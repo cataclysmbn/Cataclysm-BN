@@ -445,7 +445,7 @@
           "x": [ 4, 15 ],
           "y": 15
         },
-        { "chunks": [ [ "roof_16x16_help", 10 ], [ "null", 80 ] ], "x": 4, "y": 4 },
+        { "chunks": [ [ "roof_16x16_help", 10 ], [ "roof_12x12_aircraft", 5 ], [ "null", 80 ] ], "x": 4, "y": 4 },
         {
           "chunks": [ [ "null", 70 ], [ "roof_4x4_party", 20 ], [ "roof_4x4_holdout", 10 ] ],
           "x": [ 5, 16 ],

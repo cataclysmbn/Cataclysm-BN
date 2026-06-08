@@ -52,6 +52,11 @@
   },
   {
     "type": "construction_category",
+    "id": "RECREATION",
+    "name": "Place Recreational Furniture"
+  },
+  {
+    "type": "construction_category",
     "id": "OTHER",
     "name": "Others"
   },

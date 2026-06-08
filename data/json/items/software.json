@@ -50,6 +50,7 @@
     "id": "AID_bio_infolink",
     "type": "GENERIC",
     "copy-from": "AID_abstract",
+    "looks_like": "AID_bio_power_storage_mkII",
     "name": { "str_sp": "Infolink CBM installation data" },
     "description": "Precise step-by-step instructions and other required data for installation of Infolink CBM, stored on a data card of proprietary form-factor, designed to be used extensively by an Autodoc, and allowing bionic installation with minimal failure chance.  Integrated security subroutine renders it unusable after installation."
   },
@@ -264,6 +265,16 @@
     "name": { "str": "integrated circuit datasheet archives", "str_pl": "misc software" },
     "description": "Huge archives of numerous IC circuit datasheets from several major manufacturers.  Probably valuable to the right person, as it would be hard to salvage and reuse these components without them.",
     "price": "400 USD",
+    "price_postapoc": "0 cent",
+    "category": "valuables"
+  },
+  {
+    "id": "software_cryptow",
+    "copy-from": "software",
+    "type": "GENERIC",
+    "name": { "str_sp": "undeclared crypto wallet" },
+    "description": "A cryptocoin fortune equivalent to $250,000 that someone really didn't want to report to Uncle Sam. A pity it's useless now...",
+    "price": "250000 USD",
     "price_postapoc": "0 cent",
     "category": "valuables"
   }

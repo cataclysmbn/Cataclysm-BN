@@ -1,0 +1,20 @@
+[
+  {
+    "result": "sword_crt",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 50 ] ], [ [ "essence_dull", 100 ] ] ]
+  },
+  {
+    "result": "blade_crt",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 1000 ] ], [ [ "essence_dull", 150 ] ] ]
+  }
+]

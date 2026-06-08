@@ -140,7 +140,7 @@
     "upgrades": { "age_grow": 7, "into": "mon_plague_vector" },
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_WEAK" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 60 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 7200 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "POISON", "STUMBLES", "PATH_AVOID_FIRE" ]
   },
   {
@@ -171,7 +171,7 @@
     "harvest": "arachnid_tainted",
     "upgrades": { "age_grow": 7, "into": "mon_skittering_plague" },
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 120 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 14400 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "POISON", "LARVA", "STUMBLES", "PATH_AVOID_FIRE" ]
   },
   {
@@ -207,7 +207,7 @@
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_WEAK" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 40 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 4800 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "POISON", "STUMBLES", "PATH_AVOID_FIRE" ]
   },
   {
@@ -242,7 +242,7 @@
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
     "upgrades": { "age_grow": 7, "into": "mon_pregnant_giant_cockroach" },
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 60 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 7200 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "PATH_AVOID_FIRE" ]
   },
   {
@@ -272,7 +272,7 @@
     "harvest": "mutant_animal_tiny",
     "upgrades": { "age_grow": 7, "into": "mon_giant_cockroach" },
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 120 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 14400 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "LARVA", "CLIMBS", "PATH_AVOID_FIRE" ]
   },
   {
@@ -307,7 +307,7 @@
     "reproduction": { "baby_egg": "egg_roach", "baby_count": 3, "baby_timer": 7 },
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
     "death_function": [ "NORMAL", "PREG_ROACH" ],
-    "special_attacks": [ [ "EAT_FOOD", 40 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 4800 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "PATH_AVOID_FIRE" ]
   },
   {
@@ -1294,6 +1294,55 @@
     "delete": { "flags": [ "HARDTOSHOOT" ] }
   },
   {
+    "id": "mon_wasp_mega_acid",
+    "type": "MONSTER",
+    "name": { "str": "giant acidic wasp queen" },
+    "description": "A yellowjacket queen grown to the size of a horse, towering over their daughters.  Even worse, it's skin seems to have taken on a green hue, and bubbling acid seems to drip from its stinger.",
+    "copy-from": "mon_wasp_guard",
+    "looks_like": "mon_wasp_mega",
+    "diff": 4,
+    "proportional": { "hp": 4, "volume": 5, "weight": 5 },
+    "speed": 100,
+    "attack_cost": 100,
+    "melee_skill": 8,
+    "melee_dice": 4,
+    "melee_dice_sides": 5,
+    "melee_damage": [ { "damage_type": "acid", "amount": 6 } ],
+    "special_attacks": [
+      [ "ACID", 10 ],
+      {
+        "id": "sting",
+        "cooldown": 5,
+        "move_cost": 200,
+        "damage_max_instance": [ { "damage_type": "stab", "amount": 15, "armor_penetration": 30 } ],
+        "min_mul": 1,
+        "max_mul": 3,
+        "effects": [ { "id": "corroding", "duration": 600 }, { "id": "downed", "duration": 1, "chance": 50 } ]
+      },
+      {
+        "type": "bite",
+        "cooldown": 3,
+        "move_cost": 100,
+        "damage_max_instance": [ { "damage_type": "cut", "amount": 10, "armor_penetration": 15 } ],
+        "min_mul": 1,
+        "max_mul": 3,
+        "body_parts": [ [ "leg_l", 2 ], [ "leg_r", 2 ], [ "head", 1 ], [ "arm_l", 2 ], [ "arm_r", 2 ], [ "torso", 4 ] ]
+      }
+    ],
+    "//": "sting 15-45 damage, 6 hits to max intensity, 8 to max duration; bite 10-30",
+    "dodge": 3,
+    "vision_night": 15,
+    "armor_bash": 8,
+    "armor_cut": 30,
+    "armor_stab": 18,
+    "armor_bullet": 22,
+    "harvest": "arachnid_wasp_queen_acid",
+    "death_function": [ "NORMAL", "ACID" ],
+    "reproduction": { "baby_egg": "egg_wasp", "baby_count": 4, "baby_timer": 5 },
+    "extend": { "flags": [ "PUSH_MON", "ACIDPROOF", "ACID_BLOOD", "POISON" ] },
+    "delete": { "flags": [ "HARDTOSHOOT" ] }
+  },
+  {
     "id": "mon_dermatik",
     "type": "MONSTER",
     "name": { "str": "dermatik" },
@@ -1452,7 +1501,7 @@
     "anger_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT", "PLAYER_WEAK" ],
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_ant_fungus",
-    "special_attacks": [ [ "EAT_FOOD", 30 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 3600 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
   },
   {
@@ -1484,7 +1533,7 @@
     "vision_day": 5,
     "vision_night": 5,
     "upgrades": { "age_grow": 14, "into": "mon_ant_acid_soldier" },
-    "special_attacks": [ [ "ACID", 23 ], [ "EAT_FOOD", 30 ] ],
+    "special_attacks": [ [ "ACID", 23 ], [ "EAT_FOOD", 3600 ] ],
     "anger_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT", "PLAYER_CLOSE" ],
     "death_function": [ "ACID", "NORMAL" ],
     "harvest": "arachnid_acid",
@@ -1705,7 +1754,7 @@
     "baby_flags": [ "AUTUMN" ],
     "anger_triggers": [ "FRIEND_ATTACKED" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ { "type": "leap", "cooldown": 2, "max_range": 8, "allow_no_target": true }, [ "EAT_CROP", 60 ] ],
+    "special_attacks": [ { "type": "leap", "cooldown": 2, "max_range": 8, "allow_no_target": true }, [ "EAT_CROP", 7200 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "STUMBLES", "PATH_AVOID_FIRE" ]
   },
   {
@@ -1734,7 +1783,7 @@
     "harvest": "mutant_animal_tiny",
     "upgrades": { "age_grow": 10, "into": "mon_locust" },
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ { "type": "leap", "cooldown": 4, "max_range": 4, "allow_no_target": true }, [ "EAT_CROP", 120 ] ],
+    "special_attacks": [ { "type": "leap", "cooldown": 4, "max_range": 4, "allow_no_target": true }, [ "EAT_CROP", 14400 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "LARVA", "STUMBLES", "PATH_AVOID_FIRE" ]
   }
 ]

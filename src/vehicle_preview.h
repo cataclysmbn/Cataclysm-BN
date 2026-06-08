@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include "cata_tiles.h"
 #include "cursesdef.h"
 #include "point.h"
 #include "sdl_wrappers.h"
@@ -30,10 +31,10 @@ struct vehicle_preview_window {
         /**
          * Display the vehicle with tiles.
          * @param veh The vehicle to display
-         * @param cursor_offset Offset from vehicle origin to cursor position (negative of dd)
+         * @param cursor Vehicle-local mount cursor position
          * @param highlight_part Index of the part to highlight, or -1 for none
          */
-        void display( const vehicle &veh, point cursor_offset, int highlight_part );
+        void display( const vehicle &veh, tripoint_mnt_veh cursor, int highlight_part );
 
         /** Clean up after display (restore zoom level) */
         void clear();
@@ -82,8 +83,8 @@ struct vehicle_preview_window {
          */
         void draw_vpart_at_pixel( const vpart_id &vp_id, point pixel_pos,
                                   int part_mod, units::angle veh_facing,
-                                  std::optional<SDL_Color> bg_color = std::nullopt,
-                                  std::optional<SDL_Color> fg_color = std::nullopt );
+                                  const tint_config &bg_color = {},
+                                  const tint_config &fg_color = {} );
 
         /** Draw a highlight overlay at the given pixel position */
         void draw_highlight_at_pixel( point pixel_pos );

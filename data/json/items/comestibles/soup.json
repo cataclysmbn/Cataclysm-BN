@@ -19,7 +19,7 @@
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT" ],
-    "fun": 4,
+    "fun": 2,
     "vitamins": [ [ "iron", 3 ], [ "veggy_allergen", 1 ] ]
   },
   {
@@ -44,7 +44,7 @@
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_SALVAGE" ],
-    "fun": 6,
+    "fun": 3,
     "vitamins": [ [ "calcium", 1 ], [ "iron", 1 ], [ "meat_allergen", 1 ] ]
   },
   {

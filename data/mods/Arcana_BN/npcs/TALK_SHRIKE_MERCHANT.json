@@ -1,0 +1,169 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_SHRIKE_MERCHANT",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+      "yes": "…hunter.  Greetings.",
+      "no": "Greetings."
+    },
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_SHRIKE_MERCHANT_GM_PRELUDE"
+      },
+      {
+        "text": "[MISSION] I've been tasked with hunting down a different sanguinist sect, think you could help out?",
+        "condition": { "u_has_mission": "MISSION_CF_GM_3" },
+        "topic": "TALK_SHRIKE_MERCHANT_GM_3"
+      },
+      { "text": "Who are you?", "topic": "TALK_SHRIKE_MERCHANT_WHO" },
+      { "text": "What can you tell me about this place?", "topic": "TALK_SHRIKE_MERCHANT_WHERE" },
+      { "text": "What do you do here?", "topic": "TALK_SHRIKE_MERCHANT_DO" },
+      {
+        "text": "Do you have anything to trade?",
+        "effect": "start_trade",
+        "condition": { "u_has_var": "cf_horace_traded", "type": "flag", "context": "knowledge", "value": "yes" },
+        "topic": "TALK_SHRIKE_MERCHANT"
+      },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "One of the other shrikes ran into those things during a hunt.  Not far from Elena's hideout, half a mile northeast at most."
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_GM_3",
+    "type": "talk_topic",
+    "dynamic_line": "Well you have terrible timing.  I'm not going to have free time to go on a proper hunt anytime soon.  I prefer to hunt alone these days, but it would've been tempting to join in and see how it goes.  I guess I can give some advice so you come back with all your limbs still attached.",
+    "responses": [
+      { "text": "Is there any chance of talking them out of a fight?", "topic": "TALK_SHRIKE_MERCHANT_GM_3_CHANCE" },
+      { "text": "What should I expect to encounter?", "topic": "TALK_SHRIKE_MERCHANT_GM_3_THREAT" },
+      { "text": "Nevermind.  I think I'll manage.", "topic": "TALK_SHRIKE_MERCHANT" }
+    ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_GM_3_CHANCE",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_trait": "PROF_SANGUINIST",
+      "yes": "Chances are a magus is leading them, and I doubt they'll stand down even for you.  You might be able to talk their shrike into defecting, if they have one.  I could try giving you one of the code phrases used to identify yourself to whoever's on watch, might buy you enough time to drop them before they alert the others.  Tell me what the hunters know about your target.",
+      "no": "A proper sanguinist sect isn't like Elena's group.  They'll likely be led by a magus, and there's no way you'll talk any sense into them.  If they have a shrike, you might be able to talk them into defecting.  We had a handful of trust passwords used when returning from a scouting run.  Tell me what the hunters have said about your target and maybe I can give you one that'll keep whoever's on watch off your back long enough to silence them.  Better than letting them alert the rest."
+    },
+    "responses": [
+      { "text": "Johnathan said they were one of the transhumanist sects.", "topic": "TALK_SHRIKE_MERCHANT_GM_3_SECT" },
+      { "text": "I'll ask around, and might return later.", "topic": "TALK_SHRIKE_MERCHANT" }
+    ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_GM_3_SECT",
+    "type": "talk_topic",
+    "dynamic_line": "Good, that narrows it down.  They're a division of the Order responsible for this nonsense about what they called the Dragonnblood Sacrament.  Dragged half the other magi into that tangle and cost us our best-defended safehouse.  Not many sects dabbling in mutation survived this long.  Try the phrase, \"The moonlit sky anoints the worthy, who seek The Path home.\"  It's an old pass phrase, but to my knowledge it was still in use up until they lost the hideout. That might give them pause long enough to catch them off guard.",
+    "speaker_effect": { "effect": { "u_add_var": "horace_password_known", "type": "flag", "context": "shrike", "value": "yes" } },
+    "responses": [
+      { "text": "Thanks.  One more thing before I go.", "topic": "TALK_SHRIKE_MERCHANT" },
+      { "text": "Worth a shot  I'll be on my way.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_GM_3_THREAT",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_trait": "PROF_SANGUINIST",
+      "yes": "Rarely more than one experienced magus per sect, they'll be the priority threat.  You should know how it works among those who follow The Path, only gathering multiple magi together for something big.  Try to drop whoever's keeping watch before they can sound the alarm.",
+      "no": {
+        "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+        "yes": "Shock and awe is how your people did this sort of thing, and I'm betting you don't have the raw numbers you did back in the old days.  They've likely suffered attrition too, so it might even out.  Probably have guns scavenged from victims if they're still active, otherwise the magus and the shrike will be the biggest threats.  Single out the shrike first if they have one, you let them go on the offensive and you'll probably lose whatever help you brought along.",
+        "no": "Most of them will be fresh meat, armed with whatever weapons they were able to scavenge.  Their leader will be dangerous, single them out and pick them off if you get a chance.  Try to drop whoever's keeping watch before they can raise the alarm.  And if you see one of them geared up like they were actually prepared for a proper fight, focus on them immediately.  That's most likely a sanguine shrike."
+      }
+    },
+    "responses": [
+      { "text": "Any chance I could talk any of them into defecting?", "topic": "TALK_SHRIKE_MERCHANT_GM_3_CHANCE" },
+      { "text": "That's all for now, thanks.", "topic": "TALK_SHRIKE_MERCHANT" }
+    ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_WHO",
+    "type": "talk_topic",
+    "dynamic_line": "A shrike, hunter of hunters.  Now I hunt whatever else causes trouble.  Something constructive to do, I suppose.",
+    "responses": [
+      { "text": "What kind of trouble?", "topic": "TALK_SHRIKE_MERCHANT_TROUBLE" },
+      {
+        "text": "Can I do anything for you?",
+        "condition": { "not": { "u_has_var": "cf_horace_mission", "type": "flag", "context": "knowledge", "value": "yes" } },
+        "topic": "TALK_SHRIKE_MERCHANT_HELP"
+      },
+      { "text": "I see.", "topic": "TALK_SHRIKE_MERCHANT" }
+    ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_TROUBLE",
+    "type": "talk_topic",
+    "dynamic_line": "Monsters, usually.  Bandits if they're foolish enough.  If we ever hear about another blood mage still out there practicing the old ways, that should get blood pumping…",
+    "responses": [
+      {
+        "text": "[MISSION] I've been tasked with hunting down a sanguinist group doing exactly that, think you could help out?",
+        "condition": { "u_has_mission": "MISSION_CF_GM_3" },
+        "topic": "TALK_SHRIKE_MERCHANT_GM_3"
+      },
+      {
+        "text": "I could help with that, if you'd like.",
+        "condition": { "not": { "u_has_var": "cf_horace_mission", "type": "flag", "context": "knowledge", "value": "yes" } },
+        "topic": "TALK_SHRIKE_MERCHANT_HELP"
+      },
+      { "text": "Oh, okay.", "topic": "TALK_SHRIKE_MERCHANT" }
+    ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_HELP",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+      "yes": "Hah.  That is your job, isn't it?  Hunting the wicked and otherworldly.  No offense, but I prefer to deal with such matters myself.  It's a rare chance to put my talents to good use, without harming the innocent.  Feels like it brings purpose to what we called The Path.",
+      "no": "For now, I'd rather have this task all to myself.  There are few joys in this new world to be had, and these hunts of mine are a rare chance to cut loose in a way that lets me do some good for once."
+    },
+    "speaker_effect": { "effect": { "u_add_var": "cf_horace_mission", "type": "flag", "context": "knowledge", "value": "yes" } },
+    "responses": [ { "text": "…", "topic": "TALK_SHRIKE_MERCHANT" } ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_WHERE",
+    "type": "talk_topic",
+    "dynamic_line": "It's a nice place.  Quiet, but not too vulnerable to attack.  It seems the priestess, Sofia if I recall, keeps the others hunters in line.  Never thought I'd be working with mage hunters…",
+    "responses": [
+      { "text": "Any others come along with you?", "topic": "TALK_SHRIKE_MERCHANT_SURVIVORS" },
+      { "text": "Right, got it.", "topic": "TALK_SHRIKE_MERCHANT" }
+    ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_SURVIVORS",
+    "type": "talk_topic",
+    "dynamic_line": "One of the shrikes visited to discuss things with Sofia.  She ran off, I'm the only one that decided to stay.",
+    "responses": [ { "text": "I see.", "topic": "TALK_SHRIKE_MERCHANT" } ]
+  },
+  {
+    "id": "TALK_SHRIKE_MERCHANT_DO",
+    "type": "talk_topic",
+    "dynamic_line": "Hunting, mainly.  Monsters instead of people now, usually.  More productive these days.  I also have a few items I could trade around if you want.",
+    "speaker_effect": {
+      "condition": { "not": { "u_has_var": "cf_horace_traded", "type": "flag", "context": "knowledge", "value": "yes" } },
+      "effect": { "u_add_var": "cf_horace_traded", "type": "flag", "context": "knowledge", "value": "yes" }
+    },
+    "responses": [
+      { "text": "Sure, let's see what you have.", "effect": "start_trade", "topic": "TALK_SHRIKE_MERCHANT" },
+      { "text": "Maybe another time, thank you.", "topic": "TALK_SHRIKE_MERCHANT" }
+    ]
+  }
+]

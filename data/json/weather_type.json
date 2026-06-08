@@ -37,7 +37,7 @@
     "id": "sunny",
     "type": "weather_type",
     "name": "Sunny",
-    "color": "c_light_cyan",
+    "color": "c_yellow",
     "map_color": "c_yellow_cyan",
     "glyph": "*",
     "ranged_penalty": 0,
@@ -79,7 +79,7 @@
     "id": "light_drizzle",
     "type": "weather_type",
     "name": "Light Drizzle",
-    "color": "c_light_blue",
+    "color": "c_light_cyan",
     "map_color": "h_light_cyan",
     "glyph": ".",
     "ranged_penalty": 0,
@@ -99,7 +99,7 @@
     "id": "drizzle",
     "type": "weather_type",
     "name": "Drizzle",
-    "color": "c_light_blue",
+    "color": "c_cyan",
     "map_color": "h_light_cyan",
     "glyph": ";",
     "ranged_penalty": 1,
@@ -124,7 +124,7 @@
     "id": "rain",
     "type": "weather_type",
     "name": "Rain",
-    "color": "c_blue",
+    "color": "c_light_blue",
     "map_color": "h_light_cyan",
     "glyph": "o",
     "ranged_penalty": 3,
@@ -149,7 +149,7 @@
     "id": "heavy_rain",
     "type": "weather_type",
     "name": "Heavy Rain",
-    "color": "h_blue",
+    "color": "c_blue",
     "map_color": "h_light_cyan",
     "glyph": "%",
     "ranged_penalty": 4,
@@ -228,7 +228,7 @@
     "name": "Acidic Drizzle",
     "color": "c_light_green",
     "map_color": "c_yellow_green",
-    "glyph": ".",
+    "glyph": ";",
     "ranged_penalty": 2,
     "sight_penalty": 1.03,
     "light_modifier": -20,
@@ -245,13 +245,16 @@
         "effect_id_str": "acid_burn_pain_light",
         "effect_intensity": 0,
         "precipitation_name": "acidic drizzle",
-        "ignore_armor": false,
         "effect_msg": "The acidic drizzle burns, but is mostly harmless for now...",
         "effect_msg_frequency": 3,
         "effect_msg_blocked_frequency": 32,
         "message_type": 3,
-        "clothing_protection": 2,
-        "umbrella_protection": 1
+        "protection_data": [
+          { "check": "RAIN_PROTECT", "odds": 1 },
+          { "check": "RAINPROOF", "odds": 1 },
+          { "check": "ACIDPROOF", "odds": 1 },
+          { "check": "DEFAULT", "odds": 2 }
+        ]
       }
     ],
     "animation": { "factor": 0.01, "color": "c_light_green", "glyph": ".", "tile": "weather_acid_drop" },
@@ -282,13 +285,16 @@
         "effect_id_str": "acid_burn_pain",
         "effect_intensity": 0,
         "precipitation_name": "acid rain",
-        "ignore_armor": false,
         "effect_msg": "The acid rain burns your skin!",
         "effect_msg_frequency": 1,
         "effect_msg_blocked_frequency": 32,
         "message_type": 1,
-        "clothing_protection": 2,
-        "umbrella_protection": 1
+        "protection_data": [
+          { "check": "RAIN_PROTECT", "odds": 1 },
+          { "check": "RAINPROOF", "odds": 1 },
+          { "check": "ACIDPROOF", "odds": 1 },
+          { "check": "DEFAULT", "odds": 2 }
+        ]
       }
     ],
     "animation": { "factor": 0.02, "color": "c_light_green", "glyph": ",", "tile": "weather_acid_drop" },

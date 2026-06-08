@@ -1,0 +1,29 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_RANCH_BARKEEP_INFORMATION",
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_RANCH_BARKEEP_GM_PRELUDE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_BARKEEP_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "Just gotta keep pushing your luck, huh?  Well alright, if that's all you're after, I don't like dealing in rumors but this sounds like serious shit.  You hear stupid stories from drunk survivors all the time, only one I'd put stock in comes from one of the more experienced fellows, who said she had a run-in with a ghost or some shit. Out by the river.  Had a freezer burn on the back of her hand, couple hairline fractures too.  If she wasn't stone-cold sober, and one of the few scavengers I can trust not to bullshit me, I wouldn't have given her story a second thought.",
+    "responses": [  ]
+  }
+]

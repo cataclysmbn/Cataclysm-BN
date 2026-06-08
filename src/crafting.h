@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -20,11 +21,11 @@ struct tool_comp;
 enum class cost_adjustment : int;
 
 struct bench_location {
-    explicit bench_location( bench_type type, tripoint position )
+    explicit bench_location( bench_type type, tripoint_abs_ms position )
         : type( type ), position( position )
     {}
     bench_type type;
-    tripoint position;
+    tripoint_abs_ms position;
 };
 template<typename Type>
 struct comp_selection;
@@ -45,12 +46,13 @@ float morale_crafting_speed_multiplier( const Character &who, const recipe &rec 
 float lighting_crafting_speed_multiplier( const Character &who, const recipe &rec );
 float crafting_speed_multiplier( const Character &who, const recipe &rec, bool );
 float crafting_speed_multiplier( const Character &who, const item &craft,
-                                 const bench_location &bench );
+                                 const bench_location &bench,
+                                 std::optional<float> tools_multi_override = std::nullopt );
 void complete_craft( Character &who, item &craft );
 
 namespace crafting
 {
-std::pair<bench_type, float> best_bench_here( const item &craft, const tripoint &loc,
+std::pair<bench_type, float> best_bench_here( const item &craft, const tripoint_bub_ms &loc,
         bool can_lift );
 /**
 * Returns the set of book types in crafting_inv that provide the
@@ -114,6 +116,7 @@ bool disassemble_all( avatar &you, bool recursively );
 /**
  * Complete disassembly of target item.
  */
-void complete_disassemble( Character &who, const iuse_location &target, const tripoint &pos );
+void complete_disassemble( Character &who, const iuse_location &target,
+                           const tripoint_bub_ms &pos );
 
 } // namespace crafting

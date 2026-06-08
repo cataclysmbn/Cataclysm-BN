@@ -10,12 +10,14 @@
 
 #include "anatomy.h"
 #include "bodypart.h"
+#include "coordinates.h"
 #include "pimpl.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
 #include "cached_options.h"
+#include "coordinates.h"
 #include "enums.h"
 #include "memory_fast.h"
 
@@ -36,10 +38,8 @@ class field;
 class field_entry;
 class JsonObject;
 class JsonOut;
-struct tripoint;
 class time_duration;
 class player;
-struct point;
 
 enum damage_type : int;
 enum m_flag : int;
@@ -250,6 +250,14 @@ class Creature
         virtual const avatar *as_avatar() const {
             return nullptr;
         }
+
+        /** Return the dimension this creature belongs to.
+         *  Base fallback: returns g_active_dimension_id (for creature subtypes
+         *  that don't track dimension explicitly).
+         *  Overridden by avatar (delegates to game::current_dimension_id_),
+         *  npc, and monster (each store their own dimension_id_). */
+        virtual const std::string &get_dimension() const;
+
         /** return the direction the creature is facing, for sdl horizontal flip **/
         FacingDirection facing = FD_RIGHT;
         /** Returns true for non-real Creatures used temporarily; i.e. fake NPC's used for turret fire. */
@@ -259,6 +267,14 @@ class Creature
 
         /** Processes effects and bonuses and allocates move points based on speed. */
         virtual void process_turn();
+        /**
+         * Batch catchup: simulate @p n missed turns for this creature.
+         * Default implementation calls process_turn() @p n times.
+         * Derived classes (monster, npc) provide specialized versions that are
+         * cheaper and/or more appropriate for out-of-bubble simulation.
+         * @p n is expected to be pre-clamped by the caller.
+         */
+        virtual void batch_turns( int n );
         /** Resets the value of all bonus fields to 0. */
         virtual void reset_bonuses();
         /** Resets stats, and applies effects in an idempotent manner */
@@ -269,6 +285,9 @@ class Creature
         virtual void bleed() const;
         /** Empty function. Should always be overwritten by the appropriate player/NPC/monster version. */
         virtual void die( Creature *killer ) = 0;
+
+        /** Removes this creature from the game without death notifications or a corpse. */
+        virtual void erase();
 
         virtual float dodge_roll() = 0;
         virtual float stability_roll() const = 0;
@@ -293,7 +312,7 @@ class Creature
          * @param tr is the trap that was triggered.
          * @param pos is the location of the trap (not necessarily of the creature) in the main map.
          */
-        virtual bool avoid_trap( const tripoint &pos, const trap &tr ) const = 0;
+        virtual bool avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const = 0;
 
         /**
          * The functions check whether this creature can see the target.
@@ -305,7 +324,7 @@ class Creature
          */
         /*@{*/
         virtual bool sees( const Creature &critter ) const;
-        virtual bool sees( const tripoint &t, bool is_avatar = false, int range_mod = 0 ) const;
+        virtual bool sees( const tripoint_bub_ms &t, bool is_avatar = false, int range_mod = 0 ) const;
         /*@}*/
 
         /**
@@ -351,9 +370,9 @@ class Creature
         virtual void absorb_hit( const bodypart_id &bp, damage_instance &dam ) = 0;
 
         // TODO: this is just a shim so knockbacks work
-        void knock_back_from( const tripoint &p );
+        void knock_back_from( const tripoint_bub_ms &p );
         /** Knocks the creature to a specified tile */
-        virtual void knock_back_to( const tripoint &to ) = 0;
+        virtual void knock_back_to( const tripoint_bub_ms &to ) = 0;
 
         int size_melee_penalty() const;
         // begins a melee attack against the creature
@@ -456,7 +475,7 @@ class Creature
         /** Returns multiplier on fall damage at low velocity (knockback/pit/1 z-level, not 5 z-levels) */
         virtual float fall_damage_mod() const = 0;
         /** Deals falling/collision damage with terrain/creature at pos */
-        virtual int impact( int force, const tripoint &pos ) = 0;
+        virtual int impact( int force, const tripoint_bub_ms &pos ) = 0;
 
         /**
          * This function checks the creatures @ref is_dead_state and (if true) calls @ref die.
@@ -470,14 +489,14 @@ class Creature
          */
         void check_dead_state();
 
-        virtual int posx() const = 0;
-        virtual int posy() const = 0;
-        virtual int posz() const = 0;
-        virtual const tripoint &pos() const = 0;
+        virtual tripoint_bub_ms bub_pos() const = 0;
+        virtual tripoint_abs_ms abs_pos() const;
 
-        virtual void setpos( const tripoint &pos ) = 0;
+        virtual void setpos( const tripoint_bub_ms &pos ) = 0;
+        virtual void setpos( const tripoint_abs_ms &pos );
 
         bool is_loaded() const;
+        virtual bool is_simulated() const;
 
         /** Processes move stopping effects. Returns false if movement is stopped. */
         virtual bool move_effects( bool attacking ) = 0;
@@ -531,6 +550,7 @@ class Creature
         void set_value( const std::string &key, const std::string &value );
         void remove_value( const std::string &key );
         std::string get_value( const std::string &key ) const;
+        auto get_values_map() const -> const std::unordered_map<std::string, std::string> &;
 
         virtual units::mass get_weight() const = 0;
 
@@ -708,15 +728,15 @@ class Creature
         /** Returns settings for legacy pathfinding. */
         virtual const pathfinding_settings &get_legacy_pathfinding_settings() const = 0;
         /** Returns a set of points we do not want to path through with legacy pathfinding. */
-        virtual std::set<tripoint> get_legacy_path_avoid() const = 0;
+        virtual std::set<tripoint_bub_ms> get_legacy_path_avoid() const = 0;
 
         /** Returns a pathfinding and route settings pair for pathfinding */
         using pf_pair = std::pair<PathfindingSettings, RouteSettings>;
         virtual pf_pair get_pathfinding_pair() const = 0;
 
         int moves = 0;
-        void draw( const catacurses::window &w, point origin, bool inverted ) const;
-        void draw( const catacurses::window &w, const tripoint &origin, bool inverted ) const;
+        void draw( const catacurses::window &w, const point_bub_ms &origin, bool inverted ) const;
+        void draw( const catacurses::window &w, const tripoint_bub_ms &origin, bool inverted ) const;
         /**
          * Write information about this creature.
          * @param w the window to print the text into.
@@ -942,6 +962,7 @@ class Creature
 
         // TODO: There may be a cleaner way of doing it than exposing the map
         effects_map get_all_effects() const;
+        const effects_map &get_effects() const;
 
     protected:
         weak_ptr_fast<Creature> killer; // whoever killed us. this should be NULL unless we are dead
@@ -951,6 +972,8 @@ class Creature
          * Processes one effect on the Creature.
          */
         virtual void process_one_effect( effect &e, bool is_new ) = 0;
+        auto add_action_move_credit( int base_moves, int action_factor ) -> void;
+        virtual auto action_move_factor() const -> int;
 
         pimpl<effects_map> effects;
         // Miscellaneous key/value pairs.
@@ -970,6 +993,7 @@ class Creature
         int speed_base = 0; // only speed needs a base, the rest are assumed at 0 and calculated off skills
 
         int speed_bonus = 0;
+        int move_credit_remainder = 0;
         float speed_mult = 0.f;
         float dodge_bonus = 0.0;
         int block_bonus = 0;
@@ -1039,5 +1063,3 @@ class Creature
         int pain = 0;
         bool underwater = false;
 };
-
-

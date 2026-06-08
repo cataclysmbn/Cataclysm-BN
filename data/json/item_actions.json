@@ -427,7 +427,7 @@
   {
     "type": "item_action",
     "id": "FISH_ROD",
-    "name": { "str": "Fish" }
+    "name": { "ctxt": "fishing action", "str": "Fish" }
   },
   {
     "type": "item_action",
@@ -806,13 +806,33 @@
   },
   {
     "type": "item_action",
+    "id": "REPORT_FLUID_GRID_CONNECTIONS",
+    "name": { "str": "Check fluid grid connections" }
+  },
+  {
+    "type": "item_action",
     "id": "MODIFY_GRID_CONNECTIONS",
     "name": { "str": "Modify grid connections" }
   },
   {
     "type": "item_action",
+    "id": "MODIFY_FLUID_GRID_CONNECTIONS",
+    "name": { "str": "Modify fluid grid connections" }
+  },
+  {
+    "type": "item_action",
     "id": "VOLTMETER",
     "name": { "str": "Measure grid power" }
+  },
+  {
+    "type": "item_action",
+    "id": "ARTIFACT_ANALYZER",
+    "name": { "str": "Analyze artifact" }
+  },
+  {
+    "type": "item_action",
+    "id": "OBJ_VAR_VIEWER",
+    "name": { "str": "Inspect object variables" }
   },
   {
     "type": "item_action",
@@ -946,6 +966,11 @@
   },
   {
     "type": "item_action",
+    "id": "sonar_scan",
+    "name": { "str": "Scan with sonar" }
+  },
+  {
+    "type": "item_action",
     "id": "change_scent",
     "name": { "str": "Mask scent" }
   },
@@ -1038,5 +1063,25 @@
     "type": "item_action",
     "id": "flowerpot_collect",
     "name": { "str": "Collect a plant" }
+  },
+  {
+    "type": "item_action",
+    "id": "dimension_travel",
+    "name": { "str": "Travel to another dimension" }
+  },
+  {
+    "type": "item_action",
+    "id": "pocket_dimension",
+    "name": { "str": "Access a pocket dimension" }
+  },
+  {
+    "type": "item_action",
+    "id": "paint_stuff",
+    "name": { "str": "Paint something" }
+  },
+  {
+    "type": "item_action",
+    "id": "paint_stuff_cfg",
+    "name": { "str": "Configure Painter" }
   }
 ]

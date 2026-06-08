@@ -15,7 +15,6 @@ struct itype;
 
 namespace auto_pickup
 {
-
 /**
  * The currently-active set of auto-pickup rules, in a form that allows quick
  * lookup. When this is filled (by @ref auto_pickup::create_rule()), every
@@ -39,7 +38,7 @@ class cache : public std::unordered_map<std::string, rule_state>
 class rule
 {
     public:
-        std::string sRule;
+        std::string sRule = "";
         bool bActive = false;
         bool bExclude = false;
 
@@ -155,6 +154,9 @@ class npc_settings : public base_settings
 
         bool empty() const;
 };
+
+bool test_pattern_function( const itype &type, std::string filter );
+bool autopickup_item_function( const item &object, std::string filter );
 
 } // namespace auto_pickup
 

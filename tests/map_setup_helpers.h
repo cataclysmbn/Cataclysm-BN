@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "point.h"
+#include "coordinates.h"
 #include "catch/catch.hpp"
 
 namespace map_helpers

@@ -409,6 +409,13 @@
     ]
   },
   {
+    "id": "nested_m7_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [ { "item": "ar10mag_20rd", "ammo-group": "on_hand_277", "prob": 100 } ]
+  },
+  {
     "id": "nested_steyr_aug_mag",
     "type": "item_group",
     "subtype": "distribution",
@@ -479,5 +486,69 @@
       { "item": "USAS10mag", "ammo-group": "on_hand_shot", "prob": 100 },
       { "item": "USAS20mag", "ammo-group": "on_hand_shot", "prob": 5 }
     ]
+  },
+  {
+    "id": "display_hi_power_9mm_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "bhp9mag_13rd", "prob": 75 }, { "item": "bhp9mag_15rd", "prob": 25 } ]
+  },
+  {
+    "id": "display_m9_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "m9mag", "prob": 75 }, { "item": "m9bigmag", "prob": 25 } ]
+  },
+  {
+    "id": "display_m1911_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "m1911mag", "prob": 75 }, { "item": "m1911bigmag", "prob": 25 } ]
+  },
+  {
+    "id": "display_tommygun_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "item": "thompson_mag", "prob": 75 },
+      { "item": "thompson_bigmag", "prob": 10 },
+      { "item": "thompson_drum", "prob": 15 }
+    ]
+  },
+  {
+    "id": "display_fn_fal_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "falmag", "prob": 75 }, { "item": "falbigmag", "prob": 25 } ]
+  },
+  {
+    "id": "display_hk_g3_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "g3mag", "prob": 75 }, { "item": "g3bigmag", "prob": 25 } ]
+  },
+  {
+    "id": "display_m14_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "m14mag", "prob": 75 }, { "item": "m14smallmag", "prob": 25 } ]
+  },
+  {
+    "id": "display_ak47_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "akmag30", "prob": 75 },
+      { "item": "akmag10", "prob": 5 },
+      { "item": "akmag20", "prob": 10 },
+      { "item": "akmag40", "prob": 5 },
+      { "item": "akdrum75", "prob": 5 }
+    ]
+  },
+  {
+    "id": "display_m1918_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "m1918mag", "prob": 75 }, { "item": "m1918bigmag", "prob": 25 } ]
   }
 ]

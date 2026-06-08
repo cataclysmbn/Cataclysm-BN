@@ -31,5 +31,22 @@
     "max_level": 3,
     "intelligence": 4,
     "time": "18 m"
+  },
+  {
+    "id": "textbook_stabbing",
+    "type": "BOOK",
+    "copy-from": "base_book",
+    "name": { "str": "TC 7-21.3 (CUI) Special Forces Piercing Weapon Techniques" },
+    "description": "A large military manual describing advanced techniques and practices for all manner of piercing weapons, from knives and bayonets to shivs and long pointy sticks. Requires some experience to understand.",
+    "weight": "800 g",
+    "volume": "500 ml",
+    "price": "85 USD",
+    "price_postapoc": "5 USD",
+    "color": "blue",
+    "skill": "stabbing",
+    "required_level": 3,
+    "max_level": 6,
+    "intelligence": 9,
+    "time": "28 m"
   }
 ]

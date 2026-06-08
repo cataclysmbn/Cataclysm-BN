@@ -170,7 +170,7 @@ bool can_fly( Character &ch )
 
 auto is_driving( const Character &p ) -> bool
 {
-    const optional_vpart_position vp = get_map().veh_at( p.pos() );
+    const optional_vpart_position vp = get_map().veh_at( p.bub_pos() );
     return vp && vp->vehicle().is_moving() && vp->vehicle().player_in_control( p );
 }
 
@@ -229,10 +229,10 @@ int get_book_fun_for( const Character &ch, const item &book )
 
 float fine_detail_vision_mod( const Character &who )
 {
-    return fine_detail_vision_mod( who, who.pos() );
+    return fine_detail_vision_mod( who, who.bub_pos() );
 }
 
-float fine_detail_vision_mod( const Character &who, const tripoint &p )
+float fine_detail_vision_mod( const Character &who, const tripoint_bub_ms &p )
 {
     if( who.has_effect_with_flag( flag_EFFECT_SUPER_CLAIRVOYANCE )
         || who.has_effect_with_flag( flag_EFFECT_CLAIRVOYANCE )
@@ -264,15 +264,15 @@ float fine_detail_vision_mod( const Character &who, const tripoint &p )
 
 bool can_see_fine_details( const Character &who )
 {
-    return can_see_fine_details( who, who.pos() );
+    return can_see_fine_details( who, who.bub_pos() );
 }
 
-bool can_see_fine_details( const Character &who, const tripoint &p )
+bool can_see_fine_details( const Character &who, const tripoint_bub_ms &p )
 {
     return fine_detail_vision_mod( who, p ) <= FINE_VISION_THRESHOLD;
 }
 
-comfort_response_t base_comfort_value( const Character &who, const tripoint &p )
+comfort_response_t base_comfort_value( const Character &who, const tripoint_bub_ms &p )
 {
     // Comfort of sleeping spots is "objective", while sleep_spot( p ) is "subjective"
     // As in the latter also checks for fatigue and other variables while this function
@@ -293,7 +293,7 @@ comfort_response_t base_comfort_value( const Character &who, const tripoint &p )
 
     map &here = get_map();
     const optional_vpart_position vp = here.veh_at( p );
-    const maptile tile = here.maptile_at( p );
+    const maptile tile = here.maptile_at( tripoint_bub_ms( p ) );
     const trap &trap_at_pos = tile.get_trap_t();
     const ter_id ter_at_pos = tile.get_ter();
     const furn_id furn_at_pos = tile.get_furn();
@@ -436,7 +436,7 @@ comfort_response_t base_comfort_value( const Character &who, const tripoint &p )
     return comfort_response;
 }
 
-int rate_sleep_spot( const Character &who, const tripoint &p )
+int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
 {
     const int current_stim = who.get_stim();
     const comfort_response_t comfort_info = base_comfort_value( who, p );
@@ -520,7 +520,7 @@ bool roll_can_sleep( Character &who )
     }
     who.last_sleep_check = now;
 
-    int sleepy = character_funcs::rate_sleep_spot( who, who.pos() );
+    int sleepy = character_funcs::rate_sleep_spot( who, who.bub_pos() );
     sleepy += rng( -8, 8 );
     bool result = sleepy > 0;
 
@@ -754,13 +754,13 @@ bool try_uncanny_dodge( Character &who )
     }
 }
 
-std::optional<tripoint> pick_safe_adjacent_tile( const Character &who )
+std::optional<tripoint_bub_ms> pick_safe_adjacent_tile( const Character &who )
 {
-    std::vector<tripoint> ret;
+    std::vector<tripoint_bub_ms> ret;
     int dangerous_fields = 0;
     map &here = get_map();
-    for( const tripoint &p : here.points_in_radius( who.pos(), 1 ) ) {
-        if( p == who.pos() ) {
+    for( const tripoint_bub_ms &p : here.points_in_radius( who.bub_pos(), 1 ) ) {
+        if( p == who.bub_pos() ) {
             // Don't consider player position
             continue;
         }
@@ -777,7 +777,7 @@ std::optional<tripoint> pick_safe_adjacent_tile( const Character &who )
                 }
             }
 
-            if( dangerous_fields == 0 && ! get_map().obstructed_by_vehicle_rotation( who.pos(), p ) ) {
+            if( dangerous_fields == 0 && ! get_map().obstructed_by_vehicle_rotation( who.bub_pos(), p ) ) {
                 ret.push_back( p );
             }
         }
@@ -816,8 +816,8 @@ std::vector<npc *> get_crafting_helpers( const Character &who, int max )
             return false;
         }
         bool ok = !guy.in_sleep_state() && guy.is_obeying( who ) &&
-                  rl_dist( guy.pos(), who.pos() ) < PICKUP_RANGE &&
-                  get_map().clear_path( who.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
+                  rl_dist( guy.bub_pos(), who.bub_pos() ) < PICKUP_RANGE &&
+                  get_map().clear_path( who.bub_pos(), guy.bub_pos(), PICKUP_RANGE, 1, 100 );
         if( ok ) {
             n += 1;
         }
@@ -877,7 +877,8 @@ bool list_ammo( const Character &who, item &base, std::vector<item_reload_option
         for( item *ammo : find_ammo_items_or_mags( who, *e, include_empty_mags,
                 ammo_search_range ) ) {
             // don't try to unload frozen liquids
-            if( ammo->is_watertight_container() && ammo->contents_made_of( SOLID ) ) {
+            if( ammo->is_watertight_container() && ammo->contents_normally_made_of( LIQUID ) &&
+                ammo->contents_made_of( SOLID ) ) {
                 continue;
             }
             auto id = ( ammo->is_ammo_container() || ammo->is_container() )
@@ -925,7 +926,7 @@ item_reload_option select_ammo( const player &who, item &base,
     }
 
     uilist menu;
-    menu.text = string_format( base.is_watertight_container() ? _( "Refill %s" ) :
+    menu.text = string_format( base.is_container() ? _( "Refill %s" ) :
                                base.has_flag( flag_RELOAD_AND_SHOOT ) ? _( "Select ammo for %s" ) : _( "Reload %s" ),
                                base.tname() );
 
@@ -950,7 +951,7 @@ item_reload_option select_ammo( const player &who, item &base,
                                                   e.ammo->type_name(), e.ammo->ammo_data()->nname( e.ammo->ammo_remaining() ),
                                                   e.ammo->ammo_remaining() ) );
             }
-        } else if( e.ammo->is_watertight_container() ||
+        } else if( e.ammo->is_container() ||
                    ( e.ammo->is_ammo_container() && who.is_worn( *e.ammo ) ) ) {
             // worn ammo containers should be named by their contents with their location also updated below
             return e.ammo->contents.front().display_name();
@@ -1183,6 +1184,8 @@ item_reload_option select_ammo( const player &who, item &base, bool prompt,
                     name = base.ammo_data()->nname( 1 );
                 } else if( base.is_watertight_container() ) {
                     name = base.is_container_empty() ? "liquid" : base.contents.front().tname();
+                } else if( base.is_container() ) {
+                    name = base.is_container_empty() ? "items" : base.contents.front().tname();
                 } else {
                     name = enumerate_as_string( base.ammo_types().begin(),
                     base.ammo_types().end(), []( const ammotype & at ) {
@@ -1228,7 +1231,7 @@ std::vector<item *> get_ammo_items( const Character &who, const ammotype &at )
 template <typename T, typename Output>
 void find_ammo_helper( T &src, const item &obj, bool empty, Output out, bool nested )
 {
-    if( obj.is_watertight_container() ) {
+    if( obj.is_container() ) {
         if( !obj.is_container_empty() ) {
             auto contents_id = obj.contents.front().typeId();
 
@@ -1242,13 +1245,19 @@ void find_ammo_helper( T &src, const item &obj, bool empty, Output out, bool nes
                 if( node->is_container() && !node->is_container_empty() &&
                     node->contents.front().typeId() == contents_id ) {
                     out = node;
+                } else if( !node->is_container() && !node->is_in_container() && node->made_of( SOLID ) &&
+                           node->typeId() == contents_id ) {
+                    out = node;
                 }
                 return nested ? VisitResponse::NEXT : VisitResponse::SKIP;
             } );
         } else {
-            // Look for containers with any liquid
+            // Look for any contents we can hold
             src.visit_items( [&nested, &out]( item * node ) {
-                if( node->is_container() && node->contents_made_of( LIQUID ) ) {
+                if( ( node->is_watertight_container() && node->contents_made_of( LIQUID ) ) ||
+                    ( !node->is_in_container() && ( node->is_ammo() || node->is_comestible() ) &&
+                      node->made_of( SOLID ) ) ||
+                    ( node->is_container() && node->contents_made_of( SOLID ) ) ) {
                     out = node;
                 }
                 return nested ? VisitResponse::NEXT : VisitResponse::SKIP;
@@ -1329,10 +1338,10 @@ std::vector<item *> find_ammo_items_or_mags( const Character &who, const item &o
     find_ammo_helper( const_cast<Character &>( who ), obj, empty, std::back_inserter( res ), true );
 
     if( radius >= 0 ) {
-        for( auto &cursor : map_selector( who.pos(), radius ) ) {
+        for( auto &cursor : map_selector( who.bub_pos(), radius ) ) {
             find_ammo_helper( cursor, obj, empty, std::back_inserter( res ), false );
         }
-        for( auto &cursor : vehicle_selector( who.pos(), radius ) ) {
+        for( auto &cursor : vehicle_selector( who.bub_pos(), radius ) ) {
             find_ammo_helper( cursor, obj, empty, std::back_inserter( res ), false );
         }
     }

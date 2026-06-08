@@ -49,5 +49,22 @@
     "intelligence": 1,
     "time": "6 m",
     "fun": 1
+  },
+  {
+    "id": "textbook_dodge",
+    "type": "BOOK",
+    "copy-from": "base_book",
+    "name": { "str": "Professional Dancer's Textbook" },
+    "description": "A giant textbook aimed towards those pursuing professional dance, with descriptions of highly advanced footwork which could be invaluable to those wishing to dance around enemy attacks.",
+    "weight": "3000 g",
+    "volume": "1500 ml",
+    "price": "85 USD",
+    "price_postapoc": "5 USD",
+    "color": "blue",
+    "skill": "dodge",
+    "required_level": 4,
+    "max_level": 6,
+    "intelligence": 9,
+    "time": "28 m"
   }
 ]

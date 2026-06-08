@@ -228,7 +228,9 @@
       { "item": "556", "prob": 110, "charges": [ 1, 100 ] },
       { "item": "556_incendiary", "prob": 5, "charges": [ 1, 100 ] },
       { "item": "762_51", "prob": 70, "charges": [ 1, 100 ] },
-      { "item": "762_51_incendiary", "prob": 5, "charges": [ 1, 100 ] }
+      { "item": "762_51_incendiary", "prob": 5, "charges": [ 1, 100 ] },
+      { "item": "277_fmj", "prob": 10, "charges": [ 1, 100 ] },
+      { "item": "277_hybrid", "prob": 5, "charges": [ 1, 100 ] }
     ]
   },
   {
@@ -254,7 +256,9 @@
       { "item": "8mm_inc", "prob": 20, "charges": [ 1, 100 ] },
       { "item": "8mm_jhp", "prob": 10, "charges": [ 1, 100 ] },
       { "item": "300blk", "prob": 15, "charges": [ 1, 100 ] },
-      { "item": "300blk_ss", "prob": 10, "charges": [ 1, 100 ] }
+      { "item": "300blk_ss", "prob": 10, "charges": [ 1, 100 ] },
+      { "item": "277_fmj", "prob": 15, "charges": [ 1, 100 ] },
+      { "item": "277_hybrid", "prob": 10, "charges": [ 1, 100 ] }
     ]
   },
   {
@@ -268,7 +272,9 @@
       { "item": "50_incendiary", "prob": 1, "charges": [ 1, 100 ] },
       { "item": "50bmg", "prob": 2, "charges": [ 1, 100 ] },
       { "item": "50match", "prob": 1, "charges": [ 1, 100 ] },
-      { "item": "50ss", "prob": 1, "charges": [ 1, 100 ] }
+      { "item": "50ss", "prob": 1, "charges": [ 1, 100 ] },
+      { "item": "277_fmj", "prob": 15, "charges": [ 1, 100 ] },
+      { "item": "277_hybrid", "prob": 10, "charges": [ 1, 100 ] }
     ]
   },
   {
@@ -660,7 +666,8 @@
       { "item": "762R_casing", "prob": 60 },
       { "item": "9mm_casing", "prob": 100 },
       { "item": "shot_hull", "prob": 100 },
-      { "item": "300blk_casing", "prob": 80 }
+      { "item": "300blk_casing", "prob": 80 },
+      { "item": "277_casing", "prob": 30 }
     ]
   },
   {

@@ -61,16 +61,16 @@
       }
     },
     "root": "lab_core",
-    "shared": { "size": [ 1, 7 ] },
+    "shared": { "size": [ 4, 4 ] },
     "phases": [
       [
-        { "overmap": "lab", "scale": "size", "max": { "poisson": 15 } },
+        { "overmap": "lab", "scale": "size", "max": { "poisson": 3 } },
         {
           "name": "stairs_and_core",
           "chunk": [ { "overmap": "lab_stairs", "pos": [ 0, 0, 0 ] }, { "overmap": "lab_core", "pos": [ 0, 0, -1 ] } ],
           "z": "bottom",
           "scale": "size",
-          "max": { "poisson": 3 }
+          "max": { "poisson": 2 }
         }
       ],
       [
@@ -96,7 +96,7 @@
     "subtype": "mutable",
     "locations": [ "subterranean_empty" ],
     "city_distance": [ 10, -1 ],
-    "occurrences": [ 1, 10 ],
+    "occurrences": [ 1, 2 ],
     "flags": [ "LAB" ],
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road" } ],
     "check_for_locations": [
@@ -162,17 +162,17 @@
       }
     },
     "root": "surface",
-    "shared": { "size": [ 1, 7 ] },
+    "shared": { "size": [ 4, 4 ] },
     "phases": [
       [ { "overmap": "ice_lab_core", "max": 1 } ],
       [
-        { "overmap": "ice_lab", "scale": "size", "max": { "poisson": 15 } },
+        { "overmap": "ice_lab", "scale": "size", "max": { "poisson": 3 } },
         {
           "name": "stairs_and_core",
           "chunk": [ { "overmap": "ice_lab_stairs", "pos": [ 0, 0, 0 ] }, { "overmap": "ice_lab_core", "pos": [ 0, 0, -1 ] } ],
           "z": "bottom",
           "scale": "size",
-          "max": { "poisson": 3 }
+          "max": { "poisson": 2 }
         }
       ],
       [

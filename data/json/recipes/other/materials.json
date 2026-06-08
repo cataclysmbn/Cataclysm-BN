@@ -33,7 +33,7 @@
     "time": "1 h",
     "autolearn": true,
     "batch_time_factors": [ 83, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "rock_quern", -1 ], [ "clay_quern", -1 ] ] ],
     "components": [ [ [ "chitin_piece", 1 ], [ "acidchitin_piece", 1 ] ] ]
   },
@@ -49,28 +49,13 @@
     "time": "1 h 30 m",
     "autolearn": true,
     "batch_time_factors": [ 83, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "mortar_pestle", -1 ] ] ],
     "components": [ [ [ "chitin_piece", 1 ] ] ]
   },
   {
     "type": "recipe",
     "result": "reinforced_glass_sheet",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_MATERIALS",
-    "skill_used": "fabrication",
-    "difficulty": 4,
-    "time": "20 m",
-    "reversible": true,
-    "decomp_learn": 3,
-    "autolearn": true,
-    "using": [ [ "welding_standard", 10 ] ],
-    "qualities": [ { "id": "SAW_M", "level": 1 } ],
-    "components": [ [ [ "reinforced_glass_pane", 4 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "reinforced_glass_pane",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
     "skill_used": "fabrication",
@@ -164,7 +149,6 @@
     "time": "1 m",
     "autolearn": true,
     "charges": 6,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "paper", 1 ] ] ]
   },
   {
@@ -349,19 +333,6 @@
   },
   {
     "type": "recipe",
-    "result": "metal_tank",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_MATERIALS",
-    "skill_used": "fabrication",
-    "difficulty": 1,
-    "time": "2 m",
-    "autolearn": true,
-    "using": [ [ "welding_standard", 5 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "components": [ [ [ "sheet_metal", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
     "result": "it_battery_mount",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
@@ -373,19 +344,6 @@
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 } ],
     "using": [ [ "steel_tiny", 1 ], [ "welding_standard", 5 ] ],
     "components": [ [ [ "sheet_metal", 2 ] ], [ [ "pipe", 2 ] ], [ [ "chain", 1 ] ], [ [ "circuit", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "metal_tank_little",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_MATERIALS",
-    "skill_used": "fabrication",
-    "difficulty": 1,
-    "time": "30 s",
-    "autolearn": true,
-    "using": [ [ "welding_standard", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "components": [ [ [ "sheet_metal_small", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -662,7 +620,8 @@
     "subcategory": "CSC_OTHER_MATERIALS",
     "skill_used": "fabrication",
     "difficulty": 3,
-    "time": "1 h 30 m",
+    "time": "1 h",
+    "batch_time_factors": [ 80, 5 ],
     "autolearn": true,
     "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ] ]
   },
@@ -1096,9 +1055,9 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
-    "components": [ [ [ "rag", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 10 ] ] ]
   },
   {
     "result": "bundle_leather",
@@ -1110,9 +1069,9 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
-    "components": [ [ [ "leather", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "leather", 10 ] ] ]
   },
   {
     "result": "bundle_wool",
@@ -1124,9 +1083,9 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
-    "components": [ [ [ "felt_patch", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "felt_patch", 10 ] ] ]
   },
   {
     "type": "recipe",
@@ -1137,6 +1096,7 @@
     "time": "2 m",
     "autolearn": true,
     "qualities": [ { "id": "DIG", "level": 3 } ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "bag_canvas", 1 ] ], [ [ "material_sand", 3000 ] ] ]
   },
   {
@@ -1147,6 +1107,7 @@
     "skill_used": "fabrication",
     "time": "2 m",
     "autolearn": true,
+    "flags": [ "BLIND_NO_EFFECT" ],
     "qualities": [ { "id": "DIG", "level": 3 } ],
     "components": [ [ [ "bag_canvas", 1 ] ], [ [ "material_soil", 3 ] ] ]
   },

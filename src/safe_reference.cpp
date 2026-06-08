@@ -2,6 +2,7 @@
 #include "item.h"
 #include "json.h"
 #include "character.h"
+#include "coordinates.h"
 #include "map.h"
 #include "map_selector.h"
 #include "avatar.h"
@@ -16,6 +17,7 @@ bool save_and_quit = false;
 template<typename T>
 void safe_reference<T>::serialize_global( JsonOut &json )
 {
+    const std::lock_guard<std::mutex> guard( records_mutex );
     json.start_array();
     for( auto &it : records_by_id ) {
         //TODO!: better format
@@ -32,6 +34,7 @@ void safe_reference<T>::serialize_global( JsonOut &json )
 template<typename T>
 void safe_reference<T>::deserialize_global( const JsonArray &jsin )
 {
+    const std::lock_guard<std::mutex> guard( records_mutex );
     bool pair = false;
     safe_reference<T>::id_type id;
     for( const JsonValue val : jsin ) {
@@ -70,7 +73,7 @@ void deserialize<item>( safe_reference<item> &out, JsonIn &js )
         auto obj = js.get_object();
         auto type = obj.get_string( "type" );
         int idx = -1;
-        tripoint pos = tripoint_min;
+        auto pos = tripoint_abs_ms::zero();
 
         obj.read( "idx", idx );
         obj.read( "pos", pos );
@@ -157,6 +160,7 @@ void serialize<item>( const safe_reference<item> &val, JsonOut &js );
 template<typename T>
 void safe_reference<T>::cleanup()
 {
+    const std::lock_guard<std::mutex> guard( records_mutex );
     std::set<record *> records;
     for( auto &rec : records_by_pointer ) {
         records.insert( rec.second );
@@ -180,6 +184,7 @@ void safe_reference<T>::register_load( T *obj, id_type id )
     if( id == ID_NONE ) {
         return;
     }
+    const std::lock_guard<std::mutex> guard( records_mutex );
     auto search = records_by_id.find( id );
     if( search != records_by_id.end() ) {
         search->second->target.p = obj;
@@ -193,6 +198,7 @@ void safe_reference<T>::register_load( T *obj, id_type id )
 template<typename T>
 auto safe_reference<T>::lookup_id( const T *obj ) -> safe_reference<T>::id_type
 {
+    const std::lock_guard<std::mutex> guard( records_mutex );
     auto search = records_by_pointer.find( obj );
     if( search != records_by_pointer.end() ) {
         if( search->second->id == ID_NONE ) {
@@ -206,6 +212,7 @@ auto safe_reference<T>::lookup_id( const T *obj ) -> safe_reference<T>::id_type
 template<typename T>
 void safe_reference<T>::mark_destroyed( T *obj )
 {
+    const std::lock_guard<std::mutex> guard( records_mutex );
     auto search = records_by_pointer.find( obj );
     if( search == records_by_pointer.end() ) {
         return;
@@ -216,6 +223,7 @@ void safe_reference<T>::mark_destroyed( T *obj )
 template<typename T>
 void safe_reference<T>::mark_deallocated( T *obj )
 {
+    const std::lock_guard<std::mutex> guard( records_mutex );
     auto search = records_by_pointer.find( obj );
     if( search == records_by_pointer.end() ) {
         return;

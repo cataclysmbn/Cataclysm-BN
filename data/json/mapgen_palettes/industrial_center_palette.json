@@ -51,6 +51,7 @@
       "J": "t_region_groundcover",
       "L": "t_gates_control_concrete_lab",
       "M": "t_door_metal_locked",
+      "N": "t_column",
       "P": "t_floor",
       "R": "t_recycler",
       "S": "t_thconc_floor",

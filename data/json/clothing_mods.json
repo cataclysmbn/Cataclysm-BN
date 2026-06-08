@@ -120,6 +120,7 @@
     "implement_prompt": "Resize to fit abnormally large mutated anatomy",
     "destroy_prompt": "Undo resizing for mutated anatomy",
     "restricted": true,
+    "use_base_material": true,
     "mod_value": [ { "type": "encumbrance", "value": 10, "proportion": [ "coverage" ] } ]
   },
   {
@@ -130,7 +131,28 @@
     "implement_prompt": "Resize to fit abnormally small mutants",
     "destroy_prompt": "Undo resizing for small mutants",
     "restricted": true,
+    "use_base_material": true,
     "mod_value": [ { "type": "encumbrance", "value": 10, "proportion": [ "coverage" ] } ]
+  },
+  {
+    "type": "clothing_mod",
+    "//": "There are separate versions for welders to use. Internally, either version of the resize mod applies the same flag, and having the flag applies the effects of all clothing mods sharing it, so only one version of each resize mod should have encumbrance.",
+    "//2": "TODO: Phase this out in favor of allowing a clothing mod to choose its raw material based on what the target clothing is made of.",
+    "id": "resized_large_metal",
+    "flag": "resized_large",
+    "item": "scrap",
+    "implement_prompt": "Resize to fit abnormally large mutated anatomy",
+    "destroy_prompt": "Undo resizing for mutated anatomy",
+    "restricted": true
+  },
+  {
+    "type": "clothing_mod",
+    "id": "resized_small_metal",
+    "flag": "resized_small",
+    "item": "scrap",
+    "implement_prompt": "Resize to fit abnormally small mutants",
+    "destroy_prompt": "Undo resizing for small mutants",
+    "restricted": true
   },
   {
     "type": "clothing_mod",

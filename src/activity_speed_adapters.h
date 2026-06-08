@@ -1,8 +1,9 @@
 #pragma once
 #include <utility>
+#include <variant>
 
 #include "activity_type.h"
-#include "point.h"
+#include "coordinates.h"
 #include "units_mass.h"
 #include "units_volume.h"
 
@@ -16,6 +17,9 @@ struct vpslot_workbench;
 struct construction;
 
 class recipe;
+
+// Activity target types that can provide context to calculation functions
+using activity_target = std::variant<std::monostate, const recipe *, const construction *>;
 
 enum class bench_type : int {
     ground = 0,
@@ -43,9 +47,9 @@ struct workbench_info_wrapper {
 
 struct bench_loc {
     workbench_info_wrapper wb_info;
-    tripoint position;
+    tripoint_bub_ms position;
 
-    explicit bench_loc( workbench_info_wrapper info, tripoint position )
+    explicit bench_loc( workbench_info_wrapper info, const tripoint_bub_ms &position )
         : wb_info( info ), position( position ) {
     }
 };
@@ -54,6 +58,7 @@ struct activity_reqs_adapter {
     q_reqs qualities;
     skill_reqs skills;
     metric metrics = std::make_pair( 0_milligram, 0_ml );
+    activity_target target;  // Target context for flag/property checks
 
     activity_reqs_adapter( const construction &con );
     activity_reqs_adapter( const recipe &rec, const metric &metrics );

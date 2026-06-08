@@ -1,8 +1,10 @@
 #include "mongroup.h"
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "assign.h"
 #include "calendar.h"
 #include "debug.h"
@@ -77,7 +79,7 @@ float mongroup::avg_speed() const
         }
         avg_speed /= monsters.size();
     }
-    return avg_speed;
+    return static_cast<float>( action_time_scale::scaled_overmap_horde_speed( avg_speed ) );
 }
 
 const MonsterGroup &MonsterGroupManager::GetUpgradedMonsterGroup( const mongroup_id &group )
@@ -260,6 +262,14 @@ const MonsterGroup &MonsterGroupManager::GetMonsterGroup( const mongroup_id &gro
     } else {
         return it->second;
     }
+}
+
+auto MonsterGroupManager::get_all_group_ids() -> std::vector<mongroup_id>
+{
+    namespace views = std::views;
+    return monsterGroupMap
+           | views::keys
+           | std::ranges::to<std::vector<mongroup_id>>();
 }
 
 void MonsterGroupManager::LoadMonsterBlacklist( const JsonObject &jo )

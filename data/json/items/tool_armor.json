@@ -69,7 +69,8 @@
     "color": "light_gray",
     "coverage": 1,
     "material_thickness": 1,
-    "flags": [ "DEAF", "OVERSIZE", "POWERARMOR_COMPATIBLE" ]
+    "hearing_protection": 12,
+    "flags": [ "OVERSIZE", "POWERARMOR_COMPATIBLE" ]
   },
   {
     "id": "gobag",
@@ -219,7 +220,7 @@
     "encumbrance": 60,
     "material_thickness": 3,
     "qualities": [ [ "GLARE", 3 ] ],
-    "flags": [ "SUN_GLASSES", "FLASH_PROTECTION", "BLIND" ]
+    "flags": [ "SUN_GLASSES", "FLASH_PROTECTION" ]
   },
   {
     "id": "welding_mask_crude",
@@ -272,6 +273,7 @@
     "encumbrance": 60,
     "material_thickness": 2,
     "coverage": 30,
+    "qualities": [ [ "GLARE", 2 ] ],
     "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
@@ -297,7 +299,8 @@
     "warmth": 5,
     "encumbrance": 60,
     "material_thickness": 3,
-    "coverage": 30
+    "coverage": 30,
+    "qualities": [ [ "GLARE", 3 ] ]
   },
   {
     "type": "TOOL_ARMOR",
@@ -310,8 +313,8 @@
     "to_hit": -1,
     "color": "light_gray",
     "covers": [ "hand_either" ],
-    "price": 6000,
-    "price_postapoc": 100,
+    "price": "60 USD",
+    "price_postapoc": "1 USD",
     "material": [ "plastic" ],
     "flags": [
       "WATCH",
@@ -730,6 +733,52 @@
     "magazine_well": "250 ml"
   },
   {
+    "id": "sparkledogsuit",
+    "copy-from": "wolfsuit",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "sparkledog suit" },
+    "description": "A full body fursuit in the form of some unidentifiable species. It's a riot of clashing neon colors, LEDs, and glitter. It is quite encumbering and has little storage but is very warm.  Using it will turn the LEDs on.",
+    "price": "1200 USD",
+    "price_postapoc": "25 USD",
+    "color": "c_pink_green",
+    "ammo": "battery",
+    "use_action": {
+      "type": "transform",
+      "msg": "You turn your fursuit's LEDs on.",
+      "target": "sparkledogsuit_on",
+      "active": true,
+      "transform_charges": 1,
+      "need_charges": 1,
+      "need_charges_msg": "The fursuit's batteries are dead."
+    },
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_plus_battery_cell",
+          "light_disposable_cell",
+          "light_minus_disposable_cell",
+          "light_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell"
+        ]
+      ]
+    ],
+    "magazine_well": "250 ml",
+    "extend": { "flags": [ "FANCY" ] }
+  },
+  {
+    "id": "sparkledogsuit_on",
+    "copy-from": "sparkledogsuit",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "sparkledog suit (on)", "str_pl": "sparkledog suits (on)" },
+    "power_draw": 10000,
+    "revert_to": "sparkledogsuit",
+    "use_action": { "menu_text": "Turn off", "type": "transform", "msg": "You turn your fursuit off.", "target": "sparkledogsuit" },
+    "extend": { "flags": [ "LIGHT_200" ] }
+  },
+  {
     "id": "survivor_light",
     "type": "TOOL_ARMOR",
     "category": "clothing",
@@ -794,6 +843,7 @@
     "category": "clothing",
     "symbol": "[",
     "color": "blue",
+    "light_color": "#b8ffc0",
     "looks_like": "survivor_light_on",
     "name": { "str": "atomic headlamp" },
     "description": "This is a custom-made reinforced headlamp powered by the magic of nuclear decay, focused for more usable brightness.  The adjustable strap allows it to be comfortably worn on your head or attached to your helmet.  Use it to close the cover and hide the light.",
@@ -821,6 +871,7 @@
     "repairs_like": "wearable_atomic_light",
     "type": "TOOL_ARMOR",
     "looks_like": "survivor_light",
+    "light_color": null,
     "name": { "str": "atomic headlamp (covered)", "str_pl": "atomic headlamps (covered)" },
     "description": "This is a custom-made reinforced headlamp powered by the magic of nuclear decay, focused for more usable brightness.  The adjustable strap allows it to be comfortably worn on your head or attached to your helmet.  Use it to open the cover and show the light.",
     "flags": [ "LEAK_DAM", "RADIOACTIVE", "DURABLE_MELEE", "OVERSIZE", "BELTED", "ALLOWS_NATURAL_ATTACKS" ],
@@ -894,6 +945,7 @@
       "ALARMCLOCK",
       "SWIM_GOGGLES",
       "SUN_GLASSES",
+      "RECON_VISION",
       "RAD_PROOF",
       "ELECTRIC_IMMUNE",
       "THERMOMETER",
@@ -909,7 +961,8 @@
     "environmental_protection": 40,
     "encumbrance": 10,
     "qualities": [ [ "GLARE", 2 ], [ "HV_INSULATION", 1 ] ],
-    "material_thickness": 7
+    "material_thickness": 7,
+    "adv_hearing_protection": 120
   },
   {
     "id": "dimensional_anchor",
@@ -1039,7 +1092,6 @@
       "SWIM_GOGGLES",
       "SUN_GLASSES",
       "ELECTRIC_IMMUNE",
-      "PARTIAL_DEAF",
       "GAS_PROOF",
       "TRADER_AVOID",
       "PSYSHIELD_PARTIAL",
@@ -1047,7 +1099,8 @@
       "CLIMATE_CONTROL",
       "COMBAT_NPC_USE",
       "COMBAT_NPC_ON"
-    ]
+    ],
+    "adv_hearing_protection": 48
   },
   {
     "id": "rebreather",
@@ -1470,6 +1523,74 @@
       "menu_text": "Turn off",
       "msg": "Your %s deactivates and you push them up.",
       "target": "goggles_nv"
+    },
+    "covers": [ "eyes" ],
+    "warmth": 25,
+    "encumbrance": 20,
+    "magazine_well": "250 ml"
+  },
+  {
+    "id": "goggles_nv_enhanced",
+    "type": "TOOL_ARMOR",
+    "category": "clothing",
+    "symbol": "[",
+    "color": "dark_gray",
+    "name": { "str_sp": "enhanced light amp goggles" },
+    "description": "Modern light enhancement goggles that greatly amplify ambient light, allowing you to see in the dark almost perfectly, all while looking properly tactical.  Use it to turn them on.",
+    "flags": [ "FRAGILE", "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ],
+    "price": "920 USD",
+    "price_postapoc": "35 USD",
+    "material": [ "plastic", "steel" ],
+    "weight": "880 g",
+    "volume": "1 L",
+    "to_hit": -3,
+    "ammo": "battery",
+    "use_action": {
+      "type": "transform",
+      "msg": "You activate your %s and pull them down over your eyes.",
+      "target": "goggles_nv_enhanced_on",
+      "active": true,
+      "transform_charges": 1,
+      "need_charges": 1,
+      "need_charges_msg": "The %s's batteries are dead."
+    },
+    "covers": [ "head" ],
+    "warmth": 10,
+    "environmental_protection": 6,
+    "encumbrance": 5,
+    "coverage": 15,
+    "material_thickness": 2,
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_plus_battery_cell",
+          "light_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
+      ]
+    ],
+    "magazine_well": "250 ml"
+  },
+  {
+    "id": "goggles_nv_enhanced_on",
+    "copy-from": "goggles_nv_enhanced",
+    "repairs_like": "goggles_nv_enhanced",
+    "type": "TOOL_ARMOR",
+    "name": { "str_sp": "enhanced light amp goggles (on)" },
+    "description": "Modern light enhancement goggles that greatly amplify ambient light, allowing you to see in the dark almost perfectly, all while looking properly tactical.  It is turned on, and continually draining batteries.  Use it to turn them off.",
+    "flags": [ "GNVE_EFFECT", "FRAGILE", "TRADER_AVOID" ],
+    "power_draw": 375,
+    "revert_to": "goggles_nv_enhanced",
+    "use_action": {
+      "type": "transform",
+      "menu_text": "Turn off",
+      "msg": "Your %s deactivates and you push them up.",
+      "target": "goggles_nv_enhanced"
     },
     "covers": [ "eyes" ],
     "warmth": 25,
@@ -2605,7 +2726,7 @@
     "color": "blue",
     "name": { "str_sp": "shooter's earmuffs" },
     "description": "A pair of earmuffs favored by shooters.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount when turned on.  The earmuffs are currently off.",
-    "flags": [ "DEAF", "OVERSIZE", "BELTED", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE" ],
+    "flags": [ "OVERSIZE", "BELTED", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE" ],
     "price": "125 USD",
     "price_postapoc": "750 cent",
     "material": [ "plastic" ],
@@ -2626,6 +2747,7 @@
     "encumbrance": 5,
     "coverage": 10,
     "material_thickness": 2,
+    "hearing_protection": 12,
     "magazines": [
       [
         "battery",
@@ -2654,7 +2776,69 @@
     "revert_to": "powered_earmuffs",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s flicks off.", "target": "powered_earmuffs" },
     "extend": { "flags": [ "PARTIAL_DEAF", "COMBAT_NPC_ON" ] },
-    "delete": { "flags": [ "DEAF" ] }
+    "hearing_protection": 6,
+    "adv_hearing_protection": 20
+  },
+  {
+    "id": "army_powered_earmuffs",
+    "type": "TOOL_ARMOR",
+    "category": "clothing",
+    "symbol": "[",
+    "color": "green",
+    "name": { "str_sp": "tactical headset" },
+    "description": "An active headset used by the military.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount as well as function as a two-way radio when turned on.  The headset is currently off.",
+    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ],
+    "price": "250 USD",
+    "price_postapoc": "15 USD",
+    "material": [ "plastic" ],
+    "weight": "300 g",
+    "volume": "1 L",
+    "ammo": "battery",
+    "use_action": {
+      "type": "transform",
+      "msg": "You turn the headset on.",
+      "target": "army_powered_earmuffs_on",
+      "active": true,
+      "transform_charges": 1,
+      "need_charges": 1,
+      "need_charges_msg": "The headset's batteries are dead."
+    },
+    "covers": [ "head" ],
+    "warmth": 5,
+    "encumbrance": 5,
+    "coverage": 10,
+    "material_thickness": 2,
+    "hearing_protection": 12,
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_plus_battery_cell",
+          "light_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
+      ]
+    ],
+    "magazine_well": "250 ml"
+  },
+  {
+    "id": "army_powered_earmuffs_on",
+    "copy-from": "army_powered_earmuffs",
+    "type": "TOOL_ARMOR",
+    "repairs_like": "army_powered_earmuffs",
+    "name": { "str_sp": "tactical headset (on)" },
+    "description": "An active headset used by the military.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount as well as function as a two-way radio when turned on.",
+    "//": "3M Peltors claim to go 100 hours on 2 AAs",
+    "power_draw": 60,
+    "revert_to": "army_powered_earmuffs",
+    "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s flicks off.", "target": "army_powered_earmuffs" },
+    "extend": { "flags": [ "COMBAT_NPC_ON", "TWO_WAY_RADIO" ] },
+    "hearing_protection": 6,
+    "adv_hearing_protection": 24
   },
   {
     "id": "stethoscope",
@@ -3029,7 +3213,8 @@
       "target": "attached_ear_plugs_off",
       "menu_text": "Unplug",
       "need_worn": true
-    }
+    },
+    "hearing_protection": 12
   },
   {
     "id": "attached_ear_plugs_off",
@@ -3045,7 +3230,7 @@
       "menu_text": "Plug in",
       "need_worn": true
     },
-    "delete": { "flags": [ "DEAF" ] }
+    "hearing_protection": 0
   },
   {
     "id": "mask_halfsurvivor",
@@ -3071,14 +3256,14 @@
     "to_hit": -1,
     "color": "light_gray",
     "covers": [ "eyes" ],
-    "price": 6000,
-    "price_postapoc": 100,
+    "price": "60 USD",
+    "price_postapoc": "1 USD",
     "material": [ "plastic" ],
     "flags": [
       "WATCH",
       "ALARMCLOCK",
       "WATER_FRIENDLY",
-      "BELTED",
+      "SKINTIGHT",
       "COMPACT",
       "ALLOWS_NATURAL_ATTACKS",
       "OVERSIZE",
@@ -3105,7 +3290,7 @@
       { "type": "gps_device", "radius": 40, "additional_charges_per_tile": 0.1 },
       {
         "type": "transform",
-        "msg": "You activate your %'s night vision mode.",
+        "msg": "You activate your %s's night vision mode.",
         "target": "scouter_nv_on",
         "active": true,
         "transform_charges": 1,
@@ -3141,7 +3326,7 @@
       { "type": "gps_device", "radius": 120, "additional_charges_per_tile": 0.1 },
       {
         "type": "transform",
-        "msg": "You activate your %'s night vision mode.",
+        "msg": "You activate your %s's night vision mode.",
         "target": "mil_scouter_nv_on",
         "active": true,
         "transform_charges": 1,
@@ -3162,5 +3347,47 @@
     "extend": { "flags": [ "GNV_EFFECT" ] },
     "revert_to": "mil_scouter",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "Your %s deactivates.", "target": "mil_scouter" }
+  },
+  {
+    "id": "nature_ghillie",
+    "type": "ARMOR",
+    "name": { "str": "woodland ghillie suit" },
+    "description": "A bulky woodland camo suit covered with natural and synthetic foliage meant to reduce visibility in natural environments.",
+    "weight": "7915 g",
+    "volume": "7500 ml",
+    "price": "1800 USD",
+    "price_postapoc": "20 USD",
+    "to_hit": -3,
+    "material": [ "plastic", "cotton" ],
+    "symbol": "[",
+    "color": "green",
+    "covers": [ "head", "mouth", "eyes", "torso", "arms", "legs" ],
+    "coverage": 100,
+    "encumbrance": 30,
+    "warmth": 30,
+    "material_thickness": 8,
+    "environmental_protection": 2,
+    "flags": [ "VARSIZE", "STURDY", "NATURE_CAMO", "OUTER", "HOOD" ]
+  },
+  {
+    "id": "urban_ghillie",
+    "type": "ARMOR",
+    "name": { "str": "urban ghillie suit" },
+    "description": "A bulky gray camo suit covered with debris and garbage bags meant to reduce visibility in urban and rocky environments.",
+    "weight": "7915 g",
+    "volume": "7500 ml",
+    "price": "1800 USD",
+    "price_postapoc": "20 USD",
+    "to_hit": -3,
+    "material": [ "plastic", "cotton" ],
+    "symbol": "[",
+    "color": "dark_gray",
+    "covers": [ "head", "mouth", "eyes", "torso", "arms", "legs" ],
+    "coverage": 100,
+    "encumbrance": 30,
+    "warmth": 30,
+    "material_thickness": 8,
+    "environmental_protection": 2,
+    "flags": [ "VARSIZE", "STURDY", "URBAN_CAMO", "OUTER", "HOOD" ]
   }
 ]

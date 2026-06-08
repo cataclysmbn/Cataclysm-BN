@@ -276,7 +276,7 @@
     "speed": 100,
     "special_attacks": [
       { "id": "stomp_DinoMod", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 8 } ] },
-      [ "EAT_CROP", 10 ]
+      [ "EAT_CROP", 1200 ]
     ],
     "extend": { "flags": [ "PET_MOUNTABLE" ] }
   },
@@ -292,7 +292,7 @@
     "weight": "15 kg",
     "bodytype": "bear",
     "hp": 25,
-    "special_attacks": [ [ "EAT_CROP", 50 ] ]
+    "special_attacks": [ [ "EAT_CROP", 6000 ] ]
   },
   {
     "id": "mon_issi_juvenile",
@@ -309,7 +309,7 @@
     "speed": 100,
     "special_attacks": [
       { "id": "stomp_DinoMod", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 8 } ] },
-      [ "EAT_CROP", 10 ]
+      [ "EAT_CROP", 1200 ]
     ],
     "extend": { "flags": [ "PET_MOUNTABLE" ] }
   },
@@ -351,7 +351,7 @@
     "special_attacks": [
       { "id": "stomp_DinoMod", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 8 } ] },
       [ "tailsmash_DinoMod", 30 ],
-      [ "EAT_CROP", 5 ]
+      [ "EAT_CROP", 600 ]
     ],
     "harvest": "dino_sauropod",
     "anger_triggers": [ "HURT", "FRIEND_ATTACKED" ],
@@ -400,7 +400,7 @@
     "special_attacks": [
       { "id": "stomp_DinoMod", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 8 } ] },
       [ "tailsmash_long_DinoMod", 30 ],
-      [ "EAT_CROP", 5 ]
+      [ "EAT_CROP", 600 ]
     ],
     "zombify_into": "mon_zamarasaurus_juvenile",
     "upgrades": { "age_grow": 1460, "into": "mon_camarasaurus" }

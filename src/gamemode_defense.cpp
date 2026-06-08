@@ -6,11 +6,11 @@
 #include <ostream>
 #include <set>
 
+#include "action_time_scale.h"
 #include "action.h"
 #include "avatar.h"
 #include "color.h"
 #include "construction.h"
-#include "coordinate_conversions.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "game.h"
@@ -140,7 +140,7 @@ void defense_game::per_turn()
     if( !sleep ) {
         g->u.set_fatigue( 0 );
     }
-    if( calendar::once_every( time_between_waves ) ) {
+    if( action_time_scale::once_every_this_tick( time_between_waves ) ) {
         current_wave++;
         if( current_wave > 1 && current_wave % waves_between_caravans == 0 ) {
             popup( _( "A caravan approaches!  Press spacebar…" ) );
@@ -173,11 +173,11 @@ void defense_game::pre_action( action_id &act )
         case ACTION_MOVE_BACK_LEFT:
         case ACTION_MOVE_LEFT:
         case ACTION_MOVE_FORTH_LEFT: {
-            const point delta = get_delta_from_movement_action( act, iso_rotate::yes );
-            if( ( delta.y < 0 && g->u.posy() == HALF_MAPSIZE_Y && g->get_levy() <= 93 )
-                || ( delta.y > 0 && g->u.posy() == HALF_MAPSIZE_Y + SEEY - 1 && g->get_levy() >= 98 )
-                || ( delta.x < 0 && g->u.posx() == HALF_MAPSIZE_X && g->get_levx() <= 93 )
-                || ( delta.x > 0 && g->u.posx() == HALF_MAPSIZE_X + SEEX - 1 && g->get_levx() >= 98 ) ) {
+            const auto delta = get_delta_from_movement_action( act, iso_rotate::yes );
+            if( ( delta.y() < 0 && g->u.bub_pos().y() == g_half_mapsize_y && g->get_levy() <= 93 )
+                || ( delta.y() > 0 && g->u.bub_pos().y() == g_half_mapsize_y + SEEY - 1 && g->get_levy() >= 98 )
+                || ( delta.x() < 0 && g->u.bub_pos().x() == g_half_mapsize_x && g->get_levx() <= 93 )
+                || ( delta.x() > 0 && g->u.bub_pos().x() == g_half_mapsize_x + SEEX - 1 && g->get_levx() >= 98 ) ) {
                 action_error_message = string_format( _( "You cannot leave the %s behind!" ),
                                                       defense_location_name( location ) );
             }
@@ -228,7 +228,7 @@ void defense_game::init_map()
     ui_manager::redraw();
     refresh_display();
 
-    auto &starting_om = overmap_buffer.get( point_abs_om() );
+    auto &starting_om = get_primary_overmapbuffer().get( point_abs_om() );
     for( int x = 0; x < OMAPX; x++ ) {
         for( int y = 0; y < OMAPY; y++ ) {
             tripoint_om_omt p( x, y, 0 );
@@ -270,12 +270,12 @@ void defense_game::init_map()
 
     // Init the map
     int old_percent = 0;
-    for( int i = 0; i <= MAPSIZE * 2; i += 2 ) {
-        for( int j = 0; j <= MAPSIZE * 2; j += 2 ) {
-            int mx = 100 - MAPSIZE + i;
-            int my = 100 - MAPSIZE + j;
-            int percent = 100 * ( ( j / 2 + MAPSIZE * ( i / 2 ) ) ) /
-                          ( ( MAPSIZE ) * ( MAPSIZE + 1 ) );
+    for( int i = 0; i <= g_mapsize * 2; i += 2 ) {
+        for( int j = 0; j <= g_mapsize * 2; j += 2 ) {
+            int mx = 100 - g_mapsize + i;
+            int my = 100 - g_mapsize + j;
+            int percent = 100 * ( ( j / 2 + g_mapsize * ( i / 2 ) ) ) /
+                          ( ( g_mapsize ) * ( g_mapsize + 1 ) );
             if( percent >= old_percent + 1 ) {
                 popup.message( _( "Please wait as the map generates [%2d%%]" ), percent );
                 ui_manager::redraw();
@@ -287,10 +287,9 @@ void defense_game::init_map()
             mx -= mx % 2;
             my -= my % 2;
             tinymap tm;
-            tm.generate( tripoint( mx, my, 0 ), calendar::turn );
+            tm.generate( tripoint_abs_sm( mx, my, 0 ), calendar::turn );
             tm.clear_spawns();
             tm.clear_traps();
-            tm.save();
         }
     }
 
@@ -298,11 +297,12 @@ void defense_game::init_map()
     tripoint_abs_omt abs_defloc_pos = project_combine( point_abs_om(), defloc_pos );
     g->load_map( project_to<coords::sm>( abs_defloc_pos ) );
     Character &player_character = get_player_character();
-    player_character.setx( SEEX );
-    player_character.sety( SEEY );
+    const int z = player_character.bub_pos().z();
+    player_character.setpos( tripoint_bub_ms( SEEX, SEEY, z ) );
 
     g->update_map( g-> u );
-    monster *const generator = g->place_critter_around( mtype_id( "mon_generator" ), g->u.pos(), 2 );
+    monster *const generator = g->place_critter_around( mtype_id( "mon_generator" ), g->u.bub_pos(),
+                               2 );
     assert( generator );
     generator->friendly = -1;
 }
@@ -1069,7 +1069,7 @@ void defense_game::caravan()
                     g->u.i_add( std::move( tmp ) );
                 } else { // Could fit it in the inventory!
                     dropped_some = true;
-                    get_map().add_item_or_charges( g->u.pos(), std::move( tmp ) );
+                    get_map().add_item_or_charges( g->u.bub_pos(), std::move( tmp ) );
                 }
             }
         }
@@ -1358,27 +1358,27 @@ std::vector<mtype_id> defense_game::pick_monster_wave()
 void defense_game::spawn_wave_monster( const mtype_id &type )
 {
     for( int tries = 0; tries < 1000; tries++ ) {
-        point pnt;
+        point_bub_ms pnt;
         if( location == DEFLOC_HOSPITAL || location == DEFLOC_MALL ) {
             // Always spawn to the north!
-            pnt = point( rng( HALF_MAPSIZE_X, HALF_MAPSIZE_X + SEEX ), SEEY );
+            pnt = point_bub_ms( rng( g_half_mapsize_x, g_half_mapsize_x + SEEX ), SEEY );
         } else if( one_in( 2 ) ) {
-            pnt = point( rng( HALF_MAPSIZE_X, HALF_MAPSIZE_X + SEEX ), rng( 1, SEEY ) );
+            pnt = point_bub_ms( rng( g_half_mapsize_x, g_half_mapsize_x + SEEX ), rng( 1, SEEY ) );
             if( one_in( 2 ) ) {
-                pnt = point( pnt.x, -pnt.y ) + point( 0, MAPSIZE_Y - 1 );
+                pnt = point_bub_ms( pnt.x(), -pnt.y() ) + point_rel_ms( 0, g_mapsize_y - 1 );
             }
         } else {
-            pnt = point( rng( 1, SEEX ), rng( HALF_MAPSIZE_Y, HALF_MAPSIZE_Y + SEEY ) );
+            pnt = point_bub_ms( rng( 1, SEEX ), rng( g_half_mapsize_y, g_half_mapsize_y + SEEY ) );
             if( one_in( 2 ) ) {
-                pnt = point( -pnt.x, pnt.y ) + point( MAPSIZE_X - 1, 0 );
+                pnt = point_bub_ms( -pnt.x(), pnt.y() ) + point_rel_ms( g_mapsize_x - 1, 0 );
             }
         }
-        monster *const mon = g->place_critter_at( type, tripoint( pnt, g->get_levz() ) );
+        monster *const mon = g->place_critter_at( type, tripoint_bub_ms( pnt, g->get_levz() ) );
         if( !mon ) {
             continue;
         }
         monster &tmp = *mon;
-        tmp.wander_pos = g->u.pos();
+        tmp.wander_pos = g->u.bub_pos();
         tmp.wandf = 150;
         // We want to kill!
         tmp.anger = 100;

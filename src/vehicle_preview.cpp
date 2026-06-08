@@ -10,6 +10,7 @@
 #include "map.h"
 #include "output.h"
 #include "sdltiles.h"
+#include "units_utility.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -22,12 +23,12 @@ static const std::string empty_string;
 // We provide our own static definitions here to avoid duplicate symbols
 static int termx_to_pixel_value()
 {
-    return projected_window_width() / TERMX;
+    return projected_window_width() / TERMX / get_scaling_factor();
 }
 
 static int termy_to_pixel_value()
 {
-    return projected_window_height() / TERMY;
+    return projected_window_height() / TERMY / get_scaling_factor();
 }
 
 /**
@@ -48,8 +49,8 @@ class veh_preview_adapter : public cata_tiles
          */
         void draw_vpart_tile( const vpart_id &vp_id, const point &pixel_pos,
                               int part_mod, int rotation_degrees,
-                              std::optional<SDL_Color> bg_color,
-                              std::optional<SDL_Color> fg_color ) {
+                              const tint_config &bg_color,
+                              const tint_config &fg_color ) {
             if( !vp_id.is_valid() ) {
                 return;
             }
@@ -79,7 +80,7 @@ class veh_preview_adapter : public cata_tiles
             // tells the renderer to treat these as absolute pixel positions
             draw_from_id_string(
                 tile,
-                tripoint( pixel_pos, 0 ),
+                tripoint_bub_ms( pixel_pos.x, pixel_pos.y, 0 ),
                 bg_color,
                 fg_color,
                 lit_level::BRIGHT,
@@ -94,10 +95,9 @@ class veh_preview_adapter : public cata_tiles
          * Get the paint colors for a vehicle part.
          * Uses get_vpart_color which will return actual colors when painting is implemented.
          */
-        static std::pair<std::optional<SDL_Color>, std::optional<SDL_Color>>
-        get_part_colors( const vehicle &veh, int part_idx ) {
+        static color_tint_pair get_part_colors( const vehicle &veh, int part_idx ) {
             map &here = get_map();
-            const tripoint part_pos = veh.global_part_pos3( part_idx );
+            const auto part_pos = veh.bub_part_location( part_idx );
             const optional_vpart_position vp = here.veh_at( part_pos );
             return cata_tiles::get_vpart_color( vp, here, part_pos );
         }
@@ -117,7 +117,7 @@ class veh_preview_adapter : public cata_tiles
 
             draw_from_id_string(
                 tile,
-                tripoint( pixel_pos, 0 ),
+                tripoint_bub_ms( pixel_pos.x, pixel_pos.y, 0 ),
                 std::nullopt,
                 std::nullopt,
                 lit_level::BRIGHT,
@@ -143,7 +143,7 @@ class veh_preview_adapter : public cata_tiles
 
             draw_from_id_string(
                 tile,
-                tripoint( pixel_pos, 0 ),
+                tripoint_bub_ms( pixel_pos.x, pixel_pos.y, 0 ),
                 std::nullopt,
                 std::nullopt,
                 lit_level::BRIGHT,
@@ -202,8 +202,8 @@ void vehicle_preview_window::zoom_out()
 
 void vehicle_preview_window::draw_vpart_at_pixel( const vpart_id &vp_id, point pixel_pos,
         int part_mod, units::angle veh_facing,
-        std::optional<SDL_Color> bg_color,
-        std::optional<SDL_Color> fg_color )
+        const tint_config &bg_color,
+        const tint_config &fg_color )
 {
     const int rotation_degrees = static_cast<int>( std::round( to_degrees( veh_facing ) ) );
 
@@ -223,7 +223,8 @@ void vehicle_preview_window::draw_cursor_at_pixel( point pixel_pos )
     adapter->draw_cursor_tile( pixel_pos );
 }
 
-void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, int highlight_part )
+void vehicle_preview_window::display( const vehicle &veh, tripoint_mnt_veh cursor,
+                                      int highlight_part )
 {
     const point center_px = calc_window_center_pixels();
 
@@ -240,7 +241,7 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, i
     // Set SDL clip rectangle to prevent drawing outside the window bounds
     const SDL_Renderer_Ptr &renderer = get_sdl_renderer();
     SDL_Rect clip_rect = { win_left, win_top, win_width, win_height };
-    SDL_RenderSetClipRect( renderer.get(), &clip_rect );
+    SDL_SetRenderClipRect( renderer.get(), &clip_rect );
 
     // Get all parts that should be displayed (one per tile)
     const std::vector<int> structural_parts = veh.all_standalone_parts();
@@ -255,14 +256,8 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, i
             continue;
         }
 
-        const point mount = part.mount;
-
-        // Calculate position relative to cursor
-        // rotate(3) matches the rotation used in ASCII display_veh()
-        const point rel = ( mount + cursor_offset ).rotate( 3 );
-
-        // Convert to pixel position (centered in window)
-        const point pixel_pos = center_px + point( rel.x * tile_w, rel.y * tile_h );
+        const auto q = ( part.mount - cursor ).xy().rotate( 3 );
+        const point pixel_pos = center_px + point( q.x() * tile_w, q.y() * tile_h );
 
         // Get part rendering info
         char part_mod = 0;
@@ -271,12 +266,12 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, i
         // Get paint colors for this part (will return actual colors when painting is implemented)
         const auto [bg_color, fg_color] = veh_preview_adapter::get_part_colors( veh, part_idx );
 
-        // Always display parts facing north (270 degrees, since 0 = east)
-        draw_vpart_at_pixel( vp_id, pixel_pos, part_mod, 270_degrees, bg_color, fg_color );
+        const auto part_direction = normalize( 270_degrees + veh.part_display_direction( part_idx ) -
+                                               veh.face.dir() );
+        draw_vpart_at_pixel( vp_id, pixel_pos, part_mod, part_direction, bg_color, fg_color );
 
-        // Check if this part should be highlighted
         const bool is_highlighted = ( part_idx == highlight_part ) ||
-                                    ( mount == -cursor_offset ); // Cursor position
+                                    ( q == point_rel_veh::zero() );
         if( is_highlighted ) {
             highlight_positions.push_back( pixel_pos );
         }
@@ -291,7 +286,7 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, i
     draw_cursor_at_pixel( center_px );
 
     // Clear the clip rectangle
-    SDL_RenderSetClipRect( renderer.get(), nullptr );
+    SDL_SetRenderClipRect( renderer.get(), nullptr );
 }
 
 vehicle_preview_window::~vehicle_preview_window()
@@ -307,7 +302,7 @@ void vehicle_preview_window::clear()
 
     // Ensure clip rectangle is cleared
     const auto &renderer = get_sdl_renderer();
-    SDL_RenderSetClipRect( renderer.get(), nullptr );
+    SDL_SetRenderClipRect( renderer.get(), nullptr );
 }
 
 #endif // TILES

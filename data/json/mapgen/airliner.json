@@ -448,7 +448,7 @@
         "collection": [ { "item": "flaregun" }, { "item": "signal_flare", "count-min": 1, "count-max": 2 } ],
         "prob": 40
       },
-      { "item": "1st_aid", "prob": 40 },
+      { "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ], "prob": 40 },
       { "item": "handflare", "count-min": 1, "count-max": 3, "prob": 30 },
       { "item": "sm_extinguisher", "prob": 75 }
     ]
@@ -458,7 +458,7 @@
     "type": "item_group",
     "subtype": "collection",
     "items": [
-      { "item": "1st_aid", "prob": 40 },
+      { "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ], "prob": 40 },
       { "item": "handflare", "count-min": 1, "count-max": 3, "prob": 30 },
       { "item": "sm_extinguisher", "prob": 75 }
     ]

@@ -1687,6 +1687,18 @@
     ]
   },
   {
+    "id": "nested_m250",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "m250", "ammo-group": "on_hand_277", "charges": [ 0, 100 ] },
+      { "item": "belt277", "ammo-group": "on_hand_277", "charges": 100, "prob": 50 },
+      { "group": "on_hand_277" }
+    ]
+  },
+  {
     "id": "nested_rm11b_sniper_rifle",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -1778,6 +1790,19 @@
     ]
   },
   {
+    "id": "nested_m7",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "m7", "ammo-group": "on_hand_277", "charges": [ 0, 20 ] },
+      { "group": "nested_m7_mag" },
+      { "group": "nested_m7_mag", "prob": 50 },
+      { "group": "on_hand_277" }
+    ]
+  },
+  {
     "id": "nested_m110a1",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -1866,8 +1891,8 @@
     "subtype": "collection",
     "ammo": 100,
     "entries": [
-      { "item": "longrifle_flintlock", "ammo-group": "on_hand_flintlock", "charges": [ 0, 1 ] },
-      { "group": "on_hand_flintlock" }
+      { "item": "longrifle_flintlock", "ammo-group": "on_hand_longrifle_flintlock", "charges": [ 0, 1 ] },
+      { "group": "on_hand_longrifle_flintlock" }
     ]
   },
   {
@@ -2033,6 +2058,14 @@
     "entries": [ { "item": "ksg-25", "charges": [ 0, 12 ] }, { "group": "on_hand_shot" } ]
   },
   {
+    "id": "nested_dp-12",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [ { "item": "dp-12", "ammo-group": "on_hand_shot", "charges": [ 0, 7 ] }, { "group": "on_hand_shot" } ]
+  },
+  {
     "id": "nested_tavor_12",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -2093,6 +2126,19 @@
     "ammo": 100,
     "entries": [
       { "item": "saiga_12", "ammo-group": "on_hand_shot", "charges": [ 0, 10 ] },
+      { "group": "nested_saiga_12_mag" },
+      { "group": "nested_saiga_12_mag", "prob": 50 },
+      { "group": "on_hand_shot" }
+    ]
+  },
+  {
+    "id": "nested_bp_12",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "BP_12", "ammo-group": "on_hand_shot", "charges": [ 0, 10 ] },
       { "group": "nested_saiga_12_mag" },
       { "group": "nested_saiga_12_mag", "prob": 50 },
       { "group": "on_hand_shot" }

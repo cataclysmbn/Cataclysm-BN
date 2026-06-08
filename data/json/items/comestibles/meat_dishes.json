@@ -1288,6 +1288,7 @@
     "price": "9 USD",
     "price_postapoc": "3 USD",
     "delete": { "flags": [ "NUTRIENT_OVERRIDE" ] },
+    "extend": { "flags": [ "SMOKED" ] },
     "material": [ "flesh" ],
     "primary_material": "cured_meat",
     "volume": "125 ml",
@@ -1414,6 +1415,7 @@
     "volume": "125 ml",
     "fun": -4,
     "delete": { "flags": [ "RAW" ] },
+    "extend": { "flags": [ "SMOKED" ] },
     "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {

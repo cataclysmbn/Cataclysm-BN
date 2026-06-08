@@ -19,6 +19,7 @@
 #include "calendar.h"
 #include "character.h"
 #include "color.h"
+#include "coordinates.h"
 #include "creature.h"
 #include "cursesdef.h"
 #include "enums.h"
@@ -467,9 +468,17 @@ struct npc_follower_rules {
 };
 
 struct dangerous_sound {
-    tripoint abs_pos;
+    tripoint_abs_ms abs_pos;
     sounds::sound_t type;
     int volume = 0;
+};
+
+struct sound_to_warn_about {
+    std::string type;
+    time_duration duration = 10_minutes;
+    std::string name;
+    int range = -1;
+    tripoint_bub_ms danger_pos = tripoint_bub_ms::zero();
 };
 
 const direction npc_threat_dir[8] = { direction::NORTHWEST, direction::NORTH, direction::NORTHEAST, direction::EAST,
@@ -500,20 +509,28 @@ struct npc_short_term_cache {
     healing_options can_heal;
     // map of positions / type / volume of suspicious sounds
     std::vector<dangerous_sound> sound_alerts;
+    // Vector of sounds to warn or complain about on NPC's turn.
+    // This is so NPCs complain during their turn not the apply sounds to NPC AI stage
+    // Which can cause other NPCs to complain about the NPC complaining, etc.
+    // This is cleared at the end of every turn.
+    std::vector<sound_to_warn_about> warn_about_queue;
     // current sound position being investigated
-    tripoint s_abs_pos;
+    tripoint_abs_ms s_abs_pos;
     // number of times we haven't moved when investigating a sound
     int stuck = 0;
     // Position to return to guarding
-    std::optional<tripoint> guard_pos;
+    std::optional<tripoint_abs_ms> guard_pos;
     double my_weapon_value = 0;
 
     // Use weak_ptr to avoid circular references between Creatures
     std::vector<weak_ptr_fast<Creature>> friends;
+    // NPC-typed friends only; rebuilt when g_npc_friends_dirty_version changes
+    std::vector<weak_ptr_fast<Creature>> cached_npc_friends;
+    uint32_t npc_friends_version = 0;
     std::vector<sphere> dangerous_explosives;
-    std::map<direction, float> threat_map;
+    std::array<float, 27> threat_map;
     // Cache of locations the NPC has searched recently in npc::find_item()
-    lru_cache<tripoint, int> searched_tiles;
+    lru_cache<tripoint_abs_ms, int> searched_tiles;
 };
 
 struct npc_need_goal_cache {
@@ -774,17 +791,10 @@ class npc : public player
         void set_fac( const faction_id &id );
         faction *get_faction() const override;
         faction_id get_fac_id() const;
-        /**
-         * Set @ref submap_coords and @ref pos.
-         * @param m global submap coordinates.
-         */
-        void spawn_at_sm( const tripoint &p );
-        /**
-         * As spawn_at, but also sets position within the submap.
-         * Note: final submap may differ from submap_offset if @ref square has
-         * x/y values outside [0, SEEX-1]/[0, SEEY-1] range.
-         */
-        void spawn_at_precise( point submap_offset, const tripoint &square );
+        /** Teleport the NPC to a random tile within the given absolute submap. */
+        void spawn_at_sm( const tripoint_abs_sm &p );
+        /** Place the NPC at an exact absolute position (submap + within-submap tile). */
+        void spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm_ms &square );
         /**
          * Places the NPC on the @ref map. This update its
          * pos values to fit the current offset of
@@ -881,7 +891,7 @@ class npc : public player
         int follow_distance() const;
 
         // Dialogue and bartering--see npctalk.cpp
-        void talk_to_u( bool radio_contact = false );
+        void talk_to_u( bool radio_contact = false, bool enforce_first_topic = false );
         // Re-roll the inventory of a shopkeeper
         void shop_restock();
         std::string get_restock_interval() const;
@@ -902,7 +912,7 @@ class npc : public player
         void stow_weapon( );
         bool wield( item &it ) override;
         detached_ptr<item> wield( detached_ptr<item> &&target ) override;
-        void drop( const drop_locations &what, const tripoint &target,
+        void drop( const drop_locations &what, const tripoint_bub_ms &target,
                    bool stash ) override;
         bool adjust_worn();
         bool has_healing_item( healing_options try_to_fix );
@@ -935,7 +945,7 @@ class npc : public player
         Creature *current_target();
         const Creature *current_ally() const;
         Creature *current_ally();
-        tripoint good_escape_direction( bool include_pos = true );
+        tripoint_bub_ms good_escape_direction( bool include_pos = true );
 
         // Interaction and assessment of the world around us
         float danger_assessment();
@@ -953,6 +963,19 @@ class npc : public player
         void decide_needs();
         void reboot();
         void die( Creature *killer ) override;
+        /**
+        * Removes the npc from the game without death notifications or a corpse.
+        * Immediate if called outside npc processing, deferred to cleanup_dead() otherwise.
+        */
+        void erase() override;
+        /**
+        * True if this NPC is in a simulated submap — i.e. loaded and eligible
+        * for per-turn AI processing.  Mirrors the check used in npcmove().
+        */
+        bool is_simulated() const override;
+        bool is_manually_erased() const {
+            return manually_erased_;
+        }
         bool is_dead() const;
         // How well we smash terrain (not corpses!)
         int smash_ability() const;
@@ -998,28 +1021,42 @@ class npc : public player
         // wrapper for complain_about that warns about a specific type of threat, with
         // different warnings for hostile or friendly NPCs and hostile NPCs always complaining
         void warn_about( const std::string &type, const time_duration &d = 10_minutes,
-                         const std::string &name = "", int range = -1, const tripoint &danger_pos = tripoint_zero );
+                         const std::string &name = "", int range = -1,
+                         const tripoint_bub_ms &danger_pos = tripoint_bub_ms::zero() );
         // Finds something to complain about and complains. Returns if complained.
         bool complain();
 
         int calc_spell_training_cost( bool knows, int difficulty, int level );
 
-        void handle_sound( sounds::sound_t priority, const std::string &description,
-                           int heard_volume, const tripoint &spos );
+        void handle_sound( const short heard_vol, sound_event sound );
 
         /* shift() works much like monster::shift(), and is called when the player moves
          * from one submap to an adjacent submap.  It updates our position (shifting by
          * 12 tiles), as well as our plans.
          */
-        void shift( point s );
+        void shift( point_rel_sm s );
 
         // Movement; the following are defined in npcmove.cpp
         void move(); // Picks an action & a target and calls execute_action
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
+        auto action_move_factor() const -> int override;
+        /**
+         * Batch catchup: analytically simulate @p n missed turns.
+         * Processes biology at 30-min/5-min/1-turn granularity, then
+         * calls advance_job_progress(n) to fast-forward any ongoing activity.
+         */
+        void batch_turns( int n ) override;
+        /**
+         * Fast-forward the NPC's current activity by @p n turns.
+         * Grants the NPC enough move points (to_moves<int>(n)) to advance
+         * any ongoing player_activity, mirroring what on_load() does for
+         * destination/activity NPCs.
+         */
+        void advance_job_progress( int n );
 
         using Character::invoke_item;
-        bool invoke_item( item *, const tripoint &pt ) override;
+        bool invoke_item( item *, const tripoint_bub_ms &pt ) override;
         bool invoke_item( item *used, const std::string &method ) override;
         bool invoke_item( item * ) override;
 
@@ -1053,7 +1090,7 @@ class npc : public player
         int confident_gun_mode_range( const gun_mode &gun, int at_recoil ) const;
         int confident_throw_range( const item &, Creature * ) const;
         void invalidate_range_cache();
-        bool wont_hit_friend( const tripoint &tar, const item &it, bool throwing ) const;
+        bool wont_hit_friend( const tripoint_bub_ms &tar, const item &it, bool throwing ) const;
         bool enough_time_to_reload( const item &gun ) const;
         /** Can reload currently wielded gun? */
         bool can_reload_current();
@@ -1079,20 +1116,21 @@ class npc : public player
          * @param force If there is no valid path, empty the current path.
          * @returns If it updated the path.
          */
-        bool update_path( const tripoint &p, bool no_bashing = false, bool force = true );
-        bool can_open_door( const tripoint &p, bool inside ) const;
-        bool can_move_to( const tripoint &p, bool no_bashing = false ) const;
+        bool update_path( const tripoint_bub_ms &p, bool no_bashing = false, bool force = true );
+        bool can_open_door( const tripoint_bub_ms &p, bool inside ) const;
+        bool can_move_to( const tripoint_bub_ms &p, bool no_bashing = false ) const;
 
         // nomove is used to resolve recursive invocation
-        void move_to( const tripoint &p, bool no_bashing = false, std::set<tripoint> *nomove = nullptr );
+        void move_to( const tripoint_bub_ms &p, bool no_bashing = false,
+                      std::set<tripoint_bub_ms> *nomove = nullptr );
         // Next in <path>
         void move_to_next();
         // Maneuver so we won't shoot u
         void avoid_friendly_fire();
         void escape_explosion();
         // nomove is used to resolve recursive invocation
-        void move_away_from( const tripoint &p, bool no_bash_atk = false,
-                             std::set<tripoint> *nomove = nullptr );
+        void move_away_from( const tripoint_bub_ms &p, bool no_bash_atk = false,
+                             std::set<tripoint_bub_ms> *nomove = nullptr );
         void move_away_from( const std::vector<sphere> &spheres, bool no_bashing = false );
         // Same as if the player pressed '.'
         void move_pause();
@@ -1101,7 +1139,7 @@ class npc : public player
 
         const pathfinding_settings &get_legacy_pathfinding_settings() const override;
         const pathfinding_settings &get_legacy_pathfinding_settings( bool no_bashing ) const;
-        std::set<tripoint> get_legacy_path_avoid() const override;
+        std::set<tripoint_bub_ms> get_legacy_path_avoid() const override; // tripoint_bub_ms
 
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair( bool no_bashing ) const;
@@ -1117,7 +1155,7 @@ class npc : public player
         // Drop wgt and vol, including all items with less value than min_val
         void drop_items( units::mass drop_weight, units::volume drop_volume, int min_val = 0 );
         /** Picks up items and returns a list of them. */
-        std::vector<item *> pick_up_item_map( const tripoint &where );
+        std::vector<item *> pick_up_item_map( const tripoint_bub_ms &where );
         std::vector<item *> pick_up_item_vehicle( vehicle &veh, int part_index );
 
         bool has_item_whitelist() const;
@@ -1191,9 +1229,9 @@ class npc : public player
          * Note: this places NPC on a given position in CURRENT MAP coordinates.
          * Do not use when placing a NPC in mapgen.
          */
-        void setpos( const tripoint &pos ) override;
-        void onswapsetpos( const tripoint &pos );
-        void travel_overmap( const tripoint &pos );
+        void setpos( const tripoint_bub_ms &pos ) override;
+        void setpos( const tripoint_abs_ms &pos ) override;
+        void travel_overmap( const tripoint_abs_sm &pos );
         npc_attitude get_attitude() const;
         void set_attitude( npc_attitude new_attitude );
         void set_mission( npc_mission new_mission );
@@ -1201,6 +1239,14 @@ class npc : public player
         npc_attitude get_previous_attitude();
         npc_mission get_previous_mission();
         void revert_after_activity();
+        void set_suppress_activity_complete_message( bool value );
+        bool consume_suppress_activity_complete_message();
+        void set_activity_failure_message( const std::string &msg );
+        std::string consume_activity_failure_message();
+        std::string peek_activity_failure_message() const;
+        // Craft related stuff
+        void do_npc_craft( const std::optional<tripoint> &loc = std::nullopt );
+        item_location get_item_to_craft();
 
         // #############   VALUES   ################
         activity_id current_activity_id = activity_id::NULL_ID();
@@ -1214,65 +1260,44 @@ class npc : public player
         npc_attitude attitude = NPCATT_NULL; // What we want to do to the player
         npc_attitude previous_attitude = NPCATT_NULL;
         bool known_to_u = false; // Does the player know this NPC?
-        /**
-         * Global submap coordinates of the submap containing the npc.
-         * Use global_*_location to get the global position.
-         * You should not change submap_coords directly, use pos instead,
-         * @ref shift will update submap_coords and move the npc to a different
-         * overmap if needed.
-         * submap_coords defines the overmap the npc is stored on.
-         */
-        point submap_coords;
         // Type of complaint->last time we complained about this type
         std::map<std::string, time_point> complaints;
 
         npc_short_term_cache ai_cache;
 
         std::map<npc_need, npc_need_goal_cache> goal_cache;
+        bool suppress_activity_complete_message = false;
+        std::string activity_failure_message;
     public:
-        /**
-         * Global position, expressed in map square coordinate system
-         * (the most detailed coordinate system), used by the @ref map.
-         *
-         * The (global) position of an NPC is always:
-         * point(
-         *     submap_coords.x * SEEX + posx() % SEEX,
-         *     submap_coords.y * SEEY + posy() % SEEY,
-         *     pos.z)
-         * (Expressed in map squares, the system that @ref map uses.)
-         * Any of om, map, pos can be in any range.
-         * For active NPCs pos would be in the valid range required by
-         * the map. But pos, map, and om can be changed without the NPC
-         * actual moving as long as the position stays the same:
-         * pos() += SEEX; submap_coords.x -= 1;
-         * This does not change the global position of the NPC.
-         */
-        tripoint global_square_location() const override;
-        std::optional<tripoint> last_player_seen_pos; // Where we last saw the player
+        std::optional<tripoint_bub_ms> last_player_seen_pos; // Where we last saw the player
         // Player orders a friendly NPC to move to this position
         std::optional<tripoint_abs_ms> goto_to_this_pos;
         int last_seen_player_turn = 0; // Timeout to forgetting
-        tripoint wanted_item_pos; // The square containing an item we want
-        tripoint guard_pos;  // These are the local coordinates that a guard will return to inside of their goal tripoint
-        tripoint chair_pos = tripoint_min; // This is the spot the NPC wants to move to to sit and relax.
+        tripoint_bub_ms wanted_item_pos; // The square containing an item we want
+        tripoint_abs_ms
+        guard_pos;  // These are the local coordinates that a guard will return to inside of their goal tripoint
+        tripoint_abs_ms chair_pos =
+            tripoint_abs_ms::zero(); // This is the spot the NPC wants to move to to sit and relax.
         std::optional<tripoint_abs_omt> base_location; // our faction base location in OMT coords.
         /**
          * Global overmap terrain coordinate, where we want to get to
          * if no goal exist, this is no_goal_point.
          */
         tripoint_abs_omt goal;
-        tripoint wander_pos = tripoint_min;
+        // Doesnt seem to be used anywhere
+        // Welp will put it as the same thing monsters put it to
+        tripoint_abs_ms wander_pos = tripoint_abs_ms::zero();
         int wander_time = 0;
         /**
          * Location and index of the corpse we'd like to pulp (if any).
          */
-        std::optional<tripoint> pulp_location;
+        std::optional<tripoint_bub_ms> pulp_location;
         time_point restock;
         bool fetching_item = false;
         bool has_new_items = false; // If true, we have something new and should re-equip
         int worst_item_value = 0; // The value of our least-wanted item
 
-        std::vector<tripoint> path; // Our movement plans
+        std::vector<tripoint_bub_ms> path; // Our movement plans
 
         // Personality & other defining characteristics
         std::string companion_mission_role_id; //Set mission source or squad leader for a patrol
@@ -1297,6 +1322,15 @@ class npc : public player
         // Dummy point that indicates that the goal is invalid.
         static constexpr tripoint_abs_omt no_goal_point{ tripoint_min };
         time_point last_updated;
+
+        // ID of the dimension this NPC belongs to.  Empty string = primary dimension.
+        // Set when the NPC is spawned or loaded from a non-primary dimension submap.
+        // Persisted across saves so cross-dimension processing survives reload.
+        std::string dimension_id_ = "";  // empty = primary dimension
+        const std::string &get_dimension() const override {
+            return dimension_id_;
+        }
+
         /**
          * Do some cleanup and caching as npc is being unloaded from map.
          */
@@ -1342,10 +1376,12 @@ class npc : public player
         // Copy of toggled CBM weapon for comparisons;
         location_ptr<item, false> cbm_fake_toggled;
 
-        bool dead = false;  // If true, we need to be cleaned up
+        bool dead = false;           // If true, we need to be cleaned up
+        bool manually_erased_ =
+            false; // Set by erase(); tells cleanup_dead() not to re-do overmap/follower removal
 
-        bool sees_dangerous_field( const tripoint &p ) const;
-        bool could_move_onto( const tripoint &p ) const;
+        bool sees_dangerous_field( const tripoint_bub_ms &p ) const;
+        bool could_move_onto( const tripoint_bub_ms &p ) const;
 
         std::vector<sphere> find_dangerous_explosives() const;
 
@@ -1356,8 +1392,12 @@ class npc : public player
 class standard_npc : public npc
 {
     public:
+        // pos defaults to tripoint_min as a sentinel; the constructor body
+        // resolves it to tripoint( g_half_mapsize_x, g_half_mapsize_y, 0 ) at
+        // runtime so that the correct bubble-center is used regardless of the
+        // current REALITY_BUBBLE_SIZE setting.
         standard_npc( const std::string &name = "",
-                      const tripoint &pos = tripoint( HALF_MAPSIZE_X, HALF_MAPSIZE_Y, 0 ),
+                      const tripoint_bub_ms &pos = tripoint_bub_ms::min(),
                       const std::vector<std::string> &clothing = {},
                       int sk_lvl = 4, int s_str = 8, int s_dex = 8, int s_int = 8, int s_per = 8 );
 };
@@ -1418,5 +1458,3 @@ static constexpr int density_search_radius = 120;
 /** Chance that a random NPC spawns somewhere on overmap. */
 double spawn_chance_in_hour( int current_npc_count, double density );
 } // namespace npc_overmap
-
-

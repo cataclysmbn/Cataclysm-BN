@@ -41,6 +41,8 @@
     "armor_acid": 3,
     "vision_day": 30,
     "vision_night": 3,
+    "//": "You wouldn't bully a musical skeleton, would you?",
+    "monster_weapon": "skeltal_monster_weapon",
     "death_drops": "skeltal_drops",
     "death_function": [ "NORMAL" ],
     "flags": [ "SEES", "HEARS", "BLEED", "HARDTOSHOOT", "REVIVES", "NO_BREATHE" ],

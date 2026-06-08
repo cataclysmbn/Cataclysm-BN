@@ -12,12 +12,20 @@
       { "group": "cop_pants", "damage": [ 1, 4 ] },
       { "group": "cop_shoes", "damage": [ 1, 4 ] },
       { "group": "cop_torso", "damage": [ 1, 4 ] },
-      { "group": "cop_weapons", "prob": 50, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
+      { "group": "cop_weapons", "prob": 60, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
+      { "group": "cop_contraband", "prob": 10 },
       { "group": "underwear", "damage": [ 1, 4 ] },
       { "group": "clothing_glasses", "prob": 5 },
       { "group": "clothing_watch", "prob": 5 },
       {
-        "collection": [ { "item": "badge_deputy", "prob": 100 }, { "item": "badge_detective", "prob": 20 } ],
+        "distribution": [
+          { "item": "powered_earmuffs", "prob": 75, "damage": [ 1, 4 ] },
+          { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 1, 4 ] }
+        ],
+        "prob": 15
+      },
+      {
+        "collection": [ { "item": "badge_deputy", "prob": 20 }, { "item": "badge_detective", "prob": 20 } ],
         "prob": 10
       },
       {
@@ -33,23 +41,25 @@
     "type": "item_group",
     "id": "cop_gear",
     "items": [
-      [ "1st_aid", 30 ],
-      [ "armor_riot", 20 ],
+      [ "1st_aid", 24 ],
+      [ "1st_aid_deluxe", 6 ],
+      [ "gasbomb", 5 ],
       [ "airhorn", 5 ],
       [ "bandages", 20 ],
-      [ "tacvest", 5 ],
+      [ "tacvest", 10 ],
       [ "heavy_flashlight", 35 ],
       [ "holster", 25 ],
       [ "shoulder_holster", 10 ],
       [ "kevlar", 35 ],
       [ "bholster", 3 ],
       [ "legpouch_large", 5 ],
+      [ "shoulder_pouch", 10 ],
       [ "pocket_firstaid", 10 ],
       [ "police_belt", 20 ],
       [ "rope_30", 5 ],
       [ "sm_extinguisher", 5 ],
-      [ "two_way_radio", 30 ],
-      [ "whistle", 5 ]
+      [ "two_way_radio", 25 ],
+      [ "dog_whistle", 5 ]
     ]
   },
   {
@@ -60,12 +70,13 @@
   {
     "id": "cop_helmet",
     "type": "item_group",
-    "items": [ [ "cowboy_hat", 10 ], [ "helmet_riot", 100 ] ]
+    "//": "Cotton hat represents the watch cap sometimes worn instead of a five point police cap.",
+    "items": [ [ "cowboy_hat", 10 ], [ "hat_cotton", 20 ], [ "helmet_riot", 30 ] ]
   },
   {
     "id": "cop_pants",
     "type": "item_group",
-    "items": [ [ "pants", 75 ], [ "pants_cargo", 70 ], [ "leather_belt", 30 ] ]
+    "items": [ [ "pants", 75 ], [ "pants_cargo", 70 ] ]
   },
   {
     "id": "cop_shoes",
@@ -75,7 +86,7 @@
   {
     "id": "cop_torso",
     "type": "item_group",
-    "items": [ [ "dress_shirt", 50 ], [ "sheriffshirt", 45 ], [ "jacket_light", 40 ] ]
+    "items": [ [ "armor_riot", 30 ], [ "dress_shirt", 50 ], [ "sheriffshirt", 45 ], [ "jacket_light", 40 ] ]
   },
   {
     "id": "cop_melee",
@@ -88,6 +99,37 @@
     "items": [ { "group": "cop_melee", "prob": 60 }, { "group": "carried_guns_cop", "prob": 40 } ]
   },
   {
+    "type": "item_group",
+    "id": "cop_contraband",
+    "items": [
+      [ "coke", 8 ],
+      [ "meth", 12 ],
+      [ "heroin", 8 ],
+      [ "syringe", 20 ],
+      [ "crack", 8 ],
+      [ "lsd", 4 ],
+      [ "weed", 20 ],
+      [ "joint", 20 ],
+      [ "pipe_glass", 50 ],
+      [ "pipe_glass_bong", 50 ],
+      { "item": "light_battery_cell", "charges": 100, "container-item": "dab_pen", "prob": 20 },
+      [ "dab_pen_disposable", 20 ],
+      [ "improvised_grenade", 2 ],
+      [ "molotov", 6 ],
+      [ "improvised_pipebomb", 2 ],
+      [ "tool_small_improvised_fragmentation_device", 2 ],
+      [ "switchblade", 6 ],
+      [ "knife_folding", 10 ],
+      [ "knife_hunting", 2 ],
+      [ "tazer", 6 ],
+      [ "knuckle_brass", 8 ],
+      [ "knuckle_steel", 5 ],
+      [ "chem_chloroform", 1 ],
+      [ "ether", 1 ],
+      [ "ghb", 1 ]
+    ]
+  },
+  {
     "id": "mon_zombie_swat_death_drops",
     "type": "item_group",
     "subtype": "collection",
@@ -95,16 +137,23 @@
     "ammo": 40,
     "entries": [
       { "group": "swat_zombie_gear", "prob": 100, "damage": [ 0, 2 ] },
-      { "group": "swat_gloves", "prob": 30, "damage": [ 0, 4 ] },
-      { "group": "swat_helmet", "prob": 20, "damage": [ 0, 4 ] },
+      { "group": "swat_gloves", "damage": [ 0, 4 ] },
+      { "group": "swat_helmet", "damage": [ 0, 4 ] },
       { "group": "swat_pants", "damage": [ 0, 4 ] },
       { "group": "swat_shoes", "damage": [ 0, 4 ] },
       { "group": "swat_torso", "damage": [ 0, 4 ] },
-      { "group": "swat_weapons", "prob": 50, "damage": [ 0, 3 ], "dirt": [ 0, 7050 ] },
+      { "group": "swat_weapons", "damage": [ 0, 3 ], "dirt": [ 0, 7050 ] },
       { "group": "underwear", "damage": [ 0, 4 ] },
       { "group": "clothing_glasses", "prob": 5 },
       { "group": "clothing_watch", "prob": 10 },
       { "item": "badge_swat", "prob": 10 },
+      {
+        "distribution": [
+          { "item": "powered_earmuffs", "prob": 75, "damage": [ 1, 4 ] },
+          { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 1, 4 ] }
+        ],
+        "prob": 15
+      },
       { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 50 },
       {
         "distribution": [
@@ -121,7 +170,16 @@
     "id": "swat_zombie_gear",
     "subtype": "collection",
     "entries": [
-      { "collection": [ { "item": "bandages", "prob": 60 }, { "item": "1st_aid", "prob": 20 } ], "prob": 25 },
+      {
+        "collection": [
+          { "item": "bandages", "prob": 60 },
+          {
+            "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ],
+            "prob": 20
+          }
+        ],
+        "prob": 25
+      },
       {
         "collection": [ { "item": "swat_armor", "prob": 50 }, { "item": "kevlar", "prob": 25 }, { "item": "tacvest", "prob": 5 } ],
         "prob": 75
@@ -129,14 +187,15 @@
       {
         "collection": [
           { "item": "heavy_flashlight", "prob": 20 },
-          { "item": "airhorn", "prob": 5 },
+          { "item": "grenade", "prob": 5 },
           { "item": "two_way_radio", "prob": 30 },
-          { "item": "whistle", "prob": 5 },
+          { "item": "gasbomb", "prob": 15 },
+          { "item": "smokebomb", "prob": 10 },
           { "item": "flashbang", "prob": 10 },
           { "item": "sm_extinguisher", "prob": 5 },
           { "item": "rope_30", "prob": 10 }
         ],
-        "prob": 30
+        "prob": 50
       },
       {
         "collection": [
@@ -144,9 +203,12 @@
           { "item": "chestpouch", "prob": 15 },
           { "item": "ammo_satchel", "prob": 10 },
           { "item": "bholster", "prob": 25 },
+          { "item": "smokebomb", "prob": 3 },
+          { "item": "gasbomb", "prob": 3 },
+          { "item": "flashbang", "prob": 3 },
           { "item": "bandolier_shotgun", "prob": 10 },
           { "item": "legpouch_large", "prob": 25 },
-          { "item": "police_belt", "prob": 15 }
+          { "item": "police_belt", "prob": 25 }
         ],
         "prob": 25
       }

@@ -1,0 +1,92 @@
+[
+  {
+    "//": "This skews appearances towards the demographics most common in the founding orders of the Cleansing Flame, with remainder following normal demographics for the region.",
+    "type": "trait_group",
+    "id": "Appearance_cleansingflame",
+    "subtype": "distribution",
+    "traits": [
+      { "group": "Appearance_Irish", "prob": 13 },
+      { "group": "Appearance_Germanic", "prob": 12 },
+      { "group": "Appearance_EastAsian", "prob": 10 },
+      { "group": "Appearance_SouthAsian", "prob": 5 },
+      { "group": "Appearance_demographics", "prob": 60 }
+    ]
+  },
+  {
+    "//": "More narrow mix of starting traits, mostly excludes traits that would've consigned someone to non-combatant roles, and a few flavor things.",
+    "type": "trait_group",
+    "id": "Arcanist_starting_traits",
+    "subtype": "collection",
+    "traits": [
+      { "group": "trait_group_NONADDICTIVE", "prob": 10 },
+      { "group": "trait_group_EASYSLEEPER", "prob": 10 },
+      { "group": "trait_group_ANIMALEMPATH", "prob": 10 },
+      { "group": "trait_group_FLEET", "prob": 15 },
+      { "group": "trait_group_GOODHEARING", "prob": 10 },
+      { "group": "trait_group_WAKEFUL", "prob": 10 },
+      { "group": "trait_group_OPTIMISTIC", "prob": 10 },
+      { "group": "trait_group_MARTIAL_ARTS", "prob": 20 },
+      { "group": "trait_group_LIAR", "prob": 30 },
+      { "group": "trait_group_STRONGSTOMACH", "prob": 10 },
+      { "group": "trait_group_THICKSKIN", "prob": 10 },
+      { "trait": "DEFT", "prob": 10 },
+      { "trait": "DISRESISTANT", "prob": 10 },
+      { "trait": "ADRENALINE", "prob": 10 },
+      { "trait": "INFRESIST", "prob": 15 },
+      { "trait": "NIGHTVISION", "prob": 10 },
+      { "trait": "OUTDOORSMAN", "prob": 10 },
+      { "trait": "POISRESIST", "prob": 10 },
+      { "trait": "QUICK", "prob": 10 },
+      { "trait": "ROBUST", "prob": 10 },
+      { "trait": "TERRIFYING", "prob": 15 },
+      { "trait": "HEAVYSLEEPER", "prob": 10 },
+      { "trait": "LACTOSE", "prob": 10 },
+      { "trait": "VEGETARIAN", "prob": 15 },
+      { "trait": "MOODSWINGS", "prob": 10 }
+    ]
+  },
+  {
+    "//": "This group picks out background traits for mage hunters, due to being able to potentially recruit a couple during missions.  A few of these have some modifiers that change the story a bit depending on if that NPC was one of the initial spawns, or if they arrived with the second group to rendezvous at the holdout.",
+    "type": "trait_group",
+    "id": "BG_survival_story_MAGE_HUNTER",
+    "subtype": "distribution",
+    "traits": [
+      { "trait": "BGSS_CF_1" },
+      { "trait": "BGSS_CF_2" },
+      { "trait": "BGSS_CF_3" },
+      { "trait": "BGSS_CF_4" },
+      { "trait": "BGSS_CF_5" }
+    ]
+  },
+  {
+    "type": "trait_group",
+    "id": "Sanguine_aspirant_traits",
+    "subtype": "collection",
+    "traits": [
+      { "group": "trait_group_FLEET", "prob": 15 },
+      { "group": "trait_group_GOODHEARING", "prob": 10 },
+      { "group": "trait_group_GOODCARDIO", "prob": 10 },
+      { "group": "trait_group_LIGHTSTEP", "prob": 10 },
+      { "group": "trait_group_TOUGH", "prob": 20 },
+      {
+        "collection": [
+          { "trait": "ARCANA_SCALYPATCHES" },
+          { "distribution": [ { "trait": "ARCANA_SCALYTAIL" }, { "trait": "ARCANA_DRAGONTAIL" } ], "prob": 50 },
+          { "trait": "ARCANA_SCALYWINGS", "prob": 50 }
+        ],
+        "prob": 50
+      },
+      {
+        "distribution": [
+          { "trait": "ARCANA_INNERHEAT", "prob": 50 },
+          { "trait": "ARCANA_INNERFIRE", "prob": 25 },
+          { "collection": [ { "trait": "ARCANA_INNERFIRE" }, { "trait": "ARCANA_FIREAFFINITY" } ], "prob": 25 }
+        ],
+        "prob": 50
+      },
+      { "trait": "ARCANA_DRAGONCLAWS", "prob": 10 },
+      { "trait": "ARCANA_DRAGONTEETH", "prob": 25 },
+      { "trait": "ARCANA_DRAGONHORNS", "prob": 5 }
+    ]
+  }
+]

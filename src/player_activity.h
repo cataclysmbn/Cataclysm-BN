@@ -26,6 +26,8 @@ class translation;
 class activity_ptr;
 class npc;
 
+auto activity_uses_calendar_duration_progress( const activity_id &id ) -> bool;
+
 class player_activity
 {
     private:
@@ -54,7 +56,6 @@ class player_activity
         bool interruptable_with_kb = true;
 
         activity_speed speed;
-        std::vector<safe_reference<item>> tools;
 
         // The members in the following block are deprecated, prefer creating a new
         // activity_actor.
@@ -68,10 +69,10 @@ class player_activity
         std::vector<safe_reference<item>> targets;
         std::vector<int> values;
         std::vector<std::string> str_values;
-        std::vector<tripoint> coords;
-        std::unordered_set<tripoint> coord_set;
+        std::vector<tripoint_abs_ms> coords;
+        std::unordered_set<tripoint_abs_ms> coord_set;
         std::vector<weak_ptr_fast<monster>> monsters;
-        tripoint placement;
+        tripoint_abs_ms placement;
 
         bool no_drink_nearby_for_auto_consume = false;
         bool no_food_nearby_for_auto_consume = false;
@@ -145,6 +146,16 @@ class player_activity
         bool rooted() const {
             return type != activity_id::NULL_ID() && type->rooted();
         }
+        auto has_idle_bubble_effect() const -> bool {
+            return type != activity_id::NULL_ID() &&
+                   type->bubble_effect() == activity_bubble_effect::idle;
+        }
+        auto has_special_turns() const -> bool {
+            return type != activity_id::NULL_ID() && type->special();
+        }
+        auto light_affected() const -> bool {
+            return type != activity_id::NULL_ID() && type->light_affected();
+        }
 
         // Question to ask when the activity is to be stopped,
         // e.g. "Stop doing something?", already translated.
@@ -212,6 +223,14 @@ class player_activity
         void ignore_distraction( distraction_type type );
         void allow_distractions();
         void inherit_distractions( const player_activity & );
+
+        /// Add a tool to the activity. PSEUDO items (fake/temporary items) are automatically skipped.
+        void add_tool( item *it );
+        /// Get the tools vector (read-only access)
+        auto get_tools() const -> const std::vector<safe_reference<item>>& { return tools_; } // *NOPAD*
+        /// Get the tools vector (read-write access for internal use)
+        auto get_tools_mut() -> std::vector<safe_reference<item>>& { return tools_; } // *NOPAD*
+
+    private:
+        std::vector<safe_reference<item>> tools_;
 };
-
-

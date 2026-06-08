@@ -89,7 +89,8 @@
             [ "lakebed_12x12_hot_spring", 1 ],
             [ "lakebed_12x12_debris", 1 ],
             [ "lakebed_12x12_toxic_waste_dump", 1 ],
-            [ "lakebed_12x12_safes", 1 ]
+            [ "lakebed_12x12_safes", 1 ],
+            [ "lakebed_12x12_sunken_corpses", 1 ]
           ],
           "x": [ 1, 11 ],
           "y": [ 1, 11 ]
@@ -203,6 +204,17 @@
         { "chunks": [ "null", "lakebed_1x1_safe" ], "x": [ 0, 11 ], "y": [ 0, 11 ] },
         { "chunks": [ "null", "lakebed_1x1_safe" ], "x": [ 0, 11 ], "y": [ 0, 11 ] }
       ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakebed_12x12_sunken_corpses",
+    "//": "Weighted-down bodies dumped into the lake",
+    "object": {
+      "mapgensize": [ 12, 12 ],
+      "rotation": [ 0, 3 ],
+      "place_items": [ { "item": "lakebed_sunken_corpse", "x": [ 2, 11 ], "y": [ 2, 11 ], "chance": 75, "repeat": [ 2, 6 ] } ]
     }
   },
   {

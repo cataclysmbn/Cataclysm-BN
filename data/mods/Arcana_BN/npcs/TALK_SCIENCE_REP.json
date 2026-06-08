@@ -1,0 +1,151 @@
+[
+  {
+    "id": "TALK_SCIENCE_REP",
+    "type": "talk_topic",
+    "responses": [
+      {
+        "text": "[MISSION] I've been asked to find information on shipments between laboratories that may have been handling anomalies.  Can you help me with that?",
+        "topic": "TALK_SCIENCE_REP_NICHOLAS_1",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "nicholas_mission_2_mid", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_PURIFIER_1_2" }
+          ]
+        }
+      },
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_SCIENCE_REP_GM_PRELUDE"
+      },
+      {
+        "text": "[MISSION] I've been asked to help attract work for another community of survivors.  Know of anyone who could help with that?",
+        "topic": "TALK_SCIENCE_REP_MISSION_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "TALK_SCIENCE_REP_NICHOLAS_1",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_trait": "PROF_FED",
+      "yes": "There isn't a lot that I can do, Marshal.  Anomalous materials weren't my preferred area of study back in the day, and I can't exactly pull information out of thin air.",
+      "no": "We don't have the manpower to go poking around in ruined old labs, if that's what you're asking.  I don't know what you expect me to be able to do."
+    },
+    "responses": [
+      {
+        "text": "I have a printout of what we know so far, would that help?",
+        "condition": { "u_has_item": "cf_purifier_project_data" },
+        "switch": true,
+        "topic": "TALK_SCIENCE_REP_NICHOLAS_2"
+      },
+      {
+        "text": "I might need the printout Nicholas gave me to help with that…",
+        "switch": true,
+        "default": true,
+        "topic": "TALK_DONE"
+      },
+      { "text": "Never mind.", "topic": "TALK_SCIENCE_REP" }
+    ]
+  },
+  {
+    "id": "TALK_SCIENCE_REP_NICHOLAS_2",
+    "type": "talk_topic",
+    "dynamic_line": "Where in the world did your benefactors get ahold of that, I wonder.  Well, this concerns several quite classified research facilities across a good portion of the entire state.  What am I supposed to be looking for?",
+    "responses": [
+      { "text": "Do any of the shipments seem anomalous?", "topic": "TALK_SCIENCE_REP_NICHOLAS_3" },
+      {
+        "text": "Do you know if any of these locations will help us figure out what items were being shipped?",
+        "topic": "TALK_SCIENCE_REP_NICHOLAS_4"
+      },
+      { "text": "On second though, I'll be back later.", "topic": "TALK_SCIENCE_REP" }
+    ]
+  },
+  {
+    "id": "TALK_SCIENCE_REP_NICHOLAS_3",
+    "type": "talk_topic",
+    "dynamic_line": "The only thing anomalous I can see at a glance is how your friends got all this classified information.  This is a mess of identification codes, it tells me nothing about what they were sending, and very little about where.  What were you expecting?",
+    "responses": [
+      { "text": "Where could we get more information on them?", "topic": "TALK_SCIENCE_REP_NICHOLAS_4" },
+      { "text": "Would it be possible to figure out what the codes mean?", "topic": "TALK_SCIENCE_REP_NICHOLAS_5" },
+      { "text": "Alright, nevermind.", "topic": "TALK_SCIENCE_REP" }
+    ]
+  },
+  {
+    "id": "TALK_SCIENCE_REP_NICHOLAS_4",
+    "type": "talk_topic",
+    "dynamic_line": "I think I have an idea.  I do recognize one of the locations mentioned here.  One place I did some work with briefly.  They were a sort of processing center, hence why a good chunk of these shipments listed go through it.",
+    "responses": [
+      { "text": "Anything useful there?", "topic": "TALK_SCIENCE_REP_NICHOLAS_6" },
+      { "text": "Let me think about it.", "topic": "TALK_SCIENCE_REP" }
+    ]
+  },
+  {
+    "id": "TALK_SCIENCE_REP_NICHOLAS_5",
+    "type": "talk_topic",
+    "dynamic_line": "I'm looking at this, and I think it does give me a rough idea.  There was a place I used to work at that seems to be on this list, that might still have records of their shipments.",
+    "responses": [
+      { "text": "Tell me more.", "topic": "TALK_SCIENCE_REP_NICHOLAS_6" },
+      { "text": "Let me think about it.", "topic": "TALK_SCIENCE_REP" }
+    ]
+  },
+  {
+    "id": "TALK_SCIENCE_REP_NICHOLAS_6",
+    "type": "talk_topic",
+    "dynamic_line": "There's a server room in it, that might hold information on shipments that came through the site.  But if you go exploring dangerous ruins like that, I'd like to ask a little favor of it.",
+    "responses": [
+      { "text": "What's that?", "topic": "TALK_SCIENCE_REP_NICHOLAS_7" },
+      { "text": "I need time to consider it.", "topic": "TALK_SCIENCE_REP" }
+    ]
+  },
+  {
+    "id": "TALK_SCIENCE_REP_NICHOLAS_7",
+    "type": "talk_topic",
+    "dynamic_line": "If you find what you're looking for, I'd like you to ask your contact, whoever has you doing all this, to send any information on medical supply shipments our way.  We need all the help we can get, and if they're after anomalous materials they can hopefully spare that information.",
+    "responses": [
+      { "text": "Deal.  What do I need to do?", "topic": "TALK_SCIENCE_REP_NICHOLAS_ACCEPT" },
+      { "text": "Let me think it over.", "topic": "TALK_SCIENCE_REP" }
+    ]
+  },
+  {
+    "id": "TALK_SCIENCE_REP_NICHOLAS_ACCEPT",
+    "type": "talk_topic",
+    "dynamic_line": "I'll give you a lead to the entrance to that place, but that's all the guidance I can give you.  The server room should be dead center, but no telling what sorts of threats may be down there.  It may be under lockdown as well, if you can find a keycard off personnel who died trying to evacuate that should get you inside.",
+    "speaker_effect": [ { "effect": { "add_mission": "MISSION_CF_PURIFIER_1_INTERLUDE_1" } } ],
+    "responses": [
+      { "text": "Thanks!  Before I go…", "topic": "TALK_SCIENCE_REP" },
+      { "text": "Thanks, I'll be back later!", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_SCIENCE_REP_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "I would be reluctant to describe it as supernatural or any such, but anomalous is perhaps appropriate.  Indeed, recent information suggests that there may be a new rash of attacks by some unknown xenoforms.  I haven't had the opportunity to gather extensive data on this, but I did recently discuss something with my superiors regarding a recent patrol fending off creatures that don't fit the usual patterns.  I'll relay that information to your benefactors, I guess."
+  },
+  {
+    "id": "TALK_SCIENCE_REP_MISSION_4",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_trait": "PROF_FED",
+      "yes": "I'm afraid I don't know anything about that, Marshal.  The representative sent here by the military might be able to help, otherwise asking around.",
+      "no": "I'm afraid I don't know anything about that.  The representative sent here by the military might be able to help, but they've been stretched thin as of late.  Might be better to just ask around if you're looking to find work."
+    },
+    "responses": [ { "text": "Oh, okay.", "topic": "TALK_SCIENCE_REP" } ]
+  }
+]

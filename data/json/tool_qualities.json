@@ -117,7 +117,7 @@
     "id": "SAW_M",
     "name": { "str": "metal sawing" },
     "usages": [ [ 2, [ "HACKSAW", "saw_barrel" ] ] ],
-    "salvagable_materials": [ "steel", "budget_steel", "tin", "lead", "silver", "gold", "copper", "platinum", "iron", "bronze", "zinc" ]
+    "salvagable_materials": [ "steel", "budget_steel", "tin", "lead", "silver", "gold", "copper", "platinum", "iron", "bronze", "brass", "zinc" ]
   },
   {
     "type": "tool_quality",
@@ -233,7 +233,9 @@
   {
     "type": "tool_quality",
     "id": "SEW",
-    "name": { "str": "sewing" }
+    "name": { "str": "sewing" },
+    "crafting_speed_bonus_per_level": 1.1,
+    "crafting_speed_level_offset": 2
   },
   {
     "type": "tool_quality",
@@ -380,7 +382,7 @@
   {
     "type": "tool_quality",
     "id": "CASING_PRESSING",
-    "name": { "str": "Ammunition reloading" }
+    "name": { "str": "ammunition reloading" }
   },
   {
     "type": "tool_quality",

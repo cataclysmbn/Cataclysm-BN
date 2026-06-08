@@ -165,7 +165,23 @@
       },
       "update_mapgen": [ { "place_nested": [ { "chunks": [ "robofac_mi3_photonics_chunk" ], "x": 10, "y": 22 } ] } ]
     },
-    "end": { "effect": [ { "u_buy_item": "RobofacCoin", "count": 4 } ] },
+    "end": {
+      "effect": [
+        { "u_buy_item": "RobofacCoin", "count": 4 },
+        { "u_add_var": "completed_robofac_intercom_3", "type": "dialogue", "context": "intercom", "value": "yes" }
+      ],
+      "update_mapgen": [
+        {
+          "om_terrain": "robofachq_surface_entrance",
+          "set": [
+            { "point": "terrain", "id": "t_door_metal_c", "x": 16, "y": 15 },
+            { "point": "terrain", "id": "t_door_metal_c", "x": 17, "y": 15 },
+            { "point": "terrain", "id": "t_elevator_control", "x": 14, "y": 19 },
+            { "point": "terrain", "id": "t_elevator_control", "x": 14, "y": 22 }
+          ]
+        }
+      ]
+    },
     "origins": [ "ORIGIN_SECONDARY" ],
     "has_generic_rewards": false,
     "dialogue": {
@@ -175,7 +191,7 @@
       "rejected": "Return if you change your mind.",
       "advice": "The scout drone also revealed extensive heat signatures and high concentrations of toxic compounds within the ruins, plan accordingly.  We are willing to sell you some protective gear at a discount, if you require it.",
       "inquire": "Have you retrieved the blueprints?",
-      "success": "You have our thanks and payment.",
+      "success": "Fantastic.  You have our thanks and payment.  The elevator access doors have been opened, and you are now authorized to use the elevator.",
       "success_lie": "What good does this do us?",
       "failure": "Simply useless…"
     }

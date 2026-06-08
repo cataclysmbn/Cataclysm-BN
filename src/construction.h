@@ -79,11 +79,11 @@ struct construction {
         time_duration time;
 
         // Custom constructibility check
-        std::function<bool( const tripoint & )> pre_special;
+        std::function<bool( const tripoint_bub_ms & )> pre_special;
         // Custom after-effects
-        std::function<void( const tripoint & )> post_special;
+        std::function<void( const tripoint_bub_ms & )> post_special;
         // Custom error message display
-        std::function<void( const tripoint & )> explain_failure;
+        std::function<void( const tripoint_bub_ms & )> explain_failure;
 
         bool pre_special_is_valid_for_dirt = true;
 
@@ -127,7 +127,7 @@ void override_build_times( time_duration time );
 
 std::optional<construction_id> construction_menu( bool blueprint );
 void complete_construction( Character &who, tripoint_abs_ms &where );
-bool can_construct( const construction &con, const tripoint &p );
+bool can_construct( const construction &con, const tripoint_bub_ms &p );
 bool player_can_build( Character &ch, const inventory &inv, const construction &con );
 
 

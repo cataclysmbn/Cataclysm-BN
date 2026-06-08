@@ -102,7 +102,7 @@
     "type": "technique",
     "id": "mma_tec_iron_heart_disarm",
     "name": "Disarming Strike",
-    "messages": [ "You skillfully disarm %s", "<npcname> skillfully disarms %s" ],
+    "messages": [ "You skillfully aim to disarm %s", "<npcname> skillfully aims to disarm %s" ],
     "unarmed_allowed": true,
     "disarms": true
   },
@@ -198,7 +198,10 @@
     "messages": [ "You jump and somersault kick %s", "<npcname> jump and somersault kick %s" ],
     "melee_allowed": true,
     "unarmed_allowed": true,
-    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.2 } ]
+    "force_unarmed": true,
+    "knockback_dist": 1,
+    "powerful_knockback": true,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.5 } ]
   },
   {
     "type": "technique",
@@ -338,7 +341,7 @@
     "type": "technique",
     "id": "mma_tec_shii_cho_disarm",
     "name": "Disarming Slash",
-    "messages": [ "You disarm %s with a quick flick of your weapon", "<npcname> disarms %s with a quick flick of their weapon" ],
+    "messages": [ "You strike %s with a quick flick of your weapon", "<npcname> strikes %s with a quick flick of their weapon" ],
     "skill_requirements": [ { "name": "melee", "level": 2 } ],
     "melee_allowed": true,
     "crit_ok": true,

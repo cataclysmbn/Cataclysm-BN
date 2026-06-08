@@ -1,0 +1,32 @@
+[
+  {
+    "type": "snippet",
+    "category": "note_grove",
+    "text": [
+      {
+        "id": "note_grove_arcana_magiclysm_1",
+        "text": "\"Those who came before us are in decline, but they too will face what awaits those who shall take our place.  What they will make of all they have learned, only time will tell.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_chalice",
+    "text": [
+      {
+        "id": "note_chalice_arcana_magiclysm_1",
+        "text": "\"The power He has granted our Chosen, who wield the Shrouded King's relics, draws from the spirit much like that of the fallen arts.  But it draws forth a divine power with it, strengthened by The Beyond…\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_soa_journal",
+    "text": [
+      {
+        "id": "note_soa_journal_arcana_magiclysm_1",
+        "text": "\"Local activity shows no connection to any suspected remnant of previous anomalous research, probable connection to current outbreak of anomalies falling under our purview.  Sustain observation until confirmation received.\""
+      }
+    ]
+  }
+]

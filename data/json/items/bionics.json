@@ -217,6 +217,7 @@
     "id": "bio_cable_upgrade",
     "bionic_id": "bio_cable_mkII",
     "copy-from": "bionic_general",
+    "looks_like": "bio_power_storage_mkII",
     "type": "BIONIC_ITEM",
     "name": { "str": "Cable Charger Upgrade CBM" },
     "description": "A kit for upgrading a pre-installed cable charger with enhanced power throughput.",
@@ -823,7 +824,7 @@
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
     "name": { "str": "Internal Microreactor CBM" },
-    "description": "This stripped down mini-reactor will generate impressive amounts of bionic power, but may not be the safest thing to install.  1 plutonium fuel cell provides 1000 charges producing 10kJ of power a turn, while not active & fueled provides a constant 50J of power.",
+    "description": "This stripped down mini-reactor will generate impressive amounts of bionic power, but may not be the safest thing to install.  1 plutonium fuel cell provides 1000 charges producing 10kW of power.  Produces 50W of power while inactive.",
     "price": "9 kUSD",
     "difficulty": 11
   },
@@ -832,7 +833,7 @@
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
     "name": { "str": "Advanced Microreactor CBM" },
-    "description": "This module upgrades a pre-installed microreactor with enhanced maximum yield and limited automatic radiation scrubbing capabilities.  1 plutonium fuel cell provides 1500 charges producing 10kJ of power a turn, while not active & fueled provides a constant 75J of power.",
+    "description": "This module upgrades a pre-installed microreactor with enhanced maximum yield and limited automatic radiation scrubbing capabilities.  1 plutonium fuel cell provides 1500 charges producing 10kW of power.  Produces 75W of power while inactive.",
     "price": "9 kUSD",
     "difficulty": 13
   },
@@ -845,6 +846,28 @@
     "description": "Disables the radiation safety protocols allowing for much higher energy production.  While active produces 40kJ of power a turn and 1 irradiated stack every 20 turns.",
     "price": "9 kUSD",
     "difficulty": 13
+  },
+  {
+    "id": "bio_atomic_battery",
+    "copy-from": "bionic_general_npc_usable",
+    "looks_like": "bio_power_storage_mkII",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Atomic Battery CBM" },
+    "description": " Effectively a plutonium fuel cell converted into an alphavoltaic battery, this bionic will provide a limitless source of power at a steady 50 watts when active, with only minimal exposure to radiation while in use.",
+    "price": "8 kUSD",
+    "difficulty": 8
+  },
+  {
+    "id": "bio_atomic_battery_upgrade",
+    "bionic_id": "bio_reactor",
+    "copy-from": "bionic_general_npc_usable",
+    "looks_like": "bio_power_storage_mkII",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Atomic Battery Upgrade CBM" },
+    "description": "A kit for upgrading a pre-installed atomic battery into a Microreactor, providing options for significantly more power generation potential and fuel capacity at the cost of increased radiation exposure.",
+    "price": "2500 USD",
+    "difficulty": 10,
+    "is_upgrade": true
   },
   {
     "id": "bio_reactor_upgrade",
@@ -1379,6 +1402,15 @@
     "name": { "str": "Debug Fuel Cell CBM" },
     "description": "The power of the sun, in the palm of my hand!  Installed within you is a perpetual generator powered by nonsensoleum.  When activated its power gen doubles.  If you are seeing this, you'd better be debugging.",
     "price": "0 cent",
+    "looks_like": "bio_int_enhancer"
+  },
+  {
+    "id": "bio_portal_tap",
+    "copy-from": "bionic_general",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Dimensional Portal Tap CBM" },
+    "description": "An implanted interface for siphoning power from a linked dimensional portal.  Must be linked to a specific portal by examining it.  While the linked portal's grid has power, this bionic passively draws energy into your reserves each turn.",
+    "price": "1 kUSD",
     "looks_like": "bio_int_enhancer"
   }
 ]

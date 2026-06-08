@@ -1,0 +1,55 @@
+[
+  {
+    "id": "mountable_heater",
+    "type": "vehicle_part",
+    "name": { "str": "vehicle-mounted heater" },
+    "item": "mountable_heater",
+    "location": "on_ceiling",
+    "symbol": ";",
+    "broken_symbol": ":",
+    "color": "red",
+    "durability": 400,
+    "//": "700W average assuming relatively small target-actual difference",
+    "epower": -700,
+    "bonus": 10,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ], [ "electronics", 1 ] ], "time": "2 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "1 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "30 s",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "CTRL_ELECTRONIC", "ENABLED_DRAINS_EPOWER", "SPACE_HEATER", "EMITTER", "SHOCK_RESISTANT" ],
+    "emissions": [ "emit_heater_vehicle" ],
+    "breaks_into": [ { "item": "steel_lump" }, { "item": "steel_chunk", "count": [ 1, 3 ] }, { "item": "scrap", "count": [ 1, 3 ] } ],
+    "damage_reduction": { "all": 15 }
+  },
+  {
+    "id": "mountable_cooler",
+    "type": "vehicle_part",
+    "name": { "str": "vehicle-mounted cooler" },
+    "item": "mountable_cooler",
+    "location": "on_roof",
+    "symbol": "C",
+    "broken_symbol": ":",
+    "color": "light_cyan",
+    "durability": 400,
+    "epower": -120,
+    "bonus": 10,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ], [ "electronics", 1 ] ], "time": "2 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "1 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "30 s",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "CTRL_ELECTRONIC", "ENABLED_DRAINS_EPOWER", "COOLER", "EMITTER", "SHOCK_RESISTANT" ],
+    "emissions": [ "emit_cooler_vehicle" ],
+    "breaks_into": [ { "item": "steel_lump" }, { "item": "steel_chunk", "count": [ 1, 3 ] }, { "item": "scrap", "count": [ 1, 3 ] } ],
+    "damage_reduction": { "all": 15 }
+  }
+]

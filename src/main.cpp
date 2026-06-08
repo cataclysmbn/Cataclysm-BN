@@ -54,20 +54,23 @@
 
 class ui_adaptor;
 
-#if defined(TILES)
-#   define SDL_MAIN_HANDLED
-#   include "sdl_wrappers.h"
-#   if defined(_MSC_VER) && defined(USE_VCPKG)
-#      include <SDL2/SDL_version.h>
-#   else
-#      include <SDL_version.h>
+#if defined(CATA_SDL)
+#   if !defined(SDL_MAIN_HANDLED)
+#       define SDL_MAIN_HANDLED
 #   endif
+#   include <SDL3/SDL.h>
+#   include "compute/gpu_platform.h"
 #endif
+#if defined(TILES)
+#   include <SDL3/SDL_main.h>
+#   include "sdl_wrappers.h"
+#endif
+#include "preload_config.h"
+#include "sdlsound.h"
 
 #if defined(__ANDROID__)
-#include <SDL_filesystem.h>
-#include <SDL_keyboard.h>
-#include <SDL_system.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_system.h>
 #include <android/log.h>
 #include <unistd.h>
 
@@ -182,6 +185,46 @@ struct arg_handler {
     handler_method handler;  //!< The callback to be invoked when this argument is encountered.
 };
 
+#if defined(CATA_SDL)
+#if defined(__linux__) && !defined(__ANDROID__) && !defined(TILES)
+auto use_offscreen_video_driver_for_headless_curses() -> void
+{
+    if( std::getenv( "SDL_VIDEO_DRIVER" ) != nullptr ||
+        std::getenv( "SDL_VIDEODRIVER" ) != nullptr ||
+        std::getenv( "DISPLAY" ) != nullptr ||
+        std::getenv( "WAYLAND_DISPLAY" ) != nullptr ) {
+        return;
+    }
+
+    if( SDL_SetHint( SDL_HINT_VIDEO_DRIVER, "offscreen" ) ) {
+        DebugLog( DL::Info, DC::Main ) << "SDL video driver set to offscreen for headless curses";
+    } else {
+        DebugLog( DL::Warn, DC::Main ) << "SDL video driver offscreen hint failed: " << SDL_GetError();
+    }
+}
+#endif
+
+auto init_sdl_platform( bool init_audio ) -> bool
+{
+    auto init_flags = SDL_InitFlags{ SDL_INIT_VIDEO };
+#if defined(SDL_SOUND)
+    if( init_audio ) {
+        init_flags |= SDL_INIT_AUDIO;
+    }
+#else
+    ( void )init_audio;
+#endif
+
+    if( !SDL_Init( init_flags ) ) {
+        DebugLog( DL::Error, DC::Main ) << "SDL_Init failed: " << SDL_GetError();
+        return false;
+    }
+
+    atexit( SDL_Quit );
+    return true;
+}
+#endif
+
 void printHelpMessage( const arg_handler *first_pass_arguments, size_t num_first_pass_arguments,
                        const arg_handler *second_pass_arguments, size_t num_second_pass_arguments );
 }  // namespace
@@ -202,6 +245,7 @@ int main( int argc, char *argv[] )
     int seed = time( nullptr );
     bool verifyexit = false;
     bool check_mods = false;
+    auto check_mods_mode = init::check_mods_mode::default_mods;
     std::filesystem::path lua_doc_output_path;
     std::filesystem::path lua_types_output_path;
     std::string dump;
@@ -215,7 +259,7 @@ int main( int argc, char *argv[] )
 
     // On Android first launch, we copy all data files from the APK into the app's writeable folder so std::io stuff works.
     // Use the external storage so it's publicly modifiable data (so users can mess with installed data, save games etc.)
-    std::string external_storage_path( SDL_AndroidGetExternalStoragePath() );
+    std::string external_storage_path( SDL_GetAndroidExternalStoragePath() );
 
     PATH_INFO::init_base_path( external_storage_path );
 #else
@@ -243,7 +287,7 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 15> first_pass_arguments = {{
+        const std::array<arg_handler, 17> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
@@ -263,13 +307,14 @@ int main( int argc, char *argv[] )
                     "Checks the BN json files",
                     section_default,
                     [&verifyexit]( int, const char ** ) -> int {
+                        test_mode = true;
                         verifyexit = true;
                         return 0;
                     }
                 },
                 {
                     "--check-mods", "[mods…]",
-                    "Checks the json files belonging to BN mods",
+                    "Checks the json files belonging to default or specified BN mods",
                     section_default,
                     [&check_mods, &opts]( int n, const char *params[] ) -> int {
                         check_mods = true;
@@ -278,6 +323,17 @@ int main( int argc, char *argv[] )
                         {
                             opts.emplace_back( params[ i ] );
                         }
+                        return 0;
+                    }
+                },
+                {
+                    "--check-all-mods", nullptr,
+                    "Checks the json files belonging to all non-obsolete BN mods",
+                    section_default,
+                    [&check_mods, &check_mods_mode]( int, const char ** ) -> int {
+                        check_mods = true;
+                        check_mods_mode = init::check_mods_mode::all_mods;
+                        test_mode = true;
                         return 0;
                     }
                 },
@@ -448,6 +504,21 @@ int main( int argc, char *argv[] )
                         test_mode = true;
                         lua_types_output_path = params[0];
                         return 0;
+                    }
+                },
+                {
+                    "--gpu-backend", "<driver>",
+                    "Override the SDL_GPU backend driver for diagnostics (vulkan / direct3d12 / metal / software).",
+                    nullptr,
+                    []( int num_args, const char **params ) -> int {
+                        if( num_args < 1 )
+                        {
+                            return -1;
+                        }
+#if defined(CATA_SDL)
+                        preload_config::set_gpu_backend_override( params[0] );
+#endif
+                        return 1;
                     }
                 }
             }
@@ -634,6 +705,8 @@ int main( int argc, char *argv[] )
         }
     }
 
+    preload_config::load();
+
     std::string current_path = std::filesystem::current_path().string();
 
     if( !dir_exist( PATH_INFO::datadir() ) ) {
@@ -674,6 +747,26 @@ int main( int argc, char *argv[] )
         }
     };
 
+#if defined(__ANDROID__)
+    if( !dir_exist( PATH_INFO::user_dir() ) ) {
+        check_dir_good( PATH_INFO::user_dir() );
+        std::string external_storage_path( SDL_GetAndroidExternalStoragePath() );
+        if( dir_exist( external_storage_path + "/config" ) ) {
+            std::filesystem::copy( external_storage_path + "/config", PATH_INFO::user_dir() + "config",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/font", PATH_INFO::user_dir() + "font",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/gfx", PATH_INFO::user_dir() + "gfx",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/save", PATH_INFO::user_dir() + "save",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/sound", PATH_INFO::user_dir() + "sound",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/templates", PATH_INFO::user_dir() + "templates",
+                                   std::filesystem::copy_options::recursive );
+        }
+    }
+#endif
     check_dir_good( PATH_INFO::user_dir() );
     check_dir_good( PATH_INFO::config_dir() );
     check_dir_good( PATH_INFO::savedir() );
@@ -684,20 +777,17 @@ int main( int argc, char *argv[] )
         exit_handler( -999 );
     }
 
-#if defined(TILES)
-    SDL_version compiled;
-    SDL_VERSION( &compiled );
+#if defined(CATA_SDL)
     DebugLog( DL::Info, DC::Main ) << "SDL version used during compile is "
-                                   << static_cast<int>( compiled.major ) << "."
-                                   << static_cast<int>( compiled.minor ) << "."
-                                   << static_cast<int>( compiled.patch );
+                                   << SDL_MAJOR_VERSION << "."
+                                   << SDL_MINOR_VERSION << "."
+                                   << SDL_MICRO_VERSION;
 
-    SDL_version linked;
-    SDL_GetVersion( &linked );
+    const int linked_ver = SDL_GetVersion();
     DebugLog( DL::Info, DC::Main ) << "SDL version used during linking and in runtime is "
-                                   << static_cast<int>( linked.major ) << "."
-                                   << static_cast<int>( linked.minor ) << "."
-                                   << static_cast<int>( linked.patch );
+                                   << SDL_VERSIONNUM_MAJOR( linked_ver ) << "."
+                                   << SDL_VERSIONNUM_MINOR( linked_ver ) << "."
+                                   << SDL_VERSIONNUM_MICRO( linked_ver );
 #endif
 
 #if !defined(TILES)
@@ -705,6 +795,18 @@ int main( int argc, char *argv[] )
     get_options().load();
     get_options().save();
     set_language(); // Have to set locale before initializing ncurses
+#if defined(CATA_SDL)
+#   if defined(__linux__) && !defined(__ANDROID__)
+    use_offscreen_video_driver_for_headless_curses();
+#   endif
+    if( !init_sdl_platform( !test_mode ) ) {
+        return 1;
+    }
+#endif
+#elif defined(CATA_SDL)
+    if( test_mode && !init_sdl_platform( false ) ) {
+        return 1;
+    }
 #endif
 
     // in test mode don't initialize curses to avoid escape sequences being inserted into output stream
@@ -720,7 +822,17 @@ int main( int argc, char *argv[] )
             DebugLog( DL::Error, DC::Main ) << "Error while initializing the interface: " << err.what();
             return 1;
         }
+#if defined(SDL_SOUND) && !defined(TILES)
+        init_sound();
+        atexit( shutdown_sound );
+        load_soundset();
+#endif
     }
+
+#if defined(CATA_SDL)
+    cata_gpu::init();
+    atexit( cata_gpu::shutdown );
+#endif
 
 #if defined(TILES)
     if( test_mode ) {
@@ -748,7 +860,7 @@ int main( int argc, char *argv[] )
             init_colors();
             loading_ui ui( false );
             const std::vector<mod_id> mods( opts.begin(), opts.end() );
-            if( init::check_mods_for_errors( ui, mods ) ) {
+            if( init::check_mods_for_errors( ui, mods, check_mods_mode ) ) {
                 exit( 0 );
             } else {
                 exit( 1 );

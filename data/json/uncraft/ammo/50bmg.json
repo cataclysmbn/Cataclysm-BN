@@ -15,23 +15,5 @@
       [ [ "copper", 6 ] ]
     ],
     "charges": 1
-  },
-  {
-    "result": "50_mk211",
-    "type": "uncraft",
-    "skill_used": "fabrication",
-    "difficulty": 8,
-    "skills_required": [ "gun", 7 ],
-    "time": "2 m",
-    "qualities": [ { "id": "PULL", "level": 2 } ],
-    "components": [
-      [ [ "lead", 15 ] ],
-      [ [ "chem_rdx", 20 ] ],
-      [ [ "50_casing", 1 ] ],
-      [ [ "lgrifle_primer", 1 ] ],
-      [ [ "gunpowder", 30 ] ],
-      [ [ "copper", 6 ] ]
-    ],
-    "charges": 1
   }
 ]

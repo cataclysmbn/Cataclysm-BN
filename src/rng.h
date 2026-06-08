@@ -7,6 +7,7 @@
 #include <random>
 #include <type_traits>
 
+#include "coordinates.h"
 #include "units_angle.h"
 #include "units_probability.h"
 
@@ -25,6 +26,19 @@ void rng_set_engine_seed( unsigned int seed );
 using cata_default_random_engine = std::minstd_rand0;
 cata_default_random_engine &rng_get_engine();
 unsigned int rng_bits();
+
+/**
+ * Thread-local RNG support for worker threads.
+ *
+ * Call rng_set_worker_seed() once on each worker thread before dispatching
+ * compute_plan() work.  All subsequent rng()/one_in()/x_in_y() calls on that
+ * thread will use an independent per-thread engine, leaving the main thread's
+ * engine state undisturbed.
+ *
+ * The main thread must never call rng_set_worker_seed(); it always uses the
+ * global engine returned by rng_get_engine().
+ */
+void rng_set_worker_seed( unsigned int seed );
 
 int rng( int lo, int hi );
 double rng_float( double lo, double hi );
@@ -192,12 +206,12 @@ inline detached_ptr<C> random_entry_detached( location_vector<C> &container )
 
 
 /// Returns a range enclosing all valid points of the map.
-tripoint_range<tripoint> points_in_range( const map &m );
+tripoint_range<tripoint_bub_ms> points_in_range( const map &m );
 /// Returns a random point in the given range that satisfies the given predicate ( if any ).
-std::optional<tripoint> random_point( const tripoint_range<tripoint> &range,
-                                      const std::function<bool( const tripoint & )> &predicate );
+std::optional<tripoint_bub_ms> random_point( const tripoint_range<tripoint_bub_ms> &range,
+        const std::function<bool( const tripoint_bub_ms & )> &predicate );
 /// Same as other random_point with a range enclosing all valid points of the map.
-std::optional<tripoint> random_point( const map &m,
-                                      const std::function<bool( const tripoint & )> &predicate );
+std::optional<tripoint_bub_ms> random_point( const map &m,
+        const std::function<bool( const tripoint_bub_ms & )> &predicate );
 
 

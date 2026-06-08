@@ -56,7 +56,9 @@
       { "monster": "mon_talon_m202a1", "freq": 50, "cost_multiplier": 0 },
       { "monster": "mon_dispatch", "freq": 100, "cost_multiplier": 0 },
       { "monster": "mon_dispatch_military", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_tankbot", "freq": 20, "cost_multiplier": 0, "starts": 720 }
+      { "monster": "mon_tripod", "freq": 10, "cost_multiplier": 0, "starts": 336 },
+      { "monster": "mon_chickenbot", "freq": 10, "cost_multiplier": 0, "starts": 336 },
+      { "monster": "mon_tankbot", "freq": 20, "cost_multiplier": 0, "starts": 336 }
     ]
   }
 ]

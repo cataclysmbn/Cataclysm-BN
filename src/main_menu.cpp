@@ -51,7 +51,6 @@
 #include "wcwidth.h"
 #include "worldfactory.h"
 #include "game_info.h"
-
 enum class main_menu_opts : int {
     MOTD = 0,
     NEWCHAR = 1,
@@ -623,6 +622,11 @@ bool main_menu::opening_screen()
         return false;
     }
 
+    if( !assure_dir_exist( PATH_INFO::user_moddir() ) ) {
+        popup( _( "Unable to make user mods directory.  Check permissions." ) );
+        return false;
+    }
+
     if( !assure_dir_exist( PATH_INFO::savedir() ) ) {
         popup( _( "Unable to make save directory.  Check permissions." ) );
         return false;
@@ -992,7 +996,7 @@ bool main_menu::new_character_tab()
     if( !pc.create( play_type, selected_template ) ) {
         load_char_templates();
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        get_primary_overmapbuffer().clear();
         return false;
     }
 
@@ -1095,7 +1099,7 @@ void main_menu::world_tab( const std::string &worldname )
         world_generator->delete_world( worldname, do_delete );
         savegames.clear();
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        get_primary_overmapbuffer().clear();
         if( do_delete ) {
             sel2 = 0; // reset to create world selection
         }
@@ -1105,7 +1109,7 @@ void main_menu::world_tab( const std::string &worldname )
         world_generator->set_active_world( nullptr );
         savegames.clear();
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        get_primary_overmapbuffer().clear();
         world_generator->convert_to_v2( worldname );
     };
 
@@ -1151,7 +1155,7 @@ void main_menu::world_tab( const std::string &worldname )
                 pc.character_to_template( pc.name );
                 pc = avatar();
                 MAPBUFFER.clear();
-                overmap_buffer.clear();
+                get_primary_overmapbuffer().clear();
                 load_char_templates();
             }
             break;

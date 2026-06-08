@@ -591,6 +591,20 @@ static const std::array<std::string, 20> artifact_noun = { {
     }
 };
 std::string artifact_name( const std::string &type );
+
+namespace
+{
+
+auto set_artifact_origin( itype &def ) -> void
+{
+    if( !def.src.empty() ) {
+        return;
+    }
+    def.src.emplace_back( def.get_id(), mod_id( "bn" ) );
+}
+
+} // namespace
+
 //Dreams for each charge req
 static const std::array<artifact_dream_datum, NUM_ACRS> artifact_dream_data = { {
         {   {translate_marker( "The %s is somehow vaguely dissatisfied even though it doesn't want anything.  Seeing this is a bug!" )},
@@ -624,6 +638,7 @@ it_artifact_tool::it_artifact_tool()
     tool = cata::make_value<islot_tool>();
     artifact = cata::make_value<islot_artifact>();
     id = item_controller->create_artifact_id();
+    set_artifact_origin( *this );
     price = 0_cent;
     tool->charges_per_use = 1;
     artifact->charge_type = ARTC_NULL;
@@ -641,6 +656,7 @@ it_artifact_tool::it_artifact_tool( const JsonObject &jo )
     artifact = cata::make_value<islot_artifact>();
     use_methods.emplace( "ARTIFACT", use_function( "ARTIFACT", &iuse::artifact ) );
     deserialize( jo );
+    set_artifact_origin( *this );
 }
 
 it_artifact_armor::it_artifact_armor()
@@ -648,6 +664,7 @@ it_artifact_armor::it_artifact_armor()
     armor = cata::make_value<islot_armor>();
     artifact = cata::make_value<islot_artifact>();
     id = item_controller->create_artifact_id();
+    set_artifact_origin( *this );
     price = 0_cent;
 }
 
@@ -656,6 +673,7 @@ it_artifact_armor::it_artifact_armor( const JsonObject &jo )
     armor = cata::make_value<islot_armor>();
     artifact = cata::make_value<islot_artifact>();
     deserialize( jo );
+    set_artifact_origin( *this );
 }
 
 void it_artifact_tool::create_name( const std::string &type )
@@ -1134,8 +1152,8 @@ void it_artifact_tool::deserialize( const JsonObject &jo )
             materials.emplace_back( id );
         }
     }
-    volume = jo.get_int( "volume" ) * units::legacy_volume_factor;
-    weight = units::from_gram<std::int64_t>( jo.get_int( "weight" ) );
+    assign( jo, "volume", volume, false );
+    assign( jo, "weight", weight, false );
     melee[DT_BASH] = jo.get_int( "melee_dam" );
     melee[DT_CUT] = jo.get_int( "melee_cut" );
     m_to_hit = jo.get_int( "m_to_hit" );
@@ -1244,8 +1262,8 @@ void it_artifact_armor::deserialize( const JsonObject &jo )
             materials.emplace_back( id );
         }
     }
-    volume = jo.get_int( "volume" ) * units::legacy_volume_factor;
-    weight = units::from_gram<std::int64_t>( jo.get_int( "weight" ) );
+    assign( jo, "volume", volume, false );
+    assign( jo, "weight", weight, false );
     melee[DT_BASH] = jo.get_int( "melee_dam" );
     melee[DT_CUT] = jo.get_int( "melee_cut" );
     m_to_hit = jo.get_int( "m_to_hit" );
@@ -1260,7 +1278,7 @@ void it_artifact_armor::deserialize( const JsonObject &jo )
     armor->thickness = jo.get_int( "material_thickness" );
     armor->env_resist = jo.get_int( "env_resist" );
     armor->warmth = jo.get_int( "warmth" );
-    armor->storage = jo.get_int( "storage" ) * units::legacy_volume_factor;
+    assign( jo, "storage", armor->storage, false );
 
     for( const int entry : jo.get_array( "effects_worn" ) ) {
         artifact->effects_worn.push_back( static_cast<art_effect_passive>( entry ) );
@@ -1315,15 +1333,15 @@ void it_artifact_tool::serialize( JsonOut &json ) const
     json.member( "description", description.translated() );
     json.member( "sym", sym );
     json.member( "color", color );
-    json.member( "price", units::to_cent( price ) );
+    json.member( "price", price );
     json.member( "materials" );
     json.start_array();
     for( const material_id &mat : materials ) {
         json.write( mat );
     }
     json.end_array();
-    json.member( "volume", volume / units::legacy_volume_factor );
-    json.member( "weight", to_gram( weight ) );
+    json.member( "volume", volume );
+    json.member( "weight", weight );
 
     json.member( "melee_dam", melee[DT_BASH] );
     json.member( "melee_cut", melee[DT_CUT] );
@@ -1372,15 +1390,15 @@ void it_artifact_armor::serialize( JsonOut &json ) const
     json.member( "description", description.translated() );
     json.member( "sym", sym );
     json.member( "color", color );
-    json.member( "price", units::to_cent( price ) );
+    json.member( "price", price );
     json.member( "materials" );
     json.start_array();
     for( const material_id &mat : materials ) {
         json.write( mat );
     }
     json.end_array();
-    json.member( "volume", volume / units::legacy_volume_factor );
-    json.member( "weight", to_gram( weight ) );
+    json.member( "volume", volume );
+    json.member( "weight", weight );
 
     json.member( "melee_dam", melee[DT_BASH] );
     json.member( "melee_cut", melee[DT_CUT] );
@@ -1401,7 +1419,7 @@ void it_artifact_armor::serialize( JsonOut &json ) const
     json.member( "material_thickness", armor->thickness );
     json.member( "env_resist", armor->env_resist );
     json.member( "warmth", armor->warmth );
-    json.member( "storage", armor->storage / units::legacy_volume_factor );
+    json.member( "storage", armor->storage );
 
     // artifact data
     serialize_enum_vector_as_int( json, "effects_worn", artifact->effects_worn );
@@ -1547,6 +1565,37 @@ std::string enum_to_string<art_charge_req>( art_charge_req data )
             break;
     }
     debugmsg( "Invalid ACR" );
+    abort();
+}
+
+template<>
+std::string enum_to_string<artifact_natural_property>( artifact_natural_property data )
+{
+    switch( data ) {
+        // *INDENT-OFF*
+        PAIR( ARTPROP_NULL )
+        PAIR( ARTPROP_WRIGGLING )
+        PAIR( ARTPROP_GLOWING )
+        PAIR( ARTPROP_HUMMING )
+        PAIR( ARTPROP_MOVING )
+        PAIR( ARTPROP_WHISPERING )
+        PAIR( ARTPROP_BREATHING )
+        PAIR( ARTPROP_DEAD )
+        PAIR( ARTPROP_ITCHY )
+        PAIR( ARTPROP_GLITTERING )
+        PAIR( ARTPROP_ELECTRIC )
+        PAIR( ARTPROP_SLIMY )
+        PAIR( ARTPROP_ENGRAVED )
+        PAIR( ARTPROP_CRACKLING )
+        PAIR( ARTPROP_WARM )
+        PAIR( ARTPROP_RATTLING )
+        PAIR( ARTPROP_SCALED )
+        PAIR( ARTPROP_FRACTAL )
+        // *INDENT-ON*
+        case ARTPROP_MAX:
+            break;
+    }
+    debugmsg( "Invalid ARTPROP" );
     abort();
 }
 #undef PAIR

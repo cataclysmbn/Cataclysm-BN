@@ -1,0 +1,23 @@
+{
+  "type": "map_feature_description",
+  "features": [
+    { "text": "Smashable.", "test": "bashable" },
+    { "text": "Diggable.", "test": "diggable" },
+    { "text": "Plowable.", "test": "flag", "flag": "PLOWABLE" },
+    { "text": "Rough.", "test": "flag", "flag": "ROUGH" },
+    { "text": "Unstable.", "test": "flag", "flag": "UNSTABLE" },
+    { "text": "Sharp.", "test": "flag", "flag": "SHARP" },
+    { "text": "Flat.", "test": "flag", "flag": "FLAT" },
+    { "text": "Roof.", "test": "flag", "flag": "ROOF" },
+    { "text": "Simple.", "test": "flag", "flag": "EASY_DECONSTRUCT" },
+    { "text": "Mountable.", "test": "flag", "flag": "MOUNTABLE" },
+    { "text": "Supports a roof.", "test": "flag", "flag": "SUPPORTS_ROOF" },
+    { "text": "Prone to collapse.", "test": "flag", "flag": "COLLAPSES" },
+    { "text": "Climbable.", "test": "flag", "flag": "CLIMBABLE" },
+    { "text": "Sealed.", "test": "flag", "flag": "SEALED" },
+    { "text": "Fire source.", "test": "flag", "flag": "FIRE_CONTAINER" },
+    { "text": "Holds liquids.", "test": "flag", "flag": "LIQUIDCONT" },
+    { "text": "Can sit here.", "test": "flag", "flag": "CAN_SIT" },
+    { "text": "Short.", "test": "flag", "flag": "SHORT" }
+  ]
+}

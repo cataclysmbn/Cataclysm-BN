@@ -902,6 +902,19 @@
   },
   {
     "type": "recipe",
+    "result": "fluted_grip",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ "archery", 1 ],
+    "difficulty": 2,
+    "autolearn": true,
+    "time": "10 m",
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
+    "components": [ [ [ "chunk_rubber", 1 ] ], [ [ "adhesive_proper", 3, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "filter_suppressor",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_MODS",
@@ -949,6 +962,28 @@
     "autolearn": true,
     "book_learn": [ [ "mag_archery", 3 ], [ "manual_archery", 2 ] ],
     "using": [ [ "blacksmithing_advanced", 10 ], [ "steel_standard", 2 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "crossbow_draw_assist",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "mechanics",
+    "difficulty": 3,
+    "skills_required": [ [ "fabrication", 3 ], [ "electronics", 4 ] ],
+    "time": "30 m",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_advanced", 10 ], [ "soldering_standard", 5 ], [ "steel_standard", 2 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "duct_tape", 35 ], [ "medical_tape", 35 ] ],
+      [ [ "motor_tiny", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "e_scrap", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "string_6", 4 ] ],
+      [ [ "adhesive_proper", 2, "LIST" ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -1143,5 +1178,20 @@
     "tools": [ [ [ "steyr_aug", -1 ], [ "large_repairkit", 25 ], [ "small_repairkit", 45 ] ], [ [ "mold_plastic", -1 ] ] ],
     "using": [ [ "3d_printing_standard", 3 ] ],
     "components": [ [ [ "plastic_chunk", 8 ] ], [ [ "sheet_metal_small", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "40x53mm_conversion_kit",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "mechanics", 3 ], [ "launcher", 3 ] ],
+    "difficulty": 8,
+    "time": "45 m",
+    "book_learn": [ [ "manual_launcher", 6 ], [ "mag_launcher", 8 ] ],
+    "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "tools": [ [ [ "large_repairkit", 20 ], [ "small_repairkit", 40 ] ] ],
+    "components": [ [ [ "pipe", 1 ] ] ]
   }
 ]

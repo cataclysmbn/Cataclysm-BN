@@ -213,7 +213,7 @@
       "terrain": {
         "<": "t_flat_roof",
         "v": "t_stairs_down",
-        "A": "t_metal_floor",
+        "A": "t_metal_floor_no_roof",
         "f": "t_machinery_light",
         "b": "t_pavement_y",
         "h": "t_machinery_light",

@@ -298,6 +298,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     mandatory( jo, was_loaded, "description", raw_desc );
     mandatory( jo, was_loaded, "points", points );
 
+    optional( jo, was_loaded, "apperance_description", raw_apperance_desc );
     optional( jo, was_loaded, "visibility", visibility, 0 );
     optional( jo, was_loaded, "ugliness", ugliness, 0 );
     optional( jo, was_loaded, "starting_trait", startingtrait, false );
@@ -402,6 +403,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "noise_modifier", noise_modifier, 1.0f );
     optional( jo, was_loaded, "temperature_speed_modifier", temperature_speed_modifier, 0.0f );
     optional( jo, was_loaded, "metabolism_modifier", metabolism_modifier, 0.0f );
+    optional( jo, was_loaded, "kcal_scale", kcal_scale, 0.0f );
     optional( jo, was_loaded, "thirst_modifier", thirst_modifier, 0.0f );
     optional( jo, was_loaded, "fatigue_modifier", fatigue_modifier, 0.0f );
     optional( jo, was_loaded, "fatigue_regen_modifier", fatigue_regen_modifier, 0.0f );
@@ -409,6 +411,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "overmap_sight", overmap_sight, 0.0f );
     optional( jo, was_loaded, "overmap_multiplier", overmap_multiplier, 1.0f );
     optional( jo, was_loaded, "night_vision_range", night_vision_range, 0.0f );
+    optional( jo, was_loaded, "local_detail_sight", local_detail_sight, 0.0f );
     optional( jo, was_loaded, "reading_speed_multiplier", reading_speed_multiplier, 1.0f );
     optional( jo, was_loaded, "skill_rust_multiplier", skill_rust_multiplier, 1.0f );
     optional( jo, was_loaded, "packmule_modifier", packmule_modifier, 1.0f );
@@ -578,6 +581,11 @@ std::string mutation_branch::desc() const
     return raw_desc.translated();
 }
 
+std::string mutation_branch::apperance_desc() const
+{
+    return raw_apperance_desc.translated();
+}
+
 static void check_consistency( const std::vector<trait_id> &mvec, const trait_id &mid,
                                const std::string &what )
 {
@@ -590,6 +598,8 @@ static void check_consistency( const std::vector<trait_id> &mvec, const trait_id
 
 void mutation_branch::check_consistency()
 {
+    mutation_type_check_consistency();
+
     for( const auto &mdata : get_all() ) {
         const auto &mid = mdata.id;
         const std::optional<scenttype_id> &s_id = mdata.scent_typeid;
@@ -659,6 +669,17 @@ std::string mutation_branch::get_name( const trait_id &mutation_id )
 const std::vector<mutation_branch> &mutation_branch::get_all()
 {
     return trait_factory.get_all();
+}
+
+void mutation_branch::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> &actors )
+{
+    for( const mutation_branch &mb : trait_factory.get_all() ) {
+        auto it = actors.find( mb.id.str() );
+        if( it != actors.end() ) {
+            mb.lua_callbacks = it->second.get();
+        }
+    }
 }
 
 void mutation_branch::reset_all()

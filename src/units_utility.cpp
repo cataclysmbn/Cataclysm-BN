@@ -61,20 +61,20 @@ const char *volume_units_long()
 double convert_velocity( int velocity, const units_type vel_units )
 {
     const std::string type = get_option<std::string>( "USE_METRIC_SPEEDS" );
-    // internal units to mph conversion
-    double ret = static_cast<double>( velocity ) / 100;
-
-    if( type == "km/h" ) {
-        switch( vel_units ) {
-            case VU_VEHICLE:
-                // mph to km/h conversion
-                ret *= 1.609f;
-                break;
-            case VU_WIND:
-                // mph to m/s conversion
-                ret *= 0.447f;
-                break;
+    if( vel_units == VU_VEHICLE ) {
+        const double meters_per_second = static_cast<double>( velocity ) / 100.0;
+        if( type == "mph" ) {
+            return meters_per_second * 2.23694;
         }
+        if( type == "t/t" ) {
+            return meters_per_second / 1.78816;
+        }
+        return meters_per_second * 3.6;
+    }
+
+    double ret = static_cast<double>( velocity ) / 100;
+    if( type == "km/h" ) {
+        ret *= 0.447f;
     } else if( type == "t/t" ) {
         ret /= 4;
     }

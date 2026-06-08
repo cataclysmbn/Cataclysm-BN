@@ -33,6 +33,6 @@
     "chip_resist": 10,
     "dmg_adj": [ "marked", "dented", "scarred", "broken" ],
     "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut"
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" }
   }
 ]

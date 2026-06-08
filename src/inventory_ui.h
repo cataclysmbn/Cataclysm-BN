@@ -21,11 +21,12 @@
 #include "memory_fast.h"
 #include "pimpl.h"
 #include "units.h"
+#include "pickup_token.h"
 
 class Character;
+class player;
 class item;
 class item_category;
-class player;
 class string_input_popup;
 struct tripoint;
 class ui_adaptor;
@@ -214,6 +215,16 @@ class inventory_selector_preset
 
 const inventory_selector_preset default_preset;
 
+class pickup_inventory_preset : public inventory_selector_preset
+{
+    public:
+        pickup_inventory_preset( const player &p ) : p( p ) {}
+        std::string get_denial( const item *loc ) const override;
+
+    private:
+        const player &p;
+};
+
 class inventory_column
 {
     public:
@@ -266,7 +277,9 @@ class inventory_column
         std::vector<inventory_entry *> get_all_selected() const;
         std::vector<inventory_entry *> get_entries(
             const std::function<bool( const inventory_entry &entry )> &filter_func ) const;
-
+        std::vector<inventory_entry *> get_all_entries(
+            const std::function<bool( const inventory_entry &entry )> &filter_func ) const;
+        std::vector<inventory_entry *> get_all_entries() const;
         inventory_entry *find_by_invlet( int invlet ) const;
 
         void draw( const catacurses::window &win, point pos ) const;
@@ -331,6 +344,10 @@ class inventory_column
 
         void set_filter( const std::string &filter );
 
+        std::vector<inventory_entry> entries;
+        std::vector<inventory_entry> entries_hidden;
+        bool paging_is_valid = false;
+
     protected:
         struct entry_cell_cache_t {
             bool assigned = false;
@@ -368,14 +385,11 @@ class inventory_column
         entry_cell_cache_t make_entry_cell_cache( const inventory_entry &entry ) const;
         const entry_cell_cache_t &get_entry_cell_cache( size_t index ) const;
 
+        void refresh_entry_cell_caches();
         const inventory_selector_preset &preset;
-
-        std::vector<inventory_entry> entries;
-        std::vector<inventory_entry> entries_unfiltered;
         navigation_mode mode = navigation_mode::ITEM;
         bool active = false;
         bool multiselect = false;
-        bool paging_is_valid = false;
         bool visibility = true;
 
         size_t selected_index = 0;
@@ -440,8 +454,8 @@ class inventory_selector
         virtual ~inventory_selector();
         /** These functions add items from map / vehicles. */
         void add_character_items( Character &character );
-        void add_map_items( const tripoint &target );
-        void add_vehicle_items( const tripoint &target );
+        void add_map_items( const tripoint_bub_ms &target );
+        void add_vehicle_items( const tripoint_bub_ms &target );
         void add_nearby_items( int radius = 1 );
         void add_bionics_items( Character &character );
         /** Remove all items */
@@ -468,6 +482,10 @@ class inventory_selector
         /** Get last filter string set by set_filter or entered by player */
         std::string get_filter() const;
 
+        /** Actions you can take from inventory menus */
+        bool wield( inventory_entry &entry );
+        bool wear( inventory_entry &entry );
+
         // An array of cells for the stat lines. Example: ["Weight (kg)", "10", "/", "20"].
         using stat = std::array<std::string, 4>;
         using stats = std::array<stat, 2>;
@@ -477,6 +495,8 @@ class inventory_selector
         void add_item( inventory_column &target_column,
                        item *location,
                        const item_category *custom_category = nullptr );
+
+        void remove_item( item *location );
 
     protected:
         player &u;
@@ -488,7 +508,7 @@ class inventory_selector
         input_context ctxt;
 
         const item_category *naturalize_category( const item_category &category,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
 
         void add_entry( inventory_column &target_column,
                         std::vector<item *> &&locations,
@@ -617,14 +637,12 @@ class inventory_selector
         void toggle_navigation_mode();
 
         const navigation_mode_data &get_navigation_data( navigation_mode m ) const;
-
+        std::unique_ptr<string_input_popup> spopup;
+        weak_ptr_fast<ui_adaptor> ui;
 
     private:
         catacurses::window w_inv;
 
-        weak_ptr_fast<ui_adaptor> ui;
-
-        std::unique_ptr<string_input_popup> spopup;
 
         std::vector<inventory_column *> columns;
 
@@ -660,6 +678,11 @@ class inventory_pick_selector : public inventory_selector
             inventory_selector( p, preset ) {}
 
         item *execute();
+
+    protected:
+        virtual auto handle_action( const std::string &/*action*/ ) -> bool {
+            return false;
+        }
 };
 
 class inventory_multiselector : public inventory_selector
@@ -669,8 +692,9 @@ class inventory_multiselector : public inventory_selector
                                  const std::string &selection_column_title = "" );
     protected:
         void rearrange_columns( size_t client_width ) override;
-
-    private:
+        size_t query_count( size_t count );
+        void set_chosen_count( inventory_entry &entry, size_t count );
+        std::vector<inventory_entry *> get_selection_column_items() const;
         std::unique_ptr<inventory_column> selection_col;
 };
 
@@ -716,6 +740,12 @@ class inventory_drop_selector : public inventory_multiselector
         drop_locations execute();
 
     protected:
+        /**
+         * Opens prompt that asks for number of items to select
+         *
+         * @param count Number that the prompt starts out with
+         * @return size_t Number the prompt returns
+         */
         stats get_raw_stats() const override;
         /** Toggle item dropping */
         void set_chosen_count( inventory_entry &entry, size_t count );
@@ -724,5 +754,16 @@ class inventory_drop_selector : public inventory_multiselector
     private:
         excluded_stacks dropping;
 };
+
+
+class inventory_pickup_selector : public inventory_multiselector
+{
+    public:
+        inventory_pickup_selector( player &p, const inventory_selector_preset &preset = default_preset );
+        std::vector<pickup::pick_drop_selection> execute();
+    protected:
+        stats get_raw_stats() const override;
+};
+
 
 

@@ -20,5 +20,30 @@
     "reload": 600,
     "valid_mod_locations": [ [ "sling", 1 ], [ "rail", 1 ], [ "sights", 1 ], [ "underbarrel", 1 ] ],
     "extend": { "flags": [ "RELOAD_EJECT", "MOUNTED_GUN" ] }
+  },
+  {
+    "id": "atgm_turret",
+    "copy-from": "gun_base",
+    "weapon_category": [ "ROCKET_LAUNCHERS" ],
+    "looks_like": "atgm_launcher",
+    "type": "GUN",
+    "name": { "str_sp": "BGM-71F TOW Under Armor" },
+    "description": "A twin-tube launcher for anti-tank guided missiles, specifically designed for vehicle use.  While fairly accurate, it isn't fire-and-forget.  Obviously it needs to be mounted on a vehicle to fire.",
+    "weight": "200 kg",
+    "volume": "50 L",
+    "price": "91000 USD",
+    "price_postapoc": "50 USD",
+    "to_hit": -6,
+    "bashing": 12,
+    "material": "steel",
+    "ammo": [ "atgm" ],
+    "skill": "launcher",
+    "range": 15,
+    "sight_dispersion": 10,
+    "durability": 9,
+    "clip_size": 2,
+    "reload": 1200,
+    "ups_charges": 75,
+    "flags": [ "MOUNTED_GUN", "NEVER_JAMS", "NO_RELOAD", "RELOAD_EJECT", "RELOAD_ONE", "PYROMANIAC_WEAPON" ]
   }
 ]

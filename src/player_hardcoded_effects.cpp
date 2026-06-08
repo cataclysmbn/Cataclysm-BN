@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <memory>
 
+#include "action_time_scale.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "character.h"
@@ -141,7 +142,7 @@ static void eff_fun_fungus( player &u, effect &it )
             if( one_in( 600 ) ) {
                 u.add_msg_if_player( m_warning, _( "You feel nauseous." ) );
             }
-            if( calendar::once_every( 10_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 10_minutes ) ) {
                 u.add_msg_if_player( m_warning, _( "You smell and taste mushrooms." ) );
             }
             it.mod_duration( 1_turns );
@@ -174,7 +175,7 @@ static void eff_fun_fungus( player &u, effect &it )
             break;
         case 3: {
             // Permanent symptoms
-            bool is_fungal_ter = g->m.has_flag_ter( "FUNGUS", u.pos() );
+            bool is_fungal_ter = g->m.has_flag_ter( "FUNGUS", u.bub_pos() );
             if( !is_fungal_ter && one_in( 600 + 4 * bonus ) ) {
                 u.add_effect( effect_nausea, 5_minutes );
             }
@@ -222,14 +223,20 @@ static void eff_fun_bleed( player &u, effect &it )
 }
 static void eff_fun_hallu( player &u, effect &it )
 {
-    // TODO: Redo this to allow for variable durations
-    // Time intervals are drawn from the old ones based on 3600 (6-hour) duration.
-    constexpr int maxDuration = 21600;
-    constexpr int comeupTime = static_cast<int>( maxDuration * 0.9 );
-    constexpr int noticeTime = static_cast<int>( comeupTime + ( maxDuration - comeupTime ) / 2 );
-    constexpr int peakTime = static_cast<int>( maxDuration * 0.8 );
-    constexpr int comedownTime = static_cast<int>( maxDuration * 0.3 );
-    const int dur = to_turns<int>( it.get_duration() );
+    // Scale thresholds to the actual duration this instance was added with so
+    // that short doses (pink tablets) still go through the full lifecycle and
+    // longer ones (spells / monster attacks) aren't cut off early.
+    const time_duration remaining = it.get_duration();
+    const time_duration total = ( calendar::turn - it.get_start_time() ) + remaining;
+    if( total <= 0_turns ) {
+        return;
+    }
+    const int totalTurns = to_turns<int>( total );
+    const int comeupTime = static_cast<int>( totalTurns * 0.9 );
+    const int noticeTime = static_cast<int>( comeupTime + ( totalTurns - comeupTime ) / 2 );
+    const int peakTime = static_cast<int>( totalTurns * 0.8 );
+    const int comedownTime = static_cast<int>( totalTurns * 0.3 );
+    const int dur = to_turns<int>( remaining );
     // Baseline
     if( dur == noticeTime ) {
         u.add_msg_if_player( m_warning, _( "You feel a little strange." ) );
@@ -265,12 +272,18 @@ static void eff_fun_hallu( player &u, effect &it )
             ///\EFFECT_STR_NPC increases volume of hallucination sounds (NEGATIVE)
 
             ///\EFFECT_INT_NPC decreases volume of hallucination sounds
-            int loudness = 20 + u.str_cur - u.int_cur;
-            loudness = ( loudness > 5 ? loudness : 5 );
-            loudness = ( loudness < 30 ? loudness : 30 );
-            sounds::sound( u.pos(), loudness, sounds::sound_t::speech, _( random_entry_ref( npc_hallu ) ),
-                           false, "speech",
-                           loudness < 15 ? ( u.male ? "NPC_m" : "NPC_f" ) : ( u.male ? "NPC_m_loud" : "NPC_f_loud" ) );
+            int loudness = 60 + u.str_cur - u.int_cur;
+            loudness = std::min( 90, std::max( 30, loudness ) );
+
+            sound_event se;
+            se.origin = u.bub_pos();
+            se.volume = loudness;
+            se.category = sounds::sound_t::speech;
+            se.description = _( random_entry_ref( npc_hallu ) );
+            se.id = "speech";
+            se.variant = loudness < 70 ? ( u.male ? "NPC_m" : "NPC_f" ) : ( u.male ? "NPC_m_loud" :
+                         "NPC_f_loud" );
+            sounds::sound( se );
         }
     } else if( dur == peakTime ) {
         // Visuals start
@@ -284,7 +297,7 @@ static void eff_fun_hallu( player &u, effect &it )
         u.add_miss_reason( _( "Dancing fractals distract you." ), 2 );
         u.mod_str_bonus( -1 );
         if( u.is_player() && one_in( 50 ) ) {
-            g->spawn_hallucination( u.pos() + tripoint( rng( -10, 10 ), rng( -10, 10 ), 0 ) );
+            g->spawn_hallucination( u.bub_pos() + tripoint_rel_ms( rng( -10, 10 ), rng( -10, 10 ), 0 ) );
         }
     } else if( dur == comedownTime ) {
         if( one_in( 42 ) ) {
@@ -534,7 +547,7 @@ void Character::hardcoded_effects( effect &it )
                                    _( "Your flesh crawls; insects tear through the flesh and begin to emerge!" ),
                                    _( "Insects begin to emerge from <npcname>'s skin!" ) );
             for( ; num_insects > 0; num_insects-- ) {
-                if( monster *const grub = g->place_critter_around( mon_dermatik_larva, pos(), 1 ) ) {
+                if( monster *const grub = g->place_critter_around( mon_dermatik_larva, bub_pos(), 1 ) ) {
                     if( one_in( 3 ) ) {
                         grub->friendly = -1;
                     }
@@ -559,7 +572,7 @@ void Character::hardcoded_effects( effect &it )
                 //~ %s is bodypart in accusative.
                 add_msg( m_warning, _( "You start scratching your %s!" ), body_part_name_accusative( bp ) );
                 g->u.cancel_activity();
-            } else if( g->u.sees( pos() ) ) {
+            } else if( g->u.sees( bub_pos() ) ) {
                 //~ 1$s is NPC name, 2$s is bodypart in accusative.
                 add_msg( _( "%1$s starts scratching their %2$s!" ), name, body_part_name_accusative( bp ) );
             }
@@ -628,7 +641,7 @@ void Character::hardcoded_effects( effect &it )
                 if( has_psy_protection( *this, 4 ) ) {
                     add_msg_if_player( m_bad, _( "You feel something probing your mind, but it is rebuffed!" ) );
                 } else {
-                    add_msg_if_player( m_bad, _( "A terrifying image in the back out your mind paralyzes you." ) );
+                    add_msg_if_player( m_bad, _( "A terrifying image in the back of your mind paralyzes you." ) );
                     add_effect( effect_fearparalyze, 5_turns );
                     moves -= 4 * get_speed();
                 }
@@ -705,7 +718,7 @@ void Character::hardcoded_effects( effect &it )
             }
             if( one_in( 7200 - ( intense * 250 ) ) ) {
                 add_msg_if_player( m_bad, _( "You are beset with a vision of a prowling beast." ) );
-                for( const tripoint &dest : g->m.points_in_radius( pos(), 6 ) ) {
+                for( const tripoint_bub_ms &dest : g->m.points_in_radius( bub_pos(), 6 ) ) {
                     if( g->m.is_cornerfloor( dest ) ) {
                         g->m.add_field( dest, fd_tindalos_rift, 3 );
                         add_msg_if_player( m_info, _( "Your surroundings are permeated with a foul scent." ) );
@@ -722,13 +735,13 @@ void Character::hardcoded_effects( effect &it )
         if( intense > 4 ) {
             // Once every 4 hours baseline, once every 2 hours max
             if( one_turn_in( 14_hours - ( intense * 90_minutes ) ) ) {
-                tripoint dest( 0, 0, posz() );
-                int &x = dest.x;
-                int &y = dest.y;
+                tripoint_bub_ms dest( 0, 0, bub_pos().z() );
+                int &x = dest.x();
+                int &y = dest.y();
                 int tries = 0;
                 do {
-                    x = posx() + rng( -4, 4 );
-                    y = posy() + rng( -4, 4 );
+                    x = bub_pos().x() + rng( -4, 4 );
+                    y = bub_pos().y() + rng( -4, 4 );
                     tries++;
                     if( tries >= 10 ) {
                         break;
@@ -788,16 +801,24 @@ void Character::hardcoded_effects( effect &it )
         if( one_in( 5000 ) ) {
             add_msg_if_player( m_bad, _( "A strange sound reverberates around the edges of reality." ) );
             // Comparable to the humming anomaly trap, with a narrower range
-            int volume = rng( 25, 150 );
+            int volume = rng( 40, 125 );
             std::string sfx;
-            if( volume <= 50 ) {
+            if( volume <= 60 ) {
                 sfx = _( "hrmmm" );
             } else if( volume <= 100 ) {
                 sfx = _( "HRMMM" );
             } else {
                 sfx = _( "VRMMMMMM" );
             }
-            sounds::sound( pos(), volume, sounds::sound_t::activity, sfx, false, "humming", "machinery" );
+            sound_event se;
+            se.origin = bub_pos();
+            se.volume = volume;
+            se.category = sounds::sound_t::activity;
+            se.description = sfx;
+            se.id = "humming";
+            se.variant = "machinery";
+
+            sounds::sound( se );
         }
     } else if( id == effect_asthma ) {
         if( has_effect( effect_adrenaline ) || has_effect( effect_datura ) ) {
@@ -917,7 +938,7 @@ void Character::hardcoded_effects( effect &it )
     } else if( id == effect_grabbed ) {
         set_num_blocks_bonus( get_num_blocks_bonus() - 1 );
         int zed_number = 0;
-        for( auto &dest : g->m.points_in_radius( pos(), 1, 0 ) ) {
+        for( auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
             const monster *const mon = g->critter_at<monster>( dest );
             if( mon && mon->has_effect( effect_grabbing ) ) {
                 zed_number += mon->get_grab_strength();
@@ -993,7 +1014,7 @@ void Character::hardcoded_effects( effect &it )
             } else if( has_effect( effect_antibiotic ) ) {
                 // Normal antibiotic prevents progression
             } else if( has_effect( effect_weak_antibiotic ) ) {
-                if( calendar::once_every( 4_turns ) ) {
+                if( action_time_scale::once_every_this_tick( 4_turns ) ) {
                     // Weak antibiotic slows down to a quarter
                     it.mod_duration( 1_turns );
                 }
@@ -1041,7 +1062,7 @@ void Character::hardcoded_effects( effect &it )
             } else if( has_effect( effect_antibiotic ) ) {
                 // No progression
             } else if( has_effect( effect_weak_antibiotic ) ) {
-                if( calendar::once_every( 4_turns ) ) {
+                if( action_time_scale::once_every_this_tick( 4_turns ) ) {
                     it.mod_duration( 1_turns );
                 }
             } else if( dur > 1_days ) {
@@ -1072,7 +1093,7 @@ void Character::hardcoded_effects( effect &it )
             set_fatigue( 25 ); //Prevent us from waking up naturally while under anesthesia
         }
 
-        if( get_fatigue() <= 10 && !has_effect( effect_narcosis ) && !is_hibernating() ) {
+        if( get_fatigue() <= 25 && !has_effect( effect_narcosis ) && !is_hibernating() ) {
             // Mycus folks upgrade once per night of sleep.
             if( has_trait( trait_THRESH_MYCUS ) ) {
                 mutate_category( mutation_category_id( "MYCUS" ) );
@@ -1113,12 +1134,12 @@ void Character::hardcoded_effects( effect &it )
         }
 
         // TODO: Move this to update_needs when NPCs can mutate
-        if( calendar::once_every( 10_minutes ) && ( has_trait( trait_CHLOROMORPH ) ||
+        if( action_time_scale::once_every_this_tick( 10_minutes ) && ( has_trait( trait_CHLOROMORPH ) ||
                 has_trait( trait_M_SKIN3 ) || has_trait( trait_WATERSLEEP ) ) &&
-            g->m.is_outside( pos() ) ) {
+            g->m.is_outside( bub_pos() ) ) {
             if( has_trait( trait_CHLOROMORPH ) ) {
                 // Hunger and thirst fall before your Chloromorphic physiology!
-                if( g->natural_light_level( posz() ) >= 12 &&
+                if( g->natural_light_level( bub_pos().z() ) >= 12 &&
                     get_weather().weather_id->sun_intensity >= sun_intensity_type::light ) {
                     if( get_stored_kcal() < max_stored_kcal() - 50 ) {
                         mod_stored_kcal( 50 );
@@ -1130,11 +1151,11 @@ void Character::hardcoded_effects( effect &it )
             }
             if( has_trait( trait_M_SKIN3 ) ) {
                 // Spores happen!
-                if( g->m.has_flag_ter_or_furn( "FUNGUS", pos() ) ) {
+                if( g->m.has_flag_ter_or_furn( "FUNGUS", bub_pos() ) ) {
                     if( get_fatigue() >= 0 ) {
                         mod_fatigue( -5 ); // Local guides need less sleep on fungal soil
                     }
-                    if( calendar::once_every( 1_hours ) ) {
+                    if( action_time_scale::once_every_this_tick( 1_hours ) ) {
                         spores(); // spawn some P O O F Y   B O I S
                     }
                 }
@@ -1151,7 +1172,7 @@ void Character::hardcoded_effects( effect &it )
                     trait_SEESLEEP ) ) { // People who can see while sleeping are acclimated to the light.
                 if( has_trait( trait_HEAVYSLEEPER2 ) && !has_trait( trait_HIBERNATE ) ) {
                     // So you can too sleep through noon
-                    if( ( tirednessVal * 1.25 ) < g->m.ambient_light_at( pos() ) && ( get_fatigue() < 10 ||
+                    if( ( tirednessVal * 1.25 ) < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
                             one_in( get_fatigue() / 2 ) ) ) {
                         add_msg_if_player( _( "It's too bright to sleep." ) );
                         // Set ourselves up for removal
@@ -1160,14 +1181,14 @@ void Character::hardcoded_effects( effect &it )
                     }
                     // Ursine hibernators would likely do so indoors.  Plants, though, might be in the sun.
                 } else if( has_trait( trait_HIBERNATE ) ) {
-                    if( ( tirednessVal * 5 ) < g->m.ambient_light_at( pos() ) && ( get_fatigue() < 10 ||
+                    if( ( tirednessVal * 5 ) < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
                             one_in( get_fatigue() / 2 ) ) ) {
                         add_msg_if_player( _( "It's too bright to sleep." ) );
                         // Set ourselves up for removal
                         it.set_duration( 0_turns );
                         woke_up = true;
                     }
-                } else if( tirednessVal < g->m.ambient_light_at( pos() ) && ( get_fatigue() < 10 ||
+                } else if( tirednessVal < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
                            one_in( get_fatigue() / 2 ) ) ) {
                     add_msg_if_player( _( "It's too bright to sleep." ) );
                     // Set ourselves up for removal
@@ -1224,8 +1245,8 @@ void Character::hardcoded_effects( effect &it )
                 } else {
                     int max_count = rng( 1, 3 );
                     int count = 0;
-                    for( const tripoint &mp : g->m.points_in_radius( pos(), 1 ) ) {
-                        if( mp == pos() ) {
+                    for( const tripoint_bub_ms &mp : g->m.points_in_radius( bub_pos(), 1 ) ) {
+                        if( mp == bub_pos() ) {
                             continue;
                         }
                         if( g->m.has_flag( "FLAT", mp ) &&
@@ -1275,15 +1296,27 @@ void Character::hardcoded_effects( effect &it )
                     it.mod_duration( 10_minutes );
                 } else if( dur == 2_turns ) {
                     // let the sound code handle the wake-up part
-                    sounds::sound( pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
-                                   "alarm_clock" );
+                    sound_event se;
+                    se.origin = bub_pos();
+                    se.volume = 70;
+                    se.category = sounds::sound_t::alarm;
+                    se.description = _( "beep-beep-beep!" );
+                    se.id = "tool";
+                    se.variant = "alarm_clock";
+                    sounds::sound( se );
                 }
             }
         } else {
             if( dur == 1_turns ) {
                 if( is_avatar() && has_alarm_clock() ) {
-                    sounds::sound( pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
-                                   "alarm_clock" );
+                    sound_event se;
+                    se.origin = bub_pos();
+                    se.volume = 70;
+                    se.category = sounds::sound_t::alarm;
+                    se.description = _( "beep-beep-beep!" );
+                    se.id = "tool";
+                    se.variant = "alarm_clock";
+                    sounds::sound( se );
                     const std::string alarm = _( "Your alarm is going off." );
                     g->cancel_activity_or_ignore_query( distraction_type::alert, alarm );
                     add_msg( _( "Your alarm went off." ) );

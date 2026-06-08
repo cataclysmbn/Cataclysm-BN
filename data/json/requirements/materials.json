@@ -94,6 +94,12 @@
     "components": [ [ [ "plasma", 5 ], [ "c_hydrogen_gas", 20 ] ], [ [ "charcoal", 25 ], [ "coal_lump", 25 ] ] ]
   },
   {
+    "id": "superalloy_forge",
+    "type": "requirement",
+    "//": "Materials required to print one superalloy sheet",
+    "components": [ [ [ "sheet_metal", 1 ] ], [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
     "id": "autoclave",
     "type": "requirement",
     "//": "Materials required to run one cycle of the furniture autoclave",
@@ -389,11 +395,13 @@
         [ "cooking_oil2", 8 ],
         [ "lamp_oil", 100 ],
         [ "r_paint", 10 ],
-        [ "b_paint", 10 ],
-        [ "w_paint", 10 ],
         [ "g_paint", 10 ],
+        [ "b_paint", 10 ],
+        [ "c_paint", 10 ],
         [ "p_paint", 10 ],
         [ "y_paint", 10 ],
+        [ "w_paint", 10 ],
+        [ "k_paint", 10 ],
         [ "bone_glue", 1 ],
         [ "superglue", 1 ],
         [ "wax", 1 ],

@@ -8,6 +8,7 @@
 #include "activity_handlers.h"
 #include "assign.h"
 #include "debug.h"
+#include "flag.h"
 #include "enum_conversions.h"
 #include "json.h"
 #include "sounds.h"
@@ -41,6 +42,25 @@ bool string_id<activity_type>::is_valid() const
     return found != activity_type_all.end();
 }
 
+namespace io
+{
+template<>
+std::string enum_to_string<activity_bubble_effect>( activity_bubble_effect data )
+{
+    switch( data ) {
+        // *INDENT-OFF*
+        case activity_bubble_effect::none:   return "none";
+        case activity_bubble_effect::mobile: return "mobile";
+        case activity_bubble_effect::idle:   return "idle";
+        case activity_bubble_effect::last:   break;
+        // *INDENT-ON*
+    }
+    debugmsg( "Invalid activity_bubble_effect", data );
+    return "none";
+}
+} // namespace io
+
+
 
 void activity_type::load( const JsonObject &jo )
 {
@@ -57,6 +77,8 @@ void activity_type::load( const JsonObject &jo )
     assign( jo, "auto_needs", result.auto_needs, false );
     assign( jo, "morale_blocked", result.morale_blocked_, false );
     assign( jo, "verbose_tooltip", result.verbose_tooltip_, false );
+    result.bubble_effect_ = jo.get_enum_value<activity_bubble_effect>( "bubble_size_effect",
+                            activity_bubble_effect::none );
     if( jo.has_member( "complex_moves" ) ) {
         result.complex_moves_ = true;
         auto c_moves = jo.get_object( "complex_moves" );
@@ -202,8 +224,11 @@ bool activity_type::call_finish( player_activity *act, player *p ) const
         pair->second( act, p );
         // kill activity sounds at finish
         sfx::end_activity_sounds();
-        if( !act->tools.empty() ) {
-            g->remove_fake_item( &*act->tools.front() );
+        if( !act->get_tools().empty() ) {
+            auto &tool = *act->get_tools().front();
+            if( tool.has_flag( flag_TEMPORARY_ITEM ) ) {
+                g->remove_fake_item( &tool );
+            }
         }
         return true;
     }

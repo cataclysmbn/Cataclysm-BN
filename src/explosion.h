@@ -3,6 +3,7 @@
 #include <optional>
 #include <string>
 
+#include "coordinates.h"
 #include "projectile.h"
 
 struct tripoint;
@@ -13,6 +14,7 @@ struct explosion_data {
     int damage              = 0;
     float radius            = 0;
     bool fire               = false;
+    std::optional<std::vector<std::tuple<std::string, int, int, int>>> fragment_effect = std::nullopt;
     std::optional<projectile> fragment = std::nullopt;
 
     /** Returns the range at which blast damage is 0 and shrapnel is out of range. */
@@ -38,24 +40,24 @@ namespace explosion_handler
  * If casing mass > 0, shrapnel is produced.
  */
 void explosion(
-    const tripoint &p, Creature *source, float power, float factor = 0.8f,
+    const tripoint_bub_ms &p, Creature *source, float power, float factor = 0.8f,
     bool fire = false, int legacy_casing_mass = 0, float legacy_frag_mass = 0.05
 );
 
-void explosion( const tripoint &p, const explosion_data &ex, Creature *source );
+void explosion( const tripoint_bub_ms &p, const explosion_data &ex, Creature *source );
 
 constexpr float power_to_dmg_mult = 2.0f / 15.0f;
 
 /** Triggers a flashbang explosion at p. */
-void flashbang( const tripoint &p, bool player_immune, const std::string &exp_name );
+void flashbang( const tripoint_bub_ms &p, bool player_immune, const std::string &exp_name );
 /** Triggers a resonance cascade at p. */
-void resonance_cascade( const tripoint &p );
+void resonance_cascade( const tripoint_bub_ms &p );
 /** Triggers a scrambler blast at p. */
-void scrambler_blast( const tripoint &p );
+void scrambler_blast( const tripoint_bub_ms &p );
 /** Triggers an EMP blast at p. */
-void emp_blast( const tripoint &p );
+void emp_blast( const tripoint_bub_ms &p );
 /** Shockwave applies knockback with given parameters to all targets within radius of p. */
-void shockwave( const tripoint &p, const shockwave_data &sw, const std::string &exp_name,
+void shockwave( const tripoint_bub_ms &p, const shockwave_data &sw, const std::string &exp_name,
                 Creature *source );
 
 projectile shrapnel_from_legacy( int power, float blast_radius );

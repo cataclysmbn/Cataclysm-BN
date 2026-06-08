@@ -1,0 +1,50 @@
+name: Update PR artifact body
+
+description: Update the Build Artifacts block at the bottom of a pull request body
+
+inputs:
+  repository:
+    description: owner/repo containing the pull request
+    required: true
+  pr-number:
+    description: Pull request number
+    required: true
+  content:
+    description: Markdown content to place between artifact comment markers
+    required: true
+  token:
+    description: GitHub token with pull-requests:write
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Update Build Artifacts block
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPOSITORY: ${{ inputs.repository }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        CONTENT: ${{ inputs.content }}
+      run: |
+        set -euo pipefail
+
+        block=$(cat <<EOF
+        <!-- BEGIN artifact comment -->
+
+        ${CONTENT}
+        <!-- END artifact comment -->
+        EOF
+        )
+
+        body=$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')
+        clean_body=$(printf '%s' "$body" | perl -0pe 's/\n*<!-- BEGIN artifact comment -->.*?<!-- END artifact comment -->\s*//sg; s/[ \t]+\n/\n/g; s/\s+\z//')
+
+        if [ -n "$clean_body" ]; then
+          printf -v new_body '%s\n\n%s' "$clean_body" "$block"
+        else
+          new_body="$block"
+        fi
+
+        jq -n --arg body "$new_body" '{body: $body}' > "$RUNNER_TEMP/pr-body.json"
+        gh api -X PATCH "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --input "$RUNNER_TEMP/pr-body.json" >/dev/null

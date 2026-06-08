@@ -1,6 +1,6 @@
 #pragma once
 
-#include "point.h"
+#include "coordinates.h"
 #include "sdl_wrappers.h"
 
 class pixel_minimap_projector

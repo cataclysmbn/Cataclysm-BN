@@ -25,6 +25,11 @@ scopes:
   - balance
   - port
   - lua
+  - mods/Arcana
+  - mods/Arcana_Crit_Patch
+  - mods/Arcana_Dinomod_Patch
+  - mods/Arcana_MagiclalNights_Patch
+  - mods/Arcana_aftershock_Patch
   - mods/CheesyInnaWoodFixes
   - mods/DinoMod
   - mods/MMA
@@ -45,10 +50,12 @@ scopes:
   - mods/UDP_BN_FAKE_SNOW
   - mods/aftershock
   - mods/alt_map_key
+  - mods/callback_lua_test
   - mods/cbm_slots
   - mods/change_hairstyle
   - mods/civilians
   - mods/classic_zombies
+  - mods/color_expansion
   - mods/crazy_cataclysm
   - mods/crt_expansion
   - mods/dangerous_fungi
@@ -57,6 +64,8 @@ scopes:
   - mods/exotic_ammo
   - mods/flowerpots_plus
   - mods/fuji_mpp
+  - mods/gunchair
+  - mods/i_noencum_backpacks
   - mods/innawoods
   - mods/jump_pad
   - mods/lethal_zeds
@@ -68,19 +77,24 @@ scopes:
   - mods/no_reviving_zombies
   - mods/no_zombify
   - mods/novitamins
+  - mods/npc_lua_hook_test
   - mods/nuclear_tear
   - mods/pathfinding_stockfish
   - mods/pride_flags
   - mods/resurrection_tech
   - mods/rpg_system
+  - mods/sample-uv-mod
   - mods/saveload_lua_test
+  - mods/skills_through_kills
   - mods/smart_house_remote_mod
+  - mods/spawn_hook_test
   - mods/speedydex
   - mods/stats_through_kills
   - mods/tablet_ebook
   - mods/teleportation_tech
   - mods/test_data
   - mods/test_lua_hooks
+  - mods/test_lua_require
   - mods/udp_redux
   - mods/underground_dynamic_temperature
   - mods/weather_variants

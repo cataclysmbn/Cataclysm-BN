@@ -21,7 +21,7 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
 
     clear_avatar();
     Character &dummy = get_player_character();
-    const tripoint test_origin( 60, 60, 0 );
+    const tripoint_bub_ms test_origin( 60, 60, 0 );
 
     REQUIRE( here.ter( test_origin ) == t_water_dp );
     REQUIRE( here.ter( test_origin + tripoint_below ) == t_water_cube );
@@ -36,8 +36,8 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
             g->vertical_move( -1, false );
 
             THEN( "avatar is underwater at z0" ) {
-                REQUIRE( dummy.pos() == test_origin );
-                REQUIRE( here.ter( dummy.pos() ) == ter_id( "t_water_dp" ) );
+                REQUIRE( dummy.bub_pos() == test_origin );
+                REQUIRE( here.ter( dummy.bub_pos() ) == ter_id( "t_water_dp" ) );
                 REQUIRE( dummy.is_underwater() );
             }
         }
@@ -46,8 +46,8 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
             g->vertical_move( 1, false );
 
             THEN( "avatar is not underwater at z0" ) {
-                REQUIRE( dummy.pos() == test_origin );
-                REQUIRE( here.ter( dummy.pos() ) == ter_id( "t_water_dp" ) );
+                REQUIRE( dummy.bub_pos() == test_origin );
+                REQUIRE( here.ter( dummy.bub_pos() ) == ter_id( "t_water_dp" ) );
                 REQUIRE( !dummy.is_underwater() );
             }
         }
@@ -62,8 +62,8 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
             g->vertical_move( -1, false );
 
             THEN( "avatar is underwater at z-1" ) {
-                REQUIRE( dummy.pos() == test_origin + tripoint_below );
-                REQUIRE( here.ter( dummy.pos() ) == ter_id( "t_water_cube" ) );
+                REQUIRE( dummy.bub_pos() == test_origin + tripoint_below );
+                REQUIRE( here.ter( dummy.bub_pos() ) == ter_id( "t_water_cube" ) );
                 REQUIRE( dummy.is_underwater() );
             }
         }
@@ -72,8 +72,8 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
             g->vertical_move( 1, false );
 
             THEN( "avatar is not underwater at z0" ) {
-                REQUIRE( dummy.pos() == test_origin );
-                REQUIRE( here.ter( dummy.pos() ) == ter_id( "t_water_dp" ) );
+                REQUIRE( dummy.bub_pos() == test_origin );
+                REQUIRE( here.ter( dummy.bub_pos() ) == ter_id( "t_water_dp" ) );
                 REQUIRE( !dummy.is_underwater() );
             }
         }
@@ -88,8 +88,8 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
             g->vertical_move( -1, false );
 
             THEN( "avatar is underwater at z-2" ) {
-                REQUIRE( dummy.pos() == test_origin + tripoint( 0, 0, -2 ) );
-                REQUIRE( here.ter( dummy.pos() ) == ter_id( "t_lake_bed" ) );
+                REQUIRE( dummy.bub_pos() == test_origin + tripoint_rel_ms( 0, 0, -2 ) );
+                REQUIRE( here.ter( dummy.bub_pos() ) == ter_id( "t_lake_bed" ) );
                 REQUIRE( dummy.is_underwater() );
             }
         }
@@ -98,8 +98,8 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
             g->vertical_move( 1, false );
 
             THEN( "avatar is underwater at z0" ) {
-                REQUIRE( dummy.pos() == test_origin );
-                REQUIRE( here.ter( dummy.pos() ) == ter_id( "t_water_dp" ) );
+                REQUIRE( dummy.bub_pos() == test_origin );
+                REQUIRE( here.ter( dummy.bub_pos() ) == ter_id( "t_water_dp" ) );
                 REQUIRE( dummy.is_underwater() );
             }
         }
@@ -114,8 +114,8 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
             g->vertical_move( -1, false );
 
             THEN( "avatar is underwater at z-2" ) {
-                REQUIRE( dummy.pos() == test_origin + tripoint( 0, 0, -2 ) );
-                REQUIRE( here.ter( dummy.pos() ) == ter_id( "t_lake_bed" ) );
+                REQUIRE( dummy.bub_pos() == test_origin + tripoint_rel_ms( 0, 0, -2 ) );
+                REQUIRE( here.ter( dummy.bub_pos() ) == ter_id( "t_lake_bed" ) );
                 REQUIRE( dummy.is_underwater() );
             }
         }
@@ -124,8 +124,8 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
             g->vertical_move( 1, false );
 
             THEN( "avatar is underwater at z-1" ) {
-                REQUIRE( dummy.pos() == test_origin + tripoint_below );
-                REQUIRE( here.ter( dummy.pos() ) == ter_id( "t_water_cube" ) );
+                REQUIRE( dummy.bub_pos() == test_origin + tripoint_below );
+                REQUIRE( here.ter( dummy.bub_pos() ) == ter_id( "t_water_cube" ) );
                 REQUIRE( dummy.is_underwater() );
             }
         }

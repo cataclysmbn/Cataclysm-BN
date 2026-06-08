@@ -139,7 +139,10 @@ SDL_Color color_pixel_underwater_dark( const SDL_Color &color )
     };
 }
 
-SDL_Color color_pixel_copy( const SDL_Color &color ) { return color; }
+SDL_Color color_pixel_copy( const SDL_Color &color )
+{
+    return color;
+}
 
 SDL_Color color_pixel_darken( const SDL_Color &color )
 {
@@ -228,11 +231,7 @@ std::vector<SDL_Color> color_linear_interpolate( const SDL_Color &start_color,
 
 SDL_Surface_Ptr create_surface_32( int w, int h )
 {
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    return CreateRGBSurface( 0, w, h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF );
-#else
-    return CreateRGBSurface( 0, w, h, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000 );
-#endif
+    return CreateSurface( SDL_PIXELFORMAT_RGBA32, w, h );
 }
 
 SDL_Rect fit_rect_inside( const SDL_Rect &inner, const SDL_Rect &outer )
@@ -248,6 +247,64 @@ SDL_Rect fit_rect_inside( const SDL_Rect &inner, const SDL_Rect &outer )
     const point p( outer.x + ( outer.w - w ) / 2, outer.y + ( outer.h - h ) / 2 );
 
     return SDL_Rect{ p.x, p.y, w, h };
+}
+
+void get_pixel_rgba( const SDL_Surface *surface, int x, int y,
+                     Uint8 &r, Uint8 &g, Uint8 &b, Uint8 &a )
+{
+    const SDL_PixelFormatDetails *fmt = SDL_GetPixelFormatDetails( surface->format );
+    auto *pixels = static_cast<Uint8 *>( surface->pixels );
+    Uint8 *p = pixels + y * surface->pitch + x * fmt->bytes_per_pixel;
+
+    Uint32 pixel;
+    switch( fmt->bytes_per_pixel ) {
+        case 4:
+            pixel = *reinterpret_cast<Uint32 *>( p );
+            break;
+        case 3:
+            // 24-bit surfaces (rare)
+            if constexpr( SDL_BYTEORDER == SDL_BIG_ENDIAN ) {
+                pixel = p[0] << 16 | p[1] << 8 | p[2];
+            } else {
+                pixel = p[0] | p[1] << 8 | p[2] << 16;
+            }
+            break;
+        default:
+            pixel = 0;
+            break;
+    }
+
+    SDL_GetRGBA( pixel, fmt, nullptr, &r, &g, &b, &a );
+}
+
+void set_pixel_rgba( const SDL_Surface *surface, int x, int y,
+                     Uint8 r, Uint8 g, Uint8 b, Uint8 a )
+{
+    const SDL_PixelFormatDetails *fmt = SDL_GetPixelFormatDetails( surface->format );
+    Uint32 pixel = SDL_MapRGBA( fmt, nullptr, r, g, b, a );
+
+    auto *pixels = static_cast<Uint8 *>( surface->pixels );
+    Uint8 *p = pixels + y * surface->pitch + x * fmt->bytes_per_pixel;
+
+    switch( fmt->bytes_per_pixel ) {
+        case 4:
+            *reinterpret_cast<Uint32 *>( p ) = pixel;
+            break;
+        case 3:
+            // 24-bit surfaces (rare)
+            if constexpr( SDL_BYTEORDER == SDL_BIG_ENDIAN ) {
+                p[0] = ( pixel >> 16 ) & 0xff;
+                p[1] = ( pixel >> 8 ) & 0xff;
+                p[2] = pixel & 0xff;
+            } else {
+                p[0] = pixel & 0xff;
+                p[1] = ( pixel >> 8 ) & 0xff;
+                p[2] = ( pixel >> 16 ) & 0xff;
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 #endif // SDL_TILES

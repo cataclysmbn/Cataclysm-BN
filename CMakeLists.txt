@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.24)
 
+if (POLICY CMP0141)
+    cmake_policy(SET CMP0141 NEW)
+endif ()
+
 project(CataclysmBN C CXX)
 
 list(APPEND CMAKE_MODULE_PATH
@@ -9,7 +13,12 @@ if (NOT VCPKG_MANIFEST_MODE)
             ${CMAKE_SOURCE_DIR}/CMakeModules/Find)
 endif()
 
-include(AstyleFormatSource)
+
+option(CATA_FORMAT_TARGETS "Enable C++ formatting targets" ON)
+if (CATA_FORMAT_TARGETS)
+    include(FormatSource)
+endif ()
+include(FetchContent)
 
 set(CMAKE_TLS_VERIFY ON)
 
@@ -63,6 +72,11 @@ set(CATA_CHECK_CLANG_TIDY "" CACHE STRING "Path to check_clang_tidy.py for plugi
 set(GIT_BINARY "" CACHE STRING "Git binary name or path.")
 set(LINKER "" CACHE STRING "Custom Linker to use")
 set(GETTEXT_MSGFMT_BINARY "" CACHE FILEPATH "msgfmt binary name or path.")
+option(BUILD_SDL3 "Force builds SDL3 and its modules from source, instead of using system packages" "OFF")
+option(BUILD_SHADERCROSS "Build SDL_shadercross from source when shadercross is not on PATH" "ON")
+option(CATA_SDL "Link SDL3 core for GPU platform services used by existing game targets." "OFF")
+option(CATA_GPU_VERIFY "Enable GPU output verification against CPU reference via readback (development only, requires CATA_SDL)." "OFF")
+set(CATA_SHADERS OFF)
 
 if (TESTS)
 include(CTest)
@@ -120,7 +134,7 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
     set(_OS_DARWIN_ 1)
     add_definitions(-DMACOSX)
     if (TILES)
-        add_definitions(-DOSX_SDL2_LIBS)
+        add_definitions(-DOSX_SDL3_LIBS)
     endif ()
 endif ()
 
@@ -133,8 +147,15 @@ include(CheckCXXCompilerFlag)
 #SET(CMAKE_SHARED_LIBRARY_C_FLAGS "${CMAKE_SHARED_LIBRARY_C_FLAGS} -m32")
 #SET(CMAKE_SHARED_LIBRARY_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -m32")
 
+if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+    set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+endif ()
+
 find_package(PkgConfig)
 find_package(SQLite3)
+if (NOT TARGET SQLite3::SQLite3 AND TARGET SQLite::SQLite3)
+    add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif ()
 find_package(ZLIB)
 if (NOT DYNAMIC_LINKING)
     if(NOT MSVC)
@@ -175,6 +196,11 @@ endif ()
 # Can't compile curses and tiles build's at same time
 if (TILES)
     set(CURSES OFF)
+endif ()
+
+if (TILES OR CURSES OR SOUND)
+    set(CATA_SDL ON CACHE BOOL
+        "Link SDL3 core for GPU platform services used by existing game targets." FORCE)
 endif ()
 
 # Can't use both home and xdg directories
@@ -238,6 +264,10 @@ message(STATUS "LANGUAGES                     : ${LANGUAGES}")
 if (LINKER)
     message(STATUS "LINKER                        : ${LINKER}")
 endif ()
+message(STATUS "BUILD_SDL3                    : ${BUILD_SDL3}")
+message(STATUS "CATA_SDL                      : ${CATA_SDL}")
+message(STATUS "CATA_SHADERS                  : ${CATA_SHADERS}")
+message(STATUS "CATA_GPU_VERIFY               : ${CATA_GPU_VERIFY}")
 
 message(STATUS "See CMake compiling guide for details and more info --")
 
@@ -266,14 +296,15 @@ if (NOT MSVC)
     if (NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
         set(CATA_WARNINGS "${CATA_WARNINGS} -Wredundant-decls")
     endif ()
-    set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -fsigned-char -fno-builtin-std-forward_like -fno-finite-math-only")
+    set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -fsigned-char -fno-builtin-std-forward_like")
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-finite-math-only>)
     # Add debug symbols for non-release builds or when backtrace is enabled
     if (BACKTRACE OR NOT RELEASE)
         set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -g1")
         # Use debug prefix map for ccache compatibility with git worktrees
         # see https://ccache.dev/manual/latest.html#_compiling_in_different_directories
         file(RELATIVE_PATH REL_SRC_PATH "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}")
-        set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -ffile-prefix-map=${REL_SRC_PATH}=.")
+        set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -ffile-prefix-map=${REL_SRC_PATH}=/")
     endif()
     # Compact the whitespace in the warning string
     string(REGEX REPLACE "[\t ]+" " " CATA_WARNINGS "${CATA_WARNINGS}")
@@ -299,7 +330,6 @@ set(CMAKE_THREAD_PREFER_PTHREAD True)
 find_package(Threads REQUIRED)
 
 if (USE_TRACY)
-    include(FetchContent)
 
     if (NOT TRACY_VERSION)
         if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
@@ -328,46 +358,303 @@ if (USE_TRACY)
 endif ()
 
 # Check for build types and libraries
-if (TILES)
-    # Find SDL, SDL_ttf & SDL_image for graphical install
-    message(STATUS "Searching for SDL2 library --")
+if (CATA_SDL)
+    message(STATUS "Searching for SDL3 library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
-        # ^^ Use sdl2-config.cmake provided by the system or VCPKG
-        find_package(SDL2)
-        if(NOT SDL2_FOUND)
-            # Use our CMakeModules/Find/FindSDL2.cmake
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3-config.cmake provided by the system or VCPKG
+            find_package(SDL3 CONFIG)
             set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
-            find_package(SDL2)
+        endif ()
+        if(NOT SDL3_FOUND)
+            message("Installing SDL3 from Source")
+            set(SDL_TEST_LIBRARY OFF)
+            SET(SDL_SHARED ON)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3
+                    URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.8.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3")
         endif()
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
     endif()
-    if (NOT (SDL2_FOUND OR TARGET SDL2::SDL2 OR TARGET SDL2::SDL2-static))
+    if (NOT (SDL3_FOUND OR TARGET SDL3::SDL3 OR TARGET SDL3::SDL3-static))
         message(FATAL_ERROR
-                "This project requires SDL2 to be installed to compile in graphical mode.  \
-                 Please install the SDL2 development libraries, \
-                 or try compiling without -DTILES=1 for a text-only compilation. \
+                "This project requires SDL3 to be installed for SDL platform services. \
+                 Please install the SDL3 development libraries. \
                  See CMake compiling guide for details and more info.")
     endif ()
+    add_definitions(-DCATA_SDL)
+    if (CATA_GPU_VERIFY)
+        add_definitions(-DCATA_GPU_VERIFY)
+    endif ()
 
-    message(STATUS "Searching for SDL2_TTF library --")
-    find_package(SDL2_ttf)
-    if (NOT (SDL2_TTF_FOUND OR TARGET SDL2::SDL2_ttf OR TARGET SDL2_ttf::SDL2_ttf-static))
+    # --- SDL_shadercross: HLSL shader compiler (build-time tool only, library not linked) ---
+    message(STATUS "Searching for shadercross (HLSL compiler) --")
+
+    find_program(SHADERCROSS_EXE
+        NAMES shadercross
+        HINTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/sdl3-shadercross")
+
+    if (APPLE AND SHADERCROSS_EXE)
+        message(STATUS "shadercross found on macOS; using precompiled MSL shaders instead")
+        set(SHADERCROSS_EXE "")
+    endif ()
+
+    if (NOT SHADERCROSS_EXE AND BUILD_SHADERCROSS AND NOT APPLE)
+        message(STATUS "Installing SDL_shadercross from Source")
+        FetchContent_Declare(
+                SDL3_SHADERCROSS
+                GIT_REPOSITORY https://github.com/libsdl-org/SDL_shadercross.git
+                GIT_TAG main
+                GIT_SHALLOW TRUE
+                GIT_SUBMODULES_RECURSE TRUE
+        )
+        FetchContent_GetProperties(SDL3_SHADERCROSS)
+        if (NOT sdl3_shadercross_POPULATED)
+            cmake_policy(PUSH)
+            if (POLICY CMP0169)
+                cmake_policy(SET CMP0169 OLD)
+            endif ()
+            FetchContent_Populate(SDL3_SHADERCROSS)
+            cmake_policy(POP)
+        endif ()
+
+        set(SHADERCROSS_DXC_ROOT "${sdl3_shadercross_BINARY_DIR}/DirectXShaderCompiler-binaries")
+        set(DXC_ROOT "${SHADERCROSS_DXC_ROOT}")
+        include("${sdl3_shadercross_SOURCE_DIR}/build-scripts/download-prebuilt-DirectXShaderCompiler.cmake")
+        set(DirectXShaderCompiler_ROOT "${SHADERCROSS_DXC_ROOT}")
+        if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+            set(DirectXShaderCompiler_INCLUDE_PATH "${SHADERCROSS_DXC_ROOT}/linux/include/dxc")
+            set(DirectXShaderCompiler_dxcompiler_LIBRARY "${SHADERCROSS_DXC_ROOT}/linux/lib/libdxcompiler.so")
+            set(DirectXShaderCompiler_dxil_LIBRARY "${SHADERCROSS_DXC_ROOT}/linux/lib/libdxil.so")
+        endif ()
+
+        set(CATA_SAVED_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+        set(CATA_SAVED_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+        set(CATA_SAVED_CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+        set(CMAKE_C_FLAGS "")
+        set(CMAKE_CXX_FLAGS "")
+        set(CMAKE_CXX_FLAGS_DEBUG "")
+
+        set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+        set(SPIRV_CROSS_SKIP_INSTALL ON)
+        set(SPIRV_CROSS_CLI OFF)
+        set(SPIRV_CROSS_ENABLE_TESTS OFF)
+        set(SPIRV_CROSS_STATIC ON)
+        set(SPIRV_CROSS_SHARED OFF)
+        set(SPIRV_CROSS_FORCE_PIC ON)
+        add_subdirectory(
+                "${sdl3_shadercross_SOURCE_DIR}/external/SPIRV-Cross"
+                "${sdl3_shadercross_BINARY_DIR}/external/SPIRV-Cross"
+                EXCLUDE_FROM_ALL)
+        if (TARGET spirv-cross-c AND NOT TARGET spirv_cross_c)
+            add_library(spirv_cross_c ALIAS spirv-cross-c)
+        endif ()
+
+        set(SDLSHADERCROSS_CLI ON)
+        set(SDLSHADERCROSS_DXC ON)
+        set(SDLSHADERCROSS_INSTALL OFF)
+        set(SDLSHADERCROSS_SHARED ON)
+        set(SDLSHADERCROSS_STATIC OFF)
+        set(SDLSHADERCROSS_SPIRVCROSS_SHARED OFF)
+        set(SDLSHADERCROSS_TESTS OFF)
+        set(SDLSHADERCROSS_VENDORED OFF)
+        set(SDLSHADERCROSS_WERROR OFF)
+
+        add_subdirectory(
+                "${sdl3_shadercross_SOURCE_DIR}"
+                "${sdl3_shadercross_BINARY_DIR}"
+                EXCLUDE_FROM_ALL)
+        set(CMAKE_C_FLAGS "${CATA_SAVED_CMAKE_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CATA_SAVED_CMAKE_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CATA_SAVED_CMAKE_CXX_FLAGS_DEBUG}")
+        set_target_properties(shadercross PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${sdl3_shadercross_BINARY_DIR}")
+
+        set(SHADERCROSS_EXE $<TARGET_FILE:shadercross>)
+        set(SHADERCROSS_TARGET shadercross)
+    endif ()
+
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/data/shaders")
+
+    file(GLOB_RECURSE CATA_HLSL_SOURCES CONFIGURE_DEPENDS
+         "${CMAKE_SOURCE_DIR}/src/shaders/*.hlsl")
+
+    set(CATA_PRECOMPILED_SHADER_OUTPUTS "")
+    foreach (HLSL_SRC ${CATA_HLSL_SOURCES})
+        get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
+        if (WIN32)
+            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
+        elseif (APPLE)
+            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
+        else ()
+            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
+        endif ()
+    endforeach ()
+
+    if (SHADERCROSS_EXE)
+        set(CATA_SHADERS ON)
+        message(STATUS "shadercross: ${SHADERCROSS_EXE}")
+        set(CATA_SHADER_OUTPUTS "")
+
+        foreach (HLSL_SRC ${CATA_HLSL_SOURCES})
+            get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
+
+            if (SHADER_NAME MATCHES "_vertex$")
+                set(STAGE vertex)
+            elseif (SHADER_NAME MATCHES "_fragment$")
+                set(STAGE fragment)
+            else ()
+                set(STAGE compute)
+            endif ()
+
+            set(SPV_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
+            set(MSL_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
+
+            add_custom_command(
+                OUTPUT "${SPV_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d spirv -t ${STAGE} -o "${SPV_OUT}"
+                DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
+                COMMENT "Compiling ${SHADER_NAME}.hlsl -> SPIR-V"
+                VERBATIM)
+            list(APPEND CATA_SHADER_OUTPUTS "${SPV_OUT}")
+
+            add_custom_command(
+                OUTPUT "${MSL_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d msl -t ${STAGE} -o "${MSL_OUT}"
+                DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
+                COMMENT "Compiling ${SHADER_NAME}.hlsl -> MSL"
+                VERBATIM)
+            list(APPEND CATA_SHADER_OUTPUTS "${MSL_OUT}")
+
+            if (WIN32)
+                set(DXIL_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
+                add_custom_command(
+                    OUTPUT "${DXIL_OUT}"
+                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                    COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d dxil -t ${STAGE} -o "${DXIL_OUT}"
+                    DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
+                    COMMENT "Compiling ${SHADER_NAME}.hlsl -> DXIL"
+                    VERBATIM)
+                list(APPEND CATA_SHADER_OUTPUTS "${DXIL_OUT}")
+            endif ()
+        endforeach ()
+
+        add_custom_target(cata_shaders ALL DEPENDS ${CATA_SHADER_OUTPUTS})
+        if (SHADERCROSS_TARGET)
+            add_dependencies(cata_shaders ${SHADERCROSS_TARGET})
+        endif ()
+    elseif (TILES AND CATA_PRECOMPILED_SHADER_OUTPUTS)
+        set(CATA_MISSING_PRECOMPILED_SHADERS "")
+        foreach (SHADER_OUT ${CATA_PRECOMPILED_SHADER_OUTPUTS})
+            if (NOT EXISTS "${SHADER_OUT}")
+                list(APPEND CATA_MISSING_PRECOMPILED_SHADERS "${SHADER_OUT}")
+            endif ()
+        endforeach ()
+
+        if (CATA_MISSING_PRECOMPILED_SHADERS)
+            message(FATAL_ERROR
+                "shadercross not found and precompiled platform shaders are missing: "
+                "${CATA_MISSING_PRECOMPILED_SHADERS}. "
+                "Run a shader generation job or place shadercross on PATH.")
+        endif ()
+
+        set(CATA_SHADERS ON)
+        message(STATUS "shadercross not found; using precompiled shaders from data/shaders")
+        add_custom_target(cata_shaders DEPENDS ${CATA_PRECOMPILED_SHADER_OUTPUTS})
+    elseif (TILES)
         message(FATAL_ERROR
-                "This project requires SDL2_ttf to be installed to compile in graphical mode. \
-                Please install the SDL2_ttf development libraries, \
+            "shadercross not found — tiles builds require compiled shaders. "
+            "Either enable BUILD_SHADERCROSS or place shadercross on PATH.")
+    else ()
+        message(STATUS "shadercross not found — shaders will not be compiled")
+    endif ()
+endif ()
+
+if (WIN32 AND CATA_SDL)
+    include(${CMAKE_SOURCE_DIR}/build-scripts/WindowsLavapipe.cmake)
+    cata_setup_windows_lavapipe_runtime()
+endif()
+
+if (TILES)
+    # Find SDL3_ttf & SDL3_image for tile rendering
+    message(STATUS "Searching for SDL3_ttf library --")
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_ttf-config.cmake provided by the system or VCPKG
+            find_package(SDL3_ttf CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
+        if(NOT SDL3_ttf_FOUND)
+            message("Installing SDL3_ttf from Source")
+            set(SDLTTF_PLUTOSVG OFF)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_TTF
+                    URL https://github.com/libsdl-org/SDL_ttf/archive/refs/tags/release-3.2.2.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3_TTF)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_ttf-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3_ttf")
+        endif()
+    endif()
+    if (NOT (SDL3_ttf_FOUND OR TARGET SDL3_ttf::SDL3_ttf OR TARGET SDL3_ttf::SDL3_ttf-static))
+        message(FATAL_ERROR
+                "This project requires SDL3_ttf to be installed to compile in graphical mode. \
+                Please install the SDL3_ttf development libraries, \
                 or try compiling without -DTILES=1 for a text-only compilation. \
                 See CMake compiling guide for details and more info.")
     endif ()
 
-    message(STATUS "Searching for SDL2_image library --")
-    find_package(SDL2_image)
-    if (NOT (SDL2_IMAGE_FOUND OR TARGET SDL2::SDL2_image OR TARGET SDL2_image::SDL2_image-static))
+    message(STATUS "Searching for SDL3_image library --")
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_image-config.cmake provided by the system or VCPKG
+            find_package(SDL3_image CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
+        if(NOT SDL3_image_FOUND)
+            message("Installing SDL3_image from Source")
+            set(SDLIMAGE_JXL ON)
+            set(SDLIMAGE_PNG_LIBPNG ON)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_IMAGE
+                    URL https://github.com/libsdl-org/SDL_image/archive/refs/tags/release-3.4.4.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3_IMAGE)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_image-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3_image")
+        endif()
+    endif()
+    if (NOT (SDL3_image_FOUND OR TARGET SDL3_image::SDL3_image OR TARGET SDL3_image::SDL3_image-static))
         message(FATAL_ERROR
-                "This project requires SDL2_image to be installed to compile in graphical mode. \
-                 Please install the SDL2_image development libraries, \
+                "This project requires SDL3_image to be installed to compile in graphical mode. \
+                 Please install the SDL3_image development libraries, \
                  or try compiling without -DTILES=1 for a text-only compilation. \
-                 See doc/COMPILING/COMPILING-CMAKE.md for details and more info.")
+                 See docs/en/dev/guides/building/cmake.md for details and more info.")
     endif ()
     add_definitions(-DTILES)
 endif ()
@@ -391,24 +678,43 @@ if (CURSES)
 endif ()
 
 if (SOUND)
-    # You need TILES to be able to use SOUND
-    if (NOT TILES)
+    if (NOT CATA_SDL)
         message(FATAL_ERROR
-                "You must enable graphical support with -DTILES=1 \
-                to be able to enable sound support. \
+                "Sound support requires SDL core. Existing game targets should enable CATA_SDL automatically. \
                 See CMake compiling guide for details and more info.")
     endif ()
 
     # Sound requires SDL_mixer library
-    message(STATUS "Searching for SDL2_mixer library --")
-    find_package(SDL2_mixer)
-    if (NOT (SDL2_MIXER_FOUND OR TARGET SDL2_mixer::SDL2_mixer
-                              OR TARGET SDL2_mixer::SDL2_mixer-static))
+    message(STATUS "Searching for SDL3_mixer library --")
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_mixer-config.cmake provided by the system or VCPKG
+            find_package(SDL3_mixer CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
+        if(NOT SDL3_mixer_FOUND)
+            message("Installing SDL3_mixer from Source")
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_MIXER
+                    URL https://github.com/libsdl-org/SDL_mixer/archive/refs/tags/release-3.2.0.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3_MIXER )
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_mixer-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3_mixer")
+        endif()
+    endif()
+    if (NOT (SDL3_mixer_FOUND OR TARGET SDL3_mixer::SDL3_mixer OR TARGET SDL3_mixer::SDL3_mixer-static))
         message(FATAL_ERROR
-                "You need the SDL2_mixer development library \
+                "You need the SDL3_mixer development library \
                     to be able to compile with sound enabled. \
                     See CMake compiling guide for details and more info.")
-    endif()
+    endif ()
 endif ()
 
 if (BACKTRACE)
@@ -524,6 +830,14 @@ endif ()
 add_subdirectory(src)
 add_subdirectory(data)
 
+if (UNIX AND TILES AND DYNAMIC_LINKING)
+    set_target_properties(
+            cataclysm-bn-tiles
+            PROPERTIES
+            INSTALL_RPATH "$<IF:$<BOOL:${APPLE}>,@executable_path/lib:@executable_path/lib64,\$ORIGIN/lib:\$ORIGIN/lib64>"
+    )
+endif()
+
 if(TESTS)
     add_subdirectory(tests)
 endif()
@@ -537,10 +851,6 @@ endif()
 
 if (RELEASE)
     if (USE_PREFIX_DATA_DIR)
-        install(DIRECTORY doc TYPE DOC)
-        install(DIRECTORY data TYPE DATA
-            PATTERN "json/external_tileset/README.md" EXCLUDE
-            PATTERN "json/mapgen/lab/README.md" EXCLUDE)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt
@@ -548,10 +858,6 @@ if (RELEASE)
             ${CMAKE_SOURCE_DIR}/VERSION.txt
             TYPE DOC)
     else()
-        install(DIRECTORY doc DESTINATION .)
-        install(DIRECTORY data DESTINATION .
-            PATTERN "json/external_tileset/README.md" EXCLUDE
-            PATTERN "json/mapgen/lab/README.md" EXCLUDE)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt
@@ -573,6 +879,115 @@ if (RELEASE)
         install(PROGRAMS ${CMAKE_SOURCE_DIR}/cataclysm-launcher
             DESTINATION .)
     endif()
+    if ( NOT USE_XDG_DIR AND NOT USE_HOME_DIR )
+        install(DIRECTORY ${CMAKE_SOURCE_DIR}/mods
+            DESTINATION .)
+    endif()
+endif()
+
+if (WIN32 AND CATA_SDL AND TARGET cata_windows_lavapipe_runtime)
+    install(DIRECTORY "${CATA_WINDOWS_LAVAPIPE_RUNTIME_DIR}/"
+        DESTINATION "mesa/x64")
+endif()
+
+if (APPLE AND RELEASE AND (TILES OR CURSES))
+    if (TILES)
+        set(CATA_OSX_GAME_TARGET cataclysm-bn-tiles)
+    else()
+        set(CATA_OSX_GAME_TARGET cataclysm-bn)
+    endif()
+
+    set(CATA_OSX_APP_DIR "${CMAKE_SOURCE_DIR}/Cataclysm.app")
+    set(CATA_OSX_CONTENTS_DIR "${CATA_OSX_APP_DIR}/Contents")
+    set(CATA_OSX_RESOURCES_DIR "${CATA_OSX_CONTENTS_DIR}/Resources")
+    set(CATA_OSX_DATA_DIR "${CATA_OSX_RESOURCES_DIR}/data")
+    set(CATA_OSX_FRAMEWORKS_DIR "" CACHE PATH "Directory containing macOS SDL3 frameworks for app packaging.")
+    if (NOT CATA_OSX_FRAMEWORKS_DIR)
+        if (EXISTS "$ENV{HOME}/Library/Frameworks/SDL3.framework")
+            set(CATA_OSX_FRAMEWORKS_DIR "$ENV{HOME}/Library/Frameworks")
+        elseif (EXISTS "/Library/Frameworks/SDL3.framework")
+            set(CATA_OSX_FRAMEWORKS_DIR "/Library/Frameworks")
+        endif()
+    endif()
+
+    set(CATA_OSX_COPY_RESOURCE_COMMANDS)
+    if (TILES)
+        list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/gfx" "${CATA_OSX_RESOURCES_DIR}/gfx")
+    endif()
+    if (CATA_SDL)
+        list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/shaders" "${CATA_OSX_DATA_DIR}/shaders")
+    endif()
+    if (SOUND)
+        list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/sound" "${CATA_OSX_DATA_DIR}/sound")
+    endif()
+    if (CURSES)
+        find_library(CATA_OSX_NCURSESW_LIBRARY NAMES ncursesw REQUIRED)
+        find_library(CATA_OSX_FORMW_LIBRARY NAMES formw REQUIRED)
+        file(REAL_PATH "${CATA_OSX_NCURSESW_LIBRARY}" CATA_OSX_NCURSESW_LIBRARY)
+        file(REAL_PATH "${CATA_OSX_FORMW_LIBRARY}" CATA_OSX_FORMW_LIBRARY)
+        get_filename_component(CATA_OSX_NCURSESW_LIBRARY_NAME "${CATA_OSX_NCURSESW_LIBRARY}" NAME)
+        get_filename_component(CATA_OSX_FORMW_LIBRARY_NAME "${CATA_OSX_FORMW_LIBRARY}" NAME)
+        list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CATA_OSX_NCURSESW_LIBRARY}" "${CATA_OSX_RESOURCES_DIR}/${CATA_OSX_NCURSESW_LIBRARY_NAME}"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CATA_OSX_FORMW_LIBRARY}" "${CATA_OSX_RESOURCES_DIR}/${CATA_OSX_FORMW_LIBRARY_NAME}")
+    endif()
+
+    set(CATA_OSX_COPY_FRAMEWORK_COMMANDS)
+    if (CATA_SDL AND CATA_OSX_FRAMEWORKS_DIR)
+        set(CATA_OSX_FRAMEWORK_NAMES SDL3)
+        if (TILES)
+            list(APPEND CATA_OSX_FRAMEWORK_NAMES SDL3_image SDL3_ttf)
+        endif()
+        if (SOUND)
+            list(APPEND CATA_OSX_FRAMEWORK_NAMES SDL3_mixer)
+        endif()
+        foreach (CATA_OSX_FRAMEWORK_NAME ${CATA_OSX_FRAMEWORK_NAMES})
+            list(APPEND CATA_OSX_COPY_FRAMEWORK_COMMANDS
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${CATA_OSX_FRAMEWORKS_DIR}/${CATA_OSX_FRAMEWORK_NAME}.framework"
+                    "${CATA_OSX_RESOURCES_DIR}/${CATA_OSX_FRAMEWORK_NAME}.framework")
+        endforeach()
+    endif()
+
+    add_custom_target(osx-app
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "${CATA_OSX_APP_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CATA_OSX_CONTENTS_DIR}/MacOS"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CATA_OSX_RESOURCES_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CATA_OSX_DATA_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/build-data/osx/Info.plist" "${CATA_OSX_CONTENTS_DIR}/Info.plist"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/build-data/osx/Cataclysm.sh" "${CATA_OSX_CONTENTS_DIR}/MacOS/Cataclysm.sh"
+        COMMAND chmod +x "${CATA_OSX_CONTENTS_DIR}/MacOS/Cataclysm.sh"
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${CATA_OSX_GAME_TARGET}>" "${CATA_OSX_RESOURCES_DIR}/$<TARGET_FILE_NAME:${CATA_OSX_GAME_TARGET}>"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/build-data/osx/AppIcon.icns" "${CATA_OSX_RESOURCES_DIR}/AppIcon.icns"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/font" "${CATA_OSX_DATA_DIR}/font"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/json" "${CATA_OSX_DATA_DIR}/json"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/mods" "${CATA_OSX_DATA_DIR}/mods"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/names" "${CATA_OSX_DATA_DIR}/names"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/raw" "${CATA_OSX_DATA_DIR}/raw"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/motd" "${CATA_OSX_DATA_DIR}/motd"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/credits" "${CATA_OSX_DATA_DIR}/credits"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/title" "${CATA_OSX_DATA_DIR}/title"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/help" "${CATA_OSX_DATA_DIR}/help"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/lua" "${CATA_OSX_DATA_DIR}/lua"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/lang/mo" "${CATA_OSX_RESOURCES_DIR}/lang/mo"
+        ${CATA_OSX_COPY_RESOURCE_COMMANDS}
+        ${CATA_OSX_COPY_FRAMEWORK_COMMANDS}
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        DEPENDS ${CATA_OSX_GAME_TARGET} translations)
+
+    if (GIT_VERSION)
+        set(CATA_OSX_DMG_VERSION "${GIT_VERSION}")
+    else()
+        set(CATA_OSX_DMG_VERSION unknown)
+    endif()
+    add_custom_target(dmgdist
+        COMMAND plutil -convert binary1 "${CATA_OSX_APP_DIR}/Contents/Info.plist"
+        COMMAND dmgbuild -s build-data/osx/dmgsettings.py "Cataclysm BN" "CataclysmBN-${CATA_OSX_DMG_VERSION}.dmg"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        DEPENDS osx-app)
 endif()
 
 configure_file(

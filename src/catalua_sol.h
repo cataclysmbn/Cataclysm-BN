@@ -6,6 +6,10 @@
 #  pragma clang diagnostic ignored "-Wmissing-noreturn"
 #  pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
 
 #define CATALUA_SOL_WRAPPED
 
@@ -26,5 +30,7 @@ struct sol::unique_usertype_traits<detached_ptr<T>> {
 #ifdef __clang__
 #  pragma clang diagnostic pop
 #endif
-
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 

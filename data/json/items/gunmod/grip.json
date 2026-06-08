@@ -1,5 +1,26 @@
 [
   {
+    "id": "fluted_grip",
+    "type": "GUNMOD",
+    "name": { "str": "fluted large grip" },
+    "description": "Ring-like patterns made of rubber grooved into the thick handle of a greatbow. Helps maintain a stable grip and dampen vibrations with no downsides. Irremovable, as the grip of the bow must be carved in to install.",
+    "weight": "5 g",
+    "volume": "100 ml",
+    "integral_volume": "0 ml",
+    "price": "10 USD",
+    "price_postapoc": "20 cent",
+    "material": [ "plastic" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "grip",
+    "mod_target_category": [ [ "BOWS" ] ],
+    "install_time": "20 m",
+    "handling_modifier": 3,
+    "dispersion_modifier": -25,
+    "loudness_modifier": -2,
+    "flags": [ "IRREMOVABLE" ]
+  },
+  {
     "id": "light_grip",
     "type": "GUNMOD",
     "name": { "str": "lightweight replacement furniture" },

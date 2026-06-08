@@ -1,0 +1,248 @@
+[
+  {
+    "id": "TALK_OLD_GUARD_REP",
+    "type": "talk_topic",
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            { "u_has_trait": "PROF_FED" }
+          ]
+        },
+        "topic": "TALK_OLD_GUARD_REP_GM_PRELUDE_SPECIAL"
+      },
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            { "not": { "u_has_trait": "PROF_FED" } }
+          ]
+        },
+        "topic": "TALK_OLD_GUARD_REP_GM_PRELUDE"
+      },
+      {
+        "text": "[MISSION] Would the Old Guard be willing to establish a presence in another community?",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        },
+        "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4"
+      }
+    ]
+  },
+  {
+    "id": "TALK_OLD_GUARD_REP_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "I have received a number of reports about attacks, I assume you are tracking the cause on someone else's behalf?  I would like to help, but we are stretched thin as it is.  I've only had enough manpower to follow up on one of the most recent assaults on our patrols, and it certainly fits the bill for \"anomalous\" as you put it.  I'll send off the debriefing summary, but I doubt that will be enough to help.  There is a lot going on lately, keep asking around and maybe you can do something with all that intel."
+  },
+  {
+    "id": "TALK_OLD_GUARD_REP_GM_PRELUDE_SPECIAL",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "npc_has_var": "old_guard_presence",
+      "type": "knowledge",
+      "context": "rural_church",
+      "value": "yes",
+      "yes": "We've received a lot of chatter indeed, Marshal.  I'm aware of a more localized series of bandit raids with unusual patterns, and evidence that you spearheaded an assault on their hideout, on behalf of the group you've vouched for previously.  And now this, dispersed over a wider area and inconsistent with any human or undead attackers.  I will relay all the information we've gathered to your allies, and trust you to care care of this.  Make haste, Marshal.",
+      "no": "We've received a lot of chatter about recent attacks, Marshal.  I'm aware of a more localized series of bandit raids with unusual patterns, and evidence that you spearheaded an assault on their hideout, on behalf of another group of survivors.  And now this, dispersed over a wider area and inconsistent with any human or undead attackers.  I will relay all the information we've gathered to the people you're working with, and trust you to care care of this.  Make haste, Marshal."
+    },
+    "responses": [
+      {
+        "text": "Okay.  I guess I'll report back to them, then.",
+        "effect": [
+          { "u_add_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" },
+          { "npc_add_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+        ],
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_OLD_GUARD_REP_CF_MISSION_4",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_trait": "PROF_FED",
+      "yes": "We're stretched thin as it is.  However, hou've done a lot of good work for us, maybe I could try to talk the higher-ups into working something out.  I'll be honest with you, it's not going to be easy to convince them, and I'm worried such arrangements might turn sour if they find something they need.  I'll need to know more about the community you're requesting assistance for.",
+      "no": "I wish we could spare the people for every settlement out there, but we're stretched dangerously thin as it is.  Not to mention, that's for the higher-ups to decide.  If things weren't so hectic in this region, I might be able talk them into committing more personnel, but I'm not sure how easy it'll be."
+    },
+    "responses": [
+      {
+        "text": "It's a group converting a rural church into a small outpost, who have been trading with the Free Merchants.",
+        "condition": { "u_has_trait": "PROF_FED" },
+        "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4_CHURCH"
+      },
+      {
+        "text": "I'll look into other options, just in case.  Thank you though.",
+        "switch": true,
+        "condition": { "u_has_trait": "PROF_FED" },
+        "topic": "TALK_OLD_GUARD_REP"
+      },
+      { "text": "Oh, okay.", "switch": true, "default": true, "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_OLD_GUARD_REP_CF_MISSION_4_CHURCH",
+    "type": "talk_topic",
+    "dynamic_line": "I've heard rumors about that, from people bringing in news of the outside world.  Lot of mixed messages and misinformation though.  Whatever they're up to, at least a couple people higher up the chain of command might have an interest in keeping an eye on them, but I'm not sure how well that'll turn out.  What can you tell me about them?",
+    "responses": [
+      {
+        "text": "I've been a part of their group since before things boiled over.  We were focused on hunting down and dealing with some of the anomalies that began to show up in the months leading up to this.",
+        "condition": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] },
+        "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4_CF1"
+      },
+      {
+        "text": "I'm one of then, actually.  We have a common interest, doing our best to ensure humanity's survival.  We have our ways, rooted in the otherworldly though they are.",
+        "condition": { "u_has_trait": "PROF_CLEANSINGFLAME2" },
+        "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4_CF2"
+      },
+      {
+        "text": "They're hunters.  Monster hunters these days, in the past they fought with local occult groups and other small-scale threats, before it all boiled over.",
+        "switch": true,
+        "condition": { "u_has_any_trait": [ "PROF_ARCANIST", "PROF_ARCANIST2", "PROF_SANGUINE", "PROF_CHALICE", "PROF_CHALICE2" ] },
+        "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4_ARCANIST"
+      },
+      {
+        "text": "Monster hunters, primarily.  Decently equipped for their size, if a bit eccentric.",
+        "switch": true,
+        "default": true,
+        "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4_HUNTER"
+      }
+    ]
+  },
+  {
+    "id": "TALK_OLD_GUARD_REP_CF_MISSION_4_CF1",
+    "type": "talk_topic",
+    "dynamic_line": "So you can vouch for them, Marshal.  That's good.  I hope you know the risks.  If even half the rumors brought back by survivors that meet with them are true, they're involved in some odd business, and that might attract the wrong kind of attention from top brass.  If you're sure, I'll do what I can to put in word with my superiors to make contact with them and set up a contact.",
+    "responses": [
+      {
+        "text": "I don't think either party can afford not to work together for survival.  Go ahead.",
+        "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4_DEAL"
+      },
+      {
+        "text": "Perhaps you're right.  I'll look into alternatives as well, just in case.  Thank you, however.",
+        "topic": "TALK_OLD_GUARD_REP"
+      }
+    ]
+  },
+  {
+    "id": "TALK_OLD_GUARD_REP_CF_MISSION_4_DEAL",
+    "type": "talk_topic",
+    "dynamic_line": "So be it, Marshal.  I'll be in contact with the local merchant too since I know they have prior arrangements.  If all goes well, they should be set up by the time you return.  Just hope this pans out…",
+    "responses": [
+      {
+        "text": "Thank you.  There's something else I wanted to talk about, before I leave.",
+        "effect": [
+          { "u_add_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+          { "u_add_var": "old_guard_presence", "type": "knowledge", "context": "rural_church", "value": "yes" },
+          { "npc_add_var": "old_guard_presence", "type": "knowledge", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "arcana_cf_4_old_guard_1",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_old_guard_2",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_1",
+            "om_terrain": "cf_church_1_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_2",
+            "om_terrain": "cf_church_3_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          }
+        ],
+        "topic": "TALK_OLD_GUARD_REP"
+      },
+      {
+        "text": "Thank you.  I should go check on them, goodbye for now.",
+        "effect": [
+          { "u_add_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+          { "u_add_var": "old_guard_presence", "type": "knowledge", "context": "rural_church", "value": "yes" },
+          { "npc_add_var": "old_guard_presence", "type": "knowledge", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "arcana_cf_4_old_guard_1",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_old_guard_2",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_1",
+            "om_terrain": "cf_church_1_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_2",
+            "om_terrain": "cf_church_3_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          }
+        ],
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_OLD_GUARD_REP_CF_MISSION_4_CF2",
+    "type": "talk_topic",
+    "dynamic_line": "Otherworldly stuff, huh.  I've seen and heard a lot of strange things, but that's not something I want to get involved with.  If there's any truth to this, then maybe you have a point.  Still, be careful getting involved in this.  I'll put in my recommendation if you're sure this is the best course of action, Marshal.",
+    "responses": [
+      {
+        "text": "We must ally with outsiders to survive, and our experience will be to their benefit.  Go for it.",
+        "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4_DEAL"
+      },
+      { "text": "I'll look into alternatives then.  Thank you though.", "topic": "TALK_OLD_GUARD_REP" }
+    ]
+  },
+  {
+    "id": "TALK_OLD_GUARD_REP_CF_MISSION_4_ARCANIST",
+    "type": "talk_topic",
+    "dynamic_line": "Great.  Occult stuff and vigilantism.  If you know that much about them, and still think they'll get along with the Old Guard, then I'll trust your judgment.  Just say the word, and I'll do what I can to smooth things over.",
+    "responses": [
+      { "text": "Go ahead, then.", "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4_DEAL" },
+      { "text": "On second thought, I'll seek out another option.", "topic": "TALK_OLD_GUARD_REP" }
+    ]
+  },
+  {
+    "id": "TALK_OLD_GUARD_REP_CF_MISSION_4_HUNTER",
+    "type": "talk_topic",
+    "dynamic_line": "I've heard stranger rumors than that, so I suppose if that's what they are at heart, then it's in our best interest to work together.  I still have my reservations about this, but if you're sure, I can get in touch with my superiors and try to win them over.",
+    "responses": [
+      { "text": "Go ahead, then.", "topic": "TALK_OLD_GUARD_REP_CF_MISSION_4_DEAL" },
+      { "text": "On second thought, I'll seek out another option.", "topic": "TALK_OLD_GUARD_REP" }
+    ]
+  }
+]

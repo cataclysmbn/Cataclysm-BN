@@ -160,7 +160,9 @@ Example PR title:
 feat(balance): Give moose pelts instead of hides
 ```
 
-### `port`: Ports from DDA or other forks
+### `port`: Ports someone else's contribution
+
+For example, from DDA or other forks.
 
 Example PR title:
 

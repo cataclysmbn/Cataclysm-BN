@@ -100,7 +100,7 @@
     "melee_cut": 2,
     "dodge": 2,
     "harvest": "mammal_fur",
-    "special_attacks": [ [ "EAT_FOOD", 60 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 7200 ] ],
     "upgrades": { "age_grow": 480, "into": "mon_bear" },
     "petfood": {
       "food": [ "DOGFOOD" ],
@@ -146,7 +146,7 @@
     "reproduction": { "baby_monster": "mon_bear_cub", "baby_count": 1, "baby_timer": 700 },
     "//": "220 days gestation period, the mother and cubs remain together for 16-17 months.",
     "baby_flags": [ "SPRING" ],
-    "special_attacks": [ [ "EAT_FOOD", 20 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "BASHES", "ATTACKMON" ],
     "upgrades": { "half_life": 42, "into": "mon_bear_armored" }
   },
@@ -210,7 +210,7 @@
     "anger_triggers": [ "PLAYER_WEAK" ],
     "fear_triggers": [ "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 120 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 14400 ] ],
     "flags": [ "SEES", "SMELLS", "HEARS", "WARM", "SWIMS", "ANIMAL", "STUMBLES", "PATH_AVOID_DANGER_1" ]
   },
   {
@@ -244,7 +244,7 @@
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
     "upgrades": { "age_grow": 38, "into": "mon_boar_wild" },
-    "special_attacks": [ [ "EAT_FOOD", 40 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 4800 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ],
     "petfood": { "food": [ "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s squeals happily at you." }
   },
@@ -284,9 +284,22 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 20 ] ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ],
-    "petfood": { "food": [ "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s squeals happily at you." }
+    "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "PET_MOUNTABLE",
+      "MOUNTABLE_DOORS",
+      "MOUNTABLE_OBSTACLES",
+      "ANIMAL",
+      "PATH_AVOID_DANGER_1",
+      "WARM",
+      "KEENNOSE",
+      "BLEED"
+    ],
+    "petfood": { "food": [ "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s squeals happily at you." },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.25, "dodge_mult": 1.1, "max_level": 3 }
   },
   {
     "id": "mon_bobcat",
@@ -389,6 +402,7 @@
       "feed": "The %s seems to like you!  Or maybe it just tolerates your presence better.  It's hard to tell with felines.",
       "pet": "The %s sofly purrs as you pet it.  It demands more."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.15, "dodge_mult": 1.25, "max_level": 2 },
     "flags": [
       "SEES",
       "HEARS",
@@ -707,7 +721,7 @@
     "death_function": [ "NORMAL" ],
     "harvest": "mammal_large_leather",
     "upgrades": { "age_grow": 180, "into": "mon_cow" },
-    "special_attacks": [ [ "EAT_CROP", 60 ] ],
+    "special_attacks": [ [ "EAT_CROP", 7200 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "PET_WONT_FOLLOW" ]
   },
@@ -746,8 +760,9 @@
     "harvest": "mammal_large_leather",
     "reproduction": { "baby_monster": "mon_cow_calf", "baby_count": 1, "baby_timer": 343 },
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
-    "special_attacks": [ [ "EAT_CROP", 40 ] ],
+    "special_attacks": [ [ "EAT_CROP", 4800 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.15, "dodge_mult": 1.05, "max_level": 3 },
     "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "PET_WONT_FOLLOW", "MILKABLE" ]
   },
   {
@@ -785,6 +800,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.15, "dodge_mult": 1.2, "max_level": 3 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "CANPLAY", "PATH_AVOID_DANGER_1", "WARM", "HIT_AND_RUN", "KEENNOSE", "BLEED" ]
   },
   {
@@ -887,13 +903,14 @@
     "reproduction": { "baby_monster": "mon_deer_fawn", "baby_count": 1, "baby_timer": 330 },
     "//": " 201 days gestation period. The fawn will stay with its mother for approximately one year, suckling for three to four months.",
     "baby_flags": [ "SPRING", "SUMMER" ],
-    "special_attacks": [ [ "EAT_CROP", 60 ] ],
+    "special_attacks": [ [ "EAT_CROP", 7200 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM" ],
     "petfood": {
       "food": [ "CATTLEFOOD" ],
       "feed": "The %s seems to like you!",
       "pet": "The %s kicks its leg happily as you scratch it."
-    }
+    },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.1, "dodge_mult": 1.2, "max_level": 2 }
   },
   {
     "id": "mon_dog",
@@ -934,6 +951,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.15, "dodge_mult": 1.15, "max_level": 3 },
     "special_attacks": [ [ "EAT_FOOD", 100 ], [ "PARROT_AT_DANGER", 0 ] ],
     "flags": [
       "ANIMAL",
@@ -941,6 +959,9 @@
       "GROUP_MORALE",
       "HEARS",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "HIT_AND_RUN",
       "KEENNOSE",
       "PATH_AVOID_DANGER_1",
@@ -990,10 +1011,14 @@
     "harvest": "mammal_small_leather",
     "reproduction": { "baby_monster": "mon_dog_bull_pup", "baby_count": 7, "baby_timer": 300 },
     "//": "7 puppies and 300-320 days per-litter for size medium canines",
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.2, "dodge_mult": 1.1, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "HEARS",
       "HIT_AND_RUN",
       "KEENNOSE",
@@ -1030,7 +1055,7 @@
     "path_settings": { "max_dist": 10 },
     "upgrades": { "age_grow": 42, "into": "mon_dog_bull" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1061,10 +1086,14 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.25, "dodge_mult": 1.15, "max_level": 4 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "HEARS",
       "HIT_AND_RUN",
       "KEENNOSE",
@@ -1103,7 +1132,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_pitbullmix" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1133,12 +1162,16 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
       "GROUP_MORALE",
       "HARDTOSHOOT",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "HEARS",
       "HIT_AND_RUN",
       "KEENNOSE",
@@ -1178,7 +1211,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_beagle" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1207,11 +1240,15 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.25, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CLIMBS",
       "CANPLAY",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "HEARS",
       "HIT_AND_RUN",
       "KEENNOSE",
@@ -1250,7 +1287,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_bcollie" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1275,7 +1312,8 @@
     "fear_triggers": [ "HURT" ],
     "special_attacks": [ [ "LUNGE", 5 ] ],
     "reproduction": { "baby_monster": "mon_dog_boxer_pup", "baby_count": 4, "baby_timer": 270 },
-    "//": "1-4 puppies & 270 days per-litter for size small canines"
+    "//": "1-4 puppies & 270 days per-litter for size small canines",
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.25, "dodge_mult": 1.15, "max_level": 4 }
   },
   {
     "id": "mon_dog_boxer_pup",
@@ -1307,7 +1345,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_boxer" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1317,6 +1355,9 @@
       "ANIMAL",
       "CANPLAY",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "GROUP_MORALE",
       "HEARS",
       "KEENNOSE",
@@ -1352,6 +1393,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.05, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -1394,7 +1436,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_chihuahua" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1425,12 +1467,16 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
       "HARDTOSHOOT",
       "HEARS",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "HIT_AND_RUN",
       "KEENNOSE",
       "PATH_AVOID_DANGER_1",
@@ -1469,7 +1515,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_dachshund" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1498,7 +1544,21 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
-    "flags": [ "ANIMAL", "CANPLAY", "PET_MOUNTABLE", "HEARS", "KEENNOSE", "PATH_AVOID_DANGER_1", "SEES", "SMELLS", "WARM" ]
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.2, "dodge_mult": 1.2, "max_level": 5 },
+    "flags": [
+      "ANIMAL",
+      "CANPLAY",
+      "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
+      "HEARS",
+      "KEENNOSE",
+      "PATH_AVOID_DANGER_1",
+      "SEES",
+      "SMELLS",
+      "WARM"
+    ]
   },
   {
     "id": "mon_dog_gshepherd_pup",
@@ -1529,7 +1589,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_gshepherd" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1563,10 +1623,14 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.15, "dodge_mult": 1.1, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "HEARS",
       "HIT_AND_RUN",
       "KEENNOSE",
@@ -1605,7 +1669,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_gpyrenees" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1639,10 +1703,14 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.2, "dodge_mult": 1.15, "max_level": 4 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "HEARS",
       "HIT_AND_RUN",
       "KEENNOSE",
@@ -1681,7 +1749,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_rottweiler" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1712,11 +1780,15 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.15, "dodge_mult": 1.2, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CLIMBS",
       "CANPLAY",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_OBSTACLES",
+      "MOUNTABLE_DOORS",
       "HEARS",
       "HIT_AND_RUN",
       "KEENNOSE",
@@ -1755,7 +1827,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_auscattle" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1910,7 +1982,7 @@
     "placate_triggers": [ "PLAYER_WEAK" ],
     "harvest": "mammal_large_leather",
     "upgrades": { "age_grow": 450, "into": "mon_horse" },
-    "special_attacks": [ [ "EAT_CROP", 100 ] ],
+    "special_attacks": [ [ "EAT_CROP", 12000 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PET_WONT_FOLLOW", "PATH_AVOID_DANGER_1", "WARM", "NO_BREED" ]
   },
@@ -1944,8 +2016,19 @@
     "harvest": "mammal_large_leather",
     "reproduction": { "baby_monster": "mon_horse_foal", "baby_count": 1, "baby_timer": 360 },
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
-    "special_attacks": [ [ "EAT_CROP", 60 ] ],
-    "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
+    "special_attacks": [ [ "EAT_CROP", 7200 ] ],
+    "petfood": {
+      "food": [ "CATTLEFOOD" ],
+      "feed": "The %s seems to like you! It lets you pat its head and seems friendly.",
+      "pet": "The %s nuzzles you affectionately."
+    },
+    "pet_training": {
+      "hp_mult": 1.2,
+      "melee_mult": 1.15,
+      "dodge_mult": 1.15,
+      "max_level": 3,
+      "level_flags": [ { "level": 1, "flags": [ "COMBAT_MOUNT" ] } ]
+    },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PET_WONT_FOLLOW", "PET_MOUNTABLE", "PATH_AVOID_DANGER_1", "WARM" ]
   },
   {
@@ -2038,7 +2121,7 @@
     "baby_flags": [ "AUTUMN" ],
     "//": "Baby moose don't actually exist (yet), but autumn is their mating season so baby_flags is defined so that they get angry then",
     "harvest": "mammal_large_fur",
-    "special_attacks": [ [ "EAT_CROP", 60 ] ],
+    "special_attacks": [ [ "EAT_CROP", 7200 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "ATTACKMON" ]
   },
   {
@@ -2195,7 +2278,7 @@
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
     "upgrades": { "age_grow": 38, "into": "mon_pig" },
-    "special_attacks": [ [ "EAT_FOOD", 40 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 4800 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "PET_WONT_FOLLOW", "WARM", "KEENNOSE", "BLEED" ]
   },
@@ -2232,9 +2315,22 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 20 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
-    "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ]
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.15, "dodge_mult": 1.1, "max_level": 2 },
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "PET_MOUNTABLE",
+      "MOUNTABLE_DOORS",
+      "MOUNTABLE_OBSTACLES",
+      "ANIMAL",
+      "PATH_AVOID_DANGER_1",
+      "WARM",
+      "KEENNOSE",
+      "BLEED"
+    ]
   },
   {
     "id": "mon_rabbit",
@@ -2261,6 +2357,7 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
+    "pet_training": { "hp_mult": 1.05, "melee_mult": 1.05, "dodge_mult": 1.2, "max_level": 1 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "CANPLAY", "PET_WONT_FOLLOW", "WARM" ]
   },
   {
@@ -2291,7 +2388,8 @@
     "anger_triggers": [ "FRIEND_ATTACKED", "HURT" ],
     "death_function": [ "NORMAL" ],
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "CLIMBS", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ],
-    "petfood": { "food": [ "CATFOOD", "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s looks at you lovingly." }
+    "petfood": { "food": [ "CATFOOD", "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s looks at you lovingly." },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 }
   },
   {
     "id": "mon_rat_king",
@@ -2412,8 +2510,9 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE", "FRIEND_ATTACKED" ],
     "placate_triggers": [ "PLAYER_WEAK" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_CROP", 120 ] ],
+    "special_attacks": [ [ "EAT_CROP", 14400 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.05, "dodge_mult": 1.05, "max_level": 2 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "SHEARABLE", "PATH_AVOID_DANGER_1", "WARM", "PET_WONT_FOLLOW", "MILKABLE" ]
   },
   {
@@ -2527,6 +2626,13 @@
     "anger_triggers": [ "STALK", "FRIEND_ATTACKED", "FRIEND_DIED", "PLAYER_WEAK", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s eyes you warily, then cautiously accepts the food.",
+      "pet": "The %s allows you to touch it, watching you intently.",
+      "tamer_traits": [ [ "THRESH_LUPINE" ] ]
+    },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.2, "dodge_mult": 1.2, "max_level": 5, "min_skill": 5 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ]
   }
 ]

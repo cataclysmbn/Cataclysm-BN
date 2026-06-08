@@ -57,14 +57,14 @@
     "price": "75 USD",
     "price_postapoc": "20 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel" ],
     "symbol": "[",
     "looks_like": "legguard_hard",
     "color": "light_red",
     "covers": [ "legs" ],
-    "coverage": 95,
+    "coverage": 100,
     "encumbrance": 20,
-    "material_thickness": 4,
+    "material_thickness": 3,
     "flags": [ "VARSIZE", "STURDY" ]
   },
   {
@@ -151,6 +151,7 @@
     "encumbrance": 10,
     "warmth": 15,
     "material_thickness": 4,
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "OUTER", "STURDY" ]
   },
   {
@@ -185,16 +186,17 @@
     "price": "200 USD",
     "price_postapoc": "40 USD",
     "to_hit": -1,
-    "material": [ "steel", "leather" ],
+    "material": [ "steel" ],
     "symbol": "[",
     "looks_like": "legguard_hard",
     "color": "light_gray",
     "covers": [ "legs" ],
     "coverage": 95,
-    "encumbrance": 20,
-    "warmth": 20,
+    "encumbrance": 30,
+    "warmth": 10,
     "material_thickness": 4,
-    "flags": [ "VARSIZE", "OUTER", "STURDY" ]
+    "flags": [ "VARSIZE", "OUTER", "STURDY" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "legguard_lightplate_superalloy",
@@ -202,9 +204,9 @@
     "type": "ARMOR",
     "name": { "str": "pair of superalloy leg guards", "str_pl": "pairs of superalloy leg guards" },
     "description": "A full assembly of medieval leg protection, made from cutting-edge superalloy.  Cuisses, poleyns, and greaves, with leather straps to secure each piece and connect it as part of a set.",
-    "material": [ "superalloy", "leather" ],
+    "material": [ "superalloy" ],
     "color": "light_cyan",
-    "encumbrance": 15,
+    "encumbrance": 25,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -226,6 +228,7 @@
     "encumbrance": 6,
     "warmth": 10,
     "material_thickness": 4,
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "OUTER", "WATER_FRIENDLY" ]
   },
   {

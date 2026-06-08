@@ -149,7 +149,7 @@
     "name": "Disarm",
     "melee_allowed": true,
     "disarms": true,
-    "messages": [ "You disarm %s using your whip", "<npcname> disarms %s using their whip" ],
+    "messages": [ "You attempt to disarm %s with your whip", "<npcname> attempts to disarm %s with their whip" ],
     "description": "Unwield target's weapon"
   },
   {
@@ -196,11 +196,10 @@
     "type": "technique",
     "id": "tec_aikido_blockdisarm",
     "name": "Block Counter Disarm",
-    "messages": [ "You block and smoothly disarm %s", "<npcname> blocks and smoothly disarms %s" ],
+    "messages": [ "You block and smoothly counter %s", "<npcname> blocks and smoothly counter %s" ],
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
     "melee_allowed": true,
-    "unarmed_weapons_allowed": false,
     "block_counter": true,
     "crit_ok": true,
     "disarms": true,
@@ -215,9 +214,9 @@
     "messages": [ "You block and smoothly throw %s", "<npcname> blocks and smoothly throws %s" ],
     "unarmed_allowed": true,
     "melee_allowed": true,
-    "unarmed_weapons_allowed": false,
     "block_counter": true,
     "crit_ok": true,
+    "force_unarmed": true,
     "down_dur": 1,
     "knockback_dist": 1,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
@@ -230,9 +229,9 @@
     "skill_requirements": [ { "name": "unarmed", "level": 2 } ],
     "unarmed_allowed": true,
     "melee_allowed": true,
-    "unarmed_weapons_allowed": false,
     "dodge_counter": true,
     "crit_ok": true,
+    "force_unarmed": true,
     "down_dur": 1,
     "knockback_dist": 1,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
@@ -241,11 +240,10 @@
     "type": "technique",
     "id": "tec_aikido_dodgedisarm",
     "name": "Dodge Counter Disarm",
-    "messages": [ "You dodge and smoothly disarm %s", "<npcname> dodges and smoothly disarms %s" ],
+    "messages": [ "You dodge and smoothly counter %s", "<npcname> dodges and smoothly counter %s" ],
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
     "melee_allowed": true,
-    "unarmed_weapons_allowed": false,
     "dodge_counter": true,
     "crit_ok": true,
     "disarms": true,
@@ -415,7 +413,7 @@
     "type": "technique",
     "id": "tec_brawl_disarm_melee",
     "name": "Disarm",
-    "messages": [ "You knock %s's weapon away", "<npcname> knock %s's weapon away" ],
+    "messages": [ "You strike at %s's weapon", "<npcname> strikes at %s's weapon" ],
     "skill_requirements": [ { "name": "melee", "level": 8 } ],
     "melee_allowed": true,
     "disarms": true
@@ -424,7 +422,7 @@
     "type": "technique",
     "id": "tec_brawl_disarm_unarmed",
     "name": "Disarm",
-    "messages": [ "You knock %s's weapon away", "<npcname> knock %s's weapon away" ],
+    "messages": [ "You strike at %s's weapon", "<npcname> strikes at %s's weapon" ],
     "skill_requirements": [ { "name": "unarmed", "level": 8 } ],
     "unarmed_allowed": true,
     "disarms": true
@@ -465,11 +463,10 @@
     "name": "Push Kick",
     "messages": [ "You push kick %s", "<npcname> push kicks %s" ],
     "unarmed_allowed": true,
-    "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.2 },
-      { "stat": "damage", "type": "cut", "scale": 1.2 },
-      { "stat": "damage", "type": "stab", "scale": 1.2 }
-    ]
+    "force_unarmed": true,
+    "knockback_dist": 1,
+    "powerful_knockback": true,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.5 } ]
   },
   {
     "type": "technique",
@@ -479,11 +476,9 @@
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
     "crit_tec": true,
-    "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.4 },
-      { "stat": "damage", "type": "cut", "scale": 1.4 },
-      { "stat": "damage", "type": "stab", "scale": 1.4 }
-    ]
+    "force_unarmed": true,
+    "stun_dur": 1,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.5 } ]
   },
   {
     "type": "technique",
@@ -492,10 +487,11 @@
     "messages": [ "You sweep kick %s", "<npcname> sweep kicks %s" ],
     "skill_requirements": [ { "name": "unarmed", "level": 2 } ],
     "unarmed_allowed": true,
+    "force_unarmed": true,
     "req_buffs": [ "buff_capoeira_onmove" ],
     "weighting": 2,
     "down_dur": 1,
-    "mult_bonuses": [ { "stat": "movecost", "scale": 0.75 } ]
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.75 }, { "stat": "damage", "type": "bash", "scale": 1.25 } ]
   },
   {
     "type": "technique",
@@ -504,16 +500,12 @@
     "messages": [ "You spin kick %s", "<npcname> spin kicks %s" ],
     "skill_requirements": [ { "name": "unarmed", "level": 5 } ],
     "unarmed_allowed": true,
+    "force_unarmed": true,
     "req_buffs": [ "buff_capoeira_onmove" ],
     "weighting": 2,
     "crit_tec": true,
     "stun_dur": 1,
-    "mult_bonuses": [
-      { "stat": "movecost", "scale": 0.75 },
-      { "stat": "damage", "type": "bash", "scale": 1.4 },
-      { "stat": "damage", "type": "cut", "scale": 1.4 },
-      { "stat": "damage", "type": "stab", "scale": 1.4 }
-    ]
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.75 }, { "stat": "damage", "type": "bash", "scale": 2.0 } ]
   },
   {
     "type": "technique",
@@ -556,10 +548,12 @@
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
     "crit_tec": true,
+    "force_unarmed": true,
     "knockback_dist": 1,
     "knockback_spread": 1,
+    "powerful_knockback": true,
     "stun_dur": 2,
-    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.25 } ]
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2.0 } ]
   },
   {
     "type": "technique",
@@ -849,7 +843,7 @@
     "messages": [ "You throw %s to the ground", "<npcname> throws %s to the ground" ],
     "unarmed_allowed": true,
     "melee_allowed": true,
-    "unarmed_weapons_allowed": false,
+    "force_unarmed": true,
     "down_dur": 1,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.25 },
@@ -861,11 +855,11 @@
     "type": "technique",
     "id": "tec_judo_disarm",
     "name": "Disarming Throw",
-    "messages": [ "You disarm and throw %s", "<npcname> disarms and throws %s" ],
+    "messages": [ "You throw %s by their weapon arm", "<npcname> throws %s by their weapon arm" ],
     "skill_requirements": [ { "name": "unarmed", "level": 1 } ],
     "unarmed_allowed": true,
     "melee_allowed": true,
-    "unarmed_weapons_allowed": false,
+    "force_unarmed": true,
     "disarms": true,
     "down_dur": 1,
     "mult_bonuses": [
@@ -882,9 +876,9 @@
     "skill_requirements": [ { "name": "unarmed", "level": 2 } ],
     "unarmed_allowed": true,
     "melee_allowed": true,
-    "unarmed_weapons_allowed": false,
     "crit_tec": true,
     "side_switch": true,
+    "force_unarmed": true,
     "down_dur": 1,
     "stun_dur": 1,
     "mult_bonuses": [
@@ -915,8 +909,8 @@
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
     "melee_allowed": true,
-    "unarmed_weapons_allowed": false,
     "dodge_counter": true,
+    "force_unarmed": true,
     "down_dur": 1,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
@@ -961,11 +955,10 @@
     "name": "Roundhouse Kick",
     "messages": [ "You roundhouse kick %s", "<npcname> roundhouse kicks %s" ],
     "unarmed_allowed": true,
-    "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.2 },
-      { "stat": "damage", "type": "cut", "scale": 1.2 },
-      { "stat": "damage", "type": "stab", "scale": 1.2 }
-    ]
+    "force_unarmed": true,
+    "knockback_dist": 1,
+    "powerful_knockback": true,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2.0 } ]
   },
   {
     "type": "technique",
@@ -1007,13 +1000,12 @@
     "messages": [ "You roundhouse kick %s", "<npcname> roundhouse kicks %s" ],
     "unarmed_allowed": true,
     "melee_allowed": true,
+    "force_unarmed": true,
     "crit_ok": true,
     "weighting": -2,
-    "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.2 },
-      { "stat": "damage", "type": "cut", "scale": 1.2 },
-      { "stat": "damage", "type": "stab", "scale": 1.2 }
-    ]
+    "knockback_dist": 1,
+    "powerful_knockback": true,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2.0 } ]
   },
   {
     "type": "technique",
@@ -1024,10 +1016,11 @@
     "unarmed_allowed": true,
     "melee_allowed": true,
     "dodge_counter": true,
+    "force_unarmed": true,
     "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.2 },
-      { "stat": "damage", "type": "cut", "scale": 1.2 },
-      { "stat": "damage", "type": "stab", "scale": 1.2 }
+      { "stat": "damage", "type": "bash", "scale": 1.5 },
+      { "stat": "damage", "type": "cut", "scale": 1.5 },
+      { "stat": "damage", "type": "stab", "scale": 1.5 }
     ]
   },
   {
@@ -1041,12 +1034,14 @@
     "skill_requirements": [ { "name": "unarmed", "level": 3 } ],
     "unarmed_allowed": true,
     "crit_tec": true,
+    "force_unarmed": true,
     "knockback_dist": 1,
+    "powerful_knockback": true,
     "stun_dur": 1,
     "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.3 },
-      { "stat": "damage", "type": "cut", "scale": 1.3 },
-      { "stat": "damage", "type": "stab", "scale": 1.3 }
+      { "stat": "damage", "type": "bash", "scale": 1.5 },
+      { "stat": "damage", "type": "cut", "scale": 1.5 },
+      { "stat": "damage", "type": "stab", "scale": 1.5 }
     ]
   },
   {
@@ -1260,12 +1255,11 @@
     "name": "Power Kick",
     "messages": [ "You deal a powerful kick to %s", "<npcname> deals a powerful kick to %s" ],
     "unarmed_allowed": true,
+    "force_unarmed": true,
     "crit_ok": true,
-    "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.3 },
-      { "stat": "damage", "type": "cut", "scale": 1.3 },
-      { "stat": "damage", "type": "stab", "scale": 1.3 }
-    ]
+    "knockback_dist": 1,
+    "powerful_knockback": true,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2.0 } ]
   },
   {
     "type": "technique",
@@ -1275,12 +1269,9 @@
     "skill_requirements": [ { "name": "unarmed", "level": 5 } ],
     "unarmed_allowed": true,
     "crit_tec": true,
+    "force_unarmed": true,
     "stun_dur": 1,
-    "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.4 },
-      { "stat": "damage", "type": "cut", "scale": 1.4 },
-      { "stat": "damage", "type": "stab", "scale": 1.4 }
-    ]
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.5 } ]
   },
   {
     "type": "technique",
@@ -1422,7 +1413,9 @@
     "skill_requirements": [ { "name": "unarmed", "level": 2 } ],
     "unarmed_allowed": true,
     "crit_tec": true,
-    "stun_dur": 2
+    "force_unarmed": true,
+    "stun_dur": 2,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.5 } ]
   },
   {
     "type": "technique",
@@ -1442,26 +1435,24 @@
     "skill_requirements": [ { "name": "unarmed", "level": 3 } ],
     "unarmed_allowed": true,
     "stunned_target": true,
+    "force_unarmed": true,
     "weighting": 3,
-    "mult_bonuses": [ { "stat": "movecost", "scale": 0.5 } ]
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.5 }, { "stat": "damage", "type": "bash", "scale": 1.25 } ]
   },
   {
     "type": "technique",
     "id": "tec_pankration_grabdisarm",
     "name": "Arm Lock",
-    "messages": [ "You disarm %s with an arm lock", "<npcname> disarms %s with an arm lock" ],
+    "messages": [ "You put %s in an arm lock", "<npcname> puts %s in an arm lock" ],
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
+    "force_unarmed": true,
     "stunned_target": true,
     "crit_ok": true,
     "weighting": 3,
     "disarms": true,
     "stun_dur": 1,
-    "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.25 },
-      { "stat": "damage", "type": "cut", "scale": 1.25 },
-      { "stat": "damage", "type": "stab", "scale": 1.25 }
-    ]
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.25 } ]
   },
   {
     "type": "technique",
@@ -1476,11 +1467,8 @@
     "knockback_dist": 2,
     "knockback_spread": 2,
     "stunned_target": true,
-    "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 2 },
-      { "stat": "damage", "type": "cut", "scale": 2 },
-      { "stat": "damage", "type": "stab", "scale": 2 }
-    ]
+    "force_unarmed": true,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2 } ]
   },
   {
     "type": "technique",
@@ -1626,7 +1614,7 @@
     "type": "technique",
     "id": "tec_taekwondo_disarm",
     "name": "Snatch Weapon",
-    "messages": [ "You snatch %s's weapon", "<npcname> snatches %s's weapon" ],
+    "messages": [ "You snatch at %s's weapon", "<npcname> snatches at %s's weapon" ],
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
     "weighting": 2,
@@ -1648,14 +1636,11 @@
     "skill_requirements": [ { "name": "unarmed", "level": 5 } ],
     "unarmed_allowed": true,
     "crit_tec": true,
+    "force_unarmed": true,
     "stun_dur": 2,
     "knockback_dist": 2,
-    "mult_bonuses": [
-      { "stat": "movecost", "scale": 1.5 },
-      { "stat": "damage", "type": "bash", "scale": 1.5 },
-      { "stat": "damage", "type": "cut", "scale": 1.5 },
-      { "stat": "damage", "type": "stab", "scale": 1.5 }
-    ]
+    "powerful_knockback": true,
+    "mult_bonuses": [ { "stat": "movecost", "scale": 1.5 }, { "stat": "damage", "type": "bash", "scale": 3.0 } ]
   },
   {
     "type": "technique",
@@ -1663,7 +1648,9 @@
     "name": "Side Kick",
     "unarmed_allowed": true,
     "messages": [ "You turn slightly and side-kick %s", "<npcname> turns slightly and side-kicks %s" ],
-    "knockback_dist": 1
+    "force_unarmed": true,
+    "knockback_dist": 1,
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.75 }, { "stat": "damage", "type": "bash", "scale": 1.25 } ]
   },
   {
     "type": "technique",
@@ -1673,7 +1660,9 @@
     "skill_requirements": [ { "name": "unarmed", "level": 2 } ],
     "unarmed_allowed": true,
     "crit_ok": true,
-    "down_dur": 1
+    "force_unarmed": true,
+    "down_dur": 1,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.25 } ]
   },
   {
     "type": "technique",
@@ -1681,11 +1670,10 @@
     "name": "Roundhouse Kick",
     "messages": [ "You roundhouse kick %s", "<npcname> roundhouse kicks %s" ],
     "unarmed_allowed": true,
-    "mult_bonuses": [
-      { "stat": "damage", "type": "bash", "scale": 1.2 },
-      { "stat": "damage", "type": "cut", "scale": 1.2 },
-      { "stat": "damage", "type": "stab", "scale": 1.2 }
-    ]
+    "force_unarmed": true,
+    "knockback_dist": 1,
+    "powerful_knockback": true,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2.0 } ]
   },
   {
     "type": "technique",
@@ -1701,7 +1689,7 @@
     "type": "technique",
     "id": "tec_taichi_disarm",
     "name": "Disarm",
-    "messages": [ "You gently disarm %s", "<npcname> gently disarms %s" ],
+    "messages": [ "You attempt to disarm %s", "<npcname> attempts to disarm %s" ],
     "skill_requirements": [ { "name": "unarmed", "level": 3 } ],
     "unarmed_allowed": true,
     "disarms": true

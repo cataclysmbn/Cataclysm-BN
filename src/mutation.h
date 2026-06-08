@@ -26,6 +26,7 @@ class Character;
 class JsonObject;
 class Trait_group;
 class item;
+class lua_mutation_callback_actor;
 class nc_color;
 template <typename E> struct enum_traits;
 template <typename T> class string_id;
@@ -187,8 +188,13 @@ struct mutation_branch {
         /** Night vision range (in tiles), added to NV from stats. Only the highest value from all mutations applies. */
         float night_vision_range = 0.0f;
 
+        /** Local detail sight range bonus, applied before reality-bubble visibility scaling. */
+        float local_detail_sight = 0.0f;
+
         // Speed lowers--or raises--for every X F (X C) degrees below or above 65 F (18.3 C)
         float temperature_speed_modifier = 0.0f;
+        // Scales total kcal character can hold. 1.0 doubles, -0.5 halves.
+        float kcal_scale = 0.0f;
         // Extra metabolism rate multiplier. 1.0 doubles usage, -0.5 halves.
         float metabolism_modifier = 0.0f;
         // As above but for thirst.
@@ -297,10 +303,11 @@ struct mutation_branch {
     private:
         translation raw_name;
         translation raw_desc;
+        translation raw_apperance_desc;
     public:
         std::string name() const;
         std::string desc() const;
-
+        std::string apperance_desc() const;
         /**
          * Returns the color to display the mutation name with.
          */
@@ -322,9 +329,17 @@ struct mutation_branch {
          * All known mutations. Key is the mutation id, value is the mutation_branch that you would
          * also get by calling @ref get.
          */
+        /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+         *  Mutable because it is wired post-construction through const factory references. */
+        mutable const lua_mutation_callback_actor *lua_callbacks = nullptr;
+
         static const std::vector<mutation_branch> &get_all();
         // For init.cpp: reset (clear) the mutation data
         static void reset_all();
+
+        /** Wire Lua callback pointers onto mutation_branch objects. */
+        static void resolve_lua_callbacks(
+            const std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> &actors );
         // For init.cpp: load mutation data from json
         void load( const JsonObject &jo, const std::string &src );
         static void load_trait( const JsonObject &jo, const std::string &src );
@@ -488,10 +503,22 @@ struct mutation_category_trait {
         LUA_TYPE_OPS( mutation_category_trait, id );
 };
 
+struct mutation_type_default {
+    std::string type_id;
+    trait_id trait;
+};
+
 void load_mutation_type( const JsonObject &jsobj );
 void reset_mutation_types();
+auto mutation_type_check_consistency() -> void;
 bool mutation_category_is_valid( const mutation_category_id &cat );
 bool mutation_type_exists( const std::string &id );
+bool mutation_type_is_mandatory( const std::string &id );
+bool mutation_type_swaps_on_conflict( const std::string &id );
+int mutation_type_random_chance( const std::string &id );
+auto mutation_type_display_name( const std::string &id ) -> std::string;
+auto get_default_mutations_for_types() -> std::vector<mutation_type_default>;
+std::vector<std::string> get_all_mutation_type_ids();
 std::vector<trait_id> get_mutations_in_types( const std::set<std::string> &ids );
 std::vector<trait_id> get_mutations_in_type( const std::string &id );
 bool trait_display_sort( const trait_id &a, const trait_id &b ) noexcept;
@@ -541,5 +568,4 @@ mutagen_attempt mutagen_common_checks( Character &guy, const item &it, bool stro
 
 void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category,
                               const unsigned short tier );
-
 

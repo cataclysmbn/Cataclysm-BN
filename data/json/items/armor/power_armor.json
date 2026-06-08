@@ -16,12 +16,13 @@
     "looks_like": "power_armor_basic",
     "color": "light_gray",
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],
-    "coverage": 95,
-    "encumbrance": 35,
+    "coverage": 100,
+    "encumbrance": 30,
     "storage": "4 L",
     "warmth": 50,
-    "material_thickness": 8,
+    "material_thickness": 7,
     "environmental_protection": 6,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "WATERPROOF", "STURDY" ]
   },
   {
@@ -40,12 +41,13 @@
     "looks_like": "power_armor_helmet_basic",
     "color": "light_gray",
     "covers": [ "head", "eyes", "mouth" ],
-    "coverage": 95,
-    "encumbrance": 35,
+    "coverage": 100,
+    "encumbrance": 30,
     "warmth": 50,
-    "material_thickness": 8,
+    "material_thickness": 7,
     "environmental_protection": 6,
     "qualities": [ [ "GLARE", 2 ] ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "WATERPROOF", "STURDY", "SUN_GLASSES" ]
   },
   {
@@ -72,6 +74,7 @@
     "warmth": 60,
     "material_thickness": 10,
     "environmental_protection": 10,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transform",
       "turn_off": false,
@@ -133,6 +136,7 @@
     "warmth": 60,
     "material_thickness": 12,
     "environmental_protection": 10,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transform",
       "turn_off": false,
@@ -194,6 +198,7 @@
     "warmth": 60,
     "material_thickness": 8,
     "environmental_protection": 10,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transform",
       "turn_off": false,
@@ -261,7 +266,9 @@
       "need_worn": true,
       "active": true
     },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80
   },
   {
     "id": "power_armor_helmet_basic_on",
@@ -271,7 +278,7 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "power armor helmet (active)", "str_pl": "power armor helmets (active)" },
     "description": "A fully enclosed combat helmet for hazardous environments, this was designed to fit with a powered exoskeleton, using cameras to expand visual range.  In practice, the cameras were unreliable and easily fouled.  The environmental controls function best with direct-skin contact.",
-    "extend": { "flags": [ "THERMOMETER", "CLIMATE_CONTROL", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "THERMOMETER", "RECON_VISION", "CLIMATE_CONTROL", "TRADER_AVOID" ] },
     "power_draw": 500000,
     "qualities": [ [ "GLARE", 2 ] ],
     "revert_to": "power_armor_helmet_basic",
@@ -317,7 +324,9 @@
       "need_worn": true,
       "active": true
     },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80
   },
   {
     "id": "power_armor_helmet_heavy_on",
@@ -327,7 +336,7 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "heavy power armor helmet (active)", "str_pl": "heavy power armor helmets (active)" },
     "description": "An extremely heavy-duty fully enclosed combat helmet for hazardous environments, this was designed to fit with a powered exoskeleton.  In the field, soldiers reported that the protection was not worth the awkward size and limited visuals.  The environmental controls function best with direct-skin contact.",
-    "extend": { "flags": [ "THERMOMETER", "CLIMATE_CONTROL", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "THERMOMETER", "RECON_VISION", "CLIMATE_CONTROL", "TRADER_AVOID" ] },
     "power_draw": 750000,
     "qualities": [ [ "GLARE", 2 ] ],
     "revert_to": "power_armor_helmet_heavy",
@@ -373,7 +382,9 @@
       "active": true
     },
     "qualities": [ [ "GLARE", 1 ] ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80
   },
   {
     "id": "power_armor_helmet_light_on",
@@ -383,7 +394,7 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "light power armor helmet (active)", "str_pl": "light power armor helmets (active)" },
     "description": "This full-enclosure helmet was designed based on commercial diving equipment, in response to complaints that earlier designs were impossible to use in combat.  While still a little more restrictive than regular combat headgear - and frustrating should your nose itch - this one received far better reviews from soldiers.  Sadly, civilization ended before they could roll out in significant numbers.  The environmental controls function best with direct-skin contact.",
-    "extend": { "flags": [ "THERMOMETER", "CLIMATE_CONTROL", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "THERMOMETER", "RECON_VISION", "CLIMATE_CONTROL", "TRADER_AVOID" ] },
     "power_draw": 250000,
     "qualities": [ [ "GLARE", 1 ] ],
     "revert_to": "power_armor_helmet_light",
@@ -419,6 +430,30 @@
     "encumbrance": 5,
     "storage": "40 L",
     "material_thickness": 10,
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "BELTED", "ONLY_ONE" ]
+  },
+  {
+    "id": "heavy_power_armor_frame",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "advanced power armor hauling frame" },
+    "description": "A cutting-edge advanced hauling frame made from superalloy designed to interface with military exoskeletons.  Barely deployed before the Cataclysm struck.",
+    "weight": "1300 g",
+    "volume": "11 L",
+    "price": "20 kUSD",
+    "price_postapoc": "200 USD",
+    "to_hit": 1,
+    "bashing": 1,
+    "material": [ "superalloy" ],
+    "symbol": "[",
+    "looks_like": "power_armor_frame",
+    "color": "light_gray",
+    "covers": [ "torso" ],
+    "coverage": 10,
+    "encumbrance": 0,
+    "storage": "40 L",
+    "material_thickness": 10,
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "BELTED", "ONLY_ONE" ]
   },
   {
@@ -445,6 +480,7 @@
       "flags": [ "SHEATH_SWORD", "SHEATH_AXE", "SHEATH_SPEAR" ],
       "skills": [ "smg", "shotgun", "rifle", "launcher" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "BELTED", "ONLY_ONE" ]
   },
   {
@@ -468,8 +504,9 @@
       "max_volume": "3 L",
       "min_volume": "250 ml",
       "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "BELT_CLIP" ],
-      "skills": [ "pistol", "smg", "shotgun", "rifle" ]
+      "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "WAIST" ]
   },
   {
@@ -500,6 +537,7 @@
       "draw_cost": 80,
       "flags": [ "MAG_COMPACT", "MAG_BULKY", "MAG_BELT" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "WAIST" ]
   },
   {
@@ -692,6 +730,17 @@
     "extend": { "flags": [ "POWERARMOR_MOD" ] }
   },
   {
+    "id": "power_armor_shoulder_pouch",
+    "copy-from": "shoulder_pouch",
+    "type": "ARMOR",
+    "name": { "str": "power armor shoulder magazine pouch" },
+    "description": "A shoulder pouch that can hold two small magazines or speedloaders, converted to clip onto power armor.",
+    "material": [ "leather", "steel" ],
+    "proportional": { "encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
     "id": "exosuit_survivor",
     "type": "TOOL_ARMOR",
     "category": "armor",
@@ -710,6 +759,7 @@
     "warmth": 20,
     "material_thickness": 6,
     "environmental_protection": 3,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "max_charges": 500,
     "ammo": "battery",
     "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] },
@@ -753,11 +803,12 @@
     "color": "light_gray",
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],
     "coverage": 35,
-    "encumbrance": 30,
+    "encumbrance": 20,
     "storage": "7 L",
     "material_thickness": 8,
     "max_charges": 500,
     "ammo": "battery",
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "relic_data": {
       "passive_effects": [
         {
@@ -802,11 +853,11 @@
     "description": "Although power armor took the world's militaries by storm, the technologies used to make them also allowed for smaller, less protective external rigging that rely on UPS to boost strength and speed, ones designed for operatives or light infantry rather than heavy infantry.  It is currently turned on, activate it to turn it off.",
     "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "ELECTRIC_IMMUNE", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "qualities": [ [ "HV_INSULATION", 1 ] ],
-    "power_draw": 350000,
+    "power_draw": 250000,
     "revert_to": "exosuit_military",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s disengages.", "target": "exosuit_military" },
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],
-    "encumbrance": 5,
+    "encumbrance": 0,
     "weight_capacity_bonus": "20 kg"
   },
   {
@@ -827,11 +878,12 @@
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],
     "qualities": [ [ "HV_INSULATION", 1 ] ],
     "coverage": 35,
-    "encumbrance": 30,
+    "encumbrance": 25,
     "storage": "15 L",
     "material_thickness": 8,
     "max_charges": 500,
     "ammo": "battery",
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "relic_data": {
       "passive_effects": [
         {
@@ -876,7 +928,7 @@
     "name": { "str": "industrial exo-suit (active)", "str_pl": "industrial exo-suits (active)" },
     "description": "Although power armor took the world's militaries by storm, the technologies used to make them also allowed for industrial powered suits meant for heavy lifting.  It is currently turned on, activate it to turn it off.",
     "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
-    "power_draw": 350000,
+    "power_draw": 250000,
     "revert_to": "exosuit_industrial",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s disengages.", "target": "exosuit_industrial" },
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],

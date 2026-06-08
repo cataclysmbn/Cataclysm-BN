@@ -171,9 +171,7 @@
         "topic": "TALK_FRIEND_CHAT",
         "condition": { "not": { "npc_has_effect": "asked_to_socialize" } }
       },
-      { "text": "Tell me about giving you orders (NPC TUTORIAL).", "topic": "TALK_ALLY_TUTORIAL" },
-      { "text": "I'm going to go my own way for a while.", "topic": "TALK_LEAVE" },
-      { "text": "If I were in your shoes... (Control this NPC)", "topic": "TALK_DONE", "effect": "control_npc" },
+      { "text": "We should go our seperate ways. I'm going to go my own way for a while.", "topic": "TALK_LEAVE" },
       { "text": "Let's go.", "topic": "TALK_DONE" }
     ]
   },
@@ -878,6 +876,12 @@
         "topic": "TALK_DONE",
         "condition": { "not": "npc_has_activity" },
         "effect": "do_farming"
+      },
+      {
+        "text": "Can you craft this item?",
+        "topic": "TALK_DONE",
+        "condition": { "and": [ { "not": "npc_has_activity" }, { "not": { "npc_has_trait": "HALLUCINATION" } } ] },
+        "effect": "do_craft"
       }
     ]
   },

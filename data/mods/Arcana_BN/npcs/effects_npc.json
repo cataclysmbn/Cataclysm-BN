@@ -1,0 +1,224 @@
+[
+  {
+    "type": "effect_type",
+    "id": "sent_to_hermit",
+    "//": "This marks a player as having been led to The Hermit via a quest chain, no name or description since this one is player-side.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_inquire_denied",
+    "//": "This marks a player as having asking The Hermit for personal information and failed the roll, no name or description since this one is player-side.  Intended duration 3 hours."
+  },
+  {
+    "type": "effect_type",
+    "id": "shrike_inquire_denied",
+    "//": "This marks a player as having asking Elena for intel and failed the roll, no name or description since this one is player-side.  Intended duration 3 hours."
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_earned_trust_1",
+    "//": "This marks a player as having talked The Hermit into revealing general familiarity with the arcane.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_earned_trust_2",
+    "//": "This marks a player as having talked The Hermit into revealing their affiliation with the Keepers of The Oath, opening up quests.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_stage_1",
+    "name": [ "Quest Stage 1" ],
+    "desc": [
+      "AI tag marking The Hermit's quest progression, changing dialogue.  Intended to be permanent.  This is a bug if you have it."
+    ],
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_quest_backdoor",
+    "//": "This marks a player as having talked The Hermit into helping an illiterate character complete the ritual.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_has_sanguine_codex",
+    "name": [ "Has Sanguine Codex" ],
+    "desc": [ "AI tag marking The Hermit's progress through the ritual.  Intended to be permanent.  This is a bug if you have it." ],
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_has_blood_essence",
+    "name": [ "Has Blood Essence" ],
+    "desc": [ "AI tag marking The Hermit's progress through the ritual.  Intended to be permanent.  This is a bug if you have it." ],
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_has_salt",
+    "name": [ "Has Salt" ],
+    "desc": [ "AI tag marking The Hermit's progress through the ritual.  Intended to be permanent.  This is a bug if you have it." ],
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_stage_2",
+    "//": "AI tag marking The Hermit's quest progression, changing dialogue.  Intended to be permanent.  Also given to players for achievement tracking purposes.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_stage_3",
+    "name": [ "Quest Stage 3" ],
+    "desc": [
+      "AI tag marking The Hermit's quest progression, changing dialogue.  Intended to be permanent.  This is a bug if you have it."
+    ],
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_stage_failure",
+    "name": [ "Quest Stage Failure" ],
+    "desc": [
+      "AI tag marking The Hermit's quest progression, changing dialogue.  Intended to be permanent.  This is a bug if you have it."
+    ],
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_stage_3_backdoor",
+    "//": "Effect for players, confirms that the hermit has given this specific player the restored ritual blade, beginning the backdoor quest.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hermit_stage_4",
+    "name": [ "Quest Stage 4" ],
+    "desc": [
+      "AI tag marking The Hermit's quest progression, changing dialogue.  Intended to be permanent.  This is a bug if you have it."
+    ],
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "rural_church_aware",
+    "//": "Effect for both players and NPCs, to filter out whether the rural church has already spawned vs new players asking about the structure, and used by The Deacon to change dialogue after he's heard back from Sofia.  Intended to be permanent.  No name or description since players will get it too.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "already_asked_deacon",
+    "//": "Effect for players, filters out dialogue in The Deacon's talk topic, once the player has already been directed to the rural church.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "sofia_deacon_message",
+    "//": "Effect for players, transmits mission info from Sofia to the Deacon.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "sofia_motive_explained",
+    "//": "Effect for both players and NPCs, for Sofia it filters out sanguinist and Keeper players that have explained their motivation for visiting the holdout.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_hunter_motive",
+    "//": "Effect for players, marks certain professions as having explained to the mage hunter guards why their mere presence gives them the heebie-jeebies.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_mission_1",
+    "//": "Effect for players, marks them as being trustworthy and known to Sofia's camp.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_mission_receipt",
+    "//": "Effect for both players and NPCs, changes dialogue for both the Evac Merchant and Sofia.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_mission_3_recruited",
+    "//": "Effect for players, indicates that they asked one of the guards to assist in a hunt.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_mission_3_recruited_2",
+    "//": "Effect for players, indicates that they asked another guard to assist in a hunt.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_mission_3_recruited_3",
+    "//": "Effect for players, indicates that they asked another guard to assist in a hunt.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_mission_3",
+    "name": [ "Mission Marker" ],
+    "desc": [
+      "AI tag marking that Sofia has attracted the first wave of allies to the rural church.  Also used to indicate to Jonathan that their third mission has been completed.  Intended to be permanent.  This is a bug if you have it."
+    ],
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_mission_sofia_3",
+    "//": "Effect for players, tracks having completed Sofia's third mission for achievement tracking.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_mission_johnathan_3",
+    "//": "Effect for players, tracks having completed Johnathan's third mission for achievement tracking.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_mission_sofia_7",
+    "//": "Effect for players, tracks having completed Sofia's final mission for achievement tracking.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_sofia_notes_given",
+    "//": "Effect for players, indicates that Sofia has already given the player a copy of Apprentice's Notes.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_sofia_traded",
+    "//": "Effect for players, populates Sofia's initial menu with the trade option.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_seeker_traded",
+    "//": "Effect for players, populates Matthew's initial menu with the trade option.  Intended to be permanent.",
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_purifier_making_item",
+    "name": [ "Busy Making Something Special" ],
+    "desc": [
+      "AI tag marking Nicholas as busy tinkering with your quest reward.  Intended duration 3 days.  This is a bug if you have it."
+    ]
+  },
+  {
+    "type": "effect_type",
+    "id": "cf_purifier_kairos",
+    "//": "This marks a player as having completed Nicholas' final mission and received the item made afterward, used mainly for achievement tracking.  Intended to be permanent.",
+    "permanent": true
+  }
+]

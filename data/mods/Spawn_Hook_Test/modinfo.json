@@ -1,0 +1,13 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "spawn_hook_test",
+    "name": "Spawn hook testing",
+    "authors": [ "Azmodius X" ],
+    "description": "Testing spawn hooks. It should be obsolete after testing!",
+    "category": "content",
+    "lua_api_version": 2,
+    "dependencies": [ "bn" ],
+    "obsolete": true
+  }
+]

@@ -151,7 +151,8 @@
             [ "roof_3x3_wine", 30 ],
             [ "roof_4x4_utility_1", 30 ],
             [ "roof_4x4_party", 15 ],
-            [ "roof_16x16_help", 3 ]
+            [ "roof_16x16_help", 3 ],
+            [ "roof_12x12_aircraft", 5 ]
           ],
           "x": 4,
           "y": 8

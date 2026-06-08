@@ -16,12 +16,12 @@ If you only have `astyle` installed, use:
 astyle --options=.astylerc --recursive src/*.cpp,*.h tests/*.cpp,*.h tools/*.cpp,*.h
 ```
 
-### Invoking astyle through make
+### Invoking astyle through CMake
 
-If you have both `make` and `astyle` installed, use:
+If you have configured a CMake build tree, use:
 
 ```sh
-make astyle
+cmake --build build --target astyle
 ```
 
 ### Invoking astyle via pre-commit hook
@@ -34,7 +34,7 @@ and json by adding these commands to your git pre-commit hook (typically at
 git diff --cached --name-only -z HEAD | grep -z 'data/.*\.json' | \
     xargs -r -0 -L 1 ./tools/format/json_formatter.[ce]* || exit 1
 
-make astyle-check || exit 1
+astyle --options=.astylerc --dry-run -X -Q src/*.cpp src/*.h tests/*.cpp tests/*.h tools/*/*.cpp tools/*/*.h || exit 1
 ```
 
 ### Astyle extensions for Visual Studio
@@ -109,8 +109,7 @@ In addition to the usual means of creating a `tags` file via e.g.
 [`ctags`](http://ctags.sourceforge.net/), we provide `tools/json_tools/cddatags.py` to augment a
 `tags` file with locations of definitions taken from CDDA JSON data. `cddatags.py` is designed to
 safely update a tags file containing source code tags, so if you want both types of tag in your
-`tags` file then you can run `ctags -R . && tools/json_tools/cddatags.py`. Alternatively, there is a
-rule in the `Makefile` to do this for you; just run `make ctags` or `make etags`.
+`tags` file then you can run `ctags -R . && tools/json_tools/cddatags.py`.
 
 ## clang-tidy
 

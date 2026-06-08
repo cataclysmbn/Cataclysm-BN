@@ -762,5 +762,17 @@
       { "item": "lw21mag", "charges-min": 0, "ammo-group": "on_hand_9mm", "prob": 50 },
       { "group": "on_hand_9mm", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
+  },
+  {
+    "id": "display_ppsh_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "ppshmag", "prob": 75 }, { "item": "ppshdrum", "prob": 25 } ]
+  },
+  {
+    "id": "display_ak74_mag",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "ak74mag", "prob": 75 }, { "item": "rpk74mag", "prob": 25 } ]
   }
 ]

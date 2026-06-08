@@ -318,7 +318,7 @@
     "proportional": { "weight": 0.4, "volume": 0.5 },
     "description": "A plastic cup with a spill-proof lid, designed for use by children.",
     "copy-from": "base_plastic_dish",
-    "container_data": { "contains": "250 ml", "watertight": true, "seals": true },
+    "container_data": { "contains": "500 ml", "watertight": true, "seals": true },
     "qualities": [ [ "CONTAIN", 1 ] ],
     "snippet_category": [
       { "id": "sippycup1", "text": "This cup is decorated with cartoon bears." },

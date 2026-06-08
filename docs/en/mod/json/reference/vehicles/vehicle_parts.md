@@ -39,12 +39,19 @@ Vehicle components when installed on a vehicle.
   {"item": "scrap", "count": [0,5]} // instead of an array, this can be an inline item group,
 ],
 "breaks_into" : "some_item_group", // or just the id of an item group.
-"flags": [                    // Flags associated with the part
-     "EXTERNAL", "MOUNT_OVER", "WHEEL", "MOUNT_POINT", "VARIABLE_SIZE"
-],
-"damage_reduction" : {        // Flat reduction of damage, as described below. If not specified, set to zero
-    "all" : 10,
-    "physical" : 5
+	"flags": [                    // Flags associated with the part
+	     "EXTERNAL", "MOUNT_OVER", "WHEEL", "MOUNT_POINT", "VARIABLE_SIZE"
+	],
+	"rotating_light": {           // Optional for light parts. Emits rotating directional cone light instead of the light flag's normal shape.
+	  "arc": 30,                  // Cone width in degrees. Default 30.
+	  "step": 90,                 // Degrees advanced every period. Negative values rotate in reverse. Default 90.
+	  "phase": 0,                 // Initial direction offset in degrees. Default 0.
+	  "period": "1 turns",        // Time between rotation steps. Can also be an integer turn count. Default 1 turn.
+	  "beams": 2                  // Number of simultaneous evenly spaced beams. Default 2.
+	},
+	"damage_reduction" : {        // Flat reduction of damage, as described below. If not specified, set to zero
+	    "all" : 10,
+	    "physical" : 5
 },
                               // The following optional fields are specific to ENGINEs.
 "m2c": 50,                    // Mandatory field for parts with the ENGINE flag, indicates ratio of cruise power to maximum power
@@ -62,6 +69,7 @@ Vehicle components when installed on a vehicle.
 "lift_coff": 0.5,             // Optional field, multiplier of wing effectiveness
 "propeller_diameter": 0.5,    // Optional field, diameter of propeller
 "length": 3,                  // Optional field, z-level length of ladder
+"default_color": "#622625"    // Optional field, default tint color when none other is defined
 ```
 
 ### Integrated Tools
@@ -79,10 +87,27 @@ Most legacy crafting vehiclepart flags have been removed and should be replaced 
 "integrated_tools": [ "dehydrator", "vac_sealer", "food_processor", "press" ],  // Replaces the `CRAFTRIG` flag
 "integrated_tools": [ "chemistry_set", "electrolysis_kit" ],  // Replaces the `CHEMLAB` flag
 "integrated_tools": [ "forge" ],  // Replaces the `FORGE` flag
-"integrated_tools": [ "fake_adv_butchery" ],  // Replaces the `BUTCHER_EQ` flag
+"integrated_tools": [ "fake_adv_butchery" ],  // Needed with the `BUTCHER_EQ` flag
 "integrated_tools": [ "kiln" ],  // Replaces the `KILN` flag
 "integrated_tools": [ "soldering_iron", "welder" ],  // Replaces the tools
 "integrated_tools": [ "water_purifier" ],  // Replaces the tools, but not the ability to purify water in vehicle tanks, of the `WATER_PURIFIER` flag
+```
+
+### Converters
+
+An field for vehicles with the CONVERTER flag which allows vehicles to convert from one liquid to another within the fuel tanks
+
+This does not work for items nor for working with nearby liquid sources
+
+```json
+"converter": {
+  "input": "input_itype_id",   // What itype is being inputed
+  "input_step": 3,             // For each iteration how much of input is consumed
+  "output": "output_itype_id", // What itype is being outputed
+  "output_step": 1,            // For each iteration how much of output is consumed
+  "max_steps": 10,             // Maximum iterations per minute
+  "charge_cost": 100           // How many kJ does each iteration take ( this is smallest unit for vehicles )
+}
 ```
 
 ### Part Resistance

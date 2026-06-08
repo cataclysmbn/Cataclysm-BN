@@ -1,15 +1,17 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
-#include <vector>
 #include <map>
+#include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "calendar.h"
 #include "coordinates.h"
-#include "cuboid_rectangle.h"
 #include "memory_fast.h"
 #include "point.h"
+#include "submap_load_manager.h"
 #include "type_id.h"
 
 class Character;
@@ -65,8 +67,20 @@ class distribution_grid
         const std::vector<tripoint_abs_ms> &get_contents() const {
             return flat_contents;
         }
-        /// Calculate total power generation (W) and consumption (W) in the grid
+        /// Calculate total power generation (W) and consumption (W) in the grid,
+        /// including any grids linked via grid_link_tile portals.
         auto get_power_stat() const -> power_stat;
+
+        /**
+         * Apply a net power delta (in watt-turns) to this grid's batteries.
+         * Positive @p delta_w charges, negative discharges.  Clamps to int
+         * before forwarding to mod_resource() to handle large batch values.
+         */
+        void apply_net_power( int64_t delta_w );
+
+    private:
+        /// Local-only stat (no portal chaining). Used internally by get_power_stat().
+        auto get_power_stat_local() const -> power_stat;
 };
 
 class distribution_grid_tracker;
@@ -116,9 +130,44 @@ class grid_furn_transform_queue
 };
 
 /**
- * Contains and manages all the active distribution grids.
+ * One end of an active power-portal link between two electrical grids.
+ *
+ * Each end of the link holds a node in its dimension's distribution_grid_tracker.
+ * Power equalisation and upkeep are handled by game::tick_portal_links() each turn.
+ * The node is registered when the grid_link_tile active tile is loaded and removed
+ * when it is unloaded or the link is destroyed.
  */
-class distribution_grid_tracker
+struct cross_dimension_export_node {
+    /// Anchor tile in this (source) dimension.
+    tripoint_abs_ms source_pos;
+    /// Dimension of the far-end anchor ("" = primary dimension).
+    std::string     target_dim_id;
+    /// Absolute position of the far-end anchor tile.
+    tripoint_abs_ms target_pos;
+    /// True when the link is paused (power failure or manual).
+    /// No power is transferred while paused; upkeep is not charged.
+    bool            paused = false;
+    /// submap_load_manager handle keeping the far end's submap resident.
+    /// 0 when paused or not yet registered.
+    load_request_handle far_load_handle = 0;
+    /// submap_load_manager handle keeping the LOCAL source submap resident.
+    /// Without this, the source submap would unload when the player leaves,
+    /// which triggers on_submap_unloaded → remove_export_node → releases the
+    /// far_load_handle → far end unloads → mutual collapse after 1 turn.
+    load_request_handle local_load_handle = 0;
+    /// Last time upkeep was charged on this node.  Upkeep is charged every
+    /// PORTAL_UPKEEP_INTERVAL to match the timescale of grid power production.
+    time_point last_upkeep = calendar::turn_zero;
+};
+
+/**
+ * Contains and manages all the active distribution grids.
+ *
+ * Implements submap_load_listener to receive per-submap load/unload events.
+ * Registered with submap_load_manager so that grids are built incrementally
+ * as submaps enter and leave memory rather than on every map shift.
+ */
+class distribution_grid_tracker : public submap_load_listener
 {
     private:
         /**
@@ -127,14 +176,32 @@ class distribution_grid_tracker
         std::map<tripoint_abs_sm, shared_ptr_fast<distribution_grid>> parent_distribution_grids;
 
         /**
-         * @param omt_pos Absolute submap position of one of the tiles of the grid.
+         * @param sm_pos Absolute submap position of one of the tiles of the grid.
          */
         distribution_grid &make_distribution_grid_at( const tripoint_abs_sm &sm_pos );
 
         /**
-         * In submap coords, to mirror @ref map
+         * Set of submap positions currently tracked by this instance.
+         * Populated by on_submap_loaded() / on_submap_unloaded() events.
+         * Replaces the old half_open_rectangle<point_abs_sm> bounds member.
          */
-        half_open_rectangle<point_abs_sm> bounds;
+        std::unordered_set<tripoint_abs_sm> tracked_submaps_;
+
+        /**
+         * OMTs marked dirty by on_changed() during the current tick.
+         * Rebuilt in batch by flush_dirty_omts() at the start of update(),
+         * so multiple on_changed() calls on the same OMT cluster within one
+         * tick only trigger one make_distribution_grid_at() call per OMT.
+         */
+        std::unordered_set<tripoint_abs_omt> dirty_omts_;
+
+        /**
+         * Rebuild the distribution grid for every OMT accumulated in dirty_omts_
+         * since the last flush, then clear dirty_omts_.
+         * Called at the start of update() so that the power tick always sees
+         * an up-to-date grid topology.
+         */
+        void flush_dirty_omts();
 
         mapbuffer &mb;
 
@@ -145,10 +212,79 @@ class distribution_grid_tracker
          */
         std::unordered_set<shared_ptr_fast<distribution_grid>> grids_requiring_updates;
 
+        /**
+         * The dimension this tracker belongs to (matches the key in game::grid_trackers_).
+         * "" means the primary/overworld dimension.
+         * Set at construction time and never changes.
+         */
+        std::string dimension_id_;
+
+        /**
+         * Stub cross-dimension export nodes installed on this tracker.
+         * Each node represents one end of a dimensional electrical cable.
+         */
+        std::vector<cross_dimension_export_node> export_nodes_;
+
+        /**
+         * Returns the 4 submap positions that make up the given OMT.
+         * An OMT at omt_pos contains submaps at:
+         *   project_to<coords::sm>(omt_pos) + (0,0), (1,0), (0,1), (1,1)
+         */
+        static std::array<tripoint_abs_sm, 4> get_submaps_for_omt( tripoint_abs_omt omt_pos );
+
+        /**
+         * Returns the OMT itself and its 4 cardinal neighbors (5 total).
+         * Diagonal neighbors are excluded: electrical connections run along cardinal axes only.
+         */
+        static std::array<tripoint_abs_omt, 5> get_omt_and_cardinal_neighbors( tripoint_abs_omt omt_pos );
+
     public:
         distribution_grid_tracker();
-        distribution_grid_tracker( mapbuffer &buffer );
+        distribution_grid_tracker( mapbuffer &buffer, std::string dim_id = {} );
         distribution_grid_tracker( distribution_grid_tracker && ) = default;
+        ~distribution_grid_tracker();
+
+        /** The dimension this tracker serves ("" = overworld). */
+        auto get_dimension_id() const -> const std::string & { // *NOPAD*
+            return dimension_id_;
+        }
+
+        /**
+         * Register a cross-dimension cable endpoint on this tracker.
+         * Registers a submap_load_manager request to keep the far end resident.
+         * When @p register_reverse is true (default), also ensures the remote
+         * tracker exists and has the matching reverse node.
+         */
+        void add_export_node( cross_dimension_export_node node, bool register_reverse = true );
+
+        /**
+         * Remove the cross-dimension cable whose source tile is @p source_pos.
+         * Releases the associated load request.
+         */
+        void remove_export_node( const tripoint_abs_ms &source_pos );
+
+        /**
+         * Pause the export node at @p source_pos (e.g. power failure).
+         * Releases the far-end load request; the remote submap may unload.
+         */
+        void pause_export_node( const tripoint_abs_ms &source_pos );
+
+        /**
+         * Resume a previously-paused export node.
+         * Re-registers the far-end load request.
+         */
+        void resume_export_node( const tripoint_abs_ms &source_pos );
+
+        /**
+         * Return the export nodes on this tracker (read-only).
+         * Used for save/load and for cross-dimension grid resolution.
+         */
+        auto get_export_nodes() const -> const std::vector<cross_dimension_export_node> & { // *NOPAD*
+            return export_nodes_;
+        }
+        auto get_export_nodes_mut() -> std::vector<cross_dimension_export_node> & { // *NOPAD*
+            return export_nodes_;
+        }
         /**
          * Gets grid at given global map square coordinate. @ref map::getabs
          */
@@ -170,20 +306,39 @@ class distribution_grid_tracker
         }
 
         /**
-         * Loads grids in an area given by submap coords.
+         * submap_load_listener overrides.
+         * Called when a submap at @p pos in dimension @p dim_id becomes resident.
+         * Inserts the position into tracked_submaps_ and builds the grid cluster.
          */
-        void load( half_open_rectangle<point_abs_sm> area );
+        void on_submap_loaded( const tripoint_abs_sm &pos,
+                               const std::string &dim_id ) override;
+
         /**
-         * Loads grids in the same area as a given map.
+         * Called just before the submap at @p pos in dimension @p dim_id is evicted.
+         * Removes from tracked_submaps_ and invalidates all 4 submaps of the affected OMT.
          */
-        void load( const map &m );
+        void on_submap_unloaded( const tripoint_abs_sm &pos,
+                                 const std::string &dim_id ) override;
 
         /**
          * Updates grid at given global map square coordinate.
+         * Only rebuilds grids in the 5-OMT cluster affected by the change.
          */
         void on_changed( const tripoint_abs_ms &p );
-        void on_saved();
         void on_options_changed();
+
+        /**
+         * Clears all grids and tracked submaps. Used when changing dimensions.
+         */
+        void clear();
+
+        /**
+         * Returns true if this tracker has at least one tracked submap.
+         * Used by game to decide when a non-primary dimension's tracker can be destroyed.
+         */
+        auto has_tracked_submaps() const -> bool {
+            return !tracked_submaps_.empty() || !export_nodes_.empty();
+        }
 };
 
 class vehicle;
@@ -229,4 +384,17 @@ constexpr traverse_visitor_result noop_visitor_veh( const vehicle & )
  */
 distribution_grid_tracker &get_distribution_grid_tracker();
 
+/**
+ * Returns the distribution grid tracker for the given dimension, or nullptr if
+ * no tracker exists for @p dim_id.  Used by portal-link code that needs to access
+ * a tracker for a dimension other than the player's current one.
+ */
+distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string &dim_id );
+
+/**
+ * Returns the distribution grid tracker for @p dim_id, creating it and
+ * registering it with the submap_load_manager if it doesn't already exist.
+ * Used by add_export_node() to guarantee the remote tracker is available.
+ */
+distribution_grid_tracker &ensure_distribution_grid_tracker_for( const std::string &dim_id );
 

@@ -4,14 +4,7 @@ set -e
 set -x
 
 if [[ "$LIBBACKTRACE" == "1" ]]; then
-    git clone https://github.com/ianlancetaylor/libbacktrace.git
-    (
-        cd libbacktrace
-        git checkout 4d2dd0b172f2c9192f83ba93425f868f2a13c553
-        ./configure
-        make -j$(nproc)
-        sudo make install
-    )
+    echo "LIBBACKTRACE is built by CMake when enabled."
 fi
 
 # needed for newer ubuntu versions

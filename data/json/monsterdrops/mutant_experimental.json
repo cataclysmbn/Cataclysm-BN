@@ -10,5 +10,29 @@
     "subtype": "collection",
     "id": "mon_mutant_evolved_death_drops",
     "entries": [ { "item": "rag", "damage": [ 1, 4 ], "count": [ 1, 4 ] }, { "item": "pants", "damage": [ 2, 3 ] } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_mutant_alpha_boss_death_drops",
+    "entries": [ { "item": "subsuit_xl" }, { "item": "recipe_alpha" } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_mutant_medical_boss_death_drops",
+    "entries": [ { "item": "subsuit_xl", "damage": [ 3, 4 ] }, { "item": "recipe_medicalmut" } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_mutant_elfa_boss_death_drops",
+    "entries": [ { "item": "recipe_elfa" } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_mutant_elfa_boss_monster_weapon",
+    "subtype": "collection",
+    "entries": [ { "item": "longbow", "prob": 100 }, { "item": "primitive_knife", "prob": 100 } ]
   }
 ]

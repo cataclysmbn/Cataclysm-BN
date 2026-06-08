@@ -83,7 +83,8 @@
     "entries": [
       { "item": "bandages", "prob": 50 },
       { "item": "cotton_ball", "prob": 50 },
-      { "item": "1st_aid", "prob": 35 },
+      { "item": "1st_aid", "prob": 28 },
+      { "item": "1st_aid_deluxe", "prob": 7 },
       { "item": "saline", "prob": 25 },
       { "item": "contacts", "prob": 10 },
       { "item": "vitamins", "prob": 75 },

@@ -6,7 +6,9 @@
 #include <utility>
 #include <optional>
 
+#include "coordinates.h"
 #include "item_handling_util.h"
+#include "pickup_token.h"
 
 struct tripoint;
 
@@ -28,7 +30,7 @@ item *titled_menu( avatar &you, const std::string &title,
                    const std::string &none_message = "" );
 // item selector for items in @you's inventory with a filter
 item *titled_filter_menu( const item_filter &filter, avatar &you,
-                          const std::string &title, const std::string &none_message = "" );
+                          const std::string &title, const std::string &none_message = "", int radius = -1 );
 
 /**
 * @name Customized inventory menus
@@ -42,7 +44,7 @@ item *titled_filter_menu( const item_filter &filter, avatar &you,
 /*@{*/
 
 void common( avatar &you );
-void compare( player &p, const std::optional<tripoint> &offset );
+void compare( player &p, const std::optional<tripoint_rel_ms> &offset );
 void compare( const item &left, const item &right );
 /** Assign (or reassign from existing) letter to item in character's inventory. */
 void reassign_letter( Character &who, item &it, int invlet );
@@ -55,7 +57,9 @@ void swap_letters( player &p );
  * @return A list of pairs of item_location, quantity.
  */
 drop_locations multidrop( player &p );
-
+std::vector<pickup::pick_drop_selection> pickup_from_tile( player &p,
+        const tripoint_bub_ms &target );
+std::vector<pickup::pick_drop_selection> pickup_nearby( player &p );
 
 /** Consuming an item. */
 item *consume( player &p );

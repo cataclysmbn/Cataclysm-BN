@@ -53,6 +53,7 @@
     [ "9mm", [ "glockmag" ] ]                // The first magazine specified for each ammo type is the default
     [ "45", [ "m1911mag", "m1911bigmag" ] ],
 ],
+"crafting_speed_modifier": 1.0,              // Optional (default = 1.0). Multiplier applied to crafting speed when this item satisfies a tool or quality requirement.
 "milling": {                                 // Optional. If given, the item can be milled in a water/wind mill.
   "into": "flour",                           // The item id of the product. Product MUST be something that uses charges.
   "conversion_rate": 4                       // Number of products per item consumed. At a conversion_rate of 4, 1 item is milled into 4 product. Only accepts integers.
@@ -65,6 +66,13 @@
   "damage": 10,                              // Damage the explosion deals to player at epicenter. Damage is halved above 50% radius.
   "radius": 8,                               // Radius of the explosion. 0 means only the epicenter is affected.
   "fire": true,                              // Should the explosion leave fire
+  "fragment_effect": [ {                     // Effects data of "shrapnel"
+      "effect": "onfire",                    // Effect to apply (note that onfire has special hardcoded behaviour to check the target is flamable)
+      "odds": 2,                             // One in x chance to apply this effect
+      "min_turns": 4,                        // Min turn duration for effect
+      "max_turns": 8                         // Max turn duration for effect
+    }
+  ],
   "fragment": {                              // Projectile data of "shrapnel". This projectile will hit every target in its range and field of view exactly once.
     "damage": {                              // Damage data of the shrapnel projectile.  Uses damage_instance syntax (see below)
       "damage_type": "acid",                 // Type of damage dealt.
@@ -108,7 +116,11 @@
 "drop": "nail",             // (Optional) Defines an object that drops at the projectile location at a 100% chance.
 "drop_active": false        // (Optional) Whether the object starts active. Default is true.
 "drop_count": 1,            // (Optional) Number of items to drop. For tools, this sets their charges. 
-                            // If omitted, the drop amount defaults to the 'count' defined in its itype.
+                             // If omitted, the drop amount defaults to the 'count' defined in its itype.
+"shot": {                   // (Optional) Shot-pattern data for pellet-style ammo.
+  "count": 12,             // Number of projectile attacks spawned by one round.
+  "half_angle": 3          // Half-angle in degrees used for the pellet spread preview and pattern.
+},
 "effects" : ["COOKOFF", "SHOT"]
 ```
 
@@ -146,8 +158,10 @@ Armor can be defined like this:
 "coverage" : 80,      // What percentage of body part
 "material_thickness" : 1,  // Thickness of material, in millimeter units (approximately).  Generally ranges between 1 - 5, more unusual armor types go up to 10 or more
 "power_armor" : false, // If this is a power armor item (those are special).
-"valid_mods" : ["steel_padded"] // List of valid clothing mods. Note that if the clothing mod doesn't have "restricted" listed, this isn't needed.
-"resistance": { "cut": 0, "bullet": 1000 } // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
+"valid_mods" : ["steel_padded"], // List of valid clothing mods. Note that if the clothing mod doesn't have "restricted" listed, this isn't needed.
+"resistance": { "cut": 0, "bullet": 1000 }, // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
+"hearing_protection": 0,    // How much does this armor dampen sound hear by the wearer, in dB spl. 0 - 191. This will make all sounds harder to hear for the wearer, but increases the deafening volume threshold by twice its given amount. At a hearing_ability multiplier of one, heard sounds of 120dB+ can deafen the player, with garunteed temporary deafness at 140dB+. Use this instead of the "DEAF" or "PARTIAL_DEAF" flags. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
+"adv_hearing_protection": 0 // How much does this armor dampen deafening sounds heard by the wearer, in dB spl. 0 - 191. This will increase the deafening volume threshold by its given amount without dampening other sounds. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
 ```
 
 Alternately, every item (book, tool, gun, even food) can be used as armor if it has armor_data:
@@ -166,6 +180,35 @@ Alternately, every item (book, tool, gun, even food) can be used as armor if it 
     "power_armor" : false
 }
 ```
+
+#### Armor Portion Data
+
+For items that cover multiple body parts with different coverage or encumbrance values, use `armor_portion_data`. This allows defining separate values for each body part or group of body parts:
+
+```json
+"armor_portion_data": [
+    { 
+        "covers": [ "torso" ], 
+        "coverage": 95, 
+        "encumbrance": 15 
+    },
+    { 
+        "covers": [ "arms", "legs" ], 
+        "coverage": 80, 
+        "encumbrance": 10,
+        "max_encumbrance": 20
+    }
+]
+```
+
+Fields for each entry in `armor_portion_data`:
+
+- `covers`: Array of body part IDs this entry applies to (e.g., "torso", "head", "eyes", "mouth", "arms", "hands", "legs", "feet")
+- `coverage`: Percentage of body part area covered (0-100). Higher values mean better protection.
+- `encumbrance`: How much the item encumbers the body part. Default is 0.
+- `max_encumbrance`: Encumbrance when the character is at full storage volume. Default equals `encumbrance`.
+
+When `armor_portion_data` is used, the top-level `covers`, `coverage`, `encumbrance`, and `max_encumbrance` fields should not be used as they are replaced by the portion data.
 
 ### Pet Armor
 
@@ -482,6 +525,8 @@ Guns can be defined like this:
 "ammo_to_fire" 1,          // Amount of ammo used per shot, separate from any UPS cost that may be given to the weapon.
 // The legacy item flags `FIRE_20`, `FIRE_50`, and `FIRE_100` are still permitted and will override `ammo_to_fire` if present.
 "reload": 450,             // Amount of time to reload, 100 = 1 second = 1 "turn". Default 100.
+"reload_noise_volume": 6   // [DEPRECIATED] How loud is reloading the gun, in tile distance. This is depreciated, use reload_noise_volume_dB instead. This value will be converted to an appropiate dB volume if provided.
+"reload_noise_volume_dB": 40, // How loud is reloading the gun, in dB spl @1 meter reference. Default 40dB. Normal conversation is ~60dB, deafening sounds are 120dB+
 "built_in_mods": ["m203"], // An array of mods that will be integrated in the weapon using the IRREMOVABLE tag.
 "default_mods": ["m203"]   // An array of mods that will be added to a weapon on spawn.
 "barrel_volume": "30 mL",  // Amount of volume lost when the barrel is sawn. Approximately 250 ml per IRL inch is a decent approximation.
@@ -546,14 +591,14 @@ Gun mods can be defined like this:
                                // Additionally some gunmod specific entries:
 "location": "stock",           // Mandatory. Where is this gunmod is installed?
 "mod_targets": [ "crossbow" ], // Optional. What specific weapons can this gunmod be used with?
-"mod_target_category": [ [ "BOWS" ] ], // Optional. What specific weapon categories can this gunmod be used with?
+"mod_target_category": [ [ "BOWS" ] ], // Optional. Weapon category requirements. Inner arrays are AND, outer array is OR. E.g. [["RIFLES","AUTOLOADING"]] = RIFLE AND AUTOLOADING; [["PISTOLS"],["REVOLVERS"]] = PISTOL OR REVOLVER.
 "mod_exclusions": [ "laser_rifle" ], // Optional. What specific weapons can't this gunmod be used with?
-"mod_exclusion_category": [ [ "ENERGY_WEAPONS" ] ], // Optional. What specific weapon categories can't this gunmod be used with?
+"mod_exclusion_category": [ [ "ENERGY_WEAPONS" ] ], // Optional. Excluded weapon categories. Same logic as mod_target_category - matching any inner array prevents installation.
 "acceptable_ammo": [ "9mm" ],  // Optional filter restricting mod to guns with those base (before modifiers) ammo types
 "install_time": "30 s",        // Optional time installation takes. Installation is instantaneous if unspecified. An integer will be read as moves or a time string can be used.
 "ammo_modifier": [ "57" ],     // Optional field which if specified modifies parent gun to use these ammo types
-"magazine_adaptor": [ [ "223", [ "stanag30" ] ] ], // Optional field which changes the types of magazines the parent gun accepts
-"mode_modifier": [ [ "AUTO", "auto", 5 ] ]         // Optional field which adds new firing modes to a weapon
+"magazine_adaptor": [ [ "223", [ "stanag30" ] ] ], // Optional. Array of [ammotype, [...magazines]] pairs. Overrides the weapon's compatible magazines for that ammo type.
+"mode_modifier": [ [ "AUTO", "auto", 5 ] ],       // Optional. Array of [mode_id, mode_name, burst_size, [...flags]?] arrays. Adds firing modes to the weapon. Optional flags array can include "MELEE", "REACH_ATTACK", etc.
 "damage_modifier": -1,         // Optional field increasing or decreasing base gun damage
 "dispersion_modifier": 15,     // Optional field increasing or decreasing base gun dispersion
 "loudness_modifier": 4,        // Optional field increasing or decreasing base guns loudness
@@ -1069,7 +1114,7 @@ more structured function.
 },
 "use_action": {
     "type": "sew_advanced",  // Modify clothing
-    "materials": [           // materials to deal with.
+    "materials": [           // materials to deal with. Power armor can be targeted when its material matches.
         "cotton",
         "leather"
     ],
@@ -1094,8 +1139,16 @@ more structured function.
     "spell_id": "magus_escape", // The ID of the spell to be casted
     "no_fail": true,            // Whether you can fail the cast
     "level": 10,                // The level its cast at
-    "need_worn": true,           // if you need to wear it to cast the spell
+    "need_worn": true,          // if you need to wear it to cast the spell
     "need_wielding": true       // if you need to wield it to cast the spell
+},
+"use_action": {
+    "type": "paint_stuff",      // Paints terrain or vehicles using ammo
+    "charge_cost": 0            // Number of charges to use
+},
+"use_action": {
+    "type": "paint_stuff_cfg",  // Configures how it paints using paint stuff
+    "color_swap": true          // Allow the color to be swapped to any other named color
 }
 ```
 

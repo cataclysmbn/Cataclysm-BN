@@ -1441,5 +1441,63 @@
       "explosion": { "damage": 1 }
     },
     "flags": [ "BOMB", "TRADER_AVOID" ]
+  },
+  {
+    "id": "aerial_bomb",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "aerial bomb" },
+    "description": "A hefty explosive meant to be air-dropped from a plane.  If deployed from a vehicle bomb bay, it will activate and automatically explode on impact with enough force to reduce a house to rubble.  You'll want to be at least 4 stories above your target to maintain a safe distance.  Trying to arm it manually and throw it by hand would be a terrible idea.",
+    "weight": "90 kg",
+    "volume": "50 L",
+    "price": "40 kUSD",
+    "price_postapoc": "80 USD",
+    "to_hit": -6,
+    "bashing": 20,
+    "material": [ "steel", "powder" ],
+    "symbol": "O",
+    "color": "dark_gray",
+    "looks_like": "tool_improvised_barrel_bomb",
+    "explode_in_fire": true,
+    "explosion": {
+      "damage": 300,
+      "radius": 15,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 200, "armor_multiplier": 2 }, "range": 30 }
+    },
+    "use_action": {
+      "target": "aerial_bomb_armed",
+      "msg": "You arm the bomb.  Activate again to disarm it, or drop it to explode on impact.",
+      "active": true,
+      "menu_text": "Arm bomb",
+      "type": "transform"
+    },
+    "//": "Note: Do not add ALLOWS_REMOTE_USE, while it works fine and doesn't trigger the drop_action just from being armed while sitting on the floor, hauling an armed bomb detonates it.  This way you have to intentionally put the bomb in your inventory if you want to risk YASD with it.",
+    "flags": [ "BOMB" ]
+  },
+  {
+    "id": "aerial_bomb_armed",
+    "type": "TOOL",
+    "name": { "str": "aerial bomb (armed)", "str_pl": "aerial bombs (armed)" },
+    "description": "A hefty explosive designed to be air-dropped from a plane or other vehicle.  It's currently armed, and will explode if it hits the ground.  If you're currently struggling to lift this monstrosity, you should probably disarm it before you drop it on your foot and blow yourself up.",
+    "weight": "90 kg",
+    "volume": "50 L",
+    "price": "40 kUSD",
+    "price_postapoc": "80 USD",
+    "to_hit": -6,
+    "bashing": 20,
+    "material": [ "steel", "powder" ],
+    "symbol": "O",
+    "color": "dark_gray",
+    "looks_like": "tool_improvised_barrel_bomb_act",
+    "use_action": { "target": "aerial_bomb", "msg": "You carefully disarm the bomb.", "menu_text": "Disarm bomb", "type": "transform" },
+    "drop_action": {
+      "type": "explosion",
+      "explosion": {
+        "damage": 300,
+        "radius": 15,
+        "fragment": { "impact": { "damage_type": "bullet", "amount": 200, "armor_multiplier": 2 }, "range": 30 }
+      }
+    },
+    "extend": { "flags": [ "TRADER_AVOID" ] }
   }
 ]

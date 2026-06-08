@@ -415,6 +415,24 @@
     "permanent": true
   },
   {
+    "id": "morale_indoor_misery",
+    "type": "morale_type",
+    "text": "Claustrophobic",
+    "permanent": true
+  },
+  {
+    "id": "morale_outdoor_misery",
+    "type": "morale_type",
+    "text": "Agoraphobic",
+    "permanent": true
+  },
+  {
+    "id": "morale_clutter_intolerant",
+    "type": "morale_type",
+    "text": "Messy surroundings",
+    "permanent": true
+  },
+  {
     "id": "morale_perm_debug",
     "type": "morale_type",
     "text": "Debug Morale",

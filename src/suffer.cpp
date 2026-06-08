@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "addiction.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -44,6 +45,7 @@
 #include "overmapbuffer.h"
 #include "pldata.h"
 #include "point.h"
+#include "regional_settings.h"
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
@@ -69,7 +71,6 @@ static const bionic_id bio_leaky( "bio_leaky" );
 static const bionic_id bio_noise( "bio_noise" );
 static const bionic_id bio_power_weakness( "bio_power_weakness" );
 static const bionic_id bio_reactor( "bio_reactor" );
-static const bionic_id bio_advreactor( "bio_advreactor" );
 static const bionic_id bio_reactoroverride( "bio_reactoroverride" );
 static const bionic_id bio_shakes( "bio_shakes" );
 static const bionic_id bio_sleepy( "bio_sleepy" );
@@ -264,7 +265,7 @@ void Character::suffer_while_underwater()
             }
         }
     }
-    if( has_trait( trait_FRESHWATEROSMOSIS ) && !get_map().has_flag_ter( "SALT_WATER", pos() ) &&
+    if( has_trait( trait_FRESHWATEROSMOSIS ) && !get_map().has_flag_ter( "SALT_WATER", bub_pos() ) &&
         get_thirst() > thirst_levels::turgid ) {
         mod_thirst( -1 );
     }
@@ -283,7 +284,7 @@ void Character::suffer_from_addictions()
             cur_addiction.intensity >= MIN_ADDICTION_LEVEL ) {
             addict_effect( *this, cur_addiction );
         }
-        cur_addiction.sated -= 1_turns;
+        cur_addiction.sated -= action_time_scale::calendar_duration_this_tick();
         // Higher intensity addictions heal faster
         if( cur_addiction.sated - 10_minutes * cur_addiction.intensity < timer ) {
             if( cur_addiction.intensity <= 2 ) {
@@ -338,10 +339,16 @@ void Character::suffer_while_awake( const int current_stim )
     }
 
     if( has_trait( trait_JITTERY ) && !has_effect( effect_shakes ) ) {
+
+        int total_kcal = get_stored_kcal() + stomach.get_calories();
+        int max_kcal = max_stored_kcal();
+        float days_left = static_cast<float>( total_kcal ) / bmr();
+        float days_max = static_cast<float>( max_kcal ) / bmr();
+
         if( current_stim > 50 && one_in( to_turns<int>( 30_minutes ) - ( current_stim * 6 ) ) ) {
             add_effect( effect_shakes, 30_minutes + 1_turns * current_stim );
-        } else if( ( get_kcal_percent() < 0.95f ) &&
-                   one_turn_in( 60_minutes - 1_seconds * ( max_stored_kcal() - get_stored_kcal() ) ) ) {
+        } else if( ( days_max - days_left >= 0.5f ) && //matches hunger state in get_hunger_description
+                   one_turn_in( 60_minutes - 1_seconds * ( max_kcal - total_kcal ) ) ) {
             add_effect( effect_shakes, 40_minutes );
         }
     }
@@ -542,7 +549,8 @@ void Character::suffer_from_schizophrenia()
     }
     // Follower turns hostile
     if( one_turn_in( 4_hours ) ) {
-        std::vector<shared_ptr_fast<npc>> followers = overmap_buffer.get_npcs_near_player( 12 );
+        std::vector<shared_ptr_fast<npc>> followers = get_overmapbuffer(
+                                           get_dimension() ).get_npcs_near_player( 12 );
 
         std::string who_gets_angry = name;
         if( !followers.empty() ) {
@@ -597,13 +605,13 @@ void Character::suffer_from_schizophrenia()
         // Weapon is concerned for player if bleeding
         // Weapon is concerned for itself if damaged
         // Otherwise random chit-chat
-        std::vector<weak_ptr_fast<monster>> mons = g->all_monsters().items;
+        auto mons = g->all_monsters().items;
 
         std::string i_talk_w;
         bool does_talk = false;
-        if( !mons.empty() && one_turn_in( 12_minutes ) ) {
+        if( !mons->empty() && one_turn_in( 12_minutes ) ) {
             std::vector<std::string> seen_mons;
-            for( weak_ptr_fast<monster> &n : mons ) {
+            for( auto &n : *mons ) {
                 if( sees( *n.lock() ) ) {
                     seen_mons.emplace_back( n.lock()->get_name() );
                 }
@@ -662,7 +670,7 @@ void Character::suffer_from_asthma( const int current_stim )
 
     if( in_sleep_state() && !has_effect( effect_narcosis ) ) {
         inventory map_inv;
-        map_inv.form_from_map( g->u.pos(), 2, &g->u );
+        map_inv.form_from_map( g->u.bub_pos(), 2, &g->u );
         // check if an inhaler is somewhere near
         bool nearby_use = auto_use || oxygenator || map_inv.has_charges( itype_inhaler, 1 ) ||
                           map_inv.has_charges( itype_oxygen_tank, 1 ) ||
@@ -685,11 +693,11 @@ void Character::suffer_from_asthma( const int current_stim )
             // create new variable to resolve a reference issue
             int amount = 1;
             map &here = get_map();
-            if( !here.use_charges( g->u.pos(), 2, itype_inhaler, amount ).empty() ) {
+            if( !here.use_charges( g->u.bub_pos(), 2, itype_inhaler, amount ).empty() ) {
                 add_msg_if_player( m_info, _( "You use your inhaler and go back to sleep." ) );
                 add_effect( effect_took_antiasthmatic, rng( 1_hours, 2_hours ) );
-            } else if( !here.use_charges( g->u.pos(), 2, itype_oxygen_tank, amount ).empty() ||
-                       !here.use_charges( g->u.pos(), 2, itype_smoxygen_tank, amount ).empty() ) {
+            } else if( !here.use_charges( g->u.bub_pos(), 2, itype_oxygen_tank, amount ).empty() ||
+                       !here.use_charges( g->u.bub_pos(), 2, itype_smoxygen_tank, amount ).empty() ) {
                 add_msg_if_player( m_info, _( "You take a deep breath from your oxygen tank "
                                               "and go back to sleep." ) );
             }
@@ -750,7 +758,7 @@ void Character::suffer_feral_kill_withdrawl()
         return;
     }
     // Once every 4 hours
-    if( calendar::once_every( 4_hours ) ) {
+    if( action_time_scale::once_every_this_tick( 4_hours ) ) {
         // Select a random side effect:
         switch( dice( 1, 4 ) ) {
             default:
@@ -826,7 +834,7 @@ void Character::suffer_feral_kill_withdrawl()
 
 void Character::suffer_in_sunlight()
 {
-    if( !g->is_in_sunlight( pos() ) ) {
+    if( !g->is_in_sunlight( bub_pos() ) ) {
         return;
     }
 
@@ -843,7 +851,7 @@ void Character::suffer_in_sunlight()
                                        sun_intensity_type::normal ) ? 1.0 : 0.5;
 
         int sunlight_nutrition = 0;
-        const int player_local_temp = units::to_fahrenheit( get_weather().get_temperature( pos() ) );
+        const int player_local_temp = units::to_fahrenheit( get_weather().get_temperature( abs_pos() ) );
         const int flux = ( player_local_temp - 65 ) / 2;
 
         if( !has_hat ) {
@@ -1059,19 +1067,30 @@ void Character::suffer_from_other_mutations()
     map &here = get_map();
     if( has_trait( trait_SHARKTEETH ) && one_turn_in( 24_hours ) ) {
         add_msg_if_player( m_neutral, _( "You shed a tooth!" ) );
-        here.spawn_item( pos(), "bone", 1 );
+        here.spawn_item( bub_pos(), "bone", 1 );
     }
 
     if( has_active_mutation( trait_WINGS_INSECT ) ) {
         //~Sound of buzzing Insect Wings
-        sounds::sound( pos(), 10, sounds::sound_t::movement, _( "BZZZZZ" ), false, "misc",
-                       "insect_wings" );
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = 60;
+        se.category = sounds::sound_t::movement;
+        se.movement_noise = true;
+        se.description = _( "BZZZZZ" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.id = "misc";
+        se.variant = "insect_wings";
+        se.faction = get_faction()->id;
+        se.monfaction = get_faction()->mon_faction;
+        sounds::sound( se );
     }
 
     bool wearing_shoes = is_wearing_shoes( side::LEFT ) || is_wearing_shoes( side::RIGHT );
     int root_vitamins = 0;
     int root_water = 0;
-    if( has_trait( trait_ROOTS3 ) && here.has_flag( flag_PLOWABLE, pos() ) && !wearing_shoes ) {
+    if( has_trait( trait_ROOTS3 ) && here.has_flag( flag_PLOWABLE, bub_pos() ) && !wearing_shoes ) {
         root_vitamins += 1;
         if( get_thirst() <= thirst_levels::turgid ) {
             root_water += 51;
@@ -1105,7 +1124,7 @@ void Character::suffer_from_other_mutations()
     //Web Weavers...weave web
     if( has_active_mutation( trait_WEB_WEAVER ) && !in_vehicle ) {
         // this adds intensity to if its not already there.
-        here.add_field( pos(), fd_web, 1 );
+        here.add_field( bub_pos(), fd_web, 1 );
 
     }
 
@@ -1130,7 +1149,7 @@ void Character::suffer_from_other_mutations()
 
     if( has_trait( trait_WEB_SPINNER ) && !in_vehicle && one_in( 3 ) ) {
         // this adds intensity to if its not already there.
-        here.add_field( pos(), fd_web, 1 );
+        here.add_field( bub_pos(), fd_web, 1 );
     }
 
     bool should_mutate = has_trait( trait_UNSTABLE ) && !has_trait( trait_CHAOTIC_BAD ) &&
@@ -1144,16 +1163,16 @@ void Character::suffer_from_other_mutations()
     const bool needs_fire = !has_morale( MORALE_PYROMANIA_NEARFIRE ) &&
                             !has_morale( MORALE_PYROMANIA_STARTFIRE );
     if( has_trait( trait_PYROMANIA ) && needs_fire && !in_sleep_state() &&
-        calendar::once_every( 2_hours ) ) {
+        action_time_scale::once_every_this_tick( 2_hours ) ) {
         add_morale( MORALE_PYROMANIA_NOFIRE, -1, -30, 24_hours, 24_hours, true );
-        if( calendar::once_every( 4_hours ) ) {
+        if( action_time_scale::once_every_this_tick( 4_hours ) ) {
             const translation smokin_hot_fiyah =
                 SNIPPET.random_from_category( "pyromania_withdrawal" ).value_or( translation() );
             add_msg_if_player( m_bad, "%s", smokin_hot_fiyah );
         }
     }
     if( has_trait( trait_KILLER ) && !has_morale( MORALE_KILLER_HAS_KILLED ) &&
-        calendar::once_every( 2_hours ) ) {
+        action_time_scale::once_every_this_tick( 2_hours ) ) {
         if( !has_morale( MORALE_KILLER_NEED_TO_KILL ) ) {
             const translation snip = SNIPPET.random_from_category( "killer_withdrawal" ).value_or(
                                          translation() );
@@ -1168,7 +1187,7 @@ void Character::suffer_from_radiation()
     map &here = get_map();
     // checking for radioactive items in inventory
     const int item_radiation = leak_level( flag_RADIOACTIVE );
-    const int map_radiation = here.get_radiation( pos() );
+    const int map_radiation = here.get_radiation( bub_pos() );
     float rads = map_radiation / 100.0f + item_radiation / 10.0f;
 
     int rad_mut = 0;
@@ -1199,7 +1218,7 @@ void Character::suffer_from_radiation()
         if( rad_mut_proc && !kept_in ) {
             // Irradiate a random nearby point
             // If you can't, irradiate the player instead
-            tripoint rad_point = pos() + point( rng( -3, 3 ), rng( -3, 3 ) );
+            tripoint_bub_ms rad_point = bub_pos() + point_rel_ms( rng( -3, 3 ), rng( -3, 3 ) );
             // TODO: Radioactive vehicles?
             if( here.get_radiation( rad_point ) < rad_mut ) {
                 here.adjust_radiation( rad_point, 1 );
@@ -1212,13 +1231,14 @@ void Character::suffer_from_radiation()
     // Used to control vomiting from radiation to make it not-annoying
     bool radiation_increasing = irradiate( rads );
 
-    if( radiation_increasing && calendar::once_every( 3_minutes ) && has_bionic( bio_geiger ) ) {
+    if( radiation_increasing && action_time_scale::once_every_this_tick( 3_minutes ) &&
+        has_bionic( bio_geiger ) ) {
         add_msg_if_player( m_warning,
                            _( "You feel an anomalous sensation coming from "
                               "your radiation sensors." ) );
     }
 
-    if( calendar::once_every( 15_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 15_minutes ) ) {
         if( get_rad() < 0 ) {
             set_rad( 0 );
         } else if( get_rad() > 2000 ) {
@@ -1235,7 +1255,7 @@ void Character::suffer_from_radiation()
     }
 
     const bool radiogenic = has_trait( trait_RADIOGENIC );
-    if( radiogenic && calendar::once_every( 30_minutes ) && get_rad() > 0 ) {
+    if( radiogenic && action_time_scale::once_every_this_tick( 30_minutes ) && get_rad() > 0 ) {
         // At 200 irradiation, twice as fast as REGEN
         if( x_in_y( get_rad(), 200 ) ) {
             healall( 1 );
@@ -1255,53 +1275,27 @@ void Character::suffer_from_radiation()
         }
     }
 
-    if( get_rad() > 200 && calendar::once_every( 10_minutes ) && x_in_y( get_rad(), 1000 ) ) {
+    if( get_rad() > 200 && action_time_scale::once_every_this_tick( 10_minutes ) &&
+        x_in_y( get_rad(), 1000 ) ) {
         hurtall( 1, nullptr );
         mod_rad( -5 );
     }
 
-    // Microreactor CBM
-    if( get_fuel_type_available( itype_plut_cell ) > 0 ) {
-        if( calendar::once_every( 60_minutes ) ) {
-            int rad_mod = 0;
-            rad_mod += has_bionic( bio_reactor ) ? 3 : 0;
+    // Microreactor CBM. advanced microreactor is safe to use
+    if( has_active_bionic( bio_reactor ) ) {
+        mod_rad( 1 );
+    }
+    // Reactor override increases power output but irradiates you faster
+    if( has_active_bionic( bio_reactoroverride ) ) {
+        int current_fuel_stock = std::stoi( get_value( itype_plut_cell.str() ) );
 
-            if( rad_mod > 1 ) {
-                mod_rad( rad_mod );
-            }
-        }
+        current_fuel_stock -= 50;
 
-        bool powered_reactor = false;
+        set_value( itype_plut_cell.str(), std::to_string( current_fuel_stock ) );
+        update_fuel_storage( itype_plut_cell );
 
-        if( has_bionic( bio_reactor ) ) {
-            if( get_bionic_state( bio_reactor ).powered ) {
-                powered_reactor = true;
-            } else {
-                mod_power_level( 50_J );
-            }
-        }
-
-        if( has_bionic( bio_advreactor ) ) {
-            if( get_bionic_state( bio_advreactor ).powered ) {
-                powered_reactor = true;
-            } else {
-                mod_power_level( 75_J );
-            }
-        }
-
-        if( has_bionic( bio_reactoroverride ) && powered_reactor ) {
-            if( get_bionic_state( bio_reactoroverride ).powered ) {
-                int current_fuel_stock = std::stoi( get_value( itype_plut_cell.str() ) );
-
-                current_fuel_stock -= 50;
-
-                set_value( itype_plut_cell.str(), std::to_string( current_fuel_stock ) );
-                update_fuel_storage( itype_plut_cell );
-
-                mod_power_level( 40_kJ );
-                mod_rad( 2 );
-            }
-        }
+        mod_power_level( 40_kJ );
+        mod_rad( 2 );
     }
 }
 
@@ -1349,7 +1343,16 @@ void Character::suffer_from_bad_bionics()
             add_msg_if_player( m_bad, _( "You feel your faulty bionic shuddering." ) );
             sfx::play_variant_sound( "bionics", "elec_blast_muffled", 100 );
         }
-        sounds::sound( pos(), 60, sounds::sound_t::movement, _( "Crackle!" ) ); //sfx above
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = 90;
+        se.category = sounds::sound_t::movement;
+        se.movement_noise = true;
+        se.description = _( "Crackle!" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.id = "explosion";
+        sounds::sound( se ); //sfx above
     }
     if( has_bionic( bio_power_weakness ) && has_max_power() &&
         get_power_level() >= get_max_power_level() * .75 ) {
@@ -1405,7 +1408,7 @@ void Character::suffer_from_artifacts()
         add_effect( effect_attention, 3_turns );
     }
 
-    if( has_artifact_with( AEP_BAD_WEATHER ) && calendar::once_every( 1_minutes ) &&
+    if( has_artifact_with( AEP_BAD_WEATHER ) && action_time_scale::once_every_this_tick( 1_minutes ) &&
         get_weather().weather_id->precip < precip_class::heavy ) {
         weather_manager &wm = get_weather();
         wm.weather_override = wm.get_cur_weather_gen().get_bad_weather();
@@ -1433,13 +1436,13 @@ void Character::suffer_from_stimulants( const int current_stim )
         }
     }
     if( current_stim > 110 ) {
-        if( !has_effect( effect_shakes ) && calendar::once_every( 10_minutes ) ) {
+        if( !has_effect( effect_shakes ) && action_time_scale::once_every_this_tick( 10_minutes ) ) {
             add_msg_if_player( _( "You shake uncontrollably." ) );
             add_effect( effect_shakes, 15_minutes + 1_turns );
         }
     }
     if( current_stim > 75 ) {
-        if( calendar::once_every( 5_minutes ) && !has_effect( effect_nausea ) ) {
+        if( action_time_scale::once_every_this_tick( 5_minutes ) && !has_effect( effect_nausea ) ) {
             add_msg_if_player( _( "You feel nauseous…" ) );
             add_effect( effect_nausea, 5_minutes );
         }
@@ -1455,7 +1458,7 @@ void Character::suffer_from_stimulants( const int current_stim )
         }
     }
     if( current_stim < -60 || get_painkiller() > 130 ) {
-        if( calendar::once_every( 10_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 10_minutes ) ) {
             add_msg_if_player( m_warning, _( "You feel tired…" ) );
             mod_fatigue( rng( 1, 2 ) );
         }
@@ -1559,13 +1562,60 @@ void Character::suffer()
         }
     }
 
+    const auto dim = get_dimension();
+    const auto &effects = get_overmapbuffer( dim ).get_settings( abs_omt_pos() ).region_effects;
+    for( const auto& [type, effect_list] : effects ) {
+        switch( type ) {
+            case region_effect_type::generic:
+                break;
+            case region_effect_type::sunlight:
+                if( !g->is_in_sunlight( bub_pos() ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::surface:
+                if( bub_pos().z() < 0 || !g->is_sheltered( bub_pos() ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::night_time:
+                if( !is_night( calendar::turn ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::sleep:
+                if( !in_sleep_state() ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::underwater:
+                if( !is_underwater() ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::underground:
+                if( bub_pos().z() >= 0 ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::num_types:
+                break;
+        }
+
+        for( const auto &effect : effect_list ) {
+            if( effect.second <= 1 || one_in( effect.second ) ) {
+                add_effect( effect.first, 1_turns );
+            }
+        }
+    }
+
     for( bionic &bio : get_bionic_collection() ) {
         process_bionic( bio );
     }
 
     for( std::pair<const trait_id, char_trait_data> &mut : my_mutations ) {
         const mutation_branch &mdata = mut.first.obj();
-        if( calendar::once_every( 1_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             suffer_water_damage( mdata );
         }
         char_trait_data &tdata = mut.second;
@@ -1611,7 +1661,7 @@ void Character::suffer()
     //Suffer from enchantments
     enchantment_cache->activate_passive( *this );
 
-    if( calendar::once_every( 1_hours ) ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) ) {
         add_effect( effect_accumulated_mutagen, 1_hours, bodypart_str_id::NULL_ID() );
     }
 }

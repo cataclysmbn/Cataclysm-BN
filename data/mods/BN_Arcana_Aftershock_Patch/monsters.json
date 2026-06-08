@@ -1,0 +1,14 @@
+[
+  {
+    "id": "afs_mon_migoturret",
+    "copy-from": "afs_mon_migoturret",
+    "type": "MONSTER",
+    "death_drops": "afs_mon_migoturret_death_drops"
+  },
+  {
+    "id": "mon_afs_headless_horror",
+    "copy-from": "mon_afs_headless_horror",
+    "type": "MONSTER",
+    "death_drops": "mon_afs_headless_horror_death_drops"
+  }
+]

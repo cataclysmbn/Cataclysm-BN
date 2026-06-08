@@ -443,7 +443,8 @@ class generic_factory
          */
         const T &obj( const int_id<T> &id ) const {
             if( !is_valid( id ) ) {
-                debugmsg( "invalid %s id \"%d\"", type_name, id.to_i() );
+                debugmsg( "invalid %s id \"%d\" (max: %d)", type_name, id.to_i(),
+                          static_cast<int>( list.size() ) - 1 );
                 return dummy_obj;
             }
             return list[id.to_i()];

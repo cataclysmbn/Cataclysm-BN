@@ -93,6 +93,9 @@ void quality::load_static( const JsonObject &jo, const std::string &src )
 void quality::load( const JsonObject &jo, const std::string & )
 {
     mandatory( jo, was_loaded, "name", name );
+    optional( jo, was_loaded, "crafting_speed_bonus_per_level", crafting_speed_bonus_per_level,
+              0.0f );
+    optional( jo, was_loaded, "crafting_speed_level_offset", crafting_speed_level_offset, 0 );
 
     for( JsonArray levels : jo.get_array( "usages" ) ) {
         const int level = levels.get_int( 0 );
@@ -1201,7 +1204,7 @@ requirement_data requirement_data::continue_requirements( const std::vector<item
             comp.count -= qty;
             craft_components.remove_items_with( [&comp, &qty]( detached_ptr<item> &&e ) {
                 std::vector<detached_ptr<item>> used;
-                e = item::use_charges( std::move( e ), comp.type, qty, used, tripoint_zero );
+                e = item::use_charges( std::move( e ), comp.type, qty, used, tripoint_bub_ms::zero() );
                 return qty > 0 ? VisitResponse::SKIP : VisitResponse::ABORT;
             } );
         } else {

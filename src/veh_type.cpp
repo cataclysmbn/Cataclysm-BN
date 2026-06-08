@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdlib>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -11,12 +12,14 @@
 
 #include "ammo.h"
 #include "assign.h"
+#include "calendar.h"
 #include "cata_utility.h"
 #include "character_functions.h"
 #include "color.h"
 #include "debug.h"
 #include "flag.h"
 #include "game_constants.h"
+#include "hsv_color.h"
 #include "init.h"
 #include "item.h"
 #include "item_group.h"
@@ -35,8 +38,10 @@
 #include "units_utility.h"
 #include "value_ptr.h"
 #include "vehicle.h"
+#include "vehicle_palette.h"
 #include "vehicle_part.h"
 #include "vehicle_group.h"
+#include "weighted_list.h"
 
 class npc;
 
@@ -110,11 +115,85 @@ static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map =
     { "ROOF", VPFLAG_ROOF },
     { "BALLOON", VPFLAG_BALLOON },
     { "WING", VPFLAG_WING },
+    { "POWERED_BY_ENGINE", VPFLAG_POWERED_BY_ENGINE },
     { "PROPELLER", VPFLAG_PROPELLER },
     { "EXTENDABLE", VPFLAG_EXTENDABLE },
+    { "NOCOLLIDE", VPFLAG_NOCOLLIDE },
+    { "NOCOLLIDEABOVE", VPFLAG_NOCOLLIDEABOVE },
+    { "NOCOLLIDEBELOW", VPFLAG_NOCOLLIDEBELOW },
+    { "NOSMASH", VPFLAG_NOSMASH },
     { "NOFIELDS", VPFLAG_NOFIELDS },
-    { "DROPPER", VPFLAG_DROPPER }
+    { "DROPPER", VPFLAG_DROPPER },
+    { "LADDER", VPFLAG_LADDER }
 };
+
+auto vpart_rotating_light::arc_width() const -> units::angle
+{
+    return units::from_degrees( std::max( arc, 1 ) );
+}
+
+auto vpart_rotating_light::beam_count() const -> int
+{
+    return std::max( beams, 1 );
+}
+
+auto vpart_rotating_light::beam_spacing() const -> units::angle
+{
+    return units::from_degrees( 360.0 / static_cast<double>( beam_count() ) );
+}
+
+auto vpart_rotating_light::direction_at( const units::angle base_direction,
+        const time_point turn ) const -> units::angle
+{
+    const auto period_turns = std::max( to_turns<int>( period ), 1 );
+    const auto step_magnitude = std::abs( static_cast<long long>( step ) );
+    const auto rotated_beam_step = step_magnitude * beam_count();
+    const auto state_count = step_magnitude > 0 ?
+                             static_cast<int>( 360 / std::gcd( 360LL, rotated_beam_step ) ) : 1;
+    const auto elapsed_turns = std::max( to_turns<int>( turn - calendar::turn_zero ), 0 );
+    const auto step_index = elapsed_turns / period_turns % state_count;
+    const auto rotation_degrees = phase + step * step_index;
+
+    return base_direction + units::from_degrees( rotation_degrees );
+}
+
+static auto load_rotating_light( const JsonObject &jo,
+                                 std::optional<vpart_rotating_light> &rotating_light ) -> void
+{
+    if( !jo.has_member( "rotating_light" ) ) {
+        return;
+    }
+
+    if( jo.has_null( "rotating_light" ) ) {
+        rotating_light.reset();
+        return;
+    }
+
+    if( !jo.has_object( "rotating_light" ) ) {
+        jo.throw_error( "rotating_light must be an object or null", "rotating_light" );
+    }
+
+    auto data = rotating_light.value_or( vpart_rotating_light{} );
+    auto jrot = jo.get_object( "rotating_light" );
+
+    assign( jrot, "arc", data.arc, false, 1, 360 );
+    assign( jrot, "step", data.step );
+    assign( jrot, "phase", data.phase );
+    assign( jrot, "beams", data.beams, false, 1, 16 );
+
+    if( jrot.has_int( "period" ) ) {
+        data.period = time_duration::from_turns( jrot.get_int( "period" ) );
+    } else if( jrot.has_string( "period" ) ) {
+        data.period = read_from_json_string<time_duration>( *jrot.get_raw( "period" ),
+                      time_duration::units );
+    }
+
+    if( data.period <= 0_turns ) {
+        jrot.throw_error( "period must be positive", "period" );
+    }
+
+    rotating_light = data;
+}
 
 static const std::vector<std::pair<std::string, int>> standard_terrain_mod = {{
         { "FLAT", 4 }, { "ROAD", 2 }
@@ -376,6 +455,23 @@ void vpart_info::load_crafter( std::optional<vpslot_crafter> &craftptr, const Js
     assert( craftptr );
 }
 
+void vpart_info::load_converter( std::optional<vpslot_converter> &convertptr, const JsonObject &jo )
+{
+    vpslot_converter convert_info{};
+    if( convertptr ) {
+        convert_info = *convertptr;
+    }
+    JsonObject converter = jo.get_object( "converter" );
+    assign( converter, "input", convert_info.input );
+    assign( converter, "input_step", convert_info.input_step );
+    assign( converter, "output", convert_info.output );
+    assign( converter, "output_step", convert_info.output_step );
+    assign( converter, "max_steps", convert_info.max_steps );
+    assign( converter, "charge_cost", convert_info.charge_cost );
+    convertptr = convert_info;
+    assert( convertptr );
+}
+
 /**
  * Reads in a vehicle part from a JsonObject.
  */
@@ -427,14 +523,19 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
     assign( jo, "flags", def.flags );
     assign( jo, "description", def.description );
 
+    load_rotating_light( jo, def.rotating_light );
+
     assign( jo, "comfort", def.comfort );
     assign( jo, "floor_bedding_warmth", def.floor_bedding_warmth );
     assign( jo, "bonus_fire_warmth_feet", def.bonus_fire_warmth_feet );
+    assign( jo, "default_color", def.default_color );
+    assign( jo, "light_color", def.light_color );
 
     if( jo.has_member( "transform_terrain" ) ) {
         JsonObject jttd = jo.get_object( "transform_terrain" );
         for( const std::string pre_flag : jttd.get_array( "pre_flags" ) ) {
             def.transform_terrain.pre_flags.emplace( pre_flag );
+
         }
         def.transform_terrain.diggable = jttd.get_bool( "diggable", false );
         def.transform_terrain.post_terrain = jttd.get_string( "post_terrain", "t_null" );
@@ -523,12 +624,18 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
         load_wing( def.wing_info, jo );
     }
 
+    if( def.has_flag( "CONVERTER" ) ) {
+        load_converter( def.converter_info, jo );
+    }
+
     if( def.has_flag( "WORKBENCH" ) ) {
         load_workbench( def.workbench_info, jo );
     }
+
     if( def.has_flag( "CRAFTER" ) ) {
         load_crafter( def.crafter_info, jo );
     }
+
     // Dummy
     // TODO: Implement
     jo.get_string_array( "categories" );
@@ -710,7 +817,7 @@ void vpart_info::check()
         const itype &base_item_type = *part.item;
         // Fuel type errors are serious and need fixing now
         if( !part.fuel_type.is_valid() ) {
-            debugmsg( "vehicle part %s uses undefined fuel %s", part.id.c_str(), part.item.c_str() );
+            debugmsg( "vehicle part %s uses undefined fuel %s", part.id.c_str(), part.fuel_type.c_str() );
             part.fuel_type = itype_id::NULL_ID();
         } else if( part.fuel_type && !part.fuel_type->fuel &&
                    ( !base_item_type.container || !base_item_type.container->watertight ) ) {
@@ -757,11 +864,19 @@ void vpart_info::check()
         if( part.has_flag( VPFLAG_ENABLED_DRAINS_EPOWER ) && part.epower == 0 ) {
             debugmsg( "%s is set to drain epower, but has epower == 0", part.id.c_str() );
         }
+        if( part.has_flag( VPFLAG_NOCOLLIDEABOVE ) && !part.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            debugmsg( "%s has flag NOCOLLIDEABOVE, but does not have the prerequisite flag NOCOLLIDE",
+                      part.id.c_str() );
+        }
+        if( part.has_flag( VPFLAG_NOCOLLIDEBELOW ) && !part.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            debugmsg( "%s has flag NOCOLLIDEBELOW, but does not have the prerequisite flag NOCOLLIDE",
+                      part.id.c_str() );
+        }
         // Parts with non-zero epower must have a flag that affects epower usage
         static const std::vector<std::string> handled = {{
                 "ENABLED_DRAINS_EPOWER", "SECURITY", "ENGINE",
                 "ALTERNATOR", "SOLAR_PANEL", "POWER_TRANSFER",
-                "REACTOR", "WIND_TURBINE", "WATER_WHEEL"
+                "PERPETUAL", "REACTOR", "WIND_TURBINE", "WATER_WHEEL"
             }
         };
         if( part.epower != 0 &&
@@ -1022,10 +1137,31 @@ int vpart_info::propeller_diameter() const
 {
     return has_flag( VPFLAG_PROPELLER ) ? propeller_info->propeller_diameter : 0;
 }
+
+int vpart_info::get_max_conversions() const
+{
+    return has_flag( "CONVERTER" ) ? converter_info->max_steps : 0;
+}
+int vpart_info::get_conversion_charges() const
+{
+    return has_flag( "CONVERTER" ) ? converter_info->charge_cost : 0;
+}
+const std::pair<itype_id, int> vpart_info::get_conversion_input() const
+{
+    return has_flag( "CONVERTER" ) ? std::make_pair( converter_info->input,
+            converter_info->input_step ) : std::make_pair( itype_id::NULL_ID(), 0 );
+}
+const std::pair<itype_id, int> vpart_info::get_conversion_output() const
+{
+    return has_flag( "CONVERTER" ) ? std::make_pair( converter_info->output,
+            converter_info->output_step ) : std::make_pair( itype_id::NULL_ID(), 0 );
+}
+
 const std::vector<itype_id> vpart_info::craftertools() const
 {
     return crafter_info->fake_parts;
 }
+
 const std::optional<vpslot_workbench> &vpart_info::get_workbench_info() const
 {
     return workbench_info;
@@ -1092,7 +1228,7 @@ void vehicle_prototype::load( const JsonObject &jo )
 
     vgroups[vgroup_id( jo.get_string( "id" ) )].add_vehicle( vproto_id( jo.get_string( "id" ) ), 100 );
 
-    const auto add_part_obj = [&]( const JsonObject & part, point pos ) {
+    const auto add_part_obj = [&]( const JsonObject & part, tripoint_mnt_veh pos ) {
         part_def pt;
         pt.pos = pos;
         pt.part = vpart_id( part.get_string( "part" ) );
@@ -1105,7 +1241,7 @@ void vehicle_prototype::load( const JsonObject &jo )
         vproto.parts.push_back( pt );
     };
 
-    const auto add_part_string = [&]( const std::string & part, point pos ) {
+    const auto add_part_string = [&]( const std::string & part, tripoint_mnt_veh pos ) {
         part_def pt;
         pt.pos = pos;
         pt.part = vpart_id( part );
@@ -1116,26 +1252,38 @@ void vehicle_prototype::load( const JsonObject &jo )
         vproto.flags = jo.get_tags<flag_id>( "flags" );
     }
 
+    if( jo.has_member( "color_palette" ) ) {
+        vproto.color_palette = vpalette_id( jo.get_string( "color_palette" ) );
+    }
+
     if( jo.has_member( "blueprint" ) ) {
         if( jo.has_member( "palette" ) ) {
             std::map< char, JsonArray > string_palette;
             for( const JsonMember member : jo.get_object( "palette" ) ) {
-                std::vector<std::string> members;
-                for( const auto entry : member.get_array() ) {
-                    members.push_back( entry );
-                }
                 string_palette[member.name().at( 0 )] = member.get_array();
             }
-            std::map< char, std::vector<vpart_id> > veh_palette;
-            for( auto const character : string_palette ) {
-                for( std::string part : character.second ) {
-                    if( !veh_palette.contains( character.first ) ) {
-                        veh_palette[character.first] = { vpart_id( part ) };
+            std::map< char, std::vector<part_def> > veh_palette;
+            for( auto const &character : string_palette ) {
+                for( JsonValue part : character.second ) {
+                    part_def pt;
+                    if( part.test_string() ) {
+                        pt.part = vpart_id( part.get_string() );
                     } else {
-                        veh_palette[character.first].push_back( vpart_id( part ) );
+                        JsonObject realpart = part.get_object();
+                        pt.part = vpart_id( realpart.get_string( "part" ) );
+                        assign( realpart, "ammo", pt.with_ammo, true, 0, 100 );
+                        assign( realpart, "ammo_types", pt.ammo_types, true );
+                        assign( realpart, "ammo_qty", pt.ammo_qty, true, 0 );
+                        assign( realpart, "fuel", pt.fuel, true );
+                    }
+                    if( !veh_palette.contains( character.first ) ) {
+                        veh_palette[character.first] = { pt };
+                    } else {
+                        veh_palette[character.first].push_back( pt );
                     }
                 }
             }
+            // TODO: Handle Z coordinates in blueprints
             auto pnt = jo.get_object( "blueprint_origin" );
             int y = -pnt.get_int( "y", 0 );
             for( std::string row : jo.get_array( "blueprint" ) ) {
@@ -1143,23 +1291,23 @@ void vehicle_prototype::load( const JsonObject &jo )
                 for( char character : row ) {
                     x += 1;
                     if( !veh_palette.contains( character ) ) { continue; }
-                    for( auto const part : veh_palette.at( character ) ) {
-                        part_def pt;
-                        pt.pos = point( x, y );
-                        pt.part = part;
+                    for( auto part : veh_palette.at( character ) ) {
+                        part_def pt = part;
+                        pt.pos = tripoint_mnt_veh( x, y, 0 );
                         vproto.parts.push_back( pt );
                     }
                 }
                 y += 1;
             }
         } else {
-            // This still has to be optional in cases where old mods or places are still using it for only display purposes
+            // This still has to be optional in cases where it is used only for display purposes
             jo.get_array( "blueprint" );
         }
     }
 
     for( JsonObject part : jo.get_array( "parts" ) ) {
-        point pos = point( part.get_int( "x" ), part.get_int( "y" ) );
+        auto pos = tripoint_mnt_veh( part.get_int( "x" ), part.get_int( "y" ),
+                                     part.has_int( "z" ) ? part.get_int( "z" ) : 0 );
 
         if( part.has_string( "part" ) ) {
             add_part_obj( part, pos );
@@ -1178,13 +1326,20 @@ void vehicle_prototype::load( const JsonObject &jo )
 
     for( JsonObject spawn_info : jo.get_array( "items" ) ) {
         vehicle_item_spawn next_spawn;
-        next_spawn.pos.x = spawn_info.get_int( "x" );
-        next_spawn.pos.y = spawn_info.get_int( "y" );
+        const bool do_z = spawn_info.has_int( "z" );
+        next_spawn.pos.x() = spawn_info.get_int( "x" );
+        next_spawn.pos.y() = spawn_info.get_int( "y" );
+        next_spawn.pos.z() = do_z ? spawn_info.get_int( "z" ) : 0;
 
         next_spawn.chance = spawn_info.get_int( "chance" );
         if( next_spawn.chance <= 0 || next_spawn.chance > 100 ) {
-            debugmsg( "Invalid spawn chance in %s (%d, %d): %d%%",
-                      vproto.name, next_spawn.pos.x, next_spawn.pos.y, next_spawn.chance );
+            if( do_z ) {
+                debugmsg( "Invalid spawn chance in %s (%d, %d, %d): %d%%",
+                          vproto.name, next_spawn.pos.x(), next_spawn.pos.y(), next_spawn.pos.z(), next_spawn.chance );
+            } else {
+                debugmsg( "Invalid spawn chance in %s (%d, %d): %d%%",
+                          vproto.name, next_spawn.pos.x(), next_spawn.pos.y(), next_spawn.chance );
+            }
         }
 
         // constrain both with_magazine and with_ammo to [0-100]
@@ -1223,7 +1378,7 @@ void vehicle_prototype::reset()
 void vehicle_prototype::finalize()
 {
     for( auto &vp : vtypes ) {
-        std::unordered_set<point> cargo_spots;
+        std::unordered_set<tripoint_mnt_veh> cargo_spots;
         vehicle_prototype &proto = vp.second;
         const vproto_id &id = vp.first;
 
@@ -1237,6 +1392,12 @@ void vehicle_prototype::finalize()
 
         blueprint.suspend_refresh();
         for( auto &pt : proto.parts ) {
+            if( proto.color_palette.is_valid() && !proto.color_match.contains( pt.part.str() ) ) {
+                int index = proto.color_palette->fuzzy_to_index( pt.part );
+                if( index != -1 ) {
+                    proto.color_match[pt.part.str()] = index;
+                }
+            }
             const itype *base = &*pt.part->item;
 
             if( !pt.part.is_valid() ) {
@@ -1247,7 +1408,7 @@ void vehicle_prototype::finalize()
             if( blueprint.install_part( pt.pos, pt.part, true ) < 0 ) {
                 debugmsg( "init_vehicles: '%s' part '%s'(%d) can't be installed to %d,%d",
                           blueprint.name, pt.part.c_str(),
-                          blueprint.part_count(), pt.pos.x, pt.pos.y );
+                          blueprint.part_count(), pt.pos.x(), pt.pos.y() );
             }
 
             if( !base->gun ) {
@@ -1293,8 +1454,8 @@ void vehicle_prototype::finalize()
 
         for( auto &i : proto.item_spawns ) {
             if( !cargo_spots.contains( i.pos ) ) {
-                debugmsg( "Invalid spawn location (no CARGO vpart) in %s (%d, %d): %d%%",
-                          proto.name, i.pos.x, i.pos.y, i.chance );
+                debugmsg( "Invalid spawn location (no CARGO vpart) in %s (%d, %d, %d): %d%%",
+                          proto.name, i.pos.x(), i.pos.y(), i.pos.z(), i.chance );
             }
             for( auto &j : i.item_ids ) {
                 if( !j.is_valid() ) {
