@@ -3231,8 +3231,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             << source_upload_bytes << " colored_sources_bytes=" << colored_source_upload_bytes;
     }
     if (deferred_download_copy && !s_logged_dxbc_deferred_download) {
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: lm: DXBC defers lighting downloads to a separate "
-                                        "command buffer";
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC defers lighting downloads to a separate "
+               "command buffer";
         s_logged_dxbc_deferred_download = true;
     }
 
