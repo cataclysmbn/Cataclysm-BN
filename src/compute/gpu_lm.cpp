@@ -2907,8 +2907,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         }
     }
     if (dxbc_lighting_checkpoints && !s_logged_dxbc_cycled_full_uploads) {
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: lm: DXBC cycles transfer maps and full-buffer "
-                                        "input uploads";
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC cycles transfer maps and full-buffer "
+               "input uploads";
         s_logged_dxbc_cycled_full_uploads = true;
     }
     if (!s_lighting_resources.source_map_valid && lightmap_levels.empty()) {
