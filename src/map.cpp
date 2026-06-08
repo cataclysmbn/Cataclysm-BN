@@ -2129,12 +2129,12 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     // Capture the old footprint in absolute submap coordinates BEFORE parts
     // are updated by advance_precalc_mounts.  The player may shift the map
     // origin below, so bubble coordinates would be stale by on_vehicle_moved().
-    auto veh_abs_sm_min = tripoint_abs_sm( INT_MAX, INT_MAX, INT_MAX );
-    auto veh_abs_sm_max = tripoint_abs_sm( INT_MIN, INT_MIN, INT_MIN );
+    auto veh_sm_min = tripoint_abs_sm( INT_MAX, INT_MAX, INT_MAX );
+    auto veh_sm_max = tripoint_abs_sm( INT_MIN, INT_MIN, INT_MIN );
 
     auto expand_bounds = [&]( const tripoint_abs_ms & base, const vehicle_part & prt ) {
-        const auto p = abs_to_map_local( *this, project_to<coords::sm>( base + tripoint_rel_ms(
-                                             prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) ) );
+        const auto p = project_to<coords::sm>( base + tripoint_rel_ms(
+                                             prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) );
         veh_sm_min.x() = std::min( veh_sm_min.x(), p.x() );
         veh_sm_min.y() = std::min( veh_sm_min.y(), p.y() );
         veh_sm_min.z() = std::min( veh_sm_min.z(), p.z() );
@@ -2223,9 +2223,9 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         }
         std::ranges::for_each( smzs, [&]( const int vsmz ) {
             const auto smz = dest.z() + vsmz;
-            const auto veh_sm_min = abs_to_bub( tripoint_abs_sm( veh_abs_sm_min.xy(), smz ) );
-            const auto veh_sm_max = abs_to_bub( tripoint_abs_sm( veh_abs_sm_max.xy(), smz ) );
-            on_vehicle_moved( veh_sm_min, veh_sm_max, smz );
+            const auto veh_bub_sm_min = abs_to_bub( tripoint_abs_sm( veh_sm_min.xy(), smz ) );
+            const auto veh_bub_sm_max = abs_to_bub( tripoint_abs_sm( veh_sm_max.xy(), smz ) );
+            on_vehicle_moved( veh_bub_sm_min, veh_bub_sm_max, smz );
         } );
         vehicle_moved_marked = true;
     };
