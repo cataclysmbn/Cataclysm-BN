@@ -1377,9 +1377,19 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
         } else if( action == "PAGE_UP" ) {
             recipe_info_scroll -= scroll_recipe_info_lines;
             item_info_scroll -= scroll_recipe_info_lines;
+            if( batch ) {
+                line = std::max( 0, line - 50 );
+                }
         } else if( action == "PAGE_DOWN" ) {
             recipe_info_scroll += scroll_recipe_info_lines;
             item_info_scroll += scroll_recipe_info_lines;
+            if( batch ) {
+                if ( line == 0 ) {
+                line = std::min( static_cast<int>( current.size() - 1 ), line + 49 );
+                } else {
+                line = std::min( static_cast<int>( current.size() - 1 ), line + 50 );
+                }
+            }
         } else if( action == "LEFT" ) {
             if( batch || !filterstring.empty() ) {
                 continue;
