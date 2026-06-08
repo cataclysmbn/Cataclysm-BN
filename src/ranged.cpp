@@ -3456,7 +3456,7 @@ bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
 
     // Try to re-acquire target tile or tile where the target creature used to be
     auto local_lt = abs_to_bub( *you->last_target_pos );
-    if( !outside_visible_z_range( src, local_lt ) && dist_fn( local_lt ) <= range ) {
+    if( dist_fn( local_lt ) <= range ) {
         new_dst = local_lt;
         // Abort aiming if a creature moved in
         return !critter && !g->critter_at( local_lt, true );
