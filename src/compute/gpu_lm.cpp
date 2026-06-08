@@ -2865,8 +2865,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         }
     }
     if (dxbc_backend && !s_logged_dxbc_single_submit_lighting) {
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: lm: DXBC uses single-submit lighting command "
-                                        "buffers";
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC uses single-submit lighting command "
+               "buffers";
         s_logged_dxbc_single_submit_lighting = true;
     }
 
