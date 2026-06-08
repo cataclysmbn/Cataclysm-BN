@@ -4165,8 +4165,8 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
             SDL_ReleaseGPUFence(device, fence);
             if (!wait_succeeded) {
                 DebugLog(DL::Error, DC::Main)
-                    << "SDL_GPU: lm: DXBC readback fence wait failed for " << request.label
-                    << ": " << SDL_GetError();
+                    << "SDL_GPU: lm: DXBC readback fence wait failed for " << request.label << ": "
+                    << SDL_GetError();
                 return false;
             }
 
@@ -4241,8 +4241,10 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
                             auto const* color_src = static_cast<uint32_t const*>(mapped);
                             auto const color_span = std::span{color_src, sz};
                             std::ranges::copy(color_span, lc.colored_light_cache.begin());
-                            lc.colored_light_cache_active = std::ranges::any_of(
-                                color_span, [](uint32_t const value) { return value != 0u; });
+                            lc.colored_light_cache_active =
+                                std::ranges::any_of(color_span, [](uint32_t const value) {
+                                    return value != 0u;
+                                });
                         })) {
                     return false;
                 }
