@@ -195,15 +195,13 @@ auto pack_compact_shader_inputs(pack_compact_shader_inputs_params const& p) -> v
         for (auto const tile : std::views::iota(std::size_t{0}, submap_tiles_count)) {
             auto const ter_id = static_cast<std::size_t>(submap.ter_ids[tile]);
             auto const furn_id = static_cast<std::size_t>(submap.furn_ids[tile]);
-            auto const ter_transparent =
-                ter_id < p.ter_lut.size() && p.ter_lut[ter_id] != 0u;
-            auto const furn_transparent =
-                furn_id < p.furn_lut.size() && p.furn_lut[furn_id] != 0u;
-            auto value = ter_transparent || !furn_transparent ? light_transparency_open_air :
-                         light_transparency_solid;
-            if (submap.outside_flags[tile] != 0u) {
-                value *= p.sight_penalty;
-            }
+            auto const ter_transparent = ter_id < p.ter_lut.size() && p.ter_lut[ter_id] != 0u;
+            auto const furn_transparent = furn_id < p.furn_lut.size() && p.furn_lut[furn_id] != 0u;
+            auto value =
+                ter_transparent || !furn_transparent
+                    ? light_transparency_open_air
+                    : light_transparency_solid;
+            if (submap.outside_flags[tile] != 0u) { value *= p.sight_penalty; }
             value *= submap.field_opacity[tile];
             p.out.values[base + tile] = value;
         }
@@ -642,8 +640,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         }
         auto offset = Uint32{0};
         if (use_compact_shader) {
-            std::memcpy(mapped + offset, compact_shader_inputs.values.data(),
-                        compact_input_bytes);
+            std::memcpy(mapped + offset, compact_shader_inputs.values.data(), compact_input_bytes);
         } else {
             std::memcpy(mapped + offset, shader_inputs.ids.data(), submap_ids_bytes);
             offset += submap_ids_bytes;
