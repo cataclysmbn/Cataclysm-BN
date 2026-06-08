@@ -135,22 +135,15 @@ struct transparency_shader_inputs {
     std::vector<transparency_submap_meta_in> meta;
 };
 
-struct transparency_compact_tile_in {
-    uint32_t ter_transparent = 0;
-    uint32_t furn_transparent = 0;
-    float field_opacity = 1.0f;
-    uint32_t outside_flag = 0;
-};
-static_assert(sizeof(transparency_compact_tile_in) == 16);
-
 struct transparency_compact_shader_inputs {
-    std::vector<transparency_compact_tile_in> tiles;
+    std::vector<float> values;
 };
 
 struct pack_compact_shader_inputs_params {
     std::vector<transparency_submap_in> const& submaps;
     std::vector<uint32_t> const& ter_lut;
     std::vector<uint32_t> const& furn_lut;
+    float sight_penalty = 1.0f;
     transparency_compact_shader_inputs& out;
 };
 
@@ -189,9 +182,12 @@ auto pack_shader_inputs(
 }
 
 auto pack_compact_shader_inputs(pack_compact_shader_inputs_params const& p) -> void {
+    static constexpr auto light_transparency_open_air = 0.038376418216f;
+    static constexpr auto light_transparency_solid = 0.0f;
+
     auto const submap_tiles_count = static_cast<std::size_t>(SEEX * SEEY);
     auto const tile_count = p.submaps.size() * submap_tiles_count;
-    p.out.tiles.resize(tile_count);
+    p.out.values.resize(tile_count);
 
     for (auto const submap_index : std::views::iota(std::size_t{0}, p.submaps.size())) {
         auto const& submap = p.submaps[submap_index];
@@ -199,13 +195,17 @@ auto pack_compact_shader_inputs(pack_compact_shader_inputs_params const& p) -> v
         for (auto const tile : std::views::iota(std::size_t{0}, submap_tiles_count)) {
             auto const ter_id = static_cast<std::size_t>(submap.ter_ids[tile]);
             auto const furn_id = static_cast<std::size_t>(submap.furn_ids[tile]);
-            p.out.tiles[base + tile] = {
-                .ter_transparent = ter_id < p.ter_lut.size() && p.ter_lut[ter_id] != 0u ? 1u : 0u,
-                .furn_transparent =
-                    furn_id < p.furn_lut.size() && p.furn_lut[furn_id] != 0u ? 1u : 0u,
-                .field_opacity = submap.field_opacity[tile],
-                .outside_flag = submap.outside_flags[tile],
-            };
+            auto const ter_transparent =
+                ter_id < p.ter_lut.size() && p.ter_lut[ter_id] != 0u;
+            auto const furn_transparent =
+                furn_id < p.furn_lut.size() && p.furn_lut[furn_id] != 0u;
+            auto value = ter_transparent || !furn_transparent ? light_transparency_open_air :
+                         light_transparency_solid;
+            if (submap.outside_flags[tile] != 0u) {
+                value *= p.sight_penalty;
+            }
+            value *= submap.field_opacity[tile];
+            p.out.values[base + tile] = value;
         }
     }
 }
@@ -343,15 +343,10 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
         .format = fmt,
         .num_samplers = 0,
         .num_readonly_storage_textures = 0,
-        .num_readonly_storage_buffers = static_cast<Uint32>(use_compact_shader ? 1 : 4),
+        .num_readonly_storage_buffers = static_cast<Uint32>(use_compact_shader ? 0 : 4),
         .num_readwrite_storage_textures = 0,
-        .num_readwrite_storage_buffers = static_cast<Uint32>(
-            use_compact_shader ? 1 : 2), // compact
-                                         // plus
-                                         // optional
-                                         // resident
-                                         // output
-        .num_uniform_buffers = 1,        // push constants (slot 0)
+        .num_readwrite_storage_buffers = 2,
+        .num_uniform_buffers = static_cast<Uint32>(use_compact_shader ? 0 : 1),
         .threadcount_x = 12,
         .threadcount_y = 12,
         .threadcount_z = 1,
@@ -367,7 +362,8 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
     if (s_pipeline != nullptr) {
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: transparency pipeline=" << shader_name
-            << " resident_output=" << (s_pipeline_writes_resident_output ? "yes" : "no");
+            << " resident_output=" << (s_pipeline_writes_resident_output ? "yes" : "no")
+            << " mode=" << (use_compact_shader ? "dxbc_rw_copy" : "resident");
     }
     return s_pipeline;
 }
@@ -491,6 +487,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
             .submaps = submaps,
             .ter_lut = luts.ter_transparent,
             .furn_lut = luts.furn_transparent,
+            .sight_penalty = p.push.sight_penalty,
             .out = compact_shader_inputs,
         });
     } else {
@@ -502,13 +499,15 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     auto const submap_meta_bytes = static_cast<Uint32>(
         shader_inputs.meta.size() * sizeof(transparency_submap_meta_in));
     auto const compact_input_bytes = static_cast<Uint32>(
-        compact_shader_inputs.tiles.size() * sizeof(transparency_compact_tile_in));
+        compact_shader_inputs.values.size() * sizeof(float));
     auto const compact_output_bytes = static_cast<Uint32>(
         submaps.size() * SEEX * SEEY * sizeof(float));
     auto const full_output_bytes = static_cast<Uint32>(p.cache_size * sizeof(float));
 
     auto const read_usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ;
     auto const write_usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE;
+    auto const read_write_usage =
+        SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ | SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE;
     auto const old_ter_lut_buf = s_resources.ter_lut.buffer;
     auto const old_furn_lut_buf = s_resources.furn_lut.buffer;
     auto const full_output_required_bytes =
@@ -537,7 +536,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         && !ensure_buffer({
             .device = device,
             .slot = &s_resources.compact_input,
-            .usage = read_usage,
+            .usage = read_write_usage,
             .required_bytes = compact_input_bytes,
             .name = "compact_input",
         })) {
@@ -643,7 +642,8 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         }
         auto offset = Uint32{0};
         if (use_compact_shader) {
-            std::memcpy(mapped + offset, compact_shader_inputs.tiles.data(), compact_input_bytes);
+            std::memcpy(mapped + offset, compact_shader_inputs.values.data(),
+                        compact_input_bytes);
         } else {
             std::memcpy(mapped + offset, shader_inputs.ids.data(), submap_ids_bytes);
             offset += submap_ids_bytes;
@@ -722,7 +722,14 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
 
         // --- Compute pass ---
         {
-            auto const rw_bindings = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{{
+            auto const compact_rw_bindings = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{{
+                {
+                    .buffer = compact_input_buf,
+                    .cycle = false,
+                    .padding1 = 0,
+                    .padding2 = 0,
+                    .padding3 = 0,
+                },
                 {
                     .buffer = compact_output_buf,
                     .cycle = false,
@@ -730,23 +737,34 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
                     .padding2 = 0,
                     .padding3 = 0,
                 },
-                {
-                    .buffer = full_output_buf,
-                    .cycle = false,
-                    .padding1 = 0,
-                    .padding2 = 0,
-                    .padding3 = 0,
-                },
             }};
-            auto const rw_count = static_cast<Uint32>(use_compact_shader ? 1 : rw_bindings.size());
-            auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, rw_bindings.data(), rw_count);
-            SDL_BindGPUComputePipeline(cp, pipeline);
-
             if (use_compact_shader) {
-                auto const ro_bufs = std::array<SDL_GPUBuffer*, 1>{compact_input_buf};
-                SDL_BindGPUComputeStorageBuffers(
-                    cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
+                auto* const cp = SDL_BeginGPUComputePass(
+                    cmd, nullptr, 0, compact_rw_bindings.data(),
+                    static_cast<Uint32>(compact_rw_bindings.size()));
+                SDL_BindGPUComputePipeline(cp, pipeline);
+                SDL_DispatchGPUCompute(cp, static_cast<Uint32>(submaps.size()), 1, 1);
+                SDL_EndGPUComputePass(cp);
             } else {
+                auto const rw_bindings = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{{
+                    {
+                        .buffer = compact_output_buf,
+                        .cycle = false,
+                        .padding1 = 0,
+                        .padding2 = 0,
+                        .padding3 = 0,
+                    },
+                    {
+                        .buffer = full_output_buf,
+                        .cycle = false,
+                        .padding1 = 0,
+                        .padding2 = 0,
+                        .padding3 = 0,
+                    },
+                }};
+                auto* const cp = SDL_BeginGPUComputePass(
+                    cmd, nullptr, 0, rw_bindings.data(), static_cast<Uint32>(rw_bindings.size()));
+                SDL_BindGPUComputePipeline(cp, pipeline);
                 auto const ro_bufs = std::array<SDL_GPUBuffer*, 4>{
                     submap_ids_buf,
                     submap_meta_buf,
@@ -755,13 +773,11 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
                 };
                 SDL_BindGPUComputeStorageBuffers(
                     cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
+
+                SDL_PushGPUComputeUniformData(cmd, 0, &push, sizeof(push));
+                SDL_DispatchGPUCompute(cp, static_cast<Uint32>(submaps.size()), 1, 1);
+                SDL_EndGPUComputePass(cp);
             }
-
-            // Uniform slot 0 → cbuffer Constants (register b0, space2) in HLSL.
-            SDL_PushGPUComputeUniformData(cmd, 0, &push, sizeof(push));
-
-            SDL_DispatchGPUCompute(cp, static_cast<Uint32>(submaps.size()), 1, 1);
-            SDL_EndGPUComputePass(cp);
         }
 
         // --- Copy pass: download output ---

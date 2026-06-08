@@ -468,7 +468,7 @@ auto probe_shader(
         .num_readonly_storage_textures = 0,
         .num_readonly_storage_buffers = 0,
         .num_readwrite_storage_textures = 0,
-        .num_readwrite_storage_buffers = 1,
+        .num_readwrite_storage_buffers = 2,
         .num_uniform_buffers = 0,
         .threadcount_x = 12,
         .threadcount_y = 12,
@@ -486,15 +486,45 @@ auto probe_shader(
     static constexpr auto probe_value = uint32_t{0xC0DECAFEu};
     static constexpr auto probe_count = std::size_t{12 * 12};
     auto const probe_bytes = static_cast<Uint32>(probe_count * sizeof(probe_value));
-    auto const buffer_info = SDL_GPUBufferCreateInfo{
+    auto const input_buffer_info = SDL_GPUBufferCreateInfo{
+        .usage =
+            SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ | SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
+        .size = probe_bytes,
+        .props = 0,
+    };
+    auto* const input_buffer = SDL_CreateGPUBuffer(device, &input_buffer_info);
+    if (input_buffer == nullptr) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe input buffer creation failed: " << SDL_GetError();
+        SDL_ReleaseGPUComputePipeline(device, pipeline);
+        return false;
+    }
+
+    auto const output_buffer_info = SDL_GPUBufferCreateInfo{
         .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
         .size = probe_bytes,
         .props = 0,
     };
-    auto* const output_buffer = SDL_CreateGPUBuffer(device, &buffer_info);
+    auto* const output_buffer = SDL_CreateGPUBuffer(device, &output_buffer_info);
     if (output_buffer == nullptr) {
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: shader probe output buffer creation failed: " << SDL_GetError();
+        SDL_ReleaseGPUBuffer(device, input_buffer);
+        SDL_ReleaseGPUComputePipeline(device, pipeline);
+        return false;
+    }
+
+    auto const upload_transfer_info = SDL_GPUTransferBufferCreateInfo{
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = probe_bytes,
+        .props = 0,
+    };
+    auto* const upload_buffer = SDL_CreateGPUTransferBuffer(device, &upload_transfer_info);
+    if (upload_buffer == nullptr) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe upload buffer creation failed: " << SDL_GetError();
+        SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUBuffer(device, input_buffer);
         SDL_ReleaseGPUComputePipeline(device, pipeline);
         return false;
     }
@@ -508,29 +538,73 @@ auto probe_shader(
     if (download_buffer == nullptr) {
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: shader probe download buffer creation failed: " << SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
         SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUBuffer(device, input_buffer);
         SDL_ReleaseGPUComputePipeline(device, pipeline);
         return false;
     }
+
+    auto* const upload_mapped =
+        static_cast<uint32_t*>(SDL_MapGPUTransferBuffer(device, upload_buffer, false));
+    if (upload_mapped == nullptr) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe upload map failed: " << SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
+        SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUBuffer(device, input_buffer);
+        SDL_ReleaseGPUComputePipeline(device, pipeline);
+        return false;
+    }
+    for (auto const idx : std::views::iota(std::size_t{0}, probe_count)) {
+        upload_mapped[idx] = static_cast<uint32_t>(idx);
+    }
+    SDL_UnmapGPUTransferBuffer(device, upload_buffer);
 
     auto* const cmd = SDL_AcquireGPUCommandBuffer(device);
     if (cmd == nullptr) {
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: shader probe command buffer acquisition failed: " << SDL_GetError();
         SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
         SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUBuffer(device, input_buffer);
         SDL_ReleaseGPUComputePipeline(device, pipeline);
         return false;
     }
 
-    auto const output_binding = SDL_GPUStorageBufferReadWriteBinding{
-        .buffer = output_buffer,
-        .cycle = false,
-        .padding1 = 0,
-        .padding2 = 0,
-        .padding3 = 0,
+    auto* const upload_pass = SDL_BeginGPUCopyPass(cmd);
+    auto const input_src = SDL_GPUTransferBufferLocation{
+        .transfer_buffer = upload_buffer,
+        .offset = 0,
     };
-    auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &output_binding, 1);
+    auto const input_dst = SDL_GPUBufferRegion{
+        .buffer = input_buffer,
+        .offset = 0,
+        .size = probe_bytes,
+    };
+    SDL_UploadToGPUBuffer(upload_pass, &input_src, &input_dst, false);
+    SDL_EndGPUCopyPass(upload_pass);
+
+    auto const rw_bindings = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{{
+        {
+            .buffer = input_buffer,
+            .cycle = false,
+            .padding1 = 0,
+            .padding2 = 0,
+            .padding3 = 0,
+        },
+        {
+            .buffer = output_buffer,
+            .cycle = false,
+            .padding1 = 0,
+            .padding2 = 0,
+            .padding3 = 0,
+        },
+    }};
+    auto* const cp = SDL_BeginGPUComputePass(
+        cmd, nullptr, 0, rw_bindings.data(), static_cast<Uint32>(rw_bindings.size()));
     SDL_BindGPUComputePipeline(cp, pipeline);
     SDL_DispatchGPUCompute(cp, 1, 1, 1);
     SDL_EndGPUComputePass(cp);
@@ -553,7 +627,9 @@ auto probe_shader(
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: shader probe command buffer submission failed: " << SDL_GetError();
         SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
         SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUBuffer(device, input_buffer);
         SDL_ReleaseGPUComputePipeline(device, pipeline);
         return false;
     }
@@ -564,7 +640,9 @@ auto probe_shader(
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: shader probe fence wait failed: " << SDL_GetError();
         SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
         SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUBuffer(device, input_buffer);
         SDL_ReleaseGPUComputePipeline(device, pipeline);
         return false;
     }
@@ -575,7 +653,9 @@ auto probe_shader(
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: shader probe download map failed: " << SDL_GetError();
         SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
         SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUBuffer(device, input_buffer);
         SDL_ReleaseGPUComputePipeline(device, pipeline);
         return false;
     }
@@ -593,7 +673,9 @@ auto probe_shader(
     }
     SDL_UnmapGPUTransferBuffer(device, download_buffer);
     SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+    SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
     SDL_ReleaseGPUBuffer(device, output_buffer);
+    SDL_ReleaseGPUBuffer(device, input_buffer);
     SDL_ReleaseGPUComputePipeline(device, pipeline);
 
     if (mismatch_index != probe_count) {
