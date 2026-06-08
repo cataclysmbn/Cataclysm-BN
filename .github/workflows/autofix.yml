@@ -36,9 +36,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends astyle cmake ninja-build gettext ccache ca-certificates wget gnupg
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x ./llvm.sh
-          sudo ./llvm.sh "$LLVM_VERSION"
+          wget -qO "$RUNNER_TEMP/llvm.sh" https://apt.llvm.org/llvm.sh
+          chmod +x "$RUNNER_TEMP/llvm.sh"
+          sudo "$RUNNER_TEMP/llvm.sh" "$LLVM_VERSION"
           sudo apt-get install -y --no-install-recommends "clang-format-$LLVM_VERSION"
           "/usr/bin/clang-format-$LLVM_VERSION" --version
 
