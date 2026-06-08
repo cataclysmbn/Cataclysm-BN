@@ -160,18 +160,19 @@ auto dynamic_atlas::find_sprite( const size_t id ) -> std::optional<atlas_textur
 void dynamic_atlas::readback_load()
 {
     const auto &r = get_sdl_renderer();
-    const auto state = sdl_save_render_state(r.get());
+    const auto state = sdl_save_render_state( r.get() );
     for( auto &it : sheets ) {
         if( it.dirty ) {
-            auto tmpTex = CreateTexture( r, sdl_color_pixel_format, SDL_TEXTUREACCESS_TARGET, it.atlas_width, it.atlas_height );
+            auto tmpTex = CreateTexture( r, sdl_color_pixel_format, SDL_TEXTUREACCESS_TARGET, it.atlas_width,
+                                         it.atlas_height );
             SDL_SetRenderTarget( r.get(), tmpTex.get() );
-            SDL_RenderTexture( r.get(), it.texture.get(), nullptr, nullptr);
+            SDL_RenderTexture( r.get(), it.texture.get(), nullptr, nullptr );
             // SDL3: SDL_RenderReadPixels returns a new surface owned by us.
             it.readback.reset( SDL_RenderReadPixels( r.get(), nullptr ) );
             it.dirty = false;
         }
     }
-    sdl_restore_render_state(r.get(), state);
+    sdl_restore_render_state( r.get(), state );
 }
 
 void dynamic_atlas::readback_clear()
@@ -197,29 +198,32 @@ auto dynamic_atlas::readback_find( const texture &tex ) -> std::tuple<bool, SDL_
 }
 
 auto dynamic_atlas::get_or_create_sprite(
-    const int w, const int h, const std::optional<size_t>& id, const sprite_callback& cb)
-    -> atlas_texture {
-    const auto existing = id.has_value() ? find_sprite(id.value()) : std::nullopt;
-    if (existing.has_value()) { return existing.value(); }
-    return create_sprite(w, h, id, cb);
+    const int w, const int h, const std::optional<size_t> &id, const sprite_callback &cb )
+- > atlas_texture
+{
+    const auto existing = id.has_value() ? find_sprite( id.value() ) : std::nullopt;
+    if( existing.has_value() ) { return existing.value(); }
+    return create_sprite( w, h, id, cb );
 }
 
-auto dynamic_atlas::create_sprite(const int w, const int h, const std::optional<size_t>& id, const sprite_callback& blitFn)
-    -> atlas_texture {
+auto dynamic_atlas::create_sprite( const int w, const int h, const std::optional<size_t> &id,
+                                   const sprite_callback &blitFn )
+- > atlas_texture
+{
     // TODO: Update sprite instead of allocating a new one if ID already exists?
-    auto atl_tex = allocate_sprite_internal(w, h);
-    if ( id.has_value() && !this->assign_id_internal(id.value(), atl_tex) ) {
-        debugmsg("Duplicate sprite ID in atlas: %x", id.value());
+    auto atl_tex = allocate_sprite_internal( w, h );
+    if( id.has_value() && !this->assign_id_internal( id.value(), atl_tex ) ) {
+        debugmsg( "Duplicate sprite ID in atlas: %x", id.value() );
     }
     auto& [tex, rect] = atl_tex;
 
-    SDL_Surface* tmpSurf{};
-    if (SDL_LockTextureToSurface(tex.get(), &rect, &tmpSurf)) {
+    SDL_Surface *tmpSurf{};
+    if( SDL_LockTextureToSurface( tex.get(), &rect, &tmpSurf ) ) {
         const auto tmpRect = SDL_Rect{0, 0, w, h};
-        blitFn(tmpSurf, &tmpRect);
-        SDL_UnlockTexture(tex.get());
+        blitFn( tmpSurf, &tmpRect );
+        SDL_UnlockTexture( tex.get() );
     } else {
-        debugmsg("Failed to lock dynamic atlas texture for writing.");
+        debugmsg( "Failed to lock dynamic atlas texture for writing." );
     }
 
     return atl_tex;

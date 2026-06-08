@@ -1174,10 +1174,11 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
 
         const auto surf_hash = get_surface_hash( st_surf, nullptr );
 
-        auto atl_tex = ts.tileset_atlas->get_or_create_sprite( sprite_width, sprite_height, surf_hash, [&](SDL_Surface* dstSurf, const SDL_Rect* dstRect) {
-                const SDL_Rect srcRect{ ( st_sub_rect.x ), ( st_sub_rect.y ), ( st_sub_rect.w ), ( st_sub_rect.h ) };
-                SDL_BlitSurface( st_surf, &srcRect, dstSurf, dstRect );
-            });
+        auto atl_tex = ts.tileset_atlas->get_or_create_sprite( sprite_width, sprite_height,
+        surf_hash, [&]( SDL_Surface * dstSurf, const SDL_Rect * dstRect ) {
+            const SDL_Rect srcRect{ ( st_sub_rect.x ), ( st_sub_rect.y ), ( st_sub_rect.w ), ( st_sub_rect.h ) };
+            SDL_BlitSurface( st_surf, &srcRect, dstSurf, dstRect );
+        } );
 
         const auto tex_key = tileset_lookup_key{ index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, TILESET_NO_WARP, point_zero };
         auto &[at_tex, at_rect] = atl_tex;
@@ -1674,12 +1675,12 @@ texture_result tileset::get_or_default( const int sprite_index,
         auto surf_hash = get_surface_hash( st_surf, &st_sub_rect_final );
 
         const auto atl_tex = tileset_atlas->get_or_create_sprite(
-            final_w, final_h, surf_hash, [&](SDL_Surface* dstSurf, const SDL_Rect* dstRect) {
-                const SDL_Rect
-                    srcRect{(st_sub_rect_final.x), (st_sub_rect_final.y), (st_sub_rect_final.w),
-                            (st_sub_rect_final.h)};
-                SDL_BlitSurface(st_surf, &srcRect, dstSurf, dstRect);
-            });
+        final_w, final_h, surf_hash, [&]( SDL_Surface * dstSurf, const SDL_Rect * dstRect ) {
+            const SDL_Rect
+            srcRect{( st_sub_rect_final.x ), ( st_sub_rect_final.y ), ( st_sub_rect_final.w ),
+                    ( st_sub_rect_final.h )};
+            SDL_BlitSurface( st_surf, &srcRect, dstSurf, dstRect );
+        } );
 
         sdl_restore_render_state( rp, state );
         auto &[at_tex, at_rect] = atl_tex;
@@ -6391,12 +6392,13 @@ void tileset_loader::ensure_default_item_highlight()
     int index = offset;
 
     auto [tex, rect] = ts.tileset_atlas->create_sprite(
-        ts.tile_width, ts.tile_height, std::nullopt, [&](SDL_Surface* dstSurf, const SDL_Rect* dstRect) {
-            const auto col = SDL_MapRGBA(
-                SDL_GetPixelFormatDetails(sdl_color_pixel_format), nullptr, 0, 0, 127,
-                highlight_alpha);
-            SDL_FillSurfaceRect(dstSurf, dstRect, col);
-        });
+                           ts.tile_width, ts.tile_height, std::nullopt, [&]( SDL_Surface * dstSurf,
+    const SDL_Rect * dstRect ) {
+        const auto col = SDL_MapRGBA(
+                             SDL_GetPixelFormatDetails( sdl_color_pixel_format ), nullptr, 0, 0, 127,
+                             highlight_alpha );
+        SDL_FillSurfaceRect( dstSurf, dstRect, col );
+    } );
 
     ts.tile_ids[ITEM_HIGHLIGHT].sprite.fg.add( std::vector<int>( {index} ), 1 );
     ts.tile_lookup.emplace( tileset_lookup_key{

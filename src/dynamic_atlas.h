@@ -39,7 +39,7 @@ class dynamic_atlas
             SDL_Surface_Ptr readback;
             bool dirty;
         };
-        using sprite_callback = std::function<void(SDL_Surface*, const SDL_Rect*)>;
+        using sprite_callback = std::function<void( SDL_Surface *, const SDL_Rect * )>;
 
         dynamic_atlas()
             : max_atlas_width( 0 ), max_atlas_height( 0 ), hint_sprite_width( 0 ), hint_sprite_height( 0 ) {}
@@ -47,8 +47,10 @@ class dynamic_atlas
             : max_atlas_width( w ), max_atlas_height( h ), hint_sprite_width( sw ), hint_sprite_height( sh ) {}
 
         auto find_sprite( size_t id ) -> std::optional<atlas_texture>;
-        auto create_sprite( int w, int h, const std::optional<size_t>& id, const sprite_callback& ) -> atlas_texture;
-        auto get_or_create_sprite( int w, int h, const std::optional<size_t>& id, const sprite_callback& ) -> atlas_texture;
+        auto create_sprite( int w, int h, const std::optional<size_t> &id,
+                            const sprite_callback & ) -> atlas_texture;
+        auto get_or_create_sprite( int w, int h, const std::optional<size_t> &id,
+                                   const sprite_callback & ) -> atlas_texture;
         void clear();
 
         void readback_load();
