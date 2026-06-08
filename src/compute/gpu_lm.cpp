@@ -3162,6 +3162,17 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                "command buffers";
         s_logged_dxbc_lighting_checkpoints = true;
     }
+    if (dxbc_lighting_checkpoints && upload_total > 0) {
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC input upload total=" << upload_total
+            << " transparency_levels=" << input_uploads.transparency_levels.size()
+            << " floor_levels=" << input_uploads.floor_levels.size()
+            << " vehicle_floor_levels=" << input_uploads.vehicle_floor_levels.size()
+            << " vehicle_obscured_levels=" << input_uploads.vehicle_obscured_levels.size()
+            << " source_map_levels=" << source_map_upload_levels.size()
+            << " sources_bytes=" << source_upload_bytes
+            << " colored_sources_bytes=" << colored_source_upload_bytes;
+    }
 
     {
         ZoneScopedN("gpu_lm_ensure_resources");
@@ -3312,15 +3323,33 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
 
         // [Pass 1] Copy: upload all input buffers.
         if (upload_total > 0) {
-            auto* const cp = SDL_BeginGPUCopyPass(cmd);
             auto off = Uint32{0};
             auto upload_copy_commands = Uint32{0};
 
-            auto upload_whole = [&](SDL_GPUBuffer* dst, Uint32 const bytes) {
-                auto const src_loc = SDL_GPUTransferBufferLocation{
+            struct upload_level_ranges_params {
+                SDL_GPUCopyPass* cp;
+                SDL_GPUBuffer* dst;
+                std::vector<int> const* levels;
+                Uint32 level_bytes;
+            };
+
+            struct dxbc_upload_levels_params {
+                std::string_view label;
+                SDL_GPUBuffer* dst;
+                std::vector<int> const* levels;
+                Uint32 level_bytes;
+            };
+
+            auto make_upload_location = [&](Uint32 const offset) {
+                return SDL_GPUTransferBufferLocation{
                     .transfer_buffer = upload_tbuf,
-                    .offset = off,
+                    .offset = offset,
                 };
+            };
+
+            auto upload_whole_region =
+                [&](SDL_GPUCopyPass* const cp, SDL_GPUBuffer* const dst, Uint32 const bytes) {
+                auto const src_loc = make_upload_location(off);
                 auto const dst_reg = SDL_GPUBufferRegion{
                     .buffer = dst,
                     .offset = 0,
@@ -3330,41 +3359,150 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 off += bytes;
                 ++upload_copy_commands;
             };
-            auto upload_levels =
-                [&](SDL_GPUBuffer* dst, std::vector<int> const& levels, Uint32 const level_bytes) {
-                    auto packed_level_index = Uint32{0};
-                    for (auto const& range : make_z_level_ranges(levels)) {
-                        auto const range_bytes = static_cast<Uint32>(range.z_count) * level_bytes;
-                        auto const src_loc = SDL_GPUTransferBufferLocation{
-                            .transfer_buffer = upload_tbuf,
-                            .offset = off + packed_level_index * level_bytes,
-                        };
-                        auto const dst_reg = SDL_GPUBufferRegion{
-                            .buffer = dst,
-                            .offset =
-                                static_cast<Uint32>(range.z_start + OVERMAP_DEPTH) * level_bytes,
-                            .size = range_bytes,
-                        };
-                        SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
-                        packed_level_index += static_cast<Uint32>(range.z_count);
-                        ++upload_copy_commands;
-                    }
-                    off += static_cast<Uint32>(levels.size()) * level_bytes;
-                };
 
-            upload_levels(t_buf, input_uploads.transparency_levels, float_level_bytes);
-            upload_levels(f_buf, input_uploads.floor_levels, uint_level_bytes);
-            upload_levels(vf_buf, input_uploads.vehicle_floor_levels, uint_level_bytes);
-            upload_levels(vo_buf, input_uploads.vehicle_obscured_levels, uint_level_bytes);
-            upload_levels(source_map_buf, source_map_upload_levels, float_level_bytes);
-            if (source_upload_bytes > 0) { upload_whole(src_buf, source_upload_bytes); }
-            if (colored_source_upload_bytes > 0) {
-                upload_whole(colored_src_buf, colored_source_upload_bytes);
+            auto upload_level_ranges =
+                [&](upload_level_ranges_params const& p) {
+                auto packed_level_index = Uint32{0};
+                for (auto const& range : make_z_level_ranges(*p.levels)) {
+                    auto const range_bytes = static_cast<Uint32>(range.z_count) * p.level_bytes;
+                    auto const src_loc =
+                        make_upload_location(off + packed_level_index * p.level_bytes);
+                    auto const dst_reg = SDL_GPUBufferRegion{
+                        .buffer = p.dst,
+                        .offset =
+                            static_cast<Uint32>(range.z_start + OVERMAP_DEPTH) * p.level_bytes,
+                        .size = range_bytes,
+                    };
+                    SDL_UploadToGPUBuffer(p.cp, &src_loc, &dst_reg, false);
+                    packed_level_index += static_cast<Uint32>(range.z_count);
+                    ++upload_copy_commands;
+                }
+                off += static_cast<Uint32>(p.levels->size()) * p.level_bytes;
+            };
+
+            auto upload_whole_dxbc =
+                [&](std::string_view const label, SDL_GPUBuffer* const dst,
+                    Uint32 const bytes) -> bool {
+                if (bytes == 0) { return true; }
+                auto* const cp = SDL_BeginGPUCopyPass(cmd);
+                upload_whole_region(cp, dst, bytes);
+                SDL_EndGPUCopyPass(cp);
+                return submit_dxbc_checkpoint(label);
+            };
+
+            auto upload_levels_dxbc =
+                [&](dxbc_upload_levels_params const& p) -> bool {
+                auto packed_level_index = Uint32{0};
+                for (auto const z : *p.levels) {
+                    auto const src_loc = SDL_GPUTransferBufferLocation{
+                        .transfer_buffer = upload_tbuf,
+                        .offset = off + packed_level_index * p.level_bytes,
+                    };
+                    auto const dst_reg = SDL_GPUBufferRegion{
+                        .buffer = p.dst,
+                        .offset = static_cast<Uint32>(z + OVERMAP_DEPTH) * p.level_bytes,
+                        .size = p.level_bytes,
+                    };
+                    auto* const cp = SDL_BeginGPUCopyPass(cmd);
+                    SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
+                    SDL_EndGPUCopyPass(cp);
+                    ++packed_level_index;
+                    ++upload_copy_commands;
+                    if (!submit_dxbc_checkpoint(p.label)) { return false; }
+                }
+                off += static_cast<Uint32>(p.levels->size()) * p.level_bytes;
+                return true;
+            };
+
+            if (dxbc_lighting_checkpoints) {
+                if (!upload_levels_dxbc({
+                        .label = "transparency upload",
+                        .dst = t_buf,
+                        .levels = &input_uploads.transparency_levels,
+                        .level_bytes = float_level_bytes,
+                    })) {
+                    return {};
+                }
+                if (!upload_levels_dxbc({
+                        .label = "floor upload",
+                        .dst = f_buf,
+                        .levels = &input_uploads.floor_levels,
+                        .level_bytes = uint_level_bytes,
+                    })) {
+                    return {};
+                }
+                if (!upload_levels_dxbc({
+                        .label = "vehicle floor upload",
+                        .dst = vf_buf,
+                        .levels = &input_uploads.vehicle_floor_levels,
+                        .level_bytes = uint_level_bytes,
+                    })) {
+                    return {};
+                }
+                if (!upload_levels_dxbc({
+                        .label = "vehicle obscured upload",
+                        .dst = vo_buf,
+                        .levels = &input_uploads.vehicle_obscured_levels,
+                        .level_bytes = uint_level_bytes,
+                    })) {
+                    return {};
+                }
+                if (!upload_levels_dxbc({
+                        .label = "source map upload",
+                        .dst = source_map_buf,
+                        .levels = &source_map_upload_levels,
+                        .level_bytes = float_level_bytes,
+                    })) {
+                    return {};
+                }
+                if (!upload_whole_dxbc("source upload", src_buf, source_upload_bytes)) {
+                    return {};
+                }
+                if (!upload_whole_dxbc(
+                        "colored source upload", colored_src_buf, colored_source_upload_bytes)) {
+                    return {};
+                }
+            } else {
+                auto* const cp = SDL_BeginGPUCopyPass(cmd);
+                upload_level_ranges({
+                    .cp = cp,
+                    .dst = t_buf,
+                    .levels = &input_uploads.transparency_levels,
+                    .level_bytes = float_level_bytes,
+                });
+                upload_level_ranges({
+                    .cp = cp,
+                    .dst = f_buf,
+                    .levels = &input_uploads.floor_levels,
+                    .level_bytes = uint_level_bytes,
+                });
+                upload_level_ranges({
+                    .cp = cp,
+                    .dst = vf_buf,
+                    .levels = &input_uploads.vehicle_floor_levels,
+                    .level_bytes = uint_level_bytes,
+                });
+                upload_level_ranges({
+                    .cp = cp,
+                    .dst = vo_buf,
+                    .levels = &input_uploads.vehicle_obscured_levels,
+                    .level_bytes = uint_level_bytes,
+                });
+                upload_level_ranges({
+                    .cp = cp,
+                    .dst = source_map_buf,
+                    .levels = &source_map_upload_levels,
+                    .level_bytes = float_level_bytes,
+                });
+                if (source_upload_bytes > 0) {
+                    upload_whole_region(cp, src_buf, source_upload_bytes);
+                }
+                if (colored_source_upload_bytes > 0) {
+                    upload_whole_region(cp, colored_src_buf, colored_source_upload_bytes);
+                }
+                SDL_EndGPUCopyPass(cp);
             }
             TracyPlot("GPU LM Upload Copy Commands", static_cast<int64_t>(upload_copy_commands));
-
-            SDL_EndGPUCopyPass(cp);
-            if (!submit_dxbc_checkpoint("input upload")) { return {}; }
         }
 
         if (!lightmap_levels.empty()) {
