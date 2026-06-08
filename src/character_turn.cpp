@@ -41,6 +41,7 @@
 #include "weather_gen.h"
 #include "weather.h"
 #include "profile.h"
+#include <algorithm>
 
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
 static const trait_id trait_ARACHNID_ARMS_OK( "ARACHNID_ARMS_OK" );
@@ -148,7 +149,8 @@ void Character::recalc_speed_bonus()
         if( has_trait( trait_SUNLIGHT_DEPENDENT ) && !g->is_in_sunlight( bub_pos() ) ) {
             mod_speed_bonus( -( g->light_level( bub_pos().z() ) >= 12 ? 5 : 10 ) );
         }
-        const float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
+        float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
+        temperature_speed_modifier += bonus_from_enchantments( temperature_speed_modifier, enchant_vals::mod::BODYTEMP_SPEED );
         if( temperature_speed_modifier != 0 ) {
             const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( abs_pos() ) );
             if( has_trait( trait_COLDBLOOD4 ) || player_local_temp < 65 ) {
@@ -263,6 +265,8 @@ void Character::process_turn()
             norm_scent *= mut.obj().scent_modifier;
         }
         norm_scent += bonus_from_enchantments( norm_scent, enchant_vals::mod::SCENT );
+
+        norm_scent = std::max( 0, norm_scent );
         // Scent increases fast at first, and slows down as it approaches normal levels.
         // Estimate it will take about norm_scent * 2 turns to go from 0 - norm_scent / 2
         // Without smelly trait this is about 1.5 hrs. Slows down significantly after that.

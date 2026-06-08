@@ -4232,10 +4232,6 @@ int Character::read_speed( bool return_stat_effect ) const
     /** @EFFECT_INT increases reading speed by 3s per level above 8*/
     int ret = to_moves<int>( 1_minutes ) - to_moves<int>( 3_seconds ) * ( intel - 8 );
 
-    if( has_bionic( afs_bio_linguistic_coprocessor ) ) {
-        ret *= .75;
-    }
-
     ret *= mutation_value( "reading_speed_multiplier" );
     ret += bonus_from_enchantments( ret, enchant_vals::mod::READING_SPEED );
 
@@ -5393,8 +5389,8 @@ void Character::regen( int rate_multiplier )
 
     float rest = rest_quality();
     float heal_rate = healing_rate( rest ) * to_turns<int>( 5_minutes );
-    const float broken_regen_mod = clamp( 0.25 + mutation_value( "mending_modifier" ) +
-                                          bonus_from_enchantments( 0.25, enchant_vals::mod::MENDING_MULT ), 0.0, 1.0 );
+    const float broken_regen_mod_pre = 0.25 + mutation_value( "mending_modifier" );
+    const float broken_regen_mod = clamp( broken_regen_mod_pre + bonus_from_enchantments( broken_regen_mod_pre, enchant_vals::mod::MENDING_MULT ), 0.0, 1.0 );
     if( heal_rate > 0.0f ) {
         const int heal = roll_remainder( rate_multiplier * heal_rate );
 
@@ -11682,7 +11678,7 @@ float Character::hearing_ability() const
         volume_multiplier *= .25;
     }
 
-    return volume_multiplier;
+    return std::max( 0, volume_multiplier );
 }
 
 std::vector<std::string> Character::short_description_parts() const

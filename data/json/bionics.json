@@ -1472,6 +1472,7 @@
     "description": "The left hemisphere of your brain has been augmented with a microcomputer that moderately increases the speed that language and written words are processed, granting a 25% increase to reading speed.",
     "occupied_bodyparts": [ [ "head", 1 ] ],
     "points": 1
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "READING_SPEED", "multiply": -0.25 } ] } ]
   },
   {
     "id": "afs_bio_dopamine_stimulators",

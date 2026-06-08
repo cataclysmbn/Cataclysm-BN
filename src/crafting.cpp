@@ -326,9 +326,10 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     const float game_opt_multi = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0 ? 9999 :
                                  100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
 
-    const auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
-                             game_opt_multi;
+    auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
+                       game_opt_multi;
 
+    total_multi += who.bonus_from_enchantments( total_multi, enchant_vals::mod::CRAFTING_SPEED );
     if( light_multi <= 0.0f ) {
         who.add_msg_player_or_npc( m_bad,
                                    _( "You can no longer see well enough to keep crafting." ),
