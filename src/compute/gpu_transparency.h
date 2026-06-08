@@ -109,6 +109,7 @@ struct dispatch_transparency_params {
     int cache_size = 0;
     std::vector<float>* out_buffer = nullptr;
     transparency_output_target output = {};
+    bool* resident_output_written = nullptr;
 };
 
 // Upload the submap records, dispatch the transparency compute shader, and

@@ -56,8 +56,18 @@ auto preferred_shader_ext(SDL_GPUShaderFormat const fmts) -> std::string_view {
     return {};
 }
 
+auto shader_format_is_dxbc(SDL_GPUShaderFormat const fmt) -> bool {
+#if defined(SDL_GPU_SHADERFORMAT_DXBC)
+    return fmt == SDL_GPU_SHADERFORMAT_DXBC;
+#else
+    static_cast<void>(fmt);
+    return false;
+#endif
+}
+
 SDL_GPUComputePipeline* s_pipeline = nullptr;
 auto* s_pipeline_device = static_cast<SDL_GPUDevice*>(nullptr);
+bool s_pipeline_writes_resident_output = true;
 
 struct gpu_buffer_slot {
     SDL_GPUBuffer* buffer = nullptr;
@@ -73,6 +83,10 @@ struct transparency_resource_cache {
     SDL_GPUDevice* device = nullptr;
     gpu_buffer_slot submap_ids;
     gpu_buffer_slot submap_meta;
+    gpu_buffer_slot compact_ter_ids;
+    gpu_buffer_slot compact_furn_ids;
+    gpu_buffer_slot compact_field_opacity;
+    gpu_buffer_slot compact_outside_flags;
     gpu_buffer_slot ter_lut;
     gpu_buffer_slot furn_lut;
     gpu_buffer_slot compact_output;
@@ -124,6 +138,20 @@ struct transparency_shader_inputs {
     std::vector<transparency_submap_meta_in> meta;
 };
 
+struct transparency_compact_shader_inputs {
+    std::vector<uint32_t> ter_ids;
+    std::vector<uint32_t> furn_ids;
+    std::vector<float> field_opacity;
+    std::vector<uint32_t> outside_flags;
+};
+
+struct pack_compact_shader_inputs_params {
+    std::vector<transparency_submap_in> const& submaps;
+    std::vector<uint32_t> const& ter_lut;
+    std::vector<uint32_t> const& furn_lut;
+    transparency_compact_shader_inputs& out;
+};
+
 auto mix_signature(std::size_t& seed, std::size_t const value) -> void {
     seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
 }
@@ -158,6 +186,30 @@ auto pack_shader_inputs(
     }
 }
 
+auto pack_compact_shader_inputs(pack_compact_shader_inputs_params const& p) -> void {
+    auto const submap_tiles_count = static_cast<std::size_t>(SEEX * SEEY);
+    auto const tile_count = p.submaps.size() * submap_tiles_count;
+    p.out.ter_ids.resize(tile_count);
+    p.out.furn_ids.resize(tile_count);
+    p.out.field_opacity.resize(tile_count);
+    p.out.outside_flags.resize(tile_count);
+
+    for (auto const submap_index : std::views::iota(std::size_t{0}, p.submaps.size())) {
+        auto const& submap = p.submaps[submap_index];
+        auto const base = submap_index * submap_tiles_count;
+        for (auto const tile : std::views::iota(std::size_t{0}, submap_tiles_count)) {
+            auto const ter_id = static_cast<std::size_t>(submap.ter_ids[tile]);
+            auto const furn_id = static_cast<std::size_t>(submap.furn_ids[tile]);
+            p.out.ter_ids[base + tile] =
+                ter_id < p.ter_lut.size() && p.ter_lut[ter_id] != 0u ? 1u : 0u;
+            p.out.furn_ids[base + tile] =
+                furn_id < p.furn_lut.size() && p.furn_lut[furn_id] != 0u ? 1u : 0u;
+            p.out.field_opacity[base + tile] = submap.field_opacity[tile];
+            p.out.outside_flags[base + tile] = submap.outside_flags[tile];
+        }
+    }
+}
+
 auto release_buffer_slot(SDL_GPUDevice* const device, gpu_buffer_slot& slot) -> void {
     if (slot.buffer != nullptr) { SDL_ReleaseGPUBuffer(device, slot.buffer); }
     slot = {};
@@ -171,6 +223,10 @@ auto release_transfer_slot(SDL_GPUDevice* const device, gpu_transfer_slot& slot)
 auto release_transparency_resources(SDL_GPUDevice* const device) -> void {
     release_buffer_slot(device, s_resources.submap_ids);
     release_buffer_slot(device, s_resources.submap_meta);
+    release_buffer_slot(device, s_resources.compact_ter_ids);
+    release_buffer_slot(device, s_resources.compact_furn_ids);
+    release_buffer_slot(device, s_resources.compact_field_opacity);
+    release_buffer_slot(device, s_resources.compact_outside_flags);
     release_buffer_slot(device, s_resources.ter_lut);
     release_buffer_slot(device, s_resources.furn_lut);
     release_buffer_slot(device, s_resources.compact_output);
@@ -239,6 +295,7 @@ auto release_pipeline(SDL_GPUDevice* const device) -> void {
     if (s_pipeline == nullptr) { return; }
     SDL_ReleaseGPUComputePipeline(device, s_pipeline);
     s_pipeline = nullptr;
+    s_pipeline_writes_resident_output = true;
     if (s_pipeline_device == device) { s_pipeline_device = nullptr; }
 }
 
@@ -264,13 +321,16 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
     auto const fmts = SDL_GetGPUShaderFormats(device);
     auto const fmt = preferred_shader_format(fmts);
     auto const ext = preferred_shader_ext(fmts);
+    auto const use_compact_shader = shader_format_is_dxbc(fmt);
+    auto const shader_name =
+        use_compact_shader ? "transparency_compact_compute" : "transparency_compute";
 
     if (fmt == SDL_GPU_SHADERFORMAT_INVALID || ext.empty()) {
         DebugLog(DL::Error, DC::Main) << "SDL_GPU: transparency: no supported shader format";
         return nullptr;
     }
 
-    auto const path = PATH_INFO::shaders() + "transparency_compute" + std::string{ext};
+    auto const path = PATH_INFO::shaders() + shader_name + std::string{ext};
     auto const blob = read_blob(path);
     if (blob.empty()) {
         DebugLog(DL::Error, DC::Main)
@@ -288,7 +348,8 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
         .num_readonly_storage_textures = 0,
         .num_readonly_storage_buffers = 4, // submap ids, submap meta, ter_lut, furn_lut
         .num_readwrite_storage_textures = 0,
-        .num_readwrite_storage_buffers = 2, // compact output, full resident output
+        .num_readwrite_storage_buffers =
+            static_cast<Uint32>(use_compact_shader ? 1 : 2), // compact plus optional resident output
         .num_uniform_buffers = 1,           // push constants (slot 0)
         .threadcount_x = 12,
         .threadcount_y = 12,
@@ -300,6 +361,12 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
     if (s_pipeline == nullptr) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: transparency pipeline creation failed: " << SDL_GetError();
+    }
+    s_pipeline_writes_resident_output = !use_compact_shader;
+    if (s_pipeline != nullptr) {
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: transparency pipeline=" << shader_name
+            << " resident_output=" << (s_pipeline_writes_resident_output ? "yes" : "no");
     }
     return s_pipeline;
 }
@@ -401,19 +468,17 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     push.output_offset = output_offset;
     auto* const pipeline = ensure_pipeline(device);
     if (pipeline == nullptr) { return false; }
+    auto const use_compact_shader = !s_pipeline_writes_resident_output;
+    auto const write_resident_output = use_external_output && s_pipeline_writes_resident_output;
+    if (p.resident_output_written != nullptr) {
+        *p.resident_output_written = false;
+    }
 
     static auto shader_inputs = transparency_shader_inputs{};
-    pack_shader_inputs(submaps, shader_inputs);
+    static auto compact_shader_inputs = transparency_compact_shader_inputs{};
 
-    auto const submap_ids_bytes = static_cast<Uint32>(
-        shader_inputs.ids.size() * sizeof(transparency_submap_ids_in));
-    auto const submap_meta_bytes = static_cast<Uint32>(
-        shader_inputs.meta.size() * sizeof(transparency_submap_meta_in));
     auto const ter_lut_bytes = static_cast<Uint32>(luts.ter_transparent.size() * sizeof(uint32_t));
     auto const fur_lut_bytes = static_cast<Uint32>(luts.furn_transparent.size() * sizeof(uint32_t));
-    auto const compact_output_bytes = static_cast<Uint32>(
-        submaps.size() * SEEX * SEEY * sizeof(float));
-    auto const full_output_bytes = static_cast<Uint32>(p.cache_size * sizeof(float));
 
     if (ter_lut_bytes == 0 || fur_lut_bytes == 0) {
         DebugLog(DL::Error, DC::Main)
@@ -422,13 +487,40 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         return false;
     }
 
+    if (use_compact_shader) {
+        pack_compact_shader_inputs({
+            .submaps = submaps,
+            .ter_lut = luts.ter_transparent,
+            .furn_lut = luts.furn_transparent,
+            .out = compact_shader_inputs,
+        });
+    } else {
+        pack_shader_inputs(submaps, shader_inputs);
+    }
+
+    auto const submap_ids_bytes = static_cast<Uint32>(
+        shader_inputs.ids.size() * sizeof(transparency_submap_ids_in));
+    auto const submap_meta_bytes = static_cast<Uint32>(
+        shader_inputs.meta.size() * sizeof(transparency_submap_meta_in));
+    auto const compact_ter_ids_bytes = static_cast<Uint32>(
+        compact_shader_inputs.ter_ids.size() * sizeof(uint32_t));
+    auto const compact_furn_ids_bytes = static_cast<Uint32>(
+        compact_shader_inputs.furn_ids.size() * sizeof(uint32_t));
+    auto const compact_field_opacity_bytes = static_cast<Uint32>(
+        compact_shader_inputs.field_opacity.size() * sizeof(float));
+    auto const compact_outside_flags_bytes = static_cast<Uint32>(
+        compact_shader_inputs.outside_flags.size() * sizeof(uint32_t));
+    auto const compact_output_bytes = static_cast<Uint32>(
+        submaps.size() * SEEX * SEEY * sizeof(float));
+    auto const full_output_bytes = static_cast<Uint32>(p.cache_size * sizeof(float));
+
     auto const read_usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ;
     auto const write_usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE;
     auto const old_ter_lut_buf = s_resources.ter_lut.buffer;
     auto const old_furn_lut_buf = s_resources.furn_lut.buffer;
     auto const full_output_required_bytes =
-        use_external_output ? Uint32{1} : std::max(full_output_bytes, Uint32{1});
-    if (!ensure_buffer({
+        write_resident_output ? Uint32{1} : std::max(full_output_bytes, Uint32{1});
+    if (!use_compact_shader && !ensure_buffer({
             .device = device,
             .slot = &s_resources.submap_ids,
             .usage = read_usage,
@@ -437,7 +529,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         })) {
         return false;
     }
-    if (!ensure_buffer({
+    if (!use_compact_shader && !ensure_buffer({
             .device = device,
             .slot = &s_resources.submap_meta,
             .usage = read_usage,
@@ -446,7 +538,43 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         })) {
         return false;
     }
-    if (!ensure_buffer({
+    if (use_compact_shader && !ensure_buffer({
+            .device = device,
+            .slot = &s_resources.compact_ter_ids,
+            .usage = read_usage,
+            .required_bytes = compact_ter_ids_bytes,
+            .name = "compact_ter_ids",
+        })) {
+        return false;
+    }
+    if (use_compact_shader && !ensure_buffer({
+            .device = device,
+            .slot = &s_resources.compact_furn_ids,
+            .usage = read_usage,
+            .required_bytes = compact_furn_ids_bytes,
+            .name = "compact_furn_ids",
+        })) {
+        return false;
+    }
+    if (use_compact_shader && !ensure_buffer({
+            .device = device,
+            .slot = &s_resources.compact_field_opacity,
+            .usage = read_usage,
+            .required_bytes = compact_field_opacity_bytes,
+            .name = "compact_field_opacity",
+        })) {
+        return false;
+    }
+    if (use_compact_shader && !ensure_buffer({
+            .device = device,
+            .slot = &s_resources.compact_outside_flags,
+            .usage = read_usage,
+            .required_bytes = compact_outside_flags_bytes,
+            .name = "compact_outside_flags",
+        })) {
+        return false;
+    }
+    if (!use_compact_shader && !ensure_buffer({
             .device = device,
             .slot = &s_resources.ter_lut,
             .usage = read_usage,
@@ -456,7 +584,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         return false;
     }
     if (old_ter_lut_buf != s_resources.ter_lut.buffer) { s_resources.ter_lut_valid = false; }
-    if (!ensure_buffer({
+    if (!use_compact_shader && !ensure_buffer({
             .device = device,
             .slot = &s_resources.furn_lut,
             .usage = read_usage,
@@ -475,7 +603,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         })) {
         return false;
     }
-    if (!use_external_output
+    if (!write_resident_output && !use_compact_shader
         && !ensure_buffer({
             .device = device,
             .slot = &s_resources.full_output,
@@ -498,10 +626,15 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     auto const ter_lut_signature = lut_signature(luts.ter_transparent);
     auto const furn_lut_signature = lut_signature(luts.furn_transparent);
     auto const upload_ter_lut =
-        !s_resources.ter_lut_valid || s_resources.ter_lut_signature != ter_lut_signature;
+        !use_compact_shader
+        && (!s_resources.ter_lut_valid || s_resources.ter_lut_signature != ter_lut_signature);
     auto const upload_furn_lut =
-        !s_resources.furn_lut_valid || s_resources.furn_lut_signature != furn_lut_signature;
-    auto upload_bytes = submap_ids_bytes + submap_meta_bytes;
+        !use_compact_shader
+        && (!s_resources.furn_lut_valid || s_resources.furn_lut_signature != furn_lut_signature);
+    auto upload_bytes = use_compact_shader
+                            ? compact_ter_ids_bytes + compact_furn_ids_bytes
+                                  + compact_field_opacity_bytes + compact_outside_flags_bytes
+                            : submap_ids_bytes + submap_meta_bytes;
     upload_bytes += upload_ter_lut ? ter_lut_bytes : Uint32{0};
     upload_bytes += upload_furn_lut ? fur_lut_bytes : Uint32{0};
     if (!ensure_transfer_buffer({
@@ -516,14 +649,18 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
 
     auto* const submap_ids_buf = s_resources.submap_ids.buffer;
     auto* const submap_meta_buf = s_resources.submap_meta.buffer;
+    auto* const compact_ter_ids_buf = s_resources.compact_ter_ids.buffer;
+    auto* const compact_furn_ids_buf = s_resources.compact_furn_ids.buffer;
+    auto* const compact_field_opacity_buf = s_resources.compact_field_opacity.buffer;
+    auto* const compact_outside_flags_buf = s_resources.compact_outside_flags.buffer;
     auto* const ter_lut_buf = s_resources.ter_lut.buffer;
     auto* const fur_lut_buf = s_resources.furn_lut.buffer;
     auto* const compact_output_buf = s_resources.compact_output.buffer;
     auto* const full_output_buf =
-        use_external_output ? p.output.buffer : s_resources.full_output.buffer;
+        write_resident_output ? p.output.buffer : s_resources.full_output.buffer;
     auto* const upload_tbuf = s_resources.upload.buffer;
     auto* const download_tbuf = s_resources.download.buffer;
-    if (full_output_buf == nullptr) {
+    if (!use_compact_shader && full_output_buf == nullptr) {
         DebugLog(DL::Error, DC::Main) << "SDL_GPU: transparency missing full output buffer";
         return false;
     }
@@ -539,16 +676,31 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
             return false;
         }
         auto offset = Uint32{0};
-        std::memcpy(mapped + offset, shader_inputs.ids.data(), submap_ids_bytes);
-        offset += submap_ids_bytes;
-        std::memcpy(mapped + offset, shader_inputs.meta.data(), submap_meta_bytes);
-        offset += submap_meta_bytes;
-        if (upload_ter_lut) {
-            std::memcpy(mapped + offset, luts.ter_transparent.data(), ter_lut_bytes);
-            offset += ter_lut_bytes;
-        }
-        if (upload_furn_lut) {
-            std::memcpy(mapped + offset, luts.furn_transparent.data(), fur_lut_bytes);
+        if (use_compact_shader) {
+            std::memcpy(mapped + offset, compact_shader_inputs.ter_ids.data(), compact_ter_ids_bytes);
+            offset += compact_ter_ids_bytes;
+            std::memcpy(
+                mapped + offset, compact_shader_inputs.furn_ids.data(), compact_furn_ids_bytes);
+            offset += compact_furn_ids_bytes;
+            std::memcpy(
+                mapped + offset, compact_shader_inputs.field_opacity.data(),
+                compact_field_opacity_bytes);
+            offset += compact_field_opacity_bytes;
+            std::memcpy(
+                mapped + offset, compact_shader_inputs.outside_flags.data(),
+                compact_outside_flags_bytes);
+        } else {
+            std::memcpy(mapped + offset, shader_inputs.ids.data(), submap_ids_bytes);
+            offset += submap_ids_bytes;
+            std::memcpy(mapped + offset, shader_inputs.meta.data(), submap_meta_bytes);
+            offset += submap_meta_bytes;
+            if (upload_ter_lut) {
+                std::memcpy(mapped + offset, luts.ter_transparent.data(), ter_lut_bytes);
+                offset += ter_lut_bytes;
+            }
+            if (upload_furn_lut) {
+                std::memcpy(mapped + offset, luts.furn_transparent.data(), fur_lut_bytes);
+            }
         }
         SDL_UnmapGPUTransferBuffer(device, upload_tbuf);
     }
@@ -565,37 +717,62 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         // --- Copy pass: upload all inputs ---
         auto* const cp = SDL_BeginGPUCopyPass(cmd);
 
-        SDL_GPUTransferBufferLocation const submap_ids_src{
-            .transfer_buffer = upload_tbuf,
-            .offset = 0,
-        };
-        SDL_GPUBufferRegion const
-            submap_ids_dst{.buffer = submap_ids_buf, .offset = 0, .size = submap_ids_bytes};
-        SDL_UploadToGPUBuffer(cp, &submap_ids_src, &submap_ids_dst, false);
+        if (use_compact_shader) {
+            auto upload_region =
+                [&](SDL_GPUBuffer* const dst, Uint32 const offset, Uint32 const bytes) {
+                    auto const src = SDL_GPUTransferBufferLocation{
+                        .transfer_buffer = upload_tbuf,
+                        .offset = offset,
+                    };
+                    auto const dst_region = SDL_GPUBufferRegion{
+                        .buffer = dst,
+                        .offset = 0,
+                        .size = bytes,
+                    };
+                    SDL_UploadToGPUBuffer(cp, &src, &dst_region, false);
+                };
 
-        SDL_GPUTransferBufferLocation const submap_meta_src{
-            .transfer_buffer = upload_tbuf,
-            .offset = submap_ids_bytes,
-        };
-        SDL_GPUBufferRegion const
-            submap_meta_dst{.buffer = submap_meta_buf, .offset = 0, .size = submap_meta_bytes};
-        SDL_UploadToGPUBuffer(cp, &submap_meta_src, &submap_meta_dst, false);
+            auto offset = Uint32{0};
+            upload_region(compact_ter_ids_buf, offset, compact_ter_ids_bytes);
+            offset += compact_ter_ids_bytes;
+            upload_region(compact_furn_ids_buf, offset, compact_furn_ids_bytes);
+            offset += compact_furn_ids_bytes;
+            upload_region(compact_field_opacity_buf, offset, compact_field_opacity_bytes);
+            offset += compact_field_opacity_bytes;
+            upload_region(compact_outside_flags_buf, offset, compact_outside_flags_bytes);
+        } else {
+            SDL_GPUTransferBufferLocation const submap_ids_src{
+                .transfer_buffer = upload_tbuf,
+                .offset = 0,
+            };
+            SDL_GPUBufferRegion const
+                submap_ids_dst{.buffer = submap_ids_buf, .offset = 0, .size = submap_ids_bytes};
+            SDL_UploadToGPUBuffer(cp, &submap_ids_src, &submap_ids_dst, false);
 
-        auto offset = submap_ids_bytes + submap_meta_bytes;
-        if (upload_ter_lut) {
-            SDL_GPUTransferBufferLocation const
-                ter_src{.transfer_buffer = upload_tbuf, .offset = offset};
+            SDL_GPUTransferBufferLocation const submap_meta_src{
+                .transfer_buffer = upload_tbuf,
+                .offset = submap_ids_bytes,
+            };
             SDL_GPUBufferRegion const
-                ter_dst{.buffer = ter_lut_buf, .offset = 0, .size = ter_lut_bytes};
-            SDL_UploadToGPUBuffer(cp, &ter_src, &ter_dst, false);
-            offset += ter_lut_bytes;
-        }
-        if (upload_furn_lut) {
-            SDL_GPUTransferBufferLocation const
-                fur_src{.transfer_buffer = upload_tbuf, .offset = offset};
-            SDL_GPUBufferRegion const
-                fur_dst{.buffer = fur_lut_buf, .offset = 0, .size = fur_lut_bytes};
-            SDL_UploadToGPUBuffer(cp, &fur_src, &fur_dst, false);
+                submap_meta_dst{.buffer = submap_meta_buf, .offset = 0, .size = submap_meta_bytes};
+            SDL_UploadToGPUBuffer(cp, &submap_meta_src, &submap_meta_dst, false);
+
+            auto offset = submap_ids_bytes + submap_meta_bytes;
+            if (upload_ter_lut) {
+                SDL_GPUTransferBufferLocation const
+                    ter_src{.transfer_buffer = upload_tbuf, .offset = offset};
+                SDL_GPUBufferRegion const
+                    ter_dst{.buffer = ter_lut_buf, .offset = 0, .size = ter_lut_bytes};
+                SDL_UploadToGPUBuffer(cp, &ter_src, &ter_dst, false);
+                offset += ter_lut_bytes;
+            }
+            if (upload_furn_lut) {
+                SDL_GPUTransferBufferLocation const
+                    fur_src{.transfer_buffer = upload_tbuf, .offset = offset};
+                SDL_GPUBufferRegion const
+                    fur_dst{.buffer = fur_lut_buf, .offset = 0, .size = fur_lut_bytes};
+                SDL_UploadToGPUBuffer(cp, &fur_src, &fur_dst, false);
+            }
         }
 
         SDL_EndGPUCopyPass(cp);
@@ -618,12 +795,24 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
                     .padding3 = 0,
                 },
             }};
+            auto const rw_count = static_cast<Uint32>(use_compact_shader ? 1 : rw_bindings.size());
             auto* const cp = SDL_BeginGPUComputePass(
-                cmd, nullptr, 0, rw_bindings.data(), static_cast<Uint32>(rw_bindings.size()));
+                cmd, nullptr, 0, rw_bindings.data(), rw_count);
             SDL_BindGPUComputePipeline(cp, pipeline);
 
-            auto const ro_bufs = std::array<
-                SDL_GPUBuffer*, 4>{submap_ids_buf, submap_meta_buf, ter_lut_buf, fur_lut_buf};
+            auto const ro_bufs = use_compact_shader
+                                     ? std::array<SDL_GPUBuffer*, 4>{
+                                         compact_ter_ids_buf,
+                                         compact_furn_ids_buf,
+                                         compact_field_opacity_buf,
+                                         compact_outside_flags_buf,
+                                     }
+                                     : std::array<SDL_GPUBuffer*, 4>{
+                                         submap_ids_buf,
+                                         submap_meta_buf,
+                                         ter_lut_buf,
+                                         fur_lut_buf,
+                                     };
             SDL_BindGPUComputeStorageBuffers(
                 cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
@@ -689,6 +878,9 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         SDL_UnmapGPUTransferBuffer(device, download_tbuf);
     }
 
+    if (p.resident_output_written != nullptr) {
+        *p.resident_output_written = write_resident_output;
+    }
     return true;
 }
 
