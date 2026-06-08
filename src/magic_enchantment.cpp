@@ -118,6 +118,13 @@ namespace io
             case enchant_vals::mod::OVERMAP_SIGHT: return "OVERMAP_SIGHT";
             case enchant_vals::mod::EFFECTIVE_FOCUS: return "EFFECTIVE_FOCUS";
             case enchant_vals::mod::BONUS_DODGE: return "BONUS_DODGE";
+            case enchant_vals::mod::RANGED_DISPERSION: return "RANGED_DISPERSION";
+            case enchant_vals::mod::RANGED_DAMAGE_BULLET: return "RANGED_DAMAGE_BULLET";
+            case enchant_vals::mod::RANGED_ARMOR_PENETRATION: return "RANGED_ARMOR_PENETRATION";
+            case enchant_vals::mod::RANGED_RANGE: return "RANGED_RANGE";
+            case enchant_vals::mod::RANGED_RECOIL: return "RANGED_RECOIL";
+            case enchant_vals::mod::RANGED_RELOAD_TIME: return "RANGED_RELOAD_TIME";
+            case enchant_vals::mod::RANGED_AIM_SPEED: return "RANGED_AIM_SPEED";
             case enchant_vals::mod::ARMOR_ACID: return "ARMOR_ACID";
             case enchant_vals::mod::ARMOR_BASH: return "ARMOR_BASH";
             case enchant_vals::mod::ARMOR_BIO: return "ARMOR_BIO";
@@ -156,13 +163,6 @@ namespace io
             case enchant_vals::mod::ITEM_ARMOR_ACID: return "ITEM_ARMOR_ACID";
             case enchant_vals::mod::ITEM_ARMOR_BIO: return "ITEM_ARMOR_BIO";
             case enchant_vals::mod::ITEM_ATTACK_COST: return "ITEM_ATTACK_COST";
-            case enchant_vals::mod::RANGED_DISPERSION: return "RANGED_DISPERSION";
-            case enchant_vals::mod::RANGED_DAMAGE_BULLET: return "RANGED_DAMAGE_BULLET";
-            case enchant_vals::mod::RANGED_ARMOR_PENETRATION: return "RANGED_ARMOR_PENETRATION";
-            case enchant_vals::mod::RANGED_RANGE: return "RANGED_RANGE";
-            case enchant_vals::mod::RANGED_RECOIL: return "RANGED_RECOIL";
-            case enchant_vals::mod::RANGED_RELOAD_TIME: return "RANGED_RELOAD_TIME";
-            case enchant_vals::mod::RANGED_AIM_SPEED: return "RANGED_AIM_SPEED";
             case enchant_vals::mod::NUM_MOD: break;
         }
         debugmsg( "Invalid enchant_vals::mod" );

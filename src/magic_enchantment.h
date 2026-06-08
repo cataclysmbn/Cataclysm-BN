@@ -95,6 +95,15 @@ enum class mod : int {
     ARMOR_ACID,
     ARMOR_BIO,
 
+    // Ranged related
+    RANGED_DISPERSION,
+    RANGED_DAMAGE_BULLET,
+    RANGED_ARMOR_PENETRATION,
+    RANGED_RANGE,
+    RANGED_RECOIL,
+    RANGED_RELOAD_TIME,
+    RANGED_AIM_SPEED,
+
     // Object Only Effects
 
     // Damage
@@ -125,16 +134,9 @@ enum class mod : int {
     ITEM_ARMOR_ELEC,
     ITEM_ARMOR_ACID,
     ITEM_ARMOR_BIO,
-    ITEM_ATTACK_COST,
 
-    // Guns
-    RANGED_DISPERSION,
-    RANGED_DAMAGE_BULLET,
-    RANGED_ARMOR_PENETRATION,
-    RANGED_RANGE,
-    RANGED_RECOIL,
-    RANGED_RELOAD_TIME,
-    RANGED_AIM_SPEED,
+    // Speed
+    ITEM_ATTACK_COST,
 
     NUM_MOD
 };

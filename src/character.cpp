@@ -7239,9 +7239,7 @@ tripoint_abs_omt Character::abs_omt_pos() const
 
 bool Character::is_blind() const
 {
-    return ( worn_with_flag( flag_BLIND ) ||
-             has_effect( effect_blind ) ||
-             has_active_bionic( bio_blindfold ) );
+    return worn_with_flag( flag_BLIND ) || has_effect( effect_blind );
 }
 
 bool Character::is_invisible() const
@@ -11268,9 +11266,6 @@ int Character::adjust_for_focus( int amount ) const
 
     if( has_trait( trait_FASTLEARNER ) ) {
         effective_focus += 15;
-    }
-    if( has_active_bionic( bio_memory ) ) {
-        effective_focus += 10;
     }
     if( has_trait( trait_SLOWLEARNER ) ) {
         effective_focus -= 15;
