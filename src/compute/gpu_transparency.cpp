@@ -348,12 +348,13 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
         .num_readonly_storage_textures = 0,
         .num_readonly_storage_buffers = 4, // submap ids, submap meta, ter_lut, furn_lut
         .num_readwrite_storage_textures = 0,
-        .num_readwrite_storage_buffers = static_cast<Uint32>(use_compact_shader ? 1 : 2), // compact
-                                                                                          // plus
-                                                                                          // optional
-                                                                                          // resident
-                                                                                          // output
-        .num_uniform_buffers = 1, // push constants (slot 0)
+        .num_readwrite_storage_buffers = static_cast<Uint32>(
+            use_compact_shader ? 1 : 2), // compact
+                                         // plus
+                                         // optional
+                                         // resident
+                                         // output
+        .num_uniform_buffers = 1,        // push constants (slot 0)
         .threadcount_x = 12,
         .threadcount_y = 12,
         .threadcount_z = 1,

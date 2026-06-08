@@ -566,8 +566,8 @@ auto probe_shader(
         return false;
     }
 
-    auto const* const mapped =
-        static_cast<uint32_t const*>(SDL_MapGPUTransferBuffer(device, download_buffer, false));
+    auto const* const mapped = static_cast<uint32_t const*>(
+        SDL_MapGPUTransferBuffer(device, download_buffer, false));
     if (mapped == nullptr) {
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: shader probe download map failed: " << SDL_GetError();
