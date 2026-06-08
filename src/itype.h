@@ -20,6 +20,7 @@
 #include "enums.h" // point
 #include "explosion.h"
 #include "game_constants.h"
+#include "hsv_color.h"
 #include "iuse.h" // use_function
 #include "mapdata.h"
 #include "pldata.h" // add_type
@@ -307,6 +308,18 @@ struct islot_armor {
     */
     units::mass weight_capacity_bonus = 0_gram;
 
+    /**
+    * Sound dampening in dB spl provided by the item when worn.
+    * This value decreased the volume of all heard sounds.
+    */
+    int hearing_protection = 0;
+    /**
+    * Advanced sound dampening in dB spl provided by the item when worn.
+    * This value only decreases heard volume for purposes of determining deafness,
+    * allowing the wearer to hear other sounds normally.
+    */
+    int adv_hearing_protection = 0;
+
     bool was_loaded;
     /**
      * Whitelisted clothing mods.
@@ -531,8 +544,9 @@ struct islot_gun : common_ranged_data {
     std::string reload_noise = translate_marker( "click." );
     /**
      * Volume of the noise made when reloading this weapon.
+     * Base reload volume set to 40dB spl. Below 20dB spl is effectively silent.
      */
-    int reload_noise_volume = 0;
+    int reload_noise_volume = 40;
 
     /** Maximum aim achievable using base weapon sights */
     int sight_dispersion = 30;
@@ -1068,6 +1082,7 @@ struct itype {
         int m_to_hit  = 0;  // To-hit bonus for melee combat; -5 to 5 is reasonable
 
         unsigned light_emission = 0;   // Exactly the same as item_tags LIGHT_*, this is for lightmap.
+        std::optional<RGBColor> light_color;
 
         /** If set via JSON forces item category to this (preventing automatic assignment) */
         item_category_id category_force;
@@ -1118,6 +1133,8 @@ struct itype {
         const itype_id &get_id() const;
 
         bool count_by_charges() const;
+        // Separate check for stackable generics, for functions that are allowed to treat them separately from ammo or comestibles.
+        bool is_stackable() const;
 
         int charges_default() const;
 

@@ -6917,6 +6917,11 @@ bool item::count_by_charges() const
     return type->count_by_charges();
 }
 
+bool item::is_stackable() const
+{
+    return type->is_stackable();
+}
+
 int item::count() const
 {
     return count_by_charges() ? charges : 1;
@@ -6931,6 +6936,22 @@ bool item::craft_has_charges()
     }
 
     return false;
+}
+
+// Get the hearing protection provided by this item.
+// Returns advanced (active) hearing protection if true.
+// Advanced hearing protection does not make it harder for the character to hear other sounds.
+int item::get_hearing_protection( bool advanced ) const
+{
+    if( this->is_armor() ) {
+        const islot_armor *armor = find_armor_data();
+        if( armor == nullptr ) {
+            return 0;
+        }
+        return ( advanced ) ? armor->adv_hearing_protection : armor->hearing_protection;
+    } else {
+        return 0;
+    }
 }
 
 #if defined(_MSC_VER)
@@ -7136,7 +7157,7 @@ bool item::mod_damage( int qty, damage_type dt )
 {
     bool destroy = false;
 
-    if( count_by_charges() ) {
+    if( count_by_charges() && !is_stackable() ) {
         charges -= std::min( type->stack_size * qty / itype::damage_scale, charges );
         destroy |= charges == 0;
     }
@@ -7145,7 +7166,7 @@ bool item::mod_damage( int qty, damage_type dt )
         on_damage( qty, dt );
     }
 
-    if( !count_by_charges() ) {
+    if( !count_by_charges() || is_stackable() ) {
         destroy |= damage_ + qty > max_damage();
 
         damage_ = std::max( std::min( damage_ + qty, max_damage() ), min_damage() );
@@ -10024,6 +10045,21 @@ bool item::can_holster( const item &obj, bool ignore ) const
 
     if( !ignore && static_cast<int>( contents.num_item_stacks() ) >= ptr->multi ) {
         return false; // item is already full
+    }
+
+    return true;
+}
+
+bool item::can_put_in_bandolier( const item &obj, bool ) const
+{
+    if( !type->can_use( "bandolier" ) ) {
+        return false; // item is not a holster
+    }
+
+    const auto *ptr = dynamic_cast<const bandolier_actor *>
+                      ( type->get_use( "bandolier" )->get_actor_ptr() );
+    if( !ptr->can_store( *this, obj ) ) {
+        return false; // item is not a suitable holster for obj
     }
 
     return true;

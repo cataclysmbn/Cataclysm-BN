@@ -1103,7 +1103,7 @@ static const std::array<point, 8> eight_dirs_sm = {{
     }
 };
 
-auto process_fields_in_submap( submap &sm,
+auto process_fields_in_submap( const std::string &dim, submap &sm,
                                const tripoint_abs_sm &pos,
                                mapbuffer &mb ) -> bool
 {
@@ -1112,8 +1112,10 @@ auto process_fields_in_submap( submap &sm,
         return false;
     }
 
-    auto has_fire = false;
+    map &map = get_map();
+    const auto in_bubble = submap_loader.is_properly_requested( dim, pos );
 
+    auto has_fire = false;
     // Snapshot before iterating: wandering-field spread can push_back to sm.field_cache
     // within the same submap (line ~1742), which would invalidate the range iterators.
     // Newly-added entries are newborn (age 0) and skip all effects anyway, so processing
@@ -1122,6 +1124,8 @@ auto process_fields_in_submap( submap &sm,
     std::ranges::for_each( field_positions, [&]( const point_sm_ms & local ) {
         auto &curfield = sm.get_field( local );
 
+        bool dirty_transparency_cache = false;
+
         if( !curfield.displayed_field_type() ) {
             return;
         }
@@ -1129,14 +1133,19 @@ auto process_fields_in_submap( submap &sm,
         for( auto it = curfield.begin(); it != curfield.end(); ) {
             auto &cur = it->second;
 
+            auto cur_fd_type_id = cur.get_field_type();
+
             // Dead entries — clean up.
             if( !cur.is_field_alive() ) {
                 --sm.field_count;
+                if( !cur_fd_type_id->get_transparent( cur.get_field_intensity() - 1 ) ) {
+                    dirty_transparency_cache = true;
+                }
                 curfield.remove_field( it++ );
                 continue;
             }
 
-            auto cur_fd_type_id = cur.get_field_type();
+            dirty_transparency_cache |= cur_fd_type_id->dirty_transparency_cache;
 
             // Track fire before the newborn suppression below.
             if( cur_fd_type_id.obj().has_fire ) {
@@ -1753,6 +1762,12 @@ auto process_fields_in_submap( submap &sm,
             } else {
                 ++it;
             }
+
+            if( in_bubble && dirty_transparency_cache ) {
+                map.set_transparency_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
+                map.set_seen_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
+            }
+
         } // end field-entry loop
     } );
 

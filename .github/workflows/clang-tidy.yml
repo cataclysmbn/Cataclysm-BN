@@ -45,9 +45,10 @@ jobs:
       - name: install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install \
+          sudo apt-get install -y \
             cmake gettext ninja-build mold jq \
-            sqlite3 libsqlite3-dev zlib1g-dev
+            sqlite3 libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb \
+            autoconf autoconf-archive automake libtool libltdl-dev
 
           VERSION=20
           wget https://apt.llvm.org/llvm.sh
@@ -82,6 +83,9 @@ jobs:
           max-size: 500M
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Install shadercross
+        run: bash build-scripts/install-shadercross-vcpkg.sh
 
       - name: add problem matcher
         run: |

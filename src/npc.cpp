@@ -1611,8 +1611,20 @@ void npc::on_attacked( const Creature &attacker )
         die( nullptr );
     }
     if( attacker.is_player() && !is_enemy() ) {
+        const auto attacked_faction = get_monster_faction();
         make_angry();
         hit_by_player = true;
+
+        static const auto player_faction = mfaction_id( "player" );
+        for( monster &critter : g->all_monsters() ) {
+            if( !critter.type->has_anger_trigger( mon_trigger::FRIEND_ATTACKED ) ) {
+                continue;
+            }
+            if( critter.generic_npc_attitude_to( attacked_faction ) != Attitude::A_FRIENDLY ) {
+                continue;
+            }
+            critter.add_faction_anger( player_faction, 15 );
+        }
     }
 }
 
@@ -1721,11 +1733,31 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
     }
     // Sound happens even if we can't hear it
     if( spriority == sounds::sound_t::order || spriority == sounds::sound_t::alert ) {
-        sounds::sound( bub_pos(), get_shout_volume(), spriority, sound, false, "speech",
-                       male ? "NPC_m" : "NPC_f" );
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = get_shout_volume();
+        se.category = spriority;
+        se.description = sound;
+        se.from_npc = true;
+        se.faction = get_fac_id();
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "speech";
+        se.variant = male ? "NPC_m" : "NPC_f";
+
+        sounds::sound( se );
     } else {
-        sounds::sound( bub_pos(), 16, sounds::sound_t::speech, sound, false, "speech",
-                       male ? "NPC_m_loud" : "NPC_f_loud" );
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = 80;
+        se.category = sounds::sound_t::speech;
+        se.description = sound;
+        se.from_npc = true;
+        se.faction = get_fac_id();
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "speech";
+        se.variant = male ? "NPC_m_loud" : "NPC_f_loud";
+
+        sounds::sound( se );
     }
 }
 

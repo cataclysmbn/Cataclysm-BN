@@ -1167,9 +1167,13 @@ void vehicle::drive_to_local_target( const tripoint_abs_ms &target, bool follow_
     }
     if( stop ) {
         if( autopilot_on ) {
-            sounds::sound( bub_ms_location(), 30, sounds::sound_t::alert,
-                           string_format( _( "the %s emitting a beep and saying \"Obstacle detected!\"" ),
-                                          name ) );
+            sound_event se;
+            se.origin = bub_ms_location();
+            se.volume = 60;
+            se.category = sounds::sound_t::alert;
+            se.description = string_format( _( "the %s emitting a beep and saying \"Obstacle detected!\"" ),
+                                            name );
+            sounds::sound( se );
         }
         stop_autodriving();
         return;
@@ -1500,11 +1504,18 @@ void vehicle::backfire( const int e ) const
 {
     const int power = part_vpower_w( engines[e], true );
     const auto pos = bub_part_location( engines[e] );
-    sounds::sound( pos, 40 + power / 10000, sounds::sound_t::movement,
-                   // single space after the exclaimation mark because it does not end the sentence
-                   //~ backfire sound
-                   string_format( _( "a loud BANG! from the %s" ), // NOLINT(cata-text-style)
-                                  parts[ engines[ e ] ].name() ), true, "vehicle", "engine_backfire" );
+    sound_event se;
+    se.origin = pos;
+    se.volume = 100 + rng( 0, 20 ) + rng( 0, 20 );
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = string_format( _( "a loud BANG! from the %s" ), // NOLINT(cata-text-style)
+                                    parts[engines[e]].name() );
+    // single space after the exclaimation mark because it does not end the sentence
+    //~ backfire sound
+    se.id = "vehicle";
+    se.variant = "engine_bckfire";
+    sounds::sound( se );
 }
 
 const vpart_info &vehicle::part_info( int index, bool include_removed ) const
@@ -4448,8 +4459,11 @@ void vehicle::noise_and_smoke( int load, time_duration time )
             double cur_stress = load / 1000.0 * max_stress;
             // idle stress = 1.0 resulting in nominal working engine noise = engine_noise_factor()
             // and preventing noise = 0
+            const bool electric_engine = part_info( p ).fuel_type == fuel_type_battery;
             cur_stress = std::max( cur_stress, 1.0 );
-            double part_noise = cur_stress * part_info( p ).engine_noise_factor();
+            // Reduce the relative volume of electric engines as there is not literal explosions occouring inside.
+            double part_noise = cur_stress * part_info( p ).engine_noise_factor() * ( (
+                                    electric_engine ) ? 0.1 : 1.0 );
 
             if( part_info( p ).has_flag( "E_COMBUSTION" ) ) {
                 combustion = true;
@@ -4489,10 +4503,14 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     if( is_flying && has_part( VPFLAG_ROTOR ) ) {
         noise *= 2;
     }
-    // Cap engine noise to avoid deafening.
-    noise = std::min( noise, 100.0 );
-    // Even a vehicle with engines off will make noise traveling at high speeds
-    noise = std::max( noise, std::fabs( velocity / 224.0 ) );
+    // Speed alone wont generate much noise unless the vehicle is traveling faster than the speed of sound.
+    // noise = std::max( noise, std::fabs( velocity / 224.0 ) );
+    // Cap engine noise to avoid deafening. Deafening can occour at or above 140dBspl.
+    noise = std::min( noise, 139.0 );
+    if( velocity >= 34300 ) {
+        // Sonic boom.
+        noise = 180;
+    }
     int lvl = 0;
     if( one_in( 4 ) && rng( 0, 30 ) < noise ) {
         while( noise > sounds[lvl].second ) {
@@ -4502,8 +4520,14 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     add_msg( m_debug, "VEH NOISE final: %d", static_cast<int>( noise ) );
     vehicle_noise = static_cast<unsigned char>( noise );
     // TODO: other noises for non-rotor aircraft?
-    sounds::sound( bub_ms_location(), noise, sounds::sound_t::movement,
-                   _( has_part( VPFLAG_ROTOR ) ? heli_noise : sounds[lvl].first ), true );
+    sound_event se;
+    se.origin = bub_ms_location();
+    se.volume = noise;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( is_rotorcraft() ? heli_noise : sounds[lvl].first );
+
+    sounds::sound( se );
 }
 
 int vehicle::wheel_area() const
@@ -5814,11 +5838,9 @@ void traverse( StartPoint &start,
     using tvr = traverse_visitor_result;
     constexpr bool IsConst = std::is_const_v<StartPoint>;
     struct hash {
-        const std::hash<char> char_hash = std::hash<char>();
-        const std::hash<size_t> ptr_hash = std::hash<size_t>();
         auto operator()( const vehicle_or_grid<IsConst> &elem ) const {
-            return char_hash( static_cast<char>( elem.type ) ) ^
-                   ptr_hash(
+            return std::hash<char> {}( static_cast<char>( elem.type ) ) ^
+                   std::hash<size_t> {}(
                        // Because only one of pointers is not nullptr, binary OR would get value of set pointer.
                        reinterpret_cast<size_t>( elem.veh ) | reinterpret_cast<size_t>( elem.grid )
                    );
@@ -6227,7 +6249,9 @@ detached_ptr<item> vehicle::add_charges( int part, detached_ptr<item> &&itm )
     itm_copy->charges = amount;
     itm->charges -= amount;
     detached_ptr<item> remaining = add_item( part, std::move( itm_copy ) );
-    itm->charges += remaining->charges;
+    if( remaining ) {
+        itm->charges += remaining->charges;
+    }
     return itm->charges > 0 ? std::move( itm ) : detached_ptr<item>();
 }
 
@@ -7277,7 +7301,7 @@ void vehicle::unboard_all()
     }
 }
 
-int vehicle::damage( int p, int dmg, damage_type type, bool aimed )
+int vehicle::damage( int p, int dmg, damage_type type, bool aimed, bool random_part )
 {
     if( dmg < 1 ) {
         return dmg;
@@ -7304,7 +7328,16 @@ int vehicle::damage( int p, int dmg, damage_type type, bool aimed )
         }
     }
 
-    int target_part = part_info( p ).rotor_diameter() ? p : random_entry( pl );
+    int target_part = [&]() {
+        if( random_part ) {
+            if( part_info( p ).rotor_diameter() && one_in( 2 ) ) {
+                return p;
+            }
+            return random_entry( pl );
+        }
+        return p;
+    }
+    ();
 
     // door motor mechanism is protected by closed doors
     if( part_flag( target_part, "DOOR_MOTOR" ) ) {

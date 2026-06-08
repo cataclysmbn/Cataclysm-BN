@@ -1,13 +1,17 @@
 #include "map.h"
 
+#include "faction.h"
+#include "mapdata.h"
 #include "mapgen_async.h"
 
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <climits>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <iterator>
 #include <ranges>
 #include <limits>
 #include <mutex>
@@ -58,6 +62,7 @@
 #include "fluid_grid.h"
 #include "fungal_effects.h"
 #include "game.h"
+#include "game_constants.h"
 #include "harvest.h"
 #include "iexamine.h"
 #include "input.h"
@@ -92,6 +97,7 @@
 #include "overmapbuffer.h"
 #include "legacy_pathfinding.h"
 #include "player.h"
+#include "point.h"
 #include "point_float.h"
 #include "projectile.h"
 #include "profile.h"
@@ -118,6 +124,11 @@
 #include "vpart_range.h"
 #include "weather.h"
 #include "weighted_list.h"
+
+#if defined( CATA_SDL )
+#include "compute/gpu_lm.h"
+#include "compute/gpu_platform.h"
+#endif
 
 struct ammo_effect;
 using ammo_effect_str_id = string_id<ammo_effect>;
@@ -176,6 +187,47 @@ auto horde_should_avoid_vehicle_tile( const map &here, const tripoint_bub_ms &p,
 
     const auto &veh = vp->vehicle();
     return veh.is_owned_by( get_avatar() );
+}
+
+auto quantized_light_signature_value( const float value ) -> int
+{
+    return static_cast<int>( std::lround( value * 4.0f ) );
+}
+
+auto quantized_solar_signature_value( const float value ) -> int
+{
+    return static_cast<int>( std::lround( value * 8.0f ) );
+}
+
+auto quantized_angle_signature_value( const units::angle angle ) -> int
+{
+    return static_cast<int>( std::lround( units::to_degrees( angle ) * 10.0 ) );
+}
+
+void hash_light_item( std::size_t &seed, const tripoint_bub_ms &pos, const item &itm )
+{
+    auto luminance = 0.0f;
+    auto width = 0_degrees;
+    auto direction = 0_degrees;
+    if( !itm.getlight( luminance, width, direction ) ) {
+        return;
+    }
+    cata::hash_combine( seed, pos );
+    cata::hash_combine( seed, quantized_light_signature_value( luminance ) );
+    cata::hash_combine( seed, quantized_angle_signature_value( width ) );
+    cata::hash_combine( seed, quantized_angle_signature_value( direction ) );
+}
+
+void hash_character_light_state( std::size_t &seed, const Character &who )
+{
+    const auto active_luminance = who.active_light();
+    const auto has_fire_light = who.has_effect( effect_onfire );
+    if( active_luminance <= LIGHT_AMBIENT_LOW && !has_fire_light ) {
+        return;
+    }
+    cata::hash_combine( seed, who.bub_pos() );
+    cata::hash_combine( seed, quantized_light_signature_value( active_luminance ) );
+    cata::hash_combine( seed, has_fire_light );
 }
 
 } // namespace
@@ -452,6 +504,8 @@ void map::set_transparency_cache_dirty( const int zlev )
 {
     if( inbounds_z( zlev ) ) {
         get_cache( zlev ).transparency_cache_dirty.set();
+        // If we are invalidating the entire transparency cache for this zlevel, the sound absorption cache will also be invalidated.
+        get_cache( zlev ).absorption_cache_dirty.set();
         for( const auto p : bubble_submaps() ) {
             auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
             if( sm ) { sm->transparency_dirty = true; }
@@ -466,10 +520,14 @@ void map::set_seen_cache_dirty( const tripoint_bub_ms &change_location )
         if( cache.seen_cache_dirty ) {
             return;
         }
+#if defined( CATA_SDL )
+        cache.seen_cache_dirty = true;
+#else
         const int ci = cache.idx( change_location.x(), change_location.y() );
         if( cache.seen_cache[ci] != 0.0 || cache.camera_cache[ci] != 0.0 ) {
             cache.seen_cache_dirty = true;
         }
+#endif
     }
 }
 
@@ -549,6 +607,8 @@ void map::set_floor_cache_dirty( const int zlev )
     }
     // outside_cache and sheltered_cache at z-1 depend on floor_cache at z.
     set_outside_cache_dirty( zlev - 1 );
+    // This also means the absorption and sound wall caches are marked dirty there as well.
+    set_absorption_cache_dirty( zlev - 1 );
 }
 
 void map::set_floor_cache_dirty( const tripoint_bub_ms &p )
@@ -564,6 +624,8 @@ void map::set_floor_cache_dirty( const tripoint_bub_ms &p )
     // outside_cache and sheltered_cache at z-1 depend on floor_cache at z.
     // The 3×3 neighbourhood means adjacent submaps at z-1 may also be affected.
     set_outside_cache_dirty( p + tripoint_rel_ms::below() );
+    // Setting the floor cache for a submap dirty should also automatically set the absorption cache and sound_wall caches dirty.
+    set_absorption_cache_dirty( p + tripoint_rel_ms::below() );
 }
 
 void map::set_seen_cache_dirty( const int &zlevel )
@@ -582,6 +644,59 @@ void map::set_transparency_cache_dirty( const tripoint_bub_ms &p )
         ch.transparency_cache_dirty.set( static_cast<size_t>( ch.bidx( smp.x(), smp.y() ) ) );
         auto *sm = get_submap_at_grid( smp );
         if( sm ) { sm->transparency_dirty = true; }
+    }
+}
+
+void map::set_absorption_cache_dirty( const tripoint_bub_ms &p )
+{
+    // Logic lifted shamelessly from set_outside_cache_dirty
+    if( !inbounds( p ) ) {
+        return;
+    }
+    level_cache &ch = get_cache( p.z() );
+    const auto proj = project_remain<coords::sm>( p );
+    const auto smp = proj.quotient_tripoint;
+    const auto l = proj.remainder;
+
+    // Helper: mark one submap grid cell dirty in both the bitset and the submap flag.
+    auto mark = [&]( const tripoint_bub_sm & p ) {
+        if( p.x() < 0 || p.y() < 0 || p.x() >= my_MAPSIZE || p.y() >= my_MAPSIZE ) {
+            return;
+        }
+        ch.absorption_cache_dirty.set( static_cast<size_t>( ch.bidx( p.x(), p.y() ) ) );
+        auto *sm = get_submap_at_grid( tripoint_bub_sm{ p.x(), p.y(), p.z() } );
+        if( sm ) {
+            sm->absorption_dirty = true;
+        }
+    };
+
+    // Always mark the tile's own submap.
+    mark( smp );
+
+    // rebuild_absorption_cache checks a 3×3 tile neighbourhood, so a tile on a
+    // submap boundary can affect tiles in the adjacent submap.
+    const bool on_left   = ( l.x() == 0 );
+    const bool on_right  = ( l.x() == SEEX - 1 );
+    const bool on_top    = ( l.y() == 0 );
+    const bool on_bottom = ( l.y() == SEEY - 1 );
+
+    if( on_left )   { mark( smp + point_rel_sm::west() ); }
+    if( on_right )  { mark( smp + point_rel_sm::east() ); }
+    if( on_top )    { mark( smp + point_rel_sm::north() ); }
+    if( on_bottom ) { mark( smp + point_rel_sm::south() ); }
+
+    // Corner neighbours when on both x and y boundaries.
+    if( on_left  && on_top )    { mark( smp + point_rel_sm::north_west() ); }
+    if( on_right && on_top )    { mark( smp + point_rel_sm::north_east() ); }
+    if( on_left  && on_bottom ) { mark( smp + point_rel_sm::south_west() ); }
+    if( on_right && on_bottom ) { mark( smp + point_rel_sm::south_east() ); }
+
+}
+
+void map::set_absorption_cache_dirty( const int zlev )
+{
+    if( inbounds_z( zlev ) ) {
+        get_cache( zlev ).absorption_cache_dirty.set();
     }
 }
 
@@ -820,8 +935,11 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
 
     auto &ch = get_cache( smz );
     invalidate_lightmap_caches();
-    m_solar.last_built_hour = -1;
     set_seen_cache_dirty( smz );
+    ch.visibility_cache_dirty = true;
+#if defined( CATA_SDL )
+    cata_gpu::invalidate_lighting_transparency_levels( std::vector<int> { smz } );
+#endif
 
     const auto for_clamped_submaps = [&]( const point_bub_sm & range_min,
     const point_bub_sm & range_max, const auto & callback ) {
@@ -868,6 +986,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     if( inbounds_z( above_z ) ) {
         auto &ch_above = get_cache( above_z );
         set_seen_cache_dirty( above_z );
+        ch_above.visibility_cache_dirty = true;
         for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm & p ) {
             ch_above.floor_cache_dirty.set(
                 static_cast<size_t>( ch_above.bidx( p.x(), p.y() ) ) );
@@ -1233,10 +1352,16 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
     if( impulse > 0 ) {
         coll_turn = shake_vehicle( veh, velocity_before, facing.dir() );
         veh.stop_autodriving();
-        const int volume = std::min<int>( 100, std::sqrt( impulse ) );
+        const int volume = std::min<int>( 120, std::sqrt( impulse ) );
         // TODO: Center the sound at weighted (by impulse) average of collisions
-        sounds::sound( veh.bub_ms_location(), volume, sounds::sound_t::combat, _( "crash!" ),
-                       false, "smash_success", "hit_vehicle" );
+        sound_event se;
+        se.origin = veh.bub_ms_location();
+        se.volume = volume;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "crash!" );
+        se.id = "smash_success";
+        se.variant = "hit_vehicle";
+        sounds::sound( se );
     }
 
     if( veh_veh_coll_flag ) {
@@ -1316,8 +1441,15 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
         for( auto &w : wheel_indices ) {
             const auto wheel_p = veh.bub_part_location( w );
             if( one_in( 2 ) && displace_water( wheel_p ) ) {
-                sounds::sound( wheel_p, 4,  sounds::sound_t::movement, _( "splash!" ), false,
-                               "environment", "splash" );
+                sound_event se;
+                se.origin = wheel_p;
+                se.volume = 50;
+                se.category = sounds::sound_t::movement;
+                se.movement_noise = true;
+                se.description = _( "splash!" );
+                se.id = "environment";
+                se.variant = "splash";
+                sounds::sound( se );
             }
 
             veh.handle_trap( wheel_p, w );
@@ -1873,20 +2005,21 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         }
     }
 
-    // Capture the old footprint in submap grid coordinates BEFORE parts are
-    // updated by advance_precalc_mounts.
-    tripoint_bub_sm veh_sm_min = { INT_MAX, INT_MAX, INT_MAX };
-    tripoint_bub_sm veh_sm_max = { INT_MIN, INT_MIN, INT_MIN };
+    // Capture the old footprint in absolute submap coordinates BEFORE parts
+    // are updated by advance_precalc_mounts.  The player may shift the map
+    // origin below, so bubble coordinates would be stale by on_vehicle_moved().
+    auto veh_abs_sm_min = tripoint_abs_sm( INT_MAX, INT_MAX, INT_MAX );
+    auto veh_abs_sm_max = tripoint_abs_sm( INT_MIN, INT_MIN, INT_MIN );
 
     auto expand_bounds = [&]( const tripoint_abs_ms & base, const vehicle_part & prt ) {
-        const auto p = abs_to_bub( project_to<coords::sm>( base + tripoint_rel_ms(
-                                       prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) ) );
-        veh_sm_min.x() = std::min( veh_sm_min.x(), p.x() );
-        veh_sm_min.y() = std::min( veh_sm_min.y(), p.y() );
-        veh_sm_min.z() = std::min( veh_sm_min.z(), p.z() );
-        veh_sm_max.x() = std::max( veh_sm_max.x(), p.x() );
-        veh_sm_max.y() = std::max( veh_sm_max.y(), p.y() );
-        veh_sm_max.z() = std::max( veh_sm_max.z(), p.z() );
+        const auto p = project_to<coords::sm>( base + tripoint_rel_ms(
+                prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) );
+        veh_abs_sm_min.x() = std::min( veh_abs_sm_min.x(), p.x() );
+        veh_abs_sm_min.y() = std::min( veh_abs_sm_min.y(), p.y() );
+        veh_abs_sm_min.z() = std::min( veh_abs_sm_min.z(), p.z() );
+        veh_abs_sm_max.x() = std::max( veh_abs_sm_max.x(), p.x() );
+        veh_abs_sm_max.y() = std::max( veh_abs_sm_max.y(), p.y() );
+        veh_abs_sm_max.z() = std::max( veh_abs_sm_max.z(), p.z() );
     };
 
     for( const vpart_reference &vpr : veh.get_all_parts() ) {
@@ -1958,6 +2091,28 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         veh.update_overmap( prev );
     }
 
+    //
+    //global positions of vehicle loot zones have changed.
+    veh.zones_dirty = true;
+
+    auto vehicle_moved_marked = false;
+    auto const mark_vehicle_moved = [&]() {
+        if( vehicle_moved_marked ) {
+            return;
+        }
+        std::ranges::for_each( smzs, [&]( const int vsmz ) {
+            const auto smz = dest.z() + vsmz;
+            const auto veh_sm_min = abs_to_bub( tripoint_abs_sm( veh_abs_sm_min.xy(), smz ) );
+            const auto veh_sm_max = abs_to_bub( tripoint_abs_sm( veh_abs_sm_max.xy(), smz ) );
+            on_vehicle_moved( veh_sm_min, veh_sm_max, smz );
+        } );
+        vehicle_moved_marked = true;
+    };
+
+    if( need_update && !z_change && src.z() == dest.z() ) {
+        mark_vehicle_moved();
+    }
+
     if( need_update ) {
         g->update_map( g->u );
     }
@@ -1991,14 +2146,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         // Has to be after update_map or coordinates won't be valid
         g->setremoteveh( &veh );
     }
-
-    //
-    //global positions of vehicle loot zones have changed.
-    veh.zones_dirty = true;
-
-    std::ranges::for_each( smzs, [&]( const int vsmz ) {
-        on_vehicle_moved( veh_sm_min, veh_sm_max, dest.z() + vsmz );
-    } );
+    mark_vehicle_moved();
     return true;
 }
 
@@ -2128,6 +2276,9 @@ void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
         set_transparency_cache_dirty( p );
         set_seen_cache_dirty( p );
     }
+    if( old_t.light_emitted != new_t.light_emitted ) {
+        invalidate_lightmap_caches();
+    }
 
     if( ( old_t.has_flag( TFLAG_NO_FLOOR ) != new_t.has_flag( TFLAG_NO_FLOOR ) ) ||
         ( old_t.has_flag( TFLAG_Z_TRANSPARENT ) != new_t.has_flag( TFLAG_Z_TRANSPARENT ) ) ) {
@@ -2141,6 +2292,11 @@ void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
 
     if( old_t.has_flag( TFLAG_SUN_ROOF_ABOVE ) != new_t.has_flag( TFLAG_SUN_ROOF_ABOVE ) ) {
         set_floor_cache_dirty( tripoint_bub_ms( p.xy(), p.z() + 1 ) );
+    }
+
+    if( old_t.has_flag( TFLAG_BLOCK_WIND ) != new_t.has_flag( TFLAG_BLOCK_WIND ) ||
+        old_t.has_flag( TFLAG_CONNECT_TO_WALL ) != new_t.has_flag( TFLAG_CONNECT_TO_WALL ) ) {
+        set_absorption_cache_dirty( tripoint_bub_ms( p.xy(), p.z() ) );
     }
 
     invalidate_max_populated_zlev( p.z() );
@@ -2497,6 +2653,9 @@ bool map::ter_set( const tripoint_bub_ms &p, const ter_id &new_terrain )
         // Opening/closing a floor affects visibility on this and the level below.
         set_seen_cache_dirty( p.z() );
         set_seen_cache_dirty( p.z() - 1 );
+        // This also changes the sound absorption of both this tile and the tile below it.
+        set_absorption_cache_dirty( p );
+        set_absorption_cache_dirty( p.z() - 1 );
     }
 
     if( new_t.has_flag( TFLAG_Z_TRANSPARENT ) != old_t.has_flag( TFLAG_Z_TRANSPARENT ) ) {
@@ -2512,6 +2671,16 @@ bool map::ter_set( const tripoint_bub_ms &p, const ter_id &new_terrain )
             level_cache &ch = get_cache( p.z() );
             ch.suspension_cache.emplace_back( bub_to_abs( p ).xy() );
         }
+    }
+
+    if( new_t.has_flag( "BLOCK_WIND" ) != old_t.has_flag( "BLOCK_WIND" ) ) {
+        // Changing BLOCK_WIND prompts an absorption cache recalc around that tile.
+        set_absorption_cache_dirty( p );
+    }
+
+    if( new_t.has_flag( "CONNECT_TO_WALL" ) != old_t.has_flag( "CONNECT_TO_WALL" ) ) {
+        // Changing CONNECT_TO_WALL prompts an absorption cache recalc around that tile to see if a structure blocks sounds.
+        set_absorption_cache_dirty( p );
     }
 
     invalidate_max_populated_zlev( p.z() );
@@ -4095,12 +4264,26 @@ static bool furn_is_supported( const map &m, const tripoint_bub_ms &p )
     return false;
 }
 
-static int get_sound_volume( const map_bash_info &bash )
+static auto get_sound_volume( const map_bash_info &bash, const bash_params &params ) -> int
 {
-    int smin = bash.str_min;
-    int smax = bash.str_max;
-    // TODO: Consider setting this in finalize instead of calculating here
-    return bash.sound_vol.value_or( std::min( static_cast<int>( smin * 1.5 ), smax ) );
+    // Just take the minimum/base volume at 20dB.
+    const auto minvol = 20;
+    // Set maxvol to 140dB, which can be deafening for extreme impacts.
+    const auto maxvol = 140;
+    const auto impact_strength = params.destroy ? bash.str_max : params.strength;
+    return bash.sound_vol.value_or( std::clamp( minvol + impact_strength, minvol, maxvol ) );
+}
+
+static void set_bash_sound_source( sound_event &se, const bash_params &params )
+{
+    if( !params.caused_by_player ) {
+        return;
+    }
+
+    auto &player_character = get_avatar();
+    se.from_player = true;
+    se.faction = player_character.get_faction()->id;
+    se.monfaction = player_character.get_faction()->mon_faction;
 }
 
 bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params &params )
@@ -4143,9 +4326,16 @@ bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params 
 
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
-        int sound_volume = get_sound_volume( bash );
-        sounds::sound( p, sound_volume, sounds::sound_t::combat, bash.sound, false,
-                       soundfxid, soundfxvariant );
+        const auto sound_volume = get_sound_volume( bash, params );
+        sound_event se;
+        se.origin = p;
+        se.volume = sound_volume;
+        se.category = sounds::sound_t::combat;
+        se.description = bash.sound.translated();
+        se.id = soundfxid;
+        se.variant = soundfxvariant;
+        set_bash_sound_source( se, params );
+        sounds::sound( se );
     }
 
     if( !zlevels ) {
@@ -4327,9 +4517,16 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
 
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
-        int sound_volume = get_sound_volume( bash );
-        sounds::sound( p, sound_volume, sounds::sound_t::combat, bash.sound, false,
-                       soundfxid, soundfxvariant );
+        const auto sound_volume = get_sound_volume( bash, params );
+        sound_event se;
+        se.origin = p;
+        se.volume = sound_volume;
+        se.category = sounds::sound_t::combat;
+        se.description = bash.sound.translated();
+        se.id = soundfxid;
+        se.variant = soundfxvariant;
+        set_bash_sound_source( se, params );
+        sounds::sound( se );
     }
 
     if( bash.explosive > 0 ) {
@@ -4383,8 +4580,14 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
 
     // TODO: what if silent is true?
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
-        sounds::sound( p, 40, sounds::sound_t::alarm, _( "an alarm go off!" ),
-                       false, "environment", "alarm" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 90;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "an alarm go off!" );
+        se.id = "environment";
+        se.variant = "alarm";
+        sounds::sound( se );
         // Blame nearby player
         if( rl_dist( g->u.bub_pos(), p ) <= 3 ) {
             g->events().send<event_type::triggers_alarm>( g->u.getID() );
@@ -4398,8 +4601,15 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
         // Nothing bashable here
         if( impassable( p ) ) {
             if( !params.silent ) {
-                sounds::sound( p, 18, sounds::sound_t::combat, _( "thump!" ),
-                               false, "smash_fail", "default" );
+                sound_event se;
+                se.origin = p;
+                se.volume = 80;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "thump!" );
+                se.id = "smash_fail";
+                se.variant = "default";
+                set_bash_sound_source( se, params );
+                sounds::sound( se );
             }
 
             result.did_bash = true;
@@ -4446,12 +4656,20 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
     }
 
     if( !result.success ) {
-        int sound_volume = bash->sound_fail_vol.value_or( 12 );
+        // Cap out bash volume to 120dB for sanity checking.
+        int sound_volume = std::min( 120, bash->sound_fail_vol.value_or( 70 ) );
 
         result.did_bash = true;
         if( !params.silent ) {
-            sounds::sound( p, sound_volume, sounds::sound_t::combat, bash->sound_fail, false,
-                           "smash_fail", soundfxvariant );
+            sound_event se;
+            se.origin = p;
+            se.volume = sound_volume;
+            se.category = sounds::sound_t::combat;
+            se.description = bash->sound_fail.translated();
+            se.id = "smash_fail";
+            se.variant = soundfxvariant;
+            set_bash_sound_source( se, params );
+            sounds::sound( se );
         }
 
         if( !smash_ter && smax > 0 ) {
@@ -4495,14 +4713,26 @@ bash_results map::bash( const tripoint_bub_ms &p, const int str,
                         bool silent, bool destroy, bool bash_floor,
                         const vehicle *bashing_vehicle )
 {
-    bash_params bsh{
-        str, silent, destroy, bash_floor, static_cast<float>( rng_float( 0, 1.0f ) ), false, true
+    const auto bsh = bash_params{
+        .strength = str,
+        .silent = silent,
+        .destroy = destroy,
+        .bash_floor = bash_floor,
+        .roll = static_cast<float>( rng_float( 0, 1.0f ) ),
+        .bashing_from_above = false,
+        .do_recurse = true
     };
+    return bash( p, bsh, bashing_vehicle );
+}
+
+bash_results map::bash( const tripoint_bub_ms &p, const bash_params &bsh,
+                        const vehicle *bashing_vehicle )
+{
     bash_results result;
 
     // Dimension bounds cannot be bashed - show message from boundary terrain
     if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
-        if( !silent && pocket_info_ ) {
+        if( !bsh.silent && pocket_info_ ) {
             const ter_t &boundary_ter = pocket_info_->bounds.boundary_terrain.obj();
             if( !boundary_ter.bash.sound_fail.empty() ) {
                 add_msg( m_info, boundary_ter.bash.sound_fail.translated() );
@@ -4566,8 +4796,15 @@ bash_results map::bash_items( const tripoint_bub_ms &p, const bash_params &param
 
     // Add a glass sound even when something else also breaks
     if( smashed_glass && !params.silent ) {
-        sounds::sound( p, 12, sounds::sound_t::combat, _( "glass shattering" ), false,
-                       "smash_success", "smash_glass_contents" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 70;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "glass shattering" );
+        se.id = "smash_success";
+        se.variant = "smash_glass_contents";
+        set_bash_sound_source( se, params );
+        sounds::sound( se );
     }
     return result;
 }
@@ -4579,8 +4816,15 @@ bash_results map::bash_vehicle( const tripoint_bub_ms &p, const bash_params &par
     if( const optional_vpart_position vp = veh_at( p ) ) {
         vp->vehicle().damage( vp->part_index(), params.strength, DT_BASH );
         if( !params.silent ) {
-            sounds::sound( p, 18, sounds::sound_t::combat, _( "crash!" ), false,
-                           "smash_success", "hit_vehicle" );
+            sound_event se;
+            se.origin = p;
+            se.volume = 70;
+            se.category = sounds::sound_t::combat;
+            se.description = _( "crash!" );
+            se.id = "smash_success";
+            se.variant = "hit_vehicle";
+            set_bash_sound_source( se, params );
+            sounds::sound( se );
         }
 
         result.did_bash = true;
@@ -4722,8 +4966,14 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
     float pen = initial_arpen;
 
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
-        sounds::sound( p, 30, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
-                       "alarm" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 90;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "an alarm sound!" );
+        se.id = "environment";
+        se.variant = "alarm";
+        sounds::sound( se );
         const auto abs = project_to<coords::sm>( bub_to_abs( p ) );
         g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0, abs );
     }
@@ -4735,7 +4985,12 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
                       proj.impact.type_damage( DT_STAB ) > 0 ||
                       proj.impact.type_damage( DT_BULLET ) > 0;
     if( const optional_vpart_position vp = veh_at( p ) ) {
-        dam = vp->vehicle().damage( vp->part_index(), dam, inc ? DT_HEAT : DT_STAB, hit_items );
+        if( origin.z() > p.z() && vp->part_with_feature( "ROOF", true ) ) {
+            const int roof = vp->vehicle().roof_at_part( vp->part_index() );
+            dam = vp->vehicle().damage( roof, dam, inc ? DT_HEAT : DT_STAB, hit_items, false );
+        } else {
+            dam = vp->vehicle().damage( vp->part_index(), dam, inc ? DT_HEAT : DT_STAB, hit_items );
+        }
     }
 
     furn_id furn_here = furn( p );
@@ -4756,7 +5011,9 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         } else if( proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES ) ) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle and stop the shot.
-            add_msg( _( "The shot strikes the %s!" ), furnname( p ) );
+            if( get_avatar().sees( p ) ) {
+                add_msg( _( "The shot strikes the %s!" ), furnname( p ) );
+            }
             if( phys ) {
                 bash( p, dam, false );
             }
@@ -4805,7 +5062,9 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         } else if( proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES ) ) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle if it was a thrown rock or the like, then stop the shot.
-            add_msg( _( "The shot strikes the %s!" ), tername( p ) );
+            if( get_avatar().sees( p ) ) {
+                add_msg( _( "The shot strikes the %s!" ), tername( p ) );
+            }
             if( phys ) {
                 bash( p, dam, false );
             }
@@ -4846,14 +5105,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         dam = 0;
     }
 
-    for( const ammo_effect_str_id &ae_id : proj.get_ammo_effects() ) {
-        const ammo_effect &ae = *ae_id;
-        if( ae.trail_field_type ) {
-            if( x_in_y( ae.trail_chance, 100 ) ) {
-                add_field( p, ae.trail_field_type, rng( ae.trail_intensity_min, ae.trail_intensity_max ) );
-            }
-        }
-    }
+    apply_ammo_trail_effects( p, proj.get_ammo_effects(), 1.0 );
 
     // Check fields?
     const field_entry *fieldhit = get_field( p, fd_web );
@@ -5046,9 +5298,15 @@ bool map::open_door_ter(
         return false;
     }
 
-    sounds::sound(
-        p, 6, sounds::sound_t::movement, _( "swish" ),
-        true, "open_door", ter.id.str() );
+    sound_event se;
+    se.origin = p;
+    se.volume = 50;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "swish" );
+    se.id = "open_door";
+    se.variant = ter.id.str();
+    sounds::sound( se );
     ter_set( p, ter.open );
 
     const auto is_schizo = std::visit( []<typename T>( T u ) -> bool {
@@ -5101,9 +5359,15 @@ bool map::open_door_furn(
         return false;
     }
 
-    sounds::sound(
-        p, 6, sounds::sound_t::movement, _( "swish" ),
-        true, "open_door", furn.id.str() );
+    sound_event se;
+    se.origin = p;
+    se.volume = 50;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "swish" );
+    se.id = "open_door";
+    se.variant = furn.id.str();
+    sounds::sound( se );
     furn_set( p, furn.open );
     return true;
 
@@ -5236,17 +5500,23 @@ bool map::close_door( const tripoint_bub_ms &p, const bool inside, const bool ch
 
     const auto &ter = this->ter( p ).obj();
     const auto &furn = this->furn( p ).obj();
+    sound_event se;
+    se.origin = p;
+    se.volume = 60;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "swish" );
+    se.id = "close_door";
+    se.variant = ter.id.str();
     if( ter.close && !furn.id ) {
         if( !check_only ) {
-            sounds::sound( p, 10, sounds::sound_t::movement, _( "swish" ), true,
-                           "close_door", ter.id.str() );
+            sounds::sound( se );
             ter_set( p, ter.close );
         }
         return true;
     } else if( furn.close ) {
         if( !check_only ) {
-            sounds::sound( p, 10, sounds::sound_t::movement, _( "swish" ), true,
-                           "close_door", furn.id.str() );
+            sounds::sound( se );
             furn_set( p, furn.close );
         }
         return true;
@@ -5365,7 +5635,11 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
         submaps_with_active_items.erase( project_to<coords::sm>( bub_to_abs( p ) ) );
     }
 
+    const auto removed_emissive = ( *it )->is_emissive();
     current_submap->update_lum_rem( l, **it );
+    if( removed_emissive ) {
+        invalidate_lightmap_caches();
+    }
 
     return current_submap->get_items( l ).erase( std::move( it ), out );
 }
@@ -5397,7 +5671,11 @@ std::vector<detached_ptr<item>> map::i_clear( const tripoint_bub_ms &p )
         submaps_with_active_items.erase( project_to<coords::sm>( bub_to_abs( p ) ) );
     }
 
+    const auto had_luminance = current_submap->get_lum( l ) != 0;
     current_submap->set_lum( l, 0 );
+    if( had_luminance ) {
+        invalidate_lightmap_caches();
+    }
     return current_submap->get_items( l ).clear();
 }
 
@@ -5667,7 +5945,11 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
     current_submap->is_uniform = false;
     invalidate_max_populated_zlev( p.z() );
 
+    const auto adds_luminance = new_item->is_emissive();
     current_submap->update_lum_add( l, *new_item );
+    if( adds_luminance ) {
+        invalidate_lightmap_caches();
+    }
     if( new_item->needs_processing() ) {
         if( current_submap->active_items.empty() ) {
             submaps_with_active_items.insert( tripoint_abs_sm( abs_sub.x() + p.x() / SEEX,
@@ -5783,6 +6065,7 @@ void map::update_lum( item &loc, bool add )
     } else {
         current_submap->update_lum_rem( l, *target );
     }
+    invalidate_lightmap_caches();
 }
 
 static bool process_map_items( item *item_ref, const tripoint_bub_ms &location,
@@ -6016,9 +6299,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         vp.part().process_contents( vp.pos(), engine_heater_is_on );
     }
 
-    // OPP-4 / MISSED-4: if there is nothing to do (no active items and no cargo
-    // recharge), skip the get_parts_including_carried() call entirely.
-    // Building cargo_parts is not free on vehicles with many cargo slots.
+    // If there is nothing to process, skip the expensive cargo-part collection.
     if( cur_veh.active_items.empty() && !cur_veh.has_cargo_recharge ) {
         return;
     }
@@ -6879,30 +7160,110 @@ void map::update_submap_active_item_status( const tripoint_bub_ms &p )
 }
 
 
-void map::update_visibility_cache( const int zlev )
+auto map::update_visibility_cache( const int zlev,
+                                   const std::function<void()> &while_gpu_pending ) -> void
 {
     ZoneScopedN( "update_visibility_cache" );
     const auto player_pos = g->u.bub_pos();
-    visibility_variables_cache.variables_set = true; // Not used yet
-    visibility_variables_cache.g_light_level = static_cast<int>( g->light_level( zlev ) );
-    {
-        const level_cache &plr_ch = get_cache_ref( player_pos.z() );
-        visibility_variables_cache.vision_threshold = g->u.get_vision_threshold(
-                    plr_ch.lm[plr_ch.idx( player_pos.x(), player_pos.y() )].max() );
+#if defined( CATA_SDL )
+    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+    if( gpu_device == nullptr ) {
+        debugmsg( "SDL_GPU visibility is required, but no GPU device is available" );
+        return;
     }
+    const auto &visibility_cache_for_residency = get_cache_ref( zlev );
+    const auto visibility_cache_x = visibility_cache_for_residency.cache_x;
+    const auto visibility_cache_y = visibility_cache_for_residency.cache_y;
+    if( !cata_gpu::resident_lighting_ready_for_visibility( {
+    .device = gpu_device,
+    .cache_x = visibility_cache_x,
+    .cache_y = visibility_cache_y,
+    .z_count = OVERMAP_LAYERS,
+} ) ) {
+        build_map_cache( zlev );
+        if( !cata_gpu::resident_lighting_ready_for_visibility( {
+        .device = gpu_device,
+        .cache_x = visibility_cache_x,
+        .cache_y = visibility_cache_y,
+        .z_count = OVERMAP_LAYERS,
+    } ) ) {
+            debugmsg( "SDL_GPU visibility residency bootstrap failed; see debug.log for details" );
+            return;
+        }
+    }
+#endif
+    visibility_variables_cache = make_visibility_variables( zlev );
 
-    visibility_variables_cache.u_clairvoyance = g->u.clairvoyance();
-    visibility_variables_cache.u_unimpaired_range = g->u.unimpaired_range();
-    visibility_variables_cache.u_sight_impaired = g->u.sight_impaired();
-    visibility_variables_cache.u_is_boomered = g->u.has_effect( effect_boomered );
-    visibility_variables_cache.visibility_scale_factor =
-        60.0f / static_cast<float>( g_max_view_distance );
+#if defined( CATA_SDL )
+    auto const mark_overmap_seen_from_visibility = [this]( const level_cache & vc_cache ) {
+        auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
+        for( const auto x : std::views::iota( 0, vc_cache.cache_x ) ) {
+            for( const auto y : std::views::iota( 0, vc_cache.cache_y ) ) {
+                const auto ll = vc_cache.visibility_cache[vc_cache.idx( x, y )];
+                sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
+                    ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
+            }
+        }
+        for( const auto p : bubble_submaps() ) {
+            if( sm_squares_seen[p.x() * my_MAPSIZE + p.y()] > 36 ) {
+                const auto abs_sm = bub_to_abs( p );
+                const auto abs_omt( project_to<coords::omt>( abs_sm ) );
+                get_overmapbuffer( bound_dimension_ ).set_seen( tripoint_abs_omt( abs_omt, 0 ), true );
+            }
+        }
+    };
+
+    auto visibility_download_levels = std::vector<int> {};
+    if( zlevels ) {
+        std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
+                           std::back_inserter( visibility_download_levels ) );
+    } else {
+        visibility_download_levels.push_back( zlev );
+    }
+    const auto rebuild_seen_cache = m_last_seen_cache_origin != player_pos;
+    const auto gpu_visibility_work = cata_gpu::begin_gpu_visibility( gpu_device, {
+        .m = this,
+        .download_levels = &visibility_download_levels,
+        .zlev = zlev,
+        .player_x = player_pos.x(),
+        .player_y = player_pos.y(),
+        .player_zlev = player_pos.z(),
+        .g_light_level = visibility_variables_cache.g_light_level,
+        .u_clairvoyance = visibility_variables_cache.u_clairvoyance,
+        .u_unimpaired_range = visibility_variables_cache.u_unimpaired_range,
+        .vision_threshold = visibility_variables_cache.vision_threshold,
+        .visibility_scale_factor = visibility_variables_cache.visibility_scale_factor,
+        .detail_range = visibility_variables_cache.detail_range,
+        .vision_block_mask = vision_transparency_block_mask(),
+        .rebuild_seen_cache = rebuild_seen_cache,
+    } );
+    if( gpu_visibility_work.id == 0 ) {
+        debugmsg( "SDL_GPU visibility dispatch failed; see debug.log for details" );
+        return;
+    }
+    if( while_gpu_pending ) {
+        while_gpu_pending();
+    }
+    const auto gpu_visibility_ok = cata_gpu::finish_gpu_visibility( gpu_device, gpu_visibility_work );
+    if( !gpu_visibility_ok ) {
+        debugmsg( "SDL_GPU visibility completion failed; see debug.log for details" );
+        return;
+    }
+    if( rebuild_seen_cache ) {
+        auto &origin_cache = get_cache( player_pos.z() );
+        std::fill( origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f );
+        m_last_seen_cache_origin = player_pos;
+    }
+    mark_overmap_seen_from_visibility( get_cache_ref( zlev ) );
+    return;
+#endif
+
+    ( void )while_gpu_pending;
 
     auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
 
-    const auto min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1,
-                       -OVERMAP_DEPTH ) : zlev );
-    const auto max_z = fov_3d ? OVERMAP_HEIGHT : zlev;
+    const int min_z = -OVERMAP_DEPTH;
+    const int max_z = OVERMAP_HEIGHT;
     const auto max_delta_z = std::max( std::abs( min_z - player_pos.z() ),
                                        std::abs( max_z - player_pos.z() ) );
     const auto &reference_cache = get_cache_ref( zlev );
@@ -7514,7 +7875,7 @@ bool map::sees( const tripoint_bub_ms &F, const tripoint_bub_ms &T, const int ra
     bool visible = true;
 
     // Ugly `if` for now
-    if( !fov_3d || F.z() == T.z() ) {
+    if( F.z() == T.z() ) {
 
         auto last_point = F.xy();
         // Please someone make bresenham work with typed points, I'm running out of willpower
@@ -7769,11 +8130,6 @@ void map::reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts,
 bool map::clear_path( const tripoint_bub_ms &f, const tripoint_bub_ms &t, const int range,
                       const int cost_min, const int cost_max ) const
 {
-    // Ugly `if` for now
-    if( !fov_3d && f.z() != t.z() ) {
-        return false;
-    }
-
     if( f.z() == t.z() ) {
         if( ( range >= 0 && range < rl_dist( f.xy(), t.xy() ) ) ||
             !inbounds( t ) ) {
@@ -7985,39 +8341,10 @@ void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool 
         }
     }
     reset_vehicle_cache( );
+
+    charge_removal_blacklist::split_deferred();
 }
 
-
-// Shift a flat tile-coordinate cache array (x-major layout: vec[x * stride_y + y])
-// by `s` submaps.  seex/seey give the tile count per submap in each direction.
-// New edge positions retain stale values — the caller must mark those submaps
-// dirty so the next build_*_cache() pass overwrites them.
-template <typename T>
-static void shift_flat_cache( std::vector<T> &cache, int cache_x, int cache_y,
-                              const point_rel_sm &s )
-{
-    T *data = cache.data();
-    // X shift: each x-column is a contiguous block of cache_y elements.
-    if( s.x() > 0 ) {
-        std::memmove( data, data + SEEX * cache_y,
-                      static_cast<size_t>( cache_x - SEEX ) * cache_y * sizeof( T ) );
-    } else if( s.x() < 0 ) {
-        std::memmove( data + SEEX * cache_y, data,
-                      static_cast<size_t>( cache_x - SEEX ) * cache_y * sizeof( T ) );
-    }
-    // Y shift: move within each x-column.
-    if( s.y() > 0 ) {
-        for( int x = 0; x < cache_x; ++x ) {
-            T *col = data + x * cache_y;
-            std::memmove( col, col + SEEY, static_cast<size_t>( cache_y - SEEY ) * sizeof( T ) );
-        }
-    } else if( s.y() < 0 ) {
-        for( int x = 0; x < cache_x; ++x ) {
-            T *col = data + x * cache_y;
-            std::memmove( col + SEEY, col, static_cast<size_t>( cache_y - SEEY ) * sizeof( T ) );
-        }
-    }
-}
 
 void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier,
                          const point_rel_sm &s )
@@ -8141,16 +8468,36 @@ void map::shift( const point_rel_sm &sp )
         debugmsg( "map::shift called with a shift of more than one submap" );
     }
 
+    vehicle *remoteveh = g->remoteveh();
     const tripoint_abs_sm abs = get_abs_sub();
 
     set_abs_sub( abs + sp );
 
     g->shift_destination_preview( -project_to<coords::ms>( sp ) );
 
-    vehicle *remoteveh = g->remoteveh();
-
     const int zmin = zlevels ? -OVERMAP_DEPTH : abs.z();
     const int zmax = zlevels ? OVERMAP_HEIGHT : abs.z();
+    m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
+#if defined( CATA_SDL )
+    auto *const gpu_device = cata_gpu::get_device();
+    const auto &shift_cache = get_cache_ref( zmin );
+    const auto gpu_residency_shifted = cata_gpu::shift_lighting_resident_inputs( {
+        .device = gpu_device,
+        .cache_x = shift_cache.cache_x,
+        .cache_y = shift_cache.cache_y,
+        .z_count = OVERMAP_LAYERS,
+        .shift_x_submaps = sp.x(),
+        .shift_y_submaps = sp.y(),
+    } );
+    if( !gpu_residency_shifted ) {
+        debugmsg( "SDL_GPU resident lighting input shift failed; see debug.log for details" );
+        auto shifted_levels = std::vector<int> {};
+        for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
+            shifted_levels.push_back( gridz );
+        }
+        cata_gpu::invalidate_lighting_transparency_levels( shifted_levels );
+    }
+#endif
     for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
         for( auto *veh : get_cache( gridz ).vehicle_list ) {
             veh->zones_dirty = true;
@@ -8161,6 +8508,142 @@ void map::shift( const point_rel_sm &sp )
             point_bub_ms( g_mapsize_x, g_mapsize_y ) );
     const point_rel_ms shift_offset_pt( -sp.x() * SEEX, -sp.y() * SEEY );
 
+    auto const shift_flat_cache = [&]( auto & cache, auto & scratch, level_cache & gc,
+    const auto fill_value ) {
+        using cache_value = std::ranges::range_value_t<std::remove_reference_t<decltype( cache )>>;
+        scratch.assign( cache.begin(), cache.end() );
+
+        const auto source_offset_x = sp.x() * SEEX;
+        const auto source_offset_y = sp.y() * SEEY;
+        const auto fill = static_cast<cache_value>( fill_value );
+        const auto row_size = gc.cache_y;
+        const auto valid_y_count = std::max( 0, row_size - std::abs( source_offset_y ) );
+        const auto dst_y_begin = std::max( 0, -source_offset_y );
+        const auto source_y_begin = dst_y_begin + source_offset_y;
+
+        auto const fill_row = [&]( const auto x ) {
+            std::fill_n( cache.begin() + gc.idx( x, 0 ), row_size, fill );
+        };
+
+        if( valid_y_count <= 0 ) {
+            for( const auto x : std::views::iota( 0, gc.cache_x ) ) {
+                fill_row( x );
+            }
+            return;
+        }
+
+        for( const auto x : std::views::iota( 0, gc.cache_x ) ) {
+            const auto source_x = x + source_offset_x;
+            if( source_x < 0 || source_x >= gc.cache_x ) {
+                fill_row( x );
+                continue;
+            }
+
+            if( dst_y_begin > 0 ) {
+                std::fill_n( cache.begin() + gc.idx( x, 0 ), dst_y_begin, fill );
+            }
+            std::copy_n( scratch.begin() + gc.idx( source_x, source_y_begin ), valid_y_count,
+                         cache.begin() + gc.idx( x, dst_y_begin ) );
+            const auto dst_y_end = dst_y_begin + valid_y_count;
+            if( dst_y_end < row_size ) {
+                std::fill_n( cache.begin() + gc.idx( x, dst_y_end ), row_size - dst_y_end, fill );
+            }
+        }
+    };
+    auto float_shift_scratch = std::vector<float> {};
+    auto char_shift_scratch = std::vector<char> {};
+    auto short_shift_scratch = std::vector<short> {};
+    auto bool_shift_scratch = std::vector<bool> {};
+
+    auto const shift_submap_dirty_bits = [&]( cata_dynamic_bitset & dirty_bits, level_cache & gc ) {
+        const auto old_dirty = dirty_bits;
+        dirty_bits.reset();
+        for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
+            const auto source_smx = smx + sp.x();
+            for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
+                const auto source_smy = smy + sp.y();
+                if( source_smx >= 0 && source_smx < my_MAPSIZE && source_smy >= 0 &&
+                    source_smy < my_MAPSIZE &&
+                    old_dirty.test( static_cast<size_t>( gc.bidx( source_smx, source_smy ) ) ) ) {
+                    dirty_bits.set( static_cast<size_t>( gc.bidx( smx, smy ) ) );
+                }
+            }
+        }
+    };
+    auto const mark_shifted_submap_bands = [&]( const int gridz, const int band_count, auto mark ) {
+        auto const mark_column = [&]( const int smx ) {
+            if( smx < 0 || smx >= my_MAPSIZE ) {
+                return;
+            }
+            for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
+                mark( tripoint_bub_sm( smx, smy, gridz ) );
+            }
+        };
+        auto const mark_row = [&]( const int smy ) {
+            if( smy < 0 || smy >= my_MAPSIZE ) {
+                return;
+            }
+            for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
+                mark( tripoint_bub_sm( smx, smy, gridz ) );
+            }
+        };
+
+        for( const auto band : std::views::iota( 0, band_count ) ) {
+            if( sp.x() > 0 ) {
+                mark_column( my_MAPSIZE - 1 - band );
+            } else if( sp.x() < 0 ) {
+                mark_column( band );
+            }
+            if( sp.y() > 0 ) {
+                mark_row( my_MAPSIZE - 1 - band );
+            } else if( sp.y() < 0 ) {
+                mark_row( band );
+            }
+        }
+    };
+    auto const mark_shifted_map_caches_dirty = [&]( auto const gridz ) {
+        ZoneScopedN( "shift_mark_map_caches_dirty" );
+        auto &gc = get_cache( gridz );
+
+        auto const mark_floor = [&]( const tripoint_bub_sm & smp ) {
+            gc.floor_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
+            auto *sm = get_submap_at_grid( smp );
+            if( sm != nullptr ) {
+                sm->floor_dirty = true;
+            }
+        };
+        auto const mark_outside = [&]( const tripoint_bub_sm & smp ) {
+            gc.outside_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
+            auto *sm = get_submap_at_grid( smp );
+            if( sm != nullptr ) {
+                sm->outside_dirty = true;
+            }
+        };
+        auto const mark_transparency = [&]( const tripoint_bub_sm & smp ) {
+            gc.transparency_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
+            auto *sm = get_submap_at_grid( smp );
+            if( sm != nullptr ) {
+                sm->transparency_dirty = true;
+            }
+        };
+
+        mark_shifted_submap_bands( gridz, 1, mark_floor );
+        mark_shifted_submap_bands( gridz, 3, mark_outside );
+        mark_shifted_submap_bands( gridz, 3, mark_transparency );
+    };
+    auto const mark_shifted_absorption_cache_dirty = [&]( level_cache & gc, const int gridz ) {
+        auto const mark = [&]( const tripoint_bub_sm & smp ) {
+            if( smp.x() < 0 || smp.x() >= my_MAPSIZE || smp.y() < 0 || smp.y() >= my_MAPSIZE ) {
+                return;
+            }
+            gc.absorption_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
+            auto *sm = get_submap_at_grid( smp );
+            if( sm != nullptr ) {
+                sm->absorption_dirty = true;
+            }
+        };
+        mark_shifted_submap_bands( gridz, 2, mark );
+    };
 
     // Run any Lua on_mapgen_postprocess hooks that were deferred from worker
     // threads (Lua is not thread-safe).  The submaps are already in the
@@ -8185,20 +8668,29 @@ void map::shift( const point_rel_sm &sp )
         for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
             clear_vehicle_list( gridz );
             {
-                ZoneScopedN( "shift_cache_arrays" );
-                level_cache &gc = get_cache( gridz );
+                ZoneScopedN( "shift_memory_seen_cache" );
+                auto &gc = get_cache( gridz );
                 shift_bitset_cache( gc.map_memory_seen_cache, gc.cache_x, SEEX, sp );
-                // Shift per-submap dirty bitsets so retained submaps stay clean.
-                shift_bitset_cache( gc.transparency_cache_dirty, gc.cache_mapsize, 1, sp );
-                shift_bitset_cache( gc.floor_cache_dirty, gc.cache_mapsize, 1, sp );
-                // Shift flat cache data so retained submaps' data stays in the
-                // correct tile position.  New edge submaps get stale values that
-                // will be overwritten by the next build_*_cache() call.
-                shift_flat_cache( gc.transparency_cache, gc.cache_x, gc.cache_y, sp );
-                shift_flat_cache( gc.floor_cache, gc.cache_x, gc.cache_y, sp );
-                if( fov_3d_occlusion ) {
-                    shift_flat_cache( gc.angled_sunlight_cache, gc.cache_x, gc.cache_y, sp );
-                }
+            }
+            {
+                ZoneScopedN( "shift_prerequisite_caches" );
+                auto &gc = get_cache( gridz );
+                shift_flat_cache( gc.transparency_cache, float_shift_scratch, gc,
+                                  LIGHT_TRANSPARENCY_OPEN_AIR );
+                shift_flat_cache( gc.floor_cache, char_shift_scratch, gc, '\x01' );
+                shift_flat_cache( gc.outside_cache, char_shift_scratch, gc, '\0' );
+                shift_flat_cache( gc.sheltered_cache, char_shift_scratch, gc, '\x01' );
+                shift_submap_dirty_bits( gc.transparency_cache_dirty, gc );
+                shift_submap_dirty_bits( gc.floor_cache_dirty, gc );
+                shift_submap_dirty_bits( gc.outside_cache_dirty, gc );
+            }
+            {
+                ZoneScopedN( "shift_absorption_cache" );
+                auto &gc = get_cache( gridz );
+                shift_flat_cache( gc.absorption_cache, short_shift_scratch, gc,
+                                  static_cast<short>( SOUND_ABSORPTION_OPEN_FIELD ) );
+                shift_flat_cache( gc.sound_wall_cache, bool_shift_scratch, gc, false );
+                shift_submap_dirty_bits( gc.absorption_cache_dirty, gc );
             }
             // Iterate in shift-direction order so copy_grid never reads an
             // already-overwritten source slot.  sp >= 0 → forward; sp < 0 → reverse.
@@ -8243,14 +8735,14 @@ void map::shift( const point_rel_sm &sp )
                     } );
                 } );
             }
-            set_outside_cache_dirty( gridz );
+            mark_shifted_map_caches_dirty( gridz );
             set_seen_cache_dirty( gridz );
+            get_cache( gridz ).visibility_cache_dirty = true;
             set_pathfinding_cache_dirty( gridz );
             set_suspension_cache_dirty( gridz );
+            mark_shifted_absorption_cache_dirty( get_cache( gridz ), gridz );
         }
     } // shift_grid_copy_load
-    // New edge submaps have stale solar cache data. Force a rebuild before the next draw.
-    m_solar.last_built_hour = -1;
     if( zlevels ) {
         ZoneScopedN( "shift_add_roofs" );
         //Go through the generated maps and fill in the roofs
@@ -8288,6 +8780,7 @@ void map::shift( const point_rel_sm &sp )
     if( !support_cache_dirty.empty() ) {
         shift_tripoint_set( support_cache_dirty, shift_offset_pt, boundaries_2d );
     }
+    sounds::shift_sound_positions( shift_offset_pt );
 
     invalidate_lightmap_caches();
 }
@@ -8406,11 +8899,13 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
             tmpsub->transparency_dirty = true;
             tmpsub->floor_dirty = true;
             tmpsub->outside_dirty = true;
+            tmpsub->absorption_dirty = true;
             tmpsub->pf_dirty = true;
         } else {
             set_transparency_cache_dirty( grid.z() );
             set_floor_cache_dirty( grid.z() );
             set_outside_cache_dirty( grid.z() );
+            set_absorption_cache_dirty( grid.z() );
             set_seen_cache_dirty( grid.z() );
             set_pathfinding_cache_dirty( grid.z() );
             set_suspension_cache_dirty( grid.z() );
@@ -9289,6 +9784,12 @@ bool map::inbounds( const tripoint_abs_sm &p ) const
     return inbounds( abs_to_bub( p ) );
 }
 
+bool map::inbounds( const point_bub_sm &p ) const
+{
+    const auto max_xy = my_MAPSIZE;
+    return p.x() >= 0 && p.x() < max_xy && p.y() >= 0 && p.y() < max_xy;
+}
+
 bool map::is_position_simulated( const tripoint_bub_sm &p ) const
 {
     return submap_loader.is_simulated( bound_dimension_, bub_to_abs( p ) );
@@ -9431,6 +9932,7 @@ void map::build_outside_cache( const int zlev )
     if( zlev >= OVERMAP_HEIGHT ) {
         // Base case: open sky at the top — every tile is outside, nothing above.
         std::fill( ch.outside_cache.begin(), ch.outside_cache.end(), true );
+        std::fill( ch.sheltered_cache.begin(), ch.sheltered_cache.end(), false );
         for( const auto p : bubble_submaps() ) {
             auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
             if( sm ) {
@@ -9772,8 +10274,45 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     ZoneScoped;
     const int minz = zlevels ? -OVERMAP_DEPTH : zlev;
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
+    flush_lightmap_cpu_read_counters();
+    const auto valid_lm_levels = std::ranges::count_if(
+    std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
+        return get_cache_ref( z ).lm_cpu_cache_valid;
+    } );
+    TracyPlot( "Map CPU LM Valid Levels", static_cast<int64_t>( valid_lm_levels ) );
+    TracyPlot( "Map CPU LM Stale Levels",
+               static_cast<int64_t>( maxz - minz + 1 - valid_lm_levels ) );
     bool seen_cache_dirty = false;
+    bool gpu_transparency_dirty = false;
+    bool gpu_floor_dirty = false;
+    bool gpu_vehicle_floor_dirty = false;
+    bool gpu_vehicle_obscured_dirty = false;
     std::vector<int> dirty_seen_cache_levels;
+    std::vector<int> gpu_transparency_dirty_levels;
+    std::vector<int> gpu_transparency_residency_invalid_levels;
+    std::vector<int> gpu_floor_dirty_levels;
+    std::vector<int> gpu_vehicle_floor_dirty_levels;
+    std::vector<int> gpu_vehicle_obscured_dirty_levels;
+
+    auto add_gpu_dirty_level = []( auto & levels, const int z ) {
+        if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
+            levels.push_back( z );
+        }
+    };
+    auto add_all_gpu_dirty_levels = [&]( auto & levels ) {
+        std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [&]( const int z ) {
+            add_gpu_dirty_level( levels, z );
+        } );
+    };
+    auto normalize_gpu_dirty_levels = []( auto & levels ) {
+        std::ranges::sort( levels );
+        levels.erase( std::ranges::unique( levels ).begin(), levels.end() );
+    };
+    auto level_has_vehicle_floor = []( const level_cache & ch ) {
+        return std::ranges::any_of( ch.vehicle_floor_cache, []( const char c ) {
+            return c != '\0';
+        } );
+    };
 
     // Refresh the shared weather-transparency lookup table once, serially,
     // before the parallel block.  build_transparency_cache() reads the
@@ -9793,9 +10332,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         // Floor caches are z-independent so they can run in any order.
         // They must complete before outside/sheltered caches which read floor[z+1].
         for( int z = minz; z <= maxz; ++z ) {
-            const bool affects_seen_cache = z == zlev || fov_3d;
-            if( build_floor_cache( z ) && affects_seen_cache ) {
+            const bool floor_was_dirty = !get_cache_ref( z ).floor_cache_dirty.none();
+            if( build_floor_cache( z ) ) {
                 seen_cache_dirty = true;
+            }
+            if( floor_was_dirty ) {
+                gpu_floor_dirty = true;
+                add_gpu_dirty_level( gpu_floor_dirty_levels, z );
             }
         }
     }
@@ -9813,8 +10356,11 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     {
         ZoneScopedN( "Phase1_transparency" );
         // Transparency depends on outside_cache; runs after outside is complete.
-        for( int z = minz; z <= maxz; ++z ) {
-            build_transparency_cache( z );
+        auto const transparency_dirty_levels = build_transparency_caches( minz, maxz );
+        if( !transparency_dirty_levels.empty() ) {
+            gpu_transparency_dirty = true;
+            std::ranges::copy( transparency_dirty_levels,
+                               std::back_inserter( gpu_transparency_dirty_levels ) );
         }
     }
 
@@ -9825,6 +10371,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             std::mutex dirty_mutex;
             parallel_for( minz, maxz + 1, [&]( int z ) {
                 level_cache &ch = get_cache( z );
+                const bool vehicle_floor_was_dirty = level_has_vehicle_floor( ch );
                 // vehicle_floor_cache is written by vehicles one level below (via
                 // vehicle_caching_internal_above), so it must be cleared unconditionally —
                 // not gated on veh_in_active_range — to prevent stale entries after shifts.
@@ -9833,18 +10380,27 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     const diagonal_blocks fill = {false, false};
                     std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
                     std::fill( ch.vehicle_obstructed_cache.begin(), ch.vehicle_obstructed_cache.end(), fill );
+                    std::lock_guard<std::mutex> lock( dirty_mutex );
+                    add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, z );
                 }
 
                 const bool level_seen_dirty = ch.seen_cache_dirty;
-                if( level_seen_dirty ) {
+                if( level_seen_dirty || vehicle_floor_was_dirty ) {
                     std::lock_guard<std::mutex> lock( dirty_mutex );
-                    seen_cache_dirty = true;
-                    dirty_seen_cache_levels.push_back( z );
+                    if( level_seen_dirty ) {
+                        seen_cache_dirty = true;
+                        dirty_seen_cache_levels.push_back( z );
+                    }
+                    if( vehicle_floor_was_dirty ) {
+                        add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
+                    }
                 }
             } );
         } else {
             for( int z = minz; z <= maxz; ++z ) {
                 level_cache &ch = get_cache( z );
+                const bool vehicle_floor_was_dirty = level_has_vehicle_floor( ch );
+
                 // vehicle_floor_cache is written by vehicles one level below (via
                 // vehicle_caching_internal_above), so it must be cleared unconditionally —
                 // not gated on veh_in_active_range — to prevent stale entries after shifts.
@@ -9853,12 +10409,16 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     const diagonal_blocks fill = {false, false};
                     std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
                     std::fill( ch.vehicle_obstructed_cache.begin(), ch.vehicle_obstructed_cache.end(), fill );
+                    add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, z );
                 }
 
                 const bool level_seen_dirty = ch.seen_cache_dirty;
                 if( level_seen_dirty ) {
                     seen_cache_dirty = true;
                     dirty_seen_cache_levels.push_back( z );
+                }
+                if( vehicle_floor_was_dirty ) {
+                    add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
                 }
             }
         }
@@ -9879,105 +10439,271 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         // needs a separate pass as it changes the caches on neighbour z-levels (e.g. floor_cache);
         // otherwise such changes might be overwritten by main cache-building logic.
         // This pass must remain serial: do_vehicle_caching() writes to neighbor z-level caches.
+        auto const mark_vehicle_gpu_structural_levels = [&]( const vehicle * const veh ) {
+            if( veh == nullptr ) {
+                return;
+            }
+            for( const vpart_reference &vp : veh->get_all_parts() ) {
+                const auto &part_pos = veh->bub_part_location( vp.part() );
+                if( !inbounds( part_pos ) || vp.part().removed ) {
+                    continue;
+                }
+                add_gpu_dirty_level( gpu_transparency_dirty_levels, part_pos.z() );
+                add_gpu_dirty_level( gpu_transparency_residency_invalid_levels, part_pos.z() );
+                add_gpu_dirty_level( gpu_floor_dirty_levels, part_pos.z() );
+                add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, part_pos.z() );
+            }
+        };
         for( int z = minz; z <= maxz; z++ ) {
             if( get_cache( z ).veh_in_active_range ) {
+                for( const vehicle *const veh : get_cache( z ).vehicle_list ) {
+                    mark_vehicle_gpu_structural_levels( veh );
+                }
                 do_vehicle_caching( z );
             }
+        }
+        std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [&]( const int z ) {
+            if( level_has_vehicle_floor( get_cache_ref( z ) ) ) {
+                add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
+            }
+        } );
+    }
+
+    normalize_gpu_dirty_levels( gpu_transparency_dirty_levels );
+    normalize_gpu_dirty_levels( gpu_transparency_residency_invalid_levels );
+    normalize_gpu_dirty_levels( gpu_floor_dirty_levels );
+    normalize_gpu_dirty_levels( gpu_vehicle_floor_dirty_levels );
+    normalize_gpu_dirty_levels( gpu_vehicle_obscured_dirty_levels );
+    gpu_transparency_dirty = !gpu_transparency_dirty_levels.empty();
+    gpu_floor_dirty = !gpu_floor_dirty_levels.empty();
+    gpu_vehicle_floor_dirty = !gpu_vehicle_floor_dirty_levels.empty();
+    gpu_vehicle_obscured_dirty = !gpu_vehicle_obscured_dirty_levels.empty();
+#if defined( CATA_SDL )
+    if( !gpu_transparency_residency_invalid_levels.empty() ) {
+        cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_residency_invalid_levels );
+    }
+#endif
+    TracyPlot( "Map GPU Transparency Dirty Levels",
+               static_cast<int64_t>( gpu_transparency_dirty_levels.size() ) );
+    TracyPlot( "Map GPU Floor Dirty Levels",
+               static_cast<int64_t>( gpu_floor_dirty_levels.size() ) );
+    TracyPlot( "Map GPU Vehicle Floor Dirty Levels",
+               static_cast<int64_t>( gpu_vehicle_floor_dirty_levels.size() ) );
+    TracyPlot( "Map GPU Vehicle Obscured Dirty Levels",
+               static_cast<int64_t>( gpu_vehicle_obscured_dirty_levels.size() ) );
+    TracyPlot( "Map GPU Transparency Invalidated Levels",
+               static_cast<int64_t>( gpu_transparency_residency_invalid_levels.size() ) );
+
+    const tripoint_bub_ms &p = g->u.bub_pos();
+    auto force_seen_rebuild_for_gpu_residency = false;
+#if defined( CATA_SDL )
+    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+    if( !skip_lightmap && gpu_device != nullptr ) {
+        const auto &visibility_cache = get_cache_ref( zlev );
+        if( !cata_gpu::resident_lighting_ready_for_visibility( {
+        .device = gpu_device,
+        .cache_x = visibility_cache.cache_x,
+        .cache_y = visibility_cache.cache_y,
+        .z_count = OVERMAP_LAYERS,
+    } ) ) {
+            force_seen_rebuild_for_gpu_residency = true;
+            invalidate_lightmap_caches();
+            get_cache( zlev ).visibility_cache_dirty = true;
+        }
+    }
+#endif
+    auto dirty_lightmap_levels = std::vector<int> {};
+    if( !skip_lightmap ) {
+        ZoneScopedN( "Phase4_lightmap_prepare" );
+        invalidate_lightmap_caches_if_light_state_changed();
+        auto needs_lightmap_dispatch = [this]( const int z ) {
+            return get_cache( z ).lightmap_dirty;
+        };
+        std::ranges::copy_if( std::views::iota( minz, maxz + 1 ),
+                              std::back_inserter( dirty_lightmap_levels ), needs_lightmap_dispatch );
+
+        // Only include levels whose lightmap is actually stale this redraw.
+        // lightmap_dirty is set by explicit cache invalidation or dynamic light
+        // source changes, then cleared after generate_lightmap runs.
+        std::ranges::sort( dirty_lightmap_levels );
+        dirty_lightmap_levels.erase( std::ranges::unique( dirty_lightmap_levels ).begin(),
+                                     dirty_lightmap_levels.end() );
+        TracyPlot( "Map Dirty LM Levels", static_cast<int64_t>( dirty_lightmap_levels.size() ) );
+    }
+
+#if defined( CATA_SDL )
+    auto pending_gpu_lighting = cata_gpu::gpu_lighting_work {};
+    if( !skip_lightmap && gpu_device != nullptr && !dirty_lightmap_levels.empty() ) {
+        ZoneScopedN( "Phase4_lightmap_begin" );
+        update_solar_params();
+        // GPU path: lightmap rebuilds only run for lightmap-dirty levels.
+        // Player movement and other FoV-only updates are handled by
+        // update_visibility_cache(), which can rebuild resident seen data.
+        for( const int z : dirty_lightmap_levels ) {
+            auto &c = get_cache( z );
+            std::fill( c.sm.begin(), c.sm.end(), 0.0f );
+            std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+            c.light_source_points.clear();
+            std::ranges::fill( c.lm, 0.0f );
+            c.lm_cpu_cache_valid = false;
+            ++c.lm_cpu_cache_generation;
+        }
+        pending_gpu_lighting = cata_gpu::begin_gpu_lighting( gpu_device, {
+            .m            = this,
+            .dirty_levels = &dirty_lightmap_levels,
+            .seen_dirty_levels = &dirty_seen_cache_levels,
+            .player_x     = p.x(),
+            .player_y     = p.y(),
+            .player_zlev  = zlev,
+            .transparency_dirty = gpu_transparency_dirty,
+            .transparency_dirty_levels = &gpu_transparency_dirty_levels,
+            .floor_dirty = gpu_floor_dirty,
+            .floor_dirty_levels = &gpu_floor_dirty_levels,
+            .vehicle_floor_dirty = gpu_vehicle_floor_dirty,
+            .vehicle_floor_dirty_levels = &gpu_vehicle_floor_dirty_levels,
+            .vehicle_obscured_dirty = gpu_vehicle_obscured_dirty,
+            .vehicle_obscured_dirty_levels = &gpu_vehicle_obscured_dirty_levels,
+            .rebuild_seen_cache = false,
+            .download_seen_cache = false,
+            .download_lightmap = true,
+            .vision_block_mask = vision_transparency_block_mask(),
+            .angled_sunlight_shadows = angled_sunlight_shadows,
+            .direct_sunlight = m_solar.direct_active,
+            .sun_dx_per_z = m_solar.dx_per_z,
+            .sun_dy_per_z = m_solar.dy_per_z,
+        } );
+        if( pending_gpu_lighting.id == 0 ) {
+            debugmsg( "SDL_GPU lighting dispatch failed; see debug.log for details" );
+            return;
+        }
+        if( submap_loader.has_deferred_lazy_border_work() ) {
+            ZoneScopedN( "Phase4_lightmap_pending_lazy_border" );
+            submap_loader.process_deferred_lazy_border_work();
+        }
+    }
+#endif
+
+    {
+        ZoneScopedN( "Phase3_sound_absorption" );
+        // Absorption cache relies upon the floor, outside, and vehicle caches all being completed.
+        for( int z = minz; z <= maxz; z++ ) {
+            build_absorption_cache( z );
         }
     }
 
     seen_cache_dirty |= build_vision_transparency_cache( get_player_character() );
-
     if( seen_cache_dirty ) {
         skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
     }
-    const tripoint_bub_ms &p = g->u.bub_pos();
-    if( seen_cache_dirty || m_last_seen_cache_origin != p ) {
+    const auto need_seen_rebuild = seen_cache_dirty || force_seen_rebuild_for_gpu_residency ||
+                                   m_last_seen_cache_origin != p;
+    TracyPlot( "Map Need Seen Rebuild", need_seen_rebuild ? int64_t{ 1 } : int64_t{ 0 } );
+    if( need_seen_rebuild ) {
+#if defined( CATA_SDL )
+        if( gpu_device == nullptr ) {
+            debugmsg( "SDL_GPU lighting is required for 3D visibility, but no GPU device is available" );
+            return;
+        }
+        m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
+#else
         build_seen_cache( p, zlev );
         m_last_seen_cache_origin = p;
-        // seen_cache changed; any cached visibility derived from it is now stale.
+#endif
+        // seen_cache changed (or will be updated by GPU pass); mark visibility stale.
         get_cache( zlev ).visibility_cache_dirty = true;
     }
     if( !skip_lightmap ) {
-        ZoneScopedN( "Phase4_lightmap" );
-        // Only include levels whose lightmap is actually stale this redraw.
-        // lightmap_dirty is set for all levels at the start of each game turn and
-        // cleared here after generate_lightmap runs, so subsequent redraws within
-        // the same turn skip the rebuild entirely.
-        if( get_cache( zlev ).lightmap_dirty ) {
-            dirty_seen_cache_levels.push_back( zlev );
-        }
-        dirty_seen_cache_levels.erase(
-        std::ranges::remove_if( dirty_seen_cache_levels, [this]( int z ) {
-            return !get_cache( z ).lightmap_dirty;
-        } ).begin(),
-        dirty_seen_cache_levels.end() );
-        std::ranges::sort( dirty_seen_cache_levels );
-        dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
-                                       dirty_seen_cache_levels.end() );
+#if defined( CATA_SDL )
+        if( gpu_device != nullptr ) {
+            if( !dirty_lightmap_levels.empty() ) {
+                ZoneScopedN( "Phase4_lightmap_finish" );
+                const bool gpu_lighting_ok = cata_gpu::finish_gpu_lighting( gpu_device,
+                                             pending_gpu_lighting );
+                if( !gpu_lighting_ok ) {
+                    debugmsg( "SDL_GPU lighting completion failed; see debug.log for details" );
+                    return;
+                }
 
-        if( !dirty_seen_cache_levels.empty() ) {
-
-            if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
-                // Multiple dirty levels: hoist shared initialization outside the
-                // parallel loop so worker threads never race on cross-level writes.
-                //
-                // Clear sm, light_source_buffer, and lm for every dirty level.
-                // lm must be zeroed because build_sunlight_cache only writes outdoor tiles.
-                for( const int z : dirty_seen_cache_levels ) {
-                    auto &c = get_cache( z );
-                    std::fill( c.sm.begin(), c.sm.end(), 0.0f );
-                    std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
-                    std::fill( c.lm.begin(), c.lm.end(), four_quadrants( 0.0f ) );
-                }
-                // Build sunlight (all z-levels, top-to-bottom; serial).
-                build_sunlight_cache( zlev );
-                // Apply character/NPC lights serially to avoid racing on per-level caches.
-                apply_character_light( get_player_character() );
-                for( npc &guy : g->all_npcs() ) {
-                    apply_character_light( guy );
-                }
-                // Apply monster lights serially (all_monsters() uses non-atomic weak_ptr_fast
-                // refcounts, so iterating from worker threads would be a data race).
-                for( monster &critter : g->all_monsters() ) {
-                    if( critter.is_hallucination() ) {
-                        continue;
-                    }
-                    const auto &mp = critter.bub_pos();
-                    if( inbounds( mp ) ) {
-                        if( critter.has_effect( effect_onfire ) ) {
-                            apply_light_source( mp, 8 );
-                        }
-                        if( critter.type->luminance > 0 ) {
-                            apply_light_source( mp, critter.type->luminance );
-                        }
-                    }
-                }
-                // Generate per-level dynamic lighting in parallel.
-                // skip_shared_init=true: workers only process entities on their own z-level.
-                // Pre-warm the vehicle list cache serially to avoid heap corruption
-                // from concurrent writes to last_full_vehicle_list.
-                get_vehicles();
-                parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
-                    generate_lightmap_worker( dirty_seen_cache_levels[i] );
+                std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
+                    get_cache( z ).lightmap_dirty = false;
+                    get_cache( z ).visibility_cache_dirty = true;
                 } );
-            } else {
-                // Single dirty level: run serially using the standard full path.
-                for( const int level : dirty_seen_cache_levels ) {
-                    generate_lightmap( level );
-                }
             }
+        } else {
+            if( !dirty_lightmap_levels.empty() ) {
+                debugmsg( "SDL_GPU lighting is required for lightmap rebuild, but no GPU device is available" );
+                return;
+            }
+#endif
+            if( !dirty_lightmap_levels.empty() ) {
 
-            // Mark each regenerated level clean so subsequent redraws this turn skip it.
-            // Also mark visibility dirty: the lightmap just changed, so any visibility
-            // cache computed before this rebuild (e.g. from handle_action's unconditional
-            // update_visibility_cache call) is now stale and must be rebuilt in game::draw.
-            std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
-                get_cache( z ).lightmap_dirty = false;
-                get_cache( z ).visibility_cache_dirty = true;
-            } );
+                if( dirty_lightmap_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
+                    // Multiple dirty levels: hoist shared initialization outside the
+                    // parallel loop so worker threads never race on cross-level writes.
+                    //
+                    // Clear sm, light_source_buffer, and lm for every dirty level.
+                    // lm must be zeroed because build_sunlight_cache only writes outdoor tiles.
+                    for( const int z : dirty_lightmap_levels ) {
+                        auto &c = get_cache( z );
+                        std::fill( c.sm.begin(), c.sm.end(), 0.0f );
+                        std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+                        c.light_source_points.clear();
+                        std::ranges::fill( c.lm, 0.0f );
+                        c.lm_cpu_cache_valid = false;
+                        ++c.lm_cpu_cache_generation;
+                    }
+                    // Build sunlight (all z-levels, top-to-bottom; serial).
+                    build_sunlight_cache( zlev );
+                    // Apply character/NPC lights serially to avoid racing on per-level caches.
+                    apply_character_light( get_player_character() );
+                    for( npc &guy : g->all_npcs() ) {
+                        apply_character_light( guy );
+                    }
+                    // Apply monster lights serially (all_monsters() uses non-atomic weak_ptr_fast
+                    // refcounts, so iterating from worker threads would be a data race).
+                    for( monster &critter : g->all_monsters() ) {
+                        if( critter.is_hallucination() ) {
+                            continue;
+                        }
+                        const auto &mp = critter.bub_pos();
+                        if( inbounds( mp ) ) {
+                            if( critter.has_effect( effect_onfire ) ) {
+                                apply_light_source( mp, 8 );
+                            }
+                            if( critter.type->luminance > 0 ) {
+                                apply_light_source( mp, critter.type->luminance );
+                            }
+                        }
+                    }
+                    // Generate per-level dynamic lighting in parallel.
+                    // skip_shared_init=true: workers only process entities on their own z-level.
+                    // Pre-warm the vehicle list cache serially to avoid heap corruption
+                    // from concurrent writes to last_full_vehicle_list.
+                    get_vehicles();
+                    parallel_for( 0, static_cast<int>( dirty_lightmap_levels.size() ), [&]( int i ) {
+                        generate_lightmap_worker( dirty_lightmap_levels[i] );
+                    } );
+                } else {
+                    // Single dirty level: run serially using the standard full path.
+                    for( const int level : dirty_lightmap_levels ) {
+                        generate_lightmap( level );
+                    }
+                }
 
-        } // end if( !dirty_seen_cache_levels.empty() )
+                // Mark each regenerated level clean so subsequent redraws this turn skip it.
+                // Also mark visibility dirty: the lightmap just changed, so any visibility
+                // cache computed before this rebuild (e.g. from handle_action's unconditional
+                // update_visibility_cache call) is now stale and must be rebuilt in game::draw.
+                std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
+                    get_cache( z ).lightmap_dirty = false;
+                    get_cache( z ).lm_cpu_cache_valid = true;
+                    get_cache( z ).visibility_cache_dirty = true;
+                } );
+
+            } // end if( !dirty_lightmap_levels.empty() )
+#if defined( CATA_SDL )
+        }
+#endif
     }
 }
 
@@ -10573,12 +11299,13 @@ level_cache::level_cache( int mx, int my )
       transparency_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
       outside_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
       floor_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
-      lm( static_cast<size_t>( mx * my ), four_quadrants( 0.0f ) ),
+      absorption_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
+      sound_wall_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
+      lm( static_cast<size_t>( mx * my ), 0.0f ),
       sm( static_cast<size_t>( mx * my ), 0.0f ),
       light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
       outside_cache( static_cast<size_t>( mx * my ), '\0' ),
       sheltered_cache( static_cast<size_t>( mx * my ), '\0' ),
-      angled_sunlight_cache( static_cast<size_t>( mx * my ), '\0' ),
       floor_cache( static_cast<size_t>( mx * my ), false ),
       vehicle_floor_cache( static_cast<size_t>( mx * my ), '\0' ),
       transparency_cache( static_cast<size_t>( mx * my ), 0.0f ),
@@ -10587,14 +11314,49 @@ level_cache::level_cache( int mx, int my )
       seen_cache( static_cast<size_t>( mx * my ), 0.0f ),
       camera_cache( static_cast<size_t>( mx * my ), 0.0f ),
       visibility_cache( static_cast<size_t>( mx * my ), lit_level::DARK ),
+      colored_light_cache( static_cast<size_t>( mx * my ), 0u ),
       map_memory_seen_cache( static_cast<size_t>( mx * my ) ),
-      veh_exists_at( static_cast<size_t>( mx * my ), false )
+      veh_exists_at( static_cast<size_t>( mx * my ), false ),
+      absorption_cache( static_cast<size_t>( mx * my ), 0 ),
+      sound_wall_cache( static_cast<size_t>( mx * my ), false )
+
 {
     transparency_cache_dirty.set();
+    absorption_cache_dirty.set();
+    sound_wall_cache_dirty.set();
     outside_cache_dirty.set();
     floor_cache_dirty.set();
 }
 
+// Default constructor: zero-sized null sentinel — not for normal use.
+sound_instance_cache::sound_instance_cache() = default;
+
+// Normal constructor. Use this in almost all cases, takes the originating sound event.
+// This is done so we can garuntee that the sound is sized to the reality bubble and the level_cache.
+sound_instance_cache::sound_instance_cache( sound_event &input_sound,
+        const sound_vol_for_flood_dist &d_e, const int &f_r )
+    : sound( input_sound ),
+      dist_enum( d_e ),
+      flood_radius( f_r ),
+      origin( input_sound.origin ),
+      envelope_index_point( tripoint( origin.x() - flood_radius, origin.y() - flood_radius,
+                                      origin.z() ) ),
+      offset_x( envelope_index_point.x() ),
+      offset_y( envelope_index_point.y() ),
+      // 4r^2 + 4r + 1 equals our total area, for some (2r + 1) by (2r + 1) flood envelope.
+      volume( static_cast<size_t>( ( 1 + ( 4 * flood_radius ) + ( 4 * ( flood_radius *
+                                     flood_radius ) ) ) ), 0 ),
+      movement_noise( input_sound.movement_noise ),
+      from_player( input_sound.from_player ),
+      from_monster( input_sound.from_monster ),
+      from_npc( input_sound.from_npc )
+{
+
+}
+
+sound_filter_key::sound_filter_key() = default;
+
+sound_cache::sound_cache() = default;
 
 void map::set_pathfinding_cache_dirty( const int zlev )
 {
@@ -10654,13 +11416,16 @@ void map::invalidate_map_cache( const int zlev )
         level_cache &ch = get_cache( zlev );
         ch.floor_cache_dirty.set();
         ch.transparency_cache_dirty.set();
+        ch.absorption_cache_dirty.set();
+        ch.sound_wall_cache_dirty.set();
         ch.seen_cache_dirty = true;
         ch.lightmap_dirty = true;
+        ch.lm_cpu_cache_valid = false;
+        ++ch.lm_cpu_cache_generation;
         ch.visibility_cache_dirty = true;
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
         m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
-        m_solar.last_built_hour  = -1;
     }
 }
 
@@ -10669,8 +11434,193 @@ void map::invalidate_lightmap_caches()
     const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
     const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
     std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( int z ) {
-        get_cache( z ).lightmap_dirty = true;
+        auto &cache = get_cache( z );
+        cache.lightmap_dirty = true;
+        cache.lm_cpu_cache_valid = false;
+        ++cache.lm_cpu_cache_generation;
     } );
+}
+
+auto map::current_lightmap_source_signature() -> std::size_t
+{
+    ZoneScopedN( "lightmap_source_signature" );
+
+    auto seed = std::size_t{ 0 };
+    const auto minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
+    const auto maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
+
+    cata::hash_combine( seed, to_hours<int>( calendar::turn - calendar::turn_zero ) );
+    update_solar_params();
+    cata::hash_combine( seed, angled_sunlight_shadows );
+    cata::hash_combine( seed, m_solar.direct_active );
+    if( angled_sunlight_shadows && m_solar.direct_active ) {
+        cata::hash_combine( seed, quantized_solar_signature_value( m_solar.dx_per_z ) );
+        cata::hash_combine( seed, quantized_solar_signature_value( m_solar.dy_per_z ) );
+    }
+    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [&]( const int z ) {
+        cata::hash_combine( seed, z );
+        cata::hash_combine( seed, quantized_light_signature_value( g->natural_light_level( z ) ) );
+    } );
+
+    hash_character_light_state( seed, get_player_character() );
+    for( npc &guy : g->all_npcs() ) {
+        hash_character_light_state( seed, guy );
+    }
+    for( monster &critter : g->all_monsters() ) {
+        if( critter.is_hallucination() ) {
+            continue;
+        }
+        const auto has_fire_light = critter.has_effect( effect_onfire );
+        const auto luminance = critter.type->luminance;
+        if( !has_fire_light && luminance <= 0.0f ) {
+            continue;
+        }
+        cata::hash_combine( seed, critter.bub_pos() );
+        cata::hash_combine( seed, has_fire_light );
+        cata::hash_combine( seed, quantized_light_signature_value( luminance ) );
+    }
+
+    const auto axis = std::views::iota( 0, my_MAPSIZE );
+    for( const auto x : axis ) {
+        for( const auto y : axis ) {
+            const auto grid_xy = point_bub_sm( x, y );
+            for( const auto z : std::views::iota( minz, maxz + 1 ) ) {
+                const auto grid = tripoint_bub_sm( grid_xy, z );
+                auto *sm = get_submap_at_grid( grid );
+                if( sm == nullptr || sm->is_uniform ) {
+                    continue;
+                }
+                for( const auto local : sm->field_cache ) {
+                    auto &curfield = sm->get_field( local );
+                    if( curfield.field_count() == 0 ) {
+                        continue;
+                    }
+                    const auto pos = project_combine( grid, local );
+                    for( const auto &field_pair : curfield ) {
+                        const auto &entry = field_pair.second;
+                        const auto emitted = entry.light_emitted();
+                        const auto override = entry.local_light_override();
+                        if( emitted <= 0 && override < 0.0f ) {
+                            continue;
+                        }
+                        cata::hash_combine( seed, pos );
+                        cata::hash_combine( seed, field_pair.first );
+                        cata::hash_combine( seed, entry.get_field_intensity() );
+                        cata::hash_combine( seed, quantized_light_signature_value(
+                                                static_cast<float>( emitted ) ) );
+                        cata::hash_combine( seed, quantized_light_signature_value( override ) );
+                    }
+                }
+            }
+        }
+    }
+
+    for( const tripoint_abs_sm &abs_pos : submaps_with_active_items ) {
+        if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
+            continue;
+        }
+        const auto local_pos = abs_to_bub( abs_pos );
+        auto *sm = get_submap_at_grid( local_pos );
+        if( sm == nullptr || sm->active_items.empty() ) {
+            continue;
+        }
+        for( item *const itm : sm->active_items.get() ) {
+            if( itm != nullptr ) {
+                hash_light_item( seed, tripoint_bub_ms( itm->position() ), *itm );
+            }
+        }
+    }
+
+    const auto odd_turn = calendar::once_every( 2_turns );
+    for( const wrapped_vehicle &wrapped : get_vehicles() ) {
+        vehicle *veh = wrapped.v;
+        if( veh == nullptr ) {
+            continue;
+        }
+
+        auto lights = veh->lights( true );
+        auto veh_luminance = 0.0f;
+        auto iteration = 1.0f;
+        for( const auto pt : lights ) {
+            const auto &vp = pt->info();
+            if( vp.has_flag( VPFLAG_CONE_LIGHT ) ||
+                vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
+                veh_luminance += vp.bonus / iteration;
+                iteration = iteration * 1.1f;
+            }
+        }
+
+        for( const auto pt : lights ) {
+            const auto &vp = pt->info();
+            const auto src = veh->bub_part_location( *pt );
+            if( !inbounds( src ) ) {
+                continue;
+            }
+            cata::hash_combine( seed, src );
+            cata::hash_combine( seed, quantized_light_signature_value(
+                                    static_cast<float>( vp.bonus ) ) );
+            cata::hash_combine( seed, quantized_light_signature_value( veh_luminance ) );
+            cata::hash_combine( seed, quantized_angle_signature_value(
+                                    veh->face.dir() + pt->direction ) );
+            cata::hash_combine( seed, vp.has_flag( VPFLAG_CONE_LIGHT ) );
+            cata::hash_combine( seed, vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) );
+            cata::hash_combine( seed, vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) );
+            cata::hash_combine( seed, vp.has_flag( VPFLAG_CIRCLE_LIGHT ) );
+            cata::hash_combine( seed, vp.rotating_light.has_value() );
+            if( vp.rotating_light ) {
+                const auto base_direction = veh->face.dir() + pt->direction;
+                const auto active_direction = vp.rotating_light->direction_at( base_direction,
+                                              calendar::turn );
+                cata::hash_combine( seed, quantized_angle_signature_value(
+                                        vp.rotating_light->arc_width() ) );
+                cata::hash_combine( seed, vp.rotating_light->beam_count() );
+                cata::hash_combine( seed, quantized_angle_signature_value(
+                                        vp.rotating_light->beam_spacing() ) );
+                cata::hash_combine( seed, quantized_angle_signature_value( active_direction ) );
+                cata::hash_combine( seed, to_turns<int>( vp.rotating_light->period ) );
+            }
+            const auto uses_flash_gated_light = !vp.rotating_light &&
+                                                vp.has_flag( VPFLAG_CIRCLE_LIGHT ) &&
+                                                ( vp.has_flag( VPFLAG_ODDTURN ) ||
+                                                  vp.has_flag( VPFLAG_EVENTURN ) );
+            cata::hash_combine( seed, uses_flash_gated_light );
+            if( uses_flash_gated_light ) {
+                cata::hash_combine( seed, odd_turn );
+            }
+        }
+
+        for( const vpart_reference &vp : veh->get_all_parts() ) {
+            if( !vp.has_feature( VPFLAG_CARGO ) || vp.has_feature( "COVERED" ) ) {
+                continue;
+            }
+            const auto part_index = static_cast<int>( vp.part_index() );
+            const auto pos = vp.pos();
+            if( !inbounds( pos ) ) {
+                continue;
+            }
+            for( item * const &itm : veh->get_items( part_index ) ) {
+                if( itm != nullptr ) {
+                    hash_light_item( seed, pos, *itm );
+                }
+            }
+        }
+    }
+
+    return seed;
+}
+
+void map::invalidate_lightmap_caches_if_light_state_changed()
+{
+    const auto signature = current_lightmap_source_signature();
+    if( m_last_lightmap_source_signature_valid &&
+        signature == m_last_lightmap_source_signature ) {
+        TracyPlot( "Light Source Signature Changed", int64_t{ 0 } );
+        return;
+    }
+    TracyPlot( "Light Source Signature Changed", int64_t{ 1 } );
+    m_last_lightmap_source_signature = signature;
+    m_last_lightmap_source_signature_valid = true;
+    invalidate_lightmap_caches();
 }
 
 void map::invalidate_visibility_caches()

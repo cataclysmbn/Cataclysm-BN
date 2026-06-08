@@ -197,6 +197,8 @@ enum debug_menu_index {
     DEBUG_DISPLAY_TRANSPARENCY,
     DEBUG_DISPLAY_OUTSIDE,
     DEBUG_DISPLAY_SUBMAP_GRID,
+    DEBUG_DISPLAY_TERRAIN_SOUND_ABSORPTION,
+    DEBUG_DISPLAY_SOUND_WALLS,
     DEBUG_TEST_MAP_EXTRA_DISTRIBUTION,
     DEBUG_VEHICLE_BATTERY_CHARGE,
     DEBUG_VEHICLE_EXPORT_JSON,
@@ -252,6 +254,8 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_DISPLAY_OUTSIDE, true, 'O', _( "Toggle display outside/sheltered/indoors" ) ) },
             { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ) },
             { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TERRAIN_SOUND_ABSORPTION, true, 'Q', _( "Toggle display terrain sound absorption" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_SOUND_WALLS, true, 'q', _( "Toggle display sound walls" ) ) },
 #if defined(TILES)
             { uilist_entry( ACTION_TOGGLE_ZONE_OVERLAY, true, 'z', _( "Toggle zone overlay" ) ) },
 #endif
@@ -1832,16 +1836,21 @@ void debug()
             }
 
             int volume;
-            if( !query_int( volume, _( "Volume of sound: " ) ) ) {
+            if( !query_int( volume, _( "Volume of sound( 0 - 191 ): " ) ) ) {
                 return;
             }
 
             if( volume < 0 ) {
                 return;
             }
-
-            sounds::sound( *where, volume, sounds::sound_t::order, string_format( _( "DEBUG SOUND ( %d )" ),
-                           volume ) );
+            sound_event se;
+            se.origin = *where;
+            se.volume = volume;
+            se.category = sounds::sound_t::order;
+            se.description = string_format( _( "DEBUG SOUND ( %d )" ), volume );
+            se.id = "misc";
+            se.variant = "puff";
+            sounds::sound( se );
         }
         break;
 
@@ -1971,6 +1980,12 @@ void debug()
             break;
         case DEBUG_DISPLAY_OUTSIDE:
             g->display_toggle_overlay( ACTION_DISPLAY_OUTSIDE );
+            break;
+        case DEBUG_DISPLAY_TERRAIN_SOUND_ABSORPTION:
+            g->display_toggle_overlay( ACTION_DISPLAY_SOUND_ABSORPTION );
+            break;
+        case DEBUG_DISPLAY_SOUND_WALLS:
+            g->display_toggle_overlay( ACTION_DISPLAY_SOUND_WALLS );
             break;
         case DEBUG_DISPLAY_SUBMAP_GRID:
             g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;

@@ -1,7 +1,7 @@
 [
   {
     "type": "recipe",
-    "result": "tÖttchen",
+    "result": "t\u00d6ttchen",
     "obsolete": true
   },
   {
@@ -2251,5 +2251,35 @@
       [ [ "processor", 1 ] ],
       [ [ "RAM", 1 ] ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "40x46mm_buckshot_m118",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "40x46mm_slug_m118",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "40x46mm_slug_m199",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "40x46mm_flechette_m118",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "40x46mm_flechette_m199",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "40x46mm_makeshift_he_m199",
+    "obsolete": true
   }
 ]

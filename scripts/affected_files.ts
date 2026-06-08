@@ -25,7 +25,7 @@ const getDiffs = async (pr: number) => {
     octokit.rest.pulls.listFiles,
     { owner: "cataclysmbn", repo: "Cataclysm-BN", pull_number: pr },
   )
-  const pathsFilter = new RegExp(`(^${paths.join("|")})/.*\\.(cpp|h|hpp)`)
+  const pathsFilter = new RegExp(`^(?:${paths.join("|")})/.*\\.(?:cpp|h|hpp)$`)
 
   return res
     .filter((x) => ACMRT.has(x.status))

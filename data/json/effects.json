@@ -859,6 +859,13 @@
   },
   {
     "type": "effect_type",
+    "id": "clairvoyance_plus",
+    "name": [ "Enhanced Clairvoyance" ],
+    "desc": [ "You can see through walls!" ],
+    "flags": [ "EFFECT_CLAIRVOYANCE_PLUS" ]
+  },
+  {
+    "type": "effect_type",
     "id": "debug_clairvoyance",
     "name": [ "Debug Clairvoyance" ],
     "desc": [ "You can see through everything!" ],
@@ -1413,6 +1420,7 @@
     "id": "attention",
     "name": [ "Being Watched" ],
     "desc": [ "You can't shake the feeling that something out there is watching you.  Something big…" ],
+    "apply_message": "You feel like you're being watched…",
     "remove_message": "You no longer feel like you're being watched.",
     "rating": "bad",
     "max_intensity": 8,

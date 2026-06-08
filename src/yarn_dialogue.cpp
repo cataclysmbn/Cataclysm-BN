@@ -3564,7 +3564,7 @@ void register_builtin_functions( func_registry &reg )
         {
             return false;
         }
-        if( const optional_vpart_position vp = get_map().veh_at( p->pos() ) )
+        if( const optional_vpart_position vp = get_map().veh_at( p->abs_pos() ) )
         {
             return vp->vehicle().is_moving() && vp->vehicle().player_in_control( *p );
         }
@@ -3578,7 +3578,7 @@ void register_builtin_functions( func_registry &reg )
         {
             return false;
         }
-        if( const optional_vpart_position vp = get_map().veh_at( n->pos() ) )
+        if( const optional_vpart_position vp = get_map().veh_at( n->abs_pos() ) )
         {
             return vp->vehicle().is_moving() && vp->vehicle().player_in_control( *n );
         }
@@ -3720,7 +3720,7 @@ void register_builtin_functions( func_registry &reg )
             return false;
         }
         map &here = get_map();
-        return !here.has_flag( TFLAG_INDOORS, here.getabs( n->pos() ) );
+        return !here.is_outside( n->bub_pos() );
     } );
 
     // True if the NPC is in a safe-space overmap tile.
@@ -3731,7 +3731,7 @@ void register_builtin_functions( func_registry &reg )
         {
             return false;
         }
-        return get_overmapbuffer( n->get_dimension() ).is_safe( n->global_omt_location() );
+        return get_overmapbuffer( n->get_dimension() ).is_safe( n->abs_omt_pos() );
     } );
 
     // True if the player is standing on the given overmap terrain type.
@@ -3743,7 +3743,7 @@ void register_builtin_functions( func_registry &reg )
             return false;
         }
         const auto &loc = std::get<std::string>( args[0] );
-        const oter_id &ter = get_overmapbuffer( p->get_dimension() ).ter( p->global_omt_location() );
+        const oter_id &ter = get_overmapbuffer( p->get_dimension() ).ter( p->abs_omt_pos() );
         return ter == oter_id( oter_no_dir( oter_id( loc ) ) );
     } );
 
@@ -3756,7 +3756,7 @@ void register_builtin_functions( func_registry &reg )
             return false;
         }
         const auto &loc = std::get<std::string>( args[0] );
-        const oter_id &ter = get_overmapbuffer( n->get_dimension() ).ter( n->global_omt_location() );
+        const oter_id &ter = get_overmapbuffer( n->get_dimension() ).ter( n->abs_omt_pos() );
         return ter == oter_id( oter_no_dir( oter_id( loc ) ) );
     } );
 
@@ -3775,9 +3775,9 @@ void register_builtin_functions( func_registry &reg )
         const auto &role = std::get<std::string>( args[0] );
         auto npcs = g->get_npcs_if( [&]( const npc & guy )
         {
-            return p->posz() == guy.posz()
+            return p->abs_pos().z() == guy.abs_pos().z()
             && guy.companion_mission_role_id == role
-            && rl_dist( p->pos(), guy.pos() ) <= 48;
+            && rl_dist( p->abs_pos(), guy.abs_pos() ) <= 48;
         } );
         return !npcs.empty();
     } );
@@ -5061,7 +5061,7 @@ void register_builtin_commands( command_registry &reg )
         const mtype_id mtype( type_str );
         for( int idx = 0; idx < count; ++idx )
         {
-            monster *const mon_ptr = g->place_critter_around( mtype, p->pos(), 3 );
+            monster *const mon_ptr = g->place_critter_around( mtype, p->bub_pos(), 3 );
             if( !mon_ptr ) {
                 add_msg( m_debug, "u_buy_monster: no valid placement location for %s", type_str );
                 break;
@@ -5089,7 +5089,7 @@ void register_builtin_commands( command_registry &reg )
     reg.add( "mapgen_update", 0, -1, []( const std::vector<value> &args ) -> command_signal {
         if( auto *n = g_conv_ctx.npc_ref )
         {
-            auto omt_pos = n->global_omt_location();
+            auto omt_pos = n->abs_omt_pos();
             for( const auto &arg : args ) {
                 run_mapgen_update_func( std::get<std::string>( arg ), omt_pos,
                                         n->chatbin.mission_selected );
