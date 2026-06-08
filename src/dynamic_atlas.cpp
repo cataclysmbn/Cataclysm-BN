@@ -159,19 +159,19 @@ auto dynamic_atlas::find_sprite( const size_t id ) -> std::optional<atlas_textur
 
 void dynamic_atlas::readback_load()
 {
+    const auto &r = get_sdl_renderer();
+    const auto state = sdl_save_render_state(r.get());
     for( auto &it : sheets ) {
         if( it.dirty ) {
-            const auto &r = get_sdl_renderer();
-            const auto prev_rt = SDL_GetRenderTarget( r.get() );
-            SDL_SetRenderTarget( r.get(), it.texture.get() );
-
+            auto tmpTex = CreateTexture( r, sdl_color_pixel_format, SDL_TEXTUREACCESS_TARGET, it.atlas_width, it.atlas_height );
+            SDL_SetRenderTarget( r.get(), tmpTex.get() );
+            SDL_RenderTexture( r.get(), it.texture.get(), nullptr, nullptr);
             // SDL3: SDL_RenderReadPixels returns a new surface owned by us.
             it.readback.reset( SDL_RenderReadPixels( r.get(), nullptr ) );
-
-            SDL_SetRenderTarget( r.get(), prev_rt );
             it.dirty = false;
         }
     }
+    sdl_restore_render_state(r.get(), state);
 }
 
 void dynamic_atlas::readback_clear()
@@ -236,9 +236,10 @@ atlas_texture dynamic_atlas::allocate_sprite_internal( const int w, const int h 
         return atlas_texture{tex, r2};
     };
 
-    for( const auto &s : sheets ) {
+    for( auto &s : sheets ) {
         auto p = s.packer->pack( w, h );
         if( p.has_value() ) {
+            s.dirty = true;
             return get_texture( s.texture, p.value(), w, h );
         }
     }
@@ -274,16 +275,6 @@ atlas_texture dynamic_atlas::allocate_sprite_internal( const int w, const int h 
     SDL_SetTextureBlendMode( tex, SDL_BLENDMODE_BLEND );
     SDL_SetTextureScaleMode( tex, SDL_SCALEMODE_NEAREST );
 
-    {
-        const auto state = sdl_save_render_state( r.get() );
-
-        SDL_SetRenderTarget( r.get(), tex );
-        SetRenderDrawColor( r, 255, 255, 255, 0 );
-        SDL_RenderClear( r.get() );
-
-        sdl_restore_render_state( r.get(), state );
-    }
-
     auto s = sprite_sheet{
         SDL_Texture_Ptr( tex ),
         std::move( packer ),
@@ -292,8 +283,7 @@ atlas_texture dynamic_atlas::allocate_sprite_internal( const int w, const int h 
         nullptr,
         true
     };
-    auto &entry = sheets.emplace_back( std::move( s ) );
-    entry.dirty = true;
+    const auto &entry = sheets.emplace_back( std::move( s ) );
 
     const auto rect = entry.packer->pack( w, h );
 
@@ -302,7 +292,6 @@ atlas_texture dynamic_atlas::allocate_sprite_internal( const int w, const int h 
 
 void dynamic_atlas::readback_dump( const std::string &s ) const
 {
-
     int i = 0;
     for( auto &q : sheets ) {
         auto name = std::format( "{}/tile_dump_{}.png", s, i++ );
