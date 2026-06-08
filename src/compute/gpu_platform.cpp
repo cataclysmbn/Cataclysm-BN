@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -469,8 +470,8 @@ auto probe_shader(
         .num_readwrite_storage_textures = 0,
         .num_readwrite_storage_buffers = 1,
         .num_uniform_buffers = 0,
-        .threadcount_x = 1,
-        .threadcount_y = 1,
+        .threadcount_x = 12,
+        .threadcount_y = 12,
         .threadcount_z = 1,
         .props = 0,
     };
@@ -483,9 +484,11 @@ auto probe_shader(
     }
 
     static constexpr auto probe_value = uint32_t{0xC0DECAFEu};
+    static constexpr auto probe_count = std::size_t{12 * 12};
+    auto const probe_bytes = static_cast<Uint32>(probe_count * sizeof(probe_value));
     auto const buffer_info = SDL_GPUBufferCreateInfo{
         .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
-        .size = static_cast<Uint32>(sizeof(probe_value)),
+        .size = probe_bytes,
         .props = 0,
     };
     auto* const output_buffer = SDL_CreateGPUBuffer(device, &buffer_info);
@@ -498,7 +501,7 @@ auto probe_shader(
 
     auto const transfer_info = SDL_GPUTransferBufferCreateInfo{
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
-        .size = static_cast<Uint32>(sizeof(probe_value)),
+        .size = probe_bytes,
         .props = 0,
     };
     auto* const download_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_info);
@@ -536,7 +539,7 @@ auto probe_shader(
     auto const output_src = SDL_GPUBufferRegion{
         .buffer = output_buffer,
         .offset = 0,
-        .size = static_cast<Uint32>(sizeof(probe_value)),
+        .size = probe_bytes,
     };
     auto const output_dst = SDL_GPUTransferBufferLocation{
         .transfer_buffer = download_buffer,
@@ -577,15 +580,27 @@ auto probe_shader(
         return false;
     }
 
-    auto const observed = *mapped;
+    auto const observed = std::span{mapped, probe_count};
+    auto const indices = std::views::iota(std::size_t{0}, probe_count);
+    auto const mismatch = std::ranges::find_if(indices, [&observed](std::size_t const idx) {
+        return observed[idx] != (probe_value ^ static_cast<uint32_t>(idx));
+    });
+    auto mismatch_index = probe_count;
+    auto mismatch_value = uint32_t{};
+    if (mismatch != std::ranges::end(indices)) {
+        mismatch_index = *mismatch;
+        mismatch_value = observed[mismatch_index];
+    }
     SDL_UnmapGPUTransferBuffer(device, download_buffer);
     SDL_ReleaseGPUTransferBuffer(device, download_buffer);
     SDL_ReleaseGPUBuffer(device, output_buffer);
     SDL_ReleaseGPUComputePipeline(device, pipeline);
 
-    if (observed != probe_value) {
+    if (mismatch_index != probe_count) {
         DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe returned " << observed << ", expected " << probe_value;
+            << "SDL_GPU: shader probe returned " << mismatch_value << " at index "
+            << mismatch_index << ", expected "
+            << (probe_value ^ static_cast<uint32_t>(mismatch_index));
         return false;
     }
 
