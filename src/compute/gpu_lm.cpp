@@ -2843,7 +2843,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const dxbc_lighting_checkpoints = shader_format_is_dxbc(
         preferred_fmt(SDL_GetGPUShaderFormats(device)));
     auto const dxbc_has_resident_resources =
-        s_lighting_resources.device == device && s_lighting_resources.transparency.buffer != nullptr;
+        s_lighting_resources.device == device
+        && s_lighting_resources.transparency.buffer != nullptr;
     if (dxbc_lighting_checkpoints && !lightmap_levels.empty() && dxbc_has_resident_resources) {
         if (!SDL_WaitForGPUIdle(device)) {
             DebugLog(DL::Error, DC::Main)
