@@ -4814,7 +4814,7 @@ bash_results map::bash_vehicle( const tripoint_bub_ms &p, const bash_params &par
     bash_results result;
     // Smash vehicle if present
     if( const optional_vpart_position vp = veh_at( p ) ) {
-        vp->vehicle().damage( vp->part_index(), params.strength, DT_BASH );
+        vp->vehicle().damage( vp->part_index(), params.strength, DT_BASH, true );
         if( !params.silent ) {
             sound_event se;
             se.origin = p;
