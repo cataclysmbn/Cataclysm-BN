@@ -7798,7 +7798,7 @@ RGBColorPair color_from_vars( const data_vars::data_set &vars )
     return RGBColorPair{.bg = p_bg, .fg = p_fg};
 }
 
-void color_to_vars(
+void colors_to_vars(
     data_vars::data_set &vars, const RGBColorPair &col,
     const iuse_paint_stuff_config::paint_layer layer )
 {
@@ -7871,7 +7871,7 @@ struct item_painter {
 
     static auto set_color( const value_type it, const RGBColorPair &col,
                            const paint_layer layer ) -> bool {
-        color_to_vars( it->item_vars(), col, layer );
+        colors_to_vars( it->item_vars(), col, layer );
         return true;
     }
 };
@@ -8454,7 +8454,7 @@ void iuse_paint_stuff_config::set_color( item &it )
     if( lst.ret >= 0 ) {
         const auto col = RGBColor::try_parse( lst.entries[lst.ret].txt ).value_or({});
         it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, col);
-        color_to_vars(it.item_vars(), {col,col}, both);
+        colors_to_vars(it.item_vars(), {col,col}, both);
     }
 }
 
