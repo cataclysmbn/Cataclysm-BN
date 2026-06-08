@@ -471,8 +471,8 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     static constexpr auto dxbc_compact_submaps_per_dispatch = std::size_t{64};
     if (use_compact_shader && submaps.size() > dxbc_compact_submaps_per_dispatch) {
         DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: transparency DXBC compact dispatch chunked: submaps="
-            << submaps.size() << " chunk=" << dxbc_compact_submaps_per_dispatch;
+            << "SDL_GPU: transparency DXBC compact dispatch chunked: submaps=" << submaps.size()
+            << " chunk=" << dxbc_compact_submaps_per_dispatch;
 
         p.out_buffer->clear();
         p.out_buffer->reserve(submaps.size() * static_cast<std::size_t>(SEEX * SEEY));
@@ -481,10 +481,10 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         auto chunk_submaps = std::vector<transparency_submap_in>{};
         auto chunk_result = std::vector<float>{};
         while (offset < submaps.size()) {
-            auto const end =
-                std::min(offset + dxbc_compact_submaps_per_dispatch, submaps.size());
-            chunk_submaps.assign(submaps.begin() + static_cast<std::ptrdiff_t>(offset),
-                                 submaps.begin() + static_cast<std::ptrdiff_t>(end));
+            auto const end = std::min(offset + dxbc_compact_submaps_per_dispatch, submaps.size());
+            chunk_submaps
+                .assign(submaps.begin() + static_cast<std::ptrdiff_t>(offset),
+                        submaps.begin() + static_cast<std::ptrdiff_t>(end));
             chunk_result.clear();
 
             auto chunk_push = p.push;
