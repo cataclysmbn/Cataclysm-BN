@@ -143,6 +143,33 @@ TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][cre
     CHECK( test_data.get<bool>( "found_expected_monster" ) );
 }
 
+TEST_CASE( "lua_npc_move_to_binding_moves_real_npc", "[lua][npc]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    map &here = get_map();
+    const auto start = tripoint_bub_ms{ 50, 50, 0 };
+    const auto destination = tripoint_bub_ms{ 51, 50, 0 };
+    for( const tripoint_bub_ms &pos : { start, destination } ) {
+        here.ter_set( pos, ter_id( "t_dirt" ) );
+        here.furn_set( pos, furn_id( "f_null" ) );
+    }
+
+    auto &moving_npc = spawn_npc( start.xy(), "test_talker" );
+    moving_npc.set_moves( 1000 );
+    test_data["npc"] = &moving_npc;
+    test_data["destination"] = destination;
+
+    run_lua_test_script( lua, "npc_move_to_test.lua" );
+
+    CHECK( test_data.get<bool>( "moved" ) );
+    CHECK( moving_npc.bub_pos() == destination );
+}
+
 TEST_CASE( "lua_typed_coords_projection", "[lua]" )
 {
     auto lua = make_lua_state();

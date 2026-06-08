@@ -1259,6 +1259,12 @@ void cata::detail::reg_npc( sol::state &lua )
 
         SET_FX_T( can_move_to, bool( const tripoint_bub_ms &, bool ) const );
 
+        DOC( "Attempts to move the NPC to an adjacent map square." );
+        luna::set_fx( ut, "move_to", []( UT_CLASS & npchar, const tripoint_bub_ms & pos,
+        sol::optional<bool> no_bashing ) -> void {
+            npchar.move_to( pos, no_bashing.value_or( false ), nullptr );
+        } );
+
         SET_FX_T( saw_player_recently, bool() const );
 
         SET_FX_T( has_omt_destination, bool() const );
