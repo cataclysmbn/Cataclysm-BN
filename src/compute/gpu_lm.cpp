@@ -630,6 +630,7 @@ auto s_logged_dxbc_lighting_checkpoints = false;
 auto s_logged_dxbc_full_transparency_upload = false;
 auto s_logged_dxbc_cycled_full_uploads = false;
 auto s_logged_dxbc_reset_lighting_resources = false;
+auto s_logged_dxbc_single_submit_lighting = false;
 
 struct pending_gpu_visibility_work {
     bool active = false;
@@ -2840,12 +2841,14 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const cache_xy = cache_x * cache_y;
     auto const z_count = OVERMAP_LAYERS;
     auto all_levels = make_all_levels(z_count);
-    auto const dxbc_lighting_checkpoints = shader_format_is_dxbc(
-        preferred_fmt(SDL_GetGPUShaderFormats(device)));
+    auto const dxbc_backend = shader_format_is_dxbc(preferred_fmt(SDL_GetGPUShaderFormats(device)));
+    // Older DXBC/D3D12 drivers can exhaust command allocators when lighting is
+    // split into many checkpoint submissions.  Keep DXBC on a single submit.
+    auto const dxbc_lighting_checkpoints = false;
     auto const dxbc_has_resident_resources =
         s_lighting_resources.device == device
         && s_lighting_resources.transparency.buffer != nullptr;
-    if (dxbc_lighting_checkpoints && !lightmap_levels.empty() && dxbc_has_resident_resources) {
+    if (dxbc_backend && !lightmap_levels.empty() && dxbc_has_resident_resources) {
         if (!SDL_WaitForGPUIdle(device)) {
             DebugLog(DL::Error, DC::Main)
                 << "SDL_GPU: lm: DXBC wait for idle before lighting "
@@ -2860,6 +2863,11 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                    "for each lightmap rebuild";
             s_logged_dxbc_reset_lighting_resources = true;
         }
+    }
+    if (dxbc_backend && !s_logged_dxbc_single_submit_lighting) {
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC uses single-submit lighting command buffers";
+        s_logged_dxbc_single_submit_lighting = true;
     }
 
     // ── Collect light sources ────────────────────────────────────────────────
@@ -2895,7 +2903,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
     auto input_uploads = make_input_upload_plan(p, all_levels);
     clear_transparency_shader_update_marks();
-    if (dxbc_lighting_checkpoints && !input_uploads.transparency_levels.empty()
+    if (dxbc_backend && !input_uploads.transparency_levels.empty()
         && input_uploads.transparency_levels != all_levels) {
         input_uploads.transparency_levels = all_levels;
         if (!s_logged_dxbc_full_transparency_upload) {
@@ -2905,7 +2913,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             s_logged_dxbc_full_transparency_upload = true;
         }
     }
-    if (dxbc_lighting_checkpoints && !s_logged_dxbc_cycled_full_uploads) {
+    if (dxbc_backend && !s_logged_dxbc_cycled_full_uploads) {
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: lm: DXBC cycles transfer maps and full-buffer "
                "input uploads";
@@ -3207,7 +3215,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                "command buffers";
         s_logged_dxbc_lighting_checkpoints = true;
     }
-    if (dxbc_lighting_checkpoints && upload_total > 0) {
+    if (dxbc_backend && upload_total > 0) {
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: lm: DXBC input upload total=" << upload_total
             << " transparency_levels=" << input_uploads.transparency_levels.size()
@@ -3284,7 +3292,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     if (upload_total > 0) {
         ZoneScopedN("gpu_lm_stage_upload");
         auto* const mapped = static_cast<std::byte*>(
-            SDL_MapGPUTransferBuffer(device, upload_tbuf, dxbc_lighting_checkpoints));
+            SDL_MapGPUTransferBuffer(device, upload_tbuf, dxbc_backend));
         if (mapped == nullptr) {
             DebugLog(DL::Error, DC::Main)
                 << "SDL_GPU: lm: upload transfer buffer map failed: " << SDL_GetError();
@@ -3499,6 +3507,16 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 }
             } else {
                 auto* const cp = SDL_BeginGPUCopyPass(cmd);
+                auto const cycle_transparency_upload =
+                    dxbc_backend && input_uploads.transparency_levels == all_levels;
+                auto const cycle_floor_upload =
+                    dxbc_backend && input_uploads.floor_levels == all_levels;
+                auto const cycle_vehicle_floor_upload =
+                    dxbc_backend && input_uploads.vehicle_floor_levels == all_levels;
+                auto const cycle_vehicle_obscured_upload =
+                    dxbc_backend && input_uploads.vehicle_obscured_levels == all_levels;
+                auto const cycle_source_map_upload =
+                    dxbc_backend && source_map_upload_levels == all_levels;
                 upload_level_ranges(
                     {
                         .cp = cp,
@@ -3506,7 +3524,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         .levels = &input_uploads.transparency_levels,
                         .level_bytes = float_level_bytes,
                     },
-                    false);
+                    cycle_transparency_upload);
                 upload_level_ranges(
                     {
                         .cp = cp,
@@ -3514,7 +3532,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         .levels = &input_uploads.floor_levels,
                         .level_bytes = uint_level_bytes,
                     },
-                    false);
+                    cycle_floor_upload);
                 upload_level_ranges(
                     {
                         .cp = cp,
@@ -3522,7 +3540,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         .levels = &input_uploads.vehicle_floor_levels,
                         .level_bytes = uint_level_bytes,
                     },
-                    false);
+                    cycle_vehicle_floor_upload);
                 upload_level_ranges(
                     {
                         .cp = cp,
@@ -3530,7 +3548,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         .levels = &input_uploads.vehicle_obscured_levels,
                         .level_bytes = uint_level_bytes,
                     },
-                    false);
+                    cycle_vehicle_obscured_upload);
                 upload_level_ranges(
                     {
                         .cp = cp,
@@ -3538,12 +3556,13 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         .levels = &source_map_upload_levels,
                         .level_bytes = float_level_bytes,
                     },
-                    false);
+                    cycle_source_map_upload);
                 if (source_upload_bytes > 0) {
-                    upload_whole_region(cp, src_buf, source_upload_bytes, false);
+                    upload_whole_region(cp, src_buf, source_upload_bytes, dxbc_backend);
                 }
                 if (colored_source_upload_bytes > 0) {
-                    upload_whole_region(cp, colored_src_buf, colored_source_upload_bytes, false);
+                    upload_whole_region(cp, colored_src_buf, colored_source_upload_bytes,
+                                        dxbc_backend);
                 }
                 SDL_EndGPUCopyPass(cp);
             }
