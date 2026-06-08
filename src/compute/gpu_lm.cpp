@@ -2907,8 +2907,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         }
     }
     if (dxbc_lighting_checkpoints && !s_logged_dxbc_cycled_full_uploads) {
-        DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: lm: DXBC cycles transfer maps and full-buffer input uploads";
+        DebugLog(DL::Info, DC::Main) << "SDL_GPU: lm: DXBC cycles transfer maps and full-buffer "
+                                        "input uploads";
         s_logged_dxbc_cycled_full_uploads = true;
     }
     if (!s_lighting_resources.source_map_valid && lightmap_levels.empty()) {
@@ -3405,8 +3405,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     ++upload_copy_commands;
                 };
 
-            auto upload_level_ranges =
-                [&](upload_level_ranges_params const& p, bool const cycle) {
+            auto upload_level_ranges = [&](upload_level_ranges_params const& p, bool const cycle) {
                 auto packed_level_index = Uint32{0};
                 for (auto const& range : make_z_level_ranges(*p.levels)) {
                     auto const range_bytes = static_cast<Uint32>(range.z_count) * p.level_bytes;
@@ -3438,13 +3437,14 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             auto upload_levels_dxbc = [&](dxbc_upload_levels_params const& p) -> bool {
                 if (p.levels->empty()) { return true; }
                 auto* const cp = SDL_BeginGPUCopyPass(cmd);
-                upload_level_ranges({
-                    .cp = cp,
-                    .dst = p.dst,
-                    .levels = p.levels,
-                    .level_bytes = p.level_bytes,
-                },
-                *p.levels == all_levels);
+                upload_level_ranges(
+                    {
+                        .cp = cp,
+                        .dst = p.dst,
+                        .levels = p.levels,
+                        .level_bytes = p.level_bytes,
+                    },
+                    *p.levels == all_levels);
                 SDL_EndGPUCopyPass(cp);
                 return submit_dxbc_checkpoint(p.label);
             };
@@ -3499,41 +3499,46 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 }
             } else {
                 auto* const cp = SDL_BeginGPUCopyPass(cmd);
-                upload_level_ranges({
-                    .cp = cp,
-                    .dst = t_buf,
-                    .levels = &input_uploads.transparency_levels,
-                    .level_bytes = float_level_bytes,
-                },
-                false);
-                upload_level_ranges({
-                    .cp = cp,
-                    .dst = f_buf,
-                    .levels = &input_uploads.floor_levels,
-                    .level_bytes = uint_level_bytes,
-                },
-                false);
-                upload_level_ranges({
-                    .cp = cp,
-                    .dst = vf_buf,
-                    .levels = &input_uploads.vehicle_floor_levels,
-                    .level_bytes = uint_level_bytes,
-                },
-                false);
-                upload_level_ranges({
-                    .cp = cp,
-                    .dst = vo_buf,
-                    .levels = &input_uploads.vehicle_obscured_levels,
-                    .level_bytes = uint_level_bytes,
-                },
-                false);
-                upload_level_ranges({
-                    .cp = cp,
-                    .dst = source_map_buf,
-                    .levels = &source_map_upload_levels,
-                    .level_bytes = float_level_bytes,
-                },
-                false);
+                upload_level_ranges(
+                    {
+                        .cp = cp,
+                        .dst = t_buf,
+                        .levels = &input_uploads.transparency_levels,
+                        .level_bytes = float_level_bytes,
+                    },
+                    false);
+                upload_level_ranges(
+                    {
+                        .cp = cp,
+                        .dst = f_buf,
+                        .levels = &input_uploads.floor_levels,
+                        .level_bytes = uint_level_bytes,
+                    },
+                    false);
+                upload_level_ranges(
+                    {
+                        .cp = cp,
+                        .dst = vf_buf,
+                        .levels = &input_uploads.vehicle_floor_levels,
+                        .level_bytes = uint_level_bytes,
+                    },
+                    false);
+                upload_level_ranges(
+                    {
+                        .cp = cp,
+                        .dst = vo_buf,
+                        .levels = &input_uploads.vehicle_obscured_levels,
+                        .level_bytes = uint_level_bytes,
+                    },
+                    false);
+                upload_level_ranges(
+                    {
+                        .cp = cp,
+                        .dst = source_map_buf,
+                        .levels = &source_map_upload_levels,
+                        .level_bytes = float_level_bytes,
+                    },
+                    false);
                 if (source_upload_bytes > 0) {
                     upload_whole_region(cp, src_buf, source_upload_bytes, false);
                 }
