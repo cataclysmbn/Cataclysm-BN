@@ -629,6 +629,7 @@ auto s_next_lighting_work_id = uint64_t{1};
 auto s_logged_dxbc_lighting_checkpoints = false;
 auto s_logged_dxbc_full_transparency_upload = false;
 auto s_logged_dxbc_recreated_transparency_buffer = false;
+auto s_logged_dxbc_cycled_full_uploads = false;
 
 struct pending_gpu_visibility_work {
     bool active = false;
@@ -2888,6 +2889,13 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     if (dxbc_lighting_checkpoints && !input_uploads.transparency_levels.empty()
         && s_lighting_resources.inputs.transparency_valid
         && s_lighting_resources.transparency.buffer != nullptr) {
+        if (!SDL_WaitForGPUIdle(device)) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: DXBC wait for idle before transparency "
+                   "buffer recreation failed: "
+                << SDL_GetError();
+            return {};
+        }
         release_buffer_slot(device, s_lighting_resources.transparency);
         invalidate_resident_transparency();
         s_lighting_resources.lighting_outputs_valid = false;
@@ -2897,6 +2905,11 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                    "buffer before CPU reupload";
             s_logged_dxbc_recreated_transparency_buffer = true;
         }
+    }
+    if (dxbc_lighting_checkpoints && !s_logged_dxbc_cycled_full_uploads) {
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC cycles transfer maps and full-buffer input uploads";
+        s_logged_dxbc_cycled_full_uploads = true;
     }
     if (!s_lighting_resources.source_map_valid && lightmap_levels.empty()) {
         DebugLog(DL::Error, DC::Main)
@@ -3271,7 +3284,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     if (upload_total > 0) {
         ZoneScopedN("gpu_lm_stage_upload");
         auto* const mapped = static_cast<std::byte*>(
-            SDL_MapGPUTransferBuffer(device, upload_tbuf, false));
+            SDL_MapGPUTransferBuffer(device, upload_tbuf, dxbc_lighting_checkpoints));
         if (mapped == nullptr) {
             DebugLog(DL::Error, DC::Main)
                 << "SDL_GPU: lm: upload transfer buffer map failed: " << SDL_GetError();
@@ -3379,19 +3392,21 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             };
 
             auto upload_whole_region =
-                [&](SDL_GPUCopyPass* const cp, SDL_GPUBuffer* const dst, Uint32 const bytes) {
+                [&](SDL_GPUCopyPass* const cp, SDL_GPUBuffer* const dst, Uint32 const bytes,
+                    bool const cycle) {
                     auto const src_loc = make_upload_location(off);
                     auto const dst_reg = SDL_GPUBufferRegion{
                         .buffer = dst,
                         .offset = 0,
                         .size = bytes,
                     };
-                    SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
+                    SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, cycle);
                     off += bytes;
                     ++upload_copy_commands;
                 };
 
-            auto upload_level_ranges = [&](upload_level_ranges_params const& p) {
+            auto upload_level_ranges =
+                [&](upload_level_ranges_params const& p, bool const cycle) {
                 auto packed_level_index = Uint32{0};
                 for (auto const& range : make_z_level_ranges(*p.levels)) {
                     auto const range_bytes = static_cast<Uint32>(range.z_count) * p.level_bytes;
@@ -3403,7 +3418,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                             static_cast<Uint32>(range.z_start + OVERMAP_DEPTH) * p.level_bytes,
                         .size = range_bytes,
                     };
-                    SDL_UploadToGPUBuffer(p.cp, &src_loc, &dst_reg, false);
+                    SDL_UploadToGPUBuffer(p.cp, &src_loc, &dst_reg, cycle);
                     packed_level_index += static_cast<Uint32>(range.z_count);
                     ++upload_copy_commands;
                 }
@@ -3415,7 +3430,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 -> bool {
                 if (bytes == 0) { return true; }
                 auto* const cp = SDL_BeginGPUCopyPass(cmd);
-                upload_whole_region(cp, dst, bytes);
+                upload_whole_region(cp, dst, bytes, true);
                 SDL_EndGPUCopyPass(cp);
                 return submit_dxbc_checkpoint(label);
             };
@@ -3428,7 +3443,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     .dst = p.dst,
                     .levels = p.levels,
                     .level_bytes = p.level_bytes,
-                });
+                },
+                *p.levels == all_levels);
                 SDL_EndGPUCopyPass(cp);
                 return submit_dxbc_checkpoint(p.label);
             };
@@ -3488,36 +3504,41 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     .dst = t_buf,
                     .levels = &input_uploads.transparency_levels,
                     .level_bytes = float_level_bytes,
-                });
+                },
+                false);
                 upload_level_ranges({
                     .cp = cp,
                     .dst = f_buf,
                     .levels = &input_uploads.floor_levels,
                     .level_bytes = uint_level_bytes,
-                });
+                },
+                false);
                 upload_level_ranges({
                     .cp = cp,
                     .dst = vf_buf,
                     .levels = &input_uploads.vehicle_floor_levels,
                     .level_bytes = uint_level_bytes,
-                });
+                },
+                false);
                 upload_level_ranges({
                     .cp = cp,
                     .dst = vo_buf,
                     .levels = &input_uploads.vehicle_obscured_levels,
                     .level_bytes = uint_level_bytes,
-                });
+                },
+                false);
                 upload_level_ranges({
                     .cp = cp,
                     .dst = source_map_buf,
                     .levels = &source_map_upload_levels,
                     .level_bytes = float_level_bytes,
-                });
+                },
+                false);
                 if (source_upload_bytes > 0) {
-                    upload_whole_region(cp, src_buf, source_upload_bytes);
+                    upload_whole_region(cp, src_buf, source_upload_bytes, false);
                 }
                 if (colored_source_upload_bytes > 0) {
-                    upload_whole_region(cp, colored_src_buf, colored_source_upload_bytes);
+                    upload_whole_region(cp, colored_src_buf, colored_source_upload_bytes, false);
                 }
                 SDL_EndGPUCopyPass(cp);
             }
