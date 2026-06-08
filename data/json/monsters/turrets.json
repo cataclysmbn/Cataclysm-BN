@@ -58,7 +58,7 @@
         "move_cost": 150,
         "gun_type": "laser_cannon_turret_fake",
         "fake_skills": [ [ "gun", 4 ], [ "rifle", 8 ] ],
-        "ranges": [ [ 0, 15, "AUTO" ], [ 16, 30, "DEFAULT" ] ],
+        "ranges": [ [ 0, 5, "AUTO" ], [ 6, 30, "DEFAULT" ] ],
         "require_targeting_npc": true,
         "require_targeting_monster": true,
         "target_moving_vehicles": true,
