@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -447,14 +448,14 @@ auto select_shader_format(SDL_GPUShaderFormat const formats)
 
 auto probe_shader(
     SDL_GPUDevice* const device, SDL_GPUShaderFormat const fmt,
-    std::string_view const ext) -> void {
+    std::string_view const ext) -> bool {
     auto const path = PATH_INFO::shaders() + "test_compute" + std::string{ext};
     auto const blob = read_file_bytes(path);
     if (blob.empty()) {
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: shader blob not found: " << path
             << " (run a build with shadercross to compile shaders)";
-        return;
+        return false;
     }
 
     SDL_GPUComputePipelineCreateInfo const info{
@@ -466,7 +467,7 @@ auto probe_shader(
         .num_readonly_storage_textures = 0,
         .num_readonly_storage_buffers = 0,
         .num_readwrite_storage_textures = 0,
-        .num_readwrite_storage_buffers = 0,
+        .num_readwrite_storage_buffers = 1,
         .num_uniform_buffers = 0,
         .threadcount_x = 1,
         .threadcount_y = 1,
@@ -478,11 +479,118 @@ auto probe_shader(
     if (pipeline == nullptr) {
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: compute pipeline creation failed for " << path << ": " << SDL_GetError();
-        return;
+        return false;
+    }
+
+    static constexpr auto probe_value = uint32_t{0xC0DECAFEu};
+    auto const buffer_info = SDL_GPUBufferCreateInfo{
+        .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
+        .size = static_cast<Uint32>(sizeof(probe_value)),
+        .props = 0,
+    };
+    auto* const output_buffer = SDL_CreateGPUBuffer(device, &buffer_info);
+    if (output_buffer == nullptr) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe output buffer creation failed: " << SDL_GetError();
+        SDL_ReleaseGPUComputePipeline(device, pipeline);
+        return false;
+    }
+
+    auto const transfer_info = SDL_GPUTransferBufferCreateInfo{
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
+        .size = static_cast<Uint32>(sizeof(probe_value)),
+        .props = 0,
+    };
+    auto* const download_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_info);
+    if (download_buffer == nullptr) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe download buffer creation failed: " << SDL_GetError();
+        SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUComputePipeline(device, pipeline);
+        return false;
+    }
+
+    auto* const cmd = SDL_AcquireGPUCommandBuffer(device);
+    if (cmd == nullptr) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe command buffer acquisition failed: " << SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+        SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUComputePipeline(device, pipeline);
+        return false;
+    }
+
+    auto const output_binding = SDL_GPUStorageBufferReadWriteBinding{
+        .buffer = output_buffer,
+        .cycle = false,
+        .padding1 = 0,
+        .padding2 = 0,
+        .padding3 = 0,
+    };
+    auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &output_binding, 1);
+    SDL_BindGPUComputePipeline(cp, pipeline);
+    SDL_DispatchGPUCompute(cp, 1, 1, 1);
+    SDL_EndGPUComputePass(cp);
+
+    auto* const copy_pass = SDL_BeginGPUCopyPass(cmd);
+    auto const output_src = SDL_GPUBufferRegion{
+        .buffer = output_buffer,
+        .offset = 0,
+        .size = static_cast<Uint32>(sizeof(probe_value)),
+    };
+    auto const output_dst = SDL_GPUTransferBufferLocation{
+        .transfer_buffer = download_buffer,
+        .offset = 0,
+    };
+    SDL_DownloadFromGPUBuffer(copy_pass, &output_src, &output_dst);
+    SDL_EndGPUCopyPass(copy_pass);
+
+    auto* const fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
+    if (fence == nullptr) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe command buffer submission failed: " << SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+        SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUComputePipeline(device, pipeline);
+        return false;
+    }
+
+    auto const wait_succeeded = SDL_WaitForGPUFences(device, true, &fence, 1);
+    SDL_ReleaseGPUFence(device, fence);
+    if (!wait_succeeded) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe fence wait failed: " << SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+        SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUComputePipeline(device, pipeline);
+        return false;
+    }
+
+    auto const* const mapped =
+        static_cast<uint32_t const*>(SDL_MapGPUTransferBuffer(device, download_buffer, false));
+    if (mapped == nullptr) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe download map failed: " << SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+        SDL_ReleaseGPUBuffer(device, output_buffer);
+        SDL_ReleaseGPUComputePipeline(device, pipeline);
+        return false;
+    }
+
+    auto const observed = *mapped;
+    SDL_UnmapGPUTransferBuffer(device, download_buffer);
+    SDL_ReleaseGPUTransferBuffer(device, download_buffer);
+    SDL_ReleaseGPUBuffer(device, output_buffer);
+    SDL_ReleaseGPUComputePipeline(device, pipeline);
+
+    if (observed != probe_value) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: shader probe returned " << observed << ", expected " << probe_value;
+        return false;
     }
 
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: shader probe OK (" << path << ")";
-    SDL_ReleaseGPUComputePipeline(device, pipeline);
+    return true;
 }
 
 } // namespace
@@ -518,6 +626,24 @@ auto init() -> void {
                 device = nullptr;
                 continue;
             }
+
+            const char* const candidate_driver = SDL_GetGPUDeviceDriver(device);
+            const auto candidate_formats = SDL_GetGPUShaderFormats(device);
+            DebugLog(DL::Info, DC::Main)
+                << "SDL_GPU: candidate driver="
+                << (candidate_driver != nullptr ? candidate_driver : "unknown")
+                << "  formats=" << shader_formats_to_string(candidate_formats);
+            log_gpu_device_info(selected_device_info);
+
+            auto const [fmt, ext] = select_shader_format(candidate_formats);
+            if (fmt == SDL_GPU_SHADERFORMAT_INVALID || !probe_shader(device, fmt, ext)) {
+                DebugLog(DL::Warn, DC::Main)
+                    << "SDL_GPU: rejected device after compute dispatch probe: " << attempt.label;
+                SDL_DestroyGPUDevice(device);
+                device = nullptr;
+                continue;
+            }
+
             DebugLog(DL::Info, DC::Main) << "SDL_GPU: selected device policy: " << attempt.label;
             break;
         }
@@ -546,9 +672,6 @@ auto init() -> void {
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: driver=" << (driver != nullptr ? driver : "unknown")
                                  << "  formats=" << shader_formats_to_string(formats);
     log_gpu_device_info(selected_device_info);
-
-    auto const [fmt, ext] = select_shader_format(formats);
-    if (fmt != SDL_GPU_SHADERFORMAT_INVALID) { probe_shader(device, fmt, ext); }
 
     s_device = device;
 }
