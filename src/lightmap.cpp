@@ -385,7 +385,8 @@ bool map::build_transparency_cache( const int zlev )
                       gpu_result.size(), expected_compact_result_size );
             return false;
         }
-        if( resident_output_written && ( rebuild_all ? resident_output_complete : resident_level_was_valid ) ) {
+        if( resident_output_written &&
+            ( rebuild_all ? resident_output_complete : resident_level_was_valid ) ) {
             cata_gpu::mark_lighting_transparency_level_updated( zlev );
         }
 
