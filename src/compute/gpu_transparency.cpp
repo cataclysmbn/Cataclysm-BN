@@ -488,10 +488,9 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
             .out = compact_shader_inputs,
         });
         DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: transparency DXBC compact CPU result path: submaps="
-            << submaps.size();
-        p.out_buffer->assign(compact_shader_inputs.values.begin(),
-                             compact_shader_inputs.values.end());
+            << "SDL_GPU: transparency DXBC compact CPU result path: submaps=" << submaps.size();
+        p.out_buffer
+            ->assign(compact_shader_inputs.values.begin(), compact_shader_inputs.values.end());
         return true;
     }
 
