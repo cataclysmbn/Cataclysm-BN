@@ -3592,6 +3592,13 @@
     "components": [ [ [ "cardboard", 85 ] ] ]
   },
   {
+    "result": "box_huge",
+    "type": "uncraft",
+    "time": "30 m",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "cardboard", 1000 ] ] ]
+  },
+  {
     "result": "box_large",
     "type": "uncraft",
     "time": "6 m",
@@ -3662,24 +3669,6 @@
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "felt_patch", 10 ] ] ],
     "flags": [ "BLIND_NO_EFFECT" ]
-  },
-  {
-    "result": "1st_aid",
-    "type": "uncraft",
-    "time": "6 s",
-    "components": [
-      [ [ "medical_tape", 20 ] ],
-      [ [ "aspirin", 10 ] ],
-      [ [ "disinfectant", 10 ] ],
-      [ [ "saline", 5 ] ],
-      [ [ "bandages", 6 ] ],
-      [ [ "medical_gauze", 6 ] ],
-      [ [ "gloves_medical", 1 ] ],
-      [ [ "mask_dust", 1 ] ],
-      [ [ "scissors", 1 ] ],
-      [ [ "booklet_firstaid", 1 ] ]
-    ],
-    "flags": [ "BLIND_NO_EFFECT", "UNCRAFT_LIQUIDS_CONTAINED" ]
   },
   {
     "result": "survival_kit",

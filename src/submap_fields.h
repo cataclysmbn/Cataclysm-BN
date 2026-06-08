@@ -34,7 +34,7 @@ void create_burnproducts( std::vector<detached_ptr<item>> &out, const item &fuel
  * Known omissions (render-context-dependent):
  *   • Vehicle fire damage      (TODO: requires coordinate translation).
  *   • NPC complaints / scent   (player-centric, handled by creature_in_field).
- *   • Transparency cache flush (handled on next in-bubble load).
+ *   • Transparency cache flush (handled on next in-bubble load, unless already within bubble).
  *   • Monster spawning         (TODO: deferred to submap spawn system).
  *   • Fungal haze spreading    (TODO: requires fungal_effects with map context).
  *   • Item detonation in fire  (TODO: explosion creation needs map).
@@ -42,6 +42,6 @@ void create_burnproducts( std::vector<detached_ptr<item>> &out, const item &fuel
  * @return  true if any fire field remains alive after processing.
  *          world_tick() uses this to request adjacent submap loading.
  */
-auto process_fields_in_submap( submap &sm,
+auto process_fields_in_submap( const std::string &dim, submap &sm,
                                const tripoint_abs_sm &pos,
                                mapbuffer &mb ) -> bool;

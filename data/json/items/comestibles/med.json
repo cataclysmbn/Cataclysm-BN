@@ -4,16 +4,29 @@
     "type": "GENERIC",
     "category": "drugs",
     "name": { "str": "first aid kit" },
-    "description": "A full medical kit, with bandages, local anesthetics, and rapid healing agents.  Used for healing large amounts of damage.  Disassemble to get its content.",
-    "weight": "2000 g",
-    "volume": "1250 ml",
+    "description": "A compact medical kit containing bandages and antiseptic.  Used for healing large amounts of damage.  Disassemble to get its content.",
+    "weight": "1500 g",
+    "volume": "1 L",
     "price": "30 USD",
     "price_postapoc": "30 USD",
     "material": "plastic",
     "symbol": "!",
     "color": "red",
-    "use_action": "DISASSEMBLE",
+    "use_action": { "type": "unpack", "group": "pocket_first_aid_kit" },
     "flags": [ "NO_REPAIR", "NO_SALVAGE" ]
+  },
+  {
+    "id": "1st_aid_deluxe",
+    "copy-from": "1st_aid",
+    "type": "GENERIC",
+    "category": "drugs",
+    "name": { "str": "deluxe first aid kit" },
+    "description": "A full medical kit, with bandages, antiseptic, local analgesics, and basic medical tools.  Used for healing large amounts of damage.  Disassemble to get its content.",
+    "weight": "2000 g",
+    "volume": "1500 ml",
+    "price": "45 USD",
+    "price_postapoc": "45 USD",
+    "use_action": { "type": "unpack", "group": "deluxe_first_aid_kit" }
   },
   {
     "id": "melatonin_tablet",
@@ -38,8 +51,8 @@
     "id": "fungal_painkiller",
     "type": "COMESTIBLE",
     "comestible_type": "MED",
-    "name": "Nerve dampening tablet",
-    "description": "A chemical that surpresses pain response, made from alien fungal tissues.  Without a central nervous system, the only thing fungus can feel is rage.  Seems to be safe from spore infection, though there still might be unpleasant effects after it wears off…",
+    "name": "nerve dampening tablet",
+    "description": "A chemical that suppresses pain response, made from alien fungal tissues.  Without a central nervous system, the only thing fungus can feel is rage.  Seems to be safe from spore infection, though there still might be unpleasant effects after it wears off…",
     "weight": "15 g",
     "volume": "250 ml",
     "price": "400 USD",
@@ -192,7 +205,7 @@
     "description": "Simple cloth bandages.  Better than nothing.",
     "price_postapoc": "1 USD",
     "flags": [ "NO_INGEST" ],
-    "use_action": { "type": "heal", "bandages_power": 2, "bleed": 0.9, "move_cost": 300 }
+    "use_action": { "type": "heal", "bandages_power": 2, "bleed": 0.75, "move_cost": 300 }
   },
   {
     "id": "bandages_makeshift_bleached",
@@ -202,7 +215,7 @@
     "description": "Simple cloth bandages.  It is white, as real bandages should be.",
     "price_postapoc": "150 cent",
     "flags": [ "NO_INGEST" ],
-    "use_action": { "type": "heal", "bandages_power": 3, "bleed": 0.9, "move_cost": 300 }
+    "use_action": { "type": "heal", "bandages_power": 3, "bleed": 0.75, "move_cost": 300 }
   },
   {
     "id": "bandages_makeshift_boiled",
@@ -212,7 +225,7 @@
     "description": "Simple cloth bandages.  It was boiled to make it more sterile.",
     "price_postapoc": "150 cent",
     "flags": [ "NO_INGEST" ],
-    "use_action": { "type": "heal", "bandages_power": 3, "bleed": 0.9, "move_cost": 300 }
+    "use_action": { "type": "heal", "bandages_power": 3, "bleed": 0.75, "move_cost": 300 }
   },
   {
     "id": "bfipowder",
@@ -444,7 +457,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You snort a bump of coke.",
-      "effects": [ { "id": "cocaine_high", "duration": "60 minutes" } ],
+      "effects": [ { "id": "cocaine_high", "duration": "300 minutes" } ],
       "stat_adjustments": { "hunger": -10 }
     }
   },
@@ -510,7 +523,7 @@
     "color": "white",
     "container": "bag_zipper",
     "flags": [ "NO_INGEST", "TINDER" ],
-    "use_action": { "type": "heal", "bandages_power": 2, "bleed": 0.9, "move_cost": 300 }
+    "use_action": { "type": "heal", "bandages_power": 2, "bleed": 0.5, "move_cost": 300 }
   },
   {
     "id": "crack",
@@ -537,9 +550,9 @@
       "type": "consume_drug",
       "activation_message": "You smoke your crack rocks.  Mother would be proud.",
       "effects": [
-        { "id": "cocaine_high", "duration": "10 minutes" },
-        { "id": "cocaine_high", "duration": "10 minutes" },
-        { "id": "cocaine_high", "duration": "10 minutes" }
+        { "id": "cocaine_high", "duration": "100 minutes" },
+        { "id": "cocaine_high", "duration": "100 minutes" },
+        { "id": "cocaine_high", "duration": "100 minutes" }
       ],
       "stat_adjustments": { "hunger": -10 },
       "fields_produced": { "fd_cracksmoke": 2 },
@@ -591,7 +604,7 @@
     "copy-from": "disinfectant",
     "description": "Makeshift antiseptic made from ethanol.  Can be used to disinfect a wound.",
     "flags": [ "NO_INGEST" ],
-    "use_action": { "type": "heal", "disinfectant_power": 3, "bite": 0.95, "move_cost": 100 }
+    "use_action": { "type": "heal", "disinfectant_power": 3, "bite": 0.8, "move_cost": 100 }
   },
   {
     "id": "diazepam",
@@ -619,13 +632,15 @@
     "comestible_type": "MED",
     "name": { "str": "saline eye drop" },
     "description": "Sterile saline eye drops.  Can be used to treat dry eyes, or to wash out contaminants.",
-    "volume": "10 ml",
-    "weight": "3 g",
+    "volume": "250 ml",
+    "weight": "25 g",
     "price": "3 USD",
     "price_postapoc": "3 USD",
     "charges": 10,
     "symbol": "!",
     "color": "light_blue",
+    "phase": "liquid",
+    "container": "bottle_plastic_small",
     "use_action": "EYEDROPS",
     "flags": [ "NO_INGEST", "NPC_SAFE" ]
   },
@@ -815,7 +830,7 @@
       "smoking_duration": 4,
       "do_weed_msg": true,
       "charges_needed": { "fire": 1 },
-      "effects": [ { "id": "weed_high", "duration": "15 s" }, { "id": "pkill1", "duration": "12 m" } ],
+      "effects": [ { "id": "weed_high", "duration": "90 m" }, { "id": "pkill1", "duration": "12 m" } ],
       "fields_produced": { "fd_weedsmoke": 2 }
     }
   },
@@ -846,7 +861,7 @@
       "charges_needed": { "fire": 1 },
       "do_weed_msg": true,
       "effects": [
-        { "id": "weed_high", "duration": "15 s" },
+        { "id": "weed_high", "duration": "120 m" },
         { "id": "cig", "duration": "15 s" },
         { "id": "pkill1", "duration": "12 m" }
       ],
@@ -1009,6 +1024,7 @@
     "phase": "liquid",
     "container": "bottle_plastic_small",
     "stim": -7,
+    "fun": 8,
     "addiction_potential": 20,
     "addiction_type": "sleeping pill",
     "use_action": "FLUSLEEP"
@@ -1210,14 +1226,14 @@
     "color": "light_gray",
     "container": "bag_zipper",
     "flags": [ "NO_INGEST" ],
-    "use_action": { "type": "heal", "bleed": 0.9, "move_cost": 100 }
+    "use_action": { "type": "heal", "bleed": 0.99, "move_cost": 100 }
   },
   {
     "id": "saline",
     "type": "COMESTIBLE",
     "comestible_type": "MED",
     "name": "saline solution",
-    "description": "A solution of sterilized water and salt for intravenous infusion or washing contaminants from one's eyes.",
+    "description": "A solution of sterilized water and salt for intravenous infusion.  Can be used to flush contaminants from wounds.",
     "weight": "51 g",
     "volume": "250 ml",
     "price": "5 USD",
@@ -1227,7 +1243,7 @@
     "color": "light_cyan",
     "phase": "liquid",
     "container": "bottle_plastic_small",
-    "use_action": "EYEDROPS",
+    "use_action": { "type": "heal", "bite": 0.5, "move_cost": 200 },
     "flags": [ "NO_INGEST", "NPC_SAFE" ]
   },
   {
@@ -1261,7 +1277,7 @@
     "color": "yellow",
     "phase": "liquid",
     "flags": [ "NO_INGEST" ],
-    "use_action": { "type": "heal", "disinfectant_power": 3, "bite": 0.95, "move_cost": 100 }
+    "use_action": { "type": "heal", "disinfectant_power": 3, "bite": 0.8, "move_cost": 100 }
   },
   {
     "id": "tobacco",
@@ -1482,7 +1498,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You smoke some weed.  Good stuff, man!",
-      "effects": [ { "id": "weed_high", "duration": 90 }, { "id": "pkill1", "duration": 360 } ],
+      "effects": [ { "id": "weed_high", "duration": "90 m" }, { "id": "pkill1", "duration": "6 m" } ],
       "stat_adjustments": { "hunger": 4, "thirst": 6 },
       "fields_produced": { "fd_weedsmoke": 2 },
       "charges_needed": { "fire": 1 },
@@ -1634,7 +1650,7 @@
     "use_action": {
       "type": "heal",
       "disinfectant_power": 3,
-      "bite": 0.75,
+      "bite": 0.8,
       "move_cost": 100,
       "effects": [ { "id": "pkill1", "duration": 720 } ]
     }
@@ -1652,7 +1668,7 @@
     "charges": 5,
     "symbol": "!",
     "color": "white",
-    "healthy": -10,
+    "healthy": -5,
     "flags": [ "NPC_SAFE" ],
     "use_action": { "type": "STRONG_ANTIBIOTIC" }
   }

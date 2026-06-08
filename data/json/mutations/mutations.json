@@ -529,12 +529,13 @@
     "//": "Can't change the ID as that breaks save-compatibility.",
     "name": { "str": "Scout" },
     "points": 1,
-    "description": "You're an excellent navigator and your ability to recognize distant landmarks is unmatched.  Your sight radius on the overmap extends beyond the normal range.",
+    "description": "You're an excellent navigator and your ability to recognize distant landmarks is unmatched.  Your sight radius on the overmap extends beyond the normal range, and distant details are easier for you to resolve.",
     "valid": false,
     "starting_trait": true,
     "category": [ "BIRD", "MOUSE" ],
     "cancels": [ "MYOPIC", "UNOBSERVANT" ],
-    "overmap_sight": 5
+    "overmap_sight": 5,
+    "local_detail_sight": 10
   },
   {
     "type": "mutation",

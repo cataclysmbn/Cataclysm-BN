@@ -376,6 +376,8 @@ auto game::unserialize( std::istream &fin ) -> bool
         inp_mngr.pump_events();
         Messages::deserialize( data );
 
+        charge_removal_blacklist::split_deferred();
+
     } catch( const JsonError &jsonerr ) {
         debugmsg( "Bad save json\n%s", jsonerr.c_str() );
         return false;

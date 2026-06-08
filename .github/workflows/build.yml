@@ -89,7 +89,32 @@ env:
   EMMYLUA_CHECK_VERSION: "0.22.0"
 
 jobs:
+  shader-artifacts:
+    name: Generate shader artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shadercross dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev
+
+      - name: Install shadercross
+        run: bash build-scripts/install-shadercross-vcpkg.sh
+
+      - name: Generate shaders
+        run: bash build-scripts/generate-shaders.sh
+
+      - name: Upload generated shaders
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-shaders
+          path: data/shaders/
+          if-no-files-found: error
+
   builds:
+    needs: shader-artifacts
     strategy:
       fail-fast: false
       matrix:
@@ -99,6 +124,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download generated shaders
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders
+          path: data/shaders
 
       - name: Download translation artifacts
         if: inputs.download-translations
@@ -230,7 +261,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install gcc-14 libncursesw5-dev \
-            libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev
+            libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb \
+            autoconf autoconf-archive automake libtool libltdl-dev
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
@@ -288,6 +320,10 @@ jobs:
           max-size: 500M
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Install shadercross (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && matrix.tiles == true
+        run: bash build-scripts/install-shadercross-vcpkg.sh
 
       # Build with CMake (Linux)
       - name: Configure and Build with CMake (Linux)
@@ -425,9 +461,11 @@ jobs:
       - name: Create distribution package (windows msvc)
         if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
+          $dist = "cataclysmbn-${{ inputs.version-label }}"
           New-Item -ItemType Directory -Force lang/mo
-          cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix cataclysmbn-${{ inputs.version-label }} --config Release
-          Compress-Archive -Force -Path cataclysmbn-${{ inputs.version-label }}/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
+          cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
+
+          Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
       - name: Locate PDB (windows msvc)
         if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
@@ -470,7 +508,11 @@ jobs:
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         run: |
           sudo apt-get update
-          sudo apt-get install cmake gettext ninja-build
+          sudo apt-get install -y cmake gettext ninja-build autoconf autoconf-archive automake libtool libltdl-dev
+
+      - name: Install shadercross (android host)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        run: bash build-scripts/install-shadercross-vcpkg.sh
 
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'

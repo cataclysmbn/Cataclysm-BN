@@ -8,7 +8,9 @@
 #include <vector>
 
 #include "ballistics.h"
+#include "calendar.h"
 #include "dispersion.h"
+#include "field_type.h"
 #include "shape.h"
 #include "shape_impl.h"
 #include "map.h"
@@ -215,6 +217,31 @@ TEST_CASE( "expected shape coverage through windows", "[shape]" )
     CHECK( cov[origin + 4 * point_east] == Approx( 0.25 ) );
 }
 
+TEST_CASE( "shaped attacks apply trail ammo effects", "[ranged][projectile]" )
+{
+    clear_all_state();
+
+    map &here = get_map();
+    auto &attacker = get_player_character();
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    const auto target = origin + 5 * point_east;
+    attacker.set_body();
+    attacker.setpos( origin );
+
+    const auto shape_factory = cone_factory( 15_degrees, 6.0 );
+    const auto attack_shape = shape_factory.create( rl_vec3d( origin ), rl_vec3d( target ) );
+    auto proj = projectile {};
+    proj.speed = 1000;
+    proj.range = 6;
+    proj.impact.add_damage( DT_HEAT, 1 );
+    proj.add_effect( ammo_effect_str_id( "LASER" ) );
+
+    ranged::execute_shaped_attack( *attack_shape, proj, attacker, nullptr );
+
+    CHECK( here.get_field( origin + point_east, fd_laser ) != nullptr );
+    CHECK( here.get_field( origin + 2 * point_east, fd_laser ) != nullptr );
+}
+
 TEST_CASE( "character using birdshot against another character", "[ranged]" )
 {
     const auto damage = fire_shells_at_target( itype_id( "shot_bird" ), {} );
@@ -244,6 +271,7 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
     const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
     shooter.set_body();
     shooter.setpos( shooter_pos );
+    set_time( calendar::turn_zero + 12_hours );
     shooter.set_skill_level( skill_gun, 10 );
     shooter.set_skill_level( skill_shotgun, 10 );
 

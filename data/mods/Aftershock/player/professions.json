@@ -70,8 +70,8 @@
         "entries": [
           { "item": "water_clean", "container-item": "camelbak" },
           { "item": "crowbar", "custom-flags": [ "auto_wield" ] },
-          { "item": "phase_immersion_suit", "ammo-item": "heavy_atomic_battery_cell", "charges": 10000 },
-          { "item": "dimensional_anchor", "ammo-item": "medium_atomic_battery_cell", "charges": 5000 }
+          { "item": "phase_immersion_suit", "ammo-item": "plut_cell", "charges": 2500 },
+          { "item": "dimensional_anchor", "ammo-item": "plut_cell", "charges": 1000 }
         ]
       },
       "male": [ "briefs" ],

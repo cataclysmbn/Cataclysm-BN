@@ -27,7 +27,8 @@
       { "skill": "rifle", "bonus": { "rng": [ 2, 4 ] } }
     ],
     "carry_override": "NC_robofac_generic_security_misc",
-    "worn_override": "NC_robofac_generic_security_worn"
+    "worn_override": "NC_robofac_generic_security_worn",
+    "weapon_override": "NC_robofac_security_weapon"
   },
   {
     "type": "item_group",
@@ -55,10 +56,14 @@
       { "item": "grenade", "prob": 2 },
       { "item": "PR24-extended" },
       { "item": "flashlight" },
-      { "item": "glock_17", "charges": 21, "ammo-item": "9mmP" },
-      { "item": "glock17_22", "charges": 21, "ammo-item": "9mmP" },
       { "item": "9mmP", "count": 6 }
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_robofac_security_weapon",
+    "subtype": "collection",
+    "entries": [ { "item": "glock_17", "charges": 21, "ammo-item": "9mmP" } ]
   },
   {
     "id": "TALK_HUB_SECURITY",

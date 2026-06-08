@@ -1021,6 +1021,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_multicooker_improved",
+    "name": "Plug In Improved Multi Cooker"
+  },
+  {
+    "type": "construction_group",
     "id": "install_refrigerator",
     "name": "Plug In Refrigerator"
   },
@@ -1236,8 +1241,18 @@
   },
   {
     "type": "construction_group",
+    "id": "place_firearm_kit",
+    "name": "Plug In Firearm Repair Kit"
+  },
+  {
+    "type": "construction_group",
     "id": "place_gunsmith_kit",
     "name": "Plug In Gunsmith Kit"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_con_mix",
+    "name": "Place Concrete Mixer"
   },
   {
     "type": "construction_group",
@@ -1291,6 +1306,21 @@
   },
   {
     "type": "construction_group",
+    "id": "place_analytical_set_basic",
+    "name": "Plug In Basic Analysis Kit"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_microcentrifuge",
+    "name": "Plug In  Microcentrifuge"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_dna_editor",
+    "name": "Plug In Genome Workstation"
+  },
+  {
+    "type": "construction_group",
     "id": "place_food_dehydrator",
     "name": "Plug In Food Dehydrator"
   },
@@ -1298,6 +1328,11 @@
     "type": "construction_group",
     "id": "place_food_processor",
     "name": "Plug In Food Processor"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_coffeemaker",
+    "name": "Plug In Coffeemaker"
   },
   {
     "type": "construction_group",
@@ -1321,6 +1356,11 @@
   },
   {
     "type": "construction_group",
+    "id": "place_hotplate",
+    "name": "Plug In hotplate"
+  },
+  {
+    "type": "construction_group",
     "id": "place_soldering_iron",
     "name": "Plug In soldering iron"
   },
@@ -1338,6 +1378,11 @@
     "type": "construction_group",
     "id": "place_vaccuum_sealer",
     "name": "Plug In Vaccuum Sealer"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_makeshift_sealer",
+    "name": "Plug In Makeshift Vacuum Sealer"
   },
   {
     "type": "construction_group",

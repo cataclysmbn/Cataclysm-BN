@@ -251,6 +251,34 @@
     ]
   },
   {
+    "id": "pocket_first_aid_kit",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [
+      { "item": "medical_tape", "charges": 20 },
+      { "item": "disinfectant", "charges": 10, "container-item": "bottle_plastic_small" },
+      { "item": "bandages", "charges": 6 },
+      { "item": "medical_gauze", "charges": 6 }
+    ]
+  },
+  {
+    "id": "deluxe_first_aid_kit",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [
+      { "item": "medical_tape", "charges": 20 },
+      { "item": "aspirin", "charges": 10 },
+      { "item": "disinfectant", "charges": 10, "container-item": "bottle_plastic_small" },
+      { "item": "saline", "charges": 5 },
+      { "item": "bandages", "charges": 6 },
+      { "item": "medical_gauze", "charges": 6 },
+      { "item": "gloves_medical" },
+      { "item": "mask_dust" },
+      { "item": "scissors" },
+      { "item": "booklet_firstaid" }
+    ]
+  },
+  {
     "id": "premium_contents",
     "type": "item_group",
     "subtype": "collection",

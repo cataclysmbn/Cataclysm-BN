@@ -271,6 +271,7 @@ static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { 
         { "FREEZER",                  TFLAG_FREEZER },        // This is an active freezer.
         { "ELEVATOR",                 TFLAG_ELEVATOR },       // This is an elevator.
         { "NO_MEMORY",                TFLAG_NO_MEMORY },      // This should not be added to map memory
+        { "ROAD",                     TFLAG_ROAD },           // Some floors have this flag, as do some passable transformation of otherwise impassible terrain/furniture. Very notably, open doors.
     }
 };
 
@@ -1394,6 +1395,7 @@ void map_data_common_t::load( const JsonObject &jo, const std::string &src )
     mandatory( jo, was_loaded, "description", description );
     optional( jo, was_loaded, "message", message );
     optional( jo, was_loaded, "prompt", prompt );
+    assign( jo, "light_color", light_color, is_json_check_strict( src ) );
 
     assign( jo, "flags", flags );
     assign( jo, "default_vars", default_vars );

@@ -407,5 +407,12 @@
     "field": "fd_fog",
     "intensity": 2,
     "qty": 200
+  },
+  {
+    "id": "emit_fog_kraken",
+    "type": "emit",
+    "field": "fd_fog_kraken",
+    "intensity": 3,
+    "qty": 200
   }
 ]

@@ -267,7 +267,8 @@
       "active": true
     },
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80
   },
   {
     "id": "power_armor_helmet_basic_on",
@@ -324,7 +325,8 @@
       "active": true
     },
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80
   },
   {
     "id": "power_armor_helmet_heavy_on",
@@ -381,7 +383,8 @@
     },
     "qualities": [ [ "GLARE", 1 ] ],
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80
   },
   {
     "id": "power_armor_helmet_light_on",

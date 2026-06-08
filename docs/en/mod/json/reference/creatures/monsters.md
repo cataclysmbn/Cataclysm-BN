@@ -852,7 +852,13 @@ Description of the sound made when targeting.
 
 #### "targeting_volume"
 
-Volume of the sound made when targeting.
+OBSOLETE
+
+Volume of the sound made when targeting. ( in tiles of volume )
+
+#### "targeting_volume_dB"
+
+Volume of the sound made when targeting in dB
 
 #### "no_ammo_sound"
 

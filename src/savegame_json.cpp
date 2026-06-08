@@ -77,6 +77,7 @@
 #include "lru_cache.h"
 #include "magic.h"
 #include "magic_teleporter_list.h"
+#include "map.h"
 #include "map_memory.h"
 #include "mapdata.h"
 #include "mattack_common.h"
@@ -2492,6 +2493,72 @@ void reset()
 {
     removal_list.clear();
 }
+static std::vector<std::tuple<item *, int>> split_defer;
+void defer( item *it, int cnt )
+{
+    split_defer.push_back( std::make_tuple( it, cnt ) );
+}
+
+void split_deferred()
+{
+    auto &m = get_map();
+
+    for( const auto& [it, cnt] : split_defer ) {
+        const auto pos = it->position();
+        for( auto n = 0; n < cnt; n++ ) {
+            auto tmp = item::spawn( *it );
+
+            /* Handle Vehicle */
+            const auto vp = m.veh_at( pos );
+            if( vp.has_value() ) {
+                const auto vpid = vp->part_index();
+                const auto stk = vp->vehicle().get_items( vpid );
+                if( std::ranges::contains( stk, it ) ) {
+                    tmp = vp->vehicle().add_item( vpid, std::move( tmp ) );
+                }
+                if( !tmp ) {
+                    continue;
+                }
+            }
+
+            /* Handle Player  */
+            {
+                auto &u = get_avatar();
+                if( u.has_item( *it ) ) {
+                    tmp = u.i_add_or_drop( std::move( tmp ) );
+                }
+                if( !tmp ) {
+                    continue;
+                }
+            }
+
+            /* Handle NPCs */
+            {
+                const auto npc_vec = get_overmapbuffer( m.get_bound_dimension() ).get_overmap_npcs();
+                for( const auto &p : npc_vec ) {
+                    if( p->has_item( *it ) ) {
+                        tmp = p->i_add_or_drop( std::move( tmp ) );
+                    }
+                    if( !tmp ) {
+                        break;
+                    }
+                }
+                if( !tmp ) {
+                    continue;
+                }
+            }
+
+            /* drop on map */
+            tmp = m.add_item_or_charges( pos, std::move( tmp ) );
+
+            if( tmp ) {
+                debugmsg( "failed to split charges to items: %s", it->type_name( 1 ) );
+            }
+        }
+    }
+    split_defer.clear();
+}
+
 } // namespace charge_removal_blacklist
 
 namespace to_cbc_migration
@@ -2810,11 +2877,15 @@ void item::io( Archive &archive )
     if( charges != 0 && !type->can_have_charges() ) {
         // Types that are known to have charges, but should not have them.
         // We fix it here, but it's expected from bugged saves and does not require a message.
-        if( !charge_removal_blacklist::get().contains( type->get_id() ) ) {
-            debugmsg( "Item %s was loaded with charges, but can not have any!", type->get_id() );
-        }
+        const auto to_split = charges - 1;
         charges = 0;
         curammo = nullptr;
+
+        if( !charge_removal_blacklist::get().contains( type->get_id() ) ) {
+            debugmsg( "Item %s was loaded with charges, but can not have any!", type->get_id() );
+        } else if( to_split > 0 ) {
+            charge_removal_blacklist::defer( this, to_split );
+        }
     }
 
     // Relic check. Kinda late, but that's how relics have to be

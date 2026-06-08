@@ -90,6 +90,9 @@ struct dealt_projectile_attack {
     bool suppress_damage_message = false;
 };
 
+auto apply_ammo_trail_effects( const tripoint_bub_ms &p,
+                               const std::set<ammo_effect_str_id> &effects,
+                               double chance_multiplier ) -> void;
 void apply_ammo_effects( const tripoint_bub_ms &p, const std::set<ammo_effect_str_id> &effects,
                          Creature *source );
 // Legacy. TODO: Remove

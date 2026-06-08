@@ -115,8 +115,14 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
 
         // TODO: Non-glass breaking
         // TODO: Wine glass breaking vs. entire sheet of glass breaking
-        sounds::sound( pt, 16, sounds::sound_t::combat, _( "glass breaking!" ), false, "bullet_hit",
-                       "hit_glass" );
+        sound_event se;
+        se.origin = pt;
+        se.volume = 75;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "glass breaking!" );
+        se.id = "bullet_hit";
+        se.variant = "hit_glass";
+        sounds::sound( se );
         return;
     }
 
@@ -182,10 +188,19 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
         }
 
         if( proj.has_effect( ammo_effect_HEAVY_HIT ) ) {
+            sound_event se;
+            se.origin = pt;
+            se.category = sounds::sound_t::combat;
+            se.id = "bullet_hit";
+            se.variant = "hit_wall";
             if( here.has_flag( flag_LIQUID, pt ) ) {
-                sounds::sound( pt, 10, sounds::sound_t::combat, _( "splash!" ), false, "bullet_hit", "hit_water" );
+                se.description = _( "splash!" );
+                se.volume = 60;
+                sounds::sound( se );
             } else {
-                sounds::sound( pt, 8, sounds::sound_t::combat, _( "thud." ), false, "bullet_hit", "hit_wall" );
+                se.description = _( "thud." );
+                se.volume = 70;
+                sounds::sound( se );
             }
             const trap &tr = here.tr_at( pt );
             if( tr.triggered_by_item( drop_item ) ) {
@@ -407,8 +422,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
         // Don't extend range further, miss here can mean hitting the ground near the target
         range = rl_dist( source, target );
         extend_to_range = range;
-
-        sfx::play_variant_sound( "bullet_hit", "hit_wall", sfx::get_heard_volume( target ),
+        // Take the volume of bullet impacts on walls at 90dB. Loud, but comparatively completely drowned out by the gun firing them.
+        sfx::play_variant_sound( "bullet_hit", "hit_wall", sfx::get_heard_volume( target, 90 ),
                                  sfx::get_heard_angle( target ) );
         // TODO: Z dispersion
         // If we missed, just draw a straight line.
@@ -583,6 +598,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
             }
         }
 
+        // If the target's in a vehicle and we're at a different height, hit the vehicle instead, unless you're firing down into a roof-less vehicle.
+        const bool z_level_vehicle = here.veh_at( tp ) && ( source.z() < tp.z() || ( source.z() > tp.z() &&
+                                     here.veh_at( tp )->part_with_feature( "ROOF", true ) ) );
+
         // Penalize damage and/or range on overpenetration.
         auto apply_overpenetration_penalty = [&]( bool modify_damage ) {
             traj_len *= overpenetration_modifier;
@@ -594,7 +613,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
             }
         };
 
-        if( critter != nullptr && cur_missed_by < 1.0 ) {
+        if( critter != nullptr && cur_missed_by < 1.0 && !z_level_vehicle ) {
             if( in_veh != nullptr && veh_pointer_or_null( here.veh_at( tp ) ) == in_veh &&
                 critter->is_player() ) {
                 // Turret either was aimed by the player (who is now ducking) and shoots from above
@@ -705,8 +724,9 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
             add_msg( _( "The attack bounced to %s!" ), z.get_name() );
             z.add_effect( effect_bounced, 1_turns );
             projectile_attack( proj, tp, z.bub_pos(), dispersion, origin, source_weapon, in_veh );
+            // Take the volume of a bio lightening impact at 70dB
             sfx::play_variant_sound( "fire_gun", "bio_lightning_tail",
-                                     sfx::get_heard_volume( z.bub_pos() ), sfx::get_heard_angle( z.bub_pos() ) );
+                                     sfx::get_heard_volume( z.bub_pos(), 70 ), sfx::get_heard_angle( z.bub_pos() ) );
         }
     }
     explosion_handler::get_explosion_queue().execute();

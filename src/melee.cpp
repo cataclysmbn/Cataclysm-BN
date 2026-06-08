@@ -667,7 +667,18 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
             // Make a rather quiet sound, to alert any nearby monsters
             if( !is_quiet() ) { // check martial arts silence
                 //sound generated later
-                sounds::sound( bub_pos(), 8, sounds::sound_t::combat, "whack!" );
+                sound_event se;
+                se.origin = bub_pos();
+                se.volume = 50;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "whack!" );
+                se.from_player = is_avatar();
+                se.from_npc = !se.from_player;
+                se.faction = get_faction()->id;
+                se.monfaction = get_faction()->mon_faction;
+                se.id = "misc";
+                se.variant = "puff";
+                sounds::sound( se );
             }
             std::string material = "flesh";
             if( t.is_monster() ) {
@@ -1166,6 +1177,9 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
     }
 
     int arpen = attack.damage.get_armor_pen( DT_CUT );
+    if( weap.has_flag( flag_DIAMOND ) ) {
+        arpen += cut_dam * 0.35 + 10;
+    }
     float armor_mult = attack.damage.get_armor_mult( DT_CUT );
 
     // 80%, 88%, 96%, 104%, 112%, 116%, 120%, 124%, 128%, 132%
@@ -1247,6 +1261,9 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
     float armor_mult = attack.damage.get_armor_mult( DT_STAB );
     int arpen = attack.damage.get_armor_pen( DT_STAB );
     arpen += c.mabuff_arpen_bonus( DT_STAB );
+    if( weap.has_flag( flag_DIAMOND ) ) {
+        arpen += stab_dam * 0.35 + 10;
+    }
     armor_mult *= c.mabuff_tg_armor_mult( DT_STAB );
 
     if( crit ) {
@@ -2171,8 +2188,14 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
                                    weap.tname() );
         }
 
-        sounds::sound( bub_pos(), 16, sounds::sound_t::combat, "Crack!", true, "smash_success",
-                       "smash_glass_contents" );
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = 70;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "Crack!" );
+        se.id = "smash_success";
+        se.variant = "smash_glass_contents";
+        sounds::sound( se );
         // Dump its contents on the ground
         weap.contents.spill_contents( bub_pos() );
         // Take damage

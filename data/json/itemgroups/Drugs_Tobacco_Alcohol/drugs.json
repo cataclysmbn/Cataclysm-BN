@@ -10,7 +10,8 @@
     "type": "item_group",
     "//": "Common healing items found almost everywhere",
     "items": [
-      [ "1st_aid", 5 ],
+      [ "1st_aid", 4 ],
+      [ "1st_aid_deluxe", 1 ],
       [ "aspirin", 50 ],
       [ "bandages", 50 ],
       { "item": "cotton_ball", "prob": 40, "container-item": "box_small", "charges": 20 },
@@ -93,13 +94,23 @@
     "subtype": "distribution",
     "//": "Healing items appropriate for soldiers and other paramilitary forces",
     "entries": [
-      { "item": "1st_aid", "prob": 50 },
+      { "item": "1st_aid", "prob": 40 },
+      { "item": "1st_aid_deluxe", "prob": 10 },
       { "item": "antibiotics", "prob": 20 },
       { "item": "bandages", "prob": 100 },
       { "item": "morphine", "prob": 20 },
       { "item": "quikclot", "prob": 20 },
       { "item": "smoxygen_tank", "prob": 20 },
-      { "item": "tramadol", "prob": 20 }
+      { "item": "tramadol", "prob": 20 },
+      {
+        "distribution": [
+          { "item": "rx12_injector", "charges": [ 0, 2 ], "prob": 10 },
+          { "item": "ampoule", "charges": 2, "prob": 40 },
+          { "item": "rx11_stimpack", "charges": [ 0, 5 ], "prob": 10 },
+          { "item": "stimpack_ammo", "charges": 5, "prob": 40 }
+        ],
+        "prob": 5
+      }
     ]
   },
   {
@@ -144,7 +155,8 @@
     "items": [
       [ "bandages", 50 ],
       { "item": "cotton_ball", "prob": 50, "container-item": "box_small", "charges-min": 1, "charges-max": 20 },
-      [ "1st_aid", 35 ],
+      [ "1st_aid", 28 ],
+      [ "1st_aid_deluxe", 7 ],
       [ "saline", 25 ],
       [ "contacts", 10 ],
       [ "vitamins", 75 ],
