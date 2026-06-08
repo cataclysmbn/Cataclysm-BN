@@ -629,6 +629,7 @@ auto s_next_lighting_work_id = uint64_t{1};
 auto s_logged_dxbc_lighting_checkpoints = false;
 auto s_logged_dxbc_full_transparency_upload = false;
 auto s_logged_dxbc_cycled_full_uploads = false;
+auto s_logged_dxbc_reset_lighting_resources = false;
 
 struct pending_gpu_visibility_work {
     bool active = false;
@@ -2841,6 +2842,24 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto all_levels = make_all_levels(z_count);
     auto const dxbc_lighting_checkpoints = shader_format_is_dxbc(
         preferred_fmt(SDL_GetGPUShaderFormats(device)));
+    auto const dxbc_has_resident_resources =
+        s_lighting_resources.device == device && s_lighting_resources.transparency.buffer != nullptr;
+    if (dxbc_lighting_checkpoints && !lightmap_levels.empty() && dxbc_has_resident_resources) {
+        if (!SDL_WaitForGPUIdle(device)) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: DXBC wait for idle before lighting "
+                   "resource reset failed: "
+                << SDL_GetError();
+            return {};
+        }
+        release_lighting_resources(device);
+        if (!s_logged_dxbc_reset_lighting_resources) {
+            DebugLog(DL::Info, DC::Main)
+                << "SDL_GPU: lm: DXBC resets resident lighting resources "
+                   "for each lightmap rebuild";
+            s_logged_dxbc_reset_lighting_resources = true;
+        }
+    }
 
     // ── Collect light sources ────────────────────────────────────────────────
     auto all_sources = std::vector<GpuLightSource>{};
