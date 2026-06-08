@@ -627,6 +627,7 @@ struct pending_gpu_lighting_work {
 auto s_pending_lighting_work = pending_gpu_lighting_work{};
 auto s_next_lighting_work_id = uint64_t{1};
 auto s_logged_dxbc_lighting_checkpoints = false;
+auto s_logged_dxbc_full_transparency_upload = false;
 
 struct pending_gpu_visibility_work {
     bool active = false;
@@ -2830,6 +2831,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const cache_xy = cache_x * cache_y;
     auto const z_count = OVERMAP_LAYERS;
     auto all_levels = make_all_levels(z_count);
+    auto const dxbc_lighting_checkpoints = shader_format_is_dxbc(
+        preferred_fmt(SDL_GetGPUShaderFormats(device)));
 
     // ── Collect light sources ────────────────────────────────────────────────
     auto all_sources = std::vector<GpuLightSource>{};
@@ -2864,6 +2867,16 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
     auto input_uploads = make_input_upload_plan(p, all_levels);
     clear_transparency_shader_update_marks();
+    if (dxbc_lighting_checkpoints && !input_uploads.transparency_levels.empty()
+        && input_uploads.transparency_levels != all_levels) {
+        input_uploads.transparency_levels = all_levels;
+        if (!s_logged_dxbc_full_transparency_upload) {
+            DebugLog(DL::Info, DC::Main)
+                << "SDL_GPU: lm: DXBC expands dirty transparency uploads to "
+                   "the full resident volume";
+            s_logged_dxbc_full_transparency_upload = true;
+        }
+    }
     if (!s_lighting_resources.source_map_valid && lightmap_levels.empty()) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: lm: seen-only rebuild requested before resident "
@@ -3154,8 +3167,6 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
               static_cast<int64_t>(input_uploads.vehicle_obscured_levels.size()));
     TracyPlot("GPU LM Upload KiB", static_cast<int64_t>(upload_total / 1024u));
 
-    auto const dxbc_lighting_checkpoints = shader_format_is_dxbc(
-        preferred_fmt(SDL_GetGPUShaderFormats(device)));
     if (dxbc_lighting_checkpoints && !s_logged_dxbc_lighting_checkpoints) {
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: lm: DXBC lighting checkpoints enabled for long "
