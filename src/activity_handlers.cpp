@@ -15,6 +15,7 @@
 #include <weighted_list.h>
 
 #include "action.h"
+#include "action_time_scale.h"
 #include "advanced_inv.h"
 #include "armor_layers.h"
 #include "avatar.h"
@@ -396,10 +397,10 @@ bool activity_handlers::resume_for_multi_activities( player &p )
 
 void activity_handlers::burrow_do_turn( player_activity *act, player *p )
 {
-    const auto &pos = get_map().abs_to_bub( act->placement );
+    const auto &pos = abs_to_bub( act->placement );
     sfx::play_activity_sound( "activity", "burrow",
                               sfx::get_heard_volume( abs_to_bub( act->placement ), 70 ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         sound_event se;
         se.origin = pos;
         se.volume = 65;
@@ -433,7 +434,7 @@ void activity_handlers::burrow_finish( player_activity *act, player *p )
     }
     act->set_to_null();
     p->add_msg_if_player( m_good, _( "You finish burrowing." ) );
-    here.destroy( here.abs_to_bub( pos ), true );
+    here.destroy( abs_to_bub( pos ), true );
 }
 
 static bool check_butcher_cbm( const int roll )
@@ -1748,7 +1749,7 @@ void activity_handlers::forage_finish( player_activity *act, player *p )
 
 void activity_handlers::generic_game_do_turn( player_activity * /*act*/, player *p )
 {
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         // So 30 points per play
         p->add_morale( MORALE_GAME, 2, 60, 2_hours, 30_minutes, true );
         return;
@@ -1760,7 +1761,7 @@ void activity_handlers::game_do_turn( player_activity *act, player *p )
     item &game_item = *act->targets.front();
 
     // Consume battery charges for every minute spent playing
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         int energy = game_item.ammo_required();
         energy -= game_item.ammo_consume( energy, p->bub_pos() );
         if( energy > 0 && game_item.has_flag( flag_USE_UPS ) ) {
@@ -1878,7 +1879,7 @@ void activity_handlers::pickaxe_do_turn( player_activity *act, player *p )
     const auto &pos = get_map().abs_to_bub( act->placement );
     sfx::play_activity_sound( "tool", "pickaxe", sfx::get_heard_volume( pos, 80 ) );
     // each turn is too much
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a Pickaxe at work!
         sound_event se;
         se.origin = pos;
@@ -2169,7 +2170,7 @@ void activity_handlers::start_fire_do_turn( player_activity *act, player *p )
     p->mod_moves( -p->moves );
     const firestarter_actor *actor = dynamic_cast<const firestarter_actor *>( usef->get_actor_ptr() );
     const float light = actor->light_mod( p->bub_pos() );
-    act->moves_left -= light * 100;
+    act->moves_left -= light * action_time_scale::activity_progress_per_tick();
     if( light < 0.1 ) {
         add_msg( m_bad, _( "There is not enough sunlight to start a fire now.  You stop trying." ) );
         p->cancel_activity();
@@ -2332,7 +2333,7 @@ void activity_handlers::hand_crank_do_turn( player_activity *act, player *p )
         charge_interval = 144_seconds;
     }
 
-    if( calendar::once_every( charge_interval ) ) {
+    if( action_time_scale::once_every_this_tick( charge_interval ) ) {
         p->mod_fatigue( fatigue_amount );
         if( hand_crank_item.ammo_capacity() > hand_crank_item.ammo_remaining() ) {
             const auto current = hand_crank_item.ammo_remaining();
@@ -2367,7 +2368,7 @@ void activity_handlers::vibe_do_turn( player_activity *act, player *p )
         add_msg( m_bad, _( "You have trouble breathing, and stop." ) );
     }
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         p->mod_fatigue( 1 );
         if( vibrator_item.ammo_remaining() > 0 ) {
             vibrator_item.ammo_consume( 1, p->bub_pos() );
@@ -2724,7 +2725,7 @@ void activity_handlers::train_skill_do_turn( player_activity *act, player *p )
         return;
     }
 
-    if( calendar::once_every( 1_minutes * training_skill_interval ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes * training_skill_interval ) ) {
         // pull metadata. this is probably the easiest way to get this data from the JSON definition
         std::string training_skill = p->get_value( "training_iuse_skill" );
         if( training_skill.empty() ) {
@@ -3284,7 +3285,7 @@ void activity_handlers::fish_do_turn( player_activity *act, player *p )
         caught.add( {"fish", 1}, 1 ); //Hardcoded for now, but can be expanded for magnet fishing or smthn
         rod_fish( p, caught );
     }
-    if( calendar::once_every( 60_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 60_minutes ) ) {
         p->practice( skill_survival, rng( 1, 3 ) );
     }
 
@@ -3314,12 +3315,14 @@ void activity_handlers::repair_item_do_turn( player_activity *act, player *p )
 {
     // Moves are decremented based on a combination of speed and good vision (not in the dark, farsighted, etc)
     const float vision_mod = character_funcs::fine_detail_vision_mod( *p );
-    const int effective_moves = p->moves / vision_mod;
+    const auto effective_moves = static_cast<int>(
+                                     action_time_scale::activity_progress_from_actor_moves( *p ) / vision_mod );
     if( effective_moves <= act->moves_left ) {
         act->moves_left -= effective_moves;
         p->moves = 0;
     } else {
-        p->moves -= act->moves_left * vision_mod;
+        p->moves -= action_time_scale::actor_moves_for_activity_progress( *p,
+                    act->moves_left * vision_mod );
         act->moves_left = 0;
     }
 }
@@ -3348,7 +3351,7 @@ void activity_handlers::read_do_turn( player_activity *act, player *p )
         p->moves = 0;
     }
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         safe_reference<item> &loc = act->targets[0];
         if( !loc || !loc->is_book() ) {
             p->add_msg_if_player( m_bad, _( "You lost your book!  You stop reading." ) );
@@ -3487,7 +3490,7 @@ void activity_handlers::try_sleep_do_turn( player_activity *act, player *p )
         } else if( one_in( 1000 ) ) {
             p->add_msg_if_player( _( "You toss and turn…" ) );
         }
-        if( calendar::once_every( 30_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
             try_sleep_query( act, p );
         }
     }
@@ -3526,12 +3529,20 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
     - values[1]: success
     - values[2]: max_power_level
     - values[3]: pl_skill
+    - values[4]: operation attempted
     - str_values[0]: install/uninstall
     - str_values[1]: bionic_id
     - str_values[2]: installer_name
     - str_values[3]: bool autodoc
     */
-    enum operation_values_ids {
+    enum operation_value_ids {
+        difficulty_value = 0,
+        success_value = 1,
+        max_power_value = 2,
+        pl_skill_value = 3,
+        operation_attempted_value = 4
+    };
+    enum operation_str_value_ids {
         operation_type = 0,
         cbm_id = 1,
         installer_name = 2,
@@ -3543,13 +3554,18 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
     const bool u_see = g->u.sees( p->bub_pos() ) && ( !g->u.has_effect( effect_narcosis ) ||
                        g->u.has_bionic( bio_painkiller ) || g->u.has_trait( trait_NOPAIN ) );
 
-    const int difficulty = act->values.front();
+    if( act->values.size() <= operation_attempted_value ) {
+        act->values.resize( operation_attempted_value + 1, 0 );
+    }
+
+    const auto difficulty = act->values[difficulty_value];
 
     const std::vector<bodypart_id> bps = get_occupied_bodyparts( bid );
 
-    const time_duration half_op_duration = difficulty * 10_minutes;
+    const auto half_op_moves = to_moves<int>( difficulty * 10_minutes );
     const time_duration message_freq = difficulty * 2_minutes;
-    time_duration time_left = time_duration::from_turns( act->moves_left / 100 );
+    const auto time_left = time_duration::from_turns(
+                               action_time_scale::activity_turns_for_progress( act->moves_left ) );
 
     map &here = get_map();
 
@@ -3590,10 +3606,10 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
         }
     }
 
-    if( time_left > half_op_duration ) {
+    if( act->moves_left > half_op_moves ) {
         if( !bps.empty() ) {
             for( const bodypart_id &bp : bps ) {
-                if( calendar::once_every( message_freq ) && u_see && autodoc ) {
+                if( action_time_scale::once_every_this_tick( message_freq ) && u_see && autodoc ) {
                     p->add_msg_player_or_npc( m_info,
                                               _( "The Autodoc is meticulously cutting your %s open." ),
                                               _( "The Autodoc is meticulously cutting <npcname>'s %s open." ),
@@ -3601,21 +3617,22 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
                 }
             }
         } else {
-            if( calendar::once_every( message_freq ) && u_see ) {
+            if( action_time_scale::once_every_this_tick( message_freq ) && u_see ) {
                 p->add_msg_player_or_npc( m_info,
                                           _( "The Autodoc is meticulously cutting you open." ),
                                           _( "The Autodoc is meticulously cutting <npcname> open." ) );
             }
         }
-    } else if( time_left == half_op_duration ) {
+    } else if( act->values[operation_attempted_value] == 0 ) {
+        act->values[operation_attempted_value] = 1;
         if( act->str_values[operation_type] == "uninstall" ) {
             if( u_see && autodoc ) {
                 add_msg( m_info, _( "The Autodoc attempts to carefully extract the bionic." ) );
             }
 
             if( p->has_bionic( bid ) ) {
-                p->perform_uninstall( bid, act->values[0], act->values[1],
-                                      units::from_joule( act->values[2] ), act->values[3] );
+                p->perform_uninstall( bid, act->values[difficulty_value], act->values[success_value],
+                                      units::from_joule( act->values[max_power_value] ), act->values[pl_skill_value] );
             } else {
                 debugmsg( _( "Tried to uninstall %s, but you don't have this bionic installed." ), bid.c_str() );
                 p->remove_effect( effect_under_op );
@@ -3627,7 +3644,8 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
             }
 
             if( bid.is_valid() ) {
-                p->perform_install( bid, upbid, act->values[0], act->values[1], act->values[3],
+                p->perform_install( bid, upbid, act->values[difficulty_value], act->values[success_value],
+                                    act->values[pl_skill_value],
                                     act->str_values[installer_name], bid->canceled_mutations );
             } else {
                 debugmsg( _( "%s is no a valid bionic_id" ), bid.c_str() );
@@ -3635,10 +3653,10 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
                 act->set_to_null();
             }
         }
-    } else if( act->values[1] > 0 ) {
+    } else if( act->values[success_value] > 0 ) {
         if( !bps.empty() ) {
             for( const bodypart_id &bp : bps ) {
-                if( calendar::once_every( message_freq ) && u_see && autodoc ) {
+                if( action_time_scale::once_every_this_tick( message_freq ) && u_see && autodoc ) {
                     p->add_msg_player_or_npc( m_info,
                                               _( "The Autodoc is stitching your %s back up." ),
                                               _( "The Autodoc is stitching <npcname>'s %s back up." ),
@@ -3646,14 +3664,14 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
                 }
             }
         } else {
-            if( calendar::once_every( message_freq ) && u_see && autodoc ) {
+            if( action_time_scale::once_every_this_tick( message_freq ) && u_see && autodoc ) {
                 p->add_msg_player_or_npc( m_info,
                                           _( "The Autodoc is stitching you back up." ),
                                           _( "The Autodoc is stitching <npcname> back up." ) );
             }
         }
     } else {
-        if( calendar::once_every( message_freq ) && u_see && autodoc ) {
+        if( action_time_scale::once_every_this_tick( message_freq ) && u_see && autodoc ) {
             p->add_msg_player_or_npc( m_bad,
                                       _( "The Autodoc is moving erratically through the rest of its program, not actually stitching your wounds." ),
                                       _( "The Autodoc is moving erratically through the rest of its program, not actually stitching <npcname>'s wounds." ) );
@@ -3922,9 +3940,8 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     const double cur_total_moves = std::max( 1, rec.batch_time( craft->charges, crafting_speed,
                                    assistants ) );
     // Delta progress in moves adjusted for current crafting speed
-    const double delta_progress = p->get_moves() > 0
-                                  ? p->get_moves() * base_total_moves / cur_total_moves
-                                  : 0;
+    const double delta_progress = action_time_scale::activity_progress_from_actor_moves( *p ) *
+                                  base_total_moves / cur_total_moves;
     // Current progress in moves
     const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
     // Current progress as a percent of base_total_moves to 2 decimal places
@@ -4017,8 +4034,8 @@ void activity_handlers::chop_tree_do_turn( player_activity *act, player *p )
 {
     map &here = get_map();
     sfx::play_activity_sound( "tool", "axe",
-                              sfx::get_heard_volume( here.abs_to_bub( act->placement ), 85 ) );
-    if( calendar::once_every( 1_minutes ) ) {
+                              sfx::get_heard_volume( abs_to_bub( act->placement ), 85 ) );
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a wood chopping tool at work!
         sound_event se;
         se.origin = here.abs_to_bub( act->placement );
@@ -4222,10 +4239,10 @@ void activity_handlers::jackhammer_do_turn( player_activity *act, player *p )
 {
     map &here = get_map();
     sfx::play_activity_sound( "tool", "jackhammer",
-                              sfx::get_heard_volume( here.abs_to_bub( act->placement ), 130 ) );
-    if( calendar::once_every( 1_minutes ) ) {
+                              sfx::get_heard_volume( abs_to_bub( act->placement ), 130 ) );
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         sound_event se;
-        se.origin = here.abs_to_bub( act->placement );
+        se.origin = abs_to_bub( act->placement );
         se.volume = 130;
         se.category = sounds::sound_t::destructive_activity;
         se.description = _( "TATATATATATATAT!" );//~ Sound of a jackhammer at work!
@@ -4283,7 +4300,7 @@ void activity_handlers::jackhammer_finish( player_activity *act, player *p )
 void activity_handlers::fill_pit_do_turn( player_activity *act, player *p )
 {
     sfx::play_activity_sound( "tool", "shovel", 100 );
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel filling a pit or mound at work!
         sound_event se;
         se.origin = abs_to_bub( act->placement );
@@ -4615,7 +4632,7 @@ void activity_handlers::tree_communion_do_turn( player_activity *act, player *p 
         return;
     }
     // Information is received every minute.
-    if( !calendar::once_every( 1_minutes ) ) {
+    if( !action_time_scale::once_every_this_tick( 1_minutes ) ) {
         return;
     }
     // Breadth-first search forest tiles until one reveals new overmap tiles.

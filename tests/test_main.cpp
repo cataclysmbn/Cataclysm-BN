@@ -27,6 +27,7 @@
 #include <exception>
 #include <memory>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -60,8 +61,57 @@
 #include "weather.h"
 #include "worldfactory.h"
 
+#if defined(CATA_SDL)
+#   if !defined(SDL_MAIN_HANDLED)
+#       define SDL_MAIN_HANDLED
+#   endif
+#   include "compute/gpu_platform.h"
+#   include "preload_config.h"
+#   include <SDL3/SDL.h>
+#endif
+
 using name_value_pair_t = std::pair<std::string, std::string>;
 using option_overrides_t = std::vector<name_value_pair_t>;
+
+#if defined(CATA_SDL)
+namespace
+{
+
+bool s_sdl_platform_initialized = false;
+
+auto init_test_sdl_gpu() -> void
+{
+    if( !SDL_Init( SDL_InitFlags{ SDL_INIT_VIDEO } ) ) {
+        throw std::runtime_error( string_format( "SDL_Init failed: %s", SDL_GetError() ) );
+    }
+    s_sdl_platform_initialized = true;
+
+    preload_config::load();
+    if( get_options().has_option( "COMPUTE_ACCELERATION" ) ) {
+        preload_config::set_compute_accel(
+            preload_config::compute_accel_from_string(
+                get_options().get_option( "COMPUTE_ACCELERATION" ).getValue() ) );
+    }
+
+    cata_gpu::init();
+    if( cata_gpu::get_device() == nullptr ) {
+        throw std::runtime_error(
+            "SDL_GPU test initialization failed; install or enable a hardware GPU driver or "
+            "a software Vulkan driver such as Lavapipe" );
+    }
+}
+
+auto shutdown_test_sdl_gpu() -> void
+{
+    cata_gpu::shutdown();
+    if( s_sdl_platform_initialized ) {
+        SDL_Quit();
+        s_sdl_platform_initialized = false;
+    }
+}
+
+} // namespace
+#endif
 
 // If tag is found as a prefix of any argument in arg_vec, the argument is
 // removed from arg_vec and the argument suffix after tag is returned.
@@ -139,6 +189,10 @@ static void init_global_game_state( const std::vector<mod_id> &mods,
             }
         }
     }
+
+#if defined(CATA_SDL)
+    init_test_sdl_gpu();
+#endif
     init_colors();
 
     g = std::make_unique<game>( );
@@ -283,6 +337,13 @@ int main( int argc, const char *argv[] )
 
     std::string user_dir = extract_user_dir( arg_vec );
 
+#if defined(CATA_SDL)
+    std::string gpu_backend_override = extract_argument( arg_vec, "--gpu-backend=" );
+    if( !gpu_backend_override.empty() ) {
+        preload_config::set_gpu_backend_override( gpu_backend_override );
+    }
+#endif
+
     std::string error_fmt = extract_argument( arg_vec, "--error-format=" );
     if( error_fmt == "github-action" ) {
         error_log_format = error_log_format_t::github_action;
@@ -304,6 +365,9 @@ int main( int argc, const char *argv[] )
         cata_printf( "  -D, --drop-world             Don't save the world on test failure.\n" );
         cata_printf( "  --option_overrides=n:v[,…]   Name-value pairs of game options for tests.\n" );
         cata_printf( "                               (overrides config/options.json values)\n" );
+#if defined(CATA_SDL)
+        cata_printf( "  --gpu-backend=<driver>       Override SDL_GPU backend for diagnostics.\n" );
+#endif
         cata_printf( "  --error-format=<value>       Format of error messages.  Possible values are:\n" );
         cata_printf( "                                   human-readable (default)\n" );
         cata_printf( "                                   github-action\n" );
@@ -326,6 +390,9 @@ int main( int argc, const char *argv[] )
     DebugLog( DL::Info, DC::Main ) << "Randomness seeded to: " << seed;
 
     auto _on_out_of_scope = on_out_of_scope( []() {
+#if defined(CATA_SDL)
+        shutdown_test_sdl_gpu();
+#endif
         g.reset();
         DynamicDataLoader::get_instance().unload_data();
     } );

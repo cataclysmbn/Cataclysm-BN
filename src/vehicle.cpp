@@ -23,6 +23,7 @@
 #include <vector>
 #include <ranges>
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
 #include "avatar_functions.h"
@@ -6249,7 +6250,9 @@ detached_ptr<item> vehicle::add_charges( int part, detached_ptr<item> &&itm )
     itm_copy->charges = amount;
     itm->charges -= amount;
     detached_ptr<item> remaining = add_item( part, std::move( itm_copy ) );
-    itm->charges += remaining->charges;
+    if( remaining ) {
+        itm->charges += remaining->charges;
+    }
     return itm->charges > 0 ? std::move( itm ) : detached_ptr<item>();
 }
 
@@ -6520,7 +6523,7 @@ bool vehicle::decrement_summon_timer()
         g->m.destroy_vehicle( this );
         return true;
     } else {
-        *summon_time_limit -= 1_turns;
+        *summon_time_limit -= action_time_scale::calendar_duration_this_tick();
     }
     return false;
 }

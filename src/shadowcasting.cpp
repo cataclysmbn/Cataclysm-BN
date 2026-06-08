@@ -47,7 +47,7 @@ static const exp_lookup s_openair_lookup{ LIGHT_TRANSPARENCY_OPEN_AIR };
 // physics: one z-level is ~1.8 horizontal tiles in height.
 //
 // Table layout: [dy * (Z+1) * (R+1) + dz * (R+1) + dx]
-// where R = g_max_view_distance, Z = fov_3d_z_range.
+// where R = g_max_view_distance, Z = full overmap z span.
 // Rebuilt whenever those two runtime values change.
 
 static std::mutex            s_zdist_mutex;
@@ -59,7 +59,7 @@ static void rebuild_zdist_table()
 {
     const std::lock_guard<std::mutex> lock( s_zdist_mutex );
     const int R = g_max_view_distance;
-    const int Z = fov_3d_z_range;
+    const int Z = OVERMAP_HEIGHT + OVERMAP_DEPTH;
     if( R == s_zdist_R && Z == s_zdist_Z ) {
         return;
     }
@@ -192,7 +192,7 @@ struct octant_xform_3d {
 };
 
 // The 8 octant transforms for 2D casting.  Bit i of the octant_mask passed to
-// castLightOctants_q selects k_octant_xforms[i].
+// castLightOctants selects k_octant_xforms[i].
 static constexpr std::array<octant_xform, 8> k_octant_xforms = {{
         { 0,  1,  1,  0 },
         { 1,  0,  0,  1 },
@@ -235,7 +235,7 @@ static constexpr std::array<octant_xform_3d, 16> k_zlight_xforms = {{
 // @p lookup  Active fast-path table, or null for full exp() computation.
 //            When a tile's transparency differs from lookup->transparency the
 //            cast recurses with lookup=nullptr (slow path).
-// @p Out     float or four_quadrants — selects which update_* to invoke.
+// @p Out     float — selects which update_* to invoke.
 
 template<typename Out>
 static void castLight(
@@ -405,7 +405,7 @@ static void castLight(
     }
 }
 
-// ── castLightAll / castLightAll_q ─────────────────────────────────────────────
+// ── castLightAll / castLightOctants ───────────────────────────────────────────
 
 void castLightAll(
     float *output_cache,
@@ -440,39 +440,8 @@ void castLightAll(
     }
 }
 
-void castLightAll_q(
-    four_quadrants *output_cache,
-    const float *input_array,
-    const diagonal_blocks *blocked_array,
-    int sx, int sy,
-    point_bub_ms offset, int offset_distance, float numerator,
-    const light_model &model,
-    const exp_lookup *weather_lookup )
-{
-    ZoneScoped;
-
-    for( const auto &xf : k_octant_xforms ) {
-        const exp_lookup *fast = nullptr;
-        if( model.lookup_calc != nullptr ) {
-            const point first{ offset.x() - xf.xy, offset.y() - xf.yy };
-            if( first.x >= 0 && first.y >= 0 && first.x < sx && first.y < sy ) {
-                const float t = input_array[first.x * sy + first.y];
-                if( t == LIGHT_TRANSPARENCY_OPEN_AIR ) {
-                    fast = &s_openair_lookup;
-                } else if( weather_lookup != nullptr && t == weather_lookup->transparency ) {
-                    fast = weather_lookup;
-                }
-            }
-        }
-
-        castLight<four_quadrants>( output_cache, input_array, blocked_array, sx, sy,
-                                   offset, offset_distance, numerator, model, xf,
-                                   1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast );
-    }
-}
-
-void castLightOctants_q(
-    four_quadrants *output_cache,
+void castLightOctants(
+    float *output_cache,
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
@@ -500,9 +469,9 @@ void castLightOctants_q(
                 }
             }
         }
-        castLight<four_quadrants>( output_cache, input_array, blocked_array, sx, sy,
-                                   offset, offset_distance, numerator, model, xf,
-                                   1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast );
+        castLight<float>( output_cache, input_array, blocked_array, sx, sy,
+                          offset, offset_distance, numerator, model, xf,
+                          1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast );
     }
 }
 
@@ -575,7 +544,8 @@ static void cast_zlight_segment(
         // z_start is mutable within the z loop (floor handling advances it).
         int z_start = z_start_init;
 
-        for( delta.z = z_start; delta.z <= std::min( fov_3d_z_range, z_limit ); ++delta.z ) {
+        for( delta.z = z_start; delta.z <= std::min( OVERMAP_HEIGHT + OVERMAP_DEPTH, z_limit );
+             ++delta.z ) {
             const tripoint world_offset = xf.apply( 0, delta.y, delta.z );
             tripoint current;
             current.z = offset.z() + world_offset.z;

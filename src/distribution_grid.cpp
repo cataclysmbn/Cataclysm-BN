@@ -748,7 +748,7 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
 
         if( m.inbounds( pos_local ) ) {
             m.furn_set( pos_local, qt.id );
-            return;
+            continue;
         }
 
         // Something is transforming from an unloaded map...?
@@ -790,4 +790,3 @@ void distribution_grid_tracker::update( time_point to )
     transform_queue.apply( mb, *this, get_player_character(), get_map() );
     transform_queue.clear();
 }
-

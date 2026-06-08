@@ -33,7 +33,9 @@ static auto prepare_fixed_window_wait( const time_duration &duration ) -> void
     clear_all_state();
 
     g->timed_events = timed_event_manager {};
-    calendar::turn = calendar::turn_zero + 12_hours;
+    static auto next_start_turn = calendar::turn_zero + 12_hours;
+    calendar::turn = next_start_turn;
+    next_start_turn += 1_hours;
 
     auto &weather = get_weather();
     weather.weather_id = weather_type_id( "clear" );
@@ -117,6 +119,32 @@ TEST_CASE( "fixed window activity skip completes a short wait with active creatu
     auto &timer_after = g->m.i_at( item_pos ).only_item();
     CHECK( timer_after.get_counter() <= starting_counter - to_turns<int>( duration ) );
     CHECK( timer_after.get_counter() >= starting_counter - to_turns<int>( duration ) - 1 );
+}
+
+TEST_CASE( "fixed window activity skip honors wait duration at low action scale",
+           "[activity][fixed_window][speed]" )
+{
+    const auto no_autosave = override_option( "AUTOSAVE", "false" );
+    const auto slow_global_actions = override_option( "TIME_ACTION_SCALE", "10" );
+    const auto normal_bubble_size = override_option( "REALITY_BUBBLE_SIZE",
+                                    std::to_string( g_reality_bubble_size ) );
+    const auto no_mobile_bubble = override_option( "ACTIVITY_MOBILE_BUBBLE_SIZE", "0" );
+    const auto no_idle_bubble = override_option( "ACTIVITY_IDLE_BUBBLE_SIZE", "0" );
+    const auto no_underground_bubble = override_option( "UNDERGROUND_BUBBLE_SIZE", "0" );
+    const auto no_vehicle_bubble = override_option( "VEHICLE_BUBBLE_SIZE", "0" );
+    const auto no_combat_bubble = override_option( "COMBAT_BUBBLE_SIZE", "0" );
+    const auto duration = 1_minutes;
+    prepare_fixed_window_wait( duration );
+    const auto cleanup = on_out_of_scope( []() {
+        clear_all_state();
+    } );
+
+    const auto start_turn = calendar::turn;
+
+    CHECK_FALSE( g->do_turn() );
+
+    CHECK( calendar::turn == start_turn + duration );
+    CHECK_FALSE( static_cast<bool>( g->u.activity ) );
 }
 
 TEST_CASE( "fixed window activity skip hard blockers fall back to normal turns",

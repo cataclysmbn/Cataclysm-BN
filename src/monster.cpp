@@ -8,6 +8,7 @@
 #include <tuple>
 #include <unordered_map>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "catalua_hooks.h"
@@ -236,8 +237,8 @@ monster::monster() : corpse_components( new monster_component_item_location( thi
 monster::monster( const mtype_id &id ) : monster()
 {
     type = &id.obj();
-    moves = type->speed;
     Creature::set_speed_base( type->speed );
+    add_action_move_credit( type->speed, action_move_factor() );
     hp = type->hp;
     for( auto &sa : type->special_attacks ) {
         auto &entry = special_attacks[sa.first];
@@ -2869,7 +2870,7 @@ void monster::decrement_summon_timer()
     if( *summon_time_limit <= 0_turns ) {
         die( nullptr );
     } else {
-        *summon_time_limit -= 1_turns;
+        *summon_time_limit -= action_time_scale::calendar_duration_this_tick();
     }
 }
 
@@ -2880,7 +2881,7 @@ void monster::process_turn()
     decrement_summon_timer();
     if( !is_hallucination() ) {
         for( const std::pair<const emit_id, time_duration> &e : type->emit_fields ) {
-            if( !calendar::once_every( e.second ) ) {
+            if( !action_time_scale::once_every_this_tick( e.second ) ) {
                 continue;
             }
             const emit_id emid = e.first;
@@ -2909,9 +2910,8 @@ void monster::process_turn()
             continue;
         }
 
-        if( local_attack_data.cooldown > 0 ) {
-            local_attack_data.cooldown--;
-        }
+        local_attack_data.cooldown = std::max( 0, local_attack_data.cooldown -
+                                               action_time_scale::calendar_turns_this_tick() );
     }
     // Persist grabs as long as there's an adjacent target.
     if( has_effect( effect_grabbing ) ) {
@@ -2925,7 +2925,7 @@ void monster::process_turn()
     // We update electrical fields here since they act every turn.
     if( has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
-            if( calendar::once_every( 10_turns ) ) {
+            if( action_time_scale::once_every_this_tick( 10_turns ) ) {
                 sound_event se;
                 se.origin = bub_pos();
                 se.volume = 50;
@@ -3001,7 +3001,8 @@ void monster::process_turn()
                     g->u.add_effect( effect_blind, rng( 1_minutes, 2_minutes ) );
                 }
                 add_effect( effect_supercharged, 12_hours );
-            } else if( has_effect( effect_supercharged ) && calendar::once_every( 5_turns ) ) {
+            } else if( has_effect( effect_supercharged ) &&
+                       action_time_scale::once_every_this_tick( 5_turns ) ) {
                 sound_event se;
                 se.origin = bub_pos();
                 se.volume = 80;
@@ -3017,6 +3018,11 @@ void monster::process_turn()
     }
 
     Creature::process_turn();
+}
+
+auto monster::action_move_factor() const -> int
+{
+    return action_time_scale::monster_tick_action_factor();
 }
 
 void monster::batch_turns( int n )

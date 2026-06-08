@@ -1,4 +1,4 @@
-# Leitfaden für neue Spieler
+# Leitfaden für den ersten Tag
 
 > [!TIP]
 > Solltest du zu irgendeinem Zeitpunkt mit der Tastenbelegung verwirrt sein, benutze `?`, um deine Tastenbelegung im Spiel zu überprüfen, oder

@@ -229,11 +229,18 @@
         "color": "yellow",
         "dangerous": true,
         "light_emitted": 20,
+        "light_color": "#ffd08a",
         "translucency": 0.7,
         "convection_temperature_mod": 300
       },
-      { "name": { "ctxt": "noun", "str": "fire" }, "color": "light_red", "light_emitted": 60, "translucency": 0.4 },
-      { "name": "raging fire", "color": "red", "light_emitted": 160, "translucency": 0.1 }
+      {
+        "name": { "ctxt": "noun", "str": "fire" },
+        "color": "light_red",
+        "light_emitted": 60,
+        "light_color": "#ffb05f",
+        "translucency": 0.4
+      },
+      { "name": "raging fire", "color": "red", "light_emitted": 160, "light_color": "#ff8a45", "translucency": 0.1 }
     ],
     "description_affix": "on",
     "decay_amount_factor": 3,
@@ -504,7 +511,11 @@
     "id": "fd_fire_vent",
     "type": "field_type",
     "legacy_enum_id": 17,
-    "intensity_levels": [ { "name": "fire vent", "light_emitted": 20 }, { "//": "repeat last entry" }, { "//": "repeat last entry" } ],
+    "intensity_levels": [
+      { "name": "fire vent", "light_emitted": 20, "light_color": "#ffb05f" },
+      { "//": "repeat last entry" },
+      { "//": "repeat last entry" }
+    ],
     "description_affix": "under",
     "has_fire": true,
     "phase": "gas",
@@ -523,7 +534,16 @@
     "id": "fd_flame_burst",
     "type": "field_type",
     "legacy_enum_id": 18,
-    "intensity_levels": [ { "name": { "ctxt": "noun", "str": "fire" }, "sym": "5", "color": "red", "dangerous": true, "light_emitted": 20 } ],
+    "intensity_levels": [
+      {
+        "name": { "ctxt": "noun", "str": "fire" },
+        "sym": "5",
+        "color": "red",
+        "dangerous": true,
+        "light_emitted": 20,
+        "light_color": "#ffb05f"
+      }
+    ],
     "description_affix": "on",
     "has_fire": true,
     "priority": 4,
@@ -961,13 +981,20 @@
     "type": "field_type",
     "legacy_enum_id": 38,
     "intensity_levels": [
-      { "name": "smoke", "sym": "8", "dangerous": true, "light_emitted": 20, "translucency": 1 },
-      { "name": "airborne incendiary", "color": "light_red", "light_emitted": 60, "translucency": 10 },
+      { "name": "smoke", "sym": "8", "dangerous": true, "light_emitted": 20, "light_color": "#ffd08a", "translucency": 1 },
+      {
+        "name": "airborne incendiary",
+        "color": "light_red",
+        "light_emitted": 60,
+        "light_color": "#ffb05f",
+        "translucency": 10
+      },
       {
         "name": "airborne incendiary",
         "color": "light_red_red",
         "transparent": false,
         "light_emitted": 160,
+        "light_color": "#ff8a45",
         "translucency": 0
       }
     ],

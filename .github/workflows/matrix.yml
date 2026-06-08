@@ -43,8 +43,33 @@ jobs:
         with:
           paths_ignore: '["docs/**", "doxygen_doc/**", "lgtm/**", "utilities/**", "scripts/**", "**.md", "**.mdx"]'
 
-  varied_builds:
+  shader-artifacts:
     needs: skip-duplicates
+    name: Generate shader artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shadercross dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev
+
+      - name: Install shadercross
+        run: bash build-scripts/install-shadercross-vcpkg.sh
+
+      - name: Generate shaders
+        run: bash build-scripts/generate-shaders.sh
+
+      - name: Upload generated shaders
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-shaders-ci
+          path: data/shaders/
+          if-no-files-found: error
+
+  varied_builds:
+    needs: [skip-duplicates, shader-artifacts]
     strategy:
       fail-fast: ${{ github.ref_name == 'main' }}
       max-parallel: ${{ github.ref_name == 'main' && 20 || 2 }}
@@ -82,11 +107,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Download generated shaders
+        if: ${{ env.SKIP == 'false' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders-ci
+          path: data/shaders
+
       - name: install dependencies (ubuntu)
         if: ${{ env.SKIP == 'false' }}
         run: |
           sudo apt-get update
-          sudo apt-get install gcc-14 libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev ninja-build
+          sudo apt-get install -y gcc-14 libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev ninja-build libvulkan-dev mesa-vulkan-drivers xvfb autoconf autoconf-archive automake libtool libltdl-dev
           sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
 
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
@@ -190,8 +222,14 @@ jobs:
         if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
         run: |
           # Run tests using parallel execution
+          Xvfb :99 -screen 0 1280x1024x24 &
+          xvfb_pid=$!
+          trap 'kill "$xvfb_pid" 2>/dev/null || true' EXIT
+          export DISPLAY=:99
+          sleep 1
+
           test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
-          test_opts="--min-duration 20 --use-colour yes --rng-seed time --error-format=github-action"
+          test_opts="--min-duration 20 --use-colour yes --rng-seed time --error-format=github-action --gpu-backend=software"
 
           parallel --verbose --linebuffer \
             "$test_bin $test_opts --user-dir=test_user_dir_{#} {}" \
