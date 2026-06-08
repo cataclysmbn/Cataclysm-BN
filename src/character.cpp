@@ -5482,6 +5482,12 @@ void Character::update_health( int external_modifiers )
 
     float effective_healthy_mod = get_healthy_mod();
 
+    if( has_active_bionic( bio_leukocyte ) ) {
+        // Side effect: dependency
+        mod_healthy_mod( -50, -200 );
+        effective_healthy_mod = 100;
+    }
+
     // Apply enchantment healthy_rate as a multiplier to the target health level
     // healthy_rate > 1.0 boosts health toward max, < 1.0 reduces it toward negative
     float enchant_healthy_rate = bonus_from_enchantments( 1.0, enchant_vals::mod::HEALTHY_MULT );
