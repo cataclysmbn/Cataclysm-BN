@@ -8454,7 +8454,7 @@ void iuse_paint_stuff_config::set_color( item &it )
     if( lst.ret >= 0 ) {
         const auto col = RGBColor::try_parse( lst.entries[lst.ret].txt ).value_or( RGBColor{} );
         it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, col );
-        colors_to_vars( it.item_vars(), RGBColorPair{.bg=col, .fg=col}, both );
+        colors_to_vars( it.item_vars(), RGBColorPair{.bg = col, .fg = col}, both );
     }
 }
 
