@@ -3147,9 +3147,10 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         download_lm_levels || download_player_light || download_colored_light
         || !seen_download_levels.empty();
     auto const deferred_download_copy = dxbc_backend && needs_download_copy;
-    auto const lm_download_resource_bytes = deferred_download_copy
-        ? std::max(lm_level_bytes, static_cast<Uint32>(sizeof(uint32_t)))
-        : std::max(lm_download_bytes, Uint32{1});
+    auto const lm_download_resource_bytes =
+        deferred_download_copy
+            ? std::max(lm_level_bytes, static_cast<Uint32>(sizeof(uint32_t)))
+            : std::max(lm_download_bytes, Uint32{1});
     auto upload_total = source_upload_bytes;
     upload_total += colored_source_upload_bytes;
     upload_total += transparency_upload_bytes;
