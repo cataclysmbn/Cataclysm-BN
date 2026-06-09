@@ -104,6 +104,8 @@ jobs:
         run: bash build-scripts/install-shadercross-vcpkg.sh
 
       - name: Generate shaders
+        env:
+          SHADER_FORMATS: spirv msl dxil
         run: bash build-scripts/generate-shaders.sh
 
       - name: Upload generated shaders
@@ -438,13 +440,21 @@ jobs:
       - name: Build CBN (windows msvc)
         if: runner.os == 'Windows'
         run: |
-          $targets = @("cataclysm-bn-tiles")
+          $targets = @("cata_shaders", "cataclysm-bn-tiles")
           if ("${{ inputs.run-tests }}" -eq "true") {
             $targets += "cata_test-tiles"
           }
           cmake --build "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" `
             --config Release `
             --target $targets
+
+      - name: Verify Windows shader artifacts
+        if: runner.os == 'Windows'
+        run: |
+          $shader = "${{ github.workspace }}/data/shaders/lm_pack_visibility_compute.dxbc"
+          if (-not (Test-Path $shader)) {
+            throw "Required DXBC shader was not generated: $shader"
+          }
 
       - name: Verify ccache compatibility (windows msvc)
         if: runner.os == 'Windows'

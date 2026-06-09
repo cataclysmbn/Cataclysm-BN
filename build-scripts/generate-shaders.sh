@@ -4,7 +4,21 @@ set -euo pipefail
 shadercross="${SHADERCROSS:-shadercross}"
 source_dir="${1:-src/shaders}"
 output_dir="${2:-data/shaders}"
-formats="${3:-${SHADER_FORMATS:-spirv msl dxil dxbc}}"
+
+default_formats="spirv msl dxil"
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*|Windows_NT)
+        default_formats="spirv msl dxil dxbc"
+        ;;
+esac
+formats="${3:-${SHADER_FORMATS:-${default_formats}}}"
+
+host="$(uname -s)"
+if [[ " ${formats} " == *" dxbc "* ]] && [[ "${host}" != MINGW* && "${host}" != MSYS* && "${host}" != CYGWIN* && "${host}" != Windows_NT ]]; then
+    echo "DXBC shader generation requires a Windows host with D3DCompile available." >&2
+    echo "Set SHADER_FORMATS without dxbc on this host, or generate DXBC in a Windows build." >&2
+    exit 1
+fi
 
 if ! command -v "${shadercross}" >/dev/null 2>&1; then
     echo "shadercross executable not found: ${shadercross}" >&2

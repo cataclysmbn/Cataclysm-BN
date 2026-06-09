@@ -59,6 +59,8 @@ jobs:
         run: bash build-scripts/install-shadercross-vcpkg.sh
 
       - name: Generate shaders
+        env:
+          SHADER_FORMATS: spirv msl dxil
         run: bash build-scripts/generate-shaders.sh
 
       - name: Upload generated shaders
