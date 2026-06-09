@@ -1323,8 +1323,8 @@ void vehicle::pldrive( Character &driver, tripoint_rel_veh p )
             cruise_thrust( -p.y() * thr_amount );
         } else {
             thrust( -p.y() );
+            driver.moves -= action_time_scale::vehicle_control_cost( driver, 100 );
         }
-        driver.moves -= action_time_scale::vehicle_control_cost( driver, 100 );
     }
 
     // TODO: Actually check if we're on land on water (or disable water-skidding)

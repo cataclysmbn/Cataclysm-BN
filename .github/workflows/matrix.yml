@@ -21,6 +21,9 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  LLVM_VERSION: "22"
+
 jobs:
   skip-duplicates:
     continue-on-error: true
@@ -77,21 +80,21 @@ jobs:
       max-parallel: ${{ github.ref_name == 'main' && 20 || 2 }}
       matrix:
         include:
-          - title: gcc, curses
+          - title: clang, curses
             preset: ci-curses
             os: ubuntu-latest
             tiles: 0
             test-stage: 1
             ccache_limit: 2G
-            ccache_key: linux-gcc-curses
+            ccache_key: linux-clang-curses
             always-run: true
 
-          - title: gcc, tiles, i18n
+          - title: clang, tiles, i18n
             preset: ci-tiles
             os: ubuntu-latest
             tiles: 1
             ccache_limit: 2G
-            ccache_key: linux-gcc-tiles
+            ccache_key: linux-clang-tiles
             upload-artifact: true
 
     name: ${{ matrix.title }}
@@ -120,12 +123,22 @@ jobs:
         if: ${{ env.SKIP == 'false' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-14 libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev ninja-build libvulkan-dev mesa-vulkan-drivers xvfb autoconf autoconf-archive automake libtool libltdl-dev
+          sudo apt-get install -y libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb autoconf autoconf-archive automake libtool libltdl-dev
           sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
 
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-          g++ --version
+      - name: Setup LLVM build tools
+        if: ${{ env.SKIP == 'false' }}
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          clang-format: ${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          setup-cpp: false
+
+      - name: Show Clang version
+        if: ${{ env.SKIP == 'false' }}
+        run: clang++ --version
 
       #- name: Install SDL3 (ubuntu)
       #  if: ${{ env.SKIP == 'false' }}
@@ -143,7 +156,7 @@ jobs:
             libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev \
             libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev
 
-      # problem matchers are only ran on GCC to reduce error spam
+      # Problem matchers are only run on the always-on validation leg to reduce error spam.
       - name: add problem matcher
         if: ${{ matrix.always-run == true }}
         run: |
@@ -168,8 +181,6 @@ jobs:
           max-size: ${{ matrix.ccache_limit }}
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
-
-      - uses: ammaraskar/gcc-problem-matcher@master
 
       - name: run JSON syntax validation (test-stage only)
         if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}

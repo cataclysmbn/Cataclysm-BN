@@ -6584,7 +6584,9 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                    !critter.has_effect( effect_ridden ) ) {
                 ++monmove_move_iterations;
                 critter.made_footstep = false;
-                if( !critter.has_effect( effect_ai_controlled ) ) {
+                const auto use_direct_monster_move =
+                    critter.has_effect( effect_ai_controlled ) || critter.type->lua_ai.has_value();
+                if( !use_direct_monster_move ) {
                     if( !used_preplan ) {
                         used_preplan = true;
                         const auto it = plan_index.find( &critter );

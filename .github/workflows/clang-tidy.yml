@@ -31,8 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CMAKE: 1
-      CLANG: /usr/bin/clang++-20
-      COMPILER: /usr/bin/clang++-20
+      LLVM_VERSION: "22"
+      CLANG: clang++
+      COMPILER: clang++
       TILES: 1
       SOUND: 1
       BUILD_PATH: "build"
@@ -46,17 +47,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            cmake gettext ninja-build mold jq \
+            gettext mold jq \
             sqlite3 libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb \
             autoconf autoconf-archive automake libtool libltdl-dev
 
-          VERSION=20
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x ./llvm.sh
-          sudo ./llvm.sh $VERSION all
-          for bin in clang clang++ clang-format clang-tidy run-clang-tidy llvm-config; do
-            sudo update-alternatives --install /usr/bin/$bin $bin /usr/bin/$bin-$VERSION 200
-          done
+      - name: Setup LLVM lint tools
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          clang-format: ${{ env.LLVM_VERSION }}
+          clang-tidy: ${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          setup-cpp: false
+
+      - name: Show LLVM tool versions
+        run: |
+          clang++ --version
+          clang-format --version
+          clang-tidy --version
+          llvm-config --version
 
       #- name: Install SDL3
       #  run: |
@@ -93,8 +103,6 @@ jobs:
           # (See https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md)
           echo "::add-matcher::build-scripts/problem-matchers/catch2.json"
           echo "::add-matcher::build-scripts/problem-matchers/debugmsg.json"
-
-      - uses: ammaraskar/gcc-problem-matcher@master
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }
