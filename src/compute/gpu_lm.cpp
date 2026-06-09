@@ -113,8 +113,8 @@ auto packed_visibility_level_bytes(int const cache_xy) -> Uint32 {
 }
 
 auto unpack_packed_visibility_level(
-    void const* const mapped, std::size_t const tiles,
-    std::vector<lit_level>& destination) -> void {
+    void const* const mapped, std::size_t const tiles, std::vector<lit_level>& destination)
+    -> void {
     auto const* const words = static_cast<uint32_t const*>(mapped);
     auto tile = std::size_t{0};
     auto destination_span = std::span<lit_level>{destination.data(), destination.size()}.first(
@@ -730,8 +730,8 @@ struct serialized_readback_request {
 
 template <typename CopyResult>
 auto readback_buffer_region(
-    SDL_GPUDevice* const device, serialized_readback_request const& request,
-    CopyResult copy_result) -> bool {
+    SDL_GPUDevice* const device, serialized_readback_request const& request, CopyResult copy_result)
+    -> bool {
     auto* const cmd = SDL_AcquireGPUCommandBuffer(device);
     if (cmd == nullptr) {
         DebugLog(DL::Error, DC::Main)
@@ -983,8 +983,8 @@ struct batched_readback_chunk {
 
 template <typename CopyChunk>
 auto readback_buffer_region_chunked_batched(
-    SDL_GPUDevice* const device, chunked_readback_request const& request,
-    CopyChunk copy_chunk) -> bool {
+    SDL_GPUDevice* const device, chunked_readback_request const& request, CopyChunk copy_chunk)
+    -> bool {
     auto const chunk_bytes = request.chunk_bytes == 0 ? request.region.size : request.chunk_bytes;
     if (!ensure_serialized_readback_downloads(device, chunk_bytes)) { return false; }
 
