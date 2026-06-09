@@ -2877,8 +2877,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         s_logged_dxbc_single_submit_lighting = true;
     }
     if (dxbc_stage_checkpoints && !s_logged_dxbc_stage_checkpoints) {
-        DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: lm: DXBC stage checkpoints enabled for diagnostics";
+        DebugLog(DL::Info, DC::Main) << "SDL_GPU: lm: DXBC stage checkpoints enabled for "
+                                        "diagnostics";
         s_logged_dxbc_stage_checkpoints = true;
     }
 
@@ -3976,8 +3976,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 && !submit_dxbc_checkpoint("static lm merge")) {
                 return {};
             }
-            if (!submit_dxbc_stage_checkpoint("static lm merge",
-                                              !static_merge_is_final_dxbc_stage)) {
+            if (!submit_dxbc_stage_checkpoint(
+                    "static lm merge", !static_merge_is_final_dxbc_stage)) {
                 return {};
             }
 
@@ -4004,7 +4004,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 }
                 auto const colored_raytrace_is_final_dxbc_stage =
                     !rebuild_seen && deferred_download_copy;
-                if (!colored_raytrace_buckets.empty() && !submit_dxbc_stage_checkpoint(
+                if (!colored_raytrace_buckets.empty()
+                    && !submit_dxbc_stage_checkpoint(
                         "colored raytrace", !colored_raytrace_is_final_dxbc_stage)) {
                     return {};
                 }
@@ -4557,9 +4558,10 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
         static_cast<Uint32>(visibility_download_levels.size()) * uint_level_bytes;
     auto const visibility_download_total_bytes = visibility_download_bytes;
     auto const deferred_visibility_download = dxbc_backend && !visibility_download_levels.empty();
-    auto const visibility_download_resource_bytes = deferred_visibility_download
-        ? uint_level_bytes
-        : std::max(visibility_download_total_bytes, Uint32{1});
+    auto const visibility_download_resource_bytes =
+        deferred_visibility_download
+            ? uint_level_bytes
+            : std::max(visibility_download_total_bytes, Uint32{1});
     auto vehicle_optics = collect_vehicle_optics(
         *p.m, tripoint_bub_ms{p.player_x, p.player_y, p.player_zlev}, p.zlev);
     if (!vehicle_optics.empty() && !ensure_vehicle_optics_pipeline(device)) { return {}; }
@@ -4909,8 +4911,8 @@ auto finish_gpu_visibility(SDL_GPUDevice* const device, gpu_visibility_work cons
             std::string_view label;
         };
 
-        auto readback_visibility_level = [&](dxbc_visibility_readback_request const& request,
-                                             auto const& copy_result) -> bool {
+        auto readback_visibility_level =
+            [&](dxbc_visibility_readback_request const& request, auto const& copy_result) -> bool {
             auto* const cmd = SDL_AcquireGPUCommandBuffer(device);
             if (cmd == nullptr) {
                 DebugLog(DL::Error, DC::Main)
