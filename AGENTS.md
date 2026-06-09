@@ -25,7 +25,6 @@ const auto foo = 3; //< **MUST** use `auto` for type. `const` **MUST** come befo
 
 auto bar() -> int; //< **MUST** use trailing return types.
 using my_callback_t = std::function<auto( int ) -> bool>; //< **MUST** use trailing return types in type aliases.
-auto baz() -> int&; // *NOPAD*  //< **MUST** append `// *NOPAD*` for references/pointer returns to prevent astyle bugs.
 auto qux() -> int { return 42; } //< **MUST** use single-line functions whenever possible.
 
 auto qux = my_struct{ .a = 1, .b = 2 }; //< **MUST** use designated initializers.
@@ -38,7 +37,7 @@ auto may_fail() -> std::expected<int, std::string>; //< **MUST** use `std::expec
 struct comparable {
   int x;
   int y;
-  auto operator<=>( const comparable & ) const = default; // *NOPAD* //< **MUST** use `<=>` for comparisons and append `// *NOPAD*` at the end to prevent astyle bugs.
+  auto operator<=>( const comparable & ) const = default; //< **MUST** use `<=>` for comparisons.
 }
 
 auto values = xs
@@ -63,6 +62,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 
 - **SHOULD NOT** modify existing headers with >10 usages. Create new header with pure functions.
 - **MUST** use modern C++23 features.
+- Source subdirectories use clang-format 22; omit astyle-only padding/directive comments there.
 - **MUST** keep every Lua function typed with EmmyLua/LuaLS annotations, including existing and local helper functions: `---@param`, `---@return`, and table `---@class`/`---@field` shapes where parameters are tables. Before touching Lua, inspect the file's annotation style and preserve complete function typing.
 - **MUST** test C++ Lua binding behavior with real bound objects when adding or changing bindings; Lua-only mocks may supplement but must not be the sole validation for binding correctness.
 - **MUST** use options struct for functions with more than 3 parameters. Use designated initializers at call sites.

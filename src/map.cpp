@@ -126,8 +126,8 @@
 #include "weighted_list.h"
 
 #if defined( CATA_SDL )
-#include "compute/gpu_lm.h"
-#include "compute/gpu_platform.h"
+#include "compute/gpu/gpu_lm.h"
+#include "compute/gpu/gpu_platform.h"
 #endif
 
 struct ammo_effect;

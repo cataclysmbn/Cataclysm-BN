@@ -59,7 +59,7 @@ class ui_adaptor;
 #       define SDL_MAIN_HANDLED
 #   endif
 #   include <SDL3/SDL.h>
-#   include "compute/gpu_platform.h"
+#   include "compute/gpu/gpu_platform.h"
 #endif
 #if defined(TILES)
 #   include <SDL3/SDL_main.h>

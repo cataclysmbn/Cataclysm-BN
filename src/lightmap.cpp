@@ -58,9 +58,9 @@
 #include "vpart_range.h"
 #include "weather.h"
 #if defined( CATA_SDL )
-#include "compute/gpu_lm.h"
-#include "compute/gpu_platform.h"
-#include "compute/gpu_transparency.h"
+#include "compute/gpu/gpu_lm.h"
+#include "compute/gpu/gpu_platform.h"
+#include "compute/gpu/gpu_transparency.h"
 #endif
 
 namespace

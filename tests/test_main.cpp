@@ -65,7 +65,7 @@
 #   if !defined(SDL_MAIN_HANDLED)
 #       define SDL_MAIN_HANDLED
 #   endif
-#   include "compute/gpu_platform.h"
+#   include "compute/gpu/gpu_platform.h"
 #   include "preload_config.h"
 #   include <SDL3/SDL.h>
 #endif

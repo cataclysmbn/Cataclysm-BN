@@ -211,8 +211,8 @@
 #include "location_vector.h"
 #include "monfaction.h"
 #if defined( CATA_SDL )
-#include "compute/gpu_lm.h"
-#include "compute/gpu_platform.h"
+#include "compute/gpu/gpu_lm.h"
+#include "compute/gpu/gpu_platform.h"
 #endif
 class computer;
 

@@ -13,6 +13,7 @@ static const float LIGHT_TRANSPARENCY_OPEN_AIR = 0.038376418216;
 static const float LIGHT_TRANSPARENCY_SOLID    = 0.0;
 static const uint  SEEY                        = 12;
 
+// Must match transparency_submap_ids_in in gpu/gpu_transparency.cpp exactly.
 // Split so each StructuredBuffer stride stays inside legacy D3D limits.
 struct TransparencySubmapIdsIn
 {
