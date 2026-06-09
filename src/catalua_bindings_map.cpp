@@ -423,8 +423,8 @@ void cata::detail::reg_map( sol::state &lua )
             return m.add_item_or_charges( tripoint_bub_ms( p ), std::move( it ) );
         } ) );
         luna::set_fx( ut, "clear_items_at", sol::overload(
-        []( map & m, const tripoint_bub_ms & p ) -> void { m.i_clear( p ); },
-        []( map & m, const tripoint & p ) -> void { m.i_clear( tripoint_bub_ms( p ) ); } ) );
+                          []( map & m, const tripoint_bub_ms & p ) -> void { m.i_clear( p ); },
+                          []( map & m, const tripoint & p ) -> void { m.i_clear( tripoint_bub_ms( p ) ); } ) );
 
         luna::set_fx( ut, "get_items_at", sol::overload(
         []( map & m, const tripoint_bub_ms & p ) {

@@ -357,8 +357,9 @@ void cata::detail::reg_monster( sol::state &lua )
         []( monster & mon, const tripoint & p ) -> void {
             mon.set_dest( tripoint_bub_ms( p ) );
         } ) );
-        luna::set_fx( ut, "set_target", []( monster & mon, Creature *target ) -> void {
-            if( target == nullptr ) {
+        luna::set_fx( ut, "set_target", []( monster & mon, Creature * target ) -> void {
+            if( target == nullptr )
+            {
                 mon.unset_dest();
                 return;
             }
@@ -373,12 +374,12 @@ void cata::detail::reg_monster( sol::state &lua )
             mon.execute_action( action );
         } );
         luna::set_fx( ut, "move_to", sol::overload(
-        []( monster & mon, const tripoint_bub_ms & p, bool force, bool step_on_critter,
+                          []( monster & mon, const tripoint_bub_ms & p, bool force, bool step_on_critter,
         float stagger_adjustment ) -> bool {
             return mon.move_to( p, force, step_on_critter, stagger_adjustment );
         },
         []( monster & mon, const tripoint & p, bool force, bool step_on_critter,
-        float stagger_adjustment ) -> bool {
+            float stagger_adjustment ) -> bool {
             return mon.move_to( tripoint_bub_ms( p ), force, step_on_critter, stagger_adjustment );
         } ) );
         luna::set_fx( ut, "bash_at", sol::overload(
@@ -1345,12 +1346,12 @@ void cata::detail::reg_npc( sol::state &lua )
         SET_FX_T( can_move_to, bool( const tripoint_bub_ms &, bool ) const );
 
         luna::set_fx( ut, "set_move_target", sol::overload(
-        []( npc & npchar, const tripoint_bub_ms & p,
+                          []( npc & npchar, const tripoint_bub_ms & p,
         sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
             return npchar.update_path( p, no_bashing.value_or( false ), force.value_or( true ) );
         },
         []( npc & npchar, const tripoint & p,
-        sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
+            sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
             return npchar.update_path( tripoint_bub_ms( p ), no_bashing.value_or( false ),
                                        force.value_or( true ) );
         } ) );

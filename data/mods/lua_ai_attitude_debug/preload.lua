@@ -23,26 +23,20 @@ local modes = {
 ---@return LuaAiDebugMode|nil
 local function mode_by_id(id)
   for _, m in ipairs(modes) do
-    if m.id == id then
-      return m
-    end
+    if m.id == id then return m end
   end
   return nil
 end
 
 ---@param pt Tripoint
 ---@return string
-local function serialize_tripoint(pt)
-  return string.format("%d,%d,%d", pt.x, pt.y, pt.z)
-end
+local function serialize_tripoint(pt) return string.format("%d,%d,%d", pt.x, pt.y, pt.z) end
 
 ---@param str string|nil
 ---@return Tripoint|nil
 local function deserialize_tripoint(str)
   local x, y, z = string.match(str or "", "(-?%d+),(-?%d+),(-?%d+)")
-  if x ~= nil then
-    return Tripoint.new(tonumber(x), tonumber(y), tonumber(z))
-  end
+  if x ~= nil then return Tripoint.new(tonumber(x), tonumber(y), tonumber(z)) end
   return nil
 end
 
@@ -51,9 +45,7 @@ end
 ---@return boolean
 local function safe_step(mon, dest)
   local occupant = gapi.get_creature_at(dest, true)
-  if occupant ~= nil and occupant ~= mon then
-    return false
-  end
+  if occupant ~= nil and occupant ~= mon then return false end
   return mon:move_to(dest, false, false, 1.0)
 end
 
@@ -70,21 +62,15 @@ local function choose_mode()
     end
   end
   local chosen = menu:query()
-  if chosen < 0 or modes[chosen] == nil then
-    return nil
-  end
+  if chosen < 0 or modes[chosen] == nil then return nil end
   return modes[chosen].id
 end
 
 ---@param val integer
 ---@return integer
 local function sign(val)
-  if val > 0 then
-    return 1
-  end
-  if val < 0 then
-    return -1
-  end
+  if val > 0 then return 1 end
+  if val < 0 then return -1 end
   return 0
 end
 
@@ -105,9 +91,7 @@ ai_behaviors.register({
   sign = sign,
 })
 
-mod.get_mode = function()
-  return storage.mode
-end
+mod.get_mode = function() return storage.mode end
 
 mod.set_mode = function(new_mode)
   local m = mode_by_id(new_mode)
@@ -173,9 +157,7 @@ mod.use_remote = function(_who, _item, _pos)
     storage.fetch_target = ""
     storage.fetch_item = ""
     storage.drop_target = ""
-    if new_mode ~= "mine" then
-      storage.mine_center = ""
-    end
+    if new_mode ~= "mine" then storage.mine_center = "" end
   end
   if new_mode == "attack" then
     attack_target = mod.prompt_attack_target()
@@ -220,9 +202,7 @@ mod.set_nearby_modes = function(mode, fetch, attack_target, mine_center)
   storage.attack_target = attack_target or ""
   storage.mine_center = mine_center or storage.mine_center or ""
   local avatar = gapi.get_avatar()
-  if avatar == nil then
-    return
-  end
+  if avatar == nil then return end
   local here = gapi.get_map()
   for _, pt in ipairs(here:points_in_radius(avatar:get_pos_ms(), 15)) do
     local mon = gapi.get_monster_at(pt, true)
@@ -319,9 +299,7 @@ mod.use_selector = function(_who, _item, _pos)
     storage.fetch_target = ""
     storage.fetch_item = ""
     storage.drop_target = ""
-    if new_mode ~= "mine" then
-      storage.mine_center = ""
-    end
+    if new_mode ~= "mine" then storage.mine_center = "" end
   end
   if new_mode == "attack" then
     attack_target = mod.prompt_attack_target()
@@ -332,10 +310,6 @@ mod.use_selector = function(_who, _item, _pos)
   return 0
 end
 
-game.iuse_functions["LUA_AI_DEBUG_REMOTE"] = function(...)
-  return mod.use_remote(...)
-end
+game.iuse_functions["LUA_AI_DEBUG_REMOTE"] = function(...) return mod.use_remote(...) end
 
-game.iuse_functions["LUA_AI_DEBUG_SELECTOR"] = function(...)
-  return mod.use_selector(...)
-end
+game.iuse_functions["LUA_AI_DEBUG_SELECTOR"] = function(...) return mod.use_selector(...) end

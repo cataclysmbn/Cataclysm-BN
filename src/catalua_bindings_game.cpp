@@ -195,8 +195,8 @@ void cata::detail::reg_game_api( sol::state &lua )
         return g->place_critter_around( id, tripoint_bub_ms( p ), radius );
     } ) );
     luna::set_fx( lib, "spawn_hallucination", sol::overload(
-    []( const tripoint_bub_ms & p ) -> bool { return g->spawn_hallucination( p ); },
-    []( const tripoint & p ) -> bool { return g->spawn_hallucination( tripoint_bub_ms( p ) ); } ) );
+                      []( const tripoint_bub_ms & p ) -> bool { return g->spawn_hallucination( p ); },
+                      []( const tripoint & p ) -> bool { return g->spawn_hallucination( tripoint_bub_ms( p ) ); } ) );
     luna::set_fx( lib, "get_character_at", sol::overload(
     []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> Character * {
         return g->critter_at<Character>( p, allow_hallucination.value_or( false ) );

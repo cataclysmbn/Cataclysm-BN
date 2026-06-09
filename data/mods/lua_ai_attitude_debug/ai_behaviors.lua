@@ -34,27 +34,17 @@ function ai_behaviors.register(ctx)
   game.monster_attitude_functions["lua_attitude_debug_mode"] = function(_mon, target)
     local mode = _mon:get_value("lua_ai_mode")
     if mode == "" then mode = storage.mode or "attack" end
-    if target == nil then
-      return MonsterAttitude.MATT_IGNORE
-    end
-    if mode == "ignore" then
-      return MonsterAttitude.MATT_IGNORE
-    end
-    if mode == "follow" or mode == "fetch" then
-      return MonsterAttitude.MATT_FOLLOW
-    end
+    if target == nil then return MonsterAttitude.MATT_IGNORE end
+    if mode == "ignore" then return MonsterAttitude.MATT_IGNORE end
+    if mode == "follow" or mode == "fetch" then return MonsterAttitude.MATT_FOLLOW end
     return MonsterAttitude.MATT_ATTACK
   end
 
   game.monster_attitude_functions["lua_attitude_dance"] = function(_mon, target)
     if _mon:get_value("lua_dance_angry") == "1" or _mon:has_effect(effect_hit_by_player) then
       _mon:set_value("lua_dance_angry", "1")
-      if target == nil then
-        return MonsterAttitude.MATT_ATTACK
-      end
-      if target:is_avatar() then
-        return MonsterAttitude.MATT_ATTACK
-      end
+      if target == nil then return MonsterAttitude.MATT_ATTACK end
+      if target:is_avatar() then return MonsterAttitude.MATT_ATTACK end
       return MonsterAttitude.MATT_IGNORE
     end
     return MonsterAttitude.MATT_IGNORE
@@ -65,9 +55,7 @@ function ai_behaviors.register(ctx)
     if type_id == "mon_lua_ai_debug" then
       return game.monster_attitude_functions["lua_attitude_debug_mode"](_mon, target)
     end
-    if type_id == "mon_lua_dancer" then
-      return game.monster_attitude_functions["lua_attitude_dance"](_mon, target)
-    end
+    if type_id == "mon_lua_dancer" then return game.monster_attitude_functions["lua_attitude_dance"](_mon, target) end
     if type_id == "mon_lua_hoarder" then
       return game.monster_attitude_functions["lua_attitude_hoarder"](_mon, target)
     end
@@ -99,9 +87,7 @@ function ai_behaviors.register(ctx)
     local function maybe_step_toward(dest, allow_attack)
       local step = Tripoint.new(pos.x + sign(dest.x - pos.x), pos.y + sign(dest.y - pos.y), pos.z)
       mon:set_target(avatar)
-      if step.x == pos.x and step.y == pos.y and step.z == pos.z then
-        return false
-      end
+      if step.x == pos.x and step.y == pos.y and step.z == pos.z then return false end
       return try_step(step, allow_attack)
     end
     local drop_target_str = mon:get_value("lua_ai_drop_target")
@@ -118,9 +104,7 @@ function ai_behaviors.register(ctx)
       if dist <= 1 then
         for _, it in ipairs(carrying) do
           local detached = mon:remove_item(it)
-          if detached ~= nil then
-            here:add_item(drop_target, detached)
-          end
+          if detached ~= nil then here:add_item(drop_target, detached) end
         end
         mon:set_value("lua_ai_drop_target", "")
         mon:set_value("lua_ai_fetch_target", "")
@@ -145,9 +129,7 @@ function ai_behaviors.register(ctx)
         mon:mod_moves(-50)
         return true
       end
-      if maybe_step_toward(target, false) then
-        return true
-      end
+      if maybe_step_toward(target, false) then return true end
       mon:mod_moves(-50)
       return true
     end
@@ -188,18 +170,14 @@ function ai_behaviors.register(ctx)
         mon:set_value("lua_ai_fetch_item", "")
         return true
       end
-      if maybe_step_toward(fetch_pos, false) then
-        return true
-      end
+      if maybe_step_toward(fetch_pos, false) then return true end
       mon:mod_moves(-50)
       return true
     end
 
     if mode == "mine" then
       local center_str = mon:get_value("lua_ai_mine_center")
-      if center_str == "" then
-        center_str = storage.mine_center or ""
-      end
+      if center_str == "" then center_str = storage.mine_center or "" end
       local center_abs = deserialize_tripoint(center_str)
       if center_abs == nil then
         mon:set_value("lua_ai_mode", "follow")
@@ -207,9 +185,7 @@ function ai_behaviors.register(ctx)
         return true
       end
       local idx = tonumber(mon:get_value("lua_ai_mine_idx")) or 1
-      if idx < 1 then
-        idx = 1
-      end
+      if idx < 1 then idx = 1 end
       if idx > #mine_offsets then
         mon:set_value("lua_ai_mode", "follow")
         mon:set_value("lua_ai_mine_idx", "")
@@ -217,8 +193,7 @@ function ai_behaviors.register(ctx)
       end
       local center_local = here:get_local_ms(center_abs)
       local map_extent = here:get_map_size()
-      if math.abs(center_local.x - pos.x ) > map_extent
-         or math.abs(center_local.y - pos.y ) > map_extent then
+      if math.abs(center_local.x - pos.x) > map_extent or math.abs(center_local.y - pos.y) > map_extent then
         center_abs = here:get_abs_ms(mon:get_pos_ms())
         mon:set_value("lua_ai_mine_center", serialize_tripoint(center_abs))
         center_local = mon:get_pos_ms()
@@ -272,9 +247,11 @@ function ai_behaviors.register(ctx)
   }
 
   game.monster_ai_functions["lua_ai_dance"] = function(mon)
-    if mon:get_value("lua_dance_angry") == "1"
-       or mon:has_effect(effect_hit_by_player)
-       or mon:get_hp() < mon:get_hp_max() then
+    if
+      mon:get_value("lua_dance_angry") == "1"
+      or mon:has_effect(effect_hit_by_player)
+      or mon:get_hp() < mon:get_hp_max()
+    then
       mon:set_value("lua_dance_angry", "1")
       mon:run_normal_ai_turn()
       return true
@@ -291,13 +268,13 @@ function ai_behaviors.register(ctx)
       mon:set_value("lua_dance_anchor_abs", serialize_tripoint(anchor_abs))
     end
     local idx = tonumber(mon:get_value("lua_dance_index")) or 1
-    if idx < 1 or idx > #dance_points then
-      idx = 1
-    end
+    if idx < 1 or idx > #dance_points then idx = 1 end
     local anchor_local = here:get_local_ms(anchor_abs)
     local map_extent = here:get_map_size()
-    if math.abs(anchor_local.x - mon:get_pos_ms().x) > map_extent
-       or math.abs(anchor_local.y - mon:get_pos_ms().y) > map_extent then
+    if
+      math.abs(anchor_local.x - mon:get_pos_ms().x) > map_extent
+      or math.abs(anchor_local.y - mon:get_pos_ms().y) > map_extent
+    then
       anchor_abs = here:get_abs_ms(mon:get_pos_ms())
       mon:set_value("lua_dance_anchor_abs", serialize_tripoint(anchor_abs))
       idx = 1
