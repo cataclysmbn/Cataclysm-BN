@@ -18,6 +18,11 @@ on:
         required: false
         type: string
         default: ""
+      checkout-ref:
+        description: "Git ref or SHA to build"
+        required: false
+        type: string
+        default: ""
       matrix-json:
         description: "Build matrix include entries as JSON"
         required: false
@@ -94,6 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout-ref }}
 
       - name: Install shadercross dependencies
         run: |
@@ -124,6 +131,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout-ref }}
 
       - name: Download generated shaders
         uses: actions/download-artifact@v4

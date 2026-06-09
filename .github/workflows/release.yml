@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
+    inputs:
+      date:
+        description: "Nightly date to build, in UTC YYYY-MM-DD. Defaults to today."
+        required: false
+        type: string
 
 env:
   VCPKG_BINARY_SOURCES: "default"
@@ -18,23 +23,35 @@ jobs:
       release_name: ${{ steps.env_vars.outputs.release_name }}
       last_tag_name: ${{ steps.env_vars.outputs.last_tag_name }}
       yesterday_tag_name: ${{ steps.env_vars.outputs.yesterday_tag_name }}
+      source_sha: ${{ steps.env_vars.outputs.source_sha }}
     steps:
       - uses: actions/checkout@v4
       - id: env_vars
+        env:
+          REQUESTED_DATE: ${{ inputs.date || '' }}
         run: |
-          TAG_NAME=$(date -u --iso-8601)
-          YESTERDAY_TAG_NAME=$(date -u --iso-8601 --date='1 day ago')
+          TAG_NAME=${REQUESTED_DATE:-$(date -u --iso-8601)}
+          if ! [[ "$TAG_NAME" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || [ "$(date -u --date="$TAG_NAME" +%F)" != "$TAG_NAME" ]; then
+            echo "::error::date must be a valid UTC date in YYYY-MM-DD format"
+            exit 1
+          fi
+
+          YESTERDAY_TAG_NAME=$(date -u --iso-8601 --date="$TAG_NAME 1 day ago")
           LAST_TAG_NAME=$(git for-each-ref --sort=-creatordate --format '%(creatordate:short)' refs/tags | head -n 1)
           COMMITS=$(git log --oneline --since="$YESTERDAY_TAG_NAME" --until="$TAG_NAME" | wc -l)
           RELEASE_NAME="Nightly $TAG_NAME"
+          SOURCE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG_NAME" | awk '{ print $1 }')
+          SOURCE_SHA=${SOURCE_SHA:-$GITHUB_SHA}
 
           echo "commits yesterday ($YESTERDAY_TAG_NAME): $COMMITS" >> "$GITHUB_STEP_SUMMARY"
+          echo "source commit: $SOURCE_SHA" >> "$GITHUB_STEP_SUMMARY"
 
           echo "count=$COMMITS" >> "$GITHUB_OUTPUT"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "last_tag_name=$LAST_TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "yesterday_tag_name=$YESTERDAY_TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "release_name=$RELEASE_NAME" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
 
   release:
     needs: metadata
@@ -101,7 +118,7 @@ jobs:
           name: ${{ needs.metadata.outputs.release_name }}
           body: |
             ${{ steps.build_changelog.outputs.changelog }}
-            These are the outputs for the build of commit [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            These are the outputs for the build of commit [${{ needs.metadata.outputs.source_sha }}](https://github.com/${{ github.repository }}/commit/${{ needs.metadata.outputs.source_sha }})
           draft: false
           prerelease: true
 
@@ -124,6 +141,8 @@ jobs:
     needs: [metadata, release]
     if: ${{ needs.release.outputs.upload_assets == 'true' }}
     uses: ./.github/workflows/build-translations.yml
+    with:
+      checkout-ref: ${{ needs.metadata.outputs.tag_name }}
     secrets:
       TX_TOKEN: ${{ secrets.TX_TOKEN }}
 
@@ -133,6 +152,7 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       version-label: ${{ needs.metadata.outputs.tag_name }}
+      checkout-ref: ${{ needs.metadata.outputs.tag_name }}
       upload-to-release: true
       release-tag: ${{ needs.metadata.outputs.tag_name }}
     secrets: inherit
