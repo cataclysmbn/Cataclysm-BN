@@ -112,11 +112,13 @@ struct dispatch_transparency_params {
     bool* resident_output_written = nullptr;
 };
 
-// Upload the submap records, dispatch the transparency compute shader, and
-// synchronously download compact submap-local results into out_buffer.
+// Build compact submap-local transparency results into out_buffer.
+// Most backends dispatch the transparency compute shader and synchronously
+// download the compact result. DXBC backends use CPU compact packing here; GPU
+// lighting uploads that packed cache through its resident input scheduler.
 // If output.buffer is non-null, the shader also writes into that existing full
 // flat-cache buffer at output.output_offset so lighting can keep resident input
-// state without a duplicate CPU upload.
+// state without a duplicate CPU upload on shader-backed transparency backends.
 auto dispatch_transparency(dispatch_transparency_params const& p) -> bool;
 
 // Release transparency compute resources before the SDL GPU device is destroyed.
