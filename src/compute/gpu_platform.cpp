@@ -252,7 +252,8 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
         props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_INDIRECT_DRAW_FIRST_INSTANCE_BOOLEAN, false);
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_ANISOTROPY_BOOLEAN, false);
 
-    // For Intel Haswell and Broadwell iGPU, requires <= 8 shader storage resource slots across *all* stages
+    // For Intel Haswell and Broadwell iGPU, requires <= 8 shader storage resource slots across
+    // *all* stages
     SDL_SetBooleanProperty(
         props, SDL_PROP_GPU_DEVICE_CREATE_D3D12_ALLOW_FEWER_RESOURCE_SLOTS_BOOLEAN, true);
 
@@ -260,7 +261,8 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN, true);
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
-    SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN, attempt.prefer_low_power);
+    SDL_SetBooleanProperty(
+        props, SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN, attempt.prefer_low_power);
 
     if (!attempt.driver.empty()) {
         SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, attempt.driver.c_str());
