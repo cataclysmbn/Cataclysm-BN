@@ -7,6 +7,7 @@ on:
 
 env:
   VCPKG_BINARY_SOURCES: "default"
+  EXPECTED_NIGHTLY_ASSET_COUNT: 10
 
 jobs:
   metadata:
@@ -43,7 +44,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || fromJson(needs.metadata.outputs.count) > 0
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
-      release_already_exists: ${{ steps.tag_check.outputs.exists }}
+      tag_exists: ${{ steps.tag_check.outputs.exists }}
+      release_exists: ${{ steps.release_check.outputs.exists }}
+      upload_assets: ${{ steps.asset_check.outputs.upload_assets }}
 
     steps:
       - name: Check if there is existing git tag
@@ -53,6 +56,17 @@ jobs:
           tag: ${{ needs.metadata.outputs.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if release exists
+        id: release_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ needs.metadata.outputs.tag_name }}" --json tagName --jq .tagName > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/checkout@v4
 
@@ -66,6 +80,7 @@ jobs:
           tag_prefix: ""
 
       - name: Build Changelog
+        if: ${{ steps.release_check.outputs.exists == 'false' }}
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@v4.2.0
         with:
@@ -76,6 +91,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release
+        if: ${{ steps.release_check.outputs.exists == 'false' }}
         id: create_release
         uses: softprops/action-gh-release@v2.0.2
         env:
@@ -89,16 +105,31 @@ jobs:
           draft: false
           prerelease: true
 
+      - name: Check release assets
+        id: asset_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          asset_count=$(gh release view "${{ needs.metadata.outputs.tag_name }}" --json assets --jq '.assets | length' 2>/dev/null || echo 0)
+          echo "asset_count=$asset_count" >> "$GITHUB_STEP_SUMMARY"
+          echo "asset_count=$asset_count" >> "$GITHUB_OUTPUT"
+
+          if [ "$asset_count" -lt "$EXPECTED_NIGHTLY_ASSET_COUNT" ]; then
+            echo "upload_assets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload_assets=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build-translations:
     needs: [metadata, release]
-    if: ${{ needs.release.outputs.release_already_exists == 'false' }}
+    if: ${{ needs.release.outputs.upload_assets == 'true' }}
     uses: ./.github/workflows/build-translations.yml
     secrets:
       TX_TOKEN: ${{ secrets.TX_TOKEN }}
 
   builds:
     needs: [metadata, release, build-translations]
-    if: ${{ needs.release.outputs.release_already_exists == 'false' }}
+    if: ${{ needs.release.outputs.upload_assets == 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: ${{ needs.metadata.outputs.tag_name }}
