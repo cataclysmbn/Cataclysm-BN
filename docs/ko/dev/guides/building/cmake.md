@@ -8,9 +8,8 @@ CataclysmBN을 빌드하려면 다음 라이브러리와 개발 헤더가 설치
 
 - General
   - `cmake` >= 3.0.0
-  - `gcc` >= 14
-  - `clang` >= 19
-  - `gcc-libs`
+  - `clang` >= 22
+  - `gcc-libs` 또는 이에 준하는 C++ 런타임 라이브러리
   - `glibc`
   - `zlib`
   - `bzip2`
@@ -49,7 +48,7 @@ cd Cataclysm-BN
 - Ubuntu 기반 배포판 (24.04 이상):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 llvm-20 ccache \
+sudo apt install git cmake ninja-build mold clang-22 llvm-22 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -66,58 +65,32 @@ sqlite-devel zlib-devel
 
 #### 컴파일러 버전 확인
 
-CataclysmBN을 빌드하려면 최소한 `gcc` 14 **및** `clang` 19가 있어야 합니다. 컴파일러 버전을 확인할 수 있습니다:
+CataclysmBN을 빌드하려면 Clang 22 이상이 필요합니다. 컴파일러 버전을 확인할 수 있습니다:
 
 ```sh
-$ g++ --version
-g++ (GCC) 15.2.1 20250808 (Red Hat 15.2.1-1)
-Copyright (C) 2025 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
 $ clang++ --version
-clang version 20.1.8 (Fedora 20.1.8-4.fc42)
+clang version 22.1.6 (Fedora 22.1.6-1.fc44)
 Target: x86_64-redhat-linux-gnu
 Thread model: posix
 InstalledDir: /usr/bin
-Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 ```
 
 > [!TIP]
 >
-> **`gcc-{version}` 설치했지만 `gcc`를 찾을 수 없을 때**
+> **`clang-{version}`을 설치했지만 `clang`을 찾을 수 없을 때**
 >
-> `update-alternatives`를 사용하여 기본 gcc 버전을 설정합니다:
+> `update-alternatives`를 사용하여 기본 Clang 버전을 설정합니다:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-> sudo update-alternatives --display gcc
-> gcc - auto mode
->   link best version is /usr/bin/gcc-14
->   link currently points to /usr/bin/gcc-14
->   link gcc is /usr/bin/gcc
-> /usr/bin/gcc-14 - priority 100
-> sudo update-alternatives --display g++
-> g++ - auto mode
->   link best version is /usr/bin/g++-14
->   link currently points to /usr/bin/g++-14
->   link g++ is /usr/bin/g++
-> /usr/bin/g++-14 - priority 100
+> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-22 100
+> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 100
 > ```
 >
-> `clang`에도 동일하게 적용됩니다.
+> Ubuntu가 `llvm-ar-22`, `llvm-ranlib-22`처럼 버전이 붙은 LLVM binutils 이름만 설치하는 경우에는 이 이름도 등록하세요:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
-> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
-> ```
->
-> Ubuntu가 `llvm-ar-20`, `llvm-ranlib-20`처럼 버전이 붙은 LLVM binutils 이름만 설치하는 경우에는 이 이름도 등록하세요:
->
-> ```sh
-> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-20 100
-> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-20 100
+> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-22 100
+> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-22 100
 > ```
 
 ### Windows Subsystem for Linux (WSL)
