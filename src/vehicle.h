@@ -321,7 +321,7 @@ class veh_mount_slot
         // Later: version that takes a vehicle turret mount sub-grid
         ~veh_mount_slot();
 
-        // We always initialize a mount slot as dirty. 
+        // We always initialize a mount slot as dirty.
         bool veh_mount_slot_dirty = true;
 
         // TODO: Do we need to have a relative to vehicle index tile adjust value?
@@ -331,12 +331,12 @@ class veh_mount_slot
 
         vehicle *get_veh() const {
             return veh;
-        } 
+        }
         // Dedicated slots will be initialized with dummy parts on mount creation.
         // While not set initially, the size of this vector is ALWAYS equal to NUM_DVPM_SLOTS after initialization.
         std::vector<vehicle_part> dedicated_slots;
 
-        // all vehicle parts that that 
+        // all vehicle parts that that
         std::vector<vehicle_part> other_parts;
 
         // Consider culling getters that dont need to be accessed very frequently.
@@ -1733,9 +1733,9 @@ class vehicle
 
         std::vector<vehicle_part> parts;   // Parts which occupy different tiles
 
-        // Map of vehicle mount slots, keyed to the vehicle mount tripoint they inhabit. 
+        // Map of vehicle mount slots, keyed to the vehicle mount tripoint they inhabit.
         // Mount slots contain all the vehicle parts in their respective tripoint.
-        std::unordered_map<tripoint_mnt_veh, veh_mount_slot> mount_slots; 
+        std::unordered_map<tripoint_mnt_veh, veh_mount_slot> mount_slots;
 
     public:
         // Number of parts contained in this vehicle
