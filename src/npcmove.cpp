@@ -27,7 +27,6 @@
 #include "character_turn.h"
 #include "character_id.h"
 #include "clzones.h"
-#include "coordinate_conversions.h"
 #include "catalua.h"
 #include "catalua_impl.h"
 #include "damage.h"
