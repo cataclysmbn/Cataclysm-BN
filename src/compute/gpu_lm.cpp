@@ -109,8 +109,7 @@ struct gpu_backend_policy {
 };
 
 auto backend_policy_for_device(SDL_GPUDevice* const device) -> gpu_backend_policy {
-    auto const uses_dxbc =
-        shader_format_is_dxbc(preferred_fmt(SDL_GetGPUShaderFormats(device)));
+    auto const uses_dxbc = shader_format_is_dxbc(preferred_fmt(SDL_GetGPUShaderFormats(device)));
     return gpu_backend_policy{
         .reset_lighting_resources_on_rebuild = uses_dxbc,
         .expand_dirty_transparency_uploads = uses_dxbc,
@@ -677,10 +676,9 @@ struct serialized_readback_request {
     std::string_view label;
 };
 
-template<typename CopyResult>
+template <typename CopyResult>
 auto readback_buffer_region(
-    SDL_GPUDevice* const device,
-    serialized_readback_request const& request,
+    SDL_GPUDevice* const device, serialized_readback_request const& request,
     CopyResult copy_result) -> bool {
     auto* const cmd = SDL_AcquireGPUCommandBuffer(device);
     if (cmd == nullptr) {
@@ -3754,7 +3752,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     SDL_PushGPUComputeUniformData(cmd, 0, &max_push, sizeof(max_push));
                     SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
                     SDL_EndGPUComputePass(cp);
-            };
+                };
             max_uint_buffer(lm_buf, static_lm_buf);
             auto const static_merge_is_final_stage =
                 dynamic_raytrace_buckets.empty() && !download_colored_light && !rebuild_seen
@@ -3776,7 +3774,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 fill_uint_buffer(colored_light_buf, 0u);
                 if (!submit_lighting_stage("colored lm clear", true)) { return {}; }
                 if (!dispatch_color_raytrace(colored_raytrace_buckets)) { return {}; }
-                auto const colored_raytrace_is_final_stage = !rebuild_seen && deferred_download_copy;
+                auto const colored_raytrace_is_final_stage =
+                    !rebuild_seen && deferred_download_copy;
                 if (!colored_raytrace_buckets.empty()
                     && !submit_lighting_stage(
                         "colored raytrace", !colored_raytrace_is_final_stage)) {
@@ -3805,9 +3804,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 .dispatch_z_count = z_count,
                 .vision_block_mask = p.vision_block_mask,
             });
-            if (!submit_lighting_stage("seen rebuild", !deferred_download_copy)) {
-                return {};
-            }
+            if (!submit_lighting_stage("seen rebuild", !deferred_download_copy)) { return {}; }
         }
 
         // [Pass 7] Copy: download dirty lm levels and requested seen_cache results.
@@ -4275,9 +4272,10 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     auto const visibility_download_total_bytes = visibility_download_bytes;
     auto const deferred_visibility_download =
         backend_policy.serialize_visibility_downloads && !visibility_download_levels.empty();
-    auto const visibility_download_resource_bytes = deferred_visibility_download
-        ? uint_level_bytes
-        : std::max(visibility_download_total_bytes, Uint32{1});
+    auto const visibility_download_resource_bytes =
+        deferred_visibility_download
+            ? uint_level_bytes
+            : std::max(visibility_download_total_bytes, Uint32{1});
     auto vehicle_optics = collect_vehicle_optics(
         *p.m, tripoint_bub_ms{p.player_x, p.player_y, p.player_zlev}, p.zlev);
     if (!vehicle_optics.empty() && !ensure_vehicle_optics_pipeline(device)) { return {}; }
