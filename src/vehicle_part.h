@@ -27,7 +27,7 @@ class npc;
 /**
  * Structure, describing vehicle part (i.e., wheel, seat)
  */
- struct vehicle_part {
+struct vehicle_part {
     public:
         friend vehicle;
         friend class veh_interact;

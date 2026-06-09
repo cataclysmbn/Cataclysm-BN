@@ -321,7 +321,7 @@ class veh_mount
         // Later: version that takes a vehicle turret mount sub-grid
         ~veh_mount();
 
-        // We always initialize a mount slot as dirty. 
+        // We always initialize a mount slot as dirty.
         bool veh_mount_dirty = true;
 
         // TODO: Do we need to have a relative to vehicle index tile adjust value?
@@ -1735,7 +1735,7 @@ class vehicle
 
         // Map of vehicle mount slots, keyed to the vehicle mount tripoint they inhabit.
         // Mount slots contain all the vehicle parts in their respective tripoint.
-        std::unordered_map<tripoint_mnt_veh, veh_mount> mount_slots; 
+        std::unordered_map<tripoint_mnt_veh, veh_mount> mount_slots;
 
     public:
         // Number of parts contained in this vehicle

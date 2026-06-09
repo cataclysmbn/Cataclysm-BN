@@ -2,7 +2,7 @@
 
 #include "int_id.h"
 #include "string_id.h"
-// Removed include veh_type.h as it was causing recursive looping errors. 
+// Removed include veh_type.h as it was causing recursive looping errors.
 // veh_type.h already is including this file.
 
 class activity_type;
