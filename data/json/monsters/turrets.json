@@ -54,13 +54,22 @@
     "special_attacks": [
       {
         "type": "gun",
-        "cooldown": 1,
-        "target_moving_vehicles": true,
+        "cooldown": 3,
+        "move_cost": 150,
         "gun_type": "laser_cannon_turret_fake",
         "fake_skills": [ [ "gun", 4 ], [ "rifle", 8 ] ],
-        "ranges": [ [ 0, 30, "DEFAULT" ] ],
+        "ranges": [ [ 0, 5, "AUTO" ], [ 6, 30, "DEFAULT" ] ],
+        "require_targeting_npc": true,
+        "require_targeting_monster": true,
+        "target_moving_vehicles": true,
+        "laser_lock": false,
         "require_sunlight": true,
-        "no_crits": true
+        "no_crits": true,
+        "targeting_cost": 150,
+        "targeting_timeout_extend": -10,
+        "targeting_sound": "\"Hostile detected.\"",
+        "targeting_volume": 20,
+        "no_ammo_sound": "beep!"
       }
     ],
     "special_when_hit": [ "RETURN_FIRE", 100 ],
