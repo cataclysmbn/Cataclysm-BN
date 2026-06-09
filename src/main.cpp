@@ -804,7 +804,8 @@ int main( int argc, char *argv[] )
     }
 #endif
 #elif defined(CATA_SDL)
-    if( test_mode && !init_sdl_platform( false ) ) {
+    if( test_mode && lua_doc_output_path.empty() && lua_types_output_path.empty() &&
+        !init_sdl_platform( false ) ) {
         return 1;
     }
 #endif
@@ -830,8 +831,10 @@ int main( int argc, char *argv[] )
     }
 
 #if defined(CATA_SDL)
-    cata_gpu::init();
-    atexit( cata_gpu::shutdown );
+    if( lua_doc_output_path.empty() && lua_types_output_path.empty() ) {
+        cata_gpu::init();
+        atexit( cata_gpu::shutdown );
+    }
 #endif
 
 #if defined(TILES)
@@ -871,20 +874,6 @@ int main( int argc, char *argv[] )
         exit_handler( -999 );
     }
 
-    // Now we do the actual game.
-
-    game_ui::init_ui();
-
-    catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
-
-#if !defined(_WIN32)
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = signal_handler;
-    sigemptyset( &sigIntHandler.sa_mask );
-    sigIntHandler.sa_flags = 0;
-    sigaction( SIGINT, &sigIntHandler, nullptr );
-#endif
-
     DebugLog( DL::Info, DC::Main ) << "LAPI version: " << cata::get_lapi_version_string();
     cata::startup_lua_test();
 
@@ -912,6 +901,20 @@ int main( int argc, char *argv[] )
         }
         return 0;
     }
+
+    // Now we do the actual game.
+
+    game_ui::init_ui();
+
+    catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
+
+#if !defined(_WIN32)
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = signal_handler;
+    sigemptyset( &sigIntHandler.sa_mask );
+    sigIntHandler.sa_flags = 0;
+    sigaction( SIGINT, &sigIntHandler, nullptr );
+#endif
 
     prompt_select_lang_on_startup();
     replay_buffered_debugmsg_prompts();
