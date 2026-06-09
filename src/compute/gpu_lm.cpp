@@ -634,6 +634,7 @@ auto s_logged_dxbc_cycled_full_uploads = false;
 auto s_logged_dxbc_reset_lighting_resources = false;
 auto s_logged_dxbc_single_submit_lighting = false;
 auto s_logged_dxbc_deferred_download = false;
+auto s_logged_dxbc_stage_checkpoints = false;
 
 struct pending_gpu_visibility_work {
     bool active = false;
@@ -2848,6 +2849,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     // Older DXBC/D3D12 drivers can exhaust command allocators when lighting is
     // split into many checkpoint submissions.  Keep DXBC on a single submit.
     auto const dxbc_lighting_checkpoints = false;
+    auto const dxbc_stage_checkpoints = dxbc_backend;
     auto const dxbc_has_resident_resources =
         s_lighting_resources.device == device
         && s_lighting_resources.transparency.buffer != nullptr;
@@ -2872,6 +2874,11 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             << "SDL_GPU: lm: DXBC uses single-submit lighting command "
                "buffers";
         s_logged_dxbc_single_submit_lighting = true;
+    }
+    if (dxbc_stage_checkpoints && !s_logged_dxbc_stage_checkpoints) {
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC stage checkpoints enabled for diagnostics";
+        s_logged_dxbc_stage_checkpoints = true;
     }
 
     // ── Collect light sources ────────────────────────────────────────────────
@@ -3385,6 +3392,52 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         return true;
     };
 
+    auto submit_dxbc_stage_checkpoint =
+        [&](std::string_view const label, bool const reacquire) -> bool {
+        if (!dxbc_stage_checkpoints) { return true; }
+        if (cmd == nullptr) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: DXBC stage checkpoint requested without a command buffer after "
+                << label;
+            return false;
+        }
+
+        auto* checkpoint_fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
+        if (checkpoint_fence == nullptr) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: DXBC stage checkpoint submission failed after " << label << ": "
+                << SDL_GetError();
+            cmd = nullptr;
+            return false;
+        }
+
+        auto const wait_succeeded = SDL_WaitForGPUFences(device, true, &checkpoint_fence, 1);
+        SDL_ReleaseGPUFence(device, checkpoint_fence);
+        if (!wait_succeeded) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: DXBC stage checkpoint wait failed after " << label << ": "
+                << SDL_GetError();
+            cmd = nullptr;
+            return false;
+        }
+
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC stage checkpoint completed after " << label;
+        if (!reacquire) {
+            cmd = nullptr;
+            return true;
+        }
+
+        cmd = SDL_AcquireGPUCommandBuffer(device);
+        if (cmd == nullptr) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: DXBC stage checkpoint command buffer reacquire failed after "
+                << label << ": " << SDL_GetError();
+            return false;
+        }
+        return true;
+    };
+
     {
         ZoneScopedN("gpu_lm_record_commands");
 
@@ -3582,6 +3635,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 SDL_EndGPUCopyPass(cp);
             }
             TracyPlot("GPU LM Upload Copy Commands", static_cast<int64_t>(upload_copy_commands));
+            if (!submit_dxbc_stage_checkpoint("input upload", true)) { return {}; }
         }
 
         if (!lightmap_levels.empty()) {
@@ -3794,8 +3848,13 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 // [Pass 2] Compute: static terrain/furniture source contribution.
                 fill_uint_buffer(static_lm_buf, 0u);
                 if (!submit_dxbc_checkpoint("static lm clear")) { return {}; }
+                if (!submit_dxbc_stage_checkpoint("static lm clear", true)) { return {}; }
                 if (!dispatch_raytrace(static_lm_buf, static_raytrace_buckets,
                                        /*checkpoint_after_final=*/true)) {
+                    return {};
+                }
+                if (!static_raytrace_buckets.empty()
+                    && !submit_dxbc_stage_checkpoint("static raytrace", true)) {
                     return {};
                 }
             }
@@ -3829,6 +3888,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
                 SDL_EndGPUComputePass(cp);
                 if (!submit_dxbc_checkpoint("ambient")) { return {}; }
+                if (!submit_dxbc_stage_checkpoint("ambient", true)) { return {}; }
             }
 
             // [Pass 4] Compute: local daylight diffusion through transparent openings.
@@ -3881,6 +3941,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     source_buf = target_buf;
                     target_buf = pass % 2 == 0 ? daylight_diffuse_b_buf : daylight_diffuse_a_buf;
                 }
+                if (!submit_dxbc_stage_checkpoint("daylight diffusion", true)) { return {}; }
             }
 
             // [Pass 5] Compute: max cached static-source contribution into frame lm.
@@ -3906,9 +3967,16 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     SDL_EndGPUComputePass(cp);
                 };
             max_uint_buffer(lm_buf, static_lm_buf);
+            auto const static_merge_is_final_dxbc_stage =
+                dynamic_raytrace_buckets.empty() && !download_colored_light && !rebuild_seen
+                && deferred_download_copy;
             if ((!dynamic_raytrace_buckets.empty() || download_colored_light || rebuild_seen
                  || needs_download_copy)
                 && !submit_dxbc_checkpoint("static lm merge")) {
+                return {};
+            }
+            if (!submit_dxbc_stage_checkpoint("static lm merge",
+                                              !static_merge_is_final_dxbc_stage)) {
                 return {};
             }
 
@@ -3917,12 +3985,26 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                                    download_colored_light || rebuild_seen || needs_download_copy)) {
                 return {};
             }
+            auto const dynamic_raytrace_is_final_dxbc_stage =
+                !download_colored_light && !rebuild_seen && deferred_download_copy;
+            if (!dynamic_raytrace_buckets.empty()
+                && !submit_dxbc_stage_checkpoint(
+                    "dynamic raytrace", !dynamic_raytrace_is_final_dxbc_stage)) {
+                return {};
+            }
 
             if (download_colored_light) {
                 fill_uint_buffer(colored_light_buf, 0u);
                 if (!submit_dxbc_checkpoint("colored lm clear")) { return {}; }
+                if (!submit_dxbc_stage_checkpoint("colored lm clear", true)) { return {}; }
                 if (!dispatch_color_raytrace(
                         colored_raytrace_buckets, rebuild_seen || needs_download_copy)) {
+                    return {};
+                }
+                auto const colored_raytrace_is_final_dxbc_stage =
+                    !rebuild_seen && deferred_download_copy;
+                if (!colored_raytrace_buckets.empty() && !submit_dxbc_stage_checkpoint(
+                        "colored raytrace", !colored_raytrace_is_final_dxbc_stage)) {
                     return {};
                 }
             }
@@ -3949,6 +4031,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 .vision_block_mask = p.vision_block_mask,
             });
             if (needs_download_copy && !submit_dxbc_checkpoint("seen rebuild")) { return {}; }
+            if (!submit_dxbc_stage_checkpoint("seen rebuild", !deferred_download_copy)) {
+                return {};
+            }
         }
 
         // [Pass 7] Copy: download dirty lm levels and requested seen_cache results.
@@ -4036,7 +4121,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         && seen_download_levels.empty();
     TracyPlot("GPU LM Deferred Submit", defer_seen_only_wait ? int64_t{1} : int64_t{0});
     auto* fence = static_cast<SDL_GPUFence*>(nullptr);
-    if (defer_seen_only_wait) {
+    if (cmd == nullptr) {
+        TracyPlot("GPU LM Submit Skipped", int64_t{1});
+    } else if (defer_seen_only_wait) {
         ZoneScopedN("gpu_lm_submit_deferred");
         if (!SDL_SubmitGPUCommandBuffer(cmd)) {
             DebugLog(DL::Error, DC::Main)
