@@ -261,7 +261,7 @@ mod.prompt_mine_area = function()
     gapi.add_msg(MsgType.info, "Lua AI mine cancelled.")
     return nil
   end
-  local abs = gapi.get_map():bub_to_abs(where)
+  local abs = gapi:bub_to_abs(where)
   return serialize_tripoint(abs)
 end
 

@@ -120,7 +120,15 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_N_T( bub_pos, "get_pos_ms", tripoint_bub_ms() const );
 
+        SET_FX_N_T( bub_pos, "bub_pos", tripoint_bub_ms() const );
+
+        SET_FX_N_T( abs_pos, "abs_pos", tripoint_abs_ms() const );
+
         SET_FX_N_T( setpos, "set_pos_ms", void( const tripoint_bub_ms & ) );
+
+        SET_FX_N_T( setpos, "set_pos", void( const tripoint_bub_ms & ) );
+
+        SET_FX_N_T( setpos, "set_pos", void( const tripoint_abs_ms & ) );
 
         luna::set_fx( ut, "has_effect", []( const Creature & cr, const efftype_id & eff,
         sol::optional<const bodypart_str_id &> bpid ) -> bool {

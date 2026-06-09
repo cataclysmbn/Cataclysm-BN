@@ -70,8 +70,8 @@ function ai_behaviors.register(ctx)
     end
     local mode = mon:get_value("lua_ai_mode")
     if mode == "" then mode = storage.mode or "attack" end
-    local pos = mon:get_pos_ms()
-    local target = avatar:get_pos_ms()
+    local pos = mon:bub_pos()
+    local target = avatar:bub_pos()
     local here = gapi.get_map()
     local function try_step(dest, allow_attack)
       local occupant = gapi.get_creature_at(dest, true)
@@ -95,7 +95,7 @@ function ai_behaviors.register(ctx)
     local carrying = mon:get_items()
 
     if #carrying > 0 and drop_target == nil then
-      drop_target = avatar:get_pos_ms()
+      drop_target = avatar:bub_pos()
       mon:set_value("lua_ai_drop_target", serialize_tripoint(drop_target))
     end
 
@@ -159,7 +159,7 @@ function ai_behaviors.register(ctx)
             mon:add_detached_item(taken)
             gapi.add_msg(MsgType.info, "Lua AI debug drone fetched an item.")
             mon:set_value("lua_ai_mode", "follow")
-            mon:set_value("lua_ai_drop_target", serialize_tripoint(avatar:get_pos_ms()))
+            mon:set_value("lua_ai_drop_target", serialize_tripoint(avatar:bub_pos()))
             mon:set_value("lua_ai_fetch_target", "")
             mon:set_value("lua_ai_fetch_item", "")
             return true
@@ -191,12 +191,12 @@ function ai_behaviors.register(ctx)
         mon:set_value("lua_ai_mine_idx", "")
         return true
       end
-      local center_local = here:abs_to_bub(center_abs)
+      local center_local = gapi:abs_to_bub(center_abs)
       local map_extent = here:get_map_size()
       if math.abs(center_local.x - pos.x) > map_extent or math.abs(center_local.y - pos.y) > map_extent then
-        center_abs = here:bub_to_abs(mon:get_pos_ms())
+        center_abs = here:bub_to_abs(mon:bub_pos())
         mon:set_value("lua_ai_mine_center", serialize_tripoint(center_abs))
-        center_local = mon:get_pos_ms()
+        center_local = mon:bub_pos()
         idx = 1
       end
       local offset = mine_offsets[idx]
@@ -260,26 +260,26 @@ function ai_behaviors.register(ctx)
     local here = gapi.get_map()
     local anchor_abs = deserialize_tripoint(mon:get_value("lua_dance_anchor_abs"))
     if anchor_abs == nil then
-      anchor_abs = here:bub_to_abs(mon:get_pos_ms())
+      anchor_abs = mon:abs_pos()
       mon:set_value("lua_dance_anchor_abs", serialize_tripoint(anchor_abs))
     end
-    if anchor_abs.z ~= mon:get_pos_ms().z then
-      anchor_abs = Tripoint.new(anchor_abs.x, anchor_abs.y, mon:get_pos_ms().z)
+    if anchor_abs.z ~= mon:bub_pos().z then
+      anchor_abs = Tripoint.new(anchor_abs.x, anchor_abs.y, mon:bub_pos().z)
       mon:set_value("lua_dance_anchor_abs", serialize_tripoint(anchor_abs))
     end
     local idx = tonumber(mon:get_value("lua_dance_index")) or 1
     if idx < 1 or idx > #dance_points then idx = 1 end
-    local anchor_local = here:abs_to_bub(anchor_abs)
+    local anchor_local = gapi:abs_to_bub(anchor_abs)
     local map_extent = here:get_map_size()
     if
-      math.abs(anchor_local.x - mon:get_pos_ms().x) > map_extent
-      or math.abs(anchor_local.y - mon:get_pos_ms().y) > map_extent
+      math.abs(anchor_local.x - mon:bub_pos().x) > map_extent
+      or math.abs(anchor_local.y - mon:bub_pos().y) > map_extent
     then
-      anchor_abs = here:bub_to_abs(mon:get_pos_ms())
+      anchor_abs = mon:abs_pos()
       mon:set_value("lua_dance_anchor_abs", serialize_tripoint(anchor_abs))
       idx = 1
       mon:set_value("lua_dance_index", "1")
-      anchor_local = mon:get_pos_ms()
+      anchor_local = mon:bub_pos()
     end
     local offset = dance_points[idx]
     local dest = Tripoint.new(anchor_local.x + offset[1], anchor_local.y + offset[2], anchor_local.z)
