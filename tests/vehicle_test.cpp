@@ -339,7 +339,7 @@ TEST_CASE( "vehicle control scale modifies throttle move cost", "[vehicle][speed
     const auto origin = tripoint_bub_ms( 60, 60, 0 );
     auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
-    
+
     veh_ptr->cruise_on = false;
     veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
 
