@@ -898,6 +898,25 @@
     ]
   },
   {
+    "result": "cerberus_laser",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "45 m",
+    "using": [ [ "soldering_standard", 25 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "laser_source", 3 ] ],
+      [ [ "amplifier", 6 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "cable", 100 ] ],
+      [ [ "e_scrap", 1 ] ],
+      [ [ "lens", 3 ] ],
+      [ [ "plastic_chunk", 12 ] ],
+      [ [ "scrap", 6 ] ]
+    ]
+  },
+  {
     "result": "broken_science_bot",
     "type": "uncraft",
     "skill_used": "electronics",

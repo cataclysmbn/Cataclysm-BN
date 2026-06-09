@@ -32,10 +32,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - env: { DEBIAN_FRONTEND: noninteractive }
+      - env: { DEBIAN_FRONTEND: noninteractive, LLVM_VERSION: "22" }
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends astyle clang-format cmake ninja-build gettext ccache
+          sudo apt-get install -y --no-install-recommends astyle cmake ninja-build gettext ccache ca-certificates wget gnupg
+          wget -qO "$RUNNER_TEMP/llvm.sh" https://apt.llvm.org/llvm.sh
+          chmod +x "$RUNNER_TEMP/llvm.sh"
+          sudo "$RUNNER_TEMP/llvm.sh" "$LLVM_VERSION"
+          sudo apt-get install -y --no-install-recommends "clang-format-$LLVM_VERSION"
+          "/usr/bin/clang-format-$LLVM_VERSION" --version
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }
@@ -47,7 +52,7 @@ jobs:
           key: deno-${{ hashFiles('deno.lock') }}
 
       - name: configure cmake for formatting
-        run: cmake --preset lint
+        run: cmake --preset lint -DCLANG_FORMAT_EXECUTABLE=/usr/bin/clang-format-22
 
       - name: format C++ files
         run: cmake --build build --target format

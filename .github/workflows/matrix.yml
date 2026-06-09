@@ -53,12 +53,14 @@ jobs:
       - name: Install shadercross dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev
+          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev libvkd3d-utils1
 
       - name: Install shadercross
         run: bash build-scripts/install-shadercross-vcpkg.sh
 
       - name: Generate shaders
+        env:
+          SHADER_FORMATS: spirv msl dxil
         run: bash build-scripts/generate-shaders.sh
 
       - name: Upload generated shaders
