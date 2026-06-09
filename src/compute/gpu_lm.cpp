@@ -4500,8 +4500,10 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     if (requested_packed_visibility_download) {
         static auto pack_visibility_shader_available = std::optional<bool>{};
         if (!pack_visibility_shader_available.has_value()) {
-            pack_visibility_shader_available = shader_blob_available(device, "lm_pack_visibility_"
-                                                                             "compute");
+            pack_visibility_shader_available = shader_blob_available(
+                device,
+                "lm_pack_visibility_"
+                "compute");
         }
         if (!*pack_visibility_shader_available) {
             requested_packed_visibility_download = false;
