@@ -55,6 +55,7 @@ static constexpr auto solar_shadow_scatter = 0.09f;
 static constexpr auto daylight_diffusion_passes = 16;
 static constexpr auto light_source_default_z_frac = 0.5f;
 static constexpr auto light_source_vehicle_external_z_frac = 0.8f;
+static constexpr auto dxbc_serialized_readback_chunk_bytes = Uint32{16u * 1024u};
 
 // ---------------------------------------------------------------------------
 // Pipeline management
@@ -106,6 +107,7 @@ struct gpu_backend_policy {
     bool submit_lighting_stages = false;
     bool serialize_lighting_downloads = false;
     bool serialize_visibility_downloads = false;
+    Uint32 serialized_readback_chunk_bytes = 0;
 };
 
 auto backend_policy_for_device(SDL_GPUDevice* const device) -> gpu_backend_policy {
@@ -117,6 +119,8 @@ auto backend_policy_for_device(SDL_GPUDevice* const device) -> gpu_backend_polic
         .submit_lighting_stages = uses_dxbc,
         .serialize_lighting_downloads = uses_dxbc,
         .serialize_visibility_downloads = uses_dxbc,
+        .serialized_readback_chunk_bytes =
+            uses_dxbc ? dxbc_serialized_readback_chunk_bytes : Uint32{0},
     };
 }
 
@@ -482,6 +486,7 @@ struct lighting_buffer_sizes {
     Uint32 static_lm_bytes;
     Uint32 output_bytes;
     Uint32 lm_download_bytes;
+    Uint32 seen_download_bytes;
     Uint32 visibility_download_bytes;
     Uint32 upload_bytes;
     Uint32 visibility_upload_bytes;
@@ -634,6 +639,7 @@ struct pending_gpu_lighting_work {
     std::size_t current_static_source_signature = 0;
     int cache_xy = 0;
     Uint32 lm_download_bytes = 0;
+    Uint32 serialized_readback_chunk_bytes = 0;
     bool deferred_download_copy = false;
     bool download_lm_levels = false;
     bool download_player_light = false;
@@ -727,6 +733,38 @@ auto readback_buffer_region(
     }
     copy_result(mapped);
     SDL_UnmapGPUTransferBuffer(device, request.transfer_buffer);
+    return true;
+}
+
+struct chunked_readback_request {
+    serialized_readback_request region;
+    Uint32 chunk_bytes = 0;
+};
+
+template<typename CopyChunk>
+auto readback_buffer_region_chunked(
+    SDL_GPUDevice* const device,
+    chunked_readback_request const& request,
+    CopyChunk copy_chunk) -> bool {
+    auto const chunk_bytes =
+        request.chunk_bytes == 0 ? request.region.size : request.chunk_bytes;
+    auto offset = Uint32{0};
+    while (offset < request.region.size) {
+        auto const bytes = std::min(chunk_bytes, request.region.size - offset);
+        if (!readback_buffer_region(
+                device,
+                {
+                    .source_buffer = request.region.source_buffer,
+                    .transfer_buffer = request.region.transfer_buffer,
+                    .source_offset = request.region.source_offset + offset,
+                    .size = bytes,
+                    .label = request.region.label,
+                },
+                [&](void const* const mapped) { copy_chunk(mapped, offset, bytes); })) {
+            return false;
+        }
+        offset += bytes;
+    }
     return true;
 }
 
@@ -1043,7 +1081,7 @@ auto ensure_lighting_resources(SDL_GPUDevice* const device, lighting_buffer_size
             .device = device,
             .slot = &s_lighting_resources.seen_download,
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
-            .required_bytes = sizes.transparency_bytes,
+            .required_bytes = sizes.seen_download_bytes,
             .name = "seen_download",
         })
         && ensure_transfer_buffer({
@@ -3200,10 +3238,25 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         || !seen_download_levels.empty();
     auto const deferred_download_copy =
         backend_policy.serialize_lighting_downloads && needs_download_copy;
+    auto const serialized_readback_chunk_bytes =
+        backend_policy.serialized_readback_chunk_bytes == 0
+            ? lm_level_bytes
+            : std::min(backend_policy.serialized_readback_chunk_bytes, lm_level_bytes);
+    auto const serialized_uint_level_download_bytes =
+        deferred_download_copy ? serialized_readback_chunk_bytes : uint_level_bytes;
+    auto const serialized_float_level_download_bytes =
+        deferred_download_copy ? std::min(serialized_readback_chunk_bytes, float_level_bytes)
+                               : float_level_bytes;
     auto const lm_download_resource_bytes =
         deferred_download_copy
-            ? std::max(lm_level_bytes, static_cast<Uint32>(sizeof(uint32_t)))
+            ? std::max(serialized_readback_chunk_bytes, static_cast<Uint32>(sizeof(uint32_t)))
             : std::max(lm_download_bytes, Uint32{1});
+    auto const seen_download_resource_bytes =
+        deferred_download_copy
+            ? std::max(serialized_float_level_download_bytes, static_cast<Uint32>(sizeof(float)))
+            : std::max(
+                static_cast<Uint32>(seen_download_levels.size()) * float_level_bytes,
+                Uint32{1});
     auto upload_total = source_upload_bytes;
     upload_total += colored_source_upload_bytes;
     upload_total += transparency_upload_bytes;
@@ -3288,6 +3341,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     .static_lm_bytes = out_bytes,
                     .output_bytes = out_bytes,
                     .lm_download_bytes = lm_download_resource_bytes,
+                    .seen_download_bytes = seen_download_resource_bytes,
                     .visibility_download_bytes = out_bytes,
                     .upload_bytes = upload_buffer_bytes,
                     .visibility_upload_bytes = visibility_upload_total,
@@ -3303,7 +3357,12 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 {
                     .source_bytes = colored_source_buffer_bytes,
                     .output_bytes = out_bytes,
-                    .download_bytes = std::max(colored_light_download_bytes, Uint32{1}),
+                    .download_bytes =
+                        deferred_download_copy
+                            ? std::max(
+                                serialized_uint_level_download_bytes,
+                                static_cast<Uint32>(sizeof(uint32_t)))
+                            : std::max(colored_light_download_bytes, Uint32{1}),
                 })) {
             return {};
         }
@@ -3928,6 +3987,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         .current_static_source_signature = current_static_source_signature,
         .cache_xy = cache_xy,
         .lm_download_bytes = lm_download_bytes,
+        .serialized_readback_chunk_bytes =
+            deferred_download_copy ? serialized_readback_chunk_bytes : Uint32{0},
         .deferred_download_copy = deferred_download_copy,
         .download_lm_levels = download_lm_levels,
         .download_player_light = download_player_light,
@@ -3989,22 +4050,26 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
             for (auto const z : pending.lightmap_levels) {
                 auto const zi = z + OVERMAP_DEPTH;
                 auto& lc = const_cast<level_cache&>(pending.m->get_cache_ref(z));
-                auto const sz = static_cast<std::size_t>(pending.cache_xy);
-                if (!readback_buffer_region(
+                auto* const dest = reinterpret_cast<std::byte*>(lc.lm.data());
+                if (!readback_buffer_region_chunked(
                         device,
                         {
-                            .source_buffer = lm_buf,
-                            .transfer_buffer = lm_dl_tbuf,
-                            .source_offset = static_cast<Uint32>(zi) * lm_level_bytes,
-                            .size = lm_level_bytes,
-                            .label = "lm level",
+                            .region =
+                                {
+                                    .source_buffer = lm_buf,
+                                    .transfer_buffer = lm_dl_tbuf,
+                                    .source_offset = static_cast<Uint32>(zi) * lm_level_bytes,
+                                    .size = lm_level_bytes,
+                                    .label = "lm level",
+                                },
+                            .chunk_bytes = pending.serialized_readback_chunk_bytes,
                         },
-                        [&](void const* const mapped) {
-                            std::memcpy(lc.lm.data(), mapped, sz * sizeof(float));
-                            lc.lm_cpu_cache_valid = true;
+                        [&](void const* const mapped, Uint32 const offset, Uint32 const bytes) {
+                            std::memcpy(dest + offset, mapped, bytes);
                         })) {
                     return false;
                 }
+                lc.lm_cpu_cache_valid = true;
             }
         }
         if (pending.download_player_light) {
@@ -4032,50 +4097,55 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
             for (auto const z : pending.colored_light_download_levels) {
                 auto const zi = z + OVERMAP_DEPTH;
                 auto& lc = const_cast<level_cache&>(pending.m->get_cache_ref(z));
-                auto const sz = static_cast<std::size_t>(pending.cache_xy);
-                if (!readback_buffer_region(
+                auto* const dest = reinterpret_cast<std::byte*>(lc.colored_light_cache.data());
+                if (!readback_buffer_region_chunked(
                         device,
                         {
-                            .source_buffer = colored_light_buf,
-                            .transfer_buffer = colored_light_dl_tbuf,
-                            .source_offset = static_cast<Uint32>(zi) * uint_level_bytes,
-                            .size = uint_level_bytes,
-                            .label = "colored light level",
+                            .region =
+                                {
+                                    .source_buffer = colored_light_buf,
+                                    .transfer_buffer = colored_light_dl_tbuf,
+                                    .source_offset = static_cast<Uint32>(zi) * uint_level_bytes,
+                                    .size = uint_level_bytes,
+                                    .label = "colored light level",
+                                },
+                            .chunk_bytes = pending.serialized_readback_chunk_bytes,
                         },
-                        [&](void const* const mapped) {
-                            auto const* color_src = static_cast<uint32_t const*>(mapped);
-                            auto const color_span = std::span{color_src, sz};
-                            std::ranges::copy(color_span, lc.colored_light_cache.begin());
-                            lc.colored_light_cache_active =
-                                std::ranges::any_of(color_span, [](uint32_t const value) {
-                                    return value != 0u;
-                                });
+                        [&](void const* const mapped, Uint32 const offset, Uint32 const bytes) {
+                            std::memcpy(dest + offset, mapped, bytes);
                         })) {
                     return false;
                 }
+                lc.colored_light_cache_active =
+                    std::ranges::any_of(lc.colored_light_cache, [](uint32_t const value) {
+                        return value != 0u;
+                    });
             }
         }
         if (!pending.seen_download_levels.empty()) {
             for (auto const z : pending.seen_download_levels) {
                 auto const zi = z + OVERMAP_DEPTH;
                 auto& lc = const_cast<level_cache&>(pending.m->get_cache_ref(z));
-                auto const sz = static_cast<std::size_t>(pending.cache_xy);
-                if (!readback_buffer_region(
+                auto* const dest = reinterpret_cast<std::byte*>(lc.seen_cache.data());
+                if (!readback_buffer_region_chunked(
                         device,
                         {
-                            .source_buffer = seen_buf,
-                            .transfer_buffer = seen_dl_tbuf,
-                            .source_offset = static_cast<Uint32>(zi) * float_level_bytes,
-                            .size = float_level_bytes,
-                            .label = "seen level",
+                            .region =
+                                {
+                                    .source_buffer = seen_buf,
+                                    .transfer_buffer = seen_dl_tbuf,
+                                    .source_offset = static_cast<Uint32>(zi) * float_level_bytes,
+                                    .size = float_level_bytes,
+                                    .label = "seen level",
+                                },
+                            .chunk_bytes = pending.serialized_readback_chunk_bytes,
                         },
-                        [&](void const* const mapped) {
-                            auto const* seen_src = static_cast<float const*>(mapped);
-                            std::ranges::copy(std::span{seen_src, sz}, lc.seen_cache.begin());
-                            lc.seen_cache_dirty = false;
+                        [&](void const* const mapped, Uint32 const offset, Uint32 const bytes) {
+                            std::memcpy(dest + offset, mapped, bytes);
                         })) {
                     return false;
                 }
+                lc.seen_cache_dirty = false;
             }
         }
         downloads_unpacked_by_deferred = true;
@@ -4351,6 +4421,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 .static_lm_bytes = uint_volume_bytes,
                 .output_bytes = uint_volume_bytes,
                 .lm_download_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t)),
+                .seen_download_bytes = Uint32{1},
                 .visibility_download_bytes = visibility_download_resource_bytes,
                 .upload_bytes = float_volume_bytes,
                 .visibility_upload_bytes = visibility_upload_total,
