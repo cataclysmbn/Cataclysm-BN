@@ -741,13 +741,11 @@ struct chunked_readback_request {
     Uint32 chunk_bytes = 0;
 };
 
-template<typename CopyChunk>
+template <typename CopyChunk>
 auto readback_buffer_region_chunked(
-    SDL_GPUDevice* const device,
-    chunked_readback_request const& request,
+    SDL_GPUDevice* const device, chunked_readback_request const& request,
     CopyChunk copy_chunk) -> bool {
-    auto const chunk_bytes =
-        request.chunk_bytes == 0 ? request.region.size : request.chunk_bytes;
+    auto const chunk_bytes = request.chunk_bytes == 0 ? request.region.size : request.chunk_bytes;
     auto offset = Uint32{0};
     while (offset < request.region.size) {
         auto const bytes = std::min(chunk_bytes, request.region.size - offset);
@@ -3245,8 +3243,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const serialized_uint_level_download_bytes =
         deferred_download_copy ? serialized_readback_chunk_bytes : uint_level_bytes;
     auto const serialized_float_level_download_bytes =
-        deferred_download_copy ? std::min(serialized_readback_chunk_bytes, float_level_bytes)
-                               : float_level_bytes;
+        deferred_download_copy
+            ? std::min(serialized_readback_chunk_bytes, float_level_bytes)
+            : float_level_bytes;
     auto const lm_download_resource_bytes =
         deferred_download_copy
             ? std::max(serialized_readback_chunk_bytes, static_cast<Uint32>(sizeof(uint32_t)))
@@ -3254,9 +3253,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const seen_download_resource_bytes =
         deferred_download_copy
             ? std::max(serialized_float_level_download_bytes, static_cast<Uint32>(sizeof(float)))
-            : std::max(
-                static_cast<Uint32>(seen_download_levels.size()) * float_level_bytes,
-                Uint32{1});
+            : std::max(static_cast<Uint32>(seen_download_levels.size()) * float_level_bytes,
+                       Uint32{1});
     auto upload_total = source_upload_bytes;
     upload_total += colored_source_upload_bytes;
     upload_total += transparency_upload_bytes;
@@ -3359,9 +3357,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     .output_bytes = out_bytes,
                     .download_bytes =
                         deferred_download_copy
-                            ? std::max(
-                                serialized_uint_level_download_bytes,
-                                static_cast<Uint32>(sizeof(uint32_t)))
+                            ? std::max(serialized_uint_level_download_bytes,
+                                       static_cast<Uint32>(sizeof(uint32_t)))
                             : std::max(colored_light_download_bytes, Uint32{1}),
                 })) {
             return {};
