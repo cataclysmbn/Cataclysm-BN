@@ -3461,8 +3461,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             auto* stage_fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
             if (stage_fence == nullptr) {
                 DebugLog(DL::Error, DC::Main)
-                    << "SDL_GPU: lm: lighting stage command buffer submission failed after " << label
-                    << ": " << SDL_GetError();
+                    << "SDL_GPU: lm: lighting stage command buffer submission failed after "
+                    << label << ": " << SDL_GetError();
                 cmd = nullptr;
                 return false;
             }
