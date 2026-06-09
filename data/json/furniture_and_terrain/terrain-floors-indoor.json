@@ -897,7 +897,7 @@
       "sound": "rrrrip!",
       "sound_fail": "slap!",
       "sound_vol": 60,
-      "sound_fail_vol": ,50
+      "sound_fail_vol": 50,
       "ter_set": "t_null"
     }
   },
