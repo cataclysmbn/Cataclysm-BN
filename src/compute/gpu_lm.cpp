@@ -55,7 +55,7 @@ static constexpr auto solar_shadow_scatter = 0.09f;
 static constexpr auto daylight_diffusion_passes = 16;
 static constexpr auto light_source_default_z_frac = 0.5f;
 static constexpr auto light_source_vehicle_external_z_frac = 0.8f;
-static constexpr auto dxbc_serialized_readback_chunk_bytes = Uint32{16u * 1024u};
+static constexpr auto dxbc_serialized_readback_chunk_bytes = Uint32{64u * 1024u};
 
 // ---------------------------------------------------------------------------
 // Pipeline management
@@ -105,6 +105,7 @@ struct gpu_backend_policy {
     bool expand_dirty_transparency_uploads = false;
     bool cycle_upload_transfers = false;
     bool submit_lighting_stages = false;
+    bool wait_lighting_stages = false;
     bool serialize_lighting_downloads = false;
     bool serialize_visibility_downloads = false;
     Uint32 serialized_readback_chunk_bytes = 0;
@@ -113,10 +114,11 @@ struct gpu_backend_policy {
 auto backend_policy_for_device(SDL_GPUDevice* const device) -> gpu_backend_policy {
     auto const uses_dxbc = shader_format_is_dxbc(preferred_fmt(SDL_GetGPUShaderFormats(device)));
     return gpu_backend_policy{
-        .reset_lighting_resources_on_rebuild = uses_dxbc,
-        .expand_dirty_transparency_uploads = uses_dxbc,
+        .reset_lighting_resources_on_rebuild = false,
+        .expand_dirty_transparency_uploads = false,
         .cycle_upload_transfers = uses_dxbc,
         .submit_lighting_stages = uses_dxbc,
+        .wait_lighting_stages = false,
         .serialize_lighting_downloads = uses_dxbc,
         .serialize_visibility_downloads = uses_dxbc,
         .serialized_readback_chunk_bytes =
@@ -3266,6 +3268,12 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const visibility_upload_total = camera_bytes;
 
     TracyPlot("GPU LM Dirty Levels", static_cast<int64_t>(lightmap_levels.size()));
+    TracyPlot("GPU LM DXBC Stage Submit",
+              backend_policy.submit_lighting_stages ? int64_t{1} : int64_t{0});
+    TracyPlot("GPU LM DXBC Stage Wait",
+              backend_policy.wait_lighting_stages ? int64_t{1} : int64_t{0});
+    TracyPlot("GPU LM Serialized Chunk Bytes",
+              static_cast<int64_t>(serialized_readback_chunk_bytes));
     TracyPlot("GPU LM Rewrite Full Volume", rewrites_full_lighting_volume ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Requested Selected Rewrite",
               requested_selected_lightmap_levels ? int64_t{1} : int64_t{0});
@@ -3449,21 +3457,29 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             return false;
         }
 
-        auto* stage_fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
-        if (stage_fence == nullptr) {
+        if (backend_policy.wait_lighting_stages) {
+            auto* stage_fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
+            if (stage_fence == nullptr) {
+                DebugLog(DL::Error, DC::Main)
+                    << "SDL_GPU: lm: lighting stage command buffer submission failed after " << label
+                    << ": " << SDL_GetError();
+                cmd = nullptr;
+                return false;
+            }
+
+            auto const wait_succeeded = SDL_WaitForGPUFences(device, true, &stage_fence, 1);
+            SDL_ReleaseGPUFence(device, stage_fence);
+            if (!wait_succeeded) {
+                DebugLog(DL::Error, DC::Main)
+                    << "SDL_GPU: lm: lighting stage fence wait failed after " << label << ": "
+                    << SDL_GetError();
+                cmd = nullptr;
+                return false;
+            }
+        } else if (!SDL_SubmitGPUCommandBuffer(cmd)) {
             DebugLog(DL::Error, DC::Main)
                 << "SDL_GPU: lm: lighting stage command buffer submission failed after " << label
                 << ": " << SDL_GetError();
-            cmd = nullptr;
-            return false;
-        }
-
-        auto const wait_succeeded = SDL_WaitForGPUFences(device, true, &stage_fence, 1);
-        SDL_ReleaseGPUFence(device, stage_fence);
-        if (!wait_succeeded) {
-            DebugLog(DL::Error, DC::Main)
-                << "SDL_GPU: lm: lighting stage fence wait failed after " << label << ": "
-                << SDL_GetError();
             cmd = nullptr;
             return false;
         }
