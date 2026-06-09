@@ -147,6 +147,17 @@ struct lm_visibility_push_constants {
 };
 static_assert(sizeof(lm_visibility_push_constants) == 80);
 
+struct lm_pack_visibility_push_constants {
+    uint32_t total_words;     //  4 bytes
+    int32_t cache_xy;         //  4 bytes
+    int32_t words_per_level;  //  4 bytes
+    int32_t z_start_idx;      //  4 bytes = 16
+    int32_t dispatch_z_count; //  4 bytes
+    int32_t z_count;          //  4 bytes
+    uint32_t _pad[2];         //  8 bytes = 32
+};
+static_assert(sizeof(lm_pack_visibility_push_constants) == 32);
+
 // ---------------------------------------------------------------------------
 // Compute a conservative dispatch radius from source luminance.
 // Matches lm_raytrace_compute.hlsl: exponential attenuation divided by linear

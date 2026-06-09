@@ -404,11 +404,7 @@ auto shader_formats_to_string(SDL_GPUShaderFormat const formats) -> std::string 
     using entry_t = std::pair<SDL_GPUShaderFormat, std::string_view>;
     static constexpr std::array<entry_t, 4> entries{{
         {SDL_GPU_SHADERFORMAT_SPIRV, "SPIRV"},
-#if defined(SDL_GPU_SHADERFORMAT_DXBC)
         {SDL_GPU_SHADERFORMAT_DXBC, "DXBC"},
-#else
-        {SDL_GPU_SHADERFORMAT_INVALID, ""},
-#endif
         {SDL_GPU_SHADERFORMAT_DXIL, "DXIL"},
         {SDL_GPU_SHADERFORMAT_MSL, "MSL"},
     }};
@@ -439,9 +435,7 @@ auto read_file_bytes(std::string const& path) -> std::vector<std::byte> {
 auto select_shader_format(SDL_GPUShaderFormat const formats)
     -> std::pair<SDL_GPUShaderFormat, std::string_view> {
     if (formats & SDL_GPU_SHADERFORMAT_DXIL) { return {SDL_GPU_SHADERFORMAT_DXIL, ".dxil"}; }
-#if defined(SDL_GPU_SHADERFORMAT_DXBC)
     if (formats & SDL_GPU_SHADERFORMAT_DXBC) { return {SDL_GPU_SHADERFORMAT_DXBC, ".dxbc"}; }
-#endif
     if (formats & SDL_GPU_SHADERFORMAT_SPIRV) { return {SDL_GPU_SHADERFORMAT_SPIRV, ".spv"}; }
     if (formats & SDL_GPU_SHADERFORMAT_MSL) { return {SDL_GPU_SHADERFORMAT_MSL, ".msl"}; }
     return {SDL_GPU_SHADERFORMAT_INVALID, ""};
