@@ -5487,16 +5487,8 @@ void Character::update_health( int external_modifiers )
 
     // Apply enchantment healthy_rate as a multiplier to the target health level
     // healthy_rate > 1.0 boosts health toward max, < 1.0 reduces it toward negative
-    float enchant_healthy_rate = bonus_from_enchantments( 1.0, enchant_vals::mod::HEALTHY_MULT );
-    if( enchant_healthy_rate > 1.0f ) {
-        // Positive effect: push effective_healthy_mod toward get_max_healthy()
-        effective_healthy_mod = effective_healthy_mod +
-                                ( get_max_healthy() - effective_healthy_mod ) * ( enchant_healthy_rate - 1.0f );
-    } else if( enchant_healthy_rate < 1.0f ) {
-        // Negative effect: push effective_healthy_mod toward -200
-        effective_healthy_mod = effective_healthy_mod +
-                                ( -200.0f - effective_healthy_mod ) * ( 1.0f - enchant_healthy_rate );
-    }
+    effective_healthy_mod += bonus_from_enchantments( effective_healthy_mod,
+                             enchant_vals::mod::HEALTHY_MULT );
 
     // Health tends toward healthy_mod.
     // For small differences, it changes 4 points per day
