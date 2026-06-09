@@ -2613,7 +2613,7 @@ void sounds::process_sound_markers( Character *who )
         }
         // And set the sound as having been heard by the player, before we potentially skip it for volume reasons.
         element.heard_by_player = true;
-        if( element.sound.volume >= mdBspl_to_dBspl( MAXIMUM_VOLUME_ATMOSPHERE ) ) {
+        if( element.sound.volume > mdBspl_to_dBspl( MAXIMUM_VOLUME_ATMOSPHERE ) ) {
             // Dont count impossibly loud sounds.
             add_msg( m_debug,
                      "Player given sound louder than possible in Atmosphere! Sound with description [ %1s ] from %i:%i:%i with an origin volume of %i dB is louder than possible.",
