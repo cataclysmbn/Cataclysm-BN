@@ -2877,8 +2877,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         s_logged_dxbc_single_submit_lighting = true;
     }
     if (dxbc_stage_checkpoints && !s_logged_dxbc_stage_checkpoints) {
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: lm: DXBC stage checkpoints enabled for "
-                                        "diagnostics";
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC stage checkpoints enabled for "
+               "diagnostics";
         s_logged_dxbc_stage_checkpoints = true;
     }
 
