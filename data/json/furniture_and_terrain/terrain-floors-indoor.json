@@ -56,7 +56,7 @@
     "move_cost": 2,
     "light_emitted": 120,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "FLAT", "ROAD", "LOCAL_LIGHT" ],
     "bash": {
       "str_min": 4,
       "str_max": 12,
@@ -79,7 +79,7 @@
     "light_emitted": 120,
     "roof": "t_flat_roof",
     "looks_like": "t_floor",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD", "LOCAL_LIGHT" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -103,7 +103,7 @@
     "move_cost": 2,
     "light_emitted": 120,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAT", "ROAD", "LOCAL_LIGHT" ],
     "bash": {
       "sound": "thump",
       "ter_set": "t_null",

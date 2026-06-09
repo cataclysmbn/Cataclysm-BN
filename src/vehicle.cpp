@@ -23,6 +23,7 @@
 #include <vector>
 #include <ranges>
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
 #include "avatar_functions.h"
@@ -1506,7 +1507,7 @@ void vehicle::backfire( const int e ) const
     const auto pos = bub_part_location( engines[e] );
     sound_event se;
     se.origin = pos;
-    se.volume = std::min( 160, 40 + power / 10000 );
+    se.volume = 100 + rng( 0, 20 ) + rng( 0, 20 );
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
     se.description = string_format( _( "a loud BANG! from the %s" ), // NOLINT(cata-text-style)
@@ -5838,11 +5839,9 @@ void traverse( StartPoint &start,
     using tvr = traverse_visitor_result;
     constexpr bool IsConst = std::is_const_v<StartPoint>;
     struct hash {
-        const std::hash<char> char_hash = std::hash<char>();
-        const std::hash<size_t> ptr_hash = std::hash<size_t>();
         auto operator()( const vehicle_or_grid<IsConst> &elem ) const {
-            return char_hash( static_cast<char>( elem.type ) ) ^
-                   ptr_hash(
+            return std::hash<char> {}( static_cast<char>( elem.type ) ) ^
+                   std::hash<size_t> {}(
                        // Because only one of pointers is not nullptr, binary OR would get value of set pointer.
                        reinterpret_cast<size_t>( elem.veh ) | reinterpret_cast<size_t>( elem.grid )
                    );
@@ -6251,7 +6250,9 @@ detached_ptr<item> vehicle::add_charges( int part, detached_ptr<item> &&itm )
     itm_copy->charges = amount;
     itm->charges -= amount;
     detached_ptr<item> remaining = add_item( part, std::move( itm_copy ) );
-    itm->charges += remaining->charges;
+    if( remaining ) {
+        itm->charges += remaining->charges;
+    }
     return itm->charges > 0 ? std::move( itm ) : detached_ptr<item>();
 }
 
@@ -6522,7 +6523,7 @@ bool vehicle::decrement_summon_timer()
         g->m.destroy_vehicle( this );
         return true;
     } else {
-        *summon_time_limit -= 1_turns;
+        *summon_time_limit -= action_time_scale::calendar_duration_this_tick();
     }
     return false;
 }
@@ -7301,7 +7302,7 @@ void vehicle::unboard_all()
     }
 }
 
-int vehicle::damage( int p, int dmg, damage_type type, bool aimed )
+int vehicle::damage( int p, int dmg, damage_type type, bool aimed, bool random_part )
 {
     if( dmg < 1 ) {
         return dmg;
@@ -7328,7 +7329,16 @@ int vehicle::damage( int p, int dmg, damage_type type, bool aimed )
         }
     }
 
-    int target_part = part_info( p ).rotor_diameter() ? p : random_entry( pl );
+    int target_part = [&]() {
+        if( random_part ) {
+            if( part_info( p ).rotor_diameter() && one_in( 2 ) ) {
+                return p;
+            }
+            return random_entry( pl );
+        }
+        return p;
+    }
+    ();
 
     // door motor mechanism is protected by closed doors
     if( part_flag( target_part, "DOOR_MOTOR" ) ) {

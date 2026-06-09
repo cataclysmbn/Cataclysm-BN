@@ -20,6 +20,7 @@
 #include "enums.h" // point
 #include "explosion.h"
 #include "game_constants.h"
+#include "hsv_color.h"
 #include "iuse.h" // use_function
 #include "mapdata.h"
 #include "pldata.h" // add_type
@@ -1081,6 +1082,7 @@ struct itype {
         int m_to_hit  = 0;  // To-hit bonus for melee combat; -5 to 5 is reasonable
 
         unsigned light_emission = 0;   // Exactly the same as item_tags LIGHT_*, this is for lightmap.
+        std::optional<RGBColor> light_color;
 
         /** If set via JSON forces item category to this (preventing automatic assignment) */
         item_category_id category_force;
@@ -1131,6 +1133,8 @@ struct itype {
         const itype_id &get_id() const;
 
         bool count_by_charges() const;
+        // Separate check for stackable generics, for functions that are allowed to treat them separately from ammo or comestibles.
+        bool is_stackable() const;
 
         int charges_default() const;
 

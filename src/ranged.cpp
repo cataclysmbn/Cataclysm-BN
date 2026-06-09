@@ -2125,20 +2125,9 @@ static int print_ranged_chance( const catacurses::window &w, int line_number,
     return line_number;
 }
 
-// Whether player character knows creature's position and can roughly track it with the aim cursor
-static auto outside_visible_z_range( const tripoint_bub_ms &from,
-                                     const tripoint_bub_ms &to ) -> bool
-{
-    return get_map().has_zlevels() && fov_3d &&
-           std::abs( from.z() - to.z() ) > fov_3d_z_range;
-}
-
 static bool pl_sees( const Creature &cr )
 {
     Character &u = get_player_character();
-    if( outside_visible_z_range( u.bub_pos(), cr.bub_pos() ) ) {
-        return false;
-    }
     return u.sees( cr ) || u.sees_with_infrared( cr ) || u.sees_with_specials( cr );
 }
 
@@ -2793,11 +2782,6 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
             return false;
         }
 
-        if( outside_visible_z_range( shooter_pos, critter_pos ) )
-        {
-            return false;
-        }
-
         // Special case: if range is 1, it's a melee attack.
         // Melee attacks can only target on same z-level or directly up/down, not "z-diagonally".
         if( range <= 1 && shooter_pos.z() != critter_pos.z() && shooter_pos.xy() != critter_pos.xy() )
@@ -2887,7 +2871,7 @@ target_handler::trajectory target_ui::run()
 
     map &here = get_map();
     // Load settings
-    allow_zlevel_shift = here.has_zlevels() && get_option<bool>( "FOV_3D" );
+    allow_zlevel_shift = here.has_zlevels();
     snap_to_target = get_option<bool>( "SNAP_TO_TARGET" );
     if( mode == TargetMode::Turrets ) {
         // Due to how cluttered the display would become, disable it by default
@@ -3274,8 +3258,6 @@ bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
     if( new_pos != src ) {
         // On Z axis, make sure we do not exceed map boundaries
         valid_pos.z() = clamp( valid_pos.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT );
-        // Or current view range
-        valid_pos.z() = clamp( valid_pos.z() - src.z(), -fov_3d_z_range, fov_3d_z_range ) + src.z();
 
         new_traj = here.find_clear_path( src, valid_pos );
         if( range == 1 ) {
@@ -3474,7 +3456,7 @@ bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
 
     // Try to re-acquire target tile or tile where the target creature used to be
     auto local_lt = get_map().abs_to_bub( *you->last_target_pos );
-    if( !outside_visible_z_range( src, local_lt ) && dist_fn( local_lt ) <= range ) {
+    if( dist_fn( local_lt ) <= range ) {
         new_dst = local_lt;
         // Abort aiming if a creature moved in
         return !critter && !g->critter_at( local_lt, true );
@@ -3639,7 +3621,9 @@ void target_ui::cycle_targets( int direction )
 
 void target_ui::set_view_offset( const tripoint_rel_ms &new_offset )
 {
-    tripoint_rel_ms new_( new_offset.xy(), clamp( new_offset.z(), -fov_3d_z_range, fov_3d_z_range ) );
+    tripoint_rel_ms new_( new_offset.xy(),
+                          clamp( new_offset.z(), -OVERMAP_DEPTH - src.z(),
+                                 OVERMAP_HEIGHT - src.z() ) );
     new_.z() = clamp( new_.z() + src.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT ) - src.z();
 
     bool changed_z = you->view_offset.z() != new_.z();

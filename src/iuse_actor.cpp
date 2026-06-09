@@ -16,6 +16,7 @@
 #include <vector>
 #include <ranges>
 
+#include "action_time_scale.h"
 #include "action.h"
 #include "activity_handlers.h"
 #include "addiction.h"
@@ -2602,11 +2603,11 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint_b
     std::string desc = "music";
     /** @EFFECT_PER increases morale bonus when playing an instrument */
     const int morale_effect = fun + fun_bonus * p.per_cur;
-    if( morale_effect >= 0 && calendar::once_every( description_frequency ) ) {
+    if( morale_effect >= 0 && action_time_scale::once_every_this_tick( description_frequency ) ) {
         if( !player_descriptions.empty() && p.is_player() ) {
             desc = _( random_entry( player_descriptions ) );
         }
-    } else if( morale_effect < 0 && calendar::once_every( 1_minutes ) ) {
+    } else if( morale_effect < 0 && action_time_scale::once_every_this_tick( 1_minutes ) ) {
         // No musical skills = possible morale penalty
         if( p.is_player() ) {
             desc = _( "You produce an annoying sound" );
@@ -3457,7 +3458,7 @@ bool repair_item_actor::can_repair_target( player &pl, const item &fix,
         }
         return false;
     }
-    if( fix.count_by_charges() || fix.has_flag( flag_NO_REPAIR ) ) {
+    if( ( fix.count_by_charges() && !fix.is_stackable() ) || fix.has_flag( flag_NO_REPAIR ) ) {
         if( print_msg ) {
             pl.add_msg_if_player( m_info, _( "You cannot repair this type of item." ) );
         }
@@ -5899,7 +5900,7 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &p
 
             return 0;
         } else {
-            if( calendar::once_every( 1_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                 it.ammo_consume( charges_per_minute, pos );
             }
             it.set_var( "COOKTIME", cooktime );

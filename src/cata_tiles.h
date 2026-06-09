@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -305,6 +306,15 @@ struct tint_config {
 };
 
 using color_tint_pair = std::pair<tint_config, tint_config>;  // {bg, fg}
+
+struct render_light_tint {
+    SDL_Color color = TILESET_NO_COLOR;
+    uint8_t alpha = 0;
+
+    bool has_value() const {
+        return alpha != 0 && color != TILESET_NO_COLOR;
+    }
+};
 
 struct tileset_lookup_key {
     int sprite_index;
@@ -817,7 +827,8 @@ class cata_tiles
                              const tint_config &tint, lit_level ll,
                              bool apply_visual_effects, int overlay_count,
                              int *height_3d, int retract = 0,
-                             size_t warp_hash = TILESET_NO_WARP );
+                             size_t warp_hash = TILESET_NO_WARP,
+                             const render_light_tint &light_tint = {} );
 
         /**
          * @brief Calls draw_sprite_at() twice each for foreground and background.
@@ -838,7 +849,8 @@ class cata_tiles
                            unsigned int loc_rand, int rota,
                            const tint_config &bg_tint, const tint_config &fg_tint,
                            lit_level ll, bool apply_visual_effects, int &height_3d,
-                           int overlay_count, int retract );
+                           int overlay_count, int retract,
+                           const render_light_tint &light_tint = {} );
 
         /**
          * @brief Draws a colored solid color tile at position, with optional blending

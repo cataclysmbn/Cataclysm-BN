@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <cmath>
 #include <map>
 #include <memory>
 #include <set>
@@ -26,6 +27,7 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "npc.h"
+#include "options_helpers.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
 #include "player_activity.h"
@@ -721,7 +723,7 @@ TEST_CASE( "total crafting time with or without interruption", "[crafting][time]
 TEST_CASE( "debug hammerspace", "[crafting]" )
 {
     clear_all_state();
-    static const recipe_id test_recipe( "nodachi" );
+    static const auto test_recipe = recipe_id( "nodachi" );
 
     GIVEN( "A character with debug hammerspace trait" ) {
         avatar dummy;
@@ -749,6 +751,79 @@ TEST_CASE( "debug hammerspace", "[crafting]" )
             }
         }
     }
+}
+
+TEST_CASE( "craft catch-up uses activity progress scale", "[crafting][speed]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "50" );
+    static const auto test_recipe = recipe_id( "nodachi" );
+
+    auto &dummy = get_avatar();
+    clear_avatar();
+    set_time( midday );
+    dummy.set_mutation( trait_DEBUG_HS );
+    dummy.set_body();
+    dummy.set_mutation( trait_DEBUG_STORAGE );
+    dummy.i_add( item::spawn( itype_id( "atomic_lamp" ) ) );
+    REQUIRE( character_funcs::can_see_fine_details( dummy ) );
+
+    const auto &recipe = *test_recipe;
+    auto command = craft_command( &recipe, 1, false, &dummy );
+    auto *craft_item = dummy.start_craft( command, dummy.bub_pos() );
+
+    REQUIRE( craft_item );
+    REQUIRE( dummy.activity );
+    REQUIRE( dummy.activity->id() == activity_id( "ACT_CRAFT" ) );
+    REQUIRE( craft_item->get_counter() == 0 );
+
+    const auto elapsed_turns = 10;
+    calendar::turn += time_duration::from_turns( elapsed_turns );
+    dummy.activity->init_all_moves( dummy );
+
+    const auto base_total_moves = std::max( 1, recipe.batch_time( 1, 1.0f, 0 ) );
+    const auto expected_progress = elapsed_turns * 25.0 / base_total_moves * 10'000'000.0;
+    const auto expected_counter = std::min(
+                                      static_cast<int>( expected_progress ), 10'000'000 );
+    CHECK( craft_item->get_counter() == expected_counter );
+}
+
+TEST_CASE( "craft progress uses activity scale", "[crafting][speed]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "50" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "100" );
+    static const auto test_recipe = recipe_id( "nodachi" );
+
+    auto &dummy = get_avatar();
+    clear_avatar();
+    set_time( midday );
+    dummy.set_mutation( trait_DEBUG_HS );
+    dummy.set_body();
+    dummy.set_mutation( trait_DEBUG_STORAGE );
+    dummy.i_add( item::spawn( itype_id( "atomic_lamp" ) ) );
+    REQUIRE( character_funcs::can_see_fine_details( dummy ) );
+
+    const auto &recipe = *test_recipe;
+    auto command = craft_command( &recipe, 1, false, &dummy );
+    auto *craft_item = dummy.start_craft( command, dummy.bub_pos() );
+
+    REQUIRE( craft_item );
+    REQUIRE( dummy.activity );
+    REQUIRE( dummy.activity->id() == activity_id( "ACT_CRAFT" ) );
+    REQUIRE( craft_item->get_counter() == 0 );
+
+    dummy.set_moves( 25 );
+    dummy.activity->do_turn( dummy );
+
+    const auto base_total_moves = std::max( 1, recipe.batch_time( 1, 1.0f, 0 ) );
+    const auto expected_progress = 50.0 / base_total_moves * 10'000'000.0;
+    const auto expected_counter = std::min(
+                                      static_cast<int>( std::round( expected_progress ) ), 10'000'000 );
+    CHECK( craft_item->get_counter() == expected_counter );
+    CHECK( dummy.get_moves() == 0 );
 }
 
 TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )

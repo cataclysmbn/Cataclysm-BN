@@ -5,6 +5,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <functional>
 
 #include "sdl_wrappers.h"
 
@@ -38,13 +39,18 @@ class dynamic_atlas
             SDL_Surface_Ptr readback;
             bool dirty;
         };
+        using sprite_callback = std::function<void( SDL_Surface *, const SDL_Rect * )>;
 
         dynamic_atlas()
             : max_atlas_width( 0 ), max_atlas_height( 0 ), hint_sprite_width( 0 ), hint_sprite_height( 0 ) {}
         dynamic_atlas( const int w, const int h, const int sw = 0, const int sh = 0 )
             : max_atlas_width( w ), max_atlas_height( h ), hint_sprite_width( sw ), hint_sprite_height( sh ) {}
 
-        auto allocate_sprite( int w, int h ) -> atlas_texture;
+        auto find_sprite( size_t id ) -> std::optional<atlas_texture>;
+        auto create_sprite( int w, int h, const std::optional<size_t> &id,
+                            const sprite_callback & ) -> atlas_texture;
+        auto get_or_create_sprite( int w, int h, const std::optional<size_t> &id,
+                                   const sprite_callback & ) -> atlas_texture;
         void clear();
 
         void readback_load();
@@ -58,9 +64,9 @@ class dynamic_atlas
         auto begin() const { return sheets.begin(); }
         auto end() const { return sheets.end(); }
 
-        auto id_assign( size_t id, const atlas_texture &tex ) -> bool;
-        auto id_search( size_t id ) -> std::optional<atlas_texture>;
     private:
+        auto assign_id_internal( size_t id, const atlas_texture &tex ) -> bool;
+        auto allocate_sprite_internal( int w, int h ) -> atlas_texture;
         std::vector<sprite_sheet> sheets;
         std::unordered_map<size_t, std::pair<int, SDL_Rect>> sprite_ids;
         SDL_Surface_Ptr staging_surf;

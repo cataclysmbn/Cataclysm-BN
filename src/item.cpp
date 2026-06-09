@@ -20,6 +20,7 @@
 #include <tuple>
 #include <unordered_set>
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "ammo.h"
 #include "ascii_art.h"
@@ -6880,7 +6881,7 @@ bool item::ready_to_revive( const tripoint_bub_ms &pos ) const
     if( get_map().veh_at( pos ) ) {
         return false;
     }
-    if( !calendar::once_every( 1_seconds ) ) {
+    if( !action_time_scale::once_every_this_tick( 1_seconds ) ) {
         return false;
     }
     int age_in_hours = to_hours<int>( age() );
@@ -6915,6 +6916,11 @@ bool item::is_money() const
 bool item::count_by_charges() const
 {
     return type->count_by_charges();
+}
+
+bool item::is_stackable() const
+{
+    return type->is_stackable();
 }
 
 int item::count() const
@@ -7152,7 +7158,7 @@ bool item::mod_damage( int qty, damage_type dt )
 {
     bool destroy = false;
 
-    if( count_by_charges() ) {
+    if( count_by_charges() && !is_stackable() ) {
         charges -= std::min( type->stack_size * qty / itype::damage_scale, charges );
         destroy |= charges == 0;
     }
@@ -7161,7 +7167,7 @@ bool item::mod_damage( int qty, damage_type dt )
         on_damage( qty, dt );
     }
 
-    if( !count_by_charges() ) {
+    if( !count_by_charges() || is_stackable() ) {
         destroy |= damage_ + qty > max_damage();
 
         damage_ = std::max( std::min( damage_ + qty, max_damage() ), min_damage() );

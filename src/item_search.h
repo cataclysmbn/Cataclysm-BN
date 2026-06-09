@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "string_utils.h"
+#include "itype.h"
 
 /**
  * Get a function that returns true if the value matches the query.
@@ -88,10 +89,18 @@ class item;
  * Get a function that returns true if the item matches the query.
  */
 std::function<bool( const item & )> item_filter_from_string( const std::string &filter );
-
+/**
+ * @brief Get a function that returns true if the itype matches the query.
+ */
+std::function<bool( const itype & )> itype_filter_from_string( const std::string &filter );
 /**
  * Get a function that returns true if the value matches the basic query (no commas or minuses).
  */
 std::function<bool( const item & )> basic_item_filter( std::string filter );
+/**
+ * Similar to basic_item_filter, but for item type instead
+ */
+std::function<bool( const itype & )> basic_itype_filter( std::string filter );
 
-
+std::function<bool( const item & )> wildcard_item_filter( std::string filter );
+std::function<bool( const itype & )> wildcard_itype_filter( std::string filter );

@@ -15,6 +15,7 @@
 #include <utility>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "avatar.h"
@@ -350,11 +351,11 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     }
 
     // If we're working below 20% speed, just suggest giving up
-    if( calendar::once_every( 1_hours ) && total_multi <= 0.2f ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) && total_multi <= 0.2f ) {
         who.add_msg_if_player( m_bad, _( "You are too frustrated to continue and should just give up." ) );
     }
 
-    if( calendar::once_every( 1_hours ) && total_multi < 0.75f ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) && total_multi < 0.75f ) {
         if( light_multi <= 0.5f ) {
             who.add_msg_if_player( m_bad, _( "You can't see well and are working slowly." ) );
         }
@@ -1104,7 +1105,16 @@ void complete_craft( Character &who, item &craft )
     for( detached_ptr<item> &it : used ) {
         used_items.push_back( &*it );
     }
-    const double relative_rot = craft.get_relative_rot();
+    // Makes it so that crafting inherits the components' rot instead of the vehicle cargo age, whatever that means
+    double relative_rot = 0.0;
+    for( const item *comp : used_items ) {
+        if( comp->goes_bad() ) {
+            const double comp_rot = comp->get_relative_rot();
+            if( comp_rot > relative_rot ) {
+                relative_rot = comp_rot;
+            }
+        }
+    }
     const bool ignore_component = making.has_flag( "NUTRIENT_OVERRIDE" );
 
     // Set up the new item, and assign an inventory letter if available

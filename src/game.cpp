@@ -34,6 +34,7 @@
 
 #include "achievement.h"
 #include "action.h"
+#include "action_time_scale.h"
 #include "activity_time_cadence.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
@@ -209,6 +210,10 @@
 #include "worldfactory.h"
 #include "location_vector.h"
 #include "monfaction.h"
+#if defined( CATA_SDL )
+#include "compute/gpu_lm.h"
+#include "compute/gpu_platform.h"
+#endif
 class computer;
 
 #if defined(TILES)
@@ -358,6 +363,7 @@ static const trait_id trait_WEB_ROPE( "WEB_ROPE" );
 static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
 static const trait_id trait_WAYFARER( "WAYFARER" );
 static const trait_id trait_HAS_NEMESIS( "HAS_NEMESIS" );
+static const trait_id trait_DEBUG_INFINITE_SPEED( "DEBUG_INFINITE_SPEED" );
 
 static const trait_flag_str_id trait_flag_MUTATION_FLIGHT( "MUTATION_FLIGHT" );
 static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
@@ -1849,12 +1855,26 @@ void game::calc_driving_offset( vehicle *veh )
     set_driving_view_offset( point( offset.x, offset.y ) );
 }
 
+auto game::advance_time_action_tick() -> int
+{
+    const auto calendar_turns = action_time_scale::calendar_turns_for_next_tick(
+                                    time_action_scale_turn_remainder );
+    action_time_scale::set_calendar_turns_this_tick( calendar_turns );
+    calendar::turn += time_duration::from_turns( calendar_turns );
+    return calendar_turns;
+}
+
 // MAIN GAME LOOP
 // Returns true if game is over (death, saved, quit, etc)
 bool game::do_turn()
 {
     ZoneScopedN( "game::do_turn" );
+    const auto reset_time_action_tick = on_out_of_scope( [this]() {
+        action_time_scale::set_calendar_turns_this_tick_to_next_tick(
+            time_action_scale_turn_remainder );
+    } );
     {
+        ZoneScopedN( "do_turn_initial_cleanup" );
         cleanup_arenas();
         if( is_game_over() ) {
             return cleanup_at_end();
@@ -1870,6 +1890,7 @@ bool game::do_turn()
     const auto monperf = asleep && get_option<bool>( "SLEEP_SKIP_MON" );
     const auto npcperf = asleep && get_option<bool>( "SLEEP_SKIP_NPC" );
     {
+        ZoneScopedN( "do_turn_population_plots" );
         TracyPlot( "Total Monsters", static_cast<int64_t>( critter_tracker->size() ) );
         auto total_npcs = int64_t{ 0 };
         auto simulated_npcs = int64_t{ 0 };
@@ -1887,6 +1908,7 @@ bool game::do_turn()
     }
     // Actual stuff
     {
+        ZoneScopedN( "do_turn_calendar" );
         if( new_game ) {
             new_game = false;
         } else {
@@ -1894,33 +1916,37 @@ bool game::do_turn()
                 gamemode = std::make_unique<special_game>();
             }
             gamemode->per_turn();
-            calendar::turn += 1_turns;
+            advance_time_action_tick();
         }
     }
     // Reset dimension swap flag now that the map is fully loaded and turn is processing
     swapping_dimensions = false;
 
-    // Mark all lightmap and visibility caches dirty for this turn.  The first redraw will run
-    // generate_lightmap / update_visibility_cache; subsequent redraws within the same turn skip them.
+    // Mark visibility dirty for this turn. Lightmap dirtiness is derived from
+    // dynamic light state in build_map_cache and from explicit map mutations.
     {
-        m.invalidate_lightmap_caches();
+        ZoneScopedN( "do_turn_invalidate_visibility" );
         m.invalidate_visibility_caches();
     }
 
     // starting a new turn, clear out temperature cache
     weather_manager &weather = get_weather();
     {
+        ZoneScopedN( "do_turn_clear_temp_cache" );
         weather.clear_temp_cache();
     }
 
     if( npcs_dirty ) {
+        ZoneScopedN( "do_turn_load_npcs" );
         load_npcs();
     }
 
     {
+        ZoneScopedN( "do_turn_timed_events" );
         timed_events.process();
     }
     {
+        ZoneScopedN( "do_turn_missions" );
         mission::process_all();
     }
     // If controlling a vehicle that is owned by someone else
@@ -1934,12 +1960,14 @@ bool game::do_turn()
     if( u.is_mounted() ) {
         u.check_mount_is_spooked();
     }
-    if( calendar::once_every( 1_days ) ) {
+    if( action_time_scale::once_every_this_tick( 1_days ) ) {
+        ZoneScopedN( "do_turn_overmap_mongroups" );
         get_overmapbuffer( current_dimension_id_ ).process_mongroups();
     }
 
     // Move hordes every 2.5 min
-    if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
+    if( action_time_scale::once_every_this_tick( time_duration::from_minutes( 2.5 ) ) ) {
+        ZoneScopedN( "do_turn_overmap_hordes" );
         get_overmapbuffer( current_dimension_id_ ).move_hordes();
         if( u.has_trait( trait_HAS_NEMESIS ) ) {
             get_overmapbuffer( current_dimension_id_ ).move_nemesis();
@@ -1952,28 +1980,33 @@ bool game::do_turn()
     debug_hour_timer.print_time();
 
     {
+        ZoneScopedN( "do_turn_update_body" );
         u.update_body();
     }
 
     // Auto-save if autosave is enabled
     if( get_option<bool>( "AUTOSAVE" ) &&
-        calendar::once_every( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
+        action_time_scale::once_every_this_tick( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
         !u.is_dead_state() ) {
+        ZoneScopedN( "do_turn_autosave" );
         autosave();
     }
 
     {
+        ZoneScopedN( "do_turn_weather_update" );
         weather.update_weather();
         reset_light_level();
     }
 
     {
+        ZoneScopedN( "do_turn_pre_action_updates" );
         perhaps_add_random_npc();
         process_voluntary_act_interrupt();
         process_activity();
         update_performance_bubble();
     }
     if( !soundperf ) {
+        ZoneScopedN( "do_turn_player_sound" );
         // Sound information and is broken up into three main blocks: Player, Monsters, NPCs
         // Player is special in that they are immediatly informed of the sounds they made on their turn for displayed sound marker purposes
         // Each sound block is generally a map::cull_heard_sounds(), feeding the AI in question remaining sounds, and then moving said AI.
@@ -1991,6 +2024,7 @@ bool game::do_turn()
 
     if( !u.has_effect( effect_sleep ) || uquit == QUIT_WATCH ) {
         if( u.moves > 0 || uquit == QUIT_WATCH ) {
+            ZoneScopedN( "do_turn_player_action_loop" );
             while( u.moves > 0 || uquit == QUIT_WATCH ) {
                 cleanup_dead();
                 mon_info_update();
@@ -2011,7 +2045,11 @@ bool game::do_turn()
                 }
 
                 const auto moves_before_action = u.moves;
-                const auto handled_action = handle_action();
+                auto handled_action = false;
+                {
+                    ZoneScopedN( "do_turn_handle_action" );
+                    handled_action = handle_action();
+                }
                 if( handled_action ) {
                     ++moves_since_last_save;
                 }
@@ -2047,6 +2085,7 @@ bool game::do_turn()
     }
 
     if( driving_view_offset.x != 0 || driving_view_offset.y != 0 ) {
+        ZoneScopedN( "do_turn_driving_offset" );
         // Still have a view offset, but might not be driving anymore,
         // or the option has been deactivated,
         // might also happen when someone dives from a moving car.
@@ -2057,6 +2096,7 @@ bool game::do_turn()
 
     // No-scent debug mutation has to be processed here or else it takes time to start working
     {
+        ZoneScopedN( "do_turn_scent" );
         if( !u.has_active_bionic( bionic_id( "bio_scent_mask" ) ) &&
             !u.has_trait( trait_id( "DEBUG_NOSCENT" ) ) ) {
             scent.set( u.bub_pos(), u.scent, u.get_type_of_scent() );
@@ -2067,10 +2107,12 @@ bool game::do_turn()
 
     // We need floor cache before checking falling 'n stuff
     {
+        ZoneScopedN( "do_turn_build_floor_caches" );
         m.build_floor_caches();
     }
 
     if( !vehperf ) {
+        ZoneScopedN( "do_turn_vehicle_physics" );
         m.process_falling();
         autopilot_vehicles();
         m.vehmove();
@@ -2080,9 +2122,11 @@ bool game::do_turn()
         m.process_items();
     }
     {
+        ZoneScopedN( "do_turn_creature_in_field" );
         m.creature_in_field( u );
     }
     {
+        ZoneScopedN( "do_turn_distribution_trackers" );
         for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
             if( tracker_ptr ) {
                 tracker_ptr->update( calendar::turn );
@@ -2090,21 +2134,25 @@ bool game::do_turn()
         }
     }
     {
+        ZoneScopedN( "do_turn_dimension_ticks" );
         tick_portal_links();
         tick_temporary_pocket_dimensions();
         tick_vehicle_portal_taps();
     }
     {
+        ZoneScopedN( "do_turn_fluid_grid" );
         fluid_grid::update( calendar::turn );
     }
 
     // Update vision caches for monsters. If this turns out to be expensive,
     // consider a stripped down cache just for monsters.
     {
+        ZoneScopedN( "do_turn_monster_visibility_cache" );
         m.build_map_cache( get_levz(), true );
     }
     // This has to be done after updating our map caches, as sound propagation relies on terrain.
     if( !soundperf ) {
+        ZoneScopedN( "do_turn_sound_before_monsters" );
         // Cull stale sounds that have been heard by everyone. Should nominally catch all stale sounds made by the player on the prior turn.
         m.cull_heard_sounds();
         // Apply sounds from previous turn to monster AI.
@@ -2113,10 +2161,12 @@ bool game::do_turn()
     }
 
     if( !monperf ) {
+        ZoneScopedN( "do_turn_monmove" );
         monmove();
     }
 
     if( !soundperf ) {
+        ZoneScopedN( "do_turn_sound_before_npcs" );
         // Cull any noises that have already been heard by everyone. This should generally cull all stale sounds made by monsters on the prior turn.
         m.cull_heard_sounds();
         // Batch floodfill sounds made by monsters or other qued sources.
@@ -2127,25 +2177,36 @@ bool game::do_turn()
     }
 
     if( !npcperf ) {
+        ZoneScopedN( "do_turn_npcmove" );
         npcmove();
     } else {
+        ZoneScopedN( "do_turn_sleep_skip_npc_process" );
         sleep_skip_npc_process();
     }
-    if( calendar::once_every( 5_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 5_minutes ) ) {
+        ZoneScopedN( "do_turn_overmap_npc_move" );
         overmap_npc_move();
     }
 
     if( !soundperf ) {
+        ZoneScopedN( "do_turn_sound_after_npcs" );
         // Floodfill any sounds cued up by NPCs during their respective turns or from other sources.
         m.batch_flood_fill_sounds();
     }
     // We want to clear our floodfill que anyways, so that sounds dont accumulate in the que if soundperf is on.
     // This function will also print a debug sound diagnostic to the log if !soundperf.
     {
+        ZoneScopedN( "do_turn_clear_floodfill" );
         sounds::clear_floodfill_que( soundperf );
     }
-    update_stair_monsters();
-    mon_info_update();
+    {
+        ZoneScopedN( "do_turn_update_stair_monsters" );
+        update_stair_monsters();
+    }
+    {
+        ZoneScopedN( "do_turn_final_mon_info_update" );
+        mon_info_update();
+    }
     {
         ZoneScopedN( "do_turn_player_process_turn" );
         u.process_turn();
@@ -2157,24 +2218,32 @@ bool game::do_turn()
     }
 
     {
+        ZoneScopedN( "do_turn_explosions" );
         explosion_handler::get_explosion_queue().execute();
     }
     {
+        ZoneScopedN( "do_turn_cleanup_dead" );
         cleanup_dead();
     }
 
     if( u.moves < 0 && get_option<bool>( "FORCE_REDRAW" ) ) {
+        ZoneScopedN( "do_turn_force_redraw" );
         ui_manager::redraw();
         refresh_display();
     }
 
     if( get_levz() >= 0 && !u.is_underwater() ) {
+        ZoneScopedN( "do_turn_weather_effects" );
         handle_weather_effects( weather.weather_id );
     }
 
-    handle_wait_activity_redraw();
+    {
+        ZoneScopedN( "do_turn_wait_activity_redraw" );
+        handle_wait_activity_redraw();
+    }
 
     {
+        ZoneScopedN( "do_turn_bodytemp_wetness" );
         u.update_bodytemp( m, weather );
         character_funcs::update_body_wetness( u, get_weather().get_precise() );
         u.apply_wetness_morale( weather.temperature );
@@ -2184,6 +2253,7 @@ bool game::do_turn()
         sfx::remove_hearing_loss();
     }
     {
+        ZoneScopedN( "do_turn_sfx" );
         sfx::do_danger_music();
         sfx::do_vehicle_engine_sfx();
         sfx::do_vehicle_exterior_engine_sfx();
@@ -2191,7 +2261,10 @@ bool game::do_turn()
     }
 
     // Tick all loaded submaps: fields for every submap, items/vehicles for batch-eligible ones.
-    world_tick();
+    {
+        ZoneScopedN( "do_turn_world_tick" );
+        world_tick();
+    }
 
     // Fire-spread (and other non-bubble) requests created during world_tick()
     // must be realised before the next turn.  Let the load manager diff
@@ -2199,12 +2272,20 @@ bool game::do_turn()
     // Ensure trackers exist for all active dimensions before update() fires
     // on_submap_loaded events (mirrors the logic in load_map / update_map).
     for( const auto &dim_id : submap_loader.active_dimensions() ) {
+        ZoneScopedN( "do_turn_ensure_distribution_trackers" );
         ensure_distribution_grid_tracker_for( dim_id );
     }
-    submap_loader.update_lazy_border_focus( current_dimension_id_, u.abs_pos() );
-    submap_loader.update();
+    {
+        ZoneScopedN( "do_turn_lazy_border_focus" );
+        submap_loader.update_lazy_border_focus( current_dimension_id_, u.abs_pos() );
+    }
+    {
+        ZoneScopedN( "do_turn_submap_loader_update" );
+        submap_loader.update( is_draw_tiles_mode() );
+    }
     // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
     {
+        ZoneScopedN( "do_turn_cleanup_distribution_trackers" );
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
             if( !it->first.empty() && !it->second->has_tracked_submaps() ) {
                 submap_loader.remove_listener( it->second.get() );
@@ -2217,6 +2298,7 @@ bool game::do_turn()
 
     // Finally, clear pathfinding cache
     {
+        ZoneScopedN( "do_turn_clear_pathfinding" );
         Pathfinding::clear_d_maps();
     }
 
@@ -2225,6 +2307,7 @@ bool game::do_turn()
     // input while activity or auto-move interruption checks are active, so
     // pause/menu keys can still stop long-running actions.
     if( !u.activity && !u.has_destination() ) {
+        ZoneScopedN( "do_turn_pump_events" );
         inp_mngr.pump_events();
     }
 
@@ -2291,8 +2374,46 @@ void game::process_activity()
     }
 
     while( u.moves > 0 && *u.activity ) {
+        const auto before_activity_id = u.activity->id();
+        const auto before_activity_moves_left = u.activity->get_moves_left();
+        const auto before_avatar_moves = u.moves;
+        const auto freeze_non_calendar_activity = debug_infinite_speed_can_freeze_time() &&
+                !activity_uses_calendar_duration_progress( before_activity_id );
+
         u.activity->do_turn( u );
+
+        if( !freeze_non_calendar_activity ) {
+            continue;
+        }
+
+        const auto activity_finished = !u.activity || !*u.activity;
+        const auto activity_changed = !activity_finished && u.activity->id() != before_activity_id;
+        const auto activity_progressed = !activity_finished &&
+                                         u.activity->get_moves_left() < before_activity_moves_left;
+        if( activity_finished || activity_changed || activity_progressed ) {
+            restore_debug_infinite_speed_moves( before_avatar_moves );
+        }
     }
+}
+
+auto game::debug_infinite_speed_can_freeze_time() const -> bool
+{
+    if( !u.has_trait( trait_DEBUG_INFINITE_SPEED ) ) {
+        return false;
+    }
+    if( !u.activity || !*u.activity ) {
+        return true;
+    }
+    return !activity_uses_calendar_duration_progress( u.activity->id() );
+}
+
+auto game::restore_debug_infinite_speed_moves( const int minimum_moves ) -> void
+{
+    if( !debug_infinite_speed_can_freeze_time() ) {
+        return;
+    }
+    const auto minimum_turn_moves = std::max( minimum_moves, action_time_scale::base_moves_per_turn );
+    u.moves = std::max( u.moves, minimum_turn_moves );
 }
 
 auto game::activity_fixed_window_duration() -> time_duration
@@ -2390,6 +2511,9 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
         get_weather().nextweather <= calendar::turn ) {
         return false;
     }
+    if( debug_infinite_speed_can_freeze_time() ) {
+        return false;
+    }
     if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||
         u.is_mounted() ) {
         return false;
@@ -2447,9 +2571,15 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
     weather_manager &weather = get_weather();
     const auto starting_activity = u.activity->id();
     auto activity_monsters = activity_monmove_cache {};
-    for( const auto turn_index : std::views::iota( 0, to_turns<int>( duration ) ) ) {
-        static_cast<void>( turn_index );
+    const auto requested_turns = to_turns<int>( duration );
+    while( skipped_turns < requested_turns ) {
         if( is_game_over() || !u.activity || !*u.activity ) {
+            break;
+        }
+
+        const auto calendar_turns = action_time_scale::calendar_turns_for_remainder(
+                                        time_action_scale_turn_remainder );
+        if( skipped_turns > 0 && skipped_turns + calendar_turns > requested_turns ) {
             break;
         }
 
@@ -2457,8 +2587,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             gamemode = std::make_unique<special_game>();
         }
         gamemode->per_turn();
-        calendar::turn += 1_turns;
-        ++skipped_turns;
+        skipped_turns += advance_time_action_tick();
         swapping_dimensions = false;
         weather.clear_temp_cache();
         reset_light_level();
@@ -2466,10 +2595,10 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         const auto monster_count = critter_tracker->size();
         timed_events.process();
         mission::process_all();
-        if( calendar::once_every( 1_days ) ) {
+        if( action_time_scale::once_every_this_tick( 1_days ) ) {
             get_overmapbuffer( current_dimension_id_ ).process_mongroups();
         }
-        if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
+        if( action_time_scale::once_every_this_tick( time_duration::from_minutes( 2.5 ) ) ) {
             get_overmapbuffer( current_dimension_id_ ).move_hordes();
             if( u.has_trait( trait_HAS_NEMESIS ) ) {
                 get_overmapbuffer( current_dimension_id_ ).move_nemesis();
@@ -2477,7 +2606,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             m.spawn_monsters( false );
         }
         if( get_option<bool>( "AUTOSAVE" ) &&
-            calendar::once_every( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
+            action_time_scale::once_every_this_tick( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
             !u.is_dead_state() ) {
             autosave();
         }
@@ -2628,7 +2757,7 @@ auto game::run_activity_cadence_boundary() -> void
     reset_light_level();
     m.invalidate_lightmap_caches();
     m.invalidate_visibility_caches();
-    if( calendar::once_every( activity_time_cadence::fixed_window() ) ) {
+    if( action_time_scale::once_every_this_tick( activity_time_cadence::fixed_window() ) ) {
         overmap_npc_move();
     }
     Pathfinding::clear_d_maps();
@@ -2674,7 +2803,7 @@ auto game::handle_wait_activity_redraw( const bool force ) -> void
         wait_redraw = true;
         wait_message = _( "Wait till you wake up…" );
         wait_refresh_rate = 30_minutes;
-        if( calendar::once_every( 1_hours ) ) {
+        if( action_time_scale::once_every_this_tick( 1_hours ) ) {
             add_artifact_dreams();
         }
     } else if( u.has_destination() ) {
@@ -2692,8 +2821,9 @@ auto game::handle_wait_activity_redraw( const bool force ) -> void
     if( wait_redraw ) {
         ZoneScopedN( "wait_redraw" );
         if( force || first_redraw_since_waiting_started ||
-            calendar::once_every( std::min( 1_minutes, wait_refresh_rate ) ) ) {
-            if( force || first_redraw_since_waiting_started || calendar::once_every( wait_refresh_rate ) ) {
+            action_time_scale::once_every_this_tick( std::min( 1_minutes, wait_refresh_rate ) ) ) {
+            if( force || first_redraw_since_waiting_started ||
+                action_time_scale::once_every_this_tick( wait_refresh_rate ) ) {
                 ui_manager::redraw();
             }
 
@@ -3046,11 +3176,16 @@ void game::handle_key_blocking_activity()
 // Returns true if input requires breaking out into a game action.
 bool game::handle_mouseview( input_context &ctxt, std::string &action )
 {
+    ZoneScopedN( "handle_mouseview" );
     std::optional<tripoint_bub_ms> liveview_pos;
 
     do {
-        action = ctxt.handle_input();
+        {
+            ZoneScopedN( "handle_mouseview_handle_input" );
+            action = ctxt.handle_input();
+        }
         if( action == "MOUSE_MOVE" ) {
+            ZoneScopedN( "handle_mouseview_mouse_move" );
             const std::optional<tripoint_bub_ms> mouse_pos = ctxt.get_coordinates( w_terrain );
             if( mouse_pos && ( !liveview_pos || *mouse_pos != *liveview_pos ) ) {
                 liveview_pos = mouse_pos;
@@ -3059,12 +3194,16 @@ bool game::handle_mouseview( input_context &ctxt, std::string &action )
                 liveview_pos.reset();
                 liveview.hide();
             }
-            ui_manager::redraw();
+            {
+                ZoneScopedN( "handle_mouseview_redraw" );
+                ui_manager::redraw();
+            }
         }
     } while( action == "MOUSE_MOVE" ); // Freeze animation when moving the mouse
 
     if( action != "TIMEOUT" ) {
         // Keyboard event, break out of animation loop
+        ZoneScopedN( "handle_mouseview_hide_liveview" );
         liveview.hide();
         return false;
     }
@@ -4387,12 +4526,17 @@ void game::draw( ui_adaptor &ui )
         const auto cache_z = is_looking ? u.bub_pos().z() : ter_view_p.z();
         m.build_map_cache( cache_z );
         if( m.get_cache_ref( cache_z ).visibility_cache_dirty ) {
-            m.update_visibility_cache( cache_z );
+            if( !is_draw_tiles_mode() ) {
+                m.update_visibility_cache( cache_z );
+            }
         }
     }
 
     werase( w_terrain );
-    draw_ter();
+    {
+        ZoneScopedN( "game_draw_terrain" );
+        draw_ter();
+    }
     {
         ZoneScopedN( "game_draw_callbacks" );
         for( auto it = draw_callbacks.begin(); it != draw_callbacks.end(); ) {
@@ -4538,6 +4682,11 @@ void game::draw_ter( const bool draw_sounds )
 {
     draw_ter( u.bub_pos() + u.view_offset, is_looking,
               draw_sounds );
+}
+
+auto game::visibility_cache_z() -> int
+{
+    return is_looking ? u.bub_pos().z() : ter_view_p.z();
 }
 
 void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bool draw_sounds )
@@ -5439,7 +5588,7 @@ void game::world_tick()
     TracyPlot( "Active Dimensions", static_cast<int64_t>( loaded_dimensions_.size() ) );
 
     const auto fire_spread = reality_bubble_fire_spread;
-    const auto do_emits = calendar::once_every( 10_seconds );
+    const auto do_emits = action_time_scale::once_every_this_tick( 10_seconds );
 
     if( !fire_spread ) {
         fire_loader.clear( submap_loader );
@@ -5587,6 +5736,153 @@ void game::world_tick()
         fire_loader.prune_disconnected( submap_loader );
     }
 }
+
+struct prepared_sight_query {
+    bool needs_los = false;
+    bool immediate_result = false;
+    tripoint_bub_ms from = tripoint_bub_ms::zero();
+    tripoint_bub_ms to = tripoint_bub_ms::zero();
+    int range = -1;
+};
+
+static auto prepare_terrain_sight_query( const Creature &seer, const tripoint_bub_ms &target,
+        const int range_mod ) -> prepared_sight_query
+{
+    auto &here = get_map();
+    if( seer.get_dimension() != here.get_bound_dimension() ) {
+        return { .immediate_result = false };
+    }
+
+    const auto range_day = seer.sight_range( default_daylight_level() );
+    const auto range_night = seer.sight_range( 0 );
+    const auto range_max = std::max( range_day, range_night );
+    const auto wanted_range = rl_dist( seer.bub_pos(), target );
+    if( wanted_range > range_max ) {
+        return { .immediate_result = false };
+    }
+
+    const auto ambient = here.ambient_light_at( target );
+    const auto range_cur = seer.sight_range( ambient );
+    const auto range_min = std::min( range_cur, range_max );
+    const auto natural_light = g->natural_light_level( target.z() );
+    const auto is_lit = ambient > natural_light;
+    if( wanted_range > range_min && !( wanted_range <= range_max && is_lit ) ) {
+        return { .immediate_result = false };
+    }
+
+    auto range = is_lit ? g_max_view_distance : range_min;
+    if( seer.has_effect( effect_no_sight ) ) {
+        range = 1;
+    }
+    if( range_mod > 0 ) {
+        range = std::min( range, range_mod );
+    }
+    return {
+        .needs_los = true,
+        .from = seer.bub_pos(),
+        .to = target,
+        .range = range,
+    };
+}
+
+static auto prepare_creature_sight_query( const Creature &seer,
+        const Creature &target ) -> prepared_sight_query
+{
+    if( &target == &seer ) {
+        return { .immediate_result = true };
+    }
+    if( target.is_hallucination() ) {
+        return { .immediate_result = seer.is_player() };
+    }
+    if( seer.get_dimension() != target.get_dimension() ) {
+        return { .immediate_result = false };
+    }
+
+    const auto *const target_character = target.as_character();
+    if( target_character != nullptr && target_character->is_invisible() ) {
+        return { .immediate_result = false };
+    }
+
+    auto &here = get_map();
+    const auto seer_pos = seer.bub_pos();
+    const auto target_pos = target.bub_pos();
+    const auto wanted_range = rl_dist( seer_pos, target_pos );
+    if( wanted_range <= 1 && seer_pos.z() == target_pos.z() ) {
+        return {
+            .immediate_result = !here.obscured_by_vehicle_rotation( seer_pos, target_pos ),
+        };
+    }
+    if( wanted_range <= 1 ) {
+        return {
+            .needs_los = true,
+            .from = seer_pos,
+            .to = target_pos,
+            .range = 1,
+        };
+    }
+
+    if( target.digging() ||
+        ( target.has_flag( MF_NIGHT_INVISIBILITY ) &&
+          here.light_at( target_pos ) <= lit_level::LOW ) ||
+        ( target.is_underwater() && !seer.is_underwater() && here.is_divable( target_pos ) ) ||
+        ( here.has_flag_ter_or_furn( TFLAG_HIDE_PLACE, target_pos ) &&
+          !( std::abs( seer_pos.x() - target_pos.x() ) <= 1 &&
+             std::abs( seer_pos.y() - target_pos.y() ) <= 1 &&
+             std::abs( seer_pos.z() - target_pos.z() ) <= 1 ) &&
+          !target.has_flag( MF_FLIES ) &&
+          target.get_size() <= creature_size::medium ) ) {
+        return { .immediate_result = false };
+    }
+
+    if( target_character != nullptr && target_character->movement_mode_is( CMM_CROUCH ) ) {
+        const auto coverage = here.obstacle_coverage( seer_pos, target_pos );
+        if( coverage < 30 ) {
+            return prepare_terrain_sight_query( seer, target_pos, 0 );
+        }
+        auto size_modifier = 1.0;
+        switch( target_character->get_size() ) {
+            case creature_size::tiny:
+                size_modifier = 2.0;
+                break;
+            case creature_size::small:
+                size_modifier = 1.4;
+                break;
+            case creature_size::medium:
+                break;
+            case creature_size::large:
+                size_modifier = 0.6;
+                break;
+            case creature_size::huge:
+                size_modifier = 0.15;
+                break;
+            default:
+                break;
+        }
+        const auto vision_modifier = static_cast<int>( 30 - 0.5 * coverage * size_modifier );
+        if( vision_modifier <= 1 ) {
+            return { .immediate_result = false };
+        }
+        return prepare_terrain_sight_query( seer, target_pos, vision_modifier );
+    }
+
+    return prepare_terrain_sight_query( seer, target_pos, 0 );
+}
+
+#if defined( CATA_SDL )
+static auto make_gpu_sight_pair( const prepared_sight_query &query ) -> cata_gpu::GpuSightPair
+{
+    return {
+        .from_x = query.from.x(),
+        .from_y = query.from.y(),
+        .from_z_idx = query.from.z() + OVERMAP_DEPTH,
+        .to_x = query.to.x(),
+        .to_y = query.to.y(),
+        .to_z_idx = query.to.z() + OVERMAP_DEPTH,
+        .range = query.range,
+        ._pad = 0,
+    };
+}
+#endif
 
 auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache *cache ) -> void
 {
@@ -5786,10 +6082,9 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     }
 
     // Pre-warm directed Creature::sees() jobs before the parallel planning phase.
-    // Worker threads compute raw perception results only; the shared
-    // turn_sight_cache_ is filled serially afterward, avoiding cache write-lock
-    // contention in compute_plan().  map::sees() still supplies symmetric LOS reuse
-    // for the ray traces below Creature::sees().
+    // CPU code applies the creature perception rules, then the terrain LOS work
+    // is batched into one GPU dispatch.  The shared turn_sight_cache_ is filled
+    // serially afterward, avoiding cache write-lock contention in compute_plan().
     auto sight_jobs = std::vector<std::pair<const Creature *, const Creature *>> {};
     const auto initial_sight_job_capacity =
         plannable.size() * ( npc_snap->size() + std::min( mon_snap->size(), size_t{ 16 } ) + 1 );
@@ -5847,31 +6142,74 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
         }
     }
     TracyPlot( "Monmove Sight Jobs", static_cast<int64_t>( sight_jobs.size() ) );
+    auto sight_results = std::vector<char> {};
+    auto los_jobs = std::vector<std::pair<size_t, prepared_sight_query>> {};
+#if defined( CATA_SDL )
+    auto gpu_pairs = std::vector<cata_gpu::GpuSightPair> {};
+    auto gpu_results = std::vector<uint32_t> {};
+    auto *gpu_sight_device = static_cast<SDL_GPUDevice *>( nullptr );
+    auto gpu_sight_work = cata_gpu::gpu_sight_pairs_work {};
+#endif
     if( !sight_jobs.empty() ) {
-        auto sight_results = std::vector<char>( sight_jobs.size(), 0 );
+        sight_results.assign( sight_jobs.size(), 0 );
         {
-            ZoneScopedN( "monmove_parallel_sight_prewarm" );
-            if( parallel_enabled && parallel_monster_planning && sight_jobs.size() > 1 ) {
-                parallel_for_chunked( 0, static_cast<int>( sight_jobs.size() ),
-                monster_plan_chunk_size, [&]( int i ) {
-                    const auto index = static_cast<size_t>( i );
-                    const auto &[seer, target] = sight_jobs[index];
-                    sight_results[index] = seer->sees( *target ) ? 1 : 0;
-                } );
-            } else {
-                for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
-                    const auto &[seer, target] = sight_jobs[index];
-                    sight_results[index] = seer->sees( *target ) ? 1 : 0;
+            ZoneScopedN( "monmove_prepare_sight_prewarm" );
+            los_jobs.reserve( sight_jobs.size() );
+            for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
+                const auto &[seer, target] = sight_jobs[index];
+                const auto query = prepare_creature_sight_query( *seer, *target );
+                if( query.needs_los ) {
+                    los_jobs.emplace_back( index, query );
+                } else {
+                    sight_results[index] = query.immediate_result ? 1 : 0;
                 }
             }
         }
-        {
-            ZoneScopedN( "monmove_insert_sight_prewarm" );
-            auto lock = std::unique_lock<std::shared_mutex>( turn_sight_cache_mutex_ );
-            turn_sight_cache_.reserve( sight_jobs.size() );
-            for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
-                turn_sight_cache_.emplace( sight_jobs[index], sight_results[index] != 0 );
+        TracyPlot( "Monmove GPU Sight LOS Jobs", static_cast<int64_t>( los_jobs.size() ) );
+        if( !los_jobs.empty() ) {
+#if defined( CATA_SDL )
+            ZoneScopedN( "monmove_begin_gpu_sight_prewarm" );
+            gpu_pairs.reserve( los_jobs.size() );
+            std::ranges::transform( los_jobs, std::back_inserter( gpu_pairs ),
+            []( const auto & job ) {
+                return make_gpu_sight_pair( job.second );
+            } );
+            gpu_sight_device = cata_gpu::get_device();
+            if( gpu_sight_device == nullptr ) {
+                debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+            } else {
+                const auto sight_inputs_ready = [&]() {
+                    return cata_gpu::resident_lighting_ready_for_sight_pairs( {
+                        .device = gpu_sight_device,
+                        .m = &m,
+                        .pairs = &gpu_pairs,
+                        .zlev = get_levz(),
+                    } );
+                };
+                if( !sight_inputs_ready() ) {
+                    ZoneScopedN( "monmove_bootstrap_gpu_sight_inputs" );
+                    m.build_map_cache( get_levz() );
+                }
+                if( !sight_inputs_ready() ) {
+                    debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                } else {
+                    gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
+                        .m = &m,
+                        .pairs = &gpu_pairs,
+                        .zlev = get_levz(),
+                    } );
+                    if( gpu_sight_work.id == 0 ) {
+                        debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                    }
+                }
             }
+#else
+            ZoneScopedN( "monmove_cpu_sight_prewarm" );
+            auto &here = get_map();
+            for( const auto &[result_index, query] : los_jobs ) {
+                sight_results[result_index] = here.sees( query.from, query.to, query.range ) ? 1 : 0;
+            }
+#endif
         }
     }
 
@@ -5924,6 +6262,35 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             hostile_fac_map_for_plan = &cache->hostile_fac_map;
         } else {
             hostile_fac_map_for_plan = &hostile_fac_map;
+        }
+    }
+    if( !sight_jobs.empty() ) {
+        if( !los_jobs.empty() ) {
+#if defined( CATA_SDL )
+            if( gpu_sight_work.id != 0 ) {
+                ZoneScopedN( "monmove_finish_gpu_sight_prewarm" );
+                if( !cata_gpu::finish_gpu_sight_pairs( gpu_sight_device, gpu_sight_work,
+                                                       gpu_results ) ) {
+                    debugmsg( "SDL_GPU sight pair completion failed; see debug.log for details" );
+                } else {
+                    auto &here = get_map();
+                    for( const auto gpu_index : std::views::iota( size_t{ 0 }, los_jobs.size() ) ) {
+                        const auto &[result_index, query] = los_jobs[gpu_index];
+                        const auto result = gpu_results[gpu_index] != 0 &&
+                                            !here.obscured_by_vehicle_rotation( query.from, query.to );
+                        sight_results[result_index] = result ? 1 : 0;
+                    }
+                }
+            }
+#endif
+        }
+        {
+            ZoneScopedN( "monmove_insert_sight_prewarm" );
+            auto lock = std::unique_lock<std::shared_mutex>( turn_sight_cache_mutex_ );
+            turn_sight_cache_.reserve( sight_jobs.size() );
+            for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
+                turn_sight_cache_.emplace( sight_jobs[index], sight_results[index] != 0 );
+            }
         }
     }
     const monster::compute_plan_context plan_ctx{ mon_snap, npc_snap, faction_snap_for_plan,
@@ -6009,7 +6376,7 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             }
 
             m.creature_in_field( critter );
-            if( calendar::once_every( 1_days ) ) {
+            if( action_time_scale::once_every_this_tick( 1_days ) ) {
                 if( critter.has_flag( MF_MILKABLE ) ) {
                     critter.refill_udders();
                 }
@@ -6413,7 +6780,7 @@ void game::sleep_skip_npc_process()
     // Every ~30 in-game minutes, re-examine sleeping NPCs and wake any whose
     // sleep need is satisfied or whose player has woken up.  Otherwise, renew
     // their lying-down effect for another 30-minute window.
-    if( calendar::once_every( 30_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
         for( npc &guy : g->all_npcs() ) {
             if( guy.is_dead() || !guy.in_sleep_state() ) {
                 continue;
@@ -9423,7 +9790,7 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
 
     // TODO: Make this `true`
     const bool allow_zlev_move = zlSwitch(
-                                     m.has_zlevels() && get_option<bool>( "FOV_3D" ),
+                                     m.has_zlevels(),
                                      false,
                                      true
                                  );
@@ -9526,10 +9893,8 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
 #endif // TILES
 
     const int old_levz = get_levz();
-    const int min_levz = zlSwitch( std::max( old_levz - fov_3d_z_range, -OVERMAP_DEPTH ),
-                                   old_levz,        -OVERMAP_DEPTH );
-    const int max_levz = zlSwitch( std::min( old_levz + fov_3d_z_range, OVERMAP_HEIGHT ), old_levz,
-                                   OVERMAP_HEIGHT );
+    const int min_levz = zlSwitch( -OVERMAP_DEPTH, old_levz, -OVERMAP_DEPTH );
+    const int max_levz = zlSwitch( OVERMAP_HEIGHT, old_levz, OVERMAP_HEIGHT );
 
     m.update_visibility_cache( old_levz );
     const visibility_variables &cache = m.get_visibility_variables_cache();
@@ -9810,11 +10175,10 @@ std::vector<map_item_stack> game::find_nearby_items( int iRadius )
         return ret;
     }
 
-    int range = fov_3d ? ( fov_3d_z_range * 2 ) + 1 : 1;
-    int center_z = u.bub_pos().z();
-
-    for( int i = 1; i <= range; i++ ) {
-        int z = i % 2 ? center_z - i / 2 : center_z + i / 2;
+    const auto process_z = [&]( const int z ) {
+        if( z < -OVERMAP_DEPTH || z > OVERMAP_HEIGHT ) {
+            return;
+        }
         for( auto &points_p_it : closest_points_first<tripoint_bub_ms>( {u.bub_pos().xy(), z}, iRadius ) ) {
             if( points_p_it.y() >= u.bub_pos().y() - iRadius && points_p_it.y() <= u.bub_pos().y() + iRadius &&
                 u.sees( points_p_it ) &&
@@ -9832,6 +10196,14 @@ std::vector<map_item_stack> game::find_nearby_items( int iRadius )
                     }
                 }
             }
+        }
+    };
+
+    const int center_z = u.bub_pos().z();
+    for( int dz = 0; dz <= OVERMAP_HEIGHT + OVERMAP_DEPTH; ++dz ) {
+        process_z( center_z - dz );
+        if( dz != 0 ) {
+            process_z( center_z + dz );
         }
     }
 
@@ -12100,6 +12472,7 @@ std::vector<std::string> game::get_dangerous_tile( const tripoint_bub_ms &dest_l
 
 bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
 {
+    ZoneScopedN( "walk_move" );
     if( m.has_flag_ter( TFLAG_SMALL_PASSAGE, dest_loc ) ) {
         if( u.get_size() > creature_size::medium ) {
             add_msg( m_warning, _( "You can't fit there." ) );
@@ -12228,41 +12601,44 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     }
     u.set_underwater( false );
 
-    const auto hook_results = cata::run_hooks(
-                                  "on_player_try_move",
-    [ &, this]( sol::table & params ) {
-        params["player"] = &u;
-        params["from"] = cata::detail::lua_coords::to_lua( u.bub_pos() );
-        params["to"] = cata::detail::lua_coords::to_lua( dest_loc );
-        params["movement_mode"] = u.get_movement_mode();
-        params["via_ramp"] = via_ramp;
-        if( u.is_mounted() ) {
-            params["mounted"] = true;
-            params["mount"] = u.mounted_creature.get();
-        } else {
-            params["mounted"] = false;
-        }
-    } );
+    {
+        ZoneScopedN( "walk_move_try_move_hooks" );
+        const auto hook_results = cata::run_hooks(
+                                      "on_player_try_move",
+        [ &, this]( sol::table & params ) {
+            params["player"] = &u;
+            params["from"] = cata::detail::lua_coords::to_lua( u.bub_pos() );
+            params["to"] = cata::detail::lua_coords::to_lua( dest_loc );
+            params["movement_mode"] = u.get_movement_mode();
+            params["via_ramp"] = via_ramp;
+            if( u.is_mounted() ) {
+                params["mounted"] = true;
+                params["mount"] = u.mounted_creature.get();
+            } else {
+                params["mounted"] = false;
+            }
+        } );
 
-    const auto char_hook_results = cata::run_hooks(
-                                       "on_character_try_move",
-    [ &, this]( sol::table & params ) {
-        params["char"] = static_cast<Character *>( &u );
-        params["from"] = cata::detail::lua_coords::to_lua( u.bub_pos() );
-        params["to"] = cata::detail::lua_coords::to_lua( dest_loc );
-        params["movement_mode"] = u.get_movement_mode();
-        params["via_ramp"] = via_ramp;
-        if( u.is_mounted() ) {
-            params["mounted"] = true;
-            params["mount"] = u.mounted_creature.get();
-        } else {
-            params["mounted"] = false;
-        }
-    } );
+        const auto char_hook_results = cata::run_hooks(
+                                           "on_character_try_move",
+        [ &, this]( sol::table & params ) {
+            params["char"] = static_cast<Character *>( &u );
+            params["from"] = cata::detail::lua_coords::to_lua( u.bub_pos() );
+            params["to"] = cata::detail::lua_coords::to_lua( dest_loc );
+            params["movement_mode"] = u.get_movement_mode();
+            params["via_ramp"] = via_ramp;
+            if( u.is_mounted() ) {
+                params["mounted"] = true;
+                params["mount"] = u.mounted_creature.get();
+            } else {
+                params["mounted"] = false;
+            }
+        } );
 
-    if( !hook_results.get_or( "allowed", true ) ||
-        !char_hook_results.get_or( "allowed", true ) ) {
-        return false;
+        if( !hook_results.get_or( "allowed", true ) ||
+            !char_hook_results.get_or( "allowed", true ) ) {
+            return false;
+        }
     }
 
     if( !shifting_furniture && !pushing && is_dangerous_tile( dest_loc ) ) {
@@ -12507,7 +12883,11 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
 
     auto oldpos = u.bub_pos();
     const auto keep_grab = u.get_grab_type() == OBJECT_VEHICLE || allow_furniture_z_move;
-    auto submap_shift = place_player( dest_loc, keep_grab );
+    auto submap_shift = point_rel_sm::zero();
+    {
+        ZoneScopedN( "walk_move_place_player" );
+        submap_shift = place_player( dest_loc, keep_grab );
+    }
     auto ms_shift = project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift;
 
@@ -12525,7 +12905,10 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         start_hauling( oldpos );
     }
 
-    on_move_effects();
+    {
+        ZoneScopedN( "walk_move_on_move_effects" );
+        on_move_effects();
+    }
 
     return true;
 }
@@ -12535,6 +12918,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
     const auto regular_pit_move = pit_trap_helpers::is_regular_pit_destination_from_pit( m.tr_at(
                                       u.bub_pos() ),
                                   m.tr_at( dest_loc ) );
+    ZoneScopedN( "place_player" );
     const optional_vpart_position vp1 = m.veh_at( dest_loc );
     if( const std::optional<std::string> label = vp1.get_label() ) {
         add_msg( m_info, _( "Label here: %s" ), *label );
@@ -12667,14 +13051,18 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
         u.stop_hauling();
     }
     u.setpos( dest_loc );
-    m.invalidate_lightmap_caches();
+    m.invalidate_visibility_caches();
     if( u.is_mounted() ) {
         monster *mon = u.mounted_creature.get();
         mon->setpos( dest_loc );
         mon->process_triggers();
         m.creature_in_field( *mon );
     }
-    point_rel_sm submap_shift = update_map( u );
+    auto submap_shift = point_rel_sm::zero();
+    {
+        ZoneScopedN( "place_player_update_map" );
+        submap_shift = update_map( u );
+    }
     // Important: don't use dest_loc after this line. `update_map` may have shifted the map
     // and dest_loc was not adjusted and therefore is still in the un-shifted system and probably wrong.
     // If you must use it you can calculate the position in the new, shifted system with
@@ -12682,6 +13070,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
 
     //Auto pulp or butcher and Auto foraging
     if( get_option<bool>( "AUTO_FEATURES" ) && mostseen == 0  && !u.is_mounted() ) {
+        ZoneScopedN( "place_player_auto_features" );
         static const direction adjacentDir[8] = { direction::NORTH, direction::NORTHEAST, direction::EAST, direction::SOUTHEAST, direction::SOUTH, direction::SOUTHWEST, direction::WEST, direction::NORTHWEST };
 
         const std::string forage_type = get_option<std::string>( "AUTO_FORAGING" );
@@ -12759,6 +13148,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
     if( !u.is_mounted() && get_option<bool>( "AUTO_PICKUP" ) && !u.is_hauling() &&
         ( !get_option<bool>( "AUTO_PICKUP_SAFEMODE" ) || mostseen == 0 ) &&
         ( m.has_items( u.bub_pos() ) || get_option<bool>( "AUTO_PICKUP_ADJACENT" ) ) ) {
+        ZoneScopedN( "place_player_autopickup" );
         pickup::pick_up( u.bub_pos(), -1 );
     }
 
@@ -12786,6 +13176,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
 
     // List items here
     if( !m.has_flag( "SEALED", u.bub_pos() ) ) {
+        ZoneScopedN( "place_player_list_items" );
         if( get_option<bool>( "NO_AUTO_PICKUP_ZONES_LIST_ITEMS" ) ||
             !check_zone( zone_type_id( "NO_AUTO_PICKUP" ), u.bub_pos() ) ) {
             if( u.is_blind() && !m.i_at( u.bub_pos() ).empty() && u.clairvoyance() < 1 ) {
@@ -12970,7 +13361,7 @@ bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         //tunneling costs 100 moves baseline, 50 per extra tile up to a cap of 500 moves
         u.moves -= ( 50 + ( tunneldist * 50 ) );
         u.setpos( dest );
-        m.invalidate_lightmap_caches();
+        m.invalidate_visibility_caches();
 
         if( m.veh_at( u.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {
             m.board_vehicle( u.bub_pos(), &u );
@@ -14966,23 +15357,27 @@ point_rel_sm game::update_map( Character &who )
 
 point_rel_sm game::update_map( int &x, int &y )
 {
+    ZoneScopedN( "update_map" );
     point_rel_sm shift;
 
-    while( x < g_half_mapsize_x ) {
-        x += SEEX;
-        shift.x()--;
-    }
-    while( x >= g_half_mapsize_x + SEEX ) {
-        x -= SEEX;
-        shift.x()++;
-    }
-    while( y < g_half_mapsize_y ) {
-        y += SEEY;
-        shift.y()--;
-    }
-    while( y >= g_half_mapsize_y + SEEY ) {
-        y -= SEEY;
-        shift.y()++;
+    {
+        ZoneScopedN( "update_map_compute_shift" );
+        while( x < g_half_mapsize_x ) {
+            x += SEEX;
+            shift.x()--;
+        }
+        while( x >= g_half_mapsize_x + SEEX ) {
+            x -= SEEX;
+            shift.x()++;
+        }
+        while( y < g_half_mapsize_y ) {
+            y += SEEY;
+            shift.y()--;
+        }
+        while( y >= g_half_mapsize_y + SEEY ) {
+            y -= SEEY;
+            shift.y()++;
+        }
     }
 
     if( shift == point_rel_sm::zero() ) {
@@ -15000,16 +15395,20 @@ point_rel_sm game::update_map( int &x, int &y )
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     inclusive_rectangle<point_rel_sm> size_1( point_rel_sm( -1, -1 ), point_rel_sm( 1, 1 ) );
     auto remaining_shift = shift;
-    while( remaining_shift != point_rel_sm::zero() ) {
-        auto this_shift = clamp( remaining_shift, size_1 );
-        m.shift( this_shift );
-        remaining_shift -= this_shift;
+    {
+        ZoneScopedN( "update_map_shift_map" );
+        while( remaining_shift != point_rel_sm::zero() ) {
+            auto this_shift = clamp( remaining_shift, size_1 );
+            m.shift( this_shift );
+            remaining_shift -= this_shift;
+        }
     }
 
     // Keep the reality bubble request center in sync with the shifted map.
     // Distribution-grid tracker updates are fully incremental via
     // on_submap_loaded/unloaded; the old full-rebuild has been removed.
     if( reality_bubble_handle_ != 0 ) {
+        ZoneScopedN( "update_map_submap_loader" );
         const auto &origin = m.get_abs_sub();
         const tripoint_abs_sm new_center(
             origin.x() + reality_bubble_radius_, origin.y() + reality_bubble_radius_, origin.z() );
@@ -15033,7 +15432,7 @@ point_rel_sm game::update_map( int &x, int &y )
             ensure_distribution_grid_tracker_for( dim_id );
         }
         submap_loader.update_lazy_border_focus( m.get_bound_dimension(), u.abs_pos() );
-        submap_loader.update();
+        submap_loader.update( is_draw_tiles_mode() );
         // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
             if( !it->first.empty() && !it->second->has_tracked_submaps() ) {
@@ -15046,7 +15445,10 @@ point_rel_sm game::update_map( int &x, int &y )
     }
 
     // Shift monsters
-    shift_monsters( tripoint_rel_sm( shift, 0 ) );
+    {
+        ZoneScopedN( "update_map_shift_monsters" );
+        shift_monsters( tripoint_rel_sm( shift, 0 ) );
+    }
     const auto shift_ms = project_to<coords::ms>( shift );
     u.shift_destination( -shift_ms );
 
@@ -15054,17 +15456,20 @@ point_rel_sm game::update_map( int &x, int &y )
     // Allow 2 submaps of slop beyond the grid edge so fast-moving NPCs that
     // crossed the boundary this tick are not immediately despawned.
     static constexpr int npc_despawn_margin_sm = 2;
-    for( auto it = active_npc.begin(); it != active_npc.end(); ) {
-        ( *it )->shift( shift );
-        if( ( *it )->bub_pos().x() < 0 - SEEX * npc_despawn_margin_sm ||
-            ( *it )->bub_pos().y() < 0 - SEEY * npc_despawn_margin_sm ||
-            ( *it )->bub_pos().x() > SEEX * ( g_mapsize + npc_despawn_margin_sm ) ||
-            ( *it )->bub_pos().y() > SEEY * ( g_mapsize + npc_despawn_margin_sm ) ) {
-            //Remove the npc from the active list. It remains in the overmap list.
-            ( *it )->on_unload();
-            it = active_npc.erase( it );
-        } else {
-            it++;
+    {
+        ZoneScopedN( "update_map_shift_npcs" );
+        for( auto it = active_npc.begin(); it != active_npc.end(); ) {
+            ( *it )->shift( shift );
+            if( ( *it )->bub_pos().x() < 0 - SEEX * npc_despawn_margin_sm ||
+                ( *it )->bub_pos().y() < 0 - SEEY * npc_despawn_margin_sm ||
+                ( *it )->bub_pos().x() > SEEX * ( g_mapsize + npc_despawn_margin_sm ) ||
+                ( *it )->bub_pos().y() > SEEY * ( g_mapsize + npc_despawn_margin_sm ) ) {
+                //Remove the npc from the active list. It remains in the overmap list.
+                ( *it )->on_unload();
+                it = active_npc.erase( it );
+            } else {
+                it++;
+            }
         }
     }
 
@@ -15080,16 +15485,28 @@ point_rel_sm game::update_map( int &x, int &y )
 
     // Check for overmap saved npcs that should now come into view.
     // Put those in the active list.
-    load_npcs();
+    {
+        ZoneScopedN( "update_map_load_npcs" );
+        load_npcs();
+    }
 
-    m.build_map_cache( get_levz() );
+    {
+        ZoneScopedN( "update_map_build_map_cache" );
+        m.build_map_cache( get_levz() );
+    }
 
     // Spawn monsters only in the strip of submaps that just entered the bubble
     // to avoid duplicating already-active monsters from stale monster_map entries.
-    m.spawn_monsters_new_submaps( shift ); // Static monsters
+    {
+        ZoneScopedN( "update_map_spawn_monsters_new_submaps" );
+        m.spawn_monsters_new_submaps( shift ); // Static monsters
+    }
 
     // Update what parts of the world map we can see
-    update_overmap_seen();
+    {
+        ZoneScopedN( "update_map_overmap_seen" );
+        update_overmap_seen();
+    }
 
     return shift;
 }
@@ -15424,7 +15841,7 @@ void game::perhaps_add_random_npc()
 {
     ZoneScoped;
     static constexpr time_duration spawn_interval = 1_hours;
-    if( !calendar::once_every( spawn_interval ) ) {
+    if( !action_time_scale::once_every_this_tick( spawn_interval ) ) {
         return;
     }
     // Create a new NPC?
@@ -15590,7 +16007,7 @@ void game::debug_hour_timer::toggle()
 void game::debug_hour_timer::print_time()
 {
     if( enabled ) {
-        if( calendar::once_every( time_duration::from_hours( 1 ) ) ) {
+        if( action_time_scale::once_every_this_tick( time_duration::from_hours( 1 ) ) ) {
             const IRLTimeMs now = std::chrono::time_point_cast<std::chrono::milliseconds>(
                                       std::chrono::system_clock::now() );
             if( start_time ) {
@@ -15750,7 +16167,8 @@ void game::process_artifact( item &it, Character &who )
 
     if( it.is_tool() ) {
         // Recharge it if necessary
-        if( it.ammo_remaining() < it.ammo_capacity() && calendar::once_every( 1_minutes ) ) {
+        if( it.ammo_remaining() < it.ammo_capacity() &&
+            action_time_scale::once_every_this_tick( 1_minutes ) ) {
             //Before incrementing charge, check that any extra requirements are met
             if( check_art_charge_req( it ) ) {
                 switch( it.type->artifact->charge_type ) {
@@ -15759,12 +16177,12 @@ void game::process_artifact( item &it, Character &who )
                         break; // dummy entries
                     case ARTC_TIME:
                         // Once per hour
-                        if( calendar::once_every( 1_hours ) ) {
+                        if( action_time_scale::once_every_this_tick( 1_hours ) ) {
                             it.charges++;
                         }
                         break;
                     case ARTC_SOLAR:
-                        if( calendar::once_every( 10_minutes ) &&
+                        if( action_time_scale::once_every_this_tick( 10_minutes ) &&
                             is_in_sunlight( who.bub_pos() ) ) {
                             it.charges++;
                         }
@@ -15773,21 +16191,21 @@ void game::process_artifact( item &it, Character &who )
                     // Some weird Lovecraftian thing.  ;P
                     // (So DON'T route them through mod_pain!)
                     case ARTC_PAIN:
-                        if( calendar::once_every( 1_minutes ) ) {
+                        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                             add_msg( m_bad, _( "You suddenly feel sharp pain for no reason." ) );
                             who.mod_pain_noresist( 3 * rng( 1, 3 ) );
                             it.charges++;
                         }
                         break;
                     case ARTC_HP:
-                        if( calendar::once_every( 1_minutes ) ) {
+                        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                             add_msg( m_bad, _( "You feel your body decaying." ) );
                             who.hurtall( 1, nullptr );
                             it.charges++;
                         }
                         break;
                     case ARTC_FATIGUE:
-                        if( calendar::once_every( 1_minutes ) ) {
+                        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                             add_msg( m_bad, _( "You feel fatigue seeping into your body." ) );
                             u.mod_fatigue( 3 * rng( 1, 3 ) );
                             u.mod_stamina( -90 * rng( 1, 3 ) * rng( 1, 3 ) * rng( 2, 3 ), false );
@@ -15988,7 +16406,8 @@ bool check_art_charge_req( item &it )
                 return elem.second.get_wetness() != 0;
             } );
             if( !reqsmet &&
-                sum_conditions( calendar::turn - 1_turns, calendar::turn, p.abs_pos() ).rain_amount > 0
+                sum_conditions( calendar::turn - action_time_scale::calendar_duration_this_tick(),
+                                calendar::turn, p.abs_pos() ).rain_amount > 0
                 && !( p.in_vehicle && here.veh_at( p.bub_pos() )->is_inside() ) ) {
                 reqsmet = true;
             }

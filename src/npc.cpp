@@ -9,6 +9,7 @@
 #include <limits>
 #include <memory>
 
+#include "action_time_scale.h"
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -2983,8 +2984,12 @@ void npc::on_unload()
 // A throtled version of player::update_body since npc's don't need to-the-turn updates.
 void npc::npc_update_body()
 {
-    if( calendar::once_every( 10_seconds ) ) {
-        update_body( 10_seconds );
+    const auto elapsed = calendar::turn - last_updated;
+    if( elapsed <= 0_turns ) {
+        return;
+    }
+    if( elapsed >= 10_seconds || action_time_scale::once_every_this_tick( 10_seconds ) ) {
+        update_body( elapsed );
         last_updated = calendar::turn;
     }
 }
@@ -3100,7 +3105,7 @@ void npc::process_turn()
 {
     player::process_turn();
 
-    if( is_player_ally() && calendar::once_every( 1_hours ) &&
+    if( is_player_ally() && action_time_scale::once_every_this_tick( 1_hours ) &&
         get_kcal_percent() > 0.95 && get_thirst() < thirst_levels::very_thirsty && op_of_u.trust < 5 ) {
         // Friends who are well fed will like you more
         // 24 checks per day, best case chance at trust 0 is 1 in 48 for +1 trust per 2 days
@@ -3122,6 +3127,11 @@ void npc::process_turn()
 
     // TODO: Add decreasing trust/value/etc. here when player doesn't provide food
     // TODO: Make NPCs leave the player if there's a path out of map and player is sleeping/unseen/etc.
+}
+
+auto npc::action_move_factor() const -> int
+{
+    return action_time_scale::npc_tick_action_factor();
 }
 
 void npc::batch_turns( int n )
@@ -3182,12 +3192,14 @@ void npc::advance_job_progress( int n )
         return;
     }
     if( activity && *activity ) {
-        // Directly reduce moves_left by n turns' worth (100 moves per turn).
+        // Directly reduce moves_left by n turns' worth of scaled activity progress.
         // The mod_moves() approach is wrong here: activity->do_turn() unconditionally
         // sets p.moves = 0 after each step, so any extra moves granted via mod_moves()
         // are zeroed on the very first step and the catchup never happens.
-        // Direct reduction is speed-independent, matching the design intent.
-        activity->moves_left = std::max( 0, activity->moves_left - n * 100 );
+        const auto progress = activity_uses_calendar_duration_progress( activity->id() ) ?
+                              action_time_scale::calendar_progress_for_turns( n ) :
+                              action_time_scale::activity_progress_for_turns( n );
+        activity->moves_left = std::max( 0, activity->moves_left - progress );
     } else if( has_destination() ) {
         // Destination movement: grant extra moves so the NPC takes additional path
         // steps toward its goal.  mod_moves() is correct here because path-following

@@ -1040,6 +1040,7 @@ class npc : public player
         void move(); // Picks an action & a target and calls execute_action
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
+        auto action_move_factor() const -> int override;
         /**
          * Batch catchup: analytically simulate @p n missed turns.
          * Processes biology at 30-min/5-min/1-turn granularity, then
