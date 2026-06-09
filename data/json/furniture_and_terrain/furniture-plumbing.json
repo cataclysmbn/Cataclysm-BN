@@ -43,8 +43,8 @@
       "str_max": 30,
       "sound": "porcelain breaking!",
       "sound_fail": "whunk!",
-      "sound_vol": 16,
-      "sound_fail_vol": 12,
+      "sound_vol": 100,
+      "sound_fail_vol": 80,
       "items": [
         { "item": "cu_pipe", "count": [ 0, 2 ] },
         { "item": "scrap_copper", "count": [ 0, 2 ] },

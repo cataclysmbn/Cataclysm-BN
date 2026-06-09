@@ -3113,8 +3113,8 @@
       "str_max": 80,
       "sound": "ker-rash!",
       "sound_fail": "plunk.",
-      "sound_vol": 16,
-      "sound_fail_vol": 12,
+      "sound_vol": 100,
+      "sound_fail_vol": 80,
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] }, { "item": "scrap", "count": [ 0, 2 ] } ],
       "//": "reduction and destroy_threshold are lower for plain glass",
       "ranged": { "reduction": [ 1, 6 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 6, "block_unaimed_chance": "75%" }
@@ -3139,8 +3139,8 @@
       "str_max": 80,
       "sound": "ker-rash!",
       "sound_fail": "plunk.",
-      "sound_vol": 16,
-      "sound_fail_vol": 12,
+      "sound_vol": 100,
+      "sound_fail_vol": 80,
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] }, { "item": "scrap", "count": [ 0, 2 ] } ],
       "//": "reduction and destroy_threshold are lower for plain glass",
       "ranged": { "reduction": [ 1, 6 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 6, "block_unaimed_chance": "75%" }
