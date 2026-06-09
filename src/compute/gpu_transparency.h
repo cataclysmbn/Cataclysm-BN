@@ -112,7 +112,7 @@ struct dispatch_transparency_params {
     bool* resident_output_written = nullptr;
 };
 
-// Upload the submap records, dispatch the transparency compute shader, and
+// Upload transparency inputs, dispatch the transparency compute shader, and
 // synchronously download compact submap-local results into out_buffer.
 // If output.buffer is non-null, the shader also writes into that existing full
 // flat-cache buffer at output.output_offset so lighting can keep resident input
