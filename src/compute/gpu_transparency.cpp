@@ -310,8 +310,9 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
         return nullptr;
     }
     if (shader_format_is_dxbc(fmt)) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: transparency: DXBC uses CPU compact packing, "
-                                         "not a compute pipeline";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: transparency: DXBC uses CPU compact packing, "
+               "not a compute pipeline";
         return nullptr;
     }
 
