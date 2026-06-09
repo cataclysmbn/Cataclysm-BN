@@ -117,7 +117,8 @@ auto unpack_packed_visibility_level(
     std::vector<lit_level>& destination) -> void {
     auto const* const words = static_cast<uint32_t const*>(mapped);
     auto tile = std::size_t{0};
-    auto destination_span = std::span<lit_level>{destination.data(), destination.size()}.first(tiles);
+    auto destination_span = std::span<lit_level>{destination.data(), destination.size()}.first(
+        tiles);
     for (auto& level : destination_span) {
         auto const word = words[tile / 4u];
         auto const shift = static_cast<uint32_t>((tile % 4u) * 8u);
@@ -969,7 +970,7 @@ auto ensure_serialized_readback_downloads(SDL_GPUDevice* const device, Uint32 co
                  .required_bytes = std::max(required_bytes, Uint32{1}),
                  .name = "serialized_readback_download",
              })
-            && ok;
+          && ok;
     }
     return ok;
 }
@@ -989,8 +990,7 @@ auto readback_buffer_region_chunked_batched(
 
     auto offset = Uint32{0};
     while (offset < request.region.size) {
-        auto chunks =
-            std::array<batched_readback_chunk, dxbc_serialized_readback_batch_slots>{};
+        auto chunks = std::array<batched_readback_chunk, dxbc_serialized_readback_batch_slots>{};
         auto chunk_count = std::size_t{0};
         while (chunk_count < chunks.size() && offset < request.region.size) {
             auto const bytes = std::min(chunk_bytes, request.region.size - offset);
@@ -3410,9 +3410,11 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
               backend_policy.wait_lighting_stages ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Serialized Chunk Bytes",
               static_cast<int64_t>(serialized_readback_chunk_bytes));
-    TracyPlot("GPU LM Serialized Batch Slots",
-              deferred_download_copy ? static_cast<int64_t>(dxbc_serialized_readback_batch_slots)
-                                     : int64_t{0});
+    TracyPlot(
+        "GPU LM Serialized Batch Slots",
+        deferred_download_copy
+            ? static_cast<int64_t>(dxbc_serialized_readback_batch_slots)
+            : int64_t{0});
     TracyPlot("GPU LM Rewrite Full Volume", rewrites_full_lighting_volume ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Requested Selected Rewrite",
               requested_selected_lightmap_levels ? int64_t{1} : int64_t{0});
@@ -4498,8 +4500,8 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     if (requested_packed_visibility_download) {
         static auto pack_visibility_shader_available = std::optional<bool>{};
         if (!pack_visibility_shader_available.has_value()) {
-            pack_visibility_shader_available =
-                shader_blob_available(device, "lm_pack_visibility_compute");
+            pack_visibility_shader_available = shader_blob_available(device, "lm_pack_visibility_"
+                                                                             "compute");
         }
         if (!*pack_visibility_shader_available) {
             requested_packed_visibility_download = false;
@@ -4581,12 +4583,14 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     TracyPlot("GPU Visibility Mirror Optics", static_cast<int64_t>(num_optics) - camera_optics);
     TracyPlot("GPU Visibility Packed Download",
               use_packed_visibility_download ? int64_t{1} : int64_t{0});
-    TracyPlot("GPU Visibility Packed Level Bytes",
-              use_packed_visibility_download ? static_cast<int64_t>(packed_level_bytes) : int64_t{0});
-    TracyPlot("GPU Visibility Packed Batch Slots",
-              use_packed_visibility_download
-                  ? static_cast<int64_t>(dxbc_serialized_readback_batch_slots)
-                  : int64_t{0});
+    TracyPlot(
+        "GPU Visibility Packed Level Bytes",
+        use_packed_visibility_download ? static_cast<int64_t>(packed_level_bytes) : int64_t{0});
+    TracyPlot(
+        "GPU Visibility Packed Batch Slots",
+        use_packed_visibility_download
+            ? static_cast<int64_t>(dxbc_serialized_readback_batch_slots)
+            : int64_t{0});
 
     if (!ensure_lighting_resources(
             device,
@@ -4795,11 +4799,11 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
             auto const pack_push = lm_pack_visibility_push_constants{
-                .total_words =
-                    static_cast<Uint32>(visibility_dispatch.z_count)
-                    * packed_visibility_words_per_level(cache_xy),
+                .total_words = static_cast<Uint32>(visibility_dispatch.z_count)
+                             * packed_visibility_words_per_level(cache_xy),
                 .cache_xy = cache_xy,
-                .words_per_level = static_cast<int32_t>(packed_visibility_words_per_level(cache_xy)),
+                .words_per_level = static_cast<int32_t>(
+                    packed_visibility_words_per_level(cache_xy)),
                 .z_start_idx = visibility_dispatch.z_start_idx,
                 .dispatch_z_count = visibility_dispatch.z_count,
                 .z_count = z_count,
@@ -4919,8 +4923,8 @@ auto finish_gpu_visibility(SDL_GPUDevice* const device, gpu_visibility_work cons
                     static_cast<std::size_t>(range.z_count) * packed_words_per_level);
                 auto* const dest = reinterpret_cast<std::byte*>(packed_range.data());
                 auto const zi = range.z_start + OVERMAP_DEPTH;
-                auto const range_bytes = static_cast<Uint32>(range.z_count)
-                    * pending.packed_level_bytes;
+                auto const range_bytes =
+                    static_cast<Uint32>(range.z_count) * pending.packed_level_bytes;
                 if (!readback_buffer_region_chunked_batched(
                         device,
                         {
@@ -4943,7 +4947,8 @@ auto finish_gpu_visibility(SDL_GPUDevice* const device, gpu_visibility_work cons
                 for (auto const rel_z : std::views::iota(0, range.z_count)) {
                     auto const z = range.z_start + rel_z;
                     auto& lc = const_cast<level_cache&>(pending.m->get_cache_ref(z));
-                    auto const* src = packed_range.data()
+                    auto const* src =
+                        packed_range.data()
                         + static_cast<std::size_t>(rel_z) * packed_words_per_level;
                     unpack_packed_visibility_level(
                         src, static_cast<std::size_t>(pending.cache_xy), lc.visibility_cache);
