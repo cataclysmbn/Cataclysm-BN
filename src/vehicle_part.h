@@ -397,7 +397,7 @@ static constexpr uint8_t VMDS_AISLE_Index = 19;
  * TODO: Review this list and refine based on the kind of parts desired vs the technical mount location, making sure only one can be mounted, etc
  * TODO: consider splitting this up based on used case.
  * TODO: We probably dont need rotors, propellers, vehicle controls, turret controls etc in here.
- * 
+ *
  */
 enum dedicated_vpmount_slot_enum : int {
     VMD_SLOT_STRUCTURE = VMDS_STRUCTURE_Index,
@@ -434,79 +434,79 @@ static constexpr int number_of_dedicated_vmount_slots = NUM_VMD_SLOTS;
 static constexpr std::vector<vehicle_part> get_dummy_dedicated_slot_table( veh_mount *mnt )
 {
     std::vector<vehicle_part> parts;
-    for (int i = 0; i < number_of_dedicated_vmount_slots; i++){
-        parts.emplace_back(vehicle_part(mnt));
+    for( int i = 0; i < number_of_dedicated_vmount_slots; i++ ) {
+        parts.emplace_back( vehicle_part( mnt ) );
     }
     return parts;
 }
 
-static constexpr int get_dedicated_veh_mount_slot_index( const dedicated_vpmount_slot_enum &vpslot)
+static constexpr int get_dedicated_veh_mount_slot_index( const dedicated_vpmount_slot_enum &vpslot )
 {
-    switch (vpslot) {
+    switch( vpslot ) {
 
-    case VMD_SLOT_STRUCTURE:
-        return VMDS_STRUCTURE_Index;
+        case VMD_SLOT_STRUCTURE:
+            return VMDS_STRUCTURE_Index;
 
-    case VMD_SLOT_ENGINE:
-        return VMDS_ENGINE_Index;
+        case VMD_SLOT_ENGINE:
+            return VMDS_ENGINE_Index;
 
-    case VMD_SLOT_WHEEL:
-        return VMDS_WHEEL_Index;
+        case VMD_SLOT_WHEEL:
+            return VMDS_WHEEL_Index;
 
-    case VMD_SLOT_BOARD:
-        return VMDS_BOARD_Index;
+        case VMD_SLOT_BOARD:
+            return VMDS_BOARD_Index;
 
-    case VMD_SLOT_CENTER:
-        return VMDS_CENTER_Index;
+        case VMD_SLOT_CENTER:
+            return VMDS_CENTER_Index;
 
-    case VMD_SLOT_STORAGE:
-        return VMDS_STORAGE_Index;
+        case VMD_SLOT_STORAGE:
+            return VMDS_STORAGE_Index;
 
-    case VMD_SLOT_ROOF:
-        return VMDS_ROOF_Index;
+        case VMD_SLOT_ROOF:
+            return VMDS_ROOF_Index;
 
-    case VMD_SLOT_ARMOR:
-        return VMDS_ARMOR_Index;
+        case VMD_SLOT_ARMOR:
+            return VMDS_ARMOR_Index;
 
-    case VMD_SLOT_VEHICLE_CONTROLS:
-        return VMDS_VEHICLE_CONTROLS_Index;
+        case VMD_SLOT_VEHICLE_CONTROLS:
+            return VMDS_VEHICLE_CONTROLS_Index;
 
-    case VMD_SLOT_TURRET_CONTROLS:
-        return VMDS_TURRET_CONTROLS_Index;
+        case VMD_SLOT_TURRET_CONTROLS:
+            return VMDS_TURRET_CONTROLS_Index;
 
-    case VMD_SLOT_BATTERY:
-        return VMDS_BATTERY_Index;
+        case VMD_SLOT_BATTERY:
+            return VMDS_BATTERY_Index;
 
-    case VMD_SLOT_LIQUID_TANK:
-        return VMDS_LIQUID_TANK_Index;
+        case VMD_SLOT_LIQUID_TANK:
+            return VMDS_LIQUID_TANK_Index;
 
-    case VMD_SLOT_LIGHT:
-        return VMDS_LIGHT_Index;
+        case VMD_SLOT_LIGHT:
+            return VMDS_LIGHT_Index;
 
-    case VMD_SLOT_TURRET:
-        return VMDS_TURRET_Index;
+        case VMD_SLOT_TURRET:
+            return VMDS_TURRET_Index;
 
-    case VMD_SLOT_AUTOLOADER:
-        return VMDS_AUTOLOADER_Index;
+        case VMD_SLOT_AUTOLOADER:
+            return VMDS_AUTOLOADER_Index;
 
-    case VMD_SLOT_ROTOR:
-        return VMDS_ROTOR_Index;
+        case VMD_SLOT_ROTOR:
+            return VMDS_ROTOR_Index;
 
-    case VMD_SLOT_PROPELLER:
-        return VMDS_PROPELLER_Index;
+        case VMD_SLOT_PROPELLER:
+            return VMDS_PROPELLER_Index;
 
-    case VMD_SLOT_WING:
-        return VMDS_WING_Index;
+        case VMD_SLOT_WING:
+            return VMDS_WING_Index;
 
-    case VMD_SLOT_BALLOON:
-        return VMDS_BALLOON_Index;
+        case VMD_SLOT_BALLOON:
+            return VMDS_BALLOON_Index;
 
-    case VMD_SLOT_AISLE:
-        return VMDS_AISLE_Index;
+        case VMD_SLOT_AISLE:
+            return VMDS_AISLE_Index;
 
-    case NUM_VMD_SLOTS:
-        // If something asks for our number of slots enum instead of a proper one redirect them to structure.
-        return VMDS_STRUCTURE_Index;
-    } 
-    
+        case NUM_VMD_SLOTS:
+            // If something asks for our number of slots enum instead of a proper one redirect them to structure.
+            return VMDS_STRUCTURE_Index;
+    }
+
 };
