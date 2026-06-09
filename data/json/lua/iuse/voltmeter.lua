@@ -33,7 +33,7 @@ end
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): string
 voltmeter.get_grid_charge_info = function(_who, _item, pos)
-  local pos_abs = gapi.get_map():get_abs_ms(pos)
+  local pos_abs = gapi.get_map():bub_to_abs(pos)
   local grid = gapi.get_distribution_grid_tracker():grid_at(pos_abs)
   local amt = grid:get_resource()
   if not amt then return "" end

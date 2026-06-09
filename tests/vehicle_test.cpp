@@ -340,9 +340,27 @@ TEST_CASE( "vehicle control scale modifies throttle move cost", "[vehicle][speed
     auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
 
+    veh_ptr->cruise_on = false;
     veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
 
     CHECK( you.get_moves() == -25 );
+}
+
+TEST_CASE( "vehicle speed control free in cruise mode", "[vehicle][speed]" )
+{
+    clear_all_state();
+
+    auto &you = get_avatar();
+    you.set_moves( 25 );
+
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    veh_ptr->cruise_on = true;
+    veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
+
+    CHECK( you.get_moves() == 25 );
 }
 
 TEST_CASE( "horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]" )

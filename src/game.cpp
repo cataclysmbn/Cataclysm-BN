@@ -2316,15 +2316,6 @@ bool game::do_turn()
         Pathfinding::clear_d_maps();
     }
 
-    // Drain the OS input buffer so key-repeat events generated during world
-    // processing don't accumulate and drive movement after key release.  Keep
-    // input while activity or auto-move interruption checks are active, so
-    // pause/menu keys can still stop long-running actions.
-    if( !u.activity && !u.has_destination() ) {
-        ZoneScopedN( "do_turn_pump_events" );
-        inp_mngr.pump_events();
-    }
-
     return false;
 }
 
@@ -6607,7 +6598,9 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                    !critter.has_effect( effect_ridden ) ) {
                 ++monmove_move_iterations;
                 critter.made_footstep = false;
-                if( !critter.has_effect( effect_ai_controlled ) ) {
+                const auto use_direct_monster_move =
+                    critter.has_effect( effect_ai_controlled ) || critter.type->lua_ai.has_value();
+                if( !use_direct_monster_move ) {
                     if( !used_preplan ) {
                         used_preplan = true;
                         const auto it = plan_index.find( &critter );

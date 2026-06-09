@@ -1150,7 +1150,7 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
         point( surf->w / sprite_width, surf->h / sprite_height )
     );
 
-    auto [st_tex, st_surf, st_sub_rect] =
+    auto [_, st_surf, st_sub_rect] =
         ts.texture_atlas()->get_staging_area( sprite_width, sprite_height );
 
     SDL_SetSurfaceBlendMode( surf.get(), SDL_BLENDMODE_NONE );
@@ -1173,23 +1173,12 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
         SDL_BlitSurface( surf.get(), &src_rect, st_surf, &st_sub_rect );
 
         const auto surf_hash = get_surface_hash( st_surf, nullptr );
-        const auto existing = ts.tileset_atlas->id_search( surf_hash );
 
-        atlas_texture atl_tex;
-        if( existing.has_value() ) {
-            atl_tex = existing.value();
-        } else {
-            atl_tex = ts.tileset_atlas->allocate_sprite( sprite_width, sprite_height );
-            ts.tileset_atlas->id_assign( surf_hash, atl_tex );
-
-            SDL_UpdateTexture( st_tex, nullptr, st_surf->pixels, st_surf->pitch );
-            SDL_SetRenderTarget( renderer.get(), atl_tex.first.get() );
-            {
-                const SDL_FRect fsrc{ float( st_sub_rect.x ), float( st_sub_rect.y ), float( st_sub_rect.w ), float( st_sub_rect.h ) };
-                const SDL_FRect fdst{ float( atl_tex.second.x ), float( atl_tex.second.y ), float( atl_tex.second.w ), float( atl_tex.second.h ) };
-                SDL_RenderTexture( renderer.get(), st_tex, &fsrc, &fdst );
-            }
-        }
+        auto atl_tex = ts.tileset_atlas->get_or_create_sprite( sprite_width, sprite_height,
+        surf_hash, [&]( SDL_Surface * dstSurf, const SDL_Rect * dstRect ) {
+            const SDL_Rect srcRect{ ( st_sub_rect.x ), ( st_sub_rect.y ), ( st_sub_rect.w ), ( st_sub_rect.h ) };
+            SDL_BlitSurface( st_surf, &srcRect, dstSurf, dstRect );
+        } );
 
         const auto tex_key = tileset_lookup_key{ index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, TILESET_NO_WARP, point_zero };
         auto &[at_tex, at_rect] = atl_tex;
@@ -1684,23 +1673,14 @@ texture_result tileset::get_or_default( const int sprite_index,
         apply_color_filter( st_surf, st_sub_rect_final, st_surf, final_src_rect, color_pixel_copy );
 
         auto surf_hash = get_surface_hash( st_surf, &st_sub_rect_final );
-        auto existing = tileset_atlas->id_search( surf_hash );
 
-        atlas_texture atl_tex;
-        if( existing.has_value() ) {
-            atl_tex = std::move( existing.value() );
-        } else {
-            atl_tex = tileset_atlas->allocate_sprite( final_w, final_h );
-            tileset_atlas->id_assign( surf_hash, atl_tex );
-
-            SDL_UpdateTexture( st_tex, nullptr, st_surf->pixels, st_surf->pitch );
-            SDL_SetRenderTarget( rp, atl_tex.first.get() );
-            {
-                const SDL_FRect fsrc{ float( st_sub_rect_final.x ), float( st_sub_rect_final.y ), float( st_sub_rect_final.w ), float( st_sub_rect_final.h ) };
-                const SDL_FRect fdst{ float( atl_tex.second.x ), float( atl_tex.second.y ), float( atl_tex.second.w ), float( atl_tex.second.h ) };
-                SDL_RenderTexture( rp, st_tex, &fsrc, &fdst );
-            }
-        }
+        const auto atl_tex = tileset_atlas->get_or_create_sprite(
+        final_w, final_h, surf_hash, [&]( SDL_Surface * dstSurf, const SDL_Rect * dstRect ) {
+            const SDL_Rect
+            srcRect{( st_sub_rect_final.x ), ( st_sub_rect_final.y ), ( st_sub_rect_final.w ),
+                    ( st_sub_rect_final.h )};
+            SDL_BlitSurface( st_surf, &srcRect, dstSurf, dstRect );
+        } );
 
         sdl_restore_render_state( rp, state );
         auto &[at_tex, at_rect] = atl_tex;
@@ -6407,18 +6387,18 @@ void tileset_loader::ensure_default_item_highlight()
         return;
     }
 #if defined(DYNAMIC_ATLAS)
-    const Uint8 highlight_alpha = 127;
+    constexpr Uint8 highlight_alpha = 127;
 
     int index = offset;
 
-    const SDL_Surface_Ptr surface = create_surface_32( ts.tile_width, ts.tile_height );
-    assert( surface );
-    throwErrorIf( !SDL_FillSurfaceRect( surface.get(), nullptr,
-                                        SDL_MapRGBA( SDL_GetPixelFormatDetails( surface->format ), nullptr, 0, 0, 127,
-                                                highlight_alpha ) ), "SDL_FillSurfaceRect failed" );
-
-    auto [tex, rect] = ts.tileset_atlas->allocate_sprite( ts.tile_width, ts.tile_height );
-    SDL_UpdateTexture( tex.get(), &rect, surface->pixels, surface->pitch );
+    auto [tex, rect] = ts.tileset_atlas->create_sprite(
+                           ts.tile_width, ts.tile_height, std::nullopt, [&]( SDL_Surface * dstSurf,
+    const SDL_Rect * dstRect ) {
+        const auto col = SDL_MapRGBA(
+                             SDL_GetPixelFormatDetails( sdl_color_pixel_format ), nullptr, 0, 0, 127,
+                             highlight_alpha );
+        SDL_FillSurfaceRect( dstSurf, dstRect, col );
+    } );
 
     ts.tile_ids[ITEM_HIGHLIGHT].sprite.fg.add( std::vector<int>( {index} ), 1 );
     ts.tile_lookup.emplace( tileset_lookup_key{

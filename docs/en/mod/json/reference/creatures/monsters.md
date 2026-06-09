@@ -226,6 +226,63 @@ If the monster will differentiate between monsters and characters (NPC, Player) 
 targets - if false the monster will ignore characters regardless of current anger/morale until a
 character trips and anger trigger. Resets randomly when the monster is at its base anger level.
 
+## "lua_attitude"
+
+(string, optional)
+
+If set, uses a Lua function from `game.monster_attitude_functions` to determine the monster's
+attitude instead of the default C++ logic. The Lua function is called with `(monster, target)`,
+where `target` can be `nil`, and should return a `MonsterAttitude` value. Returning `nil` falls back
+to the default behavior.
+
+```json
+"lua_attitude": "my_attitude"
+```
+
+```lua
+game.monster_attitude_functions["my_attitude"] = function(mon, target)
+  if target ~= nil and target:is_avatar() then
+    return MonsterAttitude.MATT_ATTACK
+  end
+  return nil
+end
+```
+
+## "lua_ai"
+
+(string, optional)
+
+If set, runs a Lua function from `game.monster_ai_functions` each monster turn. The function
+is called with `(monster)` and should return a boolean: `true` means Lua handled the turn and
+the default C++ AI is skipped, `false` or `nil` falls back to the default AI.
+
+```json
+"lua_ai": "my_ai"
+```
+
+```lua
+game.monster_ai_functions["my_ai"] = function(mon)
+  local avatar = gapi.get_avatar()
+  if avatar ~= nil then
+    local function sign(val)
+      if val > 0 then
+        return 1
+      end
+      if val < 0 then
+        return -1
+      end
+      return 0
+    end
+    local pos = mon:get_pos_ms()
+    local tgt = avatar:get_pos_ms()
+    local step = Tripoint.new(pos.x + sign(tgt.x - pos.x), pos.y + sign(tgt.y - pos.y), pos.z)
+    mon:set_target(avatar)
+    mon:move_to(step, false, true, 1.0)
+  end
+  return true
+end
+```
+
 ## "speed"
 
 (integer)

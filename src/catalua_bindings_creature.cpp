@@ -9,6 +9,7 @@
 #include "bodypart.h"
 #include "catalua.h"
 #include "catalua_bindings_utils.h"
+#include "calendar.h"
 #include "catalua_impl.h"
 #include "catalua_log.h"
 #include "catalua_luna.h"
@@ -349,10 +350,90 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_N_T( is_wandering, "is_wandering", bool() const );
 
         SET_FX_T( wander_to, void( const tripoint_bub_ms & p, int f ) );
-        SET_FX_T( move_to, bool( const tripoint_bub_ms & p, bool force, bool step_on_critter,
-                                 float stagger_adjustment ) );
+        luna::set_fx( ut, "set_move_target", sol::overload(
+        []( monster & mon, const tripoint_bub_ms & p ) -> void {
+            mon.set_dest( p );
+        },
+        []( monster & mon, const tripoint & p ) -> void {
+            mon.set_dest( tripoint_bub_ms( p ) );
+        } ) );
+        luna::set_fx( ut, "set_target", []( monster & mon, Creature * target ) -> void {
+            if( target == nullptr )
+            {
+                mon.unset_dest();
+                return;
+            }
+            mon.set_dest( target->bub_pos() );
+        } );
+        luna::set_fx( ut, "clear_move_target", []( monster & mon ) -> void {
+            mon.unset_dest();
+        } );
+        luna::set_fx( ut, "run_normal_ai_turn", []( monster & mon ) -> void {
+            mon.plan();
+            const auto action = mon.decide_action();
+            mon.execute_action( action );
+        } );
+        luna::set_fx( ut, "move_to", sol::overload(
+                          []( monster & mon, const tripoint_bub_ms & p, bool force, bool step_on_critter,
+        float stagger_adjustment ) -> bool {
+            return mon.move_to( p, force, step_on_critter, stagger_adjustment );
+        },
+        []( monster & mon, const tripoint & p, bool force, bool step_on_critter,
+            float stagger_adjustment ) -> bool {
+            return mon.move_to( tripoint_bub_ms( p ), force, step_on_critter, stagger_adjustment );
+        } ) );
+        luna::set_fx( ut, "bash_at", sol::overload(
+        []( monster & mon, const tripoint_bub_ms & p ) -> bool {
+            return mon.bash_at( p );
+        },
+        []( monster & mon, const tripoint & p ) -> bool {
+            return mon.bash_at( tripoint_bub_ms( p ) );
+        } ) );
 
         SET_FX_T( attitude, monster_attitude( const Character * ) const );
+        luna::set_fx( ut, "set_attitude", []( monster & mon, monster_attitude att ) -> void {
+            static const auto effect_docile = efftype_id( "docile" );
+            static const auto effect_pacified = efftype_id( "pacified" );
+            switch( att )
+            {
+                case MATT_FLEE:
+                    mon.anger = 0;
+                    mon.morale = -100;
+                    break;
+                case MATT_ATTACK:
+                    mon.anger = 100;
+                    mon.morale = 100;
+                    mon.remove_effect( effect_docile );
+                    mon.remove_effect( effect_pacified );
+                    break;
+                case MATT_IGNORE:
+                    mon.anger = 0;
+                    mon.morale = 0;
+                    mon.remove_effect( effect_docile );
+                    mon.remove_effect( effect_pacified );
+                    break;
+                case MATT_FOLLOW:
+                    mon.anger = 5;
+                    mon.morale = -5;
+                    mon.remove_effect( effect_docile );
+                    mon.remove_effect( effect_pacified );
+                    break;
+                case MATT_FRIEND:
+                    mon.make_friendly();
+                    mon.remove_effect( effect_docile );
+                    mon.remove_effect( effect_pacified );
+                    break;
+                case MATT_FPASSIVE:
+                    mon.make_friendly();
+                    mon.add_effect( effect_docile, 1_turns );
+                    break;
+                case MATT_ZLAVE:
+                    mon.add_effect( effect_pacified, 1_turns );
+                    break;
+                default:
+                    break;
+            }
+        } );
 
         SET_FX_T( heal, int( int, bool ) );
 
@@ -370,6 +451,11 @@ void cata::detail::reg_monster( sol::state &lua )
             if( it == nullptr ) { return; }
             detached_ptr<item> ptr = item::spawn( *it );
             m.add_item( std::move( ptr ) );
+        } );
+        luna::set_fx( ut, "add_detached_item", []( monster & m, detached_ptr<item> &it )
+        {
+            if( !it ) { return; }
+            m.add_item( std::move( it ) );
         } );
         SET_FX_T( remove_item, detached_ptr<item>( item * ) );
         SET_FX_T( clear_items, std::vector<detached_ptr<item>>() );
@@ -1258,6 +1344,17 @@ void cata::detail::reg_npc( sol::state &lua )
         SET_FX_T( can_open_door, bool( const tripoint_bub_ms &, bool ) const );
 
         SET_FX_T( can_move_to, bool( const tripoint_bub_ms &, bool ) const );
+
+        luna::set_fx( ut, "set_move_target", sol::overload(
+                          []( npc & npchar, const tripoint_bub_ms & p,
+        sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
+            return npchar.update_path( p, no_bashing.value_or( false ), force.value_or( true ) );
+        },
+        []( npc & npchar, const tripoint & p,
+            sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
+            return npchar.update_path( tripoint_bub_ms( p ), no_bashing.value_or( false ),
+                                       force.value_or( true ) );
+        } ) );
 
         SET_FX_T( saw_player_recently, bool() const );
 

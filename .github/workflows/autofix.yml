@@ -21,6 +21,7 @@ permissions:
 
 env:
   DENO_DIR: /home/runner/.cache/deno
+  LLVM_VERSION: "22"
 
 jobs:
   autofix:
@@ -35,7 +36,20 @@ jobs:
       - env: { DEBIAN_FRONTEND: noninteractive }
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends astyle clang-format cmake ninja-build gettext ccache
+          sudo apt-get install -y --no-install-recommends astyle gettext
+
+      - name: Setup C++ format tools
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          clang-format: ${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          ccache: true
+          setup-cpp: false
+
+      - name: Show clang-format version
+        run: clang-format --version
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }

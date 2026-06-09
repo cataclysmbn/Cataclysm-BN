@@ -93,8 +93,8 @@ auto gather_transparency_refs(map const& m, int zlev) -> std::vector<transparenc
 // Reads ter/furn/field/outside_cache data from each ref.sm and writes one
 // transparency_submap_in per ref into out (clearing it first).
 auto prepare_transparency_inputs(
-    std::span<transparency_submap_ref const> refs,
-    std::vector<transparency_submap_in>& out) -> void;
+    std::span<transparency_submap_ref const> refs, std::vector<transparency_submap_in>& out)
+    -> void;
 
 struct transparency_output_target {
     SDL_GPUBuffer* buffer = nullptr;
@@ -109,9 +109,10 @@ struct dispatch_transparency_params {
     int cache_size = 0;
     std::vector<float>* out_buffer = nullptr;
     transparency_output_target output = {};
+    bool* resident_output_written = nullptr;
 };
 
-// Upload the submap records, dispatch the transparency compute shader, and
+// Upload transparency inputs, dispatch the transparency compute shader, and
 // synchronously download compact submap-local results into out_buffer.
 // If output.buffer is non-null, the shader also writes into that existing full
 // flat-cache buffer at output.output_offset so lighting can keep resident input

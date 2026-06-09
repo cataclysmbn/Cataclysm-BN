@@ -361,6 +361,7 @@ bool map::build_transparency_cache( const int zlev )
         }
         const auto resident_level_was_valid =
             cata_gpu::lighting_transparency_level_is_valid( zlev );
+        auto resident_output_written = false;
         if( !cata_gpu::dispatch_transparency( {
         .device = gpu_device,
         .luts = &luts,
@@ -372,6 +373,7 @@ bool map::build_transparency_cache( const int zlev )
             .buffer = resident_output.buffer,
             .output_offset = resident_output.output_offset,
         },
+        .resident_output_written = &resident_output_written,
     } ) || gpu_result.empty() ) {
             debugmsg( "SDL_GPU transparency dispatch failed; see debug.log for details" );
             return false;
@@ -383,7 +385,8 @@ bool map::build_transparency_cache( const int zlev )
                       gpu_result.size(), expected_compact_result_size );
             return false;
         }
-        if( rebuild_all ? resident_output_complete : resident_level_was_valid ) {
+        if( resident_output_written &&
+            ( rebuild_all ? resident_output_complete : resident_level_was_valid ) ) {
             cata_gpu::mark_lighting_transparency_level_updated( zlev );
         }
 
@@ -631,6 +634,7 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
     };
 
     static auto gpu_result = std::vector<float> {};
+    auto resident_output_written = false;
     if( !cata_gpu::dispatch_transparency( {
     .device = gpu_device,
     .luts = &luts,
@@ -642,6 +646,7 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
         .buffer = resident_buffer,
         .output_offset = 0,
     },
+    .resident_output_written = &resident_output_written,
 } ) || gpu_result.empty() ) {
         debugmsg( "SDL_GPU batched transparency dispatch failed; see debug.log for details" );
         return dirty_levels;
@@ -683,7 +688,8 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
 
     for( const auto &state : level_states ) {
         get_cache( state.zlev ).transparency_cache_dirty.reset();
-        if( state.rebuild_all ? state.resident_output_complete : state.resident_level_was_valid ) {
+        if( resident_output_written &&
+            ( state.rebuild_all ? state.resident_output_complete : state.resident_level_was_valid ) ) {
             cata_gpu::mark_lighting_transparency_level_updated( state.zlev );
         }
     }
