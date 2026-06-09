@@ -649,6 +649,7 @@ struct pending_gpu_visibility_work {
     int player_y = 0;
     bool rebuild_seen = false;
     bool force_seen_invalidate = false;
+    bool deferred_download_copy = false;
 };
 
 auto s_pending_visibility_work = pending_gpu_visibility_work{};
@@ -4536,6 +4537,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     auto const cache_y = lc0.cache_y;
     auto const cache_xy = cache_x * cache_y;
     auto const z_count = OVERMAP_LAYERS;
+    auto const dxbc_backend = shader_format_is_dxbc(preferred_fmt(SDL_GetGPUShaderFormats(device)));
     auto const volume_tiles = static_cast<Uint32>(z_count * cache_xy);
     auto const float_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(float));
     auto const uint_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(uint32_t));
@@ -4554,6 +4556,10 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     auto const visibility_download_bytes =
         static_cast<Uint32>(visibility_download_levels.size()) * uint_level_bytes;
     auto const visibility_download_total_bytes = visibility_download_bytes;
+    auto const deferred_visibility_download = dxbc_backend && !visibility_download_levels.empty();
+    auto const visibility_download_resource_bytes = deferred_visibility_download
+        ? uint_level_bytes
+        : std::max(visibility_download_total_bytes, Uint32{1});
     auto vehicle_optics = collect_vehicle_optics(
         *p.m, tripoint_bub_ms{p.player_x, p.player_y, p.player_zlev}, p.zlev);
     if (!vehicle_optics.empty() && !ensure_vehicle_optics_pipeline(device)) { return {}; }
@@ -4629,7 +4635,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 .static_lm_bytes = uint_volume_bytes,
                 .output_bytes = uint_volume_bytes,
                 .lm_download_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t)),
-                .visibility_download_bytes = std::max(visibility_download_total_bytes, Uint32{1}),
+                .visibility_download_bytes = visibility_download_resource_bytes,
                 .upload_bytes = float_volume_bytes,
                 .visibility_upload_bytes = visibility_upload_total,
             })) {
@@ -4798,7 +4804,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
             SDL_DispatchGPUCompute(cp, (visibility_dispatch.tiles + 63) / 64, 1, 1);
             SDL_EndGPUComputePass(cp);
         }
-        {
+        if (!deferred_visibility_download) {
             ZoneScopedN("gpu_visibility_record_download");
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
             auto visibility_download_offset = Uint32{0};
@@ -4843,6 +4849,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
         .player_y = p.player_y,
         .rebuild_seen = rebuild_seen,
         .force_seen_invalidate = p.rebuild_seen_cache,
+        .deferred_download_copy = deferred_visibility_download,
     };
     TracyPlot("GPU Visibility Pending Work", int64_t{1});
     return gpu_visibility_work{.id = work_id};
@@ -4887,8 +4894,101 @@ auto finish_gpu_visibility(SDL_GPUDevice* const device, gpu_visibility_work cons
     }
 
     auto* const visibility_dl_tbuf = s_lighting_resources.visibility_download.buffer;
+    auto* const visibility_buf = s_lighting_resources.visibility.buffer;
+    auto const uint_level_bytes = static_cast<Uint32>(pending.cache_xy * sizeof(uint32_t));
+    auto visibility_unpacked_by_deferred = false;
 
-    {
+    if (pending.deferred_download_copy) {
+        ZoneScopedN("gpu_visibility_deferred_download_copy");
+
+        struct dxbc_visibility_readback_request {
+            SDL_GPUBuffer* source_buffer;
+            SDL_GPUTransferBuffer* transfer_buffer;
+            Uint32 source_offset;
+            Uint32 size;
+            std::string_view label;
+        };
+
+        auto readback_visibility_level = [&](dxbc_visibility_readback_request const& request,
+                                             auto const& copy_result) -> bool {
+            auto* const cmd = SDL_AcquireGPUCommandBuffer(device);
+            if (cmd == nullptr) {
+                DebugLog(DL::Error, DC::Main)
+                    << "SDL_GPU: lm: DXBC visibility readback command buffer acquisition failed "
+                       "for "
+                    << request.label << ": " << SDL_GetError();
+                return false;
+            }
+
+            auto* const cp = SDL_BeginGPUCopyPass(cmd);
+            auto const source = SDL_GPUBufferRegion{
+                .buffer = request.source_buffer,
+                .offset = request.source_offset,
+                .size = request.size,
+            };
+            auto const destination = SDL_GPUTransferBufferLocation{
+                .transfer_buffer = request.transfer_buffer,
+                .offset = 0,
+            };
+            SDL_DownloadFromGPUBuffer(cp, &source, &destination);
+            SDL_EndGPUCopyPass(cp);
+
+            auto* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
+            if (fence == nullptr) {
+                DebugLog(DL::Error, DC::Main)
+                    << "SDL_GPU: lm: DXBC visibility readback command buffer submission failed "
+                       "for "
+                    << request.label << ": " << SDL_GetError();
+                return false;
+            }
+            auto const readback_wait_succeeded = SDL_WaitForGPUFences(device, true, &fence, 1);
+            SDL_ReleaseGPUFence(device, fence);
+            if (!readback_wait_succeeded) {
+                DebugLog(DL::Error, DC::Main)
+                    << "SDL_GPU: lm: DXBC visibility readback fence wait failed for "
+                    << request.label << ": " << SDL_GetError();
+                return false;
+            }
+
+            SDL_ClearError();
+            auto const* mapped = SDL_MapGPUTransferBuffer(device, request.transfer_buffer, false);
+            if (mapped == nullptr) {
+                DebugLog(DL::Error, DC::Main)
+                    << "SDL_GPU: lm: DXBC visibility readback transfer map failed for "
+                    << request.label << " bytes=" << request.size << ": " << SDL_GetError();
+                return false;
+            }
+            copy_result(mapped);
+            SDL_UnmapGPUTransferBuffer(device, request.transfer_buffer);
+            return true;
+        };
+
+        for (auto const z : pending.visibility_download_levels) {
+            auto const zi = z + OVERMAP_DEPTH;
+            auto& lc = const_cast<level_cache&>(pending.m->get_cache_ref(z));
+            auto const sz = static_cast<std::size_t>(pending.cache_xy);
+            if (!readback_visibility_level(
+                    {
+                        .source_buffer = visibility_buf,
+                        .transfer_buffer = visibility_dl_tbuf,
+                        .source_offset = static_cast<Uint32>(zi) * uint_level_bytes,
+                        .size = uint_level_bytes,
+                        .label = "visibility level",
+                    },
+                    [&](void const* const mapped) {
+                        auto const* src = static_cast<uint32_t const*>(mapped);
+                        std::ranges::transform(
+                            std::span{src, sz}, lc.visibility_cache.begin(),
+                            [](uint32_t const value) { return static_cast<lit_level>(value); });
+                        lc.visibility_cache_dirty = false;
+                    })) {
+                return false;
+            }
+        }
+        visibility_unpacked_by_deferred = true;
+    }
+
+    if (!visibility_unpacked_by_deferred) {
         ZoneScopedN("gpu_visibility_unpack_download");
         auto const* visibility_mapped = static_cast<uint32_t const*>(
             SDL_MapGPUTransferBuffer(device, visibility_dl_tbuf, false));
