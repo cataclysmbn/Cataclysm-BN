@@ -389,25 +389,30 @@ endif ()
 # Check for build types and libraries
 if (CATA_SDL)
     message(STATUS "Searching for SDL3 library --")
-    if (NOT BUILD_SDL3)
-        find_package(SDL3 CONFIG QUIET)
-    endif ()
-    if (NOT (SDL3_FOUND OR TARGET SDL3::SDL3 OR TARGET SDL3::SDL3-static))
-        message("Installing SDL3 from Source")
-        set(SDL_TEST_LIBRARY OFF)
-        SET(SDL_SHARED ON)
-        # Install via FetchContent
-        FetchContent_Declare(
-                SDL3
-                URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.8.tar.gz
-                EXCLUDE_FROM_ALL
-        )
-        FetchContent_MakeAvailable(SDL3)
-        if (DYNAMIC_LINKING)
-            install(TARGETS SDL3-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3-config.cmake provided by the system or VCPKG
+            find_package(SDL3 CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
         endif ()
-    else()
-        message("Using installed SDL3")
+        if(NOT SDL3_FOUND)
+            message("Installing SDL3 from Source")
+            set(SDL_TEST_LIBRARY OFF)
+            SET(SDL_SHARED ON)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3
+                    URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.8.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3")
+        endif()
     endif()
     if (NOT (SDL3_FOUND OR TARGET SDL3::SDL3 OR TARGET SDL3::SDL3-static))
         message(FATAL_ERROR
@@ -625,24 +630,29 @@ endif()
 if (TILES)
     # Find SDL3_ttf & SDL3_image for tile rendering
     message(STATUS "Searching for SDL3_ttf library --")
-    if (NOT BUILD_SDL3)
-        find_package(SDL3_ttf CONFIG QUIET)
-    endif ()
-    if (NOT (SDL3_ttf_FOUND OR TARGET SDL3_ttf::SDL3_ttf OR TARGET SDL3_ttf::SDL3_ttf-static))
-        message("Installing SDL3_ttf from Source")
-        set(SDLTTF_PLUTOSVG OFF)
-        # Install via FetchContent
-        FetchContent_Declare(
-                SDL3_TTF
-                URL https://github.com/libsdl-org/SDL_ttf/archive/refs/tags/release-3.2.2.tar.gz
-                EXCLUDE_FROM_ALL
-        )
-        FetchContent_MakeAvailable(SDL3_TTF)
-        if (DYNAMIC_LINKING)
-            install(TARGETS SDL3_ttf-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_ttf-config.cmake provided by the system or VCPKG
+            find_package(SDL3_ttf CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
         endif ()
-    else()
-        message("Using installed SDL3_ttf")
+        if(NOT SDL3_ttf_FOUND)
+            message("Installing SDL3_ttf from Source")
+            set(SDLTTF_PLUTOSVG OFF)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_TTF
+                    URL https://github.com/libsdl-org/SDL_ttf/archive/refs/tags/release-3.2.2.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3_TTF)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_ttf-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3_ttf")
+        endif()
     endif()
     if (NOT (SDL3_ttf_FOUND OR TARGET SDL3_ttf::SDL3_ttf OR TARGET SDL3_ttf::SDL3_ttf-static))
         message(FATAL_ERROR
@@ -653,25 +663,30 @@ if (TILES)
     endif ()
 
     message(STATUS "Searching for SDL3_image library --")
-    if (NOT BUILD_SDL3)
-        find_package(SDL3_image CONFIG QUIET)
-    endif ()
-    if (NOT (SDL3_image_FOUND OR TARGET SDL3_image::SDL3_image OR TARGET SDL3_image::SDL3_image-static))
-        message("Installing SDL3_image from Source")
-        set(SDLIMAGE_JXL ON)
-        set(SDLIMAGE_PNG_LIBPNG ON)
-        # Install via FetchContent
-        FetchContent_Declare(
-                SDL3_IMAGE
-                URL https://github.com/libsdl-org/SDL_image/archive/refs/tags/release-3.4.4.tar.gz
-                EXCLUDE_FROM_ALL
-        )
-        FetchContent_MakeAvailable(SDL3_IMAGE)
-        if (DYNAMIC_LINKING)
-            install(TARGETS SDL3_image-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_image-config.cmake provided by the system or VCPKG
+            find_package(SDL3_image CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
         endif ()
-    else()
-        message("Using installed SDL3_image")
+        if(NOT SDL3_image_FOUND)
+            message("Installing SDL3_image from Source")
+            set(SDLIMAGE_JXL ON)
+            set(SDLIMAGE_PNG_LIBPNG ON)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_IMAGE
+                    URL https://github.com/libsdl-org/SDL_image/archive/refs/tags/release-3.4.4.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3_IMAGE)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_image-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3_image")
+        endif()
     endif()
     if (NOT (SDL3_image_FOUND OR TARGET SDL3_image::SDL3_image OR TARGET SDL3_image::SDL3_image-static))
         message(FATAL_ERROR
@@ -710,23 +725,28 @@ if (SOUND)
 
     # Sound requires SDL_mixer library
     message(STATUS "Searching for SDL3_mixer library --")
-    if (NOT BUILD_SDL3)
-        find_package(SDL3_mixer CONFIG QUIET)
-    endif ()
-    if (NOT (SDL3_mixer_FOUND OR TARGET SDL3_mixer::SDL3_mixer OR TARGET SDL3_mixer::SDL3_mixer-static))
-        message("Installing SDL3_mixer from Source")
-        # Install via FetchContent
-        FetchContent_Declare(
-                SDL3_MIXER
-                URL https://github.com/libsdl-org/SDL_mixer/archive/refs/tags/release-3.2.0.tar.gz
-                EXCLUDE_FROM_ALL
-        )
-        FetchContent_MakeAvailable(SDL3_MIXER )
-        if (DYNAMIC_LINKING)
-            install(TARGETS SDL3_mixer-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_mixer-config.cmake provided by the system or VCPKG
+            find_package(SDL3_mixer CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
         endif ()
-    else()
-        message("Using installed SDL3_mixer")
+        if(NOT SDL3_mixer_FOUND)
+            message("Installing SDL3_mixer from Source")
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_MIXER
+                    URL https://github.com/libsdl-org/SDL_mixer/archive/refs/tags/release-3.2.0.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3_MIXER )
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_mixer-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3_mixer")
+        endif()
     endif()
     if (NOT (SDL3_mixer_FOUND OR TARGET SDL3_mixer::SDL3_mixer OR TARGET SDL3_mixer::SDL3_mixer-static))
         message(FATAL_ERROR

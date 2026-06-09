@@ -536,7 +536,7 @@ much faster.
 
 [libbacktrace]: https://github.com/ianlancetaylor/libbacktrace
 
-Installed external dependencies are preferred before downloading source fallbacks. Set
+Supported installed external dependencies are preferred before downloading source fallbacks. Set
 `CMAKE_PREFIX_PATH` to a local prefix such as `$HOME/.local` to use locally installed packages.
 
 - USE_TRACY=`<boolean>`
