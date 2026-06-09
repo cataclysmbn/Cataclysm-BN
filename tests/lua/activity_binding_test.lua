@@ -6,6 +6,8 @@
 ---@field activity_moves_total integer
 ---@field activity_interruptable boolean
 ---@field activity_coord string
+---@field turn_called boolean
+---@field turn_name string
 ---@field finish_called boolean
 ---@field finish_name string
 ---@field finish_pos_type string
@@ -18,7 +20,13 @@
 test_data.has_examine_functions = game.examine_functions ~= nil
 test_data.has_activity_functions = game.activity_functions ~= nil
 
----@param params LuaActivityFinishParams
+---@param params LuaActivityCallbackParams
+game.activity_functions["TEST_TURN"] = function(params)
+  test_data.turn_called = true
+  test_data.turn_name = params.name
+end
+
+---@param params LuaActivityCallbackParams
 game.activity_functions["TEST_CALLBACK"] = function(params)
   test_data.finish_called = true
   test_data.finish_name = params.name
@@ -31,9 +39,10 @@ end
 
 local avatar = gapi.get_avatar()
 avatar:assign_lua_activity({
-  type = ActivityTypeId.new("ACT_WASH_SELF"),
+  type = ActivityTypeId.new("ACT_WAIT"),
   duration = TimeDuration.from_minutes(5),
   on_finish = "TEST_CALLBACK",
+  on_turn = "TEST_TURN",
   name = "test wash",
   pos = TripointBubMs.new(9, 8, 0),
   data = {

@@ -302,20 +302,23 @@ doc_gen_func.impl = function()
 ---@class LuaActivityOptions
 ---@field type ActivityTypeId @activity type to assign
 ---@field duration TimeDuration @activity duration
----@field on_finish string @key in game.activity_functions to run when the activity finishes
----@field name? string @display/debug name, also forwarded as finish params.name
----@field pos? TripointBubMs @activity target position; stored and finished as TripointAbsMs
----@field data? table @serializable named payload forwarded as finish params.data
+---@field on_finish? string @key in game.activity_functions to run when the activity finishes
+---@field on_turn? string @key in game.activity_functions to run every turn
+---@field name? string @display/debug name, also forwarded as callback params.name
+---@field pos? TripointBubMs @activity target position; stored and forwarded as TripointAbsMs
+---@field data? table @serializable named payload forwarded as callback params.data
 ---@field interruptable? boolean @whether pause can cancel this activity; defaults to true
 
----@class LuaActivityFinishParams
+---@class LuaActivityCallbackParams
 ---@field user Character
 ---@field activity PlayerActivity
 ---@field name string
 ---@field pos? TripointAbsMs
 ---@field data table
 
----@alias LuaActivityFinishFunction fun(params: LuaActivityFinishParams)
+---@alias LuaActivityFinishParams LuaActivityCallbackParams
+---@alias LuaActivityFinishFunction fun(params: LuaActivityCallbackParams)
+---@alias LuaActivityTurnFunction fun(params: LuaActivityCallbackParams)
 
 ---@class IuseFunctionTable
 ---@field use fun(params: ItemUseParams): integer

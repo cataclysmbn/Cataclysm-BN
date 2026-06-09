@@ -120,7 +120,7 @@ TEST_CASE( "lua_activity_bindings", "[lua]" )
 
     REQUIRE( test_data.get<bool>( "has_examine_functions" ) );
     REQUIRE( test_data.get<bool>( "has_activity_functions" ) );
-    REQUIRE( test_data.get<std::string>( "activity_id" ) == "ACT_WASH_SELF" );
+    REQUIRE( test_data.get<std::string>( "activity_id" ) == "ACT_WAIT" );
     REQUIRE( test_data.get<std::string>( "activity_name" ) == "test wash" );
     CHECK( test_data.get<int>( "activity_moves_total" ) == to_moves<int>( 5_minutes ) );
     CHECK( test_data.get<bool>( "activity_interruptable" ) );
@@ -130,6 +130,8 @@ TEST_CASE( "lua_activity_bindings", "[lua]" )
     get_avatar().activity->do_turn( get_avatar() );
 
     CHECK( get_avatar().activity->is_null() );
+    CHECK( test_data.get<bool>( "turn_called" ) );
+    CHECK( test_data.get<std::string>( "turn_name" ) == "test wash" );
     CHECK( test_data.get<bool>( "finish_called" ) );
     CHECK( test_data.get<std::string>( "finish_name" ) == "test wash" );
     CHECK( test_data.get<std::string>( "finish_pos_type" ) == "TripointAbsMs" );

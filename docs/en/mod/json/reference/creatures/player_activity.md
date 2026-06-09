@@ -26,7 +26,7 @@ something that takes more than just one turn.
 
 ## Lua-backed activities
 
-Lua scripts can assign activities whose completion calls `game.activity_functions[id]`:
+Lua scripts can assign any activity with Lua callbacks in `game.activity_functions[id]`:
 
 ```lua
 game.activity_functions["MY_ACTIVITY_FINISH"] = function(params)
@@ -37,13 +37,14 @@ who:assign_lua_activity({
   type = ActivityTypeId.new("ACT_WASH_SELF"),
   duration = TimeDuration.from_minutes(5),
   on_finish = "MY_ACTIVITY_FINISH",
+  on_turn = "MY_ACTIVITY_TURN", -- optional
   pos = target_pos,
   data = { mode = "example" },
 })
 ```
 
 Use `data` for serializable Lua state. `pos` is supplied in bubble coordinates when assigning and
-is reported to the finish callback as absolute map-square coordinates.
+is reported to callbacks as absolute map-square coordinates.
 
 ## JSON Properties
 

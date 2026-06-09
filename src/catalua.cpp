@@ -51,6 +51,21 @@ namespace
 {
 
 constexpr std::string_view lua_activity_data_prefix = "lua_activity_data:";
+constexpr std::string_view lua_activity_on_finish_prefix = "lua_activity_on_finish:";
+constexpr std::string_view lua_activity_on_turn_prefix = "lua_activity_on_turn:";
+
+auto get_lua_activity_prefixed_value( const player_activity &act,
+                                      const std::string_view prefix ) -> std::string
+{
+    namespace ranges = std::ranges;
+    const auto iter = ranges::find_if( act.str_values, [prefix]( const std::string & value ) {
+        return value.starts_with( prefix );
+    } );
+    if( iter == act.str_values.end() ) {
+        return {};
+    }
+    return iter->substr( prefix.size() );
+}
 
 } // namespace
 
@@ -197,12 +212,11 @@ auto run_lua_callback( const char *table_name, const std::string &callback_id,
 auto make_lua_activity_data_table( sol::state &lua, const player_activity &act ) -> sol::table
 {
     auto data = lua.create_table();
-    const auto data_payload = act.get_str_value( 1 );
-    if( !data_payload.starts_with( lua_activity_data_prefix ) ) {
+    const auto data_json = get_lua_activity_prefixed_value( act, lua_activity_data_prefix );
+    if( data_json.empty() ) {
         return data;
     }
 
-    auto data_json = data_payload.substr( lua_activity_data_prefix.size() );
     auto buffer = std::istringstream{ data_json };
     auto jsin = JsonIn( buffer );
     auto obj = jsin.get_object();
@@ -977,6 +991,16 @@ auto run_lua_examine( const std::string &callback_id, player &who,
         params["user"] = who.as_character();
         params["pos"] = pos;
     } );
+}
+
+auto get_lua_activity_on_finish( const player_activity &act ) -> std::string
+{
+    return get_lua_activity_prefixed_value( act, lua_activity_on_finish_prefix );
+}
+
+auto get_lua_activity_on_turn( const player_activity &act ) -> std::string
+{
+    return get_lua_activity_prefixed_value( act, lua_activity_on_turn_prefix );
 }
 
 auto run_lua_activity_callback( const std::string &callback_id, player &who,

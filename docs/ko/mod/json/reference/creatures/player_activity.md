@@ -17,7 +17,7 @@
 
 ## Lua 기반 활동
 
-Lua 스크립트는 완료 시 `game.activity_functions[id]`를 호출하는 활동을 시작할 수 있습니다:
+Lua 스크립트는 `game.activity_functions[id]`의 Lua 콜백이 붙은 활동을 시작할 수 있습니다:
 
 ```lua
 game.activity_functions["MY_ACTIVITY_FINISH"] = function(params)
@@ -28,12 +28,13 @@ who:assign_lua_activity({
   type = ActivityTypeId.new("ACT_WASH_SELF"),
   duration = TimeDuration.from_minutes(5),
   on_finish = "MY_ACTIVITY_FINISH",
+  on_turn = "MY_ACTIVITY_TURN", -- 선택 사항
   pos = target_pos,
   data = { mode = "example" },
 })
 ```
 
-저장 가능한 Lua 상태는 `data`에 넣으세요. `pos`는 시작할 때는 버블 좌표를 받고, 완료 콜백에는 절대 맵 칸 좌표로 전달됩니다.
+저장 가능한 Lua 상태는 `data`에 넣으세요. `pos`는 시작할 때는 버블 좌표를 받고, 콜백에는 절대 맵 칸 좌표로 전달됩니다.
 
 ## JSON에서 정의된 활동
 

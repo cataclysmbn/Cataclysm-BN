@@ -19,7 +19,7 @@
 
 ## Lua ベースのアクティビティ
 
-Lua スクリプトは、完了時に `game.activity_functions[id]` を呼ぶアクティビティを開始できます:
+Lua スクリプトは、`game.activity_functions[id]` の Lua コールバックを持つアクティビティを開始できます:
 
 ```lua
 game.activity_functions["MY_ACTIVITY_FINISH"] = function(params)
@@ -30,12 +30,13 @@ who:assign_lua_activity({
   type = ActivityTypeId.new("ACT_WASH_SELF"),
   duration = TimeDuration.from_minutes(5),
   on_finish = "MY_ACTIVITY_FINISH",
+  on_turn = "MY_ACTIVITY_TURN", -- 任意
   pos = target_pos,
   data = { mode = "example" },
 })
 ```
 
-保存可能な Lua 状態は `data` に入れてください。`pos` は開始時にはバブル座標で渡し、完了コールバックでは絶対マップ平方座標として渡されます。
+保存可能な Lua 状態は `data` に入れてください。`pos` は開始時にはバブル座標で渡し、コールバックでは絶対マップ平方座標として渡されます。
 
 ## JSONプロパティ
 

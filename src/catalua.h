@@ -10,6 +10,8 @@
 
 class Item_factory;
 class map;
+class player;
+class player_activity;
 class tinymap;
 class world;
 
@@ -46,6 +48,8 @@ void run_on_game_save_hooks( lua_state &state );
 void run_on_every_x_hooks( lua_state &state );
 auto run_lua_examine( const std::string &callback_id, player &who,
                       const tripoint_bub_ms &pos ) -> void;
+auto get_lua_activity_on_finish( const player_activity &act ) -> std::string;
+auto get_lua_activity_on_turn( const player_activity &act ) -> std::string;
 auto run_lua_activity_callback( const std::string &callback_id, player &who,
                                 player_activity &act ) -> void;
 void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint_abs_omt &p,

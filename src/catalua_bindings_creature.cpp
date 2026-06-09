@@ -55,6 +55,8 @@ namespace
 {
 
 constexpr std::string_view lua_activity_data_prefix = "lua_activity_data:";
+constexpr std::string_view lua_activity_on_finish_prefix = "lua_activity_on_finish:";
+constexpr std::string_view lua_activity_on_turn_prefix = "lua_activity_on_turn:";
 
 auto serialize_lua_activity_data( const sol::optional<sol::table> &maybe_data ) -> std::string
 {
@@ -72,6 +74,7 @@ struct lua_activity_options {
     activity_id activity;
     time_duration duration;
     std::string on_finish;
+    std::string on_turn;
     std::optional<tripoint_bub_ms> pos;
     std::string name;
     bool interruptable = true;
@@ -81,13 +84,17 @@ struct lua_activity_options {
 auto parse_lua_activity_options( const sol::table &opts ) -> lua_activity_options
 {
     const auto pos = opts.get<sol::optional<tripoint_bub_ms>>( "pos" );
+    const auto on_finish = opts.get<sol::optional<std::string>>( "on_finish" );
+    const auto on_turn = opts.get<sol::optional<std::string>>( "on_turn" );
+    const auto interruptable = opts.get<sol::optional<bool>>( "interruptable" );
     auto result = lua_activity_options{
         .activity = opts.get<activity_id>( "type" ),
         .duration = opts.get<time_duration>( "duration" ),
-        .on_finish = opts.get<std::string>( "on_finish" ),
+        .on_finish = on_finish.value_or( "" ),
+        .on_turn = on_turn.value_or( "" ),
         .pos = pos ? std::make_optional( *pos ) : std::nullopt,
         .name = opts.get_or<std::string>( "name", "" ),
-        .interruptable = opts.get<sol::optional<bool>>( "interruptable" ).value_or( true ),
+        .interruptable = interruptable.value_or( true ),
         .data = {},
     };
     const auto data = opts.get<sol::optional<sol::table>>( "data" );
@@ -100,7 +107,12 @@ auto make_lua_activity( const lua_activity_options &opts ) -> std::unique_ptr<pl
     auto act = std::make_unique<player_activity>( opts.activity, to_moves<int>( opts.duration ), -1,
                INT_MIN, opts.name );
     act->interruptable_with_kb = opts.interruptable;
-    act->str_values.push_back( opts.on_finish );
+    if( !opts.on_finish.empty() ) {
+        act->str_values.push_back( std::string{ lua_activity_on_finish_prefix } + opts.on_finish );
+    }
+    if( !opts.on_turn.empty() ) {
+        act->str_values.push_back( std::string{ lua_activity_on_turn_prefix } + opts.on_turn );
+    }
     if( !opts.data.empty() ) {
         act->str_values.push_back( std::string{ lua_activity_data_prefix } + opts.data );
     }
@@ -1029,7 +1041,7 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( assign_activity,
                   void( const activity_id &, int, int, int, const std::string & ) );
 
-        DOC( "Assigns a Lua-backed activity with opts.type, opts.duration, opts.on_finish, optional opts.data, optional opts.pos, optional opts.name, and optional opts.interruptable." );
+        DOC( "Assigns a Lua-backed activity with opts.type, opts.duration, optional opts.on_finish, optional opts.on_turn, optional opts.data, optional opts.pos, optional opts.name, and optional opts.interruptable." );
         luna::set_fx( ut, "assign_lua_activity", []( UT_CLASS & c, const sol::table & opts ) -> void {
             c.assign_activity( make_lua_activity( parse_lua_activity_options( opts ) ) );
         } );
