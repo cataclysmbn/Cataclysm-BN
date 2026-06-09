@@ -44,6 +44,10 @@ void run_mod_main_script( lua_state &state, const mod_id &mod );
 void run_on_game_load_hooks( lua_state &state );
 void run_on_game_save_hooks( lua_state &state );
 void run_on_every_x_hooks( lua_state &state );
+auto run_lua_examine( const std::string &callback_id, player &who,
+                      const tripoint_bub_ms &pos ) -> void;
+auto run_lua_activity_callback( const std::string &callback_id, player &who,
+                                player_activity &act ) -> void;
 void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint_abs_omt &p,
                                       const time_point &when );
 

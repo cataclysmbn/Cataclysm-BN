@@ -1,18 +1,24 @@
 #include "catalua_bindings.h"
 #include "catalua_coord.h"
 
+#include <climits>
+#include <iterator>
 #include <ranges>
+#include <sstream>
+#include <string_view>
 
 #include "activity_type.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "calendar.h"
 #include "catalua.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_impl.h"
 #include "catalua_log.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
+#include "catalua_serde.h"
 #include "character.h"
 #include "creature.h"
 #include "damage.h"
@@ -25,6 +31,7 @@
 #include "flag_trait.h"
 #include "game.h"
 #include "inventory.h"
+#include "json.h"
 #include "magic.h"
 #include "map.h"
 #include "monfaction.h"
@@ -34,6 +41,7 @@
 #include "mutation.h"
 #include "npc.h"
 #include "player.h"
+#include "player_activity.h"
 #include "pldata.h"
 #include "recipe.h"
 #include "requirements.h"
@@ -41,8 +49,94 @@
 #include "type_id.h"
 #include "trap.h"
 
+LUNA_VAL( player_activity, "PlayerActivity" )
+
+namespace
+{
+
+constexpr std::string_view lua_activity_data_prefix = "lua_activity_data:";
+
+auto serialize_lua_activity_data( const sol::optional<sol::table> &maybe_data ) -> std::string
+{
+    if( !maybe_data ) {
+        return {};
+    }
+
+    auto buffer = std::ostringstream{};
+    auto jsout = JsonOut( buffer );
+    cata::serialize_lua_table( *maybe_data, jsout );
+    return buffer.str();
+}
+
+struct lua_activity_options {
+    activity_id activity;
+    time_duration duration;
+    std::string on_finish;
+    std::optional<tripoint_bub_ms> pos;
+    std::string name;
+    bool interruptable = true;
+    std::string data;
+};
+
+auto parse_lua_activity_options( const sol::table &opts ) -> lua_activity_options
+{
+    const auto pos = opts.get<sol::optional<tripoint_bub_ms>>( "pos" );
+    auto result = lua_activity_options{
+        .activity = opts.get<activity_id>( "type" ),
+        .duration = opts.get<time_duration>( "duration" ),
+        .on_finish = opts.get<std::string>( "on_finish" ),
+        .pos = pos ? std::make_optional( *pos ) : std::nullopt,
+        .name = opts.get_or<std::string>( "name", "" ),
+        .interruptable = opts.get<sol::optional<bool>>( "interruptable" ).value_or( true ),
+        .data = {},
+    };
+    const auto data = opts.get<sol::optional<sol::table>>( "data" );
+    result.data = serialize_lua_activity_data( data );
+    return result;
+}
+
+auto make_lua_activity( const lua_activity_options &opts ) -> std::unique_ptr<player_activity>
+{
+    auto act = std::make_unique<player_activity>( opts.activity, to_moves<int>( opts.duration ), -1,
+               INT_MIN, opts.name );
+    act->interruptable_with_kb = opts.interruptable;
+    act->str_values.push_back( opts.on_finish );
+    if( !opts.data.empty() ) {
+        act->str_values.push_back( std::string{ lua_activity_data_prefix } + opts.data );
+    }
+    auto &here = get_map();
+    auto append_pos = [&]( const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
+        auto abs_pos = here.bub_to_abs( pos );
+        act->coords.push_back( abs_pos );
+        return abs_pos;
+    };
+    if( opts.pos ) {
+        act->placement = append_pos( *opts.pos );
+    }
+    return act;
+}
+
+auto reg_player_activity( sol::state &lua ) -> void
+{
+    auto ut = luna::new_usertype<player_activity>( lua, luna::no_bases, luna::no_constructor );
+    luna::set( ut, "moves_total", &player_activity::moves_total );
+    luna::set( ut, "moves_left", &player_activity::moves_left );
+    luna::set( ut, "interruptable_with_kb", &player_activity::interruptable_with_kb );
+    luna::set( ut, "name", &player_activity::name );
+    luna::set_prop( ut, "coords", []( const player_activity & act ) -> std::vector<tripoint_abs_ms> {
+        return act.coords;
+    } );
+    luna::set_fx( ut, "id", []( const player_activity & act ) -> activity_id { return act.id(); } );
+    luna::set_fx( ut, "id_str", []( const player_activity & act ) -> std::string {
+        return act.id().str();
+    } );
+}
+
+} // namespace
+
 void cata::detail::reg_creature_family( sol::state &lua )
 {
+    reg_player_activity( lua );
     reg_creature( lua );
     reg_monster( lua );
     reg_character( lua );
@@ -935,6 +1029,15 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( assign_activity,
                   void( const activity_id &, int, int, int, const std::string & ) );
 
+        DOC( "Assigns a Lua-backed activity with opts.type, opts.duration, opts.on_finish, optional opts.data, optional opts.pos, optional opts.name, and optional opts.interruptable." );
+        luna::set_fx( ut, "assign_lua_activity", []( UT_CLASS & c, const sol::table & opts ) -> void {
+            c.assign_activity( make_lua_activity( parse_lua_activity_options( opts ) ) );
+        } );
+
+        luna::set_fx( ut, "get_activity", []( UT_CLASS & c ) -> player_activity * {
+            return c.activity.get();
+        } );
+
         SET_FX_T( has_activity, bool( const activity_id & type ) const );
 
         SET_FX_T( cancel_activity, void() );
@@ -1057,6 +1160,13 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX( bodypart_exposure );
 
+        luna::set_fx( ut, "drench", []( UT_CLASS & c, const int saturation,
+                                        const std::vector<bodypart_id> &parts, const bool ignore_waterproof )
+        {
+            auto drenched_parts = body_part_set();
+            drenched_parts.fill( parts );
+            c.drench( saturation, drenched_parts, ignore_waterproof );
+        } );
 
         SET_FX( use_charges );
         SET_FX( use_charges_if_avail );

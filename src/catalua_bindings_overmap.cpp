@@ -15,6 +15,7 @@
 
 #include "coordinates.h"
 #include "enums.h"
+#include "fluid_grid.h"
 #include "mongroup.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
@@ -28,6 +29,21 @@ auto electric_grid_at_vector( overmapbuffer &buf,
 {
     auto points = std::vector<tripoint_abs_omt> {};
     std::ranges::copy( buf.electric_grid_at( p ), std::back_inserter( points ) );
+    return points;
+}
+
+inline auto fluid_grid_at_vector( const tripoint_abs_omt &p ) -> std::vector<tripoint_abs_omt>
+{
+    auto points = std::vector<tripoint_abs_omt> {};
+    std::ranges::copy( fluid_grid::grid_at( p ), std::back_inserter( points ) );
+    return points;
+}
+
+inline auto fluid_grid_connectivity_at_vector( const tripoint_abs_omt &p ) ->
+std::vector<tripoint_rel_omt>
+{
+    auto points = std::vector<tripoint_rel_omt> {};
+    std::ranges::copy( fluid_grid::grid_connectivity_at( p ), std::back_inserter( points ) );
     return points;
 }
 
@@ -256,6 +272,21 @@ void cata::detail::reg_overmap( sol::state &lua )
     []( const tripoint_abs_omt & lhs, const tripoint_abs_omt & rhs ) -> bool {
         return get_active_overmapbuffer().remove_grid_connection( lhs, rhs );
     } );
+
+    DOC( "Get all overmap tiles belonging to the fluid grid at the given TripointAbsOmt position. Returns TripointAbsOmt values." );
+    luna::set_fx( lib, "fluid_grid_at", &fluid_grid_at_vector );
+
+    DOC( "Get all fluid grid connections from the given TripointAbsOmt position. Returns TripointRelOmt offsets." );
+    luna::set_fx( lib, "fluid_grid_connectivity_at", &fluid_grid_connectivity_at_vector );
+
+    DOC( "Get the available charges of a liquid in the fluid grid at the given TripointAbsOmt position." );
+    luna::set_fx( lib, "fluid_grid_liquid_charges_at", &fluid_grid::liquid_charges_at );
+
+    DOC( "Drain liquid charges from the fluid grid at the given TripointAbsOmt position. Returns the number removed." );
+    luna::set_fx( lib, "drain_fluid_grid_liquid_charges", &fluid_grid::drain_liquid_charges );
+
+    DOC( "Check whether adding a liquid would contaminate the fluid grid at the given TripointAbsOmt position." );
+    luna::set_fx( lib, "fluid_grid_would_contaminate", &fluid_grid::would_contaminate );
 
     // Horde and monster group methods
     DOC( "List monster groups influencing the given overmap tile (absolute OMT coordinates)." );

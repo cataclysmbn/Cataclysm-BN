@@ -299,6 +299,24 @@ doc_gen_func.impl = function()
 ---@field user Character
 ---@field bionic Bionic
 
+---@class LuaActivityOptions
+---@field type ActivityTypeId @activity type to assign
+---@field duration TimeDuration @activity duration
+---@field on_finish string @key in game.activity_functions to run when the activity finishes
+---@field name? string @display/debug name, also forwarded as finish params.name
+---@field pos? TripointBubMs @activity target position; stored and finished as TripointAbsMs
+---@field data? table @serializable named payload forwarded as finish params.data
+---@field interruptable? boolean @whether pause can cancel this activity; defaults to true
+
+---@class LuaActivityFinishParams
+---@field user Character
+---@field activity PlayerActivity
+---@field name string
+---@field pos? TripointAbsMs
+---@field data table
+
+---@alias LuaActivityFinishFunction fun(params: LuaActivityFinishParams)
+
 ---@class IuseFunctionTable
 ---@field use fun(params: ItemUseParams): integer
 ---@field can_use? fun(params: ItemUseParams): boolean
@@ -349,6 +367,8 @@ doc_gen_func.impl = function()
 ---@field mutation_functions table<string, table<string, function>>
 ---@field horde_behaviours table<string, function>
 ---@field mapgen_functions table<string, MapgenFunction>
+---@field examine_functions table<string, fun(params: { user: Character, pos: TripointBubMs })>
+---@field activity_functions table<string, LuaActivityFinishFunction>
 ---@field hooks hooks
 ---@field current_mod string
 ---@field current_mod_path string

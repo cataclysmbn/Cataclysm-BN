@@ -487,7 +487,11 @@
       { "x": -4, "y": 2, "parts": [ "frame_se", "board_se", "wheel_mount_medium", "wheel", "roof" ] },
       { "x": -3, "y": 0, "parts": [ "frame_vertical", "muffler", "roof", "veh_table" ] },
       { "x": -4, "y": -1, "parts": [ "frame_sw", "board_sw", "wheel_mount_medium", "wheel", "roof" ] },
-      { "x": -2, "y": 0, "parts": [ "frame_vertical_2", "roof", "minifridge" ] },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "frame_vertical_2", "roof", { "part": "tank", "fuel": "water_clean" }, "minifridge" ]
+      },
       {
         "x": 0,
         "y": 0,
@@ -509,7 +513,7 @@
         "parts": [ "frame_horizontal", "halfboard_horizontal", "engine_inline4", "alternator_car", "battery_car" ]
       },
       { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "trunk_floor", "aisle_curtain" ] },
-      { "x": -2, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "vehicle_shower", "roof" ] },
       { "x": -4, "y": 1, "parts": [ "frame_horizontal", "door_trunk", "roof", "v_curtain" ] },
       { "x": 0, "y": 1, "parts": [ "frame_vertical_2", "reclining_seat", "seatbelt", "roof" ] },
       { "x": 0, "y": -1, "parts": [ "frame_vertical", "door", "roof" ] },
@@ -996,7 +1000,7 @@
       },
       { "x": -7, "y": 1, "parts": [ "frame_vertical_2", "aisle_horizontal", "roof" ] },
       { "x": -1, "y": 0, "parts": [ "frame_horizontal", "board_horizontal" ] },
-      { "x": -2, "y": 1, "parts": [ "frame_vertical_2", "aisle_horizontal", "roof" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_vertical_2", "aisle_horizontal", "vehicle_shower", "roof" ] },
       { "x": -7, "y": -1, "parts": [ "frame_vertical", "board_vertical" ] },
       { "x": -7, "y": 3, "parts": [ "frame_vertical", "stowboard_vertical" ] },
       { "x": -9, "y": 3, "parts": [ "frame_se", "wheel_mount_medium", "wheel_wide", "board_se", "solar_panel" ] },
@@ -1134,7 +1138,7 @@
       },
       { "x": -7, "y": 1, "parts": [ "frame_vertical_2", "workbench", "roof", "reinforced_solar_panel" ] },
       { "x": -1, "y": 0, "parts": [ "frame_horizontal", "roof", "board_horizontal" ] },
-      { "x": -2, "y": 1, "parts": [ "frame_vertical_2", "trunk_floor", "roof" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_vertical_2", "trunk_floor", "vehicle_shower", "roof" ] },
       { "x": -7, "y": -1, "parts": [ "frame_vertical", "wheel_mount_medium", "wheel_wide_or", "board_vertical" ] },
       { "x": -7, "y": 3, "parts": [ "frame_vertical", "wheel_mount_medium", "wheel_wide_or", "board_vertical" ] },
       { "x": -9, "y": 3, "parts": [ "frame_se", "board_se" ] },
@@ -1470,7 +1474,7 @@
         "parts": [ "frame_vertical", "board_vertical_right", "wheel_mount_medium", "wheel_wide", "roof" ]
       },
       { "x": -1, "y": 2, "parts": [ "frame_horizontal", "board_horizontal", "roof" ] },
-      { "x": -5, "y": 1, "parts": [ "frame_vertical_2", "lit_aisle_vertical", "roof" ] },
+      { "x": -5, "y": 1, "parts": [ "frame_vertical_2", "lit_aisle_vertical", "vehicle_shower", "roof" ] },
       { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal_front", "headlight" ] },
       { "x": 1, "y": -1, "parts": [ "frame_vertical", "windshield_nw" ] },
       { "x": -5, "y": 2, "parts": [ "frame_vertical_2", "bed", "roof" ] },

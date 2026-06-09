@@ -23,6 +23,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
@@ -186,6 +187,7 @@ static const activity_id ACT_WAIT( "ACT_WAIT" );
 static const activity_id ACT_WAIT_NPC( "ACT_WAIT_NPC" );
 static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
 static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
+static const activity_id ACT_WASH_SELF( "ACT_WASH_SELF" );
 static const activity_id ACT_WEAR( "ACT_WEAR" );
 
 static const efftype_id effect_ai_waiting( "ai_waiting" );
@@ -219,6 +221,8 @@ static const itype_id itype_vine_30( "vine_30" );
 static const itype_id itype_wool_staple( "wool_staple" );
 
 static const zone_type_id zone_type_FARM_PLOT( "FARM_PLOT" );
+
+static auto lua_activity_finish( player_activity *act, player *p ) -> void;
 
 static const skill_id skill_computer( "computer" );
 static const skill_id skill_electronics( "electronics" );
@@ -354,6 +358,7 @@ activity_handlers::finish_functions = {
     { ACT_WAIT_WEATHER, wait_weather_finish },
     { ACT_WAIT_NPC, wait_npc_finish },
     { ACT_WAIT_STAMINA, wait_stamina_finish },
+    { ACT_WASH_SELF, lua_activity_finish },
     { ACT_SOCIALIZE, socialize_finish },
     { ACT_TRY_SLEEP, try_sleep_finish },
     { ACT_OPERATION, operation_finish },
@@ -381,6 +386,22 @@ activity_handlers::finish_functions = {
     { ACT_SPELLCASTING, spellcasting_finish },
     { ACT_STUDY_SPELL, study_spell_finish }
 };
+
+static auto lua_activity_finish( player_activity *act, player *p ) -> void
+{
+    if( act == nullptr || p == nullptr ) {
+        return;
+    }
+
+    const auto callback_id = act->get_str_value( 0 );
+    if( callback_id.empty() ) {
+        act->set_to_null();
+        return;
+    }
+
+    cata::run_lua_activity_callback( callback_id, *p, *act );
+    act->set_to_null();
+}
 
 bool activity_handlers::resume_for_multi_activities( player &p )
 {

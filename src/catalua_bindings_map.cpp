@@ -25,6 +25,8 @@
 #include "type_id.h"
 #include "units_angle.h"
 #include "vehicle.h"
+#include "vpart_position.h"
+#include "weather.h"
 
 #include <algorithm>
 #include <cmath>
@@ -61,6 +63,16 @@ struct replace_vehicle_request {
     std::optional<bool> locked = std::nullopt;
     std::optional<bool> has_keys = std::nullopt;
 };
+
+auto vehicle_part_with_feature_at( map &m, const tripoint_bub_ms &pos, const std::string &feature,
+                                   const bool unbroken ) -> std::optional<vpart_reference>
+{
+    const auto vp = m.veh_at( pos );
+    if( !vp ) {
+        return std::nullopt;
+    }
+    return vp.part_with_feature( feature, unbroken );
+}
 
 auto parse_replace_vehicle_options( const sol::table &opts,
                                     const units::angle default_orientation ) -> std::optional<replace_vehicle_options>
@@ -342,6 +354,11 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "In map squares" );
         luna::set_fx( ut, "get_map_size", []( const map & m ) -> int { return m.getmapsize() * SEEX; } );
         luna::set_fx( ut, "ambient_light_at", []( map & m, tripoint_bub_ms p ) { return m.ambient_light_at( p ); } );
+        DOC( "Get the local ambient temperature in degrees Celsius at a map-square position." );
+        luna::set_fx( ut, "get_temperature_c",
+        []( const map & m, const tripoint_bub_ms & p ) -> double {
+            return units::to_celsius<double>( get_weather().get_temperature( m.bub_to_abs( p ) ) );
+        } );
 
         DOC( "Forcibly places an npc using a template at a position on the map. Returns the npc." );
         luna::set_fx( ut, "place_npc", []( map & m, point_bub_ms p, std::string id_str ) -> npc * {
@@ -424,6 +441,29 @@ void cata::detail::reg_map( sol::state &lua )
 
         DOC( "Returns every vehicle currently on the map." );
         luna::set_fx( ut, "get_vehicles", []( map & m ) -> std::vector<wrapped_vehicle> { return m.get_vehicles(); } );
+
+        const auto has_vehicle_part_with_feature_at_lua = []( map & m, const tripoint_bub_ms & pos,
+        const std::string & feature, sol::optional<bool> unbroken ) -> bool {
+            return vehicle_part_with_feature_at( m, pos, feature, unbroken.value_or( true ) ).has_value();
+        };
+        DOC( "Returns whether a vehicle at this position has an available part with the given feature." );
+        luna::set_fx( ut, "has_vehicle_part_with_feature_at", has_vehicle_part_with_feature_at_lua );
+
+        const auto get_vehicle_fuel_left_at_lua = []( map & m, const tripoint_bub_ms & pos,
+        const std::string & feature, const itype_id & fuel, sol::optional<bool> recurse ) -> int {
+            const auto part = vehicle_part_with_feature_at( m, pos, feature, true );
+            return part ? part->vehicle().fuel_left( fuel, recurse.value_or( false ) ) : 0;
+        };
+        DOC( "Returns the vehicle's available fuel charges when the position has a part with the given feature." );
+        luna::set_fx( ut, "get_vehicle_fuel_left_at", get_vehicle_fuel_left_at_lua );
+
+        const auto drain_vehicle_fuel_at_lua = []( map & m, const tripoint_bub_ms & pos,
+        const std::string & feature, const itype_id & fuel, const int amount ) -> int {
+            const auto part = vehicle_part_with_feature_at( m, pos, feature, true );
+            return part ? part->vehicle().drain( fuel, amount ) : 0;
+        };
+        DOC( "Drains fuel charges from the vehicle when the position has a part with the given feature. Returns the charges drained." );
+        luna::set_fx( ut, "drain_vehicle_fuel_at", drain_vehicle_fuel_at_lua );
 
         DOC( "Replaces a specific vehicle with a different prototype, preserving origin tile by default. Pass an optional table with `orientation` (Angle or degrees), `status`, and `locks` to override spawn settings." );
         luna::set_fx( ut, "replace_vehicle", sol::overload(
