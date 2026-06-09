@@ -19,7 +19,7 @@
 #include "location_ptr.h"
 
 class vehicle;
-class veh_mount_slot;
+class veh_mount;
 class item_location;
 class vehicle_cursor;
 class npc;
@@ -27,7 +27,7 @@ class npc;
 /**
  * Structure, describing vehicle part (i.e., wheel, seat)
  */
-struct vehicle_part {
+ struct vehicle_part {
     public:
         friend vehicle;
         friend class veh_interact;
@@ -35,7 +35,7 @@ struct vehicle_part {
         friend location_visitable<vehicle_cursor>;
         friend class turret_data;
         friend class vehicle_base_item_location;
-        friend class veh_mount_slot;
+        friend class veh_mount;
 
         enum vp_state_flag : int { passenger_flag = 1,
                                    animal_flag = 2,
@@ -47,12 +47,12 @@ struct vehicle_part {
 
         vehicle_part();
         vehicle_part( vehicle * );
-        vehicle_part( veh_mount_slot * );
+        vehicle_part( veh_mount * );
 
         vehicle_part( const vpart_id &vp, const tripoint_mnt_veh &dp, detached_ptr<item> &&obj, vehicle * );
         vehicle_part( const vehicle_part &, vehicle * );
 
-        vehicle_part( const vehicle_part &, veh_mount_slot * );
+        vehicle_part( const vehicle_part &, veh_mount * );
 
         vehicle_part( vehicle_part && );
         vehicle_part &operator=( vehicle_part && );
@@ -365,6 +365,7 @@ struct vehicle_part {
 };
 
 
+
 /**
  * We assign constexpr values to come of our slots that will be used very often for checks.
  * This way we can also forgo the enum list if we know exactly what we want to be polling and use the contexpr index
@@ -430,7 +431,7 @@ struct enum_traits<dedicated_vpmount_slot_enum> {
 // This way we can size our dedicated_slots vectors to the number of VMD slot enums
 static constexpr int number_of_dedicated_vmount_slots = NUM_VMD_SLOTS;
 
-static constexpr std::vector<vehicle_part> get_dummy_dedicated_slot_table( veh_mount_slot *mnt )
+static constexpr std::vector<vehicle_part> get_dummy_dedicated_slot_table( veh_mount *mnt )
 {
     std::vector<vehicle_part> parts;
     for (int i = 0; i < number_of_dedicated_vmount_slots; i++){

@@ -186,6 +186,7 @@ automatically_convertible = {
     "TOOLMOD",
     "TOOL_ARMOR",
     "tool_quality",
+    "vp_location",
     "vehicle",
     "vehicle_part",
     "vitamin",

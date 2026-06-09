@@ -42,10 +42,120 @@
 #include "vehicle_part.h"
 #include "vehicle_group.h"
 #include "weighted_list.h"
+#include "generic_factory.h"
 
 class npc;
 
 std::unordered_map<vproto_id, vehicle_prototype> vtypes;
+
+const vp_location_slot_id VPLS_NULL = vp_location_slot_id::NULL_ID(); // "null"
+const vp_location_slot_id VPLS_ANYWHERE( "anywhere" );
+const vp_location_slot_id VPLS_ARMOR( "armor" );
+const vp_location_slot_id VPLS_AXLE( "axle" );
+const vp_location_slot_id VPLS_CENTER( "center" );
+const vp_location_slot_id VPLS_DOOR_LOCK( "door_lock" );
+const vp_location_slot_id VPLS_ENGINE_BLOCK( "engine_block" );
+const vp_location_slot_id VPLS_FUEL_SOURCE( "fuel_source" );
+const vp_location_slot_id VPLS_ON_BATTERY_MOUNT( "on_battery_mount" );
+const vp_location_slot_id VPLS_ON_CARGO( "on_cargo" );
+const vp_location_slot_id VPLS_ON_CEILING( "on_ceiling" );
+const vp_location_slot_id VPLS_ON_CONTROLS( "on_controls" );
+const vp_location_slot_id VPLS_ON_LOCKABLE_CARGO( "on_lockable_cargo" );
+const vp_location_slot_id VPLS_ON_ROOF( "on_roof" );
+const vp_location_slot_id VPLS_ON_SEAT( "on_seat" );
+const vp_location_slot_id VPLS_ON_WINDSHIELD( "on_windshield" );
+const vp_location_slot_id VPLS_ROOF( "roof" );
+const vp_location_slot_id VPLS_STRUCTURE( "structure" );
+const vp_location_slot_id VPLS_UNDER( "under" );
+
+namespace
+{
+generic_factory<json_vp_location_slot> vp_location_slot_all( "vp_locations" );
+} // namespace
+
+/** @relates string_id */
+template<>
+bool vp_location_slot_id::is_valid() const
+{
+    return vp_location_slot_all.is_valid( *this );
+}
+
+/** @relates string_id */
+template<>
+const json_vp_location_slot &vp_location_slot_id::obj() const
+{
+    return vp_location_slot_all.obj( *this );
+}
+
+json_vp_location_slot::operator bool() const
+{
+    return id.is_valid();
+}
+
+const json_vp_location_slot &json_vp_location_slot::get( const std::string &id )
+{
+    static const json_vp_location_slot null_value = json_vp_location_slot();
+    const vp_location_slot_id vpls_id( id );
+    return vpls_id.is_valid() ? *vpls_id : null_value;
+}
+
+void json_vp_location_slot::load( const JsonObject &jo, const std::string & )
+{
+    // TODO: rebuild this with the information we actually want.
+    optional( jo, was_loaded, "info", info_ );
+    optional( jo, was_loaded, "conflicts", conflicts_ );
+    // optional( jo, was_loaded, "inherit", inherit_, true );
+    // optional( jo, was_loaded, "craft_inherit", craft_inherit_, false );
+    // optional( jo, was_loaded, "requires_flag", requires_flag_ );
+    // optional( jo, was_loaded, "taste_mod", taste_mod_ );
+    optional( jo, was_loaded, "restriction", restriction_ );
+    // optional( jo, was_loaded, "tag", tag_ );
+
+    // FIXME: most flags have a "context" field that isn't used for anything
+    // Test for it here to avoid errors about unvisited members
+    jo.get_member( "context" );
+}
+
+void json_vp_location_slot::check_consistency()
+{
+    vp_location_slot_all.check();
+}
+
+void json_vp_location_slot::reset()
+{
+    vp_location_slot_all.reset();
+}
+
+void json_vp_location_slot::load_all( const JsonObject &jo, const std::string &src )
+{
+    vp_location_slot_all.load( jo, src );
+}
+
+void json_vp_location_slot::check() const
+{
+    for( const auto &conflicting : conflicts_ ) {
+        if( !vp_location_slot_id( conflicting ).is_valid() ) {
+            debugmsg( "flag definition %s specifies unknown conflicting field %s", id.str(),
+                      conflicting );
+        }
+    }
+}
+
+void json_vp_location_slot::finalize_all()
+{
+    vp_location_slot_all.finalize();
+}
+
+bool json_vp_location_slot::is_ready()
+{
+    return !vp_location_slot_all.empty();
+}
+
+const std::vector<json_vp_location_slot> &json_vp_location_slot::get_all()
+{
+    return vp_location_slot_all.get_all();
+}
+
 
 // GENERAL GUIDELINES
 // To determine mount position for parts (dx, dy), check this scheme:
@@ -67,6 +177,7 @@ std::unordered_map<vproto_id, vehicle_prototype> vtypes;
 // To determine, what parts can be external, and what can not, check
 // vehicle_parts.json
 // If you use wrong config, installation of part will fail
+// TODO: Move all of these into vehicle_part.h
 
 static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map = {
     { "ARMOR", VPFLAG_ARMOR },

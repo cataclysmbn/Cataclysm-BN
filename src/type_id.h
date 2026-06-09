@@ -2,6 +2,8 @@
 
 #include "int_id.h"
 #include "string_id.h"
+// Removed include veh_type.h as it was causing recursive looping errors. 
+// veh_type.h already is including this file.
 
 class activity_type;
 using activity_id = string_id<activity_type>;
@@ -227,5 +229,9 @@ using flag_id = string_id<json_flag>;
 class json_trait_flag;
 using trait_flag_id = int_id<json_trait_flag>;
 using trait_flag_str_id = string_id<json_trait_flag>;
+
+class json_vp_location_slot;
+using vp_location_slot_id = string_id<json_vp_location_slot>;
+// using vp_location_slot_str_id = string_id<json_vp_location_slot>;
 
 

@@ -309,20 +309,20 @@ struct label : public tripoint_mnt_veh {
     void serialize( JsonOut &json ) const;
 };
 
-class veh_mount_slot
+class veh_mount
 {
         friend vehicle;
 
     public:
 
         // TODO: Figure out the right required declarations.
-        veh_mount_slot();
-        veh_mount_slot( const tripoint_mnt_veh &mnt_tri, vehicle * );
+        veh_mount();
+        veh_mount( const tripoint_mnt_veh &mnt_tri, vehicle * );
         // Later: version that takes a vehicle turret mount sub-grid
-        ~veh_mount_slot();
+        ~veh_mount();
 
         // We always initialize a mount slot as dirty. 
-        bool veh_mount_slot_dirty = true;
+        bool veh_mount_dirty = true;
 
         // TODO: Do we need to have a relative to vehicle index tile adjust value?
         const tripoint_mnt_veh pos;
@@ -1735,7 +1735,7 @@ class vehicle
 
         // Map of vehicle mount slots, keyed to the vehicle mount tripoint they inhabit. 
         // Mount slots contain all the vehicle parts in their respective tripoint.
-        std::unordered_map<tripoint_mnt_veh, veh_mount_slot> mount_slots; 
+        std::unordered_map<tripoint_mnt_veh, veh_mount> mount_slots; 
 
     public:
         // Number of parts contained in this vehicle

@@ -312,6 +312,7 @@ void DynamicDataLoader::initialize()
         item_action_generator::generator().load_item_action( jo );
     } );
 
+    add( "vp_location", &json_vp_location_slot::load );
     add( "vehicle_part",  &vpart_info::load );
     add( "vehicle_color_palette",  &VehiclePalette::load );
     add( "vehicle",  &vehicle_prototype::load );

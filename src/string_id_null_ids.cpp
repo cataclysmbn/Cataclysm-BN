@@ -1,4 +1,5 @@
 #include "string_id.h"
+#include "veh_type.h"
 
 // These are centralized in this file because they must appear in one and only one compilation unit,
 // and it's problematic to define them in the respective cpp files for each class.
@@ -39,6 +40,7 @@ MAKE_CLASS_NULL_ID( Skill, "none" )
 MAKE_CLASS_NULL_ID( spell_type, "spell_none" )
 MAKE_CLASS_NULL_ID( ter_furn_transform, "null" )
 MAKE_CLASS_NULL_ID( translation, "null" )
+MAKE_CLASS_NULL_ID( json_vp_location_slot, "null" )
 MAKE_CLASS_NULL_ID( VehicleGroup, "null" )
 MAKE_CLASS_NULL_ID( VehiclePalette, "null" )
 MAKE_CLASS_NULL_ID( vpart_info, "null" )

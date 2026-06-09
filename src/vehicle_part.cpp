@@ -46,7 +46,7 @@ vehicle_part::vehicle_part( vehicle *veh )
       items( new vehicle_item_location( veh, hack_id ) ) {}
 
 // Review this!
-vehicle_part::vehicle_part( veh_mount_slot *mount )
+vehicle_part::vehicle_part( veh_mount *mount )
     : id( vpart_id::NULL_ID() ), hack_id( mount->get_veh()->get_next_hack_id() ),
       base( new vehicle_base_item_location( mount->get_veh(), hack_id ) ),
       items( new vehicle_item_location( mount->get_veh(), hack_id ) ) {}

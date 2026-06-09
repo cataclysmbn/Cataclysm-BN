@@ -27,8 +27,126 @@ class player;
 class JsonObject;
 class vehicle;
 
+
+
+extern const vp_location_slot_id VPLS_NULL;
+extern const vp_location_slot_id VPLS_ANYWHERE;
+extern const vp_location_slot_id VPLS_ARMOR;
+extern const vp_location_slot_id VPLS_AXLE;
+extern const vp_location_slot_id VPLS_CENTER;
+extern const vp_location_slot_id VPLS_DOOR_LOCK;
+extern const vp_location_slot_id VPLS_ENGINE_BLOCK;
+extern const vp_location_slot_id VPLS_FUEL_SOURCE;
+extern const vp_location_slot_id VPLS_ON_BATTERY_MOUNT;
+extern const vp_location_slot_id VPLS_ON_CARGO;
+extern const vp_location_slot_id VPLS_ON_CEILING;
+extern const vp_location_slot_id VPLS_ON_CONTROLS;
+extern const vp_location_slot_id VPLS_ON_LOCKABLE_CARGO;
+extern const vp_location_slot_id VPLS_ON_ROOF;
+extern const vp_location_slot_id VPLS_ON_SEAT;
+extern const vp_location_slot_id VPLS_ON_WINDSHIELD;
+extern const vp_location_slot_id VPLS_ROOF;
+extern const vp_location_slot_id VPLS_STRUCTURE;
+extern const vp_location_slot_id VPLS_UNDER;
+
+
+// The list of default vehicle part location slot names is as follows.
+//  "anywhere", "armor", "axle",
+//  "center", "door_lock", "engine_block",
+//  "fuel_source", "on_battery_mount", "on_cargo",
+//  "on_ceiling", "on_controls", "on_lockable_cargo",
+//  "on_roof", "on_seat", "on_windshield", "roof",
+//  "structure", "under"
+// Anywhere is effectively a designator for a slotless vehicle part.
+class json_vp_location_slot
+{
+        friend class DynamicDataLoader;
+        friend class generic_factory<json_vp_location_slot>;
+
+    public:
+        // used by generic_factory
+        vp_location_slot_id id = vp_location_slot_id::NULL_ID();
+        bool was_loaded = false;
+
+        json_vp_location_slot() = default;
+
+        /** Fetches location slot definition (or null flag if not found) */
+        static const json_vp_location_slot &get( const std::string &id );
+
+        /** Get informative text for display in UI */
+        std::string info() const {
+            return info_.translated();
+        }
+
+        /** Get "restriction" phrase, saying what items with this flag must be able to do */
+        std::string restriction() const {
+            return restriction_.translated();
+        }
+
+        /** Is flag inherited by base items from any attached items? */
+        // bool inherit() const {
+        //     return inherit_;
+        // }
+
+        /** Is flag inherited by crafted items from any component items? */
+        // bool craft_inherit() const {
+        //     return craft_inherit_;
+        // }
+
+        /** Requires this flag to be installed on vehicle */
+        // std::string requires_flag() const {
+        //     return requires_flag_;
+        // }
+
+        /** The tag to be displayed on the item's display name when it has this flag */
+        // auto tag() const -> const translation & { return tag_; } // *NOPAD*
+
+        /** The flag's modifier on the fun value of comestibles */
+        // int taste_mod() const {
+        //     return taste_mod_;
+        // }
+
+        /** Is this a valid (non-null) flag */
+        operator bool() const;
+
+        void check() const;
+
+        /** true, if flags were loaded */
+        static bool is_ready();
+
+        static const std::vector<json_vp_location_slot> &get_all();
+
+        LUA_TYPE_OPS( json_vp_location_slot, id );
+
+    private:
+        translation info_;
+        translation restriction_;
+        std::set<std::string> conflicts_;
+        // bool inherit_ = true;
+        // bool craft_inherit_ = false;
+        // std::string requires_flag_;
+        // translation tag_;
+        // int taste_mod_ = 0;
+
+        /** Load flag definition from JSON */
+        void load( const JsonObject &jo, const std::string &src );
+
+        /** Load all flags from JSON */
+        static void load_all( const JsonObject &jo, const std::string &src );
+
+        /** finalize */
+        static void finalize_all( );
+
+        /** Check consistency of all loaded flags */
+        static void check_consistency();
+
+        /** Clear all loaded flags (invalidating any pointers) */
+        static void reset();
+};
+
 // bitmask backing store of -certain- vpart_info.flags, ones that
 // won't be going away, are involved in core functionality, and are checked frequently
+// TODO: Move all of these into vehicle_part.cpp
 enum vpart_bitflags : int {
     VPFLAG_ARMOR,
     VPFLAG_EVENTURN,
