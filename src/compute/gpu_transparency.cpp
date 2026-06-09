@@ -586,14 +586,16 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         if (upload_ter_lut) {
             SDL_GPUTransferBufferLocation const
                 ter_src{.transfer_buffer = upload_tbuf, .offset = offset};
-            SDL_GPUBufferRegion const ter_dst{.buffer = ter_lut_buf, .offset = 0, .size = ter_lut_bytes};
+            SDL_GPUBufferRegion const
+                ter_dst{.buffer = ter_lut_buf, .offset = 0, .size = ter_lut_bytes};
             SDL_UploadToGPUBuffer(cp, &ter_src, &ter_dst, false);
             offset += ter_lut_bytes;
         }
         if (upload_furn_lut) {
             SDL_GPUTransferBufferLocation const
                 fur_src{.transfer_buffer = upload_tbuf, .offset = offset};
-            SDL_GPUBufferRegion const fur_dst{.buffer = fur_lut_buf, .offset = 0, .size = fur_lut_bytes};
+            SDL_GPUBufferRegion const
+                fur_dst{.buffer = fur_lut_buf, .offset = 0, .size = fur_lut_bytes};
             SDL_UploadToGPUBuffer(cp, &fur_src, &fur_dst, false);
         }
 
