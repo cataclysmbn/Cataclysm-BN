@@ -21,6 +21,7 @@ permissions:
 
 env:
   DENO_DIR: /home/runner/.cache/deno
+  LLVM_VERSION: "22"
 
 jobs:
   autofix:
@@ -32,15 +33,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - env: { DEBIAN_FRONTEND: noninteractive, LLVM_VERSION: "22" }
+      - env: { DEBIAN_FRONTEND: noninteractive }
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends astyle cmake ninja-build gettext ccache ca-certificates wget gnupg
-          wget -qO "$RUNNER_TEMP/llvm.sh" https://apt.llvm.org/llvm.sh
-          chmod +x "$RUNNER_TEMP/llvm.sh"
-          sudo "$RUNNER_TEMP/llvm.sh" "$LLVM_VERSION"
-          sudo apt-get install -y --no-install-recommends "clang-format-$LLVM_VERSION"
-          "/usr/bin/clang-format-$LLVM_VERSION" --version
+          sudo apt-get install -y --no-install-recommends astyle gettext
+
+      - name: Setup C++ format tools
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          clang-format: ${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          ccache: true
+          setup-cpp: false
+
+      - name: Show clang-format version
+        run: clang-format --version
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }
@@ -52,7 +61,7 @@ jobs:
           key: deno-${{ hashFiles('deno.lock') }}
 
       - name: configure cmake for formatting
-        run: cmake --preset lint -DCLANG_FORMAT_EXECUTABLE=/usr/bin/clang-format-22
+        run: cmake --preset lint
 
       - name: format C++ files
         run: cmake --build build --target format

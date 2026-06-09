@@ -92,6 +92,7 @@ env:
   ZSTD_CLEVEL: 17
   VCPKG_BINARY_SOURCES: "default"
   EMMYLUA_CHECK_VERSION: "0.22.0"
+  LLVM_VERSION: "22"
 
 jobs:
   shader-artifacts:
@@ -271,12 +272,22 @@ jobs:
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
         run: |
           sudo apt-get update
-          sudo apt-get install gcc-14 libncursesw5-dev \
+          sudo apt-get install libncursesw5-dev \
             libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb \
             autoconf autoconf-archive automake libtool libltdl-dev
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-          g++ --version
+
+      - name: Setup LLVM build tools (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          setup-cpp: false
+
+      - name: Show Clang version (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+        run: clang++ --version
 
       #- name: Install SDL3 (Linux)
       #  if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
@@ -311,13 +322,22 @@ jobs:
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja ncurses flac pkg-config
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel astyle sqlite3 zlib ncurses flac pkg-config
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
           echo "CMAKE_PREFIX_PATH=$(brew --prefix ncurses):$(brew --prefix flac)" >> "$GITHUB_ENV"
           echo "PKG_CONFIG_PATH=$(brew --prefix flac)/lib/pkgconfig" >> "$GITHUB_ENV"
           echo "$PWD/venv/bin" >> "$GITHUB_PATH"
+
+      - name: Setup C++ build tools (mac)
+        if: runner.os == 'macOS'
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: apple-clang
+          cmake: true
+          ninja: true
+          setup-cpp: false
 
       - name: Setup ccache (mac)
         if: runner.os == 'macOS'
@@ -529,7 +549,15 @@ jobs:
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake gettext ninja-build autoconf autoconf-archive automake libtool libltdl-dev
+          sudo apt-get install -y gettext autoconf autoconf-archive automake libtool libltdl-dev
+
+      - name: Setup C++ build tools (android host)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        uses: aminya/setup-cpp@v1
+        with:
+          cmake: true
+          ninja: true
+          setup-cpp: false
 
       - name: Install shadercross (android host)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
