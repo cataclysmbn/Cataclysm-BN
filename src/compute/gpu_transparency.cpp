@@ -358,12 +358,6 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
             << "SDL_GPU: transparency pipeline creation failed: " << SDL_GetError();
     }
     s_pipeline_writes_resident_output = !use_compact_shader;
-    if (s_pipeline != nullptr) {
-        DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: transparency pipeline=" << shader_name
-            << " resident_output=" << (s_pipeline_writes_resident_output ? "yes" : "no")
-            << " mode=" << (use_compact_shader ? "dxbc_cpu_compact" : "resident");
-    }
     return s_pipeline;
 }
 
@@ -487,8 +481,6 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
             .sight_penalty = p.push.sight_penalty,
             .out = compact_shader_inputs,
         });
-        DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: transparency DXBC compact CPU result path: submaps=" << submaps.size();
         p.out_buffer
             ->assign(compact_shader_inputs.values.begin(), compact_shader_inputs.values.end());
         return true;
