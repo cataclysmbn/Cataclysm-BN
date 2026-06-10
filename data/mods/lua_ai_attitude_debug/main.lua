@@ -36,9 +36,7 @@ local modes = {
 ---@return LuaAiDebugMode|nil
 local function mode_by_id(id)
   for _, mode in ipairs(modes) do
-    if mode.id == id then
-      return mode
-    end
+    if mode.id == id then return mode end
   end
   return nil
 end
@@ -56,9 +54,7 @@ local function choose_mode()
     end
   end
   local chosen = menu:query()
-  if chosen < 0 or modes[chosen] == nil then
-    return nil
-  end
+  if chosen < 0 or modes[chosen] == nil then return nil end
   return modes[chosen].id
 end
 
@@ -111,9 +107,7 @@ end
 ---@return nil
 local function register_runtime_functions(mod, storage)
   ---@return string
-  local function get_mode()
-    return storage.mode
-  end
+  local function get_mode() return storage.mode end
 
   ---@param new_mode string
   ---@return string
@@ -161,9 +155,7 @@ local function register_runtime_functions(mod, storage)
     storage.attack_target = attack_target or ""
     storage.mine_center = mine_center or storage.mine_center or ""
     local avatar = gapi.get_avatar()
-    if avatar == nil then
-      return
-    end
+    if avatar == nil then return end
     local here = gapi.get_map()
     for _, pt in ipairs(here:points_in_radius(avatar:get_pos_ms(), 15)) do
       local mon = gapi.get_monster_at(pt, true)
@@ -267,9 +259,7 @@ local function register_runtime_functions(mod, storage)
       storage.fetch_target = ""
       storage.fetch_item = ""
       storage.drop_target = ""
-      if new_mode ~= "mine" then
-        storage.mine_center = ""
-      end
+      if new_mode ~= "mine" then storage.mine_center = "" end
     end
     if new_mode == "attack" then
       attack_target = prompt_attack_target()
@@ -280,7 +270,10 @@ local function register_runtime_functions(mod, storage)
     if spawned ~= nil then
       gapi.add_msg(MsgType.info, string.format("Lua AI debug: mode '%s', spawned %s.", new_mode, spawned:name(0)))
     else
-      gapi.add_msg(MsgType.info, string.format("Lua AI debug: mode '%s'. Spawn the drone manually if needed.", new_mode))
+      gapi.add_msg(
+        MsgType.info,
+        string.format("Lua AI debug: mode '%s'. Spawn the drone manually if needed.", new_mode)
+      )
     end
     return 0
   end
@@ -323,9 +316,7 @@ local function register_runtime_functions(mod, storage)
       storage.fetch_target = ""
       storage.fetch_item = ""
       storage.drop_target = ""
-      if new_mode ~= "mine" then
-        storage.mine_center = ""
-      end
+      if new_mode ~= "mine" then storage.mine_center = "" end
     end
     if new_mode == "attack" then
       attack_target = prompt_attack_target()

@@ -43,9 +43,7 @@ local mine_offsets = build_mine_offsets(2)
 ---@return string
 local function get_debug_mode(mon, storage)
   local mode = mon:get_value("lua_ai_mode")
-  if mode == "" then
-    return storage.mode or "attack"
-  end
+  if mode == "" then return storage.mode or "attack" end
   return mode
 end
 
@@ -56,9 +54,7 @@ local function lua_attitude_dance(mon, target)
   local effect_hit_by_player = EffectTypeId.new("hit_by_player")
   if mon:get_value("lua_dance_angry") == "1" or mon:has_effect(effect_hit_by_player) then
     mon:set_value("lua_dance_angry", "1")
-    if target == nil or target:is_avatar() then
-      return MonsterAttitude.MATT_ATTACK
-    end
+    if target == nil or target:is_avatar() then return MonsterAttitude.MATT_ATTACK end
   end
   return MonsterAttitude.MATT_IGNORE
 end
@@ -69,12 +65,8 @@ end
 ---@return MonsterAttitude
 local function lua_attitude_debug_mode(ctx, mon, target)
   local mode = get_debug_mode(mon, ctx.storage)
-  if target == nil or mode == "ignore" then
-    return MonsterAttitude.MATT_IGNORE
-  end
-  if mode == "follow" or mode == "fetch" then
-    return MonsterAttitude.MATT_FOLLOW
-  end
+  if target == nil or mode == "ignore" then return MonsterAttitude.MATT_IGNORE end
+  if mode == "follow" or mode == "fetch" then return MonsterAttitude.MATT_FOLLOW end
   return MonsterAttitude.MATT_ATTACK
 end
 
@@ -98,15 +90,10 @@ end
 ---@param allow_attack boolean
 ---@return boolean
 local function maybe_step_toward(ctx, dest, allow_attack)
-  local step = TripointBubMs.new(
-    ctx.pos.x + ctx.sign(dest.x - ctx.pos.x),
-    ctx.pos.y + ctx.sign(dest.y - ctx.pos.y),
-    ctx.pos.z
-  )
+  local step =
+    TripointBubMs.new(ctx.pos.x + ctx.sign(dest.x - ctx.pos.x), ctx.pos.y + ctx.sign(dest.y - ctx.pos.y), ctx.pos.z)
   ctx.mon:set_target(ctx.avatar)
-  if step.x == ctx.pos.x and step.y == ctx.pos.y and step.z == ctx.pos.z then
-    return false
-  end
+  if step.x == ctx.pos.x and step.y == ctx.pos.y and step.z == ctx.pos.z then return false end
   return try_step(ctx, step, allow_attack)
 end
 
@@ -119,9 +106,7 @@ local function maybe_deliver_carried_items(ctx, serialize_tripoint_bub_ms, deser
   local drop_target = deserialize_tripoint_bub_ms(drop_target_str)
   local carrying = ctx.mon:get_items()
 
-  if #carrying == 0 then
-    return false
-  end
+  if #carrying == 0 then return false end
   if drop_target == nil then
     drop_target = ctx.avatar:get_pos_ms()
     ctx.mon:set_value("lua_ai_drop_target", serialize_tripoint_bub_ms(drop_target))
@@ -131,9 +116,7 @@ local function maybe_deliver_carried_items(ctx, serialize_tripoint_bub_ms, deser
   if dist <= 1 then
     for _, item in ipairs(carrying) do
       local detached = ctx.mon:remove_item(item)
-      if detached ~= nil then
-        ctx.here:add_item(drop_target, detached)
-      end
+      if detached ~= nil then ctx.here:add_item(drop_target, detached) end
     end
     ctx.mon:set_value("lua_ai_drop_target", "")
     ctx.mon:set_value("lua_ai_fetch_target", "")
@@ -166,9 +149,7 @@ local function run_follow_mode(runtime_ctx, ctx)
     ctx.mon:mod_moves(-50)
     return true
   end
-  if maybe_step_toward(ctx, ctx.target, false) then
-    return true
-  end
+  if maybe_step_toward(ctx, ctx.target, false) then return true end
   ctx.mon:mod_moves(-50)
   return true
 end
@@ -214,9 +195,7 @@ local function run_fetch_mode(runtime_ctx, ctx)
     return true
   end
 
-  if maybe_step_toward(ctx, fetch_pos, false) then
-    return true
-  end
+  if maybe_step_toward(ctx, fetch_pos, false) then return true end
   ctx.mon:mod_moves(-50)
   return true
 end
@@ -226,9 +205,7 @@ end
 ---@return boolean
 local function run_mine_mode(runtime_ctx, ctx)
   local center_str = ctx.mon:get_value("lua_ai_mine_center")
-  if center_str == "" then
-    center_str = runtime_ctx.storage.mine_center or ""
-  end
+  if center_str == "" then center_str = runtime_ctx.storage.mine_center or "" end
   local center_abs = runtime_ctx.deserialize_tripoint_abs_ms(center_str)
   if center_abs == nil then
     ctx.mon:set_value("lua_ai_mode", "follow")
@@ -237,9 +214,7 @@ local function run_mine_mode(runtime_ctx, ctx)
   end
 
   local idx = tonumber(ctx.mon:get_value("lua_ai_mine_idx")) or 1
-  if idx < 1 then
-    idx = 1
-  end
+  if idx < 1 then idx = 1 end
   if idx > #mine_offsets then
     ctx.mon:set_value("lua_ai_mode", "follow")
     ctx.mon:set_value("lua_ai_mine_idx", "")
@@ -249,8 +224,7 @@ local function run_mine_mode(runtime_ctx, ctx)
   -- Persist the mine center in absolute coordinates so the pattern survives map shifts.
   local center_local = ctx.here:get_local_ms(center_abs)
   local map_extent = ctx.here:get_map_size()
-  if math.abs(center_local.x - ctx.pos.x) > map_extent
-     or math.abs(center_local.y - ctx.pos.y) > map_extent then
+  if math.abs(center_local.x - ctx.pos.x) > map_extent or math.abs(center_local.y - ctx.pos.y) > map_extent then
     center_abs = ctx.here:get_abs_ms(ctx.mon:get_pos_ms())
     ctx.mon:set_value("lua_ai_mine_center", runtime_ctx.serialize_tripoint_abs_ms(center_abs))
     center_local = ctx.mon:get_pos_ms()
@@ -258,11 +232,7 @@ local function run_mine_mode(runtime_ctx, ctx)
   end
 
   local offset = mine_offsets[idx]
-  local target_tile = TripointBubMs.new(
-    center_local.x + offset[1],
-    center_local.y + offset[2],
-    center_local.z
-  )
+  local target_tile = TripointBubMs.new(center_local.x + offset[1], center_local.y + offset[2], center_local.z)
   local dist = math.max(math.abs(target_tile.x - ctx.pos.x), math.abs(target_tile.y - ctx.pos.y))
   if dist > 1 then
     maybe_step_toward(ctx, target_tile, false)
@@ -329,15 +299,15 @@ local function run_calm_dance_turn(mon, serialize_tripoint_abs_ms, deserialize_t
   end
 
   local idx = tonumber(mon:get_value("lua_dance_index")) or 1
-  if idx < 1 or idx > #dance_points then
-    idx = 1
-  end
+  if idx < 1 or idx > #dance_points then idx = 1 end
 
   -- The anchor is stored as absolute MS, then projected back into bubble coordinates each turn.
   local anchor_local = here:get_local_ms(anchor_abs)
   local map_extent = here:get_map_size()
-  if math.abs(anchor_local.x - mon:get_pos_ms().x) > map_extent
-     or math.abs(anchor_local.y - mon:get_pos_ms().y) > map_extent then
+  if
+    math.abs(anchor_local.x - mon:get_pos_ms().x) > map_extent
+    or math.abs(anchor_local.y - mon:get_pos_ms().y) > map_extent
+  then
     anchor_abs = here:get_abs_ms(mon:get_pos_ms())
     mon:set_value("lua_dance_anchor_abs", serialize_tripoint_abs_ms(anchor_abs))
     idx = 1
@@ -346,11 +316,7 @@ local function run_calm_dance_turn(mon, serialize_tripoint_abs_ms, deserialize_t
   end
 
   local offset = dance_points[idx]
-  local dest = TripointBubMs.new(
-    anchor_local.x + offset[1],
-    anchor_local.y + offset[2],
-    anchor_local.z
-  )
+  local dest = TripointBubMs.new(anchor_local.x + offset[1], anchor_local.y + offset[2], anchor_local.z)
 
   if not safe_step(mon, dest) then
     local block = gapi.get_creature_at(dest, true)
@@ -426,11 +392,7 @@ local function run_debug_seek_turn(ctx, available_mode_routes)
     sign = ctx.sign,
   }
 
-  if maybe_deliver_carried_items(
-      turn_ctx,
-      ctx.serialize_tripoint_bub_ms,
-      ctx.deserialize_tripoint_bub_ms
-    ) then
+  if maybe_deliver_carried_items(turn_ctx, ctx.serialize_tripoint_bub_ms, ctx.deserialize_tripoint_bub_ms) then
     return true
   end
 
@@ -447,9 +409,8 @@ function ai_behaviors.register(ctx)
 
   -- Register named attitude callbacks by string id. Monster JSON can point at these
   -- ids directly through `lua_attitude`.
-  game.monster_attitude_functions["lua_attitude_debug_mode"] = function(mon, target)
-    return lua_attitude_debug_mode(ctx, mon, target)
-  end
+  game.monster_attitude_functions["lua_attitude_debug_mode"] =
+    function(mon, target) return lua_attitude_debug_mode(ctx, mon, target) end
   game.monster_attitude_functions["lua_attitude_dance"] = lua_attitude_dance
 
   -- Register the named Lua AI callback used by the debug bot's monster JSON via
@@ -472,17 +433,14 @@ function ai_behaviors.register(ctx)
   -- Register the dancer's named Lua AI entry point. This is separate from the
   -- debug bot so the monster JSON can opt into a completely different turn script.
   game.monster_ai_functions["lua_ai_dance"] = function(mon)
-    if mon:get_value("lua_dance_angry") == "1"
-       or mon:has_effect(effect_hit_by_player)
-       or mon:get_hp() < mon:get_hp_max() then
+    if
+      mon:get_value("lua_dance_angry") == "1"
+      or mon:has_effect(effect_hit_by_player)
+      or mon:get_hp() < mon:get_hp_max()
+    then
       return run_angry_dance_turn(mon)
     end
-    return run_calm_dance_turn(
-      mon,
-      ctx.serialize_tripoint_abs_ms,
-      ctx.deserialize_tripoint_abs_ms,
-      ctx.safe_step
-    )
+    return run_calm_dance_turn(mon, ctx.serialize_tripoint_abs_ms, ctx.deserialize_tripoint_abs_ms, ctx.safe_step)
   end
 end
 
