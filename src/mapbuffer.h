@@ -449,7 +449,7 @@ class mapbuffer
          * Set by mapbuffer_registry::get() at construction time.
          * Empty string ("") = the overworld (primary dimension, legacy path).
          */
-        auto get_dimension_id() const -> const dimension_id& {
+        auto get_dimension_id() const -> const dimension_id & {
             return dimension_id_;
         }
 
