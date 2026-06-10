@@ -33,10 +33,10 @@ class dynamic_atlas
     public:
         struct sprite_sheet {
             SDL_Texture_SharedPtr texture;
+            SDL_Surface_Ptr surface;
             std::unique_ptr<detail::texture_packer> packer;
             int atlas_width;
             int atlas_height;
-            SDL_Surface_Ptr readback;
             bool dirty;
         };
         using sprite_callback = std::function<void( SDL_Surface *, const SDL_Rect * )>;
@@ -55,8 +55,11 @@ class dynamic_atlas
 
         void readback_load();
         auto readback_find( const texture &tex ) -> std::tuple<bool, SDL_Surface *, SDL_Rect>;
-        void readback_dump( const std::string &s ) const;
+        void readback_dump( const std::string &s );
         void readback_clear();
+
+        void start_batch();
+        void end_batch();
 
         auto get_staging_area( int width,
                                int height ) -> std::tuple<SDL_Texture *, SDL_Surface *, SDL_Rect>;
@@ -84,6 +87,7 @@ class dynamic_atlas
         int max_atlas_height;
         int hint_sprite_width;
         int hint_sprite_height;
+        bool is_batching;
 };
 
 #endif

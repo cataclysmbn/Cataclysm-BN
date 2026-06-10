@@ -2231,6 +2231,7 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
     }
 #if defined(DYNAMIC_ATLAS)
     ts.tileset_atlas = std::make_unique<dynamic_atlas>( 4096, 4096, ts.tile_width, ts.tile_height );
+    ts.tileset_atlas->start_batch();
 #endif
     // Load tile information if available.
     offset = 0;
@@ -2310,6 +2311,7 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
 
     ts.tileset_id = tileset_id;
 #if defined(DYNAMIC_ATLAS)
+    ts.tileset_atlas->end_batch();
     ts.tileset_atlas->readback_load();
 #endif
 }
