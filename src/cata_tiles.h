@@ -515,7 +515,7 @@ class tileset
         std::pair<std::string, bool> get_tint_controller( const std::string &tint_type );
 
         const color_tint_pair *get_tint( const std::string &tint_id );
-        bool try_get_tint( const std::string &tint_id, color_tint_pair& tint );
+        bool try_get_tint( const std::string &tint_id, color_tint_pair &tint );
 };
 
 class tileset_loader
@@ -898,35 +898,35 @@ class cata_tiles
 
         bool draw_block( const tripoint_bub_ms &p, SDL_Color color, int scale );
 
-        auto get_overmap_color(overmapbuffer& o, const tripoint_abs_omt& p) const
-            -> color_tint_pair;
-        auto get_terrain_color(const ter_t& t, const map& m, const tripoint_bub_ms& p) const
-            -> color_tint_pair;
-        auto get_furniture_color(const furn_t& f, const map& m, const tripoint_bub_ms& p) const
-            -> color_tint_pair;
-        auto get_graffiti_color(const map& m, const tripoint_bub_ms& p) const -> color_tint_pair;
-        auto get_trap_color(const trap& tr, const map& map, tripoint_bub_ms tripoint) const
-            -> color_tint_pair;
-        auto get_field_color(const field& f, const map& m, const tripoint_bub_ms& p) const
-            -> color_tint_pair;
-        auto get_item_color(const item& i, const map& m, const tripoint_bub_ms& p) const
-            -> color_tint_pair;
+        auto get_overmap_color( overmapbuffer &o, const tripoint_abs_omt &p ) const
+        -> color_tint_pair;
+        auto get_terrain_color( const ter_t &t, const map &m, const tripoint_bub_ms &p ) const
+        -> color_tint_pair;
+        auto get_furniture_color( const furn_t &f, const map &m, const tripoint_bub_ms &p ) const
+        -> color_tint_pair;
+        auto get_graffiti_color( const map &m, const tripoint_bub_ms &p ) const -> color_tint_pair;
+        auto get_trap_color( const trap &tr, const map &map, tripoint_bub_ms tripoint ) const
+        -> color_tint_pair;
+        auto get_field_color( const field &f, const map &m, const tripoint_bub_ms &p ) const
+        -> color_tint_pair;
+        auto get_item_color( const item &i, const map &m, const tripoint_bub_ms &p ) const
+        -> color_tint_pair;
         auto get_vpart_color(
-            const optional_vpart_position& vp, const map& m, const tripoint_bub_ms& p,
-            bool use_roof = false) const -> color_tint_pair;
-        auto get_monster_color(const monster& mon, const map& m, const tripoint_bub_ms& p) const
-            -> color_tint_pair;
-        auto get_character_color(const Character& ch, const map& m, const tripoint_bub_ms& p) const
-            -> color_tint_pair;
+            const optional_vpart_position &vp, const map &m, const tripoint_bub_ms &p,
+            bool use_roof = false ) const -> color_tint_pair;
+        auto get_monster_color( const monster &mon, const map &m, const tripoint_bub_ms &p ) const
+        -> color_tint_pair;
+        auto get_character_color( const Character &ch, const map &m, const tripoint_bub_ms &p ) const
+        -> color_tint_pair;
         auto get_effect_color(
-            const effect& eff, const Character& c, const map& m, const tripoint_bub_ms& p) const
-            -> color_tint_pair;
+            const effect &eff, const Character &c, const map &m, const tripoint_bub_ms &p ) const
+        -> color_tint_pair;
         auto get_bionic_color(
-            const bionic& bio, const Character& c, const map& m, const tripoint_bub_ms& p) const
-            -> color_tint_pair;
+            const bionic &bio, const Character &c, const map &m, const tripoint_bub_ms &p ) const
+        -> color_tint_pair;
         auto get_mutation_color(
-            const mutation& mut, const Character& c, const map& m, const tripoint_bub_ms& p) const
-            -> color_tint_pair;
+            const mutation &mut, const Character &c, const map &m, const tripoint_bub_ms &p ) const
+        -> color_tint_pair;
 
         bool draw_terrain( const tripoint_bub_ms &p, lit_level ll, int &height_3d,
                            const bool ( &invisible )[5], int z_drop );

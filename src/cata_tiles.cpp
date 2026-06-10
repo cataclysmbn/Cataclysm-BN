@@ -1252,17 +1252,17 @@ static void apply_surf_blend_effect(
             }
             case tint_blend_mode::subtract: {
                 col = RGBColor{
-                    static_cast<uint8_t>(std::max<int>(base.r - (255 - target.r), 0)),
-                    static_cast<uint8_t>(std::max<int>(base.g - (255 - target.g), 0)),
-                    static_cast<uint8_t>(std::max<int>(base.b - (255 - target.b), 0)),
+                    static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
+                    static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
+                    static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ),
                     base.a};
                 break;
             }
             case tint_blend_mode::multiply: {
                 col = RGBColor{
-                    static_cast<uint8_t>(base.r * target.r / 256),
-                    static_cast<uint8_t>(base.g * target.g / 256),
-                    static_cast<uint8_t>(base.b * target.b / 256),
+                    static_cast<uint8_t>( base.r *target.r / 256 ),
+                    static_cast<uint8_t>( base.g *target.g / 256 ),
+                    static_cast<uint8_t>( base.b *target.b / 256 ),
                     base.a};
                 break;
             }
@@ -1270,9 +1270,9 @@ static void apply_surf_blend_effect(
                 // A truely accurate normal blend would use the alpha from the target, but that'd be
                 // useless here.
                 col = RGBColor{
-                    static_cast<uint8_t>(ilerp<uint16_t, uint8_t>(base.r, target.r, target.a)),
-                    static_cast<uint8_t>(ilerp<uint16_t, uint8_t>(base.g, target.g, target.a)),
-                    static_cast<uint8_t>(ilerp<uint16_t, uint8_t>(base.b, target.b, target.a)),
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.r, target.r, target.a ) ),
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.g, target.g, target.a ) ),
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.b, target.b, target.a ) ),
                     base.a};
                 break;
             }
@@ -2569,7 +2569,8 @@ const color_tint_pair *tileset::get_tint( const std::string &tint_id )
     return nullptr;
 }
 
-bool tileset::try_get_tint(const std::string& tint_id, color_tint_pair& tint) {
+bool tileset::try_get_tint( const std::string &tint_id, color_tint_pair &tint )
+{
     if( tints.contains( tint_id ) ) {
         tint = tints[tint_id];
         return true;

@@ -14,11 +14,12 @@
 
 static constexpr RGBColor RGB_NO_COLOR = TILESET_NO_COLOR;
 
-namespace {
+namespace
+{
 
 struct blend_mode_cvt {
-    bool operator()(const std::string& str, tint_blend_mode& res) const {
-        res = string_to_tint_blend_mode(str);
+    bool operator()( const std::string &str, tint_blend_mode &res ) const {
+        res = string_to_tint_blend_mode( str );
         return true;
     }
 };
@@ -27,71 +28,72 @@ template<typename T>
 struct tint_helper {};
 
 template <> struct tint_helper<item> {
-    static auto get_flags(const item& t) {
-        return std::ranges::transform_view(t.get_flags(), [](auto& v) { return v.str(); });
+    static auto get_flags( const item &t ) {
+        return std::ranges::transform_view( t.get_flags(), []( auto & v ) { return v.str(); } );
     }
-    static auto& get_typestr(const item& t) { return t.typeId().str(); }
+    static auto &get_typestr( const item &t ) { return t.typeId().str(); }
 };
 
 template<>
 struct tint_helper<ter_t> {
-    static auto& get_flags(const ter_t& t) { return t.get_flags(); }
-    static auto& get_typestr(const ter_t& t) { return t.id.str(); }
+    static auto &get_flags( const ter_t &t ) { return t.get_flags(); }
+    static auto &get_typestr( const ter_t &t ) { return t.id.str(); }
 };
 
 template<>
 struct tint_helper<furn_t> {
-    static auto& get_flags(const furn_t& t) { return t.get_flags(); }
-    static auto& get_typestr(const furn_t& t) { return t.id.str(); }
+    static auto &get_flags( const furn_t &t ) { return t.get_flags(); }
+    static auto &get_typestr( const furn_t &t ) { return t.id.str(); }
 };
 
 template<>
 struct tint_helper<vehicle_part> {
-    static auto& get_flags(const vehicle_part& t) { return t.info().get_flags(); }
-    static auto& get_typestr(const vehicle_part& t) { return t.info().get_id().str(); }
+    static auto &get_flags( const vehicle_part &t ) { return t.info().get_flags(); }
+    static auto &get_typestr( const vehicle_part &t ) { return t.info().get_id().str(); }
 };
 
 template<>
 struct tint_helper<monster> {
-    static auto& get_typestr(const monster& t) { return t.type->id.str(); }
+    static auto &get_typestr( const monster &t ) { return t.type->id.str(); }
 };
 
 template <> struct tint_helper<bionic> {
-    static auto get_flags(const bionic& t) {
-        return std::ranges::transform_view(t.id->flags, [](auto& v) { return v.str(); });
+    static auto get_flags( const bionic &t ) {
+        return std::ranges::transform_view( t.id->flags, []( auto & v ) { return v.str(); } );
     }
-    static auto& get_typestr(const bionic& t) { return t.id.str(); }
+    static auto &get_typestr( const bionic &t ) { return t.id.str(); }
 };
 
 template<>
 struct tint_helper<effect> {
-    static auto& get_typestr(const effect& t) { return t.get_id().str(); }
+    static auto &get_typestr( const effect &t ) { return t.get_id().str(); }
 };
 
 template<>
 struct tint_helper<oter_t> {
-    static auto& get_typestr(const oter_t& t) { return t.id.str(); }
+    static auto &get_typestr( const oter_t &t ) { return t.id.str(); }
 };
 
 template<typename T>
 color_tint_pair tint_from_tileset(
-    const std::unique_ptr<tileset>& tileset_ptr,
-    const T& v,
-    const color_tint_pair& defVal = {}) {
+    const std::unique_ptr<tileset> &tileset_ptr,
+    const T &v,
+    const color_tint_pair &defVal = {} )
+{
     using helper = tint_helper<T>;
 
     color_tint_pair tint = defVal;
 
-    if constexpr (requires { helper::get_flags(v); }) {
-        for (const auto& flag : helper::get_flags(v)) {
-            if (tileset_ptr->try_get_tint(flag, tint)) {
+    if constexpr( requires { helper::get_flags( v ); } ) {
+        for( const auto &flag : helper::get_flags( v ) ) {
+            if( tileset_ptr->try_get_tint( flag, tint ) ) {
                 return tint;
             }
         }
     }
 
-    if constexpr (requires { helper::get_typestr(v); }) {
-        if (tileset_ptr->try_get_tint(helper::get_typestr(v), tint)) {
+    if constexpr( requires { helper::get_typestr( v ); } ) {
+        if( tileset_ptr->try_get_tint( helper::get_typestr( v ), tint ) ) {
             return tint;
         }
     }
@@ -99,11 +101,11 @@ color_tint_pair tint_from_tileset(
     return tint;
 }
 
-color_tint_pair tint_from_data_vars(const data_vars::data_set& i, const color_tint_pair& defVal = {})
+color_tint_pair tint_from_data_vars( const data_vars::data_set &i, const color_tint_pair &defVal = {} )
 {
     auto [bg_tint, fg_tint] = defVal;
 
-    if (!std::ranges::any_of(i, [](auto& f) { return f.first.starts_with(TINT_VAR_PREFIX); })) {
+    if( !std::ranges::any_of( i, []( auto & f ) { return f.first.starts_with( TINT_VAR_PREFIX ); } ) ) {
         return defVal;
     }
 
@@ -114,47 +116,47 @@ color_tint_pair tint_from_data_vars(const data_vars::data_set& i, const color_ti
     auto blend = tint_blend_mode::tint;
 
     {
-        if (i.try_get(TINT_COLOR_BG_VAR_NAME, color)
-            || i.try_get(TINT_COLOR_VAR_NAME, color)) {
+        if( i.try_get( TINT_COLOR_BG_VAR_NAME, color )
+            || i.try_get( TINT_COLOR_VAR_NAME, color ) ) {
             bg_tint.color = color;
         }
-        if (i.try_get(TINT_MODE_BG_VAR_NAME, blend, blendCvt)
-            || i.try_get(TINT_MODE_VAR_NAME, blend, blendCvt)) {
+        if( i.try_get( TINT_MODE_BG_VAR_NAME, blend, blendCvt )
+            || i.try_get( TINT_MODE_VAR_NAME, blend, blendCvt ) ) {
             bg_tint.blend_mode = blend;
         }
-        if (i.try_get(TINT_SATURATION_BG_VAR_NAME, scl)
-            || i.try_get(TINT_SATURATION_VAR_NAME, scl)) {
+        if( i.try_get( TINT_SATURATION_BG_VAR_NAME, scl )
+            || i.try_get( TINT_SATURATION_VAR_NAME, scl ) ) {
             bg_tint.saturation = scl;
         }
-        if (i.try_get(TINT_CONTRAST_BG_VAR_NAME, scl)
-            || i.try_get(TINT_CONTRAST_VAR_NAME, scl)) {
+        if( i.try_get( TINT_CONTRAST_BG_VAR_NAME, scl )
+            || i.try_get( TINT_CONTRAST_VAR_NAME, scl ) ) {
             bg_tint.contrast = scl;
         }
-        if (i.try_get(TINT_BRIGHTNESS_BG_VAR_NAME, scl)
-            || i.try_get(TINT_BRIGHTNESS_VAR_NAME, scl)) {
+        if( i.try_get( TINT_BRIGHTNESS_BG_VAR_NAME, scl )
+            || i.try_get( TINT_BRIGHTNESS_VAR_NAME, scl ) ) {
             bg_tint.brightness = scl;
         }
     }
 
     {
-        if (i.try_get(TINT_COLOR_FG_VAR_NAME, color)
-            || i.try_get(TINT_COLOR_VAR_NAME, color)) {
+        if( i.try_get( TINT_COLOR_FG_VAR_NAME, color )
+            || i.try_get( TINT_COLOR_VAR_NAME, color ) ) {
             fg_tint.color = color;
         }
-        if (i.try_get(TINT_MODE_FG_VAR_NAME, blend, blendCvt)
-            || i.try_get(TINT_MODE_VAR_NAME, blend, blendCvt)) {
+        if( i.try_get( TINT_MODE_FG_VAR_NAME, blend, blendCvt )
+            || i.try_get( TINT_MODE_VAR_NAME, blend, blendCvt ) ) {
             fg_tint.blend_mode = blend;
         }
-        if (i.try_get(TINT_SATURATION_FG_VAR_NAME, scl)
-            || i.try_get(TINT_SATURATION_VAR_NAME, scl)) {
+        if( i.try_get( TINT_SATURATION_FG_VAR_NAME, scl )
+            || i.try_get( TINT_SATURATION_VAR_NAME, scl ) ) {
             fg_tint.saturation = scl;
         }
-        if (i.try_get(TINT_CONTRAST_FG_VAR_NAME, scl)
-            || i.try_get(TINT_CONTRAST_VAR_NAME, scl)) {
+        if( i.try_get( TINT_CONTRAST_FG_VAR_NAME, scl )
+            || i.try_get( TINT_CONTRAST_VAR_NAME, scl ) ) {
             fg_tint.contrast = scl;
         }
-        if (i.try_get(TINT_BRIGHTNESS_FG_VAR_NAME, scl)
-            || i.try_get(TINT_BRIGHTNESS_VAR_NAME, scl)) {
+        if( i.try_get( TINT_BRIGHTNESS_FG_VAR_NAME, scl )
+            || i.try_get( TINT_BRIGHTNESS_VAR_NAME, scl ) ) {
             fg_tint.brightness = scl;
         }
     }
@@ -165,33 +167,33 @@ color_tint_pair tint_from_data_vars(const data_vars::data_set& i, const color_ti
 } // namespace
 
 auto cata_tiles::get_overmap_color(
-    overmapbuffer & o, const tripoint_abs_omt & p) const -> color_tint_pair
+    overmapbuffer &o, const tripoint_abs_omt &p ) const -> color_tint_pair
 {
-    const oter_t oter = o.ter(p).obj();
-    return tint_from_tileset(tileset_ptr, oter);
+    const oter_t oter = o.ter( p ).obj();
+    return tint_from_tileset( tileset_ptr, oter );
 }
 
 auto cata_tiles::get_terrain_color(
-    const ter_t & t, const map &m, const tripoint_bub_ms &p ) const -> color_tint_pair
+    const ter_t &t, const map &m, const tripoint_bub_ms &p ) const -> color_tint_pair
 {
-    auto tint = tint_from_tileset(tileset_ptr, t);
+    auto tint = tint_from_tileset( tileset_ptr, t );
 
-    const auto vars = m.ter_vars(p);
-    if (vars != nullptr) {
-        return tint_from_data_vars( *vars , tint );
+    const auto vars = m.ter_vars( p );
+    if( vars != nullptr ) {
+        return tint_from_data_vars( *vars, tint );
     }
 
     return tint;
 }
 
 auto cata_tiles::get_furniture_color(
-    const furn_t & f, const map &m, const tripoint_bub_ms &p ) const -> color_tint_pair
+    const furn_t &f, const map &m, const tripoint_bub_ms &p ) const -> color_tint_pair
 {
-    auto tint = tint_from_tileset(tileset_ptr, f);
+    auto tint = tint_from_tileset( tileset_ptr, f );
 
-    const auto vars = m.furn_vars(p);
-    if (vars != nullptr) {
-        return tint_from_data_vars( *vars , tint );
+    const auto vars = m.furn_vars( p );
+    if( vars != nullptr ) {
+        return tint_from_data_vars( *vars, tint );
     }
 
     return tint;
@@ -204,21 +206,21 @@ auto cata_tiles::get_graffiti_color(
 }
 
 auto cata_tiles::get_trap_color(
-    const trap & tr, const map &, tripoint_bub_ms ) const -> color_tint_pair
+    const trap &tr, const map &, tripoint_bub_ms ) const -> color_tint_pair
 {
-    return tint_from_tileset(tileset_ptr, tr);
+    return tint_from_tileset( tileset_ptr, tr );
 }
 
 auto cata_tiles::get_field_color(
-    const field & f, const map &, const tripoint_bub_ms & ) const -> color_tint_pair
+    const field &f, const map &, const tripoint_bub_ms & ) const -> color_tint_pair
 {
-    return tint_from_tileset(tileset_ptr, f);
+    return tint_from_tileset( tileset_ptr, f );
 }
 
 auto cata_tiles::get_item_color(
     const item &i, const map &, const tripoint_bub_ms & ) const -> color_tint_pair
 {
-    const auto tint = tint_from_tileset(tileset_ptr, i);
+    const auto tint = tint_from_tileset( tileset_ptr, i );
     return tint_from_data_vars( i.item_vars(), tint );
 }
 
@@ -231,34 +233,34 @@ auto cata_tiles::get_vpart_color(
         return tint;
     }
 
-    vehicle_part* vpp = nullptr;
-    if (use_roof) {
-        auto& veh = vp->vehicle();
-        const auto part_idx = veh.roof_at_part(vp->part_index());
-        if (part_idx != -1) {
-            vpp = &veh.part(part_idx);
+    vehicle_part *vpp = nullptr;
+    if( use_roof ) {
+        auto &veh = vp->vehicle();
+        const auto part_idx = veh.roof_at_part( vp->part_index() );
+        if( part_idx != -1 ) {
+            vpp = &veh.part( part_idx );
         }
     } else {
         const auto part_ref = vp.part_displayed();
-        if (part_ref) {
+        if( part_ref ) {
             vpp = &part_ref->part();
         }
     }
 
-    if (vpp == nullptr) {
+    if( vpp == nullptr ) {
         return tint;
     }
 
-    tint = tint_from_tileset(tileset_ptr, *vpp);
+    tint = tint_from_tileset( tileset_ptr, *vpp );
     auto [bg, fg] = vpp->get_color();
-    std::tie(tint.first.color, tint.second.color) = std::make_pair(bg, fg);
+    std::tie( tint.first.color, tint.second.color ) = std::make_pair( bg, fg );
     return tint;
 }
 
 auto cata_tiles::get_monster_color(
-    const monster & mon, const map &, const tripoint_bub_ms & ) const -> color_tint_pair
+    const monster &mon, const map &, const tripoint_bub_ms & ) const -> color_tint_pair
 {
-    return tint_from_tileset(tileset_ptr, mon);
+    return tint_from_tileset( tileset_ptr, mon );
 }
 
 auto cata_tiles::get_character_color(
@@ -268,19 +270,22 @@ auto cata_tiles::get_character_color(
 }
 
 auto cata_tiles::get_effect_color(
-    const effect &eff, const Character &, const map &, const tripoint_bub_ms & ) const -> color_tint_pair
+    const effect &eff, const Character &, const map &,
+    const tripoint_bub_ms & ) const -> color_tint_pair
 {
-    return tint_from_tileset(tileset_ptr, eff);
+    return tint_from_tileset( tileset_ptr, eff );
 }
 
 auto cata_tiles::get_bionic_color(
-    const bionic &bio, const Character &, const map &, const tripoint_bub_ms & ) const -> color_tint_pair
+    const bionic &bio, const Character &, const map &,
+    const tripoint_bub_ms & ) const -> color_tint_pair
 {
-    return tint_from_tileset(tileset_ptr, bio);
+    return tint_from_tileset( tileset_ptr, bio );
 }
 
 auto cata_tiles::get_mutation_color(
-    const mutation &mut, const Character &c, const map &, const tripoint_bub_ms & ) const -> color_tint_pair
+    const mutation &mut, const Character &c, const map &,
+    const tripoint_bub_ms & ) const -> color_tint_pair
 {
     const mutation_branch &mut_branch = mut.first.obj();
     std::string fallback_color;
