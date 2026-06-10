@@ -196,7 +196,7 @@ TEST_CASE( "mapbuffer_simulated_lookup_uses_load_manager_membership" )
 {
     clear_all_state();
 
-    static constexpr auto dim_id = "mapbuffer_lookup_test_dim";
+    static const dimension_id dim_id( "mapbuffer_lookup_test_dim" );
     auto &buffer = MAPBUFFER_REGISTRY.get( dim_id );
     const auto sm_pos = tripoint_abs_sm( 1300, -1300, 0 );
     auto full_handle = load_request_handle {};

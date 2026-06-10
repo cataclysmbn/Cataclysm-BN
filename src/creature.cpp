@@ -58,7 +58,7 @@
 #include "overmapbuffer_registry.h"
 #include "profile.h"
 
-const std::string &Creature::get_dimension() const
+auto Creature::get_dimension() const -> const dimension_id &
 {
     return g_active_dimension_id;
 }

@@ -256,7 +256,7 @@ class Creature
          *  that don't track dimension explicitly).
          *  Overridden by avatar (delegates to game::current_dimension_id_),
          *  npc, and monster (each store their own dimension_id_). */
-        virtual const std::string &get_dimension() const;
+        virtual auto get_dimension() const -> const dimension_id &;
 
         /** return the direction the creature is facing, for sdl horizontal flip **/
         FacingDirection facing = FD_RIGHT;

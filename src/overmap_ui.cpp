@@ -1594,7 +1594,7 @@ static void draw_om_sidebar(
     std::string dim_name;
     if( const dimension_info *dim = g->get_current_dimension_info() ) {
         dim_name = dim->display_name.empty()
-                   ? ( dim->world_type.is_valid() ? dim->world_type.obj().name.translated() : dim->dimension_id )
+                   ? ( dim->world_type.is_valid() ? dim->world_type.obj().name.translated() : dim->id.str() )
                    : dim->display_name;
     }
     mvwprintz( wbar, point( 1, getmaxy( wbar ) - 2 ), c_cyan, dim_name );

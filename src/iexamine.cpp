@@ -7619,7 +7619,7 @@ void iexamine::check_power( player &, const tripoint_bub_ms &examp )
 void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 {
     const tripoint_abs_ms abs_pos( bub_to_abs( examp ) );
-    const std::string local_dim = g->m.get_bound_dimension();
+    const auto local_dim = g->m.get_bound_dimension();
 
     // Look up the grid_link_tile for this portal.  Access through the correct
     // mapbuffer so this works regardless of which dimension the player is in.
@@ -7649,12 +7649,12 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
     } else if( glt->paused ) {
         status = string_format(
                      _( "Status: PAUSED — insufficient power\nTarget: [%s] (%d,%d,%d)" ),
-                     glt->target_dim_id.empty() ? _( "primary" ) : glt->target_dim_id,
+                     glt->target_dim_id.is_empty() ? _( "primary" ) : glt->target_dim_id.str(),
                      glt->target_pos.raw().x, glt->target_pos.raw().y, glt->target_pos.raw().z );
     } else {
         status = string_format(
                      _( "Status: Active\nTarget: [%s] (%d,%d,%d)" ),
-                     glt->target_dim_id.empty() ? _( "primary" ) : glt->target_dim_id,
+                     glt->target_dim_id.is_empty() ? _( "primary" ) : glt->target_dim_id.str(),
                      glt->target_pos.raw().x, glt->target_pos.raw().y, glt->target_pos.raw().z );
     }
 
@@ -7696,13 +7696,14 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 
     switch( menu.ret ) {
         case 0: { // Attune keycard
-            keycard->set_var( "portal_target_dim", local_dim );
+            keycard->set_var( "portal_target_dim", local_dim.str() );
             keycard->set_var( "portal_target_pos", abs_pos );
             add_msg( m_info, _( "You attune the keycard to this power portal." ) );
             break;
         }
         case 1: { // Link using keycard
-            const std::string target_dim = keycard->get_var( "portal_target_dim", std::string{} );
+            const auto target_dim = dimension_id( keycard->get_var( "portal_target_dim",
+                                    std::string{} ) );
             const auto target_pos = keycard->get_var( "portal_target_pos", tripoint_abs_ms::zero() );
             if( target_pos == abs_pos && target_dim == local_dim ) {
                 add_msg( m_bad, _( "You can't link a portal to itself." ) );
@@ -7767,12 +7768,12 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
         }
         case 4: { // Unlink
             const tripoint_abs_ms old_target_pos    = glt->target_pos;
-            const std::string     old_target_dim_id = glt->target_dim_id;
+            const auto old_target_dim_id = glt->target_dim_id;
             // Sever local side first.
             local_tracker.remove_export_node( abs_pos );
             glt->linked = false;
             glt->paused = false;
-            glt->target_dim_id.clear();
+            glt->target_dim_id = dimension_id();
             // Always update the remote grid_link_tile (submap may be resident
             // via load handles even if the remote tracker was destroyed).
             {
@@ -7787,7 +7788,7 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
                         if( rglt != nullptr ) {
                             rglt->linked = false;
                             rglt->paused = false;
-                            rglt->target_dim_id.clear();
+                            rglt->target_dim_id = dimension_id();
                         }
                     }
                 }
@@ -7821,7 +7822,7 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
             return;
         }
         // Generate the dynamic special in the target dimension at a random overmap location.
-        const std::string &tdim = pt->target_dim_id;
+        const auto &tdim = pt->target_dim_id;
         auto &omb = get_overmapbuffer( tdim );
         // Pick an origin far enough from the player so the generated area doesn't overlap.
         const tripoint_abs_omt gen_origin( rng( 50, 100 ), rng( 50, 100 ), 0 );
@@ -7889,8 +7890,8 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
     p.add_msg_if_player( m_good, _( "You step through the portal." ) );
 
     // Resolve destination world_type.
-    auto wt_id = world_type_id( pt->target_dim_id );
-    if( pt->target_dim_id.empty() ) {
+    auto wt_id = world_type_id( pt->target_dim_id.str() );
+    if( pt->target_dim_id.is_empty() ) {
         wt_id = world_types::get_default();
     }
 

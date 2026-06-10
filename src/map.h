@@ -771,7 +771,7 @@ class map : public submap_load_listener
          * Return the dimension ID this map is currently bound to.
          * An empty string means the primary (default) dimension.
          */
-        const std::string &get_bound_dimension() const {
+        auto get_bound_dimension() const -> const dimension_id & {
             return bound_dimension_;
         }
 
@@ -791,7 +791,7 @@ class map : public submap_load_listener
          * Bind this map to a specific dimension.
          * Should be called when the player transitions to another dimension.
          */
-        void bind_dimension( const std::string &dim );
+        auto bind_dimension( const dimension_id &dim ) -> void;
 
         /**
          * Return true if the submap at absolute-submap coordinates @p pos
@@ -801,9 +801,9 @@ class map : public submap_load_listener
 
         // submap_load_listener implementation
         void on_submap_loaded( const tripoint_abs_sm &pos,
-                               const std::string &dim_id ) override;
+                               const dimension_id &dim_id ) override;
         void on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const std::string &dim_id ) override;
+                                 const dimension_id &dim_id ) override;
 
         /**
          * Sets a dirty flag on the a given cache.
@@ -2664,7 +2664,7 @@ class map : public submap_load_listener
         std::optional<pocket_dimension_data> pocket_info_;
 
         // The dimension ID this map is bound to (empty = primary dimension)
-        std::string bound_dimension_;
+        dimension_id bound_dimension_;
 
     public:
         bool has_rope_at( tripoint_bub_ms pt ) const;

@@ -1762,8 +1762,8 @@ class vehicle
         // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
         // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
         // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_ = "";  // empty = primary dimension
-        auto get_dimension() const -> const std::string & { // *NOPAD*
+        dimension_id dimension_id_;  // empty = primary dimension
+        auto get_dimension() const -> const dimension_id & { // *NOPAD*
             return dimension_id_;
         }
         // direction, to which vehicle is turning (player control). will rotate frame on next move

@@ -1325,8 +1325,8 @@ class npc : public player
         // ID of the dimension this NPC belongs to.  Empty string = primary dimension.
         // Set when the NPC is spawned or loaded from a non-primary dimension submap.
         // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_ = "";  // empty = primary dimension
-        const std::string &get_dimension() const override {
+        dimension_id dimension_id_;  // empty = primary dimension
+        auto get_dimension() const -> const dimension_id & override {
             return dimension_id_;
         }
 

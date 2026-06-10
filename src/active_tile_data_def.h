@@ -131,7 +131,7 @@ class portal_tile : public active_tile_data
 {
     public:
         /// Dimension ID of the destination ("" = primary).
-        std::string target_dim_id;
+        dimension_id target_dim_id;
         /// Absolute position of the landing spot in the target dimension.
         tripoint_abs_ms target_pos;
         /// Number of submaps to keep resident around target_pos (0 = no preload).
@@ -182,7 +182,7 @@ class grid_link_tile : public active_tile_data
         /// Ignored when linked == false.
         bool paused = false;
         /// Dimension ID of the far-end portal ("" = primary dimension).
-        std::string target_dim_id;
+        dimension_id target_dim_id;
         /// Absolute map-square position of the far-end portal.
         tripoint_abs_ms target_pos;
 

@@ -680,8 +680,8 @@ class monster : public Creature, public location_visitable<monster>
         // ID of the dimension this monster belongs to.  Empty string = primary dimension.
         // Set when the monster is spawned or loaded from a non-primary dimension submap.
         // Persisted across saves so cross-dimension LOD assignment survives reload.
-        std::string dimension_id_ = "";  // empty = primary dimension
-        const std::string &get_dimension() const override {
+        dimension_id dimension_id_;  // empty = primary dimension
+        auto get_dimension() const -> const dimension_id & override {
             return dimension_id_;
         }
 

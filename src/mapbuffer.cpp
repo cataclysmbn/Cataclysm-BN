@@ -39,7 +39,7 @@
 namespace
 {
 
-auto uniform_terrain_for_omt( const std::string &dimension_id,
+auto uniform_terrain_for_omt( const dimension_id &dimension_id,
                               const tripoint_abs_omt &omt_addr ) -> std::optional<ter_id>
 {
     static const oter_id rock( "empty_rock" );
@@ -118,7 +118,7 @@ void mapbuffer::remove_submap( tripoint_abs_sm addr )
                 debugmsg( "remove_submap: skipping free of submap at %s (ptr %p) "
                           "— map::grid[%zu] still references it (dim='%s')",
                           addr.to_string(), static_cast<const void *>( doomed ),
-                          i, dimension_id_ );
+                          i, dimension_id_.c_str() );
                 return;  // do NOT erase — prevent use-after-free
             }
         }
@@ -235,7 +235,7 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
                     debugmsg( "unload_omt: skipping free of submap at %s (ptr %p) "
                               "— map::grid[%zu] still references it (dim='%s')",
                               p.to_string(), static_cast<const void *>( doomed ),
-                              i, dimension_id_ );
+                              i, dimension_id_.c_str() );
                     return true;  // remove from to_delete → keep alive
                 }
             }
@@ -294,7 +294,7 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
             found = true;
         } else {
             ZoneScopedN( "lookup_disk_read" );
-            found = g->get_active_world()->read_map_omt( dimension_id_, omt_addr,
+            found = g->get_active_world()->read_map_omt( dimension_id_.str(), omt_addr,
             [this, &loaded, &already_loaded]( JsonIn & jsin ) {
                 ZoneScopedN( "lookup_disk_deserialize" );
                 deserialize_into_vec( jsin, loaded, already_loaded );
@@ -441,7 +441,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
     if( notify_tracker ) {
         auto &tracker = get_distribution_grid_tracker();
         for( const auto &pos : submaps_to_delete ) {
-            tracker.on_submap_unloaded( tripoint_abs_sm( pos ), "" );
+            tracker.on_submap_unloaded( tripoint_abs_sm( pos ), dimension_id() );
         }
     }
 
@@ -465,7 +465,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
             submaps.contains( base + point_south ) ||
             submaps.contains( base + point_south_east );
         if( !in_memory ) {
-            g->get_active_world()->write_map_omt( dimension_id_, omt_addr,
+            g->get_active_world()->write_map_omt( dimension_id_.str(), omt_addr,
             [&data]( std::ostream & fout ) {
                 fout << data;
             } );
@@ -516,7 +516,7 @@ void mapbuffer::save_omt( const tripoint_abs_omt &omt_addr,
         return;
     }
 
-    g->get_active_world()->write_map_omt( dimension_id_, omt_addr, [&]( std::ostream & fout ) {
+    g->get_active_world()->write_map_omt( dimension_id_.str(), omt_addr, [&]( std::ostream & fout ) {
         JsonOut jsout( fout );
         jsout.start_array();
         for( const tripoint_abs_sm &submap_addr : submap_addrs ) {
@@ -630,7 +630,7 @@ bool mapbuffer::preload_omt( const tripoint_abs_omt &omt_addr )
         JsonIn jsin( iss );
         deserialize_into_vec( jsin, loaded, already_loaded );
     } else {
-        g->get_active_world()->read_map_omt( dimension_id_, omt_addr,
+        g->get_active_world()->read_map_omt( dimension_id_.str(), omt_addr,
         [this, &loaded, &already_loaded]( JsonIn & jsin ) {
             deserialize_into_vec( jsin, loaded, already_loaded );
         } );

@@ -87,7 +87,7 @@ auto scent_map::raw_scent_set( int x, int y, int z, int value ) -> void
 void scent_map::reset()
 {
     // Clear scent from all loaded submaps across every dimension.
-    MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer & buf ) {
+    MAPBUFFER_REGISTRY.for_each( []( const dimension_id &, mapbuffer & buf ) {
         std::ranges::for_each( buf, []( auto & entry ) {
             auto &[raw_pos, sm_ptr] = entry;
             if( sm_ptr && !sm_ptr->is_uniform ) {
@@ -105,9 +105,9 @@ void scent_map::decay()
     ZoneScopedN( "scent_map::decay" );
     // Decay scent on tracked submaps across every dimension within scent z-range.
     // Called during precipitation, so rain washes away scent globally.
-    // Only submaps registered in scent_submaps_ are visited — no mapbuffer scan needed.
+    // Only submaps registered in scent_submaps_ are visited; no mapbuffer scan needed.
     const int levz = gm.get_levz();
-    MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim_id, mapbuffer & buf ) {
+    MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim_id, mapbuffer & buf ) {
         auto dim_it = scent_submaps_.find( dim_id );
         if( dim_it == scent_submaps_.end() ) {
             return;

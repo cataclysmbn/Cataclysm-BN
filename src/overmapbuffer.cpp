@@ -293,7 +293,7 @@ void overmapbuffer::fix_npcs( overmap &new_overmap )
     }
 }
 
-void overmapbuffer::save( const std::string &dim_id )
+auto overmapbuffer::save( const dimension_id &dim_id ) -> void
 {
     read_lock<std::shared_mutex> _l( mutex );
 

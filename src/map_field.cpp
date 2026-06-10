@@ -1104,7 +1104,7 @@ static const std::array<point, 8> eight_dirs_sm = {{
     }
 };
 
-auto process_fields_in_submap( const std::string &dim, submap &sm,
+auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                                const tripoint_abs_sm &pos,
                                mapbuffer &mb ) -> bool
 {

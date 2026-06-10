@@ -603,7 +603,7 @@ const itype_id &mission::get_item_id() const
     return item_id;
 }
 
-const std::string &mission::get_dimension() const
+auto mission::get_dimension() const -> const dimension_id &
 {
     return dimension_id_;
 }

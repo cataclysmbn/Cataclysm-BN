@@ -489,7 +489,7 @@ ter_id map::get_boundary_terrain() const
     return t_null;
 }
 
-void map::bind_dimension( const std::string &dim )
+auto map::bind_dimension( const dimension_id &dim ) -> void
 {
     bound_dimension_ = dim;
 }
@@ -508,7 +508,7 @@ bool map::contains_abs_sm( const tripoint_abs_sm &p ) const
     return p.z() == abs_sub.z();
 }
 
-void map::on_submap_loaded( const tripoint_abs_sm &p, const std::string &dim_id )
+void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id )
 {
     if( dim_id != bound_dimension_ ) {
         return;
@@ -566,7 +566,7 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const std::string &dim_id 
     }
 }
 
-void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim_id )
+void map::on_submap_unloaded( const tripoint_abs_sm &pos, const dimension_id &dim_id )
 {
     if( dim_id != bound_dimension_ ) {
         return;

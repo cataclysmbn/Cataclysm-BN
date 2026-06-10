@@ -257,12 +257,12 @@ class mapbuffer
          * Set by mapbuffer_registry::get() at construction time.
          * Empty string ("") = the overworld (primary dimension, legacy path).
          */
-        const std::string &get_dimension_id() const {
+        auto get_dimension_id() const -> const dimension_id & {
             return dimension_id_;
         }
 
         /** Set the dimension ID — called only by mapbuffer_registry. */
-        void set_dimension_id( const std::string &id ) {
+        auto set_dimension_id( const dimension_id &id ) -> void {
             dimension_id_ = id;
         }
 
@@ -285,7 +285,7 @@ class mapbuffer
 
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.
-        std::string dimension_id_;
+        dimension_id dimension_id_;
 };
 
 // Included after the full mapbuffer definition to avoid circular dependencies.
