@@ -1478,8 +1478,8 @@ auto mapbuffer::invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
     }
 }
 
-auto mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p, const submap &sm ) const
-- > void
+void mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p,
+                                               const submap &sm ) const
 {
     const auto local = active_map_local( p );
     if( !local ) {
@@ -1495,7 +1495,7 @@ auto mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p, const s
     }
 }
 
-auto mapbuffer::invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const -> void
+void mapbuffer::invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const
 {
     if( active_map_local( p ) ) {
         get_map().invalidate_lightmap_caches();
