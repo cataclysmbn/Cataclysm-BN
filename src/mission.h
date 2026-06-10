@@ -374,6 +374,9 @@ class mission
         const itype_id &get_item_id() const;
         character_id get_npc_id() const;
         auto get_dimension() const -> const dimension_id &;
+        auto set_dimension( const dimension_id &dim_id ) -> void {
+            dimension_id_ = dim_id;
+        }
         const std::vector<std::pair<int, itype_id>> &get_likely_rewards() const;
         bool has_generic_rewards() const;
         void register_kill_needed();

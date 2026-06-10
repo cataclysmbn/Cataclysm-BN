@@ -519,12 +519,12 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id
 
     // Vehicle abs_sm_pos fixup and loaded_vehicles registration.
     // Covers all loaded submaps, including out-of-bubble ones.
-    // For in-bubble submaps loadn() has already done this; the set insert is idempotent.
-    if( sm != nullptr && !sm->vehicles.empty() ) {
+        // For in-bubble submaps loadn() has already done this; the set insert is idempotent.
+        if( sm != nullptr && !sm->vehicles.empty() ) {
         // Extended local grid index: may be outside [0, my_MAPSIZE) for out-of-bubble.
         for( const auto &veh : sm->vehicles ) {
             veh->abs_sm_pos = p;
-            veh->dimension_id_ = dim_id;
+            veh->set_dimension( dim_id );
             loaded_vehicles.insert( veh.get() );
         }
     }
@@ -9045,7 +9045,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
             if( veh->part_count() > 0 ) {
                 // Always fix submap coordinates for easier Z-level-related operations
                 veh->abs_sm_pos = grid_abs_sub;
-                veh->dimension_id_ = bound_dimension_;
+                veh->set_dimension( bound_dimension_ );
                 loaded_vehicles.insert( veh );
                 veh->attach();
                 iter++;

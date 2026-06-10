@@ -1815,7 +1815,7 @@ void npc::load( const JsonObject &data )
     }
     auto raw_dimension_id = std::string{};
     data.read( "dimension_id", raw_dimension_id );
-    dimension_id_ = dimension_id( raw_dimension_id );
+    set_dimension( dimension_id( raw_dimension_id ) );
     complaints.clear();
     data.read( "complaints", complaints );
 }
@@ -2167,7 +2167,7 @@ auto monster::load( const JsonObject &data,
     }
     auto raw_dimension_id = std::string{};
     data.read( "dimension_id", raw_dimension_id );
-    dimension_id_ = dimension_id( raw_dimension_id );
+    set_dimension( dimension_id( raw_dimension_id ) );
     data.read( "mounted_player_id", mounted_player_id );
     data.read( "path", path );
     data.read( "monster_flags", monster_flags );
@@ -3315,7 +3315,7 @@ void vehicle::deserialize( JsonIn &jsin )
     data.read( "theft_time", theft_time );
     auto raw_dimension_id = std::string{};
     data.read( "dimension_id", raw_dimension_id );
-    dimension_id_ = dimension_id( raw_dimension_id );
+    set_dimension( dimension_id( raw_dimension_id ) );
 
     // we persist the pivot anchor so that if the rules for finding
     // the pivot change, existing vehicles do not shift around.
@@ -3602,7 +3602,7 @@ void mission::deserialize( JsonIn &jsin )
                           jo.get_bool( "legacy_no_player_id", false );
     auto raw_dimension_id = std::string{};
     jo.read( "dimension_id", raw_dimension_id );
-    dimension_id_ = dimension_id( raw_dimension_id );
+    set_dimension( dimension_id( raw_dimension_id ) );
 }
 
 void mission::serialize( JsonOut &json ) const

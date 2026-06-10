@@ -70,7 +70,7 @@ mission *mission::reserve_new( const mission_type_id &type, const character_id &
     if( npc_id.is_valid() ) {
         const npc *giver = g->find_npc( npc_id );
         if( giver != nullptr ) {
-            tmp.dimension_id_ = giver->get_dimension();
+            tmp.set_dimension( giver->get_dimension() );
         }
     }
     // TODO: Warn about overwrite?

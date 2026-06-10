@@ -1209,8 +1209,8 @@ vehicle *game::place_vehicle_nearby(
             const auto proj = project_remain<coords::sm>( abs );
             veh->abs_sm_pos = proj.quotient_tripoint;
             veh->sm_ms_pos = proj.remainder;
-            veh->dimension_id_ = target_map.get_bound_dimension();
-            get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
+            veh->set_dimension( target_map.get_bound_dimension() );
+            get_overmapbuffer( veh->get_dimension() ).add_vehicle( veh );
             veh->tracking_on = true;
             return veh;
         }

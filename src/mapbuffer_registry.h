@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <memory>
@@ -13,9 +14,9 @@ class mapbuffer;
 /**
  * Registry managing one mapbuffer per dimension.
  *
- * Each dimension is identified by a string key.  The primary (default) dimension
- * uses PRIMARY_DIMENSION_ID (""), which is also accessible through the MAPBUFFER
- * macro for backwards compatibility.
+ * Each dimension is identified by a dimension_id.  The primary/default
+ * dimension uses an empty dimension_id, which is also accessible through the
+ * MAPBUFFER macro for backwards compatibility.
  */
 class mapbuffer_registry
 {
@@ -36,6 +37,13 @@ class mapbuffer_registry
          * already exist.
          */
         auto get( const dimension_id &dim_id ) -> mapbuffer &;
+
+        /**
+         * Return the mapbuffer for the given dimension if a registry slot already
+         * exists.  Does not create a slot or load any submaps.
+         */
+        auto find( const dimension_id &dim_id ) -> mapbuffer *;
+        auto find( const dimension_id &dim_id ) const -> const mapbuffer *;
 
         /**
          * Return true if a registry slot exists for the given dimension.
@@ -94,8 +102,18 @@ class mapbuffer_registry
          */
         auto active_dimension_ids() const -> std::vector<dimension_id>;
 
+        /**
+         * Monotonic counter bumped whenever registry slots are created or erased.
+         * Cached mapbuffer pointers can use this to detect possible invalidation
+         * without doing a registry lookup on every access.
+         */
+        auto generation() const -> std::size_t {
+            return generation_;
+        }
+
     private:
         std::map<dimension_id, std::unique_ptr<mapbuffer>> buffers_;
+        std::size_t generation_ = 0;
 };
 
 extern mapbuffer_registry MAPBUFFER_REGISTRY;

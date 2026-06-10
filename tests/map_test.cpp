@@ -12,6 +12,7 @@
 #include "game_constants.h"
 #include "map.h"
 #include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "npc.h"
@@ -246,6 +247,32 @@ TEST_CASE( "mapbuffer_load_or_generate_lookup_is_explicit" )
     REQUIRE( generated != nullptr );
     CHECK( buffer.lookup_submap_in_memory( sm_pos ) == generated );
     CHECK( buffer.get_ter( project_to<coords::ms>( sm_pos ), resident_only ).has_value() );
+}
+
+TEST_CASE( "creature_mapbuffer_cache_tracks_dimension_registry_slots" )
+{
+    clear_all_state();
+
+    static const dimension_id dim_id( "creature_mapbuffer_cache_test_dim" );
+    const auto cleanup = on_out_of_scope( [&]() {
+        MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+    } );
+    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+
+    auto critter = monster( mtype_id( "mon_zombie" ) );
+    critter.set_dimension( dim_id );
+
+    CHECK( critter.find_mapbuffer() == nullptr );
+
+    mapbuffer &created = critter.get_mapbuffer();
+    CHECK( &created == MAPBUFFER_REGISTRY.find( dim_id ) );
+    CHECK( critter.find_mapbuffer() == &created );
+
+    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+    CHECK( critter.find_mapbuffer() == nullptr );
+
+    mapbuffer &recreated = critter.get_mapbuffer();
+    CHECK( &recreated == MAPBUFFER_REGISTRY.find( dim_id ) );
 }
 
 TEST_CASE( "free_bubble_conversions_follow_avatar_position" )

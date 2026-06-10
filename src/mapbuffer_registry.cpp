@@ -24,8 +24,21 @@ auto mapbuffer_registry::get( const dimension_id &dim_id ) -> mapbuffer &
         auto result = buffers_.emplace( dim_id, std::make_unique<mapbuffer>() );
         result.first->second->set_dimension_id( dim_id );
         it = result.first;
+        ++generation_;
     }
     return *it->second;
+}
+
+auto mapbuffer_registry::find( const dimension_id &dim_id ) -> mapbuffer *
+{
+    const auto it = buffers_.find( dim_id );
+    return it == buffers_.end() ? nullptr : it->second.get();
+}
+
+auto mapbuffer_registry::find( const dimension_id &dim_id ) const -> const mapbuffer *
+{
+    const auto it = buffers_.find( dim_id );
+    return it == buffers_.end() ? nullptr : it->second.get();
 }
 
 auto mapbuffer_registry::is_registered( const dimension_id &dim_id ) const -> bool
@@ -44,7 +57,9 @@ auto mapbuffer_registry::has_any_loaded( const dimension_id &dim_id ) const -> b
 
 auto mapbuffer_registry::unload_dimension( const dimension_id &dim_id ) -> void
 {
-    buffers_.erase( dim_id );
+    if( buffers_.erase( dim_id ) > 0 ) {
+        ++generation_;
+    }
 }
 
 auto mapbuffer_registry::for_each(
