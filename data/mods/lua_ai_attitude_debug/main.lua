@@ -217,7 +217,7 @@ local function register_runtime_functions(mod, storage)
       gapi.add_msg(MsgType.info, "Lua AI mine cancelled.")
       return nil
     end
-    local abs = gapi.get_map():get_abs_ms(where)
+    local abs = gapi.get_map():bub_to_abs(where)
     return utils.serialize_tripoint_abs_ms(abs)
   end
 

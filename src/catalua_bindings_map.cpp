@@ -321,11 +321,6 @@ void cata::detail::reg_map( sol::state &lua )
     {
         sol::usertype<map> ut = luna::new_usertype<map>( lua, luna::no_bases, luna::no_constructor );
 
-        DOC( "[Deprecated] Convert bubble ms -> absolute ms" );
-        luna::set_fx( ut, "get_abs_ms", []( const map &,
-        const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-            return bub_to_abs( pos );
-        } );
         DOC( "Convert bubble coordinates to absolute coordinates." );
         luna::set_fx( ut, "bub_to_abs",
                       sol::overload(
@@ -335,11 +330,6 @@ void cata::detail::reg_map( sol::state &lua )
         []( const map &, const tripoint_bub_sm & pos ) -> tripoint_abs_sm {
             return bub_to_abs( pos );
         } ) );
-        DOC( "[Deprecated] Convert absolute ms -> bubble ms" );
-        luna::set_fx( ut, "get_local_ms", []( const map &,
-        const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
-            return abs_to_bub( pos );
-        } );
         DOC( "Convert absolute coordinates to bubble coordinates." );
         luna::set_fx( ut, "abs_to_bub",
                       sol::overload(
