@@ -67,6 +67,7 @@
 #   endif
 #   include "compute/gpu_platform.h"
 #   include "preload_config.h"
+#   include "platform/sdl_video.h"
 #   include <SDL3/SDL.h>
 #endif
 
@@ -81,6 +82,8 @@ bool s_sdl_platform_initialized = false;
 
 auto init_test_sdl_gpu() -> void
 {
+    use_offscreen_video_driver_for_headless_sdl();
+
     if( !SDL_Init( SDL_InitFlags{ SDL_INIT_VIDEO } ) ) {
         throw std::runtime_error( string_format( "SDL_Init failed: %s", SDL_GetError() ) );
     }
