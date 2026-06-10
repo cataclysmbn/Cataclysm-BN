@@ -31,12 +31,16 @@ auto on_furniture_changed( const furniture_changed_options &options ) -> void
         return;
     }
 
-    auto &here = get_map();
-    if( here.get_bound_dimension() != options.dim_id || !here.inbounds( options.p ) ) {
+    auto &here = g->m;
+    if( here.get_bound_dimension() != options.dim_id ) {
         return;
     }
 
-    const auto local = abs_to_map_local( here, options.p );
+    const auto local = abs_to_bub( options.p );
+    if( !is_in_reality_bubble_bounds( local ) ) {
+        return;
+    }
+
     const auto &old_furniture_type = options.old_furniture.obj();
     const auto &new_furniture_type = options.new_furniture.obj();
 
@@ -65,12 +69,16 @@ auto prepare_item_for_placement( const item_placement_options &options ) -> bool
         return true;
     }
 
-    auto &here = get_map();
-    if( here.get_bound_dimension() != options.dim_id || !here.inbounds( options.p ) ) {
+    auto &here = g->m;
+    if( here.get_bound_dimension() != options.dim_id ) {
         return true;
     }
 
-    const auto local = abs_to_map_local( here, options.p );
+    const auto local = abs_to_bub( options.p );
+    if( !is_in_reality_bubble_bounds( local ) ) {
+        return true;
+    }
+
     if( options.item_to_place->is_food() ) {
         options.item_to_place = item::process( std::move( options.item_to_place ), nullptr, local, false );
         if( !options.item_to_place ) {

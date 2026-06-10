@@ -275,6 +275,20 @@ auto player_reality_bubble_origin() -> tripoint_abs_sm
     return reality_bubble_origin_from_player( get_avatar().abs_pos(), g_reality_bubble_size );
 }
 
+auto is_in_reality_bubble_bounds( const tripoint_bub_sm &p ) -> bool
+{
+    const auto bubble_size = checked_reality_bubble_size( g_reality_bubble_size );
+    const auto map_size = 2 * bubble_size + 3;
+    return p.z() >= -OVERMAP_DEPTH && p.z() <= OVERMAP_HEIGHT &&
+           p.x() >= 0 && p.x() < map_size &&
+           p.y() >= 0 && p.y() < map_size;
+}
+
+auto is_in_reality_bubble_bounds( const tripoint_bub_ms &p ) -> bool
+{
+    return is_in_reality_bubble_bounds( project_to<coords::sm>( p ) );
+}
+
 auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms
 {
     const auto origin = project_to<coords::ms>( player_reality_bubble_origin() );

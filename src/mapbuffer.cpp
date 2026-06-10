@@ -151,7 +151,7 @@ void mapbuffer::remove_submap( tripoint_abs_sm addr )
     // Safety: skip freeing if map::grid[] still references this submap.
     if( g != nullptr && m_target->second ) {
         const submap *doomed = m_target->second.get();
-        const map &here = get_map();
+        const map &here = g->m;
         const auto &grid_vec = here.grid;
         for( size_t i = 0; i < grid_vec.size(); ++i ) {
             if( grid_vec[i] == doomed ) {
@@ -262,7 +262,7 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
     // This prevents use-after-free when submap_loader eviction races with
     // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
     if( g != nullptr ) {
-        const map &here = get_map();
+        const map &here = g->m;
         const auto &grid_vec = here.grid;
         to_delete.remove_if( [&]( const tripoint_abs_sm & p ) {
             const auto it = submaps.find( p );
@@ -578,8 +578,8 @@ auto mapbuffer::set_lum( const tripoint_abs_ms &p, const std::uint8_t luminance,
     }
 
     tile->sm->set_lum( tile->local, luminance );
-    if( active_map_local( p ) ) {
-        get_map().invalidate_lightmap_caches();
+    if( active_reality_bubble_local( p ) ) {
+        g->m.invalidate_lightmap_caches();
     }
     return true;
 }
@@ -793,16 +793,13 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
 
     auto valid_tile = [&]( const tripoint_abs_ms & target ) -> std::optional<mapbuffer_tile_lookup> {
         auto tile = lookup_tile( *this, target, options.lookup );
-        if( !tile )
-        {
+        if( !tile ) {
             return std::nullopt;
         }
-        if( tile_has_flag( *tile, "DESTROY_ITEM" ) )
-        {
+        if( tile_has_flag( *tile, "DESTROY_ITEM" ) ) {
             return std::nullopt;
         }
-        if( new_item->made_of( LIQUID ) && tile_has_flag( *tile, "SWIMMABLE" ) )
-        {
+        if( new_item->made_of( LIQUID ) && tile_has_flag( *tile, "SWIMMABLE" ) ) {
             return std::nullopt;
         }
         return tile;
@@ -821,7 +818,7 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
     };
 
     auto call_active_drop_hook = [&]( const tripoint_abs_ms & target ) {
-        const auto local = active_map_local( target );
+        const auto local = active_reality_bubble_local( target );
         if( !local ) {
             if( new_item->made_of( LIQUID ) && !new_item->has_own_flag( flag_DIRTY ) ) {
                 new_item->set_flag( flag_DIRTY );
@@ -829,14 +826,14 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
             return false;
         }
         if( new_item->made_of( LIQUID ) || !new_item->has_flag( flag_DROP_ACTION_ONLY_IF_LIQUID ) ) {
-            return new_item->on_drop( *local, get_map() );
+            return new_item->on_drop( *local, g->m );
         }
         return false;
     };
 
     auto route_allows_overflow = [&]( const tripoint_abs_ms & target ) {
-        const auto source_local = active_map_local( p );
-        const auto target_local = active_map_local( target );
+        const auto source_local = active_reality_bubble_local( p );
+        const auto target_local = active_reality_bubble_local( target );
         if( !source_local || !target_local ) {
             return false;
         }
@@ -844,7 +841,7 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
         const auto max_path_length = 4 * max_dist;
         const auto setting = pathfinding_settings( 0, max_dist, max_path_length, 0, false, true, false,
                              false, false );
-        return !get_map().route( *source_local, *target_local, setting ).empty();
+        return !g->m.route( *source_local, *target_local, setting ).empty();
     };
 
     auto place_item = [&]( const tripoint_abs_ms & target, mapbuffer_tile_lookup & tile ) {
@@ -857,14 +854,14 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
             }
         }
 
-        if( const auto local = active_map_local( target ) ) {
-            get_map().support_dirty( *local );
+        if( const auto local = active_reality_bubble_local( target ) ) {
+            g->m.support_dirty( *local );
         }
         new_item = add_item( target, std::move( new_item ), options.lookup );
     };
 
     auto try_place = [&]( const tripoint_abs_ms & target, const bool reject_noitem,
-    const bool call_drop_hook_first ) {
+                          const bool call_drop_hook_first ) {
         auto tile = valid_tile( target );
         if( !tile ) {
             return false;
@@ -925,10 +922,10 @@ auto mapbuffer::add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_ite
     }
 
     if( !map_mutation_hooks::prepare_item_for_placement( {
-    .dim_id = dimension_id_,
-    .p = p,
-    .item_to_place = new_item,
-} ) ) {
+        .dim_id = dimension_id_,
+        .p = p,
+        .item_to_place = new_item,
+    } ) ) {
         return std::move( new_item );
     }
 
@@ -937,8 +934,8 @@ auto mapbuffer::add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_ite
     }
 
     tile->sm->is_uniform = false;
-    if( active_map_local( p ) ) {
-        get_map().invalidate_max_populated_zlev( p.z() );
+    if( active_reality_bubble_local( p ) ) {
+        g->m.invalidate_max_populated_zlev( p.z() );
     }
 
     const auto adds_luminance = new_item->is_emissive();
@@ -1261,30 +1258,35 @@ auto mapbuffer::partial_con_remove( const tripoint_abs_ms &p,
     return tile->sm->partial_constructions.erase( tripoint_sm_ms( tile->local, p.z() ) ) > 0;
 }
 
-auto mapbuffer::active_map_local( const tripoint_abs_ms &p ) const -> std::optional<tripoint_bub_ms>
+auto mapbuffer::active_reality_bubble_local( const tripoint_abs_ms &p ) const
+-> std::optional<tripoint_bub_ms>
 {
     if( g == nullptr ) {
         return std::nullopt;
     }
 
-    auto &here = get_map();
-    if( here.get_bound_dimension() != dimension_id_ || !here.inbounds( p ) ) {
+    if( g->m.get_bound_dimension() != dimension_id_ ) {
         return std::nullopt;
     }
 
-    return abs_to_map_local( here, p );
+    const auto local = abs_to_bub( p );
+    if( !is_in_reality_bubble_bounds( local ) ) {
+        return std::nullopt;
+    }
+
+    return local;
 }
 
 auto mapbuffer::invalidate_active_terrain_set_caches( const tripoint_abs_ms &p,
         const ter_id &old_id,
         const ter_id &new_id ) const -> void
 {
-    const auto local = active_map_local( p );
+    const auto local = active_reality_bubble_local( p );
     if( !local ) {
         return;
     }
 
-    auto &here = get_map();
+    auto &here = g->m;
     const auto &old_terrain = old_id.obj();
     const auto &new_terrain = new_id.obj();
 
@@ -1355,7 +1357,7 @@ auto mapbuffer::sync_furniture_change_side_tables( const tripoint_abs_ms &p, sub
         }
     }
 
-    if( g != nullptr && get_map().get_bound_dimension() == dimension_id_ &&
+    if( g != nullptr && g->m.get_bound_dimension() == dimension_id_ &&
         ( old_furniture.fluid_grid || new_furniture.fluid_grid ) ) {
         fluid_grid::on_structure_changed( p );
     }
@@ -1364,12 +1366,12 @@ auto mapbuffer::sync_furniture_change_side_tables( const tripoint_abs_ms &p, sub
 auto mapbuffer::invalidate_active_furniture_set_caches( const tripoint_abs_ms &p,
         const furn_id &old_id, const furn_id &new_id ) const -> void
 {
-    const auto local = active_map_local( p );
+    const auto local = active_reality_bubble_local( p );
     if( !local ) {
         return;
     }
 
-    auto &here = get_map();
+    auto &here = g->m;
     const auto &old_furniture = old_id.obj();
     const auto &new_furniture = new_id.obj();
 
@@ -1410,12 +1412,12 @@ auto mapbuffer::invalidate_active_furniture_set_caches( const tripoint_abs_ms &p
 auto mapbuffer::sync_active_trap_change_side_tables( const tripoint_abs_ms &p,
         const point_sm_ms &local_tile, const trap_id &old_id, const trap_id &new_id ) const -> void
 {
-    const auto local = active_map_local( p );
+    const auto local = active_reality_bubble_local( p );
     if( !local ) {
         return;
     }
 
-    auto &here = get_map();
+    auto &here = g->m;
     const auto sm_abs = project_to<coords::sm>( p );
 
     if( old_id != tr_null ) {
@@ -1435,12 +1437,12 @@ auto mapbuffer::sync_active_trap_change_side_tables( const tripoint_abs_ms &p,
 auto mapbuffer::invalidate_active_field_add_caches( const tripoint_abs_ms &p,
         const field_type_id &type ) const -> void
 {
-    const auto local = active_map_local( p );
+    const auto local = active_reality_bubble_local( p );
     if( !local ) {
         return;
     }
 
-    auto &here = get_map();
+    auto &here = g->m;
     const auto &field_type = type.obj();
     here.invalidate_max_populated_zlev( local->z() );
 
@@ -1461,12 +1463,12 @@ auto mapbuffer::invalidate_active_field_add_caches( const tripoint_abs_ms &p,
 auto mapbuffer::invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
         const field_type_id &type ) const -> void
 {
-    const auto local = active_map_local( p );
+    const auto local = active_reality_bubble_local( p );
     if( !local ) {
         return;
     }
 
-    auto &here = get_map();
+    auto &here = g->m;
     const auto &field_type = type.obj();
     if( field_type.dirty_transparency_cache || !field_type.is_transparent() ) {
         here.set_transparency_cache_dirty( *local );
@@ -1481,12 +1483,11 @@ auto mapbuffer::invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
 void mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p,
         const submap &sm ) const
 {
-    const auto local = active_map_local( p );
-    if( !local ) {
+    if( g == nullptr || g->m.get_bound_dimension() != dimension_id_ ) {
         return;
     }
 
-    auto &active_submaps = get_map().submaps_with_active_items;
+    auto &active_submaps = g->m.submaps_with_active_items;
     const auto abs_submap = project_to<coords::sm>( p );
     if( sm.active_items.empty() ) {
         active_submaps.erase( abs_submap );
@@ -1497,8 +1498,8 @@ void mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p,
 
 void mapbuffer::invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const
 {
-    if( active_map_local( p ) ) {
-        get_map().invalidate_lightmap_caches();
+    if( active_reality_bubble_local( p ) ) {
+        g->m.invalidate_lightmap_caches();
     }
 }
 

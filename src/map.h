@@ -2774,6 +2774,9 @@ auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms;
 auto bub_to_abs( const point_bub_sm &p ) -> point_abs_sm;
 auto abs_to_bub( const point_abs_sm &p ) -> point_bub_sm;
 
+auto is_in_reality_bubble_bounds( const tripoint_bub_sm &p ) -> bool;
+auto is_in_reality_bubble_bounds( const tripoint_bub_ms &p ) -> bool;
+
 // Convert against a specific map object's loaded-grid origin, not the player bubble origin.
 auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms;
 auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms;
