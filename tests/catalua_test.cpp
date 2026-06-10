@@ -374,10 +374,10 @@ TEST_CASE( "plumbing_lua_tripoint_migration", "[lua][plumbing]" )
     CHECK( removed_blood_fields > 0 );
     CHECK( blood_intensity == 0 );
 
-    get_avatar().setpos( tripoint_bub_ms( 10, 10, 0 ) );
     auto &soap = get_avatar().add_item_with_id( itype_id( "soap" ), 10 );
     REQUIRE( soap.charges > 1 );
     params["user"] = get_avatar().as_character();
+    params["pos"] = cata::detail::lua_coords::to_lua( get_avatar().bub_pos() );
     auto consume_res = examine( params );
     REQUIRE( consume_res.valid() );
     CHECK( get_avatar().activity->id() == activity_id( "ACT_WASH_SELF" ) );

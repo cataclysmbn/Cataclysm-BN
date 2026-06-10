@@ -117,9 +117,8 @@ auto make_lua_activity( const lua_activity_options &opts ) -> std::unique_ptr<pl
     if( !opts.data.empty() ) {
         act->str_values.push_back( std::string{ lua_activity_data_prefix } + opts.data );
     }
-    auto &here = get_map();
-    auto append_pos = [&]( const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-        auto abs_pos = here.bub_to_abs( pos );
+    auto append_pos = [&act]( const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
+        const auto abs_pos = bub_to_abs( pos );
         act->coords.push_back( abs_pos );
         return abs_pos;
     };

@@ -321,33 +321,33 @@ void cata::detail::reg_map( sol::state &lua )
     {
         sol::usertype<map> ut = luna::new_usertype<map>( lua, luna::no_bases, luna::no_constructor );
 
-        DOC( "[Deprecated] Convert local ms -> absolute ms" );
-        luna::set_fx( ut, "get_abs_ms", []( const map & m,
+        DOC( "[Deprecated] Convert bubble ms -> absolute ms" );
+        luna::set_fx( ut, "get_abs_ms", []( const map &,
         const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-            return map_local_to_abs( m, pos );
+            return bub_to_abs( pos );
         } );
-        DOC( "Convert local bubble coordinates to absolute coordinates." );
+        DOC( "Convert bubble coordinates to absolute coordinates." );
         luna::set_fx( ut, "bub_to_abs",
                       sol::overload(
-        []( const map & m, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-            return map_local_to_abs( m, pos );
+        []( const map &, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
+            return bub_to_abs( pos );
         },
-        []( const map & m, const tripoint_bub_sm & pos ) -> tripoint_abs_sm {
-            return map_local_to_abs( m, pos );
+        []( const map &, const tripoint_bub_sm & pos ) -> tripoint_abs_sm {
+            return bub_to_abs( pos );
         } ) );
-        DOC( "[Deprecated] Convert absolute ms -> local ms" );
-        luna::set_fx( ut, "get_local_ms", []( const map & m,
+        DOC( "[Deprecated] Convert absolute ms -> bubble ms" );
+        luna::set_fx( ut, "get_local_ms", []( const map &,
         const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
-            return abs_to_map_local( m, pos );
+            return abs_to_bub( pos );
         } );
-        DOC( "Convert absolute coordinates to local bubble coordinates." );
+        DOC( "Convert absolute coordinates to bubble coordinates." );
         luna::set_fx( ut, "abs_to_bub",
                       sol::overload(
-        []( const map & m, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
-            return abs_to_map_local( m, pos );
+        []( const map &, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
+            return abs_to_bub( pos );
         },
-        []( const map & m, const tripoint_abs_sm & pos ) -> tripoint_bub_sm {
-            return abs_to_map_local( m, pos );
+        []( const map &, const tripoint_abs_sm & pos ) -> tripoint_bub_sm {
+            return abs_to_bub( pos );
         } ) );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
@@ -356,8 +356,8 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "ambient_light_at", []( map & m, tripoint_bub_ms p ) { return m.ambient_light_at( p ); } );
         DOC( "Get the local ambient temperature in degrees Celsius at a map-square position." );
         luna::set_fx( ut, "get_temperature_c",
-        []( const map & m, const tripoint_bub_ms & p ) -> double {
-            return units::to_celsius<double>( get_weather().get_temperature( m.bub_to_abs( p ) ) );
+        []( const map &, const tripoint_bub_ms & p ) -> double {
+            return units::to_celsius<double>( get_weather().get_temperature( bub_to_abs( p ) ) );
         } );
 
         DOC( "Forcibly places an npc using a template at a position on the map. Returns the npc." );
