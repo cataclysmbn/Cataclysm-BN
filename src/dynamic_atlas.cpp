@@ -138,9 +138,9 @@ struct null_texture_packer final : detail::texture_packer {
     };
 };
 
-auto dynamic_atlas::update_staging_area( staging_area &staging, const int width,
-        const int height ) const
-- > std::tuple<SDL_Texture *, SDL_Surface *, SDL_Rect>
+auto dynamic_atlas::update_staging_area(
+    staging_area &staging, const int width, const int height )
+const -> std::tuple<SDL_Texture *, SDL_Surface *, SDL_Rect>
 {
     const auto r_width = round_up( width, hint_sprite_width );
     const auto r_height = round_up( height, hint_sprite_height );
