@@ -275,16 +275,12 @@ local collect_dry_towel_candidates = function(opts)
   return candidates
 end
 
----@param user Character
----@param morale_type MoraleTypeDataId
----@param bonus integer
----@param duration TimeDuration
----@param decay_start TimeDuration
+---@param opts { user: Character, morale_type: MoraleTypeDataId, bonus: integer, duration: TimeDuration, decay_start: TimeDuration }
 ---@return nil
-local refresh_morale = function(user, morale_type, bonus, duration, decay_start)
-  local current = user:get_morale(morale_type)
-  local delta = current < bonus and bonus - current or 0
-  user:add_morale(morale_type, delta, bonus, duration, decay_start, true, nil)
+local refresh_morale = function(opts)
+  local current = opts.user:get_morale(opts.morale_type)
+  local delta = current < opts.bonus and opts.bonus - current or 0
+  opts.user:add_morale(opts.morale_type, delta, opts.bonus, opts.duration, opts.decay_start, true, nil)
 end
 
 ---@param opts { user: Character, map: Map, center: TripointBubMs }
@@ -608,9 +604,23 @@ plumbing.finish_wash = function(params)
   local morale_duration = TimeDuration.from_hours(mode_data.morale_duration_hours)
   local morale_decay = TimeDuration.from_minutes(mode_data.morale_decay_minutes)
 
-  refresh_morale(params.user, base_morale_type, mode_data.morale, morale_duration, morale_decay)
+  refresh_morale({
+    user = params.user,
+    morale_type = base_morale_type,
+    bonus = mode_data.morale,
+    duration = morale_duration,
+    decay_start = morale_decay,
+  })
 
-  if used_hygiene then refresh_morale(params.user, morale_cleansed_self, mode_data.hygiene_bonus, morale_duration, morale_decay) end
+  if used_hygiene then
+    refresh_morale({
+      user = params.user,
+      morale_type = morale_cleansed_self,
+      bonus = mode_data.hygiene_bonus,
+      duration = morale_duration,
+      decay_start = morale_decay,
+    })
+  end
 
   if is_warm then
     local heat_duration = TimeDuration.from_minutes(mode_data.heat_minutes)
