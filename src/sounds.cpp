@@ -3637,8 +3637,9 @@ void sfx::do_hearing_loss( int turns )
     // We only check this for the player, so we know it is safe to grab their specific stats.
     const auto &p = get_avatar();
 
-    // Determine our global sfx multiplier based on if the player is deaf, or if 
-    g_sfx_volume_multiplier = ( p.is_deaf() ) ? .1 : get_hearing_loss_sfx_mult( p.total_hearing_impairment() );
+    // Determine our global sfx multiplier based on if the player is deaf, or if
+    g_sfx_volume_multiplier = ( p.is_deaf() ) ? .1 : get_hearing_loss_sfx_mult(
+                                  p.total_hearing_impairment() );
     fade_audio_group( group::weather, 50 );
     fade_audio_group( group::time_of_day, 50 );
     // Negative duration is just insuring we stay in sync with player condition,
@@ -3672,10 +3673,10 @@ void sfx::remove_hearing_loss( const bool &p_hear_impaired )
 {
     if( test_mode ) {
         return;
-    } 
-    if ( !p_hear_impaired ){
-        
-        // If the player does not have impaired hearing end all tinnitus effects and do ambient. 
+    }
+    if( !p_hear_impaired ) {
+
+        // If the player does not have impaired hearing end all tinnitus effects and do ambient.
         stop_sound_effect_fade( channel::deafness_tone, 300 );
         g_sfx_volume_multiplier = 1;
         do_ambient();
@@ -3691,24 +3692,24 @@ void sfx::remove_hearing_loss( const bool &p_hear_impaired )
         const auto hearing_impairment = p.total_hearing_impairment();
 
         // If the avatar is deaf or their non-permanant hearing loss is over a certain threshold, we give a chance to end deafness sfx to not play tinnitus forever.
-        if ( deaf && one_in( SOUND_ABSORPTION_FOREST ) ){
+        if( deaf && one_in( SOUND_ABSORPTION_FOREST ) ) {
 
             stop_sound_effect_fade( channel::deafness_tone, 300 );
             // You technically can hear with busted eardrums, just not with any hope of clarity.
-            g_sfx_volume_multiplier = (ruptured)? 0.05 : 0.1;
+            g_sfx_volume_multiplier = ( ruptured ) ? 0.05 : 0.1;
             do_ambient();
             return;
 
-        } else if ( hearing_impairment >= HEARING_LOSS_SLIGHT_THRESHOLD ){
+        } else if( hearing_impairment >= HEARING_LOSS_SLIGHT_THRESHOLD ) {
 
             g_sfx_volume_multiplier = get_hearing_loss_sfx_mult( hearing_impairment );
 
             // Check to see if our hearing impairment is due to actual loss or other effects to see if we should end tinnitus shenanagins.
             const auto hearing_loss = p.total_hearing_loss( false );
 
-            if ( hearing_loss >= HEARING_LOSS_SLIGHT_THRESHOLD ){
+            if( hearing_loss >= HEARING_LOSS_SLIGHT_THRESHOLD ) {
 
-                if ( !tinnitus_stop_chance( hearing_loss ) ){
+                if( !tinnitus_stop_chance( hearing_loss ) ) {
 
                     return;
 
@@ -3724,7 +3725,7 @@ void sfx::remove_hearing_loss( const bool &p_hear_impaired )
         }
 
     }
-    
+
 }
 
 void sfx::do_footstep()

@@ -11900,31 +11900,38 @@ void Character::update_hearing_loss( const time_duration &duration, const bool &
     remove_effect( effect_hearing_loss_light );
     remove_effect( effect_hearing_loss_heavy );
 
-    if ( get_effect_int( effect_hearing_loss_light) != 0 || get_effect_int( effect_hearing_loss_heavy) != 0 || tot_dB_loss >= HEARING_LOSS_SLIGHT_THRESHOLD ){
+    if( get_effect_int( effect_hearing_loss_light ) != 0 ||
+        get_effect_int( effect_hearing_loss_heavy ) != 0 || tot_dB_loss >= HEARING_LOSS_SLIGHT_THRESHOLD ) {
         // Step through our cases, most likely to least.
-        if ( tot_dB_loss < HEARING_LOSS_MILD_THRESHOLD ){
+        if( tot_dB_loss < HEARING_LOSS_MILD_THRESHOLD ) {
 
-            add_effect( effect_hearing_loss_light, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(), 1, true );
+            add_effect( effect_hearing_loss_light, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        1, true );
 
-        } else if ( tot_dB_loss < HEARING_LOSS_MODERATE_THRESHOLD ){
+        } else if( tot_dB_loss < HEARING_LOSS_MODERATE_THRESHOLD ) {
 
-            add_effect( effect_hearing_loss_light, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(), 2, true );
+            add_effect( effect_hearing_loss_light, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        2, true );
 
-        } else if ( tot_dB_loss < HEARING_LOSS_HEAVY_THRESHOLD ){
+        } else if( tot_dB_loss < HEARING_LOSS_HEAVY_THRESHOLD ) {
 
-            add_effect( effect_hearing_loss_light, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(), 3, true );
+            add_effect( effect_hearing_loss_light, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        3, true );
 
-        } else if ( tot_dB_loss < HEARING_LOSS_SEVERE_THRESHOLD ){
+        } else if( tot_dB_loss < HEARING_LOSS_SEVERE_THRESHOLD ) {
 
-            add_effect( effect_hearing_loss_heavy, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(), 1, true );
+            add_effect( effect_hearing_loss_heavy, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        1, true );
 
-        } else if ( tot_dB_loss < HEARING_LOSS_PROFOUND_THRESHOLD ) {
+        } else if( tot_dB_loss < HEARING_LOSS_PROFOUND_THRESHOLD ) {
 
-            add_effect( effect_hearing_loss_heavy, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(), 2, true );
+            add_effect( effect_hearing_loss_heavy, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        2, true );
 
         } else {
 
-            add_effect( effect_hearing_loss_heavy, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(), 3, true );
+            add_effect( effect_hearing_loss_heavy, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        3, true );
 
         }
     }
@@ -11997,8 +12004,9 @@ float Character::hearing_ability() const
         volume_multiplier *= ( 30_minutes - get_effect_dur( effect_deaf ) ) / 30_minutes;
     }
     // Acount for our hearing protection and hearing loss.
-    const auto hearing_dampening = total_hearing_loss() + dBspl_to_mdBspl( get_char_hearing_protection() );
-    if( hearing_dampening > 0 ){
+    const auto hearing_dampening = total_hearing_loss() + dBspl_to_mdBspl(
+                                       get_char_hearing_protection() );
+    if( hearing_dampening > 0 ) {
         volume_multiplier *= get_hearing_loss_hearing_ability_mult( hearing_dampening );
     }
 
