@@ -2562,6 +2562,14 @@ const color_tint_pair *tileset::get_tint( const std::string &tint_id )
     return nullptr;
 }
 
+bool tileset::try_get_tint(const std::string& tint_id, color_tint_pair& tint) {
+    if( tints.contains( tint_id ) ) {
+        tint = tints[tint_id];
+        return true;
+    }
+    return false;
+}
+
 void tileset_loader::process_variations_after_loading( weighted_int_list<std::vector<int>> &vs )
 {
     // loop through all of the variations
