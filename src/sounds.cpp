@@ -3709,7 +3709,7 @@ void sfx::remove_hearing_loss( const bool &p_hear_impaired )
 
             if( hearing_loss >= HEARING_LOSS_SLIGHT_THRESHOLD ) {
 
-                if( !tinnitus_stop_chance( hearing_loss ) ) {
+                if( !one_in( tinnitus_stop_chance( hearing_loss ) ) )  {
 
                     return;
 

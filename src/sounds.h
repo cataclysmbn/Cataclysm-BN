@@ -239,7 +239,7 @@ static constexpr uint8_t hearing_loss_threshold_index_from_mdB_volume( const sho
 static constexpr bool tinnitus_stop_chance( const short &total_loss )
 {
     // Our chances range from 11.11% to 25%.
-    return one_in( 9 - hearing_loss_threshold_index_from_mdB_volume( total_loss ) );
+    return ( 9 - hearing_loss_threshold_index_from_mdB_volume( total_loss ) );
 }
 
 
