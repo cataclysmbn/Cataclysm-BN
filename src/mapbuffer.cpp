@@ -527,7 +527,7 @@ auto mapbuffer::move_cost( const tripoint_abs_ms &p,
     }
 
     return move_cost_from_tile_parts( tile->sm->get_ter( tile->local ),
-                                     tile->sm->get_furn( tile->local ), veh_at( p, options ) );
+                                      tile->sm->get_furn( tile->local ), veh_at( p, options ) );
 }
 
 auto mapbuffer::passable( const tripoint_abs_ms &p,
@@ -874,13 +874,16 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
 
     auto valid_tile = [&]( const tripoint_abs_ms & target ) -> std::optional<mapbuffer_tile_lookup> {
         auto tile = lookup_tile( *this, target, options.lookup );
-        if( !tile ) {
+        if( !tile )
+        {
             return std::nullopt;
         }
-        if( tile_has_flag( *tile, "DESTROY_ITEM" ) ) {
+        if( tile_has_flag( *tile, "DESTROY_ITEM" ) )
+        {
             return std::nullopt;
         }
-        if( new_item->made_of( LIQUID ) && tile_has_flag( *tile, "SWIMMABLE" ) ) {
+        if( new_item->made_of( LIQUID ) && tile_has_flag( *tile, "SWIMMABLE" ) )
+        {
             return std::nullopt;
         }
         return tile;
@@ -942,7 +945,7 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
     };
 
     auto try_place = [&]( const tripoint_abs_ms & target, const bool reject_noitem,
-                          const bool call_drop_hook_first ) {
+    const bool call_drop_hook_first ) {
         auto tile = valid_tile( target );
         if( !tile ) {
             return false;
@@ -1003,10 +1006,10 @@ auto mapbuffer::add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_ite
     }
 
     if( !map_mutation_hooks::prepare_item_for_placement( {
-        .dim_id = dimension_id_,
-        .p = p,
-        .item_to_place = new_item,
-    } ) ) {
+    .dim_id = dimension_id_,
+    .p = p,
+    .item_to_place = new_item,
+} ) ) {
         return std::move( new_item );
     }
 
@@ -1340,7 +1343,7 @@ auto mapbuffer::partial_con_remove( const tripoint_abs_ms &p,
 }
 
 auto mapbuffer::active_reality_bubble_local( const tripoint_abs_ms &p ) const
--> std::optional<tripoint_bub_ms>
+- > std::optional<tripoint_bub_ms>
 {
     if( g == nullptr ) {
         return std::nullopt;
