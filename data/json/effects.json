@@ -2630,6 +2630,7 @@
   {
     "type": "effect_type",
     "id": "hearing_loss_light",
+    "looks_like": "deaf",
     "name": [ "Slight Hearing Loss", "Mild Hearing Loss", "Moderate Hearing Loss" ],
     "desc": [
       "Everything feels just a bit quieter.",
