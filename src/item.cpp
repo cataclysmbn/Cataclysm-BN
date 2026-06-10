@@ -9605,6 +9605,13 @@ int item::get_remaining_capacity_for_id( const itype_id &liquid, bool allow_buck
     return rem_cap;
 }
 
+auto item::preserve_freshness_when_unsealed() -> void
+{
+    if( goes_bad() && is_in_preserving_container() ) {
+        mark_rot_checked_now();
+    }
+}
+
 detached_ptr<item> item::use_amount( detached_ptr<item> &&self, const itype_id &it, int &quantity,
                                      std::vector<detached_ptr<item>> &used,
                                      const std::function<bool( const item & )> &filter )
@@ -9614,6 +9621,7 @@ detached_ptr<item> item::use_amount( detached_ptr<item> &&self, const itype_id &
 
     self->remove_items_with( [&]( detached_ptr<item> &&a ) {
         if( quantity > 0  && a->typeId() == it && filter( *a ) ) {
+            a->preserve_freshness_when_unsealed();
             used.push_back( std::move( a ) );
             quantity--;
             return VisitResponse::SKIP;
@@ -9752,6 +9760,9 @@ detached_ptr<item> item::use_charges( detached_ptr<item> &&self, const itype_id 
 
 
     auto handle_item = [&qty, &used, &pos, &what]( detached_ptr<item> &&e ) {
+        if( e->typeId() == what ) {
+            e->preserve_freshness_when_unsealed();
+        }
         if( e->is_tool() ) {
             if( e->typeId() == what || ( what == itype_UPS && e->has_flag( flag_IS_UPS ) ) ) {
                 int ups_eff_mult = e->type->tool->ups_eff_mult;

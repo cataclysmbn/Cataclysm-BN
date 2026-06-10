@@ -2429,6 +2429,7 @@ class item : public location_visitable<item>, public game_object<item>
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
         auto is_in_preserving_container() const -> bool;
         auto mark_rot_checked_now() -> void;
+        auto preserve_freshness_when_unsealed() -> void;
 
         /** Helper for checking reloadability. **/
         bool is_reloadable_helper( const itype_id &ammo, bool now ) const;
