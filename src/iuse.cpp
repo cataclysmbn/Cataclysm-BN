@@ -9502,7 +9502,7 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint_bub_ms & )
     if( t ) { // Normal use
         if( p->has_item( *it ) ) {
             // Only triggers every 1 minute so that fatigue isn't ridiculous
-            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 2_minutes ) ) {
                 p->add_morale( MORALE_FEELING_GOOD, 1, 30, 20_minutes, 10_minutes, true );
                 p->mod_fatigue( 1 );
             }
