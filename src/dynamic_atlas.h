@@ -72,8 +72,8 @@ class dynamic_atlas
 
         auto assign_id_internal( size_t id, const atlas_texture &tex ) -> bool;
         auto allocate_sprite_internal( int w, int h ) -> atlas_texture;
-        auto update_staging_area( staging_area& staging, int width, int height ) const
-            -> std::tuple<SDL_Texture *, SDL_Surface *, SDL_Rect>;
+        auto update_staging_area( staging_area &staging, int width, int height ) const
+        -> std::tuple<SDL_Texture *, SDL_Surface *, SDL_Rect>;
         std::vector<sprite_sheet> sheets;
         std::unordered_map<size_t, std::pair<int, SDL_Rect>> sprite_ids;
 

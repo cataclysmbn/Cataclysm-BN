@@ -2308,13 +2308,13 @@ void options_manager::add_options_graphics()
 
 #if defined(TILES)
     add( "TEXTURE_STREAMING", graphics, translate_marker( "Texture Streaming" ),
-     translate_marker( "Use texture-streaming instead of render-to-texture for dynamic graphics. Requires restart." ),
-{
-                { "auto", translate_marker( "Auto" ) },
-                { "on", translate_marker( "Enable" ) },
-                { "off", translate_marker( "Disable" ) }
-            },
-"auto" );
+         translate_marker( "Use texture-streaming instead of render-to-texture for dynamic graphics. Requires restart." ),
+    {
+        { "auto", translate_marker( "Auto" ) },
+        { "on", translate_marker( "Enable" ) },
+        { "off", translate_marker( "Disable" ) }
+    },
+    "auto" );
 #endif
 
 #if defined(SDL_HINT_RENDER_BATCHING)

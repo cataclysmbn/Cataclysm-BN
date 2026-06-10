@@ -28,22 +28,22 @@ auto load() -> void
 {
     read_from_file_json(
         PATH_INFO::preload(),
-        [&](JsonIn& jsin) {
-            const auto jObj = jsin.get_object();
+    [&]( JsonIn & jsin ) {
+        const auto jObj = jsin.get_object();
 
-            s_state.accel = compute_accel_from_string(
-                jObj.get_string("compute_acceleration", "auto") //
-            );
+        s_state.accel = compute_accel_from_string(
+                            jObj.get_string( "compute_acceleration", "auto" ) //
+                        );
 
-            if (!s_state.gpu_backend_override_set) {
-                s_state.gpu_backend = jObj.get_string("gpu_backend", "");
-            }
+        if( !s_state.gpu_backend_override_set ) {
+            s_state.gpu_backend = jObj.get_string( "gpu_backend", "" );
+        }
 
-            s_state.texture_streaming = tristate_from_string(
-                jObj.get_string("texture_streaming", "auto") //
-            );
-        },
-        true);
+        s_state.texture_streaming = tristate_from_string(
+                                        jObj.get_string( "texture_streaming", "auto" ) //
+                                    );
+    },
+    true );
 }
 
 auto save() -> void
