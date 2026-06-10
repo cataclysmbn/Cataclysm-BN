@@ -1327,8 +1327,8 @@ void game::unload_npcs()
     active_npc.clear();
 }
 
-auto game::on_submap_loaded( const tripoint_abs_sm &/*pos*/, const dimension_id &/*dim_id*/ )
-- > void
+void game::on_submap_loaded( const tripoint_abs_sm &/*pos*/,
+                             const dimension_id &/*dim_id*/ )
 {
     // Schedule an NPC activation scan on the next do_turn().  Any NPCs whose
     // authoritative submap position falls within the newly-simulated submap
@@ -1337,8 +1337,8 @@ auto game::on_submap_loaded( const tripoint_abs_sm &/*pos*/, const dimension_id 
     set_npcs_dirty();
 }
 
-auto game::on_submap_unloaded( const tripoint_abs_sm &pos, const dimension_id &/*dim_id*/ )
-- > void
+void game::on_submap_unloaded( const tripoint_abs_sm &pos,
+                               const dimension_id &/*dim_id*/ )
 {
     // Deactivate any NPCs whose absolute position falls in the evicted submap.
     // abs_pos() returns position directly (no map lookup), so this is safe to call here.
