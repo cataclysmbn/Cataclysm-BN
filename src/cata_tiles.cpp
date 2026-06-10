@@ -4821,7 +4821,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
         sprite_tex->get_alpha_mod( &old_alpha );
         sprite_tex->get_blend_mode( &old_blend_mode );
 
-        sprite_tex->set_blend_mode( SDL_BLENDMODE_BLEND );
+        sprite_tex->set_blend_mode( SDL_BLENDMODE_ADD );
         sprite_tex->set_color_mod( light_tint.color.r, light_tint.color.g, light_tint.color.b );
         sprite_tex->set_alpha_mod( light_tint.alpha );
         const auto ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
