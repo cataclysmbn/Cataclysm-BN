@@ -236,7 +236,7 @@ static constexpr uint8_t hearing_loss_threshold_index_from_mdB_volume( const sho
 }
 
 // Given a hearing_loss_thresholds index, return true if a one_in() chance is successful.
-static constexpr bool tinnitus_stop_chance( const short &total_loss )
+static constexpr uint8_t tinnitus_stop_chance( const short &total_loss )
 {
     // Our chances range from 11.11% to 25%.
     return ( 9 - hearing_loss_threshold_index_from_mdB_volume( total_loss ) );
