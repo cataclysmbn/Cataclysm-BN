@@ -6,11 +6,13 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "coordinates.h"
+#include "crafting.h"
 #include "enums.h"
 #include "item.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "game.h" // Just for get_convection_temperature(), TODO: Remove
+#include "requirements.h"
 #include "rot.h"
 #include "state_helpers.h"
 #include "units_temperature.h"
@@ -63,11 +65,22 @@ static auto make_storage( const vpart_id &storage_part,
     return { .veh = veh, .part_index = part_index, .pos = vehicle_pos };
 }
 
+static auto add_food_to_vehicle_part( vehicle &veh, const int part_index,
+                                      const itype_id &food_type ) -> void
+{
+    auto food = item::spawn( food_type );
+    REQUIRE( food->goes_bad() );
+    REQUIRE_FALSE( veh.add_item( part_index, std::move( food ) ) );
+}
+
 static auto add_sashimi_to_vehicle_part( vehicle &veh, const int part_index ) -> void
 {
-    auto sashimi = item::spawn( "sashimi" );
-    REQUIRE( sashimi->goes_bad() );
-    REQUIRE_FALSE( veh.add_item( part_index, std::move( sashimi ) ) );
+    add_food_to_vehicle_part( veh, part_index, itype_id( "sashimi" ) );
+}
+
+static auto add_bread_to_vehicle_part( vehicle &veh, const int part_index ) -> void
+{
+    add_food_to_vehicle_part( veh, part_index, itype_id( "bread" ) );
 }
 
 static auto add_canned_red_sauce_to_vehicle_part( vehicle &veh, const int part_index ) -> void
@@ -75,6 +88,19 @@ static auto add_canned_red_sauce_to_vehicle_part( vehicle &veh, const int part_i
     auto sauce = item::in_its_container( item::spawn( "sauce_red" ) );
     REQUIRE( sauce->goes_bad_after_opening( true ) );
     REQUIRE_FALSE( veh.add_item( part_index, std::move( sauce ) ) );
+}
+
+static auto complete_recipe_from_components( Character &crafter, const recipe_id &recipe_to_make,
+        std::vector<detached_ptr<item>> components ) -> void
+{
+    auto craft = item::spawn( &recipe_to_make.obj(), 1, std::move( components ),
+                              std::vector<item_comp> {} );
+    complete_craft( crafter, *craft );
+}
+
+static auto completed_items( Character &who, const itype_id &type ) -> std::vector<item *>
+{
+    return who.items_with( [&type]( const item & it ) { return it.typeId() == type; } );
 }
 
 static auto move_to_inventory_with_attempt_detach( item &stored ) -> item * // *NOPAD*
@@ -105,10 +131,17 @@ static auto prepare_map_storage_test() -> void
     set_map_temperature( get_weather(), 18_c );
 }
 
+static auto add_food_to_map( const tripoint_bub_ms &pos, const itype_id &food_type ) -> void
+{
+    auto food = item::spawn( food_type );
+    REQUIRE( food->goes_bad() );
+    get_map().add_item( pos, std::move( food ) );
+    REQUIRE( get_map().i_at( pos ).size() == 1 );
+}
+
 static auto add_sashimi_to_map( const tripoint_bub_ms &pos ) -> void
 {
-    get_map().add_item( pos, item::spawn( "sashimi" ) );
-    REQUIRE( get_map().i_at( pos ).size() == 1 );
+    add_food_to_map( pos, itype_id( "sashimi" ) );
 }
 
 TEST_CASE( "Rate of rotting" )
@@ -479,6 +512,104 @@ TEST_CASE( "Vehicle storage temperature controls food rot" )
         CHECK( components.front()->get_rot() == 0_turns );
         CHECK( !components.front()->rotten() );
     }
+
+    SECTION( "powered freezer cargo keeps whole food fresh when consumed for crafting" ) {
+        auto fixture = make_storage( vpart_id( "minifreezer" ), true );
+        add_sashimi_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        calendar::turn += 21_days;
+
+        auto quantity = 1;
+        auto components = get_map().use_amount( fixture.pos, PICKUP_RANGE, itype_id( "sashimi" ),
+                                                quantity, return_true<item> );
+
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+        CHECK( components.front()->get_rot() == 0_turns );
+        CHECK( !components.front()->rotten() );
+    }
+
+    SECTION( "powered freezer cargo keeps crafted food fresh from frozen ingredients" ) {
+        auto fixture = make_storage( vpart_id( "minifreezer" ), true );
+        add_food_to_vehicle_part( *fixture.veh, fixture.part_index, itype_id( "meat" ) );
+
+        calendar::turn += 21_days;
+
+        auto quantity = 1;
+        auto components = get_map().use_amount( fixture.pos, PICKUP_RANGE, itype_id( "meat" ),
+                                                quantity, return_true<item> );
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+
+        auto &avatar = get_avatar();
+        complete_recipe_from_components( avatar, recipe_id( "meat_cooked" ), std::move( components ) );
+
+        const auto crafted = completed_items( avatar, itype_id( "meat_cooked" ) );
+        REQUIRE( crafted.size() == 1 );
+        CHECK( crafted.front()->get_rot() == 0_turns );
+        CHECK( !crafted.front()->rotten() );
+    }
+
+    SECTION( "powered fridge cargo catches up whole food rot when consumed for crafting" ) {
+        auto fixture = make_storage( vpart_id( "minifridge" ), true );
+        add_sashimi_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        calendar::turn += 24_hours;
+
+        auto quantity = 1;
+        auto components = get_map().use_amount( fixture.pos, PICKUP_RANGE, itype_id( "sashimi" ),
+                                                quantity, return_true<item> );
+
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+        CHECK( components.front()->get_relative_rot() > 0.0 );
+        CHECK( components.front()->get_relative_rot() < 1.0 );
+    }
+
+    SECTION( "powered freezer cargo keeps charge food fresh when consumed for crafting" ) {
+        auto fixture = make_storage( vpart_id( "minifreezer" ), true );
+        add_bread_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        calendar::turn += 20_days;
+
+        auto quantity = 1;
+        auto components = get_map().use_charges( fixture.pos, 0, itype_id( "bread" ), quantity,
+                          return_true<item> );
+
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+        CHECK( components.front()->charges == 1 );
+        CHECK( components.front()->get_rot() == 0_turns );
+        CHECK( !components.front()->rotten() );
+
+        auto remaining = fixture.veh->get_items( fixture.part_index );
+        REQUIRE( remaining.size() == 1 );
+        CHECK( remaining.only_item().charges == 1 );
+        CHECK( remaining.only_item().get_rot() == 0_turns );
+    }
+
+    SECTION( "powered fridge cargo catches up charge food rot when consumed for crafting" ) {
+        auto fixture = make_storage( vpart_id( "minifridge" ), true );
+        add_bread_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        calendar::turn += 24_hours;
+
+        auto quantity = 1;
+        auto components = get_map().use_charges( fixture.pos, 0, itype_id( "bread" ), quantity,
+                          return_true<item> );
+
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+        CHECK( components.front()->charges == 1 );
+        CHECK( components.front()->get_relative_rot() > 0.0 );
+        CHECK( components.front()->get_relative_rot() < 1.0 );
+
+        auto remaining = fixture.veh->get_items( fixture.part_index );
+        REQUIRE( remaining.size() == 1 );
+        CHECK( remaining.only_item().charges == 1 );
+        CHECK( remaining.only_item().get_relative_rot() > 0.0 );
+        CHECK( remaining.only_item().get_relative_rot() < 1.0 );
+    }
 }
 
 TEST_CASE( "Contained item keeps parent location while temporarily detached" )
@@ -530,6 +661,113 @@ TEST_CASE( "Map powered fridge and freezer furniture controls food rot" )
         REQUIRE( items.size() == 1 );
         CHECK( items.only_item().get_relative_rot() > 0.0 );
         CHECK( items.only_item().get_relative_rot() < 1.0 );
+    }
+
+    SECTION( "powered freezer furniture keeps food fresh when removed after missed processing" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        get_map().furn_set( pos, f_test_minifreezer_on );
+        add_sashimi_to_map( pos );
+
+        calendar::turn += 21_days;
+
+        auto items = get_map().i_at( pos );
+        REQUIRE( items.size() == 1 );
+        auto *carried = move_to_inventory_with_attempt_detach( items.only_item() );
+
+        REQUIRE( carried != nullptr );
+        CHECK( carried->get_rot() == 0_turns );
+        CHECK( !carried->rotten() );
+    }
+
+    SECTION( "powered freezer furniture keeps whole food fresh when consumed for crafting" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        get_map().furn_set( pos, f_test_minifreezer_on );
+        add_sashimi_to_map( pos );
+
+        calendar::turn += 21_days;
+
+        auto quantity = 1;
+        auto components = get_map().use_amount( pos, PICKUP_RANGE, itype_id( "sashimi" ), quantity,
+                                                return_true<item> );
+
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+        CHECK( components.front()->get_rot() == 0_turns );
+        CHECK( !components.front()->rotten() );
+    }
+
+    SECTION( "powered fridge furniture catches up whole food rot when consumed for crafting" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        get_map().furn_set( pos, f_test_fridge_on );
+        add_sashimi_to_map( pos );
+
+        calendar::turn += 24_hours;
+
+        auto quantity = 1;
+        auto components = get_map().use_amount( pos, PICKUP_RANGE, itype_id( "sashimi" ), quantity,
+                                                return_true<item> );
+
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+        CHECK( components.front()->get_relative_rot() > 0.0 );
+        CHECK( components.front()->get_relative_rot() < 1.0 );
+    }
+
+    SECTION( "powered freezer furniture keeps charge food fresh when consumed for crafting" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        get_map().furn_set( pos, f_test_minifreezer_on );
+        add_food_to_map( pos, itype_id( "bread" ) );
+
+        calendar::turn += 20_days;
+
+        auto quantity = 1;
+        auto components = get_map().use_charges( pos, 0, itype_id( "bread" ), quantity,
+                          return_true<item> );
+
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+        CHECK( components.front()->charges == 1 );
+        CHECK( components.front()->get_rot() == 0_turns );
+        CHECK( !components.front()->rotten() );
+
+        auto remaining = get_map().i_at( pos );
+        REQUIRE( remaining.size() == 1 );
+        CHECK( remaining.only_item().charges == 1 );
+        CHECK( remaining.only_item().get_rot() == 0_turns );
+    }
+
+    SECTION( "powered fridge furniture catches up charge food rot when consumed for crafting" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        get_map().furn_set( pos, f_test_fridge_on );
+        add_food_to_map( pos, itype_id( "bread" ) );
+
+        calendar::turn += 24_hours;
+
+        auto quantity = 1;
+        auto components = get_map().use_charges( pos, 0, itype_id( "bread" ), quantity,
+                          return_true<item> );
+
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+        CHECK( components.front()->charges == 1 );
+        CHECK( components.front()->get_relative_rot() > 0.0 );
+        CHECK( components.front()->get_relative_rot() < 1.0 );
+
+        auto remaining = get_map().i_at( pos );
+        REQUIRE( remaining.size() == 1 );
+        CHECK( remaining.only_item().charges == 1 );
+        CHECK( remaining.only_item().get_relative_rot() > 0.0 );
+        CHECK( remaining.only_item().get_relative_rot() < 1.0 );
     }
 
     SECTION( "unprotected map storage reports stale rot when inspected before processing" ) {
