@@ -1,5 +1,11 @@
 import { assertEquals } from "https://deno.land/std@0.208.0/assert/assert_equals.ts"
-import { base, bionic, schemasTransformer, vehiclePart } from "./3312.migrate_legacy_unit.ts"
+import {
+  base,
+  bionic,
+  fromLegacySound,
+  schemasTransformer,
+  vehiclePart,
+} from "./3312.migrate_legacy_unit.ts"
 
 const input = [{
   type: "vehicle_part",
@@ -62,5 +68,22 @@ Deno.test("preserves use_action arrays while converting sibling units", () => {
     type: "TOOL",
     magazine_well: "250 ml",
     use_action: [{ type: "repair_item" }],
+  }])
+})
+
+Deno.test("converts nested legacy sound volumes", () => {
+  const transformer = schemasTransformer([base])
+
+  const result = transformer([{
+    type: "TOOL",
+    use_action: { type: "explosion", sound_volume: 2 },
+    vehicle_data: { sound_volume: 10 },
+    bash: { sound_vol: 20, sound_fail_vol: "80 dB" },
+  }])
+  assertEquals(result, [{
+    type: "TOOL",
+    use_action: { type: "explosion", sound_volume: fromLegacySound(2) },
+    vehicle_data: { sound_volume: fromLegacySound(10) },
+    bash: { sound_vol: fromLegacySound(20), sound_fail_vol: "80 dB" },
   }])
 })
