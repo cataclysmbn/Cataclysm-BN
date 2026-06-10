@@ -585,7 +585,27 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEYSTORE_PROPERTIES: ${{ secrets.KEYSTORE_PROPERTIES }}
         run: |
-          if [ -n "$KEYSTORE" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEYSTORE_PROPERTIES" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            rm -f app/pr-debug.keystore keystore.properties
+            keytool -genkeypair \
+              -noprompt \
+              -keystore app/pr-debug.keystore \
+              -storetype JKS \
+              -storepass android \
+              -keypass android \
+              -alias cbn-pr-debug \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Cataclysm BN PR Debug,O=Cataclysm BN"
+            cat > keystore.properties <<'EOF'
+          storeFile=pr-debug.keystore
+          storePassword=android
+          keyAlias=cbn-pr-debug
+          keyPassword=android
+          EOF
+            echo "::notice::Signing PR Android artifact with the PR debug key"
+          elif [ -n "$KEYSTORE" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEYSTORE_PROPERTIES" ]; then
             printf '%s' "$KEYSTORE" > release.keystore.asc
             gpg -d --passphrase "$KEYSTORE_PASSWORD" --batch release.keystore.asc > app/release.keystore
             printf '%s' "$KEYSTORE_PROPERTIES" > keystore.properties.asc
