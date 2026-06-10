@@ -410,7 +410,7 @@ TEST_CASE( "plumbing_lua_morale_refreshes_without_stacking", "[lua][plumbing]" )
     auto gapi_table = lua.create_table();
     gapi_table["get_map"] = [&fake_map]() -> sol::table { return fake_map; };
     gapi_table["add_msg"] = [&last_message]( const sol::object &,
-            const std::string & message ) -> void {
+    const std::string & message ) -> void {
         last_message = message;
     };
 
