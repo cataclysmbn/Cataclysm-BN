@@ -42,9 +42,11 @@ class dynamic_atlas
         using sprite_callback = std::function<void( SDL_Surface *, const SDL_Rect * )>;
 
         dynamic_atlas()
-            : max_atlas_width( 0 ), max_atlas_height( 0 ), hint_sprite_width( 0 ), hint_sprite_height( 0 ), is_batching( false ) {}
+            : max_atlas_width( 0 ), max_atlas_height( 0 ), hint_sprite_width( 0 ),
+              hint_sprite_height( 0 ), is_batching( false ) {}
         dynamic_atlas( const int w, const int h, const int sw = 0, const int sh = 0 )
-            : max_atlas_width( w ), max_atlas_height( h ), hint_sprite_width( sw ), hint_sprite_height( sh ), is_batching( false ) {}
+            : max_atlas_width( w ), max_atlas_height( h ), hint_sprite_width( sw ),
+              hint_sprite_height( sh ), is_batching( false ) {}
 
         auto find_sprite( size_t id ) -> std::optional<atlas_texture>;
         auto create_sprite( int w, int h, const std::optional<size_t> &id,
