@@ -3963,7 +3963,7 @@ void sfx::generate_gun_sound( const tripoint_bub_ms &, const item &, const short
 void sfx::generate_melee_sound( const tripoint_bub_ms &, const tripoint_bub_ms &, bool, bool,
                                 const std::string & ) { }
 void sfx::do_hearing_loss( int ) { }
-void sfx::remove_hearing_loss() { }
+void sfx::remove_hearing_loss( const bool &p_hear_impaired ) { }
 void sfx::do_projectile_hit( const Creature & ) { }
 void sfx::do_footstep() { }
 void sfx::do_danger_music() { }
