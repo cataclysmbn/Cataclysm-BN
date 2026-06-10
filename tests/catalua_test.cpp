@@ -384,6 +384,65 @@ TEST_CASE( "plumbing_lua_tripoint_migration", "[lua][plumbing]" )
     get_avatar().cancel_activity();
 }
 
+TEST_CASE( "plumbing_lua_morale_refreshes_without_stacking", "[lua][plumbing]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto empty_item_stack = lua.create_table();
+    empty_item_stack["items"] = [&lua]() -> sol::table { return lua.create_table(); };
+
+    auto fake_map = lua.create_table();
+    fake_map["points_in_radius"] = []( const sol::object &, const tripoint_bub_ms &, int,
+    int ) -> std::vector<tripoint_bub_ms> {
+        return { tripoint_bub_ms( 10, 10, 0 ) };
+    };
+    fake_map["get_items_at"] = [&empty_item_stack]( const sol::object &,
+    const tripoint_bub_ms & ) -> sol::table {
+        return empty_item_stack;
+    };
+    fake_map["has_vehicle_part_with_feature_at"] = []( const sol::object &, const tripoint_bub_ms &,
+    const std::string & feature, bool ) -> bool {
+        return feature == "TOWEL";
+    };
+
+    auto last_message = std::string{};
+    auto gapi_table = lua.create_table();
+    gapi_table["get_map"] = [&fake_map]() -> sol::table { return fake_map; };
+    gapi_table["add_msg"] = [&last_message]( const sol::object &,
+            const std::string & message ) -> void {
+        last_message = message;
+    };
+
+    auto env = sol::environment( lua, sol::create, lua.globals() );
+    env["gapi"] = gapi_table;
+
+    auto load_res = lua.load_file( "data/json/lua/plumbing.lua" );
+    REQUIRE( load_res.valid() );
+    auto exec = sol::protected_function( load_res );
+    sol::set_environment( env, exec );
+    auto exec_res = exec();
+    REQUIRE( exec_res.valid() );
+    auto plumbing = exec_res.get<sol::table>();
+    auto finish = plumbing["finish_wash"].get<sol::protected_function>();
+
+    auto data = lua.create_table();
+    data["mode"] = "shower";
+    data["is_warm"] = false;
+    data["used_hygiene"] = false;
+    data["is_cold_wash"] = false;
+
+    auto params = lua.create_table();
+    params["user"] = get_avatar().as_character();
+    params["data"] = data;
+
+    REQUIRE( finish( params ).valid() );
+    REQUIRE( finish( params ).valid() );
+    REQUIRE( finish( params ).valid() );
+    CHECK( get_avatar().get_morale( morale_type( "morale_shower" ) ) == 6 );
+    CHECK( last_message.find( "vehicle towel hanger" ) != std::string::npos );
+}
+
 TEST_CASE( "plumbing_lua_data_hooks", "[lua]" )
 {
     const auto &shower = furn_id( "f_shower" ).obj();
@@ -406,8 +465,6 @@ TEST_CASE( "plumbing_lua_data_hooks", "[lua]" )
 
     REQUIRE( morale_type( "morale_shower" ).is_valid() );
     REQUIRE( morale_type( "morale_bath" ).is_valid() );
-    REQUIRE( morale_type( "morale_cold_shower" ).is_valid() );
-    REQUIRE( morale_type( "morale_warm_bath" ).is_valid() );
     REQUIRE( morale_type( "morale_cleansed_self" ).is_valid() );
 
     const auto &vehicle_shower = vpart_id( "vehicle_shower" ).obj();

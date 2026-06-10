@@ -3,7 +3,6 @@
 ---@field water_charges integer
 ---@field power_cost integer
 ---@field morale integer
----@field morale_max integer
 ---@field morale_duration_hours integer
 ---@field morale_decay_minutes integer
 ---@field heat_minutes integer
@@ -22,6 +21,10 @@
 ---@field item Item
 ---@field source string
 ---@field pos TripointBubMs?
+
+---@class PlumbingTowelCandidate
+---@field item Item?
+---@field label string
 
 ---@class PlumbingWashContext
 ---@field user Character
@@ -63,12 +66,8 @@ local item_towel = ItypeId.new("towel")
 local item_towel_wet = ItypeId.new("towel_wet")
 local item_water = ItypeId.new("water")
 local item_water_clean = ItypeId.new("water_clean")
-local morale_cold_shower = MoraleTypeDataId.new("morale_cold_shower")
 local morale_shower = MoraleTypeDataId.new("morale_shower")
-local morale_warm_shower = MoraleTypeDataId.new("morale_warm_shower")
-local morale_cold_bath = MoraleTypeDataId.new("morale_cold_bath")
 local morale_bath = MoraleTypeDataId.new("morale_bath")
-local morale_warm_bath = MoraleTypeDataId.new("morale_warm_bath")
 local morale_cleansed_self = MoraleTypeDataId.new("morale_cleansed_self")
 local flag_body_cleanser = JsonFlagId.new("BODY_CLEANSER")
 
@@ -78,6 +77,7 @@ local resource_source = {
 }
 
 local vehicle_shower_feature = "SHOWER"
+local vehicle_towel_feature = "TOWEL"
 
 local blood_field_ids = {
   FieldTypeId.new("fd_blood"):int_id(),
@@ -96,7 +96,6 @@ local wash_mode_data = {
     water_charges = 24,
     power_cost = 500,
     morale = 6,
-    morale_max = 20,
     morale_duration_hours = 2,
     morale_decay_minutes = 30,
     heat_minutes = 20,
@@ -107,7 +106,6 @@ local wash_mode_data = {
     water_charges = 180,
     power_cost = 1500,
     morale = 14,
-    morale_max = 30,
     morale_duration_hours = 5,
     morale_decay_minutes = 45,
     heat_minutes = 45,
@@ -256,21 +254,37 @@ local consume_body_cleanser_candidate = function(opts)
 end
 
 ---@param opts { user: Character, map: Map, center: TripointBubMs }
----@return PlumbingConsumableCandidate[]
+---@return PlumbingTowelCandidate[]
 local collect_dry_towel_candidates = function(opts)
   local candidates = {}
 
   for _, item in ipairs(opts.user:all_items(true)) do
-    if item:get_type() == item_towel then table.insert(candidates, { item = item, source = "inventory" }) end
+    if item:get_type() == item_towel then table.insert(candidates, { item = item, label = item:display_name(1) }) end
   end
 
   for _, tile in pairs(opts.map:points_in_radius(opts.center, 1, 0)) do
     for _, item in pairs(opts.map:get_items_at(tile):items()) do
-      if item:get_type() == item_towel then table.insert(candidates, { item = item, source = "map", pos = tile }) end
+      if item:get_type() == item_towel then table.insert(candidates, { item = item, label = item:display_name(1) }) end
+    end
+
+    if opts.map:has_vehicle_part_with_feature_at(tile, vehicle_towel_feature, true) then
+      table.insert(candidates, { label = locale.gettext("the vehicle towel hanger") })
     end
   end
 
   return candidates
+end
+
+---@param user Character
+---@param morale_type MoraleTypeDataId
+---@param bonus integer
+---@param duration TimeDuration
+---@param decay_start TimeDuration
+---@return nil
+local refresh_morale = function(user, morale_type, bonus, duration, decay_start)
+  local current = user:get_morale(morale_type)
+  local delta = current < bonus and bonus - current or 0
+  user:add_morale(morale_type, delta, bonus, duration, decay_start, true, nil)
 end
 
 ---@param opts { user: Character, map: Map, center: TripointBubMs }
@@ -279,9 +293,8 @@ local wet_dry_towel = function(opts)
   local candidate = collect_dry_towel_candidates({ user = opts.user, map = opts.map, center = opts.center })[1]
   if candidate == nil then return "" end
 
-  local label = candidate.item:display_name(1)
-  candidate.item:convert(item_towel_wet)
-  return label
+  if candidate.item ~= nil then candidate.item:convert(item_towel_wet) end
+  return candidate.label
 end
 
 ---@param opts { context: PlumbingWashContext }
@@ -592,33 +605,12 @@ plumbing.finish_wash = function(params)
   local mode_label = get_mode_label(mode)
 
   local base_morale_type = mode == wash_mode.bath and morale_bath or morale_shower
-  if is_warm then
-    base_morale_type = mode == wash_mode.bath and morale_warm_bath or morale_warm_shower
-  elseif is_cold_wash then
-    base_morale_type = mode == wash_mode.bath and morale_cold_bath or morale_cold_shower
-  end
+  local morale_duration = TimeDuration.from_hours(mode_data.morale_duration_hours)
+  local morale_decay = TimeDuration.from_minutes(mode_data.morale_decay_minutes)
 
-  params.user:add_morale(
-    base_morale_type,
-    mode_data.morale,
-    mode_data.morale_max,
-    TimeDuration.from_hours(mode_data.morale_duration_hours),
-    TimeDuration.from_minutes(mode_data.morale_decay_minutes),
-    true,
-    nil
-  )
+  refresh_morale(params.user, base_morale_type, mode_data.morale, morale_duration, morale_decay)
 
-  if used_hygiene then
-    params.user:add_morale(
-      morale_cleansed_self,
-      mode_data.hygiene_bonus,
-      mode_data.morale_max,
-      TimeDuration.from_hours(mode_data.morale_duration_hours),
-      TimeDuration.from_minutes(mode_data.morale_decay_minutes),
-      true,
-      nil
-    )
-  end
+  if used_hygiene then refresh_morale(params.user, morale_cleansed_self, mode_data.hygiene_bonus, morale_duration, morale_decay) end
 
   if is_warm then
     local heat_duration = TimeDuration.from_minutes(mode_data.heat_minutes)
