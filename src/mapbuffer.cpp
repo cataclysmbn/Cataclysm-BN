@@ -27,6 +27,7 @@
 #include "json.h"
 #include "map.h"
 #include "mapdata.h"
+#include "map_mutation_hooks.h"
 #include "overmapbuffer.h"
 #include "output.h"
 #include "popup.h"
@@ -435,6 +436,12 @@ auto mapbuffer::set_furn( const tripoint_abs_ms &p, const furn_id furn,
     tile->sm->set_furn( tile->local, furn );
     sync_furniture_change_side_tables( p, *tile->sm, tile->local, old_id, furn );
     invalidate_active_furniture_set_caches( p, old_id, furn );
+    map_mutation_hooks::on_furniture_changed( {
+        .dim_id = dimension_id_,
+        .p = p,
+        .old_furniture = old_id,
+        .new_furniture = furn,
+    } );
     return true;
 }
 
