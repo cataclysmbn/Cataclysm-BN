@@ -22,5 +22,7 @@
 
 ## Layout
 
-- `preload.lua`: menu flow, mode selection, shared helpers, and applying settings to nearby debug drones.
-- `ai_behaviors.lua`: explicit monster attitude routing and concrete `lua_ai_*` behavior implementations.
+- `preload.lua`: thin bootstrap that loads the mod runtime entrypoint.
+- `main.lua`: menu flow, mode selection, item-use entrypoints, spawning, and applying settings to nearby debug drones.
+- `ai_behaviors.lua`: named `lua_attitude_*` / `lua_ai_*` registrations and the concrete behavior implementations behind them.
+- `lib/utils.lua`: shared coordinate serialization/deserialization and small movement helpers used by the other modules.
