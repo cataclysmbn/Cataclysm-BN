@@ -302,7 +302,7 @@ class game : public submap_load_listener
          * Return the dimension ID the player is currently in.
          * Empty string = overworld (primary dimension).
          */
-        auto get_current_dimension_id() const -> const dimension_id & {
+        auto get_current_dimension_id() const -> const dimension_id& {
             return current_dimension_id_;
         }
 
