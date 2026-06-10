@@ -30,6 +30,7 @@
 #include "profile.h"
 #include "string_formatter.h"
 #include "submap.h"
+#include "submap_load_manager.h"
 #include "thread_pool.h"
 #include "translations.h"
 #include "ui_manager.h"
@@ -328,6 +329,42 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
         debugmsg( "file did not contain the expected submap %d,%d,%d", p.x(), p.y(), p.z() );
     }
     return result;
+}
+
+auto mapbuffer::get_submap( const tripoint_abs_sm &p,
+                            const mapbuffer_lookup_options options ) -> submap *
+{
+    switch( options.mode ) {
+        case mapbuffer_lookup_mode::simulated_only:
+            if( !submap_loader.is_simulated( dimension_id_, p ) ) {
+                return nullptr;
+            }
+            return lookup_submap_in_memory( p );
+        case mapbuffer_lookup_mode::resident_only:
+            return lookup_submap_in_memory( p );
+        case mapbuffer_lookup_mode::load_from_disk:
+            return lookup_submap( p );
+        case mapbuffer_lookup_mode::load_or_generate:
+            if( auto *sm = lookup_submap( p ) ) {
+                return sm;
+            }
+            generate_omt( project_to<coords::omt>( p ) );
+            return lookup_submap_in_memory( p );
+    }
+
+    return nullptr;
+}
+
+auto mapbuffer::get_ter( const tripoint_abs_ms &p,
+                         const mapbuffer_lookup_options options ) -> std::optional<ter_id>
+{
+    const auto split = project_remain<coords::sm>( p );
+    submap *const sm = get_submap( split.quotient_tripoint, options );
+    if( sm == nullptr ) {
+        return std::nullopt;
+    }
+
+    return sm->get_ter( split.remainder );
 }
 
 void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_progress )

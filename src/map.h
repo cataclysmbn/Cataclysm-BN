@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <shared_mutex>
 #include <set>
 #include <source_location>
@@ -761,11 +762,6 @@ class map : public submap_load_listener
          * Check if the map has dimension bounds set.
          */
         bool has_dimension_bounds() const;
-        /**
-         * Check if a local tripoint is out of dimension bounds.
-         * Returns false if no bounds are set (infinite dimension).
-         */
-        bool is_out_of_bounds( const tripoint_bub_ms &p ) const;
         /**
          * Get the boundary terrain ID for out-of-bounds areas.
          * Only valid if has_dimension_bounds() is true.
@@ -2465,17 +2461,15 @@ class map : public submap_load_listener
          */
         submap *getsubmap( size_t grididx ) const;
         /**
-         * Get the submap pointer containing the specified position within the reality bubble.
-         * (p) must be a valid coordinate, check with @ref inbounds.
+         * Compatibility map-local lookup. Absolute data lookup belongs on
+         * mapbuffer; simulation membership belongs on submap_load_manager.
          */
         submap *get_submap_at( const tripoint_bub_ms &p ) const;
         submap *get_submap_at( const point_bub_ms &p ) const {
             return get_submap_at( tripoint_bub_ms( p, abs_sub.z() ) );
         }
         /**
-         * Get the submap pointer containing the specified position within the reality bubble.
-         * The same as other get_submap_at, (p) must be valid (@ref inbounds).
-         * Also writes the position within the submap to offset_p
+         * Compatibility map-local lookup with submap-local offset.
          */
         submap *get_submap_at( const tripoint_bub_ms &p, point_sm_ms &offset_p ) const;
         submap *get_submap_at( const point_bub_ms &p, point_sm_ms &offset_p ) const {

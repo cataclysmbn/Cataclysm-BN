@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -13,6 +14,7 @@
 #include "coordinates.h"
 #include "mapgen_functions.h"
 #include "point.h"
+#include "type_id.h"
 
 class submap;
 class JsonIn;
@@ -22,6 +24,17 @@ struct mapbuffer_generate_omt_options {
     bool worker_safe = false;
     bool use_selected_mapgen = false;
     std::shared_ptr<mapgen_function> selected_mapgen;
+};
+
+enum class mapbuffer_lookup_mode : int {
+    simulated_only,
+    resident_only,
+    load_from_disk,
+    load_or_generate,
+};
+
+struct mapbuffer_lookup_options {
+    mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::resident_only;
 };
 
 /**
@@ -62,6 +75,23 @@ class mapbuffer
          * is not stored and the given unique_ptr retains ownsership.
          */
         bool add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &sm );
+
+        /**
+         * Absolute submap lookup with explicit residency/loading policy.
+         *
+         * simulated_only: return only if already resident and currently simulated.
+         * The simulation set is owned by submap_load_manager and may include
+         * non-player-bubble load requests.
+         * resident_only: return only if already resident in memory.
+         * load_from_disk: load saved/pending data if needed; never generate.
+         * load_or_generate: load saved/pending data first, then generate the
+         * containing OMT on miss.
+         */
+        auto get_submap( const tripoint_abs_sm &p,
+                         mapbuffer_lookup_options options = {} ) -> submap *;
+
+        auto get_ter( const tripoint_abs_ms &p,
+                      mapbuffer_lookup_options options = {} ) -> std::optional<ter_id>;
 
         /** Get a submap stored in this buffer.
          *

@@ -480,14 +480,6 @@ bool map::has_dimension_bounds() const
     return pocket_info_.has_value();
 }
 
-bool map::is_out_of_bounds( const tripoint_bub_ms &p ) const
-{
-    if( !pocket_info_ ) {
-        return false;  // No bounds means infinite dimension
-    }
-    return !pocket_info_->bounds.contains( map_local_to_abs( *this, p ) );
-}
-
 ter_id map::get_boundary_terrain() const
 {
     if( pocket_info_ && pocket_info_->bounds.boundary_terrain.is_valid() ) {
@@ -2342,7 +2334,7 @@ bool map::has_furn( const tripoint_bub_ms &p ) const
 
 furn_id map::furn( const tripoint_bub_ms &p ) const
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return f_null;
     }
 
@@ -2358,7 +2350,7 @@ furn_id map::furn( const tripoint_bub_ms &p ) const
 void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
                     const cata::poly_serialized<active_tile_data> &new_active, bool ignore_grab_check )
 {
-    if( is_out_of_bounds( p ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), p ) ) {
         return;
     }
 
@@ -2512,7 +2504,7 @@ std::string map::furnname( const tripoint_bub_ms &p )
 ter_id map::ter( const tripoint_bub_ms &p ) const
 {
     // Check dimension bounds first - out-of-bounds areas show boundary terrain
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return get_boundary_terrain();
     }
 
@@ -2741,7 +2733,7 @@ bool map::is_harvestable( const tripoint_bub_ms &pos ) const
  */
 bool map::ter_set( const tripoint_bub_ms &p, const ter_id &new_terrain )
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return false;
     }
 
@@ -2901,7 +2893,7 @@ bool map::is_wall_adjacent( const tripoint_bub_ms &center ) const
 int map::move_cost( const tripoint_bub_ms &p, const vehicle *ignored_vehicle ) const
 {
     // Dimension bounds are always impassable
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return 0;
     }
 
@@ -4852,7 +4844,7 @@ bash_results map::bash( const tripoint_bub_ms &p, const bash_params &bsh,
     bash_results result;
 
     // Dimension bounds cannot be bashed - show message from boundary terrain
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         if( !bsh.silent && pocket_info_ ) {
             const ter_t &boundary_ter = pocket_info_->bounds.boundary_terrain.obj();
             if( !boundary_ter.bash.sound_fail.empty() ) {
@@ -4979,7 +4971,7 @@ bash_results &bash_results::operator|=( const bash_results &other )
 void map::destroy( const tripoint_bub_ms &p, const bool silent )
 {
     // Dimension bounds cannot be destroyed
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return;
     }
 
@@ -5707,7 +5699,7 @@ void map::adjust_radiation( const tripoint_bub_ms &p, const int delta )
 
 int map::get_temperature( const tripoint_bub_ms &p ) const
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return 0;
     }
 
@@ -5720,7 +5712,7 @@ int map::get_temperature( const tripoint_bub_ms &p ) const
 
 void map::set_temperature( const tripoint_bub_ms &p, int new_temperature )
 {
-    if( is_out_of_bounds( p ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), p ) ) {
         return;
     }
 
@@ -5884,7 +5876,7 @@ void map::spawn_item( const tripoint_bub_ms &p, const itype_id &type_id,
     }
 
     // Skip spawning items in dimension-bounded out-of-bounds areas
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return;
     }
 
@@ -5927,7 +5919,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
     // Checks if item would not be destroyed if added to this tile
     auto valid_tile = [&]( const tripoint_bub_ms & e ) {
         // Cannot add items to dimension-bounded out-of-bounds areas or unloaded submaps
-        if( is_out_of_bounds( e ) ) {
+        if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), e ) ) {
             return false;
         }
 
@@ -5996,7 +5988,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
         const pathfinding_settings setting( 0, max_dist, max_path_length, 0, false, true, false, false,
                                             false );
         for( const auto &e : tiles ) {
-            if( is_out_of_bounds( e ) ) {
+            if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), e ) ) {
                 continue;
             }
             //must be a path to the target tile
@@ -6820,7 +6812,7 @@ bool map::can_see_trap_at( const tripoint_bub_ms &p, const Character &c ) const
 
 const trap &map::tr_at( const tripoint_bub_ms &p ) const
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return tr_null.obj();
     }
 
@@ -6840,7 +6832,7 @@ const trap &map::tr_at( const tripoint_bub_ms &p ) const
 
 partial_con *map::partial_con_at( const tripoint_bub_ms &p )
 {
-    if( is_out_of_bounds( p ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), p ) ) {
         return nullptr;
     }
     point_sm_ms l;
@@ -6857,7 +6849,7 @@ partial_con *map::partial_con_at( const tripoint_bub_ms &p )
 
 void map::partial_con_remove( const tripoint_bub_ms &p )
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return;
     }
     point_sm_ms l;
@@ -6870,7 +6862,7 @@ void map::partial_con_remove( const tripoint_bub_ms &p )
 
 void map::partial_con_set( const tripoint_bub_ms &p, std::unique_ptr<partial_con> con )
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return;
     }
     point_sm_ms l;
@@ -6995,7 +6987,7 @@ void map::remove_trap( const tripoint_bub_ms &p )
  */
 const field &map::field_at( const tripoint_bub_ms &p ) const
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         nulfield = field();
         return nulfield;
     }
@@ -7016,7 +7008,7 @@ const field &map::field_at( const tripoint_bub_ms &p ) const
  */
 field &map::field_at( const tripoint_bub_ms &p )
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         nulfield = field();
         return nulfield;
     }
@@ -7093,7 +7085,7 @@ int map::get_field_intensity( const tripoint_bub_ms &p, const field_type_id &typ
 
 bool map::has_field_at( const tripoint_bub_ms &p, bool check_bounds )
 {
-    if( check_bounds && is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( check_bounds && is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return false;
     }
     point_sm_ms l;
@@ -10854,7 +10846,7 @@ submap *map::get_submap_at( const tripoint_bub_ms &p ) const
         // Fast path: tile is inside the reality bubble grid.
         return get_submap_at_grid( tripoint_bub_sm( p.x() / SEEX, p.y() / SEEY, p.z() ) );
     }
-    if( is_out_of_bounds( p ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), p ) ) {
         // Outside dimension bounds — genuinely invalid position.
         return nullptr;
     }
