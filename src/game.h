@@ -26,7 +26,6 @@
 #include "creature.h"
 #include "dimension_info.h"
 #include "cursesdef.h"
-#include "distribution_grid.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "mapdata.h"
@@ -40,6 +39,7 @@
 
 class Character;
 class Creature_tracker;
+class distribution_grid_tracker;
 class item;
 class monster;
 class spell_events;
