@@ -1869,7 +1869,7 @@ auto add_field_sources(source_accumulator& acc) -> void {
 auto add_active_item_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_active_item_sources");
     for (tripoint_abs_sm const& abs_pos : acc.m.get_submaps_with_active_items()) {
-        auto const local_pos = acc.m.abs_to_bub(abs_pos);
+        auto const local_pos = abs_to_bub(abs_pos);
         if (dirty_level_index(acc, local_pos.z()) < 0) { continue; }
 
         auto* const sm = acc.m.get_submap_at_grid(local_pos);

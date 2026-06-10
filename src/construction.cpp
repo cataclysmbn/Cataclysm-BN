@@ -1678,7 +1678,7 @@ void place_construction( const construction_group_str_id &group )
     }
     g->u.assign_activity( std::make_unique<player_activity>
                           ( std::make_unique<construction_activity_actor>
-                            ( here.bub_to_abs( pnt ) ) ) );
+                            ( bub_to_abs( pnt ) ) ) );
 }
 
 void complete_construction( Character &who, tripoint_abs_ms &where )
@@ -1688,7 +1688,7 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
         return;
     }
     map &here = get_map();
-    auto local = here.abs_to_bub( where );
+    auto local = abs_to_bub( where );
     partial_con *pc = here.partial_con_at( tripoint_bub_ms( local ) );
     if( !pc ) {
         debugmsg( "No partial construction found at activity placement in complete_construction()" );
@@ -2092,11 +2092,11 @@ static void unroll_digging( const int numer_of_2x4s )
 void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
 {
     map &here = get_map();
-    const auto abs_pos = here.bub_to_abs( p );
+    const auto abs_pos = bub_to_abs( p );
     const auto pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
     tmpmap.load( pos_sm + tripoint_rel_sm::below(), false );
-    const auto local_tmp = tmpmap.abs_to_bub( abs_pos );
+    const auto local_tmp = abs_to_map_local( tmpmap, abs_pos );
 
     bool dig_muts = g->u.has_trait( trait_PAINRESIST_TROGLO ) || g->u.has_trait( trait_STOCKY_TROGLO );
 
@@ -2146,11 +2146,11 @@ void construct::done_mine_downstair( const tripoint_bub_ms &p )
 void construct::done_mine_upstair( const tripoint_bub_ms &p )
 {
     map &here = get_map();
-    const auto abs_pos = here.bub_to_abs( p );
+    const auto abs_pos = bub_to_abs( p );
     const auto pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
     tmpmap.load( pos_sm + tripoint_rel_sm::above(), false );
-    const auto local_tmp = tmpmap.abs_to_bub( abs_pos );
+    const auto local_tmp = abs_to_map_local( tmpmap, abs_pos );
 
     if( tmpmap.ter( local_tmp ) == t_lava ) {
         here.ter_set( p.xy(), t_rock_floor ); // You dug a bit before discovering the problem

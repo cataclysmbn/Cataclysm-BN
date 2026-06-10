@@ -5009,7 +5009,8 @@ void item::on_map_placement( const map &m, const tripoint_bub_ms &p )
 
     // TODO: Move to reveal_map_actor
     if( is_map() && !has_var( "reveal_map_center_omt" ) ) {
-        set_var( "reveal_map_center_omt", project_to<coords::omt>( m.bub_to_abs( p ) ) );
+        const auto abs_pos = map_local_to_abs( m, p );
+        set_var( "reveal_map_center_omt", project_to<coords::omt>( abs_pos ) );
     }
 
     for( const auto &func : type->use_methods | std::views::values ) {
@@ -10211,7 +10212,7 @@ void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
             //Use weather if above ground, use map temp if below
             units::temperature env_temperature_raw;
             if( pos.z() >= 0 ) {
-                tripoint_abs_ms location = tripoint_abs_ms( get_map().bub_to_abs( pos ) );
+                const auto location = bub_to_abs( pos );
                 units::temperature weather_temperature = wgen.get_weather_temperature( location, time,
                         calendar::config, seed );
                 env_temperature_raw = weather_temperature + local_mod;
@@ -10677,7 +10678,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
         }
     }
     if( nonchar.map_point() ) {
-        distance = rl_dist( pos, here.abs_to_bub( nonchar.point ) );
+        distance = rl_dist( pos, abs_to_bub( nonchar.point ) );
         self->charges = self->type->maximum_charges() - distance;
         if( self->charges < 1 ) {
             if( carrier ) {

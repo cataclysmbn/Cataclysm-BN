@@ -381,7 +381,7 @@ void vehicle::stop( bool update_cache )
     }
     map &here = get_map();
     for( const auto &p : get_points() ) {
-        here.set_memory_seen_cache_dirty( here.abs_to_bub( p ) );
+        here.set_memory_seen_cache_dirty( abs_to_bub( p ) );
     }
 }
 
@@ -602,7 +602,7 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
             // push the animal out of way until it's no longer in our vehicle and not in
             // anyone else's position
             while( g->critter_at( end_pos, true ) ||
-                   cur_points.contains( here.bub_to_abs( end_pos ) ) ) {
+                   cur_points.contains( bub_to_abs( end_pos ) ) ) {
                 start_pos = end_pos;
                 calc_ray_end( angle, 2, start_pos, end_pos );
             }
@@ -1159,7 +1159,7 @@ bool vehicle::check_heli_descend( Character &who )
     }
     map &here = get_map();
     for( const tripoint_abs_ms &abs : get_points( true ) ) {
-        const auto &pt = here.abs_to_bub( abs );
+        const auto pt = abs_to_bub( abs );
         const int idx = part_at( pt - bub_ms_location() );
         if( part_info( idx ).has_flag( VPFLAG_NOCOLLIDEBELOW ) ) {
             continue;
@@ -1202,7 +1202,7 @@ bool vehicle::check_heli_ascend( Character &who )
     }
     map &here = get_map();
     for( const tripoint_abs_ms &abs : get_points( true ) ) {
-        const auto &pt = here.abs_to_bub( abs );
+        const auto pt = abs_to_bub( abs );
         tripoint_bub_ms above = pt + tripoint_rel_ms::above();
         if( !here.inbounds_z( above.z() ) ) {
             who.add_msg_if_player( m_bad, _( "It would be unsafe to try and ascend further." ) );
@@ -1743,7 +1743,7 @@ void vehicle::check_falling_or_floating()
     size_t deep_water_tiles = 0;
     size_t water_tiles = 0;
     for( const auto &abs : pts ) {
-        const auto &p = here.abs_to_bub( abs );
+        const auto p = abs_to_bub( abs );
         if( is_falling ) {
             is_falling &= here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, p ) &&
                           ( p.z() > -OVERMAP_DEPTH ) &&

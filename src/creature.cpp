@@ -2550,20 +2550,22 @@ effects_map Creature::get_all_effects() const
 
 tripoint_abs_ms Creature::abs_pos() const
 {
-    return get_map().bub_to_abs( bub_pos() );
+    return bub_to_abs( bub_pos() );
 }
 
 void Creature::setpos( const tripoint_abs_ms &pos )
 {
-    setpos( get_map().abs_to_bub( pos ) );
+    setpos( abs_to_bub( pos ) );
 }
 
 bool Creature::is_loaded() const
 {
-    return get_map().get_submap_at( bub_pos() ) != nullptr;
+    map &here = get_map();
+    return here.get_submap_at( abs_to_map_local( here, abs_pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const
 {
-    return get_map().is_position_simulated( bub_pos() );
+    map &here = get_map();
+    return here.is_position_simulated( abs_to_map_local( here, abs_pos() ) );
 }

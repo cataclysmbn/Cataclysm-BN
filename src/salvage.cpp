@@ -228,7 +228,7 @@ void complete_salvage( Character &who, item &cut, tripoint_abs_ms pos )
     who.reset_encumbrance();
 
     map &here = get_map();
-    auto pos_here = here.abs_to_bub( pos );
+    auto pos_here = abs_to_bub( pos );
 
     for( const auto &salvaged : salvage_results( cut ) ) {
         int amount = std::floor( salvagable_percent * salvaged.second );
@@ -378,7 +378,7 @@ bool salvage_all( Character &who )
     }
 
     if( !targets.empty() ) {
-        tripoint_abs_ms pos_abs( here.bub_to_abs( pos ) );
+        const auto pos_abs = bub_to_abs( pos );
 
         who.assign_activity( std::make_unique<player_activity>
                              ( std::make_unique<salvage_activity_actor>( std::move(

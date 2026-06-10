@@ -322,38 +322,32 @@ void cata::detail::reg_map( sol::state &lua )
         sol::usertype<map> ut = luna::new_usertype<map>( lua, luna::no_bases, luna::no_constructor );
 
         DOC( "[Deprecated] Convert local ms -> absolute ms" );
-        luna::set_fx( ut, "get_abs_ms", sol::overload(
-        []( const map & m, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-            return m.bub_to_abs( pos );
-        },
-        []( const map & m, const tripoint & pos ) -> tripoint_abs_ms {
-            return m.bub_to_abs( tripoint_bub_ms( pos ) );
-        } ) );
+        luna::set_fx( ut, "get_abs_ms", []( const map & m,
+        const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
+            return map_local_to_abs( m, pos );
+        } );
         DOC( "Convert local bubble coordinates to absolute coordinates." );
         luna::set_fx( ut, "bub_to_abs",
                       sol::overload(
         []( const map & m, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-            return m.bub_to_abs( pos );
+            return map_local_to_abs( m, pos );
         },
         []( const map & m, const tripoint_bub_sm & pos ) -> tripoint_abs_sm {
-            return m.bub_to_abs( pos );
+            return map_local_to_abs( m, pos );
         } ) );
         DOC( "[Deprecated] Convert absolute ms -> local ms" );
-        luna::set_fx( ut, "get_local_ms", sol::overload(
-        []( const map & m, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
-            return m.abs_to_bub( pos );
-        },
-        []( const map & m, const tripoint & pos ) -> tripoint_bub_ms {
-            return m.abs_to_bub( tripoint_abs_ms( pos ) );
-        } ) );
+        luna::set_fx( ut, "get_local_ms", []( const map & m,
+        const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
+            return abs_to_map_local( m, pos );
+        } );
         DOC( "Convert absolute coordinates to local bubble coordinates." );
         luna::set_fx( ut, "abs_to_bub",
                       sol::overload(
         []( const map & m, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
-            return m.abs_to_bub( pos );
+            return abs_to_map_local( m, pos );
         },
         []( const map & m, const tripoint_abs_sm & pos ) -> tripoint_bub_sm {
-            return m.abs_to_bub( pos );
+            return abs_to_map_local( m, pos );
         } ) );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );

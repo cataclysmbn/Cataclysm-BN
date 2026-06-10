@@ -1282,7 +1282,7 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
     for( size_t e = 0; e < engines.size(); ++e ) {
         if( !has_starting_engine_position && !parts[ engines[ e ] ].is_broken() &&
             parts[ engines[ e ] ].enabled ) {
-            starting_engine_position = g->m.bub_to_abs( bub_part_location( engines[ e ] ) );
+            starting_engine_position = bub_to_abs( bub_part_location( engines[ e ] ) );
             has_starting_engine_position = true;
         }
         has_engine = has_engine || is_engine_on( e );
@@ -2007,7 +2007,7 @@ void vehicle::interact_with( const tripoint_bub_ms &pos, int interact_part )
     const bool has_items_on_ground = here.sees_some_items( pos, g->u );
     const bool items_are_sealed = here.has_flag( "SEALED", pos );
 
-    auto turret = turret_query( here.bub_to_abs( pos ) );
+    auto turret = turret_query( bub_to_abs( pos ) );
 
     const int curtain_part = avail_part_with_feature( interact_part, "CURTAIN", true );
     const bool curtain_closed = ( curtain_part == -1 ) ? false : !parts[curtain_part].open;

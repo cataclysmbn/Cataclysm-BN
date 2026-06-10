@@ -2205,7 +2205,7 @@ static bool prompt_disassemble_single( avatar &you, item *target, bool interacti
     loc.loc = target;
     loc.count = res.batches ? *res.batches : 1;
 
-    tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.bub_pos() ) );
+    tripoint_abs_ms pos_abs( you.abs_pos() );
 
     you.assign_activity( std::make_unique<player_activity>
     ( std::make_unique<disassemble_activity_actor>( std::vector<iuse_location> {{ loc }}, pos_abs,
@@ -2242,7 +2242,7 @@ bool crafting::disassemble_all( avatar &you, bool recursively )
     }
 
     if( !targets.empty() ) {
-        tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.bub_pos() ) );
+        tripoint_abs_ms pos_abs( you.abs_pos() );
 
         you.assign_activity( std::make_unique<player_activity>
                              ( std::make_unique<disassemble_activity_actor>( std::move(

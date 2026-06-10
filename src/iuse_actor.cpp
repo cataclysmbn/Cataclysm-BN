@@ -7274,7 +7274,7 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
     g->travel_to_dimension( target_dim_id, destination, std::nullopt, load_pos );
 
     if( abs_pos.has_value() ) {
-        p.setpos( abs_to_bub( abs_pos.value() ) );
+        p.setpos( abs_pos.value() );
     }
 }
 
@@ -7511,13 +7511,12 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     // Only make the first entrance safe. If the player makes it dangerous later, that's on them.
     // No sneaky teleporting shenaneigans.
     if( new_pd ) {
-        const auto safe = find_safe_spawn( get_map().abs_to_bub( pd.entry_point ) );
-        pd.entry_point = get_map().bub_to_abs( safe );
+        const auto &here = get_map();
+        const auto safe = find_safe_spawn( abs_to_map_local( here, pd.entry_point ) );
+        pd.entry_point = map_local_to_abs( here, safe );
     }
 
-    // The map is already loaded centered on the destination (via load_pos parameter),
-    // so local coordinates are valid without needing a map shift first.
-    p.setpos( abs_to_bub( pd.entry_point ) );
+    p.setpos( pd.entry_point );
 
     // Single update_map call at the final position
     g->update_map( p );
@@ -7556,7 +7555,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     if( !required_portal_flag.empty() ) {
         portal_tile *nearby_portal = nullptr;
         for( const tripoint_bub_ms &adj : get_map().points_in_radius( p.bub_pos(), 1 ) ) {
-            auto abs = tripoint_abs_ms( get_map().bub_to_abs( adj ) );
+            auto abs = bub_to_abs( adj );
             auto *candidate = active_tiles::furn_at<portal_tile>( abs );
             if( candidate && candidate->linkable_item_flag == required_portal_flag &&
                 candidate->linked ) {
@@ -7603,7 +7602,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
             const auto preload_point = project_to<coords::sm>( origin_pos ) - point_rel_sm( g_half_mapsize,
                                        g_half_mapsize );
             g->travel_to_dimension( origin_dim, wt_id, std::nullopt, preload_point );
-            p.setpos( get_map().abs_to_bub( origin_pos ) );
+            p.setpos( origin_pos );
             g->update_map( p );
             it.erase_var( "origin_stored" );
             return charges_per_use;
@@ -7630,7 +7629,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     const auto dest_sm = project_to<coords::sm>( linked_pos ) -
                          tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
     g->travel_to_dimension( linked_dim, wt_id, std::nullopt, dest_sm );
-    p.setpos( get_map().abs_to_bub( linked_pos ) );
+    p.setpos( linked_pos );
     g->update_map( p );
     return charges_per_use;
 }
@@ -7664,7 +7663,9 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     g->travel_to_dimension( return_dimension_id, return_world_type, std::nullopt,
                             return_preload_point );
 
-    p.setpos( find_safe_spawn( get_map().abs_to_bub( return_point ) ) );
+    const auto &here = get_map();
+    const auto safe = find_safe_spawn( abs_to_map_local( here, return_point ) );
+    p.setpos( map_local_to_abs( here, safe ) );
 
     // Single update_map call at the final position
     g->update_map( p );

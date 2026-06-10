@@ -832,7 +832,7 @@ TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
     map &m = get_map();
     avatar &u = get_avatar();
     constexpr tripoint_bub_ms start_pos = tripoint_bub_ms( 60, 60, 0 );
-    const tripoint_abs_ms start_pos_abs( m.bub_to_abs( start_pos ) );
+    const tripoint_abs_ms start_pos_abs( map_local_to_abs( m, start_pos ) );
     u.setpos( start_pos );
     clear_avatar();
     GIVEN( "player is near an oven on an electric grid with a battery on it" ) {

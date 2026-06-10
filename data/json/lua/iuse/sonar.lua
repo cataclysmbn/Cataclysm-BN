@@ -35,8 +35,7 @@ sonar.register = function(mod)
     local item = params.item
     if pos == nil and who then pos = who:get_pos_ms() end
     if pos == nil then return 0 end
-    local map = gapi.get_map()
-    local abs_ms = map:bub_to_abs(pos)
+    local abs_ms = gapi:bub_to_abs(pos)
     local center_omt = abs_ms:to_omt()
     local radius = 7
     local depth_steps = 5
