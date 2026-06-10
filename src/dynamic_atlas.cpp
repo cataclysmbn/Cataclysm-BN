@@ -196,13 +196,13 @@ void dynamic_atlas::readback_load()
     for( auto &it : sheets ) {
         if( it.dirty ) {
             SDL_Texture_Ptr tmpTex;
-            if (use_texture_streaming()) {
+            if( use_texture_streaming() ) {
                 tmpTex = CreateTexture( r, sdl_color_pixel_format, SDL_TEXTUREACCESS_TARGET, it.atlas_width,
-                                             it.atlas_height );
+                                        it.atlas_height );
                 SDL_SetRenderTarget( r.get(), tmpTex.get() );
                 SDL_RenderTexture( r.get(), it.texture.get(), nullptr, nullptr );
             } else {
-                SDL_SetRenderTarget(  r.get(), it.texture.get() );
+                SDL_SetRenderTarget( r.get(), it.texture.get() );
             }
             // SDL3: SDL_RenderReadPixels returns a new surface owned by us.
             it.surface.reset( SDL_RenderReadPixels( r.get(), nullptr ) );
@@ -220,23 +220,27 @@ void dynamic_atlas::readback_clear()
     }
 }
 
-void dynamic_atlas::start_batch() {
-    if ( is_batching )
+void dynamic_atlas::start_batch()
+{
+    if( is_batching ) {
         return;
+    }
 
     is_batching = true;
     readback_load();
 }
 
-void dynamic_atlas::end_batch() {
-    if ( !is_batching )
+void dynamic_atlas::end_batch()
+{
+    if( !is_batching ) {
         return;
+    }
 
     is_batching = false;
-    for (auto& s : sheets) {
-        if (s.dirty) {
+    for( auto &s : sheets ) {
+        if( s.dirty ) {
             s.dirty = false;
-            SDL_UpdateTexture(s.texture.get(), nullptr, s.surface->pixels, s.surface->pitch );
+            SDL_UpdateTexture( s.texture.get(), nullptr, s.surface->pixels, s.surface->pitch );
         }
     }
 }
@@ -247,18 +251,18 @@ auto dynamic_atlas::readback_find( const texture &tex ) -> std::tuple<bool, SDL_
         return s.texture == tex.sdl_texture_ptr;
     } );
 
-    if (it == sheets.end()) {
-        return std::make_tuple(false, nullptr, SDL_Rect{});
+    if( it == sheets.end() ) {
+        return std::make_tuple( false, nullptr, SDL_Rect{} );
     }
 
     SDL_Rect rect(
-        static_cast<int>(tex.srcrect.x), //
-        static_cast<int>(tex.srcrect.y), //
-        static_cast<int>(tex.srcrect.w), //
-        static_cast<int>(tex.srcrect.h)  //
+        static_cast<int>( tex.srcrect.x ), //
+        static_cast<int>( tex.srcrect.y ), //
+        static_cast<int>( tex.srcrect.w ), //
+        static_cast<int>( tex.srcrect.h ) //
     );
 
-    return std::make_tuple( true, it->surface.get(), rect);
+    return std::make_tuple( true, it->surface.get(), rect );
 }
 
 auto dynamic_atlas::get_or_create_sprite(
@@ -285,15 +289,15 @@ auto dynamic_atlas::create_sprite(
     }
     auto& [tex, dstRect] = atl_tex;
 
-    if (is_batching) {
+    if( is_batching ) {
         const auto it = std::ranges::find_if( sheets, [&]( const sprite_sheet & s ) {
             return s.texture == tex;
-        });
-        if ( it == sheets.end() ) {
+        } );
+        if( it == sheets.end() ) {
             debugmsg( "Failed to find dynamic atlas surface" );
         }
         const auto surf = it->surface.get();
-        if ( surf == nullptr ) {
+        if( surf == nullptr ) {
             debugmsg( "Dynamic atlas surface missing" );
         } else {
             blitFn( surf, &dstRect );
@@ -386,7 +390,8 @@ atlas_texture dynamic_atlas::allocate_sprite_internal( const int w, const int h 
     SDL_SetTextureBlendMode( tex, SDL_BLENDMODE_BLEND );
     SDL_SetTextureScaleMode( tex, SDL_SCALEMODE_NEAREST );
 
-    auto surface = is_batching ? CreateSurface(sdl_color_pixel_format, tex_width, tex_height) : nullptr;
+    auto surface = is_batching ? CreateSurface( sdl_color_pixel_format, tex_width,
+                   tex_height ) : nullptr;
     auto s = sprite_sheet{
         .texture = SDL_Texture_Ptr( tex ),
         .surface = std::move( surface ),
