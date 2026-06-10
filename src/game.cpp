@@ -2017,7 +2017,8 @@ bool game::do_turn()
         // Process sound events into sound markers for display to the player.
         sounds::process_sound_markers( &u );
 
-        if( u.is_deaf() ) {
+        // Check if the avatar is deaf, or has sufficient hearing impairment to have reduced sfx volume.
+        if( u.is_hearing_impaired() ) {
             sfx::do_hearing_loss();
         }
     }
@@ -2249,8 +2250,9 @@ bool game::do_turn()
         u.apply_wetness_morale( weather.temperature );
     }
 
-    if( !u.is_deaf() ) {
-        sfx::remove_hearing_loss();
+    {
+        // Hearing impaired check says weather or not to handle chance of ending tinnitus.
+        sfx::remove_hearing_loss( u.is_hearing_impaired() );
     }
     {
         ZoneScopedN( "do_turn_sfx" );

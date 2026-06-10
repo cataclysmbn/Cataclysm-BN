@@ -2282,7 +2282,13 @@ class Character : public Creature, public location_visitable<Character>
         float hearing_ability() const;
 
         // Returns the total mdB spl perceived volume adjustment due to a character's hearing loss.
-        short total_hearing_loss() const;
+        short total_hearing_loss( const bool &include_perm = true ) const;
+
+        // Returns the total mdB spl value of a characters basic hearing protection and hearing loss.
+        short total_hearing_impairment() const;
+
+        // Checks if the player has enough basic hearing protection and hearing loss to modify sfx volume.
+        bool is_hearing_impaired() const;
 
         using trap_map = std::map<tripoint_abs_ms, std::string>;
         bool knows_trap( const tripoint_bub_ms &pos ) const;

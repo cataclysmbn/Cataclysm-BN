@@ -351,7 +351,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
                               get_option<bool>( "BULLETS_AS_LASERS" );
     const bool null_source = proj.has_effect( ammo_effect_NULL_SOURCE );
     // Determines whether it can penetrate obstacles
-    const bool is_bullet = proj_arg.speed >= 200 &&
+    // If the intended result is acheived when all projectiles were defaulted to 1000, including thrown rocks,
+    // having a speed check is redundant and not actually desired.
+    // Just make sure the projectile speed is not zero for whatever reason.
+    const bool is_bullet = proj_arg.speed > 0 &&
                            !proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES );
 
     const auto is_thrown = proj.has_effect( ammo_effect_THROWN );

@@ -10,6 +10,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "rng.h"
 #include "type_id.h"
 #include "point.h"
 
@@ -149,6 +150,93 @@ static constexpr short SOUND_ABSORPTION_FOREST_FALL = 9;
 static constexpr short SOUND_ABSORPTION_FOREST = 20;
 // Per tile sound attenuation bonus in mdB spl provided by snow.
 static constexpr short SOUND_ABSORPTION_SNOW_BONUS = 128;
+
+// Use these to modify hearing loss mechanics. Should automatically carry over to the hearing loss functions in character.
+
+// mdB spl threshold for hearing loss to be considered at least slight.
+// At this point hearing loss becomes noticable to the character.
+static constexpr short HEARING_LOSS_SLIGHT_THRESHOLD = SOUND_ABSORPTION_SNOW_BONUS;
+// mdB spl threshold for hearing loss to be considered at least mild.
+// At this point hearing loss will minorly impact the characters situational awarness.
+static constexpr short HEARING_LOSS_MILD_THRESHOLD = SOUND_ABSORPTION_BARRIER;
+// mdB spl threshold for hearing loss to be considered at least moderate.
+// At this point the character will have difficulty hearing most footsteps unless they are adjacent or from a big monster.
+static constexpr short HEARING_LOSS_MODERATE_THRESHOLD = 1000;
+// mdB spl threshold for hearing loss to be considered at least heavy.
+// At this point the character would need to be standing adjacent to someone in order to hear normal conversation.
+static constexpr short HEARING_LOSS_HEAVY_THRESHOLD = SOUND_ABSORPTION_THICK_BARRIER;
+// mdB spl threshold for hearing loss to be considered at least severe.
+// At this point the character has little hope of hearing normal conversation.
+static constexpr short HEARING_LOSS_SEVERE_THRESHOLD = SOUND_ABSORPTION_WALL;
+// mdB spl threshold for hearing loss to be considered at least profound.
+// At this point the player is effectively completely deaf.
+static constexpr short HEARING_LOSS_PROFOUND_THRESHOLD = 8000;
+
+// mdB Hearing loss thresholds, in order of greatest to least. 
+static constexpr auto hearing_loss_thresholds = std::array<short, 6>
+{
+    { HEARING_LOSS_PROFOUND_THRESHOLD, HEARING_LOSS_SEVERE_THRESHOLD, HEARING_LOSS_HEAVY_THRESHOLD, HEARING_LOSS_MODERATE_THRESHOLD, HEARING_LOSS_MILD_THRESHOLD, HEARING_LOSS_SLIGHT_THRESHOLD }
+};
+// Get a multiplier to hearing ability from total hearing loss. 
+static constexpr float get_hearing_loss_hearing_ability_mult( const short &total_loss, const bool &in_dB = false ){
+    const auto &checkvol = ( in_dB ) ? dBspl_to_mdBspl( total_loss ) : total_loss;
+    // Handle our easy out.
+    if ( checkvol <  HEARING_LOSS_SLIGHT_THRESHOLD ){
+        return 1.0;
+    }
+    // Cycle through our loss thresholds from greatest to least, and if true return a calced value.
+    // From a minimum of 0.05, adding 0.18 at every loop gets us to 0.95 at our lowest loss threshold.
+    for ( uint8_t i = 0; i < 6; i++ ){
+        const auto &retval = 0.05 + ( 0.18 * i );
+        const auto &thresh = hearing_loss_thresholds[i];
+        if ( checkvol >= thresh ){
+            return retval;
+        }
+    }
+    // It is technically impossible for us to not have returned a value by this point given prior conditions. But the computer is silly.
+    return 1.0;
+}
+
+// Get a global sfx multiplier from total hearing loss.
+static constexpr float get_hearing_loss_sfx_mult( const short &total_loss, const bool &in_dB = false ){
+const auto &checkvol = ( in_dB ) ? dBspl_to_mdBspl( total_loss ) : total_loss;
+    // Handle our easy out.
+    if ( checkvol <  HEARING_LOSS_SLIGHT_THRESHOLD ){
+        return 1.0;
+    }
+    // Cycle through our loss thresholds from greatest to least, and if true return a calced value.
+    // From a minimum of 0.1, adding 0.16 at every loop gets us to 0.9 at our lowest loss threshold.
+    for ( uint8_t i = 0; i < 6; i++ ){
+        const auto &retval = 0.1 + ( 0.16 * i );
+        const auto &thresh = hearing_loss_thresholds[i];
+        if ( checkvol >= thresh ){
+            return retval;
+        }
+    }
+    // It is technically impossible for us to not have returned a value by this point given prior conditions. But the computer is silly.
+    return 1.0;
+}
+// Returns the corresponding hearing loss threshold index given a mdB volume.
+static constexpr uint8_t hearing_loss_threshold_index_from_mdB_volume( const short &total_loss ){
+
+    // Cycle through our loss thresholds from greatest to least, and if true return the index.
+    for ( uint8_t i = 0; i < 6; i++ ){
+        const auto &thresh = hearing_loss_thresholds[i];
+        if ( total_loss >= thresh ){
+            return i;
+        }
+    }
+    // It is technically impossible for us to not have returned a value by this point given prior conditions. But the computer is silly.
+    return 5;
+}
+
+// Given a hearing_loss_thresholds index, return true if a one_in() chance is successful.
+static constexpr bool tinnitus_stop_chance( const short &total_loss )
+{
+    // Our chances range from 11.11% to 25%.
+    return one_in( 9 - hearing_loss_threshold_index_from_mdB_volume( total_loss ) );
+}
+
 
 // Use these to tweak sound floodfilling.
 // Only here for completeness and characters with super hearing or bionic ears in an anechoic chamber.
@@ -454,7 +542,8 @@ void generate_gun_sound( const tripoint_bub_ms &source, const item &firing,
 void generate_melee_sound( const tripoint_bub_ms &source, const tripoint_bub_ms &target, bool hit,
                            bool targ_mon = false, const std::string &material = "flesh" );
 void do_hearing_loss( int turns = -1 );
-void remove_hearing_loss();
+// We check against being deaf/having impaired hearing so that we can have a chance to end the tinnitus ringing, instead of a garuntee. 
+void remove_hearing_loss( const bool &p_hear_impaired = false );
 void do_projectile_hit( const Creature &target );
 int get_heard_volume( const tripoint_bub_ms &source, const short &origin_volume,
                       const bool &in_mdB = false );
