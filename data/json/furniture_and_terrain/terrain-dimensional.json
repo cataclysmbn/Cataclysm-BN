@@ -32,6 +32,13 @@
     "coverage": 100,
     "flags": [ "NOITEM", "NO_SIGHT", "NO_SCENT", "BLOCK_WIND", "FLAT" ],
     "connects_to": "WALL",
-    "bash": { "str_min": -1, "str_max": -1, "sound": "whump!", "sound_fail": "whump!", "sound_vol": 100, "sound_fail_vol": 90 }
+    "bash": {
+      "str_min": -1,
+      "str_max": -1,
+      "sound": "whump!",
+      "sound_fail": "whump!",
+      "sound_vol": "60 dB",
+      "sound_fail_vol": "59 dB"
+    }
   }
 ]

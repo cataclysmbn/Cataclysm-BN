@@ -2,7 +2,7 @@
   {
     "abstract": "gun_base",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "name": { "str": "base gun" },
     "symbol": "(",
     "durability": 8,

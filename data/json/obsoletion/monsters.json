@@ -280,7 +280,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -339,7 +339,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -398,7 +398,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -456,7 +456,7 @@
         "targeting_cost": 400,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 20,
+        "targeting_volume": "46 dB",
         "no_ammo_sound": "a chk!"
       }
     ],

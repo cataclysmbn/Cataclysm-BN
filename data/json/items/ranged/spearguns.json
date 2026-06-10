@@ -70,7 +70,7 @@
     "looks_like": "ar15",
     "weapon_category": [ "RIFLES", "PNEUMATIC" ],
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "symbol": "(",
     "color": "brown",
     "name": { "str": "pneumatic speargun" },
