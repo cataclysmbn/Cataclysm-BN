@@ -26,7 +26,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "EE `",
+        "@@ `",
         "¤  I",
         "  hI",
         "dL  "
@@ -818,9 +818,9 @@
       "rotation": [ 0, 3 ],
       "rows": [
         "y   T",
-        "H l C",
+        "H l E",
         "H l s",
-        "H l C",
+        "H l E",
         "s   y"
       ],
       "palettes": [ "standard_domestic_palette" ]
