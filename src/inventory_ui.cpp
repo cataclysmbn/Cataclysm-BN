@@ -1247,6 +1247,12 @@ void inventory_selector::add_item( inventory_column &target_column,
                custom_category );
 }
 
+void inventory_selector::add_custom_item( item *location, const item_category *custom_category )
+{
+    custom_items.push_back( location );
+    add_item( own_inv_column, location, custom_category );
+}
+
 void inventory_selector::add_items( inventory_column &target_column,
                                     const std::function<item*( item * )> &locator,
                                     const std::vector<std::list<item *>> &stacks,
@@ -1380,6 +1386,7 @@ void inventory_selector::add_bionics_items( Character &character )
 void inventory_selector::clear_items()
 {
     is_empty = true;
+    custom_items.clear();
     for( auto &column : columns ) {
         column->clear();
     }
@@ -1796,6 +1803,9 @@ bool inventory_selector::wield( inventory_entry &entry )
     }
 
     item *item = entry.any_item();
+    if( is_custom_item( item ) ) {
+        return false;
+    }
     bool wield_result = u.can_wield( *item ).success();
     if( wield_result ) {
         remove_item( item );
@@ -1814,6 +1824,9 @@ bool inventory_selector::wear( inventory_entry &entry )
     }
 
     item *item = entry.any_item();
+    if( is_custom_item( item ) ) {
+        return false;
+    }
     bool wear_result = u.can_wear( *item ).success();
     if( wear_result ) {
         remove_item( item );
@@ -1874,6 +1887,11 @@ void inventory_selector::draw_frame( const catacurses::window &w ) const
     mvwhline( w, point( getmaxx( w ) - border, y ), LINE_XOXX, 1 );
 }
 
+auto inventory_selector::is_custom_item( const item *location ) const -> bool
+{
+    return std::ranges::find( custom_items, location ) != custom_items.end();
+}
+
 std::pair<std::string, nc_color> inventory_selector::get_footer( navigation_mode m ) const
 {
     if( has_available_choices() ) {
@@ -1924,10 +1942,10 @@ inventory_selector::inventory_selector( player &u, const inventory_selector_pres
     , preset( preset )
     , ctxt( "INVENTORY" )
     , own_gear_column( preset )
-    , active_column_index( 0 )
-    , mode( navigation_mode::ITEM )
     , own_inv_column( preset )
     , map_column( preset )
+    , active_column_index( 0 )
+    , mode( navigation_mode::ITEM )
 {
     ctxt.register_action( "DOWN", to_translation( "Next item" ) );
     ctxt.register_action( "UP", to_translation( "Previous item" ) );

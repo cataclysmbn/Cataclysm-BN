@@ -509,6 +509,55 @@ int avatar::time_to_read( const item &book, const Character &reader,
     return retval;
 }
 
+auto avatar::can_read_book_type( const itype_id &book_id ) const -> bool
+{
+    return read_book_type_denials( book_id ).empty();
+}
+
+auto avatar::read_book_type_denials( const itype_id &book_id ) const -> std::vector<std::string>
+{
+    if( !book_id.is_valid() || !book_id->book ) {
+        return { _( "That stored book can no longer be read." ) };
+    }
+    const auto book = item::spawn( book_id );
+    auto fail_messages = std::vector<std::string>();
+    if( get_book_reader( *book, fail_messages ) != nullptr ) {
+        return {};
+    }
+    return fail_messages;
+}
+
+auto avatar::time_to_read_book_type( const itype_id &book_id ) const -> time_duration
+{
+    if( !book_id.is_valid() || !book_id->book ) {
+        return 0_turns;
+    }
+    const auto book = item::spawn( book_id );
+    auto fail_messages = std::vector<std::string>();
+    const auto *reader = get_book_reader( *book, fail_messages );
+    if( reader == nullptr ) {
+        return 0_turns;
+    }
+    return time_duration::from_turns( time_to_read( *book, *reader ) / 100 );
+}
+
+auto avatar::finish_reading_book_type( const itype_id &book_id ) -> void
+{
+    if( !book_id.is_valid() || !book_id->book ) {
+        add_msg( m_bad, _( "That stored book can no longer be read." ) );
+        if( activity ) {
+            activity->set_to_null();
+        }
+        return;
+    }
+    const auto book = item::spawn( book_id );
+    if( !has_identified( book_id ) ) {
+        items_identified.insert( book_id );
+        skim_book_msg( *book, *this );
+    }
+    do_read( book.get() );
+}
+
 diary *avatar::get_avatar_diary()
 {
     if( a_diary == nullptr ) {

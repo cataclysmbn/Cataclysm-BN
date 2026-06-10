@@ -136,6 +136,7 @@
     "charges_per_use": 2,
     "use_action": [
       "EINKTABLETPC",
+      "EBOOK_READER",
       {
         "target": "control_laptop_screen_lit",
         "msg": "You light up the screen.",
@@ -232,6 +233,7 @@
       },
       "PORTABLE_GAME",
       "EINKTABLETPC",
+      "EBOOK_READER",
       "RADGLOVE"
     ],
     "flags": [
@@ -343,6 +345,7 @@
       "RADIOCONTROL",
       "ROBOTCONTROL",
       "EINKTABLETPC",
+      "EBOOK_READER",
       "RADGLOVE"
     ],
     "flags": [
@@ -446,6 +449,7 @@
     "charges_per_use": 1,
     "use_action": [
       "EINKTABLETPC",
+      "EBOOK_READER",
       {
         "type": "music_player",
         "target": "eink_tablet_pc_music",
@@ -639,6 +643,7 @@
     "charges_per_use": 1,
     "use_action": [
       "EINKTABLETPC",
+      "EBOOK_READER",
       "PORTABLE_GAME",
       {
         "//": "40 xp/hr.  Tier 1, 0-3 skill, higher-tier EXP since requires power.",

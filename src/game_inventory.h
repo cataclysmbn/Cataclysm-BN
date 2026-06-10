@@ -9,6 +9,7 @@
 #include "coordinates.h"
 #include "item_handling_util.h"
 #include "pickup_token.h"
+#include "type_id.h"
 
 struct tripoint;
 
@@ -75,8 +76,21 @@ item *container_for( avatar &you, const item &liquid, int radius = 0 );
 item *disassemble( player &p );
 /** Gunmod installation menu. */
 item *gun_to_modify( player &p, const item &gunmod );
+struct read_selection {
+    item *loc = nullptr;
+    itype_id stored_book = itype_id::NULL_ID();
+
+    auto is_stored_book() const -> bool {
+        return !stored_book.is_null();
+    }
+
+    auto has_value() const -> bool {
+        return loc != nullptr || is_stored_book();
+    }
+};
+
 /** Book reading menu. */
-item *read( player &pl );
+read_selection read( player &pl );
 /** Menu for stealing stuff. */
 item *steal( avatar &you, player &victim );
 /** Item activation menu. */

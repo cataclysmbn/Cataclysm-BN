@@ -26,6 +26,8 @@
 #include "bionics_ui.h"
 #include "calendar.h"
 #include "catalua.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "catacharset.h"
 #include "character.h"
 #include "character_display.h"
@@ -1540,15 +1542,21 @@ static void read()
 {
     avatar &u = g->u;
     // Can read items from inventory or within one tile (including in vehicles)
-    item *loc = game_menus::inv::read( u );
+    const auto selected = game_menus::inv::read( u );
 
-    if( loc ) {
-        if( loc->type->can_use( "learn_spell" ) ) {
-            item &spell_book = *loc;
-            spell_book.get_use( "learn_spell" )->call( u, spell_book, spell_book.is_active(), u.bub_pos() );
-        } else {
-            u.read( loc );
+    if( selected.is_stored_book() ) {
+        const auto hook_results = cata::run_hooks( "on_read_virtual_book", [&]( auto & params ) {
+            params["book_id"] = selected.stored_book;
+            params["reader"] = &u;
+        } );
+        if( !hook_results.get_or( "handled", false ) ) {
+            add_msg( _( "You can't read that." ) );
         }
+    } else if( selected.loc != nullptr && selected.loc->type->can_use( "learn_spell" ) ) {
+        item &spell_book = *selected.loc;
+        spell_book.get_use( "learn_spell" )->call( u, spell_book, spell_book.is_active(), u.bub_pos() );
+    } else if( selected.loc != nullptr ) {
+        u.read( selected.loc );
     } else {
         add_msg( _( "Never mind." ) );
     }

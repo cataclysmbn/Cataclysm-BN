@@ -14,7 +14,8 @@
         "need_charges": 1
       },
       "TOGGLE_UPS_CHARGING",
-      "LUA_EBOOK"
+      "LUA_EBOOK",
+      "EBOOK_READER"
     ]
   }
 ]

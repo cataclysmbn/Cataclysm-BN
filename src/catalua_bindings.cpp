@@ -744,6 +744,29 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_display_skill_info", []( const sol::table & ) {} );
 
+    DOC( "Called when collecting recipes provided by an item in crafting inventory.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `item` (Item)  " );
+    DOC( "* `reader` (Character)  " );
+    DOC( "Return entries as `{ { recipe = RecipeId, difficulty = integer }, ... }`.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_item_available_recipes", []( const sol::table & ) {} );
+
+    DOC( "Called when adding virtual book entries to the Read inventory menu.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `reader` (Character)  " );
+    DOC( "Return entries as `{ { book_id = ItypeId, caption_prefix = string?, caption_suffix = string? }, ... }`.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_read_inventory_virtual_books", []( const sol::table & ) {} );
+
+    DOC( "Called when a virtual book entry is selected from the Read inventory menu.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `book_id` (ItypeId)  " );
+    DOC( "* `reader` (Character)  " );
+    DOC( "Set `params.results.handled = true` after starting the read action.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_read_virtual_book", []( const sol::table & ) {} );
+
     DOC( "Called when character gets the effect which has `EFFECT_LUA_ON_ADDED` flag.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );
