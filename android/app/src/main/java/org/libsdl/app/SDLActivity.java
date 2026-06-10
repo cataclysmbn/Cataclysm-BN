@@ -39,6 +39,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
@@ -228,6 +230,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     protected static boolean mActivityCreated = false;
     private static SDLFileDialogState mFileDialogState = null;
     protected static boolean mDispatchingKeyEvent = false;
+    private OnBackInvokedCallback mBackInvokedCallback;
 
     public static SDLGenericMotionListener_API14 getMotionListener() {
         if (mMotionListener == null) {
@@ -488,6 +491,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         setWindowStyle(false);
 
         getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(this);
+        registerBackInvokedCallback();
 
         // Get filename from "Open with" of another application
         Intent intent = getIntent();
@@ -706,21 +710,52 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             }
         }
 
+        unregisterBackInvokedCallback();
         SDLActivity.nativeQuit();
 
         super.onDestroy();
     }
 
+    private boolean handleBackButton() {
+        boolean trapBack = SDLActivity.nativeGetHintBoolean("SDL_ANDROID_TRAP_BACK_BUTTON", false);
+        if (!trapBack) {
+            return false;
+        }
+
+        SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_BACK);
+        SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_BACK);
+        return true;
+    }
+
+    private void registerBackInvokedCallback() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || mBackInvokedCallback != null) {
+            return;
+        }
+        mBackInvokedCallback = new OnBackInvokedCallback() {
+            @Override
+            public void onBackInvoked() {
+                if (!handleBackButton() && !SDLActivity.this.isFinishing()) {
+                    SDLActivity.super.onBackPressed();
+                }
+            }
+        };
+        getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+            OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+            mBackInvokedCallback
+        );
+    }
+
+    private void unregisterBackInvokedCallback() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || mBackInvokedCallback == null) {
+            return;
+        }
+        getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(mBackInvokedCallback);
+        mBackInvokedCallback = null;
+    }
+
     @Override
     public void onBackPressed() {
-        // Check if we want to block the back button in case of mouse right click.
-        //
-        // If we do, the normal hardware back button will no longer work and people have to use home,
-        // but the mouse right click will work.
-        //
-        boolean trapBack = SDLActivity.nativeGetHintBoolean("SDL_ANDROID_TRAP_BACK_BUTTON", false);
-        if (trapBack) {
-            // Exit and let the mouse handler handle this button (if appropriate)
+        if (handleBackButton()) {
             return;
         }
 

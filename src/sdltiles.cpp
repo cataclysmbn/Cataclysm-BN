@@ -2294,7 +2294,6 @@ bool ignore_action_for_quick_shortcuts( const std::string &action )
              || action == "LEFTDOWN"
              || action == "RIGHTUP"
              || action == "RIGHTDOWN"
-             || action == "QUIT"
              || action == "CONFIRM"
              || action == "MOVE_SINGLE_ITEM" // maps to ENTER
              || action == "MOVE_ARMOR" // maps to ENTER

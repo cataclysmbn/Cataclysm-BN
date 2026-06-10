@@ -5,7 +5,7 @@ import org.libsdl.app.SDLActivity;
 
 import java.io.File;
 import android.content.pm.ActivityInfo;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.content.Context;
 import android.os.*;

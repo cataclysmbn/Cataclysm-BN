@@ -606,12 +606,12 @@ jobs:
           "$exe" --version
 
       # Android builds
-      - name: Set up JDK 11 (android)
+      - name: Set up JDK 17 (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         uses: actions/setup-java@v4.1.0
         with:
-          java-version: "11"
-          distribution: "adopt"
+          java-version: "17"
+          distribution: "temurin"
           cache: gradle
           cache-dependency-path: |
             android/*.gradle.kts
