@@ -7703,7 +7703,7 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
         }
         case 1: { // Link using keycard
             const auto target_dim = dimension_id( keycard->get_var( "portal_target_dim",
-                                    std::string{} ) );
+                                                  std::string{} ) );
             const auto target_pos = keycard->get_var( "portal_target_pos", tripoint_abs_ms::zero() );
             if( target_pos == abs_pos && target_dim == local_dim ) {
                 add_msg( m_bad, _( "You can't link a portal to itself." ) );

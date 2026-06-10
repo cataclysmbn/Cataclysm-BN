@@ -785,7 +785,7 @@ class map : public submap_load_listener
          * Return the dimension ID this map is currently bound to.
          * An empty string means the primary (default) dimension.
          */
-        auto get_bound_dimension() const -> const dimension_id & {
+        auto get_bound_dimension() const -> const dimension_id& {
             return bound_dimension_;
         }
 

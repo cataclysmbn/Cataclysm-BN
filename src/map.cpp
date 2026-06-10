@@ -594,8 +594,8 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id
 
     // Vehicle abs_sm_pos fixup and loaded_vehicles registration.
     // Covers all loaded submaps, including out-of-bubble ones.
-        // For in-bubble submaps loadn() has already done this; the set insert is idempotent.
-        if( sm != nullptr && !sm->vehicles.empty() ) {
+    // For in-bubble submaps loadn() has already done this; the set insert is idempotent.
+    if( sm != nullptr && !sm->vehicles.empty() ) {
         // Extended local grid index: may be outside [0, my_MAPSIZE) for out-of-bubble.
         for( const auto &veh : sm->vehicles ) {
             veh->abs_sm_pos = p;
@@ -5871,7 +5871,8 @@ detached_ptr<item> map::i_rem( const tripoint_bub_ms &p, item *it )
 
     const auto abs_pos = map_local_to_abs( *this, p );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
-        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).remove_item( abs_pos, it, resident_item_lookup() );
+        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).remove_item( abs_pos, it,
+                resident_item_lookup() );
     }
 
     auto &items = current_submap->get_items( l );
@@ -7264,7 +7265,8 @@ int map::get_field_intensity( const tripoint_bub_ms &p, const field_type_id &typ
 
 bool map::has_field_at( const tripoint_bub_ms &p, bool check_bounds )
 {
-    if( check_bounds && is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
+    if( check_bounds &&
+        is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return false;
     }
     point_sm_ms l;

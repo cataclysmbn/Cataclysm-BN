@@ -650,7 +650,7 @@ class monster : public Creature, public location_visitable<monster>
         auto setpos( const tripoint_abs_ms &p ) -> void override;
         auto bub_pos() const -> tripoint_bub_ms override;
         auto abs_pos() const -> tripoint_abs_ms override;
-        auto get_dimension() const -> const dimension_id & override {
+        auto get_dimension() const -> const dimension_id &override {
             return dimension_id_;
         }
         auto set_dimension( const dimension_id &dim_id ) -> void override {

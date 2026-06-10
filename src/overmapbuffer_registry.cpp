@@ -43,7 +43,7 @@ class overmapbuffer_registry
         overmapbuffer_registry( const overmapbuffer_registry & ) = delete;
         overmapbuffer_registry &operator=( const overmapbuffer_registry & ) = delete;
 
-        auto get( const dimension_id &dim_id ) -> overmapbuffer & {
+        auto get( const dimension_id &dim_id ) -> overmapbuffer& {
             auto it = buffers_.find( dim_id );
             if( it == buffers_.end() ) {
                 auto buf = std::make_unique<overmapbuffer>();
@@ -69,7 +69,7 @@ class overmapbuffer_registry
             }
         }
 
-        auto primary() -> overmapbuffer & {
+        auto primary() -> overmapbuffer& {
             return get( primary_dimension_id() );
         }
 

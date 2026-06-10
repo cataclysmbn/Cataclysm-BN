@@ -1322,7 +1322,7 @@ class npc : public player
         static constexpr tripoint_abs_omt no_goal_point{ tripoint_min };
         time_point last_updated;
 
-        auto get_dimension() const -> const dimension_id & override {
+        auto get_dimension() const -> const dimension_id &override {
             return dimension_id_;
         }
         auto set_dimension( const dimension_id &dim_id ) -> void override {

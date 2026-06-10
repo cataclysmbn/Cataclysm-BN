@@ -442,7 +442,7 @@ game::game() :
     // Create the primary dimension's grid tracker (key ""); other dimensions
     // are constructed lazily on first use.
     grid_trackers_[dimension_id()] = std::make_unique<distribution_grid_tracker>( MAPBUFFER,
-                                      dimension_id() );
+                                     dimension_id() );
     submap_loader.add_listener( grid_trackers_[dimension_id()].get() );
 
     first_redraw_since_waiting_started = true;
@@ -782,7 +782,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
         if( lazy_border_handle_ == 0 ) {
             lazy_border_handle_ = submap_loader.request_load(
                                       load_request_source::lazy_border,
-            new_dim_id, bubble_center,
+                                      new_dim_id, bubble_center,
                                       reality_bubble_radius_ );
         } else {
             submap_loader.update_request( lazy_border_handle_, bubble_center );
@@ -1328,7 +1328,7 @@ void game::unload_npcs()
 }
 
 auto game::on_submap_loaded( const tripoint_abs_sm &/*pos*/, const dimension_id &/*dim_id*/ )
--> void
+- > void
 {
     // Schedule an NPC activation scan on the next do_turn().  Any NPCs whose
     // authoritative submap position falls within the newly-simulated submap
@@ -1338,7 +1338,7 @@ auto game::on_submap_loaded( const tripoint_abs_sm &/*pos*/, const dimension_id 
 }
 
 auto game::on_submap_unloaded( const tripoint_abs_sm &pos, const dimension_id &/*dim_id*/ )
--> void
+- > void
 {
     // Deactivate any NPCs whose absolute position falls in the evicted submap.
     // abs_pos() returns position directly (no map lookup), so this is safe to call here.
@@ -16991,7 +16991,8 @@ auto get_distribution_grid_tracker_for( const dimension_id &dim_id ) -> distribu
     return nullptr;
 }
 
-auto ensure_distribution_grid_tracker_for( const dimension_id &dim_id ) -> distribution_grid_tracker &
+auto ensure_distribution_grid_tracker_for( const dimension_id &dim_id ) -> distribution_grid_tracker
+&
 {
     auto it = g->grid_trackers_.find( dim_id );
     if( it != g->grid_trackers_.end() && it->second ) {

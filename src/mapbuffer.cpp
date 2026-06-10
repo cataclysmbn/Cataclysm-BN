@@ -111,7 +111,8 @@ auto tile_has_flag( const mapbuffer_tile_lookup &tile, const std::string &flag )
            tile.sm->get_furn( tile.local ).obj().has_flag( flag );
 }
 
-auto tile_allows_item_despite_noitem_flag( const item &target, const mapbuffer_tile_lookup &tile ) -> bool
+auto tile_allows_item_despite_noitem_flag( const item &target,
+        const mapbuffer_tile_lookup &tile ) -> bool
 {
     return target.made_of( LIQUID ) && tile_has_flag( tile, "LIQUIDCONT" );
 }
@@ -792,13 +793,16 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
 
     auto valid_tile = [&]( const tripoint_abs_ms & target ) -> std::optional<mapbuffer_tile_lookup> {
         auto tile = lookup_tile( *this, target, options.lookup );
-        if( !tile ) {
+        if( !tile )
+        {
             return std::nullopt;
         }
-        if( tile_has_flag( *tile, "DESTROY_ITEM" ) ) {
+        if( tile_has_flag( *tile, "DESTROY_ITEM" ) )
+        {
             return std::nullopt;
         }
-        if( new_item->made_of( LIQUID ) && tile_has_flag( *tile, "SWIMMABLE" ) ) {
+        if( new_item->made_of( LIQUID ) && tile_has_flag( *tile, "SWIMMABLE" ) )
+        {
             return std::nullopt;
         }
         return tile;
@@ -860,7 +864,7 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
     };
 
     auto try_place = [&]( const tripoint_abs_ms & target, const bool reject_noitem,
-                          const bool call_drop_hook_first ) {
+    const bool call_drop_hook_first ) {
         auto tile = valid_tile( target );
         if( !tile ) {
             return false;
@@ -921,10 +925,10 @@ auto mapbuffer::add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_ite
     }
 
     if( !map_mutation_hooks::prepare_item_for_placement( {
-        .dim_id = dimension_id_,
-        .p = p,
-        .item_to_place = new_item,
-    } ) ) {
+    .dim_id = dimension_id_,
+    .p = p,
+    .item_to_place = new_item,
+} ) ) {
         return std::move( new_item );
     }
 
@@ -1271,7 +1275,8 @@ auto mapbuffer::active_map_local( const tripoint_abs_ms &p ) const -> std::optio
     return abs_to_map_local( here, p );
 }
 
-auto mapbuffer::invalidate_active_terrain_set_caches( const tripoint_abs_ms &p, const ter_id &old_id,
+auto mapbuffer::invalidate_active_terrain_set_caches( const tripoint_abs_ms &p,
+        const ter_id &old_id,
         const ter_id &new_id ) const -> void
 {
     const auto local = active_map_local( p );
@@ -1314,7 +1319,8 @@ auto mapbuffer::invalidate_active_terrain_set_caches( const tripoint_abs_ms &p, 
         here.set_absorption_cache_dirty( *local );
     }
 
-    if( new_terrain.has_flag( TFLAG_CONNECT_TO_WALL ) != old_terrain.has_flag( TFLAG_CONNECT_TO_WALL ) ) {
+    if( new_terrain.has_flag( TFLAG_CONNECT_TO_WALL ) != old_terrain.has_flag(
+            TFLAG_CONNECT_TO_WALL ) ) {
         here.set_absorption_cache_dirty( *local );
     }
 
@@ -1473,7 +1479,7 @@ auto mapbuffer::invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
 }
 
 auto mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p, const submap &sm ) const
-        -> void
+- > void
 {
     const auto local = active_map_local( p );
     if( !local ) {

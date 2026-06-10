@@ -6470,7 +6470,8 @@ auto overmap::open( const dimension_id &dim_id,
 // Note: this may throw io errors from std::ofstream
 auto overmap::save( const dimension_id &dim_id ) const -> void
 {
-    g->get_active_world()->write_overmap_player_visibility( dim_id.str(), loc, [&]( std::ostream & stream ) {
+    g->get_active_world()->write_overmap_player_visibility( dim_id.str(),
+    loc, [&]( std::ostream & stream ) {
         serialize_view( stream );
     } );
 

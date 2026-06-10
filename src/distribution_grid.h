@@ -396,4 +396,5 @@ auto get_distribution_grid_tracker_for( const dimension_id &dim_id ) -> distribu
  * registering it with the submap_load_manager if it doesn't already exist.
  * Used by add_export_node() to guarantee the remote tracker is available.
  */
-auto ensure_distribution_grid_tracker_for( const dimension_id &dim_id ) -> distribution_grid_tracker &;
+auto ensure_distribution_grid_tracker_for( const dimension_id &dim_id ) -> distribution_grid_tracker
+&;

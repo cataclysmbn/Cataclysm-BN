@@ -351,7 +351,8 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     CHECK( buffer.get_ter( tile_pos, resident_only ) == t_console );
     CHECK( buffer.has_computer( tile_pos, resident_only ) );
     CHECK( buffer.partial_con_at( tile_pos, resident_only ) == nullptr );
-    CHECK( buffer.partial_con_set( tile_pos, std::make_unique<partial_con>( tile_pos ), resident_only ) );
+    CHECK( buffer.partial_con_set( tile_pos, std::make_unique<partial_con>( tile_pos ),
+                                   resident_only ) );
     CHECK( buffer.partial_con_at( tile_pos, resident_only ) != nullptr );
     CHECK( buffer.partial_con_remove( tile_pos, resident_only ) );
     CHECK( buffer.partial_con_at( tile_pos, resident_only ) == nullptr );
