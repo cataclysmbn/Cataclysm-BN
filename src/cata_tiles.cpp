@@ -1247,26 +1247,33 @@ static void apply_surf_blend_effect(
                     static_cast<uint8_t>( std::min<int>( base.r + target.r, 255 ) ),
                     static_cast<uint8_t>( std::min<int>( base.g + target.g, 255 ) ),
                     static_cast<uint8_t>( std::min<int>( base.b + target.b, 255 ) ),
-                    static_cast<uint8_t>( std::min<int>( base.a + target.a, 255 ) ) };
+                    base.a };
                 break;
             }
             case tint_blend_mode::subtract: {
-                col = RGBColor{ static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
-                                static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
-                                static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ), base.a };
+                col = RGBColor{
+                    static_cast<uint8_t>(std::max<int>(base.r - (255 - target.r), 0)),
+                    static_cast<uint8_t>(std::max<int>(base.g - (255 - target.g), 0)),
+                    static_cast<uint8_t>(std::max<int>(base.b - (255 - target.b), 0)),
+                    base.a};
                 break;
             }
             case tint_blend_mode::multiply: {
-                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ),
-                                static_cast<uint8_t>( base.g *target.g / 256 ),
-                                static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
+                col = RGBColor{
+                    static_cast<uint8_t>(base.r * target.r / 256),
+                    static_cast<uint8_t>(base.g * target.g / 256),
+                    static_cast<uint8_t>(base.b * target.b / 256),
+                    base.a};
                 break;
             }
             case tint_blend_mode::normal: {
-                // A truely accurate normal blend would use the alpha from the target, but that'd be useless here.
-                col = RGBColor{ static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.r, target.r, target.a ) ),
-                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.g, target.g, target.a ) ),
-                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.b, target.b, target.a ) ), base.a };
+                // A truely accurate normal blend would use the alpha from the target, but that'd be
+                // useless here.
+                col = RGBColor{
+                    static_cast<uint8_t>(ilerp<uint16_t, uint8_t>(base.r, target.r, target.a)),
+                    static_cast<uint8_t>(ilerp<uint16_t, uint8_t>(base.g, target.g, target.a)),
+                    static_cast<uint8_t>(ilerp<uint16_t, uint8_t>(base.b, target.b, target.a)),
+                    base.a};
                 break;
             }
             case tint_blend_mode::divide: {
