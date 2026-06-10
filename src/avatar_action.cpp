@@ -64,12 +64,101 @@
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
+#include "vehicle_throw.h"
+#include "vehicle_grab.h"
 #include "vpart_position.h"
 
 class player;
 
 namespace
 {
+
+auto try_shove_grabbed_vehicle( avatar &you ) -> bool
+{
+    if( you.get_grab_type() != OBJECT_VEHICLE || you.grab_point == tripoint_rel_ms::zero() ) {
+        return false;
+    }
+
+    auto grabbed_vehicle_target = vehicle_grab_target_at( get_map(), you.bub_pos() + you.grab_point );
+    if( !grabbed_vehicle_target ) {
+        add_msg( m_info, _( "No vehicle at grabbed point." ) );
+        you.grab( OBJECT_NONE );
+        return true;
+    }
+
+    auto &veh = grabbed_vehicle_target->vp.vehicle();
+    if( !veh.handle_potential_theft( you ) ) {
+        return true;
+    }
+
+    const auto shove_strength = character_funcs::get_lift_strength_with_helpers( you );
+    const auto shove_strength_req = vehicle_throw::strength_requirement( veh );
+    if( shove_strength < shove_strength_req ) {
+        add_msg( m_bad, _( "You lack the strength to shove the %s." ), veh.name );
+        you.mod_moves( -100 );
+        return true;
+    }
+
+    const auto shove_range = vehicle_throw::throw_range( shove_strength, shove_strength_req );
+    const auto grabbed_part_pos = grabbed_vehicle_target->pos;
+    const auto trajectory = target_handler::mode_throw_vehicle( you, grabbed_part_pos, shove_range );
+    if( trajectory.empty() ) {
+        return true;
+    }
+
+    const auto grabbed_part_index = static_cast<int>( grabbed_vehicle_target->vp.part_index() );
+    const auto shove_velocity = 1000 + 250 * std::max( 0, shove_range - 1 );
+    auto moved = false;
+    auto last_shove_delta = tripoint_rel_ms::zero();
+    for( const auto &target_pos : trajectory ) {
+        const auto current_part_pos = veh.bub_part_location( grabbed_part_index );
+        if( target_pos == current_part_pos ) {
+            continue;
+        }
+        const auto shove_delta = tripoint_rel_ms(
+                                     std::clamp( target_pos.x() - current_part_pos.x(), -1, 1 ),
+                                     std::clamp( target_pos.y() - current_part_pos.y(), -1, 1 ),
+                                     std::clamp( target_pos.z() - current_part_pos.z(), -1, 1 ) );
+        if( shove_delta == tripoint_rel_ms::zero() ) {
+            continue;
+        }
+
+        veh.skidding = true;
+        veh.velocity = shove_velocity;
+        if( shove_delta.z() != 0 ) {
+            veh.vertical_velocity = shove_delta.z() < 0 ? -shove_velocity : shove_velocity;
+        }
+
+        vehicle *const moved_vehicle = get_map().move_vehicle( veh, shove_delta, veh.face );
+        if( moved_vehicle == nullptr || moved_vehicle->bub_part_location( grabbed_part_index ) ==
+            current_part_pos ) {
+            break;
+        }
+        moved = true;
+        last_shove_delta = shove_delta;
+    }
+
+    if( !moved ) {
+        add_msg( m_info, _( "The %s won't budge." ), veh.name );
+        you.mod_moves( -100 );
+        return true;
+    }
+
+    if( last_shove_delta != tripoint_rel_ms::zero() ) {
+        veh.move = tileray( last_shove_delta.xy() );
+        veh.skidding = true;
+        veh.velocity = shove_velocity;
+        if( last_shove_delta.z() != 0 ) {
+            veh.vertical_velocity = last_shove_delta.z() < 0 ? -shove_velocity : shove_velocity;
+        }
+    }
+
+    add_msg( _( "You shove the %s away from you." ), veh.name );
+    you.mod_moves( -100 - 25 * std::max( 0, shove_range - 1 ) );
+    you.mod_stamina( -100 - 25 * std::max( 0, shove_range - 1 ) );
+    you.grab( OBJECT_NONE );
+    return true;
+}
 
 auto melee_attack_from_movement( avatar &you, Creature &target ) -> void
 {
@@ -1193,6 +1282,10 @@ void avatar_action::plthrow( avatar &you, item *loc,
     }
 
     if( loc == nullptr && !blind_throw_from_pos && throw_grabbed_creature( you ) ) {
+        return;
+    }
+
+    if( loc == nullptr && !blind_throw_from_pos && try_shove_grabbed_vehicle( you ) ) {
         return;
     }
 

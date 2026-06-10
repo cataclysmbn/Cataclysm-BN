@@ -682,6 +682,19 @@ target_handler::trajectory target_handler::mode_throw_creature( avatar &you,
     return ui.run();
 }
 
+target_handler::trajectory target_handler::mode_throw_vehicle( avatar &you,
+        const tripoint_bub_ms &grabbed_part_pos, int range )
+{
+    target_ui ui = target_ui();
+    ui.you = &you;
+    ui.mode = target_ui::TargetMode::ThrowCreature;
+    ui.range = std::max( 1, range );
+    ui.initial_target = grabbed_part_pos;
+
+    restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
+    return ui.run();
+}
+
 target_handler::trajectory target_handler::mode_reach( avatar &you, item &weapon )
 {
     target_ui ui = target_ui();

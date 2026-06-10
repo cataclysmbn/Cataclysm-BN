@@ -31,6 +31,7 @@
 #include "state_helpers.h"
 #include "test_statistics.h"
 #include "type_id.h"
+#include "vehicle_throw.h"
 
 TEST_CASE( "throwing distance test", "[throwing], [balance]" )
 {
@@ -88,6 +89,27 @@ TEST_CASE( "grabbed creature throw eligibility follows size class", "[throwing],
     const auto small_player_size = creature_size::small;
     CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( small_player_size, 20,
                  creature_size::huge ) );
+}
+
+TEST_CASE( "vehicle throw strength thresholds follow mass", "[throwing], [balance]" )
+{
+    CHECK( vehicle_throw::strength_requirement( 20_kilogram ) == 1 );
+    CHECK( vehicle_throw::strength_requirement( 1000_kilogram ) == 10 );
+    CHECK( vehicle_throw::strength_requirement( 3000_kilogram ) == 30 );
+}
+
+TEST_CASE( "vehicle throw range grows slowly past the weight threshold", "[throwing], [balance]" )
+{
+    CHECK( vehicle_throw::throw_range( 0, 1 ) == 0 );
+    CHECK( vehicle_throw::throw_range( 1, 1 ) == 1 );
+    CHECK( vehicle_throw::throw_range( 5, 1 ) == 3 );
+    CHECK( vehicle_throw::throw_range( 6, 1 ) == 3 );
+    CHECK( vehicle_throw::throw_range( 20, 10 ) == 6 );
+    CHECK( vehicle_throw::throw_range( 22, 10 ) == 7 );
+    CHECK( vehicle_throw::throw_range( 30, 30 ) == 1 );
+    CHECK( vehicle_throw::throw_range( 35, 30 ) == 3 );
+    CHECK( vehicle_throw::throw_range( 38, 30 ) == 5 );
+    CHECK( vehicle_throw::throw_range( 50, 30 ) == 11 );
 }
 
 TEST_CASE( "lighter flung creatures are worse at breaking obstacles", "[throwing], [balance]" )
