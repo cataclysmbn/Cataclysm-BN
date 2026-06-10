@@ -218,6 +218,53 @@ TEST_CASE( "Preserving containers stop contained food rot" )
 
         CHECK( removed->get_rot() > 0_turns );
     }
+
+    SECTION( "directly removed food starts fresh when opened" ) {
+        prepare_map_storage_test();
+
+        auto sealed_jar = item::in_container( itype_id( "jar_glass_sealed" ),
+                                              item::spawn( "meat_cooked" ) );
+        item &food = sealed_jar->contents.front();
+
+        calendar::turn += 20_days;
+
+        auto removed = sealed_jar->contents.remove_top( &food );
+
+        REQUIRE( removed );
+        CHECK( removed->get_rot() == 0_turns );
+    }
+
+    SECTION( "filtered removed food starts fresh when opened" ) {
+        prepare_map_storage_test();
+
+        auto sealed_jar = item::in_container( itype_id( "jar_glass_sealed" ),
+                                              item::spawn( "meat_cooked" ) );
+
+        calendar::turn += 20_days;
+
+        auto removed = detached_ptr<item>();
+        sealed_jar->contents.remove_top_items_with( [&removed]( detached_ptr<item> &&it ) {
+            removed = std::move( it );
+            return detached_ptr<item>();
+        } );
+
+        REQUIRE( removed );
+        CHECK( removed->get_rot() == 0_turns );
+    }
+
+    SECTION( "cleared preserved food starts fresh when opened" ) {
+        prepare_map_storage_test();
+
+        auto sealed_jar = item::in_container( itype_id( "jar_glass_sealed" ),
+                                              item::spawn( "meat_cooked" ) );
+
+        calendar::turn += 20_days;
+
+        auto removed = sealed_jar->contents.clear_items();
+
+        REQUIRE( removed.size() == 1 );
+        CHECK( removed.front()->get_rot() == 0_turns );
+    }
 }
 
 TEST_CASE( "Items rot away" )
