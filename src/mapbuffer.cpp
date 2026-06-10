@@ -1479,7 +1479,7 @@ auto mapbuffer::invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
 }
 
 void mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p,
-                                               const submap &sm ) const
+        const submap &sm ) const
 {
     const auto local = active_map_local( p );
     if( !local ) {
