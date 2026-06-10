@@ -5,8 +5,11 @@
 
 #include "avatar.h"
 #include "avatar_action.h"
+#include "computer.h"
+#include "construction_partial.h"
 #include "coordinates.h"
 #include "cata_utility.h"
+#include "data_vars.h"
 #include "enums.h"
 #include "field_type.h"
 #include "game.h"
@@ -194,11 +197,17 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     CHECK( *terrain == ter_id( "t_rock" ) );
     CHECK( buffer.set_ter( tile_pos, ter_id( "t_dirt" ), resident_only ) );
     CHECK( buffer.get_ter( tile_pos, resident_only ) == ter_id( "t_dirt" ) );
+    REQUIRE( buffer.ter_vars( tile_pos, resident_only ) != nullptr );
+    buffer.ter_vars( tile_pos, resident_only )->set( "test_var", "terrain" );
+    CHECK( sm->get_ter_vars( local_tile_pos ).get( "test_var" ) == "terrain" );
 
     const auto furniture = furn_str_id( "f_console_table" ).id();
     CHECK( buffer.get_furn( tile_pos, resident_only ) == f_null );
     CHECK( buffer.set_furn( tile_pos, furniture, resident_only ) );
     CHECK( buffer.get_furn( tile_pos, resident_only ) == furniture );
+    REQUIRE( buffer.furn_vars( tile_pos, resident_only ) != nullptr );
+    buffer.furn_vars( tile_pos, resident_only )->set( "test_var", "furniture" );
+    CHECK( sm->get_furn_vars( local_tile_pos ).get( "test_var" ) == "furniture" );
 
     const auto trap = trap_str_id( "tr_bubblewrap" ).id();
     CHECK( buffer.get_trap( tile_pos, resident_only ) == tr_null );
@@ -214,6 +223,9 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     CHECK( buffer.get_lum( tile_pos, resident_only ) == 0 );
     CHECK( buffer.set_lum( tile_pos, 3, resident_only ) );
     CHECK( buffer.get_lum( tile_pos, resident_only ) == 3 );
+    CHECK( buffer.get_temperature( tile_pos, resident_only ) == 0 );
+    CHECK( buffer.set_temperature( tile_pos, 42, resident_only ) );
+    CHECK( buffer.get_temperature( tile_pos, resident_only ) == 42 );
     CHECK( buffer.get_field( tile_pos, resident_only ) == &sm->get_field( local_tile_pos ) );
     CHECK_FALSE( buffer.has_field_at( tile_pos, resident_only ) );
     CHECK( buffer.get_field_entry( tile_pos, fd_fire, resident_only ) == nullptr );
@@ -259,14 +271,44 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     CHECK_FALSE( buffer.has_field_at( tile_pos, resident_only ) );
     CHECK( sm->field_count == 0 );
     CHECK( buffer.get_items( tile_pos, resident_only ) == &sm->get_items( local_tile_pos ) );
+    CHECK_FALSE( buffer.has_graffiti_at( tile_pos, resident_only ) );
+    CHECK( buffer.graffiti_at( tile_pos, resident_only ) == "" );
+    CHECK( buffer.set_graffiti( tile_pos, "absolute graffiti", resident_only ) );
+    CHECK( buffer.has_graffiti_at( tile_pos, resident_only ) );
+    CHECK( buffer.graffiti_at( tile_pos, resident_only ) == "absolute graffiti" );
+    CHECK( buffer.delete_graffiti( tile_pos, resident_only ) );
+    CHECK_FALSE( buffer.has_graffiti_at( tile_pos, resident_only ) );
+    CHECK( buffer.set_signage( tile_pos, "absolute signage", resident_only ) );
+    CHECK( buffer.get_signage( tile_pos, resident_only ) == "" );
+    CHECK( buffer.delete_signage( tile_pos, resident_only ) );
+    CHECK_FALSE( buffer.has_computer( tile_pos, resident_only ) );
+    CHECK( buffer.set_computer( tile_pos, computer( "absolute terminal", 1 ), resident_only ) );
+    CHECK( buffer.has_computer( tile_pos, resident_only ) );
+    CHECK( buffer.get_computer( tile_pos, resident_only ) != nullptr );
+    CHECK( buffer.delete_computer( tile_pos, resident_only ) );
+    CHECK_FALSE( buffer.has_computer( tile_pos, resident_only ) );
+    CHECK( buffer.add_computer( tile_pos, {
+        .name = "absolute generated terminal",
+        .security = 2,
+        .lookup = resident_only,
+    } ) != nullptr );
+    CHECK( buffer.get_ter( tile_pos, resident_only ) == t_console );
+    CHECK( buffer.has_computer( tile_pos, resident_only ) );
+    CHECK( buffer.partial_con_at( tile_pos, resident_only ) == nullptr );
+    CHECK( buffer.partial_con_set( tile_pos, std::make_unique<partial_con>( tile_pos ), resident_only ) );
+    CHECK( buffer.partial_con_at( tile_pos, resident_only ) != nullptr );
+    CHECK( buffer.partial_con_remove( tile_pos, resident_only ) );
+    CHECK( buffer.partial_con_at( tile_pos, resident_only ) == nullptr );
 
     const auto missing_sm = sm_pos + tripoint_rel_sm( 10, 0, 0 );
     const auto missing_tile = project_to<coords::ms>( missing_sm );
     CHECK( buffer.get_submap( missing_sm, resident_only ) == nullptr );
     CHECK_FALSE( buffer.get_ter( missing_tile, resident_only ).has_value() );
     CHECK_FALSE( buffer.set_ter( missing_tile, ter_id( "t_dirt" ), resident_only ) );
+    CHECK( buffer.ter_vars( missing_tile, resident_only ) == nullptr );
     CHECK_FALSE( buffer.get_furn( missing_tile, resident_only ).has_value() );
     CHECK_FALSE( buffer.set_furn( missing_tile, furniture, resident_only ) );
+    CHECK( buffer.furn_vars( missing_tile, resident_only ) == nullptr );
     CHECK_FALSE( buffer.get_trap( missing_tile, resident_only ).has_value() );
     CHECK_FALSE( buffer.set_trap( missing_tile, trap, resident_only ) );
     CHECK_FALSE( buffer.get_radiation( missing_tile, resident_only ).has_value() );
@@ -274,6 +316,8 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     CHECK_FALSE( buffer.adjust_radiation( missing_tile, 5, resident_only ).has_value() );
     CHECK_FALSE( buffer.get_lum( missing_tile, resident_only ).has_value() );
     CHECK_FALSE( buffer.set_lum( missing_tile, 3, resident_only ) );
+    CHECK_FALSE( buffer.get_temperature( missing_tile, resident_only ).has_value() );
+    CHECK_FALSE( buffer.set_temperature( missing_tile, 42, resident_only ) );
     CHECK( buffer.get_field( missing_tile, resident_only ) == nullptr );
     CHECK_FALSE( buffer.has_field_at( missing_tile, resident_only ) );
     CHECK( buffer.get_field_entry( missing_tile, fd_fire, resident_only ) == nullptr );
@@ -296,6 +340,27 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     } ) );
     CHECK_FALSE( buffer.remove_field( missing_tile, fd_fire, resident_only ) );
     CHECK( buffer.get_items( missing_tile, resident_only ) == nullptr );
+    CHECK_FALSE( buffer.has_graffiti_at( missing_tile, resident_only ) );
+    CHECK_FALSE( buffer.graffiti_at( missing_tile, resident_only ).has_value() );
+    CHECK_FALSE( buffer.set_graffiti( missing_tile, "missing", resident_only ) );
+    CHECK_FALSE( buffer.delete_graffiti( missing_tile, resident_only ) );
+    CHECK_FALSE( buffer.has_signage( missing_tile, resident_only ) );
+    CHECK_FALSE( buffer.get_signage( missing_tile, resident_only ).has_value() );
+    CHECK_FALSE( buffer.set_signage( missing_tile, "missing", resident_only ) );
+    CHECK_FALSE( buffer.delete_signage( missing_tile, resident_only ) );
+    CHECK_FALSE( buffer.has_computer( missing_tile, resident_only ) );
+    CHECK( buffer.get_computer( missing_tile, resident_only ) == nullptr );
+    CHECK_FALSE( buffer.set_computer( missing_tile, computer( "missing", 1 ), resident_only ) );
+    CHECK( buffer.add_computer( missing_tile, {
+        .name = "missing",
+        .security = 1,
+        .lookup = resident_only,
+    } ) == nullptr );
+    CHECK_FALSE( buffer.delete_computer( missing_tile, resident_only ) );
+    CHECK( buffer.partial_con_at( missing_tile, resident_only ) == nullptr );
+    CHECK_FALSE( buffer.partial_con_set( missing_tile, std::make_unique<partial_con>( missing_tile ),
+                                         resident_only ) );
+    CHECK_FALSE( buffer.partial_con_remove( missing_tile, resident_only ) );
 }
 
 TEST_CASE( "mapbuffer_simulated_lookup_uses_load_manager_membership" )

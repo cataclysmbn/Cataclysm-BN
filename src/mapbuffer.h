@@ -20,12 +20,18 @@
 #include "type_id.h"
 
 class submap;
+class computer;
 class field;
 class field_entry;
 class item;
 class JsonIn;
+struct partial_con;
 template<typename T>
 class location_vector;
+namespace data_vars
+{
+class data_set;
+} // namespace data_vars
 
 struct mapbuffer_generate_omt_options {
     bool defer_postprocess_hooks = false;
@@ -63,6 +69,12 @@ struct mapbuffer_add_field_options {
     field_type_id type;
     int intensity = std::numeric_limits<int>::max();
     time_duration age = 0_turns;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_add_computer_options {
+    std::string name;
+    int security = 0;
     mapbuffer_lookup_options lookup;
 };
 
@@ -130,6 +142,10 @@ class mapbuffer
                        mapbuffer_lookup_options options = {} ) -> std::optional<furn_id>;
         auto set_furn( const tripoint_abs_ms &p, furn_id furn,
                        mapbuffer_lookup_options options = {} ) -> bool;
+        auto ter_vars( const tripoint_abs_ms &p,
+                       mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
+        auto furn_vars( const tripoint_abs_ms &p,
+                        mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
 
         auto get_trap( const tripoint_abs_ms &p,
                        mapbuffer_lookup_options options = {} ) -> std::optional<trap_id>;
@@ -147,6 +163,11 @@ class mapbuffer
                       mapbuffer_lookup_options options = {} ) -> std::optional<std::uint8_t>;
         auto set_lum( const tripoint_abs_ms &p, std::uint8_t luminance,
                       mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto get_temperature( const tripoint_abs_ms &p,
+                              mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto set_temperature( const tripoint_abs_ms &p, int temperature,
+                              mapbuffer_lookup_options options = {} ) -> bool;
 
         auto get_field( const tripoint_abs_ms &p,
                         mapbuffer_lookup_options options = {} ) -> field *;
@@ -172,6 +193,42 @@ class mapbuffer
                            mapbuffer_lookup_options options = {} ) -> bool;
         auto get_items( const tripoint_abs_ms &p,
                         mapbuffer_lookup_options options = {} ) -> location_vector<item> *;
+
+        auto has_graffiti_at( const tripoint_abs_ms &p,
+                              mapbuffer_lookup_options options = {} ) -> bool;
+        auto graffiti_at( const tripoint_abs_ms &p,
+                          mapbuffer_lookup_options options = {} ) -> std::optional<std::string>;
+        auto set_graffiti( const tripoint_abs_ms &p, const std::string &contents,
+                           mapbuffer_lookup_options options = {} ) -> bool;
+        auto delete_graffiti( const tripoint_abs_ms &p,
+                              mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto has_signage( const tripoint_abs_ms &p,
+                          mapbuffer_lookup_options options = {} ) -> bool;
+        auto get_signage( const tripoint_abs_ms &p,
+                          mapbuffer_lookup_options options = {} ) -> std::optional<std::string>;
+        auto set_signage( const tripoint_abs_ms &p, const std::string &message,
+                          mapbuffer_lookup_options options = {} ) -> bool;
+        auto delete_signage( const tripoint_abs_ms &p,
+                             mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto has_computer( const tripoint_abs_ms &p,
+                           mapbuffer_lookup_options options = {} ) -> bool;
+        auto get_computer( const tripoint_abs_ms &p,
+                           mapbuffer_lookup_options options = {} ) -> computer *;
+        auto set_computer( const tripoint_abs_ms &p, const computer &terminal,
+                           mapbuffer_lookup_options options = {} ) -> bool;
+        auto add_computer( const tripoint_abs_ms &p,
+                           const mapbuffer_add_computer_options &options ) -> computer *;
+        auto delete_computer( const tripoint_abs_ms &p,
+                              mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto partial_con_at( const tripoint_abs_ms &p,
+                             mapbuffer_lookup_options options = {} ) -> partial_con *;
+        auto partial_con_set( const tripoint_abs_ms &p, std::unique_ptr<partial_con> con,
+                              mapbuffer_lookup_options options = {} ) -> bool;
+        auto partial_con_remove( const tripoint_abs_ms &p,
+                                 mapbuffer_lookup_options options = {} ) -> bool;
 
         /** Get a submap stored in this buffer.
          *
@@ -280,6 +337,15 @@ class mapbuffer
         using submap_map_t = std::unordered_map<tripoint_abs_sm, std::unique_ptr<submap>>;
 
         auto active_map_local( const tripoint_abs_ms &p ) const -> std::optional<tripoint_bub_ms>;
+        auto invalidate_active_terrain_set_caches( const tripoint_abs_ms &p, const ter_id &old_id,
+                const ter_id &new_id ) const -> void;
+        auto sync_furniture_change_side_tables( const tripoint_abs_ms &p, submap &sm,
+                                                const point_sm_ms &local, const furn_id &old_id,
+                                                const furn_id &new_id ) const -> void;
+        auto invalidate_active_furniture_set_caches( const tripoint_abs_ms &p, const furn_id &old_id,
+                const furn_id &new_id ) const -> void;
+        auto sync_active_trap_change_side_tables( const tripoint_abs_ms &p, const point_sm_ms &local,
+                const trap_id &old_id, const trap_id &new_id ) const -> void;
         auto invalidate_active_field_add_caches( const tripoint_abs_ms &p,
                 const field_type_id &type ) const -> void;
         auto invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
