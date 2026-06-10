@@ -17006,8 +17006,8 @@ auto get_distribution_grid_tracker_for( const dimension_id &dim_id ) -> distribu
     return nullptr;
 }
 
-auto ensure_distribution_grid_tracker_for( const dimension_id &dim_id ) -> distribution_grid_tracker
-&
+auto ensure_distribution_grid_tracker_for(
+    const dimension_id &dim_id ) -> distribution_grid_tracker &
 {
     auto it = g->grid_trackers_.find( dim_id );
     if( it != g->grid_trackers_.end() && it->second ) {

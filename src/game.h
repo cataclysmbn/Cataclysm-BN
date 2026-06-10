@@ -172,10 +172,10 @@ class game : public submap_load_listener
         friend class advanced_inventory;
         friend class main_menu;
         friend distribution_grid_tracker &get_distribution_grid_tracker();
-        friend auto get_distribution_grid_tracker_for( const dimension_id & ) -> distribution_grid_tracker
-        *;
-        friend auto ensure_distribution_grid_tracker_for( const dimension_id & ) ->
-        distribution_grid_tracker &;
+        friend auto get_distribution_grid_tracker_for(
+            const dimension_id & ) -> distribution_grid_tracker *;
+        friend auto ensure_distribution_grid_tracker_for(
+            const dimension_id & ) -> distribution_grid_tracker &;
         friend map &get_map();
         friend Character &get_player_character();
         friend avatar &get_avatar();
