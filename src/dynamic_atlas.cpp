@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "preload_config.h"
 #include "sdl_utils.h"
 #include "sdltiles.h"
 
@@ -25,6 +26,31 @@ static T round_up( T n, T m )
         return n;
     }
     return ( ( n + m - 1 ) / m ) * m;
+}
+
+static bool use_texture_streaming() {
+    static std::unordered_map<std::string, bool> auto_values = {
+        {SDL_SOFTWARE_RENDERER, false},
+        {SDL_GPU_RENDERER, true},
+    };
+    const auto &r = get_sdl_renderer();
+    const auto renderer = SDL_GetRendererName( r.get() );
+    switch (preload_config::get_texture_streaming()) {
+        default:
+        case preload_config::tristate::auto_select: {
+            const auto it = auto_values.find(renderer);
+            if (it != auto_values.end()) {
+                return it->second;
+            }
+            return false;
+        }
+        case preload_config::tristate::enable: {
+            return true;
+        }
+        case preload_config::tristate::disable: {
+            return false;
+        }
+    }
 }
 
 struct stripe_texture_packer final : detail::texture_packer {
@@ -111,24 +137,27 @@ struct null_texture_packer final : detail::texture_packer {
     };
 };
 
+auto dynamic_atlas::update_staging_area(staging& staging, const int width, const int height) const
+    -> std::tuple<SDL_Texture*, SDL_Surface*, SDL_Rect> {
+    const auto r_width = round_up(width, hint_sprite_width);
+    const auto r_height = round_up(height, hint_sprite_height);
+
+    if (staging.surf == nullptr || staging.surf->w < r_width || staging.surf->h < r_height) {
+        const auto& r = get_sdl_renderer();
+        staging.surf = create_surface_32(r_width, r_height);
+        staging.tex =
+            CreateTexture(r, sdl_color_pixel_format, SDL_TEXTUREACCESS_TARGET, r_width, r_height);
+        SDL_SetTextureBlendMode(staging.tex.get(), SDL_BLENDMODE_NONE);
+        SDL_SetSurfaceBlendMode(staging.surf.get(), SDL_BLENDMODE_NONE);
+    }
+
+    return std::make_tuple(staging.tex.get(), staging.surf.get(), SDL_Rect(0,0, width, height));
+}
+
 auto dynamic_atlas::get_staging_area(
     const int width, const int height ) -> std::tuple<SDL_Texture *, SDL_Surface *, SDL_Rect>
 {
-    const auto r_width = round_up( width, hint_sprite_width );
-    const auto r_height = round_up( height, hint_sprite_height );
-
-    if( staging_surf == nullptr || staging_surf->w < r_width ||
-        staging_surf->h < r_height ) {
-        const auto &r = get_sdl_renderer();
-        staging_surf = create_surface_32( r_width, r_height );
-        staging_tex = CreateTexture( r, sdl_color_pixel_format,
-                                     SDL_TEXTUREACCESS_TARGET, r_width, r_height );
-        SDL_SetTextureBlendMode( staging_tex.get(), SDL_BLENDMODE_NONE );
-        SDL_SetSurfaceBlendMode( staging_surf.get(), SDL_BLENDMODE_NONE );
-    }
-
-    return std::make_tuple( staging_tex.get(), staging_surf.get(),
-                            SDL_Rect{0, 0, width, height} );
+    return update_staging_area(user_staging, width, height);
 }
 
 auto dynamic_atlas::assign_id_internal( const size_t id, const atlas_texture &tex ) -> bool
@@ -219,15 +248,35 @@ auto dynamic_atlas::create_sprite(
     if( id.has_value() && !this->assign_id_internal( id.value(), atl_tex ) ) {
         debugmsg( "Duplicate sprite ID in atlas: %x", id.value() );
     }
-    auto& [tex, rect] = atl_tex;
+    auto& [tex, dstRect] = atl_tex;
 
-    SDL_Surface *tmpSurf{};
-    if( SDL_LockTextureToSurface( tex.get(), &rect, &tmpSurf ) ) {
-        const auto tmpRect = SDL_Rect{0, 0, w, h};
-        blitFn( tmpSurf, &tmpRect );
-        SDL_UnlockTexture( tex.get() );
+    const auto tmpRect = SDL_Rect(0, 0, w, h);
+    if (use_texture_streaming()) {
+        SDL_Surface *tmpSurf{};
+        if( SDL_LockTextureToSurface( tex.get(), &dstRect, &tmpSurf ) ) {
+            blitFn( tmpSurf, &tmpRect );
+            SDL_UnlockTexture( tex.get() );
+        } else {
+            debugmsg( "Failed to lock dynamic atlas texture for writing." );
+        }
     } else {
-        debugmsg( "Failed to lock dynamic atlas texture for writing." );
+        const auto &r = get_sdl_renderer();
+
+        const auto [stTex, stSurf, stRect] = update_staging_area(local_staging,  w, h);
+        blitFn( stSurf, &stRect );
+        SDL_UpdateTexture(stTex, nullptr, stSurf->pixels, stSurf->pitch);
+
+        const auto state = sdl_save_render_state( r.get() );
+
+        if ( SDL_SetRenderTarget( r.get(), tex.get() ) ) {
+            const auto fSrc = SDL_FRect( stRect.x, stRect.y, stRect.w, stRect.h );
+            const auto fDst = SDL_FRect( dstRect.x, dstRect.y, dstRect.w, dstRect.h );
+            SDL_RenderTexture( r.get(), stTex, &fSrc, &fDst );
+        } else {
+            debugmsg( "Failed to set dynamic atlas texture as render target." );
+        }
+
+        sdl_restore_render_state(r.get(), state);
     }
 
     return atl_tex;
@@ -278,8 +327,10 @@ atlas_texture dynamic_atlas::allocate_sprite_internal( const int w, const int h 
 
     assert( w <= tex_width && h <= tex_height );
 
-    const auto tex = SDL_CreateTexture( r.get(), sdl_color_pixel_format, SDL_TEXTUREACCESS_STREAMING,
-                                        tex_width, tex_height );
+    const auto access = use_texture_streaming() ? SDL_TEXTUREACCESS_STREAMING : SDL_TEXTUREACCESS_TARGET;
+
+    const auto tex =
+        SDL_CreateTexture(r.get(), sdl_color_pixel_format, access, tex_width, tex_height);
     SDL_SetTextureBlendMode( tex, SDL_BLENDMODE_BLEND );
     SDL_SetTextureScaleMode( tex, SDL_SCALEMODE_NEAREST );
 
