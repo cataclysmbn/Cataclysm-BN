@@ -84,7 +84,7 @@
 #include "recipe.h"
 #include "requirements.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "sounds.h"
 #include "spell_targeting.h"

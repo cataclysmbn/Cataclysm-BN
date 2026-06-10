@@ -1,11 +1,16 @@
 #include "catch/catch.hpp"
 
+#include <chrono>
+#include <cstddef>
 #include <functional>
+#include <latch>
 #include <optional>
+#include <thread>
 #include <vector>
 
 #include "test_statistics.h"
-#include "rng.h"
+#include "random/rng.h"
+#include "thread_pool.h"
 
 static void check_remainder( float proportion )
 {
@@ -77,4 +82,46 @@ TEST_CASE( "random_entry_preserves_constness" )
     CHECK( i1 == 1234 );
     i1 = 5678;
     CHECK( v1[0] == 5678 );
+}
+
+TEST_CASE( "deterministic_rng_scopes_parallel_tasks", "[rng][thread_pool]" )
+{
+    const auto run_submitted_tasks = []() {
+        rng_set_deterministic_seed( 424242 );
+        auto values = std::vector<int>( 16 );
+        auto done = std::latch( static_cast<std::ptrdiff_t>( values.size() ) );
+        auto pool = cata_thread_pool( 4 );
+        for( auto i = std::size_t{ 0 }; i < values.size(); ++i ) {
+            pool.submit( { .stream = 0x746573745f737562ULL, .id = i },
+            [&values, &done, i]() {
+                if( i % 2 == 0 ) {
+                    std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+                }
+                values[i] = rng( 1, 1000000 );
+                done.count_down();
+            } );
+        }
+        done.wait();
+        return values;
+    };
+
+    const auto run_parallel_for = []() {
+        rng_set_deterministic_seed( 424242 );
+        auto values = std::vector<int>( 16 );
+        parallel_for( 0, static_cast<int>( values.size() ), [&values]( const int i ) {
+            if( i % 2 == 0 ) {
+                std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+            }
+            values[i] = rng( 1, 1000000 );
+        } );
+        return values;
+    };
+
+    const auto first_submitted = run_submitted_tasks();
+    const auto second_submitted = run_submitted_tasks();
+    const auto first_parallel = run_parallel_for();
+    const auto second_parallel = run_parallel_for();
+    rng_clear_deterministic_seed();
+    CHECK( first_submitted == second_submitted );
+    CHECK( first_parallel == second_parallel );
 }

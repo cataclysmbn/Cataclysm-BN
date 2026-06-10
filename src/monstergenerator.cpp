@@ -30,7 +30,7 @@
 #include "mtype.h"
 #include "options.h"
 #include "legacy_pathfinding.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_id.h"
 #include "translations.h"
 #include "units.h"

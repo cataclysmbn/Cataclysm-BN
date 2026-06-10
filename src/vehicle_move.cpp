@@ -37,7 +37,7 @@
 #include "options.h"
 #include "player.h"
 #include "point_float.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "string_id.h"
 #include "translations.h"

@@ -1,6 +1,6 @@
 #include "regen.h"
 #include "character.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "type_id.h"
 
 const flag_id flag_SPLINT( "SPLINT" );

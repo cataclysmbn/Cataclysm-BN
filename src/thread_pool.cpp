@@ -6,7 +6,19 @@
 
 #include "crash.h"
 #include "options.h"
-#include "rng.h"
+#include "random/rng.h"
+
+namespace
+{
+
+auto enqueue_task( std::deque<std::function<void()>> &queue, std::mutex &mutex,
+                   std::function<void()> task ) -> void
+{
+    std::lock_guard<std::mutex> lock( mutex );
+    queue.push_back( std::move( task ) );
+}
+
+} // namespace
 
 thread_local bool tl_is_worker_thread = false;
 
@@ -19,8 +31,8 @@ cata_thread_pool::cata_thread_pool( unsigned int num_workers )
 {
     workers_.reserve( num_workers );
     for( unsigned int i = 0; i < num_workers; ++i ) {
-        workers_.emplace_back( [this]() {
-            worker_loop();
+        workers_.emplace_back( [this, i]() {
+            worker_loop( i );
         } );
     }
 }
@@ -37,7 +49,7 @@ cata_thread_pool::~cata_thread_pool()
     }
 }
 
-void cata_thread_pool::worker_loop()
+void cata_thread_pool::worker_loop( const unsigned int worker_index )
 {
     tl_is_worker_thread = true;
     // Windows installs signal handlers per-thread for hardware exception signals
@@ -47,12 +59,16 @@ void cata_thread_pool::worker_loop()
     init_crash_handlers();
 
     // Seed this worker's thread-local RNG so compute_plan() calls do not
-    // race on the main thread's global engine (P-5).
-    // Mix thread ID with current time for a unique-ish seed per worker.
-    const unsigned int seed =
-        static_cast<unsigned int>( std::hash<std::thread::id> {}( std::this_thread::get_id() ) ) ^
-        static_cast<unsigned int>(
-            std::chrono::high_resolution_clock::now().time_since_epoch().count() );
+    // race on the main thread's global engine (P-5). Deterministic replay uses
+    // stable worker-index seeds plus per-task RNG scopes, so OS thread IDs and
+    // scheduling cannot change worker RNG streams.
+    const auto seed = rng_deterministic_seed_active() ?
+                      rng_deterministic_seed_for( { .stream = 0x776f726b65725f5fULL,
+                              .id = worker_index } ) :
+                      static_cast<unsigned int>(
+                          static_cast<unsigned int>( std::hash<std::thread::id> {}( std::this_thread::get_id() ) ) ^
+                          static_cast<unsigned int>(
+                              std::chrono::high_resolution_clock::now().time_since_epoch().count() ) );
     rng_set_worker_seed( seed );
 
     while( true ) {
@@ -74,9 +90,22 @@ void cata_thread_pool::worker_loop()
 
 void cata_thread_pool::submit( std::function<void()> task )
 {
-    {
-        std::lock_guard<std::mutex> lock( mutex_ );
-        queue_.push_back( std::move( task ) );
+    enqueue_task( queue_, mutex_, std::move( task ) );
+    cv_.notify_one();
+}
+
+void cata_thread_pool::submit( const rng_deterministic_key &key, std::function<void()> task )
+{
+    const auto deterministic_seed = rng_deterministic_seed_for_current_context( key );
+    if( deterministic_seed ) {
+        auto wrapped_task = [task = std::move( task ), deterministic_seed]() {
+            [[maybe_unused]] const auto deterministic_scope =
+                rng_deterministic_task_scope( *deterministic_seed );
+            task();
+        };
+        enqueue_task( queue_, mutex_, std::move( wrapped_task ) );
+    } else {
+        enqueue_task( queue_, mutex_, std::move( task ) );
     }
     cv_.notify_one();
 }

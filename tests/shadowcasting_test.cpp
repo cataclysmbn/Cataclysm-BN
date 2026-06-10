@@ -14,7 +14,7 @@
 #include "lightmap.h"
 #include "line.h" // For rl_dist.
 #include "map.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "shadowcasting.h"
 #include "state_helpers.h"
 #include "string_formatter.h"

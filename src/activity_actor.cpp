@@ -51,7 +51,7 @@
 #include "crafting_quality.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "timed_event.h"
 #include "translations.h"

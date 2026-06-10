@@ -171,7 +171,7 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "rot.h"
 #include "safemode_ui.h"
 #include "salvage.h"

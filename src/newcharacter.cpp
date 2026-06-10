@@ -58,7 +58,7 @@
 #include "ranged.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "scenario.h"
 #include "sdltiles.h"
 #include "skill.h"

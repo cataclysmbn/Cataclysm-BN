@@ -71,7 +71,7 @@
 #include "projectile.h"
 #include "ranged.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "stomach.h"
 #include "translations.h"

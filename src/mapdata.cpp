@@ -23,7 +23,7 @@
 #include "json.h"
 #include "make_static.h"
 #include "output.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "translations.h"

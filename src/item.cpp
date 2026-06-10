@@ -99,7 +99,7 @@
 #include "relic.h"
 #include "requirements.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "rot.h"
 #include "scores_ui.h"
 #include "cloning_utils.h"

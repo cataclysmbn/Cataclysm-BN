@@ -15,7 +15,7 @@
 #include "messages.h"
 #include "output.h"
 #include "player.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "units.h"

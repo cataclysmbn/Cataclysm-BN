@@ -13,7 +13,7 @@
 #include "coordinates.h"
 #include "line.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 
 #define SGN(a) (((a)<0) ? -1 : 1)

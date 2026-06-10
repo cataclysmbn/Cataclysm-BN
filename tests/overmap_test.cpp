@@ -15,7 +15,7 @@
 #include "overmap_special.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "state_helpers.h"
 #include "type_id.h"
 

@@ -10,7 +10,7 @@
 #include "mtype.h"
 #include "test_statistics.h"
 #include "bodypart.h"
-#include "rng.h"
+#include "random/rng.h"
 namespace
 {
 

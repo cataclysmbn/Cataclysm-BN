@@ -68,7 +68,7 @@
 #include "player_activity.h"
 #include "recipe.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "stomach.h"
 #include "string_formatter.h"

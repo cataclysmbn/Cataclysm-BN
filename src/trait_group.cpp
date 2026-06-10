@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "json.h"
 #include "mutation.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "ui.h"

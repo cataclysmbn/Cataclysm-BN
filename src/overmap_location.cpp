@@ -10,7 +10,7 @@
 #include "json.h"
 #include "omdata.h"
 #include "overmap.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "type_id_implement.h"
 
 namespace

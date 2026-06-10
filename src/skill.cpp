@@ -14,7 +14,7 @@
 #include "json.h"
 #include "options.h"
 #include "recipe.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_id.h"
 #include "translations.h"
 

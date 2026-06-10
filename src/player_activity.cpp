@@ -32,7 +32,7 @@
 #include "player.h"
 #include "profile.h"
 #include "recipe.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "sounds.h"
 #include "string_formatter.h"

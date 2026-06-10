@@ -61,7 +61,8 @@
 #include "path_info.h"
 #include "point.h"
 #include "profile.h"
-#include "rng.h"
+#include "random/rng.h"
+#include "replay/replay.h"
 #include "sdl_wrappers.h"
 #include "sdl_geometry.h"
 #include "sdl_utils.h"
@@ -3952,6 +3953,15 @@ input_event input_manager::get_input_event()
 {
     ZoneScopedN( "sdl_input_get_input_event" );
     previously_pressed_key = 0;
+    if( replay::is_playing() && inputdelay == 0 ) {
+        return input_event();
+    }
+    if( const auto replay_input = replay::next_input_event() ) {
+        if( replay_input->type == input_event_t::keyboard ) {
+            previously_pressed_key = replay_input->get_first_input();
+        }
+        return *replay_input;
+    }
 
     // standards note: getch is sometimes required to call refresh
     // see, e.g., http://linux.die.net/man/3/getch
@@ -4012,6 +4022,7 @@ input_event input_manager::get_input_event()
     }
 #endif
 
+    replay::record_input_event( last_input );
     return last_input;
 }
 

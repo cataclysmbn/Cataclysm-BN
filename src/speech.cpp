@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "json.h"
-#include "rng.h"
+#include "random/rng.h"
 
 static std::map<std::string, std::vector<SpeechBubble>> speech;
 

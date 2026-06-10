@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 
 namespace CellularAutomata
 {

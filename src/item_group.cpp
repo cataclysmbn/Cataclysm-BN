@@ -17,7 +17,7 @@
 #include "itype.h"
 #include "iuse_actor.h"
 #include "json.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "type_id.h"
 #include "options.h"
 

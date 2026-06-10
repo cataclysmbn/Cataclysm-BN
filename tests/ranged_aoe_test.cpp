@@ -21,7 +21,7 @@
 #include "map_helpers.h"
 #include "game.h"
 #include "itype.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "state_helpers.h"
 

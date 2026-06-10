@@ -27,7 +27,7 @@
 #include "output.h"
 #include "point.h"
 #include "profile.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "submap.h"
 #include "translations.h"
 #include "weather.h"

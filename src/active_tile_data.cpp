@@ -9,7 +9,7 @@
 #include "json.h"
 #include "map.h"
 #include "mapbuffer.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "submap_load_manager.h"
 #include "vehicle.h"
 #include "vehicle_part.h"

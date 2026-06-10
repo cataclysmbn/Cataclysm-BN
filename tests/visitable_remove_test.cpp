@@ -20,7 +20,7 @@
 #include "map_helpers.h"
 #include "map_selector.h"
 #include "player.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle.h"

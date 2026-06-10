@@ -29,7 +29,7 @@
 #include "output.h"
 #include "player_activity.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "translations.h"
