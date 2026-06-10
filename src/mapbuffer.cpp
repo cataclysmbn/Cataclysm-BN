@@ -18,6 +18,7 @@
 #include "debug.h"
 #include "distribution_grid.h"
 #include "filesystem.h"
+#include "field_type.h"
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
@@ -38,6 +39,26 @@
 
 namespace
 {
+
+struct mapbuffer_tile_lookup {
+    submap *sm = nullptr;
+    point_sm_ms local;
+};
+
+auto lookup_tile( mapbuffer &buffer, const tripoint_abs_ms &p,
+                  const mapbuffer_lookup_options options ) -> std::optional<mapbuffer_tile_lookup>
+{
+    const auto split = project_remain<coords::sm>( p );
+    auto *const sm = buffer.get_submap( split.quotient_tripoint, options );
+    if( sm == nullptr ) {
+        return std::nullopt;
+    }
+
+    return mapbuffer_tile_lookup {
+        .sm = sm,
+        .local = split.remainder,
+    };
+}
 
 auto uniform_terrain_for_omt( const dimension_id &dimension_id,
                               const tripoint_abs_omt &omt_addr ) -> std::optional<ter_id>
@@ -358,13 +379,357 @@ auto mapbuffer::get_submap( const tripoint_abs_sm &p,
 auto mapbuffer::get_ter( const tripoint_abs_ms &p,
                          const mapbuffer_lookup_options options ) -> std::optional<ter_id>
 {
-    const auto split = project_remain<coords::sm>( p );
-    submap *const sm = get_submap( split.quotient_tripoint, options );
-    if( sm == nullptr ) {
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
         return std::nullopt;
     }
 
-    return sm->get_ter( split.remainder );
+    return tile->sm->get_ter( tile->local );
+}
+
+auto mapbuffer::set_ter( const tripoint_abs_ms &p, const ter_id terrain,
+                         const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->set_ter( tile->local, terrain );
+    return true;
+}
+
+auto mapbuffer::get_furn( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::optional<furn_id>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_furn( tile->local );
+}
+
+auto mapbuffer::set_furn( const tripoint_abs_ms &p, const furn_id furn,
+                          const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->set_furn( tile->local, furn );
+    return true;
+}
+
+auto mapbuffer::get_trap( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::optional<trap_id>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_trap( tile->local );
+}
+
+auto mapbuffer::set_trap( const tripoint_abs_ms &p, const trap_id trap,
+                          const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->set_trap( tile->local, trap );
+    return true;
+}
+
+auto mapbuffer::get_radiation( const tripoint_abs_ms &p,
+                               const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_radiation( tile->local );
+}
+
+auto mapbuffer::set_radiation( const tripoint_abs_ms &p, const int radiation,
+                               const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->set_radiation( tile->local, radiation );
+    return true;
+}
+
+auto mapbuffer::adjust_radiation( const tripoint_abs_ms &p, const int delta,
+                                  const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    const auto adjusted = tile->sm->get_radiation( tile->local ) + delta;
+    tile->sm->set_radiation( tile->local, adjusted );
+    return adjusted;
+}
+
+auto mapbuffer::get_lum( const tripoint_abs_ms &p,
+                         const mapbuffer_lookup_options options ) -> std::optional<std::uint8_t>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_lum( tile->local );
+}
+
+auto mapbuffer::set_lum( const tripoint_abs_ms &p, const std::uint8_t luminance,
+                         const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->set_lum( tile->local, luminance );
+    return true;
+}
+
+auto mapbuffer::get_field( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> field *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    return &tile->sm->get_field( tile->local );
+}
+
+auto mapbuffer::has_field_at( const tripoint_abs_ms &p,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile && tile->sm->field_count > 0;
+}
+
+auto mapbuffer::get_field_entry( const tripoint_abs_ms &p, const field_type_id &type,
+                                 const mapbuffer_lookup_options options ) -> field_entry *
+{
+    if( !has_field_at( p, options ) ) {
+        return nullptr;
+    }
+
+    return get_field( p, options )->find_field( type );
+}
+
+auto mapbuffer::get_field_age( const tripoint_abs_ms &p, const field_type_id &type,
+                               const mapbuffer_lookup_options options ) -> std::optional<time_duration>
+{
+    if( !get_field( p, options ) ) {
+        return std::nullopt;
+    }
+
+    const auto *const field_ptr = get_field_entry( p, type, options );
+    return field_ptr == nullptr ? -1_turns : field_ptr->get_field_age();
+}
+
+auto mapbuffer::get_field_intensity( const tripoint_abs_ms &p, const field_type_id &type,
+                                     const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    if( !get_field( p, options ) ) {
+        return std::nullopt;
+    }
+
+    const auto *const field_ptr = get_field_entry( p, type, options );
+    return field_ptr == nullptr ? 0 : field_ptr->get_field_intensity();
+}
+
+auto mapbuffer::mod_field_age( const tripoint_abs_ms &p,
+                               const mapbuffer_field_age_options &options ) -> std::optional<time_duration>
+{
+    auto set_options = options;
+    set_options.isoffset = true;
+    return set_field_age( p, set_options );
+}
+
+auto mapbuffer::mod_field_intensity( const tripoint_abs_ms &p,
+                                     const mapbuffer_field_intensity_options &options ) -> std::optional<int>
+{
+    auto set_options = options;
+    set_options.isoffset = true;
+    return set_field_intensity( p, set_options );
+}
+
+auto mapbuffer::set_field_age( const tripoint_abs_ms &p,
+                               const mapbuffer_field_age_options &options ) -> std::optional<time_duration>
+{
+    if( !get_field( p, options.lookup ) ) {
+        return std::nullopt;
+    }
+
+    auto *const field_ptr = get_field_entry( p, options.type, options.lookup );
+    if( field_ptr == nullptr ) {
+        return -1_turns;
+    }
+
+    return field_ptr->set_field_age( ( options.isoffset ? field_ptr->get_field_age() : 0_turns ) +
+                                     options.age );
+}
+
+auto mapbuffer::set_field_intensity( const tripoint_abs_ms &p,
+                                     const mapbuffer_field_intensity_options &options ) -> std::optional<int>
+{
+    if( !get_field( p, options.lookup ) ) {
+        return std::nullopt;
+    }
+
+    auto *const field_ptr = get_field_entry( p, options.type, options.lookup );
+    if( field_ptr != nullptr ) {
+        const auto adjusted = ( options.isoffset ? field_ptr->get_field_intensity() : 0 ) +
+                              options.intensity;
+        if( adjusted > 0 ) {
+            return field_ptr->set_field_intensity( adjusted );
+        }
+        remove_field( p, options.type, options.lookup );
+        return 0;
+    }
+
+    if( options.intensity <= 0 ) {
+        return 0;
+    }
+
+    return add_field( p, {
+        .type = options.type,
+        .intensity = options.intensity,
+        .lookup = options.lookup,
+    } ) ? options.intensity : 0;
+}
+
+auto mapbuffer::add_field( const tripoint_abs_ms &p,
+                           const mapbuffer_add_field_options &options ) -> bool
+{
+    if( !options.type ) {
+        debugmsg( "Tried to add null field" );
+        return false;
+    }
+
+    const auto tile = lookup_tile( *this, p, options.lookup );
+    if( !tile ) {
+        return false;
+    }
+
+    const auto &field_type = *options.type;
+    const auto intensity = std::min( options.intensity, field_type.get_max_intensity() );
+    if( intensity <= 0 ) {
+        return false;
+    }
+
+    tile->sm->is_uniform = false;
+    if( tile->sm->get_field( tile->local ).add_field( options.type, intensity, options.age ) ) {
+        tile->sm->field_count++;
+        tile->sm->field_cache.push_back( tile->local );
+    }
+
+    invalidate_active_field_add_caches( p, options.type );
+    return true;
+}
+
+auto mapbuffer::remove_field( const tripoint_abs_ms &p, const field_type_id &type,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    if( !tile->sm->get_field( tile->local ).remove_field( type ) ) {
+        return false;
+    }
+
+    --tile->sm->field_count;
+    invalidate_active_field_remove_caches( p, type );
+    return true;
+}
+
+auto mapbuffer::get_items( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> location_vector<item> *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    return &tile->sm->get_items( tile->local );
+}
+
+auto mapbuffer::active_map_local( const tripoint_abs_ms &p ) const -> std::optional<tripoint_bub_ms>
+{
+    if( g == nullptr ) {
+        return std::nullopt;
+    }
+
+    auto &here = get_map();
+    if( here.get_bound_dimension() != dimension_id_ || !here.inbounds( p ) ) {
+        return std::nullopt;
+    }
+
+    return abs_to_map_local( here, p );
+}
+
+auto mapbuffer::invalidate_active_field_add_caches( const tripoint_abs_ms &p,
+        const field_type_id &type ) const -> void
+{
+    const auto local = active_map_local( p );
+    if( !local ) {
+        return;
+    }
+
+    auto &here = get_map();
+    const auto &field_type = type.obj();
+    here.invalidate_max_populated_zlev( local->z() );
+
+    if( field_type.dirty_transparency_cache || !field_type.is_transparent() ) {
+        here.set_transparency_cache_dirty( *local );
+        here.set_seen_cache_dirty( *local );
+    }
+
+    if( field_type.is_dangerous() ) {
+        here.set_pathfinding_cache_dirty( *local );
+    }
+
+    if( here.has_zlevels() && field_type.accelerated_decay ) {
+        here.support_dirty( *local );
+    }
+}
+
+auto mapbuffer::invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
+        const field_type_id &type ) const -> void
+{
+    const auto local = active_map_local( p );
+    if( !local ) {
+        return;
+    }
+
+    auto &here = get_map();
+    const auto &field_type = type.obj();
+    if( field_type.dirty_transparency_cache || !field_type.is_transparent() ) {
+        here.set_transparency_cache_dirty( *local );
+        here.set_seen_cache_dirty( *local );
+    }
+
+    if( field_type.is_dangerous() ) {
+        here.set_pathfinding_cache_dirty( *local );
+    }
 }
 
 void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_progress )

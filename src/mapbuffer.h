@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
+#include <limits>
 #include <list>
 #include <map>
 #include <memory>
@@ -11,13 +13,19 @@
 #include <utility>
 #include <vector>
 
+#include "calendar.h"
 #include "coordinates.h"
 #include "mapgen_functions.h"
 #include "point.h"
 #include "type_id.h"
 
 class submap;
+class field;
+class field_entry;
+class item;
 class JsonIn;
+template<typename T>
+class location_vector;
 
 struct mapbuffer_generate_omt_options {
     bool defer_postprocess_hooks = false;
@@ -35,6 +43,27 @@ enum class mapbuffer_lookup_mode : int {
 
 struct mapbuffer_lookup_options {
     mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::simulated_only;
+};
+
+struct mapbuffer_field_age_options {
+    field_type_id type;
+    time_duration age = 0_turns;
+    bool isoffset = false;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_field_intensity_options {
+    field_type_id type;
+    int intensity = 0;
+    bool isoffset = false;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_add_field_options {
+    field_type_id type;
+    int intensity = std::numeric_limits<int>::max();
+    time_duration age = 0_turns;
+    mapbuffer_lookup_options lookup;
 };
 
 /**
@@ -94,6 +123,55 @@ class mapbuffer
 
         auto get_ter( const tripoint_abs_ms &p,
                       mapbuffer_lookup_options options = {} ) -> std::optional<ter_id>;
+        auto set_ter( const tripoint_abs_ms &p, ter_id terrain,
+                      mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto get_furn( const tripoint_abs_ms &p,
+                       mapbuffer_lookup_options options = {} ) -> std::optional<furn_id>;
+        auto set_furn( const tripoint_abs_ms &p, furn_id furn,
+                       mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto get_trap( const tripoint_abs_ms &p,
+                       mapbuffer_lookup_options options = {} ) -> std::optional<trap_id>;
+        auto set_trap( const tripoint_abs_ms &p, trap_id trap,
+                       mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto get_radiation( const tripoint_abs_ms &p,
+                            mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto set_radiation( const tripoint_abs_ms &p, int radiation,
+                            mapbuffer_lookup_options options = {} ) -> bool;
+        auto adjust_radiation( const tripoint_abs_ms &p, int delta,
+                               mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+
+        auto get_lum( const tripoint_abs_ms &p,
+                      mapbuffer_lookup_options options = {} ) -> std::optional<std::uint8_t>;
+        auto set_lum( const tripoint_abs_ms &p, std::uint8_t luminance,
+                      mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto get_field( const tripoint_abs_ms &p,
+                        mapbuffer_lookup_options options = {} ) -> field *;
+        auto has_field_at( const tripoint_abs_ms &p,
+                           mapbuffer_lookup_options options = {} ) -> bool;
+        auto get_field_entry( const tripoint_abs_ms &p, const field_type_id &type,
+                              mapbuffer_lookup_options options = {} ) -> field_entry *;
+        auto get_field_age( const tripoint_abs_ms &p, const field_type_id &type,
+                            mapbuffer_lookup_options options = {} ) -> std::optional<time_duration>;
+        auto get_field_intensity( const tripoint_abs_ms &p, const field_type_id &type,
+                                  mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto mod_field_age( const tripoint_abs_ms &p,
+                            const mapbuffer_field_age_options &options ) -> std::optional<time_duration>;
+        auto mod_field_intensity( const tripoint_abs_ms &p,
+                                  const mapbuffer_field_intensity_options &options ) -> std::optional<int>;
+        auto set_field_age( const tripoint_abs_ms &p,
+                            const mapbuffer_field_age_options &options ) -> std::optional<time_duration>;
+        auto set_field_intensity( const tripoint_abs_ms &p,
+                                  const mapbuffer_field_intensity_options &options ) -> std::optional<int>;
+        auto add_field( const tripoint_abs_ms &p,
+                        const mapbuffer_add_field_options &options ) -> bool;
+        auto remove_field( const tripoint_abs_ms &p, const field_type_id &type,
+                           mapbuffer_lookup_options options = {} ) -> bool;
+        auto get_items( const tripoint_abs_ms &p,
+                        mapbuffer_lookup_options options = {} ) -> location_vector<item> *;
 
         /** Get a submap stored in this buffer.
          *
@@ -200,6 +278,12 @@ class mapbuffer
 
     private:
         using submap_map_t = std::unordered_map<tripoint_abs_sm, std::unique_ptr<submap>>;
+
+        auto active_map_local( const tripoint_abs_ms &p ) const -> std::optional<tripoint_bub_ms>;
+        auto invalidate_active_field_add_caches( const tripoint_abs_ms &p,
+                const field_type_id &type ) const -> void;
+        auto invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
+                const field_type_id &type ) const -> void;
 
         /// Guards all accesses to `submaps` that may overlap with background
         /// worker threads calling add_submap().  std::recursive_mutex allows

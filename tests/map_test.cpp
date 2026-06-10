@@ -8,6 +8,7 @@
 #include "coordinates.h"
 #include "cata_utility.h"
 #include "enums.h"
+#include "field_type.h"
 #include "game.h"
 #include "game_constants.h"
 #include "map.h"
@@ -187,13 +188,114 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     CHECK( buffer.get_submap( sm_pos, resident_only ) == sm );
 
     const auto tile_pos = project_to<coords::ms>( sm_pos ) + tripoint_rel_ms( 3, 4, 0 );
+    const auto local_tile_pos = point_sm_ms( 3, 4 );
     const auto terrain = buffer.get_ter( tile_pos, resident_only );
     REQUIRE( terrain.has_value() );
     CHECK( *terrain == ter_id( "t_rock" ) );
+    CHECK( buffer.set_ter( tile_pos, ter_id( "t_dirt" ), resident_only ) );
+    CHECK( buffer.get_ter( tile_pos, resident_only ) == ter_id( "t_dirt" ) );
+
+    const auto furniture = furn_str_id( "f_console_table" ).id();
+    CHECK( buffer.get_furn( tile_pos, resident_only ) == f_null );
+    CHECK( buffer.set_furn( tile_pos, furniture, resident_only ) );
+    CHECK( buffer.get_furn( tile_pos, resident_only ) == furniture );
+
+    const auto trap = trap_str_id( "tr_bubblewrap" ).id();
+    CHECK( buffer.get_trap( tile_pos, resident_only ) == tr_null );
+    CHECK( buffer.set_trap( tile_pos, trap, resident_only ) );
+    CHECK( buffer.get_trap( tile_pos, resident_only ) == trap );
+
+    CHECK( buffer.get_radiation( tile_pos, resident_only ) == 0 );
+    CHECK( buffer.set_radiation( tile_pos, 7, resident_only ) );
+    CHECK( buffer.get_radiation( tile_pos, resident_only ) == 7 );
+    CHECK( buffer.adjust_radiation( tile_pos, 5, resident_only ) == 12 );
+    CHECK( buffer.get_radiation( tile_pos, resident_only ) == 12 );
+
+    CHECK( buffer.get_lum( tile_pos, resident_only ) == 0 );
+    CHECK( buffer.set_lum( tile_pos, 3, resident_only ) );
+    CHECK( buffer.get_lum( tile_pos, resident_only ) == 3 );
+    CHECK( buffer.get_field( tile_pos, resident_only ) == &sm->get_field( local_tile_pos ) );
+    CHECK_FALSE( buffer.has_field_at( tile_pos, resident_only ) );
+    CHECK( buffer.get_field_entry( tile_pos, fd_fire, resident_only ) == nullptr );
+    CHECK( buffer.get_field_age( tile_pos, fd_fire, resident_only ) == -1_turns );
+    CHECK( buffer.get_field_intensity( tile_pos, fd_fire, resident_only ) == 0 );
+    CHECK( buffer.add_field( tile_pos, {
+        .type = fd_fire,
+        .intensity = 1,
+        .age = 5_turns,
+        .lookup = resident_only,
+    } ) );
+    REQUIRE( buffer.get_field_entry( tile_pos, fd_fire, resident_only ) != nullptr );
+    CHECK( buffer.has_field_at( tile_pos, resident_only ) );
+    CHECK( sm->field_count == 1 );
+    REQUIRE_FALSE( sm->field_cache.empty() );
+    CHECK( sm->field_cache.back() == local_tile_pos );
+    CHECK( buffer.get_field_age( tile_pos, fd_fire, resident_only ) == 5_turns );
+    CHECK( buffer.get_field_intensity( tile_pos, fd_fire, resident_only ) == 1 );
+    CHECK( buffer.set_field_age( tile_pos, {
+        .type = fd_fire,
+        .age = 10_turns,
+        .lookup = resident_only,
+    } ) == 10_turns );
+    CHECK( buffer.mod_field_age( tile_pos, {
+        .type = fd_fire,
+        .age = 2_turns,
+        .lookup = resident_only,
+    } ) == 12_turns );
+    CHECK( buffer.set_field_intensity( tile_pos, {
+        .type = fd_fire,
+        .intensity = 3,
+        .lookup = resident_only,
+    } ) == 3 );
+    const auto max_fire_intensity = fd_fire.obj().get_max_intensity();
+    CHECK( buffer.mod_field_intensity( tile_pos, {
+        .type = fd_fire,
+        .intensity = 2,
+        .lookup = resident_only,
+    } ) == max_fire_intensity );
+    CHECK( buffer.get_field_intensity( tile_pos, fd_fire, resident_only ) == max_fire_intensity );
+    CHECK( buffer.remove_field( tile_pos, fd_fire, resident_only ) );
+    CHECK_FALSE( buffer.remove_field( tile_pos, fd_fire, resident_only ) );
+    CHECK_FALSE( buffer.has_field_at( tile_pos, resident_only ) );
+    CHECK( sm->field_count == 0 );
+    CHECK( buffer.get_items( tile_pos, resident_only ) == &sm->get_items( local_tile_pos ) );
 
     const auto missing_sm = sm_pos + tripoint_rel_sm( 10, 0, 0 );
+    const auto missing_tile = project_to<coords::ms>( missing_sm );
     CHECK( buffer.get_submap( missing_sm, resident_only ) == nullptr );
-    CHECK_FALSE( buffer.get_ter( project_to<coords::ms>( missing_sm ), resident_only ).has_value() );
+    CHECK_FALSE( buffer.get_ter( missing_tile, resident_only ).has_value() );
+    CHECK_FALSE( buffer.set_ter( missing_tile, ter_id( "t_dirt" ), resident_only ) );
+    CHECK_FALSE( buffer.get_furn( missing_tile, resident_only ).has_value() );
+    CHECK_FALSE( buffer.set_furn( missing_tile, furniture, resident_only ) );
+    CHECK_FALSE( buffer.get_trap( missing_tile, resident_only ).has_value() );
+    CHECK_FALSE( buffer.set_trap( missing_tile, trap, resident_only ) );
+    CHECK_FALSE( buffer.get_radiation( missing_tile, resident_only ).has_value() );
+    CHECK_FALSE( buffer.set_radiation( missing_tile, 7, resident_only ) );
+    CHECK_FALSE( buffer.adjust_radiation( missing_tile, 5, resident_only ).has_value() );
+    CHECK_FALSE( buffer.get_lum( missing_tile, resident_only ).has_value() );
+    CHECK_FALSE( buffer.set_lum( missing_tile, 3, resident_only ) );
+    CHECK( buffer.get_field( missing_tile, resident_only ) == nullptr );
+    CHECK_FALSE( buffer.has_field_at( missing_tile, resident_only ) );
+    CHECK( buffer.get_field_entry( missing_tile, fd_fire, resident_only ) == nullptr );
+    CHECK_FALSE( buffer.get_field_age( missing_tile, fd_fire, resident_only ).has_value() );
+    CHECK_FALSE( buffer.get_field_intensity( missing_tile, fd_fire, resident_only ).has_value() );
+    CHECK_FALSE( buffer.set_field_age( missing_tile, {
+        .type = fd_fire,
+        .age = 10_turns,
+        .lookup = resident_only,
+    } ).has_value() );
+    CHECK_FALSE( buffer.set_field_intensity( missing_tile, {
+        .type = fd_fire,
+        .intensity = 3,
+        .lookup = resident_only,
+    } ).has_value() );
+    CHECK_FALSE( buffer.add_field( missing_tile, {
+        .type = fd_fire,
+        .intensity = 1,
+        .lookup = resident_only,
+    } ) );
+    CHECK_FALSE( buffer.remove_field( missing_tile, fd_fire, resident_only ) );
+    CHECK( buffer.get_items( missing_tile, resident_only ) == nullptr );
 }
 
 TEST_CASE( "mapbuffer_simulated_lookup_uses_load_manager_membership" )
