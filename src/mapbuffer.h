@@ -34,7 +34,7 @@ enum class mapbuffer_lookup_mode : int {
 };
 
 struct mapbuffer_lookup_options {
-    mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::resident_only;
+    mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::simulated_only;
 };
 
 /**
@@ -78,6 +78,8 @@ class mapbuffer
 
         /**
          * Absolute submap lookup with explicit residency/loading policy.
+         * Defaults to simulated_only so ordinary callers only see active
+         * simulation data unless they explicitly request broader residency.
          *
          * simulated_only: return only if already resident and currently simulated.
          * The simulation set is owned by submap_load_manager and may include

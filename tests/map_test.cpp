@@ -173,6 +173,9 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
 
     auto &buffer = MAPBUFFER;
     const auto sm_pos = tripoint_abs_sm( 1200, -1200, 0 );
+    const auto resident_only = mapbuffer_lookup_options {
+        .mode = mapbuffer_lookup_mode::resident_only
+    };
     const auto cleanup = on_out_of_scope( [&]() {
         buffer.unload_omt( project_to<coords::omt>( sm_pos ), false );
     } );
@@ -180,16 +183,16 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     auto *const sm = add_absolute_test_submap( buffer, sm_pos, ter_id( "t_rock" ) );
     REQUIRE( sm != nullptr );
 
-    CHECK( buffer.get_submap( sm_pos ) == sm );
+    CHECK( buffer.get_submap( sm_pos, resident_only ) == sm );
 
     const auto tile_pos = project_to<coords::ms>( sm_pos ) + tripoint_rel_ms( 3, 4, 0 );
-    const auto terrain = buffer.get_ter( tile_pos );
+    const auto terrain = buffer.get_ter( tile_pos, resident_only );
     REQUIRE( terrain.has_value() );
     CHECK( *terrain == ter_id( "t_rock" ) );
 
     const auto missing_sm = sm_pos + tripoint_rel_sm( 10, 0, 0 );
-    CHECK( buffer.get_submap( missing_sm ) == nullptr );
-    CHECK_FALSE( buffer.get_ter( project_to<coords::ms>( missing_sm ) ).has_value() );
+    CHECK( buffer.get_submap( missing_sm, resident_only ) == nullptr );
+    CHECK_FALSE( buffer.get_ter( project_to<coords::ms>( missing_sm ), resident_only ).has_value() );
 }
 
 TEST_CASE( "mapbuffer_simulated_lookup_uses_load_manager_membership" )
@@ -204,20 +207,16 @@ TEST_CASE( "mapbuffer_simulated_lookup_uses_load_manager_membership" )
         submap_loader.release_load( full_handle );
         MAPBUFFER_REGISTRY.unload_dimension( dim_id );
     } );
-    const auto simulated_only = mapbuffer_lookup_options {
-        .mode = mapbuffer_lookup_mode::simulated_only
-    };
-
     auto *const sm = add_absolute_test_submap( buffer, sm_pos, ter_id( "t_rock" ) );
     REQUIRE( sm != nullptr );
 
     const auto lazy_handle = submap_loader.request_load( load_request_source::lazy_border,
                              dim_id, sm_pos, 0 );
-    CHECK( buffer.get_submap( sm_pos, simulated_only ) == nullptr );
+    CHECK( buffer.get_submap( sm_pos ) == nullptr );
     submap_loader.release_load( lazy_handle );
 
     full_handle = submap_loader.request_load( load_request_source::script, dim_id, sm_pos, 0 );
-    CHECK( buffer.get_submap( sm_pos, simulated_only ) == sm );
+    CHECK( buffer.get_submap( sm_pos ) == sm );
 }
 
 TEST_CASE( "mapbuffer_load_or_generate_lookup_is_explicit" )
@@ -235,6 +234,9 @@ TEST_CASE( "mapbuffer_load_or_generate_lookup_is_explicit" )
     const auto load_or_generate = mapbuffer_lookup_options {
         .mode = mapbuffer_lookup_mode::load_or_generate
     };
+    const auto resident_only = mapbuffer_lookup_options {
+        .mode = mapbuffer_lookup_mode::resident_only
+    };
 
     REQUIRE( buffer.lookup_submap_in_memory( sm_pos ) == nullptr );
     CHECK( buffer.get_submap( sm_pos, load_from_disk ) == nullptr );
@@ -243,7 +245,7 @@ TEST_CASE( "mapbuffer_load_or_generate_lookup_is_explicit" )
     submap *const generated = buffer.get_submap( sm_pos, load_or_generate );
     REQUIRE( generated != nullptr );
     CHECK( buffer.lookup_submap_in_memory( sm_pos ) == generated );
-    CHECK( buffer.get_ter( project_to<coords::ms>( sm_pos ) ).has_value() );
+    CHECK( buffer.get_ter( project_to<coords::ms>( sm_pos ), resident_only ).has_value() );
 }
 
 TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
