@@ -1,0 +1,11 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "bionic_replacements",
+    "name": "Bionic Replacements",
+    "authors": [ "Azmodius X" ],
+    "description": "Adds various cbms that have marginal effect, but free up bionic slots.",
+    "category": "content",
+    "dependencies": [ "bn", "cbm_slots" ]
+  }
+]

@@ -1,0 +1,63 @@
+[
+  {
+    "id": "bio_stomach_replacement",
+    "type": "bionic",
+    "name": { "str": "Bionic Stomach" },
+    "description": "A simple stomach replacement. It takes up significantly less room than a biologic stomach, but prevents the use of other digestive bionics and requires minor upkeep.",
+    "starting_bionic": true,
+    "occupied_bodyparts": [ [ "torso", -20 ] ],
+    "conflicting_bionics": [ "bio_digestion" ],
+    "fuel_options": [ "metabolism" ],
+    "fuel_efficiency": 0.25,
+    "flags": [ "BIONIC_SLEEP_FRIENDLY", "BIONIC_NPC_USABLE" ],
+    "can_uninstall": false,
+    "react_cost": "1 J",
+    "time": 10
+  },
+  {
+    "id": "bio_heart_replacement",
+    "type": "bionic",
+    "name": { "str": "Bionic Heart" },
+    "description": "A basic heart replacement. You're much less likely to have a heart attack with this, but who wants to test that? Prevents utilization of other heart bionics.",
+    "starting_bionic": true,
+    "occupied_bodyparts": [ [ "torso", -5 ] ],
+    "conflicting_bionics": [ "bio_blood_filter", "bio_blood_anal" ],
+    "fuel_options": [ "metabolism" ],
+    "fuel_efficiency": 0.25,
+    "flags": [ "BIONIC_SLEEP_FRIENDLY", "BIONIC_NPC_USABLE" ],
+    "can_uninstall": false,
+    "react_cost": "1 J",
+    "time": 5,
+    "available_upgrades": [ "bio_heart_replacement_mkII" ]
+  },
+  {
+    "id": "bio_heart_replacement_mk2",
+    "type": "bionic",
+    "name": { "str": "Bionic Heart MkII" },
+    "description": "An advanced heart replacement. Replaces significant portions of your vascular system. Compatible with other bionics that interact with the heart.",
+    "starting_bionic": true,
+    "occupied_bodyparts": [ [ "torso", -10 ] ],
+    "fuel_options": [ "metabolism" ],
+    "fuel_efficiency": 0.25,
+    "flags": [ "BIONIC_SLEEP_FRIENDLY", "BIONIC_NPC_USABLE" ],
+    "can_uninstall": false,
+    "react_cost": "1 J",
+    "time": 1
+  },
+  {
+    "id": "bio_lungs_replacement",
+    "type": "bionic",
+    "name": { "str": "Bionic Lungs" },
+    "description": "Replacement lungs. They nullify asthma, but can get gummed up just like normal lungs. Prevents the usage of other lung bionics.",
+    "starting_bionic": true,
+    "occupied_bodyparts": [ [ "torso", -15 ] ],
+    "conflicting_bionics": [ "bio_purifier", "bio_gills" ],
+    "fuel_options": [ "metabolism" ],
+    "fuel_efficiency": 0.25,
+    "flags": [ "BIONIC_SLEEP_FRIENDLY", "BIONIC_NPC_USABLE" ],
+    "canceled_mutations": [ "ASTHMA" ],
+    "can_uninstall": false,
+    "react_cost": "2 J",
+    "time": 1
+  }
+]
