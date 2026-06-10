@@ -9,9 +9,14 @@ game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) 
 game.iuse_functions["sonar_scan"] = function(...) return mod.sonar_scan(...) end
 game.iuse_functions["ARTIFACT_ANALYZER"] = function(...) return mod.artifact_analyzer.menu(...) end
 game.iuse_functions["OBJ_VAR_VIEWER"] = function(...) return mod.item_var_viewer.menu(...) end
+game.iuse_functions["EBOOK_READER"] = function(...) return mod.ebook_reader.menu(...) end
 game.examine_functions["PLUMBING_SHOWER_EXAMINE"] = function(...) return mod.plumbing.examine_shower(...) end
 game.examine_functions["PLUMBING_BATHTUB_EXAMINE"] = function(...) return mod.plumbing.examine_bathtub(...) end
 game.activity_functions["PLUMBING_FINISH_WASH"] = function(...) return mod.plumbing.finish_wash(...) end
+game.activity_functions["EBOOK_CHECK_READING"] = function(...) return mod.ebook_reader.check_reading(...) end
+game.activity_functions["EBOOK_FINISH_READING"] = function(...) return mod.ebook_reader.finish_reading(...) end
+game.activity_functions["EBOOK_CHECK_SCANNING"] = function(...) return mod.ebook_reader.check_scanning(...) end
+game.activity_functions["EBOOK_FINISH_SCANNING"] = function(...) return mod.ebook_reader.finish_scanning(...) end
 game.bionic_functions["bio_minirose"] = { on_activate = function(...) return mod.minirose.on_activate(...) end }
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...)
@@ -32,6 +37,9 @@ game.add_hook("on_npc_loaded", function(...) return mod.robofac.authorize_hub01_
 game.add_hook("on_monster_spawn", function(...) return mod.robofac.authorize_hub01_turret(...) end)
 game.add_hook("on_monster_loaded", function(...) return mod.robofac.authorize_hub01_turret(...) end)
 game.add_hook("on_craft_result", function(...) return mod.cooking.on_craft_result(...) end)
+game.add_hook("on_item_available_recipes", function(...) return mod.ebook_reader.available_recipes(...) end)
+game.add_hook("on_read_inventory_virtual_books", function(...) return mod.ebook_reader.virtual_books(...) end)
+game.add_hook("on_read_virtual_book", function(...) return mod.ebook_reader.read_virtual_book(...) end)
 game.add_hook("on_explosion_start", function(...) return mod.nuclear_tear.on_explosion(...) end)
 game.add_hook("on_character_death", function(...) return mod.minirose.on_character_death(...) end)
 

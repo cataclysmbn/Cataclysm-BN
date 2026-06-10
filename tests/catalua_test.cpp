@@ -312,6 +312,12 @@ TEST_CASE( "lua_activity_bindings", "[lua]" )
 {
     clear_all_state();
     auto &state = *DynamicDataLoader::get_instance().lua;
+    const auto original_lua = std::make_shared<sol::state>( std::move( state.lua ) );
+    const auto restore_lua = on_out_of_scope( [&state, original_lua]() {
+        state.lua = std::move( *original_lua );
+    } );
+    state.lua = make_lua_state();
+    state.lua.globals()["game"] = state.lua.create_table();
     cata::init_global_state_tables( state, {} );
     sol::state &lua = state.lua;
 

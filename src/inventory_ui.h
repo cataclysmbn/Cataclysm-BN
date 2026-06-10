@@ -496,6 +496,8 @@ class inventory_selector
         void add_item( inventory_column &target_column,
                        item *location,
                        const item_category *custom_category = nullptr );
+        void add_custom_item( item *location,
+                              const item_category *custom_category = nullptr );
 
         void remove_item( item *location );
 
@@ -575,6 +577,7 @@ class inventory_selector
         void draw_footer( const catacurses::window &w ) const;
         void draw_columns( const catacurses::window &w ) const;
         void draw_frame( const catacurses::window &w ) const;
+        auto is_custom_item( const item *location ) const -> bool;
 
     public:
         /**
@@ -655,6 +658,8 @@ class inventory_selector
         size_t active_column_index;
         std::list<item_category> categories;
         navigation_mode mode;
+
+        std::vector<item *> custom_items;
 
         const int border = 1;                // Width of the window border
         std::string filter;

@@ -1136,26 +1136,27 @@ void npc::do_npc_read()
     if( !pl ) {
         return;
     }
-    auto loc = game_menus::inv::read( *pl );
+    const auto selection = game_menus::inv::read( *pl );
 
-    if( loc ) {
-        std::vector<std::string> fail_reasons;
-        Character *ch = dynamic_cast<Character *>( pl );
-        if( !ch ) {
-            return;
-        }
-        if( can_read( *loc, fail_reasons ) ) {
-            if( g->u.sees( bub_pos() ) ) {
-                add_msg( m_info, _( "%s starts reading." ), disp_name() );
-            }
-            start_read( *loc, pl );
-        } else {
-            for( const auto &elem : fail_reasons ) {
-                say( elem );
-            }
-        }
-    } else {
+    if( selection.loc == nullptr ) {
         add_msg( _( "Never mind." ) );
+        return;
+    }
+
+    std::vector<std::string> fail_reasons;
+    Character *ch = dynamic_cast<Character *>( pl );
+    if( !ch ) {
+        return;
+    }
+    if( can_read( *selection.loc, fail_reasons ) ) {
+        if( g->u.sees( bub_pos() ) ) {
+            add_msg( m_info, _( "%s starts reading." ), disp_name() );
+        }
+        start_read( *selection.loc, pl );
+    } else {
+        for( const auto &elem : fail_reasons ) {
+            say( elem );
+        }
     }
 }
 

@@ -3,6 +3,7 @@ local sonar = require("lua/iuse/sonar")
 local slimepit = require("lua/mapgen/slimepit")
 local artifact_analyzer = require("lua/iuse/artifact_analyzer")
 local item_var_viewer = require("lua/iuse/item_var_viewer")
+local ebook_reader = require("lua/iuse/ebook_reader")
 local lua_traits = require("lua/traits/lua_traits")
 local lab = require("lua/mapgen/lab")
 local cooking = require("lua/cooking")
@@ -19,6 +20,7 @@ mod.slimepit = slimepit
 mod.lab = lab
 mod.artifact_analyzer = artifact_analyzer
 mod.item_var_viewer = item_var_viewer
+mod.ebook_reader = ebook_reader
 mod.plumbing = plumbing
 sonar.register(mod)
 mod.lua_traits = lua_traits

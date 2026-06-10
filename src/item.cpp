@@ -29,7 +29,9 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cached_item_options.h"
+#include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
@@ -8172,23 +8174,47 @@ std::vector<std::pair<const recipe *, int>> item::get_available_recipes( const C
                 recipe_entries.emplace_back( elem.recipe, elem.skill_level );
             }
         }
-    } else if( has_var( "EIPC_RECIPES" ) ) {
-        // See einkpc_download_memory_card() in iuse.cpp where this is set.
-        const std::string recipes = get_var( "EIPC_RECIPES" );
-        // Capture the index one past the delimiter, i.e. start of target string.
-        size_t first_string_index = recipes.find_first_of( ',' ) + 1;
-        while( first_string_index != std::string::npos ) {
-            size_t next_string_index = recipes.find_first_of( ',', first_string_index );
-            if( next_string_index == std::string::npos ) {
-                break;
+    }
+
+    const auto add_hook_recipe = [&]( const sol::table & recipe_result ) {
+        const auto recipe_object = recipe_result.get<sol::object>( "recipe" );
+        auto recipe_ident = recipe_id::NULL_ID();
+        if( recipe_object.is<recipe_id>() ) {
+            recipe_ident = recipe_object.as<recipe_id>();
+        } else if( recipe_object.is<std::string>() ) {
+            recipe_ident = recipe_id( recipe_object.as<std::string>() );
+        }
+        if( recipe_ident.is_valid() ) {
+            const auto &recipe = recipe_ident.obj();
+            const auto difficulty = recipe_result.get_or<int>( "difficulty", recipe.difficulty );
+            if( ( recipe.skill_used && u.get_skill_level( recipe.skill_used ) >= difficulty ) ||
+                ( !recipe.skill_used && difficulty <= 0 ) ) {
+                recipe_entries.emplace_back( &recipe, difficulty );
             }
-            std::string new_recipe = recipes.substr( first_string_index,
-                                     next_string_index - first_string_index );
-            const recipe *r = &recipe_id( new_recipe ).obj();
-            if( u.get_skill_level( r->skill_used ) >= r->difficulty ) {
-                recipe_entries.emplace_back( r, r->difficulty );
+        }
+    };
+    const auto add_hook_recipes = [&]( const sol::table & recipe_results ) {
+        for( const auto &recipe_result : recipe_results ) {
+            if( recipe_result.second.is<sol::table>() ) {
+                add_hook_recipe( recipe_result.second.as<sol::table>() );
             }
-            first_string_index = next_string_index + 1;
+        }
+    };
+
+    const auto hook_results = cata::run_hooks( "on_item_available_recipes", [&]( auto & params ) {
+        params["item"] = this;
+        params["reader"] = &u;
+    } );
+    for( const auto &hook_result : hook_results ) {
+        if( !hook_result.second.is<sol::table>() ) {
+            continue;
+        }
+        const auto recipe_result = hook_result.second.as<sol::table>();
+        const auto result_object = recipe_result.get<sol::object>( "result" );
+        if( result_object.is<sol::table>() ) {
+            const auto result_table = result_object.as<sol::table>();
+            add_hook_recipe( result_table );
+            add_hook_recipes( result_table );
         }
     }
     return recipe_entries;
