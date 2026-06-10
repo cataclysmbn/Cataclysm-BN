@@ -232,7 +232,17 @@ jobs:
         with:
           script: |
             core.exportVariable("ACTIONS_CACHE_URL", process.env.ACTIONS_CACHE_URL || "")
+            core.exportVariable("ACTIONS_RESULTS_URL", process.env.ACTIONS_RESULTS_URL || "")
             core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env.ACTIONS_RUNTIME_TOKEN || "")
+
+      - name: Configure vcpkg binary cache (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          $mode = "readwrite"
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            $mode = "read"
+          }
+          "VCPKG_BINARY_SOURCES=clear;x-gha,$mode" >> $env:GITHUB_ENV
 
       - name: Install vcpkg
         if: runner.os == 'Windows'
@@ -362,7 +372,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
-          configurePresetAdditionalArgs: "['-DCATA_FORMAT_TARGETS=OFF']"
+          configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
 
       - name: Setup Deno (Lua docs)
@@ -530,7 +540,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
-          configurePresetAdditionalArgs: "['-DCATA_FORMAT_TARGETS=OFF']"
+          configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.preset }}
 
       - name: Rename distribution package (macOS)
@@ -544,6 +554,12 @@ jobs:
         with:
           java-version: "11"
           distribution: "adopt"
+          cache: gradle
+          cache-dependency-path: |
+            android/*.gradle.kts
+            android/**/*.gradle.kts
+            android/gradle.properties
+            android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Setup Build and Dependencies (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
@@ -627,15 +643,99 @@ jobs:
             VERSION_ARG="-Poverride_version=${{ inputs.version-label }}"
           fi
 
+          gradle_retry() {
+            for attempt in 1 2 3; do
+              if ./gradlew "$@"; then
+                return 0
+              fi
+              if [ "$attempt" = 3 ]; then
+                return 1
+              fi
+              echo "::warning::Gradle attempt $attempt failed; retrying after 60 seconds"
+              sleep 60
+            done
+          }
+
           if [ ${{ matrix.android }} = arm64 ]
           then
-               ./gradlew -Pj=$(nproc) -Pabi_arm_32=false -Plocalize=${{ inputs.android-localize }} assemble${VARIANT}Release ${VERSION_ARG}
+               gradle_retry -Pj=$(nproc) -Pabi_arm_32=false -Plocalize=${{ inputs.android-localize }} assemble${VARIANT}Release ${VERSION_ARG}
                mv ./app/build/outputs/apk/${VARIANT_LOWER}/release/*.apk ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.apk
           elif [ ${{ matrix.android }} = bundle ]
           then
-               ./gradlew -Pj=$(nproc) -Plocalize=${{ inputs.android-localize }} bundle${VARIANT}Release ${VERSION_ARG}
+               gradle_retry -Pj=$(nproc) -Plocalize=${{ inputs.android-localize }} bundle${VARIANT}Release ${VERSION_ARG}
                mv ./app/build/outputs/bundle/${VARIANT_LOWER}Release/*.aab ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.aab
           fi
+
+      - name: Build test executable (desktop)
+        if: inputs.run-tests && (runner.os == 'Windows' || runner.os == 'macOS' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
+        shell: pwsh
+        run: |
+          $buildDir = if ($IsWindows) {
+            "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc"
+          } else {
+            "${{ github.workspace }}/build"
+          }
+          $target = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
+          cmake --build $buildDir --target $target --config Release
+
+      - name: Run tests (desktop)
+        if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $buildDir = if ($IsWindows) {
+            "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc"
+          } else {
+            "${{ github.workspace }}/build"
+          }
+          $exeName = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
+          if ($IsWindows) {
+            $exeName = "$exeName.exe"
+          }
+          $testBin = Join-Path $buildDir (Join-Path "tests" $exeName)
+          if (-not (Test-Path $testBin)) {
+            throw "Missing test executable: $testBin"
+          }
+
+          $testOpts = @(
+            "--min-duration", "20",
+            "--use-colour", "yes",
+            "--rng-seed", "time",
+            "--error-format=github-action"
+          )
+          if ($IsLinux) {
+            $testOpts += "--gpu-backend=software"
+          }
+          $filters = @("[slow] ~starting_items", "~[slow] ~[.],starting_items")
+          $jobs = @()
+          for ($i = 0; $i -lt $filters.Count; ++$i) {
+            $userDir = "test_user_dir_$($i + 1)"
+            $jobs += Start-Job -Name "cata-test-$($i + 1)" -ScriptBlock {
+              param($bin, $opts, $filter, $userDir)
+              & $bin @opts "--user-dir=$userDir" $filter
+              if ($LASTEXITCODE -ne 0) {
+                throw "Test shard '$filter' exited with code $LASTEXITCODE"
+              }
+            } -ArgumentList $testBin, $testOpts, $filters[$i], $userDir
+          }
+
+          while ($jobs | Where-Object { $_.State -eq "Running" }) {
+            Start-Sleep -Seconds 30
+            $running = ($jobs | Where-Object { $_.State -eq "Running" }).Name -join ", "
+            Write-Host "Still running: $running"
+          }
+
+          $failed = $false
+          foreach ($job in $jobs) {
+            Receive-Job $job -ErrorAction Continue
+            if ($job.State -ne "Completed") {
+              $failed = $true
+              Write-Host "$($job.Name) failed with state $($job.State)"
+            }
+          }
+          if ($failed) {
+            throw "One or more test shards failed"
+          }
 
       # Upload artifacts
       - name: Upload packaged build artifact
@@ -657,11 +757,6 @@ jobs:
           run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           head-sha: ${{ github.event.pull_request.head.sha }}
           token: ${{ github.token }}
-
-      - name: Run tests (windows msvc)
-        if: runner.os == 'Windows' && inputs.run-tests
-        run: |
-          & "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe" --rng-seed time
 
       - name: Upload to release
         if: inputs.upload-to-release
