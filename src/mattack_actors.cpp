@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "ammo_effect.h"
+#include "assign.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "creature.h"
@@ -564,13 +565,8 @@ void gun_actor::load_internal( const JsonObject &obj, const std::string & )
         targeting_sound = _( "Beep." );
     }
 
-    if( obj.has_int( "targeting_volume" ) ) {
-        int volume = obj.get_int( "targeting_volume" );
-        volume = approximate_dB_volume_from_legacy_tile_distance_vol( volume );
-        targeting_volume = volume;
-    }
-
-    obj.read( "targeting_volume_dB", targeting_volume );
+    assign( obj, "targeting_volume", targeting_volume );
+    assign( obj, "targeting_volume_dB", targeting_volume );
 
     obj.read( "laser_lock", laser_lock );
 
@@ -733,10 +729,10 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
                                   !target.has_effect( effect_was_laserlocked );
 
     if( not_targeted || not_laser_locked ) {
-        if( targeting_volume > 0 && !targeting_sound.empty() ) {
+        if( targeting_volume > 0_dB && !targeting_sound.empty() ) {
             sound_event se;
             se.origin = z.bub_pos();
-            se.volume = targeting_volume;
+            se.volume = units::to_decibel( targeting_volume );
             se.category = sounds::sound_t::alarm;
             se.description = _( targeting_sound );
             se.from_monster = true;

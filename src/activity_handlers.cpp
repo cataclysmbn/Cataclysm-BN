@@ -92,6 +92,7 @@
 #include "string_id.h"
 #include "text_snippets.h"
 #include "translations.h"
+#include "units.h"
 #include "type_id.h"
 #include "ui.h"
 #include "veh_interact.h"
@@ -2086,10 +2087,10 @@ void activity_handlers::reload_finish( player_activity *act, player *p )
                 msg = _( "You insert one %2$s into the %1$s." );
             }
         }
-        if( reloadable.type->gun->reload_noise_volume > 0 ) {
+        if( reloadable.type->gun->reload_noise_volume > 0_dB ) {
             sound_event se;
             se.origin = p->bub_pos();
-            se.volume = reloadable.type->gun->reload_noise_volume;
+            se.volume = units::to_decibel( reloadable.type->gun->reload_noise_volume );
             se.category = sounds::sound_t::activity;
             se.description = reloadable.type->gun->reload_noise;
             se.id = "reload";
