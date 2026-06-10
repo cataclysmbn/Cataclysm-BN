@@ -15,6 +15,8 @@
 
 #include "calendar.h"
 #include "coordinates.h"
+#include "game_constants.h"
+#include "item_stack.h"
 #include "mapgen_functions.h"
 #include "point.h"
 #include "type_id.h"
@@ -28,6 +30,8 @@ class JsonIn;
 struct partial_con;
 template<typename T>
 class location_vector;
+template<typename T>
+class detached_ptr;
 namespace data_vars
 {
 class data_set;
@@ -75,6 +79,24 @@ struct mapbuffer_add_field_options {
 struct mapbuffer_add_computer_options {
     std::string name;
     int security = 0;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_item_lum_options {
+    bool add_luminance = false;
+    mapbuffer_lookup_options lookup;
+};
+
+class mapbuffer;
+
+struct mapbuffer_add_item_or_charges_options {
+    bool overflow = true;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_erase_item_options {
+    location_vector<item>::const_iterator it;
+    detached_ptr<item> *out = nullptr;
     mapbuffer_lookup_options lookup;
 };
 
@@ -193,6 +215,22 @@ class mapbuffer
                            mapbuffer_lookup_options options = {} ) -> bool;
         auto get_items( const tripoint_abs_ms &p,
                         mapbuffer_lookup_options options = {} ) -> location_vector<item> *;
+        auto add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
+                                  const mapbuffer_add_item_or_charges_options &options = {} ) -> detached_ptr<item>;
+        auto add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
+                       mapbuffer_lookup_options options = {} ) -> detached_ptr<item>;
+        auto erase_item( const tripoint_abs_ms &p,
+                         const mapbuffer_erase_item_options &options ) -> location_vector<item>::iterator;
+        auto remove_item( const tripoint_abs_ms &p, item *to_remove,
+                          mapbuffer_lookup_options options = {} ) -> detached_ptr<item>;
+        auto clear_items( const tripoint_abs_ms &p,
+                          mapbuffer_lookup_options options = {} ) -> std::vector<detached_ptr<item>>;
+        auto make_item_active( const tripoint_abs_ms &p, item &target,
+                               mapbuffer_lookup_options options = {} ) -> bool;
+        auto make_item_inactive( const tripoint_abs_ms &p, item &target,
+                                 mapbuffer_lookup_options options = {} ) -> bool;
+        auto update_item_lum( const tripoint_abs_ms &p, item &target,
+                              const mapbuffer_item_lum_options &options ) -> bool;
 
         auto has_graffiti_at( const tripoint_abs_ms &p,
                               mapbuffer_lookup_options options = {} ) -> bool;
@@ -350,6 +388,8 @@ class mapbuffer
                 const field_type_id &type ) const -> void;
         auto invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
                 const field_type_id &type ) const -> void;
+        auto sync_active_item_submap_index( const tripoint_abs_ms &p, const submap &sm ) const -> void;
+        auto invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const -> void;
 
         /// Guards all accesses to `submaps` that may overlap with background
         /// worker threads calling add_submap().  std::recursive_mutex allows

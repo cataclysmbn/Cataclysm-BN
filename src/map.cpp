@@ -380,27 +380,102 @@ scoped_map_context::~scoped_map_context() noexcept
     tl_map_context = prev_;
 }
 
-// Map stack methods.
+auto resident_item_lookup() -> mapbuffer_lookup_options
+{
+    return {
+        .mode = mapbuffer_lookup_mode::resident_only,
+    };
+}
+
+auto can_delegate_item_mutation_to_mapbuffer( const map &m, const tripoint_abs_ms &p,
+        const submap *sm ) -> bool
+{
+    if( sm == nullptr || g == nullptr || &get_map() != &m ) {
+        return false;
+    }
+
+    return MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ).lookup_submap_in_memory(
+               project_to<coords::sm>( p ) ) == sm;
+}
+
+auto map_stack::local_location() const -> tripoint_bub_ms
+{
+    if( local_origin != nullptr ) {
+        return abs_to_map_local( *local_origin, location );
+    }
+    return abs_to_bub( location );
+}
+
 map_stack::iterator map_stack::erase( map_stack::const_iterator it, detached_ptr<item> *out )
 {
-    return myorigin->i_rem( location, std::move( it ), out );
+    if( myorigin != nullptr ) {
+        return myorigin->erase_item( location, {
+            .it = std::move( it ),
+            .out = out,
+            .lookup = resident_item_lookup(),
+        } );
+    }
+    if( local_origin != nullptr ) {
+        return local_origin->i_rem( local_location(), std::move( it ), out );
+    }
+    return location_vector<item>::iterator();
 }
 
 void map_stack::insert( detached_ptr<item> &&newitem )
 {
-    myorigin->add_item_or_charges( location, std::move( newitem ) );
+    if( local_origin != nullptr ) {
+        local_origin->add_item_or_charges( local_location(), std::move( newitem ) );
+        return;
+    }
+    if( myorigin != nullptr ) {
+        myorigin->add_item_or_charges( location, std::move( newitem ), {
+            .lookup = resident_item_lookup(),
+        } );
+    }
 }
 detached_ptr<item> map_stack::remove( item *to_remove )
 {
-    return myorigin->i_rem( location, to_remove );
+    if( myorigin != nullptr ) {
+        return myorigin->remove_item( location, to_remove, resident_item_lookup() );
+    }
+    if( local_origin != nullptr ) {
+        return local_origin->i_rem( local_location(), to_remove );
+    }
+    return detached_ptr<item>();
+}
+
+auto map_stack::clear() -> std::vector<detached_ptr<item>>
+{
+    if( myorigin != nullptr ) {
+        return myorigin->clear_items( location, resident_item_lookup() );
+    }
+    if( local_origin != nullptr ) {
+        return local_origin->i_clear( local_location() );
+    }
+    return {};
 }
 
 units::volume map_stack::max_volume() const
 {
-    if( myorigin->has_furn( location ) ) {
-        return myorigin->furn( location ).obj().max_volume;
+    if( myorigin != nullptr ) {
+        const auto furniture = myorigin->get_furn( location, resident_item_lookup() );
+        if( furniture && *furniture != f_null ) {
+            return furniture->obj().max_volume;
+        }
+        const auto terrain = myorigin->get_ter( location, resident_item_lookup() );
+        if( terrain ) {
+            return terrain->obj().max_volume;
+        }
+        return 0_ml;
     }
-    return myorigin->ter( location ).obj().max_volume;
+    const auto local = local_location();
+    if( local_origin != nullptr && local_origin->has_furn( local ) ) {
+        return local_origin->furn( local ).obj().max_volume;
+    }
+    if( local_origin != nullptr ) {
+        return local_origin->ter( local ).obj().max_volume;
+    }
+    return 0_ml;
 }
 
 // Map class methods.
@@ -5726,14 +5801,31 @@ void map::set_temperature( const tripoint_bub_ms &p, int new_temperature )
 
 map_stack map::i_at( const tripoint_bub_ms &p )
 {
+    const auto abs_pos = map_local_to_abs( *this, p );
     point_sm_ms l;
     submap *const current_submap = get_submap_at( p, l );
     if( current_submap == nullptr ) {
         nulitems.clear();
-        return map_stack{ &nulitems, p, this };
+        return map_stack( {
+            .stack = &nulitems,
+            .location = abs_pos,
+            .local_origin = this,
+        } );
     }
 
-    return map_stack{ &current_submap->get_items( l ), p, this };
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return map_stack( {
+            .stack = &current_submap->get_items( l ),
+            .location = abs_pos,
+            .origin = &MAPBUFFER_REGISTRY.get( bound_dimension_ ),
+        } );
+    }
+
+    return map_stack( {
+        .stack = &current_submap->get_items( l ),
+        .location = abs_pos,
+        .local_origin = this,
+    } );
 }
 
 map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_iterator it,
@@ -5741,11 +5833,23 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
 {
     point_sm_ms l;
     submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
+    if( current_submap == nullptr ) {
+        return location_vector<item>::iterator();
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, p );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).erase_item( abs_pos, {
+            .it = std::move( it ),
+            .out = out,
+            .lookup = resident_item_lookup(),
+        } );
+    }
 
     // remove from the active items cache (if it isn't there does nothing)
     current_submap->active_items.remove( *it );
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( map_local_to_abs( *this, p ) ) );
+        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
     }
 
     const auto removed_emissive = ( *it )->is_emissive();
@@ -5759,29 +5863,55 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
 
 detached_ptr<item> map::i_rem( const tripoint_bub_ms &p, item *it )
 {
-    map_stack map_items = i_at( p );
-    detached_ptr<item> res;
-    map_items.remove_top_items_with( [&res, it]( detached_ptr<item> &&e ) {
-        if( &*e == it ) {
-            res = std::move( e );
-            return detached_ptr<item>();
-        }
-        return std::move( e );
-    } );
-    return res;
+    point_sm_ms l;
+    submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return detached_ptr<item>();
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, p );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).remove_item( abs_pos, it, resident_item_lookup() );
+    }
+
+    auto &items = current_submap->get_items( l );
+    if( std::ranges::find( items, it ) == items.end() ) {
+        return detached_ptr<item>();
+    }
+
+    current_submap->active_items.remove( it );
+    if( current_submap->active_items.empty() ) {
+        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
+    }
+
+    const auto removed_emissive = it->is_emissive();
+    current_submap->update_lum_rem( l, *it );
+    if( removed_emissive ) {
+        invalidate_lightmap_caches();
+    }
+
+    return items.remove( it );
 }
 
 std::vector<detached_ptr<item>> map::i_clear( const tripoint_bub_ms &p )
 {
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
+    submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return {};
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, p );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).clear_items( abs_pos, resident_item_lookup() );
+    }
 
     for( item * const &it : current_submap->get_items( l ) ) {
         // remove from the active items cache (if it isn't there does nothing)
         current_submap->active_items.remove( it );
     }
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( map_local_to_abs( *this, p ) ) );
+        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
     }
 
     const auto had_luminance = current_submap->get_lum( l ) != 0;
@@ -5916,6 +6046,16 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
         return std::move( obj );
     }
 
+    point_sm_ms local_tile;
+    submap *const current_submap = get_submap_at( pos, local_tile );
+    const auto abs_pos = map_local_to_abs( *this, pos );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_item_or_charges( abs_pos, std::move( obj ), {
+            .overflow = overflow,
+            .lookup = resident_item_lookup(),
+        } );
+    }
+
     // Checks if item would not be destroyed if added to this tile
     auto valid_tile = [&]( const tripoint_bub_ms & e ) {
         // Cannot add items to dimension-bounded out-of-bounds areas or unloaded submaps
@@ -6020,8 +6160,15 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
         return;
     }
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
+    submap *const current_submap = get_submap_at( p, l );
     if( current_submap == nullptr ) {
+        return;
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, p );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_item( abs_pos, std::move( new_item ),
+                resident_item_lookup() );
         return;
     }
 
@@ -6133,14 +6280,24 @@ detached_ptr<item> map::water_from( const tripoint_bub_ms &p )
 
 void map::make_inactive( item &loc )
 {
+    const auto local_pos = loc.position();
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( loc.position() ), l );
+    submap *const current_submap = get_submap_at( local_pos, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, local_pos );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        MAPBUFFER_REGISTRY.get( bound_dimension_ ).make_item_inactive( abs_pos, loc,
+                resident_item_lookup() );
+        return;
+    }
 
     // remove from the active items cache (if it isn't there does nothing)
     current_submap->active_items.remove( &loc );
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( tripoint_abs_sm( abs_sub.x() + loc.position().x() / SEEX,
-                                         abs_sub.y() + loc.position().y() / SEEY, loc.position().z() ) );
+        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
     }
 }
 
@@ -6152,12 +6309,21 @@ void map::make_active( item &loc )
     if( !target->needs_processing() ) {
         return;
     }
+    const auto local_pos = loc.position();
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( loc.position() ), l );
+    submap *const current_submap = get_submap_at( local_pos, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, local_pos );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        MAPBUFFER_REGISTRY.get( bound_dimension_ ).make_item_active( abs_pos, loc, resident_item_lookup() );
+        return;
+    }
 
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.insert( tripoint_abs_sm( abs_sub.x() + loc.position().x() / SEEX,
-                                          abs_sub.y() + loc.position().y() / SEEY, loc.position().z() ) );
+        submaps_with_active_items.insert( project_to<coords::sm>( abs_pos ) );
     }
     current_submap->active_items.add( *target );
 }
@@ -6171,8 +6337,21 @@ void map::update_lum( item &loc, bool add )
         return;
     }
 
+    const auto local_pos = loc.position();
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( loc.position() ), l );
+    submap *const current_submap = get_submap_at( local_pos, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, local_pos );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        MAPBUFFER_REGISTRY.get( bound_dimension_ ).update_item_lum( abs_pos, loc, {
+            .add_luminance = add,
+            .lookup = resident_item_lookup(),
+        } );
+        return;
+    }
 
     if( add ) {
         current_submap->update_lum_add( l, *target );

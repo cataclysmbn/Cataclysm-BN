@@ -17,13 +17,16 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "debug.h"
+#include "detached_ptr.h"
 #include "distribution_grid.h"
 #include "filesystem.h"
 #include "field_type.h"
 #include "fluid_grid.h"
+#include "flag.h"
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
+#include "item.h"
 #include "json.h"
 #include "map.h"
 #include "mapdata.h"
@@ -100,6 +103,17 @@ auto add_uniform_omt( mapbuffer &dest, const tripoint_abs_sm &base,
         added_any |= dest.add_submap( pos, sm );
     } );
     return added_any;
+}
+
+auto tile_has_flag( const mapbuffer_tile_lookup &tile, const std::string &flag ) -> bool
+{
+    return tile.sm->get_ter( tile.local ).obj().has_flag( flag ) ||
+           tile.sm->get_furn( tile.local ).obj().has_flag( flag );
+}
+
+auto tile_allows_item_despite_noitem_flag( const item &target, const mapbuffer_tile_lookup &tile ) -> bool
+{
+    return target.made_of( LIQUID ) && tile_has_flag( tile, "LIQUIDCONT" );
 }
 
 } // namespace
@@ -762,6 +776,306 @@ auto mapbuffer::get_items( const tripoint_abs_ms &p,
     return &tile->sm->get_items( tile->local );
 }
 
+auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
+                                     const mapbuffer_add_item_or_charges_options &options ) -> detached_ptr<item>
+{
+    if( !new_item ) {
+        return std::move( new_item );
+    }
+    if( new_item->is_null() ) {
+        debugmsg( "Tried to add a null item to the mapbuffer" );
+        return std::move( new_item );
+    }
+    if( new_item->has_flag( flag_NO_DROP ) ) {
+        return std::move( new_item );
+    }
+
+    auto valid_tile = [&]( const tripoint_abs_ms & target ) -> std::optional<mapbuffer_tile_lookup> {
+        auto tile = lookup_tile( *this, target, options.lookup );
+        if( !tile ) {
+            return std::nullopt;
+        }
+        if( tile_has_flag( *tile, "DESTROY_ITEM" ) ) {
+            return std::nullopt;
+        }
+        if( new_item->made_of( LIQUID ) && tile_has_flag( *tile, "SWIMMABLE" ) ) {
+            return std::nullopt;
+        }
+        return tile;
+    };
+
+    auto valid_limits = [&]( const mapbuffer_tile_lookup & tile ) {
+        const auto max_volume = tile.sm->get_furn( tile.local ) != f_null ?
+                                tile.sm->get_furn( tile.local ).obj().max_volume :
+                                tile.sm->get_ter( tile.local ).obj().max_volume;
+        auto stored_volume = 0_ml;
+        for( const auto *const existing : tile.sm->get_items( tile.local ) ) {
+            stored_volume += existing->volume();
+        }
+        return new_item->volume() <= max_volume - stored_volume &&
+               tile.sm->get_items( tile.local ).size() < MAX_ITEM_IN_SQUARE;
+    };
+
+    auto call_active_drop_hook = [&]( const tripoint_abs_ms & target ) {
+        const auto local = active_map_local( target );
+        if( !local ) {
+            if( new_item->made_of( LIQUID ) && !new_item->has_own_flag( flag_DIRTY ) ) {
+                new_item->set_flag( flag_DIRTY );
+            }
+            return false;
+        }
+        if( new_item->made_of( LIQUID ) || !new_item->has_flag( flag_DROP_ACTION_ONLY_IF_LIQUID ) ) {
+            return new_item->on_drop( *local, get_map() );
+        }
+        return false;
+    };
+
+    auto route_allows_overflow = [&]( const tripoint_abs_ms & target ) {
+        const auto source_local = active_map_local( p );
+        const auto target_local = active_map_local( target );
+        if( !source_local || !target_local ) {
+            return false;
+        }
+        const auto max_dist = 2;
+        const auto max_path_length = 4 * max_dist;
+        const auto setting = pathfinding_settings( 0, max_dist, max_path_length, 0, false, true, false,
+                             false, false );
+        return !get_map().route( *source_local, *target_local, setting ).empty();
+    };
+
+    auto place_item = [&]( const tripoint_abs_ms & target, mapbuffer_tile_lookup & tile ) {
+        auto &items = tile.sm->get_items( tile.local );
+        if( new_item->count_by_charges() ) {
+            for( auto &existing : items ) {
+                if( existing->merge_charges( std::move( new_item ) ) ) {
+                    return;
+                }
+            }
+        }
+
+        if( const auto local = active_map_local( target ) ) {
+            get_map().support_dirty( *local );
+        }
+        new_item = add_item( target, std::move( new_item ), options.lookup );
+    };
+
+    auto try_place = [&]( const tripoint_abs_ms & target, const bool reject_noitem,
+                          const bool call_drop_hook_first ) {
+        auto tile = valid_tile( target );
+        if( !tile ) {
+            return false;
+        }
+        if( reject_noitem && ( tile_has_flag( *tile, "NOITEM" ) || tile_has_flag( *tile, "SEALED" ) ) ) {
+            return false;
+        }
+        if( call_drop_hook_first && call_active_drop_hook( target ) ) {
+            return true;
+        }
+        if( ( !tile_has_flag( *tile, "NOITEM" ) ||
+              tile_allows_item_despite_noitem_flag( *new_item, *tile ) ) &&
+            valid_limits( *tile ) ) {
+            if( !call_drop_hook_first && call_active_drop_hook( target ) ) {
+                return true;
+            }
+            place_item( target, *tile );
+            return true;
+        }
+        return false;
+    };
+
+    if( try_place( p, false, false ) ) {
+        return std::move( new_item );
+    }
+
+    if( options.overflow ) {
+        const auto max_dist = 2;
+        auto tiles = closest_points_first( p, max_dist );
+        tiles.erase( tiles.begin() );
+        for( const auto &candidate : tiles ) {
+            if( !route_allows_overflow( candidate ) ) {
+                continue;
+            }
+            if( try_place( candidate, true, true ) ) {
+                return std::move( new_item );
+            }
+        }
+    }
+
+    return std::move( new_item );
+}
+
+auto mapbuffer::add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
+                          const mapbuffer_lookup_options options ) -> detached_ptr<item>
+{
+    if( !new_item ) {
+        return std::move( new_item );
+    }
+    if( new_item->is_null() ) {
+        debugmsg( "Tried to add a null item to the mapbuffer" );
+        return std::move( new_item );
+    }
+
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::move( new_item );
+    }
+
+    if( !map_mutation_hooks::prepare_item_for_placement( {
+        .dim_id = dimension_id_,
+        .p = p,
+        .item_to_place = new_item,
+    } ) ) {
+        return std::move( new_item );
+    }
+
+    if( new_item->is_map() && !new_item->has_var( "reveal_map_center_omt" ) ) {
+        new_item->set_var( "reveal_map_center_omt", project_to<coords::omt>( p ) );
+    }
+
+    tile->sm->is_uniform = false;
+    if( active_map_local( p ) ) {
+        get_map().invalidate_max_populated_zlev( p.z() );
+    }
+
+    const auto adds_luminance = new_item->is_emissive();
+    tile->sm->update_lum_add( tile->local, *new_item );
+    if( adds_luminance ) {
+        invalidate_active_item_luminance_cache( p );
+    }
+
+    if( new_item->needs_processing() ) {
+        tile->sm->active_items.add( *new_item );
+        sync_active_item_submap_index( p, *tile->sm );
+    }
+
+    tile->sm->get_items( tile->local ).push_back( std::move( new_item ) );
+    return detached_ptr<item>();
+}
+
+auto mapbuffer::erase_item( const tripoint_abs_ms &p,
+                            const mapbuffer_erase_item_options &options ) -> location_vector<item>::iterator
+{
+    const auto tile = lookup_tile( *this, p, options.lookup );
+    if( !tile ) {
+        return location_vector<item>::iterator();
+    }
+
+    auto &items = tile->sm->get_items( tile->local );
+    item *const to_remove = *options.it;
+
+    tile->sm->active_items.remove( to_remove );
+    sync_active_item_submap_index( p, *tile->sm );
+
+    const auto removed_luminance = to_remove->is_emissive();
+    tile->sm->update_lum_rem( tile->local, *to_remove );
+    if( removed_luminance ) {
+        invalidate_active_item_luminance_cache( p );
+    }
+
+    return items.erase( options.it, options.out );
+}
+
+auto mapbuffer::remove_item( const tripoint_abs_ms &p, item *const to_remove,
+                             const mapbuffer_lookup_options options ) -> detached_ptr<item>
+{
+    if( to_remove == nullptr ) {
+        return detached_ptr<item>();
+    }
+
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return detached_ptr<item>();
+    }
+
+    auto &items = tile->sm->get_items( tile->local );
+    const auto iter = std::ranges::find( items, to_remove );
+    if( iter == items.end() ) {
+        return detached_ptr<item>();
+    }
+
+    detached_ptr<item> removed;
+    erase_item( p, {
+        .it = iter,
+        .out = &removed,
+        .lookup = options,
+    } );
+    return removed;
+}
+
+auto mapbuffer::clear_items( const tripoint_abs_ms &p,
+                             const mapbuffer_lookup_options options ) -> std::vector<detached_ptr<item>>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return {};
+    }
+
+    auto &items = tile->sm->get_items( tile->local );
+    for( item *const it : items ) {
+        tile->sm->active_items.remove( it );
+    }
+    sync_active_item_submap_index( p, *tile->sm );
+
+    const auto had_luminance = tile->sm->get_lum( tile->local ) != 0;
+    tile->sm->set_lum( tile->local, 0 );
+    if( had_luminance ) {
+        invalidate_active_item_luminance_cache( p );
+    }
+
+    return items.clear();
+}
+
+auto mapbuffer::make_item_active( const tripoint_abs_ms &p, item &target,
+                                  const mapbuffer_lookup_options options ) -> bool
+{
+    if( !target.needs_processing() ) {
+        return false;
+    }
+
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->active_items.add( target );
+    sync_active_item_submap_index( p, *tile->sm );
+    return true;
+}
+
+auto mapbuffer::make_item_inactive( const tripoint_abs_ms &p, item &target,
+                                    const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->active_items.remove( &target );
+    sync_active_item_submap_index( p, *tile->sm );
+    return true;
+}
+
+auto mapbuffer::update_item_lum( const tripoint_abs_ms &p, item &target,
+                                 const mapbuffer_item_lum_options &options ) -> bool
+{
+    if( !target.is_emissive() ) {
+        return false;
+    }
+
+    const auto tile = lookup_tile( *this, p, options.lookup );
+    if( !tile ) {
+        return false;
+    }
+
+    if( options.add_luminance ) {
+        tile->sm->update_lum_add( tile->local, target );
+    } else {
+        tile->sm->update_lum_rem( tile->local, target );
+    }
+    invalidate_active_item_luminance_cache( p );
+    return true;
+}
+
 auto mapbuffer::has_graffiti_at( const tripoint_abs_ms &p,
                                  const mapbuffer_lookup_options options ) -> bool
 {
@@ -1155,6 +1469,30 @@ auto mapbuffer::invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
 
     if( field_type.is_dangerous() ) {
         here.set_pathfinding_cache_dirty( *local );
+    }
+}
+
+auto mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p, const submap &sm ) const
+        -> void
+{
+    const auto local = active_map_local( p );
+    if( !local ) {
+        return;
+    }
+
+    auto &active_submaps = get_map().submaps_with_active_items;
+    const auto abs_submap = project_to<coords::sm>( p );
+    if( sm.active_items.empty() ) {
+        active_submaps.erase( abs_submap );
+    } else {
+        active_submaps.insert( abs_submap );
+    }
+}
+
+auto mapbuffer::invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const -> void
+{
+    if( active_map_local( p ) ) {
+        get_map().invalidate_lightmap_caches();
     }
 }
 

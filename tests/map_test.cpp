@@ -14,6 +14,7 @@
 #include "field_type.h"
 #include "game.h"
 #include "game_constants.h"
+#include "item.h"
 #include "map.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
@@ -271,6 +272,61 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     CHECK_FALSE( buffer.has_field_at( tile_pos, resident_only ) );
     CHECK( sm->field_count == 0 );
     CHECK( buffer.get_items( tile_pos, resident_only ) == &sm->get_items( local_tile_pos ) );
+    CHECK( sm->get_items( local_tile_pos ).empty() );
+    CHECK( buffer.set_furn( tile_pos, f_null, resident_only ) );
+    auto aspirin_stack = item::spawn( "aspirin", calendar::start_of_cataclysm,
+                                      item::default_charges_tag() );
+    auto aspirin_charges = aspirin_stack->charges;
+    CHECK_FALSE( buffer.add_item_or_charges( tile_pos, std::move( aspirin_stack ), {
+        .overflow = false,
+        .lookup = resident_only,
+    } ) );
+    REQUIRE( sm->get_items( local_tile_pos ).size() == 1 );
+    CHECK( sm->get_items( local_tile_pos ).front()->charges == aspirin_charges );
+    auto more_aspirin = item::spawn( "aspirin", calendar::start_of_cataclysm,
+                                     item::default_charges_tag() );
+    aspirin_charges += more_aspirin->charges;
+    CHECK_FALSE( buffer.add_item_or_charges( tile_pos, std::move( more_aspirin ), {
+        .overflow = false,
+        .lookup = resident_only,
+    } ) );
+    REQUIRE( sm->get_items( local_tile_pos ).size() == 1 );
+    CHECK( sm->get_items( local_tile_pos ).front()->charges == aspirin_charges );
+    auto blocked_item = item::spawn( "rock", calendar::start_of_cataclysm );
+    CHECK( buffer.set_furn( tile_pos, furn_str_id( "f_no_item" ).id(), resident_only ) );
+    auto returned_blocked_item = buffer.add_item_or_charges( tile_pos, std::move( blocked_item ), {
+        .overflow = false,
+        .lookup = resident_only,
+    } );
+    CHECK( returned_blocked_item != nullptr );
+    CHECK( sm->get_items( local_tile_pos ).size() == 1 );
+    CHECK( buffer.set_furn( tile_pos, furniture, resident_only ) );
+    auto removed_aspirin = buffer.clear_items( tile_pos, resident_only );
+    CHECK( removed_aspirin.size() == 1 );
+
+    auto active_item = item::spawn( "firecracker_act", calendar::start_of_cataclysm,
+                                    item::default_charges_tag() );
+    active_item->activate();
+    REQUIRE( active_item->needs_processing() );
+    auto *const active_item_ptr = &*active_item;
+    CHECK_FALSE( buffer.add_item( tile_pos, std::move( active_item ), resident_only ) );
+    CHECK( sm->get_items( local_tile_pos ).size() == 1 );
+    CHECK_FALSE( sm->active_items.empty() );
+    auto removed_active_item = buffer.remove_item( tile_pos, active_item_ptr, resident_only );
+    CHECK( removed_active_item != nullptr );
+    CHECK( sm->get_items( local_tile_pos ).empty() );
+    CHECK( sm->active_items.empty() );
+
+    CHECK( buffer.get_lum( tile_pos, resident_only ) == 0 );
+    auto light_item = item::spawn( "glowstick_lit", calendar::start_of_cataclysm,
+                                   item::default_charges_tag() );
+    REQUIRE( light_item->is_emissive() );
+    CHECK_FALSE( buffer.add_item( tile_pos, std::move( light_item ), resident_only ) );
+    CHECK( buffer.get_lum( tile_pos, resident_only ) == 1 );
+    auto cleared_items = buffer.clear_items( tile_pos, resident_only );
+    CHECK( cleared_items.size() == 1 );
+    CHECK( buffer.get_lum( tile_pos, resident_only ) == 0 );
+    CHECK( sm->active_items.empty() );
     CHECK_FALSE( buffer.has_graffiti_at( tile_pos, resident_only ) );
     CHECK( buffer.graffiti_at( tile_pos, resident_only ) == "" );
     CHECK( buffer.set_graffiti( tile_pos, "absolute graffiti", resident_only ) );
@@ -340,6 +396,11 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     } ) );
     CHECK_FALSE( buffer.remove_field( missing_tile, fd_fire, resident_only ) );
     CHECK( buffer.get_items( missing_tile, resident_only ) == nullptr );
+    auto missing_item = item::spawn( "rock" );
+    auto unplaced_item = buffer.add_item( missing_tile, std::move( missing_item ), resident_only );
+    CHECK( unplaced_item != nullptr );
+    CHECK( buffer.remove_item( missing_tile, &*unplaced_item, resident_only ) == nullptr );
+    CHECK( buffer.clear_items( missing_tile, resident_only ).empty() );
     CHECK_FALSE( buffer.has_graffiti_at( missing_tile, resident_only ) );
     CHECK_FALSE( buffer.graffiti_at( missing_tile, resident_only ).has_value() );
     CHECK_FALSE( buffer.set_graffiti( missing_tile, "missing", resident_only ) );

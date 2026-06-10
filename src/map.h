@@ -35,6 +35,7 @@
 #include "lightmap.h"
 #include "line.h"
 #include "lru_cache.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "mapgen_functions.h"
 #include "memory_fast.h"
@@ -116,17 +117,30 @@ namespace cata
 template <class T> class poly_serialized;
 } // namespace cata
 
+struct map_stack_options {
+    location_vector<item> *stack = nullptr;
+    tripoint_abs_ms location;
+    mapbuffer *origin = nullptr;
+    map *local_origin = nullptr;
+};
+
 class map_stack : public item_stack
 {
     private:
-        tripoint_bub_ms location;
-        map *myorigin;
+        tripoint_abs_ms location;
+        mapbuffer *myorigin = nullptr;
+        map *local_origin = nullptr;
+
+        auto local_location() const -> tripoint_bub_ms;
+
     public:
-        map_stack( location_vector<item> *newstack, tripoint_bub_ms newloc, map *neworigin ) :
-            item_stack( newstack ), location( newloc ), myorigin( neworigin ) {}
+        explicit map_stack( const map_stack_options &options ) :
+            item_stack( options.stack ), location( options.location ), myorigin( options.origin ),
+            local_origin( options.local_origin ) {}
         void insert( detached_ptr<item> &&newitem ) override;
         iterator erase( const_iterator it, detached_ptr<item> *out = nullptr ) override;
         detached_ptr<item> remove( item *to_remove ) override;
+        std::vector<detached_ptr<item>> clear() override;
         int count_limit() const override {
             return MAX_ITEM_IN_SQUARE;
         }
