@@ -257,7 +257,8 @@
       "min_volume": "15 ml",
       "max_volume": "250 ml",
       "draw_cost": 50,
-      "flags": [ "SHEATH_KNIFE" ]
+      "flags": [ "SHEATH_KNIFE" ],
+      "weapon_category": "KNIVES"
     },
     "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE" ]
   }
