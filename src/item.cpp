@@ -827,17 +827,25 @@ void item::set_damage( int qty )
 
 auto item::prepare_for_location_removal() -> void
 {
-    if( goes_bad() && is_in_preserving_container() ) {
+    if( !goes_bad() ) {
+        return;
+    }
+    if( is_in_preserving_container() ) {
         mark_rot_checked_now();
+        return;
+    }
+    if( is_loaded() && has_position() ) {
+        const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
+        const auto temperature = vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
+                                 rot::temperature_flag_for_location( get_map(), *this );
+        update_rot( position(), temperature, get_weather() );
     }
 }
 
 detached_ptr<item> item::split( int qty )
 {
     const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
-    if( split_from_preserving_container ) {
-        prepare_for_location_removal();
-    }
+    prepare_for_location_removal();
     if( qty <= 0 || !count_by_charges() || qty >= charges ) {
         return detach();
     }
@@ -890,10 +898,8 @@ bool item::attempt_split( int qty,
                           const std::function < detached_ptr<item>( detached_ptr<item> && ) > & cb )
 {
     const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
-    if( split_from_preserving_container ) {
-        prepare_for_location_removal();
-    }
-    const bool split_needs_rot_actualization = goes_bad() && has_position() &&
+    prepare_for_location_removal();
+    const bool split_needs_rot_actualization = goes_bad() && is_loaded() && has_position() &&
             !split_from_preserving_container;
     const auto split_pos = split_needs_rot_actualization ? position() : tripoint_bub_ms::zero();
     const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
