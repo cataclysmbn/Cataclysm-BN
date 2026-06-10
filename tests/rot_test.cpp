@@ -57,6 +57,7 @@ static auto make_storage( const vpart_id &storage_part,
     const auto part_index = veh->install_part( tripoint_mnt_veh::zero(), storage_part, true );
     REQUIRE( part_index >= 0 );
     veh->part( part_index ).enabled = enabled;
+    here.add_vehicle_to_cache( veh );
     here.build_map_cache( vehicle_pos.z(), true );
 
     return { .veh = veh, .part_index = part_index, .pos = vehicle_pos };
@@ -67,6 +68,13 @@ static auto add_sashimi_to_vehicle_part( vehicle &veh, const int part_index ) ->
     auto sashimi = item::spawn( "sashimi" );
     REQUIRE( sashimi->goes_bad() );
     REQUIRE_FALSE( veh.add_item( part_index, std::move( sashimi ) ) );
+}
+
+static auto add_canned_red_sauce_to_vehicle_part( vehicle &veh, const int part_index ) -> void
+{
+    auto sauce = item::in_its_container( item::spawn( "sauce_red" ) );
+    REQUIRE( sauce->goes_bad_after_opening( true ) );
+    REQUIRE_FALSE( veh.add_item( part_index, std::move( sauce ) ) );
 }
 
 static auto move_to_inventory_with_attempt_detach( item &stored ) -> item * // *NOPAD*
@@ -383,6 +391,26 @@ TEST_CASE( "Vehicle storage temperature controls food rot" )
         process_storage_for( 25_hours );
 
         CHECK( fixture.veh->get_items( fixture.part_index ).empty() );
+    }
+
+    SECTION( "preserved food in vehicle cargo is fresh when opened for crafting" ) {
+        auto fixture = make_storage( vpart_id( "box" ), true );
+        add_canned_red_sauce_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        calendar::turn += 20_days;
+
+        auto cargo = get_map().veh_at( fixture.pos ).part_with_feature( "CARGO", true );
+        REQUIRE( cargo.has_value() );
+        REQUIRE( static_cast<int>( cargo->part_index() ) == fixture.part_index );
+
+        auto quantity = 1;
+        auto components = get_map().use_amount( fixture.pos, PICKUP_RANGE, itype_id( "sauce_red" ),
+                                                quantity, return_true<item> );
+
+        REQUIRE( quantity == 0 );
+        REQUIRE( components.size() == 1 );
+        CHECK( components.front()->get_rot() == 0_turns );
+        CHECK( !components.front()->rotten() );
     }
 }
 
