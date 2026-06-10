@@ -2826,7 +2826,6 @@ class tinymap : public map
         friend class editmap;
     public:
         tinymap( int mapsize = 2, bool zlevels = false );
-        bool inbounds( const tripoint_abs_sm &p ) const override;
 
         /**
          * Position this tinymap at @p sm_base (submap coordinates) and wire up

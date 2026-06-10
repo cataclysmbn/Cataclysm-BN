@@ -26,6 +26,7 @@
 #include "submap.h"
 #include "submap_load_manager.h"
 #include "type_id.h"
+#include "vehicle.h"
 
 namespace
 {
@@ -160,7 +161,57 @@ TEST_CASE( "destroy_grabbed_furniture" )
 // A meaningful bounds test would involve pocket dimensions and dimension_bounds,
 // which require more involved setup (mapgen, dimension transitions, etc.).
 
-// tinymap_bounds_checking removed: same reasoning as map_bounds_checking above.
+TEST_CASE( "tinymap_absolute_inbounds_uses_loaded_anchor" )
+{
+    clear_all_state();
+
+    auto &buffer = MAPBUFFER;
+    const auto anchor = tripoint_abs_sm( 1200, -1200, 0 );
+    const auto cleanup = on_out_of_scope( [&]() {
+        buffer.unload_omt( project_to<coords::omt>( anchor ), false );
+    } );
+
+    const auto offsets = std::vector<tripoint_rel_sm> {
+        tripoint_rel_sm( 0, 0, 0 ),
+        tripoint_rel_sm( 1, 0, 0 ),
+        tripoint_rel_sm( 0, 1, 0 ),
+        tripoint_rel_sm( 1, 1, 0 ),
+    };
+
+    for( const auto &offset : offsets ) {
+        add_absolute_test_submap( buffer, anchor + offset, ter_id( "t_rock" ) );
+    }
+
+    tinymap tm;
+    tm.bind_submaps_for_hook( anchor );
+
+    CHECK( tm.inbounds( anchor ) );
+    CHECK( tm.inbounds( anchor + tripoint_rel_sm( 1, 1, 0 ) ) );
+    CHECK_FALSE( tm.inbounds( anchor + tripoint_rel_sm( -1, 0, 0 ) ) );
+    CHECK_FALSE( tm.inbounds( anchor + tripoint_rel_sm( 2, 0, 0 ) ) );
+    CHECK_FALSE( tm.inbounds( tripoint_abs_sm( 0, 0, 0 ) ) );
+}
+
+TEST_CASE( "mapbuffer_vehicle_lookup_uses_absolute_coordinates" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    const auto local_pos = tripoint_bub_ms( 60, 60, 0 );
+    here.ter_set( local_pos, ter_id( "t_floor" ) );
+
+    auto *const veh = here.add_vehicle( vproto_id( "none" ), local_pos, 0_degrees, 0, 0 );
+    REQUIRE( veh != nullptr );
+    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ) ) >= 0 );
+    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "windshield" ), true ) >= 0 );
+
+    const auto abs_pos = map_local_to_abs( here, local_pos );
+    const auto vp = MAPBUFFER.veh_at( abs_pos );
+    REQUIRE( vp.has_value() );
+    CHECK( &vp->vehicle() == veh );
+    CHECK( MAPBUFFER.passable( abs_pos ) == false );
+}
 
 TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
 {

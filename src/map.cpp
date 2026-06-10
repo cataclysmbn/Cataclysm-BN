@@ -10105,16 +10105,6 @@ bool map::is_position_simulated( const tripoint_bub_sm &p ) const
     return submap_loader.is_simulated( bound_dimension_, map_local_to_abs( *this, p ) );
 }
 
-bool tinymap::inbounds( const tripoint_abs_sm &p ) const
-{
-    constexpr tripoint_abs_sm map_boundary_min( 0, 0, -OVERMAP_DEPTH );
-    constexpr tripoint_abs_sm map_boundary_max( SEEX * 2, SEEY * 2, OVERMAP_HEIGHT + 1 );
-
-    constexpr half_open_cuboid<tripoint_abs_sm> map_boundaries( map_boundary_min, map_boundary_max );
-
-    return map_boundaries.contains( p );
-}
-
 // set up a map just long enough scribble on it
 // this tinymap should never, ever get saved
 fake_map::fake_map( const furn_id &fur_type, const ter_id &ter_type, const trap_id &trap_type,

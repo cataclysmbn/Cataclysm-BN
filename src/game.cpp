@@ -1218,6 +1218,31 @@ vehicle *game::place_vehicle_nearby(
     return nullptr;
 }
 
+static auto npc_can_place_at_abs( mapbuffer &buffer, const tripoint_abs_ms &pos ) -> bool
+{
+    const auto passable = buffer.passable( pos );
+    return passable && *passable && g->critter_at( pos ) == nullptr;
+}
+
+static auto place_npc_on_absolute_mapbuffer( npc &who, mapbuffer &buffer ) -> bool
+{
+    const auto initial = who.abs_pos();
+    if( npc_can_place_at_abs( buffer, initial ) || who.is_mounted() ) {
+        return true;
+    }
+
+    for( const auto &pos : closest_points_first( initial, SEEX + 1 ) ) {
+        if( npc_can_place_at_abs( buffer, pos ) ) {
+            who.setpos( pos );
+            return true;
+        }
+    }
+
+    debugmsg( "Failed to place NPC in a valid absolute location near %s",
+              initial.to_string() );
+    return false;
+}
+
 //Make any nearby overmap npcs active, and put them in the right location.
 void game::load_npcs()
 {
@@ -1268,24 +1293,13 @@ void game::load_npcs()
     }
 
     // Activate NPCs for non-reality-bubble load requests (fire spread, player bases, scripts).
-    // Each request gets a temporary tinymap providing the NPC context for that region.
-    // tinymap disables the circle guard so all square-footprint submaps are loaded.
     for( const auto &req : submap_loader.non_bubble_requests() ) {
-        const int mapsize = 2 * req.radius + 1;
-        tinymap req_map( mapsize, m.has_zlevels() );
-        req_map.bind_dimension( req.dim_id );
-        const tripoint_abs_sm top_left{
-            req.center.raw().x - req.radius,
-            req.center.raw().y - req.radius,
-            req.center.raw().z
-        };
-        req_map.load( top_left, false );
-        scoped_map_context ctx( req_map );
+        auto &buffer = MAPBUFFER_REGISTRY.get( req.dim_id );
+        auto &overmap_buffer = get_overmapbuffer( req.dim_id );
 
         for( auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
             const tripoint_abs_sm center_z( req.center.raw().x, req.center.raw().y, z );
-            for( const auto &temp : get_overmapbuffer( current_dimension_id_ ).get_npcs_near( center_z,
-                    req.radius ) ) {
+            for( const auto &temp : overmap_buffer.get_npcs_near( center_z, req.radius ) ) {
                 const auto id = temp->getID();
                 const auto already_active = std::ranges::any_of( active_npc,
                 [id]( const shared_ptr_fast<npc> &n ) {
@@ -1294,10 +1308,11 @@ void game::load_npcs()
                 if( already_active || temp->is_active() ) {
                     continue;
                 }
-                temp->place_on_map();
                 const auto sm_loc = project_to<coords::sm>( temp->abs_pos() );
-                if( !req_map.inbounds( sm_loc )
-                    || req_map.get_submap_at_grid( abs_to_map_local( req_map, sm_loc ) ) == nullptr ) {
+                if( std::abs( sm_loc.x() - req.center.x() ) > req.radius ||
+                    std::abs( sm_loc.y() - req.center.y() ) > req.radius ||
+                    buffer.get_submap( sm_loc ) == nullptr ||
+                    !place_npc_on_absolute_mapbuffer( *temp, buffer ) ) {
                     continue;
                 }
                 if( temp->marked_for_death ) {

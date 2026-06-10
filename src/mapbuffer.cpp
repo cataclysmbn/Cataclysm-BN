@@ -42,6 +42,8 @@
 #include "translations.h"
 #include "trap.h"
 #include "ui_manager.h"
+#include "veh_type.h"
+#include "vehicle.h"
 #include "world.h"
 
 namespace
@@ -115,6 +117,32 @@ auto tile_allows_item_despite_noitem_flag( const item &target,
         const mapbuffer_tile_lookup &tile ) -> bool
 {
     return target.made_of( LIQUID ) && tile_has_flag( tile, "LIQUIDCONT" );
+}
+
+auto move_cost_from_tile_parts( const ter_id &terrain_id, const furn_id &furniture_id,
+                                const optional_vpart_position &vp ) -> int
+{
+    const auto &terrain = terrain_id.obj();
+    const auto &furniture = furniture_id.obj();
+    if( terrain.movecost == 0 || ( furniture.id && furniture.movecost < 0 ) ) {
+        return 0;
+    }
+
+    if( vp ) {
+        if( vp.obstacle_at_part() ) {
+            return 0;
+        }
+        if( vp.part_with_feature( VPFLAG_AISLE, true ) ) {
+            return 2;
+        }
+        return 8;
+    }
+
+    if( furniture.id ) {
+        return std::max( terrain.movecost + furniture.movecost, 0 );
+    }
+
+    return std::max( terrain.movecost, 0 );
 }
 
 } // namespace
@@ -458,6 +486,59 @@ auto mapbuffer::set_furn( const tripoint_abs_ms &p, const furn_id furn,
         .new_furniture = furn,
     } );
     return true;
+}
+
+auto mapbuffer::veh_at( const tripoint_abs_ms &p,
+                        const mapbuffer_lookup_options options ) -> optional_vpart_position
+{
+    const auto target_sm = project_to<coords::sm>( p );
+    if( get_submap( target_sm, options ) == nullptr ) {
+        return optional_vpart_position( std::nullopt );
+    }
+
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    for( const auto &entry : submaps ) {
+        const auto *const sm = entry.second.get();
+        if( sm == nullptr ) {
+            continue;
+        }
+        for( const auto &veh_ptr : sm->vehicles ) {
+            if( veh_ptr == nullptr ) {
+                continue;
+            }
+            auto &veh = *veh_ptr;
+            const auto rel = p - veh.abs_ms_location();
+            const auto part = veh.part_at( rel );
+            if( part >= 0 ) {
+                return optional_vpart_position( vpart_position( veh, static_cast<size_t>( part ) ) );
+            }
+        }
+    }
+
+    return optional_vpart_position( std::nullopt );
+}
+
+auto mapbuffer::move_cost( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return move_cost_from_tile_parts( tile->sm->get_ter( tile->local ),
+                                     tile->sm->get_furn( tile->local ), veh_at( p, options ) );
+}
+
+auto mapbuffer::passable( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::optional<bool>
+{
+    const auto cost = move_cost( p, options );
+    if( !cost ) {
+        return std::nullopt;
+    }
+
+    return *cost != 0;
 }
 
 auto mapbuffer::ter_vars( const tripoint_abs_ms &p,

@@ -20,6 +20,7 @@
 #include "mapgen_functions.h"
 #include "point.h"
 #include "type_id.h"
+#include "vpart_position.h"
 
 class submap;
 class computer;
@@ -164,6 +165,12 @@ class mapbuffer
                        mapbuffer_lookup_options options = {} ) -> std::optional<furn_id>;
         auto set_furn( const tripoint_abs_ms &p, furn_id furn,
                        mapbuffer_lookup_options options = {} ) -> bool;
+        auto veh_at( const tripoint_abs_ms &p,
+                     mapbuffer_lookup_options options = {} ) -> optional_vpart_position;
+        auto move_cost( const tripoint_abs_ms &p,
+                        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto passable( const tripoint_abs_ms &p,
+                       mapbuffer_lookup_options options = {} ) -> std::optional<bool>;
         auto ter_vars( const tripoint_abs_ms &p,
                        mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
         auto furn_vars( const tripoint_abs_ms &p,
