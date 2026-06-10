@@ -825,11 +825,18 @@ void item::set_damage( int qty )
     damage_ = std::max( std::min( qty, max_damage() ), min_damage() );
 }
 
+auto item::prepare_for_location_removal() -> void
+{
+    if( goes_bad() && is_in_preserving_container() ) {
+        mark_rot_checked_now();
+    }
+}
+
 detached_ptr<item> item::split( int qty )
 {
     const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
     if( split_from_preserving_container ) {
-        mark_rot_checked_now();
+        prepare_for_location_removal();
     }
     if( qty <= 0 || !count_by_charges() || qty >= charges ) {
         return detach();
@@ -872,9 +879,7 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
     if( is_null() ) {
         return false;
     }
-    if( goes_bad() && is_in_preserving_container() ) {
-        mark_rot_checked_now();
-    }
+    prepare_for_location_removal();
     if( count_by_charges() ) {
         return attempt_split( 0, cb );
     }
@@ -886,7 +891,7 @@ bool item::attempt_split( int qty,
 {
     const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
     if( split_from_preserving_container ) {
-        mark_rot_checked_now();
+        prepare_for_location_removal();
     }
     const bool split_needs_rot_actualization = goes_bad() && has_position() &&
             !split_from_preserving_container;
@@ -9605,13 +9610,6 @@ int item::get_remaining_capacity_for_id( const itype_id &liquid, bool allow_buck
     return rem_cap;
 }
 
-auto item::preserve_freshness_when_unsealed() -> void
-{
-    if( goes_bad() && is_in_preserving_container() ) {
-        mark_rot_checked_now();
-    }
-}
-
 detached_ptr<item> item::use_amount( detached_ptr<item> &&self, const itype_id &it, int &quantity,
                                      std::vector<detached_ptr<item>> &used,
                                      const std::function<bool( const item & )> &filter )
@@ -9621,7 +9619,6 @@ detached_ptr<item> item::use_amount( detached_ptr<item> &&self, const itype_id &
 
     self->remove_items_with( [&]( detached_ptr<item> &&a ) {
         if( quantity > 0  && a->typeId() == it && filter( *a ) ) {
-            a->preserve_freshness_when_unsealed();
             used.push_back( std::move( a ) );
             quantity--;
             return VisitResponse::SKIP;
@@ -9760,9 +9757,6 @@ detached_ptr<item> item::use_charges( detached_ptr<item> &&self, const itype_id 
 
 
     auto handle_item = [&qty, &used, &pos, &what]( detached_ptr<item> &&e ) {
-        if( e->typeId() == what ) {
-            e->preserve_freshness_when_unsealed();
-        }
         if( e->is_tool() ) {
             if( e->typeId() == what || ( what == itype_UPS && e->has_flag( flag_IS_UPS ) ) ) {
                 int ups_eff_mult = e->type->tool->ups_eff_mult;

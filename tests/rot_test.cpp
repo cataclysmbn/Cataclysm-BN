@@ -265,6 +265,26 @@ TEST_CASE( "Preserving containers stop contained food rot" )
         REQUIRE( removed.size() == 1 );
         CHECK( removed.front()->get_rot() == 0_turns );
     }
+
+    SECTION( "split preserved charges start fresh when opened" ) {
+        prepare_map_storage_test();
+
+        auto sealed_can = item::in_its_container( item::spawn( "sauce_red" ) );
+        item &food = sealed_can->contents.front();
+        REQUIRE( food.count_by_charges() );
+
+        calendar::turn += 20_days;
+
+        auto removed = detached_ptr<item>();
+        REQUIRE( food.attempt_split( 3, [&removed]( detached_ptr<item> &&it ) {
+            removed = std::move( it );
+            return detached_ptr<item>();
+        } ) );
+
+        REQUIRE( removed );
+        CHECK( removed->charges == 3 );
+        CHECK( removed->get_rot() == 0_turns );
+    }
 }
 
 TEST_CASE( "Items rot away" )

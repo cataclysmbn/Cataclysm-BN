@@ -396,6 +396,12 @@ class item : public location_visitable<item>, public game_object<item>
          */
         detached_ptr<item> split( int qty );
 
+        /**
+         * Update state before removing the item from its current location.
+         * This must run while @ref loc or @ref saved_loc still identifies the old location.
+         */
+        auto prepare_for_location_removal() -> void;
+
         virtual bool attempt_detach( std::function < detached_ptr<item>( detached_ptr<item> && ) > )
         override;
 
@@ -2429,7 +2435,6 @@ class item : public location_visitable<item>, public game_object<item>
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
         auto is_in_preserving_container() const -> bool;
         auto mark_rot_checked_now() -> void;
-        auto preserve_freshness_when_unsealed() -> void;
 
         /** Helper for checking reloadability. **/
         bool is_reloadable_helper( const itype_id &ammo, bool now ) const;
