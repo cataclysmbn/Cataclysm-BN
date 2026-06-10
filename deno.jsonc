@@ -2,12 +2,12 @@
   "tasks": {
     "docs": {
       "description": "documentation site generation",
-      "command": "deno task --cwd docs"
+      "command": "deno task --cwd docs",
     },
     "docs:gen": {
       "description": "automated documentation generation for CLI and Lua API",
       "command": "deno fmt",
-      "dependencies": ["docs:gen:cli", "docs:gen:lua"]
+      "dependencies": ["docs:gen:cli", "docs:gen:lua"],
     },
     "docs:gen:cli": "deno run --allow-run=$CATA_EXE --allow-env=CATA_EXE --allow-write=docs ./scripts/gen_cli_docs.ts --output docs/en/dev/reference/cli_options.md",
     "docs:gen:lua": "$CATA_EXE --lua-doc docs/en/mod/lua/reference/lua.md --lua-types lua_annotations.lua",
@@ -15,28 +15,28 @@
     "dprint": "deno run -A npm:dprint",
     "changelog:reddit": {
       "description": "creates a weekly reddit changelog template",
-      "command": "deno run -A scripts/changelog/main.ts --format reddit"
+      "command": "deno run -A scripts/changelog/main.ts --format reddit",
     },
     "semantic": {
       "description": "update available semantic commit types",
-      "command": "deno run -R=data/mods -W=.github/semantic.yml scripts/semantic.ts"
+      "command": "deno run -R=data/mods -W=.github/semantic.yml scripts/semantic.ts",
     },
     "docs:translation-warning": "deno run --allow-read=docs --allow-env=GITHUB_TOKEN,GITHUB_REPOSITORY --allow-net=api.github.com scripts/docs_translation_warning.ts",
-    "affected-files": "deno run -RWEN --allow-run scripts/affected_files.ts"
+    "affected-files": "deno run -RWEN --allow-run scripts/affected_files.ts",
   },
   "test": { "include": ["scripts", ".agents"] },
   "lint": {
-    "include": ["scripts", ".agents"],
-    "rules": { "exclude": ["no-unversioned-import", "no-import-prefix"] }
+    "include": ["scripts", "build-scripts", ".agents"],
+    "rules": { "exclude": ["no-unversioned-import", "no-import-prefix"] },
   },
   "unstable": ["raw-imports", "fmt-component", "temporal"],
   "fmt": {
-    "exclude": ["doc", "**/*.svg"],
-    "include": ["scripts", ".agents", "doc", "docs", "*.md", ".github", ".claude"],
+    "exclude": ["doc", "**/*.svg", "build-scripts/problem-matchers"],
+    "include": ["scripts", "build-scripts", ".agents", "doc", "docs", "*.md", ".github", ".claude"],
     "semiColons": false,
     "json.trailingCommas": "jsonc",
     "lineWidth": 100,
-    "proseWrap": "preserve"
+    "proseWrap": "preserve",
   },
   "imports": {
     "$asynciter/": "https://deno.land/x/asynciter@0.0.18/",
@@ -44,6 +44,7 @@
     "$outdent/": "https://deno.land/x/outdent@v0.8.0/",
     "$zod/": "https://deno.land/x/zod@v3.22.4/",
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",
+    "@deno-library/compress": "jsr:@deno-library/compress@^0.5.6",
     "@octokit/rest": "npm:@octokit/rest@21.0.2",
     "@cliffy/flags": "jsr:@cliffy/flags@^1.0.0-rc.7",
     "@scarf/json-map": "jsr:@scarf/json-map@^0.0.4",
@@ -56,6 +57,7 @@
     "@std/path": "jsr:@std/path@^1.1.2",
     "@std/yaml": "jsr:@std/yaml@^1.0.10",
     "@valibot/valibot": "jsr:@valibot/valibot@^1.1.0",
-    "markdown-table": "npm:markdown-table@3.0.4"
-  }
+    "@zip-js/zip-js": "jsr:@zip-js/zip-js@^2.8.26",
+    "markdown-table": "npm:markdown-table@3.0.4",
+  },
 }

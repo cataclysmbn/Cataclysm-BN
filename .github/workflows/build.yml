@@ -49,6 +49,11 @@ on:
         required: false
         type: boolean
         default: true
+      bundle-registry-mods:
+        description: "Bundle registry mods and soundpacks into release archives"
+        required: false
+        type: boolean
+        default: true
       package-artifacts:
         description: "Create release archives where separate packaging is needed"
         required: false
@@ -148,6 +153,11 @@ jobs:
           name: translations
           path: .
 
+      - name: Setup Deno (registry mod bundling)
+        if: inputs.bundle-registry-mods
+        uses: denoland/setup-deno@v2
+        with: { cache: true }
+
       - name: Create VERSION.TXT
         shell: bash
         run: |
@@ -157,6 +167,16 @@ jobs:
           commit sha: ${{ github.sha }}
           commit url: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
           EOL
+
+      - name: Bundle registry mods
+        if: inputs.bundle-registry-mods
+        shell: bash
+        run: |
+          if [ "${{ matrix.sound }}" = "false" ]; then
+            deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts --exclude-package-type soundpack
+          else
+            deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts
+          fi
 
       - name: Bundle CDDA tilesets
         if: matrix.tiles == true && inputs.bundle-tilesets
