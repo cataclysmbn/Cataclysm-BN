@@ -100,6 +100,10 @@ class Trait_group;
 template<> struct string_id_params<Trait_group> {
     static constexpr bool dynamic = true;
 };
+class dimension;
+template<> struct string_id_params<dimension> {
+    static constexpr bool dynamic = true;
+};
 
 #if !defined(RELEASE) && !defined(CATA_STRING_ID_DEBUGGING)
 #define CATA_STRING_ID_DEBUGGING
@@ -384,5 +388,4 @@ struct lexicographic {
         return x.str() < y.str();
     }
 };
-
 

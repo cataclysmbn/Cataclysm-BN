@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "type_id.h"
+
 class mapbuffer;
 
 /**
