@@ -2468,7 +2468,7 @@ void sounds::process_sounds_npc()
             const auto &chary = loc.y();
             const auto npc_indoors = !level_cache.outside_cache[level_cache.idx( charx, chary )];
             const auto ambient_vol = ambient( loc.z(), npc_indoors );
-            // Passive sound dampening reduces all heard volume by a set amount, but protects against hearing loss by 2x this amount.
+            // Passive sound dampening reduces all heard volume by a set amount.
             const short passive_sound_dampening = dBspl_to_mdBspl( who.get_char_hearing_protection() );
             // Active dampening does not reduce heard volume and directly protects against hearing loss.
             const short active_sound_dampening = dBspl_to_mdBspl( who.get_char_hearing_protection( true ) );
@@ -2511,9 +2511,9 @@ void sounds::process_sounds_npc()
                 }
                 // Deafening is based on the felt volume, as an NPC may be too deaf to
                 // hear the deafening sound but still suffer additional hearing loss.
-                if( tile_vol - ( ( passive_sound_dampening * 2 ) + active_sound_dampening )  >=
+                if( tile_vol - ( passive_sound_dampening + active_sound_dampening )  >=
                     8500 ) {
-                    const short def_vol = tile_vol - ( ( passive_sound_dampening * 2 ) + active_sound_dampening );
+                    const short def_vol = tile_vol - ( passive_sound_dampening + active_sound_dampening );
                     who.handle_hearing_loss( def_vol, true );
 
                 }
@@ -2660,9 +2660,8 @@ void sounds::process_sound_markers( Character *who )
             // Deafening is based on the felt volume, as a player may be too deaf to
             // hear the deafening sound but still suffer additional hearing loss.
             // Is the loudest tile volume louder than the deafening threshold?
-            // Passive sound dampening counts 2x for protecting against hearing loss compared to is normal volume adjustment to approximate hearing protection working more effectively against harmful high frequency sounds.
             const short deafening_vol = std::max( 0,
-                                                  tile_vol - ( active_sound_dampening + passive_sound_dampening + passive_sound_dampening ) );
+                                                  tile_vol - ( active_sound_dampening + passive_sound_dampening ) );
 
             who->handle_hearing_loss( deafening_vol, true );
 

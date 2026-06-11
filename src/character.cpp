@@ -11610,6 +11610,8 @@ bool Character::avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const
 
 void Character::handle_hearing_loss( const short &vol, const bool &hearing_protection_applied )
 {
+    short effective_vol = vol;
+    
     auto &rupture = hearing_loss_stats.ruptured_eardrums;
 
     // If our eardrums are already ruptured, dont do any more damage.
@@ -11619,13 +11621,21 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
         return;
     }
 
-    short effective_vol = vol;
-
     if( !hearing_protection_applied ) {
         // basic hearing protection counts for double its value when protecting against deafening, advanced counts for it value.
         // Yes its a little jank, this way we can apply total basic hearing protection as a malus to all perceived sound volumes which makes things harder to hear.
-        effective_vol = effective_vol - ( dBspl_to_mdBspl( get_char_hearing_protection() ) * 2 ) -
-                        dBspl_to_mdBspl( get_char_hearing_protection( true ) );
+        const auto volume_mitigation = std::min( static_cast<int>(MAXIMUM_VOLUME_ATMOSPHERE) , std::max( 0, dBspl_to_mdBspl( get_char_hearing_protection() ) + dBspl_to_mdBspl( get_char_hearing_protection( true ) ) ) );
+        
+        if ( volume_mitigation >= effective_vol ){
+            // Our mitigation is louder than the sound. Just jump out.
+            return;
+
+        } else { 
+            // Apply our volume mitigation.
+            effective_vol -= volume_mitigation;
+
+        }
+        
     }
 
     auto &temp_loss = hearing_loss_stats.hearing_loss_temp;
@@ -11634,9 +11644,12 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
 
     // A characters healthy modifies a couple things in here.
     const int HLTH = static_cast<int>( std::round( healthy ) );
+
+    const auto &hab = hearing_ability();
+
     // Eardrums generally rupture at or above 184 dB.
     // Modify that with our healthy to reward players for taking care of their character.
-    const auto &rupture_vol = 18400 + ( 2 * HLTH );
+    const short &rupture_vol = 18400 + ( 2 * HLTH ) - std::round( 200 * ( hab - 1 ) );
 
     // If you are not healthy, eardrums go pop easier.
     if( effective_vol >= rupture_vol ) {
@@ -11713,11 +11726,13 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
     // 85 dB is the general threshold for hearing damage to occur. Higher volumes cause more damage over time.
     // As this is a game, modify the threshold by our hearing multiplier and health.
     // Hearing ability is already taking into account the current hearing impairment,
-    const auto &hab = hearing_ability();
+
     const short damage_threshold = 8500 + ( HLTH ) - ( 200 * ( hab - 1 ) );
+
     if( effective_vol <= damage_threshold ) {
         return;
     }
+
     // The safe exposure time threshold decreases dramatically as the volume of a increases.
     // OSHA recommended maximum safe exposure time to sounds at 85 dB (A weighted) is 8 hours.
     // Safe exposure time to sounds of 100dB (A weighted) is 15 minutes.

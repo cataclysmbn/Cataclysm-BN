@@ -6944,15 +6944,13 @@ bool item::craft_has_charges()
 // Advanced hearing protection does not make it harder for the character to hear other sounds.
 int item::get_hearing_protection( bool advanced ) const
 {
-    if( this->is_armor() ) {
-        const islot_armor *armor = find_armor_data();
-        if( armor == nullptr ) {
-            return 0;
-        }
-        return ( advanced ) ? armor->adv_hearing_protection : armor->hearing_protection;
-    } else {
+    const islot_armor *armor = find_armor_data();
+    if( armor == nullptr ) {
         return 0;
     }
+        
+    return ( advanced ) ? armor->adv_hearing_protection : armor->hearing_protection;
+
 }
 
 #if defined(_MSC_VER)
