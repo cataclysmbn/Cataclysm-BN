@@ -529,14 +529,33 @@ int enchantment::mult_bonus( enchant_vals::mod value_type, int base_value ) cons
     return get_value_multiply( value_type ) * base_value;
 }
 
+void enchantment::activate_effects( Character &guy ) const
+{
+    for( const std::pair<efftype_id, int> eff : ench_effects ) {
+        guy.add_effect( eff.first, 1_seconds, bodypart_str_id::NULL_ID(), eff.second );
+    }
+}
+
+void enchantment::deactivate_effects( Character &guy ) const
+{
+    for( const std::pair<efftype_id, int> eff : ench_effects ) {
+        if( guy.has_effect( eff.first ) ) {
+            auto intensity = guy.get_effect_int( eff.first, bodypart_str_id::NULL_ID() );
+            intensity -= eff.second;
+            guy.remove_effect( eff.first, bodypart_str_id::NULL_ID() );
+            if( intensity > 0 ) {
+                guy.add_effect( eff.first, 1_seconds, bodypart_str_id::NULL_ID(), intensity );
+            }
+        }
+    }
+}
+
 void enchantment::activate_passive( Character &guy ) const
 {
     if( emitter ) {
         get_map().emit_field( guy.bub_pos(), *emitter );
     }
-    for( const std::pair<efftype_id, int> eff : ench_effects ) {
-        guy.add_effect( eff.first, 1_seconds, bodypart_str_id::NULL_ID(), eff.second );
-    }
+    activate_effects( guy );
     for( const std::pair<const time_duration, std::vector<fake_spell>> &activation :
          intermittent_activation ) {
         // a random approximation!

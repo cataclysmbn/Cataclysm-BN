@@ -205,6 +205,12 @@ class enchantment
         // modifies character stats, or does other passive effects
         void activate_passive( Character &guy ) const;
 
+        // activates effects
+        void activate_effects( Character &guy ) const;
+
+        // deactivate effects
+        void deactivate_effects( Character &guy ) const;
+
         enchantment_id id;
 
         bool was_loaded = false;

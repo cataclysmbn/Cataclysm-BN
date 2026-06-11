@@ -8919,6 +8919,9 @@ mutation_category_id Character::get_highest_category() const
 
 void Character::recalculate_enchantment_cache()
 {
+    for( const auto &[ ench, src ] : enchantment_sources ) {
+        ench->deactivate_effects( *this );
+    }
     // start by resetting the cache
     *enchantment_cache = enchantment();
     enchantment_sources.clear();
@@ -8970,6 +8973,10 @@ void Character::recalculate_enchantment_cache()
                 enchantment_sources.emplace_back( &ench, &bio );
             }
         }
+    }
+
+    for( const auto &[ ench, src ] : enchantment_sources ) {
+        ench->activate_effects( *this );
     }
 
     rebuild_mutation_cache();
