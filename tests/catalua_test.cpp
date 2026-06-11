@@ -196,6 +196,31 @@ TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][cre
     CHECK( test_data.get<bool>( "found_expected_monster" ) );
 }
 
+TEST_CASE( "lua_npc_move_to_binding_moves_real_npc", "[lua][npc]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    map &here = get_map();
+    const auto start = tripoint_bub_ms{ 50, 50, 0 };
+    const auto destination = tripoint_bub_ms{ 51, 50, 0 };
+    for( const tripoint_bub_ms &pos : { start, destination } ) {
+        here.ter_set( pos, ter_id( "t_dirt" ) );
+        here.furn_set( pos, furn_id( "f_null" ) );
+    }
+
+    auto &moving_npc = spawn_npc( start.xy(), "test_talker" );
+    moving_npc.set_moves( 1000 );
+    test_data["npc"] = &moving_npc;
+    test_data["destination"] = destination;
+
+    run_lua_test_script( lua, "npc_move_to_test.lua" );
+
+    CHECK( test_data.get<bool>( "moved" ) );
+    CHECK( moving_npc.bub_pos() == destination );
 TEST_CASE( "lua_place_monster_pins_upgrade_time", "[lua][monster]" )
 {
     const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
@@ -235,6 +260,10 @@ TEST_CASE( "lua_typed_coords_projection", "[lua]" )
     CHECK( test_data.get<std::string>( "remain_remainder" ) == "PointOmSm(1,2)" );
     CHECK( test_data.get<std::string>( "combined" ) == "TripointAbsSm(361,2,-1)" );
     CHECK( test_data.get<int>( "distance" ) == 3 );
+    CHECK( test_data.get<std::string>( "named_bub_point" ) == "PointBubMs(3,4)" );
+    CHECK( test_data.get<std::string>( "named_abs_tripoint" ) == "TripointAbsMs(5,6,7)" );
+    CHECK( test_data.get<std::string>( "named_abs_tripoint_from_typed_point" ) ==
+           "TripointAbsMs(8,9,10)" );
 
     // Validate project_remain_omt example from the typed-coordinates documentation.
     CHECK( test_data.get<std::string>( "doc_remain_omt_quotient" ) == "TripointAbsOmt(1,1,2)" );

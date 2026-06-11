@@ -332,7 +332,7 @@ jobs:
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel astyle sqlite3 zlib ncurses flac pkg-config
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel astyle sqlite3 zlib ncurses flac pkg-config dylibbundler
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
@@ -389,8 +389,6 @@ jobs:
 
       - name: Generate Lua reference/annotations for typecheck
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
-        id: lua-docs-typecheck
-        continue-on-error: true
         env:
           CATA_EXE: ./cataclysm-bn-tiles
         run: |
@@ -398,9 +396,7 @@ jobs:
           deno task docs:gen
 
       - name: Run EmmyLua check
-        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && steps.lua-docs-typecheck.outcome == 'success'
-        id: emmylua-check
-        continue-on-error: true
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
         run: emmylua_check .
 
       - name: Generate documentation artifacts
@@ -438,6 +434,36 @@ jobs:
           cmake --install build --prefix cataclysmbn-${{ inputs.version-label }}
           tar -czvf cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.tar.gz \
             cataclysmbn-${{ inputs.version-label }}
+
+      - name: Verify bundled SDL runtime (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          set -euo pipefail
+          dist="cataclysmbn-${{ inputs.version-label }}"
+          exe="$dist/cataclysm-bn"
+          if [ "${{ matrix.tiles }}" = "true" ]; then
+            exe="$dist/cataclysm-bn-tiles"
+          fi
+
+          test -x "$exe"
+          find "$dist/lib" -maxdepth 1 -name 'libSDL3*.so*' | grep .
+          if [ "${{ matrix.tiles }}" = "true" ]; then
+            find "$dist/lib" -maxdepth 1 -name 'libSDL3_image*.so*' | grep .
+            find "$dist/lib" -maxdepth 1 -name 'libSDL3_ttf*.so*' | grep .
+          fi
+          if [ "${{ matrix.sound }}" = "true" ]; then
+            find "$dist/lib" -maxdepth 1 -name 'libSDL3_mixer*.so*' | grep .
+          fi
+
+          ldd "$exe" | tee bundled-deps.txt
+          if grep -E 'SDL3.*not found' bundled-deps.txt; then
+            exit 1
+          fi
+          if ! grep -E "libSDL3.*$dist/lib" bundled-deps.txt; then
+            echo "SDL3 is not resolved from the bundled lib directory" >&2
+            exit 1
+          fi
+          "$exe" --version
 
       - name: Configure CBN (windows msvc)
         if: runner.os == 'Windows'
@@ -518,6 +544,21 @@ jobs:
 
           Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
+      - name: Verify statically linked SDL runtime (windows msvc)
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          $dist = "cataclysmbn-${{ inputs.version-label }}"
+          $exe = Join-Path $dist "cataclysm-bn-tiles.exe"
+          if (!(Test-Path $exe)) {
+            throw "Missing Windows release executable: $exe"
+          }
+          $deps = dumpbin /DEPENDENTS $exe
+          $deps
+          if ($deps -match "SDL3") {
+            throw "Windows release executable should use the static SDL build, but dumpbin found an SDL DLL dependency"
+          }
+          & $exe --version
+
       - name: Locate PDB (windows msvc)
         if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" -Filter "*.pdb" -Recurse | Select-Object -ExpandProperty FullName
@@ -546,6 +587,33 @@ jobs:
       - name: Rename distribution package (macOS)
         if: runner.os == 'macOS' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
+
+      - name: Verify bundled SDL runtime (macOS)
+        if: runner.os == 'macOS' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          set -euo pipefail
+          resources="Cataclysm.app/Contents/Resources"
+          exe="$resources/cataclysm-bn"
+          if [ "${{ matrix.tiles }}" = "true" ]; then
+            exe="$resources/cataclysm-bn-tiles"
+          fi
+
+          test -x "$exe"
+          find "$resources/lib" -maxdepth 1 -name '*SDL3*.dylib' | grep .
+          if [ "${{ matrix.tiles }}" = "true" ]; then
+            find "$resources/lib" -maxdepth 1 -name '*SDL3_image*.dylib' | grep .
+            find "$resources/lib" -maxdepth 1 -name '*SDL3_ttf*.dylib' | grep .
+          fi
+          if [ "${{ matrix.sound }}" = "true" ]; then
+            find "$resources/lib" -maxdepth 1 -name '*SDL3_mixer*.dylib' | grep .
+          fi
+
+          otool -L "$exe" | tee bundled-deps.txt
+          if grep -E '/(opt/homebrew|usr/local)/.*SDL3' bundled-deps.txt; then
+            echo "SDL3 still resolves through Homebrew instead of the app bundle" >&2
+            exit 1
+          fi
+          "$exe" --version
 
       # Android builds
       - name: Set up JDK 11 (android)
@@ -602,25 +670,14 @@ jobs:
           KEYSTORE_PROPERTIES: ${{ secrets.KEYSTORE_PROPERTIES }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            rm -f app/pr-debug.keystore keystore.properties
-            keytool -genkeypair \
-              -noprompt \
-              -keystore app/pr-debug.keystore \
-              -storetype JKS \
-              -storepass android \
-              -keypass android \
-              -alias cbn-pr-debug \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -dname "CN=Cataclysm BN PR Debug,O=Cataclysm BN"
+            rm -f keystore.properties
             cat > keystore.properties <<'EOF'
           storeFile=pr-debug.keystore
           storePassword=android
           keyAlias=cbn-pr-debug
           keyPassword=android
           EOF
-            echo "::notice::Signing PR Android artifact with the PR debug key"
+            echo "::notice::Signing PR Android artifact with the committed PR debug key"
           elif [ -n "$KEYSTORE" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEYSTORE_PROPERTIES" ]; then
             printf '%s' "$KEYSTORE" > release.keystore.asc
             gpg -d --passphrase "$KEYSTORE_PASSWORD" --batch release.keystore.asc > app/release.keystore
@@ -665,6 +722,18 @@ jobs:
                gradle_retry -Pj=$(nproc) -Plocalize=${{ inputs.android-localize }} bundle${VARIANT}Release ${VERSION_ARG}
                mv ./app/build/outputs/bundle/${VARIANT_LOWER}Release/*.aab ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.aab
           fi
+
+      - name: Verify bundled SDL runtime (android)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        run: |
+          set -euo pipefail
+          artifact="cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}"
+          test -f "$artifact"
+          unzip -l "$artifact" | tee bundled-deps.txt
+          grep -E 'libSDL3\.so' bundled-deps.txt
+          grep -E 'libSDL3_image\.so' bundled-deps.txt
+          grep -E 'libSDL3_mixer\.so' bundled-deps.txt
+          grep -E 'libSDL3_ttf\.so' bundled-deps.txt
 
       - name: Build test executable (desktop)
         if: inputs.run-tests && (runner.os == 'Windows' || runner.os == 'macOS' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))

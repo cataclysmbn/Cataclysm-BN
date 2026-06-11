@@ -541,6 +541,10 @@ class monster : public Creature, public location_visitable<monster>
         void make_pet();
         // check if this monster is a pet of the player
         bool is_pet() const;
+
+        character_id bonded_character_id; // id of bonded character ( for save/load )
+        void on_pet_bonding( Character *ch );
+
         // Add an item to inventory
         void add_item( detached_ptr<item> &&it );
         // check mech power levels and modify it.
@@ -583,6 +587,7 @@ class monster : public Creature, public location_visitable<monster>
                                     const std::string &npc_msg ) const override;
         void add_msg_player_or_npc( const game_message_params &params, const std::string &player_msg,
                                     const std::string &npc_msg ) const override;
+
         // TEMP VALUES
         tripoint_bub_ms wander_pos; // Wander destination - Just try to move in that direction
         int wandf;           // Urge to wander - Increased by sound, decrements each move
@@ -616,6 +621,8 @@ class monster : public Creature, public location_visitable<monster>
         // >0 = freindly for x turns
         int friendly;
         int training_level = 0;
+        int pet_bond_level = 0;
+        static constexpr int pet_bond_max_level = 10;
         int anger = 0;
         int morale = 0;
         // Per-npcmove-pass cache of attitude_to() result for a generic NPC (no special traits).

@@ -248,6 +248,18 @@
     "extend": { "flags": [ "ODDTURN" ] }
   },
   {
+    "id": "light_white",
+    "copy-from": "light_emergency",
+    "type": "vehicle_part",
+    "name": { "str": "white light" },
+    "item": "light_emergency_white",
+    "color": "white",
+    "broken_color": "white",
+    "light_color": "#ffffff",
+    "rotating_light": { "phase": 90 },
+    "extend": { "flags": [ "EVENTURN" ] }
+  },
+  {
     "id": "lit_aisle_horizontal",
     "type": "vehicle_part",
     "name": { "str": "aisle with lights" },

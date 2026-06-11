@@ -18,6 +18,7 @@
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
+#include "json.h"
 #include "mutation.h"
 #include "newcharacter.h"
 #include "pldata.h"
@@ -81,6 +82,24 @@ static avatar get_sanitized_player()
     return ret;
 }
 
+static auto load_scenario_whitelist( const std::string &scenario_id ) -> void
+{
+    const auto json = std::string( R"({ "subtype": "whitelist", "scenarios": [ ")" ) +
+                      scenario_id + R"(" ] })";
+    auto stream = std::istringstream( json );
+    auto jsin = JsonIn( stream );
+    auto jo = jsin.get_object();
+    scen_blacklist::load_scen_blacklist( jo, "test" );
+    scenario::check_definitions();
+}
+
+struct scoped_scenario_blacklist_reset {
+    ~scoped_scenario_blacklist_reset() {
+        reset_scenarios_blacklist();
+        scenario::check_definitions();
+    }
+};
+
 struct failure {
     string_id<profession> prof;
     std::vector<trait_id> mut;
@@ -125,6 +144,21 @@ TEST_CASE( "skin_tone_is_mandatory_with_default", "[new_character][traits]" )
 
     CHECK( ch.has_base_trait( skin_lighter ) );
     CHECK( ch.has_trait( skin_lighter ) );
+}
+
+TEST_CASE( "default_character_respects_scenario_whitelist", "[new_character][scenario]" )
+{
+    const auto whitelisted_scenario = string_id<scenario>( "wilderness" );
+    [[maybe_unused]] const auto reset_blacklist = scoped_scenario_blacklist_reset{};
+    load_scenario_whitelist( whitelisted_scenario.c_str() );
+
+    auto ch = get_sanitized_player();
+    auto points = points_left();
+    g->scen = scenario::generic();
+
+    ch.randomize( false, points, true );
+
+    CHECK( g->scen->ident() == whitelisted_scenario );
 }
 
 TEST_CASE( "starting_items", "[slow]" )

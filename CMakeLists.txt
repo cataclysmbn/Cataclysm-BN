@@ -408,7 +408,7 @@ if (CATA_SDL)
             )
             FetchContent_MakeAvailable(SDL3)
             if (DYNAMIC_LINKING)
-                install(TARGETS SDL3-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+                install(TARGETS SDL3-shared DESTINATION lib)
             endif ()
         else()
             message("Using system SDL3")
@@ -648,7 +648,7 @@ if (TILES)
             )
             FetchContent_MakeAvailable(SDL3_TTF)
             if (DYNAMIC_LINKING)
-                install(TARGETS SDL3_ttf-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+                install(TARGETS SDL3_ttf-shared DESTINATION lib)
             endif ()
         else()
             message("Using system SDL3_ttf")
@@ -682,7 +682,7 @@ if (TILES)
             )
             FetchContent_MakeAvailable(SDL3_IMAGE)
             if (DYNAMIC_LINKING)
-                install(TARGETS SDL3_image-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+                install(TARGETS SDL3_image-shared DESTINATION lib)
             endif ()
         else()
             message("Using system SDL3_image")
@@ -742,7 +742,7 @@ if (SOUND)
             )
             FetchContent_MakeAvailable(SDL3_MIXER )
             if (DYNAMIC_LINKING)
-                install(TARGETS SDL3_mixer-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+                install(TARGETS SDL3_mixer-shared DESTINATION lib)
             endif ()
         else()
             message("Using system SDL3_mixer")
@@ -883,12 +883,14 @@ endif ()
 add_subdirectory(src)
 add_subdirectory(data)
 
-if (UNIX AND TILES AND DYNAMIC_LINKING)
-    set_target_properties(
-            cataclysm-bn-tiles
-            PROPERTIES
-            INSTALL_RPATH "$<IF:$<BOOL:${APPLE}>,@executable_path/lib:@executable_path/lib64,\$ORIGIN/lib:\$ORIGIN/lib64>"
-    )
+if (UNIX AND DYNAMIC_LINKING)
+    set(CATA_INSTALL_RPATH "$<IF:$<BOOL:${APPLE}>,@executable_path/lib:@executable_path/lib64,\$ORIGIN/lib:\$ORIGIN/lib64>")
+    if (TARGET cataclysm-bn-tiles)
+        set_target_properties(cataclysm-bn-tiles PROPERTIES INSTALL_RPATH "${CATA_INSTALL_RPATH}")
+    endif()
+    if (TARGET cataclysm-bn)
+        set_target_properties(cataclysm-bn PROPERTIES INSTALL_RPATH "${CATA_INSTALL_RPATH}")
+    endif()
 endif()
 
 if(TESTS)
@@ -1005,6 +1007,15 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         endforeach()
     endif()
 
+    if (DYNAMIC_LINKING)
+        find_program(CATA_OSX_DYLIBBUNDLER dylibbundler REQUIRED)
+        set(CATA_OSX_BUNDLE_RUNTIME_COMMANDS
+            COMMAND "${CATA_OSX_DYLIBBUNDLER}" -od -b
+                -x "${CATA_OSX_RESOURCES_DIR}/$<TARGET_FILE_NAME:${CATA_OSX_GAME_TARGET}>"
+                -d "${CATA_OSX_RESOURCES_DIR}/lib"
+                -p "@executable_path/lib/")
+    endif()
+
     add_custom_target(osx-app
         COMMAND ${CMAKE_COMMAND} -E rm -rf "${CATA_OSX_APP_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CATA_OSX_CONTENTS_DIR}/MacOS"
@@ -1031,6 +1042,11 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         DEPENDS ${CATA_OSX_GAME_TARGET} translations)
 
+    add_custom_target(osx-bundle-runtime
+        ${CATA_OSX_BUNDLE_RUNTIME_COMMANDS}
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        DEPENDS osx-app)
+
     if (GIT_VERSION)
         set(CATA_OSX_DMG_VERSION "${GIT_VERSION}")
     else()
@@ -1040,7 +1056,7 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         COMMAND plutil -convert binary1 "${CATA_OSX_APP_DIR}/Contents/Info.plist"
         COMMAND dmgbuild -s build-data/osx/dmgsettings.py "Cataclysm BN" "CataclysmBN-${CATA_OSX_DMG_VERSION}.dmg"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        DEPENDS osx-app)
+        DEPENDS osx-bundle-runtime)
 endif()
 
 configure_file(

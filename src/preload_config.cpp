@@ -22,6 +22,19 @@ struct state_t {
 
 state_t s_state;
 
+auto tristate_from_legacy_int( const int value ) -> tristate
+{
+    switch( static_cast<tristate>( value ) ) {
+        case tristate::enable:
+            return tristate::enable;
+        case tristate::disable:
+            return tristate::disable;
+        default:
+        case tristate::auto_select:
+            return tristate::auto_select;
+    }
+}
+
 } // namespace
 
 auto load() -> void
@@ -39,9 +52,14 @@ auto load() -> void
             s_state.gpu_backend = jObj.get_string( "gpu_backend", "" );
         }
 
-        s_state.texture_streaming = tristate_from_string(
-                                        jObj.get_string( "texture_streaming", "auto" ) //
-                                    );
+        if( jObj.has_string( "texture_streaming" ) ) {
+            s_state.texture_streaming = tristate_from_string(
+                                            jObj.get_string( "texture_streaming" ) );
+        } else {
+            s_state.texture_streaming = tristate_from_legacy_int(
+                                            jObj.get_int( "texture_streaming",
+                                                    static_cast<int>( tristate::auto_select ) ) );
+        }
     },
     true );
 }
@@ -56,7 +74,8 @@ auto save() -> void
         if( !s_state.gpu_backend.empty() ) {
             jout.member( "gpu_backend", s_state.gpu_backend );
         }
-        jout.member( "texture_streaming", s_state.texture_streaming );
+        jout.member( "texture_streaming",
+                     std::string{ tristate_to_string( s_state.texture_streaming ) } );
         jout.end_object();
     }, "preload config" );
 }

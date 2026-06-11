@@ -196,6 +196,7 @@ static const efftype_id effect_music( "music" );
 static const efftype_id effect_onfire( "onfire" );
 static const efftype_id effect_paincysts( "paincysts" );
 static const efftype_id effect_pet( "pet" );
+static const efftype_id effect_pet_bonded( "pet_bonded" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_ridden( "ridden" );
 static const efftype_id effect_riding( "riding" );
@@ -1582,6 +1583,7 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
         }
 
         p->consume_charges( *it, 1 );
+        mon.on_pet_bonding( p->as_character() );
         return 0;
     }
 
