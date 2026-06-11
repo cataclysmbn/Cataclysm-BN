@@ -31,9 +31,9 @@ voltmeter.menu = function(params)
   return 0
 end
 
----@type fun(who: Character, item: Item, pos: Tripoint): string
+---@type fun(who: Character, item: Item, pos: TripointBubMs): string
 voltmeter.get_grid_charge_info = function(_who, _item, pos)
-  local pos_abs = gapi:bub_to_abs(pos)
+  local pos_abs = gapi.bub_to_abs(pos)
   local grid = gapi.get_distribution_grid_tracker():grid_at(pos_abs)
   local amt = grid:get_resource()
   if not amt then return "" end
@@ -50,11 +50,11 @@ voltmeter.get_grid_charge_info = function(_who, _item, pos)
   return msg
 end
 
----@type fun(who: Character, item: Item, pos: Tripoint): string
+---@type fun(who: Character, item: Item, pos: TripointBubMs): string
 voltmeter.get_grid_connections_info = function(_who, _item, pos)
-  local pos_abs_ms = gapi:bub_to_abs(pos)
+  local pos_abs_ms = gapi.bub_to_abs(pos)
   local pos_abs_omt = pos_abs_ms:to_omt()
-  ---@cast pos_abs Tripoint
+  ---@cast pos_abs_omt TripointAbsOmt
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
   local six_dirs = gapi.six_cardinal_directions()
@@ -80,11 +80,11 @@ voltmeter.get_grid_connections_info = function(_who, _item, pos)
   return msg
 end
 
----@type fun(who: Character, item: Item, pos: Tripoint): integer
+---@type fun(who: Character, item: Item, pos: TripointBubMs): integer
 voltmeter.modify_grid_connections = function(who, item, pos)
-  local pos_abs_ms = gapi:bub_to_abs(pos)
+  local pos_abs_ms = gapi.bub_to_abs(pos)
   local pos_abs_omt = pos_abs_ms:to_omt()
-  ---@cast pos_abs Tripoint
+  ---@cast pos_abs_omt TripointAbsOmt
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
   local six_dirs = gapi.six_cardinal_directions()

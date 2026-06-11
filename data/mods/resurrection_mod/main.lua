@@ -96,7 +96,7 @@ mod.iuse_function_anchor = function(params)
   local f_anchor = FurnId.new("resurrection_anchor_deployed"):int_id()
   local f_null = FurnId.new("f_null"):int_id()
 
-  local abs_pos = gapi:bub_to_abs(pos)
+  local abs_pos = gapi.bub_to_abs(pos)
   local furn_id = gapi.get_map():get_furn_at(pos)
 
   if furn_id == f_null then
@@ -131,7 +131,7 @@ mod.pick_teleport_destination = function(who)
 end
 
 mod.remove_placed_furniture = function(pos)
-  local abs_pos = gapi:bub_to_abs(pos)
+  local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
 
   for i in pairs(mod.anchor_list) do

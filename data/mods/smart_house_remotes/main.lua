@@ -300,7 +300,7 @@ mod.iuse_function = function(params)
   local _who = params.user
   local item = params.item
   local pos = params.pos
-  local user_pos = gapi:bub_to_abs(pos)
+  local user_pos = gapi.bub_to_abs(pos)
 
   -- Uncomment this so on activation the remote reconfigures itself to work in user's omt
   --[[

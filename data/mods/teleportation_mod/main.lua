@@ -156,7 +156,7 @@ mod.iuse_function_anchor = function(params)
   local player_map_pos = params.pos
   local a = { "teleporter_anchor_deployed" }
 
-  local player_abs_pos = gapi:bub_to_abs(player_map_pos)
+  local player_abs_pos = gapi.bub_to_abs(player_map_pos)
   --print(player_abs_pos)
 
   local player_omt = player_abs_pos:to_omt()
@@ -274,7 +274,7 @@ mod.do_station_charge = function(choose, grid, power_available, chosen_station_l
 end
 
 mod.charge_stations_from_grid = function(pos)
-  local abs_pos = gapi:bub_to_abs(pos)
+  local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
   local grid = gapi.get_distribution_grid_tracker():grid_at(abs_pos)
   local power_available = grid:get_resource(true)
@@ -332,7 +332,7 @@ mod.teleport_to_target = function(who, anchor, distance, teleporter_list_key, pi
 end
 
 mod.pick_teleporter = function(who, eidx, pos)
-  local abs_pos = gapi:bub_to_abs(pos)
+  local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
   local anchor = mod.anchor_list[eidx]
   if not anchor then return 0 end
@@ -379,7 +379,7 @@ end
 
 mod.pick_teleport_destination = function(who, pos)
   local ui_teleport = UiList.new()
-  local abs_pos = gapi:bub_to_abs(pos)
+  local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
   ui_teleport:title(locale.gettext("Select teleportation target"))
 
@@ -404,7 +404,7 @@ mod.pick_teleport_destination = function(who, pos)
 end
 
 mod.get_anchor_distance = function(pos, i)
-  local abs_pos = gapi:bub_to_abs(pos)
+  local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
   local anchor = mod.anchor_list[i]
   if not anchor then return 0 end
@@ -594,7 +594,7 @@ mod.update_station_table = function()
 end
 
 mod.remove_placed_furniture = function(pos)
-  local abs_pos = gapi:bub_to_abs(pos)
+  local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
   local ui_remove_furn = UiList.new()
   ui_remove_furn:title(locale.gettext("Remove station or anchor?"))

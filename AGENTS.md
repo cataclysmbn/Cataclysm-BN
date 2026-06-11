@@ -63,7 +63,8 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 
 - **SHOULD NOT** modify existing headers with >10 usages. Create new header with pure functions.
 - **MUST** use modern C++23 features.
-- **MUST** keep every Lua function typed with EmmyLua/LuaLS annotations, including existing and local helper functions: `---@param`, `---@return`, and table `---@class`/`---@field` shapes where parameters are tables. Before touching Lua, inspect the file's annotation style and preserve complete function typing.
+- **MUST** keep Lua function parameters typed with EmmyLua/LuaLS annotations, including existing and local helper functions: `---@param` and table `---@class`/`---@field` shapes where parameters are tables. Do not require or add `---@return` solely for annotation enforcement when the return type is inferable. Before touching Lua, inspect the file's annotation style and preserve complete function typing.
+- **MUST** fix missing Lua binding type declarations at the binding/doc-generation source; do not hard-code generated binding classes in `data/raw/generate_types.lua` as a shortcut.
 - **MUST** test C++ Lua binding behavior with real bound objects when adding or changing bindings; Lua-only mocks may supplement but must not be the sole validation for binding correctness.
 - **MUST** use options struct for functions with more than 3 parameters. Use designated initializers at call sites.
 - **MUST NOT** manually write an options/struct type at a call site when the function parameter type makes it inferable; use `{ .field = value }` instead of `options_type{ .field = value }`.
