@@ -363,7 +363,7 @@ enum action_id : int {
 };
 template<>
 struct enum_traits<action_id> {
-        static constexpr action_id last = action_id::NUM_ACTIONS;
+    static constexpr action_id last = action_id::NUM_ACTIONS;
 };
 
 /**
