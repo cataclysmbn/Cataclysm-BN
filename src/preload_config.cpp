@@ -17,22 +17,51 @@ struct state_t {
     compute_accel accel{ compute_accel::auto_select };
     std::string gpu_backend;
     bool gpu_backend_override_set = false;
+    tristate texture_streaming { tristate::auto_select };
 };
 
 state_t s_state;
+
+auto tristate_from_legacy_int( const int value ) -> tristate
+{
+    switch( static_cast<tristate>( value ) ) {
+        case tristate::enable:
+            return tristate::enable;
+        case tristate::disable:
+            return tristate::disable;
+        default:
+        case tristate::auto_select:
+            return tristate::auto_select;
+    }
+}
 
 } // namespace
 
 auto load() -> void
 {
-    read_from_file_json( PATH_INFO::preload(), [&]( JsonIn & jsin ) {
-        auto jobj = jsin.get_object();
+    read_from_file_json(
+        PATH_INFO::preload(),
+    [&]( JsonIn & jsin ) {
+        const auto jObj = jsin.get_object();
+
         s_state.accel = compute_accel_from_string(
-                            jobj.get_string( "compute_acceleration", "auto" ) );
+                            jObj.get_string( "compute_acceleration", "auto" ) //
+                        );
+
         if( !s_state.gpu_backend_override_set ) {
-            s_state.gpu_backend = jobj.get_string( "gpu_backend", "" );
+            s_state.gpu_backend = jObj.get_string( "gpu_backend", "" );
         }
-    }, true );
+
+        if( jObj.has_string( "texture_streaming" ) ) {
+            s_state.texture_streaming = tristate_from_string(
+                                            jObj.get_string( "texture_streaming" ) );
+        } else {
+            s_state.texture_streaming = tristate_from_legacy_int(
+                                            jObj.get_int( "texture_streaming",
+                                                    static_cast<int>( tristate::auto_select ) ) );
+        }
+    },
+    true );
 }
 
 auto save() -> void
@@ -45,6 +74,8 @@ auto save() -> void
         if( !s_state.gpu_backend.empty() ) {
             jout.member( "gpu_backend", s_state.gpu_backend );
         }
+        jout.member( "texture_streaming",
+                     std::string{ tristate_to_string( s_state.texture_streaming ) } );
         jout.end_object();
     }, "preload config" );
 }
@@ -58,6 +89,9 @@ auto set_gpu_backend_override( std::string_view s ) -> void
     s_state.gpu_backend = s;
     s_state.gpu_backend_override_set = true;
 }
+
+auto get_texture_streaming() -> tristate                         { return s_state.texture_streaming; }
+auto set_texture_streaming( tristate val ) -> void               { s_state.texture_streaming = val; }
 
 auto compute_accel_from_string( std::string_view s ) -> compute_accel
 {
@@ -74,6 +108,26 @@ auto compute_accel_to_string( compute_accel val ) -> std::string_view
         case compute_accel::force:
             return "force";
         default:
+            return "auto";
+    }
+}
+
+auto tristate_from_string( std::string_view s ) -> tristate
+{
+    if( s == "off" || s == "disable" ) { return tristate::disable; }
+    if( s == "on" || s == "enable" ) { return tristate::enable; }
+    return tristate::auto_select;
+}
+
+auto  tristate_to_string( tristate val ) -> std::string_view
+{
+    switch( val ) {
+        case tristate::enable:
+            return "enable";
+        case tristate::disable:
+            return "disable";
+        default:
+        case tristate::auto_select:
             return "auto";
     }
 }

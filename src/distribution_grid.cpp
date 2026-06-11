@@ -738,10 +738,11 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
 
         const furn_t &old_t = sm->get_furn( p_within_sm ).obj();
         const furn_t &new_t = qt.id.obj();
-        const auto pos_local = m.abs_to_bub( qt.p );
+        const auto pos_player = abs_to_bub( qt.p );
+        const auto pos_local = abs_to_map_local( m, qt.p );
 
         if( !qt.msg.empty() ) {
-            if( u.sees( pos_local ) ) {
+            if( u.sees( pos_player ) ) {
                 add_msg( "%s", _( qt.msg ) );
             }
         }

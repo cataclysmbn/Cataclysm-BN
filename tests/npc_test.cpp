@@ -372,7 +372,7 @@ TEST_CASE( "npc-movement" )
                     guy->randomize();
                     // Repeat until we get an NPC vulnerable to acid
                 } while( guy->is_immune_field( fd_acid ) );
-                const auto remain = project_remain<coords::sm>( here.bub_to_abs( p ) );
+                const auto remain = project_remain<coords::sm>( map_local_to_abs( here, p ) );
                 guy->spawn_at_precise( remain.quotient, remain.remainder_tripoint );
                 // Set the shopkeep mission; this means that
                 // the NPC deems themselves to be guarding and stops them
@@ -481,7 +481,7 @@ TEST_CASE( "npc_move_through_vehicle_holes" )
 
     shared_ptr_fast<npc> guy = make_shared_fast<npc>();
     guy->randomize();
-    const auto remain = project_remain<coords::sm>( here.bub_to_abs( mon_origin ) );
+    const auto remain = project_remain<coords::sm>( map_local_to_abs( here, mon_origin ) );
     guy->spawn_at_precise( remain.quotient, remain.remainder_tripoint );
 
     ACTIVE_OVERMAP_BUFFER.insert_npc( guy );

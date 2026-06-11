@@ -1247,26 +1247,33 @@ static void apply_surf_blend_effect(
                     static_cast<uint8_t>( std::min<int>( base.r + target.r, 255 ) ),
                     static_cast<uint8_t>( std::min<int>( base.g + target.g, 255 ) ),
                     static_cast<uint8_t>( std::min<int>( base.b + target.b, 255 ) ),
-                    static_cast<uint8_t>( std::min<int>( base.a + target.a, 255 ) ) };
+                    base.a };
                 break;
             }
             case tint_blend_mode::subtract: {
-                col = RGBColor{ static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
-                                static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
-                                static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ), base.a };
+                col = RGBColor{
+                    static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
+                    static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
+                    static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ),
+                    base.a};
                 break;
             }
             case tint_blend_mode::multiply: {
-                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ),
-                                static_cast<uint8_t>( base.g *target.g / 256 ),
-                                static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
+                col = RGBColor{
+                    static_cast<uint8_t>( base.r *target.r / 256 ),
+                    static_cast<uint8_t>( base.g *target.g / 256 ),
+                    static_cast<uint8_t>( base.b *target.b / 256 ),
+                    base.a};
                 break;
             }
             case tint_blend_mode::normal: {
-                // A truely accurate normal blend would use the alpha from the target, but that'd be useless here.
-                col = RGBColor{ static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.r, target.r, target.a ) ),
-                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.g, target.g, target.a ) ),
-                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.b, target.b, target.a ) ), base.a };
+                // A truely accurate normal blend would use the alpha from the target, but that'd be
+                // useless here.
+                col = RGBColor{
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.r, target.r, target.a ) ),
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.g, target.g, target.a ) ),
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.b, target.b, target.a ) ),
+                    base.a};
                 break;
             }
             case tint_blend_mode::divide: {
@@ -2224,6 +2231,7 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
     }
 #if defined(DYNAMIC_ATLAS)
     ts.tileset_atlas = std::make_unique<dynamic_atlas>( 4096, 4096, ts.tile_width, ts.tile_height );
+    ts.tileset_atlas->start_batch();
 #endif
     // Load tile information if available.
     offset = 0;
@@ -2303,6 +2311,7 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
 
     ts.tileset_id = tileset_id;
 #if defined(DYNAMIC_ATLAS)
+    ts.tileset_atlas->end_batch();
     ts.tileset_atlas->readback_load();
 #endif
 }
@@ -2560,6 +2569,15 @@ const color_tint_pair *tileset::get_tint( const std::string &tint_id )
         return &tints[tint_id];
     }
     return nullptr;
+}
+
+bool tileset::try_get_tint( const std::string &tint_id, color_tint_pair &tint )
+{
+    if( tints.contains( tint_id ) ) {
+        tint = tints[tint_id];
+        return true;
+    }
+    return false;
 }
 
 void tileset_loader::process_variations_after_loading( weighted_int_list<std::vector<int>> &vs )
@@ -3063,7 +3081,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 if( pos.z() != center.z() ) {
                     return;
                 }
-                local_tiles.insert( here.abs_to_bub( pos ).xy() );
+                local_tiles.insert( abs_to_bub( pos ).xy() );
             } );
 
             if( !local_tiles.empty() ) {
@@ -3145,8 +3163,8 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                     std::max( s.y + o.y(), max_visible_y )
                                 );
         g->u.prepare_map_memory_region(
-            here.bub_to_abs( tripoint_bub_ms( min_mm_reg, center.z() ) ),
-            here.bub_to_abs( tripoint_bub_ms( max_mm_reg, center.z() ) )
+            bub_to_abs( tripoint_bub_ms( min_mm_reg, center.z() ) ),
+            bub_to_abs( tripoint_bub_ms( max_mm_reg, center.z() ) )
         );
 
         const auto already_drawn = half_open_rectangle<point>(
@@ -3811,7 +3829,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
         const auto &tname = t.id().str();
         if( here.check_seen_cache( p ) ) {
-            const auto abs_pos = here.bub_to_abs( p );
+            const auto abs_pos = bub_to_abs( p );
             if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
                 g->u.memorize_tile( abs_pos, tname, subtile, rotation );
                 g->u.memorize_terrain_tile( abs_pos, tname, subtile, rotation );
@@ -3845,7 +3863,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             get_tile_values_with_ter( p, f.to_i(), neighborhood_ids.data(), subtile, rotation );
         }
         if( here.check_seen_cache( p ) ) {
-            g->u.memorize_tile( here.bub_to_abs( p ), f.id().str(), subtile, rotation );
+            g->u.memorize_tile( bub_to_abs( p ), f.id().str(), subtile, rotation );
         }
     };
 
@@ -3869,7 +3887,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         auto rotation = 0;
         get_tile_values( tr_id.to_i(), neighborhood_ids.data(), subtile, rotation );
         if( here.check_seen_cache( p ) ) {
-            g->u.memorize_tile( here.bub_to_abs( p ), tr_id.id().str(), subtile, rotation );
+            g->u.memorize_tile( bub_to_abs( p ), tr_id.id().str(), subtile, rotation );
         }
     };
 
@@ -3895,7 +3913,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         const auto &vp_id = veh->part( veh_part ).info().get_id();
         const auto vpname = std::string( "vp_" ) + vp_id.str();
         auto &you = get_avatar();
-        const auto abs_pos = here.bub_to_abs( p );
+        const auto abs_pos = bub_to_abs( p );
         if( you.get_memorized_tile( abs_pos ).tile == vpname ) {
             you.clear_memorized_overlay( abs_pos );
         }
@@ -3920,7 +3938,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 veh_part, false ) ) ) );
         const auto vpname = std::string( "vp_" ) + vp_id.str();
         auto &you = get_avatar();
-        const auto abs_pos = here.bub_to_abs( p );
+        const auto abs_pos = bub_to_abs( p );
         if( veh.forward_velocity() ) {
             you.clear_memorized_overlay( abs_pos );
         } else {
@@ -4072,9 +4090,9 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                   ( g->is_zones_manager_open() && g->is_zone_submap_grid_overlay_enabled() );
 
     if( draw_submap_grid && !iso_mode ) {
-        point_abs_sm sm_start = project_to<coords::sm>( here.bub_to_abs( point_bub_ms( min_col,
+        point_abs_sm sm_start = project_to<coords::sm>( bub_to_abs( point_bub_ms( min_col,
                                 min_row ) + o.raw() ) );
-        point_abs_sm sm_end = project_to<coords::sm>( here.bub_to_abs( point_bub_ms( max_col,
+        point_abs_sm sm_end = project_to<coords::sm>( bub_to_abs( point_bub_ms( max_col,
                               max_row ) + o.raw() ) );
 
         bool zlevs = here.has_zlevels();
@@ -4105,8 +4123,8 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             for( int sm_y = sm_start.y(); sm_y <= sm_end.y(); sm_y++ ) {
                 auto sm_p = point_abs_sm( sm_x, sm_y );
                 auto sm_tp = tripoint_abs_sm( sm_x, sm_y, center.z() );
-                point p1 = player_to_screen( here.abs_to_bub( project_to<coords::ms>( sm_p ) ) );
-                point p3 = player_to_screen( here.abs_to_bub( project_to<coords::ms>( sm_p + point_south_east ) ) );
+                point p1 = player_to_screen( abs_to_bub( project_to<coords::ms>( sm_p ) ) );
+                point p3 = player_to_screen( abs_to_bub( project_to<coords::ms>( sm_p + point_south_east ) ) );
                 p3 -= point( THICC, THICC ); // Don't draw over other lines
 
                 // Leave a small gap to indicate omt boundaries
@@ -4524,7 +4542,7 @@ bool cata_tiles::draw_from_id_string(
             if( fid.is_valid() ) {
                 const furn_t &f = fid.obj();
                 if( !f.is_movable() ) {
-                    seed = simple_point_hash_new( here.bub_to_abs( pos ) );
+                    seed = simple_point_hash_new( bub_to_abs( pos ) );
                 }
             }
         }
@@ -4579,7 +4597,7 @@ bool cata_tiles::draw_from_id_string(
     // or has an idle animation and idle animations are enabled
     if( has_variations && variations_enabled ) {
         if( seed_from_map_coords ) {
-            seed = simple_point_hash_new( g->m.bub_to_abs( pos ) );
+            seed = simple_point_hash_new( bub_to_abs( pos ) );
         }
         static const auto rot32 = []( const unsigned int x, const int k ) {
             return ( x << k ) | ( x >> ( 32 - k ) );
@@ -4803,7 +4821,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
         sprite_tex->get_alpha_mod( &old_alpha );
         sprite_tex->get_blend_mode( &old_blend_mode );
 
-        sprite_tex->set_blend_mode( SDL_BLENDMODE_BLEND );
+        sprite_tex->set_blend_mode( SDL_BLENDMODE_ADD );
         sprite_tex->set_color_mod( light_tint.color.r, light_tint.color.g, light_tint.color.b );
         sprite_tex->set_alpha_mod( light_tint.alpha );
         const auto ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
@@ -5018,7 +5036,7 @@ auto get_map_memory_of_at( const tripoint_bub_ms &p ) -> std::optional<memorized
         return std::nullopt;
     }
 
-    const memorized_terrain_tile t = g->u.get_memorized_tile( get_map().bub_to_abs( p ) );
+    const memorized_terrain_tile t = g->u.get_memorized_tile( bub_to_abs( p ) );
     if( !string_id<T>( t.tile ).is_valid() ) {
         return std::nullopt;
     }
@@ -5034,7 +5052,7 @@ std::optional<memorized_terrain_tile>
         return std::nullopt;
     }
 
-    const memorized_terrain_tile t = g->u.get_memorized_tile( get_map().bub_to_abs( tripoint_bub_ms(
+    const memorized_terrain_tile t = g->u.get_memorized_tile( bub_to_abs( tripoint_bub_ms(
                                          p ) ) );
     if( !t.tile.starts_with( "vp_" ) ) {
         return std::nullopt;
@@ -5054,7 +5072,7 @@ bool cata_tiles::has_memory_at( const tripoint_bub_ms &p )
         return false;
     }
 
-    const auto abs = get_map().bub_to_abs( p );
+    const auto abs = bub_to_abs( p );
     // Check overlay slot (furniture, vpart, trap) and terrain slot separately,
     // since terrain is now stored in its own slot and may be the only memory present.
     if( !g->u.get_memorized_tile( abs ).tile.empty() ) {
@@ -5069,7 +5087,7 @@ std::optional<memorized_terrain_tile>
     if( !g->u.should_show_map_memory() ) {
         return std::nullopt;
     }
-    const memorized_terrain_tile t = g->u.get_terrain_tile( get_map().bub_to_abs( tripoint_bub_ms(
+    const memorized_terrain_tile t = g->u.get_terrain_tile( bub_to_abs( tripoint_bub_ms(
                                          p ) ) );
     if( t.tile.empty() ) {
         return std::nullopt;
@@ -5164,10 +5182,10 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
         const std::string &tname = t.id().str();
         if( here.check_seen_cache( p ) ) {
             if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
-                g->u.memorize_tile( here.bub_to_abs( p ), tname, subtile, rotation );
-                g->u.memorize_terrain_tile( here.bub_to_abs( p ), tname, subtile, rotation );
+                g->u.memorize_tile( bub_to_abs( p ), tname, subtile, rotation );
+                g->u.memorize_terrain_tile( bub_to_abs( p ), tname, subtile, rotation );
             } else {
-                g->u.clear_memorized_tile( here.bub_to_abs( p ) );
+                g->u.clear_memorized_tile( bub_to_abs( p ) );
             }
         }
         // draw the actual terrain if there's no override
@@ -5268,7 +5286,7 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
 
         const std::string &fname = f.id().str();
         if( here.check_seen_cache( p ) ) {
-            g->u.memorize_tile( here.bub_to_abs( p ), fname, subtile, rotation );
+            g->u.memorize_tile( bub_to_abs( p ), fname, subtile, rotation );
         }
         // draw the actual furniture if there's no override
         if( !neighborhood_overridden ) {
@@ -5363,7 +5381,7 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
         get_tile_values( tr_id.to_i(), neighborhood, subtile, rotation );
         const std::string trname = tr_id.id().str();
         if( here.check_seen_cache( p ) && tr_id != tr_ledge ) {
-            g->u.memorize_tile( here.bub_to_abs( p ), trname, subtile, rotation );
+            g->u.memorize_tile( bub_to_abs( p ), trname, subtile, rotation );
         }
         // draw the actual trap if there's no override
         if( !neighborhood_overridden ) {
@@ -5632,9 +5650,9 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
         // Always memorize while stationary so returning to a previous position
         // after a trip refreshes the tile rather than leaving it blank.
         if( veh.forward_velocity() ) {
-            you.clear_memorized_overlay( here.bub_to_abs( p ) );
+            you.clear_memorized_overlay( bub_to_abs( p ) );
         } else {
-            you.memorize_tile( here.bub_to_abs( p ), vpname, subtile, rotation );
+            you.memorize_tile( bub_to_abs( p ), vpname, subtile, rotation );
         }
         if( !overridden ) {
             const std::optional<vpart_reference> cargopart = vp.part_with_feature( "CARGO", true );
@@ -5709,7 +5727,7 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
                     veh_part, use_roof_variant ) ) ) );
             const std::string vpname = "vp_" + vp_id.str();
             if( !veh.forward_velocity() ) {
-                get_avatar().memorize_tile( here.bub_to_abs( p ), vpname, subtile, rotation );
+                get_avatar().memorize_tile( bub_to_abs( p ), vpname, subtile, rotation );
             }
             const tile_search_params tile { vpname, C_VEHICLE_PART, empty_string, subtile, rotation };
             return draw_from_id_string(
@@ -5752,7 +5770,7 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
                 veh_part ) ) ) );
         const std::string vpname = "vp_" + vp_id.str();
         avatar &you = get_avatar();
-        const auto abs_pos = here.bub_to_abs( p );
+        const auto abs_pos = bub_to_abs( p );
         // Projected rope segments are live draws, not persistent vehicle parts.
         if( you.get_memorized_tile( abs_pos ).tile == vpname ) {
             you.clear_memorized_overlay( abs_pos );
@@ -5905,7 +5923,7 @@ bool cata_tiles::draw_zone_mark( const tripoint_bub_ms &p, lit_level ll, int &he
     }
 
     const zone_manager &mgr = zone_manager::get_manager();
-    const auto &abs = get_map().bub_to_abs( p );
+    const auto abs = bub_to_abs( p );
     const auto zone = mgr.get_bottom_zone( abs );
 
     if( zone && zone->has_options() ) {
@@ -6966,7 +6984,7 @@ void cata_tiles::draw_zones_frame( std::multimap<point, formatted_text> &overlay
 
     // get_zone_at expects absolute coordinates
     const zone_data *zone = zone_manager::get_manager().get_zone_at(
-                                get_map().bub_to_abs( lookup_local ) );
+                                bub_to_abs( lookup_local ) );
 
     if( has_custom_points ) {
         if( zone ) {

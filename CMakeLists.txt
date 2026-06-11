@@ -66,6 +66,9 @@ endif()
 option(LUA_DOCS_ON_BUILD "Generate Lua reference/annotations after building cataclysm-bn-tiles (requires deno)." ${LUA_DOCS_DEFAULT})
 option(CATA_CLANG_TIDY_PLUGIN "Build Cata's custom clang-tidy plugin" "OFF")
 option(USE_TRACY "Use Tracy profiler" "OFF")
+set(TRACY_VERSION "" CACHE STRING "Tracy version to fetch when source fallback is used")
+option(TRACY_ON_DEMAND "Enable Tracy on-demand profiler connection" "ON")
+option(TRACY_ONLY_IPV4 "Use IPv4 only for Tracy profiler connections" "OFF")
 set(CATA_CLANG_TIDY_INCLUDE_DIR "" CACHE STRING
         "Path to internal clang-tidy headers required for plugin (e.g. ClangTidy.h)")
 set(CATA_CHECK_CLANG_TIDY "" CACHE STRING "Path to check_clang_tidy.py for plugin tests")
@@ -331,29 +334,55 @@ find_package(Threads REQUIRED)
 
 if (USE_TRACY)
 
-    if (NOT TRACY_VERSION)
-        if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
-            set(TRACY_VERSION 6d1deb5640ed11da01995fb1791115cfebe54dbf)
-        else()
-            set(TRACY_VERSION v0.10)
+    find_package(Tracy CONFIG QUIET)
+
+    if (TARGET Tracy::TracyClient AND NOT TARGET TracyClient)
+        add_library(TracyClient INTERFACE IMPORTED)
+        target_link_libraries(TracyClient INTERFACE Tracy::TracyClient)
+        get_target_property(CATA_TRACY_INCLUDE_DIRS Tracy::TracyClient INTERFACE_INCLUDE_DIRECTORIES)
+        foreach (CATA_TRACY_INCLUDE_DIR ${CATA_TRACY_INCLUDE_DIRS})
+            if (EXISTS "${CATA_TRACY_INCLUDE_DIR}/tracy/tracy/Tracy.hpp")
+                target_include_directories(TracyClient INTERFACE "${CATA_TRACY_INCLUDE_DIR}/tracy")
+            endif ()
+        endforeach ()
+        unset(CATA_TRACY_INCLUDE_DIRS)
+        unset(CATA_TRACY_INCLUDE_DIR)
+        target_compile_definitions(TracyClient INTERFACE TRACY_ENABLE)
+        if (TRACY_ON_DEMAND)
+            target_compile_definitions(TracyClient INTERFACE TRACY_ON_DEMAND)
+        endif ()
+        if (TRACY_ONLY_IPV4)
+            target_compile_definitions(TracyClient INTERFACE TRACY_ONLY_IPV4)
+        endif ()
+        message(STATUS "Using installed Tracy")
+    endif ()
+
+    if (NOT TARGET TracyClient)
+        if (NOT TRACY_VERSION)
+            if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+                set(TRACY_VERSION 6d1deb5640ed11da01995fb1791115cfebe54dbf)
+            else()
+                set(TRACY_VERSION v0.10)
+            endif()
+            message(STATUS "Using tracy version: ${TRACY_VERSION}")
         endif()
-        message(STATUS "Using tracy version: ${TRACY_VERSION}")
-    endif()
 
-    FetchContent_Declare(
-        tracy
-        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-        GIT_TAG "${TRACY_VERSION}"
-        GIT_PROGRESS TRUE)
+        message(STATUS "Installing Tracy from Source")
+        FetchContent_Declare(
+            tracy
+            GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+            GIT_TAG "${TRACY_VERSION}"
+            GIT_PROGRESS TRUE)
 
-    FetchContent_MakeAvailable(tracy)
-    set_target_properties(TracyClient PROPERTIES TRACY_ENABLE ON TRACY_ON_DEMAND ON)
+        FetchContent_MakeAvailable(tracy)
+        set_target_properties(TracyClient PROPERTIES TRACY_ENABLE ON TRACY_ON_DEMAND ${TRACY_ON_DEMAND})
 
-    if(NOT MSVC)
-        target_compile_options(TracyClient PRIVATE "-Wno-everything")
-    endif()
-    if (NOT DYNAMIC_LINKING)
-        set_target_properties(TracyClient PROPERTIES TRACY_STATIC ON)
+        if(NOT MSVC)
+            target_compile_options(TracyClient PRIVATE "-Wno-everything")
+        endif()
+        if (NOT DYNAMIC_LINKING)
+            set_target_properties(TracyClient PROPERTIES TRACY_STATIC ON)
+        endif ()
     endif ()
 endif ()
 
@@ -379,7 +408,7 @@ if (CATA_SDL)
             )
             FetchContent_MakeAvailable(SDL3)
             if (DYNAMIC_LINKING)
-                install(TARGETS SDL3-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+                install(TARGETS SDL3-shared DESTINATION lib)
             endif ()
         else()
             message("Using system SDL3")
@@ -566,7 +595,7 @@ if (CATA_SDL)
         if (SHADERCROSS_TARGET)
             add_dependencies(cata_shaders ${SHADERCROSS_TARGET})
         endif ()
-    elseif (TILES AND CATA_PRECOMPILED_SHADER_OUTPUTS)
+    elseif (CATA_PRECOMPILED_SHADER_OUTPUTS)
         set(CATA_MISSING_PRECOMPILED_SHADERS "")
         foreach (SHADER_OUT ${CATA_PRECOMPILED_SHADER_OUTPUTS})
             if (NOT EXISTS "${SHADER_OUT}")
@@ -619,7 +648,7 @@ if (TILES)
             )
             FetchContent_MakeAvailable(SDL3_TTF)
             if (DYNAMIC_LINKING)
-                install(TARGETS SDL3_ttf-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+                install(TARGETS SDL3_ttf-shared DESTINATION lib)
             endif ()
         else()
             message("Using system SDL3_ttf")
@@ -653,7 +682,7 @@ if (TILES)
             )
             FetchContent_MakeAvailable(SDL3_IMAGE)
             if (DYNAMIC_LINKING)
-                install(TARGETS SDL3_image-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+                install(TARGETS SDL3_image-shared DESTINATION lib)
             endif ()
         else()
             message("Using system SDL3_image")
@@ -713,7 +742,7 @@ if (SOUND)
             )
             FetchContent_MakeAvailable(SDL3_MIXER )
             if (DYNAMIC_LINKING)
-                install(TARGETS SDL3_mixer-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+                install(TARGETS SDL3_mixer-shared DESTINATION lib)
             endif ()
         else()
             message("Using system SDL3_mixer")
@@ -730,67 +759,81 @@ endif ()
 if (BACKTRACE)
     add_definitions(-DBACKTRACE)
     if (LIBBACKTRACE AND NOT MSVC)
-        message(STATUS "Integrating libbacktrace build using ExternalProject")
+        find_path(CATA_LIBBACKTRACE_INCLUDE_DIR NAMES backtrace.h)
+        find_library(CATA_LIBBACKTRACE_LIBRARY NAMES backtrace libbacktrace)
+        mark_as_advanced(CATA_LIBBACKTRACE_INCLUDE_DIR CATA_LIBBACKTRACE_LIBRARY)
 
-        set(LIBBACKTRACE_GIT_REPO https://github.com/ianlancetaylor/libbacktrace.git)
-        set(LIBBACKTRACE_GIT_TAG master)
+        if (CATA_LIBBACKTRACE_INCLUDE_DIR AND CATA_LIBBACKTRACE_LIBRARY)
+            message(STATUS "Using installed libbacktrace: ${CATA_LIBBACKTRACE_LIBRARY}")
+            add_library(backtrace UNKNOWN IMPORTED)
+            set_target_properties(backtrace
+                PROPERTIES
+                    IMPORTED_LOCATION "${CATA_LIBBACKTRACE_LIBRARY}"
+                    INTERFACE_INCLUDE_DIRECTORIES "${CATA_LIBBACKTRACE_INCLUDE_DIR}"
+            )
+        else ()
+            message(STATUS "Installing libbacktrace from Source")
 
-        set(LIBBACKTRACE_INSTALL_DIR "${CMAKE_BINARY_DIR}/libbacktrace/install")
-        SET(LIBBACKTRACE_LIBRARY "${LIBBACKTRACE_INSTALL_DIR}/lib/libbacktrace.a")
+            set(LIBBACKTRACE_GIT_REPO https://github.com/ianlancetaylor/libbacktrace.git)
+            set(LIBBACKTRACE_GIT_TAG master)
 
-        include(ProcessorCount)
-        ProcessorCount(NCPU)
-        if(NCPU EQUAL 0)
-            set(NCPU 1)
-        endif()
+            set(LIBBACKTRACE_INSTALL_DIR "${CMAKE_BINARY_DIR}/libbacktrace/install")
+            SET(LIBBACKTRACE_LIBRARY "${LIBBACKTRACE_INSTALL_DIR}/lib/libbacktrace.a")
 
-        # Set up ccache for libbacktrace if available
-        if (CCACHE_FOUND AND CATA_CCACHE AND CMAKE_C_COMPILER_LAUNCHER)
-            # Join compiler launcher and compiler into a single string for configure
-            set(LIBBACKTRACE_CC_LIST "${CMAKE_C_COMPILER_LAUNCHER}" "${CMAKE_C_COMPILER}")
-            set(LIBBACKTRACE_CXX_LIST "${CMAKE_CXX_COMPILER_LAUNCHER}" "${CMAKE_CXX_COMPILER}")
-            list(JOIN LIBBACKTRACE_CC_LIST " " LIBBACKTRACE_CC)
-            list(JOIN LIBBACKTRACE_CXX_LIST " " LIBBACKTRACE_CXX)
-        else()
-            set(LIBBACKTRACE_CC "${CMAKE_C_COMPILER}")
-            set(LIBBACKTRACE_CXX "${CMAKE_CXX_COMPILER}")
-        endif()
+            include(ProcessorCount)
+            ProcessorCount(NCPU)
+            if(NCPU EQUAL 0)
+                set(NCPU 1)
+            endif()
 
-        ExternalProject_Add(
-            libbacktrace_external
-            GIT_REPOSITORY ${LIBBACKTRACE_GIT_REPO}
-            GIT_TAG ${LIBBACKTRACE_GIT_TAG}
-            GIT_SHALLOW TRUE
+            # Set up ccache for libbacktrace if available
+            if (CCACHE_FOUND AND CATA_CCACHE AND CMAKE_C_COMPILER_LAUNCHER)
+                # Join compiler launcher and compiler into a single string for configure
+                set(LIBBACKTRACE_CC_LIST "${CMAKE_C_COMPILER_LAUNCHER}" "${CMAKE_C_COMPILER}")
+                set(LIBBACKTRACE_CXX_LIST "${CMAKE_CXX_COMPILER_LAUNCHER}" "${CMAKE_CXX_COMPILER}")
+                list(JOIN LIBBACKTRACE_CC_LIST " " LIBBACKTRACE_CC)
+                list(JOIN LIBBACKTRACE_CXX_LIST " " LIBBACKTRACE_CXX)
+            else()
+                set(LIBBACKTRACE_CC "${CMAKE_C_COMPILER}")
+                set(LIBBACKTRACE_CXX "${CMAKE_CXX_COMPILER}")
+            endif()
 
-            SOURCE_DIR "${CMAKE_BINARY_DIR}/libbacktrace/src"
-            BINARY_DIR "${CMAKE_BINARY_DIR}/libbacktrace/build"
+            ExternalProject_Add(
+                libbacktrace_external
+                GIT_REPOSITORY ${LIBBACKTRACE_GIT_REPO}
+                GIT_TAG ${LIBBACKTRACE_GIT_TAG}
+                GIT_SHALLOW TRUE
 
-            CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env
-                CC=${LIBBACKTRACE_CC}
-                CXX=${LIBBACKTRACE_CXX}
-                <SOURCE_DIR>/configure
-                --prefix=${LIBBACKTRACE_INSTALL_DIR}
+                SOURCE_DIR "${CMAKE_BINARY_DIR}/libbacktrace/src"
+                BINARY_DIR "${CMAKE_BINARY_DIR}/libbacktrace/build"
 
-            BUILD_COMMAND make -j${NCPU}
+                CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env
+                    CC=${LIBBACKTRACE_CC}
+                    CXX=${LIBBACKTRACE_CXX}
+                    <SOURCE_DIR>/configure
+                    --prefix=${LIBBACKTRACE_INSTALL_DIR}
 
-            INSTALL_COMMAND make install
+                BUILD_COMMAND make -j${NCPU}
 
-            INSTALL_DIR ${LIBBACKTRACE_INSTALL_DIR}
-            BUILD_BYPRODUCTS ${LIBBACKTRACE_LIBRARY}
+                INSTALL_COMMAND make install
 
-            UPDATE_DISCONNECTED 1
-        )
+                INSTALL_DIR ${LIBBACKTRACE_INSTALL_DIR}
+                BUILD_BYPRODUCTS ${LIBBACKTRACE_LIBRARY}
 
-        add_library(backtrace SHARED IMPORTED)
-        set_target_properties(backtrace
-            PROPERTIES IMPORTED_LOCATION ${LIBBACKTRACE_LIBRARY}
-        )
-        # Hack to make it work, otherwise INTERFACE_INCLUDE_DIRECTORIES will not be propagated
-        file(MAKE_DIRECTORY "${LIBBACKTRACE_INSTALL_DIR}/include")
-        target_include_directories(backtrace INTERFACE
-            "${LIBBACKTRACE_INSTALL_DIR}/include"
-        )
-        add_dependencies(backtrace libbacktrace_external)
+                UPDATE_DISCONNECTED 1
+            )
+
+            add_library(backtrace UNKNOWN IMPORTED)
+            set_target_properties(backtrace
+                PROPERTIES IMPORTED_LOCATION ${LIBBACKTRACE_LIBRARY}
+            )
+            # Hack to make it work, otherwise INTERFACE_INCLUDE_DIRECTORIES will not be propagated
+            file(MAKE_DIRECTORY "${LIBBACKTRACE_INSTALL_DIR}/include")
+            target_include_directories(backtrace INTERFACE
+                "${LIBBACKTRACE_INSTALL_DIR}/include"
+            )
+            add_dependencies(backtrace libbacktrace_external)
+        endif ()
     endif ()
     if (LIBBACKTRACE)
         add_definitions(-DLIBBACKTRACE)
@@ -840,12 +883,14 @@ endif ()
 add_subdirectory(src)
 add_subdirectory(data)
 
-if (UNIX AND TILES AND DYNAMIC_LINKING)
-    set_target_properties(
-            cataclysm-bn-tiles
-            PROPERTIES
-            INSTALL_RPATH "$<IF:$<BOOL:${APPLE}>,@executable_path/lib:@executable_path/lib64,\$ORIGIN/lib:\$ORIGIN/lib64>"
-    )
+if (UNIX AND DYNAMIC_LINKING)
+    set(CATA_INSTALL_RPATH "$<IF:$<BOOL:${APPLE}>,@executable_path/lib:@executable_path/lib64,\$ORIGIN/lib:\$ORIGIN/lib64>")
+    if (TARGET cataclysm-bn-tiles)
+        set_target_properties(cataclysm-bn-tiles PROPERTIES INSTALL_RPATH "${CATA_INSTALL_RPATH}")
+    endif()
+    if (TARGET cataclysm-bn)
+        set_target_properties(cataclysm-bn PROPERTIES INSTALL_RPATH "${CATA_INSTALL_RPATH}")
+    endif()
 endif()
 
 if(TESTS)
@@ -962,6 +1007,15 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         endforeach()
     endif()
 
+    if (DYNAMIC_LINKING)
+        find_program(CATA_OSX_DYLIBBUNDLER dylibbundler REQUIRED)
+        set(CATA_OSX_BUNDLE_RUNTIME_COMMANDS
+            COMMAND "${CATA_OSX_DYLIBBUNDLER}" -od -b
+                -x "${CATA_OSX_RESOURCES_DIR}/$<TARGET_FILE_NAME:${CATA_OSX_GAME_TARGET}>"
+                -d "${CATA_OSX_RESOURCES_DIR}/lib"
+                -p "@executable_path/lib/")
+    endif()
+
     add_custom_target(osx-app
         COMMAND ${CMAKE_COMMAND} -E rm -rf "${CATA_OSX_APP_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CATA_OSX_CONTENTS_DIR}/MacOS"
@@ -988,6 +1042,11 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         DEPENDS ${CATA_OSX_GAME_TARGET} translations)
 
+    add_custom_target(osx-bundle-runtime
+        ${CATA_OSX_BUNDLE_RUNTIME_COMMANDS}
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        DEPENDS osx-app)
+
     if (GIT_VERSION)
         set(CATA_OSX_DMG_VERSION "${GIT_VERSION}")
     else()
@@ -997,7 +1056,7 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         COMMAND plutil -convert binary1 "${CATA_OSX_APP_DIR}/Contents/Info.plist"
         COMMAND dmgbuild -s build-data/osx/dmgsettings.py "Cataclysm BN" "CataclysmBN-${CATA_OSX_DMG_VERSION}.dmg"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        DEPENDS osx-app)
+        DEPENDS osx-bundle-runtime)
 endif()
 
 configure_file(

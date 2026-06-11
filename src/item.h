@@ -114,13 +114,27 @@ static const std::string source_p1_name = "source_" + p1_name;
 static const std::string source_p2_name = "source_" + p2_name;
 static const tripoint_abs_ms tripoint_abs_ms_min( tripoint_min );
 
+static const std::string TINT_VAR_PREFIX( "tint_" );
+
 static const std::string TINT_COLOR_VAR_NAME( "tint_color" );
 static const std::string TINT_COLOR_FG_VAR_NAME( "tint_color_fg" );
 static const std::string TINT_COLOR_BG_VAR_NAME( "tint_color_bg" );
+
 static const std::string TINT_MODE_VAR_NAME( "tint_blend_mode" );
+static const std::string TINT_MODE_FG_VAR_NAME( "tint_blend_mode_fg" );
+static const std::string TINT_MODE_BG_VAR_NAME( "tint_blend_mode_bg" );
+
 static const std::string TINT_SATURATION_VAR_NAME( "tint_saturation" );
+static const std::string TINT_SATURATION_FG_VAR_NAME( "tint_saturation_fg" );
+static const std::string TINT_SATURATION_BG_VAR_NAME( "tint_saturation_bg" );
+
 static const std::string TINT_CONTRAST_VAR_NAME( "tint_contrast" );
+static const std::string TINT_CONTRAST_FG_VAR_NAME( "tint_contrast_fg" );
+static const std::string TINT_CONTRAST_BG_VAR_NAME( "tint_contrast_bg" );
+
 static const std::string TINT_BRIGHTNESS_VAR_NAME( "tint_brightness" );
+static const std::string TINT_BRIGHTNESS_FG_VAR_NAME( "tint_brightness_fg" );
+static const std::string TINT_BRIGHTNESS_BG_VAR_NAME( "tint_brightness_bg" );
 
 /**
  *  Value and metadata for one property of an item
@@ -395,6 +409,12 @@ class item : public location_visitable<item>, public game_object<item>
          * @return new instance containing exactly qty charges or *this after detaching
          */
         detached_ptr<item> split( int qty );
+
+        /**
+         * Update state before removing the item from its current location.
+         * This must run while @ref loc or @ref saved_loc still identifies the old location.
+         */
+        auto prepare_for_location_removal() -> void;
 
         virtual bool attempt_detach( std::function < detached_ptr<item>( detached_ptr<item> && ) > )
         override;

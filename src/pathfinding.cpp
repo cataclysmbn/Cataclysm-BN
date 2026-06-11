@@ -292,11 +292,13 @@ void Pathfinding::update_z_caches( bool update_open_air )
     }
 
     const auto anti_shift = tripoint_rel_ms( Pathfinding::z_area - cur_z_area, 0 );
+    const auto prev_z_area_local = ( Pathfinding::z_area - cur_z_area ).reinterpret_as<point_bub_ms>();
+    const auto prev_z_area_end_local = ( Pathfinding::z_area + point_rel_ms( g_mapsize_x,
+                                         g_mapsize_y ) - cur_z_area ).reinterpret_as<point_bub_ms>();
     // This cuboid will contain negative values, it's fine
     half_open_cuboid<tripoint_bub_ms> prev_z_volume_local(
-        tripoint_bub_ms( here.abs_to_bub( Pathfinding::z_area ), -OVERMAP_DEPTH ),
-        tripoint_bub_ms( here.abs_to_bub( Pathfinding::z_area + point_rel_ms( g_mapsize_x, g_mapsize_y ) ),
-                         OVERMAP_HEIGHT + 1 )
+        tripoint_bub_ms( prev_z_area_local, -OVERMAP_DEPTH ),
+        tripoint_bub_ms( prev_z_area_end_local, OVERMAP_HEIGHT + 1 )
     );
 
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {

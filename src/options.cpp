@@ -2306,6 +2306,17 @@ void options_manager::add_options_graphics()
        );
 #endif
 
+#if defined(TILES)
+    add( "TEXTURE_STREAMING", graphics, translate_marker( "Texture Streaming" ),
+         translate_marker( "Use texture-streaming instead of render-to-texture for dynamic graphics. Requires restart." ),
+    {
+        { "auto", translate_marker( "Auto" ) },
+        { "on", translate_marker( "Enable" ) },
+        { "off", translate_marker( "Disable" ) }
+    },
+    "auto" );
+#endif
+
 #if defined(SDL_HINT_RENDER_BATCHING)
     add( "RENDER_BATCHING", graphics, translate_marker( "Allow render batching" ),
          translate_marker( "Use render batching for 2D render API to make it more efficient.  Requires restart." ),
@@ -4455,6 +4466,14 @@ void options_manager::cache_to_globals()
         preload_config::set_compute_accel(
             preload_config::compute_accel_from_string(
                 ::get_option<std::string>( "COMPUTE_ACCELERATION" ) ) );
+    }
+#endif
+
+#if defined(TILES)
+    if( options.contains( "TEXTURE_STREAMING" ) ) {
+        preload_config::set_texture_streaming(
+            preload_config::tristate_from_string(
+                ::get_option<std::string>( "TEXTURE_STREAMING" ) ) );
     }
 #endif
 }

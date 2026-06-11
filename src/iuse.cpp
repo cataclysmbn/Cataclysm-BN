@@ -196,6 +196,7 @@ static const efftype_id effect_music( "music" );
 static const efftype_id effect_onfire( "onfire" );
 static const efftype_id effect_paincysts( "paincysts" );
 static const efftype_id effect_pet( "pet" );
+static const efftype_id effect_pet_bonded( "pet_bonded" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_ridden( "ridden" );
 static const efftype_id effect_riding( "riding" );
@@ -1582,6 +1583,7 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
         }
 
         p->consume_charges( *it, 1 );
+        mon.on_pet_bonding( p->as_character() );
         return 0;
     }
 
@@ -1697,10 +1699,9 @@ int iuse::remove_all_mods( player *p, item *, bool, const tripoint_bub_ms & )
 int iuse::good_fishing_spot( const tripoint_bub_ms &pos )
 {
     int fishable_locations = g->get_fishable_locations( 60, pos ).size();
-    map &here = get_map();
     const oter_id &cur_omt =
         get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( project_to<coords::omt>(
-                    here.bub_to_abs( pos ) ) ) );
+                    bub_to_abs( pos ) ) ) );
     std::string om_id = cur_omt.id().c_str();
     if( fishable_locations < 100 && !g->m.has_flag( "CURRENT", pos ) &&
         om_id.find( "river_" ) == std::string::npos && !cur_omt->is_lake() &&
@@ -1781,7 +1782,7 @@ int iuse::fishing_rod( player *p, item *it, bool, const tripoint_bub_ms & )
     p->activity->coord_set.reserve( fishable_locations.size() );
     std::ranges::transform( fishable_locations, std::inserter( p->activity->coord_set,
                             p->activity->coord_set.end() ),
-    []( const tripoint_bub_ms & pnt ) { return g->m.bub_to_abs( pnt ); } );
+    []( const tripoint_bub_ms & pnt ) { return bub_to_abs( pnt ); } );
     return 0;
 }
 
@@ -2542,7 +2543,7 @@ int iuse::makemound( player *p, item *it, bool t, const tripoint_bub_ms & )
     if( g->m.has_flag( flag_PLOWABLE, pnt ) && !g->m.has_flag( flag_PLANT, pnt ) ) {
         p->add_msg_if_player( _( "You start churning up the earth here." ) );
         p->assign_activity( ACT_CHURN, 18000, -1, p->get_item_position( it ) );
-        p->activity->placement = g->m.bub_to_abs( pnt );
+        p->activity->placement = bub_to_abs( pnt );
         return it->type->charges_to_use();
     } else {
         p->add_msg_if_player( _( "You can't churn up this ground." ) );
@@ -2945,7 +2946,7 @@ int iuse::jackhammer( player *p, item *it, bool, const tripoint_bub_ms &pos )
 
     p->assign_activity( ACT_JACKHAMMER, moves );
     p->activity->add_tool( it );
-    p->activity->placement = g->m.bub_to_abs( pnt );
+    p->activity->placement = bub_to_abs( pnt );
     p->add_msg_if_player( _( "You start drilling into the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
 
@@ -2984,7 +2985,7 @@ int iuse::pick_lock( player *p, item *it, bool, const tripoint_bub_ms &pos )
     }
 
     you.assign_activity( std::make_unique<player_activity>( lockpick_activity_actor::use_item( duration,
-                         *it, g->m.bub_to_abs( *target ) ) ) );
+                         *it, bub_to_abs( *target ) ) ) );
     return it->type->charges_to_use();
 }
 
@@ -3037,7 +3038,7 @@ int iuse::pickaxe( player *p, item *it, bool, const tripoint_bub_ms &pos )
 
     p->assign_activity( ACT_PICKAXE, moves, -1 );
     p->activity->add_tool( it );
-    p->activity->placement = g->m.bub_to_abs( pnt );
+    p->activity->placement = bub_to_abs( pnt );
     p->add_msg_if_player( _( "You strike the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
     return 0; // handled when the activity finishes
@@ -4490,7 +4491,7 @@ void iuse::cut_log_into_planks( player &p )
     p.add_msg_if_player( _( "You cut the log into planks." ) );
 
     p.assign_activity( ACT_CHOP_PLANKS, moves, -1 );
-    p.activity->placement = g->m.bub_to_abs( p.bub_pos() );
+    p.activity->placement = p.abs_pos();
 }
 
 int iuse::lumber( player *p, item *it, bool t, const tripoint_bub_ms & )
@@ -4586,7 +4587,7 @@ int iuse::chop_tree( player *p, item *it, bool t, const tripoint_bub_ms & )
 
     p->assign_activity( ACT_CHOP_TREE, moves, -1, p->get_item_position( it ) );
     p->activity->add_tool( it );
-    p->activity->placement = g->m.bub_to_abs( pnt );
+    p->activity->placement = bub_to_abs( pnt );
 
     return it->type->charges_to_use();
 }
@@ -4632,7 +4633,7 @@ int iuse::chop_logs( player *p, item *it, bool t, const tripoint_bub_ms & )
     moves = moves * ( 10 - helpers.size() ) / 10;
 
     p->assign_activity( ACT_CHOP_LOGS, moves, -1, p->get_item_position( it ) );
-    p->activity->placement = g->m.bub_to_abs( pnt );
+    p->activity->placement = bub_to_abs( pnt );
     p->activity->add_tool( it );
 
     return it->type->charges_to_use();
@@ -7073,7 +7074,7 @@ static extended_photo_def photo_def_for_camera_point( const tripoint_bub_ms &aim
     // TODO: fix point types
     const oter_id &cur_ter =
         get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( project_to<coords::omt>(
-                    g->m.bub_to_abs( aim_point ) ) ) );
+                    bub_to_abs( aim_point ) ) ) );
     std::string overmap_desc = string_format( _( "In the background you can see a %s" ),
                                colorize( cur_ter->get_name(), cur_ter->get_color() ) );
     if( outside_tiles_num == total_tiles_num ) {
@@ -8232,7 +8233,7 @@ static tripoint_abs_ms process_map_connection( const Character *who, cable_state
         return tripoint_abs_ms_min;
     }
     map &here = get_map();
-    const auto posp = here.bub_to_abs( *posp_ );
+    const auto posp = bub_to_abs( *posp_ );
 
     switch( state ) {
         case state_vehicle: {
@@ -8687,7 +8688,7 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint_bub_ms & )
         // TODO: Don't output air temp if we aren't near air
         if( g->m.has_flag( TFLAG_SWIMMABLE, p->bub_pos() ) ) {
             const units::temperature water_temp = weather.get_cur_weather_gen().get_water_temperature(
-                    tripoint_abs_ms( here.bub_to_abs( p->bub_pos() ) ),
+                    tripoint_abs_ms( p->abs_pos() ),
                     calendar::turn, calendar::config, g->get_seed() );
             p->add_msg_if_player( m_neutral, _( "Water temperature: %s." ),
                                   print_temperature( water_temp ) );
@@ -9018,7 +9019,9 @@ int iuse::craft( player *p, item *it, bool, const tripoint_bub_ms & )
                          it->get_cached_tool_selections(),
                          it->get_var( "craft_tools_fully_prepaid", 0 ) == 1
                      );
-        p->assign_activity( std::make_unique<player_activity>( std::move( actor ) ) );
+        auto craft_activity = std::make_unique<player_activity>( std::move( actor ) );
+        craft_activity->targets.emplace_back( it );
+        p->assign_activity( std::move( craft_activity ) );
     }
 
     return 0;
@@ -9147,7 +9150,7 @@ int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint_bub_ms 
 
 int iuse::report_grid_charge( player *p, item *, bool, const tripoint_bub_ms &pos )
 {
-    const tripoint_abs_ms pos_abs( get_map().bub_to_abs( pos ) );
+    const tripoint_abs_ms pos_abs( bub_to_abs( pos ) );
     const distribution_grid &gr = get_distribution_grid_tracker().grid_at( pos_abs );
     const int amt = gr.get_resource();
     const auto stat = gr.get_power_stat();
@@ -9176,8 +9179,7 @@ int iuse::report_grid_charge( player *p, item *, bool, const tripoint_bub_ms &po
 
 int iuse::report_grid_connections( player *p, item *, bool, const tripoint_bub_ms &pos )
 {
-    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs(
-                                   pos ) ) );
+    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( bub_to_abs( pos ) ) );
     std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
                 p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
@@ -9204,7 +9206,7 @@ int iuse::report_grid_connections( player *p, item *, bool, const tripoint_bub_m
 auto iuse::report_fluid_grid_connections( player *p, item *, bool,
         const tripoint_bub_ms &pos ) -> int
 {
-    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( bub_to_abs( pos ) ) );
     const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
     const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs );
 
@@ -9247,8 +9249,7 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool,
 
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint_bub_ms &pos )
 {
-    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs(
-                                   pos ) ) );
+    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( bub_to_abs( pos ) ) );
     std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
                 p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
@@ -9350,7 +9351,7 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint_bub
 auto iuse::modify_fluid_grid_connections( player *p, item *it, bool,
         const tripoint_bub_ms &pos ) -> int
 {
-    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( bub_to_abs( pos ) ) );
     const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
 
     uilist ui;
@@ -9505,7 +9506,7 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint_bub_ms & )
     if( t ) { // Normal use
         if( p->has_item( *it ) ) {
             // Only triggers every 1 minute so that fatigue isn't ridiculous
-            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 2_minutes ) ) {
                 p->add_morale( MORALE_FEELING_GOOD, 1, 30, 20_minutes, 10_minutes, true );
                 p->mod_fatigue( 1 );
             }

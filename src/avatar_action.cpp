@@ -500,7 +500,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                                dest_loc ).id().str();
             }
             // TODO: Figure out how to make subtile and rotation work right here
-            you.memorize_tile( m.bub_to_abs( dest_loc ), obstacle, 0, 0 );
+            you.memorize_tile( bub_to_abs( dest_loc ), obstacle, 0, 0 );
         }
     } else if( m.ter( dest_loc ) == t_door_locked || m.ter( dest_loc ) == t_door_locked_peep ||
                m.ter( dest_loc ) == t_door_locked_alarm || m.ter( dest_loc ) == t_door_locked_interior ) {
@@ -631,7 +631,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
     you.setpos( p );
     g->update_map( you );
 
-    cata_event_dispatch::avatar_moves( you, m, bub_to_abs( p ) );
+    cata_event_dispatch::avatar_moves( you, m, you.abs_pos() );
 
     if( m.veh_at( you.bub_pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
         m.board_vehicle( you.bub_pos(), &you );

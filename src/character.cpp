@@ -426,7 +426,7 @@ Character::Character() :
     last_climate_control_ret( false )
 {
     if( g != nullptr ) {
-        position = get_map().bub_to_abs( tripoint_bub_ms::zero() );
+        position = bub_to_abs( tripoint_bub_ms::zero() );
     }
 
     str_max = 0;
@@ -831,7 +831,7 @@ std::string Character::skin_name() const
 
 tripoint_bub_ms Character::bub_pos() const
 {
-    return get_map().abs_to_bub( position );
+    return abs_to_bub( position );
 }
 
 tripoint_abs_ms Character::abs_pos() const
@@ -841,7 +841,7 @@ tripoint_abs_ms Character::abs_pos() const
 
 auto Character::setpos( const tripoint_bub_ms &p ) -> void
 {
-    position = get_map().bub_to_abs( p );
+    position = map_local_to_abs( get_map(), p );
 }
 
 auto Character::setpos( const tripoint_abs_ms &p ) -> void
@@ -1248,8 +1248,8 @@ bool Character::check_outbounds_activity( player_activity &act )
 {
     map &here = get_map();
     if( ( act.placement != tripoint_abs_ms::zero() && act.placement != tripoint_abs_ms::min() &&
-          !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.placement ) ) ) ) || ( !act.coords.empty() &&
-                  !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.coords.back() ) ) ) ) ) {
+          !here.inbounds( abs_to_bub( tripoint_abs_ms( act.placement ) ) ) ) || ( !act.coords.empty() &&
+                  !here.inbounds( abs_to_bub( tripoint_abs_ms( act.coords.back() ) ) ) ) ) {
 
         add_msg( m_debug,
                  "npc %s at pos %d %d, activity target is not inbounds at %d %d therefore activity was stashed",
@@ -11571,13 +11571,13 @@ std::vector<Creature *> Character::get_hostile_creatures( int range ) const
 
 bool Character::knows_trap( const tripoint_bub_ms &pos ) const
 {
-    const auto p = get_map().bub_to_abs( pos );
+    const auto p = bub_to_abs( pos );
     return known_traps.contains( p );
 }
 
 void Character::add_known_trap( const tripoint_bub_ms &pos, const trap &t )
 {
-    const auto p = get_map().bub_to_abs( pos );
+    const auto p = bub_to_abs( pos );
     if( t.is_null() ) {
         known_traps.erase( p );
     } else {
@@ -11826,7 +11826,7 @@ void Character::set_destination( const std::vector<tripoint_bub_ms> &route,
 {
     auto_move_route = route;
     set_destination_activity( std::move( new_destination_activity ) );
-    destination_point.emplace( get_map().bub_to_abs( route.back() ) );
+    destination_point.emplace( bub_to_abs( route.back() ) );
 }
 
 std::unique_ptr<player_activity> Character::clear_destination()

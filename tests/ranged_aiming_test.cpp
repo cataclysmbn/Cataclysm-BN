@@ -236,7 +236,7 @@ TEST_CASE( "Aiming a turret from a solid vehicle", "[ranged][aiming]" )
             } );
             REQUIRE( non_vehicle_blocking_tiles == 0 );
             AND_WHEN( "The shooter aims the turret" ) {
-                turret_data turret = veh->turret_query( get_map().bub_to_abs( shooter_pos ) );
+                turret_data turret = veh->turret_query( map_local_to_abs( get_map(), shooter_pos ) );
                 REQUIRE( static_cast<bool>( turret ) );
                 REQUIRE( turret.query() == turret_data::status::ready );
                 REQUIRE( avatar_action::can_fire_turret( shooter, g->m, turret ) );

@@ -2134,27 +2134,25 @@ class map : public submap_load_listener
         bool pl_line_of_sight( const tripoint_bub_ms &t, int max_range ) const;
         std::set<vehicle *> dirty_vehicle_list;
 
-        /** return @ref abs_sub */
-        tripoint_abs_sm get_abs_sub() const { return abs_sub; }
+        /**
+         * Legacy accessor for the loaded-grid origin.
+         *
+         * This is the absolute submap coordinate backing map-local grid slot
+         * (0,0).  For the player map it should match the player-derived reality
+         * bubble origin after map transitions settle.  Detached maps, including
+         * tinymaps and mapgen maps, keep an explicit loaded-grid origin here.
+         */
+        auto get_abs_sub() const -> tripoint_abs_sm {
+            return abs_sub;
+        }
 
-        tripoint_abs_ms bub_to_abs( const tripoint_bub_ms &bub ) const {
-            const auto origin = project_to<coords::ms>( abs_sub );
-            return tripoint_abs_ms( tripoint( origin.x() + bub.x(), origin.y() + bub.y(), bub.z() ) );
+        /**
+         * Adjust only the z-level of the loaded-grid origin.  This is for player
+         * map vertical transitions where x/y remain player-derived.
+         */
+        auto set_loaded_submap_z( int z ) -> void {
+            abs_sub.z() = z;
         }
-        tripoint_bub_ms abs_to_bub( const tripoint_abs_ms &abs ) const {
-            const auto origin = project_to<coords::ms>( abs_sub );
-            return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-        }
-        tripoint_abs_sm bub_to_abs( const tripoint_bub_sm &bub ) const {
-            return tripoint_abs_sm( tripoint( abs_sub.x() + bub.x(), abs_sub.y() + bub.y(), bub.z() ) );
-        }
-        tripoint_bub_sm abs_to_bub( const tripoint_abs_sm &abs ) const {
-            return tripoint_bub_sm( tripoint( abs.x() - abs_sub.x(), abs.y() - abs_sub.y(), abs.z() ) );
-        }
-        point_abs_ms bub_to_abs( const point_bub_ms &bub ) const { return project_to<coords::ms>( abs_sub ).xy() + point_rel_ms( bub.raw() ); }
-        point_bub_ms abs_to_bub( const point_abs_ms &abs ) const { return point_bub_ms( ( abs - project_to<coords::ms>( abs_sub ).xy() ).raw() ); }
-        point_abs_sm bub_to_abs( const point_bub_sm &bub ) const { return abs_sub.xy() + point_rel_sm( bub.raw() ); }
-        point_bub_sm abs_to_bub( const point_abs_sm &abs ) const { return ( abs - abs_sub.raw().xy() ).reinterpret_as<point_bub_sm>(); }
 
         bool inbounds_z( const int z ) const {
             return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
@@ -2444,20 +2442,21 @@ class map : public submap_load_listener
         solar_params m_solar;
 
         /**
-         * Absolute coordinates of first submap (get_submap_at(0,0))
-         * This is in submap coordinates (see overmapbuffer for explanation).
-         * It is set upon:
-         * - loading submap at grid[0],
-         * - generating submaps (@ref generate)
-         * - shifting the map with @ref shift
+         * Absolute submap coordinate of loaded grid slot (0,0).
+         *
+         * This is a loaded-grid/cache origin, not the definition of player
+         * reality-bubble space.  The player map's value is synchronized with
+         * player_reality_bubble_origin() by load, shift, resize, and vertical
+         * transition code.  Detached maps use this as their explicit local
+         * anchor.
          */
         tripoint_abs_sm abs_sub;
 
+        auto set_abs_sub( const tripoint_abs_sm &p ) -> void {
+            abs_sub = p;
+        }
+
     public:
-        /**
-         * Sets @ref abs_sub, see there. Uses the same coordinate system as @ref abs_sub.
-         */
-        void set_abs_sub( const tripoint_abs_sm &p ) { abs_sub = p; }
 
         field &get_field( const tripoint_bub_ms &p );
 
@@ -2664,7 +2663,7 @@ class map : public submap_load_listener
         visibility_variables visibility_variables_cache;
 
         // caches the highest zlevel above which all zlevels are uniform
-        // !value || value->first != map::abs_sub means cache is invalid
+        // !value || value->first != the loaded-grid origin means cache is invalid
         std::optional<std::pair<tripoint_abs_sm, int>> max_populated_zlev = std::nullopt;
 
         // Dimension info for bounded pocket dimensions (nullopt for infinite dimensions)
@@ -2752,22 +2751,30 @@ class map : public submap_load_listener
 
 map &get_map();
 
-inline auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms
-{
-    return get_map().bub_to_abs( p );
-}
-inline auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms
-{
-    return get_map().abs_to_bub( p );
-}
-inline auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms
-{
-    return get_map().bub_to_abs( p );
-}
-inline auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms
-{
-    return get_map().abs_to_bub( p );
-}
+auto player_reality_bubble_origin() -> tripoint_abs_sm;
+auto reality_bubble_origin_from_player( const tripoint_abs_ms &player_pos,
+                                        int reality_bubble_size ) -> tripoint_abs_sm;
+auto reality_bubble_center_from_origin( const tripoint_abs_sm &origin,
+                                        int reality_bubble_size ) -> tripoint_abs_sm;
+
+auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms;
+auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms;
+auto bub_to_abs( const tripoint_bub_sm &p ) -> tripoint_abs_sm;
+auto abs_to_bub( const tripoint_abs_sm &p ) -> tripoint_bub_sm;
+auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms;
+auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms;
+auto bub_to_abs( const point_bub_sm &p ) -> point_abs_sm;
+auto abs_to_bub( const point_abs_sm &p ) -> point_bub_sm;
+
+// Convert against a specific map object's loaded-grid origin, not the player bubble origin.
+auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms;
+auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms;
+auto map_local_to_abs( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm;
+auto abs_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm;
+auto map_local_to_abs( const map &m, const point_bub_ms &local ) -> point_abs_ms;
+auto abs_to_map_local( const map &m, const point_abs_ms &abs ) -> point_bub_ms;
+auto map_local_to_abs( const map &m, const point_bub_sm &local ) -> point_abs_sm;
+auto abs_to_map_local( const map &m, const point_abs_sm &abs ) -> point_bub_sm;
 
 /**
  * RAII guard that temporarily redirects get_map() to a different map object

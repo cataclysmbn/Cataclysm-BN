@@ -791,7 +791,7 @@ static void smash()
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
             sound_event se;
             se.origin = smashp;
-            se.volume = std::min( 80, bash_info.sound_vol.value_or( 0 ) );
+            se.volume = bash_info.sound_vol.value_or( 0 );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound.translated();
             se.id = "smash";
@@ -806,7 +806,7 @@ static void smash()
         } else {
             sound_event se;
             se.origin = smashp;
-            se.volume = std::min( 80, bash_info.sound_fail_vol.value_or( 0 ) );
+            se.volume = bash_info.sound_fail_vol.value_or( 0 );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound_fail.translated();
             se.id = "smash";
@@ -836,7 +836,7 @@ static void smash()
     if( should_pulp ) {
         // do activity forever. ACT_PULP stops itself
         u.assign_activity( std::make_unique<player_activity>( ACT_PULP, calendar::INDEFINITELY_LONG, 0 ) );
-        u.activity->placement = here.bub_to_abs( smashp );
+        u.activity->placement = bub_to_abs( smashp );
         return; // don't smash terrain if we've smashed a corpse
     }
 
@@ -951,7 +951,6 @@ static int try_set_alarm()
 
     return as_m.ret;
 }
-
 
 static auto parse_custom_wait_duration( const std::string &value ) -> std::optional<time_duration>
 {
