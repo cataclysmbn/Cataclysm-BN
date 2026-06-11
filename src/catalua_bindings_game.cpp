@@ -233,26 +233,23 @@ void cata::detail::reg_game_api( sol::state &lua )
                       const std::string & failure_message,
                       const action_id & actionId,
                       sol::optional<bool> allow_vertical
-    ) -> sol::optional<tripoint_bub_ms> {
-        std::optional<tripoint_bub_ms> stdOpt = choose_adjacent_highlight( message, failure_message, actionId, allow_vertical.value_or( false ) );
-        return sol::optional<tripoint_bub_ms>( *stdOpt );
+    ) -> std::optional<tripoint_bub_ms> {
+        return choose_adjacent_highlight( message, failure_message, actionId, allow_vertical.value_or( false ) );
     } );
     luna::set_fx( lib, "choose_adjacent_uilist", [](
                       const std::string & message,
                       const std::string & failure_message,
                       const sol::protected_function & allowed,
                       const sol::protected_function & name
-    ) -> sol::optional<tripoint_bub_ms> {
-        std::optional<tripoint_bub_ms> stdOpt = choose_adjacent_uilist( message, failure_message, allowed, name );
-        return sol::optional<tripoint_bub_ms>( *stdOpt );
+    ) -> std::optional<tripoint_bub_ms> {
+        return choose_adjacent_uilist( message, failure_message, allowed, name );
     } );
     luna::set_fx( lib, "choose_area", [](
         const std::string &message,
         const tripoint_bub_ms &start_pos,
         const bool allow_vertical
     ) -> std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> {
-        std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> area = choose_area( message, start_pos, allow_vertical );
-        return std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>>( *area );
+        return choose_area( message, start_pos, allow_vertical );
     } );
 
     luna::set_fx( lib, "choose_direction", []( const std::string & message,
