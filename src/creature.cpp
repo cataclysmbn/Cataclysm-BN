@@ -1490,10 +1490,6 @@ void Creature::clear_effects()
         }
     }
 }
-bool Creature::remove_effect( const efftype_id &eff_id )
-{
-    return remove_effect( eff_id, bodypart_str_id::NULL_ID() );
-}
 bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &bp )
 {
     if( !has_effect( eff_id, bp ) ) {

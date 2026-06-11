@@ -209,7 +209,7 @@ class enchantment
         void activate_effects( Character &guy ) const;
 
         // deactivate effects
-        void deactivate_effects( Character &guy ) const;
+        void deactivate_removed_effects( Character &guy, const enchantment &other ) const;
 
         enchantment_id id;
 

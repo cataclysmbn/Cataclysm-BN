@@ -536,16 +536,11 @@ void enchantment::activate_effects( Character &guy ) const
     }
 }
 
-void enchantment::deactivate_effects( Character &guy ) const
+void enchantment::deactivate_removed_effects( Character &guy, const enchantment &other ) const
 {
-    for( const std::pair<efftype_id, int> eff : ench_effects ) {
-        if( guy.has_effect( eff.first ) ) {
-            auto intensity = guy.get_effect_int( eff.first, bodypart_str_id::NULL_ID() );
-            intensity -= eff.second;
+    for( const std::pair<efftype_id, int> eff : other.ench_effects ) {
+        if( !ench_effects.contains( eff.first ) ) {
             guy.remove_effect( eff.first, bodypart_str_id::NULL_ID() );
-            if( intensity > 0 ) {
-                guy.add_effect( eff.first, 1_seconds, bodypart_str_id::NULL_ID(), intensity );
-            }
         }
     }
 }
