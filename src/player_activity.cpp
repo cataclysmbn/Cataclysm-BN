@@ -13,6 +13,7 @@
 #include "activity_type.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_turn.h"
@@ -580,6 +581,12 @@ void player_activity::do_turn( player &p )
         type->call_do_turn( this, &p );
     }
 
+    if( *this ) {
+        const auto callback_id = cata::get_lua_activity_on_turn( *this );
+        if( !callback_id.empty() ) {
+            cata::run_lua_activity_callback( callback_id, p, *this );
+        }
+    }
 
     /*
     * Stamina block
@@ -618,7 +625,11 @@ void player_activity::do_turn( player &p )
         if( actor ) {
             actor->finish( *this, p );
         } else {
-            if( !type->call_finish( this, &p ) ) {
+            const auto callback_id = cata::get_lua_activity_on_finish( *this );
+            if( !callback_id.empty() ) {
+                cata::run_lua_activity_callback( callback_id, p, *this );
+                set_to_null();
+            } else if( !type->call_finish( this, &p ) ) {
                 // "Finish" is never a misnomer for any activity without a finish function
                 set_to_null();
             }

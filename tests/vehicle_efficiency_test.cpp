@@ -46,7 +46,8 @@ static void clear_game( const ter_id &terrain )
 
     // Move player somewhere safe
     REQUIRE_FALSE( g->u.in_vehicle );
-    g->u.setpos( tripoint_bub_ms::zero() );
+    g->u.setpos( tripoint_bub_ms( g_half_mapsize_x + SEEX - 1,
+                                  g_half_mapsize_y + SEEY - 1, -2 ) );
     // Blind the player to avoid needless drawing-related overhead
     g->u.add_effect( effect_blind, 365_days, bodypart_str_id::NULL_ID() );
 
@@ -230,7 +231,7 @@ static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
         // If the vehicle starts skidding, the effects become random and test is RUINED
         REQUIRE( !veh.skidding );
         for( const tripoint_abs_ms &pos : veh.get_points() ) {
-            REQUIRE( here.ter( here.abs_to_bub( pos ) ) );
+            REQUIRE( here.ter( abs_to_map_local( here, pos ) ) );
         }
         // How much it moved
         tiles_travelled += square_dist( starting_point, veh.bub_ms_location() );
@@ -302,7 +303,7 @@ static void print_efficiency(
 static void find_efficiency( const std::string &type )
 {
     SECTION( "finding efficiency of " + type ) {
-        print_efficiency( type, 0,  "t_pavement", -1, false );
+        print_efficiency( type, 0, "t_pavement", -1, false );
         print_efficiency( type, 0, "t_dirt", -1, false );
         print_efficiency( type, 0, "t_pavement", 5, false );
         print_efficiency( type, 0, "t_dirt", 5, false );

@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <utility>
@@ -1090,6 +1091,21 @@ void item::inherit_flags( const std::vector<item *> &parents, const recipe &maki
     }
 }
 
+static auto component_relative_rot( const item *component ) -> double
+{
+    return component != nullptr && component->goes_bad() ? component->get_relative_rot() : 0.0;
+}
+
+static auto highest_component_relative_rot( const std::vector<item *> &components ) -> double
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    if( components.empty() ) {
+        return 0.0;
+    }
+    return ranges::max( components | transform( component_relative_rot ) );
+}
+
 void complete_craft( Character &who, item &craft )
 {
     if( !craft.is_craft() ) {
@@ -1105,16 +1121,7 @@ void complete_craft( Character &who, item &craft )
     for( detached_ptr<item> &it : used ) {
         used_items.push_back( &*it );
     }
-    // Makes it so that crafting inherits the components' rot instead of the vehicle cargo age, whatever that means
-    double relative_rot = 0.0;
-    for( const item *comp : used_items ) {
-        if( comp->goes_bad() ) {
-            const double comp_rot = comp->get_relative_rot();
-            if( comp_rot > relative_rot ) {
-                relative_rot = comp_rot;
-            }
-        }
-    }
+    const auto relative_rot = highest_component_relative_rot( used_items );
     const bool ignore_component = making.has_flag( "NUTRIENT_OVERRIDE" );
 
     // Set up the new item, and assign an inventory letter if available
@@ -2205,7 +2212,7 @@ static bool prompt_disassemble_single( avatar &you, item *target, bool interacti
     loc.loc = target;
     loc.count = res.batches ? *res.batches : 1;
 
-    tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.bub_pos() ) );
+    tripoint_abs_ms pos_abs( you.abs_pos() );
 
     you.assign_activity( std::make_unique<player_activity>
     ( std::make_unique<disassemble_activity_actor>( std::vector<iuse_location> {{ loc }}, pos_abs,
@@ -2242,7 +2249,7 @@ bool crafting::disassemble_all( avatar &you, bool recursively )
     }
 
     if( !targets.empty() ) {
-        tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.bub_pos() ) );
+        tripoint_abs_ms pos_abs( you.abs_pos() );
 
         you.assign_activity( std::make_unique<player_activity>
                              ( std::make_unique<disassemble_activity_actor>( std::move(

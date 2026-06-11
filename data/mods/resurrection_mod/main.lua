@@ -60,7 +60,7 @@ mod.on_character_death_hook = function()
   local who = gapi.get_avatar()
   local anchor_pos = mod.pick_teleport_destination(who)
   if anchor_pos ~= nil then
-    local player_abs = gapi.get_map():bub_to_abs(who:get_pos_ms())
+    local player_abs = who:abs_pos()
     local distance = math.abs(player_abs:rl_dist(anchor_pos))
     ---@cast distance integer
     who:drop_inv(math.ceil(distance / 50))
@@ -96,7 +96,7 @@ mod.iuse_function_anchor = function(params)
   local f_anchor = FurnId.new("resurrection_anchor_deployed"):int_id()
   local f_null = FurnId.new("f_null"):int_id()
 
-  local abs_pos = gapi.get_map():get_abs_ms(pos)
+  local abs_pos = gapi:bub_to_abs(pos)
   local furn_id = gapi.get_map():get_furn_at(pos)
 
   if furn_id == f_null then
@@ -111,8 +111,7 @@ mod.iuse_function_anchor = function(params)
 end
 
 mod.pick_teleport_destination = function(who)
-  local pos = who:get_pos_ms()
-  local player_abs = gapi.get_map():bub_to_abs(pos)
+  local player_abs = who:abs_pos()
   local min_dist = math.maxinteger
   local anchor_idx = 0
 
@@ -132,7 +131,7 @@ mod.pick_teleport_destination = function(who)
 end
 
 mod.remove_placed_furniture = function(pos)
-  local abs_pos = gapi.get_map():bub_to_abs(pos)
+  local abs_pos = gapi:bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
 
   for i in pairs(mod.anchor_list) do

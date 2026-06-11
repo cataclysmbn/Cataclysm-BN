@@ -33,18 +33,20 @@ class dynamic_atlas
     public:
         struct sprite_sheet {
             SDL_Texture_SharedPtr texture;
+            SDL_Surface_Ptr surface;
             std::unique_ptr<detail::texture_packer> packer;
             int atlas_width;
             int atlas_height;
-            SDL_Surface_Ptr readback;
             bool dirty;
         };
         using sprite_callback = std::function<void( SDL_Surface *, const SDL_Rect * )>;
 
         dynamic_atlas()
-            : max_atlas_width( 0 ), max_atlas_height( 0 ), hint_sprite_width( 0 ), hint_sprite_height( 0 ) {}
+            : max_atlas_width( 0 ), max_atlas_height( 0 ), hint_sprite_width( 0 ),
+              hint_sprite_height( 0 ), is_batching( false ) {}
         dynamic_atlas( const int w, const int h, const int sw = 0, const int sh = 0 )
-            : max_atlas_width( w ), max_atlas_height( h ), hint_sprite_width( sw ), hint_sprite_height( sh ) {}
+            : max_atlas_width( w ), max_atlas_height( h ), hint_sprite_width( sw ),
+              hint_sprite_height( sh ), is_batching( false ) {}
 
         auto find_sprite( size_t id ) -> std::optional<atlas_texture>;
         auto create_sprite( int w, int h, const std::optional<size_t> &id,
@@ -55,8 +57,11 @@ class dynamic_atlas
 
         void readback_load();
         auto readback_find( const texture &tex ) -> std::tuple<bool, SDL_Surface *, SDL_Rect>;
-        void readback_dump( const std::string &s ) const;
+        void readback_dump( const std::string &s );
         void readback_clear();
+
+        void start_batch();
+        void end_batch();
 
         auto get_staging_area( int width,
                                int height ) -> std::tuple<SDL_Texture *, SDL_Surface *, SDL_Rect>;
@@ -65,17 +70,26 @@ class dynamic_atlas
         auto end() const { return sheets.end(); }
 
     private:
+        struct staging_area {
+            SDL_Surface_Ptr surf;
+            SDL_Texture_Ptr tex;
+        };
+
         auto assign_id_internal( size_t id, const atlas_texture &tex ) -> bool;
         auto allocate_sprite_internal( int w, int h ) -> atlas_texture;
+        auto update_staging_area( staging_area &staging, int width, int height ) const
+        -> std::tuple<SDL_Texture *, SDL_Surface *, SDL_Rect>;
         std::vector<sprite_sheet> sheets;
         std::unordered_map<size_t, std::pair<int, SDL_Rect>> sprite_ids;
-        SDL_Surface_Ptr staging_surf;
-        SDL_Texture_Ptr staging_tex;
+
+        staging_area user_staging;
+        staging_area local_staging;
 
         int max_atlas_width;
         int max_atlas_height;
         int hint_sprite_width;
         int hint_sprite_height;
+        bool is_batching;
 };
 
 #endif

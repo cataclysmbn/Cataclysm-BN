@@ -1725,9 +1725,11 @@ void monster::execute_action( const monster_action_t &action )
         if( !dragged_foe->has_effect( effect_grabbed ) ) {
             dragged_foe = nullptr;
             remove_effect( effect_dragging );
-        } else if( g->m.abs_to_bub( drag_to ) != bub_pos() &&
-                   g->critter_at( g->m.abs_to_bub( drag_to ) ) == nullptr ) {
-            dragged_foe->setpos( g->m.abs_to_bub( drag_to ) );
+        } else {
+            const auto drag_to_bub = abs_to_bub( drag_to );
+            if( drag_to_bub != bub_pos() && g->critter_at( drag_to_bub ) == nullptr ) {
+                dragged_foe->setpos( drag_to );
+            }
         }
     }
 
