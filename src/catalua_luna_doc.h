@@ -271,7 +271,7 @@ LUNA_ID( quality, "Quality" )
 LUNA_ID( vitamin, "Vitamin" )
 
 // Enums
-LUNA_ENUM( action_id, "ActionId")
+LUNA_ENUM( action_id, "ActionId" )
 LUNA_ENUM( add_type, "AddictionType" )
 LUNA_ENUM( Attitude, "Attitude" )
 LUNA_ENUM( body_part, "BodyPart" )

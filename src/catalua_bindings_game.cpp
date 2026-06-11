@@ -229,10 +229,10 @@ void cata::detail::reg_game_api( sol::state &lua )
         return sol::optional<tripoint_bub_ms>();
     } );
     luna::set_fx( lib, "choose_adjacent_highlight", [](
-        const std::string & message,
-        const std::string & failure_message,
-        const action_id & actionId,
-        sol::optional<bool> allow_vertical
+                      const std::string & message,
+                      const std::string & failure_message,
+                      const action_id & actionId,
+                      sol::optional<bool> allow_vertical
     ) -> sol::optional<tripoint_bub_ms> {
         std::optional<tripoint_bub_ms> stdOpt = choose_adjacent_highlight( message, failure_message, actionId, allow_vertical.value_or( false ) );
         return sol::optional<tripoint_bub_ms>( *stdOpt );
