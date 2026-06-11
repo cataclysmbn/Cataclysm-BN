@@ -217,7 +217,7 @@ void record_cpu_lm_read( const bool valid, std::atomic<int64_t> &valid_counter,
     counter.fetch_add( 1, std::memory_order_relaxed );
 }
 
-auto take_counter( std::atomic<int64_t> &counter ) -> int64_t
+[[maybe_unused]] auto take_counter( std::atomic<int64_t> &counter ) -> int64_t
 {
     return counter.exchange( 0, std::memory_order_relaxed );
 }

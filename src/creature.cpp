@@ -392,7 +392,7 @@ bool Creature::sees( const Creature &critter ) const
     return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
 }
 
-bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) const
+bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod ) const
 {
     ZoneScoped;
     map &here = get_map();

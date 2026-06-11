@@ -173,7 +173,7 @@ void player_activity::init_all_moves( Character &who )
     }
 }
 
-inline std::vector<npc *> &player_activity::assistants()
+std::vector<npc *> &player_activity::assistants()
 {
     if( !assistants_ids_.empty() && assistants_.empty() ) {
         for( npc &guy : g->all_npcs() ) {

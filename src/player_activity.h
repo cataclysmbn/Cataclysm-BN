@@ -118,7 +118,7 @@ class player_activity
             return moves_left <= 0;
         }
         //Wrapper func to return assistants array properly
-        inline std::vector<npc *> &assistants();
+        std::vector<npc *> &assistants();
         /*
         * Members to work with activity_actor.
         */

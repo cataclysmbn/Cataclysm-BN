@@ -1504,7 +1504,6 @@ bool vehicle::has_security_working() const
 
 void vehicle::backfire( const int e ) const
 {
-    const int power = part_vpower_w( engines[e], true );
     const auto pos = bub_part_location( engines[e] );
     sound_event se;
     se.origin = pos;

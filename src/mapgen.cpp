@@ -292,7 +292,7 @@ auto map::generate( const tripoint_abs_sm &p, const time_point &when,
             );
         }
     }
-    return { .status = mapgen_result_status::generated };
+    return { .status = mapgen_result_status::generated, .selected_mapgen = nullptr };
 }
 
 void mapgen_function_builtin::generate( mapgendata &mgd )
@@ -4407,7 +4407,7 @@ auto map::draw_map( mapgendata &dat, const map_generate_options &options ) -> ma
         ZoneScopedN( "draw_map_connections" );
         draw_connections( dat );
     }
-    return { .status = mapgen_result_status::generated };
+    return { .status = mapgen_result_status::generated, .selected_mapgen = nullptr };
 }
 
 const int SOUTH_EDGE = 2 * SEEY - 1;
