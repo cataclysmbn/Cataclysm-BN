@@ -315,51 +315,63 @@ Stealth modifier value higher value increases stealth, lower value decreases it.
 Clamped between 20 and 160. With 160 being 60% more visible and 20 being 80% less visible
 
 ##### BODYTEMP_X
+
 Modifier to bodytemp accepted ranges
 Appropriate values are
 `BODYTEMP_MIN`: minimum temp for comfort
 `BODYTEMP_MAX`: maximum temp for comfort
 
 ##### BODYTEMP_SLEEP
+
 Additional bodytemp given during sleep
 `base_value` is the mutation/previous enchantment values
 There is no limit
 
 ##### BODYTEMP_SPEED
+
 Additional speed change for COLDBLOOD4 characters
 `base_value` is the mutation value or 0
 NOTE: There is no limit, this is subject to future changes
 
 ##### LIE
+
 Modifier to Lie chance `base_value` is post skill effects
 Under 0 and above 100 has no change
 
 ##### PERSUADE
+
 Same as LIE but for persuasion
 
 ##### INTIMIDATE
+
 Same as LIE but for intimidation
 
 ##### HEALTHY_MULT
+
 Edit to healthy. `base_value` is 1
 
 ##### FALL_DAMAGE_MULT
+
 Modifier to fall damage multiplier, `base_value` is post mutations and other modifiers
 Cannot go below 0
 
 ##### CARRY_STORAGE
+
 Modifier to carryable storage. `base_value` is current storage in mililiters
 Cannot go below 0
 
 ##### CARRY_WEIGHT
+
 Modifier to carryable weight. `base_value` is current storage in mililiters
 Cannot go below 0
 
 ##### OVERMAP_SIGHT
+
 Modifier to overmap sight. `base_value` is the best mutation value.
 Maximum is 3
 
 ##### EFFECTIVE_FOCUS
+
 Modifier to focus. `base_value` is current focus
 There is no limit
 
@@ -478,4 +490,3 @@ value:
   }
 ]
 ```
-

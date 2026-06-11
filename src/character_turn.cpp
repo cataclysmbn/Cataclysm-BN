@@ -151,7 +151,8 @@ void Character::recalc_speed_bonus()
             mod_speed_bonus( -( g->light_level( bub_pos().z() ) >= 12 ? 5 : 10 ) );
         }
         float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
-        temperature_speed_modifier += bonus_from_enchantments( temperature_speed_modifier, enchant_vals::mod::BODYTEMP_SPEED );
+        temperature_speed_modifier += bonus_from_enchantments( temperature_speed_modifier,
+                                      enchant_vals::mod::BODYTEMP_SPEED );
         if( temperature_speed_modifier != 0 ) {
             const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( abs_pos() ) );
             if( has_trait( trait_COLDBLOOD4 ) || player_local_temp < 65 ) {

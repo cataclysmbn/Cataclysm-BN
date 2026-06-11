@@ -5395,7 +5395,8 @@ void Character::regen( int rate_multiplier )
     float rest = rest_quality();
     float heal_rate = healing_rate( rest ) * to_turns<int>( 5_minutes );
     const float broken_regen_mod_pre = 0.25 + mutation_value( "mending_modifier" );
-    const float broken_regen_mod = clamp( broken_regen_mod_pre + bonus_from_enchantments( broken_regen_mod_pre, enchant_vals::mod::MENDING_MULT ), 0.0, 1.0 );
+    const float broken_regen_mod = clamp( broken_regen_mod_pre + bonus_from_enchantments(
+            broken_regen_mod_pre, enchant_vals::mod::MENDING_MULT ), 0.0, 1.0 );
     if( heal_rate > 0.0f ) {
         const int heal = roll_remainder( rate_multiplier * heal_rate );
 
@@ -5491,16 +5492,8 @@ void Character::update_health( int external_modifiers )
 
     // Apply enchantment healthy_rate as a multiplier to the target health level
     // healthy_rate > 1.0 boosts health toward max, < 1.0 reduces it toward negative
-    float enchant_healthy_rate = bonus_from_enchantments( 1.0, enchant_vals::mod::HEALTHY_MULT );
-    if( enchant_healthy_rate > 1.0f ) {
-        // Positive effect: push effective_healthy_mod toward get_max_healthy()
-        effective_healthy_mod = effective_healthy_mod +
-                                ( get_max_healthy() - effective_healthy_mod ) * ( enchant_healthy_rate - 1.0f );
-    } else if( enchant_healthy_rate < 1.0f ) {
-        // Negative effect: push effective_healthy_mod toward -200
-        effective_healthy_mod = effective_healthy_mod +
-                                ( -200.0f - effective_healthy_mod ) * ( 1.0f - enchant_healthy_rate );
-    }
+    effective_healthy_mod += bonus_from_enchantments( effective_healthy_mod,
+                             enchant_vals::mod::HEALTHY_MULT );
 
     // Health tends toward healthy_mod.
     // For small differences, it changes 4 points per day
@@ -11686,7 +11679,7 @@ float Character::hearing_ability() const
         volume_multiplier *= .25;
     }
 
-    return std::max( 0, volume_multiplier );
+    return std::max( 0.0f, volume_multiplier );
 }
 
 std::vector<std::string> Character::short_description_parts() const

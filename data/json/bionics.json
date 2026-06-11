@@ -78,9 +78,7 @@
     "cut_protec": [ [ "eyes", 3 ] ],
     "points": 1,
     "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ],
-    "bio_enchantments": [
-      { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 10 } ] }
-    ]
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 10 } ] } ]
   },
   {
     "id": "bio_armor_head",
@@ -757,7 +755,7 @@
     "react_cost": "2 J",
     "trigger_cost": "25 J",
     "time": 1,
-    "points": 1
+    "points": 1,
     "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "EFFECTIVE_FOCUS", "add": 10 } ] } ]
   },
   {
@@ -1471,7 +1469,7 @@
     "name": { "str": "Linguistic Coprocessor" },
     "description": "The left hemisphere of your brain has been augmented with a microcomputer that moderately increases the speed that language and written words are processed, granting a 25% increase to reading speed.",
     "occupied_bodyparts": [ [ "head", 1 ] ],
-    "points": 1
+    "points": 1,
     "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "READING_SPEED", "multiply": -0.25 } ] } ]
   },
   {
