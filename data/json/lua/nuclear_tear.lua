@@ -1,6 +1,6 @@
 local M = {}
 
-local NUKE_DAMAGE_THRESHOLD = 300
+local NUKE_DAMAGE_THRESHOLD = 3000
 
 local fd_fatigue_id = FieldTypeId.new("fd_fatigue"):int_id()
 
