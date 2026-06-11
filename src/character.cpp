@@ -11615,10 +11615,11 @@ bool Character::can_hear( const tripoint_bub_ms &source, const int volume ) cons
     const auto cache = get_map().get_cache_ref( bub_pos().z() );
     const int dist = rl_dist( source, bub_pos() );
     const float volume_multiplier = hearing_ability();
+    // terrain absorption at the characters location.
     const auto tabsp = ( get_map().inbounds( bub_pos() ) ) ? cache.absorption_cache[cache.idx(
                            bub_pos().x(), bub_pos().y() )] : 0;
-    return ( ( 100 * volume ) - get_cumulative_vol_dist_loss( 3, dist,
-             tabsp ) ) >= ( SOUND_MINIMUM_VOLUME_FOR_PROPAGATION - ( ( volume_multiplier * 100 ) - 100 ) );
+    return ( ( dBspl_to_mdBspl( volume ) ) - get_cumulative_vol_dist_loss( 3, dist,
+             tabsp ) ) >= ( SOUND_MINIMUM_VOLUME_FOR_PROPAGATION - ( ( volume_multiplier * 500 ) - 500 ) );
 }
 
 float Character::hearing_ability() const
@@ -11645,6 +11646,11 @@ float Character::hearing_ability() const
 
     if( has_effect( effect_earphones ) ) {
         volume_multiplier *= .25;
+    }
+    // Account for our hearing protection.
+    const auto hearing_dampening = dBspl_to_mdBspl( get_char_hearing_protection() );
+    if( hearing_dampening > 0 ) {
+        volume_multiplier *= get_ear_protection_hearing_reduction( hearing_dampening );
     }
 
     return volume_multiplier;
