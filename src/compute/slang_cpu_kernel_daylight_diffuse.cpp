@@ -56,34 +56,16 @@ auto daylight_diffuse( daylight_diffuse_params const &params ) -> bool
     constants.min_light_0 = params.min_light;
 
     auto globals = GlobalParams_0 {};
-    globals.daylight_seed_all_0 = StructuredBuffer<uint32_t> {
-        .data = const_cast<uint32_t *>( params.daylight_seed ),
-        .count = params.total_tiles,
-    };
-    globals.daylight_src_all_0 = StructuredBuffer<uint32_t> {
-        .data = const_cast<uint32_t *>( params.daylight_src ),
-        .count = params.total_tiles,
-    };
-    globals.transparency_all_0 = StructuredBuffer<float> {
-        .data = const_cast<float *>( params.transparency ),
-        .count = params.total_tiles,
-    };
-    globals.daylight_dst_all_0 = RWStructuredBuffer<uint32_t> {
-        .data = params.daylight_dst,
-        .count = params.total_tiles,
-    };
-    globals.lm_all_0 = RWStructuredBuffer<uint32_t> {
-        .data = params.lightmap,
-        .count = params.total_tiles,
-    };
+    globals.daylight_seed_all_0 = readonly_buffer( params.daylight_seed, params.total_tiles );
+    globals.daylight_src_all_0 = readonly_buffer( params.daylight_src, params.total_tiles );
+    globals.transparency_all_0 = readonly_buffer( params.transparency, params.total_tiles );
+    globals.daylight_dst_all_0 = writable_buffer( params.daylight_dst, params.total_tiles );
+    globals.lm_all_0 = writable_buffer( params.lightmap, params.total_tiles );
     globals.constants_0 = &constants;
 
-    dispatch_independent( {
-        .group_x = ( params.total_tiles + 63U ) / 64U,
-    }, [&]( cpu_dispatch_range const &range ) {
-        auto varying = make_varying( range );
-        cata_slang_lm_daylight_diffuse_cpu_main( &varying, nullptr, &globals );
-    } );
+    dispatch_independent_kernel( {
+        .group_x = tile_groups( params.total_tiles ),
+    }, globals, cata_slang_lm_daylight_diffuse_cpu_main );
     return true;
 #else
     ( void )params;

@@ -35,22 +35,6 @@ static constexpr auto transparency_tile_count = SEEX * SEEY;
 static constexpr auto light_transparency_open_air = 0.038376418216f;
 
 #if defined( CATA_SLANG_CPU_GENERATED )
-auto copy_transparency_submap( cata_gpu::transparency_submap_in const &source )
--> TransparencySubmapIn_0
-{
-    auto result = TransparencySubmapIn_0 {};
-    for( const auto tile : std::views::iota( 0, transparency_tile_count ) ) {
-        result.ter_ids_0[tile] = source.ter_ids[tile];
-        result.furn_ids_0[tile] = source.furn_ids[tile];
-        result.field_opacity_0[tile] = source.field_opacity[tile];
-        result.outside_flags_0[tile] = source.outside_flags[tile];
-    }
-    result.cache_offset_x_0 = source.cache_offset_x;
-    result.cache_offset_y_0 = source.cache_offset_y;
-    result.submap_output_offset_0 = source.output_offset;
-    return result;
-}
-
 auto full_output_required_count( transparency_params const &params ) -> std::size_t
 {
     auto required_count = std::size_t { 0 };
@@ -87,7 +71,9 @@ auto dispatch_transparency( transparency_params const &params ) -> bool
     auto shader_submaps = std::vector<TransparencySubmapIn_0> {};
     shader_submaps.reserve( params.submaps.size() );
     std::ranges::transform( params.submaps, std::back_inserter( shader_submaps ),
-                            copy_transparency_submap );
+    []( cata_gpu::transparency_submap_in const &submap ) {
+        return copy_transparency_submap<TransparencySubmapIn_0>( submap, transparency_tile_count );
+    } );
 
     params.compact_output->assign( params.submaps.size() * transparency_tile_count, 0.0f );
     params.full_output->resize( std::max( params.full_output->size(),
@@ -100,34 +86,21 @@ auto dispatch_transparency( transparency_params const &params ) -> bool
     constants.output_offset_0 = params.push->output_offset;
 
     auto globals = GlobalParams_0 {};
-    globals.submap_in_0 = StructuredBuffer<TransparencySubmapIn_0> {
-        .data = shader_submaps.data(),
-        .count = static_cast<uint32_t>( shader_submaps.size() ),
-    };
-    globals.ter_lut_0 = StructuredBuffer<uint32_t> {
-        .data = const_cast<uint32_t *>( params.luts->ter_transparent.data() ),
-        .count = static_cast<uint32_t>( params.luts->ter_transparent.size() ),
-    };
-    globals.furn_lut_0 = StructuredBuffer<uint32_t> {
-        .data = const_cast<uint32_t *>( params.luts->furn_transparent.data() ),
-        .count = static_cast<uint32_t>( params.luts->furn_transparent.size() ),
-    };
-    globals.compact_transparency_out_0 = RWStructuredBuffer<float> {
-        .data = params.compact_output->data(),
-        .count = static_cast<uint32_t>( params.compact_output->size() ),
-    };
-    globals.full_transparency_out_0 = RWStructuredBuffer<float> {
-        .data = params.full_output->data(),
-        .count = static_cast<uint32_t>( params.full_output->size() ),
-    };
+    globals.submap_in_0 = readonly_buffer( shader_submaps.data(),
+                                           static_cast<uint32_t>( shader_submaps.size() ) );
+    globals.ter_lut_0 = readonly_buffer( params.luts->ter_transparent.data(),
+                                         static_cast<uint32_t>( params.luts->ter_transparent.size() ) );
+    globals.furn_lut_0 = readonly_buffer( params.luts->furn_transparent.data(),
+                                          static_cast<uint32_t>( params.luts->furn_transparent.size() ) );
+    globals.compact_transparency_out_0 = writable_buffer( params.compact_output->data(),
+                                           static_cast<uint32_t>( params.compact_output->size() ) );
+    globals.full_transparency_out_0 = writable_buffer( params.full_output->data(),
+                                        static_cast<uint32_t>( params.full_output->size() ) );
     globals.constants_0 = &constants;
 
-    dispatch_independent( {
+    dispatch_independent_kernel( {
         .group_x = static_cast<uint32_t>( params.submaps.size() ),
-    }, [&]( cpu_dispatch_range const &range ) {
-        auto varying = make_varying( range );
-        cata_slang_transparency_cpu_main( &varying, nullptr, &globals );
-    } );
+    }, globals, cata_slang_transparency_cpu_main );
     return true;
 #else
     ( void )params;

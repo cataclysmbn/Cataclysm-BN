@@ -25,26 +25,6 @@
 namespace cata_compute::slang_cpu::kernels
 {
 
-namespace
-{
-
-#if defined( CATA_SLANG_CPU_GENERATED )
-auto copy_sight_pair( cata_gpu::GpuSightPair const &source ) -> GpuSightPair_0
-{
-    auto result = GpuSightPair_0 {};
-    result.from_x_0 = source.from_x;
-    result.from_y_0 = source.from_y;
-    result.from_z_idx_0 = source.from_z_idx;
-    result.to_x_0 = source.to_x;
-    result.to_y_0 = source.to_y;
-    result.to_z_idx_0 = source.to_z_idx;
-    result.range_0 = source.range;
-    return result;
-}
-#endif
-
-} // namespace
-
 auto sight_pairs( sight_pairs_params const &params ) -> bool
 {
 #if defined( CATA_SLANG_CPU_GENERATED )
@@ -56,7 +36,10 @@ auto sight_pairs( sight_pairs_params const &params ) -> bool
 
     auto shader_pairs = std::vector<GpuSightPair_0> {};
     shader_pairs.reserve( params.pairs.size() );
-    std::ranges::transform( params.pairs, std::back_inserter( shader_pairs ), copy_sight_pair );
+    std::ranges::transform( params.pairs, std::back_inserter( shader_pairs ),
+    []( cata_gpu::GpuSightPair const &pair ) {
+        return copy_sight_pair<GpuSightPair_0>( pair );
+    } );
 
     params.results->assign( params.pairs.size(), 0U );
 
@@ -69,30 +52,17 @@ auto sight_pairs( sight_pairs_params const &params ) -> bool
 
     const auto total_tiles = static_cast<uint32_t>( params.cache_xy * params.z_count );
     auto globals = GlobalParams_0 {};
-    globals.transparency_all_0 = StructuredBuffer<float> {
-        .data = const_cast<float *>( params.transparency ),
-        .count = total_tiles,
-    };
-    globals.floor_all_0 = StructuredBuffer<uint32_t> {
-        .data = const_cast<uint32_t *>( params.floor ),
-        .count = total_tiles,
-    };
-    globals.pairs_0 = StructuredBuffer<GpuSightPair_0> {
-        .data = shader_pairs.data(),
-        .count = static_cast<uint32_t>( shader_pairs.size() ),
-    };
-    globals.results_0 = RWStructuredBuffer<uint32_t> {
-        .data = params.results->data(),
-        .count = static_cast<uint32_t>( params.results->size() ),
-    };
+    globals.transparency_all_0 = readonly_buffer( params.transparency, total_tiles );
+    globals.floor_all_0 = readonly_buffer( params.floor, total_tiles );
+    globals.pairs_0 = readonly_buffer( shader_pairs.data(),
+                                       static_cast<uint32_t>( shader_pairs.size() ) );
+    globals.results_0 = writable_buffer( params.results->data(),
+                                         static_cast<uint32_t>( params.results->size() ) );
     globals.constants_0 = &constants;
 
-    dispatch_independent( {
-        .group_x = ( static_cast<uint32_t>( params.pairs.size() ) + 63U ) / 64U,
-    }, [&]( cpu_dispatch_range const &range ) {
-        auto varying = make_varying( range );
-        cata_slang_lm_sight_pairs_cpu_main( &varying, nullptr, &globals );
-    } );
+    dispatch_independent_kernel( {
+        .group_x = tile_groups( static_cast<uint32_t>( params.pairs.size() ) ),
+    }, globals, cata_slang_lm_sight_pairs_cpu_main );
     return true;
 #else
     ( void )params;

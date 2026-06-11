@@ -37,22 +37,13 @@ auto clear_seen( clear_seen_params const &params ) -> bool
     const auto output_count =
         static_cast<uint32_t>( params.z_start_idx * params.cache_xy ) + params.total_tiles;
     auto globals = GlobalParams_0 {};
-    globals.seen_raw_all_0 = RWStructuredBuffer<float> {
-        .data = params.seen_raw,
-        .count = output_count,
-    };
-    globals.seen_all_0 = RWStructuredBuffer<float> {
-        .data = params.seen,
-        .count = output_count,
-    };
+    globals.seen_raw_all_0 = writable_buffer( params.seen_raw, output_count );
+    globals.seen_all_0 = writable_buffer( params.seen, output_count );
     globals.constants_0 = &constants;
 
-    dispatch_independent( {
-        .group_x = ( params.total_tiles + 63U ) / 64U,
-    }, [&]( cpu_dispatch_range const &range ) {
-        auto varying = make_varying( range );
-        cata_slang_lm_clear_seen_cpu_main( &varying, nullptr, &globals );
-    } );
+    dispatch_independent_kernel( {
+        .group_x = tile_groups( params.total_tiles ),
+    }, globals, cata_slang_lm_clear_seen_cpu_main );
     return true;
 #else
     ( void )params;

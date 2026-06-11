@@ -39,22 +39,13 @@ auto shift_uint( shift_uint_params const &params ) -> bool
 
     const auto total_tiles = static_cast<uint32_t>( params.z_count * params.cache_xy );
     auto globals = GlobalParams_0 {};
-    globals.src_all_0 = StructuredBuffer<uint32_t> {
-        .data = params.source,
-        .count = total_tiles,
-    };
-    globals.dst_all_0 = RWStructuredBuffer<uint32_t> {
-        .data = params.target,
-        .count = total_tiles,
-    };
+    globals.src_all_0 = readonly_buffer( params.source, total_tiles );
+    globals.dst_all_0 = writable_buffer( params.target, total_tiles );
     globals.constants_0 = &constants;
 
-    dispatch_independent( {
-        .group_x = ( total_tiles + 63U ) / 64U,
-    }, [&]( cpu_dispatch_range const &range ) {
-        auto varying = make_varying( range );
-        cata_slang_lm_shift_uint_cpu_main( &varying, nullptr, &globals );
-    } );
+    dispatch_independent_kernel( {
+        .group_x = tile_groups( total_tiles ),
+    }, globals, cata_slang_lm_shift_uint_cpu_main );
     return true;
 #else
     ( void )params;

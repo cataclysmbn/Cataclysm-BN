@@ -34,18 +34,14 @@ auto fill_float( fill_float_params const &params ) -> bool
     constants.value_0 = params.value;
 
     auto globals = GlobalParams_0 {};
-    globals.target_values_0 = RWStructuredBuffer<float> {
-        .data = params.target,
-        .count = static_cast<uint32_t>( params.z_start_idx * params.cache_xy ) + params.total_tiles,
-    };
+    globals.target_values_0 = writable_buffer( params.target,
+                               static_cast<uint32_t>( params.z_start_idx * params.cache_xy ) +
+                               params.total_tiles );
     globals.constants_0 = &constants;
 
-    dispatch_independent( {
-        .group_x = ( params.total_tiles + 63U ) / 64U,
-    }, [&]( cpu_dispatch_range const &range ) {
-        auto varying = make_varying( range );
-        cata_slang_lm_fill_float_cpu_main( &varying, nullptr, &globals );
-    } );
+    dispatch_independent_kernel( {
+        .group_x = tile_groups( params.total_tiles ),
+    }, globals, cata_slang_lm_fill_float_cpu_main );
     return true;
 #else
     ( void )params;

@@ -48,6 +48,124 @@ inline auto make_varying( cpu_dispatch_range const &range ) -> ComputeVaryingInp
         .endGroupID = uint3( range.end.x, range.end.y, range.end.z ),
     };
 }
+
+template<typename Value>
+auto readonly_buffer( Value const *data, const uint32_t count ) -> StructuredBuffer<Value>
+{
+    return {
+        .data = const_cast<Value *>( data ),
+        .count = count,
+    };
+}
+
+template<typename Value>
+auto writable_buffer( Value *data, const uint32_t count ) -> RWStructuredBuffer<Value>
+{
+    return {
+        .data = data,
+        .count = count,
+    };
+}
+
+template<typename Kernel, typename Globals>
+auto dispatch_generated_kernel( Kernel &&kernel, Globals &globals,
+                                cpu_dispatch_range const &range ) -> void
+{
+    auto varying = make_varying( range );
+    kernel( &varying, nullptr, &globals );
+}
+
+inline auto tile_groups( const uint32_t value_count ) -> uint32_t
+{
+    return ( value_count + 63U ) / 64U;
+}
+
+template<typename Sources>
+auto source_window_is_valid( Sources const &sources, const uint32_t source_offset,
+                             const uint32_t source_count ) -> bool
+{
+    const auto offset = static_cast<std::size_t>( source_offset );
+    const auto count = static_cast<std::size_t>( source_count );
+    return offset <= sources.size() && count <= sources.size() - offset;
+}
+
+template<typename Dst, typename Src>
+auto copy_light_source( Src const &source ) -> Dst
+{
+    auto result = Dst {};
+    result.x_0 = source.x;
+    result.y_0 = source.y;
+    result.z_idx_0 = source.z_idx;
+    result.flags_0 = source.flags;
+    result.luminance_0 = source.luminance;
+    result.radius_0 = source.radius;
+    result.dir_x_0 = source.dir_x;
+    result.dir_y_0 = source.dir_y;
+    result.cone_cos_0 = source.cone_cos;
+    result.z_frac_0 = source.z_frac;
+    return result;
+}
+
+template<typename Dst, typename Src>
+auto copy_colored_light_source( Src const &source ) -> Dst
+{
+    auto result = copy_light_source<Dst>( source );
+    result.color_rgb_0 = source.color_rgb;
+    return result;
+}
+
+template<typename Dst, typename Src>
+auto copy_vehicle_optic( Src const &source ) -> Dst
+{
+    auto result = Dst {};
+    result.x_0 = source.x;
+    result.y_0 = source.y;
+    result.z_idx_0 = source.z_idx;
+    result.kind_0 = source.kind;
+    result.range_0 = source.range;
+    result.offset_distance_0 = source.offset_distance;
+    return result;
+}
+
+template<typename Dst, typename Src>
+auto copy_sight_pair( Src const &source ) -> Dst
+{
+    auto result = Dst {};
+    result.from_x_0 = source.from_x;
+    result.from_y_0 = source.from_y;
+    result.from_z_idx_0 = source.from_z_idx;
+    result.to_x_0 = source.to_x;
+    result.to_y_0 = source.to_y;
+    result.to_z_idx_0 = source.to_z_idx;
+    result.range_0 = source.range;
+    return result;
+}
+
+template<typename Dst, typename Src>
+auto copy_transparency_submap( Src const &source, const int32_t tile_count ) -> Dst
+{
+    auto result = Dst {};
+    for( const auto tile : std::views::iota( 0, tile_count ) ) {
+        result.ter_ids_0[tile] = source.ter_ids[tile];
+        result.furn_ids_0[tile] = source.furn_ids[tile];
+        result.field_opacity_0[tile] = source.field_opacity[tile];
+        result.outside_flags_0[tile] = source.outside_flags[tile];
+    }
+    result.cache_offset_x_0 = source.cache_offset_x;
+    result.cache_offset_y_0 = source.cache_offset_y;
+    result.submap_output_offset_0 = source.output_offset;
+    return result;
+}
+
+inline auto ray_group_side( const int32_t max_radius ) -> uint32_t
+{
+    return static_cast<uint32_t>( max_radius * 2 + 1 + 7 ) / 8U;
+}
+
+inline auto radius_group_side( const int32_t radius ) -> uint32_t
+{
+    return ray_group_side( radius );
+}
 #endif
 
 template<typename RunRange>
@@ -110,6 +228,17 @@ auto dispatch_independent( independent_dispatch_grid const &grid, RunRange &&run
         } );
     } );
 }
+
+#if defined( CATA_SLANG_CPU_GENERATED )
+template<typename Globals, typename Kernel>
+auto dispatch_independent_kernel( independent_dispatch_grid const &grid, Globals &globals,
+                                  Kernel &&kernel ) -> void
+{
+    dispatch_independent( grid, [&]( cpu_dispatch_range const &range ) {
+        dispatch_generated_kernel( kernel, globals, range );
+    } );
+}
+#endif
 
 inline auto make_accumulating_ranges( accumulating_dispatch_grid const &grid )
 -> std::vector<cpu_dispatch_range>
@@ -217,5 +346,41 @@ auto dispatch_accumulating_chunks( std::span<cpu_dispatch_range const> ranges,
         run_chunk( index, ranges[index] );
     } );
 }
+
+#if defined( CATA_SLANG_CPU_GENERATED )
+template<typename Globals, typename BindOutput, typename RunKernel, typename MergeOutput>
+auto dispatch_accumulating_uint( accumulating_dispatch_grid const &grid, Globals globals,
+                                 BindOutput &&bind_output, RunKernel &&run_kernel,
+                                 MergeOutput &&merge_output ) -> bool
+{
+    const auto ranges = make_accumulating_ranges( grid );
+    if( ranges.empty() ) {
+        return true;
+    }
+
+    if( ranges.size() == 1 ) {
+        dispatch_accumulating_chunks( ranges, [&]( const std::size_t,
+                                        cpu_dispatch_range const &range ) {
+            run_kernel( globals, range );
+        } );
+        return true;
+    }
+
+    auto scratch_buffers = make_zero_uint_buffers( ranges.size(), grid.output_values );
+    dispatch_accumulating_chunks( ranges, [&]( const std::size_t chunk_index,
+                                    cpu_dispatch_range const &range ) {
+        auto chunk_globals = globals;
+        bind_output( chunk_globals, scratch_buffers[chunk_index].data(), grid.output_values );
+        run_kernel( chunk_globals, range );
+    } );
+
+    for( auto &scratch : scratch_buffers ) {
+        if( !merge_output( scratch.data(), grid.output_values ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+#endif
 
 } // namespace cata_compute::slang_cpu::kernels

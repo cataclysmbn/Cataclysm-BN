@@ -3,7 +3,6 @@
 #if defined( CATA_SDL )
 
 #include <bit>
-#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -27,24 +26,6 @@ namespace cata_compute::slang_cpu::kernels
 namespace
 {
 
-#if defined( CATA_SLANG_CPU_GENERATED )
-auto copy_light_source( cata_gpu::GpuLightSource const &source ) -> GpuLightSource_0
-{
-    auto result = GpuLightSource_0 {};
-    result.x_0 = source.x;
-    result.y_0 = source.y;
-    result.z_idx_0 = source.z_idx;
-    result.flags_0 = source.flags;
-    result.luminance_0 = source.luminance;
-    result.radius_0 = source.radius;
-    result.dir_x_0 = source.dir_x;
-    result.dir_y_0 = source.dir_y;
-    result.cone_cos_0 = source.cone_cos;
-    result.z_frac_0 = source.z_frac;
-    return result;
-}
-#endif
-
 auto bits_float( const uint32_t value ) -> float
 {
     return std::bit_cast<float>( value );
@@ -61,17 +42,14 @@ auto raytrace( raytrace_params const &params ) -> bool
         params.z_count <= 0 || params.num_sources == 0 ) {
         return false;
     }
-    const auto source_offset = static_cast<std::size_t>( params.source_offset );
-    const auto requested_sources = static_cast<std::size_t>( params.num_sources );
-    if( source_offset > params.sources.size() ||
-        requested_sources > params.sources.size() - source_offset ) {
+    if( !source_window_is_valid( params.sources, params.source_offset, params.num_sources ) ) {
         return false;
     }
 
     auto shader_sources = std::vector<GpuLightSource_0> {};
     shader_sources.reserve( params.sources.size() );
     for( const auto &source : params.sources ) {
-        shader_sources.push_back( copy_light_source( source ) );
+        shader_sources.push_back( copy_light_source<GpuLightSource_0>( source ) );
     }
 
     auto constants = RaytraceConstants_0 {};
@@ -86,66 +64,30 @@ auto raytrace( raytrace_params const &params ) -> bool
 
     const auto total_tiles = static_cast<uint32_t>( params.cache_xy * params.z_count );
     auto globals = GlobalParams_0 {};
-    globals.transparency_all_0 = StructuredBuffer<float> {
-        .data = const_cast<float *>( params.transparency ),
-        .count = total_tiles,
-    };
-    globals.floor_all_0 = StructuredBuffer<uint32_t> {
-        .data = const_cast<uint32_t *>( params.floor ),
-        .count = total_tiles,
-    };
-    globals.vehicle_floor_all_0 = StructuredBuffer<uint32_t> {
-        .data = const_cast<uint32_t *>( params.vehicle_floor ),
-        .count = total_tiles,
-    };
-    globals.light_sources_0 = StructuredBuffer<GpuLightSource_0> {
-        .data = shader_sources.data(),
-        .count = static_cast<uint32_t>( shader_sources.size() ),
-    };
-    globals.lm_all_0 = RWStructuredBuffer<uint32_t> {
-        .data = params.lightmap,
-        .count = total_tiles,
-    };
+    globals.transparency_all_0 = readonly_buffer( params.transparency, total_tiles );
+    globals.floor_all_0 = readonly_buffer( params.floor, total_tiles );
+    globals.vehicle_floor_all_0 = readonly_buffer( params.vehicle_floor, total_tiles );
+    globals.light_sources_0 = readonly_buffer( shader_sources.data(),
+                               static_cast<uint32_t>( shader_sources.size() ) );
+    globals.lm_all_0 = writable_buffer( params.lightmap, total_tiles );
     globals.constants_0 = &constants;
 
-    const auto group_side = static_cast<uint32_t>( params.max_radius * 2 + 1 + 7 ) / 8U;
-    const auto ranges = make_accumulating_ranges( {
+    return dispatch_accumulating_uint( {
         .group_x = params.num_sources,
-        .group_y = group_side,
-        .group_z = group_side,
+        .group_y = ray_group_side( params.max_radius ),
+        .group_z = ray_group_side( params.max_radius ),
         .output_values = total_tiles,
-    } );
-
-    if( ranges.size() == 1 ) {
-        dispatch_accumulating_chunks( ranges, [&]( const std::size_t, cpu_dispatch_range const &range ) {
-            auto varying = make_varying( range );
-            cata_slang_lm_raytrace_cpu_main( &varying, nullptr, &globals );
-        } );
-        return true;
-    }
-
-    auto scratch_buffers = make_zero_uint_buffers( ranges.size(), total_tiles );
-    dispatch_accumulating_chunks( ranges, [&]( const std::size_t chunk_index,
-                                    cpu_dispatch_range const &range ) {
-        auto chunk_globals = globals;
-        chunk_globals.lm_all_0 = RWStructuredBuffer<uint32_t> {
-            .data = scratch_buffers[chunk_index].data(),
-            .count = total_tiles,
-        };
-        auto varying = make_varying( range );
-        cata_slang_lm_raytrace_cpu_main( &varying, nullptr, &chunk_globals );
-    } );
-
-    for( auto &scratch : scratch_buffers ) {
-        if( !max_uint( {
+    }, globals, []( auto &chunk_globals, uint32_t *data, const uint32_t count ) {
+        chunk_globals.lm_all_0 = writable_buffer( data, count );
+    }, []( auto &chunk_globals, cpu_dispatch_range const &range ) {
+        dispatch_generated_kernel( cata_slang_lm_raytrace_cpu_main, chunk_globals, range );
+    }, [&]( uint32_t *scratch, const uint32_t count ) {
+        return max_uint( {
             .target = params.lightmap,
-            .source = scratch.data(),
-            .count = total_tiles,
-        } ) ) {
-            return false;
-        }
-    }
-    return true;
+            .source = scratch,
+            .count = count,
+        } );
+    } );
 #else
     ( void )params;
     return false;

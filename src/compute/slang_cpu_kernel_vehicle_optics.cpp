@@ -4,7 +4,6 @@
 
 #include <array>
 #include <bit>
-#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -28,20 +27,6 @@ namespace cata_compute::slang_cpu::kernels
 namespace
 {
 
-#if defined( CATA_SLANG_CPU_GENERATED )
-auto copy_vehicle_optic( cata_gpu::GpuVehicleOptic const &source ) -> GpuVehicleOptic_0
-{
-    auto result = GpuVehicleOptic_0 {};
-    result.x_0 = source.x;
-    result.y_0 = source.y;
-    result.z_idx_0 = source.z_idx;
-    result.kind_0 = source.kind;
-    result.range_0 = source.range;
-    result.offset_distance_0 = source.offset_distance;
-    return result;
-}
-#endif
-
 auto bits_float( const uint32_t value ) -> float
 {
     return std::bit_cast<float>( value );
@@ -61,7 +46,7 @@ auto vehicle_optics( vehicle_optics_params const &params ) -> bool
     auto shader_optics = std::vector<GpuVehicleOptic_0> {};
     shader_optics.reserve( params.optics.size() );
     for( const auto &optic : params.optics ) {
-        shader_optics.push_back( copy_vehicle_optic( optic ) );
+        shader_optics.push_back( copy_vehicle_optic<GpuVehicleOptic_0>( optic ) );
     }
 
     auto constants = VehicleOpticsConstants_0 {};
@@ -77,63 +62,30 @@ auto vehicle_optics( vehicle_optics_params const &params ) -> bool
 
     const auto total_tiles = static_cast<uint32_t>( params.cache_xy * params.z_count );
     auto globals = GlobalParams_0 {};
-    globals.transparency_all_0 = StructuredBuffer<float> {
-        .data = const_cast<float *>( params.transparency ),
-        .count = total_tiles,
-    };
-    globals.seen_all_0 = StructuredBuffer<float> {
-        .data = const_cast<float *>( params.seen ),
-        .count = total_tiles,
-    };
-    globals.vehicle_optics_0 = StructuredBuffer<GpuVehicleOptic_0> {
-        .data = shader_optics.data(),
-        .count = static_cast<uint32_t>( shader_optics.size() ),
-    };
-    globals.camera_all_0 = RWStructuredBuffer<uint32_t> {
-        .data = params.camera,
-        .count = total_tiles,
-    };
+    globals.transparency_all_0 = readonly_buffer( params.transparency, total_tiles );
+    globals.seen_all_0 = readonly_buffer( params.seen, total_tiles );
+    globals.vehicle_optics_0 = readonly_buffer( shader_optics.data(),
+                                static_cast<uint32_t>( shader_optics.size() ) );
+    globals.camera_all_0 = writable_buffer( params.camera, total_tiles );
     globals.constants_0 = &constants;
 
-    const auto group_side = static_cast<uint32_t>( params.max_radius * 2 + 1 + 7 ) / 8U;
     const auto optic_count = static_cast<uint32_t>( params.optics.size() );
-    const auto ranges = make_accumulating_ranges( {
+    return dispatch_accumulating_uint( {
         .group_x = optic_count,
-        .group_y = group_side,
-        .group_z = group_side,
+        .group_y = ray_group_side( params.max_radius ),
+        .group_z = ray_group_side( params.max_radius ),
         .output_values = total_tiles,
-    } );
-
-    if( ranges.size() == 1 ) {
-        dispatch_accumulating_chunks( ranges, [&]( const std::size_t, cpu_dispatch_range const &range ) {
-            auto varying = make_varying( range );
-            cata_slang_lm_vehicle_optics_cpu_main( &varying, nullptr, &globals );
-        } );
-        return true;
-    }
-
-    auto scratch_buffers = make_zero_uint_buffers( ranges.size(), total_tiles );
-    dispatch_accumulating_chunks( ranges, [&]( const std::size_t chunk_index,
-                                    cpu_dispatch_range const &range ) {
-        auto chunk_globals = globals;
-        chunk_globals.camera_all_0 = RWStructuredBuffer<uint32_t> {
-            .data = scratch_buffers[chunk_index].data(),
-            .count = total_tiles,
-        };
-        auto varying = make_varying( range );
-        cata_slang_lm_vehicle_optics_cpu_main( &varying, nullptr, &chunk_globals );
-    } );
-
-    for( auto &scratch : scratch_buffers ) {
-        if( !max_uint( {
+    }, globals, []( auto &chunk_globals, uint32_t *data, const uint32_t count ) {
+        chunk_globals.camera_all_0 = writable_buffer( data, count );
+    }, []( auto &chunk_globals, cpu_dispatch_range const &range ) {
+        dispatch_generated_kernel( cata_slang_lm_vehicle_optics_cpu_main, chunk_globals, range );
+    }, [&]( uint32_t *scratch, const uint32_t count ) {
+        return max_uint( {
             .target = params.camera,
-            .source = scratch.data(),
-            .count = total_tiles,
-        } ) ) {
-            return false;
-        }
-    }
-    return true;
+            .source = scratch,
+            .count = count,
+        } );
+    } );
 #else
     ( void )params;
     return false;

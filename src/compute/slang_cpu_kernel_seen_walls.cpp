@@ -57,37 +57,19 @@ auto seen_walls( seen_walls_params const &params ) -> bool
 
     const auto total_tiles = static_cast<uint32_t>( params.cache_xy * params.z_count );
     auto globals = GlobalParams_0 {};
-    globals.transparency_all_0 = StructuredBuffer<float> {
-        .data = const_cast<float *>( params.transparency ),
-        .count = total_tiles,
-    };
-    globals.seen_src_all_0 = StructuredBuffer<float> {
-        .data = const_cast<float *>( params.seen_src ),
-        .count = total_tiles,
-    };
-    globals.vehicle_floor_all_0 = StructuredBuffer<uint32_t> {
-        .data = const_cast<uint32_t *>( params.vehicle_floor ),
-        .count = total_tiles,
-    };
-    globals.vehicle_obscured_all_0 = StructuredBuffer<uint32_t> {
-        .data = const_cast<uint32_t *>( params.vehicle_obscured ),
-        .count = total_tiles,
-    };
-    globals.seen_dst_all_0 = RWStructuredBuffer<float> {
-        .data = params.seen_dst,
-        .count = total_tiles,
-    };
+    globals.transparency_all_0 = readonly_buffer( params.transparency, total_tiles );
+    globals.seen_src_all_0 = readonly_buffer( params.seen_src, total_tiles );
+    globals.vehicle_floor_all_0 = readonly_buffer( params.vehicle_floor, total_tiles );
+    globals.vehicle_obscured_all_0 = readonly_buffer( params.vehicle_obscured, total_tiles );
+    globals.seen_dst_all_0 = writable_buffer( params.seen_dst, total_tiles );
     globals.constants_0 = &constants;
 
-    const auto group_count = static_cast<uint32_t>( params.view_radius * 2 + 1 + 7 ) / 8U;
-    dispatch_independent( {
+    const auto group_count = radius_group_side( params.view_radius );
+    dispatch_independent_kernel( {
         .group_x = group_count,
         .group_y = group_count,
         .group_z = static_cast<uint32_t>( params.dispatch_z_count ),
-    }, [&]( cpu_dispatch_range const &range ) {
-        auto varying = make_varying( range );
-        cata_slang_lm_seen_walls_cpu_main( &varying, nullptr, &globals );
-    } );
+    }, globals, cata_slang_lm_seen_walls_cpu_main );
     return true;
 #else
     ( void )params;

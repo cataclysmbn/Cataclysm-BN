@@ -42,25 +42,16 @@ auto clear_seen_view( clear_seen_view_params const &params ) -> bool
 
     const auto output_count = static_cast<uint32_t>( params.cache_xy * params.z_count );
     auto globals = GlobalParams_0 {};
-    globals.seen_raw_all_0 = RWStructuredBuffer<float> {
-        .data = params.seen_raw,
-        .count = output_count,
-    };
-    globals.seen_all_0 = RWStructuredBuffer<float> {
-        .data = params.seen,
-        .count = output_count,
-    };
+    globals.seen_raw_all_0 = writable_buffer( params.seen_raw, output_count );
+    globals.seen_all_0 = writable_buffer( params.seen, output_count );
     globals.constants_0 = &constants;
 
     const auto group_count = static_cast<uint32_t>( params.view_radius * 2 + 1 + 7 ) / 8U;
-    dispatch_independent( {
+    dispatch_independent_kernel( {
         .group_x = group_count,
         .group_y = group_count,
         .group_z = static_cast<uint32_t>( params.dispatch_z_count ),
-    }, [&]( cpu_dispatch_range const &range ) {
-        auto varying = make_varying( range );
-        cata_slang_lm_clear_seen_view_cpu_main( &varying, nullptr, &globals );
-    } );
+    }, globals, cata_slang_lm_clear_seen_view_cpu_main );
     return true;
 #else
     ( void )params;

@@ -33,18 +33,12 @@ auto fill_uint( fill_uint_params const &params ) -> bool
     constants.value_0 = params.value;
 
     auto globals = GlobalParams_0 {};
-    globals.target_values_0 = RWStructuredBuffer<uint32_t> {
-        .data = params.target,
-        .count = params.count,
-    };
+    globals.target_values_0 = writable_buffer( params.target, params.count );
     globals.constants_0 = &constants;
 
-    dispatch_independent( {
-        .group_x = ( params.count + 63U ) / 64U,
-    }, [&]( cpu_dispatch_range const &range ) {
-        auto varying = make_varying( range );
-        cata_slang_lm_fill_uint_cpu_main( &varying, nullptr, &globals );
-    } );
+    dispatch_independent_kernel( {
+        .group_x = tile_groups( params.count ),
+    }, globals, cata_slang_lm_fill_uint_cpu_main );
     return true;
 #else
     ( void )params;
