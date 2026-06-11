@@ -636,7 +636,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
                     here.add_splatter_trail( critter->bloodType(), tp, dest );
                 }
                 sfx::do_projectile_hit( *attack.hit_critter );
-                has_momentum = proj.impact.total_damage() > 0 && !proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES );
+                has_momentum = proj.impact.total_damage() > 0 &&
+                               !proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES );
 
                 apply_overpenetration_penalty( is_projectile_modify_overpenetration );
                 // Force embed based on damage after overpenetration penalties
