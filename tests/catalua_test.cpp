@@ -256,17 +256,22 @@ TEST_CASE( "lua_place_monster_pins_upgrade_time", "[lua][monster]" )
     put_player_underground();
     calendar::turn = calendar::start_of_cataclysm + 2 * calendar::season_length();
 
+    const auto monster_id = mtype_id( "mon_test_lua_upgrade_zombie" );
+    const auto &monster_type = monster_id.obj();
+    REQUIRE( monster_type.upgrades );
+    REQUIRE( monster_type.age_grow == 14 );
+
     auto lua = make_lua_state();
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
-    test_data["monster_id"] = mtype_id( "mon_zombie" );
+    test_data["monster_id"] = monster_id;
     test_data["pos"] = tripoint_bub_ms{ 5, 5, 0 };
 
     run_lua_test_script( lua, "place_monster_upgrade_time_test.lua" );
 
     const auto current_day = to_days<int>( calendar::turn - calendar::turn_zero );
     REQUIRE( test_data.get<bool>( "monster_spawned" ) );
-    CHECK( test_data.get<std::string>( "monster_type" ) == "mon_zombie" );
+    CHECK( test_data.get<std::string>( "monster_type" ) == "mon_test_lua_upgrade_zombie" );
     CHECK( test_data.get<int>( "upgrade_time" ) > current_day );
 }
 
