@@ -238,10 +238,10 @@ void cata::detail::reg_game_api( sol::state &lua )
         return sol::optional<tripoint_bub_ms>( *stdOpt );
     } );
     luna::set_fx( lib, "choose_adjacent_uilist", [](
-        const std::string & message,
-        const std::string & failure_message,
-        const sol::protected_function & allowed,
-        const sol::protected_function & name
+                      const std::string & message,
+                      const std::string & failure_message,
+                      const sol::protected_function & allowed,
+                      const sol::protected_function & name
     ) -> sol::optional<tripoint_bub_ms> {
         std::optional<tripoint_bub_ms> stdOpt = choose_adjacent_uilist( message, failure_message, allowed, name );
         return sol::optional<tripoint_bub_ms>( *stdOpt );
