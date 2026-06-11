@@ -389,8 +389,6 @@ jobs:
 
       - name: Generate Lua reference/annotations for typecheck
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
-        id: lua-docs-typecheck
-        continue-on-error: true
         env:
           CATA_EXE: ./cataclysm-bn-tiles
         run: |
@@ -398,9 +396,7 @@ jobs:
           deno task docs:gen
 
       - name: Run EmmyLua check
-        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && steps.lua-docs-typecheck.outcome == 'success'
-        id: emmylua-check
-        continue-on-error: true
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
         run: emmylua_check .
 
       - name: Generate documentation artifacts
