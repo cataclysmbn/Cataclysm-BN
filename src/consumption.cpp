@@ -18,6 +18,8 @@
 #include "avatar.h"
 #include "bionics.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "craft_command.h"
 #include "debug.h"
@@ -1251,6 +1253,7 @@ bool Character::consume_effects( item &food )
     if( has_effect( effect_tapeworm ) ) {
         ingested.nutr /= 2;
     }
+    const auto fun = fun_for( food );
     int excess_kcal = get_stored_kcal() + stomach.get_calories() + ingested.nutr.kcal -
                       max_stored_kcal();
 
@@ -1270,6 +1273,21 @@ bool Character::consume_effects( item &food )
         !food.has_flag( flag_NO_BLOAT ) &&
         !has_trait( trait_GOURMAND ) ) {
         add_effect( effect_bloated, 5_minutes );
+    }
+
+    if( food.is_food() || food.is_food_container() ) {
+        cata::run_hooks( "on_character_consumed_food", [ &, this]( auto & params ) {
+            params["character"] = this;
+            params["food"] = &food;
+            params["nutrition"] = nutr;
+            params["calories"] = ingested.nutr.kcal;
+            params["quench"] = comest.quench;
+            params["healthy"] = comest.healthy;
+            params["fun"] = fun.first;
+            params["fun_cap"] = fun.second;
+            params["spoiled"] = relative_rot > 1.0f;
+            params["when"] = calendar::turn;
+        } );
     }
 
     return true;
