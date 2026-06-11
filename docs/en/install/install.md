@@ -39,8 +39,9 @@
 
 ## Get a ~~real~~ soundpack
 
+- First, check if there is folder with "otopack" in the name, in `/gamefolder/data/sound/`. If that's the case you can skip this part, otherwise:
 - Go to https://mods.cataclysmbn.org/mods/otopack_bn_mk_2/
-- Repeat the process of `Get external mods` but this time we will put the files in `/gamefolder/sound`
+- Repeat the process of `Get external mods` but this time we will put the files in `/gamefolder/sound/`
 - PS: Create the `sound` folder in `/gamefolder/` if it doesn't exist. _You musn't install anything in `data`, although it works too, this is reserved for the base game files_
   <img width="1914" height="1064" alt="image" src="https://github.com/user-attachments/assets/a71770dc-a032-4ed5-93a6-bf90c60e4a99" />
 
