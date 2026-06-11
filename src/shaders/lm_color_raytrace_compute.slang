@@ -1,7 +1,4 @@
 // GPU Lighting - Render-Only Colored Light Pass
-//
-// Emits the strongest colored light source per tile into a packed uint buffer:
-// high byte = rank, low bytes = RGB888.  Gameplay light remains scalar.
 
 static const float LIGHT_TRANSPARENCY_SOLID = 0.0;
 static const float LIGHT_TRANSPARENCY_OPEN_AIR = 0.038376418216;
@@ -11,6 +8,8 @@ static const float VEHICLE_ROOF_SURFACE_Z_FRAC = 0.70;
 static const float VEHICLE_ROOF_EPSILON = 0.001;
 static const uint  LIGHT_SOURCE_DIRECTIONAL = 1u;
 static const uint  LIGHT_SOURCE_EXTERNAL_VEHICLE = 2u;
+static const uint COLOR_RAYTRACE_THREADS_X = 8u;
+static const uint COLOR_RAYTRACE_THREADS_Y = 8u;
 
 struct GpuColoredLightSource
 {
@@ -28,6 +27,7 @@ struct GpuColoredLightSource
     uint  _pad;
 };
 
+[[vk::binding(0, 2)]]
 cbuffer Constants : register(b0, space2)
 {
     int   cache_x;
@@ -40,11 +40,20 @@ cbuffer Constants : register(b0, space2)
     uint  source_offset;
 };
 
-StructuredBuffer<float>                 transparency_all : register(t0, space0);
-StructuredBuffer<uint>                  floor_all        : register(t1, space0);
-StructuredBuffer<uint>                  vehicle_floor_all: register(t2, space0);
-StructuredBuffer<GpuColoredLightSource> light_sources    : register(t3, space0);
-RWStructuredBuffer<uint>                color_all        : register(u0, space1);
+[[vk::binding(0, 0)]]
+StructuredBuffer<float> transparency_all : register(t0, space0);
+
+[[vk::binding(1, 0)]]
+StructuredBuffer<uint> floor_all : register(t1, space0);
+
+[[vk::binding(2, 0)]]
+StructuredBuffer<uint> vehicle_floor_all : register(t2, space0);
+
+[[vk::binding(3, 0)]]
+StructuredBuffer<GpuColoredLightSource> light_sources : register(t3, space0);
+
+[[vk::binding(0, 1)]]
+RWStructuredBuffer<uint> color_all : register(u0, space1);
 
 int tile_index( int x, int y, int z )
 {
@@ -53,7 +62,51 @@ int tile_index( int x, int y, int z )
 
 int round_nearest_int( float value )
 {
-    return value >= 0.0 ? (int)floor( value + 0.5 ) : (int)ceil( value - 0.5 );
+    return value >= 0.0 ? int( floor( value + 0.5 ) ) : int( ceil( value - 0.5 ) );
+}
+
+int bounded_int( int value, int low, int high )
+{
+    if( value < low ) {
+        return low;
+    }
+    if( value > high ) {
+        return high;
+    }
+    return value;
+}
+
+float bounded_float( float value, float low, float high )
+{
+    if( value < low ) {
+        return low;
+    }
+    if( value > high ) {
+        return high;
+    }
+    return value;
+}
+
+int larger_int( int lhs, int rhs )
+{
+    return lhs > rhs ? lhs : rhs;
+}
+
+float smaller_float( float lhs, float rhs )
+{
+    return lhs < rhs ? lhs : rhs;
+}
+
+int largest_int_3( int a, int b, int c )
+{
+    int best = a;
+    if( b > best ) {
+        best = b;
+    }
+    if( c > best ) {
+        best = c;
+    }
+    return best;
 }
 
 bool has_vehicle_surface( int x, int y, int z )
@@ -72,9 +125,9 @@ bool target_vehicle_surface_blocks_source(
         return false;
     }
 
-    float roof_plane = (float)tz + VEHICLE_ROOF_SURFACE_Z_FRAC;
-    float source_h = (float)src.z_idx + src.z_frac;
-    float target_h = (float)tz + target_frac;
+    float roof_plane = float( tz ) + VEHICLE_ROOF_SURFACE_Z_FRAC;
+    float source_h = float( src.z_idx ) + src.z_frac;
+    float target_h = float( tz ) + target_frac;
 
     return source_h > roof_plane + VEHICLE_ROOF_EPSILON
            && target_h < roof_plane - VEHICLE_ROOF_EPSILON;
@@ -91,16 +144,28 @@ bool ray_sample_is_above_vehicle_surface( int x, int y, int z, float ray_h )
     if( !has_vehicle_surface( x, y, z ) ) {
         return false;
     }
-    float roof_plane = (float)z + VEHICLE_ROOF_SURFACE_Z_FRAC;
+    float roof_plane = float( z ) + VEHICLE_ROOF_SURFACE_Z_FRAC;
     return ray_h >= roof_plane - VEHICLE_ROOF_EPSILON;
+}
+
+void max_color_bits( int idx, uint candidate )
+{
+#if defined(CATA_SLANG_CPU)
+    uint previous = color_all[idx];
+    if( candidate > previous ) {
+        color_all[idx] = candidate;
+    }
+#else
+    InterlockedMax( color_all[idx], candidate );
+#endif
 }
 
 float trace_intensity(
     GpuColoredLightSource src, int tx, int ty, int tz, int dx, int dy, float target_frac )
 {
-    float fdx = (float)dx;
-    float fdy = (float)dy;
-    float fdz = ( (float)tz + target_frac - ( (float)src.z_idx + src.z_frac ) ) * z_scale;
+    float fdx = float( dx );
+    float fdy = float( dy );
+    float fdz = ( float( tz ) + target_frac - ( float( src.z_idx ) + src.z_frac ) ) * z_scale;
     float dist = sqrt( fdx * fdx + fdy * fdy + fdz * fdz );
 
     if( dist > src.radius ) {
@@ -118,8 +183,8 @@ float trace_intensity(
         return 0.0;
     }
 
-    int steps = max( abs( sdx ), max( abs( sdy ), (int)ceil( abs( fdz ) ) ) );
-    steps = max( steps, 1 );
+    int steps = largest_int_3( abs( sdx ), abs( sdy ), int( ceil( abs( fdz ) ) ) );
+    steps = larger_int( steps, 1 );
 
     float avg_transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
 
@@ -127,9 +192,9 @@ float trace_intensity(
         int sign_z = sdz > 0 ? 1 : -1;
         int crossings = abs( sdz );
         for( int k = 0; k < crossings; ++k ) {
-            float t_z = ( (float)k + 0.5 ) / (float)crossings;
-            int ix_z = clamp( tx + round_nearest_int( (float)sdx * t_z ), 0, cache_x - 1 );
-            int iy_z = clamp( ty + round_nearest_int( (float)sdy * t_z ), 0, cache_y - 1 );
+            float t_z = ( float( k ) + 0.5 ) / float( crossings );
+            int ix_z = bounded_int( tx + round_nearest_int( float( sdx ) * t_z ), 0, cache_x - 1 );
+            int iy_z = bounded_int( ty + round_nearest_int( float( sdy ) * t_z ), 0, cache_y - 1 );
             int floor_z = sign_z > 0 ? tz + k + 1 : tz - k;
             if( floor_z >= 0 && floor_z < z_count ) {
                 int fl_idx = tile_index( ix_z, iy_z, floor_z );
@@ -145,15 +210,15 @@ float trace_intensity(
     }
 
     for( int i = 1; i < steps; ++i ) {
-        float t = (float)i / (float)steps;
-        int ix = clamp( tx + round_nearest_int( (float)sdx * t ), 0, cache_x - 1 );
-        int iy = clamp( ty + round_nearest_int( (float)sdy * t ), 0, cache_y - 1 );
-        int iz = clamp( tz + round_nearest_int( (float)sdz * t ), 0, z_count - 1 );
+        float t = float( i ) / float( steps );
+        int ix = bounded_int( tx + round_nearest_int( float( sdx ) * t ), 0, cache_x - 1 );
+        int iy = bounded_int( ty + round_nearest_int( float( sdy ) * t ), 0, cache_y - 1 );
+        int iz = bounded_int( tz + round_nearest_int( float( sdz ) * t ), 0, z_count - 1 );
 
         float t_val = transparency_all[tile_index( ix, iy, iz )];
         if( t_val <= LIGHT_TRANSPARENCY_SOLID ) {
-            float source_h = (float)src.z_idx + src.z_frac;
-            float target_h = (float)tz + target_frac;
+            float source_h = float( src.z_idx ) + src.z_frac;
+            float target_h = float( tz ) + target_frac;
             float ray_h = target_h + ( source_h - target_h ) * t;
             if( ray_sample_is_above_vehicle_surface( ix, iy, iz, ray_h ) ) {
                 continue;
@@ -161,20 +226,20 @@ float trace_intensity(
             return 0.0;
         }
 
-        avg_transparency = ( (float)( i - 1 ) * avg_transparency + t_val ) / (float)i;
+        avg_transparency = ( float( i - 1 ) * avg_transparency + t_val ) / float( i );
     }
 
-    return min( src.luminance, src.luminance / ( exp( avg_transparency * dist ) * dist ) );
+    float attenuated = src.luminance / ( exp( avg_transparency * dist ) * dist );
+    return smaller_float( src.luminance, attenuated );
 }
 
 uint packed_color_value( float intensity, uint color_rgb )
 {
-    uint rank = (uint)clamp( round( intensity * 2.0 ), 1.0, 255.0 );
+    uint rank = uint( bounded_float( round( intensity * 2.0 ), 1.0, 255.0 ) );
     return ( rank << 24 ) | ( color_rgb & 0x00ffffffu );
 }
 
-[numthreads(8, 8, 1)]
-void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
+void color_raytrace_main_impl( uint3 group_id, uint3 group_thread_id )
 {
     if( group_id.x >= num_sources ) {
         return;
@@ -182,8 +247,8 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
 
     GpuColoredLightSource src = light_sources[source_offset + group_id.x];
 
-    int dx = (int)( group_id.y * 8 + thread_id.x ) - max_radius;
-    int dy = (int)( group_id.z * 8 + thread_id.y ) - max_radius;
+    int dx = int( group_id.y * COLOR_RAYTRACE_THREADS_X + group_thread_id.x ) - max_radius;
+    int dy = int( group_id.z * COLOR_RAYTRACE_THREADS_Y + group_thread_id.y ) - max_radius;
     int tx = src.x + dx;
     int ty = src.y + dy;
 
@@ -191,8 +256,8 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
         return;
     }
 
-    float fdx = (float)dx;
-    float fdy = (float)dy;
+    float fdx = float( dx );
+    float fdy = float( dy );
     float dist_xy_sq = fdx * fdx + fdy * fdy;
     if( ( src.flags & LIGHT_SOURCE_DIRECTIONAL ) != 0u ) {
         if( dist_xy_sq <= 0.0001 ) {
@@ -204,9 +269,9 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
         }
     }
 
-    int z_span = (int)ceil( src.radius / z_scale );
-    int z_min = max( 0, src.z_idx - z_span );
-    int z_max = min( z_count - 1, src.z_idx + z_span );
+    int z_span = int( ceil( src.radius / z_scale ) );
+    int z_min = bounded_int( src.z_idx - z_span, 0, z_count - 1 );
+    int z_max = bounded_int( src.z_idx + z_span, 0, z_count - 1 );
 
     for( int tz = z_min; tz <= z_max; ++tz ) {
         int idx = tile_index( tx, ty, tz );
@@ -215,7 +280,19 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
             vehicle_surface ? VEHICLE_ROOF_SURFACE_Z_FRAC : open_target_z_frac( src );
         float intensity = trace_intensity( src, tx, ty, tz, dx, dy, target_frac );
         if( intensity > LIGHT_AMBIENT_LOW ) {
-            InterlockedMax( color_all[idx], packed_color_value( intensity, src.color_rgb ) );
+            max_color_bits( idx, packed_color_value( intensity, src.color_rgb ) );
         }
     }
+}
+
+[numthreads(8, 8, 1)]
+void main( uint3 group_id : SV_GroupID, uint3 group_thread_id : SV_GroupThreadID )
+{
+    color_raytrace_main_impl( group_id, group_thread_id );
+}
+
+[numthreads(8, 8, 1)]
+void cpu_main( uint3 group_id : SV_GroupID, uint3 group_thread_id : SV_GroupThreadID )
+{
+    color_raytrace_main_impl( group_id, group_thread_id );
 }

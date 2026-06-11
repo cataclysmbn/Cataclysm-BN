@@ -149,7 +149,7 @@ static_assert(sizeof(lm_visibility_push_constants) == 80);
 
 // ---------------------------------------------------------------------------
 // Compute a conservative dispatch radius from source luminance.
-// Matches lm_raytrace_compute.hlsl: exponential attenuation divided by linear
+// Matches lm_raytrace_compute.slang: exponential attenuation divided by linear
 // distance, capped to the runtime view radius.
 // ---------------------------------------------------------------------------
 auto compute_light_radius(float luminance) -> float;

@@ -1,10 +1,7 @@
 // GPU Lighting - Batched terrain LOS queries
-//
-// One thread answers one directed sight pair.  CPU code still applies creature
-// perception rules and supplies only terrain LOS requests that reached the
-// final map::sees() stage.
 
 static const float LIGHT_TRANSPARENCY_SOLID = 0.0;
+static const uint SIGHT_PAIR_THREADS_X = 64u;
 
 struct GpuSightPair
 {
@@ -18,6 +15,7 @@ struct GpuSightPair
     uint _pad0;
 };
 
+[[vk::binding(0, 2)]]
 cbuffer Constants : register(b0, space2)
 {
     int cache_x;
@@ -30,10 +28,16 @@ cbuffer Constants : register(b0, space2)
     uint _pad2;
 };
 
+[[vk::binding(0, 0)]]
 StructuredBuffer<float> transparency_all : register(t0, space0);
+
+[[vk::binding(1, 0)]]
 StructuredBuffer<uint> floor_all : register(t1, space0);
+
+[[vk::binding(2, 0)]]
 StructuredBuffer<GpuSightPair> pairs : register(t2, space0);
 
+[[vk::binding(0, 1)]]
 RWStructuredBuffer<uint> results : register(u0, space1);
 
 int tile_index( int x, int y, int z )
@@ -67,9 +71,18 @@ int sgn( int value )
     return value == 0 ? 0 : ( value > 0 ? 1 : -1 );
 }
 
-int rl_distance( int dx, int dy, int dz )
+int largest_abs_3d( int dx, int dy, int dz )
 {
-    return max( abs( dx ), max( abs( dy ), abs( dz ) ) );
+    int best = abs( dx );
+    int ay = abs( dy );
+    if( ay > best ) {
+        best = ay;
+    }
+    int az = abs( dz );
+    if( az > best ) {
+        best = az;
+    }
+    return best;
 }
 
 bool check_2d_step( int x, int y, int z, int target_x, int target_y )
@@ -91,12 +104,12 @@ bool check_3d_step( int3 current, int3 last_point, int3 target )
         return is_transparent_at( current.x, current.y, current.z );
     }
 
-    int max_z = max( current.z, last_point.z );
+    int high_z = current.z > last_point.z ? current.z : last_point.z;
     bool current_side_blocked =
-        has_floor_at( current.x, current.y, max_z ) ||
+        has_floor_at( current.x, current.y, high_z ) ||
         !is_transparent_at( current.x, current.y, last_point.z );
     bool last_side_blocked =
-        has_floor_at( last_point.x, last_point.y, max_z ) ||
+        has_floor_at( last_point.x, last_point.y, high_z ) ||
         !is_transparent_at( last_point.x, last_point.y, current.z );
     return !( current_side_blocked && last_side_blocked );
 }
@@ -308,10 +321,9 @@ bool los_3d( GpuSightPair pair )
     return true;
 }
 
-[numthreads(64, 1, 1)]
-void main( uint3 dispatch_id : SV_DispatchThreadID )
+void sight_pairs_main_impl( uint3 group_id, uint3 group_thread_id )
 {
-    uint pair_idx = dispatch_id.x;
+    uint pair_idx = group_id.x * SIGHT_PAIR_THREADS_X + group_thread_id.x;
     if( pair_idx >= pair_count ) {
         return;
     }
@@ -323,7 +335,7 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
         return;
     }
 
-    int dist = rl_distance(
+    int dist = largest_abs_3d(
         pair.to_x - pair.from_x,
         pair.to_y - pair.from_y,
         pair.to_z_idx - pair.from_z_idx );
@@ -334,4 +346,16 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
 
     bool visible = pair.from_z_idx == pair.to_z_idx ? los_2d( pair ) : los_3d( pair );
     results[pair_idx] = visible ? 1u : 0u;
+}
+
+[numthreads(64, 1, 1)]
+void main( uint3 group_id : SV_GroupID, uint3 group_thread_id : SV_GroupThreadID )
+{
+    sight_pairs_main_impl( group_id, group_thread_id );
+}
+
+[numthreads(64, 1, 1)]
+void cpu_main( uint3 group_id : SV_GroupID, uint3 group_thread_id : SV_GroupThreadID )
+{
+    sight_pairs_main_impl( group_id, group_thread_id );
 }
