@@ -61,8 +61,21 @@ jobs:
       - name: Install shadercross
         run: bash build-scripts/install-shadercross-vcpkg.sh
 
+      - name: Install Slang
+        run: |
+          SLANG_INSTALL_DIR="${RUNNER_TEMP}/slang" \
+          SLANG_DOWNLOAD_DIR="${RUNNER_TEMP}/slang-downloads" \
+          bash build-scripts/install-slang.sh
+          echo "${RUNNER_TEMP}/slang/bin" >> "${GITHUB_PATH}"
+
       - name: Generate shaders
         run: bash build-scripts/generate-shaders.sh
+
+      - name: Run Slang compute probe
+        continue-on-error: true
+        run: |
+          cmake -S . -B build/slang-probe -DCATA_SLANG_PROBE=ON -DTILES=OFF -DCURSES=OFF -DTESTS=OFF
+          cmake --build build/slang-probe --target cata_slang_probe
 
       - name: Upload generated shaders
         uses: actions/upload-artifact@v4
