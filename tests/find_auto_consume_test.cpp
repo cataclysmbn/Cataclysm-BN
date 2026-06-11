@@ -42,7 +42,7 @@ TEST_CASE( "auto_consume_priority", "[auto_consume][food][zone]" )
     avatar &you = get_avatar();
     you.setpos( zone_origin );
 
-    static auto create_zone = [ &, zone_origin_absolute,
+    auto create_zone = [ &, zone_origin_absolute,
        zone_size]( const std::string & name ) -> void {
         zmgr.add( name, zone_type_id( name ),
                   faction_id( "your_followers" ), false, true,
@@ -50,8 +50,8 @@ TEST_CASE( "auto_consume_priority", "[auto_consume][food][zone]" )
                   zone_origin_absolute + zone_size );
     };
 
-    static auto place_items = [&]( const std::vector<std::pair<item *, tripoint_bub_ms>> &item_pairs )
-                              ->
+    auto place_items = [&]( const std::vector<std::pair<item *, tripoint_bub_ms>> &item_pairs )
+                       ->
     void {
         for( const auto &[ item, pos ] : item_pairs )
         {
@@ -59,7 +59,7 @@ TEST_CASE( "auto_consume_priority", "[auto_consume][food][zone]" )
         }
     };
 
-    static const auto auto_consume = [&]( consume_type consume ) {
+    const auto auto_consume = [&]( consume_type consume ) {
         return [&you, consume]( int count ) -> bool {
             bool ok = true;
             for( int i = 0; i < count; i++ )
@@ -73,7 +73,7 @@ TEST_CASE( "auto_consume_priority", "[auto_consume][food][zone]" )
     using PosCounts = std::vector<std::pair<tripoint_bub_ms, int>>;
 
     SECTION( "auto_eat" ) {
-        static const auto check_item_count =
+        const auto check_item_count =
         [&]( const PosCounts & expected ) -> void {
             for( const auto&[ pos, count ] : expected )
             {
@@ -87,7 +87,7 @@ TEST_CASE( "auto_consume_priority", "[auto_consume][food][zone]" )
             }
         };
 
-        static const auto auto_eat = auto_consume( consume_type::FOOD );
+        const auto auto_eat = auto_consume( consume_type::FOOD );
 
         clear_avatar();
         you.set_stored_kcal( 1000 );
@@ -115,7 +115,7 @@ TEST_CASE( "auto_consume_priority", "[auto_consume][food][zone]" )
     }
 
     SECTION( "auto_drink" ) {
-        static const auto check_drink_amount =
+        const auto check_drink_amount =
         [&]( const PosCounts & expected ) -> void {
             for( const auto&[ pos, count ] : expected )
             {
@@ -130,7 +130,7 @@ TEST_CASE( "auto_consume_priority", "[auto_consume][food][zone]" )
             }
         };
 
-        static const auto auto_drink = auto_consume( consume_type::DRINK );
+        const auto auto_drink = auto_consume( consume_type::DRINK );
 
         create_zone( "AUTO_DRINK" );
 

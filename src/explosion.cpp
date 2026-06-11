@@ -23,6 +23,7 @@
 #include "catalua_sol.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "character.h"
 #include "catalua_coord.h"
 #include "cata_utility.h"
 #include "cata_algo.h"
@@ -96,6 +97,17 @@ static const bionic_id bio_sunglasses( "bio_sunglasses" );
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_e_handcuffs( "e_handcuffs" );
 static const itype_id itype_rm13_armor_on( "rm13_armor_on" );
+
+namespace
+{
+auto is_dead_for_explosion( const Creature &critter ) -> bool
+{
+    if( const auto *const character = dynamic_cast<const Character *>( &critter ) ) {
+        return character->Character::is_dead_state();
+    }
+    return critter.is_dead_state();
+}
+} // namespace
 
 static float obstacle_blast_percentage( float range, float distance )
 {
@@ -642,7 +654,7 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
     fragment.add_effect( ammo_effect_NULL_SOURCE );
 
     auto critter = g->critter_at( position );
-    if( critter && !critter->is_dead_state() ) {
+    if( critter && !is_dead_for_explosion( *critter ) ) {
         int damage_taken = 0;
         const auto bps = critter->get_all_body_parts( true );
         // Humans get hit in all body parts
@@ -739,7 +751,8 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
         {
             Creature *critter = g->critter_at( position );
 
-            if( critter != nullptr && !mobs_blasted.contains( critter ) ) {
+            if( critter != nullptr && !is_dead_for_explosion( *critter ) &&
+                !mobs_blasted.contains( critter ) ) {
                 const int blast_damage = blast_power * critter_blast_percentage( critter, blast_radius,
                                          rl_distance );
                 const auto shockwave_dmg = damage_instance::physical( blast_damage, 0, 0, 0.4f );
@@ -788,7 +801,7 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
         {
             Creature *critter = g->critter_at( position );
 
-            if( critter != nullptr && !flung_set.contains( critter ) ) {
+            if( critter != nullptr && !is_dead_for_explosion( *critter ) && !flung_set.contains( critter ) ) {
                 const int push_strength = ( blast_radius - rl_distance ) * blast_power;
                 const float move_power = ExplosionConstants::MOB_FLING_FACTOR * push_strength;
 
@@ -969,6 +982,12 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
 
     if( !is_mob && !std::get<safe_reference<item>>( cur_target ) ) {
         return;
+    }
+    if( is_mob ) {
+        auto *const target = std::get<Creature *>( cur_target );
+        if( target == nullptr || is_dead_for_explosion( *target ) || target->bub_pos() != position ) {
+            return;
+        }
     }
 
     map &here = get_map();
@@ -1283,7 +1302,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
             continue;
         }
         auto critter = g->critter_at( target );
-        if( critter && !critter->is_dead_state() ) {
+        if( critter && !is_dead_for_explosion( *critter ) ) {
             // dealt_dag->m.total_damage() == 0 means armor block
             // dealt_dag->m.total_damage() > 0 means took damage
             // Need to diffentiate target among player, npc, and monster
