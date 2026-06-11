@@ -10422,11 +10422,6 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             levels.push_back( z );
         }
     };
-    auto add_all_gpu_dirty_levels = [&]( auto & levels ) {
-        std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [&]( const int z ) {
-            add_gpu_dirty_level( levels, z );
-        } );
-    };
     auto normalize_gpu_dirty_levels = []( auto & levels ) {
         std::ranges::sort( levels );
         levels.erase( std::ranges::unique( levels ).begin(), levels.end() );

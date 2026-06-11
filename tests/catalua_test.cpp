@@ -107,6 +107,32 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_npc_avatar_name == "nil" );
 }
 
+TEST_CASE( "lua_map_create_item_at_places_without_returning_owned_item", "[lua][map]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto &here = get_map();
+    const auto pos = get_avatar().bub_pos();
+    here.i_clear( pos );
+    test_data["pos"] = pos;
+
+    const auto script_res = lua.safe_script( R"(
+local map = gapi.get_map()
+local placed = map:create_item_at(test_data["pos"], ItypeId.new("rock"), 1)
+test_data["return_type"] = type(placed)
+test_data["item_count"] = #map:get_items_at(test_data["pos"])
+)", sol::script_pass_on_error );
+    REQUIRE( script_res.valid() );
+
+    CHECK( test_data.get<std::string>( "return_type" ) == "nil" );
+    CHECK( test_data.get<int>( "item_count" ) == 1 );
+
+    here.i_clear( pos );
+}
+
 TEST_CASE( "lua_activity_bindings", "[lua]" )
 {
     clear_all_state();
@@ -230,17 +256,22 @@ TEST_CASE( "lua_place_monster_pins_upgrade_time", "[lua][monster]" )
     put_player_underground();
     calendar::turn = calendar::start_of_cataclysm + 2 * calendar::season_length();
 
+    const auto monster_id = mtype_id( "mon_test_lua_upgrade_zombie" );
+    const auto &monster_type = monster_id.obj();
+    REQUIRE( monster_type.upgrades );
+    REQUIRE( monster_type.age_grow == 14 );
+
     auto lua = make_lua_state();
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
-    test_data["monster_id"] = mtype_id( "mon_zombie" );
+    test_data["monster_id"] = monster_id;
     test_data["pos"] = tripoint_bub_ms{ 5, 5, 0 };
 
     run_lua_test_script( lua, "place_monster_upgrade_time_test.lua" );
 
     const auto current_day = to_days<int>( calendar::turn - calendar::turn_zero );
     REQUIRE( test_data.get<bool>( "monster_spawned" ) );
-    CHECK( test_data.get<std::string>( "monster_type" ) == "mon_zombie" );
+    CHECK( test_data.get<std::string>( "monster_type" ) == "mon_test_lua_upgrade_zombie" );
     CHECK( test_data.get<int>( "upgrade_time" ) > current_day );
 }
 

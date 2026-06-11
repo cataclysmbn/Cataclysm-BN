@@ -14,5 +14,16 @@
     "name": { "str": "unstabbable monster" },
     "description": "This monster exists only for testing purposes.",
     "armor_stab": 1000
+  },
+  {
+    "id": "mon_test_lua_upgrade_zombie",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "Lua upgrade test zombie" },
+    "description": "This monster exists only for testing purposes.",
+    "default_faction": "zombie",
+    "species": [ "ZOMBIE", "HUMAN" ],
+    "symbol": "Z",
+    "upgrades": { "age_grow": 14, "into": "mon_zombie" }
   }
 ]
