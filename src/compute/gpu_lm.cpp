@@ -238,7 +238,7 @@ auto load_pipeline(
     SDL_GPUComputePipelineCreateInfo const info{
         .code_size = blob.size(),
         .code = reinterpret_cast<Uint8 const*>(blob.data()),
-        .entrypoint = "main",
+        .entrypoint = compute_shader_entrypoint(fmt),
         .format = fmt,
         .num_samplers = 0,
         .num_readonly_storage_textures = 0,
