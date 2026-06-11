@@ -267,7 +267,6 @@
             "additional_tiles": [ { "id": "broken", "fg": 185 } ]
           },
           { "id": "f_rain_collector_plumbed", "fg": 186 },
-          { "id": "vp_light_white", "fg": 187 },
           { "id": "bearskin_hat", "fg": 187 },
           { "id": "t_door_window_c", "fg": 189 },
           { "id": "t_door_window_o", "fg": 190 },
@@ -337,7 +336,8 @@
           { "id": [ "armor_trench", "overlay_wielded_armor_trench" ], "fg": 228 },
           { "id": "overlay_worn_armor_trench", "fg": 229 },
           { "id": [ "helm_trench", "overlay_wielded_helm_trench" ], "fg": 230 },
-          { "id": "overlay_worn_helm_trench", "fg": 231 }
+          { "id": "overlay_worn_helm_trench", "fg": 231 },
+          { "id": "vp_light_white", "fg": 232 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
