@@ -246,6 +246,14 @@ void cata::detail::reg_game_api( sol::state &lua )
         std::optional<tripoint_bub_ms> stdOpt = choose_adjacent_uilist( message, failure_message, allowed, name );
         return sol::optional<tripoint_bub_ms>( *stdOpt );
     } );
+    luna::set_fx( lib, "choose_area", [](
+        const std::string &message,
+        const tripoint_bub_ms &start_pos,
+        const bool allow_vertical
+    ) -> std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> {
+        std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> area = choose_area( message, start_pos, allow_vertical );
+        return std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>>( *area );
+    } );
 
     luna::set_fx( lib, "choose_direction", []( const std::string & message,
     sol::optional<bool> allow_vertical ) -> sol::optional<tripoint_rel_ms> {
