@@ -357,10 +357,11 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         DOC( "Creates a new item(s) at a position on the map." );
+        DOC( "Returns nil. Use gapi.create_item and Map:add_item to modify before placement." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint_bub_ms & p, const itype_id & itype,
-        int count ) -> item* {
-            detached_ptr<item> new_item = item::spawn( itype, calendar::turn, count );
-            return m.add_item_or_charges( p, std::move( new_item ) ).get();
+        int count ) -> void {
+            auto new_item = item::spawn( itype, calendar::turn, count );
+            m.add_item_or_charges( p, std::move( new_item ) );
         } );
 
         DOC( "Spawns a random artifact at a position on the map." );

@@ -107,6 +107,32 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_npc_avatar_name == "nil" );
 }
 
+TEST_CASE( "lua_map_create_item_at_places_without_returning_owned_item", "[lua][map]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto &here = get_map();
+    const auto pos = get_avatar().bub_pos();
+    here.i_clear( pos );
+    test_data["pos"] = pos;
+
+    const auto script_res = lua.safe_script( R"(
+local map = gapi.get_map()
+local placed = map:create_item_at(test_data["pos"], ItypeId.new("rock"), 1)
+test_data["return_type"] = type(placed)
+test_data["item_count"] = #map:get_items_at(test_data["pos"])
+)", sol::script_pass_on_error );
+    REQUIRE( script_res.valid() );
+
+    CHECK( test_data.get<std::string>( "return_type" ) == "nil" );
+    CHECK( test_data.get<int>( "item_count" ) == 1 );
+
+    here.i_clear( pos );
+}
+
 TEST_CASE( "lua_activity_bindings", "[lua]" )
 {
     clear_all_state();
