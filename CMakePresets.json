@@ -46,6 +46,7 @@
         "CURSES": "ON",
         "TILES": "OFF",
         "SOUND": "OFF",
+        "LIBBACKTRACE": "ON",
         "USE_PREFIX_DATA_DIR": "OFF",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "LINKER": "mold",
