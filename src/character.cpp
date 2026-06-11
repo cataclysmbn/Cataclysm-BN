@@ -11648,11 +11648,12 @@ float Character::hearing_ability() const
         volume_multiplier *= .25;
     }
     // Account for our hearing protection.
-    const auto hearing_dampening = dBspl_to_mdBspl( get_char_hearing_protection() );
-    if( hearing_dampening > 0 ) {
-        volume_multiplier *= get_ear_protection_hearing_reduction( hearing_dampening );
+    if(get_char_hearing_protection() > 190 ) {
+        return 0.0;
+    } else if ( get_char_hearing_protection() > 0 ) {
+        const float hearing_dampening = get_char_hearing_protection();
+        volume_multiplier *= 191.0 / ( 191.0 - hearing_dampening );
     }
-
     return volume_multiplier;
 }
 

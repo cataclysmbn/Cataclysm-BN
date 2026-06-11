@@ -1487,11 +1487,12 @@ auto submap::rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid
     for( const auto &sp : submap_tiles() ) {
         const tripoint_bub_ms &btri = abs_trip + sp.raw();
         // See if there is a vehicle in our given tripoint.
-        // If there is, if there is a full board or a closed door, return thick barrier sound absorption.
+        // If there is, if there is a full board, a closed door, or a window, return thick barrier sound absorption.
         // We could technically run through checking adjacent tiles as we do below, but vehicles are dynamic and rechecking all of the vehicles tiles every turn would not provide enough benifit.
         if( const auto &vp = m.veh_at( btri ) ) {
             if( vp.part_with_feature( "FULL_BOARD", true ) || ( vp.obstacle_at_part() &&
-                    vp.part_with_feature( "OPENABLE", true ) ) ) {
+                    ( vp.part_with_feature( VPFLAG_OPENABLE, true ) ||
+                      vp->part_with_feature( VPFLAG_WINDOW, true ) ) ) ) {
                 absorption_cache[sp.x()][sp.y()] = SOUND_ABSORPTION_THICK_BARRIER;
                 sound_wall_cache[sp.x()][sp.y()] = true;
                 continue;
@@ -2449,7 +2450,7 @@ void sounds::process_sounds_npc()
             bool is_deaf = who.is_deaf();
             const auto &loc = who.bub_pos();
             const auto &level_cache = map.get_cache_ref( loc.z() );
-            const float volume_multiplier = who.hearing_ability();
+            const auto &volume_multiplier = who.hearing_ability();
             // Deafening is based on the loudest volume at that tile.
             // A deaf npc might not "hear" the deafening sound but still suffer additional hearing loss.
             // The average pain threshold is generally taken as 120dB.
@@ -2467,11 +2468,11 @@ void sounds::process_sounds_npc()
             const short below_ambient = std::min( 3000.0f,
                                                   ( std::floor( 1500 + 500 * volume_multiplier ) ) );
 
-            const auto charx = loc.x();
-            const auto chary = loc.y();
+            const auto &charx = loc.x();
+            const auto &chary = loc.y();
             const auto npc_indoors = !level_cache.outside_cache[level_cache.idx( charx, chary )];
             const auto ambient_vol = ambient( loc.z(), npc_indoors );
-            // Passive sound dampening reduces all heard volume by a set amount, but protects against hearing loss by same amount.
+            // Passive sound dampening reduces all heard volume by a set amount.
             const short passive_sound_dampening = dBspl_to_mdBspl( who.get_char_hearing_protection() );
             // Active dampening does not reduce heard volume and directly protects against hearing loss.
             const short active_sound_dampening = dBspl_to_mdBspl( who.get_char_hearing_protection( true ) );
@@ -2497,13 +2498,13 @@ void sounds::process_sounds_npc()
                 // Do an early filter for sounds that would always be indaudible.
                 // Check to see if the NPC is deaf here as well, as we may deafen them part way through the process.
                 const auto tile_vol = svol_at( element, who.bub_pos(), average_t_absorp,
-                                               npc_indoors, who.sees( element.origin ) );
+                                               npc_indoors, who.sees( element.origin, element.from_player ) );
 
                 if( tile_vol <= min_vol ) {
                     continue;
                 }
 
-                if( tile_vol  > min_vol && !who.is_deaf() ) {
+                if( tile_vol > min_vol && !is_deaf ) {
 
                     // We only want to feed NPC AI sounds they should react to.
                     // This is more than a bit hackey and gives the NPCs a bit of omniscience,
@@ -2644,7 +2645,7 @@ void sounds::process_sound_markers( Character *who )
         }
         // And set the sound as having been heard by the player, before we potentially skip it for volume reasons.
         element.heard_by_player = true;
-        if( element.sound.volume >= mdBspl_to_dBspl( MAXIMUM_VOLUME_ATMOSPHERE ) ) {
+        if( element.sound.volume > mdBspl_to_dBspl( MAXIMUM_VOLUME_ATMOSPHERE ) ) {
             // Dont count impossibly loud sounds.
             add_msg( m_debug,
                      "Player given sound louder than possible in Atmosphere! Sound with description [ %1s ] from %i:%i:%i with an origin volume of %i dB is louder than possible.",
@@ -3371,14 +3372,14 @@ void sfx::generate_gun_sound( const tripoint_bub_ms &source, const item &firing,
         const auto mods = firing.gunmods();
         if( std::ranges::any_of( mods,
         []( const item * e ) {
-        return e->type->gunmod->loudness < 0;
+        return e->type->gunmod->loudness < -20;
     } ) ) {
             weapon_id = itype_weapon_fire_suppressed;
         }
 
     } else {
         angle = get_heard_angle( source );
-        if( heard_volume >= 60 ) {
+        if( heard_volume >= 100 ) {
             selected_sound = "fire_gun";
         } else {
             selected_sound = "fire_gun_distant";
