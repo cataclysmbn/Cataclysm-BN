@@ -147,6 +147,7 @@
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
     "barrel_volume": "250 ml",
     "handling": 20,
+    "loudness": 0,
     "valid_mod_locations": [
       [ "accessories", 3 ],
       [ "barrel", 1 ],
@@ -182,7 +183,8 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 620,
     "durability": 7,
-    "clip_size": 5
+    "clip_size": 5,
+    "loudness": 2
   },
   {
     "id": "tommygun",

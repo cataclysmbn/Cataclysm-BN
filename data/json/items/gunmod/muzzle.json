@@ -41,7 +41,7 @@
     "location": "muzzle",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ], [ "SHOTGUNS" ] ],
     "handling_modifier": 10,
-    "loudness_modifier": 5
+    "loudness_modifier": 4
   },
   {
     "id": "muzzle_brake_mod",

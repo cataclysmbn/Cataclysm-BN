@@ -201,7 +201,7 @@
     "bashing": 12,
     "skill": "rifle",
     "handling": 20,
-    "loudness": -5,
+    "loudness": -4,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],
@@ -280,7 +280,7 @@
     "dispersion": 550,
     "durability": 6,
     "blackpowder_tolerance": 72,
-    "loudness": 0,
+    "loudness": -2,
     "clip_size": 1,
     "reload": 200,
     "valid_mod_locations": [
@@ -400,7 +400,7 @@
     "looks_like": "remington_870",
     "ammo": "shot",
     "handling": 20,
-    "loudness": -5,
+    "loudness": -4,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],
@@ -469,7 +469,7 @@
     "ascii_picture": "hk_mp5a2",
     "skill": "smg",
     "handling": 30,
-    "loudness": -5,
+    "loudness": -2,
     "valid_mod_locations": [
       [ "accessories", 3 ],
       [ "barrel", 1 ],
@@ -512,7 +512,7 @@
     "valid_mod_locations": [ [ "brass catcher", 1 ], [ "sling", 1 ], [ "rail", 1 ], [ "sights", 1 ] ],
     "flags": [ "MOUNTED_GUN" ],
     "blackpowder_tolerance": 48,
-    "loudness": -5,
+    "loudness": -4,
     "faults": [ "fault_gun_blackpowder", "fault_gun_dirt" ]
   },
   {
