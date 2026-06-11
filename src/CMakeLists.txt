@@ -11,7 +11,7 @@ list(REMOVE_ITEM CATACLYSM_BN_SOURCES ${MAIN_CPP} ${MESSAGES_CPP})
 # compile them with no optimization to reduce build times.
 file(GLOB CATALUA_BINDINGS_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/catalua_bindings*.cpp)
 if (MSVC)
-    set(CATALUA_BINDINGS_COMPILE_OPTIONS /Od)
+    set(CATALUA_BINDINGS_COMPILE_OPTIONS /Od /Ob0)
 else ()
     set(CATALUA_BINDINGS_COMPILE_OPTIONS -O0 -g0)
 endif ()
@@ -103,12 +103,6 @@ function(setup_common_target_properties target_name)
         target_link_libraries(${target_name} PUBLIC TracyClient)
         target_include_directories(${target_name} SYSTEM PUBLIC ${tracy_SOURCE_DIR}/public)
         target_compile_definitions(${target_name} PUBLIC USE_TRACY)
-    endif ()
-
-    # Set up precompiled headers if not exporting compile commands
-    if (NOT "${CMAKE_EXPORT_COMPILE_COMMANDS}")
-        target_precompile_headers(${target_name} PRIVATE
-            ${CMAKE_SOURCE_DIR}/pch/main-pch.hpp)
     endif ()
 endfunction()
 

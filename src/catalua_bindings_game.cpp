@@ -1,6 +1,7 @@
 #include "catalua_bindings.h"
 #include "catalua_coord.h"
 #include "catalua_bindings_utils.h"
+#include "catalua_bindings_game_internal.h"
 #include "catalua_impl.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
@@ -50,22 +51,7 @@ auto place_lua_monster_around( const mtype_id &id, const tripoint_bub_ms &center
     return placed;
 }
 
-auto direction_from_relative_delta( const cata::detail::lua_coords::lua_tripoint_coord &delta ) ->
-direction
-{
-    if( delta.origin != coords::origin::relative ) {
-        throw std::runtime_error( "direction_from expects a relative TripointCoord delta" );
-    }
-    return direction_from( delta.raw );
-}
 
-auto overmap_terrain_cardinal_directions() -> std::vector<tripoint_rel_omt>
-{
-    return std::vector<tripoint_rel_omt> {
-        tripoint_rel_omt::north(), tripoint_rel_omt::south(), tripoint_rel_omt::east(),
-        tripoint_rel_omt::west(), tripoint_rel_omt::above(), tripoint_rel_omt::below()
-    };
-}
 
 } // namespace
 
@@ -271,175 +257,8 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "add_npc_follower", []( npc & p ) { g->add_npc_follower( p.getID() ); } );
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );
 
-    DOC( "Returns all active creatures (monsters, NPCs, and the player) as a Lua array." );
-    luna::set_fx( lib, "get_all_creatures", []( sol::this_state s ) -> sol::table {
-        sol::state_view lua( s );
-        auto out = lua.create_table();
-        auto npc_rng = g->all_npcs();
-        auto mon_rng = g->all_monsters();
-        int idx = 1;
-        out[idx++] = static_cast<Creature *>( &g->u );
-        if( npc_rng.items )
-        {
-            std::ranges::for_each(
-                *npc_rng.items
-            | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
-            | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool { return sp && !sp->is_dead(); } ),
-            [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = static_cast<Creature *>( sp.get() ); } );
-        }
-        if( mon_rng.items )
-        {
-            std::ranges::for_each(
-                *mon_rng.items
-            | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )
-            | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool { return sp && !sp->is_dead(); } ),
-            [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = static_cast<Creature *>( sp.get() ); } );
-        }
-        return out;
-    } );
-
-    DOC( "Returns all active NPCs as a Lua array." );
-    luna::set_fx( lib, "get_all_npcs", []( sol::this_state s ) -> sol::table {
-        sol::state_view lua( s );
-        auto out = lua.create_table();
-        auto rng = g->all_npcs();
-        int idx = 1;
-        if( rng.items )
-        {
-            std::ranges::for_each(
-                *rng.items
-            | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
-            | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool { return sp && !sp->is_dead(); } ),
-            [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
-        }
-        return out;
-    } );
-
-    DOC( "Returns all active monsters as a Lua array." );
-    luna::set_fx( lib, "get_all_monsters", []( sol::this_state s ) -> sol::table {
-        sol::state_view lua( s );
-        auto out = lua.create_table();
-        auto rng = g->all_monsters();
-        int idx = 1;
-        if( rng.items )
-        {
-            std::ranges::for_each(
-                *rng.items
-            | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )
-            | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool { return sp && !sp->is_dead(); } ),
-            [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = sp.get(); } );
-        }
-        return out;
-    } );
-
-    DOC( "Returns active NPCs near an absolute overmap terrain tile as a Lua array.  " );
-    DOC( "Takes a table with keys: `center`, `radius`, and optional `ignore_z`." );
-    luna::set_fx( lib, "get_npcs_near_omt", []( sol::this_state s, sol::table params ) -> sol::table {
-        sol::state_view lua( s );
-        auto out = lua.create_table();
-        const auto p = params["center"].get<tripoint_abs_omt>();
-        const auto radius = params["radius"].get_or( 0 );
-        const auto all_z = params["ignore_z"].get_or( false );
-        auto idx = 1;
-        auto npcs = g->all_npcs();
-        if( npcs.items )
-        {
-            std::ranges::for_each(
-                *npcs.items
-            | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
-            | std::views::filter( [&]( const shared_ptr_fast<npc> &sp ) -> bool {
-                if( !sp || sp->is_dead() || sp->marked_for_death )
-                {
-                    return false;
-                }
-                const auto pos = sp->abs_omt_pos();
-                return ( all_z || pos.z() == p.z() ) && square_dist( pos.xy(), p.xy() ) <= radius;
-            } ),
-            [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
-        }
-        return out;
-    } );
-
-
-    DOC( "Returns active monsters near an absolute overmap terrain tile as a Lua array.  " );
-    DOC( "Takes a table with keys: `center`, `radius`, and optional `ignore_z`." );
-    luna::set_fx( lib, "get_monsters_near_omt", []( sol::this_state s,
-    sol::table params ) -> sol::table {
-        sol::state_view lua( s );
-        auto out = lua.create_table();
-        const auto p = params["center"].get<tripoint_abs_omt>();
-        const auto radius = params["radius"].get_or( 0 );
-        const auto all_z = params["ignore_z"].get_or( false );
-        auto idx = 1;
-        std::ranges::for_each(
-            g->critter_tracker->get_monsters_list()
-        | std::views::filter( [&]( const shared_ptr_fast<monster> &sp ) -> bool {
-            if( !sp || sp->is_dead() )
-            {
-                return false;
-            }
-            const auto pos = project_to<coords::omt>( sp->abs_pos() );
-            return ( all_z || pos.z() == p.z() ) && square_dist( pos.xy(), p.xy() ) <= radius;
-        } ),
-        [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = sp.get(); } );
-        return out;
-    } );
-
-
-    DOC( "Returns NPCs in simulated (fully loaded, AI-eligible) submaps as a Lua array." );
-    luna::set_fx( lib, "get_simulated_npcs", []( sol::this_state s ) -> sol::table {
-        sol::state_view lua( s );
-        auto out = lua.create_table();
-        auto rng = g->all_npcs();
-        int idx = 1;
-        if( rng.items )
-        {
-            std::ranges::for_each(
-                *rng.items
-            | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
-            | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool {
-                return sp && !sp->is_dead() && sp->is_simulated();
-            } ),
-            [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
-        }
-        return out;
-    } );
-
-    DOC( "Get the global overmap buffer" );
-    luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return get_active_overmapbuffer(); } );
-    DOC( "Run a built-in examine action at a position." );
-    luna::set_fx( lib, "call_builtin_examine",
-    []( const std::string & examine_id, player & who, const tripoint_bub_ms & pos ) -> void {
-        iexamine_function_from_string( examine_id )( who, pos );
-    } );
-
-    DOC( "Get direction from a relative tripoint coordinate delta." );
-    luna::set_fx( lib, "direction_from", &direction_from_relative_delta );
-
-    DOC( "Get direction name from direction enum" );
-    luna::set_fx( lib, "direction_name", []( direction dir ) -> std::string { return direction_name( dir ); } );
-
-    DOC( "Get the six cardinal overmap-terrain direction offsets (N, S, E, W, Up, Down)." );
-    luna::set_fx( lib, "six_cardinal_directions", &overmap_terrain_cardinal_directions );
-
-    DOC( "Get the player's pet monsters" );
-    luna::set_fx( lib, "get_player_pets", []( sol::this_state s ) -> sol::table {
-        sol::state_view lua( s );
-        auto out = lua.create_table();
-        auto rng = g->all_monsters();
-        auto idx = 1;
-        if( rng.items )
-        {
-            std::ranges::for_each(
-                *rng.items
-            | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )
-            | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool {
-                return sp && !sp->is_dead() && sp->is_pet();
-            } ),
-            [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = sp.get(); } );
-        }
-        return out;
-    } );
+    reg_game_api_creature_queries( lib );
+    reg_game_api_world_helpers( lib );
 
     luna::finalize_lib( lib );
 }
