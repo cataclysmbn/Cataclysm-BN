@@ -16,7 +16,7 @@
     "dispersion": 10,
     "durability": 10,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ],
-    "loudness": 23,
+    "loudness": 75,
     "ups_charges": 60,
     "valid_mod_locations": [
       [ "accessories", 4 ],
@@ -46,7 +46,7 @@
     "range": 30,
     "ranged_damage": { "damage_type": "heat", "amount": 40, "armor_penetration": 5 },
     "dispersion": 100,
-    "loudness": 12,
+    "loudness": 60,
     "ups_charges": 50,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 5 ], [ "AUTO", "auto", 10 ] ],
     "ammo_effects": [ "LASER", "PLASMA_BUBBLE", "INCENDIARY" ],
@@ -82,7 +82,7 @@
     "range": 45,
     "ranged_damage": { "damage_type": "heat", "amount": 80, "armor_penetration": 10 },
     "dispersion": 15,
-    "loudness": 1,
+    "loudness": 30,
     "ups_charges": 100,
     "ammo_effects": [ "LASER", "PLASMA_BUBBLE", "INCENDIARY" ],
     "extend": { "flags": [ "NO_UNWIELD", "NO_REPAIR", "NO_SALVAGE", "UNBREAKABLE_MELEE" ] }
@@ -117,7 +117,7 @@
     "dispersion": 90,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ],
     "durability": 7,
-    "loudness": 8,
+    "loudness": 60,
     "ups_charges": 60,
     "valid_mod_locations": [
       [ "emitter", 1 ],
@@ -154,7 +154,7 @@
     "ranged_damage": { "damage_type": "heat", "amount": 25, "armor_penetration": 4 },
     "dispersion": 10,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
-    "loudness": 12,
+    "loudness": 60,
     "ups_charges": 40,
     "ammo_effects": [ "LASER", "INCENDIARY" ]
   },
@@ -173,7 +173,7 @@
     "range": 30,
     "ranged_damage": { "damage_type": "heat", "amount": 16, "armor_penetration": 4 },
     "dispersion": 180,
-    "loudness": 7,
+    "loudness": 60,
     "ups_charges": 20,
     "ammo_effects": [ "LASER", "INCENDIARY" ]
   },
@@ -194,7 +194,7 @@
     "ranged_damage": { "damage_type": "heat", "amount": 15 },
     "dispersion": 150,
     "durability": 6,
-    "loudness": 14,
+    "loudness": 70,
     "ups_charges": 30,
     "ammo_effects": [ "LASER", "INCENDIARY" ]
   },

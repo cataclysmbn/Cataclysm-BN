@@ -16,6 +16,8 @@
     "ammo_type": "bola",
     "effects": [ "TANGLE", "NO_DAMAGE" ],
     "drop": "bolas",
+    "loudness": 0,
+    "speed": 30,
     "flags": [ "NO_DAMAGE", "TANGLE", "PRIMITIVE_RANGED_WEAPON" ]
   },
   {
@@ -36,6 +38,8 @@
     "effects": [ "TANGLE", "NO_DAMAGE" ],
     "damage": { "damage_type": "bash", "amount": 0 },
     "dispersion": 0,
+    "loudness": 0,
+    "speed": 30,
     "drop": "bolas",
     "flags": [ "NO_DAMAGE", "TANGLE", "PRIMITIVE_RANGED_WEAPON" ]
   },
@@ -85,6 +89,8 @@
     "symbol": "H",
     "color": "white",
     "to_hit": -2,
+    "loudness": 0,
+    "speed": 30,
     "ammo_type": "thrown",
     "flags": [ "NO_DAMAGE", "NET_TANGLE", "TANGLE", "PRIMITIVE_RANGED_WEAPON" ]
   },
@@ -197,6 +203,8 @@
     "symbol": ";",
     "color": "brown",
     "ammo_type": "thrown",
+    "loudness": 0,
+    "speed": 30,
     "flags": [ "NOGIB" ]
   }
 ]
