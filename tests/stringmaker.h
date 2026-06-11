@@ -8,6 +8,7 @@
 #include "cuboid_rectangle.h"
 #include "catch/catch.hpp"
 #include "cata_variant.h"
+#include "coordinates.h"
 #include "dialogue.h"
 #include "distribution_grid.h"
 #include "item.h"

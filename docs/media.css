@@ -1,0 +1,20 @@
+.body img,
+.body video {
+  max-width: 100%;
+  height: auto;
+}
+
+.body table:has(img, video) {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.body table:has(img, video) td,
+.body table:has(img, video) th {
+  vertical-align: top;
+}
+
+.body table:has(img, video) img,
+.body table:has(img, video) video {
+  width: 100%;
+}

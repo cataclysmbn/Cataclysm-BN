@@ -1,0 +1,57 @@
+[
+  {
+    "type": "enchantment",
+    "id": "ENCH_CBM_TEMPORAL_STIMULATION",
+    "condition": "ACTIVE",
+    "ench_effects": [ { "effect": "temporal_stimulation_effect", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "ENCH_CBM_LIFE_SIGN_SUPPRESSION",
+    "condition": "ACTIVE",
+    "mutations": [ "ARCANA_LIFE_SIGN_SUPPRESSION" ],
+    "ench_effects": [ { "effect": "life_sign_suppression_debuff", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "ENCH_DRAGONBLOOD_ELEMENTAL_AFFINITY",
+    "condition": "ALWAYS",
+    "values": [ { "value": "ARMOR_COLD", "multiply": 0.5 } ],
+    "ench_effects": [ { "effect": "heat_ward_dragonblood", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "ENCH_DRAGONBLOOD_SCALY_WINGS",
+    "condition": "ALWAYS",
+    "//": "Only here for consistency with below stat mods.",
+    "values": [ { "value": "STRENGTH", "add": 2 }, { "value": "DEXTERITY", "add": -1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "ENCH_DRAGONBLOOD_DRACONIC_WINGS",
+    "condition": "ALWAYS",
+    "//": "Moved here instead of passive stat buffs in the mutation as active mutations act weird.",
+    "values": [ { "value": "STRENGTH", "add": 5 }, { "value": "DEXTERITY", "add": -2 } ],
+    "ench_effects": [ { "effect": "feather_fall_dragonblood", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "ENCH_DRAGONBLOOD_TOXINIMMUNE_2",
+    "condition": "ALWAYS",
+    "ench_effects": [ { "effect": "food_protect_dragonblood", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "ENCH_DRAGONBLOOD_KNOCKDOWN",
+    "condition": "ALWAYS",
+    "hit_you_effect": [
+      {
+        "id": "arcana_react_dragonblood_knockdown",
+        "hit_self": false,
+        "once_in": 20,
+        "message": "The force of your strike floors %2$s!",
+        "npc_message": "The force of %1$s's strike floors %2$s!"
+      }
+    ]
+  }
+]

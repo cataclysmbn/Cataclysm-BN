@@ -128,6 +128,7 @@ ignorable = {
     "vehicle_group",
     "vehicle_placement",
     "WORLD_OPTION",
+    "sound_effect",
 }
 
 # these objects can have their strings automatically extracted.
@@ -161,7 +162,6 @@ automatically_convertible = {
     "GENERIC",
     "item_action",
     "ITEM_CATEGORY",
-    "json_flag",
     "mutation_flag",
     "keybinding",
     "LOOT_ZONE",
@@ -191,7 +191,8 @@ automatically_convertible = {
     "vitamin",
     "WHEEL",
     "help",
-    "weather_type"
+    "weather_type",
+    "world_type"
 }
 
 # for these objects a plural form is needed
@@ -817,6 +818,13 @@ def extract_fault(state, item):
             writestr(state, method["success_msg"], format_strings=True, comment=f"Success message for mending method '{method['name']}' of fault '{item['name']}'")
 
 
+def extract_json_flag(state, item):
+    flag_id = item.get("id")
+    for field in ["info", "restriction", "tag"]:
+        if field in item:
+            writestr(state, item[field], comment=f"{field} for JSON flag '{flag_id}'")
+
+
 def extract_snippet(state, item):
     text = item["text"];
     if type(text) is not list:
@@ -859,6 +867,7 @@ extract_specials = {
     "recipe": extract_recipe,
     "scenario": extract_scenario,
     "skill_display_type": extract_skill_display_type,
+    "json_flag": extract_json_flag,
     "snippet": extract_snippet,
     "talk_topic": extract_talk_topic,
     "technique": extract_technique,
@@ -1009,6 +1018,7 @@ def extract_use_action_msgs(state, use_action, it_name):
             extract_use_action_msgs(state, v, it_name)
 
 found_types = set();
+warned_unknown_types = set();
 known_types = ignorable | extract_specials.keys() | automatically_convertible
 
 
@@ -1025,7 +1035,12 @@ def extract_json(state, item):
         extract_specials[object_type](state, item)
         return
     elif object_type not in automatically_convertible:
-        raise WrongJSONItem(f"ERROR: Unrecognized object type '{object_type}'!", item)
+        if object_type not in warned_unknown_types:
+            warned_unknown_types.add(object_type)
+            print(
+                f"WARNING: Skipping unrecognized object type '{object_type}' in '{state.current_source_file}'"
+            )
+        return
     if object_type not in known_types:
         print(f"WARNING: known_types does not contain object type '{object_type}'")
     # Use mod id as project name if project name is not specified

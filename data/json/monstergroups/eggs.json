@@ -141,5 +141,128 @@
       { "monster": "mon_dragonfly_naiad", "freq": 500, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
       { "monster": "mon_dragonfly_naiad", "freq": 500, "cost_multiplier": 1, "conditions": [ "SUMMER" ] }
     ]
+  },
+  {
+    "name": "GROUP_EGG_FISH_T",
+    "type": "monstergroup",
+    "default": "mon_null",
+    "monsters": [
+      { "monster": "mon_fish_white_bass", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_sunfish", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_pumpkinseed", "freq": 100, "cost_multiplier": 1, "conditions": [ "SUMMER" ] },
+      { "monster": "mon_fish_redbreast", "freq": 100, "cost_multiplier": 1, "conditions": [ "SUMMER" ] },
+      { "monster": "mon_fish_green_sunfish", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      {
+        "monster": "mon_fish_longear_sunfish",
+        "freq": 100,
+        "cost_multiplier": 1,
+        "conditions": [ "SPRING", "SUMMER" ]
+      },
+      { "monster": "mon_fish_redear_sunfish", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING" ] },
+      { "monster": "mon_fish_rock_bass", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_white_catfish", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_pickerel", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING" ] },
+      {
+        "monster": "mon_dragonfly_naiad",
+        "freq": 100,
+        "cost_multiplier": 1,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      }
+    ]
+  },
+  {
+    "name": "GROUP_EGG_FISH_S",
+    "type": "monstergroup",
+    "default": "mon_null",
+    "monsters": [
+      { "monster": "mon_fish_brook_trout", "freq": 100, "cost_multiplier": 1, "conditions": [ "FALL" ] },
+      { "monster": "mon_fish_sbass", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_perch", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_bluegill", "freq": 100, "cost_multiplier": 1, "conditions": [ "SUMMER" ] },
+      { "monster": "mon_fish_warmouth", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_bullhead", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_white_sucker", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING" ] },
+      { "monster": "mon_fish_fallfish", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING" ] },
+      {
+        "monster": "mon_dragonfly_naiad",
+        "freq": 100,
+        "cost_multiplier": 1,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      }
+    ]
+  },
+  {
+    "name": "GROUP_EGG_FISH_M",
+    "type": "monstergroup",
+    "default": "mon_null",
+    "monsters": [
+      { "monster": "mon_fish_trout", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_brown_trout", "freq": 100, "cost_multiplier": 1, "conditions": [ "FALL", "WINTER" ] },
+      { "monster": "mon_fish_rainbow_trout", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING" ] },
+      { "monster": "mon_fish_kokanee_salmon", "freq": 100, "cost_multiplier": 1, "conditions": [ "FALL", "WINTER" ] },
+      { "monster": "mon_fish_whitefish", "freq": 100, "cost_multiplier": 1, "conditions": [ "FALL", "WINTER" ] },
+      { "monster": "mon_fish_lbass", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_pbass", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_fish_walleye", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      {
+        "monster": "mon_fish_calico_bass",
+        "freq": 100,
+        "cost_multiplier": 1,
+        "conditions": [ "SPRING", "SUMMER", "FALL" ]
+      },
+      { "monster": "mon_fish_carp", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      {
+        "monster": "mon_dragonfly_naiad",
+        "freq": 100,
+        "cost_multiplier": 1,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      }
+    ]
+  },
+  {
+    "name": "GROUP_EGG_FISH_L",
+    "type": "monstergroup",
+    "default": "mon_null",
+    "monsters": [
+      { "monster": "mon_fish_lake_trout", "freq": 100, "cost_multiplier": 1, "conditions": [ "FALL" ] },
+      {
+        "monster": "mon_fish_steelhead_trout",
+        "freq": 100,
+        "cost_multiplier": 1,
+        "conditions": [ "WINTER", "SPRING" ]
+      },
+      { "monster": "mon_fish_coho_salmon", "freq": 100, "cost_multiplier": 1, "conditions": [ "FALL", "WINTER" ] },
+      {
+        "monster": "mon_fish_channel_catfish",
+        "freq": 100,
+        "cost_multiplier": 1,
+        "conditions": [ "SPRING", "SUMMER" ]
+      },
+      { "monster": "mon_fish_pike", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING" ] },
+      { "monster": "mon_fish_muskellunge", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING" ] },
+      { "monster": "mon_fish_bowfin", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      {
+        "monster": "mon_dragonfly_naiad",
+        "freq": 100,
+        "cost_multiplier": 1,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      }
+    ]
+  },
+  {
+    "name": "GROUP_EGG_FISH_H",
+    "type": "monstergroup",
+    "default": "mon_null",
+    "monsters": [
+      { "monster": "mon_fish_salmon", "freq": 100, "cost_multiplier": 1, "conditions": [ "FALL", "WINTER" ] },
+      { "monster": "mon_fish_chinook_salmon", "freq": 100, "cost_multiplier": 1, "conditions": [ "SUMMER", "FALL" ] },
+      { "monster": "mon_fish_grass_carp", "freq": 100, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      {
+        "monster": "mon_dragonfly_naiad",
+        "freq": 100,
+        "cost_multiplier": 1,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      }
+    ]
   }
 ]

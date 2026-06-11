@@ -3,7 +3,7 @@ name: Clang-tidy (tiles)
 on:
   # push:
   #   branches: [main]
-  #   paths: [ "**.cpp", "**.h", "**.c", "**/CMakeLists.txt", "**/Makefile", "**.hpp", "**.cmake", "build-scripts/**","tools/clang-tidy-plugin/**", ".github/workflows/clang-tidy.yml", "**/.clang-tidy" ]
+  #   paths: [ "**.cpp", "**.h", "**.c", "**/CMakeLists.txt", "**.hpp", "**.cmake", "build-scripts/**","tools/clang-tidy-plugin/**", ".github/workflows/clang-tidy.yml", "**/.clang-tidy" ]
   workflow_dispatch:
   pull_request:
     branches: [main]
@@ -13,7 +13,6 @@ on:
         "**.h",
         "**.c",
         "**/CMakeLists.txt",
-        "**/Makefile",
         "**.hpp",
         "**.cmake",
         "build-scripts/**",
@@ -32,8 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CMAKE: 1
-      CLANG: /usr/bin/clang++-20
-      COMPILER: /usr/bin/clang++-20
+      LLVM_VERSION: "22"
+      CLANG: clang++
+      COMPILER: clang++
       TILES: 1
       SOUND: 1
       BUILD_PATH: "build"
@@ -46,18 +46,41 @@ jobs:
       - name: install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install \
-            cmake gettext ninja-build mold jq \
-            libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev \
-            sqlite3 libsqlite3-dev zlib1g-dev
+          sudo apt-get install -y \
+            gettext mold jq \
+            sqlite3 libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb \
+            autoconf autoconf-archive automake libtool libltdl-dev
 
-          VERSION=20
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x ./llvm.sh
-          sudo ./llvm.sh $VERSION all
-          for bin in clang clang++ clang-format clang-tidy run-clang-tidy llvm-config; do
-            sudo update-alternatives --install /usr/bin/$bin $bin /usr/bin/$bin-$VERSION 200
-          done
+      - name: Setup LLVM lint tools
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          clang-format: ${{ env.LLVM_VERSION }}
+          clang-tidy: ${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          setup-cpp: false
+
+      - name: Show LLVM tool versions
+        run: |
+          clang++ --version
+          clang-format --version
+          clang-tidy --version
+          llvm-config --version
+
+      #- name: Install SDL3
+      #  run: |
+      #    sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+
+      - name: Install SDL3-devel dependencies
+        run: |
+          sudo apt-get install libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
+            libfreetype-dev libharfbuzz-dev \
+            libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev \
+            libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -71,14 +94,15 @@ jobs:
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
+      - name: Install shadercross
+        run: bash build-scripts/install-shadercross-vcpkg.sh
+
       - name: add problem matcher
         run: |
           # Enable GitHub actions problem matchers
           # (See https://github.com/actions/toolkit/blob/master/docs/problem-matchers.md)
           echo "::add-matcher::build-scripts/problem-matchers/catch2.json"
           echo "::add-matcher::build-scripts/problem-matchers/debugmsg.json"
-
-      - uses: ammaraskar/gcc-problem-matcher@master
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }

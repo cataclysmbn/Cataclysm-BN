@@ -20,7 +20,8 @@
     "charges_per_use": 1,
     "qualities": [ [ "COOK", 2 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ] ],
     "relic_data": { "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ] },
-    "use_action": "HOTPLATE"
+    "use_action": "HOTPLATE",
+    "flags": [ "RECHARGE", "NO_UNLOAD" ]
   },
   {
     "id": "knife_crt",

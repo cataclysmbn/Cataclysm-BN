@@ -30,6 +30,7 @@
     "harvest": "human",
     "//": "We haven't demihuman, so I went with the Troll solution of just going human.",
     "death_function": [ "NORMAL" ],
+    "monster_weapon": "orc_warrior_monster_weapon",
     "death_drops": "orc_warrior_drops",
     "special_attacks": [ { "type": "bite", "cooldown": 5 } ],
     "flags": [
@@ -53,6 +54,7 @@
     "copy-from": "mon_orc_warrior",
     "melee_skill": 3,
     "dodge": 2,
+    "monster_weapon": "orc_archer_monster_weapon",
     "death_drops": "orc_archer_drops",
     "starting_ammo": { "arrow_metal_sharpened_fletched": 30 },
     "extend": {
@@ -84,6 +86,7 @@
     "color": "red",
     "melee_dice_sides": 12,
     "melee_damage": [ { "damage_type": "cut", "amount": 8 }, { "damage_type": "stab", "amount": 4 } ],
+    "monster_weapon": "orc_blood_warrior_weapon",
     "death_drops": "orc_blood_warrior_drops"
   }
 ]

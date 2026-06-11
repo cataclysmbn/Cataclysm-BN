@@ -13,13 +13,16 @@
 
 #include "achievement.h"
 #include "avatar.h"
+#include "calendar.h"
 #include "cata_io.h"
-#include "coordinate_conversions.h"
+#include "coordinates.h"
 #include "creature_tracker.h"
 #include "debug.h"
+#include "dimension_info.h"
 #include "drop_token.h"
 #include "enum_conversions.h"
 #include "faction.h"
+#include "game_constants.h"
 #include "hash_utils.h"
 #include "int_id.h"
 #include "json.h"
@@ -45,6 +48,8 @@
 #include "translations.h"
 #include "ui_manager.h"
 #include "weather.h"
+#include "world_type.h"
+#include "overmapbuffer_registry.h"
 
 #if defined(__ANDROID__)
 #include "input.h"
@@ -93,16 +98,48 @@ void game::serialize( std::ostream &fout )
     json.member( "mostseen", mostseen );
     json.member( "show_zone_overlay", show_zone_overlay );
     // current map coordinates
-    tripoint pos_sm = m.get_abs_sub();
-    const point pos_om = sm_to_om_remain( pos_sm.x, pos_sm.y );
-    json.member( "levx", pos_sm.x );
-    json.member( "levy", pos_sm.y );
-    json.member( "levz", pos_sm.z );
-    json.member( "om_x", pos_om.x );
-    json.member( "om_y", pos_om.y );
+    auto pos_sm = player_reality_bubble_origin();
+    const auto pos_decomp = project_remain<coords::om>( pos_sm );
+    json.member( "levx", pos_decomp.remainder.x() );
+    json.member( "levy", pos_decomp.remainder.y() );
+    json.member( "levz", pos_sm.z() );
+    json.member( "om_x", pos_decomp.quotient.x() );
+    json.member( "om_y", pos_decomp.quotient.y() );
+    json.member( "reality_bubble_size", g_reality_bubble_size );
 
-    json.member( "grscent", scent.serialize() );
-    json.member( "typescent", scent.serialize( true ) );
+    // Save the current dimension ID (replaces the old world_type + pocket_instance_id pair)
+    json.member( "current_dimension_id", current_dimension_id_ );
+    // Save the kept pocket dimension ID so the single preserved pocket survives reload.
+    // The dimension_info metadata is reconstructed on entry from the item's pocket_dimension_data.
+    if( !kept_pocket_dimension_id_.empty() ) {
+        json.member( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
+    }
+
+    // Save dimension bounds for bounded dimensions (pocket dimensions)
+    const auto &pocket_info = m.get_pocket_info();
+    if( pocket_info ) {
+        json.member( "pocket_info", pocket_info );
+    }
+
+    // Serialize all tracked dimension metadata so kept (non-active) pocket dimensions
+    // retain their bounds across save/load. Without this, only the current dimension's
+    // info is reconstructed after reload.
+    json.member( "loaded_dimensions" );
+    json.start_array();
+    std::ranges::for_each( loaded_dimensions_, [&]( const auto & kv ) {
+        const auto &info = kv.second;
+        json.start_object();
+        json.member( "dimension_id", info.dimension_id );
+        json.member( "world_type", info.world_type.str() );
+        json.member( "display_name", info.display_name );
+        if( info.pocket_info ) {
+            json.member( "pocket_info", *info.pocket_info );
+        }
+        json.end_object();
+    } );
+    json.end_array();
+
+    // grscent/typescent removed — scent values live on per-submap arrays (not serialized).
 
     // Then each monster
     json.member( "active_monsters", *critter_tracker );
@@ -127,34 +164,7 @@ void game::serialize( std::ostream &fout )
     json.end_object();
 }
 
-std::string scent_map::serialize( bool is_type ) const
-{
-    std::ostringstream rle_out;
-    rle_out.imbue( std::locale::classic() );
-    if( is_type ) {
-        rle_out << typescent.str();
-    } else {
-        int rle_lastval = -1;
-        int rle_count = 0;
-        for( auto &elem : grscent ) {
-            for( auto &val : elem ) {
-                if( val == rle_lastval ) {
-                    rle_count++;
-                } else {
-                    if( rle_count ) {
-                        rle_out << rle_count << " ";
-                    }
-                    rle_out << val << " ";
-                    rle_lastval = val;
-                    rle_count = 1;
-                }
-            }
-        }
-        rle_out << rle_count;
-    }
-
-    return rle_out.str();
-}
+// scent_map::serialize() moved to scent_map.cpp
 
 static void chkversion( std::istream &fin )
 {
@@ -172,10 +182,23 @@ static void chkversion( std::istream &fin )
     }
 }
 
+auto game::validate_save_json( std::istream &fin ) -> bool
+{
+    chkversion( fin );
+    try {
+        JsonIn jsin( fin );
+        jsin.skip_value();
+    } catch( const JsonError &jsonerr ) {
+        debugmsg( "Bad save json\n%s", jsonerr.c_str() );
+        return false;
+    }
+    return true;
+}
+
 /*
  * Parse an open .sav file.
  */
-void game::unserialize( std::istream &fin )
+auto game::unserialize( std::istream &fin ) -> bool
 {
     chkversion( fin );
     int tmpturn = 0;
@@ -214,25 +237,132 @@ void game::unserialize( std::istream &fin )
         data.read( "levz", lev.z );
         data.read( "om_x", com.x );
         data.read( "om_y", com.y );
+        auto saved_reality_bubble_size = g_reality_bubble_size;
+        const auto has_saved_reality_bubble_size = data.read( "reality_bubble_size",
+                saved_reality_bubble_size );
+        auto saved_player_abs = tripoint_abs_ms::zero();
+        auto has_saved_player_abs = false;
+        if( data.has_object( "player" ) ) {
+            auto player_data = data.get_object( "player" );
+            player_data.allow_omitted_members();
+            has_saved_player_abs = player_data.read( "abs_pos", saved_player_abs );
+        }
 
-        load_map(
-            tripoint( lev.x + com.x * OMAPX * 2, lev.y + com.y * OMAPY * 2, lev.z ),
-            /*pump_events=*/true
-        );
+        // Load the current dimension ID before load_map so get_dimension_prefix()
+        // returns the correct value.  Fall back to reconstructing it from legacy
+        // world_type + pocket_instance_id fields for old saves.
+        if( data.has_member( "current_dimension_id" ) ) {
+            data.read( "current_dimension_id", current_dimension_id_ );
+        } else if( data.has_member( "world_type" ) ) {
+            // Legacy compat: reconstruct dimension_id from world_type + instance_id
+            world_type_id wt;
+            data.read( "world_type", wt );
+            std::string pocket_id;
+            data.read( "pocket_instance_id", pocket_id );
+            if( wt.is_valid() ) {
+                current_dimension_id_ = wt.obj().save_prefix + pocket_id;
+                if( !pocket_id.empty() && !current_dimension_id_.ends_with( "_" ) ) {
+                    current_dimension_id_ += "_";
+                }
+            }
+        }
+        set_active_dimension_id( current_dimension_id_ );
+        data.read( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
+
+        // Restore all dimension metadata.  The current dimension is also included
+        // in this array, so the explicit reconstruction below becomes a fallback
+        // for old saves that don't have the "loaded_dimensions" key.
+        loaded_dimensions_.clear();
+        if( data.has_array( "loaded_dimensions" ) ) {
+            for( JsonObject dim_data : data.get_array( "loaded_dimensions" ) ) {
+                auto info = dimension_info{};
+                dim_data.read( "dimension_id", info.dimension_id );
+                auto wt_str = std::string{};
+                dim_data.read( "world_type", wt_str );
+                info.world_type = world_type_id( wt_str );
+                dim_data.read( "display_name", info.display_name );
+                auto legacy_origin_pos_x = 0;
+                auto legacy_origin_pos_y = 0;
+                auto legacy_origin_pos_z = 0;
+                dim_data.read( "origin_pos_x", legacy_origin_pos_x );
+                dim_data.read( "origin_pos_y", legacy_origin_pos_y );
+                dim_data.read( "origin_pos_z", legacy_origin_pos_z );
+                if( dim_data.has_object( "pocket_info" ) ) {
+                    dim_data.read( "pocket_info", info.pocket_info );
+                } else if( dim_data.has_object( "bounds" ) ) {
+                    auto pocket_data = pocket_dimension_data{};
+                    auto bounds_obj = dim_data.get_object( "bounds" );
+                    auto bounds = dimension_bounds{};
+                    bounds.min_bound = tripoint_abs_sm(
+                                           bounds_obj.get_int( "min_x" ),
+                                           bounds_obj.get_int( "min_y" ),
+                                           bounds_obj.get_int( "min_z" ) );
+                    bounds.max_bound = tripoint_abs_sm(
+                                           bounds_obj.get_int( "max_x" ),
+                                           bounds_obj.get_int( "max_y" ),
+                                           bounds_obj.get_int( "max_z" ) );
+                    bounds.boundary_terrain = ter_str_id(
+                                                  bounds_obj.get_string( "boundary_terrain" ) );
+                    bounds.boundary_overmap_terrain = oter_str_id(
+                                                          bounds_obj.get_string( "boundary_overmap_terrain" ) );
+                    pocket_data.bounds = bounds;
+                    info.pocket_info = pocket_data;
+                }
+                loaded_dimensions_[info.dimension_id] = info;
+            }
+        }
+
+        // Set the calendar's active world type now that loaded_dimensions_ is populated.
+        {
+            auto it = loaded_dimensions_.find( current_dimension_id_ );
+            if( it != loaded_dimensions_.end() ) {
+                calendar::set_active_world_type( it->second.world_type.str() );
+            }
+        }
+
+        // Load dimension bounds BEFORE load_map so loadn() can generate
+        // boundary submaps for out-of-bounds areas
+        if( data.has_object( "pocket_info" ) ) {
+            pocket_dimension_data pocket_info;
+            data.read( "pocket_info", pocket_info );
+            m.set_pocket_info( pocket_info );
+            get_overmapbuffer( current_dimension_id_ ).set_pocket_info( pocket_info );
+        }
+
+        // Absolute player position is authoritative when present.  Saves with
+        // reality_bubble_size can reconstruct the player submap from their saved
+        // bubble origin.  Older saves keep levx/levy/levz as the authoritative
+        // legacy origin so remaining bubble-space fields still decode against
+        // that offset.
+        const auto saved_origin = tripoint_abs_sm( lev.x + com.x * OMAPX * 2,
+                                  lev.y + com.y * OMAPY * 2, lev.z );
+        auto load_origin = saved_origin;
+        if( has_saved_player_abs ) {
+            u.setpos( saved_player_abs );
+            load_origin = player_reality_bubble_origin();
+        } else if( has_saved_reality_bubble_size ) {
+            const auto saved_player_sm = reality_bubble_center_from_origin( saved_origin,
+                                         saved_reality_bubble_size );
+            u.setpos( project_to<coords::ms>( saved_player_sm ) );
+            load_origin = player_reality_bubble_origin();
+        } else {
+            u.setpos( project_to<coords::ms>( saved_origin + tripoint_rel_sm( g_half_mapsize,
+                                              g_half_mapsize, 0 ) ) );
+        }
+        load_map( load_origin, /*pump_events=*/true );
 
         safe_mode = static_cast<safe_mode_type>( tmprun );
         if( get_option<bool>( "SAFEMODE" ) && safe_mode == SAFE_MODE_OFF ) {
             safe_mode = SAFE_MODE_ON;
         }
 
-        std::string linebuff;
-        std::string linebuf;
-        if( data.read( "grscent", linebuf ) && data.read( "typescent", linebuff ) ) {
-            scent.deserialize( linebuf );
-            scent.deserialize( linebuff, true );
-        } else {
-            scent.reset();
+        // Silently discard old grscent/typescent flat-array data; scent now lives on submaps.
+        {
+            std::string discard;
+            data.read( "grscent", discard );
+            data.read( "typescent", discard );
         }
+        scent.reset();
         data.read( "active_monsters", *critter_tracker );
 
         coming_to_stairs.clear();
@@ -275,34 +405,16 @@ void game::unserialize( std::istream &fin )
         inp_mngr.pump_events();
         Messages::deserialize( data );
 
+        charge_removal_blacklist::split_deferred();
+
     } catch( const JsonError &jsonerr ) {
         debugmsg( "Bad save json\n%s", jsonerr.c_str() );
-        return;
+        return false;
     }
+    return true;
 }
 
-void scent_map::deserialize( const std::string &data, bool is_type )
-{
-    std::istringstream buffer( data );
-    buffer.imbue( std::locale::classic() );
-    if( is_type ) {
-        std::string str;
-        buffer >> str;
-        typescent = scenttype_id( str );
-    } else {
-        int stmp = 0;
-        int count = 0;
-        for( auto &elem : grscent ) {
-            for( auto &val : elem ) {
-                if( count == 0 ) {
-                    buffer >> stmp >> count;
-                }
-                count--;
-                val = stmp;
-            }
-        }
-    }
-}
+// scent_map::deserialize() moved to scent_map.cpp
 
 #if defined(__ANDROID__)
 ///// quick shortcuts
@@ -360,10 +472,18 @@ void overmap::load_monster_groups( JsonIn &jsin )
         new_group.deserialize( jsin );
 
         jsin.start_array();
-        tripoint_om_sm temp;
+        tripoint_abs_sm temp;
         while( !jsin.end_array() ) {
             temp.deserialize( jsin );
-            new_group.pos = temp;
+            const auto proj = project_remain<coords::om>( temp );
+            if( proj.quotient == pos() ) {
+                new_group.abs_pos = temp;
+            } else if( inbounds( project_to<coords::omt>( temp ) ) ) {
+                // Legacy support, for when the stored position was local to this overmap.
+                new_group.abs_pos = project_combine( pos(), temp.reinterpret_as<tripoint_om_sm>() );
+            } else {
+                new_group.abs_pos = temp;
+            }
             add_mon_group( new_group );
         }
 
@@ -558,7 +678,7 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
                 tripoint_om_sm monster_location;
                 monster new_monster;
                 monster_location.deserialize( jsin );
-                new_monster.deserialize( jsin );
+                new_monster.deserialize_from_overmap( jsin, pos(), monster_location );
                 monster_map->insert( std::make_pair( monster_location, std::move( new_monster ) ) );
             }
         } else if( name == "tracked_vehicles" ) {
@@ -662,6 +782,7 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
             jsin.skip_value();
         }
     }
+    sync_mapgen_args_init_flags();
 }
 
 static void unserialize_array_from_compacted_sequence( JsonIn &jsin, bool ( &array )[OMAPX][OMAPY] )
@@ -891,14 +1012,14 @@ void overmap::save_monster_groups( JsonOut &jout ) const
     jout.member( "monster_groups" );
     jout.start_array();
     // Bin groups by their fields, except positions and monsters
-    std::unordered_map<mongroup, std::list<tripoint_om_sm>, mongroup_hash, mongroup_bin_eq>
+    std::unordered_map<mongroup, std::list<tripoint_abs_sm>, mongroup_hash, mongroup_bin_eq>
     binned_groups;
     binned_groups.reserve( zg.size() );
     for( const auto &pos_group : zg ) {
         // Each group in bin adds only position
         // so that 100 identical groups are 1 group data and 100 tripoints
-        std::list<tripoint_om_sm> &positions = binned_groups[pos_group.second];
-        positions.emplace_back( pos_group.first );
+        auto &positions = binned_groups[pos_group.second];
+        positions.emplace_back( pos_group.second.abs_pos );
     }
 
     for( auto &group_bin : binned_groups ) {
@@ -907,7 +1028,7 @@ void overmap::save_monster_groups( JsonOut &jout ) const
         // The position is stored separately, in the list
         // TODO: Do it without the copy
         mongroup saved_group = group_bin.first;
-        saved_group.pos = tripoint_om_sm();
+        saved_group.abs_pos = tripoint_abs_sm::zero();
         jout.write( saved_group );
         jout.write( group_bin.second );
         jout.end_array();
@@ -999,7 +1120,7 @@ void overmap::serialize( std::ostream &fout ) const
     json.start_array();
     for( auto &i : *monster_map ) {
         i.first.serialize( json );
-        i.second.serialize( json );
+        i.second.serialize_for_overmap( json );
     }
     json.end_array();
     fout << '\n';
@@ -1150,14 +1271,13 @@ template<typename Archive>
 void mongroup::io( Archive &archive )
 {
     archive.io( "type", type );
-    archive.io( "pos", pos, tripoint_om_sm() );
     archive.io( "abs_pos", abs_pos, tripoint_abs_sm() );
     archive.io( "radius", radius, 1u );
     archive.io( "population", population, 1u );
     archive.io( "diffuse", diffuse, false );
     archive.io( "dying", dying, false );
     archive.io( "horde", horde, false );
-    archive.io( "target", target, tripoint_om_sm() );
+    archive.io( "target", target, tripoint_abs_sm() );
     archive.io( "nemesis_target", nemesis_target, tripoint_abs_sm() );
     archive.io( "interest", interest, 0 );
     archive.io( "horde_behaviour", horde_behaviour, io::empty_default_tag() );
@@ -1185,8 +1305,6 @@ void mongroup::deserialize_legacy( JsonIn &json )
         std::string name = json.get_member_name();
         if( name == "type" ) {
             type = mongroup_id( json.get_string() );
-        } else if( name == "pos" ) {
-            pos.deserialize( json );
         } else if( name == "abs_pos" ) {
             abs_pos.deserialize( json );
         } else if( name == "radius" ) {
@@ -1263,7 +1381,7 @@ void game::unserialize_master( std::istream &fin )
             } else if( name == "seed" ) {
                 jsin.read( seed );
             } else if( name == "placed_unique_specials" ) {
-                overmap_buffer.deserialize_placed_unique_specials( jsin );
+                get_overmapbuffer( current_dimension_id_ ).deserialize_placed_unique_specials( jsin );
             } else if( name == "weather" ) {
                 JsonObject w = jsin.get_object();
                 w.read( "lightning", get_weather().lightning_active );
@@ -1274,6 +1392,38 @@ void game::unserialize_master( std::istream &fin )
         }
     } catch( const JsonError &e ) {
         debugmsg( "error loading %s: %s", SAVE_MASTER, e.c_str() );
+    }
+}
+
+void game::unserialize_dimension_data( std::istream &fin )
+{
+    savegame_loading_version = 0;
+    chkversion( fin );
+    if( savegame_loading_version < 11 ) {
+        std::unique_ptr<static_popup>popup = std::make_unique<static_popup>();
+        popup->message(
+            _( "Cannot find loader for save data in old version %d, attempting to load as current version %d." ),
+            savegame_loading_version, savegame_version );
+        ui_manager::redraw();
+        refresh_display();
+    }
+    try {
+        // Parse dimension-specific data from JSON
+        JsonIn jsin( fin );
+        jsin.start_object();
+        while( !jsin.end_object() ) {
+            std::string name = jsin.get_member_name();
+            if( name == "region_type" ) {
+                // Load the region type for this dimension
+                jsin.read( get_overmapbuffer( current_dimension_id_ ).current_region_type );
+            } else {
+                // Skip unknown members for forward/backward compatibility
+                // (e.g., DDA's "overmapbuffer", "weather", "placed_unique_specials")
+                jsin.skip_value();
+            }
+        }
+    } catch( const JsonError &e ) {
+        debugmsg( "error loading %s: %s", SAVE_DIMENSION_DATA, e.c_str() );
     }
 }
 
@@ -1300,7 +1450,7 @@ void game::serialize_master( std::ostream &fout )
         mission::serialize_all( json );
 
         json.member( "placed_unique_specials" );
-        overmap_buffer.serialize_placed_unique_specials( json );
+        get_overmapbuffer( current_dimension_id_ ).serialize_placed_unique_specials( json );
 
         json.member( "factions", *faction_manager_ptr );
         json.member( "seed", seed );
@@ -1313,6 +1463,27 @@ void game::serialize_master( std::ostream &fout )
         json.end_object();
     } catch( const JsonError &e ) {
         debugmsg( "error saving to %s: %s", SAVE_MASTER, e.c_str() );
+    }
+}
+
+void game::serialize_dimension_data( std::ostream &fout )
+{
+    fout << "# version " << savegame_version << '\n';
+
+    try {
+        JsonOut json( fout, true ); // pretty-print
+        json.start_object();
+
+        // Save the region type for this dimension
+        // This allows different dimensions to have different regional settings
+        json.member( "region_type", get_overmapbuffer( current_dimension_id_ ).current_region_type );
+
+        // Note: BN doesn't use DDA's global_state or weather_manager
+        // Those are stored differently in BN's architecture
+
+        json.end_object();
+    } catch( const JsonError &e ) {
+        debugmsg( "error saving to %s: %s", SAVE_DIMENSION_DATA, e.c_str() );
     }
 }
 
@@ -1364,13 +1535,19 @@ void faction_manager::deserialize( JsonIn &jsin )
 
 void Creature_tracker::deserialize( JsonIn &jsin )
 {
-    monsters_list.clear();
-    monsters_by_location.clear();
+    clear();
     jsin.start_array();
     while( !jsin.end_array() ) {
         // TODO: would be nice if monster had a constructor using JsonIn or similar, so this could be one statement.
-        shared_ptr_fast<monster> mptr = make_shared_fast<monster>();
+        auto mptr = make_shared_fast<monster>();
         jsin.read( *mptr );
+        if( const auto existing_mon_ptr = find( mptr->bub_pos() ) ) {
+            if( !existing_mon_ptr->is_hallucination() && !mptr->is_hallucination() ) {
+                DebugLog( DL::Warn, DC::Game ) << "Skipping duplicate active monster "
+                                               << mptr->disp_name() << " at " << mptr->bub_pos();
+                continue;
+            }
+        }
         add( mptr );
     }
 }

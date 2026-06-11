@@ -225,7 +225,7 @@
     "price": "2 USD",
     "price_postapoc": "10 cent",
     "material": [ "veggy" ],
-    "volume": "1000 ml",
+    "volume": "750 ml",
     "flags": [ "SMOKABLE", "RAW" ],
     "smoking_result": "dry_veggy",
     "vitamins": [ [ "vitA", 3 ], [ "vitC", 4 ], [ "calcium", 4 ], [ "iron", 1 ], [ "veggy_allergen", 1 ] ]

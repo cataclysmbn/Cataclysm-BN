@@ -9,7 +9,13 @@ on:
     paths-ignore: [docs/**, scripts/**, "**.md", "**.mdx"]
 
 jobs:
+  build-translations:
+    uses: ./.github/workflows/build-translations.yml
+    secrets:
+      TX_TOKEN: ${{ secrets.TX_TOKEN }}
+
   builds:
+    needs: build-translations
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental

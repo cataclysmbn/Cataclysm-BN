@@ -486,7 +486,7 @@ bool scenario::has_flag( const std::string &flag ) const
 bool scenario::allowed_start( const start_location_id &loc ) const
 {
     auto &vec = _allowed_locs;
-    return std::ranges::find( vec, loc ) != vec.end();
+    return std::ranges::contains( vec, loc );
 }
 
 bool scenario::can_pick( const scenario &current_scenario, const int points ) const

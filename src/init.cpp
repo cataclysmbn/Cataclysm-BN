@@ -1,11 +1,13 @@
 #include "init.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <exception>
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <set>
 #include <sstream> // for throwing errors
 #include <stdexcept>
 #include <string>
@@ -63,8 +65,10 @@
 #include "magic_ter_furn_transform.h"
 #include "map_extras.h"
 #include "mapbuffer.h"
+#include "map_feature_descriptions.h"
 #include "mapdata.h"
 #include "mapgen.h"
+#include "mapgen_async.h"
 #include "martialarts.h"
 #include "material.h"
 #include "mission.h"
@@ -105,9 +109,11 @@
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle_group.h"
+#include "vehicle_palette.h"
 #include "vitamin.h"
 #include "weather.h"
 #include "weather_type.h"
+#include "world_type.h"
 #include "worldfactory.h"
 
 #if defined(TILES)
@@ -259,6 +265,7 @@ void DynamicDataLoader::initialize()
     add( "fault", &fault::load_fault );
     add( "field_type", &field_types::load );
     add( "weather_type", &weather_types::load );
+    add( "world_type", &world_types::load );
     add( "ammo_effect", &ammo_effects::load );
     add( "emit", &emit::load_emit );
     add( "activity_type", &activity_type::load );
@@ -306,6 +313,7 @@ void DynamicDataLoader::initialize()
     } );
 
     add( "vehicle_part",  &vpart_info::load );
+    add( "vehicle_color_palette",  &VehiclePalette::load );
     add( "vehicle",  &vehicle_prototype::load );
     add( "vehicle_group",  &VehicleGroup::load );
     add( "vehicle_placement",  &VehiclePlacement::load );
@@ -392,6 +400,7 @@ void DynamicDataLoader::initialize()
     add( "recipe_category", &load_recipe_category );
     add( "recipe",  &recipe_dictionary::load_recipe );
     add( "uncraft", &recipe_dictionary::load_uncraft );
+    add( "nested_category", &recipe_dictionary::load_nested_category );
     add( "recipe_group",  &recipe_group::load );
 
     add( "tool_quality", &quality::load_static );
@@ -411,6 +420,7 @@ void DynamicDataLoader::initialize()
     add( "overmap_special", &overmap_specials::load );
     add( "city_building", &city_buildings::load );
     add( "map_extra", &MapExtras::load );
+    add( "map_feature_description", &map_feature_descriptions::load_map_feature_descriptions );
 
     add( "region_settings", &load_region_settings );
     add( "region_overlay", &load_region_overlay );
@@ -462,6 +472,7 @@ void DynamicDataLoader::initialize()
     add( "event_statistic", &event_statistic::load_statistic );
     add( "score", &score::load_score );
     add( "achievement", &achievement::load_achievement );
+    add( "named_color", &RGBColor::load_named_color );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
 #else
@@ -581,6 +592,7 @@ void DynamicDataLoader::unload_data()
     json_flag::reset();
     json_trait_flag::reset();
     MapExtras::reset();
+    map_feature_descriptions::reset_map_feature_descriptions();
     mapgen_palette::reset();
     materials::reset();
     mission_type::reset();
@@ -629,14 +641,17 @@ void DynamicDataLoader::unload_data()
     trap::reset();
     unload_talk_topics();
     VehicleGroup::reset();
+    VehiclePalette::reset();
     VehiclePlacement::reset();
     VehicleSpawn::reset();
     vitamin::reset();
     vpart_info::reset();
     weapon_category::reset();
     weather_types::reset();
+    world_types::reset();
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
+    RGBColor::unload_names();
 #if defined(TILES)
     reset_mod_tileset();
 #endif
@@ -666,6 +681,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Body parts" ), &body_part_type::finalize_all },
             { _( "Bionics" ), &bionic_data::finalize_all },
             { _( "Weather types" ), &weather_types::finalize_all },
+            { _( "World types" ), &world_types::finalize_all },
             { _( "Field types" ), &field_types::finalize_all },
             { _( "Ammo effects" ), &ammo_effects::finalize_all },
             { _( "Emissions" ), &emit::finalize },
@@ -749,6 +765,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             },
             { _( "Vitamins" ), &vitamin::check_consistency },
             { _( "Weather types" ), &weather_types::check_consistency },
+            { _( "World types" ), &world_types::check_consistency },
             { _( "Field types" ), &field_types::check_consistency },
             { _( "Ammo effects" ), &ammo_effects::check_consistency },
             { _( "Emissions" ), &emit::check_consistency },
@@ -762,6 +779,8 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Materials" ), &materials::check },
             { _( "Engine faults" ), &fault::check_consistency },
             { _( "Vehicle parts" ), &vpart_info::check },
+            { _( "Vehicle palettes" ), &VehiclePalette::check },
+            { _( "Vehicle groups" ), &VehicleGroup::check },
             { _( "Mapgen definitions" ), &check_mapgen_definitions },
             { _( "Mapgen palettes" ), &mapgen_palette::check_definitions },
             {
@@ -901,6 +920,10 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
 
     init::load_main_lua_scripts( *loader.lua, packs );
     cata::clear_mod_being_loaded( *loader.lua );
+    // Update cached hook-presence flag so worker threads know whether to queue
+    // deferred mapgen postprocess hooks (avoids lock + allocation overhead per omt
+    // when no on_mapgen_postprocess hooks are registered).
+    refresh_mapgen_postprocess_hook_presence( *loader.lua );
 }
 
 auto init::load_main_lua_scripts( cata::lua_state &state, const std::vector<mod_id> &packs ) -> int
@@ -930,6 +953,29 @@ static void clear_loaded_data()
     DynamicDataLoader::get_instance().unload_data();
 }
 
+static auto normalize_mod_load_order( std::vector<mod_id> mods ) -> std::vector<mod_id>
+{
+    auto found = std::set<mod_id> {};
+    mods.erase( std::remove_if( mods.begin(), mods.end(), [&found]( const auto & e ) {
+        if( found.contains( e ) ) {
+            return true;
+        }
+        found.insert( e );
+        return false;
+    } ), mods.end() );
+
+    const auto core_iter = std::ranges::find_if( mods, []( const auto & e ) { return e->core; } );
+    if( core_iter != mods.end() ) {
+        const auto core_pack = *core_iter;
+        mods.erase( core_iter );
+        mods.insert( mods.begin(), core_pack );
+    } else {
+        mods.insert( mods.begin(), mod_management::get_default_core_content_pack() );
+    }
+
+    return mods;
+}
+
 void init::load_core_bn_modfiles()
 {
     clear_loaded_data();
@@ -946,25 +992,8 @@ void init::load_world_modfiles( loading_ui &ui, const world *world,
 {
     clear_loaded_data();
 
-    mod_management::t_mod_list &mods = world->info->active_mod_order;
-
-    // remove any duplicates whilst preserving order (fixes #19385)
-    std::set<mod_id> found;
-    mods.erase( std::remove_if( mods.begin(), mods.end(), [&found]( const mod_id & e ) {
-        if( found.contains( e ) ) {
-            return true;
-        } else {
-            found.insert( e );
-            return false;
-        }
-    } ), mods.end() );
-
-    // require at least one core mod (saves before version 6 may implicitly require dda pack)
-    if( std::none_of( mods.begin(), mods.end(), []( const mod_id & e ) {
-    return e->core;
-} ) ) {
-        mods.insert( mods.begin(), mod_management::get_default_core_content_pack() );
-    }
+    auto &mods = world->info->active_mod_order;
+    mods = normalize_mod_load_order( mods );
 
     // TODO: get rid of artifacts
     load_artifacts( world, artifacts_file );
@@ -977,7 +1006,8 @@ void init::load_world_modfiles( loading_ui &ui, const world *world,
     load_and_finalize_packs( ui, _( "Loading files" ), mods );
 }
 
-bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opts )
+auto init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opts,
+                                  const check_mods_mode mode ) -> bool
 {
     const dependency_tree &tree = world_generator->get_mod_manager().get_tree();
 
@@ -1001,18 +1031,27 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         to_check.emplace( id );
     }
 
-    // If no specific mods specified check all non-obsolete mods
     if( to_check.empty() ) {
-        for( const mod_id &mod : world_generator->get_mod_manager().all_mods() ) {
-            if( !mod->obsolete ) {
+        if( mode == check_mods_mode::all_mods ) {
+            for( const mod_id &mod : world_generator->get_mod_manager().all_mods() ) {
+                if( !mod->obsolete ) {
+                    to_check.emplace( mod );
+                }
+            }
+        } else {
+            for( const mod_id &mod : world_generator->get_mod_manager().get_default_mods() ) {
                 to_check.emplace( mod );
             }
         }
     }
-    // If no mods are available then test core data only
+    // If no mode-selected mods are available then test core data only
     if( to_check.empty() ) {
         to_check.emplace( mod_management::get_default_core_content_pack() );
     }
+
+    // Ensure the last checked mod unloads before process exit so Lua-backed
+    // mapgen functions do not outlive the active Lua state.
+    on_out_of_scope clear_last_checked_data( [] { clear_loaded_data(); } );
 
     for( const mod_id &id : to_check ) {
         clear_loaded_data();
@@ -1030,9 +1069,11 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         std::cout << string_format( "Checking mod %s [%s]\n", id->name(), id );
 
         // Load all dependencies first
-        std::vector<mod_id> mods_list = tree.get_dependencies_of_X_as_strings( id );
+        auto mods_list = tree.get_dependencies_of_X_as_strings( id );
         // Load the mod itself
         mods_list.push_back( id );
+
+        mods_list = normalize_mod_load_order( mods_list );
 
         try {
             load_and_finalize_packs( ui, _( "Checking mods" ), mods_list );
@@ -1045,7 +1086,7 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
 
         // TODO: Why would we need these calls?
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        get_primary_overmapbuffer().clear();
     }
 
     return !debug_has_error_been_observed();

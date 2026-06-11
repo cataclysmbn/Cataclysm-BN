@@ -103,10 +103,43 @@
         { "monster": "GROUP_ZOMBIE", "x": [ 24, 47 ], "y": [ 0, 21 ], "chance": 5 },
         { "monster": "GROUP_ZOMBIE", "x": [ 48, 71 ], "y": [ 0, 19 ], "chance": 5 }
       ],
-      "place_vehicles": [
-        { "vehicle": "garage", "x": [ 38, 39 ], "y": [ 12, 13 ], "chance": 20, "rotation": 270 },
-        { "vehicle": "garage", "x": [ 49, 50 ], "y": [ 12, 13 ], "chance": 20, "rotation": 270 }
-      ]
+      "place_nested": [
+        {
+          "chunks": [ [ "null", 65 ], [ "garage_gas_2_vehicle", 25 ], [ "garage_gas_2_military_restoration", 10 ] ],
+          "x": 35,
+          "y": 6
+        }
+      ],
+      "place_vehicles": [ { "vehicle": "garage", "x": [ 49, 50 ], "y": [ 12, 13 ], "chance": 20, "rotation": 270 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "garage_gas_2_vehicle",
+    "object": {
+      "mapgensize": [ 10, 10 ],
+      "place_vehicles": [ { "vehicle": "garage", "x": [ 3, 4 ], "y": [ 6, 7 ], "chance": 100, "rotation": 270 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "garage_gas_2_military_restoration",
+    "object": {
+      "mapgensize": [ 10, 10 ],
+      "set": [ { "line": "terrain", "id": "t_door_metal_locked_o", "x": 0, "x2": 7, "y": 1, "y2": 1 } ],
+      "place_furniture": [ { "furn": "f_crate_c", "x": 9, "y": 6 } ],
+      "place_loot": [
+        { "group": "fuel_barrel_diesel_only", "x": 9, "y": 4, "chance": 50 },
+        { "group": "m60_patton_ammo_rack", "x": 9, "y": 6, "chance": 100 }
+      ],
+      "place_monster": [
+        { "group": "GROUP_MIL_WEAK", "x": [ 7, 9 ], "y": [ 2, 9 ], "chance": 50 },
+        { "group": "GROUP_MIL_WEAK", "x": [ 7, 9 ], "y": [ 2, 9 ], "chance": 50 },
+        { "group": "GROUP_MIL_WEAK", "x": [ 7, 9 ], "y": [ 2, 9 ], "chance": 50 }
+      ],
+      "place_vehicles": [ { "vehicle": "tankmod_garage_restoration", "x": 3, "y": 5, "chance": 100, "rotation": 270 } ]
     }
   },
   {

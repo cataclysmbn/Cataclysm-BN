@@ -1,8 +1,8 @@
 #include "scent_block.h"
 
-scent_block::scent_block( const tripoint &sub, scent_map &scents )
+scent_block::scent_block( const tripoint_bub_sm &sub, scent_map &scents )
 // NOLINTNEXTLINE(cata-use-named-point-constants)
-    : origin( sm_to_ms_copy( sub ) + point( -1, -1 ) )
+    : origin( project_to<coords::ms>( sub ) + point( -1, -1 ) )
     , scents( scents )
     , modification_count( 0 )
 {
@@ -24,14 +24,14 @@ void scent_block::commit_modifications()
                 case NONE:
                     break;
                 case SET: {
-                    tripoint p = origin + tripoint( x, y, 0 );
+                    tripoint_bub_ms p = origin + tripoint_rel_ms( x, y, 0 );
                     if( scents.inbounds( p ) ) {
                         scents.set_unsafe( p, assignment[x][y].intensity );
                     }
                     break;
                 }
                 case MAX: {
-                    tripoint p = origin + tripoint( x, y, 0 );
+                    tripoint_bub_ms p = origin + tripoint_rel_ms( x, y, 0 );
                     if( scents.inbounds( p ) ) {
                         scents.set_unsafe( p, std::max( assignment[x][y].intensity, scents.get_unsafe( p ) ) );
                     }
@@ -42,7 +42,7 @@ void scent_block::commit_modifications()
     }
 }
 
-void scent_block::apply_gas( const tripoint &p, const int nintensity )
+void scent_block::apply_gas( const tripoint_bub_ms &p, const int nintensity )
 {
     const point ndx = index( p );
     assignment[ndx.x][ndx.y].mode = SET;
@@ -50,7 +50,7 @@ void scent_block::apply_gas( const tripoint &p, const int nintensity )
     ++modification_count;
 }
 
-void scent_block::apply_slime( const tripoint &p, int intensity )
+void scent_block::apply_slime( const tripoint_bub_ms &p, int intensity )
 {
     const point ndx = index( p );
     datum &dat = assignment[ndx.x][ndx.y];

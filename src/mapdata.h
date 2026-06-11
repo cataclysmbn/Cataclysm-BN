@@ -12,12 +12,15 @@
 #include "calendar.h"
 #include "catalua_type_operators.h"
 #include "color.h"
+#include "coordinates.h"
+#include "hsv_color.h"
 #include "numeric_interval.h"
 #include "poly_serialized.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
+#include "data_vars.h"
 
 struct ter_t;
 using ter_str_id = string_id<ter_t>;
@@ -29,7 +32,7 @@ struct itype;
 struct ter_t;
 struct tripoint;
 
-using iexamine_function = void ( * )( player &, const tripoint & );
+using iexamine_function = void ( * )( player &, const tripoint_bub_ms & );
 
 struct ranged_bash_info {
         numeric_interval<int> reduction; // Damage reduction when shot. Rolled like rng(min, max).
@@ -225,7 +228,6 @@ struct pry_result {
  * ALARMED - Sets off an alarm if smashed
  * SUPPORTS_ROOF - Used as a boundary for roof construction
  * MINEABLE - Able to broken with the jackhammer/pickaxe, but does not necessarily support a roof
- * INDOORS - Has roof over it; blocks rain, sunlight, etc.
  * COLLAPSES - Has a roof that can collapse
  * FLAMMABLE_ASH - Burns to ash rather than rubble.
  * REDUCE_SCENT - Reduces scent even more, only works if also bashable
@@ -284,7 +286,6 @@ enum ter_bitflags : int {
     TFLAG_COLLAPSES,
     TFLAG_FLAMMABLE_ASH,
     TFLAG_DESTROY_ITEM,
-    TFLAG_INDOORS,
     TFLAG_LIQUIDCONT,
     TFLAG_FIRE_CONTAINER,
     TFLAG_FLAMMABLE_HARD,
@@ -328,6 +329,7 @@ enum ter_bitflags : int {
     TFLAG_FREEZER,
     TFLAG_ELEVATOR,
     TFLAG_NO_MEMORY,
+    TFLAG_ROAD,
     NUM_TERFLAGS
 };
 
@@ -463,6 +465,7 @@ struct map_data_common_t {
         std::array<int, NUM_SEASONS> symbol_;
 
         int light_emitted = 0;
+        std::optional<RGBColor> light_color;
         // The amount of movement points required to pass this terrain by default.
         int movecost = 0;
         // The coverage percentage of a furniture piece of terrain. <30 won't cover from sight.
@@ -484,6 +487,9 @@ struct map_data_common_t {
         std::string prompt;
 
         iexamine_function examine; // What happens when the terrain/furniture is examined
+        std::string examine_action_id;
+
+        data_vars::data_set default_vars;
 
         /**
          * When will this terrain/furniture get harvested and what will drop?
@@ -811,7 +817,9 @@ extern ter_id t_null,
        t_railroad_track, t_railroad_track_h, t_railroad_track_v, t_railroad_track_d, t_railroad_track_d1,
        t_railroad_track_d2,
        t_railroad_track_on_tie, t_railroad_track_h_on_tie, t_railroad_track_v_on_tie,
-       t_railroad_track_d_on_tie;
+       t_railroad_track_d_on_tie,
+       t_pd_border,
+       t_rock_border;
 
 /*
 runtime index: furn_id

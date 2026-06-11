@@ -275,7 +275,7 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset,
 - `src/veh_interact.h` - 타일 미리보기 멤버 추가
 - `src/veh_interact.cpp` - 타일 디스플레이 통합
 - `src/options.cpp` - `VEHICLE_EDIT_TILES` 옵션 추가
-- `src/Makefile` / `CMakeLists.txt` - 새 소스 파일 추가
+- `CMakeLists.txt` - 새 소스 파일 추가
 
 ### 옵션
 

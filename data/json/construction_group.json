@@ -411,6 +411,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_door_window",
+    "name": "Build Windowed Door"
+  },
+  {
+    "type": "construction_group",
     "id": "build_makeshift_door",
     "name": "Build Makeshift Door"
   },
@@ -1011,6 +1016,16 @@
   },
   {
     "type": "construction_group",
+    "id": "install_multicooker",
+    "name": "Plug In Multi Cooker"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_multicooker_improved",
+    "name": "Plug In Improved Multi Cooker"
+  },
+  {
+    "type": "construction_group",
     "id": "install_refrigerator",
     "name": "Plug In Refrigerator"
   },
@@ -1226,8 +1241,18 @@
   },
   {
     "type": "construction_group",
+    "id": "place_firearm_kit",
+    "name": "Plug In Firearm Repair Kit"
+  },
+  {
+    "type": "construction_group",
     "id": "place_gunsmith_kit",
     "name": "Plug In Gunsmith Kit"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_con_mix",
+    "name": "Place Concrete Mixer"
   },
   {
     "type": "construction_group",
@@ -1281,6 +1306,21 @@
   },
   {
     "type": "construction_group",
+    "id": "place_analytical_set_basic",
+    "name": "Plug In Basic Analysis Kit"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_microcentrifuge",
+    "name": "Plug In  Microcentrifuge"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_dna_editor",
+    "name": "Plug In Genome Workstation"
+  },
+  {
+    "type": "construction_group",
     "id": "place_food_dehydrator",
     "name": "Plug In Food Dehydrator"
   },
@@ -1288,6 +1328,11 @@
     "type": "construction_group",
     "id": "place_food_processor",
     "name": "Plug In Food Processor"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_coffeemaker",
+    "name": "Plug In Coffeemaker"
   },
   {
     "type": "construction_group",
@@ -1311,6 +1356,11 @@
   },
   {
     "type": "construction_group",
+    "id": "place_hotplate",
+    "name": "Plug In hotplate"
+  },
+  {
+    "type": "construction_group",
     "id": "place_soldering_iron",
     "name": "Plug In soldering iron"
   },
@@ -1328,6 +1378,16 @@
     "type": "construction_group",
     "id": "place_vaccuum_sealer",
     "name": "Plug In Vaccuum Sealer"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_makeshift_sealer",
+    "name": "Plug In Makeshift Vacuum Sealer"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_water_purifier",
+    "name": "Install Water Purifier"
   },
   {
     "type": "construction_group",
@@ -1611,8 +1671,18 @@
   },
   {
     "type": "construction_group",
+    "id": "build_bathtub",
+    "name": "Build Bathtub"
+  },
+  {
+    "type": "construction_group",
     "id": "build_bathtub_money",
     "name": "Fill Bathtub with Money"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_shower",
+    "name": "Build Shower Booth"
   },
   {
     "type": "construction_group",
@@ -1623,6 +1693,11 @@
     "type": "construction_group",
     "id": "water_fill_pit",
     "name": "Fill Pit With Water"
+  },
+  {
+    "type": "construction_group",
+    "id": "salt_water_fill_pit",
+    "name": "Fill Pit With Salt Water"
   },
   {
     "type": "construction_group",
@@ -1858,5 +1933,10 @@
     "type": "construction_group",
     "id": "place_roulette",
     "name": "Place Roulette Table"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_bathtub",
+    "name": "Build Bathtub"
   }
 ]

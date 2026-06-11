@@ -1,0 +1,37 @@
+[
+  {
+    "id": "chalice_cult_books_postapoc",
+    "type": "item_group",
+    "items": [ [ "wizard_beginner", 3 ], [ "wizard_advanced", 2 ] ]
+  },
+  {
+    "id": "sanguine_cult_books_postapoc",
+    "type": "item_group",
+    "items": [ { "group": "dragon_books", "prob": 5 } ]
+  },
+  {
+    "id": "cleansing_flame_books_postapoc",
+    "type": "item_group",
+    "items": [ [ "priest_beginner", 2 ], [ "priest_advanced", 2 ], [ "techno_fundamentals", 1 ] ]
+  },
+  {
+    "id": "unaligned_arcanist_books_postapoc",
+    "type": "item_group",
+    "items": [
+      { "group": "magic_recipe_basic", "prob": 2 },
+      { "group": "magic_recipe_advanced", "prob": 1 },
+      { "group": "spellbook_loot_0", "prob": 1 },
+      { "group": "spellbook_loot_1", "prob": 1 }
+    ]
+  },
+  {
+    "id": "magic_books_postapoc",
+    "type": "item_group",
+    "items": [
+      { "group": "magic_recipe_basic", "prob": 2 },
+      { "group": "magic_recipe_advanced", "prob": 1 },
+      { "group": "spellbook_loot_0", "prob": 1 },
+      { "group": "spellbook_loot_1", "prob": 1 }
+    ]
+  }
+]

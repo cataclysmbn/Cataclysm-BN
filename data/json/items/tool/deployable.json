@@ -423,5 +423,16 @@
     "color": "light_gray",
     "use_action": { "type": "deploy_furn", "furn_type": "f_chair_folding" },
     "flags": [ "FRAGILE_MELEE" ]
+  },
+  {
+    "id": "metal_charcoal_kiln",
+    "copy-from": "55gal_drum",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "metal charcoal kiln" },
+    "description": "A huge metal kiln with a door cut in to allow easy loading and unloading of char materials. When deployed, it can process up to 200L of bone or wood into charcoal.",
+    "price": "250 USD",
+    "price_postapoc": "5 USD",
+    "use_action": { "type": "deploy_furn", "furn_type": "f_kiln_metal_empty" }
   }
 ]

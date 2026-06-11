@@ -147,7 +147,8 @@
     "copy-from": "medium_storage_battery",
     "type": "vehicle_part",
     "name": { "str": "sea scooter battery" },
-    "item": "sea_scooter_battery"
+    "item": "sea_scooter_battery",
+    "extend": { "flags": [ "NOINSTALL" ] }
   },
   {
     "id": "small_storage_battery",

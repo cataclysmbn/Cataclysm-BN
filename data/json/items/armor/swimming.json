@@ -136,7 +136,7 @@
     "id": "wetsuit_spring",
     "type": "ARMOR",
     "name": { "str": "spring suit" },
-    "description": "A long-sleeved spring wetsuit with pink color details and cleavage-enhancing, hip-accentuating construction.  Not as protective as a full-body suit, but also less restrictive.",
+    "description": "A pink neoprene wetsuit that leaves the legs exposed.  Not as protective as a full-body suit, but also less restrictive and more comfortable in the summer.",
     "weight": "1320 g",
     "volume": "4 L",
     "price": "120 USD",
@@ -146,14 +146,12 @@
     "symbol": "[",
     "looks_like": "wetsuit",
     "color": "pink",
-    "covers": [ "torso", "arms" ],
-    "coverage": 90,
-    "encumbrance": 5,
+    "armor_portion_data": [ { "covers": [ "torso", "arms" ], "coverage": 90, "encumbrance": 5 }, { "covers": [ "legs" ], "coverage": 30 } ],
     "storage": "1 L",
     "warmth": 30,
     "material_thickness": 1,
     "environmental_protection": 2,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "VARSIZE", "FANCY", "WATER_FRIENDLY", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
   },
   {
     "id": "shark_suit_faraday",

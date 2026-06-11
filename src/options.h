@@ -37,6 +37,7 @@ class options_manager
 
         void enable_json( const std::string &var );
         void add_retry( const std::string &var, const std::string &val );
+        auto refresh_title_screen_option() -> void;
 
         std::map<std::string, std::string> post_json_verify;
 
@@ -218,6 +219,10 @@ class options_manager
         bool has_option( const std::string &name ) const;
 
         cOpt &get_option( const std::string &name );
+#if defined(__ANDROID__)
+        bool android_get_default_setting( const char *settings_name, bool default_value );
+#endif
+
 
         //add hidden external option with value
         void add_external( const std::string &sNameIn, const std::string &sPageIn, const std::string &sType,
@@ -369,5 +374,3 @@ inline T get_option( const std::string &name )
 {
     return get_options().get_option( name ).value_as<T>();
 }
-
-

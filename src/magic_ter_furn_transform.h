@@ -63,18 +63,19 @@ class ter_furn_transform
         // return value is success of message found
         template <class T, class K>
         bool add_message( const std::map<K, ter_furn_data<T>> &list, const K &key, const Creature &critter,
-                          const tripoint &location ) const;
+                          const tripoint_bub_ms &location ) const;
 
     public:
 
         ter_furn_transform_id id;
         bool was_loaded = false;
 
-        void add_all_messages( const Creature &critter, const tripoint &location ) const;
-        void add_all_messages( const map &m, const Creature &critter, const tripoint &location ) const;
+        void add_all_messages( const Creature &critter, const tripoint_bub_ms &location ) const;
+        void add_all_messages( const map &m, const Creature &critter,
+                               const tripoint_bub_ms &location ) const;
 
-        void transform( const tripoint &location ) const;
-        void transform( map &m, const tripoint &location ) const;
+        void transform( const tripoint_bub_ms &location ) const;
+        void transform( map &m, const tripoint_bub_ms &location ) const;
 
         static void load_transform( const JsonObject &jo, const std::string &src );
         void load( const JsonObject &jo, const std::string & );

@@ -7,6 +7,7 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "catalua_readonly.h"
@@ -153,6 +154,38 @@ std::string doc_type()
 {
     return doc_typename<std::remove_cvref_t<Val>> {}();
 }
+
+template<typename Ref>
+struct doc_typename<sol::basic_object<Ref>> {
+    std::string operator()() const {
+        return "any";
+    }
+};
+
+template<>
+struct doc_typename<sol::nil_t> {
+    std::string operator()() const {
+        return "nil";
+    }
+};
+
+template<typename ...Args>
+struct doc_typename<std::variant<Args...>> {
+    std::string operator()() const {
+        std::string ret = "Variant( ";
+        bool is_first = true;
+        ( [&]() {
+            if( is_first ) {
+                is_first = false;
+            } else {
+                ret += ", ";
+            }
+            ret += doc_type<Args>();
+        }
+        (), ... );
+        return ret + " )";
+    }
+};
 
 template<typename T, typename U>
 struct doc_typename<std::pair<T, U>> {
@@ -485,6 +518,18 @@ sol::table make_type_member_doctable( sol::table type_dt, const Key &key )
     return member_dt;
 }
 
+template<typename Value, typename Class, typename Key>
+auto doc_member_fake( sol::usertype<Class> &ut, Key &&key )
+{
+    sol::state_view lua( ut.lua_state() );
+    sol::table type_dt = detail::get_type_doctable<Class>( lua );
+    sol::table member_dt = detail::make_type_member_doctable( type_dt, key );
+
+    member_dt[KEY_MEMBER_TYPE] = MEMBER_IS_VAR;
+    add_comment( member_dt, KEY_MEMBER_COMMENT );
+    member_dt[KEY_MEMBER_VARIABLE_TYPE] = doc_type<Value>();
+}
+
 } // namespace detail
 
 template<typename Class, typename ConstructorScheme, typename Bases>
@@ -569,6 +614,34 @@ void set(
     sol::table type_dt = detail::get_type_doctable<Class>( lua );
     sol::table member_dt = detail::make_type_member_doctable( type_dt, key );
     detail::doc_member<Class>( member_dt, sol::types<Value>() );
+}
+
+template<typename Class, typename Key, typename Getter, typename Setter>
+void set_prop(
+    sol::usertype<Class> &ut,
+    Key &&key,
+    Getter &&get,
+    Setter &&set
+)
+{
+    using std_function_type = decltype( std::function{std::forward<Getter>( get )} );
+    using Value = std_function_type::result_type;
+    ut[ key ] = sol::property( std::forward<Getter>( get ), std::forward<Setter>( set ) );
+    detail::doc_member_fake<Value, Class>( ut, key );
+}
+
+
+template<typename Class, typename Key, typename Getter>
+void set_prop(
+    sol::usertype<Class> &ut,
+    Key &&key,
+    Getter &&get
+)
+{
+    using std_function_type = decltype( std::function{std::forward<Getter>( get )} );
+    using Value = std_function_type::result_type;
+    ut[ key ] = sol::property( std::forward<Getter>( get ) );
+    detail::doc_member_fake<Value, Class>( ut, key );
 }
 
 template<typename E>
@@ -736,5 +809,3 @@ inline void doc_params( const Ts &... args )
 }
 
 } // namespace luna
-
-

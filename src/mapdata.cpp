@@ -227,7 +227,6 @@ static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { 
         { "COLLAPSES",                TFLAG_COLLAPSES },      // This tile includes a ceiling. If the ceiling drops, this tile is destroyed.
         { "FLAMMABLE",                TFLAG_FLAMMABLE },      // fire bad! fire SLOW!
         { "REDUCE_SCENT",             TFLAG_REDUCE_SCENT },   // ...and the other half is update_scent
-        { "INDOORS",                  TFLAG_INDOORS },        // vehicle gain_moves, weather
         { "SHARP",                    TFLAG_SHARP },          // monmove
         { "SUPPORTS_ROOF",            TFLAG_SUPPORTS_ROOF },  // Supports its ceiling and roof above it.
         { "MINEABLE",                 TFLAG_MINEABLE },       // allows mining
@@ -272,6 +271,7 @@ static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { 
         { "FREEZER",                  TFLAG_FREEZER },        // This is an active freezer.
         { "ELEVATOR",                 TFLAG_ELEVATOR },       // This is an elevator.
         { "NO_MEMORY",                TFLAG_NO_MEMORY },      // This should not be added to map memory
+        { "ROAD",                     TFLAG_ROAD },           // Some floors have this flag, as do some passable transformation of otherwise impassible terrain/furniture. Very notably, open doors.
     }
 };
 
@@ -830,7 +830,9 @@ ter_id t_null,
        t_railroad_track, t_railroad_track_h, t_railroad_track_v, t_railroad_track_d, t_railroad_track_d1,
        t_railroad_track_d2,
        t_railroad_track_on_tie, t_railroad_track_h_on_tie, t_railroad_track_v_on_tie,
-       t_railroad_track_d_on_tie;
+       t_railroad_track_d_on_tie,
+       t_pd_border,
+       t_rock_border;
 
 // TODO: Put this crap into an inclusion, which should be generated automatically using JSON data
 
@@ -1141,6 +1143,8 @@ void set_ter_ids()
     t_railroad_track_h_on_tie = ter_id( "t_railroad_track_h_on_tie" );
     t_railroad_track_v_on_tie = ter_id( "t_railroad_track_v_on_tie" );
     t_railroad_track_d_on_tie = ter_id( "t_railroad_track_d_on_tie" );
+    t_pd_border = ter_id( "t_pd_border" );
+    t_rock_border = ter_id( "t_rock_border" );
 
     for( auto &elem : terrain_data.get_all() ) {
         ter_t &ter = const_cast<ter_t &>( elem );
@@ -1356,8 +1360,14 @@ std::string enum_to_string<season_type>( season_type data )
 
 void map_data_common_t::load( const JsonObject &jo, const std::string &src )
 {
-    if( jo.has_member( "examine_action" ) ) {
-        examine = iexamine_function_from_string( jo.get_string( "examine_action" ) );
+    const auto examine_action = jo.get_string( "examine_action", "" );
+    examine_action_id.clear();
+
+    if( examine_action.rfind( "lua:", 0 ) == 0 ) {
+        examine_action_id = examine_action.substr( 4 );
+        examine = iexamine_function_from_string( "lua_examine" );
+    } else if( !examine_action.empty() ) {
+        examine = iexamine_function_from_string( examine_action );
     } else if( !was_loaded ) {
         examine = iexamine_function_from_string( "none" );
     }
@@ -1391,8 +1401,11 @@ void map_data_common_t::load( const JsonObject &jo, const std::string &src )
     mandatory( jo, was_loaded, "description", description );
     optional( jo, was_loaded, "message", message );
     optional( jo, was_loaded, "prompt", prompt );
+    assign( jo, "light_color", light_color, is_json_check_strict( src ) );
 
     assign( jo, "flags", flags );
+    assign( jo, "default_vars", default_vars );
+
     bitflags.reset();
     transparent = false;
 

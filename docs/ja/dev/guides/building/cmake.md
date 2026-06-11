@@ -8,9 +8,8 @@ title: CMake
 
 - 一般
   - `cmake` >= 3.0.0
-  - `gcc` >= 14
-  - `clang` >= 19
-  - `gcc-libs`
+  - `clang` >= 22
+  - `gcc-libs` または同等の C++ ランタイムライブラリ
   - `glibc`
   - `zlib`
   - `bzip2`
@@ -50,7 +49,7 @@ cd Cataclysm-BN
 - Ubuntu ベースのディストリビューション (24.04 以降):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 ccache \
+sudo apt install git cmake ninja-build mold clang-22 llvm-22 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -59,7 +58,7 @@ gettext libflac++-dev libsqlite3-dev zlib1g-dev
 - Fedora ベースのディストリビューション:
 
 ```sh
-sudo dnf install git cmake ninja-build mold clang ccache \
+sudo dnf install git cmake ninja-build mold clang llvm ccache \
 SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
@@ -67,51 +66,32 @@ sqlite-devel zlib-devel
 
 #### コンパイラバージョンの確認
 
-Cataclysm-BN』をビルドするには、少なくとも `gcc` 14 **および** `clang` が必要です。コンパイラのバージョンは、以下のコマンドで確認できます:
+『Cataclysm-BN』をビルドするには Clang 22 以降が必要です。コンパイラのバージョンは、以下のコマンドで確認できます:
 
 ```sh
-$ g++ --version
-g++ (GCC) 15.2.1 20250808 (Red Hat 15.2.1-1)
-Copyright (C) 2025 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
 $ clang++ --version
-clang version 20.1.8 (Fedora 20.1.8-4.fc42)
+clang version 22.1.6 (Fedora 22.1.6-1.fc44)
 Target: x86_64-redhat-linux-gnu
 Thread model: posix
 InstalledDir: /usr/bin
-Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 ```
 
 > [!TIP]
 >
-> **`gcc-{version}` はインストールされているが `gcc` が見つからない場合**
+> **`clang-{version}` はインストールされているが `clang` が見つからない場合**
 >
-> `update-alternatives` を使用して、デフォルトのgcc バージョンを設定します:
+> `update-alternatives` を使用して、デフォルトの Clang バージョンを設定します:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-> sudo update-alternatives --display gcc
-> gcc - auto mode
->   link best version is /usr/bin/gcc-14
->   link currently points to /usr/bin/gcc-14
->   link gcc is /usr/bin/gcc
-> /usr/bin/gcc-14 - priority 100
-> sudo update-alternatives --display g++
-> g++ - auto mode
->   link best version is /usr/bin/g++-14
->   link currently points to /usr/bin/g++-14
->   link g++ is /usr/bin/g++
-> /usr/bin/g++-14 - priority 100
+> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-22 100
+> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 100
 > ```
 >
-> `clang`も同様に適用されます。
+> Ubuntu で `llvm-ar-22` と `llvm-ranlib-22` のようなバージョン付き LLVM binutils だけがインストールされる場合は、これらの名前も登録してください:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
-> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-22 100
+> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-22 100
 > ```
 
 ### Windows Subsystem for Linux (WSL)
@@ -142,7 +122,7 @@ pacman -S mingw-w64-x86_64-toolchain msys/git \
 
 ### CMake によるビルド
 
-CMake には、設定 (Configuration) とビルド (Build) のステップが分かれています。設定は CMake 自体を使用して行い、実際のビルドは `make` (Makefile ジェネレータの場合) またはビルドシステムに依存しない
+CMake には、設定 (Configuration) とビルド (Build) のステップが分かれています。設定は CMake 自体を使用して行い、実際のビルドはビルドシステムに依存しない
 `cmake --build .` を使用して行います。
 
 CMake で『Cataclysm-BN』をビルドする方法には、ソースツリーの内部で行う方法と外部で行う方法の2つがあります。ソースツリー外ビルド（Out-of-source builds）には、1つのソースディレクトリから異なるオプションで複数のビルドを作成できるという利点があります。
@@ -323,6 +303,59 @@ Curses バージョンをビルドします。
 ```
 
 言語ファイルは、`RELEASE` ビルドタイプをビルドする場合にのみ自動的にコンパイルされることに注意してください。他のビルドタイプでは、 `translations_compile` `make` コマンドに追加する必要があります。例: `make all translations_compile`。
+
+### ローカルで翻訳込みのビルドを行う
+
+2026年以降、翻訳ファイル（`.po` ファイル）はリポジトリに含まれなくなりました。CI が Transifex から取得し、ワークフローのアーティファクトとして保存したうえで、リリースパッケージのビルドに使用します。
+
+ローカルでビルドする場合は、次のいずれかを使用してください。
+
+#### オプション 1: 翻訳なしでビルドする（最速）
+
+翻訳作業をしていない場合は無効化してください。
+
+```sh
+cmake --preset linux-full -DLANGUAGES=none
+cmake --build --preset linux-full
+```
+
+#### オプション 2: Transifex から翻訳を取得する
+
+ローカルで翻訳をテストする必要があり、Transifex へのアクセス権がある場合:
+
+1. Transifex CLI をインストールします。
+
+```sh
+curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
+```
+
+2. 翻訳ファイルを取得します。
+
+```sh
+tx pull --force --all
+```
+
+3. 翻訳を有効にしてビルドします。
+
+```sh
+cmake --preset linux-full -DLANGUAGES=all
+cmake --build --preset linux-full
+```
+
+#### オプション 3: `translations` ワークフローアーティファクトをダウンロードする
+
+Transifex へのアクセス権がない場合は、翻訳ワークフローが生成したアーティファクトを使用してください。
+
+1. [Actions](https://github.com/cataclysmbn/Cataclysm-BN/actions) で最近成功したワークフロー実行を開きます
+2. `translations` アーティファクトをダウンロードします
+3. `lang/po` と `src/lang_stats.inc` をローカルチェックアウトに展開します
+4. 通常どおり `-DLANGUAGES=all` でビルドします
+
+> [!NOTE]
+> ほとんどのコード変更では翻訳は不要です。ローカライズされた出力をテストするのでなければ `-DLANGUAGES=none` を使用してください。
+
+> [!NOTE]
+> リリースアーカイブに含まれるのはパッケージ用にコンパイル済みの `lang/mo` ファイルだけです。ローカルで翻訳を再ビルドするのに必要な `lang/po` のソースは含まれません。
 
 - DYNAMIC_LINKING=`<boolean>`
 

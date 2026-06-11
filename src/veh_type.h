@@ -12,13 +12,16 @@
 
 #include "calendar.h"
 #include "color.h"
+#include "coordinates.h"
 #include "damage.h"
-#include "point.h"
+#include "hsv_color.h"
 #include "requirements.h"
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "units_angle.h"
+#include "weighted_list.h"
 
 class player;
 class JsonObject;
@@ -83,6 +86,7 @@ enum vpart_bitflags : int {
     VPFLAG_NOFIELDS,
     VPFLAG_DROPPER,
     VPFLAG_LADDER,
+    VPFLAG_POWERED_BY_ENGINE,
 
     NUM_VPFLAGS
 };
@@ -108,7 +112,6 @@ struct vpslot_engine {
     std::vector<std::string> exclusions;
     std::vector<itype_id> fuel_opts;
 };
-
 struct vpslot_wheel {
     float rolling_resistance = 1.0f;
     int contact_area = 1;
@@ -135,6 +138,15 @@ struct vpslot_ladder {
     int length = 0;
 };
 
+struct vpslot_converter {
+    itype_id input = itype_id::NULL_ID();
+    int input_step = 0;
+    itype_id output = itype_id::NULL_ID();
+    int output_step = 0;
+    int max_steps = 0;
+    int charge_cost = 0;
+};
+
 struct vpslot_workbench {
     // Base multiplier applied for crafting here
     float multiplier = 1.0f;
@@ -157,6 +169,19 @@ struct transform_terrain_data {
     bool diggable;
 };
 
+struct vpart_rotating_light {
+    int arc = 30;
+    int step = 90;
+    int phase = 0;
+    time_duration period = 1_turns;
+    int beams = 2;
+
+    auto arc_width() const -> units::angle;
+    auto beam_count() const -> int;
+    auto beam_spacing() const -> units::angle;
+    auto direction_at( units::angle base_direction, time_point turn ) const -> units::angle;
+};
+
 class vpart_info
 {
     private:
@@ -170,6 +195,7 @@ class vpart_info
         std::optional<vpslot_wing> wing_info;
         std::optional<vpslot_balloon> balloon_info;
         std::optional<vpslot_ladder> ladder_info;
+        std::optional<vpslot_converter> converter_info;
         std::optional<vpslot_workbench> workbench_info;
         std::optional<vpslot_crafter> crafter_info;
 
@@ -191,6 +217,8 @@ class vpart_info
         nc_color color = c_light_gray;
         nc_color color_broken = c_light_gray;
 
+        RGBColorPair default_color = {};
+        std::optional<RGBColor> light_color;
         /**
          * Symbol of part which will be translated as follows:
          * y, u, n, b to NW, NE, SE, SW lines correspondingly
@@ -301,6 +329,9 @@ class vpart_info
         /** seatbelt (str), muffler (%), horn (vol), light (intensity), recharing (power) */
         int bonus = 0;
 
+        /** Optional cone rotation data for lights that sweep instead of emitting continuously. */
+        std::optional<vpart_rotating_light> rotating_light;
+
         /** cargo weight modifier (percentage) */
         int cargo_weight_modifier = 100;
 
@@ -345,6 +376,10 @@ class vpart_info
         int propeller_diameter() const;
         float balloon_height() const;
         int ladder_length() const;
+        const std::pair<itype_id, int> get_conversion_input() const;
+        const std::pair<itype_id, int> get_conversion_output() const;
+        int get_max_conversions() const;
+        int get_conversion_charges() const;
         const std::vector<itype_id> craftertools() const;
         /**
          * Getter for optional workbench info
@@ -392,6 +427,7 @@ class vpart_info
         static void load_ladder( std::optional<vpslot_ladder> &ladptr, const JsonObject &jo );
         static void load_propeller( std::optional<vpslot_propeller> &proptr, const JsonObject &jo );
         static void load_crafter( std::optional<vpslot_crafter> &craftptr, const JsonObject &jo );
+        static void load_converter( std::optional<vpslot_converter> &convertptr, const JsonObject &jo );
         static void load( const JsonObject &jo, const std::string &src );
         static void finalize();
         static void check();
@@ -401,7 +437,7 @@ class vpart_info
 };
 
 struct vehicle_item_spawn {
-    point pos;
+    tripoint_mnt_veh pos;
     int chance = 0;
     /** Chance [0-100%] for items to spawn with ammo (plus default magazine if necessary) */
     int with_ammo = 0;
@@ -417,7 +453,7 @@ struct vehicle_item_spawn {
  */
 struct vehicle_prototype {
     struct part_def {
-        point pos;
+        tripoint_mnt_veh pos;
         vpart_id part;
         int with_ammo = 0;
         std::set<itype_id> ammo_types;
@@ -439,6 +475,10 @@ struct vehicle_prototype {
     std::vector<vehicle_item_spawn> item_spawns;
     std::set<flag_id> flags;
 
+    std::map<std::string, int> color_match;
+
+    vpalette_id color_palette;
+
     std::unique_ptr<vehicle> blueprint;
 
     static void load( const JsonObject &jo );
@@ -447,5 +487,3 @@ struct vehicle_prototype {
 
     static std::vector<vproto_id> get_all();
 };
-
-

@@ -9,6 +9,8 @@
 #include "addiction.h"
 #include "avatar.h"
 #include "bionics.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character_effects.h"
@@ -360,7 +362,7 @@ static bool is_cqb_skill( const skill_id &id )
             skill_id( "bashing" ), skill_id( "stabbing" ),
         }
     };
-    return std::ranges::find( cqb_skills, id ) != cqb_skills.end();
+    return std::ranges::contains( cqb_skills, id );
 }
 
 namespace
@@ -896,7 +898,8 @@ static void draw_skills_tab( ui_adaptor &ui, const catacurses::window &w_skills,
     wnoutrefresh( w_skills );
 }
 
-static void draw_skills_info( const catacurses::window &w_info, unsigned int line,
+static void draw_skills_info( const catacurses::window &w_info, const Character &you,
+                              unsigned int line,
                               const std::vector<HeaderSkill> &skillslist )
 {
     werase( w_info );
@@ -911,9 +914,19 @@ static void draw_skills_info( const catacurses::window &w_info, unsigned int lin
     werase( w_info );
 
     if( selectedSkill ) {
+        auto description = selectedSkill->description();
+        const auto hook_results = cata::run_hooks( "on_character_display_skill_info",
+        [&]( sol::table & params ) {
+            params["character"] = &you;
+            params["skill"] = selectedSkill->ident();
+        } );
+        const auto extra_text = hook_results.get_or( "text", std::string() );
+        if( !extra_text.empty() ) {
+            description += "\n\n" + extra_text;
+        }
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray,
-                        selectedSkill->description() );
+                        description );
     }
     wnoutrefresh( w_info );
 }
@@ -959,8 +972,8 @@ static void draw_speed_tab( const catacurses::window &w_speed,
                    left_justify( _( "Starving" ), 20 ), pen );
         ++line;
     }
-    if( you.has_trait( trait_id( "SUNLIGHT_DEPENDENT" ) ) && !g->is_in_sunlight( you.pos() ) ) {
-        pen = ( g->light_level( you.posz() ) >= 12 ? 5 : 10 );
+    if( you.has_trait( trait_id( "SUNLIGHT_DEPENDENT" ) ) && !g->is_in_sunlight( you.bub_pos() ) ) {
+        pen = ( g->light_level( you.bub_pos().z() ) >= 12 ? 5 : 10 );
         //~ %s: Out of Sunlight (already left-justified), %2d%%: speed penalty
         mvwprintz( w_speed, point( 1, line ), c_red, pgettext( "speed penalty", "%s-%2d%%" ),
                    left_justify( _( "Out of Sunlight" ), 20 ), pen );
@@ -971,7 +984,8 @@ static void draw_speed_tab( const catacurses::window &w_speed,
     if( temperature_speed_modifier != 0 ) {
         nc_color pen_color;
         std::string pen_sign;
-        const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( you.pos() ) );
+        const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature(
+                                           you.abs_pos() ) );
         if( you.has_trait( trait_id( "COLDBLOOD4" ) ) && player_local_temp > 65 ) {
             pen_color = c_green;
             pen_sign = "+";
@@ -1039,7 +1053,7 @@ static void draw_info_window( const catacurses::window &w_info, const Character 
             draw_encumbrance_info( w_info, you, line );
             break;
         case player_display_tab::skills:
-            draw_skills_info( w_info, line, skillslist );
+            draw_skills_info( w_info, you, line, skillslist );
             break;
         case player_display_tab::traits:
             draw_traits_info( w_info, line, traitslist );
@@ -1207,7 +1221,14 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
                     selectedSkill = skillslist[line].skill;
                 }
                 if( selectedSkill ) {
-                    you.get_skill_level_object( selectedSkill->ident() ).toggleTraining();
+                    const auto hook_results = cata::run_hooks( "on_character_display_skill_action",
+                    [&]( sol::table & params ) {
+                        params["character"] = &you;
+                        params["skill"] = selectedSkill->ident();
+                    } );
+                    if( !hook_results.get_or( "handled", false ) ) {
+                        you.get_skill_level_object( selectedSkill->ident() ).toggleTraining();
+                    }
                 }
                 invalidate_tab( curtab );
                 break;
@@ -1320,21 +1341,21 @@ void character_display::disp_info( Character &ch )
         effect_name_and_text.emplace_back( starvation_name, starvation_text );
     }
 
-    if( ( ch.has_trait( trait_id( "TROGLO" ) ) && g->is_in_sunlight( ch.pos() ) &&
+    if( ( ch.has_trait( trait_id( "TROGLO" ) ) && g->is_in_sunlight( ch.bub_pos() ) &&
           get_weather().weather_id->sun_intensity >= sun_intensity_type::high ) ||
-        ( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.pos() ) &&
+        ( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.bub_pos() ) &&
           get_weather().weather_id->sun_intensity < sun_intensity_type::high )
       ) {
         effect_name_and_text.emplace_back( _( "In Sunlight" ),
                                            _( "The sunlight irritates you.\n"
                                               "Strength - 1;    Dexterity - 1;    Intelligence - 1;    Perception - 1" )
                                          );
-    } else if( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.pos() ) ) {
+    } else if( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.bub_pos() ) ) {
         effect_name_and_text.emplace_back( _( "In Sunlight" ),
                                            _( "The sunlight irritates you badly.\n"
                                               "Strength - 2;    Dexterity - 2;    Intelligence - 2;    Perception - 2" )
                                          );
-    } else if( ch.has_trait( trait_id( "TROGLO3" ) ) && g->is_in_sunlight( ch.pos() ) ) {
+    } else if( ch.has_trait( trait_id( "TROGLO3" ) ) && g->is_in_sunlight( ch.bub_pos() ) ) {
         effect_name_and_text.emplace_back( _( "In Sunlight" ),
                                            _( "The sunlight irritates you terribly.\n"
                                               "Strength - 4;    Dexterity - 4;    Intelligence - 4;    Perception - 4" )

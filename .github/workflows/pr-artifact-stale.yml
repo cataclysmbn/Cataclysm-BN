@@ -1,0 +1,76 @@
+name: PR Artifact Stale Marker
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-artifact-stale-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  mark-stale:
+    if: github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark existing artifacts stale
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          body=$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')
+          if ! grep -q '<!-- BEGIN artifact comment -->' <<< "$body"; then
+            exit 0
+          fi
+
+          new_body=$(BODY="$body" HEAD_SHA="$HEAD_SHA" python3 - <<'PY'
+          import os
+          import re
+
+          body = os.environ["BODY"]
+          head_sha = os.environ["HEAD_SHA"]
+          pattern = re.compile(r"(?s)<!-- BEGIN artifact comment -->.*?<!-- END artifact comment -->")
+          match = pattern.search(body)
+          if not match:
+              print(body, end="")
+              raise SystemExit
+
+          block = match.group(0)
+          if f"/commit/{head_sha}" in block:
+              print(body, end="")
+              raise SystemExit
+
+          stale_block = re.sub(
+              r"- \[✅ ([^\]\n]+?) — download\]\(([^)\n]+)\)",
+              r"- [⏳ \1 — stale](\2)",
+              block,
+          )
+          if stale_block == block:
+              print(body, end="")
+              raise SystemExit
+
+          stale_block = re.sub(
+              r"^PR build for commit (.+)$",
+              r"Stale PR build for commit \1; waiting for a build from the latest commit.",
+              stale_block,
+              flags=re.MULTILINE,
+          )
+          print(body[:match.start()] + stale_block + body[match.end():], end="")
+          PY
+          )
+
+          if [ "$new_body" = "$body" ]; then
+            exit 0
+          fi
+
+          jq -n --arg body "$new_body" '{body: $body}' > "$RUNNER_TEMP/pr-body.json"
+          gh api -X PATCH "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --input "$RUNNER_TEMP/pr-body.json" >/dev/null

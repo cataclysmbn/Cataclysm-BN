@@ -285,6 +285,13 @@ class JsonIn
         template<size_t N>
         bool read( std::bitset<N> &b, bool throw_on_error = false );
         bool read( JsonDeserializer &j, bool throw_on_error = false );
+
+#if defined(_MSC_VER)
+        // in MSVC, long is neither int32_t, nor int64_t...
+        bool read( long &i, bool throw_on_error = false );
+        bool read( unsigned long &u, bool throw_on_error = false );
+#endif
+
         // This is for the string_id type
         template <typename T>
         auto read( T &thing, bool throw_on_error = false ) -> decltype( thing.str(), true ) {

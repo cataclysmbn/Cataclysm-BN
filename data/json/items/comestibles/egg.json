@@ -298,6 +298,57 @@
   },
   {
     "type": "COMESTIBLE",
+    "id": "egg_fish_tiny",
+    "copy-from": "egg_fish",
+    "name": "roe",
+    "comestible_type": "FOOD",
+    "description": "Common roe from an unknown tiny fish.",
+    "rot_spawn": "GROUP_EGG_FISH_T"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "egg_fish_small",
+    "copy-from": "egg_fish",
+    "name": "roe",
+    "comestible_type": "FOOD",
+    "description": "Common roe from an unknown small fish.",
+    "rot_spawn": "GROUP_EGG_FISH_S"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "egg_fish_medium",
+    "copy-from": "egg_fish",
+    "name": "roe",
+    "weight": "48 g",
+    "comestible_type": "FOOD",
+    "description": "Common roe from an unknown medium fish.",
+    "rot_spawn": "GROUP_EGG_FISH_M",
+    "volume": "35 ml"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "egg_fish_large",
+    "copy-from": "egg_fish",
+    "name": "roe",
+    "weight": "56 g",
+    "comestible_type": "FOOD",
+    "description": "Common roe from an unknown large fish.",
+    "rot_spawn": "GROUP_EGG_FISH_L",
+    "volume": "40 ml"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "egg_fish_huge",
+    "copy-from": "egg_fish",
+    "name": "roe",
+    "weight": "60 g",
+    "comestible_type": "FOOD",
+    "description": "Common roe from an unknown huge fish.",
+    "rot_spawn": "GROUP_EGG_FISH_H",
+    "volume": "60 ml"
+  },
+  {
+    "type": "COMESTIBLE",
     "id": "powder_eggs",
     "category": "cooking_ingredients",
     "name": { "str": "powdered egg" },

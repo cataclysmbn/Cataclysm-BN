@@ -123,6 +123,26 @@ local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
 target_monster:as_monster():add_item(scraps)
 ```
 
+### 몬스터 상호작용을 무작위로 막기
+
+Lua 콘솔에 아래 코드를 붙여 넣으면 몬스터 상호작용이 50% 확률로
+실패하게 할 수 있습니다:
+
+```lua
+game.add_hook("on_try_monster_interaction", function(params)
+    local monster = params.monster
+
+    gapi.add_msg(string.format("당신은 %s에게 말을 걸어보려 합니다", monster:get_name()))
+    if math.random(2) == 1 then
+        gapi.add_msg(MsgType.warning, string.format("당신은 %s(와)과 상호작용하기엔 너무 수줍습니다!", monster:get_name()))
+        return false
+    end
+end)
+```
+
+`false` 를 반환하면 기본 펫, 메카, 우호적 몬스터 상호작용이 막히고,
+`true` 를 반환하면 그대로 진행됩니다.
+
 ## NPC
 
 ### NPC 생성 및 삭제

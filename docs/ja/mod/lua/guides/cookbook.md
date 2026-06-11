@@ -123,6 +123,26 @@ local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
 target_monster:as_monster():add_item(scraps)
 ```
 
+### モンスターとの対話をランダムに止める
+
+Lua コンソールに次のコードを貼り付けると、モンスターとの対話が
+50% の確率で失敗するようになります:
+
+```lua
+game.add_hook("on_try_monster_interaction", function(params)
+    local monster = params.monster
+
+    gapi.add_msg(string.format("あなたは %s に話しかけようとします", monster:get_name()))
+    if math.random(2) == 1 then
+        gapi.add_msg(MsgType.warning, string.format("あなたは %s と対話するにはシャイすぎます!", monster:get_name()))
+        return false
+    end
+end)
+```
+
+`false` を返すと通常のペット、メカ、友好的モンスターとの対話を止め、`true` を返すと
+そのまま続行します。
+
 ## NPC
 
 ### NPCの生成と削除

@@ -173,6 +173,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_CANPLAY: return "CANPLAY";
         case MF_PET_MOUNTABLE: return "PET_MOUNTABLE";
         case MF_PET_HARNESSABLE: return "PET_HARNESSABLE";
+        case MF_CAN_FETCH: return "CAN_FETCH";
         case MF_DOGFOOD: return "DOGFOOD";
         case MF_MILKABLE: return "MILKABLE";
         case MF_SHEARABLE: return "SHEARABLE";
@@ -197,12 +198,17 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_PROJECTILE_RESISTANT_2: return "PROJECTILE_RESISTANT_2";
         case MF_PROJECTILE_RESISTANT_3: return "PROJECTILE_RESISTANT_3";
         case MF_PROJECTILE_RESISTANT_4: return "PROJECTILE_RESISTANT_4";
-         case MF_VOLATILE: return "VOLATILE";
-         case MF_CANT_CLONE: return "CANT_CLONE";
-         case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
-         case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
-         case MF_FACTION_MEMORY: return "FACTION_MEMORY";
-         // *INDENT-ON*
+        case MF_VOLATILE: return "VOLATILE";
+        case MF_CANT_CLONE: return "CANT_CLONE";
+        case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
+        case MF_MOUNTABLE_LADDER: return "MOUNTABLE_LADDER";
+        case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
+        case MF_MOUNTABLE_DOORS: return "MOUNTABLE_DOORS";
+        case MF_MOUNTABLE_LEDGE: return "MOUNTABLE_LEDGE";        
+        case MF_FACTION_MEMORY: return "FACTION_MEMORY";
+        case MF_COMBAT_MOUNT: return "COMBAT_MOUNT";
+        case MF_CANT_TRAIN: return "CANT_TRAIN";
+        // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
     }
@@ -381,7 +387,6 @@ void MonsterGenerator::finalize_mtypes()
 
         if( !mon.has_flag( MF_RIDEABLE_MECH ) ) {
             // adjust for worldgen difficulty parameters
-            mon.speed *= get_option<int>( "MONSTER_SPEED" )      / 100.0;
             mon.hp    *= get_option<int>( "MONSTER_RESILIENCE" ) / 100.0;
         }
 
@@ -795,6 +800,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
 
     assign( jo, "vision_day", vision_day, strict, 0 );
     assign( jo, "vision_night", vision_night, strict, 0 );
+    optional( jo, was_loaded, "preferred_z", preferred_z );
 
     optional( jo, was_loaded, "regenerates", regenerates, 0 );
     optional( jo, was_loaded, "regenerates_in_dark", regenerates_in_dark, false );
@@ -826,6 +832,8 @@ void mtype::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "mech_str_bonus", mech_str_bonus, 0 );
     optional( jo, was_loaded, "mech_battery", mech_battery, itype_id() );
     optional( jo, was_loaded, "aggro_character", aggro_character, true );
+    assign( jo, "lua_attitude", lua_attitude );
+    assign( jo, "lua_ai", lua_ai );
 
     // TODO: make this work with `was_loaded`
     if( jo.has_array( "melee_damage" ) ) {
@@ -836,6 +844,27 @@ void mtype::load( const JsonObject &jo, const std::string &src )
 
     // Load pet food data
     optional( jo, was_loaded, "petfood", petfood );
+
+    if( jo.has_object( "pet_training" ) ) {
+        JsonObject pt = jo.get_object( "pet_training" );
+        pet_training_multipliers ptm;
+        pt.read( "hp_mult", ptm.hp );
+        pt.read( "melee_mult", ptm.melee );
+        pt.read( "dodge_mult", ptm.dodge );
+        pt.read( "max_level", ptm.max_level );
+        pt.read( "min_skill", ptm.min_skill );
+        if( pt.has_array( "level_flags" ) ) {
+            for( JsonObject lf_obj : pt.get_array( "level_flags" ) ) {
+                pet_training_level_flags lf;
+                lf_obj.read( "level", lf.level );
+                for( const std::string &flag_str : lf_obj.get_array( "flags" ) ) {
+                    lf.flags.push_back( io::string_to_enum<m_flag>( flag_str ) );
+                }
+                ptm.level_flags.push_back( std::move( lf ) );
+            }
+        }
+        pet_training = ptm;
+    }
 
     if( jo.has_array( "scents_tracked" ) ) {
         for( const std::string line : jo.get_array( "scents_tracked" ) ) {
@@ -855,6 +884,10 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         melee_damage.add_damage( DT_CUT, bonus_cut );
     }
 
+    if( jo.has_member( "monster_weapon" ) ) {
+        monster_weapon = item_group::load_item_group( jo.get_member( "monster_weapon" ),
+                         "distribution" );
+    }
     if( jo.has_member( "death_drops" ) ) {
         death_drops = item_group::load_item_group( jo.get_member( "death_drops" ),
                       "distribution" );
@@ -896,7 +929,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         if( !mon_spawns.empty() ) {
             on_death.emplace_back( [mon_spawns]( monster & z ) {
                 for( const auto &pair : mon_spawns ) {
-                    g->place_critter_around( pair.second, z.pos(), pair.first );
+                    g->place_critter_around( pair.second, z.bub_pos(), pair.first );
                 }
             } );
         }
@@ -1344,6 +1377,8 @@ mtype_special_attack MonsterGenerator::create_actor( const JsonObject &obj,
         new_attack = std::make_unique<gun_actor>();
     } else if( attack_type == "spell" ) {
         new_attack = std::make_unique<mon_spellcasting_actor>();
+    } else if( attack_type == "deployer" ) {
+        new_attack = std::make_unique<deployer_actor>();
     } else {
         obj.throw_error( "unknown monster attack", "attack_type" );
     }
@@ -1543,6 +1578,10 @@ void MonsterGenerator::check_monster_definitions() const
         if( !mon.mech_battery.is_empty() && !mon.mech_battery.is_valid() ) {
             debugmsg( "monster %s has unknown mech_battery: %s", mon.id.c_str(),
                       mon.mech_battery.c_str() );
+        }
+        if( mon.monster_weapon && !item_group::group_is_defined( mon.monster_weapon ) ) {
+            debugmsg( "monster %s has unknown monster weapon item group: %s", mon.id.c_str(),
+                      mon.monster_weapon.c_str() );
         }
         for( const scenttype_id &s_id : mon.scents_tracked ) {
             if( !s_id.is_empty() && !s_id.is_valid() ) {

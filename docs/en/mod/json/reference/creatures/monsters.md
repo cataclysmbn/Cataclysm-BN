@@ -226,6 +226,63 @@ If the monster will differentiate between monsters and characters (NPC, Player) 
 targets - if false the monster will ignore characters regardless of current anger/morale until a
 character trips and anger trigger. Resets randomly when the monster is at its base anger level.
 
+## "lua_attitude"
+
+(string, optional)
+
+If set, uses a Lua function from `game.monster_attitude_functions` to determine the monster's
+attitude instead of the default C++ logic. The Lua function is called with `(monster, target)`,
+where `target` can be `nil`, and should return a `MonsterAttitude` value. Returning `nil` falls back
+to the default behavior.
+
+```json
+"lua_attitude": "my_attitude"
+```
+
+```lua
+game.monster_attitude_functions["my_attitude"] = function(mon, target)
+  if target ~= nil and target:is_avatar() then
+    return MonsterAttitude.MATT_ATTACK
+  end
+  return nil
+end
+```
+
+## "lua_ai"
+
+(string, optional)
+
+If set, runs a Lua function from `game.monster_ai_functions` each monster turn. The function
+is called with `(monster)` and should return a boolean: `true` means Lua handled the turn and
+the default C++ AI is skipped, `false` or `nil` falls back to the default AI.
+
+```json
+"lua_ai": "my_ai"
+```
+
+```lua
+game.monster_ai_functions["my_ai"] = function(mon)
+  local avatar = gapi.get_avatar()
+  if avatar ~= nil then
+    local function sign(val)
+      if val > 0 then
+        return 1
+      end
+      if val < 0 then
+        return -1
+      end
+      return 0
+    end
+    local pos = mon:get_pos_ms()
+    local tgt = avatar:get_pos_ms()
+    local step = Tripoint.new(pos.x + sign(tgt.x - pos.x), pos.y + sign(tgt.y - pos.y), pos.z)
+    mon:set_target(avatar)
+    mon:move_to(step, false, true, 1.0)
+  end
+  return true
+end
+```
+
 ## "speed"
 
 (integer)
@@ -313,6 +370,14 @@ Amount of light passively output by monster. Ranges from 0 to 10.
 (integer)
 
 Monster hit points.
+
+## "monster_weapon"
+
+(item group, optional)
+
+An item group that is used to spawn items assumed to be the monster's wielded weapon. Having this defined will make said monster vulnerable to disarming techniques. If disarmed, a monster will have their bashing damage roll greatly reduced and any special melee damage (cut, electric, etc) reduced to zero, and they'll be unable to use certain special attacks (notably attacks of `"type": "gun"`, but also some such as `TAZER`, `SHOCKSTORM`, `FLAMETHROWER`, etc).
+
+Can freely be a collection to imply two weapons wielded in both hands, as items will be dropped on the ground instead of wielded by the attacker, even if the technique has `take_weapon` set. Itemgroup will also spawn on death as with `death_drops` if the monster was killed without being disarmed.
 
 ## "death_drops"
 
@@ -844,8 +909,31 @@ Description of the sound made when targeting.
 
 #### "targeting_volume"
 
-Volume of the sound made when targeting.
+OBSOLETE
+
+Volume of the sound made when targeting. ( in tiles of volume )
+
+#### "targeting_volume_dB"
+
+Volume of the sound made when targeting in dB
 
 #### "no_ammo_sound"
 
 Description of the sound made when out of ammo.
+
+### "deployer"
+
+```json
+{
+  "type": "deployer",
+  "deployables": {
+    "bot_c4_hack": { // Item Id of ammo to deploy
+      "message": "The elite zombie grenadier deploys a c4 hack", // Message to display when deploying
+      "chance": 1, // Spawn weight, randomly selected based on total weight of available deployables
+      "ammo_percentage": 0.6, // Threshold for when it will add this deployable to the pool for random selection, e.g. won't start deploying this until 40% of total deployables have already been used up.
+      "range": 10 // Spawn radius when deploying
+    }
+  },
+  "cooldown": 3 // Turns between deployments
+}
+```

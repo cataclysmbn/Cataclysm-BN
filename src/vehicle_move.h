@@ -1,7 +1,7 @@
 #pragma once
 
+#include "coordinates.h"
 #include "units_angle.h"
-#include "point.h"
 
 class map;
 class vehicle;
@@ -13,7 +13,7 @@ struct rail_processing_result {
     bool do_turn = false;
     bool do_shift = false;
     units::angle turn_dir;
-    tripoint shift_amount;
+    tripoint_rel_ms shift_amount;
 };
 
 /**

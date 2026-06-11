@@ -585,6 +585,24 @@
     "flags": [ "MISSION_ITEM" ]
   },
   {
+    "id": "labpass",
+    "type": "GENERIC",
+    "category": "valuables",
+    "name": { "str": "lab door override code" },
+    "description": "This printout contains a one-time use emergency override code for any locked door in a science lab.",
+    "weight": "5 g",
+    "volume": "4 ml",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "to_hit": -1,
+    "bashing": 1,
+    "material": "paper",
+    "symbol": ";",
+    "color": "white",
+    "flags": [ "TRADER_AVOID" ],
+    "looks_like": "survnote"
+  },
+  {
     "id": "small_space_heater",
     "type": "TOOL",
     "category": "deployables",
@@ -636,7 +654,7 @@
     "type": "TOOL",
     "category": "tools",
     "name": { "str": "spray can" },
-    "description": "This is a spray can, filled with paint.  Use this tool to make graffiti on the floor.",
+    "description": "This is a spray can, filled with paint.  Use this tool to make graffiti on the floor or to paint objects.",
     "weight": "340 g",
     "volume": "250 ml",
     "price": "5 USD",
@@ -646,9 +664,42 @@
     "color": "light_gray",
     "initial_charges": 10,
     "max_charges": 10,
-    "charges_per_use": 1,
-    "use_action": "SPRAY_CAN",
-    "flags": [ "WRITE_MESSAGE" ]
+    "charges_per_use": 0,
+    "ammo": "spray_paint",
+    "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": false } ],
+    "flags": [ "WRITE_MESSAGE", "NO_UNLOAD", "NO_PAINT" ]
+  },
+  {
+    "id": "super_spray_can",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "Prototype CMHP-9000" },
+    "description": "You dont really know what this is, it appears to be filled with paint. But the paint seems to be shimmering and switching colors as you look at it. Use this tool to make graffiti on the floor or to paint objects.",
+    "weight": "340 g",
+    "volume": "250 ml",
+    "looks_like": "spray_can",
+    "price": "10000 USD",
+    "price_postapoc": "10 USD",
+    "material": "aluminum",
+    "symbol": ";",
+    "color": "light_gray",
+    "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": true } ],
+    "flags": [ "WRITE_MESSAGE", "NO_PAINT" ],
+    "ammo": "battery",
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_disposable_cell",
+          "light_minus_disposable_cell",
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell"
+        ]
+      ]
+    ]
   },
   {
     "id": "stepladder",
@@ -855,8 +906,8 @@
     "description": "A cheap gadget combining a whistle, thermometer, magnifying glass, and compass.",
     "weight": "7 g",
     "volume": "25 ml",
-    "price": 200,
-    "price_postapoc": 250,
+    "price": "2 USD",
+    "price_postapoc": "250 cent",
     "to_hit": -3,
     "material": "plastic",
     "symbol": ";",
@@ -928,5 +979,20 @@
     "//": "used by the cloning vat and adds a var called 'place_monster_override'",
     "name": { "str": "artificial womb" },
     "description": "A single-use vessel for transporting clones safely from the cloning vat to the field.  Currently empty, if sufficiently sterile it can be used by a cloning vat to grow a creature from a viable DNA sample. "
+  },
+  {
+    "id": "item_var_viewer",
+    "type": "TOOL",
+    "category": "electronics",
+    "name": { "str": "object variable viewer" },
+    "description": "A compact analyzer that scans any nearby object and reveals every stored variable for quick debugging without needing to drop the object.  It can also add, update, or remove item variables.",
+    "weight": "400 g",
+    "volume": "750 ml",
+    "price": "900 USD",
+    "price_postapoc": "30 USD",
+    "symbol": ";",
+    "color": "light_gray",
+    "use_action": [ "OBJ_VAR_VIEWER" ],
+    "flags": [ "BELT_CLIP" ]
   }
 ]

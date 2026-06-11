@@ -155,7 +155,9 @@ PR 제목 예시:
 feat(balance): Give moose pelts instead of hides
 ```
 
-### `port`: DDA 또는 다른 포크에서 포팅
+### `port`: 다른 사람의 기여를 포팅
+
+예: DDA 또는 다른 포크에서 포팅
 
 PR 제목 예시:
 

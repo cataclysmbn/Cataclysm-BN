@@ -20,9 +20,10 @@
 #endif
 
 #if defined(__ANDROID__)
-#include <SDL_keyboard.h>
+#include <SDL3/SDL.h>
 
 #include "options.h"
+#include "sdltiles.h"
 #endif
 
 #include <algorithm>
@@ -127,6 +128,7 @@ void string_input_popup::create_context()
     ctxt->register_action( "PAGE_DOWN" );
     ctxt->register_action( "SCROLL_UP" );
     ctxt->register_action( "SCROLL_DOWN" );
+    ctxt->register_action( "NUMPAD_6" );
     ctxt->register_action( "ANY_INPUT" );
 }
 
@@ -446,14 +448,15 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
         if( action == "TEXT.QUIT" ) {
 #if defined(__ANDROID__)
             if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-                SDL_StopTextInput();
+                SDL_StopTextInput( get_sdl_window().get() );
             }
 #endif
             _text.clear();
             _position = -1;
             _canceled = true;
             return _text;
-        } else if( action == "TEXT.CONFIRM" ) {
+        } else if( action == "TEXT.CONFIRM" || ( action == "TEXT.RIGHT" && !( edit.empty() &&
+                   _position + 1 <= static_cast<int>( ret.size() ) ) ) ) {
             add_to_history( ret.str() );
             _confirmed = true;
             _text = ret.str();

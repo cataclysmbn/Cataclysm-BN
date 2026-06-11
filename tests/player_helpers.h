@@ -5,11 +5,11 @@
 #include <string>
 #include <vector>
 
+#include "coordinates.h"
 #include "type_id.h"
 
 class npc;
 class player;
-struct point;
 
 int get_remaining_charges( const std::string &tool_id );
 bool player_has_item_of_type( const std::string & );
@@ -17,7 +17,7 @@ void clear_character( player &, bool debug_storage = true );
 void clear_avatar();
 void process_activity( player &dummy );
 
-npc &spawn_npc( const point &, const std::string &npc_class );
+npc &spawn_npc( const point_bub_ms &, const std::string &npc_class );
 void give_and_activate_bionic( player &p, const bionic_id &bioid );
 
 void arm_character( player &shooter, const std::string &gun_type,

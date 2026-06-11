@@ -341,7 +341,8 @@
             { "value": "RANGED_DAMAGE_BULLET", "add": 15 },
             { "value": "RANGED_RANGE", "multiply": 0.5 },
             { "value": "RANGED_RECOIL", "multiply": -0.5 },
-            { "value": "RANGED_RELOAD_TIME", "multiply": -0.3 }
+            { "value": "RANGED_RELOAD_TIME", "multiply": -0.3 },
+            { "value": "RANGED_AIM_SPEED", "multiply": 0.5 }
           ]
         }
       ]

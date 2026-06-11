@@ -62,7 +62,9 @@ if (import.meta.main) {
     .option("-o, --output <output:string>", "Output file path", { required: true })
     .parse(Deno.args)
 
-  const command = new Deno.Command("./cataclysm-bn-tiles", { args: ["--help"] })
+  const command = new Deno.Command(Deno.env.get("CATA_EXE") ?? "./cataclysm-bn-tiles", {
+    args: ["--help"],
+  })
   const { stdout } = await command.output()
 
   const text = new TextDecoder().decode(stdout)

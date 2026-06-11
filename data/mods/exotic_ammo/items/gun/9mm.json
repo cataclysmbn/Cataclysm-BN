@@ -20,7 +20,7 @@
     "description": "A selective-firing 9x19mm handgun introduced by Leadworks LLC's, L39B provides accurate single-shot placement as well as controllable short-range firepower with its three-round burst mode.  Users praised its accuracy and fearsome appearance.  Comes with built in red dot and laser sights.  Similar to other Leadworks products it doesn't accept third-party modifications.",
     "price": "950 USD",
     "modes": [ [ "DEFAULT", "semi-auto", 1 ], [ "BURST", "3 rd.", 3 ] ],
-    "relative": { "weight": 130, "durability": -1 }
+    "relative": { "weight": "130 g", "durability": -1 }
   },
   {
     "id": "l_sp_9mm",
@@ -54,7 +54,7 @@
       [ "rail mount", 1 ],
       [ "stock mount", 1 ]
     ],
-    "magazine_well": 1,
+    "magazine_well": "250 ml",
     "magazines": [ [ "9mm", [ "lw21mag" ] ], [ "460", [ "lw12mag" ] ] ],
     "flags": [ "DURABLE_MELEE" ]
   }

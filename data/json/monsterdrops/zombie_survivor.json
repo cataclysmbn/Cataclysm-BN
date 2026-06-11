@@ -68,8 +68,9 @@
           { "group": "survivor_knife", "damage": [ 1, 4 ] },
           {
             "distribution": [
-              { "group": "survivor_melee", "prob": 40, "damage": [ 1, 4 ] },
-              { "group": "guns_survival", "prob": 60, "damage": [ 1, 4 ] }
+              { "group": "survivor_melee", "prob": 35, "damage": [ 1, 4 ] },
+              { "group": "guns_survival", "prob": 55, "damage": [ 1, 4 ] },
+              { "item": "oldguard_rifle", "prob": 2, "damage": [ 1, 4 ] }
             ],
             "prob": 50
           },
@@ -95,7 +96,8 @@
           { "group": "survivor_currency", "prob": 25 }
         ]
       },
-      { "item": "survival_kit", "prob": 5, "damage": [ 1, 4 ] }
+      { "item": "survival_kit", "prob": 5, "damage": [ 1, 4 ] },
+      { "item": "recipe_oldguard", "prob": 1 }
     ]
   },
   {
@@ -187,6 +189,7 @@
       {
         "distribution": [
           { "group": "survivorzed_suits", "prob": 25, "damage": [ 1, 4 ] },
+          { "item": "oldguard_armor", "prob": 10, "damage": [ 1, 4 ] },
           {
             "collection": [ { "group": "survivorzed_tops", "damage": [ 1, 4 ] }, { "group": "survivorzed_bottoms", "damage": [ 1, 4 ] } ],
             "prob": 75
@@ -201,6 +204,7 @@
           { "group": "survivor_knife", "prob": 5, "damage": [ 1, 4 ] },
           { "group": "survivor_melee", "prob": 5, "damage": [ 1, 4 ] },
           { "group": "guns_survival", "prob": 15, "damage": [ 1, 4 ] },
+          { "item": "oldguard_rifle", "prob": 5, "damage": [ 1, 4 ] },
           { "group": "survivor_grenades", "prob": 10, "count": [ 1, 3 ] },
           { "group": "launchers", "prob": 1 }
         ]
@@ -226,7 +230,8 @@
             ],
             "prob": 25
           },
-          { "group": "survivor_currency", "prob": 75, "count": 2 }
+          { "group": "survivor_currency", "prob": 75, "count": 2 },
+          { "item": "recipe_oldguard", "prob": 10 }
         ]
       }
     ]

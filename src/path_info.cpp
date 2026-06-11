@@ -7,13 +7,14 @@
 #include "filesystem.h"
 #include "language.h"
 #include "options.h"
+#include "title_screen.h"
 
 #if defined(_WIN32)
 #include <windows.h>
 #endif
 #if defined(__ANDROID__)
 #include <jni.h>
-#include <SDL_system.h>
+#include <SDL3/SDL.h>
 #endif
 /**
  * Return a locale specific path, or if there is no path for the current
@@ -50,8 +51,12 @@ void PATH_INFO::init_base_path( std::string path )
 // And points the user directory to it for android
 void PATH_INFO::init_user_dir( std::string dir )
 {
-    JNIEnv *env = static_cast<JNIEnv *>( SDL_AndroidGetJNIEnv() );
-    jobject activity = static_cast<jobject>( SDL_AndroidGetActivity() );
+    if( get_options().android_get_default_setting( "Use Legacy Storage", false ) ) {
+        user_dir_value = as_norm_dir( dir );
+        return;
+    }
+    auto *env = static_cast<JNIEnv *>( SDL_GetAndroidJNIEnv() );
+    auto activity = static_cast<jobject>( SDL_GetAndroidActivity() );
 
     jclass clazz = env->GetObjectClass( activity );
 
@@ -268,6 +273,10 @@ std::string PATH_INFO::panel_options()
 {
     return config_dir_value + "panel_options.json";
 }
+std::string PATH_INFO::preload()
+{
+    return config_dir_value + "preload.json";
+}
 std::string PATH_INFO::safemode()
 {
     return config_dir_value + "safemode.json";
@@ -279,7 +288,10 @@ std::string PATH_INFO::distraction()
 std::string PATH_INFO::savedir()
 {
 #if defined(__ANDROID__)
-    if( get_option<bool>( "LOAD_FROM_EXTERNAL" ) ) {
+    const auto load_from_external =
+        get_options().has_option( "LOAD_FROM_EXTERNAL" ) &&
+        get_option<bool>( "LOAD_FROM_EXTERNAL" );
+    if( load_from_external ) {
         return base_path_value + "/save/";
     } else {
         return savedir_value;
@@ -287,6 +299,10 @@ std::string PATH_INFO::savedir()
 #else
     return savedir_value;
 #endif
+}
+std::string PATH_INFO::shaders()
+{
+    return datadir_value + "shaders/";
 }
 std::string PATH_INFO::sokoban()
 {
@@ -366,10 +382,7 @@ std::string PATH_INFO::motd()
 
 std::string PATH_INFO::title( const holiday )
 {
-    std::string theme_basepath = datadir_value + "title/";
-    std::string theme_extension = ".title";
-    std::string theme_fallback = theme_basepath + "en.title";
-    return find_translated_file( theme_basepath, theme_extension, theme_fallback );
+    return title_screen::resolve_path();
 }
 
 std::string PATH_INFO::names()

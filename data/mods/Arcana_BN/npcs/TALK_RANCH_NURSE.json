@@ -1,0 +1,28 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_RANCH_NURSE",
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_RANCH_NURSE_GM_PRELUDE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_NURSE_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "Now that you mention it, yes.  A few days ago one of the scavengers came in with a severe injury, described a strange creature that attacked him while on his way to rendezvous with a few others.  I can relay where it happened I guess.  Very odd too, a three-inch section of his forearm suffered from fourth-degree frostbite, down to the tendons, and both the radius and ulna had a complete transverse fracture in that area.  We had no choice but to amputate, I'm afraid…"
+  }
+]

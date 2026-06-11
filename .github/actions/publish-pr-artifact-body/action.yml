@@ -1,0 +1,143 @@
+name: Publish PR artifact body
+
+description: Publish the Build Artifacts block for a pull request
+
+inputs:
+  repository:
+    description: owner/repo containing the pull request
+    required: true
+  pr-number:
+    description: Pull request number
+    required: true
+  run-id:
+    description: Workflow run id containing uploaded artifacts
+    required: true
+  run-url:
+    description: Workflow run URL for failed or pending artifact links
+    required: true
+  head-sha:
+    description: Pull request head SHA built by the workflow run
+    required: true
+  token:
+    description: GitHub token with actions:read and pull-requests:write
+    required: true
+  watch:
+    description: Keep publishing until the workflow run completes
+    required: false
+    default: "false"
+  poll-interval-seconds:
+    description: Seconds to wait between watched updates
+    required: false
+    default: "120"
+
+runs:
+  using: composite
+  steps:
+    - name: Publish Build Artifacts block
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPOSITORY: ${{ inputs.repository }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        RUN_ID: ${{ inputs.run-id }}
+        RUN_URL: ${{ inputs.run-url }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        WATCH: ${{ inputs.watch }}
+        POLL_INTERVAL_SECONDS: ${{ inputs.poll-interval-seconds }}
+      run: |
+        set -euo pipefail
+
+        artifact_url() {
+          local artifact_name="$1"
+          local artifact_id=""
+
+          for attempt in 1 2 3 4 5; do
+            artifact_id=$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/artifacts?name=${artifact_name}" \
+              --jq '.artifacts[0] | select(.expired == false) | .id // empty')
+            if [ -n "$artifact_id" ]; then
+              break
+            fi
+            if [ "$attempt" != 5 ]; then
+              sleep 2
+            fi
+          done
+
+          if [ -n "$artifact_id" ]; then
+            printf 'https://github.com/%s/actions/runs/%s/artifacts/%s' "$REPOSITORY" "$RUN_ID" "$artifact_id"
+          fi
+        }
+
+        artifact_line() {
+          local label="$1"
+          local url="$2"
+          if [ -n "$url" ]; then
+            printf -- '- [✅ %s — download](%s)\n' "$label" "$url"
+          elif [ "$run_status" = "completed" ]; then
+            printf -- '- [❌ %s — build failed](%s)\n' "$label" "$RUN_URL"
+          else
+            printf -- '- [⏳ %s — pending](%s)\n' "$label" "$RUN_URL"
+          fi
+        }
+
+        publish_once() {
+          local current_head
+          current_head=$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          if [ "$current_head" != "$HEAD_SHA" ]; then
+            echo "Pull request head changed; stopping artifact body updates."
+            exit 0
+          fi
+
+          run_status=$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq '.status')
+          sha_short=${HEAD_SHA:0:7}
+          commit_subject=$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq '.head_commit.message // "" | split("\n")[0]')
+          timestamp=$(date -u "+%F %T")
+
+          artifact_label="pr-${PR_NUMBER}"
+          linux_url=$(artifact_url "linux-tiles-x64-${artifact_label}")
+          windows_url=$(artifact_url "windows-tiles-x64-msvc-${artifact_label}")
+          macos_url=$(artifact_url "osx-tiles-x64-${artifact_label}")
+          android_url=$(artifact_url "android-x64-${artifact_label}")
+
+          content=$(
+            {
+              echo '## Build Artifacts'
+              echo
+              echo "PR build for commit [${sha_short}](https://github.com/${REPOSITORY}/commit/${HEAD_SHA}) (${commit_subject}) on ${timestamp}"
+              echo
+              artifact_line 'Linux tiles' "$linux_url"
+              artifact_line 'Windows tiles' "$windows_url"
+              artifact_line 'macOS tiles' "$macos_url"
+              artifact_line 'Android tiles' "$android_url"
+            }
+          )
+
+          block=$(cat <<EOF
+        <!-- BEGIN artifact comment -->
+
+        ${content}
+        <!-- END artifact comment -->
+        EOF
+          )
+
+          body=$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')
+          clean_body=$(printf '%s' "$body" | perl -0pe 's/\n*<!-- BEGIN artifact comment -->.*?<!-- END artifact comment -->\s*//sg; s/[ \t]+\n/\n/g; s/\s+\z//')
+
+          if [ -n "$clean_body" ]; then
+            printf -v new_body '%s\n\n%s' "$clean_body" "$block"
+          else
+            new_body="$block"
+          fi
+
+          jq -n --arg body "$new_body" '{body: $body}' > "$RUNNER_TEMP/pr-body.json"
+          gh api -X PATCH "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --input "$RUNNER_TEMP/pr-body.json" >/dev/null
+          echo "Published artifact links for ${run_status} workflow run ${RUN_ID}."
+        }
+
+        publish_once
+
+        if [ "$WATCH" = "true" ]; then
+          while [ "$run_status" != "completed" ]; do
+            sleep "$POLL_INTERVAL_SECONDS"
+            publish_once
+          done
+        fi

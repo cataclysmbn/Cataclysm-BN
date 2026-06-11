@@ -21,7 +21,7 @@
 #include "rot.h"
 #include "ui_manager.h"
 //#include "handle_action.cpp"
-#include "url_utility.h"
+#include "utils/url.h"
 #include "options.h"
 #include "ui.h"
 
@@ -182,7 +182,7 @@ bool run(
     } );
 
     add_entry( "DROP", rate_drop_item, [&]() {
-        you.drop( itm, you.pos() );
+        you.drop( itm, you.bub_pos() );
         return true;
     } );
 

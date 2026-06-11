@@ -1,0 +1,183 @@
+[
+  {
+    "type": "faction",
+    "id": "cleansing_flame",
+    "name": "The Cleansing Flame",
+    "likes_u": 0,
+    "respects_u": 0,
+    "known_by_u": false,
+    "size": 50,
+    "power": 100,
+    "food_supply": 115200,
+    "wealth": 25000000,
+    "currency": "CF_golden_scale",
+    "relations": {
+      "cleansing_flame": {
+        "kill on sight": false,
+        "watch your back": true,
+        "share my stuff": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "defends your space": true,
+        "knows your voice": true
+      },
+      "cleansing_flame_aux": {
+        "kill on sight": false,
+        "watch your back": true,
+        "share my stuff": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "defends your space": true,
+        "knows your voice": true
+      },
+      "your_followers": {
+        "kill on sight": false,
+        "watch your back": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "knows your voice": true
+      },
+      "sanguine_order_remnant": { "kill on sight": true, "knows your voice": true }
+    },
+    "epilogues": [
+      { "power_min": 0, "power_max": 102, "id": "epilogue_faction_cleansing_flame_0" },
+      { "power_min": 103, "power_max": 110, "id": "epilogue_faction_cleansing_flame_103" },
+      { "power_min": 111, "power_max": 115, "id": "epilogue_faction_cleansing_flame_111" },
+      { "power_min": 116, "power_max": 127, "id": "epilogue_faction_cleansing_flame_116" },
+      { "power_min": 128, "id": "epilogue_faction_cleansing_flame_128" }
+    ],
+    "description": "A local syncretic religious order, from some time before the cataclysm.  Now, remnants of them are dedicated to hunting down dangerous magic and otherworldly monsters."
+  },
+  {
+    "type": "faction",
+    "id": "cleansing_flame_aux",
+    "name": "Rural Church Survivors",
+    "likes_u": 0,
+    "respects_u": 0,
+    "known_by_u": false,
+    "size": 50,
+    "power": 50,
+    "food_supply": 100000,
+    "wealth": 2500000,
+    "currency": "CF_golden_scale",
+    "relations": {
+      "cleansing_flame_aux": {
+        "kill on sight": false,
+        "watch your back": true,
+        "share my stuff": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "defends your space": true,
+        "knows your voice": true
+      },
+      "cleansing_flame": {
+        "kill on sight": false,
+        "watch your back": true,
+        "share my stuff": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "defends your space": true,
+        "knows your voice": true
+      },
+      "your_followers": {
+        "kill on sight": false,
+        "watch your back": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "knows your voice": true
+      }
+    },
+    "description": "An assortment of traders, scavengers, mercenaries, even the occasional arcanist.  These people have come to the rural church to trade and work with Sofia's group."
+  },
+  {
+    "type": "faction",
+    "id": "keeper_remnant",
+    "name": "Lone Hermit",
+    "likes_u": 0,
+    "respects_u": 0,
+    "known_by_u": false,
+    "size": 1,
+    "power": 10,
+    "food_supply": 20000,
+    "wealth": 30000,
+    "lone_wolf_faction": true,
+    "relations": {
+      "keeper_remnant": {
+        "kill on sight": false,
+        "watch your back": true,
+        "share my stuff": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "defends your space": true,
+        "knows your voice": true
+      },
+      "your_followers": {
+        "kill on sight": false,
+        "watch your back": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "knows your voice": true
+      },
+      "cleansing_flame": { "knows your voice": true },
+      "sanguine_order_remnant": { "knows your voice": true }
+    },
+    "epilogues": [
+      { "power_min": 22, "power_max": 33, "id": "epilogue_faction_keeper_remnant_22" },
+      { "power_min": 34, "id": "epilogue_faction_keeper_remnant_34" }
+    ],
+    "description": "A lone survivor, who seems to only be interested in living a quiet life away from the ruins of the old world.  Something seems off about him, though…"
+  },
+  {
+    "type": "faction",
+    "id": "sanguine_order_remnant",
+    "name": "Sanguine Remnant",
+    "likes_u": -5,
+    "respects_u": -5,
+    "known_by_u": false,
+    "size": 7,
+    "power": 100,
+    "food_supply": 85000,
+    "wealth": 300000,
+    "relations": {
+      "sanguine_order_remnant": {
+        "kill on sight": false,
+        "watch your back": true,
+        "share my stuff": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "defends your space": true,
+        "knows your voice": true
+      },
+      "your_followers": { "knows your voice": true },
+      "cleansing_flame": { "kill on sight": true, "knows your voice": true }
+    },
+    "description": "The broken leftovers of a bloodthirsty pseudo-cult, from before the cataclysm.  The remainder still pursue the studies that led them down their murderous path, gleaming what little they can from past failures."
+  },
+  {
+    "type": "faction",
+    "id": "sanguine_shrike_splinter",
+    "name": "Sanguine Shrike Splinter Cell",
+    "likes_u": -1,
+    "respects_u": -1,
+    "known_by_u": false,
+    "size": 5,
+    "power": 100,
+    "food_supply": 20000,
+    "wealth": 30000,
+    "relations": {
+      "sanguine_shrike_splinter": {
+        "kill on sight": false,
+        "watch your back": true,
+        "share my stuff": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "defends your space": true,
+        "knows your voice": true
+      },
+      "your_followers": { "knows your voice": true },
+      "sanguine_order_remnant": { "kill on sight": true, "knows your voice": true },
+      "cleansing_flame": { "knows your voice": true }
+    },
+    "description": "A handful of survivors who served as the elite \"hunters of hunters\" for a now-broken murderous cult.  Acting contrary to the norm for their order, their motives are unclear."
+  }
+]

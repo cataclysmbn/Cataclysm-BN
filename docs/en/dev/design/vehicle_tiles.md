@@ -275,7 +275,7 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset,
 - `src/veh_interact.h` - Add tile preview member
 - `src/veh_interact.cpp` - Integrate tile display
 - `src/options.cpp` - Add `VEHICLE_EDIT_TILES` option
-- `src/Makefile` / `CMakeLists.txt` - Add new source files
+- `CMakeLists.txt` - Add new source files
 
 ### Options
 

@@ -57,7 +57,7 @@
 #include "vehicle_selector.h"
 
 #if defined(__ANDROID__)
-#   include <SDL_keyboard.h>
+#   include <SDL3/SDL.h>
 #endif
 
 static const activity_id ACT_ADV_INVENTORY( "ACT_ADV_INVENTORY" );
@@ -88,22 +88,22 @@ advanced_inventory::advanced_inventory()
     , squares( {
     {
         //               pos in window
-        { AIM_INVENTORY, point( 22, 2 ), tripoint_zero,       _( "Inventory" ),          _( "IN" ),  "I", "ITEMS_INVENTORY", AIM_INVENTORY},
-        { AIM_SOUTHWEST, point( 27, 3 ), tripoint_south_west, _( "South West" ),         _( "SW" ),  "1", "ITEMS_SW",        AIM_WEST},
-        { AIM_SOUTH,     point( 30, 3 ), tripoint_south,      _( "South" ),              _( "S" ),   "2", "ITEMS_S",         AIM_SOUTHWEST},
-        { AIM_SOUTHEAST, point( 33, 3 ), tripoint_south_east, _( "South East" ),         _( "SE" ),  "3", "ITEMS_SE",        AIM_SOUTH},
-        { AIM_WEST,      point( 27, 2 ), tripoint_west,       _( "West" ),               _( "W" ),   "4", "ITEMS_W",         AIM_NORTHWEST},
-        { AIM_CENTER,    point( 30, 2 ), tripoint_zero,       _( "Directly below you" ), _( "DN" ),  "5", "ITEMS_CE",        AIM_CENTER},
-        { AIM_EAST,      point( 33, 2 ), tripoint_east,       _( "East" ),               _( "E" ),   "6", "ITEMS_E",         AIM_SOUTHEAST},
-        { AIM_NORTHWEST, point( 27, 1 ), tripoint_north_west, _( "North West" ),         _( "NW" ),  "7", "ITEMS_NW",        AIM_NORTH},
-        { AIM_NORTH,     point( 30, 1 ), tripoint_north,      _( "North" ),              _( "N" ),   "8", "ITEMS_N",         AIM_NORTHEAST},
-        { AIM_NORTHEAST, point( 33, 1 ), tripoint_north_east, _( "North East" ),         _( "NE" ),  "9", "ITEMS_NE",        AIM_EAST},
-        { AIM_ABOVE,     point( 36, 1 ), tripoint_above,      _( "Above"),               _( "UP"),   "<", "ITEMS_UP",        AIM_ABOVE },
-        { AIM_BELOW,     point( 36, 2 ), tripoint_below,      _( "Below"),               _( "DN"),   ">", "ITEMS_DOWN",      AIM_BELOW },
-        { AIM_DRAGGED,   point( 22, 1 ), tripoint_zero,       _( "Grabbed Vehicle" ),    _( "GR" ),  "D", "ITEMS_DRAGGED_CONTAINER", AIM_DRAGGED},
-        { AIM_ALL,       point( 19, 3 ), tripoint_zero,       _( "Surrounding area" ),   _( "AL" ),  "A", "ITEMS_AROUND",    AIM_ALL},
-        { AIM_CONTAINER, point( 19, 1 ), tripoint_zero,       _( "Container" ),          _( "CN" ),  "C", "ITEMS_CONTAINER", AIM_CONTAINER},
-        { AIM_WORN,      point( 22, 3 ), tripoint_zero,       _( "Worn Items" ),         _( "WR" ),  "W", "ITEMS_WORN",      AIM_WORN}
+        { AIM_INVENTORY, point( 22, 2 ), tripoint_rel_ms::zero(),       _( "Inventory" ),          _( "IN" ),  "I", "ITEMS_INVENTORY", AIM_INVENTORY},
+        { AIM_SOUTHWEST, point( 27, 3 ), tripoint_rel_ms::south_west(), _( "South West" ),         _( "SW" ),  "1", "ITEMS_SW",        AIM_WEST},
+        { AIM_SOUTH,     point( 30, 3 ), tripoint_rel_ms::south(),      _( "South" ),              _( "S" ),   "2", "ITEMS_S",         AIM_SOUTHWEST},
+        { AIM_SOUTHEAST, point( 33, 3 ), tripoint_rel_ms::south_east(), _( "South East" ),         _( "SE" ),  "3", "ITEMS_SE",        AIM_SOUTH},
+        { AIM_WEST,      point( 27, 2 ), tripoint_rel_ms::west(),       _( "West" ),               _( "W" ),   "4", "ITEMS_W",         AIM_NORTHWEST},
+        { AIM_CENTER,    point( 30, 2 ), tripoint_rel_ms::zero(),       _( "Directly below you" ), _( "DN" ),  "5", "ITEMS_CE",        AIM_CENTER},
+        { AIM_EAST,      point( 33, 2 ), tripoint_rel_ms::east(),       _( "East" ),               _( "E" ),   "6", "ITEMS_E",         AIM_SOUTHEAST},
+        { AIM_NORTHWEST, point( 27, 1 ), tripoint_rel_ms::north_west(), _( "North West" ),         _( "NW" ),  "7", "ITEMS_NW",        AIM_NORTH},
+        { AIM_NORTH,     point( 30, 1 ), tripoint_rel_ms::north(),      _( "North" ),              _( "N" ),   "8", "ITEMS_N",         AIM_NORTHEAST},
+        { AIM_NORTHEAST, point( 33, 1 ), tripoint_rel_ms::north_east(), _( "North East" ),         _( "NE" ),  "9", "ITEMS_NE",        AIM_EAST},
+        { AIM_ABOVE,     point( 36, 1 ), tripoint_rel_ms::above(),      _( "Above"),               _( "UP"),   "<", "ITEMS_UP",        AIM_ABOVE },
+        { AIM_BELOW,     point( 36, 2 ), tripoint_rel_ms::below(),      _( "Below"),               _( "DN"),   ">", "ITEMS_DOWN",      AIM_BELOW },
+        { AIM_DRAGGED,   point( 22, 1 ), tripoint_rel_ms::zero(),       _( "Grabbed Vehicle" ),    _( "GR" ),  "D", "ITEMS_DRAGGED_CONTAINER", AIM_DRAGGED},
+        { AIM_ALL,       point( 19, 3 ), tripoint_rel_ms::zero(),       _( "Surrounding area" ),   _( "AL" ),  "A", "ITEMS_AROUND",    AIM_ALL},
+        { AIM_CONTAINER, point( 19, 1 ), tripoint_rel_ms::zero(),       _( "Container" ),          _( "CN" ),  "C", "ITEMS_CONTAINER", AIM_CONTAINER},
+        { AIM_WORN,      point( 22, 3 ), tripoint_rel_ms::zero(),       _( "Worn Items" ),         _( "WR" ),  "W", "ITEMS_WORN",      AIM_WORN}
     }
 } )
 {
@@ -888,7 +888,7 @@ bool advanced_inventory::move_all_items( bool nested_call )
             dropped = dropped_favorite;
         }
 
-        g->u.drop( dropped, g->u.pos() + darea.off );
+        g->u.drop( dropped, g->u.bub_pos() + darea.off );
     } else {
         if( dpane.get_area() == AIM_WORN ) {
             // TODO: Start ACT_WEAR in this case
@@ -902,7 +902,7 @@ bool advanced_inventory::move_all_items( bool nested_call )
             }
 
             // Stash the destination
-            const tripoint relative_destination = darea.off;
+            const tripoint_rel_ms relative_destination = darea.off;
 
             // Find target items and quantities thereof for the new activity
             std::vector<item *> target_items;
@@ -950,7 +950,7 @@ bool advanced_inventory::move_all_items( bool nested_call )
                         quantities );
                 g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
                                           targets,
-                                          panes[src].in_vehicle() ? std::nullopt : std::optional<tripoint>( g->u.pos() )
+                                          panes[src].in_vehicle() ? std::nullopt : std::optional<tripoint_bub_ms>( g->u.bub_pos() )
                                       ) ) );
             } else {
                 g->u.assign_activity( std::make_unique<player_activity>
@@ -1169,11 +1169,11 @@ void advanced_inventory::start_activity( const aim_location destarea,
                     quantities );
             g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
                                       targets,
-                                      from_vehicle ? std::nullopt : std::optional<tripoint>( g->u.pos() )
+                                      from_vehicle ? std::nullopt : std::optional<tripoint_bub_ms>( g->u.bub_pos() )
                                   ) ) );
         } else {
             // Stash the destination
-            const tripoint relative_destination = squares[destarea].off;
+            const tripoint_rel_ms relative_destination = squares[destarea].off;
 
             g->u.assign_activity( std::make_unique<player_activity>
                                   ( std::make_unique<move_items_activity_actor>(
@@ -1839,9 +1839,9 @@ void advanced_inventory::draw_minimap()
     };
     static const std::array<side, NUM_PANES> sides = {{left, right}};
     // get the center of the window
-    tripoint pc = {getmaxx( minimap ) / 2, getmaxy( minimap ) / 2, 0};
+    tripoint_rel_ms pc = {getmaxx( minimap ) / 2, getmaxy( minimap ) / 2, 0};
     // draw the 3x3 tiles centered around player
-    get_map().draw( minimap, g->u.pos() );
+    get_map().draw( minimap, g->u.bub_pos() );
     for( auto s : sides ) {
         char sym = get_minimap_sym( s );
         if( sym == '\0' ) {
@@ -1852,7 +1852,7 @@ void advanced_inventory::draw_minimap()
         // invert the color if pointing to the player's position
         auto cl = sq.id == AIM_INVENTORY || sq.id == AIM_WORN ?
                   invert_color( c_light_cyan ) : c_light_cyan.blink();
-        mvwputch( minimap, pt.xy(), cl, sym );
+        mvwputch( minimap, pt.xy().raw(), cl, sym );
     }
 
     // Invert player's tile color if exactly one pane points to player's tile
@@ -1867,7 +1867,7 @@ void advanced_inventory::draw_minimap()
     }
 
     if( !invert_left || !invert_right ) {
-        g->u.draw( minimap, g->u.pos(), invert_left || invert_right );
+        g->u.draw( minimap, g->u.bub_pos(), invert_left || invert_right );
     }
 }
 

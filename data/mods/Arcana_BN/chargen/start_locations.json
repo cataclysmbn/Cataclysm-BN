@@ -1,0 +1,52 @@
+[
+  {
+    "type": "start_location",
+    "id": "strange_grove",
+    "name": "Strange Grove",
+    "terrain": [ "strange_grove" ],
+    "flags": [ "ALLOW_OUTSIDE" ]
+  },
+  {
+    "type": "start_location",
+    "id": "island_temple",
+    "name": "Sanguine Ruins",
+    "terrain": [ "island_temple_1" ]
+  },
+  {
+    "type": "start_location",
+    "id": "impact_site",
+    "name": "Impact Site",
+    "terrain": [ "impact_site" ],
+    "flags": [ "ALLOW_OUTSIDE" ]
+  },
+  {
+    "type": "start_location",
+    "id": "curious_structure",
+    "name": "Curious Structure",
+    "terrain": [ "curious_structure_2" ]
+  },
+  {
+    "type": "start_location",
+    "id": "arcanist_basement",
+    "name": "Arcanist Basement",
+    "terrain": [ "arcanist_basement", "arcanist_basement_2" ]
+  },
+  {
+    "type": "start_location",
+    "id": "cathedral_basement",
+    "name": "Cathedral",
+    "terrain": [ "cathedral_b_SE" ]
+  },
+  {
+    "type": "start_location",
+    "ident": "necropolis_basement",
+    "name": "Ruined City …?",
+    "terrain": [ "necropolis_b_54" ]
+  },
+  {
+    "type": "start_location",
+    "ident": "hermit_house",
+    "name": "Odd House",
+    "terrain": [ "arcana_hermitage_1" ]
+  }
+]

@@ -8,6 +8,7 @@
       { "group": "softdrinks_canned", "prob": 380 },
       { "group": "salty_snacks", "prob": 135 },
       { "item": "cola", "prob": 25, "container-item": "bottle_glass" },
+      { "item": "zero_cola", "prob": 25, "container-item": "bottle_glass" },
       { "item": "creamsoda", "prob": 25, "container-item": "bottle_glass" },
       { "item": "lemonlime", "prob": 25, "container-item": "bottle_glass" },
       { "item": "orangesoda", "prob": 25, "container-item": "bottle_glass" },

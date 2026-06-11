@@ -4,7 +4,9 @@
 #include <cassert>
 #include <algorithm>
 #include <array>
+#include <mutex>
 #include <memory>
+#include <ranges>
 #include <tuple>
 #include <utility>
 
@@ -20,6 +22,104 @@ double iso_tangent( double distance, units::angle vertex )
 {
     // we can use the cosine formula (a² = b² + c² - 2bc⋅cosθ) to calculate the tangent
     return std::sqrt( 2 * std::pow( distance, 2 ) * ( 1 - cos( vertex ) ) );
+}
+
+static auto lookup_distance( const int dx, const int dy, const int dz,
+                             const bool use_trigdist ) -> uint16_t
+{
+    if( !use_trigdist ) {
+        return static_cast<uint16_t>( std::max( { dx, dy, dz } ) );
+    }
+    const auto squared = dx * dx + dy * dy + dz * dz;
+    const auto distance = static_cast<float>( std::sqrt( static_cast<double>( squared ) ) );
+    return static_cast<uint16_t>(
+               std::round( distance ) );
+}
+
+auto rl_dist_lookup_table::matches( const rl_dist_lookup_table_dimensions &dimensions ) const ->
+bool
+{
+    return dimensions_.trigdist == dimensions.trigdist &&
+           dimensions_.max_dx >= dimensions.max_dx &&
+           dimensions_.max_dy >= dimensions.max_dy &&
+           dimensions_.max_dz >= dimensions.max_dz;
+}
+
+auto rl_dist_lookup_table::reset( const rl_dist_lookup_table_dimensions &dimensions ) -> void
+{
+    dimensions_ = dimensions;
+
+    distances_2d_.resize( static_cast<size_t>( dimensions_.max_dx + 1 ) *
+                          static_cast<size_t>( dimensions_.max_dy + 1 ) );
+    for( const auto dy : std::views::iota( 0, dimensions_.max_dy + 1 ) ) {
+        for( const auto dx : std::views::iota( 0, dimensions_.max_dx + 1 ) ) {
+            distances_2d_[index_2d( dx, dy )] =
+                lookup_distance( dx, dy, 0, dimensions_.trigdist );
+        }
+    }
+
+    distances_3d_.resize( static_cast<size_t>( dimensions_.max_dx + 1 ) *
+                          static_cast<size_t>( dimensions_.max_dy + 1 ) *
+                          static_cast<size_t>( dimensions_.max_dz + 1 ) );
+    for( const auto dz : std::views::iota( 0, dimensions_.max_dz + 1 ) ) {
+        for( const auto dy : std::views::iota( 0, dimensions_.max_dy + 1 ) ) {
+            for( const auto dx : std::views::iota( 0, dimensions_.max_dx + 1 ) ) {
+                distances_3d_[index_3d( dx, dy, dz )] =
+                    lookup_distance( dx, dy, dz, dimensions_.trigdist );
+            }
+        }
+    }
+}
+
+auto rl_dist_lookup_table::distance_2d( const int dx, const int dy ) const -> int
+{
+    return distances_2d_[index_2d( std::abs( dx ), std::abs( dy ) )];
+}
+
+auto rl_dist_lookup_table::distance_3d( const int dx, const int dy, const int dz ) const -> int
+{
+    return distances_3d_[index_3d( std::abs( dx ), std::abs( dy ), std::abs( dz ) )];
+}
+
+auto rl_dist_lookup_table::row_2d( const int dy ) const -> std::span<const uint16_t>
+{
+    const auto row_start = distances_2d_.data() + index_2d( 0, std::abs( dy ) );
+    return { row_start, static_cast<size_t>( dimensions_.max_dx + 1 ) };
+}
+
+auto rl_dist_lookup_table::row_3d( const int dy, const int dz ) const -> std::span<const uint16_t>
+{
+    const auto row_start = distances_3d_.data() +
+                           index_3d( 0, std::abs( dy ), std::abs( dz ) );
+    return { row_start, static_cast<size_t>( dimensions_.max_dx + 1 ) };
+}
+
+auto rl_dist_lookup_table::index_2d( const int dx, const int dy ) const -> size_t
+{
+    return static_cast<size_t>( dy ) * static_cast<size_t>( dimensions_.max_dx + 1 ) +
+           static_cast<size_t>( dx );
+}
+
+auto rl_dist_lookup_table::index_3d( const int dx, const int dy, const int dz ) const -> size_t
+{
+    const auto row_size = static_cast<size_t>( dimensions_.max_dx + 1 );
+    const auto plane_size = row_size * static_cast<size_t>( dimensions_.max_dy + 1 );
+    return static_cast<size_t>( dz ) * plane_size +
+           static_cast<size_t>( dy ) * row_size +
+           static_cast<size_t>( dx );
+}
+
+auto get_rl_dist_lookup_table( const rl_dist_lookup_table_dimensions &dimensions ) ->
+const rl_dist_lookup_table &
+{
+    static std::mutex distance_table_mutex;
+    static rl_dist_lookup_table table;
+
+    const std::lock_guard<std::mutex> lock( distance_table_mutex );
+    if( !table.matches( dimensions ) ) {
+        table.reset( dimensions );
+    }
+    return table;
 }
 
 void bresenham( point p1, point p2, int t,

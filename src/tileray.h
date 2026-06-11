@@ -1,6 +1,6 @@
 #pragma once
 
-#include "point.h"
+#include "coordinates.h"
 #include "units_angle.h"
 
 // Class for calculating tile coordinates
@@ -24,19 +24,19 @@
 class tileray
 {
     private:
-        point delta;            // ray delta
+        point_rel_ms delta;            // ray delta
         int leftover = 0;       // counter to shift coordinates
-        point abs_d;            // absolute value of delta
+        point_rel_ms abs_d;            // absolute value of delta
         units::angle direction = 0_degrees; // ray direction
-        point last_d;           // delta of last advance
+        point_rel_ms last_d;           // delta of last advance
         int steps = 0;          // how many steps we advanced so far
         bool infinite = false;  // ray is infinite (end will always return true)
     public:
         tileray();
-        tileray( point ad );
+        tileray( point_rel_ms ad );
         tileray( units::angle adir );
 
-        void init( point ad );   // init ray with ad
+        void init( point_rel_ms ad );   // init ray with ad
         void init( units::angle adir ); // init ray with direction
 
         int dx() const;       // return dx of last advance (-1 to 1)

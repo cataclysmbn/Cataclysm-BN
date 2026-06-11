@@ -1,0 +1,78 @@
+[
+  {
+    "id": "debug_testing_dimension_travel",
+    "type": "TOOL",
+    "copy-from": "pocketwatch",
+    "name": { "str": "dimensional pocket watch (desert)" },
+    "description": "A pocket watch that allows the user to travel to the desert dimension.  Used for debugging purposes only.  Transforms after use.",
+    "looks_like": "pocketwatch",
+    "weight": "500 g",
+    "volume": "500 ml",
+    "price": "1 kUSD",
+    "price_postapoc": "1 USD",
+    "material": [ "brass", "glass" ],
+    "use_action": [
+      {
+        "type": "dimension_travel",
+        "destination": "desert_test",
+        "travel_radius": 5,
+        "need_charges": 0,
+        "fail_message": "The watch vibrates but nothing happens.",
+        "success_message": "You feel a wrenching sensation as you are pulled through space and time."
+      },
+      {
+        "type": "transform",
+        "target": "debug_testing_dimension_travel_return",
+        "msg": "The watch reconfigures itself."
+      }
+    ]
+  },
+  {
+    "id": "debug_testing_dimension_travel_return",
+    "type": "TOOL",
+    "copy-from": "pocketwatch",
+    "name": { "str": "dimensional pocket watch (default)" },
+    "description": "A pocket watch that allows the user to return to the default dimension.  Used for debugging purposes only.",
+    "looks_like": "pocketwatch",
+    "weight": "500 g",
+    "volume": "500 ml",
+    "price": "1 kUSD",
+    "price_postapoc": "1 USD",
+    "material": [ "brass", "glass" ],
+    "use_action": [
+      {
+        "type": "dimension_travel",
+        "destination": "default",
+        "travel_radius": 5,
+        "need_charges": 0,
+        "fail_message": "The watch vibrates but nothing happens.",
+        "success_message": "You feel reality snap back into place."
+      },
+      { "type": "transform", "target": "debug_testing_dimension_travel", "msg": "The watch reconfigures itself." }
+    ]
+  },
+  {
+    "type": "TOOL",
+    "id": "pocket_dimension_key",
+    "name": { "str": "pocket cave key" },
+    "description": "A strange key that glows with an otherworldly light.  When activated, it opens a door to a pocket dimension containing a small extradimensional space.  The pocket dimension is tied to this key - if the key is destroyed, the dimension collapses.",
+    "weight": "50 g",
+    "volume": "10 ml",
+    "price": "1 kUSD",
+    "price_postapoc": "1 USD",
+    "symbol": "%",
+    "color": "light_gray",
+    "material": [ "steel" ],
+    "flags": [ "UNBREAKABLE" ],
+    "stackable": false,
+    "use_action": [
+      {
+        "type": "pocket_dimension",
+        "pocket_name": "Pocket Cave",
+        "entry_mapgen": "Cave",
+        "need_charges": 0,
+        "persistent": false
+      }
+    ]
+  }
+]

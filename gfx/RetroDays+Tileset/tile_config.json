@@ -5480,7 +5480,7 @@
         { "id": [ "spork", "foon", "fork" ], "fg": 2066, "rotates": false },
         { "id": "glass_macuahuitl", "fg": 2067, "rotates": false },
         { "id": "glass_shard", "fg": 2068, "rotates": false },
-        { "id": [ "reinforced_glass_sheet", "reinforced_glass_pane" ], "fg": 2069, "rotates": false },
+        { "id": [ "reinforced_glass_sheet" ], "fg": 2069, "rotates": false },
         { "id": "glass_sheet", "fg": 2070, "rotates": false },
         { "id": "glass_tinted", "fg": 2071, "rotates": false },
         { "id": "glowplug", "fg": 2072, "rotates": false },

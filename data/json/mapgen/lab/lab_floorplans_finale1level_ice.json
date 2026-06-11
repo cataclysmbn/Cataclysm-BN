@@ -1,0 +1,449 @@
+[
+  {
+    "//": "nano_fabricator room",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_finale_1level_ice" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "CCC..................CCC",
+        "C..........PP..........C",
+        "........................",
+        "....cc............cc....",
+        "....cc..c......c..cc....",
+        "....cc..c..//..c..cc....",
+        "........c..//..c........",
+        "........c......c........",
+        "...........YY...........",
+        "........................",
+        ".....-----gGGg-----.....",
+        ".....-c.g,,,,,,g.c-.....",
+        "..YY.-c.G,/,,/,G.c-.YY..",
+        ".....-c.g,?,,?,g.c-.....",
+        "ggGGg----,,,,,,----gGGgg",
+        ".x...-CC-+gggg+-CC-...x.",
+        ".x..x-,,,,,,,,,,,,-x..x.",
+        ".x..C-,r,,,rr,,,r,-C..x.",
+        ".x..C-Y,,,,,,,,,,Y-C..x.",
+        ".x..x----GggggG----x..x.",
+        ".R....G..........G....R.",
+        "......G....YY....G......",
+        ".Yxx..g..........g..xxY.",
+        "......g..........g......"
+      ],
+      "palettes": [ "lab_palette", "lab_loot_research" ],
+      "furniture": { "R": "f_rack", "P": "t_dimensional_portal" },
+      "terrain": { "?": "t_nanofab", "r": "t_metal_floor", "/": "t_nanofab_body" },
+      "mapping": { "r": { "item": { "item": "standard_template_construct" } }, "R": { "item": { "item": "nanomaterial" } } },
+      "place_nested": [ { "chunks": [ "lab_finale_loot_ice" ], "x": 6, "y": 11 } ],
+      "place_loot": [
+        { "group": "mech_power_cell_spawn", "x": [ 4, 5 ], "y": [ 3, 5 ] },
+        { "item": "id_science", "x": 17, "y": [ 11, 13 ] }
+      ],
+      "place_monster": [
+        { "monster": "mon_secubot", "x": [ 1, 4 ], "y": [ 20, 22 ], "chance": 90 },
+        { "monster": "mon_secubot", "x": [ 19, 20 ], "y": [ 20, 22 ], "chance": 90 },
+        { "monster": "mon_zombie_scientist", "x": [ 2, 20 ], "y": [ 1, 9 ], "chance": 90, "repeat": [ 1, 2 ] },
+        { "monster": "mon_mech_lifter", "x": 2, "y": 2, "chance": 100 }
+      ]
+    }
+  },
+  {
+    "//": "superalloy forge room",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_finale_1level_ice" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "CCC..................CCC",
+        "C..........PP..........C",
+        "........................",
+        "....mmm..........mmm....",
+        "....mmm..........mmm....",
+        "....mmm..........mmm....",
+        "........................",
+        "........................",
+        "...........YY...........",
+        "........................",
+        "........../../..........",
+        "........../../..........",
+        "..YY....../../......YY..",
+        "..........?..?..........",
+        ".....y---......----gGGgg",
+        ".....y-r-+gggg+-CC-...x.",
+        ".....y-r,,,,,,,,,r-x..x.",
+        ".....y-r,,,,,,,,,r-C..x.",
+        ".....y-r,,,,,,,,,Y-C..x.",
+        ".....y---GggggG----x..x.",
+        ".................G....R.",
+        "...........YY....G......",
+        ".Y...............g..xxY.",
+        ".................g......"
+      ],
+      "palettes": [ "lab_palette", "lab_loot_research" ],
+      "furniture": { "R": "f_rack", "m": [ "f_cardboard_box", "f_crate_c" ], "y": "f_crate_c", "P": "t_dimensional_portal" },
+      "terrain": { "?": "t_nanoforge", "r": "t_metal_floor", "/": "t_nanoforge_body" },
+      "mapping": { "R": { "item": { "item": "nanomaterial" } } },
+      "place_nested": [ { "chunks": [ "lab_finale_loot_ice" ], "x": 7, "y": 15 } ],
+      "place_loot": [ { "item": "id_science", "x": 17, "y": [ 16, 17 ] } ],
+      "items": {
+        "m": { "item": "sheet_metal", "chance": 50, "repeat": [ 1, 2 ] },
+        "y": { "item": "alloy_sheet", "chance": 100, "repeat": [ 1, 2 ] }
+      },
+      "place_monster": [
+        { "monster": "mon_secubot", "x": [ 1, 4 ], "y": [ 10, 12 ], "chance": 90 },
+        { "monster": "mon_secubot", "x": [ 19, 20 ], "y": [ 20, 22 ], "chance": 90 },
+        { "monster": "mon_zombie_scientist", "x": [ 2, 20 ], "y": [ 1, 9 ], "chance": 90, "repeat": [ 1, 2 ] },
+        { "monster": "mon_mech_lifter", "x": 2, "y": 2, "chance": 100 }
+      ]
+    }
+  },
+  {
+    "//": "medical mutant room",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_finale_1level_ice" ],
+    "weight": 50,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "CCC..................CCC",
+        "C......................C",
+        "..cccccccc....cccccccc..",
+        "........................",
+        ".............6..........",
+        ".....------LL------.....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....-,,,,,,,,,,,,-.....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....--------------.....",
+        "...........PP...........",
+        "........................",
+        "..cccccccc....cccccccc..",
+        "C......................C",
+        "CCC..................CCC"
+      ],
+      "palettes": [ "lab_palette", "lab_loot_research" ],
+      "furniture": { "R": "f_rack", "P": "t_dimensional_portal" },
+      "terrain": { ",": "t_metal_floor" },
+      "place_nested": [ { "chunks": [ "lab_finale_loot_ice" ], "x": 4, "y": 11 } ],
+      "place_loot": [ { "item": "id_science", "x": 19, "y": [ 11, 13 ] } ],
+      "place_monster": [ { "monster": "mon_mutant_medical", "x": 12, "y": 12, "chance": 100 } ],
+      "computers": { "6": { "name": "High Risk Subject Containment", "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock" } ] } }
+    }
+  },
+  {
+    "//": "portal room",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_finale_1level_ice" ],
+    "weight": 50,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        ".....,...g.....xxxxxxxxx",
+        ".r..r,..ig.YY...........",
+        ".r..r,..tg.....dd..tt...",
+        ".rY.r,..tg.....xh..tt.Y.",
+        ".rY.r,.. G.....d...tt.Y.",
+        ".R..r,...G.........tt...",
+        ".....,..tg..............",
+        "-+-l,,..tg.....d........",
+        "..-l....tggGGggdh.......",
+        "..-lll...G,,,,gd........",
+        "..-----g-ggGGgg-gggGg-+-",
+        "..-,,,,xgY,,,,Y-....l-..",
+        "..-,,,hxg,,,,,,-dDd.l-..",
+        "..-,,,,xg,,,,,,-.h..l-..",
+        "-+--+----,,,,,,-------+-",
+        ".....-CCC,,,,,,CCC-....C",
+        ".....g,,,,,,,,,,,,gx...C",
+        ".....g,,,,CPPC,,,,gC...C",
+        ".....-Y,,,,,,,,,,Y-C...C",
+        "-+-------GggggG-------+-",
+        ".......................-",
+        ".......................-",
+        ".CCCCxxxxA....ACCxxCCCx-",
+        "........................"
+      ],
+      "palettes": [ "lab_palette", "lab_loot_research" ],
+      "furniture": { "R": "f_rack", "D": "f_desk", "A": "f_artifact_analyzer_console", "P": "t_dimensional_portal" },
+      "mapping": { "R": { "item": [ { "item": "dimensional_anchor" }, { "item": "phase_immersion_suit" } ] } },
+      "place_nested": [ { "chunks": [ "lab_finale_loot_ice" ], "x": 4, "y": 1 } ],
+      "place_loot": [ { "item": "id_science", "x": [ 19, 20 ], "y": [ 2, 5 ] } ],
+      "place_monster": [ { "monster": "mon_mech_lifter", "x": 2, "y": 2, "chance": 100 } ]
+    }
+  },
+  {
+    "//": "experimental firing range room",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_finale_1level_ice" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "xxx..................xxx",
+        "xhd........PP........dhx",
+        "d.d.----------------.d.d",
+        "....|//////////////|....",
+        "....|,,,,,,,,,,,,I,|....",
+        "....|,,,,,,,,,,,???|....",
+        "....|,I,,,III,,I,,,|....",
+        "....|/?/,,III,???,,|....",
+        "....|I,,,,III,,,,,,|....",
+        "....|??,,,,,,,,,,,,|....",
+        "....|,,,,,,,,,,,,,,|....",
+        "....|,,,,,I,,,,I,,,|....",
+        "....|,,,,???,,,,,,,|....",
+        "....|,,,,,,,,,,,,,,|....",
+        "....|///,,,,,,,,///|....",
+        "....|---yyyyyyyy---|....",
+        "....gr,,,,,,,,,,,,rg....",
+        "....gr,,,,OOOO,,,,rg....",
+        "....gr,,,,,,,,,,,,rg....",
+        "....gggggggGGggggggg....",
+        "........................",
+        "ddd.....xxdppdxx.....ddd",
+        "xh....................hx",
+        "xxx..................xxx"
+      ],
+      "palettes": [ "lab_palette", "lab_loot_research" ],
+      "furniture": {
+        "I": "f_target",
+        "y": "f_counter",
+        "?": "f_sandbag_half",
+        "/": "f_sandbag_wall",
+        "O": "f_locker",
+        "p": "f_control_station",
+        "P": "t_dimensional_portal"
+      },
+      "terrain": {
+        "?": "t_strconc_floor",
+        "r": "t_strconc_floor",
+        "/": "t_strconc_floor",
+        "O": "t_strconc_floor",
+        "I": "t_strconc_floor"
+      },
+      "place_nested": [ { "chunks": [ "lab_finale_loot_ice" ], "x": 5, "y": 16 }, { "chunks": [ "lab_weapon_loot" ], "x": 8, "y": 15 } ],
+      "place_loot": [ { "group": "mech_power_cell_spawn", "x": 18, "y": 17 }, { "item": "id_science", "x": 18, "y": 16 } ],
+      "place_monster": [
+        { "monster": "mon_secubot", "x": [ 1, 4 ], "y": [ 20, 22 ], "chance": 90 },
+        { "monster": "mon_secubot", "x": [ 19, 20 ], "y": [ 20, 22 ], "chance": 90 },
+        { "monster": "mon_mech_recon", "x": 8, "y": 17, "chance": 50 }
+      ]
+    }
+  },
+  {
+    "//": "ice lab unique mutagen room",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_finale_1level_ice" ],
+    "weight": 150,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "........................",
+        "........................",
+        "..Y..................Y..",
+        "........................",
+        "....|-MMM----------|....",
+        "....|....|Y.......c|....",
+        "....|?...|..a.O...c|....",
+        "....|-MMM|.e..P...c|....",
+        "....|r........P...c|....",
+        "....|r...h....O...c|....",
+        "....|rY.xtt......Yc|....",
+        "....|--------------|....",
+        "........................",
+        "..Y..................Y..",
+        "........................",
+        "..............yyyyyyyyyy",
+        "---------|....ya..e..a..",
+        "cSccrccSc|Y...y.........",
+        "...h..h..|....y.X..a....",
+        ".........M....y.........",
+        ".........M....y.a...X...",
+        ".........|....y.....a...",
+        "cSccrccSc|....y.X.......",
+        "---------|....y........."
+      ],
+      "palettes": [ "lab_palette" ],
+      "place_nested": [ { "chunks": [ "lab_finale_loot_ice" ], "x": 5, "y": 8 } ],
+      "monster": { "?": { "monster": "mon_turret_medium" } },
+      "terrain": { "a": "t_thconc_floor", "b": "t_thconc_floor", "y": "t_thconc_y" },
+      "furniture": { "O": "f_standing_tank", "P": "t_dimensional_portal" },
+      "liquids": { "O": { "liquid": "mutagen", "amount": [ 100, 200 ] } },
+      "place_loot": [ { "item": "id_science", "x": [ 8, 10 ], "y": 10 } ],
+      "mapping": {
+        "a": { "items": [ { "item": "55gal_drum", "chance": 100 } ] },
+        "e": { "items": [ { "item": "exosuit_industrial", "chance": 100 } ] },
+        "c": { "items": [ { "item": "mut_iv", "chance": 50 } ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_finale_loot_ice",
+    "weight": 25,
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rows": [
+        "r  ",
+        "r  ",
+        "R  "
+      ],
+      "palettes": [ "lab_palette" ],
+      "mapping": {
+        "r": {
+          "item": [
+            { "item": "iv_mutagen_alpha", "chance": 100, "repeat": [ 2, 2 ] },
+            { "item": "iv_mutagen_elfa", "chance": 100, "repeat": [ 2, 2 ] },
+            { "item": "iv_mutagen_medical", "chance": 100, "repeat": [ 2, 2 ] }
+          ]
+        },
+        "R": { "item": [ { "item": "purifier_smart_shot", "chance": 100 } ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_finale_loot_ice",
+    "weight": 25,
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rows": [
+        "r  ",
+        "r  ",
+        "R  "
+      ],
+      "palettes": [ "lab_palette" ],
+      "mapping": {
+        "r": { "items": [ { "item": "books_bank_vault", "chance": 100, "repeat": [ 3, 3 ] } ] },
+        "R": {
+          "items": [
+            { "item": "still_lab", "chance": 100 },
+            { "item": "analytical_set_basic", "chance": 100 },
+            { "item": "microcentrifuge", "chance": 100 },
+            { "item": "chemistry_set", "chance": 100 },
+            { "item": "3d_printer_advanced", "chance": 100 },
+            { "item": "purifier_smart_shot", "chance": 100, "repeat": [ 2, 2 ] }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_finale_loot_ice",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rows": [
+        "r  ",
+        "r  ",
+        "R  "
+      ],
+      "palettes": [ "lab_palette" ],
+      "mapping": {
+        "r": { "item": [ { "item": "plut_cell", "chance": 100, "repeat": [ 3, 8 ] } ] },
+        "R": {
+          "items": [
+            { "item": "heavy_atomic_battery_cell", "chance": 100, "charges": 10000 },
+            { "item": "adv_UPS_off", "chance": 100, "repeat": [ 2, 2 ] },
+            { "item": "v29", "chance": 100 },
+            { "item": "laser_rifle", "chance": 100, "repeat": [ 2, 2 ] },
+            { "item": "plasma_gun", "chance": 100 },
+            { "item": "plasma", "chance": 100 },
+            { "item": "recipe_atomic_battery", "chance": 100 }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_finale_loot_ice",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rows": [
+        "r  ",
+        "r  ",
+        "R  "
+      ],
+      "palettes": [ "lab_palette" ],
+      "mapping": {
+        "r": { "item": [ { "item": "mininuke_mod", "chance": 100, "repeat": [ 6, 10 ] } ] },
+        "R": {
+          "item": [
+            { "item": "recipe_atomic_battery", "chance": 100 },
+            { "item": "plut_cell", "chance": 100, "repeat": [ 8, 16 ] },
+            { "item": "mininuke_launcher", "chance": 100 }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_finale_loot_ice",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rows": [
+        "r  ",
+        "r  ",
+        "R  "
+      ],
+      "palettes": [ "lab_palette" ],
+      "mapping": {
+        "r": { "item": [ { "item": "plut_cell", "chance": 100, "repeat": [ 4, 10 ] } ] },
+        "R": {
+          "item": [ { "item": "rm13_armor", "chance": 100, "repeat": [ 2, 2 ] }, { "item": "recipe_caseless", "chance": 100 } ]
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_finale_loot_ice",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rows": [
+        "r  ",
+        "r  ",
+        "r  "
+      ],
+      "palettes": [ "lab_palette" ],
+      "mapping": {
+        "r": {
+          "items": [
+            { "item": "bionics_op", "chance": 100, "repeat": [ 2, 4 ] },
+            { "item": "autodoc_installation_programs_advanced", "chance": 100, "repeat": [ 1, 3 ] }
+          ]
+        }
+      }
+    }
+  }
+]

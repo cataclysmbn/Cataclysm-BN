@@ -1,0 +1,105 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "s_gas_arcana_bandit" ],
+    "weight": 200,
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "||||||||||||||||||||||||",
+        "|                      |",
+        "| ??---????:????!#!??? |",
+        "????---????:____][]__? |",
+        "????:-:????:____:]:__? |",
+        "????---????:____][]__? |",
+        "?????-?????:____!#!__? |",
+        "????---????:____][]__? |",
+        "????:]:????:____:]:__? |",
+        "|]]]]]]]]]]]]]]]]]]]]] |",
+        "|]]]]]]]]]]]]]]]]]]]]] |",
+        "#xxxxxxxxxy//yxxxxxxxxx#",
+        "#}}......%....%&......}#",
+        "#........%....%........#",
+        "#b..rrrrrr....rrrrrr..b#",
+        "#...rrrrrr....rrrrrr...#",
+        "#b.......C............b#",
+        "#........C.............#",
+        "#}.....#sC....#{{{CCv}}#",
+        "##+#...#CC....##########",
+        "#S.#...+......+......$%X",
+        "#T.#lll#.^^^^^#HHtc..}%#",
+        "########~###############",
+        " 4      -               "
+      ],
+      "palettes": [ "road" ],
+      "set": [
+        { "point": "trap", "id": "tr_shotgun_2", "x": 8, "y": 21 },
+        { "point": "trap", "id": "tr_landmine_buried", "x": 8, "y": 23 },
+        { "point": "trap", "id": "tr_rollmat", "x": 1, "y": 14 },
+        { "point": "trap", "id": "tr_rollmat", "x": 1, "y": 16 },
+        { "point": "trap", "id": "tr_rollmat", "x": 22, "y": 14 },
+        { "point": "trap", "id": "tr_rollmat", "x": 22, "y": 16 }
+      ],
+      "terrain": {
+        " ": [ [ "t_region_groundcover_barren", 3 ], "t_pit_shallow", "t_pit" ],
+        "%": "t_floor",
+        "-": "t_region_groundcover_barren",
+        "[": "t_sidewalk",
+        "{": "t_floor",
+        "}": "t_floor",
+        "$": "t_floor",
+        "^": "t_floor",
+        "/": "t_door_metal_c",
+        "?": [ [ "t_pavement", 2 ], "t_region_groundcover_barren" ],
+        "4": "t_gutter_downspout",
+        "|": "t_fence_barbed",
+        "X": "t_door_boarded",
+        "b": "t_floor",
+        "v": "t_floor",
+        "x": "t_junk_palisade",
+        "y": "t_scrap_wall"
+      },
+      "furniture": {
+        "[": "f_counter",
+        "%": "f_sandbag_half",
+        "$": "f_safe_o",
+        "}": "f_locker",
+        "^": "f_utility_shelf",
+        "b": "f_makeshift_bed",
+        "v": "f_woodstove"
+      },
+      "items": {
+        "{": [ { "item": "stash_food", "chance": 75 }, { "item": "stash_food", "chance": 75 } ],
+        "&": { "item": "trash_cart", "chance": 50 },
+        "b": [ { "item": "bed", "chance": 50 }, { "item": "bed", "chance": 50 } ],
+        "r": [ { "item": "supplies_mechanics", "chance": 25 }, { "item": "tools_mechanic", "chance": 10 } ],
+        "t": [ { "item": "tools_gunsmith", "chance": 50 }, { "item": "tools_gunsmith", "chance": 50 } ]
+      },
+      "place_loot": [
+        { "group": "supplies_spares_vehicle", "x": 17, "y": 3, "chance": 25, "repeat": 5 },
+        { "group": "fuel_gasoline", "x": 17, "y": 5, "chance": 25, "repeat": 5 },
+        { "group": "fuel_diesel", "x": 17, "y": 7, "chance": 50, "repeat": 5 },
+        { "group": "tools_survival", "x": [ 1, 2 ], "y": 12, "chance": 50, "repeat": 6 },
+        { "group": "weapons", "x": 1, "y": 18, "chance": 50, "repeat": 3 },
+        { "group": "guns_improvised", "x": 22, "y": 12, "chance": 50, "repeat": 3 },
+        { "item": "human_flesh", "x": [ 15, 17 ], "y": 18, "chance": 50, "repeat": 10 },
+        { "item": "bone_human", "x": [ 18, 19 ], "y": 18, "chance": 50, "repeat": 10 },
+        { "group": "kitchen_counters", "x": [ 18, 19 ], "y": 18, "chance": 50, "repeat": 4 },
+        { "item": "cookbook_human", "x": [ 18, 19 ], "y": 18 },
+        { "group": "ammo_reloaded", "x": [ 21, 22 ], "y": 18, "chance": 50, "repeat": 8 },
+        { "group": "behindcounter", "x": [ 4, 6 ], "y": 21, "chance": 75, "repeat": 3 },
+        { "group": "meth_ingredients", "x": [ 9, 13 ], "y": 21, "chance": 80, "repeat": 7 },
+        { "group": "stash_drugs", "x": 21, "y": 21, "chance": 50, "repeat": 5 },
+        { "group": "arcane_purifier_bandit_safe", "x": 21, "y": 20 }
+      ],
+      "place_vehicles": [ { "vehicle": "bandit_vehicles", "x": 5, "y": 5, "rotation": 180, "chance": 100 } ],
+      "place_npcs": [
+        { "class": "bandit", "x": 8, "y": 12 },
+        { "class": "bandit", "x": 15, "y": 13 },
+        { "class": "bandit", "x": 8, "y": 18 },
+        { "class": "bandit_purifier_ambusher", "x": 18, "y": 21 }
+      ]
+    }
+  }
+]

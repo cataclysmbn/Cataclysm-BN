@@ -10,13 +10,7 @@ num_jobs=3
 # We might need binaries installed via pip, so ensure that our personal bin dir is on the PATH
 export PATH=$HOME/.local/bin:$PATH
 
-if [ -n "$TEST_STAGE" ]
-then
-    build-scripts/lint-json.sh
-    make style-all-json-parallel RELEASE=1
-
-    tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
-elif [ -n "$JUST_JSON" ]
+if [ -n "$JUST_JSON" ]
 then
     echo "Early exit on just-json change"
     exit 0
@@ -27,52 +21,63 @@ ccache --zero-stats
 ccache -M 5G
 ccache --show-stats
 
-echo "CMAKE: $CMAKE, COMPILER: $COMPILER, OS: $OS, TILES: $TILES, SOUND: $SOUND, TEST_STAGE: $TEST_STAGE"
+echo "COMPILER: $COMPILER, OS: $OS, TILES: $TILES, SOUND: $SOUND, TEST_STAGE: $TEST_STAGE"
 echo "LANGUAGES: $LANGUAGES, LIBBACKTRACE: $LIBBACKTRACE, NATIVE: $NATIVE, RELEASE: $RELEASE, CROSS_COMPILATION: $CROSS_COMPILATION"
 
-if [ "$CMAKE" = "1" ]
+if [ "$RELEASE" = "1" ]
 then
-    if [ "$RELEASE" = "1" ]
-    then
-        build_type=MinSizeRel
-    else
-        build_type=Debug
-    fi
-
-    echo "Building with CMake"
-    TILES="${TILES:-0}"
-    CURSES=$((1 - TILES))
-
-    mkdir -p build
-    cmake \
-        -B build \
-        -DBACKTRACE=ON \
-        ${COMPILER:+-DCMAKE_CXX_COMPILER=$COMPILER} \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-        -DCMAKE_BUILD_TYPE="$build_type" \
-        -DTILES="${TILES}" \
-        -DCURSES="${CURSES}" \
-        -DSOUND="${SOUND:-0}"
-
-    make -j$num_jobs -C build
+    build_type=MinSizeRel
 else
-    if [ "$OS" == "macos-14" ]
-    then
-        export NATIVE=osx
-        # if OSX_MIN we specify here is lower than 11 then linker is going
-        # to throw warnings because uncaught_exceptions, SDL and gettext libraries installed from
-        # Homebrew are built with minimum target osx version 11
-        export OSX_MIN=14
-    else
-        export BACKTRACE=1
-    fi
-    make -j "$num_jobs" RELEASE=1 CCACHE=1 CROSS="$CROSS_COMPILATION" LINTJSON=0 FRAMEWORK=1
+    build_type=Debug
+fi
 
-    # For CI on macOS, patch the test binary so it can find SDL2 libraries.
-    if [[ ! -z "$OS" && "$OS" = "macos-14" ]]
-    then
-        file tests/cata_test
-        install_name_tool -add_rpath "$HOME"/Library/Frameworks tests/cata_test
+TILES="${TILES:-0}"
+CURSES=$((1 - TILES))
+
+cmake_args=(
+    -B build
+    -G Ninja
+    -DBACKTRACE=ON
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    -DCMAKE_BUILD_TYPE="$build_type"
+    -DTILES="$TILES"
+    -DCURSES="$CURSES"
+    -DSOUND="${SOUND:-0}"
+)
+
+if [ -n "$COMPILER" ]; then
+    cmake_args+=( -DCMAKE_CXX_COMPILER="$COMPILER" )
+fi
+
+if [ -n "$TEST_STAGE" ]; then
+    cmake_args+=( -DJSON_FORMAT=ON )
+fi
+
+if [ "$OS" = "macos-14" ]; then
+    cmake_args+=( -DCMAKE_OSX_DEPLOYMENT_TARGET=14 )
+fi
+
+cmake "${cmake_args[@]}"
+
+if [ -n "$TEST_STAGE" ]
+then
+    build-scripts/lint-json.sh
+    cmake --build build --target style-json-parallel --parallel "$num_jobs"
+    tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
+fi
+
+cmake --build build --parallel "$num_jobs"
+
+# For CI on macOS, patch the test binary so it can find SDL3 libraries.
+if [[ ! -z "$OS" && "$OS" = "macos-14" ]]
+then
+    test_bin="build/tests/cata_test"
+    if [ "$TILES" = "1" ]; then
+        test_bin="build/tests/cata_test-tiles"
+    fi
+    if [ -f "$test_bin" ]; then
+        file "$test_bin"
+        install_name_tool -add_rpath "$HOME"/Library/Frameworks "$test_bin"
     fi
 fi
 

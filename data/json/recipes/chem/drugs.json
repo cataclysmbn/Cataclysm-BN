@@ -13,6 +13,26 @@
   },
   {
     "type": "recipe",
+    "result": "fungal_painkiller",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_DRUGS",
+    "skill_used": "cooking",
+    "skills_required": [ "firstaid", 4 ],
+    "difficulty": 9,
+    "time": "20 m",
+    "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
+    "batch_time_factors": [ 80, 5 ],
+    "qualities": [ { "id": "CHEM", "level": 3 } ],
+    "components": [
+      [ [ "chem_methanol", 1 ] ],
+      [ [ "oxycodone", 1 ], [ "codeine", 2 ] ],
+      [ [ "chem_muriatic_acid", 1 ] ],
+      [ [ "veggy_tainted", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "tobacco",
     "category": "CC_CHEM",
     "subcategory": "CSC_CHEM_DRUGS",
@@ -78,6 +98,7 @@
     "skill_used": "cooking",
     "difficulty": 5,
     "time": "20 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [ [ "textbook_chemistry", 5 ], [ "adv_chemistry", 5 ], [ "recipe_labchem", 5 ] ],
     "qualities": [ { "id": "CHEM", "level": 3 } ],
@@ -110,6 +131,7 @@
     "skill_used": "cooking",
     "difficulty": 4,
     "time": "30 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [ [ "textbook_chemistry", 4 ], [ "adv_chemistry", 4 ], [ "recipe_labchem", 4 ] ],
     "qualities": [ { "id": "CHEM", "level": 3 } ],
@@ -169,6 +191,7 @@
     "skills_required": [ "survival", 2 ],
     "difficulty": 3,
     "time": "30 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [
       [ "pocket_survival", 3 ],
@@ -212,6 +235,7 @@
     "skill_used": "cooking",
     "difficulty": 4,
     "time": "30 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [
       [ "textbook_chemistry", 5 ],
@@ -237,6 +261,7 @@
     "skill_used": "cooking",
     "difficulty": 6,
     "time": "30 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [
       [ "textbook_chemistry", 7 ],
@@ -267,6 +292,7 @@
     "skill_used": "cooking",
     "difficulty": 6,
     "time": "30 m",
+    "flags": [ "BLIND_NEARLY_IMPOSSIBLE" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [
       [ "textbook_chemistry", 8 ],
@@ -315,6 +341,7 @@
     "difficulty": 5,
     "charges": 70,
     "time": "30 m",
+    "flags": [ "BLIND_EASY" ],
     "//": "unfortunately this is a weird process - 30min to actually extract and a few hours to purge the remaining liquid. we'll go with 2h30m for purging. 28g at 20% yield is 7g unrefined distillate",
     "batch_time_factors": [ 80, 5 ],
     "autolearn": true,
@@ -331,6 +358,7 @@
     "skills_required": [ "cooking", 4 ],
     "difficulty": 5,
     "time": "4 h",
+    "flags": [ "BLIND_EASY" ],
     "//": "purging generally can take 24-48 hours, however we don't want to make the player wait that long. 4 will do hopefully. this step encompasses winterization, distillation, and purging since we have no freezing for recipes",
     "batch_time_factors": [ 99, 5 ],
     "autolearn": true,
@@ -347,6 +375,7 @@
     "skills_required": [ "cooking", 4 ],
     "difficulty": 5,
     "time": "4 h",
+    "flags": [ "BLIND_EASY" ],
     "//": "purging generally can take 24-48 hours, however we don't want to make the player wait that long. 4 will do hopefully. this step encompasses whippikng and a long purge under slight heat",
     "batch_time_factors": [ 99, 5 ],
     "autolearn": true,
@@ -362,6 +391,7 @@
     "skill_used": "cooking",
     "difficulty": 6,
     "time": "4 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [
       [ "textbook_chemistry", 7 ],
@@ -386,6 +416,7 @@
     "skill_used": "cooking",
     "difficulty": 7,
     "time": "4 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [
       [ "textbook_chemistry", 8 ],
@@ -406,6 +437,7 @@
     "skill_used": "cooking",
     "difficulty": 6,
     "time": "30 m",
+    "flags": [ "BLIND_NEARLY_IMPOSSIBLE" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [ [ "textbook_chemistry", 8 ], [ "adv_chemistry", 6 ], [ "recipe_labchem", 7 ] ],
     "qualities": [ { "id": "CHEM", "level": 3 } ],
@@ -427,6 +459,7 @@
     "skills_required": [ "firstaid", 1 ],
     "difficulty": 6,
     "time": "24 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [
       [ "adv_chemistry", 5 ],
@@ -449,6 +482,7 @@
     "skills_required": [ "firstaid", 1 ],
     "difficulty": 7,
     "time": "36 m",
+    "flags": [ "BLIND_NEARLY_IMPOSSIBLE" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [
       [ "adv_chemistry", 6 ],
@@ -525,6 +559,7 @@
     "difficulty": 2,
     "time": "2 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "batch_time_factors": [ 80, 5 ],
     "qualities": [ { "id": "CHEM", "level": 1 } ],
     "components": [
@@ -555,6 +590,7 @@
     "difficulty": 4,
     "time": "6 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [ [ "recipe_labchem", 3 ], [ "textbook_chemistry", 3 ], [ "reference_cooking", 4 ], [ "reference_firstaid1", 2 ] ],
     "qualities": [ { "id": "BOIL", "level": 2 }, { "id": "CHEM", "level": 1 } ],

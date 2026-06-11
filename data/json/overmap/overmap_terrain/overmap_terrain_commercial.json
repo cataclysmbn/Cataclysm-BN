@@ -1129,7 +1129,7 @@
   {
     "type": "overmap_terrain",
     "abstract": "generic_large_office_tower",
-    "name": "Large Office Tower",
+    "name": "large office tower",
     "copy-from": "generic_city_building",
     "sym": "T",
     "color": "white"

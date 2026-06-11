@@ -383,7 +383,7 @@
       "palettes": [ "school_palette" ],
       "place_items": [  ],
       "place_nested": [
-        { "chunks": [ [ "roof_16x16_help", 5 ], [ "null", 25 ] ], "x": [ 48, 54 ], "y": [ 6, 8 ] },
+        { "chunks": [ [ "roof_16x16_help", 5 ], [ "roof_12x12_aircraft", 5 ], [ "null", 25 ] ], "x": [ 48, 54 ], "y": [ 6, 8 ] },
         {
           "chunks": [ [ "roof_4x4_utility", 5 ], [ "roof_4x4_utility", 5 ], [ "roof_6x6_utility", 5 ] ],
           "x": [ 50, 58 ],

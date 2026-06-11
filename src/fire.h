@@ -5,7 +5,7 @@
 /**
  * Contains the state of a fire in one tile on one turn
  *
- * Used to pass data between the fire field calculations in @ref map::process_fields_in_submap()
+ * Used to pass data between the fire field calculations in @ref process_fields_in_submap()
  * and the item::burn() function of each specific item being burned.
  *
  * A structure of this type is created during the burn calculation for a given turn and a given

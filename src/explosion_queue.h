@@ -1,7 +1,7 @@
 #pragma once
 
 #include "explosion.h"
-#include "point.h"
+#include "coordinates.h"
 
 #include <string>
 #include <deque>
@@ -18,11 +18,11 @@ enum class ExplosionType {
 
 struct queued_explosion {
     queued_explosion() = default;
-    queued_explosion( const tripoint &pos, ExplosionType type,
+    queued_explosion( const tripoint_bub_ms &pos, ExplosionType type,
                       Creature *source ) : pos( pos ), type( type ), source( source ) {}
 
     /** Origin */
-    tripoint pos;
+    tripoint_bub_ms pos;
     /** Explosion type */
     ExplosionType type = ExplosionType::Regular;
     /** Data for Regular explosion */

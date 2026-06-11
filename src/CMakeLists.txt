@@ -2,15 +2,16 @@ set(MAIN_CPP ${CMAKE_SOURCE_DIR}/src/main.cpp)
 set(MESSAGES_CPP ${CMAKE_SOURCE_DIR}/src/messages.cpp)
 set(RESOURCE_RC ${CMAKE_SOURCE_DIR}/src/resource.rc)
 
-file(GLOB CATACLYSM_BN_SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE CATACLYSM_BN_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
+list(FILTER CATACLYSM_BN_SOURCES EXCLUDE REGEX "/src/(lua|sol|third-party)/")
 
 list(REMOVE_ITEM CATACLYSM_BN_SOURCES ${MAIN_CPP} ${MESSAGES_CPP})
 
 # Lua binding translation units are template-heavy and primarily run at startup;
 # compile them with no optimization to reduce build times.
-file(GLOB CATALUA_BINDINGS_SOURCES ${CMAKE_SOURCE_DIR}/src/catalua_bindings*.cpp)
+file(GLOB CATALUA_BINDINGS_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/catalua_bindings*.cpp)
 if (MSVC)
-    set(CATALUA_BINDINGS_COMPILE_OPTIONS /Od)
+    set(CATALUA_BINDINGS_COMPILE_OPTIONS /Od /Ob0)
 else ()
     set(CATALUA_BINDINGS_COMPILE_OPTIONS -O0 -g0)
 endif ()
@@ -18,9 +19,18 @@ foreach (catalua_src IN LISTS CATALUA_BINDINGS_SOURCES)
     set_source_files_properties(${catalua_src} PROPERTIES COMPILE_OPTIONS "${CATALUA_BINDINGS_COMPILE_OPTIONS}")
 endforeach ()
 
-file(GLOB CATACLYSM_BN_HEADERS ${CMAKE_SOURCE_DIR}/src/*.h)
+file(GLOB_RECURSE CATACLYSM_BN_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.h)
+list(FILTER CATACLYSM_BN_HEADERS EXCLUDE REGEX "/src/(lua|sol|third-party)/")
 
 add_subdirectory(lua)
+if (UNIX)
+    target_compile_definitions(liblua PUBLIC LUA_USE_LINUX)
+elseif (APPLE)
+    target_compile_definitions(liblua PUBLIC LUA_USE_MACOSX)
+elseif (WIN32)
+    target_compile_definitions(liblua PUBLIC LUA_USE_WINDOWS)
+endif()
+
 add_subdirectory(sol)
 
 # Get GIT version strings
@@ -45,7 +55,7 @@ function(setup_common_target_properties target_name)
 
     # Add common libraries
     target_link_libraries(${target_name} PUBLIC ZLIB::ZLIB)
-    target_link_libraries(${target_name} PUBLIC SQLite::SQLite3)
+    target_link_libraries(${target_name} PUBLIC SQLite3::SQLite3)
 
     # Setup threading
     if (CMAKE_USE_PTHREADS_INIT)
@@ -94,12 +104,24 @@ function(setup_common_target_properties target_name)
         target_include_directories(${target_name} SYSTEM PUBLIC ${tracy_SOURCE_DIR}/public)
         target_compile_definitions(${target_name} PUBLIC USE_TRACY)
     endif ()
+endfunction()
 
-    # Set up precompiled headers if not exporting compile commands
-    if (NOT "${CMAKE_EXPORT_COMPILE_COMMANDS}")
-        target_precompile_headers(${target_name} PRIVATE
-            ${CMAKE_SOURCE_DIR}/pch/main-pch.hpp)
+function(link_sdl_core target_name)
+    if (NOT DYNAMIC_LINKING)
+        target_link_libraries(${target_name} PUBLIC SDL3::SDL3-static)
+    else()
+        target_link_libraries(${target_name} PUBLIC SDL3::SDL3)
     endif ()
+    target_compile_definitions(${target_name} PUBLIC CATA_SDL)
+endfunction()
+
+function(link_sdl_mixer target_name)
+    if (NOT DYNAMIC_LINKING)
+        target_link_libraries(${target_name} PUBLIC SDL3_mixer::SDL3_mixer-static)
+    else()
+        target_link_libraries(${target_name} PUBLIC SDL3_mixer::SDL3_mixer)
+    endif ()
+    target_compile_definitions(${target_name} PUBLIC SDL_SOUND)
 endfunction()
 
 # Build tiles version if requested
@@ -127,6 +149,7 @@ if (TILES)
 
     # Tiles-specific setup
     target_compile_definitions(cataclysm-bn-tiles-common PUBLIC TILES)
+    link_sdl_core(cataclysm-bn-tiles-common)
     if (DYNAMIC_ATLAS)
         target_compile_definitions(cataclysm-bn-tiles-common PUBLIC DYNAMIC_ATLAS)
     endif()
@@ -142,29 +165,18 @@ if (TILES)
 
     if (NOT DYNAMIC_LINKING)
         target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-            SDL2::SDL2-static
-            SDL2_image::SDL2_image-static
-            SDL2_ttf::SDL2_ttf-static
+            SDL3_image::SDL3_image-static
+            SDL3_ttf::SDL3_ttf-static
         )
     else()
         target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-            SDL2::SDL2
-            SDL2_image::SDL2_image
-            SDL2_ttf::SDL2_ttf
+            SDL3_image::SDL3_image
+            SDL3_ttf::SDL3_ttf
         )
     endif ()
 
     if (SOUND)
-        if (NOT DYNAMIC_LINKING)
-            target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-                SDL2_mixer::SDL2_mixer-static
-            )
-        else()
-            target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-                SDL2_mixer::SDL2_mixer
-            )
-        endif()
-        add_definitions(-DSDL_SOUND)
+        link_sdl_mixer(cataclysm-bn-tiles-common)
     endif ()
 
     if (RELEASE)
@@ -172,16 +184,23 @@ if (TILES)
     endif ()
 
     set_target_properties(cataclysm-bn-tiles PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+    if (COMMAND cata_copy_windows_lavapipe_runtime)
+        cata_copy_windows_lavapipe_runtime(cataclysm-bn-tiles)
+    endif()
 
     if( LUA_DOCS_ON_BUILD AND DENO_BINARY )
         add_custom_command(
             TARGET cataclysm-bn-tiles POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E env --unset=LD_LIBRARY_PATH ${DENO_BINARY} task docs:gen
+            COMMAND ${CMAKE_COMMAND} -E env --unset=LD_LIBRARY_PATH "CATA_EXE=$<TARGET_FILE:cataclysm-bn-tiles>" ${DENO_BINARY} task docs:gen
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             COMMENT "Generating Lua reference/annotations (deno task docs:gen)"
             VERBATIM
         )
     endif()
+
+    if (CATA_SHADERS)
+        add_dependencies(cataclysm-bn-tiles-common cata_shaders)
+    endif ()
 endif ()
 
 # Build curses version if requested
@@ -207,9 +226,22 @@ if (CURSES)
     # Curses-specific setup
     target_include_directories(cataclysm-bn-common PUBLIC ${CURSES_INCLUDE_DIR})
     target_link_libraries(cataclysm-bn-common PUBLIC ${CURSES_LIBRARIES})
+    if (CATA_SDL)
+        link_sdl_core(cataclysm-bn-common)
+    endif()
+    if (SOUND)
+        link_sdl_mixer(cataclysm-bn-common)
+    endif()
     target_link_libraries(cataclysm-bn PRIVATE cataclysm-bn-common)
+
+    if (CATA_SHADERS)
+        add_dependencies(cataclysm-bn-common cata_shaders)
+    endif ()
 
     if (RELEASE)
         install(TARGETS cataclysm-bn RUNTIME)
     endif ()
+    if (COMMAND cata_copy_windows_lavapipe_runtime)
+        cata_copy_windows_lavapipe_runtime(cataclysm-bn)
+    endif()
 endif ()

@@ -1,4 +1,4 @@
-name: General build matrix
+name: matrix
 
 on:
   push:
@@ -7,14 +7,22 @@ on:
   pull_request:
     branches: [main]
     paths-ignore: [docs/**, scripts/**, "**.md", "**.mdx"]
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 # Cancel all previous instances in favor of latest revision of a PR.
 # Allow running main builds to complete to help with ccache refreshes.
 concurrency:
-  group: general-build-${{ github.event.pull_request.number || github.ref_name }}
+  group: matrix-build-${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+env:
+  LLVM_VERSION: "22"
 
 jobs:
   skip-duplicates:
@@ -23,6 +31,7 @@ jobs:
     outputs:
       should_skip_code: ${{ steps.skip_code_check.outputs.should_skip }}
       should_skip_data: ${{ steps.skip_data_check.outputs.should_skip }}
+      should_skip_platform: ${{ steps.skip_platform_check.outputs.should_skip }}
     steps:
       - id: skip_code_check
         uses: fkirc/skip-duplicate-actions@master
@@ -32,29 +41,60 @@ jobs:
         uses: fkirc/skip-duplicate-actions@master
         with:
           paths_ignore: '["android/**", "docs/**", "doxygen_doc/**", "msvc-**", "tools/**", "utilities/**", "scripts/**"]'
+      - id: skip_platform_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          paths_ignore: '["docs/**", "doxygen_doc/**", "lgtm/**", "utilities/**", "scripts/**", "**.md", "**.mdx"]'
+
+  shader-artifacts:
+    needs: skip-duplicates
+    name: Generate shader artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shadercross dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev libvkd3d-utils1
+
+      - name: Install shadercross
+        run: bash build-scripts/install-shadercross-vcpkg.sh
+
+      - name: Generate shaders
+        env:
+          SHADER_FORMATS: spirv msl dxil
+        run: bash build-scripts/generate-shaders.sh
+
+      - name: Upload generated shaders
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-shaders-ci
+          path: data/shaders/
+          if-no-files-found: error
 
   varied_builds:
-    needs: skip-duplicates
+    needs: [skip-duplicates, shader-artifacts]
     strategy:
       fail-fast: ${{ github.ref_name == 'main' }}
       max-parallel: ${{ github.ref_name == 'main' && 20 || 2 }}
       matrix:
         include:
-          - title: GCC, Ubuntu, Curses, CMake
+          - title: clang, curses
             preset: ci-curses
             os: ubuntu-latest
             tiles: 0
             test-stage: 1
             ccache_limit: 2G
-            ccache_key: linux-gcc-curses
+            ccache_key: linux-clang-curses
             always-run: true
 
-          - title: GCC, Ubuntu, Tiles, Sound, CMake, Languages
+          - title: clang, tiles, i18n
             preset: ci-tiles
             os: ubuntu-latest
             tiles: 1
             ccache_limit: 2G
-            ccache_key: linux-gcc-tiles
+            ccache_key: linux-clang-tiles
             upload-artifact: true
 
     name: ${{ matrix.title }}
@@ -63,7 +103,7 @@ jobs:
       ZSTD_CLEVEL: 3
       TILES: ${{ matrix.tiles }}
       TEST_STAGE: ${{ matrix.test-stage }}
-      SKIP: ${{ matrix.always-run != true && ( github.event.pull_request.draft == true || needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
+      SKIP: ${{ matrix.always-run != true && ( needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
 
     steps:
       - name: checkout repository
@@ -72,23 +112,51 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Download generated shaders
+        if: ${{ env.SKIP == 'false' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders-ci
+          path: data/shaders
+
       - name: install dependencies (ubuntu)
         if: ${{ env.SKIP == 'false' }}
         run: |
           sudo apt-get update
-          sudo apt-get install gcc-14 libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev ninja-build
+          sudo apt-get install -y libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb autoconf autoconf-archive automake libtool libltdl-dev
           sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
 
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-          g++ --version
+      - name: Setup LLVM build tools
+        if: ${{ env.SKIP == 'false' }}
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          clang-format: ${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          setup-cpp: false
 
-      - name: install SDL2 dependencies (ubuntu)
-        if: ${{ env.SKIP == 'false' && matrix.tiles == 1 }}
+      - name: Show Clang version
+        if: ${{ env.SKIP == 'false' }}
+        run: clang++ --version
+
+      #- name: Install SDL3 (ubuntu)
+      #  if: ${{ env.SKIP == 'false' }}
+      #  run: |
+      #    sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+
+      - name: Install SDL3-devel Dependencies (ubuntu)
+        if: ${{ env.SKIP == 'false' }}
         run: |
-          sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev
+          sudo apt-get install libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
+            libfreetype-dev libharfbuzz-dev \
+            libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev \
+            libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev
 
-      # problem matchers are only ran on GCC to reduce error spam
+      # Problem matchers are only run on the always-on validation leg to reduce error spam.
       - name: add problem matcher
         if: ${{ matrix.always-run == true }}
         run: |
@@ -114,8 +182,6 @@ jobs:
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
-      - uses: ammaraskar/gcc-problem-matcher@master
-
       - name: run JSON syntax validation (test-stage only)
         if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
         run: |
@@ -126,6 +192,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
+          configurePresetAdditionalArgs: "['-DUSE_PREFIX_DATA_DIR=OFF', '-DCATA_FORMAT_TARGETS=OFF']"
           buildPreset: ${{ matrix.preset }}
           buildPresetAdditionalArgs: "['-j', '2']"
 
@@ -135,12 +202,47 @@ jobs:
           cmake --build build --target style-json-parallel
           tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 
+      - name: create Linux tiles playtest package
+        if: ${{ success() && env.SKIP == 'false' && matrix.upload-artifact == true }}
+        env:
+          VERSION_LABEL: pr-${{ github.event.pull_request.number || github.run_id }}
+        run: |
+          mkdir -p lang/mo
+          cmake --install build --prefix cataclysmbn-${VERSION_LABEL}
+          tar -czvf cbn-linux-tiles-x64-${VERSION_LABEL}.tar.gz cataclysmbn-${VERSION_LABEL}
+
+      - name: upload Linux tiles playtest package
+        if: ${{ success() && env.SKIP == 'false' && matrix.upload-artifact == true }}
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}
+          path: cbn-linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}.tar.gz
+          if-no-files-found: error
+
+      - name: Publish Linux artifact link
+        if: ${{ success() && github.event_name == 'pull_request' && env.SKIP == 'false' && matrix.upload-artifact == true }}
+        continue-on-error: true
+        uses: ./.github/actions/publish-pr-artifact-body
+        with:
+          repository: ${{ github.repository }}
+          pr-number: ${{ github.event.pull_request.number }}
+          run-id: ${{ github.run_id }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          token: ${{ github.token }}
+
       - name: run tests
         if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
         run: |
           # Run tests using parallel execution
+          Xvfb :99 -screen 0 1280x1024x24 &
+          xvfb_pid=$!
+          trap 'kill "$xvfb_pid" 2>/dev/null || true' EXIT
+          export DISPLAY=:99
+          sleep 1
+
           test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
-          test_opts="--min-duration 20 --use-colour yes --rng-seed time --error-format=github-action"
+          test_opts="--min-duration 20 --use-colour yes --rng-seed time --error-format=github-action --gpu-backend=software"
 
           parallel --verbose --linebuffer \
             "$test_bin $test_opts --user-dir=test_user_dir_{#} {}" \
@@ -155,13 +257,6 @@ jobs:
               done
           fi
 
-      - name: emit success artifact
-        if: ${{ success() && matrix.upload-artifact == 'true' }}
-        uses: actions/upload-artifact@v4.6.0
-        with:
-          name: ${{ github.event.number }}
-          path: ${{ github.event.number }}
-
       - name: upload artifacts if failed
         uses: actions/upload-artifact@v4.6.0
         if: failure()
@@ -169,3 +264,52 @@ jobs:
           name: cata_test-${{ matrix.tiles == 1 && 'tiles' || 'curses' }}
           path: build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}
           if-no-files-found: ignore
+
+  cache-warm-builds:
+    needs: skip-duplicates
+    if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: experimental
+      mode: ci
+      matrix-json: |
+        [
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
+          { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk" }
+        ]
+      download-translations: false
+      bundle-tilesets: false
+      package-artifacts: false
+      run-tests: true
+      android-localize: false
+      upload-artifacts: false
+    secrets: inherit
+
+  builds:
+    needs: skip-duplicates
+    if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: experimental
+      mode: ci
+      artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
+      matrix-json: |
+        [
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip", "upload-artifact": true },
+          { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage", "upload-artifact": true },
+          { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk", "upload-artifact": true }
+        ]
+      download-translations: false
+      bundle-tilesets: false
+      package-artifacts: true
+      run-tests: true
+      android-localize: false
+      upload-artifacts: true
+    secrets: inherit

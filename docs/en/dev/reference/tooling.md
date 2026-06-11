@@ -16,12 +16,12 @@ If you only have `astyle` installed, use:
 astyle --options=.astylerc --recursive src/*.cpp,*.h tests/*.cpp,*.h tools/*.cpp,*.h
 ```
 
-### Invoking astyle through make
+### Invoking astyle through CMake
 
-If you have both `make` and `astyle` installed, use:
+If you have configured a CMake build tree, use:
 
 ```sh
-make astyle
+cmake --build build --target astyle
 ```
 
 ### Invoking astyle via pre-commit hook
@@ -34,7 +34,7 @@ and json by adding these commands to your git pre-commit hook (typically at
 git diff --cached --name-only -z HEAD | grep -z 'data/.*\.json' | \
     xargs -r -0 -L 1 ./tools/format/json_formatter.[ce]* || exit 1
 
-make astyle-check || exit 1
+astyle --options=.astylerc --dry-run -X -Q src/*.cpp src/*.h tests/*.cpp tests/*.h tools/*/*.cpp tools/*/*.h || exit 1
 ```
 
 ### Astyle extensions for Visual Studio
@@ -109,15 +109,14 @@ In addition to the usual means of creating a `tags` file via e.g.
 [`ctags`](http://ctags.sourceforge.net/), we provide `tools/json_tools/cddatags.py` to augment a
 `tags` file with locations of definitions taken from CDDA JSON data. `cddatags.py` is designed to
 safely update a tags file containing source code tags, so if you want both types of tag in your
-`tags` file then you can run `ctags -R . && tools/json_tools/cddatags.py`. Alternatively, there is a
-rule in the `Makefile` to do this for you; just run `make ctags` or `make etags`.
+`tags` file then you can run `ctags -R . && tools/json_tools/cddatags.py`.
 
 ## clang-tidy
 
 Cataclysm has a
 [clang-tidy configuration file](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/.clang-tidy)
 and if you have `clang-tidy` available you can run it to perform static analysis of the codebase. We
-test with `clang-tidy` from LLVM 18 with CI, so for the most consistent results, you might want to
+test with `clang-tidy` from LLVM 22 with CI, so for the most consistent results, you might want to
 use that version.
 
 To run it, you have a few options.
@@ -153,7 +152,7 @@ Also install these additional dependencies:
 
 ```sh
 sudo apt-get install \
-  clang-18 libclang-18-dev llvm-18 llvm-18-dev clang-tidy-18
+  clang-22 libclang-22-dev llvm-22 llvm-22-dev clang-tidy-22
 ```
 
 add `CATA_CLANG_TIDY_PLUGIN=ON` to cmake flags when configuring the build.

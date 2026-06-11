@@ -44,6 +44,21 @@
     "category": "scrap_electronics"
   },
   {
+    "id": "freezer_industrial",
+    "type": "TOOL",
+    "looks_like": "f_fridge",
+    "name": "industrial freezer",
+    "description": "An industrial freezer, the freezer's imposing big brother. It stops just short of being a commercial walk-in freezer, but has nearly as much capacity.",
+    "weight": "160 kg",
+    "volume": "420000 ml",
+    "price": "5000 USD",
+    "price_postapoc": "50 USD",
+    "material": "steel",
+    "symbol": "{",
+    "color": "blue",
+    "category": "scrap_electronics"
+  },
+  {
     "id": "glass_fridge",
     "type": "TOOL",
     "looks_like": "f_glass_fridge",

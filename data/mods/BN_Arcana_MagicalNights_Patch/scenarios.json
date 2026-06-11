@@ -1,0 +1,77 @@
+[
+  {
+    "type": "scenario",
+    "id": "lost_faith",
+    "copy-from": "lost_faith",
+    "extend": {
+      "professions": [ "arcanist_magehunter", "arcanist_dark_priest", "arcanist_purifier", "arcanist_operator", "arcanist_mendicant" ],
+      "traits": [
+        "SPELL_CLAIRVOYANCE",
+        "SPELL_CLARITY",
+        "SPELL_CONFUSE",
+        "SPELL_STRENGTH",
+        "SPELL_AGILE",
+        "SPELL_INSIGHT",
+        "SPELL_LIGHT",
+        "SPELL_DAYLIGHT",
+        "SPELL_LOCKPICK",
+        "SPELL_POISONARMOR"
+      ]
+    }
+  },
+  {
+    "type": "scenario",
+    "id": "magic_basement",
+    "copy-from": "magic_basement",
+    "extend": {
+      "traits": [
+        "SPELL_HEAL",
+        "SPELL_SHADOWSNAKES",
+        "SPELL_CLERIC",
+        "SPELL_STRENGTH",
+        "SPELL_AGILE",
+        "SPELL_INSIGHT",
+        "SPELL_LIGHT",
+        "SPELL_FIRE",
+        "SPELL_DAMPENING",
+        "SPELL_SUMMONDOG"
+      ]
+    }
+  },
+  {
+    "type": "scenario",
+    "id": "lake_retreat",
+    "copy-from": "lake_retreat",
+    "extend": {
+      "traits": [
+        "SPELL_HEAL",
+        "SPELL_SHADOWSNAKES",
+        "SPELL_CLERIC",
+        "SPELL_STRENGTH",
+        "SPELL_AGILE",
+        "SPELL_INSIGHT",
+        "SPELL_LIGHT",
+        "SPELL_FIRE",
+        "SPELL_DAMPENING",
+        "SPELL_SUMMONDOG"
+      ]
+    }
+  },
+  {
+    "type": "scenario",
+    "id": "arcane_seeker",
+    "copy-from": "arcane_seeker",
+    "extend": {
+      "professions": [ "novice_necromancer", "novice_stormshaper", "novice_earthshaper", "novice_technomancer", "novice_kelvinist" ]
+    }
+  },
+  {
+    "type": "scenario",
+    "id": "arcane_urban",
+    "copy-from": "arcane_urban",
+    "extend": {
+      "professions": [ "priest_magic2", "shinto_priest_magic2", "imam_magic2", "rabbi_magic2", "guru_magic2", "preacher_magic2" ]
+    },
+    "delete": { "professions": [ "priest", "shinto_priest", "imam", "rabbi", "guru", "preacher" ] }
+  }
+]

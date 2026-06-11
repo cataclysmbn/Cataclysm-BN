@@ -177,8 +177,8 @@ void weather_type::load( const JsonObject &jo, const std::string & )
         if( name == "effect" ) {
             std::string id_str = weather_effect.get_string( "effect_id_str" );
             std::string msg = weather_effect.get_string( "effect_msg" );
-            int freq = weather_effect.get_int( "effect_msg_frequency" );
-            int blocked_freq = weather_effect.get_int( "effect_msg_blocked_frequency" );
+            int msg_freq = weather_effect.get_int( "effect_msg_frequency" );
+            int msg_blocked_freq = weather_effect.get_int( "effect_msg_blocked_frequency" );
             int effect_intensity = weather_effect.get_int( "effect_intensity" );
             std::string bodypart_string = weather_effect.get_string( "bodypart_string", "" );
             time_duration duration = read_from_json_string<time_duration>
@@ -191,17 +191,29 @@ void weather_type::load( const JsonObject &jo, const std::string & )
             }
 
             std::string precipitation_name = weather_effect.get_string( "precipitation_name" );
-            bool ignore_armor = weather_effect.get_bool( "ignore_armor" );
+            std::vector<std::tuple<std::string, int>> protection_data;
+
+            for( const JsonValue entry : weather_effect.get_array( "protection_data" ) ) {
+                std::string check;
+                int odds = 0;
+                if( entry.test_object() ) {
+                    JsonObject jc = entry.get_object();
+                    check = jc.get_string( "check", "" );
+                    odds = jc.get_int( "odds", 0 );
+                }
+                if( check != "" && odds > 0 ) {
+                    protection_data.emplace_back( check, odds );
+                }
+            }
+
             int message_type = weather_effect.get_int( "message_type" );
-            int clothing_protection = weather_effect.get_int( "clothing_protection" );
-            int umbrella_protection = weather_effect.get_int( "umbrella_protection" );
             game_message_type gmt = static_cast<game_message_type>( message_type );
 
             effects.emplace_back(
             [ = ]( int intensity ) {
                 weather_effect::effect( intensity, duration, bp_id, effect_intensity, id_str, msg,
-                                        freq, blocked_freq,
-                                        gmt, precipitation_name, ignore_armor, clothing_protection, umbrella_protection );
+                                        msg_freq, msg_blocked_freq,
+                                        gmt, precipitation_name, protection_data );
             },
             intensity
             );

@@ -1,0 +1,15 @@
+[
+  {
+    "type": "overlay_order",
+    "overlay_ordering": [
+      { "id": [ "ARCANA_SCALYWINGS", "ARCANA_DRAGONWINGS" ], "order": 500 },
+      { "id": [ "ARCANA_SCALYPATCHES", "ARCANA_DRAGONSCALES", "ARCANA_PLATES" ], "order": 1500 },
+      { "id": [ "ARCANA_DRAGONCLAWS" ], "order": 3000 },
+      { "id": [ "ARCANA_SCALYTAIL", "ARCANA_DRAGONTAIL" ], "order": 3500 },
+      { "id": [ "ARCANA_SCALYLEGS", "ARCANA_DRAGONLEGS" ], "order": 4500 },
+      { "id": [ "ARCANA_DRAGONHORNS" ], "order": 6000 },
+      { "id": [ "ARCANA_DRAGONMUZZLE" ], "order": 7000 },
+      { "id": [ "ARCANA_DRAGONTEETH" ], "order": 7500 }
+    ]
+  }
+]

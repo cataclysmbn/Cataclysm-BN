@@ -13,7 +13,8 @@ static const mtype_id mon_mi_go_myrmidon( "mon_mi_go_myrmidon" );
 namespace map_funcs
 {
 
-auto climbing_cost( const map &m, const tripoint &from, const tripoint &to ) -> std::optional<int>
+auto climbing_cost( const map &m, const tripoint_bub_ms &from,
+                    const tripoint_bub_ms &to ) -> std::optional<int>
 {
     // TODO: All sorts of mutations, equipment weight etc. for characters
     if( !m.valid_move( from, to, false, true ) ) {
@@ -26,10 +27,10 @@ auto climbing_cost( const map &m, const tripoint &from, const tripoint &to ) -> 
     return 50 + diff * 100;
 }
 
-void migo_nerve_cage_removal( map &m, const tripoint &p, bool spawn_damaged )
+void migo_nerve_cage_removal( map &m, const tripoint_bub_ms &p, bool spawn_damaged )
 {
     bool open = false;
-    for( const tripoint &tmp : m.points_in_radius( p, 12 ) ) {
+    for( const tripoint_bub_ms &tmp : m.points_in_radius( p, 12 ) ) {
         if( m.ter( tmp ) == ter_id( "t_wall_resin_cage" ) ) {
             m.ter_set( tmp, ter_id( "t_floor_resin" ) );
             open = true;
@@ -40,9 +41,14 @@ void migo_nerve_cage_removal( map &m, const tripoint &p, bool spawn_damaged )
     } else {
         add_msg( _( "The nerve cluster collapses in on itself, to no discernible effect." ) );
     }
-    sounds::sound( p, 120, sounds::sound_t::combat,
-                   _( "a loud alien shriek reverberating through the structure!" ), true,
-                   "shout", "scream_tortured" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 120;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "a loud alien shriek reverberating through the structure!" );
+    se.id = "shout";
+    se.variant = "scream_tortured";
+    sounds::sound( se );
     monster *const spawn = g->place_critter_around( mon_mi_go_myrmidon, p, 1 );
     if( spawn_damaged ) {
         spawn->set_hp( spawn->get_hp_max() / 2 );

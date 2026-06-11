@@ -9,9 +9,8 @@ CataclysmBN:
 
 - General
   - `cmake` >= 3.0.0
-  - `gcc` >= 14
-  - `clang` >= 19
-  - `gcc-libs`
+  - `clang` >= 22
+  - `gcc-libs` or equivalent C++ runtime libraries
   - `glibc`
   - `zlib`
   - `bzip2`
@@ -51,7 +50,7 @@ Obtain packages specified above with your system package manager.
 - For Ubuntu-based distros (24.04 onwards):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 ccache \
+sudo apt install git cmake ninja-build mold clang-22 llvm-22 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -60,7 +59,7 @@ gettext libflac++-dev libsqlite3-dev zlib1g-dev
 - For Fedora-based distros:
 
 ```sh
-sudo dnf install git cmake ninja-build mold clang ccache \
+sudo dnf install git cmake ninja-build mold clang llvm ccache \
 SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
@@ -68,51 +67,33 @@ sqlite-devel zlib-devel
 
 #### Verifying Compiler Version
 
-You need to have at least `gcc` 14 **and** `clang` 19 to build CataclysmBN. You can check your compiler version with:
+You need Clang 22 or newer to build CataclysmBN. You can check your compiler version with:
 
 ```sh
-$ g++ --version
-g++ (GCC) 15.2.1 20250808 (Red Hat 15.2.1-1)
-Copyright (C) 2025 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
 $ clang++ --version
-clang version 20.1.8 (Fedora 20.1.8-4.fc42)
+clang version 22.1.6 (Fedora 22.1.6-1.fc44)
 Target: x86_64-redhat-linux-gnu
 Thread model: posix
 InstalledDir: /usr/bin
-Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 ```
 
 > [!TIP]
 >
-> **when intalled `gcc-{version}` but `gcc` is not found**
+> **when installed `clang-{version}` but `clang` is not found**
 >
-> Use `update-alternatives` to set the default gcc version:
+> Use `update-alternatives` to set the default Clang version:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-> sudo update-alternatives --display gcc
-> gcc - auto mode
->   link best version is /usr/bin/gcc-14
->   link currently points to /usr/bin/gcc-14
->   link gcc is /usr/bin/gcc
-> /usr/bin/gcc-14 - priority 100
-> sudo update-alternatives --display g++
-> g++ - auto mode
->   link best version is /usr/bin/g++-14
->   link currently points to /usr/bin/g++-14
->   link g++ is /usr/bin/g++
-> /usr/bin/g++-14 - priority 100
+> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-22 100
+> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 100
 > ```
 >
-> The same applies to `clang`.
+> If Ubuntu only installs versioned LLVM binutils such as `llvm-ar-22` and
+> `llvm-ranlib-22`, register those names too:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
-> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-22 100
+> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-22 100
 > ```
 
 ### macOS Environment
@@ -121,7 +102,7 @@ Install dependencies via [Homebrew](https://brew.sh/):
 
 ```sh
 brew install cmake ninja ccache sdl2 sdl2_image sdl2_ttf sdl2_mixer \
-  freetype gettext sqlite pkg-config
+  freetype gettext sqlite pkg-config ncurses flac
 ```
 
 > [!NOTE]
@@ -139,11 +120,15 @@ This places executables into `out/build/osx-arm-slim/`.
 
 #### Creating a macOS Distribution
 
+The macOS distribution presets build a DMG with the `dmgdist` target. `dmgbuild` must be available on `PATH`. Tiles builds also package SDL2 frameworks from `~/Library/Frameworks` or `/Library/Frameworks`.
+
 ```sh
-cmake --preset osx-arm-dist
-cmake --build --preset osx-arm-dist
-cmake --install build --prefix cataclysmbn-osx-tiles
+python3 -m pip install dmgbuild biplist
+cmake --preset osx-tiles-arm-dist
+cmake --build --preset osx-tiles-arm-dist
 ```
+
+Use `osx-curses-arm-dist`, `osx-tiles-arm-dist`, `osx-curses-x64-dist`, or `osx-tiles-x64-dist` for the desired architecture and UI.
 
 ### Windows Subsystem for Linux (WSL)
 
@@ -175,8 +160,7 @@ This should get your environment set up to build console and tiles version of wi
 ### CMake Build
 
 CMake has separate configuration and build steps. Configuration is done using CMake itself, and the
-actual build is done using either `make` (for Makefiles generator) or build-system agnostic
-`cmake --build .` .
+actual build is done using build-system agnostic `cmake --build .`.
 
 There are two ways to build CataclysmBN with CMake: inside the source tree or outside of it.
 Out-of-source builds have the advantage that you can have multiple builds with different options
@@ -446,6 +430,59 @@ Note that language files are only compiled automatically when building the `RELE
 other build types, you need to add the `translations_compile` target to the `make` command, for
 example `make all translations_compile`.
 
+### Building with Translations Locally
+
+Starting in 2026, translation files (`.po` files) are no longer kept in the repository. CI pulls them from Transifex, stores them in workflow artifacts, and uses them to build release packages.
+
+For local builds, use one of the following:
+
+#### Option 1: Build Without Translations (Fastest)
+
+If you are not working on translations, disable them:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=none
+cmake --build --preset linux-full
+```
+
+#### Option 2: Pull Translations from Transifex
+
+If you need to test translations locally and have Transifex access:
+
+1. Install the Transifex CLI:
+
+```sh
+curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
+```
+
+2. Pull the translation files:
+
+```sh
+tx pull --force --all
+```
+
+3. Build with translations enabled:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=all
+cmake --build --preset linux-full
+```
+
+#### Option 3: Download the `translations` Workflow Artifact
+
+If you do not have Transifex access, use the artifact produced by the translation workflow:
+
+1. Open a recent successful workflow run in [Actions](https://github.com/cataclysmbn/Cataclysm-BN/actions)
+2. Download the `translations` artifact
+3. Extract `lang/po` and `src/lang_stats.inc` into your local checkout
+4. Build normally with `-DLANGUAGES=all`
+
+> [!NOTE]
+> Most code changes do not need translations. Use `-DLANGUAGES=none` unless you are testing localized output.
+
+> [!NOTE]
+> Release archives only include compiled `lang/mo` files for packaged builds. They do not contain the `lang/po` sources required to rebuild translations locally.
+
 - DYNAMIC_LINKING=`<boolean>`
 
 Use dynamic linking. Or use static to remove MinGW dependency instead.
@@ -471,6 +508,9 @@ Print backtrace with [libbacktrace]. This allows lld and mold to print backtrace
 much faster.
 
 [libbacktrace]: https://github.com/ianlancetaylor/libbacktrace
+
+Supported installed external dependencies are preferred before downloading source fallbacks. Set
+`CMAKE_PREFIX_PATH` to a local prefix such as `$HOME/.local` to use locally installed packages.
 
 - USE_TRACY=`<boolean>`
 

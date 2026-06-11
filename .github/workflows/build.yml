@@ -8,8 +8,69 @@ on:
         description: "Version label for all builds"
         required: true
         type: string
+      mode:
+        description: "Build mode: release or ci"
+        required: false
+        type: string
+        default: release
+      artifact-label:
+        description: "Suffix for uploaded workflow artifact names"
+        required: false
+        type: string
+        default: ""
+      checkout-ref:
+        description: "Git ref or SHA to build"
+        required: false
+        type: string
+        default: ""
+      matrix-json:
+        description: "Build matrix include entries as JSON"
+        required: false
+        type: string
+        default: |
+          [
+            { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
+            { "name": "Linux Tiles", "platform": "linux", "artifact": "linux-tiles-x64", "os": "ubuntu-latest", "tiles": true, "sound": true, "ext": "tar.gz", "content-type": "application/gzip" },
+            { "name": "Linux Curses", "platform": "linux", "artifact": "linux-curses-x64", "os": "ubuntu-latest", "tiles": false, "sound": false, "ext": "tar.gz", "content-type": "application/gzip" },
+            { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+            { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+            { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+            { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+            { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk" },
+            { "name": "Android Bundle", "platform": "android", "artifact": "android-bundle", "os": "ubuntu-latest", "android": "bundle", "tiles": true, "ext": "aab", "content-type": "application/aab" }
+          ]
+      download-translations:
+        description: "Download prebuilt translation artifact"
+        required: false
+        type: boolean
+        default: true
+      bundle-tilesets:
+        description: "Bundle external tilesets into tiles builds"
+        required: false
+        type: boolean
+        default: true
+      package-artifacts:
+        description: "Create release archives where separate packaging is needed"
+        required: false
+        type: boolean
+        default: true
+      run-tests:
+        description: "Build and run tests when supported by the selected platform"
+        required: false
+        type: boolean
+        default: false
+      android-localize:
+        description: "Build Android assets with localization"
+        required: false
+        type: boolean
+        default: true
       upload-to-release:
         description: "Upload to GitHub release"
+        required: false
+        type: boolean
+        default: false
+      upload-artifacts:
+        description: "Upload packaged build files as workflow artifacts"
         required: false
         type: boolean
         default: false
@@ -26,96 +87,68 @@ on:
       KEYSTORE_PROPERTIES:
         required: false
 
+# Keep release-compatible defaults here. CI callers can replace the matrix with inputs.matrix-json.
 env:
   ZSTD_CLEVEL: 17
   VCPKG_BINARY_SOURCES: "default"
+  EMMYLUA_CHECK_VERSION: "0.22.0"
+  LLVM_VERSION: "22"
 
 jobs:
+  shader-artifacts:
+    name: Generate shader artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout-ref }}
+
+      - name: Install shadercross dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev libvkd3d-utils1
+
+      - name: Install shadercross
+        run: bash build-scripts/install-shadercross-vcpkg.sh
+
+      - name: Generate shaders
+        env:
+          SHADER_FORMATS: spirv msl dxil
+        run: bash build-scripts/generate-shaders.sh
+
+      - name: Upload generated shaders
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-shaders
+          path: data/shaders/
+          if-no-files-found: error
+
   builds:
+    needs: shader-artifacts
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Windows
-          - name: Windows Tiles x64 MSVC
-            artifact: windows-tiles-x64-msvc
-            os: windows-latest
-            arch: x64
-            tiles: true
-            sound: true
-            ext: zip
-            content-type: application/zip
-
-          # Linux
-          - name: Linux Tiles x64
-            artifact: linux-tiles-x64
-            os: ubuntu-latest
-            tiles: true
-            sound: true
-            ext: tar.gz
-            content-type: application/gzip
-
-          - name: Linux Curses x64
-            artifact: linux-curses-x64
-            os: ubuntu-latest
-            tiles: false
-            sound: false
-            ext: tar.gz
-            content-type: application/gzip
-
-          # macOS Intel
-          - name: macOS Curses x64
-            artifact: osx-curses-x64
-            os: macos-15-intel
-            tiles: false
-            sound: false
-            ext: dmg
-            content-type: application/x-apple-diskimage
-
-          - name: macOS Tiles x64
-            artifact: osx-tiles-x64
-            os: macos-15-intel
-            tiles: true
-            sound: true
-            ext: dmg
-            content-type: application/x-apple-diskimage
-
-          # macOS ARM
-          - name: macOS Curses ARM
-            artifact: osx-curses-arm
-            os: macos-15
-            tiles: false
-            sound: false
-            ext: dmg
-            content-type: application/x-apple-diskimage
-
-          - name: macOS Tiles ARM
-            artifact: osx-tiles-arm
-            os: macos-15
-            tiles: true
-            sound: true
-            ext: dmg
-            content-type: application/x-apple-diskimage
-
-          # Android
-          - name: Android ARM64
-            artifact: android-x64
-            os: ubuntu-latest
-            android: arm64
-            ext: apk
-            content-type: application/apk
-
-          - name: Android Bundle
-            artifact: android-bundle
-            os: ubuntu-latest
-            android: bundle
-            ext: aab
-            content-type: application/aap
+        include: ${{ fromJSON(inputs.matrix-json) }}
 
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout-ref }}
+
+      - name: Download generated shaders
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders
+          path: data/shaders
+
+      - name: Download translation artifacts
+        if: inputs.download-translations
+        uses: actions/download-artifact@v4
+        with:
+          name: translations
+          path: .
 
       - name: Create VERSION.TXT
         shell: bash
@@ -127,7 +160,56 @@ jobs:
           commit url: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
           EOL
 
+      - name: Bundle CDDA tilesets
+        if: matrix.tiles == true && inputs.bundle-tilesets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CDDA_TILESETS_REPO: I-am-Erk/CDDA-Tilesets
+          CDDA_TILESETS_RELEASE: "2026-05-03"
+          CDDA_TILESETS: UltimateCataclysm ChibiUltica
+        shell: bash
+        run: |
+          set -euo pipefail
+          download_dir="$RUNNER_TEMP/cdda-tilesets"
+          rm -rf "$download_dir"
+          mkdir -p "$download_dir"
+
+          for tileset in $CDDA_TILESETS; do
+            gh release download "$CDDA_TILESETS_RELEASE" \
+              --repo "$CDDA_TILESETS_REPO" \
+              --pattern "$tileset.zip" \
+              --dir "$download_dir" \
+              --clobber
+            rm -rf "gfx/$tileset"
+            unzip -q "$download_dir/$tileset.zip" -d gfx
+          done
+
+          cat >gfx/CDDA-Tilesets-2026-05-03-CREDITS.txt <<'EOF'
+          Bundled CDDA-Tilesets release assets
+          ====================================
+
+          Source repository: https://github.com/I-am-Erk/CDDA-Tilesets
+          Source release: https://github.com/I-am-Erk/CDDA-Tilesets/releases/tag/2026-05-03
+          Bundled assets: UltimateCataclysm.zip, ChibiUltica.zip
+
+          The CDDA-Tilesets repository states that Cataclysm: Dark Days Ahead and
+          the Ultimate Cataclysm tileset are volunteer contributions under the
+          Creative Commons Attribution-ShareAlike 3.0 Unported License:
+          http://creativecommons.org/licenses/by-sa/3.0/
+
+          Per the tileset metadata, further sprite credits are maintained in the
+          source repository under gfx/UltimateCataclysm and gfx.  ChibiUltica also
+          includes Dungeon Crawl: Stone Soup sprites under CC0; see its tileset.txt
+          for that notice.
+          EOF
+
       # Windows MSVC setup
+      - name: Setup MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Setup msys2 (windows msvc)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
@@ -136,19 +218,31 @@ jobs:
           install: gettext
 
       - name: Compile translations (windows msvc)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && inputs.download-translations
         shell: msys2 {0}
         run: lang/compile_mo.sh all
-
-      - name: Install MSBuild (windows msvc)
-        if: runner.os == 'Windows'
-        uses: microsoft/setup-msbuild@v2
-        with:
-          vs-version: 17.13
 
       - name: Install stable CMake
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@v3.31.6
+
+      - name: Export GitHub Actions cache environment variables
+        if: runner.os == 'Windows'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable("ACTIONS_CACHE_URL", process.env.ACTIONS_CACHE_URL || "")
+            core.exportVariable("ACTIONS_RESULTS_URL", process.env.ACTIONS_RESULTS_URL || "")
+            core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env.ACTIONS_RUNTIME_TOKEN || "")
+
+      - name: Configure vcpkg binary cache (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          $mode = "readwrite"
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            $mode = "read"
+          }
+          "VCPKG_BINARY_SOURCES=clear;x-gha,$mode" >> $env:GITHUB_ENV
 
       - name: Install vcpkg
         if: runner.os == 'Windows'
@@ -165,31 +259,61 @@ jobs:
         if: runner.os == 'Windows'
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: windows-${{ matrix.artifact }}-${{ github.ref_name }}
+          # Build mode changes MSVC compiler inputs.
+          key: windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
           restore-keys: |
-            windows-${{ matrix.artifact }}-${{ github.ref_name }}
-            windows-${{ matrix.artifact }}-main
-            windows-${{ matrix.artifact }}-
-          max-size: 500M
+            windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
+            windows-${{ matrix.artifact }}-${{ inputs.mode }}-main
+            windows-${{ matrix.artifact }}-${{ inputs.mode }}-
+          max-size: 3G
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
       - name: Configure ccache for MSVC
+        if: runner.os == 'Windows'
         run: |
           echo "CCACHE_BASEDIR=${{ github.workspace }}" >> $env:GITHUB_ENV
           echo "CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime,time_macros,pch_defines" >> $env:GITHUB_ENV
           echo "CCACHE_NOHASHDIR=1" >> $env:GITHUB_ENV
+          echo "CCACHE_COMPILERCHECK=content" >> $env:GITHUB_ENV
 
       # Linux setup
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
         run: |
           sudo apt-get update
-          sudo apt-get install gcc-14 libncursesw5-dev libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev \
-            libsdl2-mixer-dev libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-          g++ --version
+          sudo apt-get install libncursesw5-dev \
+            libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb \
+            autoconf autoconf-archive automake libtool libltdl-dev
+
+      - name: Setup LLVM build tools (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          setup-cpp: false
+
+      - name: Show Clang version (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+        run: clang++ --version
+
+      #- name: Install SDL3 (Linux)
+      #  if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+      #  run: |
+      #    sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+
+      - name: Install SDL3-devel Dependencies (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+        run: |
+          sudo apt-get install libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
+            libfreetype-dev libharfbuzz-dev \
+            libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev \
+            libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev
 
       - name: Setup ccache (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
@@ -205,22 +329,25 @@ jobs:
           save: ${{ github.event_name != 'pull_request' }}
 
       # macOS setup
-      - name: Install runtime dependencies (mac)
-        if: runner.os == 'macOS'
-        uses: BrettDong/setup-sdl2-frameworks@v1
-        with:
-          sdl2: 2.30.11
-          sdl2-ttf: 2.24.0
-          sdl2-image: 2.8.4
-          sdl2-mixer: 2.8.0
-
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel astyle sqlite3 zlib ncurses flac pkg-config dylibbundler
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix ncurses):$(brew --prefix flac)" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=$(brew --prefix flac)/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "$PWD/venv/bin" >> "$GITHUB_PATH"
+
+      - name: Setup C++ build tools (mac)
+        if: runner.os == 'macOS'
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: apple-clang
+          cmake: true
+          ninja: true
+          setup-cpp: false
 
       - name: Setup ccache (mac)
         if: runner.os == 'macOS'
@@ -235,74 +362,258 @@ jobs:
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
+      - name: Install shadercross (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && matrix.tiles == true
+        run: bash build-scripts/install-shadercross-vcpkg.sh
+
       # Build with CMake (Linux)
       - name: Configure and Build with CMake (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
+          configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
 
       - name: Setup Deno (Lua docs)
-        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
         uses: denoland/setup-deno@v2
         with: { cache: true }
 
-      - name: Generate Lua reference/annotations
-        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
+      - name: Setup EmmyLua checker
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
+        uses: scarf005/emmylua_check_action@v1.0.3
+        with:
+          version: ${{ env.EMMYLUA_CHECK_VERSION }}
+          token: ${{ github.token }}
+
+      - name: Generate Lua reference/annotations for typecheck
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
+        env:
+          CATA_EXE: ./cataclysm-bn-tiles
         run: |
           ln -sf build/src/cataclysm-bn-tiles ./cataclysm-bn-tiles
           deno task docs:gen
 
-      - name: Upload Lua reference/annotations artifact
+      - name: Run EmmyLua check
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
+        run: emmylua_check .
+
+      - name: Generate documentation artifacts
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
+        env:
+          CATA_EXE: ./cataclysm-bn-tiles
+        run: |
+          ln -sf build/src/cataclysm-bn-tiles ./cataclysm-bn-tiles
+          deno task docs:gen
+
+      - name: Upload documentation artifact
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
         uses: actions/upload-artifact@v4
         with:
           name: lua-docs
           if-no-files-found: error
           path: |
+            docs/en/dev/reference/cli_options.md
             docs/en/mod/lua/reference/lua.md
             lua_annotations.lua
 
-      - name: Summary of Lua docs artifact
+      - name: Summary of documentation artifact
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
         run: |
-          echo "## 📦 Lua Documentation Artifact Uploaded" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Documentation Artifact Uploaded" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
+          echo "- \`docs/en/dev/reference/cli_options.md\`: $(wc -l < docs/en/dev/reference/cli_options.md) lines" >> $GITHUB_STEP_SUMMARY
           echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
+          echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
 
       - name: Create distribution package (Linux)
-        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
+          mkdir -p lang/mo
           cmake --install build --prefix cataclysmbn-${{ inputs.version-label }}
           tar -czvf cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.tar.gz \
             cataclysmbn-${{ inputs.version-label }}
 
-      - name: Configure and Build CBN (windows msvc)
+      - name: Verify bundled SDL runtime (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          set -euo pipefail
+          dist="cataclysmbn-${{ inputs.version-label }}"
+          exe="$dist/cataclysm-bn"
+          if [ "${{ matrix.tiles }}" = "true" ]; then
+            exe="$dist/cataclysm-bn-tiles"
+          fi
+
+          test -x "$exe"
+          find "$dist/lib" -maxdepth 1 -name 'libSDL3*.so*' | grep .
+          if [ "${{ matrix.tiles }}" = "true" ]; then
+            find "$dist/lib" -maxdepth 1 -name 'libSDL3_image*.so*' | grep .
+            find "$dist/lib" -maxdepth 1 -name 'libSDL3_ttf*.so*' | grep .
+          fi
+          if [ "${{ matrix.sound }}" = "true" ]; then
+            find "$dist/lib" -maxdepth 1 -name 'libSDL3_mixer*.so*' | grep .
+          fi
+
+          ldd "$exe" | tee bundled-deps.txt
+          if grep -E 'SDL3.*not found' bundled-deps.txt; then
+            exit 1
+          fi
+          if ! grep -E "libSDL3.*$dist/lib" bundled-deps.txt; then
+            echo "SDL3 is not resolved from the bundled lib directory" >&2
+            exit 1
+          fi
+          "$exe" --version
+
+      - name: Configure CBN (windows msvc)
         if: runner.os == 'Windows'
-        uses: lukka/run-cmake@v10
         env:
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
-        with:
-          configurePreset: windows-tiles-sounds-x64-msvc
-          buildPreset: windows-msvc-build
-          configurePresetAdditionalArgs: "['-DRELEASE=ON']"
-          buildPresetAdditionalArgs: "['--config', 'Release']"
+        run: |
+          $buildType = "Release"
+          $localize = "False"
+          $tests = "False"
+          $release = "ON"
+          if ("${{ inputs.download-translations }}" -eq "true") {
+            $localize = "True"
+          }
+          if ("${{ inputs.mode }}" -eq "ci") {
+            $buildType = "RelWithDebInfo"
+            $release = "OFF"
+          }
+          if ("${{ inputs.run-tests }}" -eq "true") {
+            $tests = "True"
+          }
+          cmake -G Ninja `
+            -S "${{ github.workspace }}" `
+            -B "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" `
+            "-DCMAKE_BUILD_TYPE=$buildType" `
+            -DCMAKE_PROJECT_INCLUDE_BEFORE="${{ github.workspace }}/build-scripts/windows-tiles-sounds-x64-msvc.cmake" `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build-scripts/MSVC.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+            -DDYNAMIC_LINKING=False `
+            -DCURSES=False `
+            "-DLOCALIZE=$localize" `
+            -DTILES=True `
+            -DSOUND=True `
+            "-DTESTS=$tests" `
+            "-DRELEASE=$release" `
+            -DJSON_FORMAT=OFF `
+            -DCATA_FORMAT_TARGETS=OFF `
+            -DCMAKE_INSTALL_MESSAGE=NEVER
 
-      - name: Create distribution package (windows msvc)
+      - name: Build CBN (windows msvc)
         if: runner.os == 'Windows'
         run: |
-          cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix cataclysmbn-${{ inputs.version-label }} --config Release
-          Compress-Archive -Force -Path cataclysmbn-${{ inputs.version-label }}/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
+          $targets = @("cata_shaders", "cataclysm-bn-tiles")
+          if ("${{ inputs.run-tests }}" -eq "true") {
+            $targets += "cata_test-tiles"
+          }
+          cmake --build "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" `
+            --config Release `
+            --target $targets
 
-      # Build with Make (macOS) - TODO: migrate to CMake once dmgdist target is implemented
-      - name: Build CBN (osx)
-        if: runner.os == 'macOS'
+      - name: Verify Windows shader artifacts
+        if: runner.os == 'Windows'
         run: |
-          source ./venv/bin/activate
-          make -j3 CCACHE=1 TILES=${{ matrix.tiles && '1' || '0' }} SOUND=${{ matrix.sound && '1' || '0' }} RELEASE=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=0 PCH=0 USE_HOME_DIR=1 OSX_MIN=11 FRAMEWORK=1 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
-          mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
+          $shader = "${{ github.workspace }}/data/shaders/lm_pack_visibility_compute.dxbc"
+          if (-not (Test-Path $shader)) {
+            throw "Required DXBC shader was not generated: $shader"
+          }
+
+      - name: Verify ccache compatibility (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          $stats = ccache -s -vv 2>&1
+          $stats
+          $cacheable = [int64](($stats | Select-String 'Cacheable calls:\s+(\d+)').Matches[0].Groups[1].Value)
+          $unsupported = [int64](($stats | Select-String 'Unsupported compiler option:\s+(\d+)').Matches[0].Groups[1].Value)
+          if ($cacheable -le 100) {
+            throw "ccache did not see enough cacheable MSVC compile calls"
+          }
+          if ($unsupported -ge $cacheable) {
+            throw "ccache saw more unsupported MSVC compiler options than cacheable calls"
+          }
+
+      - name: Create distribution package (windows msvc)
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          $dist = "cataclysmbn-${{ inputs.version-label }}"
+          New-Item -ItemType Directory -Force lang/mo
+          cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
+
+          Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
+
+      - name: Verify statically linked SDL runtime (windows msvc)
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          $dist = "cataclysmbn-${{ inputs.version-label }}"
+          $exe = Join-Path $dist "cataclysm-bn-tiles.exe"
+          if (!(Test-Path $exe)) {
+            throw "Missing Windows release executable: $exe"
+          }
+          $deps = dumpbin /DEPENDENTS $exe
+          $deps
+          if ($deps -match "SDL3") {
+            throw "Windows release executable should use the static SDL build, but dumpbin found an SDL DLL dependency"
+          }
+          & $exe --version
+
+      - name: Locate PDB (windows msvc)
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" -Filter "*.pdb" -Recurse | Select-Object -ExpandProperty FullName
+
+      - name: Archive PDB (windows msvc)
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          $pdb = "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/src/cataclysm-bn-tiles.pdb"
+          $archive = "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
+          if (!(Test-Path $pdb)) {
+            throw "Missing Windows release PDB: $pdb"
+          }
+          Compress-Archive -Force -Path $pdb -DestinationPath $archive
+          if (!(Test-Path $archive)) {
+            throw "Missing Windows release PDB archive: $archive"
+          }
+
+      - name: Configure and Build with CMake (macOS)
+        if: runner.os == 'macOS'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ matrix.preset }}
+          configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
+          buildPreset: ${{ matrix.preset }}
+
+      - name: Rename distribution package (macOS)
+        if: runner.os == 'macOS' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
+
+      - name: Verify bundled SDL runtime (macOS)
+        if: runner.os == 'macOS' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          set -euo pipefail
+          resources="Cataclysm.app/Contents/Resources"
+          exe="$resources/cataclysm-bn"
+          if [ "${{ matrix.tiles }}" = "true" ]; then
+            exe="$resources/cataclysm-bn-tiles"
+          fi
+
+          test -x "$exe"
+          find "$resources/lib" -maxdepth 1 -name '*SDL3*.dylib' | grep .
+          if [ "${{ matrix.tiles }}" = "true" ]; then
+            find "$resources/lib" -maxdepth 1 -name '*SDL3_image*.dylib' | grep .
+            find "$resources/lib" -maxdepth 1 -name '*SDL3_ttf*.dylib' | grep .
+          fi
+          if [ "${{ matrix.sound }}" = "true" ]; then
+            find "$resources/lib" -maxdepth 1 -name '*SDL3_mixer*.dylib' | grep .
+          fi
+
+          otool -L "$exe" | tee bundled-deps.txt
+          if grep -E '/(opt/homebrew|usr/local)/.*SDL3' bundled-deps.txt; then
+            echo "SDL3 still resolves through Homebrew instead of the app bundle" >&2
+            exit 1
+          fi
+          "$exe" --version
 
       # Android builds
       - name: Set up JDK 11 (android)
@@ -311,12 +622,30 @@ jobs:
         with:
           java-version: "11"
           distribution: "adopt"
+          cache: gradle
+          cache-dependency-path: |
+            android/*.gradle.kts
+            android/**/*.gradle.kts
+            android/gradle.properties
+            android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Setup Build and Dependencies (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         run: |
           sudo apt-get update
-          sudo apt-get install gettext
+          sudo apt-get install -y gettext autoconf autoconf-archive automake libtool libltdl-dev
+
+      - name: Setup C++ build tools (android host)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        uses: aminya/setup-cpp@v1
+        with:
+          cmake: true
+          ninja: true
+          setup-cpp: false
+
+      - name: Install shadercross (android host)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        run: bash build-scripts/install-shadercross-vcpkg.sh
 
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
@@ -336,11 +665,39 @@ jobs:
         working-directory: ./android
         env:
           NDK_CCACHE: ccache
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_PROPERTIES: ${{ secrets.KEYSTORE_PROPERTIES }}
         run: |
-          echo "${{ secrets.KEYSTORE }}" > release.keystore.asc
-          gpg -d --passphrase "${{ secrets.KEYSTORE_PASSWORD }}" --batch release.keystore.asc > app/release.keystore
-          echo "${{ secrets.KEYSTORE_PROPERTIES }}" > keystore.properties.asc
-          gpg -d --passphrase "${{ secrets.KEYSTORE_PASSWORD }}" --batch keystore.properties.asc > keystore.properties
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            rm -f app/pr-debug.keystore keystore.properties
+            keytool -genkeypair \
+              -noprompt \
+              -keystore app/pr-debug.keystore \
+              -storetype JKS \
+              -storepass android \
+              -keypass android \
+              -alias cbn-pr-debug \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Cataclysm BN PR Debug,O=Cataclysm BN"
+            cat > keystore.properties <<'EOF'
+          storeFile=pr-debug.keystore
+          storePassword=android
+          keyAlias=cbn-pr-debug
+          keyPassword=android
+          EOF
+            echo "::notice::Signing PR Android artifact with the PR debug key"
+          elif [ -n "$KEYSTORE" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEYSTORE_PROPERTIES" ]; then
+            printf '%s' "$KEYSTORE" > release.keystore.asc
+            gpg -d --passphrase "$KEYSTORE_PASSWORD" --batch release.keystore.asc > app/release.keystore
+            printf '%s' "$KEYSTORE_PROPERTIES" > keystore.properties.asc
+            gpg -d --passphrase "$KEYSTORE_PASSWORD" --batch keystore.properties.asc > keystore.properties
+          else
+            echo "::warning::Android signing secrets are unavailable; building unsigned release artifacts"
+          fi
+          mkdir -p ../lang/mo
           chmod +x gradlew
 
           # Determine build variant based on version label
@@ -354,27 +711,156 @@ jobs:
             VERSION_ARG="-Poverride_version=${{ inputs.version-label }}"
           fi
 
+          gradle_retry() {
+            for attempt in 1 2 3; do
+              if ./gradlew "$@"; then
+                return 0
+              fi
+              if [ "$attempt" = 3 ]; then
+                return 1
+              fi
+              echo "::warning::Gradle attempt $attempt failed; retrying after 60 seconds"
+              sleep 60
+            done
+          }
+
           if [ ${{ matrix.android }} = arm64 ]
           then
-               ./gradlew -Pj=$(nproc) -Pabi_arm_32=false assemble${VARIANT}Release ${VERSION_ARG}
+               gradle_retry -Pj=$(nproc) -Pabi_arm_32=false -Plocalize=${{ inputs.android-localize }} assemble${VARIANT}Release ${VERSION_ARG}
                mv ./app/build/outputs/apk/${VARIANT_LOWER}/release/*.apk ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.apk
           elif [ ${{ matrix.android }} = bundle ]
           then
-               ./gradlew -Pj=$(nproc) bundle${VARIANT}Release ${VERSION_ARG}
+               gradle_retry -Pj=$(nproc) -Plocalize=${{ inputs.android-localize }} bundle${VARIANT}Release ${VERSION_ARG}
                mv ./app/build/outputs/bundle/${VARIANT_LOWER}Release/*.aab ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.aab
           fi
 
+      - name: Verify bundled SDL runtime (android)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        run: |
+          set -euo pipefail
+          artifact="cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}"
+          test -f "$artifact"
+          unzip -l "$artifact" | tee bundled-deps.txt
+          grep -E 'libSDL3\.so' bundled-deps.txt
+          grep -E 'libSDL3_image\.so' bundled-deps.txt
+          grep -E 'libSDL3_mixer\.so' bundled-deps.txt
+          grep -E 'libSDL3_ttf\.so' bundled-deps.txt
+
+      - name: Build test executable (desktop)
+        if: inputs.run-tests && (runner.os == 'Windows' || runner.os == 'macOS' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
+        shell: pwsh
+        run: |
+          $buildDir = if ($IsWindows) {
+            "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc"
+          } else {
+            "${{ github.workspace }}/build"
+          }
+          $target = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
+          cmake --build $buildDir --target $target --config Release
+
+      - name: Run tests (desktop)
+        if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $buildDir = if ($IsWindows) {
+            "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc"
+          } else {
+            "${{ github.workspace }}/build"
+          }
+          $exeName = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
+          if ($IsWindows) {
+            $exeName = "$exeName.exe"
+          }
+          $testBin = Join-Path $buildDir (Join-Path "tests" $exeName)
+          if (-not (Test-Path $testBin)) {
+            throw "Missing test executable: $testBin"
+          }
+
+          $testOpts = @(
+            "--min-duration", "20",
+            "--use-colour", "yes",
+            "--rng-seed", "time",
+            "--error-format=github-action"
+          )
+          if ($IsLinux) {
+            $testOpts += "--gpu-backend=software"
+          }
+          $filters = @("[slow] ~starting_items", "~[slow] ~[.],starting_items")
+          $jobs = @()
+          for ($i = 0; $i -lt $filters.Count; ++$i) {
+            $userDir = "test_user_dir_$($i + 1)"
+            $jobs += Start-Job -Name "cata-test-$($i + 1)" -ScriptBlock {
+              param($bin, $opts, $filter, $userDir)
+              & $bin @opts "--user-dir=$userDir" $filter
+              if ($LASTEXITCODE -ne 0) {
+                throw "Test shard '$filter' exited with code $LASTEXITCODE"
+              }
+            } -ArgumentList $testBin, $testOpts, $filters[$i], $userDir
+          }
+
+          while ($jobs | Where-Object { $_.State -eq "Running" }) {
+            Start-Sleep -Seconds 30
+            $running = ($jobs | Where-Object { $_.State -eq "Running" }).Name -join ", "
+            Write-Host "Still running: $running"
+          }
+
+          $failed = $false
+          foreach ($job in $jobs) {
+            Receive-Job $job -ErrorAction Continue
+            if ($job.State -ne "Completed") {
+              $failed = $true
+              Write-Host "$($job.Name) failed with state $($job.State)"
+            }
+          }
+          if ($failed) {
+            throw "One or more test shards failed"
+          }
+
       # Upload artifacts
+      - name: Upload packaged build artifact
+        if: inputs.upload-artifacts && matrix.upload-artifact == true
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
+          path: ${{ runner.os == 'Windows' && format('cataclysmbn-{0}/', inputs.version-label) || format('cbn-{0}-{1}.{2}', matrix.artifact, inputs.version-label, matrix.ext) }}
+          if-no-files-found: error
+
+      - name: Publish platform artifact link
+        if: github.event_name == 'pull_request' && inputs.upload-artifacts && matrix.upload-artifact == true
+        continue-on-error: true
+        uses: ./.github/actions/publish-pr-artifact-body
+        with:
+          repository: ${{ github.repository }}
+          pr-number: ${{ github.event.pull_request.number }}
+          run-id: ${{ github.run_id }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          token: ${{ github.token }}
+
       - name: Upload to release
         if: inputs.upload-to-release
         run: |
           if [ "${{ inputs.version-label }}" = "experimental" ]; then
             SHA_SHORT=$(git rev-parse --short HEAD)
-            TIMESTAMP=$(date "+%F %T")
+            COMMIT_SUBJECT=$(git log -1 --pretty=%s)
+            TIMESTAMP=$(date -u "+%F %T")
             gh release upload experimental --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
-            gh release edit experimental --title "Experimental @ $TIMESTAMP ($SHA_SHORT)" --notes "Experimental build for commit $SHA_SHORT on $TIMESTAMP"
+            gh release edit experimental --title "Experimental @ $TIMESTAMP ($SHA_SHORT)" --notes "Experimental build for commit $SHA_SHORT ($COMMIT_SUBJECT) on $TIMESTAMP"
           else
             gh release upload ${{ inputs.release-tag }} --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+
+      - name: Upload PDB to release (windows msvc)
+        if: runner.os == 'Windows' && inputs.upload-to-release
+        run: |
+          if [ "${{ inputs.version-label }}" = "experimental" ]; then
+            gh release upload experimental --clobber "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
+          else
+            gh release upload ${{ inputs.release-tag }} --clobber "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,426 @@
+[
+  {
+    "type": "ter_furn_transform",
+    "id": "arcana_plants",
+    "fail_message": "Life fails to take hold in this place.",
+    "terrain": [
+      {
+        "result": [
+          [ "t_tree", 50 ],
+          [ "t_tree_pine", 15 ],
+          [ "t_tree_blackjack", 10 ],
+          [ "t_tree_willow", 10 ],
+          [ "t_tree_birch", 10 ],
+          [ "t_tree_cherry", 5 ]
+        ],
+        "valid_flags": [ "YOUNG" ],
+        "message": "Saplings bloom vibrantly."
+      },
+      {
+        "result": [
+          [ "t_grass", 50 ],
+          [ "t_grass_long", 20 ],
+          [ "t_grass_tall", 5 ],
+          [ "t_shrub", 10 ],
+          [ "t_underbrush", 5 ],
+          [ "t_shrub_rose", 5 ],
+          [ "t_tree_young", 5 ]
+        ],
+        "valid_flags": [ "PLOWABLE" ],
+        "message": "Plant life grows wild over the ground."
+      },
+      {
+        "result": [ [ "t_grass", 3 ], [ "t_grass_long", 1 ] ],
+        "valid_flags": [ "ROAD" ],
+        "message": "The ground shifts and crumbles, grass growing from the cracks."
+      }
+    ],
+    "furniture": [ { "result": "f_null", "valid_flags": [ "MOUNTABLE", "BLOCK_WIND", "ORGANIC", "FUNGUS" ] } ]
+  },
+  {
+    "type": "ter_furn_transform",
+    "id": "arcana_earthweaving",
+    "terrain": [
+      { "result": "t_root_wall", "valid_flags": [ "DIGGABLE" ] },
+      { "result": "t_dirt", "valid_flags": [ "WALL" ] },
+      { "result": "t_rock_floor_no_roof", "valid_flags": [ "MINEABLE" ] },
+      { "result": "t_rock", "valid_flags": [ "FLAT" ] }
+    ],
+    "furniture": [ { "result": "f_null", "valid_flags": [ "MOUNTABLE", "BLOCK_WIND", "ORGANIC", "BLOCKSDOOR", "NOITEM", "MINEABLE" ] } ]
+  },
+  {
+    "type": "ter_furn_transform",
+    "id": "arcana_pestilence",
+    "terrain": [
+      {
+        "result": [ [ "t_dirt", 75 ], [ "t_dirtmound", 25 ] ],
+        "valid_terrain": [ "t_moss", "t_grass", "t_grass_long", "t_grass_tall", "t_grass_white", "t_grass_golf", "t_grass_dead" ]
+      },
+      { "result": [ [ "t_dirt", 75 ], [ "t_dirtmound", 25 ] ], "valid_flags": [ "SHRUB" ] },
+      { "result": [ [ "t_dirt", 75 ], [ "t_dirtmound", 25 ] ], "valid_flags": [ "TREE" ] }
+    ]
+  },
+  {
+    "type": "ter_furn_transform",
+    "id": "arcana_fire_dragonblood3",
+    "fail_message": "Nothing remains to be marked by flame.",
+    "terrain": [
+      {
+        "result": "t_grass_dead",
+        "valid_terrain": [ "t_moss", "t_grass", "t_grass_long", "t_grass_tall", "t_grass_white", "t_grass_golf" ]
+      },
+      { "result": "t_dirt", "valid_flags": [ "SHRUB" ] },
+      { "result": "t_dirt", "valid_flags": [ "TREE" ] },
+      {
+        "result": "t_dirt",
+        "//": "Reliable fungus killer, but you're not getting your terrain back.",
+        "valid_flags": [ "FUNGUS" ],
+        "message": "The fungal corruption erupts into a shower of blue embers!"
+      }
+    ],
+    "furniture": [
+      { "result": "f_null", "valid_furniture": [ "f_datura", "f_cattails", "f_lily", "f_lotus" ] },
+      { "result": "f_null", "valid_flags": [ "FLOWER", "PLANT" ] },
+      {
+        "result": "f_egg_sacke",
+        "valid_furniture": [ "f_egg_sackbw", "f_egg_sackcs", "f_egg_sackws" ],
+        "message": "The egg sacks swell and burst from the unearthly heat!"
+      },
+      {
+        "result": "f_null",
+        "valid_flags": [ "FUNGUS" ],
+        "message": "The fungal corruption erupts into a shower of blue embers!"
+      },
+      {
+        "result": "f_null",
+        "//": "Partial effect on mi-go terraforming, only the more recognizably alive projections are vulnerable.",
+        "valid_furniture": [
+          "f_alien_tendril",
+          "f_alien_anemone",
+          "f_alien_gasper",
+          "f_alien_zapper",
+          "f_alien_zapper_altered",
+          "f_alien_scar",
+          "f_alien_scar_small",
+          "f_alien_table",
+          "f_alien_nerve",
+          "f_glowingbulb",
+          "f_brambles",
+          "f_midden"
+        ],
+        "message": "The unnatural outgrowths are cauterized bare, in a spray of green sparks!"
+      }
+    ]
+  },
+  {
+    "type": "ter_furn_transform",
+    "id": "arcana_open_lock",
+    "fail_message": "You fail to find any obstacles to clear.",
+    "terrain": [
+      {
+        "result": "t_door_o",
+        "valid_terrain": [ "t_door_locked_interior", "t_door_locked", "t_door_locked_alarm" ],
+        "message": "The door swings open silently."
+      },
+      {
+        "result": "t_door_o_peep",
+        "valid_terrain": [ "t_door_locked_peep", "t_door_boarded_peep" ],
+        "message": "The door swings open silently."
+      },
+      {
+        "result": "t_door_c",
+        "valid_terrain": [ "t_door_boarded" ],
+        "message": "The boards keeping the door sealed decay and crumble away."
+      },
+      {
+        "result": "t_rdoor_c",
+        "valid_terrain": [ "t_rdoor_boarded" ],
+        "message": "The boards keeping the door sealed decay and crumble away."
+      },
+      {
+        "result": "t_door_b",
+        "valid_terrain": [ "t_door_boarded_damaged" ],
+        "message": "The boards keeping the door sealed decay and crumble away."
+      },
+      {
+        "result": "t_door_c_peep",
+        "valid_terrain": [ "t_door_boarded_peep" ],
+        "message": "The boards keeping the door sealed decay and crumble away."
+      },
+      {
+        "result": "t_rdoor_boarded_damaged",
+        "valid_terrain": [ "t_rdoor_b" ],
+        "message": "The boards keeping the door sealed decay and crumble away."
+      },
+      {
+        "result": "t_door_boarded_damaged_peep",
+        "valid_terrain": [ "t_door_b_peep" ],
+        "message": "The boards keeping the door sealed decay and crumble away."
+      },
+      {
+        "result": "t_secretdoor_metal_o",
+        "valid_terrain": [ "t_secretdoor_metal_c" ],
+        "message": "A secret passage is revealed in the wall."
+      },
+      {
+        "result": "t_rock_floor_no_roof",
+        "valid_terrain": [ "t_portcullis" ],
+        "message": "The steel barrier crumbles into nothingness."
+      },
+      {
+        "result": "t_door_metal_o",
+        "valid_terrain": [ "t_door_metal_locked", "t_door_metal_pickable" ],
+        "message": "The door swings open silently."
+      },
+      { "result": "t_door_bar_o", "valid_terrain": [ "t_door_bar_locked" ], "message": "The bars swing open." },
+      {
+        "result": "t_palisade_gate_o",
+        "valid_terrain": [ "t_palisade_gate" ],
+        "message": "The gate moves of its own accord, opening the way forward."
+      },
+      { "result": "t_chaingate_o", "valid_terrain": [ "t_chaingate_l" ], "message": "The gate swings open silently." },
+      {
+        "result": "t_window_open",
+        "valid_terrain": [ "t_curtains", "t_window_domestic", "t_window_domestic_taped" ],
+        "message": "The window is forced open."
+      },
+      {
+        "result": "t_window_open",
+        "valid_terrain": [ "t_window_bars_curtains", "t_window_bars_domestic" ],
+        "message": "The window's reinforcements rust away, the window is silently forced open."
+      },
+      {
+        "result": "t_window_no_curtains_open",
+        "valid_terrain": [ "t_window_no_curtains", "t_window_no_curtains_taped" ],
+        "message": "The window is forced open."
+      },
+      {
+        "result": "t_window_empty",
+        "valid_terrain": [
+          "t_window_boarded",
+          "t_window_boarded_noglass",
+          "t_window_boarded_noglass",
+          "t_window_reinforced",
+          "t_window_reinforced_noglass",
+          "t_window_enhanced",
+          "t_window_enhanced_noglass",
+          "t_window_bars",
+          "t_window_bars_alarm"
+        ],
+        "message": "The obstructions across the window decay and crumble away, the glass disintegrating soon afterward."
+      },
+      {
+        "result": "t_manhole",
+        "valid_terrain": [ "t_manhole_cover" ],
+        "message": "The manhole cover rusts and decays away, falling into the hole."
+      },
+      {
+        "result": "t_floor_resin",
+        "valid_terrain": [ "t_wall_resin_cage" ],
+        "message": "The resin cage crumbles away."
+      },
+      { "result": "t_dirt", "valid_flags": [ "LOCKED" ], "message": "The obstacle crumbles to dust." }
+    ],
+    "furniture": [
+      {
+        "result": "f_displaycase_o",
+        "valid_furniture": [ "f_displaycase" ],
+        "message": "The display case's lock evaporates."
+      },
+      {
+        "result": "f_coffin_o",
+        "valid_furniture": [ "f_coffin_c" ],
+        "message": "Nails and wood decay until the crate is left unsealed."
+      },
+      {
+        "result": "f_crate_o",
+        "valid_furniture": [ "f_crate_c" ],
+        "message": "Nails and wood decay until the coffin is left unsealed."
+      },
+      {
+        "result": "f_safe_o",
+        "valid_furniture": [ "f_gunsafe_ml", "f_gunsafe_mj", "f_gun_safe_el", "f_safe_l" ],
+        "message": "Mechanisms rust away until the safe silently swings open."
+      },
+      {
+        "result": "f_vending_o",
+        "valid_furniture": [ "f_vending_reinforced", "f_vending_c" ],
+        "message": "The vending machine's facade erodes and decays to reveal its contents."
+      },
+      { "result": "f_null", "valid_flags": [ "RUBBLE" ], "message": "Rubble wavers and evaporates to clear a path." },
+      { "result": "f_null", "valid_flags": [ "LOCKED" ], "message": "The obstacle crumbles to dust." }
+    ]
+  },
+  {
+    "type": "ter_furn_transform",
+    "id": "arcana_barrier",
+    "fail_message": "The barrier flickers out of existence.",
+    "furniture": [ { "result": "f_force_barrier", "valid_furniture": [ "f_null" ] } ]
+  },
+  {
+    "type": "ter_furn_transform",
+    "id": "arcana_consecrate",
+    "fail_message": "Reality fails to impose itself on this place.",
+    "terrain": [
+      { "result": "t_slope_down", "valid_terrain": [ "t_triffid_slope_down" ] },
+      { "result": "t_slope_up", "valid_terrain": [ "t_triffid_slope_up" ] },
+      {
+        "result": "t_rock_smooth",
+        "valid_terrain": [
+          "t_wall_resin",
+          "t_fault",
+          "t_pedestal_wyrm",
+          "t_pedestal_temple",
+          "t_paper",
+          "t_root_wall",
+          "t_wax",
+          "t_triffid_bark_wall",
+          "t_bark_wall_chipped",
+          "t_bark_wall_broken",
+          "t_triffid_wood_wall"
+        ]
+      },
+      {
+        "result": "t_rock_floor_no_roof",
+        "valid_terrain": [
+          "t_floor_resin",
+          "t_platform_resin",
+          "t_resin_roof",
+          "t_resin_hole_c",
+          "t_resin_hole_o",
+          "t_resin_hole",
+          "t_wall_resin_cage",
+          "t_floor_red",
+          "t_floor_green",
+          "t_floor_blue",
+          "t_rock_red",
+          "t_rock_green",
+          "t_rock_blue",
+          "t_switch_rg",
+          "t_switch_gb",
+          "t_switch_rb",
+          "t_switch_even",
+          "t_lava",
+          "t_vat",
+          "t_slime",
+          "t_barkfloor",
+          "t_triffid_leaves",
+          "t_root_floor",
+          "t_bramble_door_c",
+          "t_bramble_door_o"
+        ]
+      },
+      { "result": "t_rock_floor_no_roof", "valid_flags": [ "FUNGUS" ] }
+    ],
+    "furniture": [
+      { "result": "f_null", "valid_flags": [ "FUNGUS" ] },
+      {
+        "result": "f_null",
+        "valid_furniture": [
+          "f_alien_tendril",
+          "f_alien_anemone",
+          "f_alien_gasper",
+          "f_alien_zapper",
+          "f_alien_zapper_altered",
+          "f_alien_scar",
+          "f_alien_scar_small",
+          "f_alien_pod",
+          "f_alien_pod_organ",
+          "f_alien_pod_resin",
+          "f_alien_table",
+          "f_alien_nerve",
+          "f_glowingbulb",
+          "f_brambles",
+          "f_midden",
+          "f_mutpoppy",
+          "f_egg_sackbw",
+          "f_egg_sackcs",
+          "f_egg_sackws",
+          "f_egg_sacke",
+          "f_cloning_vat"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "ter_furn_transform",
+    "id": "arcana_sundering_quake",
+    "fail_message": "The earth remains still.",
+    "terrain": [
+      {
+        "result": [
+          [ "t_dirt", 15 ],
+          [ "t_rock_floor_no_roof", 10 ],
+          [ "t_pit_shallow", 15 ],
+          [ "t_dirtmound", 10 ],
+          [ "t_railroad_rubble", 10 ],
+          [ "t_clay", 10 ],
+          [ "t_sand", 5 ],
+          [ "t_drystone_wall_half", 15 ],
+          [ "t_drystone_wall", 10 ]
+        ],
+        "valid_flags": [ "DIGGABLE", "FLAT" ],
+        "message": "The ground shifts."
+      }
+    ],
+    "furniture": [ { "result": "f_null", "valid_flags": [ "MOUNTABLE", "BLOCK_WIND" ] } ]
+  },
+  {
+    "type": "ter_furn_transform",
+    "id": "arcana_plant_renewal",
+    "terrain": [
+      { "result": [ [ "t_grass", 90 ], [ "t_moss", 10 ] ], "valid_terrain": [ "t_grass_dead" ] },
+      {
+        "result": "t_underbrush",
+        "valid_terrain": [
+          "t_underbrush_harvested_spring",
+          "t_underbrush_harvested_summer",
+          "t_underbrush_harvested_autumn",
+          "t_underbrush_harvested_winter"
+        ]
+      },
+      { "result": "t_shrub_peanut", "valid_terrain": [ "t_shrub_peanut_harvested" ] },
+      { "result": "t_shrub_blueberry", "valid_terrain": [ "t_shrub_blueberry_harvested" ] },
+      { "result": "t_shrub_strawberry", "valid_terrain": [ "t_shrub_strawberry_harvested" ] },
+      { "result": "t_shrub_blackberry", "valid_terrain": [ "t_shrub_blackberry_harvested" ] },
+      { "result": "t_shrub_huckleberry", "valid_terrain": [ "t_shrub_huckleberry_harvested" ] },
+      { "result": "t_shrub_raspberry", "valid_terrain": [ "t_shrub_raspberry_harvested" ] },
+      { "result": "t_shrub_grape", "valid_terrain": [ "t_shrub_grape_harvested" ] },
+      { "result": "t_shrub_rose", "valid_terrain": [ "t_shrub_rose_harvested" ] },
+      { "result": "t_fern", "valid_terrain": [ "t_fern_harvested" ] },
+      {
+        "result": [
+          [ "t_tree", 25 ],
+          [ "t_tree_blackjack", 20 ],
+          [ "t_tree_willow", 20 ],
+          [ "t_tree_birch", 25 ],
+          [ "t_tree_cherry", 10 ]
+        ],
+        "valid_terrain": [ "t_tree_dead", "t_stump" ]
+      },
+      { "result": "t_tree", "valid_terrain": [ "t_tree_harvested" ] },
+      { "result": "t_tree_pine", "valid_terrain": [ "t_tree_pine_harvested", "t_tree_deadpine" ] },
+      { "result": "t_tree_blackjack", "valid_terrain": [ "t_tree_blackjack_harvested" ] },
+      { "result": "t_tree_birch", "valid_terrain": [ "t_tree_birch_harvested" ] },
+      { "result": "t_tree_willow", "valid_terrain": [ "t_tree_willow_harvested", "" ] },
+      { "result": "t_tree_apple", "valid_terrain": [ "t_tree_apple_harvested" ] },
+      { "result": "t_tree_pear", "valid_terrain": [ "t_tree_pear_harvested" ] },
+      { "result": "t_tree_cherry", "valid_terrain": [ "t_tree_cherry_harvested" ] },
+      { "result": "t_tree_juniper", "valid_terrain": [ "t_tree_juniper_harvested" ] },
+      { "result": "t_tree_peach", "valid_terrain": [ "t_tree_peach_harvested" ] },
+      { "result": "t_tree_apricot", "valid_terrain": [ "t_tree_apricot_harvested" ] },
+      { "result": "t_tree_plum", "valid_terrain": [ "t_tree_plum_harvested" ] },
+      { "result": "t_tree_mulberry", "valid_terrain": [ "t_tree_mulberry_harvested" ] },
+      { "result": "t_tree_elderberry", "valid_terrain": [ "t_tree_elderberry_harvested" ] },
+      { "result": "t_tree_hickory", "valid_terrain": [ "t_tree_hickory_harvested", "t_tree_hickory_dead" ] },
+      { "result": "t_tree_walnut", "valid_terrain": [ "t_tree_hickory_harvested" ] },
+      { "result": "t_tree_chestnut", "valid_terrain": [ "t_tree_chestnut_harvested" ] },
+      { "result": "t_tree_beech", "valid_terrain": [ "t_tree_beech_harvested" ] },
+      { "result": "t_tree_hazelnut", "valid_terrain": [ "t_tree_hazelnut_harvested" ] },
+      { "result": "t_tree_coffee", "valid_terrain": [ "t_tree_coffee_harvested" ] },
+      { "result": "t_tree_pistachio", "valid_terrain": [ "t_tree_pistachio_harvested" ] },
+      { "result": "t_tree_almond", "valid_terrain": [ "t_tree_almond_harvested" ] },
+      { "result": "t_tree_pecan", "valid_terrain": [ "t_tree_pecan_harvested" ] }
+    ]
+  }
+]

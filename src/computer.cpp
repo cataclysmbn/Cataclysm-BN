@@ -337,6 +337,7 @@ std::string enum_to_string<computer_action>( const computer_action act )
         case COMPACT_TOWER_UNRESPONSIVE: return "tower_unresponsive";
         case COMPACT_UNLOCK: return "unlock";
         case COMPACT_UNLOCK_DISARM: return "unlock_disarm";
+        case COMPACT_UNLOCK_LABPASS: return "unlock_labpass";
         // *INDENT-OFF*
         case NUM_COMPUTER_ACTIONS:
             break;

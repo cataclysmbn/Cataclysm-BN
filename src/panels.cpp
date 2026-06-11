@@ -423,11 +423,11 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
             const tripoint_abs_omt omp( curs + point( i, j ), g->get_levz() );
             nc_color ter_color;
             std::string ter_sym;
-            const bool seen = overmap_buffer.seen( omp );
-            const bool vehicle_here = overmap_buffer.has_vehicle( omp );
-            if( overmap_buffer.has_note( omp ) ) {
+            const bool seen = ACTIVE_OVERMAP_BUFFER.seen( omp );
+            const bool vehicle_here = ACTIVE_OVERMAP_BUFFER.has_vehicle( omp );
+            if( ACTIVE_OVERMAP_BUFFER.has_note( omp ) ) {
 
-                const std::string &note_text = overmap_buffer.note( omp );
+                const std::string &note_text = ACTIVE_OVERMAP_BUFFER.note( omp );
 
                 const auto note_info = overmap_ui::get_note_display_info( note_text );
                 ter_color = std::get<1>( note_info );
@@ -439,9 +439,9 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                 ter_color = c_cyan;
                 ter_sym = "c";
             } else {
-                const oter_id &cur_ter = overmap_buffer.ter( omp );
+                const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( omp );
                 ter_sym = cur_ter->get_symbol();
-                if( overmap_buffer.is_explored( omp ) ) {
+                if( ACTIVE_OVERMAP_BUFFER.is_explored( omp ) ) {
                     ter_color = c_dark_gray;
                 } else {
                     ter_color = cur_ter->get_color();
@@ -486,9 +486,9 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                 arrowy = clamp( arrowy, 0, 6 );
             }
             char glyph = '*';
-            if( targ.z() > you.posz() ) {
+            if( targ.z() > you.bub_pos().z() ) {
                 glyph = '^';
-            } else if( targ.z() < you.posz() ) {
+            } else if( targ.z() < you.bub_pos().z() ) {
                 glyph = 'v';
             }
 
@@ -496,16 +496,16 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
         }
     }
     const int sight_points = player_character.overmap_sight_range( g->light_level(
-                                 player_character.posz() ) );
+                                 player_character.bub_pos().z() ) );
     for( int i = -3; i <= 3; i++ ) {
         for( int j = -3; j <= 3; j++ ) {
             if( i > -3 && i < 3 && j > -3 && j < 3 ) {
                 continue; // only do hordes on the border, skip inner map
             }
             const tripoint_abs_omt omp( curs + point( i, j ), g->get_levz() );
-            int horde_size = overmap_buffer.get_horde_size( omp );
+            int horde_size = ACTIVE_OVERMAP_BUFFER.get_horde_size( omp );
             if( horde_size >= HORDE_VISIBILITY_SIZE ) {
-                if( overmap_buffer.seen( omp )
+                if( ACTIVE_OVERMAP_BUFFER.seen( omp )
                     && player_character.overmap_los( omp, sight_points ) ) {
                     mvwputch( w_minimap, point( i + 3, j + 3 ), c_green,
                               horde_size > HORDE_VISIBILITY_SIZE * 2 ? 'Z' : 'z' );
@@ -518,7 +518,7 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
 
 static void draw_minimap( const avatar &u, const catacurses::window &w_minimap )
 {
-    const tripoint_abs_omt curs = u.global_omt_location();
+    const tripoint_abs_omt curs = u.abs_omt_pos();
     overmap_ui::draw_overmap_chunk( w_minimap, u, curs, point( -1, -1 ), 7, 7 );
 }
 
@@ -544,7 +544,7 @@ static std::string get_temp( const avatar &u )
     std::string temp;
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
-        temp = print_temperature( get_weather().get_temperature( u.pos() ) );
+        temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
     }
     if( temp.empty() ) {
         return "-";
@@ -1398,7 +1398,7 @@ static void draw_char_narrow( avatar &u, const catacurses::window &w )
     std::string movecost = std::to_string( u.movecounter ) + "(" + move_char + ")";
     bool m_style = get_option<std::string>( "MORALE_STYLE" ) == "horizontal";
     std::string smiley = morale_emotion( morale_pair.second, get_face_type( u ), m_style );
-    mvwprintz( w, point( 8, 0 ), c_light_gray, "%s", u.volume );
+    mvwprintz( w, point( 8, 0 ), c_light_gray, std::to_string( u.volume ) );
 
     // print stamina
     auto needs_pair = std::make_pair( get_hp_bar( u.get_stamina(), u.get_stamina_max() ).second,
@@ -1443,7 +1443,7 @@ static void draw_char_wide( avatar &u, const catacurses::window &w )
     bool m_style = get_option<std::string>( "MORALE_STYLE" ) == "horizontal";
     std::string smiley = morale_emotion( morale_pair.second, get_face_type( u ), m_style );
 
-    mvwprintz( w, point( 8, 0 ), c_light_gray, "%s", u.volume );
+    mvwprintz( w, point( 8, 0 ), c_light_gray, std::to_string( u.volume ) );
     mvwprintz( w, point( 23, 0 ), morale_pair.first, "%s", smiley );
     mvwprintz( w, point( 38, 0 ), focus_color( u.focus_pool ), "%s", u.focus_pool );
 
@@ -1523,8 +1523,8 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
 {
     werase( w );
     // display location
-    const oter_id &cur_ter = overmap_buffer.ter( u.global_omt_location() );
-    tripoint_abs_omt coord = u.global_omt_location();
+    const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
+    tripoint_abs_omt coord = u.abs_omt_pos();
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Place: " ) );
     wprintz( w, c_white, utf8_truncate( cur_ter->get_name(), getmaxx( w ) - 13 ) );
@@ -1536,7 +1536,7 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
         std::tie( abs_coord, rel_coord ) = project_remain<coords::om>( coord );
         wprintz( w, c_white, string_format( "%d'%d, %d'%d, %d", abs_coord.x(), rel_coord.x(), abs_coord.y(),
                                             rel_coord.y(),
-                                            u.global_omt_location().z() ) );
+                                            u.abs_omt_pos().z() ) );
     } else {
         wprintz( w, c_white, string_format( "%d, %d, %d", coord.x(), coord.y(), coord.z() ) );
     }
@@ -1573,7 +1573,7 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
     }
     if( minimap ) {
         const int offset = getmaxx( w ) - 6;
-        const tripoint_abs_omt curs = u.global_omt_location();
+        const tripoint_abs_omt curs = u.abs_omt_pos();
         overmap_ui::draw_overmap_chunk( w, u, curs, point( offset, -1 ), 5, 5 );
     }
     wnoutrefresh( w );
@@ -1738,8 +1738,8 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
     // style
     mvwprintz( w, point( 8, 1 ), c_light_gray, "%s", u.martial_arts_data->selected_style_name( u ) );
     // location
-    mvwprintz( w, point( 8, 2 ), c_white, utf8_truncate( overmap_buffer.ter(
-                   u.global_omt_location() )->get_name(), getmaxx( w ) - 8 ) );
+    mvwprintz( w, point( 8, 2 ), c_white, utf8_truncate( ACTIVE_OVERMAP_BUFFER.ter(
+                   u.abs_omt_pos() )->get_name(), getmaxx( w ) - 8 ) );
     // weather
     const weather_manager &weather = get_weather();
     if( g->get_levz() < 0 ) {
@@ -1753,15 +1753,15 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
                 character_funcs::fine_detail_vision_mod( get_avatar() ) );
     mvwprintz( w, point( 8, 4 ), ll.second, ll.first );
     // wind
-    const oter_id &cur_om_ter = overmap_buffer.ter( u.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
-                                            u.pos(), weather.winddirection, g->is_sheltered( u.pos() ) );
+                                            u.abs_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
     mvwprintz( w, point( 8, 5 ), get_wind_color( windpower ),
                get_wind_desc( windpower ) + " " + get_wind_arrow( weather.winddirection ) );
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
-        std::string temp = print_temperature( weather.get_temperature( u.pos() ) );
+        std::string temp = print_temperature( weather.get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31 - utf8_width( temp ), 5 ), c_light_gray, temp );
     }
 
@@ -1774,10 +1774,10 @@ static void render_wind( avatar &u, const catacurses::window &w, const std::stri
     mvwprintz( w, point_zero, c_light_gray,
                //~ translation should not exceed 5 console cells
                string_format( formatstr, left_justify( _( "Wind" ), 5 ) ) );
-    const oter_id &cur_om_ter = overmap_buffer.ter( u.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
     const weather_manager &weather = get_weather();
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
-                                            u.pos(), weather.winddirection, g->is_sheltered( u.pos() ) );
+                                            u.abs_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
     mvwprintz( w, point( 8, 0 ), get_wind_color( windpower ),
                get_wind_desc( windpower ) + " " + get_wind_arrow( weather.winddirection ) );
     wnoutrefresh( w );
@@ -2005,78 +2005,27 @@ static void draw_compass( avatar &, const catacurses::window &w )
     wnoutrefresh( w );
 }
 
-// Forward declarations
-std::string direction_to_enemy_improved( const tripoint &enemy_pos, const tripoint &player_pos );
-void check( const char *msg, std::function < auto( const tripoint &,
-            const tripoint & ) -> std::string > fn );
-
-// Improved direction function
-std::string direction_to_enemy_improved( const tripoint &enemy_pos, const tripoint &player_pos )
-{
-    // Constants based on cos(22.5°) / sin(22.5°) approximation
-    constexpr int x0 = 80782;
-    constexpr int y0 = 33461;
-
-    struct wedge_range {
-        const char *direction;
-        int x0, y0;
-        int x1, y1;
-    };
-
-    constexpr std::array<wedge_range, 8> wedges = {{
-            { "N",  -y0, -x0,   y0, -x0 },
-            { "NE",  y0, -x0,   x0, -y0 },
-            { "E",   x0, -y0,   x0,  y0 },
-            { "SE",  x0,  y0,   y0,  x0 },
-            { "S",   y0,  x0,  -y0,  x0 },
-            { "SW", -y0,  x0,  -x0,  y0 },
-            { "W",  -x0,  y0,  -x0, -y0 },
-            { "NW", -x0, -y0, -y0, -x0 }
-        }
-    };
-
-    auto between = []( int cx, int cy, const wedge_range & wr ) {
-        auto side_of_sign = []( int ax, int ay, int bx, int by ) {
-            int dot = ax * by - ay * bx;
-            return ( dot > 0 ) - ( dot < 0 );
-        };
-
-        int dot_ab = side_of_sign( wr.x0, wr.y0, wr.x1, wr.y1 );
-        int dot_ac = side_of_sign( wr.x0, wr.y0, cx, cy );
-        int dot_cb = side_of_sign( cx, cy, wr.x1, wr.y1 );
-
-        return ( dot_ab == dot_ac ) && ( dot_ab == dot_cb );
-    };
-
-    const int dx = enemy_pos.x - player_pos.x;
-    const int dy = enemy_pos.y - player_pos.y;
-
-    for( const auto &wr : wedges ) {
-        if( between( dx, dy, wr ) ) {
-            return wr.direction;
-        }
-    }
-    return "--";
-}
-
 
 static void draw_simple_compass( avatar &u, const catacurses::window &w )
 {
     werase( w );
 
-    const auto &visible_creatures = u.get_visible_creatures( 200 );
-    std::map<std::string, int> direction_count;
-    const tripoint player_pos = u.pos();
-
-    for( const auto &creature : visible_creatures ) {
-        const tripoint enemy_pos = creature->pos();
-        std::string direction = direction_to_enemy_improved( enemy_pos, player_pos );
-        direction_count[direction]++;
-    }
+    // Use the cached per-direction counts from mon_info_update() rather than
+    // rebuilding a creature vector every frame.  Indices: 0=N 1=NE 2=E 3=SE
+    // 4=S 5=SW 6=W 7=NW 8=local; matches direction_from() octant ordering.
+    static constexpr std::array<const char *, 9> dir_labels = {
+        "N", "NE", "E", "SE", "S", "SW", "W", "NW", "--"
+    };
+    const auto &counts = u.get_mon_visible().visible_count_by_dir;
 
     std::string enemies_text;
-    for( const auto &entry : direction_count ) {
-        enemies_text += entry.first + "(" + std::to_string( entry.second ) + ") ";
+    for( int i = 0; i < 9; ++i ) {
+        if( counts[i] > 0 ) {
+            enemies_text += dir_labels[i];
+            enemies_text += '(';
+            enemies_text += std::to_string( counts[i] );
+            enemies_text += ") ";
+        }
     }
 
     mvwprintz( w, point( 0, 0 ), c_white, enemies_text );
@@ -2099,7 +2048,7 @@ static void draw_veh_compact( const avatar &u, const catacurses::window &w )
     // vehicle display
     vehicle *veh = g->remoteveh();
     if( veh == nullptr && u.in_vehicle ) {
-        veh = veh_pointer_or_null( get_map().veh_at( u.pos() ) );
+        veh = veh_pointer_or_null( get_map().veh_at( u.bub_pos() ) );
     }
     if( veh ) {
         mvwprintz( w, point( 0, 1 ), c_light_gray, "fuel: " );
@@ -2142,7 +2091,7 @@ static void draw_veh_padding( const avatar &u, const catacurses::window &w )
     // vehicle display
     vehicle *veh = g->remoteveh();
     if( veh == nullptr && u.in_vehicle ) {
-        veh = veh_pointer_or_null( get_map().veh_at( u.pos() ) );
+        veh = veh_pointer_or_null( get_map().veh_at( u.bub_pos() ) );
     }
     if( veh ) {
         mvwprintz( w, point( 1, 1 ), c_light_gray, "fuel: " );
@@ -2185,7 +2134,7 @@ static void draw_veh_classic( const avatar &u, const catacurses::window &w )
     // vehicle display
     vehicle *veh = g->remoteveh();
     if( veh == nullptr && u.in_vehicle ) {
-        veh = veh_pointer_or_null( get_map().veh_at( u.pos() ) );
+        veh = veh_pointer_or_null( get_map().veh_at( u.bub_pos() ) );
     }
     if( veh ) {
         mvwprintz( w, point( 0, 1 ), c_light_gray, "fuel: " );
@@ -2238,8 +2187,8 @@ static void draw_location_classic( const avatar &u, const catacurses::window &w 
     werase( w );
 
     mvwprintz( w, point_zero, c_light_gray, _( "Location:" ) );
-    mvwprintz( w, point( 10, 0 ), c_white, utf8_truncate( overmap_buffer.ter(
-                   u.global_omt_location() )->get_name(), getmaxx( w ) - 13 ) );
+    mvwprintz( w, point( 10, 0 ), c_white, utf8_truncate( ACTIVE_OVERMAP_BUFFER.ter(
+                   u.abs_omt_pos() )->get_name(), getmaxx( w ) - 13 ) );
 
     wnoutrefresh( w );
 }
@@ -2344,7 +2293,7 @@ static void draw_time_classic( const avatar &u, const catacurses::window &w )
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
-        std::string temp = print_temperature( get_weather().get_temperature( u.pos() ) );
+        std::string temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31, 0 ), c_light_gray, _( "Temp : " ) + temp );
     }
 

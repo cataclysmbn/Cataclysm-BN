@@ -149,7 +149,7 @@ std::vector<item_pricing> npc_trading::init_buying( Character &buyer, Character 
     //nearby items owned by the NPC will only show up in
     //the trade window if the NPC is also a shopkeeper
     if( np.is_shopkeeper() ) {
-        std::ranges::for_each( map_selector( seller.pos(), PICKUP_RANGE ),
+        std::ranges::for_each( map_selector( seller.bub_pos(), PICKUP_RANGE ),
         [&]( auto & cursor ) {
             cursor.visit_items( [&check_item]( item * node ) {
                 check_item( {node}, 1 );
@@ -158,7 +158,7 @@ std::vector<item_pricing> npc_trading::init_buying( Character &buyer, Character 
         } );
     }
 
-    std::ranges::for_each( vehicle_selector( seller.pos(), 1 ), [&]( auto & cursor ) {
+    std::ranges::for_each( vehicle_selector( seller.bub_pos(), 1 ), [&]( auto & cursor ) {
         cursor.visit_items( [&check_item]( item * node ) {
             check_item( {node}, 1 );
             return VisitResponse::SKIP;

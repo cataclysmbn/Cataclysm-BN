@@ -1528,5 +1528,14 @@
     "fuel_efficiency": 20000,
     "time": 1,
     "flags": [ "BIONIC_POWER_SOURCE", "BIONIC_TOGGLED" ]
+  },
+  {
+    "id": "bio_portal_tap",
+    "type": "bionic",
+    "name": { "str": "Dimensional Portal Tap" },
+    "description": "An implanted interface for siphoning power from a linked dimensional portal.  Must be linked to a specific portal by examining it.  While the linked portal's grid has power, this bionic passively draws energy into your reserves each turn.",
+    "occupied_bodyparts": [ [ "torso", 8 ] ],
+    "flags": [ "BIONIC_NPC_USABLE" ],
+    "points": 3
   }
 ]

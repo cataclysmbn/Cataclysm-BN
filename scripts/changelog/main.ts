@@ -15,7 +15,13 @@ const asSections = (group: Record<string, string>): string =>
 
 const formatCommitList = (items: { commit: Commit; info: CommitInfo }[]): string =>
   items
-    .flatMap((x) => fmtLink({ subject: x.commit.subject, author: x.commit.author }))
+    .flatMap((x) =>
+      fmtLink({
+        subject: x.commit.subject,
+        author: x.commit.author,
+        coauthors: x.commit.coauthors,
+      })
+    )
     .toSorted((a, b) => a.pr - b.pr)
     .map(({ entry }) => entry)
     .join("\n")
@@ -44,7 +50,7 @@ const commitsSection = (changelog: Commit[]) => {
 
 const authorsSection = (changelog: Commit[]) => {
   const byAuthors = mapValues(
-    Object.groupBy(changelog, (x) => x.author),
+    Object.groupBy(changelog.flatMap((x) => [x.author, ...x.coauthors]), (x) => x),
     (xs) => xs!.length,
   )
 

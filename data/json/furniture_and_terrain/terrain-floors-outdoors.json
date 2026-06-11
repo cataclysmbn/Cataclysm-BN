@@ -170,7 +170,7 @@
     "color": "brown",
     "move_cost": 3,
     "coverage": 40,
-    "flags": [ "TRANSPARENT", "MOUNTABLE", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "VEH_TREAT_AS_BASH_BELOW" ],
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "SUPPORTS_ROOF", "COLLAPSES", "VEH_TREAT_AS_BASH_BELOW" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": {
       "sound": "thump",
