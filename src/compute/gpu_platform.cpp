@@ -27,6 +27,10 @@
 
 namespace cata_gpu {
 
+auto compute_shader_entrypoint(SDL_GPUShaderFormat const format) -> char const* {
+    return format == SDL_GPU_SHADERFORMAT_MSL ? "main0" : "main";
+}
+
 namespace {
 
 SDL_GPUDevice* s_device = nullptr;
@@ -440,7 +444,7 @@ auto probe_shader(
     SDL_GPUComputePipelineCreateInfo const info{
         .code_size = blob.size(),
         .code = reinterpret_cast<Uint8 const*>(blob.data()),
-        .entrypoint = "main",
+        .entrypoint = compute_shader_entrypoint(fmt),
         .format = fmt,
         .num_samplers = 0,
         .num_readonly_storage_textures = 0,
