@@ -63,6 +63,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "357sig",
+    "loudness": -6,
     "range": 20,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 170,

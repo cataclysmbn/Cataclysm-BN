@@ -15,6 +15,7 @@
     "barrel_volume": "750 ml",
     "magazine_well": "250 ml",
     "ammo": "410shot",
+    "loudness": 1,
     "blackpowder_tolerance": 24,
     "magazines": [ [ "410shot", [ "saiga410mag_10rd", "saiga410mag_30rd" ] ] ],
     "flags": [ "NEVER_JAMS" ]

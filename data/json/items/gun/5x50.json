@@ -43,6 +43,7 @@
     "ammo": "5x50",
     "dispersion": 280,
     "durability": 9,
+    "loudness": 2,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "2 rd.", 2 ], [ "AUTO", "auto", 4 ] ],
     "magazine_well": "250 ml",
     "magazines": [ [ "5x50", [ "5x50_50_mag", "5x50_100_mag" ] ] ],

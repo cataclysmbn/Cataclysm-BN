@@ -84,6 +84,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "38",
+    "loudness": -2,
     "barrel_volume": "750 ml"
   },
   {
@@ -196,6 +197,7 @@
     "material": [ "iron", "wood" ],
     "color": "brown",
     "ammo": [ "357mag", "38" ],
+    "loudness": -4,
     "handling": 30,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 160,

@@ -48,6 +48,7 @@
     "material": "steel",
     "color": "dark_gray",
     "ammo": "32",
+    "loudness": -2,
     "dispersion": 360,
     "durability": 6,
     "min_cycle_recoil": 135,

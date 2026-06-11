@@ -3705,7 +3705,7 @@ void sfx::remove_hearing_loss( const bool &p_hear_impaired )
             g_sfx_volume_multiplier = get_hearing_loss_sfx_mult( hearing_impairment );
 
             // Check to see if our hearing impairment is due to actual loss or other effects to see if we should end tinnitus shenanagins.
-            const auto hearing_loss = p.total_hearing_loss( false );
+            const auto &hearing_loss = p.hearing_loss_stats.hearing_loss_longterm;
 
             if( hearing_loss >= HEARING_LOSS_SLIGHT_THRESHOLD ) {
 
@@ -3722,6 +3722,7 @@ void sfx::remove_hearing_loss( const bool &p_hear_impaired )
             }
             // Either we have stopped having tinnitus, or our hearing impairment was due to basic hearing protection.
             do_ambient();
+            
         }
 
     }

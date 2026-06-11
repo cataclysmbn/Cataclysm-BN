@@ -59,7 +59,7 @@
     "damage": { "damage_type": "bullet", "amount": 45, "armor_penetration": 35 },
     "dispersion": 75,
     "recoil": 2200,
-    "loudness": 160,
+    "loudness": 158,
     "speed": 900,
     "effects": [ "NEVER_MISFIRES" ]
   },

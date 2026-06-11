@@ -117,7 +117,7 @@
     "dispersion": 90,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ],
     "durability": 7,
-    "loudness": 50,
+    "loudness": 60,
     "ups_charges": 60,
     "valid_mod_locations": [
       [ "emitter", 1 ],

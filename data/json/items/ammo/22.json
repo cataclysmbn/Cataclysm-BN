@@ -33,7 +33,7 @@
     "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 9 },
     "dispersion": 60,
     "recoil": 150,
-    "loudness": 143,
+    "loudness": 142,
     "speed": 370,
     "effects": [ "COOKOFF" ]
   },
@@ -50,7 +50,7 @@
     "damage": { "damage_type": "bullet", "amount": 2, "armor_penetration": 1 },
     "shot": { "count": 10, "half_angle": 15 },
     "proportional": { "recoil": 0.334 },
-    "loudness": 145,
+    "loudness": 140,
     "speed": 300,
     "extend": { "effects": [ "SHOT", "NOGIB" ] }
   },

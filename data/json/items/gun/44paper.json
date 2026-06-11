@@ -58,6 +58,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "44paper",
+    "loudness": -6,
     "dispersion": 280,
     "clip_size": 8
   }
