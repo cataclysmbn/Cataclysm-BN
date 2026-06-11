@@ -1,5 +1,6 @@
 #include "compute_backend.h"
 
+#include "debug.h"
 #include "preload_config.h"
 #include "slang_cpu_backend.h"
 
@@ -14,6 +15,12 @@ namespace
 {
 
 auto s_status = backend_status {};
+
+auto log_backend_selection() -> void
+{
+    DebugLog( DL::Info, DC::Main )
+            << "Compute backend selected: " << s_status.name << " (" << s_status.detail << ")";
+}
 
 auto sdl_gpu_status() -> backend_status
 {
@@ -41,6 +48,7 @@ auto init() -> void
     if( preload_config::get_compute_accel() == preload_config::compute_accel::cpu ) {
         slang_cpu::init();
         s_status = slang_cpu::status();
+        log_backend_selection();
         return;
     }
 #if defined( CATA_SDL )
@@ -55,6 +63,7 @@ auto init() -> void
     slang_cpu::init();
     s_status = slang_cpu::status();
 #endif
+    log_backend_selection();
 }
 
 auto shutdown() -> void
@@ -164,6 +173,10 @@ auto to_sdl_run_sight_pairs_params( run_sight_pairs_params const &p )
 
 auto resident_lighting_ready_for_visibility( resident_lighting_ready_params const &p ) -> bool
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::resident_lighting_ready_for_visibility( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return false;
@@ -179,6 +192,10 @@ auto resident_lighting_ready_for_visibility( resident_lighting_ready_params cons
 auto resident_lighting_ready_for_sight_pairs( resident_sight_pair_inputs_params const &p )
 -> bool
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::resident_lighting_ready_for_sight_pairs( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return false;
@@ -194,6 +211,10 @@ auto resident_lighting_ready_for_sight_pairs( resident_sight_pair_inputs_params 
 auto prepare_lighting_transparency_output( prepare_lighting_transparency_output_params const &p )
 -> resident_transparency_output
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::prepare_lighting_transparency_output( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return {};
@@ -218,21 +239,39 @@ auto prepare_lighting_transparency_output( prepare_lighting_transparency_output_
 
 auto mark_lighting_transparency_level_updated( const int zlev ) -> void
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        slang_cpu::mark_lighting_transparency_level_updated( zlev );
+        return;
+    }
+
     cata_gpu::mark_lighting_transparency_level_updated( zlev );
 }
 
 auto lighting_transparency_level_is_valid( const int zlev ) -> bool
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::lighting_transparency_level_is_valid( zlev );
+    }
+
     return cata_gpu::lighting_transparency_level_is_valid( zlev );
 }
 
 auto invalidate_lighting_transparency_levels( std::vector<int> const &levels ) -> void
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        slang_cpu::invalidate_lighting_transparency_levels( levels );
+        return;
+    }
+
     cata_gpu::invalidate_lighting_transparency_levels( levels );
 }
 
 auto shift_lighting_resident_inputs( shift_lighting_residency_params const &p ) -> bool
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::shift_lighting_resident_inputs( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return false;
@@ -261,6 +300,10 @@ auto prepare_transparency_inputs(
 
 auto dispatch_transparency( dispatch_transparency_params const &p ) -> bool
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::dispatch_transparency( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return false;
@@ -289,6 +332,10 @@ auto verify_transparency_against_cpu(
 
 auto begin_lighting( lighting_params const &p ) -> lighting_work
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::begin_lighting( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return {};
@@ -303,6 +350,10 @@ auto begin_lighting( lighting_params const &p ) -> lighting_work
 
 auto finish_lighting( lighting_work const &work ) -> bool
 {
+    if( work.backend == backend_kind::slang_cpu ) {
+        return slang_cpu::finish_lighting( work );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr || work.backend != backend_kind::sdl_gpu ) {
         return false;
@@ -312,6 +363,10 @@ auto finish_lighting( lighting_work const &work ) -> bool
 
 auto run_lighting( lighting_params const &p ) -> bool
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::run_lighting( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return false;
@@ -321,6 +376,10 @@ auto run_lighting( lighting_params const &p ) -> bool
 
 auto begin_visibility( visibility_params const &p ) -> visibility_work
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::begin_visibility( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return {};
@@ -335,6 +394,10 @@ auto begin_visibility( visibility_params const &p ) -> visibility_work
 
 auto finish_visibility( visibility_work const &work ) -> bool
 {
+    if( work.backend == backend_kind::slang_cpu ) {
+        return slang_cpu::finish_visibility( work );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr || work.backend != backend_kind::sdl_gpu ) {
         return false;
@@ -344,6 +407,10 @@ auto finish_visibility( visibility_work const &work ) -> bool
 
 auto run_visibility( visibility_params const &p ) -> bool
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::run_visibility( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return false;
@@ -353,6 +420,10 @@ auto run_visibility( visibility_params const &p ) -> bool
 
 auto begin_sight_pairs( begin_sight_pairs_params const &p ) -> sight_pairs_work
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::begin_sight_pairs( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return {};
@@ -367,6 +438,10 @@ auto begin_sight_pairs( begin_sight_pairs_params const &p ) -> sight_pairs_work
 
 auto finish_sight_pairs( sight_pairs_work const &work, std::vector<uint32_t> &results ) -> bool
 {
+    if( work.backend == backend_kind::slang_cpu ) {
+        return slang_cpu::finish_sight_pairs( work, results );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr || work.backend != backend_kind::sdl_gpu ) {
         return false;
@@ -376,6 +451,10 @@ auto finish_sight_pairs( sight_pairs_work const &work, std::vector<uint32_t> &re
 
 auto run_sight_pairs( run_sight_pairs_params const &p ) -> bool
 {
+    if( active_backend().kind == backend_kind::slang_cpu ) {
+        return slang_cpu::run_sight_pairs( p );
+    }
+
     auto *const device = active_sdl_gpu_device();
     if( device == nullptr ) {
         return false;

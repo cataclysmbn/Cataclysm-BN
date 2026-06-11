@@ -4,8 +4,7 @@ static const float LIGHT_TRANSPARENCY_SOLID = 0.0;
 static const uint DAYLIGHT_DIFFUSE_THREADS_X = 64u;
 
 [[vk::binding(0, 2)]]
-cbuffer Constants : register(b0, space2)
-{
+struct DaylightDiffuseConstants {
     uint  total_tiles;
     int   cache_x;
     int   cache_y;
@@ -15,6 +14,17 @@ cbuffer Constants : register(b0, space2)
     float min_light;
     uint  _pad;
 };
+
+[[vk::binding(0, 2)]]
+ConstantBuffer<DaylightDiffuseConstants> constants : register(b0, space2);
+
+#define total_tiles constants.total_tiles
+#define cache_x constants.cache_x
+#define cache_y constants.cache_y
+#define cache_xy constants.cache_xy
+#define z_count constants.z_count
+#define diffuse_decay constants.diffuse_decay
+#define min_light constants.min_light
 
 [[vk::binding(0, 0)]]
 StructuredBuffer<uint> daylight_seed_all : register(t0, space0);

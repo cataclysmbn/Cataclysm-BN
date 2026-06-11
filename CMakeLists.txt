@@ -609,6 +609,7 @@ if (CATA_SDL)
         if (CATA_SLANG_SOURCES)
             function(cata_find_slang_toolchain)
                 unset(CATA_SLANGC_EXE CACHE)
+                unset(CATA_SLANG_CPP_TYPES_DIR CACHE)
 
                 if (CATA_SLANGC)
                     set(CATA_SLANGC_EXE "${CATA_SLANGC}" CACHE FILEPATH "Resolved slangc path." FORCE)
@@ -619,6 +620,18 @@ if (CATA_SDL)
                         NO_DEFAULT_PATH)
                 else ()
                     find_program(CATA_SLANGC_EXE NAMES slangc slangc.exe)
+                endif ()
+
+                if (CATA_SLANG_INCLUDE_DIR)
+                    set(CATA_SLANG_CPP_TYPES_DIR "${CATA_SLANG_INCLUDE_DIR}" CACHE PATH
+                        "Resolved Slang generated C++ support header directory." FORCE)
+                elseif (CATA_SLANG_ROOT)
+                    find_path(CATA_SLANG_CPP_TYPES_DIR
+                        NAMES slang-cpp-types.h
+                        HINTS "${CATA_SLANG_ROOT}/include"
+                        NO_DEFAULT_PATH)
+                else ()
+                    find_path(CATA_SLANG_CPP_TYPES_DIR NAMES slang-cpp-types.h)
                 endif ()
             endfunction()
 
@@ -662,6 +675,11 @@ if (CATA_SDL)
                     "Slang shader sources require slangc. Set CATA_SLANG_ROOT or CATA_SLANGC, "
                     "or enable BUILD_SLANG.")
             endif ()
+            if (NOT CATA_SLANG_CPP_TYPES_DIR)
+                message(FATAL_ERROR
+                    "Slang CPU kernel wrappers require slang-cpp-types.h. Set CATA_SLANG_ROOT "
+                    "or CATA_SLANG_INCLUDE_DIR, or enable BUILD_SLANG.")
+            endif ()
 
             get_filename_component(CATA_SLANG_BIN_DIR "${CATA_SLANGC_EXE}" DIRECTORY)
             if (WIN32)
@@ -679,6 +697,8 @@ if (CATA_SDL)
             endif ()
 
             message(STATUS "slangc: ${CATA_SLANGC_EXE}")
+
+            set(CATA_SLANG_CPU_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated/slang_cpu")
 
             foreach (SLANG_SRC ${CATA_SLANG_SOURCES})
                 get_filename_component(SHADER_NAME ${SLANG_SRC} NAME_WE)
@@ -731,10 +751,10 @@ if (CATA_SDL)
                     list(APPEND CATA_SHADER_OUTPUTS "${DXIL_OUT}")
                 endif ()
 
-                set(CPP_OUT "${CMAKE_BINARY_DIR}/generated/slang_cpu/${SHADER_NAME}.cpp")
+                set(CPP_OUT "${CATA_SLANG_CPU_GENERATED_DIR}/${SHADER_NAME}.cpp")
                 add_custom_command(
                     OUTPUT "${CPP_OUT}"
-                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/generated/slang_cpu"
+                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CATA_SLANG_CPU_GENERATED_DIR}"
                     COMMAND ${CATA_SLANGC_COMMAND}
                             "${SLANG_SRC}"
                             -entry cpu_main

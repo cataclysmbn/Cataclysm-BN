@@ -17,9 +17,7 @@ static const uint LIT_BRIGHT      = 4u;
 static const uint LIT_BLANK       = 6u;
 static const uint VISIBILITY_THREADS_X = 64u;
 
-[[vk::binding(0, 2)]]
-cbuffer Constants : register(b0, space2)
-{
+struct VisibilityConstants {
     int player_x;
     int player_y;
     int player_z_idx;
@@ -42,6 +40,9 @@ cbuffer Constants : register(b0, space2)
     uint _pad2;
 };
 
+[[vk::binding(0, 2)]]
+ConstantBuffer<VisibilityConstants> constants : register(b0, space2);
+
 [[vk::binding(0, 0)]]
 StructuredBuffer<float> transparency_all : register(t0, space0);
 
@@ -62,12 +63,12 @@ RWStructuredBuffer<uint> visibility_all : register(u0, space1);
 
 int tile_index( int x, int y, int z )
 {
-    return z * cache_xy + x * cache_y + y;
+    return z * constants.cache_xy + x * constants.cache_y + y;
 }
 
 int visibility_distance( int dx, int dy, int dz )
 {
-    if( trigdist == 0u ) {
+    if( constants.trigdist == 0u ) {
         int best = dx;
         if( dy > best ) {
             best = dy;
@@ -88,17 +89,17 @@ float scaled_visibility_for_view_distance( float vis )
     if( vis >= VISIBILITY_FULL ) {
         return VISIBILITY_FULL;
     }
-    if( visibility_scale_factor == 1.0 ) {
+    if( constants.visibility_scale_factor == 1.0 ) {
         return vis;
     }
-    return pow( vis, visibility_scale_factor );
+    return pow( vis, constants.visibility_scale_factor );
 }
 
 bool is_opaque( int x, int y, int z )
 {
     int idx = tile_index( x, y, z );
     return transparency_all[idx] <= LIGHT_TRANSPARENCY_SOLID &&
-           ( x != player_x || y != player_y );
+           ( x != constants.player_x || y != constants.player_y );
 }
 
 float visible_surface_light( int x, int y, int z )
@@ -119,7 +120,7 @@ float visible_surface_light( int x, int y, int z )
     for( int i = 0; i < 8; ++i ) {
         int nx = x + offsets[i].x;
         int ny = y + offsets[i].y;
-        if( nx < 0 || ny < 0 || nx >= cache_x || ny >= cache_y ) {
+        if( nx < 0 || ny < 0 || nx >= constants.cache_x || ny >= constants.cache_y ) {
             continue;
         }
         if( is_opaque( nx, ny, z ) ) {
@@ -141,13 +142,13 @@ float visible_surface_light( int x, int y, int z )
 uint classify_light(
     int dist, bool obstructed, float apparent_light, bool source_light, bool camera_visible )
 {
-    if( dist > u_unimpaired_range ) {
+    if( dist > constants.u_unimpaired_range ) {
         if( !obstructed && source_light ) {
             return LIT_BRIGHT_ONLY;
         }
         return LIT_DARK;
     }
-    if( float( dist ) > detail_range && !camera_visible ) {
+    if( float( dist ) > constants.detail_range && !camera_visible ) {
         if( !obstructed && source_light ) {
             return LIT_BRIGHT_ONLY;
         }
@@ -156,12 +157,12 @@ uint classify_light(
 
     if( obstructed ) {
         if( apparent_light > LIGHT_AMBIENT_LIT ) {
-            if( apparent_light > float( g_light_level ) ) {
+            if( apparent_light > float( constants.g_light_level ) ) {
                 return LIT_BRIGHT_ONLY;
             }
             return LIT_LOW;
         }
-        if( apparent_light >= vision_threshold ) {
+        if( apparent_light >= constants.vision_threshold ) {
             return LIT_LOW;
         }
         return LIT_BLANK;
@@ -173,7 +174,7 @@ uint classify_light(
     if( apparent_light > LIGHT_AMBIENT_LIT ) {
         return LIT_LIT;
     }
-    if( apparent_light >= vision_threshold ) {
+    if( apparent_light >= constants.vision_threshold ) {
         return LIT_LOW;
     }
     return LIT_BLANK;
@@ -182,27 +183,27 @@ uint classify_light(
 void visibility_main_impl( uint3 group_id, uint3 group_thread_id )
 {
     uint local_idx = group_id.x * VISIBILITY_THREADS_X + group_thread_id.x;
-    if( local_idx >= uint( dispatch_z_count * cache_xy ) ) {
+    if( local_idx >= uint( constants.dispatch_z_count * constants.cache_xy ) ) {
         return;
     }
 
-    uint z_idx = uint( z_start_idx ) + local_idx / uint( cache_xy );
-    if( z_idx >= uint( z_count ) ) {
+    uint z_idx = uint( constants.z_start_idx ) + local_idx / uint( constants.cache_xy );
+    if( z_idx >= uint( constants.z_count ) ) {
         return;
     }
-    uint tile = local_idx % uint( cache_xy );
-    uint idx = z_idx * uint( cache_xy ) + tile;
+    uint tile = local_idx % uint( constants.cache_xy );
+    uint idx = z_idx * uint( constants.cache_xy ) + tile;
 
-    int x = int( tile / uint( cache_y ) );
-    int y = int( tile % uint( cache_y ) );
+    int x = int( tile / uint( constants.cache_y ) );
+    int y = int( tile % uint( constants.cache_y ) );
     int z = int( z_idx );
 
-    int dx = abs( x - player_x );
-    int dy = abs( y - player_y );
-    int dz = abs( z - player_z_idx );
+    int dx = abs( x - constants.player_x );
+    int dy = abs( y - constants.player_y );
+    int dz = abs( z - constants.player_z_idx );
     int dist = visibility_distance( dx, dy, dz );
 
-    if( dist <= u_clairvoyance ) {
+    if( dist <= constants.u_clairvoyance ) {
         visibility_all[idx] = LIT_BRIGHT;
         return;
     }
@@ -210,7 +211,7 @@ void visibility_main_impl( uint3 group_id, uint3 group_thread_id )
     float camera_vis = asfloat( camera_all[idx] );
     float seen_vis = seen_all[idx];
     float vis = seen_vis > camera_vis ? seen_vis : camera_vis;
-    bool obstructed = vis <= visible_threshold;
+    bool obstructed = vis <= constants.visible_threshold;
     float scaled_vis = scaled_visibility_for_view_distance( vis );
     bool opaque = is_opaque( x, y, z );
 

@@ -2361,11 +2361,12 @@ void options_manager::add_options_graphics()
 #if defined(CATA_SDL)
     add_empty_line();
     add( "COMPUTE_ACCELERATION", graphics, translate_marker( "Compute Acceleration" ),
-         translate_marker( "Controls compute backend selection for lighting and visibility.  Requires restart." ),
+         translate_marker( "Controls compute backend selection for lighting and visibility.  Software driver uses a CPU-backed SDL_GPU driver; CPU shader uses Slang-generated CPU code.  Requires restart." ),
     {
         { "auto", translate_marker( "Auto" ) },
-        { "hardware", translate_marker( "Hardware" ) },
-        { "software_gpu", translate_marker( "Software GPU" ) }
+        { "hardware", translate_marker( "Hardware GPU" ) },
+        { "software_gpu", translate_marker( "Software SDL_GPU driver" ) },
+        { "cpu", translate_marker( "CPU shader backend" ) }
     },
     "auto" );
 #endif

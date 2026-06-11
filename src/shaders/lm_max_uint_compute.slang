@@ -2,12 +2,13 @@
 
 static const uint MAX_UINT_THREADS_X = 64u;
 
-[[vk::binding(0, 2)]]
-cbuffer Constants : register(b0, space2)
-{
+struct MaxUintConstants {
     uint total_tiles;
     uint3 _pad;
 };
+
+[[vk::binding(0, 2)]]
+ConstantBuffer<MaxUintConstants> constants : register(b0, space2);
 
 [[vk::binding(0, 0)]]
 StructuredBuffer<uint> source_values : register(t0, space0);
@@ -18,7 +19,7 @@ RWStructuredBuffer<uint> target_values : register(u0, space1);
 void max_uint_main_impl( uint3 group_id, uint3 group_thread_id )
 {
     uint idx = group_id.x * MAX_UINT_THREADS_X + group_thread_id.x;
-    if( idx >= total_tiles ) {
+    if( idx >= constants.total_tiles ) {
         return;
     }
 

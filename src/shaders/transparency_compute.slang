@@ -12,17 +12,19 @@ struct TransparencySubmapIn
     uint  outside_flags[144];
     int   cache_offset_x;
     int   cache_offset_y;
-    uint  output_offset;
+    uint  submap_output_offset;
 };
 
-[[vk::binding(0, 2)]]
-cbuffer Constants : register(b0, space2)
+struct TransparencyConstants
 {
     float sight_penalty;
     int   cache_y;
     uint  num_submaps;
     uint  output_offset;
 };
+
+[[vk::binding(0, 2)]]
+ConstantBuffer<TransparencyConstants> constants : register(b0, space2);
 
 [[vk::binding(0, 0)]]
 StructuredBuffer<TransparencySubmapIn> submap_in : register(t0, space0);
@@ -41,7 +43,7 @@ RWStructuredBuffer<float> full_transparency_out : register(u1, space1);
 
 void transparency_main_impl( uint3 group_id, uint3 group_thread_id )
 {
-    if( group_id.x >= num_submaps ) {
+    if( group_id.x >= constants.num_submaps ) {
         return;
     }
 
@@ -58,7 +60,7 @@ void transparency_main_impl( uint3 group_id, uint3 group_thread_id )
     if( ter_transparent || !furn_transparent ) {
         value = LIGHT_TRANSPARENCY_OPEN_AIR;
         if( sm.outside_flags[tile] != 0u ) {
-            value *= sight_penalty;
+            value *= constants.sight_penalty;
         }
         value *= sm.field_opacity[tile];
     } else {
@@ -68,7 +70,7 @@ void transparency_main_impl( uint3 group_id, uint3 group_thread_id )
     int cx = sm.cache_offset_x + int( sx );
     int cy = sm.cache_offset_y + int( sy );
     compact_transparency_out[group_id.x * 144u + tile] = value;
-    full_transparency_out[output_offset + sm.output_offset + uint( cx * cache_y + cy )] = value;
+    full_transparency_out[constants.output_offset + sm.submap_output_offset + uint( cx * constants.cache_y + cy )] = value;
 }
 
 [numthreads(12, 12, 1)]

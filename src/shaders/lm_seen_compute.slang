@@ -6,8 +6,7 @@ static const uint SEEN_THREADS_X = 8u;
 static const uint SEEN_THREADS_Y = 8u;
 
 [[vk::binding(0, 2)]]
-cbuffer Constants : register(b0, space2)
-{
+struct SeenConstants {
     int   player_x;
     int   player_y;
     int   player_z_idx;
@@ -23,6 +22,23 @@ cbuffer Constants : register(b0, space2)
     uint  vision_block_mask;
     uint3 _pad;
 };
+
+[[vk::binding(0, 2)]]
+ConstantBuffer<SeenConstants> constants : register(b0, space2);
+
+#define player_x constants.player_x
+#define player_y constants.player_y
+#define player_z_idx constants.player_z_idx
+#define cache_x constants.cache_x
+#define cache_y constants.cache_y
+#define cache_xy constants.cache_xy
+#define z_count constants.z_count
+#define view_radius constants.view_radius
+#define z_scale constants.z_scale
+#define z_start_idx constants.z_start_idx
+#define dispatch_z_count constants.dispatch_z_count
+#define trigdist constants.trigdist
+#define vision_block_mask constants.vision_block_mask
 
 [[vk::binding(0, 0)]]
 StructuredBuffer<float> transparency_all : register(t0, space0);

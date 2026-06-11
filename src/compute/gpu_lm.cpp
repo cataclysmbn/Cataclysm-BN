@@ -465,20 +465,6 @@ struct camera_zero_plan {
     std::vector<int> nonzero_levels_after_dispatch;
 };
 
-struct GpuVehicleOptic {
-    int32_t x;
-    int32_t y;
-    int32_t z_idx;
-    uint32_t kind;
-    int32_t range;
-    int32_t offset_distance;
-    uint32_t _pad[2];
-};
-static_assert(sizeof(GpuVehicleOptic) == 32);
-
-static constexpr auto vehicle_optic_mirror = uint32_t{0};
-static constexpr auto vehicle_optic_camera = uint32_t{1};
-
 struct lm_vehicle_optics_push_constants {
     int32_t cache_x;
     int32_t cache_y;
@@ -2481,6 +2467,33 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
+
+auto collect_lighting_sources( collect_lighting_sources_params const &p )
+-> lighting_source_collection
+{
+    if( p.m == nullptr || p.levels == nullptr || p.levels->empty() ) {
+        return {};
+    }
+
+    auto collection = collect_sources( *p.m, *p.levels, p.collect_colored_sources );
+    write_source_map_to_level_caches( *p.m, *p.levels, collection.sources );
+    if( p.collect_colored_sources && collection.colored_sources.empty() ) {
+        clear_colored_light_caches( *p.m, *p.levels );
+    }
+    return {
+        .sources = std::move( collection.sources ),
+        .colored_sources = std::move( collection.colored_sources ),
+    };
+}
+
+auto collect_lighting_vehicle_optics( collect_lighting_vehicle_optics_params const &p )
+-> std::vector<GpuVehicleOptic>
+{
+    if( p.m == nullptr || p.origin == nullptr ) {
+        return {};
+    }
+    return collect_vehicle_optics( *p.m, *p.origin, p.target_z );
+}
 
 auto prepare_lighting_transparency_output(prepare_lighting_transparency_output_params const& p)
     -> resident_transparency_output {

@@ -16,8 +16,7 @@ struct GpuSightPair
 };
 
 [[vk::binding(0, 2)]]
-cbuffer Constants : register(b0, space2)
-{
+struct SightPairsConstants {
     int cache_x;
     int cache_y;
     int cache_xy;
@@ -27,6 +26,9 @@ cbuffer Constants : register(b0, space2)
     uint _pad1;
     uint _pad2;
 };
+
+[[vk::binding(0, 2)]]
+ConstantBuffer<SightPairsConstants> constants : register(b0, space2);
 
 [[vk::binding(0, 0)]]
 StructuredBuffer<float> transparency_all : register(t0, space0);
@@ -42,12 +44,13 @@ RWStructuredBuffer<uint> results : register(u0, space1);
 
 int tile_index( int x, int y, int z )
 {
-    return z * cache_xy + x * cache_y + y;
+    return z * constants.cache_xy + x * constants.cache_y + y;
 }
 
 bool inbounds_tile( int x, int y, int z )
 {
-    return x >= 0 && y >= 0 && z >= 0 && x < cache_x && y < cache_y && z < z_count;
+    return x >= 0 && y >= 0 && z >= 0 && x < constants.cache_x &&
+           y < constants.cache_y && z < constants.z_count;
 }
 
 bool is_transparent_at( int x, int y, int z )
@@ -324,7 +327,7 @@ bool los_3d( GpuSightPair pair )
 void sight_pairs_main_impl( uint3 group_id, uint3 group_thread_id )
 {
     uint pair_idx = group_id.x * SIGHT_PAIR_THREADS_X + group_thread_id.x;
-    if( pair_idx >= pair_count ) {
+    if( pair_idx >= constants.pair_count ) {
         return;
     }
 

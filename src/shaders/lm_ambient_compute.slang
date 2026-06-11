@@ -1,8 +1,7 @@
 // GPU Lighting - Ambient Initialisation Pass
 
 [[vk::binding(0, 2)]]
-cbuffer Constants : register(b0, space2)
-{
+struct AmbientConstants {
     float  inside_light;
     int    cache_x;
     int    cache_y;
@@ -17,6 +16,22 @@ cbuffer Constants : register(b0, space2)
     uint   _pad1;
     float4 natural_light[6];
 };
+
+[[vk::binding(0, 2)]]
+ConstantBuffer<AmbientConstants> constants : register(b0, space2);
+
+#define inside_light constants.inside_light
+#define cache_x constants.cache_x
+#define cache_y constants.cache_y
+#define cache_xy constants.cache_xy
+#define z_count constants.z_count
+#define overmap_depth constants.overmap_depth
+#define angled_sunlight_shadows constants.angled_sunlight_shadows
+#define direct_sunlight constants.direct_sunlight
+#define sun_dx_per_z constants.sun_dx_per_z
+#define sun_dy_per_z constants.sun_dy_per_z
+#define solar_shadow_light constants.solar_shadow_light
+#define natural_light constants.natural_light
 
 static const float LIGHT_TRANSPARENCY_SOLID = 0.0;
 static const int SUN_NONE   = 0;

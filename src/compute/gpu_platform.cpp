@@ -494,7 +494,7 @@ auto init() -> void {
     auto const accel = preload_config::get_compute_accel();
     if (accel == compute_accel::cpu) {
         DebugLog(DL::Info, DC::Main)
-            << "Compute backend selected: unavailable (Slang CPU backend is not implemented yet)";
+            << "SDL_GPU: skipped device creation because the CPU shader backend was selected";
         return;
     }
 

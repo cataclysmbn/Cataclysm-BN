@@ -29,8 +29,7 @@ struct GpuLightSource
 };
 
 [[vk::binding(0, 2)]]
-cbuffer Constants : register(b0, space2)
-{
+struct RaytraceConstants {
     int   cache_x;
     int   cache_y;
     int   cache_xy;
@@ -40,6 +39,18 @@ cbuffer Constants : register(b0, space2)
     int   max_radius;
     uint  source_offset;
 };
+
+[[vk::binding(0, 2)]]
+ConstantBuffer<RaytraceConstants> constants : register(b0, space2);
+
+#define cache_x constants.cache_x
+#define cache_y constants.cache_y
+#define cache_xy constants.cache_xy
+#define z_count constants.z_count
+#define z_scale constants.z_scale
+#define num_sources constants.num_sources
+#define max_radius constants.max_radius
+#define source_offset constants.source_offset
 
 [[vk::binding(0, 0)]]
 StructuredBuffer<float> transparency_all : register(t0, space0);

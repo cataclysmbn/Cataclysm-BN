@@ -51,6 +51,45 @@ struct GpuColoredLightSource {
 };
 static_assert(sizeof(GpuColoredLightSource) == 48);
 
+struct lighting_source_collection {
+    std::vector<GpuLightSource> sources = {};
+    std::vector<GpuColoredLightSource> colored_sources = {};
+};
+
+struct collect_lighting_sources_params {
+    map const *m = nullptr;
+    std::vector<int> const *levels = nullptr;
+    bool collect_colored_sources = false;
+};
+
+// Collect GPU-shaped light source records for the shared compute lighting path.
+// This also refreshes the per-level source-map cache consumed by ambient lighting.
+auto collect_lighting_sources( collect_lighting_sources_params const &p )
+-> lighting_source_collection;
+
+inline constexpr auto vehicle_optic_mirror = uint32_t{0};
+inline constexpr auto vehicle_optic_camera = uint32_t{1};
+
+struct GpuVehicleOptic {
+    int32_t x;
+    int32_t y;
+    int32_t z_idx;
+    uint32_t kind;
+    int32_t range;
+    int32_t offset_distance;
+    uint32_t _pad[2];
+};
+static_assert(sizeof(GpuVehicleOptic) == 32);
+
+struct collect_lighting_vehicle_optics_params {
+    map const *m = nullptr;
+    tripoint_bub_ms const *origin = nullptr;
+    int target_z = 0;
+};
+
+auto collect_lighting_vehicle_optics( collect_lighting_vehicle_optics_params const &p )
+-> std::vector<GpuVehicleOptic>;
+
 // ---------------------------------------------------------------------------
 // lm_ambient_push_constants
 // Uniform data for the ambient initialisation pass.

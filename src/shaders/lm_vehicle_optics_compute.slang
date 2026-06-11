@@ -22,8 +22,7 @@ struct GpuVehicleOptic
 };
 
 [[vk::binding(0, 2)]]
-cbuffer Constants : register(b0, space2)
-{
+struct VehicleOpticsConstants {
     int   cache_x;
     int   cache_y;
     int   cache_xy;
@@ -37,6 +36,19 @@ cbuffer Constants : register(b0, space2)
     uint  _pad1;
     uint  _pad2;
 };
+
+[[vk::binding(0, 2)]]
+ConstantBuffer<VehicleOpticsConstants> constants : register(b0, space2);
+
+#define cache_x constants.cache_x
+#define cache_y constants.cache_y
+#define cache_xy constants.cache_xy
+#define z_count constants.z_count
+#define num_optics constants.num_optics
+#define max_radius constants.max_radius
+#define trigdist constants.trigdist
+#define visible_threshold constants.visible_threshold
+#define max_view_distance constants.max_view_distance
 
 [[vk::binding(0, 0)]]
 StructuredBuffer<float> transparency_all : register(t0, space0);

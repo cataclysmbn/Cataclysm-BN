@@ -124,6 +124,14 @@ function(link_sdl_mixer target_name)
     target_compile_definitions(${target_name} PUBLIC SDL_SOUND)
 endfunction()
 
+function(link_slang_cpu_generated target_name)
+    if (CATA_SLANG_CPU_OUTPUTS AND CATA_SLANG_CPP_TYPES_DIR AND CATA_SLANG_CPU_GENERATED_DIR)
+        target_compile_definitions(${target_name} PUBLIC CATA_SLANG_CPU_GENERATED)
+        target_include_directories(${target_name} SYSTEM PUBLIC "${CATA_SLANG_CPP_TYPES_DIR}")
+        target_include_directories(${target_name} PUBLIC "${CATA_SLANG_CPU_GENERATED_DIR}")
+    endif()
+endfunction()
+
 # Build tiles version if requested
 if (TILES)
     add_library(
@@ -146,6 +154,7 @@ if (TILES)
     endif ()
 
     setup_common_target_properties(cataclysm-bn-tiles-common)
+    link_slang_cpu_generated(cataclysm-bn-tiles-common)
 
     # Tiles-specific setup
     target_compile_definitions(cataclysm-bn-tiles-common PUBLIC TILES)
@@ -222,6 +231,7 @@ if (CURSES)
     endif ()
 
     setup_common_target_properties(cataclysm-bn-common)
+    link_slang_cpu_generated(cataclysm-bn-common)
 
     # Curses-specific setup
     target_include_directories(cataclysm-bn-common PUBLIC ${CURSES_INCLUDE_DIR})
