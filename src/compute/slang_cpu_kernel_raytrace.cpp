@@ -3,6 +3,7 @@
 #if defined( CATA_SDL )
 
 #include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -17,6 +18,8 @@
 #undef _cpu_main
 #undef cpu_main
 #endif
+
+#include "slang_cpu_dispatch.h"
 
 namespace cata_compute::slang_cpu::kernels
 {
@@ -56,6 +59,12 @@ auto raytrace( raytrace_params const &params ) -> bool
         params.vehicle_floor == nullptr || params.sources.empty() || params.lightmap == nullptr ||
         params.cache_x <= 0 || params.cache_y <= 0 || params.cache_xy <= 0 ||
         params.z_count <= 0 || params.num_sources == 0 ) {
+        return false;
+    }
+    const auto source_offset = static_cast<std::size_t>( params.source_offset );
+    const auto requested_sources = static_cast<std::size_t>( params.num_sources );
+    if( source_offset > params.sources.size() ||
+        requested_sources > params.sources.size() - source_offset ) {
         return false;
     }
 
@@ -100,12 +109,42 @@ auto raytrace( raytrace_params const &params ) -> bool
     globals.constants_0 = &constants;
 
     const auto group_side = static_cast<uint32_t>( params.max_radius * 2 + 1 + 7 ) / 8U;
-    auto varying = ComputeVaryingInput {
-        .startGroupID = uint3( 0U, 0U, 0U ),
-        .endGroupID = uint3( params.num_sources, group_side, group_side ),
-    };
+    const auto ranges = make_accumulating_ranges( {
+        .group_x = params.num_sources,
+        .group_y = group_side,
+        .group_z = group_side,
+        .output_values = total_tiles,
+    } );
 
-    cata_slang_lm_raytrace_cpu_main( &varying, nullptr, &globals );
+    if( ranges.size() == 1 ) {
+        dispatch_accumulating_chunks( ranges, [&]( const std::size_t, cpu_dispatch_range const &range ) {
+            auto varying = make_varying( range );
+            cata_slang_lm_raytrace_cpu_main( &varying, nullptr, &globals );
+        } );
+        return true;
+    }
+
+    auto scratch_buffers = make_zero_uint_buffers( ranges.size(), total_tiles );
+    dispatch_accumulating_chunks( ranges, [&]( const std::size_t chunk_index,
+                                    cpu_dispatch_range const &range ) {
+        auto chunk_globals = globals;
+        chunk_globals.lm_all_0 = RWStructuredBuffer<uint32_t> {
+            .data = scratch_buffers[chunk_index].data(),
+            .count = total_tiles,
+        };
+        auto varying = make_varying( range );
+        cata_slang_lm_raytrace_cpu_main( &varying, nullptr, &chunk_globals );
+    } );
+
+    for( auto &scratch : scratch_buffers ) {
+        if( !max_uint( {
+            .target = params.lightmap,
+            .source = scratch.data(),
+            .count = total_tiles,
+        } ) ) {
+            return false;
+        }
+    }
     return true;
 #else
     ( void )params;

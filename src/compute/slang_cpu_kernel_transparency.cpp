@@ -23,6 +23,8 @@
 #undef cpu_main
 #endif
 
+#include "slang_cpu_dispatch.h"
+
 namespace cata_compute::slang_cpu::kernels
 {
 
@@ -120,12 +122,12 @@ auto dispatch_transparency( transparency_params const &params ) -> bool
     };
     globals.constants_0 = &constants;
 
-    auto varying = ComputeVaryingInput {
-        .startGroupID = uint3( 0U, 0U, 0U ),
-        .endGroupID = uint3( static_cast<uint32_t>( params.submaps.size() ), 1U, 1U ),
-    };
-
-    cata_slang_transparency_cpu_main( &varying, nullptr, &globals );
+    dispatch_independent( {
+        .group_x = static_cast<uint32_t>( params.submaps.size() ),
+    }, [&]( cpu_dispatch_range const &range ) {
+        auto varying = make_varying( range );
+        cata_slang_transparency_cpu_main( &varying, nullptr, &globals );
+    } );
     return true;
 #else
     ( void )params;

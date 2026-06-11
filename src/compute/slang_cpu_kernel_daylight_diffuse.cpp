@@ -16,6 +16,8 @@
 #undef cpu_main
 #endif
 
+#include "slang_cpu_dispatch.h"
+
 namespace cata_compute::slang_cpu::kernels
 {
 
@@ -76,12 +78,12 @@ auto daylight_diffuse( daylight_diffuse_params const &params ) -> bool
     };
     globals.constants_0 = &constants;
 
-    auto varying = ComputeVaryingInput {
-        .startGroupID = uint3( 0U, 0U, 0U ),
-        .endGroupID = uint3( ( params.total_tiles + 63U ) / 64U, 1U, 1U ),
-    };
-
-    cata_slang_lm_daylight_diffuse_cpu_main( &varying, nullptr, &globals );
+    dispatch_independent( {
+        .group_x = ( params.total_tiles + 63U ) / 64U,
+    }, [&]( cpu_dispatch_range const &range ) {
+        auto varying = make_varying( range );
+        cata_slang_lm_daylight_diffuse_cpu_main( &varying, nullptr, &globals );
+    } );
     return true;
 #else
     ( void )params;

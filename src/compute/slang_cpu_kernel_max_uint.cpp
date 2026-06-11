@@ -15,6 +15,8 @@
 #undef cpu_main
 #endif
 
+#include "slang_cpu_dispatch.h"
+
 namespace cata_compute::slang_cpu::kernels
 {
 
@@ -39,12 +41,12 @@ auto max_uint( max_uint_params const &params ) -> bool
     };
     globals.constants_0 = &constants;
 
-    auto varying = ComputeVaryingInput {
-        .startGroupID = uint3( 0U, 0U, 0U ),
-        .endGroupID = uint3( ( params.count + 63U ) / 64U, 1U, 1U ),
-    };
-
-    cata_slang_lm_max_uint_cpu_main( &varying, nullptr, &globals );
+    dispatch_independent( {
+        .group_x = ( params.count + 63U ) / 64U,
+    }, [&]( cpu_dispatch_range const &range ) {
+        auto varying = make_varying( range );
+        cata_slang_lm_max_uint_cpu_main( &varying, nullptr, &globals );
+    } );
     return true;
 #else
     ( void )params;

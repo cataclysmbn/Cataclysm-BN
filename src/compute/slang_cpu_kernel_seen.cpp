@@ -16,6 +16,8 @@
 #undef cpu_main
 #endif
 
+#include "slang_cpu_dispatch.h"
+
 namespace cata_compute::slang_cpu::kernels
 {
 
@@ -79,13 +81,14 @@ auto seen( seen_params const &params ) -> bool
     globals.constants_0 = &constants;
 
     const auto group_count = static_cast<uint32_t>( params.view_radius * 2 + 1 + 7 ) / 8U;
-    auto varying = ComputeVaryingInput {
-        .startGroupID = uint3( 0U, 0U, 0U ),
-        .endGroupID = uint3( group_count, group_count,
-                             static_cast<uint32_t>( params.dispatch_z_count ) ),
-    };
-
-    cata_slang_lm_seen_cpu_main( &varying, nullptr, &globals );
+    dispatch_independent( {
+        .group_x = group_count,
+        .group_y = group_count,
+        .group_z = static_cast<uint32_t>( params.dispatch_z_count ),
+    }, [&]( cpu_dispatch_range const &range ) {
+        auto varying = make_varying( range );
+        cata_slang_lm_seen_cpu_main( &varying, nullptr, &globals );
+    } );
     return true;
 #else
     ( void )params;

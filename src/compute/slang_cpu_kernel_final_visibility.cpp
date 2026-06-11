@@ -16,6 +16,8 @@
 #undef cpu_main
 #endif
 
+#include "slang_cpu_dispatch.h"
+
 namespace cata_compute::slang_cpu::kernels
 {
 
@@ -88,12 +90,12 @@ auto final_visibility( final_visibility_params const &params ) -> bool
 
     const auto dispatch_tiles =
         static_cast<uint32_t>( params.dispatch_z_count * params.cache_xy );
-    auto varying = ComputeVaryingInput {
-        .startGroupID = uint3( 0U, 0U, 0U ),
-        .endGroupID = uint3( ( dispatch_tiles + 63U ) / 64U, 1U, 1U ),
-    };
-
-    cata_slang_lm_visibility_cpu_main( &varying, nullptr, &globals );
+    dispatch_independent( {
+        .group_x = ( dispatch_tiles + 63U ) / 64U,
+    }, [&]( cpu_dispatch_range const &range ) {
+        auto varying = make_varying( range );
+        cata_slang_lm_visibility_cpu_main( &varying, nullptr, &globals );
+    } );
     return true;
 #else
     ( void )params;

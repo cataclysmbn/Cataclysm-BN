@@ -555,11 +555,129 @@ if (CATA_SDL)
         endif ()
     endforeach ()
 
+    set(CATA_SLANG_CPU_OUTPUTS "")
+    if (CATA_SLANG_SOURCES)
+        function(cata_find_slang_toolchain)
+            unset(CATA_SLANGC_EXE CACHE)
+            unset(CATA_SLANG_CPP_TYPES_DIR CACHE)
+
+            if (CATA_SLANGC)
+                set(CATA_SLANGC_EXE "${CATA_SLANGC}" CACHE FILEPATH "Resolved slangc path." FORCE)
+            elseif (CATA_SLANG_ROOT)
+                find_program(CATA_SLANGC_EXE
+                    NAMES slangc slangc.exe
+                    HINTS "${CATA_SLANG_ROOT}/bin"
+                    NO_DEFAULT_PATH)
+            else ()
+                find_program(CATA_SLANGC_EXE NAMES slangc slangc.exe)
+            endif ()
+
+            if (CATA_SLANG_INCLUDE_DIR)
+                set(CATA_SLANG_CPP_TYPES_DIR "${CATA_SLANG_INCLUDE_DIR}" CACHE PATH
+                    "Resolved Slang generated C++ support header directory." FORCE)
+            elseif (CATA_SLANG_ROOT)
+                find_path(CATA_SLANG_CPP_TYPES_DIR
+                    NAMES slang-cpp-types.h
+                    HINTS "${CATA_SLANG_ROOT}/include"
+                    NO_DEFAULT_PATH)
+            else ()
+                find_path(CATA_SLANG_CPP_TYPES_DIR NAMES slang-cpp-types.h)
+            endif ()
+        endfunction()
+
+        cata_find_slang_toolchain()
+
+        if (BUILD_SLANG AND NOT CATA_SLANGC_EXE)
+            set(CATA_SLANG_AUTO_ROOT "${CMAKE_BINARY_DIR}/_deps/slang/current")
+            set(CATA_SLANG_AUTO_DOWNLOAD_DIR "${CMAKE_BINARY_DIR}/_deps/slang/downloads")
+            message(STATUS "Slang not found; downloading prebuilt Slang to ${CATA_SLANG_AUTO_ROOT}")
+
+            if (WIN32)
+                find_program(CATA_POWERSHELL_EXE NAMES pwsh powershell powershell.exe REQUIRED)
+                execute_process(
+                    COMMAND "${CATA_POWERSHELL_EXE}" -NoProfile -ExecutionPolicy Bypass
+                            -File "${CMAKE_SOURCE_DIR}/build-scripts/install-slang.ps1"
+                            -InstallDir "${CATA_SLANG_AUTO_ROOT}"
+                            -DownloadDir "${CATA_SLANG_AUTO_DOWNLOAD_DIR}"
+                    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                    RESULT_VARIABLE CATA_SLANG_INSTALL_RESULT)
+            else ()
+                execute_process(
+                    COMMAND "${CMAKE_COMMAND}" -E env
+                            "SLANG_INSTALL_DIR=${CATA_SLANG_AUTO_ROOT}"
+                            "SLANG_DOWNLOAD_DIR=${CATA_SLANG_AUTO_DOWNLOAD_DIR}"
+                            bash "${CMAKE_SOURCE_DIR}/build-scripts/install-slang.sh"
+                    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                    RESULT_VARIABLE CATA_SLANG_INSTALL_RESULT)
+            endif ()
+
+            if (NOT CATA_SLANG_INSTALL_RESULT EQUAL 0)
+                message(FATAL_ERROR "Slang download failed with exit code ${CATA_SLANG_INSTALL_RESULT}")
+            endif ()
+
+            set(CATA_SLANG_ROOT "${CATA_SLANG_AUTO_ROOT}" CACHE PATH
+                "Directory containing a Slang release with bin/slangc and include/slang-cpp-types." FORCE)
+            cata_find_slang_toolchain()
+        endif ()
+
+        if (NOT CATA_SLANGC_EXE)
+            message(FATAL_ERROR
+                "Slang shader sources require slangc. Set CATA_SLANG_ROOT or CATA_SLANGC, "
+                "or enable BUILD_SLANG.")
+        endif ()
+        if (NOT CATA_SLANG_CPP_TYPES_DIR)
+            message(FATAL_ERROR
+                "Slang CPU kernel wrappers require slang-cpp-types.h. Set CATA_SLANG_ROOT "
+                "or CATA_SLANG_INCLUDE_DIR, or enable BUILD_SLANG.")
+        endif ()
+
+        get_filename_component(CATA_SLANG_BIN_DIR "${CATA_SLANGC_EXE}" DIRECTORY)
+        if (WIN32)
+            set(CATA_SLANGC_COMMAND "${CATA_SLANGC_EXE}")
+        elseif (APPLE)
+            set(CATA_SLANGC_COMMAND
+                "${CMAKE_COMMAND}" -E env
+                "DYLD_LIBRARY_PATH=${CATA_SLANG_BIN_DIR}:$ENV{DYLD_LIBRARY_PATH}"
+                "${CATA_SLANGC_EXE}")
+        else ()
+            set(CATA_SLANGC_COMMAND
+                "${CMAKE_COMMAND}" -E env
+                "LD_LIBRARY_PATH=${CATA_SLANG_BIN_DIR}:$ENV{LD_LIBRARY_PATH}"
+                "${CATA_SLANGC_EXE}")
+        endif ()
+
+        message(STATUS "slangc: ${CATA_SLANGC_EXE}")
+
+        set(CATA_SLANG_CPU_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated/slang_cpu")
+
+        foreach (SLANG_SRC ${CATA_SLANG_SOURCES})
+            get_filename_component(SHADER_NAME ${SLANG_SRC} NAME_WE)
+            set(CPP_OUT "${CATA_SLANG_CPU_GENERATED_DIR}/${SHADER_NAME}.cpp")
+            add_custom_command(
+                OUTPUT "${CPP_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CATA_SLANG_CPU_GENERATED_DIR}"
+                COMMAND ${CATA_SLANGC_COMMAND}
+                        "${SLANG_SRC}"
+                        -entry cpu_main
+                        -stage compute
+                        -target cpp
+                        -DCATA_SLANG_CPU=1
+                        -o "${CPP_OUT}"
+                DEPENDS "${SLANG_SRC}"
+                COMMENT "Compiling ${SHADER_NAME}.slang -> CPU C++"
+                VERBATIM)
+            list(APPEND CATA_SLANG_CPU_OUTPUTS "${CPP_OUT}")
+        endforeach ()
+    endif ()
+
+    if (CATA_SLANG_CPU_OUTPUTS)
+        add_custom_target(cata_slang_cpu_kernels DEPENDS ${CATA_SLANG_CPU_OUTPUTS})
+    endif ()
+
     if (SHADERCROSS_EXE)
         set(CATA_SHADERS ON)
         message(STATUS "shadercross: ${SHADERCROSS_EXE}")
         set(CATA_SHADER_OUTPUTS "")
-        set(CATA_SLANG_CPU_OUTPUTS "")
 
         foreach (HLSL_SRC ${CATA_EFFECTIVE_HLSL_SOURCES})
             get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
@@ -606,172 +724,57 @@ if (CATA_SDL)
             endif ()
         endforeach ()
 
-        if (CATA_SLANG_SOURCES)
-            function(cata_find_slang_toolchain)
-                unset(CATA_SLANGC_EXE CACHE)
-                unset(CATA_SLANG_CPP_TYPES_DIR CACHE)
+        foreach (SLANG_SRC ${CATA_SLANG_SOURCES})
+            get_filename_component(SHADER_NAME ${SLANG_SRC} NAME_WE)
 
-                if (CATA_SLANGC)
-                    set(CATA_SLANGC_EXE "${CATA_SLANGC}" CACHE FILEPATH "Resolved slangc path." FORCE)
-                elseif (CATA_SLANG_ROOT)
-                    find_program(CATA_SLANGC_EXE
-                        NAMES slangc slangc.exe
-                        HINTS "${CATA_SLANG_ROOT}/bin"
-                        NO_DEFAULT_PATH)
-                else ()
-                    find_program(CATA_SLANGC_EXE NAMES slangc slangc.exe)
-                endif ()
+            set(SLANG_HLSL_OUT "${CMAKE_BINARY_DIR}/generated/slang_hlsl/${SHADER_NAME}.hlsl")
+            set(SPV_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
+            set(MSL_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
 
-                if (CATA_SLANG_INCLUDE_DIR)
-                    set(CATA_SLANG_CPP_TYPES_DIR "${CATA_SLANG_INCLUDE_DIR}" CACHE PATH
-                        "Resolved Slang generated C++ support header directory." FORCE)
-                elseif (CATA_SLANG_ROOT)
-                    find_path(CATA_SLANG_CPP_TYPES_DIR
-                        NAMES slang-cpp-types.h
-                        HINTS "${CATA_SLANG_ROOT}/include"
-                        NO_DEFAULT_PATH)
-                else ()
-                    find_path(CATA_SLANG_CPP_TYPES_DIR NAMES slang-cpp-types.h)
-                endif ()
-            endfunction()
+            add_custom_command(
+                OUTPUT "${SLANG_HLSL_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/generated/slang_hlsl"
+                COMMAND ${CATA_SLANGC_COMMAND}
+                        "${SLANG_SRC}"
+                        -entry main
+                        -stage compute
+                        -profile sm_6_0
+                        -target hlsl
+                        -o "${SLANG_HLSL_OUT}"
+                DEPENDS "${SLANG_SRC}"
+                COMMENT "Compiling ${SHADER_NAME}.slang -> HLSL"
+                VERBATIM)
 
-            cata_find_slang_toolchain()
+            add_custom_command(
+                OUTPUT "${SPV_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                COMMAND "${SHADERCROSS_EXE}" "${SLANG_HLSL_OUT}" -s hlsl -d spirv -t compute -o "${SPV_OUT}"
+                DEPENDS "${SLANG_HLSL_OUT}" ${SHADERCROSS_TARGET}
+                COMMENT "Compiling ${SHADER_NAME}.slang HLSL -> SPIR-V"
+                VERBATIM)
+            list(APPEND CATA_SHADER_OUTPUTS "${SPV_OUT}")
 
-            if (BUILD_SLANG AND NOT CATA_SLANGC_EXE)
-                set(CATA_SLANG_AUTO_ROOT "${CMAKE_BINARY_DIR}/_deps/slang/current")
-                set(CATA_SLANG_AUTO_DOWNLOAD_DIR "${CMAKE_BINARY_DIR}/_deps/slang/downloads")
-                message(STATUS "Slang not found; downloading prebuilt Slang to ${CATA_SLANG_AUTO_ROOT}")
+            add_custom_command(
+                OUTPUT "${MSL_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                COMMAND "${SHADERCROSS_EXE}" "${SLANG_HLSL_OUT}" -s hlsl -d msl -t compute -o "${MSL_OUT}"
+                DEPENDS "${SLANG_HLSL_OUT}" ${SHADERCROSS_TARGET}
+                COMMENT "Compiling ${SHADER_NAME}.slang HLSL -> MSL"
+                VERBATIM)
+            list(APPEND CATA_SHADER_OUTPUTS "${MSL_OUT}")
 
-                if (WIN32)
-                    find_program(CATA_POWERSHELL_EXE NAMES pwsh powershell powershell.exe REQUIRED)
-                    execute_process(
-                        COMMAND "${CATA_POWERSHELL_EXE}" -NoProfile -ExecutionPolicy Bypass
-                                -File "${CMAKE_SOURCE_DIR}/build-scripts/install-slang.ps1"
-                                -InstallDir "${CATA_SLANG_AUTO_ROOT}"
-                                -DownloadDir "${CATA_SLANG_AUTO_DOWNLOAD_DIR}"
-                        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-                        RESULT_VARIABLE CATA_SLANG_INSTALL_RESULT)
-                else ()
-                    execute_process(
-                        COMMAND "${CMAKE_COMMAND}" -E env
-                                "SLANG_INSTALL_DIR=${CATA_SLANG_AUTO_ROOT}"
-                                "SLANG_DOWNLOAD_DIR=${CATA_SLANG_AUTO_DOWNLOAD_DIR}"
-                                bash "${CMAKE_SOURCE_DIR}/build-scripts/install-slang.sh"
-                        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-                        RESULT_VARIABLE CATA_SLANG_INSTALL_RESULT)
-                endif ()
-
-                if (NOT CATA_SLANG_INSTALL_RESULT EQUAL 0)
-                    message(FATAL_ERROR "Slang download failed with exit code ${CATA_SLANG_INSTALL_RESULT}")
-                endif ()
-
-                set(CATA_SLANG_ROOT "${CATA_SLANG_AUTO_ROOT}" CACHE PATH
-                    "Directory containing a Slang release with bin/slangc and include/slang-cpp-types." FORCE)
-                cata_find_slang_toolchain()
-            endif ()
-
-            if (NOT CATA_SLANGC_EXE)
-                message(FATAL_ERROR
-                    "Slang shader sources require slangc. Set CATA_SLANG_ROOT or CATA_SLANGC, "
-                    "or enable BUILD_SLANG.")
-            endif ()
-            if (NOT CATA_SLANG_CPP_TYPES_DIR)
-                message(FATAL_ERROR
-                    "Slang CPU kernel wrappers require slang-cpp-types.h. Set CATA_SLANG_ROOT "
-                    "or CATA_SLANG_INCLUDE_DIR, or enable BUILD_SLANG.")
-            endif ()
-
-            get_filename_component(CATA_SLANG_BIN_DIR "${CATA_SLANGC_EXE}" DIRECTORY)
             if (WIN32)
-                set(CATA_SLANGC_COMMAND "${CATA_SLANGC_EXE}")
-            elseif (APPLE)
-                set(CATA_SLANGC_COMMAND
-                    "${CMAKE_COMMAND}" -E env
-                    "DYLD_LIBRARY_PATH=${CATA_SLANG_BIN_DIR}:$ENV{DYLD_LIBRARY_PATH}"
-                    "${CATA_SLANGC_EXE}")
-            else ()
-                set(CATA_SLANGC_COMMAND
-                    "${CMAKE_COMMAND}" -E env
-                    "LD_LIBRARY_PATH=${CATA_SLANG_BIN_DIR}:$ENV{LD_LIBRARY_PATH}"
-                    "${CATA_SLANGC_EXE}")
+                set(DXIL_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
+                add_custom_command(
+                    OUTPUT "${DXIL_OUT}"
+                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                    COMMAND "${SHADERCROSS_EXE}" "${SLANG_HLSL_OUT}" -s hlsl -d dxil -t compute -o "${DXIL_OUT}"
+                    DEPENDS "${SLANG_HLSL_OUT}" ${SHADERCROSS_TARGET}
+                    COMMENT "Compiling ${SHADER_NAME}.slang HLSL -> DXIL"
+                    VERBATIM)
+                list(APPEND CATA_SHADER_OUTPUTS "${DXIL_OUT}")
             endif ()
-
-            message(STATUS "slangc: ${CATA_SLANGC_EXE}")
-
-            set(CATA_SLANG_CPU_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated/slang_cpu")
-
-            foreach (SLANG_SRC ${CATA_SLANG_SOURCES})
-                get_filename_component(SHADER_NAME ${SLANG_SRC} NAME_WE)
-
-                set(SLANG_HLSL_OUT "${CMAKE_BINARY_DIR}/generated/slang_hlsl/${SHADER_NAME}.hlsl")
-                set(SPV_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
-                set(MSL_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
-
-                add_custom_command(
-                    OUTPUT "${SLANG_HLSL_OUT}"
-                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/generated/slang_hlsl"
-                    COMMAND ${CATA_SLANGC_COMMAND}
-                            "${SLANG_SRC}"
-                            -entry main
-                            -stage compute
-                            -profile sm_6_0
-                            -target hlsl
-                            -o "${SLANG_HLSL_OUT}"
-                    DEPENDS "${SLANG_SRC}"
-                    COMMENT "Compiling ${SHADER_NAME}.slang -> HLSL"
-                    VERBATIM)
-
-                add_custom_command(
-                    OUTPUT "${SPV_OUT}"
-                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
-                    COMMAND "${SHADERCROSS_EXE}" "${SLANG_HLSL_OUT}" -s hlsl -d spirv -t compute -o "${SPV_OUT}"
-                    DEPENDS "${SLANG_HLSL_OUT}" ${SHADERCROSS_TARGET}
-                    COMMENT "Compiling ${SHADER_NAME}.slang HLSL -> SPIR-V"
-                    VERBATIM)
-                list(APPEND CATA_SHADER_OUTPUTS "${SPV_OUT}")
-
-                add_custom_command(
-                    OUTPUT "${MSL_OUT}"
-                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
-                    COMMAND "${SHADERCROSS_EXE}" "${SLANG_HLSL_OUT}" -s hlsl -d msl -t compute -o "${MSL_OUT}"
-                    DEPENDS "${SLANG_HLSL_OUT}" ${SHADERCROSS_TARGET}
-                    COMMENT "Compiling ${SHADER_NAME}.slang HLSL -> MSL"
-                    VERBATIM)
-                list(APPEND CATA_SHADER_OUTPUTS "${MSL_OUT}")
-
-                if (WIN32)
-                    set(DXIL_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
-                    add_custom_command(
-                        OUTPUT "${DXIL_OUT}"
-                        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
-                        COMMAND "${SHADERCROSS_EXE}" "${SLANG_HLSL_OUT}" -s hlsl -d dxil -t compute -o "${DXIL_OUT}"
-                        DEPENDS "${SLANG_HLSL_OUT}" ${SHADERCROSS_TARGET}
-                        COMMENT "Compiling ${SHADER_NAME}.slang HLSL -> DXIL"
-                        VERBATIM)
-                    list(APPEND CATA_SHADER_OUTPUTS "${DXIL_OUT}")
-                endif ()
-
-                set(CPP_OUT "${CATA_SLANG_CPU_GENERATED_DIR}/${SHADER_NAME}.cpp")
-                add_custom_command(
-                    OUTPUT "${CPP_OUT}"
-                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CATA_SLANG_CPU_GENERATED_DIR}"
-                    COMMAND ${CATA_SLANGC_COMMAND}
-                            "${SLANG_SRC}"
-                            -entry cpu_main
-                            -stage compute
-                            -target cpp
-                            -DCATA_SLANG_CPU=1
-                            -o "${CPP_OUT}"
-                    DEPENDS "${SLANG_SRC}"
-                    COMMENT "Compiling ${SHADER_NAME}.slang -> CPU C++"
-                    VERBATIM)
-                list(APPEND CATA_SLANG_CPU_OUTPUTS "${CPP_OUT}")
-            endforeach ()
-        endif ()
-
-        if (CATA_SLANG_CPU_OUTPUTS)
-            add_custom_target(cata_slang_cpu_kernels DEPENDS ${CATA_SLANG_CPU_OUTPUTS})
-        endif ()
+        endforeach ()
 
         add_custom_target(cata_shaders ALL DEPENDS ${CATA_SHADER_OUTPUTS})
         if (SHADERCROSS_TARGET)
