@@ -521,8 +521,7 @@ if (CATA_SDL)
         get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
         if (WIN32)
             list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
-                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil"
-                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxbc")
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
         elseif (APPLE)
             list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
                  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
@@ -571,7 +570,6 @@ if (CATA_SDL)
 
             if (WIN32)
                 set(DXIL_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
-                set(DXBC_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxbc")
                 add_custom_command(
                     OUTPUT "${DXIL_OUT}"
                     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
@@ -580,14 +578,6 @@ if (CATA_SDL)
                     COMMENT "Compiling ${SHADER_NAME}.hlsl -> DXIL"
                     VERBATIM)
                 list(APPEND CATA_SHADER_OUTPUTS "${DXIL_OUT}")
-                add_custom_command(
-                    OUTPUT "${DXBC_OUT}"
-                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
-                    COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d dxbc -t ${STAGE} -o "${DXBC_OUT}"
-                    DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
-                    COMMENT "Compiling ${SHADER_NAME}.hlsl -> DXBC"
-                    VERBATIM)
-                list(APPEND CATA_SHADER_OUTPUTS "${DXBC_OUT}")
             endif ()
         endforeach ()
 
