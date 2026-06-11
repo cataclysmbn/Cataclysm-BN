@@ -42,7 +42,7 @@
 - The soundpack is installed!
 ## (optional) Get extra musics for the soundpack
 - If you want extra musics for this soundpack, click the link here https://github.com/leoCottret/cbn-leocottret-mods/tree/main/MUSICS for instructions
-## Enabling everything in game
+## Enable everything in game
 - To enable the soundpack in game, `Settings` > `Options` (`Enter`) >  
 <img width="1924" height="1079" alt="image" src="https://github.com/user-attachments/assets/f59a43c1-c92a-4a32-b3b1-111d15e7b43e" />
 
