@@ -107,6 +107,8 @@
 "prop_damage": 2,           // Multiplies the damage of weapon by amount (overrides damage field)
 "pierce" : 0,               // Armor piercing ability when fired
 "range" : 5,                // Range when fired
+"loudness": 145,            // Base ammunition loudness, measured in dB spl. Guns tend to float aroun 145-165dB. Default/Minimum of -1 to use the auto calculated value, maximum of 191dB spl.
+"speed": 200,               // Speed of the ammo in meters per second. Speed of sound is taken at 343 m/s, default value is 1000. If ammunition is faster than the speed of sound and does not have a volume of 0, it will make a small sonic boom. 
 "dispersion" : 0,           // Inaccuracy of ammo, measured in quarter-degrees
 "recoil" : 18,              // Recoil caused when firing
 "count" : 25,               // Number of rounds that spawn together
@@ -160,8 +162,8 @@ Armor can be defined like this:
 "power_armor" : false, // If this is a power armor item (those are special).
 "valid_mods" : ["steel_padded"], // List of valid clothing mods. Note that if the clothing mod doesn't have "restricted" listed, this isn't needed.
 "resistance": { "cut": 0, "bullet": 1000 }, // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
-"hearing_protection": 0,    // How much does this armor dampen sound hear by the wearer, in dB spl. 0 - 191. This will make all sounds harder to hear for the wearer, but increases the deafening volume threshold by twice its given amount. At a hearing_ability multiplier of one, heard sounds of 120dB+ can deafen the player, with garunteed temporary deafness at 140dB+. Use this instead of the "DEAF" or "PARTIAL_DEAF" flags. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
-"adv_hearing_protection": 0 // How much does this armor dampen deafening sounds heard by the wearer, in dB spl. 0 - 191. This will increase the deafening volume threshold by its given amount without dampening other sounds. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
+"hearing_protection": 0,    // How much does this armor dampen sound hear by the wearer, in dB spl. 0 - 191. This will make all sounds harder to hear for the wearer, including deafening sounds. At a hearing_ability multiplier of one, heard sounds of 120dB+ can deafen the player, with garunteed temporary deafness at 140dB+. Use this instead of the "DEAF" or "PARTIAL_DEAF" flags. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
+"adv_hearing_protection": 0 // How much does this armor dampen deafening sounds heard by the wearer, in dB spl. 0 - 191. This will reduce the damaging volume of deafening sounds by its given amount without dampening other sounds. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
 ```
 
 Alternately, every item (book, tool, gun, even food) can be used as armor if it has armor_data:
@@ -532,6 +534,8 @@ Guns can be defined like this:
 "barrel_volume": "30 mL",  // Amount of volume lost when the barrel is sawn. Approximately 250 ml per IRL inch is a decent approximation.
 "barrel_length": "30 mL",  // Depreciated alias of barrel_volume, which should be used instead for clarity.
 "valid_mod_locations": [ [ "accessories", 4 ], [ "grip", 1 ] ],  // The valid locations for gunmods and the mount of slots for that location.
+"loudness_modifier": 4,    // Optional field increasing or decreasing base ammo loudness, measured in dB spl.
+"speed": 100               // Optional field increasing or decreasing base ammo speed in meters per second. Speed of sound is taken at 343 meters per second.
 ```
 
 Alternately, every item (book, tool, armor, even food) can be used as gun if it has gun_data:
@@ -601,7 +605,8 @@ Gun mods can be defined like this:
 "mode_modifier": [ [ "AUTO", "auto", 5 ] ],       // Optional. Array of [mode_id, mode_name, burst_size, [...flags]?] arrays. Adds firing modes to the weapon. Optional flags array can include "MELEE", "REACH_ATTACK", etc.
 "damage_modifier": -1,         // Optional field increasing or decreasing base gun damage
 "dispersion_modifier": 15,     // Optional field increasing or decreasing base gun dispersion
-"loudness_modifier": 4,        // Optional field increasing or decreasing base guns loudness
+"loudness_modifier": 4,        // Optional field increasing or decreasing base ammo loudness, measured in dB spl.
+"speed": 100,                  // Optional field increasing or decreasing base ammo speed in meters per second. Speed of sound is taken at 343 meters per second.
 "range_modifier": 2,           // Optional field increasing or decreasing base gun range
 "recoil_modifier": -100,       // Optional field increasing or decreasing base gun recoil
 "ups_charges_modifier": 200,   // Optional field increasing or decreasing base gun UPS consumption (per shot) by adding given value

@@ -11,6 +11,7 @@
     "price_postapoc": "25 USD",
     "bashing": 5,
     "ammo": "380",
+    "loudness": -2,
     "min_cycle_recoil": 270,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 6 ] ],
     "magazines": [ [ "380", [ "mac11mag" ] ] ]
@@ -118,6 +119,7 @@
     "material": [ "plastic", "steel" ],
     "color": "dark_gray",
     "ammo": "380",
+    "loudness": -4,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 250,
     "handling": 30,

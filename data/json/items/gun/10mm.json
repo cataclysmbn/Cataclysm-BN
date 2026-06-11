@@ -36,6 +36,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "10mm",
+    "loudness": -4,
     "range": 20,
     "handling": 30,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },

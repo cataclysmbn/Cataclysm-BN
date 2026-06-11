@@ -2632,5 +2632,33 @@
     "max_duration": "10 m",
     "base_mods": { "pain_amount": [ 0 ], "pain_max": [ 1 ], "pain_max_val": [ 10 ] },
     "scaling_mods": { "pain_min": [ 1 ], "pain_max": [ 1 ], "pain_chance": [ 10 ], "pain_max_val": [ 10 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "hearing_loss_light",
+    "looks_like": "deaf",
+    "name": [ "Slight Hearing Loss", "Mild Hearing Loss", "Moderate Hearing Loss" ],
+    "desc": [
+      "Everything feels just a bit quieter.",
+      "Everything sounds quieter, and you occasionally hear a quiet ringing in your ears.",
+      "It is noticably harder to hear, and occasionally an annoying ringing fills your ears."
+    ],
+    "permanent": true,
+    "rating": "bad",
+    "max_intensity": 3
+  },
+  {
+    "type": "effect_type",
+    "id": "hearing_loss_heavy",
+    "looks_like": "deaf",
+    "name": [ "Heavy Hearing Loss", "Severe Hearing Loss", "Profound Hearing Loss" ],
+    "desc": [
+      "It is difficult to hear anything and a painfull ringing occasionally fills your ears.",
+      "It is very difficult to hear anything and a painfull ringing is frequently the only thing you can hear.",
+      "It is almost impossible to hear anything but gunshots "
+    ],
+    "permanent": true,
+    "rating": "bad",
+    "max_intensity": 3
   }
 ]

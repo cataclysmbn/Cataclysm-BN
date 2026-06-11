@@ -42,7 +42,7 @@
     "ranged_damage": { "damage_type": "electric", "amount": 10, "armor_penetration": 4 },
     "//2": "This is a pulse, not a laser. It's a point and shoot system, like a shotgun but even more so since this is a single mass.",
     "durability": 10,
-    "loudness": 20,
+    "loudness": 65,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 5 ] ],
     "ammo_effects": [ "NO_PENETRATE_OBSTACLES", "DRAW_AS_LINE", "WIDE", "EMP" ],
     "flags": [ "NEVER_JAMS", "NO_DROP", "NO_UNLOAD", "TRADER_AVOID" ]
@@ -64,7 +64,7 @@
     "ranged_damage": { "damage_type": "heat", "amount": 10, "armor_penetration": 4 },
     "dispersion": 10,
     "durability": 10,
-    "loudness": 7,
+    "loudness": 55,
     "ammo_effects": [ "LASER", "INCENDIARY" ],
     "flags": [ "NEVER_JAMS", "NO_DROP", "TRADER_AVOID", "FIRESTARTER" ],
     "use_action": { "type": "firestarter", "moves": 200 }
@@ -86,7 +86,7 @@
     "ranged_damage": { "damage_type": "electric", "amount": 16 },
     "dispersion": 10,
     "durability": 10,
-    "loudness": 10,
+    "loudness": 60,
     "ammo_effects": [ "NO_PENETRATE_OBSTACLES", "LIGHTNING", "BOUNCE" ],
     "flags": [ "NEVER_JAMS", "NO_DROP", "TRADER_AVOID" ]
   },
@@ -106,7 +106,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 6 },
     "dispersion": 600,
     "durability": 10,
-    "loudness": 5,
+    "loudness": 45,
     "ammo_effects": [ "SHOT" ],
     "flags": [ "NEVER_JAMS", "TRADER_AVOID" ]
   },
@@ -126,7 +126,7 @@
     "ranged_damage": { "damage_type": "heat", "amount": 22, "armor_penetration": 30 },
     "dispersion": 30,
     "durability": 10,
-    "loudness": 12,
+    "loudness": 65,
     "modes": [ [ "DEFAULT", "single shot", 1 ], [ "burst", "triple shot", 3 ] ],
     "reload": 500,
     "built_in_mods": [ "bio_powershot" ],

@@ -10,6 +10,7 @@
     "price_postapoc": "15 USD",
     "material": [ "steel", "wood" ],
     "ammo": "3006",
+    "loudness": -2,
     "weight": "4200 g",
     "volume": "3 L",
     "blackpowder_tolerance": 72,

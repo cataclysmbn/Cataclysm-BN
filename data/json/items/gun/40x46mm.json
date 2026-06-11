@@ -43,6 +43,7 @@
     "dispersion": 270,
     "durability": 9,
     "clip_size": 1,
+    "loudness": 12,
     "reload": 150
   },
   {
@@ -122,6 +123,7 @@
     "dispersion": 140,
     "durability": 9,
     "clip_size": 4,
+    "loudness": -20,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "brass catcher", 1 ],
@@ -189,6 +191,7 @@
     "durability": 6,
     "clip_size": 3,
     "reload": 150,
+    "loudness": -20,
     "flags": [ "NEVER_JAMS", "NO_UNWIELD", "TRADER_AVOID", "RELOAD_ONE" ]
   }
 ]

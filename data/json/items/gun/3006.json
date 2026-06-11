@@ -33,6 +33,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "3006",
+    "loudness": -2,
     "dispersion": 150,
     "min_cycle_recoil": 3420,
     "reload": 150,
@@ -65,6 +66,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "3006",
+    "loudness": -2,
     "dispersion": 120,
     "clip_size": 5,
     "barrel_volume": "1000 ml",
@@ -119,6 +121,7 @@
     "material": [ "steel", "plastic" ],
     "color": "brown",
     "ammo": "3006",
+    "loudness": -2,
     "dispersion": 90,
     "clip_size": 4,
     "barrel_volume": "750 ml",
@@ -138,6 +141,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "3006",
+    "loudness": 1,
     "ranged_damage": { "damage_type": "bullet", "amount": -2 },
     "barrel_volume": "1000 ml"
   }

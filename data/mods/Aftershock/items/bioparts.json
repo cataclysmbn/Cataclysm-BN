@@ -102,7 +102,7 @@
     "ranged_damage": { "damage_type": "stab", "amount": 19, "armor_penetration": 12 },
     "dispersion": 90,
     "durability": 7,
-    "loudness": 4,
+    "loudness": 8,
     "clip_size": 80,
     "ammo_effects": "ACIDBOMB",
     "flags": [ "NO_UNLOAD", "NON_FOULING" ]

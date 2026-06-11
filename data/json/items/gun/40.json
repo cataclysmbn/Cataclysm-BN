@@ -89,6 +89,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "40",
+    "loudness": -2,
     "barrel_volume": "750 ml"
   },
   {
@@ -145,7 +146,7 @@
     "min_cycle_recoil": 425,
     "handling": 20,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
-    "loudness": 25,
+    "loudness": -2,
     "barrel_volume": "250 ml",
     "valid_mod_locations": [
       [ "accessories", 3 ],
@@ -179,7 +180,6 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "dispersion": 620,
     "durability": 6,
-    "loudness": 25,
     "magazines": [ [ "40", [ "40_speedloader6" ] ] ],
     "reload": 285,
     "valid_mod_locations": [
@@ -291,6 +291,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "40",
+    "loudness": -5,
     "handling": 30,
     "range": 20,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
@@ -316,6 +317,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "40",
+    "loudness": -2,
     "dispersion": 260,
     "durability": 7,
     "handling": 40,

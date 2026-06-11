@@ -45,6 +45,7 @@
 #include "detached_ptr.h"
 #include "disease.h"
 #include "effect.h"
+#include "enums.h"
 #include "event.h"
 #include "event_bus.h"
 #include "field.h"
@@ -204,6 +205,8 @@ static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_took_prozac( "took_prozac" );
 static const efftype_id effect_took_xanax( "took_xanax" );
 static const efftype_id effect_webbed( "webbed" );
+static const efftype_id effect_hearing_loss_light( "hearing_loss_light" );
+static const efftype_id effect_hearing_loss_heavy( "hearing_loss_heavy" );
 
 static const itype_id itype_apparatus( "apparatus" );
 static const itype_id itype_beartrap( "beartrap" );
@@ -5510,6 +5513,8 @@ void Character::update_body( const time_duration &duration )
     update_stamina( to_turns<int>( duration ) );
     update_stomach( duration );
     recalculate_enchantment_cache();
+    // heal hearing loss.
+    update_hearing_loss( duration );
 
     int three_mins = calendar::ticks_between( duration, 3_minutes );
     for( ; three_mins > 0; three_mins-- ) {
@@ -5522,6 +5527,7 @@ void Character::update_body( const time_duration &duration )
     const int five_mins = calendar::ticks_between( duration, 5_minutes );
     if( five_mins > 0 ) {
         check_needs_extremes();
+        update_hearing_loss( duration, true );
         update_needs( five_mins );
         regen( five_mins );
     }
@@ -11602,9 +11608,387 @@ bool Character::avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const
     return myroll >= traproll;
 }
 
+void Character::handle_hearing_loss( const short &vol, const bool &hearing_protection_applied )
+{
+    short effective_vol = vol;
+
+    auto &rupture = hearing_loss_stats.ruptured_eardrums;
+
+    // If our eardrums are already ruptured, dont do any more damage.
+    // Technically sounds can still cause plenty more damage, but that is more complicated than a tile game needs to get.
+    // Or if we are for whatever reason immune to the deaf effect, jump out.
+    if( rupture || is_immune_effect( effect_deaf ) ) {
+        return;
+    }
+
+    if( !hearing_protection_applied ) {
+        // basic hearing protection counts for double its value when protecting against deafening, advanced counts for it value.
+        // Yes its a little jank, this way we can apply total basic hearing protection as a malus to all perceived sound volumes which makes things harder to hear.
+        const auto volume_mitigation = std::min( static_cast<int>( MAXIMUM_VOLUME_ATMOSPHERE ), std::max( 0,
+                                       dBspl_to_mdBspl( get_char_hearing_protection() ) + dBspl_to_mdBspl( get_char_hearing_protection(
+                                               true ) ) ) );
+
+        if( volume_mitigation >= effective_vol ) {
+            // Our mitigation is louder than the sound. Just jump out.
+            return;
+
+        } else {
+            // Apply our volume mitigation.
+            effective_vol -= volume_mitigation;
+
+        }
+
+    }
+
+    auto &temp_loss = hearing_loss_stats.hearing_loss_temp;
+    auto &long_loss = hearing_loss_stats.hearing_loss_longterm;
+    const auto &perm_loss = hearing_loss_stats.hearing_loss_permanant;
+
+    // A characters healthy modifies a couple things in here.
+    const int HLTH = static_cast<int>( std::round( healthy ) );
+
+    const auto &hab = hearing_ability();
+
+    // Eardrums generally rupture at or above 184 dB.
+    // Modify that with our healthy to reward players for taking care of their character.
+    const short &rupture_vol = 18400 + ( 2 * HLTH ) - std::round( 200 * ( hab - 1 ) );
+
+    // If you are not healthy, eardrums go pop easier.
+    if( effective_vol >= rupture_vol ) {
+
+        // 184 decibels is the threshold for rupturing an eardrum
+        rupture = true;
+
+        // Healthy can modify the time taken by + 1 day to - 2 days.
+        const auto &hlth_durmod = std::max( -1.0, ( HLTH * 0.01 ) ) * time_duration::from_days( 1_days );
+
+        const auto &total_dur = time_duration::from_days( 3_days ) - hlth_durmod;
+
+        // Try to deafen the character for 3 days, modified by our healthymod.
+        add_effect( effect_deaf, total_dur );
+
+        // We blew out the eardrums, might as well do the loudest hearing loss.
+        sfx::do_hearing_loss( 1000 );
+
+        if( !has_trait( trait_id( "NOPAIN" ) ) ) {
+
+            // If the character can feel pain
+            if( one_in( 3 ) ) {
+
+                add_msg_if_player( m_bad, _( "A brutaly sharp pain comes from your eardrums!" ) );
+
+            } else if( one_in( 2 ) ) {
+
+                add_msg_if_player( m_bad, _( "There is an excruciating pain in your ears!" ) );
+
+            } else {
+
+                add_msg_if_player( m_bad, _( "Your ear drums are suddenly in agony!" ) );
+
+            }
+            // Apply pain
+            mod_pain( rng( 8, 24 ) );
+
+        } else {
+            // If our character cannot feel pain.
+            if( one_in( 3 ) ) {
+
+                add_msg_if_player( m_bad, _( "Something tears inside your ears." ) );
+
+            } else if( one_in( 2 ) ) {
+
+                add_msg_if_player( m_bad, _( "You feel something pop inside your ears." ) );
+
+            } else {
+
+                add_msg_if_player( m_bad, _( "Your eardrums rupture." ) );
+
+            }
+        }
+        // Inform the player that they wont be able to hear anything.
+        if( one_in( 3 ) ) {
+
+            add_msg_if_player( m_bad, _( "The world is muffled and quiet..." ) );
+
+        } else if( one_in( 2 ) ) {
+
+            add_msg_if_player( m_bad, _( "The only thing you can hear is a sharp ringing." ) );
+
+        } else {
+
+            add_msg_if_player( m_bad, _( "A ringing fills your ears." ) );
+
+        }
+        // Player is already deaf, jump out.
+        return;
+    }
+    // Our permanant lossapplies directly to the deafening volume.
+    effective_vol -= perm_loss;
+    // Lets take our easy out if we have it, after we have checked if the eardrums are ruptured.
+    // 85 dB is the general threshold for hearing damage to occur. Higher volumes cause more damage over time.
+    // As this is a game, modify the threshold by our hearing multiplier and health.
+    // Hearing ability is already taking into account the current hearing impairment,
+
+    const short damage_threshold = 8500 + ( HLTH ) - ( 200 * ( hab - 1 ) );
+
+    if( effective_vol <= damage_threshold ) {
+        return;
+    }
+
+    // The safe exposure time threshold decreases dramatically as the volume of a increases.
+    // OSHA recommended maximum safe exposure time to sounds at 85 dB (A weighted) is 8 hours.
+    // Safe exposure time to sounds of 100dB (A weighted) is 15 minutes.
+    // Safe exposure time to sounds of 129 dB (A weighted) is 1 second.
+    // At or past 130dB, there is effectively no safe exposure duration.
+    // The threshold for pain is ~140dB which is the number
+
+    // For game purposes we assign temporary loss based on the volume of the sound
+    // And we have a chance to assign some long term loss as the volume of the sound increases.
+    // As this is a game, modify the threshold for instant damage by a characters hearing multiplier and health.
+    const short inst_dam_thresh = 13000 + ( HLTH ) - ( 200 * ( hab - 1 ) );
+
+    const short over_thresh = effective_vol - damage_threshold;
+    short temp_loss_gain = 0;
+    if( over_thresh <= 100 ) {
+
+        temp_loss_gain =  rng( 4, 12 );
+
+    } else {
+        // We want the amount of temp loss gained to fall off as other hearing loss accumulates.
+        temp_loss_gain = std::max( 4, ( over_thresh / 100 ) - ( temp_loss / 10 ) - long_loss );
+
+    }
+    temp_loss += temp_loss_gain;
+
+    const auto &hab_mod = std::max( 0, static_cast<int>( std::round( hab - 1 ) ) );
+
+    if( effective_vol < inst_dam_thresh ) {
+
+        // accumulate a little bit of long term loss, single to low double digit mdB.
+        // At this point we should have already accounted for our
+        if( rng( damage_threshold, inst_dam_thresh ) < effective_vol ) {
+
+            // add a bit of long term damage, worse if we have a good hearing ability.
+            long_loss += std::max( 1, ( mdBspl_to_dBspl( over_thresh ) + ( hab_mod ) ) - ( long_loss / 10 ) );
+
+        }
+
+    } else {
+
+        // If we hear a sound at or past our instand damage threshold then
+        long_loss += std::max( 1, ( ( over_thresh / 50 ) + ( hab_mod ) ) - ( long_loss / 10 ) );
+
+        // Chance to give the player some pain.
+        if( !has_trait( trait_id( "NOPAIN" ) ) && one_in( 3 ) ) {
+
+            // The threshold for pain is generally taken at 140dB,
+            if( effective_vol >= inst_dam_thresh + HEARING_LOSS_MODERATE_THRESHOLD ) {
+                add_msg_if_player( m_bad, _( "Your ears ache." ) );
+            } else {
+                add_msg_if_player( m_info, _( "Your ears hurt a little bit." ) );
+            }
+
+            if( get_pain() < 10 ) {
+
+                mod_pain( 1 );
+            }
+        }
+    }
+    // Cap temp loss at 100dB
+    temp_loss = std::min( dBspl_to_mdBspl( 100 ), temp_loss );
+
+    // Cap long loss at 100dB as well.
+    long_loss = std::min( dBspl_to_mdBspl( 100 ), long_loss );
+
+    // Reduce the threshold to deafen somewhat so that it actually happens.
+    if( !is_deaf() && total_hearing_loss() > HEARING_LOSS_SEVERE_THRESHOLD ) {
+        // If we have accumulated more than ~40dB of total hearing loss, the character is effectively deaf anyways. Deafen them so they know they dun goofed.
+        add_effect( effect_deaf, std::min( 3_minutes,
+                                           time_duration::from_seconds( mdBspl_to_dBspl( temp_loss + long_loss ) ) ) );
+    }
+
+}
+// Update and possibly recover hearing loss.
+void Character::update_hearing_loss( const time_duration &duration, const bool &longterm )
+{
+
+    const auto &HLTH = static_cast<int>( std::round( healthy * 0.01 ) );
+    if( longterm ) {
+        // We use sound absorption open field as it is a convenient constexpr equal to zero.
+        hearing_loss_stats.hearing_loss_longterm = std::max( static_cast<int>
+                ( SOUND_ABSORPTION_OPEN_FIELD ), hearing_loss_stats.hearing_loss_longterm - ( 3 + HLTH ) );
+
+        // We only count the long term loss for the tinnitus messaging.
+        const auto &cur_loss = hearing_loss_stats.hearing_loss_longterm;
+
+        if( cur_loss > HEARING_LOSS_SLIGHT_THRESHOLD && one_in( 3 ) ) {
+
+            if( cur_loss < HEARING_LOSS_MILD_THRESHOLD ) {
+
+                add_msg_if_player( m_neutral, _( "There is a quiet high pitched ringing in your ear." ) );
+                if( is_player() && !is_deaf() ) {
+                    // remove hearing loss at the end of every turn will end this sound.
+                    sfx::play_variant_sound( "environment", "deafness_tone_start", 20 );
+                }
+
+            } else if( cur_loss < HEARING_LOSS_MODERATE_THRESHOLD ) {
+
+                add_msg_if_player( m_neutral, _( "There is a high pitched ringing in your ear." ) );
+
+                if( get_pain() < 10 ) {
+                    mod_pain( rng( 0, 1 ) );
+                }
+                if( is_player() && !is_deaf() ) {
+                    sfx::play_variant_sound( "environment", "deafness_tone_start", 50 );
+                }
+
+            } else if( cur_loss < HEARING_LOSS_HEAVY_THRESHOLD ) {
+
+                add_msg_if_player( m_bad, _( "There is an annoying high pitched ringing in your ears." ) );
+
+                if( get_pain() < 10 ) {
+                    mod_pain( rng( 0, 2 ) );
+                }
+                if( is_player() && !is_deaf() ) {
+                    sfx::play_variant_sound( "environment", "deafness_tone_start", 75 );
+                }
+
+            } else if( cur_loss < HEARING_LOSS_SEVERE_THRESHOLD ) {
+
+                add_msg_if_player( m_bad,
+                                   _( "Everything goes quiet for a while as a painful high pitched ringing fills your ears." ) );
+
+                if( get_pain() < 15 ) {
+
+                    mod_pain( rng( 1, 2 ) );
+
+                }
+                if( is_player() ) {
+
+                    // As with the above, remove_hearing_loss will catch this at the end of the turn if the player is not deaf.
+                    sfx::do_hearing_loss( mdBspl_to_dBspl( cur_loss ) );
+
+                }
+
+            } else {
+
+                add_msg_if_player( m_bad,
+                                   _( "A painfully loud ringing fills your skull and drowns out all other noise." ) );
+
+                if( get_pain() < 20 ) {
+
+                    mod_pain( rng( 1, 2 ) );
+
+                }
+
+                if( is_player() ) {
+
+                    // remove_hearing_loss will catch this at the end of the turn if the player is not deaf.
+                    sfx::do_hearing_loss( mdBspl_to_dBspl( cur_loss ) );
+
+                }
+
+            }
+
+        }
+
+        return;
+
+    } else {
+
+        if( !is_deaf() && hearing_loss_stats.ruptured_eardrums ) {
+            // Deaf status has expired, fix our eardrums.
+            hearing_loss_stats.ruptured_eardrums = false;
+
+            if( one_in( 3 ) ) {
+
+                add_msg_if_player( m_good, _( "Your eardrums have healed!" ) );
+
+            } else if( one_in( 2 ) ) {
+
+                add_msg_if_player( m_good, _( "You start to hear sounds again, your eardrums have recovered." ) );
+
+            } else {
+
+                add_msg_if_player( m_good, _( "You can hear again." ) );
+
+            }
+
+        }
+
+        const int secondspassed = calendar::ticks_between( duration, 1_seconds );
+        // Heal temporary loss based on how many seconds have passed.
+        hearing_loss_stats.hearing_loss_temp = std::max( 0,
+                                               hearing_loss_stats.hearing_loss_temp - std::max( secondspassed, secondspassed * ( 2 + HLTH ) ) );
+
+    }
+    // TODO: figure out a cleaner way to do this than force resetting it every turn.
+    const auto tot_dB_loss = total_hearing_loss( false );
+
+    remove_effect( effect_hearing_loss_light );
+    remove_effect( effect_hearing_loss_heavy );
+
+    if( get_effect_int( effect_hearing_loss_light ) != 0 ||
+        get_effect_int( effect_hearing_loss_heavy ) != 0 || tot_dB_loss >= HEARING_LOSS_SLIGHT_THRESHOLD ) {
+        // Step through our cases, most likely to least.
+        if( tot_dB_loss < HEARING_LOSS_MILD_THRESHOLD ) {
+
+            add_effect( effect_hearing_loss_light, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        1, true );
+
+        } else if( tot_dB_loss < HEARING_LOSS_MODERATE_THRESHOLD ) {
+
+            add_effect( effect_hearing_loss_light, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        2, true );
+
+        } else if( tot_dB_loss < HEARING_LOSS_HEAVY_THRESHOLD ) {
+
+            add_effect( effect_hearing_loss_light, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        3, true );
+
+        } else if( tot_dB_loss < HEARING_LOSS_SEVERE_THRESHOLD ) {
+
+            add_effect( effect_hearing_loss_heavy, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        1, true );
+
+        } else if( tot_dB_loss < HEARING_LOSS_PROFOUND_THRESHOLD ) {
+
+            add_effect( effect_hearing_loss_heavy, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        2, true );
+
+        } else {
+
+            add_effect( effect_hearing_loss_heavy, time_duration::from_turns( 1 ), bodypart_str_id::NULL_ID(),
+                        3, true );
+
+        }
+    }
+}
+
+// Returns the total mdB spl perceived volume adjustment due to a character's hearing loss.
+short Character::total_hearing_loss( const bool &include_perm ) const
+{
+    int total_loss = hearing_loss_stats.hearing_loss_temp + hearing_loss_stats.hearing_loss_longterm +
+                     ( include_perm ? hearing_loss_stats.hearing_loss_permanant : SOUND_ABSORPTION_OPEN_FIELD );
+    total_loss = std::max( 0, std::min( static_cast<int>( MAXIMUM_VOLUME_ATMOSPHERE ), total_loss ) );
+    return static_cast<short>( total_loss );
+}
+
+// Returns the total mdB spl perceived volume adjustment due to a character's hearing loss.
+short Character::total_hearing_impairment() const
+{
+    return total_hearing_loss() + dBspl_to_mdBspl( get_char_hearing_protection() );
+}
+
+// Is the player deaf, or have enough cumulative hearing loss and basic hearing protection to count as hearing impaired?
+bool Character::is_hearing_impaired() const
+{
+    return is_deaf() || total_hearing_impairment() >= HEARING_LOSS_SLIGHT_THRESHOLD;
+}
+
 bool Character::can_hear( const tripoint_bub_ms &source, const int volume ) const
 {
-    if( is_deaf() ) {
+    if( is_deaf() || hearing_loss_stats.ruptured_eardrums ) {
         return false;
     }
 
@@ -11612,13 +11996,18 @@ bool Character::can_hear( const tripoint_bub_ms &source, const int volume ) cons
     if( source == bub_pos() ) {
         return true;
     }
+
     const auto cache = get_map().get_cache_ref( bub_pos().z() );
+
     const int dist = rl_dist( source, bub_pos() );
+
     const float volume_multiplier = hearing_ability();
+    // terrain absorption at the characters location.
     const auto tabsp = ( get_map().inbounds( bub_pos() ) ) ? cache.absorption_cache[cache.idx(
                            bub_pos().x(), bub_pos().y() )] : 0;
-    return ( ( 100 * volume ) - get_cumulative_vol_dist_loss( 3, dist,
-             tabsp ) ) >= ( SOUND_MINIMUM_VOLUME_FOR_PROPAGATION - ( ( volume_multiplier * 100 ) - 100 ) );
+
+    return ( ( dBspl_to_mdBspl( volume ) ) - get_cumulative_vol_dist_loss( 3, dist,
+             tabsp ) ) >= ( SOUND_MINIMUM_VOLUME_FOR_PROPAGATION - ( ( volume_multiplier * 500 ) - 500 ) );
 }
 
 float Character::hearing_ability() const
@@ -11642,9 +12031,11 @@ float Character::hearing_ability() const
         // Scale linearly up to 30 minutes
         volume_multiplier *= ( 30_minutes - get_effect_dur( effect_deaf ) ) / 30_minutes;
     }
-
-    if( has_effect( effect_earphones ) ) {
-        volume_multiplier *= .25;
+    // Acount for our hearing protection and hearing loss.
+    const auto hearing_dampening = total_hearing_loss() + dBspl_to_mdBspl(
+                                       get_char_hearing_protection() );
+    if( hearing_dampening > 0 ) {
+        volume_multiplier *= get_hearing_loss_hearing_ability_mult( hearing_dampening );
     }
 
     return volume_multiplier;

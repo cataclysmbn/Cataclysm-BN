@@ -20,6 +20,7 @@
     "count": 4,
     "stack_size": 1,
     "loudness": 90,
+    "speed": 250,
     "effects": [ "COOKOFF", "AMMO_84x246_HE", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {

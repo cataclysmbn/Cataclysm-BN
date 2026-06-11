@@ -15,6 +15,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "45",
+    "loudness": -2,
     "handling": 40,
     "dispersion": 280,
     "durability": 7,
@@ -40,6 +41,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "45",
+    "loudness": -2,
     "ranged_damage": { "damage_type": "bullet", "amount": 1 },
     "dispersion": 240,
     "min_cycle_recoil": 540,
@@ -99,6 +101,7 @@
     "material": "steel",
     "color": "dark_gray",
     "ammo": "45",
+    "loudness": -2,
     "handling": 25,
     "dispersion": 520,
     "durability": 7,
@@ -123,6 +126,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "45",
+    "loudness": -2,
     "barrel_volume": "750 ml"
   },
   {
@@ -145,7 +149,7 @@
     "blackpowder_tolerance": 24,
     "min_cycle_recoil": 456,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
-    "loudness": 25,
+    "loudness": -2,
     "barrel_volume": "250 ml",
     "handling": 20,
     "valid_mod_locations": [
@@ -183,7 +187,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 620,
     "durability": 7,
-    "loudness": 25,
+    "loudness": 1,
     "clip_size": 5
   },
   {
@@ -200,6 +204,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "45",
+    "loudness": -2,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 360,
     "durability": 7,
@@ -303,6 +308,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "45",
+    "loudness": -6,
     "handling": 30,
     "range": 20,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },

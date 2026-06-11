@@ -8,6 +8,7 @@
     "weight": "4100 g",
     "price": "230 USD",
     "price_postapoc": "30 USD",
+    "loudness": 4,
     "relative": {
       "volume": "-500 ml",
       "range": -6,
@@ -54,6 +55,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "762R",
+    "loudness": -2,
     "range": 3,
     "dispersion": 90,
     "durability": 10,

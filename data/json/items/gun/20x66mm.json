@@ -20,6 +20,7 @@
     "dispersion": 285,
     "durability": 9,
     "clip_size": 5,
+    "loudness": -2,
     "barrel_volume": "750 ml",
     "valid_mod_locations": [
       [ "accessories", 4 ],
@@ -89,6 +90,7 @@
     "durability": 9,
     "default_mods": [ "pistol_stock" ],
     "handling": 25,
+    "loudness": 2,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],

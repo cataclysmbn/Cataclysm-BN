@@ -12,6 +12,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "300blk",
+    "loudness": 2,
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "dispersion": 150,
     "min_cycle_recoil": 1700,
@@ -97,6 +98,7 @@
     "copy-from": "ar15",
     "type": "GUN",
     "name": { "str": "AR-15" },
+    "loudness": -2,
     "default_mods": [ "retool_ar15_300blk" ]
   }
 ]

@@ -14,6 +14,7 @@
     "material": [ "steel", "plastic" ],
     "color": "light_gray",
     "ammo": "44",
+    "loudness": -1,
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "durability": 7,
     "min_cycle_recoil": 1413,
@@ -47,6 +48,7 @@
     "material": [ "steel", "wood" ],
     "color": "dark_gray",
     "ammo": "44",
+    "loudness": -6,
     "handling": 30,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 180,
@@ -82,6 +84,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "44",
+    "loudness": -4,
     "barrel_volume": "750 ml"
   },
   {
