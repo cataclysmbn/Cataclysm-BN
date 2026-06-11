@@ -1,5 +1,6 @@
 #include "character_turn.h"
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -183,8 +184,9 @@ void Character::process_turn()
 
     for( bionic &i : get_bionic_collection() ) {
         if( i.incapacitated_time > 0_turns ) {
-            i.incapacitated_time -= 1_turns;
-            if( i.incapacitated_time == 0_turns ) {
+            i.incapacitated_time -= action_time_scale::calendar_duration_this_tick();
+            if( i.incapacitated_time <= 0_turns ) {
+                i.incapacitated_time = 0_turns;
                 add_msg_if_player( m_bad, _( "Your %s bionic comes back online." ), i.info().name );
             }
         }
@@ -222,11 +224,11 @@ void Character::process_turn()
 
     // Handle player and NPC morale ticks
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         update_morale();
     }
 
-    if( calendar::once_every( 9_turns ) ) {
+    if( action_time_scale::once_every_this_tick( 9_turns ) ) {
         check_and_recover_morale();
     }
 
@@ -310,13 +312,13 @@ void Character::process_turn()
         const tripoint_abs_omt ompos = abs_omt_pos();
         const point_abs_omt pos = ompos.xy();
         if( !overmap_time.contains( pos ) ) {
-            overmap_time[pos] = 1_turns;
+            overmap_time[pos] = action_time_scale::calendar_duration_this_tick();
         } else {
-            overmap_time[pos] += 1_turns;
+            overmap_time[pos] += action_time_scale::calendar_duration_this_tick();
         }
     }
     // Decay time spent in other overmap tiles.
-    if( !is_npc() && calendar::once_every( 1_hours ) ) {
+    if( !is_npc() && action_time_scale::once_every_this_tick( 1_hours ) ) {
         const tripoint_abs_omt ompos = abs_omt_pos();
         const time_point now = calendar::turn;
         time_duration decay_time = 0_days;
@@ -355,6 +357,11 @@ void Character::process_turn()
             it++;
         }
     }
+}
+
+auto Character::action_move_factor() const -> int
+{
+    return action_time_scale::player_tick_action_factor();
 }
 
 void Character::process_one_effect( effect &it, bool is_new )
@@ -779,7 +786,7 @@ void Character::reset_stats()
     // Apply static martial arts buffs
     martial_arts_data->ma_static_effects( *this );
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         character_funcs::update_mental_focus( *this );
     }
 

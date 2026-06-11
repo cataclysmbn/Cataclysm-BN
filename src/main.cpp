@@ -60,6 +60,7 @@ class ui_adaptor;
 #   endif
 #   include <SDL3/SDL.h>
 #   include "compute/gpu_platform.h"
+#   include "platform/sdl_video.h"
 #endif
 #if defined(TILES)
 #   include <SDL3/SDL_main.h>
@@ -778,12 +779,23 @@ int main( int argc, char *argv[] )
     get_options().save();
     set_language(); // Have to set locale before initializing ncurses
 #if defined(CATA_SDL)
+    switch( use_offscreen_video_driver_for_headless_sdl() ) {
+        case offscreen_sdl_hint_result::applied:
+            DebugLog( DL::Info, DC::Main ) << "SDL video driver set to offscreen for headless curses";
+            break;
+        case offscreen_sdl_hint_result::failed:
+            DebugLog( DL::Warn, DC::Main ) << "SDL video driver offscreen hint failed: " << SDL_GetError();
+            break;
+        case offscreen_sdl_hint_result::skipped:
+            break;
+    }
     if( !init_sdl_platform( !test_mode ) ) {
         return 1;
     }
 #endif
 #elif defined(CATA_SDL)
-    if( test_mode && !init_sdl_platform( false ) ) {
+    if( test_mode && lua_doc_output_path.empty() && lua_types_output_path.empty() &&
+        !init_sdl_platform( false ) ) {
         return 1;
     }
 #endif
@@ -809,8 +821,10 @@ int main( int argc, char *argv[] )
     }
 
 #if defined(CATA_SDL)
-    cata_gpu::init();
-    atexit( cata_gpu::shutdown );
+    if( lua_doc_output_path.empty() && lua_types_output_path.empty() ) {
+        cata_gpu::init();
+        atexit( cata_gpu::shutdown );
+    }
 #endif
 
 #if defined(TILES)
@@ -850,20 +864,6 @@ int main( int argc, char *argv[] )
         exit_handler( -999 );
     }
 
-    // Now we do the actual game.
-
-    game_ui::init_ui();
-
-    catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
-
-#if !defined(_WIN32)
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = signal_handler;
-    sigemptyset( &sigIntHandler.sa_mask );
-    sigIntHandler.sa_flags = 0;
-    sigaction( SIGINT, &sigIntHandler, nullptr );
-#endif
-
     DebugLog( DL::Info, DC::Main ) << "LAPI version: " << cata::get_lapi_version_string();
     cata::startup_lua_test();
 
@@ -891,6 +891,20 @@ int main( int argc, char *argv[] )
         }
         return 0;
     }
+
+    // Now we do the actual game.
+
+    game_ui::init_ui();
+
+    catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
+
+#if !defined(_WIN32)
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = signal_handler;
+    sigemptyset( &sigIntHandler.sa_mask );
+    sigIntHandler.sa_flags = 0;
+    sigaction( SIGINT, &sigIntHandler, nullptr );
+#endif
 
     prompt_select_lang_on_startup();
     replay_buffered_debugmsg_prompts();

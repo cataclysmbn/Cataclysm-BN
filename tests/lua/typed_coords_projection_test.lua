@@ -1,6 +1,9 @@
 local abs_ms = coords.tripoint_abs_ms(25, 26, 2)
 local abs_omt = abs_ms:to_omt()
 local named_abs_omt = TripointAbsMs.new(25, 26, 2):to_omt()
+local named_bub_point = PointBubMs.new(Point.new(3, 4))
+local named_abs_tripoint = TripointAbsMs.new(Point.new(5, 6), 7)
+local named_abs_tripoint_from_typed_point = TripointAbsMs.new(PointAbsMs.new(8, 9), 10)
 
 local abs_sm = coords.tripoint_abs_sm(361, 2, -1)
 local quotient, remainder = coords.project_remain_om(abs_sm)
@@ -12,6 +15,9 @@ test_data["remain_quotient"] = tostring(quotient)
 test_data["remain_remainder"] = tostring(remainder)
 test_data["combined"] = tostring(combined)
 test_data["distance"] = coords.rl_dist(abs_sm, combined + coords.point_rel_sm(3, 0))
+test_data["named_bub_point"] = tostring(named_bub_point)
+test_data["named_abs_tripoint"] = tostring(named_abs_tripoint)
+test_data["named_abs_tripoint_from_typed_point"] = tostring(named_abs_tripoint_from_typed_point)
 
 -- Validate the project_remain_omt example used in the typed-coordinates documentation.
 -- Input: abs_ms(25, 26, 2).  Map squares per omt = 24.

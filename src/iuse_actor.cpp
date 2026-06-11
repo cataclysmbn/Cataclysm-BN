@@ -16,6 +16,7 @@
 #include <vector>
 #include <ranges>
 
+#include "action_time_scale.h"
 #include "action.h"
 #include "activity_handlers.h"
 #include "addiction.h"
@@ -2602,11 +2603,11 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint_b
     std::string desc = "music";
     /** @EFFECT_PER increases morale bonus when playing an instrument */
     const int morale_effect = fun + fun_bonus * p.per_cur;
-    if( morale_effect >= 0 && calendar::once_every( description_frequency ) ) {
+    if( morale_effect >= 0 && action_time_scale::once_every_this_tick( description_frequency ) ) {
         if( !player_descriptions.empty() && p.is_player() ) {
             desc = _( random_entry( player_descriptions ) );
         }
-    } else if( morale_effect < 0 && calendar::once_every( 1_minutes ) ) {
+    } else if( morale_effect < 0 && action_time_scale::once_every_this_tick( 1_minutes ) ) {
         // No musical skills = possible morale penalty
         if( p.is_player() ) {
             desc = _( "You produce an annoying sound" );
@@ -5899,7 +5900,7 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &p
 
             return 0;
         } else {
-            if( calendar::once_every( 1_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                 it.ammo_consume( charges_per_minute, pos );
             }
             it.set_var( "COOKTIME", cooktime );
@@ -7273,7 +7274,7 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
     g->travel_to_dimension( target_dim_id, destination, std::nullopt, load_pos );
 
     if( abs_pos.has_value() ) {
-        p.setpos( abs_to_bub( abs_pos.value() ) );
+        p.setpos( abs_pos.value() );
     }
 }
 
@@ -7510,13 +7511,12 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     // Only make the first entrance safe. If the player makes it dangerous later, that's on them.
     // No sneaky teleporting shenaneigans.
     if( new_pd ) {
-        const auto safe = find_safe_spawn( get_map().abs_to_bub( pd.entry_point ) );
-        pd.entry_point = get_map().bub_to_abs( safe );
+        const auto &here = get_map();
+        const auto safe = find_safe_spawn( abs_to_map_local( here, pd.entry_point ) );
+        pd.entry_point = map_local_to_abs( here, safe );
     }
 
-    // The map is already loaded centered on the destination (via load_pos parameter),
-    // so local coordinates are valid without needing a map shift first.
-    p.setpos( abs_to_bub( pd.entry_point ) );
+    p.setpos( pd.entry_point );
 
     // Single update_map call at the final position
     g->update_map( p );
@@ -7555,7 +7555,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     if( !required_portal_flag.empty() ) {
         portal_tile *nearby_portal = nullptr;
         for( const tripoint_bub_ms &adj : get_map().points_in_radius( p.bub_pos(), 1 ) ) {
-            auto abs = tripoint_abs_ms( get_map().bub_to_abs( adj ) );
+            auto abs = bub_to_abs( adj );
             auto *candidate = active_tiles::furn_at<portal_tile>( abs );
             if( candidate && candidate->linkable_item_flag == required_portal_flag &&
                 candidate->linked ) {
@@ -7602,7 +7602,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
             const auto preload_point = project_to<coords::sm>( origin_pos ) - point_rel_sm( g_half_mapsize,
                                        g_half_mapsize );
             g->travel_to_dimension( origin_dim, wt_id, std::nullopt, preload_point );
-            p.setpos( get_map().abs_to_bub( origin_pos ) );
+            p.setpos( origin_pos );
             g->update_map( p );
             it.erase_var( "origin_stored" );
             return charges_per_use;
@@ -7629,7 +7629,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     const auto dest_sm = project_to<coords::sm>( linked_pos ) -
                          tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
     g->travel_to_dimension( linked_dim, wt_id, std::nullopt, dest_sm );
-    p.setpos( get_map().abs_to_bub( linked_pos ) );
+    p.setpos( linked_pos );
     g->update_map( p );
     return charges_per_use;
 }
@@ -7663,7 +7663,9 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     g->travel_to_dimension( return_dimension_id, return_world_type, std::nullopt,
                             return_preload_point );
 
-    p.setpos( find_safe_spawn( get_map().abs_to_bub( return_point ) ) );
+    const auto &here = get_map();
+    const auto safe = find_safe_spawn( abs_to_map_local( here, return_point ) );
+    p.setpos( map_local_to_abs( here, safe ) );
 
     // Single update_map call at the final position
     g->update_map( p );
@@ -7797,22 +7799,28 @@ RGBColorPair color_from_vars( const data_vars::data_set &vars )
     return RGBColorPair{.bg = p_bg, .fg = p_fg};
 }
 
-void color_to_vars(
+void colors_to_vars(
     data_vars::data_set &vars, const RGBColorPair &col,
     const iuse_paint_stuff_config::paint_layer layer )
 {
     switch( layer ) {
         default:
         case iuse_paint_stuff_config::both:
-            vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
-            vars.erase( TINT_COLOR_FG_VAR_NAME );
-            vars.erase( TINT_COLOR_BG_VAR_NAME );
+            if( col.fg == col.bg ) {
+                vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
+                vars.erase( TINT_COLOR_FG_VAR_NAME );
+                vars.erase( TINT_COLOR_BG_VAR_NAME );
+            } else {
+                vars.erase( TINT_COLOR_VAR_NAME );
+                vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
+                vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col.bg );
+            }
             break;
         case iuse_paint_stuff_config::fg:
             vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
             break;
         case iuse_paint_stuff_config::bg:
-            vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.bg );
+            vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col.bg );
             break;
     }
 }
@@ -7864,7 +7872,7 @@ struct item_painter {
 
     static auto set_color( const value_type it, const RGBColorPair &col,
                            const paint_layer layer ) -> bool {
-        color_to_vars( it->item_vars(), col, layer );
+        colors_to_vars( it->item_vars(), col, layer );
         return true;
     }
 };
@@ -8002,7 +8010,7 @@ struct ter_furn_painter {
 
     static bool set_color( const tripoint_bub_ms &p, const RGBColorPair &col,
                            const paint_layer layer ) {
-        color_to_vars( *get_vars( p ), col, layer );
+        colors_to_vars( *get_vars( p ), col, layer );
         return true;
     }
 };
@@ -8445,8 +8453,9 @@ void iuse_paint_stuff_config::set_color( item &it )
     lst.query();
 
     if( lst.ret >= 0 ) {
-        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR,
-                              *RGBColor::try_parse( lst.entries[lst.ret].txt ) );
+        const auto col = RGBColor::try_parse( lst.entries[lst.ret].txt ).value_or( RGBColor{} );
+        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, col );
+        colors_to_vars( it.item_vars(), RGBColorPair{.bg = col, .fg = col}, both );
     }
 }
 

@@ -1,6 +1,7 @@
 #include "options.h"
 
 #include <algorithm>
+#include <array>
 #include <locale>
 #include <cfloat>
 #include <climits>
@@ -2305,6 +2306,17 @@ void options_manager::add_options_graphics()
        );
 #endif
 
+#if defined(TILES)
+    add( "TEXTURE_STREAMING", graphics, translate_marker( "Texture Streaming" ),
+         translate_marker( "Use texture-streaming instead of render-to-texture for dynamic graphics. Requires restart." ),
+    {
+        { "auto", translate_marker( "Auto" ) },
+        { "on", translate_marker( "Enable" ) },
+        { "off", translate_marker( "Disable" ) }
+    },
+    "auto" );
+#endif
+
 #if defined(SDL_HINT_RENDER_BATCHING)
     add( "RENDER_BATCHING", graphics, translate_marker( "Allow render batching" ),
          translate_marker( "Use render batching for 2D render API to make it more efficient.  Requires restart." ),
@@ -3165,10 +3177,54 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
-    add( "MONSTER_SPEED", world_default, translate_marker( "Monster speed percentage" ),
-         translate_marker( "Determines the movement rate of monsters.  A higher value increases monster speed and a lower reduces it.  Requires world reset." ),
-         1, 1000, 100, COPT_NO_HIDE, "%i%%"
-       );
+    struct time_scale_option {
+        const char *id;
+        const char *name;
+        const char *description;
+    };
+
+    static constexpr auto time_scale_max_percent = 10000;
+    static constexpr auto time_scale_options = std::array<time_scale_option, 7> {{
+            {
+                "TIME_ACTION_SCALE", translate_marker( "Global action speed percentage" ),
+                translate_marker( "Determines the baseline action rate for creatures and activities.  A higher value allows more actions per in-game second, while a lower value makes calendar time pass faster relative to actions." )
+            },
+            {
+                "PLAYER_ACTION_SCALE", translate_marker( "Player action speed percentage" ),
+                translate_marker( "Determines the player's action rate as a percentage of the global action speed.  A higher value allows more player actions per in-game second and a lower value allows fewer." )
+            },
+            {
+                "NPC_ACTION_SCALE", translate_marker( "NPC action speed percentage" ),
+                translate_marker( "Determines NPC action rate as a percentage of the global action speed.  A higher value allows more NPC actions per in-game second and a lower value allows fewer." )
+            },
+            {
+                "ACTIVITY_PROGRESS_SCALE", translate_marker( "Activity progress percentage" ),
+                translate_marker( "Determines long activity and crafting progress as a percentage of the global action speed.  A higher value completes activities faster per in-game second and a lower value completes them slower." )
+            },
+            {
+                "VEHICLE_CONTROL_SCALE", translate_marker( "Vehicle control speed percentage" ),
+                translate_marker( "Determines driver control action rate as a percentage of the global action speed without changing physical vehicle movement.  A higher value allows more steering, braking, and throttle inputs per in-game second and a lower value allows fewer." )
+            },
+            {
+                "OVERMAP_HORDE_SCALE", translate_marker( "Overmap horde speed percentage" ),
+                translate_marker( "Determines overmap horde movement speed as a percentage of global action speed and monster speed.  A higher value makes hordes travel faster over the overmap and a lower value makes them slower." )
+            },
+            {
+                "MONSTER_SPEED", translate_marker( "Monster speed percentage" ),
+                translate_marker( "Determines monster action rate as a percentage of the global action speed.  A higher value allows more monster actions per in-game second and a lower value allows fewer." )
+            },
+        }
+    };
+
+    add_option_group( world_default, Group( "time_scaling",
+                                            to_translation( "Time Scaling" ),
+                                            to_translation( "Configure experimental calendar and action-rate scaling." ) ),
+    [&]( const std::string & page_id ) {
+        for( const auto &option : time_scale_options ) {
+            add( option.id, page_id, option.name, option.description,
+                 1, time_scale_max_percent, 100, COPT_NO_HIDE, "%i%%" );
+        }
+    } );
 
     add( "MONSTER_RESILIENCE", world_default,
          translate_marker( "Monster resilience percentage" ),
@@ -4410,6 +4466,14 @@ void options_manager::cache_to_globals()
         preload_config::set_compute_accel(
             preload_config::compute_accel_from_string(
                 ::get_option<std::string>( "COMPUTE_ACCELERATION" ) ) );
+    }
+#endif
+
+#if defined(TILES)
+    if( options.contains( "TEXTURE_STREAMING" ) ) {
+        preload_config::set_texture_streaming(
+            preload_config::tristate_from_string(
+                ::get_option<std::string>( "TEXTURE_STREAMING" ) ) );
     }
 #endif
 }

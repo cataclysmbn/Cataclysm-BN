@@ -722,11 +722,11 @@ void game::chat()
             const auto &to = p.value();
             if( npcselect == follower_count ) {
                 for( npc *them : followers ) {
-                    them->goto_to_this_pos = here.bub_to_abs( to );
+                    them->goto_to_this_pos = bub_to_abs( to );
                 }
                 yell_msg = _( "Everyone move there!" );
             } else {
-                followers[npcselect]->goto_to_this_pos = here.bub_to_abs( to );
+                followers[npcselect]->goto_to_this_pos = bub_to_abs( to );
                 yell_msg = string_format( _( "Move there, %s!" ), followers[npcselect]->get_name() );
             }
             break;
@@ -886,7 +886,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
         return;
     }
 
-    const auto s_abs_pos = here.bub_to_abs( sound.origin );
+    const auto s_abs_pos = bub_to_abs( sound.origin );
     const std::string &description = sound.description.empty() ? _( "a noise" ) : sound.description;
 
     const auto &source_monster = sound.from_monster;

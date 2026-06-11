@@ -6,12 +6,14 @@
 #include <memory>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "activity_type.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_turn.h"
@@ -65,7 +67,31 @@ static const activity_id ACT_PICKAXE( "ACT_PICKAXE" );
 static const activity_id ACT_READ( "ACT_READ" );
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
 static const activity_id ACT_VEHICLE( "ACT_VEHICLE" );
+static const activity_id ACT_TRY_SLEEP( "ACT_TRY_SLEEP" );
+static const activity_id ACT_WAIT( "ACT_WAIT" );
+static const activity_id ACT_WAIT_NPC( "ACT_WAIT_NPC" );
 static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
+static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
+
+auto activity_uses_calendar_duration_progress( const activity_id &id ) -> bool
+{
+    return id == ACT_TRY_SLEEP || id == ACT_WAIT || id == ACT_WAIT_NPC ||
+           id == ACT_WAIT_STAMINA || id == ACT_WAIT_WEATHER;
+}
+
+static auto progress_per_calendar_turn_for( const player_activity &activity ) -> int
+{
+    return activity_uses_calendar_duration_progress( activity.id() ) ?
+           action_time_scale::base_moves_per_turn :
+           activity.speed.calendar_moves_per_turn();
+}
+
+static auto progress_per_tick_for( const player_activity &activity ) -> int
+{
+    return activity_uses_calendar_duration_progress( activity.id() ) ?
+           action_time_scale::calendar_progress_per_tick() :
+           action_time_scale::activity_progress_per_tick();
+}
 
 player_activity::player_activity() : type( activity_id::NULL_ID() ) { }
 
@@ -293,6 +319,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
         */
         std::string target = "";
         std::string progress_desc = "Progress: ";
+        const auto progress_per_calendar_turn = progress_per_calendar_turn_for( *this );
 
         /*
          * TODO progress for targets
@@ -315,8 +342,9 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += string_format( _( "  - Processing %s out of %s\n" ), actor->progress.get_index(),
                                                     actor->progress.get_total_tasks() );
                     progress_desc += string_format( _( "  - Estimated time: %s\n" ),
-                                                    to_string( time_duration::from_turns( actor->progress.get_moves_left() /
-                                                            speed.moves_per_turn() ) ) );
+                                                    to_string( time_duration::from_turns(
+                                                            action_time_scale::turns_for_progress( actor->progress.get_moves_left(),
+                                                                    progress_per_calendar_turn ) ) ) );
                     progress_desc += " - Current: ";
                 }
                 progress_desc += string_format( "%.1f%%\n",
@@ -326,8 +354,9 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += "  - ";
                 }
                 progress_desc += string_format( _( "Time left: %s\n" ),
-                                                to_string( time_duration::from_turns( actor->progress.front().moves_left /
-                                                        speed.moves_per_turn() ) ) );
+                                                to_string( time_duration::from_turns(
+                                                        action_time_scale::turns_for_progress( actor->progress.front().moves_left,
+                                                                progress_per_calendar_turn ) ) ) );
             }
         } else {
             if( !targets.empty() && targets.front().is_accessible() && !targets.front().is_destroyed() ) {
@@ -339,7 +368,9 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
             }
             if( moves_left > 0 ) {
                 progress_desc += string_format( _( "Time left: %s\n" ),
-                                                to_string( time_duration::from_turns( moves_left / speed.moves_per_turn() ) ) );
+                                                to_string( time_duration::from_turns(
+                                                        action_time_scale::turns_for_progress( moves_left,
+                                                                progress_per_calendar_turn ) ) ) );
             }
             if( moves_total <= 0 && moves_left <= 0 ) {
                 progress_desc = "";
@@ -465,7 +496,7 @@ void player_activity::do_turn( player &p )
     if( *this && type->will_refuel_fires() ) {
         try_fuel_fire( *this, p );
     }
-    if( calendar::once_every( 30_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
         no_food_nearby_for_auto_consume = false;
         no_drink_nearby_for_auto_consume = false;
     }
@@ -500,57 +531,46 @@ void player_activity::do_turn( player &p )
     /*
      * Moves block
      * This might finish the activity (set it to null)
-     * Leave as is till full migration to actors for "NEITHER"
+    * Leave as is till full migration to actors for "NEITHER"
     */
     if( !type->special() ) {
-        if( type->complex_moves() ) {
-            if( calendar::once_every( 1_minutes ) ) {
-                calc_moves( p );
-            }
-
-            int moves_total = speed.moves_per_turn();
-
-            //fancy new system
+        const auto consume_activity_progress = [&]( const int moves_total,
+        const bool complex_partial_cost ) {
             if( actor ) {
                 if( actor->progress.get_moves_left() >= moves_total ) {
-                    actor->progress.mod_moves_left( - moves_total );
+                    actor->progress.mod_moves_left( -moves_total );
                     p.moves = 0;
                 } else {
-                    p.moves -= std::round( ( moves_total - actor->progress.get_moves_left() ) * 100.0f / moves_total );
+                    const auto progress_cost = complex_partial_cost ?
+                                               moves_total - actor->progress.get_moves_left() :
+                                               actor->progress.get_moves_left();
+                    p.moves -= std::round( progress_cost * 100.0f / moves_total );
                     actor->progress.mod_moves_left( -actor->progress.get_moves_left() );
                 }
-            }
-            //old one
-            else {
+            } else {
                 if( moves_left >= moves_total ) {
                     moves_left -= moves_total;
                     p.moves = 0;
                 } else {
-                    p.moves -= std::round( ( moves_total - moves_left ) * 100.0f / moves_total );
+                    const auto progress_cost = complex_partial_cost ?
+                                               moves_total - moves_left :
+                                               moves_left;
+                    p.moves -= std::round( progress_cost * 100.0f / moves_total );
                     moves_left = 0;
                 }
             }
+        };
+
+        if( activity_uses_calendar_duration_progress( id() ) ) {
+            consume_activity_progress( progress_per_tick_for( *this ), false );
+        } else if( type->complex_moves() ) {
+            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
+                calc_moves( p );
+            }
+
+            consume_activity_progress( speed.moves_per_turn(), true );
         } else {
-            //fancy new system
-            if( actor ) {
-                if( actor->progress.get_moves_left() >= 100 ) {
-                    actor->progress.mod_moves_left( - 100 );
-                    p.moves = 0;
-                } else {
-                    p.moves -= actor->progress.get_moves_left();
-                    actor->progress.mod_moves_left( -actor->progress.get_moves_left() );
-                }
-            }
-            //old one
-            else {
-                if( moves_left >= 100 ) {
-                    moves_left -= 100;
-                    p.moves = 0;
-                } else {
-                    p.moves -= moves_left;
-                    moves_left = 0;
-                }
-            }
+            consume_activity_progress( progress_per_tick_for( *this ), false );
         }
     }
 
@@ -561,6 +581,12 @@ void player_activity::do_turn( player &p )
         type->call_do_turn( this, &p );
     }
 
+    if( *this ) {
+        const auto callback_id = cata::get_lua_activity_on_turn( *this );
+        if( !callback_id.empty() ) {
+            cata::run_lua_activity_callback( callback_id, p, *this );
+        }
+    }
 
     /*
     * Stamina block
@@ -599,7 +625,11 @@ void player_activity::do_turn( player &p )
         if( actor ) {
             actor->finish( *this, p );
         } else {
-            if( !type->call_finish( this, &p ) ) {
+            const auto callback_id = cata::get_lua_activity_on_finish( *this );
+            if( !callback_id.empty() ) {
+                cata::run_lua_activity_callback( callback_id, p, *this );
+                set_to_null();
+            } else if( !type->call_finish( this, &p ) ) {
                 // "Finish" is never a misnomer for any activity without a finish function
                 set_to_null();
             }

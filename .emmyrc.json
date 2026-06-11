@@ -10,7 +10,7 @@
     "requirePattern": [ "?.lua", "?/init.lua", "./?.lua", "./?/init.lua", "../?.lua", "../?/init.lua" ]
   },
   "workspace": {
-    "ignoreDir": [ "src" ],
+    "ignoreDir": [ "src", "build", "out", "android/app/build" ],
     "ignoreGlobs": [ "tests/lua/**" ],
     "library": [ "./lua_annotations.lua" ],
     "workspaceRoots": [ "data/json", "data/mods/test_lua_require" ],

@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -1165,7 +1166,7 @@ auto process_fields_in_submap( const std::string &dim, submap &sm,
                 cur.intensity_upgrade_chance() > 0 &&
                 one_in( cur.intensity_upgrade_chance() ) &&
                 cur.intensity_upgrade_duration() > 0_turns &&
-                calendar::once_every( cur.intensity_upgrade_duration() ) ) {
+                action_time_scale::once_every_this_tick( cur.intensity_upgrade_duration() ) ) {
                 cur.set_field_intensity( cur.get_field_intensity() + 1 );
             }
 
@@ -1188,6 +1189,8 @@ auto process_fields_in_submap( const std::string &dim, submap &sm,
                 const auto is_sealed  = ter_furn_has_flag( ter, frn, TFLAG_SEALED ) &&
                                         !ter_furn_has_flag( ter, frn, TFLAG_ALLOW_FIELD_EFFECT );
 
+                const auto tick_turns = action_time_scale::calendar_turns_this_tick();
+                const auto tick_duration = action_time_scale::calendar_duration_this_tick();
                 auto time_added = 0_turns;
 
                 // --- Item burning ---
@@ -1223,7 +1226,7 @@ auto process_fields_in_submap( const std::string &dim, submap &sm,
                     std::ranges::for_each( new_content, [&]( detached_ptr<item> &prod ) {
                         items_here.push_back( std::move( prod ) );
                     } );
-                    time_added = 1_turns * roll_remainder( frd.fuel_produced );
+                    time_added = 1_turns * roll_remainder( frd.fuel_produced * tick_turns );
                 }
 
                 // --- Vehicle fire damage (TODO: requires coordinate translation) ---
@@ -1231,28 +1234,28 @@ auto process_fields_in_submap( const std::string &dim, submap &sm,
                 // --- Terrain fuel consumption ---
                 if( can_burn ) {
                     if( ter.has_flag( TFLAG_SWIMMABLE ) ) {
-                        cur.set_field_age( cur.get_field_age() + 4_minutes );
+                        cur.set_field_age( cur.get_field_age() + 4_minutes * tick_turns );
                     }
                     if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE ) ) {
-                        time_added += 1_turns * ( 5 - cur.get_field_intensity() );
+                        time_added += tick_duration * ( 5 - cur.get_field_intensity() );
                         if( cur.get_field_intensity() > 1 &&
                             one_in( 200 - cur.get_field_intensity() * 50 ) ) {
                             sm.set_ter( local, t_dirt );
                         }
                     } else if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE_HARD ) && one_in( 3 ) ) {
-                        time_added += 1_turns * ( 4 - cur.get_field_intensity() );
+                        time_added += tick_duration * ( 4 - cur.get_field_intensity() );
                         if( cur.get_field_intensity() > 1 &&
                             one_in( 200 - cur.get_field_intensity() * 50 ) ) {
                             sm.set_ter( local, t_dirt );
                         }
                     } else if( ter.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
-                        time_added += 1_turns * ( 5 - cur.get_field_intensity() );
+                        time_added += tick_duration * ( 5 - cur.get_field_intensity() );
                         if( cur.get_field_intensity() > 1 &&
                             one_in( 200 - cur.get_field_intensity() * 50 ) ) {
                             sm.set_ter( local, t_dirt );
                         }
                     } else if( frn.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
-                        time_added += 1_turns * ( 5 - cur.get_field_intensity() );
+                        time_added += tick_duration * ( 5 - cur.get_field_intensity() );
                         if( cur.get_field_intensity() > 1 &&
                             one_in( 200 - cur.get_field_intensity() * 50 ) ) {
                             sm.set_furn( local, f_ash );
@@ -1263,7 +1266,7 @@ auto process_fields_in_submap( const std::string &dim, submap &sm,
                 if( time_added != 0_turns ) {
                     cur.set_field_age( cur.get_field_age() - time_added );
                 } else if( can_burn ) {
-                    cur.mod_field_age( 10_seconds * cur.get_field_intensity() );
+                    cur.mod_field_age( 10_seconds * cur.get_field_intensity() * tick_turns );
                 }
 
                 // --- Z-rise: level-3 fire spreads upward ---
@@ -1747,7 +1750,7 @@ auto process_fields_in_submap( const std::string &dim, submap &sm,
             }
 
             // ---- Aging + half-life decay --------------------------------
-            cur.set_field_age( cur.get_field_age() + 1_turns );
+            cur.set_field_age( cur.get_field_age() + action_time_scale::calendar_duration_this_tick() );
             const auto &fdata = cur.get_field_type().obj();
             if( fdata.half_life > 0_turns && cur.get_field_age() > 0_turns &&
                 dice( 2, to_turns<int>( cur.get_field_age() ) ) >

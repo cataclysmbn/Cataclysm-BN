@@ -323,6 +323,7 @@ static void WinCreate()
                           "Failed to initialize accelerated renderer, falling back to software rendering" ) ) {
             software_renderer = true;
         } else {
+            dbg( DL::Info ) << "Initialized SDL with Renderer: " << SDL_GetRendererName( renderer.get() );
             if( get_option<bool>( "VSYNC" ) ) {
                 SDL_SetRenderVSync( renderer.get(), 1 );
             }

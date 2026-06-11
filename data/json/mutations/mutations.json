@@ -6803,6 +6803,15 @@
   },
   {
     "type": "mutation",
+    "id": "DEBUG_INFINITE_SPEED",
+    "name": { "str": "Debug Infinite Speed" },
+    "points": 99,
+    "valid": false,
+    "description": "The only problem with being faster than light is that you always live in darkness.",
+    "debug": true
+  },
+  {
+    "type": "mutation",
     "id": "DEBUG_CLOAK",
     "name": { "str": "Debug Invisibility" },
     "points": 99,

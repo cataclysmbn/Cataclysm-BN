@@ -909,6 +909,13 @@ void draw_line_of( const draw_sprite_line_options &options )
         draw_line_curses( *g, options.points );
         return;
     }
+
+    // TODO: This code was added to prevent a crash during projectile tests. Why didn't it crash before?
+    // Please fix.
+    if( test_mode || !tilecontext ) {
+        return;
+    }
+
     std::vector<tripoint_bub_ms> ps;
     std::vector<std::string> ids;
     std::vector<int> rots;

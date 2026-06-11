@@ -245,7 +245,7 @@ void pixel_minimap::set_settings( const pixel_minimap_settings &settings )
 void pixel_minimap::prepare_cache_for_updates( const tripoint_bub_ms &center )
 {
     const auto &here = get_map();
-    const auto new_center_sm = project_to<coords::sm>( here.bub_to_abs( center ) );
+    const auto new_center_sm = project_to<coords::sm>( bub_to_abs( center ) );
     const auto &new_dimension_id = here.get_bound_dimension();
     const auto center_sm_diff = cached_center_sm - new_center_sm;
 
@@ -326,7 +326,7 @@ void pixel_minimap::update_cache_at( const tripoint_bub_sm &pos )
     const bool nv_goggle = get_avatar().get_vision_modes()[NV_GOGGLES];
     const bool env_goggle = get_avatar().get_vision_modes()[ENV_GOGGLES];
 
-    auto &cache_item = get_cache_at( here.bub_to_abs( pos ) );
+    auto &cache_item = get_cache_at( bub_to_abs( pos ) );
 
     cache_item.touched = true;
     for( const auto sm_ms : submap_tiles() ) {
@@ -481,8 +481,7 @@ void pixel_minimap::render( const tripoint_bub_ms &center )
 
 void pixel_minimap::render_cache( const tripoint_bub_ms &center )
 {
-    const auto &here = get_map();
-    const auto sm_center = project_to<coords::sm>( here.bub_to_abs( center ) );
+    const auto sm_center = project_to<coords::sm>( bub_to_abs( center ) );
 
     const auto sm_offset = tripoint_rel_sm( view_tiles_count.x / SEEX / 2,
                                             view_tiles_count.y / SEEY / 2, 0 );

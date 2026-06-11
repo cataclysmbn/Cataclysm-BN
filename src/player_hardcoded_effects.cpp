@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <memory>
 
+#include "action_time_scale.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "character.h"
@@ -141,7 +142,7 @@ static void eff_fun_fungus( player &u, effect &it )
             if( one_in( 600 ) ) {
                 u.add_msg_if_player( m_warning, _( "You feel nauseous." ) );
             }
-            if( calendar::once_every( 10_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 10_minutes ) ) {
                 u.add_msg_if_player( m_warning, _( "You smell and taste mushrooms." ) );
             }
             it.mod_duration( 1_turns );
@@ -1013,7 +1014,7 @@ void Character::hardcoded_effects( effect &it )
             } else if( has_effect( effect_antibiotic ) ) {
                 // Normal antibiotic prevents progression
             } else if( has_effect( effect_weak_antibiotic ) ) {
-                if( calendar::once_every( 4_turns ) ) {
+                if( action_time_scale::once_every_this_tick( 4_turns ) ) {
                     // Weak antibiotic slows down to a quarter
                     it.mod_duration( 1_turns );
                 }
@@ -1061,7 +1062,7 @@ void Character::hardcoded_effects( effect &it )
             } else if( has_effect( effect_antibiotic ) ) {
                 // No progression
             } else if( has_effect( effect_weak_antibiotic ) ) {
-                if( calendar::once_every( 4_turns ) ) {
+                if( action_time_scale::once_every_this_tick( 4_turns ) ) {
                     it.mod_duration( 1_turns );
                 }
             } else if( dur > 1_days ) {
@@ -1133,7 +1134,7 @@ void Character::hardcoded_effects( effect &it )
         }
 
         // TODO: Move this to update_needs when NPCs can mutate
-        if( calendar::once_every( 10_minutes ) && ( has_trait( trait_CHLOROMORPH ) ||
+        if( action_time_scale::once_every_this_tick( 10_minutes ) && ( has_trait( trait_CHLOROMORPH ) ||
                 has_trait( trait_M_SKIN3 ) || has_trait( trait_WATERSLEEP ) ) &&
             g->m.is_outside( bub_pos() ) ) {
             if( has_trait( trait_CHLOROMORPH ) ) {
@@ -1154,7 +1155,7 @@ void Character::hardcoded_effects( effect &it )
                     if( get_fatigue() >= 0 ) {
                         mod_fatigue( -5 ); // Local guides need less sleep on fungal soil
                     }
-                    if( calendar::once_every( 1_hours ) ) {
+                    if( action_time_scale::once_every_this_tick( 1_hours ) ) {
                         spores(); // spawn some P O O F Y   B O I S
                     }
                 }
