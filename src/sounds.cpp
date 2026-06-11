@@ -2471,7 +2471,7 @@ void sounds::process_sounds_npc()
             const auto chary = loc.y();
             const auto npc_indoors = !level_cache.outside_cache[level_cache.idx( charx, chary )];
             const auto ambient_vol = ambient( loc.z(), npc_indoors );
-            // Passive sound dampening reduces all heard volume by a set amount, but protects against hearing loss by 2x this amount.
+            // Passive sound dampening reduces all heard volume by a set amount, but protects against hearing loss by same amount.
             const short passive_sound_dampening = dBspl_to_mdBspl( who.get_char_hearing_protection() );
             // Active dampening does not reduce heard volume and directly protects against hearing loss.
             const short active_sound_dampening = dBspl_to_mdBspl( who.get_char_hearing_protection( true ) );
@@ -2518,9 +2518,9 @@ void sounds::process_sounds_npc()
                 // hear the deafening sound but still suffer additional hearing loss.
                 // Threshold for instant hearing loss is 14000mdB
                 // Volume for garunteed deafening is 17000mdB
-                if( tile_vol - ( ( passive_sound_dampening * 2 ) + active_sound_dampening )  >=
+                if( tile_vol - ( ( passive_sound_dampening ) + active_sound_dampening )  >=
                     deafening_threshold ) {
-                    const bool is_sound_deafening = ( tile_vol - ( ( passive_sound_dampening * 2 ) +
+                    const bool is_sound_deafening = ( tile_vol - ( ( passive_sound_dampening ) +
                                                       active_sound_dampening ) )
                                                     >= rng( deafening_threshold, deafening_garuntee );
 
@@ -2528,7 +2528,7 @@ void sounds::process_sounds_npc()
                     if( is_deaf ) {
                         if( is_sound_deafening && !who.is_immune_effect( effect_deaf ) ) {
                             who.add_effect( effect_deaf, std::min( 4_minutes,
-                                                                   time_duration::from_turns( mdBspl_to_dBspl( tile_vol - ( ( passive_sound_dampening * 2 ) +
+                                                                   time_duration::from_turns( mdBspl_to_dBspl( tile_vol - ( ( passive_sound_dampening ) +
                                                                            active_sound_dampening ) ) - 130 ) ) );
                             if( !who.has_trait( trait_id( "NOPAIN" ) ) ) {
                                 if( who.get_pain() < 10 ) {
@@ -2541,7 +2541,7 @@ void sounds::process_sounds_npc()
 
                     if( is_sound_deafening && !who.is_immune_effect( effect_deaf ) ) {
                         const time_duration deafness_duration = time_duration::from_turns( mdBspl_to_dBspl(
-                                tile_vol - ( ( passive_sound_dampening * 2 ) + active_sound_dampening ) ) - 130 );
+                                tile_vol - ( ( passive_sound_dampening ) + active_sound_dampening ) ) - 130 );
                         who.add_effect( effect_deaf, deafness_duration );
                         if( who.is_deaf() && !is_deaf ) {
                             is_deaf = true;
@@ -2686,9 +2686,8 @@ void sounds::process_sound_markers( Character *who )
             // Deafening is based on the felt volume, as a player may be too deaf to
             // hear the deafening sound but still suffer additional hearing loss.
             // Is the loudest tile volume louder than the deafening threshold?
-            // Passive sound dampening counts 2x for protecting against hearing loss compared to is normal volume adjustment to approximate hearing protection working more effectively against harmful high frequency sounds.
             const short deafening_vol = std::max( 0,
-                                                  tile_vol - ( active_sound_dampening + passive_sound_dampening + passive_sound_dampening ) );
+                                                  tile_vol - ( active_sound_dampening + passive_sound_dampening ) );
             const bool is_sound_deafening =  deafening_vol >= rng( deafening_threshold, deafening_garuntee );
             if( is_sound_deafening ) {
 
