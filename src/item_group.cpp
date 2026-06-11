@@ -845,7 +845,7 @@ std::set<const itype *> Item_group::every_item() const
     return result;
 }
 
-std::vector<detached_ptr<item>> Item_group::every_item_modified( bool modify ) const
+std::vector<detached_ptr<item>> Item_group::every_item_modified( bool /*modify*/ ) const
 {
     std::vector<detached_ptr<item>> result;
     for( const auto &spawn_data : items ) {
