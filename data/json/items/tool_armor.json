@@ -69,8 +69,7 @@
     "color": "light_gray",
     "coverage": 1,
     "material_thickness": 1,
-    "hearing_protection": 20,
-    "adv_hearing_protection": 20,
+    "hearing_protection": 40,
     "flags": [ "OVERSIZE", "POWERARMOR_COMPATIBLE" ]
   },
   {
@@ -2752,8 +2751,7 @@
     "encumbrance": 5,
     "coverage": 10,
     "material_thickness": 2,
-    "hearing_protection": 20,
-    "adv_hearing_protection": 20,
+    "hearing_protection": 40,
     "magazines": [
       [
         "battery",
@@ -2814,8 +2812,7 @@
     "encumbrance": 5,
     "coverage": 10,
     "material_thickness": 2,
-    "hearing_protection": 20,
-    "adv_hearing_protection": 20,
+    "hearing_protection": 40,
     "magazines": [
       [
         "battery",
@@ -3221,8 +3218,7 @@
       "menu_text": "Unplug",
       "need_worn": true
     },
-    "hearing_protection": 20,
-    "adv_hearing_protection": 20
+    "hearing_protection": 40
   },
   {
     "id": "attached_ear_plugs_off",
@@ -3238,8 +3234,7 @@
       "menu_text": "Plug in",
       "need_worn": true
     },
-    "hearing_protection": 0,
-    "adv_hearing_protection": 0
+    "hearing_protection": 0
   },
   {
     "id": "mask_halfsurvivor",
