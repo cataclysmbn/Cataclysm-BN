@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include "avatar.h"
+#include "bionics.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -11,6 +12,7 @@
 #include "catalua_serde.h"
 #include "catalua_sol.h"
 #include "clzones.h"
+#include "color.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "faction.h"
@@ -131,6 +133,112 @@ test_data["item_count"] = #map:get_items_at(test_data["pos"])
     CHECK( test_data.get<int>( "item_count" ) == 1 );
 
     here.i_clear( pos );
+}
+
+TEST_CASE( "item_lua_invoke_at_invokes_use_action", "[lua][item]" )
+{
+    auto lua = make_lua_state();
+    lua["invoke_pos"] = get_avatar().bub_pos();
+
+    const auto load_res = lua.load( "local item = Item.spawn(ItypeId.new('helmet_riot'), 1)\n"
+                                    "local used = item:invoke_at(invoke_pos)\n"
+                                    "return { used = used, item_type = item:get_type() }" );
+    REQUIRE( load_res.valid() );
+    const auto script_res = sol::protected_function( load_res )();
+    REQUIRE( script_res.valid() );
+    const auto data = script_res.get<sol::table>();
+
+    CHECK( data.get<int>( "used" ) == 0 );
+    CHECK( data.get<itype_id>( "item_type" ) == itype_id( "helmet_riot_raised" ) );
+}
+
+TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
+{
+    CHECK( bionic_id( "bio_minirose" )->activated );
+
+    auto lua = make_lua_state();
+    auto env = sol::environment( lua, sol::create, lua.globals() );
+
+    auto calls_created = 0;
+    auto calls_invoked = 0;
+    auto calls_messages = 0;
+    auto calls_removed = 0;
+    auto nuke_charges = -1;
+    auto nuke_count = 0;
+    auto nuke_id = std::string{};
+    auto bionic_id_seen = std::string{};
+    auto removed_id = std::string{};
+    auto has_minirose = true;
+    auto query_answer = std::string{ "YES" };
+
+    auto fake_item = lua.create_table();
+    fake_item["set_charges"] = [&]( const sol::table &, const int charges ) { nuke_charges = charges; };
+    fake_item["invoke_at"] = [&]( const sol::table &, const tripoint_bub_ms & ) { ++calls_invoked; };
+
+    auto fake_gapi = lua.create_table();
+    fake_gapi["create_item"] = [&]( const itype_id & id, const int count ) {
+        ++calls_created;
+        nuke_id = id.str();
+        nuke_count = count;
+        return fake_item;
+    };
+    fake_gapi["add_msg"] = [&]( const sol::variadic_args & ) { ++calls_messages; };
+    env["gapi"] = fake_gapi;
+
+    auto fake_popup_type = lua.create_table();
+    fake_popup_type["new"] = [&]() {
+        auto fake_popup = lua.create_table();
+        fake_popup["message"] = []( const sol::table &, const std::string & ) {};
+        fake_popup["message_color"] = []( const sol::table &, const color_id & ) {};
+        fake_popup["query_yn"] = [&query_answer]( const sol::table & ) { return query_answer; };
+        return fake_popup;
+    };
+    env["QueryPopup"] = fake_popup_type;
+
+    auto fake_char = lua.create_table();
+    fake_char["has_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
+        bionic_id_seen = id.str();
+        return has_minirose;
+    };
+    fake_char["remove_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
+        ++calls_removed;
+        removed_id = id.str();
+        has_minirose = false;
+    };
+    fake_char["bub_pos"] = []( const sol::table & ) { return tripoint_bub_ms( 60, 60, 0 ); };
+    fake_char["is_avatar"] = []( const sol::table & ) { return true; };
+
+    const auto load_res = lua.load_file( "data/json/lua/minirose.lua" );
+    REQUIRE( load_res.valid() );
+    auto exec = sol::protected_function( load_res );
+    sol::set_environment( env, exec );
+    const auto script_res = exec();
+    REQUIRE( script_res.valid() );
+    const auto minirose = script_res.get<sol::table>();
+
+    auto params = lua.create_table();
+    params["char"] = fake_char;
+    minirose["on_character_death"]( params );
+
+    CHECK( bionic_id_seen == "bio_minirose" );
+    CHECK( removed_id == "bio_minirose" );
+    CHECK( calls_removed == 1 );
+    CHECK( calls_created == 1 );
+    CHECK( calls_invoked == 1 );
+    CHECK( nuke_id == "mininuke_act" );
+    CHECK( nuke_count == 1 );
+    CHECK( nuke_charges == 0 );
+
+    has_minirose = true;
+    query_answer = "NO";
+    params = lua.create_table();
+    params["user"] = fake_char;
+    minirose["on_activate"]( params );
+
+    CHECK( calls_removed == 1 );
+    CHECK( calls_created == 1 );
+    CHECK( calls_invoked == 1 );
+    CHECK( calls_messages == 1 );
 }
 
 TEST_CASE( "lua_activity_bindings", "[lua]" )

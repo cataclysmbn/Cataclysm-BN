@@ -12,6 +12,7 @@ game.iuse_functions["OBJ_VAR_VIEWER"] = function(...) return mod.item_var_viewer
 game.examine_functions["PLUMBING_SHOWER_EXAMINE"] = function(...) return mod.plumbing.examine_shower(...) end
 game.examine_functions["PLUMBING_BATHTUB_EXAMINE"] = function(...) return mod.plumbing.examine_bathtub(...) end
 game.activity_functions["PLUMBING_FINISH_WASH"] = function(...) return mod.plumbing.finish_wash(...) end
+game.bionic_functions["bio_minirose"] = { on_activate = function(...) return mod.minirose.on_activate(...) end }
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...)
   if mod.on_nyctophobia_tick then mod.on_nyctophobia_tick(...) end
@@ -32,6 +33,7 @@ game.add_hook("on_monster_spawn", function(...) return mod.robofac.authorize_hub
 game.add_hook("on_monster_loaded", function(...) return mod.robofac.authorize_hub01_turret(...) end)
 game.add_hook("on_craft_result", function(...) return mod.cooking.on_craft_result(...) end)
 game.add_hook("on_explosion_start", function(...) return mod.nuclear_tear.on_explosion(...) end)
+game.add_hook("on_character_death", function(...) return mod.minirose.on_character_death(...) end)
 
 -- Mapgen
 game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end
