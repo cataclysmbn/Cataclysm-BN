@@ -130,27 +130,22 @@ TEST_CASE( "Enchantments apply effects", "[magic][enchantment][effect]" )
         REQUIRE( !guy.has_effect( effect_debug_clairvoyance ) );
         AND_WHEN( "Character receives relic" ) {
             give_item( guy, s_relic );
-            THEN( "Character still doesn't have effect" ) {
-                CHECK_FALSE( guy.has_effect( effect_debug_clairvoyance ) );
+            THEN( "Character gains the effect." ) {
+                CHECK( guy.has_effect( effect_debug_clairvoyance ) );
             }
             AND_WHEN( "Turn passes" ) {
                 advance_turn( guy );
-                THEN( "Character receives effect" ) {
+                THEN( "Character still has effect" ) {
                     CHECK( guy.has_effect( effect_debug_clairvoyance ) );
                 }
                 AND_WHEN( "Character loses relic" ) {
                     clear_items( guy );
-                    THEN( "Character still has effect" ) {
-                        CHECK( guy.has_effect( effect_debug_clairvoyance ) );
+                    THEN( "Character loses effect" ) {
+                        CHECK_FALSE( guy.has_effect( effect_debug_clairvoyance ) );
                     }
                     AND_WHEN( "Turn passes" ) {
                         advance_turn( guy );
-
-                        // FIXME: effects should go away after 1 turn!
-                        CHECK( guy.has_effect( effect_debug_clairvoyance ) );
-                        advance_turn( guy );
-
-                        THEN( "Character loses effect" ) {
+                        THEN( "Character still doesnt have effect" ) {
                             CHECK_FALSE( guy.has_effect( effect_debug_clairvoyance ) );
                         }
                     }
