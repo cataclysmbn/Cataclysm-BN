@@ -11712,7 +11712,7 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
     // Lets take our easy out if we have it, after we have checked if the eardrums are ruptured.
     // 85 dB is the general threshold for hearing damage to occur. Higher volumes cause more damage over time.
     // As this is a game, modify the threshold by our hearing multiplier and health.
-    // Hearing ability is already taking into account the current hearing impairment, 
+    // Hearing ability is already taking into account the current hearing impairment,
     const auto &hab = hearing_ability();
     const short damage_threshold = 8500 + ( HLTH ) - ( 200 * ( hab - 1 ) );
     if( effective_vol <= damage_threshold ) {
@@ -11723,7 +11723,7 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
     // Safe exposure time to sounds of 100dB (A weighted) is 15 minutes.
     // Safe exposure time to sounds of 129 dB (A weighted) is 1 second.
     // At or past 130dB, there is effectively no safe exposure duration.
-    // The threshold for pain is ~140dB which is the number 
+    // The threshold for pain is ~140dB which is the number
 
     // For game purposes we assign temporary loss based on the volume of the sound
     // And we have a chance to assign some long term loss as the volume of the sound increases.
@@ -11743,12 +11743,12 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
     }
     temp_loss += temp_loss_gain;
 
-    const auto &hab_mod = std::max( 0, static_cast<int>( std::round(hab - 1) ) );
+    const auto &hab_mod = std::max( 0, static_cast<int>( std::round( hab - 1 ) ) );
 
     if( effective_vol < inst_dam_thresh ) {
 
         // accumulate a little bit of long term loss, single to low double digit mdB.
-        // At this point we should have already accounted for our 
+        // At this point we should have already accounted for our
         if( rng( damage_threshold, inst_dam_thresh ) < effective_vol ) {
 
             // add a bit of long term damage, worse if we have a good hearing ability.
@@ -11758,19 +11758,19 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
 
     } else {
 
-        // If we hear a sound at or past our instand damage threshold then 
+        // If we hear a sound at or past our instand damage threshold then
         long_loss += std::max( 1, ( over_thresh / 20 ) - ( long_loss / 5 ) );
 
         // Chance to give the player some pain.
         if( !has_trait( trait_id( "NOPAIN" ) ) && one_in( 3 ) ) {
 
-            // The threshold for pain is generally taken at 140dB, 
-            if ( effective_vol >= inst_dam_thresh + HEARING_LOSS_MODERATE_THRESHOLD ) {
+            // The threshold for pain is generally taken at 140dB,
+            if( effective_vol >= inst_dam_thresh + HEARING_LOSS_MODERATE_THRESHOLD ) {
                 add_msg_if_player( m_bad, _( "Your ears ache." ) );
             } else {
                 add_msg_if_player( m_info, _( "Your ears hurt a little bit." ) );
             }
-            
+
             if( get_pain() < 10 ) {
 
                 mod_pain( 1 );

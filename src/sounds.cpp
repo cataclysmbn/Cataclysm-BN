@@ -3722,7 +3722,7 @@ void sfx::remove_hearing_loss( const bool &p_hear_impaired )
             }
             // Either we have stopped having tinnitus, or our hearing impairment was due to basic hearing protection.
             do_ambient();
-            
+
         }
 
     }
