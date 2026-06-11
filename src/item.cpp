@@ -6948,7 +6948,7 @@ int item::get_hearing_protection( bool advanced ) const
     if( armor == nullptr ) {
         return 0;
     }
-        
+
     return ( advanced ) ? armor->adv_hearing_protection : armor->hearing_protection;
 
 }

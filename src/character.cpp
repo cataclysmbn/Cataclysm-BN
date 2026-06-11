@@ -11611,7 +11611,7 @@ bool Character::avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const
 void Character::handle_hearing_loss( const short &vol, const bool &hearing_protection_applied )
 {
     short effective_vol = vol;
-    
+
     auto &rupture = hearing_loss_stats.ruptured_eardrums;
 
     // If our eardrums are already ruptured, dont do any more damage.
@@ -11624,18 +11624,20 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
     if( !hearing_protection_applied ) {
         // basic hearing protection counts for double its value when protecting against deafening, advanced counts for it value.
         // Yes its a little jank, this way we can apply total basic hearing protection as a malus to all perceived sound volumes which makes things harder to hear.
-        const auto volume_mitigation = std::min( static_cast<int>(MAXIMUM_VOLUME_ATMOSPHERE) , std::max( 0, dBspl_to_mdBspl( get_char_hearing_protection() ) + dBspl_to_mdBspl( get_char_hearing_protection( true ) ) ) );
-        
-        if ( volume_mitigation >= effective_vol ){
+        const auto volume_mitigation = std::min( static_cast<int>( MAXIMUM_VOLUME_ATMOSPHERE ), std::max( 0,
+                                       dBspl_to_mdBspl( get_char_hearing_protection() ) + dBspl_to_mdBspl( get_char_hearing_protection(
+                                               true ) ) ) );
+
+        if( volume_mitigation >= effective_vol ) {
             // Our mitigation is louder than the sound. Just jump out.
             return;
 
-        } else { 
+        } else {
             // Apply our volume mitigation.
             effective_vol -= volume_mitigation;
 
         }
-        
+
     }
 
     auto &temp_loss = hearing_loss_stats.hearing_loss_temp;
