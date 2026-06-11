@@ -4,6 +4,7 @@
 #include <ranges>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "assign.h"
 #include "calendar.h"
 #include "debug.h"
@@ -78,7 +79,7 @@ float mongroup::avg_speed() const
         }
         avg_speed /= monsters.size();
     }
-    return avg_speed;
+    return static_cast<float>( action_time_scale::scaled_overmap_horde_speed( avg_speed ) );
 }
 
 const MonsterGroup &MonsterGroupManager::GetUpgradedMonsterGroup( const mongroup_id &group )

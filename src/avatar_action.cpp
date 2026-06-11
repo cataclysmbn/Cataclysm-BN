@@ -51,6 +51,7 @@
 #include "output.h"
 #include "utils/pit_trap_helpers.h"
 #include "player_activity.h"
+#include "profile.h"
 #include "projectile.h"
 #include "ranged.h"
 #include "ret_val.h"
@@ -99,6 +100,7 @@ static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
 
 bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
 {
+    ZoneScopedN( "avatar_action_move" );
     if( ( !g->check_safe_mode_allowed() ) || you.has_active_mutation( trait_SHELL2 ) ) {
         if( you.has_active_mutation( trait_SHELL2 ) ) {
             add_msg( m_warning, _( "You can't move while in your shell.  Deactivate it to go mobile." ) );
@@ -229,6 +231,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     }
 
     if( you.has_effect( effect_amigara ) ) {
+        ZoneScopedN( "avatar_move_amigara_check" );
         int curdist = INT_MAX;
         int newdist = INT_MAX;
         const auto minp = tripoint_bub_ms( 0, 0, you.bub_pos().z() );
@@ -420,8 +423,11 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             return true;
         }
 
-        if( g->walk_move( dest_loc, via_ramp ) ) {
-            return true;
+        {
+            ZoneScopedN( "avatar_move_walk_move_vehicle" );
+            if( g->walk_move( dest_loc, via_ramp ) ) {
+                return true;
+            }
         }
     }
 
@@ -457,13 +463,19 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     if( !is_riding
         && m.has_flag( flag_LADDER, you.bub_pos() )
         && !m.passable( dest_loc )
-        && g->walk_move( dest_loc + tripoint_above ) ) {
-        return true;
+      ) {
+        ZoneScopedN( "avatar_move_walk_move_ladder" );
+        if( g->walk_move( dest_loc + tripoint_above ) ) {
+            return true;
+        }
     }
 
     // Regular Move
-    if( g->walk_move( dest_loc, via_ramp ) ) {
-        return true;
+    {
+        ZoneScopedN( "avatar_move_walk_move" );
+        if( g->walk_move( dest_loc, via_ramp ) ) {
+            return true;
+        }
     }
 
     // Invalid move
@@ -488,7 +500,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                                dest_loc ).id().str();
             }
             // TODO: Figure out how to make subtile and rotation work right here
-            you.memorize_tile( m.bub_to_abs( dest_loc ), obstacle, 0, 0 );
+            you.memorize_tile( bub_to_abs( dest_loc ), obstacle, 0, 0 );
         }
     } else if( m.ter( dest_loc ) == t_door_locked || m.ter( dest_loc ) == t_door_locked_peep ||
                m.ter( dest_loc ) == t_door_locked_alarm || m.ter( dest_loc ) == t_door_locked_interior ) {
@@ -619,7 +631,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
     you.setpos( p );
     g->update_map( you );
 
-    cata_event_dispatch::avatar_moves( you, m, bub_to_abs( p ) );
+    cata_event_dispatch::avatar_moves( you, m, you.abs_pos() );
 
     if( m.veh_at( you.bub_pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
         m.board_vehicle( you.bub_pos(), &you );

@@ -25,6 +25,8 @@
 #include "type_id.h"
 #include "units_angle.h"
 #include "vehicle.h"
+#include "vpart_position.h"
+#include "weather.h"
 
 #include <algorithm>
 #include <cmath>
@@ -61,6 +63,16 @@ struct replace_vehicle_request {
     std::optional<bool> locked = std::nullopt;
     std::optional<bool> has_keys = std::nullopt;
 };
+
+auto vehicle_part_with_feature_at( map &m, const tripoint_bub_ms &pos, const std::string &feature,
+                                   const bool unbroken ) -> std::optional<vpart_reference>
+{
+    const auto vp = m.veh_at( pos );
+    if( !vp ) {
+        return std::nullopt;
+    }
+    return vp.part_with_feature( feature, unbroken );
+}
 
 auto parse_replace_vehicle_options( const sol::table &opts,
                                     const units::angle default_orientation ) -> std::optional<replace_vehicle_options>
@@ -309,39 +321,34 @@ void cata::detail::reg_map( sol::state &lua )
     {
         sol::usertype<map> ut = luna::new_usertype<map>( lua, luna::no_bases, luna::no_constructor );
 
-        DOC( "[Deprecated] Convert local ms -> absolute ms" );
-        luna::set_fx( ut, "get_abs_ms", []( const map & m,
-        const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-            return m.bub_to_abs( pos );
-        } );
-        DOC( "Convert local bubble coordinates to absolute coordinates." );
+        DOC( "Convert bubble coordinates to absolute coordinates." );
         luna::set_fx( ut, "bub_to_abs",
                       sol::overload(
-        []( const map & m, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-            return m.bub_to_abs( pos );
+        []( const map &, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
+            return bub_to_abs( pos );
         },
-        []( const map & m, const tripoint_bub_sm & pos ) -> tripoint_abs_sm {
-            return m.bub_to_abs( pos );
+        []( const map &, const tripoint_bub_sm & pos ) -> tripoint_abs_sm {
+            return bub_to_abs( pos );
         } ) );
-        DOC( "[Deprecated] Convert absolute ms -> local ms" );
-        luna::set_fx( ut, "get_local_ms", []( const map & m,
-        const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
-            return m.abs_to_bub( pos );
-        } );
-        DOC( "Convert absolute coordinates to local bubble coordinates." );
+        DOC( "Convert absolute coordinates to bubble coordinates." );
         luna::set_fx( ut, "abs_to_bub",
                       sol::overload(
-        []( const map & m, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
-            return m.abs_to_bub( pos );
+        []( const map &, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
+            return abs_to_bub( pos );
         },
-        []( const map & m, const tripoint_abs_sm & pos ) -> tripoint_bub_sm {
-            return m.abs_to_bub( pos );
+        []( const map &, const tripoint_abs_sm & pos ) -> tripoint_bub_sm {
+            return abs_to_bub( pos );
         } ) );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );
         luna::set_fx( ut, "get_map_size", []( const map & m ) -> int { return m.getmapsize() * SEEX; } );
         luna::set_fx( ut, "ambient_light_at", []( map & m, tripoint_bub_ms p ) { return m.ambient_light_at( p ); } );
+        DOC( "Get the local ambient temperature in degrees Celsius at a map-square position." );
+        luna::set_fx( ut, "get_temperature_c",
+        []( const map &, const tripoint_bub_ms & p ) -> double {
+            return units::to_celsius<double>( get_weather().get_temperature( bub_to_abs( p ) ) );
+        } );
 
         DOC( "Forcibly places an npc using a template at a position on the map. Returns the npc." );
         luna::set_fx( ut, "place_npc", []( map & m, point_bub_ms p, std::string id_str ) -> npc * {
@@ -384,25 +391,49 @@ void cata::detail::reg_map( sol::state &lua )
             m.add_item_or_charges( p, std::move( new_corpse ) );
         } );
 
-        luna::set_fx( ut, "has_items_at", &map::has_items );
-        luna::set_fx( ut, "remove_item_at", []( map & m, const tripoint_bub_ms & p, item * it ) -> void { m.i_rem( p, it ); } );
+        luna::set_fx( ut, "has_items_at", sol::overload(
+        []( const map & m, const tripoint_bub_ms & p ) -> bool {
+            return m.has_items( p );
+        },
+        []( const map & m, const tripoint & p ) -> bool {
+            return m.has_items( tripoint_bub_ms( p ) );
+        } ) );
+        luna::set_fx( ut, "remove_item_at", sol::overload(
+        []( map & m, const tripoint_bub_ms & p, item * it ) -> void {
+            m.i_rem( p, it );
+        },
+        []( map & m, const tripoint & p, item * it ) -> void {
+            m.i_rem( tripoint_bub_ms( p ), it );
+        } ) );
 
         DOC( "Removes an item from the map and returns it as a detached_ptr. The item is now owned by Lua - store it in a table to keep it alive, or let it be GC'd to destroy it. Use add_item to place it back on a map." );
-        luna::set_fx( ut, "detach_item_at", []( map & m, const tripoint_bub_ms & p,
-        item * it ) -> detached_ptr<item> {
+        luna::set_fx( ut, "detach_item_at", sol::overload(
+        []( map & m, const tripoint_bub_ms & p, item * it ) -> detached_ptr<item> {
             return m.i_rem( p, it );
-        } );
+        },
+        []( map & m, const tripoint & p, item * it ) -> detached_ptr<item> {
+            return m.i_rem( tripoint_bub_ms( p ), it );
+        } ) );
 
         DOC( "Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed." );
-        luna::set_fx( ut, "add_item", []( map & m, const tripoint_bub_ms & p,
-        detached_ptr<item> &it ) -> detached_ptr<item> {
+        luna::set_fx( ut, "add_item", sol::overload(
+        []( map & m, const tripoint_bub_ms & p, detached_ptr<item> &it ) -> detached_ptr<item> {
             return m.add_item_or_charges( p, std::move( it ) );
-        } );
-        luna::set_fx( ut, "clear_items_at", []( map & m, const tripoint_bub_ms & p ) -> void { m.i_clear( p ); } );
+        },
+        []( map & m, const tripoint & p, detached_ptr<item> &it ) -> detached_ptr<item> {
+            return m.add_item_or_charges( tripoint_bub_ms( p ), std::move( it ) );
+        } ) );
+        luna::set_fx( ut, "clear_items_at", sol::overload(
+                          []( map & m, const tripoint_bub_ms & p ) -> void { m.i_clear( p ); },
+                          []( map & m, const tripoint & p ) -> void { m.i_clear( tripoint_bub_ms( p ) ); } ) );
 
-        luna::set_fx( ut, "get_items_at", []( map & m, const tripoint_bub_ms & p ) {
+        luna::set_fx( ut, "get_items_at", sol::overload(
+        []( map & m, const tripoint_bub_ms & p ) {
             return m.i_at( p );
-        } );
+        },
+        []( map & m, const tripoint & p ) {
+            return m.i_at( tripoint_bub_ms( p ) );
+        } ) );
         luna::set_fx( ut, "get_items_in_radius", []( map & m, const tripoint_bub_ms & p,
         int radius ) -> std::vector<map_stack> {
             std::vector<map_stack> items;
@@ -424,6 +455,29 @@ void cata::detail::reg_map( sol::state &lua )
 
         DOC( "Returns every vehicle currently on the map." );
         luna::set_fx( ut, "get_vehicles", []( map & m ) -> std::vector<wrapped_vehicle> { return m.get_vehicles(); } );
+
+        const auto has_vehicle_part_with_feature_at_lua = []( map & m, const tripoint_bub_ms & pos,
+        const std::string & feature, sol::optional<bool> unbroken ) -> bool {
+            return vehicle_part_with_feature_at( m, pos, feature, unbroken.value_or( true ) ).has_value();
+        };
+        DOC( "Returns whether a vehicle at this position has an available part with the given feature." );
+        luna::set_fx( ut, "has_vehicle_part_with_feature_at", has_vehicle_part_with_feature_at_lua );
+
+        const auto get_vehicle_fuel_left_at_lua = []( map & m, const tripoint_bub_ms & pos,
+        const std::string & feature, const itype_id & fuel, sol::optional<bool> recurse ) -> int {
+            const auto part = vehicle_part_with_feature_at( m, pos, feature, true );
+            return part ? part->vehicle().fuel_left( fuel, recurse.value_or( false ) ) : 0;
+        };
+        DOC( "Returns the vehicle's available fuel charges when the position has a part with the given feature." );
+        luna::set_fx( ut, "get_vehicle_fuel_left_at", get_vehicle_fuel_left_at_lua );
+
+        const auto drain_vehicle_fuel_at_lua = []( map & m, const tripoint_bub_ms & pos,
+        const std::string & feature, const itype_id & fuel, const int amount ) -> int {
+            const auto part = vehicle_part_with_feature_at( m, pos, feature, true );
+            return part ? part->vehicle().drain( fuel, amount ) : 0;
+        };
+        DOC( "Drains fuel charges from the vehicle when the position has a part with the given feature. Returns the charges drained." );
+        luna::set_fx( ut, "drain_vehicle_fuel_at", drain_vehicle_fuel_at_lua );
 
         DOC( "Replaces a specific vehicle with a different prototype, preserving origin tile by default. Pass an optional table with `orientation` (Angle or degrees), `status`, and `locks` to override spawn settings." );
         luna::set_fx( ut, "replace_vehicle", sol::overload(

@@ -17,6 +17,7 @@
 #include <ranges>
 
 #include "action.h"
+#include "action_time_scale.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "anatomy.h"
@@ -425,7 +426,7 @@ Character::Character() :
     last_climate_control_ret( false )
 {
     if( g != nullptr ) {
-        position = get_map().bub_to_abs( tripoint_bub_ms::zero() );
+        position = bub_to_abs( tripoint_bub_ms::zero() );
     }
 
     str_max = 0;
@@ -830,7 +831,7 @@ std::string Character::skin_name() const
 
 tripoint_bub_ms Character::bub_pos() const
 {
-    return get_map().abs_to_bub( position );
+    return abs_to_bub( position );
 }
 
 tripoint_abs_ms Character::abs_pos() const
@@ -840,7 +841,7 @@ tripoint_abs_ms Character::abs_pos() const
 
 auto Character::setpos( const tripoint_bub_ms &p ) -> void
 {
-    position = get_map().bub_to_abs( p );
+    position = map_local_to_abs( get_map(), p );
 }
 
 auto Character::setpos( const tripoint_abs_ms &p ) -> void
@@ -1250,8 +1251,8 @@ bool Character::check_outbounds_activity( player_activity &act )
 {
     map &here = get_map();
     if( ( act.placement != tripoint_abs_ms::zero() && act.placement != tripoint_abs_ms::min() &&
-          !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.placement ) ) ) ) || ( !act.coords.empty() &&
-                  !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.coords.back() ) ) ) ) ) {
+          !here.inbounds( abs_to_bub( tripoint_abs_ms( act.placement ) ) ) ) || ( !act.coords.empty() &&
+                  !here.inbounds( abs_to_bub( tripoint_abs_ms( act.coords.back() ) ) ) ) ) {
 
         add_msg( m_debug,
                  "npc %s at pos %d %d, activity target is not inbounds at %d %d therefore activity was stashed",
@@ -2003,7 +2004,8 @@ void Character::recalc_sight_limits()
         // You can kinda see out a bit.
         sight_max = 2;
     } else if( ( has_trait( trait_MYOPIC ) || has_trait( trait_URSINE_EYE ) ) &&
-               !worn_with_flag( flag_FIX_NEARSIGHT ) && !has_effect( effect_contacts ) ) {
+               !worn_with_flag( flag_FIX_NEARSIGHT ) && !has_effect( effect_contacts ) &&
+               !has_bionic( bio_eye_optic ) ) {
         sight_max = 4;
     } else if( has_trait( trait_PER_SLIME ) ) {
         sight_max = 6;
@@ -2116,8 +2118,11 @@ float Character::get_vision_threshold( float light_level ) const
     static const float threshold_cap = vision::threshold_for_nv_range( 1 - 1 ) * LIGHT_AMBIENT_LOW /
                                        LIGHT_AMBIENT_MINIMAL;
 
+    static constexpr auto perception_visibility_baseline_shift = 2.0f / 3.0f;
+    const auto effective_nv_range = nv_range - perception_visibility_baseline_shift;
+
     return std::min( {static_cast<float>( LIGHT_AMBIENT_LOW ),
-                      vision::threshold_for_nv_range( nv_range - 1 ) * dimming_from_light,
+                      vision::threshold_for_nv_range( effective_nv_range - 1 ) * dimming_from_light,
                       threshold_cap
                      } );
 }
@@ -5864,7 +5869,7 @@ void Character::check_needs_extremes()
             add_msg_if_player( m_bad, _( "You have starved to death." ) );
             g->events().send<event_type::dies_of_starvation>( getID() );
             set_part_hp_cur( bodypart_id( "torso" ), 0 );
-        } else if( calendar::once_every( 6_hours ) ) {
+        } else if( action_time_scale::once_every_this_tick( 6_hours ) ) {
             std::string category;
             if( get_kcal_percent() < 0.1f ) {
                 category = "empty_starving";
@@ -5890,12 +5895,12 @@ void Character::check_needs_extremes()
             g->events().send<event_type::dies_of_thirst>( getID() );
             set_part_hp_cur( bodypart_id( "torso" ), 0 );
         } else if( get_thirst() >= lerp( +thirst_levels::parched, +thirst_levels::dead, 0.333f ) &&
-                   calendar::once_every( 30_minutes ) ) {
+                   action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "Even your eyes feel dry…" ) );
         } else if( get_thirst() >= lerp( +thirst_levels::parched, +thirst_levels::dead, 0.666f ) &&
-                   calendar::once_every( 30_minutes ) ) {
+                   action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "You are THIRSTY!" ) );
-        } else if( calendar::once_every( 30_minutes ) ) {
+        } else if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "Your mouth feels so dry…" ) );
         }
     }
@@ -5907,9 +5912,9 @@ void Character::check_needs_extremes()
             g->events().send<event_type::falls_asleep_from_exhaustion>( getID() );
             mod_fatigue( -10 );
             fall_asleep();
-        } else if( get_fatigue() >= 800 && calendar::once_every( 30_minutes ) ) {
+        } else if( get_fatigue() >= 800 && action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "Anywhere would be a good place to sleep…" ) );
-        } else if( calendar::once_every( 30_minutes ) ) {
+        } else if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "You feel like you haven't slept in days." ) );
         }
     }
@@ -5918,7 +5923,7 @@ void Character::check_needs_extremes()
     // Penalties start at Dead Tired and go from there
     if( get_fatigue() >= fatigue_levels::dead_tired && !in_sleep_state() ) {
         if( get_fatigue() >= 700 ) {
-            if( calendar::once_every( 30_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
                 add_msg_if_player( m_warning, _( "You're too physically tired to stop yawning." ) );
                 add_effect( effect_lack_sleep, 30_minutes + 1_turns );
             }
@@ -5927,7 +5932,7 @@ void Character::check_needs_extremes()
                 fall_asleep( 30_seconds );
             }
         } else if( get_fatigue() >= fatigue_levels::exhausted ) {
-            if( calendar::once_every( 30_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
                 add_msg_if_player( m_warning, _( "How much longer until bedtime?" ) );
                 add_effect( effect_lack_sleep, 30_minutes + 1_turns );
             }
@@ -5935,7 +5940,8 @@ void Character::check_needs_extremes()
             if( one_in( 100 + int_cur ) ) {
                 fall_asleep( 30_seconds );
             }
-        } else if( get_fatigue() >= fatigue_levels::dead_tired && calendar::once_every( 30_minutes ) ) {
+        } else if( get_fatigue() >= fatigue_levels::dead_tired &&
+                   action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "*yawn* You should really get some sleep." ) );
             add_effect( effect_lack_sleep, 30_minutes + 1_turns );
         }
@@ -5947,7 +5953,7 @@ void Character::check_needs_extremes()
                                   ( sleep_deprivation_levels::massive );
 
     if( sleep_deprivation >= sleep_deprivation_levels::harmless && !in_sleep_state() &&
-        calendar::once_every( 60_minutes ) &&
+        action_time_scale::once_every_this_tick( 60_minutes ) &&
         ( !has_effect( effect_meth ) || sleep_deprivation >= sleep_deprivation_levels::massive ) ) {
         if( sleep_deprivation < sleep_deprivation_levels::minor ) {
             add_msg_if_player( m_warning,
@@ -5987,7 +5993,8 @@ void Character::check_needs_extremes()
 
 
         if( sleep_deprivation >= sleep_deprivation_levels::massive ||
-            ( ( calendar::once_every( 10_minutes ) && sleep_deprivation >= sleep_deprivation_levels::major &&
+            ( ( action_time_scale::once_every_this_tick( 10_minutes ) &&
+                sleep_deprivation >= sleep_deprivation_levels::major &&
                 /** @EFFECT_PER slightly increases resilience against passing out from sleep deprivation */
                 one_in( static_cast<int>( ( 1.0f - sleep_deprivation_pct ) * 100 ) + get_per() ) ) ) ) {
             add_msg_player_or_npc( m_bad,
@@ -7620,6 +7627,7 @@ mutation_value_map = {
     { "overmap_sight", calc_mutation_value_multiplicative<&mutation_branch::overmap_sight> },
     { "overmap_multiplier", calc_mutation_value_multiplicative<&mutation_branch::overmap_multiplier> },
     { "night_vision_range", calc_mutation_value<&mutation_branch::night_vision_range> },
+    { "local_detail_sight", calc_mutation_value_additive<&mutation_branch::local_detail_sight> },
     { "reading_speed_multiplier", calc_mutation_value_multiplicative<&mutation_branch::reading_speed_multiplier> },
     { "skill_rust_multiplier", calc_mutation_value_multiplicative<&mutation_branch::skill_rust_multiplier> }
 };
@@ -11600,13 +11608,13 @@ std::vector<Creature *> Character::get_hostile_creatures( int range ) const
 
 bool Character::knows_trap( const tripoint_bub_ms &pos ) const
 {
-    const auto p = get_map().bub_to_abs( pos );
+    const auto p = bub_to_abs( pos );
     return known_traps.contains( p );
 }
 
 void Character::add_known_trap( const tripoint_bub_ms &pos, const trap &t )
 {
-    const auto p = get_map().bub_to_abs( pos );
+    const auto p = bub_to_abs( pos );
     if( t.is_null() ) {
         known_traps.erase( p );
     } else {
@@ -11857,7 +11865,7 @@ void Character::set_destination( const std::vector<tripoint_bub_ms> &route,
 {
     auto_move_route = route;
     set_destination_activity( std::move( new_destination_activity ) );
-    destination_point.emplace( get_map().bub_to_abs( route.back() ) );
+    destination_point.emplace( bub_to_abs( route.back() ) );
 }
 
 std::unique_ptr<player_activity> Character::clear_destination()

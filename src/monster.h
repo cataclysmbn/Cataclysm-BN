@@ -648,7 +648,7 @@ class monster : public Creature, public location_visitable<monster>
 
         auto setpos( const tripoint_bub_ms &p ) -> void override;
         auto setpos( const tripoint_abs_ms &p ) -> void override;
-        tripoint_bub_ms bub_pos() const override;
+        auto bub_pos() const -> tripoint_bub_ms override;
         auto abs_pos() const -> tripoint_abs_ms override;
 
         short ignoring;
@@ -744,6 +744,8 @@ class monster : public Creature, public location_visitable<monster>
         std::set<m_flag> monster_flags;
 
     private:
+        auto action_move_factor() const -> int override;
+
         void process_trigger( mon_trigger trig, int amount );
         void process_trigger( mon_trigger trig, const std::function < auto() -> int > &amount_func );
         void process_trigger( mon_trigger trig, int amount, mfaction_id target_faction );

@@ -133,7 +133,7 @@ void clear_overmap()
 
 void clear_map()
 {
-    g->m.set_abs_sub( tripoint_abs_sm( g->m.get_abs_sub().xy(), 0 ) );
+    g->m.set_loaded_submap_z( 0 );
 
     // Clearing all z-levels is rather slow, so just clear the ones I know the
     // tests use for now.
@@ -156,7 +156,8 @@ void clear_map()
 void put_player_underground()
 {
     // Make sure the player doesn't block the path of the monster being tested.
-    g->u.setpos( tripoint_bub_ms{ 0, 0, -2 } );
+    g->u.setpos( map_local_to_abs( get_map(),
+                                   tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, -2 ) ) );
 }
 
 monster &spawn_test_monster( const std::string &monster_type, const tripoint_bub_ms &start )
@@ -209,7 +210,7 @@ void set_time( const time_point &time )
     calendar::turn = time;
     g->reset_light_level();
     const auto z = g->u.bub_pos().z();
-    g->m.update_visibility_cache( z );
     g->m.invalidate_map_cache( z );
     g->m.build_map_cache( z );
+    g->m.update_visibility_cache( z );
 }

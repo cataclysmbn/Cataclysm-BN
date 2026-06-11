@@ -2670,6 +2670,7 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
     assign( jo, "min_intelligence", def.min_int );
     assign( jo, "min_perception", def.min_per );
     assign( jo, "emits", def.emits );
+    assign( jo, "light_color", def.light_color );
     assign( jo, "magazine_well", def.magazine_well );
     assign( jo, "explode_in_fire", def.explode_in_fire );
     assign( jo, "solar_efficiency", def.solar_efficiency );

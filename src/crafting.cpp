@@ -10,11 +10,13 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "avatar.h"
@@ -353,11 +355,11 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     }
 
     // If we're working below 20% speed, just suggest giving up
-    if( calendar::once_every( 1_hours ) && total_multi <= 0.2f ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) && total_multi <= 0.2f ) {
         who.add_msg_if_player( m_bad, _( "You are too frustrated to continue and should just give up." ) );
     }
 
-    if( calendar::once_every( 1_hours ) && total_multi < 0.75f ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) && total_multi < 0.75f ) {
         if( light_multi <= 0.5f ) {
             who.add_msg_if_player( m_bad, _( "You can't see well and are working slowly." ) );
         }
@@ -1092,6 +1094,21 @@ void item::inherit_flags( const std::vector<item *> &parents, const recipe &maki
     }
 }
 
+static auto component_relative_rot( const item *component ) -> double
+{
+    return component != nullptr && component->goes_bad() ? component->get_relative_rot() : 0.0;
+}
+
+static auto highest_component_relative_rot( const std::vector<item *> &components ) -> double
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    if( components.empty() ) {
+        return 0.0;
+    }
+    return ranges::max( components | transform( component_relative_rot ) );
+}
+
 void complete_craft( Character &who, item &craft )
 {
     if( !craft.is_craft() ) {
@@ -1107,7 +1124,7 @@ void complete_craft( Character &who, item &craft )
     for( detached_ptr<item> &it : used ) {
         used_items.push_back( &*it );
     }
-    const double relative_rot = craft.get_relative_rot();
+    const auto relative_rot = highest_component_relative_rot( used_items );
     const bool ignore_component = making.has_flag( "NUTRIENT_OVERRIDE" );
 
     // Set up the new item, and assign an inventory letter if available
@@ -2198,7 +2215,7 @@ static bool prompt_disassemble_single( avatar &you, item *target, bool interacti
     loc.loc = target;
     loc.count = res.batches ? *res.batches : 1;
 
-    tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.bub_pos() ) );
+    tripoint_abs_ms pos_abs( you.abs_pos() );
 
     you.assign_activity( std::make_unique<player_activity>
     ( std::make_unique<disassemble_activity_actor>( std::vector<iuse_location> {{ loc }}, pos_abs,
@@ -2235,7 +2252,7 @@ bool crafting::disassemble_all( avatar &you, bool recursively )
     }
 
     if( !targets.empty() ) {
-        tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.bub_pos() ) );
+        tripoint_abs_ms pos_abs( you.abs_pos() );
 
         you.assign_activity( std::make_unique<player_activity>
                              ( std::make_unique<disassemble_activity_actor>( std::move(

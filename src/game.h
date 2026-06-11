@@ -227,6 +227,7 @@ class game : public submap_load_listener
         void draw( ui_adaptor &ui );
         void draw_ter( bool draw_sounds = true );
         void draw_ter( const tripoint_bub_ms &center, bool looking = false, bool draw_sounds = true );
+        auto visibility_cache_z() -> int;
 
         class draw_callback_t
         {
@@ -342,6 +343,10 @@ class game : public submap_load_listener
         T * critter_at( const tripoint_bub_ms &p, bool allow_hallucination = false );
         template<typename T = Creature>
         const T * critter_at( const tripoint_bub_ms &p, bool allow_hallucination = false ) const;
+        template<typename T = Creature>
+        auto critter_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) -> T *;
+        template<typename T = Creature>
+        auto critter_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const -> const T *;
         /**
         * Returns a shared pointer to the given critter (which can be of any of the subclasses of
         * @ref Creature). The function may return an empty pointer if the given critter
@@ -391,7 +396,7 @@ class game : public submap_load_listener
          */
         size_t num_creatures() const;
         /** Redirects to the creature_tracker update_pos() function. */
-        bool update_zombie_pos( const monster &critter, const tripoint_bub_ms &pos );
+        auto update_zombie_pos( const monster &critter, const tripoint_abs_ms &pos ) -> bool;
         void remove_zombie( const monster &critter );
         /** Redirects to the creature_tracker clear() function. */
         void clear_zombies();
@@ -752,12 +757,12 @@ class game : public submap_load_listener
         bool take_screenshot() const;
 
         /**
-         * The top left corner of the reality bubble (in submaps coordinates). This is the same
-         * as @ref map::abs_sub of the @ref m map.
+         * The top left corner of the reality bubble in absolute submap coordinates,
+         * derived from the avatar's absolute position.
          */
-        int get_levx() const;
-        int get_levy() const;
-        int get_levz() const;
+        auto get_levx() const -> int;
+        auto get_levy() const -> int;
+        auto get_levz() const -> int;
         /**
          * Load the main map at given location, see @ref map::load, in global, absolute submap
          * coordinates.
@@ -799,7 +804,7 @@ class game : public submap_load_listener
 
         // Animation related functions
         void draw_bullet( const tripoint_bub_ms &t, int i, const std::vector<tripoint_bub_ms> &trajectory,
-                          char bullet, const std::string &custom_sprite = {} );
+        char bullet, const std::string &custom_sprite = {} );
         void draw_hit_mon( const tripoint_bub_ms &p, const monster &m, bool dead = false );
         void draw_hit_player( const Character &p, int dam );
         void draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center_point,
@@ -1022,6 +1027,9 @@ class game : public submap_load_listener
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity
+        auto debug_infinite_speed_can_freeze_time() const -> bool;
+        auto restore_debug_infinite_speed_moves( int minimum_moves ) -> void;
+        auto advance_time_action_tick() -> int;
         auto try_activity_fixed_window_skip() -> bool;
         auto activity_fixed_window_duration() -> time_duration;
         auto execute_activity_fixed_window_skip( const time_duration &duration ) -> int;
@@ -1220,6 +1228,7 @@ class game : public submap_load_listener
         int next_mission_id = 0;
         std::set<character_id> follower_ids; // Keep track of follower NPC IDs
         int moves_since_last_save = 0;
+        int time_action_scale_turn_remainder = 0;
         bool saving_blocked_by_failed_load = false;
         time_t last_save_timestamp;
         mutable std::array<float, OVERMAP_LAYERS> latest_lightlevels;
@@ -1345,9 +1354,9 @@ class game : public submap_load_listener
         // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().
         int world_tick_interval_ = 1;
 
-        // Submap radius of the reality bubble = g_half_mapsize = 2*size+1.
+        // Submap radius of the reality bubble = g_half_mapsize = size+1.
         // Set by init_bubble_config() in start_game() / load().
-        // Default 5 matches REALITY_BUBBLE_SIZE=2 (original 11×11 grid).
+        // Default 5 matches REALITY_BUBBLE_SIZE=4 (original 11x11 grid).
         int reality_bubble_radius_ = 5;
 
     private:

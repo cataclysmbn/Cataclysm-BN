@@ -760,9 +760,17 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
                static_cast<int>( al.obstructed )
              );
     mvwprintw( w_info, point( 1, off++ ), _( "light_at: %s" ),
-               map_cache.lm[map_cache.idx( target.x(), target.y() )].to_string() );
-    mvwprintw( w_info, point( 1, off++ ), _( "apparent light: %.5f (%d)" ),
-               al.apparent_light, apparent_light );
+               std::to_string( map_cache.lm[map_cache.idx( target.x(), target.y() )] ) );
+#if defined( CATA_SDL )
+    if( visibility_cache.variables_set && !map_cache.visibility_cache_dirty ) {
+        mvwprintw( w_info, point( 1, off++ ), _( "apparent light: GPU visibility (%d)" ),
+                   apparent_light );
+    } else
+#endif
+    {
+        mvwprintw( w_info, point( 1, off++ ), _( "apparent light: %.5f (%d)" ),
+                   al.apparent_light, apparent_light );
+    }
     std::string extras;
     if( vp ) {
         extras += _( " [vehicle]" );
@@ -1911,7 +1919,7 @@ void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
 
                     //TODO!: move this into the submap swap
                     for( auto &veh : destsm->vehicles ) {
-                        veh->abs_sm_pos = here.bub_to_abs( dest_pos );
+                        veh->abs_sm_pos = map_local_to_abs( here, dest_pos );
                     }
 
                     if( !destsm->spawns.empty() ) {                              // trigger spawnpoints
@@ -2111,13 +2119,13 @@ void editmap::edit_mapgen()
     map &here = get_map();
 
     do {
-        auto abs_pos = here.bub_to_abs( target.xy() );
-        auto omt_lpos = here.abs_to_bub( project_to<coords::ms>( project_to<coords::omt>( abs_pos ) ) );
+        auto abs_pos = bub_to_abs( target.xy() );
+        auto omt_lpos = abs_to_bub( project_to<coords::ms>( project_to<coords::omt>( abs_pos ) ) );
         auto om_ltarget = omt_lpos + tripoint_rel_ms( -1 + SEEX, -1 + SEEY, target.z() );
 
         if( target.x() != om_ltarget.x() || target.y() != om_ltarget.y() ) {
             target = om_ltarget;
-            abs_pos = here.bub_to_abs( target.xy() );
+            abs_pos = bub_to_abs( target.xy() );
         }
         target_list.clear();
         for( int x = target.x() - SEEX + 1; x < target.x() + SEEX + 1; x++ ) {

@@ -1,6 +1,7 @@
 #include "options.h"
 
 #include <algorithm>
+#include <array>
 #include <locale>
 #include <cfloat>
 #include <climits>
@@ -28,6 +29,7 @@
 #include "mapsharing.h"
 #include "output.h"
 #include "path_info.h"
+#include "preload_config.h"
 #include "point.h"
 #include "popup.h"
 #include "sdlsound.h"
@@ -178,7 +180,10 @@ options_manager::options_manager()
     pages_.emplace_back( android, to_translation( "Android" ) );
 #endif
 
-    mMigrateOption = { {"DELETE_WORLD", { "WORLD_END", { {"no", "keep" }, {"yes", "delete"} } } } };
+    mMigrateOption = {
+        {"DELETE_WORLD", { "WORLD_END", { {"no", "keep" }, {"yes", "delete"} } } },
+        {"COMPUTE_ACCELERATION", { "COMPUTE_ACCELERATION", { {"off", "software"} } } },
+    };
 
     enable_json( "DEFAULT_REGION" );
     // to allow class based init_data functions to add values to a 'string' type option, add:
@@ -2103,6 +2108,17 @@ void options_manager::add_options_graphics()
          true, COPT_CURSES_HIDE
        );
 
+#if defined(__ANDROID__)
+    const auto default_colored_lighting = false;
+#else
+    const auto default_colored_lighting = true;
+#endif
+    add( "COLORED_LIGHTING", graphics, translate_marker( "Colored lighting" ),
+         translate_marker( "If true, map tiles and entities can be tinted by colored light sources." ),
+         default_colored_lighting, COPT_CURSES_HIDE
+       );
+    get_option( "COLORED_LIGHTING" ).setPrerequisite( "USE_TILES" );
+
     add( "TILES", graphics, translate_marker( "Choose tileset" ),
          translate_marker( "Choose the tileset you want to use." ),
          build_tilesets_list(), "UNDEAD_PEOPLE_BASE", COPT_CURSES_HIDE
@@ -2290,6 +2306,17 @@ void options_manager::add_options_graphics()
        );
 #endif
 
+#if defined(TILES)
+    add( "TEXTURE_STREAMING", graphics, translate_marker( "Texture Streaming" ),
+         translate_marker( "Use texture-streaming instead of render-to-texture for dynamic graphics. Requires restart." ),
+    {
+        { "auto", translate_marker( "Auto" ) },
+        { "on", translate_marker( "Enable" ) },
+        { "off", translate_marker( "Disable" ) }
+    },
+    "auto" );
+#endif
+
 #if defined(SDL_HINT_RENDER_BATCHING)
     add( "RENDER_BATCHING", graphics, translate_marker( "Allow render batching" ),
          translate_marker( "Use render batching for 2D render API to make it more efficient.  Requires restart." ),
@@ -2327,6 +2354,18 @@ void options_manager::add_options_graphics()
         { "4", translate_marker( "4x" ) }
     },
     "1", COPT_CURSES_HIDE );
+#endif
+
+#if defined(CATA_SDL)
+    add_empty_line();
+    add( "COMPUTE_ACCELERATION", graphics, translate_marker( "Compute Acceleration" ),
+         translate_marker( "Controls SDL_GPU compute device selection for lighting and visibility.  Requires restart." ),
+    {
+        { "auto", translate_marker( "Auto" ) },
+        { "software", translate_marker( "Software" ) },
+        { "force", translate_marker( "Force hardware" ) }
+    },
+    "auto" );
 #endif
 
 }
@@ -2446,16 +2485,8 @@ void options_manager::add_options_performance()
     add_option_group( performance, Group( "fov_3d", to_translation( "3D Field of Vision" ),
                                           to_translation( "Configure three-dimensional visibility across z-levels." ) ),
     [&]( auto & page_id ) {
-        add( "FOV_3D", page_id, translate_marker( "3D field of vision" ),
-             translate_marker( "If false, vision is limited to current z-level. If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
-             true
-           );
-        add( "FOV_3D_Z_RANGE", page_id, translate_marker( "Vertical range of 3D field of vision" ),
-             translate_marker( "How many levels up and down the experimental 3D field of vision reaches. (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
-             0, OVERMAP_LAYERS, is_android ? 3 : 5
-           );
-        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV shadow casting" ),
-             translate_marker( "When enabled, obstacles at other z-levels correctly cast 3D shadows. Requires 3D FoV. Significantly slower than disabled." ),
+        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "Angled Sunlight Shadows" ),
+             translate_marker( "When enabled, direct sunlight follows the current sun angle and roofs or overhangs cast time-dependent shadows." ),
              false
            );
         add( "PREVENT_OCCLUSION", page_id, translate_marker( "Handle occlusion by high sprites" ),
@@ -2485,9 +2516,6 @@ void options_manager::add_options_performance()
              0.0, 60.0, 0.0, 0.1
            );
     } );
-
-    get_option( "FOV_3D_Z_RANGE" ).setPrerequisite( "FOV_3D" );
-    get_option( "FOV_3D_OCCLUSION" ).setPrerequisite( "FOV_3D" );
 
     add_empty_line();
 
@@ -2568,6 +2596,17 @@ void options_manager::add_options_performance()
                                "Larger values increase the loaded area and memory usage; "
                                "smaller values reduce both. " ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
+        add( "VISIBILITY_SCALING", page_id,
+             translate_marker( "Visibility Scaling" ),
+             translate_marker( "Controls how clear-air visibility attenuation scales with the reality bubble.  "
+                               "Perfect scales directly with the current bubble size.  Smart keeps visibility "
+                               "near the size 6 baseline while still giving small bubbles less range and large "
+                               "bubbles more range.  None keeps visibility at the size 6 baseline and only uses "
+        "bubble size as a hard view cap." ), {
+            { "perfect", translate_marker( "Perfect Scale" ) },
+            { "smart", translate_marker( "Smart Scale" ) },
+            { "none", translate_marker( "No Scale" ) }
+        }, "smart" );
         add( "LAZY_BORDER", page_id,
              translate_marker( "Pre-load Border" ),
              translate_marker( "Preload a one-overmap-tile border around the reality bubble over several turns.  "
@@ -3138,10 +3177,54 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
-    add( "MONSTER_SPEED", world_default, translate_marker( "Monster speed percentage" ),
-         translate_marker( "Determines the movement rate of monsters.  A higher value increases monster speed and a lower reduces it.  Requires world reset." ),
-         1, 1000, 100, COPT_NO_HIDE, "%i%%"
-       );
+    struct time_scale_option {
+        const char *id;
+        const char *name;
+        const char *description;
+    };
+
+    static constexpr auto time_scale_max_percent = 10000;
+    static constexpr auto time_scale_options = std::array<time_scale_option, 7> {{
+            {
+                "TIME_ACTION_SCALE", translate_marker( "Global action speed percentage" ),
+                translate_marker( "Determines the baseline action rate for creatures and activities.  A higher value allows more actions per in-game second, while a lower value makes calendar time pass faster relative to actions." )
+            },
+            {
+                "PLAYER_ACTION_SCALE", translate_marker( "Player action speed percentage" ),
+                translate_marker( "Determines the player's action rate as a percentage of the global action speed.  A higher value allows more player actions per in-game second and a lower value allows fewer." )
+            },
+            {
+                "NPC_ACTION_SCALE", translate_marker( "NPC action speed percentage" ),
+                translate_marker( "Determines NPC action rate as a percentage of the global action speed.  A higher value allows more NPC actions per in-game second and a lower value allows fewer." )
+            },
+            {
+                "ACTIVITY_PROGRESS_SCALE", translate_marker( "Activity progress percentage" ),
+                translate_marker( "Determines long activity and crafting progress as a percentage of the global action speed.  A higher value completes activities faster per in-game second and a lower value completes them slower." )
+            },
+            {
+                "VEHICLE_CONTROL_SCALE", translate_marker( "Vehicle control speed percentage" ),
+                translate_marker( "Determines driver control action rate as a percentage of the global action speed without changing physical vehicle movement.  A higher value allows more steering, braking, and throttle inputs per in-game second and a lower value allows fewer." )
+            },
+            {
+                "OVERMAP_HORDE_SCALE", translate_marker( "Overmap horde speed percentage" ),
+                translate_marker( "Determines overmap horde movement speed as a percentage of global action speed and monster speed.  A higher value makes hordes travel faster over the overmap and a lower value makes them slower." )
+            },
+            {
+                "MONSTER_SPEED", translate_marker( "Monster speed percentage" ),
+                translate_marker( "Determines monster action rate as a percentage of the global action speed.  A higher value allows more monster actions per in-game second and a lower value allows fewer." )
+            },
+        }
+    };
+
+    add_option_group( world_default, Group( "time_scaling",
+                                            to_translation( "Time Scaling" ),
+                                            to_translation( "Configure experimental calendar and action-rate scaling." ) ),
+    [&]( const std::string & page_id ) {
+        for( const auto &option : time_scale_options ) {
+            add( option.id, page_id, option.name, option.description,
+                 1, time_scale_max_percent, 100, COPT_NO_HIDE, "%i%%" );
+        }
+    } );
 
     add( "MONSTER_RESILIENCE", world_default,
          translate_marker( "Monster resilience percentage" ),
@@ -4296,18 +4379,18 @@ void options_manager::cache_to_globals()
     trigdist = ::get_option<bool>( "CIRCLEDIST" );
 #if defined(TILES)
     use_tiles = ::get_option<bool>( "USE_TILES" );
+    colored_lighting = use_tiles && ::get_option<bool>( "COLORED_LIGHTING" );
     use_tiles_overmap = ::get_option<bool>( "USE_TILES_OVERMAP" );
 #else
     use_tiles = false;
+    colored_lighting = false;
     use_tiles_overmap = false;
 #endif
     use_pinyin_search = ::get_option<bool>( "USE_PINYIN_SEARCH" );
     log_from_top = ::get_option<std::string>( "LOG_FLOW" ) == "new_top";
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );
-    fov_3d = ::get_option<bool>( "FOV_3D" );
-    fov_3d_z_range = ::get_option<int>( "FOV_3D_Z_RANGE" );
-    fov_3d_occlusion = ::get_option<bool>( "FOV_3D_OCCLUSION" );
+    angled_sunlight_shadows = ::get_option<bool>( "FOV_3D_OCCLUSION" );
     const auto prevent_occlusion_option = ::get_option<std::string>( "PREVENT_OCCLUSION" );
     prevent_occlusion = prevent_occlusion_option == "off" ? 0 : prevent_occlusion_option == "on" ? 1 :
                         2;
@@ -4333,6 +4416,12 @@ void options_manager::cache_to_globals()
     // corresponding options are commented out above.
     reality_bubble_fire_spread = false;
     fire_spread_submap_cap = 0;
+    {
+        const auto opt = ::get_option<std::string>( "VISIBILITY_SCALING" );
+        visibility_scaling = opt == "perfect" ? visibility_scaling_mode::perfect
+                             : opt == "none" ? visibility_scaling_mode::no_scale
+                             : visibility_scaling_mode::smart;
+    }
 
     {
         const auto psl_str = ::get_option<std::string>( "POCKET_SIMULATION_LEVEL" );
@@ -4371,6 +4460,22 @@ void options_manager::cache_to_globals()
 #if defined(SDL_SOUND)
     sounds::sound_enabled = ::get_option<bool>( "SOUND_ENABLED" );
 #endif
+
+#if defined(CATA_SDL)
+    if( options.contains( "COMPUTE_ACCELERATION" ) ) {
+        preload_config::set_compute_accel(
+            preload_config::compute_accel_from_string(
+                ::get_option<std::string>( "COMPUTE_ACCELERATION" ) ) );
+    }
+#endif
+
+#if defined(TILES)
+    if( options.contains( "TEXTURE_STREAMING" ) ) {
+        preload_config::set_texture_streaming(
+            preload_config::tristate_from_string(
+                ::get_option<std::string>( "TEXTURE_STREAMING" ) ) );
+    }
+#endif
 }
 
 bool options_manager::save()
@@ -4379,10 +4484,16 @@ bool options_manager::save()
     cache_to_globals();
     update_volumes();
 
-    return write_to_file( savefile, [&]( std::ostream & fout ) {
+    auto const ok = write_to_file( savefile, [&]( std::ostream & fout ) {
         JsonOut jout( fout, true );
         serialize( jout );
     }, _( "options" ) );
+
+#if defined(CATA_SDL)
+    preload_config::save();
+#endif
+
+    return ok;
 }
 
 void options_manager::load()

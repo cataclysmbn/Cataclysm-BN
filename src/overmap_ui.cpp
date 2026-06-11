@@ -1818,7 +1818,7 @@ static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs, const tripo
 
         mvwprintz( w_search, point( 1, 3 ), c_light_blue, _( "Direction:" ) );
         mvwprintz( w_search, point( align_width, 3 ), c_light_red, "%d %s",
-                   trig_dist( orig, tripoint_abs_omt( locations[i], orig.z() ) ),
+                   static_cast<int>( trig_dist( orig, tripoint_abs_omt( locations[i], orig.z() ) ) ),
                    direction_name_short( direction_from( orig, tripoint_abs_omt( locations[i], orig.z() ) ) ) );
 
         if( locations.size() > 1 ) {

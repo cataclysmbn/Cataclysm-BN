@@ -9,6 +9,7 @@
 #include <variant>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "activity_type.h"
 #include "character.h"
 #include "character_functions.h"
@@ -50,6 +51,19 @@ inline static float refine_factor( float speed, int denom = 1, float min = -75.0
 
     //speed to factor
     return speed / 100.0f;
+}
+
+auto activity_speed::moves_per_turn() const -> int
+{
+    return std::max( 1, static_cast<int>(
+                         std::roundf( total() * action_time_scale::activity_progress_per_tick() ) ) );
+}
+
+auto activity_speed::calendar_moves_per_turn() const -> int
+{
+    return std::max( 1, static_cast<int>(
+                         std::roundf( total() *
+                                      action_time_scale::activity_progress_per_calendar_turn() ) ) );
 }
 
 void activity_speed::calc_moves( const Character &who )

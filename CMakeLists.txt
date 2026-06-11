@@ -66,6 +66,9 @@ endif()
 option(LUA_DOCS_ON_BUILD "Generate Lua reference/annotations after building cataclysm-bn-tiles (requires deno)." ${LUA_DOCS_DEFAULT})
 option(CATA_CLANG_TIDY_PLUGIN "Build Cata's custom clang-tidy plugin" "OFF")
 option(USE_TRACY "Use Tracy profiler" "OFF")
+set(TRACY_VERSION "" CACHE STRING "Tracy version to fetch when source fallback is used")
+option(TRACY_ON_DEMAND "Enable Tracy on-demand profiler connection" "ON")
+option(TRACY_ONLY_IPV4 "Use IPv4 only for Tracy profiler connections" "OFF")
 set(CATA_CLANG_TIDY_INCLUDE_DIR "" CACHE STRING
         "Path to internal clang-tidy headers required for plugin (e.g. ClangTidy.h)")
 set(CATA_CHECK_CLANG_TIDY "" CACHE STRING "Path to check_clang_tidy.py for plugin tests")
@@ -73,6 +76,10 @@ set(GIT_BINARY "" CACHE STRING "Git binary name or path.")
 set(LINKER "" CACHE STRING "Custom Linker to use")
 set(GETTEXT_MSGFMT_BINARY "" CACHE FILEPATH "msgfmt binary name or path.")
 option(BUILD_SDL3 "Force builds SDL3 and its modules from source, instead of using system packages" "OFF")
+option(BUILD_SHADERCROSS "Build SDL_shadercross from source when shadercross is not on PATH" "ON")
+option(CATA_SDL "Link SDL3 core for GPU platform services used by existing game targets." "OFF")
+option(CATA_GPU_VERIFY "Enable GPU output verification against CPU reference via readback (development only, requires CATA_SDL)." "OFF")
+set(CATA_SHADERS OFF)
 
 if (TESTS)
 include(CTest)
@@ -194,6 +201,11 @@ if (TILES)
     set(CURSES OFF)
 endif ()
 
+if (TILES OR CURSES OR SOUND)
+    set(CATA_SDL ON CACHE BOOL
+        "Link SDL3 core for GPU platform services used by existing game targets." FORCE)
+endif ()
+
 # Can't use both home and xdg directories
 if (USE_XDG_DIR)
     set(USE_HOME_DIR OFF)
@@ -256,6 +268,9 @@ if (LINKER)
     message(STATUS "LINKER                        : ${LINKER}")
 endif ()
 message(STATUS "BUILD_SDL3                    : ${BUILD_SDL3}")
+message(STATUS "CATA_SDL                      : ${CATA_SDL}")
+message(STATUS "CATA_SHADERS                  : ${CATA_SHADERS}")
+message(STATUS "CATA_GPU_VERIFY               : ${CATA_GPU_VERIFY}")
 
 message(STATUS "See CMake compiling guide for details and more info --")
 
@@ -319,35 +334,60 @@ find_package(Threads REQUIRED)
 
 if (USE_TRACY)
 
-    if (NOT TRACY_VERSION)
-        if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
-            set(TRACY_VERSION 6d1deb5640ed11da01995fb1791115cfebe54dbf)
-        else()
-            set(TRACY_VERSION v0.10)
+    find_package(Tracy CONFIG QUIET)
+
+    if (TARGET Tracy::TracyClient AND NOT TARGET TracyClient)
+        add_library(TracyClient INTERFACE IMPORTED)
+        target_link_libraries(TracyClient INTERFACE Tracy::TracyClient)
+        get_target_property(CATA_TRACY_INCLUDE_DIRS Tracy::TracyClient INTERFACE_INCLUDE_DIRECTORIES)
+        foreach (CATA_TRACY_INCLUDE_DIR ${CATA_TRACY_INCLUDE_DIRS})
+            if (EXISTS "${CATA_TRACY_INCLUDE_DIR}/tracy/tracy/Tracy.hpp")
+                target_include_directories(TracyClient INTERFACE "${CATA_TRACY_INCLUDE_DIR}/tracy")
+            endif ()
+        endforeach ()
+        unset(CATA_TRACY_INCLUDE_DIRS)
+        unset(CATA_TRACY_INCLUDE_DIR)
+        target_compile_definitions(TracyClient INTERFACE TRACY_ENABLE)
+        if (TRACY_ON_DEMAND)
+            target_compile_definitions(TracyClient INTERFACE TRACY_ON_DEMAND)
+        endif ()
+        if (TRACY_ONLY_IPV4)
+            target_compile_definitions(TracyClient INTERFACE TRACY_ONLY_IPV4)
+        endif ()
+        message(STATUS "Using installed Tracy")
+    endif ()
+
+    if (NOT TARGET TracyClient)
+        if (NOT TRACY_VERSION)
+            if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+                set(TRACY_VERSION 6d1deb5640ed11da01995fb1791115cfebe54dbf)
+            else()
+                set(TRACY_VERSION v0.10)
+            endif()
+            message(STATUS "Using tracy version: ${TRACY_VERSION}")
         endif()
-        message(STATUS "Using tracy version: ${TRACY_VERSION}")
-    endif()
 
-    FetchContent_Declare(
-        tracy
-        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-        GIT_TAG "${TRACY_VERSION}"
-        GIT_PROGRESS TRUE)
+        message(STATUS "Installing Tracy from Source")
+        FetchContent_Declare(
+            tracy
+            GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+            GIT_TAG "${TRACY_VERSION}"
+            GIT_PROGRESS TRUE)
 
-    FetchContent_MakeAvailable(tracy)
-    set_target_properties(TracyClient PROPERTIES TRACY_ENABLE ON TRACY_ON_DEMAND ON)
+        FetchContent_MakeAvailable(tracy)
+        set_target_properties(TracyClient PROPERTIES TRACY_ENABLE ON TRACY_ON_DEMAND ${TRACY_ON_DEMAND})
 
-    if(NOT MSVC)
-        target_compile_options(TracyClient PRIVATE "-Wno-everything")
-    endif()
-    if (NOT DYNAMIC_LINKING)
-        set_target_properties(TracyClient PROPERTIES TRACY_STATIC ON)
+        if(NOT MSVC)
+            target_compile_options(TracyClient PRIVATE "-Wno-everything")
+        endif()
+        if (NOT DYNAMIC_LINKING)
+            set_target_properties(TracyClient PROPERTIES TRACY_STATIC ON)
+        endif ()
     endif ()
 endif ()
 
 # Check for build types and libraries
-if (TILES)
-    # Find SDL, SDL_ttf & SDL_image for graphical install
+if (CATA_SDL)
     message(STATUS "Searching for SDL3 library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
         if (NOT BUILD_SDL3)
@@ -376,12 +416,219 @@ if (TILES)
     endif()
     if (NOT (SDL3_FOUND OR TARGET SDL3::SDL3 OR TARGET SDL3::SDL3-static))
         message(FATAL_ERROR
-                "This project requires SDL3 to be installed to compile in graphical mode.  \
-                 Please install the SDL3 development libraries, \
-                 or try compiling without -DTILES=1 for a text-only compilation. \
+                "This project requires SDL3 to be installed for SDL platform services. \
+                 Please install the SDL3 development libraries. \
                  See CMake compiling guide for details and more info.")
     endif ()
+    add_definitions(-DCATA_SDL)
+    if (CATA_GPU_VERIFY)
+        add_definitions(-DCATA_GPU_VERIFY)
+    endif ()
 
+    # --- SDL_shadercross: HLSL shader compiler (build-time tool only, library not linked) ---
+    message(STATUS "Searching for shadercross (HLSL compiler) --")
+
+    find_program(SHADERCROSS_EXE
+        NAMES shadercross
+        HINTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/sdl3-shadercross")
+
+    if (APPLE AND SHADERCROSS_EXE)
+        message(STATUS "shadercross found on macOS; using precompiled MSL shaders instead")
+        set(SHADERCROSS_EXE "")
+    endif ()
+
+    if (NOT SHADERCROSS_EXE AND BUILD_SHADERCROSS AND NOT APPLE)
+        message(STATUS "Installing SDL_shadercross from Source")
+        FetchContent_Declare(
+                SDL3_SHADERCROSS
+                GIT_REPOSITORY https://github.com/libsdl-org/SDL_shadercross.git
+                GIT_TAG main
+                GIT_SHALLOW TRUE
+                GIT_SUBMODULES_RECURSE TRUE
+        )
+        FetchContent_GetProperties(SDL3_SHADERCROSS)
+        if (NOT sdl3_shadercross_POPULATED)
+            cmake_policy(PUSH)
+            if (POLICY CMP0169)
+                cmake_policy(SET CMP0169 OLD)
+            endif ()
+            FetchContent_Populate(SDL3_SHADERCROSS)
+            cmake_policy(POP)
+        endif ()
+
+        set(SHADERCROSS_DXC_ROOT "${sdl3_shadercross_BINARY_DIR}/DirectXShaderCompiler-binaries")
+        set(DXC_ROOT "${SHADERCROSS_DXC_ROOT}")
+        include("${sdl3_shadercross_SOURCE_DIR}/build-scripts/download-prebuilt-DirectXShaderCompiler.cmake")
+        set(DirectXShaderCompiler_ROOT "${SHADERCROSS_DXC_ROOT}")
+        if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+            set(DirectXShaderCompiler_INCLUDE_PATH "${SHADERCROSS_DXC_ROOT}/linux/include/dxc")
+            set(DirectXShaderCompiler_dxcompiler_LIBRARY "${SHADERCROSS_DXC_ROOT}/linux/lib/libdxcompiler.so")
+            set(DirectXShaderCompiler_dxil_LIBRARY "${SHADERCROSS_DXC_ROOT}/linux/lib/libdxil.so")
+        endif ()
+
+        set(CATA_SAVED_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+        set(CATA_SAVED_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+        set(CATA_SAVED_CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+        set(CMAKE_C_FLAGS "")
+        set(CMAKE_CXX_FLAGS "")
+        set(CMAKE_CXX_FLAGS_DEBUG "")
+
+        set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+        set(SPIRV_CROSS_SKIP_INSTALL ON)
+        set(SPIRV_CROSS_CLI OFF)
+        set(SPIRV_CROSS_ENABLE_TESTS OFF)
+        set(SPIRV_CROSS_STATIC ON)
+        set(SPIRV_CROSS_SHARED OFF)
+        set(SPIRV_CROSS_FORCE_PIC ON)
+        add_subdirectory(
+                "${sdl3_shadercross_SOURCE_DIR}/external/SPIRV-Cross"
+                "${sdl3_shadercross_BINARY_DIR}/external/SPIRV-Cross"
+                EXCLUDE_FROM_ALL)
+        if (TARGET spirv-cross-c AND NOT TARGET spirv_cross_c)
+            add_library(spirv_cross_c ALIAS spirv-cross-c)
+        endif ()
+
+        set(SDLSHADERCROSS_CLI ON)
+        set(SDLSHADERCROSS_DXC ON)
+        set(SDLSHADERCROSS_INSTALL OFF)
+        set(SDLSHADERCROSS_SHARED ON)
+        set(SDLSHADERCROSS_STATIC OFF)
+        set(SDLSHADERCROSS_SPIRVCROSS_SHARED OFF)
+        set(SDLSHADERCROSS_TESTS OFF)
+        set(SDLSHADERCROSS_VENDORED OFF)
+        set(SDLSHADERCROSS_WERROR OFF)
+
+        add_subdirectory(
+                "${sdl3_shadercross_SOURCE_DIR}"
+                "${sdl3_shadercross_BINARY_DIR}"
+                EXCLUDE_FROM_ALL)
+        set(CMAKE_C_FLAGS "${CATA_SAVED_CMAKE_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CATA_SAVED_CMAKE_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CATA_SAVED_CMAKE_CXX_FLAGS_DEBUG}")
+        set_target_properties(shadercross PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${sdl3_shadercross_BINARY_DIR}")
+
+        set(SHADERCROSS_EXE $<TARGET_FILE:shadercross>)
+        set(SHADERCROSS_TARGET shadercross)
+    endif ()
+
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/data/shaders")
+
+    file(GLOB_RECURSE CATA_HLSL_SOURCES CONFIGURE_DEPENDS
+         "${CMAKE_SOURCE_DIR}/src/shaders/*.hlsl")
+
+    set(CATA_PRECOMPILED_SHADER_OUTPUTS "")
+    foreach (HLSL_SRC ${CATA_HLSL_SOURCES})
+        get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
+        if (WIN32)
+            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil"
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxbc")
+        elseif (APPLE)
+            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
+        else ()
+            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
+        endif ()
+    endforeach ()
+
+    if (SHADERCROSS_EXE)
+        set(CATA_SHADERS ON)
+        message(STATUS "shadercross: ${SHADERCROSS_EXE}")
+        set(CATA_SHADER_OUTPUTS "")
+
+        foreach (HLSL_SRC ${CATA_HLSL_SOURCES})
+            get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
+
+            if (SHADER_NAME MATCHES "_vertex$")
+                set(STAGE vertex)
+            elseif (SHADER_NAME MATCHES "_fragment$")
+                set(STAGE fragment)
+            else ()
+                set(STAGE compute)
+            endif ()
+
+            set(SPV_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
+            set(MSL_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
+
+            add_custom_command(
+                OUTPUT "${SPV_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d spirv -t ${STAGE} -o "${SPV_OUT}"
+                DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
+                COMMENT "Compiling ${SHADER_NAME}.hlsl -> SPIR-V"
+                VERBATIM)
+            list(APPEND CATA_SHADER_OUTPUTS "${SPV_OUT}")
+
+            add_custom_command(
+                OUTPUT "${MSL_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d msl -t ${STAGE} -o "${MSL_OUT}"
+                DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
+                COMMENT "Compiling ${SHADER_NAME}.hlsl -> MSL"
+                VERBATIM)
+            list(APPEND CATA_SHADER_OUTPUTS "${MSL_OUT}")
+
+            if (WIN32)
+                set(DXIL_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
+                set(DXBC_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxbc")
+                add_custom_command(
+                    OUTPUT "${DXIL_OUT}"
+                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                    COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d dxil -t ${STAGE} -o "${DXIL_OUT}"
+                    DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
+                    COMMENT "Compiling ${SHADER_NAME}.hlsl -> DXIL"
+                    VERBATIM)
+                list(APPEND CATA_SHADER_OUTPUTS "${DXIL_OUT}")
+                add_custom_command(
+                    OUTPUT "${DXBC_OUT}"
+                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
+                    COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d dxbc -t ${STAGE} -o "${DXBC_OUT}"
+                    DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
+                    COMMENT "Compiling ${SHADER_NAME}.hlsl -> DXBC"
+                    VERBATIM)
+                list(APPEND CATA_SHADER_OUTPUTS "${DXBC_OUT}")
+            endif ()
+        endforeach ()
+
+        add_custom_target(cata_shaders ALL DEPENDS ${CATA_SHADER_OUTPUTS})
+        if (SHADERCROSS_TARGET)
+            add_dependencies(cata_shaders ${SHADERCROSS_TARGET})
+        endif ()
+    elseif (CATA_PRECOMPILED_SHADER_OUTPUTS)
+        set(CATA_MISSING_PRECOMPILED_SHADERS "")
+        foreach (SHADER_OUT ${CATA_PRECOMPILED_SHADER_OUTPUTS})
+            if (NOT EXISTS "${SHADER_OUT}")
+                list(APPEND CATA_MISSING_PRECOMPILED_SHADERS "${SHADER_OUT}")
+            endif ()
+        endforeach ()
+
+        if (CATA_MISSING_PRECOMPILED_SHADERS)
+            message(FATAL_ERROR
+                "shadercross not found and precompiled platform shaders are missing: "
+                "${CATA_MISSING_PRECOMPILED_SHADERS}. "
+                "Run a shader generation job or place shadercross on PATH.")
+        endif ()
+
+        set(CATA_SHADERS ON)
+        message(STATUS "shadercross not found; using precompiled shaders from data/shaders")
+        add_custom_target(cata_shaders DEPENDS ${CATA_PRECOMPILED_SHADER_OUTPUTS})
+    elseif (TILES)
+        message(FATAL_ERROR
+            "shadercross not found — tiles builds require compiled shaders. "
+            "Either enable BUILD_SHADERCROSS or place shadercross on PATH.")
+    else ()
+        message(STATUS "shadercross not found — shaders will not be compiled")
+    endif ()
+endif ()
+
+if (WIN32 AND CATA_SDL)
+    include(${CMAKE_SOURCE_DIR}/build-scripts/WindowsLavapipe.cmake)
+    cata_setup_windows_lavapipe_runtime()
+endif()
+
+if (TILES)
+    # Find SDL3_ttf & SDL3_image for tile rendering
     message(STATUS "Searching for SDL3_ttf library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
         if (NOT BUILD_SDL3)
@@ -470,11 +717,9 @@ if (CURSES)
 endif ()
 
 if (SOUND)
-    # You need TILES to be able to use SOUND
-    if (NOT TILES)
+    if (NOT CATA_SDL)
         message(FATAL_ERROR
-                "You must enable graphical support with -DTILES=1 \
-                to be able to enable sound support. \
+                "Sound support requires SDL core. Existing game targets should enable CATA_SDL automatically. \
                 See CMake compiling guide for details and more info.")
     endif ()
 
@@ -514,67 +759,81 @@ endif ()
 if (BACKTRACE)
     add_definitions(-DBACKTRACE)
     if (LIBBACKTRACE AND NOT MSVC)
-        message(STATUS "Integrating libbacktrace build using ExternalProject")
+        find_path(CATA_LIBBACKTRACE_INCLUDE_DIR NAMES backtrace.h)
+        find_library(CATA_LIBBACKTRACE_LIBRARY NAMES backtrace libbacktrace)
+        mark_as_advanced(CATA_LIBBACKTRACE_INCLUDE_DIR CATA_LIBBACKTRACE_LIBRARY)
 
-        set(LIBBACKTRACE_GIT_REPO https://github.com/ianlancetaylor/libbacktrace.git)
-        set(LIBBACKTRACE_GIT_TAG master)
+        if (CATA_LIBBACKTRACE_INCLUDE_DIR AND CATA_LIBBACKTRACE_LIBRARY)
+            message(STATUS "Using installed libbacktrace: ${CATA_LIBBACKTRACE_LIBRARY}")
+            add_library(backtrace UNKNOWN IMPORTED)
+            set_target_properties(backtrace
+                PROPERTIES
+                    IMPORTED_LOCATION "${CATA_LIBBACKTRACE_LIBRARY}"
+                    INTERFACE_INCLUDE_DIRECTORIES "${CATA_LIBBACKTRACE_INCLUDE_DIR}"
+            )
+        else ()
+            message(STATUS "Installing libbacktrace from Source")
 
-        set(LIBBACKTRACE_INSTALL_DIR "${CMAKE_BINARY_DIR}/libbacktrace/install")
-        SET(LIBBACKTRACE_LIBRARY "${LIBBACKTRACE_INSTALL_DIR}/lib/libbacktrace.a")
+            set(LIBBACKTRACE_GIT_REPO https://github.com/ianlancetaylor/libbacktrace.git)
+            set(LIBBACKTRACE_GIT_TAG master)
 
-        include(ProcessorCount)
-        ProcessorCount(NCPU)
-        if(NCPU EQUAL 0)
-            set(NCPU 1)
-        endif()
+            set(LIBBACKTRACE_INSTALL_DIR "${CMAKE_BINARY_DIR}/libbacktrace/install")
+            SET(LIBBACKTRACE_LIBRARY "${LIBBACKTRACE_INSTALL_DIR}/lib/libbacktrace.a")
 
-        # Set up ccache for libbacktrace if available
-        if (CCACHE_FOUND AND CATA_CCACHE AND CMAKE_C_COMPILER_LAUNCHER)
-            # Join compiler launcher and compiler into a single string for configure
-            set(LIBBACKTRACE_CC_LIST "${CMAKE_C_COMPILER_LAUNCHER}" "${CMAKE_C_COMPILER}")
-            set(LIBBACKTRACE_CXX_LIST "${CMAKE_CXX_COMPILER_LAUNCHER}" "${CMAKE_CXX_COMPILER}")
-            list(JOIN LIBBACKTRACE_CC_LIST " " LIBBACKTRACE_CC)
-            list(JOIN LIBBACKTRACE_CXX_LIST " " LIBBACKTRACE_CXX)
-        else()
-            set(LIBBACKTRACE_CC "${CMAKE_C_COMPILER}")
-            set(LIBBACKTRACE_CXX "${CMAKE_CXX_COMPILER}")
-        endif()
+            include(ProcessorCount)
+            ProcessorCount(NCPU)
+            if(NCPU EQUAL 0)
+                set(NCPU 1)
+            endif()
 
-        ExternalProject_Add(
-            libbacktrace_external
-            GIT_REPOSITORY ${LIBBACKTRACE_GIT_REPO}
-            GIT_TAG ${LIBBACKTRACE_GIT_TAG}
-            GIT_SHALLOW TRUE
+            # Set up ccache for libbacktrace if available
+            if (CCACHE_FOUND AND CATA_CCACHE AND CMAKE_C_COMPILER_LAUNCHER)
+                # Join compiler launcher and compiler into a single string for configure
+                set(LIBBACKTRACE_CC_LIST "${CMAKE_C_COMPILER_LAUNCHER}" "${CMAKE_C_COMPILER}")
+                set(LIBBACKTRACE_CXX_LIST "${CMAKE_CXX_COMPILER_LAUNCHER}" "${CMAKE_CXX_COMPILER}")
+                list(JOIN LIBBACKTRACE_CC_LIST " " LIBBACKTRACE_CC)
+                list(JOIN LIBBACKTRACE_CXX_LIST " " LIBBACKTRACE_CXX)
+            else()
+                set(LIBBACKTRACE_CC "${CMAKE_C_COMPILER}")
+                set(LIBBACKTRACE_CXX "${CMAKE_CXX_COMPILER}")
+            endif()
 
-            SOURCE_DIR "${CMAKE_BINARY_DIR}/libbacktrace/src"
-            BINARY_DIR "${CMAKE_BINARY_DIR}/libbacktrace/build"
+            ExternalProject_Add(
+                libbacktrace_external
+                GIT_REPOSITORY ${LIBBACKTRACE_GIT_REPO}
+                GIT_TAG ${LIBBACKTRACE_GIT_TAG}
+                GIT_SHALLOW TRUE
 
-            CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env
-                CC=${LIBBACKTRACE_CC}
-                CXX=${LIBBACKTRACE_CXX}
-                <SOURCE_DIR>/configure
-                --prefix=${LIBBACKTRACE_INSTALL_DIR}
+                SOURCE_DIR "${CMAKE_BINARY_DIR}/libbacktrace/src"
+                BINARY_DIR "${CMAKE_BINARY_DIR}/libbacktrace/build"
 
-            BUILD_COMMAND make -j${NCPU}
+                CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env
+                    CC=${LIBBACKTRACE_CC}
+                    CXX=${LIBBACKTRACE_CXX}
+                    <SOURCE_DIR>/configure
+                    --prefix=${LIBBACKTRACE_INSTALL_DIR}
 
-            INSTALL_COMMAND make install
+                BUILD_COMMAND make -j${NCPU}
 
-            INSTALL_DIR ${LIBBACKTRACE_INSTALL_DIR}
-            BUILD_BYPRODUCTS ${LIBBACKTRACE_LIBRARY}
+                INSTALL_COMMAND make install
 
-            UPDATE_DISCONNECTED 1
-        )
+                INSTALL_DIR ${LIBBACKTRACE_INSTALL_DIR}
+                BUILD_BYPRODUCTS ${LIBBACKTRACE_LIBRARY}
 
-        add_library(backtrace SHARED IMPORTED)
-        set_target_properties(backtrace
-            PROPERTIES IMPORTED_LOCATION ${LIBBACKTRACE_LIBRARY}
-        )
-        # Hack to make it work, otherwise INTERFACE_INCLUDE_DIRECTORIES will not be propagated
-        file(MAKE_DIRECTORY "${LIBBACKTRACE_INSTALL_DIR}/include")
-        target_include_directories(backtrace INTERFACE
-            "${LIBBACKTRACE_INSTALL_DIR}/include"
-        )
-        add_dependencies(backtrace libbacktrace_external)
+                UPDATE_DISCONNECTED 1
+            )
+
+            add_library(backtrace UNKNOWN IMPORTED)
+            set_target_properties(backtrace
+                PROPERTIES IMPORTED_LOCATION ${LIBBACKTRACE_LIBRARY}
+            )
+            # Hack to make it work, otherwise INTERFACE_INCLUDE_DIRECTORIES will not be propagated
+            file(MAKE_DIRECTORY "${LIBBACKTRACE_INSTALL_DIR}/include")
+            target_include_directories(backtrace INTERFACE
+                "${LIBBACKTRACE_INSTALL_DIR}/include"
+            )
+            add_dependencies(backtrace libbacktrace_external)
+        endif ()
     endif ()
     if (LIBBACKTRACE)
         add_definitions(-DLIBBACKTRACE)
@@ -679,6 +938,11 @@ if (RELEASE)
     endif()
 endif()
 
+if (WIN32 AND CATA_SDL AND TARGET cata_windows_lavapipe_runtime)
+    install(DIRECTORY "${CATA_WINDOWS_LAVAPIPE_RUNTIME_DIR}/"
+        DESTINATION "mesa/x64")
+endif()
+
 if (APPLE AND RELEASE AND (TILES OR CURSES))
     if (TILES)
         set(CATA_OSX_GAME_TARGET cataclysm-bn-tiles)
@@ -704,6 +968,10 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/gfx" "${CATA_OSX_RESOURCES_DIR}/gfx")
     endif()
+    if (CATA_SDL)
+        list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/shaders" "${CATA_OSX_DATA_DIR}/shaders")
+    endif()
     if (SOUND)
         list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/sound" "${CATA_OSX_DATA_DIR}/sound")
@@ -721,8 +989,11 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
     endif()
 
     set(CATA_OSX_COPY_FRAMEWORK_COMMANDS)
-    if (TILES AND CATA_OSX_FRAMEWORKS_DIR)
-        set(CATA_OSX_FRAMEWORK_NAMES SDL3 SDL3_image SDL3_ttf)
+    if (CATA_SDL AND CATA_OSX_FRAMEWORKS_DIR)
+        set(CATA_OSX_FRAMEWORK_NAMES SDL3)
+        if (TILES)
+            list(APPEND CATA_OSX_FRAMEWORK_NAMES SDL3_image SDL3_ttf)
+        endif()
         if (SOUND)
             list(APPEND CATA_OSX_FRAMEWORK_NAMES SDL3_mixer)
         endif()

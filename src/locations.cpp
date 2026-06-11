@@ -264,7 +264,7 @@ tile_item_location::tile_item_location( const tripoint_abs_ms &position )
 detached_ptr<item> tile_item_location::detach( item *it )
 {
     map &here = get_map();
-    const auto local = here.abs_to_bub( pos );
+    const auto local = abs_to_map_local( here, pos );
     map_stack items = here.i_at( local );
     for( auto iter = items.begin(); iter != items.end(); iter++ ) {
         if( *iter == it ) {
@@ -280,19 +280,19 @@ detached_ptr<item> tile_item_location::detach( item *it )
 void tile_item_location::attach( detached_ptr<item> &&obj )
 {
     map &here = get_map();
-    map_stack items = here.i_at( here.abs_to_bub( pos ) );
+    map_stack items = here.i_at( abs_to_map_local( here, pos ) );
     items.insert( std::move( obj ) );
 }
 
 bool tile_item_location::is_loaded( const item * ) const
 {
     map &here = get_map();
-    return here.inbounds( pos );
+    return here.inbounds( project_to<coords::sm>( pos ) );
 }
 
 tripoint_bub_ms tile_item_location::position( const item * ) const
 {
-    return get_map().abs_to_bub( pos );
+    return abs_to_map_local( get_map(), pos );
 }
 
 item_location_type tile_item_location::where() const
@@ -305,17 +305,17 @@ int tile_item_location::obtain_cost( const Character &ch, int qty, const item *i
     const item *split_stack = cost_split_helper( it, qty );
     int mv = dynamic_cast<const player *>( &ch )->item_handling_cost( *split_stack, true,
              MAP_HANDLING_PENALTY );
-    mv += 100 * rl_dist( ch.bub_pos(), get_map().abs_to_bub( pos ) );
+    mv += 100 * rl_dist( ch.bub_pos(), abs_to_bub( pos ) );
     return mv;
 }
 
 std::string tile_item_location::describe( const Character *ch, const item * ) const
 {
     map &here = get_map();
-    const auto local = here.abs_to_bub( pos );
+    const auto local = abs_to_map_local( here, pos );
     std::string res = here.name( local );
     if( ch ) {
-        res += std::string( " " ) += direction_suffix( ch->bub_pos().raw(), local.raw() );
+        res += std::string( " " ) += direction_suffix( ch->bub_pos().raw(), abs_to_bub( pos ).raw() );
     }
     return res;
 }

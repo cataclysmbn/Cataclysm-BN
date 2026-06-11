@@ -9,7 +9,7 @@
 import { walk, type WalkEntry, type WalkOptions } from "jsr:@std/fs"
 import { MuxAsyncIterator } from "jsr:@std/async"
 import { partition } from "jsr:@std/collections"
-import { Octokit, type RestEndpointMethodTypes } from "https://esm.sh/@octokit/rest@21.0.2"
+import { Octokit, type RestEndpointMethodTypes } from "@octokit/rest"
 import { Command } from "@cliffy/command"
 
 const paths = ["src", "tests"]
@@ -25,7 +25,7 @@ const getDiffs = async (pr: number) => {
     octokit.rest.pulls.listFiles,
     { owner: "cataclysmbn", repo: "Cataclysm-BN", pull_number: pr },
   )
-  const pathsFilter = new RegExp(`(^${paths.join("|")})/.*\\.(cpp|h|hpp)`)
+  const pathsFilter = new RegExp(`^(?:${paths.join("|")})/.*\\.(?:cpp|h|hpp)$`)
 
   return res
     .filter((x) => ACMRT.has(x.status))

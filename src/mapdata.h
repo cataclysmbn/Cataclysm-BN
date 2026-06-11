@@ -13,6 +13,7 @@
 #include "catalua_type_operators.h"
 #include "color.h"
 #include "coordinates.h"
+#include "hsv_color.h"
 #include "numeric_interval.h"
 #include "poly_serialized.h"
 #include "translations.h"
@@ -464,6 +465,7 @@ struct map_data_common_t {
         std::array<int, NUM_SEASONS> symbol_;
 
         int light_emitted = 0;
+        std::optional<RGBColor> light_color;
         // The amount of movement points required to pass this terrain by default.
         int movecost = 0;
         // The coverage percentage of a furniture piece of terrain. <30 won't cover from sight.
@@ -485,6 +487,7 @@ struct map_data_common_t {
         std::string prompt;
 
         iexamine_function examine; // What happens when the terrain/furniture is examined
+        std::string examine_action_id;
 
         data_vars::data_set default_vars;
 

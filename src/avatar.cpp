@@ -220,12 +220,12 @@ bool avatar::should_show_map_memory()
 
 bool avatar::save_map_memory()
 {
-    return player_map_memory->save( g->m.bub_to_abs( tripoint_bub_ms( bub_pos() ) ) );
+    return player_map_memory->save( abs_pos() );
 }
 
 void avatar::load_map_memory()
 {
-    player_map_memory->load( g->m.bub_to_abs( tripoint_bub_ms( bub_pos() ) ) );
+    player_map_memory->load( abs_pos() );
 }
 
 void avatar::clear_map_memory()
