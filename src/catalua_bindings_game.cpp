@@ -235,11 +235,7 @@ void cata::detail::reg_game_api( sol::state &lua )
         sol::optional<bool> allow_vertical
     ) -> sol::optional<tripoint_bub_ms> {
         std::optional<tripoint_bub_ms> stdOpt = choose_adjacent_highlight( message, failure_message, actionId, allow_vertical.value_or( false ) );
-        if( stdOpt.has_value() )
-        {
-            return sol::optional<tripoint_bub_ms>( *stdOpt );
-        }
-        return sol::optional<tripoint_bub_ms>();
+        return sol::optional<tripoint_bub_ms>( *stdOpt );
     } );
 
     luna::set_fx( lib, "choose_direction", []( const std::string & message,
