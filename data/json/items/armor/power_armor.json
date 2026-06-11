@@ -292,7 +292,9 @@
     "covers": [ "head", "eyes", "mouth" ],
     "encumbrance": 10,
     "environmental_protection": 16,
-    "weight_capacity_bonus": "5500 g"
+    "weight_capacity_bonus": "5500 g",
+    "adv_hearing_protection": 80,
+    "hearing_protection": 0
   },
   {
     "id": "power_armor_helmet_heavy",
@@ -350,7 +352,9 @@
     "covers": [ "head", "eyes", "mouth" ],
     "encumbrance": 20,
     "environmental_protection": 16,
-    "weight_capacity_bonus": "7500 g"
+    "weight_capacity_bonus": "7500 g",
+    "adv_hearing_protection": 80,
+    "hearing_protection": 0
   },
   {
     "id": "power_armor_helmet_light",
@@ -408,7 +412,9 @@
     "covers": [ "head", "eyes", "mouth" ],
     "encumbrance": 0,
     "environmental_protection": 16,
-    "weight_capacity_bonus": "2500 g"
+    "weight_capacity_bonus": "2500 g",
+    "adv_hearing_protection": 80,
+    "hearing_protection": 0
   },
   {
     "id": "power_armor_frame",

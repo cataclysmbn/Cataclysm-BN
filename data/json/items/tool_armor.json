@@ -70,6 +70,7 @@
     "coverage": 1,
     "material_thickness": 1,
     "hearing_protection": 20,
+    "adv_hearing_protection": 20,
     "flags": [ "OVERSIZE", "POWERARMOR_COMPATIBLE" ]
   },
   {
@@ -927,7 +928,8 @@
     "environmental_protection": 15,
     "encumbrance": 30,
     "coverage": 100,
-    "material_thickness": 4
+    "material_thickness": 4,
+    "hearing_protection": 12
   },
   {
     "id": "rm13_armor_on",
@@ -962,7 +964,8 @@
     "encumbrance": 10,
     "qualities": [ [ "GLARE", 2 ], [ "HV_INSULATION", 1 ] ],
     "material_thickness": 7,
-    "adv_hearing_protection": 120
+    "adv_hearing_protection": 120,
+    "hearing_protection": 0
   },
   {
     "id": "dimensional_anchor",
@@ -1049,6 +1052,7 @@
     "coverage": 100,
     "material_thickness": 2,
     "encumbrance": 20,
+    "hearing_protection": 12,
     "flags": [
       "RAD_PROOF",
       "STURDY",
@@ -1100,7 +1104,8 @@
       "COMBAT_NPC_USE",
       "COMBAT_NPC_ON"
     ],
-    "adv_hearing_protection": 48
+    "adv_hearing_protection": 48,
+    "hearing_protection": 0
   },
   {
     "id": "rebreather",
@@ -2748,6 +2753,7 @@
     "coverage": 10,
     "material_thickness": 2,
     "hearing_protection": 20,
+    "adv_hearing_protection": 20,
     "magazines": [
       [
         "battery",
@@ -2776,7 +2782,8 @@
     "revert_to": "powered_earmuffs",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s flicks off.", "target": "powered_earmuffs" },
     "extend": { "flags": [ "PARTIAL_DEAF", "COMBAT_NPC_ON" ] },
-    "adv_hearing_protection": 40
+    "adv_hearing_protection": 40,
+    "hearing_protection": 0
   },
   {
     "id": "army_powered_earmuffs",
@@ -2808,6 +2815,7 @@
     "coverage": 10,
     "material_thickness": 2,
     "hearing_protection": 20,
+    "adv_hearing_protection": 20,
     "magazines": [
       [
         "battery",
@@ -2836,7 +2844,8 @@
     "revert_to": "army_powered_earmuffs",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s flicks off.", "target": "army_powered_earmuffs" },
     "extend": { "flags": [ "COMBAT_NPC_ON", "TWO_WAY_RADIO" ] },
-    "adv_hearing_protection": 40
+    "adv_hearing_protection": 40,
+    "hearing_protection": 0
   },
   {
     "id": "stethoscope",
@@ -3212,7 +3221,8 @@
       "menu_text": "Unplug",
       "need_worn": true
     },
-    "hearing_protection": 20
+    "hearing_protection": 20,
+    "adv_hearing_protection": 20
   },
   {
     "id": "attached_ear_plugs_off",
@@ -3228,7 +3238,8 @@
       "menu_text": "Plug in",
       "need_worn": true
     },
-    "hearing_protection": 0
+    "hearing_protection": 0,
+    "adv_hearing_protection": 0
   },
   {
     "id": "mask_halfsurvivor",

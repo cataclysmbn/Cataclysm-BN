@@ -11776,7 +11776,7 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
     } else {
 
         // If we hear a sound at or past our instand damage threshold then
-        long_loss += std::max( 1, ( over_thresh / 20 ) - ( long_loss / 5 ) );
+        long_loss += std::max( 1, ( ( over_thresh / 50 ) + ( hab_mod ) ) - ( long_loss / 10 ) );
 
         // Chance to give the player some pain.
         if( !has_trait( trait_id( "NOPAIN" ) ) && one_in( 3 ) ) {
