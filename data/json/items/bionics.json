@@ -431,7 +431,7 @@
   },
   {
     "id": "bio_minirose",
-    "copy-from": "bionic_general",
+    "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
     "name": { "str": "minirose CBM" },
     "looks_like": "bio_int_enhancer",
