@@ -211,8 +211,7 @@
 #include "location_vector.h"
 #include "monfaction.h"
 #if defined( CATA_SDL )
-#include "compute/gpu_lm.h"
-#include "compute/gpu_platform.h"
+#include "compute/compute_backend.h"
 #endif
 class computer;
 
@@ -5874,7 +5873,7 @@ static auto prepare_creature_sight_query( const Creature &seer,
 }
 
 #if defined( CATA_SDL )
-static auto make_gpu_sight_pair( const prepared_sight_query &query ) -> cata_gpu::GpuSightPair
+static auto make_gpu_sight_pair( const prepared_sight_query &query ) -> cata_compute::sight_pair
 {
     return {
         .from_x = query.from.x(),
@@ -6150,10 +6149,9 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     auto sight_results = std::vector<char> {};
     auto los_jobs = std::vector<std::pair<size_t, prepared_sight_query>> {};
 #if defined( CATA_SDL )
-    auto gpu_pairs = std::vector<cata_gpu::GpuSightPair> {};
+    auto gpu_pairs = std::vector<cata_compute::sight_pair> {};
     auto gpu_results = std::vector<uint32_t> {};
-    auto *gpu_sight_device = static_cast<SDL_GPUDevice *>( nullptr );
-    auto gpu_sight_work = cata_gpu::gpu_sight_pairs_work {};
+    auto gpu_sight_work = cata_compute::sight_pairs_work {};
 #endif
     if( !sight_jobs.empty() ) {
         sight_results.assign( sight_jobs.size(), 0 );
@@ -6179,13 +6177,11 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             []( const auto & job ) {
                 return make_gpu_sight_pair( job.second );
             } );
-            gpu_sight_device = cata_gpu::get_device();
-            if( gpu_sight_device == nullptr ) {
-                debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+            if( !cata_compute::backend_available() ) {
+                debugmsg( "Compute sight pair dispatch failed; see debug.log for details" );
             } else {
                 const auto sight_inputs_ready = [&]() {
-                    return cata_gpu::resident_lighting_ready_for_sight_pairs( {
-                        .device = gpu_sight_device,
+                    return cata_compute::resident_lighting_ready_for_sight_pairs( {
                         .m = &m,
                         .pairs = &gpu_pairs,
                         .zlev = get_levz(),
@@ -6196,15 +6192,15 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                     m.build_map_cache( get_levz() );
                 }
                 if( !sight_inputs_ready() ) {
-                    debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                    debugmsg( "Compute sight pair dispatch failed; see debug.log for details" );
                 } else {
-                    gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
+                    gpu_sight_work = cata_compute::begin_sight_pairs( {
                         .m = &m,
                         .pairs = &gpu_pairs,
                         .zlev = get_levz(),
                     } );
                     if( gpu_sight_work.id == 0 ) {
-                        debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                        debugmsg( "Compute sight pair dispatch failed; see debug.log for details" );
                     }
                 }
             }
@@ -6274,9 +6270,8 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
 #if defined( CATA_SDL )
             if( gpu_sight_work.id != 0 ) {
                 ZoneScopedN( "monmove_finish_gpu_sight_prewarm" );
-                if( !cata_gpu::finish_gpu_sight_pairs( gpu_sight_device, gpu_sight_work,
-                                                       gpu_results ) ) {
-                    debugmsg( "SDL_GPU sight pair completion failed; see debug.log for details" );
+                if( !cata_compute::finish_sight_pairs( gpu_sight_work, gpu_results ) ) {
+                    debugmsg( "Compute sight pair completion failed; see debug.log for details" );
                 } else {
                     auto &here = get_map();
                     for( const auto gpu_index : std::views::iota( size_t{ 0 }, los_jobs.size() ) ) {

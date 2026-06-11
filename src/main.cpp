@@ -59,7 +59,7 @@ class ui_adaptor;
 #       define SDL_MAIN_HANDLED
 #   endif
 #   include <SDL3/SDL.h>
-#   include "compute/gpu_platform.h"
+#   include "compute/compute_backend.h"
 #   include "platform/sdl_video.h"
 #endif
 #if defined(TILES)
@@ -822,8 +822,8 @@ int main( int argc, char *argv[] )
 
 #if defined(CATA_SDL)
     if( lua_doc_output_path.empty() && lua_types_output_path.empty() ) {
-        cata_gpu::init();
-        atexit( cata_gpu::shutdown );
+        cata_compute::init();
+        atexit( cata_compute::shutdown );
     }
 #endif
 

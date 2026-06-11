@@ -19,6 +19,8 @@ build-data/gettext
 build-data/mesa
 build-data/mesa*
 build-data/mesa/*
+build-data/slang
+build-data/slang/*
 test_user_dir*
 /build-start-time
 /cmake-build-debug/

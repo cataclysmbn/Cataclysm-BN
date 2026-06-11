@@ -58,9 +58,7 @@
 #include "vpart_range.h"
 #include "weather.h"
 #if defined( CATA_SDL )
-#include "compute/gpu_lm.h"
-#include "compute/gpu_platform.h"
-#include "compute/gpu_transparency.h"
+#include "compute/compute_backend.h"
 #endif
 
 namespace
@@ -283,13 +281,12 @@ bool map::build_transparency_cache( const int zlev )
 #if defined( CATA_SDL ) && !defined( CATA_GPU_VERIFY )
     {
         ZoneScopedN( "build_transparency_cache_gpu" );
-        SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
-        if( gpu_device == nullptr ) {
-            debugmsg( "SDL_GPU transparency is required, but no GPU device is available" );
+        if( !cata_compute::backend_available() ) {
+            debugmsg( "Compute transparency is required, but no compute backend is available" );
             return false;
         }
 
-        auto refs = std::vector<cata_gpu::transparency_submap_ref> {};
+        auto refs = std::vector<cata_compute::transparency_submap_ref> {};
         refs.reserve( static_cast<size_t>( map_cache.cache_mapsize * map_cache.cache_mapsize ) );
         auto resident_output_complete = true;
 
@@ -329,17 +326,17 @@ bool map::build_transparency_cache( const int zlev )
             return true;
         }
 
-        static auto luts = cata_gpu::transparency_luts {};
+        static auto luts = cata_compute::transparency_luts {};
         static auto luts_valid = false;
         if( !luts_valid ) {
-            cata_gpu::rebuild_transparency_luts( luts );
+            cata_compute::rebuild_transparency_luts( luts );
             luts_valid = true;
         }
 
-        static auto inputs = std::vector<cata_gpu::transparency_submap_in> {};
-        cata_gpu::prepare_transparency_inputs( refs, inputs );
+        static auto inputs = std::vector<cata_compute::transparency_submap_in> {};
+        cata_compute::prepare_transparency_inputs( refs, inputs );
 
-        const auto push = cata_gpu::transparency_push_constants {
+        const auto push = cata_compute::transparency_push_constants {
             .sight_penalty = get_weather().weather_id->sight_penalty,
             .cache_y = map_cache.cache_y,
             .num_submaps = static_cast<uint32_t>( inputs.size() ),
@@ -348,43 +345,39 @@ bool map::build_transparency_cache( const int zlev )
 
         static auto gpu_result = std::vector<float> {};
         const auto cache_size = map_cache.cache_x * map_cache.cache_y;
-        const auto resident_output = cata_gpu::prepare_lighting_transparency_output( {
-            .device = gpu_device,
+        const auto resident_output = cata_compute::prepare_lighting_transparency_output( {
             .cache_x = map_cache.cache_x,
             .cache_y = map_cache.cache_y,
             .z_count = OVERMAP_LAYERS,
             .zlev = zlev,
         } );
-        if( resident_output.buffer == nullptr ) {
-            debugmsg( "SDL_GPU transparency resident output allocation failed; see debug.log for details" );
+        if( resident_output.id == 0 ) {
+            debugmsg( "Compute transparency resident output allocation failed; see debug.log for details" );
             return false;
         }
         const auto resident_level_was_valid =
-            cata_gpu::lighting_transparency_level_is_valid( zlev );
-        if( !cata_gpu::dispatch_transparency( {
-        .device = gpu_device,
+            cata_compute::lighting_transparency_level_is_valid( zlev );
+        if( !cata_compute::dispatch_transparency( {
         .luts = &luts,
         .submaps = &inputs,
         .push = push,
         .cache_size = cache_size,
         .out_buffer = &gpu_result,
-        .output = {
-            .buffer = resident_output.buffer,
-            .output_offset = resident_output.output_offset,
-        },
+        .output = resident_output,
+        .output_offset = resident_output.output_offset,
     } ) || gpu_result.empty() ) {
-            debugmsg( "SDL_GPU transparency dispatch failed; see debug.log for details" );
+            debugmsg( "Compute transparency dispatch failed; see debug.log for details" );
             return false;
         }
         const auto expected_compact_result_size =
             refs.size() * static_cast<size_t>( SEEX * SEEY );
         if( gpu_result.size() != expected_compact_result_size ) {
-            debugmsg( "SDL_GPU transparency dispatch returned %zu compact values, expected %zu",
+            debugmsg( "Compute transparency dispatch returned %zu compact values, expected %zu",
                       gpu_result.size(), expected_compact_result_size );
             return false;
         }
         if( rebuild_all ? resident_output_complete : resident_level_was_valid ) {
-            cata_gpu::mark_lighting_transparency_level_updated( zlev );
+            cata_compute::mark_lighting_transparency_level_updated( zlev );
         }
 
         auto normalized_flat_value = [&]( const float value ) {
@@ -488,7 +481,7 @@ bool map::build_transparency_cache( const int zlev )
     map_cache.transparency_cache_dirty.reset();
 
 #if defined( CATA_SDL ) && defined( CATA_GPU_VERIFY )
-    cata_gpu::verify_transparency_against_cpu( *this, zlev,
+    cata_compute::verify_transparency_against_cpu( *this, zlev,
             get_weather().weather_id->sight_penalty );
 #endif
 
@@ -509,12 +502,12 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
     };
 
     auto level_states = std::vector<transparency_level_batch_state> {};
-    auto refs = std::vector<cata_gpu::transparency_submap_ref> {};
+    auto refs = std::vector<cata_compute::transparency_submap_ref> {};
     auto ref_levels = std::vector<int> {};
-    auto *resident_buffer = static_cast<SDL_GPUBuffer *>( nullptr );
+    auto resident_output_target = cata_compute::resident_transparency_output {};
     auto cache_size = 0;
 
-    auto *const gpu_device = cata_gpu::get_device();
+    const auto compute_available = cata_compute::backend_available();
     for( const auto zlev : std::views::iota( minz, maxz + 1 ) ) {
         auto &map_cache = get_cache( zlev );
         auto &transparency_cache = map_cache.transparency_cache;
@@ -530,27 +523,26 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
                        static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
         }
 
-        if( gpu_device == nullptr ) {
-            debugmsg( "SDL_GPU transparency is required, but no GPU device is available" );
+        if( !compute_available ) {
+            debugmsg( "Compute transparency is required, but no compute backend is available" );
             return dirty_levels;
         }
 
-        const auto resident_output = cata_gpu::prepare_lighting_transparency_output( {
-            .device = gpu_device,
+        const auto resident_output = cata_compute::prepare_lighting_transparency_output( {
             .cache_x = map_cache.cache_x,
             .cache_y = map_cache.cache_y,
             .z_count = OVERMAP_LAYERS,
             .zlev = zlev,
         } );
-        if( resident_output.buffer == nullptr ) {
-            debugmsg( "SDL_GPU transparency resident output allocation failed; see debug.log for details" );
+        if( resident_output.id == 0 ) {
+            debugmsg( "Compute transparency resident output allocation failed; see debug.log for details" );
             return dirty_levels;
         }
-        if( resident_buffer == nullptr ) {
-            resident_buffer = resident_output.buffer;
+        if( resident_output_target.id == 0 ) {
+            resident_output_target = resident_output;
             cache_size = map_cache.cache_x * map_cache.cache_y * OVERMAP_LAYERS;
-        } else if( resident_buffer != resident_output.buffer ) {
-            debugmsg( "SDL_GPU transparency resident buffer changed during batched dispatch" );
+        } else if( resident_output_target.id != resident_output.id ) {
+            debugmsg( "Compute transparency resident buffer changed during batched dispatch" );
             return dirty_levels;
         }
 
@@ -558,7 +550,7 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
             .zlev = zlev,
             .rebuild_all = rebuild_all,
             .resident_output_complete = true,
-            .resident_level_was_valid = cata_gpu::lighting_transparency_level_is_valid( zlev ),
+            .resident_level_was_valid = cata_compute::lighting_transparency_level_is_valid( zlev ),
         };
 
         refs.reserve( refs.size() + static_cast<size_t>( map_cache.cache_mapsize *
@@ -612,18 +604,18 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
         return dirty_levels;
     }
 
-    static auto luts = cata_gpu::transparency_luts {};
+    static auto luts = cata_compute::transparency_luts {};
     static auto luts_valid = false;
     if( !luts_valid ) {
-        cata_gpu::rebuild_transparency_luts( luts );
+        cata_compute::rebuild_transparency_luts( luts );
         luts_valid = true;
     }
 
-    static auto inputs = std::vector<cata_gpu::transparency_submap_in> {};
-    cata_gpu::prepare_transparency_inputs( refs, inputs );
+    static auto inputs = std::vector<cata_compute::transparency_submap_in> {};
+    cata_compute::prepare_transparency_inputs( refs, inputs );
 
     const auto &first_cache = get_cache_ref( dirty_levels.front() );
-    const auto push = cata_gpu::transparency_push_constants {
+    const auto push = cata_compute::transparency_push_constants {
         .sight_penalty = get_weather().weather_id->sight_penalty,
         .cache_y = first_cache.cache_y,
         .num_submaps = static_cast<uint32_t>( inputs.size() ),
@@ -631,25 +623,22 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
     };
 
     static auto gpu_result = std::vector<float> {};
-    if( !cata_gpu::dispatch_transparency( {
-    .device = gpu_device,
+    if( !cata_compute::dispatch_transparency( {
     .luts = &luts,
     .submaps = &inputs,
     .push = push,
     .cache_size = cache_size,
     .out_buffer = &gpu_result,
-    .output = {
-        .buffer = resident_buffer,
-        .output_offset = 0,
-    },
+    .output = resident_output_target,
+    .output_offset = 0,
 } ) || gpu_result.empty() ) {
-        debugmsg( "SDL_GPU batched transparency dispatch failed; see debug.log for details" );
+        debugmsg( "Compute batched transparency dispatch failed; see debug.log for details" );
         return dirty_levels;
     }
 
     const auto expected_compact_result_size = refs.size() * static_cast<size_t>( SEEX * SEEY );
     if( gpu_result.size() != expected_compact_result_size ) {
-        debugmsg( "SDL_GPU batched transparency dispatch returned %zu compact values, expected %zu",
+        debugmsg( "Compute batched transparency dispatch returned %zu compact values, expected %zu",
                   gpu_result.size(), expected_compact_result_size );
         return dirty_levels;
     }
@@ -684,7 +673,7 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
     for( const auto &state : level_states ) {
         get_cache( state.zlev ).transparency_cache_dirty.reset();
         if( state.rebuild_all ? state.resident_output_complete : state.resident_level_was_valid ) {
-            cata_gpu::mark_lighting_transparency_level_updated( state.zlev );
+            cata_compute::mark_lighting_transparency_level_updated( state.zlev );
         }
     }
     return dirty_levels;

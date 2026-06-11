@@ -65,7 +65,7 @@
 #   if !defined(SDL_MAIN_HANDLED)
 #       define SDL_MAIN_HANDLED
 #   endif
-#   include "compute/gpu_platform.h"
+#   include "compute/compute_backend.h"
 #   include "preload_config.h"
 #   include "platform/sdl_video.h"
 #   include <SDL3/SDL.h>
@@ -96,17 +96,17 @@ auto init_test_sdl_gpu() -> void
                 get_options().get_option( "COMPUTE_ACCELERATION" ).getValue() ) );
     }
 
-    cata_gpu::init();
-    if( cata_gpu::get_device() == nullptr ) {
+    cata_compute::init();
+    if( !cata_compute::backend_available() ) {
         throw std::runtime_error(
-            "SDL_GPU test initialization failed; install or enable a hardware GPU driver or "
-            "a software Vulkan driver such as Lavapipe" );
+            "Compute backend test initialization failed; install or enable a hardware GPU driver, "
+            "a software Vulkan driver such as Lavapipe, or a generated CPU compute backend" );
     }
 }
 
 auto shutdown_test_sdl_gpu() -> void
 {
-    cata_gpu::shutdown();
+    cata_compute::shutdown();
     if( s_sdl_platform_initialized ) {
         SDL_Quit();
         s_sdl_platform_initialized = false;

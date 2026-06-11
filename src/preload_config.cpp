@@ -95,18 +95,27 @@ auto set_texture_streaming( tristate val ) -> void               { s_state.textu
 
 auto compute_accel_from_string( std::string_view s ) -> compute_accel
 {
-    if( s == "off" || s == "software" ) { return compute_accel::software; }
-    if( s == "force" ) { return compute_accel::force; }
+    if( s == "force" || s == "hardware" ) {
+        return compute_accel::hardware;
+    }
+    if( s == "off" || s == "software" || s == "software_gpu" ) {
+        return compute_accel::software_gpu;
+    }
+    if( s == "cpu" ) {
+        return compute_accel::cpu;
+    }
     return compute_accel::auto_select;
 }
 
 auto compute_accel_to_string( compute_accel val ) -> std::string_view
 {
     switch( val ) {
-        case compute_accel::software:
-            return "software";
-        case compute_accel::force:
-            return "force";
+        case compute_accel::hardware:
+            return "hardware";
+        case compute_accel::software_gpu:
+            return "software_gpu";
+        case compute_accel::cpu:
+            return "cpu";
         default:
             return "auto";
     }

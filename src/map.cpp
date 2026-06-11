@@ -126,8 +126,7 @@
 #include "weighted_list.h"
 
 #if defined( CATA_SDL )
-#include "compute/gpu_lm.h"
-#include "compute/gpu_platform.h"
+#include "compute/compute_backend.h"
 #endif
 
 struct ammo_effect;
@@ -1057,7 +1056,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     set_seen_cache_dirty( smz );
     ch.visibility_cache_dirty = true;
 #if defined( CATA_SDL )
-    cata_gpu::invalidate_lighting_transparency_levels( std::vector<int> { smz } );
+    cata_compute::invalidate_lighting_transparency_levels( std::vector<int> { smz } );
 #endif
 
     const auto for_clamped_submaps = [&]( const point_bub_sm & range_min,
@@ -7288,28 +7287,25 @@ auto map::update_visibility_cache( const int zlev,
     ZoneScopedN( "update_visibility_cache" );
     const auto player_pos = g->u.bub_pos();
 #if defined( CATA_SDL )
-    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
-    if( gpu_device == nullptr ) {
-        debugmsg( "SDL_GPU visibility is required, but no GPU device is available" );
+    if( !cata_compute::backend_available() ) {
+        debugmsg( "Compute visibility is required, but no compute backend is available" );
         return;
     }
     const auto &visibility_cache_for_residency = get_cache_ref( zlev );
     const auto visibility_cache_x = visibility_cache_for_residency.cache_x;
     const auto visibility_cache_y = visibility_cache_for_residency.cache_y;
-    if( !cata_gpu::resident_lighting_ready_for_visibility( {
-    .device = gpu_device,
+    if( !cata_compute::resident_lighting_ready_for_visibility( {
     .cache_x = visibility_cache_x,
     .cache_y = visibility_cache_y,
     .z_count = OVERMAP_LAYERS,
 } ) ) {
         build_map_cache( zlev );
-        if( !cata_gpu::resident_lighting_ready_for_visibility( {
-        .device = gpu_device,
+        if( !cata_compute::resident_lighting_ready_for_visibility( {
         .cache_x = visibility_cache_x,
         .cache_y = visibility_cache_y,
         .z_count = OVERMAP_LAYERS,
     } ) ) {
-            debugmsg( "SDL_GPU visibility residency bootstrap failed; see debug.log for details" );
+            debugmsg( "Compute visibility residency bootstrap failed; see debug.log for details" );
             return;
         }
     }
@@ -7343,7 +7339,7 @@ auto map::update_visibility_cache( const int zlev,
         visibility_download_levels.push_back( zlev );
     }
     const auto rebuild_seen_cache = m_last_seen_cache_origin != player_pos;
-    const auto gpu_visibility_work = cata_gpu::begin_gpu_visibility( gpu_device, {
+    const auto gpu_visibility_work = cata_compute::begin_visibility( {
         .m = this,
         .download_levels = &visibility_download_levels,
         .zlev = zlev,
@@ -7360,15 +7356,15 @@ auto map::update_visibility_cache( const int zlev,
         .rebuild_seen_cache = rebuild_seen_cache,
     } );
     if( gpu_visibility_work.id == 0 ) {
-        debugmsg( "SDL_GPU visibility dispatch failed; see debug.log for details" );
+        debugmsg( "Compute visibility dispatch failed; see debug.log for details" );
         return;
     }
     if( while_gpu_pending ) {
         while_gpu_pending();
     }
-    const auto gpu_visibility_ok = cata_gpu::finish_gpu_visibility( gpu_device, gpu_visibility_work );
+    const auto gpu_visibility_ok = cata_compute::finish_visibility( gpu_visibility_work );
     if( !gpu_visibility_ok ) {
-        debugmsg( "SDL_GPU visibility completion failed; see debug.log for details" );
+        debugmsg( "Compute visibility completion failed; see debug.log for details" );
         return;
     }
     if( rebuild_seen_cache ) {
@@ -8601,10 +8597,8 @@ void map::shift( const point_rel_sm &sp )
     const int zmax = zlevels ? OVERMAP_HEIGHT : abs.z();
     m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
 #if defined( CATA_SDL )
-    auto *const gpu_device = cata_gpu::get_device();
     const auto &shift_cache = get_cache_ref( zmin );
-    const auto gpu_residency_shifted = cata_gpu::shift_lighting_resident_inputs( {
-        .device = gpu_device,
+    const auto gpu_residency_shifted = cata_compute::shift_lighting_resident_inputs( {
         .cache_x = shift_cache.cache_x,
         .cache_y = shift_cache.cache_y,
         .z_count = OVERMAP_LAYERS,
@@ -8612,12 +8606,12 @@ void map::shift( const point_rel_sm &sp )
         .shift_y_submaps = sp.y(),
     } );
     if( !gpu_residency_shifted ) {
-        debugmsg( "SDL_GPU resident lighting input shift failed; see debug.log for details" );
+        debugmsg( "Compute resident lighting input shift failed; see debug.log for details" );
         auto shifted_levels = std::vector<int> {};
         for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
             shifted_levels.push_back( gridz );
         }
-        cata_gpu::invalidate_lighting_transparency_levels( shifted_levels );
+        cata_compute::invalidate_lighting_transparency_levels( shifted_levels );
     }
 #endif
     for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
@@ -10603,7 +10597,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     gpu_vehicle_obscured_dirty = !gpu_vehicle_obscured_dirty_levels.empty();
 #if defined( CATA_SDL )
     if( !gpu_transparency_residency_invalid_levels.empty() ) {
-        cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_residency_invalid_levels );
+        cata_compute::invalidate_lighting_transparency_levels( gpu_transparency_residency_invalid_levels );
     }
 #endif
     TracyPlot( "Map GPU Transparency Dirty Levels",
@@ -10620,11 +10614,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     const tripoint_bub_ms &p = g->u.bub_pos();
     auto force_seen_rebuild_for_gpu_residency = false;
 #if defined( CATA_SDL )
-    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
-    if( !skip_lightmap && gpu_device != nullptr ) {
+    const auto compute_available = cata_compute::backend_available();
+    if( !skip_lightmap && compute_available ) {
         const auto &visibility_cache = get_cache_ref( zlev );
-        if( !cata_gpu::resident_lighting_ready_for_visibility( {
-        .device = gpu_device,
+        if( !cata_compute::resident_lighting_ready_for_visibility( {
         .cache_x = visibility_cache.cache_x,
         .cache_y = visibility_cache.cache_y,
         .z_count = OVERMAP_LAYERS,
@@ -10655,8 +10648,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
 
 #if defined( CATA_SDL )
-    auto pending_gpu_lighting = cata_gpu::gpu_lighting_work {};
-    if( !skip_lightmap && gpu_device != nullptr && !dirty_lightmap_levels.empty() ) {
+    auto pending_gpu_lighting = cata_compute::lighting_work {};
+    if( !skip_lightmap && compute_available && !dirty_lightmap_levels.empty() ) {
         ZoneScopedN( "Phase4_lightmap_begin" );
         update_solar_params();
         // GPU path: lightmap rebuilds only run for lightmap-dirty levels.
@@ -10671,7 +10664,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             c.lm_cpu_cache_valid = false;
             ++c.lm_cpu_cache_generation;
         }
-        pending_gpu_lighting = cata_gpu::begin_gpu_lighting( gpu_device, {
+        pending_gpu_lighting = cata_compute::begin_lighting( {
             .m            = this,
             .dirty_levels = &dirty_lightmap_levels,
             .seen_dirty_levels = &dirty_seen_cache_levels,
@@ -10696,7 +10689,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             .sun_dy_per_z = m_solar.dy_per_z,
         } );
         if( pending_gpu_lighting.id == 0 ) {
-            debugmsg( "SDL_GPU lighting dispatch failed; see debug.log for details" );
+            debugmsg( "Compute lighting dispatch failed; see debug.log for details" );
             return;
         }
         if( submap_loader.has_deferred_lazy_border_work() ) {
@@ -10723,8 +10716,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     TracyPlot( "Map Need Seen Rebuild", need_seen_rebuild ? int64_t{ 1 } : int64_t{ 0 } );
     if( need_seen_rebuild ) {
 #if defined( CATA_SDL )
-        if( gpu_device == nullptr ) {
-            debugmsg( "SDL_GPU lighting is required for 3D visibility, but no GPU device is available" );
+        if( !compute_available ) {
+            debugmsg( "Compute lighting is required for 3D visibility, but no compute backend is available" );
             return;
         }
         m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
@@ -10737,13 +10730,12 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
     if( !skip_lightmap ) {
 #if defined( CATA_SDL )
-        if( gpu_device != nullptr ) {
+        if( compute_available ) {
             if( !dirty_lightmap_levels.empty() ) {
                 ZoneScopedN( "Phase4_lightmap_finish" );
-                const bool gpu_lighting_ok = cata_gpu::finish_gpu_lighting( gpu_device,
-                                             pending_gpu_lighting );
+                const bool gpu_lighting_ok = cata_compute::finish_lighting( pending_gpu_lighting );
                 if( !gpu_lighting_ok ) {
-                    debugmsg( "SDL_GPU lighting completion failed; see debug.log for details" );
+                    debugmsg( "Compute lighting completion failed; see debug.log for details" );
                     return;
                 }
 
@@ -10754,7 +10746,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             }
         } else {
             if( !dirty_lightmap_levels.empty() ) {
-                debugmsg( "SDL_GPU lighting is required for lightmap rebuild, but no GPU device is available" );
+                debugmsg( "Compute lighting is required for lightmap rebuild, but no compute backend is available" );
                 return;
             }
 #endif
