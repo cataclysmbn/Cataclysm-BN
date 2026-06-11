@@ -31,7 +31,8 @@ cmake \
   -DLIBBACKTRACE="${LIBBACKTRACE:-0}" \
   -DLINKER=mold \
   -DLUA=ON \
-  -DCATA_CLANG_TIDY_PLUGIN=ON
+  -DCATA_CLANG_TIDY_PLUGIN=ON \
+  -DCATA_ENABLE_SLANG_CPU_GENERATED=OFF
 
 ninja -C "$BUILD_PATH" -j"$NUM_JOBS" CataAnalyzerPlugin
 ln -s "$BUILD_PATH/compile_commands.json" compile_commands.json	

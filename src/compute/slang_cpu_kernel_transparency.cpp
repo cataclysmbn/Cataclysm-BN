@@ -71,8 +71,9 @@ auto dispatch_transparency( transparency_params const &params ) -> bool
     auto shader_submaps = std::vector<TransparencySubmapIn_0> {};
     shader_submaps.reserve( params.submaps.size() );
     std::ranges::transform( params.submaps, std::back_inserter( shader_submaps ),
-    []( cata_gpu::transparency_submap_in const &submap ) {
-        return copy_transparency_submap<TransparencySubmapIn_0>( submap, transparency_tile_count );
+                             []( cata_gpu::transparency_submap_in const &submap ) {
+        return copy_transparency_submap<TransparencySubmapIn_0>( submap,
+                transparency_tile_count );
     } );
 
     params.compact_output->assign( params.submaps.size() * transparency_tile_count, 0.0f );
@@ -89,9 +90,11 @@ auto dispatch_transparency( transparency_params const &params ) -> bool
     globals.submap_in_0 = readonly_buffer( shader_submaps.data(),
                                            static_cast<uint32_t>( shader_submaps.size() ) );
     globals.ter_lut_0 = readonly_buffer( params.luts->ter_transparent.data(),
-                                         static_cast<uint32_t>( params.luts->ter_transparent.size() ) );
+                                         static_cast<uint32_t>(
+                                             params.luts->ter_transparent.size() ) );
     globals.furn_lut_0 = readonly_buffer( params.luts->furn_transparent.data(),
-                                          static_cast<uint32_t>( params.luts->furn_transparent.size() ) );
+                                          static_cast<uint32_t>(
+                                              params.luts->furn_transparent.size() ) );
     globals.compact_transparency_out_0 = writable_buffer( params.compact_output->data(),
                                            static_cast<uint32_t>( params.compact_output->size() ) );
     globals.full_transparency_out_0 = writable_buffer( params.full_output->data(),

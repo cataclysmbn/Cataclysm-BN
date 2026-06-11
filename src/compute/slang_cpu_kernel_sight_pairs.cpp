@@ -37,7 +37,7 @@ auto sight_pairs( sight_pairs_params const &params ) -> bool
     auto shader_pairs = std::vector<GpuSightPair_0> {};
     shader_pairs.reserve( params.pairs.size() );
     std::ranges::transform( params.pairs, std::back_inserter( shader_pairs ),
-    []( cata_gpu::GpuSightPair const &pair ) {
+                             []( cata_gpu::GpuSightPair const &pair ) {
         return copy_sight_pair<GpuSightPair_0>( pair );
     } );
 

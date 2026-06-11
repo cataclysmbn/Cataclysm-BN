@@ -81,6 +81,13 @@ option(BUILD_SLANG "Download a prebuilt Slang toolchain when Slang generation is
 option(CATA_SDL "Link SDL3 core for GPU platform services used by existing game targets." "OFF")
 option(CATA_GPU_VERIFY "Enable GPU output verification against CPU reference via readback (development only, requires CATA_SDL)." "OFF")
 option(CATA_SLANG_PROBE "Build the opt-in Slang CPU/GPU feasibility probe." "OFF")
+set(CATA_ENABLE_SLANG_CPU_GENERATED_DEFAULT ON)
+if (CATA_CLANG_TIDY_PLUGIN)
+    set(CATA_ENABLE_SLANG_CPU_GENERATED_DEFAULT OFF)
+endif()
+option(CATA_ENABLE_SLANG_CPU_GENERATED
+       "Generate and compile Slang CPU fallback kernels for game targets."
+       ${CATA_ENABLE_SLANG_CPU_GENERATED_DEFAULT})
 set(CATA_SLANG_ROOT "" CACHE PATH "Directory containing a Slang release with bin/slangc and include/slang-cpp-types.")
 set(CATA_SLANGC "" CACHE FILEPATH "Path to slangc. Overrides CATA_SLANG_ROOT discovery.")
 set(CATA_SLANG_INCLUDE_DIR "" CACHE PATH "Path to Slang generated C++ support headers. Overrides CATA_SLANG_ROOT/include discovery.")
@@ -274,6 +281,7 @@ if (LINKER)
 endif ()
 message(STATUS "BUILD_SDL3                    : ${BUILD_SDL3}")
 message(STATUS "BUILD_SLANG                   : ${BUILD_SLANG}")
+message(STATUS "CATA_ENABLE_SLANG_CPU_GENERATED : ${CATA_ENABLE_SLANG_CPU_GENERATED}")
 message(STATUS "CATA_SDL                      : ${CATA_SDL}")
 message(STATUS "CATA_SHADERS                  : ${CATA_SHADERS}")
 message(STATUS "CATA_GPU_VERIFY               : ${CATA_GPU_VERIFY}")
@@ -625,7 +633,7 @@ if (CATA_SDL)
                 "Slang shader sources require slangc. Set CATA_SLANG_ROOT or CATA_SLANGC, "
                 "or enable BUILD_SLANG.")
         endif ()
-        if (NOT CATA_SLANG_CPP_TYPES_DIR)
+        if (CATA_ENABLE_SLANG_CPU_GENERATED AND NOT CATA_SLANG_CPP_TYPES_DIR)
             message(FATAL_ERROR
                 "Slang CPU kernel wrappers require slang-cpp-types.h. Set CATA_SLANG_ROOT "
                 "or CATA_SLANG_INCLUDE_DIR, or enable BUILD_SLANG.")
@@ -648,26 +656,28 @@ if (CATA_SDL)
 
         message(STATUS "slangc: ${CATA_SLANGC_EXE}")
 
-        set(CATA_SLANG_CPU_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated/slang_cpu")
+        if (CATA_ENABLE_SLANG_CPU_GENERATED)
+            set(CATA_SLANG_CPU_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated/slang_cpu")
 
-        foreach (SLANG_SRC ${CATA_SLANG_SOURCES})
-            get_filename_component(SHADER_NAME ${SLANG_SRC} NAME_WE)
-            set(CPP_OUT "${CATA_SLANG_CPU_GENERATED_DIR}/${SHADER_NAME}.cpp")
-            add_custom_command(
-                OUTPUT "${CPP_OUT}"
-                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CATA_SLANG_CPU_GENERATED_DIR}"
-                COMMAND ${CATA_SLANGC_COMMAND}
-                        "${SLANG_SRC}"
-                        -entry cpu_main
-                        -stage compute
-                        -target cpp
-                        -DCATA_SLANG_CPU=1
-                        -o "${CPP_OUT}"
-                DEPENDS "${SLANG_SRC}"
-                COMMENT "Compiling ${SHADER_NAME}.slang -> CPU C++"
-                VERBATIM)
-            list(APPEND CATA_SLANG_CPU_OUTPUTS "${CPP_OUT}")
-        endforeach ()
+            foreach (SLANG_SRC ${CATA_SLANG_SOURCES})
+                get_filename_component(SHADER_NAME ${SLANG_SRC} NAME_WE)
+                set(CPP_OUT "${CATA_SLANG_CPU_GENERATED_DIR}/${SHADER_NAME}.cpp")
+                add_custom_command(
+                    OUTPUT "${CPP_OUT}"
+                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CATA_SLANG_CPU_GENERATED_DIR}"
+                    COMMAND ${CATA_SLANGC_COMMAND}
+                            "${SLANG_SRC}"
+                            -entry cpu_main
+                            -stage compute
+                            -target cpp
+                            -DCATA_SLANG_CPU=1
+                            -o "${CPP_OUT}"
+                    DEPENDS "${SLANG_SRC}"
+                    COMMENT "Compiling ${SHADER_NAME}.slang -> CPU C++"
+                    VERBATIM)
+                list(APPEND CATA_SLANG_CPU_OUTPUTS "${CPP_OUT}")
+            endforeach ()
+        endif ()
     endif ()
 
     if (CATA_SLANG_CPU_OUTPUTS)
