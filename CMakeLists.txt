@@ -1012,8 +1012,8 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         set(CATA_OSX_BUNDLE_RUNTIME_COMMANDS
             COMMAND "${CATA_OSX_DYLIBBUNDLER}" -od -b
                 -x "${CATA_OSX_RESOURCES_DIR}/$<TARGET_FILE_NAME:${CATA_OSX_GAME_TARGET}>"
-                -d "${CATA_OSX_RESOURCES_DIR}"
-                -p "@loader_path/")
+                -d "${CATA_OSX_RESOURCES_DIR}/lib"
+                -p "@executable_path/lib/")
     endif()
 
     add_custom_target(osx-app

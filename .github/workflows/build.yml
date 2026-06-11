@@ -603,13 +603,13 @@ jobs:
           fi
 
           test -x "$exe"
-          find "$resources" -maxdepth 1 -name '*SDL3*.dylib' | grep .
+          find "$resources/lib" -maxdepth 1 -name '*SDL3*.dylib' | grep .
           if [ "${{ matrix.tiles }}" = "true" ]; then
-            find "$resources" -maxdepth 1 -name '*SDL3_image*.dylib' | grep .
-            find "$resources" -maxdepth 1 -name '*SDL3_ttf*.dylib' | grep .
+            find "$resources/lib" -maxdepth 1 -name '*SDL3_image*.dylib' | grep .
+            find "$resources/lib" -maxdepth 1 -name '*SDL3_ttf*.dylib' | grep .
           fi
           if [ "${{ matrix.sound }}" = "true" ]; then
-            find "$resources" -maxdepth 1 -name '*SDL3_mixer*.dylib' | grep .
+            find "$resources/lib" -maxdepth 1 -name '*SDL3_mixer*.dylib' | grep .
           fi
 
           otool -L "$exe" | tee bundled-deps.txt
