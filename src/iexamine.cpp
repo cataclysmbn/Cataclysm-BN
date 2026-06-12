@@ -2063,7 +2063,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
     }
 
     if( here.can_open_door( &p, examp, true ) ) {
-        g->peek( examp );
+        g->peek( p.bub_pos() - examp );
         p.add_msg_if_player( _( "You peek through the peephole." ) );
     } else {
         // Peek through the peephole, or open the door.
@@ -2073,7 +2073,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
         } );
         if( choice == 0 ) {
             // Peek
-            g->peek( examp );
+            g->peek( p.bub_pos() - examp );
             p.add_msg_if_player( _( "You peek through the peephole." ) );
         } else if( choice == 1 ) {
             here.open_door( &p, examp, true );
@@ -5141,7 +5141,7 @@ void iexamine::curtains( player &p, const tripoint_bub_ms &examp )
     const int choice = window_menu.ret;
     if( choice == 0 ) {
         // Peek
-        g->peek( examp );
+        g->peek( p.bub_pos() - examp );
         p.add_msg_if_player( _( "You carefully peek through the curtains." ) );
     } else if( choice == 1 ) {
         // Mr. Gorbachev, tear down those curtains!

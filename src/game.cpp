@@ -8824,26 +8824,26 @@ void game::peek()
         return;
     }
 
-    peek( u.bub_pos() + *p );
+    peek( *p );
 }
 
-void game::peek( const tripoint_bub_ms &p )
+void game::peek( const tripoint_rel_ms &p )
 {
     u.moves -= 200;
-    auto prev = u.bub_pos();
-    u.setpos( p );
+    auto prev = u.abs_pos();
+    u.setpos( prev + p );
     // Force a full cache rebuild from the peek position so look_around renders
     // correct FOV and lighting.  Without this, lightmap_dirty may already be
     // false (built from the pre-peek player position earlier this turn), causing
     // look_around to display stale lighting and visibility.
     m.invalidate_map_cache( p.z() );
-    auto center = p;
+    auto center = u.bub_pos();
     const look_around_result result = look_around( /*show_window=*/true, center, center, false, false,
                                       true );
     u.setpos( prev );
 
     if( result.peek_action && *result.peek_action == PA_BLIND_THROW ) {
-        avatar_action::plthrow( u, nullptr, p );
+        avatar_action::plthrow( u, nullptr, u.bub_pos() + p );
     }
     m.invalidate_map_cache( p.z() );
 }
