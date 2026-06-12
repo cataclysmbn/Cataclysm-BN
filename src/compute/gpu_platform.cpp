@@ -479,11 +479,13 @@ auto init() -> void {
     auto const accel = preload_config::get_compute_accel();
     if (accel == compute_accel::cpu) {
         if (!backend_str.empty()) {
-            DebugLog(DL::Info, DC::Main) << "SDL_GPU: backend override ignored because CPU compute "
-                                            "is selected";
+            DebugLog(DL::Info, DC::Main)
+                << "SDL_GPU: backend override ignored because CPU compute "
+                   "is selected";
         }
-        DebugLog(DL::Info, DC::Main) << "Compute backend selected: cpu_compute; SDL_GPU compute "
-                                        "device not created";
+        DebugLog(DL::Info, DC::Main)
+            << "Compute backend selected: cpu_compute; SDL_GPU compute "
+               "device not created";
         return;
     }
 
