@@ -87,7 +87,7 @@
           { "item": "meth", "charges": [ 50, 500 ], "container-item": "bag_zipper_small", "prob": 40 },
           { "item": "crack", "charges": [ 50, 500 ], "container-item": "bag_zipper_small", "prob": 25 },
           { "item": "heroin", "charges": [ 50, 500 ], "container-item": "bag_zipper_small", "prob": 25 },
-          { "item": "weed", "charges": [ 50, 500 ], "container-item": "bag_zipper_small", "prob": 10 }
+          { "item": "weed", "charges": [ 50, 500 ], "container-item": "bag_zipper", "prob": 10 }
         ],
         "prob": 50
       },
