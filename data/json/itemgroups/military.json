@@ -971,9 +971,21 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
-      { "item": "atgm_heat", "prob": 25 },
-      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 25 },
-      { "item": "aerial_bomb", "prob": 50 }
+      { "item": "atgm_heat", "prob": 15 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 20 },
+      { "item": "aerial_bomb", "prob": 40 },
+      { "item": "hellfire_heat", "prob": 20 },
+      { "item": "hellfire_ninja", "prob": 5 }
+    ]
+  },
+  {
+    "id": "helipad_heavy_munitions",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 30 },
+      { "item": "hellfire_heat", "prob": 60 },
+      { "item": "hellfire_ninja", "prob": 10 }
     ]
   }
 ]
