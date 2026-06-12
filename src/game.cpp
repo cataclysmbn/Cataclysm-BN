@@ -13368,17 +13368,17 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
 
 bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
 {
-    if( dest_loc.z() != u.bub_pos().z() && !via_ramp ) {
+    if( dest_loc.z() != u.abs_pos().z() && !via_ramp ) {
         // No vertical phasing yet
         return false;
     }
 
     //probability travel through walls but not water
-    auto dest = dest_loc;
+    auto dest = bub_to_abs( dest_loc );
     // tile is impassable
     int tunneldist = 0;
-    const point d( sgn( dest.x() - u.bub_pos().x() ), sgn( dest.y() - u.bub_pos().y() ) );
-    while( m.impassable( dest ) ||
+    const point d( sgn( dest.x() - u.abs_pos().x() ), sgn( dest.y() - u.abs_pos().y() ) );
+    while( m.impassable( abs_to_bub( dest ) ) ||
            ( critter_at( dest ) != nullptr && tunneldist > 0 ) ) {
         //add 1 to tunnel distance for each impassable tile in the line
         tunneldist += 1;
@@ -13425,7 +13425,7 @@ bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         u.setpos( dest );
         m.invalidate_visibility_caches();
 
-        if( m.veh_at( u.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {
+        if( m.veh_at( dest ).part_with_feature( "BOARDABLE", true ) ) {
             m.board_vehicle( u.bub_pos(), &u );
         }
 
