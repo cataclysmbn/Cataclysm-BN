@@ -53,6 +53,7 @@
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_lighting.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
@@ -75,6 +76,61 @@ std::atomic<int64_t> cpu_lm_ambient_cache_hits{ 0 };
 std::atomic<int64_t> cpu_lm_ambient_cache_misses{ 0 };
 
 static constexpr auto SOLAR_SHADOW_SCATTER = 0.09f;
+
+auto has_vertical_light_blocker( const level_cache &cache, const int x, const int y ) -> bool
+{
+    const auto idx = cache.idx( x, y );
+    return cache.floor_cache[idx] || cache.vehicle_floor_cache[idx];
+}
+
+struct vehicle_external_light_cache_scope {
+    level_cache &cache;
+    std::vector<std::pair<std::size_t, float>> transparency_restore;
+    std::vector<std::pair<std::size_t, diagonal_blocks>> obscured_restore;
+    std::vector<std::pair<std::size_t, float>> lm_restore;
+    std::vector<std::pair<std::size_t, float>> sm_restore;
+
+    vehicle_external_light_cache_scope( level_cache &cache, vehicle &veh, const int zlev ) :
+        cache( cache ) {
+        for( const auto &part : veh.get_all_parts() ) {
+            const auto pos = part.pos();
+            if( pos.z() != zlev || !cache.inbounds( pos.xy() ) ) {
+                continue;
+            }
+
+            const auto idx = static_cast<std::size_t>( cache.idx( pos.x(), pos.y() ) );
+            const auto already_touched = std::ranges::any_of( lm_restore, [idx]( const auto &entry ) {
+                return entry.first == idx;
+            } );
+            if( already_touched ) {
+                continue;
+            }
+
+            transparency_restore.emplace_back( idx, cache.transparency_cache[idx] );
+            obscured_restore.emplace_back( idx, cache.vehicle_obscured_cache[idx] );
+            lm_restore.emplace_back( idx, cache.lm[idx] );
+            sm_restore.emplace_back( idx, cache.sm[idx] );
+            cache.transparency_cache[idx] = LIGHT_TRANSPARENCY_OPEN_AIR;
+            cache.vehicle_obscured_cache[idx] = diagonal_blocks{ false, false };
+        }
+    }
+
+    ~vehicle_external_light_cache_scope()
+    {
+        for( const auto &[idx, value] : transparency_restore ) {
+            cache.transparency_cache[idx] = value;
+        }
+        for( const auto &[idx, value] : obscured_restore ) {
+            cache.vehicle_obscured_cache[idx] = value;
+        }
+        for( const auto &[idx, value] : lm_restore ) {
+            cache.lm[idx] = value;
+        }
+        for( const auto &[idx, value] : sm_restore ) {
+            cache.sm[idx] = value;
+        }
+    }
+};
 
 struct ambient_cache_key {
     const map *owner = nullptr;
@@ -848,7 +904,7 @@ auto map::direct_sunlight_state_at( const point_bub_ms p,
     const auto levels_up = OVERMAP_HEIGHT - zlev;
     for( const auto step : std::views::iota( 1, levels_up + 1 ) ) {
         const auto &above = get_cache_ref( zlev + step );
-        if( above.floor_cache[above.idx( p.x(), p.y() )] ) {
+        if( has_vertical_light_blocker( above, p.x(), p.y() ) ) {
             return direct_sunlight_state::none;
         }
     }
@@ -968,22 +1024,22 @@ void map::build_sunlight_cache( int pzlev )
             const auto sky_level = outside_light_level;
             std::ranges::fill( lm, sky_level );
 
-            const auto &this_floor_cache = map_cache.floor_cache;
             const auto &this_transparency_cache = map_cache.transparency_cache;
             fully_inside = true; // recalculate
 
             for( int x = 0; x < map_cache.cache_x; ++x ) {
                 for( int y = 0; y < map_cache.cache_y; ++y ) {
+                    const auto blocks_vertical_light = has_vertical_light_blocker( map_cache, x, y );
                     // && semantics below is important, we want to skip the evaluation if possible, do not replace with &=
 
                     // fully_outside stays true if tile is transparent and there is no floor
                     fully_outside = fully_outside &&
                                     this_transparency_cache[map_cache.idx( x, y )] >= LIGHT_TRANSPARENCY_OPEN_AIR
-                                    && !this_floor_cache[map_cache.idx( x, y )];
+                                    && !blocks_vertical_light;
                     // fully_inside stays true if tile is opaque OR there is floor
                     fully_inside = fully_inside &&
                                    ( this_transparency_cache[map_cache.idx( x, y )] <= LIGHT_TRANSPARENCY_SOLID ||
-                                     this_floor_cache[map_cache.idx( x, y )] );
+                                     blocks_vertical_light );
                 }
             }
             continue;
@@ -994,7 +1050,6 @@ void map::build_sunlight_cache( int pzlev )
         const level_cache &prev_map_cache = get_cache_ref( zlev + 1 );
         const auto &prev_lm = prev_map_cache.lm;
         const auto &prev_transparency_cache = prev_map_cache.transparency_cache;
-        const auto &prev_floor_cache = prev_map_cache.floor_cache;
         const auto &outside_cache = map_cache.outside_cache;
         const float sight_penalty = get_weather().weather_id->sight_penalty;
         constexpr std::array<point, 5> cardinals = {
@@ -1028,7 +1083,7 @@ void map::build_sunlight_cache( int pzlev )
                     }
 
                     if( prev_transparency > LIGHT_TRANSPARENCY_SOLID &&
-                        !prev_floor_cache[prev_map_cache.idx( prev_x, prev_y )] &&
+                        !has_vertical_light_blocker( prev_map_cache, prev_x, prev_y ) &&
                         ( prev_light_max = prev_lm[prev_map_cache.idx( prev_x, prev_y )] ) > 0.0 ) {
                         const float light_level = clamp( prev_light_max * LIGHT_TRANSPARENCY_OPEN_AIR / prev_transparency,
                                                          inside_light_level, prev_light_max );
@@ -1117,7 +1172,7 @@ void map::generate_lightmap_worker( const int zlev )
     auto &map_cache = get_cache( zlev );
     auto &lm = map_cache.lm;
     auto &outside_cache = map_cache.outside_cache;
-    auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) ).floor_cache;
+    const auto &prev_map_cache = get_cache_ref( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) );
     bool top_floor = zlev == OVERMAP_HEIGHT;
 
     /* Bulk light sources wastefully cast rays into neighbors; a burning hospital can produce
@@ -1177,7 +1232,7 @@ void map::generate_lightmap_worker( const int zlev )
                     const auto p = project_combine( sm_pos, sm_ms );
                     // Project light into any openings into buildings.
                     auto has_floor_above = [&]( int idx ) {
-                        return prev_floor_cache[idx];
+                        return prev_map_cache.floor_cache[idx] || prev_map_cache.vehicle_floor_cache[idx];
                     };
                     const int cur_idx = map_cache.idx( p.x(), p.y() );
                     auto direct_sky = [&]( const point_bub_ms & tile ) {
@@ -1303,27 +1358,69 @@ void map::generate_lightmap_worker( const int zlev )
 
 
         // Apply any vehicle light sources.
-        VehicleList vehs = get_vehicles();
+        auto vehs = get_vehicles();
         for( auto &vv : vehs ) {
-            vehicle *v = vv.v;
+            auto *v = vv.v;
+            if( v == nullptr ) {
+                continue;
+            }
 
-            auto lights = v->lights( true );
+            auto lights = vehicle_lighting::active_light_parts( *v );
 
-            float veh_luminance = 0.0;
-            float iteration = 1.0;
+            auto veh_luminance = 0.0f;
+            auto iteration = 1.0f;
 
-            for( const auto pt : lights ) {
-                const auto &vp = pt->info();
+            for( const auto &part : lights ) {
+                const auto &vp = part.info();
                 if( vp.has_flag( VPFLAG_CONE_LIGHT ) ||
                     vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
                     veh_luminance += vp.bonus / iteration;
-                    iteration = iteration * 1.1;
+                    iteration = iteration * 1.1f;
                 }
             }
 
-            for( const auto pt : lights ) {
-                const auto &vp = pt->info();
-                tripoint_bub_ms src = v->bub_part_location( *pt );
+            auto apply_external_light = [&]( const auto &apply_light ) {
+                auto scope = vehicle_external_light_cache_scope( map_cache, *v, zlev );
+                apply_light();
+            };
+
+            struct vehicle_arc_light_def {
+                tripoint_bub_ms src;
+                units::angle direction = 0_degrees;
+                float luminance = 0.0f;
+                units::angle width = 0_degrees;
+                bool external = false;
+            };
+            struct vehicle_point_light_def {
+                tripoint_bub_ms src;
+                float luminance = 0.0f;
+                bool external = false;
+            };
+
+            auto apply_vehicle_arc = [&]( const vehicle_arc_light_def &def ) {
+                if( def.external ) {
+                    apply_external_light( [&]() {
+                        apply_light_arc( def.src, def.direction, def.luminance, def.width );
+                    } );
+                } else {
+                    apply_light_arc( def.src, def.direction, def.luminance, def.width );
+                }
+            };
+
+            auto apply_vehicle_point = [&]( const vehicle_point_light_def &def ) {
+                if( def.external ) {
+                    apply_external_light( [&]() {
+                        apply_light_source( def.src, def.luminance );
+                    } );
+                } else {
+                    add_deferred_point_light( def.src, def.luminance );
+                }
+            };
+
+            for( const auto &part : lights ) {
+                const auto &vp = part.info();
+                const auto &vehicle_part = part.part();
+                const auto src = part.pos();
 
                 if( !inbounds( src ) ) {
                     continue;
@@ -1332,35 +1429,69 @@ void map::generate_lightmap_worker( const int zlev )
                     continue;
                 }
 
+                const auto external = vehicle_lighting::is_external( part );
                 if( vp.has_flag( VPFLAG_CONE_LIGHT ) ) {
                     if( veh_luminance > lit_level::LIT ) {
-                        add_deferred_point_light( src, M_SQRT2 ); // Add a little surrounding light
-                        apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
-                                         45_degrees );
+                        apply_vehicle_arc( {
+                            .src = src,
+                            .direction = v->face.dir() + vehicle_part.direction,
+                            .luminance = veh_luminance,
+                            .width = vehicle_lighting::arc_width( vp ),
+                            .external = external,
+                        } );
                     }
 
                 } else if( vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
                     if( veh_luminance > lit_level::LIT ) {
-                        add_deferred_point_light( src, M_SQRT2 ); // Add a little surrounding light
-                        apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
-                                         90_degrees );
+                        apply_vehicle_arc( {
+                            .src = src,
+                            .direction = v->face.dir() + vehicle_part.direction,
+                            .luminance = veh_luminance,
+                            .width = vehicle_lighting::arc_width( vp ),
+                            .external = external,
+                        } );
                     }
 
+                } else if( vp.rotating_light ) {
+                    const auto &rotating_light = *vp.rotating_light;
+                    const auto base_direction = v->face.dir() + vehicle_part.direction;
+                    const auto direction = rotating_light.direction_at( base_direction, calendar::turn );
+                    for( const auto beam_index : std::views::iota( 0, rotating_light.beam_count() ) ) {
+                        const auto beam_direction =
+                            direction + rotating_light.beam_spacing() * static_cast<double>( beam_index );
+                        apply_vehicle_arc( {
+                            .src = src,
+                            .direction = beam_direction,
+                            .luminance = static_cast<float>( vp.bonus ),
+                            .width = rotating_light.arc_width(),
+                            .external = external,
+                        } );
+                    }
                 } else if( vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
-                    add_deferred_point_light( src, M_SQRT2 ); // Add a little surrounding light
-                    apply_light_arc( src, v->face.dir() + pt->direction, vp.bonus, 180_degrees );
+                    apply_vehicle_arc( {
+                        .src = src,
+                        .direction = v->face.dir() + vehicle_part.direction,
+                        .luminance = static_cast<float>( vp.bonus ),
+                        .width = vehicle_lighting::arc_width( vp ),
+                        .external = external,
+                    } );
 
                 } else if( vp.has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
-                    const bool odd_turn = calendar::once_every( 2_turns );
-                    if( ( odd_turn && vp.has_flag( VPFLAG_ODDTURN ) ) ||
-                        ( !odd_turn && vp.has_flag( VPFLAG_EVENTURN ) ) ||
-                        ( !( vp.has_flag( VPFLAG_EVENTURN ) || vp.has_flag( VPFLAG_ODDTURN ) ) ) ) {
-
-                        add_deferred_point_light( src, vp.bonus );
+                    const auto odd_turn = calendar::once_every( 2_turns );
+                    if( vehicle_lighting::circle_light_is_active( vp, odd_turn ) ) {
+                        apply_vehicle_point( {
+                            .src = src,
+                            .luminance = static_cast<float>( vp.bonus ),
+                            .external = external,
+                        } );
                     }
 
                 } else {
-                    add_deferred_point_light( src, vp.bonus );
+                    apply_vehicle_point( {
+                        .src = src,
+                        .luminance = static_cast<float>( vp.bonus ),
+                        .external = external,
+                    } );
                 }
             }
 

@@ -24,6 +24,7 @@
 #include "units_angle.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_lighting.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
@@ -1601,44 +1602,8 @@ auto add_active_item_sources(source_accumulator& acc) -> void {
     }
 }
 
-auto active_vehicle_light_parts(vehicle& veh) -> std::vector<vpart_reference> {
-    auto lights = std::vector<vpart_reference>{};
-    for (vpart_reference const& part : veh.get_all_parts()) {
-        auto const& vehicle_part = part.part();
-        if (vehicle_part.enabled && vehicle_part.is_available() && vehicle_part.is_light()) {
-            lights.push_back(part);
-        }
-    }
-    return lights;
-}
-
-auto vehicle_light_is_directional(vpart_info const& info) -> bool {
-    return info.has_flag(VPFLAG_CONE_LIGHT) || info.has_flag(VPFLAG_WIDE_CONE_LIGHT)
-        || info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT);
-}
-
-auto vehicle_light_arc_width(vpart_info const& info) -> units::angle {
-    if (info.has_flag(VPFLAG_CONE_LIGHT)) { return 45_degrees; }
-    if (info.has_flag(VPFLAG_WIDE_CONE_LIGHT)) { return 90_degrees; }
-    if (info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT)) { return 180_degrees; }
-    return 360_degrees;
-}
-
-auto vehicle_light_is_external(vpart_reference const& part) -> bool {
-    auto const& info = part.info();
-    return info.location == "on_roof" || vehicle_light_is_directional(info)
-        || info.rotating_light.has_value();
-}
-
 auto vehicle_light_flags(vpart_reference const& part) -> uint32_t {
-    return vehicle_light_is_external(part) ? light_source_external_vehicle : uint32_t{0};
-}
-
-auto vehicle_circle_light_is_active(vpart_info const& info, bool const odd_turn) -> bool {
-    if (!info.has_flag(VPFLAG_CIRCLE_LIGHT)) { return true; }
-    return (odd_turn && info.has_flag(VPFLAG_ODDTURN))
-        || (!odd_turn && info.has_flag(VPFLAG_EVENTURN))
-        || (!(info.has_flag(VPFLAG_EVENTURN) || info.has_flag(VPFLAG_ODDTURN)));
+    return vehicle_lighting::is_external(part) ? light_source_external_vehicle : uint32_t{0};
 }
 
 auto vehicle_light_color(vpart_reference const& part) -> std::optional<uint32_t> {
@@ -1670,7 +1635,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
         auto* const veh = wrapped.v;
         if (veh == nullptr) { continue; }
 
-        auto const lights = active_vehicle_light_parts(*veh);
+        auto const lights = vehicle_lighting::active_light_parts(*veh);
         auto vehicle_luminance = 0.0f;
         auto iteration = 1.0f;
         for (vpart_reference const& part : lights) {
@@ -1696,7 +1661,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
                         acc,
                         make_directional_source(
                             pos, vehicle_luminance, veh->face.dir() + vehicle_part.direction,
-                            vehicle_light_arc_width(info), flags),
+                            vehicle_lighting::arc_width(info), flags),
                         color_rgb);
                 }
             } else if (info.rotating_light) {
@@ -1718,11 +1683,11 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
                     acc,
                     make_directional_source(
                         pos, static_cast<float>(info.bonus),
-                        veh->face.dir() + vehicle_part.direction, vehicle_light_arc_width(info),
+                        veh->face.dir() + vehicle_part.direction, vehicle_lighting::arc_width(info),
                         flags),
                     color_rgb);
             } else if (info.has_flag(VPFLAG_CIRCLE_LIGHT)) {
-                if (vehicle_circle_light_is_active(info, odd_turn)) {
+                if (vehicle_lighting::circle_light_is_active(info, odd_turn)) {
                     append_vehicle_source(
                         acc,
                         make_source(pos.x(), pos.y(), pos.z(), static_cast<float>(info.bonus),
