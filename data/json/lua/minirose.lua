@@ -23,7 +23,7 @@ local function confirm_manual_detonation(who)
   if not who:is_avatar() then return true end
 
   local prompt = QueryPopup.new()
-  prompt:message(locale.gettext("Detonate your minirose CBM? This arms a mininuke centered on you."))
+  prompt:message(locale.gettext("Detonate your minirose CBM now? Answering no arms its dead man's switch."))
   prompt:message_color(Color.c_red)
   return prompt:query_yn() == "YES"
 end
@@ -32,16 +32,19 @@ end
 function M.on_activate(params)
   local who = params.user
   if not confirm_manual_detonation(who) then
-    gapi.add_msg(MsgType.info, locale.gettext("You leave the dead man's switch of minirose armed."))
+    gapi.add_msg(MsgType.info, locale.gettext("You arm the dead man's switch of minirose."))
     return
   end
   detonate_minirose(who)
 end
 
----@param params table
+---@class MiniroseDeathParams
+---@field char Character?
+
+---@param params MiniroseDeathParams
 function M.on_character_death(params)
   local who = params.char
-  if who and who:has_bionic(minirose_id) then detonate_minirose(who) end
+  if who and who:has_active_bionic(minirose_id) then detonate_minirose(who) end
 end
 
 return M

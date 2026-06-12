@@ -4,6 +4,7 @@
 #include "bionics.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "character_id.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_coord.h"
@@ -154,7 +155,9 @@ TEST_CASE( "item_lua_invoke_at_invokes_use_action", "[lua][item]" )
 
 TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
 {
-    CHECK( bionic_id( "bio_minirose" )->activated );
+    const auto minirose_id = bionic_id( "bio_minirose" );
+    CHECK( minirose_id->activated );
+    CHECK( minirose_id->has_flag( flag_id( "BIONIC_TOGGLED" ) ) );
 
     auto lua = make_lua_state();
     auto env = sol::environment( lua, sol::create, lua.globals() );
@@ -167,8 +170,10 @@ TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
     auto nuke_count = 0;
     auto nuke_id = std::string{};
     auto bionic_id_seen = std::string{};
+    auto active_bionic_id_seen = std::string{};
     auto removed_id = std::string{};
     auto has_minirose = true;
+    auto minirose_armed = false;
     auto query_answer = std::string{ "YES" };
 
     auto fake_item = lua.create_table();
@@ -200,10 +205,15 @@ TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
         bionic_id_seen = id.str();
         return has_minirose;
     };
+    fake_char["has_active_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
+        active_bionic_id_seen = id.str();
+        return has_minirose && minirose_armed;
+    };
     fake_char["remove_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
         ++calls_removed;
         removed_id = id.str();
         has_minirose = false;
+        minirose_armed = false;
     };
     fake_char["bub_pos"] = []( const sol::table & ) { return tripoint_bub_ms( 60, 60, 0 ); };
     fake_char["is_avatar"] = []( const sol::table & ) { return true; };
@@ -220,6 +230,14 @@ TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
     params["char"] = fake_char;
     minirose["on_character_death"]( params );
 
+    CHECK( active_bionic_id_seen == "bio_minirose" );
+    CHECK( calls_removed == 0 );
+    CHECK( calls_created == 0 );
+    CHECK( calls_invoked == 0 );
+
+    minirose_armed = true;
+    minirose["on_character_death"]( params );
+
     CHECK( bionic_id_seen == "bio_minirose" );
     CHECK( removed_id == "bio_minirose" );
     CHECK( calls_removed == 1 );
@@ -230,6 +248,7 @@ TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
     CHECK( nuke_charges == 0 );
 
     has_minirose = true;
+    minirose_armed = false;
     query_answer = "NO";
     params = lua.create_table();
     params["user"] = fake_char;
@@ -239,6 +258,52 @@ TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
     CHECK( calls_created == 1 );
     CHECK( calls_invoked == 1 );
     CHECK( calls_messages == 1 );
+
+    query_answer = "YES";
+    minirose["on_activate"]( params );
+
+    CHECK( calls_removed == 2 );
+    CHECK( calls_created == 2 );
+    CHECK( calls_invoked == 2 );
+}
+
+TEST_CASE( "minirose can be disarmed after switching to an npc and back", "[bionics][lua][minirose][npc]" )
+{
+    clear_all_state();
+    auto &you = get_avatar();
+    const auto minirose_id = bionic_id( "bio_minirose" );
+    const auto cleanup_test_state = on_out_of_scope( []() {
+        g->vertical_shift( 0 );
+        clear_all_state();
+        get_avatar().setID( character_id(), true );
+    } );
+
+    you.clear_bionics();
+    npc &follower = spawn_npc( point_bub_ms( 45, 30 ), "test_talker" );
+    follower.set_fac( faction_id( "your_followers" ) );
+    follower.set_attitude( NPCATT_FOLLOW );
+    follower.clear_bionics();
+    REQUIRE( follower.is_player_ally() );
+
+    follower.add_bionic( minirose_id );
+    REQUIRE( follower.has_bionic( minirose_id ) );
+    CHECK_FALSE( follower.has_active_bionic( minirose_id ) );
+    follower.get_bionic_state( minirose_id ).powered = true;
+    REQUIRE( follower.has_active_bionic( minirose_id ) );
+    CHECK_FALSE( you.has_bionic( minirose_id ) );
+
+    you.control_npc( follower );
+
+    REQUIRE( you.has_active_bionic( minirose_id ) );
+    CHECK_FALSE( follower.has_bionic( minirose_id ) );
+    REQUIRE( you.deactivate_bionic( you.get_bionic_state( minirose_id ) ) );
+    CHECK_FALSE( you.has_active_bionic( minirose_id ) );
+
+    you.control_npc( follower );
+
+    CHECK_FALSE( you.has_bionic( minirose_id ) );
+    REQUIRE( follower.has_bionic( minirose_id ) );
+    CHECK_FALSE( follower.has_active_bionic( minirose_id ) );
 }
 
 TEST_CASE( "lua_activity_bindings", "[lua]" )
