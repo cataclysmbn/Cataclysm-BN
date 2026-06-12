@@ -69,7 +69,8 @@ function Get-VcpkgShadercrossCandidates {
 function Test-OutputsOutdated {
     param(
         [System.IO.FileInfo]$Source,
-        [string[]]$Outputs
+        [string[]]$Outputs,
+        [System.IO.FileInfo[]]$AdditionalSources = @()
     )
 
     foreach ($output in $Outputs) {
@@ -78,6 +79,11 @@ function Test-OutputsOutdated {
         }
         if ((Get-Item $output).LastWriteTimeUtc -lt $Source.LastWriteTimeUtc) {
             return $true
+        }
+        foreach ($additionalSource in $AdditionalSources) {
+            if ((Get-Item $output).LastWriteTimeUtc -lt $additionalSource.LastWriteTimeUtc) {
+                return $true
+            }
         }
     }
     return $false
@@ -102,10 +108,11 @@ function Invoke-SlangHlsl {
     param(
         [string]$Slangc,
         [string]$InputPath,
+        [string]$IncludeDir,
         [string]$OutputPath
     )
 
-    & $Slangc $InputPath -entry main -stage compute -profile sm_6_0 -target hlsl -o $OutputPath
+    & $Slangc $InputPath -I $IncludeDir -entry main -stage compute -profile sm_6_0 -target hlsl -o $OutputPath
     if ($LASTEXITCODE -ne 0) {
         throw "slangc HLSL generation failed for $InputPath"
     }
@@ -115,10 +122,11 @@ function Invoke-SlangCpu {
     param(
         [string]$Slangc,
         [string]$InputPath,
+        [string]$IncludeDir,
         [string]$OutputPath
     )
 
-    & $Slangc $InputPath -entry cpu_main -stage compute -target cpp -DCATA_SLANG_CPU=1 -o $OutputPath
+    & $Slangc $InputPath -I $IncludeDir -entry cpu_main -stage compute -target cpp -DCATA_SLANG_CPU=1 -o $OutputPath
     if ($LASTEXITCODE -ne 0) {
         throw "slangc CPU C++ generation failed for $InputPath"
     }
@@ -130,6 +138,7 @@ if (!(Test-Path $SourceDir)) {
 
 $hlslShaders = @(Get-ChildItem -Path $SourceDir -Filter "*.hlsl" -File)
 $slangShaders = @(Get-ChildItem -Path $SourceDir -Filter "*.slang" -File)
+$slangIncludes = @(Get-ChildItem -Path $SourceDir -Filter "*.slangh" -File)
 if ($hlslShaders.Count -eq 0 -and $slangShaders.Count -eq 0) {
     throw "No HLSL or Slang shaders found in $SourceDir"
 }
@@ -215,9 +224,10 @@ foreach ($shader in $slangShaders) {
         (Join-Path $OutputDir "$($shader.BaseName).msl"),
         (Join-Path $OutputDir "$($shader.BaseName).dxil")
     )
-    if (Test-OutputsOutdated -Source $shader -Outputs ($shaderOutputs + @($hlslOut))) {
+    if (Test-OutputsOutdated -Source $shader -Outputs ($shaderOutputs + @($hlslOut)) `
+            -AdditionalSources $slangIncludes) {
         Write-Host "Compiling $($shader.Name) -> HLSL"
-        Invoke-SlangHlsl $slangc $shader.FullName $hlslOut
+        Invoke-SlangHlsl $slangc $shader.FullName $SourceDir $hlslOut
         Invoke-Shadercross $shadercross $hlslOut "spirv" "compute" $shaderOutputs[0]
         Invoke-Shadercross $shadercross $hlslOut "msl" "compute" $shaderOutputs[1]
         Invoke-Shadercross $shadercross $hlslOut "dxil" "compute" $shaderOutputs[2]
@@ -225,9 +235,10 @@ foreach ($shader in $slangShaders) {
 
     if ($GenerateCpu) {
         $cpuOut = Join-Path $CpuOutputDir "$($shader.BaseName).cpp"
-        if (Test-OutputsOutdated -Source $shader -Outputs @($cpuOut)) {
+        if (Test-OutputsOutdated -Source $shader -Outputs @($cpuOut) `
+                -AdditionalSources $slangIncludes) {
             Write-Host "Compiling $($shader.Name) -> CPU C++"
-            Invoke-SlangCpu $slangc $shader.FullName $cpuOut
+            Invoke-SlangCpu $slangc $shader.FullName $SourceDir $cpuOut
         }
     }
 }

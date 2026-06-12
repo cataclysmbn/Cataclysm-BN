@@ -61,11 +61,11 @@ auto seen_walls(seen_walls_params const& params) -> bool {
     globals.seen_dst_all_0 = writable_buffer(params.seen_dst, total_tiles);
     globals.constants_0 = &constants;
 
-    const auto group_count = radius_group_side(params.view_radius);
+    const auto group_count = static_cast<uint32_t>(params.view_radius * 2 + 1);
     dispatch_independent_kernel(
         {
             .group_x = group_count,
-            .group_y = group_count,
+            .group_y = 1,
             .group_z = static_cast<uint32_t>(params.dispatch_z_count),
             .min_groups_per_chunk = 1,
         },

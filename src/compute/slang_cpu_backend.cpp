@@ -253,6 +253,43 @@ auto make_dispatch_range(std::vector<int> const& levels) -> dispatch_range {
     };
 }
 
+auto visible_y_delta_for_column(const int dx, const int dz, const int view_radius) -> int {
+    if (!trigdist) { return view_radius; }
+
+    const auto remaining = view_radius * view_radius + view_radius - dx * dx - dz * dz;
+    if (remaining < 0) { return -1; }
+    return static_cast<int>(std::floor(std::sqrt(static_cast<float>(remaining))));
+}
+
+struct seen_trace_tile_estimate_params {
+    int player_x = 0;
+    int player_y = 0;
+    int player_z_idx = 0;
+    int cache_x = 0;
+    int cache_y = 0;
+    int view_radius = 0;
+    dispatch_range dispatch = {};
+};
+
+auto estimate_seen_trace_tiles(seen_trace_tile_estimate_params const& p) -> uint32_t {
+    auto total = uint64_t{0};
+    const auto x_start = std::max(0, p.player_x - p.view_radius);
+    const auto x_end = std::min(p.cache_x, p.player_x + p.view_radius + 1);
+    for (const auto z_idx : std::views::iota(
+             p.dispatch.z_start_idx, p.dispatch.z_start_idx + p.dispatch.z_count)) {
+        const auto dz = std::abs(z_idx - p.player_z_idx);
+        for (const auto x : std::views::iota(x_start, x_end)) {
+            const auto max_dy =
+                visible_y_delta_for_column(std::abs(x - p.player_x), dz, p.view_radius);
+            if (max_dy < 0) { continue; }
+            const auto y_start = std::max(0, p.player_y - max_dy);
+            const auto y_end = std::min(p.cache_y, p.player_y + max_dy + 1);
+            total += static_cast<uint64_t>(std::max(0, y_end - y_start));
+        }
+    }
+    return static_cast<uint32_t>(std::min<uint64_t>(total, UINT32_MAX));
+}
+
 auto copy_visibility_to_level_cache(map const& m, std::vector<int> const& levels) -> void {
     for (const auto zlev : levels) {
         const auto z_idx = z_to_resident_index(zlev);
@@ -916,12 +953,24 @@ auto run_visibility(visibility_params const& p) -> bool {
     TracyPlot("Slang CPU Visibility Dispatch Tiles",
               static_cast<int64_t>(dispatch.z_count)
                   * static_cast<int64_t>(s_lighting.cache_x * s_lighting.cache_y));
-    const auto seen_dispatch_tiles =
+    const auto seen_clear_tiles =
         rebuild_seen ? static_cast<uint32_t>(static_cast<std::size_t>(dispatch.z_count)
                                              * static_cast<std::size_t>(
                                                    s_lighting.cache_x * s_lighting.cache_y))
                      : uint32_t{0};
-    TracyPlot("Slang CPU Seen Dispatch Tiles", static_cast<int64_t>(seen_dispatch_tiles));
+    const auto seen_trace_tiles =
+        rebuild_seen
+            ? estimate_seen_trace_tiles({
+                  .player_x = p.player_x,
+                  .player_y = p.player_y,
+                  .player_z_idx = p.player_zlev + OVERMAP_DEPTH,
+                  .cache_x = s_lighting.cache_x,
+                  .cache_y = s_lighting.cache_y,
+                  .view_radius = g_max_view_distance,
+                  .dispatch = dispatch,
+              })
+            : uint32_t{0};
+    TracyPlot("Slang CPU Seen Dispatch Tiles", static_cast<int64_t>(seen_trace_tiles));
     if (rebuild_seen) {
         auto cleared = false;
         {
@@ -944,7 +993,7 @@ auto run_visibility(visibility_params const& p) -> bool {
                     : kernels::clear_seen({
                           .seen_raw = s_lighting.seen_raw.data(),
                           .seen = s_lighting.seen.data(),
-                          .total_tiles = seen_dispatch_tiles,
+                          .total_tiles = seen_clear_tiles,
                           .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
                           .z_start_idx = dispatch.z_start_idx,
                       });

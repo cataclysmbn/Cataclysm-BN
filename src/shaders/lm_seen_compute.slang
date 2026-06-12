@@ -1,7 +1,5 @@
 // GPU Lighting - Seen-Cache Ray-Cast Pass
 
-static const float LIGHT_TRANSPARENCY_SOLID    = 0.0;
-static const float LIGHT_TRANSPARENCY_OPEN_AIR = 0.038376418216;
 static const uint SEEN_THREADS_X = 8u;
 static const uint SEEN_THREADS_Y = 8u;
 
@@ -57,130 +55,21 @@ StructuredBuffer<uint> vehicle_obscured_all : register(t3, space0);
 [[vk::binding(0, 1)]]
 RWStructuredBuffer<float> seen_all : register(u0, space1);
 
-int round_nearest_int( float value )
+#define CATA_LM_SEEN_HAS_PLAYER_VISION_BLOCK 1
+#include "lm_seen_common.slangh"
+
+float trace_seen_visibility( int tx, int ty, int tz )
 {
-    return value >= 0.0 ? int( floor( value + 0.5 ) ) : int( ceil( value - 0.5 ) );
-}
-
-int bounded_int( int value, int low, int high )
-{
-    if( value < low ) {
-        return low;
-    }
-    if( value > high ) {
-        return high;
-    }
-    return value;
-}
-
-int largest_int_3( int a, int b, int c )
-{
-    int best = a;
-    if( b > best ) {
-        best = b;
-    }
-    if( c > best ) {
-        best = c;
-    }
-    return best;
-}
-
-int visibility_distance( int dx, int dy, int dz )
-{
-    if( trigdist == 0u ) {
-        return largest_int_3( dx, dy, dz );
-    }
-    return int( round( sqrt( float( dx * dx + dy * dy + dz * dz ) ) ) );
-}
-
-uint adjacent_block_bit( int rx, int ry )
-{
-    if( rx ==  0 && ry == -1 ) { return 1u << 0; }
-    if( rx ==  1 && ry == -1 ) { return 1u << 1; }
-    if( rx ==  1 && ry ==  0 ) { return 1u << 2; }
-    if( rx ==  1 && ry ==  1 ) { return 1u << 3; }
-    if( rx ==  0 && ry ==  1 ) { return 1u << 4; }
-    if( rx == -1 && ry ==  1 ) { return 1u << 5; }
-    if( rx == -1 && ry ==  0 ) { return 1u << 6; }
-    if( rx == -1 && ry == -1 ) { return 1u << 7; }
-    return 0u;
-}
-
-bool blocked_by_player_vision_adjustment( int x, int y, int z )
-{
-    if( vision_block_mask == 0u || z != player_z_idx ) {
-        return false;
-    }
-    uint bit = adjacent_block_bit( x - player_x, y - player_y );
-    return bit != 0u && ( vision_block_mask & bit ) != 0u;
-}
-
-int tile_index( int x, int y, int z )
-{
-    return z * cache_xy + x * cache_y + y;
-}
-
-bool vehicle_obscured_level_active( int z )
-{
-    if( z < 0 || z >= z_count ) {
-        return false;
-    }
-    return ( vehicle_obscured_z_mask & ( 1u << uint( z ) ) ) != 0u;
-}
-
-bool blocked_by_vehicle_diagonal( int from_x, int from_y, int from_z, int to_x, int to_y, int to_z )
-{
-    int z = to_z;
-    if( !vehicle_obscured_level_active( z ) ) {
-        return false;
-    }
-
-    int dx = to_x - from_x;
-    int dy = to_y - from_y;
-    if( from_z != to_z ) {
-        dx = to_x - from_x;
-        dy = to_y - from_y;
-    }
-    if( z < 0 || z >= z_count || abs( dx ) != 1 || abs( dy ) != 1 ) {
-        return false;
-    }
-    if( dx == -1 && dy == -1 ) {
-        return ( vehicle_obscured_all[tile_index( from_x, from_y, z )] & 1u ) != 0u;
-    }
-    if( dx == 1 && dy == -1 ) {
-        return ( vehicle_obscured_all[tile_index( from_x, from_y, z )] & 2u ) != 0u;
-    }
-    if( dx == -1 && dy == 1 ) {
-        return ( vehicle_obscured_all[tile_index( to_x, to_y, z )] & 2u ) != 0u;
-    }
-    return ( vehicle_obscured_all[tile_index( to_x, to_y, z )] & 1u ) != 0u;
-}
-
-void seen_main_impl( uint3 group_id, uint3 group_thread_id )
-{
-    int tx = player_x + int( group_id.x * SEEN_THREADS_X + group_thread_id.x ) - view_radius;
-    int ty = player_y + int( group_id.y * SEEN_THREADS_Y + group_thread_id.y ) - view_radius;
-    int tz = z_start_idx + int( group_id.z );
-
-    if( tx < 0 || ty < 0 || tx >= cache_x || ty >= cache_y ||
-        group_id.z >= uint( dispatch_z_count ) || tz >= z_count ) {
-        return;
-    }
-
     int dist_i = visibility_distance( abs( tx - player_x ), abs( ty - player_y ),
                                       abs( tz - player_z_idx ) );
     float dist = float( dist_i );
 
-    int seen_idx = tz * cache_xy + tx * cache_y + ty;
-
     if( dist_i == 0 ) {
-        seen_all[seen_idx] = 1.0;
-        return;
+        return 1.0;
     }
 
     if( dist_i > view_radius ) {
-        seen_all[seen_idx] = 0.0;
-        return;
+        return 0.0;
     }
 
     int sdx = tx - player_x;
@@ -193,8 +82,10 @@ void seen_main_impl( uint3 group_id, uint3 group_thread_id )
         steps = 1;
     }
 
-    float avg_transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
+    float transparency_sum = 0.0;
+    int transparency_steps = 0;
     bool blocked = false;
+    bool check_vehicle_obscured = vehicle_obscured_z_mask != 0u;
 
     if( sdz != 0 ) {
         int sign_z = sdz > 0 ? 1 : -1;
@@ -219,8 +110,12 @@ void seen_main_impl( uint3 group_id, uint3 group_thread_id )
         }
     }
 
+    int prev_ix = player_x;
+    int prev_iy = player_y;
+    int prev_iz = player_z_idx;
+    float inv_steps = 1.0 / float( steps );
     for( int i = 1; i < steps; ++i ) {
-        float t = float( i ) / float( steps );
+        float t = float( i ) * inv_steps;
         int ix = player_x + round_nearest_int( float( sdx ) * t );
         int iy = player_y + round_nearest_int( float( sdy ) * t );
         int iz = player_z_idx + round_nearest_int( float( sdz ) * t );
@@ -233,16 +128,7 @@ void seen_main_impl( uint3 group_id, uint3 group_thread_id )
             blocked = true;
             break;
         }
-        if( vehicle_obscured_level_active( iz ) ) {
-            int prev_ix = player_x + round_nearest_int(
-                float( sdx ) * ( float( i - 1 ) / float( steps ) ) );
-            int prev_iy = player_y + round_nearest_int(
-                float( sdy ) * ( float( i - 1 ) / float( steps ) ) );
-            int prev_iz = player_z_idx + round_nearest_int(
-                float( sdz ) * ( float( i - 1 ) / float( steps ) ) );
-            prev_ix = bounded_int( prev_ix, 0, cache_x - 1 );
-            prev_iy = bounded_int( prev_iy, 0, cache_y - 1 );
-            prev_iz = bounded_int( prev_iz, 0, z_count - 1 );
+        if( check_vehicle_obscured && vehicle_obscured_level_active( iz ) ) {
             if( blocked_by_vehicle_diagonal( prev_ix, prev_iy, prev_iz, ix, iy, iz ) ) {
                 blocked = true;
                 break;
@@ -255,23 +141,68 @@ void seen_main_impl( uint3 group_id, uint3 group_thread_id )
             break;
         }
 
-        avg_transparency = ( float( i - 1 ) * avg_transparency + t_val ) / float( i );
+        transparency_sum += t_val;
+        ++transparency_steps;
+        prev_ix = ix;
+        prev_iy = iy;
+        prev_iz = iz;
     }
 
     if( blocked ) {
-        seen_all[seen_idx] = 0.0;
-        return;
+        return 0.0;
     }
 
     if( tz < player_z_idx && tz + 1 < z_count ) {
         int roof_idx = tile_index( tx, ty, tz + 1 );
         if( vehicle_floor_all[roof_idx] != 0u ) {
-            seen_all[seen_idx] = 0.0;
-            return;
+            return 0.0;
         }
     }
 
-    seen_all[seen_idx] = exp( -avg_transparency * dist );
+    float avg_transparency =
+        transparency_steps > 0 ? transparency_sum / float( transparency_steps ) :
+        LIGHT_TRANSPARENCY_OPEN_AIR;
+    return exp( -avg_transparency * dist );
+}
+
+void write_seen_tile( int tx, int ty, int tz )
+{
+    seen_all[tile_index( tx, ty, tz )] = trace_seen_visibility( tx, ty, tz );
+}
+
+void seen_main_impl( uint3 group_id, uint3 group_thread_id )
+{
+    int tx = player_x + int( group_id.x * SEEN_THREADS_X + group_thread_id.x ) - view_radius;
+    int ty = player_y + int( group_id.y * SEEN_THREADS_Y + group_thread_id.y ) - view_radius;
+    int tz = z_start_idx + int( group_id.z );
+
+    if( tx < 0 || ty < 0 || tx >= cache_x || ty >= cache_y ||
+        group_id.z >= uint( dispatch_z_count ) || tz >= z_count ) {
+        return;
+    }
+
+    write_seen_tile( tx, ty, tz );
+}
+
+void seen_cpu_main_impl( uint3 group_id )
+{
+    int tx = player_x + int( group_id.x ) - view_radius;
+    int tz = z_start_idx + int( group_id.z );
+
+    if( tx < 0 || tx >= cache_x || group_id.z >= uint( dispatch_z_count ) || tz >= z_count ) {
+        return;
+    }
+
+    int max_dy = max_visible_y_delta_for_column( abs( tx - player_x ), abs( tz - player_z_idx ) );
+    if( max_dy < 0 ) {
+        return;
+    }
+
+    int y_start = bounded_int( player_y - max_dy, 0, cache_y );
+    int y_end = bounded_int( player_y + max_dy + 1, 0, cache_y );
+    for( int ty = y_start; ty < y_end; ++ty ) {
+        write_seen_tile( tx, ty, tz );
+    }
 }
 
 [numthreads(8, 8, 1)]
@@ -280,8 +211,8 @@ void main( uint3 group_id : SV_GroupID, uint3 group_thread_id : SV_GroupThreadID
     seen_main_impl( group_id, group_thread_id );
 }
 
-[numthreads(8, 8, 1)]
+[numthreads(1, 1, 1)]
 void cpu_main( uint3 group_id : SV_GroupID, uint3 group_thread_id : SV_GroupThreadID )
 {
-    seen_main_impl( group_id, group_thread_id );
+    seen_cpu_main_impl( group_id );
 }

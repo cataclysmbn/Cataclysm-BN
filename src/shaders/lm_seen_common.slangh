@@ -1,0 +1,120 @@
+// Shared helpers for player visibility seen-cache passes.
+
+#ifndef CATA_LM_SEEN_COMMON_SLANGH
+#define CATA_LM_SEEN_COMMON_SLANGH
+
+static const float LIGHT_TRANSPARENCY_SOLID    = 0.0;
+static const float LIGHT_TRANSPARENCY_OPEN_AIR = 0.038376418216;
+
+int round_nearest_int( float value )
+{
+    return value >= 0.0 ? int( floor( value + 0.5 ) ) : int( ceil( value - 0.5 ) );
+}
+
+int bounded_int( int value, int low, int high )
+{
+    if( value < low ) {
+        return low;
+    }
+    if( value > high ) {
+        return high;
+    }
+    return value;
+}
+
+int largest_int_3( int a, int b, int c )
+{
+    int best = a;
+    if( b > best ) {
+        best = b;
+    }
+    if( c > best ) {
+        best = c;
+    }
+    return best;
+}
+
+int visibility_distance( int dx, int dy, int dz )
+{
+    if( trigdist == 0u ) {
+        return largest_int_3( dx, dy, dz );
+    }
+    return int( round( sqrt( float( dx * dx + dy * dy + dz * dz ) ) ) );
+}
+
+int max_visible_y_delta_for_column( int dx, int dz )
+{
+    if( trigdist == 0u ) {
+        return view_radius;
+    }
+
+    int remaining = view_radius * view_radius + view_radius - dx * dx - dz * dz;
+    if( remaining < 0 ) {
+        return -1;
+    }
+    return int( floor( sqrt( float( remaining ) ) ) );
+}
+
+int tile_index( int x, int y, int z )
+{
+    return z * cache_xy + x * cache_y + y;
+}
+
+bool vehicle_obscured_level_active( int z )
+{
+    if( z < 0 || z >= z_count ) {
+        return false;
+    }
+    return ( vehicle_obscured_z_mask & ( 1u << uint( z ) ) ) != 0u;
+}
+
+bool blocked_by_vehicle_diagonal( int from_x, int from_y, int from_z, int to_x, int to_y,
+                                  int to_z )
+{
+    int z = to_z;
+    if( !vehicle_obscured_level_active( z ) ) {
+        return false;
+    }
+
+    int dx = to_x - from_x;
+    int dy = to_y - from_y;
+    if( z < 0 || z >= z_count || abs( dx ) != 1 || abs( dy ) != 1 ) {
+        return false;
+    }
+    if( dx == -1 && dy == -1 ) {
+        return ( vehicle_obscured_all[tile_index( from_x, from_y, z )] & 1u ) != 0u;
+    }
+    if( dx == 1 && dy == -1 ) {
+        return ( vehicle_obscured_all[tile_index( from_x, from_y, z )] & 2u ) != 0u;
+    }
+    if( dx == -1 && dy == 1 ) {
+        return ( vehicle_obscured_all[tile_index( to_x, to_y, z )] & 2u ) != 0u;
+    }
+    return ( vehicle_obscured_all[tile_index( to_x, to_y, z )] & 1u ) != 0u;
+}
+
+#if defined(CATA_LM_SEEN_HAS_PLAYER_VISION_BLOCK)
+uint adjacent_block_bit( int rx, int ry )
+{
+    if( rx ==  0 && ry == -1 ) { return 1u << 0; }
+    if( rx ==  1 && ry == -1 ) { return 1u << 1; }
+    if( rx ==  1 && ry ==  0 ) { return 1u << 2; }
+    if( rx ==  1 && ry ==  1 ) { return 1u << 3; }
+    if( rx ==  0 && ry ==  1 ) { return 1u << 4; }
+    if( rx == -1 && ry ==  1 ) { return 1u << 5; }
+    if( rx == -1 && ry ==  0 ) { return 1u << 6; }
+    if( rx == -1 && ry == -1 ) { return 1u << 7; }
+    return 0u;
+}
+
+bool blocked_by_player_vision_adjustment( int x, int y, int z )
+{
+    if( vision_block_mask == 0u || z != player_z_idx ) {
+        return false;
+    }
+    uint bit = adjacent_block_bit( x - player_x, y - player_y );
+    return bit != 0u && ( vision_block_mask & bit ) != 0u;
+}
+#endif
+
+#endif

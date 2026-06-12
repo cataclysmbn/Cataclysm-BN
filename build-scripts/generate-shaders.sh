@@ -65,7 +65,7 @@ for shader in "${source_dir}"/*.slang; do
     shader_name="${shader_file%.slang}"
     hlsl_out="${tmp_dir}/${shader_name}.hlsl"
 
-    "${slangc}" "${shader}" -entry main -stage compute -profile sm_6_0 -target hlsl -o "${hlsl_out}"
+    "${slangc}" "${shader}" -I "${source_dir}" -entry main -stage compute -profile sm_6_0 -target hlsl -o "${hlsl_out}"
     "${shadercross}" "${hlsl_out}" -s hlsl -d spirv -t compute -o "${output_dir}/${shader_name}.spv"
     "${shadercross}" "${hlsl_out}" -s hlsl -d msl -t compute -o "${output_dir}/${shader_name}.msl"
     "${shadercross}" "${hlsl_out}" -s hlsl -d dxil -t compute -o "${output_dir}/${shader_name}.dxil"

@@ -532,6 +532,8 @@ if (CATA_SDL)
          "${CMAKE_SOURCE_DIR}/src/shaders/*.hlsl")
     file(GLOB_RECURSE CATA_SLANG_SOURCES CONFIGURE_DEPENDS
          "${CMAKE_SOURCE_DIR}/src/shaders/*.slang")
+    file(GLOB_RECURSE CATA_SLANG_INCLUDE_SOURCES CONFIGURE_DEPENDS
+         "${CMAKE_SOURCE_DIR}/src/shaders/*.slangh")
 
     set(CATA_SLANG_SHADER_NAMES "")
     foreach (SLANG_SRC ${CATA_SLANG_SOURCES})
@@ -667,12 +669,13 @@ if (CATA_SDL)
                     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CATA_SLANG_CPU_GENERATED_DIR}"
                     COMMAND ${CATA_SLANGC_COMMAND}
                             "${SLANG_SRC}"
+                            -I "${CMAKE_SOURCE_DIR}/src/shaders"
                             -entry cpu_main
                             -stage compute
                             -target cpp
                             -DCATA_SLANG_CPU=1
                             -o "${CPP_OUT}"
-                    DEPENDS "${SLANG_SRC}"
+                    DEPENDS "${SLANG_SRC}" ${CATA_SLANG_INCLUDE_SOURCES}
                     COMMENT "Compiling ${SHADER_NAME}.slang -> CPU C++"
                     VERBATIM)
                 list(APPEND CATA_SLANG_CPU_OUTPUTS "${CPP_OUT}")
@@ -746,12 +749,13 @@ if (CATA_SDL)
                 COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/generated/slang_hlsl"
                 COMMAND ${CATA_SLANGC_COMMAND}
                         "${SLANG_SRC}"
+                        -I "${CMAKE_SOURCE_DIR}/src/shaders"
                         -entry main
                         -stage compute
                         -profile sm_6_0
                         -target hlsl
                         -o "${SLANG_HLSL_OUT}"
-                DEPENDS "${SLANG_SRC}"
+                DEPENDS "${SLANG_SRC}" ${CATA_SLANG_INCLUDE_SOURCES}
                 COMMENT "Compiling ${SHADER_NAME}.slang -> HLSL"
                 VERBATIM)
 
