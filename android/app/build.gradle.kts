@@ -46,7 +46,7 @@ fun pathExecutable(name: String): File? {
         .firstOrNull { it.isFile && it.canExecute() }
 }
 
-fun resolveShadercross(configured: String): String {
+fun resolveExecutable(configured: String, toolName: String): String {
     val trimmed = configured.trim()
     val configuredFile = File(trimmed)
     val hasPath = configuredFile.isAbsolute || trimmed.contains("/") || trimmed.contains("\\")
@@ -54,10 +54,13 @@ fun resolveShadercross(configured: String): String {
         if (configuredFile.isFile && configuredFile.canExecute()) {
             return configuredFile.absolutePath
         }
-        throw GradleException("Configured shadercross executable does not exist or is not executable: $trimmed")
+        throw GradleException("Configured $toolName executable does not exist or is not executable: $trimmed")
     }
     return pathExecutable(trimmed)?.absolutePath
-        ?: throw GradleException("shadercross executable '$trimmed' was not found on PATH; set SHADERCROSS or pass -Pshadercross=/path/to/shadercross")
+        ?: throw GradleException(
+            "$toolName executable '$trimmed' was not found on PATH; set " +
+                "${toolName.toUpperCase()} or pass -P$toolName=/path/to/$toolName"
+        )
 }
 
 val njobs = gradleProperty("j")
@@ -68,6 +71,7 @@ val abiX8632 = gradleProperty("abi_x86_32").toBoolean()
 val abiX8664 = gradleProperty("abi_x86_64").toBoolean()
 val deps = gradleProperty("deps")
 val shadercross = System.getenv("SHADERCROSS") ?: gradleProperty("shadercross").ifEmpty { "shadercross" }
+val slangc = System.getenv("SLANGC") ?: gradleProperty("slangc").ifEmpty { "slangc" }
 val ccache = System.getenv("CCACHE") ?: gradleProperty("ccache").ifEmpty { pathExecutable("ccache")?.absolutePath.orEmpty() }
 val overrideVersion = gradleProperty("override_version")
 val versionHeaderPath = gradleProperty("version_header_path")
@@ -82,6 +86,7 @@ println("Using [              njobs]: $njobs")
 println("Using [           localize]: $localize")
 println("Using [               deps]: $deps")
 println("Using [        shadercross]: $shadercross")
+println("Using [             slangc]: $slangc")
 println("Using [             ccache]: ${ccache.ifEmpty { "<disabled>" }}")
 println("Using [   override_version]: $overrideVersion")
 println("Using [version_header_path]: $versionHeaderPath")
@@ -155,21 +160,28 @@ val compileLocalization by tasks.registering(Exec::class) {
 val shaderSourceDir = rootProject.file("../src/shaders")
 val shaderOutputDir = rootProject.file("../data/shaders")
 val compileAndroidShaders by tasks.registering {
-    val shaderInputs = fileTree(shaderSourceDir) { include("*.hlsl") }
-    inputs.files(shaderInputs).withPropertyName("hlslShaders")
+    val hlslInputs = fileTree(shaderSourceDir) { include("*.hlsl") }
+    val slangInputs = fileTree(shaderSourceDir) { include("*.slang") }
+    inputs.files(hlslInputs).withPropertyName("hlslShaders")
+    inputs.files(slangInputs).withPropertyName("slangShaders")
     outputs.dir(shaderOutputDir).withPropertyName("spirvShaders")
 
     doLast {
-        val shaders = shaderInputs.files.sortedBy { it.name }
-        if (shaders.isEmpty()) {
-            throw GradleException("No HLSL shaders found in ${shaderSourceDir.absolutePath}")
+        val hlslShaders = hlslInputs.files.sortedBy { it.name }
+        val slangShaders = slangInputs.files.sortedBy { it.name }
+        if (hlslShaders.isEmpty() && slangShaders.isEmpty()) {
+            throw GradleException("No HLSL or Slang shaders found in ${shaderSourceDir.absolutePath}")
         }
 
-        val shadercrossExe = resolveShadercross(shadercross)
+        val shadercrossExe = resolveExecutable(shadercross, "shadercross")
+        val slangcExe = if (slangShaders.isEmpty()) "" else resolveExecutable(slangc, "slangc")
         shaderOutputDir.mkdirs()
         shaderOutputDir.listFiles { _, name -> name.endsWith(".spv") }?.forEach(File::delete)
-        shaders.forEach { shader ->
+        hlslShaders.forEach { shader ->
             val shaderName = shader.nameWithoutExtension
+            if (File(shaderSourceDir, "$shaderName.slang").isFile) {
+                return@forEach
+            }
             val stage = when {
                 shaderName.endsWith("_vertex") -> "vertex"
                 shaderName.endsWith("_fragment") -> "fragment"
@@ -185,6 +197,40 @@ val compileAndroidShaders by tasks.registering {
                     "spirv",
                     "-t",
                     stage,
+                    "-o",
+                    File(shaderOutputDir, "$shaderName.spv").absolutePath,
+                )
+            }
+        }
+        slangShaders.forEach { shader ->
+            val shaderName = shader.nameWithoutExtension
+            val hlslOut = File(temporaryDir, "$shaderName.hlsl")
+            exec {
+                commandLine(
+                    slangcExe,
+                    shader.absolutePath,
+                    "-entry",
+                    "main",
+                    "-stage",
+                    "compute",
+                    "-profile",
+                    "sm_6_0",
+                    "-target",
+                    "hlsl",
+                    "-o",
+                    hlslOut.absolutePath,
+                )
+            }
+            exec {
+                commandLine(
+                    shadercrossExe,
+                    hlslOut.absolutePath,
+                    "-s",
+                    "hlsl",
+                    "-d",
+                    "spirv",
+                    "-t",
+                    "compute",
                     "-o",
                     File(shaderOutputDir, "$shaderName.spv").absolutePath,
                 )

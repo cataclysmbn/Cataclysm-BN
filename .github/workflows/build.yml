@@ -650,6 +650,12 @@ jobs:
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         run: bash build-scripts/install-shadercross-vcpkg.sh
 
+      - name: Install Slang (android host)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        run: |
+          SLANG_INSTALL_DIR="$PWD/build-data/slang/current" bash build-scripts/install-slang.sh
+          echo "$PWD/build-data/slang/current/bin" >> "$GITHUB_PATH"
+
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         uses: hendrikmuhs/ccache-action@v1.2
