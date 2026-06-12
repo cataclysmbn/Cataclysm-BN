@@ -49,10 +49,10 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     clear_all_state();
     rng_set_engine_seed( seed );
     REQUIRE( get_map().has_zlevels() );
-    get_player_character().setpos( tripoint_bub_ms{ 60, 60, -2 } );
 
     const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
+    get_player_character().setpos( shooter_pos + tripoint_south );
     auto shooter = standard_npc( "shooter", shooter_pos );
     shooter.set_skill_level( skill_gun, 10 );
     shooter.set_skill_level( skill_shotgun, 10 );
@@ -69,7 +69,7 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     g->load_npcs();
     REQUIRE( g->critter_at<npc>( target_pos ) != nullptr );
 
-    detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
+    detached_ptr<item> gun = item::spawn( itype_id( "test_shotgun" ) );
     gun->ammo_set( ammo_id );
 
     REQUIRE( gun->ammo_data() != nullptr );
@@ -260,16 +260,16 @@ TEST_CASE( "shaped attacks apply trail ammo effects", "[ranged][projectile]" )
 
 TEST_CASE( "character using birdshot against another character", "[ranged]" )
 {
-    const auto damage = fire_shells_at_target( itype_id( "shot_bird" ), {} );
+    const auto damage = fire_shells_at_target( itype_id( "test_birdshot" ), {} );
 
     CHECK( damage > 0 );
 }
 
 TEST_CASE( "birdshot pellets are much worse against armor", "[ranged][balance]" )
 {
-    const auto unarmored_damage = fire_shells_at_target( itype_id( "shot_bird" ), {} );
-    const auto armored_damage = fire_shells_at_target( itype_id( "shot_bird" ),
-    { itype_id( "survivor_suit" ), itype_id( "depowered_helmet" ) } );
+    const auto unarmored_damage = fire_shells_at_target( itype_id( "test_birdshot" ), {} );
+    const auto armored_damage = fire_shells_at_target( itype_id( "test_birdshot" ),
+    { itype_id( "test_override_armor" ) } );
 
     CHECK( unarmored_damage > armored_damage );
     CHECK( unarmored_damage >= armored_damage * 2 );
@@ -301,8 +301,8 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
     REQUIRE( g->critter_at<npc>( target_pos ) != nullptr );
     REQUIRE( shooter.sees( *target ) );
 
-    detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
-    gun->ammo_set( itype_id( "shot_00" ) );
+    detached_ptr<item> gun = item::spawn( itype_id( "test_shotgun" ) );
+    gun->ammo_set( itype_id( "test_buckshot" ) );
     shooter.wield( std::move( gun ) );
 
     auto probe = make_direct_gun_projectile( shooter.primary_weapon() );
