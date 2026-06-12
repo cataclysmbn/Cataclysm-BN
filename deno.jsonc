@@ -21,6 +21,7 @@
       "description": "update available semantic commit types",
       "command": "deno run -R=data/mods -W=.github/semantic.yml scripts/semantic.ts"
     },
+    "docs:translation-warning": "deno run --allow-read=docs --allow-env=GITHUB_TOKEN,GITHUB_REPOSITORY --allow-net=api.github.com scripts/docs_translation_warning.ts",
     "affected-files": "deno run -RWEN --allow-run scripts/affected_files.ts"
   },
   "test": { "include": ["scripts", ".agents"] },
