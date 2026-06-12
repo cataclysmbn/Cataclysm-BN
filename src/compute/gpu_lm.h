@@ -153,9 +153,10 @@ struct lm_seen_push_constants {
     float z_scale;              //  4 bytes
     int32_t z_start_idx;        //  4 bytes
     int32_t dispatch_z_count;   // 4 bytes
-    uint32_t trigdist;          //  4 bytes = 48
-    uint32_t vision_block_mask; // 4 bytes
-    uint32_t _pad[3];           // 12 bytes = 64
+    uint32_t trigdist;                 //  4 bytes = 48
+    uint32_t vision_block_mask;        //  4 bytes
+    uint32_t vehicle_obscured_z_mask;  //  4 bytes
+    uint32_t _pad[2];                  //  8 bytes = 64
 };
 static_assert(sizeof(lm_seen_push_constants) == 64);
 

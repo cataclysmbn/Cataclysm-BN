@@ -50,6 +50,7 @@ auto seen_walls(seen_walls_params const& params) -> bool {
     constants.z_start_idx_0 = params.z_start_idx;
     constants.dispatch_z_count_0 = params.dispatch_z_count;
     constants.trigdist_0 = params.trigdist;
+    constants.vehicle_obscured_z_mask_0 = params.vehicle_obscured_z_mask;
 
     const auto total_tiles = static_cast<uint32_t>(params.cache_xy * params.z_count);
     auto globals = GlobalParams_0{};
@@ -66,6 +67,7 @@ auto seen_walls(seen_walls_params const& params) -> bool {
             .group_x = group_count,
             .group_y = group_count,
             .group_z = static_cast<uint32_t>(params.dispatch_z_count),
+            .min_groups_per_chunk = 1,
         },
         globals, cata_slang_lm_seen_walls_cpu_main);
     return true;
@@ -105,6 +107,7 @@ auto run_seen_walls_probe() -> bool {
             .z_start_idx = 0,
             .dispatch_z_count = 1,
             .trigdist = 0U,
+            .vehicle_obscured_z_mask = 0U,
         })) {
         return false;
     }

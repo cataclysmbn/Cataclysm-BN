@@ -122,6 +122,7 @@ struct seen_params {
     int32_t dispatch_z_count = 0;
     uint32_t trigdist = 0;
     uint32_t vision_block_mask = 0;
+    uint32_t vehicle_obscured_z_mask = 0;
 };
 
 struct seen_walls_params {
@@ -142,6 +143,7 @@ struct seen_walls_params {
     int32_t z_start_idx = 0;
     int32_t dispatch_z_count = 0;
     uint32_t trigdist = 0;
+    uint32_t vehicle_obscured_z_mask = 0;
 };
 
 struct daylight_diffuse_params {

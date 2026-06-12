@@ -20,7 +20,8 @@ struct SeenConstants {
     int   dispatch_z_count;
     uint  trigdist;
     uint  vision_block_mask;
-    uint3 _pad;
+    uint  vehicle_obscured_z_mask;
+    uint2 _pad;
 };
 
 [[vk::binding(0, 2)]]
@@ -39,6 +40,7 @@ ConstantBuffer<SeenConstants> constants : register(b0, space2);
 #define dispatch_z_count constants.dispatch_z_count
 #define trigdist constants.trigdist
 #define vision_block_mask constants.vision_block_mask
+#define vehicle_obscured_z_mask constants.vehicle_obscured_z_mask
 
 [[vk::binding(0, 0)]]
 StructuredBuffer<float> transparency_all : register(t0, space0);
@@ -118,9 +120,21 @@ int tile_index( int x, int y, int z )
     return z * cache_xy + x * cache_y + y;
 }
 
+bool vehicle_obscured_level_active( int z )
+{
+    if( z < 0 || z >= z_count ) {
+        return false;
+    }
+    return ( vehicle_obscured_z_mask & ( 1u << uint( z ) ) ) != 0u;
+}
+
 bool blocked_by_vehicle_diagonal( int from_x, int from_y, int from_z, int to_x, int to_y, int to_z )
 {
     int z = to_z;
+    if( !vehicle_obscured_level_active( z ) ) {
+        return false;
+    }
+
     int dx = to_x - from_x;
     int dy = to_y - from_y;
     if( from_z != to_z ) {
@@ -206,28 +220,33 @@ void seen_main_impl( uint3 group_id, uint3 group_thread_id )
     }
 
     for( int i = 1; i < steps; ++i ) {
-        int prev_ix = player_x + round_nearest_int( float( sdx ) * ( float( i - 1 ) / float( steps ) ) );
-        int prev_iy = player_y + round_nearest_int( float( sdy ) * ( float( i - 1 ) / float( steps ) ) );
-        int prev_iz = player_z_idx + round_nearest_int( float( sdz ) * ( float( i - 1 ) / float( steps ) ) );
         float t = float( i ) / float( steps );
         int ix = player_x + round_nearest_int( float( sdx ) * t );
         int iy = player_y + round_nearest_int( float( sdy ) * t );
         int iz = player_z_idx + round_nearest_int( float( sdz ) * t );
 
-        prev_ix = bounded_int( prev_ix, 0, cache_x - 1 );
-        prev_iy = bounded_int( prev_iy, 0, cache_y - 1 );
-        prev_iz = bounded_int( prev_iz, 0, z_count - 1 );
         ix = bounded_int( ix, 0, cache_x - 1 );
         iy = bounded_int( iy, 0, cache_y - 1 );
         iz = bounded_int( iz, 0, z_count - 1 );
 
-        if( blocked_by_player_vision_adjustment( ix, iy, iz ) ) {
+        if( vision_block_mask != 0u && blocked_by_player_vision_adjustment( ix, iy, iz ) ) {
             blocked = true;
             break;
         }
-        if( blocked_by_vehicle_diagonal( prev_ix, prev_iy, prev_iz, ix, iy, iz ) ) {
-            blocked = true;
-            break;
+        if( vehicle_obscured_level_active( iz ) ) {
+            int prev_ix = player_x + round_nearest_int(
+                float( sdx ) * ( float( i - 1 ) / float( steps ) ) );
+            int prev_iy = player_y + round_nearest_int(
+                float( sdy ) * ( float( i - 1 ) / float( steps ) ) );
+            int prev_iz = player_z_idx + round_nearest_int(
+                float( sdz ) * ( float( i - 1 ) / float( steps ) ) );
+            prev_ix = bounded_int( prev_ix, 0, cache_x - 1 );
+            prev_iy = bounded_int( prev_iy, 0, cache_y - 1 );
+            prev_iz = bounded_int( prev_iz, 0, z_count - 1 );
+            if( blocked_by_vehicle_diagonal( prev_ix, prev_iy, prev_iz, ix, iy, iz ) ) {
+                blocked = true;
+                break;
+            }
         }
 
         float t_val = transparency_all[tile_index( ix, iy, iz )];

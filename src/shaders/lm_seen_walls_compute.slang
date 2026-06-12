@@ -20,6 +20,9 @@ struct SeenWallsConstants {
     int   z_start_idx;
     int   dispatch_z_count;
     uint  trigdist;
+    uint  vision_block_mask_unused;
+    uint  vehicle_obscured_z_mask;
+    uint2 _pad;
 };
 
 [[vk::binding(0, 2)]]
@@ -37,6 +40,7 @@ ConstantBuffer<SeenWallsConstants> constants : register(b0, space2);
 #define z_start_idx constants.z_start_idx
 #define dispatch_z_count constants.dispatch_z_count
 #define trigdist constants.trigdist
+#define vehicle_obscured_z_mask constants.vehicle_obscured_z_mask
 
 [[vk::binding(0, 0)]]
 StructuredBuffer<float> transparency_all : register(t0, space0);
@@ -73,8 +77,20 @@ int visibility_distance( int dx, int dy, int dz )
     return int( round( sqrt( float( dx * dx + dy * dy + dz * dz ) ) ) );
 }
 
+bool vehicle_obscured_level_active( int z )
+{
+    if( z < 0 || z >= z_count ) {
+        return false;
+    }
+    return ( vehicle_obscured_z_mask & ( 1u << uint( z ) ) ) != 0u;
+}
+
 bool blocked_by_vehicle_diagonal( int from_x, int from_y, int to_x, int to_y, int z )
 {
+    if( !vehicle_obscured_level_active( z ) ) {
+        return false;
+    }
+
     int dx = to_x - from_x;
     int dy = to_y - from_y;
     if( abs( dx ) != 1 || abs( dy ) != 1 ) {
@@ -152,7 +168,8 @@ void seen_walls_main_impl( uint3 group_id, uint3 group_thread_id )
         if( transparency_all[nidx] <= LIGHT_TRANSPARENCY_SOLID ) {
             continue;
         }
-        if( blocked_by_vehicle_diagonal( nx, ny, tx, ty, tz ) ) {
+        if( vehicle_obscured_level_active( tz ) &&
+            blocked_by_vehicle_diagonal( nx, ny, tx, ty, tz ) ) {
             continue;
         }
 

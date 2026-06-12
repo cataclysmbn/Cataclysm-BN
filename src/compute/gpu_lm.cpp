@@ -401,6 +401,7 @@ struct lighting_resource_cache {
     bool seen_origin_valid = false;
     int seen_origin_x = 0;
     int seen_origin_y = 0;
+    uint32_t vehicle_obscured_z_mask = 0u;
     bool camera_valid = false;
     bool source_map_valid = false;
     bool static_lighting_valid = false;
@@ -2331,6 +2332,24 @@ auto pack_vehicle_obscured_cache_uint(
     }
 }
 
+auto packed_vehicle_obscured_z_mask(
+    std::vector<uint32_t> const& packed, std::vector<int> const& levels, int const cache_xy)
+    -> uint32_t {
+    auto result = 0u;
+    for (const auto level_index : std::views::iota(std::size_t{0}, levels.size())) {
+        const auto z_idx = levels[level_index] + OVERMAP_DEPTH;
+        if (z_idx < 0 || z_idx >= OVERMAP_LAYERS) { continue; }
+        const auto offset = level_index * static_cast<std::size_t>(cache_xy);
+        if (offset + static_cast<std::size_t>(cache_xy) > packed.size()) { break; }
+        const auto first = packed.begin() + static_cast<std::ptrdiff_t>(offset);
+        const auto last = first + cache_xy;
+        if (std::ranges::any_of(first, last, [](auto const value) { return value != 0u; })) {
+            result |= 1u << static_cast<uint32_t>(z_idx);
+        }
+    }
+    return result;
+}
+
 struct record_seen_rebuild_params {
     SDL_GPUCommandBuffer* cmd = nullptr;
     SDL_GPUBuffer* transparency_buf = nullptr;
@@ -2426,6 +2445,7 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
         .dispatch_z_count = p.dispatch_z_count,
         .trigdist = trigdist ? 1u : 0u,
         .vision_block_mask = p.vision_block_mask,
+        .vehicle_obscured_z_mask = s_lighting_resources.vehicle_obscured_z_mask,
         ._pad = {},
     };
 
@@ -2903,6 +2923,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         if (!input_uploads.vehicle_obscured_levels.empty()) {
             pack_vehicle_obscured_cache_uint(
                 *p.m, input_uploads.vehicle_obscured_levels, cache_xy, vehicle_obscured_cpu);
+            s_lighting_resources.vehicle_obscured_z_mask |= packed_vehicle_obscured_z_mask(
+                vehicle_obscured_cpu, input_uploads.vehicle_obscured_levels, cache_xy);
         }
     }
     {

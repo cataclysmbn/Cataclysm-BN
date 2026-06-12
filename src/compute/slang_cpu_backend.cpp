@@ -55,6 +55,7 @@ struct lighting_residency {
     bool floor_valid = false;
     bool vehicle_floor_valid = false;
     bool vehicle_obscured_valid = false;
+    uint32_t vehicle_obscured_z_mask = 0U;
     bool source_map_valid = false;
     bool lighting_outputs_valid = false;
     std::vector<char> seen_valid_levels = {};
@@ -104,6 +105,23 @@ auto resident_index_is_valid(const int idx) -> bool { return idx >= 0 && idx < s
 auto volume_tiles(const int cache_x, const int cache_y, const int z_count) -> std::size_t {
     return static_cast<std::size_t>(cache_x) * static_cast<std::size_t>(cache_y)
          * static_cast<std::size_t>(z_count);
+}
+
+auto vehicle_obscured_z_mask(std::vector<uint32_t> const& values) -> uint32_t {
+    const auto cache_xy = s_lighting.cache_x * s_lighting.cache_y;
+    if (cache_xy <= 0 || s_lighting.z_count <= 0) { return 0U; }
+
+    auto result = 0U;
+    for (const auto z_idx : std::views::iota(0, s_lighting.z_count)) {
+        const auto offset = static_cast<std::size_t>(z_idx) * static_cast<std::size_t>(cache_xy);
+        if (offset + static_cast<std::size_t>(cache_xy) > values.size()) { break; }
+        const auto first = values.begin() + static_cast<std::ptrdiff_t>(offset);
+        const auto last = first + cache_xy;
+        if (std::ranges::any_of(first, last, [](const uint32_t value) { return value != 0U; })) {
+            result |= 1U << static_cast<uint32_t>(z_idx);
+        }
+    }
+    return result;
 }
 
 auto reset_seen_residency() -> void {
@@ -551,6 +569,7 @@ auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> 
 }
 
 auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) -> bool {
+    ZoneScopedN("slang_cpu_shift_lighting_resident_inputs");
     if (p.cache_x <= 0 || p.cache_y <= 0 || p.z_count <= 0) { return false; }
     reset_residency_for_shape(p.cache_x, p.cache_y, p.z_count);
 
@@ -562,18 +581,21 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
     auto shifted_float =
         std::vector<float>(s_lighting.transparency.size(), LIGHT_TRANSPARENCY_OPEN_AIR);
     auto shifted_uint = std::vector<uint32_t>(s_lighting.floor.size(), 0U);
-    if (!kernels::shift_float({
-            .target = shifted_float.data(),
-            .source = s_lighting.transparency.data(),
-            .cache_x = p.cache_x,
-            .cache_y = p.cache_y,
-            .cache_xy = cache_xy,
-            .z_count = p.z_count,
-            .shift_x_tiles = shift_x_tiles,
-            .shift_y_tiles = shift_y_tiles,
-            .fill_value = LIGHT_TRANSPARENCY_OPEN_AIR,
-        })) {
-        return false;
+    {
+        ZoneScopedN("slang_cpu_shift_transparency");
+        if (!kernels::shift_float({
+                .target = shifted_float.data(),
+                .source = s_lighting.transparency.data(),
+                .cache_x = p.cache_x,
+                .cache_y = p.cache_y,
+                .cache_xy = cache_xy,
+                .z_count = p.z_count,
+                .shift_x_tiles = shift_x_tiles,
+                .shift_y_tiles = shift_y_tiles,
+                .fill_value = LIGHT_TRANSPARENCY_OPEN_AIR,
+            })) {
+            return false;
+        }
     }
     s_lighting.transparency.swap(shifted_float);
 
@@ -595,12 +617,18 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
         std::ranges::fill(shifted_uint, 0U);
         return true;
     };
-    if (s_lighting.floor_valid && !shift_uint_volume(s_lighting.floor)) { return false; }
-    if (s_lighting.vehicle_floor_valid && !shift_uint_volume(s_lighting.vehicle_floor)) {
-        return false;
+    if (s_lighting.floor_valid) {
+        ZoneScopedN("slang_cpu_shift_floor");
+        if (!shift_uint_volume(s_lighting.floor)) { return false; }
     }
-    if (s_lighting.vehicle_obscured_valid && !shift_uint_volume(s_lighting.vehicle_obscured)) {
-        return false;
+    if (s_lighting.vehicle_floor_valid) {
+        ZoneScopedN("slang_cpu_shift_vehicle_floor");
+        if (!shift_uint_volume(s_lighting.vehicle_floor)) { return false; }
+    }
+    if (s_lighting.vehicle_obscured_valid) {
+        ZoneScopedN("slang_cpu_shift_vehicle_obscured");
+        if (!shift_uint_volume(s_lighting.vehicle_obscured)) { return false; }
+        s_lighting.vehicle_obscured_z_mask = vehicle_obscured_z_mask(s_lighting.vehicle_obscured);
     }
 
     reset_seen_residency();
@@ -610,6 +638,7 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
 }
 
 auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
+    ZoneScopedN("slang_cpu_dispatch_transparency");
     if (p.submaps == nullptr || p.out_buffer == nullptr
         || p.output.backend != backend_kind::slang_cpu || p.output.id != s_lighting.id) {
         return false;
@@ -661,7 +690,6 @@ auto run_lighting(lighting_params const& p) -> bool {
         .dirty_levels = p.vehicle_obscured_dirty_levels,
         .all_levels = &levels,
     });
-
     if (!transparency_levels.empty()) {
         copy_transparency_levels(*p.m, transparency_levels, s_lighting.transparency);
     }
@@ -676,6 +704,7 @@ auto run_lighting(lighting_params const& p) -> bool {
     if (!vehicle_obscured_levels.empty()) {
         copy_vehicle_obscured_levels(*p.m, vehicle_obscured_levels, s_lighting.vehicle_obscured);
         s_lighting.vehicle_obscured_valid = true;
+        s_lighting.vehicle_obscured_z_mask = vehicle_obscured_z_mask(s_lighting.vehicle_obscured);
     }
 
     if (!refresh_transparency_valid() || !s_lighting.floor_valid || !s_lighting.vehicle_floor_valid
@@ -684,11 +713,14 @@ auto run_lighting(lighting_params const& p) -> bool {
     }
 
     if (!lightmap_levels.empty()) {
-        auto source_collection = cata_gpu::collect_lighting_sources({
-            .m = p.m,
-            .levels = &levels,
-            .collect_colored_sources = colored_lighting,
-        });
+        auto source_collection = [&]() {
+            ZoneScopedN("slang_cpu_collect_sources");
+            return cata_gpu::collect_lighting_sources({
+                .m = p.m,
+                .levels = &levels,
+                .collect_colored_sources = colored_lighting,
+            });
+        }();
         copy_source_map_levels(*p.m, levels, s_lighting.source_map);
 
         auto ambient = make_ambient_params(cache_x, cache_y, cache_xy);
@@ -696,10 +728,14 @@ auto run_lighting(lighting_params const& p) -> bool {
         ambient.direct_sunlight = p.direct_sunlight ? 1U : 0U;
         ambient.sun_dx_per_z = p.sun_dx_per_z;
         ambient.sun_dy_per_z = p.sun_dy_per_z;
-        if (!kernels::ambient(ambient)) { return false; }
+        {
+            ZoneScopedN("slang_cpu_ambient_kernel");
+            if (!kernels::ambient(ambient)) { return false; }
+        }
 
         const auto total_tiles = static_cast<uint32_t>(s_lighting.lightmap.size());
         if (p.direct_sunlight) {
+            ZoneScopedN("slang_cpu_daylight_diffusion");
             auto* source = s_lighting.daylight_seed.data();
             auto* target = s_lighting.daylight_diffuse_a.data();
             for (const auto pass : std::views::iota(0, daylight_diffusion_passes)) {
@@ -730,6 +766,8 @@ auto run_lighting(lighting_params const& p) -> bool {
         if (!source_collection.sources.empty()) {
             auto sources = std::span<cata_gpu::GpuLightSource const>{
                 source_collection.sources.data(), source_collection.sources.size()};
+            const auto source_max_radius = max_light_radius(sources);
+            ZoneScopedN("slang_cpu_raytrace_kernel");
             if (!kernels::raytrace({
                     .transparency = s_lighting.transparency.data(),
                     .floor = s_lighting.floor.data(),
@@ -743,16 +781,18 @@ auto run_lighting(lighting_params const& p) -> bool {
                     .z_scale = Z_LEVEL_SCALE,
                     .source_offset = 0U,
                     .num_sources = static_cast<uint32_t>(sources.size()),
-                    .max_radius = max_light_radius(sources),
+                    .max_radius = source_max_radius,
                 })) {
                 return false;
             }
         }
 
         if (colored_lighting && !source_collection.colored_sources.empty()) {
+            ZoneScopedN("slang_cpu_colored_lighting");
             std::ranges::fill(s_lighting.colored_light, 0U);
             auto sources = std::span<cata_gpu::GpuColoredLightSource const>{
                 source_collection.colored_sources.data(), source_collection.colored_sources.size()};
+            const auto colored_max_radius = max_colored_light_radius(sources);
             if (!kernels::color_raytrace({
                     .transparency = s_lighting.transparency.data(),
                     .floor = s_lighting.floor.data(),
@@ -766,7 +806,7 @@ auto run_lighting(lighting_params const& p) -> bool {
                     .z_scale = Z_LEVEL_SCALE,
                     .source_offset = 0U,
                     .num_sources = static_cast<uint32_t>(sources.size()),
-                    .max_radius = max_colored_light_radius(sources),
+                    .max_radius = colored_max_radius,
                 })) {
                 return false;
             }
@@ -775,7 +815,9 @@ auto run_lighting(lighting_params const& p) -> bool {
             clear_colored_light_levels(*p.m, levels);
         }
 
-        if (p.download_lightmap) { copy_lightmap_to_level_caches(*p.m, lightmap_levels); }
+        if (p.download_lightmap) {
+            copy_lightmap_to_level_caches(*p.m, lightmap_levels);
+        }
         s_lighting.source_map_valid = true;
         s_lighting.lighting_outputs_valid = true;
     }
@@ -805,6 +847,7 @@ auto finish_lighting(lighting_work const& work) -> bool {
 }
 
 auto run_visibility(visibility_params const& p) -> bool {
+    ZoneScopedN("slang_cpu_run_visibility");
     if (p.m == nullptr) { return false; }
     const auto& lc = p.m->get_cache_ref(p.zlev);
     reset_residency_for_shape(lc.cache_x, lc.cache_y, OVERMAP_LAYERS);
@@ -825,83 +868,107 @@ auto run_visibility(visibility_params const& p) -> bool {
         const auto total_tiles = static_cast<uint32_t>(
             static_cast<std::size_t>(dispatch.z_count)
             * static_cast<std::size_t>(s_lighting.cache_x * s_lighting.cache_y));
-        const auto cleared =
-            s_lighting.seen_origin_valid
-                ? kernels::clear_seen_view({
-                      .seen_raw = s_lighting.seen_raw.data(),
-                      .seen = s_lighting.seen.data(),
-                      .player_x = s_lighting.seen_origin_x,
-                      .player_y = s_lighting.seen_origin_y,
-                      .cache_x = s_lighting.cache_x,
-                      .cache_y = s_lighting.cache_y,
-                      .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
-                      .z_count = s_lighting.z_count,
-                      .view_radius = g_max_view_distance,
-                      .z_start_idx = dispatch.z_start_idx,
-                      .dispatch_z_count = dispatch.z_count,
-                  })
-                : kernels::clear_seen({
-                      .seen_raw = s_lighting.seen_raw.data(),
-                      .seen = s_lighting.seen.data(),
-                      .total_tiles = total_tiles,
-                      .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
-                      .z_start_idx = dispatch.z_start_idx,
-                  });
-        if (!cleared
-            || !kernels::seen({
-                .transparency = s_lighting.transparency.data(),
-                .floor = s_lighting.floor.data(),
-                .vehicle_floor = s_lighting.vehicle_floor.data(),
-                .vehicle_obscured = s_lighting.vehicle_obscured.data(),
-                .seen = s_lighting.seen_raw.data(),
-                .player_x = p.player_x,
-                .player_y = p.player_y,
-                .player_z_idx = p.player_zlev + OVERMAP_DEPTH,
-                .cache_x = s_lighting.cache_x,
-                .cache_y = s_lighting.cache_y,
-                .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
-                .z_count = s_lighting.z_count,
-                .view_radius = g_max_view_distance,
-                .z_scale = Z_LEVEL_SCALE,
-                .z_start_idx = dispatch.z_start_idx,
-                .dispatch_z_count = dispatch.z_count,
-                .trigdist = trigdist ? 1U : 0U,
-                .vision_block_mask = p.vision_block_mask,
-            })
-            || !kernels::seen_walls({
-                .transparency = s_lighting.transparency.data(),
-                .seen_src = s_lighting.seen_raw.data(),
-                .vehicle_floor = s_lighting.vehicle_floor.data(),
-                .vehicle_obscured = s_lighting.vehicle_obscured.data(),
-                .seen_dst = s_lighting.seen.data(),
-                .player_x = p.player_x,
-                .player_y = p.player_y,
-                .player_z_idx = p.player_zlev + OVERMAP_DEPTH,
-                .cache_x = s_lighting.cache_x,
-                .cache_y = s_lighting.cache_y,
-                .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
-                .z_count = s_lighting.z_count,
-                .view_radius = g_max_view_distance,
-                .z_scale = Z_LEVEL_SCALE,
-                .z_start_idx = dispatch.z_start_idx,
-                .dispatch_z_count = dispatch.z_count,
-                .trigdist = trigdist ? 1U : 0U,
-            })) {
+        auto cleared = false;
+        {
+            ZoneScopedN("slang_cpu_clear_seen");
+            cleared =
+                s_lighting.seen_origin_valid
+                    ? kernels::clear_seen_view({
+                          .seen_raw = s_lighting.seen_raw.data(),
+                          .seen = s_lighting.seen.data(),
+                          .player_x = s_lighting.seen_origin_x,
+                          .player_y = s_lighting.seen_origin_y,
+                          .cache_x = s_lighting.cache_x,
+                          .cache_y = s_lighting.cache_y,
+                          .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
+                          .z_count = s_lighting.z_count,
+                          .view_radius = g_max_view_distance,
+                          .z_start_idx = dispatch.z_start_idx,
+                          .dispatch_z_count = dispatch.z_count,
+                      })
+                    : kernels::clear_seen({
+                          .seen_raw = s_lighting.seen_raw.data(),
+                          .seen = s_lighting.seen.data(),
+                          .total_tiles = total_tiles,
+                          .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
+                          .z_start_idx = dispatch.z_start_idx,
+                      });
+        }
+        if (!cleared) {
             return false;
+        }
+        {
+            ZoneScopedN("slang_cpu_seen_kernel");
+            if (!kernels::seen({
+                    .transparency = s_lighting.transparency.data(),
+                    .floor = s_lighting.floor.data(),
+                    .vehicle_floor = s_lighting.vehicle_floor.data(),
+                    .vehicle_obscured = s_lighting.vehicle_obscured.data(),
+                    .seen = s_lighting.seen_raw.data(),
+                    .player_x = p.player_x,
+                    .player_y = p.player_y,
+                    .player_z_idx = p.player_zlev + OVERMAP_DEPTH,
+                    .cache_x = s_lighting.cache_x,
+                    .cache_y = s_lighting.cache_y,
+                    .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
+                    .z_count = s_lighting.z_count,
+                    .view_radius = g_max_view_distance,
+                    .z_scale = Z_LEVEL_SCALE,
+                    .z_start_idx = dispatch.z_start_idx,
+                    .dispatch_z_count = dispatch.z_count,
+                    .trigdist = trigdist ? 1U : 0U,
+                    .vision_block_mask = p.vision_block_mask,
+                    .vehicle_obscured_z_mask = s_lighting.vehicle_obscured_z_mask,
+                })) {
+                return false;
+            }
+        }
+        {
+            ZoneScopedN("slang_cpu_seen_walls_kernel");
+            if (!kernels::seen_walls({
+                    .transparency = s_lighting.transparency.data(),
+                    .seen_src = s_lighting.seen_raw.data(),
+                    .vehicle_floor = s_lighting.vehicle_floor.data(),
+                    .vehicle_obscured = s_lighting.vehicle_obscured.data(),
+                    .seen_dst = s_lighting.seen.data(),
+                    .player_x = p.player_x,
+                    .player_y = p.player_y,
+                    .player_z_idx = p.player_zlev + OVERMAP_DEPTH,
+                    .cache_x = s_lighting.cache_x,
+                    .cache_y = s_lighting.cache_y,
+                    .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
+                    .z_count = s_lighting.z_count,
+                    .view_radius = g_max_view_distance,
+                    .z_scale = Z_LEVEL_SCALE,
+                    .z_start_idx = dispatch.z_start_idx,
+                    .dispatch_z_count = dispatch.z_count,
+                    .trigdist = trigdist ? 1U : 0U,
+                    .vehicle_obscured_z_mask = s_lighting.vehicle_obscured_z_mask,
+                })) {
+                return false;
+            }
         }
         mark_seen_levels_valid(download_levels, p.player_x, p.player_y, p.rebuild_seen_cache);
     }
 
-    std::ranges::fill(s_lighting.camera, 0U);
     auto const origin = tripoint_bub_ms{p.player_x, p.player_y, p.player_zlev};
-    auto vehicle_optics = cata_gpu::collect_lighting_vehicle_optics({
-        .m = p.m,
-        .origin = &origin,
-        .target_z = p.zlev,
-    });
+    auto vehicle_optics = [&]() {
+        ZoneScopedN("slang_cpu_collect_vehicle_optics");
+        return cata_gpu::collect_lighting_vehicle_optics({
+            .m = p.m,
+            .origin = &origin,
+            .target_z = p.zlev,
+        });
+    }();
+    {
+        ZoneScopedN("slang_cpu_clear_camera");
+        std::ranges::fill(s_lighting.camera, 0U);
+    }
     if (!vehicle_optics.empty()) {
         auto optics = std::span<
             cata_gpu::GpuVehicleOptic const>{vehicle_optics.data(), vehicle_optics.size()};
+        const auto optic_max_radius = max_optic_radius(optics);
+        ZoneScopedN("slang_cpu_vehicle_optics_kernel");
         if (!kernels::vehicle_optics({
                 .transparency = s_lighting.transparency.data(),
                 .seen = s_lighting.seen.data(),
@@ -914,40 +981,45 @@ auto run_visibility(visibility_params const& p) -> bool {
                 .trigdist = trigdist ? 1U : 0U,
                 .visible_threshold = g_visible_threshold,
                 .max_view_distance = g_max_view_distance,
-                .max_radius = max_optic_radius(optics),
+                .max_radius = optic_max_radius,
             })) {
             return false;
         }
     }
-    if (!kernels::final_visibility({
-            .transparency = s_lighting.transparency.data(),
-            .lightmap = s_lighting.lightmap.data(),
-            .seen = s_lighting.seen.data(),
-            .camera = s_lighting.camera.data(),
-            .source_map = s_lighting.source_map.data(),
-            .visibility = s_lighting.visibility.data(),
-            .player_x = p.player_x,
-            .player_y = p.player_y,
-            .player_z_idx = p.player_zlev + OVERMAP_DEPTH,
-            .cache_x = s_lighting.cache_x,
-            .cache_y = s_lighting.cache_y,
-            .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
-            .z_count = s_lighting.z_count,
-            .trigdist = trigdist ? 1U : 0U,
-            .u_clairvoyance = p.u_clairvoyance,
-            .u_unimpaired_range = p.u_unimpaired_range,
-            .g_light_level = p.g_light_level,
-            .vision_threshold = p.vision_threshold,
-            .visibility_scale_factor = p.visibility_scale_factor,
-            .visible_threshold = g_visible_threshold,
-            .detail_range = p.detail_range,
-            .z_start_idx = dispatch.z_start_idx,
-            .dispatch_z_count = dispatch.z_count,
-        })) {
-        return false;
+    {
+        ZoneScopedN("slang_cpu_final_visibility_kernel");
+        if (!kernels::final_visibility({
+                .transparency = s_lighting.transparency.data(),
+                .lightmap = s_lighting.lightmap.data(),
+                .seen = s_lighting.seen.data(),
+                .camera = s_lighting.camera.data(),
+                .source_map = s_lighting.source_map.data(),
+                .visibility = s_lighting.visibility.data(),
+                .player_x = p.player_x,
+                .player_y = p.player_y,
+                .player_z_idx = p.player_zlev + OVERMAP_DEPTH,
+                .cache_x = s_lighting.cache_x,
+                .cache_y = s_lighting.cache_y,
+                .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
+                .z_count = s_lighting.z_count,
+                .trigdist = trigdist ? 1U : 0U,
+                .u_clairvoyance = p.u_clairvoyance,
+                .u_unimpaired_range = p.u_unimpaired_range,
+                .g_light_level = p.g_light_level,
+                .vision_threshold = p.vision_threshold,
+                .visibility_scale_factor = p.visibility_scale_factor,
+                .visible_threshold = g_visible_threshold,
+                .detail_range = p.detail_range,
+                .z_start_idx = dispatch.z_start_idx,
+                .dispatch_z_count = dispatch.z_count,
+            })) {
+            return false;
+        }
     }
 
-    copy_visibility_to_level_cache(*p.m, download_levels);
+    {
+        copy_visibility_to_level_cache(*p.m, download_levels);
+    }
     return true;
 }
 
@@ -974,6 +1046,7 @@ auto finish_visibility(visibility_work const& work) -> bool {
 }
 
 auto run_sight_pairs(run_sight_pairs_params const& p) -> bool {
+    ZoneScopedN("slang_cpu_run_sight_pairs");
     if (p.m == nullptr || p.pairs == nullptr || p.results == nullptr || p.pairs->empty()) {
         return false;
     }
@@ -986,16 +1059,19 @@ auto run_sight_pairs(run_sight_pairs_params const& p) -> bool {
         })) {
         return false;
     }
-    return kernels::sight_pairs({
-        .transparency = s_lighting.transparency.data(),
-        .floor = s_lighting.floor.data(),
-        .pairs = *p.pairs,
-        .results = p.results,
-        .cache_x = s_lighting.cache_x,
-        .cache_y = s_lighting.cache_y,
-        .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
-        .z_count = s_lighting.z_count,
-    });
+    {
+        ZoneScopedN("slang_cpu_sight_pairs_kernel");
+        return kernels::sight_pairs({
+            .transparency = s_lighting.transparency.data(),
+            .floor = s_lighting.floor.data(),
+            .pairs = *p.pairs,
+            .results = p.results,
+            .cache_x = s_lighting.cache_x,
+            .cache_y = s_lighting.cache_y,
+            .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
+            .z_count = s_lighting.z_count,
+        });
+    }
 }
 
 auto begin_sight_pairs(begin_sight_pairs_params const& p) -> sight_pairs_work {

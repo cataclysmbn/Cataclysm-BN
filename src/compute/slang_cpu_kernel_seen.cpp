@@ -51,6 +51,7 @@ auto seen(seen_params const& params) -> bool {
     constants.dispatch_z_count_0 = params.dispatch_z_count;
     constants.trigdist_0 = params.trigdist;
     constants.vision_block_mask_0 = params.vision_block_mask;
+    constants.vehicle_obscured_z_mask_0 = params.vehicle_obscured_z_mask;
 
     const auto total_tiles = static_cast<uint32_t>(params.cache_xy * params.z_count);
     auto globals = GlobalParams_0{};
@@ -67,6 +68,7 @@ auto seen(seen_params const& params) -> bool {
             .group_x = group_count,
             .group_y = group_count,
             .group_z = static_cast<uint32_t>(params.dispatch_z_count),
+            .min_groups_per_chunk = 1,
         },
         globals, cata_slang_lm_seen_cpu_main);
     return true;
@@ -106,6 +108,7 @@ auto run_seen_probe() -> bool {
             .dispatch_z_count = 1,
             .trigdist = 0U,
             .vision_block_mask = 0U,
+            .vehicle_obscured_z_mask = 0U,
         })) {
         return false;
     }
