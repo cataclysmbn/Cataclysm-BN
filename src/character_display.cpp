@@ -980,7 +980,10 @@ static void draw_speed_tab( const catacurses::window &w_speed,
         ++line;
     }
 
-    const float temperature_speed_modifier = you.mutation_value( "temperature_speed_modifier" );
+    float temperature_speed_modifier = you.mutation_value( "temperature_speed_modifier" );
+    temperature_speed_modifier += you.bonus_from_enchantments( temperature_speed_modifier,
+                                  enchant_vals::mod::BODYTEMP_SPEED );
+
     if( temperature_speed_modifier != 0 ) {
         nc_color pen_color;
         std::string pen_sign;
@@ -1004,7 +1007,6 @@ static void draw_speed_tab( const catacurses::window &w_speed,
 
     int quick_bonus = static_cast<int>( std::round( ( you.mutation_value( "speed_modifier" ) - 1 ) *
                                         100 ) );
-    int bio_speed_bonus = 10;
     if( quick_bonus != 0 ) {
         std::string pen_sign = quick_bonus >= 0 ? "+" : "-";
         nc_color pen_color = quick_bonus >= 0 ? c_green : c_red;
@@ -1013,9 +1015,14 @@ static void draw_speed_tab( const catacurses::window &w_speed,
                    left_justify( _( "Mutations" ), 20 ), pen_sign, std::abs( quick_bonus ) );
         ++line;
     }
-    if( you.has_bionic( bionic_id( "bio_speed" ) ) ) {
+    const auto ench_speed = int( ceil( you.bonus_from_enchantments( 100, enchant_vals::mod::SPEED ) ) );
+    if( ench_speed > 0 ) {
         mvwprintz( w_speed, point( 1, line ), c_green,
-                   pgettext( "speed bonus", "Bionic Speed        +%2d%%" ), bio_speed_bonus );
+                   pgettext( "speed bonus", "Misc Speed        +%2d%%" ), ench_speed );
+        ++line;
+    } else if( ench_speed < 0 ) {
+        mvwprintz( w_speed, point( 1, line ), c_red,
+                   pgettext( "speed bonus", "Misc Speed        -%2d%%" ), abs( ench_speed ) );
         ++line;
     }
 

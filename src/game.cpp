@@ -12859,6 +12859,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     if( !u.has_artifact_with( AEP_STEALTH ) && !u.has_trait( trait_id( "DEBUG_SILENT" ) ) ) {
         int volume = u.is_stealthy() ? 30 : 50;
         volume *= u.mutation_value( "noise_modifier" );
+        volume += u.bonus_from_enchantments( volume, enchant_vals::mod::NOISE );
         if( volume > 0 ) {
             if( u.is_wearing( itype_rm13_armor_on ) ) {
                 volume = 20;

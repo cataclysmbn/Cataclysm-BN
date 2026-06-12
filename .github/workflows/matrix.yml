@@ -219,18 +219,6 @@ jobs:
           path: cbn-linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}.tar.gz
           if-no-files-found: error
 
-      - name: Publish Linux artifact link
-        if: ${{ success() && github.event_name == 'pull_request' && env.SKIP == 'false' && matrix.upload-artifact == true }}
-        continue-on-error: true
-        uses: ./.github/actions/publish-pr-artifact-body
-        with:
-          repository: ${{ github.repository }}
-          pr-number: ${{ github.event.pull_request.number }}
-          run-id: ${{ github.run_id }}
-          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          head-sha: ${{ github.event.pull_request.head.sha }}
-          token: ${{ github.token }}
-
       - name: run tests
         if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
         run: |

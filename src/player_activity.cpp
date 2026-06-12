@@ -254,16 +254,23 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     const float game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
                                 ? 9999
                                 : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
-    const float total_mult = light_mult * bench_mult * morale_mult * tools_mult * assist_mult *
-                             speed_mult *
-                             mutation_mult * game_opt_mult;
+
+    auto total_mult_without_enchant = bench_mult * assist_mult * tools_mult * light_mult * morale_mult *
+                                      mutation_mult * game_opt_mult;
+
+    const auto enchant_mult_add = u.bonus_from_enchantments( total_mult_without_enchant,
+                                  enchant_vals::mod::CRAFTING_SPEED );
+
+    const float total_mult = total_mult_without_enchant + enchant_mult_add;
+
+    const auto enchant_mult = total_mult / total_mult_without_enchant;
 
     const double remaining_percentage = 1.0 - craft->get_counter() / 10'000'000.0;
     int remaining_turns = remaining_percentage * base_total_moves / 100 / std::max( 0.01f, total_mult );
     std::string time_desc = string_format( _( "Time left: %s" ),
                                            to_string( time_duration::from_turns( remaining_turns ) ) );
 
-    const std::array<std::pair<float, std::string>, 8> mults_with_data = { {
+    const std::array<std::pair<float, std::string>, 9> mults_with_data = { {
             { total_mult, _( "Total" ) },
             { speed_mult, _( "Speed" ) },
             { light_mult, _( "Light" ) },
@@ -271,7 +278,8 @@ static std::string craft_progress_message( const avatar &u, const player_activit
             { morale_mult, _( "Morale" ) },
             { tools_mult, _( "Tools" ) },
             { assist_mult, _( "Assistants" ) },
-            { mutation_mult, _( "Traits" ) }
+            { mutation_mult, _( "Traits" ) },
+            { enchant_mult, _( "Misc" ) }
         }
     };
     std::string mults_desc = _( "Crafting speed multipliers:\n" );
