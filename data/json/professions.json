@@ -3887,19 +3887,11 @@
     "type": "profession",
     "id": "bio_specops",
     "name": "Bionic Operator",
-    "description": "You were the best of the best, the military's finest, and your bionics have only enhanced your abilities.  Specializing in close quarters combat, you were sent on the most dangerous and critical missions, a deniable asset enforced by an explosive wired to a dead man's switch.",
+    "description": "You were the best of the best, the military's finest, and your bionics have only enhanced your abilities.  Specializing in close quarters combat, you were sent on the most dangerous and critical missions.",
     "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
-    "CBMs": [
-      "bio_cqb",
-      "bio_carbon",
-      "bio_night_vision",
-      "bio_torsionratchet",
-      "bio_claws",
-      "bio_minirose",
-      "bio_power_storage_mkII"
-    ],
+    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
     "skills": [
       { "level": 2, "name": "swimming" },
       { "level": 4, "name": "gun" },
