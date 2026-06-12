@@ -12,6 +12,7 @@
     "color": "light_gray",
     "location": "barrel",
     "mod_target_category": [ [ "SUBMACHINE_GUNS" ], [ "RIFLES" ], [ "SHOTGUNS" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
+    "half_angle_modifier": 3,
     "dispersion_modifier": 75,
     "loudness_modifier": 15,
     "flags": [ "IRREMOVABLE" ]
