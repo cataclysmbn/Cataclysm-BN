@@ -17,78 +17,6 @@ class JsonOut;
 class JsonIn;
 class JsonObject;
 
-namespace enchant_vals
-{
-// the different types of values that can be modified by enchantments
-// either the item directly or the Character, whichever is more appropriate
-enum class mod : int {
-    // effects for the Character
-    STRENGTH,
-    DEXTERITY,
-    PERCEPTION,
-    INTELLIGENCE,
-    SPEED,
-    ATTACK_COST,
-    MOVE_COST,
-    METABOLISM,
-    MANA_CAP,
-    MANA_REGEN,
-    STAMINA_CAP,
-    STAMINA_REGEN,
-    THIRST,
-    FATIGUE,
-    BONUS_DODGE,
-    ARMOR_BASH,
-    ARMOR_CUT,
-    ARMOR_DARK,
-    ARMOR_LIGHT,
-    ARMOR_PSI,
-    ARMOR_STAB,
-    ARMOR_BULLET,
-    ARMOR_HEAT,
-    ARMOR_COLD,
-    ARMOR_ELEC,
-    ARMOR_ACID,
-    ARMOR_BIO,
-    // effects for the item that has the enchantment
-    ITEM_DAMAGE_BASH,
-    ITEM_DAMAGE_CUT,
-    ITEM_DAMAGE_STAB,
-    ITEM_DAMAGE_FIRE,
-    ITEM_DAMAGE_ACID,
-    ITEM_DAMAGE_BIO,
-    ITEM_DAMAGE_COLD,
-    ITEM_DAMAGE_DARK,
-    ITEM_DAMAGE_LIGHT,
-    ITEM_DAMAGE_PSI,
-    ITEM_DAMAGE_BULLET,
-    ITEM_DAMAGE_ELECTRIC,
-    ITEM_DAMAGE_TRUE,
-    ITEM_ARMOR_BASH,
-    ITEM_ARMOR_CUT,
-    ITEM_ARMOR_DARK,
-    ITEM_ARMOR_LIGHT,
-    ITEM_ARMOR_PSI,
-    ITEM_ARMOR_STAB,
-    ITEM_ARMOR_BULLET,
-    ITEM_ARMOR_HEAT,
-    ITEM_ARMOR_COLD,
-    ITEM_ARMOR_ELEC,
-    ITEM_ARMOR_ACID,
-    ITEM_ARMOR_BIO,
-    ITEM_ATTACK_COST,
-    // effects for ranged bonuses
-    RANGED_DISPERSION,
-    RANGED_DAMAGE_BULLET,
-    RANGED_ARMOR_PENETRATION,
-    RANGED_RANGE,
-    RANGED_RECOIL,
-    RANGED_RELOAD_TIME,
-    RANGED_AIM_SPEED,
-    NUM_MOD
-};
-} // namespace enchant_vals
-
 // an "enchantment" is what passive artifact effects used to be:
 // under certain conditions, the effect persists upon the appropriate Character
 class enchantment
@@ -127,13 +55,13 @@ class enchantment
         // adds two enchantments together and ignores their conditions
         void force_add( const enchantment &rhs );
 
-        int get_value_add( enchant_vals::mod value ) const;
-        double get_value_multiply( enchant_vals::mod value ) const;
+        int get_value_add( enchantment_value_id value ) const;
+        double get_value_multiply( enchantment_value_id value ) const;
 
         /**
          * Calculate bonus provided by this enchantment for given base value.
          */
-        double calc_bonus( enchant_vals::mod value, double base, bool round = false ) const;
+        double calc_bonus( enchantment_value_id value, double base, bool round = false ) const;
 
         // this enchantment has a valid condition and is in the right location
         bool is_active( const Character &guy, const item &parent ) const;
@@ -176,10 +104,10 @@ class enchantment
         std::optional<emit_id> emitter;
         std::map<efftype_id, int> ench_effects;
         // values that add to the base value
-        std::map<enchant_vals::mod, int> values_add;
+        std::map<enchantment_value_id, int> values_add;
         // values that get multiplied to the base value
         // multipliers add to each other instead of multiply against themselves
-        std::map<enchant_vals::mod, double> values_multiply;
+        std::map<enchantment_value_id, double> values_multiply;
 
         std::vector<fake_spell> hit_me_effect;
         std::vector<fake_spell> hit_you_effect;
@@ -193,7 +121,7 @@ class enchantment
         // checks if the enchantments have the same active_conditions
         bool stacks_with( const enchantment &rhs ) const;
 
-        int mult_bonus( enchant_vals::mod value_type, int base_value ) const;
+        int mult_bonus( enchantment_value_id value_type, int base_value ) const;
 
         // performs cooldown and distance checks before casting enchantment spells
         void cast_enchantment_spell( Character &caster, const Creature *target,

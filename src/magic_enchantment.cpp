@@ -19,6 +19,7 @@
 #include "point.h"
 #include "rng.h"
 #include "string_id.h"
+#include "type_id.h"
 #include "units.h"
 
 template <typename E> struct enum_traits;
@@ -33,13 +34,9 @@ struct enum_traits<enchantment::condition> {
     static constexpr enchantment::condition last = enchantment::condition::NUM_CONDITION;
 };
 
-template<>
-struct enum_traits<enchant_vals::mod> {
-    static constexpr enchant_vals::mod last = enchant_vals::mod::NUM_MOD;
-};
-
 namespace io
 {
+    // TODO: Migrate these enums to ids too
     // *INDENT-OFF*
     template<>
     std::string enum_to_string<enchantment::has>( enchantment::has data )
@@ -74,96 +71,29 @@ namespace io
         abort();
     }
 
-    template<>
-    std::string enum_to_string<enchant_vals::mod>( enchant_vals::mod data )
-    {
-        switch ( data ) {
-            case enchant_vals::mod::STRENGTH: return "STRENGTH";
-            case enchant_vals::mod::DEXTERITY: return "DEXTERITY";
-            case enchant_vals::mod::PERCEPTION: return "PERCEPTION";
-            case enchant_vals::mod::INTELLIGENCE: return "INTELLIGENCE";
-            case enchant_vals::mod::SPEED: return "SPEED";
-            case enchant_vals::mod::ATTACK_COST: return "ATTACK_COST";
-            case enchant_vals::mod::MOVE_COST: return "MOVE_COST";
-            case enchant_vals::mod::METABOLISM: return "METABOLISM";
-            case enchant_vals::mod::MANA_CAP: return "MANA_CAP";
-            case enchant_vals::mod::MANA_REGEN: return "MANA_REGEN";
-            case enchant_vals::mod::STAMINA_CAP: return "STAMINA_CAP";
-            case enchant_vals::mod::STAMINA_REGEN: return "STAMINA_REGEN";
-            case enchant_vals::mod::THIRST: return "THIRST";
-            case enchant_vals::mod::FATIGUE: return "FATIGUE";
-            case enchant_vals::mod::BONUS_DODGE: return "BONUS_DODGE";
-            case enchant_vals::mod::ARMOR_ACID: return "ARMOR_ACID";
-            case enchant_vals::mod::ARMOR_BASH: return "ARMOR_BASH";
-            case enchant_vals::mod::ARMOR_BIO: return "ARMOR_BIO";
-            case enchant_vals::mod::ARMOR_COLD: return "ARMOR_COLD";
-            case enchant_vals::mod::ARMOR_CUT: return "ARMOR_CUT";
-            case enchant_vals::mod::ARMOR_DARK: return "ARMOR_DARK";
-            case enchant_vals::mod::ARMOR_LIGHT: return "ARMOR_LIGHT";
-            case enchant_vals::mod::ARMOR_PSI: return "ARMOR_PSI";
-            case enchant_vals::mod::ARMOR_ELEC: return "ARMOR_ELEC";
-            case enchant_vals::mod::ARMOR_HEAT: return "ARMOR_HEAT";
-            case enchant_vals::mod::ARMOR_STAB: return "ARMOR_STAB";
-            case enchant_vals::mod::ARMOR_BULLET: return "ARMOR_BULLET";
-            case enchant_vals::mod::ITEM_DAMAGE_BASH: return "ITEM_DAMAGE_BASH";
-            case enchant_vals::mod::ITEM_DAMAGE_CUT: return "ITEM_DAMAGE_CUT";
-            case enchant_vals::mod::ITEM_DAMAGE_STAB: return "ITEM_DAMAGE_STAB";
-            case enchant_vals::mod::ITEM_DAMAGE_FIRE: return "ITEM_DAMAGE_FIRE";
-            case enchant_vals::mod::ITEM_DAMAGE_ACID: return "ITEM_DAMAGE_ACID";
-            case enchant_vals::mod::ITEM_DAMAGE_BIO: return "ITEM_DAMAGE_BIO";
-            case enchant_vals::mod::ITEM_DAMAGE_COLD: return "ITEM_DAMAGE_COLD";
-            case enchant_vals::mod::ITEM_DAMAGE_DARK: return "ITEM_DAMAGE_DARK";
-            case enchant_vals::mod::ITEM_DAMAGE_LIGHT: return "ITEM_DAMAGE_LIGHT";
-            case enchant_vals::mod::ITEM_DAMAGE_PSI: return "ITEM_DAMAGE_PSI";
-            case enchant_vals::mod::ITEM_DAMAGE_BULLET: return "ITEM_DAMAGE_BULLET";
-            case enchant_vals::mod::ITEM_DAMAGE_ELECTRIC: return "ITEM_DAMAGE_ELECTRIC";
-            case enchant_vals::mod::ITEM_DAMAGE_TRUE: return "ITEM_DAMAGE_TRUE";
-            case enchant_vals::mod::ITEM_ARMOR_BASH: return "ITEM_ARMOR_BASH";
-            case enchant_vals::mod::ITEM_ARMOR_CUT: return "ITEM_ARMOR_CUT";
-            case enchant_vals::mod::ITEM_ARMOR_DARK: return "ITEM_ARMOR_DARK";
-            case enchant_vals::mod::ITEM_ARMOR_LIGHT: return "ITEM_ARMOR_LIGHT";
-            case enchant_vals::mod::ITEM_ARMOR_PSI: return "ITEM_ARMOR_PSI";
-            case enchant_vals::mod::ITEM_ARMOR_STAB: return "ITEM_ARMOR_STAB";
-            case enchant_vals::mod::ITEM_ARMOR_BULLET: return "ITEM_ARMOR_BULLET";
-            case enchant_vals::mod::ITEM_ARMOR_HEAT: return "ITEM_ARMOR_HEAT";
-            case enchant_vals::mod::ITEM_ARMOR_COLD: return "ITEM_ARMOR_COLD";
-            case enchant_vals::mod::ITEM_ARMOR_ELEC: return "ITEM_ARMOR_ELEC";
-            case enchant_vals::mod::ITEM_ARMOR_ACID: return "ITEM_ARMOR_ACID";
-            case enchant_vals::mod::ITEM_ARMOR_BIO: return "ITEM_ARMOR_BIO";
-            case enchant_vals::mod::ITEM_ATTACK_COST: return "ITEM_ATTACK_COST";
-            case enchant_vals::mod::RANGED_DISPERSION: return "RANGED_DISPERSION";
-            case enchant_vals::mod::RANGED_DAMAGE_BULLET: return "RANGED_DAMAGE_BULLET";
-            case enchant_vals::mod::RANGED_ARMOR_PENETRATION: return "RANGED_ARMOR_PENETRATION";
-            case enchant_vals::mod::RANGED_RANGE: return "RANGED_RANGE";
-            case enchant_vals::mod::RANGED_RECOIL: return "RANGED_RECOIL";
-            case enchant_vals::mod::RANGED_RELOAD_TIME: return "RANGED_RELOAD_TIME";
-            case enchant_vals::mod::RANGED_AIM_SPEED: return "RANGED_AIM_SPEED";
-            case enchant_vals::mod::NUM_MOD: break;
-        }
-        debugmsg( "Invalid enchant_vals::mod" );
-        abort();
-    }
     // *INDENT-ON*
 } // namespace io
 
+// TODO: Eventually migrate this to a migration like for items
 static std::string migrate_ench_vals_enums( const std::string &s )
 {
-    if( s == "ITEM_ATTACK_SPEED" ) {
-        return "ITEM_ATTACK_COST";
-    } else if( s == "ATTACK_SPEED" ) {
-        return "ATTACK_COST";
-    } else if( s == "MAX_MANA" ) {
-        return "MANA_CAP";
-    } else if( s == "REGEN_MANA" ) {
-        return "MANA_REGEN";
-    } else if( s == "MAX_STAMINA" ) {
-        return "STAMINA_CAP";
-    } else if( s == "REGEN_STAMINA" ) {
-        return "STAMINA_REGEN";
+    switch( s ) {
+        case "ITEM_ATTACK_SPEED":
+            return "ITEM_ATTACK_COST";
+        case "ATTACK_SPEED":
+            return "ATTACK_COST";
+        case "MAX_MANA":
+            return "MANA_CAP";
+        case "REGEN_MANA":
+            return "MANA_REGEN";
+        case "MAX_STAMINA":
+            return "STAMINA_CAP";
+        case "REGEN_STAMINA":
+            return "STAMINA_REGEN";
+        default:
+            return s;
     }
-    return s;
 }
-
 namespace
 {
 generic_factory<enchantment> enchant_factory( "enchantment" );
@@ -303,15 +233,7 @@ void enchantment::load( const JsonObject &jo, const std::string & )
                 value_obj.show_warning(
                     string_format( "%s has been renamed to %s", value_raw, value_new ), "value" );
             }
-            enchant_vals::mod value;
-            try {
-                value = io::string_to_enum<enchant_vals::mod>( value_new );
-            } catch( const std::exception &e ) {
-                value_obj.show_warning(
-                    string_format( "Unknown enchant_val '%s', ignoring", value_new ), "value" );
-                continue;
-            }
-
+            enchantment_valid_id value = enchantment_value_id( value_new );
             const int add = value_obj.get_int( "add", 0 );
             const double mult = value_obj.get_float( "multiply", 0.0 );
             if( add != 0 ) {
@@ -388,18 +310,20 @@ void enchantment::serialize( JsonOut &jsout ) const
 
     jsout.member( "values" );
     jsout.start_array();
-    for( int value = 0; value < static_cast<int>( enchant_vals::mod::NUM_MOD ); value++ ) {
-        enchant_vals::mod enum_value = static_cast<enchant_vals::mod>( value );
-        if( get_value_add( enum_value ) == 0 && get_value_multiply( enum_value ) == 0.0 ) {
+    for( enchantment_value ench_val : enchantment_value::get_all() ) {
+        enchantment_valid_id ench_val_id = ench_val.id;
+        auto val_add = get_value_add( ench_val_id );
+        auto val_mult = get_value_multiply( ench_val_id );
+        if( val_add == 0 && val_mult == 0.0 ) {
             continue;
         }
         jsout.start_object();
-        jsout.member( "value", io::enum_to_string<enchant_vals::mod>( enum_value ) );
-        if( get_value_add( enum_value ) != 0 ) {
-            jsout.member( "add", get_value_add( enum_value ) );
+        jsout.member( "value", ench_val_id.str() );
+        if( val_add != 0 ) {
+            jsout.member( "add", val_add );
         }
-        if( get_value_multiply( enum_value ) != 0 ) {
-            jsout.member( "multiply", get_value_multiply( enum_value ) );
+        if( val_mult != 0 ) {
+            jsout.member( "multiply", val_mult );
         }
         jsout.end_object();
     }
@@ -424,10 +348,10 @@ bool enchantment::add( const enchantment &rhs )
 
 void enchantment::force_add( const enchantment &rhs )
 {
-    for( const std::pair<const enchant_vals::mod, int> &pair_values : rhs.values_add ) {
+    for( const std::pair<const enchantment_valid_id, int> &pair_values : rhs.values_add ) {
         values_add[pair_values.first] += pair_values.second;
     }
-    for( const std::pair<const enchant_vals::mod, double> &pair_values : rhs.values_multiply ) {
+    for( const std::pair<const enchantment_valid_id, double> &pair_values : rhs.values_multiply ) {
         // values do not multiply against each other, they add.
         // so +10% and -10% will add to 0%
         values_multiply[pair_values.first] += pair_values.second;
@@ -455,7 +379,7 @@ void enchantment::force_add( const enchantment &rhs )
     }
 }
 
-int enchantment::get_value_add( const enchant_vals::mod value ) const
+int enchantment::get_value_add( const enchantment_value_id value ) const
 {
     const auto found = values_add.find( value );
     if( found == values_add.cend() ) {
@@ -464,7 +388,7 @@ int enchantment::get_value_add( const enchant_vals::mod value ) const
     return found->second;
 }
 
-double enchantment::get_value_multiply( const enchant_vals::mod value ) const
+double enchantment::get_value_multiply( const enchantment_valid_id value ) const
 {
     const auto found = values_multiply.find( value );
     if( found == values_multiply.cend() ) {
@@ -473,21 +397,9 @@ double enchantment::get_value_multiply( const enchant_vals::mod value ) const
     return found->second;
 }
 
-double enchantment::calc_bonus( enchant_vals::mod value, double base, bool round ) const
+double enchantment::calc_bonus( enchantment_valid_id value, double base, bool round ) const
 {
     bool use_add = true;
-    switch( value ) {
-        case enchant_vals::mod::METABOLISM:
-        case enchant_vals::mod::MANA_REGEN:
-        case enchant_vals::mod::STAMINA_CAP:
-        case enchant_vals::mod::STAMINA_REGEN:
-        case enchant_vals::mod::THIRST:
-        case enchant_vals::mod::FATIGUE:
-            use_add = false;
-            break;
-        default:
-            break;
-    }
     double add = use_add ? get_value_add( value ) : 0.0;
     double mul = get_value_multiply( value );
     double ret = add + base * mul;
@@ -497,7 +409,7 @@ double enchantment::calc_bonus( enchant_vals::mod value, double base, bool round
     return ret;
 }
 
-int enchantment::mult_bonus( enchant_vals::mod value_type, int base_value ) const
+int enchantment::mult_bonus( enchantment_valid_id value_type, int base_value ) const
 {
     return get_value_multiply( value_type ) * base_value;
 }
