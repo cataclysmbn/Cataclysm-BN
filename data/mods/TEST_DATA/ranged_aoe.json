@@ -1,5 +1,55 @@
 [
   {
+    "id": "test_fd_trail",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "faint test trail", "color": "blue", "sym": "9" },
+      { "name": "test trail", "color": "light_blue" },
+      { "name": "bright test trail", "color": "white" }
+    ],
+    "priority": 4,
+    "half_life": "1 turns",
+    "dirty_transparency_cache": true,
+    "phase": "plasma",
+    "display_items": false,
+    "display_field": true
+  },
+  {
+    "id": "TEST_TRAIL",
+    "type": "ammo_effect",
+    "trail": { "field_type": "test_fd_trail", "intensity_min": 2, "intensity_max": 2 }
+  },
+  {
+    "type": "terrain",
+    "id": "test_t_window_frame",
+    "name": "test window frame",
+    "description": "A deterministic broken window frame for ranged area-of-effect tests.",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 2,
+    "coverage": 20,
+    "flags": [ "TRANSPARENT", "NOITEM", "NO_SCENT" ]
+  },
+  {
+    "type": "terrain",
+    "id": "test_t_window",
+    "name": "test window",
+    "description": "A deterministic window for ranged area-of-effect tests.",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "flags": [ "TRANSPARENT", "NOITEM", "NO_SCENT", "CONNECT_TO_WALL", "BLOCK_WIND", "WINDOW" ],
+    "bash": {
+      "str_min": 3,
+      "str_max": 6,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "ter_set": "test_t_window_frame",
+      "ranged": { "reduction": [ 1, 3 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 3 }
+    }
+  },
+  {
     "id": "test_shotgun",
     "type": "GUN",
     "name": { "str": "test shotgun" },

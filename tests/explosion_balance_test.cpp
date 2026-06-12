@@ -272,7 +272,7 @@ TEST_CASE( "rotated_vehicle_walls_block_explosions" )
 
     here.build_map_cache( 0 );
 
-    const auto mon_origin = origin;
+    const auto mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
 
     monster &s = spawn_test_monster( "mon_test_explosion_target", mon_origin );
 

@@ -221,7 +221,7 @@ TEST_CASE( "expected shape coverage through windows", "[shape]" )
     const tripoint_bub_ms end = origin + offset;
     map &here = get_map();
     for( int wall_offset = -10; wall_offset <= 10; wall_offset++ ) {
-        here.ter_set( tripoint_bub_ms( 62, 60 + wall_offset, 0 ), t_window );
+        here.ter_set( tripoint_bub_ms( 62, 60 + wall_offset, 0 ), ter_id( "test_t_window" ) );
     }
 
     std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
@@ -250,12 +250,13 @@ TEST_CASE( "shaped attacks apply trail ammo effects", "[ranged][projectile]" )
     proj.speed = 1000;
     proj.range = 6;
     proj.impact.add_damage( DT_HEAT, 1 );
-    proj.add_effect( ammo_effect_str_id( "LASER" ) );
+    proj.add_effect( ammo_effect_str_id( "TEST_TRAIL" ) );
 
     ranged::execute_shaped_attack( *attack_shape, proj, attacker, nullptr );
 
-    CHECK( here.get_field( origin + point_east, fd_laser ) != nullptr );
-    CHECK( here.get_field( origin + 2 * point_east, fd_laser ) != nullptr );
+    const auto trail_field = field_type_id( "test_fd_trail" );
+    CHECK( here.get_field( origin + point_east, trail_field ) != nullptr );
+    CHECK( here.get_field( origin + 2 * point_east, trail_field ) != nullptr );
 }
 
 TEST_CASE( "character using birdshot against another character", "[ranged]" )
