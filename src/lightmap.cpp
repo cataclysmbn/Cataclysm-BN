@@ -99,7 +99,7 @@ struct vehicle_external_light_cache_scope {
             }
 
             const auto idx = static_cast<std::size_t>( cache.idx( pos.x(), pos.y() ) );
-            const auto already_touched = std::ranges::any_of( lm_restore, [idx]( const auto &entry ) {
+            const auto already_touched = std::ranges::any_of( lm_restore, [idx]( const auto & entry ) {
                 return entry.first == idx;
             } );
             if( already_touched ) {
@@ -115,8 +115,7 @@ struct vehicle_external_light_cache_scope {
         }
     }
 
-    ~vehicle_external_light_cache_scope()
-    {
+    ~vehicle_external_light_cache_scope() {
         for( const auto &[idx, value] : transparency_restore ) {
             cache.transparency_cache[idx] = value;
         }
@@ -557,195 +556,195 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
     auto dirty_levels = std::vector<int> {};
 #if defined( CATA_SDL ) && !defined( CATA_GPU_VERIFY )
     if( cata_compute::uses_sdl_gpu_compute() ) {
-    ZoneScopedN( "build_transparency_caches_gpu" );
+        ZoneScopedN( "build_transparency_caches_gpu" );
 
-    struct transparency_level_batch_state {
-        int zlev = 0;
-        bool rebuild_all = false;
-        bool resident_output_complete = true;
-        bool resident_level_was_valid = false;
-    };
-
-    auto level_states = std::vector<transparency_level_batch_state> {};
-    auto refs = std::vector<cata_gpu::transparency_submap_ref> {};
-    auto ref_levels = std::vector<int> {};
-    auto *resident_buffer = static_cast<SDL_GPUBuffer *>( nullptr );
-    auto cache_size = 0;
-
-    auto *const gpu_device = cata_gpu::get_device();
-    for( const auto zlev : std::views::iota( minz, maxz + 1 ) ) {
-        auto &map_cache = get_cache( zlev );
-        auto &transparency_cache = map_cache.transparency_cache;
-
-        if( map_cache.transparency_cache_dirty.none() ) {
-            continue;
-        }
-
-        dirty_levels.push_back( zlev );
-        const auto rebuild_all = map_cache.transparency_cache_dirty.all();
-        if( rebuild_all ) {
-            std::fill( transparency_cache.begin(), transparency_cache.end(),
-                       static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
-        }
-
-        if( gpu_device == nullptr ) {
-            debugmsg( "SDL_GPU transparency is required, but no GPU device is available" );
-            return dirty_levels;
-        }
-
-        const auto resident_output = cata_gpu::prepare_lighting_transparency_output( {
-            .device = gpu_device,
-            .cache_x = map_cache.cache_x,
-            .cache_y = map_cache.cache_y,
-            .z_count = OVERMAP_LAYERS,
-            .zlev = zlev,
-        } );
-        if( resident_output.buffer == nullptr ) {
-            debugmsg( "SDL_GPU transparency resident output allocation failed; see debug.log for details" );
-            return dirty_levels;
-        }
-        if( resident_buffer == nullptr ) {
-            resident_buffer = resident_output.buffer;
-            cache_size = map_cache.cache_x * map_cache.cache_y * OVERMAP_LAYERS;
-        } else if( resident_buffer != resident_output.buffer ) {
-            debugmsg( "SDL_GPU transparency resident buffer changed during batched dispatch" );
-            return dirty_levels;
-        }
-
-        auto state = transparency_level_batch_state {
-            .zlev = zlev,
-            .rebuild_all = rebuild_all,
-            .resident_output_complete = true,
-            .resident_level_was_valid = cata_gpu::lighting_transparency_level_is_valid( zlev ),
+        struct transparency_level_batch_state {
+            int zlev = 0;
+            bool rebuild_all = false;
+            bool resident_output_complete = true;
+            bool resident_level_was_valid = false;
         };
 
-        refs.reserve( refs.size() + static_cast<size_t>( map_cache.cache_mapsize *
-                      map_cache.cache_mapsize ) );
-        for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
-            for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
-                if( !rebuild_all && !map_cache.transparency_cache_dirty.test(
-                        static_cast<size_t>( map_cache.bidx( smx, smy ) ) ) ) {
-                    continue;
-                }
+        auto level_states = std::vector<transparency_level_batch_state> {};
+        auto refs = std::vector<cata_gpu::transparency_submap_ref> {};
+        auto ref_levels = std::vector<int> {};
+        auto *resident_buffer = static_cast<SDL_GPUBuffer *>( nullptr );
+        auto cache_size = 0;
 
-                const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-                auto *cur_submap = get_submap_at_grid( sm_pos );
-                const auto sm_offset = project_to<coords::ms>( sm_pos );
+        auto *const gpu_device = cata_gpu::get_device();
+        for( const auto zlev : std::views::iota( minz, maxz + 1 ) ) {
+            auto &map_cache = get_cache( zlev );
+            auto &transparency_cache = map_cache.transparency_cache;
 
-                if( cur_submap == nullptr ) {
-                    state.resident_output_complete = false;
-                    if( !rebuild_all ) {
-                        for( const auto sx : std::views::iota( 0, SEEX ) ) {
-                            std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x() + sx,
-                                         sm_offset.y() ), SEEY, LIGHT_TRANSPARENCY_OPEN_AIR );
-                        }
-                    }
-                    continue;
-                }
-
-                cur_submap->transparency_dirty = true;
-                if( cur_submap->outside_dirty ) {
-                    const auto *above = zlev < OVERMAP_HEIGHT ? &get_cache_ref( zlev + 1 ) : nullptr;
-                    cur_submap->rebuild_outside_cache( above, sm_pos );
-                }
-                refs.push_back( {
-                    .sm = cur_submap,
-                    .offset_x = sm_offset.x(),
-                    .offset_y = sm_offset.y(),
-                    .output_offset = resident_output.output_offset,
-                } );
-                ref_levels.push_back( zlev );
+            if( map_cache.transparency_cache_dirty.none() ) {
+                continue;
             }
-        }
-        level_states.push_back( state );
-    }
 
-    if( dirty_levels.empty() ) {
-        return dirty_levels;
-    }
-    if( refs.empty() ) {
+            dirty_levels.push_back( zlev );
+            const auto rebuild_all = map_cache.transparency_cache_dirty.all();
+            if( rebuild_all ) {
+                std::fill( transparency_cache.begin(), transparency_cache.end(),
+                           static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
+            }
+
+            if( gpu_device == nullptr ) {
+                debugmsg( "SDL_GPU transparency is required, but no GPU device is available" );
+                return dirty_levels;
+            }
+
+            const auto resident_output = cata_gpu::prepare_lighting_transparency_output( {
+                .device = gpu_device,
+                .cache_x = map_cache.cache_x,
+                .cache_y = map_cache.cache_y,
+                .z_count = OVERMAP_LAYERS,
+                .zlev = zlev,
+            } );
+            if( resident_output.buffer == nullptr ) {
+                debugmsg( "SDL_GPU transparency resident output allocation failed; see debug.log for details" );
+                return dirty_levels;
+            }
+            if( resident_buffer == nullptr ) {
+                resident_buffer = resident_output.buffer;
+                cache_size = map_cache.cache_x * map_cache.cache_y * OVERMAP_LAYERS;
+            } else if( resident_buffer != resident_output.buffer ) {
+                debugmsg( "SDL_GPU transparency resident buffer changed during batched dispatch" );
+                return dirty_levels;
+            }
+
+            auto state = transparency_level_batch_state {
+                .zlev = zlev,
+                .rebuild_all = rebuild_all,
+                .resident_output_complete = true,
+                .resident_level_was_valid = cata_gpu::lighting_transparency_level_is_valid( zlev ),
+            };
+
+            refs.reserve( refs.size() + static_cast<size_t>( map_cache.cache_mapsize *
+                          map_cache.cache_mapsize ) );
+            for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
+                for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
+                    if( !rebuild_all && !map_cache.transparency_cache_dirty.test(
+                            static_cast<size_t>( map_cache.bidx( smx, smy ) ) ) ) {
+                        continue;
+                    }
+
+                    const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
+                    auto *cur_submap = get_submap_at_grid( sm_pos );
+                    const auto sm_offset = project_to<coords::ms>( sm_pos );
+
+                    if( cur_submap == nullptr ) {
+                        state.resident_output_complete = false;
+                        if( !rebuild_all ) {
+                            for( const auto sx : std::views::iota( 0, SEEX ) ) {
+                                std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x() + sx,
+                                             sm_offset.y() ), SEEY, LIGHT_TRANSPARENCY_OPEN_AIR );
+                            }
+                        }
+                        continue;
+                    }
+
+                    cur_submap->transparency_dirty = true;
+                    if( cur_submap->outside_dirty ) {
+                        const auto *above = zlev < OVERMAP_HEIGHT ? &get_cache_ref( zlev + 1 ) : nullptr;
+                        cur_submap->rebuild_outside_cache( above, sm_pos );
+                    }
+                    refs.push_back( {
+                        .sm = cur_submap,
+                        .offset_x = sm_offset.x(),
+                        .offset_y = sm_offset.y(),
+                        .output_offset = resident_output.output_offset,
+                    } );
+                    ref_levels.push_back( zlev );
+                }
+            }
+            level_states.push_back( state );
+        }
+
+        if( dirty_levels.empty() ) {
+            return dirty_levels;
+        }
+        if( refs.empty() ) {
+            for( const auto &state : level_states ) {
+                get_cache( state.zlev ).transparency_cache_dirty.reset();
+            }
+            return dirty_levels;
+        }
+
+        static auto luts = cata_gpu::transparency_luts {};
+        static auto luts_valid = false;
+        if( !luts_valid ) {
+            cata_gpu::rebuild_transparency_luts( luts );
+            luts_valid = true;
+        }
+
+        static auto inputs = std::vector<cata_gpu::transparency_submap_in> {};
+        cata_gpu::prepare_transparency_inputs( refs, inputs );
+
+        const auto &first_cache = get_cache_ref( dirty_levels.front() );
+        const auto push = cata_gpu::transparency_push_constants {
+            .sight_penalty = get_weather().weather_id->sight_penalty,
+            .cache_y = first_cache.cache_y,
+            .num_submaps = static_cast<uint32_t>( inputs.size() ),
+            .output_offset = 0,
+        };
+
+        static auto gpu_result = std::vector<float> {};
+        if( !cata_gpu::dispatch_transparency( {
+        .device = gpu_device,
+        .luts = &luts,
+        .submaps = &inputs,
+        .push = push,
+        .cache_size = cache_size,
+        .out_buffer = &gpu_result,
+        .output = {
+            .buffer = resident_buffer,
+            .output_offset = 0,
+        },
+    } ) || gpu_result.empty() ) {
+            debugmsg( "SDL_GPU batched transparency dispatch failed; see debug.log for details" );
+            return dirty_levels;
+        }
+
+        const auto expected_compact_result_size = refs.size() * static_cast<size_t>( SEEX * SEEY );
+        if( gpu_result.size() != expected_compact_result_size ) {
+            debugmsg( "SDL_GPU batched transparency dispatch returned %zu compact values, expected %zu",
+                      gpu_result.size(), expected_compact_result_size );
+            return dirty_levels;
+        }
+
+        auto normalized_flat_value = [&]( const float value ) {
+            if( std::fabs( value - LIGHT_TRANSPARENCY_OPEN_AIR ) <= 0.0001f ) {
+                return LIGHT_TRANSPARENCY_OPEN_AIR;
+            }
+            if( std::fabs( value - weather_lookup_.transparency ) <= 0.0001f ) {
+                return weather_lookup_.transparency;
+            }
+            return value;
+        };
+
+        for( const auto ref_index : std::views::iota( size_t{ 0 }, refs.size() ) ) {
+            const auto &ref = refs[ref_index];
+            auto &map_cache = get_cache( ref_levels[ref_index] );
+            auto &transparency_cache = map_cache.transparency_cache;
+            auto *cur_submap = const_cast<submap *>( ref.sm );
+            for( const auto sm_ms : submap_tiles() ) {
+                const auto x = ref.offset_x + sm_ms.x();
+                const auto y = ref.offset_y + sm_ms.y();
+                const auto compact_idx = ref_index * static_cast<size_t>( SEEX * SEEY ) +
+                                         static_cast<size_t>( sm_ms.x() * SEEY + sm_ms.y() );
+                const auto value = gpu_result[compact_idx];
+                cur_submap->transparency_cache[sm_ms.x()][sm_ms.y()] = value;
+                transparency_cache[map_cache.idx( x, y )] = normalized_flat_value( value );
+            }
+            cur_submap->transparency_dirty = false;
+        }
+
         for( const auto &state : level_states ) {
             get_cache( state.zlev ).transparency_cache_dirty.reset();
+            if( state.rebuild_all ? state.resident_output_complete : state.resident_level_was_valid ) {
+                cata_gpu::mark_lighting_transparency_level_updated( state.zlev );
+            }
         }
         return dirty_levels;
-    }
-
-    static auto luts = cata_gpu::transparency_luts {};
-    static auto luts_valid = false;
-    if( !luts_valid ) {
-        cata_gpu::rebuild_transparency_luts( luts );
-        luts_valid = true;
-    }
-
-    static auto inputs = std::vector<cata_gpu::transparency_submap_in> {};
-    cata_gpu::prepare_transparency_inputs( refs, inputs );
-
-    const auto &first_cache = get_cache_ref( dirty_levels.front() );
-    const auto push = cata_gpu::transparency_push_constants {
-        .sight_penalty = get_weather().weather_id->sight_penalty,
-        .cache_y = first_cache.cache_y,
-        .num_submaps = static_cast<uint32_t>( inputs.size() ),
-        .output_offset = 0,
-    };
-
-    static auto gpu_result = std::vector<float> {};
-    if( !cata_gpu::dispatch_transparency( {
-    .device = gpu_device,
-    .luts = &luts,
-    .submaps = &inputs,
-    .push = push,
-    .cache_size = cache_size,
-    .out_buffer = &gpu_result,
-    .output = {
-        .buffer = resident_buffer,
-        .output_offset = 0,
-    },
-} ) || gpu_result.empty() ) {
-        debugmsg( "SDL_GPU batched transparency dispatch failed; see debug.log for details" );
-        return dirty_levels;
-    }
-
-    const auto expected_compact_result_size = refs.size() * static_cast<size_t>( SEEX * SEEY );
-    if( gpu_result.size() != expected_compact_result_size ) {
-        debugmsg( "SDL_GPU batched transparency dispatch returned %zu compact values, expected %zu",
-                  gpu_result.size(), expected_compact_result_size );
-        return dirty_levels;
-    }
-
-    auto normalized_flat_value = [&]( const float value ) {
-        if( std::fabs( value - LIGHT_TRANSPARENCY_OPEN_AIR ) <= 0.0001f ) {
-            return LIGHT_TRANSPARENCY_OPEN_AIR;
-        }
-        if( std::fabs( value - weather_lookup_.transparency ) <= 0.0001f ) {
-            return weather_lookup_.transparency;
-        }
-        return value;
-    };
-
-    for( const auto ref_index : std::views::iota( size_t{ 0 }, refs.size() ) ) {
-        const auto &ref = refs[ref_index];
-        auto &map_cache = get_cache( ref_levels[ref_index] );
-        auto &transparency_cache = map_cache.transparency_cache;
-        auto *cur_submap = const_cast<submap *>( ref.sm );
-        for( const auto sm_ms : submap_tiles() ) {
-            const auto x = ref.offset_x + sm_ms.x();
-            const auto y = ref.offset_y + sm_ms.y();
-            const auto compact_idx = ref_index * static_cast<size_t>( SEEX * SEEY ) +
-                                     static_cast<size_t>( sm_ms.x() * SEEY + sm_ms.y() );
-            const auto value = gpu_result[compact_idx];
-            cur_submap->transparency_cache[sm_ms.x()][sm_ms.y()] = value;
-            transparency_cache[map_cache.idx( x, y )] = normalized_flat_value( value );
-        }
-        cur_submap->transparency_dirty = false;
-    }
-
-    for( const auto &state : level_states ) {
-        get_cache( state.zlev ).transparency_cache_dirty.reset();
-        if( state.rebuild_all ? state.resident_output_complete : state.resident_level_was_valid ) {
-            cata_gpu::mark_lighting_transparency_level_updated( state.zlev );
-        }
-    }
-    return dirty_levels;
     }
 #endif
     for( const auto zlev : std::views::iota( minz, maxz + 1 ) ) {
@@ -1379,7 +1378,7 @@ void map::generate_lightmap_worker( const int zlev )
                 }
             }
 
-            auto apply_external_light = [&]( const auto &apply_light ) {
+            auto apply_external_light = [&]( const auto & apply_light ) {
                 auto scope = vehicle_external_light_cache_scope( map_cache, *v, zlev );
                 apply_light();
             };
@@ -1397,7 +1396,7 @@ void map::generate_lightmap_worker( const int zlev )
                 bool external = false;
             };
 
-            auto apply_vehicle_arc = [&]( const vehicle_arc_light_def &def ) {
+            auto apply_vehicle_arc = [&]( const vehicle_arc_light_def & def ) {
                 if( def.external ) {
                     apply_external_light( [&]() {
                         apply_light_arc( def.src, def.direction, def.luminance, def.width );
@@ -1407,7 +1406,7 @@ void map::generate_lightmap_worker( const int zlev )
                 }
             };
 
-            auto apply_vehicle_point = [&]( const vehicle_point_light_def &def ) {
+            auto apply_vehicle_point = [&]( const vehicle_point_light_def & def ) {
                 if( def.external ) {
                     apply_external_light( [&]() {
                         apply_light_source( def.src, def.luminance );

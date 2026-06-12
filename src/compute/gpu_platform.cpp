@@ -479,11 +479,11 @@ auto init() -> void {
     auto const accel = preload_config::get_compute_accel();
     if (accel == compute_accel::cpu) {
         if (!backend_str.empty()) {
-            DebugLog(DL::Info, DC::Main)
-                << "SDL_GPU: backend override ignored because CPU compute is selected";
+            DebugLog(DL::Info, DC::Main) << "SDL_GPU: backend override ignored because CPU compute "
+                                            "is selected";
         }
-        DebugLog(DL::Info, DC::Main)
-                << "Compute backend selected: cpu_compute; SDL_GPU compute device not created";
+        DebugLog(DL::Info, DC::Main) << "Compute backend selected: cpu_compute; SDL_GPU compute "
+                                        "device not created";
         return;
     }
 
@@ -524,10 +524,10 @@ auto init() -> void {
 #else
         auto const require_gpu_device = accel == compute_accel::gpu || require_software_device;
         auto const level = require_gpu_device ? DL::Error : DL::Warn;
-        DebugLog(level, DC::Main)
-                << "SDL_GPU: device creation failed; "
-                << ( require_gpu_device ? "selected GPU compute backend is unavailable" :
-                     "CPU compute fallback will be selected" );
+        DebugLog(level, DC::Main) << "SDL_GPU: device creation failed; "
+                                  << (require_gpu_device ? "selected GPU compute backend is "
+                                                           "unavailable"
+                                                         : "CPU compute fallback will be selected");
         return;
 #endif
     }
@@ -538,9 +538,9 @@ auto init() -> void {
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: driver=" << (driver != nullptr ? driver : "unknown")
                                  << "  formats=" << shader_formats_to_string(formats);
     log_gpu_device_info(selected_device_info);
-    DebugLog(DL::Info, DC::Main)
-            << "Compute backend selected: "
-            << ( require_software_device ? "sdl_gpu_software" : "sdl_gpu_hardware" );
+    DebugLog(DL::Info, DC::Main) << "Compute backend selected: "
+                                 << (require_software_device ? "sdl_gpu_software"
+                                                             : "sdl_gpu_hardware");
 
     auto const [fmt, ext] = select_shader_format(formats);
     if (fmt != SDL_GPU_SHADERFORMAT_INVALID) { probe_shader(device, fmt, ext); }
