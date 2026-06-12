@@ -8799,8 +8799,7 @@ void game::pickup_feet()
     }
 }
 
-//Shift player by one tile, look_around(), then restore previous position.
-//represents carefully peeking around a corner, hence the large move cost.
+// Shift player by one tile for rendering/look_around(), then restore previous position.
 void game::peek()
 {
     const std::optional<tripoint_rel_ms> p = choose_direction( _( "Peek where?" ), true );
@@ -8808,19 +8807,17 @@ void game::peek()
         return;
     }
 
+    const auto current_pos = u.bub_pos();
+    const auto peek_pos = current_pos + *p;
     if( p->z() != 0 ) {
-        const auto old_pos = u.bub_pos();
-        vertical_move( p->z(), false, true );
-
-        if( old_pos != u.bub_pos() ) {
-            vertical_move( p->z() * -1, false, true );
-        } else {
+        const auto can_fly = character_funcs::can_fly( u );
+        if( !m.valid_move( current_pos, peek_pos, false, can_fly ) ) {
             return;
         }
     }
 
-    if( m.impassable( u.bub_pos() + *p ) ||
-        m.obstructed_by_vehicle_rotation( u.bub_pos(), u.bub_pos() + *p ) ) {
+    if( m.impassable( peek_pos ) ||
+        m.obstructed_by_vehicle_rotation( current_pos, peek_pos ) ) {
         return;
     }
 
@@ -8829,23 +8826,32 @@ void game::peek()
 
 void game::peek( const tripoint_rel_ms &p )
 {
-    u.moves -= 200;
-    auto prev = u.abs_pos();
-    u.setpos( prev + p );
+    const auto prev = u.abs_pos();
+    const auto peek_pos = prev + p;
+    auto restore_player_pos = [&]() {
+        u.setpos( prev );
+        update_map( u );
+        m.invalidate_map_cache( get_levz() );
+    };
+    auto restore_on_return = on_out_of_scope( restore_player_pos );
+
+    u.setpos( peek_pos );
+    update_map( u );
     // Force a full cache rebuild from the peek position so look_around renders
     // correct FOV and lighting.  Without this, lightmap_dirty may already be
     // false (built from the pre-peek player position earlier this turn), causing
     // look_around to display stale lighting and visibility.
-    m.invalidate_map_cache( p.z() );
+    m.invalidate_map_cache( get_levz() );
     auto center = u.bub_pos();
     const look_around_result result = look_around( /*show_window=*/true, center, center, false, false,
                                       true );
-    u.setpos( prev );
+    restore_player_pos();
+    restore_on_return.cancel();
+    u.moves -= 200;
 
     if( result.peek_action && *result.peek_action == PA_BLIND_THROW ) {
-        avatar_action::plthrow( u, nullptr, u.bub_pos() + p );
+        avatar_action::plthrow( u, nullptr, abs_to_bub( peek_pos ) );
     }
-    m.invalidate_map_cache( p.z() );
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 std::optional<tripoint_bub_ms> game::look_debug()
@@ -13423,9 +13429,10 @@ bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         //tunneling costs 100 moves baseline, 50 per extra tile up to a cap of 500 moves
         u.moves -= ( 50 + ( tunneldist * 50 ) );
         u.setpos( dest );
+        update_map( u );
         m.invalidate_visibility_caches();
 
-        if( m.veh_at( dest ).part_with_feature( "BOARDABLE", true ) ) {
+        if( m.veh_at( u.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {
             m.board_vehicle( u.bub_pos(), &u );
         }
 
