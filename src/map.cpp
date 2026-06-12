@@ -6772,7 +6772,11 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint_bub_ms &origin,
             tmp->charges = faupart->vehicle().drain( ftype, quantity );
             // TODO: Handle water poison when crafting starts respecting it
             quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
+            // Don't return a 0-charge phantom for types the tanks can't provide:
+            // it would replace the real component during crafting (#9440)
+            if( tmp->charges > 0 ) {
+                ret.push_back( std::move( tmp ) );
+            }
 
             if( quantity == 0 ) {
                 return ret;
@@ -6790,7 +6794,9 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint_bub_ms &origin,
             detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
             tmp->charges = autoclavepart->vehicle().drain( ftype, quantity );
             quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
+            if( tmp->charges > 0 ) {
+                ret.push_back( std::move( tmp ) );
+            }
 
             if( quantity == 0 ) {
                 return ret;
