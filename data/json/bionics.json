@@ -514,6 +514,16 @@
     "act_cost": "10 kJ"
   },
   {
+    "id": "bio_minirose",
+    "type": "bionic",
+    "name": { "str": "minirose" },
+    "description": "A dead man's switch and literal mininuke wired through the torso and major blood vessels.  It can be armed or disabled, and detonates upon death while armed or manual trigger.  You wouldn't want to use it, unless you'd like to demonstrate the bottomless malice within the human heart to a certain ant.",
+    "occupied_bodyparts": [ [ "torso", 20 ] ],
+    "act_cost": "1 J",
+    "points": 1,
+    "flags": [ "BIONIC_NPC_USABLE", "BIONIC_TOGGLED" ]
+  },
+  {
     "id": "bio_flashlight",
     "type": "bionic",
     "name": { "str": "Cranial Flashlight" },

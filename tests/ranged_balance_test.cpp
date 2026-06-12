@@ -290,7 +290,7 @@ TEST_CASE( "competent_shooter_accuracy", "[ranged] [balance]" )
     SECTION( "a skilled shooter with an accurate shotgun" ) {
         arm_character( shooter, "ksg", { "red_dot_sight" } );
         test_shooting_scenario( shooter, 9, 15, 33 );
-        test_fast_shooting( shooter, 75, 0.5 );
+        test_fast_shooting( shooter, 75, 0.65 );
     }
     SECTION( "a skilled shooter with an accurate smg" ) {
         arm_character( shooter, "hk_mp5", { "tele_sight" } );

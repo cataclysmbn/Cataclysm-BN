@@ -656,9 +656,17 @@ jobs:
             ${{ matrix.artifact }}-${{ github.ref_name }}
             ${{ matrix.artifact }}-main
             ${{ matrix.artifact }}-
-          max-size: 500M
+          max-size: 2G
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Configure ccache (android)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        run: |
+          echo "CCACHE_BASEDIR=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime,time_macros,pch_defines" >> "$GITHUB_ENV"
+          echo "CCACHE_NOHASHDIR=1" >> "$GITHUB_ENV"
+          echo "CCACHE_COMPILERCHECK=content" >> "$GITHUB_ENV"
 
       - name: Build CBN (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
@@ -721,6 +729,27 @@ jobs:
           then
                gradle_retry -Pj=$(nproc) -Plocalize=${{ inputs.android-localize }} bundle${VARIANT}Release ${VERSION_ARG}
                mv ./app/build/outputs/bundle/${VARIANT_LOWER}Release/*.aab ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.aab
+          fi
+
+      - name: Verify ccache compatibility (android)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        run: |
+          set -euo pipefail
+          stats="$(ccache -s -vv 2>&1)"
+          printf '%s\n' "$stats"
+          cacheable="$(printf '%s\n' "$stats" | sed -nE 's/.*Cacheable calls:[[:space:]]*([0-9]+).*/\1/p' | head -n 1)"
+          hits="$(printf '%s\n' "$stats" | sed -nE 's/.*Hits:[[:space:]]*([0-9]+)[[:space:]]*\/.*/\1/p' | head -n 1)"
+          unsupported="$(printf '%s\n' "$stats" | sed -nE 's/.*Unsupported compiler option:[[:space:]]*([0-9]+).*/\1/p' | head -n 1)"
+          if [ "${cacheable:-0}" -le 100 ]; then
+            echo "ccache did not see enough cacheable Android compile calls" >&2
+            exit 1
+          fi
+          if [ "${unsupported:-0}" -ne 0 ]; then
+            echo "ccache saw unsupported Android compiler options" >&2
+            exit 1
+          fi
+          if [ "${hits:-0}" -eq 0 ]; then
+            echo "::warning::Android ccache restored no hits; this is expected until a warm cache is saved for the current ccache settings"
           fi
 
       - name: Verify bundled SDL runtime (android)

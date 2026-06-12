@@ -1,6 +1,8 @@
 #include "catch/catch.hpp"
 
 #include "avatar.h"
+#include "cata_utility.h"
+#include "character_id.h"
 #include "explosion.h"
 #include "explosion_queue.h"
 #include "game.h"
@@ -8,11 +10,65 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
+#include "npc.h"
 #include "options_helpers.h"
+#include "player_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
 static const mtype_id mon_zombie( "mon_zombie" );
+
+TEST_CASE( "post_death_explosion_does_not_move_avatar_before_follower_takeover",
+           "[explosion][npc][avatar]" )
+{
+    clear_all_state();
+    override_option opt( "OLD_EXPLOSIONS", "false" );
+    clear_map();
+    put_player_underground();
+
+    avatar &you = get_avatar();
+    const auto cleanup_test_state = on_out_of_scope( []() {
+        g->vertical_shift( 0 );
+        clear_all_state();
+        get_avatar().setID( character_id(), true );
+    } );
+    npc &follower = spawn_npc( point_bub_ms( 45, 30 ), "test_talker" );
+    follower.set_fac( faction_id( "your_followers" ) );
+    follower.set_attitude( NPCATT_FOLLOW );
+    REQUIRE( follower.is_player_ally() );
+
+    const auto player_pos = you.bub_pos();
+    const auto player_abs = you.abs_pos();
+    const auto explosion_center = player_pos;
+    const auto follower_abs = player_abs + tripoint_rel_ms( 0, 600, 0 );
+    follower.setpos( follower_abs );
+    REQUIRE_FALSE( get_map().inbounds( follower.bub_pos() ) );
+    you.set_part_hp_cur( bodypart_id( "head" ), 0 );
+    you.set_part_hp_cur( bodypart_id( "torso" ), 0 );
+    REQUIRE( you.Character::is_dead_state() );
+    REQUIRE( you.bub_pos() == player_pos );
+
+    explosion_handler::get_explosion_queue().clear();
+    const auto ex = explosion_data{
+        .damage = 500,
+        .radius = 3.0f,
+    };
+
+    explosion_handler::explosion( explosion_center, ex, nullptr );
+    explosion_handler::get_explosion_queue().execute();
+
+    REQUIRE( you.Character::is_dead_state() );
+    CHECK( you.abs_pos() == player_abs );
+    CHECK( follower.abs_pos() == follower_abs );
+
+    you.control_npc( follower );
+
+    CHECK( you.abs_pos() == follower_abs );
+    CHECK( you.abs_pos() != player_abs );
+    CHECK( get_map().inbounds( you.bub_pos() ) );
+    CHECK_FALSE( you.is_dead_state() );
+    you.setID( character_id(), true );
+}
 
 TEST_CASE( "explosion_flung_items_damage_creatures", "[explosion][damage]" )
 {

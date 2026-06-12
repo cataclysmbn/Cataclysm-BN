@@ -3935,7 +3935,7 @@
     "type": "profession",
     "id": "bionic_spy",
     "name": "Bionic Agent",
-    "description": "Your body has several bionics worth millions of dollars, paid for by public taxes.  The government has turned you into an infiltration and recon specialist: you have night vision, an alarm, an infolink, lock picking capabilities and a hacking module.",
+    "description": "Your body has several bionics worth millions of dollars, paid for by public taxes.  The government has turned you into an infiltration and recon specialist: you have night vision, an alarm, an infolink, lock picking capabilities and a hacking module.  And a killswitch in case you went rogue, but with your handlers dead you're the only one left who knows its activation phrase.",
     "points": 4,
     "CBMs": [
       "bio_fingerhack",
@@ -3945,6 +3945,7 @@
       "bio_night_vision",
       "bio_batteries",
       "bio_infolink",
+      "bio_minirose",
       "bio_power_storage_mkII"
     ],
     "skills": [ { "level": 2, "name": "speech" } ],
@@ -3954,7 +3955,7 @@
     "type": "profession",
     "id": "bionic_hitman",
     "name": "Bionic Assassin",
-    "description": "The product of millions of dollars of clandestine research, you are a bionic sleeper agent capable of silently engaging your target while maintaining an innocuous appearance.",
+    "description": "The product of millions of dollars of clandestine research, you are a bionic sleeper agent capable of silently engaging your target while maintaining an innocuous appearance.  If compromised while hunting high-priority targets, you were also provided with a killswitch guaranteed to take them with you.",
     "points": 8,
     "starting_cash": 2000000,
     "CBMs": [
@@ -3966,6 +3967,7 @@
       "bio_night_vision",
       "bio_face_mask",
       "bio_metabolics",
+      "bio_minirose",
       "bio_power_storage_mkII"
     ],
     "skills": [ { "level": 3, "name": "dodge" } ],

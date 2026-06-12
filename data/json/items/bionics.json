@@ -430,6 +430,18 @@
     "difficulty": 5
   },
   {
+    "id": "bio_minirose",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "minirose CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "An implanted dead man's switch and mininuke payload. Detonates upon death or manual trigger. You wouldn't want to use it, unless you'd like to demonstrate the bottomless malice within the human heart to a certain ant.",
+    "price": "10 kUSD",
+    "weight": "23 kg",
+    "volume": "16 L",
+    "difficulty": 10
+  },
+  {
     "id": "bio_flashlight",
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
