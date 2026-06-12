@@ -399,9 +399,23 @@ double enchantment::get_value_multiply( const enchantment_valid_id value ) const
 
 double enchantment::calc_bonus( enchantment_valid_id value, double base, bool round ) const
 {
+    // I honestly dont know why the first one was there in the first place...
     bool use_add = true;
+    bool use_mult = true;
+    switch( value ) {
+        case enchant_vals::mod::METABOLISM:
+        case enchant_vals::mod::MANA_REGEN:
+        case enchant_vals::mod::STAMINA_CAP:
+        case enchant_vals::mod::STAMINA_REGEN:
+        case enchant_vals::mod::THIRST:
+        case enchant_vals::mod::FATIGUE:
+            use_add = false;
+            break;
+        default:
+            break;
+    }
     double add = use_add ? get_value_add( value ) : 0.0;
-    double mul = get_value_multiply( value );
+    double mul = use_mult ? get_value_multiply( value ) : 1.0;
     double ret = add + base * mul;
     if( round ) {
         ret = trunc( ret );
@@ -414,14 +428,28 @@ int enchantment::mult_bonus( enchantment_valid_id value_type, int base_value ) c
     return get_value_multiply( value_type ) * base_value;
 }
 
+void enchantment::activate_effects( Character &guy ) const
+{
+    for( const std::pair<efftype_id, int> eff : ench_effects ) {
+        guy.add_effect( eff.first, 1_seconds, bodypart_str_id::NULL_ID(), eff.second );
+    }
+}
+
+void enchantment::deactivate_removed_effects( Character &guy, const enchantment &other ) const
+{
+    for( const std::pair<efftype_id, int> eff : other.ench_effects ) {
+        if( !ench_effects.contains( eff.first ) ) {
+            guy.remove_effect( eff.first, bodypart_str_id::NULL_ID() );
+        }
+    }
+}
+
 void enchantment::activate_passive( Character &guy ) const
 {
     if( emitter ) {
         get_map().emit_field( guy.bub_pos(), *emitter );
     }
-    for( const std::pair<efftype_id, int> eff : ench_effects ) {
-        guy.add_effect( eff.first, 1_seconds, bodypart_str_id::NULL_ID(), eff.second );
-    }
+    activate_effects( guy );
     for( const std::pair<const time_duration, std::vector<fake_spell>> &activation :
          intermittent_activation ) {
         // a random approximation!
@@ -532,13 +560,6 @@ void enchantment::check() const
         if( !mut->mods.empty() ) {
             problems.push_back(
                 string_format( "\nmutation %s which has stat adjustments (not supported)", mut.str() ) );
-        }
-
-        // TODO: Implement or also list glass jaw
-        if( !is_set_value<&mutation_branch::hp_modifier, &mutation_branch::hp_modifier_secondary, &mutation_branch::hp_adjustment>
-            ( mut, 0.0f ) ) {
-            problems.push_back( string_format( "\nmutation %s which adjusts hp (not supported)",
-                                               mut.str() ) );
         }
     }
 

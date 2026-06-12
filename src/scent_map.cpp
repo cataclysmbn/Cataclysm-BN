@@ -195,7 +195,8 @@ bool scent_map::inbounds( const tripoint_bub_ms &p ) const
         return false;
     }
     // Check bound dimension's mapbuffer — any loaded submap is accessible.
-    const auto abs_sm = m_.bub_to_abs( project_to<coords::sm>( p ) );
+    const auto local_sm = project_to<coords::sm>( p );
+    const auto abs_sm = map_local_to_abs( m_, local_sm );
     return MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).lookup_submap_in_memory(
                abs_sm ) != nullptr;
 }

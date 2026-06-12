@@ -336,7 +336,8 @@
           { "id": [ "armor_trench", "overlay_wielded_armor_trench" ], "fg": 228 },
           { "id": "overlay_worn_armor_trench", "fg": 229 },
           { "id": [ "helm_trench", "overlay_wielded_helm_trench" ], "fg": 230 },
-          { "id": "overlay_worn_helm_trench", "fg": 231 }
+          { "id": "overlay_worn_helm_trench", "fg": 231 },
+          { "id": "vp_light_white", "fg": 232 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

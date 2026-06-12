@@ -11,6 +11,7 @@
 #include "avatar.h"
 #include "cata_utility.h"
 #include "coordinates.h"
+#include "creature_tracker.h"
 #include "damage.h"
 #include "debug.h"
 #include "enums.h"
@@ -21,6 +22,7 @@
 #include "map_helpers.h"
 #include "mongroup.h"
 #include "monster.h"
+#include "options_helpers.h"
 #include "overmapbuffer.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -48,8 +50,7 @@ struct horde_vehicle_spawn_fixture {
 
 auto point_has_monster( const tripoint_abs_ms &p ) -> bool
 {
-    const auto &here = get_map();
-    return g->critter_at<monster>( here.abs_to_bub( p ) ) != nullptr;
+    return g->critter_tracker->find( p ) != nullptr;
 }
 
 auto vehicle_points_contain_monster( const std::set<tripoint_abs_ms> &vehicle_points ) -> bool
@@ -66,7 +67,7 @@ auto make_horde_vehicle_spawn_fixture(
     auto &here = get_map();
     auto &you = get_avatar();
     const auto target_submap = tripoint_bub_sm( here.getmapsize() / 2, here.getmapsize() / 2, 0 );
-    const auto target_submap_abs = here.bub_to_abs( target_submap );
+    const auto target_submap_abs = map_local_to_abs( here, target_submap );
     const auto target_submap_origin = project_to<coords::ms>( target_submap );
     const auto target_submap_end = target_submap_origin + tripoint( SEEX - 1, SEEY - 1, 0 );
     const auto vehicle_origin = target_submap_origin + tripoint( SEEX / 2, SEEY / 2, 0 );
@@ -101,7 +102,7 @@ auto make_horde_vehicle_spawn_fixture(
     const auto horde_spawn_blocking_terrain = ter_id( "t_wall" );
     std::ranges::for_each( here.points_in_rectangle( target_submap_origin, target_submap_end ),
     [&]( const auto & p ) {
-        if( !vehicle_points.contains( here.bub_to_abs( p ) ) ) {
+        if( !vehicle_points.contains( map_local_to_abs( here, p ) ) ) {
             here.ter_set( p, horde_spawn_blocking_terrain );
         }
     } );
@@ -323,6 +324,43 @@ TEST_CASE( "moving_flying_vehicle_can_use_wait_menu", "[vehicle][wait]" )
     veh_ptr->set_flying( true );
     CHECK_FALSE( vehicle_wait::is_wait_blocked_by_movement( *veh_ptr ) );
     CHECK( vehicle_wait::should_offer_flying_wait_durations( *veh_ptr ) );
+}
+
+TEST_CASE( "vehicle control scale modifies throttle move cost", "[vehicle][speed]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "50" );
+    const auto vehicle_control_scale = override_option( "VEHICLE_CONTROL_SCALE", "100" );
+
+    auto &you = get_avatar();
+    you.set_moves( 25 );
+
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    veh_ptr->cruise_on = false;
+    veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
+
+    CHECK( you.get_moves() == -25 );
+}
+
+TEST_CASE( "vehicle speed control free in cruise mode", "[vehicle][speed]" )
+{
+    clear_all_state();
+
+    auto &you = get_avatar();
+    you.set_moves( 25 );
+
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    veh_ptr->cruise_on = true;
+    veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
+
+    CHECK( you.get_moves() == 25 );
 }
 
 TEST_CASE( "horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]" )

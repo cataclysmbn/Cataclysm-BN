@@ -33,6 +33,33 @@ if (keystorePropertiesFile.exists()) {
 
 fun gradleProperty(name: String) = localProperties.getProperty(name) ?: project.findProperty(name)?.toString().orEmpty()
 
+fun pathExecutable(name: String): File? {
+    val path = System.getenv("PATH") ?: return null
+    val names = if (OperatingSystem.current().isWindows && !name.endsWith(".exe")) {
+        listOf(name, "$name.exe")
+    } else {
+        listOf(name)
+    }
+    return path.split(File.pathSeparator)
+        .asSequence()
+        .flatMap { dir -> names.asSequence().map { File(dir, it) } }
+        .firstOrNull { it.isFile && it.canExecute() }
+}
+
+fun resolveShadercross(configured: String): String {
+    val trimmed = configured.trim()
+    val configuredFile = File(trimmed)
+    val hasPath = configuredFile.isAbsolute || trimmed.contains("/") || trimmed.contains("\\")
+    if (hasPath) {
+        if (configuredFile.isFile && configuredFile.canExecute()) {
+            return configuredFile.absolutePath
+        }
+        throw GradleException("Configured shadercross executable does not exist or is not executable: $trimmed")
+    }
+    return pathExecutable(trimmed)?.absolutePath
+        ?: throw GradleException("shadercross executable '$trimmed' was not found on PATH; set SHADERCROSS or pass -Pshadercross=/path/to/shadercross")
+}
+
 val njobs = gradleProperty("j")
 val localize = gradleProperty("localize").toBoolean()
 val abiArm32 = gradleProperty("abi_arm_32").toBoolean()
@@ -40,6 +67,8 @@ val abiArm64 = gradleProperty("abi_arm_64").toBoolean()
 val abiX8632 = gradleProperty("abi_x86_32").toBoolean()
 val abiX8664 = gradleProperty("abi_x86_64").toBoolean()
 val deps = gradleProperty("deps")
+val shadercross = System.getenv("SHADERCROSS") ?: gradleProperty("shadercross").ifEmpty { "shadercross" }
+val ccache = System.getenv("CCACHE") ?: gradleProperty("ccache").ifEmpty { pathExecutable("ccache")?.absolutePath.orEmpty() }
 val overrideVersion = gradleProperty("override_version")
 val versionHeaderPath = gradleProperty("version_header_path")
 val overrideCompileSdkVersion = gradleProperty("override_compileSdkVersion").toInt()
@@ -52,6 +81,8 @@ val versionHeaderFile = rootProject.file(versionHeaderPath)
 println("Using [              njobs]: $njobs")
 println("Using [           localize]: $localize")
 println("Using [               deps]: $deps")
+println("Using [        shadercross]: $shadercross")
+println("Using [             ccache]: ${ccache.ifEmpty { "<disabled>" }}")
 println("Using [   override_version]: $overrideVersion")
 println("Using [version_header_path]: $versionHeaderPath")
 println("Using [  compileSdkVersion]: $overrideCompileSdkVersion")
@@ -121,12 +152,53 @@ val compileLocalization by tasks.registering(Exec::class) {
     }
 }
 
+val shaderSourceDir = rootProject.file("../src/shaders")
+val shaderOutputDir = rootProject.file("../data/shaders")
+val compileAndroidShaders by tasks.registering {
+    val shaderInputs = fileTree(shaderSourceDir) { include("*.hlsl") }
+    inputs.files(shaderInputs).withPropertyName("hlslShaders")
+    outputs.dir(shaderOutputDir).withPropertyName("spirvShaders")
+
+    doLast {
+        val shaders = shaderInputs.files.sortedBy { it.name }
+        if (shaders.isEmpty()) {
+            throw GradleException("No HLSL shaders found in ${shaderSourceDir.absolutePath}")
+        }
+
+        val shadercrossExe = resolveShadercross(shadercross)
+        shaderOutputDir.mkdirs()
+        shaderOutputDir.listFiles { _, name -> name.endsWith(".spv") }?.forEach(File::delete)
+        shaders.forEach { shader ->
+            val shaderName = shader.nameWithoutExtension
+            val stage = when {
+                shaderName.endsWith("_vertex") -> "vertex"
+                shaderName.endsWith("_fragment") -> "fragment"
+                else -> "compute"
+            }
+            exec {
+                commandLine(
+                    shadercrossExe,
+                    shader.absolutePath,
+                    "-s",
+                    "hlsl",
+                    "-d",
+                    "spirv",
+                    "-t",
+                    stage,
+                    "-o",
+                    File(shaderOutputDir, "$shaderName.spv").absolutePath,
+                )
+            }
+        }
+    }
+}
+
 unzipDeps.configure { dependsOn(compileLocalization) }
-tasks.named("preBuild") { dependsOn(unzipDeps, unzipSqlite) }
+tasks.named("preBuild") { dependsOn(unzipDeps, unzipSqlite, compileAndroidShaders) }
 
 tasks.configureEach {
     if (name.startsWith("configureCMake") || name.startsWith("externalNativeBuild")) {
-        dependsOn(unzipDeps, unzipSqlite)
+        dependsOn(unzipDeps, unzipSqlite, compileAndroidShaders)
     }
 }
 
@@ -172,11 +244,16 @@ fun BaseExtension.configureCommonAndroid() {
 
         externalNativeBuild {
             cmake {
-                arguments(
+                val cmakeArguments = mutableListOf(
                     "-DANDROID_PLATFORM=$overrideNdkBuildAppPlatform",
                     "-DANDROID_STL=c++_shared",
                     "-DCMAKE_BUILD_PARALLEL_LEVEL=$njobs",
                 )
+                if (ccache.isNotEmpty()) {
+                    cmakeArguments += "-DCMAKE_C_COMPILER_LAUNCHER=$ccache"
+                    cmakeArguments += "-DCMAKE_CXX_COMPILER_LAUNCHER=$ccache"
+                }
+                arguments(*cmakeArguments.toTypedArray())
             }
         }
         testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"

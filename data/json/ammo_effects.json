@@ -480,7 +480,7 @@
     "id": "AMMO_84x246_HE",
     "type": "ammo_effect",
     "explosion": {
-      "damage": 80,
+      "damage": 120,
       "radius": 6,
       "fragment": { "impact": { "damage_type": "bullet", "amount": 220, "armor_multiplier": 1 }, "range": 7 }
     }
@@ -488,6 +488,11 @@
   {
     "id": "AMMO_84x246_HEDP",
     "type": "ammo_effect",
-    "explosion": { "damage": 125, "radius": 3 }
+    "explosion": { "damage": 400, "radius": 1 }
+  },
+  {
+    "id": "AMMO_ATGM_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 600, "radius": 2 }
   }
 ]

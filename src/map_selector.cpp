@@ -66,7 +66,7 @@ std::optional<tripoint_bub_ms> random_point( const tripoint_range<tripoint_bub_m
 
 map_cursor::map_cursor( const tripoint_abs_ms &pos )
 {
-    pos_ = g ? get_map().abs_to_bub( pos ) : pos.reinterpret_as<tripoint_bub_ms>();
+    pos_ = g ? abs_to_bub( pos ) : pos.reinterpret_as<tripoint_bub_ms>();
 }
 
 map_cursor::map_cursor( const tripoint_bub_ms &pos )
@@ -76,7 +76,7 @@ map_cursor::map_cursor( const tripoint_bub_ms &pos )
 
 map_cursor::operator tripoint_abs_ms() const
 {
-    return g ? get_map().bub_to_abs( pos_ ) : pos_.reinterpret_as<tripoint_abs_ms>();
+    return g ? bub_to_abs( pos_ ) : pos_.reinterpret_as<tripoint_abs_ms>();
 }
 
 map_cursor::operator tripoint_bub_ms() const

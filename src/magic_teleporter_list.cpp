@@ -69,7 +69,7 @@ static std::optional<tripoint_abs_ms> find_valid_teleporters_omt( const tripoint
     checker.load( sm_pt, true );
     for( const auto &p : checker.points_on_zlevel() ) {
         if( checker.has_flag_furn( "TRANSLOCATOR", p ) ) {
-            return checker.bub_to_abs( p );
+            return map_local_to_abs( checker, p );
         }
     }
     return std::nullopt;
@@ -85,9 +85,9 @@ bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_o
     if( !global_dest ) {
         return false;
     }
-    const auto omt_local_dest = omt_dest.abs_to_bub( *global_dest );
-    const auto local_dest = translocator::local_dest( omt_local_dest,
-                            point_bub_ms( g_half_mapsize_x, g_half_mapsize_y ) );
+    const auto omt_local_dest = abs_to_map_local( omt_dest, *global_dest );
+    const auto local_dest = translocator::local_dest( omt_local_dest, point_bub_ms( g_half_mapsize_x,
+                            g_half_mapsize_y ) );
     you.add_effect( efftype_id( "ignore_fall_damage" ), 1_seconds, bodypart_str_id::NULL_ID(), 0,
                     true );
     g->place_player_overmap( omt_pt );

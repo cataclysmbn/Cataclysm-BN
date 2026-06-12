@@ -56,14 +56,14 @@
     "move_cost": 2,
     "light_emitted": 120,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "FLAT", "ROAD", "LOCAL_LIGHT" ],
     "bash": {
       "str_min": 4,
       "str_max": 12,
       "sound": "glass breaking!",
       "sound_fail": "whack!",
-      "sound_vol": 16,
-      "sound_fail_vol": 10,
+      "sound_vol": 90,
+      "sound_fail_vol": 75,
       "ter_set": "t_thconc_floor",
       "items": [ { "item": "glass_shard", "count": [ 0, 2 ] } ]
     }
@@ -79,7 +79,7 @@
     "light_emitted": 120,
     "roof": "t_flat_roof",
     "looks_like": "t_floor",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD", "LOCAL_LIGHT" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -103,7 +103,7 @@
     "move_cost": 2,
     "light_emitted": 120,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAT", "ROAD", "LOCAL_LIGHT" ],
     "bash": {
       "sound": "thump",
       "ter_set": "t_null",
@@ -835,8 +835,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
-      "sound_fail_vol": 4,
+      "sound_vol": 60,
+      "sound_fail_vol": 50,
       "ter_set": "t_null"
     }
   },
@@ -855,8 +855,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
-      "sound_fail_vol": 4,
+      "sound_vol": 60,
+      "sound_fail_vol": 50,
       "ter_set": "t_null"
     }
   },
@@ -876,8 +876,8 @@
       "str_min_supported": 30,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 10,
-      "sound_fail_vol": 6,
+      "sound_vol": 75,
+      "sound_fail_vol": 60,
       "ter_set": "t_null"
     }
   },
@@ -896,8 +896,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
-      "sound_fail_vol": 4,
+      "sound_vol": 60,
+      "sound_fail_vol": 50,
       "ter_set": "t_null"
     }
   },

@@ -1,0 +1,90 @@
+#include "enchantment_value.h"
+
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
+
+#include "assign.h"
+#include "debug.h"
+#include "game_constants.h"
+#include "generic_factory.h"
+#include "json.h"
+#include "map.h"
+#include "memory_fast.h"
+#include "options.h"
+#include "point.h"
+#include "rng.h"
+#include "translations.h"
+#include "type_id.h"
+#include "units_angle.h"
+
+namespace
+{
+generic_factory<enchantment_value> all_enchantment_values( "Enchantment Values" );
+}
+
+/** @relates string_id */
+template<>
+const enchantment_value &string_id<enchantment_value>::obj() const
+{
+    return all_enchantment_values.obj( *this );
+}
+
+/** @relates string_id */
+template<>
+bool string_id<enchantment_value>::is_valid() const
+{
+    return all_enchantment_values.is_valid( *this );
+}
+
+/** @relates string_id */
+template<>
+int_id<enchantment_value> string_id<enchantment_value>::id() const
+{
+    return all_enchantment_values.convert( *this, int_id<enchantment_value>( INVALID_CID ) );
+}
+
+void enchantment_value::load_enchantment_values( const JsonObject &jo, const std::string &src )
+{
+    all_enchantment_values.load( jo, src );
+}
+
+void enchantment_value::load( const JsonObject &jo, const std::string &src )
+{
+    mandatory( jo, was_loaded, "can_add", can_add );
+    mandatory( jo, was_loaded, "can_mult", can_mult );
+    if( jo.has_array( "suffixes" ) ) {
+        for( std::string &suffix : jo.get_string_array( "suffixes" ) ) {
+            enchantment_value suffixed = enchantment_value( *this );
+            suffixed.id = enchantment_value_id( suffixed.id.str() + "_" + suffix );
+            all_enchantment_values.insert( suffixed );
+        }
+    }
+}
+
+void enchantment_value::check() const
+{
+    // Currently a placeholder, needed for generic factories
+    // This will be important if anything more complex then two bools and non-c++ definitions
+    // Gets added to enchantment values
+    return;
+}
+
+void enchantment_value::check_definitions()
+{
+    all_enchantment_values.check();
+}
+
+std::vector<enchantment_value> enchantment_value::get_all()
+{
+    return all_enchantment_values.get_all();
+}
+
+void enchantment_value::reset()
+{
+    all_enchantment_values.reset();
+}
+

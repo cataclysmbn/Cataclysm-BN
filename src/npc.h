@@ -796,9 +796,7 @@ class npc : public player
         /** Place the NPC at an exact absolute position (submap + within-submap tile). */
         void spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm_ms &square );
         /**
-         * Places the NPC on the @ref map. This update its
-         * pos values to fit the current offset of
-         * map (g->levx, g->levy).
+         * Places the NPC on the active @ref map context.
          * If the square on the map where the NPC would go is not empty
          * a spiral search for an empty square around it is performed.
          */
@@ -1040,6 +1038,7 @@ class npc : public player
         void move(); // Picks an action & a target and calls execute_action
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
+        auto action_move_factor() const -> int override;
         /**
          * Batch catchup: analytically simulate @p n missed turns.
          * Processes biology at 30-min/5-min/1-turn granularity, then
@@ -1225,11 +1224,12 @@ class npc : public player
         // Because they can't run yet
         float speed_rating() const override;
         /**
-         * Note: this places NPC on a given position in CURRENT MAP coordinates.
-         * Do not use when placing a NPC in mapgen.
+         * Places the NPC in the active map's local coordinates.
+         * Use the absolute overload for mapgen when the active map context is
+         * not the map being generated.
          */
-        void setpos( const tripoint_bub_ms &pos ) override;
-        void setpos( const tripoint_abs_ms &pos ) override;
+        auto setpos( const tripoint_bub_ms &pos ) -> void override;
+        auto setpos( const tripoint_abs_ms &pos ) -> void override;
         void travel_overmap( const tripoint_abs_sm &pos );
         npc_attitude get_attitude() const;
         void set_attitude( npc_attitude new_attitude );

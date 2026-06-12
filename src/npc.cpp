@@ -9,6 +9,7 @@
 #include <limits>
 #include <memory>
 
+#include "action_time_scale.h"
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -192,9 +193,10 @@ standard_npc::standard_npc( const std::string &name, const tripoint_bub_ms &pos,
 {
     this->name = name;
     // Resolve tripoint_min sentinel to the runtime bubble center.
-    position = ( pos == tripoint_bub_ms::min() )
-               ? get_map().bub_to_abs( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) )
-               : get_map().bub_to_abs( pos );
+    const auto map_local_pos = ( pos == tripoint_bub_ms::min() )
+                               ? tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 )
+                               : pos;
+    position = map_local_to_abs( get_map(), map_local_pos );
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -745,15 +747,15 @@ void npc::set_known_to_u( bool known )
     }
 }
 
-void npc::setpos( const tripoint_bub_ms &pos )
+auto npc::setpos( const tripoint_bub_ms &pos ) -> void
 {
-    setpos( get_map().bub_to_abs( pos ) );
+    setpos( map_local_to_abs( get_map(), pos ) );
 }
 
-void npc::setpos( const tripoint_abs_ms &new_pos )
+auto npc::setpos( const tripoint_abs_ms &new_pos ) -> void
 {
-    const point_abs_om pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
-    const point_abs_om pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
+    const auto pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
+    const auto pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
     Character::setpos( new_pos );
     if( !is_fake() && pos_om_old != pos_om_new ) {
         auto &dim_ob = get_overmapbuffer( get_dimension() );
@@ -802,9 +804,9 @@ void npc::spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm
 
 void npc::place_on_map()
 {
-    // position is the authoritative absolute position; bub_pos() derives from it.
+    map &here = get_map();
     // Find an empty tile near the NPC's intended location.
-    const tripoint_bub_ms initial = bub_pos();
+    const auto initial = abs_to_map_local( here, position );
 
     if( g->is_empty( initial ) || is_mounted() ) {
         return;
@@ -812,7 +814,7 @@ void npc::place_on_map()
 
     for( const tripoint_bub_ms &p : closest_points_first( initial, SEEX + 1 ) ) {
         if( g->is_empty( p ) ) {
-            setpos( p );
+            setpos( map_local_to_abs( here, p ) );
             return;
         }
     }
@@ -2983,8 +2985,12 @@ void npc::on_unload()
 // A throtled version of player::update_body since npc's don't need to-the-turn updates.
 void npc::npc_update_body()
 {
-    if( calendar::once_every( 10_seconds ) ) {
-        update_body( 10_seconds );
+    const auto elapsed = calendar::turn - last_updated;
+    if( elapsed <= 0_turns ) {
+        return;
+    }
+    if( elapsed >= 10_seconds || action_time_scale::once_every_this_tick( 10_seconds ) ) {
+        update_body( elapsed );
         last_updated = calendar::turn;
     }
 }
@@ -3100,7 +3106,7 @@ void npc::process_turn()
 {
     player::process_turn();
 
-    if( is_player_ally() && calendar::once_every( 1_hours ) &&
+    if( is_player_ally() && action_time_scale::once_every_this_tick( 1_hours ) &&
         get_kcal_percent() > 0.95 && get_thirst() < thirst_levels::very_thirsty && op_of_u.trust < 5 ) {
         // Friends who are well fed will like you more
         // 24 checks per day, best case chance at trust 0 is 1 in 48 for +1 trust per 2 days
@@ -3122,6 +3128,11 @@ void npc::process_turn()
 
     // TODO: Add decreasing trust/value/etc. here when player doesn't provide food
     // TODO: Make NPCs leave the player if there's a path out of map and player is sleeping/unseen/etc.
+}
+
+auto npc::action_move_factor() const -> int
+{
+    return action_time_scale::npc_tick_action_factor();
 }
 
 void npc::batch_turns( int n )
@@ -3182,12 +3193,14 @@ void npc::advance_job_progress( int n )
         return;
     }
     if( activity && *activity ) {
-        // Directly reduce moves_left by n turns' worth (100 moves per turn).
+        // Directly reduce moves_left by n turns' worth of scaled activity progress.
         // The mod_moves() approach is wrong here: activity->do_turn() unconditionally
         // sets p.moves = 0 after each step, so any extra moves granted via mod_moves()
         // are zeroed on the very first step and the catchup never happens.
-        // Direct reduction is speed-independent, matching the design intent.
-        activity->moves_left = std::max( 0, activity->moves_left - n * 100 );
+        const auto progress = activity_uses_calendar_duration_progress( activity->id() ) ?
+                              action_time_scale::calendar_progress_for_turns( n ) :
+                              action_time_scale::activity_progress_for_turns( n );
+        activity->moves_left = std::max( 0, activity->moves_left - progress );
     } else if( has_destination() ) {
         // Destination movement: grant extra moves so the NPC takes additional path
         // steps toward its goal.  mod_moves() is correct here because path-following

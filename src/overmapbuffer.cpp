@@ -1924,7 +1924,7 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         monster &this_monster = monster_entry.second;
         const auto ms = this_monster.abs_pos();
         const map &here = get_map();
-        const auto local = here.abs_to_bub( ms );
+        const auto local = abs_to_bub( ms );
         if( !here.inbounds( local ) ) {
             debugmsg( "Monster at bub( %s, %s, %s ), abs( %s, %s, %s ) was out of bounds. Skipping spawn",
                       local.x(), local.y(), local.z(), ms.x(), ms.y(), ms.z() );

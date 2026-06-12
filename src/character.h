@@ -600,6 +600,7 @@ class Character : public Creature, public location_visitable<Character>
          * Handles end-of-turn processing.
          */
         void process_turn() override;
+        auto action_move_factor() const -> int override;
         /** Processes human-specific effects of effects before calling Creature::process_effects(). */
         void process_effects_internal() override;
         /** Handles the still hard-coded effects. */

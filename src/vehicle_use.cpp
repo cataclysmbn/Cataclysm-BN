@@ -22,6 +22,7 @@
 #include "avatar.h"
 #include "avatar_functions.h"
 #include "bodypart.h"
+#include "catalua.h"
 #include "clzones.h"
 #include "character_functions.h"
 #include "color.h"
@@ -359,6 +360,8 @@ void vehicle::set_electronics_menu_options( std::vector<uilist_entry> &options,
             {
                 add_msg( _( "Camera system won't turn on" ) );
             }
+            get_map().set_seen_cache_dirty( bub_ms_location().z() );
+            get_map().invalidate_visibility_caches();
             refresh();
         } );
     }
@@ -1279,7 +1282,7 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
     for( size_t e = 0; e < engines.size(); ++e ) {
         if( !has_starting_engine_position && !parts[ engines[ e ] ].is_broken() &&
             parts[ engines[ e ] ].enabled ) {
-            starting_engine_position = g->m.bub_to_abs( bub_part_location( engines[ e ] ) );
+            starting_engine_position = bub_to_abs( bub_part_location( engines[ e ] ) );
             has_starting_engine_position = true;
         }
         has_engine = has_engine || is_engine_on( e );
@@ -2004,12 +2007,13 @@ void vehicle::interact_with( const tripoint_bub_ms &pos, int interact_part )
     const bool has_items_on_ground = here.sees_some_items( pos, g->u );
     const bool items_are_sealed = here.has_flag( "SEALED", pos );
 
-    auto turret = turret_query( here.bub_to_abs( pos ) );
+    auto turret = turret_query( bub_to_abs( pos ) );
 
     const int curtain_part = avail_part_with_feature( interact_part, "CURTAIN", true );
     const bool curtain_closed = ( curtain_part == -1 ) ? false : !parts[curtain_part].open;
     const bool has_hotplate = avail_part_with_feature( interact_part, "HOTPLATE", true ) >= 0;
     const bool has_faucet = avail_part_with_feature( interact_part, "FAUCET", true ) >= 0;
+    const bool has_shower = avail_part_with_feature( interact_part, "SHOWER", true ) >= 0;
     const bool has_towel = avail_part_with_feature( interact_part, "TOWEL", true ) >= 0;
     const bool has_crafter = avail_part_with_feature( interact_part, "CRAFTER", true ) >= 0;
     const bool has_purify = avail_part_with_feature( interact_part, "WATER_PURIFIER", true ) >= 0;
@@ -2038,7 +2042,7 @@ void vehicle::interact_with( const tripoint_bub_ms &pos, int interact_part )
     enum {
         EXAMINE, TRACK, HANDBRAKE, BRAKE_HOLD, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET,
         RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_CRAFTER, USE_PURIFIER, USE_AUTOCLAVE, USE_AUTODOC,
-        USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, PEEK_CURTAIN, PICK_LOCK
+        USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, USE_SHOWER, PEEK_CURTAIN, PICK_LOCK
     };
     uilist selectmenu;
 
@@ -2089,6 +2093,9 @@ void vehicle::interact_with( const tripoint_bub_ms &pos, int interact_part )
     }
     if( has_towel ) {
         selectmenu.addentry( USE_TOWEL, true, 't', _( "Use a towel" ) );
+    }
+    if( has_shower ) {
+        selectmenu.addentry( USE_SHOWER, true, 's', _( "Take a shower" ) );
     }
     if( has_crafter && fuel_left( itype_battery, true ) > 0 ) {
         selectmenu.addentry( USE_CRAFTER, true, 'T', _( "Use the integrated tools" ) );
@@ -2162,6 +2169,10 @@ void vehicle::interact_with( const tripoint_bub_ms &pos, int interact_part )
         }
         case USE_TOWEL: {
             iuse::towel_common( &you, nullptr, false );
+            return;
+        }
+        case USE_SHOWER: {
+            cata::run_lua_examine( "PLUMBING_SHOWER_EXAMINE", you, pos );
             return;
         }
         case USE_AUTOCLAVE: {

@@ -66,6 +66,8 @@ struct MonsterGroup {
     mongroup_id name;
     mtype_id defaultMonster;
     FreqDef  monsters;
+    int evolve_chance;
+    int evolve_repeat;
     bool IsMonsterInGroup( const mtype_id &id ) const;
     bool is_animal = false;
     // replaces this group after a period of
