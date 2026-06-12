@@ -1283,16 +1283,19 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         const auto shot_half_angle = get_shot_half_angle( gun );
 
         // Apply enchantment bonuses to projectile
-        int base_bullet_damage = static_cast<int>( projectile.impact.type_damage( DT_BULLET ) );
-        int base_penetrate_bullet = projectile.impact.get_armor_pen( DT_BULLET );
-        int ench_damage_bonus = who.bonus_from_enchantments( base_bullet_damage,
-                                enchantment_value_id( "RANGED_DAMAGE_BULLET" ), true );
-        int ench_penetrate_bonus = who.bonus_from_enchantments( base_penetrate_bullet,
-                                   enchantment_value_id( "RANGED_ARMOR_PENETRATION" ) );
-        if( ench_damage_bonus != 0 ) {
-            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus, ench_penetrate_bonus );
+        // Iterate over every damage type
+        for( auto &projectile_damage : projectile.impact ) {
+            int base_damage = projectile_damage.amount;
+            int base_penetrate = projectile_damage.res_pen;
+            int ench_damage_bonus = who.bonus_from_enchantments( base_damage,
+                                    enchantment_value_id( "RANGED_DAMAGE_" + projectile_damage.get_internal_name() ) );
+            int ench_penetrate_bonus = who.bonus_from_enchantments( base_damage,
+                                       enchantment_value_id( "RANGED_ARMOR_PENETRATION_" + projectile_damage.get_internal_name() ) );
+            if( ench_damage_bonus != 0 || ench_penetrate_bonus != 0 ) {
+                projectile_damage.amount += ench_damage_bonus;
+                projectile_damage.res_pen += ench_penetrate_bonus;
+            }
         }
-
         int ench_range_bonus = who.bonus_from_enchantments( projectile.range,
                                enchantment_value_id( "RANGED_RANGE" ), true );
         // Ensure range doesn't go below 1

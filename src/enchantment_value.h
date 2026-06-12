@@ -40,4 +40,11 @@ class enchantment_value
         bool was_loaded;
         bool can_add;
         bool can_mult;
+
+        bool has_parent() const;
+        enchantment_value_id get_parent() const;
+
+    private:
+        enchantment_value_id parent_id = enchantment_value_id::NULL_ID();
+
 };

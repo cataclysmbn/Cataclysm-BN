@@ -254,9 +254,9 @@
       "BULLET",
       "HEAT",
       "COLD",
-      "ELEC",
+      "ELECTRIC",
       "ACID",
-      "BIO"
+      "BIOLOGICAL"
     ]
   },
   {
@@ -280,16 +280,30 @@
       "BULLET",
       "HEAT",
       "COLD",
-      "ELEC",
+      "ELECTRIC",
       "ACID",
-      "BIO"
+      "BIOLOGICAL"
     ]
   },
   {
     "id": "RANGED_ARMOR_PENETRATION",
     "type": "enchantment_value",
     "can_add": true,
-    "can_mult": true
+    "can_mult": true,
+    "suffixes": [
+      "BASH",
+      "CUT",
+      "DARK",
+      "LIGHT",
+      "PSI",
+      "STAB",
+      "BULLET",
+      "HEAT",
+      "COLD",
+      "ELECTRIC",
+      "ACID",
+      "BIOLOGICAL"
+    ]
   },
   {
     "id": "RANGED_RANGE",
@@ -330,9 +344,9 @@
       "BULLET",
       "HEAT",
       "COLD",
-      "ELEC",
+      "ELECTRIC",
       "ACID",
-      "BIO"
+      "BIOLOGICAL"
     ]
   },
   {
@@ -350,9 +364,9 @@
       "BULLET",
       "HEAT",
       "COLD",
-      "ELEC",
+      "ELECTRIC",
       "ACID",
-      "BIO"
+      "BIOLOGICAL"
     ]
   },
   {

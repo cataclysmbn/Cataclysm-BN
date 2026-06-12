@@ -60,6 +60,7 @@ void enchantment_value::load( const JsonObject &jo, const std::string &src )
         for( std::string &suffix : jo.get_string_array( "suffixes" ) ) {
             enchantment_value suffixed = enchantment_value( *this );
             suffixed.id = enchantment_value_id( suffixed.id.str() + "_" + suffix );
+            suffixed.parent_id = id;
             all_enchantment_values.insert( suffixed );
         }
     }
@@ -76,6 +77,16 @@ void enchantment_value::check() const
 void enchantment_value::check_consistency()
 {
     all_enchantment_values.check();
+}
+
+bool enchantment_value::has_parent() const
+{
+    return parent_id != enchantment_value_id::NULL_ID();
+}
+
+enchantment_value_id enchantment_value::get_parent() const
+{
+    return parent_id;
 }
 
 std::vector<enchantment_value> enchantment_value::get_all()

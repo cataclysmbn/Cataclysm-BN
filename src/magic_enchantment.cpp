@@ -96,6 +96,24 @@ static std::string migrate_ench_vals_enums( const std::string &s )
     if( s == "REGEN_STAMINA" ) {
         return "STAMINA_REGEN";
     }
+    if( s == "ITEM_ARMOR_BIO" ) {
+        return "ITEM_ARMOR_BIOLOGICAL";
+    }
+    if( s == "ITEM_DAMAGE_BIO" ) {
+        return "ITEM_DAMAGE_BIOLOGICAL";
+    }
+    if( s == "ARMOR_BIO" ) {
+        return "ARMOR_BIOLOGICAL";
+    }
+    if( s == "ITEM_ARMOR_ELEC" ) {
+        return "ITEM_ARMOR_ELECTRIC";
+    }
+    if( s == "ITEM_DAMAGE_ELEC" ) {
+        return "ITEM_DAMAGE_ELECTRIC";
+    }
+    if( s == "ARMOR_ELEC" ) {
+        return "ARMOR_ELECTRIC";
+    }
     return s;
 }
 namespace
@@ -385,20 +403,34 @@ void enchantment::force_add( const enchantment &rhs )
 
 int enchantment::get_value_add( const enchantment_value_id value ) const
 {
-    const auto found = values_add.find( value );
-    if( found == values_add.cend() ) {
-        return 0;
+    if( !value.is_valid() ) {
+        debugmsg( "Tried to get invalid enchantment value \"%s\".", value );
     }
-    return found->second;
+    int result = 0;
+    if( values_add.contains( value ) ) {
+        result += values_add.at( value );
+    }
+    if( value->has_parent() ) {
+        result = + get_value_add( value->get_parent() );
+    }
+
+    return result;
 }
 
 double enchantment::get_value_multiply( const enchantment_value_id value ) const
 {
-    const auto found = values_multiply.find( value );
-    if( found == values_multiply.cend() ) {
-        return 0;
+    if( !value.is_valid() ) {
+        debugmsg( "Tried to get invalid enchantment value \"%s\".", value );
     }
-    return found->second;
+    double result = 0;
+    if( values_multiply.contains( value ) ) {
+        result += values_multiply.at( value );
+    }
+    if( value->has_parent() ) {
+        result += get_value_add( value->get_parent() );
+    }
+
+    return result;
 }
 
 double enchantment::calc_bonus( enchantment_value_id value, double base, bool round ) const
