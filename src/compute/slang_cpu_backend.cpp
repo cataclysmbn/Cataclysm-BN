@@ -669,6 +669,7 @@ auto run_lighting(lighting_params const& p) -> bool {
     const auto cache_xy = cache_x * cache_y;
     reset_residency_for_shape(cache_x, cache_y, OVERMAP_LAYERS);
     const auto levels = all_levels();
+    TracyPlot("Slang CPU LM Dirty Levels", static_cast<int64_t>(lightmap_levels.size()));
 
     auto transparency_levels = choose_transparency_update_levels(
         p.transparency_dirty, p.transparency_dirty_levels, levels);
@@ -690,18 +691,29 @@ auto run_lighting(lighting_params const& p) -> bool {
         .dirty_levels = p.vehicle_obscured_dirty_levels,
         .all_levels = &levels,
     });
+    TracyPlot("Slang CPU Transparency Copy Levels",
+              static_cast<int64_t>(transparency_levels.size()));
+    TracyPlot("Slang CPU Floor Copy Levels", static_cast<int64_t>(floor_levels.size()));
+    TracyPlot("Slang CPU Vehicle Floor Copy Levels",
+              static_cast<int64_t>(vehicle_floor_levels.size()));
+    TracyPlot("Slang CPU Vehicle Obscured Copy Levels",
+              static_cast<int64_t>(vehicle_obscured_levels.size()));
     if (!transparency_levels.empty()) {
+        ZoneScopedN("slang_cpu_copy_transparency");
         copy_transparency_levels(*p.m, transparency_levels, s_lighting.transparency);
     }
     if (!floor_levels.empty()) {
+        ZoneScopedN("slang_cpu_copy_floor");
         copy_floor_levels(*p.m, floor_levels, s_lighting.floor);
         s_lighting.floor_valid = true;
     }
     if (!vehicle_floor_levels.empty()) {
+        ZoneScopedN("slang_cpu_copy_vehicle_floor");
         copy_vehicle_floor_levels(*p.m, vehicle_floor_levels, s_lighting.vehicle_floor);
         s_lighting.vehicle_floor_valid = true;
     }
     if (!vehicle_obscured_levels.empty()) {
+        ZoneScopedN("slang_cpu_copy_vehicle_obscured");
         copy_vehicle_obscured_levels(*p.m, vehicle_obscured_levels, s_lighting.vehicle_obscured);
         s_lighting.vehicle_obscured_valid = true;
         s_lighting.vehicle_obscured_z_mask = vehicle_obscured_z_mask(s_lighting.vehicle_obscured);
@@ -721,7 +733,25 @@ auto run_lighting(lighting_params const& p) -> bool {
                 .collect_colored_sources = colored_lighting,
             });
         }();
-        copy_source_map_levels(*p.m, levels, s_lighting.source_map);
+        TracyPlot("Slang CPU Sources", static_cast<int64_t>(source_collection.sources.size()));
+        TracyPlot("Slang CPU Static Sources",
+                  static_cast<int64_t>(source_collection.stats.static_sources));
+        TracyPlot("Slang CPU Field Sources",
+                  static_cast<int64_t>(source_collection.stats.field_sources));
+        TracyPlot("Slang CPU Active Item Sources",
+                  static_cast<int64_t>(source_collection.stats.active_item_sources));
+        TracyPlot("Slang CPU Vehicle Sources",
+                  static_cast<int64_t>(source_collection.stats.vehicle_sources));
+        TracyPlot("Slang CPU Character Sources",
+                  static_cast<int64_t>(source_collection.stats.character_sources));
+        TracyPlot("Slang CPU Monster Sources",
+                  static_cast<int64_t>(source_collection.stats.monster_sources));
+        TracyPlot("Slang CPU Colored Sources",
+                  static_cast<int64_t>(source_collection.colored_sources.size()));
+        {
+            ZoneScopedN("slang_cpu_copy_source_map");
+            copy_source_map_levels(*p.m, levels, s_lighting.source_map);
+        }
 
         auto ambient = make_ambient_params(cache_x, cache_y, cache_xy);
         ambient.angled_sunlight_shadows = p.angled_sunlight_shadows ? 1U : 0U;
@@ -734,6 +764,9 @@ auto run_lighting(lighting_params const& p) -> bool {
         }
 
         const auto total_tiles = static_cast<uint32_t>(s_lighting.lightmap.size());
+        TracyPlot("Slang CPU Direct Sunlight", p.direct_sunlight ? int64_t{1} : int64_t{0});
+        TracyPlot("Slang CPU Daylight Diffusion Passes",
+                  p.direct_sunlight ? int64_t{daylight_diffusion_passes} : int64_t{0});
         if (p.direct_sunlight) {
             ZoneScopedN("slang_cpu_daylight_diffusion");
             auto* source = s_lighting.daylight_seed.data();
@@ -767,6 +800,8 @@ auto run_lighting(lighting_params const& p) -> bool {
             auto sources = std::span<cata_gpu::GpuLightSource const>{
                 source_collection.sources.data(), source_collection.sources.size()};
             const auto source_max_radius = max_light_radius(sources);
+            TracyPlot("Slang CPU Raytrace Sources", static_cast<int64_t>(sources.size()));
+            TracyPlot("Slang CPU Max Radius", static_cast<int64_t>(source_max_radius));
             ZoneScopedN("slang_cpu_raytrace_kernel");
             if (!kernels::raytrace({
                     .transparency = s_lighting.transparency.data(),
@@ -785,6 +820,9 @@ auto run_lighting(lighting_params const& p) -> bool {
                 })) {
                 return false;
             }
+        } else {
+            TracyPlot("Slang CPU Raytrace Sources", int64_t{0});
+            TracyPlot("Slang CPU Max Radius", int64_t{0});
         }
 
         if (colored_lighting && !source_collection.colored_sources.empty()) {
@@ -793,6 +831,7 @@ auto run_lighting(lighting_params const& p) -> bool {
             auto sources = std::span<cata_gpu::GpuColoredLightSource const>{
                 source_collection.colored_sources.data(), source_collection.colored_sources.size()};
             const auto colored_max_radius = max_colored_light_radius(sources);
+            TracyPlot("Slang CPU Colored Max Radius", static_cast<int64_t>(colored_max_radius));
             if (!kernels::color_raytrace({
                     .transparency = s_lighting.transparency.data(),
                     .floor = s_lighting.floor.data(),
@@ -812,10 +851,16 @@ auto run_lighting(lighting_params const& p) -> bool {
             }
             copy_colored_light_to_level_caches(*p.m, levels);
         } else {
+            TracyPlot("Slang CPU Colored Max Radius", int64_t{0});
             clear_colored_light_levels(*p.m, levels);
         }
 
-        if (p.download_lightmap) { copy_lightmap_to_level_caches(*p.m, lightmap_levels); }
+        TracyPlot("Slang CPU Lightmap Copyback Levels",
+                  p.download_lightmap ? static_cast<int64_t>(lightmap_levels.size()) : int64_t{0});
+        if (p.download_lightmap) {
+            ZoneScopedN("slang_cpu_lightmap_copyback");
+            copy_lightmap_to_level_caches(*p.m, lightmap_levels);
+        }
         s_lighting.source_map_valid = true;
         s_lighting.lighting_outputs_valid = true;
     }
@@ -862,10 +907,22 @@ auto run_visibility(visibility_params const& p) -> bool {
     const auto rebuild_seen =
         p.rebuild_seen_cache || !seen_levels_valid(download_levels, p.player_x, p.player_y);
     const auto dispatch = make_dispatch_range(download_levels);
+    TracyPlot("Slang CPU Visibility Download Levels",
+              static_cast<int64_t>(download_levels.size()));
+    TracyPlot("Slang CPU Visibility Dispatch Levels", static_cast<int64_t>(dispatch.z_count));
+    TracyPlot("Slang CPU Visibility Dispatch Selected",
+              dispatch.z_count == s_lighting.z_count ? int64_t{0} : int64_t{1});
+    TracyPlot("Slang CPU Rebuild Seen", rebuild_seen ? int64_t{1} : int64_t{0});
+    TracyPlot("Slang CPU Visibility Dispatch Tiles",
+              static_cast<int64_t>(dispatch.z_count)
+                  * static_cast<int64_t>(s_lighting.cache_x * s_lighting.cache_y));
+    const auto seen_dispatch_tiles =
+        rebuild_seen ? static_cast<uint32_t>(static_cast<std::size_t>(dispatch.z_count)
+                                             * static_cast<std::size_t>(
+                                                   s_lighting.cache_x * s_lighting.cache_y))
+                     : uint32_t{0};
+    TracyPlot("Slang CPU Seen Dispatch Tiles", static_cast<int64_t>(seen_dispatch_tiles));
     if (rebuild_seen) {
-        const auto total_tiles = static_cast<uint32_t>(
-            static_cast<std::size_t>(dispatch.z_count)
-            * static_cast<std::size_t>(s_lighting.cache_x * s_lighting.cache_y));
         auto cleared = false;
         {
             ZoneScopedN("slang_cpu_clear_seen");
@@ -887,7 +944,7 @@ auto run_visibility(visibility_params const& p) -> bool {
                     : kernels::clear_seen({
                           .seen_raw = s_lighting.seen_raw.data(),
                           .seen = s_lighting.seen.data(),
-                          .total_tiles = total_tiles,
+                          .total_tiles = seen_dispatch_tiles,
                           .cache_xy = s_lighting.cache_x * s_lighting.cache_y,
                           .z_start_idx = dispatch.z_start_idx,
                       });
@@ -956,6 +1013,7 @@ auto run_visibility(visibility_params const& p) -> bool {
             .target_z = p.zlev,
         });
     }();
+    TracyPlot("Slang CPU Vehicle Optics", static_cast<int64_t>(vehicle_optics.size()));
     {
         ZoneScopedN("slang_cpu_clear_camera");
         std::ranges::fill(s_lighting.camera, 0U);
@@ -964,6 +1022,7 @@ auto run_visibility(visibility_params const& p) -> bool {
         auto optics = std::span<
             cata_gpu::GpuVehicleOptic const>{vehicle_optics.data(), vehicle_optics.size()};
         const auto optic_max_radius = max_optic_radius(optics);
+        TracyPlot("Slang CPU Vehicle Optic Max Radius", static_cast<int64_t>(optic_max_radius));
         ZoneScopedN("slang_cpu_vehicle_optics_kernel");
         if (!kernels::vehicle_optics({
                 .transparency = s_lighting.transparency.data(),
@@ -981,6 +1040,8 @@ auto run_visibility(visibility_params const& p) -> bool {
             })) {
             return false;
         }
+    } else {
+        TracyPlot("Slang CPU Vehicle Optic Max Radius", int64_t{0});
     }
     {
         ZoneScopedN("slang_cpu_final_visibility_kernel");
@@ -1013,7 +1074,10 @@ auto run_visibility(visibility_params const& p) -> bool {
         }
     }
 
-    { copy_visibility_to_level_cache(*p.m, download_levels); }
+    {
+        ZoneScopedN("slang_cpu_visibility_copyback");
+        copy_visibility_to_level_cache(*p.m, download_levels);
+    }
     return true;
 }
 

@@ -1090,15 +1090,7 @@ enum class light_source_kind : int {
     monster,
 };
 
-struct source_collection_stats {
-    int static_sources = 0;
-    int static_local_sources = 0;
-    int field_sources = 0;
-    int active_item_sources = 0;
-    int vehicle_sources = 0;
-    int character_sources = 0;
-    int monster_sources = 0;
-};
+using source_collection_stats = lighting_source_collection_stats;
 
 struct source_collection {
     std::vector<GpuLightSource> sources;
@@ -2500,6 +2492,7 @@ auto collect_lighting_sources(collect_lighting_sources_params const& p)
     return {
         .sources = std::move(collection.sources),
         .colored_sources = std::move(collection.colored_sources),
+        .stats = collection.stats,
     };
 }
 
