@@ -27,7 +27,7 @@ class enchantment_value
 
         void load( const JsonObject &jo, const std::string &src );
 
-        static void check_definitions();
+        static void check_consistency();
 
         void check() const;
 

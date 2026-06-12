@@ -2618,7 +2618,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     if( parts->test( iteminfo_parts::GUN_RELOAD_TIME ) ) {
         int base_reload_time = mod->get_reload_time();
         int ench_reload_bonus = you.bonus_from_enchantments( base_reload_time,
-                                enchantment_value_id( RANGED_RELOAD_TIME ), true );
+                                enchantment_value_id( "RANGED_RELOAD_TIME" ), true );
         int effective_reload = std::max( 25, base_reload_time + ench_reload_bonus );
 
         info.emplace_back( "GUN", _( "Reload time: " ),
@@ -5734,7 +5734,8 @@ int item::lift_strength() const
 int item::attack_cost() const
 {
     int base = 65 + ( volume() / 62.5_ml + weight() / 60_gram ) / count();
-    int bonus = bonus_from_enchantments_wielded( base, enchantment_value_id( "ITEM_ATTACK_COST" ), true );
+    int bonus = bonus_from_enchantments_wielded( base, enchantment_value_id( "ITEM_ATTACK_COST" ),
+                true );
     return std::max( 0, base + bonus );
 }
 
@@ -5886,7 +5887,8 @@ std::map<std::string, attack_statblock> item::get_attacks() const
                                  true );
                     break;
                 case DT_BULLET:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_BULLET" ),
+                    du.amount += bonus_from_enchantments_wielded( du.amount,
+                                 enchantment_value_id( "ITEM_DAMAGE_BULLET" ),
                                  true );
                     break;
                 case DT_ACID:
@@ -5906,7 +5908,8 @@ std::map<std::string, attack_statblock> item::get_attacks() const
                                  true );
                     break;
                 case DT_ELECTRIC:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_ELECTRIC" ),
+                    du.amount += bonus_from_enchantments_wielded( du.amount,
+                                 enchantment_value_id( "ITEM_DAMAGE_ELECTRIC" ),
                                  true );
                     break;
                 case DT_HEAT:
@@ -5914,7 +5917,8 @@ std::map<std::string, attack_statblock> item::get_attacks() const
                                  true );
                     break;
                 case DT_LIGHT:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_LIGHT" ),
+                    du.amount += bonus_from_enchantments_wielded( du.amount,
+                                 enchantment_value_id( "ITEM_DAMAGE_LIGHT" ),
                                  true );
                     break;
                 case DT_PSI:
@@ -8353,7 +8357,8 @@ int item::gun_range( const player *p ) const
     ret *= ranged::str_draw_range_modifier( *this, *p );
 
     // Apply enchantment bonuses to range
-    int ench_range_bonus = p->bonus_from_enchantments( ret, enchantment_value_id( "RANGED_RANGE" ), true );
+    int ench_range_bonus = p->bonus_from_enchantments( ret, enchantment_value_id( "RANGED_RANGE" ),
+                           true );
     ret = std::max( 1, ret + ench_range_bonus );
 
     return std::max( 0, ret );

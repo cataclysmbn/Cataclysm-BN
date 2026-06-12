@@ -814,12 +814,14 @@ void Character::reset_stats()
     mod_str_bonus( std::floor( mutation_value( "str_modifier" ) ) );
     mod_dodge_bonus( std::floor( mutation_value( "dodge_modifier" ) ) );
 
-    mod_str_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "STRENGTH" ), get_str_base(), true ) );
+    mod_str_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "STRENGTH" ), get_str_base(),
+                   true ) );
     mod_dex_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "DEXTERITY" ), get_dex_base(),
                    true ) );
     mod_per_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "PERCEPTION" ), get_per_base(),
                    true ) );
-    mod_int_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "INTELLIGENCE" ), get_int_base(),
+    mod_int_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "INTELLIGENCE" ),
+                   get_int_base(),
                    true ) );
 
     mod_num_dodges_bonus( enchantment_cache->calc_bonus(

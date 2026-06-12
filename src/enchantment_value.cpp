@@ -73,7 +73,7 @@ void enchantment_value::check() const
     return;
 }
 
-void enchantment_value::check_definitions()
+void enchantment_value::check_consistency()
 {
     all_enchantment_values.check();
 }

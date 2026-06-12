@@ -12,6 +12,7 @@
 #include "debug.h"
 #include "enum_conversions.h"
 #include "enums.h"
+#include "enchantment_value.h"
 #include "generic_factory.h"
 #include "json.h"
 #include "map.h"
@@ -36,7 +37,7 @@ struct enum_traits<enchantment::condition> {
 
 namespace io
 {
-    // TODO: Migrate these enums to ids too
+// TODO: Migrate these enums to ids too
     // *INDENT-OFF*
     template<>
     std::string enum_to_string<enchantment::has>( enchantment::has data )
@@ -77,22 +78,25 @@ namespace io
 // TODO: Eventually migrate this to a migration like for items
 static std::string migrate_ench_vals_enums( const std::string &s )
 {
-    switch( s ) {
-        case "ITEM_ATTACK_SPEED":
-            return "ITEM_ATTACK_COST";
-        case "ATTACK_SPEED":
-            return "ATTACK_COST";
-        case "MAX_MANA":
-            return "MANA_CAP";
-        case "REGEN_MANA":
-            return "MANA_REGEN";
-        case "MAX_STAMINA":
-            return "STAMINA_CAP";
-        case "REGEN_STAMINA":
-            return "STAMINA_REGEN";
-        default:
-            return s;
+    if( s == "ITEM_ATTACK_SPEED" ) {
+        return "ITEM_ATTACK_COST";
     }
+    if( s == "ATTACK_SPEED" ) {
+        return "ATTACK_COST";
+    }
+    if( s == "MAX_MANA" ) {
+        return "MANA_CAP";
+    }
+    if( s == "REGEN_MANA" ) {
+        return "MANA_REGEN";
+    }
+    if( s == "MAX_STAMINA" ) {
+        return "STAMINA_CAP";
+    }
+    if( s == "REGEN_STAMINA" ) {
+        return "STAMINA_REGEN";
+    }
+    return s;
 }
 namespace
 {
@@ -233,7 +237,7 @@ void enchantment::load( const JsonObject &jo, const std::string & )
                 value_obj.show_warning(
                     string_format( "%s has been renamed to %s", value_raw, value_new ), "value" );
             }
-            enchantment_valid_id value = enchantment_value_id( value_new );
+            enchantment_value_id value = enchantment_value_id( value_new );
             const int add = value_obj.get_int( "add", 0 );
             const double mult = value_obj.get_float( "multiply", 0.0 );
             if( add != 0 ) {
@@ -311,7 +315,7 @@ void enchantment::serialize( JsonOut &jsout ) const
     jsout.member( "values" );
     jsout.start_array();
     for( enchantment_value ench_val : enchantment_value::get_all() ) {
-        enchantment_valid_id ench_val_id = ench_val.id;
+        enchantment_value_id ench_val_id = ench_val.id;
         auto val_add = get_value_add( ench_val_id );
         auto val_mult = get_value_multiply( ench_val_id );
         if( val_add == 0 && val_mult == 0.0 ) {
@@ -348,10 +352,10 @@ bool enchantment::add( const enchantment &rhs )
 
 void enchantment::force_add( const enchantment &rhs )
 {
-    for( const std::pair<const enchantment_valid_id, int> &pair_values : rhs.values_add ) {
+    for( const std::pair<const enchantment_value_id, int> &pair_values : rhs.values_add ) {
         values_add[pair_values.first] += pair_values.second;
     }
-    for( const std::pair<const enchantment_valid_id, double> &pair_values : rhs.values_multiply ) {
+    for( const std::pair<const enchantment_value_id, double> &pair_values : rhs.values_multiply ) {
         // values do not multiply against each other, they add.
         // so +10% and -10% will add to 0%
         values_multiply[pair_values.first] += pair_values.second;
@@ -388,7 +392,7 @@ int enchantment::get_value_add( const enchantment_value_id value ) const
     return found->second;
 }
 
-double enchantment::get_value_multiply( const enchantment_valid_id value ) const
+double enchantment::get_value_multiply( const enchantment_value_id value ) const
 {
     const auto found = values_multiply.find( value );
     if( found == values_multiply.cend() ) {
@@ -397,10 +401,10 @@ double enchantment::get_value_multiply( const enchantment_valid_id value ) const
     return found->second;
 }
 
-double enchantment::calc_bonus( enchantment_valid_id value, double base, bool round ) const
+double enchantment::calc_bonus( enchantment_value_id value, double base, bool round ) const
 {
-    double add = value->use_add ? get_value_add( value ) : 0.0;
-    double mul = value->use_mult ? get_value_multiply( value ) : 1.0;
+    double add = value->can_add ? get_value_add( value ) : 0.0;
+    double mul = value->can_mult ? get_value_multiply( value ) : 1.0;
     double ret = add + base * mul;
     if( round ) {
         ret = trunc( ret );
@@ -408,7 +412,7 @@ double enchantment::calc_bonus( enchantment_valid_id value, double base, bool ro
     return ret;
 }
 
-int enchantment::mult_bonus( enchantment_valid_id value_type, int base_value ) const
+int enchantment::mult_bonus( enchantment_value_id value_type, int base_value ) const
 {
     return get_value_multiply( value_type ) * base_value;
 }

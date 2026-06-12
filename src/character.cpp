@@ -9060,40 +9060,52 @@ static void item_armor_enchantment_adjust(
 {
     switch( du.type ) {
         case DT_ACID:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_ACID );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_ACID" ) );
             break;
         case DT_BASH:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_BASH );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_BASH" ) );
             break;
         case DT_BIOLOGICAL:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_BIO );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_BIO" ) );
             break;
         case DT_COLD:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_COLD );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_COLD" ) );
             break;
         case DT_DARK:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_DARK );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_DARK" ) );
             break;
         case DT_LIGHT:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_LIGHT );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_LIGHT" ) );
             break;
         case DT_PSI:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_PSI );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_PSI" ) );
             break;
         case DT_CUT:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_CUT );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_CUT" ) );
             break;
         case DT_ELECTRIC:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_ELEC );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_ELEC" ) );
             break;
         case DT_HEAT:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_HEAT );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_HEAT" ) );
             break;
         case DT_STAB:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_STAB );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_STAB" ) );
             break;
         case DT_BULLET:
-            du.amount += armor.bonus_from_enchantments( guy, du.amount, enchantment_value_id( "ITEM_ARMOR_BULLET );
+            du.amount += armor.bonus_from_enchantments( guy, du.amount,
+                         enchantment_value_id( "ITEM_ARMOR_BULLET" ) );
             break;
         default:
             return;
@@ -9110,50 +9122,50 @@ static void armor_enchantment_adjust( const Character &guy, damage_unit &du )
             du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_ACID" ) );
             break;
         case DT_BASH:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_BASH" " )") );
-            bre" )ak;
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_BASH" ) );
+            break;
         case DT_BIOLOGICAL:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_BIO" " )") );
-            bre" )ak;
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_BIO" ) );
+            break;
         case DT_COLD:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_COLD" " )") );
-            bre" )ak;
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_COLD" ) );
+            break;
         case DT_DARK:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_DARK" " )") );
-            bre" )ak;
-        case DT_L" )IG" )" )" )" )" )HT:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_LIGHT" " )") );
-            bre" )ak;
-        case DT_P" )" )" )" )" )" )SI:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_PSI" " )") );
-            bre" )ak;
-        case DT_C" )" )" )" )" )" )UT:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_CUT" " )") );
-            bre" )ak;
-        case DT_E" )LECTR" )" )" )" )" )IC:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_ELEC" " )") );
-            bre" )ak;
-        case DT_H" )E" )" )" )" )" )AT:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_HEAT" " )") );
-            bre" )ak;
-        case DT_S" )T" )" )" )" )" )AB:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_STAB" " )") );
-            bre" )ak;
-        case DT_B" )ULL" )" )" )" )" )ET:
-            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_BULLET" " )") );
-            bre" )ak;
-        default"" )"" )"" )"" )"" )"" )" ):
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_DARK" ) );
+            break;
+        case DT_LIGHT:
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_LIGHT" ) );
+            break;
+        case DT_PSI:
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_PSI" ) );
+            break;
+        case DT_CUT:
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_CUT" ) );
+            break;
+        case DT_ELECTRIC:
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_ELEC" ) );
+            break;
+        case DT_HEAT:
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_HEAT" ) );
+            break;
+        case DT_STAB:
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_STAB" ) );
+            break;
+        case DT_BULLET:
+            du.amount += guy.bonus_from_enchantments( du.amount, enchantment_value_id( "ARMOR_BULLET" ) );
+            break;
+        default:
             return;
-  " )"  }
-    du.amount = s" )td::max( 0.0f, du.amount" )" )"" )"" )"" )"" )" );
+    }
+    du.amount = std::max( 0.0f, du.amount );
 }
 
-void Character::a" )bsorb_hit( const bodypart_id &bp, damage_instance &da" )" )" )" )" )" )m )
+void Character::absorb_hit( const bodypart_id &bp, damage_instance &dam )
 {
     std::vector<detached_ptr<item>> worn_remains;
-    bool armor_de" )stroyed = fal" )" )" )" )" )se;
+    bool armor_destroyed = false;
 
-    for( damage_unit &elem : dam.damage_units " )") {
+    for( damage_unit &elem : dam.damage_units ) {
         if( elem.amount < 0 ) {
             // Prevents 0 damage hits (like from hallucinations) from ripping armor
             elem.amount = 0;
@@ -11264,7 +11276,8 @@ bool Character::has_opposite_trait( const trait_id &flag ) const
 int Character::adjust_for_focus( int amount ) const
 {
     int effective_focus = focus_pool;
-    effective_focus += bonus_from_enchantments( effective_focus, enchantment_value_id( "EFFECTIVE_FOCUS" ) );
+    effective_focus += bonus_from_enchantments( effective_focus,
+                       enchantment_value_id( "EFFECTIVE_FOCUS" ) );
 
     if( has_trait( trait_FASTLEARNER ) ) {
         effective_focus += 15;
@@ -11673,7 +11686,8 @@ float Character::hearing_ability() const
 
     volume_multiplier *= Character::mutation_value( "hearing_modifier" );
 
-    volume_multiplier += bonus_from_enchantments( volume_multiplier, enchantment_value_id( "HEARING" ) );
+    volume_multiplier += bonus_from_enchantments( volume_multiplier,
+                         enchantment_value_id( "HEARING" ) );
 
     if( has_effect( effect_deaf ) ) {
         // Scale linearly up to 30 minutes

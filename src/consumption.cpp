@@ -604,7 +604,7 @@ float Character::metabolic_rate_base() const
     const float hunger_rate = get_option< float >( hunger_rate_string );
     const float mut_bonus = 1.0f + mutation_value( metabolism_modifier );
     const float with_mut = hunger_rate * mut_bonus;
-    const float ench_bonus = bonus_from_enchantments( with_mut, enchant_vals::mod::METABOLISM );
+    const float ench_bonus = bonus_from_enchantments( with_mut, enchantment_value_id( "METABOLISM" ) );
 
     return std::max( 0.0f, with_mut + ench_bonus );
 }

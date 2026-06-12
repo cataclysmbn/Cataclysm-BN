@@ -77,6 +77,7 @@
 #include "string_utils.h"
 #include "text_snippets.h"
 #include "translations.h"
+#include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include "units.h"
@@ -1827,7 +1828,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 3;
             chance += u_mods.lie;
 
-            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::LIE );
+            chance += u.bonus_from_enchantments( chance, enchantment_value_id( "LIE" ) );
             break;
         case TALK_TRIAL_PERSUADE:
             chance += character_effects::talk_skill( u ) -
@@ -1835,7 +1836,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 2 + p.op_of_u.value;
             chance += u_mods.persuade;
 
-            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::PERSUADE );
+            chance += u.bonus_from_enchantments( chance, enchantment_value_id( "PERSUADE" ) );
             break;
         case TALK_TRIAL_INTIMIDATE:
             chance += character_effects::intimidation( u ) -
@@ -1843,7 +1844,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.fear * 2 - p.personality.bravery * 2;
             chance += u_mods.intimidate;
 
-            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::INTIMIDATE );
+            chance += u.bonus_from_enchantments( chance, enchantment_value_id( "INTIMIDATE" ) );
             break;
         case TALK_TRIAL_NONE:
             chance = 100;
