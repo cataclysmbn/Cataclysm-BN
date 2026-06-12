@@ -242,9 +242,9 @@ void cata::detail::reg_game_api( sol::state &lua )
         return choose_adjacent_uilist( message, failure_message, allowed, name );
     } );
     luna::set_fx( lib, "choose_area", [](
-        const std::string &message,
-        const tripoint_bub_ms &start_pos,
-        const bool allow_vertical
+                      const std::string & message,
+                      const tripoint_bub_ms & start_pos,
+                      const bool allow_vertical
     ) -> std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> {
         return choose_area( message, start_pos, allow_vertical );
     } );
