@@ -110,7 +110,11 @@ jobs:
         run: |
           # deno lint
           deno test --allow-read --allow-env=npm_package_config_libvips,TILESET_PYTHON --allow-ffi
+
+      - name: check generated semantic PR config
+        run: |
           deno run --allow-read --allow-write scripts/semantic.ts
+          git diff --exit-code -- .github/semantic.yml
 
   lint:
     if: github.event_name == 'pull_request_target'

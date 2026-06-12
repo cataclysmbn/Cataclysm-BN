@@ -70,11 +70,13 @@ scopes:
   - mods/jump_pad
   - mods/lethal_zeds
   - mods/limit_fungal_growth
+  - mods/lua_ai_attitude_debug
   - mods/manualbionicinstall
   - mods/my_sweet_cataclysm
   - mods/no_global_uniques
   - mods/no_npc_food
   - mods/no_reviving_zombies
+  - mods/no_vehicle_colors
   - mods/no_zombify
   - mods/novitamins
   - mods/npc_lua_hook_test
@@ -97,5 +99,6 @@ scopes:
   - mods/test_lua_require
   - mods/udp_redux
   - mods/underground_dynamic_temperature
+  - mods/vehicle_color_expansion
   - mods/weather_variants
   - mods
