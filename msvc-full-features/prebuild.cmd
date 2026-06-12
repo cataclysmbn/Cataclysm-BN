@@ -27,8 +27,11 @@ echo BUILD_TIMESTAMP defined as "%BUILD_TIMESTAMP%"
 )
 
 if /I "%~1"=="shaders" (
-powershell -NoProfile -ExecutionPolicy Bypass -File ..\build-scripts\generate-shaders.ps1 -GenerateCpu
-if errorlevel 1 exit /B 1
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\build-scripts\generate-shaders.ps1 -GenerateCpu -VcpkgTriplet "%~2"
+if errorlevel 1 (
+popd
+exit /B 1
+)
 )
 
 popd

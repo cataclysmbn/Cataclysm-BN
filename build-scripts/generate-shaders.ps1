@@ -2,6 +2,7 @@ param(
     [string]$SourceDir = "",
     [string]$OutputDir = "",
     [string]$CpuOutputDir = "",
+    [string]$VcpkgTriplet = "",
     [switch]$GenerateCpu
 )
 
@@ -18,7 +19,7 @@ if ([string]::IsNullOrWhiteSpace($CpuOutputDir)) {
     $CpuOutputDir = Join-Path $repoRoot "msvc-full-features\generated\slang_cpu"
 }
 
-function Get-CommandPath {
+function Find-CommandPath {
     param(
         [string]$Name,
         [string]$EnvName,
@@ -41,15 +42,44 @@ function Get-CommandPath {
         }
     }
 
+    return ""
+}
+
+function Get-CommandPath {
+    param(
+        [string]$Name,
+        [string]$EnvName,
+        [string[]]$Candidates
+    )
+
+    $path = Find-CommandPath -Name $Name -EnvName $EnvName -Candidates $Candidates
+    if (![string]::IsNullOrWhiteSpace($path)) {
+        return $path
+    }
+
     throw "Could not find $Name. Set $EnvName or install the required build tool."
 }
 
 function Get-VcpkgShadercrossCandidates {
-    $triplets = @("x64-windows-static", "x86-windows-static")
+    $triplets = @()
+    if (![string]::IsNullOrWhiteSpace($VcpkgTriplet)) {
+        $triplets += $VcpkgTriplet
+    }
+    foreach ($defaultTriplet in @("x64-windows-static", "x86-windows-static")) {
+        if ($triplets -notcontains $defaultTriplet) {
+            $triplets += $defaultTriplet
+        }
+    }
     $roots = @(
         (Join-Path $repoRoot "msvc-full-features\vcpkg_installed"),
-        (Join-Path $repoRoot "vcpkg_installed")
+        (Join-Path $repoRoot "vcpkg_installed"),
+        (Join-Path $repoRoot "vcpkg\installed"),
+        (Join-Path $repoRoot "..\vcpkg\installed"),
+        "C:\vcpkg\installed"
     )
+    if (![string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
+        $roots += Join-Path $env:USERPROFILE "vcpkg\installed"
+    }
     foreach ($envName in @("VCPKG_ROOT", "VCPKG_INSTALLATION_ROOT")) {
         $envValue = [Environment]::GetEnvironmentVariable($envName)
         if (![string]::IsNullOrWhiteSpace($envValue)) {
@@ -64,6 +94,57 @@ function Get-VcpkgShadercrossCandidates {
         }
     }
     return $candidates
+}
+
+function Get-VcpkgExecutableCandidates {
+    $candidates = @()
+    foreach ($envName in @("VCPKG_ROOT", "VCPKG_INSTALLATION_ROOT")) {
+        $envValue = [Environment]::GetEnvironmentVariable($envName)
+        if (![string]::IsNullOrWhiteSpace($envValue)) {
+            $candidates += Join-Path $envValue "vcpkg.exe"
+        }
+    }
+
+    $roots = @(
+        (Join-Path $repoRoot "vcpkg"),
+        (Join-Path $repoRoot "..\vcpkg"),
+        "C:\vcpkg"
+    )
+    if (![string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
+        $roots += Join-Path $env:USERPROFILE "vcpkg"
+    }
+
+    foreach ($root in $roots) {
+        $candidates += Join-Path $root "vcpkg.exe"
+    }
+    return $candidates
+}
+
+function Install-VcpkgShadercross {
+    param(
+        [string]$Triplet
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Triplet)) {
+        $Triplet = "x64-windows-static"
+    }
+
+    $vcpkg = Get-CommandPath `
+        -Name "vcpkg.exe" `
+        -EnvName "VCPKG_EXE" `
+        -Candidates (Get-VcpkgExecutableCandidates)
+    $manifestRoot = Join-Path $repoRoot "msvc-full-features"
+
+    Write-Host "shadercross.exe not found; installing vcpkg manifest tools for $Triplet"
+    Push-Location $manifestRoot
+    try {
+        & $vcpkg install --triplet $Triplet --clean-after-build
+        if ($LASTEXITCODE -ne 0) {
+            throw "vcpkg failed to install shadercross dependencies for $Triplet"
+        }
+    } finally {
+        Pop-Location
+    }
 }
 
 function Test-OutputsOutdated {
@@ -143,10 +224,17 @@ if ($hlslShaders.Count -eq 0 -and $slangShaders.Count -eq 0) {
     throw "No HLSL or Slang shaders found in $SourceDir"
 }
 
-$shadercross = Get-CommandPath `
+$shadercross = Find-CommandPath `
     -Name "shadercross.exe" `
     -EnvName "SHADERCROSS" `
     -Candidates (Get-VcpkgShadercrossCandidates)
+if ([string]::IsNullOrWhiteSpace($shadercross)) {
+    Install-VcpkgShadercross -Triplet $VcpkgTriplet
+    $shadercross = Get-CommandPath `
+        -Name "shadercross.exe" `
+        -EnvName "SHADERCROSS" `
+        -Candidates (Get-VcpkgShadercrossCandidates)
+}
 
 $slangCandidates = @(
     (Join-Path $repoRoot "build-data\slang\current\bin\slangc.exe")
