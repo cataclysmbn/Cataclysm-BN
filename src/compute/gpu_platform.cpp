@@ -375,6 +375,15 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
                 .driver = backend,
                 .require_vulkan_hardware = true,
             });
+#if !defined(__ANDROID__)
+        add_attempt(
+            attempts,
+            {
+                .label = "vulkan hardware",
+                .driver = "vulkan",
+                .require_vulkan_hardware = true,
+            });
+#endif
     } else {
         add_attempt(
             attempts,
@@ -442,14 +451,14 @@ auto select_shader_format(SDL_GPUShaderFormat const formats)
 
 auto probe_shader(
     SDL_GPUDevice* const device, SDL_GPUShaderFormat const fmt, std::string_view const ext)
-    -> void {
+    -> bool {
     auto const path = PATH_INFO::shaders() + "test_compute" + std::string{ext};
     auto const blob = read_file_bytes(path);
     if (blob.empty()) {
-        DebugLog(DL::Info, DC::Main)
+        DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: shader blob not found: " << path
             << " (run a build with shadercross to compile shaders)";
-        return;
+        return false;
     }
 
     SDL_GPUComputePipelineCreateInfo const info{
@@ -473,11 +482,12 @@ auto probe_shader(
     if (pipeline == nullptr) {
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: compute pipeline creation failed for " << path << ": " << SDL_GetError();
-        return;
+        return false;
     }
 
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: shader probe OK (" << path << ")";
     SDL_ReleaseGPUComputePipeline(device, pipeline);
+    return true;
 }
 
 } // namespace
@@ -520,6 +530,27 @@ auto init() -> void {
                 device = nullptr;
                 continue;
             }
+
+            auto const formats = SDL_GetGPUShaderFormats(device);
+            auto const [fmt, ext] = select_shader_format(formats);
+            if (fmt == SDL_GPU_SHADERFORMAT_INVALID) {
+                DebugLog(DL::Warn, DC::Main)
+                    << "SDL_GPU: rejected device with no supported compute shader format: "
+                    << attempt.label << " formats=" << shader_formats_to_string(formats);
+                log_gpu_device_info(selected_device_info);
+                SDL_DestroyGPUDevice(device);
+                device = nullptr;
+                continue;
+            }
+            if (!probe_shader(device, fmt, ext)) {
+                DebugLog(DL::Warn, DC::Main)
+                    << "SDL_GPU: rejected device because compute shader probe failed: "
+                    << attempt.label;
+                log_gpu_device_info(selected_device_info);
+                SDL_DestroyGPUDevice(device);
+                device = nullptr;
+                continue;
+            }
             DebugLog(DL::Info, DC::Main) << "SDL_GPU: selected device policy: " << attempt.label;
             break;
         }
@@ -550,9 +581,6 @@ auto init() -> void {
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: driver=" << (driver != nullptr ? driver : "unknown")
                                  << "  formats=" << shader_formats_to_string(formats);
     log_gpu_device_info(selected_device_info);
-
-    auto const [fmt, ext] = select_shader_format(formats);
-    if (fmt != SDL_GPU_SHADERFORMAT_INVALID) { probe_shader(device, fmt, ext); }
 
     s_device = device;
     DebugLog(DL::Info, DC::Main) << "Compute backend selected: sdl_gpu";

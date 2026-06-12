@@ -19,6 +19,7 @@ enum class tristate : int {
 
 auto load()  -> void;
 auto save()  -> void;
+auto loaded_existing_config() -> bool;
 
 auto get_compute_accel()                -> compute_accel;
 auto set_compute_accel( compute_accel ) -> void;

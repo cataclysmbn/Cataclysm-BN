@@ -1,7 +1,7 @@
 @echo off
 SETLOCAL
 
-cd ..\msvc-full-features
+pushd "%~dp0"
 set PATH=%PATH%;%VSAPPIDDIR%\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd
 if "%VERSION%"=="" (
 for /F "tokens=*" %%i in ('git describe --tags --always --dirty --match "[0-9]*.*"') do set VERSION=%%i
@@ -25,3 +25,10 @@ echo BUILD_TIMESTAMP defined as "%BUILD_TIMESTAMP%"
 >>..\src\version.h echo #define VERSION "%VERSION%"
 >>..\src\version.h echo #define BUILD_TIMESTAMP "%BUILD_TIMESTAMP%"
 )
+
+if /I "%~1"=="shaders" (
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\build-scripts\generate-shaders.ps1 -GenerateCpu
+if errorlevel 1 exit /B 1
+)
+
+popd

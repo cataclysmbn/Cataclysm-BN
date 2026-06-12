@@ -1,5 +1,6 @@
 #include "preload_config.h"
 
+#include "filesystem.h"
 #include "fstream_utils.h"
 #include "json.h"
 #include "path_info.h"
@@ -17,6 +18,7 @@ struct state_t {
     compute_accel accel{ compute_accel::auto_select };
     std::string gpu_backend;
     bool gpu_backend_override_set = false;
+    bool loaded_existing_config = false;
     tristate texture_streaming { tristate::auto_select };
 };
 
@@ -39,6 +41,7 @@ auto tristate_from_legacy_int( const int value ) -> tristate
 
 auto load() -> void
 {
+    s_state.loaded_existing_config = file_exist( PATH_INFO::preload() );
     read_from_file_json(
         PATH_INFO::preload(),
     [&]( JsonIn & jsin ) {
@@ -66,7 +69,7 @@ auto load() -> void
 
 auto save() -> void
 {
-    write_to_file( PATH_INFO::preload(), [&]( std::ostream & fout ) {
+    const auto saved = write_to_file( PATH_INFO::preload(), [&]( std::ostream & fout ) {
         JsonOut jout( fout, true );
         jout.start_object();
         jout.member( "compute_acceleration",
@@ -78,8 +81,12 @@ auto save() -> void
                      std::string{ tristate_to_string( s_state.texture_streaming ) } );
         jout.end_object();
     }, "preload config" );
+    if( saved ) {
+        s_state.loaded_existing_config = true;
+    }
 }
 
+auto loaded_existing_config() -> bool                           { return s_state.loaded_existing_config; }
 auto get_compute_accel() -> compute_accel                         { return s_state.accel; }
 auto set_compute_accel( compute_accel val ) -> void               { s_state.accel = val; }
 
