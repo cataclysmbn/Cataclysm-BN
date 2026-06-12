@@ -275,8 +275,8 @@ auto estimate_seen_trace_tiles(seen_trace_tile_estimate_params const& p) -> uint
     auto total = uint64_t{0};
     const auto x_start = std::max(0, p.player_x - p.view_radius);
     const auto x_end = std::min(p.cache_x, p.player_x + p.view_radius + 1);
-    for (const auto z_idx : std::views::iota(
-             p.dispatch.z_start_idx, p.dispatch.z_start_idx + p.dispatch.z_count)) {
+    for (const auto z_idx :
+         std::views::iota(p.dispatch.z_start_idx, p.dispatch.z_start_idx + p.dispatch.z_count)) {
         const auto dz = std::abs(z_idx - p.player_z_idx);
         for (const auto x : std::views::iota(x_start, x_end)) {
             const auto max_dy =
@@ -944,8 +944,7 @@ auto run_visibility(visibility_params const& p) -> bool {
     const auto rebuild_seen =
         p.rebuild_seen_cache || !seen_levels_valid(download_levels, p.player_x, p.player_y);
     const auto dispatch = make_dispatch_range(download_levels);
-    TracyPlot("Slang CPU Visibility Download Levels",
-              static_cast<int64_t>(download_levels.size()));
+    TracyPlot("Slang CPU Visibility Download Levels", static_cast<int64_t>(download_levels.size()));
     TracyPlot("Slang CPU Visibility Dispatch Levels", static_cast<int64_t>(dispatch.z_count));
     TracyPlot("Slang CPU Visibility Dispatch Selected",
               dispatch.z_count == s_lighting.z_count ? int64_t{0} : int64_t{1});
@@ -954,10 +953,11 @@ auto run_visibility(visibility_params const& p) -> bool {
               static_cast<int64_t>(dispatch.z_count)
                   * static_cast<int64_t>(s_lighting.cache_x * s_lighting.cache_y));
     const auto seen_clear_tiles =
-        rebuild_seen ? static_cast<uint32_t>(static_cast<std::size_t>(dispatch.z_count)
-                                             * static_cast<std::size_t>(
-                                                   s_lighting.cache_x * s_lighting.cache_y))
-                     : uint32_t{0};
+        rebuild_seen
+            ? static_cast<uint32_t>(
+                  static_cast<std::size_t>(dispatch.z_count)
+                  * static_cast<std::size_t>(s_lighting.cache_x * s_lighting.cache_y))
+            : uint32_t{0};
     const auto seen_trace_tiles =
         rebuild_seen
             ? estimate_seen_trace_tiles({

@@ -38,16 +38,16 @@ auto sdl_gpu_status() -> backend_status {
 }
 
 auto select_slang_cpu_after_auto_fallback() -> void {
-    DebugLog(DL::Info, DC::Main)
-        << "Compute backend auto-select is falling back to Slang CPU after SDL_GPU startup "
-           "validation failed";
+    DebugLog(DL::Info, DC::Main) << "Compute backend auto-select is falling back to Slang CPU "
+                                    "after SDL_GPU startup "
+                                    "validation failed";
     slang_cpu::init();
     s_status = slang_cpu::status();
     if (s_status.available && !preload_config::loaded_existing_config()) {
         preload_config::set_compute_accel(preload_config::compute_accel::cpu);
         preload_config::save();
-        DebugLog(DL::Info, DC::Main)
-            << "Compute backend first-launch fallback persisted as CPU shader backend";
+        DebugLog(DL::Info, DC::Main) << "Compute backend first-launch fallback persisted as CPU "
+                                        "shader backend";
     }
 }
 
