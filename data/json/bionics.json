@@ -77,7 +77,8 @@
     "bash_protec": [ [ "eyes", 3 ] ],
     "cut_protec": [ [ "eyes", 3 ] ],
     "points": 1,
-    "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ]
+    "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ],
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 10 } ] } ]
   },
   {
     "id": "bio_armor_head",
@@ -168,7 +169,8 @@
     "name": { "str": "Optical Dampers" },
     "description": "The lenses surgically installed over your eyes can be tinted to block out incoming light.",
     "included": true,
-    "flags": [ "BIONIC_TOGGLED" ]
+    "flags": [ "BIONIC_TOGGLED" ],
+    "bio_enchantments": [ { "condition": "ACTIVE", "ench_effects": [ { "effect": "blind", "intensity": 1 } ] } ]
   },
   {
     "id": "bio_blood_anal",
@@ -324,7 +326,11 @@
     "occupied_bodyparts": [ [ "head", 4 ], [ "mouth", 1 ] ],
     "starting_bionic": true,
     "points": -1,
-    "flags": [ "BIONIC_FAULTY" ]
+    "flags": [ "BIONIC_FAULTY" ],
+    "bio_enchantments": [
+      { "condition": "ALWAYS", "values": [ { "value": "PERSUADE", "add": -50 } ] },
+      { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 20 } ] }
+    ]
   },
   {
     "id": "bio_dex_enhancer",
@@ -460,7 +466,12 @@
     "name": { "str": "Facial Distortion" },
     "description": "Through controlled application of electrochemical impulses, you are capable of altering your facial structure so as to subtly affect the reactions of others.  This grants a bonus to all social interactions.",
     "points": 1,
-    "occupied_bodyparts": [ [ "head", 3 ], [ "mouth", 1 ] ]
+    "occupied_bodyparts": [ [ "head", 3 ], [ "mouth", 1 ] ],
+    "bio_enchantments": [
+      { "condition": "ALWAYS", "values": [ { "value": "LIE", "add": 20 } ] },
+      { "condition": "ALWAYS", "values": [ { "value": "PERSUADE", "add": 10 } ] },
+      { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 10 } ] }
+    ]
   },
   {
     "id": "bio_faraday",
@@ -501,6 +512,16 @@
     "occupied_bodyparts": [ [ "torso", 20 ], [ "arm_l", 2 ], [ "arm_r", 2 ], [ "leg_l", 3 ], [ "leg_r", 3 ] ],
     "points": 1,
     "act_cost": "10 kJ"
+  },
+  {
+    "id": "bio_minirose",
+    "type": "bionic",
+    "name": { "str": "minirose" },
+    "description": "A dead man's switch and literal mininuke wired through the torso and major blood vessels.  It can be armed or disabled, and detonates upon death while armed or manual trigger.  You wouldn't want to use it, unless you'd like to demonstrate the bottomless malice within the human heart to a certain ant.",
+    "occupied_bodyparts": [ [ "torso", 20 ] ],
+    "act_cost": "1 J",
+    "points": 1,
+    "flags": [ "BIONIC_NPC_USABLE", "BIONIC_TOGGLED" ]
   },
   {
     "id": "bio_flashlight",
@@ -613,7 +634,8 @@
     "react_cost": "10 kJ",
     "time": 1,
     "required_bionics": [ "bio_weight" ],
-    "points": 4
+    "points": 4,
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 20 } ] } ]
   },
   {
     "id": "bio_infolink",
@@ -743,7 +765,8 @@
     "react_cost": "2 J",
     "trigger_cost": "25 J",
     "time": 1,
-    "points": 1
+    "points": 1,
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "EFFECTIVE_FOCUS", "add": 10 } ] } ]
   },
   {
     "id": "bio_metabolics",
@@ -1086,7 +1109,8 @@
       [ "foot_r", 2 ]
     ],
     "points": 2,
-    "flags": [ "BIONIC_NPC_USABLE" ]
+    "flags": [ "BIONIC_NPC_USABLE" ],
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "SPEED", "multiply": 0.1 } ] } ]
   },
   {
     "id": "bio_stiff",
@@ -1256,7 +1280,7 @@
     "react_cost": "6 J",
     "time": 1,
     "points": 2,
-    "enchantments": [ "ENCH_BIO_UNDERWATER_PROPELLERS" ]
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "SWIM_MOVE_COST", "multiply": -0.25 } ] } ]
   },
   {
     "id": "bio_ups",
@@ -1276,7 +1300,12 @@
     "occupied_bodyparts": [ [ "torso", 2 ], [ "mouth", 1 ] ],
     "flags": [ "BIONIC_FAULTY" ],
     "starting_bionic": true,
-    "points": -1
+    "points": -1,
+    "bio_enchantments": [
+      { "condition": "ALWAYS", "values": [ { "value": "LIE", "add": 10 } ] },
+      { "condition": "ALWAYS", "values": [ { "value": "PERSUADE", "add": -20 } ] },
+      { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 20 } ] }
+    ]
   },
   {
     "id": "bio_water_extractor",
@@ -1450,7 +1479,8 @@
     "name": { "str": "Linguistic Coprocessor" },
     "description": "The left hemisphere of your brain has been augmented with a microcomputer that moderately increases the speed that language and written words are processed, granting a 25% increase to reading speed.",
     "occupied_bodyparts": [ [ "head", 1 ] ],
-    "points": 1
+    "points": 1,
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "READING_SPEED", "multiply": -0.25 } ] } ]
   },
   {
     "id": "afs_bio_dopamine_stimulators",

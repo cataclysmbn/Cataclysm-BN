@@ -16,7 +16,9 @@ else ()
     set(CATALUA_BINDINGS_COMPILE_OPTIONS -O0 -g0)
 endif ()
 foreach (catalua_src IN LISTS CATALUA_BINDINGS_SOURCES)
-    set_source_files_properties(${catalua_src} PROPERTIES COMPILE_OPTIONS "${CATALUA_BINDINGS_COMPILE_OPTIONS}")
+    set_source_files_properties(${catalua_src} PROPERTIES
+        COMPILE_OPTIONS "${CATALUA_BINDINGS_COMPILE_OPTIONS}"
+        SKIP_PRECOMPILE_HEADERS ON)
 endforeach ()
 
 file(GLOB_RECURSE CATACLYSM_BN_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.h)

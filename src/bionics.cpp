@@ -349,6 +349,26 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
     assign( jsobj, "no_uninstall_reason", no_uninstall_reason, strict );
     assign( jsobj, "starting_bionic", starting_bionic, strict );
     assign( jsobj, "points", points, strict );
+    if( jsobj.has_array( "bio_enchantments" ) ) {
+        for( JsonObject jo : jsobj.get_array( "bio_enchantments" ) ) {
+            enchantment ench;
+            ench.load( jo );
+            if( !ench.id.is_empty() ) {
+                ench = ench.id.obj();
+            }
+            bool addable = false;
+            // If it can be combined with another one combine it
+            for( enchantment &oench : bio_enchantments ) {
+                if( oench.add( ench ) ) {
+                    addable = true;
+                    break;
+                }
+            }
+            if( !addable ) {
+                bio_enchantments.push_back( ench );
+            }
+        }
+    }
 
 
     activated = has_flag( flag_BIONIC_TOGGLED ) ||
@@ -404,6 +424,9 @@ void bionic_data::check() const
         if( !eid.is_valid() ) {
             rep.warn( "uses undefined enchantment \"%s\"", eid.str() );
         }
+    }
+    for( const auto &ench : id->bio_enchantments ) {
+        ench.check();
     }
     for( const auto &it : occupied_bodyparts ) {
         if( !it.first.is_valid() ) {
@@ -665,6 +688,9 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
             bio.charge_timer = bio.info().charge_time;
         }
         if( !bio.id->enchantments.empty() ) {
+            recalculate_enchantment_cache();
+        }
+        if( !bio.id->bio_enchantments.empty() ) {
             recalculate_enchantment_cache();
         }
     }
@@ -1289,6 +1315,9 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
     reset();
     get_map().invalidate_lightmap_caches();
     if( !bio.id->enchantments.empty() ) {
+        recalculate_enchantment_cache();
+    }
+    if( !bio.id->bio_enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
 
@@ -2938,6 +2967,9 @@ void Character::add_bionic( const bionic_id &b )
     reset_encumbrance();
     recalc_sight_limits();
     if( !b->enchantments.empty() ) {
+        recalculate_enchantment_cache();
+    }
+    if( !b->bio_enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
 }

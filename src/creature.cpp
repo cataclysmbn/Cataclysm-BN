@@ -392,7 +392,7 @@ bool Creature::sees( const Creature &critter ) const
     return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
 }
 
-bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) const
+bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod ) const
 {
     ZoneScoped;
     map &here = get_map();
@@ -1489,10 +1489,6 @@ void Creature::clear_effects()
             remove_effect( elem.first, _effect_it.first );
         }
     }
-}
-bool Creature::remove_effect( const efftype_id &eff_id )
-{
-    return remove_effect( eff_id, bodypart_str_id::NULL_ID() );
 }
 bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &bp )
 {

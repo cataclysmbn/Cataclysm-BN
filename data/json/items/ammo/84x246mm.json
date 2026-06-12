@@ -33,7 +33,7 @@
     "volume": "1500 ml",
     "weight": "3300 g",
     "//": "Same damage but more effective armor negation due to being dedicated anti-tank ammo",
-    "damage": { "damage_type": "bullet", "amount": 300, "armor_multiplier": 0.1 },
+    "damage": { "damage_type": "bullet", "amount": 700, "armor_multiplier": 0.1 },
     "range": 100,
     "dispersion": 75,
     "recoil": 60,

@@ -8,6 +8,7 @@ local lab = require("lua/mapgen/lab")
 local cooking = require("lua/cooking")
 local robofac = require("lua/robofac")
 local nuclear_tear = require("lua/nuclear_tear")
+local minirose = require("lua/minirose")
 local plumbing = require("lua/plumbing")
 
 local mod = game.mod_runtime[game.current_mod]
@@ -25,3 +26,4 @@ lua_traits.register(mod)
 mod.cooking = cooking
 mod.robofac = robofac
 mod.nuclear_tear = nuclear_tear
+mod.minirose = minirose

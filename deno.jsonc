@@ -33,6 +33,7 @@
     "exclude": ["doc", "**/*.svg"],
     "include": ["scripts", ".agents", "doc", "docs", "*.md", ".github", ".claude"],
     "semiColons": false,
+    "json.trailingCommas": "jsonc",
     "lineWidth": 100,
     "proseWrap": "preserve"
   },

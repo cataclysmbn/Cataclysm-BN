@@ -10,7 +10,7 @@
 class map;
 struct SDL_GPUBuffer;
 struct SDL_GPUDevice;
-struct submap;
+class submap;
 
 namespace cata_gpu {
 

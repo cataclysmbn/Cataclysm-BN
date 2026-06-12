@@ -638,6 +638,7 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr,
             .status = add_uniform_omt( *this, base, *uniform_terrain )
             ? mapgen_result_status::generated
             : mapgen_result_status::not_generated,
+            .selected_mapgen = nullptr,
         };
     }
 
@@ -658,7 +659,7 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr,
             return generate_result;
         }
     }
-    return { .status = mapgen_result_status::generated };
+    return { .status = mapgen_result_status::generated, .selected_mapgen = nullptr };
 }
 
 auto mapbuffer::drain_pending_submap_destroy() -> void
