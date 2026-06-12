@@ -473,9 +473,10 @@ auto shutdown() -> void {
 auto status() -> backend_status {
     const auto available = s_initialized && kernels::generated_kernels_available();
     const auto detail =
-        !s_initialized                            ? "Slang CPU backend is not initialized"
-        : !kernels::generated_kernels_available() ? "Slang CPU backend was built without generated "
-                                                    "kernels"
+        !s_initialized ? "Slang CPU backend is not initialized"
+        : !kernels::generated_kernels_available()
+            ? "Slang CPU backend was built without generated "
+              "kernels"
         : !s_probe_ok
             ? "Slang CPU generated kernel probe failed"
             : "Slang CPU generated kernel probe passed";

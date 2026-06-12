@@ -491,8 +491,9 @@ auto init() -> void {
     auto const backend_str = std::string{backend_sv};
     auto const accel = preload_config::get_compute_accel();
     if (accel == compute_accel::cpu) {
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: skipped device creation because the CPU shader "
-                                        "backend was selected";
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: skipped device creation because the CPU shader "
+               "backend was selected";
         return;
     }
 
