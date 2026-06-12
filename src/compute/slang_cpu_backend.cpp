@@ -815,9 +815,7 @@ auto run_lighting(lighting_params const& p) -> bool {
             clear_colored_light_levels(*p.m, levels);
         }
 
-        if (p.download_lightmap) {
-            copy_lightmap_to_level_caches(*p.m, lightmap_levels);
-        }
+        if (p.download_lightmap) { copy_lightmap_to_level_caches(*p.m, lightmap_levels); }
         s_lighting.source_map_valid = true;
         s_lighting.lighting_outputs_valid = true;
     }
@@ -894,9 +892,7 @@ auto run_visibility(visibility_params const& p) -> bool {
                           .z_start_idx = dispatch.z_start_idx,
                       });
         }
-        if (!cleared) {
-            return false;
-        }
+        if (!cleared) { return false; }
         {
             ZoneScopedN("slang_cpu_seen_kernel");
             if (!kernels::seen({
@@ -1017,9 +1013,7 @@ auto run_visibility(visibility_params const& p) -> bool {
         }
     }
 
-    {
-        copy_visibility_to_level_cache(*p.m, download_levels);
-    }
+    { copy_visibility_to_level_cache(*p.m, download_levels); }
     return true;
 }
 
