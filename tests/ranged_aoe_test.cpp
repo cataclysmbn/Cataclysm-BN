@@ -19,7 +19,6 @@
 #include "ranged.h"
 #include "projectile.h"
 #include "map_helpers.h"
-#include "overmapbuffer.h"
 #include "game.h"
 #include "itype.h"
 #include "rng.h"
@@ -52,22 +51,19 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
 
     const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
-    get_player_character().setpos( shooter_pos + tripoint_south );
+    auto &target = get_player_character();
+    target.set_body();
+    target.setpos( target_pos );
+    target.worn.clear();
+    target.set_dodge_bonus( -100.0f );
+    for( const auto &armor_id : armor_ids ) {
+        target.worn.push_back( item::spawn( armor_id ) );
+    }
+    REQUIRE( g->critter_at<avatar>( target_pos ) != nullptr );
+
     auto shooter = standard_npc( "shooter", shooter_pos );
     shooter.set_skill_level( skill_gun, 10 );
     shooter.set_skill_level( skill_shotgun, 10 );
-
-    auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
-    target->worn.clear();
-    target->set_dodge_bonus( -100.0f );
-    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
-    target->setpos( target_pos );
-    for( const auto &armor_id : armor_ids ) {
-        target->worn.push_back( item::spawn( armor_id ) );
-    }
-    ACTIVE_OVERMAP_BUFFER.insert_npc( target );
-    g->load_npcs();
-    REQUIRE( g->critter_at<npc>( target_pos ) != nullptr );
 
     detached_ptr<item> gun = item::spawn( itype_id( "test_shotgun" ) );
     gun->ammo_set( ammo_id );
@@ -81,7 +77,7 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     REQUIRE( gun->gun_range() >= rl_dist( shooter_pos, target_pos ) );
 
     const auto pellet_count = gun->ammo_data()->ammo->shot->count;
-    const auto target_hp_total_before = target->get_hp();
+    const auto target_hp_total_before = target.get_hp();
     shooter.wield( std::move( gun ) );
 
     const auto shells_to_fire = 5;
@@ -91,7 +87,7 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
         projectile_attack( probe, shooter_pos, target_pos, dispersion_sources {}, &shooter,
                            &shooter.primary_weapon(), nullptr, true );
     }
-    return target_hp_total_before - target->get_hp();
+    return target_hp_total_before - target.get_hp();
 }
 
 static auto fire_shells_at_target( const itype_id &ammo_id,
@@ -283,24 +279,19 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
     rng_set_engine_seed( deterministic_rng_seeds.front() );
     REQUIRE( get_map().has_zlevels() );
 
-    auto &shooter = get_player_character();
     const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
-    shooter.set_body();
-    shooter.setpos( shooter_pos );
+    auto &target = get_player_character();
+    target.set_body();
+    target.setpos( target_pos );
+    target.worn.clear();
+    target.set_dodge_bonus( -100.0f );
+    REQUIRE( g->critter_at<avatar>( target_pos ) != nullptr );
+
+    auto shooter = standard_npc( "shooter", shooter_pos );
     set_time( calendar::turn_zero + 12_hours );
     shooter.set_skill_level( skill_gun, 10 );
     shooter.set_skill_level( skill_shotgun, 10 );
-
-    auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
-    target->worn.clear();
-    target->set_dodge_bonus( -100.0f );
-    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
-    target->setpos( target_pos );
-    ACTIVE_OVERMAP_BUFFER.insert_npc( target );
-    g->load_npcs();
-    REQUIRE( g->critter_at<npc>( target_pos ) != nullptr );
-    REQUIRE( shooter.sees( *target ) );
 
     detached_ptr<item> gun = item::spawn( itype_id( "test_shotgun" ) );
     gun->ammo_set( itype_id( "test_buckshot" ) );
