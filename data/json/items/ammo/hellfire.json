@@ -37,6 +37,6 @@
     "range": 100,
     "recoil": 12000,
     "loudness": 120,
-    "effects": [ "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
+    "effects": [ "NEVER_MISFIRES" ]
   }
 ]
