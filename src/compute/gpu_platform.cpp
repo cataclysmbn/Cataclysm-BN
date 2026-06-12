@@ -303,10 +303,24 @@ auto software_attempts() -> std::vector<gpu_device_create_attempt> {
     return {};
 #else
     return {
+#if defined(_WIN32)
+        {
+            .label = "direct3d12 software-required",
+            .driver = "direct3d12",
+            .require_vulkan_hardware = false,
+            .prefer_low_power = true,
+        },
+#endif
         {
             .label = "vulkan software-required",
             .driver = "vulkan",
             .require_vulkan_hardware = false,
+        },
+        {
+            .label = "default software-required",
+            .driver = "",
+            .require_vulkan_hardware = false,
+            .prefer_low_power = true,
         },
     };
 #endif
