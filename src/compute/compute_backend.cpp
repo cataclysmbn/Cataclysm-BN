@@ -46,8 +46,9 @@ auto select_slang_cpu_after_auto_fallback() -> void {
     if (s_status.available && !preload_config::loaded_existing_config()) {
         preload_config::set_compute_accel(preload_config::compute_accel::cpu);
         preload_config::save();
-        DebugLog(DL::Info, DC::Main) << "Compute backend first-launch fallback persisted as CPU "
-                                        "shader backend";
+        DebugLog(DL::Info, DC::Main)
+            << "Compute backend first-launch fallback persisted as CPU "
+               "shader backend";
     }
 }
 
