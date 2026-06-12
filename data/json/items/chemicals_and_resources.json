@@ -295,7 +295,7 @@
     "color": "pink",
     "use_action": "FUNGICIDE",
     "stim": -7,
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "comestible_type": "MED",
     "symbol": "!",
     "healthy": -7,
@@ -317,7 +317,7 @@
     "//": "Typically sold in larger quantities, but that's handed in the charge count.",
     "color": "pink",
     "looks_like": "fungicide",
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "symbol": "!",
     "description": "Agricultural-grade chemical insecticide powder designed to eradicate insect pests.",
     "price": "11 USD",
@@ -500,7 +500,7 @@
     "//": "Weight should be 1.76g but the game will round down the number to 1g and 1.76g is closer to 2g",
     "bashing": 1,
     "ammo_type": "components",
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "count": 100
   },
   {
@@ -989,7 +989,7 @@
     "weight": "2 g",
     "bashing": 1,
     "ammo_type": "components",
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "count": 100
   },
   {
@@ -1312,7 +1312,7 @@
     "color": "yellow",
     "calories": 70,
     "charges": 8,
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "flags": [ "EATEN_COLD" ],
     "description": "These clear cubes of processed seaweed can be dissolved in boiling water to create a very sturdy, temperature resistant gel.  Not only is it good for making gels to separate molecules by size, but it's a great cheat ingredient to make sure your jellies set properly.",
     "material": [ "junk" ],

@@ -828,7 +828,7 @@
         { "u_sell_item": "duffelbag" },
         { "npc_consume_item": "cattail_stalk", "count": 20 },
         { "u_learn_recipe": "cattail_jelly" },
-        { "u_buy_item": "cattail_jelly", "container": "bag_zipper", "count": 7 }
+        { "u_buy_item": "cattail_jelly", "container": "bag_zipper_small", "count": 7 }
       ]
     },
     "dialogue": {
