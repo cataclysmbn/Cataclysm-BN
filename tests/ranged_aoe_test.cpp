@@ -4,6 +4,7 @@
 #include <array>
 #include <optional>
 #include <queue>
+#include <ranges>
 #include <set>
 #include <vector>
 
@@ -28,8 +29,19 @@
 static const skill_id skill_gun( "gun" );
 static const skill_id skill_shotgun( "shotgun" );
 
-// Seed 0 preserves the current test-suite RNG state.
 constexpr auto deterministic_rng_seeds = std::array { 1U, 2U, 3U, 4U, 5U, 4242424242U };
+
+static auto make_direct_gun_projectile( const item &gun ) -> projectile
+{
+    auto probe = projectile {};
+    probe.speed = gun.gun_speed();
+    probe.impact = gun.gun_damage();
+    probe.range = gun.gun_range();
+    for( const auto &ammo_effect : gun.ammo_effects() ) {
+        probe.add_effect( ammo_effect );
+    }
+    return probe;
+}
 
 static auto fire_shell_at_target( const itype_id &ammo_id,
                                   const std::vector<itype_id> &armor_ids, const unsigned int seed ) -> int
@@ -47,6 +59,7 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
 
     auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
     target->worn.clear();
+    target->set_dodge_bonus( -100.0f );
     target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
     target->setpos( target_pos );
     for( const auto &armor_id : armor_ids ) {
@@ -54,6 +67,7 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     }
     ACTIVE_OVERMAP_BUFFER.insert_npc( target );
     g->load_npcs();
+    REQUIRE( g->critter_at<npc>( target_pos ) != nullptr );
 
     detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
     gun->ammo_set( ammo_id );
@@ -66,15 +80,17 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     REQUIRE( ranged::get_target_shape_factory( *gun ).has_value() );
     REQUIRE( gun->gun_range() >= rl_dist( shooter_pos, target_pos ) );
 
+    const auto pellet_count = gun->ammo_data()->ammo->shot->count;
     const auto target_hp_total_before = target->get_hp();
     shooter.wield( std::move( gun ) );
 
-    const auto shots_to_fire = 5;
-    const auto shots_fired = ranged::fire_gun( shooter, target_pos, shots_to_fire,
-                             shooter.primary_weapon(),
-                             nullptr );
-
-    REQUIRE( shots_fired == shots_to_fire );
+    const auto shells_to_fire = 5;
+    for( const auto _ : std::views::iota( 0, shells_to_fire * pellet_count ) ) {
+        ( void ) _;
+        auto probe = make_direct_gun_projectile( shooter.primary_weapon() );
+        projectile_attack( probe, shooter_pos, target_pos, dispersion_sources {}, &shooter,
+                           &shooter.primary_weapon(), nullptr, true );
+    }
     return target_hp_total_before - target->get_hp();
 }
 
@@ -277,23 +293,19 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
 
     auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
     target->worn.clear();
+    target->set_dodge_bonus( -100.0f );
     target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
     target->setpos( target_pos );
     ACTIVE_OVERMAP_BUFFER.insert_npc( target );
     g->load_npcs();
-    CHECK( shooter.sees( *target ) );
+    REQUIRE( g->critter_at<npc>( target_pos ) != nullptr );
+    REQUIRE( shooter.sees( *target ) );
 
     detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
     gun->ammo_set( itype_id( "shot_00" ) );
     shooter.wield( std::move( gun ) );
 
-    auto probe = projectile {};
-    probe.speed = shooter.primary_weapon().gun_speed();
-    probe.impact = shooter.primary_weapon().gun_damage();
-    probe.range = shooter.primary_weapon().gun_range();
-    for( const auto &ammo_effect : shooter.primary_weapon().ammo_effects() ) {
-        probe.add_effect( ammo_effect );
-    }
+    auto probe = make_direct_gun_projectile( shooter.primary_weapon() );
     const auto probe_attack = projectile_attack( probe, shooter_pos, target_pos, dispersion_sources {},
                               &shooter, &shooter.primary_weapon(), nullptr, true );
 

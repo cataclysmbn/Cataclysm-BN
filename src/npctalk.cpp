@@ -109,11 +109,6 @@ static const zone_type_id zone_type_npc_no_investigate( "NPC_NO_INVESTIGATE" );
 
 static const skill_id skill_speech( "speech" );
 
-static const bionic_id bio_armor_eyes( "bio_armor_eyes" );
-static const bionic_id bio_deformity( "bio_deformity" );
-static const bionic_id bio_face_mask( "bio_face_mask" );
-static const bionic_id bio_voice( "bio_voice" );
-
 static const trait_id trait_DEBUG_MIND_CONTROL( "DEBUG_MIND_CONTROL" );
 static const trait_id trait_PROF_FOODP( "PROF_FOODP" );
 static const trait_id trait_SHOUT2( "SHOUT2" );
@@ -1832,13 +1827,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 3;
             chance += u_mods.lie;
 
-            //come on, who would suspect a robot of lying?
-            if( u.has_bionic( bio_voice ) ) {
-                chance += 10;
-            }
-            if( u.has_bionic( bio_face_mask ) ) {
-                chance += 20;
-            }
+            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::LIE );
             break;
         case TALK_TRIAL_PERSUADE:
             chance += character_effects::talk_skill( u ) -
@@ -1846,15 +1835,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 2 + p.op_of_u.value;
             chance += u_mods.persuade;
 
-            if( u.has_bionic( bio_face_mask ) ) {
-                chance += 10;
-            }
-            if( u.has_bionic( bio_deformity ) ) {
-                chance -= 50;
-            }
-            if( u.has_bionic( bio_voice ) ) {
-                chance -= 20;
-            }
+            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::PERSUADE );
             break;
         case TALK_TRIAL_INTIMIDATE:
             chance += character_effects::intimidation( u ) -
@@ -1862,18 +1843,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.fear * 2 - p.personality.bravery * 2;
             chance += u_mods.intimidate;
 
-            if( u.has_bionic( bio_face_mask ) ) {
-                chance += 10;
-            }
-            if( u.has_bionic( bio_armor_eyes ) ) {
-                chance += 10;
-            }
-            if( u.has_bionic( bio_deformity ) ) {
-                chance += 20;
-            }
-            if( u.has_bionic( bio_voice ) ) {
-                chance += 20;
-            }
+            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::INTIMIDATE );
             break;
         case TALK_TRIAL_NONE:
             chance = 100;

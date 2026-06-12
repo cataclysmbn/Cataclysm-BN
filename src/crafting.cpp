@@ -51,6 +51,7 @@
 #include "map.h"
 #include "map_selector.h"
 #include "mapdata.h"
+#include "magic_enchantment.h"
 #include "messages.h"
 #include "mutation.h"
 #include "npc.h"
@@ -295,12 +296,13 @@ float workbench_crafting_speed_multiplier( const item &craft, const bench_locati
 float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
 {
     const auto tools_multi = crafting_tools_speed_multiplier( who, rec );
-    const auto result = morale_crafting_speed_multiplier( who, rec ) *
-                        lighting_crafting_speed_multiplier( who,
-                                rec ) * tools_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
-                                        ? 9999
-                                        : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
-                        who.mutation_value( "crafting_speed_modifier" );
+    auto result = morale_crafting_speed_multiplier( who, rec ) *
+                  lighting_crafting_speed_multiplier( who,
+                          rec ) * tools_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                  ? 9999
+                                  : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
+                  who.mutation_value( "crafting_speed_modifier" );
+    result += who.bonus_from_enchantments( result, enchant_vals::mod::CRAFTING_SPEED );
 
     return result;
 }
@@ -326,9 +328,10 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     const float game_opt_multi = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0 ? 9999 :
                                  100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
 
-    const auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
-                             game_opt_multi;
+    auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
+                       game_opt_multi;
 
+    total_multi += who.bonus_from_enchantments( total_multi, enchant_vals::mod::CRAFTING_SPEED );
     if( light_multi <= 0.0f ) {
         who.add_msg_player_or_npc( m_bad,
                                    _( "You can no longer see well enough to keep crafting." ),
