@@ -399,23 +399,8 @@ double enchantment::get_value_multiply( const enchantment_valid_id value ) const
 
 double enchantment::calc_bonus( enchantment_valid_id value, double base, bool round ) const
 {
-    // I honestly dont know why the first one was there in the first place...
-    bool use_add = true;
-    bool use_mult = true;
-    switch( value ) {
-        case enchant_vals::mod::METABOLISM:
-        case enchant_vals::mod::MANA_REGEN:
-        case enchant_vals::mod::STAMINA_CAP:
-        case enchant_vals::mod::STAMINA_REGEN:
-        case enchant_vals::mod::THIRST:
-        case enchant_vals::mod::FATIGUE:
-            use_add = false;
-            break;
-        default:
-            break;
-    }
-    double add = use_add ? get_value_add( value ) : 0.0;
-    double mul = use_mult ? get_value_multiply( value ) : 1.0;
+    double add = value->use_add ? get_value_add( value ) : 0.0;
+    double mul = value->use_mult ? get_value_multiply( value ) : 1.0;
     double ret = add + base * mul;
     if( round ) {
         ret = trunc( ret );

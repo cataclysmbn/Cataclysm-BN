@@ -65,11 +65,6 @@ class ret_val;
 class item_location;
 struct attack_statblock;
 
-namespace enchant_vals
-{
-enum class mod : int;
-} // namespace enchant_vals
-
 using bodytype_id = std::string;
 using faction_id = string_id<faction>;
 class item_category;
@@ -2412,13 +2407,13 @@ class item : public location_visitable<item>, public game_object<item>
          * Calculate bonus from enchantments that affect this item only.
          */
         double bonus_from_enchantments( const Character &owner, double base,
-                                        enchant_vals::mod value, bool round = false ) const;
+                                        enchantment_value_id value, bool round = false ) const;
 
         /**
          * Calculate bonus from enchantments that affect this item only,
          * assume it's wielded and all enchantments' conditions are satisfied.
          */
-        double bonus_from_enchantments_wielded( double base, enchant_vals::mod value,
+        double bonus_from_enchantments_wielded( double base, enchantment_value_id value,
                                                 bool round = false ) const;
 
         /** Returns the type of location where the item is found */

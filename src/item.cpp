@@ -2391,7 +2391,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
             // Apply enchantment bonuses to damage display
             int base_bullet_damage = static_cast<int>( total_damage );
             int ench_damage_bonus = viewer.bonus_from_enchantments( base_bullet_damage,
-                                    enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
+                                    enchantment_value_id( "RANGED_DAMAGE_BULLET" ), true );
             int displayed_damage = total_damage + ench_damage_bonus;
 
             info.emplace_back( "GUN", "sum_of_damage", _( " = <num>" ),
@@ -2420,7 +2420,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
 
         // Show enchantment bonus if present
         int ench_range_bonus = you.bonus_from_enchantments( base_gun_range,
-                               enchant_vals::mod::RANGED_RANGE, true );
+                               enchantment_value_id( "RANGED_RANGE" ), true );
         if( ench_range_bonus != 0 ) {
             info.emplace_back( "GUN", "ench_range", _( " (enchanted: <num>)" ),
                                iteminfo::no_name | iteminfo::show_plus,
@@ -2527,7 +2527,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
             // Note: This isn't perfect because effective already includes some effects,
             // but it's consistent with how ranged.cpp applies enchantments
             int ench_dispersion_bonus = you.bonus_from_enchantments( effective_dispersion,
-                                        enchant_vals::mod::RANGED_DISPERSION, true );
+                                        enchantment_value_id( "RANGED_DISPERSION" ), true );
 
             if( ench_dispersion_bonus != 0 ) {
                 info.emplace_back( "GUN", "ench_dispersion", _( " (enchanted: <num>)" ),
@@ -2576,7 +2576,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
         if( parts->test( iteminfo_parts::GUN_RECOIL ) ) {
             int base_recoil = loaded_mod->gun_recoil();
             int ench_recoil_bonus = you.bonus_from_enchantments( base_recoil,
-                                    enchant_vals::mod::RANGED_RECOIL, true );
+                                    enchantment_value_id( "RANGED_RECOIL" ), true );
             int effective_recoil = std::max( 0, base_recoil + ench_recoil_bonus );
 
             info.emplace_back( "GUN", _( "Effective recoil: " ), "",
@@ -2618,7 +2618,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     if( parts->test( iteminfo_parts::GUN_RELOAD_TIME ) ) {
         int base_reload_time = mod->get_reload_time();
         int ench_reload_bonus = you.bonus_from_enchantments( base_reload_time,
-                                enchant_vals::mod::RANGED_RELOAD_TIME, true );
+                                enchantment_value_id( RANGED_RELOAD_TIME ), true );
         int effective_reload = std::max( 25, base_reload_time + ench_reload_bonus );
 
         info.emplace_back( "GUN", _( "Reload time: " ),
@@ -2687,8 +2687,8 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     if( parts->test( iteminfo_parts::GUN_AIMING_STATS ) ) {
         insert_separation_line( info );
         int final_aim = ranged::aim_per_move( you, *mod, MAX_RECOIL );
-        double add = you.bonus_from_enchantments( 0, enchant_vals::mod::RANGED_AIM_SPEED, false );
-        double mul = ( you.bonus_from_enchantments( 1000, enchant_vals::mod::RANGED_AIM_SPEED,
+        double add = you.bonus_from_enchantments( 0, enchantment_value_id( "RANGED_AIM_SPEED" ), false );
+        double mul = ( you.bonus_from_enchantments( 1000, enchantment_value_id( "RANGED_AIM_SPEED" ),
                        false ) - add ) / 1000.0;
         int base_aim = final_aim;
         if( 1.0 + mul != 0.0 ) {
@@ -5734,7 +5734,7 @@ int item::lift_strength() const
 int item::attack_cost() const
 {
     int base = 65 + ( volume() / 62.5_ml + weight() / 60_gram ) / count();
-    int bonus = bonus_from_enchantments_wielded( base, enchant_vals::mod::ITEM_ATTACK_COST, true );
+    int bonus = bonus_from_enchantments_wielded( base, enchantment_value_id( "ITEM_ATTACK_COST" ), true );
     return std::max( 0, base + bonus );
 }
 
@@ -5790,43 +5790,43 @@ int item::damage_melee( const attack_statblock &attack, damage_type dt ) const
 
     switch( dt ) {
         case DT_BASH:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_BASH, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_BASH" ), true );
             break;
         case DT_CUT:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_CUT, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_CUT" ), true );
             break;
         case DT_STAB:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_STAB, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_STAB" ), true );
             break;
         case DT_BULLET:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_BULLET, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_BULLET" ), true );
             break;
         case DT_ACID:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_ACID, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_ACID" ), true );
             break;
         case DT_BIOLOGICAL:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_BIO, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_BIO" ), true );
             break;
         case DT_COLD:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_COLD, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_COLD" ), true );
             break;
         case DT_DARK:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_DARK, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_DARK" ), true );
             break;
         case DT_ELECTRIC:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_ELECTRIC, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_ELECTRIC" ), true );
             break;
         case DT_HEAT:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_FIRE, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_FIRE" ), true );
             break;
         case DT_LIGHT:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_LIGHT, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_LIGHT" ), true );
             break;
         case DT_PSI:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_PSI, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_PSI" ), true );
             break;
         case DT_TRUE:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_TRUE, true );
+            res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_TRUE" ), true );
             break;
         default:
             break;
@@ -5874,55 +5874,55 @@ std::map<std::string, attack_statblock> item::get_attacks() const
 
             switch( du.type ) {
                 case DT_BASH:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_BASH,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_BASH" ),
                                  true );
                     break;
                 case DT_CUT:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_CUT,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_CUT" ),
                                  true );
                     break;
                 case DT_STAB:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_STAB,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_STAB" ),
                                  true );
                     break;
                 case DT_BULLET:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_BULLET,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_BULLET" ),
                                  true );
                     break;
                 case DT_ACID:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_ACID,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_ACID" ),
                                  true );
                     break;
                 case DT_BIOLOGICAL:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_BIO,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_BIO" ),
                                  true );
                     break;
                 case DT_COLD:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_COLD,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_COLD" ),
                                  true );
                     break;
                 case DT_DARK:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_DARK,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_DARK" ),
                                  true );
                     break;
                 case DT_ELECTRIC:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_ELECTRIC,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_ELECTRIC" ),
                                  true );
                     break;
                 case DT_HEAT:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_FIRE,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_FIRE" ),
                                  true );
                     break;
                 case DT_LIGHT:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_LIGHT,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_LIGHT" ),
                                  true );
                     break;
                 case DT_PSI:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_PSI,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_PSI" ),
                                  true );
                     break;
                 case DT_TRUE:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_TRUE,
+                    du.amount += bonus_from_enchantments_wielded( du.amount, enchantment_value_id( "ITEM_DAMAGE_TRUE" ),
                                  true );
                     break;
                 default:
@@ -7966,7 +7966,7 @@ const std::vector<enchantment> &item::get_enchantments() const
 }
 
 double item::bonus_from_enchantments( const Character &owner, double base,
-                                      enchant_vals::mod value, bool round ) const
+                                      enchantment_value_id value, bool round ) const
 {
     double add = 0.0;
     double mul = 0.0;
@@ -7984,7 +7984,7 @@ double item::bonus_from_enchantments( const Character &owner, double base,
     return ret;
 }
 
-double item::bonus_from_enchantments_wielded( double base, enchant_vals::mod value,
+double item::bonus_from_enchantments_wielded( double base, enchantment_value_id value,
         bool round ) const
 {
     double add = 0.0;
@@ -8353,7 +8353,7 @@ int item::gun_range( const player *p ) const
     ret *= ranged::str_draw_range_modifier( *this, *p );
 
     // Apply enchantment bonuses to range
-    int ench_range_bonus = p->bonus_from_enchantments( ret, enchant_vals::mod::RANGED_RANGE, true );
+    int ench_range_bonus = p->bonus_from_enchantments( ret, enchantment_value_id( "RANGED_RANGE" ), true );
     ret = std::max( 1, ret + ench_range_bonus );
 
     return std::max( 0, ret );
