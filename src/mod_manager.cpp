@@ -20,7 +20,20 @@
 #include "translations.h"
 #include "worldfactory.h"
 
-static const std::string MOD_SEARCH_FILE( "modinfo.json" );
+namespace
+{
+
+const auto MOD_SEARCH_FILE = std::string( "modinfo.json" );
+const auto MOD_SEARCH_FILE_JSONC = std::string( "modinfo.jsonc" );
+
+auto is_mod_info_file( const std::string &path ) -> bool
+{
+    const auto name_start = path.find_last_of( "/\\" );
+    const auto filename = name_start == std::string::npos ? path : path.substr( name_start + 1 );
+    return filename == MOD_SEARCH_FILE || filename == MOD_SEARCH_FILE_JSONC;
+}
+
+} // namespace
 
 template<>
 const MOD_INFORMATION &string_id<MOD_INFORMATION>::obj() const
@@ -203,8 +216,10 @@ std::vector<MOD_INFORMATION> load_mods_from( const std::string &path )
 {
     std::vector<MOD_INFORMATION> out;
 
-    for( auto &mod_file : get_files_from_path( MOD_SEARCH_FILE, path, true ) ) {
-        load_mod_info( mod_file, out );
+    for( const auto &mod_file : get_files_from_path( MOD_SEARCH_FILE, path, true ) ) {
+        if( is_mod_info_file( mod_file ) ) {
+            load_mod_info( mod_file, out );
+        }
     }
 
     std::set<mod_id> idents;

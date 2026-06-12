@@ -40,7 +40,7 @@ that entry. Also ties in with [`copy-from`](./items/json_inheritance.md#copy-fro
 
 ## Formatting
 
-When editing JSON files make sure you apply the correct formatting as shown below.
+When editing JSON or JSONC files make sure you apply the correct formatting as shown below.
 
 ### Time duration
 
@@ -59,8 +59,13 @@ Examples:
 
 ### Other formatting
 
-```json
-"//" : "comment", // Preferred method of leaving comments inside json files.
+JSONC files may use `//` line comments, `/* */` block comments, and trailing commas.
+
+```jsonc
+{
+  // Comment explaining this entry.
+  "type": "example",
+}
 ```
 
 Some json strings are extracted for translation, for example item names, descriptions, etc. The
