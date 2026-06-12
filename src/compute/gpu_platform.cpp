@@ -336,9 +336,7 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
     }
 
     auto attempts = std::vector<gpu_device_create_attempt>{};
-    if (accel == compute_accel::cpu) {
-        return attempts;
-    }
+    if (accel == compute_accel::cpu) { return attempts; }
 
     if (accel == compute_accel::software_gpu) {
 #if defined(__ANDROID__)
@@ -493,8 +491,8 @@ auto init() -> void {
     auto const backend_str = std::string{backend_sv};
     auto const accel = preload_config::get_compute_accel();
     if (accel == compute_accel::cpu) {
-        DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: skipped device creation because the CPU shader backend was selected";
+        DebugLog(DL::Info, DC::Main) << "SDL_GPU: skipped device creation because the CPU shader "
+                                        "backend was selected";
         return;
     }
 

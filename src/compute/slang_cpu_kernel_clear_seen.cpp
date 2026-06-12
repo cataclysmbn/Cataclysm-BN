@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <ranges>
 
-#if defined( CATA_SLANG_CPU_GENERATED )
+#if defined(CATA_SLANG_CPU_GENERATED)
 #define cpu_main cata_slang_lm_clear_seen_cpu_main
 #define _cpu_main cata_slang_lm_clear_seen_cpu_main_entry
 #define cpu_main_Group cata_slang_lm_clear_seen_cpu_main_group
@@ -18,56 +18,55 @@
 
 #include "slang_cpu_dispatch.h"
 
-namespace cata_compute::slang_cpu::kernels
-{
+namespace cata_compute::slang_cpu::kernels {
 
-auto clear_seen( clear_seen_params const &params ) -> bool
-{
-#if defined( CATA_SLANG_CPU_GENERATED )
-    if( params.seen_raw == nullptr || params.seen == nullptr || params.total_tiles == 0 ||
-        params.cache_xy <= 0 ) {
+auto clear_seen(clear_seen_params const& params) -> bool {
+#if defined(CATA_SLANG_CPU_GENERATED)
+    if (params.seen_raw == nullptr || params.seen == nullptr || params.total_tiles == 0
+        || params.cache_xy <= 0) {
         return false;
     }
 
-    auto constants = ClearSeenConstants_0 {};
+    auto constants = ClearSeenConstants_0{};
     constants.total_tiles_0 = params.total_tiles;
     constants.cache_xy_0 = params.cache_xy;
     constants.z_start_idx_0 = params.z_start_idx;
 
     const auto output_count =
-        static_cast<uint32_t>( params.z_start_idx * params.cache_xy ) + params.total_tiles;
-    auto globals = GlobalParams_0 {};
-    globals.seen_raw_all_0 = writable_buffer( params.seen_raw, output_count );
-    globals.seen_all_0 = writable_buffer( params.seen, output_count );
+        static_cast<uint32_t>(params.z_start_idx * params.cache_xy) + params.total_tiles;
+    auto globals = GlobalParams_0{};
+    globals.seen_raw_all_0 = writable_buffer(params.seen_raw, output_count);
+    globals.seen_all_0 = writable_buffer(params.seen, output_count);
     globals.constants_0 = &constants;
 
-    dispatch_independent_kernel( {
-        .group_x = tile_groups( params.total_tiles ),
-    }, globals, cata_slang_lm_clear_seen_cpu_main );
+    dispatch_independent_kernel(
+        {
+            .group_x = tile_groups(params.total_tiles),
+        },
+        globals, cata_slang_lm_clear_seen_cpu_main);
     return true;
 #else
-    ( void )params;
+    (void)params;
     return false;
 #endif
 }
 
-auto run_clear_seen_probe() -> bool
-{
-#if defined( CATA_SLANG_CPU_GENERATED )
-    auto seen_raw = std::array<float, 6> { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+auto run_clear_seen_probe() -> bool {
+#if defined(CATA_SLANG_CPU_GENERATED)
+    auto seen_raw = std::array<float, 6>{1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
     auto seen = seen_raw;
-    if( !clear_seen( {
-        .seen_raw = seen_raw.data(),
-        .seen = seen.data(),
-        .total_tiles = 2U,
-        .cache_xy = 3,
-        .z_start_idx = 1,
-    } ) ) {
+    if (!clear_seen({
+            .seen_raw = seen_raw.data(),
+            .seen = seen.data(),
+            .total_tiles = 2U,
+            .cache_xy = 3,
+            .z_start_idx = 1,
+        })) {
         return false;
     }
 
-    return seen_raw == std::array<float, 6> { 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f } &&
-           seen == std::array<float, 6> { 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f };
+    return seen_raw == std::array<float, 6>{1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f}
+        && seen == std::array<float, 6>{1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f};
 #else
     return false;
 #endif

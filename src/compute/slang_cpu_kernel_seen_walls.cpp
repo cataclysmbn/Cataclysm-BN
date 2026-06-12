@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdint>
 
-#if defined( CATA_SLANG_CPU_GENERATED )
+#if defined(CATA_SLANG_CPU_GENERATED)
 #define cpu_main cata_slang_lm_seen_walls_cpu_main
 #define _cpu_main cata_slang_lm_seen_walls_cpu_main_entry
 #define cpu_main_Group cata_slang_lm_seen_walls_cpu_main_group
@@ -18,30 +18,26 @@
 
 #include "slang_cpu_dispatch.h"
 
-namespace cata_compute::slang_cpu::kernels
-{
+namespace cata_compute::slang_cpu::kernels {
 
-namespace
-{
+namespace {
 
-auto close_enough( const float lhs, const float rhs ) -> bool
-{
-    return std::fabs( lhs - rhs ) < 0.0001f;
+auto close_enough(const float lhs, const float rhs) -> bool {
+    return std::fabs(lhs - rhs) < 0.0001f;
 }
 
 } // namespace
 
-auto seen_walls( seen_walls_params const &params ) -> bool
-{
-#if defined( CATA_SLANG_CPU_GENERATED )
-    if( params.transparency == nullptr || params.seen_src == nullptr ||
-        params.vehicle_floor == nullptr || params.vehicle_obscured == nullptr ||
-        params.seen_dst == nullptr || params.cache_x <= 0 || params.cache_y <= 0 ||
-        params.cache_xy <= 0 || params.z_count <= 0 || params.dispatch_z_count <= 0 ) {
+auto seen_walls(seen_walls_params const& params) -> bool {
+#if defined(CATA_SLANG_CPU_GENERATED)
+    if (params.transparency == nullptr || params.seen_src == nullptr
+        || params.vehicle_floor == nullptr || params.vehicle_obscured == nullptr
+        || params.seen_dst == nullptr || params.cache_x <= 0 || params.cache_y <= 0
+        || params.cache_xy <= 0 || params.z_count <= 0 || params.dispatch_z_count <= 0) {
         return false;
     }
 
-    auto constants = SeenWallsConstants_0 {};
+    auto constants = SeenWallsConstants_0{};
     constants.player_x_0 = params.player_x;
     constants.player_y_0 = params.player_y;
     constants.player_z_idx_0 = params.player_z_idx;
@@ -55,64 +51,65 @@ auto seen_walls( seen_walls_params const &params ) -> bool
     constants.dispatch_z_count_0 = params.dispatch_z_count;
     constants.trigdist_0 = params.trigdist;
 
-    const auto total_tiles = static_cast<uint32_t>( params.cache_xy * params.z_count );
-    auto globals = GlobalParams_0 {};
-    globals.transparency_all_0 = readonly_buffer( params.transparency, total_tiles );
-    globals.seen_src_all_0 = readonly_buffer( params.seen_src, total_tiles );
-    globals.vehicle_floor_all_0 = readonly_buffer( params.vehicle_floor, total_tiles );
-    globals.vehicle_obscured_all_0 = readonly_buffer( params.vehicle_obscured, total_tiles );
-    globals.seen_dst_all_0 = writable_buffer( params.seen_dst, total_tiles );
+    const auto total_tiles = static_cast<uint32_t>(params.cache_xy * params.z_count);
+    auto globals = GlobalParams_0{};
+    globals.transparency_all_0 = readonly_buffer(params.transparency, total_tiles);
+    globals.seen_src_all_0 = readonly_buffer(params.seen_src, total_tiles);
+    globals.vehicle_floor_all_0 = readonly_buffer(params.vehicle_floor, total_tiles);
+    globals.vehicle_obscured_all_0 = readonly_buffer(params.vehicle_obscured, total_tiles);
+    globals.seen_dst_all_0 = writable_buffer(params.seen_dst, total_tiles);
     globals.constants_0 = &constants;
 
-    const auto group_count = radius_group_side( params.view_radius );
-    dispatch_independent_kernel( {
-        .group_x = group_count,
-        .group_y = group_count,
-        .group_z = static_cast<uint32_t>( params.dispatch_z_count ),
-    }, globals, cata_slang_lm_seen_walls_cpu_main );
+    const auto group_count = radius_group_side(params.view_radius);
+    dispatch_independent_kernel(
+        {
+            .group_x = group_count,
+            .group_y = group_count,
+            .group_z = static_cast<uint32_t>(params.dispatch_z_count),
+        },
+        globals, cata_slang_lm_seen_walls_cpu_main);
     return true;
 #else
-    ( void )params;
+    (void)params;
     return false;
 #endif
 }
 
-auto run_seen_walls_probe() -> bool
-{
-#if defined( CATA_SLANG_CPU_GENERATED )
-    auto transparency = std::array<float, 9> {};
-    transparency.fill( 0.038376418216f );
-    auto seen_src = std::array<float, 9> {};
-    seen_src.fill( 0.25f );
-    auto vehicle_floor = std::array<uint32_t, 9> {};
-    vehicle_floor.fill( 0U );
+auto run_seen_walls_probe() -> bool {
+#if defined(CATA_SLANG_CPU_GENERATED)
+    auto transparency = std::array<float, 9>{};
+    transparency.fill(0.038376418216f);
+    auto seen_src = std::array<float, 9>{};
+    seen_src.fill(0.25f);
+    auto vehicle_floor = std::array<uint32_t, 9>{};
+    vehicle_floor.fill(0U);
     auto vehicle_obscured = vehicle_floor;
-    auto seen_dst = std::array<float, 9> {};
-    seen_dst.fill( 0.0f );
+    auto seen_dst = std::array<float, 9>{};
+    seen_dst.fill(0.0f);
 
-    if( !seen_walls( {
-        .transparency = transparency.data(),
-        .seen_src = seen_src.data(),
-        .vehicle_floor = vehicle_floor.data(),
-        .vehicle_obscured = vehicle_obscured.data(),
-        .seen_dst = seen_dst.data(),
-        .player_x = 1,
-        .player_y = 1,
-        .player_z_idx = 0,
-        .cache_x = 3,
-        .cache_y = 3,
-        .cache_xy = 9,
-        .z_count = 1,
-        .view_radius = 1,
-        .z_scale = 3.0f,
-        .z_start_idx = 0,
-        .dispatch_z_count = 1,
-        .trigdist = 0U,
-    } ) ) {
+    if (!seen_walls({
+            .transparency = transparency.data(),
+            .seen_src = seen_src.data(),
+            .vehicle_floor = vehicle_floor.data(),
+            .vehicle_obscured = vehicle_obscured.data(),
+            .seen_dst = seen_dst.data(),
+            .player_x = 1,
+            .player_y = 1,
+            .player_z_idx = 0,
+            .cache_x = 3,
+            .cache_y = 3,
+            .cache_xy = 9,
+            .z_count = 1,
+            .view_radius = 1,
+            .z_scale = 3.0f,
+            .z_start_idx = 0,
+            .dispatch_z_count = 1,
+            .trigdist = 0U,
+        })) {
         return false;
     }
 
-    return close_enough( seen_dst[4], 1.0f ) && close_enough( seen_dst[5], 0.25f );
+    return close_enough(seen_dst[4], 1.0f) && close_enough(seen_dst[5], 0.25f);
 #else
     return false;
 #endif

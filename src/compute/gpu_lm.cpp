@@ -2468,31 +2468,25 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
 // Public API
 // ---------------------------------------------------------------------------
 
-auto collect_lighting_sources( collect_lighting_sources_params const &p )
--> lighting_source_collection
-{
-    if( p.m == nullptr || p.levels == nullptr || p.levels->empty() ) {
-        return {};
-    }
+auto collect_lighting_sources(collect_lighting_sources_params const& p)
+    -> lighting_source_collection {
+    if (p.m == nullptr || p.levels == nullptr || p.levels->empty()) { return {}; }
 
-    auto collection = collect_sources( *p.m, *p.levels, p.collect_colored_sources );
-    write_source_map_to_level_caches( *p.m, *p.levels, collection.sources );
-    if( p.collect_colored_sources && collection.colored_sources.empty() ) {
-        clear_colored_light_caches( *p.m, *p.levels );
+    auto collection = collect_sources(*p.m, *p.levels, p.collect_colored_sources);
+    write_source_map_to_level_caches(*p.m, *p.levels, collection.sources);
+    if (p.collect_colored_sources && collection.colored_sources.empty()) {
+        clear_colored_light_caches(*p.m, *p.levels);
     }
     return {
-        .sources = std::move( collection.sources ),
-        .colored_sources = std::move( collection.colored_sources ),
+        .sources = std::move(collection.sources),
+        .colored_sources = std::move(collection.colored_sources),
     };
 }
 
-auto collect_lighting_vehicle_optics( collect_lighting_vehicle_optics_params const &p )
--> std::vector<GpuVehicleOptic>
-{
-    if( p.m == nullptr || p.origin == nullptr ) {
-        return {};
-    }
-    return collect_vehicle_optics( *p.m, *p.origin, p.target_z );
+auto collect_lighting_vehicle_optics(collect_lighting_vehicle_optics_params const& p)
+    -> std::vector<GpuVehicleOptic> {
+    if (p.m == nullptr || p.origin == nullptr) { return {}; }
+    return collect_vehicle_optics(*p.m, *p.origin, p.target_z);
 }
 
 auto prepare_lighting_transparency_output(prepare_lighting_transparency_output_params const& p)

@@ -4,7 +4,7 @@
 #include <bit>
 #include <cstdint>
 
-#if defined( CATA_SLANG_CPU_GENERATED )
+#if defined(CATA_SLANG_CPU_GENERATED)
 #define cpu_main cata_slang_lm_daylight_diffuse_cpu_main
 #define _cpu_main cata_slang_lm_daylight_diffuse_cpu_main_entry
 #define cpu_main_Group cata_slang_lm_daylight_diffuse_cpu_main_group
@@ -18,35 +18,26 @@
 
 #include "slang_cpu_dispatch.h"
 
-namespace cata_compute::slang_cpu::kernels
-{
+namespace cata_compute::slang_cpu::kernels {
 
-namespace
-{
+namespace {
 
-auto float_bits( const float value ) -> uint32_t
-{
-    return std::bit_cast<uint32_t>( value );
-}
+auto float_bits(const float value) -> uint32_t { return std::bit_cast<uint32_t>(value); }
 
-auto bits_float( const uint32_t value ) -> float
-{
-    return std::bit_cast<float>( value );
-}
+auto bits_float(const uint32_t value) -> float { return std::bit_cast<float>(value); }
 
 } // namespace
 
-auto daylight_diffuse( daylight_diffuse_params const &params ) -> bool
-{
-#if defined( CATA_SLANG_CPU_GENERATED )
-    if( params.daylight_seed == nullptr || params.daylight_src == nullptr ||
-        params.transparency == nullptr || params.daylight_dst == nullptr ||
-        params.lightmap == nullptr || params.total_tiles == 0 || params.cache_x <= 0 ||
-        params.cache_y <= 0 || params.cache_xy <= 0 || params.z_count <= 0 ) {
+auto daylight_diffuse(daylight_diffuse_params const& params) -> bool {
+#if defined(CATA_SLANG_CPU_GENERATED)
+    if (params.daylight_seed == nullptr || params.daylight_src == nullptr
+        || params.transparency == nullptr || params.daylight_dst == nullptr
+        || params.lightmap == nullptr || params.total_tiles == 0 || params.cache_x <= 0
+        || params.cache_y <= 0 || params.cache_xy <= 0 || params.z_count <= 0) {
         return false;
     }
 
-    auto constants = DaylightDiffuseConstants_0 {};
+    auto constants = DaylightDiffuseConstants_0{};
     constants.total_tiles_0 = params.total_tiles;
     constants.cache_x_0 = params.cache_x;
     constants.cache_y_0 = params.cache_y;
@@ -55,57 +46,58 @@ auto daylight_diffuse( daylight_diffuse_params const &params ) -> bool
     constants.diffuse_decay_0 = params.diffuse_decay;
     constants.min_light_0 = params.min_light;
 
-    auto globals = GlobalParams_0 {};
-    globals.daylight_seed_all_0 = readonly_buffer( params.daylight_seed, params.total_tiles );
-    globals.daylight_src_all_0 = readonly_buffer( params.daylight_src, params.total_tiles );
-    globals.transparency_all_0 = readonly_buffer( params.transparency, params.total_tiles );
-    globals.daylight_dst_all_0 = writable_buffer( params.daylight_dst, params.total_tiles );
-    globals.lm_all_0 = writable_buffer( params.lightmap, params.total_tiles );
+    auto globals = GlobalParams_0{};
+    globals.daylight_seed_all_0 = readonly_buffer(params.daylight_seed, params.total_tiles);
+    globals.daylight_src_all_0 = readonly_buffer(params.daylight_src, params.total_tiles);
+    globals.transparency_all_0 = readonly_buffer(params.transparency, params.total_tiles);
+    globals.daylight_dst_all_0 = writable_buffer(params.daylight_dst, params.total_tiles);
+    globals.lm_all_0 = writable_buffer(params.lightmap, params.total_tiles);
     globals.constants_0 = &constants;
 
-    dispatch_independent_kernel( {
-        .group_x = tile_groups( params.total_tiles ),
-    }, globals, cata_slang_lm_daylight_diffuse_cpu_main );
+    dispatch_independent_kernel(
+        {
+            .group_x = tile_groups(params.total_tiles),
+        },
+        globals, cata_slang_lm_daylight_diffuse_cpu_main);
     return true;
 #else
-    ( void )params;
+    (void)params;
     return false;
 #endif
 }
 
-auto run_daylight_diffuse_probe() -> bool
-{
-#if defined( CATA_SLANG_CPU_GENERATED )
-    auto seed = std::array<uint32_t, 9> {};
-    seed.fill( 0U );
-    auto source = std::array<uint32_t, 9> {};
-    source.fill( 0U );
-    source[4] = float_bits( 10.0f );
-    auto transparency = std::array<float, 9> {};
-    transparency.fill( 0.038376418216f );
-    auto dst = std::array<uint32_t, 9> {};
-    dst.fill( 0U );
-    auto lm = std::array<uint32_t, 9> {};
-    lm.fill( 0U );
+auto run_daylight_diffuse_probe() -> bool {
+#if defined(CATA_SLANG_CPU_GENERATED)
+    auto seed = std::array<uint32_t, 9>{};
+    seed.fill(0U);
+    auto source = std::array<uint32_t, 9>{};
+    source.fill(0U);
+    source[4] = float_bits(10.0f);
+    auto transparency = std::array<float, 9>{};
+    transparency.fill(0.038376418216f);
+    auto dst = std::array<uint32_t, 9>{};
+    dst.fill(0U);
+    auto lm = std::array<uint32_t, 9>{};
+    lm.fill(0U);
 
-    if( !daylight_diffuse( {
-        .daylight_seed = seed.data(),
-        .daylight_src = source.data(),
-        .transparency = transparency.data(),
-        .daylight_dst = dst.data(),
-        .lightmap = lm.data(),
-        .total_tiles = static_cast<uint32_t>( dst.size() ),
-        .cache_x = 3,
-        .cache_y = 3,
-        .cache_xy = 9,
-        .z_count = 1,
-        .diffuse_decay = 0.9f,
-        .min_light = 3.5f,
-    } ) ) {
+    if (!daylight_diffuse({
+            .daylight_seed = seed.data(),
+            .daylight_src = source.data(),
+            .transparency = transparency.data(),
+            .daylight_dst = dst.data(),
+            .lightmap = lm.data(),
+            .total_tiles = static_cast<uint32_t>(dst.size()),
+            .cache_x = 3,
+            .cache_y = 3,
+            .cache_xy = 9,
+            .z_count = 1,
+            .diffuse_decay = 0.9f,
+            .min_light = 3.5f,
+        })) {
         return false;
     }
 
-    return bits_float( dst[5] ) > 8.9f && bits_float( lm[5] ) > 8.9f;
+    return bits_float(dst[5]) > 8.9f && bits_float(lm[5]) > 8.9f;
 #else
     return false;
 #endif

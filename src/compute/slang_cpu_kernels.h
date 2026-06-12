@@ -4,22 +4,21 @@
 #include <span>
 #include <vector>
 
-#if defined( CATA_SDL )
+#if defined(CATA_SDL)
 #include "gpu_lm.h"
 #include "gpu_transparency.h"
 #endif
 
-namespace cata_compute::slang_cpu::kernels
-{
+namespace cata_compute::slang_cpu::kernels {
 
 struct fill_uint_params {
-    uint32_t *target = nullptr;
+    uint32_t* target = nullptr;
     uint32_t count = 0;
     uint32_t value = 0;
 };
 
 struct fill_float_params {
-    float *target = nullptr;
+    float* target = nullptr;
     uint32_t total_tiles = 0;
     int32_t cache_xy = 0;
     int32_t z_start_idx = 0;
@@ -27,14 +26,14 @@ struct fill_float_params {
 };
 
 struct max_uint_params {
-    uint32_t *target = nullptr;
-    uint32_t *source = nullptr;
+    uint32_t* target = nullptr;
+    uint32_t* source = nullptr;
     uint32_t count = 0;
 };
 
 struct shift_uint_params {
-    uint32_t *target = nullptr;
-    uint32_t *source = nullptr;
+    uint32_t* target = nullptr;
+    uint32_t* source = nullptr;
     int32_t cache_x = 0;
     int32_t cache_y = 0;
     int32_t cache_xy = 0;
@@ -45,8 +44,8 @@ struct shift_uint_params {
 };
 
 struct shift_float_params {
-    float *target = nullptr;
-    float *source = nullptr;
+    float* target = nullptr;
+    float* source = nullptr;
     int32_t cache_x = 0;
     int32_t cache_y = 0;
     int32_t cache_xy = 0;
@@ -57,16 +56,16 @@ struct shift_float_params {
 };
 
 struct clear_seen_params {
-    float *seen_raw = nullptr;
-    float *seen = nullptr;
+    float* seen_raw = nullptr;
+    float* seen = nullptr;
     uint32_t total_tiles = 0;
     int32_t cache_xy = 0;
     int32_t z_start_idx = 0;
 };
 
 struct clear_seen_view_params {
-    float *seen_raw = nullptr;
-    float *seen = nullptr;
+    float* seen_raw = nullptr;
+    float* seen = nullptr;
     int32_t player_x = 0;
     int32_t player_y = 0;
     int32_t cache_x = 0;
@@ -79,12 +78,12 @@ struct clear_seen_view_params {
 };
 
 struct final_visibility_params {
-    float const *transparency = nullptr;
-    uint32_t const *lightmap = nullptr;
-    float const *seen = nullptr;
-    uint32_t const *camera = nullptr;
-    float const *source_map = nullptr;
-    uint32_t *visibility = nullptr;
+    float const* transparency = nullptr;
+    uint32_t const* lightmap = nullptr;
+    float const* seen = nullptr;
+    uint32_t const* camera = nullptr;
+    float const* source_map = nullptr;
+    uint32_t* visibility = nullptr;
     int32_t player_x = 0;
     int32_t player_y = 0;
     int32_t player_z_idx = 0;
@@ -105,11 +104,11 @@ struct final_visibility_params {
 };
 
 struct seen_params {
-    float const *transparency = nullptr;
-    uint32_t const *floor = nullptr;
-    uint32_t const *vehicle_floor = nullptr;
-    uint32_t const *vehicle_obscured = nullptr;
-    float *seen = nullptr;
+    float const* transparency = nullptr;
+    uint32_t const* floor = nullptr;
+    uint32_t const* vehicle_floor = nullptr;
+    uint32_t const* vehicle_obscured = nullptr;
+    float* seen = nullptr;
     int32_t player_x = 0;
     int32_t player_y = 0;
     int32_t player_z_idx = 0;
@@ -126,11 +125,11 @@ struct seen_params {
 };
 
 struct seen_walls_params {
-    float const *transparency = nullptr;
-    float const *seen_src = nullptr;
-    uint32_t const *vehicle_floor = nullptr;
-    uint32_t const *vehicle_obscured = nullptr;
-    float *seen_dst = nullptr;
+    float const* transparency = nullptr;
+    float const* seen_src = nullptr;
+    uint32_t const* vehicle_floor = nullptr;
+    uint32_t const* vehicle_obscured = nullptr;
+    float* seen_dst = nullptr;
     int32_t player_x = 0;
     int32_t player_y = 0;
     int32_t player_z_idx = 0;
@@ -146,11 +145,11 @@ struct seen_walls_params {
 };
 
 struct daylight_diffuse_params {
-    uint32_t const *daylight_seed = nullptr;
-    uint32_t const *daylight_src = nullptr;
-    float const *transparency = nullptr;
-    uint32_t *daylight_dst = nullptr;
-    uint32_t *lightmap = nullptr;
+    uint32_t const* daylight_seed = nullptr;
+    uint32_t const* daylight_src = nullptr;
+    float const* transparency = nullptr;
+    uint32_t* daylight_dst = nullptr;
+    uint32_t* lightmap = nullptr;
     uint32_t total_tiles = 0;
     int32_t cache_x = 0;
     int32_t cache_y = 0;
@@ -161,12 +160,12 @@ struct daylight_diffuse_params {
 };
 
 struct ambient_params {
-    uint32_t const *floor = nullptr;
-    float const *transparency = nullptr;
-    float const *source_map = nullptr;
-    uint32_t const *vehicle_floor = nullptr;
-    uint32_t *lightmap = nullptr;
-    uint32_t *daylight_seed = nullptr;
+    uint32_t const* floor = nullptr;
+    float const* transparency = nullptr;
+    float const* source_map = nullptr;
+    uint32_t const* vehicle_floor = nullptr;
+    uint32_t* lightmap = nullptr;
+    uint32_t* daylight_seed = nullptr;
     float inside_light = 0.0f;
     int32_t cache_x = 0;
     int32_t cache_y = 0;
@@ -181,20 +180,20 @@ struct ambient_params {
     float natural_light[6][4] = {};
 };
 
-#if defined( CATA_SDL )
+#if defined(CATA_SDL)
 struct transparency_params {
-    cata_gpu::transparency_luts const *luts = nullptr;
+    cata_gpu::transparency_luts const* luts = nullptr;
     std::span<cata_gpu::transparency_submap_in const> submaps = {};
-    cata_gpu::transparency_push_constants const *push = nullptr;
-    std::vector<float> *compact_output = nullptr;
-    std::vector<float> *full_output = nullptr;
+    cata_gpu::transparency_push_constants const* push = nullptr;
+    std::vector<float>* compact_output = nullptr;
+    std::vector<float>* full_output = nullptr;
 };
 
 struct sight_pairs_params {
-    float const *transparency = nullptr;
-    uint32_t const *floor = nullptr;
+    float const* transparency = nullptr;
+    uint32_t const* floor = nullptr;
     std::span<cata_gpu::GpuSightPair const> pairs = {};
-    std::vector<uint32_t> *results = nullptr;
+    std::vector<uint32_t>* results = nullptr;
     int32_t cache_x = 0;
     int32_t cache_y = 0;
     int32_t cache_xy = 0;
@@ -202,11 +201,11 @@ struct sight_pairs_params {
 };
 
 struct raytrace_params {
-    float const *transparency = nullptr;
-    uint32_t const *floor = nullptr;
-    uint32_t const *vehicle_floor = nullptr;
+    float const* transparency = nullptr;
+    uint32_t const* floor = nullptr;
+    uint32_t const* vehicle_floor = nullptr;
     std::span<cata_gpu::GpuLightSource const> sources = {};
-    uint32_t *lightmap = nullptr;
+    uint32_t* lightmap = nullptr;
     int32_t cache_x = 0;
     int32_t cache_y = 0;
     int32_t cache_xy = 0;
@@ -218,11 +217,11 @@ struct raytrace_params {
 };
 
 struct color_raytrace_params {
-    float const *transparency = nullptr;
-    uint32_t const *floor = nullptr;
-    uint32_t const *vehicle_floor = nullptr;
+    float const* transparency = nullptr;
+    uint32_t const* floor = nullptr;
+    uint32_t const* vehicle_floor = nullptr;
     std::span<cata_gpu::GpuColoredLightSource const> sources = {};
-    uint32_t *color = nullptr;
+    uint32_t* color = nullptr;
     int32_t cache_x = 0;
     int32_t cache_y = 0;
     int32_t cache_xy = 0;
@@ -234,10 +233,10 @@ struct color_raytrace_params {
 };
 
 struct vehicle_optics_params {
-    float const *transparency = nullptr;
-    float const *seen = nullptr;
+    float const* transparency = nullptr;
+    float const* seen = nullptr;
     std::span<cata_gpu::GpuVehicleOptic const> optics = {};
-    uint32_t *camera = nullptr;
+    uint32_t* camera = nullptr;
     int32_t cache_x = 0;
     int32_t cache_y = 0;
     int32_t cache_xy = 0;
@@ -264,31 +263,31 @@ auto run_seen_probe() -> bool;
 auto run_seen_walls_probe() -> bool;
 auto run_daylight_diffuse_probe() -> bool;
 auto run_ambient_probe() -> bool;
-#if defined( CATA_SDL )
+#if defined(CATA_SDL)
 auto run_transparency_probe() -> bool;
 auto run_sight_pairs_probe() -> bool;
 auto run_raytrace_probe() -> bool;
 auto run_color_raytrace_probe() -> bool;
 auto run_vehicle_optics_probe() -> bool;
 #endif
-auto fill_uint( fill_uint_params const &params ) -> bool;
-auto fill_float( fill_float_params const &params ) -> bool;
-auto max_uint( max_uint_params const &params ) -> bool;
-auto shift_uint( shift_uint_params const &params ) -> bool;
-auto shift_float( shift_float_params const &params ) -> bool;
-auto clear_seen( clear_seen_params const &params ) -> bool;
-auto clear_seen_view( clear_seen_view_params const &params ) -> bool;
-auto final_visibility( final_visibility_params const &params ) -> bool;
-auto seen( seen_params const &params ) -> bool;
-auto seen_walls( seen_walls_params const &params ) -> bool;
-auto daylight_diffuse( daylight_diffuse_params const &params ) -> bool;
-auto ambient( ambient_params const &params ) -> bool;
-#if defined( CATA_SDL )
-auto dispatch_transparency( transparency_params const &params ) -> bool;
-auto sight_pairs( sight_pairs_params const &params ) -> bool;
-auto raytrace( raytrace_params const &params ) -> bool;
-auto color_raytrace( color_raytrace_params const &params ) -> bool;
-auto vehicle_optics( vehicle_optics_params const &params ) -> bool;
+auto fill_uint(fill_uint_params const& params) -> bool;
+auto fill_float(fill_float_params const& params) -> bool;
+auto max_uint(max_uint_params const& params) -> bool;
+auto shift_uint(shift_uint_params const& params) -> bool;
+auto shift_float(shift_float_params const& params) -> bool;
+auto clear_seen(clear_seen_params const& params) -> bool;
+auto clear_seen_view(clear_seen_view_params const& params) -> bool;
+auto final_visibility(final_visibility_params const& params) -> bool;
+auto seen(seen_params const& params) -> bool;
+auto seen_walls(seen_walls_params const& params) -> bool;
+auto daylight_diffuse(daylight_diffuse_params const& params) -> bool;
+auto ambient(ambient_params const& params) -> bool;
+#if defined(CATA_SDL)
+auto dispatch_transparency(transparency_params const& params) -> bool;
+auto sight_pairs(sight_pairs_params const& params) -> bool;
+auto raytrace(raytrace_params const& params) -> bool;
+auto color_raytrace(color_raytrace_params const& params) -> bool;
+auto vehicle_optics(vehicle_optics_params const& params) -> bool;
 #endif
 
 } // namespace cata_compute::slang_cpu::kernels

@@ -57,15 +57,15 @@ struct lighting_source_collection {
 };
 
 struct collect_lighting_sources_params {
-    map const *m = nullptr;
-    std::vector<int> const *levels = nullptr;
+    map const* m = nullptr;
+    std::vector<int> const* levels = nullptr;
     bool collect_colored_sources = false;
 };
 
 // Collect GPU-shaped light source records for the shared compute lighting path.
 // This also refreshes the per-level source-map cache consumed by ambient lighting.
-auto collect_lighting_sources( collect_lighting_sources_params const &p )
--> lighting_source_collection;
+auto collect_lighting_sources(collect_lighting_sources_params const& p)
+    -> lighting_source_collection;
 
 inline constexpr auto vehicle_optic_mirror = uint32_t{0};
 inline constexpr auto vehicle_optic_camera = uint32_t{1};
@@ -82,13 +82,13 @@ struct GpuVehicleOptic {
 static_assert(sizeof(GpuVehicleOptic) == 32);
 
 struct collect_lighting_vehicle_optics_params {
-    map const *m = nullptr;
-    tripoint_bub_ms const *origin = nullptr;
+    map const* m = nullptr;
+    tripoint_bub_ms const* origin = nullptr;
     int target_z = 0;
 };
 
-auto collect_lighting_vehicle_optics( collect_lighting_vehicle_optics_params const &p )
--> std::vector<GpuVehicleOptic>;
+auto collect_lighting_vehicle_optics(collect_lighting_vehicle_optics_params const& p)
+    -> std::vector<GpuVehicleOptic>;
 
 // ---------------------------------------------------------------------------
 // lm_ambient_push_constants

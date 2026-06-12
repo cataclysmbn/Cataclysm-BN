@@ -182,9 +182,13 @@ options_manager::options_manager()
 
     mMigrateOption = {
         {"DELETE_WORLD", { "WORLD_END", { {"no", "keep" }, {"yes", "delete"} } } },
-        {"COMPUTE_ACCELERATION", { "COMPUTE_ACCELERATION", {
-                {"off", "software_gpu"}, {"software", "software_gpu"}, {"force", "hardware"}
-            } } },
+        {
+            "COMPUTE_ACCELERATION", {
+                "COMPUTE_ACCELERATION", {
+                    {"off", "software_gpu"}, {"software", "software_gpu"}, {"force", "hardware"}
+                }
+            }
+        },
     };
 
     enable_json( "DEFAULT_REGION" );
