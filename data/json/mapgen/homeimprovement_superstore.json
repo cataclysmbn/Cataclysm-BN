@@ -12,7 +12,8 @@
       [ "rag", 20 ],
       [ "plastic_shopping_bag", 20 ],
       [ "bag_plastic", 15 ],
-      [ "bag_zipper", 5 ],
+      [ "bag_zipper_small", 5 ],
+      [ "bag_zipper", 2 ],
       [ "news_regional", 15 ],
       [ "mag_news", 15 ]
     ]
