@@ -6,8 +6,9 @@ namespace preload_config
 
 enum class compute_accel : int {
     auto_select,
-    software,
-    force,
+    cpu,
+    gpu,
+    gpu_software,
 };
 
 enum class tristate : int {

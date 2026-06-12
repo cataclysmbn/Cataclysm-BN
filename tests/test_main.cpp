@@ -87,6 +87,24 @@ namespace
 
 bool s_sdl_platform_initialized = false;
 
+auto test_compute_accel() -> preload_config::compute_accel
+{
+    auto const *const env_accel = std::getenv( "CATA_TEST_COMPUTE_ACCELERATION" );
+    if( env_accel != nullptr && env_accel[0] != '\0' ) {
+        return preload_config::compute_accel_from_string( env_accel );
+    }
+
+    if( get_options().has_option( "COMPUTE_ACCELERATION" ) ) {
+        const auto accel = preload_config::compute_accel_from_string(
+                               get_options().get_option( "COMPUTE_ACCELERATION" ).getValue() );
+        if( accel != preload_config::compute_accel::auto_select ) {
+            return accel;
+        }
+    }
+
+    return preload_config::compute_accel::gpu_software;
+}
+
 auto init_test_sdl_gpu() -> void
 {
     use_offscreen_video_driver_for_headless_sdl();
@@ -97,17 +115,14 @@ auto init_test_sdl_gpu() -> void
     s_sdl_platform_initialized = true;
 
     preload_config::load();
-    if( get_options().has_option( "COMPUTE_ACCELERATION" ) ) {
-        preload_config::set_compute_accel(
-            preload_config::compute_accel_from_string(
-                get_options().get_option( "COMPUTE_ACCELERATION" ).getValue() ) );
-    }
+    const auto accel = test_compute_accel();
+    preload_config::set_compute_accel( accel );
 
     cata_gpu::init();
-    if( cata_gpu::get_device() == nullptr ) {
+    if( cata_gpu::get_device() == nullptr && accel != preload_config::compute_accel::cpu ) {
         throw std::runtime_error(
-            "SDL_GPU test initialization failed; install or enable a hardware GPU driver or "
-            "a software Vulkan driver such as Lavapipe" );
+            "SDL_GPU test initialization failed; install or enable the requested GPU compute "
+            "backend, or set CATA_TEST_COMPUTE_ACCELERATION=cpu for CPU compute tests" );
     }
 }
 

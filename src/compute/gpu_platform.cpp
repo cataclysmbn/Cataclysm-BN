@@ -328,7 +328,7 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
 
     if (backend == "auto") { backend.clear(); }
     if (backend == "software") {
-        accel = compute_accel::software;
+        accel = compute_accel::gpu_software;
         backend.clear();
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: backend override 'software' selects the "
@@ -336,7 +336,9 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
     }
 
     auto attempts = std::vector<gpu_device_create_attempt>{};
-    if (accel == compute_accel::software) {
+    if (accel == compute_accel::cpu) { return attempts; }
+
+    if (accel == compute_accel::gpu_software) {
 #if defined(__ANDROID__)
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: software compute acceleration is not available on Android; "
@@ -381,19 +383,6 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
                 .driver = backend,
                 .require_vulkan_hardware = true,
             });
-    }
-
-    if (accel != compute_accel::force) {
-        if (!backend.empty() && backend != "vulkan") {
-            add_attempt(
-                attempts,
-                {
-                    .label = backend + " selected",
-                    .driver = backend,
-                    .require_vulkan_hardware = false,
-                });
-        }
-        for (auto attempt : software_attempts()) { add_attempt(attempts, std::move(attempt)); }
     }
 
     return attempts;
@@ -488,8 +477,18 @@ auto init() -> void {
     auto const backend_sv = preload_config::get_gpu_backend_override();
     auto const backend_str = std::string{backend_sv};
     auto const accel = preload_config::get_compute_accel();
+    if (accel == compute_accel::cpu) {
+        if (!backend_str.empty()) {
+            DebugLog(DL::Info, DC::Main)
+                << "SDL_GPU: backend override ignored because CPU compute is selected";
+        }
+        DebugLog(DL::Info, DC::Main)
+                << "Compute backend selected: cpu_compute; SDL_GPU compute device not created";
+        return;
+    }
+
     auto const require_software_device =
-        accel == compute_accel::software || backend_str == "software";
+        accel == compute_accel::gpu_software || backend_str == "software";
     if (require_software_device) { pin_lavapipe_icd_for_software_mode(); }
 
     if (!backend_str.empty()) {
@@ -523,12 +522,12 @@ auto init() -> void {
                "hardware and a working system Vulkan loader";
         return;
 #else
-        auto const level =
-            (accel == compute_accel::force || require_software_device) ? DL::Error : DL::Warn;
-        DebugLog(level, DC::Main) << "SDL_GPU: device creation failed; install/enable a hardware "
-                                     "GPU driver or "
-                                  << "a software Vulkan driver such as Lavapipe for the shader "
-                                     "fallback path";
+        auto const require_gpu_device = accel == compute_accel::gpu || require_software_device;
+        auto const level = require_gpu_device ? DL::Error : DL::Warn;
+        DebugLog(level, DC::Main)
+                << "SDL_GPU: device creation failed; "
+                << ( require_gpu_device ? "selected GPU compute backend is unavailable" :
+                     "CPU compute fallback will be selected" );
         return;
 #endif
     }
@@ -539,6 +538,9 @@ auto init() -> void {
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: driver=" << (driver != nullptr ? driver : "unknown")
                                  << "  formats=" << shader_formats_to_string(formats);
     log_gpu_device_info(selected_device_info);
+    DebugLog(DL::Info, DC::Main)
+            << "Compute backend selected: "
+            << ( require_software_device ? "sdl_gpu_software" : "sdl_gpu_hardware" );
 
     auto const [fmt, ext] = select_shader_format(formats);
     if (fmt != SDL_GPU_SHADERFORMAT_INVALID) { probe_shader(device, fmt, ext); }

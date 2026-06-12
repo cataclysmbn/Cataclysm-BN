@@ -211,6 +211,7 @@
 #include "location_vector.h"
 #include "monfaction.h"
 #if defined( CATA_SDL )
+#include "compute/compute_backend.h"
 #include "compute/gpu_lm.h"
 #include "compute/gpu_platform.h"
 #endif
@@ -6170,51 +6171,54 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                 }
             }
         }
-        TracyPlot( "Monmove GPU Sight LOS Jobs", static_cast<int64_t>( los_jobs.size() ) );
+        TracyPlot( "Monmove Sight LOS Jobs", static_cast<int64_t>( los_jobs.size() ) );
         if( !los_jobs.empty() ) {
 #if defined( CATA_SDL )
-            ZoneScopedN( "monmove_begin_gpu_sight_prewarm" );
-            gpu_pairs.reserve( los_jobs.size() );
-            std::ranges::transform( los_jobs, std::back_inserter( gpu_pairs ),
-            []( const auto & job ) {
-                return make_gpu_sight_pair( job.second );
-            } );
-            gpu_sight_device = cata_gpu::get_device();
-            if( gpu_sight_device == nullptr ) {
-                debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
-            } else {
-                const auto sight_inputs_ready = [&]() {
-                    return cata_gpu::resident_lighting_ready_for_sight_pairs( {
-                        .device = gpu_sight_device,
-                        .m = &m,
-                        .pairs = &gpu_pairs,
-                        .zlev = get_levz(),
-                    } );
-                };
-                if( !sight_inputs_ready() ) {
-                    ZoneScopedN( "monmove_bootstrap_gpu_sight_inputs" );
-                    m.build_map_cache( get_levz() );
-                }
-                if( !sight_inputs_ready() ) {
+            if( cata_compute::uses_sdl_gpu_compute() ) {
+                ZoneScopedN( "monmove_begin_gpu_sight_prewarm" );
+                gpu_pairs.reserve( los_jobs.size() );
+                std::ranges::transform( los_jobs, std::back_inserter( gpu_pairs ),
+                []( const auto & job ) {
+                    return make_gpu_sight_pair( job.second );
+                } );
+                gpu_sight_device = cata_gpu::get_device();
+                if( gpu_sight_device == nullptr ) {
                     debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
                 } else {
-                    gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
-                        .m = &m,
-                        .pairs = &gpu_pairs,
-                        .zlev = get_levz(),
-                    } );
-                    if( gpu_sight_work.id == 0 ) {
+                    const auto sight_inputs_ready = [&]() {
+                        return cata_gpu::resident_lighting_ready_for_sight_pairs( {
+                            .device = gpu_sight_device,
+                            .m = &m,
+                            .pairs = &gpu_pairs,
+                            .zlev = get_levz(),
+                        } );
+                    };
+                    if( !sight_inputs_ready() ) {
+                        ZoneScopedN( "monmove_bootstrap_gpu_sight_inputs" );
+                        m.build_map_cache( get_levz() );
+                    }
+                    if( !sight_inputs_ready() ) {
                         debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                    } else {
+                        gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
+                            .m = &m,
+                            .pairs = &gpu_pairs,
+                            .zlev = get_levz(),
+                        } );
+                        if( gpu_sight_work.id == 0 ) {
+                            debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                        }
                     }
                 }
-            }
-#else
-            ZoneScopedN( "monmove_cpu_sight_prewarm" );
-            auto &here = get_map();
-            for( const auto &[result_index, query] : los_jobs ) {
-                sight_results[result_index] = here.sees( query.from, query.to, query.range ) ? 1 : 0;
-            }
+            } else
 #endif
+            {
+                ZoneScopedN( "monmove_cpu_sight_prewarm" );
+                auto &here = get_map();
+                for( const auto &[result_index, query] : los_jobs ) {
+                    sight_results[result_index] = here.sees( query.from, query.to, query.range ) ? 1 : 0;
+                }
+            }
         }
     }
 
@@ -6272,7 +6276,7 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     if( !sight_jobs.empty() ) {
         if( !los_jobs.empty() ) {
 #if defined( CATA_SDL )
-            if( gpu_sight_work.id != 0 ) {
+            if( cata_compute::uses_sdl_gpu_compute() && gpu_sight_work.id != 0 ) {
                 ZoneScopedN( "monmove_finish_gpu_sight_prewarm" );
                 if( !cata_gpu::finish_gpu_sight_pairs( gpu_sight_device, gpu_sight_work,
                                                        gpu_results ) ) {

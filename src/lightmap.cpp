@@ -58,6 +58,7 @@
 #include "vpart_range.h"
 #include "weather.h"
 #if defined( CATA_SDL )
+#include "compute/compute_backend.h"
 #include "compute/gpu_lm.h"
 #include "compute/gpu_platform.h"
 #include "compute/gpu_transparency.h"
@@ -281,7 +282,7 @@ bool map::build_transparency_cache( const int zlev )
     }
 
 #if defined( CATA_SDL ) && !defined( CATA_GPU_VERIFY )
-    {
+    if( cata_compute::uses_sdl_gpu_compute() ) {
         ZoneScopedN( "build_transparency_cache_gpu" );
         SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
         if( gpu_device == nullptr ) {
@@ -499,6 +500,7 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
 {
     auto dirty_levels = std::vector<int> {};
 #if defined( CATA_SDL ) && !defined( CATA_GPU_VERIFY )
+    if( cata_compute::uses_sdl_gpu_compute() ) {
     ZoneScopedN( "build_transparency_caches_gpu" );
 
     struct transparency_level_batch_state {
@@ -688,14 +690,14 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
         }
     }
     return dirty_levels;
-#else
+    }
+#endif
     for( const auto zlev : std::views::iota( minz, maxz + 1 ) ) {
         if( build_transparency_cache( zlev ) ) {
             dirty_levels.push_back( zlev );
         }
     }
     return dirty_levels;
-#endif
 }
 
 
