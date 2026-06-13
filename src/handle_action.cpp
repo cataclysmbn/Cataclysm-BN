@@ -791,7 +791,7 @@ static void smash()
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
             sound_event se;
             se.origin = smashp;
-            se.volume = std::min( 80, bash_info.sound_vol.value_or( 0 ) );
+            se.volume = bash_info.sound_vol.value_or( 0 );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound.translated();
             se.id = "smash";
@@ -806,7 +806,7 @@ static void smash()
         } else {
             sound_event se;
             se.origin = smashp;
-            se.volume = std::min( 80, bash_info.sound_fail_vol.value_or( 0 ) );
+            se.volume = bash_info.sound_fail_vol.value_or( 0 );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound_fail.translated();
             se.id = "smash";
@@ -836,7 +836,7 @@ static void smash()
     if( should_pulp ) {
         // do activity forever. ACT_PULP stops itself
         u.assign_activity( std::make_unique<player_activity>( ACT_PULP, calendar::INDEFINITELY_LONG, 0 ) );
-        u.activity->placement = here.bub_to_abs( smashp );
+        u.activity->placement = bub_to_abs( smashp );
         return; // don't smash terrain if we've smashed a corpse
     }
 
@@ -951,7 +951,6 @@ static int try_set_alarm()
 
     return as_m.ret;
 }
-
 
 static auto parse_custom_wait_duration( const std::string &value ) -> std::optional<time_duration>
 {
@@ -1162,7 +1161,7 @@ static void wait()
         }
 
         u.assign_activity( std::make_unique<player_activity>( actType,
-                           100 * ( to_turns<int>( time_to_wait ) ), 0 ), false );
+                           to_moves<int>( time_to_wait ), 0 ), false );
     }
 }
 
@@ -1937,7 +1936,7 @@ bool game::handle_action()
         soffset = get_option<int>( "MOVE_VIEW_OFFSET" );
     }
 
-    int before_action_moves = u.moves;
+    const auto before_action_moves = u.moves;
 
     // These actions are allowed while deathcam is active. Registered in game::get_player_input
     if( uquit == QUIT_WATCH || !u.is_dead_state() ) {
@@ -3014,16 +3013,16 @@ bool game::handle_action()
         ZoneScopedN( "handle_action_elapsed_moves" );
         u.mod_moves( -current_turn.moves_elapsed() );
     }
-    {
-        ZoneScopedN( "handle_action_gamemode_post_action" );
-        gamemode->post_action( act );
+    gamemode->post_action( act );
+    const auto moves_before_debug_restore = u.moves;
+    if( act != ACTION_PAUSE ) {
+        restore_debug_infinite_speed_moves( before_action_moves );
     }
 
-    {
-        ZoneScopedN( "handle_action_finish" );
-        u.movecounter = ( !u.is_dead_state() ? ( before_action_moves - u.moves ) : 0 );
-        dbg( DL::Info ) << string_format( "%s: [%d] %d - %d = %d", action_ident( act ),
-                                          to_turn<int>( calendar::turn ), before_action_moves, u.movecounter, u.moves );
-    }
+    const auto action_moves_spent = u.moves > moves_before_debug_restore ? 0 :
+                                    before_action_moves - u.moves;
+    u.movecounter = ( !u.is_dead_state() ? action_moves_spent : 0 );
+    dbg( DL::Info ) << string_format( "%s: [%d] %d - %d = %d", action_ident( act ),
+                                      to_turn<int>( calendar::turn ), before_action_moves, u.movecounter, u.moves );
     return ( !u.is_dead_state() );
 }

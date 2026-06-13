@@ -231,7 +231,7 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
     SDL_GPUComputePipelineCreateInfo const info{
         .code_size = blob.size(),
         .code = reinterpret_cast<Uint8 const*>(blob.data()),
-        .entrypoint = "main",
+        .entrypoint = compute_shader_entrypoint(fmt),
         .format = fmt,
         .num_samplers = 0,
         .num_readonly_storage_textures = 0,
@@ -303,8 +303,8 @@ auto gather_transparency_refs(map const& m, int const zlev)
 }
 
 auto prepare_transparency_inputs(
-    std::span<transparency_submap_ref const> refs,
-    std::vector<transparency_submap_in>& out) -> void {
+    std::span<transparency_submap_ref const> refs, std::vector<transparency_submap_in>& out)
+    -> void {
     out.clear();
     out.reserve(refs.size());
 

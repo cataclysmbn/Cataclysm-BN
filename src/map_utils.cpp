@@ -25,7 +25,7 @@ auto get_items_at( const tripoint_abs_ms &loc ) -> location_subrange
         auto items = veh.get_items( index );
         return std::ranges::subrange( items );
     } else {
-        auto items = here.i_at( here.abs_to_bub( loc ) );
+        auto items = here.i_at( abs_to_bub( loc ) );
         return std::ranges::subrange( items );
     }
 }

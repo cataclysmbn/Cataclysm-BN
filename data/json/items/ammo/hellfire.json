@@ -1,0 +1,42 @@
+[
+  {
+    "type": "AMMO",
+    "id": "hellfire_heat",
+    "price": "99600 USD",
+    "price_postapoc": "50 USD",
+    "name": { "str": "AGM-114L Hellfire Longbow" },
+    "symbol": "=",
+    "color": "dark_gray",
+    "description": "An anti-armor air-to-ground missile equipped with millimeter-wave radar seeking and a 9kg HEAT warhead, designed to have devastating effect against all manner of vehicles and structures.",
+    "material": [ "steel", "powder" ],
+    "volume": "18 L",
+    "weight": "49 kg",
+    "bashing": 1,
+    "ammo_type": "hellfire",
+    "damage": { "damage_type": "bullet", "amount": 2000, "armor_multiplier": 0.1 },
+    "range": 100,
+    "recoil": 12000,
+    "loudness": 120,
+    "effects": [ "EXPLOSIVE_HUGE", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
+  },
+  {
+    "type": "AMMO",
+    "id": "hellfire_ninja",
+    "price": "99600 USD",
+    "price_postapoc": "50 USD",
+    "name": { "str": "AGM-114R-R9X Hellfire 'Ninja'" },
+    "symbol": "=",
+    "color": "dark_gray",
+    "description": "A highly specialized air-to-ground missile designed to eliminate high value targets while causing minimal collateral damage. Blades pop out of the missile after launch and devastate any single target.",
+    "material": [ "steel" ],
+    "volume": "18 L",
+    "weight": "45000 g",
+    "bashing": 1,
+    "ammo_type": "hellfire",
+    "damage": { "damage_type": "cut", "amount": 1500, "armor_multiplier": 0.1 },
+    "range": 100,
+    "recoil": 12000,
+    "loudness": 120,
+    "effects": [ "NEVER_MISFIRES" ]
+  }
+]

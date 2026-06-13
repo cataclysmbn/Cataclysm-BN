@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "action_time_scale.h"
 #include "calendar.h"
 #include "cata_unreachable.h"
 #include "creature.h"
@@ -382,7 +383,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
     if( carrier ) {
         itm.set_var( "relic_was_in_inventory", true );
     }
-    if( !calendar::once_every( rech.interval ) ) {
+    if( !action_time_scale::once_every_this_tick( rech.interval ) ) {
         return false;
     }
     if( !check_recharge_reqs( itm, rech, carrier ) ) {

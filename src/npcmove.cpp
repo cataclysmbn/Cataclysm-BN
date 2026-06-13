@@ -10,7 +10,9 @@
 #include <numeric>
 #include <ostream>
 #include <tuple>
+#include <unordered_set>
 
+#include "action_time_scale.h"
 #include "active_item_cache.h"
 #include "activity_handlers.h"
 #include "creature_tracker.h"
@@ -25,6 +27,8 @@
 #include "character_turn.h"
 #include "character_id.h"
 #include "clzones.h"
+#include "catalua.h"
+#include "catalua_impl.h"
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
@@ -38,6 +42,7 @@
 #include "game_constants.h"
 #include "gates.h"
 #include "gun_mode.h"
+#include "init.h"
 #include "item.h"
 #include "item_contents.h"
 #include "item_functions.h"
@@ -52,6 +57,7 @@
 #include "mission.h"
 #include "monster.h"
 #include "mtype.h"
+#include "npc_class.h"
 #include "npctalk.h"
 #include "options.h"
 #include "overmap.h"
@@ -78,6 +84,75 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 
+namespace
+{
+
+auto report_missing_lua_npc_ai( const std::string &method ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    debugmsg( "Lua NPC AI function '%s' is not defined", method );
+}
+
+auto report_invalid_lua_npc_ai_return( const std::string &method, const sol::object &value,
+                                       sol::state &lua ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    const auto type_name = get_luna_type( value );
+    const auto raw_name = type_name.value_or(
+                              std::string( sol::type_name( lua, value.get_type() ) ) );
+    debugmsg( "Lua NPC AI function '%s' returned %s, expected boolean or nil",
+              method, raw_name );
+}
+
+auto run_lua_npc_ai( npc &who ) -> bool
+{
+    if( !who.myclass.is_valid() ) {
+        return false;
+    }
+
+    const auto &lua_method = who.myclass.obj().lua_ai;
+    if( !lua_method ) {
+        return false;
+    }
+
+    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    if( lua_state == nullptr ) {
+        return false;
+    }
+
+    sol::state &lua = lua_state->lua;
+    sol::object ref = lua.globals()["game"]["npc_ai_functions"][*lua_method];
+    if( ref.get_type() != sol::type::function ) {
+        report_missing_lua_npc_ai( *lua_method );
+        return false;
+    }
+
+    auto func = ref.as<sol::protected_function>();
+    sol::protected_function_result res = func( &who );
+    check_func_result( res );
+    if( !res.valid() ) {
+        return false;
+    }
+
+    const auto value = res.get<sol::object>();
+    if( value.get_type() == sol::type::lua_nil ) {
+        return false;
+    }
+    if( value.get_type() != sol::type::boolean ) {
+        report_invalid_lua_npc_ai_return( *lua_method, value, lua );
+        return false;
+    }
+
+    return value.as<bool>();
+}
+
+} // namespace
 
 static const activity_id ACT_PULP( "ACT_PULP" );
 
@@ -242,7 +317,7 @@ tripoint_bub_ms npc::good_escape_direction( bool include_pos )
         std::optional<tripoint_abs_ms> retreat_target = mgr.get_nearest( retreat_zone, abs_pos(), 60,
                 fac_id );
         if( retreat_target && *retreat_target != abs_pos() ) {
-            update_path( here.abs_to_bub( tripoint_abs_ms( *retreat_target ) ) );
+            update_path( abs_to_bub( tripoint_abs_ms( *retreat_target ) ) );
             if( !path.empty() ) {
                 return path[0];
             }
@@ -771,7 +846,7 @@ void npc::regen_ai_cache()
     map &here = get_map();
     auto i = std::begin( ai_cache.sound_alerts );
     while( i != std::end( ai_cache.sound_alerts ) ) {
-        if( sees( here.abs_to_bub( i->abs_pos ) ) ) {
+        if( sees( abs_to_bub( i->abs_pos ) ) ) {
             i = ai_cache.sound_alerts.erase( i );
             if( ai_cache.sound_alerts.size() == 1 ) {
                 path.clear();
@@ -842,6 +917,14 @@ void npc::move()
     // NPCs under operation should just stay still
     if( activity->id() == activity_id( "ACT_OPERATION" ) ) {
         execute_action( npc_player_activity );
+        return;
+    }
+
+    const auto starting_moves = get_moves();
+    if( run_lua_npc_ai( *this ) ) {
+        if( get_moves() == starting_moves ) {
+            set_moves( 0 );
+        }
         return;
     }
 
@@ -1013,7 +1096,7 @@ void npc::move()
         if( !activity_route.empty() && !has_destination_activity() ) {
             tripoint_bub_ms final_destination;
             if( destination_point ) {
-                final_destination = here.abs_to_bub( *destination_point );
+                final_destination = abs_to_bub( *destination_point );
             } else {
                 final_destination = activity_route.back();
             }
@@ -1127,7 +1210,7 @@ void npc::execute_action( npc_action action )
 
         case npc_investigate_sound: {
             auto cur_pos = bub_pos();
-            update_path( here.abs_to_bub( ai_cache.s_abs_pos ) );
+            update_path( abs_to_bub( ai_cache.s_abs_pos ) );
             move_to_next();
             if( bub_pos() == cur_pos ) {
                 ai_cache.stuck += 1;
@@ -1136,7 +1219,7 @@ void npc::execute_action( npc_action action )
         break;
 
         case npc_return_to_guard_pos: {
-            const auto local_guard_pos = here.abs_to_bub( *ai_cache.guard_pos );
+            const auto local_guard_pos = abs_to_bub( *ai_cache.guard_pos );
             update_path( local_guard_pos );
             if( bub_pos() == local_guard_pos || path.empty() ) {
                 move_pause();
@@ -1443,7 +1526,7 @@ void npc::execute_action( npc_action action )
                 debugmsg( "npc_goto_to_this_pos set to true, but no target set" );
                 break;
             }
-            update_path( get_map().abs_to_bub( goto_to_this_pos.value() ) );
+            update_path( abs_to_bub( goto_to_this_pos.value() ) );
             move_to_next();
 
             if( abs_pos() == goto_to_this_pos.value() ) {
@@ -2619,7 +2702,7 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
                 if( !activity_route.empty() && !np->has_destination_activity() ) {
                     tripoint_bub_ms final_destination;
                     if( destination_point ) {
-                        final_destination = here.abs_to_bub( *destination_point );
+                        final_destination = abs_to_bub( *destination_point );
                     } else {
                         final_destination = activity_route.back();
                     }
@@ -2876,7 +2959,7 @@ void npc::move_pause()
     if( has_new_items ) {
         scan_new_items();
     }
-    if( calendar::once_every( 1_hours ) ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) ) {
         deactivate_bionic_by_id( bio_soporific );
         for( const bionic_id &bio_id : health_cbms ) {
             activate_bionic_by_id( bio_id );
@@ -3543,7 +3626,7 @@ bool npc::do_pulp()
     // TODO: Don't recreate the activity every time
     int old_moves = moves;
     assign_activity( ACT_PULP, calendar::INDEFINITELY_LONG, 0 );
-    activity->placement = get_map().bub_to_abs( *pulp_location );
+    activity->placement = bub_to_abs( *pulp_location );
     activity->do_turn( *this );
     return moves != old_moves;
 }
@@ -4330,7 +4413,7 @@ void npc::reach_omt_destination()
         // No point recalculating the path to get home
         move_to_next();
     } else if( guard_pos != tripoint_abs_ms::min() ) {
-        update_path( here.abs_to_bub( guard_pos ) );
+        update_path( abs_to_bub( guard_pos ) );
         move_to_next();
     } else {
         guard_pos = abs_pos();
@@ -4480,7 +4563,7 @@ void npc::go_to_omt_destination()
     }
     // TODO: fix point types
     auto sm_tri =
-        here.abs_to_bub( project_to<coords::ms>( omt_path.back() ) );
+        abs_to_bub( project_to<coords::ms>( omt_path.back() ) );
     auto centre_sub = sm_tri + point( SEEX, SEEY );
     if( !here.passable( centre_sub ) ) {
         auto candidates = here.points_in_radius( centre_sub, 2 );
@@ -4505,7 +4588,7 @@ void npc::go_to_omt_destination()
 void npc::guard_current_pos()
 {
     goal = abs_omt_pos();
-    guard_pos = get_map().bub_to_abs( bub_pos() );
+    guard_pos = abs_pos();
 }
 
 std::string npc_action_name( npc_action action )

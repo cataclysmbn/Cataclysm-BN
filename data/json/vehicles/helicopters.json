@@ -750,7 +750,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          { "part": "hellfire_turret", "ammo": 80, "ammo_types": [ "hellfire_heat" ], "ammo_qty": [ 1, 4 ] },
           "laser_designator_part"
         ]
       },
@@ -761,7 +761,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          { "part": "hellfire_turret", "ammo": 80, "ammo_types": [ "hellfire_heat" ], "ammo_qty": [ 1, 4 ] },
           "laser_designator_part"
         ]
       },
@@ -861,7 +861,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          { "part": "hellfire_turret", "ammo": 80, "ammo_types": [ "hellfire_heat" ], "ammo_qty": [ 1, 4 ] },
           "laser_designator_part"
         ]
       },
@@ -977,7 +977,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          { "part": "hellfire_turret", "ammo": 80, "ammo_types": [ "hellfire_heat" ], "ammo_qty": [ 1, 4 ] },
           "laser_designator_part"
         ]
       },
@@ -995,7 +995,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          { "part": "hellfire_turret", "ammo": 80, "ammo_types": [ "hellfire_heat" ], "ammo_qty": [ 1, 4 ] },
           "laser_designator_part"
         ]
       },
@@ -1088,7 +1088,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          { "part": "hellfire_turret", "ammo": 80, "ammo_types": [ "hellfire_heat" ], "ammo_qty": [ 1, 4 ] },
           "laser_designator_part"
         ]
       },
@@ -1098,7 +1098,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          { "part": "hellfire_turret", "ammo": 80, "ammo_types": [ "hellfire_heat" ], "ammo_qty": [ 1, 4 ] },
           "laser_designator_part"
         ]
       },
@@ -1167,11 +1167,11 @@
       { "x": -4, "y": 1, "chance": 75, "items": [ "plut_cell" ] },
       { "x": -4, "y": 1, "chance": 50, "items": [ "plut_cell" ] },
       { "x": -4, "y": 1, "chance": 25, "items": [ "plut_cell" ] },
-      { "x": -4, "y": 1, "chance": 50, "items": [ "atgm_heat" ] },
+      { "x": -4, "y": 1, "chance": 50, "items": [ "hellfire_heat" ] },
       { "x": -4, "y": -1, "chance": 75, "items": [ "plut_cell" ] },
       { "x": -4, "y": -1, "chance": 50, "items": [ "plut_cell" ] },
       { "x": -4, "y": -1, "chance": 25, "items": [ "plut_cell" ] },
-      { "x": -4, "y": -1, "chance": 50, "items": [ "atgm_heat" ] }
+      { "x": -4, "y": -1, "chance": 50, "items": [ "hellfire_heat" ] }
     ]
   },
   {
@@ -1201,7 +1201,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          { "part": "hellfire_turret", "ammo": 80, "ammo_types": [ "hellfire_heat" ], "ammo_qty": [ 1, 4 ] },
           "laser_designator_part"
         ]
       },
@@ -1260,7 +1260,7 @@
       { "x": -4, "y": 1, "chance": 75, "items": [ "plut_cell" ] },
       { "x": -4, "y": 1, "chance": 50, "items": [ "plut_cell" ] },
       { "x": -4, "y": 1, "chance": 25, "items": [ "plut_cell" ] },
-      { "x": -4, "y": 1, "chance": 50, "items": [ "atgm_heat" ] }
+      { "x": -4, "y": 1, "chance": 50, "items": [ "hellfire_heat" ] }
     ]
   },
   {

@@ -340,8 +340,8 @@ auto resident_lighting_ready_for_sight_pairs(resident_sight_pair_inputs_params c
 auto begin_gpu_sight_pairs(SDL_GPUDevice* device, begin_gpu_sight_pairs_params const& p)
     -> gpu_sight_pairs_work;
 auto finish_gpu_sight_pairs(
-    SDL_GPUDevice* device, gpu_sight_pairs_work const& work,
-    std::vector<uint32_t>& results) -> bool;
+    SDL_GPUDevice* device, gpu_sight_pairs_work const& work, std::vector<uint32_t>& results)
+    -> bool;
 auto run_gpu_sight_pairs(SDL_GPUDevice* device, run_gpu_sight_pairs_params const& p) -> bool;
 
 // Release all GPU pipeline objects owned by the lm module.

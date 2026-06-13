@@ -256,6 +256,7 @@ struct mutation_branch {
         std::map<spell_id, int> spells_learned;
         /** mutation enchantments */
         std::vector<enchantment_id> enchantments;
+        std::vector<enchantment> mut_enchantments;
     private:
         std::string raw_spawn_item_message;
     public:

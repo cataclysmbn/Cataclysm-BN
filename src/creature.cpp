@@ -3,11 +3,13 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <map>
 #include <memory>
 #include <optional>
 
+#include "action_time_scale.h"
 #include "anatomy.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -156,6 +158,7 @@ Creature::Creature( const Creature &source )
     speed_base = source.speed_base;
 
     speed_bonus = source.speed_bonus;
+    move_credit_remainder = source.move_credit_remainder;
     speed_mult = source.speed_mult;
     dodge_bonus = source.dodge_bonus;
     block_bonus = source.block_bonus;
@@ -244,8 +247,21 @@ void Creature::process_turn()
 
     // add an appropriate number of moves
     if( !has_effect( effect_ridden ) ) {
-        moves += get_speed();
+        add_action_move_credit( get_speed(), action_move_factor() );
     }
+}
+
+auto Creature::add_action_move_credit( const int base_moves, const int action_factor ) -> void
+{
+    const auto move_credit = static_cast<int64_t>( base_moves ) * action_factor +
+                             move_credit_remainder;
+    moves += move_credit / action_time_scale::factor_denominator;
+    move_credit_remainder = move_credit % action_time_scale::factor_denominator;
+}
+
+auto Creature::action_move_factor() const -> int
+{
+    return action_time_scale::factor_denominator;
 }
 
 void Creature::batch_turns( int n )
@@ -376,7 +392,7 @@ bool Creature::sees( const Creature &critter ) const
     return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
 }
 
-bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) const
+bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod ) const
 {
     ZoneScoped;
     map &here = get_map();
@@ -1474,10 +1490,6 @@ void Creature::clear_effects()
         }
     }
 }
-bool Creature::remove_effect( const efftype_id &eff_id )
-{
-    return remove_effect( eff_id, bodypart_str_id::NULL_ID() );
-}
 bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &bp )
 {
     if( !has_effect( eff_id, bp ) ) {
@@ -1854,6 +1866,7 @@ void Creature::mod_moves( int nmoves )
 void Creature::set_moves( int nmoves )
 {
     moves = nmoves;
+    move_credit_remainder = 0;
 }
 
 bool Creature::in_sleep_state() const
@@ -2533,20 +2546,22 @@ effects_map Creature::get_all_effects() const
 
 tripoint_abs_ms Creature::abs_pos() const
 {
-    return get_map().bub_to_abs( bub_pos() );
+    return bub_to_abs( bub_pos() );
 }
 
 void Creature::setpos( const tripoint_abs_ms &pos )
 {
-    setpos( get_map().abs_to_bub( pos ) );
+    setpos( abs_to_bub( pos ) );
 }
 
 bool Creature::is_loaded() const
 {
-    return get_map().get_submap_at( bub_pos() ) != nullptr;
+    map &here = get_map();
+    return here.get_submap_at( abs_to_map_local( here, abs_pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const
 {
-    return get_map().is_position_simulated( bub_pos() );
+    map &here = get_map();
+    return here.is_position_simulated( abs_to_map_local( here, abs_pos() ) );
 }

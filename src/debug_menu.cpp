@@ -527,8 +527,7 @@ void spawn_nested_mapgen()
             return;
         }
 
-        map &here = get_map();
-        const tripoint_abs_ms abs_ms = here.bub_to_abs( *where );
+        const auto abs_ms = bub_to_abs( *where );
         const tripoint_abs_omt abs_omt = project_to<coords::omt>( abs_ms );
         const tripoint_abs_sm abs_sub = project_to<coords::sm>( abs_ms );
 
@@ -544,7 +543,7 @@ void spawn_nested_mapgen()
         const auto nested_offset = point_rel_ms( local_ms.x(), local_ms.y() );
         ( *ptr )->nest( md, nested_offset );
         g->load_npcs();
-        here.invalidate_map_cache( g->get_levz() );
+        get_map().invalidate_map_cache( g->get_levz() );
     }
 }
 
@@ -2327,9 +2326,7 @@ void debug()
         }
         case DEBUG_DUMP_TILES: {
 #if defined(TILES) && defined(DYNAMIC_ATLAS)
-            tilecontext->current_tileset()->texture_atlas()->readback_load();
             tilecontext->current_tileset()->texture_atlas()->readback_dump( PATH_INFO::config_dir() );
-            tilecontext->current_tileset()->texture_atlas()->readback_clear();
 #endif
             break;
         }

@@ -279,6 +279,8 @@
     "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
     "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder", "soldier_wwii" ],
     "forbids_bionics": true,
+    "//": "The few characters modern enough for this to not look weird would still likely be better served by a more historical selection of firearms.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
   {
@@ -401,6 +403,8 @@
       "SMALL",
       "LARGE"
     ],
+    "//": "Do not give the lab rat a gun.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
     "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
   },
@@ -559,7 +563,8 @@
     "allowed_locs": [ "sloc_hospital" ],
     "start_name": "Hospital",
     "forced_traits": [ "FLIMSY2" ],
-    "forbidden_traits": [ "TOUGH" ],
+    "//": "Wearing your piece under your hospital gown would generally be frowned upon in most states.",
+    "forbidden_traits": [ "TOUGH", "CARRY_PERMIT" ],
     "professions": [ "unemployed", "bionic_patient", "patient", "broken_cyborg", "senior" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
   },
@@ -582,6 +587,8 @@
       "cop",
       "convict_escape_team"
     ],
+    "//": "Most professions are convicts, the rest already have their own assigned gear",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CITY_START", "LONE_START" ]
   },
   {
@@ -603,6 +610,7 @@
       "cop",
       "convict_escape_team"
     ],
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START", "CHALLENGE", "OUTDOOR" ]
   },
   {
@@ -614,6 +622,8 @@
     "allowed_locs": [ "sloc_mi-go_camp" ],
     "start_name": "Mi-Go Camp",
     "professions": [ "captive", "migo_escapee", "migo_experiment", "rescuer", "monster_hunter", "escape_team_migo" ],
+    "//": "Most professions had their items taken on capture.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START", "CHALLENGE", "WIN_START" ]
   },
   {
@@ -687,6 +697,7 @@
       "SMALL",
       "LARGE"
     ],
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START" ],
     "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
   },

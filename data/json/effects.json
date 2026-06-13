@@ -201,6 +201,12 @@
   },
   {
     "type": "effect_type",
+    "id": "pet_bonding",
+    "name": [ "Pet Bonding" ],
+    "desc": [ "AI tag used for bonding with pet critters.  This is a bug if you have it." ]
+  },
+  {
+    "type": "effect_type",
     "id": "paid",
     "name": [ "Paid" ],
     "desc": [ "AI tag used for paid critters.  This is a bug if you have it." ]

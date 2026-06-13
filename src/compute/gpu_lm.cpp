@@ -24,6 +24,7 @@
 #include "units_angle.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_lighting.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
@@ -167,7 +168,7 @@ auto load_pipeline(
     SDL_GPUComputePipelineCreateInfo const info{
         .code_size = blob.size(),
         .code = reinterpret_cast<Uint8 const*>(blob.data()),
-        .entrypoint = "main",
+        .entrypoint = compute_shader_entrypoint(fmt),
         .format = fmt,
         .num_samplers = 0,
         .num_readonly_storage_textures = 0,
@@ -1034,8 +1035,8 @@ auto ensure_uint_shift_scratch(
 // ---------------------------------------------------------------------------
 
 auto make_source(
-    int const x, int const y, int const zlev, float const luminance,
-    uint32_t const flags = 0u) -> GpuLightSource {
+    int const x, int const y, int const zlev, float const luminance, uint32_t const flags = 0u)
+    -> GpuLightSource {
     return GpuLightSource{
         .x = x,
         .y = y,
@@ -1194,8 +1195,8 @@ auto make_source_stats(std::vector<light_source_kind> const& kinds) -> source_co
 
 auto upsert_source(
     std::vector<GpuLightSource>& sources, std::unordered_map<std::size_t, std::size_t>& indices,
-    std::size_t const source_slot, tripoint_bub_ms const& pos,
-    float const luminance) -> std::size_t {
+    std::size_t const source_slot, tripoint_bub_ms const& pos, float const luminance)
+    -> std::size_t {
     auto const [iter, inserted] = indices.emplace(source_slot, sources.size());
     if (inserted) {
         sources.push_back(make_source(pos.x(), pos.y(), pos.z(), luminance));
@@ -1483,24 +1484,6 @@ auto append_source(
     }
 }
 
-auto add_item_sources(
-    source_accumulator& acc, tripoint_bub_ms const& pos,
-    location_vector<item> const& items) -> void {
-    for (auto const& itm : items) {
-        auto luminance = 0.0f;
-        auto width = 0_degrees;
-        auto direction = 0_degrees;
-        if (itm->getlight(luminance, width, direction)) {
-            add_source(acc, pos, luminance, light_source_kind::active_item);
-            add_colored_point_source({
-                .acc = acc,
-                .pos = pos,
-                .luminance = luminance,
-                .color_rgb = item_light_color(*itm),
-            });
-        }
-    }
-}
 
 auto add_field_sources(source_accumulator& acc, tripoint_bub_ms const& pos, field const& fields)
     -> void {
@@ -1594,7 +1577,7 @@ auto add_field_sources(source_accumulator& acc) -> void {
 auto add_active_item_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_active_item_sources");
     for (tripoint_abs_sm const& abs_pos : acc.m.get_submaps_with_active_items()) {
-        auto const local_pos = acc.m.abs_to_bub(abs_pos);
+        auto const local_pos = abs_to_bub(abs_pos);
         if (dirty_level_index(acc, local_pos.z()) < 0) { continue; }
 
         auto* const sm = acc.m.get_submap_at_grid(local_pos);
@@ -1619,44 +1602,8 @@ auto add_active_item_sources(source_accumulator& acc) -> void {
     }
 }
 
-auto active_vehicle_light_parts(vehicle& veh) -> std::vector<vpart_reference> {
-    auto lights = std::vector<vpart_reference>{};
-    for (vpart_reference const& part : veh.get_all_parts()) {
-        auto const& vehicle_part = part.part();
-        if (vehicle_part.enabled && vehicle_part.is_available() && vehicle_part.is_light()) {
-            lights.push_back(part);
-        }
-    }
-    return lights;
-}
-
-auto vehicle_light_is_directional(vpart_info const& info) -> bool {
-    return info.has_flag(VPFLAG_CONE_LIGHT) || info.has_flag(VPFLAG_WIDE_CONE_LIGHT)
-        || info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT);
-}
-
-auto vehicle_light_arc_width(vpart_info const& info) -> units::angle {
-    if (info.has_flag(VPFLAG_CONE_LIGHT)) { return 45_degrees; }
-    if (info.has_flag(VPFLAG_WIDE_CONE_LIGHT)) { return 90_degrees; }
-    if (info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT)) { return 180_degrees; }
-    return 360_degrees;
-}
-
-auto vehicle_light_is_external(vpart_reference const& part) -> bool {
-    auto const& info = part.info();
-    return info.location == "on_roof" || vehicle_light_is_directional(info)
-        || info.rotating_light.has_value();
-}
-
 auto vehicle_light_flags(vpart_reference const& part) -> uint32_t {
-    return vehicle_light_is_external(part) ? light_source_external_vehicle : uint32_t{0};
-}
-
-auto vehicle_circle_light_is_active(vpart_info const& info, bool const odd_turn) -> bool {
-    if (!info.has_flag(VPFLAG_CIRCLE_LIGHT)) { return true; }
-    return (odd_turn && info.has_flag(VPFLAG_ODDTURN))
-        || (!odd_turn && info.has_flag(VPFLAG_EVENTURN))
-        || (!(info.has_flag(VPFLAG_EVENTURN) || info.has_flag(VPFLAG_ODDTURN)));
+    return vehicle_lighting::is_external(part) ? light_source_external_vehicle : uint32_t{0};
 }
 
 auto vehicle_light_color(vpart_reference const& part) -> std::optional<uint32_t> {
@@ -1671,8 +1618,8 @@ auto vehicle_light_color(vpart_reference const& part) -> std::optional<uint32_t>
 }
 
 auto append_vehicle_source(
-    source_accumulator& acc, GpuLightSource const& source,
-    std::optional<uint32_t> const color_rgb) -> void {
+    source_accumulator& acc, GpuLightSource const& source, std::optional<uint32_t> const color_rgb)
+    -> void {
     append_source(acc, source, light_source_kind::vehicle);
     add_colored_source({
         .acc = acc,
@@ -1688,7 +1635,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
         auto* const veh = wrapped.v;
         if (veh == nullptr) { continue; }
 
-        auto const lights = active_vehicle_light_parts(*veh);
+        auto const lights = vehicle_lighting::active_light_parts(*veh);
         auto vehicle_luminance = 0.0f;
         auto iteration = 1.0f;
         for (vpart_reference const& part : lights) {
@@ -1714,7 +1661,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
                         acc,
                         make_directional_source(
                             pos, vehicle_luminance, veh->face.dir() + vehicle_part.direction,
-                            vehicle_light_arc_width(info), flags),
+                            vehicle_lighting::arc_width(info), flags),
                         color_rgb);
                 }
             } else if (info.rotating_light) {
@@ -1736,11 +1683,11 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
                     acc,
                     make_directional_source(
                         pos, static_cast<float>(info.bonus),
-                        veh->face.dir() + vehicle_part.direction, vehicle_light_arc_width(info),
+                        veh->face.dir() + vehicle_part.direction, vehicle_lighting::arc_width(info),
                         flags),
                     color_rgb);
             } else if (info.has_flag(VPFLAG_CIRCLE_LIGHT)) {
-                if (vehicle_circle_light_is_active(info, odd_turn)) {
+                if (vehicle_lighting::circle_light_is_active(info, odd_turn)) {
                     append_vehicle_source(
                         acc,
                         make_source(pos.x(), pos.y(), pos.z(), static_cast<float>(info.bonus),
@@ -1822,8 +1769,8 @@ auto add_monster_sources(source_accumulator& acc) -> void {
 }
 
 auto collect_sources(
-    map const& m, std::vector<int> const& dirty_levels,
-    bool const collect_colored_sources) -> source_collection {
+    map const& m, std::vector<int> const& dirty_levels, bool const collect_colored_sources)
+    -> source_collection {
     if (dirty_levels.empty()) { return {}; }
 
     auto const& lc0 = m.get_cache_ref(dirty_levels.front());
@@ -1867,8 +1814,8 @@ auto source_is_on_dirty_level(std::vector<int> const& dirty_levels, int const zl
 }
 
 auto write_source_map_to_level_caches(
-    map const& m, std::vector<int> const& dirty_levels,
-    std::vector<GpuLightSource> const& sources) -> void {
+    map const& m, std::vector<int> const& dirty_levels, std::vector<GpuLightSource> const& sources)
+    -> void {
     for (int const z : dirty_levels) {
         auto& lc = const_cast<level_cache&>(m.get_cache_ref(z));
         std::ranges::fill(lc.sm, 0.0f);
@@ -2105,8 +2052,8 @@ auto sorted_unique(std::vector<int> levels) -> std::vector<int> {
 }
 
 auto make_seen_download_levels(
-    run_gpu_lighting_params const& p, bool const seen_was_valid,
-    std::vector<int> const& all_levels) -> std::vector<int> {
+    run_gpu_lighting_params const& p, bool const seen_was_valid, std::vector<int> const& all_levels)
+    -> std::vector<int> {
     if (!seen_was_valid) { return all_levels; }
 
     auto levels = std::vector<int>{};
@@ -2170,8 +2117,8 @@ auto make_z_level_ranges(std::vector<int> const& levels) -> std::vector<z_level_
 }
 
 auto make_visibility_dispatch_plan(
-    std::vector<int> const& levels, int const cache_xy,
-    int const total_z_count) -> visibility_dispatch_plan {
+    std::vector<int> const& levels, int const cache_xy, int const total_z_count)
+    -> visibility_dispatch_plan {
     auto fallback = visibility_dispatch_plan{
         .z_start_idx = 0,
         .z_count = total_z_count,
@@ -2328,8 +2275,8 @@ auto pack_char_cache_uint(
 }
 
 auto pack_vehicle_obscured_cache_uint(
-    map const& m, std::vector<int> const& levels, int const cache_xy,
-    std::vector<uint32_t>& out) -> void {
+    map const& m, std::vector<int> const& levels, int const cache_xy, std::vector<uint32_t>& out)
+    -> void {
     out.resize(levels.size() * static_cast<std::size_t>(cache_xy));
     auto level_index = std::size_t{0};
     for (auto const z : levels) {
@@ -3875,7 +3822,6 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     auto const volume_tiles = static_cast<Uint32>(z_count * cache_xy);
     auto const float_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(float));
     auto const uint_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(uint32_t));
-    auto const float_level_bytes = static_cast<Uint32>(cache_xy * sizeof(float));
     auto const uint_level_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t));
     auto const source_bytes = static_cast<Uint32>(sizeof(GpuLightSource));
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
@@ -4494,8 +4440,8 @@ auto begin_gpu_sight_pairs(SDL_GPUDevice* const device, begin_gpu_sight_pairs_pa
 }
 
 auto finish_gpu_sight_pairs(
-    SDL_GPUDevice* const device, gpu_sight_pairs_work const& work,
-    std::vector<uint32_t>& results) -> bool {
+    SDL_GPUDevice* const device, gpu_sight_pairs_work const& work, std::vector<uint32_t>& results)
+    -> bool {
     ZoneScopedN("finish_gpu_sight_pairs");
 
     if (work.id == 0) {

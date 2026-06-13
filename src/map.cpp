@@ -126,6 +126,7 @@
 #include "weighted_list.h"
 
 #if defined( CATA_SDL )
+#include "compute/compute_backend.h"
 #include "compute/gpu_lm.h"
 #include "compute/gpu_platform.h"
 #endif
@@ -250,6 +251,125 @@ map &get_map()
     return tl_map_context ? *tl_map_context : g->m;
 }
 
+static auto checked_reality_bubble_size( const int reality_bubble_size ) -> int
+{
+    return std::clamp( reality_bubble_size, 0, REALITY_BUBBLE_SIZE_MAX );
+}
+
+auto reality_bubble_origin_from_player( const tripoint_abs_ms &player_pos,
+                                        const int reality_bubble_size ) -> tripoint_abs_sm
+{
+    const auto player_sm = project_to<coords::sm>( player_pos );
+    const auto half_mapsize = checked_reality_bubble_size( reality_bubble_size ) + 1;
+    return player_sm - tripoint_rel_sm( half_mapsize, half_mapsize, 0 );
+}
+
+auto reality_bubble_center_from_origin( const tripoint_abs_sm &origin,
+                                        const int reality_bubble_size ) -> tripoint_abs_sm
+{
+    const auto half_mapsize = checked_reality_bubble_size( reality_bubble_size ) + 1;
+    return origin + tripoint_rel_sm( half_mapsize, half_mapsize, 0 );
+}
+
+auto player_reality_bubble_origin() -> tripoint_abs_sm
+{
+    return reality_bubble_origin_from_player( get_avatar().abs_pos(), g_reality_bubble_size );
+}
+
+auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( player_reality_bubble_origin() );
+    return ( p + origin.xy().raw() ).reinterpret_as<tripoint_abs_ms>();
+}
+
+auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( player_reality_bubble_origin() );
+    return ( p - origin.xy() ).reinterpret_as<tripoint_bub_ms>();
+}
+
+auto bub_to_abs( const tripoint_bub_sm &p ) -> tripoint_abs_sm
+{
+    const auto origin = player_reality_bubble_origin();
+    return ( p + origin.xy().raw() ).reinterpret_as<tripoint_abs_sm>();
+}
+
+auto abs_to_bub( const tripoint_abs_sm &p ) -> tripoint_bub_sm
+{
+    const auto origin = player_reality_bubble_origin();
+    return ( p - origin.xy() ).reinterpret_as<tripoint_bub_sm>();
+}
+
+auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms
+{
+    const auto origin = project_to<coords::ms>( player_reality_bubble_origin() ).xy();
+    return origin + p.raw();
+}
+
+auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms
+{
+    const auto origin = project_to<coords::ms>( player_reality_bubble_origin() ).xy();
+    return ( p - origin ).reinterpret_as<point_bub_ms>();
+}
+
+auto bub_to_abs( const point_bub_sm &p ) -> point_abs_sm
+{
+    const auto origin = player_reality_bubble_origin().xy();
+    return origin + p.raw();
+}
+
+auto abs_to_bub( const point_abs_sm &p ) -> point_bub_sm
+{
+    const auto origin = player_reality_bubble_origin().xy();
+    return ( p - origin ).reinterpret_as<point_bub_sm>();
+}
+
+auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return ( local + origin.xy().raw() ).reinterpret_as<tripoint_abs_ms>();
+}
+
+auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return ( abs - origin.xy() ).reinterpret_as<tripoint_bub_ms>();
+}
+
+auto map_local_to_abs( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm
+{
+    const auto origin = m.get_abs_sub();
+    return ( local + origin.xy().raw() ).reinterpret_as<tripoint_abs_sm>();
+}
+
+auto abs_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm
+{
+    const auto origin = m.get_abs_sub();
+    return ( abs - origin.xy() ).reinterpret_as<tripoint_bub_sm>();
+}
+
+auto map_local_to_abs( const map &m, const point_bub_ms &local ) -> point_abs_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() ).xy();
+    return origin + local.raw();
+}
+
+auto abs_to_map_local( const map &m, const point_abs_ms &abs ) -> point_bub_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() ).xy();
+    return ( abs - origin ).reinterpret_as<point_bub_ms>();
+}
+
+auto map_local_to_abs( const map &m, const point_bub_sm &local ) -> point_abs_sm
+{
+    return m.get_abs_sub().xy() + local.raw();
+}
+
+auto abs_to_map_local( const map &m, const point_abs_sm &abs ) -> point_bub_sm
+{
+    return ( abs - m.get_abs_sub().xy() ).reinterpret_as<point_bub_sm>();
+}
+
 scoped_map_context::scoped_map_context( map &m ) noexcept
     : prev_( tl_map_context )
 {
@@ -366,7 +486,7 @@ bool map::is_out_of_bounds( const tripoint_bub_ms &p ) const
     if( !pocket_info_ ) {
         return false;  // No bounds means infinite dimension
     }
-    return !pocket_info_->bounds.contains( bub_to_abs( p ) );
+    return !pocket_info_->bounds.contains( map_local_to_abs( *this, p ) );
 }
 
 ter_id map::get_boundary_terrain() const
@@ -490,7 +610,7 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
     if( !contains_abs_sm( pos ) ) {
         return;
     }
-    const auto &local_p = abs_to_bub( pos ).xy();
+    const auto local_p = abs_to_map_local( *this, pos ).xy();
     // Index formula must match get_nonant() — see on_submap_loaded for details.
     const int grid_idx = zlevels
                          ? ( local_p.x() + local_p.y() * my_MAPSIZE ) * OVERMAP_LAYERS + ( pos.z() + OVERMAP_HEIGHT )
@@ -768,7 +888,7 @@ void map::add_vehicle_to_cache( vehicle *veh )
         if( vpr.part().removed ) {
             continue;
         }
-        const auto p = abs_to_bub( veh->abs_part_location( vpr.part() ) );
+        const auto p = abs_to_map_local( *this, veh->abs_part_location( vpr.part() ) );
         int part = veh->part_with_feature( vpr.part_index(), VPFLAG_LADDER, true );
         if( part != -1 ) {
             // NOTE: This cache may need to be submapfied at some point
@@ -938,7 +1058,9 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     set_seen_cache_dirty( smz );
     ch.visibility_cache_dirty = true;
 #if defined( CATA_SDL )
-    cata_gpu::invalidate_lighting_transparency_levels( std::vector<int> { smz } );
+    if( cata_compute::uses_sdl_gpu_compute() ) {
+        cata_gpu::invalidate_lighting_transparency_levels( std::vector<int> { smz } );
+    }
 #endif
 
     const auto for_clamped_submaps = [&]( const point_bub_sm & range_min,
@@ -1015,7 +1137,8 @@ void map::vehmove()
             for( vehicle *veh : get_cache( z ).vehicle_list ) {
                 veh->gain_moves();
                 veh->slow_leak();
-                vehicle_list.push_back( wrapped_vehicle{ .pos = veh->bub_ms_location(), .v = veh } );
+                vehicle_list.push_back( wrapped_vehicle{ .pos = abs_to_map_local( *this,
+                                        veh->abs_ms_location() ), .v = veh } );
             }
         }
     }
@@ -1375,9 +1498,10 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
         dp.z() == 0 ) {
         veh.velocity += veh.velocity < 0 ? 2000 : -2000;
         for( const auto &p : veh.get_points() ) {
-            const ter_id &pter = ter( abs_to_bub( p ).xy() );
+            const auto local = abs_to_map_local( *this, p );
+            const ter_id &pter = ter( local.xy() );
             if( pter == t_dirt || pter == t_grass ) {
-                ter_set( abs_to_bub( p ).xy(), t_dirtmound );
+                ter_set( local.xy(), t_dirtmound );
             }
         }
     }
@@ -1717,8 +1841,8 @@ void map::register_vehicle_zone( vehicle *veh, const int zlev )
 
 bool map::deregister_vehicle_zone( zone_data &zone )
 {
-    if( const std::optional<vpart_reference> vp = veh_at( abs_to_bub(
-                tripoint_abs_ms( zone.get_start_point() ) ) ).part_with_feature( "CARGO", false ) ) {
+    if( const std::optional<vpart_reference> vp = veh_at( abs_to_map_local( *this,
+            tripoint_abs_ms( zone.get_start_point() ) ) ).part_with_feature( "CARGO", false ) ) {
         const auto bounds = vp->vehicle().loot_zones.equal_range( vp->mount() );
         const auto it = std::ranges::find_if( std::ranges::subrange( bounds.first, bounds.second ),
         [&zone]( const auto & entry ) {
@@ -1758,7 +1882,7 @@ VehicleList map::get_vehicles( const tripoint_bub_sm &start, const tripoint_bub_
         for( const auto &elem : current_submap->vehicles ) {
             auto w = wrapped_vehicle{};
             w.v = elem.get();
-            w.pos = w.v->bub_ms_location();
+            w.pos = abs_to_map_local( *this, w.v->abs_ms_location() );
             vehs.push_back( w );
         }
     }
@@ -1768,7 +1892,7 @@ VehicleList map::get_vehicles( const tripoint_bub_sm &start, const tripoint_bub_
 
 optional_vpart_position map::veh_at( const tripoint_abs_ms &p ) const
 {
-    return veh_at( abs_to_bub( p ) );
+    return veh_at( abs_to_map_local( *this, p ) );
 }
 
 optional_vpart_position map::veh_at( const tripoint_bub_ms &p ) const
@@ -1819,7 +1943,7 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *who )
 
     auto vp = veh_at( pos ).part_with_feature( VPFLAG_BOARDABLE, true );
     if( !vp ) {
-        const auto abs_pos = bub_to_abs( pos );
+        const auto abs_pos = map_local_to_abs( *this, pos );
         for( auto *veh : loaded_vehicles ) {
             if( veh == nullptr ) {
                 continue;
@@ -1985,9 +2109,9 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
 
             // Place passenger on the new part location.  Z must include mount
             // and terrain-topology offsets — precalc[1] is XY-only.
-            auto psgp = abs_to_bub( dest + tripoint_rel_ms( veh_part.precalc[1].x(),
-                                    veh_part.precalc[1].y(),
-                                    veh_part.mount.z() + veh_part.z_terrain[1] ) );
+            auto psgp = abs_to_map_local( *this, dest + tripoint_rel_ms( veh_part.precalc[1].x(),
+                                          veh_part.precalc[1].y(),
+                                          veh_part.mount.z() + veh_part.z_terrain[1] ) );
             // someone is in the way so try again
             if( g->critter_at( psgp ) ) {
                 complete = false;
@@ -2008,18 +2132,18 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     // Capture the old footprint in absolute submap coordinates BEFORE parts
     // are updated by advance_precalc_mounts.  The player may shift the map
     // origin below, so bubble coordinates would be stale by on_vehicle_moved().
-    auto veh_abs_sm_min = tripoint_abs_sm( INT_MAX, INT_MAX, INT_MAX );
-    auto veh_abs_sm_max = tripoint_abs_sm( INT_MIN, INT_MIN, INT_MIN );
+    auto veh_sm_min = tripoint_abs_sm( INT_MAX, INT_MAX, INT_MAX );
+    auto veh_sm_max = tripoint_abs_sm( INT_MIN, INT_MIN, INT_MIN );
 
     auto expand_bounds = [&]( const tripoint_abs_ms & base, const vehicle_part & prt ) {
         const auto p = project_to<coords::sm>( base + tripoint_rel_ms(
                 prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) );
-        veh_abs_sm_min.x() = std::min( veh_abs_sm_min.x(), p.x() );
-        veh_abs_sm_min.y() = std::min( veh_abs_sm_min.y(), p.y() );
-        veh_abs_sm_min.z() = std::min( veh_abs_sm_min.z(), p.z() );
-        veh_abs_sm_max.x() = std::max( veh_abs_sm_max.x(), p.x() );
-        veh_abs_sm_max.y() = std::max( veh_abs_sm_max.y(), p.y() );
-        veh_abs_sm_max.z() = std::max( veh_abs_sm_max.z(), p.z() );
+        veh_sm_min.x() = std::min( veh_sm_min.x(), p.x() );
+        veh_sm_min.y() = std::min( veh_sm_min.y(), p.y() );
+        veh_sm_min.z() = std::min( veh_sm_min.z(), p.z() );
+        veh_sm_max.x() = std::max( veh_sm_max.x(), p.x() );
+        veh_sm_max.y() = std::max( veh_sm_max.y(), p.y() );
+        veh_sm_max.z() = std::max( veh_sm_max.z(), p.z() );
     };
 
     for( const vpart_reference &vpr : veh.get_all_parts() ) {
@@ -2102,9 +2226,9 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         }
         std::ranges::for_each( smzs, [&]( const int vsmz ) {
             const auto smz = dest.z() + vsmz;
-            const auto veh_sm_min = abs_to_bub( tripoint_abs_sm( veh_abs_sm_min.xy(), smz ) );
-            const auto veh_sm_max = abs_to_bub( tripoint_abs_sm( veh_abs_sm_max.xy(), smz ) );
-            on_vehicle_moved( veh_sm_min, veh_sm_max, smz );
+            const auto veh_bub_sm_min = abs_to_bub( tripoint_abs_sm( veh_sm_min.xy(), smz ) );
+            const auto veh_bub_sm_max = abs_to_bub( tripoint_abs_sm( veh_sm_max.xy(), smz ) );
+            on_vehicle_moved( veh_bub_sm_min, veh_bub_sm_max, smz );
         } );
         vehicle_moved_marked = true;
     };
@@ -2315,7 +2439,7 @@ void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
     if( old_t.active ) {
         current_submap->active_furniture.erase( point_sm_ms( l ) );
         // TODO: Only for g->m? Observer pattern?
-        get_distribution_grid_tracker().on_changed( bub_to_abs( p ) );
+        get_distribution_grid_tracker().on_changed( map_local_to_abs( *this, p ) );
     }
     if( new_t.active || new_active ) {
         cata::poly_serialized<active_tile_data> atd;
@@ -2326,11 +2450,11 @@ void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
             atd->set_last_updated( calendar::turn );
         }
         current_submap->active_furniture[point_sm_ms( l )] = atd;
-        get_distribution_grid_tracker().on_changed( bub_to_abs( p ) );
+        get_distribution_grid_tracker().on_changed( map_local_to_abs( *this, p ) );
     }
 
     if( old_t.fluid_grid || new_t.fluid_grid ) {
-        fluid_grid::on_structure_changed( bub_to_abs( p ) );
+        fluid_grid::on_structure_changed( map_local_to_abs( *this, p ) );
     }
 }
 
@@ -2440,13 +2564,13 @@ uint8_t map::get_known_connections( const tripoint_bub_ms &p, int connect_group,
     if( use_tiles ) {
         is_memorized =
         [&]( const tripoint_bub_ms & q ) {
-            return !g->u.get_memorized_tile( bub_to_abs( q ) ).tile.empty();
+            return !g->u.get_memorized_tile( map_local_to_abs( *this, q ) ).tile.empty();
         };
     } else {
 #endif
         is_memorized =
         [&]( const tripoint_bub_ms & q ) {
-            return g->u.get_memorized_symbol( bub_to_abs( q ) );
+            return g->u.get_memorized_symbol( map_local_to_abs( *this, q ) );
         };
 #ifdef TILES
     }
@@ -2496,12 +2620,12 @@ uint8_t map::get_known_connections_f( const tripoint_bub_ms &p, int connect_grou
 #ifdef TILES
     if( use_tiles ) {
         is_memorized = [&]( const tripoint_bub_ms & q ) {
-            return !player_character.get_memorized_tile( bub_to_abs( q ) ).tile.empty();
+            return !player_character.get_memorized_tile( map_local_to_abs( *this, q ) ).tile.empty();
         };
     } else {
 #endif
         is_memorized = [&]( const tripoint_bub_ms & q ) {
-            return player_character.get_memorized_symbol( bub_to_abs( q ) );
+            return player_character.get_memorized_symbol( map_local_to_abs( *this, q ) );
         };
 #ifdef TILES
     }
@@ -2669,7 +2793,7 @@ bool map::ter_set( const tripoint_bub_ms &p, const ter_id &new_terrain )
         set_suspension_cache_dirty( p.z() );
         if( new_t.has_flag( TFLAG_SUSPENDED ) ) {
             level_cache &ch = get_cache( p.z() );
-            ch.suspension_cache.emplace_back( bub_to_abs( p ).xy() );
+            ch.suspension_cache.emplace_back( map_local_to_abs( *this, p ).xy() );
         }
     }
 
@@ -3716,7 +3840,7 @@ void map::decay_fields_and_scent( const time_duration &amount )
             if( to_proc < 0 ) {
                 cur_submap->field_count = 0;
                 dbg( DL::Error ) << "map::decay_fields_and_scent: submap at "
-                                 << bub_to_abs( sm_pos )
+                                 << map_local_to_abs( *this, sm_pos )
                                  << "has " << to_proc << " field_count";
             }
             // This submap has no fields
@@ -3748,7 +3872,7 @@ void map::decay_fields_and_scent( const time_duration &amount )
         if( to_proc > 0 ) {
             cur_submap->field_count = cur_submap->field_count - to_proc;
             dbg( DL::Warn ) << "map::decay_fields_and_scent: submap at "
-                            << bub_to_abs( sm_pos )
+                            << map_local_to_abs( *this, sm_pos )
                             << "has " << cur_submap->field_count - to_proc << "fields, but "
                             << cur_submap->field_count << " field_count";
         }
@@ -4485,7 +4609,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
                         // Found same center, wreck current tile
                         if( furn_obj.fluid_grid &&
                             furn_obj.fluid_grid->role == fluid_grid_role::tank ) {
-                            fluid_grid::on_tank_removed( tripoint_abs_ms( bub_to_abs( pt ) ) );
+                            fluid_grid::on_tank_removed( tripoint_abs_ms( map_local_to_abs( *this, pt ) ) );
                         }
                         spawn_items( p, item_group::items_from( recur_bash.drop_group, calendar::turn ) );
                         furn_set( pt, recur_bash.furn_set );
@@ -4497,7 +4621,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
         soundfxvariant = "smash_cloth";
     } else {
         if( furnid.fluid_grid && furnid.fluid_grid->role == fluid_grid_role::tank ) {
-            fluid_grid::on_tank_removed( tripoint_abs_ms( bub_to_abs( p ) ) );
+            fluid_grid::on_tank_removed( tripoint_abs_ms( map_local_to_abs( *this, p ) ) );
         }
         furn_set( p, bash.furn_set );
         for( item * const &it : i_at( p ) )  {
@@ -4591,7 +4715,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
         // Blame nearby player
         if( rl_dist( g->u.bub_pos(), p ) <= 3 ) {
             g->events().send<event_type::triggers_alarm>( g->u.getID() );
-            const auto abs = project_to<coords::sm>( bub_to_abs( p.xy() ) );
+            const auto abs = project_to<coords::sm>( map_local_to_abs( *this, p.xy() ) );
             g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
                                  tripoint_abs_sm( abs, p.z() ) );
         }
@@ -5475,9 +5599,9 @@ void map::translate_radius( const ter_id &from, const ter_id &to, float radi,
         return;
     }
 
-    const tripoint_abs_omt abs_omt_p = project_to<coords::omt>( bub_to_abs( p ) );
+    const tripoint_abs_omt abs_omt_p = project_to<coords::omt>( map_local_to_abs( *this, p ) );
     for( const tripoint_bub_ms &t : points_on_zlevel() ) {
-        const tripoint_abs_omt abs_omt_t = project_to<coords::omt>( bub_to_abs( t ) );
+        const tripoint_abs_omt abs_omt_t = project_to<coords::omt>( map_local_to_abs( *this, t ) );
         const float radiX = trig_dist( p, t );
         if( ter( t ) == from ) {
             // within distance, and either no submap limitation or same overmap coords.
@@ -5632,7 +5756,7 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
     // remove from the active items cache (if it isn't there does nothing)
     current_submap->active_items.remove( *it );
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( bub_to_abs( p ) ) );
+        submaps_with_active_items.erase( project_to<coords::sm>( map_local_to_abs( *this, p ) ) );
     }
 
     const auto removed_emissive = ( *it )->is_emissive();
@@ -5668,7 +5792,7 @@ std::vector<detached_ptr<item>> map::i_clear( const tripoint_bub_ms &p )
         current_submap->active_items.remove( it );
     }
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( bub_to_abs( p ) ) );
+        submaps_with_active_items.erase( project_to<coords::sm>( map_local_to_abs( *this, p ) ) );
     }
 
     const auto had_luminance = current_submap->get_lum( l ) != 0;
@@ -5939,7 +6063,8 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
     }
 
     if( new_item->is_map() && !new_item->has_var( "reveal_map_center_omt" ) ) {
-        new_item->set_var( "reveal_map_center_omt", project_to<coords::omt>( bub_to_abs( p ) ) );
+        new_item->set_var( "reveal_map_center_omt", project_to<coords::omt>( map_local_to_abs( *this,
+                           p ) ) );
     }
 
     current_submap->is_uniform = false;
@@ -6138,7 +6263,7 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
             if( sm == nullptr || sm->active_items.empty() ) {
                 continue;
             }
-            const auto abs_pos = bub_to_abs( sm_pos );
+            const auto abs_pos = map_local_to_abs( *this, sm_pos );
             if( !submaps_with_active_items.contains( abs_pos ) ) {
                 result.push_back( abs_pos );
             }
@@ -6208,7 +6333,7 @@ void map::process_items()
             if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
                 continue;
             }
-            const auto local_pos = abs_to_bub( abs_pos );
+            const auto local_pos = abs_to_map_local( *this, abs_pos );
             submap *const current_submap = get_submap_at_grid( local_pos );
             if( current_submap == nullptr ) {
                 continue;
@@ -6536,7 +6661,7 @@ static void use_charges_from_furn( const furn_t &f, const itype_id &type, int &q
     static const flag_id json_flag_USES_GRID_POWER( flag_USES_GRID_POWER );
     for( const itype &itt : item_list ) {
         if( itt.has_flag( json_flag_USES_GRID_POWER ) ) {
-            const auto abspos( m->bub_to_abs( p ) );
+            const auto abspos = map_local_to_abs( *m, p );
             auto &grid = get_distribution_grid_tracker().grid_at( abspos );
             detached_ptr<item> furn_item = item::spawn( itt.get_id(), calendar::start_of_cataclysm,
                                            grid.get_resource() );
@@ -7166,96 +7291,101 @@ auto map::update_visibility_cache( const int zlev,
     ZoneScopedN( "update_visibility_cache" );
     const auto player_pos = g->u.bub_pos();
 #if defined( CATA_SDL )
-    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
-    if( gpu_device == nullptr ) {
-        debugmsg( "SDL_GPU visibility is required, but no GPU device is available" );
-        return;
-    }
-    const auto &visibility_cache_for_residency = get_cache_ref( zlev );
-    const auto visibility_cache_x = visibility_cache_for_residency.cache_x;
-    const auto visibility_cache_y = visibility_cache_for_residency.cache_y;
-    if( !cata_gpu::resident_lighting_ready_for_visibility( {
-    .device = gpu_device,
-    .cache_x = visibility_cache_x,
-    .cache_y = visibility_cache_y,
-    .z_count = OVERMAP_LAYERS,
-} ) ) {
-        build_map_cache( zlev );
+    if( cata_compute::uses_sdl_gpu_compute() ) {
+        SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+        if( gpu_device == nullptr ) {
+            debugmsg( "SDL_GPU visibility is required, but no GPU device is available" );
+            return;
+        }
+        const auto &visibility_cache_for_residency = get_cache_ref( zlev );
+        const auto visibility_cache_x = visibility_cache_for_residency.cache_x;
+        const auto visibility_cache_y = visibility_cache_for_residency.cache_y;
         if( !cata_gpu::resident_lighting_ready_for_visibility( {
         .device = gpu_device,
         .cache_x = visibility_cache_x,
         .cache_y = visibility_cache_y,
         .z_count = OVERMAP_LAYERS,
     } ) ) {
-            debugmsg( "SDL_GPU visibility residency bootstrap failed; see debug.log for details" );
-            return;
+            build_map_cache( zlev );
+            if( !cata_gpu::resident_lighting_ready_for_visibility( {
+            .device = gpu_device,
+            .cache_x = visibility_cache_x,
+            .cache_y = visibility_cache_y,
+            .z_count = OVERMAP_LAYERS,
+        } ) ) {
+                debugmsg( "SDL_GPU visibility residency bootstrap failed; see debug.log for details" );
+                return;
+            }
         }
     }
 #endif
     visibility_variables_cache = make_visibility_variables( zlev );
 
 #if defined( CATA_SDL )
-    auto const mark_overmap_seen_from_visibility = [this]( const level_cache & vc_cache ) {
-        auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
-        for( const auto x : std::views::iota( 0, vc_cache.cache_x ) ) {
-            for( const auto y : std::views::iota( 0, vc_cache.cache_y ) ) {
-                const auto ll = vc_cache.visibility_cache[vc_cache.idx( x, y )];
-                sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
-                    ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
+    if( cata_compute::uses_sdl_gpu_compute() ) {
+        SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+        auto const mark_overmap_seen_from_visibility = [this]( const level_cache & vc_cache ) {
+            auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
+            for( const auto x : std::views::iota( 0, vc_cache.cache_x ) ) {
+                for( const auto y : std::views::iota( 0, vc_cache.cache_y ) ) {
+                    const auto ll = vc_cache.visibility_cache[vc_cache.idx( x, y )];
+                    sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
+                        ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
+                }
             }
-        }
-        for( const auto p : bubble_submaps() ) {
-            if( sm_squares_seen[p.x() * my_MAPSIZE + p.y()] > 36 ) {
-                const auto abs_sm = bub_to_abs( p );
-                const auto abs_omt( project_to<coords::omt>( abs_sm ) );
-                get_overmapbuffer( bound_dimension_ ).set_seen( tripoint_abs_omt( abs_omt, 0 ), true );
+            for( const auto p : bubble_submaps() ) {
+                if( sm_squares_seen[p.x() * my_MAPSIZE + p.y()] > 36 ) {
+                    const auto abs_sm = bub_to_abs( p );
+                    const auto abs_omt( project_to<coords::omt>( abs_sm ) );
+                    get_overmapbuffer( bound_dimension_ ).set_seen( tripoint_abs_omt( abs_omt, 0 ), true );
+                }
             }
-        }
-    };
+        };
 
-    auto visibility_download_levels = std::vector<int> {};
-    if( zlevels ) {
-        std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
-                           std::back_inserter( visibility_download_levels ) );
-    } else {
-        visibility_download_levels.push_back( zlev );
-    }
-    const auto rebuild_seen_cache = m_last_seen_cache_origin != player_pos;
-    const auto gpu_visibility_work = cata_gpu::begin_gpu_visibility( gpu_device, {
-        .m = this,
-        .download_levels = &visibility_download_levels,
-        .zlev = zlev,
-        .player_x = player_pos.x(),
-        .player_y = player_pos.y(),
-        .player_zlev = player_pos.z(),
-        .g_light_level = visibility_variables_cache.g_light_level,
-        .u_clairvoyance = visibility_variables_cache.u_clairvoyance,
-        .u_unimpaired_range = visibility_variables_cache.u_unimpaired_range,
-        .vision_threshold = visibility_variables_cache.vision_threshold,
-        .visibility_scale_factor = visibility_variables_cache.visibility_scale_factor,
-        .detail_range = visibility_variables_cache.detail_range,
-        .vision_block_mask = vision_transparency_block_mask(),
-        .rebuild_seen_cache = rebuild_seen_cache,
-    } );
-    if( gpu_visibility_work.id == 0 ) {
-        debugmsg( "SDL_GPU visibility dispatch failed; see debug.log for details" );
+        auto visibility_download_levels = std::vector<int> {};
+        if( zlevels ) {
+            std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
+                               std::back_inserter( visibility_download_levels ) );
+        } else {
+            visibility_download_levels.push_back( zlev );
+        }
+        const auto rebuild_seen_cache = m_last_seen_cache_origin != player_pos;
+        const auto gpu_visibility_work = cata_gpu::begin_gpu_visibility( gpu_device, {
+            .m = this,
+            .download_levels = &visibility_download_levels,
+            .zlev = zlev,
+            .player_x = player_pos.x(),
+            .player_y = player_pos.y(),
+            .player_zlev = player_pos.z(),
+            .g_light_level = visibility_variables_cache.g_light_level,
+            .u_clairvoyance = visibility_variables_cache.u_clairvoyance,
+            .u_unimpaired_range = visibility_variables_cache.u_unimpaired_range,
+            .vision_threshold = visibility_variables_cache.vision_threshold,
+            .visibility_scale_factor = visibility_variables_cache.visibility_scale_factor,
+            .detail_range = visibility_variables_cache.detail_range,
+            .vision_block_mask = vision_transparency_block_mask(),
+            .rebuild_seen_cache = rebuild_seen_cache,
+        } );
+        if( gpu_visibility_work.id == 0 ) {
+            debugmsg( "SDL_GPU visibility dispatch failed; see debug.log for details" );
+            return;
+        }
+        if( while_gpu_pending ) {
+            while_gpu_pending();
+        }
+        const auto gpu_visibility_ok = cata_gpu::finish_gpu_visibility( gpu_device, gpu_visibility_work );
+        if( !gpu_visibility_ok ) {
+            debugmsg( "SDL_GPU visibility completion failed; see debug.log for details" );
+            return;
+        }
+        if( rebuild_seen_cache ) {
+            auto &origin_cache = get_cache( player_pos.z() );
+            std::fill( origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f );
+            m_last_seen_cache_origin = player_pos;
+        }
+        mark_overmap_seen_from_visibility( get_cache_ref( zlev ) );
         return;
     }
-    if( while_gpu_pending ) {
-        while_gpu_pending();
-    }
-    const auto gpu_visibility_ok = cata_gpu::finish_gpu_visibility( gpu_device, gpu_visibility_work );
-    if( !gpu_visibility_ok ) {
-        debugmsg( "SDL_GPU visibility completion failed; see debug.log for details" );
-        return;
-    }
-    if( rebuild_seen_cache ) {
-        auto &origin_cache = get_cache( player_pos.z() );
-        std::fill( origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f );
-        m_last_seen_cache_origin = player_pos;
-    }
-    mark_overmap_seen_from_visibility( get_cache_ref( zlev ) );
-    return;
 #endif
 
     ( void )while_gpu_pending;
@@ -7331,7 +7461,7 @@ auto map::update_visibility_cache( const int zlev,
 
     for( const auto p : bubble_submaps() ) {
         if( sm_squares_seen[p.x() * my_MAPSIZE + p.y()] > 36 ) { // 25% of the submap is visible
-            const auto abs_sm = bub_to_abs( p );
+            const auto abs_sm = map_local_to_abs( *this, p );
             const auto abs_omt( project_to<coords::omt>( abs_sm ) );
             get_overmapbuffer( bound_dimension_ ).set_seen( tripoint_abs_omt( abs_omt, 0 ), true );
         }
@@ -7385,7 +7515,7 @@ visibility_type map::get_visibility( const lit_level ll,
 static bool has_memory_at( const tripoint_bub_ms &p )
 {
     if( g->u.should_show_map_memory() ) {
-        int t = g->u.get_memorized_symbol( g->m.bub_to_abs( p ) );
+        int t = g->u.get_memorized_symbol( bub_to_abs( p ) );
         return t != 0;
     }
     return false;
@@ -7394,7 +7524,7 @@ static bool has_memory_at( const tripoint_bub_ms &p )
 static int get_memory_at( const tripoint_bub_ms &p )
 {
     if( g->u.should_show_map_memory() ) {
-        return g->u.get_memorized_symbol( g->m.bub_to_abs( p ) );
+        return g->u.get_memorized_symbol( bub_to_abs( p ) );
     }
     return ' ';
 }
@@ -7430,8 +7560,8 @@ void map::draw( const catacurses::window &w, const tripoint_bub_ms &center )
                                 std::max( g_mapsize_y, offs.y() + wnd_h )
                             );
     g->u.prepare_map_memory_region(
-        g->m.bub_to_abs( tripoint_bub_ms( min_mm_reg, center.z() ) ),
-        g->m.bub_to_abs( tripoint_bub_ms( max_mm_reg, center.z() ) )
+        map_local_to_abs( *this, tripoint_bub_ms( min_mm_reg, center.z() ) ),
+        map_local_to_abs( *this, tripoint_bub_ms( max_mm_reg, center.z() ) )
     );
 
     const auto draw_background = [&]( const tripoint_bub_ms & p ) {
@@ -7709,7 +7839,7 @@ bool map::draw_maptile( const catacurses::window &w, const tripoint_bub_ms &p,
     }
 
     if( param.memorize() && check_and_set_seen_cache( p ) ) {
-        g->u.memorize_symbol( bub_to_abs( p ), memory_sym );
+        g->u.memorize_symbol( map_local_to_abs( *this, p ), memory_sym );
     }
 
     // If there's graffiti here, change background color
@@ -8479,23 +8609,25 @@ void map::shift( const point_rel_sm &sp )
     const int zmax = zlevels ? OVERMAP_HEIGHT : abs.z();
     m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
 #if defined( CATA_SDL )
-    auto *const gpu_device = cata_gpu::get_device();
-    const auto &shift_cache = get_cache_ref( zmin );
-    const auto gpu_residency_shifted = cata_gpu::shift_lighting_resident_inputs( {
-        .device = gpu_device,
-        .cache_x = shift_cache.cache_x,
-        .cache_y = shift_cache.cache_y,
-        .z_count = OVERMAP_LAYERS,
-        .shift_x_submaps = sp.x(),
-        .shift_y_submaps = sp.y(),
-    } );
-    if( !gpu_residency_shifted ) {
-        debugmsg( "SDL_GPU resident lighting input shift failed; see debug.log for details" );
-        auto shifted_levels = std::vector<int> {};
-        for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
-            shifted_levels.push_back( gridz );
+    if( cata_compute::uses_sdl_gpu_compute() ) {
+        auto *const gpu_device = cata_gpu::get_device();
+        const auto &shift_cache = get_cache_ref( zmin );
+        const auto gpu_residency_shifted = cata_gpu::shift_lighting_resident_inputs( {
+            .device = gpu_device,
+            .cache_x = shift_cache.cache_x,
+            .cache_y = shift_cache.cache_y,
+            .z_count = OVERMAP_LAYERS,
+            .shift_x_submaps = sp.x(),
+            .shift_y_submaps = sp.y(),
+        } );
+        if( !gpu_residency_shifted ) {
+            debugmsg( "SDL_GPU resident lighting input shift failed; see debug.log for details" );
+            auto shifted_levels = std::vector<int> {};
+            for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
+                shifted_levels.push_back( gridz );
+            }
+            cata_gpu::invalidate_lighting_transparency_levels( shifted_levels );
         }
-        cata_gpu::invalidate_lighting_transparency_levels( shifted_levels );
     }
 #endif
     for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
@@ -8820,7 +8952,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
     ZoneScopedN( "map_loadn" );
     ZoneValue( static_cast<uint64_t>( grid.z() + OVERMAP_DEPTH ) );
 
-    const auto grid_abs_sub = bub_to_abs( tripoint_bub_sm( grid ) );
+    const auto grid_abs_sub = map_local_to_abs( *this, tripoint_bub_sm( grid ) );
     const size_t gridn = get_nonant( tripoint_bub_sm( grid ) );
 
     // For out-of-bounds areas in bounded dimensions, use uniform boundary terrain
@@ -9025,7 +9157,8 @@ void map::handle_decayed_corpse( const item &it, const tripoint_bub_ms &pnt )
 {
     const mtype *dead_monster = it.get_corpse_mon();
     if( !dead_monster ) {
-        debugmsg( "Corpse at tripoint %s has no associated monster?!", bub_to_abs( pnt ).to_string() );
+        debugmsg( "Corpse at tripoint %s has no associated monster?!",
+                  map_local_to_abs( *this, pnt ).to_string() );
         return;
     }
 
@@ -9125,7 +9258,7 @@ void map::fill_funnels( const tripoint_bub_ms &p, const time_point &since )
     }
     if( biggest_container != items.end() ) {
         retroactively_fill_from_funnel( **biggest_container, tr, since, calendar::turn,
-                                        bub_to_abs( p ) );
+                                        map_local_to_abs( *this, p ) );
     }
 }
 
@@ -9146,7 +9279,7 @@ void map::grow_plant( const tripoint_bub_ms &p )
         // No seed there anymore, we don't know what kind of plant it was.
         // TODO: Fix point types
         const oter_id ot = get_overmapbuffer( bound_dimension_ ).ter( project_to<coords::omt>
-                           ( tripoint_abs_ms( bub_to_abs( p ) ) ) );
+                           ( tripoint_abs_ms( map_local_to_abs( *this, p ) ) ) );
         dbg( DL::Error ) << "a planted item at " << p
                          << " (within overmap terrain " << ot.id().str() << ") has no seed data";
         i_clear( p );
@@ -9503,7 +9636,7 @@ void map::copy_grid( const tripoint_bub_sm &to, const tripoint_bub_sm &from )
         return;
     }
     for( auto &it : smap->vehicles ) {
-        it->abs_sm_pos = bub_to_abs( to );
+        it->abs_sm_pos = map_local_to_abs( *this, to );
     }
 }
 
@@ -9545,7 +9678,7 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
         const tripoint_bub_ms upper_left{ SEEX * gp.x(), SEEY * gp.y(), gp.z() };
         if( !allow_on_terrain( upper_left ) ||
             ( !ignore_inside_checks && !is_outside( upper_left ) ) ) {
-            const auto glp = bub_to_abs( gp );
+            const auto glp = map_local_to_abs( *this, gp );
             dbg( DL::Warn ) << "Empty locations for group " << group.type.str()
                             << " at uniform submap " << gp << " global " << glp;
             return;
@@ -9574,7 +9707,7 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
     if( locations.empty() ) {
         // TODO: what now? there is no possible place to spawn monsters, most
         // likely because the player can see all the places.
-        const auto glp = bub_to_abs( gp );
+        const auto glp = map_local_to_abs( *this, gp );
         dbg( DL::Warn ) << "Empty locations for group " << group.type.str()
                         << " at " << gp << " global " << glp;
         // Just kill the group. It's not like we're removing existing monsters
@@ -9617,7 +9750,7 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
             }
             if( group.horde ) {
                 // Give monster a random point near horde's expected destination
-                const auto rand_dest = abs_to_bub( horde_target ) +
+                const auto rand_dest = abs_to_map_local( *this, horde_target ) +
                                        point_rel_ms( rng( 0, SEEX ), rng( 0, SEEY ) );
                 const int turns = rl_dist( p, rand_dest ) + group.interest;
                 tmp.wander_to( rand_dest, turns );
@@ -9640,11 +9773,11 @@ void map::spawn_monsters_submap( const tripoint_bub_sm &gp, bool ignore_sight )
 {
     // Load unloaded monsters
     // TODO: fix point types
-    get_overmapbuffer( bound_dimension_ ).spawn_monster( bub_to_abs( gp ) );
+    get_overmapbuffer( bound_dimension_ ).spawn_monster( map_local_to_abs( *this, gp ) );
 
     // Only spawn new monsters after existing monsters are loaded.
     // TODO: fix point types
-    auto groups = get_overmapbuffer( bound_dimension_ ).groups_at( bub_to_abs( gp ) );
+    auto groups = get_overmapbuffer( bound_dimension_ ).groups_at( map_local_to_abs( *this, gp ) );
     for( auto &mgp : groups ) {
         spawn_monsters_submap_group( gp, *mgp, ignore_sight );
     }
@@ -9781,7 +9914,7 @@ bool map::inbounds( const tripoint_bub_sm &p ) const
 
 bool map::inbounds( const tripoint_abs_sm &p ) const
 {
-    return inbounds( abs_to_bub( p ) );
+    return inbounds( abs_to_map_local( *this, p ) );
 }
 
 bool map::inbounds( const point_bub_sm &p ) const
@@ -9792,7 +9925,7 @@ bool map::inbounds( const point_bub_sm &p ) const
 
 bool map::is_position_simulated( const tripoint_bub_sm &p ) const
 {
-    return submap_loader.is_simulated( bound_dimension_, bub_to_abs( p ) );
+    return submap_loader.is_simulated( bound_dimension_, map_local_to_abs( *this, p ) );
 }
 
 bool tinymap::inbounds( const tripoint_abs_sm &p ) const
@@ -9815,7 +9948,7 @@ fake_map::fake_map( const furn_id &fur_type, const ter_id &ter_type, const trap_
     set_abs_sub( tripoint_below_zero );
     for( const auto p : bubble_submaps() ) {
         const auto sm_pos = tripoint_bub_sm( p, fake_map_z );
-        std::unique_ptr<submap> sm = std::make_unique<submap>( bub_to_abs( sm_pos ) );
+        std::unique_ptr<submap> sm = std::make_unique<submap>( map_local_to_abs( *this, sm_pos ) );
 
         sm->set_all_ter( ter_type );
         sm->set_all_furn( fur_type );
@@ -10136,7 +10269,7 @@ void map::update_suspension_cache( const int &z )
                 const ter_t &terrain = cur_submap->get_ter( sm_ms ).obj();
                 if( terrain.has_flag( TFLAG_SUSPENDED ) ) {
                     auto loc = coords::project_combine( p, sm_ms );
-                    suspension_cache.emplace_back( bub_to_abs( loc ) );
+                    suspension_cache.emplace_back( map_local_to_abs( *this, loc ) );
                 }
             }
         }
@@ -10145,7 +10278,7 @@ void map::update_suspension_cache( const int &z )
 
     for( auto iter = suspension_cache.begin(); iter != suspension_cache.end(); ) {
         const point_abs_ms absp = *iter;
-        const tripoint_bub_ms loctp( abs_to_bub( absp ), z );
+        const tripoint_bub_ms loctp( abs_to_map_local( *this, absp ), z );
         if( !inbounds( loctp ) ) {
             ++iter;
             continue;
@@ -10274,6 +10407,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     ZoneScoped;
     const int minz = zlevels ? -OVERMAP_DEPTH : zlev;
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
+#if defined( CATA_SDL )
+    const auto use_sdl_gpu_compute = cata_compute::uses_sdl_gpu_compute();
+#endif
     flush_lightmap_cpu_read_counters();
     const auto valid_lm_levels = std::ranges::count_if(
     std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
@@ -10298,11 +10434,6 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
             levels.push_back( z );
         }
-    };
-    auto add_all_gpu_dirty_levels = [&]( auto & levels ) {
-        std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [&]( const int z ) {
-            add_gpu_dirty_level( levels, z );
-        } );
     };
     auto normalize_gpu_dirty_levels = []( auto & levels ) {
         std::ranges::sort( levels );
@@ -10479,7 +10610,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     gpu_vehicle_floor_dirty = !gpu_vehicle_floor_dirty_levels.empty();
     gpu_vehicle_obscured_dirty = !gpu_vehicle_obscured_dirty_levels.empty();
 #if defined( CATA_SDL )
-    if( !gpu_transparency_residency_invalid_levels.empty() ) {
+    if( use_sdl_gpu_compute && !gpu_transparency_residency_invalid_levels.empty() ) {
         cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_residency_invalid_levels );
     }
 #endif
@@ -10497,8 +10628,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     const tripoint_bub_ms &p = g->u.bub_pos();
     auto force_seen_rebuild_for_gpu_residency = false;
 #if defined( CATA_SDL )
-    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
-    if( !skip_lightmap && gpu_device != nullptr ) {
+    SDL_GPUDevice *const gpu_device = use_sdl_gpu_compute ? cata_gpu::get_device() : nullptr;
+    if( !skip_lightmap && use_sdl_gpu_compute && gpu_device != nullptr ) {
         const auto &visibility_cache = get_cache_ref( zlev );
         if( !cata_gpu::resident_lighting_ready_for_visibility( {
         .device = gpu_device,
@@ -10533,7 +10664,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 
 #if defined( CATA_SDL )
     auto pending_gpu_lighting = cata_gpu::gpu_lighting_work {};
-    if( !skip_lightmap && gpu_device != nullptr && !dirty_lightmap_levels.empty() ) {
+    if( !skip_lightmap && use_sdl_gpu_compute && gpu_device != nullptr &&
+        !dirty_lightmap_levels.empty() ) {
         ZoneScopedN( "Phase4_lightmap_begin" );
         update_solar_params();
         // GPU path: lightmap rebuilds only run for lightmap-dirty levels.
@@ -10600,11 +10732,16 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     TracyPlot( "Map Need Seen Rebuild", need_seen_rebuild ? int64_t{ 1 } : int64_t{ 0 } );
     if( need_seen_rebuild ) {
 #if defined( CATA_SDL )
-        if( gpu_device == nullptr ) {
-            debugmsg( "SDL_GPU lighting is required for 3D visibility, but no GPU device is available" );
-            return;
+        if( use_sdl_gpu_compute ) {
+            if( gpu_device == nullptr ) {
+                debugmsg( "SDL_GPU lighting is required for 3D visibility, but no GPU device is available" );
+                return;
+            }
+            m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
+        } else {
+            build_seen_cache( p, zlev );
+            m_last_seen_cache_origin = p;
         }
-        m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
 #else
         build_seen_cache( p, zlev );
         m_last_seen_cache_origin = p;
@@ -10614,27 +10751,29 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
     if( !skip_lightmap ) {
 #if defined( CATA_SDL )
-        if( gpu_device != nullptr ) {
-            if( !dirty_lightmap_levels.empty() ) {
-                ZoneScopedN( "Phase4_lightmap_finish" );
-                const bool gpu_lighting_ok = cata_gpu::finish_gpu_lighting( gpu_device,
-                                             pending_gpu_lighting );
-                if( !gpu_lighting_ok ) {
-                    debugmsg( "SDL_GPU lighting completion failed; see debug.log for details" );
-                    return;
-                }
+        if( use_sdl_gpu_compute ) {
+            if( gpu_device != nullptr ) {
+                if( !dirty_lightmap_levels.empty() ) {
+                    ZoneScopedN( "Phase4_lightmap_finish" );
+                    const bool gpu_lighting_ok = cata_gpu::finish_gpu_lighting( gpu_device,
+                                                 pending_gpu_lighting );
+                    if( !gpu_lighting_ok ) {
+                        debugmsg( "SDL_GPU lighting completion failed; see debug.log for details" );
+                        return;
+                    }
 
-                std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
-                    get_cache( z ).lightmap_dirty = false;
-                    get_cache( z ).visibility_cache_dirty = true;
-                } );
-            }
-        } else {
-            if( !dirty_lightmap_levels.empty() ) {
+                    std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
+                        get_cache( z ).lightmap_dirty = false;
+                        get_cache( z ).visibility_cache_dirty = true;
+                    } );
+                }
+            } else if( !dirty_lightmap_levels.empty() ) {
                 debugmsg( "SDL_GPU lighting is required for lightmap rebuild, but no GPU device is available" );
                 return;
             }
+        } else
 #endif
+        {
             if( !dirty_lightmap_levels.empty() ) {
 
                 if( dirty_lightmap_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
@@ -10695,15 +10834,16 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 // cache computed before this rebuild (e.g. from handle_action's unconditional
                 // update_visibility_cache call) is now stale and must be rebuilt in game::draw.
                 std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
-                    get_cache( z ).lightmap_dirty = false;
-                    get_cache( z ).lm_cpu_cache_valid = true;
-                    get_cache( z ).visibility_cache_dirty = true;
+                    auto &c = get_cache( z );
+                    c.lightmap_dirty = false;
+                    c.lm_cpu_cache_valid = true;
+                    c.visibility_cache_dirty = true;
+                    std::ranges::fill( c.colored_light_cache, 0u );
+                    c.colored_light_cache_active = false;
                 } );
 
             } // end if( !dirty_lightmap_levels.empty() )
-#if defined( CATA_SDL )
         }
-#endif
     }
 }
 
@@ -11151,7 +11291,7 @@ std::vector<item *> map::get_active_items_in_radius( const tripoint_bub_ms &cent
                             std::min( maxp.y() / SEEY, my_MAPSIZE - 1 ) );
 
     for( const tripoint_abs_sm &abs_submap_loc : submaps_with_active_items ) {
-        const tripoint_bub_sm submap_loc = abs_to_bub( abs_submap_loc );
+        const tripoint_bub_sm submap_loc = abs_to_map_local( *this, abs_submap_loc );
         if( submap_loc.x() < ming.x() || submap_loc.y() < ming.y() ||
             submap_loc.x() > maxg.x() || submap_loc.y() > maxg.y() ) {
             continue;
@@ -11182,8 +11322,8 @@ std::vector<tripoint_bub_ms> map::find_furnitures_with_flag_in_omt( const tripoi
         const std::string &flag )
 {
     // Some stupid code to get to the corner
-    const auto omt_p = abs_to_bub( project_to<coords::ms>( project_to<coords::omt>( bub_to_abs(
-                                       p ) ) ) );
+    const auto omt_p = abs_to_map_local( *this, project_to<coords::ms>(
+            project_to<coords::omt>( map_local_to_abs( *this, p ) ) ) );
 
     std::vector<tripoint_bub_ms> furn_locs;
     for( const auto &furn_loc : points_in_rectangle( omt_p,

@@ -20,6 +20,7 @@
 #include <tuple>
 #include <unordered_set>
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "ammo.h"
 #include "ascii_art.h"
@@ -824,12 +825,27 @@ void item::set_damage( int qty )
     damage_ = std::max( std::min( qty, max_damage() ), min_damage() );
 }
 
+auto item::prepare_for_location_removal() -> void
+{
+    if( !goes_bad() ) {
+        return;
+    }
+    if( is_in_preserving_container() ) {
+        mark_rot_checked_now();
+        return;
+    }
+    if( is_loaded() && has_position() ) {
+        const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
+        const auto temperature = vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
+                                 rot::temperature_flag_for_location( get_map(), *this );
+        update_rot( position(), temperature, get_weather() );
+    }
+}
+
 detached_ptr<item> item::split( int qty )
 {
     const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
-    if( split_from_preserving_container ) {
-        mark_rot_checked_now();
-    }
+    prepare_for_location_removal();
     if( qty <= 0 || !count_by_charges() || qty >= charges ) {
         return detach();
     }
@@ -871,9 +887,7 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
     if( is_null() ) {
         return false;
     }
-    if( goes_bad() && is_in_preserving_container() ) {
-        mark_rot_checked_now();
-    }
+    prepare_for_location_removal();
     if( count_by_charges() ) {
         return attempt_split( 0, cb );
     }
@@ -884,10 +898,8 @@ bool item::attempt_split( int qty,
                           const std::function < detached_ptr<item>( detached_ptr<item> && ) > & cb )
 {
     const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
-    if( split_from_preserving_container ) {
-        mark_rot_checked_now();
-    }
-    const bool split_needs_rot_actualization = goes_bad() && has_position() &&
+    prepare_for_location_removal();
+    const bool split_needs_rot_actualization = goes_bad() && is_loaded() && has_position() &&
             !split_from_preserving_container;
     const auto split_pos = split_needs_rot_actualization ? position() : tripoint_bub_ms::zero();
     const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
@@ -5008,7 +5020,8 @@ void item::on_map_placement( const map &m, const tripoint_bub_ms &p )
 
     // TODO: Move to reveal_map_actor
     if( is_map() && !has_var( "reveal_map_center_omt" ) ) {
-        set_var( "reveal_map_center_omt", project_to<coords::omt>( m.bub_to_abs( p ) ) );
+        const auto abs_pos = map_local_to_abs( m, p );
+        set_var( "reveal_map_center_omt", project_to<coords::omt>( abs_pos ) );
     }
 
     for( const auto &func : type->use_methods | std::views::values ) {
@@ -6880,7 +6893,7 @@ bool item::ready_to_revive( const tripoint_bub_ms &pos ) const
     if( get_map().veh_at( pos ) ) {
         return false;
     }
-    if( !calendar::once_every( 1_seconds ) ) {
+    if( !action_time_scale::once_every_this_tick( 1_seconds ) ) {
         return false;
     }
     int age_in_hours = to_hours<int>( age() );
@@ -10210,7 +10223,7 @@ void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
             //Use weather if above ground, use map temp if below
             units::temperature env_temperature_raw;
             if( pos.z() >= 0 ) {
-                tripoint_abs_ms location = tripoint_abs_ms( get_map().bub_to_abs( pos ) );
+                const auto location = bub_to_abs( pos );
                 units::temperature weather_temperature = wgen.get_weather_temperature( location, time,
                         calendar::config, seed );
                 env_temperature_raw = weather_temperature + local_mod;
@@ -10676,7 +10689,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
         }
     }
     if( nonchar.map_point() ) {
-        distance = rl_dist( pos, here.abs_to_bub( nonchar.point ) );
+        distance = rl_dist( pos, abs_to_bub( nonchar.point ) );
         self->charges = self->type->maximum_charges() - distance;
         if( self->charges < 1 ) {
             if( carrier ) {

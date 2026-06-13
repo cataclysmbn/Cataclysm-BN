@@ -8,6 +8,7 @@
 #include "catalua_luna_doc.h"
 #include "catalua_luna.h"
 
+#include "action.h"
 #include "artifact.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -460,6 +461,7 @@ void cata::detail::reg_colors( sol::state &lua )
 
 void cata::detail::reg_enums( sol::state &lua )
 {
+    reg_enum<action_id>( lua );
     reg_enum<add_type>( lua );
     reg_enum<Attitude>( lua );
     reg_enum<body_part>( lua );
