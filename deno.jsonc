@@ -55,6 +55,7 @@
     "@std/fs": "jsr:@std/fs@^1.0.19",
     "@std/path": "jsr:@std/path@^1.1.2",
     "@std/yaml": "jsr:@std/yaml@^1.0.10",
-    "@valibot/valibot": "jsr:@valibot/valibot@^1.1.0"
+    "@valibot/valibot": "jsr:@valibot/valibot@^1.1.0",
+    "markdown-table": "npm:markdown-table@3.0.4"
   }
 }
