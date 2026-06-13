@@ -11,6 +11,7 @@
 #include <optional>
 #include <queue>
 #include <random>
+#include <ranges>
 #include <set>
 #include <utility>
 #include <variant>
@@ -100,6 +101,9 @@ static const itype_id itype_rm13_armor_on( "rm13_armor_on" );
 
 namespace
 {
+
+const auto flag_CONSOLE = std::string( "CONSOLE" );
+
 auto is_dead_for_explosion( const Creature &critter ) -> bool
 {
     if( const auto *const character = dynamic_cast<const Character *>( &critter ) ) {
@@ -107,6 +111,13 @@ auto is_dead_for_explosion( const Creature &critter ) -> bool
     }
     return critter.is_dead_state();
 }
+
+auto is_emp_card_reader( const ter_id &terrain ) -> bool
+{
+    return terrain == t_card_science || terrain == t_card_military ||
+           terrain == t_card_industrial;
+}
+
 } // namespace
 
 static float obstacle_blast_percentage( float range, float distance )
@@ -1871,31 +1882,48 @@ void emp_blast( const tripoint_bub_ms &p )
 {
     map &here = get_map();
     Character &u = get_player_character();
-    const bool sight = u.sees( p );
-    if( here.has_flag( "CONSOLE", p ) ) {
-        if( sight ) {
+    const auto terrain = here.ter( p );
+    const auto console = here.has_flag( flag_CONSOLE, p );
+    const auto card_reader = is_emp_card_reader( terrain );
+    auto *const mon_ptr = g->critter_at<monster>( p );
+    const auto player_here = u.bub_pos() == p;
+    const auto has_items = here.has_items( p );
+
+    if( !console && !card_reader && mon_ptr == nullptr && !player_here && !has_items ) {
+        return;
+    }
+
+    auto sight = std::optional<bool> {};
+    auto player_sees = [&]() -> bool {
+        if( sight ) { return *sight; }
+        sight = u.sees( p );
+        return *sight;
+    };
+
+    if( console ) {
+        if( player_sees() ) {
             add_msg( _( "The %s is rendered non-functional!" ), here.tername( p ) );
         }
         here.ter_set( p, t_console_broken );
         return;
     }
     // TODO: More terrain effects.
-    if( here.ter( p ) == t_card_science || here.ter( p ) == t_card_military ||
-        here.ter( p ) == t_card_industrial ) {
-        int rn = rng( 1, 100 );
+    if( card_reader ) {
+        const int rn = rng( 1, 100 );
         if( rn > 92 || rn < 40 ) {
-            if( sight ) {
+            if( player_sees() ) {
                 add_msg( _( "The card reader is rendered non-functional." ) );
             }
             here.ter_set( p, t_card_reader_broken );
         }
         if( rn > 80 ) {
-            if( sight ) {
+            if( player_sees() ) {
                 add_msg( _( "The nearby doors slide open!" ) );
             }
-            for( int i = -3; i <= 3; i++ ) {
-                for( int j = -3; j <= 3; j++ ) {
-                    auto p2 = p + tripoint( i, j, 0 );
+            using namespace std::views;
+            for( const int i : iota( -3, 4 ) ) {
+                for( const int j : iota( -3, 4 ) ) {
+                    const auto p2 = p + tripoint( i, j, 0 );
                     if( here.ter( p2 ) == t_door_metal_locked ) {
                         here.ter_set( p2, t_floor );
                     }
@@ -1903,12 +1931,12 @@ void emp_blast( const tripoint_bub_ms &p )
             }
         }
         if( rn >= 40 && rn <= 80 ) {
-            if( sight ) {
+            if( player_sees() ) {
                 add_msg( _( "Nothing happens." ) );
             }
         }
     }
-    if( monster *const mon_ptr = g->critter_at<monster>( p ) ) {
+    if( mon_ptr != nullptr ) {
         monster &critter = *mon_ptr;
         if( critter.has_flag( MF_ELECTRONIC ) ) {
             int deact_chance = 0;
@@ -1926,7 +1954,7 @@ void emp_blast( const tripoint_bub_ms &p )
                     break;
             }
             if( !mon_item_id.is_empty() && deact_chance != 0 && one_in( deact_chance ) ) {
-                if( sight ) {
+                if( player_sees() ) {
                     add_msg( _( "The %s beeps erratically and deactivates!" ), critter.name() );
                 }
                 here.add_item_or_charges( p, critter.to_item() );
@@ -1937,7 +1965,7 @@ void emp_blast( const tripoint_bub_ms &p )
                 }
                 g->remove_zombie( critter );
             } else {
-                if( sight ) {
+                if( player_sees() ) {
                     add_msg( _( "The EMP blast fries the %s!" ), critter.name() );
                 }
                 int dam = dice( 10, 10 );
@@ -1949,13 +1977,13 @@ void emp_blast( const tripoint_bub_ms &p )
             }
         } else if( critter.has_flag( MF_ELECTRIC_FIELD ) ) {
             if( !critter.has_effect( effect_emp ) ) {
-                if( sight ) {
+                if( player_sees() ) {
                     add_msg( m_good, _( "The %s's electrical field momentarily goes out!" ), critter.name() );
                 }
                 critter.add_effect( effect_emp, 3_minutes );
             } else if( critter.has_effect( effect_emp ) ) {
                 int dam = dice( 3, 5 );
-                if( sight ) {
+                if( player_sees() ) {
                     add_msg( m_good, _( "The %s's disabled electrical field reverses polarity!" ),
                              critter.name() );
                     add_msg( m_good, _( "It takes %d damage." ), dam );
@@ -1964,7 +1992,7 @@ void emp_blast( const tripoint_bub_ms &p )
                 critter.apply_damage( nullptr, bodypart_id( "torso" ), dam );
                 critter.check_dead_state();
             }
-        } else if( sight ) {
+        } else if( player_sees() ) {
             add_msg( _( "The %s is unaffected by the EMP blast." ), critter.name() );
         }
     }
@@ -1987,9 +2015,11 @@ void emp_blast( const tripoint_bub_ms &p )
         }
     }
     // Drain any items of their battery charge
-    for( auto &it : here.i_at( p ) ) {
-        if( it->is_tool() && it->ammo_current() == itype_battery ) {
-            it->charges = 0;
+    if( here.has_items( p ) ) {
+        for( auto &it : here.i_at( p ) ) {
+            if( it->is_tool() && it->ammo_current() == itype_battery ) {
+                it->charges = 0;
+            }
         }
     }
     // TODO: Drain NPC energy reserves
