@@ -583,7 +583,22 @@ void enchantment::check() const
                 string_format( "\nmutation %s which has stat adjustments (not supported)", mut.str() ) );
         }
     }
-
+    for( const auto &[ ench_val_id, val ] : values_add ) {
+        if( !ench_val_id.is_valid() ) {
+            problems.push_back( string_format( "\nenchantment value %s is invalid", ench_val_id.str() ) );
+        } else if( !ench_val_id->can_add ) {
+            problems.push_back( string_format( "\nenchantment value %s cannot be added to",
+                                               ench_val_id.str() ) );
+        }
+    }
+    for( const auto &[ ench_val_id, val ] : values_multiply ) {
+        if( !ench_val_id.is_valid() ) {
+            problems.push_back( string_format( "\nenchantment value %s is invalid", ench_val_id.str() ) );
+        } else if( !ench_val_id->can_mult ) {
+            problems.push_back( string_format( "\nenchantment value %s cannot be added to",
+                                               ench_val_id.str() ) );
+        }
+    }
     if( !problems.empty() ) {
         debugmsg( "%s %s has: %s", ench_desc, id.c_str(),
                   enumerate_as_string( problems, enumeration_conjunction::none ) );
