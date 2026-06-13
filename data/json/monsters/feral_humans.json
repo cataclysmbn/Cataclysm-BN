@@ -1087,7 +1087,7 @@
       {
         "type": "gun",
         "cooldown": 20,
-        "move_cost": 100,
+        "move_cost": 200,
         "gun_type": "rm11b_sniper_rifle",
         "ammo_type": "8mm_hvp",
         "fake_skills": [ [ "gun", 20 ], [ "rifle", 20 ] ],
@@ -1095,14 +1095,7 @@
         "fake_per": 14,
         "ranges": [ [ 0, 30, "SINGLE" ] ],
         "description": "The feral black-ops fires their sniper rifle!",
-        "no_crits": false,
-        "require_targeting_player": true,
-        "require_targeting_npc": true,
-        "require_targeting_monster": false,
-        "target_moving_vehicles": true,
-        "laser_lock": true,
-        "targeting_cost": 300,
-        "targeting_timeout_extend": -10
+        "no_crits": true
       }
     ],
     "death_function": [ "NORMAL" ],
