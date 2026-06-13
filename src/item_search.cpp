@@ -177,13 +177,15 @@ std::function<bool( const itype & )> itype_filter_from_string( const std::string
     return filter_from_string<itype>( filter, basic_itype_filter );
 }
 
+[[clang::optnone]]
 std::pair<std::string, std::string> get_both( const std::string &a )
 {
     size_t split_mark = a.find( ';' );
-    return std::make_pair( a.substr( 0, split_mark - 1 ),
+    return std::make_pair( a.substr( 0, split_mark),
                            a.substr( split_mark + 1 ) );
 }
 
+[[clang::optnone]]
 std::function<bool( const item & )> wildcard_item_filter( std::string filter )
 {
     size_t colon;
