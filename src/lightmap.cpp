@@ -2140,8 +2140,8 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                         const int   fy = static_cast<int>( std::lround(
                                                                static_cast<float>( origin.y() ) + t * dy ) );
                         const int floor_z = ( dz < 0.0f )
-                                            ? static_cast<int>( origin.z() ) - k
-                                            : static_cast<int>( origin.z() ) + k + 1;
+                        ? static_cast<int>( origin.z() ) - k
+                        : static_cast<int>( origin.z() ) + k + 1;
                         if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
                             continue;
                         }
@@ -2212,8 +2212,8 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                     const int   fy = static_cast<int>( std::lround(
                                                            static_cast<float>( origin.y() ) + t * dy ) );
                     const int floor_z = ( dz < 0.0f )
-                                        ? static_cast<int>( origin.z() ) - k
-                                        : static_cast<int>( origin.z() ) + k + 1;
+                    ? static_cast<int>( origin.z() ) - k
+                    : static_cast<int>( origin.z() ) + k + 1;
                     if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
                         continue;
                     }
