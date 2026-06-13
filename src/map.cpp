@@ -6700,58 +6700,42 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint_bub_ms &origin,
         const std::optional<vpart_reference> autoclavepart = vp.part_with_feature( "AUTOCLAVE", true );
         const std::optional<vpart_reference> cargo = vp.part_with_feature( "CARGO", true );
 
-        if( crafterpart ) {
-            for( itype_id id : crafterpart->info().craftertools() ) {
-                if( type == id ) {
-                    detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-                    tmp->charges = crafterpart->vehicle().drain( itype_battery, quantity );
-                    quantity -= tmp->charges;
-                    ret.push_back( std::move( tmp ) );
+        auto drain_vehicle_pseudo_item = [&ret, &quantity, &type]( vehicle & veh,
+        const itype_id & drain_type ) -> bool {
+            const auto drained = veh.drain( drain_type, quantity );
+            quantity -= drained;
+            if( drained <= 0 )
+            {
+                return quantity == 0;
+            }
+            auto tmp = item::spawn( type, calendar::turn );
+            tmp->charges = drained;
+            ret.push_back( std::move( tmp ) );
+            return quantity == 0;
+        };
 
-                    if( quantity == 0 ) {
-                        return ret;
-                    }
+        if( crafterpart ) {
+            for( const auto &id : crafterpart->info().craftertools() ) {
+                if( type == id && drain_vehicle_pseudo_item( crafterpart->vehicle(), itype_battery ) ) {
+                    return ret;
                 }
             }
         }
         if( faupart ) { // we have a faucet, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
-
-            ftype = type;
-
-            // TODO: add a sane birthday arg
-            //TODO!: check if we actually need the return  here
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = faupart->vehicle().drain( ftype, quantity );
             // TODO: Handle water poison when crafting starts respecting it
-            quantity -= tmp->charges;
-            // Don't return a 0-charge phantom for types the tanks can't provide:
-            // it would replace the real component during crafting (#9440)
-            if( tmp->charges > 0 ) {
-                ret.push_back( std::move( tmp ) );
-            }
-
-            if( quantity == 0 ) {
+            if( drain_vehicle_pseudo_item( faupart->vehicle(), type ) ) {
                 return ret;
             }
         }
 
         if( autoclavepart ) { // we have an autoclave, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
+            auto ftype = itype_id::NULL_ID();
 
             if( type == itype_autoclave ) {
                 ftype = itype_battery;
             }
 
-            // TODO: add a sane birthday arg
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = autoclavepart->vehicle().drain( ftype, quantity );
-            quantity -= tmp->charges;
-            if( tmp->charges > 0 ) {
-                ret.push_back( std::move( tmp ) );
-            }
-
-            if( quantity == 0 ) {
+            if( drain_vehicle_pseudo_item( autoclavepart->vehicle(), ftype ) ) {
                 return ret;
             }
         }
