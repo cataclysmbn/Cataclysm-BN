@@ -295,14 +295,14 @@
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
   },
   {
     "id": "ITEM_ARMOR",
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
   },
   {
     "id": "ITEM_ATTACK_COST",
