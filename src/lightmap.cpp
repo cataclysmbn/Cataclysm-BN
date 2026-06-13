@@ -2130,7 +2130,6 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                 //               so check floor_cache at z=(origin.z-k).
                 //   Going up:   crossing k separates z=(origin.z+k) from z=(origin.z+k+1),
                 //               so check floor_cache at z=(origin.z+k+1).
-                // The origin tile is exempted: the player stands on top of that floor.
                 {
                     const int n_cross = static_cast<int>( std::abs( dz ) );
                     for( int k = 0; k < n_cross; ++k )
@@ -2140,10 +2139,6 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                                                                static_cast<float>( origin.x() ) + t * dx ) );
                         const int   fy = static_cast<int>( std::lround(
                                                                static_cast<float>( origin.y() ) + t * dy ) );
-                        if( k == 0 && dz < 0.0f &&
-                            fx == origin.x() && fy == origin.y() ) {
-                            continue; // player's own floor; they stand on top of it
-                        }
                         const int floor_z = ( dz < 0.0f )
                                             ? static_cast<int>( origin.z() ) - k
                                             : static_cast<int>( origin.z() ) + k + 1;
@@ -2216,10 +2211,6 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                                                            static_cast<float>( origin.x() ) + t * dx ) );
                     const int   fy = static_cast<int>( std::lround(
                                                            static_cast<float>( origin.y() ) + t * dy ) );
-                    if( k == 0 && dz < 0.0f &&
-                        fx == origin.x() && fy == origin.y() ) {
-                        continue; // player's own floor
-                    }
                     const int floor_z = ( dz < 0.0f )
                                         ? static_cast<int>( origin.z() ) - k
                                         : static_cast<int>( origin.z() ) + k + 1;
