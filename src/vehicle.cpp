@@ -1,5 +1,7 @@
 #include "vehicle.h"
 #include "detached_ptr.h"
+#include "line.h"
+#include "type_id.h"
 #include "units_mass.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 #include "vpart_position.h" // IWYU pragma: associated
@@ -12,6 +14,7 @@
 #include <complex>
 #include <cstdint>
 #include <cstdlib>
+#include <iterator>
 #include <list>
 #include <memory>
 #include <numeric>

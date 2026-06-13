@@ -1,0 +1,17 @@
+[
+  {
+    "id": "crt_hydrogen_converter_item",
+    "type": "TOOL",
+    "looks_like": "f_air_filter",
+    "name": "C.R.I.T. hydrogen producer",
+    "description": "A medium sized box which is labeled as a hydrogen producer, appears to take water from the atmosphere and make it into hydrogen. The size makes it almost perfect to utilize on a vehicle in place of a fuel tank",
+    "weight": "100 kg",
+    "volume": "75 L",
+    "price": "150000 USD",
+    "price_postapoc": "500 USD",
+    "material": "steel",
+    "symbol": "0",
+    "color": "light_green",
+    "category": "scrap_electronics"
+  }
+]

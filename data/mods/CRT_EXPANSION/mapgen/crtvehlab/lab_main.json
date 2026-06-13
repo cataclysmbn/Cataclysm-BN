@@ -1,0 +1,53 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": [ "crt_lab_veh_main", "crt_lab_veh_main_elevator" ],
+    "name": "C.R.I.T. Lab",
+    "sym": "L",
+    "color": "red",
+    "see_cost": 5,
+    "mondensity": 2
+  },
+  {
+    "type": "mapgen",
+    "method": "lua",
+    "om_terrain": [ "crt_lab_veh_main" ],
+    "luamethod": "crt_lab_veh_main"
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_main_elevator" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_strconc_floor",
+      "rows": [
+        "XXXXXXXXXXXXXXXXXXXXXXXX",
+        "X                      X",
+        "X                      X",
+        "X                      X",
+        "X                      X",
+        "X     }          }     X",
+        "X    };;;;;;;;;;;;}    X",
+        "X     ;;;;;;;;;;;;     Q",
+        "X     ;;;;;;;;;;;;     X",
+        "X     ;;;;;;;;;;;;     Z",
+        "X     ;;;;;;;;;;;;     Z",
+        "X     ;;;;;;;;;;;;     Z",
+        "X     ;;;;;;;;;;;;     Z",
+        "X     ;;;;;;;;;;;;     Z",
+        "X     ;;;;;;;;;;;;     Z",
+        "X     ;;;;;;;;;;;;     X",
+        "X     ;;;;;;;;;;;;     Q",
+        "X    };;;;;;;;;;;;}    X",
+        "X     }          }     X",
+        "X                      X",
+        "X                      X",
+        "X                      X",
+        "X                      X",
+        "XXXXXXXQXZZZZZZXQXXXXXXX"
+      ],
+      "palettes": [ "crt_universe" ]
+    }
+  }
+]

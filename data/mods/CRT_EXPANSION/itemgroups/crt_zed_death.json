@@ -1,0 +1,30 @@
+[
+  {
+    "id": "crt_general_zombie_drops",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "two_way_radio", "prob": 90 },
+      { "group": "military_patrol_food", "prob": 30 },
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 80, "charges": [ 0, 100000 ] },
+          { "item": "money_bundle", "prob": 20, "count": [ 2, 4 ] }
+        ],
+        "prob": 10
+      }
+    ]
+  },
+  {
+    "id": "crt_medic_t1_drops",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "group": "crt_general_zombie_drops" }, { "group": "gear_medical" }, { "group": "crt_dress_outfit" } ]
+  },
+  {
+    "id": "crt_medic_t2_drops",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "group": "crt_general_zombie_drops" }, { "group": "gear_medical" }, { "group": "crt_med_outfit" } ]
+  }
+]

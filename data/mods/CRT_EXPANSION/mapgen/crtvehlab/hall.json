@@ -1,0 +1,64 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": [ "crt_lab_veh_hall" ],
+    "name": "C.R.I.T. Lab",
+    "sym": "L",
+    "color": "red",
+    "see_cost": 5,
+    "mondensity": 2
+  },
+  {
+    "type": "mapgen",
+    "method": "lua",
+    "om_terrain": [ "crt_lab_veh_hall" ],
+    "luamethod": "crt_lab_veh_hall"
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_hall_frame" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "#########GGGGGG#########",
+        "#       w      w       #",
+        "#       #      #       #",
+        "#       #      #       #",
+        "#       #      #       #",
+        "#       #      #       #",
+        "#       #      #       #",
+        "#       w      w       #",
+        "#wGGGGGG#      #GGGGGGw#",
+        "G                      G",
+        "G                      G",
+        "G                      G",
+        "G                      G",
+        "G                      G",
+        "G                      G",
+        "#wGGGGGG#      #GGGGGGw#",
+        "#       w      w       #",
+        "#       #      #       #",
+        "#       #      #       #",
+        "#       #      #       #",
+        "#       #      #       #",
+        "#       #      #       #",
+        "#       w      w       #",
+        "#########GGGGGG#########"
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "G": "t_door_metal_locked" },
+      "place_monster": [
+        { "group": "GROUP_CRT_BOT", "x": [ 1, 22 ], "y": [ 9, 14 ], "repeat": [ 2, 6 ], "chance": 100, "pack_size": [ 1, 4 ] },
+        {
+          "group": "GROUP_CRT_BOT",
+          "x": [ 9, 14 ],
+          "y": [ 1, 22 ],
+          "repeat": [ 2, 6 ],
+          "chance": 100,
+          "pack_size": [ 1, 4 ]
+        }
+      ]
+    }
+  }
+]

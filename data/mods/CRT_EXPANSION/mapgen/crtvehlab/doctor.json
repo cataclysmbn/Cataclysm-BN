@@ -1,0 +1,107 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_doctor_storage",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "BBBBBBB",
+        "H     S",
+        "HHH SSS",
+        "SSS HHH",
+        "S     H",
+        "SSS HHH",
+        "       "
+      ],
+      "furniture": { "B": "f_locker", "H": "f_locker", "S": "f_locker" },
+      "items": {
+        "H": [
+          { "item": "harddrugs", "chance": 60 },
+          { "item": "gear_medical", "chance": 60, "repeat": [ 1, 3 ] },
+          { "item": "drugs_analgesic", "chance": 60, "repeat": [ 1, 3 ] },
+          { "item": "drugs_rare", "chance": 60 },
+          { "item": "surgery", "chance": 60 }
+        ],
+        "S": [
+          { "item": "harddrugs", "chance": 30, "repeat": [ 1, 3 ] },
+          { "item": "drugs_analgesic", "chance": 20, "repeat": [ 1, 3 ] },
+          { "item": "surgery", "chance": 40 },
+          { "item": "anesthetic_kit", "chance": 50 }
+        ],
+        "B": { "item": "bionics", "chance": 50, "repeat": [ 1, 5 ] }
+      },
+      "place_monster": [ { "group": "GROUP_CRT_MEDICAL", "x": [ 0, 6 ], "y": [ 0, 6 ], "repeat": [ 3, 4 ], "chance": 100 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_doctor_autodoc",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "A T#T A",
+        "C c#c C",
+        "  L#L  ",
+        "  L#L  ",
+        "#D###D#",
+        "  STS  ",
+        "       "
+      ],
+      "terrain": {
+        "#": "t_concrete_wall",
+        "D": "t_door_c",
+        " ": "t_linoleum_white",
+        "A": "t_linoleum_white",
+        "C": "t_linoleum_white",
+        "L": "t_linoleum_white",
+        "T": "t_linoleum_white",
+        "S": "t_linoleum_white",
+        "c": "t_linoleum_white"
+      },
+      "furniture": { "A": "f_autodoc", "C": "f_autodoc_couch", "L": "f_locker", "T": "f_table", "S": "f_sink", "c": "f_chair" },
+      "items": {
+        "L": [
+          { "item": "harddrugs", "chance": 60 },
+          { "item": "gear_medical", "chance": 60, "repeat": [ 1, 3 ] },
+          { "item": "drugs_analgesic", "chance": 60, "repeat": [ 1, 3 ] },
+          { "item": "drugs_rare", "chance": 60 },
+          { "item": "surgery", "chance": 60 },
+          { "item": "anesthetic_kit", "chance": 50 }
+        ],
+        "T": { "item": "gear_medical", "chance": 60, "repeat": [ 1, 5 ] }
+      },
+      "place_monster": [
+        { "group": "GROUP_CRT_MEDICAL", "x": [ 0, 2 ], "y": [ 0, 3 ], "chance": 100, "repeat": [ 3, 4 ] },
+        { "group": "GROUP_CRT_MEDICAL", "x": [ 4, 6 ], "y": [ 0, 3 ], "chance": 100, "repeat": [ 3, 4 ] },
+        { "group": "GROUP_CRT_COMBAT", "x": [ 0, 2 ], "y": [ 0, 3 ], "chance": 50, "repeat": [ 1, 2 ] },
+        { "group": "GROUP_CRT_COMBAT", "x": [ 4, 6 ], "y": [ 0, 3 ], "chance": 50, "repeat": [ 1, 2 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_doctor_house",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "BB# #TS",
+        "  D D s",
+        "dd# ###",
+        "tt# #BB",
+        "c D D d",
+        "### ###",
+        "       "
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
+      "furniture": { "B": "f_bed", "d": "f_dresser", "t": "f_table", "s": "f_sink", "T": "f_toilet", "S": "f_shower", "c": "f_chair" },
+      "mapping": {
+        "d": { "items": [ { "item": "crt_eng_set", "chance": 50 } ] },
+        "t": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 2 } ] },
+        "B": { "items": [ { "item": "bed", "chance": 50, "repeat": 5 } ] }
+      }
+    }
+  }
+]

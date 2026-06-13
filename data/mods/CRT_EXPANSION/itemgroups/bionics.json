@@ -1,0 +1,54 @@
+[
+  {
+    "type": "item_group",
+    "id": "crt_pow_bionic",
+    "subtype": "collection",
+    "items": [
+      { "item": "bio_power_storage_mkII", "prob": 50 },
+      { "item": "bio_fuel_cell_hydrogen", "prob": 10 },
+      { "item": "bn_bio_solar", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_utility_bionic",
+    "subtype": "collection",
+    "items": [
+      { "item": "bio_climate", "prob": 10 },
+      { "item": "bio_ears", "prob": 10 },
+      { "item": "bio_faraday", "prob": 10 },
+      { "item": "bio_memory", "prob": 10 },
+      { "item": "bio_nanobots", "prob": 10 },
+      { "item": "bio_night_vision", "prob": 10 },
+      { "item": "bio_radscrubber", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_armor_bionic",
+    "subtype": "collection",
+    "items": [
+      { "item": "bio_armor_arms" },
+      { "item": "bio_armor_legs" },
+      { "item": "bio_armor_torso" },
+      { "item": "bio_armor_head" },
+      { "item": "bio_carbon" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_gen_bionic",
+    "subtype": "collection",
+    "items": [
+      { "group": "crt_armor_bionic", "prob": 10 },
+      { "group": "crt_pow_bionic", "prob": 25 },
+      { "group": "crt_utility_bionic", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_med_bionic",
+    "subtype": "collection",
+    "items": [ { "group": "crt_gen_bionic" }, { "item": "bio_surgical_razor", "prob": 50 } ]
+  }
+]

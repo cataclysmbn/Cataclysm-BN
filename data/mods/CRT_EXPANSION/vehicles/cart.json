@@ -1,0 +1,23 @@
+[
+  {
+    "id": "crt_autocart",
+    "type": "vehicle",
+    "name": "CRIT Autocart",
+    "blueprint": [ "S" ],
+    "blueprint_origin": { "x": 0, "y": 0 },
+    "palette": {
+      "S": [
+        "frame_carbon_vertical",
+        "cargo_space_carbon",
+        "controls_electronic",
+        "controls",
+        "robot_controls",
+        "programmable_autopilot",
+        "battery_motorbike_small",
+        "crt_plut_engine",
+        "alternator_motorbike",
+        "tread1"
+      ]
+    }
+  }
+]

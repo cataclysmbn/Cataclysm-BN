@@ -104,6 +104,25 @@ MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
     int spawn_chance = rng( 1, group.freq_total ); //Default 1000 unless specified
     //Our spawn details specify, by default, a single instance of the default monster
     MonsterGroupResult spawn_details = MonsterGroupResult( group.defaultMonster, 1 );
+    if( group.defaultMonster != mtype_id::NULL_ID() ) {
+        int count = 0;
+        auto montype = group.defaultMonster;
+        while( count < group.evolve_repeat ) {
+            if( rng( 0, 100 ) < group.evolve_chance ) {
+                if( montype->upgrade_into ) {
+                    //If we upgrade into a blacklisted monster, treat it as though we are non-upgradeable
+                    if( MonsterGroupManager::monster_is_blacklisted( montype->upgrade_into ) ) {
+                        count = group.evolve_repeat;
+                    }
+                    montype = montype->upgrade_into;
+                } else {
+                    montype = MonsterGroupManager::GetRandomMonsterFromGroup( montype->upgrade_group );
+                }
+            }
+            count++;
+        }
+        spawn_details = MonsterGroupResult( montype, 1 );
+    }
 
     if( group.defaultMonster != mtype_id::NULL_ID() ) {
         int count = 0;

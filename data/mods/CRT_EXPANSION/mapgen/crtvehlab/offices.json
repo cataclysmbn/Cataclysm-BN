@@ -1,0 +1,115 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_office_paperwork",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "      S",
+        "FFFFFFF",
+        "F     F",
+        "FFF FFF",
+        "F     F",
+        "FFF FFF",
+        "       "
+      ],
+      "mapping": {
+        "F": { "furniture": "f_locker", "items": [ { "item": "office_paper", "chance": 70 } ] },
+        "S": {
+          "//": "Want to put a lore note here at some point",
+          "furniture": "f_gun_safe_el",
+          "items": [ { "item": "crt_artifact", "chance": 100 } ]
+        }
+      },
+      "place_monster": [ { "group": "GROUP_CRT_INTERN", "x": [ 0, 6 ], "y": [ 2, 6 ], "repeat": [ 3, 4 ], "chance": 100 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_office_group_med",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "      S",
+        "FFFFFFF",
+        "F     F",
+        "T TTT T",
+        "C OTO C",
+        "T TTT T",
+        "       "
+      ],
+      "mapping": {
+        "F": { "furniture": "f_locker", "items": [ { "item": "office_paper", "chance": 70 } ] },
+        "S": {
+          "//": "Want to put a lore note here at some point",
+          "furniture": "f_gun_safe_el",
+          "items": [ { "item": "crt_artifact", "chance": 100 } ]
+        },
+        "C": { "furniture": "f_console_table" },
+        "T": { "furniture": "f_table" },
+        "O": { "terrain": "t_floor", "vehicles": [ { "vehicle": "swivel_chair", "chance": 100, "status": 0 } ] }
+      },
+      "place_monster": [ { "group": "GROUP_CRT_MEDICAL", "x": [ 0, 6 ], "y": [ 2, 6 ], "repeat": 2, "chance": 100 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_office_group_eng",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "      S",
+        "FFFFFFF",
+        "F     F",
+        "T TTT T",
+        "C OTO C",
+        "T TTT T",
+        "       "
+      ],
+      "mapping": {
+        "F": { "furniture": "f_locker", "items": [ { "item": "office_paper", "chance": 70 } ] },
+        "S": {
+          "//": "Want to put a lore note here at some point",
+          "furniture": "f_gun_safe_el",
+          "items": [ { "item": "crt_artifact", "chance": 100 } ]
+        },
+        "C": { "furniture": "f_console_table" },
+        "T": { "furniture": "f_table" },
+        "O": { "terrain": "t_floor", "vehicles": [ { "vehicle": "swivel_chair", "chance": 100, "status": 0 } ] }
+      },
+      "place_monster": [ { "group": "GROUP_CRT_TECHNICIAN", "x": [ 0, 6 ], "y": [ 2, 6 ], "repeat": 2, "chance": 100 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_office_cubicles",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "Tt   tT",
+        "TO   OT",
+        "TF   FT",
+        "TF   FT",
+        "TO   OT",
+        "Tt   tT",
+        "       "
+      ],
+      "mapping": {
+        "F": { "furniture": "f_filing_cabinet", "items": [ { "item": "office_paper", "chance": 70 } ] },
+        "S": {
+          "//": "Want to put a lore note here at some point",
+          "furniture": "f_gun_safe_el",
+          "items": [ { "item": "crt_artifact", "chance": 100 } ]
+        },
+        "O": { "terrain": "t_floor", "vehicles": [ { "vehicle": "swivel_chair", "chance": 100, "status": 0 } ] },
+        "T": { "furniture": "f_table" },
+        "t": { "furniture": "f_trashcan" }
+      },
+      "place_monster": [ { "group": "GROUP_CRT_INTERN", "x": [ 0, 6 ], "y": [ 2, 6 ], "repeat": 2, "chance": 100 } ]
+    }
+  }
+]

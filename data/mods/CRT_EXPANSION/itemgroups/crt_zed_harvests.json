@@ -1,0 +1,26 @@
+[
+  {
+    "id": "crt_gen_zombie",
+    "type": "harvest",
+    "entries": [
+      { "drop": "crt_gen_bionic", "type": "bionic_group", "faults": [ "fault_bionic_nonsterile" ] },
+      { "drop": "blood_tainted", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "meat_tainted", "type": "flesh", "mass_ratio": 0.25 },
+      { "drop": "fat_tainted", "type": "flesh", "mass_ratio": 0.08 },
+      { "drop": "bone_tainted", "type": "bone", "mass_ratio": 0.1 },
+      { "drop": "pheromone", "type": "bionic", "max": 1 }
+    ]
+  },
+  {
+    "id": "crt_med_zombie_elite",
+    "type": "harvest",
+    "entries": [
+      { "drop": "crt_med_bionic", "type": "bionic_group", "faults": [ "fault_bionic_nonsterile" ] },
+      { "drop": "blood_tainted", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "meat_tainted", "type": "flesh", "mass_ratio": 0.25 },
+      { "drop": "fat_tainted", "type": "flesh", "mass_ratio": 0.08 },
+      { "drop": "bone_tainted", "type": "bone", "mass_ratio": 0.1 },
+      { "drop": "pheromone", "type": "bionic", "max": 1 }
+    ]
+  }
+]

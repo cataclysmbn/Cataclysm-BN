@@ -1,0 +1,62 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_engine",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "WFRtRFW",
+        "p C C p",
+        "LR   RL",
+        "PPT TPP",
+        "P     P",
+        "SS   SS",
+        "       "
+      ],
+      "furniture": {
+        "W": "f_welderrig",
+        "L": "f_heavy_lathe",
+        "F": "f_gridforge",
+        "p": "f_3d_printer_advanced",
+        "R": "f_robobench",
+        "t": "f_survivors_workbench",
+        "C": "f_armchair",
+        "T": "f_utility_shelf",
+        "P": "f_utility_shelf",
+        "S": "f_utility_shelf"
+      },
+      "//": "TODO: Make an actual item group for relevant engine crafting supplies",
+      "items": {
+        "T": { "item": "mechanics", "chance": 80, "repeat": [ 1, 10 ] },
+        "P": { "item": "supplies_mechanics", "chance": 80, "repeat": [ 1, 10 ] },
+        "S": { "item": "crt_lab_veh_engine", "chance": 100 }
+      },
+      "place_monster": [ { "group": "GROUP_CRT_TECHNICIAN", "x": [ 0, 6 ], "y": [ 0, 6 ], "repeat": [ 2, 6 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_engine_test",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "T 666 T",
+        "M  C  M",
+        "A     A",
+        "M     M",
+        "T     T",
+        "       ",
+        "       "
+      ],
+      "terrain": { "6": "t_console_broken", "M": "t_switchgear_l", "T": "t_potential_trans" },
+      "furniture": { "C": "f_armchair", "A": "f_cable_connector" },
+      "place_vehicles": [
+        { "vehicle": "crt_hydrotest", "x": 1, "y": 2, "rotation": 270, "chance": 50, "status": 0 },
+        { "vehicle": "crt_hydrotest", "x": 5, "y": 2, "rotation": 270, "chance": 50, "status": 0 }
+      ],
+      "place_monster": [ { "group": "GROUP_CRT_TECHNICIAN", "x": [ 0, 6 ], "y": [ 0, 6 ], "repeat": [ 2, 6 ] } ]
+    }
+  }
+]

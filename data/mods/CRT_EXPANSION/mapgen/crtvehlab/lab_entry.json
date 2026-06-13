@@ -1,0 +1,281 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "crt_lab_veh_entry_garage_left",
+      "crt_lab_veh_entry_garage_right",
+      "crt_lab_veh_entry_elevator",
+      "crt_lab_veh_entry_center_ne",
+      "crt_lab_veh_entry_center_nw",
+      "crt_lab_veh_entry_center_se",
+      "crt_lab_veh_entry_center_sw"
+    ],
+    "name": "C.R.I.T. Lab Entrance",
+    "sym": "C",
+    "color": "red",
+    "see_cost": 5,
+    "extras": "build",
+    "mondensity": 2
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_entry_garage_left" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_strconc_floor",
+      "rows": [
+        "XXXXXXXX&y77y77y&XXXXXXX",
+        "XèéèèéèX&y77y77y&Xè èè è",
+        "Xè èè èX&y77y77y&Xè èè è",
+        "Xè▫qq▫èX&y77y77y&Xè▫qq▫q",
+        "Xq    qX&y77y77y&Xq     ",
+        "XXZZZZZXXZZZZZZZXXZZZZZZ",
+        "÷Q÷÷÷÷÷÷Qy77y77y÷÷÷÷÷÷÷÷",
+        "÷÷÷÷÷÷÷÷÷y77y77y÷÷÷÷÷÷y7",
+        "yµyyyyyµyy77y77yyµyyyyy7",
+        "7777•7777•77777•7777•777",
+        "777777777777777777777777",
+        "yyyyyyyyyyyyyyyyyyyyyyyy",
+        "yyyyyyyyyyyyyyyyyyyyyyyy",
+        "777777777777777777777777",
+        "7777•7777•77777•7777•777",
+        "yµyyyyyµyyyyyyyyyµyyyyy7",
+        "÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷y7",
+        "Q÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷",
+        "XçXXXXXXXXXXXXXXXXXXXXXç",
+        "X +       ▫   ▫       + ",
+        "X                       ",
+        "X▫                     ▫",
+        "X                       ",
+        "X                       "
+      ],
+      "palettes": [ "crt_universe" ],
+      "place_nested": [ { "chunks": [ "crt_lab_veh_entry_dorm" ], "x": 1, "y": 19 } ],
+      "items": {
+        "q": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [
+              { "group": "supplies_electronics", "prob": 25 },
+              { "group": "supplies_metal", "prob": 25 },
+              { "group": "supplies_mechanics_milspec", "prob": 100 },
+              { "group": "hardware", "prob": 50 }
+            ]
+          },
+          "chance": 70,
+          "repeat": 2
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_entry_garage_right" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_strconc_floor",
+      "rows": [
+        "XXXXXXX&y77y77y&XXXXXXXX",
+        "è èè èX&y77y77y&Xè èèéèX",
+        "q èè èX&y77y77y&Xè èè èX",
+        " ▫qq▫èX&y77y77y&Xè▫qq▫èX",
+        "     qX&y77y77y&Xq    qX",
+        "ZZZZZZXXZZZZZZZXXZZZZZXX",
+        "÷÷÷÷÷÷÷÷y77y77yQ÷÷÷÷÷÷Q÷",
+        "7y÷÷÷÷÷÷y77y77y÷÷÷÷÷÷÷÷÷",
+        "7yyyyyµyy77y77yyµyyyyyµy",
+        "777•7777•77777•7777•7777",
+        "777777777777777777777777",
+        "yyyyyyyyyyyyyyyyyyyyyyyy",
+        "yyyyyyyyyyyyyyyyyyyyyyyy",
+        "777777777777777777777777",
+        "777•7777•77777•7777•7777",
+        "7yyyyyµyyyyyyyyyµyyyyyµy",
+        "7y÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷",
+        "÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷Q",
+        "çXXXXXXXXXXᵛXXXXXXXXXXçX",
+        " +       ▫   ▫       + X",
+        "                       X",
+        "▫                     ▫X",
+        "                       X",
+        "                       X"
+      ],
+      "palettes": [ "crt_universe" ],
+      "place_nested": [ { "chunks": [ "crt_lab_veh_entry_dorm" ], "x": 0, "y": 19 } ],
+      "items": {
+        "q": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [
+              { "group": "supplies_electronics", "prob": 25 },
+              { "group": "supplies_metal", "prob": 25 },
+              { "group": "supplies_mechanics_milspec", "prob": 100 },
+              { "group": "hardware", "prob": 50 }
+            ]
+          },
+          "chance": 70,
+          "repeat": 2
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_entry_dorm",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 23, 5 ],
+      "rows": [
+        "                       ",
+        " ##D###D###D###D###D## ",
+        " #   #   #   #   #   # ",
+        " #   #   #   #   #   # ",
+        " #   #   #   #   #   # "
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
+      "place_nested": [
+        { "chunks": [ "crt_lab_veh_entry_barracks" ], "x": 2, "y": 2 },
+        { "chunks": [ "crt_lab_veh_entry_barracks" ], "x": 6, "y": 2 },
+        { "chunks": [ "crt_lab_veh_entry_barracks" ], "x": 10, "y": 2 },
+        { "chunks": [ "crt_lab_veh_entry_barracks" ], "x": 14, "y": 2 },
+        { "chunks": [ "crt_lab_veh_entry_barracks" ], "x": 18, "y": 2 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_entry_elevator" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_strconc_floor",
+      "rows": [
+        "XXXXXXX&y77yy77y&XXXXXXX",
+        "XᵂᵂᵂᵂX&&y77yy77y&&îCïïûX",
+        "Xᵂ  ᵂX&&y77yy77y&&ëïô00X",
+        "Xᵂ ▫ᵂX&&y77yy77y&&ëïô˚0X",
+        "Xᵂ  ᵂX&&y77yy77y&&XC00üX",
+        "Xᵂ  ᵂXZZZZZZZZZZZZXXêàXX",
+        "XC   Q;;;;;;;;;;;;Q    X",
+        "XW    ;;;;;;;;;;;;     Z",
+        "X5 ᴿ ᴿ;;;;;;;;;;;;yyµyyZ",
+        "Xyyₒyy;;;;;;;;;;;;777•7Z",
+        "X77777;;;;;;;;;;;;77777Z",
+        "X77777;;;;;;;;;;;;yyyyyZ",
+        "X77777;;;;;;;;;;;;yyyyyZ",
+        "X77777;;;;;;;;;;;;77777Z",
+        "Xyyₒyy;;;;;;;;;;;;777•7Z",
+        "Xÿÿ  ᴿ;;;;;;;;;;;;yyµyyZ",
+        "Xñ€   ;;;;;;;;;;;;     Z",
+        "Xâ€  };;;;;;;;;;;;}   QX",
+        "Xöÿ   } y77yy77y }     X",
+        "Xö€     y77yy77y       X",
+        "Xâÿ▫    µ77yy77µ    ▫  X",
+        "Xñÿ     y77yy77y       X",
+        "Xᴱᴸ     y•7yy7•y Q     X",
+        "XXXXXXXZZZZZZZZZZXXXXXXX"
+      ],
+      "palettes": [ "crt_universe" ],
+      "place_vehicles": [
+        { "vehicle": "handjack", "x": 18, "y": 16, "chance": 25, "rotation": 0, "status": -1 },
+        { "vehicle": "handjack", "x": 7, "y": 18, "chance": 25, "rotation": 0, "status": -1 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [
+      [ "crt_lab_veh_entry_center_ne", "crt_lab_veh_entry_center_nw" ],
+      [ "crt_lab_veh_entry_center_se", "crt_lab_veh_entry_center_sw" ]
+    ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_strconc_floor",
+      "rows": [
+        "#D#####################DD#####################D#",
+        "D                                              D",
+        "#  #     #   ###    ###    #  #    ###  #   #  #",
+        "#   # # #   #   #   #  #   # #      #   ##  #  #",
+        "#    # #    #   #   # #    ##       #   # # #  #",
+        "#            ###    ##     # #      #   #  ##  #",
+        "#                   # #    #  #    ###  #   #  #",
+        "#                                              #",
+        "#  ##  ###          ##   ##   ###  ###  ###    #",
+        "#  # # #  #  ###   #  # #  #  #    #    #      #",
+        "#  # # # #  #   #   ###  ###  ###   #    #     #",
+        "#  ##  ##   #   #     #    #  #      #    #    #",
+        "#  #   # #   ###    ##   ##   ###  ###  ###    #",
+        "#                                              #",
+        "#  #     #   ###    ###    #  #    ###  #   #  #",
+        "#   # # #   #   #   #  #   # #      #   ##  #  #",
+        "#    # #    #   #   # #    ##       #   # # #  #",
+        "#            ###    ##     # #      #   #  ##  #",
+        "#                   # #    #  #    ###  #   #  #",
+        "#  ##  ###          ##   ##   ###  ###  ###    #",
+        "#  # # #  #  ###   #  # #  #  #    #    #      #",
+        "#  # # # #  #   #   ###  ###  ###   #    #     #",
+        "#  ##  ##   #   #     #    #  #      #    #    #",
+        "D  #   # #   ###    ##   ##   ###  ###  ###    D",
+        "D                                              D",
+        "#  #     #   ###    ###    #  #    ###  #   #  #",
+        "#   # # #   #   #   #  #   # #      #   ##  #  #",
+        "#    # #    #   #   # #    ##       #   # # #  #",
+        "#            ###    ##     # #      #   #  ##  #",
+        "#                   # #    #  #    ###  #   #  #",
+        "#  ##  ###          ##   ##   ###  ###  ###    #",
+        "#  # # #  #  ###   #  # #  #  #    #    #      #",
+        "#  # # # #  #   #   ###  ###  ###   #    #     #",
+        "#  ##  ##   #   #     #    #  #      #    #    #",
+        "#  #   # #   ###    ##   ##   ###  ###  ###    #",
+        "#                                              #",
+        "#  #     #   ###    ###    #  #    ###  #   #  #",
+        "#   # # #   #   #   #  #   # #      #   ##  #  #",
+        "#    # #    #   #   # #    ##       #   # # #  #",
+        "#            ###    ##     # #      #   #  ##  #",
+        "#                   # #    #  #    ###  #   #  #",
+        "#  ##  ###          ##   ##   ###  ###  ###    #",
+        "#  # # #  #  ###   #  # #  #  #    #    #      #",
+        "#  # # # #  #   #   ###  ###  ###   #    #     #",
+        "#  ##  ##   #   #     #    #  #      #    #    #",
+        "#  #   # #   ###    ##   ##   ###  ###  ###    #",
+        "D                                              D",
+        "#D#####################DD#####################D#"
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "D": "t_door_c" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_entry_barracks",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rows": [
+        "C¤D",
+        "BFB",
+        "BEB"
+      ],
+      "furniture": {
+        "B": "f_triple_bunkbed",
+        "D": "f_dresser",
+        "C": "f_chest",
+        "¤": "f_olight_off",
+        "E": "f_desk",
+        "F": "f_chair_folding"
+      },
+      "mapping": {
+        "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
+        "B": {
+          "items": [ { "item": "bed", "chance": 100 } ],
+          "furniture": "f_bed",
+          "monster": { "group": "GROUP_CRT_COMBAT", "chance": 50, "one_or_none": true }
+        }
+      }
+    }
+  }
+]

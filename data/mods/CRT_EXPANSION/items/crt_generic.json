@@ -11,5 +11,18 @@
     "symbol": ";",
     "color": "green",
     "flags": [ "TRADER_AVOID" ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "crt_artifact",
+    "category": "artifacts",
+    "name": "orb of emptiness",
+    "description": "You sense potential in this orb, or at least, that it should have had potential",
+    "weight": "100 g",
+    "volume": "500 ml",
+    "material": [ "gemstone" ],
+    "symbol": "*",
+    "color": "blue",
+    "flags": [ "TRADER_AVOID" ]
   }
 ]

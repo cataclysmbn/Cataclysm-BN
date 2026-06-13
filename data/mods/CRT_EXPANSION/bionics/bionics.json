@@ -1,0 +1,23 @@
+[
+  {
+    "id": "bio_crt_cold_absorb",
+    "type": "bionic",
+    "name": { "str": "Cold Drain" },
+    "description": "While fighting unarmed against any opponent, there a successful hit will drain your body heat, inflicting a small amount of extra heat damage, and increasing your power reserves slightly.",
+    "occupied_bodyparts": [ [ "hand_l", 2 ], [ "hand_r", 2 ] ],
+    "points": 3,
+    "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE", "COMBAT_NPC_USE" ],
+    "trigger_cost": "1500 J"
+  },
+  {
+    "id": "bio_crt_cold_absorb",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Cold Drain CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "While fighting unarmed against any opponent, there a successful hit will drain your body heat, inflicting a small amount of extra heat damage, and increasing your power reserves slightly.",
+    "price": "5500 USD",
+    "weight": "500 g",
+    "difficulty": 5
+  }
+]
