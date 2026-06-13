@@ -2164,7 +2164,6 @@ void inventory_multiselector::set_chosen_count( inventory_entry &entry, size_t c
     }
 }
 
-[[clang::optnone]]
 std::vector<inventory_entry *> inventory_multiselector::get_selection_column_items() const
 {
     auto func = []( const inventory_entry & e ) { return e.is_item();};
@@ -2634,7 +2633,6 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
     return std::vector<pickup::pick_drop_selection>();
 }
 
-[[clang::optnone]]
 inventory_selector::stats inventory_pickup_selector::get_raw_stats() const
 {
     units::mass weight_carried = u.weight_carried();
