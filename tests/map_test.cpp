@@ -223,6 +223,22 @@ TEST_CASE( "update_map_uses_avatar_absolute_position" )
     CHECK( you.bub_pos() == tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) );
 }
 
+TEST_CASE( "vertical_shift_preserves_absolute_position_across_submap_boundary" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    auto &you = get_avatar();
+    const auto landing_local = tripoint_bub_ms( g_half_mapsize_x + SEEX, g_half_mapsize_y, 1 );
+    const auto landing_abs = map_local_to_abs( here, landing_local );
+    const auto expected_after_descent = tripoint_abs_ms( landing_abs.xy(), 0 );
+
+    you.setpos( landing_abs );
+    g->vertical_shift( expected_after_descent.z() );
+
+    CHECK( you.abs_pos() == expected_after_descent );
+}
+
 TEST_CASE( "monster_tracker_uses_absolute_positions" )
 {
     clear_all_state();
