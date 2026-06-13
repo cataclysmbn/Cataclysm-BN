@@ -173,7 +173,7 @@
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [
       [ [ "c_hydrogen_gas", 25 ] ],
-      [ [ "bag_plastic", 12 ], [ "bag_zipper", 12 ] ],
+      [ [ "bag_plastic", 12 ], [ "bag_zipper", 12 ], [ "bag_zipper_small", 48 ] ],
       [ [ "rope_natural_short", 1, "LIST" ] ],
       [ [ "plastic_sheet", 1 ] ]
     ]

@@ -676,7 +676,7 @@ class game : public submap_load_listener
         void suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction );
 
         void peek();
-        void peek( const tripoint_bub_ms &p );
+        void peek( const tripoint_rel_ms &p );
         std::optional<tripoint_bub_ms> look_debug();
 
         bool check_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const;

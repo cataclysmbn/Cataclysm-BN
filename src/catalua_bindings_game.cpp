@@ -219,31 +219,43 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     luna::set_fx( lib, "choose_adjacent",
                   []( const std::string & message,
-    sol::optional<bool> allow_vertical ) -> sol::optional<tripoint_bub_ms> {
-        std::optional<tripoint_bub_ms> stdOpt = choose_adjacent( message, allow_vertical.value_or( false ) );
-
-        if( stdOpt.has_value() )
-        {
-            return sol::optional<tripoint_bub_ms>( *stdOpt );
-        }
-        return sol::optional<tripoint_bub_ms>();
+    sol::optional<bool> allow_vertical ) -> std::optional<tripoint_bub_ms> {
+        return choose_adjacent( message, allow_vertical.value_or( false ) );
     } );
-    luna::set_fx( lib, "choose_direction", []( const std::string & message,
-    sol::optional<bool> allow_vertical ) -> sol::optional<tripoint_rel_ms> {
-        std::optional<tripoint_rel_ms> stdOpt = choose_direction( message, allow_vertical.value_or( false ) );
+    luna::set_fx( lib, "choose_adjacent_highlight", sol::overload(
+                      []( const std::string & message, const std::string & failure_message, const action_id & actionId,
+    sol::optional<bool> allow_vertical ) -> std::optional<tripoint_bub_ms> {
+        return choose_adjacent_highlight( message, failure_message, actionId, allow_vertical.value_or( false ) );
+    }, [](
+        const std::string & message,
+        const std::string & failure_message,
+        const std::function < auto( const tripoint_bub_ms & ) -> bool > &allowed,
+        sol::optional<bool> allow_vertical
+    ) -> std::optional<tripoint_bub_ms> {
+        return choose_adjacent_highlight( message, failure_message, allowed, allow_vertical.value_or( false ) );
+    } ) );
+    luna::set_fx( lib, "choose_adjacent_uilist", [](
+                      const std::string & message,
+                      const std::string & failure_message,
+                      const sol::protected_function & allowed,
+                      const sol::protected_function & name
+    ) -> std::optional<tripoint_bub_ms> {
+        return choose_adjacent_uilist( message, failure_message, allowed, name );
+    } );
+    luna::set_fx( lib, "choose_area", [](
+                      const std::string & message,
+                      const tripoint_bub_ms & start_pos,
+                      const bool allow_vertical
+    ) -> std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> {
+        return choose_area( message, start_pos, allow_vertical );
+    } );
 
-        if( stdOpt.has_value() )
-        {
-            return sol::optional<tripoint_rel_ms>( *stdOpt );
-        }
-        return sol::optional<tripoint_rel_ms>();
+    luna::set_fx( lib, "choose_direction", []( const std::string & message,
+    sol::optional<bool> allow_vertical ) -> std::optional<tripoint_rel_ms> {
+        return choose_direction( message, allow_vertical.value_or( false ) );
     } );
     luna::set_fx( lib, "look_around", []() {
-        auto result = g->look_around();
-        if( result.has_value() ) {
-            return sol::optional<tripoint_bub_ms>( *result );
-        }
-        return sol::optional<tripoint_bub_ms>();
+        return g->look_around();
     } );
 
     luna::set_fx( lib, "play_variant_sound",

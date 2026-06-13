@@ -1,0 +1,27 @@
+[
+  {
+    "id": "hellfire_launcher",
+    "copy-from": "gun_base",
+    "weapon_category": [ "ROCKET_LAUNCHERS" ],
+    "looks_like": "atgm_turret",
+    "type": "GUN",
+    "name": { "str_sp": "Hellfire missile rack" },
+    "description": "A quad rack for Hellfire missiles, specifically designed for vehicle use.  Needs to be mounted on a vehicle to fire.",
+    "weight": "200 kg",
+    "volume": "50 L",
+    "price": "91000 USD",
+    "price_postapoc": "50 USD",
+    "to_hit": -6,
+    "bashing": 12,
+    "material": "steel",
+    "ammo": [ "hellfire" ],
+    "skill": "launcher",
+    "range": 25,
+    "sight_dispersion": 10,
+    "durability": 9,
+    "clip_size": 4,
+    "reload": 5000,
+    "ups_charges": 75,
+    "flags": [ "MOUNTED_GUN", "NEVER_JAMS", "NO_RELOAD", "RELOAD_ONE", "PYROMANIAC_WEAPON" ]
+  }
+]

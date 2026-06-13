@@ -66,7 +66,7 @@ void check_lethality( const std::string &explosive_id, const int range, float le
             }
             num_subjects++;
             num_subjects_this_time++;
-            monster &new_monster = spawn_test_monster( "mon_zombie", monster_position );
+            monster &new_monster = spawn_test_monster( "mon_test_explosion_target", monster_position );
             new_monster.no_extra_death_drops = true;
         }
         item &explosive = *item::spawn_temporary( explosive_id );
@@ -141,11 +141,10 @@ void check_vehicle_damage( const std::string &explosive_id, const std::string &v
     for( size_t i = 0; i < before_hp.size(); ++i ) {
         CAPTURE( i );
         INFO( target_vehicle->part( i ).name() );
-        if( target_vehicle->part( i ).info().get_id() == vpart_id( "battery_car" ) ||
-            target_vehicle->part( i ).info().get_id() == vpart_id( "headlight" ) ||
-            target_vehicle->part( i ).info().get_id() == vpart_id( "windshield" ) ) {
+        const auto part_id = target_vehicle->part( i ).info().get_id();
+        if( part_id == vpart_id( "test_explosion_fragile_fixture" ) ) {
             CHECK( before_hp[ i ] >= after_hp[ i ] );
-        } else if( !( target_vehicle->part( i ).info().get_id() == vpart_id( "vehicle_clock" ) ) ) {
+        } else {
             CHECK( before_hp[ i ] == after_hp[ i ] );
         }
     }
@@ -157,14 +156,14 @@ void check_vehicle_damage( const std::string &explosive_id, const std::string &v
 TEST_CASE( "grenade_lethality", "[.][grenade][explosion][balance][slow]" )
 {
     clear_all_state();
-    check_lethality( "grenade_act", 2, 0.95, 0.06, outcome_type::Kill );
-    check_lethality( "grenade_act", 7, 0.95, 0.06, outcome_type::Casualty );
+    check_lethality( "test_grenade_act", 3, 0.95, 0.06, outcome_type::Kill );
+    check_lethality( "test_grenade_act", 6, 0.95, 0.06, outcome_type::Casualty );
 }
 
 TEST_CASE( "grenade_vs_vehicle", "[grenade][explosion][balance]" )
 {
     clear_all_state();
-    check_vehicle_damage( "grenade_act", "car", 5 );
+    check_vehicle_damage( "test_grenade_act", "test_explosion_vehicle", 5 );
 }
 
 TEST_CASE( "shrapnel behind wall", "[grenade][explosion][balance]" )
@@ -173,7 +172,7 @@ TEST_CASE( "shrapnel behind wall", "[grenade][explosion][balance]" )
     put_player_underground();
     tripoint_bub_ms origin( 30, 30, 0 );
 
-    item &grenade = *item::spawn_temporary( "can_bomb_act" );
+    item &grenade = *item::spawn_temporary( "test_shrapnel_blast" );
     REQUIRE( grenade.get_use( "explosion" ) != nullptr );
     const auto *actor = dynamic_cast<const explosion_iuse *>
                         ( grenade.get_use( "explosion" )->get_actor_ptr() );
@@ -184,13 +183,14 @@ TEST_CASE( "shrapnel behind wall", "[grenade][explosion][balance]" )
 
     for( const tripoint_bub_ms &pt : closest_points_first( origin, 2 ) ) {
         if( square_dist( origin, pt ) > 1 ) {
-            g->m.ter_set( pt, t_wall_metal );
+            g->m.ter_set( pt, ter_id( "test_t_shrapnel_wall" ) );
         }
     }
 
     // Not on the bomb because shrapnel always hits that square
-    const monster &m_in_range = spawn_test_monster( "mon_zombie", origin + point_east );
-    const monster &m_behind_wall = spawn_test_monster( "mon_zombie", origin + point( 3, 0 ) );
+    const monster &m_in_range = spawn_test_monster( "mon_test_explosion_target", origin + point_east );
+    const monster &m_behind_wall = spawn_test_monster( "mon_test_explosion_target", origin + point( 3,
+                                   0 ) );
 
     set_off_explosion( grenade, origin );
 
@@ -204,7 +204,7 @@ TEST_CASE( "shrapnel at huge range", "[grenade][explosion]" )
     put_player_underground();
     tripoint_bub_ms origin;
 
-    item &grenade = *item::spawn_temporary( "debug_shrapnel_blast" );
+    item &grenade = *item::spawn_temporary( "test_long_shrapnel_blast" );
     REQUIRE( grenade.get_use( "explosion" ) != nullptr );
     const auto *actor = dynamic_cast<const explosion_iuse *>
                         ( grenade.get_use( "explosion" )->get_actor_ptr() );
@@ -213,9 +213,10 @@ TEST_CASE( "shrapnel at huge range", "[grenade][explosion]" )
     REQUIRE( actor->explosion.radius <= 0 );
     REQUIRE( actor->explosion.fragment->range > g_mapsize_x + g_mapsize_y );
 
-    const monster &m = spawn_test_monster( "mon_zombie", tripoint_bub_ms( g_mapsize_x - 1,
-                                           g_mapsize_y - 1,
-                                           0 ) );
+    const monster &m = spawn_test_monster( "mon_test_explosion_target",
+                                           tripoint_bub_ms( g_mapsize_x - 1,
+                                                   g_mapsize_y - 1,
+                                                   0 ) );
 
     set_off_explosion( grenade, origin );
 
@@ -228,7 +229,7 @@ TEST_CASE( "shrapnel at max grenade range", "[grenade][explosion]" )
     put_player_underground();
     tripoint_bub_ms origin( 60, 60, 0 );
 
-    item &grenade = *item::spawn_temporary( "can_bomb_act" );
+    item &grenade = *item::spawn_temporary( "test_shrapnel_blast" );
     REQUIRE( grenade.get_use( "explosion" ) != nullptr );
     const auto *actor = dynamic_cast<const explosion_iuse *>
                         ( grenade.get_use( "explosion" )->get_actor_ptr() );
@@ -239,7 +240,7 @@ TEST_CASE( "shrapnel at max grenade range", "[grenade][explosion]" )
 
     const int range = actor->explosion.fragment->range;
     for( const tripoint_bub_ms &pt : closest_points_first( origin, range + 1 ) ) {
-        spawn_test_monster( "mon_zombie", pt );
+        spawn_test_monster( "mon_test_explosion_sturdy_target", pt );
     }
 
     set_off_explosion( grenade, origin );
@@ -263,17 +264,17 @@ TEST_CASE( "rotated_vehicle_walls_block_explosions" )
     put_player_underground();
     tripoint_bub_ms origin( 60, 60, 0 );
 
-    item &grenade = *item::spawn_temporary( "can_bomb_act" );
+    item &grenade = *item::spawn_temporary( "test_shrapnel_blast" );
 
     map &here = get_map();
 
-    here.add_vehicle( vproto_id( "apc" ), origin, -45_degrees, 0, 0 );
+    here.add_vehicle( vproto_id( "test_explosion_wall_vehicle" ), origin, -45_degrees, 0, 0 );
 
     here.build_map_cache( 0 );
 
-    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
+    const auto mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
 
-    monster &s = spawn_test_monster( "mon_squirrel", mon_origin );
+    monster &s = spawn_test_monster( "mon_test_explosion_target", mon_origin );
 
     REQUIRE( veh_pointer_or_null( here.veh_at( mon_origin ) ) != nullptr );
 

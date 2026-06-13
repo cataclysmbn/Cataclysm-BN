@@ -4998,6 +4998,9 @@ double vehicle::coeff_water_drag() const
     }
     std::vector<int> hull_indices = all_parts_at_location( part_location_under );
     double hull_coverage;
+    if( hull_indices.empty() && !floating.empty() ) {
+        hull_indices = all_parts_at_location( part_location_structure );
+    }
     if( hull_indices.empty() ) {
         hull_coverage = 0;
     } else {

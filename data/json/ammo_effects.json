@@ -494,5 +494,10 @@
     "id": "AMMO_ATGM_HEAT",
     "type": "ammo_effect",
     "explosion": { "damage": 600, "radius": 2 }
+  },
+  {
+    "id": "AMMO_HELLFIRE_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 2000, "radius": 3 }
   }
 ]
