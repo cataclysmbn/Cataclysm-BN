@@ -1094,6 +1094,7 @@
         "fake_dex": 12,
         "fake_per": 14,
         "ranges": [ [ 0, 30, "SINGLE" ] ],
+        "require_targeting_player": false,
         "description": "The feral black-ops fires their sniper rifle!",
         "no_crits": true
       }
