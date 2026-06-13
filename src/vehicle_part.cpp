@@ -45,6 +45,12 @@ vehicle_part::vehicle_part( vehicle *veh )
       base( new vehicle_base_item_location( veh, hack_id ) ),
       items( new vehicle_item_location( veh, hack_id ) ) {}
 
+// Review this!
+vehicle_part::vehicle_part( veh_mount *mount )
+    : id( vpart_id::NULL_ID() ), hack_id( mount->get_veh()->get_next_hack_id() ),
+      base( new vehicle_base_item_location( mount->get_veh(), hack_id ) ),
+      items( new vehicle_item_location( mount->get_veh(), hack_id ) ) {}
+
 //This is a bit of a hack until vehicles are GOs
 vehicle_part::vehicle_part()
     : id( vpart_id::NULL_ID() ), base( new fake_item_location() ), items( new fake_item_location() ) {}

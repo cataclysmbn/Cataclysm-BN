@@ -1,5 +1,9 @@
 #pragma once
 
+#include "type_id.h"
+#include "vehicle.h"
+#include <cstdint>
+#include <vector>
 #pragma once
 
 #include <stack>
@@ -15,6 +19,7 @@
 #include "location_ptr.h"
 
 class vehicle;
+class veh_mount;
 class item_location;
 class vehicle_cursor;
 class npc;
@@ -30,6 +35,7 @@ struct vehicle_part {
         friend location_visitable<vehicle_cursor>;
         friend class turret_data;
         friend class vehicle_base_item_location;
+        friend class veh_mount;
 
         enum vp_state_flag : int { passenger_flag = 1,
                                    animal_flag = 2,
@@ -41,9 +47,12 @@ struct vehicle_part {
 
         vehicle_part();
         vehicle_part( vehicle * );
+        vehicle_part( veh_mount * );
 
         vehicle_part( const vpart_id &vp, const tripoint_mnt_veh &dp, detached_ptr<item> &&obj, vehicle * );
         vehicle_part( const vehicle_part &, vehicle * );
+
+        vehicle_part( const vehicle_part &, veh_mount * );
 
         vehicle_part( vehicle_part && );
         vehicle_part &operator=( vehicle_part && );
@@ -355,3 +364,149 @@ struct vehicle_part {
         void set_color( const RGBColor &bg, const RGBColor &fg );
 };
 
+
+
+/**
+ * We assign constexpr values to come of our slots that will be used very often for checks.
+ * This way we can also forgo the enum list if we know exactly what we want to be polling and use the contexpr index
+ */
+static constexpr uint8_t VMDS_STRUCTURE_Index = 0;
+static constexpr uint8_t VMDS_ENGINE_Index = 1;
+static constexpr uint8_t VMDS_WHEEL_Index = 2;
+static constexpr uint8_t VMDS_BOARD_Index = 3;
+static constexpr uint8_t VMDS_CENTER_Index = 4;
+static constexpr uint8_t VMDS_STORAGE_Index = 5;
+static constexpr uint8_t VMDS_ROOF_Index = 6;
+static constexpr uint8_t VMDS_ARMOR_Index = 7;
+static constexpr uint8_t VMDS_VEHICLE_CONTROLS_Index = 8;
+static constexpr uint8_t VMDS_TURRET_CONTROLS_Index = 9;
+static constexpr uint8_t VMDS_BATTERY_Index = 10;
+static constexpr uint8_t VMDS_LIQUID_TANK_Index = 11;
+static constexpr uint8_t VMDS_LIGHT_Index = 12;
+static constexpr uint8_t VMDS_TURRET_Index = 13;
+static constexpr uint8_t VMDS_AUTOLOADER_Index = 14;
+static constexpr uint8_t VMDS_ROTOR_Index = 15;
+static constexpr uint8_t VMDS_PROPELLER_Index = 16;
+static constexpr uint8_t VMDS_WING_Index = 17;
+static constexpr uint8_t VMDS_BALLOON_Index = 18;
+static constexpr uint8_t VMDS_AISLE_Index = 19;
+/**
+ * Each dedicated vehicle part mount slot enum equals the index to queary a veh_mount_slot.dedicated_slots vector for the part in question.
+ * The dedicated parts vectors resize as needed based on the number of dedicated slots desired.
+ * These are slots where it should only be possible for 1 vehicle part of the given type to be installed on a given vehicle mount slot.
+ * TODO: Review this list and refine based on the kind of parts desired vs the technical mount location, making sure only one can be mounted, etc
+ * TODO: consider splitting this up based on used case.
+ * TODO: We probably dont need rotors, propellers, vehicle controls, turret controls etc in here.
+ *
+ */
+enum dedicated_vpmount_slot_enum : int {
+    VMD_SLOT_STRUCTURE = VMDS_STRUCTURE_Index,
+    VMD_SLOT_ENGINE = VMDS_ENGINE_Index,
+    VMD_SLOT_WHEEL = VMDS_WHEEL_Index,
+    VMD_SLOT_BOARD = VMDS_BOARD_Index,
+    VMD_SLOT_CENTER = VMDS_CENTER_Index,
+    VMD_SLOT_STORAGE = VMDS_STORAGE_Index,
+    VMD_SLOT_ROOF = VMDS_ROOF_Index,
+    VMD_SLOT_ARMOR = VMDS_ARMOR_Index,
+    VMD_SLOT_VEHICLE_CONTROLS = VMDS_VEHICLE_CONTROLS_Index,
+    VMD_SLOT_TURRET_CONTROLS = VMDS_TURRET_CONTROLS_Index,
+    VMD_SLOT_BATTERY = VMDS_BATTERY_Index,
+    VMD_SLOT_LIQUID_TANK = VMDS_LIQUID_TANK_Index,
+    VMD_SLOT_LIGHT = VMDS_LIGHT_Index,
+    VMD_SLOT_TURRET = VMDS_TURRET_Index,
+    VMD_SLOT_AUTOLOADER = VMDS_AUTOLOADER_Index,
+    VMD_SLOT_ROTOR = VMDS_ROTOR_Index,
+    VMD_SLOT_PROPELLER = VMDS_PROPELLER_Index,
+    VMD_SLOT_WING = VMDS_WING_Index,
+    VMD_SLOT_BALLOON = VMDS_BALLOON_Index,
+    VMD_SLOT_AISLE = VMDS_AISLE_Index,
+    NUM_VMD_SLOTS // Leave this undeclared so that we can always get the right sized dedicated slots vector.
+
+};
+
+template<>
+struct enum_traits<dedicated_vpmount_slot_enum> {
+    static constexpr auto last = dedicated_vpmount_slot_enum::NUM_VMD_SLOTS;
+};
+// This way we can size our dedicated_slots vectors to the number of VMD slot enums
+static constexpr int number_of_dedicated_vmount_slots = NUM_VMD_SLOTS;
+
+static constexpr std::vector<vehicle_part> get_dummy_dedicated_slot_table( veh_mount *mnt )
+{
+    std::vector<vehicle_part> parts;
+    for( int i = 0; i < number_of_dedicated_vmount_slots; i++ ) {
+        parts.emplace_back( vehicle_part( mnt ) );
+    }
+    return parts;
+}
+
+static constexpr int get_dedicated_veh_mount_slot_index( const dedicated_vpmount_slot_enum &vpslot )
+{
+    switch( vpslot ) {
+
+        case VMD_SLOT_STRUCTURE:
+            return VMDS_STRUCTURE_Index;
+
+        case VMD_SLOT_ENGINE:
+            return VMDS_ENGINE_Index;
+
+        case VMD_SLOT_WHEEL:
+            return VMDS_WHEEL_Index;
+
+        case VMD_SLOT_BOARD:
+            return VMDS_BOARD_Index;
+
+        case VMD_SLOT_CENTER:
+            return VMDS_CENTER_Index;
+
+        case VMD_SLOT_STORAGE:
+            return VMDS_STORAGE_Index;
+
+        case VMD_SLOT_ROOF:
+            return VMDS_ROOF_Index;
+
+        case VMD_SLOT_ARMOR:
+            return VMDS_ARMOR_Index;
+
+        case VMD_SLOT_VEHICLE_CONTROLS:
+            return VMDS_VEHICLE_CONTROLS_Index;
+
+        case VMD_SLOT_TURRET_CONTROLS:
+            return VMDS_TURRET_CONTROLS_Index;
+
+        case VMD_SLOT_BATTERY:
+            return VMDS_BATTERY_Index;
+
+        case VMD_SLOT_LIQUID_TANK:
+            return VMDS_LIQUID_TANK_Index;
+
+        case VMD_SLOT_LIGHT:
+            return VMDS_LIGHT_Index;
+
+        case VMD_SLOT_TURRET:
+            return VMDS_TURRET_Index;
+
+        case VMD_SLOT_AUTOLOADER:
+            return VMDS_AUTOLOADER_Index;
+
+        case VMD_SLOT_ROTOR:
+            return VMDS_ROTOR_Index;
+
+        case VMD_SLOT_PROPELLER:
+            return VMDS_PROPELLER_Index;
+
+        case VMD_SLOT_WING:
+            return VMDS_WING_Index;
+
+        case VMD_SLOT_BALLOON:
+            return VMDS_BALLOON_Index;
+
+        case VMD_SLOT_AISLE:
+            return VMDS_AISLE_Index;
+
+        case NUM_VMD_SLOTS:
+            // If something asks for our number of slots enum instead of a proper one redirect them to structure.
+            return VMDS_STRUCTURE_Index;
+    }
+
+};
