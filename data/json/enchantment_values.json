@@ -244,7 +244,7 @@
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
   },
   {
     "id": "RANGED_DISPERSION",
@@ -257,14 +257,14 @@
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
   },
   {
     "id": "RANGED_ARMOR_PENETRATION",
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
   },
   {
     "id": "RANGED_RANGE",
