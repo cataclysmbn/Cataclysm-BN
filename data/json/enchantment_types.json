@@ -86,7 +86,7 @@
   {
     "id": "METABOLISM",
     "type": "enchantment_value",
-    "can_add": true,
+    "can_add": false,
     "can_mult": true
   },
   {
@@ -98,31 +98,31 @@
   {
     "id": "MANA_REGEN",
     "type": "enchantment_value",
-    "can_add": true,
+    "can_add": false,
     "can_mult": true
   },
   {
     "id": "STAMINA_CAP",
     "type": "enchantment_value",
-    "can_add": true,
+    "can_add": false,
     "can_mult": true
   },
   {
     "id": "STAMINA_REGEN",
     "type": "enchantment_value",
-    "can_add": true,
+    "can_add": false,
     "can_mult": true
   },
   {
     "id": "THIRST",
     "type": "enchantment_value",
-    "can_add": true,
+    "can_add": false,
     "can_mult": true
   },
   {
     "id": "FATIGUE",
     "type": "enchantment_value",
-    "can_add": true,
+    "can_add": false,
     "can_mult": true
   },
   {

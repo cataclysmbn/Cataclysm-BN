@@ -386,18 +386,18 @@ to dodge roll.
 Incoming damage modifier. Applied after Active Defense System bionic but before the damage is
 absorbed by items. Note that `base_value` here is incoming damage value of corresponding type, so
 positive `add` and greater than 1 `mul` will **increase** damage received by the character. Each
-damage type has its own enchant value:
+damage type has its own enchant value in addition to the globally applied value `ARMOR`:
 
 - `ARMOR_ACID`
 - `ARMOR_BASH`
-- `ARMOR_BIO`
+- `ARMOR_BIOLOGICAL`
 - `ARMOR_BULLET`
 - `ARMOR_COLD`
 - `ARMOR_CUT`
 - `ARMOR_LIGHT`
 - `ARMOR_DARK`
 - `ARMOR_PSI`
-- `ARMOR_ELEC`
+- `ARMOR_ELECTRIC`
 - `ARMOR_HEAT`
 - `ARMOR_STAB`
 
@@ -411,15 +411,15 @@ Attack cost (melee or throwing) for this item. Ignores condition / location, and
 ##### ITEM_DAMAGE_X
 
 Melee damage of this item. Ignores condition / location, and is always active. `base_value` here is
-base item damage of corresponding type. Note that the final value cannot go below 0. Supported damage
-types are:
+base item damage of corresponding type. Note that the final value cannot go below 0.
+There is the global damage modifier `ITEM_DAMAGE` in addition to the supported damage types:
 
 - `ITEM_DAMAGE_BASH`
 - `ITEM_DAMAGE_CUT`
 - `ITEM_DAMAGE_STAB`
 - `ITEM_DAMAGE_BULLET`
 - `ITEM_DAMAGE_ACID`
-- `ITEM_DAMAGE_BIO`
+- `ITEM_DAMAGE_BIOLOGICAL`
 - `ITEM_DAMAGE_COLD`
 - `ITEM_DAMAGE_DARK`
 - `ITEM_DAMAGE_ELECTRIC`
@@ -433,7 +433,7 @@ types are:
 Incoming damage modifier for this item, applied before the damage is absorbed by the item. Note that
 `base_value` here is incoming damage value of corresponding type, so positive `add` and greater than
 1 `mul` will **increase** damage received by the character. Each damage type has its own enchant
-value:
+value, in addition to the global `ITEM_ARMOR`:
 
 - `ITEM_ARMOR_ACID`
 - `ITEM_ARMOR_BASH`
@@ -489,4 +489,29 @@ value:
     }
   }
 ]
+```
+
+# Enchantment Values
+
+```jsonc
+{
+  "id": "RANGED_DAMAGE", // Id of the enchantment
+  "type": "enchantment_value", // Needed Type
+  "can_add": true, // Weather adding to the enchantment value will do anything
+  "can_mult": true, // Weather multiplying to the enchantment value will do anything
+  "suffixes": [ // All the suffixes. These appear as in this case RANGED_DAMAGE_XXX
+    "BASH",     // In addition suffixes will also reference the parent type when in use
+    "CUT",
+    "DARK",
+    "LIGHT",
+    "PSI",
+    "STAB",
+    "BULLET",
+    "HEAT",
+    "COLD",
+    "ELECTRIC",
+    "ACID",
+    "BIOLOGICAL"
+  ]
+},
 ```
