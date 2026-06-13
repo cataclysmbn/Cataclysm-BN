@@ -244,20 +244,7 @@
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [
-      "BASH",
-      "CUT",
-      "DARK",
-      "LIGHT",
-      "PSI",
-      "STAB",
-      "BULLET",
-      "HEAT",
-      "COLD",
-      "ELECTRIC",
-      "ACID",
-      "BIOLOGICAL"
-    ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
   },
   {
     "id": "RANGED_DISPERSION",
@@ -270,40 +257,14 @@
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [
-      "BASH",
-      "CUT",
-      "DARK",
-      "LIGHT",
-      "PSI",
-      "STAB",
-      "BULLET",
-      "HEAT",
-      "COLD",
-      "ELECTRIC",
-      "ACID",
-      "BIOLOGICAL"
-    ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
   },
   {
     "id": "RANGED_ARMOR_PENETRATION",
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [
-      "BASH",
-      "CUT",
-      "DARK",
-      "LIGHT",
-      "PSI",
-      "STAB",
-      "BULLET",
-      "HEAT",
-      "COLD",
-      "ELECTRIC",
-      "ACID",
-      "BIOLOGICAL"
-    ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
   },
   {
     "id": "RANGED_RANGE",
@@ -334,45 +295,19 @@
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [
-      "BASH",
-      "CUT",
-      "DARK",
-      "LIGHT",
-      "PSI",
-      "STAB",
-      "BULLET",
-      "HEAT",
-      "COLD",
-      "ELECTRIC",
-      "ACID",
-      "BIOLOGICAL"
-    ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
   },
   {
     "id": "ITEM_ARMOR",
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true,
-    "suffixes": [
-      "BASH",
-      "CUT",
-      "DARK",
-      "LIGHT",
-      "PSI",
-      "STAB",
-      "BULLET",
-      "HEAT",
-      "COLD",
-      "ELECTRIC",
-      "ACID",
-      "BIOLOGICAL"
-    ]
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL" ]
   },
   {
     "id": "ITEM_ATTACK_COST",
     "type": "enchantment_value",
     "can_add": true,
     "can_mult": true
-  },
+  }
 ]
