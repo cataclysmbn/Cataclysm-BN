@@ -903,7 +903,8 @@
       "HUMAN",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
-      "NIGHT_INVISIBILITY"
+      "NIGHT_INVISIBILITY",
+      "PRIORITIZE_TARGETS"
     ]
   },
   {
@@ -962,7 +963,8 @@
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
       "NIGHT_INVISIBILITY",
-      "HARDTOSHOOT"
+      "HARDTOSHOOT",
+      "PRIORITIZE_TARGETS"
     ]
   },
   {
@@ -1036,7 +1038,8 @@
       "HUMAN",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
-      "NIGHT_INVISIBILITY"
+      "NIGHT_INVISIBILITY",
+      "PRIORITIZE_TARGETS"
     ]
   },
   {
@@ -1107,7 +1110,8 @@
       "HUMAN",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
-      "NIGHT_INVISIBILITY"
+      "NIGHT_INVISIBILITY",
+      "PRIORITIZE_TARGETS"
     ]
   }
 ]
