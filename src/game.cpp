@@ -14735,8 +14735,11 @@ void game::vertical_move( int movez, bool force, bool peeking )
         return;
     }
 
-    const auto old_pos = g->u.bub_pos();
     point_rel_sm submap_shift;
+    if( force ) {
+        submap_shift = update_map( u );
+    }
+    const auto old_pos = g->u.bub_pos();
     vertical_shift( z_after );
     if( !force ) {
         submap_shift = update_map( stairs.x(), stairs.y() );
@@ -15357,7 +15360,7 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
     scent.reset();
 
     const int z_before = get_levz();
-    u.setpos( tripoint_bub_ms( u.bub_pos().xy(), z_after ) );
+    u.setpos( tripoint_abs_ms( u.abs_pos().xy(), z_after ) );
     if( !m.has_zlevels() ) {
         m.clear_vehicle_cache( );
         m.access_cache( z_before ).vehicle_list.clear();

@@ -223,7 +223,7 @@ TEST_CASE( "update_map_uses_avatar_absolute_position" )
     CHECK( you.bub_pos() == tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) );
 }
 
-TEST_CASE( "vertical_shift_preserves_absolute_position_across_submap_boundary" )
+TEST_CASE( "forced_vertical_move_preserves_absolute_position_across_submap_boundary" )
 {
     clear_all_state();
 
@@ -234,7 +234,7 @@ TEST_CASE( "vertical_shift_preserves_absolute_position_across_submap_boundary" )
     const auto expected_after_descent = tripoint_abs_ms( landing_abs.xy(), 0 );
 
     you.setpos( landing_abs );
-    g->vertical_shift( expected_after_descent.z() );
+    g->vertical_move( -1, true );
 
     CHECK( you.abs_pos() == expected_after_descent );
 }
