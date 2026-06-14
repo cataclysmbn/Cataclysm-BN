@@ -658,6 +658,28 @@ TEST_CASE( "monster_tracker_uses_absolute_positions" )
     CHECK( g->critter_at<monster>( player_shifted_monster_pos ) == nullptr );
 }
 
+TEST_CASE( "placed_monsters_inherit_bound_dimension" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    const auto original_dim = here.get_bound_dimension();
+    const auto test_dim = dimension_id( "placed_monsters_inherit_bound_dimension" );
+    const auto cleanup = on_out_of_scope( [&]() {
+        g->clear_zombies();
+        here.bind_dimension( original_dim );
+        MAPBUFFER_REGISTRY.unload_dimension( test_dim );
+    } );
+
+    here.bind_dimension( test_dim );
+
+    const auto monster_pos = tripoint_bub_ms( g_half_mapsize_x + 2, g_half_mapsize_y, 0 );
+    auto *const mon = g->place_critter_at( mtype_id( "mon_zombie" ), monster_pos );
+
+    REQUIRE( mon != nullptr );
+    CHECK( mon->get_dimension() == test_dim );
+}
+
 static std::ostream &operator<<( std::ostream &os, const ter_id &tid )
 {
     os << tid.id().c_str();
