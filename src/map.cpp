@@ -164,6 +164,7 @@ static const skill_id skill_traps( "traps" );
 
 static const efftype_id effect_boomered( "boomered" );
 static const efftype_id effect_crushed( "crushed" );
+static const efftype_id effect_haslight( "haslight" );
 static const efftype_id effect_onfire( "onfire" );
 
 static const ter_str_id t_rock_floor_no_roof( "t_rock_floor_no_roof" );
@@ -223,12 +224,14 @@ void hash_character_light_state( std::size_t &seed, const Character &who )
 {
     const auto active_luminance = who.active_light();
     const auto has_fire_light = who.has_effect( effect_onfire );
-    if( active_luminance <= LIGHT_AMBIENT_LOW && !has_fire_light ) {
+    const auto has_cached_light = who.has_effect( effect_haslight );
+    if( active_luminance <= LIGHT_AMBIENT_LOW && !has_fire_light && !has_cached_light ) {
         return;
     }
     cata::hash_combine( seed, who.bub_pos() );
     cata::hash_combine( seed, quantized_light_signature_value( active_luminance ) );
     cata::hash_combine( seed, has_fire_light );
+    cata::hash_combine( seed, has_cached_light );
 }
 
 } // namespace

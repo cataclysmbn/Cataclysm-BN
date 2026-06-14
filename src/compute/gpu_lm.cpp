@@ -1731,6 +1731,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
 
 auto add_character_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_character_sources");
+    static const efftype_id effect_haslight("haslight");
     static const efftype_id effect_onfire("onfire");
 
     auto add_char = [&](Character const& ch) {
@@ -1738,6 +1739,8 @@ auto add_character_sources(source_accumulator& acc) -> void {
         if (!acc.m.inbounds(pos)) { return; }
         if (ch.has_effect(effect_onfire)) {
             add_source(acc, pos, 8.0f, light_source_kind::character);
+        } else if (ch.has_effect(effect_haslight)) {
+            add_source(acc, pos, 4.0f, light_source_kind::character);
         }
         add_source(acc, pos, ch.active_light(), light_source_kind::character);
         if (auto const colored_light = character_colored_item_light(ch)) {
