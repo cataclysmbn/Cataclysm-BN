@@ -68,6 +68,7 @@ val abiX8632 = gradleProperty("abi_x86_32").toBoolean()
 val abiX8664 = gradleProperty("abi_x86_64").toBoolean()
 val deps = gradleProperty("deps")
 val shadercross = System.getenv("SHADERCROSS") ?: gradleProperty("shadercross").ifEmpty { "shadercross" }
+val ccache = System.getenv("CCACHE") ?: gradleProperty("ccache").ifEmpty { pathExecutable("ccache")?.absolutePath.orEmpty() }
 val overrideVersion = gradleProperty("override_version")
 val versionHeaderPath = gradleProperty("version_header_path")
 val overrideCompileSdkVersion = gradleProperty("override_compileSdkVersion").toInt()
@@ -81,6 +82,7 @@ println("Using [              njobs]: $njobs")
 println("Using [           localize]: $localize")
 println("Using [               deps]: $deps")
 println("Using [        shadercross]: $shadercross")
+println("Using [             ccache]: ${ccache.ifEmpty { "<disabled>" }}")
 println("Using [   override_version]: $overrideVersion")
 println("Using [version_header_path]: $versionHeaderPath")
 println("Using [  compileSdkVersion]: $overrideCompileSdkVersion")
@@ -242,11 +244,16 @@ fun BaseExtension.configureCommonAndroid() {
 
         externalNativeBuild {
             cmake {
-                arguments(
+                val cmakeArguments = mutableListOf(
                     "-DANDROID_PLATFORM=$overrideNdkBuildAppPlatform",
                     "-DANDROID_STL=c++_shared",
                     "-DCMAKE_BUILD_PARALLEL_LEVEL=$njobs",
                 )
+                if (ccache.isNotEmpty()) {
+                    cmakeArguments += "-DCMAKE_C_COMPILER_LAUNCHER=$ccache"
+                    cmakeArguments += "-DCMAKE_CXX_COMPILER_LAUNCHER=$ccache"
+                }
+                arguments(*cmakeArguments.toTypedArray())
             }
         }
         testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"

@@ -196,6 +196,7 @@ static const efftype_id effect_music( "music" );
 static const efftype_id effect_onfire( "onfire" );
 static const efftype_id effect_paincysts( "paincysts" );
 static const efftype_id effect_pet( "pet" );
+static const efftype_id effect_pet_bonded( "pet_bonded" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_ridden( "ridden" );
 static const efftype_id effect_riding( "riding" );
@@ -1582,6 +1583,7 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
         }
 
         p->consume_charges( *it, 1 );
+        mon.on_pet_bonding( p->as_character() );
         return 0;
     }
 
@@ -9017,7 +9019,9 @@ int iuse::craft( player *p, item *it, bool, const tripoint_bub_ms & )
                          it->get_cached_tool_selections(),
                          it->get_var( "craft_tools_fully_prepaid", 0 ) == 1
                      );
-        p->assign_activity( std::make_unique<player_activity>( std::move( actor ) ) );
+        auto craft_activity = std::make_unique<player_activity>( std::move( actor ) );
+        craft_activity->targets.emplace_back( it );
+        p->assign_activity( std::move( craft_activity ) );
     }
 
     return 0;
@@ -9502,7 +9506,7 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint_bub_ms & )
     if( t ) { // Normal use
         if( p->has_item( *it ) ) {
             // Only triggers every 1 minute so that fatigue isn't ridiculous
-            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 2_minutes ) ) {
                 p->add_morale( MORALE_FEELING_GOOD, 1, 30, 20_minutes, 10_minutes, true );
                 p->mod_fatigue( 1 );
             }

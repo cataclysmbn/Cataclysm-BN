@@ -935,6 +935,7 @@ int Character::overmap_sight_range( int light_level ) const
         multiplier += 1;
     }
 
+    sight += bonus_from_enchantments( sight, enchant_vals::mod::OVERMAP_SIGHT );
     sight = std::round( sight * multiplier );
     return std::max( sight, 3 );
 }
@@ -1138,6 +1139,8 @@ int Character::swim_speed() const
     // base swim speed.
     ret = ( 440 * mutation_value( "movecost_swim_modifier" ) ) + weight_carried() /
           ( 60_gram / mutation_value( "movecost_swim_modifier" ) ) - 50 * get_skill_level( skill_swimming );
+    ret += bonus_from_enchantments( ret, enchant_vals::mod::SWIM_MOVE_COST );
+
     /** @EFFECT_STR increases swim speed bonus from PAWS */
     if( has_trait( trait_PAWS ) ) {
         ret -= hand_bonus_mult * ( 20 + str_cur * 3 );
@@ -1961,6 +1964,7 @@ void Character::calc_all_parts_hp( float hp_mod, float hp_adjustment, int str_ma
             new_max *= 0.8;
         }
 
+        new_max += bonus_from_enchantments( new_max, enchant_vals::mod::HEALTH_POINTS );
         new_max = std::max( new_max, 1 );
         int new_cur = std::ceil( static_cast<float>( new_max ) * hp_ratio );
 
@@ -3162,6 +3166,7 @@ units::mass Character::weight_capacity() const
     /** @EFFECT_STR increases carrying capacity */
     ret += get_str() * 4_kilogram;
     ret *= mutation_value( "weight_capacity_modifier" );
+    ret += bonus_from_enchantments( ret / 1_gram, enchant_vals::mod::CARRY_WEIGHT ) * 1_gram;
 
     units::mass worn_weight_bonus = 0_gram;
     for( const item * const &it : worn ) {
@@ -3223,7 +3228,8 @@ units::volume Character::volume_capacity_reduced_by(
         ret += 6_liter;
     }
 
-    ret = ret * mutation_value( "packmule_modifier" );
+    ret *= mutation_value( "packmule_modifier" );
+    ret += bonus_from_enchantments( ret / 1_ml, enchant_vals::mod::CARRY_STORAGE ) * 1_ml;
 
     return std::max( ret, 0_ml );
 }
@@ -4231,11 +4237,8 @@ int Character::read_speed( bool return_stat_effect ) const
     /** @EFFECT_INT increases reading speed by 3s per level above 8*/
     int ret = to_moves<int>( 1_minutes ) - to_moves<int>( 3_seconds ) * ( intel - 8 );
 
-    if( has_bionic( afs_bio_linguistic_coprocessor ) ) {
-        ret *= .75;
-    }
-
     ret *= mutation_value( "reading_speed_multiplier" );
+    ret += bonus_from_enchantments( ret, enchant_vals::mod::READING_SPEED );
 
     if( ret < to_moves<int>( 1_seconds ) ) {
         ret = to_moves<int>( 1_seconds );
@@ -5391,7 +5394,9 @@ void Character::regen( int rate_multiplier )
 
     float rest = rest_quality();
     float heal_rate = healing_rate( rest ) * to_turns<int>( 5_minutes );
-    const float broken_regen_mod = clamp( mutation_value( "mending_modifier" ), 0.25f, 1.0f );
+    const float broken_regen_mod_pre = 0.25 + mutation_value( "mending_modifier" );
+    const float broken_regen_mod = clamp( broken_regen_mod_pre + bonus_from_enchantments(
+            broken_regen_mod_pre, enchant_vals::mod::MENDING_MULT ), 0.0, 1.0 );
     if( heal_rate > 0.0f ) {
         const int heal = roll_remainder( rate_multiplier * heal_rate );
 
@@ -5477,13 +5482,18 @@ void Character::update_health( int external_modifiers )
         set_healthy_mod( -200 );
     }
 
-    // Active leukocyte breeder will keep your health near 100
     float effective_healthy_mod = get_healthy_mod();
+
     if( has_active_bionic( bio_leukocyte ) ) {
         // Side effect: dependency
         mod_healthy_mod( -50, -200 );
         effective_healthy_mod = 100;
     }
+
+    // Apply enchantment healthy_rate as a multiplier to the target health level
+    // healthy_rate > 1.0 boosts health toward max, < 1.0 reduces it toward negative
+    effective_healthy_mod += bonus_from_enchantments( effective_healthy_mod,
+                             enchant_vals::mod::HEALTHY_MULT );
 
     // Health tends toward healthy_mod.
     // For small differences, it changes 4 points per day
@@ -7225,9 +7235,7 @@ tripoint_abs_omt Character::abs_omt_pos() const
 
 bool Character::is_blind() const
 {
-    return ( worn_with_flag( flag_BLIND ) ||
-             has_effect( effect_blind ) ||
-             has_active_bionic( bio_blindfold ) );
+    return worn_with_flag( flag_BLIND ) || has_effect( effect_blind );
 }
 
 bool Character::is_invisible() const
@@ -7262,6 +7270,8 @@ int Character::visibility( bool, int ) const
                here.has_flag( "MINEABLE", bub_pos() ) ) ) {
         stealth_modifier += camo_modifier;
     }
+    stealth_modifier += bonus_from_enchantments( stealth_modifier, enchant_vals::mod::STEALTH );
+
     return clamp( 100 - stealth_modifier, 20, 160 );
 }
 
@@ -8909,6 +8919,7 @@ mutation_category_id Character::get_highest_category() const
 
 void Character::recalculate_enchantment_cache()
 {
+    const enchantment old_ench_sources = enchantment( *&*enchantment_cache );
     // start by resetting the cache
     *enchantment_cache = enchantment();
     enchantment_sources.clear();
@@ -8934,6 +8945,12 @@ void Character::recalculate_enchantment_cache()
                 enchantment_sources.emplace_back( &ench, &mut_map );
             }
         }
+        for( const enchantment &ench : mut.mut_enchantments ) {
+            if( ench.is_active( *this, mut.activated && mut_map.second.powered ) ) {
+                enchantment_cache->force_add( ench );
+                enchantment_sources.emplace_back( &ench, &mut_map );
+            }
+        }
     }
 
     for( const bionic &bio : get_bionic_collection() ) {
@@ -8947,9 +8964,22 @@ void Character::recalculate_enchantment_cache()
                 enchantment_sources.emplace_back( &ench, &bio );
             }
         }
+        for( const enchantment &ench : bid->bio_enchantments ) {
+            if( ench.is_active( *this, bio.powered &&
+                                bid->has_flag( STATIC( flag_id( "BIONIC_TOGGLED" ) ) ) ) ) {
+                enchantment_cache->force_add( ench );
+                enchantment_sources.emplace_back( &ench, &bio );
+            }
+        }
     }
 
+    enchantment_cache->activate_effects( *this );
+    enchantment_cache->deactivate_removed_effects( *this, old_ench_sources );
+
     rebuild_mutation_cache();
+
+    // Enchantments can give HP now, so recalc it
+    recalc_hp();
 }
 
 void Character::rebuild_mutation_cache()
@@ -10744,6 +10774,8 @@ int Character::bodytemp_modifier_traits( bool overheated ) const
     for( const trait_id &iter : get_mutations() ) {
         mod += overheated ? iter->bodytemp_min : iter->bodytemp_max;
     }
+    mod += overheated ? bonus_from_enchantments( mod, enchant_vals::mod::BODYTEMP_MIN ) :
+           bonus_from_enchantments( mod, enchant_vals::mod::BODYTEMP_MAX );
     return mod;
 }
 
@@ -10753,6 +10785,7 @@ int Character::bodytemp_modifier_traits_floor() const
     for( const trait_id &iter : get_mutations() ) {
         mod += iter->bodytemp_sleep;
     }
+    mod += bonus_from_enchantments( mod, enchant_vals::mod::BODYTEMP_SLEEP );
     return mod;
 }
 
@@ -11230,11 +11263,10 @@ bool Character::has_opposite_trait( const trait_id &flag ) const
 int Character::adjust_for_focus( int amount ) const
 {
     int effective_focus = focus_pool;
+    effective_focus += bonus_from_enchantments( effective_focus, enchant_vals::mod::EFFECTIVE_FOCUS );
+
     if( has_trait( trait_FASTLEARNER ) ) {
         effective_focus += 15;
-    }
-    if( has_active_bionic( bio_memory ) ) {
-        effective_focus += 10;
     }
     if( has_trait( trait_SLOWLEARNER ) ) {
         effective_focus -= 15;
@@ -11365,6 +11397,7 @@ int Character::run_cost( int base_cost, bool diag ) const
     if( !is_mounted() ) {
         if( movecost > 100 ) {
             movecost *= mutation_value( "movecost_obstacle_modifier" );
+            movecost += bonus_from_enchantments( movecost, enchant_vals::mod::OBSTACLE_MOVE_COST );
             if( movecost < 100 ) {
                 movecost = 100;
             }
@@ -11384,6 +11417,7 @@ int Character::run_cost( int base_cost, bool diag ) const
         movecost *= mutation_value( "movecost_modifier" );
         if( flatground ) {
             movecost *= mutation_value( "movecost_flatground_modifier" );
+            movecost += bonus_from_enchantments( movecost, enchant_vals::mod::FLAT_MOVE_COST );
         }
         if( has_trait( trait_PADDED_FEET ) && !footwear_factor() ) {
             movecost *= .9f;
@@ -11638,6 +11672,8 @@ float Character::hearing_ability() const
 
     volume_multiplier *= Character::mutation_value( "hearing_modifier" );
 
+    volume_multiplier += bonus_from_enchantments( volume_multiplier, enchant_vals::mod::HEARING );
+
     if( has_effect( effect_deaf ) ) {
         // Scale linearly up to 30 minutes
         volume_multiplier *= ( 30_minutes - get_effect_dur( effect_deaf ) ) / 30_minutes;
@@ -11647,7 +11683,7 @@ float Character::hearing_ability() const
         volume_multiplier *= .25;
     }
 
-    return volume_multiplier;
+    return std::max( 0.0f, volume_multiplier );
 }
 
 std::vector<std::string> Character::short_description_parts() const
@@ -12161,6 +12197,7 @@ float Character::fall_damage_mod() const
 
     ret *= mutation_value( "falling_damage_multiplier" );
 
+    ret += bonus_from_enchantments( ret, enchant_vals::mod::FALL_DAMAGE_MULT );
     // TODO: Bonus for Judo, mutations. Penalty for heavy weight (including mutations)
     return std::max( 0.0f, ret );
 }

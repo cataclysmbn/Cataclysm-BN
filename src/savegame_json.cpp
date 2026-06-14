@@ -2094,6 +2094,8 @@ auto monster::load( const JsonObject &data,
 
     data.read( "friendly", friendly );
     data.read( "training_level", training_level );
+    data.read( "pet_bond_level", pet_bond_level );
+    data.read( "bonded_character_id", bonded_character_id );
     data.read( "mission_id", mission_id );
     data.read( "no_extra_death_drops", no_extra_death_drops );
     data.read( "dead", dead );
@@ -2206,6 +2208,8 @@ auto monster::store( JsonOut &json, bool include_local_state ) const -> void
     json.member( "special_attacks", special_attacks );
     json.member( "friendly", friendly );
     json.member( "training_level", training_level );
+    json.member( "pet_bond_level", pet_bond_level );
+    json.member( "bonded_character_id", bonded_character_id );
     json.member( "fish_population", fish_population );
     json.member( "faction", faction.id().str() );
     json.member( "mission_id", mission_id );
@@ -4641,7 +4645,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             int rad_num = jsin.get_int();
             for( int i = 0; i < rad_num; ++i ) {
                 if( rad_cell < SEEX * SEEY ) {
-                    set_radiation( { 0 % SEEX, rad_cell / SEEX }, rad_strength );
+                    set_radiation( { rad_cell % SEEX, rad_cell / SEEX }, rad_strength );
                     rad_cell++;
                 }
             }

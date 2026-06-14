@@ -32,6 +32,7 @@
 #include "cata_unreachable.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua.h"
 #include "character.h"
 #include "character_functions.h"
 #include "data_vars.h"
@@ -2062,7 +2063,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
     }
 
     if( here.can_open_door( &p, examp, true ) ) {
-        g->peek( examp );
+        g->peek( p.bub_pos() - examp );
         p.add_msg_if_player( _( "You peek through the peephole." ) );
     } else {
         // Peek through the peephole, or open the door.
@@ -2072,7 +2073,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
         } );
         if( choice == 0 ) {
             // Peek
-            g->peek( examp );
+            g->peek( p.bub_pos() - examp );
             p.add_msg_if_player( _( "You peek through the peephole." ) );
         } else if( choice == 1 ) {
             here.open_door( &p, examp, true );
@@ -4768,6 +4769,24 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint_bub_ms &examp ) -> 
     fluid_grid::drain_liquid_charges( pos_abs_omt, liquid_type, used );
 }
 
+auto iexamine::lua_examine( player &p, const tripoint_bub_ms &examp ) -> void
+{
+    map &here = get_map();
+    const auto &furn = here.furn( examp ).obj();
+    if( !furn.examine_action_id.empty() ) {
+        cata::run_lua_examine( furn.examine_action_id, p, examp );
+        return;
+    }
+
+    const auto &ter = here.ter( examp ).obj();
+    if( !ter.examine_action_id.empty() ) {
+        cata::run_lua_examine( ter.examine_action_id, p, examp );
+        return;
+    }
+
+    debugmsg( "Lua examine called at %s without a Lua examine action id", examp.to_string() );
+}
+
 std::vector<itype> furn_t::crafting_pseudo_item_types() const
 {
     std::vector<itype> conversion;
@@ -5122,7 +5141,7 @@ void iexamine::curtains( player &p, const tripoint_bub_ms &examp )
     const int choice = window_menu.ret;
     if( choice == 0 ) {
         // Peek
-        g->peek( examp );
+        g->peek( p.bub_pos() - examp );
         p.add_msg_if_player( _( "You carefully peek through the curtains." ) );
     } else if( choice == 1 ) {
         // Mr. Gorbachev, tear down those curtains!
@@ -8124,6 +8143,10 @@ void iexamine::multicooker( player &p, const tripoint_bub_ms &pos )
  */
 iexamine_function iexamine_function_from_string( const std::string &function_name )
 {
+    if( function_name.rfind( "lua:", 0 ) == 0 ) {
+        return &iexamine::lua_examine;
+    }
+
     static const std::map<std::string, iexamine_function> function_map = {{
             { "none", &iexamine::none },
             { "deployed_furniture", &iexamine::deployed_furniture },
@@ -8187,6 +8210,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "clean_water_source", &iexamine::clean_water_source },
             { "liquid_source", &iexamine::liquid_source },
             { "fluid_grid_fixture", &iexamine::fluid_grid_fixture },
+            { "lua_examine", &iexamine::lua_examine },
             { "reload_furniture", &iexamine::reload_furniture },
             { "use_furn_fake_item", &iexamine::use_furn_fake_item },
             { "curtains", &iexamine::curtains },

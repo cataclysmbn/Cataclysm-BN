@@ -1506,7 +1506,6 @@ bool vehicle::has_security_working() const
 
 void vehicle::backfire( const int e ) const
 {
-    const int power = part_vpower_w( engines[e], true );
     const auto pos = bub_part_location( engines[e] );
     sound_event se;
     se.origin = pos;
@@ -5001,6 +5000,9 @@ double vehicle::coeff_water_drag() const
     }
     std::vector<int> hull_indices = all_parts_at_location( part_location_under );
     double hull_coverage;
+    if( hull_indices.empty() && !floating.empty() ) {
+        hull_indices = all_parts_at_location( part_location_structure );
+    }
     if( hull_indices.empty() ) {
         hull_coverage = 0;
     } else {

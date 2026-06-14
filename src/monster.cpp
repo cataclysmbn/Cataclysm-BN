@@ -105,6 +105,7 @@ static const efftype_id effect_no_sight( "no_sight" );
 static const efftype_id effect_onfire( "onfire" );
 static const efftype_id effect_pacified( "pacified" );
 static const efftype_id effect_pet( "pet" );
+static const efftype_id effect_pet_bonding( "pet_bonding" );
 static const efftype_id effect_tpollen( "tpollen" );
 static const efftype_id effect_paralyzepoison( "paralyzepoison" );
 static const efftype_id effect_poison( "poison" );
@@ -1104,6 +1105,18 @@ std::string monster::extended_description() const
 
     if( !type->has_flag( m_flag::MF_NOHEAD ) ) {
         ss += std::string( _( "It has a head." ) ) + "\n";
+    }
+
+    if( bonded_character_id == g->u.getID() ) {
+        ss += string_format( _( "It regards you as family. (%s)\n" ), pet_bond_level );
+    } else if( pet_bond_level > 5 ) {
+        ss += string_format( _( "It really likes you. (%s)\n" ), pet_bond_level );
+    } else if( pet_bond_level > 2 ) {
+        ss += string_format( _( "It likes you. (%s)\n" ), pet_bond_level );
+    } else if( pet_bond_level > 0 ) {
+        ss += string_format( _( "It is curious about you. (%s)\n" ), pet_bond_level );
+    } else {
+        ss += string_format( _( "It is unsure about you. (%s)\n" ), pet_bond_level );
     }
 
     if( training_level > 0 && type->pet_training ) {
@@ -3739,6 +3752,26 @@ void monster::make_pet()
 bool monster::is_pet() const
 {
     return ( friendly == -1 && has_effect( effect_pet ) );
+}
+
+void monster::on_pet_bonding( Character *ch )
+{
+    if( has_effect( effect_pet_bonding ) && !one_in( 3 ) ) {
+        // Prevent spamming bond, this should raise over time.
+        // Still give a chance to increase as it may not be obvious.
+        return;
+    }
+
+    if( pet_bond_level >= pet_bond_max_level ) {
+        return;
+    }
+
+    add_effect( effect_pet_bonding, time_duration::from_hours( 8 ) );
+    pet_bond_level = std::clamp( pet_bond_level + 1, 0, pet_bond_max_level );
+    if( pet_bond_level == pet_bond_max_level ) {
+        bonded_character_id = ch->getID();
+        ch->add_msg_if_player( m_good, _( "%s has bonded with you!" ), get_name() );
+    }
 }
 
 bool monster::is_hallucination() const

@@ -186,6 +186,7 @@ static const activity_id ACT_WAIT( "ACT_WAIT" );
 static const activity_id ACT_WAIT_NPC( "ACT_WAIT_NPC" );
 static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
 static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
+static const activity_id ACT_WASH_SELF( "ACT_WASH_SELF" );
 static const activity_id ACT_WEAR( "ACT_WEAR" );
 
 static const efftype_id effect_ai_waiting( "ai_waiting" );
@@ -4359,7 +4360,10 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
     }
     mon->remove_effect( effect_well_fed );
     mon->remove_effect( effect_ai_waiting );
-    if( 4 * p->get_skill_level( skill_survival ) >= rng( 0, 100 ) ) {
+    auto const bonded = p->getID() == mon->bonded_character_id;
+    auto skill_rating = 10 * p->get_skill_level( skill_survival );
+    if( bonded ) { skill_rating *= 2; }
+    if( skill_rating >= 100 || skill_rating >= rng( 0, 100 ) ) {
         if( mon && mon->type->pet_training ) {
             mon->training_level = std::min( mon->training_level + 1, mon->type->pet_training->max_level );
             for( const auto &lf : mon->type->pet_training->level_flags ) {
@@ -4380,6 +4384,7 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
                               act->str_values[0] );
     }
     act->set_to_null();
+    mon->on_pet_bonding( p->as_character() );
 }
 
 void activity_handlers::shaving_finish( player_activity *act, player *p )

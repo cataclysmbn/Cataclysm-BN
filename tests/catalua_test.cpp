@@ -1,19 +1,26 @@
 #include "catch/catch.hpp"
 
 #include "avatar.h"
+#include "bionics.h"
 #include "calendar.h"
+#include "cata_utility.h"
+#include "character_id.h"
 #include "catacharset.h"
+#include "catalua.h"
 #include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
 #include "catalua_serde.h"
 #include "catalua_sol.h"
 #include "clzones.h"
+#include "color.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "faction.h"
+#include "flag.h"
 #include "fstream_utils.h"
 #include "game.h"
+#include "iexamine.h"
 #include "init.h"
 #include "json.h"
 #include "map.h"
@@ -23,6 +30,7 @@
 #include "monster.h"
 #include "npc.h"
 #include "options.h"
+#include "player_activity.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
@@ -35,11 +43,13 @@
 #include "units_volume.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
+#include "veh_type.h"
 
 #include <memory>
 #include <optional>
 #include <string>
 #include <stdexcept>
+#include <vector>
 
 // workaround for https://github.com/llvm/llvm-project/issues/113087
 #define CHECK_TUPLE(...) CHECK((__VA_ARGS__))
@@ -100,6 +110,248 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_npc_avatar_name == "nil" );
 }
 
+TEST_CASE( "lua_map_create_item_at_places_without_returning_owned_item", "[lua][map]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto &here = get_map();
+    const auto pos = get_avatar().bub_pos();
+    here.i_clear( pos );
+    test_data["pos"] = pos;
+
+    const auto script_res = lua.safe_script( R"(
+local map = gapi.get_map()
+local placed = map:create_item_at(test_data["pos"], ItypeId.new("rock"), 1)
+test_data["return_type"] = type(placed)
+test_data["item_count"] = #map:get_items_at(test_data["pos"])
+)", sol::script_pass_on_error );
+    REQUIRE( script_res.valid() );
+
+    CHECK( test_data.get<std::string>( "return_type" ) == "nil" );
+    CHECK( test_data.get<int>( "item_count" ) == 1 );
+
+    here.i_clear( pos );
+}
+
+TEST_CASE( "item_lua_invoke_at_invokes_use_action", "[lua][item]" )
+{
+    auto lua = make_lua_state();
+    lua["invoke_pos"] = get_avatar().bub_pos();
+
+    const auto load_res = lua.load( "local item = Item.spawn(ItypeId.new('helmet_riot'), 1)\n"
+                                    "local used = item:invoke_at(invoke_pos)\n"
+                                    "return { used = used, item_type = item:get_type() }" );
+    REQUIRE( load_res.valid() );
+    const auto script_res = sol::protected_function( load_res )();
+    REQUIRE( script_res.valid() );
+    const auto data = script_res.get<sol::table>();
+
+    CHECK( data.get<int>( "used" ) == 0 );
+    CHECK( data.get<itype_id>( "item_type" ) == itype_id( "helmet_riot_raised" ) );
+}
+
+TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
+{
+    const auto minirose_id = bionic_id( "bio_minirose" );
+    CHECK( minirose_id->activated );
+    CHECK( minirose_id->has_flag( flag_id( "BIONIC_TOGGLED" ) ) );
+
+    auto lua = make_lua_state();
+    auto env = sol::environment( lua, sol::create, lua.globals() );
+
+    auto calls_created = 0;
+    auto calls_invoked = 0;
+    auto calls_messages = 0;
+    auto calls_removed = 0;
+    auto nuke_charges = -1;
+    auto nuke_count = 0;
+    auto nuke_id = std::string{};
+    auto bionic_id_seen = std::string{};
+    auto active_bionic_id_seen = std::string{};
+    auto removed_id = std::string{};
+    auto has_minirose = true;
+    auto minirose_armed = false;
+    auto query_answer = std::string{ "YES" };
+
+    auto fake_item = lua.create_table();
+    fake_item["set_charges"] = [&]( const sol::table &, const int charges ) { nuke_charges = charges; };
+    fake_item["invoke_at"] = [&]( const sol::table &, const tripoint_bub_ms & ) { ++calls_invoked; };
+
+    auto fake_gapi = lua.create_table();
+    fake_gapi["create_item"] = [&]( const itype_id & id, const int count ) {
+        ++calls_created;
+        nuke_id = id.str();
+        nuke_count = count;
+        return fake_item;
+    };
+    fake_gapi["add_msg"] = [&]( const sol::variadic_args & ) { ++calls_messages; };
+    env["gapi"] = fake_gapi;
+
+    auto fake_popup_type = lua.create_table();
+    fake_popup_type["new"] = [&]() {
+        auto fake_popup = lua.create_table();
+        fake_popup["message"] = []( const sol::table &, const std::string & ) {};
+        fake_popup["message_color"] = []( const sol::table &, const color_id & ) {};
+        fake_popup["query_yn"] = [&query_answer]( const sol::table & ) { return query_answer; };
+        return fake_popup;
+    };
+    env["QueryPopup"] = fake_popup_type;
+
+    auto fake_char = lua.create_table();
+    fake_char["has_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
+        bionic_id_seen = id.str();
+        return has_minirose;
+    };
+    fake_char["has_active_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
+        active_bionic_id_seen = id.str();
+        return has_minirose && minirose_armed;
+    };
+    fake_char["remove_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
+        ++calls_removed;
+        removed_id = id.str();
+        has_minirose = false;
+        minirose_armed = false;
+    };
+    fake_char["bub_pos"] = []( const sol::table & ) { return tripoint_bub_ms( 60, 60, 0 ); };
+    fake_char["is_avatar"] = []( const sol::table & ) { return true; };
+
+    const auto load_res = lua.load_file( "data/json/lua/minirose.lua" );
+    REQUIRE( load_res.valid() );
+    auto exec = sol::protected_function( load_res );
+    sol::set_environment( env, exec );
+    const auto script_res = exec();
+    REQUIRE( script_res.valid() );
+    const auto minirose = script_res.get<sol::table>();
+
+    auto params = lua.create_table();
+    params["char"] = fake_char;
+    minirose["on_character_death"]( params );
+
+    CHECK( active_bionic_id_seen == "bio_minirose" );
+    CHECK( calls_removed == 0 );
+    CHECK( calls_created == 0 );
+    CHECK( calls_invoked == 0 );
+
+    minirose_armed = true;
+    minirose["on_character_death"]( params );
+
+    CHECK( bionic_id_seen == "bio_minirose" );
+    CHECK( removed_id == "bio_minirose" );
+    CHECK( calls_removed == 1 );
+    CHECK( calls_created == 1 );
+    CHECK( calls_invoked == 1 );
+    CHECK( nuke_id == "mininuke_act" );
+    CHECK( nuke_count == 1 );
+    CHECK( nuke_charges == 0 );
+
+    has_minirose = true;
+    minirose_armed = false;
+    query_answer = "NO";
+    params = lua.create_table();
+    params["user"] = fake_char;
+    minirose["on_activate"]( params );
+
+    CHECK( calls_removed == 1 );
+    CHECK( calls_created == 1 );
+    CHECK( calls_invoked == 1 );
+    CHECK( calls_messages == 1 );
+
+    query_answer = "YES";
+    minirose["on_activate"]( params );
+
+    CHECK( calls_removed == 2 );
+    CHECK( calls_created == 2 );
+    CHECK( calls_invoked == 2 );
+}
+
+TEST_CASE( "minirose can be disarmed after switching to an npc and back", "[bionics][lua][minirose][npc]" )
+{
+    clear_all_state();
+    auto &you = get_avatar();
+    const auto minirose_id = bionic_id( "bio_minirose" );
+    const auto cleanup_test_state = on_out_of_scope( []() {
+        g->vertical_shift( 0 );
+        clear_all_state();
+        get_avatar().setID( character_id(), true );
+    } );
+
+    you.clear_bionics();
+    npc &follower = spawn_npc( point_bub_ms( 45, 30 ), "test_talker" );
+    follower.set_fac( faction_id( "your_followers" ) );
+    follower.set_attitude( NPCATT_FOLLOW );
+    follower.clear_bionics();
+    REQUIRE( follower.is_player_ally() );
+
+    follower.add_bionic( minirose_id );
+    REQUIRE( follower.has_bionic( minirose_id ) );
+    CHECK_FALSE( follower.has_active_bionic( minirose_id ) );
+    follower.get_bionic_state( minirose_id ).powered = true;
+    REQUIRE( follower.has_active_bionic( minirose_id ) );
+    CHECK_FALSE( you.has_bionic( minirose_id ) );
+
+    you.control_npc( follower );
+
+    REQUIRE( you.has_active_bionic( minirose_id ) );
+    CHECK_FALSE( follower.has_bionic( minirose_id ) );
+    REQUIRE( you.deactivate_bionic( you.get_bionic_state( minirose_id ) ) );
+    CHECK_FALSE( you.has_active_bionic( minirose_id ) );
+
+    you.control_npc( follower );
+
+    CHECK_FALSE( you.has_bionic( minirose_id ) );
+    REQUIRE( follower.has_bionic( minirose_id ) );
+    CHECK_FALSE( follower.has_active_bionic( minirose_id ) );
+}
+
+TEST_CASE( "lua_activity_bindings", "[lua]" )
+{
+    clear_all_state();
+    auto &state = *DynamicDataLoader::get_instance().lua;
+    cata::init_global_state_tables( state, {} );
+    sol::state &lua = state.lua;
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "activity_binding_test.lua" );
+
+    REQUIRE( test_data.get<bool>( "has_examine_functions" ) );
+    REQUIRE( test_data.get<bool>( "has_activity_functions" ) );
+    REQUIRE( test_data.get<std::string>( "activity_id" ) == "ACT_WAIT" );
+    REQUIRE( test_data.get<std::string>( "activity_name" ) == "test wash" );
+    CHECK( test_data.get<int>( "activity_moves_total" ) == to_moves<int>( 5_minutes ) );
+    CHECK( test_data.get<bool>( "activity_interruptable" ) );
+    CHECK( test_data.get<std::string>( "activity_coord" ).starts_with( "TripointAbsMs" ) );
+
+    get_avatar().activity->moves_left = 0;
+    get_avatar().activity->do_turn( get_avatar() );
+
+    CHECK( get_avatar().activity->is_null() );
+    CHECK( test_data.get<bool>( "turn_called" ) );
+    CHECK( test_data.get<std::string>( "turn_name" ) == "test wash" );
+    CHECK( test_data.get<bool>( "finish_called" ) );
+    CHECK( test_data.get<std::string>( "finish_name" ) == "test wash" );
+    CHECK( test_data.get<std::string>( "finish_pos_type" ) == "TripointAbsMs" );
+    CHECK( test_data.get<std::string>( "finish_mode" ) == "test_shower" );
+    CHECK( test_data.get<bool>( "finish_is_warm" ) );
+    CHECK( test_data.get<std::string>( "finish_cleaner_label" ) == "soap" );
+    CHECK( test_data.get<int>( "finish_nested_charges" ) == 7 );
+}
+
+TEST_CASE( "lua_activity_without_callback_finishes", "[lua]" )
+{
+    clear_all_state();
+    auto act = std::make_unique<player_activity>( activity_id( "ACT_WASH_SELF" ), 0 );
+    get_avatar().assign_activity( std::move( act ) );
+
+    get_avatar().activity->do_turn( get_avatar() );
+
+    CHECK( get_avatar().activity->is_null() );
+}
+
 TEST_CASE( "robofac_authorization_updates_real_active_creatures", "[lua][robofac]" )
 {
     clear_all_state();
@@ -143,6 +395,59 @@ TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][cre
     CHECK( test_data.get<bool>( "found_expected_monster" ) );
 }
 
+TEST_CASE( "lua_npc_move_to_binding_moves_real_npc", "[lua][npc]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    map &here = get_map();
+    const auto start = tripoint_bub_ms{ 50, 50, 0 };
+    const auto destination = tripoint_bub_ms{ 51, 50, 0 };
+    for( const tripoint_bub_ms &pos : { start, destination } ) {
+        here.ter_set( pos, ter_id( "t_dirt" ) );
+        here.furn_set( pos, furn_id( "f_null" ) );
+    }
+
+    auto &moving_npc = spawn_npc( start.xy(), "test_talker" );
+    moving_npc.set_moves( 1000 );
+    test_data["npc"] = &moving_npc;
+    test_data["destination"] = destination;
+
+    run_lua_test_script( lua, "npc_move_to_test.lua" );
+
+    CHECK( test_data.get<bool>( "moved" ) );
+    CHECK( moving_npc.bub_pos() == destination );
+}
+
+TEST_CASE( "lua_place_monster_pins_upgrade_time", "[lua][monster]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    put_player_underground();
+    calendar::turn = calendar::start_of_cataclysm + 2 * calendar::season_length();
+
+    const auto monster_id = mtype_id( "mon_test_lua_upgrade_zombie" );
+    const auto &monster_type = monster_id.obj();
+    REQUIRE( monster_type.upgrades );
+    REQUIRE( monster_type.age_grow == 14 );
+
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+    test_data["monster_id"] = monster_id;
+    test_data["pos"] = tripoint_bub_ms{ 5, 5, 0 };
+
+    run_lua_test_script( lua, "place_monster_upgrade_time_test.lua" );
+
+    const auto current_day = to_days<int>( calendar::turn - calendar::turn_zero );
+    REQUIRE( test_data.get<bool>( "monster_spawned" ) );
+    CHECK( test_data.get<std::string>( "monster_type" ) == "mon_test_lua_upgrade_zombie" );
+    CHECK( test_data.get<int>( "upgrade_time" ) > current_day );
+}
+
 TEST_CASE( "lua_typed_coords_projection", "[lua]" )
 {
     auto lua = make_lua_state();
@@ -161,6 +466,10 @@ TEST_CASE( "lua_typed_coords_projection", "[lua]" )
     CHECK( test_data.get<std::string>( "remain_remainder" ) == "PointOmSm(1,2)" );
     CHECK( test_data.get<std::string>( "combined" ) == "TripointAbsSm(361,2,-1)" );
     CHECK( test_data.get<int>( "distance" ) == 3 );
+    CHECK( test_data.get<std::string>( "named_bub_point" ) == "PointBubMs(3,4)" );
+    CHECK( test_data.get<std::string>( "named_abs_tripoint" ) == "TripointAbsMs(5,6,7)" );
+    CHECK( test_data.get<std::string>( "named_abs_tripoint_from_typed_point" ) ==
+           "TripointAbsMs(8,9,10)" );
 
     // Validate project_remain_omt example from the typed-coordinates documentation.
     CHECK( test_data.get<std::string>( "doc_remain_omt_quotient" ) == "TripointAbsOmt(1,1,2)" );
@@ -201,6 +510,223 @@ TEST_CASE( "lua_coord_cpp_helpers", "[lua]" )
     CHECK( cata::detail::lua_coords::expect_cpp<tripoint_abs_omt>( lua_pos ) == cpp_pos );
     CHECK_THROWS_AS( cata::detail::lua_coords::expect_cpp<tripoint_bub_ms>( lua_pos ),
                      std::runtime_error );
+}
+
+TEST_CASE( "plumbing_lua_tripoint_migration", "[lua][plumbing]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto fake_map = lua.create_table();
+    auto blood_intensity = 0;
+    auto removed_blood_fields = 0;
+    fake_map["bub_to_abs"] = []( const sol::object &, const tripoint_bub_ms & ) -> tripoint_abs_ms {
+        return tripoint_abs_ms( 48, 48, 0 );
+    };
+    fake_map["has_vehicle_part_with_feature_at"] = []( const sol::object &, const tripoint_bub_ms &,
+    const std::string &, bool ) -> bool {
+        return false;
+    };
+    fake_map["points_in_radius"] = []( const sol::object &, const tripoint_bub_ms &, int,
+    int ) -> std::vector<tripoint_bub_ms> {
+        return { tripoint_bub_ms( 10, 10, 0 ) };
+    };
+    fake_map["get_field_int_at"] = [&blood_intensity]( const sol::object &, const tripoint_bub_ms &,
+    const sol::object & ) -> int {
+        return blood_intensity;
+    };
+    fake_map["remove_field_at"] = [&blood_intensity, &removed_blood_fields]( const sol::object &,
+    const tripoint_bub_ms &, const sol::object & ) -> void {
+        if( blood_intensity > 0 )
+        {
+            removed_blood_fields++;
+        }
+        blood_intensity = 0;
+    };
+    auto empty_item_stack = lua.create_table();
+    empty_item_stack["items"] = [&lua]() -> sol::table { return lua.create_table(); };
+    fake_map["get_items_at"] = [&empty_item_stack]( const sol::object &,
+    const tripoint_bub_ms & ) -> sol::table {
+        return empty_item_stack;
+    };
+    fake_map["get_temperature_c"] = []( const sol::object &, const tripoint_bub_ms & ) -> double {
+        return 20.0;
+    };
+
+    auto fake_user = lua.create_table();
+    fake_user["get_pos_ms"] = []( const sol::object & ) -> tripoint_bub_ms {
+        return tripoint_bub_ms( 9, 10, 0 );
+    };
+    auto fake_user_on_fixture = lua.create_table();
+    fake_user_on_fixture["get_pos_ms"] = []( const sol::object & ) -> tripoint_bub_ms {
+        return tripoint_bub_ms( 10, 10, 0 );
+    };
+
+    auto grid = lua.create_table();
+    grid["is_valid"] = []( const sol::object & ) -> bool { return true; };
+    grid["get_resource"] = []( const sol::object & ) -> int { return 1000; };
+    grid["mod_resource"] = []( const sol::object &, int ) -> void {};
+
+    auto tracker = lua.create_table();
+    tracker["grid_at"] = [&grid]( const sol::object &, const tripoint_abs_ms & ) -> sol::table {
+        return grid;
+    };
+
+    auto gapi_table = lua.create_table();
+    gapi_table["get_map"] = [&fake_map]() -> sol::table { return fake_map; };
+    gapi_table["get_distribution_grid_tracker"] = [&tracker]() -> sol::table { return tracker; };
+    gapi_table["add_msg"] = []( const sol::variadic_args & ) -> void {};
+
+    auto used_grid_pos = std::optional<tripoint_abs_omt>();
+    auto overmapbuffer_table = lua.create_table();
+    overmapbuffer_table["fluid_grid_liquid_charges_at"] = [&used_grid_pos](
+    const tripoint_abs_omt & pos, const itype_id & ) -> int {
+        used_grid_pos = pos;
+        return 100;
+    };
+    overmapbuffer_table["drain_fluid_grid_liquid_charges"] = []( const tripoint_abs_omt &,
+    const itype_id &, int ) -> int {
+        return 24;
+    };
+
+    auto menu_choices = std::vector<int> { 1, 2 };
+    auto menu_query_count = size_t{ 0 };
+    auto menu = lua.create_table();
+    menu["title"] = []( const sol::object &, const std::string & ) -> void {};
+    menu["add"] = []( const sol::object &, int, const std::string & ) -> void {};
+    menu["query"] = [&menu_choices, &menu_query_count]( const sol::object & ) -> int {
+        return menu_choices.at( menu_query_count++ );
+    };
+
+    auto ui_list = lua.create_table();
+    ui_list["new"] = [&menu]() -> sol::table { return menu; };
+
+    auto env = sol::environment( lua, sol::create, lua.globals() );
+    env["gapi"] = gapi_table;
+    env["overmapbuffer"] = overmapbuffer_table;
+    env["UiList"] = ui_list;
+
+    auto load_res = lua.load_file( "data/json/lua/plumbing.lua" );
+    REQUIRE( load_res.valid() );
+    auto exec = sol::protected_function( load_res );
+    sol::set_environment( env, exec );
+    auto exec_res = exec();
+    REQUIRE( exec_res.valid() );
+    auto plumbing = exec_res.get<sol::table>();
+
+    auto params = lua.create_table();
+    params["user"] = fake_user;
+    params["pos"] = cata::detail::lua_coords::to_lua( tripoint_bub_ms( 10, 10, 0 ) );
+    auto examine = plumbing["examine_shower"].get<sol::protected_function>();
+    auto examine_res = examine( params );
+    REQUIRE( examine_res.valid() );
+
+    REQUIRE( used_grid_pos.has_value() );
+    CHECK( used_grid_pos->raw() == tripoint( 2, 2, 0 ) );
+
+    blood_intensity = 1;
+    params["user"] = fake_user_on_fixture;
+    auto clean_res = examine( params );
+    REQUIRE( clean_res.valid() );
+    CHECK( removed_blood_fields > 0 );
+    CHECK( blood_intensity == 0 );
+
+    auto &soap = get_avatar().add_item_with_id( itype_id( "soap" ), 10 );
+    REQUIRE( soap.charges > 1 );
+    params["user"] = get_avatar().as_character();
+    params["pos"] = cata::detail::lua_coords::to_lua( get_avatar().bub_pos() );
+    auto consume_res = examine( params );
+    REQUIRE( consume_res.valid() );
+    CHECK( get_avatar().activity->id() == activity_id( "ACT_WASH_SELF" ) );
+    get_avatar().cancel_activity();
+}
+
+TEST_CASE( "plumbing_lua_morale_refreshes_without_stacking", "[lua][plumbing]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto empty_item_stack = lua.create_table();
+    empty_item_stack["items"] = [&lua]() -> sol::table { return lua.create_table(); };
+
+    auto fake_map = lua.create_table();
+    fake_map["points_in_radius"] = []( const sol::object &, const tripoint_bub_ms &, int,
+    int ) -> std::vector<tripoint_bub_ms> {
+        return { tripoint_bub_ms( 10, 10, 0 ) };
+    };
+    fake_map["get_items_at"] = [&empty_item_stack]( const sol::object &,
+    const tripoint_bub_ms & ) -> sol::table {
+        return empty_item_stack;
+    };
+    fake_map["has_vehicle_part_with_feature_at"] = []( const sol::object &, const tripoint_bub_ms &,
+    const std::string & feature, bool ) -> bool {
+        return feature == "TOWEL";
+    };
+
+    auto last_message = std::string{};
+    auto gapi_table = lua.create_table();
+    gapi_table["get_map"] = [&fake_map]() -> sol::table { return fake_map; };
+    gapi_table["add_msg"] = [&last_message]( const sol::object &,
+    const std::string & message ) -> void {
+        last_message = message;
+    };
+
+    auto env = sol::environment( lua, sol::create, lua.globals() );
+    env["gapi"] = gapi_table;
+
+    auto load_res = lua.load_file( "data/json/lua/plumbing.lua" );
+    REQUIRE( load_res.valid() );
+    auto exec = sol::protected_function( load_res );
+    sol::set_environment( env, exec );
+    auto exec_res = exec();
+    REQUIRE( exec_res.valid() );
+    auto plumbing = exec_res.get<sol::table>();
+    auto finish = plumbing["finish_wash"].get<sol::protected_function>();
+
+    auto data = lua.create_table();
+    data["mode"] = "shower";
+    data["is_warm"] = false;
+    data["used_hygiene"] = false;
+    data["is_cold_wash"] = false;
+
+    auto params = lua.create_table();
+    params["user"] = get_avatar().as_character();
+    params["data"] = data;
+
+    REQUIRE( finish( params ).valid() );
+    REQUIRE( finish( params ).valid() );
+    REQUIRE( finish( params ).valid() );
+    CHECK( get_avatar().get_morale( morale_type( "morale_shower" ) ) == 6 );
+    CHECK( last_message.find( "vehicle towel hanger" ) != std::string::npos );
+}
+
+TEST_CASE( "plumbing_lua_data_hooks", "[lua]" )
+{
+    const auto &shower = furn_id( "f_shower" ).obj();
+    const auto &bathtub = furn_id( "f_bathtub" ).obj();
+    const auto lua_examine = iexamine_function_from_string( "lua_examine" );
+
+    REQUIRE( shower.examine == lua_examine );
+    REQUIRE( bathtub.examine == lua_examine );
+    REQUIRE( shower.examine_action_id == "PLUMBING_SHOWER_EXAMINE" );
+    REQUIRE( bathtub.examine_action_id == "PLUMBING_BATHTUB_EXAMINE" );
+
+    const auto body_cleanser_flag = flag_id( "BODY_CLEANSER" );
+    REQUIRE( body_cleanser_flag.is_valid() );
+    REQUIRE( itype_id( "soap" ).obj().has_flag( body_cleanser_flag ) );
+    REQUIRE( itype_id( "soapy_water" ).obj().has_flag( body_cleanser_flag ) );
+    REQUIRE( itype_id( "soap_flakes" ).obj().has_flag( body_cleanser_flag ) );
+    CHECK_FALSE( itype_id( "bleach" ).obj().has_flag( body_cleanser_flag ) );
+    CHECK_FALSE( itype_id( "detergent" ).obj().has_flag( body_cleanser_flag ) );
+    CHECK_FALSE( itype_id( "ammonia" ).obj().has_flag( body_cleanser_flag ) );
+
+    REQUIRE( morale_type( "morale_shower" ).is_valid() );
+    REQUIRE( morale_type( "morale_bath" ).is_valid() );
+    REQUIRE( morale_type( "morale_cleansed_self" ).is_valid() );
+
+    const auto &vehicle_shower = vpart_id( "vehicle_shower" ).obj();
+    REQUIRE( vehicle_shower.has_flag( "SHOWER" ) );
+    REQUIRE( vehicle_shower.has_flag( "FAUCET" ) );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )

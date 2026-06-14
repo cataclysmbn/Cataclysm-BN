@@ -211,6 +211,7 @@
 #include "location_vector.h"
 #include "monfaction.h"
 #if defined( CATA_SDL )
+#include "compute/compute_backend.h"
 #include "compute/gpu_lm.h"
 #include "compute/gpu_platform.h"
 #endif
@@ -6188,51 +6189,54 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                 }
             }
         }
-        TracyPlot( "Monmove GPU Sight LOS Jobs", static_cast<int64_t>( los_jobs.size() ) );
+        TracyPlot( "Monmove Sight LOS Jobs", static_cast<int64_t>( los_jobs.size() ) );
         if( !los_jobs.empty() ) {
 #if defined( CATA_SDL )
-            ZoneScopedN( "monmove_begin_gpu_sight_prewarm" );
-            gpu_pairs.reserve( los_jobs.size() );
-            std::ranges::transform( los_jobs, std::back_inserter( gpu_pairs ),
-            []( const auto & job ) {
-                return make_gpu_sight_pair( job.second );
-            } );
-            gpu_sight_device = cata_gpu::get_device();
-            if( gpu_sight_device == nullptr ) {
-                debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
-            } else {
-                const auto sight_inputs_ready = [&]() {
-                    return cata_gpu::resident_lighting_ready_for_sight_pairs( {
-                        .device = gpu_sight_device,
-                        .m = &m,
-                        .pairs = &gpu_pairs,
-                        .zlev = get_levz(),
-                    } );
-                };
-                if( !sight_inputs_ready() ) {
-                    ZoneScopedN( "monmove_bootstrap_gpu_sight_inputs" );
-                    m.build_map_cache( get_levz() );
-                }
-                if( !sight_inputs_ready() ) {
+            if( cata_compute::uses_sdl_gpu_compute() ) {
+                ZoneScopedN( "monmove_begin_gpu_sight_prewarm" );
+                gpu_pairs.reserve( los_jobs.size() );
+                std::ranges::transform( los_jobs, std::back_inserter( gpu_pairs ),
+                []( const auto & job ) {
+                    return make_gpu_sight_pair( job.second );
+                } );
+                gpu_sight_device = cata_gpu::get_device();
+                if( gpu_sight_device == nullptr ) {
                     debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
                 } else {
-                    gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
-                        .m = &m,
-                        .pairs = &gpu_pairs,
-                        .zlev = get_levz(),
-                    } );
-                    if( gpu_sight_work.id == 0 ) {
+                    const auto sight_inputs_ready = [&]() {
+                        return cata_gpu::resident_lighting_ready_for_sight_pairs( {
+                            .device = gpu_sight_device,
+                            .m = &m,
+                            .pairs = &gpu_pairs,
+                            .zlev = get_levz(),
+                        } );
+                    };
+                    if( !sight_inputs_ready() ) {
+                        ZoneScopedN( "monmove_bootstrap_gpu_sight_inputs" );
+                        m.build_map_cache( get_levz() );
+                    }
+                    if( !sight_inputs_ready() ) {
                         debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                    } else {
+                        gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
+                            .m = &m,
+                            .pairs = &gpu_pairs,
+                            .zlev = get_levz(),
+                        } );
+                        if( gpu_sight_work.id == 0 ) {
+                            debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                        }
                     }
                 }
-            }
-#else
-            ZoneScopedN( "monmove_cpu_sight_prewarm" );
-            auto &here = get_map();
-            for( const auto &[result_index, query] : los_jobs ) {
-                sight_results[result_index] = here.sees( query.from, query.to, query.range ) ? 1 : 0;
-            }
+            } else
 #endif
+            {
+                ZoneScopedN( "monmove_cpu_sight_prewarm" );
+                auto &here = get_map();
+                for( const auto &[result_index, query] : los_jobs ) {
+                    sight_results[result_index] = here.sees( query.from, query.to, query.range ) ? 1 : 0;
+                }
+            }
         }
     }
 
@@ -6290,7 +6294,7 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     if( !sight_jobs.empty() ) {
         if( !los_jobs.empty() ) {
 #if defined( CATA_SDL )
-            if( gpu_sight_work.id != 0 ) {
+            if( cata_compute::uses_sdl_gpu_compute() && gpu_sight_work.id != 0 ) {
                 ZoneScopedN( "monmove_finish_gpu_sight_prewarm" );
                 if( !cata_gpu::finish_gpu_sight_pairs( gpu_sight_device, gpu_sight_work,
                                                        gpu_results ) ) {
@@ -8817,8 +8821,7 @@ void game::pickup_feet()
     }
 }
 
-//Shift player by one tile, look_around(), then restore previous position.
-//represents carefully peeking around a corner, hence the large move cost.
+// Shift player by one tile for rendering/look_around(), then restore previous position.
 void game::peek()
 {
     const std::optional<tripoint_rel_ms> p = choose_direction( _( "Peek where?" ), true );
@@ -8826,44 +8829,51 @@ void game::peek()
         return;
     }
 
+    const auto current_pos = u.bub_pos();
+    const auto peek_pos = current_pos + *p;
     if( p->z() != 0 ) {
-        const auto old_pos = u.bub_pos();
-        vertical_move( p->z(), false, true );
-
-        if( old_pos != u.bub_pos() ) {
-            vertical_move( p->z() * -1, false, true );
-        } else {
+        const auto can_fly = character_funcs::can_fly( u );
+        if( !m.valid_move( current_pos, peek_pos, false, can_fly ) ) {
             return;
         }
     }
 
-    if( m.impassable( u.bub_pos() + *p ) ||
-        m.obstructed_by_vehicle_rotation( u.bub_pos(), u.bub_pos() + *p ) ) {
+    if( m.impassable( peek_pos ) ||
+        m.obstructed_by_vehicle_rotation( current_pos, peek_pos ) ) {
         return;
     }
 
-    peek( u.bub_pos() + *p );
+    peek( *p );
 }
 
-void game::peek( const tripoint_bub_ms &p )
+void game::peek( const tripoint_rel_ms &p )
 {
-    u.moves -= 200;
-    auto prev = u.bub_pos();
-    u.setpos( p );
+    const auto prev = u.abs_pos();
+    const auto peek_pos = prev + p;
+    auto restore_player_pos = [&]() {
+        u.setpos( prev );
+        update_map( u );
+        m.invalidate_map_cache( get_levz() );
+    };
+    auto restore_on_return = on_out_of_scope( restore_player_pos );
+
+    u.setpos( peek_pos );
+    update_map( u );
     // Force a full cache rebuild from the peek position so look_around renders
     // correct FOV and lighting.  Without this, lightmap_dirty may already be
     // false (built from the pre-peek player position earlier this turn), causing
     // look_around to display stale lighting and visibility.
-    m.invalidate_map_cache( p.z() );
-    auto center = p;
+    m.invalidate_map_cache( get_levz() );
+    auto center = u.bub_pos();
     const look_around_result result = look_around( /*show_window=*/true, center, center, false, false,
                                       true );
-    u.setpos( prev );
+    restore_player_pos();
+    restore_on_return.cancel();
+    u.moves -= 200;
 
     if( result.peek_action && *result.peek_action == PA_BLIND_THROW ) {
-        avatar_action::plthrow( u, nullptr, p );
+        avatar_action::plthrow( u, nullptr, abs_to_bub( peek_pos ) );
     }
-    m.invalidate_map_cache( p.z() );
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 std::optional<tripoint_bub_ms> game::look_debug()
@@ -12877,6 +12887,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     if( !u.has_artifact_with( AEP_STEALTH ) && !u.has_trait( trait_id( "DEBUG_SILENT" ) ) ) {
         int volume = u.is_stealthy() ? 30 : 50;
         volume *= u.mutation_value( "noise_modifier" );
+        volume += u.bonus_from_enchantments( volume, enchant_vals::mod::NOISE );
         if( volume > 0 ) {
             if( u.is_wearing( itype_rm13_armor_on ) ) {
                 volume = 20;
@@ -13385,17 +13396,17 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
 
 bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
 {
-    if( dest_loc.z() != u.bub_pos().z() && !via_ramp ) {
+    if( dest_loc.z() != u.abs_pos().z() && !via_ramp ) {
         // No vertical phasing yet
         return false;
     }
 
     //probability travel through walls but not water
-    auto dest = dest_loc;
+    auto dest = bub_to_abs( dest_loc );
     // tile is impassable
     int tunneldist = 0;
-    const point d( sgn( dest.x() - u.bub_pos().x() ), sgn( dest.y() - u.bub_pos().y() ) );
-    while( m.impassable( dest ) ||
+    const point d( sgn( dest.x() - u.abs_pos().x() ), sgn( dest.y() - u.abs_pos().y() ) );
+    while( m.impassable( abs_to_bub( dest ) ) ||
            ( critter_at( dest ) != nullptr && tunneldist > 0 ) ) {
         //add 1 to tunnel distance for each impassable tile in the line
         tunneldist += 1;
@@ -13440,6 +13451,7 @@ bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         //tunneling costs 100 moves baseline, 50 per extra tile up to a cap of 500 moves
         u.moves -= ( 50 + ( tunneldist * 50 ) );
         u.setpos( dest );
+        update_map( u );
         m.invalidate_visibility_caches();
 
         if( m.veh_at( u.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {

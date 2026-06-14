@@ -1247,26 +1247,33 @@ static void apply_surf_blend_effect(
                     static_cast<uint8_t>( std::min<int>( base.r + target.r, 255 ) ),
                     static_cast<uint8_t>( std::min<int>( base.g + target.g, 255 ) ),
                     static_cast<uint8_t>( std::min<int>( base.b + target.b, 255 ) ),
-                    static_cast<uint8_t>( std::min<int>( base.a + target.a, 255 ) ) };
+                    base.a };
                 break;
             }
             case tint_blend_mode::subtract: {
-                col = RGBColor{ static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
-                                static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
-                                static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ), base.a };
+                col = RGBColor{
+                    static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
+                    static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
+                    static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ),
+                    base.a};
                 break;
             }
             case tint_blend_mode::multiply: {
-                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ),
-                                static_cast<uint8_t>( base.g *target.g / 256 ),
-                                static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
+                col = RGBColor{
+                    static_cast<uint8_t>( base.r *target.r / 256 ),
+                    static_cast<uint8_t>( base.g *target.g / 256 ),
+                    static_cast<uint8_t>( base.b *target.b / 256 ),
+                    base.a};
                 break;
             }
             case tint_blend_mode::normal: {
-                // A truely accurate normal blend would use the alpha from the target, but that'd be useless here.
-                col = RGBColor{ static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.r, target.r, target.a ) ),
-                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.g, target.g, target.a ) ),
-                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.b, target.b, target.a ) ), base.a };
+                // A truely accurate normal blend would use the alpha from the target, but that'd be
+                // useless here.
+                col = RGBColor{
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.r, target.r, target.a ) ),
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.g, target.g, target.a ) ),
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.b, target.b, target.a ) ),
+                    base.a};
                 break;
             }
             case tint_blend_mode::divide: {
@@ -2224,6 +2231,7 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
     }
 #if defined(DYNAMIC_ATLAS)
     ts.tileset_atlas = std::make_unique<dynamic_atlas>( 4096, 4096, ts.tile_width, ts.tile_height );
+    ts.tileset_atlas->start_batch();
 #endif
     // Load tile information if available.
     offset = 0;
@@ -2303,6 +2311,7 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
 
     ts.tileset_id = tileset_id;
 #if defined(DYNAMIC_ATLAS)
+    ts.tileset_atlas->end_batch();
     ts.tileset_atlas->readback_load();
 #endif
 }
@@ -2560,6 +2569,15 @@ const color_tint_pair *tileset::get_tint( const std::string &tint_id )
         return &tints[tint_id];
     }
     return nullptr;
+}
+
+bool tileset::try_get_tint( const std::string &tint_id, color_tint_pair &tint )
+{
+    if( tints.contains( tint_id ) ) {
+        tint = tints[tint_id];
+        return true;
+    }
+    return false;
 }
 
 void tileset_loader::process_variations_after_loading( weighted_int_list<std::vector<int>> &vs )
@@ -4803,7 +4821,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
         sprite_tex->get_alpha_mod( &old_alpha );
         sprite_tex->get_blend_mode( &old_blend_mode );
 
-        sprite_tex->set_blend_mode( SDL_BLENDMODE_BLEND );
+        sprite_tex->set_blend_mode( SDL_BLENDMODE_ADD );
         sprite_tex->set_color_mod( light_tint.color.r, light_tint.color.g, light_tint.color.b );
         sprite_tex->set_alpha_mod( light_tint.alpha );
         const auto ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );

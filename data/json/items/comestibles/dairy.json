@@ -215,7 +215,7 @@
     "name": { "str_sp": "powdered milk" },
     "weight": "30 g",
     "color": "white",
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": -1,

@@ -14,10 +14,10 @@
     "bashing": 1,
     "ammo_type": "atgm",
     "casing": "atgm_spent",
-    "damage": { "damage_type": "bullet", "amount": 450, "armor_multiplier": 0.1 },
+    "damage": { "damage_type": "bullet", "amount": 1250, "armor_multiplier": 0.1 },
     "range": 100,
     "recoil": 6000,
     "loudness": 100,
-    "effects": [ "EXPLOSIVE_HUGE", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
+    "effects": [ "AMMO_ATGM_HEAT", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   }
 ]

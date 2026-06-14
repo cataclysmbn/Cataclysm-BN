@@ -9,7 +9,7 @@
 import { walk, type WalkEntry, type WalkOptions } from "jsr:@std/fs"
 import { MuxAsyncIterator } from "jsr:@std/async"
 import { partition } from "jsr:@std/collections"
-import { Octokit, type RestEndpointMethodTypes } from "https://esm.sh/@octokit/rest@21.0.2"
+import { Octokit, type RestEndpointMethodTypes } from "@octokit/rest"
 import { Command } from "@cliffy/command"
 
 const paths = ["src", "tests"]

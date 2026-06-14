@@ -145,6 +145,15 @@
     "bubble_size_effect": "idle"
   },
   {
+    "id": "ACT_WASH_SELF",
+    "type": "activity_type",
+    "verb": "washing",
+    "rooted": true,
+    "no_resume": true,
+    "verbose_tooltip": false,
+    "bubble_size_effect": "idle"
+  },
+  {
     "id": "ACT_CRAFT",
     "type": "activity_type",
     "verb": "crafting",

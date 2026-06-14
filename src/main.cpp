@@ -60,6 +60,7 @@ class ui_adaptor;
 #   endif
 #   include <SDL3/SDL.h>
 #   include "compute/gpu_platform.h"
+#   include "platform/sdl_video.h"
 #endif
 #if defined(TILES)
 #   include <SDL3/SDL_main.h>
@@ -186,24 +187,6 @@ struct arg_handler {
 };
 
 #if defined(CATA_SDL)
-#if defined(__linux__) && !defined(__ANDROID__) && !defined(TILES)
-auto use_offscreen_video_driver_for_headless_curses() -> void
-{
-    if( std::getenv( "SDL_VIDEO_DRIVER" ) != nullptr ||
-        std::getenv( "SDL_VIDEODRIVER" ) != nullptr ||
-        std::getenv( "DISPLAY" ) != nullptr ||
-        std::getenv( "WAYLAND_DISPLAY" ) != nullptr ) {
-        return;
-    }
-
-    if( SDL_SetHint( SDL_HINT_VIDEO_DRIVER, "offscreen" ) ) {
-        DebugLog( DL::Info, DC::Main ) << "SDL video driver set to offscreen for headless curses";
-    } else {
-        DebugLog( DL::Warn, DC::Main ) << "SDL video driver offscreen hint failed: " << SDL_GetError();
-    }
-}
-#endif
-
 auto init_sdl_platform( bool init_audio ) -> bool
 {
     auto init_flags = SDL_InitFlags{ SDL_INIT_VIDEO };
@@ -796,9 +779,16 @@ int main( int argc, char *argv[] )
     get_options().save();
     set_language(); // Have to set locale before initializing ncurses
 #if defined(CATA_SDL)
-#   if defined(__linux__) && !defined(__ANDROID__)
-    use_offscreen_video_driver_for_headless_curses();
-#   endif
+    switch( use_offscreen_video_driver_for_headless_sdl() ) {
+        case offscreen_sdl_hint_result::applied:
+            DebugLog( DL::Info, DC::Main ) << "SDL video driver set to offscreen for headless curses";
+            break;
+        case offscreen_sdl_hint_result::failed:
+            DebugLog( DL::Warn, DC::Main ) << "SDL video driver offscreen hint failed: " << SDL_GetError();
+            break;
+        case offscreen_sdl_hint_result::skipped:
+            break;
+    }
     if( !init_sdl_platform( !test_mode ) ) {
         return 1;
     }

@@ -10,7 +10,7 @@
 class map;
 struct SDL_GPUBuffer;
 struct SDL_GPUDevice;
-struct submap;
+class submap;
 
 namespace cata_gpu {
 
@@ -109,10 +109,9 @@ struct dispatch_transparency_params {
     int cache_size = 0;
     std::vector<float>* out_buffer = nullptr;
     transparency_output_target output = {};
-    bool* resident_output_written = nullptr;
 };
 
-// Upload transparency inputs, dispatch the transparency compute shader, and
+// Upload the submap records, dispatch the transparency compute shader, and
 // synchronously download compact submap-local results into out_buffer.
 // If output.buffer is non-null, the shader also writes into that existing full
 // flat-cache buffer at output.output_offset so lighting can keep resident input

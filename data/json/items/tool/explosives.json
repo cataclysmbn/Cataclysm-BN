@@ -639,9 +639,9 @@
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin; try throwing it instead.",
       "explosion": {
-        "damage": 40,
-        "radius": 3,
-        "fragment": { "impact": { "damage_type": "bullet", "amount": 80, "armor_multiplier": 2 }, "range": 6 }
+        "damage": 70,
+        "radius": 2,
+        "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_multiplier": 1.8 }, "range": 7 }
       }
     },
     "flags": [ "BOMB", "TRADER_AVOID" ]

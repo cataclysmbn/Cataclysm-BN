@@ -948,11 +948,15 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         } else if( allow_follow_player ) {
             local_goal = bub_pos(); // unset_dest
         }
-        const int distance_from_friend = rl_dist( bub_pos(), get_avatar().bub_pos() );
+        const auto &u = g->u;
+        const int distance_from_friend = rl_dist( bub_pos(), u.bub_pos() );
         if( distance_from_friend < 12 ) {
-            if( one_in( distance_from_friend * 3 ) ) {
+            const bool is_bonded = bonded_character_id == u.getID();
+            const int rally_chance = ( is_bonded ) ? distance_from_friend * 3 : distance_from_friend * 2;
+            const int morale_bonus = ( is_bonded ) ? 2 : 1;
+            if( one_in( rally_chance ) ) {
                 if( local_morale != type->morale ) {
-                    local_morale += ( local_morale < type->morale ) ? 1 : -1;
+                    local_morale += ( local_morale < type->morale ) ? morale_bonus : -1;
                 }
                 if( !has_flag( MF_FACTION_MEMORY ) && local_anger != type->agro ) {
                     local_anger += ( local_anger < type->agro ) ? 1 : -1;

@@ -1284,10 +1284,13 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
 
         // Apply enchantment bonuses to projectile
         int base_bullet_damage = static_cast<int>( projectile.impact.type_damage( DT_BULLET ) );
+        int base_penetrate_bullet = projectile.impact.get_armor_pen( DT_BULLET );
         int ench_damage_bonus = who.bonus_from_enchantments( base_bullet_damage,
                                 enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
+        int ench_penetrate_bonus = who.bonus_from_enchantments( base_penetrate_bullet,
+                                   enchant_vals::mod::RANGED_ARMOR_PENETRATION );
         if( ench_damage_bonus != 0 ) {
-            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus );
+            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus, ench_penetrate_bonus );
         }
 
         int ench_range_bonus = who.bonus_from_enchantments( projectile.range,

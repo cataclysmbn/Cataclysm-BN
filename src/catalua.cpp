@@ -4,9 +4,12 @@
 
 #include <algorithm>
 #include <clocale>
+#include <functional>
 #include <optional>
 #include <ranges>
+#include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 constexpr int LUA_API_VERSION = 2;
@@ -28,6 +31,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "fstream_utils.h"
 #include "init.h"
 #include "item_factory.h"
+#include "json.h"
 #include "mapgen_async.h"
 #include "lua_sidebar_widgets.h"
 #include "lua_action_menu.h"
@@ -37,10 +41,33 @@ constexpr int LUA_API_VERSION = 2;
 #include "mutation.h"
 #include "path_info.h"
 #include "point.h"
+#include "player_activity.h"
 #include "worldfactory.h"
 
 namespace cata
 {
+
+namespace
+{
+
+constexpr std::string_view lua_activity_data_prefix = "lua_activity_data:";
+constexpr std::string_view lua_activity_on_finish_prefix = "lua_activity_on_finish:";
+constexpr std::string_view lua_activity_on_turn_prefix = "lua_activity_on_turn:";
+
+auto get_lua_activity_prefixed_value( const player_activity &act,
+                                      const std::string_view prefix ) -> std::string
+{
+    namespace ranges = std::ranges;
+    const auto iter = ranges::find_if( act.str_values, [prefix]( const std::string & value ) {
+        return value.starts_with( prefix );
+    } );
+    if( iter == act.str_values.end() ) {
+        return {};
+    }
+    return iter->substr( prefix.size() );
+}
+
+} // namespace
 
 std::string get_lapi_version_string()
 {
@@ -137,6 +164,64 @@ void debug_write_lua_backtrace( std::ostream &out )
 static sol::table get_mod_storage_table( lua_state &state )
 {
     return state.lua.globals()["game"]["cata_internal"]["mod_storage"];
+}
+
+auto get_active_lua_state() -> lua_state * // *NOPAD*
+{
+    return DynamicDataLoader::get_instance().lua.get();
+}
+
+auto get_lua_callback( lua_state &state, const char *table_name,
+                       const std::string &callback_id ) -> sol::protected_function
+{
+    const auto maybe_table = state.lua.globals()["game"][table_name].get<sol::optional<sol::table>>();
+    if( !maybe_table ) {
+        debugmsg( "Lua callback table '%s' is not available", table_name );
+        return sol::lua_nil;
+    }
+
+    return maybe_table->get_or<sol::protected_function>( callback_id, sol::lua_nil );
+}
+
+auto run_lua_callback( const char *table_name, const std::string &callback_id,
+                       const std::function<void( sol::table & )> &fill_params ) -> void
+{
+    lua_state *state = get_active_lua_state();
+    if( state == nullptr ) {
+        debugmsg( "Lua callback '%s' requested before Lua state was initialized", callback_id );
+        return;
+    }
+
+    sol::protected_function callback = get_lua_callback( *state, table_name, callback_id );
+    if( callback == sol::lua_nil ) {
+        debugmsg( "Lua callback '%s' was not found in game.%s", callback_id, table_name );
+        return;
+    }
+
+    try {
+        auto params = state->lua.create_table();
+        fill_params( params );
+        sol::protected_function_result res = callback( params );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run Lua callback '%s' from game.%s: %s", callback_id, table_name,
+                  e.what() );
+    }
+}
+
+auto make_lua_activity_data_table( sol::state &lua, const player_activity &act ) -> sol::table
+{
+    auto data = lua.create_table();
+    const auto data_json = get_lua_activity_prefixed_value( act, lua_activity_data_prefix );
+    if( data_json.empty() ) {
+        return data;
+    }
+
+    auto buffer = std::istringstream{ data_json };
+    auto jsin = JsonIn( buffer );
+    auto obj = jsin.get_object();
+    deserialize_lua_table( data, obj );
+    return data;
 }
 
 bool save_world_lua_state( const world *world, const std::string &path )
@@ -251,6 +336,8 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["istate_functions"] = lua.create_table();
     gt["imelee_functions"] = lua.create_table();
     gt["iranged_functions"] = lua.create_table();
+    gt["examine_functions"] = lua.create_table();
+    gt["activity_functions"] = lua.create_table();
 
     // bionic/mutation functions
     gt["bionic_functions"] = lua.create_table();
@@ -900,6 +987,41 @@ void run_on_every_x_hooks( lua_state &state )
             );
         }
     }
+}
+
+auto run_lua_examine( const std::string &callback_id, player &who,
+                      const tripoint_bub_ms &pos ) -> void
+{
+    run_lua_callback( "examine_functions", callback_id, [&]( sol::table & params ) {
+        params["user"] = who.as_character();
+        params["pos"] = pos;
+    } );
+}
+
+auto get_lua_activity_on_finish( const player_activity &act ) -> std::string
+{
+    return get_lua_activity_prefixed_value( act, lua_activity_on_finish_prefix );
+}
+
+auto get_lua_activity_on_turn( const player_activity &act ) -> std::string
+{
+    return get_lua_activity_prefixed_value( act, lua_activity_on_turn_prefix );
+}
+
+auto run_lua_activity_callback( const std::string &callback_id, player &who,
+                                player_activity &act ) -> void
+{
+    run_lua_callback( "activity_functions", callback_id, [&]( sol::table & params ) {
+        params["user"] = who.as_character();
+        params["activity"] = &act;
+        params["name"] = act.name;
+        if( auto *state = get_active_lua_state() ) {
+            params["data"] = make_lua_activity_data_table( state->lua, act );
+        }
+        if( !act.coords.empty() ) {
+            params["pos"] = act.coords.front();
+        }
+    } );
 }
 
 } // namespace cata
