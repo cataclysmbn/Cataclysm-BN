@@ -60,11 +60,8 @@ jobs:
           path: ${{ env.DENO_DIR }}
           key: deno-${{ hashFiles('deno.lock') }}
 
-      - name: configure cmake for formatting
-        run: cmake --preset lint
-
       - name: format C++ files
-        run: cmake --build build --target format
+        run: build-scripts/format-cpp.sh
 
       - name: format Markdown and TypeScript files
         run: deno fmt
@@ -73,7 +70,7 @@ jobs:
         run: deno task dprint fmt
 
       - name: format JSON
-        run: cmake --build build --target style-json-parallel
+        run: build-scripts/format-json.sh
 
       # autofix.ci cannot edit .github directory due to security reasons
       - name: unstage .github
