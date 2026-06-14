@@ -400,6 +400,7 @@ damage type has its own enchant value in addition to the globally applied value 
 - `ARMOR_ELECTRIC`
 - `ARMOR_HEAT`
 - `ARMOR_STAB`
+- `ARMOR_TRUE`
 
 #### Item values
 
@@ -437,16 +438,17 @@ value, in addition to the global `ITEM_ARMOR`:
 
 - `ITEM_ARMOR_ACID`
 - `ITEM_ARMOR_BASH`
-- `ITEM_ARMOR_BIO`
+- `ITEM_ARMOR_BIOLOGICAL`
 - `ITEM_ARMOR_BULLET`
 - `ITEM_ARMOR_COLD`
 - `ITEM_ARMOR_CUT`
 - `ITEM_ARMOR_LIGHT`
 - `ITEM_ARMOR_DARK`
 - `ITEM_ARMOR_PSI`
-- `ITEM_ARMOR_ELEC`
+- `ITEM_ARMOR_ELECTRIC`
 - `ITEM_ARMOR_HEAT`
 - `ITEM_ARMOR_STAB`
+- `ITEM_ARMOR_TRUE`
 
 ## Examples
 
