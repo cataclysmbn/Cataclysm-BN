@@ -1001,7 +1001,7 @@ struct SubTile {
 
 struct field_cache_dirty_context {
     map &here;
-    std::string const &dimension;
+    dimension_id const &dimension;
 };
 
 auto mark_field_cache_dirty( field_cache_dirty_context const &ctx,
