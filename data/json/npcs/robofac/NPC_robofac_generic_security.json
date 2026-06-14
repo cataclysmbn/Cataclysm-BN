@@ -8,7 +8,8 @@
     "attitude": 0,
     "mission": 8,
     "chat": "TALK_HUB_SECURITY",
-    "faction": "robofac"
+    "faction": "robofac",
+    "yarn_story": "NPC_robofac_generic_security"
   },
   {
     "type": "npc_class",
@@ -64,11 +65,5 @@
     "id": "NC_robofac_security_weapon",
     "subtype": "collection",
     "entries": [ { "item": "glock_17", "charges": 21, "ammo-item": "9mmP" } ]
-  },
-  {
-    "id": "TALK_HUB_SECURITY",
-    "type": "talk_topic",
-    "dynamic_line": [ "Keep it civil, merc.", "Just on watch, move along.", { "u_male": [ "Sir." ], "no": [ "Ma'am" ] } ],
-    "responses": [ { "text": "…", "topic": "TALK_DONE" } ]
   }
 ]

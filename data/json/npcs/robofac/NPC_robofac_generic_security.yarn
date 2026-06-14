@@ -1,0 +1,18 @@
+title: Start
+position: 0,-240
+---
+<<jump TALK_HUB_SECURITY>>
+===
+
+// Generated from data/json/npcs/robofac/NPC_robofac_generic_security.json by scripts/migrations/migrate_legacy_dialogue_to_yarn.ts.
+// Review TODO comments and unsupported conversion warnings before removing legacy JSON.
+//
+// TODO: TALK_HUB_SECURITY: mixed dynamic_line array was converted to its first entry only
+
+title: TALK_HUB_SECURITY
+position: 0,0
+---
+NPC: Keep it civil, merc.
+-> …
+    <<stop>>
+===

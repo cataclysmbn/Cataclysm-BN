@@ -2754,6 +2754,19 @@ std::unordered_map<std::string, yarn_story> &story_registry()
     return reg;
 }
 
+auto find_story_containing_node( const std::string &node ) -> std::string
+{
+    if( node.empty() ) {
+        return {};
+    }
+    for( const auto &[name, story] : story_registry() ) {
+        if( name != "__legacy" && story.has_node( node ) ) {
+            return name;
+        }
+    }
+    return {};
+}
+
 // Collect all inject_into nodes across the registry and merge their choices into
 // their declared targets.  Called once from load_yarn_stories() after all stories
 // and shared_choices are resolved.
@@ -2923,8 +2936,8 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
 
 void load_yarn_stories()
 {
-    const auto dir = PATH_INFO::datadir() + "dialogue/";
-    const auto files = get_files_from_path( ".yarn", dir, false, true );
+    const auto dir = PATH_INFO::datadir();
+    const auto files = get_files_from_path( ".yarn", dir, true, true );
 
     for( const auto &path : files ) {
         auto [story, result] = yarn_story::from_file( path );
@@ -5231,28 +5244,39 @@ void register_builtin_commands( command_registry &reg )
 
 auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
 {
-    if( n.chatbin.yarn_story.empty() ) {
+    const auto story_name = n.chatbin.yarn_story.empty()
+                            ? find_story_containing_node( n.chatbin.first_topic )
+                            : n.chatbin.yarn_story;
+    if( story_name.empty() ) {
         DebugLog( DL::Error, DC::Main )
                 << "yarn: NPC '" << n.name << "' has no yarn_story — using legacy path";
         return false;
     }
-    if( !has_yarn_story( n.chatbin.yarn_story ) ) {
-        debugmsg( "Error: dialogue story %d failed to load.", n.name, n.chatbin.yarn_story );
-        return true;
+    if( !has_yarn_story( story_name ) ) {
+        debugmsg( "Error: dialogue story %s failed to load for NPC %s.",
+                  story_name.c_str(), n.name.c_str() );
+        return false;
     }
     DebugLog( DL::Info, DC::Dialogue )
-            << "yarn: running story '" << n.chatbin.yarn_story << "' for NPC '" << n.name << "'";
+            << "yarn: running story '" << story_name << "' for NPC '" << n.name << "'";
 
-    const auto &story = get_yarn_story( n.chatbin.yarn_story );
+    const auto &story = get_yarn_story( story_name );
     d_win.print_header( n.name );
 
     g_conv_ctx = { .npc_ref = &n, .player_ref = &p, .dialogue_ref = nullptr,
-                   .d_win_ref = nullptr, .current_item_type = {}, .reason = {} };
+                   .d_win_ref = nullptr, .current_item_type = {}, .reason = {}
+                 };
     conv_ctx_guard guard;
 
     // Entry node convention: use "Greeting" if present (shown once on first contact),
-    // otherwise fall back to "Start" (the recurring choice hub).
-    const std::string entry_node = story.has_node( "Greeting" ) ? "Greeting" : "Start";
+    // otherwise "Start", otherwise the legacy chat topic for directly migrated files.
+    const std::string entry_node = story.has_node( "Greeting" ) ? "Greeting" :
+                                   story.has_node( "Start" ) ? "Start" : n.chatbin.first_topic;
+    if( !story.has_node( entry_node ) ) {
+        DebugLog( DL::Error, DC::Main )
+                << "yarn: story '" << story_name << "' has no entry node for NPC '" << n.name << "'";
+        return false;
+    }
 
     yarn_runtime::options opts{
         .story          = story,
@@ -5283,7 +5307,7 @@ auto try_legacy_yarn_dialogue( dialogue_window &d_win, npc &n, player &p, dialog
     // Use the dynamic topic from the dialogue stack, not the NPC's static first_topic.
     // By the time this is called, talk_to_u has already resolved the effective starting topic
     // (accounting for pick_talk_topic, missions, sleeping, etc.).
-    auto starting_stack = std::vector<std::string>{};
+    auto starting_stack = std::vector<std::string> {};
     if( d.topic_stack.empty() ) {
         starting_stack.push_back( n.chatbin.first_topic );
     } else {
@@ -5305,7 +5329,8 @@ auto try_legacy_yarn_dialogue( dialogue_window &d_win, npc &n, player &p, dialog
 
     // Set the global context so built-in functions and commands can access NPC/player.
     g_conv_ctx = { .npc_ref = &n, .player_ref = &p, .dialogue_ref = &d,
-                   .d_win_ref = nullptr, .current_item_type = {}, .reason = {} };
+                   .d_win_ref = nullptr, .current_item_type = {}, .reason = {}
+                 };
     conv_ctx_guard guard;
 
     yarn_runtime::options opts{

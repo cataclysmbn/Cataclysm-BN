@@ -11,7 +11,7 @@
 
 import { Command } from "@cliffy/command"
 import { ensureDir, walk } from "@std/fs"
-import { dirname, extname, join, relative } from "@std/path"
+import { basename, dirname, extname, join, relative } from "@std/path"
 import * as v from "@valibot/valibot"
 
 type JsonPrimitive = string | number | boolean | null
@@ -155,8 +155,8 @@ const commandArg = (value: string | number | boolean): string =>
 const commandLine = (name: string, args: (string | number | boolean)[] = []): string =>
   `<<${[name, ...args.map(commandArg)].join(" ")}>>`
 const ifLine = (expr: string): string => `<<if ${expr}>>`
-const detourLine = (topic: string): string => `<<detour ${topic}>>`
-const crossDetourLine = (topic: string): string => `<<cross_detour ${topic}>>`
+const jumpLine = (topic: string): string => `<<jump ${topic}>>`
+const crossJumpLine = (topic: string): string => `<<cross_jump ${topic}>>`
 const fnCall = (name: string, args: (string | number | boolean)[] = []): string =>
   `${name}(${args.map(commandArg).join(", ")})`
 const parenthesize = (expr: string): string =>
@@ -320,11 +320,9 @@ class DialogueConverter {
         ]
       }
 
-      const lines: string[] = []
-      for (const item of value) {
-        lines.push(...this.dynamicLineLines(item, topic))
-      }
-      return lines
+      const first = value[0]
+      this.addWarning(topic, "mixed dynamic_line array was converted to its first entry only")
+      return this.dynamicLineLines(first, topic)
     }
 
     if (!isRecord(value)) {
@@ -756,9 +754,9 @@ class DialogueConverter {
       return [commandLine("return")]
     }
     if (topic.includes("::")) {
-      return [crossDetourLine(topic)]
+      return [crossJumpLine(topic)]
     }
-    return [detourLine(topic)]
+    return [jumpLine(topic)]
   }
 
   private conditionExpr(value: JsonValue, topic: string): string {
@@ -963,81 +961,282 @@ const discoverJsonFiles = async (paths: string[]): Promise<string[]> => {
   return files.sort()
 }
 
-const outputPathFor = (sourcePath: string, outputDir: string): string => {
+type MigrationOptions = {
+  outputDir?: string
+  overwrite?: boolean
+  quiet?: boolean
+  replace?: boolean
+}
+
+type MigrationSummary = {
+  convertedCount: number
+  warningCount: number
+  writtenPaths: string[]
+  deletedPaths: string[]
+  rewrittenJsonPaths: string[]
+  repairedJsonPaths: string[]
+}
+
+const isTalkTopic = (entry: JsonObject): boolean => v.safeParse(TalkTopicSchema, entry).success
+const npcChats = (entries: JsonObject[]): string[] => [
+  ...new Set(
+    entries.flatMap((entry) =>
+      entry.type === "npc" && typeof entry.chat === "string" ? [entry.chat] : []
+    ),
+  ),
+]
+const storyNameFor = (path: string): string => basename(path, ".yarn")
+
+const outputPathFor = (sourcePath: string, outputDir?: string): string => {
+  if (outputDir === undefined) {
+    return sourcePath.replace(/\.json$/u, ".yarn")
+  }
+
   const cwdRelative = relative(Deno.cwd(), sourcePath)
   const safeRelative = cwdRelative.startsWith("..") ? sourcePath.replace(/^\/+/, "") : cwdRelative
   return join(outputDir, safeRelative.replace(/\.json$/u, ".yarn"))
 }
 
-const convertFile = async (sourcePath: string): Promise<ConversionResult | undefined> => {
+type FileConversion = {
+  result: ConversionResult
+  remainingEntries: JsonObject[]
+  entryChat?: string
+}
+
+const startNodeFor = (topic: string): string =>
+  [
+    "title: Start",
+    "position: 0,-240",
+    "---",
+    jumpLine(topic),
+    "===",
+    "",
+  ].join("\n")
+
+const withDirectEntryNode = (yarn: string, topic: string): string =>
+  `${startNodeFor(topic)}\n${yarn}`
+
+const withYarnStory = (entry: JsonObject, storyName: string): JsonObject =>
+  entry.type === "npc" && typeof entry.chat === "string"
+    ? { ...entry, yarn_story: storyName }
+    : entry
+
+const convertFile = async (sourcePath: string): Promise<FileConversion | undefined> => {
   const text = await Deno.readTextFile(sourcePath)
   const entries = parseJsonEntries(text, sourcePath)
   const result = convertEntriesToYarn(entries, sourcePath)
-  return result.topicCount === 0 ? undefined : result
+  if (result.topicCount === 0) {
+    return undefined
+  }
+  const chats = npcChats(entries)
+  if (chats.length > 1) {
+    result.warnings.push(
+      warning(sourcePath, undefined, "multiple NPC chat topics; yarn_story was not added"),
+    )
+  }
+  return {
+    result,
+    remainingEntries: entries.filter((entry) => !isTalkTopic(entry)),
+    entryChat: chats.length === 1 ? chats[0] : undefined,
+  }
+}
+
+const convertedFilesFor = async (paths: string[]): Promise<FileConversion[]> => {
+  const files = await discoverJsonFiles(paths)
+  return (await Promise.all(files.map(convertFile))).filter(
+    (result): result is FileConversion => result !== undefined,
+  )
+}
+
+const pathExists = async (path: string): Promise<boolean> => {
+  try {
+    await Deno.lstat(path)
+    return true
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return false
+    }
+    throw error
+  }
+}
+
+const assertOutputDoesNotExist = async (path: string): Promise<void> => {
+  if (await pathExists(path)) {
+    throw new Error(`${path} already exists; pass --overwrite to replace it`)
+  }
+}
+
+const needsYarnStory = (entry: JsonObject): boolean =>
+  entry.type === "npc" && typeof entry.chat === "string" && typeof entry.yarn_story !== "string"
+
+const repairMigratedNpcJson = async (
+  sourcePath: string,
+  outputDir: string | undefined,
+): Promise<boolean> => {
+  const text = await Deno.readTextFile(sourcePath)
+  const entries = parseJsonEntries(text, sourcePath)
+  if (entries.some(isTalkTopic) || !entries.some(needsYarnStory)) {
+    return false
+  }
+
+  const chats = npcChats(entries)
+  const yarnPath = outputPathFor(sourcePath, outputDir)
+  if (chats.length !== 1 || !(await pathExists(yarnPath))) {
+    return false
+  }
+
+  await Deno.writeTextFile(
+    sourcePath,
+    `${
+      JSON.stringify(entries.map((entry) => withYarnStory(entry, storyNameFor(yarnPath))), null, 2)
+    }\n`,
+  )
+  return true
+}
+
+export const migratePaths = async (
+  paths: string[],
+  { outputDir, overwrite = false, quiet = false, replace = false }: MigrationOptions = {},
+): Promise<MigrationSummary> => {
+  if (!replace && outputDir === undefined) {
+    throw new Error("--output-dir is required unless --stdout or --replace is used")
+  }
+
+  const files = await discoverJsonFiles(paths)
+  const conversions = (await Promise.all(files.map(convertFile))).filter(
+    (result): result is FileConversion => result !== undefined,
+  )
+  const outputs = conversions.map((conversion) => ({
+    conversion,
+    outPath: outputPathFor(conversion.result.source, outputDir),
+  }))
+
+  if (!overwrite) {
+    await Promise.all(outputs.map(({ outPath }) => assertOutputDoesNotExist(outPath)))
+  }
+
+  const summary: MigrationSummary = {
+    convertedCount: conversions.length,
+    warningCount: conversions.reduce(
+      (sum, conversion) => sum + conversion.result.warnings.length,
+      0,
+    ),
+    writtenPaths: [],
+    deletedPaths: [],
+    rewrittenJsonPaths: [],
+    repairedJsonPaths: [],
+  }
+
+  for (const { conversion, outPath } of outputs) {
+    const { result } = conversion
+    const yarn = conversion.entryChat === undefined
+      ? result.yarn
+      : withDirectEntryNode(result.yarn, conversion.entryChat)
+    await ensureDir(dirname(outPath))
+    await Deno.writeTextFile(outPath, yarn)
+    summary.writtenPaths.push(outPath)
+    if (!quiet) {
+      const warningText = result.warnings.length > 0
+        ? colors.yellow(` (${result.warnings.length} warnings)`)
+        : ""
+      console.log(`${colors.green("wrote")} ${outPath}${warningText}`)
+    }
+
+    if (replace) {
+      if (conversion.remainingEntries.length === 0) {
+        await Deno.remove(result.source)
+        summary.deletedPaths.push(result.source)
+        if (!quiet) {
+          console.log(`${colors.yellow("deleted")} ${result.source}`)
+        }
+      } else {
+        await Deno.writeTextFile(
+          result.source,
+          `${
+            JSON.stringify(
+              conversion.entryChat === undefined
+                ? conversion.remainingEntries
+                : conversion.remainingEntries.map((entry) =>
+                  withYarnStory(entry, storyNameFor(outPath))
+                ),
+              null,
+              2,
+            )
+          }\n`,
+        )
+        summary.rewrittenJsonPaths.push(result.source)
+        if (!quiet) {
+          console.log(`${colors.yellow("updated")} ${result.source}`)
+        }
+      }
+    }
+  }
+
+  if (replace) {
+    const convertedSources = new Set(conversions.map((conversion) => conversion.result.source))
+    const repaired = await Promise.all(
+      files
+        .filter((file) => !convertedSources.has(file))
+        .map(async (file) => await repairMigratedNpcJson(file, outputDir) ? file : undefined),
+    )
+    summary.repairedJsonPaths.push(
+      ...repaired.filter((file): file is string => file !== undefined),
+    )
+    if (!quiet) {
+      for (const path of summary.repairedJsonPaths) {
+        console.log(`${colors.yellow("updated")} ${path}`)
+      }
+    }
+  }
+
+  if (!quiet) {
+    const suffix = summary.warningCount > 0
+      ? colors.yellow(`, ${summary.warningCount} warnings`)
+      : ""
+    const deleteText = replace
+      ? `, deleted ${summary.deletedPaths.length} .json file(s), kept ${summary.rewrittenJsonPaths.length} mixed .json file(s), repaired ${summary.repairedJsonPaths.length} already-migrated .json file(s)`
+      : ""
+    console.log(
+      `${colors.green("converted")} ${summary.convertedCount} file(s)${deleteText}${suffix}`,
+    )
+  }
+
+  return summary
 }
 
 const main = () =>
   new Command()
     .name("migrate-legacy-dialogue-to-yarn")
     .version("1.0.0")
-    .description("Recursively convert legacy JSON talk_topic dialogue to Yarn Spinner .yarn files.")
+    .description(
+      "Recursively convert legacy JSON talk_topic dialogue to Yarn Spinner .yarn files.",
+    )
     .option("-o, --output-dir <dir:string>", "Directory for generated .yarn files")
     .option("--stdout", "Print a single converted file to stdout instead of writing files")
     .option("-f, --overwrite", "Overwrite existing .yarn files")
+    .option(
+      "--replace",
+      "Delete converted .json files; writes next to source unless --output-dir is also set",
+    )
     .option("-q, --quiet", "Suppress progress output")
     .arguments("<paths...>")
     .action(
       async (
-        { outputDir, stdout = false, overwrite = false, quiet = false },
+        { outputDir, stdout = false, overwrite = false, replace = false, quiet = false },
         ...paths: string[]
       ) => {
-        if (!stdout && outputDir === undefined) {
-          throw new Error("--output-dir is required unless --stdout is used")
-        }
-        const destinationDir = outputDir ?? ""
-
-        const files = await discoverJsonFiles(paths)
-        const results = (await Promise.all(files.map(convertFile))).filter(
-          (result): result is ConversionResult => result !== undefined,
-        )
-
         if (stdout) {
-          if (results.length !== 1) {
+          const conversions = await convertedFilesFor(paths)
+          if (conversions.length !== 1) {
             throw new Error(
-              `--stdout requires exactly one input file with talk_topic data; found ${results.length}`,
+              `--stdout requires exactly one input file with talk_topic data; found ${conversions.length}`,
             )
           }
-          console.log(results[0].yarn)
+          console.log(conversions[0].result.yarn)
           return
         }
 
-        for (const result of results) {
-          const outPath = outputPathFor(result.source, destinationDir)
-          if (!overwrite) {
-            try {
-              await Deno.lstat(outPath)
-              throw new Error(`${outPath} already exists; pass --overwrite to replace it`)
-            } catch (error) {
-              if (!(error instanceof Deno.errors.NotFound)) {
-                throw error
-              }
-            }
-          }
-          await ensureDir(dirname(outPath))
-          await Deno.writeTextFile(outPath, result.yarn)
-          if (!quiet) {
-            const warningText = result.warnings.length > 0
-              ? colors.yellow(` (${result.warnings.length} warnings)`)
-              : ""
-            console.log(`${colors.green("wrote")} ${outPath}${warningText}`)
-          }
-        }
-
-        if (!quiet) {
-          const warningCount = results.reduce((sum, result) => sum + result.warnings.length, 0)
-          const suffix = warningCount > 0 ? colors.yellow(`, ${warningCount} warnings`) : ""
-          console.log(`${colors.green("converted")} ${results.length} file(s)${suffix}`)
-        }
+        await migratePaths(paths, { outputDir, overwrite, replace, quiet })
       },
     )
 

@@ -479,7 +479,7 @@ class dynamic_choice_registry
         std::unordered_map<std::string, std::vector<generator_fn>> generators_;
 };
 
-// Scan data/dialogue/*.yarn and load all stories.
+// Scan data/**/*.yarn and load all stories.
 // Called during game init alongside other data loading.
 void load_yarn_stories();
 

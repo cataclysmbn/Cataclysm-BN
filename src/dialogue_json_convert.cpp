@@ -128,11 +128,11 @@ auto make_dialogue( std::string text, std::string speaker = "npc" ) -> yarn::nod
     return e;
 }
 
-// JSON-converted topic transitions use goto_node (push) so TALK_NONE pops back to the caller.
+// JSON-converted topic transitions replace the current topic, matching legacy talk_response flow.
 auto make_goto( std::string target ) -> yarn::node_element
 {
     yarn::node_element e;
-    e.type        = yarn::node_element::kind::goto_node;
+    e.type        = yarn::node_element::kind::jump;
     e.jump_target = std::move( target );
     return e;
 }
@@ -1411,7 +1411,7 @@ auto json_topic_to_yarn_node( const std::string &id,
         obey.text        = "OBEY ME!";
         obey.echo_speech = true;
         obey.condition   = and2( fn( "u_has_trait", { lit_str( "DEBUG_MIND_CONTROL" ) } ),
-                               not1( fn( "npc_friend", {} ) ) );
+                                 not1( fn( "npc_friend", {} ) ) );
         obey.body      = topic_to_terminal( "TALK_MIND_CONTROL" );
         cg.choices.push_back( std::move( obey ) );
     }

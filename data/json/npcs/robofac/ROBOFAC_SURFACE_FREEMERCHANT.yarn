@@ -1,0 +1,47 @@
+title: Start
+position: 0,-240
+---
+<<jump TALK_ROBOFAC_FREE_MERCHANT>>
+===
+
+// Generated from data/json/npcs/robofac/ROBOFAC_SURFACE_FREEMERCHANT.json by scripts/migrations/migrate_legacy_dialogue_to_yarn.ts.
+// Review TODO comments and unsupported conversion warnings before removing legacy JSON.
+
+title: TALK_ROBOFAC_FREE_MERCHANT
+position: 0,0
+---
+<<if u_is_wearing("badge_marshal")>>
+    NPC: {random_line("Still plenty of outlaws in the roads, perhaps you should tend to your job, marshal...", "You see anything you want, marshal?", "Oh, a U.S. marshal, how quaint.")}
+<<else>>
+    NPC: {random_line("Welcome...", "Here to trade, I hope?", "Safe travels, scavenger.")}
+<<endif>>
+-> Let's trade.
+    <<start_trade>>
+    <<jump TALK_ROBOFAC_FREE_MERCHANT>>
+-> When is the next shipment?
+    <<jump TALK_ROBOFAC_FREE_MERCHANT_INTERVAL>>
+-> What are you doing here?
+    <<jump TALK_ROBOFAC_FREE_MERCHANT_DOING>>
+-> Well, bye.
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_FREE_MERCHANT_INTERVAL
+position: 320,0
+---
+NPC: Around <interval>, if the caravan doesn't run into trouble.
+-> Thanks for the info, bye.
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_FREE_MERCHANT_DOING
+position: 640,0
+---
+<<if u_is_wearing("badge_marshal")>>
+    NPC: I keep to my own business, and you keep to yours, marshal.  Seems like a fair deal?
+<<else>>
+    NPC: We have been supplying this lab here with food from a few hunting and farming communities nearby.  The roads are though and dangerous, but it makes good money, and beats scavenging the cities for scraps.
+<<endif>>
+-> Keep safe, then.
+    <<jump TALK_ROBOFAC_FREE_MERCHANT>>
+===

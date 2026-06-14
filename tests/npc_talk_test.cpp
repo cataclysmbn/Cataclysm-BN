@@ -161,6 +161,7 @@ TEST_CASE( "legacy_yarn_conversion_echoes_json_response_choices", "[npc_talk][ya
                     "dynamic_line": "Hello.",
                     "responses": [
                         { "text": "Back.", "topic": "TALK_NONE" },
+                        { "text": "Continue.", "topic": "TEST_YARN_NEXT" },
                         {
                             "truefalsetext": { "true": "Complete.", "false": "Incomplete.", "condition": "mission_complete" },
                             "topic": "TALK_NONE"
@@ -176,16 +177,19 @@ TEST_CASE( "legacy_yarn_conversion_echoes_json_response_choices", "[npc_talk][ya
         return e.type == yarn::node_element::kind::choice_group;
     } );
     REQUIRE( choice_group_it != node.elements.end() );
-    REQUIRE( choice_group_it->choices.size() >= 5 );
+    REQUIRE( choice_group_it->choices.size() >= 6 );
     CHECK( choice_group_it->choices[0].echo_speech );
     REQUIRE_FALSE( choice_group_it->choices[0].body.empty() );
     CHECK( choice_group_it->choices[0].body.back().type == yarn::node_element::kind::yarn_return );
     CHECK( choice_group_it->choices[1].echo_speech );
+    REQUIRE_FALSE( choice_group_it->choices[1].body.empty() );
+    CHECK( choice_group_it->choices[1].body.back().type == yarn::node_element::kind::jump );
     CHECK( choice_group_it->choices[2].echo_speech );
-    CHECK( choice_group_it->choices[3].text == "OBEY ME!" );
     CHECK( choice_group_it->choices[3].echo_speech );
-    CHECK( choice_group_it->choices[4].text == _( "Bye." ) );
+    CHECK( choice_group_it->choices[4].text == "OBEY ME!" );
     CHECK( choice_group_it->choices[4].echo_speech );
+    CHECK( choice_group_it->choices[5].text == _( "Bye." ) );
+    CHECK( choice_group_it->choices[5].echo_speech );
     REQUIRE( choice_group_it->repeat_groups.size() == 1 );
     CHECK( choice_group_it->repeat_groups.front().echo_speech );
 }
@@ -199,7 +203,7 @@ TEST_CASE( "shelter_yarn_story_keeps_start_choice_text", "[npc_talk][yarn]" )
     REQUIRE( shelter_result.ok() );
     REQUIRE( common_result.ok() );
     auto lookup = [&]( const std::string & story,
-                       const std::string & node ) -> const yarn::yarn_node * {
+    const std::string & node ) -> const yarn::yarn_node * {
         const auto *current_story = story == "shelter_npc" ? &shelter : story == "common" ? &common : nullptr;
         return current_story != nullptr && current_story->has_node( node ) ? &current_story->get_node( node ) : nullptr;
     };

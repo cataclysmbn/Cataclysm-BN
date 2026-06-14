@@ -1,0 +1,120 @@
+title: Start
+position: 0,-240
+---
+<<jump TALK_ROBOFAC_MERC_1>>
+===
+
+// Generated from data/json/npcs/robofac/NPC_ROBOFAC_MERC_1.json by scripts/migrations/migrate_legacy_dialogue_to_yarn.ts.
+// Review TODO comments and unsupported conversion warnings before removing legacy JSON.
+
+title: TALK_ROBOFAC_MERC_1
+position: 0,0
+---
+<<if npc_has_var("temporal_follower", "general", "robofac_merc_1", "yes")>>
+    NPC: {random_line("Better keep our eyes on the road.", "…", "Better be careful around here.", "…", "Yes?", "What's up?")}
+<<else>>
+    NPC: {random_line("Something to say?", "I charge hourly, so be quick…", "Hey.", "…", "Yes?", "What's up?", "Good to see you.")}
+<<endif>>
+-> About that job… <<if has_assigned_mission()>>
+    <<jump TALK_MISSION_INQUIRE>>
+-> About those jobs… <<if has_many_assigned_missions()>>
+    <<jump TALK_MISSION_LIST_ASSIGNED>>
+-> Who are you? <<if not u_has_var("robofac_merc_1_stay", "dialogue", "robofac_merc_1", "yes")>>
+    <<jump TALK_ROBOFAC_MERC_1_WHO>>
+-> Good to see you around. <<if u_has_var("robofac_merc_1_stay", "dialogue", "robofac_merc_1", "yes") and (not npc_has_var("temporal_follower", "general", "robofac_merc_1", "yes"))>>
+    <<jump TALK_ROBOFAC_MERC_1_MAIN>>
+-> Want help with something else? <<if u_has_var("helped_with_missions", "general", "robofac_merc_1", "yes") and (not npc_has_var("temporal_follower", "general", "robofac_merc_1", "yes"))>>
+    <<jump TALK_MISSION_LIST>>
+-> Lets set a combat strategy <<if npc_has_var("temporal_follower", "general", "robofac_merc_1", "yes")>>
+    <<jump TALK_COMBAT_COMMANDS>>
+-> Never mind.
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_MERC_1_WHO
+position: 320,0
+---
+NPC: Same as you.  Some nobody doing dirty work for scraps, I mean, no offense.
+-> I guess that makes two of us.
+    <<jump TALK_ROBOFAC_MERC_1_TWO_OF_US>>
+-> Well, never mind.
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_MERC_1_TWO_OF_US
+position: 640,0
+---
+<<u_add_var "robofac_merc_1_stay" "dialogue" "robofac_merc_1" "yes">>
+NPC: Good.  I could do with some company between jobs.  Feel free to stay around, if you want.
+-> Alright.
+    <<jump TALK_ROBOFAC_MERC_1_MAIN>>
+-> Guess I could stay for a while
+    <<jump TALK_ROBOFAC_MERC_1_MAIN>>
+-> Actually, I have some places to be right now.
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_MERC_1_MAIN
+position: 960,0
+---
+NPC: {random_line("Rough out there isn't it?", "Well?", "Good to have some company, I guess.", "Have something to say?", "…", "Didn't you want something?", "…")}
+-> Anything interesting going on?
+    <<jump TALK_ROBOFAC_MERC_1_GOING_ON>>
+-> Anything on your mind? <<if (not u_has_var("gold_mission_complete", "general", "robofac_merc_1", "yes")) and (not u_has_mission("MISSION_ROBOFAC_MERC_1_GOLD"))>>
+    <<jump TALK_ROBOFAC_MERC_1_COINS>>
+-> Anything on your mind? <<if u_has_var("gold_mission_complete", "general", "robofac_merc_1", "yes")>>
+    <<jump TALK_ROBOFAC_MERC_1_RANDOM_THOUGHTS>>
+-> Want help with something?
+    <<jump TALK_MISSION_LIST>>
+-> What do you know about our employers?
+    <<jump TALK_ROBOFAC_MERC_1_ASK_HUB>>
+-> Well, I should get going.
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_MERC_1_ASK_HUB
+position: 1280,0
+---
+NPC: Not much really.  They made me track and destroy some government documents a while back, of course I gave them a read first but there wasn't much.
+
+ As far as I know, this place held some experimental computer network before everything went to shit.  What's going on now is anybody's guess.
+-> Well, I was hoping for more.
+    <<jump TALK_ROBOFAC_MERC_1_MAIN>>
+===
+
+title: TALK_ROBOFAC_MERC_1_GOING_ON
+position: 1600,0
+---
+NPC: {random_line("Just came back from a job.  Trying to rest for a short while.")}
+-> …
+    <<jump TALK_ROBOFAC_MERC_1_MAIN>>
+===
+
+title: TALK_ROBOFAC_MERC_1_COINS
+position: 1920,0
+---
+NPC: Have you noticed they pay us in tiny little gold coins, it's bizarre I say.  One would think they have a gold mine in there, but no, they don't, so they make me cross the damned world grabbing gold bars. 
+-> I guess I could help with that…
+    <<jump TALK_ROBOFAC_MERC_1_GOLD_MISSION>>
+-> Now that you mention it, it does seem rather strange.
+    <<jump TALK_ROBOFAC_MERC_1_MAIN>>
+===
+
+title: TALK_ROBOFAC_MERC_1_RANDOM_THOUGHTS
+position: 2240,0
+---
+NPC: {random_line("Thinking I should go hunt something soon...", "Wondering if things will get better someday...", "Hmm? Nothing, I guess I just like resting in this place.", "Have you ever noticed how… wait no, never mind.", "I heard some strange dimensional resonance caused all this, do you think it has happened to other places?", "You noticed this place has working WI-FI?  Well not the rest of the net works anyways.")}
+-> …
+    <<jump TALK_ROBOFAC_MERC_1_MAIN>>
+===
+
+title: TALK_ROBOFAC_MERC_1_GOLD_MISSION
+position: 0,240
+---
+NPC: I can offer you the whole of my payment for every bar or equivalent you bring.  But keep silent about this, it's supposed to be my job.
+-> We have a deal then.
+    <<add_mission "MISSION_ROBOFAC_MERC_1_GOLD">>
+    <<stop>>
+-> Actually, I don't think I have time for that, sorry.
+    <<jump TALK_ROBOFAC_MERC_1_MAIN>>
+===
