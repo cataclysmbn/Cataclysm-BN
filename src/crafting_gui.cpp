@@ -664,7 +664,9 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
 
 const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter,
                                        const recipe *resume_recipe,
-                                       int resume_batch_size )
+                                       int resume_batch_size,
+                                       bool resume_batch_mode,
+                                       bool *selected_in_batch )
 {
     struct {
         const recipe *recp = nullptr;
@@ -866,7 +868,31 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter,
 
     const recipe *resume_rec = resume_recipe;
     int resume_bs = resume_batch_size;
-    bool resume_batch = ( resume_bs > 1 );
+    bool resume_batch = resume_batch_mode;
+
+    if( resume_rec && resume_batch ) {
+        batch = true;
+        chosen = resume_rec;
+    }
+
+    if( resume_rec && !resume_batch ) {
+        const std::string &cat = resume_rec->category;
+        auto it = std::find( craft_cat_list.begin(), craft_cat_list.end(), cat );
+        if( it != craft_cat_list.end() ) {
+            size_t max = craft_cat_list.size();
+            for( size_t i = 0; i < max; ++i ) {
+                if( tab.cur() == cat ) break;
+                tab.next();
+            }
+            subtab = list_circularizer<std::string>( craft_subcat_list[tab.cur()] );
+            // force subtab to ALL so the recipe is guaranteed to be in the built list for search
+            size_t smax = craft_subcat_list[tab.cur()].size();
+            for( size_t j = 0; j < smax; ++j ) {
+                if( subtab.cur() == "CSC_ALL" ) break;
+                subtab.next();
+            }
+        }
+    }
 
     const inventory &crafting_inv = crafter.crafting_inventory();
     const std::vector<npc *> helpers = character_funcs::get_crafting_helpers( crafter );
@@ -1318,28 +1344,17 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter,
             }
 
             if( resume_rec != nullptr ) {
-                int rcp_idx = 0;
-                bool found = false;
-                for( const recipe *const rcp : current ) {
-                    if( rcp == resume_rec ) {
-                        line = rcp_idx;
-                        found = true;
-                        break;
-                    }
-                    ++rcp_idx;
-                }
-                if( found && resume_batch && resume_bs > 0 ) {
-                    batch = true;
-                    batch_line = line;
-                    chosen = current[line];
-                    current.clear();
-                    available.clear();
-                    for( int i = 1; i <= 250; i++ ) {
-                        current.push_back( chosen );
-                        available.emplace_back( crafter, chosen, i,
-                                                available_recipes.contains( *chosen ) );
-                    }
+                if( resume_batch ) {
                     line = std::max( 0, std::min( 249, resume_bs - 1 ) );
+                } else {
+                    int rcp_idx = 0;
+                    for( const recipe *const rcp : current ) {
+                        if( rcp == resume_rec ) {
+                            line = rcp_idx;
+                            break;
+                        }
+                        ++rcp_idx;
+                    }
                 }
                 resume_rec = nullptr;
                 resume_batch = false;
@@ -1472,6 +1487,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter,
             } else {
                 chosen = current[line];
                 batch_size_out = ( batch ) ? line + 1 : 1;
+                if( selected_in_batch ) *selected_in_batch = batch;
                 done = true;
                 if( highlight_unread_recipes && available_recipes.contains( *chosen ) ) {
                     uistate.read_recipes.insert( chosen->ident() );
