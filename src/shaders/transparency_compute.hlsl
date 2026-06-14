@@ -32,6 +32,10 @@ cbuffer Constants : register(b0, space2)
     int   cache_y;       // flat level-cache y-stride (= SEEY * mapsize)
     uint  num_submaps;   // number of entries in submap_in
     uint  output_offset; // float elements from the start of full_transparency_out
+    uint  write_full_output;
+    uint  constants_padding0;
+    uint  constants_padding1;
+    uint  constants_padding2;
 };
 
 StructuredBuffer<TransparencySubmapIn> submap_in   : register(t0, space0);
@@ -72,5 +76,7 @@ void main(uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID)
     int cx = sm.cache_offset_x + (int)sx;
     int cy = sm.cache_offset_y + (int)sy;
     compact_transparency_out[group_id.x * 144 + tile] = value;
-    full_transparency_out[output_offset + sm.output_offset + cx * cache_y + cy] = value;
+    if (write_full_output != 0) {
+        full_transparency_out[output_offset + sm.output_offset + cx * cache_y + cy] = value;
+    }
 }

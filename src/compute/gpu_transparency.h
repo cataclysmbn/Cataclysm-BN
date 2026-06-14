@@ -62,8 +62,10 @@ struct transparency_push_constants {
     int32_t cache_y;            // flat level-cache y-stride (= SEEY * mapsize)
     uint32_t num_submaps;       // number of entries in the per-submap storage buffer
     uint32_t output_offset = 0; // float elements from start of full resident output buffer
+    uint32_t write_full_output = 0;
+    uint32_t padding[3] = {};
 };
-static_assert(sizeof(transparency_push_constants) == 16);
+static_assert(sizeof(transparency_push_constants) == 32);
 
 // ---------------------------------------------------------------------------
 // transparency_submap_ref
@@ -113,9 +115,9 @@ struct dispatch_transparency_params {
 
 // Upload the submap records, dispatch the transparency compute shader, and
 // synchronously download compact submap-local results into out_buffer.
-// If output.buffer is non-null, the shader also writes into that existing full
-// flat-cache buffer at output.output_offset so lighting can keep resident input
-// state without a duplicate CPU upload.
+// If output.buffer is non-null, the shader also scatters into that existing
+// full flat-cache buffer at output.output_offset so lighting can keep resident
+// input state without a duplicate CPU upload.
 auto dispatch_transparency(dispatch_transparency_params const& p) -> bool;
 
 // Release transparency compute resources before the SDL GPU device is destroyed.

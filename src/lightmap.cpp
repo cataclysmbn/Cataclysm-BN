@@ -558,17 +558,9 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
     if( cata_compute::uses_sdl_gpu_compute() ) {
         ZoneScopedN( "build_transparency_caches_gpu" );
 
-        struct transparency_level_batch_state {
-            int zlev = 0;
-            bool rebuild_all = false;
-            bool resident_output_complete = true;
-            bool resident_level_was_valid = false;
-        };
-
-        auto level_states = std::vector<transparency_level_batch_state> {};
+        auto batch_levels = std::vector<int> {};
         auto refs = std::vector<cata_gpu::transparency_submap_ref> {};
         auto ref_levels = std::vector<int> {};
-        auto *resident_buffer = static_cast<SDL_GPUBuffer *>( nullptr );
         auto cache_size = 0;
 
         auto *const gpu_device = cata_gpu::get_device();
@@ -591,32 +583,7 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
                 debugmsg( "SDL_GPU transparency is required, but no GPU device is available" );
                 return dirty_levels;
             }
-
-            const auto resident_output = cata_gpu::prepare_lighting_transparency_output( {
-                .device = gpu_device,
-                .cache_x = map_cache.cache_x,
-                .cache_y = map_cache.cache_y,
-                .z_count = OVERMAP_LAYERS,
-                .zlev = zlev,
-            } );
-            if( resident_output.buffer == nullptr ) {
-                debugmsg( "SDL_GPU transparency resident output allocation failed; see debug.log for details" );
-                return dirty_levels;
-            }
-            if( resident_buffer == nullptr ) {
-                resident_buffer = resident_output.buffer;
-                cache_size = map_cache.cache_x * map_cache.cache_y * OVERMAP_LAYERS;
-            } else if( resident_buffer != resident_output.buffer ) {
-                debugmsg( "SDL_GPU transparency resident buffer changed during batched dispatch" );
-                return dirty_levels;
-            }
-
-            auto state = transparency_level_batch_state {
-                .zlev = zlev,
-                .rebuild_all = rebuild_all,
-                .resident_output_complete = true,
-                .resident_level_was_valid = cata_gpu::lighting_transparency_level_is_valid( zlev ),
-            };
+            cache_size = std::max( cache_size, map_cache.cache_x * map_cache.cache_y );
 
             refs.reserve( refs.size() + static_cast<size_t>( map_cache.cache_mapsize *
                           map_cache.cache_mapsize ) );
@@ -632,7 +599,6 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
                     const auto sm_offset = project_to<coords::ms>( sm_pos );
 
                     if( cur_submap == nullptr ) {
-                        state.resident_output_complete = false;
                         if( !rebuild_all ) {
                             for( const auto sx : std::views::iota( 0, SEEX ) ) {
                                 std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x() + sx,
@@ -651,20 +617,19 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
                         .sm = cur_submap,
                         .offset_x = sm_offset.x(),
                         .offset_y = sm_offset.y(),
-                        .output_offset = resident_output.output_offset,
                     } );
                     ref_levels.push_back( zlev );
                 }
             }
-            level_states.push_back( state );
+            batch_levels.push_back( zlev );
         }
 
         if( dirty_levels.empty() ) {
             return dirty_levels;
         }
         if( refs.empty() ) {
-            for( const auto &state : level_states ) {
-                get_cache( state.zlev ).transparency_cache_dirty.reset();
+            for( const auto zlev : batch_levels ) {
+                get_cache( zlev ).transparency_cache_dirty.reset();
             }
             return dirty_levels;
         }
@@ -689,17 +654,14 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
 
         static auto gpu_result = std::vector<float> {};
         if( !cata_gpu::dispatch_transparency( {
-        .device = gpu_device,
-        .luts = &luts,
-        .submaps = &inputs,
-        .push = push,
-        .cache_size = cache_size,
-        .out_buffer = &gpu_result,
-        .output = {
-            .buffer = resident_buffer,
-            .output_offset = 0,
-        },
-    } ) || gpu_result.empty() ) {
+            .device = gpu_device,
+            .luts = &luts,
+            .submaps = &inputs,
+            .push = push,
+            .cache_size = cache_size,
+            .out_buffer = &gpu_result,
+            .output = {},
+        } ) || gpu_result.empty() ) {
             debugmsg( "SDL_GPU batched transparency dispatch failed; see debug.log for details" );
             return dirty_levels;
         }
@@ -738,11 +700,8 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
             cur_submap->transparency_dirty = false;
         }
 
-        for( const auto &state : level_states ) {
-            get_cache( state.zlev ).transparency_cache_dirty.reset();
-            if( state.rebuild_all ? state.resident_output_complete : state.resident_level_was_valid ) {
-                cata_gpu::mark_lighting_transparency_level_updated( state.zlev );
-            }
+        for( const auto zlev : batch_levels ) {
+            get_cache( zlev ).transparency_cache_dirty.reset();
         }
         return dirty_levels;
     }
