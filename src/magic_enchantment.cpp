@@ -411,7 +411,7 @@ int enchantment::get_value_add( const enchantment_value_id value ) const
         result += values_add.at( value );
     }
     if( value->has_parent() ) {
-        result = + get_value_add( value->get_parent() );
+        result += get_value_add( value->get_parent() );
     }
 
     return result;
