@@ -2785,14 +2785,14 @@ void overmap_special::load( const JsonObject &jo, const std::string &src )
     }
 }
 
-auto overmap_special::can_spawn_in_dimension( const std::string &dim_id,
+auto overmap_special::can_spawn_in_dimension( const dimension_id &dim_id,
         bool dim_inherits_base ) const -> bool
 {
     if( dimensions_.empty() ) {
         // No filter: allowed in primary ("") and in dims with inherit_base_mapgen.
-        return dim_id.empty() || dim_inherits_base;
+        return dim_id.is_empty() || dim_inherits_base;
     }
-    return std::ranges::find( dimensions_, dim_id ) != dimensions_.end();
+    return std::ranges::find( dimensions_, dim_id.str() ) != dimensions_.end();
 }
 
 void overmap_special::finalize()
@@ -2879,7 +2879,7 @@ void overmap_special::check() const
 }
 
 // *** BEGIN overmap FUNCTIONS ***
-overmap::overmap( const point_abs_om &p, const std::string &dim_id )
+overmap::overmap( const point_abs_om &p, const dimension_id &dim_id )
     : loc( p )
     , dimension_id_( dim_id )
 {
@@ -2913,8 +2913,8 @@ overmap::overmap( const point_abs_om &p, const std::string &dim_id )
 overmap::overmap( overmap && )  noexcept = default;
 overmap::~overmap() = default;
 
-void overmap::populate( const std::string &dim_id,
-                        overmap_special_batch &enabled_specials )
+auto overmap::populate( const dimension_id &dim_id,
+                        overmap_special_batch &enabled_specials ) -> void
 {
     try {
         open( dim_id, enabled_specials );
@@ -2923,7 +2923,7 @@ void overmap::populate( const std::string &dim_id,
     }
 }
 
-void overmap::populate( const std::string &dim_id )
+auto overmap::populate( const dimension_id &dim_id ) -> void
 {
     overmap_special_batch enabled_specials = overmap_specials::get_default_batch( loc );
     const overmap_feature_flag_settings &overmap_feature_flag = settings->overmap_feature_flag;
@@ -3405,7 +3405,7 @@ void overmap::generate( const overmap *north, const overmap *east,
         // world_type explicitly disables generation.
         if( dim->pocket_info.has_value() ) {
             dbg( DL::Info ) << "overmap::generate skipped for bounded dimension '"
-                            << dim->dimension_id << "'";
+                            << dim->id.str() << "'";
             return;
         }
         if( dim->world_type.is_valid() && !dim->world_type.obj().generate_overmap ) {
@@ -6438,18 +6438,18 @@ void overmap::place_radios()
     }
 }
 
-void overmap::open( const std::string &dim_id,
-                    overmap_special_batch &enabled_specials )
+auto overmap::open( const dimension_id &dim_id,
+                    overmap_special_batch &enabled_specials ) -> void
 {
     const auto ter_reader = [&]( std::istream & fin ) {
         overmap::unserialize( fin, string_format( "overmap terrain %d.%d", loc.x(), loc.y() ) );
     };
 
-    if( g->get_active_world()->read_overmap( dim_id, loc, ter_reader ) ) {
+    if( g->get_active_world()->read_overmap( dim_id.str(), loc, ter_reader ) ) {
         const auto plr_reader = [&]( std::istream & fin ) {
             overmap::unserialize_view( fin, string_format( "overmap visibility %d.%d", loc.x(), loc.y() ) );
         };
-        g->get_active_world()->read_overmap_player_visibility( dim_id, loc, plr_reader );
+        g->get_active_world()->read_overmap_player_visibility( dim_id.str(), loc, plr_reader );
     } else { // No map exists!  Prepare neighbors, and generate one.
         auto &owning_omb = get_overmapbuffer( dim_id );
         std::vector<const overmap *> pointers;
@@ -6468,13 +6468,14 @@ void overmap::open( const std::string &dim_id,
 }
 
 // Note: this may throw io errors from std::ofstream
-void overmap::save( const std::string &dim_id ) const
+auto overmap::save( const dimension_id &dim_id ) const -> void
 {
-    g->get_active_world()->write_overmap_player_visibility( dim_id, loc, [&]( std::ostream & stream ) {
+    g->get_active_world()->write_overmap_player_visibility( dim_id.str(),
+    loc, [&]( std::ostream & stream ) {
         serialize_view( stream );
     } );
 
-    g->get_active_world()->write_overmap( dim_id, loc, [&]( std::ostream & stream ) {
+    g->get_active_world()->write_overmap( dim_id.str(), loc, [&]( std::ostream & stream ) {
         serialize( stream );
     } );
 }

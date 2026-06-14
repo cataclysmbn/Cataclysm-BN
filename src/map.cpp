@@ -164,6 +164,7 @@ static const skill_id skill_traps( "traps" );
 
 static const efftype_id effect_boomered( "boomered" );
 static const efftype_id effect_crushed( "crushed" );
+static const efftype_id effect_haslight( "haslight" );
 static const efftype_id effect_onfire( "onfire" );
 
 static const ter_str_id t_rock_floor_no_roof( "t_rock_floor_no_roof" );
@@ -223,12 +224,14 @@ void hash_character_light_state( std::size_t &seed, const Character &who )
 {
     const auto active_luminance = who.active_light();
     const auto has_fire_light = who.has_effect( effect_onfire );
-    if( active_luminance <= LIGHT_AMBIENT_LOW && !has_fire_light ) {
+    const auto has_cached_light = who.has_effect( effect_haslight );
+    if( active_luminance <= LIGHT_AMBIENT_LOW && !has_fire_light && !has_cached_light ) {
         return;
     }
     cata::hash_combine( seed, who.bub_pos() );
     cata::hash_combine( seed, quantized_light_signature_value( active_luminance ) );
     cata::hash_combine( seed, has_fire_light );
+    cata::hash_combine( seed, has_cached_light );
 }
 
 } // namespace
@@ -274,6 +277,20 @@ auto reality_bubble_center_from_origin( const tripoint_abs_sm &origin,
 auto player_reality_bubble_origin() -> tripoint_abs_sm
 {
     return reality_bubble_origin_from_player( get_avatar().abs_pos(), g_reality_bubble_size );
+}
+
+auto is_in_reality_bubble_bounds( const tripoint_bub_sm &p ) -> bool
+{
+    const auto bubble_size = checked_reality_bubble_size( g_reality_bubble_size );
+    const auto map_size = 2 * bubble_size + 3;
+    return p.z() >= -OVERMAP_DEPTH && p.z() <= OVERMAP_HEIGHT &&
+           p.x() >= 0 && p.x() < map_size &&
+           p.y() >= 0 && p.y() < map_size;
+}
+
+auto is_in_reality_bubble_bounds( const tripoint_bub_ms &p ) -> bool
+{
+    return is_in_reality_bubble_bounds( project_to<coords::sm>( p ) );
 }
 
 auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms
@@ -381,27 +398,102 @@ scoped_map_context::~scoped_map_context() noexcept
     tl_map_context = prev_;
 }
 
-// Map stack methods.
+auto resident_item_lookup() -> mapbuffer_lookup_options
+{
+    return {
+        .mode = mapbuffer_lookup_mode::resident_only,
+    };
+}
+
+auto can_delegate_item_mutation_to_mapbuffer( const map &m, const tripoint_abs_ms &p,
+        const submap *sm ) -> bool
+{
+    if( sm == nullptr || g == nullptr || &get_map() != &m ) {
+        return false;
+    }
+
+    return MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ).lookup_submap_in_memory(
+               project_to<coords::sm>( p ) ) == sm;
+}
+
+auto map_stack::local_location() const -> tripoint_bub_ms
+{
+    if( local_origin != nullptr ) {
+        return abs_to_map_local( *local_origin, location );
+    }
+    return abs_to_bub( location );
+}
+
 map_stack::iterator map_stack::erase( map_stack::const_iterator it, detached_ptr<item> *out )
 {
-    return myorigin->i_rem( location, std::move( it ), out );
+    if( myorigin != nullptr ) {
+        return myorigin->erase_item( location, {
+            .it = std::move( it ),
+            .out = out,
+            .lookup = resident_item_lookup(),
+        } );
+    }
+    if( local_origin != nullptr ) {
+        return local_origin->i_rem( local_location(), std::move( it ), out );
+    }
+    return location_vector<item>::iterator();
 }
 
 void map_stack::insert( detached_ptr<item> &&newitem )
 {
-    myorigin->add_item_or_charges( location, std::move( newitem ) );
+    if( local_origin != nullptr ) {
+        local_origin->add_item_or_charges( local_location(), std::move( newitem ) );
+        return;
+    }
+    if( myorigin != nullptr ) {
+        myorigin->add_item_or_charges( location, std::move( newitem ), {
+            .lookup = resident_item_lookup(),
+        } );
+    }
 }
 detached_ptr<item> map_stack::remove( item *to_remove )
 {
-    return myorigin->i_rem( location, to_remove );
+    if( myorigin != nullptr ) {
+        return myorigin->remove_item( location, to_remove, resident_item_lookup() );
+    }
+    if( local_origin != nullptr ) {
+        return local_origin->i_rem( local_location(), to_remove );
+    }
+    return detached_ptr<item>();
+}
+
+auto map_stack::clear() -> std::vector<detached_ptr<item>>
+{
+    if( myorigin != nullptr ) {
+        return myorigin->clear_items( location, resident_item_lookup() );
+    }
+    if( local_origin != nullptr ) {
+        return local_origin->i_clear( local_location() );
+    }
+    return {};
 }
 
 units::volume map_stack::max_volume() const
 {
-    if( myorigin->has_furn( location ) ) {
-        return myorigin->furn( location ).obj().max_volume;
+    if( myorigin != nullptr ) {
+        const auto furniture = myorigin->get_furn( location, resident_item_lookup() );
+        if( furniture && *furniture != f_null ) {
+            return furniture->obj().max_volume;
+        }
+        const auto terrain = myorigin->get_ter( location, resident_item_lookup() );
+        if( terrain ) {
+            return terrain->obj().max_volume;
+        }
+        return 0_ml;
     }
-    return myorigin->ter( location ).obj().max_volume;
+    const auto local = local_location();
+    if( local_origin != nullptr && local_origin->has_furn( local ) ) {
+        return local_origin->furn( local ).obj().max_volume;
+    }
+    if( local_origin != nullptr ) {
+        return local_origin->ter( local ).obj().max_volume;
+    }
+    return 0_ml;
 }
 
 // Map class methods.
@@ -481,14 +573,6 @@ bool map::has_dimension_bounds() const
     return pocket_info_.has_value();
 }
 
-bool map::is_out_of_bounds( const tripoint_bub_ms &p ) const
-{
-    if( !pocket_info_ ) {
-        return false;  // No bounds means infinite dimension
-    }
-    return !pocket_info_->bounds.contains( map_local_to_abs( *this, p ) );
-}
-
 ter_id map::get_boundary_terrain() const
 {
     if( pocket_info_ && pocket_info_->bounds.boundary_terrain.is_valid() ) {
@@ -498,7 +582,7 @@ ter_id map::get_boundary_terrain() const
     return t_null;
 }
 
-void map::bind_dimension( const std::string &dim )
+auto map::bind_dimension( const dimension_id &dim ) -> void
 {
     bound_dimension_ = dim;
 }
@@ -517,7 +601,7 @@ bool map::contains_abs_sm( const tripoint_abs_sm &p ) const
     return p.z() == abs_sub.z();
 }
 
-void map::on_submap_loaded( const tripoint_abs_sm &p, const std::string &dim_id )
+void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id )
 {
     if( dim_id != bound_dimension_ ) {
         return;
@@ -533,7 +617,7 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const std::string &dim_id 
         // Extended local grid index: may be outside [0, my_MAPSIZE) for out-of-bubble.
         for( const auto &veh : sm->vehicles ) {
             veh->abs_sm_pos = p;
-            veh->dimension_id_ = dim_id;
+            veh->set_dimension( dim_id );
             loaded_vehicles.insert( veh.get() );
         }
     }
@@ -575,7 +659,7 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const std::string &dim_id 
     }
 }
 
-void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim_id )
+void map::on_submap_unloaded( const tripoint_abs_sm &pos, const dimension_id &dim_id )
 {
     if( dim_id != bound_dimension_ ) {
         return;
@@ -2345,7 +2429,7 @@ bool map::has_furn( const tripoint_bub_ms &p ) const
 
 furn_id map::furn( const tripoint_bub_ms &p ) const
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return f_null;
     }
 
@@ -2361,7 +2445,7 @@ furn_id map::furn( const tripoint_bub_ms &p ) const
 void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
                     const cata::poly_serialized<active_tile_data> &new_active, bool ignore_grab_check )
 {
-    if( is_out_of_bounds( p ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), p ) ) {
         return;
     }
 
@@ -2515,7 +2599,7 @@ std::string map::furnname( const tripoint_bub_ms &p )
 ter_id map::ter( const tripoint_bub_ms &p ) const
 {
     // Check dimension bounds first - out-of-bounds areas show boundary terrain
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return get_boundary_terrain();
     }
 
@@ -2744,7 +2828,7 @@ bool map::is_harvestable( const tripoint_bub_ms &pos ) const
  */
 bool map::ter_set( const tripoint_bub_ms &p, const ter_id &new_terrain )
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return false;
     }
 
@@ -2904,7 +2988,7 @@ bool map::is_wall_adjacent( const tripoint_bub_ms &center ) const
 int map::move_cost( const tripoint_bub_ms &p, const vehicle *ignored_vehicle ) const
 {
     // Dimension bounds are always impassable
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return 0;
     }
 
@@ -4855,7 +4939,7 @@ bash_results map::bash( const tripoint_bub_ms &p, const bash_params &bsh,
     bash_results result;
 
     // Dimension bounds cannot be bashed - show message from boundary terrain
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         if( !bsh.silent && pocket_info_ ) {
             const ter_t &boundary_ter = pocket_info_->bounds.boundary_terrain.obj();
             if( !boundary_ter.bash.sound_fail.empty() ) {
@@ -4982,7 +5066,7 @@ bash_results &bash_results::operator|=( const bash_results &other )
 void map::destroy( const tripoint_bub_ms &p, const bool silent )
 {
     // Dimension bounds cannot be destroyed
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return;
     }
 
@@ -5710,7 +5794,7 @@ void map::adjust_radiation( const tripoint_bub_ms &p, const int delta )
 
 int map::get_temperature( const tripoint_bub_ms &p ) const
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return 0;
     }
 
@@ -5723,7 +5807,7 @@ int map::get_temperature( const tripoint_bub_ms &p ) const
 
 void map::set_temperature( const tripoint_bub_ms &p, int new_temperature )
 {
-    if( is_out_of_bounds( p ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), p ) ) {
         return;
     }
 
@@ -5737,14 +5821,31 @@ void map::set_temperature( const tripoint_bub_ms &p, int new_temperature )
 
 map_stack map::i_at( const tripoint_bub_ms &p )
 {
+    const auto abs_pos = map_local_to_abs( *this, p );
     point_sm_ms l;
     submap *const current_submap = get_submap_at( p, l );
     if( current_submap == nullptr ) {
         nulitems.clear();
-        return map_stack{ &nulitems, p, this };
+        return map_stack( {
+            .stack = &nulitems,
+            .location = abs_pos,
+            .local_origin = this,
+        } );
     }
 
-    return map_stack{ &current_submap->get_items( l ), p, this };
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return map_stack( {
+            .stack = &current_submap->get_items( l ),
+            .location = abs_pos,
+            .origin = &MAPBUFFER_REGISTRY.get( bound_dimension_ ),
+        } );
+    }
+
+    return map_stack( {
+        .stack = &current_submap->get_items( l ),
+        .location = abs_pos,
+        .local_origin = this,
+    } );
 }
 
 map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_iterator it,
@@ -5752,11 +5853,23 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
 {
     point_sm_ms l;
     submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
+    if( current_submap == nullptr ) {
+        return location_vector<item>::iterator();
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, p );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).erase_item( abs_pos, {
+            .it = std::move( it ),
+            .out = out,
+            .lookup = resident_item_lookup(),
+        } );
+    }
 
     // remove from the active items cache (if it isn't there does nothing)
     current_submap->active_items.remove( *it );
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( map_local_to_abs( *this, p ) ) );
+        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
     }
 
     const auto removed_emissive = ( *it )->is_emissive();
@@ -5770,29 +5883,56 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
 
 detached_ptr<item> map::i_rem( const tripoint_bub_ms &p, item *it )
 {
-    map_stack map_items = i_at( p );
-    detached_ptr<item> res;
-    map_items.remove_top_items_with( [&res, it]( detached_ptr<item> &&e ) {
-        if( &*e == it ) {
-            res = std::move( e );
-            return detached_ptr<item>();
-        }
-        return std::move( e );
-    } );
-    return res;
+    point_sm_ms l;
+    submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return detached_ptr<item>();
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, p );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).remove_item( abs_pos, it,
+                resident_item_lookup() );
+    }
+
+    auto &items = current_submap->get_items( l );
+    if( std::ranges::find( items, it ) == items.end() ) {
+        return detached_ptr<item>();
+    }
+
+    current_submap->active_items.remove( it );
+    if( current_submap->active_items.empty() ) {
+        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
+    }
+
+    const auto removed_emissive = it->is_emissive();
+    current_submap->update_lum_rem( l, *it );
+    if( removed_emissive ) {
+        invalidate_lightmap_caches();
+    }
+
+    return items.remove( it );
 }
 
 std::vector<detached_ptr<item>> map::i_clear( const tripoint_bub_ms &p )
 {
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
+    submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return {};
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, p );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).clear_items( abs_pos, resident_item_lookup() );
+    }
 
     for( item * const &it : current_submap->get_items( l ) ) {
         // remove from the active items cache (if it isn't there does nothing)
         current_submap->active_items.remove( it );
     }
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( map_local_to_abs( *this, p ) ) );
+        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
     }
 
     const auto had_luminance = current_submap->get_lum( l ) != 0;
@@ -5887,7 +6027,7 @@ void map::spawn_item( const tripoint_bub_ms &p, const itype_id &type_id,
     }
 
     // Skip spawning items in dimension-bounded out-of-bounds areas
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return;
     }
 
@@ -5927,10 +6067,20 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
         return std::move( obj );
     }
 
+    point_sm_ms local_tile;
+    submap *const current_submap = get_submap_at( pos, local_tile );
+    const auto abs_pos = map_local_to_abs( *this, pos );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_item_or_charges( abs_pos, std::move( obj ), {
+            .overflow = overflow,
+            .lookup = resident_item_lookup(),
+        } );
+    }
+
     // Checks if item would not be destroyed if added to this tile
     auto valid_tile = [&]( const tripoint_bub_ms & e ) {
         // Cannot add items to dimension-bounded out-of-bounds areas or unloaded submaps
-        if( is_out_of_bounds( e ) ) {
+        if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), e ) ) {
             return false;
         }
 
@@ -5999,7 +6149,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
         const pathfinding_settings setting( 0, max_dist, max_path_length, 0, false, true, false, false,
                                             false );
         for( const auto &e : tiles ) {
-            if( is_out_of_bounds( e ) ) {
+            if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), e ) ) {
                 continue;
             }
             //must be a path to the target tile
@@ -6031,8 +6181,15 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
         return;
     }
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
+    submap *const current_submap = get_submap_at( p, l );
     if( current_submap == nullptr ) {
+        return;
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, p );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_item( abs_pos, std::move( new_item ),
+                resident_item_lookup() );
         return;
     }
 
@@ -6144,14 +6301,24 @@ detached_ptr<item> map::water_from( const tripoint_bub_ms &p )
 
 void map::make_inactive( item &loc )
 {
+    const auto local_pos = loc.position();
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( loc.position() ), l );
+    submap *const current_submap = get_submap_at( local_pos, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, local_pos );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        MAPBUFFER_REGISTRY.get( bound_dimension_ ).make_item_inactive( abs_pos, loc,
+                resident_item_lookup() );
+        return;
+    }
 
     // remove from the active items cache (if it isn't there does nothing)
     current_submap->active_items.remove( &loc );
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( tripoint_abs_sm( abs_sub.x() + loc.position().x() / SEEX,
-                                         abs_sub.y() + loc.position().y() / SEEY, loc.position().z() ) );
+        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
     }
 }
 
@@ -6163,12 +6330,21 @@ void map::make_active( item &loc )
     if( !target->needs_processing() ) {
         return;
     }
+    const auto local_pos = loc.position();
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( loc.position() ), l );
+    submap *const current_submap = get_submap_at( local_pos, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, local_pos );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        MAPBUFFER_REGISTRY.get( bound_dimension_ ).make_item_active( abs_pos, loc, resident_item_lookup() );
+        return;
+    }
 
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.insert( tripoint_abs_sm( abs_sub.x() + loc.position().x() / SEEX,
-                                          abs_sub.y() + loc.position().y() / SEEY, loc.position().z() ) );
+        submaps_with_active_items.insert( project_to<coords::sm>( abs_pos ) );
     }
     current_submap->active_items.add( *target );
 }
@@ -6182,8 +6358,21 @@ void map::update_lum( item &loc, bool add )
         return;
     }
 
+    const auto local_pos = loc.position();
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms( loc.position() ), l );
+    submap *const current_submap = get_submap_at( local_pos, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
+
+    const auto abs_pos = map_local_to_abs( *this, local_pos );
+    if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
+        MAPBUFFER_REGISTRY.get( bound_dimension_ ).update_item_lum( abs_pos, loc, {
+            .add_luminance = add,
+            .lookup = resident_item_lookup(),
+        } );
+        return;
+    }
 
     if( add ) {
         current_submap->update_lum_add( l, *target );
@@ -6775,7 +6964,11 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint_bub_ms &origin,
             tmp->charges = faupart->vehicle().drain( ftype, quantity );
             // TODO: Handle water poison when crafting starts respecting it
             quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
+            // Don't return a 0-charge phantom for types the tanks can't provide:
+            // it would replace the real component during crafting (#9440)
+            if( tmp->charges > 0 ) {
+                ret.push_back( std::move( tmp ) );
+            }
 
             if( quantity == 0 ) {
                 return ret;
@@ -6793,7 +6986,9 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint_bub_ms &origin,
             detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
             tmp->charges = autoclavepart->vehicle().drain( ftype, quantity );
             quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
+            if( tmp->charges > 0 ) {
+                ret.push_back( std::move( tmp ) );
+            }
 
             if( quantity == 0 ) {
                 return ret;
@@ -6823,7 +7018,7 @@ bool map::can_see_trap_at( const tripoint_bub_ms &p, const Character &c ) const
 
 const trap &map::tr_at( const tripoint_bub_ms &p ) const
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return tr_null.obj();
     }
 
@@ -6843,7 +7038,7 @@ const trap &map::tr_at( const tripoint_bub_ms &p ) const
 
 partial_con *map::partial_con_at( const tripoint_bub_ms &p )
 {
-    if( is_out_of_bounds( p ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), p ) ) {
         return nullptr;
     }
     point_sm_ms l;
@@ -6860,7 +7055,7 @@ partial_con *map::partial_con_at( const tripoint_bub_ms &p )
 
 void map::partial_con_remove( const tripoint_bub_ms &p )
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return;
     }
     point_sm_ms l;
@@ -6873,7 +7068,7 @@ void map::partial_con_remove( const tripoint_bub_ms &p )
 
 void map::partial_con_set( const tripoint_bub_ms &p, std::unique_ptr<partial_con> con )
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return;
     }
     point_sm_ms l;
@@ -6998,7 +7193,7 @@ void map::remove_trap( const tripoint_bub_ms &p )
  */
 const field &map::field_at( const tripoint_bub_ms &p ) const
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         nulfield = field();
         return nulfield;
     }
@@ -7019,7 +7214,7 @@ const field &map::field_at( const tripoint_bub_ms &p ) const
  */
 field &map::field_at( const tripoint_bub_ms &p )
 {
-    if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         nulfield = field();
         return nulfield;
     }
@@ -7096,7 +7291,8 @@ int map::get_field_intensity( const tripoint_bub_ms &p, const field_type_id &typ
 
 bool map::has_field_at( const tripoint_bub_ms &p, bool check_bounds )
 {
-    if( check_bounds && is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
+    if( check_bounds &&
+        is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), tripoint_bub_ms( p ) ) ) {
         return false;
     }
     point_sm_ms l;
@@ -9063,7 +9259,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
             if( veh->part_count() > 0 ) {
                 // Always fix submap coordinates for easier Z-level-related operations
                 veh->abs_sm_pos = grid_abs_sub;
-                veh->dimension_id_ = bound_dimension_;
+                veh->set_dimension( bound_dimension_ );
                 loaded_vehicles.insert( veh );
                 veh->attach();
                 iter++;
@@ -9928,16 +10124,6 @@ bool map::is_position_simulated( const tripoint_bub_sm &p ) const
     return submap_loader.is_simulated( bound_dimension_, map_local_to_abs( *this, p ) );
 }
 
-bool tinymap::inbounds( const tripoint_abs_sm &p ) const
-{
-    constexpr tripoint_abs_sm map_boundary_min( 0, 0, -OVERMAP_DEPTH );
-    constexpr tripoint_abs_sm map_boundary_max( SEEX * 2, SEEY * 2, OVERMAP_HEIGHT + 1 );
-
-    constexpr half_open_cuboid<tripoint_abs_sm> map_boundaries( map_boundary_min, map_boundary_max );
-
-    return map_boundaries.contains( p );
-}
-
 // set up a map just long enough scribble on it
 // this tinymap should never, ever get saved
 fake_map::fake_map( const furn_id &fur_type, const ter_id &ter_type, const trap_id &trap_type,
@@ -10430,6 +10616,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     std::vector<int> gpu_vehicle_floor_dirty_levels;
     std::vector<int> gpu_vehicle_obscured_dirty_levels;
 
+    auto mark_lightmap_dirty = [this]( const int z ) {
+        auto &cache = get_cache( z );
+        cache.lightmap_dirty = true;
+        cache.lm_cpu_cache_valid = false;
+        ++cache.lm_cpu_cache_generation;
+        cache.visibility_cache_dirty = true;
+    };
     auto add_gpu_dirty_level = []( auto & levels, const int z ) {
         if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
             levels.push_back( z );
@@ -10492,6 +10685,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             gpu_transparency_dirty = true;
             std::ranges::copy( transparency_dirty_levels,
                                std::back_inserter( gpu_transparency_dirty_levels ) );
+            std::ranges::for_each( transparency_dirty_levels, mark_lightmap_dirty );
         }
     }
 
@@ -10612,6 +10806,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 #if defined( CATA_SDL )
     if( use_sdl_gpu_compute && !gpu_transparency_residency_invalid_levels.empty() ) {
         cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_residency_invalid_levels );
+    }
+    if( skip_lightmap && use_sdl_gpu_compute && gpu_transparency_dirty ) {
+        cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_dirty_levels );
     }
 #endif
     TracyPlot( "Map GPU Transparency Dirty Levels",
@@ -10871,7 +11068,7 @@ submap *map::get_submap_at( const tripoint_bub_ms &p ) const
         // Fast path: tile is inside the reality bubble grid.
         return get_submap_at_grid( tripoint_bub_sm( p.x() / SEEX, p.y() / SEEY, p.z() ) );
     }
-    if( is_out_of_bounds( p ) ) {
+    if( is_outside_pocket_dimension_bounds( pocket_info_, get_abs_sub(), p ) ) {
         // Outside dimension bounds — genuinely invalid position.
         return nullptr;
     }
@@ -11578,6 +11775,7 @@ void map::invalidate_lightmap_caches()
         cache.lightmap_dirty = true;
         cache.lm_cpu_cache_valid = false;
         ++cache.lm_cpu_cache_generation;
+        cache.visibility_cache_dirty = true;
     } );
 }
 

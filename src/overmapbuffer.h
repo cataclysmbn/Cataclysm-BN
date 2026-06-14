@@ -170,10 +170,10 @@ class overmapbuffer
          * registry when creating the slot; used to route I/O to the correct
          * dimension subdirectory without reading global state.
          */
-        auto get_dimension_id() const -> const std::string & { // *NOPAD*
+        auto get_dimension_id() const -> const dimension_id & { // *NOPAD*
             return dimension_id_;
         }
-        void set_dimension_id( const std::string &id ) {
+        auto set_dimension_id( const dimension_id &id ) -> void {
             dimension_id_ = id;
         }
 
@@ -188,7 +188,7 @@ class overmapbuffer
          * Thread-safe when different dimensions save concurrently: distinct paths
          * guarantee no file-level contention.
          */
-        void save( const std::string &dim_id );
+        auto save( const dimension_id &dim_id ) -> void;
 
         void clear();
         void create_custom_overmap( const point_abs_om &, overmap_special_batch &specials );
@@ -576,7 +576,7 @@ class overmapbuffer
                             int min_radius, int max_radius );
 
     private:
-        std::string dimension_id_;
+        dimension_id dimension_id_;
         std::shared_mutex mutex;
         /**
          * Protects all NPC container reads and writes across every overmap in

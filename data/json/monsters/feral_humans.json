@@ -756,10 +756,22 @@
     ],
     "death_function": [ "NORMAL" ],
     "regenerates": 1,
+    "regeneration_modifiers": [ { "effect": "emp", "base_mod": -1 } ],
     "death_drops": "mon_feral_pa_boss_death_drops",
     "zombify_into": "mon_zombie_armored",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "HUMAN",
+      "CAN_OPEN_DOORS",
+      "PATH_AVOID_DANGER_1",
+      "ELECTRIC"
+    ]
   },
   {
     "id": "mon_feral_corpo",
@@ -887,6 +899,7 @@
         "no_crits": true
       }
     ],
+    "special_when_hit": [ "RETURN_FIRE", 75 ],
     "death_function": [ "NORMAL" ],
     "death_drops": "mon_feral_blackops_boss_commander_death_drops",
     "zombify_into": "mon_zombie_soldier_blackops_2",
@@ -903,7 +916,8 @@
       "HUMAN",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
-      "NIGHT_INVISIBILITY"
+      "NIGHT_INVISIBILITY",
+      "PRIORITIZE_TARGETS"
     ]
   },
   {
@@ -946,6 +960,7 @@
     "special_when_hit": [ "ZAPBACK", 75 ],
     "death_function": [ "NORMAL" ],
     "regenerates": 1,
+    "regeneration_modifiers": [ { "effect": "emp", "base_mod": -1 } ],
     "death_drops": "mon_feral_blackops_boss_bioop_death_drops",
     "zombify_into": "mon_zombie_soldier_blackops_2",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
@@ -962,7 +977,8 @@
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
       "NIGHT_INVISIBILITY",
-      "HARDTOSHOOT"
+      "HARDTOSHOOT",
+      "PRIORITIZE_TARGETS"
     ]
   },
   {
@@ -1036,7 +1052,8 @@
       "HUMAN",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
-      "NIGHT_INVISIBILITY"
+      "NIGHT_INVISIBILITY",
+      "PRIORITIZE_TARGETS"
     ]
   },
   {
@@ -1107,7 +1124,8 @@
       "HUMAN",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_1",
-      "NIGHT_INVISIBILITY"
+      "NIGHT_INVISIBILITY",
+      "PRIORITIZE_TARGETS"
     ]
   }
 ]

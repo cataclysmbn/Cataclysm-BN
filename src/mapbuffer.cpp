@@ -13,32 +13,63 @@
 #include <utility>
 #include <vector>
 
+#include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "debug.h"
+#include "detached_ptr.h"
 #include "distribution_grid.h"
 #include "filesystem.h"
+#include "field_type.h"
+#include "fluid_grid.h"
+#include "flag.h"
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
+#include "item.h"
 #include "json.h"
 #include "map.h"
 #include "mapdata.h"
+#include "map_mutation_hooks.h"
 #include "overmapbuffer.h"
 #include "output.h"
 #include "popup.h"
 #include "profile.h"
 #include "string_formatter.h"
 #include "submap.h"
+#include "submap_load_manager.h"
 #include "thread_pool.h"
 #include "translations.h"
+#include "trap.h"
 #include "ui_manager.h"
+#include "veh_type.h"
+#include "vehicle.h"
 #include "world.h"
 
 namespace
 {
 
-auto uniform_terrain_for_omt( const std::string &dimension_id,
+struct mapbuffer_tile_lookup {
+    submap *sm = nullptr;
+    point_sm_ms local;
+};
+
+auto lookup_tile( mapbuffer &buffer, const tripoint_abs_ms &p,
+                  const mapbuffer_lookup_options options ) -> std::optional<mapbuffer_tile_lookup>
+{
+    const auto split = project_remain<coords::sm>( p );
+    auto *const sm = buffer.get_submap( split.quotient_tripoint, options );
+    if( sm == nullptr ) {
+        return std::nullopt;
+    }
+
+    return mapbuffer_tile_lookup {
+        .sm = sm,
+        .local = split.remainder,
+    };
+}
+
+auto uniform_terrain_for_omt( const dimension_id &dimension_id,
                               const tripoint_abs_omt &omt_addr ) -> std::optional<ter_id>
 {
     static const oter_id rock( "empty_rock" );
@@ -76,6 +107,44 @@ auto add_uniform_omt( mapbuffer &dest, const tripoint_abs_sm &base,
     return added_any;
 }
 
+auto tile_has_flag( const mapbuffer_tile_lookup &tile, const std::string &flag ) -> bool
+{
+    return tile.sm->get_ter( tile.local ).obj().has_flag( flag ) ||
+           tile.sm->get_furn( tile.local ).obj().has_flag( flag );
+}
+
+auto tile_allows_item_despite_noitem_flag( const item &target,
+        const mapbuffer_tile_lookup &tile ) -> bool
+{
+    return target.made_of( LIQUID ) && tile_has_flag( tile, "LIQUIDCONT" );
+}
+
+auto move_cost_from_tile_parts( const ter_id &terrain_id, const furn_id &furniture_id,
+                                const optional_vpart_position &vp ) -> int
+{
+    const auto &terrain = terrain_id.obj();
+    const auto &furniture = furniture_id.obj();
+    if( terrain.movecost == 0 || ( furniture.id && furniture.movecost < 0 ) ) {
+        return 0;
+    }
+
+    if( vp ) {
+        if( vp.obstacle_at_part() ) {
+            return 0;
+        }
+        if( vp.part_with_feature( VPFLAG_AISLE, true ) ) {
+            return 2;
+        }
+        return 8;
+    }
+
+    if( furniture.id ) {
+        return std::max( terrain.movecost + furniture.movecost, 0 );
+    }
+
+    return std::max( terrain.movecost, 0 );
+}
+
 } // namespace
 
 mapbuffer::mapbuffer() = default;
@@ -110,14 +179,14 @@ void mapbuffer::remove_submap( tripoint_abs_sm addr )
     // Safety: skip freeing if map::grid[] still references this submap.
     if( g != nullptr && m_target->second ) {
         const submap *doomed = m_target->second.get();
-        const map &here = get_map();
+        const map &here = g->m;
         const auto &grid_vec = here.grid;
         for( size_t i = 0; i < grid_vec.size(); ++i ) {
             if( grid_vec[i] == doomed ) {
                 debugmsg( "remove_submap: skipping free of submap at %s (ptr %p) "
                           "— map::grid[%zu] still references it (dim='%s')",
                           addr.to_string(), static_cast<const void *>( doomed ),
-                          i, dimension_id_ );
+                          i, dimension_id_.c_str() );
                 return;  // do NOT erase — prevent use-after-free
             }
         }
@@ -221,7 +290,7 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
     // This prevents use-after-free when submap_loader eviction races with
     // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
     if( g != nullptr ) {
-        const map &here = get_map();
+        const map &here = g->m;
         const auto &grid_vec = here.grid;
         to_delete.remove_if( [&]( const tripoint_abs_sm & p ) {
             const auto it = submaps.find( p );
@@ -234,7 +303,7 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
                     debugmsg( "unload_omt: skipping free of submap at %s (ptr %p) "
                               "— map::grid[%zu] still references it (dim='%s')",
                               p.to_string(), static_cast<const void *>( doomed ),
-                              i, dimension_id_ );
+                              i, dimension_id_.c_str() );
                     return true;  // remove from to_delete → keep alive
                 }
             }
@@ -293,7 +362,7 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
             found = true;
         } else {
             ZoneScopedN( "lookup_disk_read" );
-            found = g->get_active_world()->read_map_omt( dimension_id_, omt_addr,
+            found = g->get_active_world()->read_map_omt( dimension_id_.str(), omt_addr,
             [this, &loaded, &already_loaded]( JsonIn & jsin ) {
                 ZoneScopedN( "lookup_disk_deserialize" );
                 deserialize_into_vec( jsin, loaded, already_loaded );
@@ -328,6 +397,1194 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
         debugmsg( "file did not contain the expected submap %d,%d,%d", p.x(), p.y(), p.z() );
     }
     return result;
+}
+
+auto mapbuffer::get_submap( const tripoint_abs_sm &p,
+                            const mapbuffer_lookup_options options ) -> submap *
+{
+    switch( options.mode ) {
+        case mapbuffer_lookup_mode::simulated_only:
+            if( !submap_loader.is_simulated( dimension_id_, p ) ) {
+                return nullptr;
+            }
+            return lookup_submap_in_memory( p );
+        case mapbuffer_lookup_mode::resident_only:
+            return lookup_submap_in_memory( p );
+        case mapbuffer_lookup_mode::load_from_disk:
+            return lookup_submap( p );
+        case mapbuffer_lookup_mode::load_or_generate:
+            if( auto *sm = lookup_submap( p ) ) {
+                return sm;
+            }
+            generate_omt( project_to<coords::omt>( p ) );
+            return lookup_submap_in_memory( p );
+    }
+
+    return nullptr;
+}
+
+auto mapbuffer::get_ter( const tripoint_abs_ms &p,
+                         const mapbuffer_lookup_options options ) -> std::optional<ter_id>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_ter( tile->local );
+}
+
+auto mapbuffer::set_ter( const tripoint_abs_ms &p, const ter_id terrain,
+                         const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    const auto old_id = tile->sm->get_ter( tile->local );
+    if( old_id == terrain ) {
+        return false;
+    }
+
+    tile->sm->set_ter( tile->local, terrain );
+    invalidate_active_terrain_set_caches( p, old_id, terrain );
+    return true;
+}
+
+auto mapbuffer::get_furn( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::optional<furn_id>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_furn( tile->local );
+}
+
+auto mapbuffer::set_furn( const tripoint_abs_ms &p, const furn_id furn,
+                          const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    const auto old_id = tile->sm->get_furn( tile->local );
+    if( old_id == furn ) {
+        return false;
+    }
+
+    tile->sm->set_furn( tile->local, furn );
+    sync_furniture_change_side_tables( p, *tile->sm, tile->local, old_id, furn );
+    invalidate_active_furniture_set_caches( p, old_id, furn );
+    map_mutation_hooks::on_furniture_changed( {
+        .dim_id = dimension_id_,
+        .p = p,
+        .old_furniture = old_id,
+        .new_furniture = furn,
+    } );
+    return true;
+}
+
+auto mapbuffer::veh_at( const tripoint_abs_ms &p,
+                        const mapbuffer_lookup_options options ) -> optional_vpart_position
+{
+    const auto target_sm = project_to<coords::sm>( p );
+    if( get_submap( target_sm, options ) == nullptr ) {
+        return optional_vpart_position( std::nullopt );
+    }
+
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    for( const auto &entry : submaps ) {
+        const auto *const sm = entry.second.get();
+        if( sm == nullptr ) {
+            continue;
+        }
+        for( const auto &veh_ptr : sm->vehicles ) {
+            if( veh_ptr == nullptr ) {
+                continue;
+            }
+            auto &veh = *veh_ptr;
+            const auto rel = p - veh.abs_ms_location();
+            const auto part = veh.part_at( rel );
+            if( part >= 0 ) {
+                return optional_vpart_position( vpart_position( veh, static_cast<size_t>( part ) ) );
+            }
+        }
+    }
+
+    return optional_vpart_position( std::nullopt );
+}
+
+auto mapbuffer::move_cost( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return move_cost_from_tile_parts( tile->sm->get_ter( tile->local ),
+                                      tile->sm->get_furn( tile->local ), veh_at( p, options ) );
+}
+
+auto mapbuffer::passable( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::optional<bool>
+{
+    const auto cost = move_cost( p, options );
+    if( !cost ) {
+        return std::nullopt;
+    }
+
+    return *cost != 0;
+}
+
+auto mapbuffer::ter_vars( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> data_vars::data_set *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    return &tile->sm->get_ter_vars( tile->local );
+}
+
+auto mapbuffer::furn_vars( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> data_vars::data_set *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    return &tile->sm->get_furn_vars( tile->local );
+}
+
+auto mapbuffer::get_trap( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::optional<trap_id>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_trap( tile->local );
+}
+
+auto mapbuffer::set_trap( const tripoint_abs_ms &p, const trap_id trap,
+                          const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    if( tile->sm->get_ter( tile->local ).obj().trap != tr_null && trap != tr_null ) {
+        debugmsg( "set trap %s on top of terrain %s which already has a built-in trap",
+                  trap.obj().name(), tile->sm->get_ter( tile->local ).obj().name() );
+        return false;
+    }
+
+    const auto old_id = tile->sm->get_trap( tile->local );
+    if( old_id == trap ) {
+        return false;
+    }
+
+    tile->sm->set_trap( tile->local, trap );
+    sync_active_trap_change_side_tables( p, tile->local, old_id, trap );
+    return true;
+}
+
+auto mapbuffer::get_radiation( const tripoint_abs_ms &p,
+                               const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_radiation( tile->local );
+}
+
+auto mapbuffer::set_radiation( const tripoint_abs_ms &p, const int radiation,
+                               const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->set_radiation( tile->local, radiation );
+    return true;
+}
+
+auto mapbuffer::adjust_radiation( const tripoint_abs_ms &p, const int delta,
+                                  const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    const auto adjusted = tile->sm->get_radiation( tile->local ) + delta;
+    tile->sm->set_radiation( tile->local, adjusted );
+    return adjusted;
+}
+
+auto mapbuffer::get_lum( const tripoint_abs_ms &p,
+                         const mapbuffer_lookup_options options ) -> std::optional<std::uint8_t>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_lum( tile->local );
+}
+
+auto mapbuffer::set_lum( const tripoint_abs_ms &p, const std::uint8_t luminance,
+                         const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    const auto old_luminance = tile->sm->get_lum( tile->local );
+    if( old_luminance == luminance ) {
+        return false;
+    }
+
+    tile->sm->set_lum( tile->local, luminance );
+    if( active_reality_bubble_local( p ) ) {
+        g->m.invalidate_lightmap_caches();
+    }
+    return true;
+}
+
+auto mapbuffer::get_temperature( const tripoint_abs_ms &p,
+                                 const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    const auto split = project_to<coords::sm>( p );
+    auto *const sm = get_submap( split, options );
+    if( sm == nullptr ) {
+        return std::nullopt;
+    }
+
+    return sm->get_temperature();
+}
+
+auto mapbuffer::set_temperature( const tripoint_abs_ms &p, const int temperature,
+                                 const mapbuffer_lookup_options options ) -> bool
+{
+    const auto split = project_to<coords::sm>( p );
+    auto *const sm = get_submap( split, options );
+    if( sm == nullptr ) {
+        return false;
+    }
+
+    sm->set_temperature( temperature );
+    return true;
+}
+
+auto mapbuffer::get_field( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> field *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    return &tile->sm->get_field( tile->local );
+}
+
+auto mapbuffer::has_field_at( const tripoint_abs_ms &p,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile && tile->sm->field_count > 0;
+}
+
+auto mapbuffer::get_field_entry( const tripoint_abs_ms &p, const field_type_id &type,
+                                 const mapbuffer_lookup_options options ) -> field_entry *
+{
+    if( !has_field_at( p, options ) ) {
+        return nullptr;
+    }
+
+    return get_field( p, options )->find_field( type );
+}
+
+auto mapbuffer::get_field_age( const tripoint_abs_ms &p, const field_type_id &type,
+                               const mapbuffer_lookup_options options ) -> std::optional<time_duration>
+{
+    if( !get_field( p, options ) ) {
+        return std::nullopt;
+    }
+
+    const auto *const field_ptr = get_field_entry( p, type, options );
+    return field_ptr == nullptr ? -1_turns : field_ptr->get_field_age();
+}
+
+auto mapbuffer::get_field_intensity( const tripoint_abs_ms &p, const field_type_id &type,
+                                     const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    if( !get_field( p, options ) ) {
+        return std::nullopt;
+    }
+
+    const auto *const field_ptr = get_field_entry( p, type, options );
+    return field_ptr == nullptr ? 0 : field_ptr->get_field_intensity();
+}
+
+auto mapbuffer::mod_field_age( const tripoint_abs_ms &p,
+                               const mapbuffer_field_age_options &options ) -> std::optional<time_duration>
+{
+    auto set_options = options;
+    set_options.isoffset = true;
+    return set_field_age( p, set_options );
+}
+
+auto mapbuffer::mod_field_intensity( const tripoint_abs_ms &p,
+                                     const mapbuffer_field_intensity_options &options ) -> std::optional<int>
+{
+    auto set_options = options;
+    set_options.isoffset = true;
+    return set_field_intensity( p, set_options );
+}
+
+auto mapbuffer::set_field_age( const tripoint_abs_ms &p,
+                               const mapbuffer_field_age_options &options ) -> std::optional<time_duration>
+{
+    if( !get_field( p, options.lookup ) ) {
+        return std::nullopt;
+    }
+
+    auto *const field_ptr = get_field_entry( p, options.type, options.lookup );
+    if( field_ptr == nullptr ) {
+        return -1_turns;
+    }
+
+    return field_ptr->set_field_age( ( options.isoffset ? field_ptr->get_field_age() : 0_turns ) +
+                                     options.age );
+}
+
+auto mapbuffer::set_field_intensity( const tripoint_abs_ms &p,
+                                     const mapbuffer_field_intensity_options &options ) -> std::optional<int>
+{
+    if( !get_field( p, options.lookup ) ) {
+        return std::nullopt;
+    }
+
+    auto *const field_ptr = get_field_entry( p, options.type, options.lookup );
+    if( field_ptr != nullptr ) {
+        const auto adjusted = ( options.isoffset ? field_ptr->get_field_intensity() : 0 ) +
+                              options.intensity;
+        if( adjusted > 0 ) {
+            return field_ptr->set_field_intensity( adjusted );
+        }
+        remove_field( p, options.type, options.lookup );
+        return 0;
+    }
+
+    if( options.intensity <= 0 ) {
+        return 0;
+    }
+
+    return add_field( p, {
+        .type = options.type,
+        .intensity = options.intensity,
+        .lookup = options.lookup,
+    } ) ? options.intensity : 0;
+}
+
+auto mapbuffer::add_field( const tripoint_abs_ms &p,
+                           const mapbuffer_add_field_options &options ) -> bool
+{
+    if( !options.type ) {
+        debugmsg( "Tried to add null field" );
+        return false;
+    }
+
+    const auto tile = lookup_tile( *this, p, options.lookup );
+    if( !tile ) {
+        return false;
+    }
+
+    const auto &field_type = *options.type;
+    const auto intensity = std::min( options.intensity, field_type.get_max_intensity() );
+    if( intensity <= 0 ) {
+        return false;
+    }
+
+    tile->sm->is_uniform = false;
+    if( tile->sm->get_field( tile->local ).add_field( options.type, intensity, options.age ) ) {
+        tile->sm->field_count++;
+        tile->sm->field_cache.push_back( tile->local );
+    }
+
+    invalidate_active_field_add_caches( p, options.type );
+    return true;
+}
+
+auto mapbuffer::remove_field( const tripoint_abs_ms &p, const field_type_id &type,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    if( !tile->sm->get_field( tile->local ).remove_field( type ) ) {
+        return false;
+    }
+
+    --tile->sm->field_count;
+    invalidate_active_field_remove_caches( p, type );
+    return true;
+}
+
+auto mapbuffer::get_items( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> location_vector<item> *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    return &tile->sm->get_items( tile->local );
+}
+
+auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
+                                     const mapbuffer_add_item_or_charges_options &options ) -> detached_ptr<item>
+{
+    if( !new_item ) {
+        return std::move( new_item );
+    }
+    if( new_item->is_null() ) {
+        debugmsg( "Tried to add a null item to the mapbuffer" );
+        return std::move( new_item );
+    }
+    if( new_item->has_flag( flag_NO_DROP ) ) {
+        return std::move( new_item );
+    }
+
+    auto valid_tile = [&]( const tripoint_abs_ms & target ) -> std::optional<mapbuffer_tile_lookup> {
+        auto tile = lookup_tile( *this, target, options.lookup );
+        if( !tile )
+        {
+            return std::nullopt;
+        }
+        if( tile_has_flag( *tile, "DESTROY_ITEM" ) )
+        {
+            return std::nullopt;
+        }
+        if( new_item->made_of( LIQUID ) && tile_has_flag( *tile, "SWIMMABLE" ) )
+        {
+            return std::nullopt;
+        }
+        return tile;
+    };
+
+    auto valid_limits = [&]( const mapbuffer_tile_lookup & tile ) {
+        const auto max_volume = tile.sm->get_furn( tile.local ) != f_null ?
+                                tile.sm->get_furn( tile.local ).obj().max_volume :
+                                tile.sm->get_ter( tile.local ).obj().max_volume;
+        auto stored_volume = 0_ml;
+        for( const auto *const existing : tile.sm->get_items( tile.local ) ) {
+            stored_volume += existing->volume();
+        }
+        return new_item->volume() <= max_volume - stored_volume &&
+               tile.sm->get_items( tile.local ).size() < MAX_ITEM_IN_SQUARE;
+    };
+
+    auto call_active_drop_hook = [&]( const tripoint_abs_ms & target ) {
+        const auto local = active_reality_bubble_local( target );
+        if( !local ) {
+            if( new_item->made_of( LIQUID ) && !new_item->has_own_flag( flag_DIRTY ) ) {
+                new_item->set_flag( flag_DIRTY );
+            }
+            return false;
+        }
+        if( new_item->made_of( LIQUID ) || !new_item->has_flag( flag_DROP_ACTION_ONLY_IF_LIQUID ) ) {
+            return new_item->on_drop( *local, g->m );
+        }
+        return false;
+    };
+
+    auto route_allows_overflow = [&]( const tripoint_abs_ms & target ) {
+        const auto source_local = active_reality_bubble_local( p );
+        const auto target_local = active_reality_bubble_local( target );
+        if( !source_local || !target_local ) {
+            return false;
+        }
+        const auto max_dist = 2;
+        const auto max_path_length = 4 * max_dist;
+        const auto setting = pathfinding_settings( 0, max_dist, max_path_length, 0, false, true, false,
+                             false, false );
+        return !g->m.route( *source_local, *target_local, setting ).empty();
+    };
+
+    auto place_item = [&]( const tripoint_abs_ms & target, mapbuffer_tile_lookup & tile ) {
+        auto &items = tile.sm->get_items( tile.local );
+        if( new_item->count_by_charges() ) {
+            for( auto &existing : items ) {
+                if( existing->merge_charges( std::move( new_item ) ) ) {
+                    return;
+                }
+            }
+        }
+
+        if( const auto local = active_reality_bubble_local( target ) ) {
+            g->m.support_dirty( *local );
+        }
+        new_item = add_item( target, std::move( new_item ), options.lookup );
+    };
+
+    auto try_place = [&]( const tripoint_abs_ms & target, const bool reject_noitem,
+    const bool call_drop_hook_first ) {
+        auto tile = valid_tile( target );
+        if( !tile ) {
+            return false;
+        }
+        if( reject_noitem && ( tile_has_flag( *tile, "NOITEM" ) || tile_has_flag( *tile, "SEALED" ) ) ) {
+            return false;
+        }
+        if( call_drop_hook_first && call_active_drop_hook( target ) ) {
+            return true;
+        }
+        if( ( !tile_has_flag( *tile, "NOITEM" ) ||
+              tile_allows_item_despite_noitem_flag( *new_item, *tile ) ) &&
+            valid_limits( *tile ) ) {
+            if( !call_drop_hook_first && call_active_drop_hook( target ) ) {
+                return true;
+            }
+            place_item( target, *tile );
+            return true;
+        }
+        return false;
+    };
+
+    if( try_place( p, false, false ) ) {
+        return std::move( new_item );
+    }
+
+    if( options.overflow ) {
+        const auto max_dist = 2;
+        auto tiles = closest_points_first( p, max_dist );
+        tiles.erase( tiles.begin() );
+        for( const auto &candidate : tiles ) {
+            if( !route_allows_overflow( candidate ) ) {
+                continue;
+            }
+            if( try_place( candidate, true, true ) ) {
+                return std::move( new_item );
+            }
+        }
+    }
+
+    return std::move( new_item );
+}
+
+auto mapbuffer::add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
+                          const mapbuffer_lookup_options options ) -> detached_ptr<item>
+{
+    if( !new_item ) {
+        return std::move( new_item );
+    }
+    if( new_item->is_null() ) {
+        debugmsg( "Tried to add a null item to the mapbuffer" );
+        return std::move( new_item );
+    }
+
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::move( new_item );
+    }
+
+    if( !map_mutation_hooks::prepare_item_for_placement( {
+    .dim_id = dimension_id_,
+    .p = p,
+    .item_to_place = new_item,
+} ) ) {
+        return std::move( new_item );
+    }
+
+    if( new_item->is_map() && !new_item->has_var( "reveal_map_center_omt" ) ) {
+        new_item->set_var( "reveal_map_center_omt", project_to<coords::omt>( p ) );
+    }
+
+    tile->sm->is_uniform = false;
+    if( active_reality_bubble_local( p ) ) {
+        g->m.invalidate_max_populated_zlev( p.z() );
+    }
+
+    const auto adds_luminance = new_item->is_emissive();
+    tile->sm->update_lum_add( tile->local, *new_item );
+    if( adds_luminance ) {
+        invalidate_active_item_luminance_cache( p );
+    }
+
+    if( new_item->needs_processing() ) {
+        tile->sm->active_items.add( *new_item );
+        sync_active_item_submap_index( p, *tile->sm );
+    }
+
+    tile->sm->get_items( tile->local ).push_back( std::move( new_item ) );
+    return detached_ptr<item>();
+}
+
+auto mapbuffer::erase_item( const tripoint_abs_ms &p,
+                            const mapbuffer_erase_item_options &options ) -> location_vector<item>::iterator
+{
+    const auto tile = lookup_tile( *this, p, options.lookup );
+    if( !tile ) {
+        return location_vector<item>::iterator();
+    }
+
+    auto &items = tile->sm->get_items( tile->local );
+    item *const to_remove = *options.it;
+
+    tile->sm->active_items.remove( to_remove );
+    sync_active_item_submap_index( p, *tile->sm );
+
+    const auto removed_luminance = to_remove->is_emissive();
+    tile->sm->update_lum_rem( tile->local, *to_remove );
+    if( removed_luminance ) {
+        invalidate_active_item_luminance_cache( p );
+    }
+
+    return items.erase( options.it, options.out );
+}
+
+auto mapbuffer::remove_item( const tripoint_abs_ms &p, item *const to_remove,
+                             const mapbuffer_lookup_options options ) -> detached_ptr<item>
+{
+    if( to_remove == nullptr ) {
+        return detached_ptr<item>();
+    }
+
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return detached_ptr<item>();
+    }
+
+    auto &items = tile->sm->get_items( tile->local );
+    const auto iter = std::ranges::find( items, to_remove );
+    if( iter == items.end() ) {
+        return detached_ptr<item>();
+    }
+
+    detached_ptr<item> removed;
+    erase_item( p, {
+        .it = iter,
+        .out = &removed,
+        .lookup = options,
+    } );
+    return removed;
+}
+
+auto mapbuffer::clear_items( const tripoint_abs_ms &p,
+                             const mapbuffer_lookup_options options ) -> std::vector<detached_ptr<item>>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return {};
+    }
+
+    auto &items = tile->sm->get_items( tile->local );
+    for( item *const it : items ) {
+        tile->sm->active_items.remove( it );
+    }
+    sync_active_item_submap_index( p, *tile->sm );
+
+    const auto had_luminance = tile->sm->get_lum( tile->local ) != 0;
+    tile->sm->set_lum( tile->local, 0 );
+    if( had_luminance ) {
+        invalidate_active_item_luminance_cache( p );
+    }
+
+    return items.clear();
+}
+
+auto mapbuffer::make_item_active( const tripoint_abs_ms &p, item &target,
+                                  const mapbuffer_lookup_options options ) -> bool
+{
+    if( !target.needs_processing() ) {
+        return false;
+    }
+
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->active_items.add( target );
+    sync_active_item_submap_index( p, *tile->sm );
+    return true;
+}
+
+auto mapbuffer::make_item_inactive( const tripoint_abs_ms &p, item &target,
+                                    const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->active_items.remove( &target );
+    sync_active_item_submap_index( p, *tile->sm );
+    return true;
+}
+
+auto mapbuffer::update_item_lum( const tripoint_abs_ms &p, item &target,
+                                 const mapbuffer_item_lum_options &options ) -> bool
+{
+    if( !target.is_emissive() ) {
+        return false;
+    }
+
+    const auto tile = lookup_tile( *this, p, options.lookup );
+    if( !tile ) {
+        return false;
+    }
+
+    if( options.add_luminance ) {
+        tile->sm->update_lum_add( tile->local, target );
+    } else {
+        tile->sm->update_lum_rem( tile->local, target );
+    }
+    invalidate_active_item_luminance_cache( p );
+    return true;
+}
+
+auto mapbuffer::has_graffiti_at( const tripoint_abs_ms &p,
+                                 const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile && tile->sm->has_graffiti( tile->local );
+}
+
+auto mapbuffer::graffiti_at( const tripoint_abs_ms &p,
+                             const mapbuffer_lookup_options options ) -> std::optional<std::string>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_graffiti( tile->local );
+}
+
+auto mapbuffer::set_graffiti( const tripoint_abs_ms &p, const std::string &contents,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->set_graffiti( tile->local, contents );
+    return true;
+}
+
+auto mapbuffer::delete_graffiti( const tripoint_abs_ms &p,
+                                 const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->delete_graffiti( tile->local );
+    return true;
+}
+
+auto mapbuffer::has_signage( const tripoint_abs_ms &p,
+                             const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile && tile->sm->has_signage( tile->local );
+}
+
+auto mapbuffer::get_signage( const tripoint_abs_ms &p,
+                             const mapbuffer_lookup_options options ) -> std::optional<std::string>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_signage( tile->local );
+}
+
+auto mapbuffer::set_signage( const tripoint_abs_ms &p, const std::string &message,
+                             const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->set_signage( tile->local, message );
+    return true;
+}
+
+auto mapbuffer::delete_signage( const tripoint_abs_ms &p,
+                                const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->delete_signage( tile->local );
+    return true;
+}
+
+auto mapbuffer::has_computer( const tripoint_abs_ms &p,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile && tile->sm->has_computer( tile->local );
+}
+
+auto mapbuffer::get_computer( const tripoint_abs_ms &p,
+                              const mapbuffer_lookup_options options ) -> computer *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    return tile->sm->get_computer( tile->local );
+}
+
+auto mapbuffer::set_computer( const tripoint_abs_ms &p, const computer &terminal,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->set_computer( tile->local, terminal );
+    return true;
+}
+
+auto mapbuffer::add_computer( const tripoint_abs_ms &p,
+                              const mapbuffer_add_computer_options &options ) -> computer *
+{
+    const auto tile = lookup_tile( *this, p, options.lookup );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    set_ter( p, t_console, options.lookup );
+    tile->sm->set_computer( tile->local, computer( options.name, options.security ) );
+    return tile->sm->get_computer( tile->local );
+}
+
+auto mapbuffer::delete_computer( const tripoint_abs_ms &p,
+                                 const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    tile->sm->delete_computer( tile->local );
+    return true;
+}
+
+auto mapbuffer::partial_con_at( const tripoint_abs_ms &p,
+                                const mapbuffer_lookup_options options ) -> partial_con *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    const auto iter = tile->sm->partial_constructions.find( tripoint_sm_ms( tile->local, p.z() ) );
+    if( iter == tile->sm->partial_constructions.end() ) {
+        return nullptr;
+    }
+    return iter->second.get();
+}
+
+auto mapbuffer::partial_con_set( const tripoint_abs_ms &p, std::unique_ptr<partial_con> con,
+                                 const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    const auto inserted = tile->sm->partial_constructions.emplace( tripoint_sm_ms( tile->local, p.z() ),
+                          std::move( con ) ).second;
+    if( !inserted ) {
+        debugmsg( "set partial con on top of terrain which already has a partial con" );
+    }
+    return inserted;
+}
+
+auto mapbuffer::partial_con_remove( const tripoint_abs_ms &p,
+                                    const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    return tile->sm->partial_constructions.erase( tripoint_sm_ms( tile->local, p.z() ) ) > 0;
+}
+
+std::optional<tripoint_bub_ms>
+mapbuffer::active_reality_bubble_local( const tripoint_abs_ms &p ) const
+{
+    if( g == nullptr ) {
+        return std::nullopt;
+    }
+
+    if( g->m.get_bound_dimension() != dimension_id_ ) {
+        return std::nullopt;
+    }
+
+    const auto local = abs_to_bub( p );
+    if( !is_in_reality_bubble_bounds( local ) ) {
+        return std::nullopt;
+    }
+
+    return local;
+}
+
+auto mapbuffer::invalidate_active_terrain_set_caches( const tripoint_abs_ms &p,
+        const ter_id &old_id,
+        const ter_id &new_id ) const -> void
+{
+    const auto local = active_reality_bubble_local( p );
+    if( !local ) {
+        return;
+    }
+
+    auto &here = g->m;
+    const auto &old_terrain = old_id.obj();
+    const auto &new_terrain = new_id.obj();
+
+    if( old_terrain.transparent != new_terrain.transparent ) {
+        here.set_transparency_cache_dirty( *local );
+        here.set_seen_cache_dirty( *local );
+    }
+
+    if( new_terrain.has_flag( TFLAG_NO_FLOOR ) != old_terrain.has_flag( TFLAG_NO_FLOOR ) ) {
+        here.set_floor_cache_dirty( *local );
+        here.support_cache_dirty.insert( *local );
+        here.set_seen_cache_dirty( local->z() );
+        here.set_seen_cache_dirty( local->z() - 1 );
+        here.set_absorption_cache_dirty( *local );
+        here.set_absorption_cache_dirty( local->z() - 1 );
+    }
+
+    if( new_terrain.has_flag( TFLAG_Z_TRANSPARENT ) != old_terrain.has_flag( TFLAG_Z_TRANSPARENT ) ) {
+        here.set_floor_cache_dirty( *local );
+        here.set_seen_cache_dirty( local->z() );
+        here.set_seen_cache_dirty( local->z() - 1 );
+    }
+
+    if( new_terrain.has_flag( TFLAG_SUSPENDED ) != old_terrain.has_flag( TFLAG_SUSPENDED ) ) {
+        here.set_suspension_cache_dirty( local->z() );
+        if( new_terrain.has_flag( TFLAG_SUSPENDED ) ) {
+            here.get_cache( local->z() ).suspension_cache.emplace_back( p.xy() );
+        }
+    }
+
+    if( new_terrain.has_flag( TFLAG_BLOCK_WIND ) != old_terrain.has_flag( TFLAG_BLOCK_WIND ) ) {
+        here.set_absorption_cache_dirty( *local );
+    }
+
+    if( new_terrain.has_flag( TFLAG_CONNECT_TO_WALL ) != old_terrain.has_flag(
+            TFLAG_CONNECT_TO_WALL ) ) {
+        here.set_absorption_cache_dirty( *local );
+    }
+
+    here.invalidate_max_populated_zlev( local->z() );
+    here.set_memory_seen_cache_dirty( *local );
+    here.set_pathfinding_cache_dirty( *local );
+    here.support_dirty( tripoint_bub_ms( local->xy(), local->z() + 1 ) );
+    here.invalidate_lightmap_caches();
+}
+
+auto mapbuffer::sync_furniture_change_side_tables( const tripoint_abs_ms &p, submap &sm,
+        const point_sm_ms &local, const furn_id &old_id, const furn_id &new_id ) const -> void
+{
+    const auto &old_furniture = old_id.obj();
+    const auto &new_furniture = new_id.obj();
+    auto *const tracker = get_distribution_grid_tracker_for( dimension_id_ );
+
+    if( old_furniture.active ) {
+        sm.active_furniture.erase( local );
+        if( tracker != nullptr ) {
+            tracker->on_changed( p );
+        }
+    }
+
+    if( new_furniture.active ) {
+        cata::poly_serialized<active_tile_data> atd;
+        atd.reset( new_furniture.active->clone() );
+        atd->set_last_updated( calendar::turn );
+        sm.active_furniture[local] = atd;
+        if( tracker != nullptr ) {
+            tracker->on_changed( p );
+        }
+    }
+
+    if( g != nullptr && g->m.get_bound_dimension() == dimension_id_ &&
+        ( old_furniture.fluid_grid || new_furniture.fluid_grid ) ) {
+        fluid_grid::on_structure_changed( p );
+    }
+}
+
+auto mapbuffer::invalidate_active_furniture_set_caches( const tripoint_abs_ms &p,
+        const furn_id &old_id, const furn_id &new_id ) const -> void
+{
+    const auto local = active_reality_bubble_local( p );
+    if( !local ) {
+        return;
+    }
+
+    auto &here = g->m;
+    const auto &old_furniture = old_id.obj();
+    const auto &new_furniture = new_id.obj();
+
+    if( old_furniture.transparent != new_furniture.transparent ) {
+        here.set_transparency_cache_dirty( *local );
+        here.set_seen_cache_dirty( *local );
+    }
+
+    if( old_furniture.light_emitted != new_furniture.light_emitted ) {
+        here.invalidate_lightmap_caches();
+    }
+
+    if( old_furniture.has_flag( TFLAG_NO_FLOOR ) != new_furniture.has_flag( TFLAG_NO_FLOOR ) ||
+        old_furniture.has_flag( TFLAG_Z_TRANSPARENT ) != new_furniture.has_flag( TFLAG_Z_TRANSPARENT ) ) {
+        here.set_floor_cache_dirty( *local );
+        here.set_seen_cache_dirty( local->z() );
+        here.set_seen_cache_dirty( local->z() - 1 );
+    }
+
+    if( old_furniture.has_flag( TFLAG_SUN_ROOF_ABOVE ) !=
+        new_furniture.has_flag( TFLAG_SUN_ROOF_ABOVE ) ) {
+        here.set_floor_cache_dirty( tripoint_bub_ms( local->xy(), local->z() + 1 ) );
+    }
+
+    if( old_furniture.has_flag( TFLAG_BLOCK_WIND ) != new_furniture.has_flag( TFLAG_BLOCK_WIND ) ||
+        old_furniture.has_flag( TFLAG_CONNECT_TO_WALL ) !=
+        new_furniture.has_flag( TFLAG_CONNECT_TO_WALL ) ) {
+        here.set_absorption_cache_dirty( *local );
+    }
+
+    here.invalidate_max_populated_zlev( local->z() );
+    here.set_memory_seen_cache_dirty( *local );
+    here.set_pathfinding_cache_dirty( *local );
+    here.support_dirty( *local );
+    here.support_dirty( tripoint_bub_ms( local->xy(), local->z() + 1 ) );
+}
+
+auto mapbuffer::sync_active_trap_change_side_tables( const tripoint_abs_ms &p,
+        const point_sm_ms &local_tile, const trap_id &old_id, const trap_id &new_id ) const -> void
+{
+    const auto local = active_reality_bubble_local( p );
+    if( !local ) {
+        return;
+    }
+
+    auto &here = g->m;
+    const auto sm_abs = project_to<coords::sm>( p );
+
+    if( old_id != tr_null ) {
+        g->u.add_known_trap( *local, tr_null.obj() );
+        if( old_id.obj().is_funnel() ) {
+            std::erase_if( here.funnel_locations_, [&]( const auto & entry ) {
+                return entry.first == sm_abs && entry.second == local_tile;
+            } );
+        }
+    }
+
+    if( new_id.obj().is_funnel() ) {
+        here.funnel_locations_.emplace_back( sm_abs, local_tile );
+    }
+}
+
+auto mapbuffer::invalidate_active_field_add_caches( const tripoint_abs_ms &p,
+        const field_type_id &type ) const -> void
+{
+    const auto local = active_reality_bubble_local( p );
+    if( !local ) {
+        return;
+    }
+
+    auto &here = g->m;
+    const auto &field_type = type.obj();
+    here.invalidate_max_populated_zlev( local->z() );
+
+    if( field_type.dirty_transparency_cache || !field_type.is_transparent() ) {
+        here.set_transparency_cache_dirty( *local );
+        here.set_seen_cache_dirty( *local );
+    }
+
+    if( field_type.is_dangerous() ) {
+        here.set_pathfinding_cache_dirty( *local );
+    }
+
+    if( here.has_zlevels() && field_type.accelerated_decay ) {
+        here.support_dirty( *local );
+    }
+}
+
+auto mapbuffer::invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
+        const field_type_id &type ) const -> void
+{
+    const auto local = active_reality_bubble_local( p );
+    if( !local ) {
+        return;
+    }
+
+    auto &here = g->m;
+    const auto &field_type = type.obj();
+    if( field_type.dirty_transparency_cache || !field_type.is_transparent() ) {
+        here.set_transparency_cache_dirty( *local );
+        here.set_seen_cache_dirty( *local );
+    }
+
+    if( field_type.is_dangerous() ) {
+        here.set_pathfinding_cache_dirty( *local );
+    }
+}
+
+void mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p,
+        const submap &sm ) const
+{
+    if( g == nullptr || g->m.get_bound_dimension() != dimension_id_ ) {
+        return;
+    }
+
+    auto &active_submaps = g->m.submaps_with_active_items;
+    const auto abs_submap = project_to<coords::sm>( p );
+    if( sm.active_items.empty() ) {
+        active_submaps.erase( abs_submap );
+    } else {
+        active_submaps.insert( abs_submap );
+    }
+}
+
+void mapbuffer::invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const
+{
+    if( active_reality_bubble_local( p ) ) {
+        g->m.invalidate_lightmap_caches();
+    }
 }
 
 void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_progress )
@@ -404,7 +1661,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
     if( notify_tracker ) {
         auto &tracker = get_distribution_grid_tracker();
         for( const auto &pos : submaps_to_delete ) {
-            tracker.on_submap_unloaded( tripoint_abs_sm( pos ), "" );
+            tracker.on_submap_unloaded( tripoint_abs_sm( pos ), dimension_id() );
         }
     }
 
@@ -428,7 +1685,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
             submaps.contains( base + point_south ) ||
             submaps.contains( base + point_south_east );
         if( !in_memory ) {
-            g->get_active_world()->write_map_omt( dimension_id_, omt_addr,
+            g->get_active_world()->write_map_omt( dimension_id_.str(), omt_addr,
             [&data]( std::ostream & fout ) {
                 fout << data;
             } );
@@ -479,7 +1736,7 @@ void mapbuffer::save_omt( const tripoint_abs_omt &omt_addr,
         return;
     }
 
-    g->get_active_world()->write_map_omt( dimension_id_, omt_addr, [&]( std::ostream & fout ) {
+    g->get_active_world()->write_map_omt( dimension_id_.str(), omt_addr, [&]( std::ostream & fout ) {
         JsonOut jsout( fout );
         jsout.start_array();
         for( const tripoint_abs_sm &submap_addr : submap_addrs ) {
@@ -593,7 +1850,7 @@ bool mapbuffer::preload_omt( const tripoint_abs_omt &omt_addr )
         JsonIn jsin( iss );
         deserialize_into_vec( jsin, loaded, already_loaded );
     } else {
-        g->get_active_world()->read_map_omt( dimension_id_, omt_addr,
+        g->get_active_world()->read_map_omt( dimension_id_.str(), omt_addr,
         [this, &loaded, &already_loaded]( JsonIn & jsin ) {
             deserialize_into_vec( jsin, loaded, already_loaded );
         } );

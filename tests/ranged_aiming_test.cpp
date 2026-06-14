@@ -27,7 +27,14 @@
 
 static constexpr tripoint_bub_ms shooter_pos( 60, 60, 0 );
 
-static void set_up_player_vision()
+static auto update_player_visibility_cache() -> void
+{
+    g->m.invalidate_map_cache( shooter_pos.z() );
+    g->m.build_map_cache( shooter_pos.z() );
+    g->m.update_visibility_cache( shooter_pos.z() );
+}
+
+static auto set_up_player_vision() -> void
 {
     g->place_player( shooter_pos );
     g->u.worn.clear();
@@ -40,12 +47,8 @@ static void set_up_player_vision()
 
     calendar::turn = calendar::turn_zero + 12_hours;
 
-    g->m.invalidate_map_cache( shooter_pos.z() );
-    g->m.build_map_cache( shooter_pos.z() );
-    g->m.update_visibility_cache( shooter_pos.z() );
-    g->m.invalidate_map_cache( shooter_pos.z() );
-    g->m.build_map_cache( shooter_pos.z() );
-    g->m.update_visibility_cache( shooter_pos.z() );
+    update_player_visibility_cache();
+    update_player_visibility_cache();
 }
 
 TEST_CASE( "Aiming at a clearly visible target", "[ranged][aiming]" )
@@ -177,6 +180,7 @@ TEST_CASE( "Aiming at a target behind bars", "[ranged][aiming]" )
         g->m.ter_set( shooter_pos + point( 1, y_off ), t_window_bars );
     }
     monster &z = spawn_test_monster( "debug_mon", shooter_pos + point( 2, 0 ) );
+    update_player_visibility_cache();
     WHEN( "There is no direct, passable line to target" ) {
         const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
         int impassable_tiles = std::count_if( path.begin(), path.end(),
@@ -221,6 +225,7 @@ TEST_CASE( "Aiming a turret from a solid vehicle", "[ranged][aiming]" )
     vehicle *veh = g->m.add_vehicle( vproto_id( "turret_test" ), shooter_pos, 0_degrees, 100, 0,
                                      false );
     REQUIRE( veh != nullptr );
+    update_player_visibility_cache();
 
     WHEN( "Shooter's line of fire becomes blocked by vehicle's windshield" ) {
         int impassable_tiles_after = std::count_if( path.begin(), path.end(),

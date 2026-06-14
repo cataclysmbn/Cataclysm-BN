@@ -44,6 +44,7 @@ StructuredBuffer<float>                 transparency_all : register(t0, space0);
 StructuredBuffer<uint>                  floor_all        : register(t1, space0);
 StructuredBuffer<uint>                  vehicle_floor_all: register(t2, space0);
 StructuredBuffer<GpuColoredLightSource> light_sources    : register(t3, space0);
+StructuredBuffer<float>                 source_map_all   : register(t4, space0);
 RWStructuredBuffer<uint>                color_all        : register(u0, space1);
 
 int tile_index( int x, int y, int z )
@@ -210,6 +211,9 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
 
     for( int tz = z_min; tz <= z_max; ++tz ) {
         int idx = tile_index( tx, ty, tz );
+        if( source_map_all[idx] < 0.0 ) {
+            continue;
+        }
         bool vehicle_surface = has_vehicle_surface( tx, ty, tz );
         float target_frac =
             vehicle_surface ? VEHICLE_ROOF_SURFACE_Z_FRAC : open_target_z_frac( src );

@@ -4,6 +4,7 @@
 
 #include "coordinates.h"
 #include "item.h"
+#include "type_id.h"
 #include "units.h"
 
 class submap;
@@ -42,6 +43,6 @@ void create_burnproducts( std::vector<detached_ptr<item>> &out, const item &fuel
  * @return  true if any fire field remains alive after processing.
  *          world_tick() uses this to request adjacent submap loading.
  */
-auto process_fields_in_submap( const std::string &dim, submap &sm,
+auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                                const tripoint_abs_sm &pos,
                                mapbuffer &mb ) -> bool;

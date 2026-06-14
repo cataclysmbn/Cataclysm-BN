@@ -20,6 +20,8 @@
     "damage": { "damage_type": "bullet", "amount": 21, "armor_penetration": 12 },
     "dispersion": 60,
     "recoil": 300,
+    "loudness": 158,
+    "speed": 300,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -29,6 +31,8 @@
     "name": { "str": ".380 ACP JHP" },
     "description": ".380 ACP ammunition with a 95gr jacketed hollow point bullet.  It is a popular round for small concealable backup pistols, and often the weakest recommended defensive caliber.  One should be careful not to chamber it in 9x18mm Makarov or 9x19mm firearms.",
     "//": "Hollowpoint damage increase of 25%",
+    "loudness": 158,
+    "speed": 312,
     "damage": { "damage_type": "bullet", "amount": 26, "armor_penetration": 0 }
   },
   {
@@ -40,6 +44,8 @@
     "price": "190 cent",
     "price_postapoc": "15 USD",
     "count": 25,
+    "loudness": 130,
+    "speed": 390,
     "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 15 },
     "relative": { "dispersion": -15 },
     "proportional": { "recoil": 1.2 }

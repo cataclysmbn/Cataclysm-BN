@@ -81,6 +81,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
   - type MUST be one of: `feat`, `fix`, `refactor`, `chore`, `build`, `ci`
 - **Code**: Refer to [code changes](#when-working-on-code-changes).
 - **PR**: Use [Template](./.github/pull_request_template.md). **DO NOT ADD fluff**. create via `git push && gh pr create --web --fill`.
+- After opening or updating a Cataclysm-BN PR, track `gh pr checks` until CI finishes or a concrete blocker is identified; inspect failing job logs, fix branch-owned failures, commit, and push before finalizing. For transient or infrastructure failures, rerun when permitted or report the exact failing job and evidence.
 - Before running broad formatter targets, prefer file-scoped formatting for touched files when available; if only a broad target exists, inspect and revert unrelated formatter-only changes before continuing.
 
 ### WHEN working on code changes

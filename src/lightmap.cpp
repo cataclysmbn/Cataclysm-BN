@@ -1900,17 +1900,10 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
         return get_visibility( ll, visibility_variables_cache ) == VIS_CLEAR;
     }
 
-    ZoneScopedN( "pl_sees_dirty_visibility_fallback" );
-    const auto player_pos = g->u.bub_pos();
-    if( !sees( player_pos, t, -1 ) ) {
-        return false;
-    }
-
-    // Transitional SDL path: normal gameplay should consume GPU-generated
-    // visibility_cache.  If a caller asks before that cache is refreshed, avoid
-    // consulting stale CPU lm data; answer geometry only until this becomes a
-    // sparse GPU visibility query.
-    return true;
+    // Normal SDL gameplay should consume GPU-generated visibility_cache.
+    // If a caller asks before draw refreshes that cache, avoid geometry-only
+    // visibility because it produces false safe-mode and monster-info warnings.
+    return false;
 #else
     const auto variables = make_visibility_variables( t.z() );
     return get_visibility( apparent_light_at( t, variables ), variables ) == VIS_CLEAR;
@@ -2130,7 +2123,6 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                 //               so check floor_cache at z=(origin.z-k).
                 //   Going up:   crossing k separates z=(origin.z+k) from z=(origin.z+k+1),
                 //               so check floor_cache at z=(origin.z+k+1).
-                // The origin tile is exempted: the player stands on top of that floor.
                 {
                     const int n_cross = static_cast<int>( std::abs( dz ) );
                     for( int k = 0; k < n_cross; ++k )
@@ -2140,13 +2132,9 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                                                                static_cast<float>( origin.x() ) + t * dx ) );
                         const int   fy = static_cast<int>( std::lround(
                                                                static_cast<float>( origin.y() ) + t * dy ) );
-                        if( k == 0 && dz < 0.0f &&
-                            fx == origin.x() && fy == origin.y() ) {
-                            continue; // player's own floor; they stand on top of it
-                        }
                         const int floor_z = ( dz < 0.0f )
-                                            ? static_cast<int>( origin.z() ) - k
-                                            : static_cast<int>( origin.z() ) + k + 1;
+                        ? static_cast<int>( origin.z() ) - k
+                        : static_cast<int>( origin.z() ) + k + 1;
                         if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
                             continue;
                         }
@@ -2216,13 +2204,9 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                                                            static_cast<float>( origin.x() ) + t * dx ) );
                     const int   fy = static_cast<int>( std::lround(
                                                            static_cast<float>( origin.y() ) + t * dy ) );
-                    if( k == 0 && dz < 0.0f &&
-                        fx == origin.x() && fy == origin.y() ) {
-                        continue; // player's own floor
-                    }
                     const int floor_z = ( dz < 0.0f )
-                                        ? static_cast<int>( origin.z() ) - k
-                                        : static_cast<int>( origin.z() ) + k + 1;
+                    ? static_cast<int>( origin.z() ) - k
+                    : static_cast<int>( origin.z() ) + k + 1;
                     if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
                         continue;
                     }

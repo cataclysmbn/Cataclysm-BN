@@ -20,7 +20,7 @@
     "clip_size": 20,
     "ups_charges": 80,
     "reload": 200,
-    "loudness": 200,
+    "loudness": 155,
     "ammo_effects": [ "INCENDIARY" ],
     "extend": { "flags": [ "MOUNTED_GUN" ] }
   },
@@ -70,7 +70,7 @@
     "durability": 6,
     "clip_size": 20,
     "ups_charges": 20,
-    "loudness": 100,
+    "loudness": 120,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 2 ] ],
     "ammo_effects": [ "INCENDIARY" ]
   }

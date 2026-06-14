@@ -226,12 +226,12 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
     if (s_daylight_diffuse_pipeline == nullptr) {
         s_daylight_diffuse_pipeline = load_pipeline(
             device, "lm_daylight_diffuse_compute",
-            /*ro=*/3, /*rw=*/2, 64, 1);
+            /*ro=*/4, /*rw=*/2, 64, 1);
     }
     if (s_raytrace_pipeline == nullptr) {
         s_raytrace_pipeline = load_pipeline(
             device, "lm_raytrace_compute",
-            /*ro=*/4, /*rw=*/1, 8, 8);
+            /*ro=*/5, /*rw=*/1, 8, 8);
     }
     return s_ambient_pipeline != nullptr && s_daylight_diffuse_pipeline != nullptr
         && s_raytrace_pipeline != nullptr && ensure_seen_pipelines(device);
@@ -242,7 +242,7 @@ auto ensure_color_raytrace_pipeline(SDL_GPUDevice* const device) -> bool {
     if (s_color_raytrace_pipeline == nullptr) {
         s_color_raytrace_pipeline = load_pipeline(
             device, "lm_color_raytrace_compute",
-            /*ro=*/4, /*rw=*/1, 8, 8);
+            /*ro=*/5, /*rw=*/1, 8, 8);
     }
     return s_color_raytrace_pipeline != nullptr;
 }
@@ -322,7 +322,7 @@ auto ensure_max_uint_pipeline(SDL_GPUDevice* const device) -> bool {
     if (s_max_uint_pipeline == nullptr) {
         s_max_uint_pipeline = load_pipeline(
             device, "lm_max_uint_compute",
-            /*ro=*/1, /*rw=*/1, 64, 1);
+            /*ro=*/2, /*rw=*/1, 64, 1);
     }
     return s_max_uint_pipeline != nullptr;
 }
@@ -1312,10 +1312,8 @@ auto ambient_signature(lm_ambient_push_constants const& ambient) -> std::size_t 
     mix_signature(seed, quantized_signature_float(ambient.sun_dy_per_z, 8.0f));
     mix_signature(seed, quantized_signature_float(ambient.inside_light, 4.0f));
     mix_signature(seed, quantized_signature_float(ambient.solar_shadow_light, 4.0f));
-    for (auto const& natural_light : ambient.natural_light) {
-        for (auto const value : natural_light) {
-            mix_signature(seed, quantized_signature_float(value, 4.0f));
-        }
+    for (auto const value : ambient.natural_light) {
+        mix_signature(seed, quantized_signature_float(value, 4.0f));
     }
     return seed;
 }
@@ -1429,6 +1427,10 @@ auto field_light_color(field_entry const& entry) -> std::optional<uint32_t> {
 
 auto map_data_light_color(map_data_common_t const& data) -> std::optional<uint32_t> {
     return color_rgb_from_optional(data.light_color);
+}
+
+auto encode_local_light_override(float const light_override) -> float {
+    return -(light_override + 1.0f);
 }
 
 auto add_source(
@@ -1729,6 +1731,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
 
 auto add_character_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_character_sources");
+    static const efftype_id effect_haslight("haslight");
     static const efftype_id effect_onfire("onfire");
 
     auto add_char = [&](Character const& ch) {
@@ -1736,6 +1739,8 @@ auto add_character_sources(source_accumulator& acc) -> void {
         if (!acc.m.inbounds(pos)) { return; }
         if (ch.has_effect(effect_onfire)) {
             add_source(acc, pos, 8.0f, light_source_kind::character);
+        } else if (ch.has_effect(effect_haslight)) {
+            add_source(acc, pos, 4.0f, light_source_kind::character);
         }
         add_source(acc, pos, ch.active_light(), light_source_kind::character);
         if (auto const colored_light = character_colored_item_light(ch)) {
@@ -1830,6 +1835,35 @@ auto write_source_map_to_level_caches(
         }
         auto& value = lc.sm[lc.idx(source.x, source.y)];
         value = std::max(value, source.luminance);
+    }
+}
+
+auto write_field_light_overrides_to_source_map(map const& m, std::vector<int> const& dirty_levels)
+    -> void {
+    for (auto const z : dirty_levels) {
+        auto const& lc = m.get_cache_ref(z);
+        for (auto const smx : std::views::iota(0, lc.cache_mapsize)) {
+            for (auto const smy : std::views::iota(0, lc.cache_mapsize)) {
+                auto const grid = tripoint_bub_sm(smx, smy, z);
+                auto const* const sm = m.get_submap_at_grid(grid);
+                if (sm == nullptr || sm->field_count == 0) { continue; }
+
+                for (auto const sm_ms : sm->field_cache) {
+                    auto const& fields = sm->get_field(sm_ms);
+                    if (fields.field_count() == 0) { continue; }
+                    auto const pos = project_combine(grid, sm_ms);
+                    auto& target_lc = const_cast<level_cache&>(m.get_cache_ref(pos.z()));
+                    auto& value = target_lc.sm[target_lc.idx(pos.x(), pos.y())];
+                    for (auto const& field_pair : fields) {
+                        if (!field_pair.first.is_valid()) { continue; }
+                        auto const light_override = field_pair.second.local_light_override();
+                        if (light_override >= 0.0f) {
+                            value = encode_local_light_override(light_override);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -2782,6 +2816,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         dynamic_sources = std::move(collection.dynamic_sources);
         colored_sources = std::move(collection.colored_sources);
         write_source_map_to_level_caches(*p.m, source_collection_levels, all_sources);
+        write_field_light_overrides_to_source_map(*p.m, source_collection_levels);
         if (collect_colored_sources && colored_sources.empty()) {
             clear_colored_light_caches(*p.m, source_collection_levels);
         }
@@ -2869,8 +2904,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         ambient_push.solar_shadow_light = std::
             max(static_cast<float>(LIGHT_AMBIENT_LOW),
                 std::min(g->natural_light_level(0), max_shadow_light));
+        std::ranges::fill(ambient_push.natural_light, 0.0f);
         for (auto const zi : std::views::iota(0, OVERMAP_LAYERS)) {
-            ambient_push.natural_light[zi / 4][zi % 4] = g->natural_light_level(zi - OVERMAP_DEPTH);
+            ambient_push.natural_light[zi] = g->natural_light_level(zi - OVERMAP_DEPTH);
         }
     }
     auto const current_ambient_signature = ambient_signature(ambient_push);
@@ -3267,7 +3303,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_lm, 1);
                 SDL_BindGPUComputePipeline(cp, s_raytrace_pipeline);
 
-                auto const ro_bufs = std::array<SDL_GPUBuffer*, 4>{t_buf, f_buf, vf_buf, src_buf};
+                auto const ro_bufs =
+                    std::array<SDL_GPUBuffer*, 5>{t_buf, f_buf, vf_buf, src_buf, source_map_buf};
                 SDL_BindGPUComputeStorageBuffers(
                     cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
@@ -3302,8 +3339,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_color, 1);
                 SDL_BindGPUComputePipeline(cp, s_color_raytrace_pipeline);
 
-                auto const ro_bufs =
-                    std::array<SDL_GPUBuffer*, 4>{t_buf, f_buf, vf_buf, colored_src_buf};
+                auto const ro_bufs = std::array<
+                    SDL_GPUBuffer*, 5>{t_buf, f_buf, vf_buf, colored_src_buf, source_map_buf};
                 SDL_BindGPUComputeStorageBuffers(
                     cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
@@ -3402,8 +3439,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         auto* const cp = SDL_BeginGPUComputePass(
                             cmd, nullptr, 0, rw_bufs.data(), static_cast<Uint32>(rw_bufs.size()));
                         SDL_BindGPUComputePipeline(cp, s_daylight_diffuse_pipeline);
-                        auto const ro_bufs =
-                            std::array<SDL_GPUBuffer*, 3>{daylight_seed_buf, source_buf, t_buf};
+                        auto const ro_bufs = std::array<
+                            SDL_GPUBuffer*,
+                            4>{daylight_seed_buf, source_buf, t_buf, source_map_buf};
                         SDL_BindGPUComputeStorageBuffers(
                             cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
                         auto const diffuse_push = lm_daylight_diffuse_push_constants{
@@ -3442,7 +3480,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         .padding3 = 0};
                     auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_lm, 1);
                     SDL_BindGPUComputePipeline(cp, s_max_uint_pipeline);
-                    auto const ro_bufs = std::array<SDL_GPUBuffer*, 1>{source_buf};
+                    auto const ro_bufs = std::array<SDL_GPUBuffer*, 2>{source_buf, source_map_buf};
                     SDL_BindGPUComputeStorageBuffers(
                         cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
                     auto const max_push = lm_max_uint_push_constants{

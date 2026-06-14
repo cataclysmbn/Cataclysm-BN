@@ -1175,23 +1175,43 @@ static int calc_gun_volume( const item &gun )
     // Inherit suppressor modifiers if relevant (e.g. KSG second mag) but still use current ammo
     const item &parent = ( gun.parent_item() != nullptr &&
                            gun.has_flag( flag_USE_PARENT_GUN ) ) ? *gun.parent_item() : gun;
+    const bool am_dat = gun.ammo_data();
     // If our ammo is subsonic, loudness mods from the gun and gunmods can reduce noise freely.
-    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will make a sonic boom.
-    int noise = parent.type->gun->loudness;
-    // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
-    if( gun.ammo_data() ) {
-        noise += gun.ammo_data()->ammo->loudness;
+    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will still make a sonic boom.
+    // Start our noise at zero.
+    int noise = 0;
+    int speed = parent.gun_speed( am_dat );
+    bool suppressed = false;
+    if( am_dat ) {
+        noise = parent.ammo_data()->ammo->loudness;
         // Speed of sound at sea level is around 343 meters per second.
         // While it would be ideal to be based on speed of sound
         // EVERYTHING flies faster then the speed of sound so using that to force loud sounds makes little sense in the current state of affairs
         // NOTE: If supersonic ever gets implented, use it here
-        noise = std::min( 160, noise );
+        noise += parent.type->gun->loudness;
+    } else {
+        // If we dont have an ammo, assume that we are not a firearm/we are a fake monster item or something
+        noise = parent.type->gun->loudness;
     }
+    // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
     for( const auto mod : parent.gunmods() ) {
+        if( mod->type->gunmod->loudness < -20 ) {
+            suppressed = true;
+        }
         noise += mod->type->gunmod->loudness;
     }
+    if( suppressed ) {
+        // Speed of sound in atmosphere @ seat level is 343 m/s
+        if( speed < 344 ) {
+            // We are suppressed and subsonic. We take the least of 100 or current noise.
+            noise = std::min( 100, noise );
+        } else {
+            // We are suppressed but still super sonic. Cap our volume to 120.
+            noise = std::min( 120, noise );
+        }
+    }
 
-
+    noise = std::min( 191, noise );
     // Cap it like it gets capped when making a sound
     noise = std::max( noise, 0 );
     return noise;

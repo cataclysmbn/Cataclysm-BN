@@ -84,6 +84,7 @@ scopes:
   - mods/pathfinding_stockfish
   - mods/pride_flags
   - mods/resurrection_tech
+  - mods/rocky_zombies
   - mods/rpg_system
   - mods/sample-uv-mod
   - mods/saveload_lua_test

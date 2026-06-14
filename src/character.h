@@ -1717,7 +1717,7 @@ class Character : public Creature, public location_visitable<Character>
         efftype_id last_emote;
 
         // bio_portal_tap: persistent link to a powered portal for passive bionic charging.
-        std::string bio_portal_tap_dim_id;
+        dimension_id bio_portal_tap_dim_id;
         tripoint_abs_ms bio_portal_tap_pos;
         bool bio_portal_tap_linked = false;
 

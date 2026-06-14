@@ -1049,6 +1049,9 @@ void reg_islot( sol::state &lua )
         DOC( "Modifies base loudness as provided by the currently loaded ammo" );
         SET_MEMB_RO( loudness );
 
+        DOC( "Modifies projectile speed as provided by the currently loaded ammo" );
+        SET_MEMB_RO( speed );
+
         DOC( "If this uses UPS charges, how many (per shoot), 0 for no UPS charges at all" );
         SET_MEMB_RO( ups_charges );
 
@@ -1135,6 +1138,9 @@ void reg_islot( sol::state &lua )
 
         DOC( "Modifies base loudness as provided by the currently loaded ammo" );
         SET_MEMB_RO( loudness );
+
+        DOC( "Modifies projectile speed as provided by the currently loaded ammo" );
+        SET_MEMB_RO( speed );
 
         DOC( "How many moves does this gunmod take to install?" );
         SET_MEMB_RO( install_time );
@@ -1291,6 +1297,9 @@ void reg_islot( sol::state &lua )
         DOC( "Base loudness of ammo (possibly modified by gun/gunmods)" );
         SET_MEMB_RO( loudness );
 
+        DOC( "Base speed of ammo (possibly modified by gun/gunmods)" );
+        SET_MEMB_RO( speed );
+
         DOC( "Recoil (per shot), roughly equivalent to kinetic energy (in Joules)" );
         SET_MEMB_RO( recoil );
 
@@ -1403,7 +1412,6 @@ void reg_islot( sol::state &lua )
         SET_MEMB_RO( damage );
         SET_MEMB_RO( dispersion );
         SET_MEMB_RO( range );
-        SET_MEMB_RO( speed );
     }
 #undef UT_CLASS
 
