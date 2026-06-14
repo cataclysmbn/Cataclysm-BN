@@ -1168,10 +1168,16 @@ auto process_fields_in_submap( const std::string &dim, submap &sm,
             // Dead entries — clean up.
             if( !cur.is_field_alive() ) {
                 --sm.field_count;
-                if( !cur_fd_type_id->get_transparent( cur.get_field_intensity() - 1 ) ) {
+                const auto &cur_fd_type = cur_fd_type_id.obj();
+                if( cur_fd_type.dirty_transparency_cache || !cur_fd_type.is_transparent() ||
+                    !cur_fd_type.get_transparent( cur.get_field_intensity() - 1 ) ) {
                     dirty_transparency_cache = true;
                 }
                 curfield.remove_field( it++ );
+                if( in_bubble && dirty_transparency_cache ) {
+                    map.set_transparency_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
+                    map.set_seen_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
+                }
                 continue;
             }
 
@@ -1790,6 +1796,10 @@ auto process_fields_in_submap( const std::string &dim, submap &sm,
 
             if( !cur.is_field_alive() ) {
                 --sm.field_count;
+                const auto &removed_fd_type = cur.get_field_type().obj();
+                dirty_transparency_cache = dirty_transparency_cache ||
+                                           removed_fd_type.dirty_transparency_cache ||
+                                           !removed_fd_type.is_transparent();
                 curfield.remove_field( it++ );
             } else {
                 ++it;
