@@ -7,12 +7,17 @@
 #include <optional>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
+#include "catalua_impl.h"
 #include "catalua_sol.h"
 #include "character.h"
+#include "coordinates.h"
 #include "creature_tracker.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -27,6 +32,7 @@
 #include "game_constants.h"
 #include "game.h"
 #include "int_id.h"
+#include "init.h"
 #include "item_group.h"
 #include "item.h"
 #include "item_category.h"
@@ -99,6 +105,7 @@ static const efftype_id effect_no_sight( "no_sight" );
 static const efftype_id effect_onfire( "onfire" );
 static const efftype_id effect_pacified( "pacified" );
 static const efftype_id effect_pet( "pet" );
+static const efftype_id effect_pet_bonding( "pet_bonding" );
 static const efftype_id effect_tpollen( "tpollen" );
 static const efftype_id effect_paralyzepoison( "paralyzepoison" );
 static const efftype_id effect_poison( "poison" );
@@ -139,6 +146,76 @@ static const trait_id trait_PHEROMONE_INSECT( "PHEROMONE_INSECT" );
 static const trait_id trait_PHEROMONE_MAMMAL( "PHEROMONE_MAMMAL" );
 static const trait_id trait_PROF_FERAL( "PROF_FERAL" );
 static const trait_id trait_TERRIFYING( "TERRIFYING" );
+
+namespace
+{
+
+auto report_missing_lua_attitude( const std::string &method ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    debugmsg( "Lua monster attitude function '%s' is not defined", method );
+}
+
+auto report_invalid_lua_attitude_return( const std::string &method, const sol::object &value,
+        sol::state &lua ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    const auto type_name = get_luna_type( value );
+    const auto raw_name = type_name.value_or(
+                              std::string( sol::type_name( lua, value.get_type() ) ) );
+    debugmsg( "Lua monster attitude function '%s' returned %s, expected MonsterAttitude",
+              method, raw_name );
+}
+
+auto get_lua_monster_attitude( const monster &mon,
+                               const Character *target ) -> std::optional<monster_attitude>
+{
+    const auto &lua_method = mon.type->lua_attitude;
+    if( !lua_method ) {
+        return std::nullopt;
+    }
+
+    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    if( lua_state == nullptr ) {
+        return std::nullopt;
+    }
+
+    sol::state &lua = lua_state->lua;
+    sol::object ref = lua.globals()["game"]["monster_attitude_functions"][*lua_method];
+    if( ref.get_type() != sol::type::function ) {
+        report_missing_lua_attitude( *lua_method );
+        return std::nullopt;
+    }
+
+    auto func = ref.as<sol::protected_function>();
+    const auto target_ref = target != nullptr
+                            ? sol::make_object( lua, target )
+                            : sol::make_object( lua, sol::lua_nil );
+    sol::protected_function_result res = func( &mon, target_ref );
+    check_func_result( res );
+    if( !res.valid() ) {
+        return std::nullopt;
+    }
+
+    const auto value = res.get<sol::object>();
+    if( value.get_type() == sol::type::lua_nil ) {
+        return std::nullopt;
+    }
+    if( value.get_type() != sol::type::number ) {
+        report_invalid_lua_attitude_return( *lua_method, value, lua );
+        return std::nullopt;
+    }
+
+    return value.as<monster_attitude>();
+}
+
+} // namespace
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
 struct pathfinding_settings;
@@ -235,8 +312,8 @@ monster::monster() : corpse_components( new monster_component_item_location( thi
 monster::monster( const mtype_id &id ) : monster()
 {
     type = &id.obj();
-    moves = type->speed;
     Creature::set_speed_base( type->speed );
+    add_action_move_credit( type->speed, action_move_factor() );
     hp = type->hp;
     for( auto &sa : type->special_attacks ) {
         auto &entry = special_attacks[sa.first];
@@ -327,7 +404,7 @@ monster::~monster() = default;
 
 auto monster::setpos( const tripoint_bub_ms &p ) -> void
 {
-    setpos( get_map().bub_to_abs( p ) );
+    setpos( map_local_to_abs( get_map(), p ) );
 }
 
 auto monster::setpos( const tripoint_abs_ms &p ) -> void
@@ -336,11 +413,10 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
         return;
     }
 
-    const auto new_bub_pos = get_map().abs_to_bub( p );
     const auto wandering = is_wandering();
-    g->update_zombie_pos( *this, new_bub_pos );
+    g->update_zombie_pos( *this, p );
     pos_abs = p;
-    if( has_effect( effect_ridden ) && mounted_player && mounted_player->bub_pos() != bub_pos() ) {
+    if( has_effect( effect_ridden ) && mounted_player && mounted_player->abs_pos() != pos_abs ) {
         add_msg( m_debug, "Ridden monster %s moved independently and dumped player", get_name() );
         mounted_player->forced_dismount();
     }
@@ -349,9 +425,9 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
     }
 }
 
-tripoint_bub_ms monster::bub_pos() const
+auto monster::bub_pos() const -> tripoint_bub_ms
 {
-    return get_map().abs_to_bub( pos_abs );
+    return abs_to_bub( pos_abs );
 }
 
 auto monster::abs_pos() const -> tripoint_abs_ms
@@ -655,7 +731,7 @@ void monster::refill_udders()
 
 auto monster::spawn( const tripoint_bub_ms &p ) -> void
 {
-    pos_abs = get_map().bub_to_abs( p );
+    pos_abs = map_local_to_abs( get_map(), p );
     unset_dest();
 }
 
@@ -1029,6 +1105,18 @@ std::string monster::extended_description() const
 
     if( !type->has_flag( m_flag::MF_NOHEAD ) ) {
         ss += std::string( _( "It has a head." ) ) + "\n";
+    }
+
+    if( bonded_character_id == g->u.getID() ) {
+        ss += string_format( _( "It regards you as family. (%s)\n" ), pet_bond_level );
+    } else if( pet_bond_level > 5 ) {
+        ss += string_format( _( "It really likes you. (%s)\n" ), pet_bond_level );
+    } else if( pet_bond_level > 2 ) {
+        ss += string_format( _( "It likes you. (%s)\n" ), pet_bond_level );
+    } else if( pet_bond_level > 0 ) {
+        ss += string_format( _( "It is curious about you. (%s)\n" ), pet_bond_level );
+    } else {
+        ss += string_format( _( "It is unsure about you. (%s)\n" ), pet_bond_level );
     }
 
     if( training_level > 0 && type->pet_training ) {
@@ -1527,6 +1615,10 @@ std::string io::enum_to_string<monster_attitude>( monster_attitude att )
 
 auto monster::attitude( const Character *u ) const -> monster_attitude
 {
+    if( const auto lua_attitude = get_lua_monster_attitude( *this, u ); lua_attitude ) {
+        return *lua_attitude;
+    }
+
     if( friendly != 0 ) {
         if( has_effect( effect_docile ) ) {
             return MATT_FPASSIVE;
@@ -1550,16 +1642,39 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         return MATT_ZLAVE;
     }
 
+    const auto *np = u == nullptr ? nullptr : u->as_npc();
+    if( np != nullptr ) {
+        const auto faction_att = faction.obj().attitude( np->get_monster_faction() );
+        if( faction_att == MFA_FRIENDLY ) {
+            return MATT_FRIEND;
+        }
+        if( faction_att == MFA_NEUTRAL ) {
+            return MATT_IGNORE;
+        }
+        if( faction_att == MFA_HATE ) {
+            return MATT_ATTACK;
+        }
+    }
+
     int effective_anger  = anger;
     int effective_morale = morale;
 
     if( u != nullptr ) {
         if( has_flag( MF_FACTION_MEMORY ) ) {
+            const auto anger_towards_faction = [&]( const mfaction_id & target_faction ) {
+                const auto remembered_anger = get_faction_anger( target_faction );
+                if( faction.obj().attitude( target_faction ) == MFA_BY_MOOD ) {
+                    return std::max( remembered_anger, anger );
+                }
+                return remembered_anger;
+            };
             const monster *u_as_monster = u->as_monster();
             if( u_as_monster != nullptr ) {
-                effective_anger = get_faction_anger( u_as_monster->faction );
-            } else if( u->is_player() || u->is_npc() ) {
-                effective_anger = get_faction_anger( mfaction_id( "player" ) );
+                effective_anger = anger_towards_faction( u_as_monster->faction );
+            } else if( np != nullptr ) {
+                effective_anger = anger_towards_faction( np->get_monster_faction() );
+            } else if( u->is_player() ) {
+                effective_anger = anger_towards_faction( mfaction_id( "player" ) );
             }
         }
 
@@ -1653,6 +1768,20 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     }
 
 
+    if( u != nullptr && u->is_player() ) {
+        static const auto player_faction = mfaction_id( "player" );
+        const auto faction_att = faction.obj().attitude( player_faction );
+        if( faction_att == MFA_HATE ) {
+            return MATT_ATTACK;
+        }
+        if( effective_anger < 10 && faction_att == MFA_FRIENDLY ) {
+            return MATT_FRIEND;
+        }
+        if( effective_anger < 10 && faction_att == MFA_NEUTRAL ) {
+            return MATT_IGNORE;
+        }
+    }
+
     if( effective_morale < 0 ) {
         if( effective_morale + effective_anger > 0 && get_hp() > get_hp_max() / 3 ) {
             return MATT_FOLLOW;
@@ -1671,14 +1800,15 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         return MATT_FOLLOW;
     }
 
-    if( u != nullptr && !aggro_character && !u->is_monster() ) {
+    if( u != nullptr && !aggro_character && !u->is_monster() &&
+        !( has_flag( MF_FACTION_MEMORY ) && effective_anger >= 10 ) ) {
         return MATT_IGNORE;
     }
 
     return MATT_ATTACK;
 }
 
-auto monster::generic_npc_attitude_to() const -> Attitude
+auto monster::generic_npc_attitude_to( const mfaction_id &who_faction ) const -> Attitude
 {
     auto effective_anger = anger;
     auto effective_morale = morale;
@@ -1698,9 +1828,22 @@ auto monster::generic_npc_attitude_to() const -> Attitude
         return Attitude::A_FRIENDLY;
     }
 
+    const auto faction_att = faction.obj().attitude( who_faction );
+    if( faction_att == MFA_FRIENDLY ) {
+        return Attitude::A_FRIENDLY;
+    }
+    if( faction_att == MFA_NEUTRAL ) {
+        return Attitude::A_NEUTRAL;
+    }
+    if( faction_att == MFA_HATE ) {
+        return Attitude::A_HOSTILE;
+    }
+
     if( has_flag( MF_FACTION_MEMORY ) ) {
-        static const mfaction_id player_faction( "player" );
-        effective_anger = get_faction_anger( player_faction );
+        effective_anger = get_faction_anger( who_faction );
+        if( faction_att == MFA_BY_MOOD ) {
+            effective_anger = std::max( effective_anger, anger );
+        }
     }
 
     if( effective_morale < 0 ) {
@@ -2085,7 +2228,7 @@ void monster::melee_attack( Creature &target, float accuracy )
         if( u_see_me ) {
             if( target.is_player() ) {
                 sfx::play_variant_sound( "melee_attack", "monster_melee_hit",
-                                         sfx::get_heard_volume( target.bub_pos() ) );
+                                         sfx::get_heard_volume( target.bub_pos(), 65 ) );
                 sfx::do_player_death_hurt( dynamic_cast<player &>( target ), false );
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative.
                 add_msg( m_bad, _( "%1$s hits your %2$s." ), disp_name( false, true ),
@@ -2817,7 +2960,7 @@ void monster::decrement_summon_timer()
     if( *summon_time_limit <= 0_turns ) {
         die( nullptr );
     } else {
-        *summon_time_limit -= 1_turns;
+        *summon_time_limit -= action_time_scale::calendar_duration_this_tick();
     }
 }
 
@@ -2828,7 +2971,7 @@ void monster::process_turn()
     decrement_summon_timer();
     if( !is_hallucination() ) {
         for( const std::pair<const emit_id, time_duration> &e : type->emit_fields ) {
-            if( !calendar::once_every( e.second ) ) {
+            if( !action_time_scale::once_every_this_tick( e.second ) ) {
                 continue;
             }
             const emit_id emid = e.first;
@@ -2857,9 +3000,8 @@ void monster::process_turn()
             continue;
         }
 
-        if( local_attack_data.cooldown > 0 ) {
-            local_attack_data.cooldown--;
-        }
+        local_attack_data.cooldown = std::max( 0, local_attack_data.cooldown -
+                                               action_time_scale::calendar_turns_this_tick() );
     }
     // Persist grabs as long as there's an adjacent target.
     if( has_effect( effect_grabbing ) ) {
@@ -2873,9 +3015,17 @@ void monster::process_turn()
     // We update electrical fields here since they act every turn.
     if( has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
-            if( calendar::once_every( 10_turns ) ) {
-                sounds::sound( bub_pos(), 5, sounds::sound_t::combat, _( "hummmmm." ), false, "humming",
-                               "electric" );
+            if( action_time_scale::once_every_this_tick( 10_turns ) ) {
+                sound_event se;
+                se.origin = bub_pos();
+                se.volume = 50;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "hummmmm." );
+                se.from_monster = true;
+                se.monfaction = faction.id();
+                se.id = "humming";
+                se.variant = "electric";
+                sounds::sound( se );
             }
         } else {
             for( const auto &zap : g->m.points_in_radius( bub_pos(), 1 ) ) {
@@ -2884,8 +3034,16 @@ void monster::process_turn()
                 for( const auto &item : items ) {
                     if( item->made_of( LIQUID ) && item->flammable() ) { // start a fire!
                         g->m.add_field( zap, fd_fire, 2, 1_minutes );
-                        sounds::sound( bub_pos(), 30, sounds::sound_t::combat,  _( "fwoosh!" ), false, "fire",
-                                       "ignition" );
+                        sound_event se;
+                        se.origin = bub_pos();
+                        se.volume = 60;
+                        se.category = sounds::sound_t::combat;
+                        se.description = _( "fwoosh!" );
+                        se.from_monster = true;
+                        se.monfaction = faction.id();
+                        se.id = "fire";
+                        se.variant = "ignition";
+                        sounds::sound( se );
                         break;
                     }
                 }
@@ -2911,26 +3069,50 @@ void monster::process_turn()
             if( get_weather().lightning_active && !has_effect( effect_supercharged ) &&
                 g->m.is_outside( bub_pos() ) ) {
                 get_weather().lightning_active = false; // only one supercharge per strike
-                sounds::sound( bub_pos(), 300, sounds::sound_t::combat, _( "BOOOOOOOM!!!" ), false,
-                               "environment",
-                               "thunder_near" );
-                sounds::sound( bub_pos(), 20, sounds::sound_t::combat, _( "vrrrRRRUUMMMMMMMM!" ), false,
-                               "explosion",
-                               "default" );
+                sound_event se;
+                se.origin = bub_pos();
+                se.volume = 180;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "BOOOOOOOM!!!" );
+                se.from_monster = true;
+                se.monfaction = faction.id();
+                se.id = "environment";
+                se.variant = "thunder_near";
+                sounds::sound( se );
+
+                se.description = _( "vrrrRRRUUMMMMMMMM!" );
+                se.id = "explosion";
+                se.variant = "default";
+                se.volume = 120;
+                sounds::sound( se );
                 if( g->u.sees( bub_pos() ) ) {
                     add_msg( m_bad, _( "Lightning strikes the %s!" ), name() );
                     add_msg( m_bad, _( "Your vision goes white!" ) );
                     g->u.add_effect( effect_blind, rng( 1_minutes, 2_minutes ) );
                 }
                 add_effect( effect_supercharged, 12_hours );
-            } else if( has_effect( effect_supercharged ) && calendar::once_every( 5_turns ) ) {
-                sounds::sound( bub_pos(), 20, sounds::sound_t::combat, _( "VMMMMMMMMM!" ), false, "humming",
-                               "electric" );
+            } else if( has_effect( effect_supercharged ) &&
+                       action_time_scale::once_every_this_tick( 5_turns ) ) {
+                sound_event se;
+                se.origin = bub_pos();
+                se.volume = 80;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "VMMMMMMMMM!" );
+                se.from_monster = true;
+                se.monfaction = faction.id();
+                se.id = "humming";
+                se.variant = "electric";
+                sounds::sound( se );
             }
         }
     }
 
     Creature::process_turn();
+}
+
+auto monster::action_move_factor() const -> int
+{
+    return action_time_scale::monster_tick_action_factor();
 }
 
 void monster::batch_turns( int n )
@@ -3119,7 +3301,7 @@ void monster::die( Creature *nkiller )
     if( !is_hallucination() && has_flag( MF_QUEEN ) ) {
         // The submap coordinates of this monster, monster groups coordinates are
         // submap coordinates.
-        const auto abssub = project_to<coords::sm>( g->m.bub_to_abs( bub_pos() ) );
+        const auto abssub = project_to<coords::sm>( abs_pos() );
         // Do it for overmap above/below too
         for( const auto &p : points_in_radius( abssub, g_half_mapsize, 1 ) ) {
             // TODO: fix point types
@@ -3177,13 +3359,12 @@ void monster::die( Creature *nkiller )
     }
 
     if( anger_adjust != 0 || morale_adjust != 0 ) {
-        int light = g->light_level( bub_pos().z() );
         for( monster &critter : g->all_monsters() ) {
             if( critter.faction != this->faction ) {
                 continue;
             }
 
-            if( g->m.sees( critter.bub_pos(), bub_pos(), light ) ) {
+            if( critter.sees( *this ) ) {
                 critter.morale += morale_adjust;
 
                 if( critter.has_flag( MF_FACTION_MEMORY ) && killer_faction.is_valid() ) {
@@ -3573,6 +3754,26 @@ bool monster::is_pet() const
     return ( friendly == -1 && has_effect( effect_pet ) );
 }
 
+void monster::on_pet_bonding( Character *ch )
+{
+    if( has_effect( effect_pet_bonding ) && !one_in( 3 ) ) {
+        // Prevent spamming bond, this should raise over time.
+        // Still give a chance to increase as it may not be obvious.
+        return;
+    }
+
+    if( pet_bond_level >= pet_bond_max_level ) {
+        return;
+    }
+
+    add_effect( effect_pet_bonding, time_duration::from_hours( 8 ) );
+    pet_bond_level = std::clamp( pet_bond_level + 1, 0, pet_bond_max_level );
+    if( pet_bond_level == pet_bond_max_level ) {
+        bonded_character_id = ch->getID();
+        ch->add_msg_if_player( m_good, _( "%s has bonded with you!" ), get_name() );
+    }
+}
+
 bool monster::is_hallucination() const
 {
     return hallucination;
@@ -3798,13 +3999,12 @@ void monster::on_hit( Creature *source, bodypart_id, dealt_projectile_attack con
     }
 
     if( anger_adjust != 0 || morale_adjust != 0 ) {
-        int light = g->light_level( bub_pos().z() );
         for( monster &critter : g->all_monsters() ) {
             if( critter.faction != this->faction ) {
                 continue;
             }
 
-            if( g->m.sees( critter.bub_pos(), bub_pos(), light ) ) {
+            if( critter.sees( *this ) ) {
                 critter.morale += morale_adjust;
 
                 if( critter.has_flag( MF_FACTION_MEMORY ) && attacker_faction.is_valid() ) {
@@ -3865,8 +4065,10 @@ float monster::get_mountable_weight_ratio() const
     return type->mountable_weight_ratio;
 }
 
-void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const int dist )
+void monster::hear_sound( const sound_event &source, const short heard_vol, const short ambient,
+                          const bool reinforce_source, const bool afraid_of_source )
 {
+    // Process_sound should normally catch this, but keep this here in case monsters are given the ability to be deafened by noises so that a monster would not hear follow on noises.
     if( !can_hear() ) {
         return;
     }
@@ -3875,44 +4077,68 @@ void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const in
     const bool feral_friend = ( faction == faction_zombie || type->in_species( ZOMBIE ) ) &&
                               g->u.has_trait( trait_PROF_FERAL ) && !g->u.has_effect( effect_feral_infighting_punishment );
 
-    // Hackery: If player is currently a feral and you're a zombie, ignore any sounds close to their position.
-    if( feral_friend && rl_dist( g->u.bub_pos(), source ) <= 10 ) {
+    // Hackery: If player is currently a feral and you're a zombie, ignore any sounds made by the player.
+    if( feral_friend && source.from_player ) {
         return;
     }
 
     const bool goodhearing = has_flag( MF_GOODHEARING );
-    const int volume = goodhearing ? 2 * vol - dist : vol - dist;
-    // Error is based on volume, louder sound = less error
-    if( volume <= 0 ) {
+    // Our "volume" is the difference between the heard volume and the ambient sound. Every 10dB a sound is perceived as about twice as loud.
+    // +20dB is perceived as about 4x as loud, +30dB perceived as about 8x as loud, etc.
+    // We are working with mdB spl, 100ths of a dB spl.
+    const short volume = heard_vol - ambient;
+
+    // if we somehow got passed a volume 30dB+ below ambient, jump out.
+    if( volume < -3000 ) {
         return;
     }
+    // Error is based on volume and goodhearing. Louder sound contributes lightly, goodhearing contributes greatly.
+    // Always some error, with more error if the heard sound is very low.
+    // Getting within a few tiles *should* enable them to get better info, or just see their target.
+    int max_error = ( goodhearing ) ? 0 : 2;
+    if( volume < -1000 ) {
+        // -10dB or greater below ambient
+        max_error = ( goodhearing ) ? 8 : 16;
 
-    int max_error = 0;
-    if( volume < 2 ) {
-        max_error = 10;
-    } else if( volume < 5 ) {
-        max_error = 5;
-    } else if( volume < 10 ) {
-        max_error = 3;
-    } else if( volume < 20 ) {
-        max_error = 1;
+    } else if( volume < 0 ) {
+        // -10 - 0 dB below ambient
+        max_error = ( goodhearing ) ? 6 : 12;
+
+    } else if( volume < 1000 ) {
+        // 0-10dB greater than ambient
+        max_error = ( goodhearing ) ? 4 : 10;
+
+    } else if( volume < 2000 ) {
+        // 10-20dB greater than ambient
+        max_error = ( goodhearing ) ? 3 : 8;
+
+    } else if( volume < 4000 ) {
+        // 20-40dB greater than ambient
+        max_error = ( goodhearing ) ? 2 : 6;
+
+    } else if( volume < 8000 ) {
+        // 40-80dB greater than ambient
+        max_error = ( goodhearing ) ? 1 : 4;
     }
 
-    int target_x = source.x() + rng( -max_error, max_error );
-    int target_y = source.y() + rng( -max_error, max_error );
-    // target_z will require some special check due to soil muffling sounds
+    int target_x = source.origin.x() + rng( -max_error, max_error );
+    int target_y = source.origin.y() + rng( -max_error, max_error );
+    // Allowing for z level error would cause consistant issues with monsters trying to path into solid rock.
 
-    int wander_turns = volume * ( goodhearing ? 6 : 1 );
+    // A goodhearing monster will follow a heard_sound of 100dB for 26 turns (10 + 16).
+    // We take in mdB, 100ths of a decibel and divide by 1000 to get our follow for turn value.
+    // If we are reinforcing a sound source, we will follow said sound for an additional 30 turns.
+    const short wander_turns = std::ceil( ( heard_vol * 0.001 ) + ( goodhearing ? 16 : 4 ) ) +
+                               ( reinforce_source ? 30 : 0 );
 
-    process_trigger( mon_trigger::SOUND, volume );
-    if( morale >= 0 && anger >= 10 ) {
-        // TODO: Add a proper check for fleeing attitude
-        // but cache it nicely, because this part is called a lot
-        wander_to( tripoint_bub_ms( target_x, target_y, source.z() ), wander_turns );
-    } else if( morale < 0 ) {
+    process_trigger( mon_trigger::SOUND, ( heard_vol * 0.001 ) );
+    if( morale >= 0 && anger >= 10  && !afraid_of_source ) {
+
+        wander_to( tripoint_bub_ms( target_x, target_y, source.origin.z() ), wander_turns );
+    } else if( morale < 0 || afraid_of_source ) {
         // Monsters afraid of sound should not go towards sound
         wander_to( tripoint_bub_ms( 2 * bub_pos().x() - target_x, 2 * bub_pos().y() - target_y,
-                                    2 * bub_pos().z() - source.z() ), wander_turns );
+                                    2 * bub_pos().z() - source.origin.z() ), wander_turns );
     }
 }
 

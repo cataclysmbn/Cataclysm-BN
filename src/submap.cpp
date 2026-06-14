@@ -19,6 +19,7 @@
 #include "vehicle_part.h"
 #include "weather.h"
 
+
 const data_vars::data_set submap::EMPTY_VARS{};
 
 template<int sx, int sy>

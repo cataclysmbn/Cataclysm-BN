@@ -147,8 +147,10 @@ bool vertical_move_destination( const map &m, tripoint_bub_ms &t )
     }
 
     // Align to OMT boundaries
-    auto start = m.abs_to_bub( project_to<coords::ms>( project_to<coords::omt>( m.bub_to_abs(
-                                   t.xy() ) ) ) );
+    const auto origin = project_to<coords::ms>( m.get_abs_sub().xy() );
+    const auto target_abs = origin + t.xy().reinterpret_as<point_rel_ms>();
+    const auto omt_origin = project_to<coords::ms>( project_to<coords::omt>( target_abs ) );
+    auto start = ( omt_origin - origin ).reinterpret_as<point_bub_ms>();
     auto end = start + point_rel_ms( SEEX * 2, SEEY * 2 );
 
     // Exclude submaps not loaded into bubble

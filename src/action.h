@@ -345,6 +345,10 @@ enum action_id : int {
     ACTION_DISPLAY_OUTSIDE,
     /** Toggle submap grid overlay */
     ACTION_DISPLAY_SUBMAP_GRID,
+    /** Toggle terrain sound absorption overlay */
+    ACTION_DISPLAY_SOUND_ABSORPTION,
+    /** Toggle sound walls overlay */
+    ACTION_DISPLAY_SOUND_WALLS,
     /** Toggle zone overlay */
     ACTION_TOGGLE_ZONE_OVERLAY,
     /** Toggle visual effect rendering */
@@ -356,6 +360,10 @@ enum action_id : int {
     /** Not an action, serves as count of enumerated actions */
     NUM_ACTIONS
     /**@}*/
+};
+template<>
+struct enum_traits<action_id> {
+    static constexpr action_id last = action_id::NUM_ACTIONS;
 };
 
 /**

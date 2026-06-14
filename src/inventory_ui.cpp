@@ -685,7 +685,7 @@ std::vector<inventory_entry *> inventory_column::get_all_entries(
 
 std::vector<inventory_entry *> inventory_column::get_all_entries() const
 {
-    auto func = []( const inventory_entry & entry ) { return true; };
+    auto func = []( const inventory_entry & /*entry*/ ) { return true; };
     return get_all_entries( func );
 }
 

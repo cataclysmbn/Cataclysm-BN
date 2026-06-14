@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -1103,7 +1104,7 @@ static const std::array<point, 8> eight_dirs_sm = {{
     }
 };
 
-auto process_fields_in_submap( submap &sm,
+auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                                const tripoint_abs_sm &pos,
                                mapbuffer &mb ) -> bool
 {
@@ -1112,8 +1113,10 @@ auto process_fields_in_submap( submap &sm,
         return false;
     }
 
-    auto has_fire = false;
+    map &map = get_map();
+    const auto in_bubble = submap_loader.is_properly_requested( dim, pos );
 
+    auto has_fire = false;
     // Snapshot before iterating: wandering-field spread can push_back to sm.field_cache
     // within the same submap (line ~1742), which would invalidate the range iterators.
     // Newly-added entries are newborn (age 0) and skip all effects anyway, so processing
@@ -1122,6 +1125,8 @@ auto process_fields_in_submap( submap &sm,
     std::ranges::for_each( field_positions, [&]( const point_sm_ms & local ) {
         auto &curfield = sm.get_field( local );
 
+        bool dirty_transparency_cache = false;
+
         if( !curfield.displayed_field_type() ) {
             return;
         }
@@ -1129,14 +1134,19 @@ auto process_fields_in_submap( submap &sm,
         for( auto it = curfield.begin(); it != curfield.end(); ) {
             auto &cur = it->second;
 
+            auto cur_fd_type_id = cur.get_field_type();
+
             // Dead entries — clean up.
             if( !cur.is_field_alive() ) {
                 --sm.field_count;
+                if( !cur_fd_type_id->get_transparent( cur.get_field_intensity() - 1 ) ) {
+                    dirty_transparency_cache = true;
+                }
                 curfield.remove_field( it++ );
                 continue;
             }
 
-            auto cur_fd_type_id = cur.get_field_type();
+            dirty_transparency_cache |= cur_fd_type_id->dirty_transparency_cache;
 
             // Track fire before the newborn suppression below.
             if( cur_fd_type_id.obj().has_fire ) {
@@ -1156,7 +1166,7 @@ auto process_fields_in_submap( submap &sm,
                 cur.intensity_upgrade_chance() > 0 &&
                 one_in( cur.intensity_upgrade_chance() ) &&
                 cur.intensity_upgrade_duration() > 0_turns &&
-                calendar::once_every( cur.intensity_upgrade_duration() ) ) {
+                action_time_scale::once_every_this_tick( cur.intensity_upgrade_duration() ) ) {
                 cur.set_field_intensity( cur.get_field_intensity() + 1 );
             }
 
@@ -1179,6 +1189,8 @@ auto process_fields_in_submap( submap &sm,
                 const auto is_sealed  = ter_furn_has_flag( ter, frn, TFLAG_SEALED ) &&
                                         !ter_furn_has_flag( ter, frn, TFLAG_ALLOW_FIELD_EFFECT );
 
+                const auto tick_turns = action_time_scale::calendar_turns_this_tick();
+                const auto tick_duration = action_time_scale::calendar_duration_this_tick();
                 auto time_added = 0_turns;
 
                 // --- Item burning ---
@@ -1214,7 +1226,7 @@ auto process_fields_in_submap( submap &sm,
                     std::ranges::for_each( new_content, [&]( detached_ptr<item> &prod ) {
                         items_here.push_back( std::move( prod ) );
                     } );
-                    time_added = 1_turns * roll_remainder( frd.fuel_produced );
+                    time_added = 1_turns * roll_remainder( frd.fuel_produced * tick_turns );
                 }
 
                 // --- Vehicle fire damage (TODO: requires coordinate translation) ---
@@ -1222,28 +1234,28 @@ auto process_fields_in_submap( submap &sm,
                 // --- Terrain fuel consumption ---
                 if( can_burn ) {
                     if( ter.has_flag( TFLAG_SWIMMABLE ) ) {
-                        cur.set_field_age( cur.get_field_age() + 4_minutes );
+                        cur.set_field_age( cur.get_field_age() + 4_minutes * tick_turns );
                     }
                     if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE ) ) {
-                        time_added += 1_turns * ( 5 - cur.get_field_intensity() );
+                        time_added += tick_duration * ( 5 - cur.get_field_intensity() );
                         if( cur.get_field_intensity() > 1 &&
                             one_in( 200 - cur.get_field_intensity() * 50 ) ) {
                             sm.set_ter( local, t_dirt );
                         }
                     } else if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE_HARD ) && one_in( 3 ) ) {
-                        time_added += 1_turns * ( 4 - cur.get_field_intensity() );
+                        time_added += tick_duration * ( 4 - cur.get_field_intensity() );
                         if( cur.get_field_intensity() > 1 &&
                             one_in( 200 - cur.get_field_intensity() * 50 ) ) {
                             sm.set_ter( local, t_dirt );
                         }
                     } else if( ter.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
-                        time_added += 1_turns * ( 5 - cur.get_field_intensity() );
+                        time_added += tick_duration * ( 5 - cur.get_field_intensity() );
                         if( cur.get_field_intensity() > 1 &&
                             one_in( 200 - cur.get_field_intensity() * 50 ) ) {
                             sm.set_ter( local, t_dirt );
                         }
                     } else if( frn.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
-                        time_added += 1_turns * ( 5 - cur.get_field_intensity() );
+                        time_added += tick_duration * ( 5 - cur.get_field_intensity() );
                         if( cur.get_field_intensity() > 1 &&
                             one_in( 200 - cur.get_field_intensity() * 50 ) ) {
                             sm.set_furn( local, f_ash );
@@ -1254,7 +1266,7 @@ auto process_fields_in_submap( submap &sm,
                 if( time_added != 0_turns ) {
                     cur.set_field_age( cur.get_field_age() - time_added );
                 } else if( can_burn ) {
-                    cur.mod_field_age( 10_seconds * cur.get_field_intensity() );
+                    cur.mod_field_age( 10_seconds * cur.get_field_intensity() * tick_turns );
                 }
 
                 // --- Z-rise: level-3 fire spreads upward ---
@@ -1738,7 +1750,7 @@ auto process_fields_in_submap( submap &sm,
             }
 
             // ---- Aging + half-life decay --------------------------------
-            cur.set_field_age( cur.get_field_age() + 1_turns );
+            cur.set_field_age( cur.get_field_age() + action_time_scale::calendar_duration_this_tick() );
             const auto &fdata = cur.get_field_type().obj();
             if( fdata.half_life > 0_turns && cur.get_field_age() > 0_turns &&
                 dice( 2, to_turns<int>( cur.get_field_age() ) ) >
@@ -1753,6 +1765,12 @@ auto process_fields_in_submap( submap &sm,
             } else {
                 ++it;
             }
+
+            if( in_bubble && dirty_transparency_cache ) {
+                map.set_transparency_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
+                map.set_seen_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
+            }
+
         } // end field-entry loop
     } );
 

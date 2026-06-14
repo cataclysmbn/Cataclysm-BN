@@ -1365,7 +1365,8 @@ class vehicle
         // must exceed certain threshold to be subtracted from hp
         // (a lot light collisions will not destroy parts)
         // Returns damage bypassed
-        int damage( int p, int dmg, damage_type type = DT_BASH, bool aimed = true );
+        int damage( int p, int dmg, damage_type type = DT_BASH, bool aimed = true,
+                    bool random_part = true );
 
         // damage all parts (like shake from strong collision), range from dmg1 to dmg2
         void damage_all( int dmg1, int dmg2, damage_type type, const tripoint_mnt_veh &impact );
@@ -1758,12 +1759,11 @@ class vehicle
         // id of the om_vehicle struct corresponding to this vehicle
         int om_id = -1;
 
-        // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
-        // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
-        // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_ = "";  // empty = primary dimension
-        auto get_dimension() const -> const std::string & { // *NOPAD*
+        auto get_dimension() const -> const dimension_id & { // *NOPAD*
             return dimension_id_;
+        }
+        auto set_dimension( const dimension_id &dim_id ) -> void {
+            dimension_id_ = dim_id;
         }
         // direction, to which vehicle is turning (player control). will rotate frame on next move
         // must be a multiple of 15 degrees
@@ -1876,6 +1876,11 @@ class vehicle
 
         // Set cruise control
         void set_cruise_control_speed();
+
+    private:
+        // ID of the dimension this vehicle belongs to.  Empty = primary dimension.
+        // Persisted across saves so cross-dimension processing survives reload.
+        dimension_id dimension_id_;
 };
 
 namespace rot

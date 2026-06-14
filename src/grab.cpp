@@ -32,8 +32,15 @@ namespace
 {
 auto make_scraping_noise( const tripoint_bub_ms &pos, const int volume ) -> void
 {
-    sounds::sound( pos, volume, sounds::sound_t::movement,
-                   _( "a scraping noise." ), true, "misc", "scraping" );
+    sound_event se;
+    se.origin = pos;
+    se.volume = volume;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "a scraping noise." );
+    se.id = "misc";
+    se.variant = "scraping";
+    sounds::sound( se );
 }
 
 // vehicle movement: strength check. very strong humans can move about 2,000 kg in a wheelbarrow.
@@ -173,7 +180,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
     ///\EFFECT_STR determines ability to drag vehicles
     if( str_req <= str ) {
         if( !grabbed_vehicle->valid_wheel_config() && !grabbed_vehicle->has_sufficient_lift( true ) ) {
-            make_scraping_noise( grabbed_vehicle->bub_ms_location(), str_req * 2 );
+            make_scraping_noise( grabbed_vehicle->bub_ms_location(), std::min( 80, str_req * 2 ) );
         }
 
         //calculate exertion factor and movement penalty
@@ -216,9 +223,13 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 
         grabbed_vehicle->adjust_zlevel( 1, actual_dir );
 
-        // Set player location to illegal value so it can't collide with vehicle.
-        const auto player_prev = u.bub_pos();
-        u.setpos( tripoint_bub_ms::zero() );
+        // Put the player on an invalid z-level so they can't collide with the
+        // grabbed vehicle. Moving to an arbitrary x/y no longer hides the avatar
+        // now that player bubble space is derived from avatar position.
+        const auto player_prev = u.abs_pos();
+        auto player_hidden = player_prev;
+        player_hidden.z() = OVERMAP_HEIGHT + 1;
+        u.setpos( player_hidden );
         std::vector<veh_collision> colls;
         const bool failed = grabbed_vehicle->collision( colls, actual_dir, true );
         u.setpos( player_prev );

@@ -1175,14 +1175,24 @@ static int calc_gun_volume( const item &gun )
     // Inherit suppressor modifiers if relevant (e.g. KSG second mag) but still use current ammo
     const item &parent = ( gun.parent_item() != nullptr &&
                            gun.has_flag( flag_USE_PARENT_GUN ) ) ? *gun.parent_item() : gun;
+    // If our ammo is subsonic, loudness mods from the gun and gunmods can reduce noise freely.
+    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will make a sonic boom.
     int noise = parent.type->gun->loudness;
+    // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
+    if( gun.ammo_data() ) {
+        noise += gun.ammo_data()->ammo->loudness;
+        // Speed of sound at sea level is around 343 meters per second.
+        // While it would be ideal to be based on speed of sound
+        // EVERYTHING flies faster then the speed of sound so using that to force loud sounds makes little sense in the current state of affairs
+        // NOTE: If supersonic ever gets implented, use it here
+        noise = std::min( 160, noise );
+    }
     for( const auto mod : parent.gunmods() ) {
         noise += mod->type->gunmod->loudness;
     }
-    if( gun.ammo_data() ) {
-        noise += gun.ammo_data()->ammo->loudness;
-    }
 
+
+    // Cap it like it gets capped when making a sound
     noise = std::max( noise, 0 );
     return noise;
 }
@@ -1274,10 +1284,13 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
 
         // Apply enchantment bonuses to projectile
         int base_bullet_damage = static_cast<int>( projectile.impact.type_damage( DT_BULLET ) );
+        int base_penetrate_bullet = projectile.impact.get_armor_pen( DT_BULLET );
         int ench_damage_bonus = who.bonus_from_enchantments( base_bullet_damage,
                                 enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
+        int ench_penetrate_bonus = who.bonus_from_enchantments( base_penetrate_bullet,
+                                   enchant_vals::mod::RANGED_ARMOR_PENETRATION );
         if( ench_damage_bonus != 0 ) {
-            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus );
+            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus, ench_penetrate_bonus );
         }
 
         int ench_range_bonus = who.bonus_from_enchantments( projectile.range,
@@ -2115,20 +2128,9 @@ static int print_ranged_chance( const catacurses::window &w, int line_number,
     return line_number;
 }
 
-// Whether player character knows creature's position and can roughly track it with the aim cursor
-static auto outside_visible_z_range( const tripoint_bub_ms &from,
-                                     const tripoint_bub_ms &to ) -> bool
-{
-    return get_map().has_zlevels() && fov_3d &&
-           std::abs( from.z() - to.z() ) > fov_3d_z_range;
-}
-
 static bool pl_sees( const Creature &cr )
 {
     Character &u = get_player_character();
-    if( outside_visible_z_range( u.bub_pos(), cr.bub_pos() ) ) {
-        return false;
-    }
     return u.sees( cr ) || u.sees_with_infrared( cr ) || u.sees_with_specials( cr );
 }
 
@@ -2387,8 +2389,8 @@ static void cycle_action( item &weap, const tripoint_bub_ms &pos )
             } else {
                 vp->vehicle().add_item( *cargo.front(), item::spawn( casing ) );
             }
-
-            sfx::play_variant_sound( "fire_gun", "brass_eject", sfx::get_heard_volume( eject ),
+            // Take the dB volume of ejecting to be 60.
+            sfx::play_variant_sound( "fire_gun", "brass_eject", sfx::get_heard_volume( eject, 60 ),
                                      sfx::get_heard_angle( eject ) );
         }
     }
@@ -2412,10 +2414,63 @@ void ranged::make_gun_sound_effect( const Character &who, bool burst, const item
 {
     const item::sound_data data = gun.gun_noise( burst );
     if( data.volume > 0 ) {
-        sounds::sound( who.bub_pos(), data.volume, sounds::sound_t::combat,
-                       data.sound.empty() ? _( "Bang!" ) : data.sound );
+        sound_event se;
+        se.origin = who.bub_pos();
+        se.volume = std::min( 191, data.volume );
+        se.category = sounds::sound_t::combat;
+        se.description = data.sound.empty() ? _( "Bang!" ) : data.sound;
+        // Guns dont get to be ambient noise.
+        if( who.is_avatar() ) {
+            se.from_player = true;
+            se.faction = who.get_faction()->id;
+            se.monfaction = who.get_faction()->mon_faction;
+        } else if( who.is_npc() ) {
+            se.from_npc = true;
+            se.faction = who.get_faction()->id;
+            se.monfaction = who.get_faction()->mon_faction;
+        } else if( who.is_monster() ) {
+            se.from_monster = true;
+            se.monfaction = who.as_monster()->faction.id();
+        } else {
+            // If it was none of the above but is shooting a gun anyways, its almost certainly a monster
+            // of some kind with wierd shenanagins done to make it fire a gun without a fake gun or something.
+            // Had to pass a character, which may or may not include a tripoint.
+
+            Creature *const critter = g->critter_at<Creature>( who.bub_pos(), true );
+            if( critter ) {
+                if( !critter->is_hallucination() ) {
+                    if( critter->is_avatar() ) {
+                        se.from_player = true;
+                        se.faction = critter->as_avatar()->get_faction()->id;
+                        se.monfaction = critter->as_avatar()->get_faction()->mon_faction;
+                    } else if( critter->is_monster() ) {
+                        se.from_monster = true;
+                        se.monfaction = critter->as_monster()->faction.id();
+                    } else if( critter ->is_npc() ) {
+                        se.from_npc = true;
+                        se.faction = critter->as_npc()->get_faction()->id;
+                        se.monfaction = critter->as_npc()->get_faction()->mon_faction;
+                    } else {
+                        // Gunshots dont get to be ambient noise.
+                        se.from_monster = true;
+                    }
+                }
+
+            }
+
+        }
+        // We want to make our gun sound, and then check to see if our shooter is a hallucination.
+        // Hallucinations dont get to deafen the character.
+        sfx::generate_gun_sound( who.bub_pos(), gun, se.volume );
+        if( !who.is_hallucination() ) {
+            sounds::sound( se );
+        }
+
+        return;
     }
-    sfx::generate_gun_sound( who.bub_pos(), gun );
+    // If a perfectly silent gun shoots, does it make a sound?
+    // Yes because weapons like laser rifles or odd modded weapons exist.
+    sfx::generate_gun_sound( who.bub_pos(), gun, 60 );
 }
 
 item::sound_data item::gun_noise( const bool burst ) const
@@ -2434,7 +2489,7 @@ item::sound_data item::gun_noise( const bool burst ) const
             return { noise, burst ? _( "tz-tz-tzk!" ) : _( "tzk!" ) };
         } else if( noise < 80 ) {
             return { noise, burst ? _( "Brzzip!" ) : _( "tz-Zing!" ) };
-        } else if( noise < 200 ) {
+        } else if( noise < 160 ) {
             return { noise, burst ? _( "tzz-CR-CR-CRAck!" ) : _( "tz-CRACKck!" ) };
         } else {
             return { noise, burst ? _( "tzz-BOOOM!" ) : _( "tzk-BLAM!" ) };
@@ -2467,11 +2522,11 @@ item::sound_data item::gun_noise( const bool burst ) const
 
     if( type->weapon_category.contains( weapon_cat_ENERGY_WEAPONS ) ) {
         // Lasers and plasma
-        if( noise < 20 ) {
+        if( noise < 40 ) {
             return { noise, _( "Fzzt!" ) };
-        } else if( noise < 40 ) {
-            return { noise, _( "Pew!" ) };
         } else if( noise < 60 ) {
+            return { noise, _( "Pew!" ) };
+        } else if( noise < 80 ) {
             return { noise, _( "Tsewww!" ) };
         } else {
             return { noise, _( "Kra-kow!" ) };
@@ -2481,9 +2536,9 @@ item::sound_data item::gun_noise( const bool burst ) const
     } else if( noise > 0 ) {
         if( noise < 50 ) {
             return { noise, burst ? _( "Brrrip!" ) : _( "plink!" ) };
-        } else if( noise < 150 ) {
+        } else if( noise < 120 ) {
             return { noise, burst ? _( "Brrrap!" ) : _( "bang!" ) };
-        } else if( noise < 175 ) {
+        } else if( noise < 160 ) {
             return { noise, burst ? _( "P-p-p-pow!" ) : _( "blam!" ) };
         } else {
             return { noise, burst ? _( "Kaboom!" ) : _( "kerblam!" ) };
@@ -2730,11 +2785,6 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
             return false;
         }
 
-        if( outside_visible_z_range( shooter_pos, critter_pos ) )
-        {
-            return false;
-        }
-
         // Special case: if range is 1, it's a melee attack.
         // Melee attacks can only target on same z-level or directly up/down, not "z-diagonally".
         if( range <= 1 && shooter_pos.z() != critter_pos.z() && shooter_pos.xy() != critter_pos.xy() )
@@ -2824,7 +2874,7 @@ target_handler::trajectory target_ui::run()
 
     map &here = get_map();
     // Load settings
-    allow_zlevel_shift = here.has_zlevels() && get_option<bool>( "FOV_3D" );
+    allow_zlevel_shift = here.has_zlevels();
     snap_to_target = get_option<bool>( "SNAP_TO_TARGET" );
     if( mode == TargetMode::Turrets ) {
         // Due to how cluttered the display would become, disable it by default
@@ -3211,8 +3261,6 @@ bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
     if( new_pos != src ) {
         // On Z axis, make sure we do not exceed map boundaries
         valid_pos.z() = clamp( valid_pos.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT );
-        // Or current view range
-        valid_pos.z() = clamp( valid_pos.z() - src.z(), -fov_3d_z_range, fov_3d_z_range ) + src.z();
 
         new_traj = here.find_clear_path( src, valid_pos );
         if( range == 1 ) {
@@ -3410,8 +3458,8 @@ bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
     }
 
     // Try to re-acquire target tile or tile where the target creature used to be
-    auto local_lt = get_map().abs_to_bub( *you->last_target_pos );
-    if( !outside_visible_z_range( src, local_lt ) && dist_fn( local_lt ) <= range ) {
+    auto local_lt = abs_to_bub( *you->last_target_pos );
+    if( dist_fn( local_lt ) <= range ) {
         new_dst = local_lt;
         // Abort aiming if a creature moved in
         return !critter && !g->critter_at( local_lt, true );
@@ -3457,7 +3505,7 @@ int target_ui::dist_fn( const tripoint_bub_ms &p )
 
 void target_ui::set_last_target()
 {
-    you->last_target_pos = get_map().bub_to_abs( dst );
+    you->last_target_pos = bub_to_abs( dst );
     if( dst_critter ) {
         you->last_target = g->shared_from( *dst_critter );
     } else {
@@ -3576,7 +3624,9 @@ void target_ui::cycle_targets( int direction )
 
 void target_ui::set_view_offset( const tripoint_rel_ms &new_offset )
 {
-    tripoint_rel_ms new_( new_offset.xy(), clamp( new_offset.z(), -fov_3d_z_range, fov_3d_z_range ) );
+    tripoint_rel_ms new_( new_offset.xy(),
+                          clamp( new_offset.z(), -OVERMAP_DEPTH - src.z(),
+                                 OVERMAP_HEIGHT - src.z() ) );
     new_.z() = clamp( new_.z() + src.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT ) - src.z();
 
     bool changed_z = you->view_offset.z() != new_.z();
@@ -3615,7 +3665,7 @@ void target_ui::recalc_aim_turning_penalty()
     if( lt_ptr ) {
         curr_recoil_pos = lt_ptr->bub_pos();
     } else if( you->last_target_pos ) {
-        curr_recoil_pos = get_map().abs_to_bub( *you->last_target_pos );
+        curr_recoil_pos = abs_to_bub( *you->last_target_pos );
     } else {
         curr_recoil_pos = src;
     }

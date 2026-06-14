@@ -15,8 +15,10 @@
 #include <set>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
+#include "character.h"
 #include "creature.h"
 #include "debug.h"
 #include "enums.h"
@@ -379,7 +381,7 @@ void vehicle::stop( bool update_cache )
     }
     map &here = get_map();
     for( const auto &p : get_points() ) {
-        here.set_memory_seen_cache_dirty( here.abs_to_bub( p ) );
+        here.set_memory_seen_cache_dirty( abs_to_bub( p ) );
     }
 }
 
@@ -600,7 +602,7 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
             // push the animal out of way until it's no longer in our vehicle and not in
             // anyone else's position
             while( g->critter_at( end_pos, true ) ||
-                   cur_points.contains( here.bub_to_abs( end_pos ) ) ) {
+                   cur_points.contains( bub_to_abs( end_pos ) ) ) {
                 start_pos = end_pos;
                 calc_ray_end( angle, 2, start_pos, end_pos );
             }
@@ -929,7 +931,15 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
             if( part_flag( ret.part, "SHARP" ) ) {
                 critter->bleed();
             } else {
-                sounds::sound( p, 20, sounds::sound_t::combat, snd, false, "smash_success", "hit_vehicle" );
+                sound_event se;
+                se.origin = p;
+                se.volume = 70;
+                se.category = sounds::sound_t::combat;
+                se.description = snd;
+                se.id = "smash_success";
+                se.variant = "hit_vehicle";
+
+                sounds::sound( se );
             }
         }
     } else {
@@ -945,8 +955,15 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
             }
         }
 
-        sounds::sound( p, smashed ? 80 : 50, sounds::sound_t::combat, snd, false, "smash_success",
-                       "hit_vehicle" );
+        sound_event se;
+        se.origin = p;
+        se.volume = smashed ? 90 : 70;
+        se.category = sounds::sound_t::combat;
+        se.description = snd;
+        se.id = "smash_success";
+        se.variant = "hit_vehicle";
+
+        sounds::sound( se );
     }
 
     if( smashed && !vert_coll ) {
@@ -1009,8 +1026,15 @@ void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
 
     if( veh_data.chance >= rng( 1, 100 ) ) {
         if( veh_data.sound_volume > 0 ) {
-            sounds::sound( p, veh_data.sound_volume, sounds::sound_t::combat, veh_data.sound, false,
-                           veh_data.sound_type, veh_data.sound_variant );
+            sound_event se;
+            se.origin = p;
+            se.volume = veh_data.sound_volume;
+            se.category = sounds::sound_t::combat;
+            se.description = veh_data.sound.translated();
+            se.id = veh_data.sound_type;
+            se.variant = veh_data.sound_variant;
+
+            sounds::sound( se );
         }
         if( veh_data.do_explosion ) {
             explosion_handler::explosion( p, nullptr, veh_data.damage, 0.5f, false, veh_data.shrapnel );
@@ -1135,7 +1159,7 @@ bool vehicle::check_heli_descend( Character &who )
     }
     map &here = get_map();
     for( const tripoint_abs_ms &abs : get_points( true ) ) {
-        const auto &pt = here.abs_to_bub( abs );
+        const auto pt = abs_to_bub( abs );
         const int idx = part_at( pt - bub_ms_location() );
         if( part_info( idx ).has_flag( VPFLAG_NOCOLLIDEBELOW ) ) {
             continue;
@@ -1178,7 +1202,7 @@ bool vehicle::check_heli_ascend( Character &who )
     }
     map &here = get_map();
     for( const tripoint_abs_ms &abs : get_points( true ) ) {
-        const auto &pt = here.abs_to_bub( abs );
+        const auto pt = abs_to_bub( abs );
         tripoint_bub_ms above = pt + tripoint_rel_ms::above();
         if( !here.inbounds_z( above.z() ) ) {
             who.add_msg_if_player( m_bad, _( "It would be unsafe to try and ascend further." ) );
@@ -1226,7 +1250,7 @@ bool vehicle::check_heli_ascend( Character &who )
 void vehicle::pldrive( Character &driver, tripoint_rel_veh p )
 {
     if( p.z() != 0 && is_aircraft() ) {
-        driver.moves = std::min( driver.moves, 0 );
+        driver.moves -= action_time_scale::vehicle_control_cost( driver, 100 );
         thrust( 0, p.z() );
     }
     units::angle turn_delta = 15_degrees * p.x();
@@ -1250,9 +1274,9 @@ void vehicle::pldrive( Character &driver, tripoint_rel_veh p )
             return;
         }
 
-        // If you've got more moves than speed, it's most likely time stop
-        // Let's get rid of that
-        driver.moves = std::min( driver.moves, driver.get_speed() );
+        // If you've got more moves than one normal scaled turn, it's most likely time stop.
+        // Let's get rid of that.
+        driver.moves = std::min( driver.moves, action_time_scale::character_moves_per_tick( driver ) );
 
         ///\EFFECT_DEX reduces chance of losing control of vehicle when turning
 
@@ -1289,7 +1313,8 @@ void vehicle::pldrive( Character &driver, tripoint_rel_veh p )
         turn( turn_delta );
 
         // At most 3 turns per turn, because otherwise it looks really weird and jumpy
-        driver.moves -= std::max( cost, driver.get_speed() / 3 + 1 );
+        driver.moves -= action_time_scale::vehicle_control_cost( driver,
+                        std::max( cost, driver.get_speed() / 3 + 1 ) );
     }
 
     if( p.y() != 0 ) {
@@ -1298,7 +1323,7 @@ void vehicle::pldrive( Character &driver, tripoint_rel_veh p )
             cruise_thrust( -p.y() * thr_amount );
         } else {
             thrust( -p.y() );
-            driver.moves = std::min( driver.moves, 0 );
+            driver.moves -= action_time_scale::vehicle_control_cost( driver, 100 );
         }
     }
 
@@ -1718,7 +1743,7 @@ void vehicle::check_falling_or_floating()
     size_t deep_water_tiles = 0;
     size_t water_tiles = 0;
     for( const auto &abs : pts ) {
-        const auto &p = here.abs_to_bub( abs );
+        const auto p = abs_to_bub( abs );
         if( is_falling ) {
             is_falling &= here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, p ) &&
                           ( p.z() > -OVERMAP_DEPTH ) &&

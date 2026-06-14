@@ -52,7 +52,6 @@
     "flags": [
       "WATERPROOF",
       "STURDY",
-      "PARTIAL_DEAF",
       "SUN_GLASSES",
       "VARSIZE",
       "GAS_PROOF",
@@ -107,7 +106,6 @@
     "flags": [
       "WATERPROOF",
       "STURDY",
-      "PARTIAL_DEAF",
       "SUN_GLASSES",
       "FLASH_PROTECTION",
       "ELECTRIC_IMMUNE",
@@ -120,7 +118,9 @@
       "SLEEP_IGNORE",
       "COMBAT_NPC_USE",
       "COMBAT_NPC_ON"
-    ]
+    ],
+    "hearing_protection": 6,
+    "adv_hearing_protection": 24
   },
   {
     "id": "crt_em_vest",

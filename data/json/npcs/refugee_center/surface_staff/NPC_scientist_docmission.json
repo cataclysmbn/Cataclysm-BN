@@ -8,7 +8,7 @@
     "attitude": 0,
     "mission": 3,
     "chat": "TALK_TCLSCIENTIST_DOCMISSION",
-    "faction": "old_guard"
+    "faction": "tcl_holdouts"
   },
   {
     "id": [ "TALK_TCLSCIENTIST_DOCMISSION" ],

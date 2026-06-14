@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "activity_handlers.h" // put_into_vehicle_or_drop and drop_on_map
 #include "activity_speed.h"
 #include "advanced_inv.h"
@@ -489,16 +490,27 @@ void dig_activity_actor::start( player_activity &/*act*/, Character & )
     progress.emplace( name, moves_total );
 }
 
-void dig_activity_actor::do_turn( player_activity &/*act*/, Character & )
+void dig_activity_actor::do_turn( player_activity &/*act*/, Character &who )
 {
     if( progress.front().complete() ) {
         progress.pop();
         return;
     }
-    sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location, 60 ) );
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
-        sounds::sound( location, 10, sounds::sound_t::activity, _( "hsh!" ) );
+        sound_event se;
+        se.origin = location;
+        se.volume = 60;
+        se.category = sounds::sound_t::activity;
+        se.description = _( "hsh!" );
+        se.id =  "tool";
+        se.variant = "shovel";
+        se.from_player = who.is_player();
+        se.from_npc = !se.from_player;
+        se.faction = who.get_faction()->id;
+        se.monfaction = who.get_faction()->mon_faction;
+        sounds::sound( se );
     }
 }
 
@@ -595,16 +607,27 @@ void dig_channel_activity_actor::start( player_activity &/*act*/, Character & )
     progress.emplace( here.ter( location )->name(), moves_total );
 }
 
-void dig_channel_activity_actor::do_turn( player_activity &/*act*/, Character & )
+void dig_channel_activity_actor::do_turn( player_activity &/*act*/, Character &who )
 {
     if( progress.front().complete() ) {
         progress.pop();
         return;
     }
-    sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location, 70 ) );
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
-        sounds::sound( location, 10, sounds::sound_t::activity, _( "hsh!" ) );
+        sound_event se;
+        se.origin = location;
+        se.volume = 70;
+        se.category = sounds::sound_t::activity;
+        se.description = _( "hsh!" );
+        se.id =  "tool";
+        se.variant =  "shovel";
+        se.from_player = who.is_player();
+        se.from_npc = !se.from_player;
+        se.faction = who.get_faction()->id;
+        se.monfaction = who.get_faction()->mon_faction;
+        sounds::sound( se );
     }
 }
 
@@ -719,7 +742,7 @@ void disassemble_activity_actor::do_turn( player_activity &act, Character &who )
         if( !target.loc ) {
             debugmsg( "Lost target of ACT_DISASSEMBLY" );
         } else {
-            crafting::complete_disassemble( who, target, get_map().abs_to_bub( pos ) );
+            crafting::complete_disassemble( who, target, abs_to_bub( pos ) );
         }
         targets.erase( targets.begin() );
         progress.pop();
@@ -926,6 +949,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
     tripoint_bub_ms examp = abs_to_bub( act.placement );
     hack_type type = get_hack_type( examp );
     map &here = get_map();
+    sound_event se;
     switch( hack_attempt( who, using_bionic ) ) {
         case HACK_UNABLE:
             who.add_msg_if_player( _( "You cannot hack this." ) );
@@ -934,9 +958,13 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
             // currently all things that can be hacked have equivalent alarm failure states.
             // this may not always be the case with new hackable things.
             g->events().send<event_type::triggers_alarm>( who.getID() );
-            sounds::sound( who.bub_pos(), 60, sounds::sound_t::music, _( "an alarm sound!" ), true,
-                           "environment",
-                           "alarm" );
+            se.origin = who.bub_pos();
+            se.volume = 120;
+            se.category = sounds::sound_t::music;
+            se.description = _( "an alarm sound!" );
+            se.id = "environment";
+            se.variant = "alarm";
+            sounds::sound( se );
             if( examp.z() > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
                                      who.abs_sm_pos() );
@@ -957,8 +985,17 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
                         uistate.ags_pay_gas_selected_pump );
                 if( pGasPump && iexamine::toPumpFuel( pTank, *pGasPump, tankGasUnits ) ) {
                     who.add_msg_if_player( _( "You hack the terminal and route all available fuel to your pump!" ) );
-                    sounds::sound( examp, 6, sounds::sound_t::activity,
-                                   _( "Glug Glug Glug Glug Glug Glug Glug Glug Glug" ), true, "tool", "gaspump" );
+                    se.origin = examp;
+                    se.volume = 40;
+                    se.category = sounds::sound_t::activity;
+                    se.description = _( "Glug Glug Glug Glug Glug Glug Glug Glug Glug" );
+                    se.id = "tool";
+                    se.variant =  "gaspump";
+                    se.from_player = who.is_player();
+                    se.from_npc = !se.from_player;
+                    se.faction = who.get_faction()->id;
+                    se.monfaction = who.get_faction()->mon_faction;
+                    sounds::sound( se );
                 } else {
                     who.add_msg_if_player( _( "Nothing happens." ) );
                 }
@@ -1211,10 +1248,21 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
     }
     if( tool->ammo_sufficient() ) {
         tool->ammo_consume( tool->ammo_required(), tool->position() );
-        sfx::play_activity_sound( "tool", "hacksaw", sfx::get_heard_volume( target ) );
-        if( calendar::once_every( 1_minutes ) ) {
+        sfx::play_activity_sound( "tool", "hacksaw", sfx::get_heard_volume( target, 80 ) );
+        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             //~ Sound of a metal sawing tool at work!
-            sounds::sound( target, 15, sounds::sound_t::destructive_activity, _( "grnd grnd grnd" ) );
+            sound_event se;
+            se.origin = target;
+            se.volume = 80;
+            se.category = sounds::sound_t::destructive_activity;
+            se.description = _( "grnd grnd grnd" );
+            se.id = "tool";
+            se.variant = "hacksaw";
+            se.from_player = who.is_player();
+            se.from_npc = !se.from_player;
+            se.faction = who.get_faction()->id;
+            se.monfaction = who.get_faction()->mon_faction;
+            sounds::sound( se );
         }
     } else {
         if( who.is_avatar() ) {
@@ -1432,13 +1480,22 @@ void boltcutting_activity_actor::finish( player_activity &act, Character &who )
         act.set_to_null();
         return;
     }
-
+    sound_event se;
+    se.origin = target;
+    se.volume = 60;
+    se.category = sounds::sound_t::combat;
+    se.id = "tool";
+    se.variant = "boltcutters";
+    se.from_player = who.is_player();
+    se.from_npc = !se.from_player;
+    se.faction = who.get_faction()->id;
+    se.monfaction = who.get_faction()->mon_faction;
     if( data->sound().empty() ) {
-        sounds::sound( target, 5, sounds::sound_t::combat, _( "Snick, snick, gachunk!" ),
-                       true, "tool", "boltcutters" );
+        se.description = _( "Snick, snick, gachunk!" );
+        sounds::sound( se );
     } else {
-        sounds::sound( target, 5, sounds::sound_t::combat, data->sound().translated(),
-                       true, "tool", "boltcutters" );
+        se.description = data->sound().translated();
+        sounds::sound( se );
     }
 
 
@@ -1512,7 +1569,7 @@ std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_bionic(
 
 void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
 {
-    const auto target = get_map().abs_to_bub( this->target );
+    const auto target = abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -1555,7 +1612,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
 
-    const auto target = get_map().abs_to_bub( this->target );
+    const auto target = abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -1640,8 +1697,14 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         && ( lock_roll + dice( 1, 30 ) ) > pick_roll ) {
 
         if( get_map().has_flag( "ALARMED", target ) ) {
-            sounds::sound( who.bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ),
-                           true, "environment", "alarm" );
+            sound_event se;
+            se.origin = who.bub_pos();
+            se.volume = 90;
+            se.category = sounds::sound_t::alarm;
+            se.description = _( "an alarm sound!" );
+            se.id = "environment";
+            se.variant = "alarm";
+            sounds::sound( se );
             if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
                                      who.abs_sm_pos() );
@@ -1773,9 +1836,20 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
     // We check available charges when first starting the cut, but this prevents abnormal behavior if torch status changes mid-activity.
     if( tool->ammo_sufficient() ) {
         tool->ammo_consume( tool->ammo_required(), tool->position() );
-        sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target ) );
-        if( calendar::once_every( 2_turns ) ) {
-            sounds::sound( target, 10, sounds::sound_t::destructive_activity, _( "hissssssssss!" ) );
+        sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target, 65 ) );
+        if( action_time_scale::once_every_this_tick( 2_turns ) ) {
+            sound_event se;
+            se.origin = target;
+            se.volume = 65;
+            se.category = sounds::sound_t::destructive_activity;
+            se.description = _( "hissssssssss!" );
+            se.id = "tool";
+            se.variant = "oxytorch";
+            se.from_player = who.is_player();
+            se.from_npc = !se.from_player;
+            se.faction = who.get_faction()->id;
+            se.monfaction = who.get_faction()->mon_faction;
+            sounds::sound( se );
         }
     } else {
         if( who.is_avatar() ) {
@@ -2021,12 +2095,11 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
         return;
     }
 
-    // Shift our position to our "peeking" position, so that the UI
-    // for picking a throw point lets us target the location we couldn't
-    // otherwise see.
-    const auto original_player_position = who.bub_pos();
+    // Shift our position to our peeking position so the target UI can see from there.
+    const auto original_player_position = who.abs_pos();
     if( blind_throw_pos ) {
-        who.setpos( *blind_throw_pos );
+        who.setpos( bub_to_abs( *blind_throw_pos ) );
+        g->update_map( who );
     }
 
     target_handler::trajectory trajectory = target_handler::mode_throw( *who.as_avatar(), *it,
@@ -2035,6 +2108,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // If we previously shifted our position, put ourselves back now that we've picked our target.
     if( blind_throw_pos ) {
         who.setpos( original_player_position );
+        g->update_map( who );
     }
 
     if( trajectory.empty() ) {
@@ -2143,8 +2217,8 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
         if( craft_item ) {
             const int elapsed_turns = current_turn - last_turn_nr;
             const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
-            // 100 moves per turn at base speed (no modifiers applied while outside bubble)
-            const double moves_elapsed = elapsed_turns * 100.0;
+            // No live crafting modifiers are applied while outside the reality bubble.
+            const auto moves_elapsed = action_time_scale::activity_progress_for_turns( elapsed_turns );
             const int old_counter = craft_item->get_counter();
             const int new_counter = std::min(
                                         static_cast<int>( old_counter + moves_elapsed / base_total_moves * 10'000'000.0 ),
@@ -2289,9 +2363,8 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     const double base_total_moves = std::max( 1, making.batch_time( batch_size, 1.0f, 0 ) );
     const double cur_total_moves = std::max( 1, making.batch_time( batch_size, crafting_speed,
                                    assistants ) );
-    const double delta_progress = who.get_moves() > 0
-                                  ? who.get_moves() * base_total_moves / cur_total_moves
-                                  : 0.0;
+    const auto scaled_moves = action_time_scale::activity_progress_from_actor_moves( who );
+    const auto delta_progress = scaled_moves * base_total_moves / cur_total_moves;
     const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
     const int new_counter = std::min(
                                 static_cast<int>( std::round( current_progress / base_total_moves * 10'000'000.0 ) ),
@@ -2360,7 +2433,7 @@ void craft_activity_actor::do_complete_craft( player_activity &act, Character &w
     craft_item->detach();
     if( is_long && rec ) {
         if( who.making_would_work( rec->ident(), batch_size ) ) {
-            who.last_craft->execute( get_map().abs_to_bub( location ) );
+            who.last_craft->execute( abs_to_bub( location ) );
         }
     }
 }
@@ -2375,9 +2448,10 @@ act_progress_message craft_activity_actor::get_progress_message(
     const int assistants = who.available_assistant_count( *rec );
     const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
     const double remaining_pct = 1.0 - craft_counter / 10'000'000.0;
-    const float total_mult = act.speed.total();
-    const int remaining_turns = static_cast<int>( remaining_pct * base_total_moves / 100 /
-                                std::max( 0.01f, total_mult ) );
+    const auto total_mult = act.speed.total();
+    const auto remaining_moves = static_cast<int>( std::ceil( remaining_pct * base_total_moves ) );
+    const auto remaining_turns = action_time_scale::turns_for_progress( remaining_moves,
+                                 act.speed.calendar_moves_per_turn() );
 
     const std::string time_desc = string_format( _( "Time left: %s" ),
                                   to_string( time_duration::from_turns( remaining_turns ) ) );
@@ -2461,7 +2535,7 @@ inline void construction_activity_actor::calc_all_moves( player_activity &act, C
     // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
     if( !pc ) {
         map &here = get_map();
-        auto local = here.abs_to_bub( target );
+        auto local = abs_to_bub( target );
         pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
     //if something goes terribly wrong we don't CTD
@@ -2476,7 +2550,7 @@ inline void construction_activity_actor::calc_all_moves( player_activity &act, C
 void construction_activity_actor::start( player_activity &/*act*/, Character &/*who*/ )
 {
     map &here = get_map();
-    auto local = here.abs_to_bub( target );
+    auto local = abs_to_bub( target );
     pc = here.partial_con_at( tripoint_bub_ms( local ) );
     auto &built = *pc->id;
 
@@ -2513,7 +2587,7 @@ void construction_activity_actor::do_turn( player_activity &act, Character &who 
     // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
     if( !pc ) {
         map &here = get_map();
-        auto local = here.abs_to_bub( target );
+        auto local = abs_to_bub( target );
         pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
 

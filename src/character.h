@@ -584,6 +584,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Processes effects which may prevent the Character from moving (bear traps, crushed, etc.).
          *  Returns false if movement is stopped. */
         bool move_effects( bool attacking ) override;
+        auto move_effects( bool attacking, bool skip_pit_escape ) -> bool;
 
         void wait_effects();
 
@@ -599,6 +600,7 @@ class Character : public Creature, public location_visitable<Character>
          * Handles end-of-turn processing.
          */
         void process_turn() override;
+        auto action_move_factor() const -> int override;
         /** Processes human-specific effects of effects before calling Creature::process_effects(). */
         void process_effects_internal() override;
         /** Handles the still hard-coded effects. */
@@ -1715,7 +1717,7 @@ class Character : public Creature, public location_visitable<Character>
         efftype_id last_emote;
 
         // bio_portal_tap: persistent link to a powered portal for passive bionic charging.
-        std::string bio_portal_tap_dim_id;
+        dimension_id bio_portal_tap_dim_id;
         tripoint_abs_ms bio_portal_tap_pos;
         bool bio_portal_tap_linked = false;
 
@@ -1892,6 +1894,11 @@ class Character : public Creature, public location_visitable<Character>
         int get_armor_type( damage_type dt, bodypart_id bp ) const override;
         std::map<bodypart_id, int> get_all_armor_type( damage_type dt,
                 const std::map<bodypart_id, std::vector<const item *>> &clothing_map ) const;
+        /**
+        * Returns the total normal hearing protection of a characters worn items, in dB spl.
+        * If bool advanced is true, gets the advanced hearing protection.
+        */
+        int get_char_hearing_protection( bool advanced = false ) const;
 
         int get_stim() const;
         void set_stim( int new_stim );

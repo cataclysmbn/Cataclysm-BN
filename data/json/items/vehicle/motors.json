@@ -20,7 +20,7 @@
     "name": { "str": "enhanced electric motor" },
     "description": "A very powerful and yet lightweight electric motor.  Useful for crafting, and its advanced design means it won't suffer power loss if multiple are installed on a vehicle.",
     "weight": "100 kg",
-    "material": [ "superalloy" ],
+    "material": [ "steel" ],
     "volume": "20 L",
     "price": "680 USD",
     "price_postapoc": "25 USD",

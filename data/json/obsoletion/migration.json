@@ -379,7 +379,27 @@
   {
     "id": "40mm_casing",
     "type": "MIGRATION",
-    "replace": "40x46mm_m118_casing"
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m118_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m195_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m199_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m212_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
   },
   {
     "id": "solar_panel_v3",
@@ -728,5 +748,40 @@
     "id": "multi_cooker_filled",
     "type": "MIGRATION",
     "replace": "multi_cooker"
+  },
+  {
+    "id": "40x53mm_m169_casing",
+    "type": "MIGRATION",
+    "replace": "40x53mm_casing"
+  },
+  {
+    "id": "40x46mm_buckshot_m118",
+    "type": "MIGRATION",
+    "replace": "40x46mm_m576"
+  },
+  {
+    "id": "40x46mm_slug_m118",
+    "type": "MIGRATION",
+    "replace": "40x46mm_slug"
+  },
+  {
+    "id": "40x46mm_slug_m199",
+    "type": "MIGRATION",
+    "replace": "40x46mm_slug"
+  },
+  {
+    "id": "40x46mm_flechette_m118",
+    "type": "MIGRATION",
+    "replace": "40x46mm_flechette"
+  },
+  {
+    "id": "40x46mm_flechette_m199",
+    "type": "MIGRATION",
+    "replace": "40x46mm_flechette"
+  },
+  {
+    "id": "40x46mm_makeshift_he_m199",
+    "type": "MIGRATION",
+    "replace": "40x46mm_makeshift_he"
   }
 ]

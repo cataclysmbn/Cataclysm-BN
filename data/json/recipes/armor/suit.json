@@ -1141,7 +1141,7 @@
       [ [ "winter_pants_army", 1 ] ],
       [ [ "tacvest", 2 ], [ "webbing_belt", 3 ], [ "molle_pack", 1 ], [ "modularvest", 2 ] ],
       [ [ "duct_tape", 200 ] ],
-      [ [ "bag_plastic", 24 ], [ "bag_zipper", 24 ], [ "plastic_shopping_bag", 12 ] ]
+      [ [ "bag_plastic", 24 ], [ "bag_zipper", 24 ], [ "bag_zipper_small", 96 ], [ "plastic_shopping_bag", 12 ] ]
     ]
   },
   {

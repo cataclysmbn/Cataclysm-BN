@@ -207,9 +207,18 @@
     "id": "infantry_medical_gear",
     "subtype": "collection",
     "entries": [
-      { "item": "1st_aid", "prob": 80 },
+      { "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ], "prob": 80 },
       { "item": "quikclot", "prob": 70 },
-      { "collection": [ { "item": "morphine" }, { "item": "syringe" } ], "prob": 40 }
+      { "collection": [ { "item": "morphine" }, { "item": "syringe" } ], "prob": 40 },
+      {
+        "distribution": [
+          { "item": "rx12_injector", "charges": [ 0, 2 ], "prob": 10 },
+          { "item": "ampoule", "charges": 2, "prob": 40 },
+          { "item": "rx11_stimpack", "charges": [ 0, 5 ], "prob": 10 },
+          { "item": "stimpack_ammo", "charges": 5, "prob": 40 }
+        ],
+        "prob": 5
+      }
     ]
   },
   {
@@ -651,7 +660,8 @@
       { "item": "neccowafers", "prob": 30 },
       { "item": "can_beans", "prob": 40 },
       { "item": "pork_beans", "prob": 40 },
-      { "item": "1st_aid", "prob": 35 },
+      { "item": "1st_aid", "prob": 28 },
+      { "item": "1st_aid_deluxe", "prob": 7 },
       { "item": "saline", "prob": 10 },
       { "item": "con_milk", "prob": 10 },
       { "item": "milk_UHT", "prob": 25 },
@@ -961,9 +971,21 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
-      { "item": "atgm_heat", "prob": 25 },
-      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 25 },
-      { "item": "aerial_bomb", "prob": 50 }
+      { "item": "atgm_heat", "prob": 15 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 20 },
+      { "item": "aerial_bomb", "prob": 40 },
+      { "item": "hellfire_heat", "prob": 20 },
+      { "item": "hellfire_ninja", "prob": 5 }
+    ]
+  },
+  {
+    "id": "helipad_heavy_munitions",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 30 },
+      { "item": "hellfire_heat", "prob": 60 },
+      { "item": "hellfire_ninja", "prob": 10 }
     ]
   }
 ]

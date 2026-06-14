@@ -1,0 +1,12 @@
+[
+  {
+    "type": "item_action",
+    "id": "LUA_AI_DEBUG_REMOTE",
+    "name": { "str": "Run Lua AI debug helper" }
+  },
+  {
+    "type": "item_action",
+    "id": "LUA_AI_DEBUG_SELECTOR",
+    "name": { "str": "Set Lua AI debug drone mode" }
+  }
+]

@@ -165,6 +165,7 @@
     "name": "serpent serum",
     "description": "A super-concentrated mutagen resembling congealed venom.  You need a syringe to inject it… if you really want to?",
     "color": "light_green",
+    "looks_like": "iv_mutagen",
     "use_action": { "type": "mutagen_iv", "mutation_category": "SERPENT" }
   },
   {
@@ -203,6 +204,7 @@
     "name": "rabbit serum",
     "description": "A super-concentrated mutagen that looks like pureed carrots.  You need a syringe to inject it… if you really want to?",
     "color": "light_red",
+    "looks_like": "iv_mutagen_beast",
     "use_action": { "type": "mutagen_iv", "mutation_category": "RABBIT" }
   },
   {
@@ -378,6 +380,7 @@
     "copy-from": "mutagen_flavor",
     "type": "COMESTIBLE",
     "name": "serpent mutagen",
+    "looks_like": "mutagen",
     "use_action": { "type": "mutagen", "mutation_category": "SERPENT" }
   },
   {
@@ -417,6 +420,7 @@
     "copy-from": "mutagen_flavor",
     "type": "COMESTIBLE",
     "name": "rabbit mutagen",
+    "looks_like": "mutagen",
     "use_action": { "type": "mutagen", "mutation_category": "RABBIT" }
   },
   {

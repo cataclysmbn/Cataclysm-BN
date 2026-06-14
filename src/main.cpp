@@ -54,11 +54,20 @@
 
 class ui_adaptor;
 
+#if defined(CATA_SDL)
+#   if !defined(SDL_MAIN_HANDLED)
+#       define SDL_MAIN_HANDLED
+#   endif
+#   include <SDL3/SDL.h>
+#   include "compute/gpu_platform.h"
+#   include "platform/sdl_video.h"
+#endif
 #if defined(TILES)
-#   define SDL_MAIN_HANDLED
 #   include <SDL3/SDL_main.h>
 #   include "sdl_wrappers.h"
 #endif
+#include "preload_config.h"
+#include "sdlsound.h"
 
 #if defined(__ANDROID__)
 #include <SDL3/SDL.h>
@@ -177,6 +186,28 @@ struct arg_handler {
     handler_method handler;  //!< The callback to be invoked when this argument is encountered.
 };
 
+#if defined(CATA_SDL)
+auto init_sdl_platform( bool init_audio ) -> bool
+{
+    auto init_flags = SDL_InitFlags{ SDL_INIT_VIDEO };
+#if defined(SDL_SOUND)
+    if( init_audio ) {
+        init_flags |= SDL_INIT_AUDIO;
+    }
+#else
+    ( void )init_audio;
+#endif
+
+    if( !SDL_Init( init_flags ) ) {
+        DebugLog( DL::Error, DC::Main ) << "SDL_Init failed: " << SDL_GetError();
+        return false;
+    }
+
+    atexit( SDL_Quit );
+    return true;
+}
+#endif
+
 void printHelpMessage( const arg_handler *first_pass_arguments, size_t num_first_pass_arguments,
                        const arg_handler *second_pass_arguments, size_t num_second_pass_arguments );
 }  // namespace
@@ -197,6 +228,7 @@ int main( int argc, char *argv[] )
     int seed = time( nullptr );
     bool verifyexit = false;
     bool check_mods = false;
+    auto check_mods_mode = init::check_mods_mode::default_mods;
     std::filesystem::path lua_doc_output_path;
     std::filesystem::path lua_types_output_path;
     std::string dump;
@@ -238,7 +270,7 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 15> first_pass_arguments = {{
+        const std::array<arg_handler, 17> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
@@ -265,7 +297,7 @@ int main( int argc, char *argv[] )
                 },
                 {
                     "--check-mods", "[mods…]",
-                    "Checks the json files belonging to BN mods",
+                    "Checks the json files belonging to default or specified BN mods",
                     section_default,
                     [&check_mods, &opts]( int n, const char *params[] ) -> int {
                         check_mods = true;
@@ -274,6 +306,17 @@ int main( int argc, char *argv[] )
                         {
                             opts.emplace_back( params[ i ] );
                         }
+                        return 0;
+                    }
+                },
+                {
+                    "--check-all-mods", nullptr,
+                    "Checks the json files belonging to all non-obsolete BN mods",
+                    section_default,
+                    [&check_mods, &check_mods_mode]( int, const char ** ) -> int {
+                        check_mods = true;
+                        check_mods_mode = init::check_mods_mode::all_mods;
+                        test_mode = true;
                         return 0;
                     }
                 },
@@ -444,6 +487,21 @@ int main( int argc, char *argv[] )
                         test_mode = true;
                         lua_types_output_path = params[0];
                         return 0;
+                    }
+                },
+                {
+                    "--gpu-backend", "<driver>",
+                    "Override the SDL_GPU backend driver for diagnostics (vulkan / direct3d12 / metal / software).",
+                    nullptr,
+                    []( int num_args, const char **params ) -> int {
+                        if( num_args < 1 )
+                        {
+                            return -1;
+                        }
+#if defined(CATA_SDL)
+                        preload_config::set_gpu_backend_override( params[0] );
+#endif
+                        return 1;
                     }
                 }
             }
@@ -630,6 +688,8 @@ int main( int argc, char *argv[] )
         }
     }
 
+    preload_config::load();
+
     std::string current_path = std::filesystem::current_path().string();
 
     if( !dir_exist( PATH_INFO::datadir() ) ) {
@@ -700,7 +760,7 @@ int main( int argc, char *argv[] )
         exit_handler( -999 );
     }
 
-#if defined(TILES)
+#if defined(CATA_SDL)
     DebugLog( DL::Info, DC::Main ) << "SDL version used during compile is "
                                    << SDL_MAJOR_VERSION << "."
                                    << SDL_MINOR_VERSION << "."
@@ -718,6 +778,26 @@ int main( int argc, char *argv[] )
     get_options().load();
     get_options().save();
     set_language(); // Have to set locale before initializing ncurses
+#if defined(CATA_SDL)
+    switch( use_offscreen_video_driver_for_headless_sdl() ) {
+        case offscreen_sdl_hint_result::applied:
+            DebugLog( DL::Info, DC::Main ) << "SDL video driver set to offscreen for headless curses";
+            break;
+        case offscreen_sdl_hint_result::failed:
+            DebugLog( DL::Warn, DC::Main ) << "SDL video driver offscreen hint failed: " << SDL_GetError();
+            break;
+        case offscreen_sdl_hint_result::skipped:
+            break;
+    }
+    if( !init_sdl_platform( !test_mode ) ) {
+        return 1;
+    }
+#endif
+#elif defined(CATA_SDL)
+    if( test_mode && lua_doc_output_path.empty() && lua_types_output_path.empty() &&
+        !init_sdl_platform( false ) ) {
+        return 1;
+    }
 #endif
 
     // in test mode don't initialize curses to avoid escape sequences being inserted into output stream
@@ -733,7 +813,19 @@ int main( int argc, char *argv[] )
             DebugLog( DL::Error, DC::Main ) << "Error while initializing the interface: " << err.what();
             return 1;
         }
+#if defined(SDL_SOUND) && !defined(TILES)
+        init_sound();
+        atexit( shutdown_sound );
+        load_soundset();
+#endif
     }
+
+#if defined(CATA_SDL)
+    if( lua_doc_output_path.empty() && lua_types_output_path.empty() ) {
+        cata_gpu::init();
+        atexit( cata_gpu::shutdown );
+    }
+#endif
 
 #if defined(TILES)
     if( test_mode ) {
@@ -761,7 +853,7 @@ int main( int argc, char *argv[] )
             init_colors();
             loading_ui ui( false );
             const std::vector<mod_id> mods( opts.begin(), opts.end() );
-            if( init::check_mods_for_errors( ui, mods ) ) {
+            if( init::check_mods_for_errors( ui, mods, check_mods_mode ) ) {
                 exit( 0 );
             } else {
                 exit( 1 );
@@ -771,20 +863,6 @@ int main( int argc, char *argv[] )
         debugmsg( "%s", err.what() );
         exit_handler( -999 );
     }
-
-    // Now we do the actual game.
-
-    game_ui::init_ui();
-
-    catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
-
-#if !defined(_WIN32)
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = signal_handler;
-    sigemptyset( &sigIntHandler.sa_mask );
-    sigIntHandler.sa_flags = 0;
-    sigaction( SIGINT, &sigIntHandler, nullptr );
-#endif
 
     DebugLog( DL::Info, DC::Main ) << "LAPI version: " << cata::get_lapi_version_string();
     cata::startup_lua_test();
@@ -813,6 +891,20 @@ int main( int argc, char *argv[] )
         }
         return 0;
     }
+
+    // Now we do the actual game.
+
+    game_ui::init_ui();
+
+    catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
+
+#if !defined(_WIN32)
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = signal_handler;
+    sigemptyset( &sigIntHandler.sa_mask );
+    sigIntHandler.sa_flags = 0;
+    sigaction( SIGINT, &sigIntHandler, nullptr );
+#endif
 
     prompt_select_lang_on_startup();
     replay_buffered_debugmsg_prompts();

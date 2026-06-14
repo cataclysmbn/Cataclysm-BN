@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "calendar.h"
 #include "character.h"
 #include "debug.h"
@@ -123,7 +124,8 @@ void addict_effect( Character &u, addiction &add )
                     if( on_ghb && one_in( 5 ) ) {
                         u.add_msg_if_player( _( "The GHB makes it not so bad." ) );
                     }
-                } else if( calendar::once_every( 1_minutes ) && rng( 8, 300 ) < in && ( !on_ghb || one_in( 2 ) ) ) {
+                } else if( action_time_scale::once_every_this_tick( 1_minutes ) &&
+                           rng( 8, 300 ) < in && ( !on_ghb || one_in( 2 ) ) ) {
                     const std::string msg_2 = is_alcohol ?
                                               _( "Your hands start shaking… you need a drink bad!" ) :
                                               _( "You're shaking… you need some diazepam!" );
@@ -144,12 +146,12 @@ void addict_effect( Character &u, addiction &add )
             // No effects here--just in player::can_sleep()
             // EXCEPT!  Prolong this addiction longer than usual.
             if( one_in( 2 ) && add.sated < 0_turns ) {
-                add.sated += 1_turns;
+                add.sated += action_time_scale::calendar_duration_this_tick();
             }
             break;
 
         case add_type::PKILLER:
-            if( calendar::once_every( time_duration::from_turns( 100 - in * 4 ) ) &&
+            if( action_time_scale::once_every_this_tick( time_duration::from_turns( 100 - in * 4 ) ) &&
                 u.get_painkiller() > 20 - in ) {
                 // Tolerance increases!
                 u.mod_painkiller( -1 );
@@ -187,7 +189,7 @@ void addict_effect( Character &u, addiction &add )
             }
             u.mod_int_bonus( -1 );
             u.mod_str_bonus( -1 );
-            if( current_stim > -75 && calendar::once_every( 3_minutes ) ) {
+            if( current_stim > -75 && action_time_scale::once_every_this_tick( 3_minutes ) ) {
                 u.mod_stim( -1 );
             }
             if( rng( 0, 150 ) <= in ) {

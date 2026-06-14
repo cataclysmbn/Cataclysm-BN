@@ -3,11 +3,13 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <map>
 #include <memory>
 #include <optional>
 
+#include "action_time_scale.h"
 #include "anatomy.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -34,6 +36,8 @@
 #include "line.h"
 #include "locations.h"
 #include "map.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "messages.h"
@@ -48,6 +52,7 @@
 #include "rng.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "submap_load_manager.h"
 #include "translations.h"
 #include "value_ptr.h"
 #include "vehicle.h"
@@ -56,9 +61,62 @@
 #include "overmapbuffer_registry.h"
 #include "profile.h"
 
-const std::string &Creature::get_dimension() const
+auto Creature::get_dimension() const -> const dimension_id &
 {
     return g_active_dimension_id;
+}
+
+auto Creature::set_dimension( const dimension_id &dim_id ) -> void
+{
+    if( dim_id != get_dimension() ) {
+        debugmsg( "This creature type does not own dimension state" );
+    }
+    invalidate_mapbuffer_cache();
+}
+
+auto Creature::get_mapbuffer() const -> mapbuffer &
+{
+    const auto &dim_id = get_dimension();
+    if( cached_mapbuffer_ != nullptr ) {
+        const auto registry_generation = MAPBUFFER_REGISTRY.generation();
+        if( cached_mapbuffer_dim_ == dim_id &&
+            cached_mapbuffer_generation_ == registry_generation ) {
+            return *cached_mapbuffer_;
+        }
+    }
+
+    mapbuffer &buffer = MAPBUFFER_REGISTRY.get( dim_id );
+    cached_mapbuffer_ = &buffer;
+    cached_mapbuffer_dim_ = dim_id;
+    cached_mapbuffer_generation_ = MAPBUFFER_REGISTRY.generation();
+    return buffer;
+}
+
+auto Creature::find_mapbuffer() const -> mapbuffer *
+{
+    const auto &dim_id = get_dimension();
+    auto registry_generation = std::size_t{};
+    if( cached_mapbuffer_ != nullptr ) {
+        registry_generation = MAPBUFFER_REGISTRY.generation();
+        if( cached_mapbuffer_dim_ == dim_id &&
+            cached_mapbuffer_generation_ == registry_generation ) {
+            return cached_mapbuffer_;
+        }
+    } else {
+        registry_generation = MAPBUFFER_REGISTRY.generation();
+    }
+
+    cached_mapbuffer_ = MAPBUFFER_REGISTRY.find( dim_id );
+    cached_mapbuffer_dim_ = dim_id;
+    cached_mapbuffer_generation_ = registry_generation;
+    return cached_mapbuffer_;
+}
+
+auto Creature::invalidate_mapbuffer_cache() const -> void
+{
+    cached_mapbuffer_ = nullptr;
+    cached_mapbuffer_dim_ = dimension_id();
+    cached_mapbuffer_generation_ = 0;
 }
 
 static const ammo_effect_str_id ammo_effect_APPLY_SAP( "APPLY_SAP" );
@@ -156,6 +214,7 @@ Creature::Creature( const Creature &source )
     speed_base = source.speed_base;
 
     speed_bonus = source.speed_bonus;
+    move_credit_remainder = source.move_credit_remainder;
     speed_mult = source.speed_mult;
     dodge_bonus = source.dodge_bonus;
     block_bonus = source.block_bonus;
@@ -244,8 +303,21 @@ void Creature::process_turn()
 
     // add an appropriate number of moves
     if( !has_effect( effect_ridden ) ) {
-        moves += get_speed();
+        add_action_move_credit( get_speed(), action_move_factor() );
     }
+}
+
+auto Creature::add_action_move_credit( const int base_moves, const int action_factor ) -> void
+{
+    const auto move_credit = static_cast<int64_t>( base_moves ) * action_factor +
+                             move_credit_remainder;
+    moves += move_credit / action_time_scale::factor_denominator;
+    move_credit_remainder = move_credit % action_time_scale::factor_denominator;
+}
+
+auto Creature::action_move_factor() const -> int
+{
+    return action_time_scale::factor_denominator;
 }
 
 void Creature::batch_turns( int n )
@@ -314,10 +386,6 @@ bool Creature::sees( const Creature &critter ) const
         return false;
     }
 
-    if( !fov_3d && !debug_mode && bub_pos().z() != critter.bub_pos().z() ) {
-        return false;
-    }
-
     // This check is ridiculously expensive so defer it to after everything else.
     auto visible = []( const Character * ch ) {
         return ch == nullptr || !ch->is_invisible();
@@ -380,13 +448,9 @@ bool Creature::sees( const Creature &critter ) const
     return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
 }
 
-bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) const
+bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod ) const
 {
     ZoneScoped;
-    if( !fov_3d && bub_pos().z() != t.z() ) {
-        return false;
-    }
-
     map &here = get_map();
     // A creature in a different dimension from the current render map cannot
     // perform a valid sight check through that map's terrain data.
@@ -412,10 +476,13 @@ bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) c
         tl_range.range_max  = std::max( tl_range.range_day, tl_range.range_night );
     }
     const auto range_max = tl_range.range_max;
+    const auto wanted_range = rl_dist( bub_pos(), t );
+    if( wanted_range > range_max ) {
+        return false;
+    }
     const auto ambient = here.ambient_light_at( t );
     const auto range_cur = sight_range( ambient );
     const auto range_min = std::min( range_cur, range_max );
-    const auto wanted_range = rl_dist( bub_pos(), t );
     const auto natural_light = g->natural_light_level( t.z() );
     const auto is_lit = ambient > natural_light;
     if( wanted_range <= range_min ||
@@ -427,22 +494,7 @@ bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) c
         if( range_mod > 0 ) {
             range = std::min( range, range_mod );
         }
-        if( is_avatar && bub_pos().z() == t.z() ) {
-            // Only use seen_cache when on the same z-level
-            // Special case monster -> player visibility, forcing it to be symmetric with player vision.
-            const auto player_visibility_factor = g->u.visibility() / 100.0f;
-            const auto adj_range = static_cast<int>( std::floor( range * player_visibility_factor ) );
-            const auto &_mc = here.get_cache_ref( bub_pos().z() );
-            // seen_cache is only valid within the render area; out-of-render entities
-            // are not visible to the player by definition.
-            if( !_mc.inbounds( bub_pos().xy() ) ) {
-                return false;
-            }
-            return adj_range >= wanted_range &&
-                   _mc.seen_cache[_mc.idx( bub_pos().x(), bub_pos().y() )] > LIGHT_TRANSPARENCY_SOLID;
-        } else {
-            return here.sees( bub_pos(), t, range );
-        }
+        return here.sees( bub_pos(), t, range );
     } else {
         return false;
     }
@@ -1494,10 +1546,6 @@ void Creature::clear_effects()
         }
     }
 }
-bool Creature::remove_effect( const efftype_id &eff_id )
-{
-    return remove_effect( eff_id, bodypart_str_id::NULL_ID() );
-}
 bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &bp )
 {
     if( !has_effect( eff_id, bp ) ) {
@@ -1874,6 +1922,7 @@ void Creature::mod_moves( int nmoves )
 void Creature::set_moves( int nmoves )
 {
     moves = nmoves;
+    move_credit_remainder = 0;
 }
 
 bool Creature::in_sleep_state() const
@@ -2553,20 +2602,24 @@ effects_map Creature::get_all_effects() const
 
 tripoint_abs_ms Creature::abs_pos() const
 {
-    return get_map().bub_to_abs( bub_pos() );
+    return bub_to_abs( bub_pos() );
 }
 
 void Creature::setpos( const tripoint_abs_ms &pos )
 {
-    setpos( get_map().abs_to_bub( pos ) );
+    setpos( abs_to_bub( pos ) );
 }
 
 bool Creature::is_loaded() const
 {
-    return get_map().get_submap_at( bub_pos() ) != nullptr;
+    auto *const buffer = find_mapbuffer();
+    if( buffer == nullptr ) {
+        return false;
+    }
+    return buffer->lookup_submap_in_memory( project_to<coords::sm>( abs_pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const
 {
-    return get_map().is_position_simulated( bub_pos() );
+    return submap_loader.is_simulated( get_dimension(), project_to<coords::sm>( abs_pos() ) );
 }

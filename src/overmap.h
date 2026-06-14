@@ -265,18 +265,18 @@ class overmap
 {
     public:
         overmap( overmap && ) noexcept ;
-        overmap( const point_abs_om &p, const std::string &dim_id = "" );
+        overmap( const point_abs_om &p, const dimension_id &dim_id = dimension_id() );
         ~overmap();
 
-        auto get_dimension_id() const -> const std::string & { // *NOPAD*
+        auto get_dimension_id() const -> const dimension_id & { // *NOPAD*
             return dimension_id_;
         }
 
         /**
          * Create content in the overmap.
          **/
-        void populate( const std::string &dim_id, overmap_special_batch &enabled_specials );
-        void populate( const std::string &dim_id );
+        auto populate( const dimension_id &dim_id, overmap_special_batch &enabled_specials ) -> void;
+        auto populate( const dimension_id &dim_id ) -> void;
 
         const point_abs_om &pos() const {
             return loc;
@@ -287,7 +287,7 @@ class overmap
          * the correct dimension subdirectory.  Thread-safe when different overmaps
          * are saved concurrently: each writes to a distinct file path.
          */
-        void save( const std::string &dim_id ) const;
+        auto save( const dimension_id &dim_id ) const -> void;
 
         /** Legacy overload — delegates to save(g_active_dimension_id).
          *  Do NOT call from background threads; see g_active_dimension_id comment
@@ -461,7 +461,7 @@ class overmap
 
         bool nullbool = false;
         point_abs_om loc;
-        std::string dimension_id_;
+        dimension_id dimension_id_;
 
         std::array<map_layer, OVERMAP_LAYERS> layer;
         std::unordered_map<tripoint_abs_omt, scent_trace> scents;
@@ -492,7 +492,7 @@ class overmap
         // Initialize
         void init_layers();
         // open existing overmap, or generate a new one
-        void open( const std::string &dim_id, overmap_special_batch &enabled_specials );
+        auto open( const dimension_id &dim_id, overmap_special_batch &enabled_specials ) -> void;
     public:
 
         /**

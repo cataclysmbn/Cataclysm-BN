@@ -112,12 +112,20 @@ class safe_reference
 
         inline static rbp_type records_by_pointer;
         inline static rbi_type records_by_id;
+        // Guards the structure of records_by_pointer / records_by_id (insert / erase /
+        // rehash). Worker-thread mapgen creates, merges and destroys items, which adds
+        // and removes records concurrently with the main thread. Individual record
+        // fields are not guarded by this: each item belongs to exactly one omt so two
+        // workers never touch the same record. Uncontended on the main thread, so the
+        // cost during normal gameplay is a single atomic CAS per lock/unlock.
+        inline static std::mutex records_mutex;
         // Atomic so that concurrent save_omt() workers can call serialize() without
         // racing on ID generation.  Reads/writes to individual record fields are safe
         // across workers because each item belongs to exactly one omt (distinct records).
         inline static std::atomic<uint32_t> next_id = 1;
 
         auto fill( T *obj ) -> void {
+            const std::lock_guard<std::mutex> guard( records_mutex );
             rbp_it search = records_by_pointer.find( obj );
             if( search != records_by_pointer.end() ) {
                 rec = search->second;
@@ -127,6 +135,7 @@ class safe_reference
             }
         }
         auto fill( id_type id ) -> void {
+            const std::lock_guard<std::mutex> guard( records_mutex );
             rbi_it search = records_by_id.find( id );
             if( search != records_by_id.end() ) {
                 rec = search->second;
@@ -162,6 +171,9 @@ class safe_reference
             if( rec == nullptr ) {
                 return;
             }
+            // resolve_redirects() above only follows pointers; the map erases below
+            // are the structural mutations that need the lock.
+            const std::lock_guard<std::mutex> guard( records_mutex );
             //Check if we're the last in-memory reference
             if( rec->mem_count == 1 ) {
                 if( base_id( rec->id ) == ID_NONE ) {
@@ -319,6 +331,7 @@ class safe_reference
          */
         static auto merge( T *primary, T *secondary ) -> void {
 
+            const std::lock_guard<std::mutex> guard( records_mutex );
             rbp_it sec_search = records_by_pointer.find( secondary );
 
             // The secondary doesn't have a record (i.e. there are no references

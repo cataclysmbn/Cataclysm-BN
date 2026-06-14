@@ -420,10 +420,24 @@
     "//": "Nearly-immeasurable chance to fail to fire."
   },
   {
+    "id": "AMMO_50BMG_RAUFOSS",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 50,
+      "radius": 2,
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 70, "armor_multiplier": 1 }, "range": 5 }
+    }
+  },
+  {
     "id": "AMMO_25MM_HEI",
     "type": "ammo_effect",
-    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 1, "radius": 1, "chance": 25 },
-    "explosion": { "damage": 10, "radius": 1 }
+    "explosion": {
+      "damage": 10,
+      "radius": 1,
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 5, "armor_multiplier": 1 }, "range": 2 }
+    }
   },
   {
     "id": "AMMO_155MM_FRAG",
@@ -466,7 +480,7 @@
     "id": "AMMO_84x246_HE",
     "type": "ammo_effect",
     "explosion": {
-      "damage": 80,
+      "damage": 120,
       "radius": 6,
       "fragment": { "impact": { "damage_type": "bullet", "amount": 220, "armor_multiplier": 1 }, "range": 7 }
     }
@@ -474,6 +488,16 @@
   {
     "id": "AMMO_84x246_HEDP",
     "type": "ammo_effect",
-    "explosion": { "damage": 125, "radius": 3 }
+    "explosion": { "damage": 400, "radius": 1 }
+  },
+  {
+    "id": "AMMO_ATGM_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 600, "radius": 2 }
+  },
+  {
+    "id": "AMMO_HELLFIRE_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 2000, "radius": 3 }
   }
 ]

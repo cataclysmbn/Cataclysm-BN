@@ -131,11 +131,6 @@ static bool is_nonzero( const float x )
     return x != 0;
 }
 
-static bool is_nonzero( const four_quadrants &x )
-{
-    return is_nonzero( x.max() );
-}
-
 template<typename Exp>
 bool grids_are_equivalent( float control[MAPSIZE * SEEX][MAPSIZE * SEEY],
                            Exp experiment[MAPSIZE * SEEX][MAPSIZE * SEEY] )
@@ -220,9 +215,7 @@ void print_grid_comparison( const point_bub_ms &offset,
     }
 }
 
-// Sight model for all shadowcasting test cases.  Both update_float and
-// update_quadrants are non-null so this model works with castLightAll (float)
-// and castLightAll_q (four_quadrants) alike.
+// Sight model for all shadowcasting test cases.
 static const light_model k_sight_model = {
     sight_calc, sight_check, update_light, update_light_quadrants, sight_from_lookup,
     accumulate_transparency
@@ -303,70 +296,6 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
     if( !passed ) {
         print_grid_comparison( offset, transparency_cache, seen_squares_control,
                                seen_squares_experiment );
-    }
-
-    REQUIRE( passed );
-}
-
-static void shadowcasting_float_quad(
-    const int iterations, const unsigned int denominator = DENOMINATOR )
-{
-    // Static to avoid stack overflow: MAPSIZE*SEEX x MAPSIZE*SEEY arrays (~689 KB each).
-    static float lit_squares_float[MAPSIZE * SEEX][MAPSIZE * SEEY];
-    static four_quadrants lit_squares_quad[MAPSIZE * SEEX][MAPSIZE * SEEY];
-    static float transparency_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
-    static diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
-
-    // Result arrays accumulate light; must be zeroed before each run.
-    std::fill_n( &lit_squares_float[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, 0.0f );
-    std::fill_n( &lit_squares_quad[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, four_quadrants{} );
-    // transparency_cache fully overwritten by randomly_fill_transparency below.
-    // blocked_cache fully overwritten by uninitialized_fill_n below.
-
-    diagonal_blocks fill = {false, false};
-    std::uninitialized_fill_n( &blocked_cache[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, fill );
-
-    randomly_fill_transparency( transparency_cache, denominator );
-
-    map dummy;
-
-    const point_bub_ms offset( 65, 65 );
-
-    const auto start1 = std::chrono::high_resolution_clock::now();
-    for( int i = 0; i < iterations; i++ ) {
-        castLightAll_q( &lit_squares_quad[0][0], &transparency_cache[0][0],
-                        &blocked_cache[0][0], MAPSIZE * SEEX, MAPSIZE * SEEY,
-                        offset, 0, VISIBILITY_FULL, k_sight_model );
-    }
-    const auto end1 = std::chrono::high_resolution_clock::now();
-
-    const auto start2 = std::chrono::high_resolution_clock::now();
-    for( int i = 0; i < iterations; i++ ) {
-        // Then the current algorithm.
-        castLightAll( &lit_squares_float[0][0], &transparency_cache[0][0],
-                      &blocked_cache[0][0], MAPSIZE * SEEX, MAPSIZE * SEEY,
-                      offset, 0, VISIBILITY_FULL, k_sight_model );
-    }
-    const auto end2 = std::chrono::high_resolution_clock::now();
-
-    if( iterations > 1 ) {
-        const long long diff1 = std::chrono::duration_cast<std::chrono::microseconds>
-                                ( end1 - start1 ).count();
-        const long long diff2 = std::chrono::duration_cast<std::chrono::microseconds>
-                                ( end2 - start2 ).count();
-        cata_printf( "castLight on four_quadrants (denominator %u) "
-                     "executed %d times in %lld microseconds.\n",
-                     denominator, iterations, diff1 );
-        cata_printf( "castLight on floats (denominator %u) "
-                     "executed %d times in %lld microseconds.\n",
-                     denominator, iterations, diff2 );
-    }
-
-    bool passed = grids_are_equivalent( lit_squares_float, lit_squares_quad );
-
-    if( !passed ) {
-        print_grid_comparison( offset, transparency_cache, lit_squares_float,
-                               lit_squares_quad );
     }
 
     REQUIRE( passed );
@@ -688,19 +617,6 @@ TEST_CASE( "shadowcasting_3d_2d_performance", "[.]" )
 {
     clear_all_state();
     shadowcasting_3d_2d( 100000 );
-}
-
-TEST_CASE( "shadowcasting_float_quad_equivalence", "[shadowcasting]" )
-{
-    clear_all_state();
-    shadowcasting_float_quad( 1 );
-}
-
-TEST_CASE( "shadowcasting_float_quad_performance", "[.]" )
-{
-    clear_all_state();
-    shadowcasting_float_quad( 1000000 );
-    shadowcasting_float_quad( 1000000, 100 );
 }
 
 // I'm not sure this will ever work.

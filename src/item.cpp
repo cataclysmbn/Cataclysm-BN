@@ -20,6 +20,7 @@
 #include <tuple>
 #include <unordered_set>
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "ammo.h"
 #include "ascii_art.h"
@@ -824,12 +825,27 @@ void item::set_damage( int qty )
     damage_ = std::max( std::min( qty, max_damage() ), min_damage() );
 }
 
+auto item::prepare_for_location_removal() -> void
+{
+    if( !goes_bad() ) {
+        return;
+    }
+    if( is_in_preserving_container() ) {
+        mark_rot_checked_now();
+        return;
+    }
+    if( is_loaded() && has_position() ) {
+        const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
+        const auto temperature = vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
+                                 rot::temperature_flag_for_location( get_map(), *this );
+        update_rot( position(), temperature, get_weather() );
+    }
+}
+
 detached_ptr<item> item::split( int qty )
 {
     const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
-    if( split_from_preserving_container ) {
-        mark_rot_checked_now();
-    }
+    prepare_for_location_removal();
     if( qty <= 0 || !count_by_charges() || qty >= charges ) {
         return detach();
     }
@@ -871,9 +887,7 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
     if( is_null() ) {
         return false;
     }
-    if( goes_bad() && is_in_preserving_container() ) {
-        mark_rot_checked_now();
-    }
+    prepare_for_location_removal();
     if( count_by_charges() ) {
         return attempt_split( 0, cb );
     }
@@ -884,10 +898,8 @@ bool item::attempt_split( int qty,
                           const std::function < detached_ptr<item>( detached_ptr<item> && ) > & cb )
 {
     const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
-    if( split_from_preserving_container ) {
-        mark_rot_checked_now();
-    }
-    const bool split_needs_rot_actualization = goes_bad() && has_position() &&
+    prepare_for_location_removal();
+    const bool split_needs_rot_actualization = goes_bad() && is_loaded() && has_position() &&
             !split_from_preserving_container;
     const auto split_pos = split_needs_rot_actualization ? position() : tripoint_bub_ms::zero();
     const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
@@ -5008,7 +5020,8 @@ void item::on_map_placement( const map &m, const tripoint_bub_ms &p )
 
     // TODO: Move to reveal_map_actor
     if( is_map() && !has_var( "reveal_map_center_omt" ) ) {
-        set_var( "reveal_map_center_omt", project_to<coords::omt>( m.bub_to_abs( p ) ) );
+        const auto abs_pos = map_local_to_abs( m, p );
+        set_var( "reveal_map_center_omt", project_to<coords::omt>( abs_pos ) );
     }
 
     for( const auto &func : type->use_methods | std::views::values ) {
@@ -6880,7 +6893,7 @@ bool item::ready_to_revive( const tripoint_bub_ms &pos ) const
     if( get_map().veh_at( pos ) ) {
         return false;
     }
-    if( !calendar::once_every( 1_seconds ) ) {
+    if( !action_time_scale::once_every_this_tick( 1_seconds ) ) {
         return false;
     }
     int age_in_hours = to_hours<int>( age() );
@@ -6917,6 +6930,11 @@ bool item::count_by_charges() const
     return type->count_by_charges();
 }
 
+bool item::is_stackable() const
+{
+    return type->is_stackable();
+}
+
 int item::count() const
 {
     return count_by_charges() ? charges : 1;
@@ -6931,6 +6949,22 @@ bool item::craft_has_charges()
     }
 
     return false;
+}
+
+// Get the hearing protection provided by this item.
+// Returns advanced (active) hearing protection if true.
+// Advanced hearing protection does not make it harder for the character to hear other sounds.
+int item::get_hearing_protection( bool advanced ) const
+{
+    if( this->is_armor() ) {
+        const islot_armor *armor = find_armor_data();
+        if( armor == nullptr ) {
+            return 0;
+        }
+        return ( advanced ) ? armor->adv_hearing_protection : armor->hearing_protection;
+    } else {
+        return 0;
+    }
 }
 
 #if defined(_MSC_VER)
@@ -7136,7 +7170,7 @@ bool item::mod_damage( int qty, damage_type dt )
 {
     bool destroy = false;
 
-    if( count_by_charges() ) {
+    if( count_by_charges() && !is_stackable() ) {
         charges -= std::min( type->stack_size * qty / itype::damage_scale, charges );
         destroy |= charges == 0;
     }
@@ -7145,7 +7179,7 @@ bool item::mod_damage( int qty, damage_type dt )
         on_damage( qty, dt );
     }
 
-    if( !count_by_charges() ) {
+    if( !count_by_charges() || is_stackable() ) {
         destroy |= damage_ + qty > max_damage();
 
         damage_ = std::max( std::min( damage_ + qty, max_damage() ), min_damage() );
@@ -10029,6 +10063,21 @@ bool item::can_holster( const item &obj, bool ignore ) const
     return true;
 }
 
+bool item::can_put_in_bandolier( const item &obj, bool ) const
+{
+    if( !type->can_use( "bandolier" ) ) {
+        return false; // item is not a holster
+    }
+
+    const auto *ptr = dynamic_cast<const bandolier_actor *>
+                      ( type->get_use( "bandolier" )->get_actor_ptr() );
+    if( !ptr->can_store( *this, obj ) ) {
+        return false; // item is not a suitable holster for obj
+    }
+
+    return true;
+}
+
 std::string item::components_to_string() const
 {
     using t_count_map = std::map<std::string, int>;
@@ -10174,7 +10223,7 @@ void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
             //Use weather if above ground, use map temp if below
             units::temperature env_temperature_raw;
             if( pos.z() >= 0 ) {
-                tripoint_abs_ms location = tripoint_abs_ms( get_map().bub_to_abs( pos ) );
+                const auto location = bub_to_abs( pos );
                 units::temperature weather_temperature = wgen.get_weather_temperature( location, time,
                         calendar::config, seed );
                 env_temperature_raw = weather_temperature + local_mod;
@@ -10640,7 +10689,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
         }
     }
     if( nonchar.map_point() ) {
-        distance = rl_dist( pos, here.abs_to_bub( nonchar.point ) );
+        distance = rl_dist( pos, abs_to_bub( nonchar.point ) );
         self->charges = self->type->maximum_charges() - distance;
         if( self->charges < 1 ) {
             if( carrier ) {

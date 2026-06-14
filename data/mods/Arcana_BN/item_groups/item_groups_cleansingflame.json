@@ -356,7 +356,7 @@
       { "item": "cattail_jelly", "prob": 10, "charges": 21, "container-item": "bottle_glass" },
       { "item": "thyme_oil", "prob": 20, "charges": 3, "container-item": "bottle_glass" },
       { "item": "mugwort_oil", "prob": 5, "charges": 3, "container-item": "bottle_glass" },
-      { "item": "tea_bark", "prob": 5, "charges": 3, "container-item": "bottle_glass" },
+      { "item": "tea_bark", "prob": 5, "charges": 1, "container-item": "bottle_glass" },
       [ "bandages_makeshift", 30 ],
       [ "bandages_makeshift_boiled", 15 ],
       [ "water_talisman", 5 ],

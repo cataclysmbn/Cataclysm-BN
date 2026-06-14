@@ -1,25 +1,30 @@
 #pragma once
 
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "type_id.h"
+
 class mapbuffer;
 
 /**
  * Registry managing one mapbuffer per dimension.
  *
- * Each dimension is identified by a string key.  The primary (default) dimension
- * uses PRIMARY_DIMENSION_ID (""), which is also accessible through the MAPBUFFER
- * macro for backwards compatibility.
+ * Each dimension is identified by a dimension_id.  The primary/default
+ * dimension uses an empty dimension_id, which is also accessible through the
+ * MAPBUFFER macro for backwards compatibility.
  */
 class mapbuffer_registry
 {
     public:
         /// The dimension ID used for the primary/default world.
-        static constexpr const char *PRIMARY_DIMENSION_ID = "";
+        static auto primary_dimension_id() -> dimension_id {
+            return dimension_id();
+        }
 
         mapbuffer_registry();
 
@@ -31,36 +36,43 @@ class mapbuffer_registry
          * Return the mapbuffer for the given dimension, creating it if it does not
          * already exist.
          */
-        mapbuffer &get( const std::string &dim_id );
+        auto get( const dimension_id &dim_id ) -> mapbuffer &;
+
+        /**
+         * Return the mapbuffer for the given dimension if a registry slot already
+         * exists.  Does not create a slot or load any submaps.
+         */
+        auto find( const dimension_id &dim_id ) -> mapbuffer *;
+        auto find( const dimension_id &dim_id ) const -> const mapbuffer *;
 
         /**
          * Return true if a registry slot exists for the given dimension.
          * The slot may hold an empty mapbuffer; use has_any_loaded() to
          * check whether submaps are actually resident.
          */
-        bool is_registered( const std::string &dim_id ) const;
+        auto is_registered( const dimension_id &dim_id ) const -> bool;
 
         /**
          * Return true if the given dimension has at least one submap
          * currently resident in memory.
          */
-        bool has_any_loaded( const std::string &dim_id ) const;
+        auto has_any_loaded( const dimension_id &dim_id ) const -> bool;
 
         /**
          * Remove and destroy the mapbuffer for the given dimension.
          * All submaps held in it are deleted.  Does nothing if the dimension
          * is not registered.
          */
-        void unload_dimension( const std::string &dim_id );
+        auto unload_dimension( const dimension_id &dim_id ) -> void;
 
         /**
          * Invoke @p fn for every registered dimension.
-         * Callback signature: void( const std::string& dim_id, mapbuffer& buf )
+         * Callback signature: void( const dimension_id& dim_id, mapbuffer& buf )
          */
-        void for_each( const std::function<void( const std::string &, mapbuffer & )> &fn );
+        auto for_each( const std::function<void( const dimension_id &, mapbuffer & )> &fn ) -> void;
 
         /** Convenience accessor: returns the primary dimension's mapbuffer. */
-        mapbuffer &primary();
+        auto primary() -> mapbuffer &;
 
         /**
          * Return the mapbuffer for the currently active dimension
@@ -70,7 +82,7 @@ class mapbuffer_registry
          * a specific dimension.  Gameplay code should use
          * MAPBUFFER_REGISTRY.get(dim_id) with an explicit dimension ID.
          */
-        mapbuffer &active();
+        auto active() -> mapbuffer &;
 
         /**
          * Save all registered dimensions in parallel.
@@ -88,10 +100,20 @@ class mapbuffer_registry
          * Used by save_all() to enumerate dimensions before the parallel phase
          * (iterating buffers_ while modifying it would be unsafe).
          */
-        std::vector<std::string> active_dimension_ids() const;
+        auto active_dimension_ids() const -> std::vector<dimension_id>;
+
+        /**
+         * Monotonic counter bumped whenever registry slots are created or erased.
+         * Cached mapbuffer pointers can use this to detect possible invalidation
+         * without doing a registry lookup on every access.
+         */
+        auto generation() const -> std::size_t {
+            return generation_;
+        }
 
     private:
-        std::map<std::string, std::unique_ptr<mapbuffer>> buffers_;
+        std::map<dimension_id, std::unique_ptr<mapbuffer>> buffers_;
+        std::size_t generation_ = 0;
 };
 
 extern mapbuffer_registry MAPBUFFER_REGISTRY;

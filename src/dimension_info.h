@@ -65,7 +65,7 @@ struct pocket_dimension_data {
     bool terrain_generated = false;             // Has the terrain been generated?
 
     // Return tracking - where to go when exiting this pocket
-    std::string return_dimension_id;     // Which dimension to return to (empty = overworld)
+    dimension_id return_dimension_id;     // Which dimension to return to (empty = overworld)
     world_type_id
     return_world_type;     // World type of the return dimension (may be null for overworld)
     tripoint_abs_ms return_point;        // Where to place player on exit
@@ -83,6 +83,30 @@ struct pocket_dimension_data {
     bool operator==( const pocket_dimension_data &rhs ) const;
 };
 
+inline auto is_outside_pocket_dimension_bounds(
+    const std::optional<pocket_dimension_data> &pocket_info,
+    const tripoint_abs_sm &p ) -> bool
+{
+    return pocket_info && !pocket_info->bounds.contains( p );
+}
+
+inline auto is_outside_pocket_dimension_bounds(
+    const std::optional<pocket_dimension_data> &pocket_info,
+    const tripoint_abs_ms &p ) -> bool
+{
+    return is_outside_pocket_dimension_bounds( pocket_info, project_to<coords::sm>( p ) );
+}
+
+inline auto is_outside_pocket_dimension_bounds(
+    const std::optional<pocket_dimension_data> &pocket_info,
+    const tripoint_abs_sm &loaded_grid_origin,
+    const tripoint_bub_ms &p ) -> bool
+{
+    const auto origin = project_to<coords::ms>( loaded_grid_origin );
+    const auto abs_ms = ( p + origin.xy().raw() ).reinterpret_as<tripoint_abs_ms>();
+    return is_outside_pocket_dimension_bounds( pocket_info, abs_ms );
+}
+
 /**
  * Metadata for a dimension that is active (has at least one submap in the loaded set).
  *
@@ -96,7 +120,7 @@ struct pocket_dimension_data {
 struct dimension_info {
     /// Registry key for this dimension — also the subdirectory name under `dimensions/`
     /// for non-primary dimensions.  Empty string ("") = the overworld (primary).
-    std::string dimension_id;
+    dimension_id id;
 
     /// The game world-type associated with this dimension (determines region settings,
     /// generation parameters, etc.).

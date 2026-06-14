@@ -8,6 +8,7 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "player_helpers.h"
+#include "state_helpers.h"
 #include "type_id.h"
 
 TEST_CASE( "avatar diving", "[diving][!mayfail]" )
@@ -16,6 +17,7 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
     const ter_id t_water_cube( "t_water_cube" );
     const ter_id t_lake_bed( "t_lake_bed" );
 
+    clear_all_state();
     build_water_test_map( t_water_dp, t_water_cube, t_lake_bed );
     map &here = get_map();
 

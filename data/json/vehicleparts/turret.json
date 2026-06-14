@@ -1031,6 +1031,22 @@
   },
   {
     "type": "vehicle_part",
+    "id": "hellfire_turret",
+    "looks_like": "tow_launcher",
+    "copy-from": "turret_tank",
+    "name": "Hellfire missile rack",
+    "item": "hellfire_launcher",
+    "breaks_into": [ { "item": "steel_lump", "count": [ 25, 50 ] }, { "item": "steel_chunk", "count": [ 125, 250 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ], [ "launcher", 5 ], [ "electronics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      }
+    }
+  },
+  {
+    "type": "vehicle_part",
     "id": "mounted_25mm_autocannon",
     "looks_like": "mounted_mk19",
     "copy-from": "turret_tank",
