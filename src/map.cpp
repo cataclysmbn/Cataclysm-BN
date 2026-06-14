@@ -10868,20 +10868,20 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         // GPU path: lightmap rebuilds only run for lightmap-dirty levels.
         // Player movement and other FoV-only updates are handled by
         // update_visibility_cache(), which can rebuild resident seen data.
-            for( const int z : dirty_lightmap_levels ) {
-                auto &c = get_cache( z );
-                std::fill( c.sm.begin(), c.sm.end(), 0.0f );
-                std::fill( c.light_source_buffer.begin(),
-                           c.light_source_buffer.end(), 0.0f );
-                std::fill( c.colored_light_source_buffer.begin(),
-                           c.colored_light_source_buffer.end(), 0.0f );
-                std::fill( c.light_source_color_buffer.begin(),
-                           c.light_source_color_buffer.end(), 0u );
-                c.light_source_points.clear();
-                std::ranges::fill( c.lm, 0.0f );
-                c.lm_cpu_cache_valid = false;
-                ++c.lm_cpu_cache_generation;
-            }
+        for( const int z : dirty_lightmap_levels ) {
+            auto &c = get_cache( z );
+            std::fill( c.sm.begin(), c.sm.end(), 0.0f );
+            std::fill( c.light_source_buffer.begin(),
+                       c.light_source_buffer.end(), 0.0f );
+            std::fill( c.colored_light_source_buffer.begin(),
+                       c.colored_light_source_buffer.end(), 0.0f );
+            std::fill( c.light_source_color_buffer.begin(),
+                       c.light_source_color_buffer.end(), 0u );
+            c.light_source_points.clear();
+            std::ranges::fill( c.lm, 0.0f );
+            c.lm_cpu_cache_valid = false;
+            ++c.lm_cpu_cache_generation;
+        }
         pending_gpu_lighting = cata_gpu::begin_gpu_lighting( gpu_device, {
             .m            = this,
             .dirty_levels = &dirty_lightmap_levels,
@@ -11050,9 +11050,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     for( const auto z : colored_light_levels ) {
                         auto &c = get_cache( z );
                         c.colored_light_cache_active = std::ranges::any_of(
-                            c.colored_light_cache, []( const auto packed ) {
-                                return packed != 0u;
-                            } );
+                        c.colored_light_cache, []( const auto packed ) {
+                            return packed != 0u;
+                        } );
                     }
                 }
 

@@ -2919,7 +2919,7 @@ auto apply_cpu_colored_light_3d( map &here, const apply_cpu_colored_light_3d_opt
         .directional = opt.directional,
     };
     cast_zlight( output_caches, transparency_caches, floor_caches, blocked_caches, opt.source, 0,
-                 opt.luminance, k_light_model, {
+    opt.luminance, k_light_model, {
         .context = &context,
         .update = update_cpu_colored_light_cache_3d,
     } );
