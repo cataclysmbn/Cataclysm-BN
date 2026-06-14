@@ -103,21 +103,30 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
 
     float best = primary;
 
-    static const int2 offsets[8] = {
-        int2(  0,  1 ),
-        int2(  0, -1 ),
-        int2(  1,  0 ),
-        int2(  1,  1 ),
-        int2(  1, -1 ),
-        int2( -1,  0 ),
-        int2( -1,  1 ),
-        int2( -1, -1 )
-    };
-
-    [unroll]
-    for( int i = 0; i < 8; ++i ) {
-        int nx = tx + offsets[i].x;
-        int ny = ty + offsets[i].y;
+    for( uint offset_index = 0u; offset_index < 8u; ++offset_index ) {
+        int nx = tx;
+        int ny = ty;
+        if( offset_index == 0u ) {
+            ny = ty + 1;
+        } else if( offset_index == 1u ) {
+            ny = ty - 1;
+        } else if( offset_index == 2u ) {
+            nx = tx + 1;
+        } else if( offset_index == 3u ) {
+            nx = tx + 1;
+            ny = ty + 1;
+        } else if( offset_index == 4u ) {
+            nx = tx + 1;
+            ny = ty - 1;
+        } else if( offset_index == 5u ) {
+            nx = tx - 1;
+        } else if( offset_index == 6u ) {
+            nx = tx - 1;
+            ny = ty + 1;
+        } else {
+            nx = tx - 1;
+            ny = ty - 1;
+        }
         if( nx < 0 || ny < 0 || nx >= cache_x || ny >= cache_y ) {
             continue;
         }

@@ -1253,6 +1253,7 @@ void game::load_npcs()
     std::vector<shared_ptr_fast<npc>> just_added;
     for( const auto &temp : get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player(
              radius ) ) {
+        temp->set_dimension( current_dimension_id_ );
         const character_id &id = temp->getID();
         const auto found = std::find_if( active_npc.begin(), active_npc.end(),
         [id]( const shared_ptr_fast<npc> &n ) {
@@ -1301,6 +1302,7 @@ void game::load_npcs()
         for( auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
             const tripoint_abs_sm center_z( req.center.raw().x, req.center.raw().y, z );
             for( const auto &temp : overmap_buffer.get_npcs_near( center_z, req.radius ) ) {
+                temp->set_dimension( req.dim_id );
                 const auto id = temp->getID();
                 const auto already_active = std::ranges::any_of( active_npc,
                 [id]( const shared_ptr_fast<npc> &n ) {
@@ -2014,7 +2016,7 @@ bool game::do_turn()
 
     {
         ZoneScopedN( "do_turn_update_body" );
-        u.update_body();
+        u.update_body( action_time_scale::calendar_duration_this_tick() );
     }
 
     // Auto-save if autosave is enabled
@@ -2641,7 +2643,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
 
         debug_hour_timer.print_time();
-        u.update_body();
+        u.update_body( action_time_scale::calendar_duration_this_tick() );
         process_voluntary_act_interrupt();
         if( !u.activity || !*u.activity ) {
             break;
@@ -7440,6 +7442,7 @@ monster *game::place_critter_around( const shared_ptr_fast<monster> &mon,
     if( !where ) {
         return nullptr;
     }
+    mon->set_dimension( m.get_bound_dimension() );
     mon->spawn( *where );
     return critter_tracker->add( mon ) ? mon.get() : nullptr;
 }
@@ -7468,6 +7471,7 @@ monster *game::place_critter_within( const shared_ptr_fast<monster> &mon,
     if( !where ) {
         return nullptr;
     }
+    mon->set_dimension( m.get_bound_dimension() );
     mon->spawn( *where );
     return critter_tracker->add( mon ) ? mon.get() : nullptr;
 }
@@ -7535,6 +7539,7 @@ bool game::spawn_hallucination( const tripoint_bub_ms &p )
     const mtype_id &mt = MonsterGenerator::generator().get_valid_hallucination();
     const shared_ptr_fast<monster> phantasm = make_shared_fast<monster>( mt );
     phantasm->hallucination = true;
+    phantasm->set_dimension( m.get_bound_dimension() );
     phantasm->spawn( p );
     cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
         params["creature"] = phantasm.get();
@@ -14811,6 +14816,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     if( u.is_mounted() ) {
         if( stored_mount ) {
             assert( !m.has_zlevels() );
+            stored_mount->set_dimension( m.get_bound_dimension() );
             stored_mount->spawn( g->u.bub_pos() );
             if( critter_tracker->add( stored_mount ) ) {
                 u.mounted_creature = stored_mount;

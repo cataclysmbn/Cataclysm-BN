@@ -1378,11 +1378,8 @@ void iexamine::chainfence( player &p, const tripoint_bub_ms &examp )
         here.unboard_vehicle( p.bub_pos() );
     }
     p.setpos( examp );
-    if( examp.x() < g_half_mapsize_x || examp.y() < g_half_mapsize_y ||
-        examp.x() >= g_half_mapsize_x + SEEX || examp.y() >= g_half_mapsize_y + SEEY ) {
-        if( p.is_player() ) {
-            g->update_map( p );
-        }
+    if( p.is_player() ) {
+        g->update_map( p );
     }
 }
 
@@ -1412,6 +1409,9 @@ void iexamine::bars( player &p, const tripoint_bub_ms &examp )
     p.moves -= to_turns<int>( 2_seconds );
     add_msg( _( "You slide right between the bars." ) );
     p.setpos( examp );
+    if( p.is_player() ) {
+        g->update_map( p );
+    }
 }
 
 void iexamine::deployed_furniture( player &p, const tripoint_bub_ms &pos )
@@ -2063,7 +2063,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
     }
 
     if( here.can_open_door( &p, examp, true ) ) {
-        g->peek( p.bub_pos() - examp );
+        g->peek( examp - p.bub_pos() );
         p.add_msg_if_player( _( "You peek through the peephole." ) );
     } else {
         // Peek through the peephole, or open the door.
@@ -2073,7 +2073,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
         } );
         if( choice == 0 ) {
             // Peek
-            g->peek( p.bub_pos() - examp );
+            g->peek( examp - p.bub_pos() );
             p.add_msg_if_player( _( "You peek through the peephole." ) );
         } else if( choice == 1 ) {
             here.open_door( &p, examp, true );
@@ -5141,7 +5141,7 @@ void iexamine::curtains( player &p, const tripoint_bub_ms &examp )
     const int choice = window_menu.ret;
     if( choice == 0 ) {
         // Peek
-        g->peek( p.bub_pos() - examp );
+        g->peek( examp - p.bub_pos() );
         p.add_msg_if_player( _( "You carefully peek through the curtains." ) );
     } else if( choice == 1 ) {
         // Mr. Gorbachev, tear down those curtains!
@@ -5745,6 +5745,9 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
 
             p.moves -= to_moves<int>( 1_seconds + 1_seconds * fall_mod );
             p.setpos( examp );
+            if( p.is_player() ) {
+                g->update_map( p );
+            }
 
             if( climb_cost > 0 || rng_float( 0.8, 1.0 ) > fall_mod ) {
                 // One tile of falling less (possibly zero)

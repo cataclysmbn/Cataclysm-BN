@@ -990,6 +990,7 @@ namespace
 struct SubTile {
     submap *sm    = nullptr;
     point_sm_ms   local;
+    tripoint_abs_sm abs_sm = tripoint_abs_sm::zero();
 
     [[nodiscard]] auto valid()      const -> bool                    { return sm != nullptr; }
     [[nodiscard]] auto get_field()  const -> field                 & { return sm->get_field( local ); }
@@ -997,6 +998,30 @@ struct SubTile {
     [[nodiscard]] auto get_furn_t() const -> const furn_t          & { return sm->get_furn( local ).obj(); }
     [[nodiscard]] auto get_items()  const -> location_vector<item> & { return sm->get_items( local ); } // *NOPAD*
 };
+
+struct field_cache_dirty_context {
+    map &here;
+    dimension_id const &dimension;
+};
+
+auto mark_field_cache_dirty( field_cache_dirty_context const &ctx,
+                             const tripoint_abs_sm &abs_sm,
+                             const field_type_id &type ) -> void
+{
+    if( !type ) {
+        return;
+    }
+    const auto &data = type.obj();
+    if( !data.dirty_transparency_cache && data.is_transparent() ) {
+        return;
+    }
+    if( !submap_loader.is_properly_requested( ctx.dimension, abs_sm ) ) {
+        return;
+    }
+    const auto bub_pos = abs_to_bub( project_to<coords::ms>( abs_sm ) );
+    ctx.here.set_transparency_cache_dirty( bub_pos );
+    ctx.here.set_seen_cache_dirty( bub_pos );
+}
 
 // Resolve `local + delta` crossing submap boundaries via mapbuffer.
 // Returns an invalid SubTile if the neighbour is not loaded.
@@ -1009,14 +1034,14 @@ auto neighbor_tile( submap *base, const tripoint_abs_sm &base_pos,
     const auto dsx = nx < 0 ? -1 : ( nx >= SEEX ? 1 : 0 );
     const auto dsy = ny < 0 ? -1 : ( ny >= SEEY ? 1 : 0 );
     if( dsx == 0 && dsy == 0 ) {
-        return { base, { nx, ny } };
+        return { base, { nx, ny }, base_pos };
     }
     const tripoint_abs_sm nbr_pos( base_pos.raw() + tripoint{ dsx, dsy, 0 } );
     auto *nbr = mb.lookup_submap_in_memory( nbr_pos );
     if( !nbr ) {
         return {};
     }
-    return { nbr, { ( nx + SEEX ) % SEEX, ( ny + SEEY ) % SEEY } };
+    return { nbr, { ( nx + SEEX ) % SEEX, ( ny + SEEY ) % SEEY }, nbr_pos };
 }
 
 // Add a field to dst, maintaining field_count and field_cache.
@@ -1070,7 +1095,8 @@ auto gas_can_spread_sub( const field_entry &cur, const SubTile &dst ) -> bool
 }
 
 // Transfer gas from cur's tile into dst.
-auto gas_spread_sub( field_entry &cur, SubTile &dst ) -> void
+auto gas_spread_sub( field_cache_dirty_context const &dirty, field_entry &cur,
+                     SubTile &dst ) -> void
 {
     const auto type   = cur.get_field_type();
     const auto age    = cur.get_field_age();
@@ -1082,6 +1108,7 @@ auto gas_spread_sub( field_entry &cur, SubTile &dst ) -> void
         cur.set_field_intensity( intens - 1 );
         f->set_field_age( f->get_field_age() + age_frac );
         cur.set_field_age( age - age_frac );
+        mark_field_cache_dirty( dirty, dst.abs_sm, type );
     } else if( dst.get_field().add_field( type, 1, 0_turns ) ) {
         ++dst.sm->field_count;
         dst.sm->field_cache.push_back( dst.local );
@@ -1092,6 +1119,7 @@ auto gas_spread_sub( field_entry &cur, SubTile &dst ) -> void
         }
         cur.set_field_intensity( intens - 1 );
         cur.set_field_age( age - age_frac );
+        mark_field_cache_dirty( dirty, dst.abs_sm, type );
     }
 }
 
@@ -1115,6 +1143,7 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
 
     map &map = get_map();
     const auto in_bubble = submap_loader.is_properly_requested( dim, pos );
+    const auto dirty_context = field_cache_dirty_context{ map, dim };
 
     auto has_fire = false;
     // Snapshot before iterating: wandering-field spread can push_back to sm.field_cache
@@ -1139,10 +1168,16 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
             // Dead entries — clean up.
             if( !cur.is_field_alive() ) {
                 --sm.field_count;
-                if( !cur_fd_type_id->get_transparent( cur.get_field_intensity() - 1 ) ) {
+                const auto &cur_fd_type = cur_fd_type_id.obj();
+                if( cur_fd_type.dirty_transparency_cache || !cur_fd_type.is_transparent() ||
+                    !cur_fd_type.get_transparent( cur.get_field_intensity() - 1 ) ) {
                     dirty_transparency_cache = true;
                 }
                 curfield.remove_field( it++ );
+                if( in_bubble && dirty_transparency_cache ) {
+                    map.set_transparency_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
+                    map.set_seen_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
+                }
                 continue;
             }
 
@@ -1440,9 +1475,9 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                         const tripoint_abs_sm below_pos( pos.raw() + tripoint{ 0, 0, -1 } );
                         auto *below_sm = mb.lookup_submap_in_memory( below_pos );
                         if( below_sm ) {
-                            auto dst = SubTile{ below_sm, local };
+                            auto dst = SubTile{ below_sm, local, below_pos };
                             if( gas_can_spread_sub( cur, dst ) ) {
-                                gas_spread_sub( cur, dst );
+                                gas_spread_sub( dirty_context, cur, dst );
                                 spread_done = true;
                             }
                         }
@@ -1456,7 +1491,7 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                             auto dst = neighbor_tile( &sm, pos, local,
                                                       eight_dirs_sm[( start + c ) % 8], mb );
                             if( gas_can_spread_sub( cur, dst ) ) {
-                                gas_spread_sub( cur, dst );
+                                gas_spread_sub( dirty_context, cur, dst );
                                 spread_done = true;
                             }
                         } );
@@ -1482,7 +1517,7 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
 
             // ---- fd_electricity ------------------------------------------
             if( !is_newborn && cur_fd_type_id == fd_electricity && !one_in( 5 ) ) {
-                auto self = SubTile{ &sm, local };
+                auto self = SubTile{ &sm, local, pos };
                 if( !sub_passable( self ) && cur.get_field_intensity() > 1 ) {
                     auto tries = 0;
                     while( tries < 10 &&
@@ -1544,7 +1579,7 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                     }
                     // create_hot_air() skipped — render/audio effect only.
                 } else {
-                    auto self = SubTile{ &sm, local };
+                    auto self = SubTile{ &sm, local, pos };
                     sub_add_field( self, fd_flame_burst, 1, cur.get_field_age() );
                     cur.set_field_intensity( 0 );
                 }
@@ -1761,6 +1796,10 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
 
             if( !cur.is_field_alive() ) {
                 --sm.field_count;
+                const auto &removed_fd_type = cur.get_field_type().obj();
+                dirty_transparency_cache = dirty_transparency_cache ||
+                                           removed_fd_type.dirty_transparency_cache ||
+                                           !removed_fd_type.is_transparent();
                 curfield.remove_field( it++ );
             } else {
                 ++it;

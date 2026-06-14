@@ -164,6 +164,7 @@ static const skill_id skill_traps( "traps" );
 
 static const efftype_id effect_boomered( "boomered" );
 static const efftype_id effect_crushed( "crushed" );
+static const efftype_id effect_haslight( "haslight" );
 static const efftype_id effect_onfire( "onfire" );
 
 static const ter_str_id t_rock_floor_no_roof( "t_rock_floor_no_roof" );
@@ -223,12 +224,14 @@ void hash_character_light_state( std::size_t &seed, const Character &who )
 {
     const auto active_luminance = who.active_light();
     const auto has_fire_light = who.has_effect( effect_onfire );
-    if( active_luminance <= LIGHT_AMBIENT_LOW && !has_fire_light ) {
+    const auto has_cached_light = who.has_effect( effect_haslight );
+    if( active_luminance <= LIGHT_AMBIENT_LOW && !has_fire_light && !has_cached_light ) {
         return;
     }
     cata::hash_combine( seed, who.bub_pos() );
     cata::hash_combine( seed, quantized_light_signature_value( active_luminance ) );
     cata::hash_combine( seed, has_fire_light );
+    cata::hash_combine( seed, has_cached_light );
 }
 
 } // namespace
@@ -10613,6 +10616,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     std::vector<int> gpu_vehicle_floor_dirty_levels;
     std::vector<int> gpu_vehicle_obscured_dirty_levels;
 
+    auto mark_lightmap_dirty = [this]( const int z ) {
+        auto &cache = get_cache( z );
+        cache.lightmap_dirty = true;
+        cache.lm_cpu_cache_valid = false;
+        ++cache.lm_cpu_cache_generation;
+        cache.visibility_cache_dirty = true;
+    };
     auto add_gpu_dirty_level = []( auto & levels, const int z ) {
         if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
             levels.push_back( z );
@@ -10675,6 +10685,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             gpu_transparency_dirty = true;
             std::ranges::copy( transparency_dirty_levels,
                                std::back_inserter( gpu_transparency_dirty_levels ) );
+            std::ranges::for_each( transparency_dirty_levels, mark_lightmap_dirty );
         }
     }
 
@@ -10795,6 +10806,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 #if defined( CATA_SDL )
     if( use_sdl_gpu_compute && !gpu_transparency_residency_invalid_levels.empty() ) {
         cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_residency_invalid_levels );
+    }
+    if( skip_lightmap && use_sdl_gpu_compute && gpu_transparency_dirty ) {
+        cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_dirty_levels );
     }
 #endif
     TracyPlot( "Map GPU Transparency Dirty Levels",
@@ -11788,6 +11802,7 @@ void map::invalidate_lightmap_caches()
         cache.lightmap_dirty = true;
         cache.lm_cpu_cache_valid = false;
         ++cache.lm_cpu_cache_generation;
+        cache.visibility_cache_dirty = true;
     } );
 }
 

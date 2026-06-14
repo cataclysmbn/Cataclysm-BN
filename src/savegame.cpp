@@ -371,11 +371,20 @@ auto game::unserialize( std::istream &fin ) -> bool
         }
         scent.reset();
         data.read( "active_monsters", *critter_tracker );
+        // Older saves only had current-bubble monsters here and no per-monster dimension.
+        for( auto &critter : all_monsters() ) {
+            if( critter.get_dimension().is_empty() ) {
+                critter.set_dimension( current_dimension_id_ );
+            }
+        }
 
         coming_to_stairs.clear();
         for( auto elem : data.get_array( "stair_monsters" ) ) {
             shared_ptr_fast<monster> stairtmp = make_shared_fast<monster>();
             elem.read( *stairtmp );
+            if( stairtmp->get_dimension().is_empty() ) {
+                stairtmp->set_dimension( current_dimension_id_ );
+            }
             coming_to_stairs.push_back( stairtmp );
         }
 
