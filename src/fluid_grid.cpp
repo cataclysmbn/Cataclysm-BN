@@ -1605,7 +1605,7 @@ auto update( time_point to ) -> void
     get_fluid_grid_tracker().update( to );
 }
 
-auto bind_dimension( const std::string &dim_id ) -> void
+auto bind_dimension( const dimension_id &dim_id ) -> void
 {
     g_fluid_omb = &get_overmapbuffer( dim_id );
 }

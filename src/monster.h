@@ -657,6 +657,15 @@ class monster : public Creature, public location_visitable<monster>
         auto setpos( const tripoint_abs_ms &p ) -> void override;
         auto bub_pos() const -> tripoint_bub_ms override;
         auto abs_pos() const -> tripoint_abs_ms override;
+        auto get_dimension() const -> const dimension_id &override {
+            return dimension_id_;
+        }
+        auto set_dimension( const dimension_id &dim_id ) -> void override {
+            if( dimension_id_ != dim_id ) {
+                dimension_id_ = dim_id;
+                invalidate_mapbuffer_cache();
+            }
+        }
 
         short ignoring;
 
@@ -684,14 +693,6 @@ class monster : public Creature, public location_visitable<monster>
         void init_from_item( const item &itm );
 
         time_point last_updated = calendar::turn_zero;
-        // ID of the dimension this monster belongs to.  Empty string = primary dimension.
-        // Set when the monster is spawned or loaded from a non-primary dimension submap.
-        // Persisted across saves so cross-dimension LOD assignment survives reload.
-        std::string dimension_id_ = "";  // empty = primary dimension
-        const std::string &get_dimension() const override {
-            return dimension_id_;
-        }
-
         /**
          * Do some cleanup and caching as monster is being unloaded from map.
          */
@@ -752,6 +753,10 @@ class monster : public Creature, public location_visitable<monster>
 
     private:
         auto action_move_factor() const -> int override;
+
+        // ID of the dimension this monster belongs to.  Empty = primary dimension.
+        // Persisted across saves so cross-dimension LOD assignment survives reload.
+        dimension_id dimension_id_;
 
         void process_trigger( mon_trigger trig, int amount );
         void process_trigger( mon_trigger trig, const std::function < auto() -> int > &amount_func );

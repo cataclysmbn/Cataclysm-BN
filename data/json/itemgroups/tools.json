@@ -33,6 +33,8 @@
       [ "mop_folded", 10 ],
       [ "bucket", 10 ],
       { "item": "bag_plastic", "prob": 15, "count": [ 1, 5 ] },
+      { "item": "bag_zipper_small", "prob": 7, "count": [ 1, 3 ] },
+      { "item": "bag_zipper", "prob": 3, "count": [ 1, 3 ] },
       { "group": "tools_cleaning_small", "prob": 25 }
     ]
   },

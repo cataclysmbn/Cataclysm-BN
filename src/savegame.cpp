@@ -108,11 +108,11 @@ void game::serialize( std::ostream &fout )
     json.member( "reality_bubble_size", g_reality_bubble_size );
 
     // Save the current dimension ID (replaces the old world_type + pocket_instance_id pair)
-    json.member( "current_dimension_id", current_dimension_id_ );
+    json.member( "current_dimension_id", current_dimension_id_.str() );
     // Save the kept pocket dimension ID so the single preserved pocket survives reload.
     // The dimension_info metadata is reconstructed on entry from the item's pocket_dimension_data.
-    if( !kept_pocket_dimension_id_.empty() ) {
-        json.member( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
+    if( !kept_pocket_dimension_id_.is_empty() ) {
+        json.member( "kept_pocket_dimension_id", kept_pocket_dimension_id_.str() );
     }
 
     // Save dimension bounds for bounded dimensions (pocket dimensions)
@@ -129,7 +129,7 @@ void game::serialize( std::ostream &fout )
     std::ranges::for_each( loaded_dimensions_, [&]( const auto & kv ) {
         const auto &info = kv.second;
         json.start_object();
-        json.member( "dimension_id", info.dimension_id );
+        json.member( "dimension_id", info.id.str() );
         json.member( "world_type", info.world_type.str() );
         json.member( "display_name", info.display_name );
         if( info.pocket_info ) {
@@ -252,7 +252,9 @@ auto game::unserialize( std::istream &fin ) -> bool
         // returns the correct value.  Fall back to reconstructing it from legacy
         // world_type + pocket_instance_id fields for old saves.
         if( data.has_member( "current_dimension_id" ) ) {
-            data.read( "current_dimension_id", current_dimension_id_ );
+            auto raw_current_dimension_id = std::string{};
+            data.read( "current_dimension_id", raw_current_dimension_id );
+            current_dimension_id_ = dimension_id( raw_current_dimension_id );
         } else if( data.has_member( "world_type" ) ) {
             // Legacy compat: reconstruct dimension_id from world_type + instance_id
             world_type_id wt;
@@ -260,14 +262,17 @@ auto game::unserialize( std::istream &fin ) -> bool
             std::string pocket_id;
             data.read( "pocket_instance_id", pocket_id );
             if( wt.is_valid() ) {
-                current_dimension_id_ = wt.obj().save_prefix + pocket_id;
-                if( !pocket_id.empty() && !current_dimension_id_.ends_with( "_" ) ) {
-                    current_dimension_id_ += "_";
+                auto raw_current_dimension_id = wt.obj().save_prefix + pocket_id;
+                if( !pocket_id.empty() && !raw_current_dimension_id.ends_with( "_" ) ) {
+                    raw_current_dimension_id += "_";
                 }
+                current_dimension_id_ = dimension_id( raw_current_dimension_id );
             }
         }
         set_active_dimension_id( current_dimension_id_ );
-        data.read( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
+        auto raw_kept_pocket_dimension_id = std::string{};
+        data.read( "kept_pocket_dimension_id", raw_kept_pocket_dimension_id );
+        kept_pocket_dimension_id_ = dimension_id( raw_kept_pocket_dimension_id );
 
         // Restore all dimension metadata.  The current dimension is also included
         // in this array, so the explicit reconstruction below becomes a fallback
@@ -276,7 +281,9 @@ auto game::unserialize( std::istream &fin ) -> bool
         if( data.has_array( "loaded_dimensions" ) ) {
             for( JsonObject dim_data : data.get_array( "loaded_dimensions" ) ) {
                 auto info = dimension_info{};
-                dim_data.read( "dimension_id", info.dimension_id );
+                auto raw_dimension_id = std::string{};
+                dim_data.read( "dimension_id", raw_dimension_id );
+                info.id = dimension_id( raw_dimension_id );
                 auto wt_str = std::string{};
                 dim_data.read( "world_type", wt_str );
                 info.world_type = world_type_id( wt_str );
@@ -308,7 +315,7 @@ auto game::unserialize( std::istream &fin ) -> bool
                     pocket_data.bounds = bounds;
                     info.pocket_info = pocket_data;
                 }
-                loaded_dimensions_[info.dimension_id] = info;
+                loaded_dimensions_[info.id] = info;
             }
         }
 

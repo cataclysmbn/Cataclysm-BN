@@ -1,5 +1,6 @@
 #pragma once
 
+#include "action.h"
 #include "coordinates.h"
 #include "calendar.h"
 #include "catalua_coord.h"
@@ -8,6 +9,7 @@
 #include "type_id.h"
 #include "concepts_utility.h"
 
+enum action : int;
 enum Attitude : int;
 enum body_part : int;
 enum character_movemode : int;
@@ -269,6 +271,7 @@ LUNA_ID( quality, "Quality" )
 LUNA_ID( vitamin, "Vitamin" )
 
 // Enums
+LUNA_ENUM( action_id, "ActionId" )
 LUNA_ENUM( add_type, "AddictionType" )
 LUNA_ENUM( Attitude, "Attitude" )
 LUNA_ENUM( body_part, "BodyPart" )

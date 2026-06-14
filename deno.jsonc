@@ -21,6 +21,7 @@
       "description": "update available semantic commit types",
       "command": "deno run -R=data/mods -W=.github/semantic.yml scripts/semantic.ts"
     },
+    "docs:translation-warning": "deno run --allow-read=docs --allow-env=GITHUB_TOKEN,GITHUB_REPOSITORY --allow-net=api.github.com scripts/docs_translation_warning.ts",
     "affected-files": "deno run -RWEN --allow-run scripts/affected_files.ts"
   },
   "test": { "include": ["scripts", ".agents"] },
@@ -33,6 +34,7 @@
     "exclude": ["doc", "**/*.svg"],
     "include": ["scripts", ".agents", "doc", "docs", "*.md", ".github", ".claude"],
     "semiColons": false,
+    "json.trailingCommas": "jsonc",
     "lineWidth": 100,
     "proseWrap": "preserve"
   },
@@ -53,6 +55,7 @@
     "@std/fs": "jsr:@std/fs@^1.0.19",
     "@std/path": "jsr:@std/path@^1.1.2",
     "@std/yaml": "jsr:@std/yaml@^1.0.10",
-    "@valibot/valibot": "jsr:@valibot/valibot@^1.1.0"
+    "@valibot/valibot": "jsr:@valibot/valibot@^1.1.0",
+    "markdown-table": "npm:markdown-table@3.0.4"
   }
 }

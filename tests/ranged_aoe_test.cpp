@@ -4,6 +4,7 @@
 #include <array>
 #include <optional>
 #include <queue>
+#include <ranges>
 #include <set>
 #include <vector>
 
@@ -18,7 +19,6 @@
 #include "ranged.h"
 #include "projectile.h"
 #include "map_helpers.h"
-#include "overmapbuffer.h"
 #include "game.h"
 #include "itype.h"
 #include "rng.h"
@@ -28,8 +28,19 @@
 static const skill_id skill_gun( "gun" );
 static const skill_id skill_shotgun( "shotgun" );
 
-// Seed 0 preserves the current test-suite RNG state.
 constexpr auto deterministic_rng_seeds = std::array { 1U, 2U, 3U, 4U, 5U, 4242424242U };
+
+static auto make_direct_gun_projectile( const item &gun ) -> projectile
+{
+    auto probe = projectile {};
+    probe.speed = gun.gun_speed();
+    probe.impact = gun.gun_damage();
+    probe.range = gun.gun_range();
+    for( const auto &ammo_effect : gun.ammo_effects() ) {
+        probe.add_effect( ammo_effect );
+    }
+    return probe;
+}
 
 static auto fire_shell_at_target( const itype_id &ammo_id,
                                   const std::vector<itype_id> &armor_ids, const unsigned int seed ) -> int
@@ -37,25 +48,24 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     clear_all_state();
     rng_set_engine_seed( seed );
     REQUIRE( get_map().has_zlevels() );
-    get_player_character().setpos( tripoint_bub_ms{ 60, 60, -2 } );
 
     const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
+    auto &target = get_player_character();
+    target.set_body();
+    target.setpos( target_pos );
+    target.worn.clear();
+    target.set_dodge_bonus( -100.0f );
+    for( const auto &armor_id : armor_ids ) {
+        target.worn.push_back( item::spawn( armor_id ) );
+    }
+    REQUIRE( g->critter_at<avatar>( target_pos ) != nullptr );
+
     auto shooter = standard_npc( "shooter", shooter_pos );
     shooter.set_skill_level( skill_gun, 10 );
     shooter.set_skill_level( skill_shotgun, 10 );
 
-    auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
-    target->worn.clear();
-    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
-    target->setpos( target_pos );
-    for( const auto &armor_id : armor_ids ) {
-        target->worn.push_back( item::spawn( armor_id ) );
-    }
-    ACTIVE_OVERMAP_BUFFER.insert_npc( target );
-    g->load_npcs();
-
-    detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
+    detached_ptr<item> gun = item::spawn( itype_id( "test_shotgun" ) );
     gun->ammo_set( ammo_id );
 
     REQUIRE( gun->ammo_data() != nullptr );
@@ -66,16 +76,18 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     REQUIRE( ranged::get_target_shape_factory( *gun ).has_value() );
     REQUIRE( gun->gun_range() >= rl_dist( shooter_pos, target_pos ) );
 
-    const auto target_hp_total_before = target->get_hp();
+    const auto pellet_count = gun->ammo_data()->ammo->shot->count;
+    const auto target_hp_total_before = target.get_hp();
     shooter.wield( std::move( gun ) );
 
-    const auto shots_to_fire = 5;
-    const auto shots_fired = ranged::fire_gun( shooter, target_pos, shots_to_fire,
-                             shooter.primary_weapon(),
-                             nullptr );
-
-    REQUIRE( shots_fired == shots_to_fire );
-    return target_hp_total_before - target->get_hp();
+    const auto shells_to_fire = 5;
+    for( const auto _ : std::views::iota( 0, shells_to_fire * pellet_count ) ) {
+        ( void ) _;
+        auto probe = make_direct_gun_projectile( shooter.primary_weapon() );
+        projectile_attack( probe, shooter_pos, target_pos, dispersion_sources {}, &shooter,
+                           &shooter.primary_weapon(), nullptr, true );
+    }
+    return target_hp_total_before - target.get_hp();
 }
 
 static auto fire_shells_at_target( const itype_id &ammo_id,
@@ -205,7 +217,7 @@ TEST_CASE( "expected shape coverage through windows", "[shape]" )
     const tripoint_bub_ms end = origin + offset;
     map &here = get_map();
     for( int wall_offset = -10; wall_offset <= 10; wall_offset++ ) {
-        here.ter_set( tripoint_bub_ms( 62, 60 + wall_offset, 0 ), t_window );
+        here.ter_set( tripoint_bub_ms( 62, 60 + wall_offset, 0 ), ter_id( "test_t_window" ) );
     }
 
     std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
@@ -234,26 +246,27 @@ TEST_CASE( "shaped attacks apply trail ammo effects", "[ranged][projectile]" )
     proj.speed = 1000;
     proj.range = 6;
     proj.impact.add_damage( DT_HEAT, 1 );
-    proj.add_effect( ammo_effect_str_id( "LASER" ) );
+    proj.add_effect( ammo_effect_str_id( "TEST_TRAIL" ) );
 
     ranged::execute_shaped_attack( *attack_shape, proj, attacker, nullptr );
 
-    CHECK( here.get_field( origin + point_east, fd_laser ) != nullptr );
-    CHECK( here.get_field( origin + 2 * point_east, fd_laser ) != nullptr );
+    const auto trail_field = field_type_id( "test_fd_trail" );
+    CHECK( here.get_field( origin + point_east, trail_field ) != nullptr );
+    CHECK( here.get_field( origin + 2 * point_east, trail_field ) != nullptr );
 }
 
 TEST_CASE( "character using birdshot against another character", "[ranged]" )
 {
-    const auto damage = fire_shells_at_target( itype_id( "shot_bird" ), {} );
+    const auto damage = fire_shells_at_target( itype_id( "test_birdshot" ), {} );
 
     CHECK( damage > 0 );
 }
 
 TEST_CASE( "birdshot pellets are much worse against armor", "[ranged][balance]" )
 {
-    const auto unarmored_damage = fire_shells_at_target( itype_id( "shot_bird" ), {} );
-    const auto armored_damage = fire_shells_at_target( itype_id( "shot_bird" ),
-    { itype_id( "survivor_suit" ), itype_id( "depowered_helmet" ) } );
+    const auto unarmored_damage = fire_shells_at_target( itype_id( "test_birdshot" ), {} );
+    const auto armored_damage = fire_shells_at_target( itype_id( "test_birdshot" ),
+    { itype_id( "test_override_armor" ) } );
 
     CHECK( unarmored_damage > armored_damage );
     CHECK( unarmored_damage >= armored_damage * 2 );
@@ -266,34 +279,25 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
     rng_set_engine_seed( deterministic_rng_seeds.front() );
     REQUIRE( get_map().has_zlevels() );
 
-    auto &shooter = get_player_character();
     const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
-    shooter.set_body();
-    shooter.setpos( shooter_pos );
+    auto &target = get_player_character();
+    target.set_body();
+    target.setpos( target_pos );
+    target.worn.clear();
+    target.set_dodge_bonus( -100.0f );
+    REQUIRE( g->critter_at<avatar>( target_pos ) != nullptr );
+
+    auto shooter = standard_npc( "shooter", shooter_pos );
     set_time( calendar::turn_zero + 12_hours );
     shooter.set_skill_level( skill_gun, 10 );
     shooter.set_skill_level( skill_shotgun, 10 );
 
-    auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
-    target->worn.clear();
-    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
-    target->setpos( target_pos );
-    ACTIVE_OVERMAP_BUFFER.insert_npc( target );
-    g->load_npcs();
-    CHECK( shooter.sees( *target ) );
-
-    detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
-    gun->ammo_set( itype_id( "shot_00" ) );
+    detached_ptr<item> gun = item::spawn( itype_id( "test_shotgun" ) );
+    gun->ammo_set( itype_id( "test_buckshot" ) );
     shooter.wield( std::move( gun ) );
 
-    auto probe = projectile {};
-    probe.speed = shooter.primary_weapon().gun_speed();
-    probe.impact = shooter.primary_weapon().gun_damage();
-    probe.range = shooter.primary_weapon().gun_range();
-    for( const auto &ammo_effect : shooter.primary_weapon().ammo_effects() ) {
-        probe.add_effect( ammo_effect );
-    }
+    auto probe = make_direct_gun_projectile( shooter.primary_weapon() );
     const auto probe_attack = projectile_attack( probe, shooter_pos, target_pos, dispersion_sources {},
                               &shooter, &shooter.primary_weapon(), nullptr, true );
 

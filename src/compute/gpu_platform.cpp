@@ -14,12 +14,10 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <ranges>
-#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -249,33 +247,46 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
     }
 
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, false);
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN)
+#if defined(__ANDROID__)
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN, true);
+#else
+    SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN, false);
+#endif
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_CLIP_DISTANCE_BOOLEAN)
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_CLIP_DISTANCE_BOOLEAN, false);
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_DEPTH_CLAMPING_BOOLEAN)
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_DEPTH_CLAMPING_BOOLEAN, false);
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_INDIRECT_DRAW_FIRST_INSTANCE_BOOLEAN)
     SDL_SetBooleanProperty(
         props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_INDIRECT_DRAW_FIRST_INSTANCE_BOOLEAN, false);
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_ANISOTROPY_BOOLEAN)
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_ANISOTROPY_BOOLEAN, false);
-
-    // For Intel Haswell and Broadwell iGPU, requires <= 8 shader storage resource slots across
-    // *all* stages
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_D3D12_ALLOW_FEWER_RESOURCE_SLOTS_BOOLEAN)
     SDL_SetBooleanProperty(
         props, SDL_PROP_GPU_DEVICE_CREATE_D3D12_ALLOW_FEWER_RESOURCE_SLOTS_BOOLEAN, true);
-
+#endif
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
-    SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN, true);
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
-    SDL_SetBooleanProperty(
-        props, SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN, attempt.prefer_low_power);
-
+    if (attempt.prefer_low_power) {
+        SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN, true);
+    }
     if (!attempt.driver.empty()) {
         SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, attempt.driver.c_str());
     }
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_VULKAN_REQUIRE_HARDWARE_ACCELERATION_BOOLEAN)
     if (attempt.driver.empty() || attempt.driver == "vulkan") {
         SDL_SetBooleanProperty(
             props, SDL_PROP_GPU_DEVICE_CREATE_VULKAN_REQUIRE_HARDWARE_ACCELERATION_BOOLEAN,
             attempt.require_vulkan_hardware);
     }
+#endif
 
     auto* const device = SDL_CreateGPUDeviceWithProperties(props);
     auto const error = std::string{SDL_GetError()};
@@ -292,10 +303,24 @@ auto software_attempts() -> std::vector<gpu_device_create_attempt> {
     return {};
 #else
     return {
+#if defined(_WIN32)
+        {
+            .label = "direct3d12 software-required",
+            .driver = "direct3d12",
+            .require_vulkan_hardware = false,
+            .prefer_low_power = true,
+        },
+#endif
         {
             .label = "vulkan software-required",
             .driver = "vulkan",
             .require_vulkan_hardware = false,
+        },
+        {
+            .label = "default software-required",
+            .driver = "",
+            .require_vulkan_hardware = false,
+            .prefer_low_power = true,
         },
     };
 #endif
@@ -317,7 +342,7 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
 
     if (backend == "auto") { backend.clear(); }
     if (backend == "software") {
-        accel = compute_accel::software;
+        accel = compute_accel::gpu_software;
         backend.clear();
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: backend override 'software' selects the "
@@ -325,7 +350,9 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
     }
 
     auto attempts = std::vector<gpu_device_create_attempt>{};
-    if (accel == compute_accel::software) {
+    if (accel == compute_accel::cpu) { return attempts; }
+
+    if (accel == compute_accel::gpu_software) {
 #if defined(__ANDROID__)
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: software compute acceleration is not available on Android; "
@@ -372,27 +399,13 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
             });
     }
 
-    if (accel != compute_accel::force) {
-        if (!backend.empty() && backend != "vulkan") {
-            add_attempt(
-                attempts,
-                {
-                    .label = backend + " selected",
-                    .driver = backend,
-                    .require_vulkan_hardware = false,
-                });
-        }
-        for (auto attempt : software_attempts()) { add_attempt(attempts, std::move(attempt)); }
-    }
-
     return attempts;
 }
 
 auto shader_formats_to_string(SDL_GPUShaderFormat const formats) -> std::string {
     using entry_t = std::pair<SDL_GPUShaderFormat, std::string_view>;
-    static constexpr std::array<entry_t, 4> entries{{
+    static constexpr std::array<entry_t, 3> entries{{
         {SDL_GPU_SHADERFORMAT_SPIRV, "SPIRV"},
-        {SDL_GPU_SHADERFORMAT_DXBC, "DXBC"},
         {SDL_GPU_SHADERFORMAT_DXIL, "DXIL"},
         {SDL_GPU_SHADERFORMAT_MSL, "MSL"},
     }};
@@ -419,11 +432,10 @@ auto read_file_bytes(std::string const& path) -> std::vector<std::byte> {
 }
 
 // Select the preferred shader format and corresponding file extension for the device.
-// Priority: DXIL (modern D3D12) > DXBC (older D3D12) > SPIRV (Vulkan) > MSL (Metal).
+// Priority: DXIL (D3D12/Windows) > SPIRV (Vulkan) > MSL (Metal).
 auto select_shader_format(SDL_GPUShaderFormat const formats)
     -> std::pair<SDL_GPUShaderFormat, std::string_view> {
     if (formats & SDL_GPU_SHADERFORMAT_DXIL) { return {SDL_GPU_SHADERFORMAT_DXIL, ".dxil"}; }
-    if (formats & SDL_GPU_SHADERFORMAT_DXBC) { return {SDL_GPU_SHADERFORMAT_DXBC, ".dxbc"}; }
     if (formats & SDL_GPU_SHADERFORMAT_SPIRV) { return {SDL_GPU_SHADERFORMAT_SPIRV, ".spv"}; }
     if (formats & SDL_GPU_SHADERFORMAT_MSL) { return {SDL_GPU_SHADERFORMAT_MSL, ".msl"}; }
     return {SDL_GPU_SHADERFORMAT_INVALID, ""};
@@ -431,14 +443,14 @@ auto select_shader_format(SDL_GPUShaderFormat const formats)
 
 auto probe_shader(
     SDL_GPUDevice* const device, SDL_GPUShaderFormat const fmt, std::string_view const ext)
-    -> bool {
+    -> void {
     auto const path = PATH_INFO::shaders() + "test_compute" + std::string{ext};
     auto const blob = read_file_bytes(path);
     if (blob.empty()) {
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: shader blob not found: " << path
             << " (run a build with shadercross to compile shaders)";
-        return false;
+        return;
     }
 
     SDL_GPUComputePipelineCreateInfo const info{
@@ -450,10 +462,10 @@ auto probe_shader(
         .num_readonly_storage_textures = 0,
         .num_readonly_storage_buffers = 0,
         .num_readwrite_storage_textures = 0,
-        .num_readwrite_storage_buffers = 2,
+        .num_readwrite_storage_buffers = 0,
         .num_uniform_buffers = 0,
-        .threadcount_x = 12,
-        .threadcount_y = 12,
+        .threadcount_x = 1,
+        .threadcount_y = 1,
         .threadcount_z = 1,
         .props = 0,
     };
@@ -462,213 +474,11 @@ auto probe_shader(
     if (pipeline == nullptr) {
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: compute pipeline creation failed for " << path << ": " << SDL_GetError();
-        return false;
-    }
-
-    static constexpr auto probe_value = uint32_t{0xC0DECAFEu};
-    static constexpr auto probe_count = std::size_t{12 * 12};
-    auto const probe_bytes = static_cast<Uint32>(probe_count * sizeof(probe_value));
-    auto const input_buffer_info = SDL_GPUBufferCreateInfo{
-        .usage =
-            SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ | SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
-        .size = probe_bytes,
-        .props = 0,
-    };
-    auto* const input_buffer = SDL_CreateGPUBuffer(device, &input_buffer_info);
-    if (input_buffer == nullptr) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe input buffer creation failed: " << SDL_GetError();
-        SDL_ReleaseGPUComputePipeline(device, pipeline);
-        return false;
-    }
-
-    auto const output_buffer_info = SDL_GPUBufferCreateInfo{
-        .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
-        .size = probe_bytes,
-        .props = 0,
-    };
-    auto* const output_buffer = SDL_CreateGPUBuffer(device, &output_buffer_info);
-    if (output_buffer == nullptr) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe output buffer creation failed: " << SDL_GetError();
-        SDL_ReleaseGPUBuffer(device, input_buffer);
-        SDL_ReleaseGPUComputePipeline(device, pipeline);
-        return false;
-    }
-
-    auto const upload_transfer_info = SDL_GPUTransferBufferCreateInfo{
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = probe_bytes,
-        .props = 0,
-    };
-    auto* const upload_buffer = SDL_CreateGPUTransferBuffer(device, &upload_transfer_info);
-    if (upload_buffer == nullptr) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe upload buffer creation failed: " << SDL_GetError();
-        SDL_ReleaseGPUBuffer(device, output_buffer);
-        SDL_ReleaseGPUBuffer(device, input_buffer);
-        SDL_ReleaseGPUComputePipeline(device, pipeline);
-        return false;
-    }
-
-    auto const transfer_info = SDL_GPUTransferBufferCreateInfo{
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
-        .size = probe_bytes,
-        .props = 0,
-    };
-    auto* const download_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_info);
-    if (download_buffer == nullptr) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe download buffer creation failed: " << SDL_GetError();
-        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
-        SDL_ReleaseGPUBuffer(device, output_buffer);
-        SDL_ReleaseGPUBuffer(device, input_buffer);
-        SDL_ReleaseGPUComputePipeline(device, pipeline);
-        return false;
-    }
-
-    auto* const upload_mapped = static_cast<uint32_t*>(
-        SDL_MapGPUTransferBuffer(device, upload_buffer, false));
-    if (upload_mapped == nullptr) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe upload map failed: " << SDL_GetError();
-        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
-        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
-        SDL_ReleaseGPUBuffer(device, output_buffer);
-        SDL_ReleaseGPUBuffer(device, input_buffer);
-        SDL_ReleaseGPUComputePipeline(device, pipeline);
-        return false;
-    }
-    for (auto const idx : std::views::iota(std::size_t{0}, probe_count)) {
-        upload_mapped[idx] = static_cast<uint32_t>(idx);
-    }
-    SDL_UnmapGPUTransferBuffer(device, upload_buffer);
-
-    auto* const cmd = SDL_AcquireGPUCommandBuffer(device);
-    if (cmd == nullptr) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe command buffer acquisition failed: " << SDL_GetError();
-        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
-        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
-        SDL_ReleaseGPUBuffer(device, output_buffer);
-        SDL_ReleaseGPUBuffer(device, input_buffer);
-        SDL_ReleaseGPUComputePipeline(device, pipeline);
-        return false;
-    }
-
-    auto* const upload_pass = SDL_BeginGPUCopyPass(cmd);
-    auto const input_src = SDL_GPUTransferBufferLocation{
-        .transfer_buffer = upload_buffer,
-        .offset = 0,
-    };
-    auto const input_dst = SDL_GPUBufferRegion{
-        .buffer = input_buffer,
-        .offset = 0,
-        .size = probe_bytes,
-    };
-    SDL_UploadToGPUBuffer(upload_pass, &input_src, &input_dst, false);
-    SDL_EndGPUCopyPass(upload_pass);
-
-    auto const rw_bindings = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{{
-        {
-            .buffer = input_buffer,
-            .cycle = false,
-            .padding1 = 0,
-            .padding2 = 0,
-            .padding3 = 0,
-        },
-        {
-            .buffer = output_buffer,
-            .cycle = false,
-            .padding1 = 0,
-            .padding2 = 0,
-            .padding3 = 0,
-        },
-    }};
-    auto* const cp = SDL_BeginGPUComputePass(
-        cmd, nullptr, 0, rw_bindings.data(), static_cast<Uint32>(rw_bindings.size()));
-    SDL_BindGPUComputePipeline(cp, pipeline);
-    SDL_DispatchGPUCompute(cp, 1, 1, 1);
-    SDL_EndGPUComputePass(cp);
-
-    auto* const copy_pass = SDL_BeginGPUCopyPass(cmd);
-    auto const output_src = SDL_GPUBufferRegion{
-        .buffer = output_buffer,
-        .offset = 0,
-        .size = probe_bytes,
-    };
-    auto const output_dst = SDL_GPUTransferBufferLocation{
-        .transfer_buffer = download_buffer,
-        .offset = 0,
-    };
-    SDL_DownloadFromGPUBuffer(copy_pass, &output_src, &output_dst);
-    SDL_EndGPUCopyPass(copy_pass);
-
-    auto* const fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
-    if (fence == nullptr) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe command buffer submission failed: " << SDL_GetError();
-        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
-        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
-        SDL_ReleaseGPUBuffer(device, output_buffer);
-        SDL_ReleaseGPUBuffer(device, input_buffer);
-        SDL_ReleaseGPUComputePipeline(device, pipeline);
-        return false;
-    }
-
-    auto const wait_succeeded = SDL_WaitForGPUFences(device, true, &fence, 1);
-    SDL_ReleaseGPUFence(device, fence);
-    if (!wait_succeeded) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe fence wait failed: " << SDL_GetError();
-        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
-        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
-        SDL_ReleaseGPUBuffer(device, output_buffer);
-        SDL_ReleaseGPUBuffer(device, input_buffer);
-        SDL_ReleaseGPUComputePipeline(device, pipeline);
-        return false;
-    }
-
-    auto const* const mapped = static_cast<uint32_t const*>(
-        SDL_MapGPUTransferBuffer(device, download_buffer, false));
-    if (mapped == nullptr) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe download map failed: " << SDL_GetError();
-        SDL_ReleaseGPUTransferBuffer(device, download_buffer);
-        SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
-        SDL_ReleaseGPUBuffer(device, output_buffer);
-        SDL_ReleaseGPUBuffer(device, input_buffer);
-        SDL_ReleaseGPUComputePipeline(device, pipeline);
-        return false;
-    }
-
-    auto const observed = std::span{mapped, probe_count};
-    auto const indices = std::views::iota(std::size_t{0}, probe_count);
-    auto const mismatch = std::ranges::find_if(indices, [&observed](std::size_t const idx) {
-        return observed[idx] != (probe_value ^ static_cast<uint32_t>(idx));
-    });
-    auto mismatch_index = probe_count;
-    auto mismatch_value = uint32_t{};
-    if (mismatch != std::ranges::end(indices)) {
-        mismatch_index = *mismatch;
-        mismatch_value = observed[mismatch_index];
-    }
-    SDL_UnmapGPUTransferBuffer(device, download_buffer);
-    SDL_ReleaseGPUTransferBuffer(device, download_buffer);
-    SDL_ReleaseGPUTransferBuffer(device, upload_buffer);
-    SDL_ReleaseGPUBuffer(device, output_buffer);
-    SDL_ReleaseGPUBuffer(device, input_buffer);
-    SDL_ReleaseGPUComputePipeline(device, pipeline);
-
-    if (mismatch_index != probe_count) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe returned " << mismatch_value << " at index " << mismatch_index
-            << ", expected " << (probe_value ^ static_cast<uint32_t>(mismatch_index));
-        return false;
+        return;
     }
 
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: shader probe OK (" << path << ")";
-    return true;
+    SDL_ReleaseGPUComputePipeline(device, pipeline);
 }
 
 } // namespace
@@ -681,8 +491,20 @@ auto init() -> void {
     auto const backend_sv = preload_config::get_gpu_backend_override();
     auto const backend_str = std::string{backend_sv};
     auto const accel = preload_config::get_compute_accel();
+    if (accel == compute_accel::cpu) {
+        if (!backend_str.empty()) {
+            DebugLog(DL::Info, DC::Main)
+                << "SDL_GPU: backend override ignored because CPU compute "
+                   "is selected";
+        }
+        DebugLog(DL::Info, DC::Main)
+            << "Compute backend selected: cpu_compute; SDL_GPU compute "
+               "device not created";
+        return;
+    }
+
     auto const require_software_device =
-        accel == compute_accel::software || backend_str == "software";
+        accel == compute_accel::gpu_software || backend_str == "software";
     if (require_software_device) { pin_lavapipe_icd_for_software_mode(); }
 
     if (!backend_str.empty()) {
@@ -704,24 +526,6 @@ auto init() -> void {
                 device = nullptr;
                 continue;
             }
-
-            const char* const candidate_driver = SDL_GetGPUDeviceDriver(device);
-            const auto candidate_formats = SDL_GetGPUShaderFormats(device);
-            DebugLog(DL::Info, DC::Main)
-                << "SDL_GPU: candidate driver="
-                << (candidate_driver != nullptr ? candidate_driver : "unknown")
-                << "  formats=" << shader_formats_to_string(candidate_formats);
-            log_gpu_device_info(selected_device_info);
-
-            auto const [fmt, ext] = select_shader_format(candidate_formats);
-            if (fmt == SDL_GPU_SHADERFORMAT_INVALID || !probe_shader(device, fmt, ext)) {
-                DebugLog(DL::Warn, DC::Main)
-                    << "SDL_GPU: rejected device after compute dispatch probe: " << attempt.label;
-                SDL_DestroyGPUDevice(device);
-                device = nullptr;
-                continue;
-            }
-
             DebugLog(DL::Info, DC::Main) << "SDL_GPU: selected device policy: " << attempt.label;
             break;
         }
@@ -734,12 +538,12 @@ auto init() -> void {
                "hardware and a working system Vulkan loader";
         return;
 #else
-        auto const level =
-            (accel == compute_accel::force || require_software_device) ? DL::Error : DL::Warn;
-        DebugLog(level, DC::Main) << "SDL_GPU: device creation failed; install/enable a hardware "
-                                     "GPU driver or "
-                                  << "a software Vulkan driver such as Lavapipe for the shader "
-                                     "fallback path";
+        auto const require_gpu_device = accel == compute_accel::gpu || require_software_device;
+        auto const level = require_gpu_device ? DL::Error : DL::Warn;
+        DebugLog(level, DC::Main) << "SDL_GPU: device creation failed; "
+                                  << (require_gpu_device ? "selected GPU compute backend is "
+                                                           "unavailable"
+                                                         : "CPU compute fallback will be selected");
         return;
 #endif
     }
@@ -750,6 +554,12 @@ auto init() -> void {
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: driver=" << (driver != nullptr ? driver : "unknown")
                                  << "  formats=" << shader_formats_to_string(formats);
     log_gpu_device_info(selected_device_info);
+    DebugLog(DL::Info, DC::Main) << "Compute backend selected: "
+                                 << (require_software_device ? "sdl_gpu_software"
+                                                             : "sdl_gpu_hardware");
+
+    auto const [fmt, ext] = select_shader_format(formats);
+    if (fmt != SDL_GPU_SHADERFORMAT_INVALID) { probe_shader(device, fmt, ext); }
 
     s_device = device;
 }

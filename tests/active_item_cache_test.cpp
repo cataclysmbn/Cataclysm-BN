@@ -48,6 +48,74 @@ TEST_CASE( "nonperishable_food_does_not_enter_active_item_cache", "[item]" )
     CHECK( g->m.get_submaps_with_active_items().contains( abs_loc ) );
 }
 
+TEST_CASE( "pointer_item_removal_updates_active_item_cache", "[item]" )
+{
+    clear_all_state();
+    const auto loc = tripoint_bub_ms{ 60, 60, 0 };
+    g->m.i_clear( loc );
+    const auto abs_loc = project_to<coords::sm>( map_local_to_abs( g->m, loc ) );
+
+    auto active = item::spawn( "firecracker_act", calendar::start_of_cataclysm,
+                               item::default_charges_tag() );
+    active->activate();
+    REQUIRE( active->needs_processing() );
+    auto *const active_ptr = &*active;
+
+    g->m.add_item( loc, std::move( active ) );
+    REQUIRE( g->m.get_submaps_with_active_items().contains( abs_loc ) );
+
+    auto removed = g->m.i_rem( loc, active_ptr );
+    REQUIRE( removed != nullptr );
+    CHECK_FALSE( g->m.get_submaps_with_active_items().contains( abs_loc ) );
+    CHECK( g->m.check_submap_active_item_consistency().empty() );
+}
+
+TEST_CASE( "stack_iterator_item_removal_updates_active_item_cache", "[item]" )
+{
+    clear_all_state();
+    const auto loc = tripoint_bub_ms{ 60, 60, 0 };
+    g->m.i_clear( loc );
+    const auto abs_loc = project_to<coords::sm>( map_local_to_abs( g->m, loc ) );
+
+    auto active = item::spawn( "firecracker_act", calendar::start_of_cataclysm,
+                               item::default_charges_tag() );
+    active->activate();
+    REQUIRE( active->needs_processing() );
+
+    g->m.add_item( loc, std::move( active ) );
+    REQUIRE( g->m.get_submaps_with_active_items().contains( abs_loc ) );
+
+    auto stack = g->m.i_at( loc );
+    detached_ptr<item> removed;
+    const auto next = stack.erase( stack.begin(), &removed );
+    REQUIRE( removed != nullptr );
+    CHECK( next == stack.end() );
+    CHECK_FALSE( g->m.get_submaps_with_active_items().contains( abs_loc ) );
+    CHECK( g->m.check_submap_active_item_consistency().empty() );
+}
+
+TEST_CASE( "stack_clear_updates_active_item_cache", "[item]" )
+{
+    clear_all_state();
+    const auto loc = tripoint_bub_ms{ 60, 60, 0 };
+    g->m.i_clear( loc );
+    const auto abs_loc = project_to<coords::sm>( map_local_to_abs( g->m, loc ) );
+
+    auto active = item::spawn( "firecracker_act", calendar::start_of_cataclysm,
+                               item::default_charges_tag() );
+    active->activate();
+    REQUIRE( active->needs_processing() );
+
+    g->m.add_item( loc, std::move( active ) );
+    REQUIRE( g->m.get_submaps_with_active_items().contains( abs_loc ) );
+
+    auto stack = g->m.i_at( loc );
+    auto removed = stack.clear();
+    REQUIRE( removed.size() == 1 );
+    CHECK_FALSE( g->m.get_submaps_with_active_items().contains( abs_loc ) );
+    CHECK( g->m.check_submap_active_item_consistency().empty() );
+}
+
 TEST_CASE( "active_item_cache_slow_items_accrue_elapsed_time", "[item]" )
 {
     clear_all_state();

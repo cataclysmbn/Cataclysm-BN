@@ -6965,7 +6965,7 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
-    "cancels": [ "GUNSHY" ],
+    "cancels": [ "GUNSHY", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -6975,7 +6975,7 @@
     "points": -4,
     "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
-    "cancels": [ "BRAWLER" ],
+    "cancels": [ "BRAWLER", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -7084,5 +7084,16 @@
     "valid": false,
     "purifiable": false,
     "profession": true
+  },
+  {
+    "type": "mutation",
+    "id": "CARRY_PERMIT",
+    "name": { "str": "Carry Permit" },
+    "points": 1,
+    "starting_trait": true,
+    "description": "You prepared for trouble as best as you could, though it might not be enough for the end of the world.  In addition to any weapons your profession might start with, you start with a randomly-selected common pistol and some spare mags.  (Note: What you see in character creation does not reflect what it will select at game start.)",
+    "cancels": [ "BRAWLER", "GUNSHY" ],
+    "valid": false,
+    "purifiable": false
   }
 ]

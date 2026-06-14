@@ -2095,12 +2095,11 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
         return;
     }
 
-    // Shift our position to our "peeking" position, so that the UI
-    // for picking a throw point lets us target the location we couldn't
-    // otherwise see.
-    const auto original_player_position = who.bub_pos();
+    // Shift our position to our peeking position so the target UI can see from there.
+    const auto original_player_position = who.abs_pos();
     if( blind_throw_pos ) {
-        who.setpos( *blind_throw_pos );
+        who.setpos( bub_to_abs( *blind_throw_pos ) );
+        g->update_map( who );
     }
 
     target_handler::trajectory trajectory = target_handler::mode_throw( *who.as_avatar(), *it,
@@ -2109,6 +2108,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // If we previously shifted our position, put ourselves back now that we've picked our target.
     if( blind_throw_pos ) {
         who.setpos( original_player_position );
+        g->update_map( who );
     }
 
     if( trajectory.empty() ) {

@@ -1322,12 +1322,14 @@ class npc : public player
         static constexpr tripoint_abs_omt no_goal_point{ tripoint_min };
         time_point last_updated;
 
-        // ID of the dimension this NPC belongs to.  Empty string = primary dimension.
-        // Set when the NPC is spawned or loaded from a non-primary dimension submap.
-        // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_ = "";  // empty = primary dimension
-        const std::string &get_dimension() const override {
+        auto get_dimension() const -> const dimension_id &override {
             return dimension_id_;
+        }
+        auto set_dimension( const dimension_id &dim_id ) -> void override {
+            if( dimension_id_ != dim_id ) {
+                dimension_id_ = dim_id;
+                invalidate_mapbuffer_cache();
+            }
         }
 
         /**
@@ -1383,6 +1385,10 @@ class npc : public player
         bool could_move_onto( const tripoint_bub_ms &p ) const;
 
         std::vector<sphere> find_dangerous_explosives() const;
+
+        // ID of the dimension this NPC belongs to.  Empty = primary dimension.
+        // Persisted across saves so cross-dimension processing survives reload.
+        dimension_id dimension_id_;
 
         npc_companion_mission comp_mission;
 };

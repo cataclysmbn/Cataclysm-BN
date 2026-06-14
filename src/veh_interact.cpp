@@ -2234,9 +2234,9 @@ void veh_interact::do_rename()
     if( !name.empty() ) {
         veh->name = name;
         if( veh->tracking_on ) {
-            get_overmapbuffer( veh->dimension_id_ ).remove_vehicle( veh );
+            get_overmapbuffer( veh->get_dimension() ).remove_vehicle( veh );
             // Add the vehicle again, this time with the new name
-            get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
+            get_overmapbuffer( veh->get_dimension() ).add_vehicle( veh );
         }
     }
 }

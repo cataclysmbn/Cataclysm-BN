@@ -7,6 +7,7 @@
 #include "catalua_luna_doc.h"
 
 #include "artifact.h"
+#include "avatar.h"
 #include "itype.h"
 #include "mtype.h"
 #include "material.h"
@@ -407,6 +408,10 @@ void reg_item( sol::state &lua )
 
         SET_FX( activate );
         SET_FX( deactivate );
+        DOC( "Immediately invokes this item's use action at the given map-square position. Returns the charges consumed by the use action." );
+        luna::set_fx( ut, "invoke_at", []( item & it, const tripoint_bub_ms & pos ) -> int {
+            return it.type->invoke( get_avatar(), it, pos );
+        } );
         SET_FX( set_charges );
 
         SET_FX( set_counter );

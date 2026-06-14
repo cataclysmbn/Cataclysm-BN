@@ -94,7 +94,7 @@ class avatar : public player
         // Avatar is always in the game's active dimension; delegate to the
         // game's authoritative current_dimension_id_ rather than the global
         // g_active_dimension_id, which lags one line behind during transitions.
-        const std::string &get_dimension() const override;
+        auto get_dimension() const -> const dimension_id &override;
         avatar *as_avatar() override {
             return this;
         }
@@ -339,4 +339,3 @@ class avatar : public player
 };
 
 avatar &get_avatar();
-

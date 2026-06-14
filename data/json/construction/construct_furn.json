@@ -911,19 +911,6 @@
   },
   {
     "type": "construction",
-    "id": "constr_bathtub",
-    "group": "build_bathtub",
-    "category": "FURN",
-    "required_skills": [ [ "fabrication", 2 ], [ "mechanics", 1 ] ],
-    "time": "90 m",
-    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "WRENCH", "level": 1 } ] ],
-    "components": [ [ [ "metal_tank", 1 ] ], [ [ "pipe", 2 ] ], [ [ "scrap", 6 ], [ "sheet_metal", 2 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_bathtub"
-  },
-  {
-    "type": "construction",
     "id": "constr_shower",
     "group": "build_shower",
     "category": "FURN",

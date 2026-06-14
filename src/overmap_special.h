@@ -172,7 +172,7 @@ class overmap_special
          * @param dim_id           The dimension ID (empty = primary/overworld).
          * @param dim_inherits_base True if the dimension's world_type has inherit_base_mapgen=true.
          */
-        auto can_spawn_in_dimension( const std::string &dim_id,
+        auto can_spawn_in_dimension( const dimension_id &dim_id,
                                      bool dim_inherits_base ) const -> bool;
 
     private:
@@ -262,5 +262,4 @@ class overmap_special_batch
         std::vector<overmap_special_placement> placements;
         point_abs_om origin_overmap;
 };
-
 

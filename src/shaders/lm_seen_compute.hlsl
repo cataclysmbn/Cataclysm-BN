@@ -175,9 +175,6 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
                                       0, cache_x - 1 );
             const int   iy_z = clamp( player_y + round_nearest_int( (float)sdy * t_z ),
                                       0, cache_y - 1 );
-            if( sign_z < 0 && k == 0 && ix_z == player_x && iy_z == player_y ) {
-                continue;
-            }
             const int floor_z = sign_z > 0 ? player_z_idx + k + 1 : player_z_idx - k;
             if( floor_z >= 0 && floor_z < z_count ) {
                 const int fl_idx = floor_z * cache_xy + ix_z * cache_y + iy_z;
