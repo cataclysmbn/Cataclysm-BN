@@ -135,11 +135,21 @@ const writeStringBasic = (
   })
 }
 
+type WriteOptions = {
+  context?: string
+  formatStrings?: boolean
+  comment?: string
+  pluralFormat?: boolean
+}
+
+type FieldRule = readonly [key: string, options?: WriteOptions]
+
+const fields = (...keys: string[]): readonly FieldRule[] => keys.map((key) => [key] as const)
+
 const writeString = (
   state: ExtractorState,
   value: JsonValue | undefined,
-  options: { context?: string; formatStrings?: boolean; comment?: string; pluralFormat?: boolean } =
-    {},
+  options: WriteOptions = {},
 ) => {
   if (isArray(value)) {
     for (const entry of value) writeString(state, entry, options)
@@ -177,6 +187,27 @@ const writeString = (
   writeStringBasic(state, strSingular, strPlural, context, comment, options.formatStrings)
 }
 
+const writeField = (
+  state: ExtractorState,
+  item: JsonObject,
+  key: string,
+  options?: WriteOptions,
+): boolean => {
+  if (item[key] === undefined) return false
+  writeString(state, item[key], options)
+  return true
+}
+
+const writeFields = (
+  state: ExtractorState,
+  item: JsonObject,
+  rules: readonly FieldRule[],
+): boolean => {
+  let wrote = false
+  for (const [key, options] of rules) wrote = writeField(state, item, key, options) || wrote
+  return wrote
+}
+
 const extractUseActionMessages = (
   state: ExtractorState,
   useAction: JsonValue | undefined,
@@ -196,44 +227,36 @@ const extractUseActionMessages = (
 }
 
 const extractHarvest = (state: ExtractorState, item: JsonObject) => {
-  if (item.message !== undefined) writeString(state, item.message)
+  writeField(state, item, "message")
 }
 
+const bodypartFields = fields(
+  "name",
+  "name_multiple",
+  "accusative",
+  "accusative_multiple",
+  "encumbrance_text",
+  "heading",
+  "heading_multiple",
+  "hp_bar_ui_text",
+)
+
 const extractBodypart = (state: ExtractorState, item: JsonObject) => {
-  for (
-    const key of [
-      "name",
-      "name_multiple",
-      "accusative",
-      "accusative_multiple",
-      "encumbrance_text",
-      "heading",
-      "heading_multiple",
-      "hp_bar_ui_text",
-    ] as const
-  ) {
-    if (item[key] !== undefined) writeString(state, item[key])
-  }
+  writeFields(state, item, bodypartFields)
 }
 
 const extractClothingMod = (state: ExtractorState, item: JsonObject) => {
-  writeString(state, item.implement_prompt)
-  writeString(state, item.destroy_prompt)
+  writeFields(state, item, fields("implement_prompt", "destroy_prompt"))
 }
 
 const extractConstruction = (state: ExtractorState, item: JsonObject) => {
-  if (item.pre_note !== undefined) writeString(state, item.pre_note)
+  writeField(state, item, "pre_note")
 }
 
 const extractMaterial = (state: ExtractorState, item: JsonObject) => {
   writeString(state, item.name)
   let wrote = false
-  for (const key of ["bash_dmg_verb", "cut_dmg_verb"] as const) {
-    if (item[key] !== undefined) {
-      writeString(state, item[key])
-      wrote = true
-    }
-  }
+  wrote = writeFields(state, item, fields("bash_dmg_verb", "cut_dmg_verb")) || wrote
   const dmgAdj = jsonArray(item.dmg_adj)
   for (let idx = 0; idx < 4 && idx < dmgAdj.length; idx++) {
     writeString(state, dmgAdj[idx])
@@ -448,10 +471,10 @@ const extractMapgen = (state: ExtractorState, item: JsonObject) => {
   }
 }
 
+const monsterAttackFields = fields("hit_dmg_u", "hit_dmg_npc", "no_dmg_msg_u", "no_dmg_msg_npc")
+
 const extractMonsterAttack = (state: ExtractorState, item: JsonObject) => {
-  for (const key of ["hit_dmg_u", "hit_dmg_npc", "no_dmg_msg_u", "no_dmg_msg_npc"] as const) {
-    if (item[key] !== undefined) writeString(state, item[key])
-  }
+  writeFields(state, item, monsterAttackFields)
 }
 
 const extractRecipe = (state: ExtractorState, item: JsonObject) => {
@@ -460,8 +483,7 @@ const extractRecipe = (state: ExtractorState, item: JsonObject) => {
       writeString(state, bookLearn[2])
     }
   }
-  if (item.description !== undefined) writeString(state, item.description)
-  if (item.blueprint_name !== undefined) writeString(state, item.blueprint_name)
+  writeFields(state, item, fields("description", "blueprint_name"))
 }
 
 const extractRecipeGroup = (state: ExtractorState, item: JsonObject) => {
@@ -544,13 +566,13 @@ const extractTalkEffects = (state: ExtractorState, effects: JsonValue | undefine
 }
 
 const extractTalkResponse = (state: ExtractorState, response: JsonObject) => {
-  if (response.text !== undefined) writeString(state, response.text)
+  writeField(state, response, "text")
   if (isObject(response.truefalsetext)) {
-    writeString(state, response.truefalsetext.true)
-    writeString(state, response.truefalsetext.false)
+    writeFields(state, response.truefalsetext, fields("true", "false"))
   }
-  if (isObject(response.success)) extractTalkResponse(state, response.success)
-  if (isObject(response.failure)) extractTalkResponse(state, response.failure)
+  for (const key of ["success", "failure"] as const) {
+    if (isObject(response[key])) extractTalkResponse(state, response[key])
+  }
   for (const effect of objectArray(response.speaker_effect)) {
     if (effect.effect !== undefined) extractTalkEffects(state, effect.effect)
   }
@@ -564,8 +586,7 @@ const extractTalkTopic = (state: ExtractorState, item: JsonObject) => {
 }
 
 const extractTechnique = (state: ExtractorState, item: JsonObject) => {
-  writeString(state, item.name)
-  if (item.description !== undefined) writeString(state, item.description)
+  writeFields(state, item, fields("name", "description"))
   for (const message of jsonArray(item.messages)) {
     writeString(state, message, { formatStrings: true })
   }
@@ -580,30 +601,24 @@ const extractTrap = (state: ExtractorState, item: JsonObject) => {
   }
 }
 
+const missionDialogueFields = fields(
+  "describe",
+  "offer",
+  "accepted",
+  "rejected",
+  "advice",
+  "inquire",
+  "success",
+  "success_lie",
+  "failure",
+)
+
 const extractMissionDef = (state: ExtractorState, item: JsonObject) => {
   const itemName = item.name
   writeString(state, itemName)
   const itemNameText = pythonRepr(itemName)
-  if (item.description !== undefined) {
-    writeString(state, item.description, { comment: `Description for mission '${itemNameText}'` })
-  }
-  if (isObject(item.dialogue)) {
-    for (
-      const key of [
-        "describe",
-        "offer",
-        "accepted",
-        "rejected",
-        "advice",
-        "inquire",
-        "success",
-        "success_lie",
-        "failure",
-      ] as const
-    ) {
-      if (item.dialogue[key] !== undefined) writeString(state, item.dialogue[key])
-    }
-  }
+  writeField(state, item, "description", { comment: `Description for mission '${itemNameText}'` })
+  if (isObject(item.dialogue)) writeFields(state, item.dialogue, missionDialogueFields)
   for (const key of ["start", "end", "fail"] as const) {
     const value = item[key]
     if (isObject(value) && value.effect !== undefined) extractTalkEffects(state, value.effect)
@@ -612,12 +627,8 @@ const extractMissionDef = (state: ExtractorState, item: JsonObject) => {
 
 const extractMutation = (state: ExtractorState, item: JsonObject) => {
   const itemNameOrId = item.name ?? item.id
-  if (item.name !== undefined) writeString(state, item.name)
-  if (item.description !== undefined) {
-    writeString(state, item.description, {
-      comment: `Description for ${pythonRepr(itemNameOrId)}`,
-    })
-  }
+  writeField(state, item, "name")
+  writeField(state, item, "description", { comment: `Description for ${pythonRepr(itemNameOrId)}` })
   const attacks = item.attacks
   for (
     const attack of isArray(attacks) ? objectArray(attacks) : isObject(attacks) ? [attacks] : []
@@ -628,22 +639,20 @@ const extractMutation = (state: ExtractorState, item: JsonObject) => {
   if (isObject(item.spawn_item)) writeString(state, item.spawn_item.message)
 }
 
+const mutationCategoryMessageFields = [
+  "mutagen_message",
+  "iv_message",
+  "iv_sleep_message",
+  "iv_sound_message",
+  "junkie_message",
+]
+
 const extractMutationCategory = (state: ExtractorState, item: JsonObject) => {
   const itemName = item.name
   const itemNameText = pythonRepr(itemName)
   writeString(state, itemName, { comment: "Mutation class name" })
-  for (
-    const key of [
-      "mutagen_message",
-      "iv_message",
-      "iv_sleep_message",
-      "iv_sound_message",
-      "junkie_message",
-    ] as const
-  ) {
-    if (item[key] !== undefined) {
-      writeString(state, item[key], { comment: `Mutation class: ${itemNameText} ${key}` })
-    }
+  for (const key of mutationCategoryMessageFields) {
+    writeField(state, item, key, { comment: `Mutation class: ${itemNameText} ${key}` })
   }
   writeString(state, item.memorial_message, {
     context: "memorial_male",
@@ -684,15 +693,13 @@ const extractGate = (state: ExtractorState, item: JsonObject) => {
 }
 
 const extractFieldType = (state: ExtractorState, item: JsonObject) => {
-  for (const level of objectArray(item.intensity_levels)) {
-    if (level.name !== undefined) writeString(state, level.name)
-  }
+  for (const level of objectArray(item.intensity_levels)) writeField(state, level, "name")
 }
 
 const extractTerFurnTransform = (state: ExtractorState, item: JsonObject) => {
-  writeString(state, item.fail_message)
-  for (const terrain of objectArray(item.terrain)) writeString(state, terrain.message)
-  for (const furniture of objectArray(item.furniture)) writeString(state, furniture.message)
+  writeField(state, item, "fail_message")
+  for (const terrain of objectArray(item.terrain)) writeField(state, terrain, "message")
+  for (const furniture of objectArray(item.furniture)) writeField(state, furniture, "message")
 }
 
 const extractSkillDisplayType = (state: ExtractorState, item: JsonObject) => {
@@ -727,9 +734,7 @@ const extractFault = (state: ExtractorState, item: JsonObject) => {
 const extractJsonFlag = (state: ExtractorState, item: JsonObject) => {
   const id = rawTranslationString(item.id)
   for (const field of ["info", "restriction", "tag"] as const) {
-    if (item[field] !== undefined) {
-      writeString(state, item[field], { comment: `${field} for JSON flag '${id}'` })
-    }
+    writeField(state, item, field, { comment: `${field} for JSON flag '${id}'` })
   }
 }
 
@@ -784,6 +789,14 @@ const shouldSuppressWarning = (state: ExtractorState, file: string): boolean => 
   return false
 }
 
+const automaticNameFields = fields("name_suffix", "name_unique", "job_description")
+const automaticTextFields = fields("detailed_definition", "sound", "text", "prompt")
+const pryFields = fields("sound", "break_sound", "success_message", "fail_message", "break_message")
+const cuttingMembers = [
+  ["hacksaw", "sound of sawing", "message when finished sawing"],
+  ["boltcut", "sound of bolt cutting", "message when finished bolt cutting"],
+] as const
+
 const extractJsonObject = (state: ExtractorState, item: JsonObject) => {
   const objectType = item.type
   if (!isString(objectType)) return
@@ -818,12 +831,7 @@ const extractJsonObject = (state: ExtractorState, item: JsonObject) => {
     wrote = true
   }
 
-  for (const key of ["name_suffix", "name_unique", "job_description"] as const) {
-    if (item[key] !== undefined) {
-      writeString(state, item[key])
-      wrote = true
-    }
-  }
+  wrote = writeFields(state, item, automaticNameFields) || wrote
 
   if (item.use_action !== undefined) {
     extractUseActionMessages(state, item.use_action, nameText)
@@ -844,26 +852,15 @@ const extractJsonObject = (state: ExtractorState, item: JsonObject) => {
     }
   }
 
-  if (item.description !== undefined) {
-    writeString(state, item.description, {
-      comment: nameText ? `Description for ${nameText}` : undefined,
-    })
-    wrote = true
-  }
+  wrote = writeField(state, item, "description", {
+    comment: nameText ? `Description for ${nameText}` : undefined,
+  }) || wrote
 
-  for (const key of ["detailed_definition", "sound", "text", "prompt"] as const) {
-    if (item[key] !== undefined) {
-      writeString(state, item[key])
-      wrote = true
-    }
-  }
+  wrote = writeFields(state, item, automaticTextFields) || wrote
 
-  if (item.sound_description !== undefined) {
-    writeString(state, item.sound_description, {
-      comment: `Description for the sound of spell '${commentNameText}'`,
-    })
-    wrote = true
-  }
+  wrote = writeField(state, item, "sound_description", {
+    comment: `Description for the sound of spell '${commentNameText}'`,
+  }) || wrote
 
   if (isArray(item.snippet_category)) {
     for (const entry of item.snippet_category) {
@@ -873,27 +870,16 @@ const extractJsonObject = (state: ExtractorState, item: JsonObject) => {
   }
 
   if (isObject(item.bash)) {
-    for (const key of ["sound", "sound_fail"] as const) {
-      if (item.bash[key] !== undefined) {
-        writeString(state, item.bash[key])
-        wrote = true
-      }
-    }
+    wrote = writeFields(state, item.bash, fields("sound", "sound_fail")) || wrote
   }
 
-  if (isObject(item.oxytorch) && item.oxytorch.message !== undefined) {
-    writeString(state, item.oxytorch.message, {
+  if (isObject(item.oxytorch)) {
+    wrote = writeField(state, item.oxytorch, "message", {
       comment: `message when oxytorch cutting ${commentNameText}`,
-    })
-    wrote = true
+    }) || wrote
   }
 
-  for (
-    const [member, soundComment, messageComment] of [
-      ["hacksaw", "sound of sawing", "message when finished sawing"],
-      ["boltcut", "sound of bolt cutting", "message when finished bolt cutting"],
-    ] as const
-  ) {
+  for (const [member, soundComment, messageComment] of cuttingMembers) {
     const value = item[member]
     if (!isObject(value)) continue
     if (value.sound !== undefined) {
@@ -906,32 +892,11 @@ const extractJsonObject = (state: ExtractorState, item: JsonObject) => {
     }
   }
 
-  if (isObject(item.pry)) {
-    for (
-      const key of [
-        "sound",
-        "break_sound",
-        "success_message",
-        "fail_message",
-        "break_message",
-      ] as const
-    ) {
-      if (item.pry[key] !== undefined) {
-        writeString(state, item.pry[key])
-        wrote = true
-      }
-    }
-  }
+  if (isObject(item.pry)) wrote = writeFields(state, item.pry, pryFields) || wrote
 
-  if (item.lockpick_message !== undefined) {
-    writeString(state, item.lockpick_message)
-    wrote = true
-  }
+  wrote = writeField(state, item, "lockpick_message") || wrote
 
-  if (isObject(item.seed_data) && item.seed_data.plant_name !== undefined) {
-    writeString(state, item.seed_data.plant_name)
-    wrote = true
-  }
+  if (isObject(item.seed_data)) wrote = writeField(state, item.seed_data, "plant_name") || wrote
 
   if (isObject(item.relic_data)) {
     if (item.relic_data.name !== undefined) {
@@ -950,13 +915,10 @@ const extractJsonObject = (state: ExtractorState, item: JsonObject) => {
     }
   }
 
-  if (item.message !== undefined) {
-    writeString(state, item.message, {
-      formatStrings: true,
-      comment: `Message for ${objectType} '${commentNameText}'`,
-    })
-    wrote = true
-  }
+  wrote = writeField(state, item, "message", {
+    formatStrings: true,
+    comment: `Message for ${objectType} '${commentNameText}'`,
+  }) || wrote
 
   if (isArray(item.messages)) {
     for (const message of item.messages) {
@@ -972,17 +934,11 @@ const extractJsonObject = (state: ExtractorState, item: JsonObject) => {
     }
   }
 
-  if (item.info !== undefined) {
-    writeString(state, item.info, {
-      comment: "Please leave anything in <angle brackets> unchanged.",
-    })
-    wrote = true
-  }
+  wrote = writeField(state, item, "info", {
+    comment: "Please leave anything in <angle brackets> unchanged.",
+  }) || wrote
 
-  if (item.verb !== undefined) {
-    writeString(state, item.verb)
-    wrote = true
-  }
+  wrote = writeField(state, item, "verb") || wrote
 
   if (isArray(item.special_attacks)) {
     for (const specialAttack of item.special_attacks) {
@@ -1003,10 +959,7 @@ const extractJsonObject = (state: ExtractorState, item: JsonObject) => {
     }
   }
 
-  if (item.footsteps !== undefined) {
-    writeString(state, item.footsteps)
-    wrote = true
-  }
+  wrote = writeField(state, item, "footsteps") || wrote
 
   if (
     !wrote && item["copy-from"] === undefined &&
