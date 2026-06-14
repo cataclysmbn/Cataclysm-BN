@@ -20,6 +20,7 @@
     "shot": { "count": 5, "half_angle": 5 },
     "dispersion": 250,
     "loudness": 0,
+    "speed": 100,
     "count": 10
   },
   {
@@ -43,6 +44,7 @@
     "shot": { "count": 5, "half_angle": 5 },
     "dispersion": 80,
     "loudness": 0,
+    "speed": 100,
     "count": 10
   },
   {
@@ -66,6 +68,7 @@
     "shot": { "count": 10, "half_angle": 5 },
     "dispersion": 50,
     "loudness": 0,
+    "speed": 100,
     "count": 10
   },
   {
@@ -89,6 +92,7 @@
     "shot": { "count": 5, "half_angle": 5 },
     "dispersion": 100,
     "loudness": 0,
+    "speed": 100,
     "count": 10
   }
 ]

@@ -884,8 +884,8 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
 
     const int avoid_roll = dodge_roll();
     // Do dice(10, speed) instead of dice(speed, 10) because speed could potentially be > 10000
-    // Most monster projectiles have a speed of 10, thrown objects cap out around 8? Any projectile from a "gun" has 1000.
-    // Todo? Make doding at point blank range possible though difficult. Not dodging the bullet, dodging the barrel etc.
+    // Most monster projectiles have a speed of 10m/s, thrown objects cap out around 20. Arrows are generally 100m/s. Any projectile from a "gun" has 1000.
+    // TODO: Overhaul this because the chances of dodging even the slowest projectiles is almost nil unless you have extremely high dex + dodge skill.
     const int diff_roll = dice( 10, proj.speed );
     const double dodge_acc_adjustment = avoid_roll / static_cast<double>( diff_roll );
     // Partial dodge, capped at [0.0, 1.0], added to missed_by

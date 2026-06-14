@@ -18,7 +18,8 @@
     "dispersion": 150,
     "recoil": 150,
     "count": 4,
-    "loudness": 60,
+    "loudness": 90,
+    "speed": 200,
     "effects": [ "COOKOFF", "PYROPHORIC", "TRAIL", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
@@ -38,7 +39,8 @@
     "range": 80,
     "dispersion": 30,
     "recoil": 225,
-    "loudness": 75,
+    "loudness": 90,
+    "speed": 200,
     "effects": [ "COOKOFF", "EXPLOSIVE_BIG", "TRAIL", "NO_PENETRATE_OBSTACLES" ]
   }
 ]

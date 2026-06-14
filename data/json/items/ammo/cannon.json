@@ -15,6 +15,8 @@
     "damage": { "damage_type": "bullet", "amount": 250, "armor_penetration": 50 },
     "dispersion": 500,
     "recoil": 52500,
+    "speed": 200,
+    "loudness": 156,
     "extend": { "effects": [ "EXPLOSIVE_BIG", "NO_PENETRATE_OBSTACLES" ] }
   },
   {
@@ -39,7 +41,8 @@
     "damage": { "damage_type": "bullet", "amount": 200, "armor_penetration": 50 },
     "dispersion": 620,
     "recoil": 26250,
-    "loudness": 900,
+    "speed": 200,
+    "loudness": 156,
     "effects": [ "COOKOFF", "MUZZLE_SMOKE", "BLACKPOWDER" ]
   },
   {

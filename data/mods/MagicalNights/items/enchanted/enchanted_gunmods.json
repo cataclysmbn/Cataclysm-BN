@@ -19,7 +19,7 @@
     "handling_modifier": 5,
     "consume_chance": 220,
     "consume_divisor": 242,
-    "loudness_modifier": -90,
+    "loudness_modifier": -80,
     "flags": [ "CONSUMABLE" ]
   },
   {

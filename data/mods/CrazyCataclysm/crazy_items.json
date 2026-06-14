@@ -75,7 +75,7 @@
     "dispersion": 10,
     "recoil": 100,
     "durability": 10,
-    "loudness": 50,
+    "loudness": 65,
     "reload": 0,
     "ammo_effects": [ "PLASMA", "EXPLOSIVE_HUGE", "STREAM_BIG", "INCENDIARY", "WIDE", "NO_PENETRATE_OBSTACLES" ],
     "flags": [ "NEVER_JAMS", "NO_UNLOAD", "TRADER_AVOID", "PYROMANIAC_WEAPON" ]

@@ -1,0 +1,10 @@
+[
+  {
+    "type": "item_group",
+    "id": "mon_civilian_police_monster_weapon",
+    "magazine": 100,
+    "ammo": 25,
+    "subtype": "distribution",
+    "entries": [ { "item": "glock_22", "prob": 100, "damage": [ 1, 4 ] } ]
+  }
+]

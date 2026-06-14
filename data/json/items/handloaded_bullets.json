@@ -18,6 +18,8 @@
     "range": 12,
     "dispersion": 60,
     "recoil": 840,
+    "speed": 300,
+    "loudness": 150,
     "effects": [ "COOKOFF", "RECYCLED" ]
   },
   {
@@ -39,6 +41,8 @@
     "dispersion": 1000,
     "shot": { "count": 5, "half_angle": 10 },
     "recoil": 780,
+    "speed": 300,
+    "loudness": 150,
     "effects": [ "COOKOFF", "SHOT", "RECYCLED" ]
   },
   {
@@ -60,6 +64,8 @@
     "dispersion": 1000,
     "shot": { "count": 10, "half_angle": 10 },
     "recoil": 840,
+    "speed": 300,
+    "loudness": 150,
     "effects": [ "COOKOFF", "SHOT", "RECYCLED" ]
   }
 ]
