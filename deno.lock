@@ -47,6 +47,7 @@
     "npm:@octokit/rest@21.0.2": "21.0.2",
     "npm:dprint@*": "0.47.5",
     "npm:json-order@*": "1.1.3",
+    "npm:markdown-table@3.0.4": "3.0.4",
     "npm:sharp@~0.33.5": "0.33.5",
     "npm:ts-pattern@5.0.5": "5.0.5",
     "npm:type-fest@*": "4.27.0"
@@ -641,6 +642,9 @@
     "lodash.clonedeep@4.5.0": {
       "integrity": "sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ=="
     },
+    "markdown-table@3.0.4": {
+      "integrity": "sha512-wiYz4+JrLyb/DqW2hkFJxP7Vd7JuTDm77fvbM8VfEQdmSMqcImWeeRbHwZjBjIFki/VaMK2BhFi7oUUZeM5bqw=="
+    },
     "semver@7.7.3": {
       "integrity": "sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==",
       "bin": true
@@ -953,7 +957,8 @@
       "jsr:@std/path@^1.1.2",
       "jsr:@std/yaml@^1.0.10",
       "jsr:@valibot/valibot@^1.1.0",
-      "npm:@octokit/rest@21.0.2"
+      "npm:@octokit/rest@21.0.2",
+      "npm:markdown-table@3.0.4"
     ]
   }
 }

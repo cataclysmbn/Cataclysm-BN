@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <shared_mutex>
 #include <set>
 #include <source_location>
@@ -34,6 +35,7 @@
 #include "lightmap.h"
 #include "line.h"
 #include "lru_cache.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "mapgen_functions.h"
 #include "memory_fast.h"
@@ -115,17 +117,30 @@ namespace cata
 template <class T> class poly_serialized;
 } // namespace cata
 
+struct map_stack_options {
+    location_vector<item> *stack = nullptr;
+    tripoint_abs_ms location;
+    mapbuffer *origin = nullptr;
+    map *local_origin = nullptr;
+};
+
 class map_stack : public item_stack
 {
     private:
-        tripoint_bub_ms location;
-        map *myorigin;
+        tripoint_abs_ms location;
+        mapbuffer *myorigin = nullptr;
+        map *local_origin = nullptr;
+
+        auto local_location() const -> tripoint_bub_ms;
+
     public:
-        map_stack( location_vector<item> *newstack, tripoint_bub_ms newloc, map *neworigin ) :
-            item_stack( newstack ), location( newloc ), myorigin( neworigin ) {}
+        explicit map_stack( const map_stack_options &options ) :
+            item_stack( options.stack ), location( options.location ), myorigin( options.origin ),
+            local_origin( options.local_origin ) {}
         void insert( detached_ptr<item> &&newitem ) override;
         iterator erase( const_iterator it, detached_ptr<item> *out = nullptr ) override;
         detached_ptr<item> remove( item *to_remove ) override;
+        std::vector<detached_ptr<item>> clear() override;
         int count_limit() const override {
             return MAX_ITEM_IN_SQUARE;
         }
@@ -762,11 +777,6 @@ class map : public submap_load_listener
          */
         bool has_dimension_bounds() const;
         /**
-         * Check if a local tripoint is out of dimension bounds.
-         * Returns false if no bounds are set (infinite dimension).
-         */
-        bool is_out_of_bounds( const tripoint_bub_ms &p ) const;
-        /**
          * Get the boundary terrain ID for out-of-bounds areas.
          * Only valid if has_dimension_bounds() is true.
          */
@@ -775,7 +785,7 @@ class map : public submap_load_listener
          * Return the dimension ID this map is currently bound to.
          * An empty string means the primary (default) dimension.
          */
-        const std::string &get_bound_dimension() const {
+        auto get_bound_dimension() const -> const dimension_id & { // *NOPAD*
             return bound_dimension_;
         }
 
@@ -795,7 +805,7 @@ class map : public submap_load_listener
          * Bind this map to a specific dimension.
          * Should be called when the player transitions to another dimension.
          */
-        void bind_dimension( const std::string &dim );
+        auto bind_dimension( const dimension_id &dim ) -> void;
 
         /**
          * Return true if the submap at absolute-submap coordinates @p pos
@@ -805,9 +815,9 @@ class map : public submap_load_listener
 
         // submap_load_listener implementation
         void on_submap_loaded( const tripoint_abs_sm &pos,
-                               const std::string &dim_id ) override;
+                               const dimension_id &dim_id ) override;
         void on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const std::string &dim_id ) override;
+                                 const dimension_id &dim_id ) override;
 
         /**
          * Sets a dirty flag on the a given cache.
@@ -2465,17 +2475,15 @@ class map : public submap_load_listener
          */
         submap *getsubmap( size_t grididx ) const;
         /**
-         * Get the submap pointer containing the specified position within the reality bubble.
-         * (p) must be a valid coordinate, check with @ref inbounds.
+         * Compatibility map-local lookup. Absolute data lookup belongs on
+         * mapbuffer; simulation membership belongs on submap_load_manager.
          */
         submap *get_submap_at( const tripoint_bub_ms &p ) const;
         submap *get_submap_at( const point_bub_ms &p ) const {
             return get_submap_at( tripoint_bub_ms( p, abs_sub.z() ) );
         }
         /**
-         * Get the submap pointer containing the specified position within the reality bubble.
-         * The same as other get_submap_at, (p) must be valid (@ref inbounds).
-         * Also writes the position within the submap to offset_p
+         * Compatibility map-local lookup with submap-local offset.
          */
         submap *get_submap_at( const tripoint_bub_ms &p, point_sm_ms &offset_p ) const;
         submap *get_submap_at( const point_bub_ms &p, point_sm_ms &offset_p ) const {
@@ -2670,7 +2678,7 @@ class map : public submap_load_listener
         std::optional<pocket_dimension_data> pocket_info_;
 
         // The dimension ID this map is bound to (empty = primary dimension)
-        std::string bound_dimension_;
+        dimension_id bound_dimension_;
 
     public:
         bool has_rope_at( tripoint_bub_ms pt ) const;
@@ -2766,6 +2774,9 @@ auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms;
 auto bub_to_abs( const point_bub_sm &p ) -> point_abs_sm;
 auto abs_to_bub( const point_abs_sm &p ) -> point_bub_sm;
 
+auto is_in_reality_bubble_bounds( const tripoint_bub_sm &p ) -> bool;
+auto is_in_reality_bubble_bounds( const tripoint_bub_ms &p ) -> bool;
+
 // Convert against a specific map object's loaded-grid origin, not the player bubble origin.
 auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms;
 auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms;
@@ -2815,7 +2826,6 @@ class tinymap : public map
         friend class editmap;
     public:
         tinymap( int mapsize = 2, bool zlevels = false );
-        bool inbounds( const tripoint_abs_sm &p ) const override;
 
         /**
          * Position this tinymap at @p sm_base (submap coordinates) and wire up

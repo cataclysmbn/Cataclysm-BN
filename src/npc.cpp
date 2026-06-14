@@ -3001,17 +3001,42 @@ void npc::on_load()
 
     last_updated = calendar::turn;
 
+    auto &buffer = get_mapbuffer();
+    const auto pos = abs_pos();
+    const auto terrain = buffer.get_ter( pos );
+    const auto furniture = buffer.get_furn( pos );
+    const auto unstable = ( terrain && terrain->obj().has_flag( "UNSTABLE" ) ) ||
+                          ( furniture && furniture->obj().has_flag( "UNSTABLE" ) );
+
     // for spawned npcs
-    if( g->m.has_flag( "UNSTABLE", bub_pos() ) ) {
+    if( unstable ) {
         add_effect( effect_bouldering, 1_turns, bodypart_str_id::NULL_ID() );
     } else if( has_effect( effect_bouldering ) ) {
         remove_effect( effect_bouldering );
     }
-    if( g->m.veh_at( bub_pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) && !in_vehicle ) {
-        g->m.board_vehicle( bub_pos(), this );
+    if( !in_vehicle ) {
+        const auto player_bubble_pos = abs_to_bub( pos );
+        if( get_dimension() == g->m.get_bound_dimension() &&
+            is_in_reality_bubble_bounds( player_bubble_pos ) ) {
+            if( g->m.veh_at( player_bubble_pos ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+                g->m.board_vehicle( player_bubble_pos, this );
+            }
+        } else if( const auto vp = buffer.veh_at( pos ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+            if( vp->part().has_flag( vehicle_part::passenger_flag ) ) {
+                player *psg = vp->vehicle().get_passenger( vp->part_index() );
+                debugmsg( "npc::on_load: vehicle passenger (%s) is already there",
+                          psg ? psg->name : "<null>" );
+            } else {
+                vp->part().set_flag( vehicle_part::passenger_flag );
+                vp->part().passenger_id = getID();
+                vp->vehicle().invalidate_mass();
+                setpos( pos );
+                in_vehicle = true;
+            }
+        }
     }
     if( has_effect( effect_riding ) && !mounted_creature ) {
-        if( const monster *const mon = g->critter_at<monster>( bub_pos() ) ) {
+        if( const monster *const mon = g->critter_at<monster>( pos ) ) {
             mounted_creature = g->shared_from( *mon );
         } else {
             add_msg( m_debug, "NPC is meant to be riding, though the mount is not found when %s is loaded",

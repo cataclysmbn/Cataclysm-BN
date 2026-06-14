@@ -15,10 +15,11 @@
 #include "submap.h"
 #include "submap_fields.h"
 #include "submap_load_manager.h"
+#include "type_id.h"
 #include "units.h"
 
 // Dimension ID used only by these tests — never appears in game data.
-static constexpr const char *TEST_DIM_ID = "sim_test_dim";
+static const dimension_id TEST_DIM_ID( "sim_test_dim" );
 
 // Far enough from the test map centre that it is never inside the reality bubble.
 static const tripoint_abs_sm FAR_SM_POS{ 200, 200, 0 };

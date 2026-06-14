@@ -7199,14 +7199,15 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
     // Debug: Show current and target dimensions
     add_msg( m_debug, "[DIM_TRAVEL] Current region_type: %s",
              get_overmapbuffer( p.get_dimension() ).current_region_type );
-    add_msg( m_debug, "[DIM_TRAVEL] Current dim_id: '%s'", g->get_current_dimension_id() );
+    add_msg( m_debug, "[DIM_TRAVEL] Current dim_id: '%s'",
+             g->get_current_dimension_id().c_str() );
     add_msg( m_debug, "[DIM_TRAVEL] Target destination: %s", destination.str() );
 
     // The "default" world_type_id is the base overworld; its canonical dim_id is ""
     // (empty string) for backward-compat save paths.  Normalize here so callers
     // that specify destination="default" correctly reach the overworld slot.
-    const auto target_dim_id = destination.str() == "default" ? std::string{} :
-                               destination.str();
+    const auto target_dim_id = dimension_id( destination.str() == "default" ? std::string{} :
+                               destination.str() );
 
     // Check if already in target dimension
     if( g->get_current_dimension_id() == target_dim_id ) {
@@ -7319,7 +7320,7 @@ int iuse_pocket_dimension::use( player &p, item &it, bool, const tripoint_bub_ms
     const auto &current_dim_id = g->get_current_dimension_id();
 
     // Check if we're inside THIS pocket dimension
-    if( current_dim_id == dim_info.dimension_id ) {
+    if( current_dim_id == dim_info.id ) {
         // We're inside - exit to return point
         exit_pocket( p, it );
     } else if( current_dim_id == pd.return_dimension_id ) {
@@ -7366,7 +7367,7 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
     // Build a fully-qualified dimension_id from the pocket_type's save_prefix + a unique suffix.
     const auto instance_suffix = string_format( "%d_%d", to_turn<int>( calendar::turn ),
                                  rng( 0, 99999 ) );
-    pd.dimension_id = pocket_type.obj().save_prefix + instance_suffix + "_";
+    pd.id = dimension_id( pocket_type.obj().save_prefix + instance_suffix + "_" );
     pd.world_type = pocket_type;
     pd.display_name = pocket_name.empty() ? pocket_type.obj().name.translated() : pocket_name;
     pd.pocket_info = pocket_dimension_data{};
@@ -7496,7 +7497,7 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
         pre_load = [&]() {
             overmap_special_id special_id( entry_mapgen );
             if( special_id.is_valid() ) {
-                auto &pd_omb = get_overmapbuffer( dim_info.dimension_id );
+                auto &pd_omb = get_overmapbuffer( dim_info.id );
                 const auto proj = project_remain<coords::om>( pd.entry_point );
                 auto &om = pd_omb.get( proj.quotient );
                 om.place_special_forced( special_id, project_to<coords::omt>( proj.remainder_tripoint ),
@@ -7506,7 +7507,7 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
         };
     }
 
-    g->travel_to_dimension( dim_info.dimension_id, dim_info.world_type, pd, dest_sm, pre_load );
+    g->travel_to_dimension( dim_info.id, dim_info.world_type, pd, dest_sm, pre_load );
 
     // Only make the first entrance safe. If the player makes it dangerous later, that's on them.
     // No sneaky teleporting shenaneigans.
@@ -7566,7 +7567,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
         if( nearby_portal != nullptr && !it.get_var( "portal_linked", false ) ) {
             if( query_yn( _( "Link %s to this portal?" ), it.tname() ) ) {
                 it.set_var( "portal_linked", true );
-                it.set_var( "linked_dim_id", nearby_portal->target_dim_id );
+                it.set_var( "linked_dim_id", nearby_portal->target_dim_id.str() );
                 it.set_var( "linked_pos_x", nearby_portal->target_pos.x() );
                 it.set_var( "linked_pos_y", nearby_portal->target_pos.y() );
                 it.set_var( "linked_pos_z", nearby_portal->target_pos.z() );
@@ -7582,7 +7583,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
         return 0;
     }
 
-    const auto linked_dim = it.get_var( "linked_dim_id" );
+    const auto linked_dim = dimension_id( it.get_var( "linked_dim_id" ) );
     const tripoint_abs_ms linked_pos(
         it.get_var( "linked_pos_x", 0 ),
         it.get_var( "linked_pos_y", 0 ),
@@ -7593,12 +7594,12 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
         cur_dim == linked_dim &&
         rl_dist( player_abs, linked_pos ) <= 5 ) {
         if( query_yn( _( "Return to your origin point?" ) ) ) {
-            const auto origin_dim = it.get_var( "origin_dim_id" );
+            const auto origin_dim = dimension_id( it.get_var( "origin_dim_id" ) );
             const tripoint_abs_ms origin_pos(
                 it.get_var( "origin_pos_x", 0 ),
                 it.get_var( "origin_pos_y", 0 ),
                 it.get_var( "origin_pos_z", 0 ) );
-            auto wt_id = world_type_id( origin_dim );
+            auto wt_id = world_type_id( origin_dim.str() );
             const auto preload_point = project_to<coords::sm>( origin_pos ) - point_rel_sm( g_half_mapsize,
                                        g_half_mapsize );
             g->travel_to_dimension( origin_dim, wt_id, std::nullopt, preload_point );
@@ -7612,7 +7613,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
 
     // Store origin before teleporting if can_return.
     if( can_return && !it.get_var( "origin_stored", false ) ) {
-        it.set_var( "origin_dim_id", cur_dim );
+        it.set_var( "origin_dim_id", cur_dim.str() );
         it.set_var( "origin_pos_x", player_abs.x() );
         it.set_var( "origin_pos_y", player_abs.y() );
         it.set_var( "origin_pos_z", player_abs.z() );
@@ -7622,8 +7623,8 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     p.add_msg_if_player( m_good, _( "The %s tears a path through dimensional space." ),
                          it.tname() );
 
-    auto wt_id = world_type_id( linked_dim );
-    if( linked_dim.empty() ) {
+    auto wt_id = world_type_id( linked_dim.str() );
+    if( linked_dim.is_empty() ) {
         wt_id = world_types::get_default();
     }
     const auto dest_sm = project_to<coords::sm>( linked_pos ) -
@@ -7650,7 +7651,7 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
 
     // Reset to fresh state: clears the entry-dimension lock so the key can be used
     // from whatever dimension the player is now in after returning.
-    pd.return_dimension_id.clear();
+    pd.return_dimension_id = dimension_id();
     pd.return_world_type = world_type_id{};
 
     // Record when the player exited so the lifetime countdown can start.

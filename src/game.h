@@ -26,7 +26,6 @@
 #include "creature.h"
 #include "dimension_info.h"
 #include "cursesdef.h"
-#include "distribution_grid.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "mapdata.h"
@@ -40,6 +39,7 @@
 
 class Character;
 class Creature_tracker;
+class distribution_grid_tracker;
 class item;
 class monster;
 class spell_events;
@@ -172,8 +172,10 @@ class game : public submap_load_listener
         friend class advanced_inventory;
         friend class main_menu;
         friend distribution_grid_tracker &get_distribution_grid_tracker();
-        friend distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string & );
-        friend distribution_grid_tracker &ensure_distribution_grid_tracker_for( const std::string & );
+        friend auto get_distribution_grid_tracker_for(
+            const dimension_id & ) -> distribution_grid_tracker *;
+        friend auto ensure_distribution_grid_tracker_for(
+            const dimension_id & ) -> distribution_grid_tracker &;
         friend map &get_map();
         friend Character &get_player_character();
         friend avatar &get_avatar();
@@ -184,8 +186,9 @@ class game : public submap_load_listener
         ~game();
 
         // submap_load_listener interface
-        void on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_id ) override;
-        void on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim_id ) override;
+        auto on_submap_loaded( const tripoint_abs_sm &pos, const dimension_id &dim_id ) -> void override;
+        auto on_submap_unloaded( const tripoint_abs_sm &pos,
+                                 const dimension_id &dim_id ) -> void override;
 
         /** Loads static data that does not depend on mods or similar. */
         void load_static_data();
@@ -289,7 +292,7 @@ class game : public submap_load_listener
         *                    before load_map(). Use this to place overmap specials so that
         *                    submap generation uses the correct overmap terrain types.
         */
-        bool travel_to_dimension( const std::string &dim_id,
+        bool travel_to_dimension( const dimension_id &dim_id,
                                   const world_type_id &world_type,
                                   const std::optional<pocket_dimension_data> &pd_info = std::nullopt,
                                   const std::optional<tripoint_abs_sm> &load_pos = std::nullopt,
@@ -299,7 +302,7 @@ class game : public submap_load_listener
          * Return the dimension ID the player is currently in.
          * Empty string = overworld (primary dimension).
          */
-        const std::string &get_current_dimension_id() const {
+        auto get_current_dimension_id() const -> const dimension_id & { // *NOPAD*
             return current_dimension_id_;
         }
 
@@ -1125,7 +1128,7 @@ class game : public submap_load_listener
         pimpl<achievements_tracker> achievements_tracker_ptr;
         pimpl<memorial_logger> memorial_logger_ptr;
         pimpl<spell_events> spell_events_ptr;
-        std::map<std::string, std::unique_ptr<distribution_grid_tracker>> grid_trackers_;
+        std::map<dimension_id, std::unique_ptr<distribution_grid_tracker>> grid_trackers_;
         pimpl<weather_manager> weather_manager_ptr;
 
     public:
@@ -1301,28 +1304,28 @@ class game : public submap_load_listener
     private:
         /// Sets both current_dimension_id_ and g_active_dimension_id to @p dim_id.
         /// Always use this instead of assigning the two fields separately.
-        void set_active_dimension_id( const std::string &dim_id );
+        auto set_active_dimension_id( const dimension_id &dim_id ) -> void;
 
         /// Sequenced critical section of a dimension switch: drain all load-manager
         /// work, release load handles, flush the desired set, update the active
         /// dimension ID, and clear the old dimension's distribution-grid tracker.
         /// Must only be called from travel_to_dimension() after swapping_dimensions
         /// is set and before bind_dimension().
-        void activate_dimension_state( const std::string &new_dim_id,
-                                       const std::string &old_dim_id );
+        auto activate_dimension_state( const dimension_id &new_dim_id,
+                                       const dimension_id &old_dim_id ) -> void;
 
         /// Dimension ID the player is currently in.  "" = overworld (primary).
         /// Always updated via set_active_dimension_id().
-        std::string current_dimension_id_;
+        dimension_id current_dimension_id_;
 
         /// Metadata for all dimensions that currently have at least one submap loaded.
         /// Keyed by dimension_id.  The overworld ("") may be absent on fresh games.
-        std::unordered_map<std::string, dimension_info> loaded_dimensions_;
+        std::unordered_map<dimension_id, dimension_info> loaded_dimensions_;
 
         /// The dimension ID of the single "kept alive" pocket dimension.
         /// Empty = no pocket is kept.  When the player enters a new bounded pocket this
         /// slot is evicted (saved + removed from registry) and replaced with the new one.
-        std::string kept_pocket_dimension_id_;
+        dimension_id kept_pocket_dimension_id_;
 
         // Handle for the reality bubble's submap_load_manager request.
         // 0 means no request has been issued yet.

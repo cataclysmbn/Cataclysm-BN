@@ -1,6 +1,7 @@
 #pragma once
 
 #include <climits>
+#include <cstddef>
 #include <map>
 #include <set>
 #include <unordered_map>
@@ -38,6 +39,7 @@ class field;
 class field_entry;
 class JsonObject;
 class JsonOut;
+class mapbuffer;
 class time_duration;
 class player;
 
@@ -256,7 +258,25 @@ class Creature
          *  that don't track dimension explicitly).
          *  Overridden by avatar (delegates to game::current_dimension_id_),
          *  npc, and monster (each store their own dimension_id_). */
-        virtual const std::string &get_dimension() const;
+        virtual auto get_dimension() const -> const dimension_id &;
+
+        /**
+         * Set this creature's dimension.  Creature subtypes that own dimension
+         * state override this; game-controlled creatures reject mismatched ids.
+         */
+        virtual auto set_dimension( const dimension_id &dim_id ) -> void;
+
+        /**
+         * Return this creature's dimension mapbuffer, creating an empty registry
+         * slot if needed.  Does not load or generate submaps.
+         */
+        auto get_mapbuffer() const -> mapbuffer &;
+
+        /**
+         * Return this creature's dimension mapbuffer only if its registry slot
+         * already exists.  Does not create a slot or load/generate submaps.
+         */
+        auto find_mapbuffer() const -> mapbuffer *;
 
         /** return the direction the creature is facing, for sdl horizontal flip **/
         FacingDirection facing = FD_RIGHT;
@@ -974,6 +994,7 @@ class Creature
         virtual void process_one_effect( effect &e, bool is_new ) = 0;
         auto add_action_move_credit( int base_moves, int action_factor ) -> void;
         virtual auto action_move_factor() const -> int;
+        auto invalidate_mapbuffer_cache() const -> void;
 
         pimpl<effects_map> effects;
         // Miscellaneous key/value pairs.
@@ -1062,4 +1083,7 @@ class Creature
     private:
         int pain = 0;
         bool underwater = false;
+        mutable mapbuffer *cached_mapbuffer_ = nullptr;
+        mutable dimension_id cached_mapbuffer_dim_;
+        mutable std::size_t cached_mapbuffer_generation_ = 0;
 };

@@ -66,7 +66,8 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "bub_to_abs", []( const tripoint_bub_sm & p ) -> tripoint_abs_sm { return bub_to_abs( p ); } );
     luna::set_fx( lib, "abs_to_bub", []( const tripoint_abs_ms & p ) -> tripoint_bub_ms { return abs_to_bub( p ); } );
     luna::set_fx( lib, "abs_to_bub", []( const tripoint_abs_sm & p ) -> tripoint_bub_sm { return abs_to_bub( p ); } );
-    luna::set_fx( lib, "get_distribution_grid_tracker", &get_distribution_grid_tracker );
+    luna::set_fx( lib, "get_distribution_grid_tracker",
+                  []() -> distribution_grid_tracker & { return get_distribution_grid_tracker(); } );
     luna::set_fx( lib, "light_ambient_lit", []() -> float { return LIGHT_AMBIENT_LIT; } );
     luna::set_fx( lib, "add_msg", sol::overload(
     add_msg_lua, []( sol::variadic_args va ) { add_msg_lua( game_message_type::m_neutral, va ); }

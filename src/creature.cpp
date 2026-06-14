@@ -36,6 +36,8 @@
 #include "line.h"
 #include "locations.h"
 #include "map.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "messages.h"
@@ -50,6 +52,7 @@
 #include "rng.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "submap_load_manager.h"
 #include "translations.h"
 #include "value_ptr.h"
 #include "vehicle.h"
@@ -58,9 +61,62 @@
 #include "overmapbuffer_registry.h"
 #include "profile.h"
 
-const std::string &Creature::get_dimension() const
+auto Creature::get_dimension() const -> const dimension_id &
 {
     return g_active_dimension_id;
+}
+
+auto Creature::set_dimension( const dimension_id &dim_id ) -> void
+{
+    if( dim_id != get_dimension() ) {
+        debugmsg( "This creature type does not own dimension state" );
+    }
+    invalidate_mapbuffer_cache();
+}
+
+auto Creature::get_mapbuffer() const -> mapbuffer &
+{
+    const auto &dim_id = get_dimension();
+    if( cached_mapbuffer_ != nullptr ) {
+        const auto registry_generation = MAPBUFFER_REGISTRY.generation();
+        if( cached_mapbuffer_dim_ == dim_id &&
+            cached_mapbuffer_generation_ == registry_generation ) {
+            return *cached_mapbuffer_;
+        }
+    }
+
+    mapbuffer &buffer = MAPBUFFER_REGISTRY.get( dim_id );
+    cached_mapbuffer_ = &buffer;
+    cached_mapbuffer_dim_ = dim_id;
+    cached_mapbuffer_generation_ = MAPBUFFER_REGISTRY.generation();
+    return buffer;
+}
+
+auto Creature::find_mapbuffer() const -> mapbuffer *
+{
+    const auto &dim_id = get_dimension();
+    auto registry_generation = std::size_t{};
+    if( cached_mapbuffer_ != nullptr ) {
+        registry_generation = MAPBUFFER_REGISTRY.generation();
+        if( cached_mapbuffer_dim_ == dim_id &&
+            cached_mapbuffer_generation_ == registry_generation ) {
+            return cached_mapbuffer_;
+        }
+    } else {
+        registry_generation = MAPBUFFER_REGISTRY.generation();
+    }
+
+    cached_mapbuffer_ = MAPBUFFER_REGISTRY.find( dim_id );
+    cached_mapbuffer_dim_ = dim_id;
+    cached_mapbuffer_generation_ = registry_generation;
+    return cached_mapbuffer_;
+}
+
+auto Creature::invalidate_mapbuffer_cache() const -> void
+{
+    cached_mapbuffer_ = nullptr;
+    cached_mapbuffer_dim_ = dimension_id();
+    cached_mapbuffer_generation_ = 0;
 }
 
 static const ammo_effect_str_id ammo_effect_APPLY_SAP( "APPLY_SAP" );
@@ -2556,12 +2612,14 @@ void Creature::setpos( const tripoint_abs_ms &pos )
 
 bool Creature::is_loaded() const
 {
-    map &here = get_map();
-    return here.get_submap_at( abs_to_map_local( here, abs_pos() ) ) != nullptr;
+    auto *const buffer = find_mapbuffer();
+    if( buffer == nullptr ) {
+        return false;
+    }
+    return buffer->lookup_submap_in_memory( project_to<coords::sm>( abs_pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const
 {
-    map &here = get_map();
-    return here.is_position_simulated( abs_to_map_local( here, abs_pos() ) );
+    return submap_loader.is_simulated( get_dimension(), project_to<coords::sm>( abs_pos() ) );
 }

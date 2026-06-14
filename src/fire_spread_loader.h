@@ -43,7 +43,7 @@ class fire_spread_loader
          *   - the position is already requested (fire or otherwise), OR
          *   - @p pos is not adjacent to any properly-loaded or tracked fire submap.
          */
-        auto request_for_fire( const std::string &dim, tripoint_abs_sm pos ) -> void;
+        auto request_for_fire( const dimension_id &dim, tripoint_abs_sm pos ) -> void;
 
         /**
          * Called once per game::world_tick().
@@ -66,7 +66,7 @@ class fire_spread_loader
         auto loaded_count() const -> int { return static_cast<int>( fire_handles_.size() ); }
 
     private:
-        using dim_pos_key = std::pair<std::string, tripoint_abs_sm>;
+        using dim_pos_key = std::pair<dimension_id, tripoint_abs_sm>;
 
         // Handles for each fire-spread load request, keyed by (dimension_id, submap_pos).
         std::map<dim_pos_key, load_request_handle> fire_handles_;

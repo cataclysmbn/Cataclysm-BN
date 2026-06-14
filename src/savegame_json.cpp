@@ -1113,7 +1113,7 @@ void avatar::store( JsonOut &json ) const
     // bio_portal_tap persistent link
     if( bio_portal_tap_linked ) {
         json.member( "bio_portal_tap_linked", bio_portal_tap_linked );
-        json.member( "bio_portal_tap_dim_id", bio_portal_tap_dim_id );
+        json.member( "bio_portal_tap_dim_id", bio_portal_tap_dim_id.str() );
         json.member( "bio_portal_tap_pos", bio_portal_tap_pos.raw() );
     }
 
@@ -1201,7 +1201,9 @@ void avatar::load( const JsonObject &data )
     // bio_portal_tap persistent link
     if( data.has_member( "bio_portal_tap_linked" ) ) {
         data.read( "bio_portal_tap_linked", bio_portal_tap_linked );
-        data.read( "bio_portal_tap_dim_id", bio_portal_tap_dim_id );
+        auto raw_bio_portal_tap_dim_id = std::string{};
+        data.read( "bio_portal_tap_dim_id", raw_bio_portal_tap_dim_id );
+        bio_portal_tap_dim_id = dimension_id( raw_bio_portal_tap_dim_id );
         tripoint raw;
         data.read( "bio_portal_tap_pos", raw );
         bio_portal_tap_pos = tripoint_abs_ms( raw );
@@ -1811,7 +1813,9 @@ void npc::load( const JsonObject &data )
     if( !data.read( "last_updated", last_updated ) ) {
         last_updated = calendar::turn;
     }
-    data.read( "dimension_id", dimension_id_ );
+    auto raw_dimension_id = std::string{};
+    data.read( "dimension_id", raw_dimension_id );
+    set_dimension( dimension_id( raw_dimension_id ) );
     complaints.clear();
     data.read( "complaints", complaints );
 }
@@ -1886,8 +1890,8 @@ void npc::store( JsonOut &json ) const
     json.member( "restock", restock );
 
     json.member( "last_updated", last_updated );
-    if( !dimension_id_.empty() ) {
-        json.member( "dimension_id", dimension_id_ );
+    if( !dimension_id_.is_empty() ) {
+        json.member( "dimension_id", dimension_id_.str() );
     }
     json.member( "complaints", complaints );
 }
@@ -2163,7 +2167,9 @@ auto monster::load( const JsonObject &data,
     if( !data.read( "last_updated", last_updated ) ) {
         last_updated = calendar::turn;
     }
-    data.read( "dimension_id", dimension_id_ );
+    auto raw_dimension_id = std::string{};
+    data.read( "dimension_id", raw_dimension_id );
+    set_dimension( dimension_id( raw_dimension_id ) );
     data.read( "mounted_player_id", mounted_player_id );
     data.read( "path", path );
     data.read( "monster_flags", monster_flags );
@@ -2245,8 +2251,8 @@ auto monster::store( JsonOut &json, bool include_local_state ) const -> void
     json.member( "upgrades", upgrades );
     json.member( "upgrade_time", upgrade_time );
     json.member( "last_updated", last_updated );
-    if( !dimension_id_.empty() ) {
-        json.member( "dimension_id", dimension_id_ );
+    if( !dimension_id_.is_empty() ) {
+        json.member( "dimension_id", dimension_id_.str() );
     }
     json.member( "reproduces", reproduces );
     json.member( "baby_timer", baby_timer );
@@ -2331,7 +2337,7 @@ void item::craft_data::deserialize( const JsonObject &obj )
 void dimension_info::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
-    jsout.member( "dimension_id", dimension_id );
+    jsout.member( "dimension_id", id.str() );
     jsout.member( "world_type", world_type );
     jsout.member( "display_name", display_name );
     if( pocket_info.has_value() ) {
@@ -2344,7 +2350,9 @@ void dimension_info::deserialize( JsonIn &jsin )
 {
     auto obj = jsin.get_object();
     obj.allow_omitted_members();
-    obj.read( "dimension_id", dimension_id );
+    auto raw_dimension_id = std::string{};
+    obj.read( "dimension_id", raw_dimension_id );
+    id = dimension_id( raw_dimension_id );
     obj.read( "world_type", world_type );
     obj.read( "display_name", display_name );
     if( obj.has_member( "pocket_info" ) ) {
@@ -2359,7 +2367,7 @@ void pocket_dimension_data::serialize( JsonOut &jsout ) const
     jsout.member( "bounds", bounds );
     jsout.member( "is_initialized", is_initialized );
     jsout.member( "terrain_generated", terrain_generated );
-    jsout.member( "return_dimension_id", return_dimension_id );
+    jsout.member( "return_dimension_id", return_dimension_id.str() );
     jsout.member( "return_world_type", return_world_type );
     jsout.member( "return_point", return_point );
     if( last_player_exit.has_value() ) {
@@ -2379,7 +2387,9 @@ void pocket_dimension_data::deserialize( JsonIn &jsin )
     // Current format stores explicit return dimension data.
     // Legacy compat reconstructs it from return_dimension + return_instance_id.
     if( obj.has_member( "return_dimension_id" ) || obj.has_member( "return_world_type" ) ) {
-        obj.read( "return_dimension_id", return_dimension_id );
+        auto raw_return_dimension_id = std::string{};
+        obj.read( "return_dimension_id", raw_return_dimension_id );
+        return_dimension_id = dimension_id( raw_return_dimension_id );
         obj.read( "return_world_type", return_world_type );
     } else {
         // Old format: reconstruct dimension_id and return_dimension_id
@@ -2394,11 +2404,11 @@ void pocket_dimension_data::deserialize( JsonIn &jsin )
         obj.read( "return_instance_id", old_return_instance );
         return_world_type = old_return_dim;
         if( old_return_dim.is_valid() ) {
-            return_dimension_id = old_return_dim.obj().save_prefix + old_return_instance + "_";
+            return_dimension_id = dimension_id( old_return_dim.obj().save_prefix + old_return_instance + "_" );
         }
         // Trim trailing "_" for the return if instance was empty (overworld return)
-        if( return_dimension_id.ends_with( "_" ) && old_return_instance.empty() ) {
-            return_dimension_id = old_return_dim.obj().save_prefix;
+        if( return_dimension_id.str().ends_with( "_" ) && old_return_instance.empty() ) {
+            return_dimension_id = dimension_id( old_return_dim.obj().save_prefix );
         }
     }
 
@@ -3080,7 +3090,9 @@ void vehicle_part::deserialize( JsonIn &jsin )
     data.read( "part_color", part_color_ );
     if( data.has_member( "portal_tap_linked" ) ) {
         data.read( "portal_tap_linked", portal_tap_linked );
-        data.read( "portal_tap_dim_id", portal_tap_dim_id );
+        auto raw_portal_tap_dim_id = std::string{};
+        data.read( "portal_tap_dim_id", raw_portal_tap_dim_id );
+        portal_tap_dim_id = dimension_id( raw_portal_tap_dim_id );
         tripoint raw;
         data.read( "portal_tap_pos", raw );
         portal_tap_pos = tripoint_abs_ms( raw );
@@ -3165,7 +3177,7 @@ void vehicle_part::serialize( JsonOut &json ) const
     json.member( "part_color", part_color_ );
     if( portal_tap_linked ) {
         json.member( "portal_tap_linked", portal_tap_linked );
-        json.member( "portal_tap_dim_id", portal_tap_dim_id );
+        json.member( "portal_tap_dim_id", portal_tap_dim_id.str() );
         json.member( "portal_tap_pos", portal_tap_pos.raw() );
     }
     json.end_object();
@@ -3305,7 +3317,9 @@ void vehicle::deserialize( JsonIn &jsin )
         old_owner = faction_id( temp_old_id );
     }
     data.read( "theft_time", theft_time );
-    data.read( "dimension_id", dimension_id_ );
+    auto raw_dimension_id = std::string{};
+    data.read( "dimension_id", raw_dimension_id );
+    set_dimension( dimension_id( raw_dimension_id ) );
 
     // we persist the pivot anchor so that if the rules for finding
     // the pivot change, existing vehicles do not shift around.
@@ -3496,8 +3510,8 @@ void vehicle::serialize( JsonOut &json ) const
     json.member( "is_alarm_on", is_alarm_on );
     json.member( "camera_on", camera_on );
     json.member( "last_update_turn", last_update );
-    if( !dimension_id_.empty() ) {
-        json.member( "dimension_id", dimension_id_ );
+    if( !dimension_id_.is_empty() ) {
+        json.member( "dimension_id", dimension_id_.str() );
     }
     json.member( "pivot", pivot_anchor[0] );
     json.member( "is_following", is_following );
@@ -3590,7 +3604,9 @@ void mission::deserialize( JsonIn &jsin )
     // See player::deserialize and mission::set_player_id_legacy_0c
     legacy_no_player_id = !jo.read( "player_id", player_id ) ||
                           jo.get_bool( "legacy_no_player_id", false );
-    jo.read( "dimension_id", dimension_id_ );
+    auto raw_dimension_id = std::string{};
+    jo.read( "dimension_id", raw_dimension_id );
+    set_dimension( dimension_id( raw_dimension_id ) );
 }
 
 void mission::serialize( JsonOut &json ) const
@@ -3627,8 +3643,8 @@ void mission::serialize( JsonOut &json ) const
     json.member( "follow_up", follow_up );
     json.member( "player_id", player_id );
     json.member( "legacy_no_player_id", legacy_no_player_id );
-    if( !dimension_id_.empty() ) {
-        json.member( "dimension_id", dimension_id_ );
+    if( !dimension_id_.is_empty() ) {
+        json.member( "dimension_id", dimension_id_.str() );
     }
 
     json.end_object();

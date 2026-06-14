@@ -128,7 +128,7 @@ avatar::~avatar() = default;
 avatar::avatar( avatar && )  noexcept = default;
 avatar &avatar::operator=( avatar && ) noexcept = default;
 
-const std::string &avatar::get_dimension() const
+auto avatar::get_dimension() const -> const dimension_id &
 {
     return g->get_current_dimension_id();
 }
