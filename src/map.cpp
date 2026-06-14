@@ -10871,9 +10871,12 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             for( const int z : dirty_lightmap_levels ) {
                 auto &c = get_cache( z );
                 std::fill( c.sm.begin(), c.sm.end(), 0.0f );
-                std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
-                std::fill( c.colored_light_source_buffer.begin(), c.colored_light_source_buffer.end(), 0.0f );
-                std::fill( c.light_source_color_buffer.begin(), c.light_source_color_buffer.end(), 0u );
+                std::fill( c.light_source_buffer.begin(),
+                           c.light_source_buffer.end(), 0.0f );
+                std::fill( c.colored_light_source_buffer.begin(),
+                           c.colored_light_source_buffer.end(), 0.0f );
+                std::fill( c.light_source_color_buffer.begin(),
+                           c.light_source_color_buffer.end(), 0u );
                 c.light_source_points.clear();
                 std::ranges::fill( c.lm, 0.0f );
                 c.lm_cpu_cache_valid = false;
