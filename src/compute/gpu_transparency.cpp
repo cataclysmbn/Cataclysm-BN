@@ -348,7 +348,6 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     auto const output_offset = use_external_output ? p.output.output_offset : 0u;
     auto push = p.push;
     push.output_offset = output_offset;
-    push.write_full_output = use_external_output ? 1u : 0u;
     auto* const pipeline = ensure_pipeline(device);
     if (pipeline == nullptr) { return false; }
 
