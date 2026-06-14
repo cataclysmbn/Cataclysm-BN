@@ -6129,10 +6129,7 @@
         ],
         "entries": [
           { "item": "tanto_inferior", "container-item": "bootsheath" },
-          {
-            "item": "bandolier_knife",
-            "contents-group": "bandolier_shuriken_ninja"
-          },
+          { "item": "bandolier_knife", "contents-group": "bandolier_shuriken_ninja" },
           { "item": "katana_inferior", "custom-flags": [ "auto_wield" ] }
         ]
       },
