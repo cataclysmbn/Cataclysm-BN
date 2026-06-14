@@ -275,6 +275,7 @@ struct node_element {
         std::vector<std::string> for_category;  // item_category_id strings
         std::optional<expr_node> condition;     // group-level filter; if absent, group always runs
         std::string text_template;              // <topic_item> is replaced with item name
+        bool echo_speech = false;               // echo generated choice labels as player speech
         std::vector<node_element> body;         // executed when a repeat choice is selected
     };
     std::vector<repeat_group> repeat_groups;
@@ -388,6 +389,7 @@ class yarn_runtime
             const yarn_story &story;
             const func_registry &registry;
             std::string starting_node;
+            std::vector<std::string> starting_stack;
             npc *npc_ref = nullptr;
             player *player_ref = nullptr;
             // DEPRECATED: Only used by the legacy JSON dialogue shim.

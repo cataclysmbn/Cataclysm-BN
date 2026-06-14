@@ -1,7 +1,9 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
 #include <cstdio>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -11,12 +13,14 @@
 #include "character_id.h"
 #include "coordinates.h"
 #include "dialogue.h"
+#include "dialogue_json_convert.h"
 #include "effect.h"
 #include "faction.h"
 #include "game.h"
 #include "inventory.h"
 #include "item.h"
 #include "item_category.h"
+#include "json.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "mission.h"
@@ -24,6 +28,7 @@
 #include "npc_favor.h"
 #include "npctalk.h"
 #include "overmapbuffer.h"
+#include "path_info.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_helpers.h"
@@ -31,6 +36,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "yarn_dialogue.h"
 
 static const efftype_id effect_gave_quest_item( "gave_quest_item" );
 static const efftype_id effect_currently_busy( "currently_busy" );
@@ -39,6 +45,21 @@ static const efftype_id effect_infected( "infected" );
 
 static const trait_id trait_PROF_FED( "PROF_FED" );
 static const trait_id trait_PROF_SWAT( "PROF_SWAT" );
+
+static auto convert_legacy_topic_for_test( const std::string &id,
+        const std::string &json ) -> yarn::yarn_node
+{
+    std::istringstream stream( json );
+    JsonIn in( stream );
+    JsonObject obj( in );
+    dialogue_convert::register_yarn_node( id, obj );
+    auto nodes = dialogue_convert::flush_pending_nodes();
+    const auto node_it = std::ranges::find_if( nodes, [&]( const yarn::yarn_node & node ) {
+        return node.title == id;
+    } );
+    REQUIRE( node_it != nodes.end() );
+    return std::move( *node_it );
+}
 
 static npc &create_test_talker()
 {
@@ -107,6 +128,110 @@ static npc &prep_test( dialogue &d )
     d.beta = &talker_npc;
 
     return talker_npc;
+}
+
+TEST_CASE( "legacy_yarn_conversion_marks_json_speech_as_npc_dialogue", "[npc_talk][yarn]" )
+{
+    auto node = convert_legacy_topic_for_test( "TEST_YARN_SPEAKER",
+                R"({ "id": "TEST_YARN_SPEAKER", "type": "talk_topic", "dynamic_line": "Hello.", "responses": [] })" );
+    REQUIRE_FALSE( node.elements.empty() );
+    CHECK( node.elements.front().type == yarn::node_element::kind::dialogue );
+    CHECK( node.elements.front().speaker == "npc" );
+    CHECK( node.elements.front().text == "Hello." );
+
+    auto unattributed = convert_legacy_topic_for_test( "TEST_YARN_UNATTRIBUTED",
+                        R"({ "id": "TEST_YARN_UNATTRIBUTED", "type": "talk_topic", "dynamic_line": "&No prefix.", "responses": [] })" );
+    REQUIRE_FALSE( unattributed.elements.empty() );
+    CHECK( unattributed.elements.front().speaker == "__unattributed" );
+    CHECK( unattributed.elements.front().text == "No prefix." );
+
+    auto action = convert_legacy_topic_for_test( "TEST_YARN_ACTION",
+                  R"({ "id": "TEST_YARN_ACTION", "type": "talk_topic", "dynamic_line": "*waves.", "responses": [] })" );
+    REQUIRE_FALSE( action.elements.empty() );
+    CHECK( action.elements.front().speaker == "__action" );
+    CHECK( action.elements.front().text == "waves." );
+}
+
+TEST_CASE( "legacy_yarn_conversion_echoes_json_response_choices", "[npc_talk][yarn]" )
+{
+    auto node = convert_legacy_topic_for_test( "TEST_YARN_RESPONSES",
+                R"({
+                    "id": "TEST_YARN_RESPONSES",
+                    "type": "talk_topic",
+                    "dynamic_line": "Hello.",
+                    "responses": [
+                        { "text": "Back.", "topic": "TALK_NONE" },
+                        {
+                            "truefalsetext": { "true": "Complete.", "false": "Incomplete.", "condition": "mission_complete" },
+                            "topic": "TALK_NONE"
+                        }
+                    ],
+                    "repeat_responses": {
+                        "for_item": "rock",
+                        "response": { "text": "Give <topic_item>.", "topic": "TALK_NONE" }
+                    }
+                })" );
+    const auto choice_group_it = std::ranges::find_if( node.elements, []( const yarn::node_element &
+    e ) {
+        return e.type == yarn::node_element::kind::choice_group;
+    } );
+    REQUIRE( choice_group_it != node.elements.end() );
+    REQUIRE( choice_group_it->choices.size() >= 5 );
+    CHECK( choice_group_it->choices[0].echo_speech );
+    REQUIRE_FALSE( choice_group_it->choices[0].body.empty() );
+    CHECK( choice_group_it->choices[0].body.back().type == yarn::node_element::kind::yarn_return );
+    CHECK( choice_group_it->choices[1].echo_speech );
+    CHECK( choice_group_it->choices[2].echo_speech );
+    CHECK( choice_group_it->choices[3].text == "OBEY ME!" );
+    CHECK( choice_group_it->choices[3].echo_speech );
+    CHECK( choice_group_it->choices[4].text == _( "Bye." ) );
+    CHECK( choice_group_it->choices[4].echo_speech );
+    REQUIRE( choice_group_it->repeat_groups.size() == 1 );
+    CHECK( choice_group_it->repeat_groups.front().echo_speech );
+}
+
+TEST_CASE( "shelter_yarn_story_keeps_start_choice_text", "[npc_talk][yarn]" )
+{
+    auto [shelter, shelter_result] = yarn::yarn_story::from_file( PATH_INFO::datadir() +
+                                     "dialogue/shelter_npc.yarn" );
+    auto [common, common_result] = yarn::yarn_story::from_file( PATH_INFO::datadir() +
+                                   "dialogue/common.yarn" );
+    REQUIRE( shelter_result.ok() );
+    REQUIRE( common_result.ok() );
+    auto lookup = [&]( const std::string & story,
+                       const std::string & node ) -> const yarn::yarn_node * {
+        const auto *current_story = story == "shelter_npc" ? &shelter : story == "common" ? &common : nullptr;
+        return current_story != nullptr && current_story->has_node( node ) ? &current_story->get_node( node ) : nullptr;
+    };
+    auto errors = std::vector<std::string> {};
+    shelter.resolve_shared_choices( lookup, "shelter_npc", errors );
+    REQUIRE( errors.empty() );
+
+    const auto &start = shelter.get_node( "Start" );
+    const auto choice_group_it = std::ranges::find_if( start.elements, [](
+    const yarn::node_element & e ) {
+        return e.type == yarn::node_element::kind::choice_group;
+    } );
+    REQUIRE( choice_group_it != start.elements.end() );
+    REQUIRE( choice_group_it->choices.size() == 6 );
+    CHECK( choice_group_it->choices[0].text == "Ask what happened." );
+    CHECK( choice_group_it->choices[1].text == "Ask if they've seen anyone else." );
+    CHECK( choice_group_it->choices[2].text == "Ask how they're holding up." );
+    CHECK( choice_group_it->choices[3].text == "Ask about supplies." );
+    CHECK( choice_group_it->choices[4].text == "Barter for supplies." );
+    CHECK( choice_group_it->choices[5].text == "That's all for now.  Stay safe." );
+
+    const auto &others = shelter.get_node( "Start_Others" );
+    const auto line_group_it = std::ranges::find_if( others.elements, []( const yarn::node_element &
+    e ) {
+        return e.type == yarn::node_element::kind::line_group;
+    } );
+    REQUIRE( line_group_it != others.elements.end() );
+    REQUIRE_FALSE( line_group_it->choices.empty() );
+    REQUIRE_FALSE( line_group_it->choices.front().body.empty() );
+    const auto &line_group_text = line_group_it->choices.front().body.front();
+    CHECK( line_group_text.speaker == "NPC" );
+    CHECK( line_group_text.text == "Haven't seen anyone else until you showed up." );
 }
 
 TEST_CASE( "npc_talk_start", "[npc_talk]" )

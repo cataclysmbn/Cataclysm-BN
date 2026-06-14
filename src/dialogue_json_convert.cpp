@@ -111,8 +111,16 @@ auto fold_exprs( std::vector<yarn::expr_node> exprs, Combiner combine ) -> yarn:
 // node_element builders
 // ============================================================
 
-auto make_dialogue( std::string text, std::string speaker = "" ) -> yarn::node_element
+auto make_dialogue( std::string text, std::string speaker = "npc" ) -> yarn::node_element
 {
+    if( !text.empty() && text.front() == '&' ) {
+        text.erase( text.begin() );
+        speaker = "__unattributed";
+    } else if( !text.empty() && text.front() == '*' ) {
+        text.erase( text.begin() );
+        speaker = "__action";
+    }
+
     yarn::node_element e;
     e.type    = yarn::node_element::kind::dialogue;
     e.text    = std::move( text );
@@ -1125,7 +1133,8 @@ auto json_response_to_choice( const JsonObject &jo,
     jo.allow_omitted_members();
     yarn::node_element::choice ch;
 
-    ch.text = jo.get_string( "text", "" );
+    ch.text        = jo.get_string( "text", "" );
+    ch.echo_speech = true;
 
     // Choice visibility condition
     if( jo.has_member( "condition" ) ) {
@@ -1226,7 +1235,8 @@ auto json_response_to_choices( const JsonObject &jo,
 
     // True-text choice: shown when condition passes
     yarn::node_element::choice ch_true;
-    ch_true.text = text_true;
+    ch_true.text        = text_true;
+    ch_true.echo_speech = true;
     if( tf_cond ) {
         ch_true.condition = *tf_cond;
     }
@@ -1234,7 +1244,8 @@ auto json_response_to_choices( const JsonObject &jo,
 
     // False-text choice: shown when condition fails
     yarn::node_element::choice ch_false;
-    ch_false.text = text_false;
+    ch_false.text        = text_false;
+    ch_false.echo_speech = true;
     if( tf_cond ) {
         ch_false.condition = not1( *tf_cond );
     }
@@ -1272,6 +1283,7 @@ auto json_repeat_response_to_group( const JsonObject &jo,
         JsonObject resp_jo = jo.get_object( "response" );
 
         g.text_template = resp_jo.get_string( "text", "" );
+        g.echo_speech   = true;
 
         // Condition for the repeat group as a whole
         if( resp_jo.has_member( "condition" ) ) {
@@ -1396,8 +1408,9 @@ auto json_topic_to_yarn_node( const std::string &id,
     // Mirrors the built-in response gen_responses() used to add for every topic.
     {
         yarn::node_element::choice obey;
-        obey.text      = "OBEY ME!";
-        obey.condition = and2( fn( "u_has_trait", { lit_str( "DEBUG_MIND_CONTROL" ) } ),
+        obey.text        = "OBEY ME!";
+        obey.echo_speech = true;
+        obey.condition   = and2( fn( "u_has_trait", { lit_str( "DEBUG_MIND_CONTROL" ) } ),
                                not1( fn( "npc_friend", {} ) ) );
         obey.body      = topic_to_terminal( "TALK_MIND_CONTROL" );
         cg.choices.push_back( std::move( obey ) );
@@ -1407,8 +1420,9 @@ auto json_topic_to_yarn_node( const std::string &id,
     // Omitted when the JSON already defines an unconditional path to TALK_DONE.
     if( !has_unconditional_done ) {
         yarn::node_element::choice bye;
-        bye.text = _( "Bye." );
-        bye.body = topic_to_terminal( "TALK_DONE" );
+        bye.text        = _( "Bye." );
+        bye.echo_speech = true;
+        bye.body        = topic_to_terminal( "TALK_DONE" );
         cg.choices.push_back( std::move( bye ) );
     }
 

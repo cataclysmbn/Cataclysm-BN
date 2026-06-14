@@ -1114,17 +1114,18 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
         }
 
         // Parse the -> line: "-> Choice text" or "-> Choice text <<if condition>>"
-        std::string_view choice_text = trim_sv( line.content.substr( 2 ) );
+        auto choice_text = std::string( trim_sv( std::string_view( line.content ).substr( 2 ) ) );
         std::optional<expr_node> condition;
 
         // Check for trailing <<if condition>>
         if( choice_text.ends_with( ">>" ) ) {
             auto if_pos = choice_text.rfind( "<<if " );
-            if( if_pos != std::string_view::npos ) {
-                auto cond_src = trim_sv( choice_text.substr( if_pos + 5,
+            if( if_pos != std::string::npos ) {
+                auto choice_view = std::string_view( choice_text );
+                auto cond_src = trim_sv( choice_view.substr( if_pos + 5,
                                          choice_text.size() - if_pos - 7 ) );
                 condition = p.parse_condition( cond_src, line.line_num );
-                choice_text = trim_sv( choice_text.substr( 0, if_pos ) );
+                choice_text = std::string( trim_sv( choice_view.substr( 0, if_pos ) ) );
             }
         }
 
@@ -1132,7 +1133,7 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
         // Returns true and trims the text if the tag is found as a standalone suffix.
         auto strip_tag = [&]( std::string_view tag ) -> bool {
             auto tag_pos = choice_text.rfind( tag );
-            if( tag_pos == std::string_view::npos )
+            if( tag_pos == std::string::npos )
             {
                 return false;
             }
@@ -1140,7 +1141,7 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
             bool trailing_end  = tag_pos + tag.size() == choice_text.size();
             if( leading_space && trailing_end )
             {
-                choice_text = trim_sv( choice_text.substr( 0, tag_pos ) );
+                choice_text = std::string( trim_sv( std::string_view( choice_text ).substr( 0, tag_pos ) ) );
                 return true;
             }
             return false;
@@ -1160,7 +1161,7 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
         ++i;
 
         node_element::choice ch;
-        ch.text        = std::string( choice_text );
+        ch.text        = std::move( choice_text );
         ch.condition   = std::move( condition );
         ch.echo_speech = echo_speech;
         ch.tail        = tail;
@@ -1205,17 +1206,18 @@ auto parse_line_group( yarn_parser &p, const std::vector<raw_line> &lines,
         }
 
         // Parse the => line: "=> [Speaker: ]text" or "=> text <<if condition>>"
-        std::string_view line_group_text = trim_sv( line.content.substr( 2 ) );
+        auto line_group_text = std::string( trim_sv( std::string_view( line.content ).substr( 2 ) ) );
         std::optional<expr_node> condition;
 
         // Check for trailing <<if condition>>
         if( line_group_text.ends_with( ">>" ) ) {
             auto if_pos = line_group_text.rfind( "<<if " );
-            if( if_pos != std::string_view::npos ) {
-                auto cond_src = trim_sv( line_group_text.substr( if_pos + 5,
+            if( if_pos != std::string::npos ) {
+                auto line_group_view = std::string_view( line_group_text );
+                auto cond_src = trim_sv( line_group_view.substr( if_pos + 5,
                                          line_group_text.size() - if_pos - 7 ) );
                 condition = p.parse_condition( cond_src, line.line_num );
-                line_group_text = trim_sv( line_group_text.substr( 0, if_pos ) );
+                line_group_text = std::string( trim_sv( line_group_view.substr( 0, if_pos ) ) );
             }
         }
 
@@ -1227,15 +1229,16 @@ auto parse_line_group( yarn_parser &p, const std::vector<raw_line> &lines,
         text_elem.type = node_element::kind::dialogue;
         if( line_group_text.size() >= 2 && line_group_text[0] == '-' && line_group_text[1] == ' ' ) {
             text_elem.speaker = "__narrator";
-            text_elem.text    = std::string( trim_sv( line_group_text.substr( 2 ) ) );
+            text_elem.text = std::string( trim_sv( std::string_view( line_group_text ).substr( 2 ) ) );
         } else {
             auto colon = line_group_text.find( ':' );
-            if( colon != std::string_view::npos && colon > 0 &&
+            if( colon != std::string::npos && colon > 0 &&
                 line_group_text.find( ' ' ) > colon ) {
-                text_elem.speaker = std::string( trim_sv( line_group_text.substr( 0, colon ) ) );
-                text_elem.text    = std::string( trim_sv( line_group_text.substr( colon + 1 ) ) );
+                auto line_group_view = std::string_view( line_group_text );
+                text_elem.speaker = std::string( trim_sv( line_group_view.substr( 0, colon ) ) );
+                text_elem.text = std::string( trim_sv( line_group_view.substr( colon + 1 ) ) );
             } else {
-                text_elem.text = std::string( line_group_text );
+                text_elem.text = std::move( line_group_text );
             }
         }
 
@@ -1261,7 +1264,6 @@ auto parse_if_block( yarn_parser &p, const std::vector<raw_line> &lines,
     elem.condition = p.parse_condition( condition_src, cond_line_num );
 
     // Collect if-body until <<else>> or <<endif>>
-    int body_start = i;
     std::vector<node_element> if_body;
     std::vector<node_element> else_body;
 
@@ -2167,7 +2169,13 @@ yarn_runtime::yarn_runtime( options opts )
     , player_( opts.player_ref )
     , dialogue_ref_( opts.dialogue_ref )
 {
-    node_stack_.push_back( { &story_, std::move( opts.starting_node ) } );
+    if( opts.starting_stack.empty() ) {
+        node_stack_.push_back( { &story_, std::move( opts.starting_node ) } );
+    } else {
+        for( auto &node : opts.starting_stack ) {
+            node_stack_.push_back( { &story_, std::move( node ) } );
+        }
+    }
 }
 
 void yarn_runtime::run( dialogue_window &d_win )
@@ -2213,9 +2221,17 @@ void yarn_runtime::run( dialogue_window &d_win )
                 // Push: target executes and falls off end → pop back to here
                 node_stack_.push_back( resolve_frame( result.target ) );
                 break;
-            case signal::yarn_return:
+            case signal::yarn_return: {
+                const auto current_category = dialogue_ref_ == nullptr
+                                              ? -1
+                                              : topic_category( talk_topic( node_stack_.back().node ) );
                 node_stack_.pop_back();
+                while( current_category != -1 && !node_stack_.empty() &&
+                       topic_category( talk_topic( node_stack_.back().node ) ) == current_category ) {
+                    node_stack_.pop_back();
+                }
                 break;
+            }
             case signal::stop:
                 node_stack_.clear();
                 break;
@@ -2263,6 +2279,13 @@ void yarn_runtime::parse_dialogue_text( const node_element &elem, dialogue_windo
     if( elem.speaker == "__narrator" ) {
         // Narrator line — gray, prefixed with "- ", no speaker label, no quotes.
         d_win.add_to_history( colorize( "- " + text, c_light_gray ) );
+    } else if( elem.speaker == "__unattributed" ) {
+        // Legacy JSON '&' line — no speaker label, but still a separate history entry.
+        d_win.add_to_history( text );
+    } else if( elem.speaker == "__action" ) {
+        auto speaker_name = npc_ ? npc_->name : "NPC";
+        d_win.add_to_history( string_format( pgettext( "npc does something", "%s %s" ),
+                                             colorize( speaker_name, c_light_green ), text ) );
     } else if( elem.speaker.empty() ) {
         // Unattributed continuation — white, no label, tight spacing.
         d_win.add_to_history( text, /*continuation=*/true );
@@ -2362,6 +2385,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                         for( const auto &iid : item_ids ) {
                             node_element::choice ch;
                             ch.text = rg.text_template;
+                            ch.echo_speech = rg.echo_speech;
                             auto item_name = item::nname( iid, 1 );
                             for( std::size_t pos = 0;
                                  ( pos = ch.text.find( "<topic_item>", pos ) ) != std::string::npos; ) {
@@ -2440,6 +2464,8 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                                 string_format( "%s: \"%s\"",
                                                colorize( _( "You" ), c_green ),
                                                choice_text ) );
+                            d_win.display_responses( {}, 0 );
+                            ui_manager::redraw();
                         }
                         auto result = execute_elements( ch.body, d_win );
                         if( result.kind != signal::ok ) {
@@ -2537,7 +2563,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                     }
                     if( next.id == "TALK_NONE" ) {
                         // Natural pop — return to the calling topic node.
-                        return { signal::ok, {} };
+                        return { signal::yarn_return, {} };
                     }
                     // Group 99 meta-topics (O/L/S/Y hotkeys): opt() already displayed the info;
                     // call opt() once more to let the player pick "Okay.", then loop back to
@@ -5220,7 +5246,8 @@ auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
     const auto &story = get_yarn_story( n.chatbin.yarn_story );
     d_win.print_header( n.name );
 
-    g_conv_ctx = { &n, &p };
+    g_conv_ctx = { .npc_ref = &n, .player_ref = &p, .dialogue_ref = nullptr,
+                   .d_win_ref = nullptr, .current_item_type = {}, .reason = {} };
     conv_ctx_guard guard;
 
     // Entry node convention: use "Greeting" if present (shown once on first contact),
@@ -5228,11 +5255,12 @@ auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
     const std::string entry_node = story.has_node( "Greeting" ) ? "Greeting" : "Start";
 
     yarn_runtime::options opts{
-        .story         = story,
-        .registry      = func_registry::global(),
-        .starting_node = entry_node,
-        .npc_ref       = &n,
-        .player_ref    = &p
+        .story          = story,
+        .registry       = func_registry::global(),
+        .starting_node  = entry_node,
+        .starting_stack = {},
+        .npc_ref        = &n,
+        .player_ref     = &p
     };
     yarn_runtime runtime( std::move( opts ) );
     runtime.run( d_win );
@@ -5255,29 +5283,39 @@ auto try_legacy_yarn_dialogue( dialogue_window &d_win, npc &n, player &p, dialog
     // Use the dynamic topic from the dialogue stack, not the NPC's static first_topic.
     // By the time this is called, talk_to_u has already resolved the effective starting topic
     // (accounting for pick_talk_topic, missions, sleeping, etc.).
-    const auto &starting_topic = d.topic_stack.empty()
-                                 ? n.chatbin.first_topic
-                                 : d.topic_stack.back().id;
+    auto starting_stack = std::vector<std::string>{};
+    if( d.topic_stack.empty() ) {
+        starting_stack.push_back( n.chatbin.first_topic );
+    } else {
+        for( const auto &topic : d.topic_stack ) {
+            starting_stack.push_back( topic.id );
+        }
+    }
 
-    if( !story.has_node( starting_topic ) ) {
+    const auto missing = std::ranges::find_if( starting_stack, [&]( const auto & node ) {
+        return !story.has_node( node );
+    } );
+    if( missing != starting_stack.end() ) {
         DebugLog( DL::Warn, DC::Main )
-                << "yarn: __legacy story has no node '" << starting_topic << "'";
+                << "yarn: __legacy story has no node '" << *missing << "'";
         return false;
     }
 
     d_win.print_header( n.name );
 
     // Set the global context so built-in functions and commands can access NPC/player.
-    g_conv_ctx = { &n, &p };
+    g_conv_ctx = { .npc_ref = &n, .player_ref = &p, .dialogue_ref = &d,
+                   .d_win_ref = nullptr, .current_item_type = {}, .reason = {} };
     conv_ctx_guard guard;
 
     yarn_runtime::options opts{
-        .story         = story,
-        .registry      = func_registry::global(),
-        .starting_node = starting_topic,
-        .npc_ref       = &n,
-        .player_ref    = &p,
-        .dialogue_ref  = &d
+        .story          = story,
+        .registry       = func_registry::global(),
+        .starting_node  = starting_stack.back(),
+        .starting_stack = std::move( starting_stack ),
+        .npc_ref        = &n,
+        .player_ref     = &p,
+        .dialogue_ref   = &d
     };
     yarn_runtime runtime( std::move( opts ) );
     runtime.run( d_win );
