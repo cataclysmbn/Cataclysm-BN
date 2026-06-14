@@ -1838,8 +1838,8 @@ auto write_source_map_to_level_caches(
     }
 }
 
-auto write_field_light_overrides_to_source_map(
-    map const& m, std::vector<int> const& dirty_levels) -> void {
+auto write_field_light_overrides_to_source_map(map const& m, std::vector<int> const& dirty_levels)
+    -> void {
     for (auto const z : dirty_levels) {
         auto const& lc = m.get_cache_ref(z);
         for (auto const smx : std::views::iota(0, lc.cache_mapsize)) {
@@ -3339,8 +3339,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_color, 1);
                 SDL_BindGPUComputePipeline(cp, s_color_raytrace_pipeline);
 
-                auto const ro_bufs = std::array<SDL_GPUBuffer*, 5>{
-                    t_buf, f_buf, vf_buf, colored_src_buf, source_map_buf};
+                auto const ro_bufs = std::array<
+                    SDL_GPUBuffer*, 5>{t_buf, f_buf, vf_buf, colored_src_buf, source_map_buf};
                 SDL_BindGPUComputeStorageBuffers(
                     cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
@@ -3439,8 +3439,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         auto* const cp = SDL_BeginGPUComputePass(
                             cmd, nullptr, 0, rw_bufs.data(), static_cast<Uint32>(rw_bufs.size()));
                         SDL_BindGPUComputePipeline(cp, s_daylight_diffuse_pipeline);
-                        auto const ro_bufs = std::array<SDL_GPUBuffer*, 4>{
-                            daylight_seed_buf, source_buf, t_buf, source_map_buf};
+                        auto const ro_bufs = std::array<
+                            SDL_GPUBuffer*,
+                            4>{daylight_seed_buf, source_buf, t_buf, source_map_buf};
                         SDL_BindGPUComputeStorageBuffers(
                             cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
                         auto const diffuse_push = lm_daylight_diffuse_push_constants{
