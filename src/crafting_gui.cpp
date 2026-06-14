@@ -2080,7 +2080,7 @@ auto query_large_volume( units::volume total_volume ) -> bool
     const double user_thresh = convert_volume( 1000000 );
     const char *unit = volume_units_abbr();
     const std::string msg = string_format(
-        _( "The volume of the inputs for this recipe is <color_red>%.2f %s</color> / %.0f %s and may be too large to work on.\n\nContinue?" ),
+        _( "The volume of the components of this recipe is <color_red>%.2f %s of %.0f %s</color> which may be too large to work on.\n\nContinue?" ),
         user_vol, unit, user_thresh, unit );
     return query_yn( msg );
 }
