@@ -654,14 +654,14 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
 
         static auto gpu_result = std::vector<float> {};
         if( !cata_gpu::dispatch_transparency( {
-            .device = gpu_device,
-            .luts = &luts,
-            .submaps = &inputs,
-            .push = push,
-            .cache_size = cache_size,
-            .out_buffer = &gpu_result,
-            .output = {},
-        } ) || gpu_result.empty() ) {
+        .device = gpu_device,
+        .luts = &luts,
+        .submaps = &inputs,
+        .push = push,
+        .cache_size = cache_size,
+        .out_buffer = &gpu_result,
+        .output = {},
+    } ) || gpu_result.empty() ) {
             debugmsg( "SDL_GPU batched transparency dispatch failed; see debug.log for details" );
             return dirty_levels;
         }
