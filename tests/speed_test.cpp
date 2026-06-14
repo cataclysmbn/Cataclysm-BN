@@ -242,6 +242,25 @@ TEST_CASE( "Calendar tick helpers expose elapsed turn boundaries", "[speed]" )
     CHECK_FALSE( action_time_scale::once_every_this_tick( 7_turns ) );
 }
 
+TEST_CASE( "Body updates consume scaled calendar tick duration", "[speed][needs]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "17" );
+
+    auto &guy = *get_player_character().as_player();
+    clear_character( guy, true );
+    guy.set_thirst( 0 );
+    guy.set_fatigue( 0 );
+    calendar::turn = calendar::turn_zero + 5_minutes;
+    const auto tick_scope = action_time_scale::scoped_calendar_turns_this_tick(
+                                to_turns<int>( 5_minutes ) );
+
+    guy.update_body( action_time_scale::calendar_duration_this_tick() );
+
+    CHECK( guy.get_thirst() > 0 );
+    CHECK( guy.get_fatigue() > 0 );
+}
+
 TEST_CASE( "Effect decay consumes elapsed calendar turns", "[speed][effect]" )
 {
     clear_all_state();

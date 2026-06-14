@@ -1996,7 +1996,7 @@ bool game::do_turn()
 
     {
         ZoneScopedN( "do_turn_update_body" );
-        u.update_body();
+        u.update_body( action_time_scale::calendar_duration_this_tick() );
     }
 
     // Auto-save if autosave is enabled
@@ -2623,7 +2623,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
 
         debug_hour_timer.print_time();
-        u.update_body();
+        u.update_body( action_time_scale::calendar_duration_this_tick() );
         process_voluntary_act_interrupt();
         if( !u.activity || !*u.activity ) {
             break;

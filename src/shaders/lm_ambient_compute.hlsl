@@ -3,7 +3,7 @@
 // Initialises the frame lm before any per-source ray casting.
 // One thread per tile per z-level.
 //
-// Direct-sun tiles receive natural_light[z_idx]; roofed indoor tiles receive
+// Direct-sun tiles receive the packed natural light value for z_idx; roofed indoor tiles receive
 // inside_light; open-sky tiles in angled sunlight shadow receive
 // solar_shadow_light. Sky access is derived from physical terrain floor caches
 // by tracing from the tile upward to OVERMAP_HEIGHT. Vehicle roofs block direct
@@ -36,14 +36,18 @@ cbuffer Constants : register(b0, space2)
     float  sun_dy_per_z;
     float  solar_shadow_light;
     uint   _pad1;
-    // Each float4 element is 16 bytes in both std140 (Vulkan) and HLSL scalar
-    // layout, so C++ float[6][4] and HLSL float4[6] are layout-compatible.
-    // Access element zi as natural_light[zi / 4][zi % 4].
-    // Indices 0..20 = OVERMAP_LAYERS z-levels; indices 21-23 are unused.
-    float4 natural_light[6];
+    // Six packed rows mirror the CPU-side 24-float payload. HLSL scalar arrays
+    // in cbuffers are 16-byte strided, so this must not be declared float[24].
+    float4 natural_light_0;
+    float4 natural_light_1;
+    float4 natural_light_2;
+    float4 natural_light_3;
+    float4 natural_light_4;
+    float4 natural_light_5;
 };
 
 static const float LIGHT_TRANSPARENCY_SOLID = 0.0;
+static const float LIGHT_OVERRIDE_ENCODING_OFFSET = 1.0;
 static const int SUN_NONE   = 0;
 static const int SUN_SHADOW = 1;
 static const int SUN_DIRECT = 2;
@@ -69,6 +73,64 @@ int tile_index( int x, int y, int z )
 bool inbounds_xy( int x, int y )
 {
     return x >= 0 && y >= 0 && x < cache_x && y < cache_y;
+}
+
+bool has_light_override( float source_map_value )
+{
+    return source_map_value < 0.0;
+}
+
+float decode_light_override( float source_map_value )
+{
+    return -source_map_value - LIGHT_OVERRIDE_ENCODING_OFFSET;
+}
+
+float natural_light_for_z( uint z_idx )
+{
+    if( z_idx == 0u ) {
+        return natural_light_0.x;
+    } else if( z_idx == 1u ) {
+        return natural_light_0.y;
+    } else if( z_idx == 2u ) {
+        return natural_light_0.z;
+    } else if( z_idx == 3u ) {
+        return natural_light_0.w;
+    } else if( z_idx == 4u ) {
+        return natural_light_1.x;
+    } else if( z_idx == 5u ) {
+        return natural_light_1.y;
+    } else if( z_idx == 6u ) {
+        return natural_light_1.z;
+    } else if( z_idx == 7u ) {
+        return natural_light_1.w;
+    } else if( z_idx == 8u ) {
+        return natural_light_2.x;
+    } else if( z_idx == 9u ) {
+        return natural_light_2.y;
+    } else if( z_idx == 10u ) {
+        return natural_light_2.z;
+    } else if( z_idx == 11u ) {
+        return natural_light_2.w;
+    } else if( z_idx == 12u ) {
+        return natural_light_3.x;
+    } else if( z_idx == 13u ) {
+        return natural_light_3.y;
+    } else if( z_idx == 14u ) {
+        return natural_light_3.z;
+    } else if( z_idx == 15u ) {
+        return natural_light_3.w;
+    } else if( z_idx == 16u ) {
+        return natural_light_4.x;
+    } else if( z_idx == 17u ) {
+        return natural_light_4.y;
+    } else if( z_idx == 18u ) {
+        return natural_light_4.z;
+    } else if( z_idx == 19u ) {
+        return natural_light_4.w;
+    } else if( z_idx == 20u ) {
+        return natural_light_5.x;
+    }
+    return 0.0;
 }
 
 int sunlight_state( int x, int y, int z_idx, bool use_angled_sun )
@@ -141,19 +203,26 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
     int x = (int)( tile / (uint)cache_y );
     int y = (int)( tile % (uint)cache_y );
 
+    float source_map_value = source_map_all[idx];
+    if( has_light_override( source_map_value ) ) {
+        lm_all[idx] = asuint( decode_light_override( source_map_value ) );
+        daylight_seed_all[idx] = 0u;
+        return;
+    }
+
     bool use_angled_sun = angled_sunlight_shadows != 0u && direct_sunlight != 0u;
     int sun_state = sunlight_state( x, y, (int)z_idx, use_angled_sun );
 
     float daylight = 0.0;
     float ambient = inside_light;
     if( sun_state == SUN_DIRECT ) {
-        daylight = natural_light[z_idx / 4][z_idx % 4];
+        daylight = natural_light_for_z( z_idx );
         ambient = daylight;
     } else if( sun_state == SUN_SHADOW ) {
         daylight = solar_shadow_light;
         ambient = daylight;
     }
-    ambient = max( ambient, source_map_all[idx] );
+    ambient = max( ambient, source_map_value );
     lm_all[idx] = asuint( ambient );
     daylight_seed_all[idx] = asuint( daylight );
 }

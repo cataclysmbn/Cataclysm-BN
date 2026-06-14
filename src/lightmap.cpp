@@ -1900,17 +1900,10 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
         return get_visibility( ll, visibility_variables_cache ) == VIS_CLEAR;
     }
 
-    ZoneScopedN( "pl_sees_dirty_visibility_fallback" );
-    const auto player_pos = g->u.bub_pos();
-    if( !sees( player_pos, t, -1 ) ) {
-        return false;
-    }
-
-    // Transitional SDL path: normal gameplay should consume GPU-generated
-    // visibility_cache.  If a caller asks before that cache is refreshed, avoid
-    // consulting stale CPU lm data; answer geometry only until this becomes a
-    // sparse GPU visibility query.
-    return true;
+    // Normal SDL gameplay should consume GPU-generated visibility_cache.
+    // If a caller asks before draw refreshes that cache, avoid geometry-only
+    // visibility because it produces false safe-mode and monster-info warnings.
+    return false;
 #else
     const auto variables = make_visibility_variables( t.z() );
     return get_visibility( apparent_light_at( t, variables ), variables ) == VIS_CLEAR;

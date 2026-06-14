@@ -10436,6 +10436,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     std::vector<int> gpu_vehicle_floor_dirty_levels;
     std::vector<int> gpu_vehicle_obscured_dirty_levels;
 
+    auto mark_lightmap_dirty = [this]( const int z ) {
+        auto &cache = get_cache( z );
+        cache.lightmap_dirty = true;
+        cache.lm_cpu_cache_valid = false;
+        ++cache.lm_cpu_cache_generation;
+        cache.visibility_cache_dirty = true;
+    };
     auto add_gpu_dirty_level = []( auto & levels, const int z ) {
         if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
             levels.push_back( z );
@@ -10498,6 +10505,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             gpu_transparency_dirty = true;
             std::ranges::copy( transparency_dirty_levels,
                                std::back_inserter( gpu_transparency_dirty_levels ) );
+            std::ranges::for_each( transparency_dirty_levels, mark_lightmap_dirty );
         }
     }
 
@@ -11584,6 +11592,7 @@ void map::invalidate_lightmap_caches()
         cache.lightmap_dirty = true;
         cache.lm_cpu_cache_valid = false;
         ++cache.lm_cpu_cache_generation;
+        cache.visibility_cache_dirty = true;
     } );
 }
 

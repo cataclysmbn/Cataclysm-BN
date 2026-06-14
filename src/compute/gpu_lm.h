@@ -57,12 +57,10 @@ static_assert(sizeof(GpuColoredLightSource) == 48);
 // Total = 144 bytes (multiple of 16; fits in the minimum Vulkan push constant
 // window and in SDL_GPU's uniform buffer slot).
 // ---------------------------------------------------------------------------
-// natural_light is stored as float[6][4] (= six float4s = 96 bytes) so that the
-// GPU-side cbuffer element stride is 16 bytes in both std140 (Vulkan uniform
-// buffer default) and HLSL scalar layout.  The HLSL shader declares the
-// corresponding field as float4 natural_light[6] and accesses element zi as
-// natural_light[zi / 4][zi % 4].  Only the first OVERMAP_LAYERS (21) values
-// are meaningful; the remaining 3 slots (indices 21-23) are unused.
+// natural_light is stored as 24 floats (= six 16-byte rows) so that the GPU-side
+// cbuffer layout remains stable without requiring vector element indexing in
+// the shader.  Only the first OVERMAP_LAYERS (21) values are meaningful; the
+// remaining 3 slots are unused padding.
 struct lm_ambient_push_constants {
     float inside_light;               //  4 bytes, offset  0
     int32_t cache_x;                  //  4 bytes, offset  4
@@ -76,7 +74,7 @@ struct lm_ambient_push_constants {
     float sun_dy_per_z;               //  4 bytes, offset 36
     float solar_shadow_light;         //  4 bytes, offset 40
     uint32_t _pad0;                   //  4 bytes, offset 44 = 48
-    float natural_light[6][4];        // 96 bytes, offset 48 = 144 total
+    float natural_light[24];          // 96 bytes, offset 48 = 144 total
 };
 static_assert(sizeof(lm_ambient_push_constants) == 144);
 
