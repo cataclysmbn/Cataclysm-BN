@@ -10854,15 +10854,17 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         // GPU path: lightmap rebuilds only run for lightmap-dirty levels.
         // Player movement and other FoV-only updates are handled by
         // update_visibility_cache(), which can rebuild resident seen data.
-        for( const int z : dirty_lightmap_levels ) {
-            auto &c = get_cache( z );
-            std::fill( c.sm.begin(), c.sm.end(), 0.0f );
-            std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
-            c.light_source_points.clear();
-            std::ranges::fill( c.lm, 0.0f );
-            c.lm_cpu_cache_valid = false;
-            ++c.lm_cpu_cache_generation;
-        }
+            for( const int z : dirty_lightmap_levels ) {
+                auto &c = get_cache( z );
+                std::fill( c.sm.begin(), c.sm.end(), 0.0f );
+                std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+                std::fill( c.colored_light_source_buffer.begin(), c.colored_light_source_buffer.end(), 0.0f );
+                std::fill( c.light_source_color_buffer.begin(), c.light_source_color_buffer.end(), 0u );
+                c.light_source_points.clear();
+                std::ranges::fill( c.lm, 0.0f );
+                c.lm_cpu_cache_valid = false;
+                ++c.lm_cpu_cache_generation;
+            }
         pending_gpu_lighting = cata_gpu::begin_gpu_lighting( gpu_device, {
             .m            = this,
             .dirty_levels = &dirty_lightmap_levels,
@@ -10958,6 +10960,18 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 #endif
         {
             if( !dirty_lightmap_levels.empty() ) {
+                auto colored_light_levels = std::vector<int> {};
+                if( zlevels ) {
+                    std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
+                                       std::back_inserter( colored_light_levels ) );
+                } else {
+                    colored_light_levels = dirty_lightmap_levels;
+                }
+                for( const auto z : colored_light_levels ) {
+                    auto &c = get_cache( z );
+                    std::ranges::fill( c.colored_light_cache, 0u );
+                    c.colored_light_cache_active = false;
+                }
 
                 if( dirty_lightmap_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
                     // Multiple dirty levels: hoist shared initialization outside the
@@ -10969,6 +10983,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                         auto &c = get_cache( z );
                         std::fill( c.sm.begin(), c.sm.end(), 0.0f );
                         std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+                        std::fill( c.colored_light_source_buffer.begin(), c.colored_light_source_buffer.end(),
+                                   0.0f );
+                        std::fill( c.light_source_color_buffer.begin(), c.light_source_color_buffer.end(), 0u );
                         c.light_source_points.clear();
                         std::ranges::fill( c.lm, 0.0f );
                         c.lm_cpu_cache_valid = false;
@@ -11012,6 +11029,16 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     }
                 }
 
+                if( colored_lighting ) {
+                    for( const auto z : colored_light_levels ) {
+                        auto &c = get_cache( z );
+                        c.colored_light_cache_active = std::ranges::any_of(
+                            c.colored_light_cache, []( const auto packed ) {
+                                return packed != 0u;
+                            } );
+                    }
+                }
+
                 // Mark each regenerated level clean so subsequent redraws this turn skip it.
                 // Also mark visibility dirty: the lightmap just changed, so any visibility
                 // cache computed before this rebuild (e.g. from handle_action's unconditional
@@ -11021,8 +11048,6 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     c.lightmap_dirty = false;
                     c.lm_cpu_cache_valid = true;
                     c.visibility_cache_dirty = true;
-                    std::ranges::fill( c.colored_light_cache, 0u );
-                    c.colored_light_cache_active = false;
                 } );
 
             } // end if( !dirty_lightmap_levels.empty() )
@@ -11627,6 +11652,8 @@ level_cache::level_cache( int mx, int my )
       lm( static_cast<size_t>( mx * my ), 0.0f ),
       sm( static_cast<size_t>( mx * my ), 0.0f ),
       light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
+      colored_light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
+      light_source_color_buffer( static_cast<size_t>( mx * my ), 0u ),
       outside_cache( static_cast<size_t>( mx * my ), '\0' ),
       sheltered_cache( static_cast<size_t>( mx * my ), '\0' ),
       floor_cache( static_cast<size_t>( mx * my ), false ),

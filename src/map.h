@@ -391,6 +391,8 @@ struct level_cache {
     // To prevent redundant ray casting into neighbors: precalculate bulk light source positions.
     // This is only valid for the duration of generate_lightmap
     std::vector<float>              light_source_buffer;
+    std::vector<float>              colored_light_source_buffer;
+    std::vector<uint32_t>           light_source_color_buffer;
     // Source tiles touched in light_source_buffer.
     std::vector<point_bub_ms>        light_source_points;
 
@@ -2541,17 +2543,40 @@ class map : public submap_load_listener
                               const maptile &tile, const drawsq_params &params ) const;
 
         int determine_wall_corner( const tripoint_bub_ms &p ) const;
+        struct apply_directional_light_options {
+            tripoint_bub_ms p;
+            int direction = 0;
+            float luminance = 0.0f;
+            uint32_t color_rgb = 0u;
+        };
+        struct apply_light_arc_options {
+            tripoint_bub_ms p;
+            units::angle angle = 0_degrees;
+            float luminance = 0.0f;
+            units::angle wideangle = 30_degrees;
+            uint32_t color_rgb = 0u;
+        };
+        struct apply_light_ray_options {
+            std::vector<bool> &lit;
+            tripoint_bub_ms s;
+            tripoint_bub_ms e;
+            float luminance = 0.0f;
+            uint32_t color_rgb = 0u;
+        };
         // apply a circular light pattern immediately, however it's best to use...
-        void apply_light_source( const tripoint_bub_ms &p, float luminance );
+        void apply_light_source( const tripoint_bub_ms &p, float luminance, uint32_t color_rgb = 0u );
         // ...this, which will apply the light after at the end of generate_lightmap, and prevent redundant
         // light rays from causing massive slowdowns, if there's a huge amount of light.
-        void add_light_source( const tripoint_bub_ms &p, float luminance );
+        void add_light_source( const tripoint_bub_ms &p, float luminance, uint32_t color_rgb = 0u );
         // Handle just cardinal directions and 45 deg angles.
         void apply_directional_light( const tripoint_bub_ms &p, int direction, float luminance );
+        auto apply_directional_light( const apply_directional_light_options &opt ) -> void;
         void apply_light_arc( const tripoint_bub_ms &p, units::angle, float luminance,
                               units::angle wideangle = 30_degrees );
+        auto apply_light_arc( const apply_light_arc_options &opt ) -> void;
         void apply_light_ray( std::vector<bool> &lit,
                               const tripoint_bub_ms &s, const tripoint_bub_ms &e, float luminance );
+        auto apply_light_ray( const apply_light_ray_options &opt ) -> void;
         void add_light_from_items( const tripoint_bub_ms &p, const item_stack::iterator &begin,
                                    const item_stack::iterator &end );
         std::unique_ptr<vehicle> add_vehicle_to_map( std::unique_ptr<vehicle> veh, bool merge_wrecks );

@@ -31,9 +31,11 @@
 #include "fragment_cloud.h" // IWYU pragma: keep
 #include "game.h"
 #include "game_constants.h"
+#include "hsv_color.h"
 #include "int_id.h"
 #include "item.h"
 #include "item_stack.h"
+#include "itype.h"
 #include "line.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -278,6 +280,220 @@ void record_cpu_lm_read( const bool valid, std::atomic<int64_t> &valid_counter,
     return counter.exchange( 0, std::memory_order_relaxed );
 }
 
+struct cpu_colored_item_light {
+    float luminance = 0.0f;
+    uint32_t color_rgb = 0u;
+};
+
+struct cpu_colored_light_cache_context {
+    level_cache *cache = nullptr;
+    uint32_t color_rgb = 0u;
+};
+
+struct cpu_colored_light_3d_context {
+    map *here = nullptr;
+    tripoint_bub_ms source;
+    float luminance = 0.0f;
+    int skip_zlev = 0;
+    float dir_x = 0.0f;
+    float dir_y = 0.0f;
+    float cone_cos = -1.0f;
+    uint32_t color_rgb = 0u;
+    bool directional = false;
+};
+
+struct apply_cpu_colored_light_3d_options {
+    tripoint_bub_ms source;
+    float luminance = 0.0f;
+    uint32_t color_rgb = 0u;
+    float dir_x = 0.0f;
+    float dir_y = 0.0f;
+    float cone_cos = -1.0f;
+    bool directional = false;
+    int skip_zlev = 0;
+};
+
+auto color_is_set( const RGBColor &color ) -> bool
+{
+    return color.a != 0 && ( color.r != 0 || color.g != 0 || color.b != 0 );
+}
+
+auto pack_rgb( const RGBColor &color ) -> uint32_t
+{
+    return ( static_cast<uint32_t>( color.r ) << 16 ) |
+           ( static_cast<uint32_t>( color.g ) << 8 ) |
+           static_cast<uint32_t>( color.b );
+}
+
+auto color_rgb_from_optional( const std::optional<RGBColor> &color ) -> std::optional<uint32_t>
+{
+    if( !color || !color_is_set( *color ) ) {
+        return std::nullopt;
+    }
+    return pack_rgb( *color );
+}
+
+auto item_light_color( const item &itm ) -> std::optional<uint32_t>
+{
+    return color_rgb_from_optional( itm.typeId().obj().light_color );
+}
+
+auto field_light_color( const field_entry &entry ) -> std::optional<uint32_t>
+{
+    return color_rgb_from_optional(
+               entry.get_field_type().obj().get_light_color( entry.get_field_intensity() - 1 ) );
+}
+
+auto map_data_light_color( const map_data_common_t &data ) -> std::optional<uint32_t>
+{
+    return color_rgb_from_optional( data.light_color );
+}
+
+auto vehicle_light_color( const vpart_reference &part ) -> std::optional<uint32_t>
+{
+    if( part.info().light_color && color_is_set( *part.info().light_color ) ) {
+        return pack_rgb( *part.info().light_color );
+    }
+
+    const auto [bg, fg] = part.part().get_color( true );
+    if( color_is_set( fg ) ) {
+        return pack_rgb( fg );
+    }
+    if( color_is_set( bg ) ) {
+        return pack_rgb( bg );
+    }
+    return std::nullopt;
+}
+
+auto character_colored_item_light( const Character &ch ) -> std::optional<cpu_colored_item_light>
+{
+    auto best = std::optional<cpu_colored_item_light> {};
+    ch.has_item_with( [&best]( const item & itm ) {
+        const auto color_rgb = item_light_color( itm );
+        const auto luminance = static_cast<float>( itm.getlight_emit() );
+        if( color_rgb && luminance > LIGHT_AMBIENT_LOW && ( !best || luminance > best->luminance ) ) {
+            best = cpu_colored_item_light{
+                .luminance = luminance,
+                .color_rgb = *color_rgb,
+            };
+        }
+        return false;
+    } );
+    return best;
+}
+
+auto packed_colored_light_value( const float intensity, const uint32_t color_rgb ) -> uint32_t
+{
+    if( intensity <= LIGHT_AMBIENT_LOW || color_rgb == 0u ) {
+        return 0u;
+    }
+    const auto rank = static_cast<uint32_t>(
+                          std::clamp( static_cast<int>( std::lround( intensity * 2.0f ) ), 1, 255 ) );
+    return ( rank << 24 ) | ( color_rgb & 0x00ffffffu );
+}
+
+auto atomic_colored_light_max( uint32_t &cell, const uint32_t value ) -> void
+{
+    if( value == 0u ) {
+        return;
+    }
+#if defined( __cpp_lib_atomic_ref )
+    auto atomic_cell = std::atomic_ref<uint32_t> { cell };
+    auto expected = atomic_cell.load( std::memory_order_relaxed );
+    while( expected < value &&
+           !atomic_cell.compare_exchange_weak( expected, value, std::memory_order_relaxed ) ) {
+    }
+#else
+    auto expected = __atomic_load_n( &cell, __ATOMIC_RELAXED );
+    while( expected < value &&
+           !__atomic_compare_exchange_n( &cell, &expected, value, true, __ATOMIC_RELAXED,
+                                         __ATOMIC_RELAXED ) ) {
+    }
+#endif
+}
+
+auto write_colored_light_cache( level_cache &cache, const int idx, const float intensity,
+                                const uint32_t color_rgb ) -> void
+{
+    atomic_colored_light_max( cache.colored_light_cache[idx],
+                              packed_colored_light_value( intensity, color_rgb ) );
+}
+
+auto cpu_colored_light_allows_direction( const cpu_colored_light_3d_context &ctx, const int x,
+        const int y ) -> bool
+{
+    if( !ctx.directional ) {
+        return true;
+    }
+    const auto dx = static_cast<float>( x - ctx.source.x() );
+    const auto dy = static_cast<float>( y - ctx.source.y() );
+    const auto dist_xy_sq = dx * dx + dy * dy;
+    if( dist_xy_sq <= 0.0001f ) {
+        return false;
+    }
+    const auto cone_dot = ( dx * ctx.dir_x + dy * ctx.dir_y ) / std::sqrt( dist_xy_sq );
+    return cone_dot >= ctx.cone_cos;
+}
+
+auto update_cpu_colored_light_cache( void *context, const int, const int, const int,
+                                     const int idx, const float intensity, quadrant ) -> void
+{
+    auto &ctx = *static_cast<cpu_colored_light_cache_context *>( context );
+    if( ctx.cache == nullptr ) {
+        return;
+    }
+    write_colored_light_cache( *ctx.cache, idx, intensity, ctx.color_rgb );
+}
+
+auto update_cpu_colored_light_cache_3d( void *context, const int z_index, const int x,
+                                        const int y, const int idx, const float intensity,
+                                        quadrant ) -> void
+{
+    auto &ctx = *static_cast<cpu_colored_light_3d_context *>( context );
+    if( ctx.here == nullptr || intensity <= LIGHT_AMBIENT_LOW ) {
+        return;
+    }
+    const auto zlev = z_index - OVERMAP_DEPTH;
+    if( zlev == ctx.skip_zlev || !cpu_colored_light_allows_direction( ctx, x, y ) ) {
+        return;
+    }
+    auto adjusted_intensity = intensity;
+    const auto dx = static_cast<float>( x - ctx.source.x() );
+    const auto dy = static_cast<float>( y - ctx.source.y() );
+    const auto dz = static_cast<float>( zlev - ctx.source.z() ) * Z_LEVEL_SCALE;
+    const auto distance = std::sqrt( dx * dx + dy * dy + dz * dz );
+    if( distance > 0.5f ) {
+        adjusted_intensity = std::min( adjusted_intensity,
+                                       ctx.luminance /
+                                       ( std::exp( LIGHT_TRANSPARENCY_OPEN_AIR * distance ) * distance ) );
+    }
+    if( adjusted_intensity <= LIGHT_AMBIENT_LOW ) {
+        return;
+    }
+    auto &cache = ctx.here->access_cache( zlev );
+    write_colored_light_cache( cache, idx, adjusted_intensity, ctx.color_rgb );
+}
+
+auto make_colored_light_callback( level_cache &cache, const uint32_t color_rgb,
+                                  cpu_colored_light_cache_context &context )
+-> light_update_callback
+{
+    if( !colored_lighting || color_rgb == 0u ) {
+        return {};
+    }
+    context = cpu_colored_light_cache_context{
+        .cache = &cache,
+        .color_rgb = color_rgb,
+    };
+    return light_update_callback{
+        .context = &context,
+        .update = update_cpu_colored_light_cache,
+    };
+}
+
+auto apply_cpu_colored_light_3d( map &here, const apply_cpu_colored_light_3d_options &opt )
+-> void;
+
 } // namespace
 
 static const efftype_id effect_haslight( "haslight" );
@@ -292,10 +508,17 @@ void map::add_light_from_items( const tripoint_bub_ms &p, const item_stack::iter
         units::angle iwidth = 0_degrees; // 0-360 degrees. 0 is a circular light_source
         units::angle idir = 0_degrees;   // otherwise, it's a light_arc pointed in this direction
         if( ( *itm_it )->getlight( ilum, iwidth, idir ) ) {
+            const auto color_rgb = item_light_color( **itm_it ).value_or( 0u );
             if( iwidth > 0_degrees ) {
-                apply_light_arc( p, idir, ilum, iwidth );
+                apply_light_arc( {
+                    .p = p,
+                    .angle = idir,
+                    .luminance = ilum,
+                    .wideangle = iwidth,
+                    .color_rgb = color_rgb,
+                } );
             } else {
-                add_light_source( p, ilum );
+                add_light_source( p, ilum, color_rgb );
             }
         }
     }
@@ -836,7 +1059,13 @@ void map::apply_character_light( Character &p )
     }
 
     const float held_luminance = p.active_light();
-    if( held_luminance > LIGHT_AMBIENT_LOW ) {
+    const auto colored_light = colored_lighting ? character_colored_item_light( p ) :
+                               std::optional<cpu_colored_item_light> {};
+    if( colored_light ) {
+        apply_light_source( p.bub_pos(), colored_light->luminance, colored_light->color_rgb );
+    }
+    if( held_luminance > LIGHT_AMBIENT_LOW &&
+        ( !colored_light || held_luminance > colored_light->luminance ) ) {
         apply_light_source( p.bub_pos(), held_luminance );
     }
 
@@ -1131,11 +1360,15 @@ void map::generate_lightmap( const int zlev )
     auto &lm = map_cache.lm;
     auto &sm = map_cache.sm;
     auto &light_source_buffer = map_cache.light_source_buffer;
+    auto &colored_light_source_buffer = map_cache.colored_light_source_buffer;
+    auto &light_source_color_buffer = map_cache.light_source_color_buffer;
     auto &light_source_points = map_cache.light_source_points;
 
     std::ranges::fill( lm, 0.0f );
     std::fill( sm.begin(), sm.end(), 0.0f );
     std::fill( light_source_buffer.begin(), light_source_buffer.end(), 0.0f );
+    std::fill( colored_light_source_buffer.begin(), colored_light_source_buffer.end(), 0.0f );
+    std::fill( light_source_color_buffer.begin(), light_source_color_buffer.end(), 0u );
     light_source_points.clear();
 
     build_sunlight_cache( zlev );
@@ -1184,8 +1417,9 @@ void map::generate_lightmap_worker( const int zlev )
      * Step 4: Profit!
     */
     auto &light_source_buffer = map_cache.light_source_buffer;
-    auto add_deferred_point_light = [&]( const tripoint_bub_ms & source, const float luminance ) {
-        add_light_source( source, luminance );
+    auto add_deferred_point_light = [&]( const tripoint_bub_ms & source,
+    const float luminance, const uint32_t color_rgb = 0u ) {
+        add_light_source( source, luminance, color_rgb );
     };
 
     constexpr std::array<int, 4> dir_x = { {  0, -1, 1, 0 } };    //    [0]
@@ -1205,12 +1439,14 @@ void map::generate_lightmap_worker( const int zlev )
             tripoint_bub_ms p;
             int direction;
             float luminance;
+            uint32_t color_rgb = 0u;
         };
         struct arc_light_def {
             tripoint_bub_ms p;
             units::angle dir;
             float luminance;
             units::angle width;
+            uint32_t color_rgb = 0u;
         };
         struct smx_acc {
             std::vector<std::pair<tripoint_bub_ms, float>> lm_override;
@@ -1294,11 +1530,12 @@ void map::generate_lightmap_worker( const int zlev )
                             units::angle iwidth = 0_degrees;
                             units::angle idir = 0_degrees;
                             if( ( *itm_it )->getlight( ilum, iwidth, idir ) ) {
+                                const auto color_rgb = item_light_color( **itm_it ).value_or( 0u );
                                 if( iwidth > 0_degrees ) {
                                     // apply_light_arc writes to arbitrary lm positions; defer.
-                                    local.arc_lights.push_back( { p, idir, ilum, iwidth } );
+                                    local.arc_lights.push_back( { p, idir, ilum, iwidth, color_rgb } );
                                 } else {
-                                    add_deferred_point_light( p, ilum );
+                                    add_deferred_point_light( p, ilum, color_rgb );
                                 }
                             }
                         }
@@ -1306,11 +1543,13 @@ void map::generate_lightmap_worker( const int zlev )
 
                     const ter_id terrain = cur_submap->get_ter( sm_ms );
                     if( terrain->light_emitted > 0 ) {
-                        add_deferred_point_light( p, terrain->light_emitted );
+                        add_deferred_point_light( p, terrain->light_emitted,
+                                                  map_data_light_color( terrain.obj() ).value_or( 0u ) );
                     }
                     const furn_id furniture = cur_submap->get_furn( sm_ms );
                     if( furniture->light_emitted > 0 ) {
-                        add_deferred_point_light( p, furniture->light_emitted );
+                        add_deferred_point_light( p, furniture->light_emitted,
+                                                  map_data_light_color( furniture.obj() ).value_or( 0u ) );
                     }
 
                     std::ranges::for_each( cur_submap->get_field( sm_ms ), [&]( auto & fld ) {
@@ -1325,7 +1564,8 @@ void map::generate_lightmap_worker( const int zlev )
                         const auto *cur = &fld.second;
                         const int light_emitted = cur->light_emitted();
                         if( light_emitted > 0 ) {
-                            add_deferred_point_light( p, light_emitted );
+                            add_deferred_point_light( p, light_emitted,
+                                                      field_light_color( *cur ).value_or( 0u ) );
                         }
                         const float light_override = cur->local_light_override();
                         if( light_override >= 0.0 ) {
@@ -1348,10 +1588,21 @@ void map::generate_lightmap_worker( const int zlev )
         std::ranges::for_each( smx_accs, [&]( auto & local ) {
             lm_override.insert( lm_override.end(), local.lm_override.begin(), local.lm_override.end() );
             std::ranges::for_each( local.dir_lights, [&]( auto & dl ) {
-                apply_directional_light( dl.p, dl.direction, dl.luminance );
+                apply_directional_light( {
+                    .p = dl.p,
+                    .direction = dl.direction,
+                    .luminance = dl.luminance,
+                    .color_rgb = dl.color_rgb,
+                } );
             } );
             std::ranges::for_each( local.arc_lights, [&]( auto & al ) {
-                apply_light_arc( al.p, al.dir, al.luminance, al.width );
+                apply_light_arc( {
+                    .p = al.p,
+                    .angle = al.dir,
+                    .luminance = al.luminance,
+                    .wideangle = al.width,
+                    .color_rgb = al.color_rgb,
+                } );
             } );
         } );
 
@@ -1389,30 +1640,44 @@ void map::generate_lightmap_worker( const int zlev )
                 float luminance = 0.0f;
                 units::angle width = 0_degrees;
                 bool external = false;
+                uint32_t color_rgb = 0u;
             };
             struct vehicle_point_light_def {
                 tripoint_bub_ms src;
                 float luminance = 0.0f;
                 bool external = false;
+                uint32_t color_rgb = 0u;
             };
 
             auto apply_vehicle_arc = [&]( const vehicle_arc_light_def & def ) {
                 if( def.external ) {
                     apply_external_light( [&]() {
-                        apply_light_arc( def.src, def.direction, def.luminance, def.width );
+                        apply_light_arc( {
+                            .p = def.src,
+                            .angle = def.direction,
+                            .luminance = def.luminance,
+                            .wideangle = def.width,
+                            .color_rgb = def.color_rgb,
+                        } );
                     } );
                 } else {
-                    apply_light_arc( def.src, def.direction, def.luminance, def.width );
+                    apply_light_arc( {
+                        .p = def.src,
+                        .angle = def.direction,
+                        .luminance = def.luminance,
+                        .wideangle = def.width,
+                        .color_rgb = def.color_rgb,
+                    } );
                 }
             };
 
             auto apply_vehicle_point = [&]( const vehicle_point_light_def & def ) {
                 if( def.external ) {
                     apply_external_light( [&]() {
-                        apply_light_source( def.src, def.luminance );
+                        apply_light_source( def.src, def.luminance, def.color_rgb );
                     } );
                 } else {
-                    add_deferred_point_light( def.src, def.luminance );
+                    add_deferred_point_light( def.src, def.luminance, def.color_rgb );
                 }
             };
 
@@ -1429,6 +1694,7 @@ void map::generate_lightmap_worker( const int zlev )
                 }
 
                 const auto external = vehicle_lighting::is_external( part );
+                const auto color_rgb = vehicle_light_color( part ).value_or( 0u );
                 if( vp.has_flag( VPFLAG_CONE_LIGHT ) ) {
                     if( veh_luminance > lit_level::LIT ) {
                         apply_vehicle_arc( {
@@ -1437,6 +1703,7 @@ void map::generate_lightmap_worker( const int zlev )
                             .luminance = veh_luminance,
                             .width = vehicle_lighting::arc_width( vp ),
                             .external = external,
+                            .color_rgb = color_rgb,
                         } );
                     }
 
@@ -1448,6 +1715,7 @@ void map::generate_lightmap_worker( const int zlev )
                             .luminance = veh_luminance,
                             .width = vehicle_lighting::arc_width( vp ),
                             .external = external,
+                            .color_rgb = color_rgb,
                         } );
                     }
 
@@ -1464,6 +1732,7 @@ void map::generate_lightmap_worker( const int zlev )
                             .luminance = static_cast<float>( vp.bonus ),
                             .width = rotating_light.arc_width(),
                             .external = external,
+                            .color_rgb = color_rgb,
                         } );
                     }
                 } else if( vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
@@ -1473,6 +1742,7 @@ void map::generate_lightmap_worker( const int zlev )
                         .luminance = static_cast<float>( vp.bonus ),
                         .width = vehicle_lighting::arc_width( vp ),
                         .external = external,
+                        .color_rgb = color_rgb,
                     } );
 
                 } else if( vp.has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
@@ -1482,6 +1752,7 @@ void map::generate_lightmap_worker( const int zlev )
                             .src = src,
                             .luminance = static_cast<float>( vp.bonus ),
                             .external = external,
+                            .color_rgb = color_rgb,
                         } );
                     }
 
@@ -1490,6 +1761,7 @@ void map::generate_lightmap_worker( const int zlev )
                         .src = src,
                         .luminance = static_cast<float>( vp.bonus ),
                         .external = external,
+                        .color_rgb = color_rgb,
                     } );
                 }
             }
@@ -1519,11 +1791,24 @@ void map::generate_lightmap_worker( const int zlev )
     */
     {
         ZoneScopedN( "generate_lightmap_flush" );
-        const tripoint_bub_ms cache_start( 0, 0, zlev );
-        const tripoint_bub_ms cache_end( map_cache.cache_x, map_cache.cache_y, zlev );
-        for( const auto &p : points_in_rectangle( cache_start, cache_end ) ) {
-            if( light_source_buffer[map_cache.idx( p.x(), p.y() )] > 0.0 ) {
-                apply_light_source( p, light_source_buffer[map_cache.idx( p.x(), p.y() )] );
+        for( const auto &source : map_cache.light_source_points ) {
+            const auto p = tripoint_bub_ms( source, zlev );
+            const auto idx = map_cache.idx( p.x(), p.y() );
+            const auto luminance = light_source_buffer[idx];
+            const auto colored_luminance = map_cache.colored_light_source_buffer[idx];
+            const auto color_rgb = map_cache.light_source_color_buffer[idx];
+            if( luminance <= 0.0f && colored_luminance <= 0.0f ) {
+                continue;
+            }
+            if( color_rgb != 0u && colored_luminance >= luminance ) {
+                apply_light_source( p, colored_luminance, color_rgb );
+            } else {
+                if( luminance > 0.0f ) {
+                    apply_light_source( p, luminance );
+                }
+                if( color_rgb != 0u && colored_luminance > 0.0f ) {
+                    apply_light_source( p, colored_luminance, color_rgb );
+                }
             }
         }
         for( const std::pair<tripoint_bub_ms, float> &elem : lm_override ) {
@@ -1532,12 +1817,20 @@ void map::generate_lightmap_worker( const int zlev )
     }
 }
 
-void map::add_light_source( const tripoint_bub_ms &p, float luminance )
+void map::add_light_source( const tripoint_bub_ms &p, float luminance, uint32_t color_rgb )
 {
     auto &cache = get_cache( p.z() );
     auto &light_source_buffer = cache.light_source_buffer;
-    light_source_buffer[cache.idx( p.x(), p.y() )] = std::max( luminance,
-            light_source_buffer[cache.idx( p.x(), p.y() )] );
+    const auto idx = cache.idx( p.x(), p.y() );
+    if( light_source_buffer[idx] <= 0.0f && cache.colored_light_source_buffer[idx] <= 0.0f ) {
+        cache.light_source_points.push_back( p.xy() );
+    }
+    light_source_buffer[idx] = std::max( luminance, light_source_buffer[idx] );
+    if( colored_lighting && color_rgb != 0u &&
+        luminance >= cache.colored_light_source_buffer[idx] ) {
+        cache.colored_light_source_buffer[idx] = luminance;
+        cache.light_source_color_buffer[idx] = color_rgb;
+    }
 }
 
 // Tile light/transparency: 3D
@@ -2591,7 +2884,57 @@ static const light_model k_light_model = {
     accumulate_transparency
 };
 
-void map::apply_light_source( const tripoint_bub_ms &p, float luminance )
+namespace
+{
+
+auto apply_cpu_colored_light_3d( map &here, const apply_cpu_colored_light_3d_options &opt )
+-> void
+{
+    if( !colored_lighting || !here.has_zlevels() || opt.color_rgb == 0u ||
+        opt.luminance <= LIGHT_AMBIENT_LOW || !here.inbounds( opt.source ) ) {
+        return;
+    }
+    const auto adjacent_z_intensity =
+        opt.luminance /
+        ( std::exp( LIGHT_TRANSPARENCY_OPEN_AIR * Z_LEVEL_SCALE ) * Z_LEVEL_SCALE );
+    if( adjacent_z_intensity <= LIGHT_AMBIENT_LOW ) {
+        return;
+    }
+
+    auto transparency_caches = array_of_grids_of<const float> {};
+    auto floor_caches = array_of_grids_of<const char> {};
+    auto blocked_caches = array_of_grids_of<const diagonal_blocks> {};
+    auto output_caches = array_of_grids_of<float> {};
+    for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+        auto &cache = here.access_cache( z );
+        const auto idx = z + OVERMAP_DEPTH;
+        transparency_caches[idx] = { cache.transparency_cache.data(), cache.cache_x, cache.cache_y };
+        floor_caches[idx] = { cache.floor_cache.data(), cache.cache_x, cache.cache_y };
+        blocked_caches[idx] = { cache.vehicle_obscured_cache.data(), cache.cache_x, cache.cache_y };
+        output_caches[idx] = { nullptr, cache.cache_x, cache.cache_y };
+    }
+
+    auto context = cpu_colored_light_3d_context{
+        .here = &here,
+        .source = opt.source,
+        .luminance = opt.luminance,
+        .skip_zlev = opt.skip_zlev,
+        .dir_x = opt.dir_x,
+        .dir_y = opt.dir_y,
+        .cone_cos = opt.cone_cos,
+        .color_rgb = opt.color_rgb,
+        .directional = opt.directional,
+    };
+    cast_zlight( output_caches, transparency_caches, floor_caches, blocked_caches, opt.source, 0,
+                 opt.luminance, k_light_model, {
+        .context = &context,
+        .update = update_cpu_colored_light_cache_3d,
+    } );
+}
+
+} // namespace
+
+void map::apply_light_source( const tripoint_bub_ms &p, float luminance, uint32_t color_rgb )
 {
     auto &cache = get_cache( p.z() );
     auto *lm_data        = cache.lm.data();
@@ -2608,6 +2951,9 @@ void map::apply_light_source( const tripoint_bub_ms &p, float luminance )
         const float min_light = std::max( static_cast<float>( lit_level::LOW ), luminance );
         lm_data[p2.x() * sy + p2.y()] = std::max( lm_data[p2.x() * sy + p2.y()], min_light );
         sm_data[p2.x() * sy + p2.y()] = std::max( sm_data[p2.x() * sy + p2.y()], luminance );
+        if( colored_lighting && color_rgb != 0u ) {
+            write_colored_light_cache( cache, cache.idx( p2.x(), p2.y() ), luminance, color_rgb );
+        }
     }
     if( luminance <= lit_level::LOW ) {
         return;
@@ -2653,16 +2999,35 @@ void map::apply_light_source( const tripoint_bub_ms &p, float luminance )
         mask |= OCTANT_WEST;
     }
     if( mask != 0 ) {
+        auto colored_context = cpu_colored_light_cache_context {};
         castLightOctants( lm_data, trans_data, blocked_data, sx, sy, p2, 0, luminance,
-                          k_light_model, mask, &weather_lookup_ );
+                          k_light_model, mask, &weather_lookup_,
+                          make_colored_light_callback( cache, color_rgb, colored_context ) );
+    }
+    if( color_rgb != 0u ) {
+        apply_cpu_colored_light_3d( *this, {
+            .source = p,
+            .luminance = luminance,
+            .color_rgb = color_rgb,
+            .skip_zlev = p.z(),
+        } );
     }
 }
 
 void map::apply_directional_light( const tripoint_bub_ms &p, int direction, float luminance )
 {
-    const auto p2 = p.xy();
+    apply_directional_light( {
+        .p = p,
+        .direction = direction,
+        .luminance = luminance,
+    } );
+}
 
-    auto &cache = get_cache( p.z() );
+auto map::apply_directional_light( const apply_directional_light_options &opt ) -> void
+{
+    const auto p2 = opt.p.xy();
+
+    auto &cache = get_cache( opt.p.z() );
     auto *lm_data      = cache.lm.data();
     auto *trans_data   = cache.transparency_cache.data();
     auto *blocked_data = cache.vehicle_obscured_cache.data();
@@ -2673,46 +3038,64 @@ void map::apply_directional_light( const tripoint_bub_ms &p, int direction, floa
     // 270=south-facing (north), 180=west-facing (east).  Each maps to the two octants
     // covering the relevant half-space in k_octant_xforms.
     auto mask = uint8_t{};
-    if( direction == 90 ) {
+    if( opt.direction == 90 ) {
         mask = OCTANT_NORTH;
-    } else if( direction == 0 ) {
+    } else if( opt.direction == 0 ) {
         mask = OCTANT_EAST;
-    } else if( direction == 270 ) {
+    } else if( opt.direction == 270 ) {
         mask = OCTANT_SOUTH;
-    } else if( direction == 180 ) {
+    } else if( opt.direction == 180 ) {
         mask = OCTANT_WEST;
     }
     if( mask != 0 ) {
-        castLightOctants( lm_data, trans_data, blocked_data, sx, sy, p2, 0, luminance,
-                          k_light_model, mask, &weather_lookup_ );
+        auto colored_context = cpu_colored_light_cache_context {};
+        castLightOctants( lm_data, trans_data, blocked_data, sx, sy, p2, 0, opt.luminance,
+                          k_light_model, mask, &weather_lookup_,
+                          make_colored_light_callback( cache, opt.color_rgb, colored_context ) );
     }
 }
 
 void map::apply_light_arc( const tripoint_bub_ms &p, units::angle angle, float luminance,
                            units::angle wideangle )
 {
-    if( luminance <= LIGHT_SOURCE_LOCAL ) {
+    apply_light_arc( {
+        .p = p,
+        .angle = angle,
+        .luminance = luminance,
+        .wideangle = wideangle,
+    } );
+}
+
+auto map::apply_light_arc( const apply_light_arc_options &opt ) -> void
+{
+    if( opt.luminance <= LIGHT_SOURCE_LOCAL ) {
         return;
     }
 
-    const auto &arc_cache = get_cache( p.z() );
+    const auto &arc_cache = get_cache( opt.p.z() );
     auto lit = std::vector<bool>( static_cast<size_t>( arc_cache.cache_x ) * arc_cache.cache_y,
                                   false );
 
-    apply_light_source( p, LIGHT_SOURCE_LOCAL );
+    apply_light_source( opt.p, LIGHT_SOURCE_LOCAL );
 
     // Normalize (should work with negative values too)
-    const units::angle wangle = wideangle / 2.0;
+    const units::angle wangle = opt.wideangle / 2.0;
 
-    units::angle nangle = fmod( angle, 360_degrees );
+    units::angle nangle = fmod( opt.angle, 360_degrees );
 
     tripoint_bub_ms end;
-    int range = LIGHT_RANGE( luminance );
-    calc_ray_end( nangle, range, p, end );
-    apply_light_ray( lit, p, end, luminance );
+    auto range = LIGHT_RANGE( opt.luminance );
+    calc_ray_end( nangle, range, opt.p, end );
+    apply_light_ray( {
+        .lit = lit,
+        .s = opt.p,
+        .e = end,
+        .luminance = opt.luminance,
+        .color_rgb = opt.color_rgb,
+    } );
 
     tripoint_bub_ms test;
-    calc_ray_end( wangle + nangle, range, p, test );
+    calc_ray_end( wangle + nangle, range, opt.p, test );
 
     const float wdist = hypot( end.x() - test.x(), end.y() - test.y() );
     if( wdist <= 0.5 ) {
@@ -2725,49 +3108,97 @@ void map::apply_light_arc( const tripoint_bub_ms &p, units::angle angle, float l
     // NOLINTNEXTLINE(clang-analyzer-security.FloatLoopCounter)
     for( units::angle ao = wstep; ao <= wangle; ao += wstep ) {
         if( trigdist ) {
-            double fdist = ( ao * M_PI_2 ) / wangle;
+            auto fdist = ( ao * M_PI_2 ) / wangle;
             end.x() = static_cast<int>(
-                          p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle + ao ) );
+                          opt.p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle + ao ) );
             end.y() = static_cast<int>(
-                          p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle + ao ) );
-            apply_light_ray( lit, p, end, luminance );
+                          opt.p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle + ao ) );
+            apply_light_ray( {
+                .lit = lit,
+                .s = opt.p,
+                .e = end,
+                .luminance = opt.luminance,
+                .color_rgb = opt.color_rgb,
+            } );
 
             end.x() = static_cast<int>(
-                          p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle - ao ) );
+                          opt.p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle - ao ) );
             end.y() = static_cast<int>(
-                          p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle - ao ) );
-            apply_light_ray( lit, p, end, luminance );
+                          opt.p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle - ao ) );
+            apply_light_ray( {
+                .lit = lit,
+                .s = opt.p,
+                .e = end,
+                .luminance = opt.luminance,
+                .color_rgb = opt.color_rgb,
+            } );
         } else {
-            calc_ray_end( nangle + ao, range, p, end );
-            apply_light_ray( lit, p, end, luminance );
-            calc_ray_end( nangle - ao, range, p, end );
-            apply_light_ray( lit, p, end, luminance );
+            calc_ray_end( nangle + ao, range, opt.p, end );
+            apply_light_ray( {
+                .lit = lit,
+                .s = opt.p,
+                .e = end,
+                .luminance = opt.luminance,
+                .color_rgb = opt.color_rgb,
+            } );
+            calc_ray_end( nangle - ao, range, opt.p, end );
+            apply_light_ray( {
+                .lit = lit,
+                .s = opt.p,
+                .e = end,
+                .luminance = opt.luminance,
+                .color_rgb = opt.color_rgb,
+            } );
         }
+    }
+    if( opt.color_rgb != 0u ) {
+        apply_cpu_colored_light_3d( *this, {
+            .source = opt.p,
+            .luminance = opt.luminance,
+            .color_rgb = opt.color_rgb,
+            .dir_x = static_cast<float>( units::cos( opt.angle ) ),
+            .dir_y = static_cast<float>( units::sin( opt.angle ) ),
+            .cone_cos = static_cast<float>( units::cos( opt.wideangle / 2.0 ) ),
+            .directional = true,
+            .skip_zlev = opt.p.z(),
+        } );
     }
 }
 
 void map::apply_light_ray( std::vector<bool> &lit,
                            const tripoint_bub_ms &s, const tripoint_bub_ms &e, float luminance )
 {
-    point_bub_ms a( std::abs( e.x() - s.x() ) * 2, std::abs( e.y() - s.y() ) * 2 );
-    point_bub_ms d( ( s.x() < e.x() ) ? 1 : -1, ( s.y() < e.y() ) ? 1 : -1 );
-    auto p = s.xy();
+    apply_light_ray( {
+        .lit = lit,
+        .s = s,
+        .e = e,
+        .luminance = luminance,
+    } );
+}
+
+auto map::apply_light_ray( const apply_light_ray_options &opt ) -> void
+{
+    auto a = point_bub_ms( std::abs( opt.e.x() - opt.s.x() ) * 2,
+                           std::abs( opt.e.y() - opt.s.y() ) * 2 );
+    auto d = point_bub_ms( ( opt.s.x() < opt.e.x() ) ? 1 : -1,
+                           ( opt.s.y() < opt.e.y() ) ? 1 : -1 );
+    auto p = opt.s.xy();
 
     // TODO: Invert that z comparison when it's sane
-    if( s.z() != e.z() || ( s.x() == e.x() && s.y() == e.y() ) ) {
+    if( opt.s.z() != opt.e.z() || ( opt.s.x() == opt.e.x() && opt.s.y() == opt.e.y() ) ) {
         return;
     }
 
-    auto &cache_ref = get_cache( s.z() );
+    auto &cache_ref = get_cache( opt.s.z() );
     auto *lm_data          = cache_ref.lm.data();
     auto *trans_data       = cache_ref.transparency_cache.data();
     const int sx = cache_ref.cache_x;
     const int sy = cache_ref.cache_y;
 
-    float distance = 1.0;
-    float transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
-    const float scaling_factor = static_cast<float>( rl_dist( s, e ) ) /
-                                 static_cast<float>( square_dist( s, e ) );
+    auto distance = 1.0f;
+    auto transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
+    const float scaling_factor = static_cast<float>( rl_dist( opt.s, opt.e ) ) /
+                                 static_cast<float>( square_dist( opt.s, opt.e ) );
     // TODO: [lightmap] Pull out the common code here rather than duplication
     if( a.x() > a.y() ) {
         int t = a.y() - ( a.x() / 2 );
@@ -2783,13 +3214,16 @@ void map::apply_light_ray( std::vector<bool> &lit,
             // TODO: clamp coordinates to map bounds before this method is called.
             if( p.x() >= 0 && p.y() >= 0 && p.x() < sx && p.y() < sy ) {
                 const int idx = p.x() * sy + p.y();
-                float current_transparency = trans_data[idx];
-                bool is_opaque = ( current_transparency == LIGHT_TRANSPARENCY_SOLID );
-                if( !lit[idx] ) {
+                auto current_transparency = trans_data[idx];
+                auto is_opaque = current_transparency == LIGHT_TRANSPARENCY_SOLID;
+                if( !opt.lit[idx] ) {
                     // Multiple rays will pass through the same squares so we need to record that
-                    lit[idx] = true;
-                    float lm_val = luminance / ( fastexp( transparency * distance ) * distance );
+                    opt.lit[idx] = true;
+                    auto lm_val = opt.luminance / ( fastexp( transparency * distance ) * distance );
                     lm_data[idx] = std::max( lm_data[idx], lm_val );
+                    if( colored_lighting && opt.color_rgb != 0u ) {
+                        write_colored_light_cache( cache_ref, idx, lm_val, opt.color_rgb );
+                    }
                 }
                 if( is_opaque ) {
                     break;
@@ -2801,7 +3235,7 @@ void map::apply_light_ray( std::vector<bool> &lit,
             }
 
             distance += scaling_factor;
-        } while( !( p.x() == e.x() && p.y() == e.y() ) );
+        } while( !( p.x() == opt.e.x() && p.y() == opt.e.y() ) );
     } else {
         int t = a.x() - ( a.y() / 2 );
         do {
@@ -2815,13 +3249,16 @@ void map::apply_light_ray( std::vector<bool> &lit,
 
             if( p.x() >= 0 && p.y() >= 0 && p.x() < sx && p.y() < sy ) {
                 const int idx = p.x() * sy + p.y();
-                float current_transparency = trans_data[idx];
-                bool is_opaque = ( current_transparency == LIGHT_TRANSPARENCY_SOLID );
-                if( !lit[idx] ) {
+                auto current_transparency = trans_data[idx];
+                auto is_opaque = current_transparency == LIGHT_TRANSPARENCY_SOLID;
+                if( !opt.lit[idx] ) {
                     // Multiple rays will pass through the same squares so we need to record that
-                    lit[idx] = true;
-                    float lm_val = luminance / ( fastexp( transparency * distance ) * distance );
+                    opt.lit[idx] = true;
+                    auto lm_val = opt.luminance / ( fastexp( transparency * distance ) * distance );
                     lm_data[idx] = std::max( lm_data[idx], lm_val );
+                    if( colored_lighting && opt.color_rgb != 0u ) {
+                        write_colored_light_cache( cache_ref, idx, lm_val, opt.color_rgb );
+                    }
                 }
                 if( is_opaque ) {
                     break;
@@ -2833,6 +3270,6 @@ void map::apply_light_ray( std::vector<bool> &lit,
             }
 
             distance += scaling_factor;
-        } while( !( p.x() == e.x() && p.y() == e.y() ) );
+        } while( !( p.x() == opt.e.x() && p.y() == opt.e.y() ) );
     }
 }
