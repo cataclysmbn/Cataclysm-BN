@@ -2588,7 +2588,7 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             std::vector<item *> locations;
             std::vector<int> counts;
 
-            for( auto entry_ptr : map_column.get_all_entries()) {
+            for( auto entry_ptr : map_column.get_all_entries() ) {
                 int count = 0;
                 int chosen_count = entry_ptr->chosen_count;
                 for( size_t i = 0; i < entry_ptr->locations.size() && count < chosen_count &&
@@ -2626,7 +2626,7 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             }
         }
 
-        if( no_items && (input.action == "WIELD" || input.action == "WEAR")) {
+        if( no_items && ( input.action == "WIELD" || input.action == "WEAR" ) ) {
             return std::vector<pickup::pick_drop_selection>();
         }
     }
