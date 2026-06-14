@@ -1893,15 +1893,11 @@ void emp_blast( const tripoint_bub_ms &p )
         return;
     }
 
-    auto sight = std::optional<bool> {};
-    auto player_sees = [&]() -> bool {
-        if( sight ) { return *sight; }
-        sight = u.sees( p );
-        return *sight;
-    };
+    const auto needs_sight = console || card_reader || mon_ptr != nullptr;
+    const bool sight = needs_sight && u.sees( p );
 
     if( console ) {
-        if( player_sees() ) {
+        if( sight ) {
             add_msg( _( "The %s is rendered non-functional!" ), here.tername( p ) );
         }
         here.ter_set( p, t_console_broken );
@@ -1911,13 +1907,13 @@ void emp_blast( const tripoint_bub_ms &p )
     if( card_reader ) {
         const int rn = rng( 1, 100 );
         if( rn > 92 || rn < 40 ) {
-            if( player_sees() ) {
+            if( sight ) {
                 add_msg( _( "The card reader is rendered non-functional." ) );
             }
             here.ter_set( p, t_card_reader_broken );
         }
         if( rn > 80 ) {
-            if( player_sees() ) {
+            if( sight ) {
                 add_msg( _( "The nearby doors slide open!" ) );
             }
             using namespace std::views;
@@ -1931,7 +1927,7 @@ void emp_blast( const tripoint_bub_ms &p )
             }
         }
         if( rn >= 40 && rn <= 80 ) {
-            if( player_sees() ) {
+            if( sight ) {
                 add_msg( _( "Nothing happens." ) );
             }
         }
@@ -1954,7 +1950,7 @@ void emp_blast( const tripoint_bub_ms &p )
                     break;
             }
             if( !mon_item_id.is_empty() && deact_chance != 0 && one_in( deact_chance ) ) {
-                if( player_sees() ) {
+                if( sight ) {
                     add_msg( _( "The %s beeps erratically and deactivates!" ), critter.name() );
                 }
                 here.add_item_or_charges( p, critter.to_item() );
@@ -1965,7 +1961,7 @@ void emp_blast( const tripoint_bub_ms &p )
                 }
                 g->remove_zombie( critter );
             } else {
-                if( player_sees() ) {
+                if( sight ) {
                     add_msg( _( "The EMP blast fries the %s!" ), critter.name() );
                 }
                 int dam = dice( 10, 10 );
@@ -1977,13 +1973,13 @@ void emp_blast( const tripoint_bub_ms &p )
             }
         } else if( critter.has_flag( MF_ELECTRIC_FIELD ) ) {
             if( !critter.has_effect( effect_emp ) ) {
-                if( player_sees() ) {
+                if( sight ) {
                     add_msg( m_good, _( "The %s's electrical field momentarily goes out!" ), critter.name() );
                 }
                 critter.add_effect( effect_emp, 3_minutes );
             } else if( critter.has_effect( effect_emp ) ) {
                 int dam = dice( 3, 5 );
-                if( player_sees() ) {
+                if( sight ) {
                     add_msg( m_good, _( "The %s's disabled electrical field reverses polarity!" ),
                              critter.name() );
                     add_msg( m_good, _( "It takes %d damage." ), dam );
@@ -1992,7 +1988,7 @@ void emp_blast( const tripoint_bub_ms &p )
                 critter.apply_damage( nullptr, bodypart_id( "torso" ), dam );
                 critter.check_dead_state();
             }
-        } else if( player_sees() ) {
+        } else if( sight ) {
             add_msg( _( "The %s is unaffected by the EMP blast." ), critter.name() );
         }
     }
