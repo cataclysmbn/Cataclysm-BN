@@ -46,7 +46,11 @@
           { "id": [ "hellfire_launcher", "overlay_wielded_hellfire_launcher" ], "fg": 38 },
           { "id": [ "hellfire_heat", "overlay_wielded_hellfire_heat" ], "fg": 39 },
           { "id": [ "hellfire_ninja", "overlay_wielded_hellfire_ninja" ], "fg": 40 },
-          { "id": "vp_hellfire_turret", "fg": 41 }
+          { "id": "vp_hellfire_turret", "fg": 41 },
+          { "id": "tac_fullhelmet", "fg": 42 },
+          { "id": "overlay_worn_tac_fullhelmet", "fg": 43 },
+          { "id": "tac_helmet", "fg": 44 },
+          { "id": "overlay_worn_tac_helmet", "fg": 45 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
