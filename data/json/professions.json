@@ -744,7 +744,13 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "flintlock_pouch_reenactor",
-    "entries": [ { "item": "flintlock_ammo", "charges": 20 } ]
+    "entries": [ { "item": "flintlock_ammo", "charges": 29 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "flintlock_pouch_pirate",
+    "entries": [ { "item": "flintlock_ammo", "charges": 24 } ]
   },
   {
     "type": "item_group",
@@ -781,7 +787,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "flintlock_pouch_skyfarer",
-    "entries": [ { "item": "36navy", "charges": 16 } ]
+    "entries": [ { "item": "36navy", "charges": 19 } ]
   },
   {
     "type": "item_group",
@@ -824,6 +830,12 @@
     "subtype": "collection",
     "id": "quiver_monster_hunter_2",
     "entries": [ { "item": "arrow_stinger", "charges": 20 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "bandolier_shuriken_ninja",
+    "entries": [ { "item": "shuriken", "count": 12 } ]
   },
   {
     "type": "item_group",
@@ -1810,8 +1822,7 @@
         "entries": [
           { "item": "cutlass", "custom-flags": [ "auto_wield" ] },
           { "item": "baldric_holster", "contents-group": "pistols_pirate" },
-          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 4 }
+          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_pirate" }
         ]
       }
     },
@@ -6016,7 +6027,6 @@
         "entries": [
           { "item": "rifle_flintlock", "ammo-item": "flintlock_ammo", "charges": 1, "contents-item": "shoulder_strap" },
           { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 9 },
           { "item": "hatchet", "container-item": "axe_ring" },
           { "item": "vinegar", "container-item": "bottle_plastic_small" },
           { "item": "lamp_oil", "container-item": "bottle_plastic_small" }
@@ -6081,7 +6091,6 @@
         "entries": [
           { "item": "rifle_flintlock", "ammo-item": "flintlock_ammo", "charges": 1, "contents-item": "shoulder_strap" },
           { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 9 },
           { "item": "hatchet", "container-item": "axe_ring" },
           { "item": "vinegar", "container-item": "bottle_plastic_small" },
           { "item": "lamp_oil", "container-item": "bottle_plastic_small" }
@@ -6120,7 +6129,10 @@
         ],
         "entries": [
           { "item": "tanto_inferior", "container-item": "bootsheath" },
-          { "item": "shuriken", "count": 12 },
+          {
+            "item": "bandolier_knife",
+            "contents-group": "bandolier_shuriken_ninja"
+          },
           { "item": "katana_inferior", "custom-flags": [ "auto_wield" ] }
         ]
       },
@@ -6159,8 +6171,7 @@
         "entries": [
           { "item": "cutlass_inferior", "custom-flags": [ "auto_wield" ] },
           { "item": "baldric_holster", "contents-group": "pistols_pirate" },
-          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 4 }
+          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_pirate" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -6200,8 +6211,7 @@
         "entries": [
           { "item": "cutlass_inferior", "custom-flags": [ "auto_wield" ] },
           { "item": "baldric_holster", "contents-group": "pistols_pirate" },
-          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 4 }
+          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_pirate" }
         ]
       },
       "male": [ "boxer_shorts" ],
