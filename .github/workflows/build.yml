@@ -153,9 +153,7 @@ jobs:
           name: translations
           path: .
 
-      - name: Setup Deno (registry mod bundling)
-        if: inputs.bundle-registry-mods
-        uses: denoland/setup-deno@v2
+      - uses: denoland/setup-deno@v2
         with: { cache: true }
 
       - name: Create VERSION.TXT
@@ -170,13 +168,7 @@ jobs:
 
       - name: Bundle registry mods
         if: inputs.bundle-registry-mods
-        shell: bash
-        run: |
-          if [ "${{ matrix.sound }}" = "false" ]; then
-            deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts --exclude-package-type soundpack
-          else
-            deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts
-          fi
+        run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ format('{0}', matrix.sound) == 'false' && '--exclude-package-type soundpack' || '' }}
 
       - name: Bundle CDDA tilesets
         if: matrix.tiles == true && inputs.bundle-tilesets
@@ -392,11 +384,6 @@ jobs:
           configurePreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
-
-      - name: Setup Deno (Lua docs)
-        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
-        uses: denoland/setup-deno@v2
-        with: { cache: true }
 
       - name: Setup EmmyLua checker
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
