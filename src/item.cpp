@@ -110,6 +110,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "utils/string_to_int.h"
 #include "units_energy.h"
 #include "units_utility.h"
 #include "value_ptr.h"
@@ -10961,8 +10962,10 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         if( !self->has_var( "ethereal" ) ) {
             return detached_ptr<item>();
         }
-        self->set_var( "ethereal", std::stoi( self->get_var( "ethereal" ) ) - 1 );
-        const bool processed = std::stoi( self->get_var( "ethereal" ) ) <= 0;
+        const auto ethereal_counter = string_utils::string_to_int( self->get_var( "ethereal" ) ).value_or(
+                                          0 ) - 1;
+        self->set_var( "ethereal", ethereal_counter );
+        const bool processed = ethereal_counter <= 0;
         if( processed && carrier != nullptr ) {
             carrier->add_msg_if_player( _( "Your %s disappears!" ), self->tname() );
         }

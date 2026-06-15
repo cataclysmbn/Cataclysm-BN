@@ -1391,9 +1391,9 @@ bool Character::burn_fuel( bionic &bio, bool start )
             } else if( is_perpetual_fuel ) {
                 current_fuel_stock = 1;
             } else if( is_cable_powered ) {
-                current_fuel_stock = std::stoi( get_value( "rem_" + fuel.str() ) );
+                current_fuel_stock = get_value_as_int( "rem_" + fuel.str() ).value_or( 0 );
             } else {
-                current_fuel_stock = std::stoi( get_value( fuel.str() ) );
+                current_fuel_stock = get_value_as_int( fuel.str() ).value_or( 0 );
             }
 
             if( !bio.has_flag( flag_SAFE_FUEL_OFF ) &&
@@ -1780,11 +1780,7 @@ void Character::process_bionic( bionic &bio )
         std::vector<itype_id> fuel_available = get_fuel_available( bio.id );
         if( bio.id->is_remote_fueled ) {
             const itype_id rem_fuel = find_remote_fuel();
-            const std::string rem_amount = get_value( "rem_" + rem_fuel.str() );
-            int rem_fuel_stock = 0;
-            if( !rem_amount.empty() ) {
-                rem_fuel_stock = std::stoi( rem_amount );
-            }
+            const auto rem_fuel_stock = get_value_as_int( "rem_" + rem_fuel.str() ).value_or( 0 );
             if( !rem_fuel.is_empty() && ( rem_fuel_stock > 0 || rem_fuel->has_flag( flag_PERPETUAL ) ) ) {
                 fuel_available.emplace_back( rem_fuel );
             }

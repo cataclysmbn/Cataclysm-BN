@@ -3,6 +3,7 @@
 #include <climits>
 #include <cstddef>
 #include <map>
+#include <optional>
 #include <set>
 #include <unordered_map>
 #include <vector>
@@ -570,6 +571,7 @@ class Creature
         void set_value( const std::string &key, const std::string &value );
         void remove_value( const std::string &key );
         std::string get_value( const std::string &key ) const;
+        auto get_value_as_int( const std::string &key ) const -> std::optional<int>;
         auto get_values_map() const -> const std::unordered_map<std::string, std::string> &;
 
         virtual units::mass get_weight() const = 0;

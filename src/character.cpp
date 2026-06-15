@@ -2426,19 +2426,12 @@ std::vector<itype_id> Character::get_fuel_available( const bionic_id &bio ) cons
 
 int Character::get_fuel_type_available( const itype_id &fuel ) const
 {
-    int amount_stored = 0;
-    if( !get_value( fuel.str() ).empty() ) {
-        amount_stored = std::stoi( get_value( fuel.str() ) );
-    }
-    return amount_stored;
+    return get_value_as_int( fuel.str() ).value_or( 0 );
 }
 
 int Character::get_fuel_capacity( const itype_id &fuel ) const
 {
-    int amount_stored = 0;
-    if( !get_value( fuel.str() ).empty() ) {
-        amount_stored = std::stoi( get_value( fuel.str() ) );
-    }
+    const auto amount_stored = get_value_as_int( fuel.str() ).value_or( 0 );
     int capacity = 0;
     for( const bionic &i : get_bionic_collection() ) {
         const bionic_id &bid = i.id;
@@ -2483,7 +2476,7 @@ void Character::update_fuel_storage( const itype_id &fuel )
     if( bids.empty() ) {
         return;
     }
-    int amount_fuel_loaded = std::stoi( get_value( fuel.str() ) );
+    auto amount_fuel_loaded = get_value_as_int( fuel.str() ).value_or( 0 );
     std::vector<bionic_id> loaded_bio;
 
     // Sort bionic in order of decreasing capacity

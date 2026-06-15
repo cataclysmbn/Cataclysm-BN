@@ -1287,8 +1287,7 @@ void Character::suffer_from_radiation()
     }
     // Reactor override increases power output but irradiates you faster
     if( has_active_bionic( bio_reactoroverride ) ) {
-        const auto stored_plutonium = get_value( itype_plut_cell.str() );
-        const auto current_fuel_stock = stored_plutonium.empty() ? 0 : std::stoi( stored_plutonium );
+        const auto current_fuel_stock = get_value_as_int( itype_plut_cell.str() ).value_or( 0 );
         if( current_fuel_stock <= 0 ) {
             add_msg_player_or_npc( m_info,
                                    _( "Your %s runs out of fuel and turn off." ),
