@@ -138,6 +138,7 @@ class mapbuffer_abs_tile_view
         auto get_trap_t() const -> const trap &;
         auto get_field() const -> const field &;
         auto get_items() const -> const location_vector<item> &;
+        auto get_furn_vars() const -> const data_vars::data_set &;
         auto get_radiation() const -> int;
         auto get_lum() const -> std::uint8_t;
         auto move_cost_ter_furn() const -> int;
@@ -294,6 +295,9 @@ class mapbuffer
         auto update_active_npc_pos( const npc &guy, const tripoint_abs_ms &new_pos ) -> bool;
         auto remove_active_npc( const npc &guy ) -> void;
         auto find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_fast<npc>;
+        auto creature_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const
+        -> const Creature *;
+        auto has_creature_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const -> bool;
         auto has_loaded_vehicle( const vehicle *veh ) const -> bool;
         auto unregister_vehicle( vehicle *veh ) -> void;
         auto refresh_vehicle_footprint( vehicle *veh ) -> void;

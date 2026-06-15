@@ -729,7 +729,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                 cur_g += is_sharp ? this->settings.sharp_terrain_cost : 0.0;
 
                 if( care_about_mobs && !std::isinf( cur_g ) ) {
-                    cur_g += g->critter_at( cur_point_with_z, true ) != nullptr ?
+                    cur_g += buffer.has_creature_at( cur_point_with_z, true ) ?
                              this->settings.mob_presence_penalty :
                              0.0;
                 }

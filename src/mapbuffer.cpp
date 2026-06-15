@@ -35,6 +35,7 @@
 #include "mapdata.h"
 #include "map_iterator.h"
 #include "map_mutation_hooks.h"
+#include "monster.h"
 #include "npc.h"
 #include "overmapbuffer.h"
 #include "output.h"
@@ -239,6 +240,11 @@ auto mapbuffer_abs_tile_view::get_field() const -> const field &
 auto mapbuffer_abs_tile_view::get_items() const -> const location_vector<item> &
 {
     return sm_->get_items( local_ );
+}
+
+auto mapbuffer_abs_tile_view::get_furn_vars() const -> const data_vars::data_set &
+{
+    return sm_->get_furn_vars( local_ );
 }
 
 auto mapbuffer_abs_tile_view::get_radiation() const -> int
@@ -906,6 +912,30 @@ auto mapbuffer::find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_
         }
     }
     return nullptr;
+}
+
+auto mapbuffer::creature_at( const tripoint_abs_ms &p, const bool allow_hallucination ) const
+-> const Creature *
+{
+    if( const auto mon_ptr = creature_tracker_.find( p ) ) {
+        if( allow_hallucination || !mon_ptr->is_hallucination() ) {
+            return mon_ptr.get();
+        }
+        return nullptr;
+    }
+    if( g != nullptr && dimension_id_ == g->get_current_dimension_id() && g->u.abs_pos() == p ) {
+        return &g->u;
+    }
+    if( const auto guy = find_active_npc( p ) ) {
+        return guy.get();
+    }
+    return nullptr;
+}
+
+auto mapbuffer::has_creature_at( const tripoint_abs_ms &p, const bool allow_hallucination ) const
+-> bool
+{
+    return creature_at( p, allow_hallucination ) != nullptr;
 }
 
 auto mapbuffer::add_active_npc( const shared_ptr_fast<npc> &guy ) -> bool

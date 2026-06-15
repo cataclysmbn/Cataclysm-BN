@@ -547,8 +547,8 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
                             // Warning: really expensive, needs a cache
                             const auto below = p + tripoint_rel_ms::below();
                             if( buffer.valid_move( p, below, { .flying = true, .zlevels = has_zlevels() } ) ) {
-                                const auto below_terrain = buffer.get_ter( below );
-                                if( below_terrain && !below_terrain->obj().has_flag( TFLAG_NO_FLOOR ) ) {
+                                const auto below_tile = buffer.get_abs_tile( below );
+                                if( below_tile && !below_tile->get_ter_t().has_flag( TFLAG_NO_FLOOR ) ) {
                                     // Otherwise this would have been a huge fall
                                     auto &layer = pf.get_layer( p.z() - 1 );
                                     // From cur, not p, because we won't be walking on air
