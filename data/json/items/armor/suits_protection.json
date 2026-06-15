@@ -836,6 +836,7 @@
     "coverage": 95,
     "material": [ "carbon_fiber" ],
     "extend": { "flags": [ "ALLOWS_TAIL" ] },
+    "looks_like": "armor_plarmor",
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
