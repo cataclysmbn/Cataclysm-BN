@@ -6,36 +6,36 @@
     "object": {
       "fill_ter": "t_floor",
       "rows": [
-        "..MMppMMMGsssMMMppMM....",
-        "..MCsssCssssssCsssCM....",
-        "...ssssssssssssssss.....",
+        "..%%!!%%%p```%%%!!%%....",
+        "..%µ```µ``````µ```µ%....",
+        "...````````````````.....",
         "..##o#o###+###o##o##....",
-        "..#1    |  a|5  6  #....",
+        "..#α    |  Y|δ  ε  #....",
         "..#     |  I|      #....",
         "..#     |  I|      #....",
         "..#     +  ||||  ||#....",
-        "..#|+||||   8      #....",
-        "..#O O|>+       7  o....",
+        "..#|+||||   η      #....",
+        "..#D D|>+       ζ  o....",
         "..#||||||          o....",
-        "..#4               #....",
+        "..#γ               #....",
         "..o     |  |||||####....",
-        "..#     |  y| tT#^......",
-        "..o     |   +  To.......",
-        "..#     |   |j  #.......",
+        "..#     |  y| tB#^......",
+        "..o     |   +  Bo.......",
+        "..#     |   |S  #.......",
         "..#|+|||||+||||+#.......",
-        "..#J   K|2    |w#.......",
-        "..#J L K|     ||#.......",
-        "..on L i|     |O#.......",
-        "..#J   K|     + #.......",
-        "..#lJJ a|     |O#.......",
+        "..#1   6|β    |w#.......",
+        "..#2 J 7|     ||#.......",
+        "..o5 J O|     |D#.......",
+        "..#3   4|     + #.......",
+        "..#F Y y|     |D#.......",
         "..##o#+###o######.......",
-        "...ssssss..............."
+        "...``````..............."
       ],
-      "palettes": [ "house_w_foundation_palette" ],
-      "terrain": { "#": "t_adobe_brick_wall" },
+      "palettes": [ "standard_domestic_palette", "standard_domestic_landscaping_palette" ],
+      "terrain": { "#": "t_adobe_brick_wall", "µ": "t_column" },
       "nested": {
-        "1": { "chunks": [ [ "bedroom_4x4_adult_1_N", 20 ] ] },
-        "2": {
+        "α": { "chunks": [ [ "bedroom_4x4_adult_1_N", 20 ] ] },
+        "β": {
           "chunks": [
             [ "bedroom_5x5_adult_S_1", 50 ],
             [ "bedroom_5x5_adult_W_1", 50 ],
@@ -45,8 +45,8 @@
             [ "bedroom_5x5_adult_W_2", 50 ]
           ]
         },
-        "4": { "chunks": [ [ "diningroom_5x5_N_S", 50 ], [ "diningroom_5x5_E_W", 50 ] ] },
-        "5": {
+        "γ": { "chunks": [ [ "diningroom_5x5_N_S", 50 ], [ "diningroom_5x5_E_W", 50 ] ] },
+        "δ": {
           "chunks": [
             [ "bonus_room_2x2_1", 50 ],
             [ "bonus_room_2x2_2", 50 ],
@@ -55,7 +55,7 @@
             [ "bonus_room_3x3_2", 50 ]
           ]
         },
-        "6": {
+        "ε": {
           "chunks": [
             [ "bonus_room_3x3_4", 50 ],
             [ "bonus_room_3x3_N_6", 50 ],
@@ -64,8 +64,8 @@
             [ "bonus_room_3x3_E_8", 50 ]
           ]
         },
-        "7": { "chunks": [ [ "bonus_room_3x3_S_5", 50 ], [ "bonus_room_3x3_E_5", 50 ] ] },
-        "8": { "chunks": [ [ "bonus_room_2x2_1", 50 ], [ "bonus_room_2x2_2", 50 ] ] }
+        "ζ": { "chunks": [ [ "bonus_room_3x3_S_5", 50 ], [ "bonus_room_3x3_E_5", 50 ] ] },
+        "η": { "chunks": [ [ "bonus_room_2x2_1", 50 ], [ "bonus_room_2x2_2", 50 ] ] }
       },
       "place_nested": [
         {
