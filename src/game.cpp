@@ -5829,7 +5829,7 @@ auto game::terrain_los_blocks_sight_between( const tripoint_bub_ms &from,
     }
 }
 
-auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache *cache ) -> void
+void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache *cache )
 {
     ZoneScopedN( "game::monmove" );
     const auto activity_skip_ai = mode == monster_activity_ai_mode::activity_skip &&
@@ -5850,7 +5850,8 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     }
 
     auto use_activity_cache = cache != nullptr && cache->valid &&
-                              cache->monster_count == static_cast<int>( critter_tracker->size() );
+                              cache->monster_count == static_cast<int>(
+                              critter_tracker->size() );
     if( cache != nullptr && cache->valid && !use_activity_cache ) {
         cache->valid = false;
     }
@@ -5972,7 +5973,8 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             if( activity_ai_paused->contains( critter ) ) {
                 continue;
             }
-            critter->lod_tier = static_cast<int8_t>( std::min<int>( 2, real_lod_tier + 1 ) );
+            critter->lod_tier = static_cast<int8_t>(
+                                std::min<int>( 2, real_lod_tier + 1 ) );
         }
         TracyPlot( "Activity Skip Monster AI Paused",
                    static_cast<int64_t>( activity_ai_paused->size() ) );
@@ -6064,8 +6066,9 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             // Critters in impassable tiles get pushed away, unless it's not impassable for them
             if( !critter.is_dead() && m.impassable( critter.bub_pos() ) &&
                 !critter.can_move_to( critter.bub_pos() ) ) {
-                std::string msg = string_format( "%s can't move to its location!  %s  %s", critter.name(),
-                                                 critter.bub_pos().to_string(), m.tername( critter.bub_pos() ) );
+                std::string msg = string_format( "%s can't move to its location! %s %s", critter.name(),
+                                                 critter.bub_pos().to_string(),
+                                                 m.tername( critter.bub_pos() ) );
                 dbg( DL::Error ) << msg;
                 add_msg( m_debug, msg );
                 bool okay = false;
@@ -6131,7 +6134,8 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                 if( !critter->is_dead() &&
                     !activity_ai_paused->contains( critter ) &&
                     critter->is_simulated() ) {
-                    eligible_order.emplace_back( rl_dist( critter->bub_pos(), player_pos ), critter );
+                    eligible_order.emplace_back( rl_dist(
+                        critter->bub_pos(), player_pos ), critter );
                 }
             }
             std::ranges::sort( eligible_order );

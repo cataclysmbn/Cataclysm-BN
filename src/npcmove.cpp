@@ -2499,7 +2499,8 @@ bool npc::enough_time_to_reload( const item &gun ) const
     if( target->is_player() || target->is_npc() ) {
         auto &c = dynamic_cast<const Character &>( *target );
         if( sees( c ) && c.primary_weapon().is_gun() && rltime > 200 &&
-            c.primary_weapon().gun_range( true ) > distance + turns_til_reloaded / target_speed ) {
+            c.primary_weapon().gun_range( true ) >
+                distance + turns_til_reloaded / target_speed ) {
             // Don't take longer than 2 turns if player has a gun
             return false;
         }
@@ -2548,7 +2549,8 @@ bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool for
 
     if( !path.empty() ) {
         const auto &last = path[path.size() - 1];
-        if( last == p && ( path[0].z() != bub_pos().z() || rl_dist( path[0], bub_pos() ) <= 1 ) ) {
+        if( last == p && ( path[0].z() != bub_pos().z()
+            || rl_dist( path[0], bub_pos() ) <= 1 ) ) {
             // Our path already leads to that point, no need to recalculate
             return true;
         }
@@ -2863,7 +2865,8 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
         }
 
         // Close doors behind self (if you can)
-        if( ( rules.has_flag( ally_rule::close_doors ) && is_player_ally() ) && !is_hallucination() ) {
+        if( ( rules.has_flag( ally_rule::close_doors ) &&
+              is_player_ally() ) && !is_hallucination() ) {
             doors::close_door( here, *this, old_pos );
         }
 
@@ -3168,7 +3171,8 @@ void npc::find_item()
         for( auto &elem : followers ) {
             if( !it.is_owned_by( *this, true ) && ( player_character.sees( bub_pos() ) ||
                                                     player_character.sees( wanted_item_pos ) ||
-                                                    elem->sees( bub_pos() ) || elem->sees( wanted_item_pos ) ) ) {
+                                                    elem->sees( bub_pos() ) ||
+                                                    elem->sees( wanted_item_pos ) ) ) {
                 return;
             }
         }
@@ -3192,9 +3196,11 @@ void npc::find_item()
     // Harvest item doesn't exist, so we'll be checking by its name
     std::string wanted_name;
     const auto consider_terrain =
-    [ this, whitelisting, volume_allowed, &wanted, &wanted_name, &here ]( const tripoint_bub_ms & p ) {
+    [ this, whitelisting, volume_allowed, &wanted,
+            &wanted_name, &here ]( const tripoint_bub_ms & p ) {
         // We only want to pick plants when there are no items to pick
-        if( !whitelisting || wanted != nullptr || !wanted_name.empty() || volume_allowed < 250_ml ) {
+        if( !whitelisting || wanted != nullptr ||
+            !wanted_name.empty() || volume_allowed < 250_ml ) {
             return;
         }
 
