@@ -301,7 +301,7 @@ void defense_game::init_map()
     player_character.setpos( tripoint_bub_ms( SEEX, SEEY, z ) );
 
     monster *const generator = g->place_critter_around(
-                               mtype_id( "mon_generator" ), g->u.bub_pos(), 2 );
+                                   mtype_id( "mon_generator" ), g->u.bub_pos(), 2 );
     assert( generator );
     generator->friendly = -1;
 }

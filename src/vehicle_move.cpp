@@ -429,8 +429,8 @@ auto vehicle::collision( const vehicle_collision_options &options ) -> bool
         // First check current level, then the one below if current had no collisions
         // Bash floors on the current one, but not on the one below.
         if( collision( vehicle_collision_options{
-            .colls = colls,
-            .dp = tripoint_rel_ms::zero(),
+        .colls = colls,
+        .dp = tripoint_rel_ms::zero(),
             .just_detect = just_detect,
             .bash_floor = true,
             .ignored_critter = ignored_critter,

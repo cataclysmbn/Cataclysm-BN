@@ -72,16 +72,14 @@ struct pathfinding_tile {
     optional_vpart_position vehicle_part;
     int move_cost = 0;
 
-    auto vehicle_ptr() const -> vehicle *
-    {
+    auto vehicle_ptr() const -> vehicle * {
         if( !vehicle_part ) {
             return nullptr;
         }
         return &vehicle_part->vehicle();
     }
 
-    auto part_index() const -> int
-    {
+    auto part_index() const -> int {
         if( !vehicle_part ) {
             return -1;
         }
@@ -432,20 +430,20 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 // We won't do vehicle checks for simplicity
 
                 const ZLevelChange going_to_below = ZLevelChange{
-                                   .from = abs_pos, .to = below_us_abs, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                    .from = abs_pos, .to = below_us_abs, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
                 const ZLevelChange reach_from_below = ZLevelChange{
-                                   .from = below_us_abs, .to = abs_pos, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                    .from = below_us_abs, .to = abs_pos, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
 
                 // This is stored separately from other changes because it requires a different type of processing
                 Pathfinding::get_z_cache_open_air( z ).emplace( abs_pos.xy(), Pathfinding::ZLevelChangeOpenAirPair{
-                                                                .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
+                    .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
 
                 auto &lower_level = Pathfinding::get_z_cache_open_air( z - 1 );
                 if( lower_level.contains( abs_pos.xy() ) ) {
                     lower_level[abs_pos.xy()].reach_from_above = going_to_below;
                 } else {
                     lower_level.emplace( abs_pos.xy(), Pathfinding::ZLevelChangeOpenAirPair{
-                                         .reach_from_below = std::nullopt, .reach_from_above = going_to_below } );
+                        .reach_from_below = std::nullopt, .reach_from_above = going_to_below } );
                 }
             } else if( cur_ter.has_flag( TFLAG_GOES_UP ) ) {
                 // Stair bullshitery
@@ -460,7 +458,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 const auto above_us_abs = abs_pos + tripoint_rel_ms::above();
                 for( const auto &maybe_stairs_abs : closest_points_first( above_us_abs, 10 ) ) {
                     const auto maybe_stairs_ter = buffer.get_ter( maybe_stairs_abs,
-                                                    pathfinding_lookup_options() );
+                                                  pathfinding_lookup_options() );
                     if( !maybe_stairs_ter ) {
                         continue;
                     }
@@ -488,7 +486,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 const auto below_us_abs = abs_pos + tripoint_rel_ms::below();
                 for( const tripoint_abs_ms &maybe_stairs_abs : closest_points_first( below_us_abs, 10 ) ) {
                     const auto maybe_stairs_ter = buffer.get_ter( maybe_stairs_abs,
-                                                    pathfinding_lookup_options() );
+                                                  pathfinding_lookup_options() );
                     if( !maybe_stairs_ter ) {
                         continue;
                     }
@@ -821,7 +819,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                         const bool door_opens_from_inside = terrain.has_flag( "OPENCLOSE_INSIDE" ) ||
                                                             furniture.has_flag( "OPENCLOSE_INSIDE" );
                         const bool is_cur_point_inside = !here.is_outside( abs_to_map_local( here,
-                                                           cur_point_with_z ) );
+                                                         cur_point_with_z ) );
                         const bool valid_to_open = door_opens_from_inside ? is_cur_point_inside : true;
                         if( valid_to_open ) {
                             obstacle_g = this->settings.door_open_cost;

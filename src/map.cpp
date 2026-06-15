@@ -3063,7 +3063,7 @@ bool map::valid_move( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
                       const bool bash, const bool flying, const bool via_ramp ) const
 {
     return MAPBUFFER_REGISTRY.get( bound_dimension_ ).valid_move(
-               map_local_to_abs( *this, from ), map_local_to_abs( *this, to ), {
+    map_local_to_abs( *this, from ), map_local_to_abs( *this, to ), {
         .bash = bash,
         .flying = flying,
         .via_ramp = via_ramp,

@@ -182,7 +182,7 @@ class mapbuffer
         auto passable( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<bool>;
         auto valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
-                         mapbuffer_valid_move_options options = {} ) -> bool;
+        mapbuffer_valid_move_options options = {} ) -> bool;
         auto climb_difficulty( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
         auto has_flag( const std::string &flag, const tripoint_abs_ms &p,

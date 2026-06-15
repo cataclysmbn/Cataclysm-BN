@@ -166,7 +166,7 @@ bool vertical_move_destination( const map &m, tripoint_abs_ms &t )
             t = p;
             return true;
         }
-            }
+    }
 
     return false;
 }
@@ -209,16 +209,14 @@ struct legacy_pathfinding_tile {
     optional_vpart_position vehicle_part;
     int move_cost = 0;
 
-    auto vehicle_ptr() const -> vehicle *
-    {
+    auto vehicle_ptr() const -> vehicle * {
         if( !vehicle_part ) {
             return nullptr;
         }
         return &vehicle_part->vehicle();
     }
 
-    auto part_index() const -> int
-    {
+    auto part_index() const -> int {
         if( !vehicle_part ) {
             return -1;
         }
@@ -227,7 +225,7 @@ struct legacy_pathfinding_tile {
 };
 
 auto get_legacy_pathfinding_tile( mapbuffer &buffer, const tripoint_abs_ms &p )
--> std::optional<legacy_pathfinding_tile>
+- > std::optional<legacy_pathfinding_tile>
 {
     const auto terrain = buffer.get_ter( p );
     const auto furniture = buffer.get_furn( p );
@@ -597,7 +595,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
         }
         if( cur.z() < max.z() && parent_terrain.has_flag( TFLAG_RAMP ) &&
             buffer.valid_move( cur, cur + tripoint_rel_ms::above(),
-                               { .flying = true, .zlevels = has_zlevels() } ) ) {
+        { .flying = true, .zlevels = has_zlevels() } ) ) {
             auto &layer = pf.get_layer( cur.z() + 1 );
             for( size_t it = 0; it < 8; it++ ) {
                 const tripoint_abs_ms above( cur.x() + x_offset[it], cur.y() + y_offset[it], cur.z() + 1 );
@@ -608,7 +606,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
         }
         if( cur.z() < max.z() && parent_terrain.has_flag( TFLAG_RAMP_UP ) &&
             buffer.valid_move( cur, cur + tripoint_rel_ms::above(),
-                               { .flying = true, .via_ramp = true, .zlevels = has_zlevels() } ) ) {
+        { .flying = true, .via_ramp = true, .zlevels = has_zlevels() } ) ) {
             auto &layer = pf.get_layer( cur.z() + 1 );
             for( size_t it = 0; it < 8; it++ ) {
                 const tripoint_abs_ms above( cur.x() + x_offset[it], cur.y() + y_offset[it], cur.z() + 1 );
@@ -619,7 +617,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
         }
         if( cur.z() > min.z() && parent_terrain.has_flag( TFLAG_RAMP_DOWN ) &&
             buffer.valid_move( cur, cur + tripoint_rel_ms::below(),
-                               { .flying = true, .via_ramp = true, .zlevels = has_zlevels() } ) ) {
+        { .flying = true, .via_ramp = true, .zlevels = has_zlevels() } ) ) {
             auto &layer = pf.get_layer( cur.z() - 1 );
             for( size_t it = 0; it < 8; it++ ) {
                 const tripoint_abs_ms below( cur.x() + x_offset[it], cur.y() + y_offset[it], cur.z() - 1 );

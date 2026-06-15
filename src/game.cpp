@@ -16945,7 +16945,7 @@ void avatar_moves( const avatar &u, const map &m, const tripoint_abs_ms &pos )
         mount_type = u.mounted_creature->type->id;
     }
     const auto terrain = MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ).get_ter( pos,
-                         { .mode = mapbuffer_lookup_mode::resident_only } ).value_or( t_null );
+    { .mode = mapbuffer_lookup_mode::resident_only } ).value_or( t_null );
     g->events().send<event_type::avatar_moves>( mount_type, terrain, u.get_movement_mode(),
             u.is_underwater(), pos.z() );
 }
