@@ -18,7 +18,7 @@
     "hit_you_effect": [
       { "id": "lightning_bolt", "hit_self": false, "once_in": 5, "message": "Mjolnir's lightning arcs out and pierces %2$s!" }
     ],
-    "values": [ { "value": "ARMOR_ELEC", "add": 90 } ]
+    "values": [ { "value": "ARMOR_ELECTRIC", "add": 90 } ]
   },
   {
     "id": "ench_gungnir",

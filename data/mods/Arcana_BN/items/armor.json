@@ -132,26 +132,7 @@
     "description": "A strange radiance permeating your body, adding to your defenses.",
     "color": "white",
     "relic_data": {
-      "passive_effects": [
-        {
-          "has": "WORN",
-          "condition": "ALWAYS",
-          "values": [
-            { "value": "ARMOR_ACID", "multiply": -0.25 },
-            { "value": "ARMOR_BASH", "multiply": -0.25 },
-            { "value": "ARMOR_BIO", "multiply": -0.25 },
-            { "value": "ARMOR_COLD", "multiply": -0.25 },
-            { "value": "ARMOR_LIGHT", "multiply": -0.25 },
-            { "value": "ARMOR_DARK", "multiply": -0.25 },
-            { "value": "ARMOR_PSI", "multiply": -0.25 },
-            { "value": "ARMOR_CUT", "multiply": -0.25 },
-            { "value": "ARMOR_ELEC", "multiply": -0.25 },
-            { "value": "ARMOR_HEAT", "multiply": -0.25 },
-            { "value": "ARMOR_STAB", "multiply": -0.25 },
-            { "value": "ARMOR_BULLET", "multiply": -0.25 }
-          ]
-        }
-      ]
+      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR", "multiply": -0.25 } ] } ]
     },
     "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
   },
