@@ -5749,7 +5749,7 @@ detached_ptr<item> map::i_rem( const tripoint_bub_ms &p, item *it )
     const auto abs_pos = map_local_to_abs( *this, p );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
         return get_mapbuffer().remove_item( abs_pos, it,
-                resident_item_lookup() );
+                                            resident_item_lookup() );
     }
 
     auto &items = current_submap->get_items( l );
@@ -6046,7 +6046,7 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
     const auto abs_pos = map_local_to_abs( *this, p );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
         get_mapbuffer().add_item( abs_pos, std::move( new_item ),
-                resident_item_lookup() );
+                                  resident_item_lookup() );
         return;
     }
 
@@ -6168,7 +6168,7 @@ void map::make_inactive( item &loc )
     const auto abs_pos = map_local_to_abs( *this, local_pos );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
         get_mapbuffer().make_item_inactive( abs_pos, loc,
-                resident_item_lookup() );
+                                            resident_item_lookup() );
         return;
     }
 

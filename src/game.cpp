@@ -7039,7 +7039,7 @@ T *game::critter_at( const tripoint_bub_ms &p, bool allow_hallucination )
     }
     if constexpr( wants_npc ) {
         if( const auto guy = MAPBUFFER_REGISTRY.get( current_dimension_id_ ).find_active_npc(
-                    bub_to_abs( p ) ) ) {
+                                 bub_to_abs( p ) ) ) {
             return dynamic_cast<T *>( guy.get() );
         }
     }

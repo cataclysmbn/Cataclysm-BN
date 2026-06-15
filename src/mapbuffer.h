@@ -156,7 +156,7 @@ class mapbuffer_abs_tile_with_vehicle_view
 {
     public:
         mapbuffer_abs_tile_with_vehicle_view( const mapbuffer_abs_tile_view &tile,
-                                             const optional_vpart_position &vehicle_part );
+                                              const optional_vpart_position &vehicle_part );
 
         explicit operator bool() const;
 
@@ -282,7 +282,7 @@ class mapbuffer
         auto get_abs_tile( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_tile_view>;
         auto get_abs_tile_with_vehicle( const tripoint_abs_ms &p,
-                                        mapbuffer_lookup_options options = {} )
+        mapbuffer_lookup_options options = {} )
         -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
         auto get_abs_submap_view( const tripoint_abs_sm &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_submap_view>;
@@ -672,9 +672,9 @@ class mapbuffer
         std::unordered_map<tripoint_abs_ms, shared_ptr_fast<npc>> active_npcs_by_location_;
         std::set<vehicle *> loaded_vehicles_;
         std::unordered_map<tripoint_abs_ms, std::vector<vehicle_footprint_entry>>
-        vehicle_footprint_by_location_;
+                vehicle_footprint_by_location_;
         std::unordered_map<const vehicle *, std::vector<tripoint_abs_ms>>
-        vehicle_footprint_locations_;
+                vehicle_footprint_locations_;
 
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.

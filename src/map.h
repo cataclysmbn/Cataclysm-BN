@@ -2702,8 +2702,8 @@ class map : public submap_load_listener
         dimension_id bound_dimension_;
 
     public:
-        auto get_mapbuffer() -> mapbuffer & { return MAPBUFFER_REGISTRY.get( bound_dimension_ ); }
-        auto get_mapbuffer() const -> mapbuffer & { return MAPBUFFER_REGISTRY.get( bound_dimension_ ); }
+        auto get_mapbuffer() -> mapbuffer& { return MAPBUFFER_REGISTRY.get( bound_dimension_ ); }
+        auto get_mapbuffer() const -> mapbuffer& { return MAPBUFFER_REGISTRY.get( bound_dimension_ ); }
         bool has_rope_at( tripoint_bub_ms pt ) const;
         std::pair<vehicle *, int> get_rope_at( const point_bub_ms &pt ) const;
 
