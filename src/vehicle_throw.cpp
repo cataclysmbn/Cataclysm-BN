@@ -13,6 +13,17 @@ auto strength_requirement( const vehicle &veh ) -> int
     return strength_requirement( veh.total_mass() );
 }
 
+auto strength_penalty( const creature_size thrower_size ) -> int
+{
+    return std::max( 0, static_cast<int>( creature_size::large ) -
+                     static_cast<int>( thrower_size ) ) * smaller_than_large_strength_penalty;
+}
+
+auto effective_throw_strength( const creature_size thrower_size, const int throw_strength ) -> int
+{
+    return std::max( 0, throw_strength - strength_penalty( thrower_size ) );
+}
+
 auto throw_range( const int throw_strength, const int strength_requirement ) -> int
 {
     if( throw_strength < strength_requirement ) {

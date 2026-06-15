@@ -98,6 +98,20 @@ TEST_CASE( "vehicle throw strength thresholds follow mass", "[throwing], [balanc
     CHECK( vehicle_throw::strength_requirement( 3000_kilogram ) == 30 );
 }
 
+TEST_CASE( "vehicle throw effective strength drops below large size", "[throwing], [balance]" )
+{
+    CHECK( vehicle_throw::strength_penalty( creature_size::huge ) == 0 );
+    CHECK( vehicle_throw::strength_penalty( creature_size::large ) == 0 );
+    CHECK( vehicle_throw::strength_penalty( creature_size::medium ) == 5 );
+    CHECK( vehicle_throw::strength_penalty( creature_size::small ) == 10 );
+    CHECK( vehicle_throw::strength_penalty( creature_size::tiny ) == 15 );
+
+    CHECK( vehicle_throw::effective_throw_strength( creature_size::large, 12 ) == 12 );
+    CHECK( vehicle_throw::effective_throw_strength( creature_size::medium, 12 ) == 7 );
+    CHECK( vehicle_throw::effective_throw_strength( creature_size::small, 12 ) == 2 );
+    CHECK( vehicle_throw::effective_throw_strength( creature_size::tiny, 12 ) == 0 );
+}
+
 TEST_CASE( "vehicle throw range grows slowly past the weight threshold", "[throwing], [balance]" )
 {
     CHECK( vehicle_throw::throw_range( 0, 1 ) == 0 );

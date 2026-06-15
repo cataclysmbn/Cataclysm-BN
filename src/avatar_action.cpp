@@ -96,14 +96,20 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
     }
 
     const auto shove_strength = character_funcs::get_lift_strength_with_helpers( you );
+    const auto effective_shove_strength = vehicle_throw::effective_throw_strength( you.get_size(),
+                                          shove_strength );
     const auto shove_strength_req = vehicle_throw::strength_requirement( veh );
-    if( shove_strength < shove_strength_req ) {
-        add_msg( m_bad, _( "You lack the strength to shove the %s." ), veh.name );
+    if( effective_shove_strength < shove_strength_req ) {
+        if( shove_strength >= shove_strength_req ) {
+            add_msg( m_bad, _( "You're too small to get enough leverage to shove the %s." ), veh.name );
+        } else {
+            add_msg( m_bad, _( "You lack the strength to shove the %s." ), veh.name );
+        }
         you.mod_moves( -100 );
         return true;
     }
 
-    const auto shove_range = vehicle_throw::throw_range( shove_strength, shove_strength_req );
+    const auto shove_range = vehicle_throw::throw_range( effective_shove_strength, shove_strength_req );
     const auto grabbed_part_pos = grabbed_vehicle_target->pos;
     const auto trajectory = target_handler::mode_throw_vehicle( you, grabbed_part_pos, shove_range );
     if( trajectory.empty() ) {
@@ -121,7 +127,8 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
     }
 
     const auto grabbed_part_index = static_cast<int>( grabbed_vehicle_target->vp.part_index() );
-    const auto shove_velocity = vehicle_throw::shove_velocity( shove_strength, shove_strength_req );
+    const auto shove_velocity = vehicle_throw::shove_velocity( effective_shove_strength,
+                                shove_strength_req );
     auto moved = false;
     for( const auto &target_pos : trajectory ) {
         if( !is_in_reality_bubble_bounds( target_pos ) ) {
