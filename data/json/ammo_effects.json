@@ -499,5 +499,1021 @@
     "id": "AMMO_HELLFIRE_HEAT",
     "type": "ammo_effect",
     "explosion": { "damage": 2000, "radius": 3 }
+  },
+  {
+    "id": "AMMO_66MM_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 300, "radius": 2 }
+  }
+]
+[
+  {
+    "id": "AE_NULL",
+    "type": "ammo_effect",
+    "aoe": {
+      "field_type": "fd_null",
+      "intensity_min": 0,
+      "intensity_max": 0,
+      "radius": 0,
+      "radius_z": 0,
+      "chance": 100,
+      "size": 0,
+      "check_passable": false,
+      "check_sees": false,
+      "check_sees_radius": 0
+    },
+    "explosion": {
+      "damage": 0,
+      "radius": 0,
+      "fire": false,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 0, "armor_multiplier": 3 }, "range": 0 }
+    },
+    "do_flashbang": false,
+    "do_emp_blast": false
+  },
+  {
+    "id": "magic",
+    "type": "ammo_effect",
+    "//": "Always hits torso."
+  },
+  {
+    "id": "THROWN",[
+  {
+    "id": "AE_NULL",
+    "type": "ammo_effect",
+    "aoe": {
+      "field_type": "fd_null",
+      "intensity_min": 0,
+      "intensity_max": 0,
+      "radius": 0,
+      "radius_z": 0,
+      "chance": 100,
+      "size": 0,
+      "check_passable": false,
+      "check_sees": false,
+      "check_sees_radius": 0
+    },
+    "explosion": {
+      "damage": 0,
+      "radius": 0,
+      "fire": false,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 0, "armor_multiplier": 3 }, "range": 0 }
+    },
+    "do_flashbang": false,
+    "do_emp_blast": false
+  },
+  {
+    "id": "magic",
+    "type": "ammo_effect",
+    "//": "Always hits torso."
+  },
+  {
+    "id": "THROWN",
+    "type": "ammo_effect",
+    "//": "Used to distinguish thrown ranged attacks."
+  },
+  {
+    "id": "FLAME",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 3 }
+  },
+  {
+    "id": "NAPALM",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 3 },
+    "explosion": { "damage": 5, "radius": 2, "fire": true }
+  },
+  {
+    "id": "NAPALM_BIG",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "radius": 3, "size": 4 },
+    "explosion": { "damage": 20, "radius": 5, "fire": true }
+  },
+  {
+    "id": "PYROPHORIC",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_incendiary", "intensity_min": 1, "intensity_max": 3, "radius": 7, "chance": 33 },
+    "explosion": { "damage": 20, "radius": 3 }
+  },
+  {
+    "id": "ACID_TRAIL",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_acid", "intensity_min": 1, "intensity_max": 3, "chance": 66 }
+  },
+  {
+    "id": "ACID_TRAIL_WEAK",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_acid", "intensity_min": 1, "intensity_max": 2, "chance": 33 }
+  },
+  {
+    "id": "ACIDBOMB",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_acid", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "TOXICGAS",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_toxic_gas", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "GAS_FUNGICIDAL",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fungicidal_gas", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "GAS_INSECTICIDAL",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_insecticidal_gas", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "SMOKE",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_smoke", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "SMOKE_BIG",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_smoke", "intensity_min": 3, "intensity_max": 3, "radius": 6 }
+  },
+  {
+    "id": "FLARE",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1 }
+  },
+  {
+    "id": "LIGHTNING",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_electricity", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "PLASMA",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_plasma", "intensity_min": 2, "intensity_max": 3, "chance": 50 },
+    "trail": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 2, "chance": 50 }
+  },
+  {
+    "id": "PLASMA_BUBBLE",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 3, "radius": 1, "chance": 10 }
+  },
+  {
+    "id": "EXPLOSIVE_HUGE",
+    "type": "ammo_effect",
+    "explosion": { "damage": 100, "radius": 8 }
+  },
+  {
+    "id": "EXPLOSIVE_BIG",
+    "type": "ammo_effect",
+    "explosion": { "damage": 70, "radius": 5 }
+  },
+  {
+    "id": "EXPLOSIVE",
+    "type": "ammo_effect",
+    "explosion": { "damage": 50, "radius": 3 }
+  },
+  {
+    "id": "EXPLOSIVE_SMALL",
+    "type": "ammo_effect",
+    "explosion": { "damage": 40, "radius": 2 }
+  },
+  {
+    "id": "EXPLOSIVE_TINY",
+    "type": "ammo_effect",
+    "explosion": { "damage": 20, "radius": 2 }
+  },
+  {
+    "id": "FRAG_BIG",
+    "type": "ammo_effect",
+    "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 100, "armor_multiplier": 2 }, "range": 7 } }
+  },
+  {
+    "id": "FRAG",
+    "type": "ammo_effect",
+    "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 2 }, "range": 5 } }
+  },
+  {
+    "id": "FRAG_SMALL",
+    "type": "ammo_effect",
+    "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 30, "armor_multiplier": 2.5 }, "range": 3 } }
+  },
+  {
+    "id": "EXPLOSIVE_PLUS_FRAG",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 50,
+      "radius": 3,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 2 }, "range": 5 }
+    }
+  },
+  {
+    "id": "EXPLOSIVE_BIG_PLUS_FRAG",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 70,
+      "radius": 5,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 2 }, "range": 5 }
+    }
+  },
+  {
+    "id": "MININUKE_MOD",
+    "type": "ammo_effect",
+    "aoe": {
+      "field_type": "fd_nuke_gas",
+      "intensity_min": 3,
+      "intensity_max": 3,
+      "radius": 24,
+      "size": 1,
+      "check_passable": true,
+      "check_sees": true,
+      "check_sees_radius": 3
+    },
+    "explosion": {
+      "damage": 3000,
+      "radius": 20,
+      "fragment": { "impact": { "damage_type": "heat", "amount": 3000, "armor_multiplier": 2 }, "range": 24 }
+    }
+  },
+  {
+    "id": "FLASHBANG",
+    "type": "ammo_effect",
+    "do_flashbang": true
+  },
+  {
+    "id": "EMP",
+    "type": "ammo_effect",
+    "do_emp_blast": true
+  },
+  {
+    "id": "TRAIL",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_smoke", "intensity_min": 1, "intensity_max": 2, "chance": 75 }
+  },
+  {
+    "id": "STREAM",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "STREAM_BIG",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_fire", "intensity_min": 2, "intensity_max": 2, "chance": 75 }
+  },
+  {
+    "id": "STREAM_GAS_FUNGICIDAL",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_fungicidal_gas", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "STREAM_GAS_INSECTICIDAL",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_insecticidal_gas", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "LIGHTNING",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_electricity", "intensity_min": 2, "intensity_max": 3 }
+  },
+  {
+    "id": "LASER",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_laser", "intensity_min": 2, "intensity_max": 2 }
+  },
+  {
+    "id": "DRAW_LASER_BEAM",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_laser", "intensity_min": 2, "intensity_max": 2 }
+  },
+  {
+    "id": "NO_PENETRATE_OBSTACLES",
+    "type": "ammo_effect",
+    "//": "Don't act penetrate obstacles such as fences or reinforced glass"
+  },
+  {
+    "id": "HEAVY_HIT",
+    "type": "ammo_effect",
+    "//": "Makes a slightly different, slightly louder sound on drop..."
+  },
+  {
+    "id": "NO_ITEM_DAMAGE",
+    "type": "ammo_effect",
+    "//": "Doesn't pulp corpses hit by the projectile (overkill corpse damage still applies)"
+  },
+  {
+    "id": "WIDE",
+    "type": "ammo_effect",
+    "//": "Does NOTHING at all.  TODO: Make it ignore skeleton smaller ranged size."
+  },
+  {
+    "id": "NOGIB",
+    "type": "ammo_effect",
+    "//": "Doesn't overkill."
+  },
+  {
+    "id": "SHOT",
+    "type": "ammo_effect",
+    "//": "Implied WIDE.  Doesn't do anything on its own."
+  },
+  {
+    "id": "COOKOFF",
+    "type": "ammo_effect",
+    "//": "Item flag that is an ammo effect for a misguided reason.  Makes ammo explode in fire."
+  },
+  {
+    "id": "INCENDIARY",
+    "type": "ammo_effect",
+    "//": "Causes fires to terrain and critters."
+  },
+  {
+    "id": "NEVER_MISFIRES",
+    "type": "ammo_effect",
+    "//": "Disables misfires."
+  },
+  {
+    "id": "ACT_ON_RANGED_HIT",
+    "type": "ammo_effect",
+    "//": "The item will be processed on the hit tile before (or instead) being dropped."
+  },
+  {
+    "id": "APPLY_SAP",
+    "type": "ammo_effect",
+    "//": "Adds sap effect."
+  },
+  {
+    "id": "BEANBAG",
+    "type": "ammo_effect",
+    "//": "Stuns weaker creatures."
+  },
+  {
+    "id": "BLINDS_EYES",
+    "type": "ammo_effect",
+    "//": "Blinds if hits eyes."
+  },
+  {
+    "id": "BOUNCE",
+    "type": "ammo_effect",
+    "//": "Bounces to one of visible critters within 4 tiles of hit tile, except for the shooter or critters who were targeted by a bounce this turn.  Order of bounces is unspecified, but not random.  Reuses projectile and so damage modifiers from being blocked by terrain."
+  },
+  {
+    "id": "BURST",
+    "type": "ammo_effect",
+    "//": "Thrown item destroyed on impact, but drops contents."
+  },
+  {
+    "id": "CUSTOM_EXPLOSION",
+    "type": "ammo_effect",
+    "//": "Copy explosion data from ammo."
+  },
+  {
+    "id": "DRAW_AS_LINE",
+    "type": "ammo_effect",
+    "//": "Drawn instantly, without animation."
+  },
+  {
+    "id": "IGNITE",
+    "type": "ammo_effect",
+    "//": "Ignites hit creatures."
+  },
+  {
+    "id": "JET",
+    "type": "ammo_effect",
+    "//": "Will continue going through passable tiles even if its damage is reduced to 0."
+  },
+  {
+    "id": "LARGE_BEANBAG",
+    "type": "ammo_effect",
+    "//": "Stuns a bit more than regular beanbag."
+  },
+  {
+    "id": "MUZZLE_SMOKE",
+    "type": "ammo_effect",
+    "//": "Produces smoke from shooter's tile."
+  },
+  {
+    "id": "NO_CRIT",
+    "type": "ammo_effect",
+    "//": "Can't crit. Can still graze."
+  },
+  {
+    "id": "NO_DAMAGE",
+    "type": "ammo_effect",
+    "//": "Does not actually deal damage; meant for ammo that applies effects."
+  },
+  {
+    "id": "NO_DAMAGE_SCALING",
+    "type": "ammo_effect",
+    "//": "Can't crit or graze, all hits have 100% damage modifier from accuracy."
+  },
+  {
+    "id": "NO_EMBED",
+    "type": "ammo_effect",
+    "//": "Can't be embedded in critters it hits."
+  },
+  {
+    "id": "NO_OVERSHOOT",
+    "type": "ammo_effect",
+    "//": "Trajectory doesn't extend past the target, even on miss."
+  },
+  {
+    "id": "NULL_SOURCE",
+    "type": "ammo_effect",
+    "//": "Origin is a fake critter, replace it with null instead of passing a pointer to it."
+  },
+  {
+    "id": "POISON",
+    "type": "ammo_effect",
+    "//": "Applies poison to hit critter, worse poison on a crit."
+  },
+  {
+    "id": "PARALYZEPOISON",
+    "type": "ammo_effect",
+    "//": "Applies paralyzing poison to hit critter."
+  },
+  {
+    "id": "SHATTER_SELF",
+    "type": "ammo_effect",
+    "//": "Thrown item destroyed on impact, but drops contents.  Makes noise."
+  },
+  {
+    "id": "TANGLE",
+    "type": "ammo_effect",
+    "//": "Applies tied effect and may be recovered after the critter breaks free."
+  },
+  {
+    "id": "NET_TANGLE",
+    "type": "ammo_effect",
+    "//": "Applies tied effect to all creatures in a radius with disposable nets."
+  },
+  {
+    "id": "WHIP",
+    "type": "ammo_effect",
+    "//": "Scares wildlife hit by it.  If user has 5+ melee, applies disarm on some reach attacks."
+  },
+  {
+    "id": "BLACKPOWDER",
+    "type": "ammo_effect",
+    "//": "Causes gunk to build up and increase chance to damage gun."
+  },
+  {
+    "id": "RECYCLED",
+    "type": "ammo_effect",
+    "//": "Nearly-immeasurable chance to fail to fire."
+  },
+  {
+    "id": "AMMO_50BMG_RAUFOSS",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 50,
+      "radius": 2,
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 70, "armor_multiplier": 1 }, "range": 5 }
+    }
+  },
+  {
+    "id": "AMMO_25MM_HEI",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 10,
+      "radius": 1,
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 5, "armor_multiplier": 1 }, "range": 2 }
+    }
+  },
+  {
+    "id": "AMMO_155MM_FRAG",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 100,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 400, "armor_multiplier": 3 }, "range": 10 },
+      "radius": 10
+    }
+  },
+  {
+    "id": "AMMO_M430A1_HEDP",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 80,
+      "radius": 1,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_multiplier": 1.3 }, "range": 7 }
+    }
+  },
+  {
+    "id": "AMMO_40x53_MAKESHIFT_HE",
+    "type": "ammo_effect",
+    "explosion": { "damage": 70, "radius": 6 }
+  },
+  {
+    "id": "AMMO_M433_HEDP",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 70,
+      "radius": 1,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_multiplier": 1.6 }, "range": 7 }
+    }
+  },
+  {
+    "id": "AMMO_40x46_MAKESHIFT_HE",
+    "type": "ammo_effect",
+    "explosion": { "damage": 60, "radius": 5 }
+  },
+  {
+    "id": "AMMO_84x246_HE",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 120,
+      "radius": 6,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 220, "armor_multiplier": 1 }, "range": 7 }
+    }
+  },
+  {
+    "id": "AMMO_84x246_HEDP",
+    "type": "ammo_effect",
+    "explosion": { "damage": 400, "radius": 1 }
+  },
+  {
+    "id": "AMMO_ATGM_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 600, "radius": 2 }
+  },
+  {
+    "id": "AMMO_HELLFIRE_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 2000, "radius": 3 }
+  },
+  {
+    "id": "AMMO_66MM_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 300, "radius": 2 }
+  }
+]
+
+    "type": "ammo_effect",
+    "//": "Used to distinguish thrown ranged attacks."
+  },
+  {
+    "id": "FLAME",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 3 }
+  },
+  {
+    "id": "NAPALM",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 3 },
+    "explosion": { "damage": 5, "radius": 2, "fire": true }
+  },
+  {
+    "id": "NAPALM_BIG",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "radius": 3, "size": 4 },
+    "explosion": { "damage": 20, "radius": 5, "fire": true }
+  },
+  {
+    "id": "PYROPHORIC",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_incendiary", "intensity_min": 1, "intensity_max": 3, "radius": 7, "chance": 33 },
+    "explosion": { "damage": 20, "radius": 3 }
+  },
+  {
+    "id": "ACID_TRAIL",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_acid", "intensity_min": 1, "intensity_max": 3, "chance": 66 }
+  },
+  {
+    "id": "ACID_TRAIL_WEAK",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_acid", "intensity_min": 1, "intensity_max": 2, "chance": 33 }
+  },
+  {
+    "id": "ACIDBOMB",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_acid", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "TOXICGAS",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_toxic_gas", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "GAS_FUNGICIDAL",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fungicidal_gas", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "GAS_INSECTICIDAL",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_insecticidal_gas", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "SMOKE",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_smoke", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "SMOKE_BIG",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_smoke", "intensity_min": 3, "intensity_max": 3, "radius": 6 }
+  },
+  {
+    "id": "FLARE",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1 }
+  },
+  {
+    "id": "LIGHTNING",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_electricity", "intensity_min": 3, "intensity_max": 3 }
+  },
+  {
+    "id": "PLASMA",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_plasma", "intensity_min": 2, "intensity_max": 3, "chance": 50 },
+    "trail": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 2, "chance": 50 }
+  },
+  {
+    "id": "PLASMA_BUBBLE",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 3, "radius": 1, "chance": 10 }
+  },
+  {
+    "id": "EXPLOSIVE_HUGE",
+    "type": "ammo_effect",
+    "explosion": { "damage": 100, "radius": 8 }
+  },
+  {
+    "id": "EXPLOSIVE_BIG",
+    "type": "ammo_effect",
+    "explosion": { "damage": 70, "radius": 5 }
+  },
+  {
+    "id": "EXPLOSIVE",
+    "type": "ammo_effect",
+    "explosion": { "damage": 50, "radius": 3 }
+  },
+  {
+    "id": "EXPLOSIVE_SMALL",
+    "type": "ammo_effect",
+    "explosion": { "damage": 40, "radius": 2 }
+  },
+  {
+    "id": "EXPLOSIVE_TINY",
+    "type": "ammo_effect",
+    "explosion": { "damage": 20, "radius": 2 }
+  },
+  {
+    "id": "FRAG_BIG",
+    "type": "ammo_effect",
+    "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 100, "armor_multiplier": 2 }, "range": 7 } }
+  },
+  {
+    "id": "FRAG",
+    "type": "ammo_effect",
+    "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 2 }, "range": 5 } }
+  },
+  {
+    "id": "FRAG_SMALL",
+    "type": "ammo_effect",
+    "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 30, "armor_multiplier": 2.5 }, "range": 3 } }
+  },
+  {
+    "id": "EXPLOSIVE_PLUS_FRAG",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 50,
+      "radius": 3,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 2 }, "range": 5 }
+    }
+  },
+  {
+    "id": "EXPLOSIVE_BIG_PLUS_FRAG",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 70,
+      "radius": 5,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 2 }, "range": 5 }
+    }
+  },
+  {
+    "id": "MININUKE_MOD",
+    "type": "ammo_effect",
+    "aoe": {
+      "field_type": "fd_nuke_gas",
+      "intensity_min": 3,
+      "intensity_max": 3,
+      "radius": 24,
+      "size": 1,
+      "check_passable": true,
+      "check_sees": true,
+      "check_sees_radius": 3
+    },
+    "explosion": {
+      "damage": 3000,
+      "radius": 20,
+      "fragment": { "impact": { "damage_type": "heat", "amount": 3000, "armor_multiplier": 2 }, "range": 24 }
+    }
+  },
+  {
+    "id": "FLASHBANG",
+    "type": "ammo_effect",
+    "do_flashbang": true
+  },
+  {
+    "id": "EMP",
+    "type": "ammo_effect",
+    "do_emp_blast": true
+  },
+  {
+    "id": "TRAIL",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_smoke", "intensity_min": 1, "intensity_max": 2, "chance": 75 }
+  },
+  {
+    "id": "STREAM",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "STREAM_BIG",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_fire", "intensity_min": 2, "intensity_max": 2, "chance": 75 }
+  },
+  {
+    "id": "STREAM_GAS_FUNGICIDAL",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_fungicidal_gas", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "STREAM_GAS_INSECTICIDAL",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_insecticidal_gas", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "LIGHTNING",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_electricity", "intensity_min": 2, "intensity_max": 3 }
+  },
+  {
+    "id": "LASER",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_laser", "intensity_min": 2, "intensity_max": 2 }
+  },
+  {
+    "id": "DRAW_LASER_BEAM",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_laser", "intensity_min": 2, "intensity_max": 2 }
+  },
+  {
+    "id": "NO_PENETRATE_OBSTACLES",
+    "type": "ammo_effect",
+    "//": "Don't act penetrate obstacles such as fences or reinforced glass"
+  },
+  {
+    "id": "HEAVY_HIT",
+    "type": "ammo_effect",
+    "//": "Makes a slightly different, slightly louder sound on drop..."
+  },
+  {
+    "id": "NO_ITEM_DAMAGE",
+    "type": "ammo_effect",
+    "//": "Doesn't pulp corpses hit by the projectile (overkill corpse damage still applies)"
+  },
+  {
+    "id": "WIDE",
+    "type": "ammo_effect",
+    "//": "Does NOTHING at all.  TODO: Make it ignore skeleton smaller ranged size."
+  },
+  {
+    "id": "NOGIB",
+    "type": "ammo_effect",
+    "//": "Doesn't overkill."
+  },
+  {
+    "id": "SHOT",
+    "type": "ammo_effect",
+    "//": "Implied WIDE.  Doesn't do anything on its own."
+  },
+  {
+    "id": "COOKOFF",
+    "type": "ammo_effect",
+    "//": "Item flag that is an ammo effect for a misguided reason.  Makes ammo explode in fire."
+  },
+  {
+    "id": "INCENDIARY",
+    "type": "ammo_effect",
+    "//": "Causes fires to terrain and critters."
+  },
+  {
+    "id": "NEVER_MISFIRES",
+    "type": "ammo_effect",
+    "//": "Disables misfires."
+  },
+  {
+    "id": "ACT_ON_RANGED_HIT",
+    "type": "ammo_effect",
+    "//": "The item will be processed on the hit tile before (or instead) being dropped."
+  },
+  {
+    "id": "APPLY_SAP",
+    "type": "ammo_effect",
+    "//": "Adds sap effect."
+  },
+  {
+    "id": "BEANBAG",
+    "type": "ammo_effect",
+    "//": "Stuns weaker creatures."
+  },
+  {
+    "id": "BLINDS_EYES",
+    "type": "ammo_effect",
+    "//": "Blinds if hits eyes."
+  },
+  {
+    "id": "BOUNCE",
+    "type": "ammo_effect",
+    "//": "Bounces to one of visible critters within 4 tiles of hit tile, except for the shooter or critters who were targeted by a bounce this turn.  Order of bounces is unspecified, but not random.  Reuses projectile and so damage modifiers from being blocked by terrain."
+  },
+  {
+    "id": "BURST",
+    "type": "ammo_effect",
+    "//": "Thrown item destroyed on impact, but drops contents."
+  },
+  {
+    "id": "CUSTOM_EXPLOSION",
+    "type": "ammo_effect",
+    "//": "Copy explosion data from ammo."
+  },
+  {
+    "id": "DRAW_AS_LINE",
+    "type": "ammo_effect",
+    "//": "Drawn instantly, without animation."
+  },
+  {
+    "id": "IGNITE",
+    "type": "ammo_effect",
+    "//": "Ignites hit creatures."
+  },
+  {
+    "id": "JET",
+    "type": "ammo_effect",
+    "//": "Will continue going through passable tiles even if its damage is reduced to 0."
+  },
+  {
+    "id": "LARGE_BEANBAG",
+    "type": "ammo_effect",
+    "//": "Stuns a bit more than regular beanbag."
+  },
+  {
+    "id": "MUZZLE_SMOKE",
+    "type": "ammo_effect",
+    "//": "Produces smoke from shooter's tile."
+  },
+  {
+    "id": "NO_CRIT",
+    "type": "ammo_effect",
+    "//": "Can't crit. Can still graze."
+  },
+  {
+    "id": "NO_DAMAGE",
+    "type": "ammo_effect",
+    "//": "Does not actually deal damage; meant for ammo that applies effects."
+  },
+  {
+    "id": "NO_DAMAGE_SCALING",
+    "type": "ammo_effect",
+    "//": "Can't crit or graze, all hits have 100% damage modifier from accuracy."
+  },
+  {
+    "id": "NO_EMBED",
+    "type": "ammo_effect",
+    "//": "Can't be embedded in critters it hits."
+  },
+  {
+    "id": "NO_OVERSHOOT",
+    "type": "ammo_effect",
+    "//": "Trajectory doesn't extend past the target, even on miss."
+  },
+  {
+    "id": "NULL_SOURCE",
+    "type": "ammo_effect",
+    "//": "Origin is a fake critter, replace it with null instead of passing a pointer to it."
+  },
+  {
+    "id": "POISON",
+    "type": "ammo_effect",
+    "//": "Applies poison to hit critter, worse poison on a crit."
+  },
+  {
+    "id": "PARALYZEPOISON",
+    "type": "ammo_effect",
+    "//": "Applies paralyzing poison to hit critter."
+  },
+  {
+    "id": "SHATTER_SELF",
+    "type": "ammo_effect",
+    "//": "Thrown item destroyed on impact, but drops contents.  Makes noise."
+  },
+  {
+    "id": "TANGLE",
+    "type": "ammo_effect",
+    "//": "Applies tied effect and may be recovered after the critter breaks free."
+  },
+  {
+    "id": "NET_TANGLE",
+    "type": "ammo_effect",
+    "//": "Applies tied effect to all creatures in a radius with disposable nets."
+  },
+  {
+    "id": "WHIP",
+    "type": "ammo_effect",
+    "//": "Scares wildlife hit by it.  If user has 5+ melee, applies disarm on some reach attacks."
+  },
+  {
+    "id": "BLACKPOWDER",
+    "type": "ammo_effect",
+    "//": "Causes gunk to build up and increase chance to damage gun."
+  },
+  {
+    "id": "RECYCLED",
+    "type": "ammo_effect",
+    "//": "Nearly-immeasurable chance to fail to fire."
+  },
+  {
+    "id": "AMMO_50BMG_RAUFOSS",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 50,
+      "radius": 2,
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 70, "armor_multiplier": 1 }, "range": 5 }
+    }
+  },
+  {
+    "id": "AMMO_25MM_HEI",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 10,
+      "radius": 1,
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 5, "armor_multiplier": 1 }, "range": 2 }
+    }
+  },
+  {
+    "id": "AMMO_155MM_FRAG",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 100,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 400, "armor_multiplier": 3 }, "range": 10 },
+      "radius": 10
+    }
+  },
+  {
+    "id": "AMMO_M430A1_HEDP",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 80,
+      "radius": 1,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_multiplier": 1.3 }, "range": 7 }
+    }
+  },
+  {
+    "id": "AMMO_40x53_MAKESHIFT_HE",
+    "type": "ammo_effect",
+    "explosion": { "damage": 70, "radius": 6 }
+  },
+  {
+    "id": "AMMO_M433_HEDP",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 70,
+      "radius": 1,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_multiplier": 1.6 }, "range": 7 }
+    }
+  },
+  {
+    "id": "AMMO_40x46_MAKESHIFT_HE",
+    "type": "ammo_effect",
+    "explosion": { "damage": 60, "radius": 5 }
+  },
+  {
+    "id": "AMMO_84x246_HE",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 120,
+      "radius": 6,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 220, "armor_multiplier": 1 }, "range": 7 }
+    }
+  },
+  {
+    "id": "AMMO_84x246_HEDP",
+    "type": "ammo_effect",
+    "explosion": { "damage": 400, "radius": 1 }
+  },
+  {
+    "id": "AMMO_ATGM_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 600, "radius": 2 }
+  },
+  {
+    "id": "AMMO_HELLFIRE_HEAT",
+    "type": "ammo_effect",
+    "explosion": { "damage": 2000, "radius": 3 }
   }
 ]
