@@ -431,18 +431,21 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 };
                 // We won't do vehicle checks for simplicity
 
-                const ZLevelChange going_to_below = ZLevelChange{ .from = abs_pos, .to = below_us_abs, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
-                const ZLevelChange reach_from_below = ZLevelChange{ .from = below_us_abs, .to = abs_pos, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                const ZLevelChange going_to_below = ZLevelChange{
+                                   .from = abs_pos, .to = below_us_abs, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                const ZLevelChange reach_from_below = ZLevelChange{
+                                   .from = below_us_abs, .to = abs_pos, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
 
                 // This is stored separately from other changes because it requires a different type of processing
-                Pathfinding::get_z_cache_open_air( z ).emplace( abs_pos.xy(),
-                        Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
+                Pathfinding::get_z_cache_open_air( z ).emplace( abs_pos.xy(), Pathfinding::ZLevelChangeOpenAirPair{
+                                                                .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
 
                 auto &lower_level = Pathfinding::get_z_cache_open_air( z - 1 );
                 if( lower_level.contains( abs_pos.xy() ) ) {
                     lower_level[abs_pos.xy()].reach_from_above = going_to_below;
                 } else {
-                    lower_level.emplace( abs_pos.xy(),  Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = std::nullopt, .reach_from_above = going_to_below } );
+                    lower_level.emplace( abs_pos.xy(), Pathfinding::ZLevelChangeOpenAirPair{
+                                         .reach_from_below = std::nullopt, .reach_from_above = going_to_below } );
                 }
             } else if( cur_ter.has_flag( TFLAG_GOES_UP ) ) {
                 // Stair bullshitery
@@ -463,8 +466,10 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     }
 
                     if( maybe_stairs_ter->obj().has_flag( TFLAG_GOES_DOWN ) ) {
-                        const ZLevelChange stairs_up = ZLevelChange{ .from = abs_pos, .to = maybe_stairs_abs, .type = Pathfinding::ZLevelChange::Type::STAIRS };
-                        const ZLevelChange stairs_down = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos, .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const ZLevelChange stairs_up = ZLevelChange{ .from = abs_pos, .to = maybe_stairs_abs,
+                                                                     .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const ZLevelChange stairs_down = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos,
+                                                                       .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         Pathfinding::get_z_cache( z ).push_back( stairs_down );
                         Pathfinding::get_z_cache( z + 1 ).push_back( stairs_up );
                         break;
@@ -489,8 +494,10 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     }
 
                     if( maybe_stairs_ter->obj().has_flag( TFLAG_GOES_UP ) ) {
-                        const ZLevelChange stairs_down = ZLevelChange{ .from = abs_pos, .to = maybe_stairs_abs, .type = Pathfinding::ZLevelChange::Type::STAIRS };
-                        const ZLevelChange stairs_up = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos, .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const ZLevelChange stairs_down = ZLevelChange{ .from = abs_pos, .to = maybe_stairs_abs,
+                                                                       .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const ZLevelChange stairs_up = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos,
+                                                                     .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         Pathfinding::get_z_cache( z ).push_back( stairs_up );
                         Pathfinding::get_z_cache( z - 1 ).push_back( stairs_down );
                         break;
@@ -503,7 +510,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     continue;
                 }
 
-                const ZLevelChange ramp_up = ZLevelChange{ .from = abs_pos, .to = abs_pos + tripoint_rel_ms::above(), .type = Pathfinding::ZLevelChange::Type::RAMP };
+                const ZLevelChange ramp_up = ZLevelChange{ .from = abs_pos, .to = abs_pos + tripoint_rel_ms::above(),
+                                                           .type = Pathfinding::ZLevelChange::Type::RAMP };
                 Pathfinding::get_z_cache( z + 1 ).push_back( ramp_up );
             } else if( cur_ter.has_flag( TFLAG_RAMP_DOWN ) ) {
                 const auto below_us = cur + tripoint_below;
@@ -512,7 +520,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     continue;
                 }
 
-                const ZLevelChange ramp_down = ZLevelChange{ .from = abs_pos, .to = abs_pos + tripoint_rel_ms::below(), .type = Pathfinding::ZLevelChange::Type::RAMP };
+                const ZLevelChange ramp_down = ZLevelChange{ .from = abs_pos, .to = abs_pos + tripoint_rel_ms::below(),
+                                                             .type = Pathfinding::ZLevelChange::Type::RAMP };
                 Pathfinding::get_z_cache( z - 1 ).push_back( ramp_down );
             }
         }
