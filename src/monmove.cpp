@@ -1633,34 +1633,40 @@ void monster::execute_action( const monster_action_t &action )
     const auto try_repath = [&]() -> bool {
         if( !resolved_action.needs_repath ||
             is_wandering() ||
-            lod_tier > 1 ) {
+            lod_tier > 1 )
+        {
             return false;
         }
         route_attempted = true;
         ZoneScopedN( "mon_execute_repath" );
         std::vector<tripoint_bub_ms> maybe_new_path;
-        if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
+        if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) )
+        {
             ZoneScopedN( "mon_execute_route_legacy" );
             auto pf_settings = get_legacy_pathfinding_settings();
             maybe_new_path = g->m.route( bub_pos(), goal, pf_settings,
                                          get_legacy_path_avoid() );
-        } else {
+        } else
+        {
             ZoneScopedN( "mon_execute_route_pf" );
             auto pair = get_pathfinding_pair();
             maybe_new_path = Pathfinding::route( bub_pos(), goal,
                                                  pair.first, pair.second );
         }
         assert( maybe_new_path.empty() ? true : maybe_new_path.back() == this->goal );
-        if( maybe_new_path.empty() ) {
+        if( maybe_new_path.empty() )
+        {
             path.clear();
             return false;
         }
         path = maybe_new_path;
         auto path_it = path.cbegin();
-        while( path_it != path.cend() && *path_it == bub_pos() ) {
+        while( path_it != path.cend() && *path_it == bub_pos() )
+        {
             ++path_it;
         }
-        if( path_it == path.cend() ) {
+        if( path_it == path.cend() )
+        {
             return false;
         }
         {
@@ -2031,20 +2037,24 @@ tripoint_bub_ms monster::scent_move() const
     const auto ignore_player_scent = !fleeing && is_pet() && has_flag( MF_PET_WONT_FOLLOW );
     const auto can_smell_scent_type = [&]( const scenttype_id & type_scent ) -> bool {
         auto right_scent = false;
-        if( !tracked_scents.empty() ) {
+        if( !tracked_scents.empty() )
+        {
             right_scent = tracked_scents.contains( type_scent );
         }
-        if( !type_scent.is_empty() ) {
+        if( !type_scent.is_empty() )
+        {
             const auto &receptive_species = type_scent->receptive_species;
             right_scent = right_scent || std::ranges::any_of( type->species,
             [&]( const species_id & species ) {
                 return receptive_species.contains( species );
             } );
         }
-        if( !ignored_scents.empty() && ignored_scents.contains( type_scent ) ) {
+        if( !ignored_scents.empty() && ignored_scents.contains( type_scent ) )
+        {
             right_scent = false;
         }
-        if( ignore_player_scent && type_scent == player_scent ) {
+        if( ignore_player_scent && type_scent == player_scent )
+        {
             right_scent = false;
         }
         return right_scent;

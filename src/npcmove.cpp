@@ -2500,7 +2500,7 @@ bool npc::enough_time_to_reload( const item &gun ) const
         auto &c = dynamic_cast<const Character &>( *target );
         if( sees( c ) && c.primary_weapon().is_gun() && rltime > 200 &&
             c.primary_weapon().gun_range( true ) >
-                distance + turns_til_reloaded / target_speed ) {
+            distance + turns_til_reloaded / target_speed ) {
             // Don't take longer than 2 turns if player has a gun
             return false;
         }
@@ -2550,7 +2550,7 @@ bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool for
     if( !path.empty() ) {
         const auto &last = path[path.size() - 1];
         if( last == p && ( path[0].z() != bub_pos().z()
-            || rl_dist( path[0], bub_pos() ) <= 1 ) ) {
+                           || rl_dist( path[0], bub_pos() ) <= 1 ) ) {
             // Our path already leads to that point, no need to recalculate
             return true;
         }
@@ -2560,7 +2560,8 @@ bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool for
         ZoneScopedN( "npc_update_path_route" );
         return get_map().route( bub_pos(), p, get_legacy_pathfinding_settings( no_bashing ),
                                 get_legacy_path_avoid() );
-    }();
+    }
+    ();
     if( new_path.empty() ) {
         if( !ai_cache.sound_alerts.empty() ) {
             ai_cache.sound_alerts.erase( ai_cache.sound_alerts.begin() );
@@ -3196,8 +3197,8 @@ void npc::find_item()
     // Harvest item doesn't exist, so we'll be checking by its name
     std::string wanted_name;
     const auto consider_terrain =
-    [ this, whitelisting, volume_allowed, &wanted,
-            &wanted_name, &here ]( const tripoint_bub_ms & p ) {
+        [ this, whitelisting, volume_allowed, &wanted,
+          &wanted_name, &here ]( const tripoint_bub_ms & p ) {
         // We only want to pick plants when there are no items to pick
         if( !whitelisting || wanted != nullptr ||
             !wanted_name.empty() || volume_allowed < 250_ml ) {

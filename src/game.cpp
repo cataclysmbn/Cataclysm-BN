@@ -5798,7 +5798,7 @@ void game::world_tick()
 
 static auto turn_los_blocker_key( const tripoint_bub_ms &from,
                                   const tripoint_bub_ms &to )
-    -> std::pair<tripoint_bub_ms, tripoint_bub_ms>
+- > std::pair<tripoint_bub_ms, tripoint_bub_ms>
 {
     return from < to ? std::make_pair( from, to ) : std::make_pair( to, from );
 }
@@ -5851,7 +5851,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
 
     auto use_activity_cache = cache != nullptr && cache->valid &&
                               cache->monster_count == static_cast<int>(
-                              critter_tracker->size() );
+                                  critter_tracker->size() );
     if( cache != nullptr && cache->valid && !use_activity_cache ) {
         cache->valid = false;
     }
@@ -5974,7 +5974,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                 continue;
             }
             critter->lod_tier = static_cast<int8_t>(
-                                std::min<int>( 2, real_lod_tier + 1 ) );
+                                    std::min<int>( 2, real_lod_tier + 1 ) );
         }
         TracyPlot( "Activity Skip Monster AI Paused",
                    static_cast<int64_t>( activity_ai_paused->size() ) );
@@ -6135,7 +6135,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                     !activity_ai_paused->contains( critter ) &&
                     critter->is_simulated() ) {
                     eligible_order.emplace_back( rl_dist(
-                        critter->bub_pos(), player_pos ), critter );
+                                                     critter->bub_pos(), player_pos ), critter );
                 }
             }
             std::ranges::sort( eligible_order );
@@ -6328,7 +6328,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     auto monmove_action_attack = int64_t{ 0 };
     auto monmove_action_other = int64_t{ 0 };
     const auto record_monmove_action = [&]( const monster & critter,
-    const monster_action_t & action ) {
+    const monster_action_t &action ) {
         if( action.needs_repath ) {
             ++monmove_action_repath_requests;
             if( action.kind == monster_action_kind::idle ) {
