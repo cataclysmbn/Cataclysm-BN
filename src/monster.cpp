@@ -1048,7 +1048,7 @@ std::string monster::extended_description() const
     std::string_view if_empty = "" ) {
         std::string flag_descriptions = enumerate_as_string( flags_names.begin(),
         flags_names.end(), [this]( const flag_description & fd ) {
-            return type->has_flag( fd.first ) ? fd.second : "";
+            return type->has_flag( fd.first ) || monster_flags.contains( fd.first ) ? fd.second : "";
         } );
         if( !flag_descriptions.empty() ) {
             ss += string_format( format, flag_descriptions ) + "\n";
@@ -1146,6 +1146,9 @@ std::string monster::extended_description() const
         if( dodge_ratio > 1.0f ) {
             ss += string_format( _( "It is %s more agile than normal." ), training_adj( dodge_ratio ) ) + "\n";
         }
+    }
+    if (monster_flags.contains(m_flag::MF_COMBAT_MOUNT)) {
+        ss += _( "It has been trained for combat and will not be scared easily.\n");
     }
 
     ss += "--\n";
