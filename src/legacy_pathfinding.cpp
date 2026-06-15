@@ -224,8 +224,9 @@ struct legacy_pathfinding_tile {
     }
 };
 
-auto get_legacy_pathfinding_tile( mapbuffer &buffer, const tripoint_abs_ms &p )
-- > std::optional<legacy_pathfinding_tile>
+// Astyle can snort my carpet dust
+auto get_legacy_pathfinding_tile( mapbuffer &buffer,
+const tripoint_abs_ms &p ) -> std::optional<legacy_pathfinding_tile> // *NOPAD*
 {
     const auto terrain = buffer.get_ter( p );
     const auto furniture = buffer.get_furn( p );
