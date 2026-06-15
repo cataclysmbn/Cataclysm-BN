@@ -2164,7 +2164,6 @@ void inventory_multiselector::set_chosen_count( inventory_entry &entry, size_t c
     }
 }
 
-[[clang::optnone]]
 std::vector<inventory_entry *> inventory_multiselector::get_selection_column_items() const
 {
     auto func = []( const inventory_entry & e ) { return e.is_item();};
@@ -2589,7 +2588,7 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             std::vector<item *> locations;
             std::vector<int> counts;
 
-            for( auto entry_ptr : get_selection_column_items() ) {
+            for( auto entry_ptr : map_column.get_all_entries() ) {
                 int count = 0;
                 int chosen_count = entry_ptr->chosen_count;
                 for( size_t i = 0; i < entry_ptr->locations.size() && count < chosen_count &&
@@ -2600,6 +2599,7 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
                     if( to_add > 0 ) {
                         locations.push_back( entry_ptr->locations[i] );
                         counts.push_back( to_add );
+                        count += to_add;
                     }
                 }
             }
@@ -2626,7 +2626,7 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             }
         }
 
-        if( no_items ) {
+        if( no_items && ( input.action == "WIELD" || input.action == "WEAR" ) ) {
             return std::vector<pickup::pick_drop_selection>();
         }
     }
@@ -2634,7 +2634,6 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
     return std::vector<pickup::pick_drop_selection>();
 }
 
-[[clang::optnone]]
 inventory_selector::stats inventory_pickup_selector::get_raw_stats() const
 {
     units::mass weight_carried = u.weight_carried();
