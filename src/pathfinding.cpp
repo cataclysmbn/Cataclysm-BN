@@ -253,7 +253,7 @@ bool Pathfinding::is_in_limited_domain(
     const bool is_in_search_radius = route_settings.is_in_search_radius( start, p, this->dest );
     const bool is_in_search_cone = route_settings.is_in_search_cone( start, p, this->dest );
 
-    return is_in_f_limited_area || is_in_search_radius || is_in_search_cone;
+    return is_in_f_limited_area && is_in_search_radius && is_in_search_cone;
 }
 
 /// Pathfinding: constructor

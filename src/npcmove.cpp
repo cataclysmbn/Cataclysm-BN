@@ -65,7 +65,6 @@
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
 #include "calendar.h"
-#include "pathfinding.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "profile.h"
@@ -4635,13 +4634,8 @@ void npc::go_to_omt_destination()
     }
     {
         ZoneScopedN( "npc_goto_destination_route" );
-        if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
-            path = here.route( bub_pos(), centre_sub, get_legacy_pathfinding_settings(),
-                               get_legacy_path_avoid() );
-        } else {
-            const auto pf_pair = get_pathfinding_pair();
-            path = Pathfinding::route( bub_pos(), centre_sub, pf_pair.first, pf_pair.second );
-        }
+        path = here.route( bub_pos(), centre_sub, get_legacy_pathfinding_settings(),
+                           get_legacy_path_avoid() );
     }
     while( !path.empty() && path.front() == bub_pos() ) {
         path.erase( path.begin() );

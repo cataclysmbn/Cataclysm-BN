@@ -206,68 +206,63 @@ struct legacy_pathfinding_tile {
     ter_id terrain;
     furn_id furniture;
     trap_id trap;
-    optional_vpart_position vehicle_part;
+    const vehicle *vehicle_ptr_ = nullptr;
+    int vehicle_part = -1;
     int move_cost = 0;
 
-    auto vehicle_ptr() const -> vehicle * { // *NOPAD*
-        if( !vehicle_part ) {
-            return nullptr;
-        }
-        return &vehicle_part->vehicle();
+    auto vehicle_ptr() const -> const vehicle * { // *NOPAD*
+        return vehicle_ptr_;
     }
 
     auto part_index() const -> int {
-        if( !vehicle_part ) {
-            return -1;
-        }
-        return static_cast<int>( vehicle_part->part_index() );
+        return vehicle_part;
     }
 };
 
 // Astyle can snort my carpet dust
-auto get_legacy_pathfinding_tile( mapbuffer &buffer,
+auto get_legacy_pathfinding_tile( const map &here,
                                   const tripoint_abs_ms &p ) -> std::optional<legacy_pathfinding_tile> // *NOPAD*
 {
-    const auto terrain = buffer.get_ter( p );
-    const auto furniture = buffer.get_furn( p );
-    const auto move_cost = buffer.move_cost( p );
-    if( !terrain || !furniture || !move_cost ) {
+    const auto bubble_pos = abs_to_map_local( here, p );
+    if( !here.inbounds( bubble_pos ) ) {
         return std::nullopt;
     }
 
+    const auto tile = here.maptile_at_internal( bubble_pos );
+    auto vehicle_part = -1;
+    const auto *vehicle = here.veh_at_internal( bubble_pos, vehicle_part );
+    const auto &terrain = tile.get_ter_t();
+    const auto &furniture = tile.get_furn_t();
+
     return legacy_pathfinding_tile {
-        .terrain = *terrain,
-        .furniture = *furniture,
-        .trap = buffer.get_trap( p ).value_or( tr_null ),
-        .vehicle_part = buffer.veh_at( p ),
-        .move_cost = *move_cost,
+        .terrain = tile.get_ter(),
+        .furniture = tile.get_furn(),
+        .trap = tile.get_trap(),
+        .vehicle_ptr_ = vehicle,
+        .vehicle_part = vehicle_part,
+        .move_cost = here.move_cost_internal( furniture, terrain, vehicle, vehicle_part ),
     };
 }
 
-auto get_pf_special_abs( mapbuffer &buffer, const tripoint_abs_ms &p ) -> pf_special
+auto get_pf_special_from_tile( const legacy_pathfinding_tile &tile ) -> pf_special
 {
-    const auto tile = get_legacy_pathfinding_tile( buffer, p );
-    if( !tile ) {
-        return PF_WALL;
-    }
-
     auto cur_value = PF_NORMAL;
-    const auto &terrain = tile->terrain.obj();
+    const auto &terrain = tile.terrain.obj();
 
-    if( tile->move_cost > 2 ) {
+    if( tile.move_cost > 2 ) {
         cur_value |= PF_SLOW;
-    } else if( tile->move_cost <= 0 ) {
+    } else if( tile.move_cost <= 0 ) {
         cur_value |= PF_WALL;
         if( terrain.has_flag( TFLAG_CLIMBABLE ) ) {
             cur_value |= PF_CLIMBABLE;
         }
     }
 
-    if( tile->vehicle_part ) {
+    if( tile.vehicle_ptr() != nullptr ) {
         cur_value |= PF_VEHICLE;
     }
 
-    if( !tile->trap.obj().is_benign() || !terrain.trap.obj().is_benign() ) {
+    if( !tile.trap.obj().is_benign() || !terrain.trap.obj().is_benign() ) {
         cur_value |= PF_TRAP;
     }
 
@@ -282,6 +277,12 @@ auto get_pf_special_abs( mapbuffer &buffer, const tripoint_abs_ms &p ) -> pf_spe
     }
 
     return cur_value;
+}
+
+auto get_pf_special_abs( const map &here, const tripoint_abs_ms &p ) -> pf_special
+{
+    const auto tile = get_legacy_pathfinding_tile( here, p );
+    return tile ? get_pf_special_from_tile( *tile ) : PF_WALL;
 }
 
 std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoint_abs_ms &t,
@@ -307,9 +308,9 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
     if( f.z() == t.z() ) {
         const auto line_path = line_to( f, t );
         // Check all points for any special case (including just hard terrain)
-        if( !( get_pf_special_abs( buffer, f ) & non_normal ) &&
-        std::ranges::all_of( line_path, [&buffer]( const tripoint_abs_ms & p ) {
-        return !( get_pf_special_abs( buffer, p ) & non_normal );
+        if( !( get_pf_special_abs( *this, f ) & non_normal ) &&
+        std::ranges::all_of( line_path, [this]( const tripoint_abs_ms & p ) {
+        return !( get_pf_special_abs( *this, p ) & non_normal );
         } ) ) {
             const std::set<tripoint_abs_ms> sorted_line( line_path.begin(), line_path.end() );
 
@@ -390,10 +391,12 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
 
         cur_state = ASL_CLOSED;
 
-        const auto cur_special = get_pf_special_abs( buffer, cur );
-
-        const auto cur_tile = get_legacy_pathfinding_tile( buffer, cur );
-        const auto *cur_veh = cur_tile ? cur_tile->vehicle_ptr() : nullptr;
+        const auto cur_tile = get_legacy_pathfinding_tile( *this, cur );
+        if( !cur_tile ) {
+            continue;
+        }
+        const auto cur_special = get_pf_special_from_tile( *cur_tile );
+        const auto *cur_veh = cur_tile->vehicle_ptr();
 
         // 7 3 5
         // 1 . 2
@@ -413,7 +416,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
                 continue;
             }
 
-            const auto p_tile = get_legacy_pathfinding_tile( buffer, p );
+            const auto p_tile = get_legacy_pathfinding_tile( *this, p );
             if( !p_tile ) {
                 layer.state[index] = ASL_CLOSED;
                 continue;
@@ -438,7 +441,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
             // Penalize for diagonals or the path will look "unnatural"
             int newg = layer.gscore[parent_index] + ( ( cur.x() != p.x() && cur.y() != p.y() ) ? 1 : 0 );
 
-            const auto p_special = get_pf_special_abs( buffer, p );
+            const auto p_special = get_pf_special_from_tile( *p_tile );
             // TODO: De-uglify, de-huge-n
             if( !( p_special & non_normal ) ) {
                 // Boring flat dirt - the most common case above the ground
