@@ -220,6 +220,8 @@ std::string io::enum_to_string<action_id>( action_id data )
             PAIR( ACTION_DISPLAY_TILES_NO_VFX )
             PAIR( ACTION_TOGGLE_HOUR_TIMER )
             PAIR( ACTION_SWAP_TO_NPC )
+            PAIR( ACTION_TOGGLE_MANUAL_COMBAT_MODE )
+            PAIR( ACTION_MANUAL_ATTACK )
         case NUM_ACTIONS:
             break;
     }
