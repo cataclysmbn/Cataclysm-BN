@@ -201,8 +201,10 @@ void build_water_test_map( const ter_id &surface, const ter_id &mid, const ter_i
         }
     }
 
-    here.invalidate_map_cache( 0 );
-    here.build_map_cache( 0, true );
+    for( const int z : { z_bottom, -1, z_surface } ) {
+        here.invalidate_map_cache( z );
+        here.build_map_cache( z, true );
+    }
 }
 
 void set_time( const time_point &time )

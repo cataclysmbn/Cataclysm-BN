@@ -107,6 +107,9 @@ static const std::string ZOMBIE_REVIVAL_INDICATOR( "zombie_revival_indicator" );
 static const flag_id flag_TINT_NO_FG( "TINT_NO_FG" );
 static const flag_id flag_TINT_NO_BG( "TINT_NO_BG" );
 static const flag_id flag_TINT_NONE( "TINT_NONE" );
+static const flag_id flag_HIDDEN( "HIDDEN" );
+
+static const furn_str_id furn_f_mannequin( "f_mannequin" );
 
 static const std::array<std::string, 8> multitile_keys = {{
         "center",
@@ -5513,15 +5516,46 @@ bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level l
             hilite = std::get<2>( it_override->second );
             it_type = &*it_id;
         } else if( !invisible[0] && here.sees_some_items( p, g->u ) ) {
-            const maptile &tile = here.maptile_at( p );
-            const item &itm = tile.get_uppermost_item();
-            const mtype *const mon = itm.get_mtype();
-            it_id = itm.typeId();
-            mon_id = mon ? mon->id : mtype_id::NULL_ID();
-            hilite = tile.get_item_count() > 1;
-            it_type = itm.type;
+            if( here.furn( p ).id() == furn_f_mannequin ) {
+                auto draw_mannequin_item = [&]( const item & itm ) {
+                    if( itm.has_flag( flag_HIDDEN ) ) {
+                        return false;
+                    }
 
-            std::tie( bgCol, fgCol ) = get_item_color( itm, here, p );
+                    const auto item_id = itm.typeId().str();
+                    auto draw_id = std::string{};
+                    const auto found = find_overlay_looks_like( false, "worn_" + item_id, draw_id ) ||
+                                       find_overlay_looks_like( false, "wielded_" + item_id, draw_id );
+                    if( !found ) {
+                        return false;
+                    }
+
+                    auto [overlay_bg_col, overlay_fg_col] = get_item_color( itm, here, p );
+                    auto overlay_height_3d = height_3d;
+                    const tile_search_params tile { draw_id, C_NONE, empty_string, corner, 0 };
+                    const auto drawn = draw_from_id_string(
+                                           tile, p, overlay_bg_col, overlay_fg_col,
+                                           ll, false, z_drop, false, overlay_height_3d );
+                    height_3d = std::max( height_3d, overlay_height_3d );
+                    return drawn;
+                };
+
+                for( const auto *itm : here.i_at( p ) ) {
+                    ret_draw_items = draw_mannequin_item( *itm ) || ret_draw_items;
+                }
+                it_type = nullptr;
+                hilite = false;
+            } else {
+                const maptile &tile = here.maptile_at( p );
+                const item &itm = tile.get_uppermost_item();
+                const mtype *const mon = itm.get_mtype();
+                it_id = itm.typeId();
+                mon_id = mon ? mon->id : mtype_id::NULL_ID();
+                hilite = tile.get_item_count() > 1;
+                it_type = itm.type;
+
+                std::tie( bgCol, fgCol ) = get_item_color( itm, here, p );
+            }
         } else {
             it_type = nullptr;
             hilite = false;

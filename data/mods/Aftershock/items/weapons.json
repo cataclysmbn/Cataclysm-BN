@@ -163,7 +163,7 @@
     "dispersion": 60,
     "durability": 9,
     "clip_size": 1,
-    "loudness": 300
+    "loudness": 4
   },
   {
     "type": "GENERIC",
@@ -225,7 +225,7 @@
     "ranged_damage": { "damage_type": "heat", "amount": 40, "armor_penetration": 30 },
     "dispersion": 90,
     "durability": 7,
-    "loudness": 8,
+    "loudness": 4,
     "ups_charges": 25,
     "reload": 200,
     "valid_mod_locations": [

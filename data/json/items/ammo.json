@@ -277,6 +277,7 @@
     "range": 10,
     "dispersion": 14,
     "loudness": 0,
+    "speed": 20,
     "to_hit": -1,
     "qualities": [ [ "HAMMER", 1 ], [ "SANDING", 1 ] ],
     "dont_recover_one_in": 80,
@@ -300,6 +301,7 @@
     "range": 10,
     "dispersion": 14,
     "loudness": 0,
+    "speed": 36,
     "count": 10,
     "effects": [ "NEVER_MISFIRES", "NON_FOULING" ]
   },
@@ -321,6 +323,7 @@
     "range": 20,
     "dispersion": 12,
     "loudness": 0,
+    "speed": 36,
     "count": 40,
     "flags": [ "SHATTERS" ],
     "effects": [ "NEVER_MISFIRES" ]
@@ -344,6 +347,7 @@
     "range": 18,
     "dispersion": 12,
     "loudness": 0,
+    "speed": 36,
     "count": 20,
     "effects": [ "NEVER_MISFIRES" ]
   },
@@ -366,6 +370,7 @@
     "range": 15,
     "dispersion": 14,
     "loudness": 0,
+    "speed": 36,
     "count": 50,
     "dont_recover_one_in": 1000,
     "effects": [ "NEVER_MISFIRES", "NON_FOULING" ]
@@ -389,6 +394,7 @@
     "count": 500,
     "stack_size": 200,
     "loudness": 0,
+    "speed": 200,
     "effects": [ "NOGIB", "NEVER_MISFIRES", "NON_FOULING" ]
   },
   {
@@ -444,6 +450,8 @@
     "range": 80,
     "dispersion": 5,
     "recoil": 30,
+    "speed": 1600,
+    "loudness": 188,
     "effects": [ "EXPLOSIVE_HUGE", "TRAIL" ]
   },
   {
@@ -464,6 +472,7 @@
     "range": 12,
     "count": 25,
     "loudness": 60,
+    "speed": 300,
     "effects": [ "INCENDIARY" ],
     "flags": [ "UNRECOVERABLE" ],
     "fuel": {
@@ -489,6 +498,8 @@
     "damage": { "damage_type": "heat", "amount": 9, "armor_penetration": 2 },
     "range": 6,
     "dispersion": 120,
+    "speed": 300,
+    "loudness": 120,
     "phase": "liquid",
     "ammo_type": "c_hydrogen",
     "fuel": {
@@ -657,6 +668,7 @@
     "range": 10,
     "dispersion": 7,
     "loudness": 0,
+    "speed": 15,
     "dont_recover_one_in": 2,
     "effects": [ "BEANBAG", "NEVER_MISFIRES", "NON_FOULING" ]
   },
@@ -978,6 +990,7 @@
     "dispersion": 180,
     "recoil": 130,
     "loudness": 60,
+    "speed": 250,
     "effects": [ "COOKOFF", "TRAIL" ]
   },
   {
@@ -998,6 +1011,7 @@
     "dispersion": 170,
     "recoil": 130,
     "loudness": 60,
+    "speed": 250,
     "effects": [ "COOKOFF", "TRAIL", "EXPLOSIVE" ]
   },
   {
@@ -1018,6 +1032,7 @@
     "dispersion": 200,
     "recoil": 130,
     "loudness": 60,
+    "speed": 250,
     "effects": [ "COOKOFF", "TRAIL", "NAPALM" ]
   },
   {
@@ -1119,6 +1134,7 @@
     "range": 20,
     "dispersion": 15,
     "loudness": 0,
+    "speed": 36,
     "count": 7,
     "effects": [ "NEVER_MISFIRES" ],
     "use_action": "RPGDIE"
@@ -1141,6 +1157,7 @@
     "range": 15,
     "dispersion": 10,
     "loudness": 0,
+    "speed": 36,
     "count": 7,
     "effects": [ "NEVER_MISFIRES" ],
     "use_action": "RPGDIE"
@@ -1180,6 +1197,7 @@
     "range": 14,
     "dispersion": 10,
     "loudness": 0,
+    "speed": 36,
     "to_hit": -1,
     "dont_recover_one_in": 1000,
     "effects": [ "NEVER_MISFIRES", "NON_FOULING" ]
@@ -1218,6 +1236,7 @@
     "count": 1,
     "ammo_type": "atlatl",
     "range": 15,
+    "speed": 20,
     "damage": { "damage_type": "stab", "amount": 10, "armor_penetration": 1 },
     "dispersion": 80,
     "loudness": 0,

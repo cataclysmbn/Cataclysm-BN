@@ -41,7 +41,7 @@ auto submap_has_fire( submap &sm ) -> bool
 
 } // namespace
 
-auto fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_sm pos ) -> void
+auto fire_spread_loader::request_for_fire( const dimension_id &dim, tripoint_abs_sm pos ) -> void
 {
     ZoneScoped;
     const auto key = dim_pos_key{ dim, pos };

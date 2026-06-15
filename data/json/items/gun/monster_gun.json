@@ -27,7 +27,7 @@
     "bashing": 2,
     "to_hit": 1,
     "reload_noise_volume": 2,
-    "loudness": 2,
+    "loudness": 40,
     "range": 12,
     "dispersion": 100,
     "durability": 8
@@ -61,7 +61,7 @@
     "volume": "210 ml",
     "bashing": 1,
     "to_hit": 1,
-    "loudness": 2,
+    "loudness": 40,
     "range": 6,
     "dispersion": 6000,
     "durability": 8
@@ -104,7 +104,7 @@
     "bashing": 2,
     "to_hit": 1,
     "reload_noise_volume": 2,
-    "loudness": 2,
+    "loudness": 40,
     "range": 12,
     "dispersion": 150,
     "durability": 8
@@ -127,7 +127,7 @@
     "bashing": 1,
     "to_hit": 1,
     "reload_noise_volume": 0,
-    "loudness": 3,
+    "loudness": 45,
     "range": 12,
     "dispersion": 10,
     "durability": 8

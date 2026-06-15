@@ -433,7 +433,7 @@
     "id": "bio_minirose",
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
-    "name": { "str": "minirose CBM" },
+    "name": { "str": "Minirose CBM" },
     "looks_like": "bio_int_enhancer",
     "description": "An implanted dead man's switch and mininuke payload. Detonates upon death or manual trigger. You wouldn't want to use it, unless you'd like to demonstrate the bottomless malice within the human heart to a certain ant.",
     "price": "10 kUSD",

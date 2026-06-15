@@ -8,6 +8,7 @@
     "weight": "4100 g",
     "price": "230 USD",
     "price_postapoc": "30 USD",
+    "loudness": -2,
     "relative": {
       "volume": "-500 ml",
       "range": -6,

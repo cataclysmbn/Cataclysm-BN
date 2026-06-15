@@ -22,6 +22,7 @@ cbuffer Constants : register(b0, space2)
 StructuredBuffer<uint>  daylight_seed_all : register(t0, space0);
 StructuredBuffer<uint>  daylight_src_all  : register(t1, space0);
 StructuredBuffer<float> transparency_all  : register(t2, space0);
+StructuredBuffer<float> source_map_all    : register(t3, space0);
 
 RWStructuredBuffer<uint> daylight_dst_all : register(u0, space1);
 RWStructuredBuffer<uint> lm_all           : register(u1, space1);
@@ -41,6 +42,11 @@ void main( uint3 dispatch_thread_id : SV_DispatchThreadID )
 {
     uint idx = dispatch_thread_id.x;
     if( idx >= total_tiles ) {
+        return;
+    }
+
+    if( source_map_all[idx] < 0.0 ) {
+        daylight_dst_all[idx] = 0u;
         return;
     }
 
@@ -64,22 +70,26 @@ void main( uint3 dispatch_thread_id : SV_DispatchThreadID )
     int z = (int)z_idx;
 
     float best = asfloat( daylight_src_all[idx] );
-    static const int2 offsets[4] = {
-        int2(  0,  1 ),
-        int2(  0, -1 ),
-        int2(  1,  0 ),
-        int2( -1,  0 )
-    };
-
-    [unroll]
-    for( int i = 0; i < 4; ++i ) {
-        int nx = x + offsets[i].x;
-        int ny = y + offsets[i].y;
+    for( uint offset_index = 0u; offset_index < 4u; ++offset_index ) {
+        int nx = x;
+        int ny = y;
+        if( offset_index == 0u ) {
+            ny = y + 1;
+        } else if( offset_index == 1u ) {
+            ny = y - 1;
+        } else if( offset_index == 2u ) {
+            nx = x + 1;
+        } else {
+            nx = x - 1;
+        }
         if( !inbounds_xy( nx, ny ) ) {
             continue;
         }
 
         int nidx = tile_index( nx, ny, z );
+        if( source_map_all[nidx] < 0.0 ) {
+            continue;
+        }
         if( transparency_all[nidx] <= LIGHT_TRANSPARENCY_SOLID ) {
             continue;
         }

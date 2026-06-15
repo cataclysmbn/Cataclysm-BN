@@ -293,12 +293,12 @@ void Item_factory::finalize_pre( itype &obj )
     }
 
     if( obj.ammo ) {
-        // for ammo not specifying loudness (or an explicit zero) derive value from other properties
+        // for ammo not specifying loudness (or an explicit less than zero) derive value from other properties
         // 343 is the speed of sound in atmosphere, but guns are still loud.
-        // Very few firearms have projectiles with speeds lower than 200m/s, so we use that as the cutoff.
+        // Very few firearms have projectiles with speeds lower than 342m/s, so we use that as the cutoff.
         // For reference, arrows/bolts are sub 140 speed.
         if( obj.ammo->loudness < 0 ) {
-            if( obj.ammo->speed > 200 ) {
+            if( obj.ammo->speed > 342 ) {
                 // TODO: Overhaul base noise algorithm. The min/floor/log10 is a stopgap to make firearm noise from tile vol to dB spl.
                 // Basing noise off of range/damage/AP results in wildly varying tile volumes, pistols that cannot deafen the user and .308 rifles that will always deafen all NPCs with no hearing protection in the reality bubble.
                 obj.ammo->loudness = obj.ammo->range * 2;
@@ -1808,7 +1808,8 @@ void islot_ammo::load( const JsonObject &jo )
     assign( jo, "dispersion", dispersion );
     assign( jo, "recoil", recoil );
     optional( jo, was_loaded, "count", def_charges, 1 );
-    optional( jo, was_loaded, "loudness", loudness, -1 );
+    assign( jo, "loudness", loudness, false, -1,
+            191 ); // Measured in dB spl. -1 means the game will auto comp the loudness.
     assign( jo, "effects", ammo_effects );
     optional( jo, was_loaded, "show_stats", force_stat_display, std::nullopt );
     optional( jo, was_loaded, "shape", shape, std::nullopt );
@@ -1820,7 +1821,7 @@ void islot_ammo::load( const JsonObject &jo )
     }
     assign( jo, "aimedcritmaxbonus", aimedcritmaxbonus );
     assign( jo, "aimedcritbonus", aimedcritbonus );
-    assign( jo, "speed", speed );
+    assign( jo, "speed", speed, false, 0, 299792458 ); // Capped at the speed of light.
 }
 
 void islot_ammo::deserialize( JsonIn &jsin )

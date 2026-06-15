@@ -84,22 +84,31 @@ bool is_opaque( int x, int y, int z )
 
 float visible_surface_light( int x, int y, int z )
 {
-    static const int2 offsets[8] = {
-        int2(  0,  1 ),
-        int2(  0, -1 ),
-        int2(  1,  0 ),
-        int2(  1,  1 ),
-        int2(  1, -1 ),
-        int2( -1,  0 ),
-        int2( -1,  1 ),
-        int2( -1, -1 )
-    };
-
     float best = 0.0;
-    [unroll]
-    for( int i = 0; i < 8; ++i ) {
-        int nx = x + offsets[i].x;
-        int ny = y + offsets[i].y;
+    for( uint offset_index = 0u; offset_index < 8u; ++offset_index ) {
+        int nx = x;
+        int ny = y;
+        if( offset_index == 0u ) {
+            ny = y + 1;
+        } else if( offset_index == 1u ) {
+            ny = y - 1;
+        } else if( offset_index == 2u ) {
+            nx = x + 1;
+        } else if( offset_index == 3u ) {
+            nx = x + 1;
+            ny = y + 1;
+        } else if( offset_index == 4u ) {
+            nx = x + 1;
+            ny = y - 1;
+        } else if( offset_index == 5u ) {
+            nx = x - 1;
+        } else if( offset_index == 6u ) {
+            nx = x - 1;
+            ny = y + 1;
+        } else {
+            nx = x - 1;
+            ny = y - 1;
+        }
         if( nx < 0 || ny < 0 || nx >= cache_x || ny >= cache_y ) {
             continue;
         }

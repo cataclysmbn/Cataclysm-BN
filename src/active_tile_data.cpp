@@ -486,7 +486,7 @@ void grid_link_tile::store( JsonOut &jsout ) const
     jsout.member( "linked", linked );
     jsout.member( "paused", paused );
     if( linked ) {
-        jsout.member( "target_dim_id", target_dim_id );
+        jsout.member( "target_dim_id", target_dim_id.str() );
         jsout.member( "target_pos", target_pos.raw() );
     }
 }
@@ -496,7 +496,9 @@ void grid_link_tile::load( JsonObject &jo )
     jo.read( "linked", linked );
     jo.read( "paused", paused );
     if( linked ) {
-        jo.read( "target_dim_id", target_dim_id );
+        auto raw_target_dim_id = std::string{};
+        jo.read( "target_dim_id", raw_target_dim_id );
+        target_dim_id = dimension_id( raw_target_dim_id );
         tripoint raw;
         jo.read( "target_pos", raw );
         target_pos = tripoint_abs_ms( raw );
@@ -549,7 +551,7 @@ void portal_tile::store( JsonOut &jsout ) const
         jsout.member( "dynamic_special", dynamic_special );
     }
     if( linked ) {
-        jsout.member( "target_dim_id", target_dim_id );
+        jsout.member( "target_dim_id", target_dim_id.str() );
         jsout.member( "target_pos", target_pos.raw() );
     }
 }
@@ -565,7 +567,9 @@ void portal_tile::load( JsonObject &jo )
         jo.read( "dynamic_special", dynamic_special );
     }
     if( linked ) {
-        jo.read( "target_dim_id", target_dim_id );
+        auto raw_target_dim_id = std::string{};
+        jo.read( "target_dim_id", raw_target_dim_id );
+        target_dim_id = dimension_id( raw_target_dim_id );
         tripoint raw;
         jo.read( "target_pos", raw );
         target_pos = tripoint_abs_ms( raw );

@@ -1759,12 +1759,11 @@ class vehicle
         // id of the om_vehicle struct corresponding to this vehicle
         int om_id = -1;
 
-        // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
-        // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
-        // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_ = "";  // empty = primary dimension
-        auto get_dimension() const -> const std::string & { // *NOPAD*
+        auto get_dimension() const -> const dimension_id & { // *NOPAD*
             return dimension_id_;
+        }
+        auto set_dimension( const dimension_id &dim_id ) -> void {
+            dimension_id_ = dim_id;
         }
         // direction, to which vehicle is turning (player control). will rotate frame on next move
         // must be a multiple of 15 degrees
@@ -1877,6 +1876,11 @@ class vehicle
 
         // Set cruise control
         void set_cruise_control_speed();
+
+    private:
+        // ID of the dimension this vehicle belongs to.  Empty = primary dimension.
+        // Persisted across saves so cross-dimension processing survives reload.
+        dimension_id dimension_id_;
 };
 
 namespace rot

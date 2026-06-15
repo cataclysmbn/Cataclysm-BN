@@ -111,16 +111,16 @@ auto is_any_omt_zlevel_loaded( mapbuffer &mb, const tripoint_abs_omt &omt_addr )
 
 submap_load_manager submap_loader;
 
-load_request_handle submap_load_manager::request_load(
+auto submap_load_manager::request_load(
     load_request_source source,
-    const std::string &dim_id,
+    const dimension_id &dim_id,
     const tripoint_abs_sm &center,
-    int radius )
+    int radius ) -> load_request_handle
 {
     const load_request_handle handle = next_handle_++;
     submap_load_request req;
     req.source = source;
-    req.dimension_id = dim_id;
+    req.dim_id = dim_id;
     req.center = center;
     req.radius = radius;
     requests_[handle] = std::move( req );
@@ -137,10 +137,10 @@ void submap_load_manager::update_request( load_request_handle handle,
     it->second.center = new_center;
 }
 
-auto submap_load_manager::update_lazy_border_focus( const std::string &dim_id,
+auto submap_load_manager::update_lazy_border_focus( const dimension_id &dim_id,
         const tripoint_abs_ms &pos ) -> void
 {
-    if( lazy_omt_focus_ && lazy_omt_focus_->dimension_id == dim_id ) {
+    if( lazy_omt_focus_ && lazy_omt_focus_->dim_id == dim_id ) {
         const auto delta = point{
             signum( pos.x() - lazy_omt_focus_->pos.x() ),
             signum( pos.y() - lazy_omt_focus_->pos.y() )
@@ -156,7 +156,7 @@ auto submap_load_manager::update_lazy_border_focus( const std::string &dim_id,
     }
 
     lazy_omt_focus_ = lazy_omt_focus{
-        .dimension_id = dim_id,
+        .dim_id = dim_id,
         .pos = pos
     };
 }
@@ -204,7 +204,7 @@ auto submap_load_manager::compute_desired_set() const -> key_set
             // (2*radius+1)×(2*radius+1) grid are protected from eviction.
             // bubble_offsets_ is populated by update_load_shape() in map::resize().
             std::ranges::for_each( bubble_offsets_, [&]( const point & off ) {
-                desired.emplace( req.dimension_id, c + off );
+                desired.emplace( req.dim_id, c + off );
             } );
         } else {
             // Other sources (player_base, script, fire_spread) also use square.
@@ -214,7 +214,7 @@ auto submap_load_manager::compute_desired_set() const -> key_set
                 cata::views::cartesian_product( axis, axis ),
             [&]( auto pair ) {
                 auto [dx, dy] = pair;
-                desired.emplace( req.dimension_id, c + point{ dx, dy } );
+                desired.emplace( req.dim_id, c + point{ dx, dy } );
             } );
         }
     } );
@@ -245,7 +245,7 @@ auto submap_load_manager::compute_lazy_border_omts() const -> horizontal_omt_set
                 y >= min_omt.y() && y <= max_omt.y() ) {
                 return;
             }
-            border_omts.emplace( req.dimension_id, point_abs_omt{ x, y } );
+            border_omts.emplace( req.dim_id, point_abs_omt{ x, y } );
         } );
     } );
     return border_omts;
@@ -584,7 +584,7 @@ auto submap_load_manager::lazy_omt_priority( const retained_omt_key &key ) const
     const auto &[dim_id, omt_xy] = key;
     std::ranges::for_each( requests_, [&]( const auto & kv ) {
         const auto &req = kv.second;
-        if( req.source != load_request_source::lazy_border || req.dimension_id != dim_id ) {
+        if( req.source != load_request_source::lazy_border || req.dim_id != dim_id ) {
             return;
         }
         const auto c = req.center.xy();
@@ -900,7 +900,7 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     // ---- Synchronous loading for newly-simulated positions ----
     // new_omts is keyed by 2-D horizontal OMT position.  All z-levels for a
     // given horizontal OMT are always loaded together in the loops below.
-    using horiz_omt_key = std::pair<std::string, point_abs_omt>;
+    using horiz_omt_key = std::pair<dimension_id, point_abs_omt>;
     std::unordered_set<horiz_omt_key, coord_pair_hash<point_abs_omt>> new_omts;
     for( const desired_key &key : simulated ) {
         if( prev_simulated_.count( key ) == 0 ) {
@@ -961,10 +961,10 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     // Drain duplicate submaps created by concurrent preload_omt workers.
     // Must happen on the main thread (safe_reference remains main-thread-only).
     {
-        auto drained_dims = std::set<std::string> {};
+        auto drained_dims = std::set<dimension_id> {};
         std::ranges::transform( new_omts, std::inserter( drained_dims, drained_dims.end() ),
         []( const auto & qk ) { return qk.first; } );
-        std::ranges::for_each( drained_dims, []( const std::string & dim_id ) {
+        std::ranges::for_each( drained_dims, []( const dimension_id & dim_id ) {
             MAPBUFFER_REGISTRY.get( dim_id ).drain_pending_submap_destroy();
         } );
     }
@@ -1045,7 +1045,7 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     // terms of the 2-D desired set.
     {
         ZoneScopedN( "slm_retain_departed_omts" );
-        using horiz_key = std::pair<std::string, point_abs_omt>;
+        using horiz_key = std::pair<dimension_id, point_abs_omt>;
         std::unordered_set<horiz_key, coord_pair_hash<point_abs_omt>> omts_checked;
         for( const desired_key &key : prev_desired_ ) {
             if( all_desired.count( key ) != 0 ) {
@@ -1079,14 +1079,14 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     prev_desired_ = std::move( all_desired );
 }
 
-bool submap_load_manager::is_requested( const std::string &dim_id,
-                                        const tripoint_abs_sm &pos ) const
+auto submap_load_manager::is_requested( const dimension_id &dim_id,
+                                        const tripoint_abs_sm &pos ) const -> bool
 {
     return prev_desired_.count( { dim_id, pos.xy() } ) > 0;
 }
 
-bool submap_load_manager::is_properly_requested( const std::string &dim_id,
-        const tripoint_abs_sm &pos ) const
+auto submap_load_manager::is_properly_requested( const dimension_id &dim_id,
+        const tripoint_abs_sm &pos ) const -> bool
 {
     const point_abs_sm p = pos.xy();
     return std::ranges::any_of( requests_, [&]( const auto & kv ) {
@@ -1094,7 +1094,7 @@ bool submap_load_manager::is_properly_requested( const std::string &dim_id,
         if( req.source != load_request_source::reality_bubble ) {
             return false;
         }
-        if( req.dimension_id != dim_id ) {
+        if( req.dim_id != dim_id ) {
             return false;
         }
         const point_abs_sm c = req.center.xy();
@@ -1104,14 +1104,14 @@ bool submap_load_manager::is_properly_requested( const std::string &dim_id,
     } );
 }
 
-bool submap_load_manager::is_simulated( const std::string &dim_id,
-                                        const tripoint_abs_sm &pos ) const
+auto submap_load_manager::is_simulated( const dimension_id &dim_id,
+                                        const tripoint_abs_sm &pos ) const -> bool
 {
     if( !is_loaded( dim_id, pos ) ) { return false; }
     const point_abs_sm p = pos.xy();
     bool covered_by_lazy_only = false;
     for( const auto &[handle, req] : requests_ ) {
-        if( req.dimension_id != dim_id ) {
+        if( req.dim_id != dim_id ) {
             continue;
         }
         const point_abs_sm c = req.center.xy();
@@ -1138,17 +1138,17 @@ bool submap_load_manager::is_simulated( const std::string &dim_id,
     return requests_.empty();
 }
 
-bool submap_load_manager::is_loaded( const std::string &dim_id,
-                                     const tripoint_abs_sm &pos ) const
+auto submap_load_manager::is_loaded( const dimension_id &dim_id,
+                                     const tripoint_abs_sm &pos ) const -> bool
 {
     return MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( pos ) != nullptr;
 }
 
-std::vector<std::string> submap_load_manager::active_dimensions() const
+auto submap_load_manager::active_dimensions() const -> std::vector<dimension_id>
 {
-    std::set<std::string> dims;
+    std::set<dimension_id> dims;
     for( const auto &kv : requests_ ) {
-        dims.insert( kv.second.dimension_id );
+        dims.insert( kv.second.dim_id );
     }
     return { dims.begin(), dims.end() };
 }

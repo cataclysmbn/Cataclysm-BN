@@ -182,7 +182,14 @@ options_manager::options_manager()
 
     mMigrateOption = {
         {"DELETE_WORLD", { "WORLD_END", { {"no", "keep" }, {"yes", "delete"} } } },
-        {"COMPUTE_ACCELERATION", { "COMPUTE_ACCELERATION", { {"off", "software"} } } },
+        {
+            "COMPUTE_ACCELERATION", {
+                "COMPUTE_ACCELERATION", { {"off", "cpu" },
+                    {"software", "gpu_software" },
+                    {"force", "gpu" }
+                }
+            }
+        },
     };
 
     enable_json( "DEFAULT_REGION" );
@@ -2359,11 +2366,12 @@ void options_manager::add_options_graphics()
 #if defined(CATA_SDL)
     add_empty_line();
     add( "COMPUTE_ACCELERATION", graphics, translate_marker( "Compute Acceleration" ),
-         translate_marker( "Controls SDL_GPU compute device selection for lighting and visibility.  Requires restart." ),
+         translate_marker( "Controls compute backend selection for lighting, visibility, and line of sight.  Requires restart." ),
     {
         { "auto", translate_marker( "Auto" ) },
-        { "software", translate_marker( "Software" ) },
-        { "force", translate_marker( "Force hardware" ) }
+        { "gpu", translate_marker( "GPU" ) },
+        { "cpu", translate_marker( "CPU compute" ) },
+        { "gpu_software", translate_marker( "Software GPU (debug)" ) }
     },
     "auto" );
 #endif

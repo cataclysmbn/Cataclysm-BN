@@ -286,7 +286,7 @@ distribution_grid_tracker::distribution_grid_tracker()
     : distribution_grid_tracker( MAPBUFFER, {} )
 {}
 
-distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer, std::string dim_id )
+distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer, dimension_id dim_id )
     : mb( buffer )
     , dimension_id_( std::move( dim_id ) )
 {
@@ -478,7 +478,7 @@ distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
         DebugLog( DL::Warn, DC::Map ) << string_format(
                                           "make_distribution_grid_at: no overmap grid data for submap %s "
                                           "(dim '%s') — power operations will be silently dropped this tick",
-                                          sm_pos.to_string(), dimension_id_ );
+                                          sm_pos.to_string(), dimension_id_.c_str() );
         static distribution_grid empty_grid( {}, MAPBUFFER );
         return empty_grid;
     }
@@ -540,7 +540,7 @@ std::array<tripoint_abs_omt, 5> distribution_grid_tracker::get_omt_and_cardinal_
 }
 
 void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
-        const std::string &dim_id )
+        const dimension_id &dim_id )
 {
     ZoneScoped;
     // Each tracker only manages submaps for its own dimension.
@@ -577,7 +577,7 @@ void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
 }
 
 void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
-        const std::string &dim_id )
+        const dimension_id &dim_id )
 {
     ZoneScoped;
     if( dim_id != dimension_id_ ) {

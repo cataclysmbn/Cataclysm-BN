@@ -1794,7 +1794,7 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
     }
     sound_event se;
     se.origin = p;
-    se.volume = 170;
+    se.volume = 180;
     se.category = sounds::sound_t::combat;
     se.description = _( "a huge boom!" );
     se.id = "misc";

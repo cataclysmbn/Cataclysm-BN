@@ -17,7 +17,7 @@
     "range": 100,
     "recoil": 12000,
     "loudness": 120,
-    "effects": [ "EXPLOSIVE_HUGE", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
+    "effects": [ "AMMO_HELLFIRE_HEAT", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "type": "AMMO",

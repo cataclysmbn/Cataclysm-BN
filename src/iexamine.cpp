@@ -1378,11 +1378,8 @@ void iexamine::chainfence( player &p, const tripoint_bub_ms &examp )
         here.unboard_vehicle( p.bub_pos() );
     }
     p.setpos( examp );
-    if( examp.x() < g_half_mapsize_x || examp.y() < g_half_mapsize_y ||
-        examp.x() >= g_half_mapsize_x + SEEX || examp.y() >= g_half_mapsize_y + SEEY ) {
-        if( p.is_player() ) {
-            g->update_map( p );
-        }
+    if( p.is_player() ) {
+        g->update_map( p );
     }
 }
 
@@ -1412,6 +1409,9 @@ void iexamine::bars( player &p, const tripoint_bub_ms &examp )
     p.moves -= to_turns<int>( 2_seconds );
     add_msg( _( "You slide right between the bars." ) );
     p.setpos( examp );
+    if( p.is_player() ) {
+        g->update_map( p );
+    }
 }
 
 void iexamine::deployed_furniture( player &p, const tripoint_bub_ms &pos )
@@ -2063,7 +2063,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
     }
 
     if( here.can_open_door( &p, examp, true ) ) {
-        g->peek( p.bub_pos() - examp );
+        g->peek( examp - p.bub_pos() );
         p.add_msg_if_player( _( "You peek through the peephole." ) );
     } else {
         // Peek through the peephole, or open the door.
@@ -2073,7 +2073,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
         } );
         if( choice == 0 ) {
             // Peek
-            g->peek( p.bub_pos() - examp );
+            g->peek( examp - p.bub_pos() );
             p.add_msg_if_player( _( "You peek through the peephole." ) );
         } else if( choice == 1 ) {
             here.open_door( &p, examp, true );
@@ -5141,7 +5141,7 @@ void iexamine::curtains( player &p, const tripoint_bub_ms &examp )
     const int choice = window_menu.ret;
     if( choice == 0 ) {
         // Peek
-        g->peek( p.bub_pos() - examp );
+        g->peek( examp - p.bub_pos() );
         p.add_msg_if_player( _( "You carefully peek through the curtains." ) );
     } else if( choice == 1 ) {
         // Mr. Gorbachev, tear down those curtains!
@@ -5745,6 +5745,9 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
 
             p.moves -= to_moves<int>( 1_seconds + 1_seconds * fall_mod );
             p.setpos( examp );
+            if( p.is_player() ) {
+                g->update_map( p );
+            }
 
             if( climb_cost > 0 || rng_float( 0.8, 1.0 ) > fall_mod ) {
                 // One tile of falling less (possibly zero)
@@ -7638,7 +7641,7 @@ void iexamine::check_power( player &, const tripoint_bub_ms &examp )
 void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 {
     const tripoint_abs_ms abs_pos( bub_to_abs( examp ) );
-    const std::string local_dim = g->m.get_bound_dimension();
+    const auto local_dim = g->m.get_bound_dimension();
 
     // Look up the grid_link_tile for this portal.  Access through the correct
     // mapbuffer so this works regardless of which dimension the player is in.
@@ -7668,12 +7671,12 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
     } else if( glt->paused ) {
         status = string_format(
                      _( "Status: PAUSED — insufficient power\nTarget: [%s] (%d,%d,%d)" ),
-                     glt->target_dim_id.empty() ? _( "primary" ) : glt->target_dim_id,
+                     glt->target_dim_id.is_empty() ? _( "primary" ) : glt->target_dim_id.str(),
                      glt->target_pos.raw().x, glt->target_pos.raw().y, glt->target_pos.raw().z );
     } else {
         status = string_format(
                      _( "Status: Active\nTarget: [%s] (%d,%d,%d)" ),
-                     glt->target_dim_id.empty() ? _( "primary" ) : glt->target_dim_id,
+                     glt->target_dim_id.is_empty() ? _( "primary" ) : glt->target_dim_id.str(),
                      glt->target_pos.raw().x, glt->target_pos.raw().y, glt->target_pos.raw().z );
     }
 
@@ -7715,13 +7718,14 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 
     switch( menu.ret ) {
         case 0: { // Attune keycard
-            keycard->set_var( "portal_target_dim", local_dim );
+            keycard->set_var( "portal_target_dim", local_dim.str() );
             keycard->set_var( "portal_target_pos", abs_pos );
             add_msg( m_info, _( "You attune the keycard to this power portal." ) );
             break;
         }
         case 1: { // Link using keycard
-            const std::string target_dim = keycard->get_var( "portal_target_dim", std::string{} );
+            const auto target_dim = dimension_id( keycard->get_var( "portal_target_dim",
+                                                  std::string{} ) );
             const auto target_pos = keycard->get_var( "portal_target_pos", tripoint_abs_ms::zero() );
             if( target_pos == abs_pos && target_dim == local_dim ) {
                 add_msg( m_bad, _( "You can't link a portal to itself." ) );
@@ -7786,12 +7790,12 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
         }
         case 4: { // Unlink
             const tripoint_abs_ms old_target_pos    = glt->target_pos;
-            const std::string     old_target_dim_id = glt->target_dim_id;
+            const auto old_target_dim_id = glt->target_dim_id;
             // Sever local side first.
             local_tracker.remove_export_node( abs_pos );
             glt->linked = false;
             glt->paused = false;
-            glt->target_dim_id.clear();
+            glt->target_dim_id = dimension_id();
             // Always update the remote grid_link_tile (submap may be resident
             // via load handles even if the remote tracker was destroyed).
             {
@@ -7806,7 +7810,7 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
                         if( rglt != nullptr ) {
                             rglt->linked = false;
                             rglt->paused = false;
-                            rglt->target_dim_id.clear();
+                            rglt->target_dim_id = dimension_id();
                         }
                     }
                 }
@@ -7840,7 +7844,7 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
             return;
         }
         // Generate the dynamic special in the target dimension at a random overmap location.
-        const std::string &tdim = pt->target_dim_id;
+        const auto &tdim = pt->target_dim_id;
         auto &omb = get_overmapbuffer( tdim );
         // Pick an origin far enough from the player so the generated area doesn't overlap.
         const tripoint_abs_omt gen_origin( rng( 50, 100 ), rng( 50, 100 ), 0 );
@@ -7908,8 +7912,8 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
     p.add_msg_if_player( m_good, _( "You step through the portal." ) );
 
     // Resolve destination world_type.
-    auto wt_id = world_type_id( pt->target_dim_id );
-    if( pt->target_dim_id.empty() ) {
+    auto wt_id = world_type_id( pt->target_dim_id.str() );
+    if( pt->target_dim_id.is_empty() ) {
         wt_id = world_types::get_default();
     }
 
