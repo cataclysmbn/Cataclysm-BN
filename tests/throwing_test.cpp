@@ -112,6 +112,16 @@ TEST_CASE( "vehicle throw range grows slowly past the weight threshold", "[throw
     CHECK( vehicle_throw::throw_range( 50, 30 ) == 11 );
 }
 
+TEST_CASE( "vehicle shove velocity stays bounded", "[throwing], [balance]" )
+{
+    CHECK( vehicle_throw::shove_velocity( 0, 1 ) == vehicle_throw::base_shove_velocity );
+    CHECK( vehicle_throw::shove_velocity( 1, 1 ) == vehicle_throw::base_shove_velocity );
+    CHECK( vehicle_throw::shove_velocity( 2, 1 ) ==
+           vehicle_throw::base_shove_velocity + vehicle_throw::shove_velocity_per_excess_strength );
+    CHECK( vehicle_throw::shove_velocity( 10, 1 ) == vehicle_throw::max_shove_velocity );
+    CHECK( vehicle_throw::shove_velocity( 99, 1 ) == vehicle_throw::max_shove_velocity );
+}
+
 TEST_CASE( "lighter flung creatures are worse at breaking obstacles", "[throwing], [balance]" )
 {
     constexpr auto velocity = 30.0f;

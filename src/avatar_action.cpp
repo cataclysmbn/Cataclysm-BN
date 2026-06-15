@@ -77,6 +77,8 @@ namespace
 
 auto try_shove_grabbed_vehicle( avatar &you ) -> bool
 {
+    namespace ranges = std::ranges;
+
     if( you.get_grab_type() != OBJECT_VEHICLE || you.grab_point == tripoint_rel_ms::zero() ) {
         return false;
     }
@@ -107,12 +109,24 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
     if( trajectory.empty() ) {
         return true;
     }
+    if( ranges::any_of( trajectory, [&]( const tripoint_bub_ms & target_pos ) {
+        return target_pos.z() != grabbed_part_pos.z();
+    } ) ) {
+        add_msg( m_info, _( "You can't shove the %s vertically." ), veh.name );
+        return true;
+    }
+    if( ranges::find( trajectory, you.bub_pos() ) != trajectory.end() ) {
+        add_msg( m_info, _( "You can only shove the %s away from yourself." ), veh.name );
+        return true;
+    }
 
     const auto grabbed_part_index = static_cast<int>( grabbed_vehicle_target->vp.part_index() );
-    const auto shove_velocity = 1000 + 250 * std::max( 0, shove_range - 1 );
+    const auto shove_velocity = vehicle_throw::shove_velocity( shove_strength, shove_strength_req );
     auto moved = false;
-    auto last_shove_delta = tripoint_rel_ms::zero();
     for( const auto &target_pos : trajectory ) {
+        if( !is_in_reality_bubble_bounds( target_pos ) ) {
+            break;
+        }
         const auto current_part_pos = veh.bub_part_location( grabbed_part_index );
         if( target_pos == current_part_pos ) {
             continue;
@@ -137,23 +151,18 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
             break;
         }
         moved = true;
-        last_shove_delta = shove_delta;
     }
 
     if( !moved ) {
+        veh.vertical_velocity = 0;
+        veh.stop();
         add_msg( m_info, _( "The %s won't budge." ), veh.name );
         you.mod_moves( -100 );
         return true;
     }
 
-    if( last_shove_delta != tripoint_rel_ms::zero() ) {
-        veh.move = tileray( last_shove_delta.xy() );
-        veh.skidding = true;
-        veh.velocity = shove_velocity;
-        if( last_shove_delta.z() != 0 ) {
-            veh.vertical_velocity = last_shove_delta.z() < 0 ? -shove_velocity : shove_velocity;
-        }
-    }
+    veh.vertical_velocity = 0;
+    veh.stop();
 
     add_msg( _( "You shove the %s away from you." ), veh.name );
     you.mod_moves( -100 - 25 * std::max( 0, shove_range - 1 ) );

@@ -19,9 +19,17 @@ auto throw_range( const int throw_strength, const int strength_requirement ) -> 
         return 0;
     }
 
-    return std::max( base_throw_range,
-                     ( throw_strength - strength_requirement ) / range_strength_step +
-                     base_throw_range );
+    return std::clamp( std::max( base_throw_range,
+                                 ( throw_strength - strength_requirement ) / range_strength_step +
+                                 base_throw_range ),
+                       base_throw_range, max_throw_range );
+}
+
+auto shove_velocity( const int throw_strength, const int strength_requirement ) -> int
+{
+    return std::clamp( base_shove_velocity +
+                       shove_velocity_per_excess_strength * std::max( 0, throw_strength - strength_requirement ),
+                       base_shove_velocity, max_shove_velocity );
 }
 
 } // namespace vehicle_throw
