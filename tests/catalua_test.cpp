@@ -273,7 +273,6 @@ TEST_CASE( "minirose can be disarmed after switching to an npc and back", "[bion
     auto &you = get_avatar();
     const auto minirose_id = bionic_id( "bio_minirose" );
     const auto cleanup_test_state = on_out_of_scope( []() {
-        g->vertical_shift( 0 );
         clear_all_state();
         get_avatar().setID( character_id(), true );
     } );
@@ -426,7 +425,7 @@ TEST_CASE( "lua_place_monster_pins_upgrade_time", "[lua][monster]" )
 {
     const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
     clear_map();
-    put_player_underground();
+    move_player_out_of_the_way();
     calendar::turn = calendar::start_of_cataclysm + 2 * calendar::season_length();
 
     const auto monster_id = mtype_id( "mon_test_lua_upgrade_zombie" );

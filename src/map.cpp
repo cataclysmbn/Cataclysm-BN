@@ -1485,7 +1485,10 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
     size_t collision_attempts = 10;
     do {
         collisions.clear();
-        veh.collision( collisions, dp1, false );
+        veh.collision( vehicle_collision_options{
+            .colls = collisions,
+            .dp = dp1,
+        } );
 
         // Vehicle collisions
         std::map<vehicle *, std::vector<veh_collision> > veh_collisions;

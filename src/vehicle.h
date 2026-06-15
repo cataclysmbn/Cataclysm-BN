@@ -120,12 +120,21 @@ struct veh_collision {
     veh_collision() = default;
 };
 
+struct vehicle_collision_options {
+    std::vector<veh_collision> &colls;
+    tripoint_rel_ms dp;
+    bool just_detect = false;
+    bool bash_floor = false;
+    const Creature *ignored_critter = nullptr;
+};
+
 struct vehicle_part_collision_options {
     int part = 0;
     tripoint_bub_ms pos;
     bool just_detect = false;
     bool bash_floor = false;
     bool vertical = false;
+    const Creature *ignored_critter = nullptr;
 };
 //TODO!: location stuffs here
 class vehicle_stack : public item_stack
@@ -1280,9 +1289,7 @@ class vehicle
         }
 
         // Returns if any collision occurred
-        bool collision( std::vector<veh_collision> &colls,
-                        const tripoint_rel_ms &dp,
-                        bool just_detect, bool bash_floor = false );
+        auto collision( const vehicle_collision_options &options ) -> bool;
 
         // Handle given part collision with vehicle, monster/NPC/player or terrain obstacle
         // Returns collision, which has type, impulse, part, & target.

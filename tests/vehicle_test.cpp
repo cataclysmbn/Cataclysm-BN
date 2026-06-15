@@ -72,7 +72,7 @@ auto make_horde_vehicle_spawn_fixture(
     const auto target_submap_end = target_submap_origin + tripoint( SEEX - 1, SEEY - 1, 0 );
     const auto vehicle_origin = target_submap_origin + tripoint( SEEX / 2, SEEY / 2, 0 );
 
-    you.setpos( vehicle_origin + tripoint( 0, 0, -2 ) );
+    you.setpos( map_local_to_abs( here, target_submap_origin ) );
     const auto veh = here.add_vehicle( vproto_id( "car" ), vehicle_origin, 0_degrees, 0, 0 );
     REQUIRE( veh != nullptr );
 

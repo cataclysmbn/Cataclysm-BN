@@ -16938,14 +16938,16 @@ void game::remove_fake_item( item *it )
 }
 namespace cata_event_dispatch
 {
-void avatar_moves( const avatar &u, const map &m, const tripoint_abs_ms &p )
+void avatar_moves( const avatar &u, const map &m, const tripoint_abs_ms &pos )
 {
     mtype_id mount_type;
     if( u.is_mounted() ) {
         mount_type = u.mounted_creature->type->id;
     }
-    g->events().send<event_type::avatar_moves>( mount_type, m.ter( abs_to_bub( p ) ).id(),
-            u.get_movement_mode(), u.is_underwater(), p.z() );
+    const auto terrain = MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ).get_ter( pos,
+                         { .mode = mapbuffer_lookup_mode::resident_only } ).value_or( t_null );
+    g->events().send<event_type::avatar_moves>( mount_type, terrain, u.get_movement_mode(),
+            u.is_underwater(), pos.z() );
 }
 } // namespace cata_event_dispatch
 
