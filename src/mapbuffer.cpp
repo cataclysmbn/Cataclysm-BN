@@ -172,14 +172,248 @@ auto passable_ter_furn_at( mapbuffer &buffer, const tripoint_abs_ms &p,
     return tile && move_cost_ter_furn_from_tile( *tile ) != 0;
 }
 
+auto omt_submap_offsets() -> const std::array<point_omt_sm, 4> &
+{
+    static const auto offsets = std::array{
+        point_omt_sm::zero(),
+        point_omt_sm( 1, 0 ),
+        point_omt_sm( 0, 1 ),
+        point_omt_sm( 1, 1 ),
+    };
+    return offsets;
+}
+
+auto omt_submap_index( const point_omt_sm &local ) -> std::optional<std::size_t>
+{
+    if( local.x() < 0 || local.x() > 1 || local.y() < 0 || local.y() > 1 ) {
+        return std::nullopt;
+    }
+    return static_cast<std::size_t>( local.x() + local.y() * 2 );
+}
+
 } // namespace
+
+mapbuffer_abs_tile_view::mapbuffer_abs_tile_view( const tripoint_abs_sm &abs_sm,
+        const point_sm_ms &local, const submap &sm ) :
+    abs_sm_( abs_sm ),
+    local_( local ),
+    sm_( &sm )
+{
+}
+
+mapbuffer_abs_tile_view::operator bool() const
+{
+    return sm_ != nullptr;
+}
+
+auto mapbuffer_abs_tile_view::abs_pos() const -> tripoint_abs_ms
+{
+    return project_combine( abs_sm_, local_ );
+}
+
+auto mapbuffer_abs_tile_view::abs_submap_pos() const -> tripoint_abs_sm
+{
+    return abs_sm_;
+}
+
+auto mapbuffer_abs_tile_view::submap_pos() const -> point_sm_ms
+{
+    return local_;
+}
+
+auto mapbuffer_abs_tile_view::get_ter() const -> ter_id
+{
+    return sm_->get_ter( local_ );
+}
+
+auto mapbuffer_abs_tile_view::get_furn() const -> furn_id
+{
+    return sm_->get_furn( local_ );
+}
+
+auto mapbuffer_abs_tile_view::get_trap() const -> trap_id
+{
+    return sm_->get_trap( local_ );
+}
+
+auto mapbuffer_abs_tile_view::get_ter_t() const -> const ter_t &
+{
+    return get_ter().obj();
+}
+
+auto mapbuffer_abs_tile_view::get_furn_t() const -> const furn_t &
+{
+    return get_furn().obj();
+}
+
+auto mapbuffer_abs_tile_view::get_trap_t() const -> const trap &
+{
+    return get_trap().obj();
+}
+
+auto mapbuffer_abs_tile_view::get_field() const -> const field &
+{
+    return sm_->get_field( local_ );
+}
+
+auto mapbuffer_abs_tile_view::get_items() const -> const location_vector<item> &
+{
+    return sm_->get_items( local_ );
+}
+
+auto mapbuffer_abs_tile_view::get_radiation() const -> int
+{
+    return sm_->get_radiation( local_ );
+}
+
+auto mapbuffer_abs_tile_view::get_lum() const -> std::uint8_t
+{
+    return sm_->get_lum( local_ );
+}
+
+auto mapbuffer_abs_tile_view::move_cost_ter_furn() const -> int
+{
+    const auto &terrain = get_ter_t();
+    const auto &furniture = get_furn_t();
+    if( terrain.movecost == 0 || ( furniture.id && furniture.movecost < 0 ) ) {
+        return 0;
+    }
+    if( furniture.id ) {
+        return std::max( terrain.movecost + furniture.movecost, 0 );
+    }
+    return std::max( terrain.movecost, 0 );
+}
+
+auto mapbuffer_abs_tile_view::passable_ter_furn() const -> bool
+{
+    return move_cost_ter_furn() != 0;
+}
+
+auto mapbuffer_abs_tile_view::move_cost_with_vehicle( const optional_vpart_position &vp ) const -> int
+{
+    return move_cost_from_tile_parts( get_ter(), get_furn(), vp );
+}
+
+auto mapbuffer_abs_tile_view::passable_with_vehicle( const optional_vpart_position &vp ) const -> bool
+{
+    return move_cost_with_vehicle( vp ) != 0;
+}
+
+mapbuffer_abs_submap_view::mapbuffer_abs_submap_view( const tripoint_abs_sm &abs_sm,
+        const submap &sm ) :
+    abs_sm_( abs_sm ),
+    sm_( &sm )
+{
+}
+
+mapbuffer_abs_submap_view::operator bool() const
+{
+    return sm_ != nullptr;
+}
+
+auto mapbuffer_abs_submap_view::abs_pos() const -> tripoint_abs_sm
+{
+    return abs_sm_;
+}
+
+auto mapbuffer_abs_submap_view::get_submap() const -> const submap &
+{
+    return *sm_;
+}
+
+auto mapbuffer_abs_submap_view::tile( const point_sm_ms &local ) const -> mapbuffer_abs_tile_view
+{
+    return mapbuffer_abs_tile_view( abs_sm_, local, *sm_ );
+}
+
+auto mapbuffer_abs_submap_view::tiles() const -> point_range<point_sm_ms>
+{
+    return submap_tiles();
+}
+
+mapbuffer_abs_omt_view::mapbuffer_abs_omt_view( const tripoint_abs_omt &abs_omt,
+        const std::array<const submap *, 4> &submaps ) :
+    abs_omt_( abs_omt ),
+    submaps_( submaps )
+{
+}
+
+mapbuffer_abs_omt_view::operator bool() const
+{
+    return std::ranges::all_of( submaps_, []( const auto * sm ) {
+        return sm != nullptr;
+    } );
+}
+
+auto mapbuffer_abs_omt_view::abs_pos() const -> tripoint_abs_omt
+{
+    return abs_omt_;
+}
+
+auto mapbuffer_abs_omt_view::get_submap_view( const point_omt_sm &local ) const
+-> std::optional<mapbuffer_abs_submap_view>
+{
+    const auto index = omt_submap_index( local );
+    if( !index || submaps_[*index] == nullptr ) {
+        return std::nullopt;
+    }
+    return mapbuffer_abs_submap_view( project_combine( abs_omt_, local ), *submaps_[*index] );
+}
+
+mapbuffer_abs_tile_reader::mapbuffer_abs_tile_reader( mapbuffer &buffer,
+        const mapbuffer_lookup_options options ) :
+    buffer_( &buffer ),
+    options_( options )
+{
+}
+
+auto mapbuffer_abs_tile_reader::get_tile( const tripoint_abs_ms &p ) const
+-> std::optional<mapbuffer_abs_tile_view>
+{
+    return buffer_->get_abs_tile( p, options_ );
+}
+
+auto mapbuffer_abs_tile_reader::get_submap_view( const tripoint_abs_sm &p ) const
+-> std::optional<mapbuffer_abs_submap_view>
+{
+    return buffer_->get_abs_submap_view( p, options_ );
+}
+
+auto mapbuffer_abs_tile_reader::get_omt_view( const tripoint_abs_omt &p ) const
+-> std::optional<mapbuffer_abs_omt_view>
+{
+    return buffer_->get_abs_omt_view( p, options_ );
+}
+
+auto mapbuffer::register_submap_vehicles( const tripoint_abs_sm &p, submap &sm ) -> void
+{
+    for( const auto &veh : sm.vehicles ) {
+        if( veh == nullptr || veh->part_count() <= 0 ) {
+            continue;
+        }
+        veh->abs_sm_pos = p;
+        veh->set_dimension( dimension_id_ );
+        loaded_vehicles_.insert( veh.get() );
+    }
+}
+
+auto mapbuffer::unregister_submap_vehicles( const tripoint_abs_sm &p ) -> void
+{
+    std::erase_if( loaded_vehicles_, [&]( const vehicle * veh ) {
+        return veh == nullptr || veh->abs_sm_pos == p;
+    } );
+}
 
 mapbuffer::mapbuffer() = default;
 mapbuffer::~mapbuffer() = default;
 
 void mapbuffer::clear()
 {
-    submaps.clear();
+    {
+        std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+        loaded_vehicles_.clear();
+        submaps.clear();
+    }
     std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
     pending_writes_.clear();
 }
@@ -192,6 +426,7 @@ bool mapbuffer::add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &s
     }
 
     submaps[p] = std::move( sm );
+    register_submap_vehicles( p, *submaps[p] );
 
     return true;
 }
@@ -218,6 +453,7 @@ void mapbuffer::remove_submap( tripoint_abs_sm addr )
             }
         }
     }
+    unregister_submap_vehicles( addr );
     submaps.erase( m_target );
 }
 
@@ -233,8 +469,10 @@ void mapbuffer::transfer_all_to( mapbuffer &dest )
                       kv.first.to_string() );
             continue;
         }
+        dest.register_submap_vehicles( kv.first, *kv.second );
         dest.submaps.emplace( kv.first, std::move( kv.second ) );
     }
+    loaded_vehicles_.clear();
     submaps.clear();
 }
 
@@ -338,6 +576,7 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
         } );
     }
     for( const auto &p : to_delete ) {
+        unregister_submap_vehicles( p );
         submaps.erase( p );
     }
 }
@@ -450,6 +689,78 @@ auto mapbuffer::get_submap( const tripoint_abs_sm &p,
     return nullptr;
 }
 
+auto mapbuffer::get_abs_tile( const tripoint_abs_ms &p,
+                              const mapbuffer_lookup_options options )
+-> std::optional<mapbuffer_abs_tile_view>
+{
+    const auto split = project_remain<coords::sm>( p );
+    auto *const sm = get_submap( split.quotient_tripoint, options );
+    if( sm == nullptr ) {
+        return std::nullopt;
+    }
+
+    return mapbuffer_abs_tile_view( split.quotient_tripoint, split.remainder, *sm );
+}
+
+auto mapbuffer::get_abs_submap_view( const tripoint_abs_sm &p,
+                                     const mapbuffer_lookup_options options )
+-> std::optional<mapbuffer_abs_submap_view>
+{
+    auto *const sm = get_submap( p, options );
+    if( sm == nullptr ) {
+        return std::nullopt;
+    }
+
+    return mapbuffer_abs_submap_view( p, *sm );
+}
+
+auto mapbuffer::get_abs_omt_view( const tripoint_abs_omt &p,
+                                  const mapbuffer_lookup_options options )
+-> std::optional<mapbuffer_abs_omt_view>
+{
+    auto submaps = std::array<const submap *, 4> {};
+    for( const auto &local : omt_submap_offsets() ) {
+        const auto index = omt_submap_index( local );
+        auto *const sm = get_submap( project_combine( p, local ), options );
+        if( !index || sm == nullptr ) {
+            return std::nullopt;
+        }
+        submaps[*index] = sm;
+    }
+
+    return mapbuffer_abs_omt_view( p, submaps );
+}
+
+auto mapbuffer::make_abs_tile_reader( const mapbuffer_lookup_options options )
+-> mapbuffer_abs_tile_reader
+{
+    return mapbuffer_abs_tile_reader( *this, options );
+}
+
+auto mapbuffer::has_loaded_vehicle( const vehicle *veh ) const -> bool
+{
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    return loaded_vehicles_.contains( const_cast<vehicle *>( veh ) );
+}
+
+auto mapbuffer::unregister_vehicle( vehicle *veh ) -> void
+{
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    loaded_vehicles_.erase( veh );
+}
+
+auto mapbuffer::refresh_vehicle_registry_for_submap( const tripoint_abs_sm &p,
+        const mapbuffer_lookup_options options ) -> void
+{
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    unregister_submap_vehicles( p );
+    auto *const sm = get_submap( p, options );
+    if( sm == nullptr ) {
+        return;
+    }
+    register_submap_vehicles( p, *sm );
+}
+
 auto mapbuffer::get_ter( const tripoint_abs_ms &p,
                          const mapbuffer_lookup_options options ) -> std::optional<ter_id>
 {
@@ -518,27 +829,24 @@ auto mapbuffer::set_furn( const tripoint_abs_ms &p, const furn_id furn,
 auto mapbuffer::veh_at( const tripoint_abs_ms &p,
                         const mapbuffer_lookup_options options ) -> optional_vpart_position
 {
+    if( const auto local = active_reality_bubble_local( p ) ) {
+        return g->m.veh_at( *local );
+    }
+
     const auto target_sm = project_to<coords::sm>( p );
     if( get_submap( target_sm, options ) == nullptr ) {
         return optional_vpart_position( std::nullopt );
     }
 
     std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
-    for( const auto &entry : submaps ) {
-        const auto *const sm = entry.second.get();
-        if( sm == nullptr ) {
+    for( auto *veh : loaded_vehicles_ ) {
+        if( veh == nullptr ) {
             continue;
         }
-        for( const auto &veh_ptr : sm->vehicles ) {
-            if( veh_ptr == nullptr ) {
-                continue;
-            }
-            auto &veh = *veh_ptr;
-            const auto rel = p - veh.abs_ms_location();
-            const auto part = veh.part_at( rel );
-            if( part >= 0 ) {
-                return optional_vpart_position( vpart_position( veh, static_cast<size_t>( part ) ) );
-            }
+        const auto rel = p - veh->abs_ms_location();
+        const auto part = veh->part_at( rel );
+        if( part >= 0 ) {
+            return optional_vpart_position( vpart_position( *veh, static_cast<size_t>( part ) ) );
         }
     }
 

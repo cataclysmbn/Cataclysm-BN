@@ -2655,15 +2655,6 @@ class map : public submap_load_listener
         std::vector<std::pair<tripoint_abs_sm, point_sm_ms>> funnel_locations_;
 
         /**
-         * Flat registry of all vehicles in loaded submaps (both in-bubble and
-         * out-of-bubble).  Populated by loadn() and on_submap_loaded(); pruned
-         * by on_submap_unloaded() and detach_vehicle().  Replaces the old
-         * submaps_with_vehicles set — no manual maintenance at vehicle boundary
-         * crossings or z-level transitions is required.
-         */
-        std::set<vehicle *> loaded_vehicles;
-
-        /**
          * Direct-mapped cache of coordinate pairs recently checked for visibility.
          * Each slot stores a packed (key, value) entry.  Hash collisions silently
          * evict the old entry — no linked list, no heap allocation.
@@ -2709,6 +2700,8 @@ class map : public submap_load_listener
         dimension_id bound_dimension_;
 
     public:
+        auto get_mapbuffer() -> mapbuffer & { return MAPBUFFER_REGISTRY.get( bound_dimension_ ); }
+        auto get_mapbuffer() const -> mapbuffer & { return MAPBUFFER_REGISTRY.get( bound_dimension_ ); }
         bool has_rope_at( tripoint_bub_ms pt ) const;
         std::pair<vehicle *, int> get_rope_at( const point_bub_ms &pt ) const;
 

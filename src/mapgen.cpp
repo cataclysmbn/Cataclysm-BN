@@ -6079,7 +6079,9 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
         auto &ch = get_cache( placed_vehicle_sm.z() );
         ch.vehicle_list.insert( placed_vehicle );
         add_vehicle_to_cache( placed_vehicle );
-        loaded_vehicles.insert( placed_vehicle );
+        get_mapbuffer().refresh_vehicle_registry_for_submap( placed_vehicle->abs_sm_pos, {
+            .mode = mapbuffer_lookup_mode::resident_only,
+        } );
 
         //debugmsg ("grid[%d]->vehicles.size=%d veh.parts.size=%d", nonant, grid[nonant]->vehicles.size(),veh.parts.size());
     }
