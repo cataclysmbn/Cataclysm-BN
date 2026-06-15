@@ -225,7 +225,7 @@ struct legacy_pathfinding_tile {
 };
 
 auto get_legacy_pathfinding_tile( mapbuffer &buffer, const tripoint_abs_ms &p )
--> std::optional<legacy_pathfinding_tile>
+- > std::optional<legacy_pathfinding_tile>
 {
     const auto terrain = buffer.get_ter( p );
     const auto furniture = buffer.get_furn( p );
