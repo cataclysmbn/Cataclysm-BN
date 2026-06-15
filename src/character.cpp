@@ -841,7 +841,7 @@ tripoint_abs_ms Character::abs_pos() const
 
 auto Character::setpos( const tripoint_bub_ms &p ) -> void
 {
-    position = map_local_to_abs( get_map(), p );
+    position = bub_to_abs( p );
 }
 
 auto Character::setpos( const tripoint_abs_ms &p ) -> void
@@ -1523,7 +1523,6 @@ void Character::forced_dismount()
         if( g->u.is_auto_moving() || g->u.has_destination() || g->u.has_destination_activity() ) {
             g->u.clear_destination();
         }
-        g->update_map( g->u );
     }
     if( activity ) {
         cancel_activity();
@@ -1559,9 +1558,6 @@ void Character::dismount()
         mounted_creature = nullptr;
         critter->mounted_player = nullptr;
         setpos( *pnt );
-        if( is_avatar() ) {
-            g->update_map( g->u );
-        }
         mod_moves( -100 );
         set_movement_mode( CMM_WALK );
     }

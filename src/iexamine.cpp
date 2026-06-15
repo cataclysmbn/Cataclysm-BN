@@ -1378,9 +1378,6 @@ void iexamine::chainfence( player &p, const tripoint_bub_ms &examp )
         here.unboard_vehicle( p.bub_pos() );
     }
     p.setpos( examp );
-    if( p.is_player() ) {
-        g->update_map( p );
-    }
 }
 
 /**
@@ -1409,9 +1406,6 @@ void iexamine::bars( player &p, const tripoint_bub_ms &examp )
     p.moves -= to_turns<int>( 2_seconds );
     add_msg( _( "You slide right between the bars." ) );
     p.setpos( examp );
-    if( p.is_player() ) {
-        g->update_map( p );
-    }
 }
 
 void iexamine::deployed_furniture( player &p, const tripoint_bub_ms &pos )
@@ -5597,8 +5591,10 @@ void iexamine::pay_gas( player &p, const tripoint_bub_ms &examp )
     }
 }
 
-void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
+void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
 {
+    const auto examp = bub_to_abs( examp_bub );
+    const auto dir = ( examp - p.abs_pos() ).xy();
     enum ledge_action : int { jump_over, climb_down, pull_up_rope, spin_web_bridge };
     if( p.in_vehicle ) {
         if( !character_funcs::can_fly( p ) &&
@@ -5607,19 +5603,25 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
         }
         get_map().unboard_vehicle( p.bub_pos() );
     }
-    if( get_map().ter( p.bub_pos() ).id().str() == "t_open_air" && !character_funcs::can_fly( p ) ) {
-        auto where = p.bub_pos();
-        auto below = where;
-        below.z()--;
+    auto &buffer = p.get_mapbuffer();
+    const auto player_terrain = buffer.get_ter( p.abs_pos() );
+    if( player_terrain && player_terrain->obj().id.str() == "t_open_air" &&
+        !character_funcs::can_fly( p ) ) {
+        auto where = p.abs_pos();
+        auto below = where + tripoint_rel_ms::below();
 
         // Keep going down until we find a tile that is NOT open air
-        while( get_map().ter( below ).id().str() == "t_open_air" &&
-               get_map().valid_move( where, below, false, true ) ) {
-            where.z()--;
-            below.z()--;
+        while( true ) {
+            const auto below_terrain = buffer.get_ter( below );
+            if( !below_terrain || below_terrain->obj().id.str() != "t_open_air" ||
+                !buffer.valid_move( where, below, { .flying = true, .zlevels = get_map().has_zlevels() } ) ) {
+                break;
+            }
+            where += tripoint_rel_ms::below();
+            below += tripoint_rel_ms::below();
         }
         // where now represents the first NON-open-air tile or the last valid move before hitting one
-        const int height = p.bub_pos().z() - below.z();
+        const int height = p.abs_pos().z() - below.z();
 
         if( height > 0 ) {
             g->vertical_move( -height, true );  // fall onto the solid tile
@@ -5634,32 +5636,30 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
     //if the tile below has a grappling hook, you can pull it up
     auto below_rope = examp;
     below_rope.z()--;
-    if( get_map().has_flag_furn( "REMOVE_FROM_ABOVE", below_rope ) ) {
+    if( buffer.has_flag_furn( "REMOVE_FROM_ABOVE", below_rope ) ) {
         cmenu.addentry( ledge_action::pull_up_rope, true, 'r', _( "Pull up the %s." ),
-                        get_map().furn( below_rope ).obj().name() );
+                        buffer.get_furn( below_rope )->obj().name() );
     }
     if( p.has_trait( trait_WEB_BRIDGE ) ) {
         cmenu.addentry( ledge_action::spin_web_bridge, true, 'w', _( "Spin Web Bridge." ) );
     }
 
     cmenu.query();
-
-    map &here = get_map();
     switch( cmenu.ret ) {
         case ledge_action::jump_over: {
-            tripoint_bub_ms dest( p.bub_pos().x() + 2 * sgn( examp.x() - p.bub_pos().x() ),
-                                  p.bub_pos().y() + 2 * sgn( examp.y() - p.bub_pos().y() ),
-                                  p.bub_pos().z() );
+            const auto impulse = dir * 2;
+            const auto dest = p.abs_pos() + impulse;
             if( p.get_str() < 4 ) {
                 add_msg( m_warning, _( "You are too weak to jump over an obstacle." ) );
             } else if( 100 * p.weight_carried() / p.weight_capacity() > 25 ) {
                 add_msg( m_warning, _( "You are too burdened to jump over an obstacle." ) );
-            } else if( !here.valid_move( examp, dest, false, true ) ) {
+            } else if( !buffer.valid_move( examp, dest, { .flying = true } ) ) {
                 add_msg( m_warning, _( "You cannot jump over an obstacle - something is blocking the way." ) );
             } else if( g->critter_at( dest ) ) {
                 add_msg( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
                          g->critter_at( dest )->disp_name() );
-            } else if( here.ter( dest ).obj().trap == tr_ledge ) {
+            } else if( const auto dest_terrain = buffer.get_ter( dest );
+                       dest_terrain && dest_terrain->obj().trap == tr_ledge ) {
                 add_msg( m_warning, _( "You are not going to jump over an obstacle only to fall down." ) );
             } else {
                 add_msg( m_info, _( "You jump over an obstacle." ) );
@@ -5669,11 +5669,10 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
         }
         case ledge_action::climb_down: {
             auto where = examp;
-            auto below = examp;
-            below.z()--;
-            while( here.valid_move( where, below, false, true ) ) {
-                where.z()--;
-                below.z()--;
+            auto below = where + tripoint_rel_ms::below();
+            while( buffer.valid_move( where, below, { .flying = true } ) ) {
+                where += tripoint_rel_ms::below();
+                below += tripoint_rel_ms::below();
             }
 
             const int height = examp.z() - where.z();
@@ -5683,7 +5682,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             }
 
             const bool has_grapnel = p.has_amount( itype_grapnel, 1 );
-            const auto climb_cost = map_funcs::climbing_cost( here, where, examp );
+            const auto climb_cost = map_funcs::climbing_cost( buffer, where, examp );
             const auto fall_mod = p.fall_damage_mod();
             const std::string query_str = vgettext( "Looks like %d story.  Jump down?",
                                                     "Looks like %d stories.  Jump down?",
@@ -5745,22 +5744,18 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
 
             p.moves -= to_moves<int>( 1_seconds + 1_seconds * fall_mod );
             p.setpos( examp );
-            if( p.is_player() ) {
-                g->update_map( p );
-            }
 
             if( climb_cost > 0 || rng_float( 0.8, 1.0 ) > fall_mod ) {
                 // One tile of falling less (possibly zero)
                 g->vertical_move( -1, true );
             }
-            here.creature_on_trap( p );
+            buffer.creature_on_trap( p );
             break;
         }
         case ledge_action::pull_up_rope: {
-            map &here = get_map();
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
-                                 here.furn( below_rope ).obj().name() );
-            take_down_deployed_furniture( below_rope, p.bub_pos() );
+                                 buffer.get_furn( below_rope )->obj().name() );
+            take_down_deployed_furniture( buffer, below_rope, p.abs_pos() );
             break;
         }
         case ledge_action::spin_web_bridge: {
@@ -5773,8 +5768,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             bool success = false;
             for( int i = 2; i <= range; i++ ) {
                 //break at the first non empty space encountered
-                if( g->m.ter( tripoint_bub_ms( p.bub_pos().x() + i * sgn( examp.x() - p.bub_pos().x() ),
-                                               p.bub_pos().y() + i * sgn( examp.y() - p.bub_pos().y() ), p.bub_pos().z() ) ) != t_open_air ) {
+                if( buffer.get_ter( p.abs_pos() + dir * i ) != t_open_air ) {
                     success_range = i;
                     success = true;
                     break;
@@ -5784,11 +5778,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
                 p.add_msg_if_player( _( "There is nothing for your to attach your web to!" ) );
             } else {
                 for( int i = 1; i < success_range; i++ ) {
-                    tripoint_bub_ms dest( p.bub_pos().x() + i * sgn( examp.x() - p.bub_pos().x() ),
-                                          p.bub_pos().y() + i * sgn( examp.y() - p.bub_pos().y() ),
-                                          p.bub_pos().z() );
-
-                    g->m.ter_set( dest, t_web_bridge );
+                    buffer.set_ter( p.abs_pos() + dir * i, t_web_bridge );
                 }
                 p.mutation_spend_resources( trait_WEB_BRIDGE );
             }
@@ -7923,17 +7913,17 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
     g->travel_to_dimension( pt->target_dim_id, wt_id, std::nullopt, dest_sm );
 
     p.setpos( pt->target_pos );
-    g->update_map( p );
 }
 
 void iexamine::migo_nerve_cluster( player &p, const tripoint_bub_ms &examp )
 {
-    map &here = get_map();
     if( query_yn( _( "This looks important.  Tear open nerve cluster?" ) ) ) {
+        auto &buffer = p.get_mapbuffer();
+        const auto pos = p.abs_pos() + ( examp - p.bub_pos() );
         p.mod_moves( -200 );
         add_msg( _( "You grab hold of a sinewy tendril and wrench it loose!" ) );
-        map_funcs::migo_nerve_cage_removal( here, examp, false );
-        here.furn_set( examp, furn_id( "f_alien_scar" ) );
+        map_funcs::migo_nerve_cage_removal( buffer, pos, false );
+        buffer.set_furn( pos, furn_id( "f_alien_scar" ) );
     }
 }
 

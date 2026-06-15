@@ -137,8 +137,6 @@ static void swap_pos( Creature &caster, const tripoint_bub_ms &target )
         critter->setpos( caster.bub_pos() );
     }
     caster.setpos( target );
-    //update map in case a monster swapped positions with the player
-    g->update_map( get_avatar() );
 }
 
 void spell_effect::pain_split( const spell &sp, Creature &caster, const tripoint_bub_ms & )

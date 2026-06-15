@@ -1138,6 +1138,9 @@ class map : public submap_load_listener
         std::vector<tripoint_bub_ms> route( const tripoint_bub_ms &f, const tripoint_bub_ms &t,
                                             const pathfinding_settings &settings,
         const std::set<tripoint_bub_ms> &pre_closed = {{ }} ) const;
+        std::vector<tripoint_abs_ms> route( const tripoint_abs_ms &f, const tripoint_abs_ms &t,
+                                            const pathfinding_settings &settings,
+        const std::set<tripoint_abs_ms> &pre_closed = {{ }} ) const;
 
         // Vehicles: Common to 2D and 3D
         VehicleList get_vehicles();

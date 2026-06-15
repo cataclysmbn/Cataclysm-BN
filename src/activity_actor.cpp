@@ -2099,7 +2099,6 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     const auto original_player_position = who.abs_pos();
     if( blind_throw_pos ) {
         who.setpos( bub_to_abs( *blind_throw_pos ) );
-        g->update_map( who );
     }
 
     target_handler::trajectory trajectory = target_handler::mode_throw( *who.as_avatar(), *it,
@@ -2108,7 +2107,6 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // If we previously shifted our position, put ourselves back now that we've picked our target.
     if( blind_throw_pos ) {
         who.setpos( original_player_position );
-        g->update_map( who );
     }
 
     if( trajectory.empty() ) {

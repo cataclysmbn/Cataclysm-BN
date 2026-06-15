@@ -324,7 +324,7 @@ class game : public submap_load_listener
         std::optional<tripoint_bub_ms> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
                 bool peeking );
         /** Actual z-level movement part of vertical_move. Doesn't include stair finding, traps etc. */
-        auto vertical_shift( int z_after, bool keep_grab = false ) -> void;
+        auto vertical_shift( int z_after ) -> void;
         /** Add goes up/down auto_notes (if turned on) */
         void vertical_notes( int z_before, int z_after );
         /** Checks to see if a player can use a computer (not illiterate, etc.) and uses if able. */
@@ -665,10 +665,10 @@ class game : public submap_load_listener
         character_id assign_npc_id();
         Creature *is_hostile_nearby();
         Creature *is_hostile_very_close();
-        // Handles shifting coordinates transparently when moving between submaps.
-        // Helper to make calling with a player pointer less verbose.
-        point_rel_sm update_map( Character &who );
-        point_rel_sm update_map( int &x, int &y );
+        // Keeps the loaded map window aligned with an absolute center.
+        auto update_map( Character &who ) -> point_rel_sm;
+        auto update_map( const tripoint_abs_ms &center ) -> point_rel_sm;
+        auto update_map( int &x, int &y ) -> point_rel_sm;
         void update_overmap_seen(); // Update which overmap tiles we can see
 
         void process_artifact( item &it, Character &who );
@@ -951,7 +951,7 @@ class game : public submap_load_listener
         void butcher(); // Butcher a corpse  'B'
     public:
         // Places the player at the specified point; hurts feet, lists items etc.
-        auto place_player( const tripoint_bub_ms &dest, bool keep_grab = false ) -> point_rel_sm;
+        auto place_player( const tripoint_bub_ms &dest ) -> point_rel_sm;
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;

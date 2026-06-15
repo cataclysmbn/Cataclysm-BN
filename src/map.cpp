@@ -2062,9 +2062,6 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *who )
 
     who->setpos( pos );
     who->in_vehicle = true;
-    if( who->is_avatar() ) {
-        g->update_map( g->u );
-    }
 }
 
 void map::unboard_vehicle( const vpart_reference &vp, Character *passenger, bool dead_passenger )
@@ -2161,7 +2158,6 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
 
     bool need_update = false;
     bool z_change = false;
-    int z_to = 0;
     // Move passengers and pets
     bool complete = false;
     // loop until everyone has moved or for each passenger
@@ -2202,10 +2198,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
                 continue;
             }
             if( psg->is_avatar() ) {
-                // If passenger is you, we need to update the map
                 need_update = true;
                 z_change = psgp.z() != part_pos.z();
-                z_to = psgp.z();
             }
 
             psg->setpos( psgp );
@@ -2320,15 +2314,10 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     if( need_update && !z_change && src.z() == dest.z() ) {
         mark_vehicle_moved();
     }
-
-    if( need_update ) {
-        g->update_map( g->u );
-    }
     add_vehicle_to_cache( &veh );
 
     if( z_change || src.z() != dest.z() ) {
         if( z_change ) {
-            g->vertical_shift( z_to );
             // vertical moves can flush the caches, so make sure we're still in the cache
             add_vehicle_to_cache( &veh );
         }
@@ -3070,96 +3059,13 @@ int map::combined_movecost( const tripoint_bub_ms &from, const tripoint_bub_ms &
 bool map::valid_move( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
                       const bool bash, const bool flying, const bool via_ramp ) const
 {
-    // Used to account for the fact that older versions of GCC can trip on the if statement here.
-    assert( to.z() > std::numeric_limits<int>::min() );
-    if( std::abs( from.x() - to.x() ) > 1 || std::abs( from.y() - to.y() ) > 1 ||
-        std::abs( from.z() - to.z() ) > 1 ) {
-        return false;
-    }
-
-    if( from.z() == to.z() ) {
-        // But here we need to, to prevent bashing critters
-        return passable( to ) || ( bash && inbounds( to ) );
-    } else if( !zlevels ) {
-        return false;
-    }
-
-    const bool going_up = from.z() < to.z();
-
-    const auto &up_p = tripoint_bub_ms( going_up ? to : from );
-    const auto &down_p = tripoint_bub_ms( going_up ? from : to );
-
-    const maptile up = maptile_at( up_p );
-    const ter_t &up_ter = up.get_ter_t();
-    if( up_ter.id.is_null() ) {
-        return false;
-    }
-    // Checking for ledge is a workaround for the case when mapgen doesn't
-    // actually make a valid ledge drop location with zlevels on, this forces
-    // at least one zlevel drop and if down_ter is impassible it's probably
-    // inside a wall, we could workaround that further but it's unnecessary.
-    const bool up_is_ledge = tr_at( up_p ).loadid == tr_ledge;
-
-    if( up_ter.movecost == 0 ) {
-        // Unpassable tile
-        return false;
-    }
-
-    const maptile down = maptile_at( down_p );
-    const ter_t &down_ter = down.get_ter_t();
-    if( down_ter.id.is_null() ) {
-        return false;
-    }
-
-    if( !up_is_ledge && down_ter.movecost == 0 ) {
-        // Unpassable tile
-        return false;
-    }
-
-    if( !up_ter.has_flag( TFLAG_NO_FLOOR ) && !up_ter.has_flag( TFLAG_GOES_DOWN ) && !up_is_ledge &&
-        !via_ramp ) {
-        // Can't move from up to down
-        if( std::abs( from.x() - to.x() ) == 1 || std::abs( from.y() - to.y() ) == 1 ) {
-            // Break the move into two - vertical then horizontal
-            tripoint_bub_ms midpoint( down_p.xy(), up_p.z() );
-            return valid_move( down_p, midpoint, bash, flying, via_ramp ) &&
-                   valid_move( midpoint, up_p, bash, flying, via_ramp );
-        }
-        return false;
-    }
-
-    if( !flying && !down_ter.has_flag( TFLAG_GOES_UP ) && !down_ter.has_flag( TFLAG_RAMP ) &&
-        !up_is_ledge && !via_ramp ) {
-        // Can't safely reach the lower tile
-        return false;
-    }
-
-    if( bash ) {
-        return true;
-    }
-    // get_cache() has no bounds check on z, and maptile_at's mapbuffer fallback
-    // can return non-null terrain for positions outside the reality bubble.
-    if( !inbounds( down_p ) || !inbounds_z( up_p.z() ) ) {
-        return up.get_furn_t().movecost >= 0;
-    }
-
-    int part_up;
-    const vehicle *veh_up = veh_at_internal( up_p, part_up );
-    if( veh_up != nullptr && !veh_at( up_p ).part_with_feature( VPFLAG_NOCOLLIDEBELOW, false ) ) {
-        // TODO: Hatches below the vehicle
-        return false;
-    }
-
-    int part_down;
-    const vehicle *veh_down = veh_at_internal( down_p, part_down );
-    if( veh_down != nullptr && veh_down->roof_at_part( part_down ) >= 0 ) {
-        // TODO: OPEN (and only open) hatches from above
-        return false;
-    }
-
-    // Currently only furniture can block movement if everything else is OK
-    // TODO: Vehicles with boards in the given spot
-    return up.get_furn_t().movecost >= 0;
+    return MAPBUFFER_REGISTRY.get( bound_dimension_ ).valid_move(
+               map_local_to_abs( *this, from ), map_local_to_abs( *this, to ), {
+        .bash = bash,
+        .flying = flying,
+        .via_ramp = via_ramp,
+        .zlevels = zlevels,
+    } );
 }
 
 // End of move cost
@@ -3185,35 +3091,8 @@ int map::climb_difficulty( const tripoint_bub_ms &p ) const
         return INT_MAX;
     }
 
-    int best_difficulty = INT_MAX;
-    int blocks_movement = 0;
-    if( has_flag( "LADDER", p ) ) {
-        // Really easy, but you have to stand on the tile
-        return 1;
-    } else if( has_flag( TFLAG_RAMP, p ) || has_flag( TFLAG_RAMP_UP, p ) ||
-               has_flag( TFLAG_RAMP_DOWN, p ) ) {
-        // We're on something stair-like, so halfway there already
-        best_difficulty = 7;
-    }
-
-    for( const auto &pt : points_in_radius( p, 1 ) ) {
-        if( impassable_ter_furn( pt ) ) {
-            // TODO: Non-hardcoded climbability
-            best_difficulty = std::min( best_difficulty, 10 );
-            blocks_movement++;
-        } else if( veh_at( pt ) ) {
-            // Vehicle tiles are quite good for climbing
-            // TODO: Penalize spiked parts?
-            best_difficulty = std::min( best_difficulty, 7 );
-        }
-
-        if( best_difficulty > 5 && has_flag( "CLIMBABLE", pt ) ) {
-            best_difficulty = 5;
-        }
-    }
-
-    // TODO: Make this more sensible - check opposite sides, not just movement blocker count
-    return std::max( 0, best_difficulty - blocks_movement );
+    return MAPBUFFER_REGISTRY.get( bound_dimension_ ).climb_difficulty(
+               map_local_to_abs( *this, p ) ).value_or( INT_MAX );
 }
 
 bool map::has_floor( const tripoint_bub_ms &p, bool visible_only ) const
@@ -11271,20 +11150,7 @@ field &map::get_field( const tripoint_bub_ms &p )
 
 void map::creature_on_trap( Creature &c, const bool may_avoid )
 {
-    const auto &tr = tr_at( c.bub_pos() );
-    if( tr.is_null() ) {
-        return;
-    }
-    // boarded in a vehicle means the player is above the trap, like a flying monster and can
-    // never trigger the trap.
-    const player *const p = dynamic_cast<const player *>( &c );
-    if( p != nullptr && p->in_vehicle ) {
-        return;
-    }
-    if( may_avoid && c.avoid_trap( c.bub_pos(), tr ) ) {
-        return;
-    }
-    tr.trigger( c.bub_pos(), &c );
+    MAPBUFFER_REGISTRY.get( bound_dimension_ ).creature_on_trap( c, may_avoid );
 }
 
 template<typename Functor>

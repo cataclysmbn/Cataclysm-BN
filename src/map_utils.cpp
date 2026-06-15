@@ -30,6 +30,17 @@ auto get_items_at( const tripoint_abs_ms &loc ) -> location_subrange
     }
 }
 
+auto take_down_deployed_furniture( mapbuffer &buffer,
+                                   const tripoint_abs_ms &furniture_pos,
+                                   const tripoint_abs_ms &drop_pos ) -> void
+{
+    const auto furn_item = buffer.get_furn( furniture_pos )->obj().deployed_item;
+    auto dropped_item = item::spawn( furn_item, calendar::turn );
+    dropped_item->item_vars().merge( *buffer.furn_vars( furniture_pos ) );
+    buffer.add_item_or_charges( drop_pos, std::move( dropped_item ) );
+    buffer.set_furn( furniture_pos, f_null );
+}
+
 auto take_down_deployed_furniture( const tripoint_bub_ms &furniture_pos,
                                    const tripoint_bub_ms &drop_pos ) -> void
 {

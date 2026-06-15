@@ -974,14 +974,15 @@ bool game::start_game()
     // The player is centered in the map, but lev[xyz] refers to the top left point of the map
     lev.x() -= g_half_mapsize;
     lev.y() -= g_half_mapsize;
-    u.setpos( project_to<coords::ms>( lev + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) ) );
+    const auto starting_player_pos = project_to<coords::ms>(
+                                         lev + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
     load_map( lev, /*pump_events=*/true );
+    u.setpos( starting_player_pos );
 
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
     // Do this after the map cache has been built!
     start_loc.place_player( u );
-    update_map( u );
     // ...but then rebuild it, because we want visibility cache to avoid spawning monsters in sight
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
@@ -1128,8 +1129,6 @@ bool game::start_game()
     for( auto &e : u.inv_dump() ) {
         e->set_owner( g->u );
     }
-    // Now that we're done handling coordinates, ensure the player's submap is in the center of the map
-    update_map( u );
     // Profession pets
     for( const mtype_id &elem : u.starting_pets ) {
         if( monster *const mon = place_critter_around( elem, u.bub_pos(), g_max_view_distance ) ) {
@@ -8857,13 +8856,11 @@ void game::peek( const tripoint_rel_ms &p )
     const auto peek_pos = prev + p;
     auto restore_player_pos = [&]() {
         u.setpos( prev );
-        update_map( u );
         m.invalidate_map_cache( get_levz() );
     };
     auto restore_on_return = on_out_of_scope( restore_player_pos );
 
     u.setpos( peek_pos );
-    update_map( u );
     // Force a full cache rebuild from the peek position so look_around renders
     // correct FOV and lighting.  Without this, lightmap_dirty may already be
     // false (built from the pre-peek player position earlier this turn), causing
@@ -12977,11 +12974,10 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     }
 
     auto oldpos = u.bub_pos();
-    const auto keep_grab = u.get_grab_type() == OBJECT_VEHICLE || allow_furniture_z_move;
     auto submap_shift = point_rel_sm::zero();
     {
         ZoneScopedN( "walk_move_place_player" );
-        submap_shift = place_player( dest_loc, keep_grab );
+        submap_shift = place_player( dest_loc );
     }
     auto ms_shift = project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift;
@@ -13008,7 +13004,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     return true;
 }
 
-auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab ) -> point_rel_sm
+auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
 {
     const auto regular_pit_move = pit_trap_helpers::is_regular_pit_destination_from_pit( m.tr_at(
                                       u.bub_pos() ),
@@ -13134,17 +13130,12 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
     if( u.in_vehicle ) {
         m.unboard_vehicle( u.bub_pos() );
     }
-    // Move the player
-    // Start with z-level, to make it less likely that old functions (2D ones) freak out
-    if( m.has_zlevels() && dest_loc.z() != get_levz() ) {
-        vertical_shift( dest_loc.z(), keep_grab );
-    }
-
     if( u.is_hauling() && ( !m.can_put_items( dest_loc ) ||
                             m.has_flag( TFLAG_DEEP_WATER, dest_loc ) ||
                             vp1 ) ) {
         u.stop_hauling();
     }
+    const auto origin_before_setpos = m.get_abs_sub();
     u.setpos( dest_loc );
     m.invalidate_visibility_caches();
     if( u.is_mounted() ) {
@@ -13153,15 +13144,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
         mon->process_triggers();
         m.creature_in_field( *mon );
     }
-    auto submap_shift = point_rel_sm::zero();
-    {
-        ZoneScopedN( "place_player_update_map" );
-        submap_shift = update_map( u );
-    }
-    // Important: don't use dest_loc after this line. `update_map` may have shifted the map
-    // and dest_loc was not adjusted and therefore is still in the un-shifted system and probably wrong.
-    // If you must use it you can calculate the position in the new, shifted system with
-    // adjusted_pos = ( old_pos.x - submap_shift.x * SEEX, old_pos.y - submap_shift.y * SEEY, old_pos.z )
+    const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos ).xy();
 
     //Auto pulp or butcher and Auto foraging
     if( get_option<bool>( "AUTO_FEATURES" ) && mostseen == 0  && !u.is_mounted() ) {
@@ -13456,7 +13439,6 @@ bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         //tunneling costs 100 moves baseline, 50 per extra tile up to a cap of 500 moves
         u.moves -= ( 50 + ( tunneldist * 50 ) );
         u.setpos( dest );
-        update_map( u );
         m.invalidate_visibility_caches();
 
         if( m.veh_at( u.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {
@@ -14197,12 +14179,7 @@ void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bo
                 if( p->in_vehicle ) {
                     m.unboard_vehicle( p->bub_pos() );
                 }
-                // If we're flinging the player around, make sure the map stays centered on them.
-                if( is_u ) {
-                    update_map( pt.x(), pt.y() );
-                } else {
-                    p->setpos( pt );
-                }
+                p->setpos( pt );
             } else if( !critter_at( pt ) ) {
                 // Dying monster doesn't always leave an empty tile (blob spawning etc.)
                 // Just don't setpos if it happens - next iteration will do so
@@ -14759,11 +14736,9 @@ void game::vertical_move( int movez, bool force, bool peeking )
     }
 
     const auto old_pos = g->u.bub_pos();
-    point_rel_sm submap_shift;
-    vertical_shift( z_after );
-    if( !force ) {
-        submap_shift = update_map( stairs.x(), stairs.y() );
-    }
+    const auto origin_before_setpos = m.get_abs_sub();
+    u.setpos( map_local_to_abs( m, stairs ) );
+    const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos ).xy();
 
     // if an NPC or monster is on the stiars when player ascends/descends
     // they may end up merged on th esame tile, do some displacement to resolve that.
@@ -15121,9 +15096,10 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         // Loading at the destination avoids a costly incremental map shift in update_map()
         // when the destination is far from the current position.
         const auto target_load_origin = load_pos.value_or( current_abs_sm );
-        player.setpos( project_to<coords::ms>( target_load_origin + tripoint_rel_sm( g_half_mapsize,
-                                               g_half_mapsize, 0 ) ) );
+        const auto target_player_pos = project_to<coords::ms>(
+                                           target_load_origin + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
         load_map( target_load_origin, false );
+        player.setpos( target_player_pos );
         debug_assert_player_map_origin( "travel_to_dimension" );
 
         add_msg( m_debug, "[DIM] Loaded new dimension '%s' map", dim_id );
@@ -15367,7 +15343,7 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
     return stairs;
 }
 
-auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
+auto game::vertical_shift( const int z_after ) -> void
 {
     if( z_after < -OVERMAP_DEPTH || z_after > OVERMAP_HEIGHT ) {
         debugmsg( "Tried to get z-level %d outside allowed range of %d-%d",
@@ -15375,15 +15351,15 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
         return;
     }
 
-    if( !keep_grab ) {
-        u.grab( OBJECT_NONE );
+    const auto z_before = m.get_abs_sub().z();
+    if( z_before == z_after ) {
+        return;
     }
 
     scent.reset();
 
-    const int z_before = get_levz();
-    u.setpos( tripoint_bub_ms( u.bub_pos().xy(), z_after ) );
     if( !m.has_zlevels() ) {
+        const auto loaded_origin = m.get_abs_sub();
         m.clear_vehicle_cache( );
         m.access_cache( z_before ).vehicle_list.clear();
         m.access_cache( z_before ).zone_vehicles.clear();
@@ -15391,7 +15367,7 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
         m.set_transparency_cache_dirty( z_before );
         m.set_outside_cache_dirty( z_before );
         m.set_absorption_cache_dirty( z_before );
-        m.load( tripoint_abs_sm( get_levx(), get_levy(), z_after ), true );
+        m.load( tripoint_abs_sm( loaded_origin.xy(), z_after ), true );
         shift_monsters( tripoint_rel_sm( 0, 0, z_after - z_before ) );
         reload_npcs();
     } else {
@@ -15407,6 +15383,7 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
     // the critter is unloaded/loaded, and it needs to reconstruct its rider data after being reloaded.
     validate_mounted_npcs();
     vertical_notes( z_before, z_after );
+    update_overmap_seen();
 }
 
 void game::vertical_notes( int z_before, int z_after )
@@ -15451,49 +15428,28 @@ void game::vertical_notes( int z_before, int z_after )
     }
 }
 
-point_rel_sm game::update_map( Character &who )
+auto game::update_map( Character &who ) -> point_rel_sm
 {
-    const auto map_local_pos = abs_to_map_local( m, who.abs_pos() );
-    int x = map_local_pos.x();
-    int y = map_local_pos.y();
-    return update_map( x, y );
+    return update_map( who.abs_pos() );
 }
 
-point_rel_sm game::update_map( int &x, int &y )
+auto game::update_map( int &x, int &y ) -> point_rel_sm
+{
+    const auto target_abs = map_local_to_abs( m, tripoint_bub_ms( x, y, get_levz() ) );
+    return update_map( target_abs );
+}
+
+auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
 {
     ZoneScopedN( "update_map" );
-    const auto target_abs = map_local_to_abs( m, tripoint_bub_ms( x, y, get_levz() ) );
-    point_rel_sm shift;
-
-    {
-        ZoneScopedN( "update_map_compute_shift" );
-        while( x < g_half_mapsize_x ) {
-            x += SEEX;
-            shift.x()--;
-        }
-        while( x >= g_half_mapsize_x + SEEX ) {
-            x -= SEEX;
-            shift.x()++;
-        }
-        while( y < g_half_mapsize_y ) {
-            y += SEEY;
-            shift.y()--;
-        }
-        while( y >= g_half_mapsize_y + SEEY ) {
-            y -= SEEY;
-            shift.y()++;
-        }
-    }
+    const auto target_origin = reality_bubble_origin_from_player( center, g_reality_bubble_size );
+    const auto shift = ( target_origin - m.get_abs_sub() ).xy();
 
     if( shift == point_rel_sm::zero() ) {
-        // adjust player position
-        u.setpos( target_abs );
         // Update what parts of the world map we can see
         // We need this call because even if the map hasn't shifted we may have changed z-level and can now see farther
         // TODO: only make this call if we changed z-level
         update_overmap_seen();
-        // update_map() can run during a pending vertical vehicle transition;
-        // vertical_shift() settles the loaded-grid z anchor afterward.
         debug_assert_player_map_origin( "update_map", false );
         // Not actually shifting the submaps, all the stuff below would do nothing
         return point_rel_sm::zero();
@@ -15511,8 +15467,6 @@ point_rel_sm game::update_map( int &x, int &y )
             remaining_shift -= this_shift;
         }
     }
-
-    u.setpos( target_abs );
 
     // Keep the reality bubble request center in sync with the shifted map.
     // Distribution-grid tracker updates are fully incremental via
@@ -15608,8 +15562,8 @@ point_rel_sm game::update_map( int &x, int &y )
 
     // Update what parts of the world map we can see
     update_overmap_seen();
-    // update_map() is an x/y recentering path; vertical movement settles in
-    // vertical_shift().
+    // update_map() only shifts the loaded x/y window; vertical loaded-state
+    // changes are handled by vertical_shift().
     debug_assert_player_map_origin( "update_map", false );
 
     return shift;

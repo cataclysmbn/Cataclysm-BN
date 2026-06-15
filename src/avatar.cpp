@@ -209,15 +209,11 @@ void avatar::control_npc( npc &np )
     }
     // perception and mutations may have changed, so reset light level caches
     g->reset_light_level();
-    // center the map on the new avatar character
+    // setpos() keeps the loaded map window aligned with the new avatar.
     if( swapped_out_character_was_dead ) {
-        auto map_local_pos = abs_to_map_local( get_map(), controlled_npc_pos );
-        g->vertical_shift( controlled_npc_pos.z() );
-        g->update_map( map_local_pos.x(), map_local_pos.y() );
         setpos( controlled_npc_pos );
     } else {
-        g->vertical_shift( bub_pos().z() );
-        g->update_map( *this );
+        setpos( controlled_npc_pos );
     }
 }
 

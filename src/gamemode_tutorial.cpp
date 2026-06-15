@@ -151,9 +151,6 @@ bool tutorial_game::init()
     g->load_map( project_to<coords::sm>( lp_abs ) );
     const auto z = you.bub_pos().z();
     you.setpos( tripoint_bub_ms( 2, 4, z ) );
-
-    // This shifts the view to center the players pos
-    g->update_map( you );
     return true;
 }
 

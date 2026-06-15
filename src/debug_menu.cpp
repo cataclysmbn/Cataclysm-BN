@@ -1111,7 +1111,6 @@ void character_edit_menu( Character &c )
                     if( p.is_mounted() ) {
                         p.mounted_creature->setpos( *newpos );
                     }
-                    g->update_map( g->u );
                 }
             }
         }

@@ -216,11 +216,10 @@ auto move_vehicles( const elevator_vehicles &vehs, const tripoint_bub_ms &sm_ori
     here.reset_vehicle_cache();
 }
 
-auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> void
+auto move_player( player &p, const int /*movez*/, tripoint_abs_ms old_abs_pos ) -> void
 {
     map &here = get_map();
 
-    g->vertical_shift( movez );
     // yes, this is inefficient, but i'm lazy
     elevator::find_elevators_nearby( p.bub_pos() )
     .transform( []( const tripoint_bub_ms & pos ) -> point_rel_sm { return g->place_player( pos ); } );

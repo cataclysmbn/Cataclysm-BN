@@ -7518,9 +7518,6 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     }
 
     p.setpos( pd.entry_point );
-
-    // Single update_map call at the final position
-    g->update_map( p );
 }
 
 // ---- iuse_portal_link -------------------------------------------------------
@@ -7604,7 +7601,6 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
                                        g_half_mapsize );
             g->travel_to_dimension( origin_dim, wt_id, std::nullopt, preload_point );
             p.setpos( origin_pos );
-            g->update_map( p );
             it.erase_var( "origin_stored" );
             return charges_per_use;
         }
@@ -7631,7 +7627,6 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
                          tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
     g->travel_to_dimension( linked_dim, wt_id, std::nullopt, dest_sm );
     p.setpos( linked_pos );
-    g->update_map( p );
     return charges_per_use;
 }
 
@@ -7667,9 +7662,6 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     const auto &here = get_map();
     const auto safe = find_safe_spawn( abs_to_map_local( here, return_point ) );
     p.setpos( map_local_to_abs( here, safe ) );
-
-    // Single update_map call at the final position
-    g->update_map( p );
 }
 
 // ---- iuse_paint_stuff -------------------------------------------------------

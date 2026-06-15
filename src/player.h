@@ -34,6 +34,9 @@ class player : public Character
             return false;    // Overloaded for NPCs in npc.h
         }
 
+        void setpos( const tripoint_bub_ms &p ) override;
+        void setpos( const tripoint_abs_ms &p ) override;
+
         // populate variables, inventory items, and misc from json object
         virtual void deserialize( JsonIn &jsin ) = 0;
 
