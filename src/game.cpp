@@ -2031,7 +2031,6 @@ bool game::do_turn()
     {
         ZoneScopedN( "do_turn_pre_action_updates" );
         perhaps_add_random_npc();
-        refresh_player_visibility_cache_if_needed();
         process_voluntary_act_interrupt();
         process_activity();
         update_performance_bubble();
@@ -4548,8 +4547,10 @@ void game::draw( ui_adaptor &ui )
         const auto cache_z = is_looking ? u.bub_pos().z() : ter_view_p.z();
         m.build_map_cache( cache_z );
 #if defined( CATA_SDL )
-        const auto player_map_cache_current = m.has_zlevels() || cache_z == u.bub_pos().z();
-        refresh_player_visibility_cache_if_needed( player_map_cache_current );
+        if( !is_draw_tiles_mode() ) {
+            const auto player_map_cache_current = cache_z == u.bub_pos().z();
+            refresh_player_visibility_cache_if_needed( player_map_cache_current );
+        }
 #else
         if( m.get_cache_ref( cache_z ).visibility_cache_dirty ) {
             m.update_visibility_cache( cache_z );
@@ -4720,15 +4721,11 @@ auto game::refresh_player_visibility_cache_if_needed( const bool player_map_cach
     ZoneScopedN( "refresh_player_visibility_cache_if_needed" );
 
     const auto zlev = u.bub_pos().z();
-    const auto minz = m.has_zlevels() ? -OVERMAP_DEPTH : zlev;
-    const auto maxz = m.has_zlevels() ? OVERMAP_HEIGHT : zlev;
     const auto needs_visibility_refresh = [&]() {
         if( !m.get_visibility_variables_cache().variables_set ) {
             return true;
         }
-        return std::ranges::any_of( std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
-            return m.get_cache_ref( z ).visibility_cache_dirty;
-        } );
+        return m.visibility_caches_dirty();
     };
 
     if( !needs_visibility_refresh() ) {
@@ -5251,8 +5248,6 @@ void game::mon_info( const catacurses::window &w, int hor_padding )
 void game::mon_info_update( )
 {
     ZoneScoped;
-
-    refresh_player_visibility_cache_if_needed();
 
     int newseen = 0;
     const auto iProxyDist = ( safe_mode_proximity <= 0 ) ? g_max_view_distance : safe_mode_proximity;

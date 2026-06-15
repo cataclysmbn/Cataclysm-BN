@@ -1126,7 +1126,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     auto &ch = get_cache( smz );
     invalidate_lightmap_caches();
     set_seen_cache_dirty( smz );
-    ch.visibility_cache_dirty = true;
+    mark_visibility_cache_dirty( smz );
 #if defined( CATA_SDL )
     if( cata_compute::uses_sdl_gpu_compute() ) {
         cata_gpu::invalidate_lighting_transparency_levels( std::vector<int> { smz } );
@@ -1178,7 +1178,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     if( inbounds_z( above_z ) ) {
         auto &ch_above = get_cache( above_z );
         set_seen_cache_dirty( above_z );
-        ch_above.visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( above_z );
         for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm & p ) {
             ch_above.floor_cache_dirty.set(
                 static_cast<size_t>( ch_above.bidx( p.x(), p.y() ) ) );
@@ -7435,6 +7435,7 @@ auto map::update_visibility_cache( const int zlev,
             std::fill( origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f );
             m_last_seen_cache_origin = player_pos;
         }
+        mark_visibility_caches_clean();
         mark_overmap_seen_from_visibility( get_cache_ref( zlev ) );
         return;
     }
@@ -7521,9 +7522,7 @@ auto map::update_visibility_cache( const int zlev,
 
     // Mark all z-levels touched by this run as clean so subsequent draws within
     // the same turn can skip the rebuild entirely.
-    std::ranges::for_each( std::views::iota( min_z, max_z + 1 ), [this]( int z ) {
-        get_cache( z ).visibility_cache_dirty = false;
-    } );
+    mark_visibility_caches_clean();
 }
 
 const visibility_variables &map::get_visibility_variables_cache() const
@@ -8920,7 +8919,7 @@ void map::shift( const point_rel_sm &sp )
             }
             mark_shifted_map_caches_dirty( gridz );
             set_seen_cache_dirty( gridz );
-            get_cache( gridz ).visibility_cache_dirty = true;
+            mark_visibility_cache_dirty( gridz );
             set_pathfinding_cache_dirty( gridz );
             set_suspension_cache_dirty( gridz );
             mark_shifted_absorption_cache_dirty( get_cache( gridz ), gridz );
@@ -10476,7 +10475,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         cache.lightmap_dirty = true;
         cache.lm_cpu_cache_valid = false;
         ++cache.lm_cpu_cache_generation;
-        cache.visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( z );
     };
     auto add_gpu_dirty_level = []( auto & levels, const int z ) {
         if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
@@ -10691,7 +10690,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     } ) ) {
             force_seen_rebuild_for_gpu_residency = true;
             invalidate_lightmap_caches();
-            get_cache( zlev ).visibility_cache_dirty = true;
+            mark_visibility_cache_dirty( zlev );
         }
     }
 #endif
@@ -10804,7 +10803,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         m_last_seen_cache_origin = p;
 #endif
         // seen_cache changed (or will be updated by GPU pass); mark visibility stale.
-        get_cache( zlev ).visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( zlev );
     }
     if( !skip_lightmap ) {
 #if defined( CATA_SDL )
@@ -10821,7 +10820,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 
                     std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
                         get_cache( z ).lightmap_dirty = false;
-                        get_cache( z ).visibility_cache_dirty = true;
+                        mark_visibility_cache_dirty( z );
                     } );
                 }
             } else if( !dirty_lightmap_levels.empty() ) {
@@ -10919,7 +10918,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     auto &c = get_cache( z );
                     c.lightmap_dirty = false;
                     c.lm_cpu_cache_valid = true;
-                    c.visibility_cache_dirty = true;
+                    mark_visibility_cache_dirty( z );
                 } );
 
             } // end if( !dirty_lightmap_levels.empty() )
@@ -11631,7 +11630,7 @@ void map::invalidate_map_cache( const int zlev )
         ch.lightmap_dirty = true;
         ch.lm_cpu_cache_valid = false;
         ++ch.lm_cpu_cache_generation;
-        ch.visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( zlev );
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
         m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
@@ -11647,8 +11646,32 @@ void map::invalidate_lightmap_caches()
         cache.lightmap_dirty = true;
         cache.lm_cpu_cache_valid = false;
         ++cache.lm_cpu_cache_generation;
-        cache.visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( z );
     } );
+}
+
+auto map::mark_visibility_cache_dirty( const int zlev ) -> void
+{
+    if( !inbounds_z( zlev ) ) {
+        return;
+    }
+    get_cache( zlev ).visibility_cache_dirty = true;
+    visibility_caches_dirty_ = true;
+}
+
+auto map::mark_visibility_caches_clean() -> void
+{
+    const auto minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
+    const auto maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
+    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
+        get_cache( z ).visibility_cache_dirty = false;
+    } );
+    visibility_caches_dirty_ = false;
+}
+
+auto map::visibility_caches_dirty() const -> bool
+{
+    return visibility_caches_dirty_;
 }
 
 auto map::current_lightmap_source_signature() -> std::size_t
@@ -11835,10 +11858,10 @@ void map::invalidate_lightmap_caches_if_light_state_changed()
 
 void map::invalidate_visibility_caches()
 {
-    const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
-    const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
-    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( int z ) {
-        get_cache( z ).visibility_cache_dirty = true;
+    const auto minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
+    const auto maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
+    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
+        mark_visibility_cache_dirty( z );
     } );
 }
 
