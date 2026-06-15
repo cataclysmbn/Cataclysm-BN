@@ -390,6 +390,9 @@ monster::monster( const monster &source ) : Creature( source ),
     path = source.path;
     effect_cache = source.effect_cache;
     summon_time_limit = source.summon_time_limit;
+    training_level = source.training_level;
+    bonded_character_id = source.bonded_character_id;
+    pet_bond_level = source.pet_bond_level;
 
     set_tied_item( item::spawn( *source.tied_item ) );
     set_tack_item( item::spawn( *source.tack_item ) );
