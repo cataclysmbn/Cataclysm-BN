@@ -1144,7 +1144,7 @@ class game : public submap_load_listener
         memorial_logger &memorial();
         spell_events &spell_events_subscriber();
 
-        pimpl<Creature_tracker> critter_tracker;
+        Creature_tracker *critter_tracker = nullptr;
         pimpl<faction_manager> faction_manager_ptr;
         pimpl<drop_token_provider> token_provider_ptr;
 
@@ -1308,6 +1308,7 @@ class game : public submap_load_listener
         /// Sets both current_dimension_id_ and g_active_dimension_id to @p dim_id.
         /// Always use this instead of assigning the two fields separately.
         auto set_active_dimension_id( const dimension_id &dim_id ) -> void;
+        auto rebind_critter_tracker() -> void;
 
         /// Sequenced critical section of a dimension switch: drain all load-manager
         /// work, release load handles, flush the desired set, update the active

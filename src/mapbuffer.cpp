@@ -35,6 +35,7 @@
 #include "mapdata.h"
 #include "map_iterator.h"
 #include "map_mutation_hooks.h"
+#include "npc.h"
 #include "overmapbuffer.h"
 #include "output.h"
 #include "popup.h"
@@ -388,6 +389,9 @@ void mapbuffer::clear()
 {
     {
         std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+        creature_tracker_.clear();
+        active_npcs_.clear();
+        active_npcs_by_location_.clear();
         loaded_vehicles_.clear();
         submaps.clear();
     }
@@ -712,6 +716,114 @@ auto mapbuffer::make_abs_tile_reader( const mapbuffer_lookup_options options )
 -> mapbuffer_abs_tile_reader
 {
     return mapbuffer_abs_tile_reader( *this, options );
+}
+
+auto mapbuffer::creature_tracker() -> Creature_tracker &
+{
+    return creature_tracker_;
+}
+
+auto mapbuffer::creature_tracker() const -> const Creature_tracker &
+{
+    return creature_tracker_;
+}
+
+auto mapbuffer::find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_fast<npc>
+{
+    const auto iter = active_npcs_by_location_.find( p );
+    if( iter != active_npcs_by_location_.end() ) {
+        const auto &guy = iter->second;
+        if( guy && !guy->is_dead() ) {
+            return guy;
+        }
+    }
+    return nullptr;
+}
+
+auto mapbuffer::add_active_npc( const shared_ptr_fast<npc> &guy ) -> bool
+{
+    if( !guy || guy->is_dead() ) {
+        return false;
+    }
+    if( guy->get_dimension() != dimension_id_ ) {
+        debugmsg( "Tried to add NPC %s to dimension '%s' tracker, but NPC is in '%s'",
+                  guy->get_name(), dimension_id_.c_str(), guy->get_dimension().c_str() );
+        return false;
+    }
+    if( const auto existing = find_active_npc( guy->abs_pos() ) ) {
+        if( existing.get() != guy.get() ) {
+            debugmsg( "Tried to add NPC %s to occupied active NPC tile %s",
+                      guy->get_name(), guy->abs_pos().to_string() );
+            return false;
+        }
+        return true;
+    }
+    const auto iter = std::ranges::find_if( active_npcs_,
+    [&]( const shared_ptr_fast<npc> &existing ) {
+        return existing.get() == guy.get();
+    } );
+    if( iter == active_npcs_.end() ) {
+        active_npcs_.push_back( guy );
+    }
+    active_npcs_by_location_[guy->abs_pos()] = guy;
+    return true;
+}
+
+auto mapbuffer::remove_active_npc_from_location_map( const npc &guy ) -> void
+{
+    const auto pos_iter = active_npcs_by_location_.find( guy.abs_pos() );
+    if( pos_iter != active_npcs_by_location_.end() && pos_iter->second.get() == &guy ) {
+        active_npcs_by_location_.erase( pos_iter );
+        return;
+    }
+
+    const auto iter = std::ranges::find_if( active_npcs_by_location_,
+    [&]( const decltype( active_npcs_by_location_ )::value_type & v ) {
+        return v.second.get() == &guy;
+    } );
+    if( iter != active_npcs_by_location_.end() ) {
+        active_npcs_by_location_.erase( iter );
+    }
+}
+
+auto mapbuffer::update_active_npc_pos( const npc &guy, const tripoint_abs_ms &new_pos ) -> bool
+{
+    if( guy.is_dead() ) {
+        remove_active_npc_from_location_map( guy );
+        return true;
+    }
+
+    if( const auto existing = find_active_npc( new_pos ) ) {
+        if( existing.get() != &guy ) {
+            debugmsg( "Tried to move NPC %s to occupied active NPC tile %s",
+                      guy.get_name(), new_pos.to_string() );
+            return false;
+        }
+    }
+
+    const auto iter = std::ranges::find_if( active_npcs_,
+    [&]( const shared_ptr_fast<npc> &existing ) {
+        return existing.get() == &guy;
+    } );
+    if( iter == active_npcs_.end() ) {
+        return false;
+    }
+
+    remove_active_npc_from_location_map( guy );
+    active_npcs_by_location_[new_pos] = *iter;
+    return true;
+}
+
+auto mapbuffer::remove_active_npc( const npc &guy ) -> void
+{
+    remove_active_npc_from_location_map( guy );
+    const auto iter = std::ranges::find_if( active_npcs_,
+    [&]( const shared_ptr_fast<npc> &existing ) {
+        return existing.get() == &guy;
+    } );
+    if( iter != active_npcs_.end() ) {
+        active_npcs_.erase( iter );
+    }
 }
 
 auto mapbuffer::has_loaded_vehicle( const vehicle *veh ) const -> bool

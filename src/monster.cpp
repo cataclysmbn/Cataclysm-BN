@@ -42,6 +42,7 @@
 #include "make_static.h"
 #include "mapdata.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "map_iterator.h"
 #include "mattack_common.h"
 #include "melee.h"
@@ -454,8 +455,9 @@ void monster::poly( const mtype_id &id )
     reproduces = type->reproduces;
 
     // HACK: We should know if the monster is in the bubble instead of checking it like this
-    if( g->critter_tracker->temporary_id( *this ) >= 0 ) {
-        g->critter_tracker->update_faction( *this );
+    auto &tracker = get_mapbuffer().creature_tracker();
+    if( tracker.temporary_id( *this ) >= 0 ) {
+        tracker.update_faction( *this );
     }
 }
 
@@ -3745,7 +3747,7 @@ void monster::make_ally( const monster &z )
 void monster::make_pet()
 {
     friendly = -1;
-    g->critter_tracker->update_faction( *this );
+    get_mapbuffer().creature_tracker().update_faction( *this );
     add_effect( effect_pet, 1_turns );
 }
 

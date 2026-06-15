@@ -17,9 +17,11 @@
 
 #include "calendar.h"
 #include "coordinates.h"
+#include "creature_tracker.h"
 #include "game_constants.h"
 #include "item_stack.h"
 #include "mapgen_functions.h"
+#include "memory_fast.h"
 #include "point.h"
 #include "type_id.h"
 #include "vpart_position.h"
@@ -31,6 +33,7 @@ class field;
 class field_entry;
 class item;
 class JsonIn;
+class npc;
 class vehicle;
 enum ter_bitflags : int;
 struct partial_con;
@@ -259,6 +262,12 @@ class mapbuffer
         auto get_abs_omt_view( const tripoint_abs_omt &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_omt_view>;
         auto make_abs_tile_reader( mapbuffer_lookup_options options = {} ) -> mapbuffer_abs_tile_reader;
+        auto creature_tracker() -> Creature_tracker &;
+        auto creature_tracker() const -> const Creature_tracker &;
+        auto add_active_npc( const shared_ptr_fast<npc> &guy ) -> bool;
+        auto update_active_npc_pos( const npc &guy, const tripoint_abs_ms &new_pos ) -> bool;
+        auto remove_active_npc( const npc &guy ) -> void;
+        auto find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_fast<npc>;
         auto has_loaded_vehicle( const vehicle *veh ) const -> bool;
         auto unregister_vehicle( vehicle *veh ) -> void;
         auto refresh_vehicle_registry_for_submap( const tripoint_abs_sm &p,
@@ -533,6 +542,7 @@ class mapbuffer
         auto invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const -> void;
         auto register_submap_vehicles( const tripoint_abs_sm &p, submap &sm ) -> void;
         auto unregister_submap_vehicles( const tripoint_abs_sm &p ) -> void;
+        auto remove_active_npc_from_location_map( const npc &guy ) -> void;
 
         /// Guards all accesses to `submaps` that may overlap with background
         /// worker threads calling add_submap().  std::recursive_mutex allows
@@ -617,6 +627,9 @@ class mapbuffer
         void save_omt( const tripoint_abs_omt &omt_addr, std::list<tripoint_abs_sm> &submaps_to_delete,
                        bool delete_after_save );
         submap_map_t submaps;
+        Creature_tracker creature_tracker_;
+        std::list<shared_ptr_fast<npc>> active_npcs_;
+        std::unordered_map<tripoint_abs_ms, shared_ptr_fast<npc>> active_npcs_by_location_;
         std::set<vehicle *> loaded_vehicles_;
 
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).

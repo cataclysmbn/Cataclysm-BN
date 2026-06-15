@@ -433,6 +433,8 @@ game::game() :
     last_mouse_edge_scroll( std::chrono::steady_clock::now() ),
     fake_items( new temp_item_location( ) )
 {
+    rebind_critter_tracker();
+
     // Force thread pool startup before first turn to avoid a latency spike.
     get_thread_pool();
 
@@ -662,6 +664,9 @@ void game::setup( bool load_world_modfiles )
     sounds::reset_sounds();
     clear_zombies();
     coming_to_stairs.clear();
+    for( const auto &guy : active_npc ) {
+        guy->get_mapbuffer().remove_active_npc( *guy );
+    }
     active_npc.clear();
     faction_manager_ptr->clear();
     mission::clear_all();
@@ -1101,7 +1106,7 @@ bool game::start_game()
 
                     auto mons = critter_tracker->find( pos );
                     if( mons != nullptr ) {
-                        critter_tracker->remove( *mons );
+                        remove_zombie( *mons );
                     }
 
                     success = true;
@@ -1217,7 +1222,11 @@ vehicle *game::place_vehicle_nearby(
 static auto npc_can_place_at_abs( mapbuffer &buffer, const tripoint_abs_ms &pos ) -> bool
 {
     const auto passable = buffer.passable( pos );
-    return passable && *passable && g->critter_at( pos ) == nullptr;
+    const auto player_blocks = buffer.get_dimension_id() == g->get_current_dimension_id() &&
+                               g->u.abs_pos() == pos;
+    return passable && *passable && !player_blocks &&
+           buffer.creature_tracker().find( pos ) == nullptr &&
+           buffer.find_active_npc( pos ) == nullptr;
 }
 
 static auto place_npc_on_absolute_mapbuffer( npc &who, mapbuffer &buffer ) -> bool
@@ -1282,7 +1291,7 @@ void game::load_npcs()
         // it was on the overmap. Kill it.
         if( temp->marked_for_death ) {
             temp->die( nullptr );
-        } else {
+        } else if( temp->get_mapbuffer().add_active_npc( temp ) ) {
             active_npc.push_back( temp );
             just_added.push_back( temp );
             ++g_npc_friends_dirty_version;
@@ -1315,7 +1324,7 @@ void game::load_npcs()
                 }
                 if( temp->marked_for_death ) {
                     temp->die( nullptr );
-                } else {
+                } else if( temp->get_mapbuffer().add_active_npc( temp ) ) {
                     active_npc.push_back( temp );
                     just_added.push_back( temp );
                     ++g_npc_friends_dirty_version;
@@ -1334,6 +1343,7 @@ void game::load_npcs()
 void game::unload_npcs()
 {
     for( const auto &npc : active_npc ) {
+        npc->get_mapbuffer().remove_active_npc( *npc );
         npc->on_unload();
     }
 
@@ -1351,24 +1361,35 @@ void game::on_submap_loaded( const tripoint_abs_sm &/*pos*/,
 }
 
 void game::on_submap_unloaded( const tripoint_abs_sm &pos,
-                               const dimension_id &/*dim_id*/ )
+                               const dimension_id &dim_id )
 {
     // Deactivate any NPCs whose absolute position falls in the evicted submap.
     // abs_pos() returns position directly (no map lookup), so this is safe to call here.
-    auto in_evicted = [&pos]( const shared_ptr_fast<npc> &n ) {
+    auto in_evicted = [&pos, &dim_id]( const shared_ptr_fast<npc> &n ) {
+        if( n->get_dimension() != dim_id ) {
+            return false;
+        }
         const auto sm = project_to<coords::sm>( n->abs_pos() );
         return sm.x() == pos.x() && sm.y() == pos.y() && sm.z() == pos.z();
     };
     std::ranges::for_each( active_npc | std::views::filter( in_evicted ),
     []( const shared_ptr_fast<npc> &n ) {
+        n->get_mapbuffer().remove_active_npc( *n );
         n->on_unload();
     } );
     std::erase_if( active_npc, in_evicted );
 
     // Evict monsters whose absolute submap position matches the unloaded submap.
-    // all_monsters() snapshots weak_ptrs at construction; despawn_monster() marks hp=0 so the
-    // non_dead_range iterator skips evicted entries on subsequent steps, mirroring shift_monsters().
-    for( monster &critter : all_monsters() ) {
+    auto *const buffer = MAPBUFFER_REGISTRY.find( dim_id );
+    if( buffer == nullptr ) {
+        return;
+    }
+    const auto monster_refs = buffer->creature_tracker().get_monsters_list();
+    for( const shared_ptr_fast<monster> &critter_ptr : monster_refs ) {
+        if( !critter_ptr || critter_ptr->is_dead() ) {
+            continue;
+        }
+        monster &critter = *critter_ptr;
         const auto sm = project_to<coords::sm>( critter.abs_pos() );
         if( sm == pos ) {
             despawn_monster( critter );
@@ -5533,6 +5554,7 @@ void game::cleanup_dead()
                     remove_npc_follower( ( *it )->getID() );
                     get_overmapbuffer( ( *it )->get_dimension() ).remove_npc( ( *it )->getID() );
                 }
+                ( *it )->get_mapbuffer().remove_active_npc( **it );
                 it = active_npc.erase( it );
             } else {
                 it++;
@@ -7016,10 +7038,9 @@ T *game::critter_at( const tripoint_bub_ms &p, bool allow_hallucination )
         }
     }
     if constexpr( wants_npc ) {
-        for( auto &cur_npc : active_npc ) {
-            if( cur_npc->bub_pos() == p && !cur_npc->is_dead() ) {
-                return dynamic_cast<T *>( cur_npc.get() );
-            }
+        if( const auto guy = MAPBUFFER_REGISTRY.get( current_dimension_id_ ).find_active_npc(
+                    bub_to_abs( p ) ) ) {
+            return dynamic_cast<T *>( guy.get() );
         }
     }
     return nullptr;
@@ -7059,10 +7080,8 @@ auto game::critter_at( const tripoint_abs_ms &p, bool allow_hallucination ) -> T
         }
     }
     if constexpr( wants_npc ) {
-        for( auto &cur_npc : active_npc ) {
-            if( cur_npc->abs_pos() == p && !cur_npc->is_dead() ) {
-                return dynamic_cast<T *>( cur_npc.get() );
-            }
+        if( const auto guy = MAPBUFFER_REGISTRY.get( current_dimension_id_ ).find_active_npc( p ) ) {
+            return dynamic_cast<T *>( guy.get() );
         }
     }
     return nullptr;
@@ -7103,7 +7122,8 @@ shared_ptr_fast<T> game::shared_from( const T &critter )
         return std::dynamic_pointer_cast<T>( u_shared_ptr );
     }
     if( critter.is_monster() ) {
-        if( const shared_ptr_fast<monster> mon_ptr = critter_tracker->find( critter.abs_pos() ) ) {
+        if( const shared_ptr_fast<monster> mon_ptr = critter.get_mapbuffer().creature_tracker().find(
+                    critter.abs_pos() ) ) {
             if( static_cast<const Creature *>( mon_ptr.get() ) == static_cast<const Creature *>( &critter ) ) {
                 return std::dynamic_pointer_cast<T>( mon_ptr );
             }
@@ -7214,7 +7234,7 @@ monster *game::place_critter_around( const shared_ptr_fast<monster> &mon,
     }
     mon->set_dimension( m.get_bound_dimension() );
     mon->spawn( *where );
-    return critter_tracker->add( mon ) ? mon.get() : nullptr;
+    return mon->get_mapbuffer().creature_tracker().add( mon ) ? mon.get() : nullptr;
 }
 
 monster *game::place_critter_within( const mtype_id &id,
@@ -7243,7 +7263,7 @@ monster *game::place_critter_within( const shared_ptr_fast<monster> &mon,
     }
     mon->set_dimension( m.get_bound_dimension() );
     mon->spawn( *where );
-    return critter_tracker->add( mon ) ? mon.get() : nullptr;
+    return mon->get_mapbuffer().creature_tracker().add( mon ) ? mon.get() : nullptr;
 }
 
 size_t game::num_creatures() const
@@ -7253,12 +7273,12 @@ size_t game::num_creatures() const
 
 auto game::update_zombie_pos( const monster &critter, const tripoint_abs_ms &pos ) -> bool
 {
-    return critter_tracker->update_pos( critter, pos );
+    return critter.get_mapbuffer().creature_tracker().update_pos( critter, pos );
 }
 
 void game::remove_zombie( const monster &critter )
 {
-    critter_tracker->remove( critter );
+    critter.get_mapbuffer().creature_tracker().remove( critter );
 }
 
 void game::erase_npc( character_id id )
@@ -7270,6 +7290,7 @@ void game::erase_npc( character_id id )
         debugmsg( "game::erase_npc: NPC (%d) not found in active_npc.", id.get_value() );
         return;
     }
+    ( *it )->get_mapbuffer().remove_active_npc( **it );
     active_npc.erase( it );
 }
 
@@ -7320,7 +7341,7 @@ bool game::spawn_hallucination( const tripoint_bub_ms &p )
 
     //Don't attempt to place phantasms inside of other creatures
     if( !critter_at( phantasm->bub_pos(), true ) ) {
-        return critter_tracker->add( phantasm );
+        return phantasm->get_mapbuffer().creature_tracker().add( phantasm );
     } else {
         return false;
     }
@@ -7363,7 +7384,7 @@ bool game::swap_critters( Creature &a, Creature &b )
             return false;
         }
 
-        critter_tracker->swap_positions( *m1, *m2 );
+        m1->get_mapbuffer().creature_tracker().swap_positions( *m1, *m2 );
         return true;
     }
 
@@ -13647,7 +13668,10 @@ void game::resize_reality_bubble_to( int new_size )
             const auto diff = npc_sm - player_abs_sm;
             return std::abs( diff.x() ) <= new_half && std::abs( diff.y() ) <= new_half;
         } );
-        std::ranges::for_each( out_of_range, []( const auto & n ) { n->on_unload(); } );
+        std::ranges::for_each( out_of_range, []( const auto & n ) {
+            n->get_mapbuffer().remove_active_npc( *n );
+            n->on_unload();
+        } );
         active_npc.erase( out_of_range.begin(), out_of_range.end() );
     }
 
@@ -14421,7 +14445,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         // from the tracker before the map shifts.
         // Map shifting would otherwise just despawn the mount and would later respawn it.
         stored_mount = make_shared_fast<monster>( *u.mounted_creature );
-        critter_tracker->remove( *u.mounted_creature );
+        remove_zombie( *u.mounted_creature );
     }
     if( !m.has_zlevels() ) {
         const auto to = u.bub_pos();
@@ -14444,7 +14468,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         }
         auto mons = critter_tracker->find( g->u.bub_pos() );
         if( mons != nullptr ) {
-            critter_tracker->remove( *mons );
+            remove_zombie( *mons );
         }
         shift_monsters( tripoint_rel_sm( 0, 0, movez ) );
     }
@@ -14564,7 +14588,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
             assert( !m.has_zlevels() );
             stored_mount->set_dimension( m.get_bound_dimension() );
             stored_mount->spawn( g->u.bub_pos() );
-            if( critter_tracker->add( stored_mount ) ) {
+            if( stored_mount->get_mapbuffer().creature_tracker().add( stored_mount ) ) {
                 u.mounted_creature = stored_mount;
             }
         } else {
@@ -14656,6 +14680,12 @@ auto game::set_active_dimension_id( const dimension_id &dim_id ) -> void
 {
     current_dimension_id_ = dim_id;
     g_active_dimension_id = dim_id;
+    rebind_critter_tracker();
+}
+
+auto game::rebind_critter_tracker() -> void
+{
+    critter_tracker = &MAPBUFFER_REGISTRY.get( current_dimension_id_ ).creature_tracker();
 }
 
 auto game::activate_dimension_state( const dimension_id &new_dim_id,
@@ -15299,6 +15329,7 @@ auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
                 ( *it )->bub_pos().x() > SEEX * ( g_mapsize + npc_despawn_margin_sm ) ||
                 ( *it )->bub_pos().y() > SEEY * ( g_mapsize + npc_despawn_margin_sm ) ) {
                 //Remove the npc from the active list. It remains in the overmap list.
+                ( *it )->get_mapbuffer().remove_active_npc( **it );
                 ( *it )->on_unload();
                 it = active_npc.erase( it );
             } else {

@@ -48,6 +48,7 @@
 #include "map.h"
 #include "map_iterator.h"
 #include "map_selector.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "math_defines.h"
 #include "messages.h"
@@ -756,6 +757,9 @@ auto npc::setpos( const tripoint_abs_ms &new_pos ) -> void
 {
     const auto pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
     const auto pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
+    if( is_active() ) {
+        get_mapbuffer().update_active_npc_pos( *this, new_pos );
+    }
     Character::setpos( new_pos );
     if( !is_fake() && pos_om_old != pos_om_new ) {
         auto &dim_ob = get_overmapbuffer( get_dimension() );
@@ -2423,7 +2427,9 @@ bool npc::emergency( float danger ) const
 //Active npcs are the npcs near the player that are actively simulated.
 bool npc::is_active() const
 {
-    return g->critter_at<npc>( bub_pos() ) == this;
+    return std::ranges::any_of( g->raw_npcs(), [&]( const shared_ptr_fast<npc> &guy ) {
+        return guy.get() == this;
+    } );
 }
 
 int npc::follow_distance() const
