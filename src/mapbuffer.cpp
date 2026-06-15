@@ -276,13 +276,13 @@ auto mapbuffer_abs_tile_view::passable_ter_furn() const -> bool
 }
 
 auto mapbuffer_abs_tile_view::move_cost_with_vehicle(
-     const optional_vpart_position &vp ) const -> int
+    const optional_vpart_position &vp ) const -> int
 {
     return move_cost_from_tile_parts( get_ter(), get_furn(), vp );
 }
 
 auto mapbuffer_abs_tile_view::passable_with_vehicle(
-     const optional_vpart_position &vp ) const -> bool
+    const optional_vpart_position &vp ) const -> bool
 {
     return move_cost_with_vehicle( vp ) != 0;
 }
@@ -301,13 +301,13 @@ mapbuffer_abs_tile_with_vehicle_view::operator bool() const
 }
 
 auto mapbuffer_abs_tile_with_vehicle_view::tile()
-     const -> const mapbuffer_abs_tile_view &
+const -> const mapbuffer_abs_tile_view &
 {
     return tile_;
 }
 
 auto mapbuffer_abs_tile_with_vehicle_view::vehicle_part()
-     const -> const optional_vpart_position &
+const -> const optional_vpart_position &
 {
     return vehicle_part_;
 }
@@ -345,7 +345,7 @@ auto mapbuffer_abs_submap_view::get_submap() const -> const submap &
 }
 
 auto mapbuffer_abs_submap_view::tile( const point_sm_ms &local )
-     const -> mapbuffer_abs_tile_view
+const -> mapbuffer_abs_tile_view
 {
     return mapbuffer_abs_tile_view( abs_sm_, local, *sm_ );
 }
@@ -387,7 +387,7 @@ auto mapbuffer_abs_omt_view::is_complete() const -> bool
 }
 
 auto mapbuffer_abs_omt_view::get_submap_view( const point_omt_sm &local )
-     const -> std::optional<mapbuffer_abs_submap_view>
+const -> std::optional<mapbuffer_abs_submap_view>
 {
     const auto index = omt_submap_index( local );
     if( !index || submaps_[*index] == nullptr ) {
@@ -404,31 +404,31 @@ mapbuffer_abs_tile_reader::mapbuffer_abs_tile_reader( mapbuffer &buffer,
 }
 
 auto mapbuffer_abs_tile_reader::get_tile( const tripoint_abs_ms &p )
-     const -> std::optional<mapbuffer_abs_tile_view>
+const -> std::optional<mapbuffer_abs_tile_view>
 {
     return buffer_->get_abs_tile( p, options_ );
 }
 
 auto mapbuffer_abs_tile_reader::get_tile_with_vehicle( const tripoint_abs_ms &p )
-     const -> std::optional<mapbuffer_abs_tile_with_vehicle_view>
+const -> std::optional<mapbuffer_abs_tile_with_vehicle_view>
 {
     return buffer_->get_abs_tile_with_vehicle( p, options_ );
 }
 
 auto mapbuffer_abs_tile_reader::get_submap_view( const tripoint_abs_sm &p )
-     const -> std::optional<mapbuffer_abs_submap_view>
+const -> std::optional<mapbuffer_abs_submap_view>
 {
     return buffer_->get_abs_submap_view( p, options_ );
 }
 
 auto mapbuffer_abs_tile_reader::get_omt_view( const tripoint_abs_omt &p )
-     const -> std::optional<mapbuffer_abs_omt_view>
+const -> std::optional<mapbuffer_abs_omt_view>
 {
     return buffer_->get_abs_omt_view( p, options_ );
 }
 
 auto mapbuffer::register_submap_vehicles(
-     const tripoint_abs_sm &p, submap &sm ) -> void
+    const tripoint_abs_sm &p, submap &sm ) -> void
 {
     for( const auto &veh : sm.vehicles ) {
         if( veh == nullptr || veh->part_count() <= 0 ) {
@@ -501,7 +501,7 @@ auto mapbuffer::index_vehicle_footprint_unlocked( vehicle &veh ) -> void
 }
 
 auto mapbuffer::indexed_vehicle_part_at_unlocked(
-     const tripoint_abs_ms &p ) -> optional_vpart_position
+    const tripoint_abs_ms &p ) -> optional_vpart_position
 {
     const auto footprint_iter = vehicle_footprint_by_location_.find( p );
     if( footprint_iter == vehicle_footprint_by_location_.end() ) {
@@ -835,7 +835,7 @@ auto mapbuffer::get_submap( const tripoint_abs_sm &p,
 
 auto mapbuffer::get_abs_tile( const tripoint_abs_ms &p,
                               const mapbuffer_lookup_options options )
-                              -> std::optional<mapbuffer_abs_tile_view> // *NOPAD*
+-> std::optional<mapbuffer_abs_tile_view> // *NOPAD*
 {
     const auto split = project_remain<coords::sm>( p );
     auto *const sm = get_submap( split.quotient_tripoint, options );
@@ -848,7 +848,7 @@ auto mapbuffer::get_abs_tile( const tripoint_abs_ms &p,
 
 auto mapbuffer::get_abs_tile_with_vehicle( const tripoint_abs_ms &p,
         const mapbuffer_lookup_options options )
-        -> std::optional<mapbuffer_abs_tile_with_vehicle_view> // *NOPAD*
+-> std::optional<mapbuffer_abs_tile_with_vehicle_view> // *NOPAD*
 {
     const auto tile = get_abs_tile( p, options );
     if( !tile ) {
@@ -860,7 +860,7 @@ auto mapbuffer::get_abs_tile_with_vehicle( const tripoint_abs_ms &p,
 
 auto mapbuffer::get_abs_submap_view( const tripoint_abs_sm &p,
                                      const mapbuffer_lookup_options options )
-                                     -> std::optional<mapbuffer_abs_submap_view> // *NOPAD*
+-> std::optional<mapbuffer_abs_submap_view> // *NOPAD*
 {
     auto *const sm = get_submap( p, options );
     if( sm == nullptr ) {
@@ -872,7 +872,7 @@ auto mapbuffer::get_abs_submap_view( const tripoint_abs_sm &p,
 
 auto mapbuffer::get_abs_omt_view( const tripoint_abs_omt &p,
                                   const mapbuffer_lookup_options options )
-                                  -> std::optional<mapbuffer_abs_omt_view> // *NOPAD*
+-> std::optional<mapbuffer_abs_omt_view> // *NOPAD*
 {
     auto submaps = std::array<const submap *, 4> {};
     auto found_any = false;
@@ -894,8 +894,8 @@ auto mapbuffer::get_abs_omt_view( const tripoint_abs_omt &p,
 }
 
 auto mapbuffer::make_abs_tile_reader(
-     const mapbuffer_lookup_options options )
-     -> mapbuffer_abs_tile_reader // *NOPAD*
+    const mapbuffer_lookup_options options )
+-> mapbuffer_abs_tile_reader // *NOPAD*
 {
     return mapbuffer_abs_tile_reader( *this, options );
 }
@@ -924,7 +924,7 @@ auto mapbuffer::find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_
 
 auto mapbuffer::creature_at( const tripoint_abs_ms &p,
                              const bool allow_hallucination )
-                             const -> const Creature * // *NOPAD*
+const -> const Creature * // *NOPAD*
 {
     if( const auto mon_ptr = creature_tracker_.find( p ) ) {
         if( allow_hallucination || !mon_ptr->is_hallucination() ) {
@@ -942,8 +942,8 @@ auto mapbuffer::creature_at( const tripoint_abs_ms &p,
 }
 
 auto mapbuffer::has_creature_at(
-     const tripoint_abs_ms &p,
-     const bool allow_hallucination ) const -> bool // *NOPAD*
+    const tripoint_abs_ms &p,
+    const bool allow_hallucination ) const -> bool // *NOPAD*
 {
     return creature_at( p, allow_hallucination ) != nullptr;
 }
@@ -1342,7 +1342,7 @@ auto mapbuffer::has_flag_vpart( const std::string &flag, const tripoint_abs_ms &
 }
 
 auto mapbuffer::has_flag_furn_or_vpart( const std::string &flag, const tripoint_abs_ms &p,
-        const mapbuffer_lookup_options options ) -> bool
+                                        const mapbuffer_lookup_options options ) -> bool
 {
     const auto tile = get_abs_tile( p, options );
     if( !tile ) {
