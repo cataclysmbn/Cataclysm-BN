@@ -209,7 +209,7 @@ struct legacy_pathfinding_tile {
     optional_vpart_position vehicle_part;
     int move_cost = 0;
 
-    auto vehicle_ptr() const -> vehicle * {
+    auto vehicle_ptr() const -> vehicle * { // *NOPAD*
         if( !vehicle_part ) {
             return nullptr;
         }
