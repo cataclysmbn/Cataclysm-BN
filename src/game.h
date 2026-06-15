@@ -968,6 +968,7 @@ class game : public submap_load_listener
         std::vector<std::string> get_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
         bool prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
     private:
+        auto refresh_player_visibility_cache_if_needed( bool player_map_cache_current = false ) -> void;
         void chat(); // Talk to a nearby NPC  'C'
 
         // Internal methods to show "look around" info

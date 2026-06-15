@@ -1900,8 +1900,8 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
         return get_visibility( ll, visibility_variables_cache ) == VIS_CLEAR;
     }
 
-    // Normal SDL gameplay should consume GPU-generated visibility_cache.
-    // If a caller asks before draw refreshes that cache, avoid geometry-only
+    // Normal SDL gameplay should consume the pre-refreshed visibility_cache.
+    // If a caller asks before the game/UI refresh point, avoid geometry-only
     // visibility because it produces false safe-mode and monster-info warnings.
     return false;
 #else
