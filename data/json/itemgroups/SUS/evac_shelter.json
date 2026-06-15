@@ -36,6 +36,8 @@
       { "item": "plastic_shopping_bag", "prob": 5 },
       { "item": "box_small", "prob": 5 },
       { "item": "bag_plastic", "prob": 5 },
+      { "item": "bag_zipper_small", "prob": 2 },
+      { "item": "bag_zipper", "prob": 1 },
       { "item": "bowl_plastic", "prob": 5 },
       { "item": "can_food_unsealed", "prob": 5 },
       { "item": "bottle_plastic", "count": [ 1, 2 ], "prob": 50 },
@@ -143,6 +145,8 @@
               { "item": "bleach", "charges-min": 1, "prob": 45 },
               { "item": "box_small", "prob": 5 },
               { "item": "bag_plastic", "prob": 5 },
+              { "item": "bag_zipper_small", "prob": 2 },
+              { "item": "bag_zipper", "prob": 1 },
               { "item": "bowl_plastic", "prob": 5 },
               { "item": "ammonia", "charges-min": 1, "prob": 15 }
             ],
@@ -155,6 +159,8 @@
               { "item": "soup_chicken", "count": [ 1, 2 ], "prob": 2 },
               { "item": "box_small", "prob": 5 },
               { "item": "bag_plastic", "prob": 5 },
+              { "item": "bag_zipper_small", "prob": 2 },
+              { "item": "bag_zipper", "prob": 1 },
               { "item": "bowl_plastic", "prob": 5 },
               { "item": "vitamins", "prob": 5 },
               { "item": "can_food_unsealed", "count": [ 1, 30 ], "prob": 90 }

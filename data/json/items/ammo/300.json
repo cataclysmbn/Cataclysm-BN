@@ -19,6 +19,8 @@
     "damage": { "damage_type": "bullet", "amount": 70, "armor_penetration": 17 },
     "dispersion": 15,
     "recoil": 4000,
+    "loudness": 164,
+    "speed": 876,
     "effects": [ "COOKOFF" ]
   },
   {

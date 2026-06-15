@@ -599,8 +599,8 @@ namespace
 
 auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint_bub_ms>
 {
-    const auto is_different_plane = []( const wrapped_vehicle & v, const monster & m ) -> bool {
-        return !fov_3d && v.pos.z() != m.bub_pos().z();
+    const auto is_different_plane = []( const wrapped_vehicle & /*v*/, const monster & /*m*/ ) -> bool {
+        return false;
     };
 
     map &here = get_map();

@@ -45,7 +45,7 @@
     "modes": [ [ "DEFAULT", "burst", 4 ] ],
     "clip_size": 100,
     "reload": 500,
-    "loudness": 5,
+    "loudness": 50,
     "valid_mod_locations": [ [ "sling", 1 ] ]
   },
   {

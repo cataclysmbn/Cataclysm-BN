@@ -20,7 +20,7 @@
     "dispersion": 380,
     "durability": 8,
     "blackpowder_tolerance": 32,
-    "loudness": 30,
+    "loudness": 6,
     "clip_size": 5,
     "magazines": [ [ "223", [ "223_speedloader5" ] ] ],
     "built_in_mods": [ "lead_holo_sight", "lead_laser_sight" ],

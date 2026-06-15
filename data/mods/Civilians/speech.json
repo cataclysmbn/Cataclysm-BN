@@ -1,74 +1,519 @@
 [
   {
+    "//": "================ Panicked and stationary civilians ================",
     "type": "speech",
     "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
-    "sound": "howling in terror.",
+    "sound": "A terrified howl.",
     "volume": 65
   },
   {
     "type": "speech",
     "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
-    "sound": "wailing in fear.",
+    "sound": "A fearful wail.",
     "volume": 65
   },
   {
     "type": "speech",
     "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
-    "sound": "an anguished shriek.",
+    "sound": "An agonizing scream.",
     "volume": 70
   },
   {
     "type": "speech",
     "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
-    "sound": "agonized crying.",
+    "sound": "A painful cry.",
     "volume": 50
   },
   {
     "type": "speech",
     "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
-    "sound": "faint, almost inhuman, whimpering.",
+    "sound": "A faint whimper, barely human.",
     "volume": 45
   },
   {
     "type": "speech",
-    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
-    "sound": "\"Die!\"",
+    "speaker": [ "mon_civilian_panic" ],
+    "sound": "Someone screams frantically: 'Help! Somebody help me!'",
     "volume": 65
   },
   {
     "type": "speech",
-    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
-    "sound": "\"Die, zombie scum!\"",
+    "speaker": [ "mon_civilian_panic", "mon_civilian_stationary" ],
+    "sound": "Someone babbles incoherently: 'Don't come near... go away... please go away...'",
+    "volume": 45
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_panic" ],
+    "sound": "Someone screams: 'This isn't real! This is just a dream, right?!'",
     "volume": 65
   },
   {
     "type": "speech",
-    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
-    "sound": "\"You'll get what's coming to you!\"",
+    "speaker": [ "mon_civilian_stationary" ],
+    "sound": "Someone murmurs with hollow eyes: 'God... why have you forsaken us...'",
+    "volume": 45
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_stationary" ],
+    "sound": "Someone whispers, devoid of hope: 'It's all over... it's the end of the world...'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_panic" ],
+    "sound": "Someone screams loudly: 'Don't grab me! Please don't eat me!'",
     "volume": 65
   },
   {
     "type": "speech",
-    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
-    "sound": "\"Kick the bucket, filthy dead!\"",
+    "speaker": [ "mon_civilian_panic" ],
+    "sound": "Someone cries out, breaking down: 'I don't want to die! I don't want to die in a place like this!'",
     "volume": 65
   },
   {
     "type": "speech",
-    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
-    "sound": "\"Come get some!\"",
+    "speaker": [ "mon_civilian_panic" ],
+    "sound": "Someone roars in despair: 'Why me! Why is this happening!'",
     "volume": 65
   },
   {
     "type": "speech",
-    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
-    "sound": "\"Will you die already?!\"",
+    "speaker": [ "mon_civilian_stationary" ],
+    "sound": "Someone smiles with lifeless eyes: 'Great... this nightmare is finally ending...'",
+    "volume": 45
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_stationary" ],
+    "sound": "Someone mutters: 'Fake... it's all fake... just close my eyes and it'll be fine...'",
+    "volume": 50
+  },
+  {
+    "//": "================ Children looking for parents ================",
+    "type": "speech",
+    "speaker": [ "mon_civilian_child" ],
+    "sound": "A child cries out loudly: 'Daddy? Mommy? Where are you!'",
     "volume": 65
   },
   {
     "type": "speech",
+    "speaker": [ "mon_civilian_child" ],
+    "sound": "A child sobs in fear: 'I'm so scared... I want to go home...'",
+    "volume": 45
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_child" ],
+    "sound": "A child screams in terror: 'Don't bite me! Go away!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_child" ],
+    "sound": "A child cries out loudly: 'Waaah... somebody save me!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_child" ],
+    "sound": "A child shouts in panic: 'Monsters! Go away! Go away!'",
+    "volume": 65
+  },
+  {
+    "//": "================ Parents who lost their minds ================",
+    "type": "speech",
+    "speaker": [ "mon_civilian_parent" ],
+    "sound": "Someone screams hysterically: 'Where is my child! Have you seen my baby!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_parent" ],
+    "sound": "Someone begs into thin air: 'Give me back my child... please...'",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_parent" ],
+    "sound": "Someone roars: 'Baby! Where are you! Answer me!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_parent" ],
+    "sound": "Someone bellows: 'Don't touch my child! Come at me if you dare!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_parent" ],
+    "sound": "Someone shouts deliriously: 'Run, baby! Don't look back! I'll hold them off!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_parent" ],
+    "sound": "Someone cries in despair: 'I'm sorry... I'm sorry I couldn't protect you...'",
+    "volume": 60
+  },
+  {
+    "//": "================ Police officers and futile fighters ================",
+    "type": "speech",
+    "speaker": [
+      "mon_civilian_zombiefighter",
+      "mon_civilian_police",
+      "mon_civilian_survivor_bow",
+      "mon_civilian_survivor_crossbow",
+      "mon_civilian_survivor_pistol",
+      "mon_civilian_survivor_elite_pistol",
+      "mon_civilian_survivor_fighter",
+      "mon_civilian_survivor_elite_fighter",
+      "mon_civilian_survivor_guardian_shotgun",
+      "mon_civilian_survivor_guardian_smg",
+      "mon_civilian_survivor_guardian_elite_rifle",
+      "mon_civilian_survivor_guardian_elite_AR"
+    ],
+    "sound": "Someone roars: 'Die, zombie scum!'",
+    "volume": 60
+  },
+  {
+    "type": "speech",
     "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
-    "sound": "an unrestrained warcry.",
-    "volume": 70
+    "sound": "Someone yells: 'Bring it on! We can die together!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_police" ],
+    "sound": "Someone shouts: 'In the name of the law, stay back! ...Damn it, these monsters don't understand at all!'",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_zombiefighter" ],
+    "sound": "Someone swings their weapon wildly: 'Kill! Kill! I'll kill you all!'",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_civilian_zombiefighter",
+      "mon_civilian_police",
+      "mon_civilian_survivor_fighter",
+      "mon_civilian_survivor_elite_fighter",
+      "mon_civilian_survivor_guardian_shotgun",
+      "mon_civilian_survivor_guardian_smg",
+      "mon_civilian_survivor_guardian_elite_rifle",
+      "mon_civilian_survivor_guardian_elite_AR"
+    ],
+    "sound": "A wild battle cry.",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_zombiefighter" ],
+    "sound": "Someone laughs maniacally: 'Hahaha! Even if I die, I'm taking you with me!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_police" ],
+    "sound": "Someone shouts frantically: 'Calling HQ! Requesting backup! We are surrounded! HQ! ...Damn it!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_police" ],
+    "sound": "Someone yells with a trembling voice: 'Freeze! Get on the ground! I'm warning you!'",
+    "volume": 65
+  },
+  {
+    "//": "================ Bow/Crossbow Survivor hunters ================",
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_bow", "mon_civilian_survivor_crossbow" ],
+    "sound": "Someone shouts angrily: 'Eat this arrow!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_civilian_survivor_bow",
+      "mon_civilian_survivor_crossbow",
+      "mon_civilian_survivor_elite_bow",
+      "mon_civilian_survivor_elite_crossbow"
+    ],
+    "sound": "Someone says through gritted teeth: 'Arrows aren't easy to make, you better be worth wasting this one.'",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_civilian_survivor_bow",
+      "mon_civilian_survivor_crossbow",
+      "mon_civilian_survivor_elite_bow",
+      "mon_civilian_survivor_elite_crossbow"
+    ],
+    "sound": "Someone mutters cautiously: 'Don't move... let me aim right at your head...'",
+    "volume": 45
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_bow", "mon_civilian_survivor_crossbow" ],
+    "sound": "Someone takes a nervous deep breath: 'Keep your distance... draw, aim...'",
+    "volume": 45
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_bow", "mon_civilian_survivor_crossbow" ],
+    "sound": "Someone shouts: 'I'll shoot right through you!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_bow", "mon_civilian_survivor_crossbow" ],
+    "sound": "Someone shouts: 'Perfect target practice for my archery skills!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_bow", "mon_civilian_survivor_crossbow", "mon_civilian_survivor_pistol" ],
+    "sound": "Someone yells nervously: 'Damn, these things never stop coming!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_bow", "mon_civilian_survivor_elite_crossbow" ],
+    "sound": "Someone whispers: 'This is my hunting ground... and you are the prey...'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_bow", "mon_civilian_survivor_elite_crossbow" ],
+    "sound": "Someone whispers: 'One arrow... down...'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_bow", "mon_civilian_survivor_elite_crossbow" ],
+    "sound": "Someone whispers: 'Just hit the vitals to incapacitate the prey...'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_bow", "mon_civilian_survivor_elite_crossbow" ],
+    "sound": "Someone whispers: 'Must give the prey no chance to struggle...'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_bow", "mon_civilian_survivor_elite_crossbow" ],
+    "sound": "Someone sneers: 'Another moving target rushing to its death.'",
+    "volume": 45
+  },
+  {
+    "//": "================ Firearms Survivor/Guardian ================",
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_pistol", "mon_civilian_survivor_guardian_shotgun", "mon_civilian_survivor_guardian_smg" ],
+    "sound": "Someone warns: 'Stay back! Step any closer and I'll shoot!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_pistol", "mon_civilian_survivor_guardian_smg", "mon_civilian_survivor_guardian_shotgun" ],
+    "sound": "Someone shouts: 'Don't think I won't pull the trigger!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_pistol" ],
+    "sound": "Someone sneers: 'Let's see how many holes I can blast into you.'",
+    "volume": 45
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_civilian_survivor_pistol",
+      "mon_civilian_survivor_elite_pistol",
+      "mon_civilian_survivor_guardian_shotgun",
+      "mon_civilian_survivor_guardian_smg",
+      "mon_civilian_survivor_guardian_elite_rifle",
+      "mon_civilian_survivor_guardian_elite_AR"
+    ],
+    "sound": "Someone yells: 'Eat shit! You filthy freaks!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_pistol", "mon_civilian_survivor_guardian_shotgun", "mon_civilian_survivor_guardian_smg" ],
+    "sound": "Someone mutters: 'Damn, gotta save my bullets...'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_civilian_survivor_guardian_shotgun",
+      "mon_civilian_survivor_guardian_smg",
+      "mon_civilian_survivor_guardian_elite_rifle",
+      "mon_civilian_survivor_guardian_elite_AR"
+    ],
+    "sound": "Someone roars: 'As long as I'm standing, you won't get past here!'",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_pistol", "mon_civilian_survivor_guardian_elite_rifle" ],
+    "sound": "Someone whispers: 'One shot, one kill.'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_civilian_survivor_elite_pistol",
+      "mon_civilian_survivor_guardian_elite_rifle",
+      "mon_civilian_survivor_guardian_elite_AR"
+    ],
+    "sound": "Someone shouts excitedly: 'Taste my bullets!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_guardian_elite_rifle", "mon_civilian_survivor_guardian_elite_AR" ],
+    "sound": "Someone yells enthusiastically: 'Enemy contact! Hold the line, not one step back!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_civilian_survivor_guardian_shotgun",
+      "mon_civilian_survivor_guardian_smg",
+      "mon_civilian_survivor_guardian_elite_rifle",
+      "mon_civilian_survivor_guardian_elite_AR"
+    ],
+    "sound": "Someone roars: 'Suppressing fire!'",
+    "volume": 60
+  },
+  {
+    "//": "================ Melee Survivor Fighters ================",
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_fighter", "mon_civilian_survivor_elite_fighter" ],
+    "sound": "Someone shouts: 'Come on, monsters! Let's see if my armor is tougher or your teeth are sharper!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_fighter", "mon_civilian_survivor_elite_fighter" ],
+    "sound": "Someone says through gritted teeth: 'I didn't crawl out of hell just to die by your hands!'",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_fighter", "mon_civilian_survivor_elite_fighter" ],
+    "sound": "Someone roars: 'Come at me if you've got the guts!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_fighter", "mon_civilian_survivor_elite_fighter" ],
+    "sound": "Someone bellows: 'Don't think you're having me for dinner!'",
+    "volume": 65
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_fighter" ],
+    "sound": "Someone scoffs dismissively: 'Just this scratch? Doesn't even compare to a bear bite.'",
+    "volume": 55
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_fighter" ],
+    "sound": "Someone sneers: 'Just another pile of dead meat.'",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_elite_fighter" ],
+    "sound": "Someone taps their armor and says arrogantly: 'You think you can bite through my armor? Keep dreaming!'",
+    "volume": 50
+  },
+  {
+    "//": "================ Survivor Children ================",
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child" ],
+    "sound": "A childish voice shouts: 'Take this! Taste this!'",
+    "volume": 55
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child" ],
+    "sound": "A child mutters softly: 'I'm not scared... I won't be scared of you...'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child" ],
+    "sound": "A child says breathlessly: 'Don't come near me!'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child" ],
+    "sound": "A child taunts loudly: 'You can't catch me! Big dummy!'",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child" ],
+    "sound": "A child taunts loudly: 'Don't bother chasing if you're that slow!'",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child" ],
+    "sound": "A child laughs breathlessly: 'Good thing you're dumb enough to trip over things!'",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child" ],
+    "sound": "A childish voice shouts: 'Stay away from me!'",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child_elite" ],
+    "sound": "A child's playful laughter.",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child_elite" ],
+    "sound": "A child snorts contemptuously: 'With that speed... you think you can catch me?'",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child_elite" ],
+    "sound": "A cold, childish voice whispers: 'If your footsteps are too loud, you'll die...'",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child_elite" ],
+    "sound": "A child warns through gritted teeth: 'Don't come close! Whether you're human or a monster... I'll strike!'",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child_elite" ],
+    "sound": "A child says in a flat tone: 'The game of hide and seek is over...'",
+    "volume": 45
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_survivor_child_elite" ],
+    "sound": "A childish voice says ruthlessly: 'Adults always say we need to help each other... but they are the fastest to die...'",
+    "volume": 50
   }
 ]

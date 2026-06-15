@@ -17,6 +17,7 @@
     "count": 100,
     "stack_size": 100,
     "loudness": 0,
+    "speed": 80,
     "effects": [ "NOGIB", "NEVER_MISFIRES" ]
   }
 ]

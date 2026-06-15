@@ -1360,8 +1360,14 @@ std::string enum_to_string<season_type>( season_type data )
 
 void map_data_common_t::load( const JsonObject &jo, const std::string &src )
 {
-    if( jo.has_member( "examine_action" ) ) {
-        examine = iexamine_function_from_string( jo.get_string( "examine_action" ) );
+    const auto examine_action = jo.get_string( "examine_action", "" );
+    examine_action_id.clear();
+
+    if( examine_action.rfind( "lua:", 0 ) == 0 ) {
+        examine_action_id = examine_action.substr( 4 );
+        examine = iexamine_function_from_string( "lua_examine" );
+    } else if( !examine_action.empty() ) {
+        examine = iexamine_function_from_string( examine_action );
     } else if( !was_loaded ) {
         examine = iexamine_function_from_string( "none" );
     }
@@ -1395,6 +1401,7 @@ void map_data_common_t::load( const JsonObject &jo, const std::string &src )
     mandatory( jo, was_loaded, "description", description );
     optional( jo, was_loaded, "message", message );
     optional( jo, was_loaded, "prompt", prompt );
+    assign( jo, "light_color", light_color, is_json_check_strict( src ) );
 
     assign( jo, "flags", flags );
     assign( jo, "default_vars", default_vars );

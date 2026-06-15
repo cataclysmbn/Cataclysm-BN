@@ -82,9 +82,16 @@ namespace io
             case enchant_vals::mod::DEXTERITY: return "DEXTERITY";
             case enchant_vals::mod::PERCEPTION: return "PERCEPTION";
             case enchant_vals::mod::INTELLIGENCE: return "INTELLIGENCE";
+            case enchant_vals::mod::HEALTH_POINTS: return "HEALTH_POINTS";
             case enchant_vals::mod::SPEED: return "SPEED";
             case enchant_vals::mod::ATTACK_COST: return "ATTACK_COST";
             case enchant_vals::mod::MOVE_COST: return "MOVE_COST";
+            case enchant_vals::mod::FLAT_MOVE_COST: return "FLAT_MOVE_COST";
+            case enchant_vals::mod::OBSTACLE_MOVE_COST: return "OBSTACLE_MOVE_COST";
+            case enchant_vals::mod::SWIM_MOVE_COST: return "SWIM_MOVE_COST";
+            case enchant_vals::mod::READING_SPEED: return "READING_SPEED";
+            case enchant_vals::mod::CRAFTING_SPEED: return "CRAFTING_SPEED";
+            case enchant_vals::mod::CONSTRUCTION_SPEED: return "CONSTRUCTION_SPEED";
             case enchant_vals::mod::METABOLISM: return "METABOLISM";
             case enchant_vals::mod::MANA_CAP: return "MANA_CAP";
             case enchant_vals::mod::MANA_REGEN: return "MANA_REGEN";
@@ -92,7 +99,32 @@ namespace io
             case enchant_vals::mod::STAMINA_REGEN: return "STAMINA_REGEN";
             case enchant_vals::mod::THIRST: return "THIRST";
             case enchant_vals::mod::FATIGUE: return "FATIGUE";
+            case enchant_vals::mod::MENDING_MULT: return "MENDING_MULT";
+            case enchant_vals::mod::HEARING: return "HEARING";
+            case enchant_vals::mod::NOISE: return "NOISE";
+            case enchant_vals::mod::SCENT: return "SCENT";
+            case enchant_vals::mod::STEALTH: return "STEALTH";
+            case enchant_vals::mod::BODYTEMP_MIN: return "BODYTEMP_MIN";
+            case enchant_vals::mod::BODYTEMP_MAX: return "BODYTEMP_MAX";
+            case enchant_vals::mod::BODYTEMP_SLEEP: return "BODYTEMP_SLEEP";
+            case enchant_vals::mod::BODYTEMP_SPEED: return "BODYTEMP_SPEED";
+            case enchant_vals::mod::LIE: return "LIE";
+            case enchant_vals::mod::PERSUADE: return "PERSUADE";
+            case enchant_vals::mod::INTIMIDATE: return "INTIMIDATE";
+            case enchant_vals::mod::HEALTHY_MULT: return "HEALTHY_MULT";
+            case enchant_vals::mod::FALL_DAMAGE_MULT: return "FALL_DAMAGE_MULT";
+            case enchant_vals::mod::CARRY_STORAGE: return "CARRY_STORAGE";
+            case enchant_vals::mod::CARRY_WEIGHT: return "CARRY_WEIGHT";
+            case enchant_vals::mod::OVERMAP_SIGHT: return "OVERMAP_SIGHT";
+            case enchant_vals::mod::EFFECTIVE_FOCUS: return "EFFECTIVE_FOCUS";
             case enchant_vals::mod::BONUS_DODGE: return "BONUS_DODGE";
+            case enchant_vals::mod::RANGED_DISPERSION: return "RANGED_DISPERSION";
+            case enchant_vals::mod::RANGED_DAMAGE_BULLET: return "RANGED_DAMAGE_BULLET";
+            case enchant_vals::mod::RANGED_ARMOR_PENETRATION: return "RANGED_ARMOR_PENETRATION";
+            case enchant_vals::mod::RANGED_RANGE: return "RANGED_RANGE";
+            case enchant_vals::mod::RANGED_RECOIL: return "RANGED_RECOIL";
+            case enchant_vals::mod::RANGED_RELOAD_TIME: return "RANGED_RELOAD_TIME";
+            case enchant_vals::mod::RANGED_AIM_SPEED: return "RANGED_AIM_SPEED";
             case enchant_vals::mod::ARMOR_ACID: return "ARMOR_ACID";
             case enchant_vals::mod::ARMOR_BASH: return "ARMOR_BASH";
             case enchant_vals::mod::ARMOR_BIO: return "ARMOR_BIO";
@@ -131,13 +163,6 @@ namespace io
             case enchant_vals::mod::ITEM_ARMOR_ACID: return "ITEM_ARMOR_ACID";
             case enchant_vals::mod::ITEM_ARMOR_BIO: return "ITEM_ARMOR_BIO";
             case enchant_vals::mod::ITEM_ATTACK_COST: return "ITEM_ATTACK_COST";
-            case enchant_vals::mod::RANGED_DISPERSION: return "RANGED_DISPERSION";
-            case enchant_vals::mod::RANGED_DAMAGE_BULLET: return "RANGED_DAMAGE_BULLET";
-            case enchant_vals::mod::RANGED_ARMOR_PENETRATION: return "RANGED_ARMOR_PENETRATION";
-            case enchant_vals::mod::RANGED_RANGE: return "RANGED_RANGE";
-            case enchant_vals::mod::RANGED_RECOIL: return "RANGED_RECOIL";
-            case enchant_vals::mod::RANGED_RELOAD_TIME: return "RANGED_RELOAD_TIME";
-            case enchant_vals::mod::RANGED_AIM_SPEED: return "RANGED_AIM_SPEED";
             case enchant_vals::mod::NUM_MOD: break;
         }
         debugmsg( "Invalid enchant_vals::mod" );
@@ -475,7 +500,9 @@ double enchantment::get_value_multiply( const enchant_vals::mod value ) const
 
 double enchantment::calc_bonus( enchant_vals::mod value, double base, bool round ) const
 {
+    // I honestly dont know why the first one was there in the first place...
     bool use_add = true;
+    bool use_mult = true;
     switch( value ) {
         case enchant_vals::mod::METABOLISM:
         case enchant_vals::mod::MANA_REGEN:
@@ -489,7 +516,7 @@ double enchantment::calc_bonus( enchant_vals::mod value, double base, bool round
             break;
     }
     double add = use_add ? get_value_add( value ) : 0.0;
-    double mul = get_value_multiply( value );
+    double mul = use_mult ? get_value_multiply( value ) : 1.0;
     double ret = add + base * mul;
     if( round ) {
         ret = trunc( ret );
@@ -502,14 +529,28 @@ int enchantment::mult_bonus( enchant_vals::mod value_type, int base_value ) cons
     return get_value_multiply( value_type ) * base_value;
 }
 
+void enchantment::activate_effects( Character &guy ) const
+{
+    for( const std::pair<efftype_id, int> eff : ench_effects ) {
+        guy.add_effect( eff.first, 1_seconds, bodypart_str_id::NULL_ID(), eff.second );
+    }
+}
+
+void enchantment::deactivate_removed_effects( Character &guy, const enchantment &other ) const
+{
+    for( const std::pair<efftype_id, int> eff : other.ench_effects ) {
+        if( !ench_effects.contains( eff.first ) ) {
+            guy.remove_effect( eff.first, bodypart_str_id::NULL_ID() );
+        }
+    }
+}
+
 void enchantment::activate_passive( Character &guy ) const
 {
     if( emitter ) {
         get_map().emit_field( guy.bub_pos(), *emitter );
     }
-    for( const std::pair<efftype_id, int> eff : ench_effects ) {
-        guy.add_effect( eff.first, 1_seconds, bodypart_str_id::NULL_ID(), eff.second );
-    }
+    activate_effects( guy );
     for( const std::pair<const time_duration, std::vector<fake_spell>> &activation :
          intermittent_activation ) {
         // a random approximation!
@@ -620,13 +661,6 @@ void enchantment::check() const
         if( !mut->mods.empty() ) {
             problems.push_back(
                 string_format( "\nmutation %s which has stat adjustments (not supported)", mut.str() ) );
-        }
-
-        // TODO: Implement or also list glass jaw
-        if( !is_set_value<&mutation_branch::hp_modifier, &mutation_branch::hp_modifier_secondary, &mutation_branch::hp_adjustment>
-            ( mut, 0.0f ) ) {
-            problems.push_back( string_format( "\nmutation %s which adjusts hp (not supported)",
-                                               mut.str() ) );
         }
     }
 

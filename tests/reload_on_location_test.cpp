@@ -22,10 +22,10 @@
 TEST_CASE( "reload_on_vehicle_cargo", "[magazine] [visitable] [item] [item_location]" )
 {
     clear_all_state();
-    const tripoint_bub_ms vehicle_center = tripoint_bub_ms( 65, 65, 0 );
-    put_player_underground();
+    move_player_out_of_the_way();
 
     map &here = get_map();
+    const auto vehicle_center = tripoint_bub_ms( 65, 65, here.get_abs_sub().z() );
     const vproto_id car_id( "car" );
     const itype_id ups_id( "UPS_off" );
     vehicle *veh = here.add_vehicle( car_id, vehicle_center, 0_radians, 0, 0, false );

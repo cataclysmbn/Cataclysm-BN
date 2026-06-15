@@ -120,6 +120,29 @@ static auto random_age_for_profession( const profession &prof ) -> int
     return rng( min_age, max_age );
 }
 
+static auto scenario_is_selectable( const scenario &scen, const bool cities_enabled ) -> bool
+{
+    return !scen.scen_is_blacklisted() && ( !scen.has_flag( flag_CITY_START ) || cities_enabled );
+}
+
+static auto first_selectable_scenario( const bool cities_enabled ) -> const scenario * // *NOPAD*
+{
+    const auto &scenarios = scenario::get_all();
+    const auto iter = std::ranges::find_if( scenarios, [cities_enabled]( const scenario & scen ) {
+        return scenario_is_selectable( scen, cities_enabled );
+    } );
+    return iter != scenarios.end() ? &( *iter ) : scenario::generic();
+}
+
+static auto first_selectable_scenario( const std::vector<const scenario *> &scenarios,
+                                       const bool cities_enabled ) -> const scenario * // *NOPAD*
+{
+    const auto iter = std::ranges::find_if( scenarios, [cities_enabled]( const scenario * scen ) {
+        return scenario_is_selectable( *scen, cities_enabled );
+    } );
+    return iter != scenarios.end() ? *iter : scenarios.front();
+}
+
 // Colors used in this file: (Most else defaults to c_light_gray)
 #define COL_STAT_ACT        c_white   // Selected stat
 #define COL_STAT_BONUS      c_light_green // Bonus
@@ -260,20 +283,23 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
     }
     // if adjusting min and max height from 145 and 200, make sure to see set_description()
     init_height = rng( 145, 200 );
-    bool cities_enabled = world_generator->active_world->info->WORLD_OPTIONS["CITY_SIZE"].getValue() !=
-                          "0";
+    const auto cities_enabled =
+        world_generator->active_world->info->WORLD_OPTIONS["CITY_SIZE"].getValue() !=
+        "0";
     if( random_scenario ) {
         std::vector<const scenario *> scenarios;
         for( const auto &scen : scenario::get_all() ) {
-            if( !scen.has_flag( flag_CHALLENGE ) &&
-                ( !scen.has_flag( flag_CITY_START ) || cities_enabled ) ) {
+            if( !scen.has_flag( flag_CHALLENGE ) && scenario_is_selectable( scen, cities_enabled ) ) {
                 scenarios.emplace_back( &scen );
             }
         }
-        g->scen = random_entry( scenarios );
-    } else if( !cities_enabled ) {
-        static const string_id<scenario> wilderness_only_scenario( "wilderness" );
-        g->scen = &wilderness_only_scenario.obj();
+        if( scenarios.empty() ) {
+            g->scen = first_selectable_scenario( cities_enabled );
+        } else {
+            g->scen = random_entry( scenarios );
+        }
+    } else if( !scenario_is_selectable( *g->scen, cities_enabled ) ) {
+        g->scen = first_selectable_scenario( cities_enabled );
     }
 
     prof = g->scen->weighted_random_profession();
@@ -3100,11 +3126,13 @@ tab_direction set_scenario( avatar &u, points_left &points,
             scenario_sorter.cities_enabled = wopts["CITY_SIZE"].getValue() != "0";
             std::stable_sort( sorted_scens.begin(), sorted_scens.end(), scenario_sorter );
 
-            // If city size is 0 but the current scenario requires cities reset the scenario
-            if( !scenario_sorter.cities_enabled && g->scen->has_flag( "CITY_START" ) ) {
-                reset_scenario( u, sorted_scens[0] );
+            // Reset if the current scenario is no longer selectable, such as when a mod whitelist hides it.
+            if( !scenario_is_selectable( *g->scen, scenario_sorter.cities_enabled ) ) {
+                const auto *fallback_scenario = first_selectable_scenario( sorted_scens,
+                                                scenario_sorter.cities_enabled );
+                reset_scenario( u, fallback_scenario );
                 points.init_from_options();
-                points.skill_points -= sorted_scens[cur_id]->point_cost();
+                points.skill_points -= g->scen->point_cost();
             }
 
             // Select the current scenario, if possible.

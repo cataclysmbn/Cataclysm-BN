@@ -15,7 +15,8 @@
     "dispersion": 100,
     "count": 100,
     "stack_size": 200,
-    "loudness": 15,
+    "loudness": 50,
+    "speed": 40,
     "recoil": 26,
     "effects": [ "NOGIB", "NEVER_MISFIRES" ]
   },
@@ -35,7 +36,8 @@
     "dispersion": 100,
     "count": 100,
     "stack_size": 200,
-    "loudness": 15,
+    "loudness": 50,
+    "speed": 38,
     "recoil": 26,
     "effects": [ "NOGIB", "NEVER_MISFIRES" ]
   },
@@ -55,7 +57,8 @@
     "dispersion": 100,
     "count": 100,
     "stack_size": 200,
-    "loudness": 15,
+    "loudness": 50,
+    "speed": 48,
     "recoil": 26,
     "effects": [ "NOGIB", "NEVER_MISFIRES" ]
   },
@@ -91,7 +94,9 @@
     "material": "steel",
     "symbol": "=",
     "color": "dark_gray",
-    "relative": { "price": "5 USD", "damage": { "damage_type": "bullet", "armor_penetration": 2 }, "loudness": 25, "dispersion": 20 }
+    "loudness": 65,
+    "speed": 350,
+    "relative": { "price": "5 USD", "damage": { "damage_type": "bullet", "armor_penetration": 2 }, "dispersion": 20 }
   },
   {
     "type": "AMMO",
@@ -109,7 +114,8 @@
     "dispersion": 150,
     "count": 250,
     "stack_size": 200,
-    "loudness": 20,
+    "loudness": 80,
+    "speed": 300,
     "recoil": 100,
     "effects": [ "NOGIB" ]
   }

@@ -28,8 +28,6 @@ NOTE: Please read your emails. Anyone mentioned on Github with an @ will receive
 
 ### Mandatory
 
-- [ ] I wrote the PR title in [conventional commit format](https://docs.cataclysmbn.org/contribute/changelog_guidelines/).
-- [ ] I ran the [code formatter](https://docs.cataclysmbn.org/contribute/contributing/#code-style).
 - [ ] I linked any relevant issues using [github keyword syntax](https://docs.cataclysmbn.org/contribute/contributing/#pull-request-notes) like `closes #1234` in [Summary of the PR](#purpose-of-change-the-why) so it can be closed automatically.
 
 ### Optional
@@ -57,7 +55,6 @@ NOTE: Please read your emails. Anyone mentioned on Github with an @ will receive
 - [ ] This PR adds/removes a mod.
   - [ ] I have added [`mods` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#mods-or-mods%2F<mod_id>%3A-mods) to the PR title.
   - [ ] The `mod_name` in `data/mods/<mod_name>` matches `id` in `modinfo.json`.
-  - [ ] I have committed the output of `deno task semantic`.
 - [ ] This PR modifies lua scripts or the lua API.
   - [ ] I have added [`lua` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#lua%3A-changes-to-lua-api) to the PR title.
   - [ ] I have added [type annotations](https://emmylua.github.io/annotation.html) to functions so that it's safe and easy to maintain.

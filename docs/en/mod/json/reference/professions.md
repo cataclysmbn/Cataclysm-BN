@@ -48,6 +48,17 @@ This defines characters with the WOOLALLERGY trait get some items replaced:
 - "blazer" is converted into "jacket_leather_red",
 - each "hat_hunting" is converted into *two* "hat_cotton" items.
 
+You can also set a profession to spawn a specific itemgroup, currently restricted to `bonus` entries (which can also be used with the above item substitutions). Example:
+
+```json
+  {
+    "type": "profession_item_substitutions",
+    "item_group": "profession_carry_bonus",
+    "bonus": { "present": [ "CARRY_PERMIT" ] }
+  },
+```json
+This grants a free spawn from itemgroup `profession_carry_bonus` to characters with the `CARRY_PERMIT` trait.
+
 ### Professions
 
 Professions are specified as JSON object with "type" member set to "profession":

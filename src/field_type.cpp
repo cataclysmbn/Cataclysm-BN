@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 
+#include "assign.h"
 #include "bodypart.h"
 #include "debug.h"
 #include "enum_conversions.h"
@@ -180,6 +181,8 @@ void field_type::load( const JsonObject &jo, const std::string & )
                   fallback_intensity_level.monster_spawn_group );
         optional( jao, was_loaded, "light_emitted", intensity_level.light_emitted,
                   fallback_intensity_level.light_emitted );
+        intensity_level.light_color = fallback_intensity_level.light_color;
+        assign( jao, "light_color", intensity_level.light_color );
         optional( jao, was_loaded, "light_override", intensity_level.local_light_override,
                   fallback_intensity_level.local_light_override );
         optional( jao, was_loaded, "translucency", intensity_level.translucency,

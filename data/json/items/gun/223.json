@@ -102,6 +102,7 @@
     "dispersion": 380,
     "durability": 6,
     "min_cycle_recoil": 1350,
+    "loudness": 4,
     "magazines": [
       [
         "223",
@@ -641,7 +642,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -4 },
     "dispersion": 550,
     "durability": 6,
-    "loudness": 25,
+    "loudness": -2,
     "reload": 200,
     "valid_mod_locations": [
       [ "accessories", 2 ],

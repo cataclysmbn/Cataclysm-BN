@@ -6,6 +6,8 @@
     "name": { "str": ".38 FMJ" },
     "description": ".38 Special ammunition with brass jacketed 130gr bullets.  The .38 Special round has been known from its inception for its accuracy and low recoil.",
     "//": "Base damage of 20, balance increase of two-nineths.",
+    "loudness": 156,
+    "speed": 240,
     "relative": { "damage": { "damage_type": "bullet", "amount": -6, "armor_penetration": 14 } }
   },
   {
@@ -29,6 +31,8 @@
     "damage": { "damage_type": "bullet", "amount": 30 },
     "dispersion": 30,
     "recoil": 300,
+    "loudness": 155,
+    "speed": 250,
     "effects": [ "COOKOFF" ]
   },
   {

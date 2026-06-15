@@ -20,6 +20,8 @@
     "damage": { "damage_type": "bullet", "amount": 60, "armor_penetration": 27 },
     "dispersion": 15,
     "recoil": 2500,
+    "loudness": 164,
+    "speed": 840,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -28,6 +30,8 @@
     "type": "AMMO",
     "name": { "str": "6.8x51mm 'Fury' Hybrid" },
     "casing": "277_casing",
+    "loudness": 166,
+    "speed": 980,
     "description": "A rimless cartridge that was planned to be adopted by the US military to combat advances in modern body armor, but was quietly abandoned soon after the development of caseless. These full-power Hybrid rounds offer significant armor penetration but greatly increase recoil.",
     "relative": { "damage": { "damage_type": "bullet", "amount": 5, "armor_penetration": 20 } },
     "proportional": { "recoil": 1.3 }

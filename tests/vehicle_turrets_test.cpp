@@ -64,6 +64,14 @@ static auto biggest_tank( const ammotype &ammo ) -> const vpart_info *
     return *std::ranges::max_element( res, {}, &vpart_info::size );
 }
 
+static auto update_player_visibility_cache( map &here,
+        const tripoint_bub_ms &player_pos ) -> void
+{
+    here.invalidate_map_cache( player_pos.z() );
+    here.build_map_cache( player_pos.z() );
+    here.update_visibility_cache( player_pos.z() );
+}
+
 TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
 {
     clear_all_state();
@@ -182,8 +190,7 @@ TEST_CASE( "vehicle_turret_iff_protects_followers_in_line_of_fire", "[vehicle][t
 
     const auto hostile_pos = shooter_pos + point( 8, 0 );
     monster &hostile = spawn_test_monster( "mon_zombie_tough", hostile_pos );
-    here.invalidate_map_cache( shooter_pos.z() );
-    here.build_map_cache( shooter_pos.z(), true );
+    update_player_visibility_cache( here, shooter_pos );
     REQUIRE( shooter.sees( hostile ) );
 
     const auto target = creature_functions::auto_find_hostile_target(
@@ -212,8 +219,7 @@ TEST_CASE( "vehicle_turret_iff_allows_clear_shots", "[vehicle][turret][npc][iff]
 
     const auto hostile_pos = shooter_pos + point( 8, 0 );
     monster &hostile = spawn_test_monster( "mon_zombie_tough", hostile_pos );
-    here.invalidate_map_cache( shooter_pos.z() );
-    here.build_map_cache( shooter_pos.z(), true );
+    update_player_visibility_cache( here, shooter_pos );
     REQUIRE( shooter.sees( hostile ) );
 
     const auto target = creature_functions::auto_find_hostile_target(

@@ -25,6 +25,10 @@
 #include "ui_manager.h"
 #include "worldfactory.h"
 
+#if defined(__ANDROID__)
+#include <sys/system_properties.h>
+#endif
+
 #if defined(_WIN32)
 #   if 1 // HACK: Hack to prevent reordering of #include "platform_win.h" by IWYU
 #       include "platform_win.h"

@@ -29,6 +29,9 @@ if (BUILD_TESTING)
         endif ()
 
         set_target_properties( cata_test-tiles PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}" )
+        if (COMMAND cata_copy_windows_lavapipe_runtime)
+            cata_copy_windows_lavapipe_runtime(cata_test-tiles)
+        endif()
     endif ()
 
     if (CURSES)
@@ -45,5 +48,8 @@ if (BUILD_TESTING)
             target_precompile_headers(cata_test PRIVATE
                 ${CMAKE_CURRENT_SOURCE_DIR}/pch/tests-pch.hpp)
         endif ()
+        if (COMMAND cata_copy_windows_lavapipe_runtime)
+            cata_copy_windows_lavapipe_runtime(cata_test)
+        endif()
     endif ()
 endif ()

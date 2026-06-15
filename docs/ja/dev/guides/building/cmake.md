@@ -8,9 +8,8 @@ title: CMake
 
 - 一般
   - `cmake` >= 3.0.0
-  - `gcc` >= 14
-  - `clang` >= 19
-  - `gcc-libs`
+  - `clang` >= 22
+  - `gcc-libs` または同等の C++ ランタイムライブラリ
   - `glibc`
   - `zlib`
   - `bzip2`
@@ -50,7 +49,7 @@ cd Cataclysm-BN
 - Ubuntu ベースのディストリビューション (24.04 以降):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 llvm-20 ccache \
+sudo apt install git cmake ninja-build mold clang-22 llvm-22 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -67,58 +66,32 @@ sqlite-devel zlib-devel
 
 #### コンパイラバージョンの確認
 
-Cataclysm-BN』をビルドするには、少なくとも `gcc` 14 **および** `clang` が必要です。コンパイラのバージョンは、以下のコマンドで確認できます:
+『Cataclysm-BN』をビルドするには Clang 22 以降が必要です。コンパイラのバージョンは、以下のコマンドで確認できます:
 
 ```sh
-$ g++ --version
-g++ (GCC) 15.2.1 20250808 (Red Hat 15.2.1-1)
-Copyright (C) 2025 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
 $ clang++ --version
-clang version 20.1.8 (Fedora 20.1.8-4.fc42)
+clang version 22.1.6 (Fedora 22.1.6-1.fc44)
 Target: x86_64-redhat-linux-gnu
 Thread model: posix
 InstalledDir: /usr/bin
-Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 ```
 
 > [!TIP]
 >
-> **`gcc-{version}` はインストールされているが `gcc` が見つからない場合**
+> **`clang-{version}` はインストールされているが `clang` が見つからない場合**
 >
-> `update-alternatives` を使用して、デフォルトのgcc バージョンを設定します:
+> `update-alternatives` を使用して、デフォルトの Clang バージョンを設定します:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-> sudo update-alternatives --display gcc
-> gcc - auto mode
->   link best version is /usr/bin/gcc-14
->   link currently points to /usr/bin/gcc-14
->   link gcc is /usr/bin/gcc
-> /usr/bin/gcc-14 - priority 100
-> sudo update-alternatives --display g++
-> g++ - auto mode
->   link best version is /usr/bin/g++-14
->   link currently points to /usr/bin/g++-14
->   link g++ is /usr/bin/g++
-> /usr/bin/g++-14 - priority 100
+> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-22 100
+> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 100
 > ```
 >
-> `clang`も同様に適用されます。
+> Ubuntu で `llvm-ar-22` と `llvm-ranlib-22` のようなバージョン付き LLVM binutils だけがインストールされる場合は、これらの名前も登録してください:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
-> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
-> ```
->
-> Ubuntu で `llvm-ar-20` と `llvm-ranlib-20` のようなバージョン付き LLVM binutils だけがインストールされる場合は、これらの名前も登録してください:
->
-> ```sh
-> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-20 100
-> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-20 100
+> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-22 100
+> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-22 100
 > ```
 
 ### Windows Subsystem for Linux (WSL)

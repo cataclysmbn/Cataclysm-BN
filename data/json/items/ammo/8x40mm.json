@@ -59,6 +59,8 @@
     "damage": { "damage_type": "bullet", "amount": 45, "armor_penetration": 35 },
     "dispersion": 75,
     "recoil": 2200,
+    "loudness": 158,
+    "speed": 900,
     "effects": [ "NEVER_MISFIRES" ]
   },
   {
@@ -68,6 +70,8 @@
     "name": { "str": "8x40mm sporting" },
     "description": "8x40mm caseless rounds, light sporting load sold for civilian use.  Proprietary ammunition for Rivtech firearms.  Being caseless rounds, these cannot be disassembled or reloaded.",
     "delete": { "effects": [ "NEVER_MISFIRES" ] },
+    "loudness": 154,
+    "speed": 700,
     "proportional": {
       "price": 0.8,
       "damage": { "damage_type": "bullet", "amount": 0.5, "armor_penetration": 0.5 },
@@ -84,6 +88,8 @@
     "price": "25 USD",
     "price_postapoc": "500 USD",
     "count": 20,
+    "loudness": 168,
+    "speed": 1150,
     "//": "Balanced as AP, with 25% higher damage and 50% higher arpen",
     "relative": { "damage": { "damage_type": "bullet", "amount": 4, "armor_penetration": 34 } },
     "proportional": { "dispersion": 1.5, "recoil": 1.5 }

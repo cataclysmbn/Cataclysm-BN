@@ -286,7 +286,7 @@ distribution_grid_tracker::distribution_grid_tracker()
     : distribution_grid_tracker( MAPBUFFER, {} )
 {}
 
-distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer, std::string dim_id )
+distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer, dimension_id dim_id )
     : mb( buffer )
     , dimension_id_( std::move( dim_id ) )
 {
@@ -478,7 +478,7 @@ distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
         DebugLog( DL::Warn, DC::Map ) << string_format(
                                           "make_distribution_grid_at: no overmap grid data for submap %s "
                                           "(dim '%s') — power operations will be silently dropped this tick",
-                                          sm_pos.to_string(), dimension_id_ );
+                                          sm_pos.to_string(), dimension_id_.c_str() );
         static distribution_grid empty_grid( {}, MAPBUFFER );
         return empty_grid;
     }
@@ -540,7 +540,7 @@ std::array<tripoint_abs_omt, 5> distribution_grid_tracker::get_omt_and_cardinal_
 }
 
 void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
-        const std::string &dim_id )
+        const dimension_id &dim_id )
 {
     ZoneScoped;
     // Each tracker only manages submaps for its own dimension.
@@ -577,7 +577,7 @@ void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
 }
 
 void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
-        const std::string &dim_id )
+        const dimension_id &dim_id )
 {
     ZoneScoped;
     if( dim_id != dimension_id_ ) {
@@ -738,17 +738,18 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
 
         const furn_t &old_t = sm->get_furn( p_within_sm ).obj();
         const furn_t &new_t = qt.id.obj();
-        const auto pos_local = m.abs_to_bub( qt.p );
+        const auto pos_player = abs_to_bub( qt.p );
+        const auto pos_local = abs_to_map_local( m, qt.p );
 
         if( !qt.msg.empty() ) {
-            if( u.sees( pos_local ) ) {
+            if( u.sees( pos_player ) ) {
                 add_msg( "%s", _( qt.msg ) );
             }
         }
 
         if( m.inbounds( pos_local ) ) {
             m.furn_set( pos_local, qt.id );
-            return;
+            continue;
         }
 
         // Something is transforming from an unloaded map...?
@@ -790,4 +791,3 @@ void distribution_grid_tracker::update( time_point to )
     transform_queue.apply( mb, *this, get_player_character(), get_map() );
     transform_queue.clear();
 }
-

@@ -51,9 +51,9 @@ struct monster_action_t {
     /// Stagger multiplier passed to move_to().  1.0 = no stagger.
     float               stagger_adjust = 1.0f;
 
-    /// Path is stale; execute_action must call Pathfinding::route() before stepping.
-    /// Set for Tier-0 whenever requested; set for Tier-1 when genuinely stuck
-    /// (repath_requested was already true, i.e. stuck for 2+ turns — LOGIC-E).
+    /// Path is stale; execute_action may call Pathfinding::route() before stepping.
+    /// Set when an existing path/request is stale, not merely because greedy
+    /// movement failed to find a step.
     /// Tier-2 never sets this flag (macro step does not use the path).
     bool                needs_repath   = false;
 
@@ -61,4 +61,5 @@ struct monster_action_t {
     /// Used for the MATT_IGNORE / MATT_FOLLOW-at-range idle action that pairs
     /// a stumble with a partial move deduction (100 moves, not all moves).
     bool                needs_stumble  = false;
+
 };

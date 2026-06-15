@@ -529,6 +529,58 @@
     "components": [ [ [ "plastic_chunk", 5 ] ] ]
   },
   {
+    "result": "glock40mag",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "skill_used": "computer",
+    "difficulty": 3,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "3 m",
+    "book_learn": [ [ "textbook_computer", 3 ], [ "advanced_electronics", 3 ], [ "textbook_anarch", 3 ], [ "reference_fabrication1", 3 ] ],
+    "using": [ [ "3d_printing_standard", 3 ] ],
+    "components": [ [ [ "plastic_chunk", 3 ] ] ]
+  },
+  {
+    "result": "glock40bigmag",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "skill_used": "computer",
+    "difficulty": 3,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "5 m",
+    "book_learn": [ [ "textbook_computer", 3 ], [ "advanced_electronics", 3 ], [ "textbook_anarch", 3 ], [ "reference_fabrication1", 3 ] ],
+    "using": [ [ "3d_printing_standard", 5 ] ],
+    "components": [ [ [ "plastic_chunk", 4 ] ] ]
+  },
+  {
+    "result": "saiga10mag",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "skill_used": "computer",
+    "difficulty": 4,
+    "skills_required": [ [ "fabrication", 3 ] ],
+    "time": "5 m",
+    "book_learn": [ [ "textbook_computer", 4 ], [ "advanced_electronics", 4 ], [ "textbook_anarch", 4 ], [ "reference_fabrication1", 3 ] ],
+    "using": [ [ "3d_printing_standard", 5 ] ],
+    "components": [ [ [ "plastic_chunk", 5 ] ] ]
+  },
+  {
+    "result": "saiga410mag_10rd",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "skill_used": "computer",
+    "difficulty": 4,
+    "skills_required": [ [ "fabrication", 3 ] ],
+    "time": "5 m",
+    "book_learn": [ [ "textbook_computer", 4 ], [ "advanced_electronics", 4 ], [ "textbook_anarch", 4 ], [ "reference_fabrication1", 3 ] ],
+    "using": [ [ "3d_printing_standard", 5 ] ],
+    "components": [ [ [ "plastic_chunk", 5 ] ] ]
+  },
+  {
     "result": "carbonmag_223",
     "type": "recipe",
     "category": "CC_WEAPON",
@@ -767,6 +819,21 @@
     "components": [ [ [ "scrap", 4 ] ] ]
   },
   {
+    "result": "falmag",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "autolearn": false,
+    "skill_used": "fabrication",
+    "book_learn": [ [ "mag_guns", 3 ] ],
+    "difficulty": 3,
+    "time": "120 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "using": [ [ "magazine_standard", 5 ] ],
+    "components": [ [ [ "scrap", 5 ] ] ]
+  },
+  {
     "result": "g3mag",
     "type": "recipe",
     "category": "CC_WEAPON",
@@ -855,6 +922,21 @@
     "decomp_learn": 3,
     "using": [ [ "magazine_standard", 5 ] ],
     "components": [ [ [ "scrap", 10 ] ] ]
+  },
+  {
+    "result": "m1911mag",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "autolearn": false,
+    "skill_used": "fabrication",
+    "book_learn": [ [ "mag_guns", 3 ] ],
+    "difficulty": 3,
+    "time": "60 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "using": [ [ "magazine_standard", 5 ] ],
+    "components": [ [ [ "scrap", 2 ] ] ]
   },
   {
     "result": "usp45mag",
@@ -1247,6 +1329,21 @@
     "components": [ [ [ "scrap", 3 ] ] ]
   },
   {
+    "result": "m9mag",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "autolearn": false,
+    "skill_used": "fabrication",
+    "book_learn": [ [ "mag_guns", 3 ] ],
+    "difficulty": 3,
+    "time": "60 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "using": [ [ "magazine_standard", 5 ] ],
+    "components": [ [ [ "scrap", 3 ] ] ]
+  },
+  {
     "result": "m9bigmag",
     "type": "recipe",
     "category": "CC_WEAPON",
@@ -1590,6 +1687,21 @@
     "decomp_learn": 3,
     "using": [ [ "magazine_standard", 5 ] ],
     "components": [ [ [ "scrap", 2 ] ] ]
+  },
+  {
+    "result": "gatlingdrum240",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "autolearn": false,
+    "skill_used": "fabrication",
+    "book_learn": [ [ "mag_guns", 5 ] ],
+    "difficulty": 5,
+    "time": "120 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "using": [ [ "magazine_standard", 25 ] ],
+    "components": [ [ [ "steel_standard", 8, "LIST" ] ], [ [ "cartridgebrass", 2000 ] ] ]
   },
   {
     "result": "22_speedloader8",

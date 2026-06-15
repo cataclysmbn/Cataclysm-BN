@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdlib>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -125,6 +126,74 @@ static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map =
     { "DROPPER", VPFLAG_DROPPER },
     { "LADDER", VPFLAG_LADDER }
 };
+
+auto vpart_rotating_light::arc_width() const -> units::angle
+{
+    return units::from_degrees( std::max( arc, 1 ) );
+}
+
+auto vpart_rotating_light::beam_count() const -> int
+{
+    return std::max( beams, 1 );
+}
+
+auto vpart_rotating_light::beam_spacing() const -> units::angle
+{
+    return units::from_degrees( 360.0 / static_cast<double>( beam_count() ) );
+}
+
+auto vpart_rotating_light::direction_at( const units::angle base_direction,
+        const time_point turn ) const -> units::angle
+{
+    const auto period_turns = std::max( to_turns<int>( period ), 1 );
+    const auto step_magnitude = std::abs( static_cast<long long>( step ) );
+    const auto rotated_beam_step = step_magnitude * beam_count();
+    const auto state_count = step_magnitude > 0 ?
+                             static_cast<int>( 360 / std::gcd( 360LL, rotated_beam_step ) ) : 1;
+    const auto elapsed_turns = std::max( to_turns<int>( turn - calendar::turn_zero ), 0 );
+    const auto step_index = elapsed_turns / period_turns % state_count;
+    const auto rotation_degrees = phase + step * step_index;
+
+    return base_direction + units::from_degrees( rotation_degrees );
+}
+
+static auto load_rotating_light( const JsonObject &jo,
+                                 std::optional<vpart_rotating_light> &rotating_light ) -> void
+{
+    if( !jo.has_member( "rotating_light" ) ) {
+        return;
+    }
+
+    if( jo.has_null( "rotating_light" ) ) {
+        rotating_light.reset();
+        return;
+    }
+
+    if( !jo.has_object( "rotating_light" ) ) {
+        jo.throw_error( "rotating_light must be an object or null", "rotating_light" );
+    }
+
+    auto data = rotating_light.value_or( vpart_rotating_light{} );
+    auto jrot = jo.get_object( "rotating_light" );
+
+    assign( jrot, "arc", data.arc, false, 1, 360 );
+    assign( jrot, "step", data.step );
+    assign( jrot, "phase", data.phase );
+    assign( jrot, "beams", data.beams, false, 1, 16 );
+
+    if( jrot.has_int( "period" ) ) {
+        data.period = time_duration::from_turns( jrot.get_int( "period" ) );
+    } else if( jrot.has_string( "period" ) ) {
+        data.period = read_from_json_string<time_duration>( *jrot.get_raw( "period" ),
+                      time_duration::units );
+    }
+
+    if( data.period <= 0_turns ) {
+        jrot.throw_error( "period must be positive", "period" );
+    }
+
+    rotating_light = data;
+}
 
 static const std::vector<std::pair<std::string, int>> standard_terrain_mod = {{
         { "FLAT", 4 }, { "ROAD", 2 }
@@ -454,10 +523,13 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
     assign( jo, "flags", def.flags );
     assign( jo, "description", def.description );
 
+    load_rotating_light( jo, def.rotating_light );
+
     assign( jo, "comfort", def.comfort );
     assign( jo, "floor_bedding_warmth", def.floor_bedding_warmth );
     assign( jo, "bonus_fire_warmth_feet", def.bonus_fire_warmth_feet );
     assign( jo, "default_color", def.default_color );
+    assign( jo, "light_color", def.light_color );
 
     if( jo.has_member( "transform_terrain" ) ) {
         JsonObject jttd = jo.get_object( "transform_terrain" );

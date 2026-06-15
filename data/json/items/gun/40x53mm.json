@@ -18,6 +18,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 1 },
     "dispersion": 180,
     "reload": 400,
+    "loudness": -20,
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "barrel", 1 ],

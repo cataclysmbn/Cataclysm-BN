@@ -350,7 +350,7 @@ class mission
         // The id of the player that has accepted this mission.
         character_id player_id;
         // Dimension in which mission targets exist; empty = primary dimension (legacy saves)
-        std::string dimension_id_;
+        dimension_id dimension_id_;
     public:
 
         std::string name();
@@ -373,7 +373,10 @@ class mission
         int get_id() const;
         const itype_id &get_item_id() const;
         character_id get_npc_id() const;
-        const std::string &get_dimension() const;
+        auto get_dimension() const -> const dimension_id &;
+        auto set_dimension( const dimension_id &dim_id ) -> void {
+            dimension_id_ = dim_id;
+        }
         const std::vector<std::pair<int, itype_id>> &get_likely_rewards() const;
         bool has_generic_rewards() const;
         void register_kill_needed();
@@ -483,4 +486,3 @@ template<>
 struct enum_traits<mission::mission_status> {
     static constexpr mission::mission_status last = mission::mission_status::num_mission_status;
 };
-

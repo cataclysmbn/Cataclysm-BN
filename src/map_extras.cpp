@@ -416,7 +416,7 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
     // During mapgen, m may be a tinymap while vpart_position::pos() uses get_map().
     const auto local_part_pos = [&m]( const vehicle & wreckage,
     const vpart_reference & vp ) {
-        return m.abs_to_bub( wreckage.abs_part_location( vp.part() ) );
+        return abs_to_map_local( m, wreckage.abs_part_location( vp.part() ) );
     };
 
     const auto controls_at = []( vehicle * wreckage, const tripoint_mnt_veh & mount ) {
@@ -600,7 +600,7 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
     // During mapgen, m may be a tinymap while vpart_position::pos() uses get_map().
     const auto local_part_pos = [&m]( const vehicle & wreckage,
     const vpart_reference & vp ) {
-        return m.abs_to_bub( wreckage.abs_part_location( vp.part() ) );
+        return abs_to_map_local( m, wreckage.abs_part_location( vp.part() ) );
     };
 
     const auto controls_at = []( vehicle * wreckage, const tripoint_mnt_veh & mount ) {
@@ -2031,7 +2031,7 @@ static void burned_ground_parser( map &m, const tripoint_bub_ms &loc )
         vehicles.push_back( vehicle.v );
         std::set<tripoint_abs_ms> occupied = vehicle.v->get_points();
         for( const tripoint_abs_ms &t : occupied ) {
-            points.push_back( m.abs_to_bub( t ) );
+            points.push_back( abs_to_map_local( m, t ) );
         }
     }
     for( vehicle *vrem : vehicles ) {
@@ -2158,7 +2158,7 @@ static bool mx_burned_ground( map &m, const tripoint_abs_sm &abs_sub )
         vehicles.push_back( vehicle.v );
         std::set<tripoint_abs_ms> occupied = vehicle.v->get_points();
         for( const tripoint_abs_ms &t : occupied ) {
-            points.push_back( m.abs_to_bub( t ) );
+            points.push_back( abs_to_map_local( m, t ) );
         }
     }
     for( vehicle *vrem : vehicles ) {

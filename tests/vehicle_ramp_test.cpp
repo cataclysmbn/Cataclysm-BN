@@ -183,7 +183,7 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
         CAPTURE( cycles );
         for( const tripoint_abs_ms &checkpt : vpts ) {
             int partnum = 0;
-            vehicle *check_veh = here.veh_at_internal( here.abs_to_bub( checkpt ), partnum );
+            vehicle *check_veh = here.veh_at_internal( abs_to_map_local( here, checkpt ), partnum );
             CHECK( check_veh == veh_ptr );
         }
         vpts.clear();
@@ -192,7 +192,7 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
         // If the vehicle starts skidding, the effects become random and test is RUINED
         REQUIRE( !veh.skidding );
         for( const tripoint_abs_ms &pos : veh.get_points() ) {
-            REQUIRE( here.ter( here.abs_to_bub( pos ) ) );
+            REQUIRE( here.ter( abs_to_map_local( here, pos ) ) );
         }
         for( const vpart_reference &vp : veh.get_all_parts() ) {
             if( vp.info().location != "structure" ) {

@@ -28,7 +28,8 @@
       { "item": "hacksaw", "prob": 5 },
       { "item": "gloves_rubber", "prob": 25 },
       { "item": "bag_plastic", "prob": 10 },
-      { "item": "bag_zipper", "prob": 10 },
+      { "item": "bag_zipper_small", "prob": 10 },
+      { "item": "bag_zipper", "prob": 5 },
       { "item": "string_6", "prob": 5 }
     ]
   },
@@ -47,7 +48,8 @@
       { "item": "gloves_medical", "prob": 20 },
       { "item": "rag", "prob": 15 },
       { "item": "bag_plastic", "prob": 10 },
-      { "item": "bag_zipper", "prob": 10 },
+      { "item": "bag_zipper_small", "prob": 10 },
+      { "item": "bag_zipper", "prob": 5 },
       { "item": "jerky", "prob": 40 },
       { "item": "rope_6", "prob": 15 }
     ]

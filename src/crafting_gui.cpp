@@ -485,10 +485,17 @@ static std::vector<std::string> recipe_info(
         const auto assist_total_moves = std::max( 1, recp.batch_time( batch_size, 1.0f, assistants ) );
         const auto assist_mult = static_cast<float>( base_total_moves ) /
                                  static_cast<float>( assist_total_moves );
-        const auto total_mult = bench_mult * assist_mult * tools_mult * light_mult * morale_mult *
-                                mutation_mult * game_opt_mult;
+        auto total_mult_without_enchant = bench_mult * assist_mult * tools_mult * light_mult * morale_mult *
+                                          mutation_mult * game_opt_mult;
 
-        const std::array<std::pair<std::string, float>, 8> multipliers = { {
+        const auto enchant_mult_add = crafter.bonus_from_enchantments( total_mult_without_enchant,
+                                      enchant_vals::mod::CRAFTING_SPEED );
+
+        const auto total_mult = total_mult_without_enchant + enchant_mult_add;
+
+        const auto enchant_mult = total_mult / total_mult_without_enchant;
+
+        const std::array<std::pair<std::string, float>, 9> multipliers = { {
                 { _( "Total" ), total_mult },
                 { _( "Workbench" ), bench_mult },
                 { _( "Assistants" ), assist_mult },
@@ -496,6 +503,7 @@ static std::vector<std::string> recipe_info(
                 { _( "Light" ), light_mult },
                 { _( "Morale" ), morale_mult },
                 { _( "Traits" ), mutation_mult },
+                { _( "Misc" ), enchant_mult },
                 { _( "Game option" ), game_opt_mult }
             }
         };

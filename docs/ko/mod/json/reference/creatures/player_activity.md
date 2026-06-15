@@ -15,6 +15,27 @@
 
 이러한 활동은 복잡한 로직을 다루기 때문에 JSON이 아닌 C++ 코드로 구현되어 있습니다.
 
+## Lua 기반 활동
+
+Lua 스크립트는 `game.activity_functions[id]`의 Lua 콜백이 붙은 활동을 시작할 수 있습니다:
+
+```lua
+game.activity_functions["MY_ACTIVITY_FINISH"] = function(params)
+  -- params.user, params.activity, params.name, params.pos, params.data
+end
+
+who:assign_lua_activity({
+  type = ActivityTypeId.new("ACT_WASH_SELF"),
+  duration = TimeDuration.from_minutes(5),
+  on_finish = "MY_ACTIVITY_FINISH",
+  on_turn = "MY_ACTIVITY_TURN", -- 선택 사항
+  pos = target_pos,
+  data = { mode = "example" },
+})
+```
+
+저장 가능한 Lua 상태는 `data`에 넣으세요. `pos`는 시작할 때는 버블 좌표를 받고, 콜백에는 절대 맵 칸 좌표로 전달됩니다.
+
 ## JSON에서 정의된 활동
 
 간단한 활동의 경우, JSON에서 활동을 정의할 수 있습니다. 이러한 활동은 일반적으로 더 간단한 타이머 기반 작업이거나 특수한 동작 없이 완료되어야 하는 작업입니다.

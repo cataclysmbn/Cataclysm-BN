@@ -4,6 +4,7 @@
 #include <iterator>
 #include <list>
 #include <memory>
+#include <optional>
 #include <set>
 #include <tuple>
 #include <unordered_set>
@@ -50,28 +51,6 @@ static char key_bound_to( const input_context &ctxt, const item_action_id &act )
     auto keys = ctxt.keys_bound_to( act );
     return keys.empty() ? '\0' : keys[0];
 }
-
-class actmenu_cb : public uilist_callback
-{
-    private:
-        const action_map am;
-    public:
-        actmenu_cb( const action_map &acm ) : am( acm ) { }
-        ~actmenu_cb() override = default;
-
-        bool key( const input_context &ctxt, const input_event &event, int /*idx*/,
-                  uilist * /*menu*/ ) override {
-            const std::string &action = ctxt.input_to_action( event );
-            // Don't write a message if unknown command was sent
-            // Only when an inexistent tool was selected
-            const auto itemless_action = am.find( action );
-            if( itemless_action != am.end() ) {
-                popup( _( "You do not have an item that can perform this action." ) );
-                return true;
-            }
-            return false;
-        }
-};
 
 item_action_generator::item_action_generator() = default;
 
@@ -255,12 +234,15 @@ void game::item_action_menu()
     kmenu.text = _( "Execute which action?" );
     kmenu.input_category = "ITEM_ACTIONS";
     input_context ctxt( "ITEM_ACTIONS" );
+    // Register every action in both contexts so rows show their bound hotkeys and
+    // the in-menu keybinding overlay can still list/rebind them. A pressed key
+    // resolves to its registered action rather than the row hotkey, so the
+    // post-query loop dispatches those by action id via UILIST_ADDITIONAL.
     for( const auto &id : item_actions ) {
         ctxt.register_action( id.first, id.second.name );
         kmenu.additional_actions.emplace_back( id.first, id.second.name );
     }
-    actmenu_cb callback( item_actions );
-    kmenu.callback = &callback;
+    kmenu.allow_additional = true;
     int num = 0;
 
     const auto assigned_action = [&iactions]( const item_action_id & action ) {
@@ -326,15 +308,27 @@ void game::item_action_menu()
         num++;
     }
 
-    kmenu.query();
-    if( kmenu.ret < 0 || kmenu.ret >= static_cast<int>( iactions.size() ) ) {
+    std::optional<item_action_id> action;
+    do {
+        kmenu.query();
+        if( kmenu.ret >= 0 && kmenu.ret < static_cast<int>( iactions.size() ) ) {
+            action = std::get<0>( menu_items[kmenu.ret] );
+        } else if( kmenu.ret == UILIST_ADDITIONAL ) {
+            if( assigned_action( kmenu.ret_act ) ) {
+                action = kmenu.ret_act;
+            } else {
+                popup( _( "You do not have an item that can perform this action." ) );
+            }
+        }
+    } while( kmenu.ret == UILIST_ADDITIONAL && !action );
+
+    if( !action ) {
         return;
     }
 
-    const item_action_id action = std::get<0>( menu_items[kmenu.ret] );
-    item *it = iactions[action];
+    item *it = iactions[*action];
 
-    u.invoke_item( it, action );
+    u.invoke_item( it, *action );
 
     u.inv_restack( );
     u.inv_unsort();

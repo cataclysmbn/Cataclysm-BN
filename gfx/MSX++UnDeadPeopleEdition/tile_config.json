@@ -31471,7 +31471,7 @@
           "multitile": true,
           "additional_tiles": [ { "id": "broken", "fg": 17524 } ]
         },
-        { "id": "vp_laser_cannon", "fg": 17525 },
+        { "id": "vp_laser_cannon", "fg": 17525, "rotates": true },
         { "id": "vp_laser_rifle", "fg": 17526, "rotates": true },
         { "id": "vp_launcher_simple", "fg": 17527, "rotates": true },
         {

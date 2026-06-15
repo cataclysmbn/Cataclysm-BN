@@ -26,6 +26,8 @@ class translation;
 class activity_ptr;
 class npc;
 
+auto activity_uses_calendar_duration_progress( const activity_id &id ) -> bool;
+
 class player_activity
 {
     private:
@@ -116,7 +118,7 @@ class player_activity
             return moves_left <= 0;
         }
         //Wrapper func to return assistants array properly
-        inline std::vector<npc *> &assistants();
+        std::vector<npc *> &assistants();
         /*
         * Members to work with activity_actor.
         */
@@ -232,4 +234,3 @@ class player_activity
     private:
         std::vector<safe_reference<item>> tools_;
 };
-

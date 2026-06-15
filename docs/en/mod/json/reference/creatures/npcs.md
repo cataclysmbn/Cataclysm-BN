@@ -17,6 +17,29 @@ Note that it is perfectly fine to have a response that switches the topic back t
 NPC missions are controlled by a separate but related JSON structure and are documented in
 [the missions docs](./missions_json.md).
 
+## NPC classes
+
+NPC classes are defined as `"type": "npc_class"` entries (see `data/json/npcs/classes.json`).
+
+### "lua_ai"
+
+(string, optional)
+
+If set, runs a Lua function from `game.npc_ai_functions` each NPC turn. The function
+is called with `(npc)` and should return a boolean: `true` means Lua handled the turn and
+the default C++ AI is skipped, `false` or `nil` falls back to the default AI.
+
+```json
+"lua_ai": "my_npc_ai"
+```
+
+```lua
+game.npc_ai_functions["my_npc_ai"] = function(npc)
+  npc:set_moves(0)
+  return true
+end
+```
+
 Two topics are special:
 
 - `TALK_DONE` ends the dialogue immediately.

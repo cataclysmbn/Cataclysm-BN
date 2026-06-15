@@ -172,6 +172,7 @@ enum m_flag : int {
     MF_CANPLAY,             // This monster can be played with if it's a pet.
     MF_PET_MOUNTABLE,       // This monster can be mounted and ridden when tamed.
     MF_PET_HARNESSABLE,     // This monster can be harnessed when tamed.
+    MF_CAN_FETCH,           // This monster can fetch items for its tamer when tamed.
     MF_DOGFOOD,             // This monster will respond to the `dog whistle` item.
     MF_MILKABLE,            // This monster is milkable.
     MF_SHEARABLE,           // This monster is shearable.
@@ -428,6 +429,8 @@ struct mtype {
 
         // Do we indiscriminately attack characters, or should we wait until one annoys us?
         bool aggro_character = true;
+        std::optional<std::string> lua_attitude;
+        std::optional<std::string> lua_ai;
 
         mtype();
         /**

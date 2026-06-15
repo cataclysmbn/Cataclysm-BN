@@ -840,7 +840,8 @@
       [ "gloves_medical", 20 ],
       [ "rag", 15 ],
       [ "bag_plastic", 15 ],
-      [ "bag_zipper", 5 ],
+      [ "bag_zipper_small", 5 ],
+      [ "bag_zipper", 2 ],
       [ "jerky", 40 ],
       [ "rope_6", 15 ]
     ]

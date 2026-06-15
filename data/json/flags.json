@@ -18,6 +18,12 @@
     "info": "This gear <info>allows flight</info>."
   },
   {
+    "id": "BODY_CLEANSER",
+    "type": "json_flag",
+    "context": [ "AMMO", "COMESTIBLE", "GENERIC", "TOOL" ],
+    "info": "Safe to use as a body cleanser while bathing."
+  },
+  {
     "id": "ALLOWS_TAIL_SNAKE",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],

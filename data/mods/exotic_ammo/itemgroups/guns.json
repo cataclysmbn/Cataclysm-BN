@@ -60,6 +60,78 @@
   },
   {
     "type": "item_group",
+    "id": "profession_carry_bonus",
+    "subtype": "distribution",
+    "ammo": 100,
+    "magazine": 100,
+    "entries": [
+      {
+        "collection": [
+          { "item": "m1911a1_38super", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "m1911mag_10rd_38super", "m1911mag_10rd_38super" ] }
+        ],
+        "prob": 15
+      },
+      {
+        "collection": [
+          { "item": "sw_500", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "500_speedloader5", "500_speedloader5" ] }
+        ],
+        "prob": 25
+      },
+      {
+        "collection": [
+          { "item": "fn57", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "fn57mag", "fn57mag" ] }
+        ],
+        "prob": 10
+      },
+      {
+        "collection": [
+          { "item": "l_enforcer_45", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "460_speedloader6", "460_speedloader6" ] }
+        ],
+        "prob": 5
+      },
+      {
+        "collection": [
+          { "item": "l_lookout_9mm", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "9mm_speedloader7", "9mm_speedloader7" ] }
+        ],
+        "prob": 4
+      },
+      {
+        "collection": [
+          { "item": "l_sp_45", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "lw12mag", "lw12mag" ] }
+        ],
+        "prob": 7
+      },
+      {
+        "collection": [
+          { "item": "l_mp_45", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "lw12mag", "lw12mag" ] }
+        ],
+        "prob": 5
+      },
+      {
+        "collection": [
+          { "item": "l_sp_9mm", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "lw21mag", "lw21mag" ] }
+        ],
+        "prob": 12
+      },
+      {
+        "collection": [
+          { "item": "l_mp_9mm", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "lw21mag", "lw21mag" ] }
+        ],
+        "prob": 5
+      }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "carried_guns_pistol_common",
     "//": "Pistols commonly owned by citizens and carried by them. If a gun has mags, it has no loose ammo. If it has no mags, it has loose ammo.",
     "items": [

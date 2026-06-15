@@ -87,7 +87,7 @@ auto scent_map::raw_scent_set( int x, int y, int z, int value ) -> void
 void scent_map::reset()
 {
     // Clear scent from all loaded submaps across every dimension.
-    MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer & buf ) {
+    MAPBUFFER_REGISTRY.for_each( []( const dimension_id &, mapbuffer & buf ) {
         std::ranges::for_each( buf, []( auto & entry ) {
             auto &[raw_pos, sm_ptr] = entry;
             if( sm_ptr && !sm_ptr->is_uniform ) {
@@ -105,9 +105,9 @@ void scent_map::decay()
     ZoneScopedN( "scent_map::decay" );
     // Decay scent on tracked submaps across every dimension within scent z-range.
     // Called during precipitation, so rain washes away scent globally.
-    // Only submaps registered in scent_submaps_ are visited — no mapbuffer scan needed.
+    // Only submaps registered in scent_submaps_ are visited; no mapbuffer scan needed.
     const int levz = gm.get_levz();
-    MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim_id, mapbuffer & buf ) {
+    MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim_id, mapbuffer & buf ) {
         auto dim_it = scent_submaps_.find( dim_id );
         if( dim_it == scent_submaps_.end() ) {
             return;
@@ -147,8 +147,13 @@ void scent_map::draw( const catacurses::window &win, const int div,
 
 int scent_map::get( const tripoint_bub_ms &p ) const
 {
-    if( inbounds( p ) && raw_scent_at( p.x(), p.y(), p.z() ) > 0 ) {
-        return get_unsafe( p );
+    if( !inbounds( p ) ) {
+        return 0;
+    }
+
+    const auto raw_scent = raw_scent_at( p.x(), p.y(), p.z() );
+    if( raw_scent > 0 ) {
+        return raw_scent - std::abs( gm.get_levz() - p.z() );
     }
     return 0;
 }
@@ -195,7 +200,8 @@ bool scent_map::inbounds( const tripoint_bub_ms &p ) const
         return false;
     }
     // Check bound dimension's mapbuffer — any loaded submap is accessible.
-    const auto abs_sm = m_.bub_to_abs( project_to<coords::sm>( p ) );
+    const auto local_sm = project_to<coords::sm>( p );
+    const auto abs_sm = map_local_to_abs( m_, local_sm );
     return MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).lookup_submap_in_memory(
                abs_sm ) != nullptr;
 }

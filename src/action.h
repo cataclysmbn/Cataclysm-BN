@@ -361,6 +361,10 @@ enum action_id : int {
     NUM_ACTIONS
     /**@}*/
 };
+template<>
+struct enum_traits<action_id> {
+    static constexpr action_id last = action_id::NUM_ACTIONS;
+};
 
 /**
  * Get list of keys bound to an action ID.

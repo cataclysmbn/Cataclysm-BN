@@ -366,7 +366,7 @@
     "bashing": 12,
     "to_hit": 1,
     "reload_noise_volume": 3,
-    "loudness": 6,
+    "loudness": 45,
     "ranged_damage": { "damage_type": "stab", "amount": 29 },
     "range": 12,
     "dispersion": 950,

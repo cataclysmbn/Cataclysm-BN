@@ -14,6 +14,7 @@
     "material": [ "plastic", "aluminum" ],
     "symbol": ",",
     "color": "light_green",
+    "light_color": "#b8ffc0",
     "use_action": { "target": "atomic_lamp_off", "msg": "You close the lamp's cover.", "menu_text": "Close cover", "type": "transform" },
     "flags": [ "LIGHT_20", "LEAK_DAM", "RADIOACTIVE", "DURABLE_MELEE", "ALLOWS_REMOTE_USE" ]
   },
@@ -32,6 +33,7 @@
     "material": [ "plastic", "aluminum" ],
     "symbol": ",",
     "color": "light_green",
+    "light_color": "#b8ffc0",
     "use_action": {
       "target": "atomic_lamp",
       "active": true,
@@ -696,6 +698,7 @@
     "name": { "str": "torch (lit)", "str_pl": "torches (lit)" },
     "description": "This is a large stick, wrapped in rags that are soaked with a flammable material.  It is burning, producing plenty of light.",
     "color": "red",
+    "light_color": "#ffb05f",
     "turns_per_charge": 20,
     "revert_to": "torch_done",
     "thrown_damage": [ { "damage_type": "heat", "amount": 4 } ],

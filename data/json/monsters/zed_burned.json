@@ -31,19 +31,7 @@
     "harvest": "zombie",
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "upgrades": { "half_life": 14, "into_group": "GROUP_CHILD_ZOMBIE_UPGRADE" },
-    "flags": [
-      "SEES",
-      "HEARS",
-      "STUMBLES",
-      "POISON",
-      "GRABS",
-      "NO_BREATHE",
-      "REVIVES",
-      "REVIVES_HEALTHY",
-      "NO_NECRO",
-      "GUILT",
-      "CLIMBS"
-    ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "GRABS", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "CLIMBS" ]
   },
   {
     "id": "mon_zombie_fiend",

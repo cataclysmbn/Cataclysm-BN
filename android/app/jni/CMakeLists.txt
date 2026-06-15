@@ -9,6 +9,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 get_filename_component(CATA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
 set(CATA_SRC_DIR "${CATA_SOURCE_DIR}/src")
 
+file(GLOB CATA_ANDROID_SPV_SHADERS CONFIGURE_DEPENDS "${CATA_SOURCE_DIR}/data/shaders/*.spv")
+if(CATA_ANDROID_SPV_SHADERS STREQUAL "")
+    message(FATAL_ERROR
+        "Android SDL_GPU compute requires compiled SPIR-V shaders in data/shaders. "
+        "Run Gradle's compileAndroidShaders task before packaging Android assets.")
+endif()
+
 if(NOT EXISTS "${CATA_SRC_DIR}/version.h")
     string(TIMESTAMP CATA_BUILD_TIMESTAMP "%Y-%m-%d-%H%M")
     file(WRITE "${CATA_SRC_DIR}/version.h" "// NOLINT(cata-header-guard)\n#define VERSION \"unknown\"\n#define BUILD_TIMESTAMP \"${CATA_BUILD_TIMESTAMP}\"\n")
@@ -81,6 +88,7 @@ target_include_directories(main PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/libhidapi")
 
 target_compile_definitions(main PRIVATE
+    CATA_SDL=1
     TILES=1
     DYNAMIC_ATLAS=1
     SDL_SOUND=1

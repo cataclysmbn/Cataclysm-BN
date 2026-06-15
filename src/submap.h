@@ -145,11 +145,13 @@ class submap : maptile_soa<SEEX, SEEY>
 
         void set_ter( const point_sm_ms &p, ter_id terr ) {
             is_uniform = false;
+            emitter_cache = std::nullopt;
             ter[p.x()][p.y()] = terr;
         }
 
         void set_all_ter( const ter_id &terr ) {
             std::fill_n( &ter[0][0], elements, terr );
+            emitter_cache = std::nullopt;
         }
 
         int get_radiation( const point_sm_ms &p ) const {
@@ -291,10 +293,10 @@ class submap : maptile_soa<SEEX, SEEY>
         // sparse ones, and multiple masks can be ANDed cheaply to combine conditions.
         // Deferred because it is a broader refactor touching all cache consumers.
 
-        /** Positions of EMITTER furniture on this submap.
+        /** Positions of terrain/furniture with emitted light on this submap.
          *  std::nullopt = dirty (needs rebuild by scanning all tiles).
          *  Empty vector = no emitters present.
-         *  Rebuilt lazily; invalidated by set_furn / set_all_furn. */
+         *  Rebuilt lazily; invalidated by set_ter/set_all_ter/set_furn/set_all_furn. */
         std::optional<std::vector<point_sm_ms>> emitter_cache;
         // Serialized as "turn_last_touched" (absolute turn number).
         // Initialized to calendar::turn_zero; legacy saves that predate

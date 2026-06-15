@@ -19,7 +19,8 @@
     "range": 20,
     "damage": { "damage_type": "bullet", "amount": 13, "armor_penetration": 6 },
     "recoil": 2000,
-    "loudness": 128,
+    "loudness": 144,
+    "speed": 200,
     "effects": [ "COOKOFF", "SHOT", "MUZZLE_SMOKE", "BLACKPOWDER" ]
   },
   {

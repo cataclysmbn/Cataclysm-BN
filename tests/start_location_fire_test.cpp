@@ -60,7 +60,7 @@ TEST_CASE( "start_location_burn_places_fire_on_interior_flammable_tiles",
 
     // bad_day passes the player's OMT to burn().
     const tripoint_abs_omt omtstart =
-        project_to<coords::omt>( here.bub_to_abs( get_avatar().bub_pos() ) );
+        project_to<coords::omt>( get_avatar().abs_pos() );
 
     const start_location sl;
     sl.burn( omtstart, /*count=*/3, /*rad=*/3 );

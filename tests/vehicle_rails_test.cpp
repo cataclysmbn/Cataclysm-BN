@@ -91,7 +91,8 @@ static void clear_game( const ter_id &terrain )
     avatar &u = get_avatar();
     // Move player somewhere safe
     REQUIRE_FALSE( u.in_vehicle );
-    u.setpos( tripoint_bub_ms::zero() );
+    u.setpos( tripoint_bub_ms( g_half_mapsize_x + SEEX - 1,
+                               g_half_mapsize_y + SEEY - 1, -2 ) );
     // Blind the player to avoid needless drawing-related overhead
     u.add_effect( effect_blind, 365_days, bodypart_str_id::NULL_ID() );
 
@@ -232,7 +233,7 @@ static void test_rail_movement( const test_case &t,
             REQUIRE( !veh.skidding );
         }
         for( const tripoint_abs_ms &pos : veh.get_points() ) {
-            ter_id ter_here = here.ter( here.abs_to_bub( pos ) );
+            ter_id ter_here = here.ter( abs_to_map_local( here, pos ) );
             if( !ter_here ) {
                 // 'REQUIRE' here is behind an if check to reduce impact on Catch statistics
                 REQUIRE( ter_here );

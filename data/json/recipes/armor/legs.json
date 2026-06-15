@@ -408,7 +408,7 @@
     "tools": [ [ [ "soldering_standard", 15, "LIST" ], [ "surface_heat", 15, "LIST" ] ] ],
     "components": [
       [ [ "rag", 15 ] ],
-      [ [ "bag_plastic", 4 ], [ "bag_zipper", 4 ] ],
+      [ [ "bag_plastic", 4 ], [ "bag_zipper", 4 ], [ "bag_zipper_small", 16 ] ],
       [
         [ "legrig", 1 ],
         [ "tool_belt", 1 ],

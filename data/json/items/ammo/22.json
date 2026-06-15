@@ -8,6 +8,8 @@
     "//": "Hollowpoint damage increase of 25%",
     "damage": { "damage_type": "bullet", "amount": 20, "armor_penetration": 0 },
     "relative": { "range": 3 },
+    "loudness": 148,
+    "speed": 500,
     "proportional": { "recoil": 1.2 }
   },
   {
@@ -31,6 +33,8 @@
     "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 9 },
     "dispersion": 60,
     "recoil": 150,
+    "loudness": 142,
+    "speed": 370,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -46,6 +50,8 @@
     "damage": { "damage_type": "bullet", "amount": 2, "armor_penetration": 1 },
     "shot": { "count": 10, "half_angle": 15 },
     "proportional": { "recoil": 0.334 },
+    "loudness": 140,
+    "speed": 300,
     "extend": { "effects": [ "SHOT", "NOGIB" ] }
   },
   {

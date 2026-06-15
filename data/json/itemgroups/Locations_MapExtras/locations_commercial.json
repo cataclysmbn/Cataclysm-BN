@@ -1046,7 +1046,8 @@
       { "item": "box_small", "prob": 30 },
       { "item": "rag", "prob": 20 },
       { "item": "bag_plastic", "prob": 15 },
-      { "item": "bag_zipper", "prob": 5 },
+      { "item": "bag_zipper_small", "prob": 5 },
+      { "item": "bag_zipper", "prob": 2 },
       { "item": "news_regional", "prob": 15 },
       { "item": "mag_news", "prob": 15 }
     ]
@@ -1725,7 +1726,8 @@
       [ "backpack", 5 ],
       [ "plastic_shopping_bag", 10 ],
       [ "bag_plastic", 15 ],
-      [ "bag_zipper", 5 ],
+      [ "bag_zipper_small", 5 ],
+      [ "bag_zipper", 2 ],
       [ "basket_laundry", 30 ]
     ]
   },
@@ -1809,7 +1811,8 @@
       [ "gloves_rubber", 25 ],
       [ "rag_bloody", 10 ],
       [ "bag_plastic", 10 ],
-      [ "bag_zipper", 10 ],
+      [ "bag_zipper_small", 10 ],
+      [ "bag_zipper", 5 ],
       [ "string_6", 5 ]
     ]
   },
@@ -1831,7 +1834,8 @@
       [ "rag", 15 ],
       [ "rag_bloody", 2 ],
       [ "bag_plastic", 10 ],
-      [ "bag_zipper", 10 ],
+      [ "bag_zipper_small", 10 ],
+      [ "bag_zipper", 5 ],
       [ "jerky", 40 ]
     ]
   },

@@ -81,7 +81,8 @@
               { "group": "infantry_medical_gear", "prob": 5, "count": [ 1, 2 ] },
               { "group": "supplies_metal", "prob": 150, "count": [ 2, 6 ] },
               { "group": "supplies_mechanics_milspec", "prob": 50, "count": [ 1, 3 ] },
-              { "group": "military_helicopter_parts", "prob": 75 }
+              { "group": "military_helicopter_parts", "prob": 75 },
+              { "group": "helipad_heavy_munitions", "prob": 75, "count": [ 1, 3 ] }
             ]
           },
           "chance": 75
@@ -107,7 +108,8 @@
               { "group": "supplies_electronics", "prob": 25 },
               { "group": "supplies_metal", "prob": 25 },
               { "group": "supplies_mechanics_milspec", "prob": 100 },
-              { "group": "hardware", "prob": 50 }
+              { "group": "hardware", "prob": 50 },
+              { "group": "helipad_heavy_munitions", "prob": 25, "count": [ 1, 2 ] }
             ]
           },
           "chance": 50,

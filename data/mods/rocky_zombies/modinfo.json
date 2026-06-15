@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "rocky_zombies",
+    "name": "Rocky Zombies",
+    "authors": [ "RoyalFox" ],
+    "maintainers": [ "RoyalFox" ],
+    "description": "zombies now throw rocks at you. they really hate kites for some reason",
+    "category": "content",
+    "dependencies": [ "bn", "lethal_zeds" ]
+  }
+]

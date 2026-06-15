@@ -18,6 +18,7 @@ void clear_items( int zlevel );
 void clear_map();
 void clear_overmap();
 void put_player_underground();
+auto move_player_out_of_the_way() -> void;
 monster &spawn_test_monster( const std::string &monster_type, const tripoint_bub_ms &start );
 void clear_vehicles();
 void build_test_map( const ter_id &terrain );

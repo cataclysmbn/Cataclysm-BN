@@ -443,55 +443,72 @@ auto bind_coord_factories( luna::userlib &lib ) -> void
     } );
 }
 
-auto bind_named_point_constructor( sol::state_view lua, const coord_factory_spec &spec ) -> void
+template<typename Coord>
+auto bind_named_point_constructor( sol::state_view lua, const std::string_view name ) -> void
 {
-    auto factory = lua.create_table();
-    factory["new"] = sol::overload(
-    [spec]() {
-        return point_factory( spec, point_zero );
-    },
-    [spec]( const point & raw ) {
-        return point_factory( spec, raw );
-    },
-    [spec]( const int x, const int y ) {
-        return point_factory( spec, point( x, y ) );
-    } );
-    lua[coord_type_name( false, spec.origin, spec.scale )] = factory;
+    auto lib = luna::begin_lib( lua, name );
+    luna::set_fx( lib, "new", sol::overload(
+                      []() -> Coord { return Coord::zero(); },
+                      []( const point & raw ) -> Coord { return Coord( raw ); },
+                      []( const int x, const int y ) -> Coord { return Coord( x, y ); }
+                  ) );
+    luna::finalize_lib( lib );
 }
 
-auto bind_named_tripoint_constructor( sol::state_view lua, const coord_factory_spec &spec ) -> void
+template<typename Coord>
+auto bind_named_tripoint_constructor( sol::state_view lua, const std::string_view name ) -> void
 {
-    auto factory = lua.create_table();
-    factory["new"] = sol::overload(
-    [spec]() {
-        return tripoint_factory( spec, tripoint_zero );
-    },
-    [spec]( const tripoint & raw ) {
-        return tripoint_factory( spec, raw );
-    },
-    [spec]( const point & xy, const int z ) {
-        return tripoint_factory( spec, tripoint( xy, z ) );
-    },
-    [spec]( const lua_point_coord & xy, const int z ) {
-        if( xy.origin != spec.origin || xy.scale != spec.scale ) {
-            throw std::runtime_error( string_format( "Expected %s for %s constructor",
-                                      coord_type_name( false, spec.origin, spec.scale ),
-                                      coord_type_name( true, spec.origin, spec.scale ) ) );
-        }
-        return tripoint_factory( spec, tripoint( xy.raw, z ) );
-    },
-    [spec]( const int x, const int y, const int z ) {
-        return tripoint_factory( spec, tripoint( x, y, z ) );
-    } );
-    lua[coord_type_name( true, spec.origin, spec.scale )] = factory;
+    using point_coord = coords::coord_point<point, Coord::origin_tag, Coord::scale_tag>;
+    auto lib = luna::begin_lib( lua, name );
+    luna::set_fx( lib, "new", sol::overload(
+                      []() -> Coord { return Coord::zero(); },
+                      []( const tripoint & raw ) -> Coord { return Coord( raw ); },
+                      []( const point & xy, const int z ) -> Coord { return Coord( tripoint( xy, z ) ); },
+                      []( const point_coord & xy, const int z ) -> Coord { return Coord( xy, z ); },
+                      []( const int x, const int y, const int z ) -> Coord { return Coord( x, y, z ); }
+                  ) );
+    luna::finalize_lib( lib );
 }
 
 auto bind_named_coord_constructors( sol::state_view lua ) -> void
 {
-    std::ranges::for_each( coord_factory_specs(), [lua]( const coord_factory_spec & spec ) {
-        bind_named_point_constructor( lua, spec );
-        bind_named_tripoint_constructor( lua, spec );
-    } );
+#define BIND_NAMED_COORD_CONSTRUCTORS( point_type, tripoint_type, point_name, tripoint_name ) \
+    bind_named_point_constructor<point_type>( lua, point_name ); \
+    bind_named_tripoint_constructor<tripoint_type>( lua, tripoint_name )
+
+    BIND_NAMED_COORD_CONSTRUCTORS( point_rel_ms, tripoint_rel_ms, "PointRelMs", "TripointRelMs" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_abs_ms, tripoint_abs_ms, "PointAbsMs", "TripointAbsMs" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_bub_ms, tripoint_bub_ms, "PointBubMs", "TripointBubMs" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_sm_ms, tripoint_sm_ms, "PointSmMs", "TripointSmMs" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_omt_ms, tripoint_omt_ms, "PointOmtMs", "TripointOmtMs" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_mmr_ms, tripoint_mmr_ms, "PointMmrMs", "TripointMmrMs" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_seg_ms, tripoint_seg_ms, "PointSegMs", "TripointSegMs" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_om_ms, tripoint_om_ms, "PointOmMs", "TripointOmMs" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_rel_veh, tripoint_rel_veh, "PointRelVeh", "TripointRelVeh" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_mnt_veh, tripoint_mnt_veh, "PointMntVeh", "TripointMntVeh" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_rel_sm, tripoint_rel_sm, "PointRelSm", "TripointRelSm" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_abs_sm, tripoint_abs_sm, "PointAbsSm", "TripointAbsSm" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_bub_sm, tripoint_bub_sm, "PointBubSm", "TripointBubSm" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_omt_sm, tripoint_omt_sm, "PointOmtSm", "TripointOmtSm" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_mmr_sm, tripoint_mmr_sm, "PointMmrSm", "TripointMmrSm" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_seg_sm, tripoint_seg_sm, "PointSegSm", "TripointSegSm" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_om_sm, tripoint_om_sm, "PointOmSm", "TripointOmSm" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_rel_omt, tripoint_rel_omt, "PointRelOmt", "TripointRelOmt" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_abs_omt, tripoint_abs_omt, "PointAbsOmt", "TripointAbsOmt" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_mmr_omt, tripoint_mmr_omt, "PointMmrOmt", "TripointMmrOmt" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_seg_omt, tripoint_seg_omt, "PointSegOmt", "TripointSegOmt" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_om_omt, tripoint_om_omt, "PointOmOmt", "TripointOmOmt" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_rel_mmr, tripoint_rel_mmr, "PointRelMmr", "TripointRelMmr" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_abs_mmr, tripoint_abs_mmr, "PointAbsMmr", "TripointAbsMmr" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_seg_mmr, tripoint_seg_mmr, "PointSegMmr", "TripointSegMmr" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_om_mmr, tripoint_om_mmr, "PointOmMmr", "TripointOmMmr" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_rel_seg, tripoint_rel_seg, "PointRelSeg", "TripointRelSeg" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_abs_seg, tripoint_abs_seg, "PointAbsSeg", "TripointAbsSeg" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_om_seg, tripoint_om_seg, "PointOmSeg", "TripointOmSeg" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_rel_om, tripoint_rel_om, "PointRelOm", "TripointRelOm" );
+    BIND_NAMED_COORD_CONSTRUCTORS( point_abs_om, tripoint_abs_om, "PointAbsOm", "TripointAbsOm" );
+
+#undef BIND_NAMED_COORD_CONSTRUCTORS
 }
 
 template<typename Range, typename Maker>

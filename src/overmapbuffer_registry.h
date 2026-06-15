@@ -3,6 +3,8 @@
 #include <functional>
 #include <string>
 
+#include "type_id.h"
+
 class overmapbuffer;
 
 /**
@@ -15,23 +17,23 @@ class overmapbuffer;
  */
 
 /** Return (or create) the overmapbuffer for the given dimension. */
-overmapbuffer &get_overmapbuffer( const std::string &dim_id );
+auto get_overmapbuffer( const dimension_id &dim_id ) -> overmapbuffer &;
 
 /** Return true if a registered overmapbuffer exists for the given dimension. */
-bool has_any_overmapbuffer( const std::string &dim_id );
+auto has_any_overmapbuffer( const dimension_id &dim_id ) -> bool;
 
 /** Remove and destroy the overmapbuffer for the given dimension. */
-void unload_overmapbuffer_dimension( const std::string &dim_id );
+auto unload_overmapbuffer_dimension( const dimension_id &dim_id ) -> void;
 
 /** Invoke @p fn for every registered dimension. */
 void for_each_overmapbuffer(
-    const std::function<void( const std::string &, overmapbuffer & )> &fn );
+    const std::function<void( const dimension_id &, overmapbuffer & )> &fn );
 
 /** Save every registered overmapbuffer to disk. */
 auto save_all_overmapbuffers() -> void;
 
 /** Return the primary dimension's overmapbuffer. */
-overmapbuffer &get_primary_overmapbuffer();
+auto get_primary_overmapbuffer() -> overmapbuffer &;
 
 /**
  * The dimension ID of the dimension the player is currently in.
@@ -44,7 +46,7 @@ overmapbuffer &get_primary_overmapbuffer();
  * directly inside worker lambdas; never call get_active_overmapbuffer() from a
  * background thread.
  */
-extern std::string g_active_dimension_id;
+extern dimension_id g_active_dimension_id;
 
 /**
  * Return the overmapbuffer for the player's current dimension.
@@ -52,11 +54,10 @@ extern std::string g_active_dimension_id;
  *
  * Do NOT call this from background threads; see g_active_dimension_id comment above.
  */
-overmapbuffer &get_active_overmapbuffer();
+auto get_active_overmapbuffer() -> overmapbuffer &;
 
 // Active-dimension macro — resolves to the currently active dimension's overmapbuffer.
 // *** RENDERING / UI ONLY *** — must NOT be used for gameplay logic.
 // Gameplay code should use get_overmapbuffer(dim_id) with an explicit dimension.
 // NOLINTNEXTLINE(cata-text-style)
 #define ACTIVE_OVERMAP_BUFFER ( get_active_overmapbuffer() )
-

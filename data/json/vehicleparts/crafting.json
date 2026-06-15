@@ -485,6 +485,34 @@
   },
   {
     "type": "vehicle_part",
+    "id": "vehicle_shower",
+    "name": { "str": "vehicle shower" },
+    "symbol": "u",
+    "looks_like": "f_shower",
+    "color": "light_gray",
+    "broken_symbol": "-",
+    "broken_color": "light_gray",
+    "damage_modifier": 10,
+    "description": "A compact shower connected to the vehicle's water tanks.",
+    "durability": 45,
+    "folded_volume": "2 L",
+    "item": "vehicle_shower",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "20 s",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 1 ] ]
+      }
+    },
+    "flags": [ "FAUCET", "SHOWER", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "count": [ 1, 3 ] }, { "item": "plastic_chunk", "count": [ 1, 2 ] } ],
+    "damage_reduction": { "all": 6 }
+  },
+  {
+    "type": "vehicle_part",
     "id": "autoclave",
     "name": { "str": "autoclave" },
     "symbol": "A",

@@ -85,6 +85,7 @@
     "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 8 },
     "recoil": 2500,
     "loudness": 160,
+    "speed": 370,
     "effects": [ "COOKOFF", "SHOT" ]
   },
   {
@@ -213,6 +214,7 @@
     "price_postapoc": "4 USD",
     "dispersion": 80,
     "range": 32,
+    "speed": 500,
     "damage": { "damage_type": "bullet", "amount": 57, "armor_penetration": 18, "armor_multiplier": 1 },
     "proportional": { "recoil": 1.4 },
     "delete": { "effects": [ "SHOT" ] }

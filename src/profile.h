@@ -2,6 +2,13 @@
 
 #if defined(USE_TRACY)
 #   include "tracy/Tracy.hpp"
+#   if !defined(TRACY_ENABLE)
+#       define CATA_TRACY_NOOP_USE(x) (void)sizeof(x)
+#       undef TracyPlot
+#       undef TracyPlotConfig
+#       define TracyPlot(x,y) do { CATA_TRACY_NOOP_USE(x); CATA_TRACY_NOOP_USE(y); } while( false )
+#       define TracyPlotConfig(x,y,z,w,a) do { CATA_TRACY_NOOP_USE(x); CATA_TRACY_NOOP_USE(y); CATA_TRACY_NOOP_USE(z); CATA_TRACY_NOOP_USE(w); CATA_TRACY_NOOP_USE(a); } while( false )
+#   endif
 #else
 
 // copy-pasted from tracy/Tracy.hpp
@@ -52,8 +59,9 @@
 #define LockMark(x) (void)x
 #define LockableName(x,y,z)
 
-#define TracyPlot(x,y)
-#define TracyPlotConfig(x,y,z,w,a)
+#define CATA_TRACY_NOOP_USE(x) (void)sizeof(x)
+#define TracyPlot(x,y) do { CATA_TRACY_NOOP_USE(x); CATA_TRACY_NOOP_USE(y); } while( false )
+#define TracyPlotConfig(x,y,z,w,a) do { CATA_TRACY_NOOP_USE(x); CATA_TRACY_NOOP_USE(y); CATA_TRACY_NOOP_USE(z); CATA_TRACY_NOOP_USE(w); CATA_TRACY_NOOP_USE(a); } while( false )
 
 #define TracyMessage(x,y)
 #define TracyMessageL(x)

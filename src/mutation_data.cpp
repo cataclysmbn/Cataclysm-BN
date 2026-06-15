@@ -411,6 +411,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "overmap_sight", overmap_sight, 0.0f );
     optional( jo, was_loaded, "overmap_multiplier", overmap_multiplier, 1.0f );
     optional( jo, was_loaded, "night_vision_range", night_vision_range, 0.0f );
+    optional( jo, was_loaded, "local_detail_sight", local_detail_sight, 0.0f );
     optional( jo, was_loaded, "reading_speed_multiplier", reading_speed_multiplier, 1.0f );
     optional( jo, was_loaded, "skill_rust_multiplier", skill_rust_multiplier, 1.0f );
     optional( jo, was_loaded, "packmule_modifier", packmule_modifier, 1.0f );
@@ -468,6 +469,26 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "flags", flags, auto_flags_reader<trait_flag_str_id> {} );
     optional( jo, was_loaded, "types", types, string_reader{} );
     optional( jo, was_loaded, "enchantments", enchantments );
+    if( jo.has_array( "mut_enchantments" ) ) {
+        for( JsonObject jsobj : jo.get_array( "mut_enchantments" ) ) {
+            enchantment ench;
+            ench.load( jsobj );
+            if( !ench.id.is_empty() ) {
+                ench = ench.id.obj();
+            }
+            bool addable = false;
+            // If it can be combined with another one combine it
+            for( enchantment &oench : mut_enchantments ) {
+                if( oench.add( ench ) ) {
+                    addable = true;
+                    break;
+                }
+            }
+            if( !addable ) {
+                mut_enchantments.push_back( ench );
+            }
+        }
+    }
 
     for( const std::string s : jo.get_array( "no_cbm_on_bp" ) ) {
         no_cbm_on_bp.emplace( s );
@@ -629,6 +650,9 @@ void mutation_branch::check_consistency()
         }
         for( const enchantment_id &ench : mdata.enchantments ) {
             ench->check();
+        }
+        for( const auto &ench : mdata.mut_enchantments ) {
+            ench.check();
         }
         for( const auto &flag : mdata.flags ) {
             if( !flag.is_valid() ) {

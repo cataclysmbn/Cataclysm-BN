@@ -849,6 +849,7 @@
     "emit_fields": [ { "emit_id": "emit_fog_kraken", "delay": "1 s" } ],
     "anger_triggers": [ "PLAYER_CLOSE", "PLAYER_WEAK", "HURT" ],
     "regenerates": 10,
+    "regen_morale": true,
     "special_attacks": [
       [ "SMASH", 15 ],
       [ "RANGED_PULL", 15 ],

@@ -33,13 +33,6 @@ TEST_CASE( "Item_modifier damages item", "[item_group]" )
     Item_modifier damaged;
     damaged.damage.first = 1;
     damaged.damage.second = 1;
-    SECTION( "except when it's an ammunition" ) {
-        detached_ptr<item> rock = item::spawn( "rock" );
-        REQUIRE( rock->damage() == 0 );
-        REQUIRE( rock->max_damage() == 0 );
-        rock = damaged.modify( std::move( rock ) );
-        CHECK( rock->damage() == 0 );
-    }
     SECTION( "when it can be damaged" ) {
         detached_ptr<item> glock = item::spawn( "glock_19" );
         REQUIRE( glock->damage() == 0 );

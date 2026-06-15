@@ -31,9 +31,9 @@ jobs:
           sparse-checkout: |
             docs
 
-      - name: Download Lua reference/annotations from experimental release
+      - name: Download documentation artifacts from experimental release
         working-directory: .
-        id: download-lua-docs
+        id: download-docs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -50,7 +50,7 @@ jobs:
           fi
 
           if [ -z "$run_id" ]; then
-            echo "::warning::No successful experimental release run found for branch main, skipping lua docs"
+            echo "::warning::No successful experimental release run found for branch main, skipping generated docs"
             echo "downloaded=false" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -59,21 +59,26 @@ jobs:
             echo "downloaded=true" >> $GITHUB_OUTPUT
             echo "run_id=$run_id" >> $GITHUB_OUTPUT
           else
-            echo "::warning::Failed to download lua-docs artifact, continuing without it"
+            echo "::warning::Failed to download generated docs artifact, continuing without it"
             echo "downloaded=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Summary of Lua docs download
+      - name: Summary of documentation artifact download
         working-directory: .
-        if: steps.download-lua-docs.outputs.downloaded == 'true'
+        if: steps.download-docs.outputs.downloaded == 'true'
         run: |
-          echo "## 📥 Lua Documentation Downloaded" >> $GITHUB_STEP_SUMMARY
+          echo "## 📥 Documentation Artifact Downloaded" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "From [run #${{ steps.download-lua-docs.outputs.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ steps.download-lua-docs.outputs.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "From [run #${{ steps.download-docs.outputs.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ steps.download-docs.outputs.run_id }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f lua_annotations.lua ] && [ -f docs/en/mod/lua/reference/lua.md ]; then
-            echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
+          if [ -f docs/en/dev/reference/cli_options.md ]; then
+            echo "- \`docs/en/dev/reference/cli_options.md\`: $(wc -l < docs/en/dev/reference/cli_options.md) lines" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -f docs/en/mod/lua/reference/lua.md ]; then
             echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -f lua_annotations.lua ]; then
+            echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Setup Deno environment

@@ -29,6 +29,8 @@ extern bool json_report_strict;
  * but can be toggled in sdl build.
  */
 extern bool use_tiles;
+/** Render-only colored light tinting. Always false for non-TILES builds. */
+extern bool colored_lighting;
 
 /**
  * Enable pinyin-based fallback matching for Chinese search text.
@@ -58,14 +60,8 @@ extern bool display_object_ids;
  */
 extern bool trigdist;
 
-/** 3D FoV enabled/disabled. */
-extern bool fov_3d;
-
-/** 3D FoV range, in Z levels, in both directions. */
-extern int fov_3d_z_range;
-
-/** 3D FoV horizontal occlusion: clip vertical-cast results with per-z 2D horizontal shadow passes. */
-extern bool fov_3d_occlusion;
+/** Angled sunlight shadows: trace direct natural light along the current sun angle. */
+extern bool angled_sunlight_shadows;
 
 /** High-sprite occlusion handling mode: 0 off, 1 always, 2 automatic. */
 extern int prevent_occlusion;
@@ -118,6 +114,14 @@ extern int  activity_skip_monster_lod_gate;
 
 /** Out-of-bubble world-tick options. */
 extern bool reality_bubble_fire_spread;
+
+/** How visibility attenuation scales relative to the reality bubble hard cap. */
+enum class visibility_scaling_mode {
+    perfect,
+    smart,
+    no_scale
+};
+extern visibility_scaling_mode visibility_scaling;
 
 extern bool lazy_border_enabled;
 extern int retained_omt_cache_multiplier;

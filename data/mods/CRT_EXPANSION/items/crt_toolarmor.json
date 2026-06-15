@@ -48,6 +48,7 @@
     },
     "material_thickness": 3,
     "environmental_protection": 16,
+    "hearing_protection": 6,
     "qualities": [ [ "GLARE", 1 ] ],
     "flags": [
       "WATERPROOF",

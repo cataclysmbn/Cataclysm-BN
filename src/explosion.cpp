@@ -11,6 +11,7 @@
 #include <optional>
 #include <queue>
 #include <random>
+#include <ranges>
 #include <set>
 #include <utility>
 #include <variant>
@@ -23,6 +24,7 @@
 #include "catalua_sol.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "character.h"
 #include "catalua_coord.h"
 #include "cata_utility.h"
 #include "cata_algo.h"
@@ -96,6 +98,27 @@ static const bionic_id bio_sunglasses( "bio_sunglasses" );
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_e_handcuffs( "e_handcuffs" );
 static const itype_id itype_rm13_armor_on( "rm13_armor_on" );
+
+namespace
+{
+
+const auto flag_CONSOLE = std::string( "CONSOLE" );
+
+auto is_dead_for_explosion( const Creature &critter ) -> bool
+{
+    if( const auto *const character = dynamic_cast<const Character *>( &critter ) ) {
+        return character->Character::is_dead_state();
+    }
+    return critter.is_dead_state();
+}
+
+auto is_emp_card_reader( const ter_id &terrain ) -> bool
+{
+    return terrain == t_card_science || terrain == t_card_military ||
+           terrain == t_card_industrial;
+}
+
+} // namespace
 
 static float obstacle_blast_percentage( float range, float distance )
 {
@@ -642,7 +665,7 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
     fragment.add_effect( ammo_effect_NULL_SOURCE );
 
     auto critter = g->critter_at( position );
-    if( critter && !critter->is_dead_state() ) {
+    if( critter && !is_dead_for_explosion( *critter ) ) {
         int damage_taken = 0;
         const auto bps = critter->get_all_body_parts( true );
         // Humans get hit in all body parts
@@ -739,7 +762,8 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
         {
             Creature *critter = g->critter_at( position );
 
-            if( critter != nullptr && !mobs_blasted.contains( critter ) ) {
+            if( critter != nullptr && !is_dead_for_explosion( *critter ) &&
+                !mobs_blasted.contains( critter ) ) {
                 const int blast_damage = blast_power * critter_blast_percentage( critter, blast_radius,
                                          rl_distance );
                 const auto shockwave_dmg = damage_instance::physical( blast_damage, 0, 0, 0.4f );
@@ -788,7 +812,7 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
         {
             Creature *critter = g->critter_at( position );
 
-            if( critter != nullptr && !flung_set.contains( critter ) ) {
+            if( critter != nullptr && !is_dead_for_explosion( *critter ) && !flung_set.contains( critter ) ) {
                 const int push_strength = ( blast_radius - rl_distance ) * blast_power;
                 const float move_power = ExplosionConstants::MOB_FLING_FACTOR * push_strength;
 
@@ -969,6 +993,12 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
 
     if( !is_mob && !std::get<safe_reference<item>>( cur_target ) ) {
         return;
+    }
+    if( is_mob ) {
+        auto *const target = std::get<Creature *>( cur_target );
+        if( target == nullptr || is_dead_for_explosion( *target ) || target->bub_pos() != position ) {
+            return;
+        }
     }
 
     map &here = get_map();
@@ -1194,11 +1224,6 @@ void ExplosionProcess::run()
         }
     }
 
-    // Make sure the map is centered around the player
-    if( player_flung.has_value() ) {
-        g->update_map( *player_flung.value() );
-    }
-
     // Finally, recombine thrown items into full stacks again
     std::sort( recombination_targets.begin(), recombination_targets.end() );
     auto end = std::unique( recombination_targets.begin(), recombination_targets.end() );
@@ -1283,7 +1308,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
             continue;
         }
         auto critter = g->critter_at( target );
-        if( critter && !critter->is_dead_state() ) {
+        if( critter && !is_dead_for_explosion( *critter ) ) {
             // dealt_dag->m.total_damage() == 0 means armor block
             // dealt_dag->m.total_damage() > 0 means took damage
             // Need to diffentiate target among player, npc, and monster
@@ -1775,7 +1800,7 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
     }
     sound_event se;
     se.origin = p;
-    se.volume = 170;
+    se.volume = 180;
     se.category = sounds::sound_t::combat;
     se.description = _( "a huge boom!" );
     se.id = "misc";
@@ -1852,8 +1877,21 @@ void emp_blast( const tripoint_bub_ms &p )
 {
     map &here = get_map();
     Character &u = get_player_character();
-    const bool sight = u.sees( p );
-    if( here.has_flag( "CONSOLE", p ) ) {
+    const auto terrain = here.ter( p );
+    const auto console = here.has_flag( flag_CONSOLE, p );
+    const auto card_reader = is_emp_card_reader( terrain );
+    auto *const mon_ptr = g->critter_at<monster>( p );
+    const auto player_here = u.bub_pos() == p;
+    const auto has_items = here.has_items( p );
+
+    if( !console && !card_reader && mon_ptr == nullptr && !player_here && !has_items ) {
+        return;
+    }
+
+    const auto needs_sight = console || card_reader || mon_ptr != nullptr;
+    const bool sight = needs_sight && u.sees( p );
+
+    if( console ) {
         if( sight ) {
             add_msg( _( "The %s is rendered non-functional!" ), here.tername( p ) );
         }
@@ -1861,9 +1899,8 @@ void emp_blast( const tripoint_bub_ms &p )
         return;
     }
     // TODO: More terrain effects.
-    if( here.ter( p ) == t_card_science || here.ter( p ) == t_card_military ||
-        here.ter( p ) == t_card_industrial ) {
-        int rn = rng( 1, 100 );
+    if( card_reader ) {
+        const int rn = rng( 1, 100 );
         if( rn > 92 || rn < 40 ) {
             if( sight ) {
                 add_msg( _( "The card reader is rendered non-functional." ) );
@@ -1874,9 +1911,10 @@ void emp_blast( const tripoint_bub_ms &p )
             if( sight ) {
                 add_msg( _( "The nearby doors slide open!" ) );
             }
-            for( int i = -3; i <= 3; i++ ) {
-                for( int j = -3; j <= 3; j++ ) {
-                    auto p2 = p + tripoint( i, j, 0 );
+            using namespace std::views;
+            for( const int i : iota( -3, 4 ) ) {
+                for( const int j : iota( -3, 4 ) ) {
+                    const auto p2 = p + tripoint( i, j, 0 );
                     if( here.ter( p2 ) == t_door_metal_locked ) {
                         here.ter_set( p2, t_floor );
                     }
@@ -1889,7 +1927,7 @@ void emp_blast( const tripoint_bub_ms &p )
             }
         }
     }
-    if( monster *const mon_ptr = g->critter_at<monster>( p ) ) {
+    if( mon_ptr != nullptr ) {
         monster &critter = *mon_ptr;
         if( critter.has_flag( MF_ELECTRONIC ) ) {
             int deact_chance = 0;
@@ -1968,9 +2006,11 @@ void emp_blast( const tripoint_bub_ms &p )
         }
     }
     // Drain any items of their battery charge
-    for( auto &it : here.i_at( p ) ) {
-        if( it->is_tool() && it->ammo_current() == itype_battery ) {
-            it->charges = 0;
+    if( here.has_items( p ) ) {
+        for( auto &it : here.i_at( p ) ) {
+            if( it->is_tool() && it->ammo_current() == itype_battery ) {
+                it->charges = 0;
+            }
         }
     }
     // TODO: Drain NPC energy reserves

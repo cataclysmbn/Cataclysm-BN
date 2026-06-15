@@ -20,6 +20,8 @@
     "damage": { "damage_type": "bullet", "amount": 42, "armor_penetration": 18 },
     "dispersion": 30,
     "recoil": 1500,
+    "loudness": 158,
+    "speed": 990,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -30,6 +32,8 @@
     "description": "5.56x45mm ammunition with a 62gr FMJ bullet containing a steel penetrator.  Its light weight, high accuracy, and manageable recoil lead to widespread use in the 20th century and it remains popular among militaries and civilians.",
     "price": "290 cent",
     "price_postapoc": "9 USD",
+    "loudness": 160,
+    "speed": 961,
     "//": "Balanced as AP, 7/8 damage, arpen 6/7 of that value.",
     "relative": { "damage": { "damage_type": "bullet", "amount": -5, "armor_penetration": 14 }, "dispersion": -10 },
     "proportional": { "recoil": 1.1 },

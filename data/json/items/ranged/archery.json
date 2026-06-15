@@ -16,6 +16,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.5, "armor_multiplier": 2 },
     "dispersion": 250,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 2
   },
@@ -37,6 +38,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.8, "armor_penetration": 10, "armor_multiplier": 0.75 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 30
   },
@@ -58,6 +60,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.2 },
     "dispersion": 250,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 35,
     "effects": [ "BEANBAG" ]
@@ -80,6 +83,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.5 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 10,
     "effects": [ "NOGIB" ]
@@ -102,6 +106,7 @@
     "ammo_type": "arrow",
     "dispersion": 110,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 25
   },
@@ -123,6 +128,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.75, "armor_multiplier": 1.5 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 6
   },
@@ -144,6 +150,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.5 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 35,
     "effects": [ "NOGIB" ]
@@ -167,6 +174,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.75 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 8
@@ -190,6 +198,7 @@
     "effects": [ "POISON" ],
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 20
@@ -222,6 +231,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 1.15 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 20
@@ -244,6 +254,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 1, "armor_multiplier": 1.5 },
     "dispersion": 100,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 20
@@ -267,6 +278,7 @@
     "range": 2,
     "dispersion": 75,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 35
   },
@@ -290,6 +302,7 @@
     "range": 2,
     "dispersion": 75,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 40
   },
@@ -313,6 +326,7 @@
     "range": 2,
     "dispersion": 75,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 45,
     "effects": [ "NOGIB" ]
@@ -336,6 +350,7 @@
     "range": 4,
     "dispersion": 50,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "stack_size": 10,
     "dont_recover_one_in": 30
@@ -358,6 +373,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.1 },
     "dispersion": 285,
     "loudness": 0,
+    "speed": 100,
     "count": 5,
     "effects": [ "COOKOFF", "EXPLOSIVE_SMALL" ]
   },
@@ -397,6 +413,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.75 },
     "dispersion": 285,
     "loudness": 0,
+    "speed": 100,
     "count": 5,
     "effects": [ "IGNITE" ]
   },
@@ -410,7 +427,7 @@
     "price": "150 cent",
     "material": "wood",
     "extend": { "flags": [ "BELTED", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ] },
-    "loudness": 8,
+    "loudness": 50,
     "weight": "1360 g",
     "volume": "2500 ml",
     "price_postapoc": "50 cent",
@@ -438,7 +455,7 @@
     "price_postapoc": "5 USD",
     "bashing": 6,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 10 },
-    "loudness": 6,
+    "loudness": 45,
     "ranged_damage": { "damage_type": "stab", "amount": 28 },
     "range": 10,
     "dispersion": 1000,
@@ -460,7 +477,7 @@
     "price_postapoc": "35 USD",
     "bashing": 8,
     "to_hit": 1,
-    "loudness": 10,
+    "loudness": 60,
     "ranged_damage": { "damage_type": "stab", "amount": 41 },
     "range": 18,
     "dispersion": 850,
@@ -523,7 +540,7 @@
     "price_postapoc": "40 USD",
     "bashing": 12,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 25 },
-    "loudness": 8,
+    "loudness": 55,
     "ranged_damage": { "damage_type": "stab", "amount": 36 },
     "range": 24,
     "dispersion": 950,
@@ -543,7 +560,7 @@
     "price_postapoc": "30 USD",
     "bashing": 8,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 15 },
-    "loudness": 6,
+    "loudness": 45,
     "ranged_damage": { "damage_type": "stab", "amount": 28 },
     "range": 12
   },
@@ -562,7 +579,7 @@
     "price_postapoc": "30 USD",
     "bashing": 10,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 20 },
-    "loudness": 8,
+    "loudness": 50,
     "ranged_damage": { "damage_type": "stab", "amount": 35 },
     "range": 22,
     "dispersion": 1000,
@@ -581,7 +598,7 @@
     "price_postapoc": "20 USD",
     "bashing": 15,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 25 },
-    "loudness": 16,
+    "loudness": 65,
     "reload_noise_volume": 4,
     "ranged_damage": { "damage_type": "stab", "amount": 56, "armor_penetration": 2 },
     "range": 26,
@@ -606,7 +623,7 @@
     "armor_data": { "covers": [ "torso" ], "encumbrance": 30 },
     "bashing": 17,
     "reload_noise_volume": 4,
-    "loudness": 20,
+    "loudness": 65,
     "durability": 8,
     "ranged_damage": { "damage_type": "stab", "amount": 60, "armor_penetration": 2 },
     "range": 28,

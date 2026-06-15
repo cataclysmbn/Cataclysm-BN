@@ -791,6 +791,7 @@
     "material": [ "steel", "plastic" ],
     "symbol": ";",
     "color": "green",
+    "looks_like": "bot_antimateriel",
     "use_action": {
       "type": "place_monster",
       "monster_id": "mon_turret_antimateriel",
@@ -804,7 +805,7 @@
     "id": "bot_turret_mark19",
     "type": "TOOL",
     "name": { "str": "inactive autonomous grenade launcher milspec turret" },
-    "description": "This is an inactive grenade launcher milspec turret.  Using this item involves loading the unit with the factory-loaded .50 BMG rounds in your inventory (if you wish to divide your ammunition, set aside whatever .50 BMG rounds you do NOT want to give the turret) turning it on, and placing it on the ground, where it will attach itself.  If programmed successfully the turret will then identify you as a friendly, and attack all enemies with its gun.",
+    "description": "This is an inactive grenade launcher milspec turret.  Using this item involves loading the unit with the factory-loaded 40x53mm grenades in your inventory (if you wish to divide your ammunition, set aside whatever 40x53mm grenades you do NOT want to give the turret) turning it on, and placing it on the ground, where it will attach itself.  If programmed successfully the turret will then identify you as a friendly, and attack all enemies with its grenade launcher.",
     "weight": "120 kg",
     "volume": "40 L",
     "price": "5 kUSD",

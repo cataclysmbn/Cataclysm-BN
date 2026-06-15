@@ -516,9 +516,9 @@ plot_options::query_seed_result plot_options::query_seed()
     } );
     auto &mgr = zone_manager::get_manager();
     const std::unordered_set<tripoint_abs_ms> &zone_src_set = mgr.get_near( zone_LOOT_SEEDS,
-            here.bub_to_abs( p.bub_pos() ), 60 );
+            p.abs_pos(), 60 );
     for( const tripoint_abs_ms &elem : zone_src_set ) {
-        auto elem_loc = here.abs_to_bub( elem );
+        auto elem_loc = abs_to_bub( elem );
         for( item * const &it : here.i_at( elem_loc ) ) {
             if( it->is_seed() ) {
                 seed_inv.push_back( it );
@@ -935,8 +935,8 @@ std::unordered_set<tripoint_abs_ms> zone_manager::get_point_set_loot( const trip
 {
     std::unordered_set<tripoint_abs_ms> res;
     map &here = get_map();
-    for( const tripoint_bub_ms elem : here.points_in_radius( here.abs_to_bub( where ), radius ) ) {
-        const auto abs_pos = here.bub_to_abs( elem );
+    for( const tripoint_bub_ms elem : here.points_in_radius( abs_to_bub( where ), radius ) ) {
+        const auto abs_pos = bub_to_abs( elem );
         const zone_data *zone = get_zone_at( abs_pos );
         // if not a LOOT zone
         if( ( !zone ) || ( zone->get_type().str().substr( 0, 4 ) != "LOOT" ) ) {
@@ -1294,7 +1294,7 @@ void zone_manager::add( const std::string &name, const zone_type_id &type, const
                                     std::move( options ) );
     //the start is a vehicle tile with cargo space
     map &here = get_map();
-    if( const std::optional<vpart_reference> vp = here.veh_at( here.abs_to_bub(
+    if( const std::optional<vpart_reference> vp = here.veh_at( abs_to_bub(
                 start ) ).part_with_feature( "CARGO", false ) ) {
         // TODO:Allow for loot zones on vehicles to be larger than 1x1
         if( start == end && query_yn( _( "Bind this zone to the cargo part here?" ) ) ) {
@@ -1370,8 +1370,9 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
     if( turns == 0 ) {
         return;
     }
-    const auto a_start = target_map.bub_to_abs( tripoint_bub_ms::zero() );
-    const auto a_end = target_map.bub_to_abs( tripoint_bub_ms( 23, 23, 0 ) );
+    const auto origin = project_to<coords::ms>( target_map.get_abs_sub() );
+    const auto a_start = map_local_to_abs( target_map, tripoint_bub_ms( 0, 0, 0 ) );
+    const auto a_end = map_local_to_abs( target_map, tripoint_bub_ms( 23, 23, 0 ) );
     const point dim( 24, 24 );
     for( zone_data &zone : zones ) {
         const auto z_start = zone.get_start_point();
@@ -1382,8 +1383,8 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
             ( a_end.x() >= z_end.x() && a_end.y() >= z_end.y() ) &&
             ( a_start.z() == z_start.z() )
           ) {
-            auto z_l_start3 = target_map.abs_to_bub( z_start );
-            auto z_l_end3 = target_map.abs_to_bub( z_end );
+            const auto z_l_start3 = abs_to_map_local( target_map, z_start );
+            const auto z_l_end3 = abs_to_map_local( target_map, z_end );
             // don't rotate centered squares
             if( z_l_start3.x() == z_l_start3.y() && z_l_end3.x() == z_l_end3.y() &&
                 z_l_start3.x() + z_l_end3.x() == 23 ) {
@@ -1391,8 +1392,8 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
             }
             auto z_l_start = z_l_start3.xy().rotate( turns, dim );
             auto z_l_end = z_l_end3.xy().rotate( turns, dim );
-            auto new_z_start = target_map.bub_to_abs( z_l_start );
-            auto new_z_end = target_map.bub_to_abs( z_l_end );
+            auto new_z_start = origin + z_l_start.reinterpret_as<point_rel_ms>();
+            auto new_z_end = origin + z_l_end.reinterpret_as<point_rel_ms>();
             auto first = tripoint_abs_ms( std::min( new_z_start.x(), new_z_end.x() ),
                                           std::min( new_z_start.y(), new_z_end.y() ), a_start.z() );
             auto second = tripoint_abs_ms( std::max( new_z_start.x(), new_z_end.x() ),
@@ -1565,7 +1566,7 @@ void zone_manager::revert_vzones()
     map &here = get_map();
     for( auto zone : removed_vzones ) {
         //Code is copied from add() to avoid yn query
-        if( const std::optional<vpart_reference> vp = here.veh_at( here.abs_to_bub(
+        if( const std::optional<vpart_reference> vp = here.veh_at( abs_to_bub(
                     zone.get_start_point() ) ).part_with_feature( "CARGO", false ) ) {
             zone.set_is_vehicle( true );
             vp->vehicle().loot_zones.emplace( vp->mount(), zone );

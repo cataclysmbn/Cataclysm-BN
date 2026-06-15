@@ -56,8 +56,6 @@
           { "id": "overlay_wielded_25mm_slug", "fg": 21 },
           { "id": "ammolink25mm", "fg": 22, "bg": 2 },
           { "id": "overlay_wielded_ammolink25mm", "fg": 22 },
-          { "id": "atgm_turret", "fg": 23, "rotates": false },
-          { "id": "overlay_wielded_atgm_turret", "fg": 24, "rotates": false },
           { "id": "belt25mm", "fg": 25, "bg": 2 },
           { "id": "overlay_wielded_belt25mm", "fg": 25 },
           { "id": "electric_primer_120mm", "fg": 26, "bg": 2 },

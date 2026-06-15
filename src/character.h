@@ -600,6 +600,7 @@ class Character : public Creature, public location_visitable<Character>
          * Handles end-of-turn processing.
          */
         void process_turn() override;
+        auto action_move_factor() const -> int override;
         /** Processes human-specific effects of effects before calling Creature::process_effects(). */
         void process_effects_internal() override;
         /** Handles the still hard-coded effects. */
@@ -1716,7 +1717,7 @@ class Character : public Creature, public location_visitable<Character>
         efftype_id last_emote;
 
         // bio_portal_tap: persistent link to a powered portal for passive bionic charging.
-        std::string bio_portal_tap_dim_id;
+        dimension_id bio_portal_tap_dim_id;
         tripoint_abs_ms bio_portal_tap_pos;
         bool bio_portal_tap_linked = false;
 

@@ -20,6 +20,7 @@
 #include "enums.h" // point
 #include "explosion.h"
 #include "game_constants.h"
+#include "hsv_color.h"
 #include "iuse.h" // use_function
 #include "mapdata.h"
 #include "pldata.h" // add_type
@@ -472,12 +473,6 @@ struct common_ranged_data {
     * A bonus of 0.25 is +25% damage, up to the crit mult max.
     */
     double aimedcritbonus = 0.0;
-    /**
-    * Speed of the projectile, in meters per second. Speed of sound in game is roughly 331
-    * Supersonic projectiles can not be fully suppressed.
-    * This is placed here so that guns and gunmods can effect projectile speed.
-    */
-    int speed = 1000;
 };
 
 struct islot_engine {
@@ -550,8 +545,13 @@ struct islot_gun : common_ranged_data {
     /** Maximum aim achievable using base weapon sights */
     int sight_dispersion = 30;
 
-    /** Modifies base loudness as provided by the currently loaded ammo */
+    /** Modifies base loudness as provided by the currently loaded ammo. Measured in dB spl */
     int loudness = 0;
+    /**
+    * Modification to the base speed of the weapon projectile, in meters per second. Speed of sound in game is roughly 343 m/s
+    * Supersonic projectiles can not be fully suppressed.
+    */
+    int speed = 0;
 
     /**
      * If this uses UPS charges, how many (per shoot), 0 for no UPS charges at all.
@@ -627,8 +627,13 @@ struct islot_gunmod : common_ranged_data {
      */
     int aim_speed = -1;
 
-    /** Modifies base loudness as provided by the currently loaded ammo */
+    /** Modifies base loudness as provided by the currently loaded ammo. Measured in dB spl */
     int loudness = 0;
+    /**
+    * Modification to the base speed of the weapon projectile, in meters per second. Speed of sound in game is roughly 343 m/s
+    * Supersonic projectiles can not be fully suppressed.
+    */
+    int speed = 0;
 
     /** How many moves does this gunmod take to install? */
     int install_time = 0;
@@ -753,6 +758,12 @@ struct islot_ammo : common_ranged_data {
      * appropriate value is calculated based upon the other properties of the ammo
      */
     int loudness = -1;
+    /**
+    * Speed of the projectile, in meters per second. Speed of sound in game is roughly 343 m/s
+    * Supersonic projectiles can not be fully suppressed.
+    * This is placed here so that guns and gunmods can effect projectile speed.
+    */
+    int speed = 1000;
 
     /** Recoil (per shot), roughly equivalent to kinetic energy (in Joules) */
     int recoil = 0;
@@ -1081,6 +1092,7 @@ struct itype {
         int m_to_hit  = 0;  // To-hit bonus for melee combat; -5 to 5 is reasonable
 
         unsigned light_emission = 0;   // Exactly the same as item_tags LIGHT_*, this is for lightmap.
+        std::optional<RGBColor> light_color;
 
         /** If set via JSON forces item category to this (preventing automatic assignment) */
         item_category_id category_force;
@@ -1131,6 +1143,8 @@ struct itype {
         const itype_id &get_id() const;
 
         bool count_by_charges() const;
+        // Separate check for stackable generics, for functions that are allowed to treat them separately from ammo or comestibles.
+        bool is_stackable() const;
 
         int charges_default() const;
 

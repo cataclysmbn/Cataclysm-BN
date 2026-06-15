@@ -11,6 +11,7 @@
 #include "item_group.h"
 #include "hsv_color.h"
 #include "point.h"
+#include "type_id.h"
 #include "visitable.h"
 #include "location_ptr.h"
 
@@ -313,7 +314,7 @@ struct vehicle_part {
     public:
 
         // POWER_DRAW_LINKED_PORTAL: portal tap link state (persisted per-part instance).
-        std::string portal_tap_dim_id;
+        dimension_id portal_tap_dim_id;
         tripoint_abs_ms portal_tap_pos;
         bool portal_tap_linked = false;
         /** Get part definition common to all parts of this type */
@@ -354,4 +355,3 @@ struct vehicle_part {
         void set_color( const RGBColorPair &color ) { set_color( color.bg, color.fg ); }
         void set_color( const RGBColor &bg, const RGBColor &fg );
 };
-

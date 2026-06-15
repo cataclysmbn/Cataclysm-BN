@@ -228,7 +228,11 @@
     "difficulty": 1,
     "time": "30 m",
     "autolearn": true,
-    "components": [ [ [ "duct_tape", 50 ] ], [ [ "bag_plastic", 10 ], [ "bag_zipper", 10 ] ], [ [ "rag", 10 ] ] ]
+    "components": [
+      [ [ "duct_tape", 50 ] ],
+      [ [ "bag_plastic", 10 ], [ "bag_zipper", 10 ], [ "bag_zipper_small", 40 ] ],
+      [ [ "rag", 10 ] ]
+    ]
   },
   {
     "result": "cuirass_lightplate",

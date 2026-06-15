@@ -218,6 +218,7 @@
     "dispersion": 550,
     "durability": 6,
     "reload": 200,
+    "loudness": -2,
     "barrel_volume": "500 ml",
     "valid_mod_locations": [
       [ "accessories", 4 ],

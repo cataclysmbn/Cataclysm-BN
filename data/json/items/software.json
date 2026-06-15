@@ -50,6 +50,7 @@
     "id": "AID_bio_infolink",
     "type": "GENERIC",
     "copy-from": "AID_abstract",
+    "looks_like": "AID_bio_power_storage_mkII",
     "name": { "str_sp": "Infolink CBM installation data" },
     "description": "Precise step-by-step instructions and other required data for installation of Infolink CBM, stored on a data card of proprietary form-factor, designed to be used extensively by an Autodoc, and allowing bionic installation with minimal failure chance.  Integrated security subroutine renders it unusable after installation."
   },

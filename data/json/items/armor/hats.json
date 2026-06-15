@@ -384,7 +384,7 @@
     "id": "hat_noise_cancelling",
     "type": "ARMOR",
     "name": { "str": "noise canceling headgear" },
-    "description": "Padding over your ears kept in place by some string.  Blocks incoming sounds.",
+    "description": "Padding over your ears kept in place by some string.  They block enough incoming sound to make it easier to sleep, but aren't designed to protect your hearing.",
     "weight": "72 g",
     "volume": "500 ml",
     "price": "25 USD",
@@ -399,7 +399,7 @@
     "warmth": 5,
     "material_thickness": 1,
     "flags": [ "OVERSIZE", "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS" ],
-    "hearing_protection": 8
+    "hearing_protection": 20
   },
   {
     "id": "hat_sombrero",

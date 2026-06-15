@@ -87,6 +87,7 @@ void trap( player &p, const tripoint_bub_ms &examp );
 void water_source( player &p, const tripoint_bub_ms &examp );
 void clean_water_source( player &, const tripoint_bub_ms &examp );
 void liquid_source( player &p, const tripoint_bub_ms &examp );
+auto lua_examine( player &p, const tripoint_bub_ms &examp ) -> void;
 void kiln_empty( player &p, const tripoint_bub_ms &examp );
 void kiln_full( player &p, const tripoint_bub_ms &examp );
 void arcfurnace_empty( player &p, const tripoint_bub_ms &examp );

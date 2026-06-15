@@ -25,3 +25,8 @@ echo BUILD_TIMESTAMP defined as "%BUILD_TIMESTAMP%"
 >>..\src\version.h echo #define VERSION "%VERSION%"
 >>..\src\version.h echo #define BUILD_TIMESTAMP "%BUILD_TIMESTAMP%"
 )
+
+if /I "%~1"=="shaders" (
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\build-scripts\generate-shaders.ps1 -VcpkgTriplet "%~2"
+if ERRORLEVEL 1 exit /B %ERRORLEVEL%
+)

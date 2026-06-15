@@ -20,6 +20,8 @@
     "damage": { "damage_type": "bullet", "amount": 34 },
     "dispersion": 60,
     "recoil": 500,
+    "loudness": 159,
+    "speed": 350,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -27,6 +29,8 @@
     "copy-from": "9mm",
     "type": "AMMO",
     "name": { "str": "9x19mm FMJ" },
+    "loudness": 159,
+    "speed": 360,
     "description": "9x19mm ammunition with a brass jacketed 115gr bullet.  It is a popular round for military, law enforcement, and civilian use even after almost 150 years.",
     "//": "Base damage of 22, balance increase of two-nineths.",
     "relative": { "damage": { "damage_type": "bullet", "amount": -7, "armor_penetration": 15 } }
@@ -40,6 +44,8 @@
     "price": "3 USD",
     "price_postapoc": "8 USD",
     "count": 25,
+    "loudness": 161,
+    "speed": 410,
     "relative": { "damage": { "damage_type": "bullet", "armor_penetration": 15 }, "dispersion": -15 },
     "proportional": { "recoil": 1.2 }
   },
@@ -52,6 +58,8 @@
     "price": "350 cent",
     "price_postapoc": "4 USD",
     "count": 10,
+    "loudness": 161,
+    "speed": 430,
     "relative": { "damage": { "damage_type": "bullet", "amount": 2, "armor_penetration": 2 }, "dispersion": -15 },
     "proportional": { "recoil": 1.2 }
   },

@@ -167,7 +167,7 @@ std::unique_ptr<player_activity> veh_interact::serialize_activity()
     // if we're working on an existing part, use that part as the reference point
     // otherwise (e.g. installing a new frame), just use part 0
     const vehicle_part *vpt = pt ? pt : &veh->part( 0 );
-    const tripoint_abs_ms q = here.bub_to_abs( veh->bub_part_location( *vpt ) );
+    const auto q = bub_to_abs( veh->bub_part_location( *vpt ) );
     for( const tripoint_abs_ms &p : veh->get_points( true ) ) {
         res->coord_set.insert( p );
     }
@@ -2234,9 +2234,9 @@ void veh_interact::do_rename()
     if( !name.empty() ) {
         veh->name = name;
         if( veh->tracking_on ) {
-            get_overmapbuffer( veh->dimension_id_ ).remove_vehicle( veh );
+            get_overmapbuffer( veh->get_dimension() ).remove_vehicle( veh );
             // Add the vehicle again, this time with the new name
-            get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
+            get_overmapbuffer( veh->get_dimension() ).add_vehicle( veh );
         }
     }
 }
@@ -3264,7 +3264,7 @@ void veh_interact::complete_vehicle( Character &who )
         // check the vehicle points that were stored at beginning of activity.
         if( !who.activity->coord_set.empty() ) {
             for( const auto pt : who.activity->coord_set ) {
-                vp = here.veh_at( here.abs_to_bub( pt ) );
+                vp = here.veh_at( abs_to_bub( pt ) );
                 if( vp ) {
                     break;
                 }

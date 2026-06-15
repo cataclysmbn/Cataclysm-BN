@@ -6,6 +6,8 @@
     "name": { "str": ".40 S&W FMJ" },
     "description": ".40 S&W ammunition with 180gr FMJ bullets.  Designed to retain the 10mm Auto cartridge's power with lower recoil, the .40 S&W round became popular for law enforcement and personal defense.",
     "//": "Base damage of 23, balance increase of two-nineths.",
+    "loudness": 159,
+    "speed": 300,
     "relative": { "damage": { "damage_type": "bullet", "amount": -7, "armor_penetration": 16 } }
   },
   {
@@ -29,6 +31,8 @@
     "damage": { "damage_type": "bullet", "amount": 35 },
     "dispersion": 50,
     "recoil": 560,
+    "loudness": 160,
+    "speed": 430,
     "effects": [ "COOKOFF" ]
   },
   {

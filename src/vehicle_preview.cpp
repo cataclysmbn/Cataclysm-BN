@@ -95,11 +95,11 @@ class veh_preview_adapter : public cata_tiles
          * Get the paint colors for a vehicle part.
          * Uses get_vpart_color which will return actual colors when painting is implemented.
          */
-        static color_tint_pair get_part_colors( const vehicle &veh, int part_idx ) {
-            map &here = get_map();
+        color_tint_pair get_part_colors( const vehicle &veh, int part_idx ) const {
+            const map &here = get_map();
             const auto part_pos = veh.bub_part_location( part_idx );
             const optional_vpart_position vp = here.veh_at( part_pos );
-            return cata_tiles::get_vpart_color( vp, here, part_pos );
+            return get_vpart_color( vp, here, part_pos );
         }
 
         /**
@@ -226,6 +226,7 @@ void vehicle_preview_window::draw_cursor_at_pixel( point pixel_pos )
 void vehicle_preview_window::display( const vehicle &veh, tripoint_mnt_veh cursor,
                                       int highlight_part )
 {
+    const veh_preview_adapter *adapter = veh_preview_adapter::convert( &*tilecontext );
     const point center_px = calc_window_center_pixels();
 
     // Get tile dimensions at current zoom
@@ -264,7 +265,7 @@ void vehicle_preview_window::display( const vehicle &veh, tripoint_mnt_veh curso
         const vpart_id &vp_id = veh.part_id_string( part_idx, false, part_mod );
 
         // Get paint colors for this part (will return actual colors when painting is implemented)
-        const auto [bg_color, fg_color] = veh_preview_adapter::get_part_colors( veh, part_idx );
+        const auto [bg_color, fg_color] = adapter->get_part_colors( veh, part_idx );
 
         const auto part_direction = normalize( 270_degrees + veh.part_display_direction( part_idx ) -
                                                veh.face.dir() );

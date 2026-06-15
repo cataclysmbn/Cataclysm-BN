@@ -24,6 +24,28 @@ something that takes more than just one turn.
    newly constructed activity can then be assigned to the character and started using
    `Character::assign_activity`.
 
+## Lua-backed activities
+
+Lua scripts can assign any activity with Lua callbacks in `game.activity_functions[id]`:
+
+```lua
+game.activity_functions["MY_ACTIVITY_FINISH"] = function(params)
+  -- params.user, params.activity, params.name, params.pos, params.data
+end
+
+who:assign_lua_activity({
+  type = ActivityTypeId.new("ACT_WASH_SELF"),
+  duration = TimeDuration.from_minutes(5),
+  on_finish = "MY_ACTIVITY_FINISH",
+  on_turn = "MY_ACTIVITY_TURN", -- optional
+  pos = target_pos,
+  data = { mode = "example" },
+})
+```
+
+Use `data` for serializable Lua state. `pos` is supplied in bubble coordinates when assigning and
+is reported to callbacks as absolute map-square coordinates.
+
 ## JSON Properties
 
 - verb: A descriptive term to describe the activity to be used in the query to stop the activity,

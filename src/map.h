@@ -11,8 +11,10 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <shared_mutex>
 #include <set>
+#include <source_location>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -33,6 +35,7 @@
 #include "lightmap.h"
 #include "line.h"
 #include "lru_cache.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "mapgen_functions.h"
 #include "memory_fast.h"
@@ -114,17 +117,30 @@ namespace cata
 template <class T> class poly_serialized;
 } // namespace cata
 
+struct map_stack_options {
+    location_vector<item> *stack = nullptr;
+    tripoint_abs_ms location;
+    mapbuffer *origin = nullptr;
+    map *local_origin = nullptr;
+};
+
 class map_stack : public item_stack
 {
     private:
-        tripoint_bub_ms location;
-        map *myorigin;
+        tripoint_abs_ms location;
+        mapbuffer *myorigin = nullptr;
+        map *local_origin = nullptr;
+
+        auto local_location() const -> tripoint_bub_ms;
+
     public:
-        map_stack( location_vector<item> *newstack, tripoint_bub_ms newloc, map *neworigin ) :
-            item_stack( newstack ), location( newloc ), myorigin( neworigin ) {}
+        explicit map_stack( const map_stack_options &options ) :
+            item_stack( options.stack ), location( options.location ), myorigin( options.origin ),
+            local_origin( options.local_origin ) {}
         void insert( detached_ptr<item> &&newitem ) override;
         iterator erase( const_iterator it, detached_ptr<item> *out = nullptr ) override;
         detached_ptr<item> remove( item *to_remove ) override;
+        std::vector<detached_ptr<item>> clear() override;
         int count_limit() const override {
             return MAX_ITEM_IN_SQUARE;
         }
@@ -133,15 +149,17 @@ class map_stack : public item_stack
 
 struct visibility_variables {
     // Is this struct initialized for current z-level
-    bool variables_set;
-    bool u_sight_impaired;
-    bool u_is_boomered;
+    bool variables_set = false;
+    bool u_sight_impaired = false;
+    bool u_is_boomered = false;
     // Cached values for map visibility calculations
-    int g_light_level;
-    int u_clairvoyance;
-    int u_unimpaired_range;
-    float vision_threshold;
-    float visibility_scale_factor;
+    int g_light_level = 0;
+    int u_clairvoyance = 0;
+    int u_unimpaired_range = 0;
+    float vision_threshold = 0.0f;
+    float visibility_range = 60.0f;
+    float detail_range = 60.0f;
+    float visibility_scale_factor = 1.0f;
 };
 
 struct bash_params {
@@ -348,10 +366,14 @@ struct level_cache {
     cata_dynamic_bitset sound_wall_cache_dirty;
 
     bool seen_cache_dirty = false;
-    // Set to true at the start of each game turn; cleared after generate_lightmap
-    // completes for this level.  Allows subsequent redraws within the same turn
-    // to skip the full lightmap rebuild when nothing has changed.
+    // Set by map mutations and dynamic light-state changes; cleared after
+    // generate_lightmap completes for this level.
     bool lightmap_dirty = true;
+    // True when CPU lm contains current lighting for the whole level. SDL GPU
+    // lighting may keep resident GPU lm current while leaving this false.
+    bool lm_cpu_cache_valid = false;
+    // Incremented whenever CPU lm contents are invalidated before a rebuild.
+    uint64_t lm_cpu_cache_generation = 0;
     // Set to true at the start of each game turn; cleared after update_visibility_cache
     // completes.  Allows repeated draws within the same turn (animations, UI refreshes)
     // to skip the full visibility rebuild when nothing has changed.
@@ -364,11 +386,15 @@ struct level_cache {
 
     // ---- 12 tile-coordinate arrays (size: cache_x * cache_y) ----
     // All indexed as: vec[x * cache_y + y]  (X-outer layout, matching old C-array [MAPSIZE_X][MAPSIZE_Y])
-    std::vector<four_quadrants>     lm;
+    std::vector<float>              lm;
     std::vector<float>              sm;
     // To prevent redundant ray casting into neighbors: precalculate bulk light source positions.
     // This is only valid for the duration of generate_lightmap
     std::vector<float>              light_source_buffer;
+    std::vector<float>              colored_light_source_buffer;
+    std::vector<uint32_t>           light_source_color_buffer;
+    // Source tiles touched in light_source_buffer.
+    std::vector<point_bub_ms>        light_source_points;
 
     // True when the tile has sky access via the 3×3 overhang rule (top-down floor cascade).
     // False means fully enclosed — protected from rain, wind, weather effects.
@@ -377,12 +403,6 @@ struct level_cache {
     // True when at least one tile within 3×3 above has overhead coverage (floor or sheltered
     // tile at z+1).  Distinct from outside_cache: a tile can be outside yet sheltered (overhang).
     std::vector<char>               sheltered_cache;
-
-    // True when this tile has an unobstructed ray to the sun for the current in-game hour.
-    // Rebuilt by map::build_angled_sunlight_cache() when the hour changes.
-    // Consulted by build_sunlight_cache() to distinguish direct-sun tiles (full
-    // outside_light_level) from scatter-lit outdoor tiles (reduced ambient level).
-    std::vector<char>               angled_sunlight_cache;
 
     // true when vehicle below has "ROOF" or "OPAQUE" part, furniture below has "SUN_ROOF_ABOVE"
     //      or terrain doesn't have "NO_FLOOR" flag
@@ -418,6 +438,9 @@ struct level_cache {
 
     // stores resulting apparent brightness to player, calculated by map::apparent_light_at
     std::vector<lit_level>          visibility_cache;
+
+    std::vector<uint32_t>           colored_light_cache;
+    bool colored_light_cache_active = false;
 
     // per-tile map-memory seen bitset (size: cache_x * cache_y), indexed [x + y * cache_x]
     cata_dynamic_bitset             map_memory_seen_cache;
@@ -756,11 +779,6 @@ class map : public submap_load_listener
          */
         bool has_dimension_bounds() const;
         /**
-         * Check if a local tripoint is out of dimension bounds.
-         * Returns false if no bounds are set (infinite dimension).
-         */
-        bool is_out_of_bounds( const tripoint_bub_ms &p ) const;
-        /**
          * Get the boundary terrain ID for out-of-bounds areas.
          * Only valid if has_dimension_bounds() is true.
          */
@@ -769,7 +787,7 @@ class map : public submap_load_listener
          * Return the dimension ID this map is currently bound to.
          * An empty string means the primary (default) dimension.
          */
-        const std::string &get_bound_dimension() const {
+        auto get_bound_dimension() const -> const dimension_id & { // *NOPAD*
             return bound_dimension_;
         }
 
@@ -789,7 +807,7 @@ class map : public submap_load_listener
          * Bind this map to a specific dimension.
          * Should be called when the player transitions to another dimension.
          */
-        void bind_dimension( const std::string &dim );
+        auto bind_dimension( const dimension_id &dim ) -> void;
 
         /**
          * Return true if the submap at absolute-submap coordinates @p pos
@@ -799,9 +817,9 @@ class map : public submap_load_listener
 
         // submap_load_listener implementation
         void on_submap_loaded( const tripoint_abs_sm &pos,
-                               const std::string &dim_id ) override;
+                               const dimension_id &dim_id ) override;
         void on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const std::string &dim_id ) override;
+                                 const dimension_id &dim_id ) override;
 
         /**
          * Sets a dirty flag on the a given cache.
@@ -854,8 +872,7 @@ class map : public submap_load_listener
 
         void invalidate_map_cache( const int zlev );
 
-        /// Mark lightmap_dirty for every loaded z-level.  Call once per game turn
-        /// so that only the first redraw of each turn runs generate_lightmap.
+        /// Mark lightmap_dirty for every loaded z-level.
         void invalidate_lightmap_caches();
 
         /// Mark visibility_cache_dirty for every loaded z-level.  Call once per game turn
@@ -1123,6 +1140,9 @@ class map : public submap_load_listener
         std::vector<tripoint_bub_ms> route( const tripoint_bub_ms &f, const tripoint_bub_ms &t,
                                             const pathfinding_settings &settings,
         const std::set<tripoint_bub_ms> &pre_closed = {{ }} ) const;
+        std::vector<tripoint_abs_ms> route( const tripoint_abs_ms &f, const tripoint_abs_ms &t,
+                                            const pathfinding_settings &settings,
+        const std::set<tripoint_abs_ms> &pre_closed = {{ }} ) const;
 
         // Vehicles: Common to 2D and 3D
         VehicleList get_vehicles();
@@ -2104,7 +2124,8 @@ class map : public submap_load_listener
         // Assumes 0,0 is light map center
         lit_level light_at( const tripoint_bub_ms &p ) const;
         // Raw values for tilesets
-        float ambient_light_at( const tripoint_bub_ms &p ) const;
+        float ambient_light_at( const tripoint_bub_ms &p,
+                                std::source_location location = std::source_location::current() ) const;
         /**
          * Returns whether the tile at `p` is transparent(you can look past it).
          */
@@ -2128,27 +2149,25 @@ class map : public submap_load_listener
         bool pl_line_of_sight( const tripoint_bub_ms &t, int max_range ) const;
         std::set<vehicle *> dirty_vehicle_list;
 
-        /** return @ref abs_sub */
-        tripoint_abs_sm get_abs_sub() const { return abs_sub; }
+        /**
+         * Legacy accessor for the loaded-grid origin.
+         *
+         * This is the absolute submap coordinate backing map-local grid slot
+         * (0,0).  For the player map it should match the player-derived reality
+         * bubble origin after map transitions settle.  Detached maps, including
+         * tinymaps and mapgen maps, keep an explicit loaded-grid origin here.
+         */
+        auto get_abs_sub() const -> tripoint_abs_sm {
+            return abs_sub;
+        }
 
-        tripoint_abs_ms bub_to_abs( const tripoint_bub_ms &bub ) const {
-            const auto origin = project_to<coords::ms>( abs_sub );
-            return tripoint_abs_ms( tripoint( origin.x() + bub.x(), origin.y() + bub.y(), bub.z() ) );
+        /**
+         * Adjust only the z-level of the loaded-grid origin.  This is for player
+         * map vertical transitions where x/y remain player-derived.
+         */
+        auto set_loaded_submap_z( int z ) -> void {
+            abs_sub.z() = z;
         }
-        tripoint_bub_ms abs_to_bub( const tripoint_abs_ms &abs ) const {
-            const auto origin = project_to<coords::ms>( abs_sub );
-            return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-        }
-        tripoint_abs_sm bub_to_abs( const tripoint_bub_sm &bub ) const {
-            return tripoint_abs_sm( tripoint( abs_sub.x() + bub.x(), abs_sub.y() + bub.y(), bub.z() ) );
-        }
-        tripoint_bub_sm abs_to_bub( const tripoint_abs_sm &abs ) const {
-            return tripoint_bub_sm( tripoint( abs.x() - abs_sub.x(), abs.y() - abs_sub.y(), abs.z() ) );
-        }
-        point_abs_ms bub_to_abs( const point_bub_ms &bub ) const { return project_to<coords::ms>( abs_sub ).xy() + point_rel_ms( bub.raw() ); }
-        point_bub_ms abs_to_bub( const point_abs_ms &abs ) const { return point_bub_ms( ( abs - project_to<coords::ms>( abs_sub ).xy() ).raw() ); }
-        point_abs_sm bub_to_abs( const point_bub_sm &bub ) const { return abs_sub.xy() + point_rel_sm( bub.raw() ); }
-        point_bub_sm abs_to_bub( const point_abs_sm &abs ) const { return ( abs - abs_sub.raw().xy() ).reinterpret_as<point_bub_sm>(); }
 
         bool inbounds_z( const int z ) const {
             return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
@@ -2319,6 +2338,7 @@ class map : public submap_load_listener
         // Builds a transparency cache and returns true if the cache was invalidated.
         // Used to determine if seen cache should be rebuilt.
         bool build_transparency_cache( int zlev );
+        auto build_transparency_caches( int minz, int maxz ) -> std::vector<int>;
         // Refreshes the weather-transparency lookup table if the sight penalty
         // has changed.  Must be called once serially before any parallel call to
         // build_transparency_cache() to avoid a data race on the shared table.
@@ -2327,11 +2347,17 @@ class map : public submap_load_listener
         // fills lm with sunlight. pzlev is current player's zlevel
         void build_sunlight_cache( int pzlev );
         // Recomputes sun direction and scatter factor from the current game time.
-        // Called once per in-game hour from build_sunlight_cache.
         void update_solar_params();
-        // Traces a parallel sun ray from each tile at zlev upward and writes
-        // angled_sunlight_cache.  Reads floor_cache across all z-levels above zlev.
-        void build_angled_sunlight_cache( int zlev );
+        enum class direct_sunlight_state : int {
+            none,
+            shadow,
+            direct
+        };
+        // Distinguishes roofed tiles, angled-sun shadow, and full direct sun.
+        auto direct_sunlight_state_at( point_bub_ms p, int zlev ) const -> direct_sunlight_state;
+        auto has_direct_sunlight_at( point_bub_ms p, int zlev ) const -> bool;
+        auto current_lightmap_source_signature() -> std::size_t;
+        void invalidate_lightmap_caches_if_light_state_changed();
     public:
         // Rebuilds outside_caches for zlev top-down:
         // A tile is outside if any neighbour in the 3×3 at z+1
@@ -2368,7 +2394,9 @@ class map : public submap_load_listener
         // matches zlev, avoiding cross-level cache writes for parallel safety.
         void generate_lightmap( int zlev );
         void generate_lightmap_worker( int zlev );
+        void flush_lightmap_cpu_read_counters() const;
         void build_seen_cache( const tripoint_bub_ms &origin, int target_z );
+        auto vision_transparency_block_mask() const -> uint32_t;
         // Applies vehicle mirror/camera FOV from @p origin's vehicle.
         // Separated from build_seen_cache for readability and Tracy granularity.
         void apply_vehicle_optics( const tripoint_bub_ms &origin, int target_z );
@@ -2411,11 +2439,13 @@ class map : public submap_load_listener
         // Reset to tripoint_min by invalidate_map_cache so any full-cache invalidation
         // forces a seen_cache rebuild regardless of whether the player moved.
         tripoint_bub_ms m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
+        std::size_t m_last_lightmap_source_signature = 0;
+        bool m_last_lightmap_source_signature_valid = false;
 
-        // State for the directional sunlight system.  Rebuilt once per in-game hour by
-        // update_solar_params() and build_angled_sunlight_cache().
+        // State for the directional sunlight system.  Rebuilt by update_solar_params().
         struct solar_params {
-            // Sun ray horizontal displacement per z-level.
+            // Horizontal shadow displacement per z-level.  The sky-access ray
+            // back toward the sun uses the inverse of this vector.
             // Positive dx_per_z = east (+x); negative = west.
             // SUN_EAST_SIGN in update_solar_params() flips the axis if needed.
             // dy_per_z is always 0 (no latitude tilt modelled).
@@ -2423,26 +2453,25 @@ class map : public submap_load_listener
             float dy_per_z     = 0.f;
             // False at night; true for all daylight hours (day/night boundary only).
             bool  direct_active  = false;
-            // Game-hour when the cache was last rebuilt; -1 forces a rebuild on first use.
-            int   last_built_hour = -1;
         };
         solar_params m_solar;
 
         /**
-         * Absolute coordinates of first submap (get_submap_at(0,0))
-         * This is in submap coordinates (see overmapbuffer for explanation).
-         * It is set upon:
-         * - loading submap at grid[0],
-         * - generating submaps (@ref generate)
-         * - shifting the map with @ref shift
+         * Absolute submap coordinate of loaded grid slot (0,0).
+         *
+         * This is a loaded-grid/cache origin, not the definition of player
+         * reality-bubble space.  The player map's value is synchronized with
+         * player_reality_bubble_origin() by load, shift, resize, and vertical
+         * transition code.  Detached maps use this as their explicit local
+         * anchor.
          */
         tripoint_abs_sm abs_sub;
 
+        auto set_abs_sub( const tripoint_abs_sm &p ) -> void {
+            abs_sub = p;
+        }
+
     public:
-        /**
-         * Sets @ref abs_sub, see there. Uses the same coordinate system as @ref abs_sub.
-         */
-        void set_abs_sub( const tripoint_abs_sm &p ) { abs_sub = p; }
 
         field &get_field( const tripoint_bub_ms &p );
 
@@ -2451,17 +2480,15 @@ class map : public submap_load_listener
          */
         submap *getsubmap( size_t grididx ) const;
         /**
-         * Get the submap pointer containing the specified position within the reality bubble.
-         * (p) must be a valid coordinate, check with @ref inbounds.
+         * Compatibility map-local lookup. Absolute data lookup belongs on
+         * mapbuffer; simulation membership belongs on submap_load_manager.
          */
         submap *get_submap_at( const tripoint_bub_ms &p ) const;
         submap *get_submap_at( const point_bub_ms &p ) const {
             return get_submap_at( tripoint_bub_ms( p, abs_sub.z() ) );
         }
         /**
-         * Get the submap pointer containing the specified position within the reality bubble.
-         * The same as other get_submap_at, (p) must be valid (@ref inbounds).
-         * Also writes the position within the submap to offset_p
+         * Compatibility map-local lookup with submap-local offset.
          */
         submap *get_submap_at( const tripoint_bub_ms &p, point_sm_ms &offset_p ) const;
         submap *get_submap_at( const point_bub_ms &p, point_sm_ms &offset_p ) const {
@@ -2519,17 +2546,40 @@ class map : public submap_load_listener
                               const maptile &tile, const drawsq_params &params ) const;
 
         int determine_wall_corner( const tripoint_bub_ms &p ) const;
+        struct apply_directional_light_options {
+            tripoint_bub_ms p;
+            int direction = 0;
+            float luminance = 0.0f;
+            uint32_t color_rgb = 0u;
+        };
+        struct apply_light_arc_options {
+            tripoint_bub_ms p;
+            units::angle angle = 0_degrees;
+            float luminance = 0.0f;
+            units::angle wideangle = 30_degrees;
+            uint32_t color_rgb = 0u;
+        };
+        struct apply_light_ray_options {
+            std::vector<bool> &lit;
+            tripoint_bub_ms s;
+            tripoint_bub_ms e;
+            float luminance = 0.0f;
+            uint32_t color_rgb = 0u;
+        };
         // apply a circular light pattern immediately, however it's best to use...
-        void apply_light_source( const tripoint_bub_ms &p, float luminance );
+        void apply_light_source( const tripoint_bub_ms &p, float luminance, uint32_t color_rgb = 0u );
         // ...this, which will apply the light after at the end of generate_lightmap, and prevent redundant
         // light rays from causing massive slowdowns, if there's a huge amount of light.
-        void add_light_source( const tripoint_bub_ms &p, float luminance );
+        void add_light_source( const tripoint_bub_ms &p, float luminance, uint32_t color_rgb = 0u );
         // Handle just cardinal directions and 45 deg angles.
         void apply_directional_light( const tripoint_bub_ms &p, int direction, float luminance );
+        auto apply_directional_light( const apply_directional_light_options &opt ) -> void;
         void apply_light_arc( const tripoint_bub_ms &p, units::angle, float luminance,
                               units::angle wideangle = 30_degrees );
+        auto apply_light_arc( const apply_light_arc_options &opt ) -> void;
         void apply_light_ray( std::vector<bool> &lit,
                               const tripoint_bub_ms &s, const tripoint_bub_ms &e, float luminance );
+        auto apply_light_ray( const apply_light_ray_options &opt ) -> void;
         void add_light_from_items( const tripoint_bub_ms &p, const item_stack::iterator &begin,
                                    const item_stack::iterator &end );
         std::unique_ptr<vehicle> add_vehicle_to_map( std::unique_ptr<vehicle> veh, bool merge_wrecks );
@@ -2649,14 +2699,14 @@ class map : public submap_load_listener
         visibility_variables visibility_variables_cache;
 
         // caches the highest zlevel above which all zlevels are uniform
-        // !value || value->first != map::abs_sub means cache is invalid
+        // !value || value->first != the loaded-grid origin means cache is invalid
         std::optional<std::pair<tripoint_abs_sm, int>> max_populated_zlev = std::nullopt;
 
         // Dimension info for bounded pocket dimensions (nullopt for infinite dimensions)
         std::optional<pocket_dimension_data> pocket_info_;
 
         // The dimension ID this map is bound to (empty = primary dimension)
-        std::string bound_dimension_;
+        dimension_id bound_dimension_;
 
     public:
         bool has_rope_at( tripoint_bub_ms pt ) const;
@@ -2679,7 +2729,9 @@ class map : public submap_load_listener
         /// pf_cache if it has been marked dirty.  Works for any loaded position.
         auto get_pf_special( const tripoint_bub_ms &p ) const -> pf_special;
 
-        void update_visibility_cache( int zlev );
+        auto update_visibility_cache( int zlev,
+        const std::function<void()> &while_gpu_pending = {} ) -> void;
+        auto make_visibility_variables( int zlev ) const -> visibility_variables;
         const visibility_variables &get_visibility_variables_cache() const;
 
         void update_submap_active_item_status( const tripoint_bub_ms &p );
@@ -2735,22 +2787,33 @@ class map : public submap_load_listener
 
 map &get_map();
 
-inline auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms
-{
-    return get_map().bub_to_abs( p );
-}
-inline auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms
-{
-    return get_map().abs_to_bub( p );
-}
-inline auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms
-{
-    return get_map().bub_to_abs( p );
-}
-inline auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms
-{
-    return get_map().abs_to_bub( p );
-}
+auto player_reality_bubble_origin() -> tripoint_abs_sm;
+auto reality_bubble_origin_from_player( const tripoint_abs_ms &player_pos,
+                                        int reality_bubble_size ) -> tripoint_abs_sm;
+auto reality_bubble_center_from_origin( const tripoint_abs_sm &origin,
+                                        int reality_bubble_size ) -> tripoint_abs_sm;
+
+auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms;
+auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms;
+auto bub_to_abs( const tripoint_bub_sm &p ) -> tripoint_abs_sm;
+auto abs_to_bub( const tripoint_abs_sm &p ) -> tripoint_bub_sm;
+auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms;
+auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms;
+auto bub_to_abs( const point_bub_sm &p ) -> point_abs_sm;
+auto abs_to_bub( const point_abs_sm &p ) -> point_bub_sm;
+
+auto is_in_reality_bubble_bounds( const tripoint_bub_sm &p ) -> bool;
+auto is_in_reality_bubble_bounds( const tripoint_bub_ms &p ) -> bool;
+
+// Convert against a specific map object's loaded-grid origin, not the player bubble origin.
+auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms;
+auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms;
+auto map_local_to_abs( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm;
+auto abs_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm;
+auto map_local_to_abs( const map &m, const point_bub_ms &local ) -> point_abs_ms;
+auto abs_to_map_local( const map &m, const point_abs_ms &abs ) -> point_bub_ms;
+auto map_local_to_abs( const map &m, const point_bub_sm &local ) -> point_abs_sm;
+auto abs_to_map_local( const map &m, const point_abs_sm &abs ) -> point_bub_sm;
 
 /**
  * RAII guard that temporarily redirects get_map() to a different map object
@@ -2791,7 +2854,6 @@ class tinymap : public map
         friend class editmap;
     public:
         tinymap( int mapsize = 2, bool zlevels = false );
-        bool inbounds( const tripoint_abs_sm &p ) const override;
 
         /**
          * Position this tinymap at @p sm_base (submap coordinates) and wire up

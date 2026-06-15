@@ -81,13 +81,13 @@
     "type": "item_group",
     "subtype": "collection",
     "entries": [
-      { "item": "coke", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 75 },
+      { "item": "coke", "charges": [ 50, 500 ], "container-item": "bag_zipper_small", "prob": 75 },
       {
         "distribution": [
-          { "item": "meth", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 40 },
-          { "item": "crack", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 25 },
-          { "item": "heroin", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 25 },
-          { "item": "weed", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 10 }
+          { "item": "meth", "charges": [ 50, 500 ], "container-item": "bag_zipper_small", "prob": 40 },
+          { "item": "crack", "charges": [ 50, 500 ], "container-item": "bag_zipper_small", "prob": 25 },
+          { "item": "heroin", "charges": [ 50, 500 ], "container-item": "bag_zipper_small", "prob": 25 },
+          { "item": "weed", "charges": [ 50, 500 ], "container-item": "bag_zipper", "prob": 10 }
         ],
         "prob": 50
       },

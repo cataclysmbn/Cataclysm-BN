@@ -17,6 +17,7 @@
     "range": 6,
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 4,
     "dont_recover_one_in": 5
   },
@@ -38,6 +39,7 @@
     "range": 10,
     "dispersion": 90,
     "loudness": 0,
+    "speed": 100,
     "count": 4,
     "dont_recover_one_in": 3
   },
@@ -59,6 +61,7 @@
     "range": 6,
     "dispersion": 120,
     "loudness": 0,
+    "speed": 100,
     "count": 4,
     "dont_recover_one_in": 15
   },
@@ -88,7 +91,7 @@
     "durability": 8,
     "clip_size": 4,
     "reload": 1000,
-    "loudness": 11,
+    "loudness": 80,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "grip", 1 ],
@@ -113,7 +116,7 @@
     "weight": "840 g",
     "volume": "1 L",
     "clip_size": 1,
-    "loudness": 5
+    "loudness": 60
   },
   {
     "id": "speargun",
@@ -131,7 +134,7 @@
     "ranged_damage": { "damage_type": "stab", "amount": 6 },
     "range": 4,
     "clip_size": 1,
-    "loudness": 5
+    "loudness": 60
   },
   {
     "id": "doublespeargun",
@@ -152,6 +155,6 @@
     "durability": 7,
     "clip_size": 2,
     "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],
-    "loudness": 5
+    "loudness": 65
   }
 ]

@@ -6,6 +6,8 @@
     "description": "You're a human shaped candy brought to life under unknown circumstances.  You have your whole life ahead of you and it's gonna be sweet!",
     "points": 5,
     "traits": [ "SUGAR" ],
+    "//": "The gun would make you no longer FDA approved.  Spicy kinder egg...",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "pets": [ { "name": "mon_necco", "amount": 1 } ],
     "items": { "both": { "entries": [ { "item": "sugarkin_flyer", "custom-flags": [ "auto_wield" ] } ] } },
     "flags": [ "SCEN_ONLY" ]

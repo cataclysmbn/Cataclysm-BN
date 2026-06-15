@@ -16,6 +16,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "magic_enchantment.h"
 #include "enums.h"
 #include "color.h"
 
@@ -115,6 +116,8 @@ struct bionic_data {
     std::vector<trait_id> canceled_mutations;
 
     /** bionic enchantments */
+    std::vector<enchantment> bio_enchantments;
+
     std::vector<enchantment_id> enchantments;
 
     /**

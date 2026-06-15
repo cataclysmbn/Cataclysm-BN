@@ -272,7 +272,7 @@
     "time": "2 h",
     "autolearn": true,
     "using": [ [ "sewing_standard", 80 ] ],
-    "components": [ [ [ "felt_patch", 20 ] ], [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ] ] ]
+    "components": [ [ [ "felt_patch", 20 ] ], [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ], [ "bag_zipper_small", 32 ] ] ]
   },
   {
     "result": "boots_wsurvivor",

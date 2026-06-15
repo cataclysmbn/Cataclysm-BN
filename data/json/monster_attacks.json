@@ -168,7 +168,7 @@
     "volume": "210 ml",
     "bashing": 1,
     "to_hit": 1,
-    "loudness": 2,
+    "loudness": 4,
     "range": 30,
     "dispersion": 100,
     "durability": 10
@@ -304,7 +304,7 @@
     "range": 10,
     "dispersion": 1000,
     "ranged_damage": { "damage_type": "electric", "amount": 10, "armor_penetration": 4 },
-    "loudness": 20,
+    "loudness": 55,
     "modes": [ [ "DEFAULT", "semi", 1 ] ],
     "ammo_effects": [ "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES", "DRAW_AS_LINE", "WIDE", "EMP" ]
   }

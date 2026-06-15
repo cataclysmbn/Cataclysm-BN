@@ -128,7 +128,7 @@ void run_deferred_mapgen_hooks()
     // dimension group and dispatch them together so the batch function can
     // amortise Lua table allocation and hook-table lookup over all omts.
     tinymap tmp;
-    std::string cur_dim;
+    auto cur_dim = dimension_id();
     std::vector<cata::mapgen_hook_batch_item> batch;
     batch.reserve( pending.size() );
 

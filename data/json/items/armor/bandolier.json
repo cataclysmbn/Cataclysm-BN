@@ -43,7 +43,7 @@
     "material_thickness": 1,
     "use_action": {
       "type": "bandolier",
-      "capacity": 25,
+      "capacity": 30,
       "ammo": [ "22", "223", "300blk", "5x50", "3006", "308", "300", "762", "762R", "8x40mm", "4570", "50" ],
       "draw_cost": 20
     },
@@ -108,7 +108,7 @@
     "material_thickness": 1,
     "use_action": {
       "type": "bandolier",
-      "capacity": 20,
+      "capacity": 30,
       "ammo": [ "flintlock", "flintlockshot", "36paper", "44paper", "blunderbuss", "shotcanister", "shotpaper" ],
       "draw_cost": 20
     },
@@ -235,7 +235,7 @@
     "id": "bandolier_knife",
     "type": "ARMOR",
     "name": { "str": "throwing knife bandolier" },
-    "description": "A bandolier worn across the chest with small leather sheathes sewn on.  Able to hold up to ten small knives, whether throwing knives or other small blades.  Activate to sheath or draw a knife.",
+    "description": "A bandolier worn across the chest with small leather loops sewn on.  Able to hold up to twelve small knives or similar tools, whether throwing knives, shurikens, or other small items.  Activate to sheath or draw a tool.",
     "weight": "140 g",
     "volume": "250 ml",
     "price": "19 USD",
@@ -251,13 +251,13 @@
     "material_thickness": 1,
     "use_action": {
       "type": "holster",
-      "holster_prompt": "Sheath knife",
+      "holster_prompt": "Sheath tool",
       "holster_msg": "You sheath your %s",
-      "multi": 10,
+      "multi": 12,
       "min_volume": "15 ml",
       "max_volume": "250 ml",
       "draw_cost": 50,
-      "flags": [ "SHEATH_KNIFE" ]
+      "flags": [ "SHEATH_KNIFE", "BELT_CLIP" ]
     },
     "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE" ]
   }

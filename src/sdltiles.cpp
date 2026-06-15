@@ -60,6 +60,7 @@
 #include "mongroup.h"
 #include "path_info.h"
 #include "point.h"
+#include "profile.h"
 #include "rng.h"
 #include "sdl_wrappers.h"
 #include "sdl_geometry.h"
@@ -322,6 +323,7 @@ static void WinCreate()
                           "Failed to initialize accelerated renderer, falling back to software rendering" ) ) {
             software_renderer = true;
         } else {
+            dbg( DL::Info ) << "Initialized SDL with Renderer: " << SDL_GetRendererName( renderer.get() );
             if( get_option<bool>( "VSYNC" ) ) {
                 SDL_SetRenderVSync( renderer.get(), 1 );
             }
@@ -3948,6 +3950,7 @@ void input_manager::pump_events()
 // is simply a wrapper around this.
 input_event input_manager::get_input_event()
 {
+    ZoneScopedN( "sdl_input_get_input_event" );
     previously_pressed_key = 0;
 
     // standards note: getch is sometimes required to call refresh
@@ -3957,10 +3960,12 @@ input_event input_manager::get_input_event()
     // we can skip it if `needupdate` is false to improve performance during mouse
     // move events.
     if( needupdate ) {
+        ZoneScopedN( "sdl_input_wrefresh" );
         wrefresh( catacurses::stdscr );
     }
 
     if( inputdelay < 0 ) {
+        ZoneScopedN( "sdl_input_wait_blocking" );
         do {
             CheckMessages();
             if( last_input.type != input_event_t::error ) {
@@ -3969,6 +3974,7 @@ input_event input_manager::get_input_event()
             SDL_Delay( 1 );
         } while( last_input.type == input_event_t::error );
     } else if( inputdelay > 0 ) {
+        ZoneScopedN( "sdl_input_wait_timed" );
         Uint64 starttime = SDL_GetTicks();
         Uint64 endtime = 0;
         bool timedout = false;
@@ -3985,6 +3991,7 @@ input_event input_manager::get_input_event()
             }
         } while( !timedout );
     } else {
+        ZoneScopedN( "sdl_input_poll_once" );
         CheckMessages();
     }
 

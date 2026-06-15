@@ -25,7 +25,7 @@
     "copy-from": "jet_thruster",
     "type": "vehicle_part",
     "name": "external jet thruster",
-    "location": "structural",
+    "location": "structure",
     "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF", "NOCOLLIDE", "NOCOLLIDEBELOW" ] }
   },
   {

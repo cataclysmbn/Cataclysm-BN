@@ -30,11 +30,21 @@
 #include "type_id.h"
 #include "ui_manager.h"
 #include "world.h"
+#include "item_search.h"
 
 using namespace auto_pickup;
 
-static bool check_special_rule( const std::vector<material_id> &materials,
-                                const std::string &rule );
+bool auto_pickup::test_pattern_function( const itype &type, std::string filter )
+{
+    auto func = filter_from_string<itype>( filter, wildcard_itype_filter );
+    return func( type );
+}
+
+bool auto_pickup::autopickup_item_function( const item &object, std::string filter )
+{
+    auto func = filter_from_string<item>( filter, wildcard_item_filter );
+    return func( object );
+}
 
 auto_pickup::player_settings &get_auto_pickup()
 {
@@ -287,7 +297,7 @@ void user_interface::show()
                 const auto init_help_window = [&]( ui_adaptor & help_ui ) {
                     const point iOffset( TERMX > FULL_SCREEN_WIDTH ? ( TERMX - FULL_SCREEN_WIDTH ) / 2 : 0,
                                          TERMY > FULL_SCREEN_HEIGHT ? ( TERMY - FULL_SCREEN_HEIGHT ) / 2 : 0 );
-                    w_help = catacurses::newwin( FULL_SCREEN_HEIGHT / 2 + 2,
+                    w_help = catacurses::newwin( FULL_SCREEN_HEIGHT * ( 2.0 / 3 ) + 2,
                                                  FULL_SCREEN_WIDTH * 3 / 4,
                                                  iOffset + point( 19 / 2, 7 + FULL_SCREEN_HEIGHT / 2 / 2 ) );
                     help_ui.position_from_window( w_help );
@@ -307,10 +317,13 @@ void user_interface::show()
                                         "*avy fle*fi*arrow     multiple * are allowed\n"
                                         "heAVY*woOD*arrOW      case insensitive search\n"
                                         "\n"
-                                        "Pickup based on item materials:\n"
+                                        "Pickup using:\n"
+                                        "c:food          matches item in category food\n"
                                         "m:kevlar        matches items made of Kevlar\n"
                                         "M:copper        matches items made purely of copper\n"
-                                        "M:steel,iron    multiple materials allowed (OR search)" )
+                                        "q:drilling      matches items with drilling qualites\n"
+                                        "k:fabrication   matches books that teach fabrication\n"
+                                        "b:c:food;*meat* matches conditions c:food and *meat*" )
                                   );
 
                     draw_border( w_help );
@@ -423,7 +436,7 @@ void rule::test_pattern() const
     //APU now ignores prefixes, bottled items and suffix combinations still not generated
     for( const itype *e : item_controller->all() ) {
         const std::string sItemName = e->nname( 1 );
-        if( !check_special_rule( e->materials, sRule ) && !wildcard_match( sItemName, sRule ) ) {
+        if( !test_pattern_function( *e, sRule ) && !wildcard_match( sItemName, sRule ) ) {
             continue;
         }
 
@@ -569,38 +582,6 @@ bool player_settings::empty() const
     return global_rules.empty() && character_rules.empty();
 }
 
-bool check_special_rule( const std::vector<material_id> &materials, const std::string &rule )
-{
-    char type = ' ';
-    std::vector<std::string> filter;
-    if( rule[1] == ':' ) {
-        type = rule[0];
-        filter = string_split( rule.substr( 2 ), ',' );
-    }
-
-    if( filter.empty() || materials.empty() ) {
-        return false;
-    }
-
-    if( type == 'm' ) {
-        return std::ranges::any_of( materials, [&filter]( const material_id & mat ) {
-            return std::ranges::any_of( filter, [&mat]( const std::string & search ) {
-                return lcmatch( mat->name(), search );
-            } );
-        } );
-
-    } else if( type == 'M' ) {
-        return std::ranges::all_of( materials, [&filter]( const material_id & mat ) {
-            return std::ranges::any_of( filter, [&mat]( const std::string & search ) {
-                return lcmatch( mat->name(), search );
-            } );
-        } );
-    }
-
-    return false;
-}
-
-//Special case. Required for NPC harvest autopickup. Ignores material rules.
 void npc_settings::create_rule( const std::string &to_match )
 {
     rules.create_rule( map_items, to_match );
@@ -631,7 +612,7 @@ void rule_list::create_rule( cache &map_items, const item &it )
     for( const rule &elem : *this ) {
         if( !elem.bActive ) {
             continue;
-        } else if( !check_special_rule( it.made_of(), elem.sRule ) &&
+        } else if( !autopickup_item_function( it, elem.sRule ) &&
                    !wildcard_match( to_match, elem.sRule ) ) {
             continue;
         }
@@ -661,7 +642,7 @@ void rule_list::refresh_map_items( cache &map_items ) const
             for( const itype *e : item_controller->all() ) {
                 const std::string &cur_item = e->nname( 1 );
 
-                if( !check_special_rule( e->materials, elem.sRule ) && !wildcard_match( cur_item, elem.sRule ) ) {
+                if( !test_pattern_function( *e, elem.sRule ) && !wildcard_match( cur_item, elem.sRule ) ) {
                     continue;
                 }
 
@@ -672,7 +653,7 @@ void rule_list::refresh_map_items( cache &map_items ) const
             //only re-exclude items from the existing mapping for now
             //new exclusions will process during pickup attempts
             for( auto &map_item : map_items ) {
-                if( !check_special_rule( map_items.temp_items[ map_item.first ]->materials, elem.sRule ) &&
+                if( !test_pattern_function( *( map_items.temp_items[ map_item.first ] ), elem.sRule ) &&
                     !wildcard_match( map_item.first, elem.sRule ) ) {
                     continue;
                 }

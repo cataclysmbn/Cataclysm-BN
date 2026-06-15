@@ -6,6 +6,8 @@
     "name": { "str": ".45 ACP FMJ" },
     "description": ".45 ACP ammunition with 230gr FMJ bullets.  Noted for its stopping power, the .45 ACP round has been common for almost 150 years.",
     "//": "Base damage of 27, balance increase of two-nineths.",
+    "loudness": 157,
+    "speed": 290,
     "relative": { "damage": { "damage_type": "bullet", "amount": -8, "armor_penetration": 18 } }
   },
   {
@@ -28,6 +30,8 @@
     "damage": { "damage_type": "bullet", "amount": 41 },
     "dispersion": 50,
     "recoil": 600,
+    "loudness": 156,
+    "speed": 270,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -39,6 +43,8 @@
     "price": "210 cent",
     "price_postapoc": "6 USD",
     "count": 10,
+    "loudness": 158,
+    "speed": 380,
     "relative": { "damage": { "damage_type": "bullet", "armor_penetration": 18 }, "dispersion": -10 },
     "proportional": { "recoil": 1.2 }
   },

@@ -1097,6 +1097,7 @@
     "name": { "str": "battletorch (lit)", "str_pl": "battletorches (lit)" },
     "description": "This is a sturdy wood bat, wrapped in gasoline-soaked rags and flame-resistant Nomex fabric.  It is burning brightly, and makes it much easier to see the baselines at night games (It also makes the umpire FAR more likely to call a ball instead of a strike).",
     "color": "red",
+    "light_color": "#ffb05f",
     "turns_per_charge": 20,
     "revert_to": "battletorch_done",
     "//": "Roughly +25% fire damage",

@@ -7,6 +7,7 @@
 #include "coordinates.h"
 #include "sdl_wrappers.h"
 #include "sdl_geometry.h"
+#include "type_id.h"
 
 class pixel_minimap_projector;
 
@@ -76,7 +77,7 @@ class pixel_minimap
 
         //track the previous viewing area to determine if the minimap cache needs to be cleared
         tripoint_abs_sm cached_center_sm;
-        std::string cached_dimension_id;
+        dimension_id cached_dimension_id;
         // track presence of animated beacons to determine whether the minimap needs to be animated
         bool cached_has_animated_beacons = true;
 

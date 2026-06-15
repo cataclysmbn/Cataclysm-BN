@@ -51,12 +51,12 @@ itype::~itype() = default;
 
 int itype::damage_min() const
 {
-    return count_by_charges() ? 0 : damage_min_;
+    return count_by_charges() && !is_stackable() ? 0 : damage_min_;
 }
 
 int itype::damage_max() const
 {
-    return count_by_charges() ? 0 : damage_max_;
+    return count_by_charges() && !is_stackable() ? 0 : damage_max_;
 }
 
 std::string itype::get_item_type_string() const
@@ -99,6 +99,11 @@ const itype_id &itype::get_id() const
 bool itype::count_by_charges() const
 {
     return stackable_ || ammo || comestible;
+}
+
+bool itype::is_stackable() const
+{
+    return stackable_;
 }
 
 int itype::charges_default() const

@@ -118,10 +118,29 @@ shuffle = function(set)
   return set
 end
 
+---@param map Map
+---@param stair_id TerIntId
+---@param zlevel integer
+local function insert_stairs_single(map, stair_id, zlevel)
+  local valid_points = {}
+  for i = 0, 23 do
+    for j = 0, 23 do
+      local pt = TripointBubMs.new(i, j, zlevel)
+      if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
+        table.insert(valid_points, PointBubMs.new(i, j))
+      end
+    end
+  end
+  if #valid_points == 0 then return end
+  local final_point = valid_points[gapi.rng(1, #valid_points)]
+  map:set_ter_at(TripointBubMs.new(final_point, zlevel), stair_id)
+end
+
 -- This is the primary insert stair function, I wish there was the ability to read the square above
 -- But it appears that it just registers everything as t_thconc_floor
 insert_stairs = function(map, up_id, down_id, zlevel, from_above)
   local valid_points = {}
+  local linked_point = nil
   for i = 0, 23 do
     for j = 0, 23 do
       local pt = TripointBubMs.new(i, j, zlevel)
@@ -131,8 +150,7 @@ insert_stairs = function(map, up_id, down_id, zlevel, from_above)
       if ( from_above and map:get_ter_at(pt_above) == t_stairs_down ) or
          ( not from_above and map:get_ter_at(pt_below) == t_stairs_up ) then
         if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
-          valid_points = {PointBubMs.new(i, j)}
-          i = 24
+          linked_point = PointBubMs.new(i, j)
           break
         end
       end
@@ -140,7 +158,9 @@ insert_stairs = function(map, up_id, down_id, zlevel, from_above)
         table.insert(valid_points, PointBubMs.new(i, j))
       end
     end
+    if linked_point then break end
   end
+  if linked_point then valid_points = { linked_point } end
   if #valid_points > 0 then
     local final_point = valid_points[gapi.rng(1, #valid_points)]
     if( from_above ) then

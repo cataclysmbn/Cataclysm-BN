@@ -25,7 +25,7 @@
     "durability": 7,
     "clip_size": 50,
     "reload": 50,
-    "loudness": 9,
+    "loudness": 50,
     "valid_mod_locations": [ [ "sling", 1 ], [ "grip", 1 ], [ "rail", 1 ], [ "sights", 1 ], [ "stock", 1 ], [ "underbarrel", 1 ] ]
   }
 ]

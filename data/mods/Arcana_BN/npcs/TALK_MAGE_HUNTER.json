@@ -273,12 +273,21 @@
   {
     "id": "TALK_MAGE_HUNTER_REMAIN",
     "type": "talk_topic",
-    "dynamic_line": [
-      "You're the first of our brethren outside our hunting party that I've seen since this mess started.  I wish I could tell you more.",
-      "If any of us know, Thane McKinnon would.  Ask her.",
-      "I wish I knew for certain.  Sofia remains confident that others are out there, and I suppose your arrival confirms that.  Beyond that, we shall see.",
-      "There has to be.  I cannot say for certain, but by the gods we can't be all that's left…"
-    ],
+    "dynamic_line": {
+      "u_has_effect": "cf_mission_sofia_3",
+      "yes": [
+        "Grandmaster Leone has proven we are not alone, as have you.  There are surely more hunting parties out there to answer the call.",
+        "More of our brethren shall find us, in due time.  We need only persevere.",
+        "You have proven that others are out there.  Only time will tell how many more there are.  Dii supra et infra, dōnēs nobis virtus.",
+        "Even if we are the last, there will always be people out there, holding back the dark until the last breath of humanity."
+      ],
+      "no": [
+        "You're the first of our brethren outside our hunting party that I've seen since this mess started.  I wish I could tell you more.",
+        "If any of us know, Thane McKinnon would.  Ask her.",
+        "I wish I knew for certain.  Sofia remains confident that others are out there, and I suppose your arrival confirms that.  Beyond that, we shall see.",
+        "There has to be.  I cannot say for certain, but by the gods we can't be all that's left…"
+      ]
+    },
     "responses": [
       { "text": "And do you still uphold the faith?", "topic": "TALK_MAGE_HUNTER_FAITH" },
       { "text": "I see.", "topic": "TALK_MAGE_HUNTER" }
@@ -364,7 +373,7 @@
     "type": "talk_topic",
     "dynamic_line": [
       "That explains it.  Normally I would ask that you turn in any items related to your profession, as they are very dangerous in the wrong hands.  Sofia has requested that we hold off on searches without her approval.",
-      "Such magic can be very dangerous if misused, and it has a lingering impact on its practitioners.  It would be wise not to hoard the tools of such a trade, but I cannot force you to turn in such contraband.  Not without Sofia's, at least."
+      "Such magic can be very dangerous if misused, and it has a lingering impact on its practitioners.  It would be wise not to hoard the tools of such a trade, but per Sofia's orders I cannot force you to turn in such contraband."
     ],
     "responses": [
       { "text": "If I have anything of that sort, would you accept it?", "topic": "TALK_MAGE_HUNTER_OTHERWORLDLY_CONTRABAND" },
@@ -387,7 +396,8 @@
       {
         "text": "Okay, here you go.",
         "condition": { "u_has_item": "book_summoning" },
-        "effect": { "u_consume_item": "book_summoning" },
+        "effect": [ { "u_consume_item": "book_summoning" }, { "u_faction_rep": 5 } ],
+        "opinion": { "value": 3, "anger": -1 },
         "topic": "TALK_MAGE_HUNTER_OTHERWORLDLY_SURRENDER"
       },
       {
@@ -402,7 +412,7 @@
     "type": "talk_topic",
     "dynamic_line": [
       "Thank you.  These coins are used by Sofia and others of our order for trade with outsiders that work with us.  If there is anything she can provide then speak to her.  I'm afraid this is all I can spare, but it should help.",
-      "I'm afraid I only have enough to compensate for one of these books, so I pray that you'll trust Sofia with any others you find.",
+      "I have only enough on hand to compensate for one of these books, so I pray that you'll trust Sofia with any others you find.",
       "Here you are.  I will deal with this per Thane McKinnon's advice, forgive me if she orders it destroyed.  This should be fair pay for what it would've been worth, before all this started."
     ],
     "responses": [
@@ -419,7 +429,7 @@
     "dynamic_line": [
       "Keep your gods-damned secrets then.  With that attitude you'll take them to the grave one of these days.",
       "Trust must be earned.  You will not be welcome here if you attempt to deceive us.",
-      "I are being lenient by not having you searched for dangerous artifacts.  Do not test my patience.",
+      "We are being lenient by not having you searched for dangerous artifacts.  Do not test my patience.",
       "I would slay you where you stand if not for Sofia's orders.  Either answer to her, or leave.  While you still can.",
       "We are watching you.  Step out of line and I will put you down personally."
     ],

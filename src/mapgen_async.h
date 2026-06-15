@@ -4,6 +4,7 @@
 
 #include "calendar.h"
 #include "coordinates.h"
+#include "type_id.h"
 
 namespace cata
 {
@@ -25,7 +26,7 @@ struct lua_state;
  * main thread.
  */
 struct deferred_mapgen_hook {
-    std::string       dim;
+    dimension_id      dim;
     tripoint_abs_omt  omt_pos;
     time_point        when;
 };
@@ -39,7 +40,7 @@ struct deferred_mapgen_hook {
  * logic that would have run inline on the main thread.
  */
 struct deferred_autonote {
-    std::string       dim;
+    dimension_id      dim;
     tripoint_abs_omt  omt_pos;
     std::string       extra_id;   // raw string backing a string_id<map_extra>
 };

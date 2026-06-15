@@ -311,7 +311,7 @@
     "location": "mechanism",
     "mod_target_category": [ [ "PISTOLS", "AUTOLOADING" ] ],
     "dispersion_modifier": 60,
-    "loudness_modifier": 2,
+    "loudness_modifier": 1,
     "mode_modifier": [ [ "AUTO", "auto", 3 ] ],
     "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ] ],
     "flags": [ "INSTALL_DIFFICULT", "IRREMOVABLE" ]

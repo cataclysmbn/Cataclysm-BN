@@ -21,6 +21,7 @@
     "durability": 6,
     "clip_size": 1,
     "reload": 80,
+    "loudness": 2,
     "valid_mod_locations": [
       [ "accessories", 1 ],
       [ "grip", 1 ],
@@ -49,6 +50,7 @@
     "dispersion": 855,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 6 ] ],
     "reload": 200,
+    "loudness": -2,
     "valid_mod_locations": [ [ "accessories", 4 ], [ "sights", 1 ], [ "rail", 1 ] ],
     "magazines": [ [ "shot", [ "shotbelt_20" ] ] ],
     "flags": [ "MOUNTED_GUN" ]
@@ -324,6 +326,7 @@
     "durability": 6,
     "clip_size": 1,
     "reload": 200,
+    "loudness": -2,
     "barrel_volume": "500 ml",
     "valid_mod_locations": [
       [ "accessories", 2 ],
@@ -375,6 +378,7 @@
     "price": "538 USD",
     "price_postapoc": "2250 cent",
     "barrel_volume": "0 ml",
+    "loudness": -2,
     "built_in_mods": [ "breacher_grip" ],
     "default_mods": [ "improve_sights" ],
     "valid_mod_locations": [
@@ -457,6 +461,7 @@
     "clip_size": 6,
     "reload": 200,
     "barrel_volume": "250 ml",
+    "loudness": 0,
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "sling", 1 ],

@@ -1175,23 +1175,43 @@ static int calc_gun_volume( const item &gun )
     // Inherit suppressor modifiers if relevant (e.g. KSG second mag) but still use current ammo
     const item &parent = ( gun.parent_item() != nullptr &&
                            gun.has_flag( flag_USE_PARENT_GUN ) ) ? *gun.parent_item() : gun;
+    const bool am_dat = gun.ammo_data();
     // If our ammo is subsonic, loudness mods from the gun and gunmods can reduce noise freely.
-    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will make a sonic boom.
-    int noise = parent.type->gun->loudness;
-    // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
-    if( gun.ammo_data() ) {
-        noise += gun.ammo_data()->ammo->loudness;
+    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will still make a sonic boom.
+    // Start our noise at zero.
+    int noise = 0;
+    int speed = parent.gun_speed( am_dat );
+    bool suppressed = false;
+    if( am_dat ) {
+        noise = parent.ammo_data()->ammo->loudness;
         // Speed of sound at sea level is around 343 meters per second.
         // While it would be ideal to be based on speed of sound
         // EVERYTHING flies faster then the speed of sound so using that to force loud sounds makes little sense in the current state of affairs
         // NOTE: If supersonic ever gets implented, use it here
-        noise = std::min( 160, noise );
+        noise += parent.type->gun->loudness;
+    } else {
+        // If we dont have an ammo, assume that we are not a firearm/we are a fake monster item or something
+        noise = parent.type->gun->loudness;
     }
+    // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
     for( const auto mod : parent.gunmods() ) {
+        if( mod->type->gunmod->loudness < -20 ) {
+            suppressed = true;
+        }
         noise += mod->type->gunmod->loudness;
     }
+    if( suppressed ) {
+        // Speed of sound in atmosphere @ seat level is 343 m/s
+        if( speed < 344 ) {
+            // We are suppressed and subsonic. We take the least of 100 or current noise.
+            noise = std::min( 100, noise );
+        } else {
+            // We are suppressed but still super sonic. Cap our volume to 120.
+            noise = std::min( 120, noise );
+        }
+    }
 
-
+    noise = std::min( 191, noise );
     // Cap it like it gets capped when making a sound
     noise = std::max( noise, 0 );
     return noise;
@@ -1284,10 +1304,13 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
 
         // Apply enchantment bonuses to projectile
         int base_bullet_damage = static_cast<int>( projectile.impact.type_damage( DT_BULLET ) );
+        int base_penetrate_bullet = projectile.impact.get_armor_pen( DT_BULLET );
         int ench_damage_bonus = who.bonus_from_enchantments( base_bullet_damage,
                                 enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
+        int ench_penetrate_bonus = who.bonus_from_enchantments( base_penetrate_bullet,
+                                   enchant_vals::mod::RANGED_ARMOR_PENETRATION );
         if( ench_damage_bonus != 0 ) {
-            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus );
+            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus, ench_penetrate_bonus );
         }
 
         int ench_range_bonus = who.bonus_from_enchantments( projectile.range,
@@ -2125,20 +2148,9 @@ static int print_ranged_chance( const catacurses::window &w, int line_number,
     return line_number;
 }
 
-// Whether player character knows creature's position and can roughly track it with the aim cursor
-static auto outside_visible_z_range( const tripoint_bub_ms &from,
-                                     const tripoint_bub_ms &to ) -> bool
-{
-    return get_map().has_zlevels() && fov_3d &&
-           std::abs( from.z() - to.z() ) > fov_3d_z_range;
-}
-
 static bool pl_sees( const Creature &cr )
 {
     Character &u = get_player_character();
-    if( outside_visible_z_range( u.bub_pos(), cr.bub_pos() ) ) {
-        return false;
-    }
     return u.sees( cr ) || u.sees_with_infrared( cr ) || u.sees_with_specials( cr );
 }
 
@@ -2793,11 +2805,6 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
             return false;
         }
 
-        if( outside_visible_z_range( shooter_pos, critter_pos ) )
-        {
-            return false;
-        }
-
         // Special case: if range is 1, it's a melee attack.
         // Melee attacks can only target on same z-level or directly up/down, not "z-diagonally".
         if( range <= 1 && shooter_pos.z() != critter_pos.z() && shooter_pos.xy() != critter_pos.xy() )
@@ -2887,7 +2894,7 @@ target_handler::trajectory target_ui::run()
 
     map &here = get_map();
     // Load settings
-    allow_zlevel_shift = here.has_zlevels() && get_option<bool>( "FOV_3D" );
+    allow_zlevel_shift = here.has_zlevels();
     snap_to_target = get_option<bool>( "SNAP_TO_TARGET" );
     if( mode == TargetMode::Turrets ) {
         // Due to how cluttered the display would become, disable it by default
@@ -3105,7 +3112,7 @@ target_handler::trajectory target_ui::run()
             activity->action = timed_out_action;
             activity->snap_to_target = snap_to_target;
             activity->shifting_view = shifting_view;
-            activity->aiming_at_critter = !!dst_critter;
+            activity->aiming_at_critter = dst_critter != nullptr || you->last_target.lock() != nullptr;
             break;
         }
         case ExitCode::Reload: {
@@ -3259,7 +3266,17 @@ bool target_ui::handle_cursor_movement( const std::string &action, bool &skip_re
 
 bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
 {
+    const auto refresh_dst_critter = [this]() {
+        if( src != dst ) {
+            Creature *const cr = g->critter_at( dst, true );
+            dst_critter = cr && pl_sees( *cr ) ? cr : nullptr;
+        } else {
+            dst_critter = nullptr;
+        }
+    };
+
     if( dst == new_pos ) {
+        refresh_dst_critter();
         return false;
     }
     if( status == Status::OutOfAmmo && new_pos != src ) {
@@ -3274,8 +3291,6 @@ bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
     if( new_pos != src ) {
         // On Z axis, make sure we do not exceed map boundaries
         valid_pos.z() = clamp( valid_pos.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT );
-        // Or current view range
-        valid_pos.z() = clamp( valid_pos.z() - src.z(), -fov_3d_z_range, fov_3d_z_range ) + src.z();
 
         new_traj = here.find_clear_path( src, valid_pos );
         if( range == 1 ) {
@@ -3345,16 +3360,7 @@ bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
     }
 
     // Cache creature under cursor
-    if( src != dst ) {
-        Creature *cr = g->critter_at( dst, true );
-        if( cr && pl_sees( *cr ) ) {
-            dst_critter = cr;
-        } else {
-            dst_critter = nullptr;
-        }
-    } else {
-        dst_critter = nullptr;
-    }
+    refresh_dst_critter();
 
     // Update mode-specific stuff
     if( mode == TargetMode::Fire ) {
@@ -3458,13 +3464,12 @@ tripoint_bub_ms target_ui::choose_initial_target()
 
 bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
 {
-    if( critter ) {
-        // Try to re-acquire the creature
-        shared_ptr_fast<Creature> cr = you->last_target.lock();
-        if( cr && pl_sees( *cr ) && dist_fn( cr->bub_pos() ) <= range ) {
-            new_dst = cr->bub_pos();
-            return true;
-        }
+    // Prefer creature identity over the saved tile.  If aiming_at_critter was
+    // lost for one UI pass, last_target still tells us what the aim was tracking.
+    const auto cr = you->last_target.lock();
+    if( cr && pl_sees( *cr ) && dist_fn( cr->bub_pos() ) <= range ) {
+        new_dst = cr->bub_pos();
+        return true;
     }
 
     if( !you->last_target_pos.has_value() ) {
@@ -3473,8 +3478,8 @@ bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
     }
 
     // Try to re-acquire target tile or tile where the target creature used to be
-    auto local_lt = get_map().abs_to_bub( *you->last_target_pos );
-    if( !outside_visible_z_range( src, local_lt ) && dist_fn( local_lt ) <= range ) {
+    auto local_lt = abs_to_bub( *you->last_target_pos );
+    if( dist_fn( local_lt ) <= range ) {
         new_dst = local_lt;
         // Abort aiming if a creature moved in
         return !critter && !g->critter_at( local_lt, true );
@@ -3520,7 +3525,7 @@ int target_ui::dist_fn( const tripoint_bub_ms &p )
 
 void target_ui::set_last_target()
 {
-    you->last_target_pos = get_map().bub_to_abs( dst );
+    you->last_target_pos = bub_to_abs( dst );
     if( dst_critter ) {
         you->last_target = g->shared_from( *dst_critter );
     } else {
@@ -3639,7 +3644,9 @@ void target_ui::cycle_targets( int direction )
 
 void target_ui::set_view_offset( const tripoint_rel_ms &new_offset )
 {
-    tripoint_rel_ms new_( new_offset.xy(), clamp( new_offset.z(), -fov_3d_z_range, fov_3d_z_range ) );
+    tripoint_rel_ms new_( new_offset.xy(),
+                          clamp( new_offset.z(), -OVERMAP_DEPTH - src.z(),
+                                 OVERMAP_HEIGHT - src.z() ) );
     new_.z() = clamp( new_.z() + src.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT ) - src.z();
 
     bool changed_z = you->view_offset.z() != new_.z();
@@ -3678,7 +3685,7 @@ void target_ui::recalc_aim_turning_penalty()
     if( lt_ptr ) {
         curr_recoil_pos = lt_ptr->bub_pos();
     } else if( you->last_target_pos ) {
-        curr_recoil_pos = get_map().abs_to_bub( *you->last_target_pos );
+        curr_recoil_pos = abs_to_bub( *you->last_target_pos );
     } else {
         curr_recoil_pos = src;
     }
@@ -3918,14 +3925,11 @@ void target_ui::draw_terrain_overlay()
     if( mode != TargetMode::Turrets && dst != src ) {
         std::vector<tripoint_bub_ms> this_z = filter_this_z( traj );
 
-        // Draw a highlighted trajectory only if we can see the endpoint.
-        // Provides feedback to the player, but avoids leaking information
-        // about tiles they can't see.
-        g->draw_line( dst, center, this_z );
+        g->draw_line( dst, center, this_z, true );
     }
 
-    // Since draw_line does nothing if destination is not visible,
-    // cursor also disappears. Draw it explicitly.
+    // TILES draw_line uses a target endpoint sprite.  Keep the cursor explicit
+    // so aiming at empty tiles and z-level edges has the normal cursor marker.
     if( dst.z() == center.z() ) {
         g->draw_cursor( dst );
     }

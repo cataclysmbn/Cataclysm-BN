@@ -20,6 +20,8 @@
     "damage": { "damage_type": "bullet", "amount": 55, "armor_penetration": 24 },
     "dispersion": 15,
     "recoil": 3000,
+    "loudness": 156,
+    "speed": 810,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -28,6 +30,8 @@
     "type": "AMMO",
     "name": { "str": "7.62x51mm NATO M80" },
     "casing": "762_51_casing",
+    "loudness": 156,
+    "speed": 900,
     "description": "A 7.62x51mm NATO round with a 147gr FMJ bullet.  It is a powerful rifle cartridge commonly used by hunters and military snipers because of its high accuracy and long range.",
     "relative": { "damage": { "damage_type": "bullet", "amount": -7, "armor_penetration": 17 }, "dispersion": -10 },
     "proportional": { "recoil": 1.1 },
