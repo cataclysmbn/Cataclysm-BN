@@ -455,22 +455,30 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     const auto for_each_monster = [&]( auto &&fn ) {
         if( ctx.monsters ) {
             for( monster *mp : *ctx.monsters ) {
-                fn( *mp );
+                if( mp != nullptr && !mp->is_dead() ) {
+                    fn( *mp );
+                }
             }
         } else {
             for( monster &tmp : g->all_monsters() ) {
-                fn( tmp );
+                if( !tmp.is_dead() ) {
+                    fn( tmp );
+                }
             }
         }
     };
     const auto for_each_npc = [&]( auto &&fn ) {
         if( ctx.npcs ) {
             for( npc *np : *ctx.npcs ) {
-                fn( *np );
+                if( np != nullptr && !np->is_dead() ) {
+                    fn( *np );
+                }
             }
         } else {
             for( npc &who : g->all_npcs() ) {
-                fn( who );
+                if( !who.is_dead() ) {
+                    fn( who );
+                }
             }
         }
     };
@@ -491,6 +499,9 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     int local_morale  = morale;
     int local_friendly = friendly;
     tripoint_bub_ms local_goal = goal;
+    auto local_goal_kind = monster_plan_goal_kind::none;
+    auto *local_observed_target = static_cast<Creature *>( nullptr );
+    auto local_observed_target_pos = tripoint_bub_ms::zero();
 
     const auto &factions = g->critter_tracker->factions();
 
@@ -632,6 +643,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         result.anger   = local_anger;
         result.morale  = local_morale;
         result.friendly = local_friendly;
+        result.goal_kind = monster_plan_goal_kind::none;
         return result;
     }
 
@@ -755,7 +767,9 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                         const auto sit = ctx.faction_snap->find( hostile_id );
                         if( sit != ctx.faction_snap->end() ) {
                             std::ranges::for_each( sit->second, [&]( monster * mon_ptr ) {
-                                process_sight( *mon_ptr );
+                                if( mon_ptr != nullptr && !mon_ptr->is_dead() ) {
+                                    process_sight( *mon_ptr );
+                                }
                             } );
                         }
                     }
@@ -814,7 +828,9 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 const auto it = ctx.faction_snap->find( actual_faction );
                 if( it != ctx.faction_snap->end() ) {
                     std::ranges::for_each( it->second, [&]( monster * mon_ptr ) {
-                        process_faction_member( *mon_ptr );
+                        if( mon_ptr != nullptr && !mon_ptr->is_dead() ) {
+                            process_faction_member( *mon_ptr );
+                        }
                     } );
                 }
             } else {
@@ -872,8 +888,10 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             if( !found_path_to_couch ) {
                 local_anger = 0;
                 result.effects_to_remove.push_back( effect_dragging );
+                local_goal_kind = monster_plan_goal_kind::none;
             } else {
                 local_goal = couch_loc;
+                local_goal_kind = monster_plan_goal_kind::none;
             }
         }
 
@@ -881,8 +899,11 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
 
         const auto dest = target->bub_pos();
         const auto att_to_target = attitude_to( *target );
+        local_observed_target = target;
+        local_observed_target_pos = dest;
         if( att_to_target == Attitude::A_HOSTILE && !fleeing ) {
             local_goal = dest;
+            local_goal_kind = monster_plan_goal_kind::target_last_known;
         } else if( fleeing ) {
             const auto current_pos = bub_pos();
             const auto away = current_pos - dest;
@@ -899,6 +920,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 flee_goal.z() = current_pos.z();
             }
             local_goal = flee_goal;
+            local_goal_kind = monster_plan_goal_kind::none;
         }
         if( angers_hostile_weak && att_to_target != Attitude::A_FRIENDLY ) {
             int hp_per = target->hp_percentage();
@@ -932,11 +954,14 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         if( allow_follow_player && !has_flag( MF_PET_WONT_FOLLOW ) ) {
             if( rl_dist( bub_pos(), g->u.bub_pos() ) > 2 ) {
                 local_goal = g->u.bub_pos();
+                local_goal_kind = monster_plan_goal_kind::none;
             } else {
                 local_goal = bub_pos(); // unset_dest
+                local_goal_kind = monster_plan_goal_kind::none;
             }
         } else if( allow_follow_player ) {
             local_goal = bub_pos(); // unset_dest
+            local_goal_kind = monster_plan_goal_kind::none;
         }
         const auto &u = g->u;
         const int distance_from_friend = rl_dist( bub_pos(), u.bub_pos() );
@@ -960,15 +985,21 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             target->attitude_to( g->u ) == Attitude::A_HOSTILE && !fleeing ) {
             if( rl_dist( bub_pos(), g->u.bub_pos() ) > 5 ) {
                 local_goal = g->u.bub_pos();
+                local_goal_kind = monster_plan_goal_kind::none;
             }
         } else if( rl_dist( bub_pos(), g->u.bub_pos() ) > 1 ) {
             local_goal = g->u.bub_pos();
+            local_goal_kind = monster_plan_goal_kind::none;
         } else {
             local_goal = bub_pos(); // unset_dest
+            local_goal_kind = monster_plan_goal_kind::none;
         }
     }
 
     result.goal     = local_goal;
+    result.goal_kind = local_goal_kind;
+    result.observed_target = local_observed_target;
+    result.observed_target_pos = local_observed_target_pos;
     result.anger    = local_anger;
     result.morale   = local_morale;
     result.friendly = local_friendly;
@@ -978,11 +1009,17 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
 
 void monster::apply_plan( const monster_plan_t &plan )
 {
-    // Apply movement goal.
-    // LOGIC-1: set_goal(plan.goal) correctly implements the unset_dest()
-    // semantic when plan.goal == bub_pos(), because unset_dest() is defined as
-    // set_goal(pos()).  No special-case handling for the "unset" value is needed.
-    set_goal( plan.goal );
+    // Target movement updates last-known position; it does not by itself mean
+    // the monster's current movement path is broken.
+    if( plan.goal_kind == monster_plan_goal_kind::target_last_known ) {
+        const auto &here = get_map();
+        if( here.inbounds( plan.goal ) ) {
+            goal = plan.goal;
+        }
+    } else {
+        // set_goal(bub_pos()) preserves unset_dest() semantics.
+        set_goal( plan.goal );
+    }
 
     // Apply stat changes.
     anger   = plan.anger;
@@ -1178,11 +1215,8 @@ monster_action_t monster::decide_action() const
             }
         }
 
-        // Signal A* repath if needed (execute_action will do the actual call).
-        // Tier-0: always repath when requested.
-        // Tier-1: also repath when repath_requested is already set (monster was
-        //   stuck last turn), breaking the perpetual stuck loop where a blocked
-        //   Tier-1 monster spends 100 moves per turn and never replans.
+        // Signal stale path/request state.  execute_action only routes from
+        // no-step idle actions; a valid greedy step is taken directly.
         if( repath_requested && lod_tier <= 1 && !action.needs_repath ) {
             action.needs_repath = true;
         }
@@ -1405,10 +1439,6 @@ monster_action_t monster::decide_action() const
         action.kind          = monster_action_kind::idle;
         action.move_cost     = 100;
         action.needs_stumble = true;
-        if( !is_wandering() ) {
-            // Flag that the path is stale; execute_action will clear it.
-            action.needs_repath = true;
-        }
     }
 
     return action;
@@ -1437,13 +1467,18 @@ void monster::execute_action( const monster_action_t &action )
     // move_effects) that happen before the movement execution.
     map &here = g->m;
 
-    behavior::monster_oracle_t oracle( this );
-    behavior::tree goals;
-    goals.add( type->get_goals() );
-    std::string beh_action = goals.tick( &oracle );
+    std::string beh_action;
+    {
+        ZoneScopedN( "mon_execute_behavior" );
+        behavior::monster_oracle_t oracle( this );
+        behavior::tree goals;
+        goals.add( type->get_goals() );
+        beh_action = goals.tick( &oracle );
+    }
     // The monster can consume objects it stands on.
     if( beh_action == "consume_items" &&
         ( !has_effect( effect_mon_mitosis ) || hp < type->hp * 3 ) ) {
+        ZoneScopedN( "mon_execute_consume_items" );
         if( g->u.sees( *this ) ) {
             add_msg( _( "The %s flows around the objects on the floor and they are quickly dissolved!" ),
                      name() );
@@ -1484,6 +1519,7 @@ void monster::execute_action( const monster_action_t &action )
     //     loop: if all call()s failed the cooldown was never reset, decide_action()
     //     saw cooldown==0 again next iteration, and moves were never consumed.
     if( !( pacified || is_hallucination() ) ) {
+        ZoneScopedN( "mon_execute_special_attacks" );
         std::vector<const std::pair<const std::string, mtype_special_attack> *> spec_list;
         for( const auto &sp_type : type->special_attacks ) {
             const auto it = special_attacks.find( sp_type.first );
@@ -1511,11 +1547,16 @@ void monster::execute_action( const monster_action_t &action )
     // Fall through: execute the movement action regardless of whether a special fired.
 
     // Dragging foe / nursebot.
-    player *dragged_foe = find_dragged_foe();
-    nursebot_operate( dragged_foe );
+    auto *dragged_foe = static_cast<player *>( nullptr );
+    {
+        ZoneScopedN( "mon_execute_drag_setup" );
+        dragged_foe = find_dragged_foe();
+        nursebot_operate( dragged_foe );
+    }
 
     // Floor / drowning / moves-negative guards.
     if( !flies() && g->m.has_flag( TFLAG_NO_FLOOR, bub_pos() ) ) {
+        ZoneScopedN( "mon_execute_floor_trap" );
         g->m.creature_on_trap( *this, false );
         if( is_dead() ) {
             return;
@@ -1533,9 +1574,12 @@ void monster::execute_action( const monster_action_t &action )
     // move_effects — may prevent movement this tick.
     // TODO: Move this to attack_at/move_to/etc. functions
     bool attacking = false;
-    if( !move_effects( attacking ) ) {
-        moves = 0;
-        return;
+    {
+        ZoneScopedN( "mon_execute_move_effects" );
+        if( !move_effects( attacking ) ) {
+            moves = 0;
+            return;
+        }
     }
 
     // Friendly decrement — runs unconditionally here so idle-path exits
@@ -1545,19 +1589,96 @@ void monster::execute_action( const monster_action_t &action )
         --friendly;
     }
 
+    // Movement execution phase.
+    auto dest = resolved_action.dest;
+
+    const auto reclassify_destination = [&]() {
+        resolved_action.target = nullptr;
+        resolved_action.stagger_adjust = get_stagger_adjust( bub_pos().raw(),
+                                         dest.raw(), dest.raw() );
+
+        const Creature *critter_here = g->critter_at( dest, is_hallucination() );
+        if( !pacified && critter_here != nullptr &&
+            attitude_to( *critter_here ) == Attitude::A_HOSTILE ) {
+            resolved_action.kind = monster_action_kind::attack;
+            resolved_action.target = const_cast<Creature *>( critter_here );
+        } else if( !pacified && has_flag( MF_CAN_OPEN_DOORS ) &&
+                   here.can_open_door( this, dest, !here.is_outside( bub_pos() ) ) ) {
+            resolved_action.kind = monster_action_kind::open_door;
+        } else if( !pacified && bash_skill() > 0 && !can_move_to( dest ) ) {
+            resolved_action.kind = monster_action_kind::bash;
+        } else if( !pacified && critter_here != nullptr &&
+                   attitude_to( *critter_here ) != Attitude::A_HOSTILE &&
+                   has_flag( MF_PUSH_MON ) ) {
+            resolved_action.kind = monster_action_kind::push;
+        } else if( has_flag( MF_STATIONARY ) ) {
+            resolved_action.kind = monster_action_kind::idle;
+            resolved_action.move_cost = 100;
+        } else {
+            resolved_action.kind = monster_action_kind::move;
+        }
+    };
+
+    auto route_attempted = false;
+    const auto try_repath = [&]() -> bool {
+        if( !resolved_action.needs_repath ||
+            is_wandering() ||
+            lod_tier > 1 ) {
+            return false;
+        }
+        route_attempted = true;
+        ZoneScopedN( "mon_execute_repath" );
+        std::vector<tripoint_bub_ms> maybe_new_path;
+        if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
+            ZoneScopedN( "mon_execute_route_legacy" );
+            auto pf_settings = get_legacy_pathfinding_settings();
+            maybe_new_path = g->m.route( bub_pos(), goal, pf_settings,
+                                         get_legacy_path_avoid() );
+        } else {
+            ZoneScopedN( "mon_execute_route_pf" );
+            auto pair = get_pathfinding_pair();
+            maybe_new_path = Pathfinding::route( bub_pos(), goal,
+                                                 pair.first, pair.second );
+        }
+        assert( maybe_new_path.empty() ? true : maybe_new_path.back() == this->goal );
+        if( maybe_new_path.empty() ) {
+            path.clear();
+            return false;
+        }
+        path = maybe_new_path;
+        auto path_it = path.cbegin();
+        while( path_it != path.cend() && *path_it == bub_pos() ) {
+            ++path_it;
+        }
+        if( path_it == path.cend() ) {
+            return false;
+        }
+        {
+            ZoneScopedN( "mon_execute_repath_reclassify" );
+            dest = *path_it;
+            resolved_action.dest = dest;
+            reclassify_destination();
+        }
+        return true;
+    };
+
     // Idle / stumble actions (immobile, stunned, ai_waiting, attitude-stumble,
     //     no-viable-step).  These are checked AFTER move_effects to preserve the
     //     original ordering.
     if( resolved_action.kind == monster_action_kind::idle ) {
-        moves -= resolved_action.move_cost;
-        if( resolved_action.needs_stumble ) {
-            stumble();
+        if( resolved_action.needs_repath && try_repath() ) {
+            // A route supplied an executable step; continue into movement.
+        } else {
+            moves -= resolved_action.move_cost;
+            if( resolved_action.needs_stumble ) {
+                stumble();
+            }
+            if( resolved_action.needs_repath && !is_wandering() ) {
+                this->path.clear();
+                this->repath_requested = !route_attempted;
+            }
+            return;
         }
-        if( resolved_action.needs_repath && !is_wandering() ) {
-            this->path.clear();
-            this->repath_requested = true;
-        }
-        return;
     }
 
     if( resolved_action.kind == monster_action_kind::stumble ) {
@@ -1583,69 +1704,19 @@ void monster::execute_action( const monster_action_t &action )
         }
     }
 
-    // Movement execution phase.
-    auto dest = resolved_action.dest;
+    const auto immediate_action =
+        rl_dist( bub_pos(), resolved_action.dest ) <= 1 &&
+        ( resolved_action.kind == monster_action_kind::attack ||
+          resolved_action.kind == monster_action_kind::open_door ||
+          resolved_action.kind == monster_action_kind::bash ||
+          resolved_action.kind == monster_action_kind::push );
 
-    // Path trimming: remove front elements that equal current position.
-    while( !path.empty() && path.front() == bub_pos() ) {
-        path.erase( path.begin() );
-    }
-
-    // A* repath if flagged by decide_action.
-    //      Tier 0: always.  Tier 1: when genuinely stuck (see LOGIC-E note in
-    //      decide_action).  Tier 2: never — macro step has no path.
-    if( resolved_action.needs_repath && !is_wandering() ) {
-        if( lod_tier <= 1 ) {
-            std::vector<tripoint_bub_ms> maybe_new_path;
-            if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
-                auto pf_settings = get_legacy_pathfinding_settings();
-                maybe_new_path = g->m.route( bub_pos(), goal, pf_settings,
-                                             get_legacy_path_avoid() );
-            } else {
-                auto pair = get_pathfinding_pair();
-                maybe_new_path = Pathfinding::route( bub_pos(), goal,
-                                                     pair.first, pair.second );
-            }
-            assert( maybe_new_path.empty() ? true : maybe_new_path.back() == this->goal );
-            if( !maybe_new_path.empty() ) {
-                path = maybe_new_path;
-            } else {
-                path.clear();
-            }
-        }
-        // Tier 2: path unchanged; macro step does not use the A* path.
-        auto path_it = path.cbegin();
-        while( path_it != path.cend() && *path_it == bub_pos() ) {
-            ++path_it;
-        }
-        if( path_it != path.cend() ) {
-            dest = *path_it;
-            resolved_action.dest = dest;
-            resolved_action.target = nullptr;
-            resolved_action.stagger_adjust = get_stagger_adjust( bub_pos().raw(),
-                                             dest.raw(), dest.raw() );
-
-            const Creature *critter_here = g->critter_at( dest, is_hallucination() );
-            if( !pacified && critter_here != nullptr &&
-                attitude_to( *critter_here ) == Attitude::A_HOSTILE ) {
-                resolved_action.kind = monster_action_kind::attack;
-                resolved_action.target = const_cast<Creature *>( critter_here );
-            } else if( !pacified && has_flag( MF_CAN_OPEN_DOORS ) &&
-                       here.can_open_door( this, dest, !here.is_outside( bub_pos() ) ) ) {
-                resolved_action.kind = monster_action_kind::open_door;
-            } else if( !pacified && bash_skill() > 0 && !can_move_to( dest ) ) {
-                resolved_action.kind = monster_action_kind::bash;
-            } else if( !pacified && critter_here != nullptr &&
-                       attitude_to( *critter_here ) != Attitude::A_HOSTILE &&
-                       has_flag( MF_PUSH_MON ) ) {
-                resolved_action.kind = monster_action_kind::push;
-            } else if( has_flag( MF_STATIONARY ) ) {
-                resolved_action.kind = monster_action_kind::idle;
-                resolved_action.move_cost = 100;
-            } else {
-                resolved_action.kind = monster_action_kind::move;
-            }
-        }
+    if( !immediate_action && !path.empty() ) {
+        ZoneScopedN( "mon_execute_path_trim" );
+        const auto path_it = std::ranges::find_if( path, [&]( const tripoint_bub_ms & p ) {
+            return p != bub_pos();
+        } );
+        path.erase( path.begin(), path_it );
     }
 
     // Facing direction update.
@@ -1681,6 +1752,7 @@ void monster::execute_action( const monster_action_t &action )
     //      remote_destination = monster's movement goal (may be many tiles away);
     //      nearby_destination = the immediate step being taken (action.dest).
     if( resolved_action.kind == monster_action_kind::move ) {
+        ZoneScopedN( "mon_execute_shove_vehicle" );
         shove_vehicle( goal, dest );
     }
 
@@ -1689,22 +1761,32 @@ void monster::execute_action( const monster_action_t &action )
     bool did_something = false;
 
     switch( resolved_action.kind ) {
-        case monster_action_kind::attack:
+        case monster_action_kind::attack: {
+            ZoneScopedN( "mon_execute_attack_at" );
             did_something = !pacified && attack_at( dest );
             break;
-        case monster_action_kind::open_door:
+        }
+        case monster_action_kind::open_door: {
+            ZoneScopedN( "mon_execute_open_door" );
             did_something = !pacified && can_open_doors &&
                             here.open_door( this, dest, !here.is_outside( bub_pos() ) );
             break;
-        case monster_action_kind::bash:
+        }
+        case monster_action_kind::bash: {
+            ZoneScopedN( "mon_execute_bash_at" );
             did_something = !pacified && bash_at( dest );
             break;
-        case monster_action_kind::push:
+        }
+        case monster_action_kind::push: {
+            ZoneScopedN( "mon_execute_push_to" );
             did_something = !pacified && push_to( dest, 0, 0 );
             break;
-        case monster_action_kind::move:
+        }
+        case monster_action_kind::move: {
+            ZoneScopedN( "mon_execute_move_to" );
             did_something = move_to( dest, false, false, resolved_action.stagger_adjust );
             break;
+        }
         default:
             break;
     }
@@ -1716,6 +1798,7 @@ void monster::execute_action( const monster_action_t &action )
 
     // Dragging update.
     if( has_effect( effect_dragging ) && dragged_foe != nullptr ) {
+        ZoneScopedN( "mon_execute_drag_update" );
         if( !dragged_foe->has_effect( effect_grabbed ) ) {
             dragged_foe = nullptr;
             remove_effect( effect_dragging );

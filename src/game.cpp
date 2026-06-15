@@ -5831,10 +5831,10 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     // -----------------------------------------------------------------------
     // P-7: Parallel planning pass.
     //
-    // Collect Tier-0 and Tier-1 monsters that are alive and eligible for AI
-    // planning this turn, compute their plans in parallel, then apply and
-    // execute serially.  Tier-2 (Macro) monsters are excluded here; they take
-    // a single Manhattan step in the move execution loop below.
+    // Build thread-safe actor/faction snapshots up front, then compute plans
+    // after lifecycle and budget selection so only monsters that actually have
+    // moves this turn are preplanned.  Tier-2 (Macro) monsters are excluded;
+    // they take a single Manhattan step in the move execution loop below.
     //
     // compute_plan() is const w.r.t. *this (monster) and only reads shared
     // game state (map caches, faction data, creature positions).  The only
@@ -5844,9 +5844,8 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     //   - per-thread RNG (thread-local engine, P-5)
     // This makes the parallel phase data-race-free.
     //
-    // Over-collection is intentional: monsters that die during the serial
-    // setup phase (process_turn, creature_in_field) simply have their
-    // pre-computed plan discarded.
+    // The planning pass is intentionally after process_turn(); checking moves
+    // before process_turn() made the preplan list empty for normal monsters.
     // -----------------------------------------------------------------------
 
     // Configurable via Debug → Performance → "Monster LOD" settings.
@@ -5948,45 +5947,6 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     std::unordered_map<monster *, int> plan_index;
 
     std::vector<monster *> plannable;
-    {
-        ZoneScopedN( "monmove_build_plannable" );
-        auto plannable_candidates_local = std::vector<monster *> {};
-        const std::vector<monster *> *plannable_candidates = mon_snap;
-        if( activity_skip_ai ) {
-            if( use_activity_cache ) {
-                plannable_candidates = &cache->plannable_candidates;
-            } else {
-                plannable_candidates_local.reserve( mon_snap->size() );
-                for( monster *critter : *mon_snap ) {
-                    if( !critter->is_dead() &&
-                        !activity_ai_paused->contains( critter ) &&
-                        critter->lod_tier < 2 &&
-                        critter->is_simulated() ) {
-                        plannable_candidates_local.push_back( critter );
-                    }
-                }
-                if( cache != nullptr ) {
-                    cache->plannable_candidates = std::move( plannable_candidates_local );
-                    plannable_candidates = &cache->plannable_candidates;
-                } else {
-                    plannable_candidates = &plannable_candidates_local;
-                }
-            }
-        }
-        plannable.reserve( plannable_candidates->size() );
-        for( monster *critter : *plannable_candidates ) {
-            if( !critter->is_dead() &&
-                !activity_ai_paused->contains( critter ) &&
-                !critter->has_effect( effect_ai_controlled ) &&
-                critter->moves > 0 &&
-                !critter->has_effect( effect_ridden ) &&
-                critter->lod_tier < 2 &&
-                critter->is_simulated() ) {
-                // Tier-2 monsters skip full planning; they use the macro step.
-                plannable.push_back( critter );
-            }
-        }
-    }
 
     // Use the actor snapshots for thread-safe compute_plan() access.
     // compute_plan() calls g->all_monsters() / g->all_npcs() to find targets.
@@ -6042,35 +6002,6 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     const monster::compute_plan_context plan_ctx{ mon_snap, npc_snap, faction_snap_for_plan,
             hostile_fac_map_for_plan };
 
-    // parallel_for_chunked with a small chunk size gives the
-    // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
-    // (no ray traces) immediately pull the next chunk rather than sitting idle
-    // while a thread blocked on a costly monster finishes its oversized slice.
-    std::vector<monster_plan_t> precomputed( plannable.size() );
-    {
-        ZoneScopedN( "monmove_compute_plans" );
-        if( parallel_enabled && parallel_monster_planning ) {
-            ZoneScopedN( "monmove_compute_plans_parallel" );
-            parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
-            monster_plan_chunk_size, [&]( int i ) {
-                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
-            } );
-        } else {
-            ZoneScopedN( "monmove_compute_plans_serial" );
-            for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
-                precomputed[index] = plannable[index]->compute_plan( plan_ctx );
-            }
-        }
-    }
-
-    // Insert plannable entries into plan_index now that precomputed[] is built.
-    {
-        ZoneScopedN( "monmove_build_plan_index" );
-        plan_index.reserve( plannable.size() );
-        for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
-            plan_index[plannable[index]] = static_cast<int>( index );
-        }
-    }
     // -----------------------------------------------------------------------
 
     const auto player_pos = u.bub_pos();
@@ -6234,6 +6165,53 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     // Compare against "LOD Tier 0 (Full AI)" to verify the budget floor is safe.
     TracyPlot( "LOD Eligible (post-cap)", static_cast<int64_t>( eligible.size() ) );
 
+    {
+        ZoneScopedN( "monmove_build_plannable" );
+        plannable.reserve( eligible.size() );
+        for( const auto &entry : eligible ) {
+            auto *critter = entry.second;
+            if( critter != nullptr &&
+                !critter->is_dead() &&
+                !activity_ai_paused->contains( critter ) &&
+                !critter->has_effect( effect_ai_controlled ) &&
+                !critter->has_effect( effect_ridden ) &&
+                critter->moves > 0 &&
+                critter->next_turn <= current_turn &&
+                critter->lod_tier < 2 &&
+                critter->is_simulated() ) {
+                plannable.push_back( critter );
+            }
+        }
+    }
+
+    // parallel_for_chunked with a small chunk size gives the pool a queue of
+    // fine-grained tasks.  Workers that finish a cheap monster immediately pull
+    // the next chunk rather than sitting idle behind a costly monster.
+    std::vector<monster_plan_t> precomputed( plannable.size() );
+    {
+        ZoneScopedN( "monmove_compute_plans" );
+        if( parallel_enabled && parallel_monster_planning ) {
+            ZoneScopedN( "monmove_compute_plans_parallel" );
+            parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
+            monster_plan_chunk_size, [&]( int i ) {
+                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+            } );
+        } else {
+            ZoneScopedN( "monmove_compute_plans_serial" );
+            for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
+                precomputed[index] = plannable[index]->compute_plan( plan_ctx );
+            }
+        }
+    }
+
+    {
+        ZoneScopedN( "monmove_build_plan_index" );
+        plan_index.reserve( plannable.size() );
+        for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
+            plan_index[plannable[index]] = static_cast<int>( index );
+        }
+    }
+
     // LOD-D: execute each eligible monster's turn.
     // Bio-alarm helper — called after each monster finishes its move loop.
     // static const: string_id hash lookup happens once, not every turn.
@@ -6301,6 +6279,37 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     auto monmove_fallback_plans = int64_t{ 0 };
     auto monmove_serial_replans = int64_t{ 0 };
     auto monmove_controlled_moves = int64_t{ 0 };
+    auto monmove_action_repath_requests = int64_t{ 0 };
+    auto monmove_action_route_candidates = int64_t{ 0 };
+    auto monmove_action_idle = int64_t{ 0 };
+    auto monmove_action_move = int64_t{ 0 };
+    auto monmove_action_attack = int64_t{ 0 };
+    auto monmove_action_other = int64_t{ 0 };
+    const auto record_monmove_action = [&]( const monster & critter,
+    const monster_action_t & action ) {
+        if( action.needs_repath ) {
+            ++monmove_action_repath_requests;
+            if( action.kind == monster_action_kind::idle ) {
+                ++monmove_action_route_candidates;
+            }
+        }
+        switch( action.kind ) {
+            case monster_action_kind::idle:
+            case monster_action_kind::stumble:
+            case monster_action_kind::die:
+                ++monmove_action_idle;
+                break;
+            case monster_action_kind::move:
+                ++monmove_action_move;
+                break;
+            case monster_action_kind::attack:
+                ++monmove_action_attack;
+                break;
+            default:
+                ++monmove_action_other;
+                break;
+        }
+    };
     {
         ZoneScopedN( "monmove_execute_eligible" );
         for( const auto &entry : eligible ) {
@@ -6370,6 +6379,7 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                         return critter.decide_action();
                     }
                     ();
+                    record_monmove_action( critter, action );
                     {
                         ZoneScopedN( "monmove_execute_action" );
                         critter.execute_action( action );
@@ -6404,6 +6414,12 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     TracyPlot( "Monmove Fallback Plans", monmove_fallback_plans );
     TracyPlot( "Monmove Serial Replans", monmove_serial_replans );
     TracyPlot( "Monmove Controlled Moves", monmove_controlled_moves );
+    TracyPlot( "Monmove Action Repath Requests", monmove_action_repath_requests );
+    TracyPlot( "Monmove Action Route Candidates", monmove_action_route_candidates );
+    TracyPlot( "Monmove Action Idle", monmove_action_idle );
+    TracyPlot( "Monmove Action Move", monmove_action_move );
+    TracyPlot( "Monmove Action Attack", monmove_action_attack );
+    TracyPlot( "Monmove Action Other", monmove_action_other );
 
     if( activity_skip_ai ) {
         ZoneScopedN( "monmove_activity_restore_lod" );
