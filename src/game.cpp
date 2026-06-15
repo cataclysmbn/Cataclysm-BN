@@ -19,6 +19,7 @@
 #include <locale>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <numeric>
 #include <queue>
 #include <ranges>
@@ -210,11 +211,6 @@
 #include "worldfactory.h"
 #include "location_vector.h"
 #include "monfaction.h"
-#if defined( CATA_SDL )
-#include "compute/compute_backend.h"
-#include "compute/gpu_lm.h"
-#include "compute/gpu_platform.h"
-#endif
 class computer;
 
 #if defined(TILES)
@@ -974,14 +970,15 @@ bool game::start_game()
     // The player is centered in the map, but lev[xyz] refers to the top left point of the map
     lev.x() -= g_half_mapsize;
     lev.y() -= g_half_mapsize;
-    u.setpos( project_to<coords::ms>( lev + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) ) );
+    const auto starting_player_pos = project_to<coords::ms>(
+                                         lev + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
     load_map( lev, /*pump_events=*/true );
+    u.setpos( starting_player_pos );
 
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
     // Do this after the map cache has been built!
     start_loc.place_player( u );
-    update_map( u );
     // ...but then rebuild it, because we want visibility cache to avoid spawning monsters in sight
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
@@ -1128,8 +1125,6 @@ bool game::start_game()
     for( auto &e : u.inv_dump() ) {
         e->set_owner( g->u );
     }
-    // Now that we're done handling coordinates, ensure the player's submap is in the center of the map
-    update_map( u );
     // Profession pets
     for( const mtype_id &elem : u.starting_pets ) {
         if( monster *const mon = place_critter_around( elem, u.bub_pos(), g_max_view_distance ) ) {
@@ -2036,6 +2031,7 @@ bool game::do_turn()
     {
         ZoneScopedN( "do_turn_pre_action_updates" );
         perhaps_add_random_npc();
+        refresh_player_visibility_cache_if_needed();
         process_voluntary_act_interrupt();
         process_activity();
         update_performance_bubble();
@@ -4551,11 +4547,14 @@ void game::draw( ui_adaptor &ui )
         }
         const auto cache_z = is_looking ? u.bub_pos().z() : ter_view_p.z();
         m.build_map_cache( cache_z );
+#if defined( CATA_SDL )
+        const auto player_map_cache_current = m.has_zlevels() || cache_z == u.bub_pos().z();
+        refresh_player_visibility_cache_if_needed( player_map_cache_current );
+#else
         if( m.get_cache_ref( cache_z ).visibility_cache_dirty ) {
-            if( !is_draw_tiles_mode() ) {
-                m.update_visibility_cache( cache_z );
-            }
+            m.update_visibility_cache( cache_z );
         }
+#endif
     }
 
     werase( w_terrain );
@@ -4713,6 +4712,38 @@ void game::draw_ter( const bool draw_sounds )
 auto game::visibility_cache_z() -> int
 {
     return is_looking ? u.bub_pos().z() : ter_view_p.z();
+}
+
+auto game::refresh_player_visibility_cache_if_needed( const bool player_map_cache_current ) -> void
+{
+#if defined( CATA_SDL )
+    ZoneScopedN( "refresh_player_visibility_cache_if_needed" );
+
+    const auto zlev = u.bub_pos().z();
+    const auto minz = m.has_zlevels() ? -OVERMAP_DEPTH : zlev;
+    const auto maxz = m.has_zlevels() ? OVERMAP_HEIGHT : zlev;
+    const auto needs_visibility_refresh = [&]() {
+        if( !m.get_visibility_variables_cache().variables_set ) {
+            return true;
+        }
+        return std::ranges::any_of( std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
+            return m.get_cache_ref( z ).visibility_cache_dirty;
+        } );
+    };
+
+    if( !needs_visibility_refresh() ) {
+        return;
+    }
+
+    if( !player_map_cache_current ) {
+        m.build_map_cache( zlev );
+    }
+    if( needs_visibility_refresh() ) {
+        m.update_visibility_cache( zlev );
+    }
+#else
+    ( void )player_map_cache_current;
+#endif
 }
 
 void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bool draw_sounds )
@@ -5220,6 +5251,8 @@ void game::mon_info( const catacurses::window &w, int hor_padding )
 void game::mon_info_update( )
 {
     ZoneScoped;
+
+    refresh_player_visibility_cache_if_needed();
 
     int newseen = 0;
     const auto iProxyDist = ( safe_mode_proximity <= 0 ) ? g_max_view_distance : safe_mode_proximity;
@@ -5763,154 +5796,40 @@ void game::world_tick()
     }
 }
 
-struct prepared_sight_query {
-    bool needs_los = false;
-    bool immediate_result = false;
-    tripoint_bub_ms from = tripoint_bub_ms::zero();
-    tripoint_bub_ms to = tripoint_bub_ms::zero();
-    int range = -1;
-};
-
-static auto prepare_terrain_sight_query( const Creature &seer, const tripoint_bub_ms &target,
-        const int range_mod ) -> prepared_sight_query
+static auto turn_los_blocker_key( const tripoint_bub_ms &from,
+                                  const tripoint_bub_ms &to ) ->
+std::pair<tripoint_bub_ms, tripoint_bub_ms>
 {
-    auto &here = get_map();
-    if( seer.get_dimension() != here.get_bound_dimension() ) {
-        return { .immediate_result = false };
-    }
-
-    const auto range_day = seer.sight_range( default_daylight_level() );
-    const auto range_night = seer.sight_range( 0 );
-    const auto range_max = std::max( range_day, range_night );
-    const auto wanted_range = rl_dist( seer.bub_pos(), target );
-    if( wanted_range > range_max ) {
-        return { .immediate_result = false };
-    }
-
-    const auto ambient = here.ambient_light_at( target );
-    const auto range_cur = seer.sight_range( ambient );
-    const auto range_min = std::min( range_cur, range_max );
-    const auto natural_light = g->natural_light_level( target.z() );
-    const auto is_lit = ambient > natural_light;
-    if( wanted_range > range_min && !( wanted_range <= range_max && is_lit ) ) {
-        return { .immediate_result = false };
-    }
-
-    auto range = is_lit ? g_max_view_distance : range_min;
-    if( seer.has_effect( effect_no_sight ) ) {
-        range = 1;
-    }
-    if( range_mod > 0 ) {
-        range = std::min( range, range_mod );
-    }
-    return {
-        .needs_los = true,
-        .from = seer.bub_pos(),
-        .to = target,
-        .range = range,
-    };
+    return from < to ? std::make_pair( from, to ) : std::make_pair( to, from );
 }
 
-static auto prepare_creature_sight_query( const Creature &seer,
-        const Creature &target ) -> prepared_sight_query
+auto game::clear_turn_los_blocker_cache() -> void
 {
-    if( &target == &seer ) {
-        return { .immediate_result = true };
-    }
-    if( target.is_hallucination() ) {
-        return { .immediate_result = seer.is_player() };
-    }
-    if( seer.get_dimension() != target.get_dimension() ) {
-        return { .immediate_result = false };
-    }
-
-    const auto *const target_character = target.as_character();
-    if( target_character != nullptr && target_character->is_invisible() ) {
-        return { .immediate_result = false };
-    }
-
-    auto &here = get_map();
-    const auto seer_pos = seer.bub_pos();
-    const auto target_pos = target.bub_pos();
-    const auto wanted_range = rl_dist( seer_pos, target_pos );
-    if( wanted_range <= 1 && seer_pos.z() == target_pos.z() ) {
-        return {
-            .immediate_result = !here.obscured_by_vehicle_rotation( seer_pos, target_pos ),
-        };
-    }
-    if( wanted_range <= 1 ) {
-        return {
-            .needs_los = true,
-            .from = seer_pos,
-            .to = target_pos,
-            .range = 1,
-        };
-    }
-
-    if( target.digging() ||
-        ( target.has_flag( MF_NIGHT_INVISIBILITY ) &&
-          here.light_at( target_pos ) <= lit_level::LOW ) ||
-        ( target.is_underwater() && !seer.is_underwater() && here.is_divable( target_pos ) ) ||
-        ( here.has_flag_ter_or_furn( TFLAG_HIDE_PLACE, target_pos ) &&
-          !( std::abs( seer_pos.x() - target_pos.x() ) <= 1 &&
-             std::abs( seer_pos.y() - target_pos.y() ) <= 1 &&
-             std::abs( seer_pos.z() - target_pos.z() ) <= 1 ) &&
-          !target.has_flag( MF_FLIES ) &&
-          target.get_size() <= creature_size::medium ) ) {
-        return { .immediate_result = false };
-    }
-
-    if( target_character != nullptr && target_character->movement_mode_is( CMM_CROUCH ) ) {
-        const auto coverage = here.obstacle_coverage( seer_pos, target_pos );
-        if( coverage < 30 ) {
-            return prepare_terrain_sight_query( seer, target_pos, 0 );
-        }
-        auto size_modifier = 1.0;
-        switch( target_character->get_size() ) {
-            case creature_size::tiny:
-                size_modifier = 2.0;
-                break;
-            case creature_size::small:
-                size_modifier = 1.4;
-                break;
-            case creature_size::medium:
-                break;
-            case creature_size::large:
-                size_modifier = 0.6;
-                break;
-            case creature_size::huge:
-                size_modifier = 0.15;
-                break;
-            default:
-                break;
-        }
-        const auto vision_modifier = static_cast<int>( 30 - 0.5 * coverage * size_modifier );
-        if( vision_modifier <= 1 ) {
-            return { .immediate_result = false };
-        }
-        return prepare_terrain_sight_query( seer, target_pos, vision_modifier );
-    }
-
-    return prepare_terrain_sight_query( seer, target_pos, 0 );
+    auto lock = std::unique_lock<std::shared_mutex>( turn_los_blocker_cache_mutex_ );
+    turn_los_blocker_cache_.clear();
 }
 
-#if defined( CATA_SDL )
-static auto make_gpu_sight_pair( const prepared_sight_query &query ) -> cata_gpu::GpuSightPair
+auto game::terrain_los_blocks_sight_between( const tripoint_bub_ms &from,
+        const tripoint_bub_ms &to ) -> bool
 {
-    return {
-        .from_x = query.from.x(),
-        .from_y = query.from.y(),
-        .from_z_idx = query.from.z() + OVERMAP_DEPTH,
-        .to_x = query.to.x(),
-        .to_y = query.to.y(),
-        .to_z_idx = query.to.z() + OVERMAP_DEPTH,
-        .range = query.range,
-        ._pad = 0,
-    };
-}
-#endif
+    const auto key = turn_los_blocker_key( from, to );
+    {
+        auto lock = std::shared_lock<std::shared_mutex>( turn_los_blocker_cache_mutex_ );
+        const auto it = turn_los_blocker_cache_.find( key );
+        if( it != turn_los_blocker_cache_.end() ) {
+            return it->second;
+        }
+    }
 
-auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache *cache ) -> void
+    const auto blocks_sight = !m.sees( from, to, -1 );
+    {
+        auto lock = std::unique_lock<std::shared_mutex>( turn_los_blocker_cache_mutex_ );
+        const auto insert_result = turn_los_blocker_cache_.emplace( key, blocks_sight );
+        return insert_result.first->second;
+    }
+}
+
+void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache *cache )
 {
     ZoneScopedN( "game::monmove" );
     const auto activity_skip_ai = mode == monster_activity_ai_mode::activity_skip &&
@@ -5923,15 +5842,16 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
         cleanup_dead();
     }
 
-    // P-8: clear the per-turn sight cache at the top of every monmove() call
-    // so results from the previous turn are not reused.
+    // Clear per-turn terrain LOS blockers so terrain changes from earlier turns
+    // are not reused.
     {
-        ZoneScopedN( "monmove_clear_sight_cache" );
-        turn_sight_cache_.clear();
+        ZoneScopedN( "monmove_clear_los_blocker_cache" );
+        clear_turn_los_blocker_cache();
     }
 
     auto use_activity_cache = cache != nullptr && cache->valid &&
-                              cache->monster_count == static_cast<int>( critter_tracker->size() );
+                              cache->monster_count == static_cast<int>(
+                                  critter_tracker->size() );
     if( cache != nullptr && cache->valid && !use_activity_cache ) {
         cache->valid = false;
     }
@@ -5950,22 +5870,21 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     // -----------------------------------------------------------------------
     // P-7: Parallel planning pass.
     //
-    // Collect Tier-0 and Tier-1 monsters that are alive and eligible for AI
-    // planning this turn, compute their plans in parallel, then apply and
-    // execute serially.  Tier-2 (Macro) monsters are excluded here; they take
-    // a single Manhattan step in the move execution loop below.
+    // Build thread-safe actor/faction snapshots up front, then compute plans
+    // after lifecycle and budget selection so only monsters that actually have
+    // moves this turn are preplanned.  Tier-2 (Macro) monsters are excluded;
+    // they take a single Manhattan step in the move execution loop below.
     //
     // compute_plan() is const w.r.t. *this (monster) and only reads shared
     // game state (map caches, faction data, creature positions).  The only
     // shared writes are:
     //   - skew_vision_cache (protected by skew_vision_cache_mutex, P-6)
-    //   - turn_sight_cache_ (protected by turn_sight_cache_mutex_, P-8)
+    //   - turn_los_blocker_cache_ (protected by turn_los_blocker_cache_mutex_)
     //   - per-thread RNG (thread-local engine, P-5)
     // This makes the parallel phase data-race-free.
     //
-    // Over-collection is intentional: monsters that die during the serial
-    // setup phase (process_turn, creature_in_field) simply have their
-    // pre-computed plan discarded.
+    // The planning pass is intentionally after process_turn(); checking moves
+    // before process_turn() made the preplan list empty for normal monsters.
     // -----------------------------------------------------------------------
 
     // Configurable via Debug → Performance → "Monster LOD" settings.
@@ -6054,7 +5973,8 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             if( activity_ai_paused->contains( critter ) ) {
                 continue;
             }
-            critter->lod_tier = static_cast<int8_t>( std::min<int>( 2, real_lod_tier + 1 ) );
+            critter->lod_tier = static_cast<int8_t>(
+                                    std::min<int>( 2, real_lod_tier + 1 ) );
         }
         TracyPlot( "Activity Skip Monster AI Paused",
                    static_cast<int64_t>( activity_ai_paused->size() ) );
@@ -6067,180 +5987,6 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     std::unordered_map<monster *, int> plan_index;
 
     std::vector<monster *> plannable;
-    {
-        ZoneScopedN( "monmove_build_plannable" );
-        auto plannable_candidates_local = std::vector<monster *> {};
-        const std::vector<monster *> *plannable_candidates = mon_snap;
-        if( activity_skip_ai ) {
-            if( use_activity_cache ) {
-                plannable_candidates = &cache->plannable_candidates;
-            } else {
-                plannable_candidates_local.reserve( mon_snap->size() );
-                for( monster *critter : *mon_snap ) {
-                    if( !critter->is_dead() &&
-                        !activity_ai_paused->contains( critter ) &&
-                        critter->lod_tier < 2 &&
-                        critter->is_simulated() ) {
-                        plannable_candidates_local.push_back( critter );
-                    }
-                }
-                if( cache != nullptr ) {
-                    cache->plannable_candidates = std::move( plannable_candidates_local );
-                    plannable_candidates = &cache->plannable_candidates;
-                } else {
-                    plannable_candidates = &plannable_candidates_local;
-                }
-            }
-        }
-        plannable.reserve( plannable_candidates->size() );
-        for( monster *critter : *plannable_candidates ) {
-            if( !critter->is_dead() &&
-                !activity_ai_paused->contains( critter ) &&
-                !critter->has_effect( effect_ai_controlled ) &&
-                critter->moves > 0 &&
-                !critter->has_effect( effect_ridden ) &&
-                critter->lod_tier < 2 &&
-                critter->is_simulated() ) {
-                // Tier-2 monsters skip full planning; they use the macro step.
-                plannable.push_back( critter );
-            }
-        }
-    }
-
-    // Pre-warm directed Creature::sees() jobs before the parallel planning phase.
-    // CPU code applies the creature perception rules, then the terrain LOS work
-    // is batched into one GPU dispatch.  The shared turn_sight_cache_ is filled
-    // serially afterward, avoiding cache write-lock contention in compute_plan().
-    auto sight_jobs = std::vector<std::pair<const Creature *, const Creature *>> {};
-    const auto initial_sight_job_capacity =
-        plannable.size() * ( npc_snap->size() + std::min( mon_snap->size(), size_t{ 16 } ) + 1 );
-    sight_jobs.reserve( initial_sight_job_capacity );
-    const auto add_sight_job = [&]( const Creature & seer, const Creature & target ) {
-        sight_jobs.emplace_back( &seer, &target );
-    };
-    {
-        ZoneScopedN( "monmove_build_sight_jobs" );
-        for( auto *mon : plannable ) {
-            const auto mon_max_sight = std::max( mon->type->vision_day, mon->type->vision_night );
-            const auto mon_pos = mon->bub_pos();
-            const auto waiting = mon->has_effect( effect_ai_waiting );
-            const auto docile = mon->friendly != 0 && mon->has_effect( effect_docile );
-            if( !waiting && mon->friendly <= 0 &&
-                rl_dist( mon_pos, u.bub_pos() ) <= mon_max_sight ) {
-                add_sight_job( *mon, u );
-            }
-            for( auto *n : *npc_snap ) {
-                const auto faction_att = mon->faction.obj().attitude( n->get_monster_faction() );
-                if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
-                    continue;
-                }
-                if( rl_dist( mon_pos, n->bub_pos() ) <= mon_max_sight ) {
-                    add_sight_job( *mon, *n );
-                }
-            }
-
-            const auto needs_group_sight =
-                mon->lod_tier <= lod_group_morale_max_tier &&
-                ( ( mon->has_flag( MF_GROUP_MORALE ) && mon->morale < mon->type->morale ) ||
-                  mon->has_flag( MF_SWARMS ) );
-            for( auto *target_mon : *mon_snap ) {
-                if( target_mon == mon ) {
-                    continue;
-                }
-                if( rl_dist( mon_pos, target_mon->bub_pos() ) > mon_max_sight ) {
-                    continue;
-                }
-                if( mon->friendly != 0 && !docile && !waiting && target_mon->friendly == 0 ) {
-                    add_sight_job( *mon, *target_mon );
-                    continue;
-                }
-                if( mon->friendly == 0 ) {
-                    const auto faction_att = mon->faction.obj().attitude( target_mon->faction );
-                    if( faction_att != MFA_NEUTRAL && faction_att != MFA_FRIENDLY ) {
-                        add_sight_job( *mon, *target_mon );
-                        continue;
-                    }
-                    if( needs_group_sight && mon->faction == target_mon->faction ) {
-                        add_sight_job( *mon, *target_mon );
-                    }
-                }
-            }
-        }
-    }
-    TracyPlot( "Monmove Sight Jobs", static_cast<int64_t>( sight_jobs.size() ) );
-    auto sight_results = std::vector<char> {};
-    auto los_jobs = std::vector<std::pair<size_t, prepared_sight_query>> {};
-#if defined( CATA_SDL )
-    auto gpu_pairs = std::vector<cata_gpu::GpuSightPair> {};
-    auto gpu_results = std::vector<uint32_t> {};
-    auto *gpu_sight_device = static_cast<SDL_GPUDevice *>( nullptr );
-    auto gpu_sight_work = cata_gpu::gpu_sight_pairs_work {};
-#endif
-    if( !sight_jobs.empty() ) {
-        sight_results.assign( sight_jobs.size(), 0 );
-        {
-            ZoneScopedN( "monmove_prepare_sight_prewarm" );
-            los_jobs.reserve( sight_jobs.size() );
-            for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
-                const auto &[seer, target] = sight_jobs[index];
-                const auto query = prepare_creature_sight_query( *seer, *target );
-                if( query.needs_los ) {
-                    los_jobs.emplace_back( index, query );
-                } else {
-                    sight_results[index] = query.immediate_result ? 1 : 0;
-                }
-            }
-        }
-        TracyPlot( "Monmove Sight LOS Jobs", static_cast<int64_t>( los_jobs.size() ) );
-        if( !los_jobs.empty() ) {
-#if defined( CATA_SDL )
-            if( cata_compute::uses_sdl_gpu_compute() ) {
-                ZoneScopedN( "monmove_begin_gpu_sight_prewarm" );
-                gpu_pairs.reserve( los_jobs.size() );
-                std::ranges::transform( los_jobs, std::back_inserter( gpu_pairs ),
-                []( const auto & job ) {
-                    return make_gpu_sight_pair( job.second );
-                } );
-                gpu_sight_device = cata_gpu::get_device();
-                if( gpu_sight_device == nullptr ) {
-                    debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
-                } else {
-                    const auto sight_inputs_ready = [&]() {
-                        return cata_gpu::resident_lighting_ready_for_sight_pairs( {
-                            .device = gpu_sight_device,
-                            .m = &m,
-                            .pairs = &gpu_pairs,
-                            .zlev = get_levz(),
-                        } );
-                    };
-                    if( !sight_inputs_ready() ) {
-                        ZoneScopedN( "monmove_bootstrap_gpu_sight_inputs" );
-                        m.build_map_cache( get_levz() );
-                    }
-                    if( !sight_inputs_ready() ) {
-                        debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
-                    } else {
-                        gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
-                            .m = &m,
-                            .pairs = &gpu_pairs,
-                            .zlev = get_levz(),
-                        } );
-                        if( gpu_sight_work.id == 0 ) {
-                            debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
-                        }
-                    }
-                }
-            } else
-#endif
-            {
-                ZoneScopedN( "monmove_cpu_sight_prewarm" );
-                auto &here = get_map();
-                for( const auto &[result_index, query] : los_jobs ) {
-                    sight_results[result_index] = here.sees( query.from, query.to, query.range ) ? 1 : 0;
-                }
-            }
-        }
-    }
 
     // Use the actor snapshots for thread-safe compute_plan() access.
     // compute_plan() calls g->all_monsters() / g->all_npcs() to find targets.
@@ -6293,67 +6039,9 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             hostile_fac_map_for_plan = &hostile_fac_map;
         }
     }
-    if( !sight_jobs.empty() ) {
-        if( !los_jobs.empty() ) {
-#if defined( CATA_SDL )
-            if( cata_compute::uses_sdl_gpu_compute() && gpu_sight_work.id != 0 ) {
-                ZoneScopedN( "monmove_finish_gpu_sight_prewarm" );
-                if( !cata_gpu::finish_gpu_sight_pairs( gpu_sight_device, gpu_sight_work,
-                                                       gpu_results ) ) {
-                    debugmsg( "SDL_GPU sight pair completion failed; see debug.log for details" );
-                } else {
-                    auto &here = get_map();
-                    for( const auto gpu_index : std::views::iota( size_t{ 0 }, los_jobs.size() ) ) {
-                        const auto &[result_index, query] = los_jobs[gpu_index];
-                        const auto result = gpu_results[gpu_index] != 0 &&
-                                            !here.obscured_by_vehicle_rotation( query.from, query.to );
-                        sight_results[result_index] = result ? 1 : 0;
-                    }
-                }
-            }
-#endif
-        }
-        {
-            ZoneScopedN( "monmove_insert_sight_prewarm" );
-            auto lock = std::unique_lock<std::shared_mutex>( turn_sight_cache_mutex_ );
-            turn_sight_cache_.reserve( sight_jobs.size() );
-            for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
-                turn_sight_cache_.emplace( sight_jobs[index], sight_results[index] != 0 );
-            }
-        }
-    }
     const monster::compute_plan_context plan_ctx{ mon_snap, npc_snap, faction_snap_for_plan,
             hostile_fac_map_for_plan };
 
-    // parallel_for_chunked with a small chunk size gives the
-    // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
-    // (no ray traces) immediately pull the next chunk rather than sitting idle
-    // while a thread blocked on a costly monster finishes its oversized slice.
-    std::vector<monster_plan_t> precomputed( plannable.size() );
-    {
-        ZoneScopedN( "monmove_compute_plans" );
-        if( parallel_enabled && parallel_monster_planning ) {
-            ZoneScopedN( "monmove_compute_plans_parallel" );
-            parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
-            monster_plan_chunk_size, [&]( int i ) {
-                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
-            } );
-        } else {
-            ZoneScopedN( "monmove_compute_plans_serial" );
-            for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
-                precomputed[index] = plannable[index]->compute_plan( plan_ctx );
-            }
-        }
-    }
-
-    // Insert plannable entries into plan_index now that precomputed[] is built.
-    {
-        ZoneScopedN( "monmove_build_plan_index" );
-        plan_index.reserve( plannable.size() );
-        for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
-            plan_index[plannable[index]] = static_cast<int>( index );
-        }
-    }
     // -----------------------------------------------------------------------
 
     const auto player_pos = u.bub_pos();
@@ -6378,8 +6066,9 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             // Critters in impassable tiles get pushed away, unless it's not impassable for them
             if( !critter.is_dead() && m.impassable( critter.bub_pos() ) &&
                 !critter.can_move_to( critter.bub_pos() ) ) {
-                std::string msg = string_format( "%s can't move to its location!  %s  %s", critter.name(),
-                                                 critter.bub_pos().to_string(), m.tername( critter.bub_pos() ) );
+                std::string msg = string_format( "%s can't move to its location! %s %s", critter.name(),
+                                                 critter.bub_pos().to_string(),
+                                                 m.tername( critter.bub_pos() ) );
                 dbg( DL::Error ) << msg;
                 add_msg( m_debug, msg );
                 bool okay = false;
@@ -6445,7 +6134,8 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                 if( !critter->is_dead() &&
                     !activity_ai_paused->contains( critter ) &&
                     critter->is_simulated() ) {
-                    eligible_order.emplace_back( rl_dist( critter->bub_pos(), player_pos ), critter );
+                    eligible_order.emplace_back( rl_dist(
+                                                     critter->bub_pos(), player_pos ), critter );
                 }
             }
             std::ranges::sort( eligible_order );
@@ -6517,6 +6207,53 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     // Compare against "LOD Tier 0 (Full AI)" to verify the budget floor is safe.
     TracyPlot( "LOD Eligible (post-cap)", static_cast<int64_t>( eligible.size() ) );
 
+    {
+        ZoneScopedN( "monmove_build_plannable" );
+        plannable.reserve( eligible.size() );
+        for( const auto &entry : eligible ) {
+            auto *critter = entry.second;
+            if( critter != nullptr &&
+                !critter->is_dead() &&
+                !activity_ai_paused->contains( critter ) &&
+                !critter->has_effect( effect_ai_controlled ) &&
+                !critter->has_effect( effect_ridden ) &&
+                critter->moves > 0 &&
+                critter->next_turn <= current_turn &&
+                critter->lod_tier < 2 &&
+                critter->is_simulated() ) {
+                plannable.push_back( critter );
+            }
+        }
+    }
+
+    // parallel_for_chunked with a small chunk size gives the pool a queue of
+    // fine-grained tasks.  Workers that finish a cheap monster immediately pull
+    // the next chunk rather than sitting idle behind a costly monster.
+    std::vector<monster_plan_t> precomputed( plannable.size() );
+    {
+        ZoneScopedN( "monmove_compute_plans" );
+        if( parallel_enabled && parallel_monster_planning ) {
+            ZoneScopedN( "monmove_compute_plans_parallel" );
+            parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
+            monster_plan_chunk_size, [&]( int i ) {
+                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+            } );
+        } else {
+            ZoneScopedN( "monmove_compute_plans_serial" );
+            for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
+                precomputed[index] = plannable[index]->compute_plan( plan_ctx );
+            }
+        }
+    }
+
+    {
+        ZoneScopedN( "monmove_build_plan_index" );
+        plan_index.reserve( plannable.size() );
+        for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
+            plan_index[plannable[index]] = static_cast<int>( index );
+        }
+    }
+
     // LOD-D: execute each eligible monster's turn.
     // Bio-alarm helper — called after each monster finishes its move loop.
     // static const: string_id hash lookup happens once, not every turn.
@@ -6584,6 +6321,37 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     auto monmove_fallback_plans = int64_t{ 0 };
     auto monmove_serial_replans = int64_t{ 0 };
     auto monmove_controlled_moves = int64_t{ 0 };
+    auto monmove_action_repath_requests = int64_t{ 0 };
+    auto monmove_action_route_candidates = int64_t{ 0 };
+    auto monmove_action_idle = int64_t{ 0 };
+    auto monmove_action_move = int64_t{ 0 };
+    auto monmove_action_attack = int64_t{ 0 };
+    auto monmove_action_other = int64_t{ 0 };
+    const auto record_monmove_action = [&]( const monster & critter,
+    const monster_action_t &action ) {
+        if( action.needs_repath ) {
+            ++monmove_action_repath_requests;
+            if( action.kind == monster_action_kind::idle ) {
+                ++monmove_action_route_candidates;
+            }
+        }
+        switch( action.kind ) {
+            case monster_action_kind::idle:
+            case monster_action_kind::stumble:
+            case monster_action_kind::die:
+                ++monmove_action_idle;
+                break;
+            case monster_action_kind::move:
+                ++monmove_action_move;
+                break;
+            case monster_action_kind::attack:
+                ++monmove_action_attack;
+                break;
+            default:
+                ++monmove_action_other;
+                break;
+        }
+    };
     {
         ZoneScopedN( "monmove_execute_eligible" );
         for( const auto &entry : eligible ) {
@@ -6653,6 +6421,7 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                         return critter.decide_action();
                     }
                     ();
+                    record_monmove_action( critter, action );
                     {
                         ZoneScopedN( "monmove_execute_action" );
                         critter.execute_action( action );
@@ -6687,6 +6456,12 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     TracyPlot( "Monmove Fallback Plans", monmove_fallback_plans );
     TracyPlot( "Monmove Serial Replans", monmove_serial_replans );
     TracyPlot( "Monmove Controlled Moves", monmove_controlled_moves );
+    TracyPlot( "Monmove Action Repath Requests", monmove_action_repath_requests );
+    TracyPlot( "Monmove Action Route Candidates", monmove_action_route_candidates );
+    TracyPlot( "Monmove Action Idle", monmove_action_idle );
+    TracyPlot( "Monmove Action Move", monmove_action_move );
+    TracyPlot( "Monmove Action Attack", monmove_action_attack );
+    TracyPlot( "Monmove Action Other", monmove_action_other );
 
     if( activity_skip_ai ) {
         ZoneScopedN( "monmove_activity_restore_lod" );
@@ -8857,13 +8632,11 @@ void game::peek( const tripoint_rel_ms &p )
     const auto peek_pos = prev + p;
     auto restore_player_pos = [&]() {
         u.setpos( prev );
-        update_map( u );
         m.invalidate_map_cache( get_levz() );
     };
     auto restore_on_return = on_out_of_scope( restore_player_pos );
 
     u.setpos( peek_pos );
-    update_map( u );
     // Force a full cache rebuild from the peek position so look_around renders
     // correct FOV and lighting.  Without this, lightmap_dirty may already be
     // false (built from the pre-peek player position earlier this turn), causing
@@ -12977,11 +12750,10 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     }
 
     auto oldpos = u.bub_pos();
-    const auto keep_grab = u.get_grab_type() == OBJECT_VEHICLE || allow_furniture_z_move;
     auto submap_shift = point_rel_sm::zero();
     {
         ZoneScopedN( "walk_move_place_player" );
-        submap_shift = place_player( dest_loc, keep_grab );
+        submap_shift = place_player( dest_loc );
     }
     auto ms_shift = project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift;
@@ -13008,7 +12780,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     return true;
 }
 
-auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab ) -> point_rel_sm
+auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
 {
     const auto regular_pit_move = pit_trap_helpers::is_regular_pit_destination_from_pit( m.tr_at(
                                       u.bub_pos() ),
@@ -13134,17 +12906,12 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
     if( u.in_vehicle ) {
         m.unboard_vehicle( u.bub_pos() );
     }
-    // Move the player
-    // Start with z-level, to make it less likely that old functions (2D ones) freak out
-    if( m.has_zlevels() && dest_loc.z() != get_levz() ) {
-        vertical_shift( dest_loc.z(), keep_grab );
-    }
-
     if( u.is_hauling() && ( !m.can_put_items( dest_loc ) ||
                             m.has_flag( TFLAG_DEEP_WATER, dest_loc ) ||
                             vp1 ) ) {
         u.stop_hauling();
     }
+    const auto origin_before_setpos = m.get_abs_sub();
     u.setpos( dest_loc );
     m.invalidate_visibility_caches();
     if( u.is_mounted() ) {
@@ -13153,15 +12920,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
         mon->process_triggers();
         m.creature_in_field( *mon );
     }
-    auto submap_shift = point_rel_sm::zero();
-    {
-        ZoneScopedN( "place_player_update_map" );
-        submap_shift = update_map( u );
-    }
-    // Important: don't use dest_loc after this line. `update_map` may have shifted the map
-    // and dest_loc was not adjusted and therefore is still in the un-shifted system and probably wrong.
-    // If you must use it you can calculate the position in the new, shifted system with
-    // adjusted_pos = ( old_pos.x - submap_shift.x * SEEX, old_pos.y - submap_shift.y * SEEY, old_pos.z )
+    const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos ).xy();
 
     //Auto pulp or butcher and Auto foraging
     if( get_option<bool>( "AUTO_FEATURES" ) && mostseen == 0  && !u.is_mounted() ) {
@@ -13456,7 +13215,6 @@ bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         //tunneling costs 100 moves baseline, 50 per extra tile up to a cap of 500 moves
         u.moves -= ( 50 + ( tunneldist * 50 ) );
         u.setpos( dest );
-        update_map( u );
         m.invalidate_visibility_caches();
 
         if( m.veh_at( u.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {
@@ -14197,12 +13955,7 @@ void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bo
                 if( p->in_vehicle ) {
                     m.unboard_vehicle( p->bub_pos() );
                 }
-                // If we're flinging the player around, make sure the map stays centered on them.
-                if( is_u ) {
-                    update_map( pt.x(), pt.y() );
-                } else {
-                    p->setpos( pt );
-                }
+                p->setpos( pt );
             } else if( !critter_at( pt ) ) {
                 // Dying monster doesn't always leave an empty tile (blob spawning etc.)
                 // Just don't setpos if it happens - next iteration will do so
@@ -14759,11 +14512,9 @@ void game::vertical_move( int movez, bool force, bool peeking )
     }
 
     const auto old_pos = g->u.bub_pos();
-    point_rel_sm submap_shift;
-    vertical_shift( z_after );
-    if( !force ) {
-        submap_shift = update_map( stairs.x(), stairs.y() );
-    }
+    const auto origin_before_setpos = m.get_abs_sub();
+    u.setpos( map_local_to_abs( m, stairs ) );
+    const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos ).xy();
 
     // if an NPC or monster is on the stiars when player ascends/descends
     // they may end up merged on th esame tile, do some displacement to resolve that.
@@ -15121,9 +14872,10 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         // Loading at the destination avoids a costly incremental map shift in update_map()
         // when the destination is far from the current position.
         const auto target_load_origin = load_pos.value_or( current_abs_sm );
-        player.setpos( project_to<coords::ms>( target_load_origin + tripoint_rel_sm( g_half_mapsize,
-                                               g_half_mapsize, 0 ) ) );
+        const auto target_player_pos = project_to<coords::ms>(
+                                           target_load_origin + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
         load_map( target_load_origin, false );
+        player.setpos( target_player_pos );
         debug_assert_player_map_origin( "travel_to_dimension" );
 
         add_msg( m_debug, "[DIM] Loaded new dimension '%s' map", dim_id );
@@ -15367,7 +15119,7 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
     return stairs;
 }
 
-auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
+auto game::vertical_shift( const int z_after ) -> void
 {
     if( z_after < -OVERMAP_DEPTH || z_after > OVERMAP_HEIGHT ) {
         debugmsg( "Tried to get z-level %d outside allowed range of %d-%d",
@@ -15375,15 +15127,15 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
         return;
     }
 
-    if( !keep_grab ) {
-        u.grab( OBJECT_NONE );
+    const auto z_before = m.get_abs_sub().z();
+    if( z_before == z_after ) {
+        return;
     }
 
     scent.reset();
 
-    const int z_before = get_levz();
-    u.setpos( tripoint_bub_ms( u.bub_pos().xy(), z_after ) );
     if( !m.has_zlevels() ) {
+        const auto loaded_origin = m.get_abs_sub();
         m.clear_vehicle_cache( );
         m.access_cache( z_before ).vehicle_list.clear();
         m.access_cache( z_before ).zone_vehicles.clear();
@@ -15391,7 +15143,7 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
         m.set_transparency_cache_dirty( z_before );
         m.set_outside_cache_dirty( z_before );
         m.set_absorption_cache_dirty( z_before );
-        m.load( tripoint_abs_sm( get_levx(), get_levy(), z_after ), true );
+        m.load( tripoint_abs_sm( loaded_origin.xy(), z_after ), true );
         shift_monsters( tripoint_rel_sm( 0, 0, z_after - z_before ) );
         reload_npcs();
     } else {
@@ -15407,6 +15159,7 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
     // the critter is unloaded/loaded, and it needs to reconstruct its rider data after being reloaded.
     validate_mounted_npcs();
     vertical_notes( z_before, z_after );
+    update_overmap_seen();
 }
 
 void game::vertical_notes( int z_before, int z_after )
@@ -15451,49 +15204,28 @@ void game::vertical_notes( int z_before, int z_after )
     }
 }
 
-point_rel_sm game::update_map( Character &who )
+auto game::update_map( Character &who ) -> point_rel_sm
 {
-    const auto map_local_pos = abs_to_map_local( m, who.abs_pos() );
-    int x = map_local_pos.x();
-    int y = map_local_pos.y();
-    return update_map( x, y );
+    return update_map( who.abs_pos() );
 }
 
-point_rel_sm game::update_map( int &x, int &y )
+auto game::update_map( int &x, int &y ) -> point_rel_sm
+{
+    const auto target_abs = map_local_to_abs( m, tripoint_bub_ms( x, y, get_levz() ) );
+    return update_map( target_abs );
+}
+
+auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
 {
     ZoneScopedN( "update_map" );
-    const auto target_abs = map_local_to_abs( m, tripoint_bub_ms( x, y, get_levz() ) );
-    point_rel_sm shift;
-
-    {
-        ZoneScopedN( "update_map_compute_shift" );
-        while( x < g_half_mapsize_x ) {
-            x += SEEX;
-            shift.x()--;
-        }
-        while( x >= g_half_mapsize_x + SEEX ) {
-            x -= SEEX;
-            shift.x()++;
-        }
-        while( y < g_half_mapsize_y ) {
-            y += SEEY;
-            shift.y()--;
-        }
-        while( y >= g_half_mapsize_y + SEEY ) {
-            y -= SEEY;
-            shift.y()++;
-        }
-    }
+    const auto target_origin = reality_bubble_origin_from_player( center, g_reality_bubble_size );
+    const auto shift = ( target_origin - m.get_abs_sub() ).xy();
 
     if( shift == point_rel_sm::zero() ) {
-        // adjust player position
-        u.setpos( target_abs );
         // Update what parts of the world map we can see
         // We need this call because even if the map hasn't shifted we may have changed z-level and can now see farther
         // TODO: only make this call if we changed z-level
         update_overmap_seen();
-        // update_map() can run during a pending vertical vehicle transition;
-        // vertical_shift() settles the loaded-grid z anchor afterward.
         debug_assert_player_map_origin( "update_map", false );
         // Not actually shifting the submaps, all the stuff below would do nothing
         return point_rel_sm::zero();
@@ -15511,8 +15243,6 @@ point_rel_sm game::update_map( int &x, int &y )
             remaining_shift -= this_shift;
         }
     }
-
-    u.setpos( target_abs );
 
     // Keep the reality bubble request center in sync with the shifted map.
     // Distribution-grid tracker updates are fully incremental via
@@ -15608,8 +15338,8 @@ point_rel_sm game::update_map( int &x, int &y )
 
     // Update what parts of the world map we can see
     update_overmap_seen();
-    // update_map() is an x/y recentering path; vertical movement settles in
-    // vertical_shift().
+    // update_map() only shifts the loaded x/y window; vertical loaded-state
+    // changes are handled by vertical_shift().
     debug_assert_player_map_origin( "update_map", false );
 
     return shift;
@@ -16984,14 +16714,16 @@ void game::remove_fake_item( item *it )
 }
 namespace cata_event_dispatch
 {
-void avatar_moves( const avatar &u, const map &m, const tripoint_abs_ms &p )
+void avatar_moves( const avatar &u, const map &m, const tripoint_abs_ms &pos )
 {
     mtype_id mount_type;
     if( u.is_mounted() ) {
         mount_type = u.mounted_creature->type->id;
     }
-    g->events().send<event_type::avatar_moves>( mount_type, m.ter( abs_to_bub( p ) ).id(),
-            u.get_movement_mode(), u.is_underwater(), p.z() );
+    const auto terrain = MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ).get_ter( pos,
+    { .mode = mapbuffer_lookup_mode::resident_only } ).value_or( t_null );
+    g->events().send<event_type::avatar_moves>( mount_type, terrain, u.get_movement_mode(),
+            u.is_underwater(), pos.z() );
 }
 } // namespace cata_event_dispatch
 

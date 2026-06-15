@@ -344,19 +344,19 @@ auto game::unserialize( std::istream &fin ) -> bool
         const auto saved_origin = tripoint_abs_sm( lev.x + com.x * OMAPX * 2,
                                   lev.y + com.y * OMAPY * 2, lev.z );
         auto load_origin = saved_origin;
+        auto player_pos = project_to<coords::ms>(
+                              saved_origin + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
         if( has_saved_player_abs ) {
-            u.setpos( saved_player_abs );
-            load_origin = player_reality_bubble_origin();
+            player_pos = saved_player_abs;
+            load_origin = reality_bubble_origin_from_player( player_pos, g_reality_bubble_size );
         } else if( has_saved_reality_bubble_size ) {
             const auto saved_player_sm = reality_bubble_center_from_origin( saved_origin,
                                          saved_reality_bubble_size );
-            u.setpos( project_to<coords::ms>( saved_player_sm ) );
-            load_origin = player_reality_bubble_origin();
-        } else {
-            u.setpos( project_to<coords::ms>( saved_origin + tripoint_rel_sm( g_half_mapsize,
-                                              g_half_mapsize, 0 ) ) );
+            player_pos = project_to<coords::ms>( saved_player_sm );
+            load_origin = reality_bubble_origin_from_player( player_pos, g_reality_bubble_size );
         }
         load_map( load_origin, /*pump_events=*/true );
+        u.setpos( player_pos );
 
         safe_mode = static_cast<safe_mode_type>( tmprun );
         if( get_option<bool>( "SAFEMODE" ) && safe_mode == SAFE_MODE_OFF ) {

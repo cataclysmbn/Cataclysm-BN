@@ -2817,7 +2817,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         colored_sources = std::move(collection.colored_sources);
         write_source_map_to_level_caches(*p.m, source_collection_levels, all_sources);
         write_field_light_overrides_to_source_map(*p.m, source_collection_levels);
-        if (collect_colored_sources && colored_sources.empty()) {
+        if (!colored_lighting || (collect_colored_sources && colored_sources.empty())) {
             clear_colored_light_caches(*p.m, source_collection_levels);
         }
     }

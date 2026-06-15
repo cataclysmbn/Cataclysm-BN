@@ -197,7 +197,8 @@ jobs:
       - name: run JSON formatting check (test-stage only)
         if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
         run: |
-          cmake --build build --target style-json-parallel
+          build-scripts/format-json.sh
+          git diff --exit-code -- '*.json'
           tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 
       - name: create Linux tiles playtest package

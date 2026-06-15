@@ -322,7 +322,6 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
                 z->setpos( g->u.bub_pos() );
             }
             g->u.moves -= 150;
-            g->update_map( g->u );
         } else {
             z->stumble();
         }
@@ -340,9 +339,6 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
             n->setpos( random_entry( valid ) );
         }
         n->moves -= 150;
-        if( c == &g->u ) {
-            g->update_map( g->u );
-        }
         if( !n->is_mounted() ) {
             ///\EFFECT_DEX decreases chance of taking damage from a tripwire trap
             if( rng( 5, 20 ) > n->dex_cur ) {
@@ -1134,9 +1130,6 @@ static bool sinkhole_safety_roll( player *p, const itype_id &itemname, const int
         p->add_msg_player_or_npc( m_good, _( "You pull yourself to safety!" ),
                                   _( "<npcname> steps on a sinkhole, but manages to pull themselves to safety." ) );
         p->setpos( random_entry( safe ) );
-        if( p == &g->u ) {
-            g->update_map( *p );
-        }
 
         return true;
     }

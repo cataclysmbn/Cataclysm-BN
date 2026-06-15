@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <chrono>
+#include <cstdlib>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -16,6 +18,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "creature.h"
 #include "debug.h"
 #include "detached_ptr.h"
 #include "distribution_grid.h"
@@ -30,6 +33,7 @@
 #include "json.h"
 #include "map.h"
 #include "mapdata.h"
+#include "map_iterator.h"
 #include "map_mutation_hooks.h"
 #include "overmapbuffer.h"
 #include "output.h"
@@ -143,6 +147,29 @@ auto move_cost_from_tile_parts( const ter_id &terrain_id, const furn_id &furnitu
     }
 
     return std::max( terrain.movecost, 0 );
+}
+
+auto move_cost_ter_furn_from_tile( const mapbuffer_tile_lookup &tile ) -> int
+{
+    const auto &terrain = tile.sm->get_ter( tile.local ).obj();
+    if( terrain.movecost == 0 ) {
+        return 0;
+    }
+
+    const auto &furniture = tile.sm->get_furn( tile.local ).obj();
+    if( furniture.movecost < 0 ) {
+        return 0;
+    }
+
+    const auto cost = terrain.movecost + furniture.movecost;
+    return cost > 0 ? cost : 0;
+}
+
+auto passable_ter_furn_at( mapbuffer &buffer, const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( buffer, p, options );
+    return tile && move_cost_ter_furn_from_tile( *tile ) != 0;
 }
 
 } // namespace
@@ -541,6 +568,202 @@ auto mapbuffer::passable( const tripoint_abs_ms &p,
     return *cost != 0;
 }
 
+auto mapbuffer::valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
+                            const mapbuffer_valid_move_options options ) -> bool
+{
+    assert( to.z() > std::numeric_limits<int>::min() );
+    if( std::abs( from.x() - to.x() ) > 1 || std::abs( from.y() - to.y() ) > 1 ||
+        std::abs( from.z() - to.z() ) > 1 ) {
+        return false;
+    }
+
+    if( from.z() == to.z() ) {
+        const auto target_passable = passable( to, options.lookup );
+        if( !target_passable ) {
+            return false;
+        }
+        return *target_passable || ( options.bash && get_ter( to, options.lookup ).has_value() );
+    }
+    if( !options.zlevels ) {
+        return false;
+    }
+
+    const auto going_up = from.z() < to.z();
+    const auto up_p = going_up ? to : from;
+    const auto down_p = going_up ? from : to;
+
+    const auto up_ter_id = get_ter( up_p, options.lookup );
+    const auto up_furn_id = get_furn( up_p, options.lookup );
+    if( !up_ter_id || !up_furn_id ) {
+        return false;
+    }
+    const auto &up_ter = up_ter_id->obj();
+    if( up_ter.id.is_null() ) {
+        return false;
+    }
+    const auto &up_furn = up_furn_id->obj();
+    const auto up_trap_id = get_trap( up_p, options.lookup ).value_or( tr_null );
+    const auto up_is_ledge = up_ter.trap == tr_ledge || up_trap_id == tr_ledge;
+
+    if( up_ter.movecost == 0 ) {
+        return false;
+    }
+
+    const auto down_ter_id = get_ter( down_p, options.lookup );
+    if( !down_ter_id ) {
+        return false;
+    }
+    const auto &down_ter = down_ter_id->obj();
+    if( down_ter.id.is_null() ) {
+        return false;
+    }
+
+    if( !up_is_ledge && down_ter.movecost == 0 ) {
+        return false;
+    }
+
+    if( !up_ter.has_flag( TFLAG_NO_FLOOR ) && !up_ter.has_flag( TFLAG_GOES_DOWN ) &&
+        !up_is_ledge && !options.via_ramp ) {
+        if( std::abs( from.x() - to.x() ) == 1 || std::abs( from.y() - to.y() ) == 1 ) {
+            const auto midpoint = tripoint_abs_ms( down_p.xy(), up_p.z() );
+            return valid_move( down_p, midpoint, options ) && valid_move( midpoint, up_p, options );
+        }
+        return false;
+    }
+
+    if( !options.flying && !down_ter.has_flag( TFLAG_GOES_UP ) &&
+        !down_ter.has_flag( TFLAG_RAMP ) && !up_is_ledge && !options.via_ramp ) {
+        return false;
+    }
+
+    if( options.bash ) {
+        return true;
+    }
+
+    const auto up_vehicle = veh_at( up_p, options.lookup );
+    if( up_vehicle && !up_vehicle.part_with_feature( VPFLAG_NOCOLLIDEBELOW, false ) ) {
+        return false;
+    }
+
+    const auto down_vehicle = veh_at( down_p, options.lookup );
+    if( down_vehicle &&
+        down_vehicle->vehicle().roof_at_part( static_cast<int>( down_vehicle->part_index() ) ) >= 0 ) {
+        return false;
+    }
+
+    return up_furn.movecost >= 0;
+}
+
+auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
+                                  const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    if( p.z() > OVERMAP_HEIGHT || p.z() < -OVERMAP_DEPTH ) {
+        return std::nullopt;
+    }
+
+    const auto center_tile = lookup_tile( *this, p, options );
+    if( !center_tile ) {
+        return std::nullopt;
+    }
+
+    auto best_difficulty = std::numeric_limits<int>::max();
+    auto blocks_movement = 0;
+    if( has_flag_ter_or_furn( "LADDER", p, options ) ) {
+        return 1;
+    }
+    if( has_flag_ter_or_furn( TFLAG_RAMP, p, options ) ||
+        has_flag_ter_or_furn( TFLAG_RAMP_UP, p, options ) ||
+        has_flag_ter_or_furn( TFLAG_RAMP_DOWN, p, options ) ) {
+        best_difficulty = 7;
+    }
+
+    for( const auto &pt : points_in_radius( p, 1 ) ) {
+        if( !passable_ter_furn_at( *this, pt, options ) ) {
+            best_difficulty = std::min( best_difficulty, 10 );
+            blocks_movement++;
+        } else if( veh_at( pt, options ) ) {
+            best_difficulty = std::min( best_difficulty, 7 );
+        }
+
+        if( best_difficulty > 5 && has_flag_ter_or_furn( "CLIMBABLE", pt, options ) ) {
+            best_difficulty = 5;
+        }
+    }
+
+    return std::max( 0, best_difficulty - blocks_movement );
+}
+
+auto mapbuffer::has_flag( const std::string &flag, const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> bool
+{
+    return has_flag_ter_or_furn( flag, p, options );
+}
+
+auto mapbuffer::has_flag_ter( const std::string &flag, const tripoint_abs_ms &p,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile && tile->sm->get_ter( tile->local ).obj().has_flag( flag );
+}
+
+auto mapbuffer::has_flag_furn( const std::string &flag, const tripoint_abs_ms &p,
+                               const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile && tile->sm->get_furn( tile->local ).obj().has_flag( flag );
+}
+
+auto mapbuffer::has_flag_vpart( const std::string &flag, const tripoint_abs_ms &p,
+                                const mapbuffer_lookup_options options ) -> bool
+{
+    const auto vp = veh_at( p, options );
+    return static_cast<bool>( vp.part_with_feature( flag, true ) );
+}
+
+auto mapbuffer::has_flag_furn_or_vpart( const std::string &flag, const tripoint_abs_ms &p,
+                                        const mapbuffer_lookup_options options ) -> bool
+{
+    return has_flag_furn( flag, p, options ) || has_flag_vpart( flag, p, options );
+}
+
+auto mapbuffer::has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
+                                      const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile &&
+           ( tile->sm->get_ter( tile->local ).obj().has_flag( flag ) ||
+             tile->sm->get_furn( tile->local ).obj().has_flag( flag ) );
+}
+
+auto mapbuffer::has_flag( const ter_bitflags flag, const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> bool
+{
+    return has_flag_ter_or_furn( flag, p, options );
+}
+
+auto mapbuffer::has_flag_ter( const ter_bitflags flag, const tripoint_abs_ms &p,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile && tile->sm->get_ter( tile->local ).obj().has_flag( flag );
+}
+
+auto mapbuffer::has_flag_furn( const ter_bitflags flag, const tripoint_abs_ms &p,
+                               const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile && tile->sm->get_furn( tile->local ).obj().has_flag( flag );
+}
+
+auto mapbuffer::has_flag_ter_or_furn( const ter_bitflags flag, const tripoint_abs_ms &p,
+                                      const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    return tile &&
+           ( tile->sm->get_ter( tile->local ).obj().has_flag( flag ) ||
+             tile->sm->get_furn( tile->local ).obj().has_flag( flag ) );
+}
+
 auto mapbuffer::ter_vars( const tripoint_abs_ms &p,
                           const mapbuffer_lookup_options options ) -> data_vars::data_set *
 {
@@ -596,6 +819,35 @@ auto mapbuffer::set_trap( const tripoint_abs_ms &p, const trap_id trap,
     tile->sm->set_trap( tile->local, trap );
     sync_active_trap_change_side_tables( p, tile->local, old_id, trap );
     return true;
+}
+
+auto mapbuffer::creature_on_trap( Creature &critter, const bool may_avoid ) -> void
+{
+    const auto pos = critter.abs_pos();
+    const auto terrain = get_ter( pos );
+    if( !terrain ) {
+        return;
+    }
+
+    auto trap_here = terrain->obj().trap;
+    if( trap_here == tr_null ) {
+        trap_here = get_trap( pos ).value_or( tr_null );
+    }
+
+    const auto &tr = trap_here.obj();
+    if( tr.is_null() ) {
+        return;
+    }
+    const player *const pl = critter.as_player();
+    if( pl != nullptr && pl->in_vehicle ) {
+        return;
+    }
+
+    const auto bubble_pos = abs_to_bub( pos );
+    if( may_avoid && critter.avoid_trap( bubble_pos, tr ) ) {
+        return;
+    }
+    tr.trigger( bubble_pos, &critter );
 }
 
 auto mapbuffer::get_radiation( const tripoint_abs_ms &p,

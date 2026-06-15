@@ -604,7 +604,7 @@ TEST_CASE( "reality_bubble_origin_helpers_use_explicit_size" )
     CHECK( reality_bubble_center_from_origin( size_zero_origin, 0 ) == player_sm );
 }
 
-TEST_CASE( "update_map_uses_avatar_absolute_position" )
+TEST_CASE( "avatar_setpos_updates_map_from_absolute_position" )
 {
     clear_all_state();
 
@@ -615,13 +615,12 @@ TEST_CASE( "update_map_uses_avatar_absolute_position" )
     const auto destination_abs = map_local_to_abs( here, destination );
 
     you.setpos( destination_abs );
-    const auto shift = g->update_map( you );
 
-    CHECK( shift == point_rel_sm( 1, 0 ) );
     CHECK( here.get_abs_sub() == old_origin + tripoint_rel_sm( 1, 0, 0 ) );
     CHECK( here.get_abs_sub() == player_reality_bubble_origin() );
     CHECK( you.abs_pos() == destination_abs );
     CHECK( you.bub_pos() == tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) );
+    CHECK( g->update_map( you ) == point_rel_sm::zero() );
 }
 
 TEST_CASE( "monster_tracker_uses_absolute_positions" )

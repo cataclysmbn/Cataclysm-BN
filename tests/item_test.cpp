@@ -7,6 +7,7 @@
 
 #include "calendar.h"
 #include "enums.h"
+#include "flag.h"
 #include "item.h"
 #include "itype.h"
 #include "ret_val.h"
@@ -53,6 +54,17 @@ TEST_CASE( "gun_layer", "[item]" )
     CHECK( gun.is_gunmod_compatible( *mod ).success() );
     gun.put_in( std::move( mod ) );
     CHECK( gun.get_layer() == BELTED_LAYER );
+}
+
+TEST_CASE( "ethereal_item_with_malformed_counter_expires_without_throwing", "[item]" )
+{
+    auto ethereal = item::spawn( "rock" );
+    ethereal->set_flag( flag_ETHEREAL_ITEM );
+    ethereal->set_var( "ethereal", "not-a-number" );
+
+    CHECK_NOTHROW( ethereal = item::process( std::move( ethereal ), nullptr,
+                              tripoint_bub_ms::zero(), false ) );
+    CHECK_FALSE( ethereal );
 }
 
 TEST_CASE( "gun_cycle_mode_wraps_from_last_to_first", "[item]" )

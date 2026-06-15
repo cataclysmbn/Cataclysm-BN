@@ -56,9 +56,9 @@ void check_lethality( const std::string &explosive_id, const int range, float le
     do {
         // Clear map
         clear_map();
-        put_player_underground();
+        move_player_out_of_the_way();
         // Spawn some monsters in a circle.
-        tripoint_bub_ms origin( 30, 30, 0 );
+        const auto origin = tripoint_bub_ms( 30, 30, 0 );
         int num_subjects_this_time = 0;
         for( const tripoint_bub_ms &monster_position : closest_points_first( origin, range ) ) {
             if( rl_dist( monster_position, origin ) != range ) {
@@ -119,8 +119,8 @@ auto get_part_hp( vehicle *veh ) -> std::vector<int>
 void check_vehicle_damage( const std::string &explosive_id, const std::string &vehicle_id,
                            const int range )
 {
-    put_player_underground();
-    tripoint_bub_ms origin( 30, 30, 0 );
+    move_player_out_of_the_way();
+    auto origin = tripoint_bub_ms( 30, 30, 0 );
 
     vehicle *target_vehicle = get_map().add_vehicle( vproto_id( vehicle_id ), origin, 0_degrees,
                               -1, 0 );
@@ -169,8 +169,8 @@ TEST_CASE( "grenade_vs_vehicle", "[grenade][explosion][balance]" )
 TEST_CASE( "shrapnel behind wall", "[grenade][explosion][balance]" )
 {
     clear_all_state();
-    put_player_underground();
-    tripoint_bub_ms origin( 30, 30, 0 );
+    move_player_out_of_the_way();
+    const auto origin = tripoint_bub_ms( 30, 30, 0 );
 
     item &grenade = *item::spawn_temporary( "test_shrapnel_blast" );
     REQUIRE( grenade.get_use( "explosion" ) != nullptr );
@@ -201,8 +201,8 @@ TEST_CASE( "shrapnel behind wall", "[grenade][explosion][balance]" )
 TEST_CASE( "shrapnel at huge range", "[grenade][explosion]" )
 {
     clear_all_state();
-    put_player_underground();
-    tripoint_bub_ms origin;
+    move_player_out_of_the_way();
+    const auto origin = tripoint_bub_ms( 0, 0, 0 );
 
     item &grenade = *item::spawn_temporary( "test_long_shrapnel_blast" );
     REQUIRE( grenade.get_use( "explosion" ) != nullptr );
@@ -226,8 +226,8 @@ TEST_CASE( "shrapnel at huge range", "[grenade][explosion]" )
 TEST_CASE( "shrapnel at max grenade range", "[grenade][explosion]" )
 {
     clear_all_state();
-    put_player_underground();
-    tripoint_bub_ms origin( 60, 60, 0 );
+    move_player_out_of_the_way();
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
 
     item &grenade = *item::spawn_temporary( "test_shrapnel_blast" );
     REQUIRE( grenade.get_use( "explosion" ) != nullptr );
@@ -261,8 +261,8 @@ TEST_CASE( "shrapnel at max grenade range", "[grenade][explosion]" )
 TEST_CASE( "rotated_vehicle_walls_block_explosions" )
 {
     clear_all_state();
-    put_player_underground();
-    tripoint_bub_ms origin( 60, 60, 0 );
+    move_player_out_of_the_way();
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
 
     item &grenade = *item::spawn_temporary( "test_shrapnel_blast" );
 

@@ -24,10 +24,12 @@
 
 class submap;
 class computer;
+class Creature;
 class field;
 class field_entry;
 class item;
 class JsonIn;
+enum ter_bitflags : int;
 struct partial_con;
 template<typename T>
 class location_vector;
@@ -54,6 +56,14 @@ enum class mapbuffer_lookup_mode : int {
 
 struct mapbuffer_lookup_options {
     mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::simulated_only;
+};
+
+struct mapbuffer_valid_move_options {
+    bool bash = false;
+    bool flying = false;
+    bool via_ramp = false;
+    bool zlevels = true;
+    mapbuffer_lookup_options lookup;
 };
 
 struct mapbuffer_field_age_options {
@@ -171,6 +181,30 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
         auto passable( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<bool>;
+        auto valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
+        mapbuffer_valid_move_options options = {} ) -> bool;
+        auto climb_difficulty( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto has_flag( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_ter( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_furn( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_vpart( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_furn_or_vpart( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_ter( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_furn( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_ter_or_furn( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
         auto ter_vars( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
         auto furn_vars( const tripoint_abs_ms &p,
@@ -180,6 +214,7 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> std::optional<trap_id>;
         auto set_trap( const tripoint_abs_ms &p, trap_id trap,
         mapbuffer_lookup_options options = {} ) -> bool;
+        auto creature_on_trap( Creature &critter, bool may_avoid = true ) -> void;
 
         auto get_radiation( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;

@@ -3390,7 +3390,7 @@ const
 std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair(
     bool no_bashing ) const
 {
-    PathfindingSettings path_settings;
+    auto path_settings = PathfindingSettings();
 
     path_settings.door_open_cost = rules.has_flag( ally_rule::avoid_doors ) ? INFINITY : 2.0;
     path_settings.mob_presence_penalty =
@@ -3410,16 +3410,24 @@ std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair(
         path_settings.climb_cost = 5 / climb_success_prob;
     }
 
-    RouteSettings route_settings;
+    auto route_settings = RouteSettings();
     // TODO: Make it assign a stockfish preset instead
-    route_settings.alpha = 1.0;
-    route_settings.h_coeff = 1.0;
+    route_settings.alpha = get_option<float>( "PATHFINDING_ALPHA_DEFAULT" );
+    route_settings.h_coeff = get_option<float>( "PATHFINDING_H_COEFF_DEFAULT" );
     route_settings.max_dist = INFINITY;
-    route_settings.max_f_coeff = INFINITY;
+    route_settings.max_f_coeff = get_option<float>( "PATHFINDING_MAX_F_COEFF_DEFAULT" );
     route_settings.max_s_coeff = INFINITY;
     route_settings.f_limit_based_on_max_dist = false;
-    route_settings.search_cone_angle = 180.0;
-    route_settings.search_radius_coeff = INFINITY;
+    route_settings.search_cone_angle =
+        get_option<float>( "PATHFINDING_SEARCH_CONE_ANGLE_DEFAULT" );
+    route_settings.search_radius_coeff =
+        get_option<float>( "PATHFINDING_SEARCH_RADIUS_COEFF_DEFAULT" );
+    if( route_settings.max_f_coeff < 0.0f ) {
+        route_settings.max_f_coeff = INFINITY;
+    }
+    if( route_settings.search_radius_coeff < 0.0f ) {
+        route_settings.search_radius_coeff = INFINITY;
+    }
 
     return { path_settings, route_settings };
 }

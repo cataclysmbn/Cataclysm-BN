@@ -6894,14 +6894,12 @@ void cata_tiles::draw_line()
         return;
     }
     static std::string line_overlay = "animation_line";
-    if( !is_target_line || g->u.sees( tripoint_bub_ms( line_pos ) ) ) {
-        for( auto it = line_trajectory.begin(); it != line_trajectory.end() - 1; ++it ) {
-            draw_from_id_string(
-            {line_overlay, C_NONE, empty_string, 0, 0},
-            *it, std::nullopt, std::nullopt,
-            lit_level::LIT, false, 0, false
-            );
-        }
+    for( auto it = line_trajectory.begin(); it != line_trajectory.end() - 1; ++it ) {
+        draw_from_id_string(
+        {line_overlay, C_NONE, empty_string, 0, 0},
+        *it, std::nullopt, std::nullopt,
+        lit_level::LIT, false, 0, false
+        );
     }
 
     draw_from_id_string(

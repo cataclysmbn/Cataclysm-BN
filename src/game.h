@@ -231,6 +231,7 @@ class game : public submap_load_listener
         void draw_ter( bool draw_sounds = true );
         void draw_ter( const tripoint_bub_ms &center, bool looking = false, bool draw_sounds = true );
         auto visibility_cache_z() -> int;
+        auto refresh_player_visibility_cache_if_needed( bool player_map_cache_current = false ) -> void;
 
         class draw_callback_t
         {
@@ -324,7 +325,7 @@ class game : public submap_load_listener
         std::optional<tripoint_bub_ms> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
                 bool peeking );
         /** Actual z-level movement part of vertical_move. Doesn't include stair finding, traps etc. */
-        auto vertical_shift( int z_after, bool keep_grab = false ) -> void;
+        auto vertical_shift( int z_after ) -> void;
         /** Add goes up/down auto_notes (if turned on) */
         void vertical_notes( int z_before, int z_after );
         /** Checks to see if a player can use a computer (not illiterate, etc.) and uses if able. */
@@ -665,10 +666,10 @@ class game : public submap_load_listener
         character_id assign_npc_id();
         Creature *is_hostile_nearby();
         Creature *is_hostile_very_close();
-        // Handles shifting coordinates transparently when moving between submaps.
-        // Helper to make calling with a player pointer less verbose.
-        point_rel_sm update_map( Character &who );
-        point_rel_sm update_map( int &x, int &y );
+        // Keeps the loaded map window aligned with an absolute center.
+        auto update_map( Character &who ) -> point_rel_sm;
+        auto update_map( const tripoint_abs_ms &center ) -> point_rel_sm;
+        auto update_map( int &x, int &y ) -> point_rel_sm;
         void update_overmap_seen(); // Update which overmap tiles we can see
 
         void process_artifact( item &it, Character &who );
@@ -951,7 +952,7 @@ class game : public submap_load_listener
         void butcher(); // Butcher a corpse  'B'
     public:
         // Places the player at the specified point; hurts feet, lists items etc.
-        auto place_player( const tripoint_bub_ms &dest, bool keep_grab = false ) -> point_rel_sm;
+        auto place_player( const tripoint_bub_ms &dest ) -> point_rel_sm;
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;
@@ -1196,25 +1197,27 @@ class game : public submap_load_listener
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
 
-        // P-8: per-turn Creature::sees() result cache used during parallel monster
-        // planning (monmove()).  Keyed on directional (seer, target) Creature pointer
-        // pairs; Creature::sees() includes observer and target perception rules, while
-        // map::sees() remains the symmetric LOS cache.  Cleared at the start of
-        // monmove() before the parallel phase begins.  Workers hold a shared_lock for
-        // hits and upgrade to unique_lock on a miss.
-        // Lives in the public section so turn_cached_sees() in monmove.cpp can
-        // access it directly without an additional indirection layer.
-        struct TurnSightPairHash {
-            size_t operator()( const std::pair<const Creature *, const Creature *> &p ) const noexcept {
-                size_t h1 = std::hash<const Creature *> {}( p.first );
-                size_t h2 = std::hash<const Creature *> {}( p.second );
-                return h1 ^ ( h2 * 2654435761ULL );
+        auto clear_turn_los_blocker_cache() -> void;
+        // True means terrain LOS is blocked between these two positions.
+        // The key is canonicalized, so a check from either end warms both directions.
+        // It is not a creature visibility or perception result.
+        auto terrain_los_blocks_sight_between( const tripoint_bub_ms &from,
+                                               const tripoint_bub_ms &to ) -> bool;
+    private:
+        struct TurnLosBlockerPairHash {
+            auto operator()( const std::pair<tripoint_bub_ms, tripoint_bub_ms> &p ) const noexcept
+            -> std::size_t {
+                const auto first_hash = std::hash<tripoint_bub_ms> {}( p.first );
+                const auto second_hash = std::hash<tripoint_bub_ms> {}( p.second );
+                return first_hash ^ ( second_hash * 2654435761ULL );
             }
         };
-        std::unordered_map<std::pair<const Creature *, const Creature *>, bool, TurnSightPairHash>
-        turn_sight_cache_;
-        std::shared_mutex turn_sight_cache_mutex_;
-    private:
+        using turn_los_blocker_cache_t =
+            std::unordered_map<std::pair<tripoint_bub_ms, tripoint_bub_ms>, bool,
+            TurnLosBlockerPairHash>;
+        turn_los_blocker_cache_t turn_los_blocker_cache_;
+        std::shared_mutex turn_los_blocker_cache_mutex_;
+
         shared_ptr_fast<player> u_shared_ptr;
 
         catacurses::window w_terrain_ptr;

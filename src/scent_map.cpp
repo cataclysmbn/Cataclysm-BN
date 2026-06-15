@@ -147,8 +147,13 @@ void scent_map::draw( const catacurses::window &win, const int div,
 
 int scent_map::get( const tripoint_bub_ms &p ) const
 {
-    if( inbounds( p ) && raw_scent_at( p.x(), p.y(), p.z() ) > 0 ) {
-        return get_unsafe( p );
+    if( !inbounds( p ) ) {
+        return 0;
+    }
+
+    const auto raw_scent = raw_scent_at( p.x(), p.y(), p.z() );
+    if( raw_scent > 0 ) {
+        return raw_scent - std::abs( gm.get_levz() - p.z() );
     }
     return 0;
 }

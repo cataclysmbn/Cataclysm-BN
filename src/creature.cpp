@@ -53,6 +53,7 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "submap_load_manager.h"
+#include "utils/string_to_int.h"
 #include "translations.h"
 #include "value_ptr.h"
 #include "vehicle.h"
@@ -1849,6 +1850,12 @@ std::string Creature::get_value( const std::string &key ) const
     auto it = values.find( key );
     return ( it == values.end() ) ? "" : it->second;
 }
+
+auto Creature::get_value_as_int( const std::string &key ) const -> std::optional<int>
+{
+    return string_utils::string_to_int( get_value( key ) );
+}
+
 auto Creature::get_values_map() const -> const std::unordered_map<std::string, std::string> &
 {
     return values;
