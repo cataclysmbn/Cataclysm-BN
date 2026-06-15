@@ -13,7 +13,6 @@
 #include <optional>
 #include <ostream>
 #include <ranges>
-#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -383,10 +382,9 @@ void monster::wander_to( const tripoint_bub_ms &p, int f )
     }
 }
 
-// P-8: per-turn Creature::sees() result cache wrapper.
-// Checks g->turn_sight_cache_ before invoking the full Creature::sees() chain.
-// Key is directional because Creature::sees() includes observer and target
-// perception rules.  The symmetric LOS part is handled by map::sees().
+// Per-turn terrain LOS blocker cache.  This is keyed only by the current
+// positions, and a true result means the real sight check can be rejected early.
+// A false result is not visibility; callers still have to run Creature::sees().
 //
 // LOGIC-2 / P-5 note: x_in_y aggro-chance rolls inside compute_plan() run on
 // worker-thread RNG (tl_worker_engine).  This is data-race-free (P-5), but it
@@ -394,22 +392,10 @@ void monster::wander_to( const tripoint_bub_ms &p, int f )
 // sequence, silently breaking save-file determinism and shifting all subsequent
 // main-thread RNG draws.  If determinism is required, move the x_in_y calls
 // into apply_plan() so they execute on the main thread with the shared engine.
-static bool turn_cached_sees( const Creature &seer, const Creature &target )
+static auto terrain_los_cache_blocks_current_positions( const Creature &seer,
+        const Creature &target ) -> bool
 {
-    const auto key = std::make_pair( &seer, &target );
-    {
-        std::shared_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
-        const auto it = g->turn_sight_cache_.find( key );
-        if( it != g->turn_sight_cache_.end() ) {
-            return it->second;
-        }
-    }
-    const bool result = seer.sees( target );
-    {
-        std::unique_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
-        g->turn_sight_cache_.emplace( key, result );
-    }
-    return result;
+    return g->terrain_los_blocks_sight_between( seer.bub_pos(), target.bub_pos() );
 }
 
 float monster::rate_target( Creature &c, float best, bool smart, int precalc_dist ) const
@@ -427,9 +413,11 @@ float monster::rate_target( Creature &c, float best, bool smart, int precalc_dis
         return FLT_MAX;
     }
 
-    // P-8: use the per-turn cache for repeated Creature::sees() checks in this
-    // direction.  Symmetric LOS reuse happens inside map::sees().
-    if( !turn_cached_sees( *this, c ) ) {
+    if( terrain_los_cache_blocks_current_positions( *this, c ) ) {
+        return FLT_MAX;
+    }
+
+    if( !sees( c ) ) {
         return FLT_MAX;
     }
 
@@ -532,8 +520,8 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     bool swarms       = lod_tier <= lod_group_morale_max_tier && has_flag( MF_SWARMS );
     auto mood   = attitude();
 
-    // GAIN-B: call rate_target once (which internally calls turn_cached_sees).
-    // The redundant outer turn_cached_sees guard has been removed; player
+    // GAIN-B: call rate_target once.  It applies the terrain LOS blocker cache,
+    // then runs the real sight check; player
     // visibility is determined by the rate_target return value (FLT_MAX = not visible).
     {
         ZoneScopedN( "cp_initial_target" );
@@ -550,7 +538,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                         local_anger += angers_hostile_near;
                     }
                     if( angers_hostile_near ) {
-                        // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
+                        // LOGIC-2: worker-thread RNG; see P-5 note above the LOS blocker cache.
                         if( x_in_y( local_anger, 100 ) ) {
                             result.aggro_triggers.push_back( "proximity" );
                         }
@@ -575,7 +563,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                             } else {
                                 local_anger += angers_mating_season;
                             }
-                            // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
+                            // LOGIC-2: worker-thread RNG; see P-5 note above the LOS blocker cache.
                             if( x_in_y( local_anger, 100 ) ) {
                                 result.aggro_triggers.push_back( "mating season" );
                             }
@@ -705,7 +693,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                         } else {
                             local_anger += angers_mating_season;
                         }
-                        // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
+                        // LOGIC-2: worker-thread RNG; see P-5 note above the LOS blocker cache.
                         if( x_in_y( local_anger, 100 ) ) {
                             result.aggro_triggers.push_back( "mating season" );
                         }
@@ -928,7 +916,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                     local_anger += anger_amount;
                 }
                 if( local_anger <= 40 ) {
-                    // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
+                    // LOGIC-2: worker-thread RNG; see P-5 note above the LOS blocker cache.
                     if( x_in_y( local_anger, 100 ) ) {
                         result.aggro_triggers.push_back( "weakness" );
                     }
@@ -937,7 +925,9 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         }
     } else if( local_friendly > 0 && one_in( 3 ) ) {
         local_friendly--;
-    } else if( local_friendly < 0 && turn_cached_sees( *this, g->u ) ) {
+    } else if( local_friendly < 0 &&
+               !terrain_los_cache_blocks_current_positions( *this, g->u ) &&
+               sees( g->u ) ) {
         const auto allow_follow_player = local_goal == bub_pos();
         if( allow_follow_player && !has_flag( MF_PET_WONT_FOLLOW ) ) {
             if( rl_dist( bub_pos(), g->u.bub_pos() ) > 2 ) {

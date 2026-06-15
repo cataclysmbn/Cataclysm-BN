@@ -1196,25 +1196,27 @@ class game : public submap_load_listener
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
 
-        // P-8: per-turn Creature::sees() result cache used during parallel monster
-        // planning (monmove()).  Keyed on directional (seer, target) Creature pointer
-        // pairs; Creature::sees() includes observer and target perception rules, while
-        // map::sees() remains the symmetric LOS cache.  Cleared at the start of
-        // monmove() before the parallel phase begins.  Workers hold a shared_lock for
-        // hits and upgrade to unique_lock on a miss.
-        // Lives in the public section so turn_cached_sees() in monmove.cpp can
-        // access it directly without an additional indirection layer.
-        struct TurnSightPairHash {
-            size_t operator()( const std::pair<const Creature *, const Creature *> &p ) const noexcept {
-                size_t h1 = std::hash<const Creature *> {}( p.first );
-                size_t h2 = std::hash<const Creature *> {}( p.second );
-                return h1 ^ ( h2 * 2654435761ULL );
+        auto clear_turn_los_blocker_cache() -> void;
+        // True means terrain LOS is blocked between these two positions.
+        // The key is canonicalized, so a check from either end warms both directions.
+        // It is not a creature visibility or perception result.
+        auto terrain_los_blocks_sight_between( const tripoint_bub_ms &from,
+                                               const tripoint_bub_ms &to ) -> bool;
+    private:
+        struct TurnLosBlockerPairHash {
+            auto operator()( const std::pair<tripoint_bub_ms, tripoint_bub_ms> &p ) const noexcept
+            -> std::size_t {
+                const auto first_hash = std::hash<tripoint_bub_ms> {}( p.first );
+                const auto second_hash = std::hash<tripoint_bub_ms> {}( p.second );
+                return first_hash ^ ( second_hash * 2654435761ULL );
             }
         };
-        std::unordered_map<std::pair<const Creature *, const Creature *>, bool, TurnSightPairHash>
-        turn_sight_cache_;
-        std::shared_mutex turn_sight_cache_mutex_;
-    private:
+        using turn_los_blocker_cache_t =
+            std::unordered_map<std::pair<tripoint_bub_ms, tripoint_bub_ms>, bool,
+            TurnLosBlockerPairHash>;
+        turn_los_blocker_cache_t turn_los_blocker_cache_;
+        std::shared_mutex turn_los_blocker_cache_mutex_;
+
         shared_ptr_fast<player> u_shared_ptr;
 
         catacurses::window w_terrain_ptr;

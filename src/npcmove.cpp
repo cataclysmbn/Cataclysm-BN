@@ -446,26 +446,6 @@ static bool too_close( const tripoint_bub_ms &critter_pos, const tripoint_bub_ms
     return rl_dist( critter_pos, ally_pos ) <= def_radius;
 }
 
-// Per-turn Creature::sees() cache wrapper — mirrors turn_cached_sees() in monmove.cpp.
-// Key is directional; map::sees() handles symmetric LOS reuse below this layer.
-static auto npc_turn_cached_sees( const Creature &seer, const Creature &target ) -> bool
-{
-    const auto key = std::make_pair( &seer, &target );
-    {
-        std::shared_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
-        const auto it = g->turn_sight_cache_.find( key );
-        if( it != g->turn_sight_cache_.end() ) {
-            return it->second;
-        }
-    }
-    const bool result = seer.sees( target );
-    {
-        std::unique_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
-        g->turn_sight_cache_.emplace( key, result );
-    }
-    return result;
-}
-
 void npc::assess_danger()
 {
     ZoneScoped;
@@ -663,7 +643,9 @@ void npc::assess_danger()
             if( att != Attitude::A_HOSTILE ) {
                 continue;
             }
-            if( !npc_turn_cached_sees( *this, critter ) ) {
+            // Character::sees() includes short-range special senses; do not replace it
+            // with a terrain-only LOS cache here.
+            if( !sees( critter ) ) {
                 continue;
             }
             float critter_threat = evaluate_enemy( critter );
