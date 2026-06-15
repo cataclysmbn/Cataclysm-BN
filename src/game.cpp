@@ -5798,7 +5798,7 @@ void game::world_tick()
 
 static auto turn_los_blocker_key( const tripoint_bub_ms &from,
                                   const tripoint_bub_ms &to ) ->
-                                  std::pair<tripoint_bub_ms, tripoint_bub_ms>
+std::pair<tripoint_bub_ms, tripoint_bub_ms>
 {
     return from < to ? std::make_pair( from, to ) : std::make_pair( to, from );
 }
