@@ -43,6 +43,7 @@
     "react_cost": "1 J",
     "trigger_cost": "25 kJ",
     "time": 1,
+    "starting_bionic": true,
     "points": 1
   },
   {
@@ -424,6 +425,7 @@
     "fuel_efficiency": 0.5,
     "exothermic_power_gen": true,
     "time": 1,
+    "starting_bionic": true,
     "points": 2,
     "flags": [ "BIONIC_POWER_SOURCE", "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF", "BIONIC_TOGGLED" ]
   },
@@ -743,6 +745,7 @@
     "description": "Surgically embedded in your right hand is a powerful electromagnet, allowing you to use your own strength to pull all nearby magnetic objects towards you.  Unlucky bystanders might be injured or killed by flying objects.",
     "occupied_bodyparts": [ [ "hand_r", 3 ] ],
     "act_cost": "10 kJ",
+    "starting_bionic": true,
     "points": 2
   },
   {
@@ -777,6 +780,7 @@
     "fuel_options": [ "metabolism" ],
     "fuel_efficiency": 0.25,
     "time": 1,
+    "starting_bionic": true,
     "points": 2,
     "flags": [ "BIONIC_POWER_SOURCE", "BIONIC_TOGGLED", "BIONIC_NPC_USABLE" ]
   },
@@ -1219,6 +1223,7 @@
     "description": "Surgically implanted in your hands and fingers is a set of tools - screwdriver, hammer, wrench, hacksaw, drill, welder, and heating elements.  You can use this in place of many tools when crafting.",
     "occupied_bodyparts": [ [ "hand_l", 3 ], [ "hand_r", 3 ] ],
     "fake_item": "toolset",
+    "starting_bionic": true,
     "points": 4,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE", "BIONIC_TOOLS", "INITIALLY_ACTIVATE" ]
   },
@@ -1231,6 +1236,7 @@
     "fuel_options": [ "muscle" ],
     "fuel_efficiency": 0.125,
     "passive_fuel_efficiency": 0.00625,
+    "starting_bionic": true,
     "points": 2,
     "flags": [ "BIONIC_POWER_SOURCE", "BIONIC_NPC_USABLE", "BIONIC_TOGGLED" ]
   },
@@ -1458,6 +1464,7 @@
     "fuel_options": [ "sunlight" ],
     "fuel_efficiency": 1,
     "time": 1,
+    "starting_bionic": true,
     "points": 1,
     "flags": [ "BIONIC_POWER_SOURCE", "BIONIC_TOGGLED", "BIONIC_NPC_USABLE" ]
   },
@@ -1479,6 +1486,7 @@
     "name": { "str": "Linguistic Coprocessor" },
     "description": "The left hemisphere of your brain has been augmented with a microcomputer that moderately increases the speed that language and written words are processed, granting a 25% increase to reading speed.",
     "occupied_bodyparts": [ [ "head", 1 ] ],
+    "starting_bionic": true,
     "points": 1,
     "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "READING_SPEED", "multiply": -0.25 } ] } ]
   },
