@@ -1059,4 +1059,5 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_requirement( lua );
     reg_inventory( lua );
     reg_mapgendata( lua );
+    reg_yarn_dialogue( lua );
 }

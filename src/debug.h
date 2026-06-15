@@ -122,6 +122,8 @@ enum class DC : int {
     MapMem,
     /** npcs*.cpp */
     NPC,
+    /** yarn_dialogue.cpp - h */
+    Dialogue,
     /** SDL & tiles & anything graphical & sound */
     SDL,
     /** Output from Lua */

@@ -1450,6 +1450,7 @@ void npc_chatbin::serialize( JsonOut &json ) const
 {
     json.start_object();
     json.member( "first_topic", first_topic );
+    json.member( "yarn_story", yarn_story );
     if( mission_selected != nullptr ) {
         json.member( "mission_selected", mission_selected->get_id() );
     }
@@ -1472,6 +1473,8 @@ void npc_chatbin::deserialize( JsonIn &jsin )
     } else {
         data.read( "first_topic", first_topic );
     }
+
+    data.read( "yarn_story", yarn_story );
 
     data.read( "skill", skill );
     data.read( "style", style );

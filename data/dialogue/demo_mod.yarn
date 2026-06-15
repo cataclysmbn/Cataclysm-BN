@@ -1,0 +1,109 @@
+// Example of how a mod would inject choices into an existing dialogue node.
+//
+// This file lives in the mod's own data/dialogue/ folder.  It does not touch
+// shelter_npc.yarn at all — it just declares inject_into pointing at the target.
+//
+// inject_priority controls placement relative to the target's native choices:
+//   priority < 0  → before native choices (most-negative appears first)
+//   priority >= 0 → after native choices  (lowest appears first; default is 0)
+//
+// Multiple mods injecting into the same node are sorted by priority, then by
+// the order their files were loaded.
+//
+// Return behaviour: the runtime automatically appends <<jump TargetNode>> to
+// every injected choice body.  Mod authors do NOT need to write <<jump>> at the
+// end — the player is returned to the injection target node automatically.
+// If the body explicitly navigates (<<stop>>, <<jump X>>, etc.) the auto-jump
+// is never reached, so deliberate exits still work as authored.
+//
+// Speaker attribution:
+//   NPC: text     — spoken by the NPC (resolves to the NPC's actual runtime name)
+//   You: text     — spoken by the player
+//   plain text    — continuation; white, no label, no extra spacing
+//   - text        — narrator/stage-direction; gray, no label, no quotes
+//   #spoken       — echo the choice label itself as player speech (opt-in)
+//   <<player "...">> / <<npc "...">> — programmatic speech inside command blocks
+//
+// Navigation across stories:
+//   <<cross_detour story::NodeName>> — push a node from another story; returns when done.
+//   <<cross_jump   story::NodeName>> — replace current frame with a node from another story.
+// These are custom commands (not native Yarn keywords), so the VS Code extension linter
+// accepts the story::NodeName argument without errors.
+
+// Injects after native choices (default priority 0).
+//
+// This example uses tag-based injection: the node declares inject_into: #shelter_dialogue
+// instead of the direct inject_into: shelter_npc::Start.  Any node in any story that
+// carries inject_tags: shelter_dialogue will receive this choice automatically.
+//
+// inject_category: mod_lore allows target nodes to opt out via inject_block: mod_lore.
+//
+// LockedDoorDetail is a multi-turn sub-conversation — the player can ask follow-up
+// questions, the NPC recalls more detail, and the exchange eventually ends naturally.
+// This is why <<detour>> is used rather than shared_choices: shared_choices can only
+// contribute individual choices to a menu; it cannot sequence a back-and-forth exchange.
+// When LockedDoorDetail falls off its end the runtime pops back to Start automatically.
+//
+// (If LockedDoorDetail lived in a different story file, use <<cross_detour story::LockedDoorDetail>>.)
+title: ModExtraDialogue
+position: 294,-191
+inject_into: #shelter_dialogue
+inject_category: #mod_lore
+---
+-> Ask about the locked door.
+    You: That locked door — what's behind it?
+    <<detour LockedDoorDetail>>
+===
+
+title: LockedDoorDetail
+position: 300,100
+---
+NPC: I don't know.  And honestly?  I don't want to find out.
+I heard something move behind it on the second night.  Since then I haven't gone near it.
+-> What did it sound like? #spoken
+    NPC: Like something heavy.  Slow.  It wasn't rats.
+    You: Did it sound like it was trying to get out?
+    NPC: No.  Just... shifting.  Like it was settling in.
+    That's almost worse.
+    -> We should check it out.
+        You: We should probably check it out at some point.
+        NPC: Be my guest.  I'll be right here, not doing that.
+    -> Better to leave it alone.
+        You: Probably better to leave it alone.
+        NPC: Exactly what I've been telling myself.
+-> Have you tried opening it? #spoken
+    NPC: Once.  On the first day, before I knew better.
+    It was locked from the inside.
+    You: From the inside?
+    NPC: Yeah.  Whatever's in there locked itself in.
+    Or someone locked it from in there.
+    I try not to think about which.
+-> Probably nothing to worry about. #spoken
+    NPC: Probably.  I still sleep on the other side of the building.
+===
+
+// Injects before native choices (negative priority).
+// Use sparingly — most mod choices should follow the base dialogue.
+//
+// Uses direct injection (inject_into: story::Node) which bypasses inject_block.
+// inject_category: #urgent lets target nodes block it if they choose, but since
+// this uses the direct form it is documented here for illustration only —
+// direct injection ignores inject_block.  Use tag-based inject_into if you want
+// blocking to apply.
+title: ModUrgentWarning
+position: 4,323
+inject_into: shelter_npc::Start
+inject_category: #urgent
+inject_priority: -10
+---
+-> Did you hear that noise just now?
+    You: Did you hear that?
+    <<if npc_following()>>
+        NPC: I heard it too.  Stay sharp.
+    <<else>>
+        NPC: What noise?  I've been trying not to listen.
+    <<endif>>
+    -> Probably nothing. #spoken
+    -> Stay alert either way.
+        You: Stay alert either way.
+===

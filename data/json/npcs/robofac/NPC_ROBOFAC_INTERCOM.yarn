@@ -1,0 +1,180 @@
+title: Start
+position: 0,-240
+---
+<<jump TALK_ROBOFAC_INTERCOM>>
+===
+
+// Generated from data/json/npcs/robofac/NPC_ROBOFAC_INTERCOM.json by scripts/migrations/migrate_legacy_dialogue_to_yarn.ts.
+// Review TODO comments and unsupported conversion warnings before removing legacy JSON.
+
+title: TALK_ROBOFAC_INTERCOM
+position: 0,0
+---
+<<u_add_var "u_met_robofac_intercom" "dialogue" "intercom" "yes">>
+<<if npc_has_var("npc_intercom_trade", "dialogue", "intercom", "yes")>>
+    NPC: {random_line("So, do you need something?", "Yes, mercenary?", "Mercenary.", "Mercenary.", "Don't you have a mission to do?", "Well?", "Say it.", "Get with it.", "Make it quick.", "Don't loiter.", "Don't do anything stupid.", "Ugh I hate intercom duty…  Wait is the speaker still on?", "Please don't bother us senselessly.", "[Silence]", "[Crackles On]", "[A red LED blinks on]", "[Unintelligible]", "What's up with the interference in this thing?", "Speak slowly and clearly.  Please.", "Say again?", "If/you speak to/understand… you/me. Yes?")}
+<<else>>
+    <<if u_has_var("u_met_robofac_intercom", "dialogue", "intercom", "yes")>>
+        NPC: We haven't changed our mind.  Go away.
+    <<else>>
+        NPC: Hold there.  I don't care how you got access to this location, but you are coming no further.  Go away.
+    <<endif>>
+<<endif>>
+-> I was sent here by the traders at the refugee center.  They told me to deliver this hard drive to you. <<if (not u_has_var("completed_robofac_intercom_1", "dialogue", "intercom", "yes")) and (not u_has_var("completed_free_merchants_hub_delivery_1", "dialogue", "intercom", "yes")) and u_has_mission("MISSION_FREE_MERCHANTS_HUB_DELIVERY_1")>>
+    <<jump TALK_ROBOFAC_INTERCOM_FREE_MERCHANT_DELIVERY_1>>
+-> The traders also mentioned you were looking for help. <<if (not u_has_var("completed_robofac_intercom_1", "dialogue", "intercom", "yes")) and u_has_var("completed_free_merchants_hub_delivery_1", "dialogue", "intercom", "yes")>>
+    <<if trial_roll("LIE", 1)>>
+        <<jump MISSION_ROBOFAC_INTERCOM_1_INTRODUCTION>>
+    <<else>>
+        <<jump MISSION_ROBOFAC_INTERCOM_1_INTRODUCTION>>
+    <<endif>>
+-> Wait!  What?? <<if (not u_has_var("completed_free_merchants_hub_delivery_1", "dialogue", "intercom", "yes")) and (not u_has_mission("MISSION_FREE_MERCHANTS_HUB_DELIVERY_1")) and (not u_has_var("completed_robofac_intercom_1", "dialogue", "intercom", "yes")) and (not u_has_mission("MISSION_ROBOFAC_INTERCOM_1"))>>
+    <<jump TALK_ROBOFAC_INTERCOM_PLEAD>>
+-> You do realize that the front door is just open? <<if (not u_has_var("completed_free_merchants_hub_delivery_1", "dialogue", "intercom", "yes")) and (not u_has_mission("MISSION_FREE_MERCHANTS_HUB_DELIVERY_1")) and (not u_has_var("completed_robofac_intercom_1", "dialogue", "intercom", "yes")) and (not u_has_mission("MISSION_ROBOFAC_INTERCOM_1"))>>
+    <<jump TALK_ROBOFAC_INTERCOM_PLEAD>>
+-> Lets trade. <<if npc_has_var("npc_intercom_trade", "dialogue", "intercom", "yes")>>
+    <<start_trade>>
+    <<jump TALK_ROBOFAC_INTERCOM>>
+-> Know when you'll get another shipment? <<if npc_has_var("npc_intercom_trade", "dialogue", "intercom", "yes")>>
+    <<jump TALK_ROBOFAC_INTERCOM_RESTOCK>>
+-> It's the apocalypse out here!  Please let me in! <<if (not u_has_var("completed_free_merchants_hub_delivery_1", "dialogue", "intercom", "yes")) and (not u_has_mission("MISSION_FREE_MERCHANTS_HUB_DELIVERY_1")) and (not u_has_var("completed_robofac_intercom_1", "dialogue", "intercom", "yes")) and (not u_has_mission("MISSION_ROBOFAC_INTERCOM_1"))>>
+    <<jump TALK_ROBOFAC_INTERCOM_PLEAD>>
+-> I was just looking for valuables, maybe I can trade with you instead? <<if (not u_has_var("completed_free_merchants_hub_delivery_1", "dialogue", "intercom", "yes")) and (not u_has_mission("MISSION_FREE_MERCHANTS_HUB_DELIVERY_1")) and (not npc_has_var("npc_failed_intercom_trade", "dialogue", "intercom", "yes")) and (not npc_has_var("npc_intercom_trade", "dialogue", "intercom", "yes"))>>
+    <<if trial_roll("PERSUADE", 1)>>
+        <<jump TALK_ROBOFAC_INTERCOM_TRADE>>
+    <<else>>
+        <<jump TALK_ROBOFAC_INTERCOM_NO_TRADE>>
+    <<endif>>
+-> Any jobs you need done? <<if u_has_var("completed_robofac_intercom_1", "dialogue", "intercom", "yes")>>
+    <<jump TALK_MISSION_LIST>>
+-> What the hell were you testing out there? <<if u_has_var("completed_robofac_intercom_1", "dialogue", "intercom", "yes")>>
+    <<jump TALK_ROBOFAC_INTERCOM_PROTOTYPE_ASK>>
+-> So, about that protective gear? <<if u_has_mission("MISSION_ROBOFAC_INTERCOM_3") and (not npc_has_var("npc_bought_protective_gear", "dialogue", "intercom", "yes"))>>
+    <<jump TALK_ROBOFAC_INTERCOM_BUY_PROTECTIVE_GEAR>>
+-> I gotta go. <<if npc_has_var("npc_intercom_trade", "dialogue", "intercom", "yes")>>
+    <<stop>>
+-> Alright, I'm leaving. <<if not npc_has_var("npc_intercom_trade", "dialogue", "intercom", "yes")>>
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_INTERCOM_FREE_MERCHANT_DELIVERY_1
+position: 320,0
+---
+NPC: Understood.  Please drop the drive on the box embedded beneath the intercom.  You are welcome to leave afterwards.
+-> [Do as the Intercom Says] <<if u_has_items("fema_data", 1)>>
+    <<u_sell_item "fema_data" 0 1>>
+    <<u_add_var "completed_free_merchants_hub_delivery_1" "dialogue" "intercom" "yes">>
+    <<stop>>
+-> Didn't bring the hard drive now, let me return with it.
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_INTERCOM_NO_TRADE
+position: 640,0
+---
+<<npc_add_var "npc_failed_intercom_trade" "dialogue" "intercom" "yes">>
+NPC: No.  Now leave.
+-> …
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_INTERCOM_TRADE
+position: 960,0
+---
+<<npc_add_var "npc_intercom_trade" "dialogue" "intercom" "yes">>
+NPC: I guess the lab can do without some of this stuff.
+-> …
+    <<start_trade>>
+    <<stop>>
+-> Know when you'll get another shipment?
+    <<jump TALK_ROBOFAC_INTERCOM_RESTOCK>>
+===
+
+title: TALK_ROBOFAC_INTERCOM_RESTOCK
+position: 1280,0
+---
+NPC: Around <interval>, if the caravan doesn't run into trouble.
+-> Thanks for the info, bye.
+    <<stop>>
+===
+
+title: TALK_ROBOFAC_INTERCOM_PROTOTYPE_ASK
+position: 1600,0
+---
+NPC: It was a modified Wraitheon chassis, with a custom AI.  We hoped it would interact with the outside world for us, but you know how well it went…  Shame about what happened, with the evisceration and all…
+-> …
+    <<jump TALK_ROBOFAC_INTERCOM>>
+===
+
+title: TALK_ROBOFAC_INTERCOM_BUY_PROTECTIVE_GEAR
+position: 1920,0
+---
+NPC: Given the current context, we are willing to sell you a set of our protective gear: gas mask, suit and gear, at a considerable discount.  We will sell it for two of our coins.
+
+the intercom: Hmm wait, we might not have your size...
+-> [ 2 HGC ] Deal! <<if u_has_items("RobofacCoin", 2)>>
+    <<u_sell_item "RobofacCoin" 0 2>>
+    <<u_buy_item "mask_gas" 0 1>>
+    <<u_buy_item "robofac_enviro_suit" 0 1>>
+    <<u_buy_item "gasfilter_m" 0 100>>
+    <<npc_add_var "npc_bought_protective_gear" "dialogue" "intercom" "yes">>
+    <<jump TALK_ROBOFAC_INTERCOM>>
+-> I have to give it a thought.
+    <<jump TALK_ROBOFAC_INTERCOM>>
+===
+
+title: TALK_ROBOFAC_INTERCOM_PLEAD
+position: 2240,0
+---
+<<if u_has_mission("MISSION_ROBOFAC_INTERCOM_1")>>
+    NPC: …
+<<else>>
+    NPC: Just leave.
+<<endif>>
+-> Wait!  Maybe I can help you! <<if not u_has_mission("MISSION_ROBOFAC_INTERCOM_1")>>
+    <<jump MISSION_ROBOFAC_INTERCOM_1_INTRODUCTION>>
+-> Alright, I'll leave
+    <<stop>>
+===
+
+title: MISSION_ROBOFAC_INTERCOM_1_INTRODUCTION
+position: 0,240
+---
+NPC: There's nothing you could do for us, now leave before I'm forced to…
+[You hear a short, muffled conversation from across the intercom]
+
+the intercom: Well, it seems we do have some use for you.  It's a dangerous task, but if you complete it we will allow you limited trading access.
+-> Tell me about it.
+    <<jump MISSION_ROBOFAC_INTERCOM_1_OFFER>>
+-> I'm not risking myself for a deal that bad.
+    <<stop>>
+===
+
+title: MISSION_ROBOFAC_INTERCOM_1_OFFER
+position: 320,240
+---
+NPC: One of our scientists recently left the lab to perform a field test on a prototype robot, but failed to return, and has not been heard of since.  Investigate the test and return with her and the prototype.  Failing that, return with the data recorder that was attached to our prototype.
+-> I'll do it!
+    <<add_mission "MISSION_ROBOFAC_INTERCOM_1">>
+    <<jump MISSION_ROBOFAC_INTERCOM_1_ACCEPTED>>
+-> Not interested.
+    <<stop>>
+===
+
+title: MISSION_ROBOFAC_INTERCOM_1_ACCEPTED
+position: 640,240
+---
+NPC: You know the deal, good luck.
+-> Got any advice?
+    <<jump MISSION_ROBOFAC_INTERCOM_1_ADVICE>>
+-> I'll be back soon!
+    <<stop>>
+===
+
+title: MISSION_ROBOFAC_INTERCOM_1_ADVICE
+position: 960,240
+---
+NPC: If the robot remains operational don’t try to fight it head on, because it WILL kill you.  Dr. Prado left the Hub with a handful of EMP grenades, use those to disable the robot.
+-> Got it.
+    <<stop>>
+===

@@ -437,4 +437,9 @@ class json_talk_topic
 void unload_talk_topics();
 void load_talk_topic( const JsonObject &jo );
 
+// Opens an item-selection menu and transfers the chosen item to the NPC.
+// If allow_use is true, the NPC may eat/wield/wear it instead of just carrying it.
+// Returns a string describing what happened (displayed to the player via reason).
+std::string give_item_to( npc &p, bool allow_use );
+
 

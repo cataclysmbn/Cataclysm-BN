@@ -881,6 +881,8 @@ class JsonOut
  * Any members with string information that is displayed directly to the user
  * will need similar treatment, and may also need to be explicitly handled
  * in lang/extract_json_strings.py to be translatable.
+ * Yarn Spinner dialogue strings (.yarn files) are handled separately by
+ * lang/extract_yarn_strings.py.
  *
  * The "points" member here is not required.
  * If it is not found in the incoming JSON object,

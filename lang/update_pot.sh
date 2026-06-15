@@ -3,6 +3,8 @@
 POT_DIRECTORY="lang/po"
 TEMP_POT_FROM_CODE="$POT_DIRECTORY/temp-code.pot"
 TEMP_POT_FROM_JSON="$POT_DIRECTORY/temp-json.pot"
+TEMP_POT_FROM_YARN="$POT_DIRECTORY/temp-yarn.pot"
+TEMP_POT_FROM_DATA="$POT_DIRECTORY/temp-data.pot"
 FINAL_POT_FILE="$POT_DIRECTORY/cataclysm-bn.pot"
 
 if [ ! -d $POT_DIRECTORY ]
@@ -20,6 +22,13 @@ echo "> Extracting strings from json"
 if ! lang/bn_extract_json_strings.sh "$@" --output $TEMP_POT_FROM_JSON
 then
     echo "Error in extract_json_strings.py. Aborting"
+    exit 1
+fi
+
+echo "> Extracting strings from yarn dialogue"
+if ! lang/bn_extract_yarn_strings.sh --output $TEMP_POT_FROM_YARN
+then
+    echo "Error in extract_yarn_strings.py. Aborting"
     exit 1
 fi
 
@@ -61,8 +70,15 @@ then
     mv $pot_file.temp $pot_file
 fi
 
-echo "> Combining JSON and source code strings"
-if ! lang/concat_pot_files.py $TEMP_POT_FROM_JSON $TEMP_POT_FROM_CODE $FINAL_POT_FILE
+echo "> Combining JSON and yarn strings"
+if ! lang/concat_pot_files.py $TEMP_POT_FROM_JSON $TEMP_POT_FROM_YARN $TEMP_POT_FROM_DATA
+then
+    echo "Error in concat_pot_files.py. Aborting"
+    exit 1
+fi
+
+echo "> Combining data and source code strings"
+if ! lang/concat_pot_files.py $TEMP_POT_FROM_DATA $TEMP_POT_FROM_CODE $FINAL_POT_FILE
 then
     echo "Error in concat_pot_files.py. Aborting"
     exit 1
@@ -100,6 +116,14 @@ fi
 if ! rm $TEMP_POT_FROM_JSON
 then
     echo "Failed to remove $TEMP_POT_FROM_JSON"
+fi
+if ! rm $TEMP_POT_FROM_YARN
+then
+    echo "Failed to remove $TEMP_POT_FROM_YARN"
+fi
+if ! rm $TEMP_POT_FROM_DATA
+then
+    echo "Failed to remove $TEMP_POT_FROM_DATA"
 fi
 
 echo "ALL DONE!"
