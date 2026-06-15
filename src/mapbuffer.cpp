@@ -149,29 +149,6 @@ auto move_cost_from_tile_parts( const ter_id &terrain_id, const furn_id &furnitu
     return std::max( terrain.movecost, 0 );
 }
 
-auto move_cost_ter_furn_from_tile( const mapbuffer_tile_lookup &tile ) -> int
-{
-    const auto &terrain = tile.sm->get_ter( tile.local ).obj();
-    if( terrain.movecost == 0 ) {
-        return 0;
-    }
-
-    const auto &furniture = tile.sm->get_furn( tile.local ).obj();
-    if( furniture.movecost < 0 ) {
-        return 0;
-    }
-
-    const auto cost = terrain.movecost + furniture.movecost;
-    return cost > 0 ? cost : 0;
-}
-
-auto passable_ter_furn_at( mapbuffer &buffer, const tripoint_abs_ms &p,
-                           const mapbuffer_lookup_options options ) -> bool
-{
-    const auto tile = lookup_tile( buffer, p, options );
-    return tile && move_cost_ter_furn_from_tile( *tile ) != 0;
-}
-
 auto omt_submap_offsets() -> const std::array<point_omt_sm, 4> &
 {
     static const auto offsets = std::array{
@@ -856,13 +833,12 @@ auto mapbuffer::veh_at( const tripoint_abs_ms &p,
 auto mapbuffer::move_cost( const tripoint_abs_ms &p,
                            const mapbuffer_lookup_options options ) -> std::optional<int>
 {
-    const auto tile = lookup_tile( *this, p, options );
+    const auto tile = get_abs_tile( p, options );
     if( !tile ) {
         return std::nullopt;
     }
 
-    return move_cost_from_tile_parts( tile->sm->get_ter( tile->local ),
-                                      tile->sm->get_furn( tile->local ), veh_at( p, options ) );
+    return tile->move_cost_with_vehicle( veh_at( p, options ) );
 }
 
 auto mapbuffer::passable( const tripoint_abs_ms &p,
@@ -885,12 +861,14 @@ auto mapbuffer::valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &
         return false;
     }
 
+    const auto tile_reader = make_abs_tile_reader( options.lookup );
+
     if( from.z() == to.z() ) {
-        const auto target_passable = passable( to, options.lookup );
-        if( !target_passable ) {
+        const auto target_tile = tile_reader.get_tile( to );
+        if( !target_tile ) {
             return false;
         }
-        return *target_passable || ( options.bash && get_ter( to, options.lookup ).has_value() );
+        return target_tile->passable_with_vehicle( veh_at( to, options.lookup ) ) || options.bash;
     }
     if( !options.zlevels ) {
         return false;
@@ -900,28 +878,27 @@ auto mapbuffer::valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &
     const auto up_p = going_up ? to : from;
     const auto down_p = going_up ? from : to;
 
-    const auto up_ter_id = get_ter( up_p, options.lookup );
-    const auto up_furn_id = get_furn( up_p, options.lookup );
-    if( !up_ter_id || !up_furn_id ) {
+    const auto up_tile = tile_reader.get_tile( up_p );
+    if( !up_tile ) {
         return false;
     }
-    const auto &up_ter = up_ter_id->obj();
+    const auto &up_ter = up_tile->get_ter_t();
     if( up_ter.id.is_null() ) {
         return false;
     }
-    const auto &up_furn = up_furn_id->obj();
-    const auto up_trap_id = get_trap( up_p, options.lookup ).value_or( tr_null );
+    const auto &up_furn = up_tile->get_furn_t();
+    const auto up_trap_id = up_tile->get_trap();
     const auto up_is_ledge = up_ter.trap == tr_ledge || up_trap_id == tr_ledge;
 
     if( up_ter.movecost == 0 ) {
         return false;
     }
 
-    const auto down_ter_id = get_ter( down_p, options.lookup );
-    if( !down_ter_id ) {
+    const auto down_tile = tile_reader.get_tile( down_p );
+    if( !down_tile ) {
         return false;
     }
-    const auto &down_ter = down_ter_id->obj();
+    const auto &down_ter = down_tile->get_ter_t();
     if( down_ter.id.is_null() ) {
         return false;
     }
@@ -969,31 +946,35 @@ auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
         return std::nullopt;
     }
 
-    const auto center_tile = lookup_tile( *this, p, options );
+    const auto center_tile = get_abs_tile( p, options );
     if( !center_tile ) {
         return std::nullopt;
     }
+    const auto has_flag = []( const mapbuffer_abs_tile_view & tile, const auto & flag ) {
+        return tile.get_ter_t().has_flag( flag ) || tile.get_furn_t().has_flag( flag );
+    };
 
     auto best_difficulty = std::numeric_limits<int>::max();
     auto blocks_movement = 0;
-    if( has_flag_ter_or_furn( "LADDER", p, options ) ) {
+    if( has_flag( *center_tile, "LADDER" ) ) {
         return 1;
     }
-    if( has_flag_ter_or_furn( TFLAG_RAMP, p, options ) ||
-        has_flag_ter_or_furn( TFLAG_RAMP_UP, p, options ) ||
-        has_flag_ter_or_furn( TFLAG_RAMP_DOWN, p, options ) ) {
+    if( has_flag( *center_tile, TFLAG_RAMP ) ||
+        has_flag( *center_tile, TFLAG_RAMP_UP ) ||
+        has_flag( *center_tile, TFLAG_RAMP_DOWN ) ) {
         best_difficulty = 7;
     }
 
     for( const auto &pt : points_in_radius( p, 1 ) ) {
-        if( !passable_ter_furn_at( *this, pt, options ) ) {
+        const auto tile = get_abs_tile( pt, options );
+        if( !tile || !tile->passable_ter_furn() ) {
             best_difficulty = std::min( best_difficulty, 10 );
             blocks_movement++;
         } else if( veh_at( pt, options ) ) {
             best_difficulty = std::min( best_difficulty, 7 );
         }
 
-        if( best_difficulty > 5 && has_flag_ter_or_furn( "CLIMBABLE", pt, options ) ) {
+        if( best_difficulty > 5 && tile && has_flag( *tile, "CLIMBABLE" ) ) {
             best_difficulty = 5;
         }
     }

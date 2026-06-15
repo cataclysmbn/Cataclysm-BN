@@ -92,51 +92,34 @@ auto pathfinding_lookup_options() -> mapbuffer_lookup_options
     return { .mode = mapbuffer_lookup_mode::simulated_only };
 }
 
-auto get_pathfinding_tile( mapbuffer &buffer, const tripoint_abs_ms &pos )
+auto get_pathfinding_tile( const mapbuffer_abs_tile_reader &reader, mapbuffer &buffer,
+                           const tripoint_abs_ms &pos )
 -> std::optional<pathfinding_tile>
 {
-    const auto options = pathfinding_lookup_options();
-    const auto terrain = buffer.get_ter( pos, options );
-    const auto furniture = buffer.get_furn( pos, options );
-    const auto move_cost = buffer.move_cost( pos, options );
-    if( !terrain || !furniture || !move_cost ) {
+    const auto tile = reader.get_tile( pos );
+    if( !tile ) {
         return std::nullopt;
     }
+    const auto vehicle_part = buffer.veh_at( pos, pathfinding_lookup_options() );
 
     return pathfinding_tile {
-        .terrain = *terrain,
-        .furniture = *furniture,
-        .trap = buffer.get_trap( pos, options ).value_or( tr_null ),
-        .vehicle_part = buffer.veh_at( pos, options ),
-        .move_cost = *move_cost,
+        .terrain = tile->get_ter(),
+        .furniture = tile->get_furn(),
+        .trap = tile->get_trap(),
+        .vehicle_part = vehicle_part,
+        .move_cost = tile->move_cost_with_vehicle( vehicle_part ),
     };
 }
 
-auto passable_ter_furn( const ter_id &terrain_id, const furn_id &furniture_id ) -> bool
+auto passable_ter_furn_at( const mapbuffer_abs_tile_reader &reader,
+                           const tripoint_abs_ms &pos ) -> bool
 {
-    const auto &terrain = terrain_id.obj();
-    if( terrain.movecost == 0 ) {
+    const auto tile = reader.get_tile( pos );
+    if( !tile ) {
         return false;
     }
 
-    const auto &furniture = furniture_id.obj();
-    if( furniture.movecost < 0 ) {
-        return false;
-    }
-
-    return terrain.movecost + furniture.movecost > 0;
-}
-
-auto passable_ter_furn_at( mapbuffer &buffer, const tripoint_abs_ms &pos ) -> bool
-{
-    const auto options = pathfinding_lookup_options();
-    const auto terrain = buffer.get_ter( pos, options );
-    const auto furniture = buffer.get_furn( pos, options );
-    if( !terrain || !furniture ) {
-        return false;
-    }
-
-    return passable_ter_furn( *terrain, *furniture );
+    return tile->passable_ter_furn();
 }
 
 } // namespace
@@ -404,16 +387,17 @@ void Pathfinding::update_z_caches( bool update_open_air )
         target.clear();
     }
     Pathfinding::cached_closest_z_changes.clear();
+    const auto tile_reader = buffer.make_abs_tile_reader( pathfinding_lookup_options() );
 
     for( const int z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         for( const tripoint_bub_ms &cur : here.points_on_zlevel( z ) ) {
             const auto bubble_pos = tripoint_bub_ms( cur );
             const auto abs_pos = map_local_to_abs( here, bubble_pos );
-            const auto cur_ter_id = buffer.get_ter( abs_pos, pathfinding_lookup_options() );
-            if( !cur_ter_id ) {
+            const auto cur_tile = tile_reader.get_tile( abs_pos );
+            if( !cur_tile ) {
                 continue;
             }
-            const auto &cur_ter = cur_ter_id->obj();
+            const auto &cur_ter = cur_tile->get_ter_t();
 
             if( update_open_air && cur_ter.has_flag( TFLAG_NO_FLOOR ) ) {
                 // Open air
@@ -424,7 +408,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     continue;
                 }
 
-                if( !passable_ter_furn_at( buffer, below_us_abs ) ) {
+                if( !passable_ter_furn_at( tile_reader, below_us_abs ) ) {
                     continue;
                 };
                 // We won't do vehicle checks for simplicity
@@ -457,13 +441,12 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 // closest_points_first will ensure stairs above us directly will be hit first
                 const auto above_us_abs = abs_pos + tripoint_rel_ms::above();
                 for( const auto &maybe_stairs_abs : closest_points_first( above_us_abs, 10 ) ) {
-                    const auto maybe_stairs_ter = buffer.get_ter( maybe_stairs_abs,
-                                                  pathfinding_lookup_options() );
-                    if( !maybe_stairs_ter ) {
+                    const auto maybe_stairs_tile = tile_reader.get_tile( maybe_stairs_abs );
+                    if( !maybe_stairs_tile ) {
                         continue;
                     }
 
-                    if( maybe_stairs_ter->obj().has_flag( TFLAG_GOES_DOWN ) ) {
+                    if( maybe_stairs_tile->get_ter_t().has_flag( TFLAG_GOES_DOWN ) ) {
                         const ZLevelChange stairs_up = ZLevelChange{ .from = abs_pos, .to = maybe_stairs_abs,
                                                                      .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         const ZLevelChange stairs_down = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos,
@@ -485,13 +468,12 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 // closest_points_first will ensure stairs below us directly will be hit first
                 const auto below_us_abs = abs_pos + tripoint_rel_ms::below();
                 for( const tripoint_abs_ms &maybe_stairs_abs : closest_points_first( below_us_abs, 10 ) ) {
-                    const auto maybe_stairs_ter = buffer.get_ter( maybe_stairs_abs,
-                                                  pathfinding_lookup_options() );
-                    if( !maybe_stairs_ter ) {
+                    const auto maybe_stairs_tile = tile_reader.get_tile( maybe_stairs_abs );
+                    if( !maybe_stairs_tile ) {
                         continue;
                     }
 
-                    if( maybe_stairs_ter->obj().has_flag( TFLAG_GOES_UP ) ) {
+                    if( maybe_stairs_tile->get_ter_t().has_flag( TFLAG_GOES_UP ) ) {
                         const ZLevelChange stairs_down = ZLevelChange{ .from = abs_pos, .to = maybe_stairs_abs,
                                                                        .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         const ZLevelChange stairs_up = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos,
@@ -648,6 +630,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
     const bool care_about_traps = this->settings.trap_cost > 0;
     const map &here = get_map();
     auto &buffer = MAPBUFFER_REGISTRY.get( here.get_bound_dimension() );
+    const auto tile_reader = buffer.make_abs_tile_reader( pathfinding_lookup_options() );
 
     while( !biased_frontier.empty() ) {
         // Periodically check if `start` is enclosed
@@ -690,7 +673,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                 continue;
             }
 
-            const auto maybe_new_tile = get_pathfinding_tile( buffer, cur_point_with_z );
+            const auto maybe_new_tile = get_pathfinding_tile( tile_reader, buffer, cur_point_with_z );
             if( !maybe_new_tile ) {
                 this->tile_state_at( cur_point ) = Pathfinding::State::INACCESSIBLE;
                 this->tile_state_modify_set.push_back( cur_point );
