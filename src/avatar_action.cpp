@@ -110,7 +110,7 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
         return true;
     }
     if( ranges::any_of( trajectory, [&]( const tripoint_bub_ms & target_pos ) {
-        return target_pos.z() != grabbed_part_pos.z();
+    return target_pos.z() != grabbed_part_pos.z();
     } ) ) {
         add_msg( m_info, _( "You can't shove the %s vertically." ), veh.name );
         return true;
