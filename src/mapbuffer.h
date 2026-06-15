@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <limits>
@@ -270,6 +271,7 @@ class mapbuffer
         auto find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_fast<npc>;
         auto has_loaded_vehicle( const vehicle *veh ) const -> bool;
         auto unregister_vehicle( vehicle *veh ) -> void;
+        auto refresh_vehicle_footprint( vehicle *veh ) -> void;
         auto refresh_vehicle_registry_for_submap( const tripoint_abs_sm &p,
         mapbuffer_lookup_options options = {} ) -> void;
 
@@ -522,6 +524,10 @@ class mapbuffer
 
     private:
         using submap_map_t = std::unordered_map<tripoint_abs_sm, std::unique_ptr<submap>>;
+        struct vehicle_footprint_entry {
+            vehicle *veh = nullptr;
+            std::size_t part_index = 0;
+        };
 
         auto active_reality_bubble_local( const tripoint_abs_ms &p ) const
         -> std::optional<tripoint_bub_ms>;
@@ -542,6 +548,10 @@ class mapbuffer
         auto invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const -> void;
         auto register_submap_vehicles( const tripoint_abs_sm &p, submap &sm ) -> void;
         auto unregister_submap_vehicles( const tripoint_abs_sm &p ) -> void;
+        auto index_vehicle_footprint_unlocked( vehicle &veh ) -> void;
+        auto unindex_vehicle_footprint_unlocked( const vehicle *veh ) -> void;
+        auto indexed_vehicle_part_at_unlocked( const tripoint_abs_ms &p )
+        -> optional_vpart_position;
         auto remove_active_npc_from_location_map( const npc &guy ) -> void;
 
         /// Guards all accesses to `submaps` that may overlap with background
@@ -631,6 +641,10 @@ class mapbuffer
         std::list<shared_ptr_fast<npc>> active_npcs_;
         std::unordered_map<tripoint_abs_ms, shared_ptr_fast<npc>> active_npcs_by_location_;
         std::set<vehicle *> loaded_vehicles_;
+        std::unordered_map<tripoint_abs_ms, std::vector<vehicle_footprint_entry>>
+        vehicle_footprint_by_location_;
+        std::unordered_map<const vehicle *, std::vector<tripoint_abs_ms>>
+        vehicle_footprint_locations_;
 
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.

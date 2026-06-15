@@ -2269,6 +2269,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         veh.abs_sm_pos = dest_proj.quotient_tripoint;
         veh.update_overmap( prev );
     }
+    get_mapbuffer().refresh_vehicle_footprint( &veh );
 
     //
     //global positions of vehicle loot zones have changed.
@@ -8633,6 +8634,7 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
     }
 
     veh.abs_sm_pos = dst;
+    get_mapbuffer().refresh_vehicle_footprint( &veh );
     veh.update_overmap( src );
 }
 

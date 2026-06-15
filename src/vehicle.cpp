@@ -2102,6 +2102,7 @@ int vehicle::install_part( const tripoint_mnt_veh &dp, vehicle_part &&new_part )
 
     refresh();
     get_map().invalidate_lightmap_caches();
+    get_map().get_mapbuffer().refresh_vehicle_footprint( this );
     coeff_air_changed = true;
     return parts.size() - 1;
 }
@@ -2462,6 +2463,7 @@ void vehicle::part_removal_cleanup()
     }
     shift_if_needed();
     refresh(); // Rebuild cached indices
+    here.get_mapbuffer().refresh_vehicle_footprint( this );
     coeff_air_dirty = coeff_air_changed;
     coeff_air_changed = false;
 }

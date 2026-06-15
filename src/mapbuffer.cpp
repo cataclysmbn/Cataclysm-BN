@@ -49,6 +49,8 @@
 #include "ui_manager.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_part.h"
+#include "vpart_range.h"
 #include "world.h"
 
 namespace
@@ -372,14 +374,108 @@ auto mapbuffer::register_submap_vehicles( const tripoint_abs_sm &p, submap &sm )
         veh->abs_sm_pos = p;
         veh->set_dimension( dimension_id_ );
         loaded_vehicles_.insert( veh.get() );
+        index_vehicle_footprint_unlocked( *veh );
     }
 }
 
 auto mapbuffer::unregister_submap_vehicles( const tripoint_abs_sm &p ) -> void
 {
-    std::erase_if( loaded_vehicles_, [&]( const vehicle * veh ) {
-        return veh == nullptr || veh->abs_sm_pos == p;
+    for( auto iter = loaded_vehicles_.begin(); iter != loaded_vehicles_.end(); ) {
+        const auto *const veh = *iter;
+        if( veh == nullptr || veh->abs_sm_pos == p ) {
+            unindex_vehicle_footprint_unlocked( veh );
+            iter = loaded_vehicles_.erase( iter );
+        } else {
+            ++iter;
+        }
+    }
+}
+
+auto mapbuffer::unindex_vehicle_footprint_unlocked( const vehicle *veh ) -> void
+{
+    const auto locations_iter = vehicle_footprint_locations_.find( veh );
+    if( locations_iter == vehicle_footprint_locations_.end() ) {
+        return;
+    }
+
+    for( const auto &pos : locations_iter->second ) {
+        const auto footprint_iter = vehicle_footprint_by_location_.find( pos );
+        if( footprint_iter == vehicle_footprint_by_location_.end() ) {
+            continue;
+        }
+
+        std::erase_if( footprint_iter->second, [&]( const vehicle_footprint_entry & entry ) {
+            return entry.veh == veh;
+        } );
+        if( footprint_iter->second.empty() ) {
+            vehicle_footprint_by_location_.erase( footprint_iter );
+        }
+    }
+
+    vehicle_footprint_locations_.erase( locations_iter );
+}
+
+auto mapbuffer::index_vehicle_footprint_unlocked( vehicle &veh ) -> void
+{
+    unindex_vehicle_footprint_unlocked( &veh );
+    if( veh.part_count() <= 0 ) {
+        return;
+    }
+
+    auto &locations = vehicle_footprint_locations_[&veh];
+    for( const auto &vpr : veh.get_all_parts() ) {
+        if( vpr.part().removed ) {
+            continue;
+        }
+
+        const auto pos = veh.abs_part_location( vpr.part() );
+        vehicle_footprint_by_location_[pos].push_back( vehicle_footprint_entry {
+            .veh = &veh,
+            .part_index = vpr.part_index(),
+        } );
+        locations.push_back( pos );
+    }
+}
+
+auto mapbuffer::indexed_vehicle_part_at_unlocked( const tripoint_abs_ms &p )
+-> optional_vpart_position
+{
+    const auto footprint_iter = vehicle_footprint_by_location_.find( p );
+    if( footprint_iter == vehicle_footprint_by_location_.end() ) {
+        return optional_vpart_position( std::nullopt );
+    }
+
+    auto &entries = footprint_iter->second;
+    std::erase_if( entries, [&]( const vehicle_footprint_entry & entry ) {
+        const auto *const veh = entry.veh;
+        if( veh == nullptr || !loaded_vehicles_.contains( const_cast<vehicle *>( veh ) ) ) {
+            return true;
+        }
+        if( entry.part_index >= static_cast<std::size_t>( veh->part_count() ) ) {
+            return true;
+        }
+        const auto part_index = static_cast<int>( entry.part_index );
+        const auto &part = veh->cpart( part_index );
+        return part.removed || veh->abs_part_location( part ) != p;
     } );
+
+    if( entries.empty() ) {
+        vehicle_footprint_by_location_.erase( footprint_iter );
+        return optional_vpart_position( std::nullopt );
+    }
+
+    auto *selected = static_cast<vehicle_footprint_entry *>( nullptr );
+    for( auto &entry : entries ) {
+        const auto part_index = static_cast<int>( entry.part_index );
+        if( selected == nullptr || !entry.veh->part_info( part_index ).has_flag( VPFLAG_NOCOLLIDE ) ) {
+            selected = &entry;
+        }
+    }
+
+    if( selected == nullptr ) {
+        return optional_vpart_position( std::nullopt );
+    }
+    return optional_vpart_position( vpart_position( *selected->veh, selected->part_index ) );
 }
 
 mapbuffer::mapbuffer() = default;
@@ -393,6 +489,8 @@ void mapbuffer::clear()
         active_npcs_.clear();
         active_npcs_by_location_.clear();
         loaded_vehicles_.clear();
+        vehicle_footprint_by_location_.clear();
+        vehicle_footprint_locations_.clear();
         submaps.clear();
     }
     std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
@@ -454,6 +552,8 @@ void mapbuffer::transfer_all_to( mapbuffer &dest )
         dest.submaps.emplace( kv.first, std::move( kv.second ) );
     }
     loaded_vehicles_.clear();
+    vehicle_footprint_by_location_.clear();
+    vehicle_footprint_locations_.clear();
     submaps.clear();
 }
 
@@ -835,7 +935,21 @@ auto mapbuffer::has_loaded_vehicle( const vehicle *veh ) const -> bool
 auto mapbuffer::unregister_vehicle( vehicle *veh ) -> void
 {
     std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    unindex_vehicle_footprint_unlocked( veh );
     loaded_vehicles_.erase( veh );
+}
+
+auto mapbuffer::refresh_vehicle_footprint( vehicle *veh ) -> void
+{
+    if( veh == nullptr ) {
+        return;
+    }
+
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    if( !loaded_vehicles_.contains( veh ) ) {
+        return;
+    }
+    index_vehicle_footprint_unlocked( *veh );
 }
 
 auto mapbuffer::refresh_vehicle_registry_for_submap( const tripoint_abs_sm &p,
@@ -928,18 +1042,7 @@ auto mapbuffer::veh_at( const tripoint_abs_ms &p,
     }
 
     std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
-    for( auto *veh : loaded_vehicles_ ) {
-        if( veh == nullptr ) {
-            continue;
-        }
-        const auto rel = p - veh->abs_ms_location();
-        const auto part = veh->part_at( rel );
-        if( part >= 0 ) {
-            return optional_vpart_position( vpart_position( *veh, static_cast<size_t>( part ) ) );
-        }
-    }
-
-    return optional_vpart_position( std::nullopt );
+    return indexed_vehicle_part_at_unlocked( p );
 }
 
 auto mapbuffer::move_cost( const tripoint_abs_ms &p,
