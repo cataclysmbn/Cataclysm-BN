@@ -393,6 +393,7 @@ monster::monster( const monster &source ) : Creature( source ),
     training_level = source.training_level;
     bonded_character_id = source.bonded_character_id;
     pet_bond_level = source.pet_bond_level;
+    monster_flags = source.monster_flags;
 
     set_tied_item( item::spawn( *source.tied_item ) );
     set_tack_item( item::spawn( *source.tack_item ) );
