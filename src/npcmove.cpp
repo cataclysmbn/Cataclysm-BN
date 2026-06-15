@@ -65,6 +65,7 @@
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
 #include "calendar.h"
+#include "pathfinding.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "profile.h"
@@ -1166,13 +1167,17 @@ void npc::move()
 
 void npc::execute_action( npc_action action )
 {
-    int oldmoves = moves;
-    tripoint_bub_ms tar = bub_pos();
-    Creature *cur = current_target();
-    if( action == npc_flee ) {
-        tar = good_escape_direction( false );
-    } else if( cur != nullptr ) {
-        tar = cur->bub_pos();
+    const auto oldmoves = moves;
+    auto tar = bub_pos();
+    auto *cur = static_cast<Creature *>( nullptr );
+    {
+        ZoneScopedN( "npc_exec_target_setup" );
+        cur = current_target();
+        if( action == npc_flee ) {
+            tar = good_escape_direction( false );
+        } else if( cur != nullptr ) {
+            tar = cur->bub_pos();
+        }
     }
     /*
       debugmsg("%s ran execute_action() with target = %d! Action %s",
@@ -1182,15 +1187,19 @@ void npc::execute_action( npc_action action )
     Character &player_character = get_player_character();
     map &here = get_map();
     switch( action ) {
-        case npc_pause:
+        case npc_pause: {
+            ZoneScopedN( "npc_exec_pause" );
             move_pause();
             break;
+        }
         case npc_reload: {
+            ZoneScopedN( "npc_exec_reload" );
             do_reload( primary_weapon() );
         }
         break;
 
         case npc_investigate_sound: {
+            ZoneScopedN( "npc_exec_investigate_sound" );
             auto cur_pos = bub_pos();
             update_path( abs_to_bub( ai_cache.s_abs_pos ) );
             move_to_next();
@@ -1201,6 +1210,7 @@ void npc::execute_action( npc_action action )
         break;
 
         case npc_return_to_guard_pos: {
+            ZoneScopedN( "npc_exec_return_to_guard_pos" );
             const auto local_guard_pos = abs_to_bub( *ai_cache.guard_pos );
             update_path( local_guard_pos );
             if( bub_pos() == local_guard_pos || path.empty() ) {
@@ -1214,6 +1224,7 @@ void npc::execute_action( npc_action action )
         break;
 
         case npc_sleep: {
+            ZoneScopedN( "npc_exec_sleep" );
             // TODO: Allow stims when not too tired
             // Find a nice spot to sleep
             int best_sleepy = character_funcs::rate_sleep_spot( *this, bub_pos() );
@@ -1250,19 +1261,26 @@ void npc::execute_action( npc_action action )
         }
         break;
 
-        case npc_pickup:
+        case npc_pickup: {
+            ZoneScopedN( "npc_exec_pickup" );
             pick_up_item();
             break;
+        }
 
-        case npc_heal:
+        case npc_heal: {
+            ZoneScopedN( "npc_exec_heal" );
             heal_self();
             break;
+        }
 
-        case npc_use_painkiller:
+        case npc_use_painkiller: {
+            ZoneScopedN( "npc_exec_use_painkiller" );
             use_painkiller();
             break;
+        }
 
-        case npc_drop_items:
+        case npc_drop_items: {
+            ZoneScopedN( "npc_exec_drop_items" );
             /* NPCs can't choose this action anymore, but at least it works */
             drop_invalid_inventory();
             /* drop_items is still broken
@@ -1271,22 +1289,28 @@ void npc::execute_action( npc_action action )
              */
             move_pause();
             break;
+        }
 
-        case npc_flee:
+        case npc_flee: {
+            ZoneScopedN( "npc_exec_flee" );
             if( path.empty() ) {
                 move_to( tar );
             } else {
                 move_to_next();
             }
             break;
+        }
 
-        case npc_reach_attack:
+        case npc_reach_attack: {
+            ZoneScopedN( "npc_exec_reach_attack" );
             if( can_use_offensive_cbm() ) {
                 activate_bionic_by_id( bio_hydraulics );
             }
             reach_attack( tar );
             break;
-        case npc_melee:
+        }
+        case npc_melee: {
+            ZoneScopedN( "npc_exec_melee" );
             update_path( tar );
             if( path.size() > 1 ) {
                 move_to_next();
@@ -1301,8 +1325,10 @@ void npc::execute_action( npc_action action )
                 look_for_player( player_character );
             }
             break;
+        }
 
         case npc_aim: {
+            ZoneScopedN( "npc_exec_aim" );
             gun_mode mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
                             cbm_fake_active->gun_current_mode();
             if( !mode ) {
@@ -1320,6 +1346,7 @@ void npc::execute_action( npc_action action )
         break;
 
         case npc_shoot: {
+            ZoneScopedN( "npc_exec_shoot" );
             gun_mode mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
                             cbm_fake_active->gun_current_mode();
             if( !mode ) {
@@ -1345,7 +1372,8 @@ void npc::execute_action( npc_action action )
             break;
         }
 
-        case npc_look_for_player:
+        case npc_look_for_player: {
+            ZoneScopedN( "npc_exec_look_for_player" );
             if( saw_player_recently() && last_player_seen_pos && sees( *last_player_seen_pos ) ) {
                 update_path( *last_player_seen_pos );
                 move_to_next();
@@ -1353,8 +1381,10 @@ void npc::execute_action( npc_action action )
                 look_for_player( player_character );
             }
             break;
+        }
 
         case npc_heal_player: {
+            ZoneScopedN( "npc_exec_heal_player" );
             player *patient = dynamic_cast<player *>( current_ally() );
             if( patient ) {
                 update_path( patient->bub_pos() );
@@ -1369,7 +1399,8 @@ void npc::execute_action( npc_action action )
             }
             break;
         }
-        case npc_follow_player:
+        case npc_follow_player: {
+            ZoneScopedN( "npc_exec_follow_player" );
             update_path( player_character.bub_pos() );
             move_mode = rules.has_flag( ally_rule::move_own_pace ) ?
                         ( ( static_cast<int>( path.size() ) > follow_distance() * 4 ) ? CMM_RUN : CMM_WALK ) :
@@ -1385,8 +1416,10 @@ void npc::execute_action( npc_action action )
             // TODO: Make it only happen when it's safe
             complain();
             break;
+        }
 
         case npc_follow_embarked: {
+            ZoneScopedN( "npc_exec_follow_embarked" );
             move_mode = rules.has_flag( ally_rule::move_own_pace ) ?
                         ( ( static_cast<int>( path.size() ) > follow_distance() * 4 ) ? CMM_RUN : CMM_WALK ) :
                         player_character.get_movement_mode();
@@ -1494,16 +1527,21 @@ void npc::execute_action( npc_action action )
         }
 
         break;
-        case npc_talk_to_player:
+        case npc_talk_to_player: {
+            ZoneScopedN( "npc_exec_talk_to_player" );
             talk_to_u();
             moves = 0;
             break;
+        }
 
-        case npc_mug_player:
+        case npc_mug_player: {
+            ZoneScopedN( "npc_exec_mug_player" );
             mug_player( player_character );
             break;
+        }
 
         case npc_goto_to_this_pos: {
+            ZoneScopedN( "npc_exec_goto_to_this_pos" );
             if( !goto_to_this_pos.has_value() ) {
                 debugmsg( "npc_goto_to_this_pos set to true, but no target set" );
                 break;
@@ -1518,33 +1556,47 @@ void npc::execute_action( npc_action action )
             break;
         }
 
-        case npc_goto_destination:
+        case npc_goto_destination: {
+            ZoneScopedN( "npc_exec_goto_destination" );
             go_to_omt_destination();
             break;
+        }
 
-        case npc_avoid_friendly_fire:
+        case npc_avoid_friendly_fire: {
+            ZoneScopedN( "npc_exec_avoid_friendly_fire" );
             avoid_friendly_fire();
             break;
+        }
 
-        case npc_escape_explosion:
+        case npc_escape_explosion: {
+            ZoneScopedN( "npc_exec_escape_explosion" );
             escape_explosion();
             break;
+        }
 
-        case npc_player_activity:
+        case npc_player_activity: {
+            ZoneScopedN( "npc_exec_player_activity" );
             do_player_activity();
             break;
+        }
 
-        case npc_undecided:
+        case npc_undecided: {
+            ZoneScopedN( "npc_exec_undecided" );
             complain();
             move_pause();
             break;
+        }
 
-        case npc_noop:
+        case npc_noop: {
+            ZoneScopedN( "npc_exec_noop" );
             add_msg( m_debug, "%s skips turn (noop)", disp_name() );
             return;
+        }
 
-        default:
+        default: {
+            ZoneScopedN( "npc_exec_unknown" );
             debugmsg( "Unknown NPC action (%d)", action );
+        }
     }
 
     if( oldmoves == moves ) {
@@ -2482,6 +2534,9 @@ bool npc::aim()
 
 bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool force )
 {
+    ZoneScopedN( "npc_update_path" );
+    ZoneValue( rl_dist( bub_pos(), p ) );
+
     if( p == bub_pos() ) {
         path.clear();
         return true;
@@ -2499,8 +2554,11 @@ bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool for
         }
     }
 
-    auto new_path = get_map().route( bub_pos(), p, get_legacy_pathfinding_settings( no_bashing ),
-                                     get_legacy_path_avoid() );
+    auto new_path = [&]() {
+        ZoneScopedN( "npc_update_path_route" );
+        return get_map().route( bub_pos(), p, get_legacy_pathfinding_settings( no_bashing ),
+                                get_legacy_path_avoid() );
+    }();
     if( new_path.empty() ) {
         if( !ai_cache.sound_alerts.empty() ) {
             ai_cache.sound_alerts.erase( ai_cache.sound_alerts.begin() );
@@ -3615,7 +3673,9 @@ bool npc::do_pulp()
 
 bool npc::do_player_activity()
 {
-    int old_moves = moves;
+    ZoneScopedN( "npc_do_player_activity" );
+
+    const auto old_moves = moves;
     if( moves > 200 && activity && ( activity->is_multi_type() ||
                                      activity->id() == activity_id( "ACT_TIDY_UP" ) ) ) {
         // a huge backlog of a multi-activity type can forever loop
@@ -3634,13 +3694,20 @@ bool npc::do_player_activity()
     // ( even if other move-using things occur inbetween )
     // so here - if no moves are used in a multi-type activity do_turn(), then subtract a nominal amount
     // to satisfy the infinite loop counter.
-    const bool multi_type = activity ? activity->is_multi_type() : false;
-    const int moves_before = moves;
-    while( moves > 0 && activity && *activity ) {
-        activity->do_turn( *this );
-        if( !is_active() ) {
-            return true;
+    const auto multi_type = activity ? activity->is_multi_type() : false;
+    const auto moves_before = moves;
+    {
+        ZoneScopedN( "npc_do_player_activity_loop" );
+        auto activity_turns = 0;
+        while( moves > 0 && activity && *activity ) {
+            activity->do_turn( *this );
+            activity_turns++;
+            if( !is_active() ) {
+                ZoneValue( activity_turns );
+                return true;
+            }
         }
+        ZoneValue( activity_turns );
     }
     if( multi_type && moves == moves_before ) {
         moves -= 1;
@@ -4499,6 +4566,8 @@ void npc::set_omt_destination()
 
 void npc::go_to_omt_destination()
 {
+    ZoneScopedN( "npc_go_to_omt_destination" );
+
     map &here = get_map();
     if( ai_cache.guard_pos ) {
         if( abs_pos() == *ai_cache.guard_pos ) {
@@ -4547,6 +4616,7 @@ void npc::go_to_omt_destination()
     auto sm_tri =
         abs_to_bub( project_to<coords::ms>( omt_path.back() ) );
     auto centre_sub = sm_tri + point( SEEX, SEEY );
+    here.clip_to_bounds( centre_sub );
     if( !here.passable( centre_sub ) ) {
         auto candidates = here.points_in_radius( centre_sub, 2 );
         for( const auto &elem : candidates ) {
@@ -4556,8 +4626,19 @@ void npc::go_to_omt_destination()
             }
         }
     }
-    path = here.route( bub_pos(), centre_sub, get_legacy_pathfinding_settings(),
-                       get_legacy_path_avoid() );
+    {
+        ZoneScopedN( "npc_goto_destination_route" );
+        if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
+            path = here.route( bub_pos(), centre_sub, get_legacy_pathfinding_settings(),
+                               get_legacy_path_avoid() );
+        } else {
+            const auto pf_pair = get_pathfinding_pair();
+            path = Pathfinding::route( bub_pos(), centre_sub, pf_pair.first, pf_pair.second );
+        }
+    }
+    while( !path.empty() && path.front() == bub_pos() ) {
+        path.erase( path.begin() );
+    }
     add_msg( m_debug, "%s going %s->%s", name, omt_pos.to_string(), goal.to_string() );
 
     if( !path.empty() ) {
