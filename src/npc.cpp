@@ -755,12 +755,31 @@ auto npc::setpos( const tripoint_bub_ms &pos ) -> void
 
 auto npc::setpos( const tripoint_abs_ms &new_pos ) -> void
 {
+    setpos_impl( new_pos, false );
+}
+
+auto npc::setpos_preserving_movement_state( const tripoint_bub_ms &pos ) -> void
+{
+    setpos_preserving_movement_state( map_local_to_abs( get_map(), pos ) );
+}
+
+auto npc::setpos_preserving_movement_state( const tripoint_abs_ms &new_pos ) -> void
+{
+    setpos_impl( new_pos, true );
+}
+
+auto npc::setpos_impl( const tripoint_abs_ms &new_pos, const bool preserve_movement_state ) -> void
+{
+    const auto old_pos = position;
     const auto pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
     const auto pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
     if( is_active() ) {
         get_mapbuffer().update_active_npc_pos( *this, new_pos );
     }
     Character::setpos( new_pos );
+    if( old_pos != new_pos && !preserve_movement_state ) {
+        clear_transient_movement_state_after_reposition();
+    }
     if( !is_fake() && pos_om_old != pos_om_new ) {
         auto &dim_ob = get_overmapbuffer( get_dimension() );
         overmap &om_old = dim_ob.get( pos_om_old );
@@ -773,6 +792,27 @@ auto npc::setpos( const tripoint_abs_ms &new_pos ) -> void
             debugmsg( "could not find npc %s on its old overmap", name );
         }
     }
+}
+
+auto npc::clear_transient_movement_state_after_reposition() -> void
+{
+    path.clear();
+    omt_path.clear();
+    clear_destination();
+    last_player_seen_pos = std::nullopt;
+    last_seen_player_turn = 999;
+    goto_to_this_pos = std::nullopt;
+    wanted_item_pos = tripoint_bub_ms::min();
+    guard_pos = tripoint_abs_ms::min();
+    goal = no_goal_point;
+    pulp_location = std::nullopt;
+    fetching_item = false;
+    ai_cache.sound_alerts.clear();
+    ai_cache.s_abs_pos = tripoint_abs_ms::zero();
+    ai_cache.stuck = 0;
+    ai_cache.guard_pos = std::nullopt;
+    ai_cache.dangerous_explosives.clear();
+    ai_cache.searched_tiles.clear();
 }
 
 void npc::travel_overmap( const tripoint_abs_sm &pos )

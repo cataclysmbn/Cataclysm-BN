@@ -92,22 +92,21 @@ auto pathfinding_lookup_options() -> mapbuffer_lookup_options
     return { .mode = mapbuffer_lookup_mode::simulated_only };
 }
 
-auto get_pathfinding_tile( const mapbuffer_abs_tile_reader &reader, mapbuffer &buffer,
-                           const tripoint_abs_ms &pos )
+auto get_pathfinding_tile( const mapbuffer_abs_tile_reader &reader, const tripoint_abs_ms &pos )
 -> std::optional<pathfinding_tile>
 {
-    const auto tile = reader.get_tile( pos );
+    const auto tile = reader.get_tile_with_vehicle( pos );
     if( !tile ) {
         return std::nullopt;
     }
-    const auto vehicle_part = buffer.veh_at( pos, pathfinding_lookup_options() );
+    const auto &tile_view = tile->tile();
 
     return pathfinding_tile {
-        .terrain = tile->get_ter(),
-        .furniture = tile->get_furn(),
-        .trap = tile->get_trap(),
-        .vehicle_part = vehicle_part,
-        .move_cost = tile->move_cost_with_vehicle( vehicle_part ),
+        .terrain = tile_view.get_ter(),
+        .furniture = tile_view.get_furn(),
+        .trap = tile_view.get_trap(),
+        .vehicle_part = tile->vehicle_part(),
+        .move_cost = tile->move_cost(),
     };
 }
 
@@ -657,7 +656,9 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
         }
 
         const tripoint_abs_ms next_point_with_z = tripoint_abs_ms( next_point, this->z );
-        const auto next_vp = buffer.veh_at( next_point_with_z, pathfinding_lookup_options() );
+        const auto next_tile = tile_reader.get_tile_with_vehicle( next_point_with_z );
+        const auto next_vp = next_tile ? next_tile->vehicle_part() :
+                             optional_vpart_position( std::nullopt );
         const auto *next_vehicle = next_vp ? &next_vp->vehicle() : nullptr;
 
         for( const auto &dir : DIRS_2D ) {
@@ -673,7 +674,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                 continue;
             }
 
-            const auto maybe_new_tile = get_pathfinding_tile( tile_reader, buffer, cur_point_with_z );
+            const auto maybe_new_tile = get_pathfinding_tile( tile_reader, cur_point_with_z );
             if( !maybe_new_tile ) {
                 this->tile_state_at( cur_point ) = Pathfinding::State::INACCESSIBLE;
                 this->tile_state_modify_set.push_back( cur_point );

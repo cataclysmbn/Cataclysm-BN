@@ -279,6 +279,38 @@ auto mapbuffer_abs_tile_view::passable_with_vehicle( const optional_vpart_positi
     return move_cost_with_vehicle( vp ) != 0;
 }
 
+mapbuffer_abs_tile_with_vehicle_view::mapbuffer_abs_tile_with_vehicle_view(
+    const mapbuffer_abs_tile_view &tile, const optional_vpart_position &vehicle_part ) :
+    tile_( tile ),
+    vehicle_part_( vehicle_part )
+{
+}
+
+mapbuffer_abs_tile_with_vehicle_view::operator bool() const
+{
+    return static_cast<bool>( tile_ );
+}
+
+auto mapbuffer_abs_tile_with_vehicle_view::tile() const -> const mapbuffer_abs_tile_view &
+{
+    return tile_;
+}
+
+auto mapbuffer_abs_tile_with_vehicle_view::vehicle_part() const -> const optional_vpart_position &
+{
+    return vehicle_part_;
+}
+
+auto mapbuffer_abs_tile_with_vehicle_view::move_cost() const -> int
+{
+    return tile_.move_cost_with_vehicle( vehicle_part_ );
+}
+
+auto mapbuffer_abs_tile_with_vehicle_view::passable() const -> bool
+{
+    return move_cost() != 0;
+}
+
 mapbuffer_abs_submap_view::mapbuffer_abs_submap_view( const tripoint_abs_sm &abs_sm,
         const submap &sm ) :
     abs_sm_( abs_sm ),
@@ -320,7 +352,12 @@ mapbuffer_abs_omt_view::mapbuffer_abs_omt_view( const tripoint_abs_omt &abs_omt,
 
 mapbuffer_abs_omt_view::operator bool() const
 {
-    return std::ranges::all_of( submaps_, []( const auto * sm ) {
+    return has_any_submap();
+}
+
+auto mapbuffer_abs_omt_view::has_any_submap() const -> bool
+{
+    return std::ranges::any_of( submaps_, []( const auto * sm ) {
         return sm != nullptr;
     } );
 }
@@ -328,6 +365,13 @@ mapbuffer_abs_omt_view::operator bool() const
 auto mapbuffer_abs_omt_view::abs_pos() const -> tripoint_abs_omt
 {
     return abs_omt_;
+}
+
+auto mapbuffer_abs_omt_view::is_complete() const -> bool
+{
+    return std::ranges::all_of( submaps_, []( const auto * sm ) {
+        return sm != nullptr;
+    } );
 }
 
 auto mapbuffer_abs_omt_view::get_submap_view( const point_omt_sm &local ) const
@@ -351,6 +395,12 @@ auto mapbuffer_abs_tile_reader::get_tile( const tripoint_abs_ms &p ) const
 -> std::optional<mapbuffer_abs_tile_view>
 {
     return buffer_->get_abs_tile( p, options_ );
+}
+
+auto mapbuffer_abs_tile_reader::get_tile_with_vehicle( const tripoint_abs_ms &p ) const
+-> std::optional<mapbuffer_abs_tile_with_vehicle_view>
+{
+    return buffer_->get_abs_tile_with_vehicle( p, options_ );
 }
 
 auto mapbuffer_abs_tile_reader::get_submap_view( const tripoint_abs_sm &p ) const
@@ -783,6 +833,18 @@ auto mapbuffer::get_abs_tile( const tripoint_abs_ms &p,
     return mapbuffer_abs_tile_view( split.quotient_tripoint, split.remainder, *sm );
 }
 
+auto mapbuffer::get_abs_tile_with_vehicle( const tripoint_abs_ms &p,
+        const mapbuffer_lookup_options options )
+-> std::optional<mapbuffer_abs_tile_with_vehicle_view>
+{
+    const auto tile = get_abs_tile( p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return mapbuffer_abs_tile_with_vehicle_view( *tile, vehicle_part_at_loaded_tile( p ) );
+}
+
 auto mapbuffer::get_abs_submap_view( const tripoint_abs_sm &p,
                                      const mapbuffer_lookup_options options )
 -> std::optional<mapbuffer_abs_submap_view>
@@ -800,13 +862,19 @@ auto mapbuffer::get_abs_omt_view( const tripoint_abs_omt &p,
 -> std::optional<mapbuffer_abs_omt_view>
 {
     auto submaps = std::array<const submap *, 4> {};
+    auto found_any = false;
     for( const auto &local : omt_submap_offsets() ) {
         const auto index = omt_submap_index( local );
         auto *const sm = get_submap( project_combine( p, local ), options );
-        if( !index || sm == nullptr ) {
-            return std::nullopt;
+        if( !index ) {
+            continue;
         }
         submaps[*index] = sm;
+        found_any |= sm != nullptr;
+    }
+
+    if( !found_any ) {
+        return std::nullopt;
     }
 
     return mapbuffer_abs_omt_view( p, submaps );
@@ -1041,6 +1109,15 @@ auto mapbuffer::veh_at( const tripoint_abs_ms &p,
         return optional_vpart_position( std::nullopt );
     }
 
+    return vehicle_part_at_loaded_tile( p );
+}
+
+auto mapbuffer::vehicle_part_at_loaded_tile( const tripoint_abs_ms &p ) -> optional_vpart_position
+{
+    if( const auto local = active_reality_bubble_local( p ) ) {
+        return g->m.veh_at( *local );
+    }
+
     std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
     return indexed_vehicle_part_at_unlocked( p );
 }
@@ -1048,23 +1125,23 @@ auto mapbuffer::veh_at( const tripoint_abs_ms &p,
 auto mapbuffer::move_cost( const tripoint_abs_ms &p,
                            const mapbuffer_lookup_options options ) -> std::optional<int>
 {
-    const auto tile = get_abs_tile( p, options );
+    const auto tile = get_abs_tile_with_vehicle( p, options );
     if( !tile ) {
         return std::nullopt;
     }
 
-    return tile->move_cost_with_vehicle( veh_at( p, options ) );
+    return tile->move_cost();
 }
 
 auto mapbuffer::passable( const tripoint_abs_ms &p,
                           const mapbuffer_lookup_options options ) -> std::optional<bool>
 {
-    const auto cost = move_cost( p, options );
-    if( !cost ) {
+    const auto tile = get_abs_tile_with_vehicle( p, options );
+    if( !tile ) {
         return std::nullopt;
     }
 
-    return *cost != 0;
+    return tile->passable();
 }
 
 auto mapbuffer::valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
@@ -1079,11 +1156,11 @@ auto mapbuffer::valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &
     const auto tile_reader = make_abs_tile_reader( options.lookup );
 
     if( from.z() == to.z() ) {
-        const auto target_tile = tile_reader.get_tile( to );
+        const auto target_tile = tile_reader.get_tile_with_vehicle( to );
         if( !target_tile ) {
             return false;
         }
-        return target_tile->passable_with_vehicle( veh_at( to, options.lookup ) ) || options.bash;
+        return target_tile->passable() || options.bash;
     }
     if( !options.zlevels ) {
         return false;
@@ -1140,12 +1217,12 @@ auto mapbuffer::valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &
         return true;
     }
 
-    const auto up_vehicle = veh_at( up_p, options.lookup );
+    const auto up_vehicle = vehicle_part_at_loaded_tile( up_p );
     if( up_vehicle && !up_vehicle.part_with_feature( VPFLAG_NOCOLLIDEBELOW, false ) ) {
         return false;
     }
 
-    const auto down_vehicle = veh_at( down_p, options.lookup );
+    const auto down_vehicle = vehicle_part_at_loaded_tile( down_p );
     if( down_vehicle &&
         down_vehicle->vehicle().roof_at_part( static_cast<int>( down_vehicle->part_index() ) ) >= 0 ) {
         return false;
@@ -1181,15 +1258,15 @@ auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
     }
 
     for( const auto &pt : points_in_radius( p, 1 ) ) {
-        const auto tile = get_abs_tile( pt, options );
-        if( !tile || !tile->passable_ter_furn() ) {
+        const auto tile = get_abs_tile_with_vehicle( pt, options );
+        if( !tile || !tile->tile().passable_ter_furn() ) {
             best_difficulty = std::min( best_difficulty, 10 );
             blocks_movement++;
-        } else if( veh_at( pt, options ) ) {
+        } else if( tile->vehicle_part() ) {
             best_difficulty = std::min( best_difficulty, 7 );
         }
 
-        if( best_difficulty > 5 && tile && has_flag( *tile, "CLIMBABLE" ) ) {
+        if( best_difficulty > 5 && tile && has_flag( tile->tile(), "CLIMBABLE" ) ) {
             best_difficulty = 5;
         }
     }
@@ -1225,9 +1302,16 @@ auto mapbuffer::has_flag_vpart( const std::string &flag, const tripoint_abs_ms &
 }
 
 auto mapbuffer::has_flag_furn_or_vpart( const std::string &flag, const tripoint_abs_ms &p,
-                                        const mapbuffer_lookup_options options ) -> bool
+        const mapbuffer_lookup_options options ) -> bool
 {
-    return has_flag_furn( flag, p, options ) || has_flag_vpart( flag, p, options );
+    const auto tile = get_abs_tile( p, options );
+    if( !tile ) {
+        return false;
+    }
+    if( tile->get_furn_t().has_flag( flag ) ) {
+        return true;
+    }
+    return static_cast<bool>( vehicle_part_at_loaded_tile( p ).part_with_feature( flag, true ) );
 }
 
 auto mapbuffer::has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
@@ -1328,14 +1412,14 @@ auto mapbuffer::set_trap( const tripoint_abs_ms &p, const trap_id trap,
 auto mapbuffer::creature_on_trap( Creature &critter, const bool may_avoid ) -> void
 {
     const auto pos = critter.abs_pos();
-    const auto terrain = get_ter( pos );
-    if( !terrain ) {
+    const auto tile = get_abs_tile( pos );
+    if( !tile ) {
         return;
     }
 
-    auto trap_here = terrain->obj().trap;
+    auto trap_here = tile->get_ter_t().trap;
     if( trap_here == tr_null ) {
-        trap_here = get_trap( pos ).value_or( tr_null );
+        trap_here = tile->get_trap();
     }
 
     const auto &tr = trap_here.obj();

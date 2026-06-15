@@ -151,6 +151,24 @@ class mapbuffer_abs_tile_view
         const submap *sm_ = nullptr;
 };
 
+class mapbuffer_abs_tile_with_vehicle_view
+{
+    public:
+        mapbuffer_abs_tile_with_vehicle_view( const mapbuffer_abs_tile_view &tile,
+                                             const optional_vpart_position &vehicle_part );
+
+        explicit operator bool() const;
+
+        auto tile() const -> const mapbuffer_abs_tile_view &;
+        auto vehicle_part() const -> const optional_vpart_position &;
+        auto move_cost() const -> int;
+        auto passable() const -> bool;
+
+    private:
+        mapbuffer_abs_tile_view tile_;
+        optional_vpart_position vehicle_part_;
+};
+
 class mapbuffer_abs_submap_view
 {
     public:
@@ -177,6 +195,8 @@ class mapbuffer_abs_omt_view
         explicit operator bool() const;
 
         auto abs_pos() const -> tripoint_abs_omt;
+        auto has_any_submap() const -> bool;
+        auto is_complete() const -> bool;
         auto get_submap_view( const point_omt_sm &local ) const
         -> std::optional<mapbuffer_abs_submap_view>;
 
@@ -191,6 +211,8 @@ class mapbuffer_abs_tile_reader
         mapbuffer_abs_tile_reader( mapbuffer &buffer, mapbuffer_lookup_options options = {} );
 
         auto get_tile( const tripoint_abs_ms &p ) const -> std::optional<mapbuffer_abs_tile_view>;
+        auto get_tile_with_vehicle( const tripoint_abs_ms &p ) const
+        -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
         auto get_submap_view( const tripoint_abs_sm &p ) const
         -> std::optional<mapbuffer_abs_submap_view>;
         auto get_omt_view( const tripoint_abs_omt &p ) const
@@ -258,6 +280,9 @@ class mapbuffer
 
         auto get_abs_tile( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_tile_view>;
+        auto get_abs_tile_with_vehicle( const tripoint_abs_ms &p,
+                                        mapbuffer_lookup_options options = {} )
+        -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
         auto get_abs_submap_view( const tripoint_abs_sm &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_submap_view>;
         auto get_abs_omt_view( const tripoint_abs_omt &p,
@@ -552,6 +577,7 @@ class mapbuffer
         auto unindex_vehicle_footprint_unlocked( const vehicle *veh ) -> void;
         auto indexed_vehicle_part_at_unlocked( const tripoint_abs_ms &p )
         -> optional_vpart_position;
+        auto vehicle_part_at_loaded_tile( const tripoint_abs_ms &p ) -> optional_vpart_position;
         auto remove_active_npc_from_location_map( const npc &guy ) -> void;
 
         /// Guards all accesses to `submaps` that may overlap with background
