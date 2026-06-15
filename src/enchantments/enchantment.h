@@ -110,10 +110,10 @@ class enchantment
         std::optional<emit_id> emitter;
         std::map<efftype_id, int> ench_effects;
         // values that add to the base value
-        std::map<enchantment_value_id, int> values_add;
+        std::map<int_id<enchantment_value>, int> values_add;
         // values that get multiplied to the base value
         // multipliers add to each other instead of multiply against themselves
-        std::map<enchantment_value_id, double> values_multiply;
+        std::map<int_id<enchantment_value>, double> values_multiply;
 
         std::vector<fake_spell> hit_me_effect;
         std::vector<fake_spell> hit_you_effect;

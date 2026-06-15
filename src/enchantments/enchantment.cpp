@@ -1,4 +1,4 @@
-#include "magic_enchantment.h"
+#include "enchantment.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -75,47 +75,6 @@ namespace io
     // *INDENT-ON*
 } // namespace io
 
-// TODO: Eventually migrate this to a migration like for items
-static std::string migrate_ench_vals_enums( const std::string &s )
-{
-    if( s == "ITEM_ATTACK_SPEED" ) {
-        return "ITEM_ATTACK_COST";
-    }
-    if( s == "ATTACK_SPEED" ) {
-        return "ATTACK_COST";
-    }
-    if( s == "MAX_MANA" ) {
-        return "MANA_CAP";
-    }
-    if( s == "REGEN_MANA" ) {
-        return "MANA_REGEN";
-    }
-    if( s == "MAX_STAMINA" ) {
-        return "STAMINA_CAP";
-    }
-    if( s == "REGEN_STAMINA" ) {
-        return "STAMINA_REGEN";
-    }
-    if( s == "ITEM_ARMOR_BIO" ) {
-        return "ITEM_ARMOR_BIOLOGICAL";
-    }
-    if( s == "ITEM_DAMAGE_BIO" ) {
-        return "ITEM_DAMAGE_BIOLOGICAL";
-    }
-    if( s == "ARMOR_BIO" ) {
-        return "ARMOR_BIOLOGICAL";
-    }
-    if( s == "ITEM_ARMOR_ELEC" ) {
-        return "ITEM_ARMOR_ELECTRIC";
-    }
-    if( s == "ITEM_DAMAGE_ELEC" ) {
-        return "ITEM_DAMAGE_ELECTRIC";
-    }
-    if( s == "ARMOR_ELEC" ) {
-        return "ARMOR_ELECTRIC";
-    }
-    return s;
-}
 namespace
 {
 generic_factory<enchantment> enchant_factory( "enchantment" );
@@ -249,22 +208,16 @@ void enchantment::load( const JsonObject &jo, const std::string & )
 
     if( jo.has_array( "values" ) ) {
         for( const JsonObject value_obj : jo.get_array( "values" ) ) {
-            std::string value_raw = value_obj.get_string( "value" );
-            std::string value_new = migrate_ench_vals_enums( value_raw );
-            if( json_report_strict && value_new != value_raw ) {
-                value_obj.show_warning(
-                    string_format( "%s has been renamed to %s", value_raw, value_new ), "value" );
-            }
-            enchantment_value_id value = enchantment_value_id( value_new );
+            enchantment_value_id value = enchantment_value_id( value_obj.get_string( "value" ) );
             const int add = value_obj.get_int( "add", 0 );
             const double mult = value_obj.get_float( "multiply", 0.0 );
             if( add != 0 ) {
-                values_add.emplace( value, add );
+                values_add.emplace( value.id(), add );
             }
             if( mult != 0.0 ) {
                 // Limit precision to minimize inconsistencies between platforms / compilers
                 const double mul = static_cast<int>( std::round( mult * 100'000 ) ) / 100'000.0;
-                values_multiply.emplace( value, mul );
+                values_multiply.emplace( value.id(), mul );
             }
         }
     }
@@ -370,10 +323,10 @@ bool enchantment::add( const enchantment &rhs )
 
 void enchantment::force_add( const enchantment &rhs )
 {
-    for( const std::pair<const enchantment_value_id, int> &pair_values : rhs.values_add ) {
+    for( const auto &pair_values : rhs.values_add ) {
         values_add[pair_values.first] += pair_values.second;
     }
-    for( const std::pair<const enchantment_value_id, double> &pair_values : rhs.values_multiply ) {
+    for( const auto &pair_values : rhs.values_multiply ) {
         // values do not multiply against each other, they add.
         // so +10% and -10% will add to 0%
         values_multiply[pair_values.first] += pair_values.second;
@@ -407,7 +360,7 @@ int enchantment::get_value_add( const enchantment_value_id value ) const
         debugmsg( "Tried to get invalid enchantment value \"%s\".", value );
     }
     int result = 0;
-    if( values_add.contains( value ) ) {
+    if( values_add.contains( value.id() ) ) {
         result += values_add.at( value );
     }
     if( value->has_parent() ) {
@@ -423,7 +376,7 @@ double enchantment::get_value_multiply( const enchantment_value_id value ) const
         debugmsg( "Tried to get invalid enchantment value \"%s\".", value );
     }
     double result = 0;
-    if( values_multiply.contains( value ) ) {
+    if( values_multiply.contains( value.id() ) ) {
         result += values_multiply.at( value );
     }
     if( value->has_parent() ) {
@@ -585,18 +538,18 @@ void enchantment::check() const
     }
     for( const auto &[ ench_val_id, val ] : values_add ) {
         if( !ench_val_id.is_valid() ) {
-            problems.push_back( string_format( "\nenchantment value %s is invalid", ench_val_id.str() ) );
+            problems.push_back( string_format( "\nenchantment value %s is invalid", ench_val_id.id().str() ) );
         } else if( !ench_val_id->can_add ) {
             problems.push_back( string_format( "\nenchantment value %s cannot be added to",
-                                               ench_val_id.str() ) );
+                                               ench_val_id.id().str() ) );
         }
     }
     for( const auto &[ ench_val_id, val ] : values_multiply ) {
         if( !ench_val_id.is_valid() ) {
-            problems.push_back( string_format( "\nenchantment value %s is invalid", ench_val_id.str() ) );
+            problems.push_back( string_format( "\nenchantment value %s is invalid", ench_val_id.id().str() ) );
         } else if( !ench_val_id->can_mult ) {
             problems.push_back( string_format( "\nenchantment value %s cannot be added to",
-                                               ench_val_id.str() ) );
+                                               ench_val_id.id().str() ) );
         }
     }
     if( !problems.empty() ) {

@@ -12,11 +12,11 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "catalua_type_operators.h"
+#include "enchantments/enchantment.h"
 #include "flat_set.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
-#include "magic_enchantment.h"
 #include "enums.h"
 #include "color.h"
 

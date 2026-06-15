@@ -1,25 +1,7 @@
 #include "enchantment_value.h"
-
-#include <cstddef>
-#include <functional>
-#include <memory>
-#include <type_traits>
-#include <unordered_map>
-#include <utility>
-
 #include "assign.h"
 #include "debug.h"
-#include "game_constants.h"
 #include "generic_factory.h"
-#include "json.h"
-#include "map.h"
-#include "memory_fast.h"
-#include "options.h"
-#include "point.h"
-#include "rng.h"
-#include "translations.h"
-#include "type_id.h"
-#include "units_angle.h"
 
 namespace
 {
@@ -33,9 +15,23 @@ const enchantment_value &string_id<enchantment_value>::obj() const
     return all_enchantment_values.obj( *this );
 }
 
+/** @relates int_id */
+template<>
+const enchantment_value &int_id<enchantment_value>::obj() const
+{
+    return all_enchantment_values.obj( *this );
+}
+
 /** @relates string_id */
 template<>
 bool string_id<enchantment_value>::is_valid() const
+{
+    return all_enchantment_values.is_valid( *this );
+}
+
+/** @relates int_id */
+template<>
+bool int_id<enchantment_value>::is_valid() const
 {
     return all_enchantment_values.is_valid( *this );
 }
@@ -45,6 +41,20 @@ template<>
 int_id<enchantment_value> string_id<enchantment_value>::id() const
 {
     return all_enchantment_values.convert( *this, int_id<enchantment_value>( INVALID_CID ) );
+}
+
+/** @relates int_id */
+template<>
+const string_id<enchantment_value> &int_id<enchantment_value>::id() const
+{
+    return all_enchantment_values.convert( *this );
+}
+
+/** @relates int_id */
+template<>
+int_id<enchantment_value>::int_id( const enchantment_value_id &id )
+{
+    *this = all_enchantment_values.convert( id, int_id<enchantment_value>( INVALID_CID ) );
 }
 
 void enchantment_value::load_enchantment_values( const JsonObject &jo, const std::string &src )

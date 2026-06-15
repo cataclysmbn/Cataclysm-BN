@@ -46,6 +46,7 @@
 #include "dispersion.h"
 #include "drop_token.h"
 #include "effect.h" // for weed_msg
+#include "enchantments/enchantment.h"
 #include "enums.h"
 #include "explosion.h"
 #include "faction.h"
@@ -70,7 +71,6 @@
 #include "line.h"
 #include "locations.h"
 #include "magic.h"
-#include "magic_enchantment.h"
 #include "map.h"
 #include "martialarts.h"
 #include "material.h"

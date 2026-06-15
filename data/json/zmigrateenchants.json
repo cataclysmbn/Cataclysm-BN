@@ -1,0 +1,12 @@
+[
+  {
+    "id": "ITEM_ARMOR_ELECTRIC",
+    "type": "enchantment_value",
+    "alias": [ "ITEM_ARMOR_ELEC" ]
+  },
+  {
+    "id": "ARMOR_ELECTRIC",
+    "type": "enchantment_value",
+    "alias": [ "ARMOR_ELEC" ]
+  }
+]
