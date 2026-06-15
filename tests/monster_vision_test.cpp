@@ -8,7 +8,6 @@
 #include "map_helpers.h"
 #include "mapdata.h"
 #include "monster.h"
-#include "options_helpers.h"
 #include "state_helpers.h"
 
 struct tripoint;
@@ -26,9 +25,6 @@ static const time_point midday = calendar::turn_zero + 12_hours;
 TEST_CASE( "monsters shouldn't see through floors", "[vision]" )
 {
     clear_all_state();
-    override_option opt( "FOV_3D", "true" );
-    bool old_fov_3d = fov_3d;
-    fov_3d = true;
     calendar::turn = midday;
     monster &upper = spawn_and_clear( { 5, 5, 0 }, true );
     monster &adjacent = spawn_and_clear( { 5, 6, 0 }, true );
@@ -76,14 +72,13 @@ TEST_CASE( "monsters shouldn't see through floors", "[vision]" )
     // One intervening vertical tile and two intervening horizontal tiles.
     CHECK( sky.sees( distant ) );
     CHECK( distant.sees( sky ) );
-    fov_3d = old_fov_3d;
 }
 
 TEST_CASE( "monsters_dont_see_through_vehicle_holes", "[vision]" )
 {
     clear_all_state();
     calendar::turn = midday;
-    put_player_underground();
+    move_player_out_of_the_way();
     tripoint_bub_ms origin( 60, 60, 0 );
 
     get_map().add_vehicle( vproto_id( "apc" ), origin, -45_degrees, 0, 0 );

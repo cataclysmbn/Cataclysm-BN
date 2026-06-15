@@ -1,27 +1,114 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
+#include <limits>
 #include <list>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "calendar.h"
 #include "coordinates.h"
+#include "game_constants.h"
+#include "item_stack.h"
 #include "mapgen_functions.h"
 #include "point.h"
+#include "type_id.h"
+#include "vpart_position.h"
 
 class submap;
+class computer;
+class Creature;
+class field;
+class field_entry;
+class item;
 class JsonIn;
+enum ter_bitflags : int;
+struct partial_con;
+template<typename T>
+class location_vector;
+template<typename T>
+class detached_ptr;
+namespace data_vars
+{
+class data_set;
+} // namespace data_vars
 
 struct mapbuffer_generate_omt_options {
     bool defer_postprocess_hooks = false;
     bool worker_safe = false;
     bool use_selected_mapgen = false;
     std::shared_ptr<mapgen_function> selected_mapgen;
+};
+
+enum class mapbuffer_lookup_mode : int {
+    simulated_only,
+    resident_only,
+    load_from_disk,
+    load_or_generate,
+};
+
+struct mapbuffer_lookup_options {
+    mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::simulated_only;
+};
+
+struct mapbuffer_valid_move_options {
+    bool bash = false;
+    bool flying = false;
+    bool via_ramp = false;
+    bool zlevels = true;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_field_age_options {
+    field_type_id type;
+    time_duration age = 0_turns;
+    bool isoffset = false;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_field_intensity_options {
+    field_type_id type;
+    int intensity = 0;
+    bool isoffset = false;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_add_field_options {
+    field_type_id type;
+    int intensity = std::numeric_limits<int>::max();
+    time_duration age = 0_turns;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_add_computer_options {
+    std::string name;
+    int security = 0;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_item_lum_options {
+    bool add_luminance = false;
+    mapbuffer_lookup_options lookup;
+};
+
+class mapbuffer;
+
+struct mapbuffer_add_item_or_charges_options {
+    bool overflow = true;
+    mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_erase_item_options {
+    location_vector<item>::const_iterator it;
+    detached_ptr<item> *out = nullptr;
+    mapbuffer_lookup_options lookup;
 };
 
 /**
@@ -62,6 +149,166 @@ class mapbuffer
          * is not stored and the given unique_ptr retains ownsership.
          */
         bool add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &sm );
+
+        /**
+         * Absolute submap lookup with explicit residency/loading policy.
+         * Defaults to simulated_only so ordinary callers only see active
+         * simulation data unless they explicitly request broader residency.
+         *
+         * simulated_only: return only if already resident and currently simulated.
+         * The simulation set is owned by submap_load_manager and may include
+         * non-player-bubble load requests.
+         * resident_only: return only if already resident in memory.
+         * load_from_disk: load saved/pending data if needed; never generate.
+         * load_or_generate: load saved/pending data first, then generate the
+         * containing OMT on miss.
+         */
+        auto get_submap( const tripoint_abs_sm &p,
+        mapbuffer_lookup_options options = {} ) -> submap *;
+
+        auto get_ter( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<ter_id>;
+        auto set_ter( const tripoint_abs_ms &p, ter_id terrain,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto get_furn( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<furn_id>;
+        auto set_furn( const tripoint_abs_ms &p, furn_id furn,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto veh_at( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> optional_vpart_position;
+        auto move_cost( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto passable( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<bool>;
+        auto valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
+        mapbuffer_valid_move_options options = {} ) -> bool;
+        auto climb_difficulty( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto has_flag( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_ter( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_furn( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_vpart( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_furn_or_vpart( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_ter( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_furn( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto has_flag_ter_or_furn( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto ter_vars( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
+        auto furn_vars( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
+
+        auto get_trap( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<trap_id>;
+        auto set_trap( const tripoint_abs_ms &p, trap_id trap,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto creature_on_trap( Creature &critter, bool may_avoid = true ) -> void;
+
+        auto get_radiation( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto set_radiation( const tripoint_abs_ms &p, int radiation,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto adjust_radiation( const tripoint_abs_ms &p, int delta,
+        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+
+        auto get_lum( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<std::uint8_t>;
+        auto set_lum( const tripoint_abs_ms &p, std::uint8_t luminance,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto get_temperature( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto set_temperature( const tripoint_abs_ms &p, int temperature,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto get_field( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> field *;
+        auto has_field_at( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto get_field_entry( const tripoint_abs_ms &p, const field_type_id &type,
+        mapbuffer_lookup_options options = {} ) -> field_entry *;
+        auto get_field_age( const tripoint_abs_ms &p, const field_type_id &type,
+        mapbuffer_lookup_options options = {} ) -> std::optional<time_duration>;
+        auto get_field_intensity( const tripoint_abs_ms &p, const field_type_id &type,
+        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto mod_field_age( const tripoint_abs_ms &p,
+                            const mapbuffer_field_age_options &options ) -> std::optional<time_duration>;
+        auto mod_field_intensity( const tripoint_abs_ms &p,
+                                  const mapbuffer_field_intensity_options &options ) -> std::optional<int>;
+        auto set_field_age( const tripoint_abs_ms &p,
+                            const mapbuffer_field_age_options &options ) -> std::optional<time_duration>;
+        auto set_field_intensity( const tripoint_abs_ms &p,
+                                  const mapbuffer_field_intensity_options &options ) -> std::optional<int>;
+        auto add_field( const tripoint_abs_ms &p,
+                        const mapbuffer_add_field_options &options ) -> bool;
+        auto remove_field( const tripoint_abs_ms &p, const field_type_id &type,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto get_items( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> location_vector<item> *;
+        auto add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
+        const mapbuffer_add_item_or_charges_options &options = {} ) -> detached_ptr<item>;
+        auto add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
+        mapbuffer_lookup_options options = {} ) -> detached_ptr<item>;
+        auto erase_item( const tripoint_abs_ms &p,
+                         const mapbuffer_erase_item_options &options ) -> location_vector<item>::iterator;
+        auto remove_item( const tripoint_abs_ms &p, item *to_remove,
+        mapbuffer_lookup_options options = {} ) -> detached_ptr<item>;
+        auto clear_items( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::vector<detached_ptr<item>>;
+        auto make_item_active( const tripoint_abs_ms &p, item &target,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto make_item_inactive( const tripoint_abs_ms &p, item &target,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto update_item_lum( const tripoint_abs_ms &p, item &target,
+                              const mapbuffer_item_lum_options &options ) -> bool;
+
+        auto has_graffiti_at( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto graffiti_at( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<std::string>;
+        auto set_graffiti( const tripoint_abs_ms &p, const std::string &contents,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto delete_graffiti( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto has_signage( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto get_signage( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<std::string>;
+        auto set_signage( const tripoint_abs_ms &p, const std::string &message,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto delete_signage( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto has_computer( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto get_computer( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> computer *;
+        auto set_computer( const tripoint_abs_ms &p, const computer &terminal,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto add_computer( const tripoint_abs_ms &p,
+                           const mapbuffer_add_computer_options &options ) -> computer *;
+        auto delete_computer( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto partial_con_at( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> partial_con *;
+        auto partial_con_set( const tripoint_abs_ms &p, std::unique_ptr<partial_con> con,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto partial_con_remove( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
 
         /** Get a submap stored in this buffer.
          *
@@ -138,9 +385,9 @@ class mapbuffer
          * version already existed.  Must be called on the main thread after all
          * preload_omt() futures have been joined.
          *
-         * safe_reference<T>, cache_reference<T>, and cata_arena<T> all rely on
-         * unsynchronised global statics; destructing submaps (and their items) on
-         * worker threads would race on those statics.  preload_omt() defers such
+         * safe_reference<T> relies on unsynchronised global statics; destructing
+         * submaps (and their items) on worker threads would race on those statics.
+         * preload_omt() defers such
          * destruction here instead of letting it happen on the worker.
          */
         auto drain_pending_submap_destroy() -> void;
@@ -169,6 +416,24 @@ class mapbuffer
     private:
         using submap_map_t = std::unordered_map<tripoint_abs_sm, std::unique_ptr<submap>>;
 
+        auto active_reality_bubble_local( const tripoint_abs_ms &p ) const
+        -> std::optional<tripoint_bub_ms>;
+        auto invalidate_active_terrain_set_caches( const tripoint_abs_ms &p, const ter_id &old_id,
+                const ter_id &new_id ) const -> void;
+        auto sync_furniture_change_side_tables( const tripoint_abs_ms &p, submap &sm,
+                                                const point_sm_ms &local, const furn_id &old_id,
+                                                const furn_id &new_id ) const -> void;
+        auto invalidate_active_furniture_set_caches( const tripoint_abs_ms &p, const furn_id &old_id,
+                const furn_id &new_id ) const -> void;
+        auto sync_active_trap_change_side_tables( const tripoint_abs_ms &p, const point_sm_ms &local,
+                const trap_id &old_id, const trap_id &new_id ) const -> void;
+        auto invalidate_active_field_add_caches( const tripoint_abs_ms &p,
+                const field_type_id &type ) const -> void;
+        auto invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
+                const field_type_id &type ) const -> void;
+        auto sync_active_item_submap_index( const tripoint_abs_ms &p, const submap &sm ) const -> void;
+        auto invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const -> void;
+
         /// Guards all accesses to `submaps` that may overlap with background
         /// worker threads calling add_submap().  std::recursive_mutex allows
         /// mapgen code (running under a held lock) to call lookup_submap_in_memory()
@@ -177,8 +442,8 @@ class mapbuffer
 
         /// Submaps that preload_omt() could not add (duplicate already in memory).
         /// Their destruction is deferred here and drained on the main thread via
-        /// drain_pending_submap_destroy() to avoid racing on the global statics
-        /// inside safe_reference<T>, cache_reference<T>, and cata_arena<T>.
+        /// drain_pending_submap_destroy() to avoid racing on safe_reference<T>
+        /// global statics.
         mutable std::mutex pending_destroy_mutex_;
         std::vector<std::unique_ptr<submap>> pending_destroy_submaps_;
 
@@ -227,12 +492,12 @@ class mapbuffer
          * Set by mapbuffer_registry::get() at construction time.
          * Empty string ("") = the overworld (primary dimension, legacy path).
          */
-        const std::string &get_dimension_id() const {
+        auto get_dimension_id() const -> const dimension_id & { // *NOPAD*
             return dimension_id_;
         }
 
         /** Set the dimension ID — called only by mapbuffer_registry. */
-        void set_dimension_id( const std::string &id ) {
+        auto set_dimension_id( const dimension_id &id ) -> void {
             dimension_id_ = id;
         }
 
@@ -255,7 +520,7 @@ class mapbuffer
 
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.
-        std::string dimension_id_;
+        dimension_id dimension_id_;
 };
 
 // Included after the full mapbuffer definition to avoid circular dependencies.

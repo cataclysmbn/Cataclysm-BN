@@ -59,7 +59,7 @@
     "id": "ear_plugs",
     "type": "ARMOR",
     "name": { "str": "pair of ear plugs", "str_pl": "pairs of ear plugs" },
-    "description": "Industrial grade ear plugs.  They fit inside the ear.",
+    "description": "Industrial grade ear plugs that fit inside the ear.  Adequate for most purposes, though you'll want to pair them with protective earmuffs if you're firing high-powered rifles or artillery.",
     "weight": "10 g",
     "volume": "10 ml",
     "price": "10 cent",
@@ -69,7 +69,8 @@
     "color": "light_gray",
     "coverage": 1,
     "material_thickness": 1,
-    "flags": [ "DEAF", "OVERSIZE", "POWERARMOR_COMPATIBLE" ]
+    "hearing_protection": 40,
+    "flags": [ "OVERSIZE", "POWERARMOR_COMPATIBLE" ]
   },
   {
     "id": "gobag",
@@ -842,6 +843,7 @@
     "category": "clothing",
     "symbol": "[",
     "color": "blue",
+    "light_color": "#b8ffc0",
     "looks_like": "survivor_light_on",
     "name": { "str": "atomic headlamp" },
     "description": "This is a custom-made reinforced headlamp powered by the magic of nuclear decay, focused for more usable brightness.  The adjustable strap allows it to be comfortably worn on your head or attached to your helmet.  Use it to close the cover and hide the light.",
@@ -869,6 +871,7 @@
     "repairs_like": "wearable_atomic_light",
     "type": "TOOL_ARMOR",
     "looks_like": "survivor_light",
+    "light_color": null,
     "name": { "str": "atomic headlamp (covered)", "str_pl": "atomic headlamps (covered)" },
     "description": "This is a custom-made reinforced headlamp powered by the magic of nuclear decay, focused for more usable brightness.  The adjustable strap allows it to be comfortably worn on your head or attached to your helmet.  Use it to open the cover and show the light.",
     "flags": [ "LEAK_DAM", "RADIOACTIVE", "DURABLE_MELEE", "OVERSIZE", "BELTED", "ALLOWS_NATURAL_ATTACKS" ],
@@ -924,7 +927,8 @@
     "environmental_protection": 15,
     "encumbrance": 30,
     "coverage": 100,
-    "material_thickness": 4
+    "material_thickness": 4,
+    "hearing_protection": 12
   },
   {
     "id": "rm13_armor_on",
@@ -958,7 +962,9 @@
     "environmental_protection": 40,
     "encumbrance": 10,
     "qualities": [ [ "GLARE", 2 ], [ "HV_INSULATION", 1 ] ],
-    "material_thickness": 7
+    "material_thickness": 7,
+    "adv_hearing_protection": 120,
+    "hearing_protection": 0
   },
   {
     "id": "dimensional_anchor",
@@ -1045,6 +1051,7 @@
     "coverage": 100,
     "material_thickness": 2,
     "encumbrance": 20,
+    "hearing_protection": 12,
     "flags": [
       "RAD_PROOF",
       "STURDY",
@@ -1088,7 +1095,6 @@
       "SWIM_GOGGLES",
       "SUN_GLASSES",
       "ELECTRIC_IMMUNE",
-      "PARTIAL_DEAF",
       "GAS_PROOF",
       "TRADER_AVOID",
       "PSYSHIELD_PARTIAL",
@@ -1096,7 +1102,9 @@
       "CLIMATE_CONTROL",
       "COMBAT_NPC_USE",
       "COMBAT_NPC_ON"
-    ]
+    ],
+    "adv_hearing_protection": 48,
+    "hearing_protection": 0
   },
   {
     "id": "rebreather",
@@ -2721,8 +2729,8 @@
     "symbol": "[",
     "color": "blue",
     "name": { "str_sp": "shooter's earmuffs" },
-    "description": "A pair of earmuffs favored by shooters.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount when turned on.  The earmuffs are currently off.",
-    "flags": [ "DEAF", "OVERSIZE", "BELTED", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE" ],
+    "description": "A pair of earmuffs favored by shooters.  Currently turned off they block most sounds, though you should pair them with ear plugs if firing high-powered rifles or artillery.  If turned on they provide the same protection while still allowing you to hear normal sounds.",
+    "flags": [ "OVERSIZE", "BELTED", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE" ],
     "price": "125 USD",
     "price_postapoc": "750 cent",
     "material": [ "plastic" ],
@@ -2743,6 +2751,7 @@
     "encumbrance": 5,
     "coverage": 10,
     "material_thickness": 2,
+    "hearing_protection": 40,
     "magazines": [
       [
         "battery",
@@ -2765,13 +2774,14 @@
     "type": "TOOL_ARMOR",
     "repairs_like": "powered_earmuffs",
     "name": { "str_sp": "shooter's earmuffs (on)" },
-    "description": "A pair of earmuffs favored by shooters.  The earmuffs are turned on.  They will block sounds over a certain decibel amount, assuming it is charged with batteries.",
+    "description": "A pair of earmuffs favored by shooters.  The earmuffs are turned on, protecting you from most loud sounds short of high-powered rifles or artillery without compromising your ability to hear.",
     "//": "3M Peltors claim to go 100 hours on 2 AAs",
     "power_draw": 60,
     "revert_to": "powered_earmuffs",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s flicks off.", "target": "powered_earmuffs" },
     "extend": { "flags": [ "PARTIAL_DEAF", "COMBAT_NPC_ON" ] },
-    "delete": { "flags": [ "DEAF" ] }
+    "adv_hearing_protection": 40,
+    "hearing_protection": 0
   },
   {
     "id": "army_powered_earmuffs",
@@ -2780,8 +2790,8 @@
     "symbol": "[",
     "color": "green",
     "name": { "str_sp": "tactical headset" },
-    "description": "An active headset used by the military.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount as well as function as a two-way radio when turned on.  The headset is currently off.",
-    "flags": [ "DEAF", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE", "SKINTIGHT" ],
+    "description": "An active headset used by the military.  Currently turned off they block most sounds, though you should pair them with ear plugs if firing high-powered rifles or artillery.  If turned on they provide the same protection while still allowing you to hear normal sounds, and double as a two-way radio.",
+    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ],
     "price": "250 USD",
     "price_postapoc": "15 USD",
     "material": [ "plastic" ],
@@ -2802,6 +2812,7 @@
     "encumbrance": 5,
     "coverage": 10,
     "material_thickness": 2,
+    "hearing_protection": 40,
     "magazines": [
       [
         "battery",
@@ -2824,13 +2835,14 @@
     "type": "TOOL_ARMOR",
     "repairs_like": "army_powered_earmuffs",
     "name": { "str_sp": "tactical headset (on)" },
-    "description": "An active headset used by the military.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount as well as function as a two-way radio when turned on.",
+    "description": "An active headset used by the military.  They're turned on, serving as a two-way radio and protecting you from most loud sounds short of high-powered rifles or artillery, without compromising your ability to hear.",
     "//": "3M Peltors claim to go 100 hours on 2 AAs",
     "power_draw": 60,
     "revert_to": "army_powered_earmuffs",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s flicks off.", "target": "army_powered_earmuffs" },
-    "extend": { "flags": [ "PARTIAL_DEAF", "COMBAT_NPC_ON", "TWO_WAY_RADIO" ] },
-    "delete": { "flags": [ "DEAF" ] }
+    "extend": { "flags": [ "COMBAT_NPC_ON", "TWO_WAY_RADIO" ] },
+    "adv_hearing_protection": 40,
+    "hearing_protection": 0
   },
   {
     "id": "stethoscope",
@@ -3197,7 +3209,7 @@
     "id": "attached_ear_plugs_on",
     "type": "ARMOR",
     "name": { "str": "pair of attached ear plugs (in)", "str_pl": "pairs of attached ear plugs (in)" },
-    "description": "A pair of industrial grade ear plugs attached together by some string.  They are inside your ears, activate them to take them out.",
+    "description": "A pair of industrial grade ear plugs attached together by some string.  Adequate for most purposes, though you'll want to pair them with protective earmuffs if you're firing high-powered rifles or artillery.  They are inside your ears, activate them to take them out.",
     "copy-from": "ear_plugs",
     "use_action": {
       "type": "transform",
@@ -3205,14 +3217,15 @@
       "target": "attached_ear_plugs_off",
       "menu_text": "Unplug",
       "need_worn": true
-    }
+    },
+    "hearing_protection": 40
   },
   {
     "id": "attached_ear_plugs_off",
     "type": "ARMOR",
     "repairs_like": "attached_ear_plugs_on",
     "name": { "str": "pair of attached ear plugs (out)", "str_pl": "pairs of attached ear plugs (out)" },
-    "description": "A pair of industrial grade ear plugs, they are attached together by some string.  They hang around your neck, use them to plug them in.",
+    "description": "A pair of industrial grade ear plugs, they are attached together by some string.  They hang around your neck, use them to plug them in.  They'll protect your hearing from most sounds when plugged in, though for high-powered rifles or artillery you'd want to pair them with protective earmuffs.",
     "copy-from": "attached_ear_plugs_on",
     "use_action": {
       "type": "transform",
@@ -3221,7 +3234,7 @@
       "menu_text": "Plug in",
       "need_worn": true
     },
-    "delete": { "flags": [ "DEAF" ] }
+    "hearing_protection": 0
   },
   {
     "id": "mask_halfsurvivor",

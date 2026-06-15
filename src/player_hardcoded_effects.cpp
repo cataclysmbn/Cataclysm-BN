@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <memory>
 
+#include "action_time_scale.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "character.h"
@@ -141,7 +142,7 @@ static void eff_fun_fungus( player &u, effect &it )
             if( one_in( 600 ) ) {
                 u.add_msg_if_player( m_warning, _( "You feel nauseous." ) );
             }
-            if( calendar::once_every( 10_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 10_minutes ) ) {
                 u.add_msg_if_player( m_warning, _( "You smell and taste mushrooms." ) );
             }
             it.mod_duration( 1_turns );
@@ -271,12 +272,18 @@ static void eff_fun_hallu( player &u, effect &it )
             ///\EFFECT_STR_NPC increases volume of hallucination sounds (NEGATIVE)
 
             ///\EFFECT_INT_NPC decreases volume of hallucination sounds
-            int loudness = 20 + u.str_cur - u.int_cur;
-            loudness = ( loudness > 5 ? loudness : 5 );
-            loudness = ( loudness < 30 ? loudness : 30 );
-            sounds::sound( u.bub_pos(), loudness, sounds::sound_t::speech, _( random_entry_ref( npc_hallu ) ),
-                           false, "speech",
-                           loudness < 15 ? ( u.male ? "NPC_m" : "NPC_f" ) : ( u.male ? "NPC_m_loud" : "NPC_f_loud" ) );
+            int loudness = 60 + u.str_cur - u.int_cur;
+            loudness = std::min( 90, std::max( 30, loudness ) );
+
+            sound_event se;
+            se.origin = u.bub_pos();
+            se.volume = loudness;
+            se.category = sounds::sound_t::speech;
+            se.description = _( random_entry_ref( npc_hallu ) );
+            se.id = "speech";
+            se.variant = loudness < 70 ? ( u.male ? "NPC_m" : "NPC_f" ) : ( u.male ? "NPC_m_loud" :
+                         "NPC_f_loud" );
+            sounds::sound( se );
         }
     } else if( dur == peakTime ) {
         // Visuals start
@@ -794,16 +801,24 @@ void Character::hardcoded_effects( effect &it )
         if( one_in( 5000 ) ) {
             add_msg_if_player( m_bad, _( "A strange sound reverberates around the edges of reality." ) );
             // Comparable to the humming anomaly trap, with a narrower range
-            int volume = rng( 25, 150 );
+            int volume = rng( 40, 125 );
             std::string sfx;
-            if( volume <= 50 ) {
+            if( volume <= 60 ) {
                 sfx = _( "hrmmm" );
             } else if( volume <= 100 ) {
                 sfx = _( "HRMMM" );
             } else {
                 sfx = _( "VRMMMMMM" );
             }
-            sounds::sound( bub_pos(), volume, sounds::sound_t::activity, sfx, false, "humming", "machinery" );
+            sound_event se;
+            se.origin = bub_pos();
+            se.volume = volume;
+            se.category = sounds::sound_t::activity;
+            se.description = sfx;
+            se.id = "humming";
+            se.variant = "machinery";
+
+            sounds::sound( se );
         }
     } else if( id == effect_asthma ) {
         if( has_effect( effect_adrenaline ) || has_effect( effect_datura ) ) {
@@ -999,7 +1014,7 @@ void Character::hardcoded_effects( effect &it )
             } else if( has_effect( effect_antibiotic ) ) {
                 // Normal antibiotic prevents progression
             } else if( has_effect( effect_weak_antibiotic ) ) {
-                if( calendar::once_every( 4_turns ) ) {
+                if( action_time_scale::once_every_this_tick( 4_turns ) ) {
                     // Weak antibiotic slows down to a quarter
                     it.mod_duration( 1_turns );
                 }
@@ -1047,7 +1062,7 @@ void Character::hardcoded_effects( effect &it )
             } else if( has_effect( effect_antibiotic ) ) {
                 // No progression
             } else if( has_effect( effect_weak_antibiotic ) ) {
-                if( calendar::once_every( 4_turns ) ) {
+                if( action_time_scale::once_every_this_tick( 4_turns ) ) {
                     it.mod_duration( 1_turns );
                 }
             } else if( dur > 1_days ) {
@@ -1119,7 +1134,7 @@ void Character::hardcoded_effects( effect &it )
         }
 
         // TODO: Move this to update_needs when NPCs can mutate
-        if( calendar::once_every( 10_minutes ) && ( has_trait( trait_CHLOROMORPH ) ||
+        if( action_time_scale::once_every_this_tick( 10_minutes ) && ( has_trait( trait_CHLOROMORPH ) ||
                 has_trait( trait_M_SKIN3 ) || has_trait( trait_WATERSLEEP ) ) &&
             g->m.is_outside( bub_pos() ) ) {
             if( has_trait( trait_CHLOROMORPH ) ) {
@@ -1140,7 +1155,7 @@ void Character::hardcoded_effects( effect &it )
                     if( get_fatigue() >= 0 ) {
                         mod_fatigue( -5 ); // Local guides need less sleep on fungal soil
                     }
-                    if( calendar::once_every( 1_hours ) ) {
+                    if( action_time_scale::once_every_this_tick( 1_hours ) ) {
                         spores(); // spawn some P O O F Y   B O I S
                     }
                 }
@@ -1281,15 +1296,27 @@ void Character::hardcoded_effects( effect &it )
                     it.mod_duration( 10_minutes );
                 } else if( dur == 2_turns ) {
                     // let the sound code handle the wake-up part
-                    sounds::sound( bub_pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
-                                   "alarm_clock" );
+                    sound_event se;
+                    se.origin = bub_pos();
+                    se.volume = 70;
+                    se.category = sounds::sound_t::alarm;
+                    se.description = _( "beep-beep-beep!" );
+                    se.id = "tool";
+                    se.variant = "alarm_clock";
+                    sounds::sound( se );
                 }
             }
         } else {
             if( dur == 1_turns ) {
                 if( is_avatar() && has_alarm_clock() ) {
-                    sounds::sound( bub_pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
-                                   "alarm_clock" );
+                    sound_event se;
+                    se.origin = bub_pos();
+                    se.volume = 70;
+                    se.category = sounds::sound_t::alarm;
+                    se.description = _( "beep-beep-beep!" );
+                    se.id = "tool";
+                    se.variant = "alarm_clock";
+                    sounds::sound( se );
                     const std::string alarm = _( "Your alarm is going off." );
                     g->cancel_activity_or_ignore_query( distraction_type::alert, alarm );
                     add_msg( _( "Your alarm went off." ) );

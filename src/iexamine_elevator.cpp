@@ -2,6 +2,8 @@
 #include <optional>
 
 #include "cata_algo.h"
+#include "catalua_coord.h"
+#include "catalua_hooks.h"
 #include "game.h"
 #include "iexamine.h"
 #include "mapdata.h"
@@ -63,7 +65,7 @@ auto dest( const elevator::tiles &elevator_here,
 auto find_elevators_nearby( const tripoint_bub_ms &pos ) -> std::optional<tripoint_bub_ms>
 {
     constexpr int max_misalign = 3;
-    map &here = get_map();
+    auto &here = get_map();
 
     for( const auto &p : closest_points_first( pos, max_misalign ) ) {
         if( here.has_flag( TFLAG_ELEVATOR, p ) ) {
@@ -214,16 +216,15 @@ auto move_vehicles( const elevator_vehicles &vehs, const tripoint_bub_ms &sm_ori
     here.reset_vehicle_cache();
 }
 
-auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> void
+auto move_player( player &p, const int /*movez*/ ) -> void
 {
-    map &here = get_map();
+    auto &here = get_map();
 
-    g->vertical_shift( movez );
     // yes, this is inefficient, but i'm lazy
     elevator::find_elevators_nearby( p.bub_pos() )
     .transform( []( const tripoint_bub_ms & pos ) -> point_rel_sm { return g->place_player( pos ); } );
 
-    cata_event_dispatch::avatar_moves( *p.as_avatar(), here, old_abs_pos );
+    cata_event_dispatch::avatar_moves( *p.as_avatar(), here, p.abs_pos() );
 }
 
 } //namespace elevator
@@ -233,9 +234,19 @@ auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> v
 void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
 {
     map &here = get_map();
-    const tripoint_abs_ms old_abs_pos = p.abs_pos();
-    const tripoint_abs_omt this_omt = project_to<coords::omt>( here.bub_to_abs( examp ) );
-    const auto sm_orig = here.abs_to_bub( project_to<coords::ms>( this_omt ) );
+    const auto this_omt = project_to<coords::omt>( bub_to_abs( examp ) );
+    const auto om_terrain = get_overmapbuffer( here.get_bound_dimension() ).ter_existing(
+                                this_omt ).id().str();
+    const auto hook_results = cata::run_hooks( "on_elevator_try_use", [&]( auto & params ) {
+        params["player"] = &p;
+        params["pos"] = cata::detail::lua_coords::to_lua( examp );
+        params["om_terrain"] = om_terrain;
+    }, { .exit_early = true } );
+    if( !hook_results.get_or( "allowed", true ) ) {
+        return;
+    }
+
+    const auto sm_orig = abs_to_bub( project_to<coords::ms>( this_omt ) );
 
     const auto elevator_here = elevator::here( p );
     const auto vehs = elevator::vehicles_on( elevator_here );
@@ -262,5 +273,5 @@ void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
     elevator::move_items( elevator_here, elevator_dest );
     elevator::move_creatures( elevator_here, elevator_dest );
     elevator::move_vehicles( vehs, sm_orig, movez, turns );
-    elevator::move_player( p, movez, old_abs_pos );
+    elevator::move_player( p, movez );
 }

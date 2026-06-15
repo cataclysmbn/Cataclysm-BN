@@ -543,6 +543,8 @@ void game::draw_bullet( const tripoint_bub_ms &t, const int i,
                         const std::vector<tripoint_bub_ms> &trajectory, const char bullet,
                         const std::string &custom_sprite )
 {
+    refresh_player_visibility_cache_if_needed();
+
     if( !use_tiles ) {
         draw_bullet_curses( m, t, bullet, nullptr );
         return;
@@ -568,6 +570,7 @@ void game::draw_bullet( const tripoint_bub_ms &t, const int i,
                         const std::vector<tripoint_bub_ms> &trajectory,
                         const char bullet, const std::string & )
 {
+    refresh_player_visibility_cache_if_needed();
     draw_bullet_curses( m, t, bullet, &trajectory[i] );
 }
 #endif
@@ -666,6 +669,8 @@ void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
     if( options.trajectories.empty() ) {
         return;
     }
+
+    g->refresh_player_visibility_cache_if_needed();
 
 #if !defined( TILES )
     draw_bullet_trajectories_curses( *g, options );
@@ -864,7 +869,7 @@ void draw_line_curses( game &g, const tripoint_bub_ms &center,
 void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
                       const std::vector<tripoint_bub_ms> &points, bool noreveal )
 {
-    if( !u.sees( p ) ) {
+    if( !noreveal && !u.sees( p ) ) {
         return;
     }
 
@@ -879,7 +884,7 @@ void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
 void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
                       const std::vector<tripoint_bub_ms> &points, bool noreveal )
 {
-    if( !u.sees( p ) ) {
+    if( !noreveal && !u.sees( p ) ) {
         return;
     }
 
@@ -905,10 +910,19 @@ void draw_line_curses( game &g, const std::vector<tripoint_bub_ms> &points )
 #if defined(TILES)
 void draw_line_of( const draw_sprite_line_options &options )
 {
+    g->refresh_player_visibility_cache_if_needed();
+
     if( !use_tiles ) {
         draw_line_curses( *g, options.points );
         return;
     }
+
+    // TODO: This code was added to prevent a crash during projectile tests. Why didn't it crash before?
+    // Please fix.
+    if( test_mode || !tilecontext ) {
+        return;
+    }
+
     std::vector<tripoint_bub_ms> ps;
     std::vector<std::string> ids;
     std::vector<int> rots;

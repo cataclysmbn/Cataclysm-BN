@@ -36,6 +36,8 @@
       { "item": "plastic_shopping_bag", "prob": 5 },
       { "item": "box_small", "prob": 5 },
       { "item": "bag_plastic", "prob": 5 },
+      { "item": "bag_zipper_small", "prob": 2 },
+      { "item": "bag_zipper", "prob": 1 },
       { "item": "bowl_plastic", "prob": 5 },
       { "item": "can_food_unsealed", "prob": 5 },
       { "item": "bottle_plastic", "count": [ 1, 2 ], "prob": 50 },
@@ -64,7 +66,10 @@
           {
             "collection": [
               { "item": "extinguisher", "prob": 70 },
-              { "item": "1st_aid", "count": [ 1, 3 ], "prob": 65 },
+              {
+                "distribution": [ { "item": "1st_aid", "count": [ 1, 3 ], "prob": 80 }, { "item": "1st_aid_deluxe", "count": [ 1, 3 ], "prob": 20 } ],
+                "prob": 50
+              },
               { "item": "two_way_radio", "prob": 65 },
               { "item": "light_disposable_cell", "count": [ 2, 4 ], "prob": 65 },
               { "item": "electric_lantern", "prob": 35 },
@@ -123,7 +128,10 @@
           {
             "collection": [
               { "item": "extinguisher", "prob": 50 },
-              { "item": "1st_aid", "prob": 5 },
+              {
+                "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ],
+                "prob": 5
+              },
               { "item": "two_way_radio", "prob": 25 },
               { "item": "electric_lantern", "prob": 5 },
               { "item": "wearable_light", "prob": 5 }
@@ -137,6 +145,8 @@
               { "item": "bleach", "charges-min": 1, "prob": 45 },
               { "item": "box_small", "prob": 5 },
               { "item": "bag_plastic", "prob": 5 },
+              { "item": "bag_zipper_small", "prob": 2 },
+              { "item": "bag_zipper", "prob": 1 },
               { "item": "bowl_plastic", "prob": 5 },
               { "item": "ammonia", "charges-min": 1, "prob": 15 }
             ],
@@ -149,6 +159,8 @@
               { "item": "soup_chicken", "count": [ 1, 2 ], "prob": 2 },
               { "item": "box_small", "prob": 5 },
               { "item": "bag_plastic", "prob": 5 },
+              { "item": "bag_zipper_small", "prob": 2 },
+              { "item": "bag_zipper", "prob": 1 },
               { "item": "bowl_plastic", "prob": 5 },
               { "item": "vitamins", "prob": 5 },
               { "item": "can_food_unsealed", "count": [ 1, 30 ], "prob": 90 }
@@ -172,7 +184,7 @@
       { "item": "bleach", "prob": 45 },
       { "item": "ammonia", "prob": 25 },
       { "item": "mirror", "prob": 12 },
-      { "item": "1st_aid", "prob": 60 },
+      { "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ], "prob": 60 },
       { "item": "paper", "charges": [ 50, 150 ] },
       { "item": "evac_pamphlet", "prob": 10 }
     ]

@@ -16,6 +16,7 @@
 #include <vector>
 #include <ranges>
 
+#include "action_time_scale.h"
 #include "action.h"
 #include "activity_handlers.h"
 #include "addiction.h"
@@ -115,6 +116,7 @@
 #include "veh_type.h"
 #include "weather.h"
 #include "world_type.h"
+#include "faction.h"
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
 static const activity_id ACT_HAND_CRANK( "ACT_HAND_CRANK" );
@@ -643,8 +645,15 @@ int explosion_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &pos
 {
     if( t ) {
         if( sound_volume >= 0 ) {
-            sounds::sound( pos, sound_volume, sounds::sound_t::alarm,
-                           sound_msg.empty() ? _( "Tick." ) : _( sound_msg ), true, "misc", "bomb_ticking" );
+            sound_event se;
+            se.origin = pos;
+            se.volume = sound_volume;
+            se.category = sounds::sound_t::alarm;
+            se.movement_noise = true;
+            se.description = sound_msg.empty() ? _( "Tick." ) : _( sound_msg );
+            se.id = "misc";
+            se.variant = "bomb_ticking";
+            sounds::sound( se );
         }
     } else if( it.charges > 0 ) {
         if( p.has_item( it ) ) {
@@ -2345,7 +2354,16 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
     p.moves -= moves;
     if( rng( 0, 10 ) - it.damage_level( 4 ) > success_chance && !p.is_underwater() ) {
         if( noise > 0 ) {
-            sounds::sound( p.bub_pos(), noise, sounds::sound_t::combat, _( success_message ) );
+            sound_event se;
+            se.origin = p.bub_pos();
+            se.volume = noise;
+            se.category = sounds::sound_t::combat;
+            se.description = _( success_message );
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
         }
         p.add_msg_if_player( _( success_message ) );
         if( p.is_npc() && get_player_character().sees( p ) ) {
@@ -2421,7 +2439,16 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
         return 0;
     } else if( one_in( noise_chance ) ) {
         if( noise > 0 ) {
-            sounds::sound( p.bub_pos(), noise, sounds::sound_t::combat, _( noise_message ) );
+            sound_event se;
+            se.origin = p.bub_pos();
+            se.volume = noise;
+            se.category = sounds::sound_t::combat;
+            se.description = _( noise_message );
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
         }
         p.add_msg_if_player( _( noise_message ) );
     }
@@ -2457,8 +2484,18 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
     {
         p.moves -= moves;
         if( noise > 0 ) {
-            sounds::sound( p.bub_pos(), noise, sounds::sound_t::activity,
-                           noise_message.empty() ? _( "Hsss" ) : _( noise_message ), true, noise_id, noise_variant );
+            sound_event se;
+            se.origin = p.bub_pos();
+            se.volume = noise;
+            se.category = sounds::sound_t::activity;
+            se.description = noise_message.empty() ? _( "Hsss" ) : _( noise_message );
+            se.id = noise_id;
+            se.variant = noise_variant;
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
         }
         p.add_msg_if_player( _( use_message ) );
     }
@@ -2566,29 +2603,38 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint_b
     std::string desc = "music";
     /** @EFFECT_PER increases morale bonus when playing an instrument */
     const int morale_effect = fun + fun_bonus * p.per_cur;
-    if( morale_effect >= 0 && calendar::once_every( description_frequency ) ) {
+    if( morale_effect >= 0 && action_time_scale::once_every_this_tick( description_frequency ) ) {
         if( !player_descriptions.empty() && p.is_player() ) {
             desc = _( random_entry( player_descriptions ) );
         }
-    } else if( morale_effect < 0 && calendar::once_every( 1_minutes ) ) {
+    } else if( morale_effect < 0 && action_time_scale::once_every_this_tick( 1_minutes ) ) {
         // No musical skills = possible morale penalty
         if( p.is_player() ) {
             desc = _( "You produce an annoying sound" );
         } else {
             desc = string_format( _( "%s produces an annoying sound" ), p.disp_name( false ) );
-        }
-        // Continuous sound messages only print every so often, so this ensures when it does print it'll be the right one.
+        } // Continuous sound messages only print every so often, so this ensures when it does print it'll be the right one.
     } else if( !npc_descriptions.empty() && p.is_npc() ) {
         desc = string_format( _( "%1$s %2$s" ), p.disp_name( false ),
                               random_entry( npc_descriptions ) );
     }
 
+    sound_event se;
+    se.origin = p.bub_pos();
+    se.volume = volume;
+    se.category = sounds::sound_t::music;
+    se.description = desc;
+    se.from_player = p.is_avatar();
+    se.from_npc = !se.from_player;
+    se.faction = p.get_faction()->id;
     if( morale_effect >= 0 ) {
-        sounds::sound( p.bub_pos(), volume, sounds::sound_t::music, desc, true, "musical_instrument",
-                       it.typeId().str() );
+        se.id = "musical_instrument";
+        se.variant = it.typeId().str();
+        sounds::sound( se );
     } else {
-        sounds::sound( p.bub_pos(), volume, sounds::sound_t::music, desc, true, "musical_instrument_bad",
-                       it.typeId().str() );
+        se.id = "musical_instrument_bad";
+        se.variant = it.typeId().str();
+        sounds::sound( se );
     }
 
     if( !p.has_effect( effect_music ) && p.can_hear( p.bub_pos(), volume ) ) {
@@ -3412,7 +3458,7 @@ bool repair_item_actor::can_repair_target( player &pl, const item &fix,
         }
         return false;
     }
-    if( fix.count_by_charges() || fix.has_flag( flag_NO_REPAIR ) ) {
+    if( ( fix.count_by_charges() && !fix.is_stackable() ) || fix.has_flag( flag_NO_REPAIR ) ) {
         if( print_msg ) {
             pl.add_msg_if_player( m_info, _( "You cannot repair this type of item." ) );
         }
@@ -4759,8 +4805,14 @@ int mutagen_iv_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     if( p.is_player() && !( p.has_trait( trait_NOPAIN ) ) && m_category.iv_sound ) {
         p.mod_pain( m_category.iv_pain );
         /** @EFFECT_STR increases volume of painful shouting when using IV mutagen */
-        sounds::sound( p.bub_pos(), m_category.iv_noise + p.str_cur, sounds::sound_t::alert,
-                       m_category.iv_sound_message(), true, m_category.iv_sound_id(), m_category.iv_sound_variant() );
+        sound_event se;
+        se.origin = p.bub_pos();
+        se.volume = m_category.iv_noise + p.str_cur;
+        se.category = sounds::sound_t::alert;
+        se.description = m_category.iv_sound_message();
+        se.id = m_category.iv_sound_id();
+        se.variant = m_category.iv_sound_variant();
+        sounds::sound( se );
     }
 
     int mut_count = m_category.iv_min_mutations;
@@ -5501,7 +5553,15 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint_bub_ms 
     if( !x_in_y( chance, 100 ) ) {
         add_msg( m_bad, _( "The %s emits a loud error beep!  You failed to gather a sufficient sample." ),
                  it.display_name() );
-        sounds::sound( pos, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+        //sounds::sound( pos, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+        sound_event se;
+        se.origin = pos;
+        se.volume = 50;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "beep!" );
+        se.id = "misc";
+        se.variant = "beep";
+        sounds::sound( se );
         // add actual noise here
         return charges_to_use;
     }
@@ -5828,11 +5888,19 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &p
             it.erase_var( "BATCHCOUNT" );
             it.erase_var( "RESULT" );
 
-            sounds::sound( pos, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
+            //sounds::sound( pos, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
+            sound_event se;
+            se.origin = pos;
+            se.volume = 50;
+            se.category = sounds::sound_t::alarm;
+            se.description = _( "ding!" );
+            se.id = "misc";
+            se.variant = "ding";
+            sounds::sound( se );
 
             return 0;
         } else {
-            if( calendar::once_every( 1_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                 it.ammo_consume( charges_per_minute, pos );
             }
             it.set_var( "COOKTIME", cooktime );
@@ -7131,14 +7199,15 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
     // Debug: Show current and target dimensions
     add_msg( m_debug, "[DIM_TRAVEL] Current region_type: %s",
              get_overmapbuffer( p.get_dimension() ).current_region_type );
-    add_msg( m_debug, "[DIM_TRAVEL] Current dim_id: '%s'", g->get_current_dimension_id() );
+    add_msg( m_debug, "[DIM_TRAVEL] Current dim_id: '%s'",
+             g->get_current_dimension_id().c_str() );
     add_msg( m_debug, "[DIM_TRAVEL] Target destination: %s", destination.str() );
 
     // The "default" world_type_id is the base overworld; its canonical dim_id is ""
     // (empty string) for backward-compat save paths.  Normalize here so callers
     // that specify destination="default" correctly reach the overworld slot.
-    const auto target_dim_id = destination.str() == "default" ? std::string{} :
-                               destination.str();
+    const auto target_dim_id = dimension_id( destination.str() == "default" ? std::string{} :
+                               destination.str() );
 
     // Check if already in target dimension
     if( g->get_current_dimension_id() == target_dim_id ) {
@@ -7206,7 +7275,7 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
     g->travel_to_dimension( target_dim_id, destination, std::nullopt, load_pos );
 
     if( abs_pos.has_value() ) {
-        p.setpos( abs_to_bub( abs_pos.value() ) );
+        p.setpos( abs_pos.value() );
     }
 }
 
@@ -7251,7 +7320,7 @@ int iuse_pocket_dimension::use( player &p, item &it, bool, const tripoint_bub_ms
     const auto &current_dim_id = g->get_current_dimension_id();
 
     // Check if we're inside THIS pocket dimension
-    if( current_dim_id == dim_info.dimension_id ) {
+    if( current_dim_id == dim_info.id ) {
         // We're inside - exit to return point
         exit_pocket( p, it );
     } else if( current_dim_id == pd.return_dimension_id ) {
@@ -7298,7 +7367,7 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
     // Build a fully-qualified dimension_id from the pocket_type's save_prefix + a unique suffix.
     const auto instance_suffix = string_format( "%d_%d", to_turn<int>( calendar::turn ),
                                  rng( 0, 99999 ) );
-    pd.dimension_id = pocket_type.obj().save_prefix + instance_suffix + "_";
+    pd.id = dimension_id( pocket_type.obj().save_prefix + instance_suffix + "_" );
     pd.world_type = pocket_type;
     pd.display_name = pocket_name.empty() ? pocket_type.obj().name.translated() : pocket_name;
     pd.pocket_info = pocket_dimension_data{};
@@ -7428,7 +7497,7 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
         pre_load = [&]() {
             overmap_special_id special_id( entry_mapgen );
             if( special_id.is_valid() ) {
-                auto &pd_omb = get_overmapbuffer( dim_info.dimension_id );
+                auto &pd_omb = get_overmapbuffer( dim_info.id );
                 const auto proj = project_remain<coords::om>( pd.entry_point );
                 auto &om = pd_omb.get( proj.quotient );
                 om.place_special_forced( special_id, project_to<coords::omt>( proj.remainder_tripoint ),
@@ -7438,21 +7507,17 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
         };
     }
 
-    g->travel_to_dimension( dim_info.dimension_id, dim_info.world_type, pd, dest_sm, pre_load );
+    g->travel_to_dimension( dim_info.id, dim_info.world_type, pd, dest_sm, pre_load );
 
     // Only make the first entrance safe. If the player makes it dangerous later, that's on them.
     // No sneaky teleporting shenaneigans.
     if( new_pd ) {
-        const auto safe = find_safe_spawn( get_map().abs_to_bub( pd.entry_point ) );
-        pd.entry_point = get_map().bub_to_abs( safe );
+        const auto &here = get_map();
+        const auto safe = find_safe_spawn( abs_to_map_local( here, pd.entry_point ) );
+        pd.entry_point = map_local_to_abs( here, safe );
     }
 
-    // The map is already loaded centered on the destination (via load_pos parameter),
-    // so local coordinates are valid without needing a map shift first.
-    p.setpos( abs_to_bub( pd.entry_point ) );
-
-    // Single update_map call at the final position
-    g->update_map( p );
+    p.setpos( pd.entry_point );
 }
 
 // ---- iuse_portal_link -------------------------------------------------------
@@ -7488,7 +7553,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     if( !required_portal_flag.empty() ) {
         portal_tile *nearby_portal = nullptr;
         for( const tripoint_bub_ms &adj : get_map().points_in_radius( p.bub_pos(), 1 ) ) {
-            auto abs = tripoint_abs_ms( get_map().bub_to_abs( adj ) );
+            auto abs = bub_to_abs( adj );
             auto *candidate = active_tiles::furn_at<portal_tile>( abs );
             if( candidate && candidate->linkable_item_flag == required_portal_flag &&
                 candidate->linked ) {
@@ -7499,7 +7564,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
         if( nearby_portal != nullptr && !it.get_var( "portal_linked", false ) ) {
             if( query_yn( _( "Link %s to this portal?" ), it.tname() ) ) {
                 it.set_var( "portal_linked", true );
-                it.set_var( "linked_dim_id", nearby_portal->target_dim_id );
+                it.set_var( "linked_dim_id", nearby_portal->target_dim_id.str() );
                 it.set_var( "linked_pos_x", nearby_portal->target_pos.x() );
                 it.set_var( "linked_pos_y", nearby_portal->target_pos.y() );
                 it.set_var( "linked_pos_z", nearby_portal->target_pos.z() );
@@ -7515,7 +7580,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
         return 0;
     }
 
-    const auto linked_dim = it.get_var( "linked_dim_id" );
+    const auto linked_dim = dimension_id( it.get_var( "linked_dim_id" ) );
     const tripoint_abs_ms linked_pos(
         it.get_var( "linked_pos_x", 0 ),
         it.get_var( "linked_pos_y", 0 ),
@@ -7526,17 +7591,16 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
         cur_dim == linked_dim &&
         rl_dist( player_abs, linked_pos ) <= 5 ) {
         if( query_yn( _( "Return to your origin point?" ) ) ) {
-            const auto origin_dim = it.get_var( "origin_dim_id" );
+            const auto origin_dim = dimension_id( it.get_var( "origin_dim_id" ) );
             const tripoint_abs_ms origin_pos(
                 it.get_var( "origin_pos_x", 0 ),
                 it.get_var( "origin_pos_y", 0 ),
                 it.get_var( "origin_pos_z", 0 ) );
-            auto wt_id = world_type_id( origin_dim );
+            auto wt_id = world_type_id( origin_dim.str() );
             const auto preload_point = project_to<coords::sm>( origin_pos ) - point_rel_sm( g_half_mapsize,
                                        g_half_mapsize );
             g->travel_to_dimension( origin_dim, wt_id, std::nullopt, preload_point );
-            p.setpos( get_map().abs_to_bub( origin_pos ) );
-            g->update_map( p );
+            p.setpos( origin_pos );
             it.erase_var( "origin_stored" );
             return charges_per_use;
         }
@@ -7545,7 +7609,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
 
     // Store origin before teleporting if can_return.
     if( can_return && !it.get_var( "origin_stored", false ) ) {
-        it.set_var( "origin_dim_id", cur_dim );
+        it.set_var( "origin_dim_id", cur_dim.str() );
         it.set_var( "origin_pos_x", player_abs.x() );
         it.set_var( "origin_pos_y", player_abs.y() );
         it.set_var( "origin_pos_z", player_abs.z() );
@@ -7555,15 +7619,14 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     p.add_msg_if_player( m_good, _( "The %s tears a path through dimensional space." ),
                          it.tname() );
 
-    auto wt_id = world_type_id( linked_dim );
-    if( linked_dim.empty() ) {
+    auto wt_id = world_type_id( linked_dim.str() );
+    if( linked_dim.is_empty() ) {
         wt_id = world_types::get_default();
     }
     const auto dest_sm = project_to<coords::sm>( linked_pos ) -
                          tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
     g->travel_to_dimension( linked_dim, wt_id, std::nullopt, dest_sm );
-    p.setpos( get_map().abs_to_bub( linked_pos ) );
-    g->update_map( p );
+    p.setpos( linked_pos );
     return charges_per_use;
 }
 
@@ -7583,7 +7646,7 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
 
     // Reset to fresh state: clears the entry-dimension lock so the key can be used
     // from whatever dimension the player is now in after returning.
-    pd.return_dimension_id.clear();
+    pd.return_dimension_id = dimension_id();
     pd.return_world_type = world_type_id{};
 
     // Record when the player exited so the lifetime countdown can start.
@@ -7596,10 +7659,9 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     g->travel_to_dimension( return_dimension_id, return_world_type, std::nullopt,
                             return_preload_point );
 
-    p.setpos( find_safe_spawn( get_map().abs_to_bub( return_point ) ) );
-
-    // Single update_map call at the final position
-    g->update_map( p );
+    const auto &here = get_map();
+    const auto safe = find_safe_spawn( abs_to_map_local( here, return_point ) );
+    p.setpos( map_local_to_abs( here, safe ) );
 }
 
 // ---- iuse_paint_stuff -------------------------------------------------------
@@ -7730,22 +7792,28 @@ RGBColorPair color_from_vars( const data_vars::data_set &vars )
     return RGBColorPair{.bg = p_bg, .fg = p_fg};
 }
 
-void color_to_vars(
+void colors_to_vars(
     data_vars::data_set &vars, const RGBColorPair &col,
     const iuse_paint_stuff_config::paint_layer layer )
 {
     switch( layer ) {
         default:
         case iuse_paint_stuff_config::both:
-            vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
-            vars.erase( TINT_COLOR_FG_VAR_NAME );
-            vars.erase( TINT_COLOR_BG_VAR_NAME );
+            if( col.fg == col.bg ) {
+                vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
+                vars.erase( TINT_COLOR_FG_VAR_NAME );
+                vars.erase( TINT_COLOR_BG_VAR_NAME );
+            } else {
+                vars.erase( TINT_COLOR_VAR_NAME );
+                vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
+                vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col.bg );
+            }
             break;
         case iuse_paint_stuff_config::fg:
             vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
             break;
         case iuse_paint_stuff_config::bg:
-            vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.bg );
+            vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col.bg );
             break;
     }
 }
@@ -7797,7 +7865,7 @@ struct item_painter {
 
     static auto set_color( const value_type it, const RGBColorPair &col,
                            const paint_layer layer ) -> bool {
-        color_to_vars( it->item_vars(), col, layer );
+        colors_to_vars( it->item_vars(), col, layer );
         return true;
     }
 };
@@ -7935,7 +8003,7 @@ struct ter_furn_painter {
 
     static bool set_color( const tripoint_bub_ms &p, const RGBColorPair &col,
                            const paint_layer layer ) {
-        color_to_vars( *get_vars( p ), col, layer );
+        colors_to_vars( *get_vars( p ), col, layer );
         return true;
     }
 };
@@ -8378,8 +8446,9 @@ void iuse_paint_stuff_config::set_color( item &it )
     lst.query();
 
     if( lst.ret >= 0 ) {
-        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR,
-                              *RGBColor::try_parse( lst.entries[lst.ret].txt ) );
+        const auto col = RGBColor::try_parse( lst.entries[lst.ret].txt ).value_or( RGBColor{} );
+        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, col );
+        colors_to_vars( it.item_vars(), RGBColorPair{.bg = col, .fg = col}, both );
     }
 }
 

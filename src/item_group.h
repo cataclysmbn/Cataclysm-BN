@@ -140,8 +140,13 @@ class Item_spawn_data
 
         virtual std::set<const itype *> every_item() const = 0;
 
+        virtual std::vector<detached_ptr<item>> every_item_modified( bool modify = true ) const = 0;
+
         /** probability, used by the parent object. */
         int probability;
+
+        // Weather it was checked already
+        bool checked;
 };
 
 using ItemFn = std::function < detached_ptr<item> ( detached_ptr<item> &&it ) >;
@@ -252,6 +257,7 @@ class Single_item_creator : public Item_spawn_data
 
         bool has_item( const itype_id &itemid ) const override;
         std::set<const itype *> every_item() const override;
+        std::vector<detached_ptr<item>> every_item_modified( bool modify = true ) const override;
 };
 
 /**
@@ -300,6 +306,7 @@ class Item_group : public Item_spawn_data
         bool replace_item( const itype_id &itemid, const itype_id &replacementid ) override;
         bool has_item( const itype_id &itemid ) const override;
         std::set<const itype *> every_item() const override;
+        std::vector<detached_ptr<item>> every_item_modified( bool modify = true ) const override;
         /**
          * Hack for testing. TODO: Find a better way.
          */

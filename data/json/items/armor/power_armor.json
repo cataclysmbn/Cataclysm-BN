@@ -267,7 +267,8 @@
       "active": true
     },
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80
   },
   {
     "id": "power_armor_helmet_basic_on",
@@ -291,7 +292,9 @@
     "covers": [ "head", "eyes", "mouth" ],
     "encumbrance": 10,
     "environmental_protection": 16,
-    "weight_capacity_bonus": "5500 g"
+    "weight_capacity_bonus": "5500 g",
+    "adv_hearing_protection": 80,
+    "hearing_protection": 0
   },
   {
     "id": "power_armor_helmet_heavy",
@@ -324,7 +327,8 @@
       "active": true
     },
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80
   },
   {
     "id": "power_armor_helmet_heavy_on",
@@ -348,7 +352,9 @@
     "covers": [ "head", "eyes", "mouth" ],
     "encumbrance": 20,
     "environmental_protection": 16,
-    "weight_capacity_bonus": "7500 g"
+    "weight_capacity_bonus": "7500 g",
+    "adv_hearing_protection": 80,
+    "hearing_protection": 0
   },
   {
     "id": "power_armor_helmet_light",
@@ -381,7 +387,8 @@
     },
     "qualities": [ [ "GLARE", 1 ] ],
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80
   },
   {
     "id": "power_armor_helmet_light_on",
@@ -405,7 +412,9 @@
     "covers": [ "head", "eyes", "mouth" ],
     "encumbrance": 0,
     "environmental_protection": 16,
-    "weight_capacity_bonus": "2500 g"
+    "weight_capacity_bonus": "2500 g",
+    "adv_hearing_protection": 80,
+    "hearing_protection": 0
   },
   {
     "id": "power_armor_frame",

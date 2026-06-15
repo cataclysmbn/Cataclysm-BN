@@ -293,7 +293,7 @@ void overmapbuffer::fix_npcs( overmap &new_overmap )
     }
 }
 
-void overmapbuffer::save( const std::string &dim_id )
+auto overmapbuffer::save( const dimension_id &dim_id ) -> void
 {
     read_lock<std::shared_mutex> _l( mutex );
 
@@ -1924,7 +1924,7 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         monster &this_monster = monster_entry.second;
         const auto ms = this_monster.abs_pos();
         const map &here = get_map();
-        const auto local = here.abs_to_bub( ms );
+        const auto local = abs_to_bub( ms );
         if( !here.inbounds( local ) ) {
             debugmsg( "Monster at bub( %s, %s, %s ), abs( %s, %s, %s ) was out of bounds. Skipping spawn",
                       local.x(), local.y(), local.z(), ms.x(), ms.y(), ms.z() );

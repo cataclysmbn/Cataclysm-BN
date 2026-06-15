@@ -19,6 +19,7 @@
 #include "calendar.h"
 #include "character.h"
 #include "color.h"
+#include "coordinates.h"
 #include "creature.h"
 #include "cursesdef.h"
 #include "enums.h"
@@ -472,6 +473,14 @@ struct dangerous_sound {
     int volume = 0;
 };
 
+struct sound_to_warn_about {
+    std::string type;
+    time_duration duration = 10_minutes;
+    std::string name;
+    int range = -1;
+    tripoint_bub_ms danger_pos = tripoint_bub_ms::zero();
+};
+
 const direction npc_threat_dir[8] = { direction::NORTHWEST, direction::NORTH, direction::NORTHEAST, direction::EAST,
                                       direction::SOUTHEAST, direction::SOUTH, direction::SOUTHWEST, direction::WEST
                                     };
@@ -500,6 +509,11 @@ struct npc_short_term_cache {
     healing_options can_heal;
     // map of positions / type / volume of suspicious sounds
     std::vector<dangerous_sound> sound_alerts;
+    // Vector of sounds to warn or complain about on NPC's turn.
+    // This is so NPCs complain during their turn not the apply sounds to NPC AI stage
+    // Which can cause other NPCs to complain about the NPC complaining, etc.
+    // This is cleared at the end of every turn.
+    std::vector<sound_to_warn_about> warn_about_queue;
     // current sound position being investigated
     tripoint_abs_ms s_abs_pos;
     // number of times we haven't moved when investigating a sound
@@ -782,9 +796,7 @@ class npc : public player
         /** Place the NPC at an exact absolute position (submap + within-submap tile). */
         void spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm_ms &square );
         /**
-         * Places the NPC on the @ref map. This update its
-         * pos values to fit the current offset of
-         * map (g->levx, g->levy).
+         * Places the NPC on the active @ref map context.
          * If the square on the map where the NPC would go is not empty
          * a spiral search for an empty square around it is performed.
          */
@@ -1014,8 +1026,7 @@ class npc : public player
 
         int calc_spell_training_cost( bool knows, int difficulty, int level );
 
-        void handle_sound( sounds::sound_t priority, const std::string &description,
-                           int heard_volume, const tripoint_bub_ms &spos );
+        void handle_sound( const short heard_vol, sound_event sound );
 
         /* shift() works much like monster::shift(), and is called when the player moves
          * from one submap to an adjacent submap.  It updates our position (shifting by
@@ -1027,6 +1038,7 @@ class npc : public player
         void move(); // Picks an action & a target and calls execute_action
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
+        auto action_move_factor() const -> int override;
         /**
          * Batch catchup: analytically simulate @p n missed turns.
          * Processes biology at 30-min/5-min/1-turn granularity, then
@@ -1212,11 +1224,12 @@ class npc : public player
         // Because they can't run yet
         float speed_rating() const override;
         /**
-         * Note: this places NPC on a given position in CURRENT MAP coordinates.
-         * Do not use when placing a NPC in mapgen.
+         * Places the NPC in the active map's local coordinates.
+         * Use the absolute overload for mapgen when the active map context is
+         * not the map being generated.
          */
-        void setpos( const tripoint_bub_ms &pos ) override;
-        void setpos( const tripoint_abs_ms &pos ) override;
+        auto setpos( const tripoint_bub_ms &pos ) -> void override;
+        auto setpos( const tripoint_abs_ms &pos ) -> void override;
         void travel_overmap( const tripoint_abs_sm &pos );
         npc_attitude get_attitude() const;
         void set_attitude( npc_attitude new_attitude );
@@ -1309,12 +1322,14 @@ class npc : public player
         static constexpr tripoint_abs_omt no_goal_point{ tripoint_min };
         time_point last_updated;
 
-        // ID of the dimension this NPC belongs to.  Empty string = primary dimension.
-        // Set when the NPC is spawned or loaded from a non-primary dimension submap.
-        // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_ = "";  // empty = primary dimension
-        const std::string &get_dimension() const override {
+        auto get_dimension() const -> const dimension_id &override {
             return dimension_id_;
+        }
+        auto set_dimension( const dimension_id &dim_id ) -> void override {
+            if( dimension_id_ != dim_id ) {
+                dimension_id_ = dim_id;
+                invalidate_mapbuffer_cache();
+            }
         }
 
         /**
@@ -1370,6 +1385,10 @@ class npc : public player
         bool could_move_onto( const tripoint_bub_ms &p ) const;
 
         std::vector<sphere> find_dangerous_explosives() const;
+
+        // ID of the dimension this NPC belongs to.  Empty = primary dimension.
+        // Persisted across saves so cross-dimension processing survives reload.
+        dimension_id dimension_id_;
 
         npc_companion_mission comp_mission;
 };

@@ -19,7 +19,8 @@
     "damage": { "damage_type": "heat", "amount": 16 },
     "dispersion": 200,
     "recoil": 100,
-    "loudness": 55,
+    "loudness": 120,
+    "speed": 100,
     "drop": "handflare_lit",
     "effects": [ "NEVER_MISFIRES", "NO_EMBED", "NO_PENETRATE_OBSTACLES" ]
   },

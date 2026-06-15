@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "activity_time_cadence.h"
+#include "action_time_scale.h"
 #include "assign.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -405,7 +406,7 @@ void weather_effect::wet_player( int amount )
         return;
     }
     // Coarse correction to get us back to previously intended soaking rate.
-    if( !calendar::once_every( 6_seconds ) ) {
+    if( !action_time_scale::once_every_this_tick( 6_seconds ) ) {
         return;
     }
     std::map<bodypart_id, std::vector<const item *>> clothing_map;
@@ -489,7 +490,8 @@ void weather_effect::morale( int intensity, int bonus, int bonus_max, time_durat
                              const std::string &morale_id_str,
                              const std::string &morale_msg, int morale_msg_frequency, game_message_type message_type )
 {
-    if( !( calendar::once_every( time_duration::from_seconds( intensity ) ) && is_player_outside() ) ) {
+    if( !( action_time_scale::once_every_this_tick( time_duration::from_seconds( intensity ) ) &&
+           is_player_outside() ) ) {
         return;
     }
 
@@ -517,7 +519,8 @@ void weather_effect::effect( int intensity, time_duration duration,
                              game_message_type message_type,
                              std::string precipitation_name, std::vector<std::tuple<std::string, int>> protection_data )
 {
-    if( !( calendar::once_every( time_duration::from_seconds( intensity ) ) && is_player_outside() ) ) {
+    if( !( action_time_scale::once_every_this_tick( time_duration::from_seconds( intensity ) ) &&
+           is_player_outside() ) ) {
         return;
     }
 

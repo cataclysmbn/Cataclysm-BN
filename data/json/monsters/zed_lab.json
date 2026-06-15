@@ -61,7 +61,7 @@
     "starting_ammo": { "bot_manhack": 3 },
     "path_settings": { "max_dist": 10 },
     "special_attacks": [ [ "scratch", 20 ], [ "SCIENCE", 18 ] ],
-    "extend": { "flags": [ "DROPS_AMMO", "ACIDPROOF" ] },
+    "extend": { "flags": [ "DROPS_AMMO", "ACIDPROOF", "ELECTRIC" ] },
     "delete": { "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" } }
   },
   {
@@ -93,6 +93,7 @@
     ],
     "special_when_hit": [ "ZAPBACK", 100 ],
     "harvest": "CBM_SUBS",
+    "extend": { "flags": [ "ELECTRIC" ] },
     "delete": { "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" } }
   },
   {
@@ -130,7 +131,6 @@
     "relative": { "hp": 50, "speed": -10, "melee_dice": 1 },
     "special_attacks": [ [ "scratch", 20 ] ],
     "death_drops": "mon_zombie_scientist_admin_death_drops",
-    "special_when_hit": [ "ZAPBACK", 100 ],
     "harvest": "CBM_SCI",
     "delete": { "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" } }
   },

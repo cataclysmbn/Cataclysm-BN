@@ -9,6 +9,7 @@
 #include <limits>
 #include <memory>
 
+#include "action_time_scale.h"
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -192,9 +193,10 @@ standard_npc::standard_npc( const std::string &name, const tripoint_bub_ms &pos,
 {
     this->name = name;
     // Resolve tripoint_min sentinel to the runtime bubble center.
-    position = ( pos == tripoint_bub_ms::min() )
-               ? get_map().bub_to_abs( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) )
-               : get_map().bub_to_abs( pos );
+    const auto map_local_pos = ( pos == tripoint_bub_ms::min() )
+                               ? tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 )
+                               : pos;
+    position = map_local_to_abs( get_map(), map_local_pos );
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -745,15 +747,15 @@ void npc::set_known_to_u( bool known )
     }
 }
 
-void npc::setpos( const tripoint_bub_ms &pos )
+auto npc::setpos( const tripoint_bub_ms &pos ) -> void
 {
-    setpos( get_map().bub_to_abs( pos ) );
+    setpos( map_local_to_abs( get_map(), pos ) );
 }
 
-void npc::setpos( const tripoint_abs_ms &new_pos )
+auto npc::setpos( const tripoint_abs_ms &new_pos ) -> void
 {
-    const point_abs_om pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
-    const point_abs_om pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
+    const auto pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
+    const auto pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
     Character::setpos( new_pos );
     if( !is_fake() && pos_om_old != pos_om_new ) {
         auto &dim_ob = get_overmapbuffer( get_dimension() );
@@ -802,9 +804,9 @@ void npc::spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm
 
 void npc::place_on_map()
 {
-    // position is the authoritative absolute position; bub_pos() derives from it.
+    map &here = get_map();
     // Find an empty tile near the NPC's intended location.
-    const tripoint_bub_ms initial = bub_pos();
+    const auto initial = abs_to_map_local( here, position );
 
     if( g->is_empty( initial ) || is_mounted() ) {
         return;
@@ -812,7 +814,7 @@ void npc::place_on_map()
 
     for( const tripoint_bub_ms &p : closest_points_first( initial, SEEX + 1 ) ) {
         if( g->is_empty( p ) ) {
-            setpos( p );
+            setpos( map_local_to_abs( here, p ) );
             return;
         }
     }
@@ -1607,8 +1609,20 @@ void npc::on_attacked( const Creature &attacker )
         die( nullptr );
     }
     if( attacker.is_player() && !is_enemy() ) {
+        const auto attacked_faction = get_monster_faction();
         make_angry();
         hit_by_player = true;
+
+        static const auto player_faction = mfaction_id( "player" );
+        for( monster &critter : g->all_monsters() ) {
+            if( !critter.type->has_anger_trigger( mon_trigger::FRIEND_ATTACKED ) ) {
+                continue;
+            }
+            if( critter.generic_npc_attitude_to( attacked_faction ) != Attitude::A_FRIENDLY ) {
+                continue;
+            }
+            critter.add_faction_anger( player_faction, 15 );
+        }
     }
 }
 
@@ -1717,11 +1731,31 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
     }
     // Sound happens even if we can't hear it
     if( spriority == sounds::sound_t::order || spriority == sounds::sound_t::alert ) {
-        sounds::sound( bub_pos(), get_shout_volume(), spriority, sound, false, "speech",
-                       male ? "NPC_m" : "NPC_f" );
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = get_shout_volume();
+        se.category = spriority;
+        se.description = sound;
+        se.from_npc = true;
+        se.faction = get_fac_id();
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "speech";
+        se.variant = male ? "NPC_m" : "NPC_f";
+
+        sounds::sound( se );
     } else {
-        sounds::sound( bub_pos(), 16, sounds::sound_t::speech, sound, false, "speech",
-                       male ? "NPC_m_loud" : "NPC_f_loud" );
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = 80;
+        se.category = sounds::sound_t::speech;
+        se.description = sound;
+        se.from_npc = true;
+        se.faction = get_fac_id();
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "speech";
+        se.variant = male ? "NPC_m_loud" : "NPC_f_loud";
+
+        sounds::sound( se );
     }
 }
 
@@ -2951,8 +2985,12 @@ void npc::on_unload()
 // A throtled version of player::update_body since npc's don't need to-the-turn updates.
 void npc::npc_update_body()
 {
-    if( calendar::once_every( 10_seconds ) ) {
-        update_body( 10_seconds );
+    const auto elapsed = calendar::turn - last_updated;
+    if( elapsed <= 0_turns ) {
+        return;
+    }
+    if( elapsed >= 10_seconds || action_time_scale::once_every_this_tick( 10_seconds ) ) {
+        update_body( elapsed );
         last_updated = calendar::turn;
     }
 }
@@ -2963,17 +3001,42 @@ void npc::on_load()
 
     last_updated = calendar::turn;
 
+    auto &buffer = get_mapbuffer();
+    const auto pos = abs_pos();
+    const auto terrain = buffer.get_ter( pos );
+    const auto furniture = buffer.get_furn( pos );
+    const auto unstable = ( terrain && terrain->obj().has_flag( "UNSTABLE" ) ) ||
+                          ( furniture && furniture->obj().has_flag( "UNSTABLE" ) );
+
     // for spawned npcs
-    if( g->m.has_flag( "UNSTABLE", bub_pos() ) ) {
+    if( unstable ) {
         add_effect( effect_bouldering, 1_turns, bodypart_str_id::NULL_ID() );
     } else if( has_effect( effect_bouldering ) ) {
         remove_effect( effect_bouldering );
     }
-    if( g->m.veh_at( bub_pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) && !in_vehicle ) {
-        g->m.board_vehicle( bub_pos(), this );
+    if( !in_vehicle ) {
+        const auto player_bubble_pos = abs_to_bub( pos );
+        if( get_dimension() == g->m.get_bound_dimension() &&
+            is_in_reality_bubble_bounds( player_bubble_pos ) ) {
+            if( g->m.veh_at( player_bubble_pos ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+                g->m.board_vehicle( player_bubble_pos, this );
+            }
+        } else if( const auto vp = buffer.veh_at( pos ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+            if( vp->part().has_flag( vehicle_part::passenger_flag ) ) {
+                player *psg = vp->vehicle().get_passenger( vp->part_index() );
+                debugmsg( "npc::on_load: vehicle passenger (%s) is already there",
+                          psg ? psg->name : "<null>" );
+            } else {
+                vp->part().set_flag( vehicle_part::passenger_flag );
+                vp->part().passenger_id = getID();
+                vp->vehicle().invalidate_mass();
+                setpos( pos );
+                in_vehicle = true;
+            }
+        }
     }
     if( has_effect( effect_riding ) && !mounted_creature ) {
-        if( const monster *const mon = g->critter_at<monster>( bub_pos() ) ) {
+        if( const monster *const mon = g->critter_at<monster>( pos ) ) {
             mounted_creature = g->shared_from( *mon );
         } else {
             add_msg( m_debug, "NPC is meant to be riding, though the mount is not found when %s is loaded",
@@ -3068,7 +3131,7 @@ void npc::process_turn()
 {
     player::process_turn();
 
-    if( is_player_ally() && calendar::once_every( 1_hours ) &&
+    if( is_player_ally() && action_time_scale::once_every_this_tick( 1_hours ) &&
         get_kcal_percent() > 0.95 && get_thirst() < thirst_levels::very_thirsty && op_of_u.trust < 5 ) {
         // Friends who are well fed will like you more
         // 24 checks per day, best case chance at trust 0 is 1 in 48 for +1 trust per 2 days
@@ -3090,6 +3153,11 @@ void npc::process_turn()
 
     // TODO: Add decreasing trust/value/etc. here when player doesn't provide food
     // TODO: Make NPCs leave the player if there's a path out of map and player is sleeping/unseen/etc.
+}
+
+auto npc::action_move_factor() const -> int
+{
+    return action_time_scale::npc_tick_action_factor();
 }
 
 void npc::batch_turns( int n )
@@ -3150,12 +3218,14 @@ void npc::advance_job_progress( int n )
         return;
     }
     if( activity && *activity ) {
-        // Directly reduce moves_left by n turns' worth (100 moves per turn).
+        // Directly reduce moves_left by n turns' worth of scaled activity progress.
         // The mod_moves() approach is wrong here: activity->do_turn() unconditionally
         // sets p.moves = 0 after each step, so any extra moves granted via mod_moves()
         // are zeroed on the very first step and the catchup never happens.
-        // Direct reduction is speed-independent, matching the design intent.
-        activity->moves_left = std::max( 0, activity->moves_left - n * 100 );
+        const auto progress = activity_uses_calendar_duration_progress( activity->id() ) ?
+                              action_time_scale::calendar_progress_for_turns( n ) :
+                              action_time_scale::activity_progress_for_turns( n );
+        activity->moves_left = std::max( 0, activity->moves_left - progress );
     } else if( has_destination() ) {
         // Destination movement: grant extra moves so the NPC takes additional path
         // steps toward its goal.  mod_moves() is correct here because path-following
@@ -3320,7 +3390,7 @@ const
 std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair(
     bool no_bashing ) const
 {
-    PathfindingSettings path_settings;
+    auto path_settings = PathfindingSettings();
 
     path_settings.door_open_cost = rules.has_flag( ally_rule::avoid_doors ) ? INFINITY : 2.0;
     path_settings.mob_presence_penalty =
@@ -3340,16 +3410,24 @@ std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair(
         path_settings.climb_cost = 5 / climb_success_prob;
     }
 
-    RouteSettings route_settings;
+    auto route_settings = RouteSettings();
     // TODO: Make it assign a stockfish preset instead
-    route_settings.alpha = 1.0;
-    route_settings.h_coeff = 1.0;
+    route_settings.alpha = get_option<float>( "PATHFINDING_ALPHA_DEFAULT" );
+    route_settings.h_coeff = get_option<float>( "PATHFINDING_H_COEFF_DEFAULT" );
     route_settings.max_dist = INFINITY;
-    route_settings.max_f_coeff = INFINITY;
+    route_settings.max_f_coeff = get_option<float>( "PATHFINDING_MAX_F_COEFF_DEFAULT" );
     route_settings.max_s_coeff = INFINITY;
     route_settings.f_limit_based_on_max_dist = false;
-    route_settings.search_cone_angle = 180.0;
-    route_settings.search_radius_coeff = INFINITY;
+    route_settings.search_cone_angle =
+        get_option<float>( "PATHFINDING_SEARCH_CONE_ANGLE_DEFAULT" );
+    route_settings.search_radius_coeff =
+        get_option<float>( "PATHFINDING_SEARCH_RADIUS_COEFF_DEFAULT" );
+    if( route_settings.max_f_coeff < 0.0f ) {
+        route_settings.max_f_coeff = INFINITY;
+    }
+    if( route_settings.search_radius_coeff < 0.0f ) {
+        route_settings.search_radius_coeff = INFINITY;
+    }
 
     return { path_settings, route_settings };
 }

@@ -126,7 +126,8 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT", "PARTIAL_DEAF" ] }
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "adv_hearing_protection": 65
   },
   {
     "id": "somen_clairvoyance_xl",
@@ -186,7 +187,8 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT", "PARTIAL_DEAF" ] }
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "adv_hearing_protection": 65
   },
   {
     "id": "armor_wyrm",

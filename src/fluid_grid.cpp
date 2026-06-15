@@ -238,7 +238,7 @@ auto batches_for_inputs( const std::vector<fluid_grid_transform_io> &inputs,
 
 auto is_outdoors_at( const tripoint_abs_ms &p ) -> bool
 {
-    return get_map().is_outside( get_map().abs_to_bub( p ) );
+    return get_map().is_outside( abs_to_bub( p ) );
 }
 
 auto rain_charges_for( double collector_area_m2, const weather_sum &weather ) -> int
@@ -1605,7 +1605,7 @@ auto update( time_point to ) -> void
     get_fluid_grid_tracker().update( to );
 }
 
-auto bind_dimension( const std::string &dim_id ) -> void
+auto bind_dimension( const dimension_id &dim_id ) -> void
 {
     g_fluid_omb = &get_overmapbuffer( dim_id );
 }

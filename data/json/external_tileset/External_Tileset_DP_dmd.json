@@ -39,7 +39,18 @@
           { "id": "mon_zombie_foreman", "fg": 32, "bg": 30 },
           { "id": "mon_zombie_foreman_minion", "fg": 33, "bg": 30 },
           { "id": "mon_zombie_scientist_admin", "fg": 34, "bg": 30 },
-          { "id": "corpse_mon_zombie_scientist_admin", "fg": 35 }
+          { "id": "corpse_mon_zombie_scientist_admin", "fg": 35 },
+          { "id": "onyx_eye", "fg": 36 },
+          { "id": "atgm_turret", "fg": 37 },
+          { "id": "overlay_wielded_atgm_turret", "fg": 37 },
+          { "id": [ "hellfire_launcher", "overlay_wielded_hellfire_launcher" ], "fg": 38 },
+          { "id": [ "hellfire_heat", "overlay_wielded_hellfire_heat" ], "fg": 39 },
+          { "id": [ "hellfire_ninja", "overlay_wielded_hellfire_ninja" ], "fg": 40 },
+          { "id": "vp_hellfire_turret", "fg": 41 },
+          { "id": "tac_fullhelmet", "fg": 42 },
+          { "id": "overlay_worn_tac_fullhelmet", "fg": 43 },
+          { "id": "tac_helmet", "fg": 44 },
+          { "id": "overlay_worn_tac_helmet", "fg": 45 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

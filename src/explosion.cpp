@@ -11,6 +11,7 @@
 #include <optional>
 #include <queue>
 #include <random>
+#include <ranges>
 #include <set>
 #include <utility>
 #include <variant>
@@ -23,6 +24,7 @@
 #include "catalua_sol.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "character.h"
 #include "catalua_coord.h"
 #include "cata_utility.h"
 #include "cata_algo.h"
@@ -97,6 +99,27 @@ static const itype_id itype_battery( "battery" );
 static const itype_id itype_e_handcuffs( "e_handcuffs" );
 static const itype_id itype_rm13_armor_on( "rm13_armor_on" );
 
+namespace
+{
+
+const auto flag_CONSOLE = std::string( "CONSOLE" );
+
+auto is_dead_for_explosion( const Creature &critter ) -> bool
+{
+    if( const auto *const character = dynamic_cast<const Character *>( &critter ) ) {
+        return character->Character::is_dead_state();
+    }
+    return critter.is_dead_state();
+}
+
+auto is_emp_card_reader( const ter_id &terrain ) -> bool
+{
+    return terrain == t_card_science || terrain == t_card_military ||
+           terrain == t_card_industrial;
+}
+
+} // namespace
+
 static float obstacle_blast_percentage( float range, float distance )
 {
     return distance > range ? 0.0f : distance > range / 2 ? 0.5f : 1.0f;
@@ -159,6 +182,26 @@ explosion_data load_explosion_data( const JsonObject &jo )
     }
 
     ret.fire = jo.get_bool( "fire", false );
+    std::vector<std::tuple<std::string, int, int, int>> frag_effect;
+
+    for( const JsonValue entry : jo.get_array( "fragment_effect" ) ) {
+        std::string effect;
+        int odds = 0;
+        int min_turns;
+        int max_turns;
+        if( entry.test_object() ) {
+            JsonObject jc = entry.get_object();
+            effect = jc.get_string( "effect", "" );
+            odds = jc.get_int( "odds", 0 );
+            min_turns = jc.get_int( "min_turns", 0 );
+            max_turns = jc.get_int( "max_turns", 0 );
+        }
+        if( effect != "" && odds > 0 && max_turns > 0 ) {
+            frag_effect.emplace_back( effect, odds, min_turns, max_turns );
+        }
+    }
+
+    ret.fragment_effect = frag_effect;
 
     return ret;
 }
@@ -324,6 +367,9 @@ class ExplosionProcess
         // Is the fire created by the explosion actually left behind?
         const bool is_fiery;
 
+        //Effects shrapnel may influct, nullopt to disable
+        const std::optional<std::vector<std::tuple<std::string, int, int, int>>> fragment_effect;
+
         // Shrapnel data, nullopt to disable
         const std::optional<projectile> shrapnel;
 
@@ -361,13 +407,17 @@ class ExplosionProcess
             const tripoint_bub_ms blast_center,
             const int blast_power,
             const int blast_radius,
+            const std::optional<std::vector<std::tuple<std::string, int, int, int>>> &fragment_effect =
+                std::nullopt,
             const std::optional<projectile> &proj = std::nullopt,
             const bool is_fiery = false,
+
             const std::optional<Creature *> responsible = std::nullopt
         ) : center( blast_center ),
             blast_power( blast_power ),
             blast_radius( blast_radius ),
             is_fiery( is_fiery ),
+            fragment_effect( fragment_effect ),
             shrapnel( proj ),
             emitter( responsible ),
             player_flung( std::nullopt ),
@@ -615,7 +665,7 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
     fragment.add_effect( ammo_effect_NULL_SOURCE );
 
     auto critter = g->critter_at( position );
-    if( critter && !critter->is_dead_state() ) {
+    if( critter && !is_dead_for_explosion( *critter ) ) {
         int damage_taken = 0;
         const auto bps = critter->get_all_body_parts( true );
         // Humans get hit in all body parts
@@ -640,6 +690,30 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
             }
             critter->check_dead_state();
         }
+
+        if( fragment_effect != std::nullopt ) {
+            for( auto data : fragment_effect.value() ) {
+                const std::string effect = std::get<0>( data );
+                const int odds = std::get<1>( data );
+                const auto min_turns = time_duration::from_turns( std::get<2>( data ) );
+                const auto max_turns = time_duration::from_turns( std::get<3>( data ) );
+
+                if( effect == "onfire" ) {
+                    //onfire is hardcoded to check if the target is actually flamable
+                    if( critter->made_of( material_id( "veggy" ) ) ||
+                        critter->made_of_any( critter->cmat_flammable ) ) {
+                        critter->add_effect( efftype_id( effect ), rng( min_turns, max_turns ), bps[0]->id );
+                    } else if( critter->made_of_any( critter->cmat_flesh ) && one_in( odds ) ) {
+                        critter->add_effect( efftype_id( effect ), rng( min_turns, max_turns ), bps[0]->id );
+                    }
+                } else {
+                    if( one_in( odds ) ) {
+                        critter->add_effect( efftype_id( effect ), rng( min_turns, max_turns ), bps[0]->id );
+                    }
+                }
+            }
+        }
+
         mobs_shrapneled[critter] = damage_taken;
     }
 
@@ -688,7 +762,8 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
         {
             Creature *critter = g->critter_at( position );
 
-            if( critter != nullptr && !mobs_blasted.contains( critter ) ) {
+            if( critter != nullptr && !is_dead_for_explosion( *critter ) &&
+                !mobs_blasted.contains( critter ) ) {
                 const int blast_damage = blast_power * critter_blast_percentage( critter, blast_radius,
                                          rl_distance );
                 const auto shockwave_dmg = damage_instance::physical( blast_damage, 0, 0, 0.4f );
@@ -737,7 +812,7 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
         {
             Creature *critter = g->critter_at( position );
 
-            if( critter != nullptr && !flung_set.contains( critter ) ) {
+            if( critter != nullptr && !is_dead_for_explosion( *critter ) && !flung_set.contains( critter ) ) {
                 const int push_strength = ( blast_radius - rl_distance ) * blast_power;
                 const float move_power = ExplosionConstants::MOB_FLING_FACTOR * push_strength;
 
@@ -918,6 +993,12 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
 
     if( !is_mob && !std::get<safe_reference<item>>( cur_target ) ) {
         return;
+    }
+    if( is_mob ) {
+        auto *const target = std::get<Creature *>( cur_target );
+        if( target == nullptr || is_dead_for_explosion( *target ) || target->bub_pos() != position ) {
+            return;
+        }
     }
 
     map &here = get_map();
@@ -1143,11 +1224,6 @@ void ExplosionProcess::run()
         }
     }
 
-    // Make sure the map is centered around the player
-    if( player_flung.has_value() ) {
-        g->update_map( *player_flung.value() );
-    }
-
     // Finally, recombine thrown items into full stacks again
     std::sort( recombination_targets.begin(), recombination_targets.end() );
     auto end = std::unique( recombination_targets.begin(), recombination_targets.end() );
@@ -1232,7 +1308,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
             continue;
         }
         auto critter = g->critter_at( target );
-        if( critter && !critter->is_dead_state() ) {
+        if( critter && !is_dead_for_explosion( *critter ) ) {
             // dealt_dag->m.total_damage() == 0 means armor block
             // dealt_dag->m.total_damage() > 0 means took damage
             // Need to diffentiate target among player, npc, and monster
@@ -1566,20 +1642,35 @@ void explosion_funcs::regular( const queued_explosion &qe )
         params["fire"] = ex.fire;
     } );
 
-    int base_noise = ex.damage;
-    if( shr ) {
-        base_noise = shr.value().impact.total_damage();
-    }
+    // Explosions are very, very loud. A *small* landmine going off is about 155dB 1m away.
+    // An antipersonel grenade/flashbang going off 1m away is about 170-180dB.
+    // Large explosions that generate a blast wave will always be ~191dB after the blast waves ceases being supersonic.
+    int base_noise = ( shr ) ? std::max( ex.damage * 1.0f,
+                                         shr.value().impact.total_damage() ) : ex.damage;
+    // Incendiaries are not as loud.
+    // This puts landmines and standard grenades at 170 dB (90 + 80)
+    // Cap the max volume to 191dB
+    const int noise = std::min( ( base_noise + ( ex.fire ? 70 : 90 ) ), 191 );
+    sound_event se;
+    se.origin = p;
+    se.volume = noise;
+    se.category = sounds::sound_t::combat;
 
-    const int noise = base_noise * ( ex.fire ? 2 : 10 );
-    if( noise >= 1000 ) {
-        sounds::sound( p, noise, sounds::sound_t::combat, _( "a huge explosion!" ), false, "explosion",
-                       "huge" );
-    } else if( noise >= 100 ) {
-        sounds::sound( p, noise, sounds::sound_t::combat, _( "an explosion!" ), false, "explosion",
-                       "default" );
+    if( noise >= 180 ) {
+        se.description = _( "a huge explosion!" );
+        se.id = "explosion";
+        se.variant = "huge";
+        sounds::sound( se );
+    } else if( noise >= 120 ) {
+        se.description = _( "an explosion!" );
+        se.id = "explosion";
+        se.variant = "default";
+        sounds::sound( se );
     } else if( noise > 0 ) {
-        sounds::sound( p, 3, sounds::sound_t::combat, _( "a loud pop!" ), false, "explosion", "small" );
+        se.description = _( "a loud pop!" );
+        se.id = "explosion";
+        se.variant = "small";
+        sounds::sound( se );
     }
 
     std::map<const Creature *, int> damaged_by_blast;
@@ -1591,7 +1682,8 @@ void explosion_funcs::regular( const queued_explosion &qe )
         }
         damaged_by_blast = legacy_blast( p, ex.damage, ex.radius, ex.fire, qe.source );
     } else {
-        ExplosionProcess process( p, ex.damage, ex.radius, shr, ex.fire, std::make_optional( qe.source ) );
+        ExplosionProcess process( p, ex.damage, ex.radius, ex.fragment_effect, shr, ex.fire,
+                                  std::make_optional( qe.source ) );
         process.run();
         damaged_by_blast = process.get_blasted();
         damaged_by_shrapnel = process.get_shrapneled();
@@ -1668,9 +1760,7 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
     draw_explosion( p, 8, c_white, qe.graphics_name );
     int dist = rl_dist( g->u.bub_pos(), p );
     if( dist <= 8 && qe.affects_player ) {
-        if( !g->u.has_bionic( bio_ears ) && !g->u.is_wearing( itype_rm13_armor_on ) ) {
-            g->u.add_effect( effect_deaf, time_duration::from_turns( 40 - dist * 4 ) );
-        }
+        // Deafening is now handled by the sound code.
         if( here.sees( g->u.bub_pos(), p, 8 ) ) {
             int flash_mod = 0;
             if( g->u.has_trait( trait_PER_SLIME ) ) {
@@ -1708,8 +1798,15 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
             }
         }
     }
-    sounds::sound( p, 12, sounds::sound_t::combat, _( "a huge boom!" ), false, "misc", "flashbang" );
-    // TODO: Blind/deafen NPC
+    sound_event se;
+    se.origin = p;
+    se.volume = 180;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "a huge boom!" );
+    se.id = "misc";
+    se.variant = "flashbang";
+    sounds::sound( se );
+    // TODO: Blind NPC. Deafening should be handled by NPC sound react.
 }
 
 void shockwave( const tripoint_bub_ms &p, const shockwave_data &sw, const std::string &exp_name,
@@ -1728,9 +1825,14 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
 
     draw_explosion( p, sw.radius, c_blue, qe.graphics_name );
 
-    sounds::sound( p, sw.force * sw.force * sw.dam_mult / 2, sounds::sound_t::combat, _( "Crack!" ),
-                   false,
-                   "misc", "shockwave" );
+    sound_event se;
+    se.origin = p;
+    se.volume = sw.force * sw.force * ( sw.dam_mult / 2 );
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Crack!" );
+    se.id = "misc";
+    se.variant = "shockwave";
+    sounds::sound( se );
 
     for( monster &critter : g->all_monsters() ) {
         if( critter.bub_pos().z() != p.z() ) {
@@ -1775,8 +1877,21 @@ void emp_blast( const tripoint_bub_ms &p )
 {
     map &here = get_map();
     Character &u = get_player_character();
-    const bool sight = u.sees( p );
-    if( here.has_flag( "CONSOLE", p ) ) {
+    const auto terrain = here.ter( p );
+    const auto console = here.has_flag( flag_CONSOLE, p );
+    const auto card_reader = is_emp_card_reader( terrain );
+    auto *const mon_ptr = g->critter_at<monster>( p );
+    const auto player_here = u.bub_pos() == p;
+    const auto has_items = here.has_items( p );
+
+    if( !console && !card_reader && mon_ptr == nullptr && !player_here && !has_items ) {
+        return;
+    }
+
+    const auto needs_sight = console || card_reader || mon_ptr != nullptr;
+    const bool sight = needs_sight && u.sees( p );
+
+    if( console ) {
         if( sight ) {
             add_msg( _( "The %s is rendered non-functional!" ), here.tername( p ) );
         }
@@ -1784,9 +1899,8 @@ void emp_blast( const tripoint_bub_ms &p )
         return;
     }
     // TODO: More terrain effects.
-    if( here.ter( p ) == t_card_science || here.ter( p ) == t_card_military ||
-        here.ter( p ) == t_card_industrial ) {
-        int rn = rng( 1, 100 );
+    if( card_reader ) {
+        const int rn = rng( 1, 100 );
         if( rn > 92 || rn < 40 ) {
             if( sight ) {
                 add_msg( _( "The card reader is rendered non-functional." ) );
@@ -1797,9 +1911,10 @@ void emp_blast( const tripoint_bub_ms &p )
             if( sight ) {
                 add_msg( _( "The nearby doors slide open!" ) );
             }
-            for( int i = -3; i <= 3; i++ ) {
-                for( int j = -3; j <= 3; j++ ) {
-                    auto p2 = p + tripoint( i, j, 0 );
+            using namespace std::views;
+            for( const int i : iota( -3, 4 ) ) {
+                for( const int j : iota( -3, 4 ) ) {
+                    const auto p2 = p + tripoint( i, j, 0 );
                     if( here.ter( p2 ) == t_door_metal_locked ) {
                         here.ter_set( p2, t_floor );
                     }
@@ -1812,7 +1927,7 @@ void emp_blast( const tripoint_bub_ms &p )
             }
         }
     }
-    if( monster *const mon_ptr = g->critter_at<monster>( p ) ) {
+    if( mon_ptr != nullptr ) {
         monster &critter = *mon_ptr;
         if( critter.has_flag( MF_ELECTRONIC ) ) {
             int deact_chance = 0;
@@ -1891,9 +2006,11 @@ void emp_blast( const tripoint_bub_ms &p )
         }
     }
     // Drain any items of their battery charge
-    for( auto &it : here.i_at( p ) ) {
-        if( it->is_tool() && it->ammo_current() == itype_battery ) {
-            it->charges = 0;
+    if( here.has_items( p ) ) {
+        for( auto &it : here.i_at( p ) ) {
+            if( it->is_tool() && it->ammo_current() == itype_battery ) {
+                it->charges = 0;
+            }
         }
     }
     // TODO: Drain NPC energy reserves

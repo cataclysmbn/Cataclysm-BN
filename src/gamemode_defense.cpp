@@ -6,6 +6,7 @@
 #include <ostream>
 #include <set>
 
+#include "action_time_scale.h"
 #include "action.h"
 #include "avatar.h"
 #include "color.h"
@@ -139,7 +140,7 @@ void defense_game::per_turn()
     if( !sleep ) {
         g->u.set_fatigue( 0 );
     }
-    if( calendar::once_every( time_between_waves ) ) {
+    if( action_time_scale::once_every_this_tick( time_between_waves ) ) {
         current_wave++;
         if( current_wave > 1 && current_wave % waves_between_caravans == 0 ) {
             popup( _( "A caravan approaches!  Press spacebar…" ) );
@@ -299,9 +300,8 @@ void defense_game::init_map()
     const int z = player_character.bub_pos().z();
     player_character.setpos( tripoint_bub_ms( SEEX, SEEY, z ) );
 
-    g->update_map( g-> u );
-    monster *const generator = g->place_critter_around( mtype_id( "mon_generator" ), g->u.bub_pos(),
-                               2 );
+    monster *const generator = g->place_critter_around(
+                                   mtype_id( "mon_generator" ), g->u.bub_pos(), 2 );
     assert( generator );
     generator->friendly = -1;
 }

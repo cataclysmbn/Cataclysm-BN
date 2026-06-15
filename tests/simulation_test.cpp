@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include "avatar.h"
 #include "cached_options.h"
 #include "cata_utility.h"
 #include "coordinates.h"
@@ -14,10 +15,11 @@
 #include "submap.h"
 #include "submap_fields.h"
 #include "submap_load_manager.h"
+#include "type_id.h"
 #include "units.h"
 
 // Dimension ID used only by these tests — never appears in game data.
-static constexpr const char *TEST_DIM_ID = "sim_test_dim";
+static const dimension_id TEST_DIM_ID( "sim_test_dim" );
 
 // Far enough from the test map centre that it is never inside the reality bubble.
 static const tripoint_abs_sm FAR_SM_POS{ 200, 200, 0 };
@@ -62,7 +64,8 @@ TEST_CASE( "fire_processes_in_loaded_submap_outside_bubble", "[simulation][field
     plant_fire( *sm, fire_pt );
     REQUIRE( sm->get_field( fire_pt ).find_field( fd_fire ) != nullptr );
 
-    process_fields_in_submap( *sm, FAR_SM_POS, MAPBUFFER );
+    auto &dummy = get_avatar();
+    process_fields_in_submap( dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER );
 
     const auto *fire = sm->get_field( fire_pt ).find_field( fd_fire );
     REQUIRE( fire != nullptr );
@@ -145,7 +148,7 @@ TEST_CASE( "fire_isolated_between_dimensions", "[simulation][field][dimension]" 
     }
 
     // Process only the secondary dimension.
-    process_fields_in_submap( *dim_sm, FAR_SM_POS, dim );
+    process_fields_in_submap( TEST_DIM_ID, *dim_sm, FAR_SM_POS, dim );
 
     // Fire in the secondary dimension must have aged (processing occurred).
     const auto *dim_fire = dim_sm->get_field( fire_pt ).find_field( fd_fire );

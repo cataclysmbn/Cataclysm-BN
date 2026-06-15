@@ -15,6 +15,12 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "starting_mana_gem_8_essence",
+    "entries": [ { "item": "essence", "charges": 8 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "starting_mana_gem_9_blood_essence",
     "entries": [ { "item": "essence_blood", "charges": 9 } ]
   },

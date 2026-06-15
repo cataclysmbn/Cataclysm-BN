@@ -6,6 +6,7 @@
 #include <optional>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "debug.h"
@@ -30,6 +31,7 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "type_id.h"
+#include "faction.h"
 
 static const itype_id itype_petrified_eye( "petrified_eye" );
 
@@ -86,9 +88,17 @@ void timed_event::actualize()
             }
             // You could drop the flag, you know.
             if( g->u.has_amount( itype_petrified_eye, 1 ) ) {
-                sounds::sound( g->u.bub_pos(), 60, sounds::sound_t::alert, _( "a tortured scream!" ), false,
-                               "shout",
-                               "scream_tortured" );
+                sound_event se;
+                se.origin = g->u.bub_pos();
+                se.volume = 100;
+                se.category = sounds::sound_t::alert;
+                se.description = _( "a tortured scream!" );
+                se.from_monster = true;
+                se.monfaction = g->u.get_faction()->mon_faction;
+                se.faction = g->u.get_faction()->id;
+                se.id = "shout";
+                se.variant = "scream_tortured";
+                sounds::sound( se );
                 if( !g->u.is_deaf() ) {
                     add_msg( _( "The eye you're carrying lets out a tortured scream!" ) );
                     g->u.add_morale( MORALE_SCREAM, -15, 0, 30_minutes, 30_seconds );
@@ -266,16 +276,17 @@ void timed_event::per_turn()
 
         case TIMED_EVENT_SPAWN_WYRMS:
             if( g->get_levz() >= 0 ) {
-                when -= 1_turns;
+                when -= action_time_scale::calendar_duration_this_tick();
                 return;
             }
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) && !g->u.is_deaf() ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) &&
+                !g->u.is_deaf() ) {
                 add_msg( m_warning, _( "You hear screeches from the rock above and around you!" ) );
             }
             break;
 
         case TIMED_EVENT_AMIGARA:
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
                 add_msg( m_warning, _( "The entire cavern shakes!" ) );
             }
             break;
@@ -289,7 +300,7 @@ void timed_event::per_turn()
                 }
             }
 
-            if( calendar::once_every( 10_seconds ) && faults ) {
+            if( action_time_scale::once_every_this_tick( 10_seconds ) && faults ) {
                 add_msg( m_info, "You hear someone whispering \"%s\"",
                          SNIPPET.random_from_category( "amigara_whispers" ).value_or( translation() ) );
             }
@@ -297,7 +308,7 @@ void timed_event::per_turn()
         break;
 
         case TIMED_EVENT_TEMPLE_OPEN:
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
                 add_msg( m_warning, _( "The earth rumbles." ) );
             }
             break;

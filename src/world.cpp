@@ -813,7 +813,7 @@ static std::string legacy_dim_id()
     // Both are kept in sync during normal gameplay, but save_all_overmapbuffers()
     // temporarily overrides g_active_dimension_id so that each dimension's overmaps
     // are written to their own path.  Reading the global here makes that override work.
-    return g_active_dimension_id;
+    return g_active_dimension_id.str();
 }
 
 bool world::read_map_omt( const tripoint_abs_omt &omt_addr, file_read_json_fn reader ) const
