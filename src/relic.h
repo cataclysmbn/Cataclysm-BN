@@ -137,6 +137,8 @@ class relic
         }
 
         void check() const;
+
+        void finalize();
 };
 
 namespace relic_funcs

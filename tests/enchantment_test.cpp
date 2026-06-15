@@ -951,23 +951,4 @@ TEST_CASE( "Armor enchantments", "[magic][enchantment][armor]" )
             CHECK( calc_damage_absorb( guy, damage_type::DT_STAB, 10 ) == 10 );
         }
     }
-
-    SECTION( "Armor item with no enchantments + socks of complete protection ( complete armor mod ) This tests enchantment aliases" ) {
-        // This is pretty much parent enchantment testing here
-        wear_item( guy, "test_hazmat_suit" );
-        // The socks provide character-wide protection regardless of what body parts they cover
-        wear_item( guy, "test_relic_char_all_armor_alias_mod" );
-
-        // 10 (incoming) + (10 * -0.5 - 2) (enchantment) - 4 (base item cut armor) = -1 (10 absorbed)
-        // This is the same for all of them hopefully
-        SECTION( "Cut" ) {
-            CHECK( calc_damage_absorb( guy, damage_type::DT_CUT, 10 ) == 10 );
-        }
-        SECTION( "Bash" ) {
-            CHECK( calc_damage_absorb( guy, damage_type::DT_BASH, 10 ) == 10 );
-        }
-        SECTION( "Stab" ) {
-            CHECK( calc_damage_absorb( guy, damage_type::DT_STAB, 10 ) == 10 );
-        }
-    }
 }

@@ -177,7 +177,7 @@ struct bionic_data {
     bool was_loaded = false;
     void load( const JsonObject &obj, const std::string & );
     void check() const;
-    void finalize() const;
+    void finalize();
 
     LUA_TYPE_OPS( bionic_data, id );
 };

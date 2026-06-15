@@ -735,6 +735,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Mutations" ), &mutation_branch::finalize },
             { _( "Achievements" ), &achievement::finalize },
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
+            { _( "Enchantments" ), &enchantment::finalize_all },
 #if defined(TILES)
             { _( "Tileset" ), &load_tileset },
 #endif

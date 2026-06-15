@@ -777,6 +777,12 @@ bool mutation_branch::trait_is_blacklisted( const trait_id &tid )
 
 void mutation_branch::finalize()
 {
+    for( const auto &mdata : get_all() ) {
+        for( const auto &ench : mdata.mut_enchantments ) {
+            const_cast<enchantment &>( ench ).finalize();
+        }
+    }
+
     for( const mutation_branch &branch : get_all() ) {
         for( const mutation_category_id &cat : branch.category ) {
             mutations_category[cat].emplace_back( branch.id );

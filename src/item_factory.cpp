@@ -587,6 +587,10 @@ void Item_factory::finalize_pre( itype &obj )
         e.second.get_actor_ptr()->finalize( obj.id );
     }
 
+    if( obj.relic_data ) {
+        obj.relic_data->finalize();
+    }
+
     if( obj.drop_action.get_actor_ptr() != nullptr ) {
         obj.drop_action.get_actor_ptr()->finalize( obj.id );
     }

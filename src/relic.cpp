@@ -262,6 +262,12 @@ std::string relic::name() const
     return item_name_override.translated();
 }
 
+void relic::finalize()
+{
+    for( enchantment &ench : passive_effects ) {
+        ench.finalize();
+    }
+}
 void relic::check() const
 {
     for( const enchantment &ench : passive_effects ) {
