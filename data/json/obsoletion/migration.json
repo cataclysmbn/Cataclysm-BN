@@ -402,11 +402,6 @@
     "replace": "40x46mm_casing"
   },
   {
-    "id": "solar_panel_v3",
-    "type": "MIGRATION",
-    "replace": "solar_panel_v2"
-  },
-  {
     "id": "q_solarpack",
     "type": "MIGRATION",
     "replace": "solarpack"

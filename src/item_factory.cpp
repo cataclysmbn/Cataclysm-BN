@@ -784,7 +784,7 @@ void Item_factory::finalize_item_blacklist()
         }
 
         for( std::pair<const item_group_id, std::unique_ptr<Item_spawn_data>> &g : m_template_groups ) {
-            g.second->replace_item( migrate.first, migrate.second.replace );
+            g.second->replace_item( migrate.first, migrate.second.replace, g.first.str() );
         }
 
         // replace migrated items in requirements

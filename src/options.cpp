@@ -2719,6 +2719,10 @@ void options_manager::add_options_debug()
          true
        );
 
+    add( "MIGRATION_CHECKS", debug, translate_marker( "Migration checks" ),
+         translate_marker( "If true, the game will report any migrated items in itemgroups. This will not function with certain mods that depend on migrations" ),
+         false );
+
     add( "FORCE_TILESET_RELOAD", debug, translate_marker( "Force tileset reload" ),
          translate_marker( "If false, the game will keep tileset in memory after first load to speed up subsequent loadings of game data.  Enable this if you're working on a tileset for the game or a mod." ),
          false
