@@ -185,12 +185,24 @@ if command -v parallel >/dev/null 2>&1; then
     export TEST_OPTS="${test_opts[*]}"
     export USER_DIR_PREFIX="$user_dir_prefix"
     parallel --jobs "$parallel_jobs" --verbose --linebuffer --halt soon,fail=1 \
-        'filter=$(paste -sd, {}); user_dir="$USER_DIR_PREFIX"_$(basename {}); "$TEST_BIN" $TEST_OPTS --user-dir="$user_dir" "$filter"' \
+        'shard=$(basename {}); filter=$(paste -sd, {}); user_dir="$USER_DIR_PREFIX"_"$shard"; start=$(date +%s); printf "Starting shard %s\n" "$shard"; "$TEST_BIN" $TEST_OPTS --user-dir="$user_dir" "$filter"; status=$?; end=$(date +%s); printf "Finished shard %s in %ss with status %s\n" "$shard" "$(( end - start ))" "$status"; exit "$status"' \
         ::: "${shard_files[@]}"
 else
     for shard_file in "${shard_files[@]}"; do
+        shard=$(basename "$shard_file")
         filter=$(paste -sd, "$shard_file")
-        user_dir="$user_dir_prefix"_$(basename "$shard_file")
-        "$test_bin" "${test_opts[@]}" --user-dir="$user_dir" "$filter"
+        user_dir="$user_dir_prefix"_"$shard"
+        start=$(date +%s)
+        printf 'Starting shard %s\n' "$shard"
+        if "$test_bin" "${test_opts[@]}" --user-dir="$user_dir" "$filter"; then
+            status=0
+        else
+            status=$?
+        fi
+        end=$(date +%s)
+        printf 'Finished shard %s in %ss with status %s\n' "$shard" "$(( end - start ))" "$status"
+        if [ "$status" != "0" ]; then
+            exit "$status"
+        fi
     done
 fi
