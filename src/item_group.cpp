@@ -355,9 +355,11 @@ bool Single_item_creator::replace_item( const itype_id &itemid, const itype_id &
         }
     }
     if( type == S_ITEM ) {
-        if( itemid.str() == id && get_option<bool>( "MIGRATION_CHECKS" ) ) {
-            debugmsg( "Migrated item: %s in ( %s ), should be migrated to %s", itemid,
-                      context, replacementid );
+        if( itemid.str() == id ) {
+            if( get_option<bool>( "MIGRATION_CHECKS" ) ) {
+                debugmsg( "Migrated item: %s in ( %s ), should be migrated to %s", itemid,
+                          context, replacementid );
+            }
             id = replacementid.str();
             return true;
         }
