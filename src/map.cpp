@@ -540,7 +540,6 @@ auto map::resize( int new_mapsize ) -> void
         ptr = std::make_unique<level_cache>( SEEX * new_mapsize, SEEY * new_mapsize );
     }
     submaps_with_active_items.clear();
-    loaded_vehicles.clear();
     funnel_locations_.clear();
     // Recompute the circular load footprint for the new bubble radius.
     // Radius = (mapsize - 1) / 2, matching g_half_mapsize.
@@ -610,16 +609,10 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id
     // Submap lookup — shared by vehicle fixup, active-item tracking, and grid update.
     submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
 
-    // Vehicle abs_sm_pos fixup and loaded_vehicles registration.
-    // Covers all loaded submaps, including out-of-bubble ones.
-    // For in-bubble submaps loadn() has already done this; the set insert is idempotent.
     if( sm != nullptr && !sm->vehicles.empty() ) {
-        // Extended local grid index: may be outside [0, my_MAPSIZE) for out-of-bubble.
-        for( const auto &veh : sm->vehicles ) {
-            veh->abs_sm_pos = p;
-            veh->set_dimension( dim_id );
-            loaded_vehicles.insert( veh.get() );
-        }
+        MAPBUFFER_REGISTRY.get( dim_id ).refresh_vehicle_registry_for_submap( p, {
+            .mode = mapbuffer_lookup_mode::resident_only,
+        } );
     }
 
     // Track submaps with active items across the full loaded set, not just the
@@ -674,13 +667,6 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const dimension_id &di
         if( sm ) {
             sm->last_touched = calendar::turn;
         }
-    }
-
-    // Vehicle tracking: remove all vehicles whose home submap matches the unloaded position.
-    {
-        std::erase_if( loaded_vehicles, [&]( vehicle * veh ) {
-            return veh->abs_sm_pos == pos;
-        } );
     }
 
     // Stop tracking active items for this submap.
@@ -1088,7 +1074,7 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
     const tripoint_bub_sm bub_sm( veh->abs_sm_pos.x() - abs_sub.x(),
                                   veh->abs_sm_pos.y() - abs_sub.y(),
                                   veh->abs_sm_pos.z() );
-    submap *current_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory(
+    submap *current_submap = get_mapbuffer().lookup_submap_in_memory(
                                  veh->abs_sm_pos );
     if( current_submap == nullptr ) {
         current_submap = get_submap_at_grid( bub_sm );
@@ -1096,7 +1082,7 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
     if( current_submap == nullptr ) {
         debugmsg( "detach_vehicle can't find submap!  name=%s, submap:%d,%d,%d",
                   veh->name, veh->abs_sm_pos.x(), veh->abs_sm_pos.y(), veh->abs_sm_pos.z() );
-        loaded_vehicles.erase( veh );
+        get_mapbuffer().unregister_vehicle( veh );
         dirty_vehicle_list.erase( veh );
         return std::unique_ptr<vehicle>();
     }
@@ -1108,7 +1094,7 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
             reset_vehicle_cache( );
             std::unique_ptr<vehicle> result = std::move( current_submap->vehicles[i] );
             current_submap->vehicles.erase( current_submap->vehicles.begin() + i );
-            loaded_vehicles.erase( veh );
+            get_mapbuffer().unregister_vehicle( veh );
             if( veh->tracking_on ) {
                 get_overmapbuffer( bound_dimension_ ).remove_vehicle( veh );
             }
@@ -1140,7 +1126,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     auto &ch = get_cache( smz );
     invalidate_lightmap_caches();
     set_seen_cache_dirty( smz );
-    ch.visibility_cache_dirty = true;
+    mark_visibility_cache_dirty( smz );
 #if defined( CATA_SDL )
     if( cata_compute::uses_sdl_gpu_compute() ) {
         cata_gpu::invalidate_lighting_transparency_levels( std::vector<int> { smz } );
@@ -1192,7 +1178,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     if( inbounds_z( above_z ) ) {
         auto &ch_above = get_cache( above_z );
         set_seen_cache_dirty( above_z );
-        ch_above.visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( above_z );
         for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm & p ) {
             ch_above.floor_cache_dirty.set(
                 static_cast<size_t>( ch_above.bidx( p.x(), p.y() ) ) );
@@ -1209,9 +1195,8 @@ void map::vehmove()
     ZoneScoped;
 
     // Give vehicles movement points.  Use per-z-level vehicle_list caches
-    // (rebuilt from in-bubble grid submaps during shift) rather than
-    // loaded_vehicles, which can hold stale pointers to evicted submaps.
-    // Out-of-bubble vehicles are handled by batch_turns_vehicle().
+    // rebuilt from in-bubble grid submaps during shift.  Out-of-bubble
+    // vehicles are handled by batch_turns_vehicle().
     VehicleList vehicle_list;
     {
         ZoneScopedN( "veh_gain_moves" );
@@ -1353,8 +1338,9 @@ void map::vehmove()
     // All vehicles in vehicle_list are loaded (on_map=true); distribution-graph
     // neighbours reachable but not in the set get on_map=false as before.
     std::set<vehicle *> all_veh_ptrs;
+    auto &vehicle_buffer = get_mapbuffer();
     std::ranges::for_each( vehicle_list, [&]( const wrapped_vehicle & w ) {
-        if( loaded_vehicles.contains( w.v ) ) {
+        if( vehicle_buffer.has_loaded_vehicle( w.v ) ) {
             all_veh_ptrs.insert( w.v );
         }
     } );
@@ -1979,7 +1965,7 @@ VehicleList map::get_vehicles( const tripoint_bub_sm &start, const tripoint_bub_
 
 optional_vpart_position map::veh_at( const tripoint_abs_ms &p ) const
 {
-    return veh_at( abs_to_map_local( *this, p ) );
+    return get_mapbuffer().veh_at( p );
 }
 
 optional_vpart_position map::veh_at( const tripoint_bub_ms &p ) const
@@ -2031,21 +2017,9 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *who )
     auto vp = veh_at( pos ).part_with_feature( VPFLAG_BOARDABLE, true );
     if( !vp ) {
         const auto abs_pos = map_local_to_abs( *this, pos );
-        for( auto *veh : loaded_vehicles ) {
-            if( veh == nullptr ) {
-                continue;
-            }
-            auto boardable_parts = veh->get_avail_parts( VPFLAG_BOARDABLE );
-            const auto part_it = std::ranges::find_if( boardable_parts,
-            [&]( const vpart_reference & part ) {
-                return veh->abs_part_location( part.part() ) == abs_pos;
-            } );
-            if( part_it == boardable_parts.end() ) {
-                continue;
-            }
-            vp = *part_it;
-            break;
-        }
+        vp = get_mapbuffer().veh_at( abs_pos, {
+            .mode = mapbuffer_lookup_mode::resident_only,
+        } ).part_with_feature( VPFLAG_BOARDABLE, true );
     }
     if( !vp ) {
         if( who->grab_point.x() == 0 && who->grab_point.y() == 0 ) {
@@ -2295,6 +2269,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         veh.abs_sm_pos = dest_proj.quotient_tripoint;
         veh.update_overmap( prev );
     }
+    get_mapbuffer().refresh_vehicle_footprint( &veh );
 
     //
     //global positions of vehicle loot zones have changed.
@@ -3062,7 +3037,7 @@ int map::combined_movecost( const tripoint_bub_ms &from, const tripoint_bub_ms &
 bool map::valid_move( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
                       const bool bash, const bool flying, const bool via_ramp ) const
 {
-    return MAPBUFFER_REGISTRY.get( bound_dimension_ ).valid_move(
+    return get_mapbuffer().valid_move(
     map_local_to_abs( *this, from ), map_local_to_abs( *this, to ), {
         .bash = bash,
         .flying = flying,
@@ -5719,7 +5694,7 @@ map_stack map::i_at( const tripoint_bub_ms &p )
         return map_stack( {
             .stack = &current_submap->get_items( l ),
             .location = abs_pos,
-            .origin = &MAPBUFFER_REGISTRY.get( bound_dimension_ ),
+            .origin = &get_mapbuffer(),
         } );
     }
 
@@ -5741,7 +5716,7 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
 
     const auto abs_pos = map_local_to_abs( *this, p );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
-        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).erase_item( abs_pos, {
+        return get_mapbuffer().erase_item( abs_pos, {
             .it = std::move( it ),
             .out = out,
             .lookup = resident_item_lookup(),
@@ -5773,8 +5748,8 @@ detached_ptr<item> map::i_rem( const tripoint_bub_ms &p, item *it )
 
     const auto abs_pos = map_local_to_abs( *this, p );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
-        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).remove_item( abs_pos, it,
-                resident_item_lookup() );
+        return get_mapbuffer().remove_item( abs_pos, it,
+                                            resident_item_lookup() );
     }
 
     auto &items = current_submap->get_items( l );
@@ -5806,7 +5781,7 @@ std::vector<detached_ptr<item>> map::i_clear( const tripoint_bub_ms &p )
 
     const auto abs_pos = map_local_to_abs( *this, p );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
-        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).clear_items( abs_pos, resident_item_lookup() );
+        return get_mapbuffer().clear_items( abs_pos, resident_item_lookup() );
     }
 
     for( item * const &it : current_submap->get_items( l ) ) {
@@ -5953,7 +5928,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
     submap *const current_submap = get_submap_at( pos, local_tile );
     const auto abs_pos = map_local_to_abs( *this, pos );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
-        return MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_item_or_charges( abs_pos, std::move( obj ), {
+        return get_mapbuffer().add_item_or_charges( abs_pos, std::move( obj ), {
             .overflow = overflow,
             .lookup = resident_item_lookup(),
         } );
@@ -6070,8 +6045,8 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
 
     const auto abs_pos = map_local_to_abs( *this, p );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
-        MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_item( abs_pos, std::move( new_item ),
-                resident_item_lookup() );
+        get_mapbuffer().add_item( abs_pos, std::move( new_item ),
+                                  resident_item_lookup() );
         return;
     }
 
@@ -6192,8 +6167,8 @@ void map::make_inactive( item &loc )
 
     const auto abs_pos = map_local_to_abs( *this, local_pos );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
-        MAPBUFFER_REGISTRY.get( bound_dimension_ ).make_item_inactive( abs_pos, loc,
-                resident_item_lookup() );
+        get_mapbuffer().make_item_inactive( abs_pos, loc,
+                                            resident_item_lookup() );
         return;
     }
 
@@ -6221,7 +6196,7 @@ void map::make_active( item &loc )
 
     const auto abs_pos = map_local_to_abs( *this, local_pos );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
-        MAPBUFFER_REGISTRY.get( bound_dimension_ ).make_item_active( abs_pos, loc, resident_item_lookup() );
+        get_mapbuffer().make_item_active( abs_pos, loc, resident_item_lookup() );
         return;
     }
 
@@ -6249,7 +6224,7 @@ void map::update_lum( item &loc, bool add )
 
     const auto abs_pos = map_local_to_abs( *this, local_pos );
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
-        MAPBUFFER_REGISTRY.get( bound_dimension_ ).update_item_lum( abs_pos, loc, {
+        get_mapbuffer().update_item_lum( abs_pos, loc, {
             .add_luminance = add,
             .lookup = resident_item_lookup(),
         } );
@@ -6342,7 +6317,7 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
     }
 
     // Direction 2: every entry in the set should point to a loaded submap with active items.
-    mapbuffer &buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
+    mapbuffer &buf = get_mapbuffer();
     for( const tripoint_abs_sm &p : submaps_with_active_items ) {
         submap *s = buf.lookup_submap_in_memory( p );
         if( s == nullptr || s->active_items.empty() ) {
@@ -6367,7 +6342,7 @@ void map::process_items()
         std::set<submap *> veh_submaps;
         for( int z = zmin; z <= zmax; ++z ) {
             for( vehicle *veh : get_cache( z ).vehicle_list ) {
-                submap *sm = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory(
+                submap *sm = get_mapbuffer().lookup_submap_in_memory(
                                  veh->abs_sm_pos );
                 if( sm != nullptr ) {
                     veh_submaps.insert( sm );
@@ -7461,6 +7436,7 @@ auto map::update_visibility_cache( const int zlev,
             std::fill( origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f );
             m_last_seen_cache_origin = player_pos;
         }
+        mark_visibility_caches_clean();
         mark_overmap_seen_from_visibility( get_cache_ref( zlev ) );
         return;
     }
@@ -7547,9 +7523,7 @@ auto map::update_visibility_cache( const int zlev,
 
     // Mark all z-levels touched by this run as clean so subsequent draws within
     // the same turn can skip the rebuild entirely.
-    std::ranges::for_each( std::views::iota( min_z, max_z + 1 ), [this]( int z ) {
-        get_cache( z ).visibility_cache_dirty = false;
-    } );
+    mark_visibility_caches_clean();
 }
 
 const visibility_variables &map::get_visibility_variables_cache() const
@@ -8539,7 +8513,6 @@ void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool 
 {
     std::fill( grid.begin(), grid.end(), nullptr );
     submaps_with_active_items.clear();
-    loaded_vehicles.clear();
     funnel_locations_.clear();
     set_abs_sub( w );
     for( const auto p : bubble_submaps() ) {
@@ -8622,8 +8595,8 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
     dirty_vertical_vehicle_caches( dst.z() );
     dirty_vertical_vehicle_caches( dst.z() + 1 );
 
-    submap *src_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( src );
-    submap *dst_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( dst );
+    submap *src_submap = get_mapbuffer().lookup_submap_in_memory( src );
+    submap *dst_submap = get_mapbuffer().lookup_submap_in_memory( dst );
 
     int our_i = -1;
     for( size_t i = 0; i < src_submap->vehicles.size(); i++ ) {
@@ -8661,6 +8634,7 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
     }
 
     veh.abs_sm_pos = dst;
+    get_mapbuffer().refresh_vehicle_footprint( &veh );
     veh.update_overmap( src );
 }
 
@@ -8947,7 +8921,7 @@ void map::shift( const point_rel_sm &sp )
             }
             mark_shifted_map_caches_dirty( gridz );
             set_seen_cache_dirty( gridz );
-            get_cache( gridz ).visibility_cache_dirty = true;
+            mark_visibility_cache_dirty( gridz );
             set_pathfinding_cache_dirty( gridz );
             set_suspension_cache_dirty( gridz );
             mark_shifted_absorption_cache_dirty( get_cache( gridz ), gridz );
@@ -9037,7 +9011,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
     // submaps instead of nullptr.  We check in-memory only (no DB lookup) because
     // most pocket-dimension submaps are out-of-bounds.
     if( pocket_info_ && !pocket_info_->bounds.contains( tripoint_abs_sm( grid_abs_sub ) ) ) {
-        mapbuffer &dim_buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
+        mapbuffer &dim_buf = get_mapbuffer();
         submap *bsub = dim_buf.lookup_submap_in_memory( grid_abs_sub );
         // Diagnostic: log boundary submap creation for dimension debugging
         if( bsub == nullptr ) {
@@ -9064,7 +9038,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
     submap *tmpsub = nullptr;
     {
         ZoneScopedN( "loadn_lookup" );
-        tmpsub = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap( grid_abs_sub );
+        tmpsub = get_mapbuffer().lookup_submap( grid_abs_sub );
     }
     // Diagnostic: log in-bounds submap loading for dimension transition debugging
     if( pocket_info_ ) {
@@ -9081,12 +9055,12 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         //  squares divisible by 2.
         // TODO: fix point types
         const auto grid_abs_omt = tripoint_abs_omt( project_to<coords::omt>( grid_abs_sub ) );
-        auto &dim_buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
+        auto &dim_buf = get_mapbuffer();
         dim_buf.generate_omt( grid_abs_omt );
 
         {
             ZoneScopedN( "loadn_generate_lookup" );
-            tmpsub = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap( grid_abs_sub );
+            tmpsub = get_mapbuffer().lookup_submap( grid_abs_sub );
         }
         if( tmpsub == nullptr ) {
             debugmsg( "failed to generate a submap at %s", grid_abs_sub.to_string() );
@@ -9142,11 +9116,11 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
                 // Always fix submap coordinates for easier Z-level-related operations
                 veh->abs_sm_pos = grid_abs_sub;
                 veh->set_dimension( bound_dimension_ );
-                loaded_vehicles.insert( veh );
                 veh->attach();
                 iter++;
             } else {
                 reset_vehicle_cache();
+                get_mapbuffer().unregister_vehicle( veh );
                 if( veh->tracking_on ) {
                     get_overmapbuffer( bound_dimension_ ).remove_vehicle( veh );
                 }
@@ -10503,7 +10477,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         cache.lightmap_dirty = true;
         cache.lm_cpu_cache_valid = false;
         ++cache.lm_cpu_cache_generation;
-        cache.visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( z );
     };
     auto add_gpu_dirty_level = []( auto & levels, const int z ) {
         if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
@@ -10718,7 +10692,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     } ) ) {
             force_seen_rebuild_for_gpu_residency = true;
             invalidate_lightmap_caches();
-            get_cache( zlev ).visibility_cache_dirty = true;
+            mark_visibility_cache_dirty( zlev );
         }
     }
 #endif
@@ -10831,7 +10805,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         m_last_seen_cache_origin = p;
 #endif
         // seen_cache changed (or will be updated by GPU pass); mark visibility stale.
-        get_cache( zlev ).visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( zlev );
     }
     if( !skip_lightmap ) {
 #if defined( CATA_SDL )
@@ -10848,7 +10822,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 
                     std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
                         get_cache( z ).lightmap_dirty = false;
-                        get_cache( z ).visibility_cache_dirty = true;
+                        mark_visibility_cache_dirty( z );
                     } );
                 }
             } else if( !dirty_lightmap_levels.empty() ) {
@@ -10946,7 +10920,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     auto &c = get_cache( z );
                     c.lightmap_dirty = false;
                     c.lm_cpu_cache_valid = true;
-                    c.visibility_cache_dirty = true;
+                    mark_visibility_cache_dirty( z );
                 } );
 
             } // end if( !dirty_lightmap_levels.empty() )
@@ -10989,7 +10963,7 @@ submap *map::get_submap_at( const tripoint_bub_ms &p ) const
         abs_sub.y() + divide_round_to_minus_infinity( p.y(), SEEY ),
         p.z()
     );
-    return MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( abs_sm_pos );
+    return get_mapbuffer().lookup_submap_in_memory( abs_sm_pos );
 }
 
 submap *map::get_submap_at( const tripoint_bub_ms &p, point_sm_ms &offset_p ) const
@@ -11181,7 +11155,7 @@ field &map::get_field( const tripoint_bub_ms &p )
 
 void map::creature_on_trap( Creature &c, const bool may_avoid )
 {
-    MAPBUFFER_REGISTRY.get( bound_dimension_ ).creature_on_trap( c, may_avoid );
+    get_mapbuffer().creature_on_trap( c, may_avoid );
 }
 
 template<typename Functor>
@@ -11658,7 +11632,7 @@ void map::invalidate_map_cache( const int zlev )
         ch.lightmap_dirty = true;
         ch.lm_cpu_cache_valid = false;
         ++ch.lm_cpu_cache_generation;
-        ch.visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( zlev );
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
         m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
@@ -11674,8 +11648,32 @@ void map::invalidate_lightmap_caches()
         cache.lightmap_dirty = true;
         cache.lm_cpu_cache_valid = false;
         ++cache.lm_cpu_cache_generation;
-        cache.visibility_cache_dirty = true;
+        mark_visibility_cache_dirty( z );
     } );
+}
+
+auto map::mark_visibility_cache_dirty( const int zlev ) -> void
+{
+    if( !inbounds_z( zlev ) ) {
+        return;
+    }
+    get_cache( zlev ).visibility_cache_dirty = true;
+    visibility_caches_dirty_ = true;
+}
+
+auto map::mark_visibility_caches_clean() -> void
+{
+    const auto minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
+    const auto maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
+    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
+        get_cache( z ).visibility_cache_dirty = false;
+    } );
+    visibility_caches_dirty_ = false;
+}
+
+auto map::visibility_caches_dirty() const -> bool
+{
+    return visibility_caches_dirty_;
 }
 
 auto map::current_lightmap_source_signature() -> std::size_t
@@ -11862,10 +11860,10 @@ void map::invalidate_lightmap_caches_if_light_state_changed()
 
 void map::invalidate_visibility_caches()
 {
-    const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
-    const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
-    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( int z ) {
-        get_cache( z ).visibility_cache_dirty = true;
+    const auto minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
+    const auto maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
+    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
+        mark_visibility_cache_dirty( z );
     } );
 }
 

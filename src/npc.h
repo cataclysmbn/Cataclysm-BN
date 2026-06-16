@@ -1263,6 +1263,10 @@ class npc : public player
         std::map<std::string, time_point> complaints;
 
         npc_short_term_cache ai_cache;
+        auto clear_transient_movement_state_after_reposition() -> void;
+        auto setpos_impl( const tripoint_abs_ms &pos, bool preserve_movement_state ) -> void;
+        auto setpos_preserving_movement_state( const tripoint_bub_ms &pos ) -> void;
+        auto setpos_preserving_movement_state( const tripoint_abs_ms &pos ) -> void;
 
         std::map<npc_need, npc_need_goal_cache> goal_cache;
         bool suppress_activity_complete_message = false;
