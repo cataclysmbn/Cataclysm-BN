@@ -299,6 +299,7 @@ class mapbuffer
         -> const Creature *;
         auto has_creature_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const -> bool;
         auto has_loaded_vehicle( const vehicle *veh ) const -> bool;
+        auto register_vehicle( vehicle *veh ) -> void;
         auto unregister_vehicle( vehicle *veh ) -> void;
         auto refresh_vehicle_footprint( vehicle *veh ) -> void;
         auto refresh_vehicle_registry_for_submap( const tripoint_abs_sm &p,

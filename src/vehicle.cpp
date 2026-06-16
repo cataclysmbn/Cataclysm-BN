@@ -3824,7 +3824,7 @@ tripoint_abs_ms vehicle::abs_ms_location() const
 
 tripoint_bub_ms vehicle::bub_ms_location() const
 {
-    return abs_to_bub( abs_ms_location() );
+    return abs_to_map_local( get_map(), abs_ms_location() );
 }
 
 tripoint_bub_ms vehicle::bub_part_location( const int &index ) const

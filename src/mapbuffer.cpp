@@ -1040,6 +1040,18 @@ auto mapbuffer::has_loaded_vehicle( const vehicle *veh ) const -> bool
     return loaded_vehicles_.contains( const_cast<vehicle *>( veh ) );
 }
 
+auto mapbuffer::register_vehicle( vehicle *veh ) -> void
+{
+    if( veh == nullptr ) {
+        return;
+    }
+
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    veh->set_dimension( dimension_id_ );
+    loaded_vehicles_.insert( veh );
+    index_vehicle_footprint_unlocked( *veh );
+}
+
 auto mapbuffer::unregister_vehicle( vehicle *veh ) -> void
 {
     std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
@@ -2233,8 +2245,8 @@ mapbuffer::active_reality_bubble_local( const tripoint_abs_ms &p ) const
         return std::nullopt;
     }
 
-    const auto local = abs_to_bub( p );
-    if( !is_in_reality_bubble_bounds( local ) ) {
+    const auto local = abs_to_map_local( g->m, p );
+    if( !g->m.inbounds( local ) ) {
         return std::nullopt;
     }
 
