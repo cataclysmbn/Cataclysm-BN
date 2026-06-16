@@ -231,9 +231,11 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_N_T( setpos, "set_pos_ms", void( const tripoint_bub_ms & ) );
 
-        SET_FX_N_T( setpos, "set_pos", void( const tripoint_bub_ms & ) );
-
-        SET_FX_N_T( setpos, "set_pos", void( const tripoint_abs_ms & ) );
+        luna::set_fx( ut, "set_pos",
+                      sol::overload(
+        []( Creature & cr, const tripoint_bub_ms & p ) -> void { cr.setpos( p ); },
+        []( Creature & cr, const tripoint_abs_ms & p ) -> void { cr.setpos( p ); }
+                      ) );
 
         luna::set_fx( ut, "has_effect", []( const Creature & cr, const efftype_id & eff,
         sol::optional<const bodypart_str_id &> bpid ) -> bool {
@@ -823,10 +825,6 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( mutate_category, void( const mutation_category_id & ) );
 
-        SET_FX_T( mutate_towards, bool( std::vector<trait_id>, int ) );
-
-        SET_FX_T( mutate_towards, bool( const trait_id & ) );
-
         luna::set_fx( ut, "mutate_towards", sol::overload(
                           sol::resolve<bool( std::vector<trait_id>, int )>( &UT_CLASS::mutate_towards ),
                           sol::resolve<bool( const trait_id & )>( &UT_CLASS::mutate_towards )
@@ -1238,7 +1236,6 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX( knows_trap );
 
         DOC( "Character learns that the given trap is on the given tripoint. If the trap is null, the character learns that there is no trap there." );
-        SET_FX( add_known_trap );
         luna::set_fx( ut, "add_known_trap", []( UT_CLASS & c, const tripoint_bub_ms & p, const trap_id & tr )
         {
             c.add_known_trap( p, tr.obj() );
