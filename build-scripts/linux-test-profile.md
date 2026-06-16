@@ -64,6 +64,10 @@ Result before the `vehicle_drag` fixture reuse: all shards passed in `6:52.40` l
 After reusing a single map in `vehicle_drag`, standalone `[#vehicle_drag_test] ~[.]` with CPU
 compute dropped from `121s` to `16.33s` wall time locally.
 
+For local runs, the shard runner defaults `--jobs` to the detected CPU count and defaults generated
+non-slow shards to `jobs * 2`, clamped to `6..16`. CI still passes explicit `--jobs 4
+--non-slow-shards 16` for runner stability.
+
 ## Resolved blockers
 
 - `[#vehicle_test] ~[.]` now passes standalone with CI flags.

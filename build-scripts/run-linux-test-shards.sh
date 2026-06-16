@@ -8,9 +8,10 @@ Usage: build-scripts/run-linux-test-shards.sh [OPTIONS] TEST_BIN -- [TEST_OPTS..
 
 Options:
   --mode MODE             auto, file-tags, tiles, or legacy (default: auto)
-  --jobs N                concurrent shard jobs (default: 4)
+  --jobs N|auto           concurrent shard jobs (default: auto, detected CPU count)
   --slow-shards N         generated slow file-tag shards (default: 4)
-  --non-slow-shards N     generated non-slow file-tag shards (default: 6)
+  --non-slow-shards N|auto
+                          generated non-slow file-tag shards (default: auto, clamped jobs*2)
   --dry-run               print shard filters without running tests
 
 Environment:
@@ -19,10 +20,29 @@ Environment:
 EOF
 }
 
+detect_cpu_count() {
+    if command -v nproc >/dev/null 2>&1; then
+        nproc
+    elif getconf _NPROCESSORS_ONLN >/dev/null 2>&1; then
+        getconf _NPROCESSORS_ONLN
+    else
+        printf '%s\n' 4
+    fi
+}
+
+validate_positive_int() {
+    local name=$1
+    local value=$2
+    if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+        printf '%s must be a positive integer: %s\n' "$name" "$value" >&2
+        exit 2
+    fi
+}
+
 mode=auto
-parallel_jobs=4
+parallel_jobs=auto
 slow_shards=4
-non_slow_shards=6
+non_slow_shards=auto
 dry_run=0
 test_bin=
 
@@ -83,6 +103,21 @@ if [ ! -x "$test_bin" ]; then
     printf 'Missing executable test binary: %s\n' "$test_bin" >&2
     exit 2
 fi
+
+if [ "$parallel_jobs" = "auto" ]; then
+    parallel_jobs=$(detect_cpu_count)
+fi
+validate_positive_int "--jobs" "$parallel_jobs"
+validate_positive_int "--slow-shards" "$slow_shards"
+if [ "$non_slow_shards" = "auto" ]; then
+    non_slow_shards=$(( parallel_jobs * 2 ))
+    if [ "$non_slow_shards" -lt 6 ]; then
+        non_slow_shards=6
+    elif [ "$non_slow_shards" -gt 16 ]; then
+        non_slow_shards=16
+    fi
+fi
+validate_positive_int "--non-slow-shards" "$non_slow_shards"
 
 case "$mode" in
     auto|file-tags|tiles)
