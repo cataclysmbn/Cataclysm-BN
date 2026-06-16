@@ -21,9 +21,9 @@ The job failed before every shard completed.
 
 ## Local shard profile after vehicle/map fixture fixes
 
-`#` bars are scaled at about 10 seconds each. Local GNU `parallel` was unavailable, so shards
-were run sequentially. CI runs most shards with CPU compute and keeps software-GPU compute for
-`20-visibility`, so `--jobs 4` does not start multiple llvmpipe-heavy test processes.
+`#` bars are scaled at about 10 seconds each. CI runs most shards with CPU compute, keeps
+software-GPU compute for `20-visibility`, and uses 16 generated non-slow shards to shorten
+individual Linux test processes.
 
 | Time | Graph | Shard |
 | ---: | :--- | --- |
@@ -47,6 +47,20 @@ were run sequentially. CI runs most shards with CPU compute and keeps software-G
 | 5s | # | `32-slow` |
 | 3s | # | `33-slow` |
 
+## Local full sharded validation after CI shard-size reduction
+
+Command: `build-scripts/run-linux-test-shards.sh --mode file-tags --jobs 4 --non-slow-shards 16 ./out/build/linux-full/tests/cata_test-tiles -- --min-duration 20 --use-colour no --rng-seed 1 --error-format=github-action --gpu-backend=software`
+
+Result: all shards passed in `6:52.40` locally. Longest shards:
+
+| Time | Shard |
+| ---: | --- |
+| 165s | `12-non-slow` |
+| 123s | `16-non-slow` |
+| 98s | `21-vehicle-efficiency` |
+| 71s | `06-non-slow` |
+| 67s | `15-non-slow` |
+
 ## Resolved blockers
 
 - `[#vehicle_test] ~[.]` now passes standalone with CI flags.
@@ -57,8 +71,8 @@ were run sequentially. CI runs most shards with CPU compute and keeps software-G
 
 ## Prioritized plan
 
-1. Wait for PR CI timings with CPU-by-default shards before changing shard weights again.
-2. If CI still has a >180s shard, split `04-non-slow` first.
+1. Wait for PR CI timings with 16 generated non-slow shards before changing shard weights again.
+2. If CI still has a >180s shard, split the longest generated non-slow shard first.
 3. If runner shutdown continues, isolate `[#map_test]` / `[#vehicle_efficiency_test]`.
 4. Benchmark `--option_overrides=REALITY_BUBBLE_SIZE:2` only on map/visibility-heavy shards;
    keep failing or reality-bubble-sensitive tags on the default bubble.

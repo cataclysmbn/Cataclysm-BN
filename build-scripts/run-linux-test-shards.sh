@@ -216,7 +216,5 @@ if command -v parallel >/dev/null 2>&1; then
     parallel --jobs "$parallel_jobs" --verbose --linebuffer --halt soon,fail=1 \
         "$shard_runner" {} ::: "${shard_files[@]}"
 else
-    for shard_file in "${shard_files[@]}"; do
-        "$shard_runner" "$shard_file"
-    done
+    printf '%s\0' "${shard_files[@]}" | xargs -0 -n 1 -P "$parallel_jobs" "$shard_runner"
 fi
