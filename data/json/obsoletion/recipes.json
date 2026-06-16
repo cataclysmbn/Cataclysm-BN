@@ -2281,5 +2281,40 @@
     "type": "recipe",
     "result": "40x46mm_makeshift_he_m199",
     "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "rifle_38",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "rifle_40",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "rifle_44",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "rifle_45",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "rifle_9mm",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "rifle_223",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "rifle_3006",
+    "obsolete": true
   }
 ]

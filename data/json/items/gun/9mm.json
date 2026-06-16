@@ -332,24 +332,6 @@
     "magazines": [ [ "9mm", [ "px4mag" ] ] ]
   },
   {
-    "id": "rifle_9mm",
-    "copy-from": "rifle_home_made",
-    "type": "GUN",
-    "name": { "str": "pipe rifle: 9x19mm", "str_pl": "pipe rifles: 9x19mm" },
-    "//": "Despite its quality, it IS a small rifle, although not as effective as a genuine pistol carbine.",
-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",
-    "weight": "2114 g",
-    "volume": "2 L",
-    "price": "100 USD",
-    "price_postapoc": "5 USD",
-    "ascii_picture": "ps_pipe_gun",
-    "bashing": 10,
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "9mm",
-    "barrel_volume": "750 ml"
-  },
-  {
     "id": "smg_9mm",
     "copy-from": "smg_base",
     "type": "GUN",

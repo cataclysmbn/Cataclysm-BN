@@ -123,22 +123,5 @@
     "clip_size": 4,
     "barrel_volume": "750 ml",
     "flags": [ "RELOAD_ONE", "NEVER_JAMS" ]
-  },
-  {
-    "id": "rifle_3006",
-    "copy-from": "rifle_home_made",
-    "type": "GUN",
-    "name": { "str": "pipe rifle: .30-06", "str_pl": "pipe rifles: .30-06" },
-    "//": "It's the same size as the others, but it's still a scrap weapon.",
-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",
-    "weight": "4080 g",
-    "volume": "3 L",
-    "price": "1100 USD",
-    "price_postapoc": "5 USD",
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "3006",
-    "ranged_damage": { "damage_type": "bullet", "amount": -2 },
-    "barrel_volume": "1000 ml"
   }
 ]

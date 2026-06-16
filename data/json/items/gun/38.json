@@ -71,21 +71,9 @@
     "magazines": [ [ "38", [ "38_speedloader6" ] ] ]
   },
   {
-    "id": "rifle_38",
-    "copy-from": "rifle_home_made",
-    "type": "GUN",
-    "name": { "str": "pipe rifle: .38 Special", "str_pl": "pipe rifles: .38 Special" },
-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",
-    "weight": "2114 g",
-    "volume": "2 L",
-    "price": "100 USD",
-    "price_postapoc": "5 USD",
-    "ascii_picture": "ps_pipe_gun",
-    "bashing": 10,
-    "material": [ "steel", "wood" ],
-    "color": "brown",
+    "id": "ruger_lcr_38",
     "ammo": "38",
-    "barrel_volume": "750 ml"
+    "magazines": [ [ "38", [ "38_speedloader6" ] ] ]
   },
   {
     "id": "ruger_lcr_38",

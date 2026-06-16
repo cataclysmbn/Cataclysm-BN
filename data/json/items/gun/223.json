@@ -458,22 +458,6 @@
     ]
   },
   {
-    "id": "rifle_223",
-    "copy-from": "rifle_home_made",
-    "type": "GUN",
-    "name": { "str": "pipe rifle: 5.56x45mm", "str_pl": "pipe rifles: 5.56x45mm" },
-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",
-    "weight": "4080 g",
-    "volume": "3 L",
-    "price": "1100 USD",
-    "price_postapoc": "5 USD",
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "223",
-    "ranged_damage": { "damage_type": "bullet", "amount": -2 },
-    "barrel_volume": "1000 ml"
-  },
-  {
     "id": "ruger_mini",
     "copy-from": "rifle_semi",
     "type": "GUN",
