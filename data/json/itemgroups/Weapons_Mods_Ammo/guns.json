@@ -737,7 +737,7 @@
     "//": "Makeshift or otherwise poor quality rifles.",
     "items": [
       { "item": "rifle_pipe", "prob": 60 },
-      { "item": "surv_carbine_223", "prob": 120, "charges-min": 0, "charges-max": 5 }
+      { "item": "carbine_handmade", "prob": 120, "charges-min": 0, "charges-max": 5 }
     ]
   },
   {

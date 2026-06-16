@@ -1,6 +1,16 @@
 [
   {
     "type": "recipe",
+    "result": "rifle_308",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "surv_carbine_223",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
     "result": "t\u00d6ttchen",
     "obsolete": true
   },
