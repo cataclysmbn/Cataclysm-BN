@@ -963,12 +963,13 @@ class game : public submap_load_listener
         void set_critter_died();
         void mon_info( const catacurses::window &,
                        int hor_padding = 0 ); // Prints a list of nearby monsters
-        void mon_info_update( );    //Update seen monsters information
+        auto mon_info_update() -> void;    //Update seen monsters information
         void cleanup_dead();     // Delete any dead NPCs/monsters
         bool is_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
         std::vector<std::string> get_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
         bool prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
     private:
+        auto player_visibility_cache_current() const -> bool;
         void chat(); // Talk to a nearby NPC  'C'
 
         // Internal methods to show "look around" info
@@ -1196,6 +1197,7 @@ class game : public submap_load_listener
         int turnssincelastmon = 0; // needed for auto run mode
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
+        bool mon_info_cache_dirty = true;
 
         auto clear_turn_los_blocker_cache() -> void;
         // True means terrain LOS is blocked between these two positions.

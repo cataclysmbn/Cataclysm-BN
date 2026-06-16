@@ -1978,6 +1978,7 @@ bool game::do_turn()
     {
         ZoneScopedN( "do_turn_invalidate_visibility" );
         m.invalidate_visibility_caches();
+        mon_info_cache_dirty = true;
     }
 
     // starting a new turn, clear out temperature cache
@@ -2799,6 +2800,7 @@ auto game::run_activity_cadence_boundary() -> void
     reset_light_level();
     m.invalidate_lightmap_caches();
     m.invalidate_visibility_caches();
+    mon_info_cache_dirty = true;
     if( action_time_scale::once_every_this_tick( activity_time_cadence::fixed_window() ) ) {
         overmap_npc_move();
     }
@@ -4556,6 +4558,7 @@ void game::draw( ui_adaptor &ui )
         return;
     }
     ZoneScopedN( "game_draw" );
+    const auto player_visibility_was_dirty = !player_visibility_cache_current();
 
     //temporary fix for updating visibility for minimap
     ter_view_p.z() = ( u.bub_pos() + u.view_offset ).z();
@@ -4568,7 +4571,7 @@ void game::draw( ui_adaptor &ui )
         const auto cache_z = is_looking ? u.bub_pos().z() : ter_view_p.z();
         m.build_map_cache( cache_z );
 #if defined( CATA_SDL )
-        if( !is_draw_tiles_mode() ) {
+        if( is_draw_tiles_mode() ) {
             const auto player_map_cache_current = cache_z == u.bub_pos().z();
             refresh_player_visibility_cache_if_needed( player_map_cache_current );
         }
@@ -4583,6 +4586,11 @@ void game::draw( ui_adaptor &ui )
     {
         ZoneScopedN( "game_draw_terrain" );
         draw_ter();
+    }
+    if( ( mon_info_cache_dirty || player_visibility_was_dirty ) &&
+        player_visibility_cache_current() ) {
+        ZoneScopedN( "game_draw_mon_info_update" );
+        mon_info_update();
     }
     {
         ZoneScopedN( "game_draw_callbacks" );
@@ -5266,9 +5274,25 @@ void game::mon_info( const catacurses::window &w, int hor_padding )
     }
 }
 
-void game::mon_info_update( )
+auto game::player_visibility_cache_current() const -> bool
+{
+#if defined( CATA_SDL )
+    return m.get_visibility_variables_cache().variables_set && !m.visibility_caches_dirty();
+#else
+    return true;
+#endif
+}
+
+auto game::mon_info_update() -> void
 {
     ZoneScoped;
+
+    if( !player_visibility_cache_current() ) {
+        mon_info_cache_dirty = true;
+        return;
+    }
+
+    mon_info_cache_dirty = false;
 
     int newseen = 0;
     const auto iProxyDist = ( safe_mode_proximity <= 0 ) ? g_max_view_distance : safe_mode_proximity;
@@ -12930,6 +12954,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
     const auto origin_before_setpos = m.get_abs_sub();
     u.setpos( dest_loc );
     m.invalidate_visibility_caches();
+    mon_info_cache_dirty = true;
     if( u.is_mounted() ) {
         monster *mon = u.mounted_creature.get();
         mon->setpos( dest_loc );
@@ -13232,6 +13257,7 @@ bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         u.moves -= ( 50 + ( tunneldist * 50 ) );
         u.setpos( dest );
         m.invalidate_visibility_caches();
+        mon_info_cache_dirty = true;
 
         if( m.veh_at( u.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {
             m.board_vehicle( u.bub_pos(), &u );
