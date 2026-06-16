@@ -50,7 +50,7 @@ individual Linux test processes.
 
 ## Local full sharded validation after CI shard-size reduction
 
-Command: `build-scripts/run-linux-test-shards.sh --mode file-tags --jobs 4 --non-slow-shards 16 ./out/build/linux-full/tests/cata_test-tiles -- --min-duration 20 --use-colour no --rng-seed 1 --error-format=github-action --gpu-backend=software`
+Command: `build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 --non-slow-shards 16 ./out/build/linux-full/tests/cata_test-tiles -- --min-duration 20 --use-colour no --rng-seed 1 --error-format=github-action --gpu-backend=software`
 
 Result before the `vehicle_drag` fixture reuse: all shards passed in `6:52.40` locally. Longest shards:
 
@@ -65,10 +65,21 @@ Result before the `vehicle_drag` fixture reuse: all shards passed in `6:52.40` l
 After reusing a single map in `vehicle_drag`, standalone `[#vehicle_drag_test] ~[.]` with CPU
 compute dropped from `121s` to `16.33s` wall time locally.
 
-For local runs, `build-scripts/run-linux-test-shards.sh` defaults to the linux-full tiles test
-binary, standard CI-like test options, detected CPU-count `--jobs`, and generated non-slow shards as
-`jobs * 2` clamped to `6..16`. CI still passes explicit `--jobs 4 --non-slow-shards 16` for runner
-stability.
+For local runs, `build-scripts/run-linux-test-shards.ts` defaults to the linux-full tiles test
+binary, standard CI-like test options, and detected CPU-count `--jobs`. The Deno runner now skips
+game initialization for `--list-tags`, folds CPU-only filters into weighted shards, and keeps only
+visibility on software GPU compute.
+
+Latest local results on this 12-thread machine:
+
+| Command                                           |                         Result |
+| ------------------------------------------------- | -----------------------------: |
+| `build-scripts/run-linux-test-shards.ts`          |                      `5:07.08` |
+| `build-scripts/run-linux-test-shards.ts --jobs 6` |                      `4:03.98` |
+| CI-equivalent `--jobs 4 --non-slow-shards 16`     | `4:56.59`, longest shard `96s` |
+
+A sub-minute full run is not reachable with the current test contracts: `vehicle_efficiency` alone
+still takes `~82s` in the fastest full run and `starting_items` takes `~48s`.
 
 ## Resolved blockers
 
