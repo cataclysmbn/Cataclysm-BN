@@ -152,19 +152,31 @@ bool vertical_move_destination( const map &m, tripoint_abs_ms &t )
         return false;
     }
 
-    // Align to OMT boundaries
-    const auto omt_origin = project_to<coords::ms>( project_to<coords::omt>( t ) );
-    const auto end = omt_origin + point_rel_ms( SEEX * 2, SEEY * 2 );
+    const auto omt = project_to<coords::omt>( t );
     auto &buffer = MAPBUFFER_REGISTRY.get( m.get_bound_dimension() );
+    const auto omt_view = buffer.get_abs_omt_view( omt );
+    if( !omt_view ) {
+        return false;
+    }
 
-    for( const auto [x, y] : cata::views::cartesian_product(
-             std::views::iota( omt_origin.x(), end.x() ),
-             std::views::iota( omt_origin.y(), end.y() ) ) ) {
-        const auto p = tripoint_abs_ms( x, y, t.z() );
-        const auto terrain = buffer.get_ter( p );
-        if( terrain && terrain->obj().has_flag( flag ) ) {
-            t = p;
-            return true;
+    const auto submap_offsets = std::array {
+        point_omt_sm::zero(),
+        point_omt_sm( 1, 0 ),
+        point_omt_sm( 0, 1 ),
+        point_omt_sm( 1, 1 ),
+    };
+    for( const auto &local_sm : submap_offsets ) {
+        const auto submap_view = omt_view->get_submap_view( local_sm );
+        if( !submap_view ) {
+            continue;
+        }
+
+        for( const auto tile_pos : submap_view->tiles() ) {
+            const auto tile = submap_view->tile( tile_pos );
+            if( tile.get_ter_t().has_flag( flag ) ) {
+                t = tile.abs_pos();
+                return true;
+            }
         }
     }
 
@@ -535,8 +547,8 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
                             // Warning: really expensive, needs a cache
                             const auto below = p + tripoint_rel_ms::below();
                             if( buffer.valid_move( p, below, { .flying = true, .zlevels = has_zlevels() } ) ) {
-                                const auto below_terrain = buffer.get_ter( below );
-                                if( below_terrain && !below_terrain->obj().has_flag( TFLAG_NO_FLOOR ) ) {
+                                const auto below_tile = buffer.get_abs_tile( below );
+                                if( below_tile && !below_tile->get_ter_t().has_flag( TFLAG_NO_FLOOR ) ) {
                                     // Otherwise this would have been a huge fall
                                     auto &layer = pf.get_layer( p.z() - 1 );
                                     // From cur, not p, because we won't be walking on air
