@@ -1,6 +1,7 @@
 # Linux test shard profile
 
 Sources:
+
 - Baseline: old Linux non-slow shard from successful PR run: `706.837s`.
 - CI profile: PR #9515 run 27586856606, `clang, tiles, i18n` job 81560362204.
 - CI resource check: PR #9515 run 27596058861 showed llvmpipe-backed shards stalling under four unrestricted software-GPU processes.
@@ -10,14 +11,14 @@ Sources:
 
 The job failed before every shard completed.
 
-| Time | Graph | Filter summary |
-| ---: | :--- | --- |
-| 217s | ###################### | `[#vehicle_rails_test]` |
-| 184s | ################## | non-slow shard: bionics/crafting/overmap/etc. |
-| 146s | ############### | non-slow shard: active_item/cata_utility/player_activities/etc. |
-| 141s | ############## | non-slow shard containing `[#vehicle_test]` (failed) |
-| 132s | ############# | non-slow shard: algo/melee/vehicle_collision/etc. |
-| >90s | #########... | non-slow shard: calendar/map/projectile/vehicle_part/etc. (canceled) |
+| Time | Graph                  | Filter summary                                                       |
+| ---: | :--------------------- | -------------------------------------------------------------------- |
+| 217s | ###################### | `[#vehicle_rails_test]`                                              |
+| 184s | ##################     | non-slow shard: bionics/crafting/overmap/etc.                        |
+| 146s | ###############        | non-slow shard: active_item/cata_utility/player_activities/etc.      |
+| 141s | ##############         | non-slow shard containing `[#vehicle_test]` (failed)                 |
+| 132s | #############          | non-slow shard: algo/melee/vehicle_collision/etc.                    |
+| >90s | #########...           | non-slow shard: calendar/map/projectile/vehicle_part/etc. (canceled) |
 
 ## Local shard profile after vehicle/map fixture fixes
 
@@ -25,27 +26,27 @@ The job failed before every shard completed.
 software-GPU compute for `20-visibility`, and uses 16 generated non-slow shards to shorten
 individual Linux test processes.
 
-| Time | Graph | Shard |
-| ---: | :--- | --- |
-| 138s | ############## | `04-non-slow` |
-| 88s | ######### | `08-non-slow` |
-| 58s | ###### | `05-non-slow` |
-| 57s | ###### | `06-non-slow` |
-| 53s | ##### | `07-non-slow` |
-| 39s | #### | `03-non-slow` |
-| 38s | #### | `01-non-slow` |
-| 38s | #### | `21-vehicle-efficiency` |
-| 30s | ### | `31-slow` |
-| 30s | ### | `00-vehicle-rails-basic` |
-| 29s | ### | `22-starting-items` |
-| 29s | ### | `02-non-slow` |
-| 28s | ### | `20-visibility` |
-| 24s | ## | `19-vehicle-rails-shifting` |
-| 18s | ## | `09-vehicle-rails-fork` |
-| 13s | # | `29-vehicle-rails-other` |
-| 10s | # | `34-slow` |
-| 5s | # | `32-slow` |
-| 3s | # | `33-slow` |
+| Time | Graph          | Shard                       |
+| ---: | :------------- | --------------------------- |
+| 138s | ############## | `04-non-slow`               |
+|  88s | #########      | `08-non-slow`               |
+|  58s | ######         | `05-non-slow`               |
+|  57s | ######         | `06-non-slow`               |
+|  53s | #####          | `07-non-slow`               |
+|  39s | ####           | `03-non-slow`               |
+|  38s | ####           | `01-non-slow`               |
+|  38s | ####           | `21-vehicle-efficiency`     |
+|  30s | ###            | `31-slow`                   |
+|  30s | ###            | `00-vehicle-rails-basic`    |
+|  29s | ###            | `22-starting-items`         |
+|  29s | ###            | `02-non-slow`               |
+|  28s | ###            | `20-visibility`             |
+|  24s | ##             | `19-vehicle-rails-shifting` |
+|  18s | ##             | `09-vehicle-rails-fork`     |
+|  13s | #              | `29-vehicle-rails-other`    |
+|  10s | #              | `34-slow`                   |
+|   5s | #              | `32-slow`                   |
+|   3s | #              | `33-slow`                   |
 
 ## Local full sharded validation after CI shard-size reduction
 
@@ -53,13 +54,13 @@ Command: `build-scripts/run-linux-test-shards.sh --mode file-tags --jobs 4 --non
 
 Result before the `vehicle_drag` fixture reuse: all shards passed in `6:52.40` locally. Longest shards:
 
-| Time | Shard |
-| ---: | --- |
-| 165s | `12-non-slow` |
-| 123s | `16-non-slow` |
-| 98s | `21-vehicle-efficiency` |
-| 71s | `06-non-slow` |
-| 67s | `15-non-slow` |
+| Time | Shard                   |
+| ---: | ----------------------- |
+| 165s | `12-non-slow`           |
+| 123s | `16-non-slow`           |
+|  98s | `21-vehicle-efficiency` |
+|  71s | `06-non-slow`           |
+|  67s | `15-non-slow`           |
 
 After reusing a single map in `vehicle_drag`, standalone `[#vehicle_drag_test] ~[.]` with CPU
 compute dropped from `121s` to `16.33s` wall time locally.
