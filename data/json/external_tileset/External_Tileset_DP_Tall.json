@@ -63,7 +63,8 @@
           { "id": "corpse_mon_triffid_radiant_boss", "fg": 43 },
           { "id": "mon_wasp_mega_acid", "fg": 44 },
           { "id": "corpse_mon_wasp_mega_acid", "fg": 45 },
-          { "id": "mon_kraken_boss", "fg": 46 }
+          { "id": "mon_kraken_boss", "fg": 46 },
+          { "id": "mon_kraken_boss_tentacle", "fg": 47 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

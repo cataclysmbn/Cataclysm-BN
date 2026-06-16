@@ -6079,7 +6079,7 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
         auto &ch = get_cache( placed_vehicle_sm.z() );
         ch.vehicle_list.insert( placed_vehicle );
         add_vehicle_to_cache( placed_vehicle );
-        loaded_vehicles.insert( placed_vehicle );
+        get_mapbuffer().register_vehicle( placed_vehicle );
 
         //debugmsg ("grid[%d]->vehicles.size=%d veh.parts.size=%d", nonant, grid[nonant]->vehicles.size(),veh.parts.size());
     }

@@ -224,7 +224,7 @@ std::string io::enum_to_string<action_id>( action_id data )
             break;
     }
     debugmsg( "Invalid action_id" );
-    abort();
+    return "null";
 }
 
 class inventory;

@@ -175,6 +175,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_PET_HARNESSABLE: return "PET_HARNESSABLE";
         case MF_CAN_FETCH: return "CAN_FETCH";
         case MF_DOGFOOD: return "DOGFOOD";
+        case MF_DOG_WHISTLE: return "DOG_WHISTLE";
         case MF_MILKABLE: return "MILKABLE";
         case MF_SHEARABLE: return "SHEARABLE";
         case MF_NO_BREED: return "NO_BREED";
