@@ -952,3 +952,37 @@ TEST_CASE( "Armor enchantments", "[magic][enchantment][armor]" )
         }
     }
 }
+
+TEST_CASE( "Skill enchantments", "[magic][enchantment][skill]" )
+{
+    clear_all_state();
+    Character &guy = get_player_character();
+    clear_character( *guy.as_player(), true );
+
+    REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 0 );
+
+    SECTION( "One barter skill enchantment item" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_relic_socks_of_speaking" );
+
+        REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 2 );
+    }
+
+    SECTION( "Two barter skill enchantment item" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_relic_socks_of_speaking" );
+        wear_item( guy, "test_relic_socks_of_speaking" );
+
+        REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 4 );
+    }
+
+    SECTION( "Two barter skill enchantment item and one global skill item" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_relic_socks_of_speaking" );
+        wear_item( guy, "test_relic_socks_of_speaking" );
+        wear_item( guy, "test_relic_socks_of_knowledge" );
+
+        REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 6 );
+        REQUIRE( guy.get_skill_level( skill_id( "speech" ) ) == 2 );
+    }
+}
