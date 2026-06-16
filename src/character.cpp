@@ -4143,6 +4143,11 @@ int Character::rust_rate() const
 
 void Character::practice( const skill_id &id, int amount, int cap, bool suppress_warning )
 {
+    auto ench_id = enchantment_value_id( "SKILL_EXP_" + to_upper_case( id.str() ) );
+    if( ench_id.is_valid() ) {
+        amount += bonus_from_enchantments( amount, ench_id );
+    }
+
     SkillLevel &level = get_skill_level_object( id );
     const Skill &skill = id.obj();
     std::string skill_name = skill.name();

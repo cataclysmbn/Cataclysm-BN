@@ -184,6 +184,8 @@ calculated values have hardcoded bounds to prevent unintended behavior.
 
 #### IDs of modifiable values
 
+Note: mods can add more values to this list
+
 #### Character values
 
 ##### STRENGTH
@@ -227,19 +229,19 @@ Movement cost effect on flat ground. `base_value` here is movement cost partiall
 The final value cannot go below 20 like MOVE_COST.
 This stacks with MOVE_COST
 
-#### OBSTACLE_MOVE_COST
+##### OBSTACLE_MOVE_COST
 
 Movement cost effect on obstacles. `base_value` here is initial move cost.
 The final value cannot go below 100.
 Stacks with MOVE_COST, done before it.
 
-#### SWIM_MOVE_COST
+##### SWIM_MOVE_COST
 
 Movement cost effect while swimming
 The fianl value cannot go below 30.
 This does NOT stack with MOVE_COST
 
-#### READING_SPEED
+##### READING_SPEED
 
 Speed of reading books. `base_value` is final reading speed in moves.
 The final value cannot go below 1 second.
@@ -401,6 +403,69 @@ damage type has its own enchant value in addition to the globally applied value 
 - `ARMOR_HEAT`
 - `ARMOR_STAB`
 - `ARMOR_TRUE`
+
+##### SKILL_LEVEL
+Character wide skill level modifier.
+`base_value` is the current skill level of the player
+In addition there are the following children of this enchantment
+- `SKILL_LEVEL_BARTER`
+- `SKILL_LEVEL_SPEECH`
+- `SKILL_LEVEL_COMPUTER`
+- `SKILL_LEVEL_FIRSTAID`
+- `SKILL_LEVEL_MECHANICS`
+- `SKILL_LEVEL_TRAPS`
+- `SKILL_LEVEL_DRIVING`
+- `SKILL_LEVEL_SWIMMING`
+- `SKILL_LEVEL_FABRICATION`
+- `SKILL_LEVEL_COOKING`
+- `SKILL_LEVEL_TAILOR`
+- `SKILL_LEVEL_SURVIVAL`
+- `SKILL_LEVEL_ELECTRONICS`
+- `SKILL_LEVEL_ARCHERY`
+- `SKILL_LEVEL_GUN`
+- `SKILL_LEVEL_LAUNCHER`
+- `SKILL_LEVEL_PISTOL`
+- `SKILL_LEVEL_RIFLE`
+- `SKILL_LEVEL_SHOTGUN`
+- `SKILL_LEVEL_SMG`
+- `SKILL_LEVEL_THROW`
+- `SKILL_LEVEL_MELEE`
+- `SKILL_LEVEL_BASHING`
+- `SKILL_LEVEL_DODGE`
+- `SKILL_LEVEL_STABBING`
+- `SKILL_LEVEL_UNARMED`
+
+##### SKILL_EXP
+Character wide skill exp gain modifier.
+`base_value` is the exp gained by whatever is being done
+Warning: this value can only be multiplied, not added
+In addition there are the following children of this enchantment
+- `SKILL_EXP_BARTER`
+- `SKILL_EXP_SPEECH`
+- `SKILL_EXP_COMPUTER`
+- `SKILL_EXP_FIRSTAID`
+- `SKILL_EXP_MECHANICS`
+- `SKILL_EXP_TRAPS`
+- `SKILL_EXP_DRIVING`
+- `SKILL_EXP_SWIMMING`
+- `SKILL_EXP_FABRICATION`
+- `SKILL_EXP_COOKING`
+- `SKILL_EXP_TAILOR`
+- `SKILL_EXP_SURVIVAL`
+- `SKILL_EXP_ELECTRONICS`
+- `SKILL_EXP_ARCHERY`
+- `SKILL_EXP_GUN`
+- `SKILL_EXP_LAUNCHER`
+- `SKILL_EXP_PISTOL`
+- `SKILL_EXP_RIFLE`
+- `SKILL_EXP_SHOTGUN`
+- `SKILL_EXP_SMG`
+- `SKILL_EXP_THROW`
+- `SKILL_EXP_MELEE`
+- `SKILL_EXP_BASHING`
+- `SKILL_EXP_DODGE`
+- `SKILL_EXP_STABBING`
+- `SKILL_EXP_UNARMED`
 
 #### Item values
 
