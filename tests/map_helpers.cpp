@@ -43,9 +43,9 @@ void clear_vehicles()
 
 void wipe_map_terrain()
 {
-    map &here = get_map();
+    auto &here = get_map();
     const int mapsize = here.getmapsize() * SEEX;
-    for( int z = -1; z <= OVERMAP_HEIGHT; ++z ) {
+    for( int z = -2; z <= OVERMAP_HEIGHT; ++z ) {
         const ter_id terrain = z == 0 ? t_grass : z < 0 ? t_rock : t_open_air;
         for( int x = 0; x < mapsize; ++x ) {
             for( int y = 0; y < mapsize; ++y ) {
@@ -76,7 +76,7 @@ void clear_npcs()
 
 void clear_fields( const int zlevel )
 {
-    map &here = get_map();
+    auto &here = get_map();
     const int mapsize = here.getmapsize();
     for( int x = 0; x < mapsize; ++x ) {
         for( int y = 0; y < mapsize; ++y ) {
@@ -157,7 +157,16 @@ void put_player_underground()
 {
     // Make sure the player doesn't block the path of the monster being tested.
     g->u.setpos( map_local_to_abs( get_map(),
-                                   tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, -2 ) ) );
+                                   tripoint_bub_ms( g_half_mapsize_x + SEEX - 1,
+                                           g_half_mapsize_y + SEEY - 1, -2 ) ) );
+}
+
+auto move_player_out_of_the_way() -> void
+{
+    auto &here = get_map();
+    g->u.setpos( map_local_to_abs( here,
+                                   tripoint_bub_ms( g_half_mapsize_x + SEEX - 1,
+                                           g_half_mapsize_y + SEEY - 1, here.get_abs_sub().z() ) ) );
 }
 
 monster &spawn_test_monster( const std::string &monster_type, const tripoint_bub_ms &start )

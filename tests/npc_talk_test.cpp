@@ -40,13 +40,13 @@ static const efftype_id effect_infected( "infected" );
 static const trait_id trait_PROF_FED( "PROF_FED" );
 static const trait_id trait_PROF_SWAT( "PROF_SWAT" );
 
-static npc &create_test_talker()
+static auto create_test_talker( const point_bub_ms &talker_pos ) -> npc &
 {
     const string_id<npc_template> test_talker( "test_talker" );
-    const character_id model_id = get_map().place_npc( point_bub_ms( 25, 25 ), test_talker, true );
+    const auto model_id = get_map().place_npc( talker_pos, test_talker, true );
     g->load_npcs();
 
-    npc *model_npc = g->find_npc( model_id );
+    auto *model_npc = g->find_npc( model_id );
     REQUIRE( model_npc != nullptr );
 
     for( const trait_id &tr : model_npc->get_mutations() ) {
@@ -90,18 +90,19 @@ static void change_om_type( const std::string &new_type )
     ACTIVE_OVERMAP_BUFFER.ter_set( omt_pos, oter_id( new_type ) );
 }
 
-static npc &prep_test( dialogue &d )
+static auto prep_test( dialogue &d ) -> npc &
 {
     clear_vehicles();
-    avatar &player_character = get_avatar();
+    auto &player_character = get_avatar();
     REQUIRE_FALSE( player_character.in_vehicle );
 
-    const tripoint_bub_ms test_origin( 15, 15, 0 );
+    const auto test_origin = tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y,
+                             get_map().get_abs_sub().z() );
     player_character.setpos( test_origin );
 
     g->faction_manager_ptr->create_if_needed();
 
-    npc &talker_npc = create_test_talker();
+    auto &talker_npc = create_test_talker( player_character.bub_pos().xy() + point( 5, 0 ) );
 
     d.alpha = &player_character;
     d.beta = &talker_npc;

@@ -744,7 +744,13 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "flintlock_pouch_reenactor",
-    "entries": [ { "item": "flintlock_ammo", "charges": 20 } ]
+    "entries": [ { "item": "flintlock_ammo", "charges": 29 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "flintlock_pouch_pirate",
+    "entries": [ { "item": "flintlock_ammo", "charges": 24 } ]
   },
   {
     "type": "item_group",
@@ -781,7 +787,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "flintlock_pouch_skyfarer",
-    "entries": [ { "item": "36navy", "charges": 16 } ]
+    "entries": [ { "item": "36navy", "charges": 19 } ]
   },
   {
     "type": "item_group",
@@ -824,6 +830,12 @@
     "subtype": "collection",
     "id": "quiver_monster_hunter_2",
     "entries": [ { "item": "arrow_stinger", "charges": 20 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "bandolier_shuriken_ninja",
+    "entries": [ { "item": "shuriken", "count": 12 } ]
   },
   {
     "type": "item_group",
@@ -1467,7 +1479,18 @@
     ],
     "items": {
       "both": {
-        "items": [ "dress_shirt", "pants", "socks", "boots", "coat_lab", "gloves_rubber", "glasses_safety", "smart_phone", "wristwatch" ],
+        "items": [
+          "dress_shirt",
+          "pants",
+          "socks",
+          "boots",
+          "coat_lab",
+          "gloves_rubber",
+          "glasses_safety",
+          "smart_phone",
+          "wristwatch",
+          "pen"
+        ],
         "entries": [ { "item": "medium_battery_cell", "ammo-item": "battery", "charges": 500, "container-item": "chemistry_set" } ]
       },
       "male": [ "briefs" ],
@@ -1810,8 +1833,7 @@
         "entries": [
           { "item": "cutlass", "custom-flags": [ "auto_wield" ] },
           { "item": "baldric_holster", "contents-group": "pistols_pirate" },
-          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 4 }
+          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_pirate" }
         ]
       }
     },
@@ -2766,7 +2788,8 @@
         "bandages",
         "aspirin",
         "grahmcrackers",
-        "stethoscope"
+        "stethoscope",
+        "pen"
       ],
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
@@ -2970,7 +2993,9 @@
     "age": { "min": 22, "max": 26 },
     "skills": [ { "level": 4, "name": "electronics" }, { "level": 2, "name": "fabrication" }, { "level": 2, "name": "computer" } ],
     "items": {
-      "both": { "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file" ] },
+      "both": {
+        "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file", "pen" ]
+      },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
     }
@@ -2984,7 +3009,9 @@
     "age": { "min": 22, "max": 26 },
     "skills": [ { "level": 4, "name": "mechanics" }, { "level": 2, "name": "fabrication" }, { "level": 2, "name": "computer" } ],
     "items": {
-      "both": { "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file" ] },
+      "both": {
+        "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file", "pen" ]
+      },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
     }
@@ -3469,7 +3496,7 @@
     "points": 0,
     "skills": [ { "level": 4, "name": "barter" } ],
     "items": {
-      "both": { "items": [ "suit", "knit_scarf", "socks", "dress_shoes", "smart_phone", "wristwatch" ] },
+      "both": { "items": [ "suit", "knit_scarf", "socks", "dress_shoes", "smart_phone", "wristwatch", "pen" ] },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     }
@@ -3782,7 +3809,8 @@
           "story_book",
           "smart_phone",
           "howto_computer",
-          "novel_coa"
+          "novel_coa",
+          "pen"
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -3802,7 +3830,7 @@
     "forbidden_traits": [ "CARRY_PERMIT" ],
     "items": {
       "both": {
-        "items": [ "pants", "tshirt", "socks", "sneakers", "backpack", "wristwatch", "smart_phone" ],
+        "items": [ "pants", "tshirt", "socks", "sneakers", "backpack", "wristwatch", "smart_phone", "pen" ],
         "entries": [ { "contents-group": [ "manuals_school", "textbooks_school", "light_reading" ], "item": "box_medium" } ]
       },
       "male": [ "boxer_shorts" ],
@@ -4154,7 +4182,7 @@
     "skills": [ { "level": 2, "name": "barter" }, { "level": 2, "name": "speech" } ],
     "no_bonus": "teleumbrella",
     "items": {
-      "both": [ "socks", "suit", "dress_shoes", "knit_scarf", "briefcase", "file", "teleumbrella" ],
+      "both": [ "socks", "suit", "dress_shoes", "knit_scarf", "briefcase", "file", "teleumbrella", "pen" ],
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
     }
@@ -5025,7 +5053,8 @@
         "wristwatch",
         "smart_phone",
         "briefcase",
-        "file"
+        "file",
+        "pen"
       ],
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
@@ -6016,7 +6045,6 @@
         "entries": [
           { "item": "rifle_flintlock", "ammo-item": "flintlock_ammo", "charges": 1, "contents-item": "shoulder_strap" },
           { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 9 },
           { "item": "hatchet", "container-item": "axe_ring" },
           { "item": "vinegar", "container-item": "bottle_plastic_small" },
           { "item": "lamp_oil", "container-item": "bottle_plastic_small" }
@@ -6081,7 +6109,6 @@
         "entries": [
           { "item": "rifle_flintlock", "ammo-item": "flintlock_ammo", "charges": 1, "contents-item": "shoulder_strap" },
           { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 9 },
           { "item": "hatchet", "container-item": "axe_ring" },
           { "item": "vinegar", "container-item": "bottle_plastic_small" },
           { "item": "lamp_oil", "container-item": "bottle_plastic_small" }
@@ -6120,7 +6147,7 @@
         ],
         "entries": [
           { "item": "tanto_inferior", "container-item": "bootsheath" },
-          { "item": "shuriken", "count": 12 },
+          { "item": "bandolier_knife", "contents-group": "bandolier_shuriken_ninja" },
           { "item": "katana_inferior", "custom-flags": [ "auto_wield" ] }
         ]
       },
@@ -6159,8 +6186,7 @@
         "entries": [
           { "item": "cutlass_inferior", "custom-flags": [ "auto_wield" ] },
           { "item": "baldric_holster", "contents-group": "pistols_pirate" },
-          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 4 }
+          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_pirate" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -6200,8 +6226,7 @@
         "entries": [
           { "item": "cutlass_inferior", "custom-flags": [ "auto_wield" ] },
           { "item": "baldric_holster", "contents-group": "pistols_pirate" },
-          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" },
-          { "item": "flintlock_ammo", "charges": 4 }
+          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_pirate" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -6386,7 +6411,8 @@
         "mbag",
         "water_mineral",
         "smart_phone",
-        "money_bundle"
+        "money_bundle",
+        "pen"
       ],
       "male": [ "briefs" ],
       "female": [ "panties" ]
@@ -6430,7 +6456,8 @@
           "knit_scarf",
           "backpack",
           "textbook_chemistry",
-          "wristwatch"
+          "wristwatch",
+          "pen"
         ]
       },
       "male": [ "briefs" ],
@@ -6459,7 +6486,8 @@
           "backpack",
           "smart_phone",
           "mag_electronics",
-          "wristwatch"
+          "wristwatch",
+          "pen"
         ]
       },
       "male": [ "briefs" ],
@@ -6503,7 +6531,7 @@
     "points": 0,
     "items": {
       "both": {
-        "items": [ "pants", "dress_shirt", "smart_phone", "blazer", "socks", "dress_shoes", "wristwatch" ],
+        "items": [ "pants", "dress_shirt", "smart_phone", "blazer", "socks", "dress_shoes", "wristwatch", "pen" ],
         "entries": [ { "item": "light_disposable_cell", "ammo-item": "battery", "charges": 300, "container-item": "camera_pro" } ]
       },
       "male": [ "boxer_shorts" ],
@@ -6784,7 +6812,8 @@
           "dnd_handbook",
           "smart_phone",
           "wristwatch",
-          "RPG_die"
+          "RPG_die",
+          "pen"
         ]
       },
       "male": [ "briefs" ],
@@ -6810,7 +6839,7 @@
       { "level": 1, "name": "throw" }
     ],
     "items": {
-      "both": [ "jeans", "polo_shirt", "socks", "dress_shoes", "mbag", "caffeine", "smart_phone", "wristwatch" ],
+      "both": [ "jeans", "polo_shirt", "socks", "dress_shoes", "mbag", "caffeine", "smart_phone", "wristwatch", "pen" ],
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     }
@@ -6959,7 +6988,8 @@
         "tie_skinny",
         "file",
         "ref_lighter",
-        "cigar"
+        "cigar",
+        "pen"
       ],
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
@@ -7345,7 +7375,18 @@
     ],
     "items": {
       "both": {
-        "items": [ "dress_shirt", "pants", "socks", "boots", "coat_lab", "gloves_rubber", "glasses_safety", "smart_phone", "wristwatch" ],
+        "items": [
+          "dress_shirt",
+          "pants",
+          "socks",
+          "boots",
+          "coat_lab",
+          "gloves_rubber",
+          "glasses_safety",
+          "smart_phone",
+          "wristwatch",
+          "pen"
+        ],
         "entries": [
           { "item": "medium_battery_cell", "ammo-item": "battery", "charges": 500, "container-item": "chemistry_set" },
           { "item": "scalpel", "custom-flags": [ "auto_wield" ] }
@@ -8119,7 +8160,8 @@
           { "item": "water_clean", "container-item": "canteen" },
           { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
           { "item": "legpouch_large", "contents-group": "army_mags_m17" },
-          { "item": "militarymap" }
+          { "item": "militarymap" },
+          { "item": "pen" }
         ]
       },
       "male": { "entries": [ { "item": "boxer_shorts" } ] },
@@ -8420,7 +8462,8 @@
           "kevlar",
           "socks",
           "dress_shoes",
-          "briefcase"
+          "briefcase",
+          "pen"
         ],
         "entries": [
           { "item": "glock_19", "ammo-item": "9mm", "container-item": "holster", "charges": 15 },

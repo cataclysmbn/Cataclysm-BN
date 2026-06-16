@@ -4209,6 +4209,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     bool pixel_minimap_changed = false;
     bool terminal_size_changed = false;
     bool force_tile_change = false;
+    bool colored_lighting_changed = false;
 
     for( auto &iter : OPTIONS_OLD ) {
         if( iter.second != OPTIONS[iter.first] ) {
@@ -4242,6 +4243,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             } else if( iter.first == "TERMINAL_X" || iter.first == "TERMINAL_Y" ) {
                 terminal_size_changed = true;
             }
+            if( iter.first == "COLORED_LIGHTING" || iter.first == "USE_TILES" ) {
+                colored_lighting_changed = true;
+            }
         }
     }
     for( auto &iter : WOPTIONS_OLD ) {
@@ -4263,12 +4267,16 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                 world_generator->active_world->info->WORLD_OPTIONS = ACTIVE_WORLD_OPTIONS;
                 world_generator->active_world->info->save();
             }
+            if( ingame && colored_lighting_changed ) {
+                g->m.invalidate_lightmap_caches();
+            }
             g->on_options_changed();
         } else {
             lang_changed = false;
             terminal_size_changed = false;
             used_tiles_changed = false;
             pixel_minimap_changed = false;
+            colored_lighting_changed = false;
             OPTIONS = OPTIONS_OLD;
             if( ingame && world_options_changed ) {
                 ACTIVE_WORLD_OPTIONS = WOPTIONS_OLD;

@@ -24,11 +24,10 @@ TEST_CASE( "post_death_explosion_does_not_move_avatar_before_follower_takeover",
     clear_all_state();
     override_option opt( "OLD_EXPLOSIONS", "false" );
     clear_map();
-    put_player_underground();
+    move_player_out_of_the_way();
 
     avatar &you = get_avatar();
     const auto cleanup_test_state = on_out_of_scope( []() {
-        g->vertical_shift( 0 );
         clear_all_state();
         get_avatar().setID( character_id(), true );
     } );
@@ -74,7 +73,7 @@ TEST_CASE( "explosion_flung_items_damage_creatures", "[explosion][damage]" )
 {
     clear_all_state();
     override_option opt( "OLD_EXPLOSIONS", "false" );
-    put_player_underground();
+    move_player_out_of_the_way();
     map &here = get_map();
 
     const tripoint_bub_ms explosion_center( 30, 30, 0 );

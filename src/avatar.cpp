@@ -198,6 +198,11 @@ void avatar::control_npc( npc &np )
     g->remove_npc_follower( getID() );
     // the previous avatar character is now a follower (unless they're dead)
     const bool swapped_out_character_was_dead = avatar_was_dead || np.is_dead_state();
+    // swap_character moved raw position data without running npc::setpos().
+    // Put the NPC object back at its old absolute location first so setpos()
+    // can update overmapbuffer membership when the old avatar body is restored.
+    np.Character::setpos( controlled_npc_pos );
+    np.setpos( previous_avatar_pos );
     if( swapped_out_character_was_dead ) {
         // Keep the newly controlled avatar in the current reality bubble while
         // the swapped-out dead character runs death side effects.
@@ -206,19 +211,14 @@ void avatar::control_npc( npc &np )
     } else {
         g->add_npc_follower( np.getID() );
         np.set_fac( faction_id( "your_followers" ) );
+        // After the swap the avatar already has controlled_npc_pos, so a plain
+        // setpos( controlled_npc_pos ) would be a no-op and skip update_map().
+        Character::setpos( previous_avatar_pos );
     }
     // perception and mutations may have changed, so reset light level caches
     g->reset_light_level();
-    // center the map on the new avatar character
-    if( swapped_out_character_was_dead ) {
-        auto map_local_pos = abs_to_map_local( get_map(), controlled_npc_pos );
-        g->vertical_shift( controlled_npc_pos.z() );
-        g->update_map( map_local_pos.x(), map_local_pos.y() );
-        setpos( controlled_npc_pos );
-    } else {
-        g->vertical_shift( bub_pos().z() );
-        g->update_map( *this );
-    }
+    // setpos() keeps the loaded map window aligned with the new avatar.
+    setpos( controlled_npc_pos );
 }
 
 void avatar::toggle_map_memory()

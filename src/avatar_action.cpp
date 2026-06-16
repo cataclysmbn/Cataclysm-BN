@@ -629,7 +629,6 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
         add_msg( m_good, _( "You are hiding in the %s." ), m.name( p ) );
     }
     you.setpos( p );
-    g->update_map( you );
 
     cata_event_dispatch::avatar_moves( you, m, you.abs_pos() );
 

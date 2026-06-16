@@ -4,12 +4,15 @@
 #include <memory>
 #include <optional>
 #include <queue>
+#include <ranges>
 #include <vector>
 
 #include "coordinates.h"
 #include "game.h"
 #include "game_constants.h"
 #include "map.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "map_iterator.h"
 #include "point.h"
 #include "submap.h"
@@ -33,6 +36,8 @@ static constexpr std::array<point_rel_ms, 8> DIRS_2D = {
 decltype( Pathfinding::d_maps_store ) Pathfinding::d_maps_store = {};
 decltype( Pathfinding::d_maps ) Pathfinding::d_maps = {};
 decltype( Pathfinding::z_area ) Pathfinding::z_area = {};
+decltype( Pathfinding::z_caches_dirty ) Pathfinding::z_caches_dirty = true;
+decltype( Pathfinding::z_caches_include_open_air ) Pathfinding::z_caches_include_open_air = false;
 decltype( Pathfinding::z_caches ) Pathfinding::z_caches = {};
 decltype( Pathfinding::z_caches_open_air ) Pathfinding::z_caches_open_air = {};
 decltype( Pathfinding::cached_closest_z_changes ) Pathfinding::cached_closest_z_changes = {};
@@ -57,6 +62,85 @@ static constexpr bool is_inf( float x )
 #endif
 }
 
+namespace
+{
+
+struct pathfinding_tile {
+    ter_id terrain;
+    furn_id furniture;
+    trap_id trap;
+    optional_vpart_position vehicle_part;
+    int move_cost = 0;
+
+    auto vehicle_ptr() const -> vehicle * { // *NOPAD*
+        if( !vehicle_part ) {
+            return nullptr;
+        }
+        return &vehicle_part->vehicle();
+    }
+
+    auto part_index() const -> int {
+        if( !vehicle_part ) {
+            return -1;
+        }
+        return static_cast<int>( vehicle_part->part_index() );
+    }
+};
+
+auto pathfinding_lookup_options() -> mapbuffer_lookup_options
+{
+    return { .mode = mapbuffer_lookup_mode::simulated_only };
+}
+
+auto get_pathfinding_tile( mapbuffer &buffer, const tripoint_abs_ms &pos )
+-> std::optional<pathfinding_tile>
+{
+    const auto options = pathfinding_lookup_options();
+    const auto terrain = buffer.get_ter( pos, options );
+    const auto furniture = buffer.get_furn( pos, options );
+    const auto move_cost = buffer.move_cost( pos, options );
+    if( !terrain || !furniture || !move_cost ) {
+        return std::nullopt;
+    }
+
+    return pathfinding_tile {
+        .terrain = *terrain,
+        .furniture = *furniture,
+        .trap = buffer.get_trap( pos, options ).value_or( tr_null ),
+        .vehicle_part = buffer.veh_at( pos, options ),
+        .move_cost = *move_cost,
+    };
+}
+
+auto passable_ter_furn( const ter_id &terrain_id, const furn_id &furniture_id ) -> bool
+{
+    const auto &terrain = terrain_id.obj();
+    if( terrain.movecost == 0 ) {
+        return false;
+    }
+
+    const auto &furniture = furniture_id.obj();
+    if( furniture.movecost < 0 ) {
+        return false;
+    }
+
+    return terrain.movecost + furniture.movecost > 0;
+}
+
+auto passable_ter_furn_at( mapbuffer &buffer, const tripoint_abs_ms &pos ) -> bool
+{
+    const auto options = pathfinding_lookup_options();
+    const auto terrain = buffer.get_ter( pos, options );
+    const auto furniture = buffer.get_furn( pos, options );
+    if( !terrain || !furniture ) {
+        return false;
+    }
+
+    return passable_ter_furn( *terrain, *furniture );
+}
+
+} // namespace
+
 // PathfindingSettings impls
 int PathfindingSettings::z_move_type() const
 {
@@ -71,9 +155,9 @@ constexpr bool RouteSettings::is_relative_search_domain() const
     return !( this->search_cone_angle >= 180. ||
               is_inf( this->search_radius_coeff ) );
 }
-constexpr bool RouteSettings::is_in_search_cone( const point_bub_ms start,
-        const point_bub_ms pos,
-        const point_bub_ms end ) const
+constexpr bool RouteSettings::is_in_search_cone( const point_abs_ms start,
+        const point_abs_ms pos,
+        const point_abs_ms end ) const
 {
     assert( 0.0 <= this->search_cone_angle );
 
@@ -100,22 +184,22 @@ constexpr bool RouteSettings::is_in_search_cone( const point_bub_ms start,
 
     return -max_cone_angle <= deviation && deviation <= max_cone_angle;
 }
-constexpr bool RouteSettings::is_in_search_radius( const point_bub_ms start,
-        const point_bub_ms pos,
-        const point_bub_ms end ) const
+constexpr bool RouteSettings::is_in_search_radius( const point_abs_ms start,
+        const point_abs_ms pos,
+        const point_abs_ms end ) const
 {
     if( is_inf( search_radius_coeff ) ) {
         return true;
     }
 
-    const auto midpoint = point_bub_ms( ( end.raw() + start.raw() ) / 2 );
+    const auto midpoint = point_abs_ms( ( end.raw() + start.raw() ) / 2 );
 
     const float objective_distance =
-        rl_dist_exact( tripoint_bub_ms( start, 0 ), tripoint_bub_ms( end, 0 ) );
+        rl_dist_exact( tripoint_abs_ms( start, 0 ), tripoint_abs_ms( end, 0 ) );
     const float search_radius =
         ( objective_distance * this->search_radius_coeff ) / 2;
     const float distance_to_objective =
-        rl_dist_exact( tripoint_bub_ms( pos, 0 ), tripoint_bub_ms( midpoint, 0 ) );
+        rl_dist_exact( tripoint_abs_ms( pos, 0 ), tripoint_abs_ms( midpoint, 0 ) );
 
     return distance_to_objective <= search_radius;
 }
@@ -145,26 +229,31 @@ unsigned int RouteSettings::rank_weighted_rng( const unsigned int n ) const
     return selected_n % n;
 }
 /// Pathfinding: verifications
-bool Pathfinding::in_bounds( const point_bub_ms &p )
+bool Pathfinding::in_bounds( const point_abs_ms &p )
 {
     // Specialized for pathfinding
+    const auto offset = this->map_pos_offset( p );
+    if( offset.x() < -1 || offset.x() > this->map_x_ || offset.y() < -1 ||
+        offset.y() > this->map_y_ ) {
+        return false;
+    }
     return this->tile_state_at( p ) != State::BOUNDS;
 }
 bool Pathfinding::is_in_limited_domain(
-    const point_bub_ms &start, const point_bub_ms &p, const RouteSettings &route_settings )
+    const point_abs_ms &start, const point_abs_ms &p, const RouteSettings &route_settings )
 {
     // Could be NaN if max_f_coeff = INFINITY * 0
     const float max_f = route_settings.max_f_coeff * (
                             route_settings.f_limit_based_on_max_dist ?
                             route_settings.max_dist :
-                            rl_dist_exact( tripoint_bub_ms( start, this->z ), tripoint_bub_ms( this->dest, this->z ) )
+                            rl_dist_exact( tripoint_abs_ms( start, this->z ), tripoint_abs_ms( this->dest, this->z ) )
                         );
 
     const bool is_in_f_limited_area = is_nan( max_f ) || this->get_f_unbiased( p ) <= max_f;
     const bool is_in_search_radius = route_settings.is_in_search_radius( start, p, this->dest );
     const bool is_in_search_cone = route_settings.is_in_search_cone( start, p, this->dest );
 
-    return is_in_f_limited_area || is_in_search_radius || is_in_search_cone;
+    return is_in_f_limited_area && is_in_search_radius && is_in_search_cone;
 }
 
 /// Pathfinding: constructor
@@ -176,30 +265,38 @@ Pathfinding::Pathfinding( int mx, int my )
 {}
 
 /// Pathfinding: map indexing
-float &Pathfinding::p_at( const point_bub_ms &p )
+point_rel_ms Pathfinding::map_pos_offset( const point_abs_ms &p ) const
 {
-    return this->p_map[p.y() * this->map_x_ + p.x()];
-};
-float &Pathfinding::g_at( const point_bub_ms &p )
+    return p - this->origin;
+}
+
+float &Pathfinding::p_at( const point_abs_ms &p )
 {
-    return this->g_map[p.y() * this->map_x_ + p.x()];
+    const auto offset = this->map_pos_offset( p );
+    return this->p_map[offset.y() * this->map_x_ + offset.x()];
 };
-float Pathfinding::get_f_unbiased( const point_bub_ms &p )
+float &Pathfinding::g_at( const point_abs_ms &p )
+{
+    const auto offset = this->map_pos_offset( p );
+    return this->g_map[offset.y() * this->map_x_ + offset.x()];
+};
+float Pathfinding::get_f_unbiased( const point_abs_ms &p )
 {
     return this->p_at( p ) + this->g_at( p );
 }
-float Pathfinding::get_f_biased( const point_bub_ms &p, const point_bub_ms &start,
+float Pathfinding::get_f_biased( const point_abs_ms &p, const point_abs_ms &start,
                                  float h_coeff )
 {
     return this->get_f_unbiased( p ) + ( h_coeff * rl_dist_exact(
-            tripoint_bub_ms( p, 0 ), tripoint_bub_ms( start, 0 ) ) );
+            tripoint_abs_ms( p, 0 ), tripoint_abs_ms( start, 0 ) ) );
 }
-Pathfinding::State &Pathfinding::tile_state_at( const point_bub_ms &p )
+Pathfinding::State &Pathfinding::tile_state_at( const point_abs_ms &p )
 {
-    return this->tile_state[( p.y() + 1 ) * ( this->map_x_ + 2 ) + ( p.x() + 1 )];
+    const auto offset = this->map_pos_offset( p );
+    return this->tile_state[( offset.y() + 1 ) * ( this->map_x_ + 2 ) + ( offset.x() + 1 )];
 }
 /// Pathfinding: d-map wide changes
-void Pathfinding::produce_d_map( point_bub_ms dest, int z, PathfindingSettings settings )
+void Pathfinding::produce_d_map( point_abs_ms dest, int z, PathfindingSettings settings )
 {
     if( Pathfinding::d_maps_store.empty() ) {
         std::unique_ptr<Pathfinding> d_map = std::make_unique<Pathfinding>( g_mapsize_x, g_mapsize_y );
@@ -211,6 +308,7 @@ void Pathfinding::produce_d_map( point_bub_ms dest, int z, PathfindingSettings s
 
     d_map->dest = dest;
     d_map->z = z;
+    d_map->origin = project_to<coords::ms>( get_map().get_abs_sub() ).xy();
     d_map->settings = settings;
 
     Pathfinding::d_maps.push_back( std::move( d_map ) );
@@ -234,12 +332,18 @@ void Pathfinding::clear_pool()
     clear_d_maps();
     Pathfinding::d_maps_store.clear();
 }
+void Pathfinding::mark_dirty_z_cache()
+{
+    Pathfinding::z_caches_dirty = true;
+    Pathfinding::z_caches_include_open_air = false;
+    Pathfinding::cached_closest_z_changes.clear();
+}
 void Pathfinding::reset_maps()
 {
     this->p_at( this->dest ) = 0.0;
     this->g_at( this->dest ) = 0.0;
 
-    for( const point_bub_ms &p : this->map_modify_set ) {
+    for( const point_abs_ms &p : this->map_modify_set ) {
         this->p_at( p ) = 0.0;
         this->g_at( p ) = 0.0;
     }
@@ -249,7 +353,7 @@ void Pathfinding::reset_tile_state()
 {
     this->tile_state_at( this->dest ) = State::UNVISITED;
 
-    for( const point_bub_ms &p : this->tile_state_modify_set ) {
+    for( const point_abs_ms &p : this->tile_state_modify_set ) {
         this->tile_state_at( p ) = State::UNVISITED;
     }
 
@@ -266,7 +370,7 @@ void Pathfinding::reset_tile_state()
     }
 }
 /// Pathfinding: Z-levels
-std::unordered_map<point_bub_ms, Pathfinding::ZLevelChangeOpenAirPair>
+std::unordered_map<point_abs_ms, Pathfinding::ZLevelChangeOpenAirPair>
 &Pathfinding::get_z_cache_open_air( const int z )
 {
     assert( -OVERMAP_DEPTH <= z && z <= OVERMAP_HEIGHT );
@@ -284,98 +388,62 @@ std::vector<Pathfinding::ZLevelChange> &Pathfinding::get_z_cache( const int z )
 void Pathfinding::update_z_caches( bool update_open_air )
 {
     const map &here = get_map();
+    auto &buffer = MAPBUFFER_REGISTRY.get( here.get_bound_dimension() );
 
     auto cur_z_area = project_to<coords::ms>( here.get_abs_sub().xy() );
 
-    if( cur_z_area == Pathfinding::z_area ) {
+    if( !Pathfinding::z_caches_dirty && cur_z_area == Pathfinding::z_area &&
+        ( !update_open_air || Pathfinding::z_caches_include_open_air ) ) {
         return;
     }
 
-    const auto anti_shift = tripoint_rel_ms( Pathfinding::z_area - cur_z_area, 0 );
-    const auto prev_z_area_local = ( Pathfinding::z_area - cur_z_area ).reinterpret_as<point_bub_ms>();
-    const auto prev_z_area_end_local = ( Pathfinding::z_area + point_rel_ms( g_mapsize_x,
-                                         g_mapsize_y ) - cur_z_area ).reinterpret_as<point_bub_ms>();
-    // This cuboid will contain negative values, it's fine
-    half_open_cuboid<tripoint_bub_ms> prev_z_volume_local(
-        tripoint_bub_ms( prev_z_area_local, -OVERMAP_DEPTH ),
-        tripoint_bub_ms( prev_z_area_end_local, OVERMAP_HEIGHT + 1 )
-    );
-
-    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-        std::vector<Pathfinding::ZLevelChange> &target = Pathfinding::get_z_cache( z );
-
-        // Shift Z-changes to match new coordinate system
-        for( Pathfinding::ZLevelChange &c : target ) {
-            c.from = c.from + anti_shift;
-            c.to = c.to + anti_shift;
-        }
-
-        // Remove Z-level changes that have gone out of bounds into unloaded regions
-        std::erase_if( target, [&here]( const auto & pair ) {
-            return !( here.inbounds( pair.from ) && here.inbounds( pair.to ) );
-        } );
-
-        if( update_open_air ) {
-            std::unordered_map<point_bub_ms, Pathfinding::ZLevelChangeOpenAirPair> &open_air_target =
-                Pathfinding::get_z_cache_open_air( z );
-            std::unordered_map<point_bub_ms, Pathfinding::ZLevelChangeOpenAirPair> new_z_cache_open_air;
-            for( auto pair : open_air_target ) {
-                auto shifted = pair.first + anti_shift;
-                // Remove open air Z-level changes that have gone out of bounds into unloaded regions
-                if( !here.inbounds( shifted ) ) {
-                    continue;
-                }
-                if( pair.second.reach_from_above.has_value() ) {
-                    pair.second.reach_from_above->from += anti_shift;
-                    pair.second.reach_from_above->to += anti_shift;
-                }
-                if( pair.second.reach_from_below.has_value() ) {
-                    pair.second.reach_from_below->from += anti_shift;
-                    pair.second.reach_from_below->to += anti_shift;
-                }
-
-                new_z_cache_open_air.emplace( shifted.xy(), pair.second );
-            }
-            open_air_target.swap( new_z_cache_open_air );
-        }
+    for( auto &target : Pathfinding::z_caches ) {
+        target.clear();
     }
+    for( auto &target : Pathfinding::z_caches_open_air ) {
+        target.clear();
+    }
+    Pathfinding::cached_closest_z_changes.clear();
 
-    // Finally, append newly loaded points
-    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+    for( const int z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         for( const tripoint_bub_ms &cur : here.points_on_zlevel( z ) ) {
             const auto bubble_pos = tripoint_bub_ms( cur );
-            if( prev_z_volume_local.contains( cur ) ) {
+            const auto abs_pos = map_local_to_abs( here, bubble_pos );
+            const auto cur_ter_id = buffer.get_ter( abs_pos, pathfinding_lookup_options() );
+            if( !cur_ter_id ) {
                 continue;
             }
-
-            const maptile &cur_tile = here.maptile_at( bubble_pos );
-            const auto &cur_ter = cur_tile.get_ter_t();
+            const auto &cur_ter = cur_ter_id->obj();
 
             if( update_open_air && cur_ter.has_flag( TFLAG_NO_FLOOR ) ) {
                 // Open air
                 const auto below_us = bubble_pos + tripoint_rel_ms::below();
+                const auto below_us_abs = abs_pos + tripoint_rel_ms::below();
 
                 if( !here.inbounds_z( below_us.z() ) ) {
                     continue;
                 }
 
-                if( here.impassable_ter_furn( below_us ) ) {
+                if( !passable_ter_furn_at( buffer, below_us_abs ) ) {
                     continue;
                 };
                 // We won't do vehicle checks for simplicity
 
-                const ZLevelChange going_to_below = ZLevelChange{ .from = cur, .to = below_us, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
-                const ZLevelChange reach_from_below = ZLevelChange{ .from = below_us, .to = cur, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                const ZLevelChange going_to_below = ZLevelChange{
+                    .from = abs_pos, .to = below_us_abs, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                const ZLevelChange reach_from_below = ZLevelChange{
+                    .from = below_us_abs, .to = abs_pos, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
 
                 // This is stored separately from other changes because it requires a different type of processing
-                Pathfinding::get_z_cache_open_air( z ).emplace( bubble_pos.xy(),
-                        Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
+                Pathfinding::get_z_cache_open_air( z ).emplace( abs_pos.xy(), Pathfinding::ZLevelChangeOpenAirPair{
+                    .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
 
                 auto &lower_level = Pathfinding::get_z_cache_open_air( z - 1 );
-                if( lower_level.contains( bubble_pos.xy() ) ) {
-                    lower_level[bubble_pos.xy()].reach_from_above = going_to_below;
+                if( lower_level.contains( abs_pos.xy() ) ) {
+                    lower_level[abs_pos.xy()].reach_from_above = going_to_below;
                 } else {
-                    lower_level.emplace( bubble_pos.xy(),  Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = std::nullopt, .reach_from_above = going_to_below } );
+                    lower_level.emplace( abs_pos.xy(), Pathfinding::ZLevelChangeOpenAirPair{
+                        .reach_from_below = std::nullopt, .reach_from_above = going_to_below } );
                 }
             } else if( cur_ter.has_flag( TFLAG_GOES_UP ) ) {
                 // Stair bullshitery
@@ -387,13 +455,19 @@ void Pathfinding::update_z_caches( bool update_open_air )
 
                 // 10 to maintain parity with legacy A*
                 // closest_points_first will ensure stairs above us directly will be hit first
-                for( const auto &maybe_stairs_p : closest_points_first( above_us, 10 ) ) {
-                    const maptile &maybe_stairs_tile = here.maptile_at( maybe_stairs_p );
-                    const auto &maybe_stair_ter = maybe_stairs_tile.get_ter_t();
+                const auto above_us_abs = abs_pos + tripoint_rel_ms::above();
+                for( const auto &maybe_stairs_abs : closest_points_first( above_us_abs, 10 ) ) {
+                    const auto maybe_stairs_ter = buffer.get_ter( maybe_stairs_abs,
+                                                  pathfinding_lookup_options() );
+                    if( !maybe_stairs_ter ) {
+                        continue;
+                    }
 
-                    if( maybe_stair_ter.has_flag( TFLAG_GOES_DOWN ) ) {
-                        const ZLevelChange stairs_up = ZLevelChange{ .from = cur, .to = maybe_stairs_p, .type = Pathfinding::ZLevelChange::Type::STAIRS };
-                        const ZLevelChange stairs_down = ZLevelChange{ .from = maybe_stairs_p, .to = cur, .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                    if( maybe_stairs_ter->obj().has_flag( TFLAG_GOES_DOWN ) ) {
+                        const ZLevelChange stairs_up = ZLevelChange{ .from = abs_pos, .to = maybe_stairs_abs,
+                                                                     .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const ZLevelChange stairs_down = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos,
+                                                                       .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         Pathfinding::get_z_cache( z ).push_back( stairs_down );
                         Pathfinding::get_z_cache( z + 1 ).push_back( stairs_up );
                         break;
@@ -409,13 +483,19 @@ void Pathfinding::update_z_caches( bool update_open_air )
 
                 // 10 to maintain parity with legacy A*
                 // closest_points_first will ensure stairs below us directly will be hit first
-                for( const tripoint_bub_ms &maybe_stairs_p : closest_points_first( below_us, 10 ) ) {
-                    const maptile &maybe_stairs_tile = here.maptile_at( maybe_stairs_p );
-                    const auto &maybe_stairs_ter = maybe_stairs_tile.get_ter_t();
+                const auto below_us_abs = abs_pos + tripoint_rel_ms::below();
+                for( const tripoint_abs_ms &maybe_stairs_abs : closest_points_first( below_us_abs, 10 ) ) {
+                    const auto maybe_stairs_ter = buffer.get_ter( maybe_stairs_abs,
+                                                  pathfinding_lookup_options() );
+                    if( !maybe_stairs_ter ) {
+                        continue;
+                    }
 
-                    if( maybe_stairs_ter.has_flag( TFLAG_GOES_UP ) ) {
-                        const ZLevelChange stairs_down = ZLevelChange{ .from = cur, .to = maybe_stairs_p, .type = Pathfinding::ZLevelChange::Type::STAIRS };
-                        const ZLevelChange stairs_up = ZLevelChange{ .from = maybe_stairs_p, .to = cur, .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                    if( maybe_stairs_ter->obj().has_flag( TFLAG_GOES_UP ) ) {
+                        const ZLevelChange stairs_down = ZLevelChange{ .from = abs_pos, .to = maybe_stairs_abs,
+                                                                       .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const ZLevelChange stairs_up = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos,
+                                                                     .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         Pathfinding::get_z_cache( z ).push_back( stairs_up );
                         Pathfinding::get_z_cache( z - 1 ).push_back( stairs_down );
                         break;
@@ -428,7 +508,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     continue;
                 }
 
-                const ZLevelChange ramp_up = ZLevelChange{ .from = cur, .to = above_us, .type = Pathfinding::ZLevelChange::Type::RAMP };
+                const ZLevelChange ramp_up = ZLevelChange{ .from = abs_pos, .to = abs_pos + tripoint_rel_ms::above(),
+                                                           .type = Pathfinding::ZLevelChange::Type::RAMP };
                 Pathfinding::get_z_cache( z + 1 ).push_back( ramp_up );
             } else if( cur_ter.has_flag( TFLAG_RAMP_DOWN ) ) {
                 const auto below_us = cur + tripoint_below;
@@ -437,32 +518,35 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     continue;
                 }
 
-                const ZLevelChange ramp_down = ZLevelChange{ .from = cur, .to = below_us, .type = Pathfinding::ZLevelChange::Type::RAMP };
+                const ZLevelChange ramp_down = ZLevelChange{ .from = abs_pos, .to = abs_pos + tripoint_rel_ms::below(),
+                                                             .type = Pathfinding::ZLevelChange::Type::RAMP };
                 Pathfinding::get_z_cache( z - 1 ).push_back( ramp_down );
             }
         }
     }
 
     Pathfinding::z_area = cur_z_area;
+    Pathfinding::z_caches_dirty = false;
+    Pathfinding::z_caches_include_open_air = update_open_air;
 }
 /// Pathfinding: main loops
 void Pathfinding::detect_culled_frontier(
-    const point_bub_ms &start, const RouteSettings &route_settings,
-    std::unordered_set<point_bub_ms> &out )
+    const point_abs_ms &start, const RouteSettings &route_settings,
+    std::unordered_set<point_abs_ms> &out )
 {
-    std::unordered_set<point_bub_ms> flood_fill;
-    std::vector<point_bub_ms> stack;
+    std::unordered_set<point_abs_ms> flood_fill;
+    std::vector<point_abs_ms> stack;
 
     flood_fill.insert( start );
     stack.push_back( start );
 
     // This is deliberately a depth-first search in order to fail quickly upon reaching map edge
     while( !stack.empty() ) {
-        const point_bub_ms p = stack.back();
+        const point_abs_ms p = stack.back();
         stack.pop_back();
 
         for( const auto &dir : DIRS_2D ) {
-            const point_bub_ms next = p + dir;
+            const point_abs_ms next = p + dir;
             if( !this->in_bounds( next ) ) {
                 // If we reached map edge, this means we're in an unclosed area
                 return;
@@ -492,7 +576,7 @@ void Pathfinding::detect_culled_frontier(
 }
 
 Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
-    const point_bub_ms &start,
+    const point_abs_ms &start,
     const RouteSettings &route_settings )
 {
     using Frontier = std::priority_queue<val_pair, std::vector<val_pair>, pair_greater_cmp_first>;
@@ -527,7 +611,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                 if( this->is_explored ) {
                     return ExpansionOutcome::NO_PATH_EXISTS;
                 }
-                for( const point_bub_ms &p : this->unbiased_frontier ) {
+                for( const point_abs_ms &p : this->unbiased_frontier ) {
                     biased_frontier.emplace( this->get_f_biased( p, start, route_settings.h_coeff ), p );
                 }
                 break;
@@ -552,9 +636,9 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
 
     // If this is not empty, we have encircled our target so don't bother expanding
     //   to tiles outside this area
-    std::unordered_set<point_bub_ms> unculled_area;
+    std::unordered_set<point_abs_ms> unculled_area;
     // If we happen to cull our search area, we'll store culled points here
-    std::unordered_set<point_bub_ms> culled_frontier;
+    std::unordered_set<point_abs_ms> culled_frontier;
     ExpansionOutcome result = ExpansionOutcome::UNSET;
 
     const bool can_open_doors = !is_inf( this->settings.door_open_cost );
@@ -563,6 +647,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
     const bool care_about_mobs = this->settings.mob_presence_penalty > 0;
     const bool care_about_traps = this->settings.trap_cost > 0;
     const map &here = get_map();
+    auto &buffer = MAPBUFFER_REGISTRY.get( here.get_bound_dimension() );
 
     while( !biased_frontier.empty() ) {
         // Periodically check if `start` is enclosed
@@ -571,7 +656,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
         if( ++it % 200 == 0 ) {
             this->detect_culled_frontier( start, route_settings, unculled_area );
         }
-        const point_bub_ms next_point = biased_frontier.top().second;
+        const point_abs_ms next_point = biased_frontier.top().second;
 
         biased_frontier.pop();
 
@@ -588,16 +673,14 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
             continue;
         }
 
-        const tripoint_bub_ms next_point_with_z = tripoint_bub_ms( next_point, this->z );
-
-        int _;
-        const vehicle *next_vehicle;
-        next_vehicle = here.veh_at_internal( tripoint_bub_ms( next_point_with_z ), _ );
+        const tripoint_abs_ms next_point_with_z = tripoint_abs_ms( next_point, this->z );
+        const auto next_vp = buffer.veh_at( next_point_with_z, pathfinding_lookup_options() );
+        const auto *next_vehicle = next_vp ? &next_vp->vehicle() : nullptr;
 
         for( const auto &dir : DIRS_2D ) {
             // It's cur_point because we're working backwards from destination
-            const point_bub_ms cur_point = next_point + dir;
-            const tripoint_bub_ms cur_point_with_z = tripoint_bub_ms( cur_point, this->z );
+            const point_abs_ms cur_point = next_point + dir;
+            const tripoint_abs_ms cur_point_with_z = tripoint_abs_ms( cur_point, this->z );
 
             if( !this->in_bounds( cur_point ) ) {
                 continue;
@@ -607,25 +690,30 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                 continue;
             }
 
-            int cur_vehicle_part;
-            const vehicle *cur_vehicle;
-            cur_vehicle = here.veh_at_internal( tripoint_bub_ms( cur_point_with_z ), cur_vehicle_part );
+            const auto maybe_new_tile = get_pathfinding_tile( buffer, cur_point_with_z );
+            if( !maybe_new_tile ) {
+                this->tile_state_at( cur_point ) = Pathfinding::State::INACCESSIBLE;
+                this->tile_state_modify_set.push_back( cur_point );
+                continue;
+            }
+            const auto &new_tile = *maybe_new_tile;
+            auto *const cur_vehicle = new_tile.vehicle_ptr();
+            const auto cur_vehicle_part = new_tile.part_index();
 
             {
                 bool is_move_valid = true;
 
-                // TODO: migrate pathfinding positions to abs so these conversions can use abs_to_mount
                 const bool is_valid_to_step_into_veh =
                     cur_vehicle == nullptr ?
                     true :
-                    cur_vehicle->allowed_move( cur_vehicle->bubble_to_mount( tripoint_bub_ms( cur_point_with_z ) ),
-                                               cur_vehicle->bubble_to_mount( tripoint_bub_ms( next_point_with_z ) ) );
+                    cur_vehicle->allowed_move( cur_vehicle->abs_to_mount( cur_point_with_z ),
+                                               cur_vehicle->abs_to_mount( next_point_with_z ) );
 
                 const bool is_valid_to_step_out_of_veh =
                     next_vehicle == nullptr ?
                     true :
-                    next_vehicle->allowed_move( next_vehicle->bubble_to_mount( tripoint_bub_ms( cur_point_with_z ) ),
-                                                next_vehicle->bubble_to_mount( tripoint_bub_ms( next_point_with_z ) ) );
+                    next_vehicle->allowed_move( next_vehicle->abs_to_mount( cur_point_with_z ),
+                                                next_vehicle->abs_to_mount( next_point_with_z ) );
 
                 is_move_valid &= is_valid_to_step_into_veh;
                 is_move_valid &= is_valid_to_step_out_of_veh;
@@ -636,10 +724,9 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                 }
             }
 
-            const maptile &new_tile = here.maptile_at_internal( tripoint_bub_ms( cur_point_with_z ) );
-            const auto &terrain = new_tile.get_ter_t();
-            const auto &furniture = new_tile.get_furn_t();
-            const int move_cost = here.move_cost_internal( furniture, terrain, cur_vehicle, cur_vehicle_part );
+            const auto &terrain = new_tile.terrain.obj();
+            const auto &furniture = new_tile.furniture.obj();
+            const auto move_cost = new_tile.move_cost;
 
             float cur_g = this->g_at( cur_point );
             // May be false for relative search, so we'll reuse g-values there
@@ -665,7 +752,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
 
                 if( care_about_traps && !std::isinf( cur_g ) ) {
                     const trap &maybe_ter_trap = terrain.trap.obj();
-                    const trap &maybe_trap = maybe_ter_trap.is_benign() ? new_tile.get_trap_t() : maybe_ter_trap;
+                    const trap &maybe_trap = maybe_ter_trap.is_benign() ? new_tile.trap.obj() : maybe_ter_trap;
                     const bool is_trap = !maybe_trap.is_benign();
 
                     cur_g += is_trap ? this->settings.trap_cost : 0.0;
@@ -696,11 +783,9 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                         const int obstacle_part = vpobst ? vpobst->part_index() : -1;
 
                         if( obstacle_part >= 0 ) {
-                            int _;
                             const bool part_is_door = cur_vehicle->part_flag( obstacle_part, VPFLAG_OPENABLE );
                             const bool part_opens_from_inside = cur_vehicle->part_flag( obstacle_part, "OPENCLOSE_INSIDE" );
-                            const bool is_cur_point_inside = here.veh_at_internal( tripoint_bub_ms( cur_point_with_z ),
-                                                             _ ) == next_vehicle;
+                            const bool is_cur_point_inside = cur_vehicle == next_vehicle;
                             const bool valid_to_open = part_is_door && ( part_opens_from_inside ? is_cur_point_inside : true );
 
                             if( can_open_doors && valid_to_open ) {
@@ -733,7 +818,8 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                         // Doors that can only be open from the inside
                         const bool door_opens_from_inside = terrain.has_flag( "OPENCLOSE_INSIDE" ) ||
                                                             furniture.has_flag( "OPENCLOSE_INSIDE" );
-                        const bool is_cur_point_inside = !here.is_outside( cur_point );
+                        const bool is_cur_point_inside = !here.is_outside( abs_to_map_local( here,
+                                                         cur_point_with_z ) );
                         const bool valid_to_open = door_opens_from_inside ? is_cur_point_inside : true;
                         if( valid_to_open ) {
                             obstacle_g = this->settings.door_open_cost;
@@ -801,12 +887,12 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
     // We will be rebuilding on next search anyway if we had a relative search this time
     if( this->domain == MapDomain::ABSOLUTE_DOMAIN ) {
         while( !biased_frontier.empty() ) {
-            const point_bub_ms p = biased_frontier.top().second;
+            const point_abs_ms p = biased_frontier.top().second;
             biased_frontier.pop();
 
             this->unbiased_frontier.push_back( p );
         }
-        for( const point_bub_ms &p : culled_frontier ) {
+        for( const point_abs_ms &p : culled_frontier ) {
             this->unbiased_frontier.push_back( p );
         }
     }
@@ -823,13 +909,13 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
 }
 
 
-std::vector<tripoint_bub_ms> Pathfinding::get_route_2d(
-    const point_bub_ms from, const point_bub_ms to, const int z,
+std::vector<tripoint_abs_ms> Pathfinding::get_route_2d(
+    const point_abs_ms from, const point_abs_ms to, const int z,
     const PathfindingSettings path_settings,
     const RouteSettings route_settings )
 {
     if( from == to ) {
-        return std::vector<tripoint_bub_ms> { tripoint_bub_ms( from, z ), tripoint_bub_ms( to, z ) };
+        return std::vector<tripoint_abs_ms> { tripoint_abs_ms( from, z ), tripoint_abs_ms( to, z ) };
     }
 
     auto d_map_it = std::ranges::find_if(
@@ -848,29 +934,29 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_2d(
 
     if( !d_map->is_in_limited_domain( from, from, route_settings ) ) {
         // This should only fail if max f-limit is failed
-        return std::vector<tripoint_bub_ms>();
+        return std::vector<tripoint_abs_ms>();
     }
 
     if( d_map->expand_2d_up_to( from, route_settings ) != ExpansionOutcome::PATH_FOUND ) {
-        return std::vector<tripoint_bub_ms>();
+        return std::vector<tripoint_abs_ms>();
     }
 
     const int chebyshev_distance = square_dist_fast(
-                                       tripoint_bub_ms( from, d_map->z ),
-                                       tripoint_bub_ms( d_map->dest, d_map->z ) );
+                                       tripoint_abs_ms( from, d_map->z ),
+                                       tripoint_abs_ms( d_map->dest, d_map->z ) );
     const float max_s = route_settings.max_s_coeff * chebyshev_distance;
 
-    std::vector<tripoint_bub_ms> result;
-    result.push_back( tripoint_bub_ms( from, d_map->z ) );
+    std::vector<tripoint_abs_ms> result;
+    result.push_back( tripoint_abs_ms( from, d_map->z ) );
 
-    point_bub_ms cur_point = from;
+    point_abs_ms cur_point = from;
     float cur_cost = d_map->get_f_unbiased( cur_point );
 
     while( cur_point != d_map->dest ) {
-        std::vector<std::pair<float, point_bub_ms>> candidates;
+        std::vector<std::pair<float, point_abs_ms>> candidates;
 
         for( const auto &dir : DIRS_2D ) {
-            const point_bub_ms next_point = cur_point + dir;
+            const point_abs_ms next_point = cur_point + dir;
             const bool is_in_bounds = d_map->in_bounds( next_point );
             if( !is_in_bounds ) {
                 continue;
@@ -906,7 +992,7 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_2d(
 
         const auto selected_pair = &candidates[route_settings.rank_weighted_rng( candidates.size() )];
 
-        result.push_back( tripoint_bub_ms( selected_pair->second, d_map->z ) );
+        result.push_back( tripoint_abs_ms( selected_pair->second, d_map->z ) );
         cur_point = selected_pair->second;
         cur_cost = selected_pair->first;
 
@@ -922,8 +1008,8 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_2d(
     return result;
 }
 
-std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
-    const tripoint_bub_ms from, const tripoint_bub_ms to,
+std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
+    const tripoint_abs_ms from, const tripoint_abs_ms to,
     const PathfindingSettings path_settings,
     const RouteSettings route_settings )
 {
@@ -936,12 +1022,12 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
     // Determine our Z-path
     std::vector<ZLevelChange> z_path;
     {
-        tripoint_bub_ms cur_origin = to;
-        point_bub_ms cur_origin_point = to.xy();
+        tripoint_abs_ms cur_origin = to;
+        point_abs_ms cur_origin_point = to.xy();
 
         while( cur_origin.z() != from.z() ) {
             Pathfinding::ZLevelChange best_z_change;
-            std::tuple<bool, int, tripoint_bub_ms> cache_pair{ we_go_up, path_settings.z_move_type(), cur_origin };
+            std::tuple<bool, int, tripoint_abs_ms> cache_pair{ we_go_up, path_settings.z_move_type(), cur_origin };
 
             if( Pathfinding::cached_closest_z_changes.contains( cache_pair ) ) {
                 best_z_change = Pathfinding::cached_closest_z_changes.at( cache_pair );
@@ -997,14 +1083,14 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
 
                 // Open air processing
                 if( path_settings.can_fly ) {
-                    std::unordered_map<point_bub_ms, ZLevelChangeOpenAirPair> &target =
+                    std::unordered_map<point_abs_ms, ZLevelChangeOpenAirPair> &target =
                         Pathfinding::get_z_cache_open_air( cur_origin.z() );
 
                     // There's a rare case where no valid non-open-air way exists to this Z-level
                     //   in which case `closest_points_first` would return a INT_MAX radius of points
                     //   causing an oopsie
                     // If that's the case, we have to iterate over open airs directly instead
-                    std::vector<point_bub_ms> source;
+                    std::vector<point_abs_ms> source;
                     const bool source_is_closest_points = !std::isinf( best_distance );
                     if( source_is_closest_points ) {
                         source = closest_points_first( cur_origin_point, static_cast<int>( best_distance ) );
@@ -1014,7 +1100,7 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
                         }
                     }
 
-                    for( const point_bub_ms &p : source ) {
+                    for( const point_abs_ms &p : source ) {
                         // Are we considering open airs that are already beyond our best known move?
                         //   only valid for closest_point movement since they're ordered
                         if( source_is_closest_points && square_dist( cur_origin_point, p ) > best_distance ) {
@@ -1025,13 +1111,13 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
                         }
                         Pathfinding::ZLevelChangeOpenAirPair z_pair = target[p];
                         if( we_go_up && z_pair.reach_from_below.has_value() ) {
-                            const float dist = rl_dist_exact( tripoint_bub_ms( cur_origin_point, 0 ), tripoint_bub_ms( p, 0 ) );
+                            const float dist = rl_dist_exact( tripoint_abs_ms( cur_origin_point, 0 ), tripoint_abs_ms( p, 0 ) );
                             if( dist < best_distance ) {
                                 best_z_change = *z_pair.reach_from_below;
                                 best_distance = dist;
                             }
                         } else if( !we_go_up && z_pair.reach_from_above.has_value() ) {
-                            const float dist = rl_dist_exact( tripoint_bub_ms( cur_origin_point, 0 ), tripoint_bub_ms( p, 0 ) );
+                            const float dist = rl_dist_exact( tripoint_abs_ms( cur_origin_point, 0 ), tripoint_abs_ms( p, 0 ) );
                             if( dist < best_distance ) {
                                 best_z_change = *z_pair.reach_from_above;
                                 best_distance = dist;
@@ -1043,7 +1129,7 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
                 if( is_inf( best_distance ) ) {
                     // No trivial Z path exists, give up
                     debugmsg_of( DL::Debug, "Failed to find a trivial path across z-levels" );
-                    return std::vector<tripoint_bub_ms>();
+                    return std::vector<tripoint_abs_ms>();
                 }
 
                 Pathfinding::cached_closest_z_changes.insert_or_assign( cache_pair, best_z_change );
@@ -1054,7 +1140,7 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
             constexpr auto unreasonable_z_hops = 1000;
             if( z_path.size() > unreasonable_z_hops ) {
                 debugmsg( "Failed to find a path with less than %d z-level changes", unreasonable_z_hops );
-                return std::vector<tripoint_bub_ms>();
+                return std::vector<tripoint_abs_ms>();
             }
 
             cur_origin = best_z_change.from;
@@ -1062,15 +1148,15 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
         }
     }
 
-    std::unordered_set<tripoint_bub_ms> ramp_excluded;
-    std::vector<tripoint_bub_ms> result;
+    std::unordered_set<tripoint_abs_ms> ramp_excluded;
+    std::vector<tripoint_abs_ms> result;
     // Now try to construct path
     {
-        point_bub_ms cur_pos = from.xy();
+        point_abs_ms cur_pos = from.xy();
         while( !z_path.empty() ) {
             const Pathfinding::ZLevelChange next = z_path.back();
 
-            const std::vector<tripoint_bub_ms> path_segment = Pathfinding::get_route_2d(
+            const std::vector<tripoint_abs_ms> path_segment = Pathfinding::get_route_2d(
                         cur_pos, next.from.xy(), next.from.z(),
                         path_settings, route_settings );
             if( path_segment.empty() ) {
@@ -1091,7 +1177,7 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
         }
 
         // We arrived to final Z level
-        const std::vector<tripoint_bub_ms> final_segment = Pathfinding::get_route_2d(
+        const std::vector<tripoint_abs_ms> final_segment = Pathfinding::get_route_2d(
                     cur_pos, to.xy(), to.z(),
                     path_settings, route_settings );
         if( final_segment.empty() ) {
@@ -1101,12 +1187,40 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
         result.insert( result.end(), final_segment.begin(), final_segment.end() );
 
         // Finally, remove ramp tiles
-        std::erase_if( result, [&ramp_excluded]( const tripoint_bub_ms & p ) {
+        std::erase_if( result, [&ramp_excluded]( const tripoint_abs_ms & p ) {
             return ramp_excluded.contains( p );
         } );
     }
     return result;
 }
+
+std::vector<tripoint_abs_ms> Pathfinding::route(
+    tripoint_abs_ms from, tripoint_abs_ms to,
+    const std::optional<PathfindingSettings> maybe_path_settings,
+    const std::optional<RouteSettings> maybe_route_settings )
+{
+    const map &here = get_map();
+
+    PathfindingSettings path_settings = maybe_path_settings.has_value() ? *maybe_path_settings :
+                                        PathfindingSettings();
+    RouteSettings route_settings = maybe_route_settings.has_value() ? *maybe_route_settings :
+                                   RouteSettings();
+
+    if( rl_dist_exact( from.raw(), to.raw() ) > route_settings.max_dist ) {
+        return std::vector<tripoint_abs_ms>();
+    }
+
+    if( !here.inbounds( abs_to_map_local( here, from ) ) ||
+        !here.inbounds( abs_to_map_local( here, to ) ) ) {
+        return std::vector<tripoint_abs_ms>();
+    }
+
+    if( from.z() == to.z() ) {
+        return Pathfinding::get_route_2d( from.xy(), to.xy(), from.z(),
+                                          path_settings, route_settings );
+    }
+    return Pathfinding::get_route_3d( from, to, path_settings, route_settings );
+};
 
 std::vector<tripoint_bub_ms> Pathfinding::route(
     tripoint_bub_ms from, tripoint_bub_ms to,
@@ -1118,18 +1232,12 @@ std::vector<tripoint_bub_ms> Pathfinding::route(
     here.clip_to_bounds( from );
     here.clip_to_bounds( to );
 
-    PathfindingSettings path_settings = maybe_path_settings.has_value() ? *maybe_path_settings :
-                                        PathfindingSettings();
-    RouteSettings route_settings = maybe_route_settings.has_value() ? *maybe_route_settings :
-                                   RouteSettings();
-
-    if( rl_dist_exact( from.raw(), to.raw() ) > route_settings.max_dist ) {
-        return std::vector<tripoint_bub_ms>();
+    const auto abs_route = Pathfinding::route( bub_to_abs( from ), bub_to_abs( to ),
+                           maybe_path_settings, maybe_route_settings );
+    std::vector<tripoint_bub_ms> result;
+    result.reserve( abs_route.size() );
+    for( const tripoint_abs_ms &p : abs_route ) {
+        result.push_back( abs_to_bub( p ) );
     }
-
-    if( from.z() == to.z() ) {
-        return Pathfinding::get_route_2d( from.xy(), to.xy(), from.z(),
-                                          path_settings, route_settings );
-    }
-    return Pathfinding::get_route_3d( from, to, path_settings, route_settings );
-};
+    return result;
+}

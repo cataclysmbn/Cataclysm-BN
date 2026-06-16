@@ -223,16 +223,14 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 
         grabbed_vehicle->adjust_zlevel( 1, actual_dir );
 
-        // Put the player on an invalid z-level so they can't collide with the
-        // grabbed vehicle. Moving to an arbitrary x/y no longer hides the avatar
-        // now that player bubble space is derived from avatar position.
-        const auto player_prev = u.abs_pos();
-        auto player_hidden = player_prev;
-        player_hidden.z() = OVERMAP_HEIGHT + 1;
-        u.setpos( player_hidden );
         std::vector<veh_collision> colls;
-        const bool failed = grabbed_vehicle->collision( colls, actual_dir, true );
-        u.setpos( player_prev );
+        const bool failed = grabbed_vehicle->collision( vehicle_collision_options{
+            .colls = colls,
+            .dp = actual_dir,
+            .just_detect = true,
+            .bash_floor = false,
+            .ignored_critter = &u,
+        } );
         if( !colls.empty() ) {
             blocker_name = colls.front().target_name;
         }

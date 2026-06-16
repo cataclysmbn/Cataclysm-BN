@@ -248,7 +248,8 @@ static void castLight(
     octant_xform xf,
     int row, float start, float end,
     float cumulative_transparency,
-    const exp_lookup *lookup )
+    const exp_lookup *lookup,
+    light_update_callback callback )
 {
     if( start < end ) {
         return;
@@ -342,6 +343,10 @@ static void castLight(
             } else {
                 model.update_quadrants( output_cache[idx], last_intensity, update_quad );
             }
+            if( callback.update != nullptr ) {
+                callback.update( callback.context, 0, current.x, current.y, idx, last_intensity,
+                                 update_quad );
+            }
 
             if( new_transparency == current_transparency ) {
                 continue;
@@ -364,7 +369,7 @@ static void castLight(
                 castLight<Out>( output_cache, input_array, blocked_array, sx, sy,
                                 offset, offset_distance, numerator, model, xf,
                                 distance + 1, start, trailing_edge,
-                                next_cumulative, next_lookup );
+                                next_cumulative, next_lookup, callback );
             }
 
             // Advance the leading edge.
@@ -392,7 +397,7 @@ static void castLight(
                             offset, offset_distance, numerator, model, xf,
                             distance + 1, start, end,
                             model.accumulate( lookup->transparency, current_transparency, distance ),
-                            nullptr );
+                            nullptr, callback );
             return;
         }
 
@@ -414,7 +419,8 @@ void castLightAll(
     int sx, int sy,
     point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
-    const exp_lookup *weather_lookup )
+    const exp_lookup *weather_lookup,
+    light_update_callback callback )
 {
     ZoneScoped;
 
@@ -436,7 +442,7 @@ void castLightAll(
 
         castLight<float>( output_cache, input_array, blocked_array, sx, sy,
                           offset, offset_distance, numerator, model, xf,
-                          1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast );
+                          1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast, callback );
     }
 }
 
@@ -448,7 +454,8 @@ void castLightOctants(
     point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     uint8_t octant_mask,
-    const exp_lookup *weather_lookup )
+    const exp_lookup *weather_lookup,
+    light_update_callback callback )
 {
     ZoneScoped;
 
@@ -471,7 +478,7 @@ void castLightOctants(
         }
         castLight<float>( output_cache, input_array, blocked_array, sx, sy,
                           offset, offset_distance, numerator, model, xf,
-                          1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast );
+                          1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast, callback );
     }
 }
 
@@ -494,7 +501,8 @@ static void cast_zlight_segment(
     float start_major = 0.0f, float end_major = 1.0f,
     float start_minor = 0.0f, float end_minor = 1.0f,
     float cumulative_transparency = LIGHT_TRANSPARENCY_OPEN_AIR,
-    int x_skip = -1, int z_skip = -1 )
+    int x_skip = -1, int z_skip = -1,
+    light_update_callback callback = {} )
 {
     if( start_major >= end_major || start_minor > end_minor ) {
         return;
@@ -600,8 +608,15 @@ static void cast_zlight_segment(
                     last_intensity = model.calc( numerator, cumulative_transparency, dist_2d );
                 }
 
-                float &out_cell = output_caches[z_index].at( current.x, current.y );
-                atomic_float_max<UseAtomic>( out_cell, last_intensity );
+                const auto idx = current.x * ic.sy + current.y;
+                if( output_caches[z_index].data != nullptr ) {
+                    float &out_cell = output_caches[z_index].at( current.x, current.y );
+                    atomic_float_max<UseAtomic>( out_cell, last_intensity );
+                }
+                if( callback.update != nullptr ) {
+                    callback.update( callback.context, z_index, current.x, current.y, idx,
+                                     last_intensity, quad );
+                }
 
                 if( new_transparency != current_transparency || new_floor != current_floor ) {
                     // ── Split: A (past rows), B (processed x so far), C (rest) ─
@@ -632,7 +647,7 @@ static void cast_zlight_segment(
                             start_major, std::min( mid_major, end_major ),
                             start_minor, end_minor,
                             next_cumulative,
-                            -1, -1 );
+                            -1, -1, callback );
                     }
 
                     const float mid_minor = ( current_transparency < new_transparency )
@@ -646,7 +661,7 @@ static void cast_zlight_segment(
                         distance,
                         std::max( mid_major, start_major ), end_major,
                         std::max( mid_minor, start_minor ), end_minor,
-                        cumulative_transparency, delta.x, delta.z );
+                        cumulative_transparency, delta.x, delta.z, callback );
 
                     // Continue with section B (already-processed x tiles).
                     if( delta.x == x_start ) {
@@ -677,7 +692,7 @@ static void cast_zlight_segment(
                         start_major, top_edge,
                         start_minor, end_minor,
                         next_cumulative,
-                        -1, -1 );
+                        -1, -1, callback );
                 }
                 start_major = ( delta.z + 0.5f ) / ( delta.y - 0.5001f );
                 if( start_major >= end_major ) {
@@ -708,26 +723,29 @@ void cast_zlight(
     const array_of_grids_of<const char> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
     const tripoint_bub_ms &origin, int offset_distance, float numerator,
-    const light_model &model )
+    const light_model &model,
+    light_update_callback callback )
 {
     ZoneScoped;
 
     // Ensure the z-distance lookup table matches current runtime settings.
     rebuild_zdist_table();
 
-    if( parallel_enabled ) {
+    if( parallel_enabled && !is_pool_worker_thread() ) {
         parallel_for_chunked( 0, static_cast<int>( k_zlight_xforms.size() ), 1, [&]( int i ) {
             cast_zlight_segment<true>(
                 output_caches, input_arrays, floor_caches, blocked_caches,
                 origin, offset_distance, numerator, model, k_zlight_xforms[i],
-                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
+                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1,
+                callback );
         } );
     } else {
         std::ranges::for_each( k_zlight_xforms, [&]( const octant_xform_3d & xf ) {
             cast_zlight_segment<false>(
                 output_caches, input_arrays, floor_caches, blocked_caches,
                 origin, offset_distance, numerator, model, xf,
-                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
+                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1,
+                callback );
         } );
     }
 }

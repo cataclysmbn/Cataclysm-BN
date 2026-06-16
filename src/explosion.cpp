@@ -11,6 +11,7 @@
 #include <optional>
 #include <queue>
 #include <random>
+#include <ranges>
 #include <set>
 #include <utility>
 #include <variant>
@@ -100,6 +101,9 @@ static const itype_id itype_rm13_armor_on( "rm13_armor_on" );
 
 namespace
 {
+
+const auto flag_CONSOLE = std::string( "CONSOLE" );
+
 auto is_dead_for_explosion( const Creature &critter ) -> bool
 {
     if( const auto *const character = dynamic_cast<const Character *>( &critter ) ) {
@@ -107,6 +111,13 @@ auto is_dead_for_explosion( const Creature &critter ) -> bool
     }
     return critter.is_dead_state();
 }
+
+auto is_emp_card_reader( const ter_id &terrain ) -> bool
+{
+    return terrain == t_card_science || terrain == t_card_military ||
+           terrain == t_card_industrial;
+}
+
 } // namespace
 
 static float obstacle_blast_percentage( float range, float distance )
@@ -1213,11 +1224,6 @@ void ExplosionProcess::run()
         }
     }
 
-    // Make sure the map is centered around the player
-    if( player_flung.has_value() ) {
-        g->update_map( *player_flung.value() );
-    }
-
     // Finally, recombine thrown items into full stacks again
     std::sort( recombination_targets.begin(), recombination_targets.end() );
     auto end = std::unique( recombination_targets.begin(), recombination_targets.end() );
@@ -1871,8 +1877,21 @@ void emp_blast( const tripoint_bub_ms &p )
 {
     map &here = get_map();
     Character &u = get_player_character();
-    const bool sight = u.sees( p );
-    if( here.has_flag( "CONSOLE", p ) ) {
+    const auto terrain = here.ter( p );
+    const auto console = here.has_flag( flag_CONSOLE, p );
+    const auto card_reader = is_emp_card_reader( terrain );
+    auto *const mon_ptr = g->critter_at<monster>( p );
+    const auto player_here = u.bub_pos() == p;
+    const auto has_items = here.has_items( p );
+
+    if( !console && !card_reader && mon_ptr == nullptr && !player_here && !has_items ) {
+        return;
+    }
+
+    const auto needs_sight = console || card_reader || mon_ptr != nullptr;
+    const bool sight = needs_sight && u.sees( p );
+
+    if( console ) {
         if( sight ) {
             add_msg( _( "The %s is rendered non-functional!" ), here.tername( p ) );
         }
@@ -1880,9 +1899,8 @@ void emp_blast( const tripoint_bub_ms &p )
         return;
     }
     // TODO: More terrain effects.
-    if( here.ter( p ) == t_card_science || here.ter( p ) == t_card_military ||
-        here.ter( p ) == t_card_industrial ) {
-        int rn = rng( 1, 100 );
+    if( card_reader ) {
+        const int rn = rng( 1, 100 );
         if( rn > 92 || rn < 40 ) {
             if( sight ) {
                 add_msg( _( "The card reader is rendered non-functional." ) );
@@ -1893,9 +1911,10 @@ void emp_blast( const tripoint_bub_ms &p )
             if( sight ) {
                 add_msg( _( "The nearby doors slide open!" ) );
             }
-            for( int i = -3; i <= 3; i++ ) {
-                for( int j = -3; j <= 3; j++ ) {
-                    auto p2 = p + tripoint( i, j, 0 );
+            using namespace std::views;
+            for( const int i : iota( -3, 4 ) ) {
+                for( const int j : iota( -3, 4 ) ) {
+                    const auto p2 = p + tripoint( i, j, 0 );
                     if( here.ter( p2 ) == t_door_metal_locked ) {
                         here.ter_set( p2, t_floor );
                     }
@@ -1908,7 +1927,7 @@ void emp_blast( const tripoint_bub_ms &p )
             }
         }
     }
-    if( monster *const mon_ptr = g->critter_at<monster>( p ) ) {
+    if( mon_ptr != nullptr ) {
         monster &critter = *mon_ptr;
         if( critter.has_flag( MF_ELECTRONIC ) ) {
             int deact_chance = 0;
@@ -1987,9 +2006,11 @@ void emp_blast( const tripoint_bub_ms &p )
         }
     }
     // Drain any items of their battery charge
-    for( auto &it : here.i_at( p ) ) {
-        if( it->is_tool() && it->ammo_current() == itype_battery ) {
-            it->charges = 0;
+    if( here.has_items( p ) ) {
+        for( auto &it : here.i_at( p ) ) {
+            if( it->is_tool() && it->ammo_current() == itype_battery ) {
+                it->charges = 0;
+            }
         }
     }
     // TODO: Drain NPC energy reserves

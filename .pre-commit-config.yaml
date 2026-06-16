@@ -1,0 +1,10 @@
+repos:
+  - repo: local
+    hooks:
+      - id: fmt
+        name: Format staged files
+        entry: build-scripts/fmt.sh
+        language: system
+        files: \.(cpp|h|hpp|json|lua|md|ts)$
+        pass_filenames: false
+        stages: [pre-commit]

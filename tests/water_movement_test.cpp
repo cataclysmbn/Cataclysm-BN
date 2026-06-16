@@ -32,7 +32,6 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
     GIVEN( "avatar is above water at z0" ) {
         dummy.set_underwater( false );
         dummy.setpos( test_origin );
-        g->vertical_shift( 0 );
 
         WHEN( "avatar dives down" ) {
             g->vertical_move( -1, false );
@@ -58,7 +57,6 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
     GIVEN( "avatar is underwater at z0" ) {
         dummy.set_underwater( true );
         dummy.setpos( test_origin );
-        g->vertical_shift( 0 );
 
         WHEN( "avatar dives down" ) {
             g->vertical_move( -1, false );
@@ -84,7 +82,6 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
     GIVEN( "avatar is underwater at z-1" ) {
         dummy.set_underwater( true );
         dummy.setpos( test_origin + tripoint_below );
-        g->vertical_shift( -1 );
 
         WHEN( "avatar dives down" ) {
             g->vertical_move( -1, false );
@@ -110,7 +107,6 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
     GIVEN( "avatar is underwater at z-2" ) {
         dummy.set_underwater( true );
         dummy.setpos( test_origin + tripoint( 0, 0, -2 ) );
-        g->vertical_shift( -2 );
 
         WHEN( "avatar dives down" ) {
             g->vertical_move( -1, false );
@@ -133,7 +129,5 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
         }
     }
 
-    // Put us back at 0. We shouldn't have to do this but other tests are
-    // making assumptions about what z-level they're on.
-    g->vertical_shift( 0 );
+    dummy.setpos( test_origin );
 }

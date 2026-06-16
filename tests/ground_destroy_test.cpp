@@ -25,7 +25,7 @@ TEST_CASE( "pavement_destroy", "[.]" )
     const ter_id flat_roof_id = ter_id( "t_flat_roof" );
     REQUIRE( flat_roof_id != t_null );
 
-    put_player_underground();
+    move_player_out_of_the_way();
     map &here = get_map();
     // Populate the map with pavement.
     here.ter_set( tripoint_bub_ms::zero(), ter_id( "t_pavement" ) );
@@ -49,7 +49,7 @@ TEST_CASE( "explosion_on_ground", "[.]" )
     ter_id flat_roof_id = ter_id( "t_flat_roof" );
     REQUIRE( flat_roof_id != t_null );
 
-    put_player_underground();
+    move_player_out_of_the_way();
     std::vector<ter_id> test_terrain_id = {
         ter_id( "t_dirt" ), ter_id( "t_grass" )
     };
@@ -100,7 +100,7 @@ TEST_CASE( "explosion_on_floor_with_rock_floor_basement", "[.]" )
     REQUIRE( rock_floor_id != t_null );
     REQUIRE( open_air_id != t_null );
 
-    put_player_underground();
+    move_player_out_of_the_way();
 
     map &here = get_map();
     const int area_dim = 24;
@@ -158,7 +158,7 @@ TEST_CASE( "collapse_checks", "[.]" )
     REQUIRE( wall_id != t_null );
     REQUIRE( open_air_id != t_null );
 
-    put_player_underground();
+    move_player_out_of_the_way();
 
     map &here = get_map();
     // build a structure

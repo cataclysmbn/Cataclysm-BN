@@ -406,7 +406,18 @@
     "//": "Do not give the lab rat a gun.",
     "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
-    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
+    "bionics": [
+      "afs_bio_dopamine_stimulators",
+      "bio_fuel_cell_hydrogen",
+      "bio_ground_sonar",
+      "bio_infrared",
+      "bio_leukocyte",
+      "bio_minirose",
+      "bio_painkiller",
+      "bio_reactor",
+      "bio_underwater_propellers",
+      "bio_wings"
+    ]
   },
   {
     "type": "scenario",
@@ -433,10 +444,11 @@
     "bionics": [
       "bio_atomic_battery",
       "bio_surgical_razor",
-      "bio_metabolics",
-      "bio_torsionratchet",
-      "bio_tools",
+      "bio_fuel_cell_hydrogen",
+      "bio_synaptic_regen",
+      "bio_blood_anal",
       "bio_memory",
+      "bio_electrosense",
       "bio_geiger"
     ]
   },
@@ -699,7 +711,18 @@
     ],
     "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START" ],
-    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
+    "bionics": [
+      "afs_bio_dopamine_stimulators",
+      "bio_fuel_cell_hydrogen",
+      "bio_ground_sonar",
+      "bio_infrared",
+      "bio_leukocyte",
+      "bio_minirose",
+      "bio_painkiller",
+      "bio_reactor",
+      "bio_underwater_propellers",
+      "bio_wings"
+    ]
   },
   {
     "type": "scenario",
@@ -772,8 +795,8 @@
     "flags": [ "HELI_CRASH", "LONE_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -900,14 +923,14 @@
     ],
     "bionics": [
       "bio_atomic_battery",
-      "bn_bio_solar",
+      "bio_fuel_cell_hydrogen",
       "bio_climate",
       "bio_evap",
-      "bio_metabolics",
+      "bio_faraday",
       "bio_recycler",
       "bio_shock_absorber",
-      "bio_tools",
-      "bio_torsionratchet",
+      "bio_soporific",
+      "bio_geiger",
       "bio_weight"
     ]
   },
@@ -946,8 +969,8 @@
     "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -1016,8 +1039,8 @@
     "flags": [ "CHALLENGE", "LONE_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -1042,8 +1065,8 @@
     "flags": [ "CITY_START", "LONE_START", "SUM_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -1085,6 +1108,16 @@
       "hacker"
     ],
     "allowed_locs": [ "sloc_lab_concourse_area" ],
+    "bionics": [
+      "bio_atomic_battery",
+      "bio_surgical_razor",
+      "bio_fuel_cell_hydrogen",
+      "bio_synaptic_regen",
+      "bio_blood_anal",
+      "bio_memory",
+      "bio_electrosense",
+      "bio_geiger"
+    ],
     "flags": [ "CHALLENGE", "LONE_START" ]
   }
 ]

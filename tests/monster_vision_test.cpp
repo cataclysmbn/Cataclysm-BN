@@ -78,7 +78,7 @@ TEST_CASE( "monsters_dont_see_through_vehicle_holes", "[vision]" )
 {
     clear_all_state();
     calendar::turn = midday;
-    put_player_underground();
+    move_player_out_of_the_way();
     tripoint_bub_ms origin( 60, 60, 0 );
 
     get_map().add_vehicle( vproto_id( "apc" ), origin, -45_degrees, 0, 0 );
