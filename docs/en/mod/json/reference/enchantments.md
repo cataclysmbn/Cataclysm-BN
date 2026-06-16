@@ -405,9 +405,11 @@ damage type has its own enchant value in addition to the globally applied value 
 - `ARMOR_TRUE`
 
 ##### SKILL_LEVEL
+
 Character wide skill level modifier.
 `base_value` is the current skill level of the player
 In addition there are the following children of this enchantment
+
 - `SKILL_LEVEL_BARTER`
 - `SKILL_LEVEL_SPEECH`
 - `SKILL_LEVEL_COMPUTER`
@@ -436,10 +438,12 @@ In addition there are the following children of this enchantment
 - `SKILL_LEVEL_UNARMED`
 
 ##### SKILL_EXP
+
 Character wide skill exp gain modifier.
 `base_value` is the exp gained by whatever is being done
 Warning: this value can only be multiplied, not added
 In addition there are the following children of this enchantment
+
 - `SKILL_EXP_BARTER`
 - `SKILL_EXP_SPEECH`
 - `SKILL_EXP_COMPUTER`
