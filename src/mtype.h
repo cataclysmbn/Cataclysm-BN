@@ -173,7 +173,8 @@ enum m_flag : int {
     MF_PET_MOUNTABLE,       // This monster can be mounted and ridden when tamed.
     MF_PET_HARNESSABLE,     // This monster can be harnessed when tamed.
     MF_CAN_FETCH,           // This monster can fetch items for its tamer when tamed.
-    MF_DOGFOOD,             // This monster will respond to the `dog whistle` item.
+    MF_DOGFOOD,             // DEPRECATED This monster will respond to the `dog whistle` item.
+    MF_DOG_WHISTLE,         // This monster will respond to the `dog whistle` item.
     MF_MILKABLE,            // This monster is milkable.
     MF_SHEARABLE,           // This monster is shearable.
     MF_NO_BREED,            // This monster doesn't breed, even though it has breed data

@@ -4303,7 +4303,8 @@ int iuse::dog_whistle( player *p, item *it, bool, const tripoint_bub_ms & )
     }
     p->add_msg_if_player( _( "You blow your dog whistle." ) );
     for( monster &critter : g->all_monsters() ) {
-        if( critter.friendly != 0 && critter.has_flag( MF_DOGFOOD ) ) {
+        if( critter.friendly != 0 && ( critter.has_flag( MF_DOGFOOD ) ||
+                                       critter.has_flag( MF_DOG_WHISTLE ) ) ) {
             bool u_see = g->u.sees( critter );
             if( critter.has_effect( effect_docile ) ) {
                 if( u_see ) {

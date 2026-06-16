@@ -5604,16 +5604,17 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
         get_map().unboard_vehicle( p.bub_pos() );
     }
     auto &buffer = p.get_mapbuffer();
-    const auto player_terrain = buffer.get_ter( p.abs_pos() );
-    if( player_terrain && player_terrain->obj().id.str() == "t_open_air" &&
+    const auto tile_reader = buffer.make_abs_tile_reader();
+    const auto player_tile = tile_reader.get_tile( p.abs_pos() );
+    if( player_tile && player_tile->get_ter() == t_open_air &&
         !character_funcs::can_fly( p ) ) {
         auto where = p.abs_pos();
         auto below = where + tripoint_rel_ms::below();
 
         // Keep going down until we find a tile that is NOT open air
         while( true ) {
-            const auto below_terrain = buffer.get_ter( below );
-            if( !below_terrain || below_terrain->obj().id.str() != "t_open_air" ||
+            const auto below_tile = tile_reader.get_tile( below );
+            if( !below_tile || below_tile->get_ter() != t_open_air ||
                 !buffer.valid_move( where, below, { .flying = true, .zlevels = get_map().has_zlevels() } ) ) {
                 break;
             }
@@ -5636,9 +5637,12 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
     //if the tile below has a grappling hook, you can pull it up
     auto below_rope = examp;
     below_rope.z()--;
-    if( buffer.has_flag_furn( "REMOVE_FROM_ABOVE", below_rope ) ) {
+    const auto below_rope_tile = tile_reader.get_tile( below_rope );
+    std::optional<std::string> below_rope_name;
+    if( below_rope_tile && below_rope_tile->get_furn_t().has_flag( "REMOVE_FROM_ABOVE" ) ) {
+        below_rope_name = below_rope_tile->get_furn().obj().name();
         cmenu.addentry( ledge_action::pull_up_rope, true, 'r', _( "Pull up the %s." ),
-                        buffer.get_furn( below_rope )->obj().name() );
+                        *below_rope_name );
     }
     if( p.has_trait( trait_WEB_BRIDGE ) ) {
         cmenu.addentry( ledge_action::spin_web_bridge, true, 'w', _( "Spin Web Bridge." ) );
@@ -5655,11 +5659,11 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
                 add_msg( m_warning, _( "You are too burdened to jump over an obstacle." ) );
             } else if( !buffer.valid_move( examp, dest, { .flying = true } ) ) {
                 add_msg( m_warning, _( "You cannot jump over an obstacle - something is blocking the way." ) );
-            } else if( g->critter_at( dest ) ) {
+            } else if( const auto blocking_creature = buffer.creature_at( dest ) ) {
                 add_msg( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
-                         g->critter_at( dest )->disp_name() );
-            } else if( const auto dest_terrain = buffer.get_ter( dest );
-                       dest_terrain && dest_terrain->obj().trap == tr_ledge ) {
+                         blocking_creature->disp_name() );
+            } else if( const auto dest_tile = tile_reader.get_tile( dest );
+                       dest_tile && dest_tile->get_ter_t().trap == tr_ledge ) {
                 add_msg( m_warning, _( "You are not going to jump over an obstacle only to fall down." ) );
             } else {
                 add_msg( m_info, _( "You jump over an obstacle." ) );
@@ -5754,7 +5758,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
         }
         case ledge_action::pull_up_rope: {
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
-                                 buffer.get_furn( below_rope )->obj().name() );
+                                 below_rope_name.value_or( std::string{} ) );
             take_down_deployed_furniture( buffer, below_rope, p.abs_pos() );
             break;
         }
@@ -5763,12 +5767,13 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
             if( !can_use_mutation_warn( trait_WEB_BRIDGE, p ) ) {
                 break;
             }
-            const int range = 6; //this means we could web across a gap of 5.
-            int success_range = 0;
-            bool success = false;
-            for( int i = 2; i <= range; i++ ) {
+            static constexpr auto range = 6; //this means we could web across a gap of 5.
+            auto success_range = 0;
+            auto success = false;
+            for( const auto i : std::views::iota( 2, range + 1 ) ) {
                 //break at the first non empty space encountered
-                if( buffer.get_ter( p.abs_pos() + dir * i ) != t_open_air ) {
+                const auto tile = tile_reader.get_tile( p.abs_pos() + dir * i );
+                if( !tile || tile->get_ter() != t_open_air ) {
                     success_range = i;
                     success = true;
                     break;
@@ -5777,7 +5782,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
             if( !success ) {
                 p.add_msg_if_player( _( "There is nothing for your to attach your web to!" ) );
             } else {
-                for( int i = 1; i < success_range; i++ ) {
+                for( const auto i : std::views::iota( 1, success_range ) ) {
                     buffer.set_ter( p.abs_pos() + dir * i, t_web_bridge );
                 }
                 p.mutation_spend_resources( trait_WEB_BRIDGE );

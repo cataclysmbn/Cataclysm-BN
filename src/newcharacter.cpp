@@ -947,12 +947,12 @@ tab_direction set_stats( avatar &u, points_left &points )
     // on the map (like -1,0) and instead returns a dummy default value.
     auto old_pos = u.bub_pos();
     old_pos.x() = -1;
-    u.setpos( old_pos );
+    u.Character::setpos( old_pos );
     u.reset();
     // set position back to 0 to prevent out-of-bound access to lightmap
     // array in map::build_seen_cache()
     old_pos.x() = 0;
-    u.setpos( old_pos );
+    u.Character::setpos( old_pos );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w );

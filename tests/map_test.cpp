@@ -205,6 +205,7 @@ TEST_CASE( "mapbuffer_vehicle_lookup_uses_absolute_coordinates" )
     REQUIRE( veh != nullptr );
     REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ) ) >= 0 );
     REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "windshield" ), true ) >= 0 );
+    here.add_vehicle_to_cache( veh );
 
     const auto abs_pos = map_local_to_abs( here, local_pos );
     const auto vp = MAPBUFFER.veh_at( abs_pos );

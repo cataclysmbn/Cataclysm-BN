@@ -49,6 +49,11 @@ on:
         required: false
         type: boolean
         default: true
+      bundle-registry-mods:
+        description: "Bundle registry mods and soundpacks into release archives"
+        required: false
+        type: boolean
+        default: true
       package-artifacts:
         description: "Create release archives where separate packaging is needed"
         required: false
@@ -148,6 +153,9 @@ jobs:
           name: translations
           path: .
 
+      - uses: denoland/setup-deno@v2
+        with: { cache: true }
+
       - name: Create VERSION.TXT
         shell: bash
         run: |
@@ -157,6 +165,10 @@ jobs:
           commit sha: ${{ github.sha }}
           commit url: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
           EOL
+
+      - name: Bundle registry mods
+        if: inputs.bundle-registry-mods
+        run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ format('{0}', matrix.sound) == 'false' && '--exclude-package-type soundpack' || '' }}
 
       - name: Bundle CDDA tilesets
         if: matrix.tiles == true && inputs.bundle-tilesets
@@ -372,11 +384,6 @@ jobs:
           configurePreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
-
-      - name: Setup Deno (Lua docs)
-        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
-        uses: denoland/setup-deno@v2
-        with: { cache: true }
 
       - name: Setup EmmyLua checker
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'

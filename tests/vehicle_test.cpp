@@ -16,6 +16,7 @@
 #include "debug.h"
 #include "enums.h"
 #include "game.h"
+#include "game_constants.h"
 #include "item.h"
 #include "json.h"
 #include "map.h"
@@ -66,7 +67,7 @@ auto make_horde_vehicle_spawn_fixture(
 
     auto &here = get_map();
     auto &you = get_avatar();
-    const auto target_submap = tripoint_bub_sm( here.getmapsize() / 2, here.getmapsize() / 2, 0 );
+    const auto target_submap = tripoint_bub_sm( g_half_mapsize, g_half_mapsize, 0 );
     const auto target_submap_abs = map_local_to_abs( here, target_submap );
     const auto target_submap_origin = project_to<coords::ms>( target_submap );
     const auto target_submap_end = target_submap_origin + tripoint( SEEX - 1, SEEY - 1, 0 );
