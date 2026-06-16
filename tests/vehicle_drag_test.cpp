@@ -49,8 +49,6 @@ static void clear_game_drag( const ter_id &terrain )
 
 static vehicle *setup_drag_test( const vproto_id &veh_id )
 {
-    clear_game_drag( ter_id( "t_pavement" ) );
-
     const tripoint_bub_ms map_starting_point( 60, 60, 0 );
     vehicle *veh_ptr = get_map().add_vehicle( veh_id, map_starting_point, -90_degrees, 0, 0 );
 
@@ -108,6 +106,7 @@ static bool test_water_drag(
         cata_printf( "    test_vehicle_water_drag( \"%s\", %f );\n",
                      veh_id.c_str(), c_water );
     }
+    get_map().destroy_vehicle( veh_ptr );
     return valid;
 
 }
@@ -152,6 +151,7 @@ static bool test_drag(
         cata_printf( "    test_vehicle_drag( \"%s\", %f, %f, %d, %d );\n",
                      veh_id.c_str(), c_air, c_rolling, safe_v, max_v );
     }
+    get_map().destroy_vehicle( veh_ptr );
     return valid;
 }
 
@@ -159,13 +159,12 @@ static void test_vehicle_drag(
     std::string type, const double expected_c_air, const double expected_c_rr,
     const double expected_c_water, const int expected_safe, const int expected_max, bool water = false )
 {
-    SECTION( type ) {
-        if( water ) {
-            test_water_drag( vproto_id( type ), expected_c_water, true );
-        }
-        test_drag( vproto_id( type ), expected_c_air, expected_c_rr,
-                   expected_safe, expected_max, true );
+    INFO( type );
+    if( water ) {
+        test_water_drag( vproto_id( type ), expected_c_water, true );
     }
+    test_drag( vproto_id( type ), expected_c_air, expected_c_rr,
+               expected_safe, expected_max, true );
 }
 
 TEST_CASE( "water drag remains positive with excess floating parts", "[vehicle] [engine]" )
@@ -267,6 +266,7 @@ std::vector<std::string> vehs_to_test_drag = {
 TEST_CASE( "vehicle_drag_calc_baseline", "[.]" )
 {
     clear_all_state();
+    clear_game_drag( ter_id( "t_pavement" ) );
     for( const std::string &veh : vehs_to_test_drag ) {
         test_drag( vproto_id( veh ) );
     }
@@ -277,6 +277,7 @@ TEST_CASE( "vehicle_drag_calc_baseline", "[.]" )
 TEST_CASE( "vehicle_drag", "[vehicle] [engine]" )
 {
     clear_all_state();
+    clear_game_drag( ter_id( "t_pavement" ) );
     test_vehicle_drag( "bicycle_test", 0.609525, 0.017205, 43.304167, 2355, 3078 );
     test_vehicle_drag( "bicycle_electric_test", 0.609525, 0.025659, 64.583333, 2754, 3268 );
     test_vehicle_drag( "motorcycle_test", 0.609525, 0.569952, 254.820312, 7296, 8687 );

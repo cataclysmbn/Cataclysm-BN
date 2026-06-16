@@ -51,7 +51,7 @@ individual Linux test processes.
 
 Command: `build-scripts/run-linux-test-shards.sh --mode file-tags --jobs 4 --non-slow-shards 16 ./out/build/linux-full/tests/cata_test-tiles -- --min-duration 20 --use-colour no --rng-seed 1 --error-format=github-action --gpu-backend=software`
 
-Result: all shards passed in `6:52.40` locally. Longest shards:
+Result before the `vehicle_drag` fixture reuse: all shards passed in `6:52.40` locally. Longest shards:
 
 | Time | Shard |
 | ---: | --- |
@@ -60,6 +60,9 @@ Result: all shards passed in `6:52.40` locally. Longest shards:
 | 98s | `21-vehicle-efficiency` |
 | 71s | `06-non-slow` |
 | 67s | `15-non-slow` |
+
+After reusing a single map in `vehicle_drag`, standalone `[#vehicle_drag_test] ~[.]` with CPU
+compute dropped from `121s` to `16.33s` wall time locally.
 
 ## Resolved blockers
 
