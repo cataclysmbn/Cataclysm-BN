@@ -112,7 +112,10 @@ if [ "$mode" = "file-tags" ]; then
         *) test_opts=( --filenames-as-tags "${test_opts[@]}" ) ;;
     esac
 
-    printf '%s\n' "[#vehicle_rails_test] ~[.]" > "$shard_dir/00-vehicle-rails"
+    printf '%s\n' "vehicle_rail_movement_basic" > "$shard_dir/00-vehicle-rails-basic"
+    printf '%s\n' "vehicle_rail_movement_fork" > "$shard_dir/09-vehicle-rails-fork"
+    printf '%s\n' "vehicle_rail_movement_shifting" > "$shard_dir/19-vehicle-rails-shifting"
+    printf '%s\n' "vehicle_rail_movement_derailed,vehicle_rail_movement_ramp" > "$shard_dir/29-vehicle-rails-other"
     for shard in $(seq 1 "$non_slow_shards"); do
         printf -v shard_name '%02d-non-slow' "$shard"
         : > "$shard_dir/$shard_name"

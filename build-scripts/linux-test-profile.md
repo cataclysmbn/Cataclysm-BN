@@ -27,7 +27,6 @@ were run sequentially; CI runs them with `--jobs 4` to avoid overloading llvmpip
 | ---: | :--- | --- |
 | 138s | ############## | `04-non-slow` |
 | 88s | ######### | `08-non-slow` |
-| 80s | ######## | `00-vehicle-rails` |
 | 58s | ###### | `05-non-slow` |
 | 57s | ###### | `06-non-slow` |
 | 53s | ##### | `07-non-slow` |
@@ -35,9 +34,13 @@ were run sequentially; CI runs them with `--jobs 4` to avoid overloading llvmpip
 | 38s | #### | `01-non-slow` |
 | 38s | #### | `21-vehicle-efficiency` |
 | 30s | ### | `31-slow` |
+| 30s | ### | `00-vehicle-rails-basic` |
 | 29s | ### | `22-starting-items` |
 | 29s | ### | `02-non-slow` |
 | 28s | ### | `20-visibility` |
+| 24s | ## | `19-vehicle-rails-shifting` |
+| 18s | ## | `09-vehicle-rails-fork` |
+| 13s | # | `29-vehicle-rails-other` |
 | 10s | # | `34-slow` |
 | 5s | # | `32-slow` |
 | 3s | # | `33-slow` |
@@ -47,8 +50,8 @@ were run sequentially; CI runs them with `--jobs 4` to avoid overloading llvmpip
 - `[#vehicle_test] ~[.]` now passes standalone with CI flags.
 - `[#map_test] ~[.]` now passes standalone with CI flags after refreshing the active vehicle
   cache in the manual part-install fixture.
-- Local verification covered the previously failing `06-non-slow` shard and remaining shards
-  `07`, `08`, `20`, `21`, `22`, `31`, `32`, `33`, and `34`.
+- Local verification covered the previously failing `06-non-slow` shard, the split vehicle-rails
+  shards, and remaining shards `07`, `08`, `20`, `21`, `22`, `31`, `32`, `33`, and `34`.
 
 ## Prioritized plan
 
