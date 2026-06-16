@@ -178,6 +178,7 @@ local function run_fetch_mode(runtime_ctx, ctx)
       end
     end
     if picked ~= nil then
+      ---@diagnostic disable-next-line: param-type-mismatch
       local taken = ctx.here:detach_item_at(fetch_pos, picked)
       if taken ~= nil then
         ctx.mon:add_detached_item(taken)
@@ -276,6 +277,7 @@ end
 ---@param safe_step fun(mon: Monster, dest: TripointBubMs): boolean
 ---@return boolean
 local function run_calm_dance_turn(mon, serialize_tripoint_abs_ms, deserialize_tripoint_abs_ms, safe_step)
+  ---@type [integer, integer][]
   local dance_points = {
     { 1, 0 },
     { 1, 1 },
@@ -316,6 +318,7 @@ local function run_calm_dance_turn(mon, serialize_tripoint_abs_ms, deserialize_t
   end
 
   local offset = dance_points[idx]
+  if offset == nil then return false end
   local dest = TripointBubMs.new(anchor_local.x + offset[1], anchor_local.y + offset[2], anchor_local.z)
 
   if not safe_step(mon, dest) then

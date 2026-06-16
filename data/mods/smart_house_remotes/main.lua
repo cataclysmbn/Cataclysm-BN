@@ -38,10 +38,14 @@ mod.remote_wireless_range_z = 2
 mod.get_remote_base_omt = function(item) return item:get_var_tri(mod.var_base, TripointAbsOmt.new(0, 0, 0)) end
 
 -- Get abs ms of remote's base
----@type fun(item: Item): Tripoint
+---@type fun(item: Item): TripointAbsMs
 mod.get_remote_base_abs_ms = function(item)
   local p_omt = mod.get_remote_base_omt(item)
-  return p_omt:to_ms() + PointRelMs.new(const.OMT_MS_SIZE // 2, const.OMT_MS_SIZE // 2)
+  local p_ms = p_omt:to_ms()
+  ---@cast p_ms TripointAbsMs
+  local center_ms = p_ms + PointRelMs.new(const.OMT_MS_SIZE // 2, const.OMT_MS_SIZE // 2)
+  ---@cast center_ms TripointAbsMs
+  return center_ms
 end
 
 -- Set remote's base abs omt
@@ -301,6 +305,7 @@ mod.iuse_function = function(params)
   local item = params.item
   local pos = params.pos
   local user_pos = gapi.bub_to_abs(pos)
+  ---@cast user_pos TripointAbsMs
 
   -- Uncomment this so on activation the remote reconfigures itself to work in user's omt
   --[[
@@ -312,14 +317,13 @@ mod.iuse_function = function(params)
     ]]
 
   local base_pos = mod.get_remote_base_abs_ms(item)
-  ---@cast base_pos Tripoint
 
   -- Check distance to wireless base the remote is bound to.
   -- The base does not physically exist in game world, but we imagine
   -- it's tucked away into a hoouse wall or something.
   if
     math.abs(user_pos.z - base_pos.z) > mod.remote_wireless_range_z
-    or user_pos:rl_dist(base_pos) > mod.remote_wireless_range
+    or (user_pos:rl_dist(base_pos) or math.maxinteger) > mod.remote_wireless_range
   then
     mod.show_no_signal_error()
     return 0

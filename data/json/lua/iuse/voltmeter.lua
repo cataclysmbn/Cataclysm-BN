@@ -126,11 +126,13 @@ voltmeter.modify_grid_connections = function(who, item, pos)
 
   if connection_present[idx] then
     -- Remove connection
+    ---@diagnostic disable-next-line: param-type-mismatch
     gapi.get_overmap_buffer():remove_grid_connection(pos_abs_omt, destination_pos_abs_omt)
     gapi.add_msg(MsgType.good, locale.gettext("Grid connection removed."))
   else
     -- Add connection
     local lhs_locations = gapi.get_overmap_buffer():electric_grid_at(pos_abs_omt)
+    ---@diagnostic disable-next-line: param-type-mismatch
     local rhs_locations = gapi.get_overmap_buffer():electric_grid_at(destination_pos_abs_omt)
 
     -- Check if same grid
@@ -222,6 +224,7 @@ voltmeter.modify_grid_connections = function(who, item, pos)
       end
       who:invalidate_crafting_inventory()
 
+      ---@diagnostic disable-next-line: param-type-mismatch
       local success = gapi.get_overmap_buffer():add_grid_connection(pos_abs_omt, destination_pos_abs_omt)
       if success then
         gapi.add_msg(MsgType.good, locale.gettext("Grid connection established."))

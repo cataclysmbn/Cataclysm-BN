@@ -16,6 +16,7 @@ mod.change_hairstyle_function = function(params)
 
     local success, types = pcall(function() return mut_raw:mutation_types() end)
     if success and types then
+      ---@diagnostic disable-next-line: param-type-mismatch
       for k, v in pairs(types) do
         local t = (type(v) == "string") and v or k
         if t == "hair_style" then return "hair_style" end

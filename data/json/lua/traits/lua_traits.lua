@@ -55,7 +55,7 @@ local function random_entry(list)
 end
 
 ---@param map Map
----@param pt Tripoint
+---@param pt TripointBubMs
 ---@return boolean
 local function is_passable(map, pt)
   local ter = map:get_ter_at(pt):obj()
@@ -77,7 +77,7 @@ local function is_wielding_mop(who)
 end
 
 ---@param here Map
----@param center Tripoint
+---@param center TripointBubMs
 local function auto_mop_surrounding(here, center)
   local mopped_tiles = 0
   for _, pt in ipairs(here:points_in_radius(center, 1)) do
@@ -103,6 +103,7 @@ local function apply_penalty(who, morale_id, penalty)
     return
   end
 
+  ---@diagnostic disable-next-line: param-type-mismatch
   who:add_morale(
     morale_id,
     -magnitude,
@@ -110,6 +111,7 @@ local function apply_penalty(who, morale_id, penalty)
     TimeDuration.from_minutes(20),
     TimeDuration.from_minutes(20),
     true,
+    ---@diagnostic disable-next-line: param-type-mismatch
     nil
   )
 end
@@ -126,7 +128,7 @@ local function drain_focus(who, amount, minimum)
 end
 
 ---@param here Map
----@param pt Tripoint
+---@param pt TripointBubMs
 ---@return boolean
 local function is_loot_on_floor(here, pt)
   local furn = here:get_furn_at(pt):obj()
@@ -137,7 +139,7 @@ local function is_loot_on_floor(here, pt)
 end
 
 ---@param here Map
----@param center Tripoint
+---@param center TripointBubMs
 ---@return integer
 local function count_loose_items(here, center)
   local you = gapi.get_avatar()

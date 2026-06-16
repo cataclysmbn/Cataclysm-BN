@@ -165,6 +165,7 @@ end
 local get_fixture_resources = function(opts)
   local pos_abs_ms = opts.map:bub_to_abs(opts.pos)
   local pos_abs_omt = pos_abs_ms:to_omt()
+  ---@cast pos_abs_omt TripointAbsOmt
   local source = resource_source.grid
   local clean_charges = overmapbuffer.fluid_grid_liquid_charges_at(pos_abs_omt, item_water_clean)
   local dirty_charges = overmapbuffer.fluid_grid_liquid_charges_at(pos_abs_omt, item_water)
@@ -239,6 +240,7 @@ local consume_body_cleanser_candidate = function(opts)
   local label = opts.candidate.item:display_name(1)
   if opts.candidate.source == "inventory" then
     if opts.candidate.item.charges > 1 then
+      ---@diagnostic disable-next-line: param-type-mismatch
       opts.user:use_charges(opts.candidate.item:get_type(), 1, function(_) return true end)
     else
       opts.user:remove_item(opts.candidate.item)
@@ -280,6 +282,7 @@ end
 local refresh_morale = function(opts)
   local current = opts.user:get_morale(opts.morale_type)
   local delta = current < opts.bonus and opts.bonus - current or 0
+  ---@diagnostic disable-next-line: param-type-mismatch
   opts.user:add_morale(opts.morale_type, delta, opts.bonus, opts.duration, opts.decay_start, true, nil)
 end
 
@@ -577,6 +580,7 @@ local examine = function(params, mode)
     is_cold_weather = map:get_temperature_c(params.pos) < warm_temperature_threshold_c,
     bloody_tile_count = count_bloody_tiles({ map = map, center = params.pos }),
   }
+  ---@diagnostic disable-next-line: param-type-mismatch
   examine_context({ context = context })
 end
 
