@@ -21,7 +21,7 @@ The job failed before every shard completed.
 ## Local shard profile after vehicle/map fixture fixes
 
 `#` bars are scaled at about 10 seconds each. Local GNU `parallel` was unavailable, so shards
-were run sequentially; CI still runs them with `--jobs 6`.
+were run sequentially; CI runs them with `--jobs 4` to avoid overloading llvmpipe-backed test runners.
 
 | Time | Graph | Shard |
 | ---: | :--- | --- |
