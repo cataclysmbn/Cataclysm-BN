@@ -374,9 +374,8 @@ struct level_cache {
     bool lm_cpu_cache_valid = false;
     // Incremented whenever CPU lm contents are invalidated before a rebuild.
     uint64_t lm_cpu_cache_generation = 0;
-    // Set to true at the start of each game turn; cleared after update_visibility_cache
-    // completes.  Allows repeated draws within the same turn (animations, UI refreshes)
-    // to skip the full visibility rebuild when nothing has changed.
+    // Per-level visibility dirtiness. The map-level aggregate flag is the source
+    // of truth for gameplay consumers that need completed player visibility.
     bool visibility_cache_dirty = true;
     // Set by build_floor_cache; true when at least one tile has a floor.
     bool has_any_floor = true;
@@ -875,8 +874,10 @@ class map : public submap_load_listener
         /// Mark lightmap_dirty for every loaded z-level.
         void invalidate_lightmap_caches();
 
-        /// Mark visibility_cache_dirty for every loaded z-level.  Call once per game turn
-        /// so that only the first redraw of each turn runs update_visibility_cache.
+        auto mark_visibility_cache_dirty( int zlev ) -> void;
+        auto mark_visibility_caches_clean() -> void;
+        auto visibility_caches_dirty() const -> bool;
+        /// Mark visibility_cache_dirty for every loaded z-level.
         void invalidate_visibility_caches();
 
         bool check_seen_cache( const tripoint_bub_ms &p ) const;
@@ -2439,6 +2440,7 @@ class map : public submap_load_listener
         // Reset to tripoint_min by invalidate_map_cache so any full-cache invalidation
         // forces a seen_cache rebuild regardless of whether the player moved.
         tripoint_bub_ms m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
+        bool visibility_caches_dirty_ = true;
         std::size_t m_last_lightmap_source_signature = 0;
         bool m_last_lightmap_source_signature_valid = false;
 
@@ -2655,15 +2657,6 @@ class map : public submap_load_listener
         std::vector<std::pair<tripoint_abs_sm, point_sm_ms>> funnel_locations_;
 
         /**
-         * Flat registry of all vehicles in loaded submaps (both in-bubble and
-         * out-of-bubble).  Populated by loadn() and on_submap_loaded(); pruned
-         * by on_submap_unloaded() and detach_vehicle().  Replaces the old
-         * submaps_with_vehicles set — no manual maintenance at vehicle boundary
-         * crossings or z-level transitions is required.
-         */
-        std::set<vehicle *> loaded_vehicles;
-
-        /**
          * Direct-mapped cache of coordinate pairs recently checked for visibility.
          * Each slot stores a packed (key, value) entry.  Hash collisions silently
          * evict the old entry — no linked list, no heap allocation.
@@ -2709,6 +2702,8 @@ class map : public submap_load_listener
         dimension_id bound_dimension_;
 
     public:
+        auto get_mapbuffer() -> mapbuffer & { return MAPBUFFER_REGISTRY.get( bound_dimension_ ); } // *NOPAD*
+        auto get_mapbuffer() const -> mapbuffer & { return MAPBUFFER_REGISTRY.get( bound_dimension_ ); } // *NOPAD*
         bool has_rope_at( tripoint_bub_ms pt ) const;
         std::pair<vehicle *, int> get_rope_at( const point_bub_ms &pt ) const;
 

@@ -372,7 +372,8 @@ void submap::rotate( int turns )
         const point_sm_ms new_pos = rotate_point( elem->sm_ms_pos );
 
         elem->sm_ms_pos = new_pos;
-        elem->set_facing( elem->turn_dir + turns * 90_degrees );
+        elem->set_facing( elem->turn_dir + turns * 90_degrees, false );
+        elem->precalc_mounts( 0, elem->turn_dir, elem->pivot_anchor[0] );
     }
 
     std::map<point_sm_ms, computer> rot_comp;

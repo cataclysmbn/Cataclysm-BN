@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <limits>
@@ -8,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -15,9 +18,11 @@
 
 #include "calendar.h"
 #include "coordinates.h"
+#include "creature_tracker.h"
 #include "game_constants.h"
 #include "item_stack.h"
 #include "mapgen_functions.h"
+#include "memory_fast.h"
 #include "point.h"
 #include "type_id.h"
 #include "vpart_position.h"
@@ -29,6 +34,8 @@ class field;
 class field_entry;
 class item;
 class JsonIn;
+class npc;
+class vehicle;
 enum ter_bitflags : int;
 struct partial_con;
 template<typename T>
@@ -111,6 +118,112 @@ struct mapbuffer_erase_item_options {
     mapbuffer_lookup_options lookup;
 };
 
+class mapbuffer_abs_tile_view
+{
+    public:
+        mapbuffer_abs_tile_view( const tripoint_abs_sm &abs_sm, const point_sm_ms &local,
+                                 const submap &sm );
+
+        explicit operator bool() const;
+
+        auto abs_pos() const -> tripoint_abs_ms;
+        auto abs_submap_pos() const -> tripoint_abs_sm;
+        auto submap_pos() const -> point_sm_ms;
+
+        auto get_ter() const -> ter_id;
+        auto get_furn() const -> furn_id;
+        auto get_trap() const -> trap_id;
+        auto get_ter_t() const -> const ter_t &;
+        auto get_furn_t() const -> const furn_t &;
+        auto get_trap_t() const -> const trap &;
+        auto get_field() const -> const field &;
+        auto get_items() const -> const location_vector<item> &;
+        auto get_furn_vars() const -> const data_vars::data_set &;
+        auto get_radiation() const -> int;
+        auto get_lum() const -> std::uint8_t;
+        auto move_cost_ter_furn() const -> int;
+        auto passable_ter_furn() const -> bool;
+        auto move_cost_with_vehicle( const optional_vpart_position &vp ) const -> int;
+        auto passable_with_vehicle( const optional_vpart_position &vp ) const -> bool;
+
+    private:
+        tripoint_abs_sm abs_sm_;
+        point_sm_ms local_;
+        const submap *sm_ = nullptr;
+};
+
+class mapbuffer_abs_tile_with_vehicle_view
+{
+    public:
+        mapbuffer_abs_tile_with_vehicle_view( const mapbuffer_abs_tile_view &tile,
+                                              const optional_vpart_position &vehicle_part );
+
+        explicit operator bool() const;
+
+        auto tile() const -> const mapbuffer_abs_tile_view &;
+        auto vehicle_part() const -> const optional_vpart_position &;
+        auto move_cost() const -> int;
+        auto passable() const -> bool;
+
+    private:
+        mapbuffer_abs_tile_view tile_;
+        optional_vpart_position vehicle_part_;
+};
+
+class mapbuffer_abs_submap_view
+{
+    public:
+        mapbuffer_abs_submap_view( const tripoint_abs_sm &abs_sm, const submap &sm );
+
+        explicit operator bool() const;
+
+        auto abs_pos() const -> tripoint_abs_sm;
+        auto get_submap() const -> const submap &;
+        auto tile( const point_sm_ms &local ) const -> mapbuffer_abs_tile_view;
+        auto tiles() const -> point_range<point_sm_ms>;
+
+    private:
+        tripoint_abs_sm abs_sm_;
+        const submap *sm_ = nullptr;
+};
+
+class mapbuffer_abs_omt_view
+{
+    public:
+        mapbuffer_abs_omt_view( const tripoint_abs_omt &abs_omt,
+                                const std::array<const submap *, 4> &submaps );
+
+        explicit operator bool() const;
+
+        auto abs_pos() const -> tripoint_abs_omt;
+        auto has_any_submap() const -> bool;
+        auto is_complete() const -> bool;
+        auto get_submap_view( const point_omt_sm &local ) const
+        -> std::optional<mapbuffer_abs_submap_view>;
+
+    private:
+        tripoint_abs_omt abs_omt_;
+        std::array<const submap *, 4> submaps_ = {};
+};
+
+class mapbuffer_abs_tile_reader
+{
+    public:
+        mapbuffer_abs_tile_reader( mapbuffer &buffer, mapbuffer_lookup_options options = {} );
+
+        auto get_tile( const tripoint_abs_ms &p ) const -> std::optional<mapbuffer_abs_tile_view>;
+        auto get_tile_with_vehicle( const tripoint_abs_ms &p ) const
+        -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
+        auto get_submap_view( const tripoint_abs_sm &p ) const
+        -> std::optional<mapbuffer_abs_submap_view>;
+        auto get_omt_view( const tripoint_abs_omt &p ) const
+        -> std::optional<mapbuffer_abs_omt_view>;
+
+    private:
+        mapbuffer *buffer_ = nullptr;
+        mapbuffer_lookup_options options_;
+};
+
 /**
  * Store, buffer, save and load the entire world map.
  */
@@ -165,6 +278,32 @@ class mapbuffer
          */
         auto get_submap( const tripoint_abs_sm &p,
         mapbuffer_lookup_options options = {} ) -> submap *;
+
+        auto get_abs_tile( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_tile_view>;
+        auto get_abs_tile_with_vehicle( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} )
+        -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
+        auto get_abs_submap_view( const tripoint_abs_sm &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_submap_view>;
+        auto get_abs_omt_view( const tripoint_abs_omt &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_omt_view>;
+        auto make_abs_tile_reader( mapbuffer_lookup_options options = {} ) -> mapbuffer_abs_tile_reader;
+        auto creature_tracker() -> Creature_tracker &;
+        auto creature_tracker() const -> const Creature_tracker &;
+        auto add_active_npc( const shared_ptr_fast<npc> &guy ) -> bool;
+        auto update_active_npc_pos( const npc &guy, const tripoint_abs_ms &new_pos ) -> bool;
+        auto remove_active_npc( const npc &guy ) -> void;
+        auto find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_fast<npc>;
+        auto creature_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const
+        -> const Creature *;
+        auto has_creature_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const -> bool;
+        auto has_loaded_vehicle( const vehicle *veh ) const -> bool;
+        auto register_vehicle( vehicle *veh ) -> void;
+        auto unregister_vehicle( vehicle *veh ) -> void;
+        auto refresh_vehicle_footprint( vehicle *veh ) -> void;
+        auto refresh_vehicle_registry_for_submap( const tripoint_abs_sm &p,
+        mapbuffer_lookup_options options = {} ) -> void;
 
         auto get_ter( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<ter_id>;
@@ -415,6 +554,10 @@ class mapbuffer
 
     private:
         using submap_map_t = std::unordered_map<tripoint_abs_sm, std::unique_ptr<submap>>;
+        struct vehicle_footprint_entry {
+            vehicle *veh = nullptr;
+            std::size_t part_index = 0;
+        };
 
         auto active_reality_bubble_local( const tripoint_abs_ms &p ) const
         -> std::optional<tripoint_bub_ms>;
@@ -433,6 +576,14 @@ class mapbuffer
                 const field_type_id &type ) const -> void;
         auto sync_active_item_submap_index( const tripoint_abs_ms &p, const submap &sm ) const -> void;
         auto invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const -> void;
+        auto register_submap_vehicles( const tripoint_abs_sm &p, submap &sm ) -> void;
+        auto unregister_submap_vehicles( const tripoint_abs_sm &p ) -> void;
+        auto index_vehicle_footprint_unlocked( vehicle &veh ) -> void;
+        auto unindex_vehicle_footprint_unlocked( const vehicle *veh ) -> void;
+        auto indexed_vehicle_part_at_unlocked( const tripoint_abs_ms &p )
+        -> optional_vpart_position;
+        auto vehicle_part_at_loaded_tile( const tripoint_abs_ms &p ) -> optional_vpart_position;
+        auto remove_active_npc_from_location_map( const npc &guy ) -> void;
 
         /// Guards all accesses to `submaps` that may overlap with background
         /// worker threads calling add_submap().  std::recursive_mutex allows
@@ -517,6 +668,14 @@ class mapbuffer
         void save_omt( const tripoint_abs_omt &omt_addr, std::list<tripoint_abs_sm> &submaps_to_delete,
                        bool delete_after_save );
         submap_map_t submaps;
+        Creature_tracker creature_tracker_;
+        std::list<shared_ptr_fast<npc>> active_npcs_;
+        std::unordered_map<tripoint_abs_ms, shared_ptr_fast<npc>> active_npcs_by_location_;
+        std::set<vehicle *> loaded_vehicles_;
+        std::unordered_map<tripoint_abs_ms, std::vector<vehicle_footprint_entry>>
+                vehicle_footprint_by_location_;
+        std::unordered_map<const vehicle *, std::vector<tripoint_abs_ms>>
+                vehicle_footprint_locations_;
 
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.

@@ -226,14 +226,16 @@ jobs:
           xvfb_pid=$!
           trap 'kill "$xvfb_pid" 2>/dev/null || true' EXIT
           export DISPLAY=:99
+          export LP_NUM_THREADS=2
           sleep 1
 
           test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
-          test_opts="--min-duration 20 --use-colour yes --rng-seed time --error-format=github-action --gpu-backend=software"
-
-          parallel --verbose --linebuffer \
-            "$test_bin $test_opts --user-dir=test_user_dir_{#} {}" \
-            ::: "[slow] ~starting_items" "~[slow] ~[.],starting_items"
+          build-scripts/run-linux-test-shards.sh --mode file-tags --jobs 4 --non-slow-shards 16 "$test_bin" -- \
+            --min-duration 20 \
+            --use-colour yes \
+            --rng-seed time \
+            --error-format=github-action \
+            --gpu-backend=software
 
           # Run test with all mods (test-stage only)
           if [ "${{ env.TEST_STAGE }}" = "1" ]; then
