@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
     cat >&2 <<'EOF'
-Usage: build-scripts/run-linux-test-shards.sh [OPTIONS] TEST_BIN -- [TEST_OPTS...]
+Usage: build-scripts/run-linux-test-shards.sh [OPTIONS] [TEST_BIN -- [TEST_OPTS...]]
 
 Options:
   --mode MODE             auto, file-tags, tiles, or legacy (default: auto)
@@ -13,6 +13,11 @@ Options:
   --non-slow-shards N|auto
                           generated non-slow file-tag shards (default: auto, clamped jobs*2)
   --dry-run               print shard filters without running tests
+
+Defaults:
+  TEST_BIN                ./out/build/linux-full/tests/cata_test-tiles
+  TEST_OPTS               --min-duration 20 --use-colour no --rng-seed 1
+                          --error-format=github-action --gpu-backend=software
 
 Environment:
   CATA_TEST_SHARD_DIR          shard file directory
@@ -44,6 +49,7 @@ parallel_jobs=auto
 slow_shards=4
 non_slow_shards=auto
 dry_run=0
+default_test_bin=./out/build/linux-full/tests/cata_test-tiles
 test_bin=
 
 while [ $# -gt 0 ]; do
@@ -95,8 +101,10 @@ done
 test_opts=( "$@" )
 
 if [ -z "$test_bin" ]; then
-    usage
-    exit 2
+    test_bin="$default_test_bin"
+fi
+if [ "${#test_opts[@]}" -eq 0 ]; then
+    test_opts=( --min-duration 20 --use-colour no --rng-seed 1 --error-format=github-action --gpu-backend=software )
 fi
 
 if [ ! -x "$test_bin" ]; then
