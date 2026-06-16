@@ -3,6 +3,7 @@
 Sources:
 - Baseline: old Linux non-slow shard from successful PR run: `706.837s`.
 - CI profile: PR #9515 run 27586856606, `clang, tiles, i18n` job 81560362204.
+- CI resource check: PR #9515 run 27596058861 showed llvmpipe-backed shards stalling under four unrestricted software-GPU processes.
 - Local profile: rebased branch at 69d0c9ec6d9, `cata_test-tiles --filenames-as-tags --rng-seed 1 --gpu-backend=software`.
 
 ## CI profile before fixes
@@ -21,7 +22,8 @@ The job failed before every shard completed.
 ## Local shard profile after vehicle/map fixture fixes
 
 `#` bars are scaled at about 10 seconds each. Local GNU `parallel` was unavailable, so shards
-were run sequentially; CI runs them with `--jobs 4` to avoid overloading llvmpipe-backed test runners.
+were run sequentially. CI runs them with `--jobs 4` and `LP_NUM_THREADS=2` to avoid unrestricted
+llvmpipe thread oversubscription.
 
 | Time | Graph | Shard |
 | ---: | :--- | --- |
@@ -55,9 +57,10 @@ were run sequentially; CI runs them with `--jobs 4` to avoid overloading llvmpip
 
 ## Prioritized plan
 
-1. Wait for PR CI timings from the rebased branch before changing shard weights again.
+1. Wait for PR CI timings with `LP_NUM_THREADS=2` before changing shard weights again.
 2. If CI still has a >180s shard, split `04-non-slow` first.
-3. Benchmark `--option_overrides=REALITY_BUBBLE_SIZE:2` only on map/visibility-heavy shards;
+3. If runner shutdown continues, reduce CI to `--jobs 3` or isolate `[#map_test]` / `[#vehicle_efficiency_test]`.
+4. Benchmark `--option_overrides=REALITY_BUBBLE_SIZE:2` only on map/visibility-heavy shards;
    keep failing or reality-bubble-sensitive tags on the default bubble.
-4. Avoid `REALITY_BUBBLE_SIZE:1` until a focused compatibility pass proves it does not change
+5. Avoid `REALITY_BUBBLE_SIZE:1` until a focused compatibility pass proves it does not change
    test contracts.
