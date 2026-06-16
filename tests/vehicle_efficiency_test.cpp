@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <string>
@@ -38,11 +39,14 @@ using efficiency_stat = statistics<int>;
 
 const efftype_id effect_blind( "blind" );
 
-static void clear_game( const ter_id &terrain )
+static std::optional<ter_id> current_efficiency_terrain;
+
+static auto reset_efficiency_state() -> void
 {
     // Set to turn 0 to prevent solars from producing power
     calendar::turn = calendar::turn_zero;
     clear_states( state::avatar | state::vehicle );
+    current_efficiency_terrain.reset();
 
     // Move player somewhere safe
     REQUIRE_FALSE( g->u.in_vehicle );
@@ -50,8 +54,14 @@ static void clear_game( const ter_id &terrain )
                                   g_half_mapsize_y + SEEY - 1, -2 ) );
     // Blind the player to avoid needless drawing-related overhead
     g->u.add_effect( effect_blind, 365_days, bodypart_str_id::NULL_ID() );
+}
 
-    build_test_map( terrain );
+static auto prepare_efficiency_map( const ter_id &terrain ) -> void
+{
+    if( !current_efficiency_terrain || *current_efficiency_terrain != terrain ) {
+        build_test_map( terrain );
+        current_efficiency_terrain = terrain;
+    }
 }
 
 // Returns how much fuel did it provide
@@ -170,7 +180,7 @@ static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
 {
     int min_dist = target_distance * 0.99;
     int max_dist = target_distance * 1.01;
-    clear_game( terrain );
+    prepare_efficiency_map( terrain );
 
     const tripoint_bub_ms map_starting_point( 60, 60, 0 );
     map &here = get_map();
@@ -266,6 +276,7 @@ static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
         CHECK( adjusted_tiles_travelled <= max_dist * 1.05 );
     }
 
+    here.destroy_vehicle( veh_ptr );
     return adjusted_tiles_travelled;
 }
 
@@ -358,16 +369,16 @@ static auto test_vehicle(
     };
 
     run_case( "on pavement", ter_id( "t_pavement" ), -1, pavement_target, false );
-    run_case( "on dirt", ter_id( "t_dirt" ), -1, dirt_target, false );
     run_case( "on pavement, full stop every 5 turns", ter_id( "t_pavement" ), 5,
               pavement_target_w_stops, false );
-    run_case( "on dirt, full stop every 5 turns", ter_id( "t_dirt" ), 5,
-              dirt_target_w_stops, false );
-
     if( pavement_target_smooth_stops > 0 ) {
         run_case( "on pavement, alternating 5 turns of acceleration and 5 turns of decceleration",
                   ter_id( "t_pavement" ), 5, pavement_target_smooth_stops, true );
     }
+
+    run_case( "on dirt", ter_id( "t_dirt" ), -1, dirt_target, false );
+    run_case( "on dirt, full stop every 5 turns", ter_id( "t_dirt" ), 5,
+              dirt_target_w_stops, false );
     if( dirt_target_smooth_stops > 0 ) {
         run_case( "on dirt, alternating 5 turns of acceleration and 5 turns of decceleration",
                   ter_id( "t_dirt" ), 5, dirt_target_smooth_stops, true );
@@ -402,6 +413,7 @@ std::vector<std::string> vehs_to_test = {{
 TEST_CASE( "vehicle_find_efficiency", "[.]" )
 {
     clear_all_state();
+    reset_efficiency_state();
     for( const std::string &veh : vehs_to_test ) {
         find_efficiency( veh );
     }
@@ -411,6 +423,7 @@ TEST_CASE( "vehicle_find_efficiency", "[.]" )
 TEST_CASE( "make_vehicle_efficiency_case", "[.]" )
 {
     clear_all_state();
+    reset_efficiency_state();
     const float acceptable = 1.25;
     std::map<std::string, int> forward_distance;
     for( const std::string &veh : vehs_to_test ) {
@@ -431,6 +444,7 @@ TEST_CASE( "make_vehicle_efficiency_case", "[.]" )
 TEST_CASE( "vehicle_efficiency", "[vehicle] [engine]" )
 {
     clear_all_state();
+    reset_efficiency_state();
     test_vehicle( "beetle_test", 713837, 431300, 364430, 104953, 86687 );
     test_vehicle( "car_test", 1020629, 617500, 403153, 56446, 28518 );
     test_vehicle( "car_sports_test", 1052382, 352600, 271570, 37554, 25824 );

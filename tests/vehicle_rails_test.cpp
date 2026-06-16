@@ -256,6 +256,8 @@ static void test_rail_movement( const test_case &t,
 
     auto got_pos = veh.bub_ms_location();
     units::angle got_dir = normalize( veh.face.dir() );
+    here.destroy_vehicle( &veh );
+
     CAPTURE( got_pos );
     CAPTURE( got_dir );
     CAPTURE( always_on_rails );
@@ -290,6 +292,9 @@ static void run_test_case_at_rotation( const test_case &t, int i_rot )
     units::angle end_dir_s = normalize( t.end_dir_straight + rot );
     units::angle end_dir_l = normalize( t.end_dir_left + rot );
     units::angle end_dir_r = normalize( t.end_dir_right + rot );
+    clear_game( t_floor );
+    build_map_from_canvas( canvas, canvas_pos );
+
     // This tripoint_bub_ms cast is making me cry
     // I don't want to fix the cascading issues from proper declaration
     const auto run_case = [&]( const char *label, const int move_dir,
@@ -297,8 +302,6 @@ static void run_test_case_at_rotation( const test_case &t, int i_rot )
                                const units::angle turn_delta, const tripoint_bub_ms & expected_pos,
     const units::angle expected_dir ) {
         CAPTURE( label );
-        clear_game( t_floor );
-        build_map_from_canvas( canvas, canvas_pos );
         test_rail_movement( t, move_dir, tripoint_bub_ms( vehicle_pos ), face_dir,
                             turn_delta, expected_pos, expected_dir );
     };

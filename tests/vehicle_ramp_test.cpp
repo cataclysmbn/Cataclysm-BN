@@ -236,27 +236,34 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
             g->vertical_move( z_change, true );
         }
     }
+    here.destroy_vehicle( veh_ptr );
 }
 
 static void test_ramp( std::string type, const int transition_x )
 {
     CAPTURE( type );
-    SECTION( "no ramp" ) {
+    {
+        INFO( "no ramp" );
         ramp_transition_angled( vproto_id( type ), 180_degrees, transition_x, false, false );
     }
-    SECTION( "ramp up" ) {
+    {
+        INFO( "ramp up" );
         ramp_transition_angled( vproto_id( type ), 180_degrees, transition_x, true, true );
     }
-    SECTION( "ramp down" ) {
+    {
+        INFO( "ramp down" );
         ramp_transition_angled( vproto_id( type ), 180_degrees, transition_x, true, false );
     }
-    SECTION( "angled no ramp" ) {
+    {
+        INFO( "angled no ramp" );
         ramp_transition_angled( vproto_id( type ), 225_degrees, transition_x, false, false );
     }
-    SECTION( "angled ramp down" ) {
+    {
+        INFO( "angled ramp down" );
         ramp_transition_angled( vproto_id( type ), 225_degrees, transition_x, true, false );
     }
-    SECTION( "angled ramp up" ) {
+    {
+        INFO( "angled ramp up" );
         ramp_transition_angled( vproto_id( type ), 225_degrees, transition_x, true, true );
     }
 }
