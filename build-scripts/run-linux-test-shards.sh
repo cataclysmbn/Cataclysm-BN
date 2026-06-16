@@ -128,9 +128,12 @@ if [ "$mode" = "file-tags" ]; then
         : > "$shard_dir/3$shard-slow"
     done
 
-    "$test_bin" "${test_opts[@]}" --user-dir="$shard_dir/discovery" --list-tags \
+    discovery_compute_accel="${CATA_TEST_COMPUTE_ACCELERATION:-cpu}"
+    CATA_TEST_COMPUTE_ACCELERATION="$discovery_compute_accel" \
+        "$test_bin" "${test_opts[@]}" --user-dir="$shard_dir/discovery" --list-tags \
         > "$shard_dir/test-tags" || true
-    "$test_bin" "${test_opts[@]}" --user-dir="$shard_dir/slow-discovery" --list-tags "[slow] ~starting_items" \
+    CATA_TEST_COMPUTE_ACCELERATION="$discovery_compute_accel" \
+        "$test_bin" "${test_opts[@]}" --user-dir="$shard_dir/slow-discovery" --list-tags "[slow] ~starting_items" \
         > "$shard_dir/slow-tags" || true
 
     slow_index=0
@@ -180,29 +183,40 @@ if [ "$dry_run" = "1" ]; then
     exit 0
 fi
 
+shard_runner="$shard_dir/run-shard.sh"
+cat > "$shard_runner" <<'EOF'
+#!/usr/bin/env bash
+set -u
+
+shard_file=$1
+shard=$(basename "$shard_file")
+filter=$(paste -sd, "$shard_file")
+user_dir="$USER_DIR_PREFIX"_"$shard"
+if [ -n "${CATA_TEST_COMPUTE_ACCELERATION:-}" ]; then
+    shard_compute_accel="$CATA_TEST_COMPUTE_ACCELERATION"
+elif [ "$shard" = "20-visibility" ]; then
+    shard_compute_accel="${CATA_TEST_VISIBILITY_COMPUTE_ACCELERATION:-gpu_software}"
+else
+    shard_compute_accel=cpu
+fi
+start=$(date +%s)
+printf 'Starting shard %s with %s compute\n' "$shard" "$shard_compute_accel"
+CATA_TEST_COMPUTE_ACCELERATION="$shard_compute_accel" "$TEST_BIN" $TEST_OPTS --user-dir="$user_dir" "$filter"
+status=$?
+end=$(date +%s)
+printf 'Finished shard %s in %ss with status %s\n' "$shard" "$(( end - start ))" "$status"
+exit "$status"
+EOF
+chmod +x "$shard_runner"
+
+export TEST_BIN="$test_bin"
+export TEST_OPTS="${test_opts[*]}"
+export USER_DIR_PREFIX="$user_dir_prefix"
 if command -v parallel >/dev/null 2>&1; then
-    export TEST_BIN="$test_bin"
-    export TEST_OPTS="${test_opts[*]}"
-    export USER_DIR_PREFIX="$user_dir_prefix"
     parallel --jobs "$parallel_jobs" --verbose --linebuffer --halt soon,fail=1 \
-        'shard=$(basename {}); filter=$(paste -sd, {}); user_dir="$USER_DIR_PREFIX"_"$shard"; start=$(date +%s); printf "Starting shard %s\n" "$shard"; "$TEST_BIN" $TEST_OPTS --user-dir="$user_dir" "$filter"; status=$?; end=$(date +%s); printf "Finished shard %s in %ss with status %s\n" "$shard" "$(( end - start ))" "$status"; exit "$status"' \
-        ::: "${shard_files[@]}"
+        "$shard_runner" {} ::: "${shard_files[@]}"
 else
     for shard_file in "${shard_files[@]}"; do
-        shard=$(basename "$shard_file")
-        filter=$(paste -sd, "$shard_file")
-        user_dir="$user_dir_prefix"_"$shard"
-        start=$(date +%s)
-        printf 'Starting shard %s\n' "$shard"
-        if "$test_bin" "${test_opts[@]}" --user-dir="$user_dir" "$filter"; then
-            status=0
-        else
-            status=$?
-        fi
-        end=$(date +%s)
-        printf 'Finished shard %s in %ss with status %s\n' "$shard" "$(( end - start ))" "$status"
-        if [ "$status" != "0" ]; then
-            exit "$status"
-        fi
+        "$shard_runner" "$shard_file"
     done
 fi

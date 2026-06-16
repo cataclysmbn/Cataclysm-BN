@@ -22,8 +22,8 @@ The job failed before every shard completed.
 ## Local shard profile after vehicle/map fixture fixes
 
 `#` bars are scaled at about 10 seconds each. Local GNU `parallel` was unavailable, so shards
-were run sequentially. CI runs them with `--jobs 2` and `LP_NUM_THREADS=2` to keep concurrent
-software-GPU test processes under the runner's resource limit.
+were run sequentially. CI runs most shards with CPU compute and keeps software-GPU compute for
+`20-visibility`, so `--jobs 4` does not start multiple llvmpipe-heavy test processes.
 
 | Time | Graph | Shard |
 | ---: | :--- | --- |
@@ -57,7 +57,7 @@ software-GPU test processes under the runner's resource limit.
 
 ## Prioritized plan
 
-1. Wait for PR CI timings with `--jobs 2` / `LP_NUM_THREADS=2` before changing shard weights again.
+1. Wait for PR CI timings with CPU-by-default shards before changing shard weights again.
 2. If CI still has a >180s shard, split `04-non-slow` first.
 3. If runner shutdown continues, isolate `[#map_test]` / `[#vehicle_efficiency_test]`.
 4. Benchmark `--option_overrides=REALITY_BUBBLE_SIZE:2` only on map/visibility-heavy shards;
