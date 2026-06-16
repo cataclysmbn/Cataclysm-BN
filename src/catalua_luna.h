@@ -157,7 +157,8 @@ auto require_unique_member( sol::table &owner_dt, const Key &key ) -> void
     }
     if( member_names[key_name].get_or( false ) ) {
         throw std::runtime_error( string_format(
-                                      "Duplicate Lua binding registration for member '%s'", key_name ) );
+                                      "Duplicate Lua binding registration for member '%s'; use a single sol::overload(...) registration for overloads",
+                                      key_name ) );
     }
     member_names[key_name] = true;
 }

@@ -1215,9 +1215,12 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( is_wearing_helmet, bool() const );
 
         SET_FX_T( get_morale_level, int() const );
-        SET_FX_T( add_morale,
-                  void( const morale_type &, int, int, const time_duration &, const time_duration &,
-                        bool, const itype * ) );
+        luna::set_fx( ut, "add_morale", []( UT_CLASS & c, const morale_type & type, int bonus,
+                                            int max_bonus, const time_duration & duration,
+                                            const time_duration & decay_start, bool capped,
+        sol::optional<const itype *> item_type ) -> void {
+            c.add_morale( type, bonus, max_bonus, duration, decay_start, capped, item_type.value_or( nullptr ) );
+        } );
         SET_FX_T( has_morale, bool( const morale_type & ) const );
         SET_FX_T( get_morale, int( const morale_type & ) const );
         SET_FX_T( rem_morale, void( const morale_type & ) );
@@ -1270,7 +1273,14 @@ void cata::detail::reg_character( sol::state &lua )
             c.drench( saturation, drenched_parts, ignore_waterproof );
         } );
 
-        SET_FX( use_charges );
+        luna::set_fx( ut, "use_charges", sol::overload(
+        []( UT_CLASS & c, const itype_id & what, int qty ) -> std::vector<detached_ptr<item>> {
+            return c.use_charges( what, qty );
+        },
+        []( UT_CLASS & c, const itype_id & what, int qty,
+        const sol::function & filter ) -> std::vector<detached_ptr<item>> {
+            return c.use_charges( what, qty, [&filter]( const item & it ) { return filter( it ); } );
+        } ) );
         SET_FX( use_charges_if_avail );
 
         DOC( "Returns the crafting inventory for this character (includes nearby items)" );

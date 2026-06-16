@@ -170,15 +170,15 @@ local function run_fetch_mode(runtime_ctx, ctx)
 
   if fetch_pos.x == ctx.pos.x and fetch_pos.y == ctx.pos.y and fetch_pos.z == ctx.pos.z then
     local stack = ctx.here:get_items_at(fetch_pos)
+    ---@type Item?
     local picked = nil
-    for _, item in ipairs(stack) do
+    for _, item in ipairs(stack:items()) do
       if item:get_type():str() == item_id then
         picked = item
         break
       end
     end
     if picked ~= nil then
-      ---@diagnostic disable-next-line: param-type-mismatch
       local taken = ctx.here:detach_item_at(fetch_pos, picked)
       if taken ~= nil then
         ctx.mon:add_detached_item(taken)

@@ -222,6 +222,15 @@ local fmt_function_field = function(member, class_name)
   return ret .. "\n"
 end
 
+---@param annotations string
+---@param class_name string
+---@param annotation string
+---@return string
+local add_class_annotation = function(annotations, class_name, annotation)
+  local pattern = "(---@class " .. class_name .. " : [^\n]+\n)"
+  return (annotations:gsub(pattern, "%1" .. annotation .. "\n"))
+end
+
 --[[
     Formats ---@overload annotations and function stub for constructors ('new' function).
   ]]
@@ -719,6 +728,7 @@ on_npc_loaded = {}
     if name == "TripointCoord" then return "---@class " .. name .. "\n" end
     return "---@class " .. name .. " : TripointCoord\n"
   end)
+  full_ret = add_class_annotation(full_ret, "TripointAbsOmt", "---@operator add(TripointRelOmt): TripointAbsOmt")
 
   return full_ret
 end

@@ -103,7 +103,6 @@ local function apply_penalty(who, morale_id, penalty)
     return
   end
 
-  ---@diagnostic disable-next-line: param-type-mismatch
   who:add_morale(
     morale_id,
     -magnitude,
@@ -111,7 +110,6 @@ local function apply_penalty(who, morale_id, penalty)
     TimeDuration.from_minutes(20),
     TimeDuration.from_minutes(20),
     true,
-    ---@diagnostic disable-next-line: param-type-mismatch
     nil
   )
 end
