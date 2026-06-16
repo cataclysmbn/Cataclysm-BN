@@ -6,10 +6,12 @@
     "difficulty": 6,
     "time": "10 m",
     "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "//": "RPGs use some propellent as an initial booster, then a rocket motor to sustain it.",
     "components": [
       [ [ "copper", 200 ] ],
       [ [ "chem_compositionb", 450 ] ],
       [ [ "gunpowder", 300 ] ],
+      [ [ "chem_rocket_fuel", 10 ] ],
       [ [ "impact_fuze", 1 ] ],
       [ [ "scrap", 3 ] ]
     ],
@@ -26,6 +28,7 @@
       [ [ "copper", 250 ] ],
       [ [ "chem_compositionb", 1500 ] ],
       [ [ "gunpowder", 300 ] ],
+      [ [ "chem_rocket_fuel", 10 ] ],
       [ [ "impact_fuze", 1 ] ],
       [ [ "scrap", 3 ] ]
     ],
@@ -42,6 +45,7 @@
       [ [ "copper", 50 ] ],
       [ [ "chem_compositionb", 50 ] ],
       [ [ "gunpowder", 300 ] ],
+      [ [ "chem_rocket_fuel", 10 ] ],
       [ [ "impact_fuze", 1 ] ],
       [ [ "scrap", 3 ] ],
       [ [ "incendiary", 150 ] ]
@@ -55,7 +59,13 @@
     "difficulty": 6,
     "time": "10 m",
     "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
-    "components": [ [ [ "chem_compositionb", 200 ] ], [ [ "gunpowder", 300 ] ], [ [ "impact_fuze", 1 ] ], [ [ "scrap", 3 ] ] ],
+    "components": [
+      [ [ "chem_compositionb", 200 ] ],
+      [ [ "gunpowder", 300 ] ],
+      [ [ "chem_rocket_fuel", 10 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 3 ] ]
+    ],
     "charges": 1
   }
 ]
