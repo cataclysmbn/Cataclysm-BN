@@ -403,7 +403,20 @@
     "reversible": true,
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "scrap", 1 ] ], [ [ "duct_tape", 50 ] ] ]
+    "components": [ [ [ "pipe", 2 ] ], [ [ "scrap", 1 ] ], [ [ "duct_tape", 50 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "pipe_pistol",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_RANGED",
+    "skill_used": "mechanics",
+    "difficulty": 1,
+    "time": "10 m",
+    "reversible": true,
+    "autolearn": true,
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [ [ [ "pipe", 1 ] ], [ [ "scrap", 1 ] ], [ [ "duct_tape", 25 ] ] ]
   },
   {
     "type": "recipe",
