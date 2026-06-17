@@ -28,6 +28,7 @@ class Creature;
 class JsonIn;
 class JsonOut;
 class map;
+class mapgen_constructor;
 class monster;
 class nc_color;
 class npc;
@@ -549,6 +550,11 @@ class vehicle
         void smash( map &m, float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
                     float percent_of_parts_to_affect = 1.0f, tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(),
                     float damage_size = 0 );
+        auto smash( mapgen_constructor &m, float hp_percent_loss_min = 0.1f,
+                    float hp_percent_loss_max = 1.2f,
+                    float percent_of_parts_to_affect = 1.0f,
+                    tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(),
+                    float damage_size = 0 ) -> void;
 
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );

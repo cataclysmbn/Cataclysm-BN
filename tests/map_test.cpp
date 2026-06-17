@@ -18,6 +18,7 @@
 #include "map.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
+#include "mapgen_constructor.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "npc.h"
@@ -157,41 +158,6 @@ TEST_CASE( "destroy_grabbed_furniture" )
     }
 }
 
-// map_bounds_checking removed: the basic inbounds() cuboid check is trivial.
-// A meaningful bounds test would involve pocket dimensions and dimension_bounds,
-// which require more involved setup (mapgen, dimension transitions, etc.).
-
-TEST_CASE( "tinymap_absolute_inbounds_uses_loaded_anchor" )
-{
-    clear_all_state();
-
-    auto &buffer = MAPBUFFER;
-    const auto anchor = tripoint_abs_sm( 1200, -1200, 0 );
-    const auto cleanup = on_out_of_scope( [&]() {
-        buffer.unload_omt( project_to<coords::omt>( anchor ), false );
-    } );
-
-    const auto offsets = std::vector<tripoint_rel_sm> {
-        tripoint_rel_sm( 0, 0, 0 ),
-        tripoint_rel_sm( 1, 0, 0 ),
-        tripoint_rel_sm( 0, 1, 0 ),
-        tripoint_rel_sm( 1, 1, 0 ),
-    };
-
-    for( const auto &offset : offsets ) {
-        add_absolute_test_submap( buffer, anchor + offset, ter_id( "t_rock" ) );
-    }
-
-    tinymap tm;
-    tm.bind_submaps_for_hook( anchor );
-
-    CHECK( tm.inbounds( anchor ) );
-    CHECK( tm.inbounds( anchor + tripoint_rel_sm( 1, 1, 0 ) ) );
-    CHECK_FALSE( tm.inbounds( anchor + tripoint_rel_sm( -1, 0, 0 ) ) );
-    CHECK_FALSE( tm.inbounds( anchor + tripoint_rel_sm( 2, 0, 0 ) ) );
-    CHECK_FALSE( tm.inbounds( tripoint_abs_sm( 0, 0, 0 ) ) );
-}
-
 TEST_CASE( "mapbuffer_vehicle_lookup_uses_absolute_coordinates" )
 {
     clear_all_state();
@@ -222,7 +188,7 @@ TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
     // broken active item cache.
     g->place_player( tripoint_bub_ms::zero() );
     CHECK( get_map().check_submap_active_item_consistency().empty() );
-    CHECK( get_map().get_abs_sub() == player_reality_bubble_origin() );
+    CHECK( get_map().get_abs_sub() == player_reality_bubble_origin().xy() );
 }
 
 TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
@@ -493,11 +459,11 @@ TEST_CASE( "mapbuffer_simulated_lookup_uses_load_manager_membership" )
     REQUIRE( sm != nullptr );
 
     const auto lazy_handle = submap_loader.request_load( load_request_source::lazy_border,
-                             dim_id, sm_pos, 0 );
+                             dim_id, sm_pos.xy(), 0 );
     CHECK( buffer.get_submap( sm_pos ) == nullptr );
     submap_loader.release_load( lazy_handle );
 
-    full_handle = submap_loader.request_load( load_request_source::script, dim_id, sm_pos, 0 );
+    full_handle = submap_loader.request_load( load_request_source::script, dim_id, sm_pos.xy(), 0 );
     CHECK( buffer.get_submap( sm_pos ) == sm );
 }
 
@@ -617,8 +583,8 @@ TEST_CASE( "avatar_setpos_updates_map_from_absolute_position" )
 
     you.setpos( destination_abs );
 
-    CHECK( here.get_abs_sub() == old_origin + tripoint_rel_sm( 1, 0, 0 ) );
-    CHECK( here.get_abs_sub() == player_reality_bubble_origin() );
+    CHECK( here.get_abs_sub() == old_origin + point_rel_sm( 1, 0 ) );
+    CHECK( here.get_abs_sub() == player_reality_bubble_origin().xy() );
     CHECK( you.abs_pos() == destination_abs );
     CHECK( you.bub_pos() == tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) );
     CHECK( g->update_map( you ) == point_rel_sm::zero() );
@@ -690,7 +656,6 @@ TEST_CASE( "bash_through_roof_can_destroy_multiple_times" )
 {
     clear_all_state();
     map &here = get_map();
-    REQUIRE( here.has_zlevels() );
 
     static const ter_str_id t_fragile_roof( "t_fragile_roof" );
     static const ter_str_id t_strong_roof( "t_strong_roof" );

@@ -568,10 +568,6 @@ static void pldrive( const tripoint_rel_veh &p )
             return;
         }
     }
-    if( p.z() != 0 && !here.has_zlevels() ) {
-        u.add_msg_if_player( m_info, _( "This vehicle doesn't look very airworthy." ) );
-        return;
-    }
     if( p.z() == -1 ) {
         if( veh->check_heli_descend( u ) ) {
             u.add_msg_if_player( m_info, _( "You steer the vehicle into a descent." ) );
@@ -755,10 +751,7 @@ static void smash()
     } else {
         smashskill = u.str_cur + weapon.damage_melee( DT_BASH );
     }
-
-    const bool allow_floor_bash = here.has_zlevels();
-    const std::optional<tripoint_bub_ms> smashp_ = choose_adjacent( _( "Smash where?" ),
-            allow_floor_bash );
+    const std::optional<tripoint_bub_ms> smashp_ = choose_adjacent( _( "Smash where?" ), true );
     if( !smashp_ ) {
         return;
     }

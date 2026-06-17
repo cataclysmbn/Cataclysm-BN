@@ -1389,7 +1389,7 @@ int place_npc_iuse::use( player &p, item &, bool, const tripoint_bub_ms & ) cons
         return 0;
     }
 
-    here.place_npc( target_pos.value().xy(), npc_class_id );
+    here.place_npc( target_pos.value(), npc_class_id );
     p.mod_moves( -moves );
     p.add_msg_if_player( m_info, "%s", _( summon_msg ) );
     return 1;
@@ -2191,7 +2191,7 @@ int enzlave_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) c
         p.add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    map_stack items = get_map().i_at( p.bub_pos().xy() );
+    map_stack items = get_map().i_at( p.bub_pos() );
     std::vector<const item *> corpses;
 
     for( item * const &corpse_candidate : items ) {

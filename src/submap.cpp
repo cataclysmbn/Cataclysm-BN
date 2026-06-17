@@ -90,6 +90,18 @@ submap::submap( const tripoint_abs_sm &position ) : maptile_soa<SEEX, SEEY>( pos
 
 submap::~submap() = default;
 
+auto submap::set_position( const tripoint_abs_sm &position ) -> void
+{
+    if( pos == position ) {
+        return;
+    }
+    const auto offset = project_to<coords::ms>( position ) - project_to<coords::ms>( pos );
+    for( const auto &p : submap_tiles() ) {
+        itm[p.x()][p.y()].move_by( offset );
+    }
+    pos = position;
+}
+
 void submap::update_lum_rem( const point_sm_ms &p, const item &i )
 {
     is_uniform = false;

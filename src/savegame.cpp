@@ -355,7 +355,7 @@ auto game::unserialize( std::istream &fin ) -> bool
             player_pos = project_to<coords::ms>( saved_player_sm );
             load_origin = reality_bubble_origin_from_player( player_pos, g_reality_bubble_size );
         }
-        load_map( load_origin, /*pump_events=*/true );
+        load_map( load_origin.xy(), /*pump_events=*/true );
         u.setpos( player_pos );
 
         safe_mode = static_cast<safe_mode_type>( tmprun );

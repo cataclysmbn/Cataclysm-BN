@@ -370,7 +370,7 @@ TEST_CASE( "Items rot away" )
 
 TEST_CASE( "Items don't rot away on map load if in a freezer" )
 {
-    tinymap m;
+    map m( 2 );
     weather_manager weather;
     if( calendar::turn <= calendar::start_of_cataclysm ) {
         calendar::turn = calendar::start_of_cataclysm + 1_minutes;
@@ -378,7 +378,7 @@ TEST_CASE( "Items don't rot away on map load if in a freezer" )
 
     constexpr tripoint_abs_sm non_tested_location = tripoint_abs_sm( 0, 0, 0 );
     constexpr tripoint_abs_sm test_location = tripoint_abs_sm( 100, 100, 0 );
-    m.load( test_location, false );
+    m.load( test_location.xy(), false );
 
     const tripoint_bub_ms freezer_pnt = {13, 13, 0};
     const tripoint_bub_ms sealed_pnt = {14, 13, 0};
@@ -422,9 +422,9 @@ TEST_CASE( "Items don't rot away on map load if in a freezer" )
     INFO( "Initial turn: " << to_turn<int>( calendar::turn ) );
 
     // Change the date outside the location, to force @ref map::actualize to proc rot
-    m.load( non_tested_location, false );
+    m.load( non_tested_location.xy(), false );
     calendar::turn += 365_days;
-    m.load( test_location, false );
+    m.load( test_location.xy(), false );
 
     auto freezer_stack_after = m.i_at( freezer_pnt );
     REQUIRE( freezer_stack_after.size() == 1 );

@@ -15,6 +15,7 @@
 #include <list>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <queue>
 #include <set>
 #include <sstream>
@@ -52,6 +53,7 @@
 #include "json.h"
 #include "make_static.h"
 #include "map.h"
+#include "mapgen_constructor.h"
 #include "map_iterator.h"
 #include "mapbuffer.h"
 #include "mapdata.h"
@@ -228,7 +230,7 @@ class MapgenRemovePartHandler : public RemovePartHandler
             if( !m.inbounds( loc ) ) {
                 point_sm_ms offset;
                 const auto pocket_info = m.get_pocket_info();
-                if( !is_outside_pocket_dimension_bounds( pocket_info, m.get_abs_sub(), loc ) &&
+                if( !is_outside_pocket_dimension_bounds( pocket_info, map_local_to_abs( m, loc ) ) &&
                     m.get_submap_at( loc, offset ) != nullptr ) {
                     return m.add_item_or_charges( loc, std::move( it ) );
                 }
@@ -261,6 +263,56 @@ class MapgenRemovePartHandler : public RemovePartHandler
         }
         auto part_location( const vehicle &veh, const int part ) const -> tripoint_bub_ms override {
             return abs_to_map_local( m, veh.abs_part_location( part ) );
+        }
+};
+
+class MapgenConstructorRemovePartHandler : public RemovePartHandler
+{
+    private:
+        mapgen_constructor &m;
+
+        auto to_omt( const tripoint_bub_ms &loc, const bool permit_oob ) const
+        -> std::optional<tripoint_omt_ms> {
+            auto raw = loc.raw();
+            const auto max_x = SEEX * 2 - 1;
+            const auto max_y = SEEY * 2 - 1;
+            const bool inbounds = raw.x >= 0 && raw.x <= max_x &&
+                                  raw.y >= 0 && raw.y <= max_y;
+            if( !inbounds && !permit_oob ) {
+                return std::nullopt;
+            }
+            raw.x = std::clamp( raw.x, 0, max_x );
+            raw.y = std::clamp( raw.y, 0, max_y );
+            return tripoint_omt_ms( raw );
+        }
+
+    public:
+        explicit MapgenConstructorRemovePartHandler( mapgen_constructor &m ) : m( m ) { }
+
+        ~MapgenConstructorRemovePartHandler() override = default;
+
+        auto unboard( const tripoint_bub_ms &/*loc*/ ) -> void override {
+            debugmsg( "Tried to unboard during mapgen!" );
+        }
+        auto add_item_or_charges( const tripoint_bub_ms &loc, detached_ptr<item> &&it,
+                                  bool permit_oob ) -> detached_ptr<item> override {
+            const auto omt_loc = to_omt( loc, permit_oob );
+            if( !omt_loc ) {
+                return std::move( it );
+            }
+            return m.add_item_or_charges( omt_loc->xy(), std::move( it ) );
+        }
+        auto set_transparency_cache_dirty( const int /*z*/ ) -> void override {
+        }
+        auto set_floor_cache_dirty( const int /*z*/ ) -> void override {
+        }
+        auto removed( vehicle &/*veh*/, const int /*part*/ ) -> void override {
+        }
+        auto spawn_animal_from_part( item &/*base*/, const tripoint_bub_ms &/*loc*/ ) -> void override {
+            debugmsg( "Tried to spawn animal from vehicle part during mapgen!" );
+        }
+        auto part_location( const vehicle &veh, const int part ) const -> tripoint_bub_ms override {
+            return veh.bub_part_location( part );
         }
 };
 
@@ -1317,6 +1369,72 @@ void vehicle::smash( map &m, float hp_percent_loss_min, float hp_percent_loss_ma
                     } else {
                         handler_ptr = std::make_unique<MapgenRemovePartHandler>( m );
                     }
+                }
+                remove_part( other_p, *handler_ptr );
+            }
+        }
+    }
+}
+
+auto vehicle::smash( mapgen_constructor &m, float hp_percent_loss_min, float hp_percent_loss_max,
+                     float percent_of_parts_to_affect, tripoint_rel_ms damage_origin,
+                     float damage_size ) -> void
+{
+    for( auto &part : parts ) {
+        if( part.is_broken() || part.removed || part.info().has_flag( VPFLAG_NOSMASH ) ) {
+            continue;
+        }
+
+        std::vector<int> parts_in_square = parts_at_relative( part.mount, true );
+        int structures_found = 0;
+        for( auto &square_part_index : parts_in_square ) {
+            if( part_info( square_part_index ).location == part_location_structure ||
+                part_info( square_part_index ).has_flag( VPFLAG_EXTENDABLE ) ) {
+                structures_found++;
+            }
+        }
+
+        if( structures_found > 1 ) {
+            for( int idx : parts_in_square ) {
+                mod_hp( parts[ idx ], 0 - parts[ idx ].hp(), DT_BASH );
+                parts[ idx ].ammo_unset();
+            }
+            continue;
+        }
+
+        int roll = dice( 1, 1000 );
+        int pct_af = ( percent_of_parts_to_affect * 1000.0f );
+        if( roll < pct_af ) {
+            double dist = damage_size == 0.0f ? 1.0f :
+                          clamp( 1.0f - trig_dist( damage_origin.xy(), part.precalc[0] ) /
+                                 damage_size, 0.0f, 1.0f );
+            if( mod_hp( part, 0 - ( rng_float( hp_percent_loss_min * dist,
+                                               hp_percent_loss_max * dist ) *
+                                    part.info().durability ), DT_BASH ) ) {
+                part.ammo_unset();
+            }
+        }
+    }
+
+    auto handler_ptr = std::unique_ptr<RemovePartHandler>();
+    for( int p = static_cast<int>( parts.size() ) - 1; p >= 0; p-- ) {
+        vehicle_part &part = parts[ p ];
+        if( part.removed ) {
+            continue;
+        }
+        std::vector<int> parts_here = parts_at_relative( part.mount, true );
+        for( int other_i = static_cast<int>( parts_here.size() ) - 1; other_i >= 0; other_i -- ) {
+            int other_p = parts_here[ other_i ];
+            if( p == other_p ) {
+                continue;
+            }
+            const vpart_info &p_info = part_info( p );
+            const vpart_info &other_p_info = part_info( other_p );
+
+            if( p_info.get_id() == other_p_info.get_id() ||
+                ( !p_info.location.empty() && p_info.location == other_p_info.location ) ) {
+                if( !handler_ptr ) {
+                    handler_ptr = std::make_unique<MapgenConstructorRemovePartHandler>( m );
                 }
                 remove_part( other_p, *handler_ptr );
             }

@@ -5615,7 +5615,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
         while( true ) {
             const auto below_tile = tile_reader.get_tile( below );
             if( !below_tile || below_tile->get_ter() != t_open_air ||
-                !buffer.valid_move( where, below, { .flying = true, .zlevels = get_map().has_zlevels() } ) ) {
+                !buffer.valid_move( where, below, { .flying = true } ) ) {
                 break;
             }
             where += tripoint_rel_ms::below();

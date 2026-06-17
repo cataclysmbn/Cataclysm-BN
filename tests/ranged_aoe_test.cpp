@@ -47,7 +47,6 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
 {
     clear_all_state();
     rng_set_engine_seed( seed );
-    REQUIRE( get_map().has_zlevels() );
 
     const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
@@ -277,7 +276,6 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
 {
     clear_all_state();
     rng_set_engine_seed( deterministic_rng_seeds.front() );
-    REQUIRE( get_map().has_zlevels() );
 
     const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     const auto target_pos = tripoint_bub_ms( 62, 60, 0 );

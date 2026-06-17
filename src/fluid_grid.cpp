@@ -1096,7 +1096,7 @@ class fluid_grid_tracker
         explicit fluid_grid_tracker( mapbuffer &buffer ) : mb( buffer ) {}
 
         auto load( const map &m ) -> void {
-            const auto p_min = point_abs_sm( m.get_abs_sub().xy() );
+            const auto p_min = m.get_abs_sub();
             const auto p_max = p_min + point( m.getmapsize(), m.getmapsize() );
             bounds = half_open_rectangle<point_abs_sm>( p_min, p_max );
             rebuild_transformer_grids();

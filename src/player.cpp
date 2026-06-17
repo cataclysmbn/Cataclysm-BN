@@ -32,7 +32,7 @@ static auto update_map_after_player_setpos( player &who,
         g->update_map( who );
     }
     if( old_pos.z() != new_pos.z() ) {
-        g->vertical_shift( new_pos.z() );
+        g->vertical_shift( old_pos.z(), new_pos.z() );
     }
 }
 

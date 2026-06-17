@@ -226,7 +226,6 @@ static void full_map_test( const std::vector<std::string> &setup,
         floor_above << '\n';
     }
 
-    INFO( "zlevels: " << here.has_zlevels() );
     INFO( "origin: " << origin );
     INFO( "player: " << player_character.bub_pos() );
     INFO( "unimpaired_range: " << player_character.unimpaired_range() );

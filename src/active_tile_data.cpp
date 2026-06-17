@@ -513,7 +513,7 @@ void portal_tile::update_internal( time_point, const tripoint_abs_ms &p, distrib
         return;
     }
     // Keep target area resident each tick if a load_radius is configured.
-    const auto center_sm = project_to<coords::sm>( target_pos );
+    const auto center_sm = project_to<coords::sm>( target_pos.xy() );
     if( preload_handle_ == 0 ) {
         preload_handle_ = submap_loader.request_load(
                               load_request_source::portal_preload,

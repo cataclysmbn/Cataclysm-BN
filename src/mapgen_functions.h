@@ -9,7 +9,7 @@
 #include "coordinates.h"
 #include "type_id.h"
 
-class map;
+class mapgen_constructor;
 class mapgen_function;
 class mapgendata;
 class mission;
@@ -44,7 +44,7 @@ struct mapgen_result {
  * Calculates the coordinates of a rotated point.
  * Should match the `mapgen_*` rotation.
  */
-tripoint_bub_ms rotate_point( const tripoint_bub_ms &p, int rotations );
+tripoint_omt_ms rotate_point( const tripoint_omt_ms &p, int rotations );
 
 int terrain_type_to_nesw_array( oter_id terrain_type, bool array[4] );
 
@@ -89,10 +89,9 @@ void mapgen_sewer( mapgendata &dat );
 void mapgen_tutorial( mapgendata &dat );
 void mapgen_lake_shore( mapgendata &dat );
 
-// Temporary wrappers
-void mremove_trap( map *m, const point_bub_ms & );
-void mtrap_set( map *m, const point_bub_ms &, trap_id type );
-void madd_field( map *m, const point_bub_ms &, field_type_id type, int intensity );
+void mremove_trap( mapgen_constructor *m, const point_omt_ms & );
+void mtrap_set( mapgen_constructor *m, const point_omt_ms &, trap_id type );
+void madd_field( mapgen_constructor *m, const point_omt_ms &, field_type_id type, int intensity );
 
 mapgen_update_func add_mapgen_update_func( const JsonObject &jo, bool &defer );
 bool run_mapgen_update_func( const std::string &update_mapgen_id, const tripoint_abs_omt &omt_pos,
