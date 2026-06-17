@@ -58,7 +58,7 @@
     "location": "bore",
     "mod_targets": [ "pipe_rifle" ],
     "install_time": "5 m",
-    "ammo_modifier": "38",
+    "ammo_modifier": "22",
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
     "flags": [ "IRREMOVABLE" ]
   },
