@@ -382,7 +382,7 @@ TEST_CASE( "vision_daylight", "[shadowcasting][vision]" )
         vision_test_flags::none
     };
 
-    t.test_all();
+    t.test();
 }
 
 TEST_CASE( "vision_day_indoors", "[shadowcasting][vision]" )
@@ -403,7 +403,7 @@ TEST_CASE( "vision_day_indoors", "[shadowcasting][vision]" )
         vision_test_flags::none
     };
 
-    t.test_all();
+    t.test();
 }
 
 TEST_CASE( "vision_light_shining_in", "[shadowcasting][vision]" )

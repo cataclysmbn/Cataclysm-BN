@@ -399,6 +399,11 @@ int main( int argc, const char *argv[] )
         return result;
     }
 
+    if( session.configData().listTags || session.configData().listTests ||
+        session.configData().listTestNamesOnly || session.configData().listReporters ) {
+        return session.run();
+    }
+
     test_mode = true;
 
     setupDebug( DebugOutput::std_err );

@@ -42,6 +42,7 @@ jobs:
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
       - name: install dependencies
         run: |
@@ -118,7 +119,7 @@ jobs:
       #     clang-tidy --version
 
       - name: gather affected files
-        run: deno task affected-files ${{ github.event.pull_request.number }} --output "$AFFECTED_FILES"
+        run: deno task affected-files --base ${{ github.event.pull_request.base.sha }} --head HEAD --output "$AFFECTED_FILES"
 
       - name: run clang-tidy
         run: bash ./build-scripts/run-clang-tidy-plugin.sh

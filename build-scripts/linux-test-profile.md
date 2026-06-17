@@ -23,8 +23,8 @@ The job failed before every shard completed.
 ## Local shard profile after vehicle/map fixture fixes
 
 `#` bars are scaled at about 10 seconds each. CI runs most shards with CPU compute, keeps
-software-GPU compute for `20-visibility`, and uses 16 generated non-slow shards to shorten
-individual Linux test processes.
+software-GPU compute for `20-visibility`, and uses 8 generated CPU shards to reduce repeated
+process startup while preserving enough balancing for `--jobs 4` CI.
 
 | Time | Graph          | Shard                       |
 | ---: | :------------- | --------------------------- |
@@ -50,7 +50,7 @@ individual Linux test processes.
 
 ## Local full sharded validation after CI shard-size reduction
 
-Command: `build-scripts/run-linux-test-shards.sh --mode file-tags --jobs 4 --non-slow-shards 16 ./out/build/linux-full/tests/cata_test-tiles -- --min-duration 20 --use-colour no --rng-seed 1 --error-format=github-action --gpu-backend=software`
+Command: `build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 --non-slow-shards 8 ./out/build/linux-full/tests/cata_test-tiles -- --min-duration 20 --use-colour no --rng-seed 1 --error-format=github-action --gpu-backend=software`
 
 Result before the `vehicle_drag` fixture reuse: all shards passed in `6:52.40` locally. Longest shards:
 
@@ -65,10 +65,23 @@ Result before the `vehicle_drag` fixture reuse: all shards passed in `6:52.40` l
 After reusing a single map in `vehicle_drag`, standalone `[#vehicle_drag_test] ~[.]` with CPU
 compute dropped from `121s` to `16.33s` wall time locally.
 
-For local runs, `build-scripts/run-linux-test-shards.sh` defaults to the linux-full tiles test
-binary, standard CI-like test options, detected CPU-count `--jobs`, and generated non-slow shards as
-`jobs * 2` clamped to `6..16`. CI still passes explicit `--jobs 4 --non-slow-shards 16` for runner
-stability.
+For local runs, `build-scripts/run-linux-test-shards.ts` defaults to the linux-full tiles test
+binary, standard CI-like test options, and detected CPU-count `--jobs`. The Deno runner now skips
+game initialization for `--list-tags`, folds CPU-only filters into weighted shards, and keeps only
+visibility on software GPU compute.
+
+Latest local results on this 12-thread machine:
+
+| Command                                                           |               Result |
+| ----------------------------------------------------------------- | -------------------: |
+| `--jobs 6 --non-slow-shards 16` before balance/vehicle reductions | `3:41.65`, 17 shards |
+| `--jobs 6 --non-slow-shards 8` before balance/vehicle reductions  |  `3:04.27`, 9 shards |
+| `--jobs 6 --non-slow-shards 8` after balance/vehicle reductions   |  `3:27.37`, 9 shards |
+| CI-equivalent `--jobs 4 --non-slow-shards 8` after reductions     |  `3:34.27`, 9 shards |
+
+The latest reductions cut several expensive test bodies, but the 8-shard profile is now limited by
+longer generated shards. `--jobs 12` over-contends CPU/software-GPU work locally and makes individual
+visibility tests exceed 10 seconds, so CI stays at `--jobs 4`.
 
 ## Resolved blockers
 
@@ -80,8 +93,8 @@ stability.
 
 ## Prioritized plan
 
-1. Wait for PR CI timings with 16 generated non-slow shards before changing shard weights again.
-2. If CI still has a >180s shard, split the longest generated non-slow shard first.
+1. Wait for PR CI timings with 8 generated CPU shards before changing shard weights again.
+2. If CI still has a >180s shard, rebalance the longest generated CPU shard first.
 3. If runner shutdown continues, isolate `[#map_test]` / `[#vehicle_efficiency_test]`.
 4. Benchmark `--option_overrides=REALITY_BUBBLE_SIZE:2` only on map/visibility-heavy shards;
    keep failing or reality-bubble-sensitive tags on the default bubble.

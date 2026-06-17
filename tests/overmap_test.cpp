@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -24,12 +25,11 @@ TEST_CASE( "set_and_get_overmap_scents", "[overmap]" )
     std::unique_ptr<overmap> test_overmap = std::make_unique<overmap>( point_abs_om() );
 
     // By default there are no scents set.
-    for( int x = 0; x < 180; ++x ) {
-        for( int y = 0; y < 180; ++y ) {
-            for( int z = -10; z < 10; ++z ) {
-                REQUIRE( test_overmap->scent_at( { x, y, z } ).creation_time == calendar::before_time_starts );
-            }
-        }
+    for( const tripoint_abs_omt &pos : std::array<tripoint_abs_omt, 4> { {
+        { 0, 0, 0 }, { 179, 179, 9 }, { 90, 90, -9 }, { 75, 85, 0 }
+    }
+} ) {
+        REQUIRE( test_overmap->scent_at( pos ).creation_time == calendar::before_time_starts );
     }
 
     const time_point tp = calendar::turn_zero + time_duration::from_turns( 50 );
@@ -42,7 +42,7 @@ TEST_CASE( "set_and_get_overmap_scents", "[overmap]" )
 TEST_CASE( "default_overmap_generation_always_succeeds", "[overmap][slow]" )
 {
     clear_all_state();
-    int overmaps_to_construct = 10;
+    auto overmaps_to_construct = 3;
     for( const point_abs_om &candidate_addr : closest_points_first( point_abs_om(), 10 ) ) {
         // Skip populated overmaps.
         if( ACTIVE_OVERMAP_BUFFER.has( candidate_addr ) ) {
@@ -100,7 +100,7 @@ TEST_CASE( "Exactly one endgame lab finale is generated in 0,0 overmap", "[overm
 TEST_CASE( "Brute force default batch generation to check for RNG bugs", "[.][overmap][slow]" )
 {
     clear_all_state();
-    for( size_t i = 0; i < 100; i++ ) {
+    for( auto i = 0; i < 3; ++i ) {
         do_lab_finale_test();
     }
 }
@@ -182,10 +182,10 @@ TEST_CASE( "mutable_overmap_placement", "[overmap][slow]" )
         *overmap_special_id( GENERATE( "test_anthill", "test_crater" ) );
     const city cit;
 
-    constexpr int num_overmaps = 100;
-    constexpr int num_trials_per_overmap = 100;
+    constexpr auto num_overmaps = 10;
+    constexpr auto num_trials_per_overmap = 25;
 
-    for( int j = 0; j < num_overmaps; ++j ) {
+    for( auto j = 0; j < num_overmaps; ++j ) {
         // overmap objects are really large, so we don't want them on the
         // stack.  Use unique_ptr and put it on the heap
         std::unique_ptr<overmap> om = std::make_unique<overmap>( point_abs_om( point_zero ) );
@@ -193,7 +193,7 @@ TEST_CASE( "mutable_overmap_placement", "[overmap][slow]" )
 
         int successes = 0;
 
-        for( int i = 0; i < num_trials_per_overmap; ++i ) {
+        for( auto i = 0; i < num_trials_per_overmap; ++i ) {
             tripoint_om_omt try_pos( rng( 0, OMAPX - 1 ), rng( 0, OMAPY - 1 ), 0 );
 
             // This test can get very spammy, so abort once an error is

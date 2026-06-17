@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-read=docs --allow-env=GITHUB_TOKEN,GITHUB_REPOSITORY --allow-net=api.github.com
+#!/usr/bin/env -S deno run --allow-read=docs --allow-run=git,gh --allow-env=GH_TOKEN,GITHUB_TOKEN
 
 /**
  * @module
@@ -6,9 +6,10 @@
  * Updates PR bodies when localized docs changed without every tracked language variant.
  */
 
+import { Command } from "@cliffy/command"
 import { walk } from "@std/fs"
-import { Octokit, type RestEndpointMethodTypes } from "@octokit/rest"
 import { markdownTable } from "markdown-table"
+import { changedFilesFromGit, type PullFile } from "./git_changed_files.ts"
 
 const beginMarker = "<!-- BEGIN docs comment -->"
 const endMarker = "<!-- END docs comment -->"
@@ -16,10 +17,7 @@ const markerPattern = new RegExp(`\n*${beginMarker}[\\s\\S]*?${endMarker}\\s*`, 
 const changedStatuses = new Set(["added", "modified", "removed", "renamed", "changed"])
 const trackedLanguages = ["en", "ja", "ko"]
 
-type PullFile = Pick<
-  RestEndpointMethodTypes["pulls"]["listFiles"]["response"]["data"][number],
-  "filename" | "previous_filename" | "status"
->
+export type { PullFile }
 type DocPath = { lang: string; path: string }
 export type TranslationWarning = {
   path: string
@@ -27,6 +25,9 @@ export type TranslationWarning = {
   stale: string[]
   missing: string[]
 }
+
+const decoder = new TextDecoder()
+const encoder = new TextEncoder()
 
 const docPaths = (paths: (string | undefined)[]): DocPath[] =>
   paths.flatMap((file) => {
@@ -86,26 +87,70 @@ const withTranslationBlock = (body: string, block: string | undefined): string =
   return block === undefined ? cleanBody : [cleanBody, block].filter(Boolean).join("\n\n")
 }
 
-if (import.meta.main) {
-  const token = Deno.env.get("GITHUB_TOKEN")
-  const [owner, repo] = Deno.env.get("GITHUB_REPOSITORY")?.split("/") ?? []
-  const pr = Number(Deno.args[0])
-  if (!token) throw new Error("GITHUB_TOKEN is required")
-  if (!owner || !repo) throw new Error("GITHUB_REPOSITORY must be owner/repo")
-  if (!Number.isInteger(pr)) throw new Error("PR number is required")
+const run = async (
+  command: string,
+  args: string[],
+  input?: string,
+  env?: Record<string, string>,
+): Promise<string> => {
+  const process = new Deno.Command(command, {
+    args,
+    clearEnv: env !== undefined,
+    env,
+    stdin: input === undefined ? "null" : "piped",
+    stdout: "piped",
+    stderr: "piped",
+  }).spawn()
+  if (input !== undefined) {
+    const writer = process.stdin.getWriter()
+    await writer.write(encoder.encode(input))
+    await writer.close()
+  }
+  const { success, stdout, stderr } = await process.output()
+  if (!success) {
+    const message = decoder.decode(stderr).trim()
+    throw new Error(`${command} ${args.join(" ")} failed${message ? `: ${message}` : ""}`)
+  }
+  return decoder.decode(stdout)
+}
 
-  const octokit = new Octokit({ auth: token })
-  const files = await octokit.paginate(octokit.rest.pulls.listFiles, {
-    owner,
-    repo,
-    pull_number: pr,
-    per_page: 100,
-  })
-  const block = renderTranslationBlock(
-    findTranslationWarnings(files, trackedLanguages, await existingDocPaths()),
+const ghEnv = (): Record<string, string> | undefined => {
+  const token = Deno.env.get("GH_TOKEN") ?? Deno.env.get("GITHUB_TOKEN")
+  return token === undefined ? undefined : { GH_TOKEN: token }
+}
+
+const readPrBody = async (pr: number): Promise<string> =>
+  (await run(
+    "gh",
+    ["pr", "view", String(pr), "--json", "body", "--jq", ".body"],
+    undefined,
+    ghEnv(),
+  ))
+    .trimEnd()
+
+const updatePrBody = async (pr: number, body: string): Promise<void> => {
+  await run("gh", ["pr", "edit", String(pr), "--body-file", "-"], body, ghEnv())
+}
+
+const main = new Command()
+  .description(
+    "updates PR bodies when localized docs changed without every tracked language variant.",
   )
-  const { data } = await octokit.rest.pulls.get({ owner, repo, pull_number: pr })
-  const oldBody = data.body ?? ""
-  const body = withTranslationBlock(oldBody, block)
-  if (body !== oldBody) await octokit.rest.pulls.update({ owner, repo, pull_number: pr, body })
+  .arguments("<pr:number>")
+  .option("--base <rev:string>", "Base git revision", { default: "origin/main" })
+  .option("--head <rev:string>", "Head git revision", { default: "HEAD" })
+  .action(async ({ base, head }, pr) => {
+    const files = await changedFilesFromGit({ base, head })
+    if (files.flatMap(changedDocPaths).length === 0) return
+
+    const block = renderTranslationBlock(
+      findTranslationWarnings(files, trackedLanguages, await existingDocPaths()),
+    )
+    const oldBody = await readPrBody(pr)
+    const body = withTranslationBlock(oldBody, block)
+    if (body !== oldBody) await updatePrBody(pr, body)
+  })
+
+if (import.meta.main) {
+  await main.parse(Deno.args)
 }

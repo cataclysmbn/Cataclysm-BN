@@ -558,13 +558,13 @@ TEST_CASE( "creature_mapbuffer_cache_tracks_dimension_registry_slots" )
 
 TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
 {
-    clear_all_state();
+    clear_states( state::avatar | state::creature );
 
     auto &you = get_avatar();
     const auto player_sm = tripoint_abs_sm( 100, 200, 2 );
     const auto player_offset = tripoint_rel_ms( 3, 4, 0 );
     const auto player_abs = project_to<coords::ms>( player_sm ) + player_offset;
-    you.setpos( player_abs );
+    you.Character::setpos( player_abs );
 
     const auto expected_origin = player_sm -
                                  tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
@@ -586,7 +586,7 @@ TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
     const auto moved_bub = tripoint_bub_ms( g_half_mapsize_x + 1, g_half_mapsize_y + 2,
                                             player_abs.z() );
     const auto moved_abs = bub_to_abs( moved_bub );
-    you.setpos( moved_abs );
+    you.Character::setpos( moved_abs );
     CHECK( you.abs_pos() == moved_abs );
     CHECK( you.bub_pos() == moved_bub );
 }
