@@ -126,7 +126,11 @@
   {
     "id": "SLEEP_PAIN_THRESH",
     "type": "enchantment_value"
-  }
+  },
+  {
+    "id": "SLEEP_DB_RESIST",
+    "type": "enchantment_value"
+  },
   {
     "id": "CLIMATE_CONTROL",
     "type": "enchantment_value",

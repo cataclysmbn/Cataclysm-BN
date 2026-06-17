@@ -782,7 +782,10 @@
     "description": "You're quite the heavy sleeper.  Noises are unlikely to wake you up.",
     "changes_to": [ "HEAVYSLEEPER2" ],
     "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "SLEEP_PAIN_THRESHOLD", "add": 2 } ] } ]
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [
+      { "value": "SLEEP_PAIN_THRESH", "add": 2 },
+      { "value": "SLEEP_DB_RESIST", "add": 30 }
+    ] } ]
   },
   {
     "type": "mutation",
@@ -4930,7 +4933,10 @@
     "valid": false,
     "prereqs": [ "HEAVYSLEEPER" ],
     "category": [ "BEAST", "LUPINE" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "SLEEP_PAIN_THRESHOLD", "add": 5 } ] } ]
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [
+      { "value": "SLEEP_PAIN_THRESH", "add": 5 },
+      { "value": "SLEEP_DB_RESIST", "add": 50 }
+    ] } ]
   },
   {
     "type": "mutation",

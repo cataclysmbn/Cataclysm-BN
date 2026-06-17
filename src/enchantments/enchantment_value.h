@@ -36,10 +36,10 @@ public:
 
     enchantment_value_id id;
 
-    bool was_loaded;
-    bool can_add;
-    bool can_mult;
-    bool can_max;
+    bool was_loaded = false;
+    bool can_add = true;
+    bool can_mult = true;
+    bool can_max = false;
 
     bool has_parent() const;
     enchantment_value_id get_parent() const;
