@@ -339,6 +339,12 @@ Additional pain required for being woken up
 `base_value` is the base sleep pain value
 Minimum value is 1
 
+##### SLEEP_DB_RESIST
+
+Modifier to the amount of noise above environemental required to be woken up
+`base_value` is 20
+There is no minimum nor maximum value
+
 ##### LIE
 
 Modifier to Lie chance `base_value` is post skill effects
@@ -386,6 +392,21 @@ There is no limit
 Additional dodges per turn before dodge penalty kicks in. `base_value` here is character's base
 dodges per turn before penalty (usually 1). The final value can go below 0, which results in penalty
 to dodge roll.
+
+##### BLISTER_COUNT
+
+Effective heat armor modifier to gaining the blister effect. `base_value` is the number of blisters.
+The final value can go below 0, which would never blister the character. Or it could go higher and always blister the character.
+
+##### LIMINATION
+
+Lumination around the player when active. You cannot add nor multiply this enchantment, only max value works.
+The final value will not go below 0, and the maximum value is uncapped.
+
+##### NIGHT_VISION
+
+Night vision value for the player. `EFFECT_NIGHT_VISION` or `GNV_EFFECT` is 10.0 while `GNVE_EFFECT` is 18.0
+Only `max` works, and it will take the highest of enchantment and other night vision effects
 
 ##### ARMOR_X
 
