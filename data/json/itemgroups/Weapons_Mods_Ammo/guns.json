@@ -735,10 +735,7 @@
     "type": "item_group",
     "id": "guns_rifle_improvised",
     "//": "Makeshift or otherwise poor quality rifles.",
-    "items": [
-      { "group": "nested_pipe_rifle", "prob": 60 },
-      { "group": "nested_handmade_carbine", "prob": 120 }
-    ]
+    "items": [ { "group": "nested_pipe_rifle", "prob": 60 }, { "group": "nested_handmade_carbine", "prob": 120 } ]
   },
   {
     "type": "item_group",

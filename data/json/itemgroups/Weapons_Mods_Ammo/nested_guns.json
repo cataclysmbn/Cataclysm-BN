@@ -2361,10 +2361,7 @@
     "type": "item_group",
     "//": "Luty SMG with 50% chance of a caliber conversion kit installed.",
     "subtype": "distribution",
-    "entries": [
-      { "item": "smg_luty", "contents-group": "gunmod_luty_conversion", "prob": 50 },
-      { "item": "smg_luty", "prob": 50 }
-    ]
+    "entries": [ { "item": "smg_luty", "contents-group": "gunmod_luty_conversion", "prob": 50 }, { "item": "smg_luty", "prob": 50 } ]
   },
   {
     "id": "nested_handmade_revolver",
@@ -2372,7 +2369,13 @@
     "//": "Handmade revolver with 50% chance of a caliber conversion kit installed.",
     "subtype": "distribution",
     "entries": [
-      { "item": "handmade_revolver", "charges-min": 0, "charges-max": 6, "contents-group": "gunmod_hmr_conversion", "prob": 50 },
+      {
+        "item": "handmade_revolver",
+        "charges-min": 0,
+        "charges-max": 6,
+        "contents-group": "gunmod_hmr_conversion",
+        "prob": 50
+      },
       { "item": "handmade_revolver", "charges-min": 0, "charges-max": 6, "prob": 50 }
     ]
   }

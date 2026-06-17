@@ -45,8 +45,8 @@
       [ "tuned_mechanism", 20 ],
       [ "u_shotgun", 60 ],
       [ "waterproof_gunmod", 40 ],
-       [ "retool_ar15_300blk", 40 ],
-       [ "g36_stanag_adapter", 40 ],
+      [ "retool_ar15_300blk", 40 ],
+      [ "g36_stanag_adapter", 40 ],
       [ "aug_nato_conversion", 40 ],
       [ "breacher_grip", 10 ],
       [ "acog_scope", 70 ],
@@ -297,9 +297,6 @@
     "id": "gunmod_luty_conversion",
     "//": "Luty SMG caliber conversion kits.",
     "subtype": "distribution",
-    "entries": [
-      { "item": "retool_luty_40", "prob": 40 },
-      { "item": "retool_luty_45", "prob": 40 }
-    ]
+    "entries": [ { "item": "retool_luty_40", "prob": 40 }, { "item": "retool_luty_45", "prob": 40 } ]
   }
 ]
