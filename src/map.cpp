@@ -497,6 +497,9 @@ units::volume map_stack::max_volume() const
 map::map( int mapsize )
 {
     my_MAPSIZE = mapsize;
+    const auto cache_size = submap_cache_size();
+    cached_submaps_.assign( cache_size, nullptr );
+    cached_submap_valid_.assign( cache_size, false );
 
     for( auto &ptr : caches ) {
         ptr = std::make_unique<level_cache>( SEEX * mapsize, SEEY * mapsize );
@@ -513,10 +516,12 @@ map &map::operator=( map && )  noexcept = default;
 auto map::resize( int new_mapsize ) -> void
 {
     my_MAPSIZE = new_mapsize;
-    const auto grid_sz = static_cast<size_t>( my_MAPSIZE * my_MAPSIZE * OVERMAP_LAYERS );
     for( auto &ptr : caches ) {
         ptr = std::make_unique<level_cache>( SEEX * new_mapsize, SEEY * new_mapsize );
     }
+    const auto cache_size = submap_cache_size();
+    cached_submaps_.assign( cache_size, nullptr );
+    cached_submap_valid_.assign( cache_size, false );
     submaps_with_active_items.clear();
     funnel_locations_.clear();
     // Recompute the circular load footprint for the new bubble radius.
@@ -557,6 +562,48 @@ ter_id map::get_boundary_terrain() const
 auto map::bind_dimension( const dimension_id &dim ) -> void
 {
     bound_dimension_ = dim;
+    clear_submap_cache();
+}
+
+auto map::submap_cache_size() const -> std::size_t
+{
+    const auto mapsize = static_cast<std::size_t>( my_MAPSIZE );
+    return mapsize * mapsize * static_cast<std::size_t>( OVERMAP_LAYERS );
+}
+
+auto map::submap_cache_index( const tripoint_bub_sm &gridp ) const -> std::optional<std::size_t>
+{
+    if( !inbounds( gridp ) ) {
+        return std::nullopt;
+    }
+    const auto mapsize = static_cast<std::size_t>( my_MAPSIZE );
+    const auto z_offset = static_cast<std::size_t>( gridp.z() + OVERMAP_DEPTH );
+    const auto x_offset = static_cast<std::size_t>( gridp.x() );
+    const auto y_offset = static_cast<std::size_t>( gridp.y() );
+    return z_offset * mapsize * mapsize + x_offset * mapsize + y_offset;
+}
+
+auto map::cache_submap_at_grid( const tripoint_bub_sm &gridp, submap *sm ) const -> void
+{
+    const auto index = submap_cache_index( gridp );
+    if( index && *index < cached_submaps_.size() && *index < cached_submap_valid_.size() ) {
+        cached_submaps_[*index] = sm;
+        cached_submap_valid_[*index] = true;
+    }
+}
+
+auto map::clear_submap_cache() const -> void
+{
+    std::ranges::fill( cached_submaps_, nullptr );
+    std::ranges::fill( cached_submap_valid_, false );
+}
+
+auto map::getsubmap( const std::size_t grididx ) const -> submap *
+{
+    if( grididx >= cached_submaps_.size() ) {
+        return nullptr;
+    }
+    return cached_submaps_[grididx];
 }
 
 bool map::contains_abs_sm( const tripoint_abs_sm &p ) const
@@ -576,7 +623,7 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id
         return;
     }
 
-    // Submap lookup — shared by vehicle fixup, active-item tracking, and grid update.
+    // Submap lookup shared by vehicle fixup, active-item tracking, and cache update.
     submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
 
     if( sm != nullptr && !sm->vehicles.empty() ) {
@@ -603,6 +650,7 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id
     if( !contains_abs_sm( p ) ) {
         return;
     }
+    cache_submap_at_grid( abs_to_map_local( *this, p ), sm );
 }
 
 void map::on_submap_unloaded( const tripoint_abs_sm &pos, const dimension_id &dim_id )
@@ -633,6 +681,7 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const dimension_id &di
     if( !contains_abs_sm( pos ) ) {
         return;
     }
+    cache_submap_at_grid( abs_to_map_local( *this, pos ), nullptr );
 }
 
 void map::set_transparency_cache_dirty( const int zlev )
@@ -8921,6 +8970,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
             dim_buf.add_submap( grid_abs_sub, sm );
             bsub = dim_buf.lookup_submap_in_memory( grid_abs_sub );
         }
+        cache_submap_at_grid( grid, bsub );
         return;
     }
 
@@ -8955,9 +9005,11 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         }
         if( tmpsub == nullptr ) {
             debugmsg( "failed to generate a submap at %s", grid_abs_sub.to_string() );
+            cache_submap_at_grid( grid, nullptr );
             return;
         }
     }
+    cache_submap_at_grid( grid, tmpsub );
 
     // New submap changes the content of the map and all caches must be recalculated.
     // In incremental mode (shift context), transparency and floor caches were
@@ -9326,10 +9378,10 @@ void map::clear_traps()
 
 bool map::inbounds( const tripoint_bub_sm &p ) const
 {
-    // Use runtime my_MAPSIZE so this agrees with get_nonant()'s grid indexing.
+    // Use runtime my_MAPSIZE so this agrees with local submap-cache indexing.
     // MAPSIZE (and MAPSIZE_X/Y) are compile-time constants sized for the maximum
     // reality bubble; using them here when the live map is smaller allows p values
-    // that pass inbounds() but produce an out-of-bounds grid[] index in get_nonant().
+    // that pass inbounds() but produce an out-of-bounds cache index.
     const auto max_xy = my_MAPSIZE;
     return inbounds_z( p.z() ) && p.x() >= 0 && p.x() < max_xy && p.y() >= 0 && p.y() < max_xy;
 }
@@ -10297,8 +10349,19 @@ submap *map::get_submap_at( const tripoint_bub_ms &p, point_sm_ms &offset_p ) co
 
 submap *map::get_submap_at_grid( const tripoint_bub_sm &gridp ) const
 {
+    const auto index = submap_cache_index( gridp );
+    if( index && *index < cached_submaps_.size() && *index < cached_submap_valid_.size() ) {
+        if( cached_submap_valid_[*index] ) {
+            return cached_submaps_[*index];
+        }
+    }
+
     const auto abs_sm = map_local_to_abs( *this, gridp );
-    return MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( abs_sm );
+    submap *const sm = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( abs_sm );
+    if( index ) {
+        cache_submap_at_grid( gridp, sm );
+    }
+    return sm;
 }
 
 void map::draw_line_ter( const ter_id &type, const tripoint_bub_ms &p1, const tripoint_bub_ms &p2 )

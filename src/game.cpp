@@ -757,7 +757,7 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
 
     // Register game and map as listeners (add_listener is idempotent).
     // game must be added before map so that on_submap_unloaded deactivates
-    // entities before the map's listener clears grid[] pointers.
+    // entities before the map's listener clears cached submap pointers.
     submap_loader.add_listener( this );
     submap_loader.add_listener( &m );
 
@@ -3858,7 +3858,7 @@ bool game::load( const save_t &name )
     u.set_save_id( name.decoded_name() );
     u.name = name.decoded_name();
     // Set the correct bubble radius BEFORE unserialize() so the submap_loader
-    // request uses the right radius and update_map() does not null active grid slots.
+    // request uses the right radius and update_map() does not clear active cached slots.
     init_bubble_config();
     reality_bubble_radius_ = g_half_mapsize;
     // If a stale request exists from a previous load in the same session, release
@@ -13679,7 +13679,7 @@ void game::resize_reality_bubble_to( int new_size )
     }
 
     // Update globals and rebuild the map grid.
-    // grid[] is cleared by resize(); submaps stay resident in the mapbuffer
+    // The non-owning submap cache is cleared by resize(); submaps stay resident in the mapbuffer
     // with their dirty flags intact and will be saved on normal eviction.
     init_bubble_config( new_size );
     m.resize( g_mapsize );
@@ -13689,7 +13689,7 @@ void game::resize_reality_bubble_to( int new_size )
     const auto new_abs_sub = player_abs_sm.xy() +
                              point_rel_sm( -g_half_mapsize, -g_half_mapsize );
 
-    // Reload the map around the player; this fills grid[], recreates load handles,
+    // Reload the map around the player; this fills the submap cache, recreates load handles,
     // rebuilds distribution_grid_tracker and fluid_grid.
     load_map( new_abs_sub, /*pump_events=*/false );
     debug_assert_player_map_origin( "resize_reality_bubble_to" );
@@ -13716,7 +13716,7 @@ void game::resize_reality_bubble_to( int new_size )
 
     // Flush the load/eviction diff immediately so the first boundary crossing
     // after resize doesn't stall on a bulk eviction of the old bubble's submaps.
-    // on_submap_unloaded is safe here: map::on_submap_unloaded guards grid[]
+    // on_submap_unloaded is safe here: map::on_submap_unloaded guards cache
     // writes behind contains_abs_sm(), so old out-of-bubble positions are
     // skipped and only vehicle/active-item tracking is cleaned up.
     submap_loader.update_lazy_border_focus( current_dimension_id_, u.abs_pos() );

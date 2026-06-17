@@ -705,11 +705,11 @@ struct sound_cache {
  * The map coordinates always start at (0, 0) for the top-left and end at (map_width-1, map_height-1) for the bottom-right.
  *
  * The actual map data is stored in `submap` instances. These instances are managed by `mapbuffer`.
- * References to the currently active submaps are stored in `map::grid`:
+ * Non-owning references to the currently active submaps are cached by `map`:
  *     0 1 2
  *     3 4 5
  *     6 7 8
- * In this example, the top-right submap would be at `grid[2]`.
+ * In this example, the top-right submap would be at cache slot 2.
  *
  * When the player moves between submaps, the whole map is shifted, so that if the player moves one submap to the right,
  * (0, 0) now points to a tile one submap to the right from before
@@ -926,17 +926,17 @@ class map : public submap_load_listener
                      const drawsq_params &params ) const;
 
         /**
-         * Add currently loaded submaps (in @ref grid) to the @ref mapbuffer.
+         * Add currently loaded submaps to the @ref mapbuffer.
          * They will than be stored by that class and can be loaded from that class.
          * This can be called several times, the mapbuffer takes care of adding
          * the same submap several times. It should only be called after the map has
          * been loaded.
          * Submaps that have been loaded from the mapbuffer (and not generated) are
-         * Load submaps into @ref grid. This might create new submaps if
+         * Load submaps into the local non-owning cache. This might create new submaps if
          * the @ref mapbuffer can not deliver the requested submap (as it does
          * not exist on disc).
          * This must be called before the map can be used at all!
-         * @param w global coordinates of the submap at grid[0]. This
+         * @param w global coordinates of the submap at local cache slot (0,0). This
          * is in submap coordinates.
          * @param update_vehicles If true, add vehicles to the vehicle cache.
          * @param pump_events If true, handle window events during loading. If
@@ -1971,10 +1971,10 @@ class map : public submap_load_listener
         /**
          * Legacy accessor for the loaded-grid origin.
          *
-         * This is the absolute submap coordinate backing map-local grid slot
+         * This is the absolute submap coordinate backing map-local cache slot
          * (0,0).  For the player map it should match the player-derived reality
-         * bubble origin after map transitions settle. Detached loaded-grid maps
-         * keep an explicit loaded-grid origin here.
+         * bubble origin after map transitions settle. Detached loaded maps keep
+         * an explicit origin here.
          */
         auto get_abs_sub() const -> point_abs_sm {
             return abs_sub;
@@ -2205,7 +2205,7 @@ class map : public submap_load_listener
         solar_params m_solar;
 
         /**
-         * Absolute submap coordinate of loaded grid slot (0,0).
+         * Absolute submap coordinate of loaded cache slot (0,0).
          *
          * This is a loaded-grid/cache origin, not the definition of player
          * reality-bubble space.  The player map's value is synchronized with
@@ -2214,19 +2214,27 @@ class map : public submap_load_listener
          * anchor.
          */
         point_abs_sm abs_sub;
+        mutable std::vector<submap *> cached_submaps_;
+        mutable std::vector<bool> cached_submap_valid_;
 
         auto set_abs_sub( const point_abs_sm &p ) -> void {
             abs_sub = p;
+            clear_submap_cache();
         }
+
+        auto submap_cache_size() const -> std::size_t;
+        auto submap_cache_index( const tripoint_bub_sm &gridp ) const -> std::optional<std::size_t>;
+        auto cache_submap_at_grid( const tripoint_bub_sm &gridp, submap *sm ) const -> void;
+        auto clear_submap_cache() const -> void;
 
     public:
 
         field &get_field( const tripoint_bub_ms &p );
 
         /**
-         * Get the submap pointer with given index in @ref grid, the index must be valid!
+         * Get a cached non-owning submap pointer by flat cache index.
          */
-        submap *getsubmap( size_t grididx ) const;
+        auto getsubmap( std::size_t grididx ) const -> submap *;
         /**
          * Compatibility map-local lookup. Absolute data lookup belongs on
          * mapbuffer; simulation membership belongs on submap_load_manager.
@@ -2238,7 +2246,7 @@ class map : public submap_load_listener
         submap *get_submap_at( const tripoint_bub_ms &p, point_sm_ms &offset_p ) const;
         /**
          * Get submap pointer at given grid coordinates.  For coordinates
-         * inside the reality bubble grid, returns the grid[] slot directly.
+         * inside the reality bubble grid, returns the local cached pointer directly.
          * For out-of-bubble coordinates, falls back to a mapbuffer lookup
          * (may return nullptr if the submap is not loaded in memory).
          */
