@@ -116,13 +116,13 @@
   {
     "id": "THIRST",
     "type": "enchantment_value",
-    "can_add": false,
+    "can_add": true,
     "can_mult": true
   },
   {
     "id": "FATIGUE",
     "type": "enchantment_value",
-    "can_add": false,
+    "can_add": true,
     "can_mult": true
   },
   {

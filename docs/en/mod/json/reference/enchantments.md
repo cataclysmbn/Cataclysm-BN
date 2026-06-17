@@ -281,12 +281,12 @@ stamina gain rate modified by mouth encumbrance. The final value cannot go below
 
 ##### THIRST
 
-Thirst gain rate. This modifier ignores `add` field. `base_value` here is character's base thirst
+Thirst gain rate. `base_value` here is character's base thirst
 gain rate. The final value cannot go below 0.
 
 ##### FATIGUE
 
-Fatigue gain rate. This modifier ignores `add` field. `base_value` here is character's base fatigue
+Fatigue gain rate. `base_value` here is character's base fatigue
 gain rate. The final value cannot go below 0.
 
 ##### MENDING_MULT
