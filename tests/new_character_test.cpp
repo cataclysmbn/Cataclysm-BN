@@ -37,20 +37,22 @@ static std::ostream &operator<<( std::ostream &s, const std::vector<trait_id> &v
     return s;
 }
 
-static std::vector<trait_id> next_subset( const std::vector<trait_id> &set )
-{
-    // Doing it this way conveniently returns a vector containing solely set[foo] before
-    // it returns any other vectors with set[foo] in it
-    static unsigned bitset = 0;
-    std::vector<trait_id> ret;
+using starting_item_trait_set = std::vector<trait_id>;
+using starting_item_trait_sets_t = std::vector<starting_item_trait_set>;
 
-    ++bitset;
-    // Check each bit position for a match
-    for( size_t idx = 0; idx < set.size(); idx++ ) {
-        if( bitset & ( 1 << idx ) ) {
-            ret.push_back( set[idx] );
+static auto starting_item_trait_sets( const std::vector<trait_id> &traits ) ->
+starting_item_trait_sets_t
+{
+    auto ret = starting_item_trait_sets_t{};
+    for( const auto &trait : traits ) {
+        ret.push_back( { trait } );
+    }
+    for( auto i = size_t{ 0 }; i < traits.size(); ++i ) {
+        for( auto j = i + 1; j < traits.size(); ++j ) {
+            ret.push_back( { traits[i], traits[j] } );
         }
     }
+    ret.push_back( { trait_id( "ANTIWHEAT" ), trait_id( "ANTIJUNK" ), trait_id( "MEATARIAN" ) } );
     return ret;
 }
 
@@ -58,7 +60,7 @@ static bool try_set_traits( Character &ch, const std::vector<trait_id> &traits )
 {
     ch.clear_mutations();
     newcharacter::add_traits( ch ); // mandatory prof/scen traits
-    for( const trait_id &tr : traits ) {
+    for( const auto &tr : traits ) {
         if( newcharacter::has_conflicting_trait( ch, tr ) || !g->scen->traitquery( tr ) ) {
             return false;
         } else if( !ch.has_trait( tr ) ) {
@@ -199,19 +201,18 @@ TEST_CASE( "starting_items", "[slow]" )
     // Avoid false positives from ingredients like salt and cornmeal.
     const avatar control = get_sanitized_player();
 
-    std::vector<trait_id> traits = next_subset( mutations );
-    for( ; !traits.empty(); traits = next_subset( mutations ) ) {
+    for( const auto &traits : starting_item_trait_sets( mutations ) ) {
         for( const auto &pair : scen_prof_combos ) {
             g->scen = pair.first;
-            for( const string_id<profession> &prof : pair.second ) {
+            for( const auto &prof : pair.second ) {
                 ch.prof = prof;
                 if( !try_set_traits( ch, traits ) ) {
                     continue; // Trait conflict: this prof/scen/trait combo is impossible to attain
                 }
-                for( int i = 0; i < 2; i++ ) {
+                for( const auto male : { true, false } ) {
                     ch.worn.clear();
                     ch.reset_encumbrance();
-                    ch.male = i == 0;
+                    ch.male = male;
                     std::vector<detached_ptr<item>> items = prof->items( ch.male, traits );
                     /*
                     for( item * const &it : items ) {

@@ -172,6 +172,13 @@ const int cycle_limit = 100;
 // Rescale the recorded number of tiles based on fuel percentage left
 // (i.e. 0% fuel left means no scaling, 50% fuel left means double the effective distance)
 // Return the rescaled number
+static auto assert_vehicle_on_valid_terrain( const map &here, vehicle &veh ) -> void
+{
+    for( const tripoint_abs_ms &pos : veh.get_points() ) {
+        REQUIRE( here.ter( abs_to_map_local( here, pos ) ) );
+    }
+}
+
 static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
                             const ter_id &terrain,
                             const int reset_velocity_turn, const int target_distance,
@@ -240,9 +247,6 @@ static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
         veh.idle( true );
         // If the vehicle starts skidding, the effects become random and test is RUINED
         REQUIRE( !veh.skidding );
-        for( const tripoint_abs_ms &pos : veh.get_points() ) {
-            REQUIRE( here.ter( abs_to_map_local( here, pos ) ) );
-        }
         // How much it moved
         tiles_travelled += square_dist( starting_point, veh.bub_ms_location() );
         // Bring it back to starting point to prevent it from leaving the map
@@ -266,6 +270,8 @@ static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
         }
     }
 
+    assert_vehicle_on_valid_terrain( here, veh );
+
     float fuel_left = fuel_percentage_left( veh, starting_fuel );
     REQUIRE( starting_fuel_per - fuel_left > 0.0001f );
     const float fuel_percentage_used = fuel_level * ( starting_fuel_per - fuel_left );
@@ -280,12 +286,40 @@ static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
     return adjusted_tiles_travelled;
 }
 
+TEST_CASE( "vehicle_efficiency_movement_keeps_vehicle_on_valid_terrain", "[vehicle] [engine]" )
+{
+    clear_all_state();
+    reset_efficiency_state();
+    prepare_efficiency_map( ter_id( "t_pavement" ) );
+
+    const tripoint_bub_ms map_starting_point( 60, 60, 0 );
+    map &here = get_map();
+    vehicle *veh_ptr = here.add_vehicle( vproto_id( "fire_truck_test" ), map_starting_point,
+                                         -90_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+    vehicle &veh = *veh_ptr;
+    veh.tags.insert( "IN_CONTROL_OVERRIDE" );
+    veh.engine_on = true;
+    veh.cruise_velocity = std::min( 2235, veh.safe_ground_velocity( false ) );
+    veh.velocity = veh.cruise_velocity;
+
+    for( auto cycle = 0; cycle < 10; ++cycle ) {
+        here.vehmove();
+        veh.idle( true );
+        REQUIRE( !veh.skidding );
+        assert_vehicle_on_valid_terrain( here, veh );
+        here.displace_vehicle( veh, map_starting_point - veh.bub_ms_location() );
+    }
+
+    here.destroy_vehicle( veh_ptr );
+}
+
 static efficiency_stat find_inner(
     const std::string &type, int &expected_mass, const std::string &terrain, const int delay,
     const bool smooth, const bool test_mass = false, const bool in_reverse = false )
 {
     efficiency_stat efficiency;
-    for( int i = 0; i < 10; i++ ) {
+    for( auto i = 0; i < 10; ++i ) {
         efficiency.add( test_efficiency( vproto_id( type ), expected_mass, ter_id( terrain ),
                                          delay, -1, smooth, test_mass, in_reverse ) );
     }
