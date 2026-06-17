@@ -53,30 +53,5 @@
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
     "components": [ [ [ "sheet_metal_small", 1 ] ], [ [ "spring", 1 ] ], [ [ "duct_tape", 20 ] ] ]
   },
-  {
-    "type": "recipe",
-    "result": "hc_stanag_adapter",
-    "category": "CC_WEAPON",
-    "subcategory": "CSC_WEAPON_MODS",
-    "skill_used": "fabrication",
-    "skills_required": [ [ "mechanics", 3 ], [ "gun", 2 ] ],
-    "difficulty": 5,
-    "time": "20 m",
-    "autolearn": true,
-    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
-    "components": [ [ [ "sheet_metal_small", 2 ] ], [ [ "spring", 1 ] ], [ [ "duct_tape", 30 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "hc_scarh_mag_adapter",
-    "category": "CC_WEAPON",
-    "subcategory": "CSC_WEAPON_MODS",
-    "skill_used": "fabrication",
-    "skills_required": [ [ "mechanics", 3 ], [ "gun", 2 ] ],
-    "difficulty": 5,
-    "time": "20 m",
-    "autolearn": true,
-    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
-    "components": [ [ [ "sheet_metal_small", 2 ] ], [ [ "spring", 1 ] ], [ [ "duct_tape", 30 ] ] ]
-  }
+
 ]

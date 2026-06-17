@@ -34,6 +34,40 @@
     ]
   },
   {
+    "id": "2_shot_special",
+    "copy-from": "pipe_pistol",
+    "type": "GUN",
+    "name": { "str": "2 Shot Special" },
+    "//": "It's hard to say just how big this is, although it's (very large) pistol sized. But it is a handmade weapon.",
+    "description": "A crudely made double barrel pistol firing 38 special ammo.  Unfortunately, the name is less about the double barrels and more about the number of shots you'll get before it breaks down on you.",
+    "weight": "750 g",
+    "volume": "700 ml",
+    "barrel_volume": "75 ml",
+    "price": "20 USD",
+    "price_postapoc": "5 USD",
+    "ascii_picture": "2_shot_special",
+    "bashing": 3,
+    "material": [ "steel" ],
+    "color": "brown",
+    "ammo": "38",
+    "dispersion": 620,
+    "durability": 3,
+    "clip_size": 2,
+    "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],
+    "reload": 200,
+    "loudness": 2,
+    "valid_mod_locations": [
+      [ "accessories", 4 ],
+      [ "bore", 1 ],
+      [ "grip", 1 ],
+      [ "sights", 1 ],
+      [ "underbarrel", 1 ],
+      [ "rail", 1 ],
+      [ "stock", 1 ]
+    ],
+    "delete": { "flags": "NEVER_JAMS" }
+  },
+  {
     "id": "pipe_rifle",
     "copy-from": "rifle_home_made",
     "type": "GUN",
@@ -50,7 +84,18 @@
     "color": "brown",
     "ammo": "22",
     "blackpowder_tolerance": 96,
-    "barrel_volume": "500 ml"
+    "barrel_volume": "500 ml",
+    "valid_mod_locations": [
+      [ "accessories", 2 ],
+      [ "bore", 1 ],
+      [ "muzzle", 1 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ],
+      [ "grip", 1 ],
+      [ "rail", 1 ],
+      [ "sights", 1 ],
+      [ "underbarrel", 1 ]
+    ]
   },
   {
     "id": "pipe_shotgun",
@@ -107,39 +152,5 @@
       [ "underbarrel", 1 ]
     ],
     "extend": { "flags": [ "RELOAD_ONE" ] }
-  },
-  {
-    "id": "2_shot_special",
-    "copy-from": "pipe_pistol",
-    "type": "GUN",
-    "name": { "str": "2 Shot Special" },
-    "//": "It's hard to say just how big this is, although it's (very large) pistol sized. But it is a handmade weapon.",
-    "description": "A crudely made double barrel pistol firing 38 special ammo.  Unfortunately, the name is less about the double barrels and more about the number of shots you'll get before it breaks down on you.",
-    "weight": "750 g",
-    "volume": "700 ml",
-    "barrel_volume": "75 ml",
-    "price": "20 USD",
-    "price_postapoc": "5 USD",
-    "ascii_picture": "2_shot_special",
-    "bashing": 3,
-    "material": [ "steel" ],
-    "color": "brown",
-    "ammo": "38",
-    "dispersion": 620,
-    "durability": 3,
-    "clip_size": 2,
-    "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],
-    "reload": 200,
-    "loudness": 2,
-    "valid_mod_locations": [
-      [ "accessories", 4 ],
-      [ "bore", 1 ],
-      [ "grip", 1 ],
-      [ "sights", 1 ],
-      [ "underbarrel", 1 ],
-      [ "rail", 1 ],
-      [ "stock", 1 ]
-    ],
-    "delete": { "flags": "NEVER_JAMS" }
   }
 ]

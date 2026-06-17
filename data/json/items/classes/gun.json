@@ -285,7 +285,6 @@
     "reload": 200,
     "valid_mod_locations": [
       [ "accessories", 2 ],
-      [ "bore", 1 ],
       [ "muzzle", 1 ],
       [ "sling", 1 ],
       [ "stock", 1 ],
