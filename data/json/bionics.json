@@ -627,7 +627,8 @@
     "act_cost": "1 kJ",
     "react_cost": "1 kJ",
     "time": 1,
-    "points": 2
+    "points": 2,
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "id": "bio_hydraulics",

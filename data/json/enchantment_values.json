@@ -177,6 +177,10 @@
     "type": "enchantment_value"
   },
   {
+    "id": "BLISTER_COUNT",
+    "type": "enchantment_value"
+  },
+  {
     "id": "LUMINATION",
     "type": "enchantment_value",
     "can_add": false,

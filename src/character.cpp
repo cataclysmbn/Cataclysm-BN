@@ -6056,9 +6056,6 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     int air_humidity = get_local_humidity( weather_point.humidity, weather.weather_id,
                                            sheltered );
     // Let's cache this not to check it num_bp times
-    const bool has_bark = has_trait( trait_BARK );
-    const bool has_heatsink = has_bionic( bio_heatsink ) || is_wearing( itype_rm13_armor_on ) ||
-                              has_trait( trait_M_SKIN2 ) || has_trait( trait_M_SKIN3 );
     const bool use_floor_warmth = can_use_floor_warmth();
     // In bodytemp units
     const int ambient_norm = 1900 - BODYTEMP_NORM;
@@ -6225,19 +6222,15 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
                       + mutation_heat_low
                       + sunlight_warmth;
 
-        // Bark : lowers blister count to -5; harder to get blisters
-        // If the counter is high, your skin starts to burn
-        int blister_count = ( has_bark ? -5 : 0 );
-
         if( bp_stats.get_frostbite_timer() > 0 ) {
             bp_stats.set_frostbite_timer( bp_stats.get_frostbite_timer() - std::min( 5, h_radiation ) );
         }
-        blister_count += h_radiation - 111 > 0 ?
-                         std::max( static_cast<int>( std::sqrt( h_radiation - 111 ) ), 0 ) : 0;
+        int blister_count = h_radiation - 111 > 0 ?
+                            std::max( static_cast<int>( std::sqrt( h_radiation - 111 ) ), 0 ) : 0;
 
-        if( has_heatsink ) {
-            blister_count -= 20;
-        }
+        blister_count += bonus_from_enchantments( blister_count, enchantment_value_id( "BLISTER_COUNT" ),
+                         true );
+
         if( fire_armor_per_bp.empty() && blister_count > 0 ) {
             fire_armor_per_bp = get_armor_fire( clothing_map );
         }
