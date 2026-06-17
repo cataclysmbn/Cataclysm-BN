@@ -14,5 +14,6 @@ test_data["volume_milliliters"] = Volume.from_liter(volume_liters):to_milliliter
 test_data["temperature_fahrenheit_from_celsius"] = Temperature.from_celsius(temperature_celsius):to_fahrenheit()
 test_data["temperature_celsius_from_fahrenheit"] = Temperature.from_fahrenheit(temperature_fahrenheit):to_celsius()
 test_data["temperature_kelvin_from_celsius"] = Temperature.from_celsius(temperature_celsius):to_kelvin()
-test_data["temperature_less_than"] = Temperature.from_celsius(temperature_celsius) < Temperature.from_fahrenheit(temperature_fahrenheit)
+test_data["temperature_less_than"] = Temperature.from_celsius(temperature_celsius)
+  < Temperature.from_fahrenheit(temperature_fahrenheit)
 test_data["temperature_equal_to"] = Temperature.from_celsius(0) == Temperature.from_fahrenheit(32)

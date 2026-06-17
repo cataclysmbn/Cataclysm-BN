@@ -10757,7 +10757,7 @@ units::temperature
     const auto enchantment_bonus = [this]( const units::temperature base,
     const enchantment_value_id & value ) -> units::temperature_delta {
         return units::from_legacy_bodypart_temp_delta(
-                   bonus_from_enchantments( units::to_legacy_bodypart_temp( base ), value ) );
+            bonus_from_enchantments( units::to_legacy_bodypart_temp( base ), value ) );
     };
     if( temperature > BODYTEMP_NORM ) {
         temperature = temperature - enchantment_bonus( temperature,
