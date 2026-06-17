@@ -3211,15 +3211,6 @@ units::volume Character::volume_capacity_reduced_by(
             ret += i->get_storage();
         }
     }
-    if( has_bionic( bio_storage ) ) {
-        ret += 2_liter;
-    }
-    if( has_trait( trait_SHELL ) ) {
-        ret += 4_liter;
-    }
-    if( has_trait( trait_SHELL2 ) && !has_active_mutation( trait_SHELL2 ) ) {
-        ret += 6_liter;
-    }
 
     ret *= mutation_value( "packmule_modifier" );
     ret += bonus_from_enchantments( ret / 1_ml, enchantment_value_id( "CARRY_STORAGE" ) ) * 1_ml;
@@ -4647,9 +4638,6 @@ bool Character::in_climate_control()
 {
     bool regulated_area = false;
     // Check
-    if( has_active_bionic( bio_climate ) ) {
-        return true;
-    }
     map &here = get_map();
     if( has_trait( trait_M_SKIN3 ) && here.has_flag_ter_or_furn( "FUNGUS", bub_pos() ) &&
         in_sleep_state() ) {
