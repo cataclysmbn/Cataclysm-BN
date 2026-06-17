@@ -330,7 +330,7 @@ double enchantment::get_value_multiply(const enchantment_value_id value) const {
 int enchantment::get_value_max(const enchantment_value_id value) const {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     int result = 0;
-    if (values_max.contains(value)) { result += values_max.at(value); }
+    if (values_max.contains(value)) { result = values_max.at(value); }
     if (value->has_parent()) { result = std::max(result, get_value_max(value->get_parent())); }
 
     return result;
@@ -525,6 +525,16 @@ void enchantment::check() const {
         } else if (!ench_val_id->can_add) {
             problems.push_back(
                 string_format("\nenchantment value %s cannot be added to", ench_val_id.str()));
+        }
+    }
+    auto val_max_copy = values_max;
+    for (const auto& [ench_val_id, val] : val_max_copy) {
+        if (!ench_val_id.is_valid()) {
+            problems.push_back(
+                string_format("\nenchantment value %s is invalid", ench_val_id.str()));
+        } else if (!ench_val_id->can_max) {
+            problems.push_back(
+                string_format("\nenchantment value %s cannot use max", ench_val_id.str()));
         }
     }
     auto val_mult_copy = values_multiply;
