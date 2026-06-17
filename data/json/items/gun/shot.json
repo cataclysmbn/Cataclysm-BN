@@ -285,7 +285,6 @@
     ],
     "extend": { "flags": [ "RELOAD_ONE" ] }
   },
-
   {
     "id": "remington_870",
     "copy-from": "shotgun_pump_3gun",
