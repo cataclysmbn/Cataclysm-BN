@@ -736,7 +736,7 @@
     "id": "guns_rifle_improvised",
     "//": "Makeshift or otherwise poor quality rifles.",
     "items": [
-      { "item": "rifle_pipe", "prob": 60 },
+      { "item": "pipe_rifle", "prob": 60 },
       { "item": "carbine_handmade", "prob": 120, "charges-min": 0, "charges-max": 5 }
     ]
   },

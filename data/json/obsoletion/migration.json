@@ -793,49 +793,49 @@
   {
     "id": "rifle_22",
     "type": "MIGRATION",
-    "replace": "rifle_pipe",
+    "replace": "pipe_rifle",
     "contents": [ "retool_pipe_22" ]
   },
   {
     "id": "rifle_38",
     "type": "MIGRATION",
-    "replace": "rifle_pipe",
+    "replace": "pipe_rifle",
     "contents": [ "retool_pipe_38" ]
   },
   {
     "id": "rifle_40",
     "type": "MIGRATION",
-    "replace": "rifle_pipe",
+    "replace": "pipe_rifle",
     "contents": [ "retool_pipe_40" ]
   },
   {
     "id": "rifle_44",
     "type": "MIGRATION",
-    "replace": "rifle_pipe",
+    "replace": "pipe_rifle",
     "contents": [ "retool_pipe_44" ]
   },
   {
     "id": "rifle_45",
     "type": "MIGRATION",
-    "replace": "rifle_pipe",
+    "replace": "pipe_rifle",
     "contents": [ "retool_pipe_45" ]
   },
   {
     "id": "rifle_9mm",
     "type": "MIGRATION",
-    "replace": "rifle_pipe",
+    "replace": "pipe_rifle",
     "contents": [ "retool_pipe_9mm" ]
   },
   {
     "id": "rifle_223",
     "type": "MIGRATION",
-    "replace": "rifle_pipe",
+    "replace": "pipe_rifle",
     "contents": [ "retool_pipe_223" ]
   },
   {
     "id": "rifle_3006",
     "type": "MIGRATION",
-    "replace": "rifle_pipe",
+    "replace": "pipe_rifle",
     "contents": [ "retool_pipe_3006" ]
   },
   {

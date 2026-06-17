@@ -407,7 +407,7 @@
   },
   {
     "type": "recipe",
-    "result": "rifle_pipe",
+    "result": "pipe_rifle",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_RANGED",
     "skill_used": "fabrication",
