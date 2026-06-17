@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <string>
@@ -374,6 +375,7 @@ TEST_CASE( "can autodrive", "[vehicle][autodrive]" )
     auto &you = get_avatar();
     const auto origin = tripoint_bub_ms( 60, 60, 0 );
     you.setpos( origin );
+    you.clear_map_memory();
     you.set_moves( 1000 );
 
     auto *veh_ptr = here.add_vehicle( vproto_id( "car" ), origin, 0_degrees, 100, 0, true, false,
@@ -385,6 +387,15 @@ TEST_CASE( "can autodrive", "[vehicle][autodrive]" )
     REQUIRE( veh_ptr->player_in_control( you ) );
 
     const auto current_omt = project_to<coords::omt>( veh_ptr->abs_ms_location() );
+    const auto memory_origin = project_to<coords::ms>( current_omt );
+    // Keep path planning deterministic; the regression check is the dirty live visibility cache.
+    using namespace std::views;
+    constexpr auto omt_size = coords::map_squares_per( coords::omt );
+    for( const auto x : iota( 0, omt_size * 2 ) ) {
+        for( const auto y : iota( 0, omt_size ) ) {
+            you.memorize_tile( memory_origin + tripoint_rel_ms( x, y, 0 ), "t_grass", 0, 0 );
+        }
+    }
     you.omt_path = { current_omt + tripoint_rel_omt( 1, 0, 0 ) };
     veh_ptr->is_autodriving = true;
 
