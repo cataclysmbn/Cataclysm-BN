@@ -11,8 +11,8 @@ namespace vehicle_throw
 constexpr int kilograms_per_strength = 100;
 constexpr int smaller_than_large_strength_penalty = 5;
 constexpr int base_throw_range = 1;
-constexpr int range_strength_step = 2;
 constexpr int max_throw_range = 30;
+constexpr int range_strength_step = 2;
 constexpr int base_shove_velocity = 1000;
 constexpr int shove_velocity_per_excess_strength = 125;
 constexpr int max_shove_velocity = 2000;

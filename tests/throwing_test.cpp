@@ -124,6 +124,7 @@ TEST_CASE( "vehicle throw range grows slowly past the weight threshold", "[throw
     CHECK( vehicle_throw::throw_range( 35, 30 ) == 3 );
     CHECK( vehicle_throw::throw_range( 38, 30 ) == 5 );
     CHECK( vehicle_throw::throw_range( 50, 30 ) == 11 );
+    CHECK( vehicle_throw::throw_range( 99, 1 ) == vehicle_throw::max_throw_range );
 }
 
 TEST_CASE( "vehicle shove velocity stays bounded", "[throwing], [balance]" )
@@ -209,6 +210,27 @@ TEST_CASE( "flung creatures take damage when they slam into a wall", "[throwing]
 
     CHECK( zombie.bub_pos() == landing );
     CHECK( zombie.get_hp() < hp_before );
+}
+
+TEST_CASE( "flung creatures stop at the reality bubble edge", "[throwing][bubble]" )
+{
+    clear_all_state();
+    clear_map();
+
+    auto &here = get_map();
+    const auto bubble_edge_x = SEEX * here.getmapsize() - 1;
+    const auto bubble_mid_y = SEEY * here.getmapsize() / 2;
+    const auto start = tripoint_bub_ms{ bubble_edge_x - 1, bubble_mid_y, 0 };
+    const auto edge = tripoint_bub_ms{ bubble_edge_x, bubble_mid_y, 0 };
+
+    here.ter_set( start, ter_id( "t_floor" ) );
+    here.ter_set( edge, ter_id( "t_floor" ) );
+
+    auto &zombie = spawn_test_monster( "mon_zombie", start );
+
+    g->fling_creature( &zombie, coord_to_angle( start, start + tripoint_east ), 30.0f );
+
+    CHECK( zombie.bub_pos() == edge );
 }
 
 struct throw_test_data {

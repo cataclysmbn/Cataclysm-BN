@@ -30,10 +30,9 @@ auto throw_range( const int throw_strength, const int strength_requirement ) -> 
         return 0;
     }
 
-    return std::clamp( std::max( base_throw_range,
-                                 ( throw_strength - strength_requirement ) / range_strength_step +
-                                 base_throw_range ),
-                       base_throw_range, max_throw_range );
+    return std::clamp(
+               ( throw_strength - strength_requirement ) / range_strength_step + base_throw_range,
+               base_throw_range, max_throw_range );
 }
 
 auto shove_velocity( const int throw_strength, const int strength_requirement ) -> int

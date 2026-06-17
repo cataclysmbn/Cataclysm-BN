@@ -14017,6 +14017,9 @@ void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bo
             pt.x() = c->bub_pos().x() + tdir.dx();
             pt.y() = c->bub_pos().y() + tdir.dy();
         }
+        if( !is_in_reality_bubble_bounds( pt ) ) {
+            break;
+        }
         float force = 0;
 
         if( m.obstructed_by_vehicle_rotation( prev_point, pt ) ) {

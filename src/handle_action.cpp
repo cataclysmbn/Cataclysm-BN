@@ -175,10 +175,20 @@ auto can_grab_creature( const Creature &target ) -> bool
            !target.has_effect( effect_grabbed ) && !target.has_flag( MF_GRAB_IMMUNE );
 }
 
+auto confirm_grab_npc( const npc &target ) -> bool
+{
+    return target.is_enemy() ||
+           query_yn( _( "You may be attacked!  Proceed?" ) );
+}
+
 auto grab_creature( avatar &you, Creature &target ) -> void
 {
     if( !can_grab_creature( target ) ) {
         add_msg( m_info, _( "You can't grab %s." ), target.disp_name() );
+        return;
+    }
+
+    if( npc *const guy = target.as_npc(); guy != nullptr && !confirm_grab_npc( *guy ) ) {
         return;
     }
 
