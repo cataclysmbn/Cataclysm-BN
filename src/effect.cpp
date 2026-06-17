@@ -4,22 +4,34 @@
 #include <cstddef>
 #include <map>
 #include <memory>
+#include <string>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "action_time_scale.h"
 #include "assign.h"
+#include "avatar.h"
+#include "calendar.h"
 #include "color.h"
 #include "debug.h"
 #include "enums.h"
+#include "game.h"
+#include "item.h"
 #include "json.h"
 #include "messages.h"
+#include "monster.h"
 #include "output.h"
 #include "player.h"
 #include "rng.h"
+#include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "type_id.h"
 #include "units.h"
 #include "units_serde.h"
+#include "generic_factory.h"
+#include "faction.h"
 
 static const efftype_id effect_bandaged( "bandaged" );
 static const efftype_id effect_beartrap( "beartrap" );
@@ -63,6 +75,97 @@ template<>
 bool string_id<effect_type>::is_valid() const
 {
     return effect_types.contains( *this );
+}
+
+// The only reason this exists is because read_from_json_string cant actually handle being given a std::string
+// It wants a JsonIn, which cant really handle a json string array
+// Be Very Careful when using this.
+template<typename T>
+T string_from_json_to_typed_unit( const std::string &source, const std::vector<std::pair<std::string, T>> &units, const JsonObject &jo )
+{
+    const std::string s = source;
+    size_t i = 0;
+    const auto error = [&]( const char *const msg ) {
+        jo.throw_error( msg, s );
+    };
+    
+    // returns whether we are at the end of the string
+    const auto skip_spaces = [&]() {
+        while( i < s.size() && s[i] == ' ' ) {
+            ++i;
+        }
+        return i >= s.size();
+    };
+    const auto get_unit = [&]() {
+        if( skip_spaces() ) {
+            error( R"("invalid quantity string [%1s]: missing unit.)" );
+        }
+        for( const auto &pair : units ) {
+            const std::string &unit = pair.first;
+            if( s.size() >= unit.size() + i && s.compare( i, unit.size(), unit ) == 0 ) {
+                i += unit.size();
+                return pair.second;
+            }
+        }
+        error( R"("invalid quantity string [%1s]: unknown unit)" );
+        // above always throws but lambdas cannot be marked [[noreturn]]
+        throw;
+    };
+
+    if( skip_spaces() ) {
+        error( R"("invalid quantity string [%1s]: empty string)" );
+    }
+    T result{};
+    do {
+        int sign_value = +1;
+        if( s[i] == '-' ) {
+            sign_value = -1;
+            ++i;
+        } else if( s[i] == '+' ) {
+            ++i;
+        }
+        if( i >= s.size() || !isdigit( s[i] ) ) {
+            error( R"("invalid quantity string [%1s]: number expected)" );
+        }
+        int value = 0;
+        for( ; i < s.size() && isdigit( s[i] ); ++i ) {
+            value = value * 10 + ( s[i] - '0' );
+        }
+        result += units::multiply_any_unit( get_unit(), sign_value * value );
+    } while( !skip_spaces() );
+    return result;
+}
+
+// If our output sound category = _LAST we dont actually add the category to the vector.
+sounds::sound_t sound_category_from_string( const std::string &st ){
+    if ( st == "background" ){
+        return sounds::sound_t::background;
+    } else if ( st == "weather" ){
+        return sounds::sound_t::weather;
+    } else if ( st == "music" ) {
+        return sounds::sound_t::music;
+    } else if ( st == "movement" ) {
+        return sounds::sound_t::movement;
+    } else if ( st == "speech" ) {
+        return sounds::sound_t::speech;
+    } else if ( st == "electronic_speech" ) {
+        return sounds::sound_t::electronic_speech;
+    } else if ( st == "activity" ) {
+        return sounds::sound_t::activity;
+    } else if ( st == "destructive_activity" ) {
+        return sounds::sound_t::destructive_activity;
+    } else if ( st == "alarm" ) {
+        return sounds::sound_t::alarm;
+    } else if ( st == "combat" ) {
+        return sounds::sound_t::combat;
+    } else if ( st == "alert" ) {
+        return sounds::sound_t::alert;
+    } else if ( st == "order" ) {
+        return sounds::sound_t::order;
+    } else {
+        return sounds::sound_t::_LAST;
+    }  
+
 }
 
 std::vector<efftype_id> find_all_effect_types()
@@ -800,6 +903,7 @@ bool effect::decay( const time_point &time, const bool player )
                 time_duration::from_turns( eff_type->int_decay_tick ) ) > 0 &&
         get_max_duration() > get_duration() ) {
         set_intensity( intensity + eff_type->int_decay_step, player );
+
     }
 
     if( duration <= 0_turns ) {
@@ -1434,6 +1538,49 @@ void load_effect_type( const JsonObject &jo )
             new_etype.effects_on_remove.back().load_decay( jo_decay );
         }
     }
+    // Load up our potential effect caused sounds.
+    if ( jo.has_array( "caused_sounds" ) ) {
+        JsonArray jarr = jo.get_array( "caused_sounds" );
+        if ( !jarr.empty() ){ 
+            for ( const JsonObject &csound : jarr ) {
+                caused_sound candidate;
+                candidate.load( csound );
+                // did our load actually produce a valid caused sound entry?
+                if ( candidate ){
+                    new_etype.caused_sounds.push_back( candidate );
+                }
+            }
+        }  
+    }
+    // Load up our potential incoming sound modifiers.
+    if ( jo.has_array( "incoming_sound_modifiers" ) ) {
+        JsonArray jarr = jo.get_array( "incoming_sound_modifiers" );
+        if ( !jarr.empty() ){ 
+            for ( const JsonObject &inmod : jarr ) {
+                heard_sound_modifiers candidate;
+                candidate.load( inmod );
+                // did our load actually produce a valid incoming sound modifiers entry?
+                if ( candidate ){
+                    new_etype.in_sound_modifiers.push_back( candidate );
+                }
+            }
+        }  
+    }
+    // Load up our potential outgoing sound modifiers.
+    if ( jo.has_array( "outgoing_sound_modifiers" ) ) {
+        JsonArray jarr = jo.get_array( "outgoing_sound_modifiers" );
+        if ( !jarr.empty() ){ 
+            for ( const JsonObject &outmod : jarr ) {
+                outgoing_sound_modifiers candidate;
+                candidate.load( outmod );
+                // did our load actually produce a valid outgoing sound modifiers entry?
+                if ( candidate ){
+                    new_etype.out_sound_modifiers.push_back( candidate );
+                }
+            }
+        }  
+    }
+    
 
     effect_types[new_etype.id] = new_etype;
 }
@@ -1602,4 +1749,797 @@ std::vector<effect> effect::create_child_effects( bool decay ) const
         ret.emplace_back( e );
     }
     return ret;
+}
+
+void outgoing_sound_modifiers::load( const JsonObject &jo ){
+    
+    if( jo.has_member( "checked_categories" ) ) {
+        if ( !jo.get_array("checked_categories").empty() ){
+            for( const std::string line : jo.get_array( "checked_categories" ) ) {
+                const auto cat = sound_category_from_string( line );
+                if ( cat != sounds::sound_t::_LAST){
+                    checked_categories.push_back( cat );
+                } else {
+                    jo.throw_error( R"("Heard sound modifiers cannot check against a invalid sound category.)" );
+                }
+            } 
+        }
+    }
+    if( jo.has_member( "checked_sound_descriptions" ) ) {
+        if ( !jo.get_array("checked_sound_descriptions").empty() ){
+            for( const std::string line : jo.get_array( "checked_sound_descriptions" ) ) {
+                if ( line != std::string( "" ) ){
+                    checked_sound_descriptions.push_back( line );
+                } else {
+                    jo.throw_error( R"("Heard sound modifiers cannot check against a blank sound description.)" );
+                }            
+            }
+        }
+    }
+    if( jo.has_member( "replace_with_sound_descriptions" ) ) {
+        if ( !jo.get_array("replace_with_sound_descriptions").empty() ){
+            for( const std::string line : jo.get_array( "replace_with_sound_descriptions" ) ) {
+                if ( line != std::string( "" ) ){
+                    replace_with_sound_descriptions.push_back( line );
+                } else {
+                    jo.throw_error( R"("Heard sound modifiers cannot use a blank sound description for replacement.)" );
+                }            
+            }
+        }
+        if ( !replace_with_sound_descriptions.empty() ){
+            optional(jo, valid, "choose_random_desc", choose_random_desc );
+        }
+    }
+
+    if ( jo.has_member( "replace_with_npc_faction" ) ){
+        replace_with_npc_faction = faction_id( jo.get_member( "replace_with_npc_faction" ).get_string() );
+        replace_npc_faction_attribution = true;
+    } 
+    if ( jo.has_member( "replace_with_monster_faction" ) ){
+        replace_with_monfaction = mfaction_str_id( jo.get_member( "replace_with_monster_faction" ).get_string() );
+        replace_monster_faction_attribution = true;
+    } 
+
+    optional( jo, valid, "intensity_min_requirment", intensity_min_requirment );
+
+    if( jo.has_member("volume_mdB_adj") ){
+        if ( !jo.get_array("volume_mdB_adj").empty() ){
+            for( auto entry : jo.get_array("volume_mdB_adj") ){
+                volume_mdB_adj.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : volume_mdB_adj ){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Outgoing sound modifier volume_mdB_adj vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                volume_mdB_adj.clear();
+            }
+        }
+    } // Adjusts the mdB volume of all heard sounds by this amount. Will influence deafening.
+    if ( !volume_mdB_adj.empty() ){
+        optional(jo, valid, "volume_mdB_adj_min_val" , volume_mdB_adj_min_val ); // Defaults to 0 
+        optional(jo, valid, "volume_mdB_adj_max_val" , volume_mdB_adj_max_val ); // Defaults to 0, which means uncapped. 
+        optional(jo, valid, "volume_mdB_adj_intensity_mult" , volume_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+
+    if( jo.has_member("volume_mdB_floor") ){
+        if ( !jo.get_array("volume_mdB_floor").empty() ){
+            for( auto entry : jo.get_array("volume_mdB_floor") ){
+                volume_mdB_floor.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : volume_mdB_floor ){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Outgoing sound modifier volume_mdB_floor vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                volume_mdB_floor.clear();
+            }
+        }
+    } // Adjusts the mdB volume of all heard sounds by this amount. Will influence deafening.
+    if ( !volume_mdB_floor.empty() ){
+        optional(jo, valid, "volume_mdB_floor_min_val" , volume_mdB_floor_min_val ); // Defaults to 0 
+        optional(jo, valid, "volume_mdB_floor_max_val" , volume_mdB_floor_max_val ); // Defaults to 0, which means uncapped. 
+        optional(jo, valid, "volume_mdB_floor_intensity_mult" , volume_mdB_floor_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+
+    if( jo.has_member("volume_mdB_ceiling") ){
+        if ( !jo.get_array("volume_mdB_ceiling").empty() ){
+            for( auto entry : jo.get_array("volume_mdB_ceiling") ){
+                volume_mdB_ceiling.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : volume_mdB_ceiling ){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Outgoing sound modifiers volume_mdB_ceiling vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                volume_mdB_ceiling.clear();
+            }
+        }
+    } // Adjusts the mdB volume of all heard sounds by this amount. Will influence deafening.
+    if ( !volume_mdB_ceiling.empty() ){
+        optional(jo, valid, "volume_mdB_ceiling_min_val" , volume_mdB_ceiling_min_val ); // Defaults to 0 
+        optional(jo, valid, "volume_mdB_ceiling_max_val" , volume_mdB_ceiling_max_val ); // Defaults to 0, which means uncapped. 
+        optional(jo, valid, "volume_mdB_ceiling_intensity_mult" , volume_mdB_ceiling_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+
+    if ( !replace_with_sound_descriptions.empty() || replace_monster_faction_attribution || replace_npc_faction_attribution || !volume_mdB_ceiling.empty() || !volume_mdB_floor.empty() || !volume_mdB_adj.empty() ){
+        // Make sure that we have atleast one usable modifier.
+        valid = true;
+    }  
+}
+
+void heard_sound_modifiers::load( const JsonObject &jo )
+{
+
+    if( jo.has_member( "checked_categories" ) ) {
+        if ( !jo.get_array("checked_categories").empty() ){
+            for( const std::string line : jo.get_array( "checked_categories" ) ) {
+                const auto cat = sound_category_from_string( line );
+                if ( cat != sounds::sound_t::_LAST){
+                    checked_categories.push_back( cat );
+                } else {
+                    jo.throw_error( R"("Heard sound modifiers cannot check against a invalid sound category.)" );
+                }
+            } 
+        }
+    }
+    if( jo.has_member( "checked_sound_descriptions" ) ) {
+        if ( !jo.get_array("checked_sound_descriptions").empty() ){
+            for( const std::string line : jo.get_array( "checked_sound_descriptions" ) ) {
+                if ( line != std::string( "" ) ){
+                    checked_sound_descriptions.push_back( line );
+                } else {
+                    jo.throw_error( R"("Heard sound modifiers cannot check against a blank sound description.)" );
+                }            
+            }
+        }
+    }
+    if( jo.has_member( "replace_with_sound_descriptions" ) ) {
+        if ( !jo.get_array("replace_with_sound_descriptions").empty() ){
+            for( const std::string line : jo.get_array( "replace_with_sound_descriptions" ) ) {
+                if ( line != std::string( "" ) ){
+                    replace_with_sound_descriptions.push_back( line );
+                } else {
+                    jo.throw_error( R"("Heard sound modifiers cannot use a blank sound description for replacement.)" );
+                }            
+            }
+        }
+        if ( !replace_with_sound_descriptions.empty() ){
+            optional(jo, valid, "choose_random_desc", choose_random_desc );
+        }
+    }
+
+    if ( jo.has_member( "replace_with_npc_faction" ) ){
+        replace_with_npc_faction = faction_id( jo.get_member( "replace_with_npc_faction" ).get_string() );
+        replace_npc_faction_attribution = true;
+    } 
+    if ( jo.has_member( "replace_with_monster_faction" ) ){
+        replace_with_monfaction = mfaction_str_id( jo.get_member( "replace_with_monster_faction" ).get_string() );
+        replace_monster_faction_attribution = true;
+    } 
+
+    optional( jo, valid, "intensity_min_requirment", intensity_min_requirment );
+
+    if( jo.has_member("base_mdB_volume_adj") ){
+        if ( !jo.get_array("base_mdB_volume_adj").empty() ){
+            for( auto entry : jo.get_array("base_mdB_volume_adj") ){
+                base_mdB_volume_adj.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : base_mdB_volume_adj){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Heard sound modifier base_mdB_volume_adj vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                base_mdB_volume_adj.clear();
+            }
+        }
+    } // Adjusts the base mdB volume of all incoming sounds. Will influence deafening.
+    if ( !base_mdB_volume_adj.empty() ){
+        optional(jo, valid, "base_mdb_adj_min_val" , base_mdb_adj_min_val ); // Defaults to 0 
+        optional(jo, valid, "base_mdb_adj_max_val" , base_mdb_adj_max_val ); // Defaults to 0, which means uncapped. 
+        optional(jo, valid, "base_mdB_adj_intensity_mult" , base_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+    
+    if( jo.has_member("heard_vol_mdb_adj") ){
+        if ( !jo.get_array("heard_vol_mdb_adj").empty() ){
+            for( auto entry : jo.get_array("heard_vol_mdb_adj") ){
+                heard_vol_mdb_adj.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : heard_vol_mdb_adj){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Heard sound modifier heard_vol_mdb_adj vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                heard_vol_mdb_adj.clear();
+            }
+        }
+    } // Adjusts the mdB volume of all heard sounds by this amount. Will influence deafening.
+    if ( !heard_vol_mdb_adj.empty() ){
+        optional(jo, valid, "heard_vol_mdb_adj_min_val" , heard_vol_mdb_adj_min_val ); // Defaults to 0 
+        optional(jo, valid, "heard_vol_mdb_adj_max_val" , heard_vol_mdb_adj_max_val ); // Defaults to 0, which means uncapped. 
+        optional(jo, valid, "heard_vol_mdB_adj_intensity_mult" , heard_vol_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+    
+    if( jo.has_member("perceived_vol_mdb_adj") ){
+        if ( !jo.get_array("perceived_vol_mdb_adj").empty() ){
+            for( auto entry : jo.get_array("perceived_vol_mdb_adj") ){
+                perceived_vol_mdb_adj.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : perceived_vol_mdb_adj){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Heard sound modifier perceived_vol_mdb_adj vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                perceived_vol_mdb_adj.clear();
+            }
+        }
+    } // Adjusts the perceived mdB volume of all heard sounds by this amount. Does not influence deafening.
+    if ( !perceived_vol_mdb_adj.empty() ){
+        optional(jo, valid, "perceived_vol_mdb_adj_min_val" , perceived_vol_mdb_adj_min_val ); // Defaults to 0 
+        optional(jo, valid, "perceived_vol_mdb_adj_max_val" , perceived_vol_mdb_adj_max_val ); // Defaults to 0, which means uncapped. 
+        optional(jo, valid, "perceived_vol_mdB_adj_intensity_mult" , perceived_vol_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+    
+    if( jo.has_member("hearing_threshold_mdb_adj") ){
+        if ( !jo.get_array("hearing_threshold_mdb_adj").empty() ){
+            for( auto entry : jo.get_array("hearing_threshold_mdb_adj") ){
+                hearing_threshold_mdb_adj.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : hearing_threshold_mdb_adj){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Heard sound modifier hearing_threshold_mdb_adj vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                hearing_threshold_mdb_adj.clear();
+            }
+        }
+    } // Adjusts the entities volume thresholds by this amount.
+    if ( !hearing_threshold_mdb_adj.empty() ){
+        optional(jo, valid, "hearing_threshold_mdb_adj_min_val" , hearing_threshold_mdb_adj_min_val ); // Defaults to 0
+        optional(jo, valid, "hearing_threshold_mdb_adj_max_val" , hearing_threshold_mdb_adj_max_val ); // Defaults to 0, which means uncapped. 
+        optional(jo, valid, "hearing_threshold_mdB_adj_intensity_mult" , hearing_threshold_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+    
+    if( jo.has_member("hearing_protection_dB_adj") ){
+        if ( !jo.get_array("hearing_protection_dB_adj").empty() ){
+            for( auto entry : jo.get_array("hearing_protection_dB_adj") ){
+                hearing_protection_dB_adj.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : hearing_protection_dB_adj){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Heard sound modifier hearing_protection_dB_adj vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                hearing_protection_dB_adj.clear();
+            }
+        }
+    }
+    if ( !hearing_protection_dB_adj.empty() ){
+        optional(jo, valid, "hearing_protection_basic_dB_adj_min_val" , hearing_protection_basic_dB_adj_min_val );// Defaults to 0
+        optional(jo, valid, "hearing_protection_basic_dB_adj_max_val" , hearing_protection_basic_dB_adj_max_val );// Defaults to 0, which means uncapped.  
+        optional(jo, valid, "hearing_protection_basic_dB_adj_intensity_mult" , hearing_protection_basic_dB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+    
+    if( jo.has_member("hearing_protection_adv_dB_adj") ){
+        if ( !jo.get_array("hearing_protection_adv_dB_adj").empty() ){
+            for( auto entry : jo.get_array("hearing_protection_adv_dB_adj") ){
+                hearing_protection_adv_dB_adj.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : hearing_protection_adv_dB_adj){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Heard sound modifier hearing_protection_adv_dB_adj vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                hearing_protection_adv_dB_adj.clear();
+            }
+        }
+    }
+    if ( !hearing_protection_adv_dB_adj.empty() ){
+        optional(jo, valid, "hearing_protection_adv_dB_adj_min_val" , hearing_protection_adv_dB_adj_min_val );// Defaults to 0
+        optional(jo, valid, "hearing_protection_adv_dB_adj_max_val" , hearing_protection_adv_dB_adj_max_val );// Defaults to 0, which means uncapped. 
+        optional(jo, valid, "hearing_protection_adv_dB_adj_intensity_mult" , hearing_protection_adv_dB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+    
+    if( jo.has_member("permanant_hearing_loss_dB_adj") ){
+        if ( !jo.get_array("permanant_hearing_loss_dB_adj").empty() ){
+            for( auto entry : jo.get_array("permanant_hearing_loss_dB_adj") ){
+                permanant_hearing_loss_dB_adj.push_back( entry.get_int() );
+            }
+            bool has_nonzero = false;
+            for( auto &entry : permanant_hearing_loss_dB_adj){
+                if ( entry > 0 ){
+                    has_nonzero = true;
+                }
+            }
+            if ( !has_nonzero ){
+                jo.throw_error( R"("Heard sound modifier permanant_hearing_loss_dB_adj vector must contain atleast one non-zero entry.)" );
+                // clear the vector, since there is nothing actually usable in there.
+                permanant_hearing_loss_dB_adj.clear();
+            }
+        }
+    }
+    if ( !permanant_hearing_loss_dB_adj.empty() ){
+        optional(jo, valid, "permanant_hearing_loss_dB_adj_min_val" , permanant_hearing_loss_dB_adj_min_val ); // Defaults to 0
+        optional(jo, valid, "permanant_hearing_loss_dB_adj_max_val" , permanant_hearing_loss_dB_adj_max_val ); // Defaults to 0, which means uncapped. 
+        optional(jo, valid, "permanant_hearing_loss_dB_adj_intensity_mult" , permanant_hearing_loss_dB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    }
+    
+    if ( !replace_with_sound_descriptions.empty() || replace_monster_faction_attribution || replace_npc_faction_attribution || !permanant_hearing_loss_dB_adj.empty() || !hearing_protection_adv_dB_adj.empty() || !hearing_protection_dB_adj.empty() || !hearing_threshold_mdb_adj.empty() || !perceived_vol_mdb_adj.empty() || !heard_vol_mdb_adj.empty() || !base_mdB_volume_adj.empty() ){
+        // Make sure that we have atleast one usable modifier.
+        valid = true;
+    }  
+}
+
+void caused_sound::load( const JsonObject &jo )
+{
+    optional( jo, valid, "allow_on_apply", allow_on_apply );
+    optional( jo, valid, "allow_on_increment", allow_on_increment );
+    optional( jo, valid, "allow_on_decay", allow_on_decay );
+    optional( jo, valid, "allow_on_remove", allow_on_remove );
+    optional( jo, valid, "time_based", time_based );
+    optional( jo, valid, "random_time", random_time );
+    
+    bool valid_random_time_interval = false;
+    bool valid_time_interval = false;
+
+    optional( jo, valid, "intensity_min_requirment", intensity_min_requirment );
+
+    if( jo.has_member( "base_time_intervals" ) ) {
+
+        if ( !jo.get_array( "base_time_intervals" ).empty() ) {
+            const auto &time_intervals = jo.get_array( "base_time_intervals" );
+
+            for(const std::string &interval : time_intervals ) {
+                // This is annoying but read_from_json_string is even more annoying.
+                base_emission_intervals.push_back( string_from_json_to_typed_unit<time_duration>( interval, time_duration::units, jo ) );
+
+            }
+            if ( !base_emission_intervals.empty() ){
+                valid_time_interval = true;
+            }
+        }
+
+    }
+
+    if ( valid_time_interval ){
+        optional( jo, valid, "intensity_base_interval_mult", intensity_interval_scaling );
+    }
+
+    if( jo.has_member( "random_time_intervals" ) ) {
+        random_time = true;
+        if ( !jo.get_array( "random_time_intervals" ).empty() ) {
+            const auto &time_intervals = jo.get_array( "random_time_intervals" );
+
+            for( JsonArray listing : time_intervals ) {
+                // This is annoying but read_from_json_string is even more annoying.
+                const auto &min = string_from_json_to_typed_unit<time_duration>( listing.get_string( 0 ), time_duration::units, jo );
+                const auto &max = string_from_json_to_typed_unit<time_duration>( listing.get_string( 1 ), time_duration::units, jo );
+                const std::pair<time_duration,time_duration> entry = { min, max};
+                random_interval_minmax.push_back( entry );
+
+            }
+            if ( !random_interval_minmax.empty() ){
+                valid_random_time_interval = true;
+            }
+        }
+    }
+
+    if ( valid_random_time_interval ){
+        optional( jo, valid, "intensity_random_interval_min_mult", intensity_random_interval_min_mult );
+        optional( jo, valid, "intensity_random_interval_max_mult", intensity_random_interval_max_mult );
+    }
+    
+    optional(jo, valid, "sfx_only", sfx_only );
+
+    // What volume should the sound be made at?
+    mandatory(jo, valid, "base_db_volume", base_dB_volume );
+    if ( base_dB_volume <= 0 || base_dB_volume > 191 ){
+        jo.throw_error( R"("A effect caused sound must have a decibel volume between 1 and 191.)" );
+        base_dB_volume = std::max( static_cast<short>(1), std::min( static_cast<short>(191), base_dB_volume) );
+    }
+
+    // Optional: How much should we increase the volume per parent effect intensity?
+    optional(jo, valid, "intensity_dB_volume_scaling", intensity_dB_volume_scaling );
+
+    if( jo.has_member( "categories" ) ) {
+        bool valid_category = false;
+        for( const std::string line : jo.get_array( "categories" ) ) {
+            if ( sound_category_from_string( line ) != sounds::sound_t::_LAST ){
+                categories.push_back( sound_category_from_string( line ) );
+                valid_category = true;
+            } 
+        }
+        // If a sound does not have a valid activity, give it a single activity entry.
+        if ( !valid_category ){
+             categories.push_back( sounds::sound_t::activity );
+        }
+    }
+
+    bool valid_desc = false;
+    if( jo.has_member( "sound_descriptions" ) ) {
+        for( const std::string line : jo.get_array( "sound_descriptions" ) ) {
+            sound_descriptions.push_back( line );
+        }
+        
+        for (const std::string desc : sound_descriptions ){
+            if ( desc != std::string( "" ) ){
+                valid_desc = true;
+            }
+        }
+        if ( !valid_desc ){
+            jo.throw_error( R"("Sound must have atleast one valid description.)" );
+        }
+    }
+
+    optional(jo, valid, "choose_random_desc", choose_random_desc );
+    optional(jo, valid, "from_effected_creature", from_effected_creature );
+    optional( jo, valid, "movement_noise", movement_noise );
+
+    if ( !from_effected_creature ){
+        optional( jo, valid, "from_player", from_player );
+        optional( jo, valid, "from_npc", from_npc );
+        optional( jo, valid, "from_monster", from_monster );
+        if (jo.has_member( "npc_faction" ) ){
+            faction = faction_id( jo.get_member( "npc_faction" ).get_string() );
+        }
+        if (jo.has_member( "monster_faction" ) ){
+            monfaction = mfaction_str_id( jo.get_member( "monster_faction" ).get_string() );
+        }
+    }
+    bool valid_sfx_pair = true;
+    if( jo.has_member( "sfx_idvariant_pairs" ) ) {
+        
+        if ( !jo.get_array( "sfx_idvariant_pairs" ).empty() ) {
+            valid_sfx_pair = false;
+            // We dont want to keep the default sfx idvariant pair if we are actually loading specified sfx ids and variants.
+            sfx_idvariant_pairs.clear();
+            const auto &pairlist = jo.get_array( "sfx_idvariant_pairs" );
+
+            for( JsonArray sfxpair : pairlist ) {
+                // This is annoying but read_from_json_string is even more annoying.
+                const auto &id = sfxpair.get_string( 0 );
+                const auto &variant = sfxpair.get_string( 1 );
+                const std::pair<std::string,std::string> entry = { id, variant};
+                sfx_idvariant_pairs.push_back( entry );
+
+            }
+            if ( !sfx_idvariant_pairs.empty() ){
+                valid_sfx_pair = true;
+            }
+        } 
+        if (!valid_sfx_pair ) {
+            jo.throw_error( R"("No valid sfx id and variant pair provided for caused sound.)" );
+        }
+    }
+    // Run through all of the checks to make sure we actually have a valid sound without conflicting settings.
+    if ( valid_sfx_pair && valid_desc && (base_dB_volume > 0 && base_dB_volume <= 191 ) ){
+
+        if ( (from_monster + from_npc + from_player) > 1 ){
+            jo.throw_error( R"("Effect caused sound can only have at most one from_monster/npc/player bool set.)" );
+
+        } else if ( !allow_on_apply && !allow_on_increment && !allow_on_decay && !allow_on_remove && !time_based && !random_time ){
+            jo.throw_error( R"("A caused sound must have atleast one emit condition bool set.)" );
+
+        } else if ( time_based && !valid_time_interval ){
+            jo.throw_error( R"("A time based effect caused sound must have atleast one valid time duration.)" );
+
+        } else if (random_time && !valid_random_time_interval ){
+            jo.throw_error( R"("A random time based effect caused sound must have atleast one valid pair of time durations.)" );
+
+        } else {
+            // We have at bare minimum the things we need. 
+            // Setting valid to true actually lets this caused sound 
+            // to be added to the caused sounds vector.
+            valid = true;
+        }
+    }
+}
+
+std::vector<sound_event> effect::create_apply_sounds( const Creature *critter ) const{
+    std::vector<sound_event> created_sounds;
+    if ( has_apply_sounds() ){
+        for( const caused_sound &cs : eff_type->get_caused_sounds() ){
+            if ( cs.allow_on_apply && intensity >= cs.intensity_min_requirment ){
+                created_sounds.push_back( create_sound_event( cs, critter ) );
+            }
+        }
+    }
+    return created_sounds;
+}
+
+std::vector<sound_event> effect::create_increment_sounds( const Creature *critter ) const{
+    std::vector<sound_event> created_sounds;
+    if ( has_apply_sounds() ){
+        for( const caused_sound &cs : eff_type->get_caused_sounds() ){
+            if ( cs.allow_on_increment && intensity >= cs.intensity_min_requirment ){
+                created_sounds.push_back( create_sound_event( cs, critter ) );
+            }
+        }
+    }
+    return created_sounds;
+}
+
+std::vector<sound_event> effect::create_decay_sounds( const Creature *critter ) const{
+    std::vector<sound_event> created_sounds;
+    if ( has_apply_sounds() ){
+        for( const caused_sound &cs : eff_type->get_caused_sounds() ){
+            if ( cs.allow_on_decay && intensity >= cs.intensity_min_requirment ){
+                created_sounds.push_back( create_sound_event( cs, critter ) );
+            }
+        }
+    }
+    return created_sounds;
+}
+
+std::vector<sound_event> effect::create_remove_sounds( const Creature *critter ) const{
+    std::vector<sound_event> created_sounds;
+    if ( has_apply_sounds() ){
+        for( const caused_sound &cs : eff_type->get_caused_sounds() ){
+            if ( cs.allow_on_remove && intensity >= cs.intensity_min_requirment ){
+                created_sounds.push_back( create_sound_event( cs, critter ) );
+            }
+        }
+    }
+    return created_sounds;
+}
+
+std::vector<sound_event> effect::create_time_based_sounds( const Creature *critter ) const{
+    std::vector<sound_event> created_sounds;
+    if ( has_apply_sounds() ){
+        for( const caused_sound &cs : eff_type->get_caused_sounds() ){
+            if ( (cs.time_based || cs.random_time) && intensity >= cs.intensity_min_requirment ){
+                created_sounds.push_back( create_sound_event( cs, critter ) );
+            }
+        }
+    }
+    return created_sounds;
+}
+
+// Chose which sound description to use based on intensity etc.
+std::string effect::select_sound_desc( const std::vector<std::string> &descs, const int &adj_intensity, const bool &random ) const{
+    if ( descs.empty() ){
+        debugmsg( "Effect type [%1s] attempted to get a sound description from an empty description vector", eff_type->id.str() );
+        return std::string( "REPORT THIS SOUND" );
+    } else if ( descs.size() == 1 ) {
+        return descs[0];
+    } else if ( random ) {
+        const auto &iterator = rng( 1, descs.size() ) - 1;
+        return descs[iterator];
+    } else {
+        const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, descs.size() ) - 1 ) );
+        return descs[iterator];
+    }
+}
+
+// Chose which sound category to use based on intensity etc.
+sounds::sound_t effect::select_sound_cat( const std::vector<sounds::sound_t> &cats, const int &adj_intensity ) const{
+    if ( cats.empty() ){
+        return sounds::sound_t::activity;
+    } else if ( cats.size() == 1 ) {
+        return cats[0];
+    } else {
+        const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, cats.size() ) - 1 ) );
+        return cats[iterator];
+    }
+}
+
+// Chose which sound sfx pair to use based on intensity etc.
+std::pair<std::string,std::string> effect::select_sound_sfx( const std::vector<std::pair<std::string,std::string>> &pairs, const int &adj_intensity ) const{
+    if ( pairs.empty() ){
+        debugmsg( "Effect type [%1s] attempted to get sound sfx from an empty sfx idvariant vector", eff_type->id.str() );
+        return { std::string(""),std::string( "default" ) };
+    } else if ( pairs.size() == 1 ) {
+        return pairs[0];
+    } else {
+        const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, pairs.size() ) - 1 ) );
+        return pairs[iterator];
+    }
+}
+
+sound_event effect::create_sound_event( const caused_sound &cs, const Creature *critter ) const{
+    bool valid_critter = false;
+    if ( critter != nullptr){
+        valid_critter = true;
+    }
+    sound_event sound;
+    // We know that we have atleast our minimum intensity requirment satisfied.
+    // But we need to adjust our intensity based on min intensity requirment.
+    const int adj_intensity = ( cs.intensity_min_requirment != 0 ) ? intensity - ( cs.intensity_min_requirment - 1 ) : intensity;
+
+    sound.description = select_sound_desc( cs.sound_descriptions, adj_intensity, cs.choose_random_desc );
+
+    sound.category = select_sound_cat( cs.categories, adj_intensity );
+
+    sound.volume = cs.base_dB_volume + ( ( adj_intensity - 1 ) * cs.intensity_dB_volume_scaling );
+
+    if ( !cs.sfx_only ){
+        sound.volume = std::max<short>( 0, std::min<short>( 191, sound.volume ) );
+    } else {
+        // If we are only doing this for sfx, cap our volume to the sfx system limits.
+        sound.volume = std::max<short>( 0, std::min<short>( 100, sound.volume ) );
+    }
+
+    if ( valid_critter ){
+        sound.origin = critter->bub_pos();
+        if ( cs.from_effected_creature) {
+
+            if ( critter->is_avatar() ) {
+
+                const player &p = get_avatar();
+                sound.from_player = true;
+                sound.faction = p.get_faction()->id;
+                sound.monfaction = p.get_faction()->mon_faction;
+
+            } else if (critter->is_npc() ) {
+
+                // NPCs have some very strange and annoying abstraction.
+                player *const npc = g->critter_at<player>( sound.origin, true );
+                sound.from_npc = true;
+                sound.faction = npc->get_faction()->id;
+                sound.monfaction = npc->get_faction()->mon_faction;
+
+            } else if (critter->is_monster() ) {
+
+                const auto *mon = critter->as_monster();
+                sound.from_monster = true;
+                sound.monfaction = mon->faction.id();
+
+            } else {
+                // Well, something reaaaaaly funky has happened. Just read the caused sounds details and move on.
+                sound.from_monster = cs.from_monster;
+                sound.from_npc = cs.from_npc;
+                sound.from_player = cs.from_player;
+                sound.faction = cs.faction;
+                sound.monfaction = cs.monfaction;
+            }
+        } else {
+
+            sound.from_monster = cs.from_monster;
+            sound.from_npc = cs.from_npc;
+            sound.from_player = cs.from_player;
+            sound.faction = cs.faction;
+            sound.monfaction = cs.monfaction;
+
+        }
+    } else {
+
+        // If we got handed a null pointer, put the location as at the player's position. 
+        sound.origin = get_avatar().bub_pos();
+        sound.from_monster = cs.from_monster;
+        sound.from_npc = cs.from_npc;
+        sound.from_player = cs.from_player;
+        sound.faction = cs.faction;
+        sound.monfaction = cs.monfaction;
+
+    }
+
+    sound.movement_noise = cs.movement_noise || sound.category == sounds::sound_t::movement;
+    const auto idvarpair = select_sound_sfx(cs.sfx_idvariant_pairs, adj_intensity);
+
+    sound.id = idvarpair.first;
+    sound.variant = idvarpair.second;
+
+    return sound;
+}
+
+void effect::update_sound_time_intervals( const bool &dirty_only )
+{
+    // Quickly check that we actually have any time based sounds 
+    if ( !has_time_based_sounds() ){
+        return;
+    }
+
+    auto select_time_interval = [&]( const caused_sound &ce, const int &adj_intensity ) -> time_duration{
+
+        time_duration base_dur = 0_seconds;
+        time_duration min_rand = 0_seconds;
+        time_duration max_rand = 0_seconds;
+        
+        if ( ce.random_time ) {
+            const auto &pairs = ce.random_interval_minmax;
+            if ( pairs.empty() ){
+                debugmsg( "Effect type [%1s] attempted to get a random time interval from an empty random time intervals vector", eff_type->id.str() );
+            } else if ( pairs.size() == 1 ) {
+                min_rand = pairs[0].first;
+                max_rand = pairs[0].second;
+            } else {
+                const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, pairs.size() ) - 1 ) );
+                min_rand = pairs[iterator].first;
+                max_rand = pairs[iterator].second;
+            }
+        }
+        if ( ce.time_based ) {
+            const auto &intervals = ce.base_emission_intervals;
+            if ( intervals.empty() ){
+                debugmsg( "Effect type [%1s] attempted to get a base time interval from an empty base time intervals vector", eff_type->id.str() );
+            } else if ( intervals.size() == 1 ) {
+                base_dur = intervals[0];
+            } else {
+                const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, intervals.size() ) - 1 ) );
+                base_dur = intervals[iterator];
+            }
+        }
+
+        const auto &minseconds = to_seconds<int>( min_rand );
+        const auto &maxseconds = to_seconds<int>( max_rand );
+        const auto &randresult = (maxseconds > minseconds ) ? rng( minseconds, maxseconds ) : ( minseconds == maxseconds ) ? maxseconds : rng( maxseconds, minseconds );
+
+        if ( ce.random_time && !ce.time_based ){
+
+            return time_duration::from_seconds( randresult );
+
+        } else if ( ce.time_based && !ce.random_time ){
+            return base_dur;
+        }
+        
+        const auto &baseseconds = to_seconds<int>( base_dur );
+
+        const auto &resultseconds = std::max( 1, ( baseseconds + ( (one_in(2) ? randresult : - randresult ) ) ) );
+
+        return time_duration::from_seconds( resultseconds );
+
+    };
+    // We should only encounter this the first time our effect is added to a creature.
+    if ( caused_sound_time_intervals.empty() ){
+        // Lets build our initial time intervals.
+        const int num_sounds = eff_type->caused_sounds.size();
+        // Step through our caused sounds vector.
+        for ( int i = 0; i < num_sounds; i++ ){
+            const auto &cs = eff_type->caused_sounds[i];
+                const int adj_intensity = ( intensity <= cs.intensity_min_requirment ) ? 1 : intensity - cs.intensity_min_requirment;
+                caused_sound_interval_details csdetails;
+                csdetails.index = i;
+                csdetails.interval = select_time_interval( cs, adj_intensity );
+                csdetails.dirty = false;
+                caused_sound_time_intervals.push_back( csdetails );
+        }
+    } else {
+
+        for ( caused_sound_interval_details &csdet : caused_sound_time_intervals ){
+            if ( dirty_only && !csdet.dirty ) {
+                continue;
+            }
+            const auto &cs = eff_type->caused_sounds[csdet.index];
+            const int adj_intensity = ( intensity <= cs.intensity_min_requirment ) ? 1 : intensity - cs.intensity_min_requirment;
+
+            csdet.interval = select_time_interval( cs, adj_intensity );
+            csdet.dirty = false;
+        }
+    }
 }

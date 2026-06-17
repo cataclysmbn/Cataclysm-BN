@@ -48,6 +48,7 @@
 #include "projectile.h"
 #include "ranged.h"
 #include "rng.h"
+#include "sounds.h"
 #include "string_id.h"
 #include "string_utils.h"
 #include "translations.h"
@@ -1407,6 +1408,15 @@ void Creature::add_effect( const efftype_id &eff_id, const time_duration &dur,
             if( e.get_intensity() != prev_int ) {
                 on_effect_int_change( e.get_id(), e.get_intensity(), e.get_bp() );
             }
+            // create any valid on increment effect sounds
+            if ( e.has_increment_sounds() ){
+                auto causedsounds = e.create_increment_sounds( this );
+                if ( !causedsounds.empty() ){
+                    for ( sound_event &se : causedsounds ){
+                        sounds::sound( se );
+                    }
+                }
+            }
         }
     }
 
@@ -1453,6 +1463,15 @@ void Creature::add_effect( const efftype_id &eff_id, const time_duration &dur,
             }
         }
         on_effect_int_change( e.get_id(), e.get_intensity(), e.get_bp() );
+        // Create any valid apply sounds.
+        if ( e.has_apply_sounds() ){
+            auto applysounds = e.create_apply_sounds( this );
+            if ( !applysounds.empty() ){
+                for ( sound_event &se : applysounds ){
+                    sounds::sound( se );
+                }
+            }
+        }
         // Perform any effect addition effects.
         // only when not deferred
         if( !deferred ) {
@@ -1695,6 +1714,12 @@ void Creature::process_effects()
         for( auto &_it : elem.second ) {
             if( _it.second.is_removed() ) {
                 to_remove.emplace_back( elem.first, _it.first, false );
+                if ( _it.second.has_remove_sounds() ) {
+                    const auto sounds = _it.second.create_remove_sounds( this );
+                    for ( const sound_event &se : sounds ){
+                        sounds::sound( se );
+                    }
+                }
                 continue;
             }
             // Add any effects that others remove to the removal list
@@ -1709,10 +1734,31 @@ void Creature::process_effects()
             // Run decay effects, marking effects for removal as necessary.
             if( e.decay( calendar::turn, is_player() ) ) {
                 to_remove.emplace_back( elem.first, _it.first, true );
+                if ( e.has_remove_sounds() ) {
+                    const auto sounds = e.create_remove_sounds( this );
+                    for ( const sound_event &se : sounds ){
+                        sounds::sound( se );
+                    }
+                }
             }
 
             if( e.get_intensity() != prev_int && e.get_duration() > 0_turns ) {
                 on_effect_int_change( e.get_id(), e.get_intensity(), e.get_bp() );
+                if (e.get_intensity() > prev_int ){
+                    if ( e.has_increment_sounds() ) {
+                        const auto sounds = e.create_increment_sounds( this );
+                        for ( const sound_event &se : sounds ){
+                            sounds::sound( se );
+                        }
+                    }
+                } else {
+                    if ( e.has_decay_sounds() ) {
+                        const auto sounds = e.create_decay_sounds( this );
+                        for ( const sound_event &se : sounds ){
+                            sounds::sound( se );
+                        }
+                    }
+                }
             }
         }
     }
@@ -1759,6 +1805,12 @@ void Creature::process_effects()
 
     for( const effect &eff : to_add ) {
         add_effect( eff );
+        if ( eff.has_apply_sounds() ) {
+            const auto sounds = eff.create_apply_sounds( this );
+            for ( const sound_event &se : sounds ){
+                sounds::sound( se );
+            }
+        }
     }
 }
 

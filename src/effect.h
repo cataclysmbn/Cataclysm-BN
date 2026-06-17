@@ -5,6 +5,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "bodypart.h"
@@ -12,10 +13,12 @@
 #include "catalua_type_operators.h"
 #include "flat_set.h"
 #include "hash_utils.h"
+#include "sounds.h"
 #include "translations.h"
 #include "type_id.h"
 
 class Character;
+struct sound_event;
 
 enum game_message_type : int;
 class JsonIn;
@@ -76,6 +79,283 @@ struct caused_effect {
         void load( const JsonObject &jo );
 };
 
+struct outgoing_sound_modifiers{
+
+        friend void load_effect_type( const JsonObject &jo );
+
+    public:
+        // Was this struct actually initialized. 
+        bool valid = false;
+
+        operator bool() const {
+            return valid;
+        }
+
+        // What categories of sound should we have our modifiers affect?
+        // So we can do odd shenanagins with sounds, 
+        // such as make a monster very good at hearing footsteps but not changing the heard volume of anything else.
+        // Defaults to all sound categories.
+        std::vector<sounds::sound_t> checked_categories;
+
+        // String of sound descriptions we should have our modifiers affect. Defaults to empty. 
+        // If left empty/default, will not check against sound descriptions when affecting heard sounds.
+        std::vector<std::string> checked_sound_descriptions;
+
+        // String of sound descriptions we should replace our affected sounds descriptions with. Defaults to empty. 
+        // If left empty/default, will not replace any descriptions. This is prime shenanagins territory.
+        std::vector<std::string> replace_with_sound_descriptions;
+
+        // Should we choose a random description from the vector instead of an intensity based one?
+        bool choose_random_desc = false;
+
+        bool replace_npc_faction_attribution = false;
+        faction_id replace_with_npc_faction = faction_id( "no_faction" );
+
+        bool replace_monster_faction_attribution = false;
+        mfaction_str_id replace_with_monfaction = mfaction_str_id( "" );
+
+        // optional minimum intensity to apply these modifiers at.
+        int intensity_min_requirment = 0;
+
+        std::vector<short> volume_mdB_adj; // mdB volume adjustment of qualifying sounds.
+        short volume_mdB_adj_min_val = 0; // Defaults to 0 
+        short volume_mdB_adj_max_val = 0; // Defaults to 0, which means uncapped. 
+        float volume_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        std::vector<short> volume_mdB_floor; // Force all qualifying sounds to be atleast this loud. Default 0
+        short volume_mdB_floor_min_val = 0; // Defaults to 0 
+        short volume_mdB_floor_max_val = 0; // Defaults to 0, which means uncapped. 
+        float volume_mdB_floor_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        std::vector<short> volume_mdB_ceiling; // Caps all qualifying sounds to this volume. Default 19100 mdB 
+        short volume_mdB_ceiling_min_val = 0; // Defaults to 0 
+        short volume_mdB_ceiling_max_val = 0; // Defaults to 0, which means uncapped. 
+        float volume_mdB_ceiling_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        auto tie() const {
+            return std::tie( checked_sound_descriptions, volume_mdB_adj, volume_mdB_adj_min_val, volume_mdB_adj_max_val,
+                             volume_mdB_adj_intensity_mult, volume_mdB_floor, volume_mdB_floor_min_val, volume_mdB_floor_max_val, volume_mdB_floor_intensity_mult, volume_mdB_ceiling, volume_mdB_ceiling_min_val, volume_mdB_ceiling_max_val, volume_mdB_ceiling_intensity_mult );
+        }
+
+        bool operator==( const outgoing_sound_modifiers &rhs ) const {
+            return tie() == rhs.tie();
+        }
+    private:
+        void load( const JsonObject &jo );
+};
+
+struct heard_sound_modifiers{
+
+        friend void load_effect_type( const JsonObject &jo );
+
+    public:
+        // Was this struct actually initialized. 
+        bool valid = false;
+
+        operator bool() const {
+            return valid;
+        }
+
+        // What categories of sound should we have our modifiers affect?
+        // So we can do odd shenanagins with sounds, 
+        // such as make a monster very good at hearing footsteps but not changing the heard volume of anything else.
+        // Defaults to all sound categories.
+        std::vector<sounds::sound_t> checked_categories;
+
+        // String of sound descriptions we should have our modifiers affect. Defaults to empty. 
+        // If left empty/default, will not check against sound descriptions when affecting heard sounds.
+        std::vector<std::string> checked_sound_descriptions;
+
+        // String of sound descriptions we should replace our affected sounds descriptions with. Defaults to empty. 
+        // If left empty/default, will not replace any descriptions. This is prime shenanagins territory.
+        std::vector<std::string> replace_with_sound_descriptions;
+
+        // Should we choose a random description from the vector instead of an intensity based one?
+        bool choose_random_desc = false;
+
+        bool replace_npc_faction_attribution = false;
+        faction_id replace_with_npc_faction = faction_id( "no_faction" );
+
+        bool replace_monster_faction_attribution = false;
+        mfaction_str_id replace_with_monfaction = mfaction_str_id( "" );
+
+        // optional minimum intensity to apply these modifiers at.
+        int intensity_min_requirment = 0;
+    
+        std::vector<short> base_mdB_volume_adj; // Adjusts the base mdB volume of all incoming sounds. Will influence deafening.
+        short base_mdb_adj_min_val = 0; // Defaults to 0 
+        short base_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
+        float base_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        std::vector<short> heard_vol_mdb_adj; // Adjusts the mdB volume of all heard sounds by this amount. Will influence deafening.
+        short heard_vol_mdb_adj_min_val = 0; // Defaults to 0 
+        short heard_vol_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
+        float heard_vol_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        std::vector<short> perceived_vol_mdb_adj; // Adjusts the perceived mdB volume of all heard sounds by this amount. Does not influence deafening.
+        short perceived_vol_mdb_adj_min_val = 0; // Defaults to 0 
+        short perceived_vol_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
+        float perceived_vol_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        std::vector<short> hearing_threshold_mdb_adj; // Adjusts the entities volume thresholds by this amount.
+        short hearing_threshold_mdb_adj_min_val = 0; // Defaults to 0
+        short hearing_threshold_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
+        float hearing_threshold_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        std::vector<short> hearing_protection_dB_adj;
+        short hearing_protection_basic_dB_adj_min_val= 0; // Defaults to 0
+        short hearing_protection_basic_dB_adj_max_val= 0; // Defaults to 0, which means uncapped.  
+        float hearing_protection_basic_dB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        std::vector<short> hearing_protection_adv_dB_adj;
+        short hearing_protection_adv_dB_adj_min_val= 0; // Defaults to 0
+        short hearing_protection_adv_dB_adj_max_val= 0; // Defaults to 0, which means uncapped. 
+        float hearing_protection_adv_dB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        std::vector<short> permanant_hearing_loss_dB_adj;
+        short permanant_hearing_loss_dB_adj_min_val = 0; // Defaults to 0
+        short permanant_hearing_loss_dB_adj_max_val = 0; // Defaults to 0, which means uncapped. 
+        float permanant_hearing_loss_dB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+
+        auto tie() const {
+            return std::tie( checked_sound_descriptions, base_mdB_volume_adj, base_mdb_adj_min_val, base_mdb_adj_max_val,
+                             base_mdB_adj_intensity_mult, permanant_hearing_loss_dB_adj, hearing_protection_dB_adj, hearing_protection_dB_adj );
+        }
+
+        bool operator==( const heard_sound_modifiers &rhs ) const {
+            return tie() == rhs.tie();
+        }
+
+    private:
+        void load( const JsonObject &jo );
+};
+
+// holder for the relevant emission interval details for a time base caused sound
+struct caused_sound_interval_details {
+    // the caused sounds vector index number for the relevant caused sound.
+    int index = 0;
+    time_duration interval = 0_seconds;
+    // If we change our interval after an intensity change, mark the interval for re-calc.
+    // If we are a random interval sound, mark the interval as dirty after we emit to prompt a re-calc
+    bool dirty = false;
+};
+
+struct caused_sound {
+
+        friend void load_effect_type( const JsonObject &jo );
+    
+    public:       
+        // Was this struct actually initialized. 
+        bool valid = false;
+
+        operator bool() const {
+            return valid;
+        }
+
+        /** If false, prevents sound emission if the trigger was parent effect being applied for the first time. */
+        bool allow_on_apply = false;
+        /** If false, prevents sound emission if the trigger was parent effect intensity incrementing. */
+        bool allow_on_increment = false;
+        /** If false, prevents sound emission if the trigger was parent decaying to 0 duration. */
+        bool allow_on_decay = false;
+        /** If false, prevents sound emission if the trigger was parent being removed with at least 1 turn of duration left. */
+        bool allow_on_remove = false;
+        /** If false, sound will not be emitted at regular time intervals. */
+        bool time_based = false;
+        /** If false, sound will not be emitted at random time intervals. */
+        bool random_time = false;
+
+        // What is the minimum intensity this sound should be emitted at?
+        int intensity_min_requirment = 0;
+
+        /**
+         * Base time intervals between sound instances.
+         * Only populated and checked if time_based is true, defaulting to 
+         * If there is more than one entry, will choose entry to use based on parent effect intensity similar to decay messages.
+         */
+        std::vector<time_duration> base_emission_intervals;
+        /**
+         * optional emission time interval multiplier per parent intensity.
+         * defaulting to 1
+         */
+        float intensity_interval_scaling = 1;
+        /**
+         * Random emission interval change minimum and maximum values.
+         * Only populated if time_based is true, defaulting to 0_turns, 0_turns.
+         * If there is more than one entry, will choose entry to use based on parent effect intensity similar to decay messages.
+         */
+        std::vector<std::pair<time_duration, time_duration>> random_interval_minmax;
+        /**
+         * optional random emission time minimum multiplier per parent intensity.
+         * defaulting to 1
+         */
+        float intensity_random_interval_min_mult = 1;
+        /**
+         * optional random emission time maximum multiplier per parent intensity.
+         * defaulting to 1
+         */
+        float intensity_random_interval_max_mult = 1;
+        
+        // Should we avoid actually floodfilling a sound in game and just play a sfx effect?
+        // If true, base_dB_volume and intensity_scaling are used to determine the sfx volume to play at.
+        bool sfx_only = false;
+    
+        // What volume should the sound be made at?
+        short base_dB_volume = 0;
+
+        // How much should we increase the volume per parent effect intensity?
+        short intensity_dB_volume_scaling = 0;
+
+        // Vector of our enums to use. If left blank will default to a single sound_t::activity entry.
+        // If there is more than one entry, will choose entry to use based on parent effect intensity similar to decay messages.
+        std::vector<sounds::sound_t> categories;
+
+        // String of sound descriptions. Required. If left blank or with an entry of "" will result in a loading error.
+        // If there is more than one entry, will choose entry to use based on parent effect intensity similar to decay messages.
+        std::vector<std::string> sound_descriptions;
+
+        // Should we choose a random description from the vector instead of an intensity based one?
+        bool choose_random_desc = false;
+
+        // Should this sound be considered to be made by the effected creature? 
+        // There are many cases where we might want to have an effect be considered to be from a different creature.
+        // If this is left true, it overrides the filtering bools below and npc/monfaction listings.
+        bool from_effected_creature = true;
+        
+        // Should we consider the sound to be from the player? Primarily for sound filtering.
+        bool from_player = false;
+        // Should we consider the sound to be from a NPC? Primarily for sound filtering.
+        bool from_npc = false;
+        // Should we consider the sound to be from a monster? Primarily for sound filtering.
+        bool from_monster = false;
+
+        // If all the filtering bools are false, the sound is unattributed enviornmental noise.
+
+        // Is this sound from movement? 
+        // For example, if an effect destructively teleports a creature into something we might want the category to be destructive activity but movement to still be true.
+        bool movement_noise = false;
+
+        // String names of source creature NPC faction or monsterfaction, whichever is applicable. Will not be set for sounds not from any creature.
+        // Will be overriden if from_effected_creature is true.
+        faction_id faction = faction_id( "no_faction" );
+        mfaction_str_id monfaction = mfaction_str_id( "" );
+
+        // What sfx to play when the sound is made?
+        // If the defaults are loaded, will not play any sfx.
+        std::vector<std::pair<std::string, std::string>> sfx_idvariant_pairs = { { std::string(""),std::string( "default" ) } };
+
+        auto tie() const {
+            return std::tie( sound_descriptions, allow_on_apply, allow_on_decay, allow_on_remove,
+                             base_dB_volume, movement_noise, sfx_only, random_time, time_based );
+        }
+
+        bool operator==( const caused_sound &rhs ) const {
+            return tie() == rhs.tie();
+        }
+    private:
+        void load( const JsonObject &jo );
+};
+
 
 class effect_type
 {
@@ -129,6 +409,16 @@ class effect_type
         const std::vector<caused_effect> &get_effects_on_remove() const {
             return effects_on_remove;
         }
+        const std::vector<caused_sound> &get_caused_sounds() const {
+            return caused_sounds;
+        }
+        const std::vector<heard_sound_modifiers> &get_heard_sound_modifiers() const {
+            return in_sound_modifiers;
+        }
+        const std::vector<outgoing_sound_modifiers> &get_outgoing_sound_modifiers() const {
+            return out_sound_modifiers;
+        }
+
 
         bool is_show_in_info() const;
 
@@ -178,6 +468,7 @@ class effect_type
         std::vector<efftype_id> removes_effects;
         std::vector<efftype_id> blocks_effects;
 
+
         std::vector<std::pair<std::string, int>> miss_msgs;
 
         bool pain_sizing = false;
@@ -210,6 +501,11 @@ class effect_type
         morale_type morale;
 
         std::vector<caused_effect> effects_on_remove;
+
+        std::vector<caused_sound> caused_sounds;
+
+        std::vector<heard_sound_modifiers> in_sound_modifiers;
+        std::vector<outgoing_sound_modifiers> out_sound_modifiers;
 
         /** Key tuple order is:("base_mods"/"scaling_mods", reduced: bool, type of mod: "STR", desired argument: "tick") */
         std::unordered_map <
@@ -365,6 +661,82 @@ class effect
         /** Create a set of effects that should replace this one when it is removed prematurely. */
         std::vector<effect> create_removal_effects() const;
 
+        bool has_apply_sounds() const {
+            for ( const caused_sound &cs : eff_type->caused_sounds ){
+                if (cs.allow_on_apply){
+                    return true;
+                }
+            }
+            return false;
+        }
+        bool has_increment_sounds() const {
+            for ( const caused_sound &cs : eff_type->caused_sounds ){
+                if (cs.allow_on_increment){
+                    return true;
+                }
+            }
+            return false;
+        }
+        bool has_decay_sounds() const {
+            for ( const caused_sound &cs : eff_type->caused_sounds ){
+                if (cs.allow_on_decay){
+                    return true;
+                }
+            }
+            return false;
+        }
+        bool has_remove_sounds() const {
+            for ( const caused_sound &cs : eff_type->caused_sounds ){
+                if (cs.allow_on_remove){
+                    return true;
+                }
+            }
+            return false;
+        }
+        bool has_time_based_sounds() const {
+            for ( const caused_sound &cs : eff_type->caused_sounds ){
+                if (cs.time_based || cs.random_time){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        bool has_heard_sound_mods() const {
+            return !eff_type->in_sound_modifiers.empty();
+        }
+        bool has_outgoing_sound_mods() const {
+            return !eff_type->out_sound_modifiers.empty();
+        }
+
+        // Functions to create a vector of sound events. 
+        // Requires a pointer to the effected creature.
+        // If no pointer to a Creature is provided the origin bubble tripoint will be initialized at the players bubble position.
+        // and faction/filtering information will default to the information provided by the sound even if 
+        // from_effected_creature is true.
+        std::vector<sound_event> create_apply_sounds( const Creature *critter = nullptr ) const;
+        std::vector<sound_event> create_increment_sounds( const Creature *critter = nullptr ) const;
+        std::vector<sound_event> create_decay_sounds( const Creature *critter = nullptr ) const;
+        std::vector<sound_event> create_remove_sounds( const Creature *critter = nullptr ) const;
+        std::vector<sound_event> create_time_based_sounds( const Creature *critter = nullptr ) const;
+
+        void update_sound_time_intervals( const bool &dirty_only = false );
+
+        const std::vector<heard_sound_modifiers> &get_heard_sound_mods() const {
+            return eff_type->in_sound_modifiers;
+        }
+        const std::vector<outgoing_sound_modifiers> &get_outgoing_sound_mods() const{
+            return eff_type->out_sound_modifiers;
+        }
+        // Chose which sound description to use based on adjusted intensity.
+        std::string select_sound_desc( const std::vector<std::string> &descs, const int &adj_intensity, const bool &random ) const;
+
+        // Chose which sound category to use based on adjusted intensity.
+        sounds::sound_t select_sound_cat( const std::vector<sounds::sound_t> &cats, const int &adj_intensity ) const;
+
+        // Chose which sound sfx pair to use based on adjusted intensity.
+        std::pair<std::string,std::string> select_sound_sfx( const std::vector<std::pair<std::string,std::string>> &pairs, const int &adj_intensity ) const;
+
         /** Returns the effect's matching effect_type id. */
         const efftype_id &get_id() const {
             return eff_type->id;
@@ -376,6 +748,9 @@ class effect
     private:
         std::vector<effect> create_child_effects( bool decay ) const;
 
+        // Requires a pointer to the effected creature, see above create_xxxx_sounds comments
+        sound_event create_sound_event( const caused_sound &cs, const Creature *critter = nullptr ) const;
+
     protected:
         const effect_type *eff_type;
         time_duration duration;
@@ -386,6 +761,12 @@ class effect
 
         // TODO: REMOVE!
         bool permanent = false;
+
+        // A vector of effect caused sound vector indexes, and the current time interval that sound will be emitted on. 
+        // Whenever we modify our intensity, we quickly re-check these to update them.
+        // We check against these to see when we should emit time based sounds, and recalc the random time interval sounds on emission.
+        std::vector<caused_sound_interval_details> caused_sound_time_intervals;
+
     public:
         /**
          * Legacy compatibility TODO: Remove
@@ -410,6 +791,8 @@ class effect
 
 void load_effect_type( const JsonObject &jo );
 void reset_effect_types();
+
+sounds::sound_t sound_category_from_string( const std::string &st );
 
 std::vector<efftype_id> find_all_effect_types();
 

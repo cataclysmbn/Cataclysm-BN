@@ -2629,30 +2629,43 @@
   },
   {
     "type": "effect_type",
-    "id": "hearing_loss_light",
+    "id": "hearing_loss",
     "looks_like": "deaf",
-    "name": [ "Slight Hearing Loss", "Mild Hearing Loss", "Moderate Hearing Loss" ],
+    "name": [
+      "Slight Hearing Loss",
+      "Mild Hearing Loss",
+      "Moderate Hearing Loss",
+      "Heavy Hearing Loss",
+      "Severe Hearing Loss",
+      "Profound Hearing Loss"
+    ],
     "desc": [
       "Everything feels just a bit quieter.",
-      "Everything sounds quieter, and you occasionally hear a quiet ringing in your ears.",
-      "It is noticably harder to hear, and occasionally an annoying ringing fills your ears."
+      "Everything is quieter, and you sometimes hear a quiet ringing in your ears.",
+      "It is noticably harder to hear anything, and occasionally an annoying ringing fills your ears.",
+      "It is difficult to hear anything and a painfull ringing frequently fills your ears.",
+      "It is very difficult to hear anything and a painfull ringing is frequently the only thing you can hear.",
+      "It is almost impossible to hear anything but gunshots and the painfull high pitched ringing that fills your skull."
     ],
-    "permanent": true,
+    "decay_messages": [
+      [ "Your hearing returns to normal.", "good" ],
+      [ "The ringing in your ears stops.", "good" ],
+      [ "Your hearing returns to normal.", "good" ],
+      [ "Your hearing returns to normal.", "good" ],
+      [ "Your hearing returns to normal.", "good" ],
+      [ "Your hearing returns to normal.", "good" ]
+    ],
     "rating": "bad",
-    "max_intensity": 3
+    "max_intensity": 6
   },
   {
     "type": "effect_type",
-    "id": "hearing_loss_heavy",
+    "id": "hearing_protection",
     "looks_like": "deaf",
-    "name": [ "Heavy Hearing Loss", "Severe Hearing Loss", "Profound Hearing Loss" ],
-    "desc": [
-      "It is difficult to hear anything and a painfull ringing occasionally fills your ears.",
-      "It is very difficult to hear anything and a painfull ringing is frequently the only thing you can hear.",
-      "It is almost impossible to hear anything but gunshots "
-    ],
+    "name": [ "Hearing Protection" ],
+    "desc": [  ],
     "permanent": true,
-    "rating": "bad",
-    "max_intensity": 3
+    "rating": "mixed",
+    "max_intensity": 200
   }
 ]
