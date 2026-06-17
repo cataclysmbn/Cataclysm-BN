@@ -261,8 +261,10 @@
     "material_thickness": 3,
     "environmental_protection": 18,
     "use_action": "WEATHER_TOOL",
-    "flags": [ "ELECTRIC_IMMUNE", "GAS_PROOF", "VARSIZE", "OVERSIZE", "STURDY", "ONLY_ONE", "WATERPROOF" ]
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "AlWAYS", "values": [ { "value": "CLIMATE_CONTROL", "add": 375 } ] } ] }
+    "flags": [ "ELECTRIC_IMMUNE", "GAS_PROOF", "VARSIZE", "OVERSIZE", "STURDY", "ONLY_ONE", "WATERPROOF" ],
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "CLIMATE_CONTROL", "add": 375 } ] } ]
+    }
   },
   {
     "id": "crt_aarmor",

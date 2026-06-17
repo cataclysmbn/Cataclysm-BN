@@ -101,7 +101,11 @@
     "revert_to": "power_armor_basic",
     "relic_data": {
       "passive_effects": [
-        { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 2 }, { "value": "CLIMATE_CONTROL", "add": 750 } ] }
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [ { "value": "STRENGTH", "add": 2 }, { "value": "CLIMATE_CONTROL", "add": 750 } ]
+        }
       ]
     },
     "use_action": {
@@ -165,7 +169,15 @@
     "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 2250000,
     "revert_to": "power_armor_heavy",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 6 }, { "value": "CLIMATE_CONTROL", "add": 750 } ] } ] },
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [ { "value": "STRENGTH", "add": 6 }, { "value": "CLIMATE_CONTROL", "add": 750 } ]
+        }
+      ]
+    },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -226,7 +238,15 @@
     "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 750000,
     "revert_to": "power_armor_light",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "CLIMATE_CONTROL", "add": 750 } ] } ] },
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "CLIMATE_CONTROL", "add": 750 } ]
+        }
+      ]
+    },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -299,7 +319,9 @@
     "weight_capacity_bonus": "5500 g",
     "adv_hearing_protection": 80,
     "hearing_protection": 0,
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ] },
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    }
   },
   {
     "id": "power_armor_helmet_heavy",
@@ -360,7 +382,9 @@
     "weight_capacity_bonus": "7500 g",
     "adv_hearing_protection": 80,
     "hearing_protection": 0,
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ] }
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    }
   },
   {
     "id": "power_armor_helmet_light",
@@ -421,7 +445,9 @@
     "weight_capacity_bonus": "2500 g",
     "adv_hearing_protection": 80,
     "hearing_protection": 0,
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ] }
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    }
   },
   {
     "id": "power_armor_frame",
