@@ -101,17 +101,17 @@ const fixedShards: Shard[] = [
 ]
 
 const tagWeights = new Map<string, number>([
-  ["[#enchantment_test]", 100],
-  ["[#vehicle_ramp_test]", 80],
-  ["[#map_test]", 65],
-  ["[#vehicle_test]", 60],
-  ["[#vehicle_drag_test]", 18],
+  ["[#enchantment_test]", 350],
+  ["[#vehicle_test]", 150],
+  ["[#vehicle_ramp_test]", 100],
+  ["[#map_test]", 100],
+  ["[#crafting_test]", 120],
+  ["[#weather_test]", 80],
+  ["[#json_test]", 70],
+  ["[#overmap_test]", 55],
   ["[#generic_factory_test]", 35],
-  ["[#json_test]", 35],
   ["[#catalua_test]", 30],
-  ["[#crafting_test]", 30],
-  ["[#overmap_test]", 30],
-  ["[#weather_test]", 30],
+  ["[#vehicle_drag_test]", 18],
 ])
 
 const specialTagPattern =

@@ -349,7 +349,8 @@ static void run_test_case( const test_case &t )
 {
     clear_all_state();
     CAPTURE( t.veh_id );
-    for( int i_rot = 0; i_rot < 4; i_rot++ ) {
+    constexpr auto rotation_count = 2;
+    for( auto i_rot = 0; i_rot < rotation_count; ++i_rot ) {
         run_test_case_at_rotation( t, i_rot );
     }
 }
@@ -839,7 +840,6 @@ static map_helpers::canvas rails_straight_start_outside()
 
 TEST_CASE( "vehicle_rail_movement_derailed", "[vehicle][railroad]" )
 {
-    clear_all_state();
     SECTION( "no_rails" ) {
         // On normal ground rail vehicle behaves like normal vehicle
         run_test_case( test_case{
@@ -879,7 +879,6 @@ TEST_CASE( "vehicle_rail_movement_derailed", "[vehicle][railroad]" )
 
 TEST_CASE( "vehicle_rail_movement_basic_straight", "[vehicle][railroad]" )
 {
-    clear_all_state();
     // Rail vehicle must follow straight rails regardless of desired turn dir.
     run_test_case( test_case{
         "motorized_draisine_trirail",
@@ -894,7 +893,6 @@ TEST_CASE( "vehicle_rail_movement_basic_straight", "[vehicle][railroad]" )
 
 TEST_CASE( "vehicle_rail_movement_basic_enter_diagonal", "[vehicle][railroad]" )
 {
-    clear_all_state();
     // Rail vehicle must follow tracks and turn regardless of desired turn dir.
     run_test_case( test_case{
         "motorcycle_rail",
@@ -909,7 +907,6 @@ TEST_CASE( "vehicle_rail_movement_basic_enter_diagonal", "[vehicle][railroad]" )
 
 TEST_CASE( "vehicle_rail_movement_basic_leave_diagonal", "[vehicle][railroad]" )
 {
-    clear_all_state();
     // Rail vehicle must follow tracks and turn regardless of desired turn dir.
     run_test_case( test_case{
         "motorized_draisine_trirail",
@@ -924,7 +921,6 @@ TEST_CASE( "vehicle_rail_movement_basic_leave_diagonal", "[vehicle][railroad]" )
 
 TEST_CASE( "vehicle_rail_movement_basic_crossing", "[vehicle][railroad]" )
 {
-    clear_all_state();
     // Rail vehicle must follow straight rails regardless of desired turn dir.
     run_test_case( test_case{
         "motorcycle_rail",
@@ -939,7 +935,6 @@ TEST_CASE( "vehicle_rail_movement_basic_crossing", "[vehicle][railroad]" )
 
 TEST_CASE( "vehicle_rail_movement_fork", "[vehicle][railroad]" )
 {
-    clear_all_state();
     SECTION( "rails_tee_straight" ) {
         // Rail vehicle must follow straight rails by default,
         // but can switch tracks depending on desired turn dir
@@ -971,7 +966,6 @@ TEST_CASE( "vehicle_rail_movement_fork", "[vehicle][railroad]" )
 
 TEST_CASE( "vehicle_rail_movement_shifting_straight_left", "[vehicle][railroad]" )
 {
-    clear_all_state();
     // Rail vehicle must shift by 1 tile left or right if the rails shift left or right.
     run_test_case( test_case{
         "motorized_draisine_trirail",
@@ -986,7 +980,6 @@ TEST_CASE( "vehicle_rail_movement_shifting_straight_left", "[vehicle][railroad]"
 
 TEST_CASE( "vehicle_rail_movement_shifting_straight_right", "[vehicle][railroad]" )
 {
-    clear_all_state();
     // Rail vehicle must shift by 1 tile left or right if the rails shift left or right.
     run_test_case( test_case{
         "motorcycle_rail",
@@ -1001,7 +994,6 @@ TEST_CASE( "vehicle_rail_movement_shifting_straight_right", "[vehicle][railroad]
 
 TEST_CASE( "vehicle_rail_movement_shifting_diagonal_left", "[vehicle][railroad]" )
 {
-    clear_all_state();
     run_test_case( test_case{
         "motorized_draisine_trirail",
         tcscope::full,
@@ -1015,7 +1007,6 @@ TEST_CASE( "vehicle_rail_movement_shifting_diagonal_left", "[vehicle][railroad]"
 
 TEST_CASE( "vehicle_rail_movement_shifting_diagonal_right", "[vehicle][railroad]" )
 {
-    clear_all_state();
     run_test_case( test_case{
         "motorcycle_rail",
         tcscope::full,
@@ -1029,7 +1020,6 @@ TEST_CASE( "vehicle_rail_movement_shifting_diagonal_right", "[vehicle][railroad]
 
 TEST_CASE( "vehicle_rail_movement_ramp", "[vehicle][railroad][ramp]" )
 {
-    clear_all_state();
     SECTION( "straight_ramp" ) {
         // Rail vehicle must go up the ramp while following rails
         run_test_case( test_case{

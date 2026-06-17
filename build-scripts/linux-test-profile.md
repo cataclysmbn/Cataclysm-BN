@@ -72,14 +72,16 @@ visibility on software GPU compute.
 
 Latest local results on this 12-thread machine:
 
-| Command                         |               Result |
-| ------------------------------- | -------------------: |
-| `--jobs 6 --non-slow-shards 16` | `3:41.65`, 17 shards |
-| `--jobs 6 --non-slow-shards 8`  |  `3:04.27`, 9 shards |
-| `--jobs 6 --non-slow-shards 6`  |  `3:18.20`, 7 shards |
+| Command                                                               |               Result |
+| --------------------------------------------------------------------- | -------------------: |
+| `--jobs 6 --non-slow-shards 16` before balance/vehicle reductions     | `3:41.65`, 17 shards |
+| `--jobs 6 --non-slow-shards 8` before balance/vehicle reductions      |  `3:04.27`, 9 shards |
+| `--jobs 6 --non-slow-shards 8` after balance/vehicle reductions       |  `3:27.37`, 9 shards |
+| CI-equivalent `--jobs 4 --non-slow-shards 8` after reductions         |  `3:34.27`, 9 shards |
 
-Merging to 8 CPU shards is the fastest measured local setting so far. Merging to 6 CPU shards
-adds tail latency despite fewer process startups.
+The latest reductions cut several expensive test bodies, but the 8-shard profile is now limited by
+longer generated shards. `--jobs 12` over-contends CPU/software-GPU work locally and makes individual
+visibility tests exceed 10 seconds, so CI stays at `--jobs 4`.
 
 ## Resolved blockers
 
