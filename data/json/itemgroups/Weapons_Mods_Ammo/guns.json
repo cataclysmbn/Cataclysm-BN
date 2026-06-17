@@ -268,8 +268,8 @@
     "//": "Makeshift or otherwise poor quality pistols.",
     "items": [
       { "item": "ashot", "prob": 100 },
-      { "item": "pipe_pistol", "prob": 100 },
-      { "item": "handmade_revolver", "prob": 100, "charges-min": 0, "charges-max": 6 }
+      { "group": "nested_pipe_pistol", "prob": 100 },
+      { "group": "nested_handmade_revolver", "prob": 100 }
     ]
   },
   {
@@ -395,7 +395,7 @@
     "type": "item_group",
     "id": "guns_smg_improvised",
     "//": "Makeshift or otherwise poor quality SMGs.",
-    "items": [ [ "smg_luty", 100 ] ]
+    "items": [ { "group": "nested_smg_luty", "prob": 100 } ]
   },
   {
     "type": "item_group",
@@ -734,10 +734,10 @@
   {
     "type": "item_group",
     "id": "guns_rifle_improvised",
-    "//": "Makeshift or otherwise poor quality rifles. Need to give them their contains-group so they can spawn with their conversion kits",
+    "//": "Makeshift or otherwise poor quality rifles.",
     "items": [
-      { "item": "pipe_rifle", "prob": 60 },
-      { "item": "handmade_carbine", "prob": 120, "charges-min": 0, "charges-max": 5 }
+      { "group": "nested_pipe_rifle", "prob": 60 },
+      { "group": "nested_handmade_carbine", "prob": 120 }
     ]
   },
   {

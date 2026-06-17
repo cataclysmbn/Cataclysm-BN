@@ -45,17 +45,8 @@
       [ "tuned_mechanism", 20 ],
       [ "u_shotgun", 60 ],
       [ "waterproof_gunmod", 40 ],
-      [ "retool_ar15_300blk", 40 ],
-      [ "retool_pipe_22", 40 ],
-      [ "retool_pipe_38", 40 ],
-      [ "retool_pipe_40", 40 ],
-      [ "retool_pipe_44", 40 ],
-      [ "retool_pipe_45", 40 ],
-      [ "retool_pipe_9mm", 40 ],
-      [ "retool_pipe_223", 30 ],
-      [ "retool_pipe_3006", 20 ],
-      [ "retool_pipe_308", 20 ],
-      [ "g36_stanag_adapter", 40 ],
+       [ "retool_ar15_300blk", 40 ],
+       [ "g36_stanag_adapter", 40 ],
       [ "aug_nato_conversion", 40 ],
       [ "breacher_grip", 10 ],
       [ "acog_scope", 70 ],
@@ -244,6 +235,71 @@
       [ "glockswitch", 50 ],
       [ "universal_autolink", 10 ],
       [ "universal_auto_conversion_kit", 5 ]
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_pipe_conversion_rifle",
+    "//": "All pipe gun caliber conversion kits installable in the pipe rifle.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_pipe_22", "prob": 40 },
+      { "item": "retool_pipe_38", "prob": 40 },
+      { "item": "retool_pipe_40", "prob": 40 },
+      { "item": "retool_pipe_44", "prob": 40 },
+      { "item": "retool_pipe_45", "prob": 40 },
+      { "item": "retool_pipe_9mm", "prob": 40 },
+      { "item": "retool_pipe_223", "prob": 30 },
+      { "item": "retool_pipe_3006", "prob": 20 },
+      { "item": "retool_pipe_308", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_pipe_conversion_pistol",
+    "//": "Pipe gun caliber conversion kits installable in the pipe pistol and 2-shot special.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_pipe_40", "prob": 40 },
+      { "item": "retool_pipe_44", "prob": 40 },
+      { "item": "retool_pipe_45", "prob": 40 },
+      { "item": "retool_pipe_9mm", "prob": 40 },
+      { "item": "retool_pipe_223", "prob": 30 },
+      { "item": "retool_pipe_3006", "prob": 20 },
+      { "item": "retool_pipe_308", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_hc_mods",
+    "//": "Handmade carbine unique mods: caliber conversion kits and BAR magazine adapter.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_hc_223", "prob": 40 },
+      { "item": "retool_hc_308", "prob": 30 },
+      { "item": "hc_bar_mag_adapter", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_hmr_conversion",
+    "//": "Handmade revolver caliber conversion kits.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_hmr_40", "prob": 40 },
+      { "item": "retool_hmr_44", "prob": 30 },
+      { "item": "retool_hmr_45", "prob": 40 },
+      { "item": "retool_hmr_9mm", "prob": 40 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_luty_conversion",
+    "//": "Luty SMG caliber conversion kits.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_luty_40", "prob": 40 },
+      { "item": "retool_luty_45", "prob": 40 }
     ]
   }
 ]
