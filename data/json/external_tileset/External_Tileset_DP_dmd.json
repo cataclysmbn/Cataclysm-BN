@@ -50,7 +50,9 @@
           { "id": "tac_fullhelmet", "fg": 42 },
           { "id": "overlay_worn_tac_fullhelmet", "fg": 43 },
           { "id": "tac_helmet", "fg": 44 },
-          { "id": "overlay_worn_tac_helmet", "fg": 45 }
+          { "id": "overlay_worn_tac_helmet", "fg": 45 },
+          { "id": [ "clam", "overlay_wielded_clam" ], "fg": 46 },
+          { "id": [ "clam_fried", "overlay_wielded_clam_fried" ], "fg": 47 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
