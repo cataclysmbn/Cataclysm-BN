@@ -389,6 +389,37 @@
     "extend": { "flags": [ "RELOAD_ONE" ] }
   },
   {
+    "id": "revolver_shotgun",
+    "copy-from": "shotgun_base",
+    "type": "GUN",
+    "name": { "str": "shotgun revolver" },
+    "description": "A shotgun modified to use a revolver cylinder mechanism, it can hold 6 cartridges.",
+    "weight": "5443 g",
+    "volume": "3 L",
+    "price": "750 USD",
+    "price_postapoc": "1250 cent",
+    "ascii_picture": "shotgun_revolver",
+    "material": [ "steel", "wood" ],
+    "dispersion": 855,
+    "durability": 6,
+    "clip_size": 6,
+    "reload": 200,
+    "barrel_volume": "250 ml",
+    "loudness": 0,
+    "valid_mod_locations": [
+      [ "accessories", 2 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ],
+      [ "barrel", 1 ],
+      [ "grip", 1 ],
+      [ "rail", 1 ],
+      [ "sights", 1 ],
+      [ "underbarrel", 1 ]
+    ],
+    "blackpowder_tolerance": 48,
+    "flags": [ "RELOAD_ONE", "RELOAD_EJECT", "NEVER_JAMS" ]
+  },
+  {
     "id": "saiga_12",
     "copy-from": "shotgun_base",
     "type": "GUN",
