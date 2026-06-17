@@ -704,7 +704,7 @@
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road" } ],
     "place_nested": [ { "point": [ 0, 0, -1 ], "special": "lab_basement" } ],
     "city_distance": [ 4, -1 ],
-    "occurrences": [ 50, 100 ],
+    "occurrences": [ 75, 100 ],
     "flags": [ "LAB", "UNIQUE" ]
   },
   {
