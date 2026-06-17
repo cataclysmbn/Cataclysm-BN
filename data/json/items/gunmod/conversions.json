@@ -60,7 +60,7 @@
     "install_time": "5 m",
     "ammo_modifier": "22",
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_pipe_38",
@@ -81,7 +81,7 @@
     "install_time": "5 m",
     "ammo_modifier": "38",
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_pipe_40",
@@ -102,7 +102,7 @@
     "install_time": "5 m",
     "ammo_modifier": "40",
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_pipe_44",
@@ -123,7 +123,7 @@
     "install_time": "5 m",
     "ammo_modifier": "44",
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_pipe_45",
@@ -144,7 +144,7 @@
     "install_time": "5 m",
     "ammo_modifier": "45",
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_pipe_9mm",
@@ -165,7 +165,7 @@
     "install_time": "5 m",
     "ammo_modifier": "9mm",
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_pipe_223",
@@ -187,7 +187,7 @@
     "ammo_modifier": "223",
     "damage_modifier": { "damage_type": "bullet", "amount": -3 },
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_pipe_3006",
@@ -209,7 +209,7 @@
     "ammo_modifier": "3006",
     "damage_modifier": { "damage_type": "bullet", "amount": -3 },
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 2 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_pipe_308",
@@ -231,7 +231,7 @@
     "ammo_modifier": "308",
     "damage_modifier": { "damage_type": "bullet", "amount": -3 },
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 2 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_hc_223",
@@ -273,7 +273,7 @@
       ]
     ],
     "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_hc_308",
@@ -295,7 +295,7 @@
     "ammo_modifier": "308",
     "magazine_adaptor": [ [ "308", [ "g3mag", "g3bigmag", "g3_makeshiftmag" ] ] ],
     "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_luty_40",
@@ -317,7 +317,7 @@
     "ammo_modifier": "40",
     "magazine_adaptor": [ [ "40", [ "smg_40_mag" ] ] ],
     "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_luty_45",
@@ -339,7 +339,7 @@
     "ammo_modifier": "45",
     "magazine_adaptor": [ [ "45", [ "mac10mag", "smg_45_mag" ] ] ],
     "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_hmr_40",
@@ -361,7 +361,7 @@
     "ammo_modifier": "40",
     "magazine_adaptor": [ [ "40", [ "40_speedloader6" ] ] ],
     "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_hmr_44",
@@ -383,7 +383,7 @@
     "ammo_modifier": "44",
     "magazine_adaptor": [ [ "44", [ "44_speedloader6" ] ] ],
     "min_skills": [ [ "weapon", 3 ], [ "mechanics", 3 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_hmr_45",
@@ -405,7 +405,7 @@
     "ammo_modifier": "45",
     "magazine_adaptor": [ [ "45", [ "45_speedloader5" ] ] ],
     "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "retool_hmr_9mm",
@@ -427,6 +427,6 @@
     "ammo_modifier": "9mm",
     "magazine_adaptor": [ [ "9mm", [ "9mm_speedloader6" ] ] ],
     "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],
-    "flags": [ "IRREMOVABLE" ]
+    "flags": [ "INSTALL_DIFFICULT" ]
   }
 ]
