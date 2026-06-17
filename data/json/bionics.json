@@ -823,7 +823,8 @@
     "flags": [ "BIONIC_TOGGLED" ],
     "act_cost": "10 J",
     "react_cost": "10 J",
-    "time": 1
+    "time": 1,
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "NIGHT_VISION", "max": 10 } ] } ]
   },
   {
     "id": "bio_noise",

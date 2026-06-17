@@ -184,6 +184,13 @@
     "can_max": true
   },
   {
+    "id": "NIGHT_VISION",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": false,
+    "can_max": true
+  },
+  {
     "id": "ARMOR",
     "type": "enchantment_value",
     "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
