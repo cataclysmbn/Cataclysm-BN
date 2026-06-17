@@ -72,11 +72,11 @@ visibility on software GPU compute.
 
 Latest local results on this 12-thread machine:
 
-| Command                                           |                         Result |
-| ------------------------------------------------- | -----------------------------: |
+| Command                         |               Result |
+| ------------------------------- | -------------------: |
 | `--jobs 6 --non-slow-shards 16` | `3:41.65`, 17 shards |
-| `--jobs 6 --non-slow-shards 8`  | `3:04.27`, 9 shards  |
-| `--jobs 6 --non-slow-shards 6`  | `3:18.20`, 7 shards  |
+| `--jobs 6 --non-slow-shards 8`  |  `3:04.27`, 9 shards |
+| `--jobs 6 --non-slow-shards 6`  |  `3:18.20`, 7 shards |
 
 Merging to 8 CPU shards is the fastest measured local setting so far. Merging to 6 CPU shards
 adds tail latency despite fewer process startups.
