@@ -235,11 +235,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [
-      "state_police_0_0",
-      "state_police_z1_0_0",
-      "state_police_z2_0_0"
-    ],
+    "id": [ "state_police_0_0", "state_police_z1_0_0", "state_police_z2_0_0" ],
     "name": "state police station",
     "sym": "P",
     "color": "blue",
@@ -250,11 +246,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [
-      "state_police_1_0",
-      "state_police_z1_1_0",
-      "state_police_z2_1_0"
-    ],
+    "id": [ "state_police_1_0", "state_police_z1_1_0", "state_police_z2_1_0" ],
     "name": "state police station",
     "sym": "P",
     "color": "blue",
