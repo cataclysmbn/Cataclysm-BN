@@ -335,7 +335,7 @@
     "skills_required": [ "gun", 1 ],
     "time": "20 m",
     "autolearn": true,
-    "tools": [ [ [ "smg_40", -1 ] ] ],
+    "tools": [ [ [ "smg_luty", -1 ] ] ],
     "using": [ [ "40_casehead", 1 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
     "components": [ [ [ "sheet_metal_small", 1 ] ], [ [ "spring", 1 ] ], [ [ "duct_tape", 40 ] ] ]
@@ -350,7 +350,7 @@
     "skills_required": [ "gun", 1 ],
     "time": "20 m",
     "autolearn": true,
-    "tools": [ [ [ "mac_10", -1 ], [ "smg_45", -1 ] ] ],
+    "tools": [ [ [ "mac_10", -1 ], [ "smg_luty", -1 ] ] ],
     "using": [ [ "45_casehead", 1 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
     "components": [ [ [ "sheet_metal_small", 1 ] ], [ [ "spring", 1 ] ], [ [ "duct_tape", 40 ] ] ]
@@ -395,7 +395,7 @@
     "skills_required": [ "gun", 1 ],
     "time": "20 m",
     "autolearn": true,
-    "tools": [ [ [ "smg_9mm", -1 ], [ "sten", -1 ] ] ],
+    "tools": [ [ [ "smg_luty", -1 ], [ "sten", -1 ] ] ],
     "using": [ [ "9mm_casehead", 1 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
     "components": [ [ [ "sheet_metal_small", 1 ] ], [ [ "spring", 1 ] ], [ [ "duct_tape", 40 ] ] ]

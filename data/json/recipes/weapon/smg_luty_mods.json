@@ -1,0 +1,30 @@
+[
+  {
+    "type": "recipe",
+    "result": "retool_smg_40",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "mechanics", 3 ], [ "gun", 2 ] ],
+    "difficulty": 5,
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ] ],
+    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "retool_smg_45",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "mechanics", 3 ], [ "gun", 2 ] ],
+    "difficulty": 5,
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ] ],
+    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
+  }
+]

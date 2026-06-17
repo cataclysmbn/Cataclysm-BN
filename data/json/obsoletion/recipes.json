@@ -1178,6 +1178,26 @@
   },
   {
     "type": "recipe",
+    "result": "smg_luty",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "smg_9mm",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "smg_40",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "smg_45",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
     "result": "smg_22",
     "obsolete": true
   },

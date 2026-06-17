@@ -279,7 +279,8 @@
   {
     "id": "smg_38",
     "type": "MIGRATION",
-    "replace": "smg_45"
+    "replace": "smg_luty",
+    "contents": [ "retool_smg_45" ]
   },
   {
     "id": "smg_38_mag",
@@ -289,7 +290,7 @@
   {
     "id": "smg_22",
     "type": "MIGRATION",
-    "replace": "smg_9mm"
+    "replace": "smg_luty"
   },
   {
     "id": "smg_22_mag",
@@ -841,5 +842,20 @@
     "type": "MIGRATION",
     "replace": "rifle_pipe",
     "contents": [ "retool_pipe_3006" ]
+  },
+  {
+    "id": "smg_9mm",
+    "type": "MIGRATION",
+    "replace": "smg_luty"
+  },
+  {
+    "id": "smg_40",
+    "type": "MIGRATION",
+    "replace": "smg_luty"
+  },
+  {
+    "id": "smg_45",
+    "type": "MIGRATION",
+    "replace": "smg_luty"
   }
 ]
