@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with: { fetch-depth: 2 }
 
       - name: install dependencies
         run: |

@@ -1,10 +1,12 @@
-#!/usr/bin/env -S deno run --allow-run=git
+#!/usr/bin/env -S deno run --allow-read --allow-run=git --allow-env=PATH
 
 /**
  * @module
  *
  * Lists pull request file changes using the local git checkout.
  */
+
+import $ from "./dax.ts"
 
 export type PullFileStatus = "added" | "copied" | "modified" | "removed" | "renamed" | "changed"
 
@@ -19,39 +21,16 @@ export type ChangedFilesOptions = {
   head?: string
 }
 
-const decoder = new TextDecoder()
+const gitStatusMap = {
+  A: "added",
+  C: "copied",
+  D: "removed",
+  M: "modified",
+  R: "renamed",
+} as const satisfies Record<string, PullFileStatus>
 
-const runGit = async (args: string[]): Promise<string> => {
-  const command = new Deno.Command("git", {
-    args,
-    clearEnv: true,
-    stdout: "piped",
-    stderr: "piped",
-  })
-  const { success, stdout, stderr } = await command.output()
-  if (!success) {
-    const message = decoder.decode(stderr).trim()
-    throw new Error(`git ${args.join(" ")} failed${message ? `: ${message}` : ""}`)
-  }
-  return decoder.decode(stdout)
-}
-
-const parseGitStatus = (status: string): PullFileStatus => {
-  switch (status[0]) {
-    case "A":
-      return "added"
-    case "C":
-      return "copied"
-    case "D":
-      return "removed"
-    case "M":
-      return "modified"
-    case "R":
-      return "renamed"
-    default:
-      return "changed"
-  }
-}
+const parseGitStatus = (status: string): PullFileStatus =>
+  gitStatusMap[status[0] as keyof typeof gitStatusMap] ?? "changed"
 
 export const parseGitNameStatus = (output: string): PullFile[] =>
   output.trim().split("\n")
@@ -71,12 +50,7 @@ export const parseGitNameStatus = (output: string): PullFile[] =>
 export const changedFilesFromGit = async (
   { base = "origin/main", head = "HEAD" }: ChangedFilesOptions = {},
 ): Promise<PullFile[]> => {
-  const output = await runGit([
-    "diff",
-    "--name-status",
-    "--find-renames",
-    "--find-copies",
-    `${base}...${head}`,
-  ])
+  const output = await $`git diff --name-status --find-renames --find-copies ${`${base}...${head}`}`
+    .text()
   return parseGitNameStatus(output)
 }
