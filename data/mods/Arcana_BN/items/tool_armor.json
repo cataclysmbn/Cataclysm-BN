@@ -528,7 +528,6 @@
     },
     "extend": {
       "flags": [
-        "CLIMATE_CONTROL",
         "LIGHT_60",
         "NO_TAKEOFF",
         "PSYSHIELD_PARTIAL",
@@ -544,6 +543,7 @@
         "COMBAT_NPC_ON"
       ]
     },
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ] }
     "qualities": [ [ "HV_INSULATION", 1 ] ]
   },
   {
@@ -616,11 +616,11 @@
         "CUT_IMMUNE",
         "STAB_IMMUNE",
         "HEAT_IMMUNE",
-        "CLIMATE_CONTROL",
         "UNBREAKABLE",
         "COMBAT_NPC_ON"
       ]
-    }
+    },
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ] }
   },
   {
     "id": "armor_wyrm_berserker",
@@ -747,7 +747,8 @@
     "turns_per_charge": 150,
     "revert_to": "jade_wreath",
     "use_action": { "target": "jade_wreath", "msg": "The glowing carvings on the jade wreath fade.", "type": "transform" },
-    "extend": { "flags": [ "CLIMATE_CONTROL", "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] }
+    "extend": { "flags": [ "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] },
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ] }
   },
   {
     "id": "meteoric_talisman",

@@ -6072,7 +6072,6 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     const bool has_bark = has_trait( trait_BARK );
     const bool has_heatsink = has_bionic( bio_heatsink ) || is_wearing( itype_rm13_armor_on ) ||
                               has_trait( trait_M_SKIN2 ) || has_trait( trait_M_SKIN3 );
-    const bool has_climate_control = in_climate_control();
     const bool use_floor_warmth = can_use_floor_warmth();
     // In bodytemp units
     const int ambient_norm = 1900 - BODYTEMP_NORM;
@@ -6272,9 +6271,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
         }
 
         // Climate Control eases the effects of high and low ambient temps
-        if( has_climate_control ) {
-            bp_conv = temp_corrected_by_climate_control( bp_conv );
-        }
+        bp_conv = temp_corrected_by_climate_control( bp_conv );
 
         int bonus_fire_warmth = best_fire * 500;
 
@@ -10706,24 +10703,24 @@ int Character::bodytemp_modifier_traits_floor() const
     return mod;
 }
 
-int Character::temp_corrected_by_climate_control( int temperature ) const
+int Character::temp_corrected_by_climate_control( int temperature )
 {
-    const int variation = int( BODYTEMP_NORM * 0.5 );
-    if( temperature < BODYTEMP_SCORCHING + variation &&
-        temperature > BODYTEMP_FREEZING - variation ) {
-        if( temperature > BODYTEMP_SCORCHING ) {
-            temperature = BODYTEMP_VERY_HOT;
-        } else if( temperature > BODYTEMP_VERY_HOT ) {
-            temperature = BODYTEMP_HOT;
-        } else if( temperature > BODYTEMP_HOT ) {
-            temperature = BODYTEMP_NORM;
-        } else if( temperature < BODYTEMP_FREEZING ) {
-            temperature = BODYTEMP_VERY_COLD;
-        } else if( temperature < BODYTEMP_VERY_COLD ) {
-            temperature = BODYTEMP_COLD;
-        } else if( temperature < BODYTEMP_COLD ) {
-            temperature = BODYTEMP_NORM;
+    int mutated_norm = BODYTEMP_NORM + ( ( bodytemp_modifier_traits( false ) - bodytemp_modifier_traits(
+            true ) ) / 2 );
+    if( temperature > mutated_norm ) {
+        temperature -= bonus_from_enchantments( temperature,
+                                                enchantment_value_id( "CLIMATE_CONTROL_COOLING" ) );
+        if( in_climate_control() ) {
+            temperature -= 750;
         }
+        return std::max( mutated_norm, temperature );
+    } else {
+        if( in_climate_control() ) {
+            temperature += 750;
+        }
+        temperature += bonus_from_enchantments( temperature,
+                                                enchantment_value_id( "CLIMATE_CONTROL_HEATING" ) );
+        return std::min( mutated_norm, temperature );
     }
     return temperature;
 }

@@ -180,6 +180,13 @@
     "can_mult": true
   },
   {
+    "id": "CLIMATE_CONTROL",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true,
+    "suffixes": [ "COOLING", "HEATING" ]
+  },
+  {
     "id": "LIE",
     "type": "enchantment_value",
     "can_add": true,

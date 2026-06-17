@@ -2053,7 +2053,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Correction factor of the body temperature due to traits and mutations for player lying on the floor **/
         int bodytemp_modifier_traits_floor() const;
         /** Value of the body temperature corrected by climate control **/
-        int temp_corrected_by_climate_control( int temperature ) const;
+        int temp_corrected_by_climate_control( int temperature );
 
         bool in_sleep_state() const override;
 
