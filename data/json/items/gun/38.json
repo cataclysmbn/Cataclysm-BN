@@ -46,11 +46,6 @@
   },
   {
     "id": "ruger_lcr_38",
-    "ammo": "38",
-    "magazines": [ [ "38", [ "38_speedloader6" ] ] ]
-  },
-  {
-    "id": "ruger_lcr_38",
     "copy-from": "pistol_revolver",
     "type": "GUN",
     "name": { "str_sp": "Ruger LCR .38" },

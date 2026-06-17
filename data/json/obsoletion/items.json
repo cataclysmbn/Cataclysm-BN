@@ -4206,8 +4206,7 @@
     "color": "brown",
     "ammo": "22",
     "blackpowder_tolerance": 96,
-    "barrel_volume": "500 ml",
-    "obsolete": true
+    "barrel_volume": "500 ml"
   },
   {
     "id": "rifle_38",
@@ -4224,8 +4223,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "38",
-    "barrel_volume": "750 ml",
-    "obsolete": true
+    "barrel_volume": "750 ml"
   },
   {
     "id": "rifle_40",
@@ -4242,8 +4240,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "40",
-    "barrel_volume": "750 ml",
-    "obsolete": true
+    "barrel_volume": "750 ml"
   },
   {
     "id": "rifle_44",
@@ -4260,8 +4257,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "44",
-    "barrel_volume": "750 ml",
-    "obsolete": true
+    "barrel_volume": "750 ml"
   },
   {
     "id": "rifle_45",
@@ -4278,8 +4274,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "45",
-    "barrel_volume": "750 ml",
-    "obsolete": true
+    "barrel_volume": "750 ml"
   },
   {
     "id": "rifle_9mm",
@@ -4297,8 +4292,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "9mm",
-    "barrel_volume": "750 ml",
-    "obsolete": true
+    "barrel_volume": "750 ml"
   },
   {
     "id": "rifle_223",
@@ -4314,8 +4308,7 @@
     "color": "brown",
     "ammo": "223",
     "ranged_damage": { "damage_type": "bullet", "amount": -2 },
-    "barrel_volume": "1000 ml",
-    "obsolete": true
+    "barrel_volume": "1000 ml"
   },
   {
     "id": "rifle_3006",
@@ -4332,8 +4325,7 @@
     "color": "brown",
     "ammo": "3006",
     "ranged_damage": { "damage_type": "bullet", "amount": -2 },
-    "barrel_volume": "1000 ml",
-    "obsolete": true
+    "barrel_volume": "1000 ml"
   },
   {
     "id": "rifle_308",
@@ -4370,8 +4362,7 @@
       [ "rail", 1 ],
       [ "underbarrel", 1 ]
     ],
-    "magazines": [ [ "308", [ "g3_makeshiftmag", "g3mag", "g3bigmag" ] ] ],
-    "obsolete": true
+    "magazines": [ [ "308", [ "g3_makeshiftmag", "g3mag", "g3bigmag" ] ] ]
   },
   {
     "id": "surv_carbine_223",
@@ -4426,8 +4417,7 @@
           "stanag150"
         ]
       ]
-    ],
-    "obsolete": true
+    ]
   },
   {
     "id": "smg_9mm",
@@ -4452,8 +4442,7 @@
     "loudness": 0,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
     "barrel_volume": "250 ml",
-    "magazines": [ [ "9mm", [ "survivor9mm_mag", "stenmag" ] ] ],
-    "obsolete": true
+    "magazines": [ [ "9mm", [ "survivor9mm_mag", "stenmag" ] ] ]
   },
   {
     "id": "smg_40",
@@ -4478,8 +4467,7 @@
     "loudness": 0,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
     "barrel_volume": "250 ml",
-    "magazines": [ [ "40", [ "smg_40_mag" ] ] ],
-    "obsolete": true
+    "magazines": [ [ "40", [ "smg_40_mag" ] ] ]
   },
   {
     "id": "smg_45",
@@ -4504,8 +4492,7 @@
     "barrel_volume": "250 ml",
     "handling": 20,
     "loudness": 0,
-    "magazines": [ [ "45", [ "smg_45_mag", "mac10mag" ] ] ],
-    "obsolete": true
+    "magazines": [ [ "45", [ "smg_45_mag", "mac10mag" ] ] ]
   },
   {
     "id": "surv_six_shooter",
@@ -4538,8 +4525,7 @@
       [ "rail", 1 ]
     ],
     "flags": [ "RELOAD_ONE", "NEVER_JAMS", "RELOAD_EJECT" ],
-    "delete": { "faults": "fault_gun_chamber_spent" },
-    "obsolete": true
+    "delete": { "faults": "fault_gun_chamber_spent" }
   },
   {
     "id": "surv_hand_cannon",
@@ -4562,7 +4548,6 @@
     "dispersion": 620,
     "durability": 7,
     "clip_size": 5,
-    "loudness": 2,
-    "obsolete": true
+    "loudness": 2
   }
 ]
