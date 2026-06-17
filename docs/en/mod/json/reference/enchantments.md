@@ -499,8 +499,9 @@ value, in addition to the global `ITEM_ARMOR`:
 {
   "id": "RANGED_DAMAGE", // Id of the enchantment
   "type": "enchantment_value", // Needed Type
-  "can_add": true, // Weather adding to the enchantment value will do anything
-  "can_mult": true, // Weather multiplying to the enchantment value will do anything
+  "can_add": true, // Weather adding to the enchantment value will do anything; Default true
+  "can_mult": true, // Weather multiplying to the enchantment value will do anything; Default true
+  "can_max": false, // Weather getting the maximum value of this type will do anything; Default false
   "suffixes": [ // All the suffixes. These appear as in this case RANGED_DAMAGE_XXX
     "BASH",     // In addition suffixes will also reference the parent type when in use
     "CUT",

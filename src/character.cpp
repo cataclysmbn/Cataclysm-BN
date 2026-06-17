@@ -5751,7 +5751,7 @@ needs_rates Character::calc_needs_rates() const
     static const std::string player_fatigue_rate( "PLAYER_FATIGUE_RATE" );
     rates.fatigue = get_option< float >( player_fatigue_rate );
     static const std::string fatigue_modifier( "fatigue_modifier" );
-    rates.fatigue *= 1.0f + mutation_value( fatigue_modifier )
+    rates.fatigue *= 1.0f + mutation_value( fatigue_modifier );
     rates.fatigue += bonus_from_enchantments( rates.fatigue, enchantment_value_id( "FATIGUE" ) );
 
     // Note: intentionally not in metabolic rate
@@ -7295,13 +7295,13 @@ float Character::active_light() const
 
     lumination = std::max( lumination, mut_lum );
 
-    if( lumination < 300 && has_active_bionic( bio_flashlight ) ) {
-        lumination = 300;
-    } else if( lumination < 25 && has_artifact_with( AEP_GLOW ) ) {
+    lumination = std::max( lumination, float( bonus_from_enchantments( 0,
+                           enchantment_value_id( "LUMINATION" ) ) ) );
+
+    if( lumination < 25 && has_artifact_with( AEP_GLOW ) ) {
         lumination = 25;
     } else if( lumination < 5 && ( has_effect( effect_glowing ) ||
-                                   has_effect( effect_glowy_led ) ||
-                                   has_active_bionic( bio_tattoo_led ) ) ) {
+                                   has_effect( effect_glowy_led ) ) ) {
         lumination = 5;
     }
     return lumination;

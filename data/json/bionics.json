@@ -538,7 +538,8 @@
     "time": 1,
     "starting_bionic": true,
     "points": 1,
-    "flags": [ "BIONIC_TOGGLED" ]
+    "flags": [ "BIONIC_TOGGLED" ],
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "LUMINATION", "max": 300 } ] } ]
   },
   {
     "id": "bio_tattoo_led",
@@ -550,7 +551,8 @@
     "time": 1,
     "starting_bionic": true,
     "points": 1,
-    "flags": [ "BIONIC_TOGGLED" ]
+    "flags": [ "BIONIC_TOGGLED" ],
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "LUMINATION", "max": 5 } ] } ]
   },
   {
     "id": "bio_glowy",
