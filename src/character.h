@@ -923,7 +923,7 @@ class Character : public Creature, public location_visitable<Character>
         /**
          * Calculate bonus from enchantments for given base value.
          */
-        double bonus_from_enchantments( double base, enchant_vals::mod value, bool round = false ) const;
+        double bonus_from_enchantments( double base, enchantment_value_id value, bool round = false ) const;
 
         /** Returns true if the player has any martial arts buffs attached */
         bool has_mabuff( const mabuff_id &buff_id ) const;

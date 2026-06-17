@@ -396,7 +396,7 @@
     "id": "crate_sports",
     "type": "item_group",
     "subtype": "collection",
-    "items": [ [ "q_solarpack", 1 ] ]
+    "items": [ [ "solarpack", 1 ] ]
   },
   {
     "type": "item_group",

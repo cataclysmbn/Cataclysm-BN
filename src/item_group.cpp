@@ -19,6 +19,7 @@
 #include "json.h"
 #include "rng.h"
 #include "type_id.h"
+#include "options.h"
 
 // FIXME: Somehow we cant get item_groups from their ids
 // Only can get Item_spawn_data
@@ -345,22 +346,27 @@ bool Single_item_creator::remove_item( const itype_id &itemid )
     return type == S_NONE;
 }
 
-bool Single_item_creator::replace_item( const itype_id &itemid, const itype_id &replacementid )
+bool Single_item_creator::replace_item( const itype_id &itemid, const itype_id &replacementid,
+                                        const std::string &context )
 {
     if( modifier ) {
-        if( modifier->replace_item( itemid, replacementid ) ) {
+        if( modifier->replace_item( itemid, replacementid, context ) ) {
             return true;
         }
     }
     if( type == S_ITEM ) {
         if( itemid.str() == id ) {
+            if( get_option<bool>( "MIGRATION_CHECKS" ) ) {
+                debugmsg( "Migrated item: %s in ( %s ), should be migrated to %s", itemid,
+                          context, replacementid );
+            }
             id = replacementid.str();
             return true;
         }
     } else if( type == S_ITEM_GROUP ) {
         Item_spawn_data *isd = item_controller->get_group( item_group_id( id ) );
         if( isd != nullptr ) {
-            isd->replace_item( itemid, replacementid );
+            isd->replace_item( itemid, replacementid, "in itemgroup " + id );
         }
     }
     return type == S_NONE;
@@ -642,13 +648,14 @@ bool Item_modifier::remove_item( const itype_id &itemid )
     return false;
 }
 
-bool Item_modifier::replace_item( const itype_id &itemid, const itype_id &replacementid )
+bool Item_modifier::replace_item( const itype_id &itemid, const itype_id &replacementid,
+                                  const std::string &context )
 {
     if( ammo != nullptr ) {
-        ammo->replace_item( itemid, replacementid );
+        ammo->replace_item( itemid, replacementid, "ammo of " + context );
     }
     if( container != nullptr ) {
-        if( container->replace_item( itemid, replacementid ) ) {
+        if( container->replace_item( itemid, replacementid, "container of " + context ) ) {
             return true;
         }
     }
@@ -760,7 +767,7 @@ detached_ptr<item> Item_group::create_single( const time_point &birthday, Recurs
 void Item_group::check_consistency( const std::string &context ) const
 {
     for( const auto &elem : items ) {
-        ( elem )->check_consistency( "item in " + context );
+        ( elem )->check_consistency( context );
     }
 }
 
@@ -817,10 +824,11 @@ bool Item_group::remove_specific_group( const std::string &itemid )
     return items.empty();
 }
 
-bool Item_group::replace_item( const itype_id &itemid, const itype_id &replacementid )
+bool Item_group::replace_item( const itype_id &itemid, const itype_id &replacementid,
+                               const std::string &context )
 {
     for( const std::unique_ptr<Item_spawn_data> &elem : items ) {
-        ( elem )->replace_item( itemid, replacementid );
+        ( elem )->replace_item( itemid, replacementid, "item in " + context );
     }
     return items.empty();
 }

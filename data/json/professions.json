@@ -842,8 +842,8 @@
     "subtype": "collection",
     "id": "dog_lover_bag",
     "entries": [
-      { "item": "rubber_harness_dog" },
-      { "item": "rubber_harness_dog" },
+      { "item": "rubber_armor_small_quadruped" },
+      { "item": "rubber_armor_small_quadruped" },
       { "item": "dog_whistle" },
       { "item": "dogfood" },
       { "item": "dogfood" }

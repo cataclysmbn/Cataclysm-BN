@@ -587,6 +587,10 @@ void Item_factory::finalize_pre( itype &obj )
         e.second.get_actor_ptr()->finalize( obj.id );
     }
 
+    if( obj.relic_data ) {
+        obj.relic_data->finalize();
+    }
+
     if( obj.drop_action.get_actor_ptr() != nullptr ) {
         obj.drop_action.get_actor_ptr()->finalize( obj.id );
     }
@@ -784,7 +788,7 @@ void Item_factory::finalize_item_blacklist()
         }
 
         for( std::pair<const item_group_id, std::unique_ptr<Item_spawn_data>> &g : m_template_groups ) {
-            g.second->replace_item( migrate.first, migrate.second.replace );
+            g.second->replace_item( migrate.first, migrate.second.replace, g.first.str() );
         }
 
         // replace migrated items in requirements

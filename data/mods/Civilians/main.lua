@@ -123,7 +123,9 @@ local function process_civilian_corpse_pulping(monster, all_creatures, map)
   end
 
   local m_pos = monster:get_pos_ms()
+  ---@type Item?
   local found_corpse = nil
+  ---@type TripointBubMs?
   local corpse_pos = nil
 
   -- 2. Scan surroundings for unpulped corpses (radius 8 tiles)
@@ -148,10 +150,11 @@ local function process_civilian_corpse_pulping(monster, all_creatures, map)
     if found_corpse then break end
   end
 
-  if not found_corpse then return end
+  if not found_corpse or corpse_pos == nil then return end
+  ---@cast corpse_pos TripointBubMs
 
   -- 3. Determine distance and execute action
-  local dist = coords.rl_dist(m_pos, corpse_pos)
+  local dist = coords.rl_dist(m_pos, corpse_pos) or math.maxinteger
   if dist <= 1 then
     -- Close enough, execute pulping action
     found_corpse:set_damage(found_corpse:get_max_damage())

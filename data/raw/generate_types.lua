@@ -222,6 +222,15 @@ local fmt_function_field = function(member, class_name)
   return ret .. "\n"
 end
 
+---@param annotations string
+---@param class_name string
+---@param annotation string
+---@return string
+local add_class_annotation = function(annotations, class_name, annotation)
+  local pattern = "(---@class " .. class_name .. " : [^\n]+\n)"
+  return (annotations:gsub(pattern, "%1" .. annotation .. "\n"))
+end
+
 --[[
     Formats ---@overload annotations and function stub for constructors ('new' function).
   ]]
@@ -369,6 +378,8 @@ doc_gen_func.impl = function()
 ---@field bionic_functions table<string, BionicFunctionTable>
 ---@field mutation_functions table<string, table<string, function>>
 ---@field horde_behaviours table<string, function>
+---@field monster_ai_functions table<string, function>
+---@field monster_attitude_functions table<string, function>
 ---@field mapgen_functions table<string, MapgenFunction>
 ---@field examine_functions table<string, fun(params: { user: Character, pos: TripointBubMs })>
 ---@field activity_functions table<string, LuaActivityFinishFunction>
@@ -586,7 +597,7 @@ on_npc_loaded = {}
     ret = ret .. "--================---- " .. section_name .. " ----================\n\n"
 
     for _, item in ipairs(section_sorted) do
-      local name = item.k -- Class or Library name
+      local name = tostring(item.k) -- Class or Library name
       local data = item.v or {}
       local comment = data.type_comment or data.lib_comment or ""
       local bases = data["#bases"] or {}
@@ -709,7 +720,15 @@ on_npc_loaded = {}
     full_ret = full_ret .. "}\n\n"
   end
 
-  -- No second pass needed anymore
+  full_ret = full_ret:gsub("%-%-%-@class (Point%u[%w]*)\n", function(name)
+    if name == "PointCoord" then return "---@class " .. name .. "\n" end
+    return "---@class " .. name .. " : PointCoord\n"
+  end)
+  full_ret = full_ret:gsub("%-%-%-@class (Tripoint%u[%w]*)\n", function(name)
+    if name == "TripointCoord" then return "---@class " .. name .. "\n" end
+    return "---@class " .. name .. " : TripointCoord\n"
+  end)
+  full_ret = add_class_annotation(full_ret, "TripointAbsOmt", "---@operator add(TripointRelOmt): TripointAbsOmt")
 
   return full_ret
 end

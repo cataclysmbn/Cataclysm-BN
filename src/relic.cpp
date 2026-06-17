@@ -8,11 +8,11 @@
 #include "cata_unreachable.h"
 #include "creature.h"
 #include "character.h"
+#include "enchantments/enchantment.h"
 #include "field.h"
 #include "game.h"
 #include "json.h"
 #include "magic.h"
-#include "magic_enchantment.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "messages.h"
@@ -262,6 +262,12 @@ std::string relic::name() const
     return item_name_override.translated();
 }
 
+void relic::finalize()
+{
+    for( enchantment &ench : passive_effects ) {
+        ench.finalize();
+    }
+}
 void relic::check() const
 {
     for( const enchantment &ench : passive_effects ) {

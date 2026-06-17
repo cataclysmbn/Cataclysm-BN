@@ -33,6 +33,7 @@
 #include "crafting_gui.h"
 #include "crafting_quality.h"
 #include "debug.h"
+#include "enchantments/enchantment.h"
 #include "enums.h"
 #include "faction.h"
 #include "flag.h"
@@ -51,7 +52,6 @@
 #include "map.h"
 #include "map_selector.h"
 #include "mapdata.h"
-#include "magic_enchantment.h"
 #include "messages.h"
 #include "mutation.h"
 #include "npc.h"
@@ -302,7 +302,7 @@ float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
                                   ? 9999
                                   : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
                   who.mutation_value( "crafting_speed_modifier" );
-    result += who.bonus_from_enchantments( result, enchant_vals::mod::CRAFTING_SPEED );
+    result += who.bonus_from_enchantments( result, enchantment_value_id( "CRAFTING_SPEED" ) );
 
     return result;
 }
@@ -331,7 +331,7 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
                        game_opt_multi;
 
-    total_multi += who.bonus_from_enchantments( total_multi, enchant_vals::mod::CRAFTING_SPEED );
+    total_multi += who.bonus_from_enchantments( total_multi, enchantment_value_id( "CRAFTING_SPEED" ) );
     if( light_multi <= 0.0f ) {
         who.add_msg_player_or_npc( m_bad,
                                    _( "You can no longer see well enough to keep crafting." ),

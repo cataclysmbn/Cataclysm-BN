@@ -486,6 +486,30 @@ TEST_CASE( "lua_typed_coords_projection", "[lua]" )
     CHECK( test_data.get<std::string>( "raw_delta_arithmetic" ) == "TripointAbsSm(364,2,-1)" );
 }
 
+TEST_CASE( "voltmeter_lua_uses_typed_coordinates", "[lua][voltmeter]" )
+{
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "voltmeter_test.lua" );
+
+    CHECK( test_data.get<bool>( "charge_ok" ) );
+    CHECK( test_data.get<std::string>( "charge_info_type" ) == "string" );
+    CHECK( test_data.get<bool>( "connections_ok" ) );
+    CHECK( test_data.get<std::string>( "connections_info_type" ) == "string" );
+}
+
+TEST_CASE( "luna_rejects_duplicate_member_registration", "[lua]" )
+{
+    auto lua = make_lua_state();
+    auto lib = luna::begin_lib( lua, "duplicate_member_test" );
+    luna::set_fx( lib, "same_name", []() -> int { return 1; } );
+    CHECK_THROWS_WITH( luna::set_fx( lib, "same_name", []() -> int { return 2; } ),
+                       Catch::Contains( "Duplicate Lua binding registration" ) );
+    luna::finalize_lib( lib );
+}
+
 TEST_CASE( "lua_coord_cpp_helpers", "[lua]" )
 {
     auto lua = make_lua_state();

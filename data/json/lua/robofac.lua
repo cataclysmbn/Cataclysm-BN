@@ -17,7 +17,7 @@ local nearby_hub01_scan_radius_omt = 4
 ---@field om_terrain string?
 
 ---@class RobofacNpcParams
----@field npc NPC?
+---@field npc Npc?
 
 ---@class RobofacMonsterParams
 ---@field monster Monster?
@@ -44,19 +44,26 @@ local has_hub01_clearance = function(ch) return ch ~= nil and ch:get_value(hub01
 ---@return boolean
 local is_in_hub01 = function(ch)
   if ch == nil then return false end
-  return overmapbuffer.check_ot("robofachq", OtMatchType.PREFIX, ch:global_square_location():to_omt())
+  local omt_pos = ch:global_square_location():to_omt()
+  if omt_pos == nil then return false end
+  ---@cast omt_pos TripointAbsOmt
+  return overmapbuffer.check_ot("robofachq", OtMatchType.PREFIX, omt_pos)
 end
 
 ---@return TripointAbsOmt?
 local hub01_scan_center = function()
   ---@type Avatar?
   local player = gapi.get_avatar()
+  ---@cast player Character?
+  if player == nil then return nil end
   if not has_hub01_clearance(player) then return nil end
   if not is_in_hub01(player) then return nil end
-  return player:global_square_location():to_omt()
+  local center = player:global_square_location():to_omt()
+  ---@cast center TripointAbsOmt?
+  return center
 end
 
----@return NPC[]
+---@return Npc[]
 local nearby_hub01_npcs = function()
   local center = hub01_scan_center()
   if center == nil then return {} end
@@ -94,6 +101,7 @@ M.authorize_hub01_security = function(params)
   if not npc then return true end
 
   local player = gapi.get_avatar()
+  ---@cast player Character?
   if not has_hub01_clearance(player) then return true end
   if npc:get_faction_id():str() ~= robofac_faction:str() then return true end
   if npc:get_first_topic() ~= "TALK_HUB_SECURITY" then return true end
@@ -105,7 +113,7 @@ M.authorize_hub01_security = function(params)
   return true
 end
 
----@param npcs NPC[]?
+---@param npcs Npc[]?
 ---@return boolean?
 M.authorize_active_hub01_security = function(npcs)
   for _, npc in ipairs(npcs or nearby_hub01_npcs()) do
@@ -123,6 +131,7 @@ M.authorize_hub01_turret = function(params)
   if monster_type ~= hub01_turret and monster_type ~= legacy_light_turret then return true end
 
   local player = gapi.get_avatar()
+  ---@cast player Character?
   if not has_hub01_clearance(player) then return true end
 
   if monster_type == legacy_light_turret then
@@ -148,6 +157,7 @@ end
 ---@return boolean?
 M.authorize_active_hub01 = function()
   local player = gapi.get_avatar()
+  ---@cast player Character?
   if not has_hub01_clearance(player) then return true end
   if not is_in_hub01(player) then return true end
 

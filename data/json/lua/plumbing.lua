@@ -90,6 +90,7 @@ local blood_field_ids = {
   FieldTypeId.new("fd_gibs_invertebrate"):int_id(),
 }
 
+---@type table<string, PlumbingModeData>
 local wash_mode_data = {
   shower = {
     duration_minutes = 15,
@@ -165,6 +166,7 @@ end
 local get_fixture_resources = function(opts)
   local pos_abs_ms = opts.map:bub_to_abs(opts.pos)
   local pos_abs_omt = pos_abs_ms:to_omt()
+  ---@cast pos_abs_omt TripointAbsOmt
   local source = resource_source.grid
   local clean_charges = overmapbuffer.fluid_grid_liquid_charges_at(pos_abs_omt, item_water_clean)
   local dirty_charges = overmapbuffer.fluid_grid_liquid_charges_at(pos_abs_omt, item_water)
@@ -239,7 +241,7 @@ local consume_body_cleanser_candidate = function(opts)
   local label = opts.candidate.item:display_name(1)
   if opts.candidate.source == "inventory" then
     if opts.candidate.item.charges > 1 then
-      opts.user:use_charges(opts.candidate.item:get_type(), 1, function(_) return true end)
+      opts.user:use_charges(opts.candidate.item:get_type(), 1)
     else
       opts.user:remove_item(opts.candidate.item)
     end

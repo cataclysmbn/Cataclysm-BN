@@ -4,6 +4,7 @@ slimepit.draw = function(data, map)
   local ot_match_prefix = 2
   local ter = data:id()
   local z = data:zlevel()
+  ---@cast z integer
   if z == 0 then
     data:fill_groundcover()
   else

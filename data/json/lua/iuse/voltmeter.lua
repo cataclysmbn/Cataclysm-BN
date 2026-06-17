@@ -179,7 +179,7 @@ voltmeter.modify_grid_connections = function(who, item, pos)
     end
 
     -- Get the requirement and multiply by cost
-    local requirement_base = get_requirement("add_grid_connection")
+    local requirement_base = requirements.get("add_grid_connection")
     if not requirement_base then
       gapi.add_msg(MsgType.warning, locale.gettext("Error: requirement not found."))
       return 0

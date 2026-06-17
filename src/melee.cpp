@@ -30,6 +30,7 @@
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
+#include "enchantments/enchantment.h"
 #include "enums.h"
 #include "flag.h"
 #include "game.h"
@@ -41,7 +42,6 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
-#include "magic_enchantment.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "mapdata.h"
@@ -2569,7 +2569,7 @@ int Character::attack_cost( const item &weap ) const
         move_cost = std::pow( move_cost, 0.975f );
     }
 
-    move_cost += bonus_from_enchantments( move_cost, enchant_vals::mod::ATTACK_COST, true );
+    move_cost += bonus_from_enchantments( move_cost, enchantment_value_id( "ATTACK_COST" ), true );
 
     // Martial arts last. Flat has to be after mult, because comments say so.
     move_cost *= ma_mult;

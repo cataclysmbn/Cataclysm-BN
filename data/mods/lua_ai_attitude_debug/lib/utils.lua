@@ -20,7 +20,7 @@ end
 ---@return TripointBubMs|nil
 function utils.deserialize_tripoint_bub_ms(str)
   local x, y, z = utils.parse_tripoint_components(str)
-  if x ~= nil then return TripointBubMs.new(x, y, z) end
+  if x ~= nil and y ~= nil and z ~= nil then return TripointBubMs.new(x, y, z) end
   return nil
 end
 
@@ -28,7 +28,7 @@ end
 ---@return TripointAbsMs|nil
 function utils.deserialize_tripoint_abs_ms(str)
   local x, y, z = utils.parse_tripoint_components(str)
-  if x ~= nil then return TripointAbsMs.new(x, y, z) end
+  if x ~= nil and y ~= nil and z ~= nil then return TripointAbsMs.new(x, y, z) end
   return nil
 end
 

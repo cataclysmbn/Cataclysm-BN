@@ -160,6 +160,7 @@ mod.iuse_function_anchor = function(params)
   --print(player_abs_pos)
 
   local player_omt = player_abs_pos:to_omt()
+  ---@cast player_omt TripointAbsOmt
 
   local no_furn = gapi.get_map():get_furn_at(player_map_pos)
   local b = tostring(no_furn)
@@ -209,6 +210,7 @@ mod.iuse_function_station = function(params)
   --print(player_map_pos)
 
   local player_omt = player_abs_pos:to_omt()
+  ---@cast player_omt TripointAbsOmt
   --print(player_omt)
 
   local no_furn = gapi.get_map():get_furn_at(player_map_pos)
@@ -276,6 +278,7 @@ end
 mod.charge_stations_from_grid = function(pos)
   local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
+  ---@cast abs_omt TripointAbsOmt
   local grid = gapi.get_distribution_grid_tracker():grid_at(abs_pos)
   local power_available = grid:get_resource(true)
   local chosen_station_list = {}
@@ -334,6 +337,7 @@ end
 mod.pick_teleporter = function(who, eidx, pos)
   local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
+  ---@cast abs_omt TripointAbsOmt
   local anchor = mod.anchor_list[eidx]
   if not anchor then return 0 end
   local distance = abs_omt:rl_dist(anchor)
@@ -381,6 +385,7 @@ mod.pick_teleport_destination = function(who, pos)
   local ui_teleport = UiList.new()
   local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
+  ---@cast abs_omt TripointAbsOmt
   ui_teleport:title(locale.gettext("Select teleportation target"))
 
   for i in pairs(mod.anchor_list) do
@@ -406,6 +411,7 @@ end
 mod.get_anchor_distance = function(pos, i)
   local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
+  ---@cast abs_omt TripointAbsOmt
   local anchor = mod.anchor_list[i]
   if not anchor then return 0 end
   local distance = abs_omt:rl_dist(anchor)
@@ -596,6 +602,7 @@ end
 mod.remove_placed_furniture = function(pos)
   local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
+  ---@cast abs_omt TripointAbsOmt
   local ui_remove_furn = UiList.new()
   ui_remove_furn:title(locale.gettext("Remove station or anchor?"))
   ui_remove_furn:add(1, locale.gettext("Station"))

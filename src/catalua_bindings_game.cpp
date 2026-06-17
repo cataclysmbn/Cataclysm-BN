@@ -62,10 +62,16 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     luna::set_fx( lib, "get_avatar", &get_avatar );
     luna::set_fx( lib, "get_map", &get_map );
-    luna::set_fx( lib, "bub_to_abs", []( const tripoint_bub_ms & p ) -> tripoint_abs_ms { return bub_to_abs( p ); } );
-    luna::set_fx( lib, "bub_to_abs", []( const tripoint_bub_sm & p ) -> tripoint_abs_sm { return bub_to_abs( p ); } );
-    luna::set_fx( lib, "abs_to_bub", []( const tripoint_abs_ms & p ) -> tripoint_bub_ms { return abs_to_bub( p ); } );
-    luna::set_fx( lib, "abs_to_bub", []( const tripoint_abs_sm & p ) -> tripoint_bub_sm { return abs_to_bub( p ); } );
+    luna::set_fx( lib, "bub_to_abs",
+                  sol::overload(
+                      []( const tripoint_bub_ms & p ) -> tripoint_abs_ms { return bub_to_abs( p ); },
+                      []( const tripoint_bub_sm & p ) -> tripoint_abs_sm { return bub_to_abs( p ); }
+                  ) );
+    luna::set_fx( lib, "abs_to_bub",
+                  sol::overload(
+                      []( const tripoint_abs_ms & p ) -> tripoint_bub_ms { return abs_to_bub( p ); },
+                      []( const tripoint_abs_sm & p ) -> tripoint_bub_sm { return abs_to_bub( p ); }
+                  ) );
     luna::set_fx( lib, "get_distribution_grid_tracker",
                   []() -> distribution_grid_tracker & { return get_distribution_grid_tracker(); } );
     luna::set_fx( lib, "light_ambient_lit", []() -> float { return LIGHT_AMBIENT_LIT; } );
