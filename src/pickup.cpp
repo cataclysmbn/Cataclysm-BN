@@ -7,7 +7,6 @@
 #include <list>
 #include <map>
 #include <memory>
-#include <numeric>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -290,14 +289,15 @@ static auto pick_one_up( const pick_one_up_options &opts ) -> bool
     }
 
     std::vector<safe_reference<item>> &children = selection.children;
-    units::volume children_volume = std::accumulate( children.begin(), children.end(), 0_ml,
-    []( units::volume acc, const safe_reference<item> &c ) {
-        return acc + c->volume();
-    } );
-    units::mass children_weight = std::accumulate( children.begin(), children.end(), 0_gram,
-    []( units::mass acc, const safe_reference<item> &c ) {
-        return acc + c->weight();
-    } );
+    auto children_volume = 0_ml;
+    auto children_weight = 0_gram;
+    for( const safe_reference<item> &child : children ) {
+        if( !child ) {
+            continue;
+        }
+        children_volume += child->volume();
+        children_weight += child->weight();
+    }
 
     bool did_prompt = false;
 
@@ -415,6 +415,9 @@ static auto pick_one_up( const pick_one_up_options &opts ) -> bool
         // Children have to be picked up first, since removing parent would re-index the stack
         if( option != EMPTY ) {
             for( safe_reference<item> &child_loc : children ) {
+                if( !child_loc ) {
+                    continue;
+                }
                 item &added = *child_loc;
                 const bool child_favorite = added.is_favorite;
                 const std::string child_note_name = added.display_name();
@@ -461,7 +464,6 @@ bool do_pickup( std::vector<pick_drop_selection> &targets, bool autopickup )
         // so remove it from the list.
         targets.pop_back();
         if( !current_target.target ) {
-            debugmsg( "lost target item of ACT_PICKUP" );
             continue;
         }
 
