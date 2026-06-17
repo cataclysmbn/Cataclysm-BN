@@ -32,9 +32,7 @@
         "                        ",
         "                        "
       ],
-      "terrain": {
-        "~": "t_water_dp"
-      },
+      "terrain": { "~": "t_water_dp" },
       "furniture": {
         " ": [ [ "f_null", 18 ], "f_wreckage", "f_rubble_landfill" ],
         "?": [ [ "f_null", 2 ], "f_wreckage", "f_rubble_landfill" ],

@@ -6613,9 +6613,7 @@
   {
     "type": "overmap_special",
     "id": "Kraken Lair",
-    "overmaps": [
-      { "point": [ 0, 0, 0 ], "overmap": "kraken_lair_north" }
-    ],
+    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "kraken_lair_north" } ],
     "locations": [ "lake_surface" ],
     "occurrences": [ 0, 2 ],
     "flags": [ "CLASSIC", "LAKE" ]
