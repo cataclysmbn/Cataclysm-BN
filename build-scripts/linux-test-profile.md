@@ -23,8 +23,8 @@ The job failed before every shard completed.
 ## Local shard profile after vehicle/map fixture fixes
 
 `#` bars are scaled at about 10 seconds each. CI runs most shards with CPU compute, keeps
-software-GPU compute for `20-visibility`, and uses 16 generated non-slow shards to shorten
-individual Linux test processes.
+software-GPU compute for `20-visibility`, and uses 8 generated CPU shards to reduce repeated
+process startup while preserving enough balancing for `--jobs 4` CI.
 
 | Time | Graph          | Shard                       |
 | ---: | :------------- | --------------------------- |
@@ -50,7 +50,7 @@ individual Linux test processes.
 
 ## Local full sharded validation after CI shard-size reduction
 
-Command: `build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 --non-slow-shards 16 ./out/build/linux-full/tests/cata_test-tiles -- --min-duration 20 --use-colour no --rng-seed 1 --error-format=github-action --gpu-backend=software`
+Command: `build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 --non-slow-shards 8 ./out/build/linux-full/tests/cata_test-tiles -- --min-duration 20 --use-colour no --rng-seed 1 --error-format=github-action --gpu-backend=software`
 
 Result before the `vehicle_drag` fixture reuse: all shards passed in `6:52.40` locally. Longest shards:
 
@@ -74,12 +74,12 @@ Latest local results on this 12-thread machine:
 
 | Command                                           |                         Result |
 | ------------------------------------------------- | -----------------------------: |
-| `build-scripts/run-linux-test-shards.ts`          |                      `5:07.08` |
-| `build-scripts/run-linux-test-shards.ts --jobs 6` |                      `4:03.98` |
-| CI-equivalent `--jobs 4 --non-slow-shards 16`     | `4:56.59`, longest shard `96s` |
+| `--jobs 6 --non-slow-shards 16` | `3:41.65`, 17 shards |
+| `--jobs 6 --non-slow-shards 8`  | `3:04.27`, 9 shards  |
+| `--jobs 6 --non-slow-shards 6`  | `3:18.20`, 7 shards  |
 
-A sub-minute full run is not reachable with the current test contracts: `vehicle_efficiency` alone
-still takes `~82s` in the fastest full run and `starting_items` takes `~48s`.
+Merging to 8 CPU shards is the fastest measured local setting so far. Merging to 6 CPU shards
+adds tail latency despite fewer process startups.
 
 ## Resolved blockers
 
@@ -91,8 +91,8 @@ still takes `~82s` in the fastest full run and `starting_items` takes `~48s`.
 
 ## Prioritized plan
 
-1. Wait for PR CI timings with 16 generated non-slow shards before changing shard weights again.
-2. If CI still has a >180s shard, split the longest generated non-slow shard first.
+1. Wait for PR CI timings with 8 generated CPU shards before changing shard weights again.
+2. If CI still has a >180s shard, rebalance the longest generated CPU shard first.
 3. If runner shutdown continues, isolate `[#map_test]` / `[#vehicle_efficiency_test]`.
 4. Benchmark `--option_overrides=REALITY_BUBBLE_SIZE:2` only on map/visibility-heavy shards;
    keep failing or reality-bubble-sensitive tags on the default bubble.

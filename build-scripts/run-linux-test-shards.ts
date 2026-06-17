@@ -158,7 +158,7 @@ const normalizedOptions = async (
 ): Promise<Options & { jobs: number; nonSlowShards: number }> => {
   const jobs = options.jobs === "auto" ? await detectCpuCount() : options.jobs
   const nonSlowShards = options.nonSlowShards === "auto"
-    ? Math.max(6, Math.min(16, jobs - 1))
+    ? Math.max(4, Math.min(8, Math.ceil(jobs * 0.75)))
     : options.nonSlowShards
   return { ...options, jobs, nonSlowShards }
 }
