@@ -70,9 +70,9 @@ struct seed_liquid_mapgen_opts {
 auto connections_for( overmap &om ) -> connection_map &; // *NOPAD*
 auto connections_for( const overmap &om ) -> const connection_map &; // *NOPAD*
 auto storage_for( overmap &om ) -> std::map<tripoint_om_omt,
-                                            liquid_storage_state> &; // *NOPAD*
+     liquid_storage_state> &; // *NOPAD*
 auto storage_for( const overmap &om ) -> const std::map<tripoint_om_omt,
-                                                        liquid_storage_state> &; // *NOPAD*
+     liquid_storage_state> &; // *NOPAD*
 
 auto grid_at( const tripoint_abs_omt &p ) -> std::set<tripoint_abs_omt>;
 auto grid_connectivity_at( const tripoint_abs_omt &p ) -> std::vector<tripoint_rel_omt>;
