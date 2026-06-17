@@ -487,11 +487,16 @@ void unpack_actor::load( const JsonObject &obj )
 
 int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
+    detached_ptr<item> unpacked = it.detach();
+    if( !unpacked ) {
+        debugmsg( "Could not detach item for unpacking" );
+        return 0;
+    }
+
+    p.add_msg_if_player( _( "You unpack the %s." ), unpacked->tname() );
+
     std::vector<detached_ptr<item>> items = item_group::items_from( unpack_group, calendar::turn );
     item *last_armor = &null_item_reference();
-
-    p.add_msg_if_player( _( "You unpack the %s." ), it.tname() );
-
     map &here = get_map();
     for( detached_ptr<item> &content : items ) {
         if( content->is_armor() ) {
@@ -510,8 +515,6 @@ int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) cons
 
         here.add_item_or_charges( p.bub_pos(), std::move( content ) );
     }
-
-    it.detach( );
 
     return 0;
 }

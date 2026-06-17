@@ -271,7 +271,12 @@ tile_item_location::tile_item_location( const tripoint_abs_ms &position )
 
 detached_ptr<item> tile_item_location::detach( item *it )
 {
-    detached_ptr<item> res = get_map().get_mapbuffer().remove_item( pos, it, resident_tile_lookup() );
+    map &here = get_map();
+    detached_ptr<item> res = here.get_mapbuffer().remove_item( pos, it, resident_tile_lookup() );
+    if( res ) {
+        return res;
+    }
+    res = here.i_rem( abs_to_map_local( here, pos ), it );
     if( res ) {
         return res;
     }
@@ -281,9 +286,15 @@ detached_ptr<item> tile_item_location::detach( item *it )
 
 void tile_item_location::attach( detached_ptr<item> &&obj )
 {
-    get_map().get_mapbuffer().add_item_or_charges( pos, std::move( obj ), {
+    map &here = get_map();
+    detached_ptr<item> remaining = here.get_mapbuffer().add_item_or_charges( pos, std::move( obj ), {
         .lookup = resident_tile_lookup(),
     } );
+    if( !remaining ) {
+        return;
+    }
+    map_stack items = here.i_at( abs_to_map_local( here, pos ) );
+    items.insert( std::move( remaining ) );
 }
 
 bool tile_item_location::is_loaded( const item * ) const
