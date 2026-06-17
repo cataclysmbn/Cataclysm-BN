@@ -59,8 +59,7 @@
     "mod_targets": [ "pipe_rifle" ],
     "install_time": "5 m",
     "ammo_modifier": "22",
-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "INSTALL_DIFFICULT" ]
+    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]
   },
   {
     "id": "retool_pipe_38",
@@ -80,8 +79,7 @@
     "mod_targets": [ "pipe_rifle" ],
     "install_time": "5 m",
     "ammo_modifier": "38",
-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "INSTALL_DIFFICULT" ]
+    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]
   },
   {
     "id": "retool_pipe_40",
@@ -101,8 +99,7 @@
     "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],
     "install_time": "5 m",
     "ammo_modifier": "40",
-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "INSTALL_DIFFICULT" ]
+    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]
   },
   {
     "id": "retool_pipe_44",
@@ -122,8 +119,7 @@
     "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],
     "install_time": "5 m",
     "ammo_modifier": "44",
-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "INSTALL_DIFFICULT" ]
+    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]
   },
   {
     "id": "retool_pipe_45",
@@ -143,8 +139,7 @@
     "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],
     "install_time": "5 m",
     "ammo_modifier": "45",
-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "INSTALL_DIFFICULT" ]
+    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]
   },
   {
     "id": "retool_pipe_9mm",
@@ -164,8 +159,7 @@
     "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],
     "install_time": "5 m",
     "ammo_modifier": "9mm",
-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "INSTALL_DIFFICULT" ]
+    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]
   },
   {
     "id": "retool_pipe_223",
@@ -186,8 +180,7 @@
     "install_time": "10 m",
     "ammo_modifier": "223",
     "damage_modifier": { "damage_type": "bullet", "amount": -3 },
-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ],
-    "flags": [ "INSTALL_DIFFICULT" ]
+    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]
   },
   {
     "id": "retool_pipe_3006",
@@ -208,8 +201,7 @@
     "install_time": "10 m",
     "ammo_modifier": "3006",
     "damage_modifier": { "damage_type": "bullet", "amount": -3 },
-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 2 ] ],
-    "flags": [ "INSTALL_DIFFICULT" ]
+    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 2 ] ]
   },
   {
     "id": "retool_pipe_308",
@@ -230,8 +222,7 @@
     "install_time": "10 m",
     "ammo_modifier": "308",
     "damage_modifier": { "damage_type": "bullet", "amount": -3 },
-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 2 ] ],
-    "flags": [ "INSTALL_DIFFICULT" ]
+    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 2 ] ]
   },
   {
     "id": "retool_hc_223",
