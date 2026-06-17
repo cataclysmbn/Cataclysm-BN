@@ -35,21 +35,27 @@ mod.remote_wireless_range = 24
 mod.remote_wireless_range_z = 2
 
 -- Get abs omt of remote's base
-mod.get_remote_base_omt = function(item) return item:get_var_tri(mod.var_base, TripointAbsOmt.new(0, 0, 0)) end
+---@param item Item
+---@return TripointAbsOmt
+mod.get_remote_base_omt = function(item)
+  local default_omt = TripointAbsOmt.new(0, 0, 0):raw()
+  return TripointAbsOmt.new(item:get_var_tri(mod.var_base, default_omt))
+end
 
 -- Get abs ms of remote's base
----@type fun(item: Item): TripointAbsMs
+---@param item Item
+---@return TripointAbsMs
 mod.get_remote_base_abs_ms = function(item)
   local p_omt = mod.get_remote_base_omt(item)
   local p_ms = p_omt:to_ms()
-  ---@cast p_ms TripointAbsMs
   local center_ms = p_ms + PointRelMs.new(const.OMT_MS_SIZE // 2, const.OMT_MS_SIZE // 2)
-  ---@cast center_ms TripointAbsMs
   return center_ms
 end
 
 -- Set remote's base abs omt
-mod.set_remote_base = function(item, p_omt) item:set_var_tri(mod.var_base, p_omt) end
+---@param item Item
+---@param p_omt TripointAbsOmt
+mod.set_remote_base = function(item, p_omt) item:set_var_tri(mod.var_base, p_omt:raw()) end
 
 -- Look for spawned remotes and bind them to given omt
 ---@param params OnMapgenPostprocessParams
@@ -305,7 +311,6 @@ mod.iuse_function = function(params)
   local item = params.item
   local pos = params.pos
   local user_pos = gapi.bub_to_abs(pos)
-  ---@cast user_pos TripointAbsMs
 
   -- Uncomment this so on activation the remote reconfigures itself to work in user's omt
   --[[
