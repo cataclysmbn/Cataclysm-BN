@@ -8,12 +8,86 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
+#include "character_id.h"
 #include "flag.h"
+#include "game.h"
 #include "item.h"
 #include "itype.h"
+#include "map.h"
+#include "map_helpers.h"
 #include "morale_types.h"
+#include "player_helpers.h"
 #include "type_id.h"
 #include "value_ptr.h"
+
+TEST_CASE( "bionic_scanner_marks_corpses_with_cbms", "[iuse][bionic_scanner]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    clear_avatar();
+    set_time( calendar::turn_zero + 12_hours );
+
+    auto &you = get_avatar();
+    you.setID( character_id( 1 ), true );
+    auto &here = get_map();
+    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    auto corpse = item::make_corpse( mtype_id( "mon_zombie_soldier" ), calendar::turn, "" );
+    corpse->add_component( item::spawn( "bio_power_storage", calendar::turn ) );
+    REQUIRE_FALSE( here.add_item_or_charges( corpse_pos, std::move( corpse ), false ) );
+    const auto corpse_stack = here.i_at( corpse_pos );
+    REQUIRE( corpse_stack.size() == 1 );
+    auto *const corpse_ptr = *corpse_stack.begin();
+    REQUIRE( corpse_ptr->get_components().size() == 1 );
+    REQUIRE( ( *corpse_ptr->get_components().begin() )->is_bionic() );
+
+    auto scanner = item::spawn( "bionic_scanner_on", calendar::turn );
+    scanner->ammo_set( itype_id( "battery" ), 10 );
+    scanner->activate();
+    const auto *const scanner_ptr = scanner.get();
+    const auto charges_before = scanner_ptr->ammo_remaining();
+    REQUIRE( charges_before > 0 );
+    you.i_add( std::move( scanner ) );
+
+    you.process_items();
+
+    CHECK( corpse_ptr->get_var( "bionics_scanned_by", -1 ) == you.getID().get_value() );
+    CHECK( corpse_ptr->has_flag( flag_CBM_SCANNED ) );
+    CHECK( scanner_ptr->ammo_remaining() == charges_before - 1 );
+}
+
+TEST_CASE( "bionic_scanner_scans_corpse_without_visible_bionic_marker", "[iuse][bionic_scanner]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    clear_avatar();
+    set_time( calendar::turn_zero + 12_hours );
+
+    auto &you = get_avatar();
+    you.setID( character_id( 1 ), true );
+    auto &here = get_map();
+    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    auto corpse = item::make_corpse( mtype_id( "mon_zombie" ), calendar::turn, "" );
+    REQUIRE_FALSE( here.add_item_or_charges( corpse_pos, std::move( corpse ), false ) );
+    const auto corpse_stack = here.i_at( corpse_pos );
+    REQUIRE( corpse_stack.size() == 1 );
+    auto *const corpse_ptr = *corpse_stack.begin();
+    REQUIRE( corpse_ptr->get_components().empty() );
+
+    auto scanner = item::spawn( "bionic_scanner_on", calendar::turn );
+    scanner->ammo_set( itype_id( "battery" ), 10 );
+    scanner->activate();
+    const auto *const scanner_ptr = scanner.get();
+    const auto charges_before = scanner_ptr->ammo_remaining();
+    REQUIRE( charges_before > 0 );
+    you.i_add( std::move( scanner ) );
+
+    you.process_items();
+
+    CHECK( corpse_ptr->get_var( "bionics_scanned_by", -1 ) == you.getID().get_value() );
+    CHECK_FALSE( corpse_ptr->has_flag( flag_CBM_SCANNED ) );
+    CHECK( scanner_ptr->ammo_remaining() == charges_before );
+}
 
 TEST_CASE( "eyedrops", "[iuse][eyedrops]" )
 {
