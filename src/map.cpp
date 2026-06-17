@@ -7298,7 +7298,7 @@ auto map::update_visibility_cache( const int zlev,
 
         auto visibility_download_levels = std::vector<int> {};
         std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
-                               std::back_inserter( visibility_download_levels ) );
+                           std::back_inserter( visibility_download_levels ) );
         const auto rebuild_seen_cache = m_last_seen_cache_origin != player_pos;
         const auto gpu_visibility_work = cata_gpu::begin_gpu_visibility( gpu_device, {
             .m = this,
@@ -10176,7 +10176,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             if( !dirty_lightmap_levels.empty() ) {
                 auto colored_light_levels = std::vector<int> {};
                 std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
-                                       std::back_inserter( colored_light_levels ) );
+                                   std::back_inserter( colored_light_levels ) );
                 for( const auto z : colored_light_levels ) {
                     auto &c = get_cache( z );
                     std::ranges::fill( c.colored_light_cache, 0u );
@@ -10310,7 +10310,8 @@ void map::draw_line_ter( const ter_id &type, const tripoint_bub_ms &p1, const tr
     }, p1.xy().raw(), p2.xy().raw() );
 }
 
-void map::draw_line_furn( const furn_id &type, const tripoint_bub_ms &p1, const tripoint_bub_ms &p2 )
+void map::draw_line_furn( const furn_id &type, const tripoint_bub_ms &p1,
+                          const tripoint_bub_ms &p2 )
 {
     assert( p1.z() == p2.z() );
     const auto z = p1.z();
@@ -10340,16 +10341,17 @@ void map::draw_fill_background( ter_id( *f )() )
 {
     draw_square_ter( f, tripoint_bub_ms{ 0, 0, -OVERMAP_DEPTH },
                      tripoint_bub_ms( SEEX * my_MAPSIZE - 1,
-                     SEEY * my_MAPSIZE - 1, OVERMAP_HEIGHT ) );
+                                      SEEY * my_MAPSIZE - 1, OVERMAP_HEIGHT ) );
 }
 void map::draw_fill_background( const weighted_int_list<ter_id> &f )
 {
     draw_square_ter( f, tripoint_bub_ms{ 0, 0, -OVERMAP_DEPTH },
                      tripoint_bub_ms( SEEX * my_MAPSIZE - 1,
-                     SEEY * my_MAPSIZE - 1, OVERMAP_HEIGHT ) );
+                                      SEEY * my_MAPSIZE - 1, OVERMAP_HEIGHT ) );
 }
 
-void map::draw_square_ter( const ter_id &type, const tripoint_bub_ms &p1, const tripoint_bub_ms &p2 )
+void map::draw_square_ter( const ter_id &type, const tripoint_bub_ms &p1,
+                           const tripoint_bub_ms &p2 )
 {
     assert( p1.z() == p2.z() );
     const auto z = p1.z();
@@ -10358,7 +10360,8 @@ void map::draw_square_ter( const ter_id &type, const tripoint_bub_ms &p1, const 
     }, p1.xy().raw(), p2.xy().raw() );
 }
 
-void map::draw_square_furn( const furn_id &type, const tripoint_bub_ms &p1, const tripoint_bub_ms &p2 )
+void map::draw_square_furn( const furn_id &type, const tripoint_bub_ms &p1,
+                            const tripoint_bub_ms &p2 )
 {
     assert( p1.z() == p2.z() );
     const auto z = p1.z();
@@ -10959,7 +10962,8 @@ auto map::mark_visibility_cache_dirty( const int zlev ) -> void
 
 auto map::mark_visibility_caches_clean() -> void
 {
-    std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ), [this]( const int z ) {
+    std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH,
+    OVERMAP_HEIGHT + 1 ), [this]( const int z ) {
         get_cache( z ).visibility_cache_dirty = false;
     } );
     visibility_caches_dirty_ = false;
@@ -11152,7 +11156,8 @@ void map::invalidate_lightmap_caches_if_light_state_changed()
 
 void map::invalidate_visibility_caches()
 {
-    std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ), [this]( const int z ) {
+    std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH,
+    OVERMAP_HEIGHT + 1 ), [this]( const int z ) {
         mark_visibility_cache_dirty( z );
     } );
 }

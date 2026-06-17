@@ -407,7 +407,7 @@ class mapbuffer
         auto clear_items( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::vector<detached_ptr<item>>;
         auto handle_rotten_away_item( const tripoint_abs_ms &p, const item &rotten_item,
-                                      mapbuffer_lookup_options options = {} ) -> void;
+        mapbuffer_lookup_options options = {} ) -> void;
         auto make_item_active( const tripoint_abs_ms &p, item &target,
         mapbuffer_lookup_options options = {} ) -> bool;
         auto make_item_inactive( const tripoint_abs_ms &p, item &target,

@@ -2124,7 +2124,8 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
     }
     here.ter_set( p, t_stairs_down ); // There's the top half
     // Again, need to use submap-local coordinates.
-    here.ter_set( p + tripoint_rel_ms::below(), impassable ? t_stairs_up : t_ladder_up ); // and there's the bottom half.
+    here.ter_set( p + tripoint_rel_ms::below(),
+                  impassable ? t_stairs_up : t_ladder_up ); // and there's the bottom half.
     // And save to the center coordinate of the current active map.
 }
 

@@ -393,7 +393,7 @@ TEST_CASE( "grid_furn_transform_queue_in_bubble", "[grids]" )
     calendar::turn = calendar::turn_zero;
     const auto z = g->u.abs_pos().z();
     move_player_out_of_the_way();
-    
+
     const auto pos_local = tripoint_bub_ms( 22, 7, z );
     const auto pos_abs = tripoint_abs_ms( map_local_to_abs( get_map(), pos_local ) );
 
@@ -416,7 +416,7 @@ TEST_CASE( "grid_furn_transform_queue_outside_bubble", "[grids]" )
     calendar::turn = calendar::turn_zero;
     const auto z = g->u.abs_pos().z();
     move_player_out_of_the_way();
-    
+
     const auto pos_local = tripoint_bub_ms( 22, 7, z );
     const auto pos_abs = tripoint_abs_ms( map_local_to_abs( get_map(), pos_local ) );
     tripoint_abs_sm pos_abs_sm;

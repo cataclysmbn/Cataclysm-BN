@@ -1193,8 +1193,8 @@ void map::build_sunlight_cache( int pzlev )
     // Start at the topmost populated zlevel to avoid unnecessary raycasting
     // Plus one zlevel to prevent clipping inside structures
     const int zlev_max = clamp( calc_max_populated_zlev() + 1,
-                                  std::min( OVERMAP_HEIGHT, pzlev + 1 ),
-                                  OVERMAP_HEIGHT );
+                                std::min( OVERMAP_HEIGHT, pzlev + 1 ),
+                                OVERMAP_HEIGHT );
 
     // true if all previous z-levels are fully transparent to light (no floors, transparency >= air)
     bool fully_outside = true;

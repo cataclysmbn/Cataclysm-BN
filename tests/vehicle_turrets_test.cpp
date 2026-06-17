@@ -79,7 +79,8 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
     avatar &player_character = get_avatar();
     for( auto e : turret_types() ) {
         SECTION( e->name() ) {
-            vehicle *veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 65, 65, 0 ), 270_degrees, 0, 0 );
+            vehicle *veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 65, 65, 0 ), 270_degrees, 0,
+                                             0 );
             REQUIRE( veh );
 
             const int idx = veh->install_part( tripoint_mnt_veh::zero(), e->get_id(), true );
@@ -123,7 +124,8 @@ TEST_CASE( "vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret
 {
     clear_all_state();
     map &here = get_map();
-    vehicle *veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 65, 65, 0 ), 270_degrees, 0, 0 );
+    vehicle *veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 65, 65, 0 ), 270_degrees, 0,
+                                     0 );
     REQUIRE( veh );
 
     const auto turret_part_id = vpart_id( "mounted_rebar_rifle" );

@@ -265,7 +265,8 @@ auto handle_decayed_corpse( const actualize_tile_options &options, const item &c
 
 auto rotten_item_spawn( const actualize_tile_options &options, const item &source ) -> void
 {
-    if( options.active_bubble_pos && g != nullptr && g->critter_at( *options.active_bubble_pos ) != nullptr ) {
+    if( options.active_bubble_pos && g != nullptr &&
+        g->critter_at( *options.active_bubble_pos ) != nullptr ) {
         return;
     }
 
@@ -375,7 +376,7 @@ auto fill_funnels( const actualize_tile_options &options ) -> void
 auto remove_fertilizer( const actualize_tile_options &options,
                         location_vector<item> &items ) -> void
 {
-    const auto fertilizer = std::ranges::find_if( items, []( const item *const it ) {
+    const auto fertilizer = std::ranges::find_if( items, []( const item * const it ) {
         return it->has_flag( flag_FERTILIZER );
     } );
     if( fertilizer != items.end() ) {
@@ -394,7 +395,7 @@ auto grow_plant( const actualize_tile_options &options ) -> void
     }
 
     auto &items = options.sm.get_items( options.local );
-    const auto seed_it = std::ranges::find_if( items, []( const item *const it ) {
+    const auto seed_it = std::ranges::find_if( items, []( const item * const it ) {
         return it->is_seed();
     } );
 
@@ -564,7 +565,8 @@ auto rad_scorch( const actualize_tile_options &options ) -> void
             {t_tree_willow, ter_str_id( "t_tree_willow_harvested" )},
             {t_tree_hickory, ter_str_id( "t_tree_hickory_dead" )},
             {t_tree_hickory_harvested, ter_str_id( "t_tree_hickory_dead" )},
-        }};
+        }
+    };
 
     const auto tid = options.sm.get_ter( options.local );
     const auto iter = dies_into.find( tid );
@@ -1066,9 +1068,9 @@ void mapbuffer::remove_submap( tripoint_abs_sm addr )
         const map &here = g->m;
         if( here.inbounds( addr ) ) {
             debugmsg( "remove_submap: skipping free of submap at %s (ptr %p) "
-                        "— reality bubble still references it (dim='%s')",
-                        addr.to_string(), static_cast<const void *>( doomed ),
-                        dimension_id_.c_str() );
+                      "— reality bubble still references it (dim='%s')",
+                      addr.to_string(), static_cast<const void *>( doomed ),
+                      dimension_id_.c_str() );
             return;  // do NOT erase — prevent use-after-free
         }
     }
@@ -1185,9 +1187,9 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
             const submap *doomed = it->second.get();
             if( here.inbounds( p ) ) {
                 debugmsg( "unload_omt: skipping free of submap at %s (ptr %p) "
-                            "— reality bubble still references it (dim='%s')",
-                            p.to_string(), static_cast<const void *>( doomed ),
-                            dimension_id_.c_str() );
+                          "— reality bubble still references it (dim='%s')",
+                          p.to_string(), static_cast<const void *>( doomed ),
+                          dimension_id_.c_str() );
                 return true;  // remove from to_delete → keep alive
             }
             return false;

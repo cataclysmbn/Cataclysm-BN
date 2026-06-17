@@ -72,7 +72,8 @@ std::vector<std::string> get_all_function_names();
 
 void apply_function( const string_id<map_extra> &id, mapgen_constructor &m,
                      const tripoint_abs_omt &abs_sub );
-void apply_function( const std::string &id, mapgen_constructor &m, const tripoint_abs_omt &abs_offset );
+void apply_function( const std::string &id, mapgen_constructor &m,
+                     const tripoint_abs_omt &abs_offset );
 
 void load( const JsonObject &jo, const std::string &src );
 void check_consistency();

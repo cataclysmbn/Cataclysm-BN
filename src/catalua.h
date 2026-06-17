@@ -52,7 +52,7 @@ auto get_lua_activity_on_finish( const player_activity &act ) -> std::string;
 auto get_lua_activity_on_turn( const player_activity &act ) -> std::string;
 auto run_lua_activity_callback( const std::string &callback_id, player &who,
                                 player_activity &act ) -> void;
-    void run_on_mapgen_postprocess_hooks( lua_state &state, mapgen_constructor &m,
+void run_on_mapgen_postprocess_hooks( lua_state &state, mapgen_constructor &m,
                                       const tripoint_abs_omt &p,
                                       const time_point &when );
 
@@ -73,8 +73,8 @@ struct mapgen_hook_batch_item {
  *
      * All items must belong to the same bound dimension of constructor.
      */
-    void run_on_mapgen_postprocess_hooks_batch( lua_state &state, mapgen_constructor &constructor,
-            std::span<const mapgen_hook_batch_item> items );
+void run_on_mapgen_postprocess_hooks_batch( lua_state &state, mapgen_constructor &constructor,
+        std::span<const mapgen_hook_batch_item> items );
 
 /** Return true if at least one on_mapgen_postprocess hook is registered. */
 bool has_mapgen_postprocess_hooks( lua_state &state );

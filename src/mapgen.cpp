@@ -2038,8 +2038,8 @@ class jmapgen_liquid_item : public jmapgen_piece
                 if( furn.fluid_grid && furn.fluid_grid->role == fluid_grid_role::tank &&
                     furn.fluid_grid->allowed_liquids.contains( migrated ) ) {
                     const auto added = fluid_grid::seed_liquid_charges_for_mapgen(
-                                       dat.m.get_abs_omt(), migrated,
-                                       newliquid->charges );
+                                           dat.m.get_abs_omt(), migrated,
+                                           newliquid->charges );
                     if( added > 0 ) {
                         return;
                     }
@@ -2124,7 +2124,7 @@ class jmapgen_loot : public jmapgen_piece
                 std::vector<detached_ptr<item>> spawn = isd->create( calendar::start_of_cataclysm );
                 dat.m.spawn_items( point_omt_ms( rng( x.val, x.valmax ),
                                                  rng( y.val, y.valmax ) ),
-                                                 std::move( spawn ) );
+                                   std::move( spawn ) );
             }
         }
 
@@ -6362,11 +6362,11 @@ void map::create_anomaly( const tripoint_bub_ms &cp, artifact_natural_property p
                 for( int j = cp.y() - 1; j <= cp.y() + 1; j++ ) {
                     if( i == cp.x() && j == cp.y() ) {
                         place_spawns( GROUP_BREATHER_HUB, 1, tripoint_bub_ms( i, j, player_pos.z() ),
-                                                             tripoint_bub_ms( i, j, player_pos.z() ), 1,
+                                      tripoint_bub_ms( i, j, player_pos.z() ), 1,
                                       true );
                     } else {
                         place_spawns( GROUP_BREATHER, 1, tripoint_bub_ms( i, j, player_pos.z() ),
-                                                         tripoint_bub_ms( i, j, player_pos.z() ), 1, true );
+                                      tripoint_bub_ms( i, j, player_pos.z() ), 1, true );
                     }
                 }
             }
@@ -6405,7 +6405,8 @@ void map::create_anomaly( const tripoint_bub_ms &cp, artifact_natural_property p
             for( int i = cp.x() - 5; i <= cp.x() + 5; i++ ) {
                 for( int j = cp.y() - 5; j <= cp.y() + 5; j++ ) {
                     if( furn( tripoint_bub_ms( i, j, player_pos.z() ) ) == f_rubble ) {
-                        add_field( { i, j, player_pos.z() }, fd_fire_vent, 1 + ( rl_dist( cp.xy(), point_bub_ms( i, j ) ) % 3 ) );
+                        add_field( { i, j, player_pos.z() }, fd_fire_vent, 1 + ( rl_dist( cp.xy(), point_bub_ms( i,
+                                   j ) ) % 3 ) );
                     }
                 }
             }

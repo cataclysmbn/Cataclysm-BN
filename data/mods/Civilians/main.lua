@@ -260,9 +260,7 @@ mod.on_mapgen_postprocess = function(params)
             local group_id = decide_spawn_group()
             if group_id then
               local spawn_local_p = find_nearby_free_tile(map, local_p)
-              if spawn_local_p then
-                map:place_spawns(group_id, 1, spawn_local_p, spawn_local_p, 1.0, true)
-              end
+              if spawn_local_p then map:place_spawns(group_id, 1, spawn_local_p, spawn_local_p, 1.0, true) end
             end
           end
         end

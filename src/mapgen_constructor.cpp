@@ -51,11 +51,13 @@ static const itype_id itype_gasoline( "gasoline" );
 namespace
 {
 
-static constexpr auto resident_lookup = mapbuffer_lookup_options {
+static constexpr auto resident_lookup = mapbuffer_lookup_options
+{
     .mode = mapbuffer_lookup_mode::resident_only
 };
 
-static constexpr auto load_or_generate_lookup = mapbuffer_lookup_options {
+static constexpr auto load_or_generate_lookup = mapbuffer_lookup_options
+{
     .mode = mapbuffer_lookup_mode::load_or_generate
 };
 
@@ -174,7 +176,8 @@ auto mapgen_constructor::load( const tripoint_abs_omt &omt_pos ) -> bool
     clear();
     abs_offset_ = omt_pos;
     return std::ranges::all_of( all_submap_offsets(), [&]( const point_omt_sm & offset ) {
-        return buffer_.get_submap( project_combine( abs_offset_, offset ), load_or_generate_lookup ) != nullptr;
+        return buffer_.get_submap( project_combine( abs_offset_, offset ),
+                                   load_or_generate_lookup ) != nullptr;
     } );
 }
 
@@ -183,7 +186,8 @@ auto mapgen_constructor::clear() -> void
     owned_submaps_.clear();
 }
 
-auto mapgen_constructor::for_each_submap( const std::function<void( submap & )> &func ) const -> void
+auto mapgen_constructor::for_each_submap( const std::function<void( submap & )> &func ) const ->
+void
 {
     std::ranges::for_each( all_submap_offsets(), [&]( const point_omt_sm & offset ) {
         submap *const sm = submap_at_grid( offset );
@@ -260,13 +264,13 @@ auto mapgen_constructor::commit_generated_submaps() -> bool
         } );
     }
     if( std::ranges::any_of( all_submap_offsets(), [&]( const point_omt_sm & offset ) {
-        const auto *const sm = submap_at_grid( offset );
+    const auto *const sm = submap_at_grid( offset );
         return sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null;
     } ) ) {
         return false;
     }
     if( std::ranges::any_of( all_submap_offsets(), [&]( const point_omt_sm & offset ) {
-        const auto index = omt_submap_index( offset );
+    const auto index = omt_submap_index( offset );
         return index && *index < owned_submaps_.size() && owned_submaps_[*index] != nullptr &&
                buffer_.lookup_submap_in_memory( project_combine( abs_offset_, offset ) ) != nullptr;
     } ) ) {
@@ -311,7 +315,7 @@ auto mapgen_constructor::points_in_rectangle( const point_omt_ms &from,
 }
 
 auto mapgen_constructor::points_in_radius( const point_omt_ms &center,
-                                           const size_t radius ) const -> point_range<point_omt_ms>
+        const size_t radius ) const -> point_range<point_omt_ms>
 {
     const auto xy_radius = static_cast<int>( radius );
     return points_in_rectangle(
@@ -358,25 +362,29 @@ auto mapgen_constructor::has_flag( const ter_bitflags flag, const point_omt_ms &
     return has_flag_ter( flag, p ) || has_flag_furn( flag, p );
 }
 
-auto mapgen_constructor::has_flag_ter( const std::string &flag, const point_omt_ms &p ) const -> bool
+auto mapgen_constructor::has_flag_ter( const std::string &flag,
+                                       const point_omt_ms &p ) const -> bool
 {
     const auto [sm, local] = tile_at( p );
     return sm != nullptr && sm->get_ter( local ).obj().has_flag( flag );
 }
 
-auto mapgen_constructor::has_flag_ter( const ter_bitflags flag, const point_omt_ms &p ) const -> bool
+auto mapgen_constructor::has_flag_ter( const ter_bitflags flag,
+                                       const point_omt_ms &p ) const -> bool
 {
     const auto [sm, local] = tile_at( p );
     return sm != nullptr && sm->get_ter( local ).obj().has_flag( flag );
 }
 
-auto mapgen_constructor::has_flag_furn( const std::string &flag, const point_omt_ms &p ) const -> bool
+auto mapgen_constructor::has_flag_furn( const std::string &flag,
+                                        const point_omt_ms &p ) const -> bool
 {
     const auto [sm, local] = tile_at( p );
     return sm != nullptr && sm->get_furn( local ).obj().has_flag( flag );
 }
 
-auto mapgen_constructor::has_flag_furn( const ter_bitflags flag, const point_omt_ms &p ) const -> bool
+auto mapgen_constructor::has_flag_furn( const ter_bitflags flag,
+                                        const point_omt_ms &p ) const -> bool
 {
     const auto [sm, local] = tile_at( p );
     return sm != nullptr && sm->get_furn( local ).obj().has_flag( flag );
@@ -646,11 +654,13 @@ auto mapgen_constructor::add_item_or_charges( const point_omt_ms &pos,
     const auto try_place = [&]( const point_omt_ms & p ) -> bool {
         const auto [sm, local] = tile_at( p );
         if( sm == nullptr || has_flag( "DESTROY_ITEM", p ) ||
-            ( obj->made_of( LIQUID ) && has_flag( "SWIMMABLE", p ) ) ) {
+            ( obj->made_of( LIQUID ) && has_flag( "SWIMMABLE", p ) ) )
+        {
             return false;
         }
         auto &items = sm->get_items( local );
-        if( obj->count_by_charges() ) {
+        if( obj->count_by_charges() )
+        {
             for( auto &existing : items ) {
                 if( existing->merge_charges( std::move( obj ) ) ) {
                     return true;
@@ -658,12 +668,14 @@ auto mapgen_constructor::add_item_or_charges( const point_omt_ms &pos,
             }
         }
         auto stored_volume = 0_ml;
-        for( const auto *const existing : items ) {
+        for( const auto *const existing : items )
+        {
             stored_volume += existing->volume();
         }
         if( ( has_flag( "NOITEM", p ) || has_flag( "SEALED", p ) ) ||
             obj->volume() > max_items_for_tile( *sm, local ) - stored_volume ||
-            items.size() >= MAX_ITEM_IN_SQUARE ) {
+            items.size() >= MAX_ITEM_IN_SQUARE )
+        {
             return false;
         }
         add_item( p, std::move( obj ) );
@@ -741,7 +753,7 @@ auto mapgen_constructor::item_category_spawn_rate( const item &itm ) -> float
 auto mapgen_constructor::flammable_items_at( const point_omt_ms &p, const int threshold ) -> bool
 {
     auto items = i_at( p );
-    return std::ranges::any_of( items, [threshold]( const item *const it ) {
+    return std::ranges::any_of( items, [threshold]( const item * const it ) {
         return it != nullptr && it->flammable( threshold );
     } );
 }
@@ -808,7 +820,7 @@ auto mapgen_constructor::place_items( const item_group_id &loc, const int chance
         } );
     } );
 
-    std::ranges::for_each( res, [&]( item *const e ) {
+    std::ranges::for_each( res, [&]( item * const e ) {
         if( e == nullptr || ( !e->is_tool() && !e->is_gun() && !e->is_magazine() ) ) {
             return;
         }
@@ -961,7 +973,7 @@ auto mapgen_constructor::rotate( int turns, const bool setpos_safe ) -> void
             return;
         }
         const auto new_pos = project_combine( abs_omt,
-                             proj.remainder.rotate( turns, { SEEX * 2, SEEY * 2 } ) );
+                                              proj.remainder.rotate( turns, { SEEX * 2, SEEY * 2 } ) );
         if( setpos_safe ) {
             np.setpos( new_pos );
             return;
@@ -1000,7 +1012,7 @@ auto mapgen_constructor::rotate( int turns, const bool setpos_safe ) -> void
         }
         sm->rotate( turns );
         sm->set_position( project_combine( abs_offset_, offset ) );
-        std::ranges::for_each( sm->vehicles, [&]( const auto &veh ) {
+        std::ranges::for_each( sm->vehicles, [&]( const auto & veh ) {
             veh->abs_sm_pos = project_combine( abs_offset_, offset );
             veh->refresh_position();
         } );
@@ -1024,7 +1036,8 @@ auto mapgen_constructor::place_spawns( const mongroup_id &group, const int chanc
     const auto spawn_density = MonsterGroupManager::is_animal( group )
                                ? get_option<float>( "SPAWN_ANIMAL_DENSITY" )
                                : get_option<float>( "SPAWN_DENSITY" );
-    auto num = roll_remainder( individual ? 1.0f : density * spawn_density * rng_float( 10.0f, 50.0f ) );
+    auto num = roll_remainder( individual ? 1.0f : density * spawn_density * rng_float( 10.0f,
+                               50.0f ) );
     while( num > 0 ) {
         auto tries = 10;
         auto p = point_omt_ms::zero();
@@ -1110,9 +1123,9 @@ auto mapgen_constructor::apply_faction_ownership( const point_omt_ms &p1, const 
         const faction_id &id ) -> void
 {
     std::ranges::for_each( points_in_rectangle( p1, p2 ),
-        [&]( const point_omt_ms & p ) {
+    [&]( const point_omt_ms & p ) {
         auto items = i_at( p );
-        std::ranges::for_each( items, [&]( item *const elem ) {
+        std::ranges::for_each( items, [&]( item * const elem ) {
             elem->set_owner( id );
         } );
         const auto vp = veh_at( p );
@@ -1142,7 +1155,7 @@ auto mapgen_constructor::add_spawn( const mtype_id &type, const int count,
     if( MonsterGroupManager::monster_is_blacklisted( type ) ) {
         return;
     }
-    const auto offset = project_remain<coords::sm>( p ).remainder;   
+    const auto offset = project_remain<coords::sm>( p ).remainder;
     sm->spawns.emplace_back( type, count, offset, faction_id, mission_id, disposition, name );
 }
 
@@ -1153,9 +1166,11 @@ auto mapgen_constructor::add_vehicle( const std::variant<vgroup_id, vproto_id> &
 {
     const auto type = std::visit( []( const auto & v ) -> vproto_id {
         using T = std::decay_t<decltype( v )>;
-        if constexpr( std::is_same_v<T, vgroup_id> ) {
+        if constexpr( std::is_same_v<T, vgroup_id> )
+        {
             return v.obj().pick();
-        } else {
+        } else
+        {
             return v;
         }
     }, type_ );
@@ -1171,7 +1186,8 @@ auto mapgen_constructor::add_vehicle( const std::variant<vgroup_id, vproto_id> &
     veh->attach();
     veh->refresh_position();
 
-    auto *const place_on_submap = submap_at_grid( project_remain<coords::omt>( veh->abs_sm_pos ).remainder );
+    auto *const place_on_submap = submap_at_grid( project_remain<coords::omt>
+                                  ( veh->abs_sm_pos ).remainder );
     if( place_on_submap == nullptr ) {
         return nullptr;
     }
@@ -1400,12 +1416,12 @@ auto points_in_range( const mapgen_constructor &m ) -> point_range<point_omt_ms>
 
 auto random_point( const point_range<point_omt_ms> &range,
                    const std::function<bool( const point_omt_ms & )> &predicate )
--> std::optional<point_omt_ms>
+- > std::optional<point_omt_ms>
 {
     for( const auto unused : std::views::iota( 0, 10 ) ) {
         ( void )unused;
         const auto p = point_omt_ms( rng( range.min().x(), range.max().x() ),
-                                        rng( range.min().y(), range.max().y() ) );
+                                     rng( range.min().y(), range.max().y() ) );
         if( predicate( p ) ) {
             return p;
         }
@@ -1420,7 +1436,7 @@ auto random_point( const point_range<point_omt_ms> &range,
 
 auto random_point( const mapgen_constructor &m,
                    const std::function<bool( const point_omt_ms & )> &predicate )
--> std::optional<point_omt_ms>
+- > std::optional<point_omt_ms>
 {
     return random_point( points_in_range( m ), predicate );
 }

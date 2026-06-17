@@ -137,7 +137,8 @@ TEST_CASE( "scent_blockers_ignore_vehicle_parts_outside_cache", "[scent]" )
     REQUIRE( veh->install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "windshield" ), true ) >= 0 );
 
     auto scent_transfer = std::vector<char>( MAPSIZE_X * MAPSIZE_Y, 5 );
-    here.scent_blockers( scent_transfer, MAPSIZE_Y, tripoint_bub_ms( -5, -5, 0 ), tripoint_bub_ms( 5, 5, 0 ) );
+    here.scent_blockers( scent_transfer, MAPSIZE_Y, tripoint_bub_ms( -5, -5, 0 ), tripoint_bub_ms( 5, 5,
+                         0 ) );
 
     CHECK( scent_transfer[MAPSIZE_Y] == 1 );
 }

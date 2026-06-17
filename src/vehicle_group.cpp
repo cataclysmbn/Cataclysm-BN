@@ -267,7 +267,8 @@ auto VehicleSpawn::apply( mapgen_constructor &m, const std::string &terrain_name
     }
 }
 
-void VehicleSpawn::apply( const vspawn_id &id, map &m, const std::string &terrain_name, const int &z )
+void VehicleSpawn::apply( const vspawn_id &id, map &m, const std::string &terrain_name,
+                          const int &z )
 {
     id.obj().apply( m, terrain_name, z );
 }
@@ -465,14 +466,34 @@ static auto builtin_parkinglot_mapgen( mapgen_constructor &m, const std::string 
 } // namespace VehicleSpawnFunction
 
 VehicleSpawn::FunctionMap VehicleSpawn::builtin_functions = {
-    { "no_vehicles", { VehicleSpawnFunction::builtin_no_vehicles,
-                        VehicleSpawnFunction::builtin_no_vehicles_mapgen } },
-    { "jack-knifed_semi", { VehicleSpawnFunction::builtin_jackknifed_semi,
-                            VehicleSpawnFunction::builtin_jackknifed_semi_mapgen } },
-    { "vehicle_pileup", { VehicleSpawnFunction::builtin_citypileup,
-                          VehicleSpawnFunction::builtin_citypileup_mapgen } },
-    { "policecar_pileup", { VehicleSpawnFunction::builtin_policepileup,
-                            VehicleSpawnFunction::builtin_policepileup_mapgen } },
-    { "parkinglot", { VehicleSpawnFunction::builtin_parkinglot,
-                      VehicleSpawnFunction::builtin_parkinglot_mapgen } }
+    {
+        "no_vehicles", {
+            VehicleSpawnFunction::builtin_no_vehicles,
+            VehicleSpawnFunction::builtin_no_vehicles_mapgen
+        }
+    },
+    {
+        "jack-knifed_semi", {
+            VehicleSpawnFunction::builtin_jackknifed_semi,
+            VehicleSpawnFunction::builtin_jackknifed_semi_mapgen
+        }
+    },
+    {
+        "vehicle_pileup", {
+            VehicleSpawnFunction::builtin_citypileup,
+            VehicleSpawnFunction::builtin_citypileup_mapgen
+        }
+    },
+    {
+        "policecar_pileup", {
+            VehicleSpawnFunction::builtin_policepileup,
+            VehicleSpawnFunction::builtin_policepileup_mapgen
+        }
+    },
+    {
+        "parkinglot", {
+            VehicleSpawnFunction::builtin_parkinglot,
+            VehicleSpawnFunction::builtin_parkinglot_mapgen
+        }
+    }
 };

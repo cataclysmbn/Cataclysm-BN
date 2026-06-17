@@ -765,7 +765,7 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
     // top-left corner.  pos_sm is the top-left corner (abs_sub), so offset
     // by reality_bubble_radius_ in each horizontal direction.
     const point_abs_sm bubble_center = pos_sm + point_rel_sm( reality_bubble_radius_,
-                                          reality_bubble_radius_ );
+                                       reality_bubble_radius_ );
 
     // Create or update the reality bubble request.
     if( reality_bubble_handle_ == 0 ) {
@@ -4929,7 +4929,7 @@ void game::draw_minimap()
     }
 
     const int sight_points = g->u.overmap_sight_range(
-                             g->light_level( g->u.abs_pos().z() ) );
+                                 g->light_level( g->u.abs_pos().z() ) );
     for( int i = -3; i <= 3; i++ ) {
         for( int j = -3; j <= 3; j++ ) {
             if( i > -3 && i < 3 && j > -3 && j < 3 ) {
@@ -4937,7 +4937,7 @@ void game::draw_minimap()
             }
             const tripoint_abs_omt omp( curs2 + point( i, j ), g->u.abs_pos().z() );
             if( get_overmapbuffer( current_dimension_id_ ).
-            get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
+                get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
                 if( get_overmapbuffer( current_dimension_id_ ).seen( omp )
                     && g->u.overmap_los( omp, sight_points ) ) {
                     mvwputch( w_minimap, point( i + 3, j + 3 ), c_green,
@@ -13687,7 +13687,7 @@ void game::resize_reality_bubble_to( int new_size )
 
     // Compute the new top-left abs_sub so load_map centers on the player.
     const auto new_abs_sub = player_abs_sm.xy() +
-               point_rel_sm( -g_half_mapsize, -g_half_mapsize );
+                             point_rel_sm( -g_half_mapsize, -g_half_mapsize );
 
     // Reload the map around the player; this fills grid[], recreates load handles,
     // rebuilds distribution_grid_tracker and fluid_grid.
@@ -15287,7 +15287,7 @@ void game::update_stair_monsters()
         return;
     }
     debugmsg( "%d monsters coming to stairs on a map with z-levels",
-                coming_to_stairs.size() );
+              coming_to_stairs.size() );
     coming_to_stairs.clear();
 
     for( const tripoint_bub_ms &dest : m.points_on_zlevel( u.bub_pos().z() ) ) {

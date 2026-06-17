@@ -233,9 +233,9 @@ auto submap_load_manager::compute_lazy_border_omts() const -> horizontal_omt_set
         // footprint, expanded by one horizontal OMT in every direction.
         const auto r = req.radius;
         const auto min_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() -
-                                                                    r, req.center.y() - r } );
+                             r, req.center.y() - r } );
         const auto max_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() +
-                                                                    r, req.center.y() + r } );
+                             r, req.center.y() + r } );
         const auto x_range = std::views::iota( min_omt.x() - 1, max_omt.x() + 2 );
         const auto y_range = std::views::iota( min_omt.y() - 1, max_omt.y() + 2 );
         std::ranges::for_each( cata::views::cartesian_product( x_range, y_range ),
@@ -663,7 +663,7 @@ auto submap_load_manager::process_lazy_border_preload() -> void
 
     const auto urgent = static_cast<std::size_t>( std::ranges::count_if(
     lazy_omt_jobs_, [&]( const omt_key & key ) {
-            return lazy_omt_priority( { key.first, key.second.xy() } ) > 0;
+        return lazy_omt_priority( { key.first, key.second.xy() } ) > 0;
     } ) );
     TracyPlot( "Lazy Border Leading OMTs", static_cast<int64_t>( urgent ) );
     TracyPlot( "Lazy Border Leading Z Jobs", static_cast<int64_t>( urgent ) );
@@ -1127,7 +1127,8 @@ auto submap_load_manager::is_simulated( const dimension_id &dim_id,
 auto submap_load_manager::is_loaded( const dimension_id &dim_id,
                                      const point_abs_sm &pos ) const -> bool
 {
-    return MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( tripoint_abs_sm{ pos, 0 } ) != nullptr;
+    return MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( tripoint_abs_sm{ pos, 0 } ) !=
+           nullptr;
 }
 
 auto submap_load_manager::active_dimensions() const -> std::vector<dimension_id>

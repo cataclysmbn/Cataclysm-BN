@@ -9868,7 +9868,7 @@ bool item::has_rotten_away() const
 }
 
 auto item::process_rot( detached_ptr<item> &&self,
-                                 const absolute_rot_process_options &options ) -> detached_ptr<item>
+                        const absolute_rot_process_options &options ) -> detached_ptr<item>
 {
     if( !self ) {
         return std::move( self );
@@ -9899,7 +9899,7 @@ auto item::actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
 }
 
 auto item::actualize_rot( detached_ptr<item> &&self,
-                                   const rot_context &context ) -> detached_ptr<item>
+                          const rot_context &context ) -> detached_ptr<item>
 {
     // Guard against null or invalid items that can survive save/load cycles
     // during dimension transitions (e.g. zombie items from deferred arena cleanup).
@@ -10075,7 +10075,8 @@ int item::processing_speed() const
     return 1;
 }
 
-auto item::process_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pos ) -> detached_ptr<item>
+auto item::process_rot( detached_ptr<item> &&self,
+                        const tripoint_bub_ms &pos ) -> detached_ptr<item>
 {
     return process_rot( std::move( self ), false, pos, nullptr, temperature_flag::TEMP_NORMAL,
                         get_weather() );
@@ -10178,7 +10179,8 @@ auto item::update_rot( const rot_context &context ) -> void
                     return weather_temperature + local_mod;
                 }
                 return temperatures::annual_average + local_mod;
-            }();
+            }
+            ();
 
             auto env_temperature_clipped = clip_by_temperature_flag( env_temperature_raw,
                                            context.temperature );
@@ -11059,9 +11061,9 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         // If the item has rotted away, then self becomes a null pointer.
         if( !self && removed_snapshot ) {
             MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).handle_rotten_away_item(
-                map_local_to_abs( here, pos ), *removed_snapshot, {
-                    .mode = mapbuffer_lookup_mode::resident_only,
-                } );
+            map_local_to_abs( here, pos ), *removed_snapshot, {
+                .mode = mapbuffer_lookup_mode::resident_only,
+            } );
         }
     }
     return std::move( self );

@@ -607,7 +607,8 @@ void cata::detail::reg_map( sol::state &lua )
             m.add_item_or_charges( p, std::move( new_corpse ) );
         } );
 
-        luna::set_fx( ut, "add_item", []( mapgen_constructor & m, const point_omt_ms & p, detached_ptr<item> &it ) -> detached_ptr<item> {
+        luna::set_fx( ut, "add_item", []( mapgen_constructor & m, const point_omt_ms & p,
+        detached_ptr<item> &it ) -> detached_ptr<item> {
             return m.add_item_or_charges( p, std::move( it ) );
         } );
         luna::set_fx( ut, "clear_items_at", []( mapgen_constructor & m, const point_omt_ms & p ) -> void { m.i_clear( p ); } );
@@ -618,7 +619,8 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_items_in_radius", []( mapgen_constructor & m,
         const point_omt_ms & p, int radius ) -> std::vector<map_stack> {
             std::vector<map_stack> items;
-            for( const auto pt : m.points_in_radius( p, radius ) ) {
+            for( const auto pt : m.points_in_radius( p, radius ) )
+            {
                 items.push_back( m.i_at( pt ) );
             }
             return items;
@@ -633,7 +635,7 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         luna::set_fx( ut, "get_vehicles",
-        []( mapgen_constructor & m ) -> std::vector<vehicle *> { return m.get_vehicles(); } );
+                      []( mapgen_constructor & m ) -> std::vector<vehicle *> { return m.get_vehicles(); } );
 
         luna::set_fx( ut, "get_map_size_in_submaps", []( const mapgen_constructor & ) -> int {
             return 2;
@@ -643,41 +645,41 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         luna::set_fx( ut, "has_flag_at",
-        []( const mapgen_constructor & m, const std::string &flag, const point_omt_ms &p ) {
+        []( const mapgen_constructor & m, const std::string & flag, const point_omt_ms & p ) {
             return m.has_flag( flag, p );
         } );
         luna::set_fx( ut, "has_ter_flag_at",
-        []( const mapgen_constructor & m, const std::string &flag, const point_omt_ms &p ) {
+        []( const mapgen_constructor & m, const std::string & flag, const point_omt_ms & p ) {
             return m.has_flag_ter( flag, p );
         } );
         luna::set_fx( ut, "get_ter_at",
-        []( const mapgen_constructor & m, const point_omt_ms &p ) { return m.ter( p ); } );
+        []( const mapgen_constructor & m, const point_omt_ms & p ) { return m.ter( p ); } );
         luna::set_fx( ut, "set_ter_at",
-        []( mapgen_constructor & m, const point_omt_ms &p, const ter_id &id ) { return m.ter_set( p, id ); } );
+        []( mapgen_constructor & m, const point_omt_ms & p, const ter_id & id ) { return m.ter_set( p, id ); } );
         luna::set_fx( ut, "has_furn_flag_at",
-        []( const mapgen_constructor & m, const std::string &flag, const point_omt_ms &p ) {
+        []( const mapgen_constructor & m, const std::string & flag, const point_omt_ms & p ) {
             return m.has_flag_furn( flag, p );
         } );
         luna::set_fx( ut, "get_furn_at",
-        []( const mapgen_constructor & m, const point_omt_ms &p ) { return m.furn( p ); } );
+        []( const mapgen_constructor & m, const point_omt_ms & p ) { return m.furn( p ); } );
         luna::set_fx( ut, "set_furn_at",
-        []( mapgen_constructor & m, const point_omt_ms &p, const furn_id &id ) { m.furn_set( p, id ); } );
+        []( mapgen_constructor & m, const point_omt_ms & p, const furn_id & id ) { m.furn_set( p, id ); } );
         luna::set_fx( ut, "get_temperature",
-        []( const mapgen_constructor & m, const point_omt_ms &p ) { return m.get_temperature( p ); } );
+        []( const mapgen_constructor & m, const point_omt_ms & p ) { return m.get_temperature( p ); } );
         luna::set_fx( ut, "set_temperature",
-        []( mapgen_constructor & m, const point_omt_ms &p, const int temp ) { m.set_temperature( p, temp ); } );
+        []( mapgen_constructor & m, const point_omt_ms & p, const int temp ) { m.set_temperature( p, temp ); } );
         luna::set_fx( ut, "add_field_at", []( mapgen_constructor & m, const point_omt_ms & p,
         const field_type_id & fid, int intensity, const time_duration & age ) -> bool {
             return m.add_field( p, fid, intensity, age );
         } );
         luna::set_fx( ut, "remove_field_at", &mapgen_constructor::remove_field );
         luna::set_fx( ut, "get_trap_at",
-        []( mapgen_constructor & m, const point_omt_ms & p ) -> trap_id { return m.tr_at( p ).loadid; } );
+                      []( mapgen_constructor & m, const point_omt_ms & p ) -> trap_id { return m.tr_at( p ).loadid; } );
         luna::set_fx( ut, "set_trap_at", &mapgen_constructor::trap_set );
         luna::set_fx( ut, "remove_trap_at", &mapgen_constructor::remove_trap );
 
         luna::set_fx( ut, "is_ot_match",
-        []( std::string ref, oter_id & id, ot_match_type match ) -> bool { return is_ot_match( ref, id, match ); } );
+                      []( std::string ref, oter_id & id, ot_match_type match ) -> bool { return is_ot_match( ref, id, match ); } );
         luna::set_fx( ut, "draw_fill_background",
         []( mapgen_constructor & m, std::string ref ) { m.draw_fill_background( ter_id( ref ) ); } );
         luna::set_fx( ut, "place_spawns", []( mapgen_constructor & m, std::string id, int chance,

@@ -50,7 +50,7 @@ class mapgen_constructor
         ~mapgen_constructor();
 
         auto generate( const tripoint_abs_omt &omt_pos, const time_point &when,
-                       const mapgen_generate_options &options = {} ) -> mapgen_result;
+        const mapgen_generate_options &options = {} ) -> mapgen_result;
 
         auto load( const tripoint_abs_omt &omt_pos ) -> bool;
         auto bind_omt_for_hook( const tripoint_abs_omt &omt_pos ) -> bool;
@@ -216,7 +216,7 @@ class mapgen_constructor
 auto points_in_range( const mapgen_constructor &m ) -> point_range<point_omt_ms>;
 auto random_point( const point_range<point_omt_ms> &range,
                    const std::function<bool( const point_omt_ms & )> &predicate )
--> std::optional<point_omt_ms>;
+- > std::optional<point_omt_ms>;
 auto random_point( const mapgen_constructor &m,
                    const std::function<bool( const point_omt_ms & )> &predicate )
--> std::optional<point_omt_ms>;
+- > std::optional<point_omt_ms>;

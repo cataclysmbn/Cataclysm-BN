@@ -941,7 +941,7 @@ class item : public location_visitable<item>, public game_object<item>
                                    temperature_flag temperature,
                                    const weather_manager &weather ) -> detached_ptr<item>;
         static auto actualize_rot( detached_ptr<item> &&self,
-                                            const rot_context &context ) -> detached_ptr<item>;
+                                   const rot_context &context ) -> detached_ptr<item>;
 
         /**
          * Returns rot of the item since last rot calculation.
@@ -2460,7 +2460,7 @@ class item : public location_visitable<item>, public game_object<item>
                 const tripoint_bub_ms &pos, bool activate,
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
         static auto process_rot( detached_ptr<item> &&self,
-                                          const absolute_rot_process_options &options ) -> detached_ptr<item>;
+                                 const absolute_rot_process_options &options ) -> detached_ptr<item>;
         auto is_in_preserving_container() const -> bool;
         auto mark_rot_checked_now() -> void;
 

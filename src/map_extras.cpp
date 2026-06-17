@@ -865,7 +865,7 @@ static bool mx_roadblock( mapgen_constructor &m, const tripoint_abs_omt &abs_off
 
         int num_bodies = dice( 1, 6 );
         for( int i = 0; i < num_bodies; i++ ) {
-            if( const auto p = random_point( m, [&m]( const point_omt_ms &n ) {
+            if( const auto p = random_point( m, [&m]( const point_omt_ms & n ) {
             return m.passable( n );
             } ) ) {
                 m.place_items( item_group_id( "map_extra_police" ), 100, *p, *p, true,
@@ -1495,8 +1495,8 @@ static bool mx_minefield( mapgen_constructor &m_orig, const tripoint_abs_omt &ab
             }
             //Spawn trash in a crate and its surroundings
             m.place_items( item_group_id( "trash_cart" ), 80, { 19, 11 },
-                           { 21, 13 }, false,
-                           calendar::start_of_cataclysm );
+            { 21, 13 }, false,
+            calendar::start_of_cataclysm );
         } else {
             m.spawn_item( { 20, 11 }, itype_hatchet );
             m.spawn_item( { 22, 12 }, itype_vodka );
@@ -1504,8 +1504,8 @@ static bool mx_minefield( mapgen_constructor &m_orig, const tripoint_abs_omt &ab
 
             //Spawn trash in a crate
             m.place_items( item_group_id( "trash_cart" ), 80, { 20, 12 },
-                           { 20, 12 }, false,
-                           calendar::start_of_cataclysm );
+            { 20, 12 }, false,
+            calendar::start_of_cataclysm );
         }
 
         //Place a tent
@@ -2949,7 +2949,8 @@ std::vector<std::string> get_all_function_names()
     return all_function_names;
 }
 
-void apply_function( const string_id<map_extra> &id, mapgen_constructor &m, const tripoint_abs_omt &abs_omt )
+void apply_function( const string_id<map_extra> &id, mapgen_constructor &m,
+                     const tripoint_abs_omt &abs_omt )
 {
     bool applied_successfully = false;
 
@@ -3018,7 +3019,8 @@ void apply_function( const string_id<map_extra> &id, mapgen_constructor &m, cons
     }
 }
 
-void apply_function( const std::string &id, mapgen_constructor &m, const tripoint_abs_omt &abs_offset )
+void apply_function( const std::string &id, mapgen_constructor &m,
+                     const tripoint_abs_omt &abs_offset )
 {
     apply_function( string_id<map_extra>( id ), m, abs_offset );
 }

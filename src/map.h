@@ -2043,7 +2043,7 @@ class map : public submap_load_listener
     protected:
         void loadn( const tripoint_bub_sm &grid, bool update_vehicles, bool incremental = false );
         void loadn( const point_bub_sm &grid, bool update_vehicles ) {
-            const auto actualize_loaded_grid = [&]( const tripoint_bub_sm &grid_pos ) {
+            const auto actualize_loaded_grid = [&]( const tripoint_bub_sm & grid_pos ) {
                 const auto abs_pos = tripoint_abs_sm( abs_sub.x() + grid_pos.x(),
                                                       abs_sub.y() + grid_pos.y(), grid_pos.z() );
                 MAPBUFFER_REGISTRY.get( bound_dimension_ ).actualize_submap( abs_pos );
