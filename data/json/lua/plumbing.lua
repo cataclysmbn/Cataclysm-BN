@@ -166,7 +166,6 @@ end
 local get_fixture_resources = function(opts)
   local pos_abs_ms = opts.map:bub_to_abs(opts.pos)
   local pos_abs_omt = pos_abs_ms:to_omt()
-  ---@cast pos_abs_omt TripointAbsOmt
   local source = resource_source.grid
   local clean_charges = overmapbuffer.fluid_grid_liquid_charges_at(pos_abs_omt, item_water_clean)
   local dirty_charges = overmapbuffer.fluid_grid_liquid_charges_at(pos_abs_omt, item_water)
