@@ -8,10 +8,11 @@
  * first, and defaults local runs to the detected CPU count while CI can pass explicit limits.
  */
 
+import { Command } from "@cliffy/command"
+import { assertEquals } from "@std/assert"
 import { pooledMap } from "@std/async"
 import { emptyDir, ensureDir } from "@std/fs"
 import { basename, join } from "@std/path"
-import { assertEquals } from "@std/assert"
 
 type Mode = "auto" | "file-tags" | "tiles" | "legacy"
 
@@ -116,85 +117,11 @@ const tagWeights = new Map<string, number>([
 const specialTagPattern =
   /^\[#(vehicle_(efficiency|rails)|vision|shadowcasting|zlevel_visibility_cache)_test\]$/
 
-const usage = () =>
-  `Usage: build-scripts/run-linux-test-shards.ts [OPTIONS] [TEST_BIN -- [TEST_OPTS...]]
-
-Options:
-  --mode MODE             auto, file-tags, tiles, or legacy (default: auto)
-  --jobs N|auto           concurrent shard jobs (default: auto, detected CPU count)
-  --slow-shards N         accepted for compatibility; slow tags are folded into CPU shards
-  --non-slow-shards N|auto
-                          generated CPU shards (default: auto, detected CPU count minus visibility)
-  --dry-run               print shard filters without running tests
-  --help, -h              print this help
-
-Defaults:
-  TEST_BIN                ${defaultTestBin}
-  TEST_OPTS               ${defaultTestOpts.join(" ")}
-
-Environment:
-  CATA_TEST_SHARD_DIR          shard file directory
-  CATA_TEST_USER_DIR_PREFIX    test user-dir prefix (default: test_user_dir)
-`
-
 const parsePositiveInt = (name: string, value: string): number => {
   if (!/^[1-9][0-9]*$/.test(value)) {
     throw new Error(`${name} must be a positive integer: ${value}`)
   }
   return Number(value)
-}
-
-export const parseArgs = (args: string[]): Options => {
-  let mode: Mode = "auto"
-  let jobs: number | "auto" = "auto"
-  let slowShards = 4
-  let nonSlowShards: number | "auto" = "auto"
-  let dryRun = false
-  let testBin = ""
-  let testOpts: string[] = []
-
-  const rest = [...args]
-  while (rest.length > 0) {
-    const arg = rest.shift()!
-    if (arg === "--mode") {
-      mode = rest.shift() as Mode
-    } else if (arg === "--jobs") {
-      const value = rest.shift() ?? ""
-      jobs = value === "auto" ? "auto" : parsePositiveInt("--jobs", value)
-    } else if (arg === "--slow-shards") {
-      slowShards = parsePositiveInt("--slow-shards", rest.shift() ?? "")
-    } else if (arg === "--non-slow-shards") {
-      const value = rest.shift() ?? ""
-      nonSlowShards = value === "auto" ? "auto" : parsePositiveInt("--non-slow-shards", value)
-    } else if (arg === "--dry-run") {
-      dryRun = true
-    } else if (arg === "--help" || arg === "-h") {
-      console.log(usage())
-      Deno.exit(0)
-    } else if (arg === "--") {
-      testOpts = rest
-      break
-    } else if (arg.startsWith("-")) {
-      throw new Error(`Unknown option: ${arg}`)
-    } else {
-      testBin = arg
-      if (rest[0] === "--") {
-        rest.shift()
-      }
-      testOpts = rest
-      break
-    }
-  }
-
-  return {
-    mode,
-    jobs,
-    slowShards,
-    nonSlowShards,
-    dryRun,
-    testBin: testBin || defaultTestBin,
-    testOpts: testOpts.length > 0 ? testOpts : defaultTestOpts,
-  }
 }
 
 const commandOutput = async (
@@ -382,8 +309,8 @@ const runShard = async (
   return result.code
 }
 
-const run = async (args: string[]): Promise<number> => {
-  const parsed = await normalizedOptions(parseArgs(args))
+const run = async (options: Options): Promise<number> => {
+  const parsed = await normalizedOptions(options)
   if (!["auto", "file-tags", "tiles", "legacy"].includes(parsed.mode)) {
     throw new Error(`Unknown shard mode: ${parsed.mode}`)
   }
@@ -414,14 +341,15 @@ const run = async (args: string[]): Promise<number> => {
       return 0
     }
 
+    let status = 0
     for await (
       const code of pooledMap(parsed.jobs, shards, (shard) => runShard(parsed, testOpts, shard))
     ) {
-      if (code !== 0) {
-        return code
+      if (code !== 0 && status === 0) {
+        status = code
       }
     }
-    return 0
+    return status
   } finally {
     await shardDir.cleanup()
   }
@@ -448,7 +376,37 @@ Deno.test("buildShardPlan keeps visibility on its GPU shard", () => {
 
 if (import.meta.main) {
   try {
-    Deno.exit(await run(Deno.args))
+    const { options, args, literal } = await new Command()
+      .name("run-linux-test-shards")
+      .description("Run Cataclysm: Bright Nights Linux tests as filename-tag shards")
+      .option("--mode <mode:string>", "auto, file-tags, tiles, or legacy", { default: "auto" })
+      .option("--jobs <jobs:string>", "concurrent shard jobs, or auto", { default: "auto" })
+      .option("--slow-shards <slowShards:string>", "accepted for compatibility", { default: "4" })
+      .option("--non-slow-shards <nonSlowShards:string>", "generated CPU shards, or auto", {
+        default: "auto",
+      })
+      .option("--dry-run", "print shard filters without running tests")
+      .arguments("[testBin:string] [...testOpts:string]")
+      .parse(Deno.args)
+    const jobs = options.jobs === "auto" ? "auto" : parsePositiveInt("--jobs", options.jobs)
+    const nonSlowShards = options.nonSlowShards === "auto"
+      ? "auto"
+      : parsePositiveInt("--non-slow-shards", options.nonSlowShards)
+    const testOpts = [
+      ...args.slice(1).filter((arg): arg is string => arg !== undefined),
+      ...literal,
+    ]
+    Deno.exit(
+      await run({
+        mode: options.mode as Mode,
+        jobs,
+        slowShards: parsePositiveInt("--slow-shards", options.slowShards),
+        nonSlowShards,
+        dryRun: Boolean(options.dryRun),
+        testBin: args[0] ?? defaultTestBin,
+        testOpts: testOpts.length > 0 ? testOpts : defaultTestOpts,
+      }),
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error(`Error: ${message}`)
