@@ -1794,6 +1794,36 @@
     "components": [ [ [ "scrap", 2 ] ] ]
   },
   {
+    "result": "45_speedloader5",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "autolearn": false,
+    "skill_used": "fabrication",
+    "book_learn": [ [ "mag_guns", 3 ] ],
+    "difficulty": 3,
+    "time": "60 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "using": [ [ "magazine_standard", 5 ] ],
+    "components": [ [ [ "scrap", 2 ] ] ]
+  },
+  {
+    "result": "9mm_speedloader6",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "autolearn": false,
+    "skill_used": "fabrication",
+    "book_learn": [ [ "mag_guns", 3 ] ],
+    "difficulty": 3,
+    "time": "60 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "using": [ [ "magazine_standard", 5 ] ],
+    "components": [ [ [ "scrap", 2 ] ] ]
+  },
+  {
     "type": "recipe",
     "result": "ammolink25mm",
     "charges": 25,

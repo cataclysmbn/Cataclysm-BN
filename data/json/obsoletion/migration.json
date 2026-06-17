@@ -12,6 +12,18 @@
     "contents": [ "retool_hc_223" ]
   },
   {
+    "id": "surv_six_shooter",
+    "type": "MIGRATION",
+    "replace": "handmade_revolver",
+    "contents": [ "retool_hmr_40" ]
+  },
+  {
+    "id": "surv_hand_cannon",
+    "type": "MIGRATION",
+    "replace": "handmade_revolver",
+    "contents": [ "retool_hmr_45" ]
+  },
+  {
     "id": "arrow_fire_hardened",
     "type": "MIGRATION",
     "replace": "arrow_fire_hardened_fletched"

@@ -11,6 +11,16 @@
   },
   {
     "type": "recipe",
+    "result": "surv_six_shooter",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "surv_hand_cannon",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
     "result": "t\u00d6ttchen",
     "obsolete": true
   },

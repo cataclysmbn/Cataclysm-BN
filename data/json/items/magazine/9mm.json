@@ -599,5 +599,22 @@
     "capacity": 40,
     "reliability": 9,
     "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "9mm_speedloader6",
+    "looks_like": "38_speedloader",
+    "type": "MAGAZINE",
+    "name": { "str": "9x19mm 6-round speedloader" },
+    "description": "This speedloader can hold 6 rounds of 9x19mm Parabellum and quickly reload a compatible revolver.",
+    "weight": "72 g",
+    "volume": "250 ml",
+    "price": "15 USD",
+    "price_postapoc": "1 USD",
+    "material": "steel",
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo_type": [ "9mm" ],
+    "capacity": 6,
+    "flags": [ "SPEEDLOADER" ]
   }
 ]

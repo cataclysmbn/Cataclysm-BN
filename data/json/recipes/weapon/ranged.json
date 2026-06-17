@@ -246,33 +246,18 @@
   },
   {
     "type": "recipe",
-    "result": "surv_six_shooter",
+    "result": "handmade_revolver",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_RANGED",
     "skill_used": "mechanics",
     "skills_required": [ [ "gun", 3 ] ],
-    "difficulty": 4,
-    "time": "1 h 30 m",
-    "autolearn": true,
-    "book_learn": [ [ "manual_pistol", 3 ] ],
-    "qualities": [ { "id": "SAW_M_FINE", "level": 1 } ],
-    "using": [ [ "welding_standard", 3 ] ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "spring", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 2 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "surv_hand_cannon",
-    "category": "CC_WEAPON",
-    "subcategory": "CSC_WEAPON_RANGED",
-    "skill_used": "mechanics",
-    "skills_required": [ [ "gun", 4 ] ],
     "difficulty": 5,
-    "time": "2 h",
+    "time": "1 h 45 m",
     "autolearn": true,
-    "book_learn": [ [ "manual_pistol", 5 ] ],
+    "book_learn": [ [ "manual_pistol", 4 ] ],
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 3 ] ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "spring", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 2 ] ] ]
+    "components": [ [ [ "pipe", 1 ] ], [ [ "spring", 1 ] ], [ [ "steel_chunk", 3 ] ], [ [ "scrap", 3 ] ] ]
   },
   {
     "type": "recipe",
