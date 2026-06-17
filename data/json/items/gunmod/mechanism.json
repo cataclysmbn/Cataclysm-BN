@@ -379,7 +379,7 @@
     "symbol": ":",
     "color": "green",
     "location": "mechanism",
-    "mod_targets": [ "carbine_handmade" ],
+    "mod_targets": [ "handmade_carbine" ],
     "acceptable_ammo": [ "3006" ],
     "install_time": "15 m",
     "magazine_adaptor": [ [ "3006", [ "m1918mag", "m1918bigmag" ] ] ],

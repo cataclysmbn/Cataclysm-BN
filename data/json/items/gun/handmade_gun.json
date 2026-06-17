@@ -62,7 +62,7 @@
     ]
   },
   {
-    "id": "carbine_handmade",
+    "id": "handmade_carbine",
     "copy-from": "rifle_manual",
     "type": "GUN",
     "name": { "str": "handmade carbine" },

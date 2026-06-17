@@ -2,12 +2,14 @@
   {
     "id": "rifle_308",
     "type": "MIGRATION",
-    "replace": "carbine_handmade"
+    "replace": "handmade_carbine",
+    "contents": [ "retool_hc_308" ]
   },
   {
     "id": "surv_carbine_223",
     "type": "MIGRATION",
-    "replace": "carbine_handmade"
+    "replace": "handmade_carbine",
+    "contents": [ "retool_hc_223" ]
   },
   {
     "id": "arrow_fire_hardened",
@@ -280,7 +282,7 @@
     "id": "smg_38",
     "type": "MIGRATION",
     "replace": "smg_luty",
-    "contents": [ "retool_smg_45" ]
+    "contents": [ "retool_luty_45" ]
   },
   {
     "id": "smg_38_mag",
@@ -793,8 +795,7 @@
   {
     "id": "rifle_22",
     "type": "MIGRATION",
-    "replace": "pipe_rifle",
-    "contents": [ "retool_pipe_22" ]
+    "replace": "pipe_rifle"
   },
   {
     "id": "rifle_38",
@@ -846,11 +847,13 @@
   {
     "id": "smg_40",
     "type": "MIGRATION",
-    "replace": "smg_luty"
+    "replace": "smg_luty",
+    "contents": [ "retool_luty_40" ]
   },
   {
     "id": "smg_45",
     "type": "MIGRATION",
-    "replace": "smg_luty"
+    "replace": "smg_luty",
+    "contents": [ "retool_luty_45" ]
   }
 ]

@@ -735,10 +735,10 @@
   {
     "type": "item_group",
     "id": "guns_rifle_improvised",
-    "//": "Makeshift or otherwise poor quality rifles.",
+    "//": "Makeshift or otherwise poor quality rifles. Need to give them their contains-group so they can spawn with their conversion kits",
     "items": [
       { "item": "pipe_rifle", "prob": 60 },
-      { "item": "carbine_handmade", "prob": 120, "charges-min": 0, "charges-max": 5 }
+      { "item": "handmade_carbine", "prob": 120, "charges-min": 0, "charges-max": 5 }
     ]
   },
   {

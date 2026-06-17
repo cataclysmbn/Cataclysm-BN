@@ -248,7 +248,7 @@
     "symbol": ":",
     "color": "green",
     "location": "bore",
-    "mod_targets": [ "carbine_handmade" ],
+    "mod_targets": [ "handmade_carbine" ],
     "install_time": "10 m",
     "ammo_modifier": "223",
     "magazine_adaptor": [
@@ -290,7 +290,7 @@
     "symbol": ":",
     "color": "green",
     "location": "bore",
-    "mod_targets": [ "carbine_handmade" ],
+    "mod_targets": [ "handmade_carbine" ],
     "install_time": "10 m",
     "ammo_modifier": "308",
     "magazine_adaptor": [ [ "308", [ "g3mag", "g3bigmag", "g3mag_30rd", "g3_makeshiftmag" ] ] ],
@@ -298,7 +298,7 @@
     "flags": [ "IRREMOVABLE" ]
   },
   {
-    "id": "retool_smg_40",
+    "id": "retool_luty_40",
     "type": "GUNMOD",
     "name": { "str": ".40 S&W Luty SMG conversion kit" },
     "description": "A replacement barrel and chamber assembly for a Luty SMG, converting it to fire .40 S&W cartridges and accept custom-made makeshift magazines.",
@@ -320,7 +320,7 @@
     "flags": [ "IRREMOVABLE" ]
   },
   {
-    "id": "retool_smg_45",
+    "id": "retool_luty_45",
     "type": "GUNMOD",
     "name": { "str": ".45 ACP Luty SMG conversion kit" },
     "description": "A replacement barrel and chamber assembly for a Luty SMG, converting it to fire .45 ACP cartridges and accept MAC-10 compatible magazines.",

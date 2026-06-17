@@ -489,7 +489,7 @@
   },
   {
     "type": "recipe",
-    "result": "carbine_handmade",
+    "result": "handmade_carbine",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_RANGED",
     "skill_used": "mechanics",
