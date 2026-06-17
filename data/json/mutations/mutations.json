@@ -5867,7 +5867,10 @@
     "category": [ "CEPHALOPOD" ],
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "restricts_gear": [ "torso" ],
-    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ]
+    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ],
+    "mut_enchantments": [
+      { "condition": "ALWAYS", "values": [ { "value": "CARRY_STORAGE", "add": 4000 } ] },
+    ]
   },
   {
     "type": "mutation",
@@ -5889,8 +5892,7 @@
     "restricts_gear": [ "torso" ],
     "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ],
     "mut_enchantments": [
-      { "condition": "ALWAYS", "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] },
-      { "condition": "ACTIVE", "values": [ { "value": "CARRY_STORAGE", "add": -2000 } ] }
+      { "condition": "INACTIVE", "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] }
     ]
   },
   {
