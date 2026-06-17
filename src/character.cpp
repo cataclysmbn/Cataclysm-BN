@@ -1004,11 +1004,9 @@ void Character::react_to_felt_pain( int intensity )
     if( has_effect( effect_sleep ) && !has_effect( effect_narcosis ) ) {
         int pain_thresh = rng( 3, 5 );
 
-        if( has_trait( trait_HEAVYSLEEPER ) ) {
-            pain_thresh += 2;
-        } else if( has_trait( trait_HEAVYSLEEPER2 ) ) {
-            pain_thresh += 5;
-        }
+        pain_thresh += bonus_from_enchantments( pain_thresh, enchantment_value_id( "SLEEP_PAIN_THRESH" ) );
+
+        pain_thresh = std::max( 1, pain_thresh );
 
         if( intensity >= pain_thresh ) {
             wake_up();

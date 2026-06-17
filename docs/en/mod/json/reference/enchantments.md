@@ -331,7 +331,13 @@ There is no limit
 
 Additional speed change for COLDBLOOD4 characters
 `base_value` is the mutation value or 0
-NOTE: There is no limit, this is subject to future changes
+There is no current limit
+
+##### SLEEP_PAIN_THRESHOLD
+
+Additional pain required for being woken up
+`base_value` is the base sleep pain value
+Minimum value is 1
 
 ##### LIE
 

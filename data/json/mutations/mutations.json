@@ -781,7 +781,8 @@
     "points": -1,
     "description": "You're quite the heavy sleeper.  Noises are unlikely to wake you up.",
     "changes_to": [ "HEAVYSLEEPER2" ],
-    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ]
+    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "SLEEP_PAIN_THRESHOLD", "add": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -4928,7 +4929,8 @@
     "description": "You could probably sleep through a firefight.",
     "valid": false,
     "prereqs": [ "HEAVYSLEEPER" ],
-    "category": [ "BEAST", "LUPINE" ]
+    "category": [ "BEAST", "LUPINE" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "SLEEP_PAIN_THRESHOLD", "add": 5 } ] } ]
   },
   {
     "type": "mutation",
