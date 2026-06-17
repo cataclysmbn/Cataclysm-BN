@@ -5868,9 +5868,7 @@
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "restricts_gear": [ "torso" ],
     "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ],
-    "mut_enchantments": [
-      { "condition": "ALWAYS", "values": [ { "value": "CARRY_STORAGE", "add": 4000 } ] },
-    ]
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "CARRY_STORAGE", "add": 4000 } ] } ]
   },
   {
     "type": "mutation",
@@ -5891,9 +5889,7 @@
     "active": true,
     "restricts_gear": [ "torso" ],
     "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ],
-    "mut_enchantments": [
-      { "condition": "INACTIVE", "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] }
-    ]
+    "mut_enchantments": [ { "condition": "INACTIVE", "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] } ]
   },
   {
     "type": "mutation",
