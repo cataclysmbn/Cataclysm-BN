@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-read=docs --allow-run=git,gh --allow-env=GH_TOKEN,GITHUB_TOKEN
+#!/usr/bin/env -S deno run --allow-read --allow-run=git,gh --allow-env=GH_TOKEN,GITHUB_TOKEN,PATH
 
 /**
  * @module
@@ -7,6 +7,7 @@
  */
 
 import { Command } from "@cliffy/command"
+import $ from "./dax.ts"
 import { walk } from "@std/fs"
 import { markdownTable } from "markdown-table"
 import { changedFilesFromGit, type PullFile } from "./git_changed_files.ts"
@@ -25,9 +26,6 @@ export type TranslationWarning = {
   stale: string[]
   missing: string[]
 }
-
-const decoder = new TextDecoder()
-const encoder = new TextEncoder()
 
 const docPaths = (paths: (string | undefined)[]): DocPath[] =>
   paths.flatMap((file) => {
@@ -87,49 +85,16 @@ const withTranslationBlock = (body: string, block: string | undefined): string =
   return block === undefined ? cleanBody : [cleanBody, block].filter(Boolean).join("\n\n")
 }
 
-const run = async (
-  command: string,
-  args: string[],
-  input?: string,
-  env?: Record<string, string>,
-): Promise<string> => {
-  const process = new Deno.Command(command, {
-    args,
-    clearEnv: env !== undefined,
-    env,
-    stdin: input === undefined ? "null" : "piped",
-    stdout: "piped",
-    stderr: "piped",
-  }).spawn()
-  if (input !== undefined) {
-    const writer = process.stdin.getWriter()
-    await writer.write(encoder.encode(input))
-    await writer.close()
-  }
-  const { success, stdout, stderr } = await process.output()
-  if (!success) {
-    const message = decoder.decode(stderr).trim()
-    throw new Error(`${command} ${args.join(" ")} failed${message ? `: ${message}` : ""}`)
-  }
-  return decoder.decode(stdout)
-}
-
-const ghEnv = (): Record<string, string> | undefined => {
+const ghEnv = (): Record<string, string> => {
   const token = Deno.env.get("GH_TOKEN") ?? Deno.env.get("GITHUB_TOKEN")
-  return token === undefined ? undefined : { GH_TOKEN: token }
+  return token === undefined ? {} : { GH_TOKEN: token }
 }
 
 const readPrBody = async (pr: number): Promise<string> =>
-  (await run(
-    "gh",
-    ["pr", "view", String(pr), "--json", "body", "--jq", ".body"],
-    undefined,
-    ghEnv(),
-  ))
-    .trimEnd()
+  (await $`gh pr view ${pr} --json body --jq .body`.env(ghEnv()).text()).trimEnd()
 
 const updatePrBody = async (pr: number, body: string): Promise<void> => {
-  await run("gh", ["pr", "edit", String(pr), "--body-file", "-"], body, ghEnv())
+  await $`gh pr edit ${pr} --body-file -`.env(ghEnv()).stdinText(body)
 }
 
 const main = new Command()

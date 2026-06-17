@@ -794,6 +794,7 @@
     "dependencies": [
       "jsr:@cliffy/command@^1.0.0-rc.7",
       "jsr:@cliffy/flags@^1.0.0-rc.7",
+      "jsr:@david/dax@*",
       "jsr:@deno-library/compress@~0.5.6",
       "jsr:@scarf/json-map@^0.0.4",
       "jsr:@std/assert@^1.0.15",
