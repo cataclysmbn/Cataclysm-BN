@@ -345,6 +345,16 @@ Modifier to the amount of noise above environemental required to be woken up
 `base_value` is 20
 There is no minimum nor maximum value
 
+##### CLIMATE_CONTROL
+
+Moves temperature felt by the player towards a point.
+`base_value` is the current temperature felt by the player
+It will increase or decrease based off if it is below or above normal temperature ( including mutations )
+It has two children:
+- `CLIMATE_CONTROL_COOLING`
+- `CLIMATE_CONTROL_HEATING`
+That would only heat or cool respectively
+
 ##### LIE
 
 Modifier to Lie chance `base_value` is post skill effects
