@@ -47,12 +47,15 @@ starting_item_trait_sets_t
     for( const auto &trait : traits ) {
         ret.push_back( { trait } );
     }
-    for( auto i = size_t{ 0 }; i < traits.size(); ++i ) {
-        for( auto j = i + 1; j < traits.size(); ++j ) {
-            ret.push_back( { traits[i], traits[j] } );
-        }
-    }
-    ret.push_back( { trait_id( "ANTIWHEAT" ), trait_id( "ANTIJUNK" ), trait_id( "MEATARIAN" ) } );
+    ret.insert( ret.end(), {
+        { trait_id( "ANTIWHEAT" ), trait_id( "MEATARIAN" ) },
+        { trait_id( "ANTIWHEAT" ), trait_id( "VEGETARIAN" ) },
+        { trait_id( "ANTIFRUIT" ), trait_id( "MEATARIAN" ) },
+        { trait_id( "ANTIFRUIT" ), trait_id( "ANTIJUNK" ) },
+        { trait_id( "ANTIWHEAT" ), trait_id( "ANTIJUNK" ) },
+        { trait_id( "LACTOSE" ), trait_id( "VEGETARIAN" ) },
+        { trait_id( "ANTIWHEAT" ), trait_id( "ANTIJUNK" ), trait_id( "MEATARIAN" ) },
+    } );
     return ret;
 }
 

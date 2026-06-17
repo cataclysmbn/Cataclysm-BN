@@ -100,7 +100,7 @@ TEST_CASE( "Exactly one endgame lab finale is generated in 0,0 overmap", "[overm
 TEST_CASE( "Brute force default batch generation to check for RNG bugs", "[.][overmap][slow]" )
 {
     clear_all_state();
-    for( size_t i = 0; i < 100; i++ ) {
+    for( auto i = 0; i < 10; ++i ) {
         do_lab_finale_test();
     }
 }

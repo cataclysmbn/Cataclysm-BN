@@ -54,7 +54,7 @@ const defaultTestOpts = [
 const fixedShards: Shard[] = [
   {
     name: "00-vehicle-rails-basic",
-    filters: ["vehicle_rail_movement_basic"],
+    filters: ["vehicle_rail_movement_basic*"],
     estimatedSeconds: 215,
     compute: "cpu",
   },
@@ -66,7 +66,7 @@ const fixedShards: Shard[] = [
   },
   {
     name: "19-vehicle-rails-shifting",
-    filters: ["vehicle_rail_movement_shifting"],
+    filters: ["vehicle_rail_movement_shifting*"],
     estimatedSeconds: 200,
     compute: "cpu",
   },

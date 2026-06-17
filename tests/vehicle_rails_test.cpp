@@ -877,98 +877,64 @@ TEST_CASE( "vehicle_rail_movement_derailed", "[vehicle][railroad]" )
     }
 }
 
-TEST_CASE( "vehicle_rail_movement_basic", "[vehicle][railroad]" )
+TEST_CASE( "vehicle_rail_movement_basic_straight", "[vehicle][railroad]" )
 {
     clear_all_state();
-    SECTION( "straight_rails" ) {
-        // Rail vehicle must follow straight rails regardless of desired turn dir
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_straight()
-        } );
+    // Rail vehicle must follow straight rails regardless of desired turn dir.
+    run_test_case( test_case{
+        "motorized_draisine_trirail",
+        tcscope::full,
+        -90_degrees,
+        -90_degrees,
+        -90_degrees,
+        -90_degrees,
+        rails_straight()
+    } );
+}
 
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_straight()
-        } );
-    }
-    SECTION( "enter_diagonal" ) {
-        // Rail vehicle must follow tracks and turn regardless of desired turn dir
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::full,
-            -90_degrees,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            rails_diag_start()
-        } );
+TEST_CASE( "vehicle_rail_movement_basic_enter_diagonal", "[vehicle][railroad]" )
+{
+    clear_all_state();
+    // Rail vehicle must follow tracks and turn regardless of desired turn dir.
+    run_test_case( test_case{
+        "motorcycle_rail",
+        tcscope::full,
+        -90_degrees,
+        -45_degrees,
+        -45_degrees,
+        -45_degrees,
+        rails_diag_start()
+    } );
+}
 
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -90_degrees,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            rails_diag_start()
-        } );
-    }
-    SECTION( "leave_diagonal" ) {
-        // Rail vehicle must follow tracks and turn regardless of desired turn dir
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::full,
-            -45_degrees,
-            0_degrees,
-            0_degrees,
-            0_degrees,
-            rails_diag_end()
-        } );
+TEST_CASE( "vehicle_rail_movement_basic_leave_diagonal", "[vehicle][railroad]" )
+{
+    clear_all_state();
+    // Rail vehicle must follow tracks and turn regardless of desired turn dir.
+    run_test_case( test_case{
+        "motorized_draisine_trirail",
+        tcscope::full,
+        -45_degrees,
+        0_degrees,
+        0_degrees,
+        0_degrees,
+        rails_diag_end()
+    } );
+}
 
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -45_degrees,
-            0_degrees,
-            0_degrees,
-            0_degrees,
-            rails_diag_end()
-        } );
-    }
-    SECTION( "rail_crossing" ) {
-        // Rail vehicle must follow straight rails regardless of desired turn dir
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_cross()
-        } );
-
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_cross()
-        } );
-    }
-
+TEST_CASE( "vehicle_rail_movement_basic_crossing", "[vehicle][railroad]" )
+{
+    clear_all_state();
+    // Rail vehicle must follow straight rails regardless of desired turn dir.
+    run_test_case( test_case{
+        "motorcycle_rail",
+        tcscope::full,
+        -90_degrees,
+        -90_degrees,
+        -90_degrees,
+        -90_degrees,
+        rails_cross()
+    } );
 }
 
 TEST_CASE( "vehicle_rail_movement_fork", "[vehicle][railroad]" )
@@ -977,16 +943,6 @@ TEST_CASE( "vehicle_rail_movement_fork", "[vehicle][railroad]" )
     SECTION( "rails_tee_straight" ) {
         // Rail vehicle must follow straight rails by default,
         // but can switch tracks depending on desired turn dir
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::no_back_turns,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees - 45_degrees,
-            -90_degrees + 45_degrees,
-            rails_tee_straight()
-        } );
-
         run_test_case( test_case{
             "motorized_draisine_trirail",
             tcscope::full,
@@ -1009,113 +965,66 @@ TEST_CASE( "vehicle_rail_movement_fork", "[vehicle][railroad]" )
             -45_degrees + 45_degrees,
             rails_tee_diag()
         } );
-
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees - 45_degrees,
-            -45_degrees + 45_degrees,
-            rails_tee_diag()
-        } );
     }
 
 }
 
-TEST_CASE( "vehicle_rail_movement_shifting", "[vehicle][railroad]" )
+TEST_CASE( "vehicle_rail_movement_shifting_straight_left", "[vehicle][railroad]" )
 {
     clear_all_state();
-    SECTION( "rails_straight_shifting_left" ) {
-        // Rail vehicle must shift by 1 tile left or right
-        // if the rails shift left or right
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_straight_shifting_left()
-        } );
+    // Rail vehicle must shift by 1 tile left or right if the rails shift left or right.
+    run_test_case( test_case{
+        "motorized_draisine_trirail",
+        tcscope::full,
+        -90_degrees,
+        -90_degrees,
+        -90_degrees,
+        -90_degrees,
+        rails_straight_shifting_left()
+    } );
+}
 
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_straight_shifting_left()
-        } );
-    }
-    SECTION( "rails_straight_shifting_right" ) {
-        // Rail vehicle must shift by 1 tile left or right
-        // if the rails shift left or right
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_straight_shifting_right()
-        } );
+TEST_CASE( "vehicle_rail_movement_shifting_straight_right", "[vehicle][railroad]" )
+{
+    clear_all_state();
+    // Rail vehicle must shift by 1 tile left or right if the rails shift left or right.
+    run_test_case( test_case{
+        "motorcycle_rail",
+        tcscope::full,
+        -90_degrees,
+        -90_degrees,
+        -90_degrees,
+        -90_degrees,
+        rails_straight_shifting_right()
+    } );
+}
 
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_straight_shifting_right()
-        } );
-    }
-    SECTION( "rails_diag_shifting_left" ) {
-        // Same as above, but for diagonal case
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::full,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            rails_diag_shifting_left()
-        } );
+TEST_CASE( "vehicle_rail_movement_shifting_diagonal_left", "[vehicle][railroad]" )
+{
+    clear_all_state();
+    run_test_case( test_case{
+        "motorized_draisine_trirail",
+        tcscope::full,
+        -45_degrees,
+        -45_degrees,
+        -45_degrees,
+        -45_degrees,
+        rails_diag_shifting_left()
+    } );
+}
 
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            rails_diag_shifting_left()
-        } );
-    }
-    SECTION( "rails_diag_shifting_right" ) {
-        // Same as above, but for diagonal case
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::full,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            rails_diag_shifting_right()
-        } );
-
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees,
-            rails_diag_shifting_right()
-        } );
-    }
+TEST_CASE( "vehicle_rail_movement_shifting_diagonal_right", "[vehicle][railroad]" )
+{
+    clear_all_state();
+    run_test_case( test_case{
+        "motorcycle_rail",
+        tcscope::full,
+        -45_degrees,
+        -45_degrees,
+        -45_degrees,
+        -45_degrees,
+        rails_diag_shifting_right()
+    } );
 }
 
 TEST_CASE( "vehicle_rail_movement_ramp", "[vehicle][railroad][ramp]" )

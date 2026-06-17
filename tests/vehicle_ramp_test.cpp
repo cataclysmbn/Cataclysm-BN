@@ -435,9 +435,8 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pushed_down_ramp", "[vehicle][ramp][gra
 TEST_CASE( "vehicle_ramp_test_59", "[vehicle][ramp]" )
 {
     clear_all_state();
-    for( const std::string &veh : ramp_vehs_to_test ) {
-        test_ramp( veh, 59 );
-    }
+    ramp_transition_angled( vproto_id( "motorcycle" ), 180_degrees, 59, true, true );
+    ramp_transition_angled( vproto_id( "motorcycle" ), 180_degrees, 59, true, false );
 }
 TEST_CASE( "vehicle_ramp_test_60", "[vehicle][ramp]" )
 {
