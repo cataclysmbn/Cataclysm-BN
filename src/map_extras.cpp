@@ -2111,17 +2111,21 @@ static void burned_ground_parser( mapgen_constructor &m, const point_omt_ms &loc
     }
 
     // burn-away flammable items
-    while( m.flammable_items_at( loc ) ) {
-        map_stack stack = m.i_at( loc );
-        std::vector<detached_ptr<item>> products;
-        for( auto it = stack.begin(); it != stack.end(); ) {
-            if( ( *it )->flammable() ) {
-                create_burnproducts( products, **it, ( *it )->weight() );
-                it = stack.erase( it );
-            } else {
-                it++;
+    if( m.flammable_items_at( loc ) ) {
+        auto removed = m.i_clear( loc );
+        auto products = std::vector<detached_ptr<item>> {};
+        auto survivors = std::vector<detached_ptr<item>> {};
+        for( auto &it : removed ) {
+            if( !it ) {
+                continue;
             }
+            if( it->flammable() ) {
+                create_burnproducts( products, *it, it->weight() );
+                continue;
+            }
+            survivors.push_back( std::move( it ) );
         }
+        m.spawn_items( loc, std::move( survivors ) );
         m.spawn_items( loc, std::move( products ) );
     }
 }
