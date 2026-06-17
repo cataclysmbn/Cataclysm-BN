@@ -408,7 +408,7 @@ to dodge roll.
 Effective heat armor modifier to gaining the blister effect. `base_value` is the number of blisters.
 The final value can go below 0, which would never blister the character. Or it could go higher and always blister the character.
 
-##### LIMINATION
+##### LUMINATION
 
 Lumination around the player when active. You cannot add nor multiply this enchantment, only max value works.
 The final value will not go below 0, and the maximum value is uncapped.
