@@ -2037,9 +2037,13 @@ class jmapgen_liquid_item : public jmapgen_piece
                 const auto &furn = dat.m.furn( target ).obj();
                 if( furn.fluid_grid && furn.fluid_grid->role == fluid_grid_role::tank &&
                     furn.fluid_grid->allowed_liquids.contains( migrated ) ) {
-                    const auto added = fluid_grid::seed_liquid_charges_for_mapgen(
-                                           dat.m.get_abs_omt(), migrated,
-                                           newliquid->charges );
+                    const auto added = fluid_grid::seed_liquid_charges_for_mapgen( {
+                        .p = dat.m.get_abs_omt(),
+                        .liquid_type = migrated,
+                        .charges = newliquid->charges,
+                        .overmap_buffer = &dat.get_overmapbuffer(),
+                        .map_buffer = &dat.m.get_buffer(),
+                    } );
                     if( added > 0 ) {
                         return;
                     }
