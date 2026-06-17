@@ -461,7 +461,8 @@
     "canceled_mutations": [ "HYPEROPIC", "MYOPIC" ],
     "can_uninstall": false,
     "points": 1,
-    "no_uninstall_reason": "The telescopic lenses are part of the patient's eyes now, remove them and the patient would become blind"
+    "no_uninstall_reason": "The telescopic lenses are part of the patient's eyes now, remove them and the patient would become blind",
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "OVERMAP_SIGHT", "add": 1 } ] } ]
   },
   {
     "id": "bio_face_mask",
