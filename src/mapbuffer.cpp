@@ -1173,6 +1173,14 @@ auto mapbuffer::indexed_vehicle_part_at_unlocked(
 mapbuffer::mapbuffer() = default;
 mapbuffer::~mapbuffer() = default;
 
+auto mapbuffer::get_boundary_terrain() const -> ter_id
+{
+    if( pocket_info_ && pocket_info_->bounds.boundary_terrain.is_valid() ) {
+        return pocket_info_->bounds.boundary_terrain.id();
+    }
+    return ter_id( "t_null" );
+}
+
 void mapbuffer::clear()
 {
     {
