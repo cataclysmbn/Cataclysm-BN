@@ -168,6 +168,7 @@ jobs:
 
       - name: Bundle registry mods
         if: inputs.bundle-registry-mods
+        continue-on-error: ${{ inputs.mode == 'ci' }}
         run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ format('{0}', matrix.sound) == 'false' && '--exclude-package-type soundpack' || '' }}
 
       - name: Bundle CDDA tilesets
