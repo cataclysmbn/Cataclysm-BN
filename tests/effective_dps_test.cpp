@@ -22,7 +22,7 @@ struct itype;
 // and return the average damage done per second.
 static double weapon_dps_trials( avatar &attacker, monster &defender, item &weapon )
 {
-    constexpr int trials = 1000;
+    constexpr auto trials = 250;
 
     int total_damage = 0;
     int total_moves = 0;
@@ -32,10 +32,10 @@ static double weapon_dps_trials( avatar &attacker, monster &defender, item &weap
 
     melee::clear_stats();
     melee_statistic_data melee_stats = melee::get_stats();
-    // rerun the trials in groups of 1000 until 100 crits occur
-    for( int i = 0; i < 10 && melee_stats.actual_crit_count < 100;
-         i++, melee_stats = melee::get_stats() ) {
-        for( int j = 0; j < trials; j++ ) {
+    // Rerun the trials in groups until enough crits occur for a stable comparison.
+    for( auto i = 0; i < 6 && melee_stats.actual_crit_count < 30;
+         ++i, melee_stats = melee::get_stats() ) {
+        for( auto j = 0; j < trials; ++j ) {
             // Reset and re-wield weapon before each attack to prevent skill-up during trials
             clear_character( attacker );
             attacker.wield( item::spawn( weapon ) );

@@ -3,12 +3,14 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "avatar.h"
+#include "calendar.h"
 #include "cata_utility.h"
 #include "coordinates.h"
 #include "creature_tracker.h"
@@ -362,6 +364,45 @@ TEST_CASE( "vehicle speed control free in cruise mode", "[vehicle][speed]" )
     veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
 
     CHECK( you.get_moves() == 25 );
+}
+
+TEST_CASE( "can autodrive", "[vehicle][autodrive]" )
+{
+    clear_all_state();
+    set_time( calendar::turn_zero + 12_hours );
+
+    auto &here = get_map();
+    auto &you = get_avatar();
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    you.setpos( origin );
+    you.clear_map_memory();
+    you.set_moves( 1000 );
+
+    auto *veh_ptr = here.add_vehicle( vproto_id( "car" ), origin, 0_degrees, 100, 0, true, false,
+                                      true );
+    REQUIRE( veh_ptr != nullptr );
+    here.board_vehicle( origin, &you );
+    veh_ptr->start_engines( true, true );
+    veh_ptr->engine_on = true;
+    REQUIRE( veh_ptr->player_in_control( you ) );
+
+    const auto current_omt = project_to<coords::omt>( veh_ptr->abs_ms_location() );
+    const auto memory_origin = project_to<coords::ms>( current_omt );
+    // Keep path planning deterministic; the regression check is the dirty live visibility cache.
+    using namespace std::views;
+    constexpr auto omt_size = coords::map_squares_per( coords::omt );
+    for( const auto x : iota( 0, omt_size * 2 ) ) {
+        for( const auto y : iota( 0, omt_size ) ) {
+            you.memorize_tile( memory_origin + tripoint_rel_ms( x, y, 0 ), "t_grass", 0, 0 );
+        }
+    }
+    you.omt_path = { current_omt + tripoint_rel_omt( 1, 0, 0 ) };
+    veh_ptr->is_autodriving = true;
+
+    here.invalidate_visibility_caches();
+    REQUIRE( here.visibility_caches_dirty() );
+
+    CHECK( veh_ptr->do_autodrive( you ) == autodrive_result::ok );
 }
 
 TEST_CASE( "horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]" )

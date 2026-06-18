@@ -33,6 +33,7 @@
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
+#include "character_vision.h"
 #include "clothing_utils.h"
 #include "clzones.h"
 #include "craft_command.h"
@@ -2023,19 +2024,16 @@ void Character::recalc_sight_limits()
     for( const mutation_branch *mut : cached_mutations ) {
         best_bonus_nv = std::max( best_bonus_nv, mut->night_vision_range );
     }
-    if( worn_with_flag( flag_RECON_VISION ) ||
-        ( is_mounted() && mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) ) {
-        best_bonus_nv = std::max( best_bonus_nv, 10.0f );
-    }
+    const auto night_vision_level = character_vision::active_night_vision_bonus_level( *this );
+    best_bonus_nv = std::max( best_bonus_nv,
+                              character_vision::sight_range_bonus( night_vision_level ) );
     if( worn_with_flag( flag_GNV_EFFECT ) ||
         has_active_bionic( bio_night_vision ) ||
         has_effect_with_flag( flag_EFFECT_NIGHT_VISION ) ) {
         vision_mode_cache.set( NV_GOGGLES );
-        best_bonus_nv = std::max( best_bonus_nv, 10.0f );
     }
     if( worn_with_flag( flag_GNVE_EFFECT ) ) {
         vision_mode_cache.set( ENV_GOGGLES );
-        best_bonus_nv = std::max( best_bonus_nv, 18.0f );
     }
     if( has_trait( trait_BIRD_EYE ) ) {
         vision_mode_cache.set( BIRD_EYE );
