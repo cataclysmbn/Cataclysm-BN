@@ -1184,7 +1184,7 @@ class map : public submap_load_listener
         void furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
                        const cata::poly_serialized<active_tile_data> &new_active = nullptr );
         auto move_furn( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
-                        const map_move_furn_options &options = {} ) -> bool;
+        const map_move_furn_options &options = {} ) -> bool;
         std::string furnname( const tripoint_bub_ms &p );
         bool can_move_furniture( const tripoint_bub_ms &pos, player *p = nullptr );
 

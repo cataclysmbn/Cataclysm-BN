@@ -13475,9 +13475,9 @@ auto game::grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool
     sounds::sound( se );
 
     if( !m.move_furn( fpos, fdest, {
-        .mover = &u,
-        .pulling = pulling_furniture,
-    } ) ) {
+    .mover = &u,
+    .pulling = pulling_furniture,
+} ) ) {
         return true;
     }
 
