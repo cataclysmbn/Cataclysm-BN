@@ -160,7 +160,7 @@
         {
           "has": "WIELD",
           "condition": "ALWAYS",
-          "values": [ { "value": "STRENGTH", "add": 10 }, { "value": "ARMOR_ELEC", "multiply": -1 } ],
+          "values": [ { "value": "STRENGTH", "add": 10 }, { "value": "ARMOR_ELECTRIC", "multiply": -1 } ],
           "mutations": [ "CRT_BERSERK_EFFECT" ],
           "hit_you_effect": [
             {

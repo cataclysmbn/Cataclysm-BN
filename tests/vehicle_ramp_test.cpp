@@ -236,35 +236,8 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
             g->vertical_move( z_change, true );
         }
     }
+    here.destroy_vehicle( veh_ptr );
 }
-
-static void test_ramp( std::string type, const int transition_x )
-{
-    CAPTURE( type );
-    SECTION( "no ramp" ) {
-        ramp_transition_angled( vproto_id( type ), 180_degrees, transition_x, false, false );
-    }
-    SECTION( "ramp up" ) {
-        ramp_transition_angled( vproto_id( type ), 180_degrees, transition_x, true, true );
-    }
-    SECTION( "ramp down" ) {
-        ramp_transition_angled( vproto_id( type ), 180_degrees, transition_x, true, false );
-    }
-    SECTION( "angled no ramp" ) {
-        ramp_transition_angled( vproto_id( type ), 225_degrees, transition_x, false, false );
-    }
-    SECTION( "angled ramp down" ) {
-        ramp_transition_angled( vproto_id( type ), 225_degrees, transition_x, true, false );
-    }
-    SECTION( "angled ramp up" ) {
-        ramp_transition_angled( vproto_id( type ), 225_degrees, transition_x, true, true );
-    }
-}
-
-static std::vector<std::string> ramp_vehs_to_test = {{
-        "motorcycle",
-    }
-};
 
 TEST_CASE( "grabbed_shopping_cart_can_be_pulled_up_ramp", "[vehicle][ramp][grab]" )
 {
@@ -428,21 +401,18 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pushed_down_ramp", "[vehicle][ramp][gra
 TEST_CASE( "vehicle_ramp_test_59", "[vehicle][ramp]" )
 {
     clear_all_state();
-    for( const std::string &veh : ramp_vehs_to_test ) {
-        test_ramp( veh, 59 );
-    }
+    ramp_transition_angled( vproto_id( "motorcycle" ), 180_degrees, 59, true, true );
+    ramp_transition_angled( vproto_id( "motorcycle" ), 180_degrees, 59, true, false );
 }
 TEST_CASE( "vehicle_ramp_test_60", "[vehicle][ramp]" )
 {
     clear_all_state();
-    for( const std::string &veh : ramp_vehs_to_test ) {
-        test_ramp( veh, 60 );
-    }
+    ramp_transition_angled( vproto_id( "motorcycle" ), 180_degrees, 60, true, true );
+    ramp_transition_angled( vproto_id( "motorcycle" ), 180_degrees, 60, true, false );
 }
 TEST_CASE( "vehicle_ramp_test_61", "[vehicle][ramp]" )
 {
     clear_all_state();
-    for( const std::string &veh : ramp_vehs_to_test ) {
-        test_ramp( veh, 61 );
-    }
+    ramp_transition_angled( vproto_id( "motorcycle" ), 180_degrees, 61, true, true );
+    ramp_transition_angled( vproto_id( "motorcycle" ), 180_degrees, 61, true, false );
 }

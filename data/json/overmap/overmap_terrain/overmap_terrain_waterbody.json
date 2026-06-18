@@ -102,5 +102,15 @@
     "copy-from": "cargo_ship_a",
     "name": "sunken ship",
     "color": "brown"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "kraken_lair",
+    "name": "kraken nest",
+    "sym": "K",
+    "color": "red",
+    "looks_like": "shipwreck_river_1",
+    "see_cost": 5,
+    "flags": [ "RISK_HIGH" ]
   }
 ]
