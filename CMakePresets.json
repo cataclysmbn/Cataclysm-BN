@@ -257,6 +257,18 @@
       }
     },
     {
+      "name": "osx-tiles-no-sound-x64-dist",
+      "inherits": ["osx-dist-base"],
+      "displayName": "macOS x64 Distribution (Tiles, No Sound, Languages)",
+      "description": "For creating portable macOS x64 distribution packages with tiles and no sound.",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "CURSES": "OFF",
+        "TILES": "ON",
+        "SOUND": "OFF"
+      }
+    },
+    {
       "name": "osx-curses-arm-dist",
       "inherits": ["osx-dist-base"],
       "displayName": "macOS ARM Distribution (Curses, Languages)",
@@ -278,6 +290,18 @@
         "CURSES": "OFF",
         "TILES": "ON",
         "SOUND": "ON"
+      }
+    },
+    {
+      "name": "osx-tiles-no-sound-arm-dist",
+      "inherits": ["osx-dist-base"],
+      "displayName": "macOS ARM Distribution (Tiles, No Sound, Languages)",
+      "description": "For creating portable macOS ARM distribution packages with tiles and no sound.",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CURSES": "OFF",
+        "TILES": "ON",
+        "SOUND": "OFF"
       }
     },
     {
@@ -439,6 +463,12 @@
       "description": "Build a macOS x64 tiles DMG."
     },
     {
+      "name": "osx-tiles-no-sound-x64-dist",
+      "configurePreset": "osx-tiles-no-sound-x64-dist",
+      "targets": ["dmgdist"],
+      "description": "Build a macOS x64 tiles DMG without sound."
+    },
+    {
       "name": "osx-curses-arm-dist",
       "configurePreset": "osx-curses-arm-dist",
       "targets": ["dmgdist"],
@@ -449,6 +479,12 @@
       "configurePreset": "osx-tiles-arm-dist",
       "targets": ["dmgdist"],
       "description": "Build a macOS ARM tiles DMG."
+    },
+    {
+      "name": "osx-tiles-no-sound-arm-dist",
+      "configurePreset": "osx-tiles-no-sound-arm-dist",
+      "targets": ["dmgdist"],
+      "description": "Build a macOS ARM tiles DMG without sound."
     },
     {
       "name": "osx-arm-dist",
