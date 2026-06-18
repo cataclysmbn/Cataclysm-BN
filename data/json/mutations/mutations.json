@@ -331,7 +331,7 @@
     "starting_trait": true,
     "category": [ "CEPHALOPOD" ],
     "prereqs": [ "SLIMY" ],
-    "stealth_modifier": 40,
+    "stealth_modifier": 40
   },
   {
     "type": "mutation",
@@ -4987,7 +4987,7 @@
     "bodytemp_modifiers": [ -1500, -1500 ],
     "description": "Your body is slowly wasting away!",
     "types": [ "HEALING" ],
-    "prereqs": [ "ROT2" ], 
+    "prereqs": [ "ROT2" ],
     "healing_awake": -0.08
   },
   {
@@ -6376,7 +6376,7 @@
     "name": { "str": "Toxic Flesh" },
     "points": 1,
     "description": "Your flesh is highly poisonous, and creatures that bite you will receive a nasty surprise.",
-    "category": [ "FISH", "CEPHALOPOD"],
+    "category": [ "FISH", "CEPHALOPOD" ],
     "threshreq": [ "THRESH_FISH", "THRESH_CEPHALOPOD" ],
     "purifiable": false
   },
