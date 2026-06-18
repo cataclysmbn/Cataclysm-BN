@@ -2780,7 +2780,7 @@ void sounds::process_sound_markers( Character *who )
             }
 
             if( !who->has_effect( effect_sleep ) && who->has_effect( effect_alarm_clock ) &&
-                !who->has_bionic( bionic_id( "bio_infolink" ) ) ) {
+                !who->has_enchantment_flag( enchantment_flag_id( "INTERNAL_ALARMCLOCK" ) ) ) {
                 // if we don't have effect_sleep but we're in_sleep_state, either
                 // we were trying to fall asleep for so long our alarm is now going
                 // off or something disturbed us while trying to sleep

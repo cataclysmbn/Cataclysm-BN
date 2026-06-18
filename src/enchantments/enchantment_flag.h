@@ -23,9 +23,13 @@ public:
 
     static void reset();
 
+    std::set<enchantment_flag_id> get_parents() const;
+
     enchantment_flag_id id;
 
     bool was_loaded = false;
 
     std::set<enchantment_flag_id> conflicts = std::set<enchantment_flag_id>();
+
+    std::set<enchantment_flag_id> parents = std::set<enchantment_flag_id>();
 };

@@ -26,7 +26,44 @@
     "type": "enchantment_flag"
   },
   {
+    "id": "EAT_ROTTEN",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "ONLY_EAT_ROTTEN",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "EAT_ROTTEN_MORALE",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "CONSUME_UNCLEAN",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "FOOD_PARASITE_IMMUNE",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "FOOD_POISION_IMMUNE",
+    "type": "enchantment_flag"
+  },
+  {
     "id": "ALARMCLOCK",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "INTERNAL_ALARMCLOCK",
+    "type": "enchantment_flag",
+    "parents": [ "ALARMCLOCK" ]
+  },
+  {
+    "id": "RADIO",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "THERMOMETER",
     "type": "enchantment_flag"
   },
   {

@@ -352,7 +352,7 @@
     "occupied_bodyparts": [ [ "torso", 5 ] ],
     "points": 3,
     "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ],
-    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "CONSUME_UNCLEAN" ] } ]
+    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "CONSUME_UNCLEAN", "FOOD_PARASITE_IMMUNE", "FOOD_POISION_IMMUNE" ] } ]
   },
   {
     "id": "bio_dis_acid",
@@ -652,7 +652,7 @@
     "act_cost": "10 J",
     "starting_bionic": true,
     "points": 1,
-    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "ALARMCLOCK", "WATCH" ] } ]
+    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "INTERNAL_ALARMCLOCK", "WATCH", "RADIO", "THERMOMETER" ] } ]
   },
   {
     "id": "bio_infrared",

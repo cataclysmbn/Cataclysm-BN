@@ -235,7 +235,8 @@
     "points": 1,
     "description": "Your system is rather tolerant of poisons and toxins, and most will affect you less.",
     "starting_trait": true,
-    "category": [ "INSECT", "SERPENT", "SLIME", "SPIDER", "MEDICAL" ]
+    "category": [ "INSECT", "SERPENT", "SLIME", "SPIDER", "MEDICAL" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISION_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -2719,7 +2720,8 @@
     "points": 1,
     "description": "Your body is unusually inhospitable to parasitic lifeforms.  You will never become infested with internal parasites.",
     "starting_trait": true,
-    "category": [ "ELFA", "CHIMERA", "MEDICAL", "SLIME" ]
+    "category": [ "ELFA", "CHIMERA", "MEDICAL", "SLIME" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_PARASITE_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -2923,7 +2925,7 @@
     "description": "Your digestive system is specialized to allow you to consume decaying material.  You can eat rotten food, albeit for less nutrition than usual.",
     "cancels": [ "HERBIVORE", "RUMINANT" ],
     "category": [ "TROGLOBITE", "CHIMERA" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN" ] } ]
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE" ] } ]
   },
   {
     "type": "mutation",
@@ -2938,7 +2940,8 @@
     "threshreq": [ "THRESH_PLANT" ],
     "cancels": [ "HERBIVORE", "CARNIVORE", "GRAZER" ],
     "leads_to": [ "CHLOROMORPH" ],
-    "category": [ "PLANT" ]
+    "category": [ "PLANT" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE", "ONLY_EAT_ROTTEN" ] } ]
   },
   {
     "type": "mutation",
@@ -3002,7 +3005,8 @@
     "prereqs": [ "POISRESIST" ],
     "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE", "THRESH_SERPENT" ],
     "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ],
-    "kcal_scale": 0.15
+    "kcal_scale": 0.15,
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISION_IMMUNE" ] } ]
   },
   {
     "type": "mutation",

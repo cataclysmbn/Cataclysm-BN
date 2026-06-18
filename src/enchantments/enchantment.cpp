@@ -466,6 +466,12 @@ void enchantment::finalize() {
             }
         }
     }
+    auto flags_copy = flags;
+    for (const auto& ench_flag_id : flags) {
+        auto parents = ench_flag_id->get_parents();
+        flags.insert(parents.begin(), parents.end());
+    }
+
     if (!problems.empty()) {
         debugmsg("%s %s has: %s", ench_desc, id.c_str(),
                  enumerate_as_string(problems, enumeration_conjunction::none));

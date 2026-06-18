@@ -6,6 +6,7 @@
 #include "type_id_implement.h"
 
 #include <optional>
+#include <vector>
 
 namespace {
 generic_factory<enchantment_flag> all_enchantment_flags("Enchantment flags");
@@ -19,6 +20,7 @@ void enchantment_flag::load_enchantment_flags(const JsonObject& jo, const std::s
 
 void enchantment_flag::load(const JsonObject& jo, const std::string& src) {
     optional(jo, was_loaded, "conflicts", conflicts);
+    optional(jo, was_loaded, "parents", parents);
 }
 
 void enchantment_flag::check() const {
@@ -38,3 +40,15 @@ std::vector<enchantment_flag> enchantment_flag::get_all() {
 }
 
 void enchantment_flag::reset() { all_enchantment_flags.reset(); }
+
+std::set<enchantment_flag_id> enchantment_flag::get_parents() const {
+    auto res = std::set<enchantment_flag_id>();
+    if (!parents.empty()) {
+        for (auto parent : parents) {
+            res.insert(parent);
+            auto more_parents = parent->get_parents();
+            res.insert(more_parents.begin(), more_parents.end());
+        }
+    }
+    return res;
+}

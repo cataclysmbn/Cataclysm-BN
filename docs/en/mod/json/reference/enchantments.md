@@ -540,6 +540,8 @@ All noted effects apply to the character in possession of the enchantment granti
 
 ## Basegame Enchantment Flag ID List
 
+### Sight
+
 ##### UNDERWATER_SIGHT
 
 Makes sight underwater uninhibited
@@ -564,24 +566,51 @@ Gain infrared vision
 
 Can see robots and electrical creatures through walls
 
-##### ALARMCLOCK
-
-Gives the ability to set an alarm while sleeping
-
-##### WATCH
-
-Gives the ability to see the precise time
+### Consumption
 
 ##### EAT_ROTTEN
 
-Gives the ability to eat rotten food.
+Gives the ability to eat rotten food safely.
+
+##### ONLY_EAT_ROTTEN
+
+Gives significant penalty to eating fresh food, still allows drinking fresh liquids
+
+##### EAT_ROTTEN_MORALE
+
+Gives no morale penalty to eating rotten food
 
 ##### CONSUME_UNCLEAN
 
 Gives the ability to drink unclean liquids and eat unclean foods
 
-##### CANNOT_EAT_FRESH
+##### FOOD_PARASITE_IMMUNE
 
-Prevents eating fresh food, still allows drinking fresh liquids
+Prevents gaining parasites from consuming food
 
-##### ROTTEN
+##### FOOD_POISION_IMMUNE
+
+Prevents gaining poision from consuming food
+
+### Miscellaneous
+
+##### ALARMCLOCK
+
+Gives the ability to set an alarm while sleeping
+
+##### INTENAL_ALARMCLOCK
+
+Has the effects of `ALARMCLOCK`, but does not produce sound
+It also should prevent sleeping through it.
+
+##### RADIO
+
+Gives the effects of having a radio
+
+##### THERMOMETER
+
+Gives the effects of having a themometer
+
+##### WATCH
+
+Gives the ability to see the precise time
