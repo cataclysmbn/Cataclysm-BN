@@ -343,9 +343,7 @@ double enchantment::calc_bonus(enchantment_value_id value, double base, bool rou
     double ret = add + base * mul;
     // This is seperated because apparently adding 0.0 is very scrungly to the computer
     // Caused a bunch of tests to splode
-    if( max != 0 ) {
-        ret += max;
-    }
+    if (max != 0) { ret += max; }
     if (round) { ret = trunc(ret); }
     return ret;
 }

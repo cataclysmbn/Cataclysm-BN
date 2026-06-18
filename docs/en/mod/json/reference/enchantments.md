@@ -420,6 +420,12 @@ The final value will not go below 0, and the maximum value is uncapped.
 Night vision value for the player. `EFFECT_NIGHT_VISION` or `GNV_EFFECT` is 10.0 while `GNVE_EFFECT` is 18.0
 Only `max` works, and it will take the highest of enchantment and other night vision effects
 
+##### CLAIRVOYANCE
+
+Clairvoyance value for the player. `CLAIRVOYANCE_SUPER` is 40.0 while `CLAIRVOYANCE_PLUS` is 8.0
+And `CLAIRVOYANCE` is 3
+Only `max` works, and it will take the highest of enchantment and other clairvoyance effects
+
 ##### ARMOR_X
 
 Incoming damage modifier. Applied after Active Defense System bionic but before the damage is

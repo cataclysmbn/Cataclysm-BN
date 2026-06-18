@@ -938,20 +938,21 @@ int Character::overmap_sight_range( int light_level ) const
 
 int Character::clairvoyance() const
 {
-    if( vision_mode_cache[VISION_CLAIRVOYANCE_SUPER] ) {
-        return MAX_CLAIRVOYANCE;
-    }
-
-    if( vision_mode_cache[VISION_CLAIRVOYANCE_PLUS] ) {
-        return 8;
-    }
-
-    if( vision_mode_cache[VISION_CLAIRVOYANCE] ) {
-        return 3;
-    }
-
     // 0 would mean we have clairvoyance of own tile
-    return -1;
+    int max = -1;
+    if( vision_mode_cache[VISION_CLAIRVOYANCE_SUPER] ) {
+        max = MAX_CLAIRVOYANCE;
+    } else if( vision_mode_cache[VISION_CLAIRVOYANCE_PLUS] ) {
+        max = 8;
+    } else if( vision_mode_cache[VISION_CLAIRVOYANCE] ) {
+        max = 3;
+    }
+
+    int ench = bonus_from_enchantments( 0.0, enchantment_value_id( "CLAIRVOYANCE" ) );
+    if( ench > 0 ) {
+        max = ench;
+    }
+    return max;
 }
 
 bool Character::sight_impaired() const
@@ -11732,13 +11733,14 @@ Attitude Character::attitude_to( const Creature &other ) const
 bool Character::sees( const tripoint_bub_ms &t, bool, int ) const
 {
     const int wanted_range = rl_dist( bub_pos(), t );
-    bool can_see = is_player() ? get_map().pl_sees( t, wanted_range ) :
-                   Creature::sees( t );
+
     // Clairvoyance is now pretty cheap, so we can check it early
-    if( wanted_range < MAX_CLAIRVOYANCE && wanted_range < clairvoyance() ) {
+    if( wanted_range < clairvoyance() ) {
         return true;
     }
 
+    bool can_see = is_player() ? get_map().pl_sees( t, wanted_range ) :
+                   Creature::sees( t );
     if( can_see && wanted_range > unimpaired_range() ) {
         can_see = false;
     }
