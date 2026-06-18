@@ -2517,7 +2517,7 @@ void split_deferred()
     auto &m = get_map();
 
     for( const auto& [it, cnt] : split_defer ) {
-        const auto pos = it->position();
+        const auto pos = it->bub_pos();
         for( auto n = 0; n < cnt; n++ ) {
             auto tmp = item::spawn( *it );
 
@@ -4602,7 +4602,7 @@ void submap::store( JsonOut &jsout ) const
 }
 
 void submap::load( JsonIn &jsin, const std::string &member_name, int version,
-                   const tripoint_abs_ms offset )
+                   const tripoint_abs_ms offset, const dimension_id &dim )
 {
     if( member_name == "turn_last_touched" ) {
         last_touched = calendar::turn_zero + time_duration::from_turns( jsin.get_int() );
@@ -4817,7 +4817,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             int k = jsin.get_int();
             auto sm_pt = tripoint_sm_ms( i, j, k );
             auto abs_pt = tripoint_abs_ms( offset.x() + i, offset.y() + j, k );
-            std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( abs_pt );
+            std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( abs_pt, dim );
             pc->counter = jsin.get_int();
             if( jsin.test_int() ) {
                 // Oops, int id incorrectly saved by legacy code, just load it and hope for the best

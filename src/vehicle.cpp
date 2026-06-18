@@ -6407,7 +6407,7 @@ units::volume vehicle::free_volume( const int part ) const
 
 void vehicle::make_inactive( item &target )
 {
-    auto cargo_parts = get_parts_at( tripoint_bub_ms( target.position() ), "CARGO",
+    auto cargo_parts = get_parts_at( target.bub_pos(), "CARGO",
                                      part_status_flag::any );
     if( cargo_parts.empty() ) {
         return;
@@ -6420,7 +6420,7 @@ void vehicle::make_active( item &target )
     if( !target.needs_processing() ) {
         return;
     }
-    auto cargo_parts = get_parts_at( tripoint_bub_ms( target.position() ), "CARGO",
+    auto cargo_parts = get_parts_at( target.bub_pos(), "CARGO",
                                      part_status_flag::any );
     if( cargo_parts.empty() ) {
         return;

@@ -173,7 +173,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
     for( auto veh : opts ) {
         vehicle *source_veh = nullptr;
         if( liquid.has_position() && liquid.where() == item_location_type::vehicle ) {
-            source_veh = veh_pointer_or_null( here.veh_at( liquid.position() ) );
+            source_veh = veh_pointer_or_null( here.veh_at( liquid.abs_pos() ) );
         }
         if( veh == source_veh && veh->has_part( "FLUIDTANK", false ) ) {
             for( const vpart_reference &vp : veh->get_avail_parts( "FLUIDTANK" ) ) {
@@ -200,7 +200,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
             continue;
         }
         if( liquid.is_loaded() && liquid.where() == item_location_type::map &&
-            liquid.position() == target_pos ) {
+            liquid.bub_pos() == target_pos ) {
             continue;
         }
         const std::string dir = direction_name( direction_from( g->u.bub_pos(), target_pos ) );
@@ -217,7 +217,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
         // infinite space and the liquid can not be used from there anyway.
         if( liquid.has_infinite_charges() && liquid.is_loaded() &&
             liquid.where() == item_location_type::map ) {
-            add_msg( m_info, _( "Clearing out the %s would take forever." ), here.name( liquid.position() ) );
+            add_msg( m_info, _( "Clearing out the %s would take forever." ), here.name( liquid.bub_pos() ) );
             return;
         }
 
@@ -230,7 +230,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
         target.pos = *target_pos_;
 
         if( liquid.is_loaded() && liquid.where() == item_location_type::map &&
-            liquid.position() == target.pos ) {
+            liquid.bub_pos() == target.pos ) {
             add_msg( m_info, _( "That's where you took it from!" ) );
             return;
         }

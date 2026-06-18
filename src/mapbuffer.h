@@ -206,6 +206,40 @@ class mapbuffer_abs_omt_view
         std::array<const submap *, 4> submaps_ = {};
 };
 
+class mapbuffer_bounds_view
+{
+    public:
+        mapbuffer_bounds_view( mapbuffer &buffer,
+                               const point_abs_sm &begin,
+                               const point_abs_sm &end,
+                               mapbuffer_lookup_options options = {} );
+        mapbuffer_bounds_view() = default;
+
+        mapbuffer_bounds_view &operator=( const mapbuffer_bounds_view & ) = delete;
+        mapbuffer_bounds_view &operator=( mapbuffer_bounds_view && ) noexcept;
+
+        auto begin() const -> point_abs_sm;
+        auto end() const -> point_abs_sm;
+        auto submaps() const -> std::span<const mapbuffer_abs_submap_view> {
+            return submaps_;
+        }
+        auto submaps( int zlev ) const -> std::span<const mapbuffer_abs_submap_view> {
+            if( zlev < -OVERMAP_DEPTH || zlev > OVERMAP_HEIGHT ) { return {}; }
+            const auto index = static_cast<std::size_t>( zlev + OVERMAP_DEPTH );
+            return submaps_by_zlev_[index];
+        }
+        auto update( const point_abs_sm &begin, const point_abs_sm &end, mapbuffer *buffer = nullptr );
+        auto update( const point_rel_sm &offset );
+
+    private:
+        mapbuffer *buffer_ = nullptr;
+        mapbuffer_lookup_options options_;
+        point_abs_sm begin_;
+        point_abs_sm end_;
+        std::vector<mapbuffer_abs_submap_view> submaps_;
+        std::array<std::vector<mapbuffer_abs_submap_view>, OVERMAP_LAYERS> submaps_by_zlev_;
+};
+
 class mapbuffer_abs_tile_reader
 {
     public:
@@ -348,6 +382,8 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
         auto furn_vars( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
+        auto furnname( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::string;
 
         auto get_trap( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<trap_id>;
@@ -396,6 +432,8 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> bool;
         auto get_items( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> location_vector<item> *;
+        auto water_from( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> detached_ptr<item>;
         auto add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
         const mapbuffer_add_item_or_charges_options &options = {} ) -> detached_ptr<item>;
         auto add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mapbuffer_registry.h"
 #include "coordinates.h"
 #include "type_id.h"
 
@@ -22,7 +23,9 @@ class location
         virtual detached_ptr<T> detach( T *obj ) = 0;
         virtual void attach( detached_ptr<T> &&obj ) = 0;
         virtual bool is_loaded( const T *obj ) const = 0;
-        virtual tripoint_bub_ms position( const T *obj ) const = 0;
+        virtual tripoint_bub_ms bub_pos( const T *obj ) const = 0;
+        virtual tripoint_abs_ms abs_pos( const T *obj ) const = 0;
+        virtual dimension_id get_dimension( const T *obj ) const = 0;
         virtual std::string describe( const Character *ch, const T *obj ) const = 0;
         virtual ~location() = default;
 };
@@ -43,7 +46,9 @@ class character_item_location : public item_location
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
         bool is_loaded( const item *it ) const override;
-        tripoint_bub_ms position( const item *it ) const override;
+        tripoint_bub_ms bub_pos( const item *it ) const override;
+        tripoint_abs_ms abs_pos( const item *it ) const override;
+        dimension_id get_dimension( const item *it ) const override;
         item_location_type where() const override;
         int obtain_cost( const Character &ch, int qty, const item *it ) const override;
         std::string describe( const Character *ch, const item *it ) const override;
@@ -66,7 +71,9 @@ class wield_item_location :  public item_location
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
         bool is_loaded( const item *it ) const override;
-        tripoint_bub_ms position( const item *it ) const override;
+        tripoint_bub_ms bub_pos( const item *it ) const override;
+        tripoint_abs_ms abs_pos( const item *it ) const override;
+        dimension_id get_dimension( const item *it ) const override;
         item_location_type where() const override;
         int obtain_cost( const Character &ch, int qty, const item *it ) const override;
         std::string describe( const Character *ch, const item *it ) const override;
@@ -86,13 +93,18 @@ class worn_item_location :  public character_item_location
 class tile_item_location : public item_location
 {
     protected:
-        tripoint_abs_ms pos;
+        dimension_id dim_;
+        tripoint_abs_ms pos_;
     public:
-        tile_item_location( const tripoint_abs_ms &position );
+        tile_item_location( const tripoint_abs_ms &position, const dimension_id &dim_id );
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
         bool is_loaded( const item *it ) const override;
-        tripoint_bub_ms position( const item *it ) const override;
+        tripoint_bub_ms bub_pos( const item *it ) const override;
+        tripoint_abs_ms abs_pos( const item *it ) const override;
+        dimension_id get_dimension( const item *it ) const override;
+        void set_dimension( const dimension_id &dim );
+        const auto &buffer( const item *it ) const { return MAPBUFFER_REGISTRY.get( get_dimension( it ) ); }
         item_location_type where() const override;
         int obtain_cost( const Character &ch, int qty, const item *it ) const override;
         std::string describe( const Character *ch, const item *it ) const override;
@@ -102,8 +114,8 @@ class tile_item_location : public item_location
 class partial_con_item_location : public tile_item_location
 {
     public:
-        explicit partial_con_item_location( const tripoint_bub_ms &position );
-        explicit partial_con_item_location( const tripoint_abs_ms &position );
+        explicit partial_con_item_location( const tripoint_bub_ms &position, const dimension_id &dim_id );
+        explicit partial_con_item_location( const tripoint_abs_ms &position, const dimension_id &dim_id );
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
 };
@@ -117,7 +129,9 @@ class monster_item_location : public item_location
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
         bool is_loaded( const item *it ) const override;
-        tripoint_bub_ms position( const item *it ) const override;
+        tripoint_bub_ms bub_pos( const item *it ) const override;
+        tripoint_abs_ms abs_pos( const item *it ) const override;
+        dimension_id get_dimension( const item *it ) const override;
         item_location_type where() const override;
         int obtain_cost( const Character &ch, int qty, const item *it ) const override;
         std::string describe( const Character *ch, const item *it ) const override;
@@ -178,7 +192,9 @@ class vehicle_item_location : public item_location
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
         bool is_loaded( const item *it ) const override;
-        tripoint_bub_ms position( const item *it ) const override;
+        tripoint_bub_ms bub_pos( const item *it ) const override;
+        tripoint_abs_ms abs_pos( const item *it ) const override;
+        dimension_id get_dimension( const item *it ) const override;
         item_location_type where() const override;
         auto storage_temperature() const -> temperature_flag;
         int obtain_cost( const Character &ch, int qty, const item *it ) const override;
@@ -204,7 +220,9 @@ class contents_item_location :  public item_location
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
         bool is_loaded( const item *it ) const override;
-        tripoint_bub_ms position( const item * ) const override;
+        tripoint_bub_ms bub_pos( const item *it ) const override;
+        tripoint_abs_ms abs_pos( const item *it ) const override;
+        dimension_id get_dimension( const item *it ) const override;
         item_location_type where() const override;
         int obtain_cost( const Character &ch, int qty, const item *it ) const override;
         std::string describe( const Character *ch, const item *it ) const override;
@@ -228,7 +246,9 @@ class fake_item_location : public item_location
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
         bool is_loaded( const item *it ) const override;
-        tripoint_bub_ms position( const item *it ) const override;
+        tripoint_bub_ms bub_pos( const item *it ) const override;
+        tripoint_abs_ms abs_pos( const item *it ) const override;
+        dimension_id get_dimension( const item *it ) const override;
         item_location_type where() const override;
         int obtain_cost( const Character &ch, int qty, const item *it ) const override;
         std::string describe( const Character *ch, const item *it ) const override;
@@ -241,7 +261,9 @@ class temp_item_location : public item_location
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&it ) override;
         bool is_loaded( const item *it ) const override;
-        tripoint_bub_ms position( const item *it ) const override;
+        tripoint_bub_ms bub_pos( const item *it ) const override;
+        tripoint_abs_ms abs_pos( const item *it ) const override;
+        dimension_id get_dimension( const item *it ) const override;
         item_location_type where() const override;
         int obtain_cost( const Character &ch, int qty, const item *it ) const override;
         std::string describe( const Character *ch, const item *it ) const override;

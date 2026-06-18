@@ -225,7 +225,7 @@ auto mapgen_constructor::reset_scratch_omt( const tripoint_abs_omt &omt_pos, con
             return;
         }
         const auto abs = project_combine( abs_offset_, offset );
-        auto sm = std::make_unique<submap>( abs );
+        auto sm = std::make_unique<submap>( abs, buffer_.get_dimension_id() );
         sm->set_all_ter( terrain );
         sm->set_all_furn( furniture );
         sm->set_all_traps( trap );
@@ -246,7 +246,7 @@ auto mapgen_constructor::ensure_omt_submaps( const time_point &when ) -> bool
         if( buffer_.lookup_submap_in_memory( abs ) != nullptr ) {
             return;
         }
-        auto sm = std::make_unique<submap>( abs );
+        auto sm = std::make_unique<submap>( abs, buffer_.get_dimension_id() );
         sm->last_touched = when;
         owned_submaps_[*index] = std::move( sm );
     } );
@@ -651,10 +651,14 @@ auto mapgen_constructor::add_item_or_charges( const point_omt_ms &pos,
     if( !obj || obj->is_null() || obj->has_flag( flag_NO_DROP ) ) {
         return std::move( obj );
     }
-    const auto try_place = [&]( const point_omt_ms & p ) -> bool {
+    const auto try_place = [&]( const point_omt_ms & p, const bool reject_noitem ) -> bool {
         const auto [sm, local] = tile_at( p );
         if( sm == nullptr || has_flag( "DESTROY_ITEM", p ) ||
             ( obj->made_of( LIQUID ) && has_flag( "SWIMMABLE", p ) ) )
+        {
+            return false;
+        }
+        if( reject_noitem && ( has_flag( "NOITEM", p ) || has_flag( "SEALED", p ) ) )
         {
             return false;
         }
@@ -672,7 +676,7 @@ auto mapgen_constructor::add_item_or_charges( const point_omt_ms &pos,
         {
             stored_volume += existing->volume();
         }
-        if( ( has_flag( "NOITEM", p ) || has_flag( "SEALED", p ) ) ||
+        if( ( has_flag( "NOITEM", p ) && !( has_flag( "LIQUIDCONT", p ) && obj->made_of( LIQUID ) ) ) ||
             obj->volume() > max_items_for_tile( *sm, local ) - stored_volume ||
             items.size() >= MAX_ITEM_IN_SQUARE )
         {
@@ -681,12 +685,12 @@ auto mapgen_constructor::add_item_or_charges( const point_omt_ms &pos,
         add_item( p, std::move( obj ) );
         return true;
     };
-    if( try_place( pos ) ) {
+    if( try_place( pos, false ) ) {
         return std::move( obj );
     }
     if( overflow ) {
         for( const auto &candidate : points_in_radius( pos, 2 ) ) {
-            if( candidate != pos && try_place( candidate ) ) {
+            if( candidate != pos && try_place( candidate, true ) ) {
                 return std::move( obj );
             }
         }
@@ -700,13 +704,19 @@ auto mapgen_constructor::spawn_an_item( const point_omt_ms &p, detached_ptr<item
     if( !new_item ) {
         return detached_ptr<item>();
     }
-    if( charges > 0 ) {
+    if( one_in( 3 ) && new_item->has_flag( flag_VARSIZE ) ) {
+        new_item->set_flag( flag_FIT );
+    }
+    if( charges && new_item->charges > 0 ) {
         new_item->charges = charges;
     }
-    if( damlevel != 0 ) {
-        new_item->set_damage( damlevel );
+    auto spawned_item = item::in_its_container( std::move( new_item ) );
+    if( ( spawned_item->made_of( LIQUID ) && has_flag( "SWIMMABLE", p ) ) ||
+        has_flag( "DESTROY_ITEM", p ) ) {
+        return detached_ptr<item>();
     }
-    return add_item_or_charges( p, std::move( new_item ) );
+    spawned_item->set_damage( damlevel );
+    return add_item_or_charges( p, std::move( spawned_item ) );
 }
 
 auto mapgen_constructor::spawn_items( const point_omt_ms &p,

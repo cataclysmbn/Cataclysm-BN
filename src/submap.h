@@ -76,7 +76,7 @@ struct spawn_point {
 template<int sx, int sy>
 struct maptile_soa {
     protected:
-        maptile_soa( const tripoint_abs_sm &position );
+        maptile_soa( const tripoint_abs_sm &position, const dimension_id &dim );
     public:
         ter_id             ter[sx][sy];  // Terrain on each square
         furn_id            frn[sx][sy];  // Furniture on each square
@@ -92,10 +92,12 @@ struct maptile_soa {
 class submap : maptile_soa<SEEX, SEEY>
 {
     public:
-        submap( const tripoint_abs_sm &position );
+        submap( const tripoint_abs_sm &position, const dimension_id &dim );
         ~submap();
 
-        const tripoint_abs_sm position() const { return pos; }
+        const dimension_id get_dimension() const { return dim_; }
+        const tripoint_abs_sm position() const { return pos_; }
+        auto set_dimension( const dimension_id &dim ) -> void;
         auto set_position( const tripoint_abs_sm &position ) -> void;
 
         trap_id get_trap( const point_sm_ms &p ) const {
@@ -268,7 +270,7 @@ class submap : maptile_soa<SEEX, SEEY>
 
         void store( JsonOut &jsout ) const;
         void load( JsonIn &jsin, const std::string &member_name, int version,
-                   const tripoint_abs_ms offset );
+                   const tripoint_abs_ms offset, const dimension_id &dim );
 
         // If is_uniform is true, this submap is a solid block of terrain
         // Uniform submaps aren't saved/loaded, because regenerating them is faster
@@ -360,7 +362,8 @@ class submap : maptile_soa<SEEX, SEEY>
 
     private:
         static const data_vars::data_set EMPTY_VARS;
-        tripoint_abs_sm pos;
+        dimension_id dim_;
+        tripoint_abs_sm pos_;
         std::unordered_map<point_sm_ms, data_vars::data_set> ter_vars;
         std::unordered_map<point_sm_ms, data_vars::data_set> frn_vars;
 

@@ -1237,9 +1237,8 @@ static void sleep()
        and loop until we get a valid answer. */
     as_m.query();
 
-    if( as_m.ret == 1 ) {
-        g->quicksave();
-    } else if( as_m.ret == 2 || as_m.ret < 0 ) {
+    const auto save_before_sleep = as_m.ret == 1;
+    if( as_m.ret == 2 || as_m.ret < 0 ) {
         return;
     }
 
@@ -1276,6 +1275,10 @@ static void sleep()
         } else if( as_m.ret < 0 ) {
             return;
         }
+    }
+
+    if( save_before_sleep ) {
+        g->quicksave();
     }
 
     u.moves = 0;

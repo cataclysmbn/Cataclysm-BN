@@ -2843,7 +2843,7 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
         const repair_item_actor::attempt_hint attempt = actor->repair( *p, *used_tool, *fix_location );
         if( attempt != repair_item_actor::AS_CANT ) {
             if( ploc && ploc->where() == item_location_type::map ) {
-                used_tool->ammo_consume( used_tool->ammo_required(), ploc->position() );
+                used_tool->ammo_consume( used_tool->ammo_required(), ploc->bub_pos() );
             } else {
                 p->consume_charges( *used_tool, used_tool->ammo_required() );
             }
@@ -4731,6 +4731,7 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
             std::vector<tripoint_bub_ms> trajectory = target_handler::mode_spell( you, spell_being_cast,
                     no_fail,
                     no_mana );
+            g->refresh_player_visibility_cache_if_needed();
 
             if( !trajectory.empty() ) {
                 target = trajectory.back();

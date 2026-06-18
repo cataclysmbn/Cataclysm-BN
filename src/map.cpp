@@ -884,7 +884,7 @@ void map::set_absorption_cache_dirty( const int zlev )
     }
 }
 
-static submap null_submap( tripoint_abs_sm::zero() );
+static submap null_submap( tripoint_abs_sm::zero(), dimension_id{} );
 
 maptile map::maptile_at( const tripoint_bub_ms &p ) const
 {
@@ -6116,7 +6116,7 @@ detached_ptr<item> map::water_from( const tripoint_bub_ms &p )
 
 void map::make_inactive( item &loc )
 {
-    const auto local_pos = loc.position();
+    const auto local_pos = loc.bub_pos();
     point_sm_ms l;
     submap *const current_submap = get_submap_at( local_pos, l );
     if( current_submap == nullptr ) {
@@ -6145,14 +6145,14 @@ void map::make_active( item &loc )
     if( !target->needs_processing() ) {
         return;
     }
-    const auto local_pos = loc.position();
+    const auto local_pos = loc.bub_pos();
     point_sm_ms l;
     submap *const current_submap = get_submap_at( local_pos, l );
     if( current_submap == nullptr ) {
         return;
     }
 
-    const auto abs_pos = map_local_to_abs( *this, local_pos );
+    const auto abs_pos = loc.abs_pos();
     if( can_delegate_item_mutation_to_mapbuffer( *this, abs_pos, current_submap ) ) {
         get_mapbuffer().make_item_active( abs_pos, loc, resident_item_lookup() );
         return;
@@ -6173,7 +6173,7 @@ void map::update_lum( item &loc, bool add )
         return;
     }
 
-    const auto local_pos = loc.position();
+    const auto local_pos = loc.bub_pos();
     point_sm_ms l;
     submap *const current_submap = get_submap_at( local_pos, l );
     if( current_submap == nullptr ) {
@@ -6379,7 +6379,7 @@ auto map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm
                 continue;
             }
 
-            const auto map_location = active_item_ref->position();
+            const auto map_location = active_item_ref->bub_pos();
             temperature_flag flag = temperature_flag_at_point( *this, tripoint_bub_ms( map_location ) );
             process_map_items( active_item_ref, map_location, flag );
         }
@@ -6435,7 +6435,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
             return;
         }
         const auto it = std::ranges::find_if( cargo_parts, [&]( const vpart_reference & part ) {
-            return active_item_ref->position() == cur_veh.mount_to_bubble( part.mount() );
+            return active_item_ref->abs_pos() == cur_veh.mount_to_abs( part.mount() );
         } );
 
         if( it == cargo_parts.end() ) {
@@ -8957,7 +8957,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         if( bsub == nullptr ) {
             add_msg( m_debug, "[DIM-DIAG] loadn: creating boundary submap at (%d,%d,%d)",
                      grid_abs_sub.x(), grid_abs_sub.y(), grid_abs_sub.z() );
-            auto sm = std::make_unique<submap>( grid_abs_sub );
+            auto sm = std::make_unique<submap>( grid_abs_sub, bound_dimension_ );
             sm->is_uniform = true;
             sm->set_all_ter( get_boundary_terrain() );
             sm->last_touched = calendar::turn;
@@ -10731,7 +10731,7 @@ std::vector<item *> map::get_active_items_in_radius( const tripoint_bub_ms &cent
         std::vector<item *> items = type == special_item_type::none ? sm->active_items.get() :
                                     sm->active_items.get_special( type );
         for( const auto &elem : items ) {
-            if( rl_dist( elem->position(), center ) > radius ) {
+            if( rl_dist( elem->bub_pos(), center ) > radius ) {
                 continue;
             }
 
@@ -11114,7 +11114,7 @@ auto map::current_lightmap_source_signature() -> std::size_t
         }
         for( item *const itm : sm->active_items.get() ) {
             if( itm != nullptr ) {
-                hash_light_item( seed, tripoint_bub_ms( itm->position() ), *itm );
+                hash_light_item( seed, itm->bub_pos(), *itm );
             }
         }
     }

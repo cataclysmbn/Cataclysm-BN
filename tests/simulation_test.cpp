@@ -28,7 +28,7 @@ static const tripoint_abs_sm FAR_SM_POS{ 200, 200, 0 };
 // Ownership is transferred to @p mb.
 static auto make_blank_submap( mapbuffer &mb, const tripoint_abs_sm &pos ) -> submap *
 {
-    auto sm = std::make_unique<submap>( pos );
+    auto sm = std::make_unique<submap>( pos, mb.get_dimension_id() );
     mb.add_submap( pos, sm );
     return mb.lookup_submap_in_memory( pos );
 }

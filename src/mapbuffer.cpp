@@ -33,6 +33,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "harvest.h"
+#include "iexamine.h"
 #include "item.h"
 #include "itype.h"
 #include "json.h"
@@ -141,7 +142,7 @@ auto add_uniform_omt( mapbuffer &dest, const tripoint_abs_sm &base,
     auto added_any = false;
     std::ranges::for_each( offsets, [&]( const auto & offset ) {
         const auto pos = base + offset;
-        auto sm = std::make_unique<submap>( pos );
+        auto sm = std::make_unique<submap>( pos, dest.get_dimension_id() );
         sm->is_uniform = true;
         sm->set_all_ter( terrain_type );
         sm->last_touched = calendar::turn;
@@ -1902,6 +1903,32 @@ auto mapbuffer::furn_vars( const tripoint_abs_ms &p,
     return &tile->sm->get_furn_vars( tile->local );
 }
 
+auto mapbuffer::furnname( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::string
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        debugmsg( "Invalid tile at (%d, %d, %d)", p.x(), p.y(), p.z() );
+        return "null";
+    }
+    const auto sm = tile->sm;
+    const auto local = tile->local;
+    const furn_t &f = sm->get_furn( local ).obj();
+    if( f.has_flag( "PLANT" ) ) {
+        auto items = &sm->get_items( local );
+        for( auto it = items->begin(); it != items->end(); ++it ) {
+            if( ( *it )->is_seed() ) {
+                const std::string &plant = ( *it )->get_plant_name();
+                return string_format( "%s (%s)", f.name(), plant );
+            }
+        }
+        debugmsg( "Missing seed for plant at (%d, %d, %d)", p.x(), p.y(), p.z() );
+        return "null";
+    } else {
+        return f.name();
+    }
+}
+
 auto mapbuffer::get_trap( const tripoint_abs_ms &p,
                           const mapbuffer_lookup_options options ) -> std::optional<trap_id>
 {
@@ -2224,6 +2251,68 @@ auto mapbuffer::get_items( const tripoint_abs_ms &p,
     }
 
     return &tile->sm->get_items( tile->local );
+}
+
+auto mapbuffer::water_from( const tripoint_abs_ms &p,
+                            const mapbuffer_lookup_options options ) -> detached_ptr<item>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return detached_ptr<item>();
+    }
+
+    if( has_flag( "SALT_WATER", p ) ) {
+        return item::spawn( "salt_water", calendar::start_of_cataclysm, item::INFINITE_CHARGES );
+    }
+
+    auto sm = tile->sm;
+    auto local = tile->local;
+
+    const ter_id terrain_id = sm->get_ter( local );
+    if( terrain_id == t_sewage ) {
+        detached_ptr<item> ret = item::spawn( "water_sewage", calendar::start_of_cataclysm,
+                                              item::INFINITE_CHARGES );
+        ret->poison = rng( 1, 7 );
+        return ret;
+    }
+
+
+    // iexamine::water_source requires a valid liquid from this function.
+    if( terrain_id.obj().examine == &iexamine::water_source ) {
+        detached_ptr<item> ret = item::spawn( "water", calendar::start_of_cataclysm,
+                                              item::INFINITE_CHARGES );
+        int poison_chance = 0;
+        if( terrain_id.obj().has_flag( TFLAG_DEEP_WATER ) ) {
+            if( terrain_id.obj().has_flag( TFLAG_CURRENT ) ) {
+                poison_chance = 20;
+            } else {
+                poison_chance = 4;
+            }
+        } else {
+            if( terrain_id.obj().has_flag( TFLAG_CURRENT ) ) {
+                poison_chance = 10;
+            } else {
+                poison_chance = 3;
+            }
+        }
+        if( one_in( poison_chance ) ) {
+            ret->poison = rng( 1, 4 );
+        }
+        return ret;
+    }
+    const furn_t ob = sm->get_furn( local ).obj();
+    if( ob.examine == &iexamine::water_source ) {
+        return item::spawn( "water", calendar::start_of_cataclysm, item::INFINITE_CHARGES );
+    }
+    if( ob.examine == &iexamine::clean_water_source ||
+        terrain_id.obj().examine == &iexamine::clean_water_source ) {
+        return item::spawn( "water_clean", calendar::start_of_cataclysm, item::INFINITE_CHARGES );
+    }
+    if( ob.examine == &iexamine::liquid_source ) {
+        // Terrains have no "provides_liquids" to work with generic source
+        return item::spawn( ob.provides_liquids, calendar::turn, item::INFINITE_CHARGES );
+    }
+    return detached_ptr<item>();
 }
 
 auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
@@ -3195,7 +3284,7 @@ void mapbuffer::deserialize_into_vec(
                 if( skip_if && skip_if( loc ) ) {
                     skip = true;
                 } else {
-                    sm = std::make_unique<submap>( submap_coordinates );
+                    sm = std::make_unique<submap>( submap_coordinates, get_dimension_id() );
                 }
             } else if( skip ) {
                 jsin.skip_value();
@@ -3203,7 +3292,8 @@ void mapbuffer::deserialize_into_vec(
                 if( !sm ) { //This whole thing is a nasty hack that relys on coordinates coming first...
                     debugmsg( "coordinates was not at the top of submap json" );
                 }
-                sm->load( jsin, submap_member_name, version, project_to<coords::ms>( submap_coordinates ) );
+                sm->load( jsin, submap_member_name, version, project_to<coords::ms>( submap_coordinates ),
+                          get_dimension_id() );
             }
         }
         if( !skip ) {

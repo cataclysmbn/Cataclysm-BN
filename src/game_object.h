@@ -5,7 +5,6 @@
 #include "coordinates.h"
 #include "detached_ptr.h"
 #include "safe_reference.h"
-#include "point.h"
 
 class location_inventory;
 
@@ -57,7 +56,8 @@ class game_object
         bool has_position() const;
         void set_location( location<T> *own );
 
-        tripoint_bub_ms position( ) const;
+        tripoint_bub_ms bub_pos( ) const;
+        tripoint_abs_ms abs_pos( ) const;
         /** Returns the name that will be used when referring to the object in error messages */
         virtual std::string debug_name() const = 0;
 };
