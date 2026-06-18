@@ -5007,7 +5007,7 @@ void item::on_contents_changed()
         return;
     }
 
-    if( const optional_vpart_position vp = get_map().veh_at( position() ) ) {
+    if( const optional_vpart_position vp = get_map().veh_at( abs_pos() ) ) {
         vp->vehicle().invalidate_cargo_recharge_cache();
     }
 }
