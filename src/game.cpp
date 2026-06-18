@@ -13241,7 +13241,7 @@ struct furniture_move_effort {
 };
 
 struct furniture_move_effort_options {
-    const avatar &you;
+    const Character &mover;
     map &here;
     tripoint_bub_ms from;
     tripoint_bub_ms to;
@@ -13295,11 +13295,11 @@ static auto is_ramp_tile_or_mate( const map &here, const tripoint_bub_ms &pos ) 
            ( here.inbounds_z( below.z() ) && here.has_flag( TFLAG_RAMP_UP, below ) );
 }
 
-static auto furniture_drag_strength( const avatar &you ) -> int
+static auto furniture_drag_strength( const Character &mover ) -> int
 {
-    auto adjusted_str = you.get_str();
-    if( you.is_mounted() ) {
-        auto *mons = you.mounted_creature.get();
+    auto adjusted_str = mover.get_str();
+    if( mover.is_mounted() ) {
+        auto *mons = mover.mounted_creature.get();
         if( mons->has_flag( MF_RIDEABLE_MECH ) && mons->mech_str_addition() != 0 ) {
             adjusted_str = mons->mech_str_addition();
         }
@@ -13330,7 +13330,7 @@ static auto furniture_move_effort_for(
         str_req = multiply_ratio_round_up( str_req, 3, 2 );
     }
 
-    const auto adjusted_str = furniture_drag_strength( options.you );
+    const auto adjusted_str = furniture_drag_strength( options.mover );
     auto move_cost = str_req * 10;
     constexpr auto dresser_strength_anchor = 8;
     auto stamina_cost = multiply_ratio_round_up(
@@ -13397,27 +13397,19 @@ auto game::grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool
         return false;
     }
 
-    const auto src_items = m.i_at( fpos ).size();
-    const auto dst_items = m.i_at( fdest ).size();
-
-    const auto only_liquid_items = std::all_of( m.i_at( fdest ).begin(), m.i_at( fdest ).end(),
+    auto dst_stack = m.i_at( fdest );
+    const auto dst_items = dst_stack.size();
+    const auto only_liquid_items = std::all_of( dst_stack.begin(), dst_stack.end(),
     [&]( const auto & liquid_item ) {
         return liquid_item->made_of( LIQUID );
     } );
-
-    const auto dst_item_ok = !m.has_flag( "NOITEM", fdest ) &&
-                             !m.has_flag( "SWIMMABLE", fdest ) &&
-                             !m.has_flag( "DESTROY_ITEM", fdest );
 
     const auto src_item_ok = m.furn( fpos ).obj().has_flag( "CONTAINER" ) ||
                              m.furn( fpos ).obj().has_flag( "FIRE_CONTAINER" ) ||
                              m.furn( fpos ).obj().has_flag( "SEALED" );
 
-    const auto fire_intensity = m.get_field_intensity( fpos, fd_fire );
-    auto fire_age = m.get_field_age( fpos, fd_fire );
-
     const auto effort = furniture_move_effort_for( {
-        .you = u,
+        .mover = u,
         .here = m,
         .from = fpos,
         .to = fdest,
@@ -13482,46 +13474,11 @@ auto game::grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool
 
     sounds::sound( se );
 
-    auto *atd = active_tiles::furn_at<active_tile_data>( bub_to_abs( fpos ) );
-
-    // Swap furniture vars between tiles beforehand
-    // because the furn_set call will clear the vars
-    // when furniture is set to f_null
-    const auto dstVars = m.furn_vars( fdest );
-    const auto srcVars = m.furn_vars( fpos );
-    std::swap( *srcVars, *dstVars );
-
-    // Actually move the furniture.
-    // Ignore grab destroy checks
-    m.furn_set( fdest, m.furn( fpos ), atd ? atd->clone() : nullptr, true );
-    m.furn_set( fpos, f_null, nullptr, true );
-    u.clear_memorized_overlay( bub_to_abs( tripoint_bub_ms( fpos ) ) );
-
-    if( fire_intensity == 1 && !pulling_furniture ) {
-        m.remove_field( fpos, fd_fire );
-        m.set_field_intensity( fdest, fd_fire, fire_intensity );
-        m.set_field_age( fdest, fd_fire, fire_age );
-    }
-
-    // Is there is only liquids on the ground, remove them after moving furniture.
-    if( dst_items > 0 && only_liquid_items ) {
-        m.i_clear( fdest );
-    }
-
-    if( src_items > 0 ) { // Move the stuff inside.
-        if( dst_item_ok && src_item_ok ) {
-            // Assume contents of both cells are legal, so we can just swap contents.
-            auto temp = m.i_clear( fpos );
-            auto temp2 = m.i_clear( fdest );
-            for( auto &it : temp ) {
-                m.i_at( fdest ).insert( std::move( it ) );
-            }
-            for( auto &it : temp2 ) {
-                m.i_at( fpos ).insert( std::move( it ) );
-            }
-        } else {
-            add_msg( _( "Stuff spills from the %s!" ), furntype.name() );
-        }
+    if( !m.move_furn( fpos, fdest, {
+        .mover = &u,
+        .pulling = pulling_furniture,
+    } ) ) {
+        return true;
     }
 
     if( shifting_furniture ) {

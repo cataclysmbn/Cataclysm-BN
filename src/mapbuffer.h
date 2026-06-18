@@ -111,7 +111,6 @@ struct mapbuffer_set_furn_options {
     furn_id furniture;
     const cata::poly_serialized<active_tile_data> *active = nullptr;
     mapbuffer_lookup_options lookup;
-    bool run_hooks = true;
 };
 
 struct mapbuffer_item_lum_options {

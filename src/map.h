@@ -120,6 +120,13 @@ struct map_stack_options {
     map *local_origin = nullptr;
 };
 
+struct map_move_furn_options {
+    Character *mover = nullptr;
+    bool pulling = false;
+    bool move_contents = true;
+    bool move_fire = true;
+};
+
 class map_stack : public item_stack
 {
     private:
@@ -1199,17 +1206,10 @@ class map : public submap_load_listener
         std::string obstacle_name( const tripoint_bub_ms &p );
         bool has_furn( const tripoint_bub_ms &p ) const;
         furn_id furn( const tripoint_bub_ms &p ) const;
-        /**
-        * Sets the furniture at given position.
-        *
-        * @param p Position within the map
-        * @param new_furniture Id of new furniture
-        * @param new_active Override default active tile of new furniture
-        * @param ignore_grabbed Ignore destruction of grabbed tile, useful when player is moved afterwards
-        */
         void furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
-                       const cata::poly_serialized<active_tile_data> &new_active = nullptr,
-                       const bool ignore_grabbed = false );
+                       const cata::poly_serialized<active_tile_data> &new_active = nullptr );
+        auto move_furn( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
+                        const map_move_furn_options &options = {} ) -> bool;
         std::string furnname( const tripoint_bub_ms &p );
         bool can_move_furniture( const tripoint_bub_ms &pos, player *p = nullptr );
 

@@ -1,5 +1,6 @@
 #include "map.h"
 
+#include "active_tile_data.h"
 #include "faction.h"
 #include "mapdata.h"
 #include "mapgen_async.h"
@@ -2387,45 +2388,108 @@ furn_id map::furn( const tripoint_bub_ms &p ) const
 }
 
 void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
-                    const cata::poly_serialized<active_tile_data> &new_active, bool ignore_grab_check )
+                    const cata::poly_serialized<active_tile_data> &new_active )
 {
     const auto abs_pos = map_local_to_abs( *this, p );
     if( is_outside_pocket_dimension_bounds( pocket_info_, abs_pos ) ) {
         return;
     }
 
-    const auto old_furniture = get_mapbuffer().get_furn( abs_pos, resident_item_lookup() );
-    if( !old_furniture || *old_furniture == new_furniture ) {
-        return;
-    }
-
-    const furn_id old_id = *old_furniture;
-    const furn_t &old_t = old_id.obj();
-    const furn_t &new_t = new_furniture.obj();
-
-    const auto changed = get_mapbuffer().set_furn( abs_pos, {
+    get_mapbuffer().set_furn( abs_pos, {
         .furniture = new_furniture,
         .active = &new_active,
         .lookup = resident_item_lookup(),
-        .run_hooks = false,
     } );
-    if( !changed ) {
+}
+
+auto map::move_furn( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
+                     const map_move_furn_options &options ) -> bool
+{
+    if( from == to ) {
+        return true;
+    }
+
+    const auto moving_furn = furn( from );
+    if( moving_furn == f_null || has_furn( to ) ) {
+        return false;
+    }
+
+    const auto src_items = i_at( from ).size();
+    auto dst_stack = i_at( to );
+    const auto dst_items = dst_stack.size();
+    const auto only_liquid_items = std::all_of( dst_stack.begin(), dst_stack.end(),
+    []( const auto & liquid_item ) {
+        return liquid_item->made_of( LIQUID );
+    } );
+
+    const auto dst_item_ok = !has_flag( "NOITEM", to ) &&
+                             !has_flag( "SWIMMABLE", to ) &&
+                             !has_flag( "DESTROY_ITEM", to );
+
+    const auto src_item_ok = moving_furn.obj().has_flag( "CONTAINER" ) ||
+                             moving_furn.obj().has_flag( "FIRE_CONTAINER" ) ||
+                             moving_furn.obj().has_flag( "SEALED" );
+
+    const auto fire_intensity = options.move_fire ? get_field_intensity( from, fd_fire ) : 0;
+    auto fire_age = options.move_fire ? get_field_age( from, fd_fire ) : 0_turns;
+
+    auto *atd = active_tiles::furn_at<active_tile_data>( map_local_to_abs( *this, from ),
+                get_mapbuffer() );
+
+    const auto dst_vars = furn_vars( to );
+    const auto src_vars = furn_vars( from );
+    std::swap( *src_vars, *dst_vars );
+
+    furn_set( to, moving_furn, atd ? atd->clone() : nullptr );
+    furn_set( from, f_null );
+
+    if( options.mover != nullptr ) {
+        if( auto *const avatar_mover = options.mover->as_avatar() ) {
+            avatar_mover->clear_memorized_overlay( map_local_to_abs( *this, from ) );
+        }
+    }
+
+    if( fire_intensity == 1 && !options.pulling ) {
+        remove_field( from, fd_fire );
+        set_field_intensity( to, fd_fire, fire_intensity );
+        set_field_age( to, fd_fire, fire_age );
+    }
+
+    if( dst_items > 0 && only_liquid_items ) {
+        i_clear( to );
+    }
+
+    if( options.move_contents && src_items > 0 ) {
+        if( dst_item_ok && src_item_ok ) {
+            auto src_contents = i_clear( from );
+            auto dst_contents = i_clear( to );
+            for( auto &it : src_contents ) {
+                i_at( to ).insert( std::move( it ) );
+            }
+            for( auto &it : dst_contents ) {
+                i_at( from ).insert( std::move( it ) );
+            }
+        } else {
+            add_msg( _( "Stuff spills from the %s!" ), moving_furn.obj().name() );
+        }
+    }
+
+    return true;
+}
+
+static auto release_avatar_grabbed_furniture_if_destroyed( const tripoint_bub_ms &p,
+        const furn_t &old_furniture, const furn_id &new_furniture ) -> void
+{
+    if( g == nullptr ) {
         return;
     }
 
-    // If player has grabbed this furniture and it's no longer grabbable, release the grab.
-    if( !ignore_grab_check && g->u.get_grab_type() == OBJECT_FURNITURE &&
-        g->u.bub_pos() + g->u.grab_point == p &&
-        !new_t.is_movable() ) {
-        add_msg( _( "The %s you were grabbing is destroyed!" ), old_t.name() );
-        g->u.grab( OBJECT_NONE );
-    }
-    // If a creature was crushed under a rubble -> free it
-    if( old_id == f_rubble && new_furniture == f_null ) {
-        Creature *c = g->critter_at( p );
-        if( c ) {
-            c->remove_effect( effect_crushed );
-        }
+    avatar &you = get_avatar();
+    if( you.get_grab_type() == OBJECT_FURNITURE &&
+        you.bub_pos() + you.grab_point == p &&
+        !new_furniture.obj().is_movable() ) {
+        add_msg( _( "The %s you were grabbing is destroyed!" ), old_furniture.name() );
+        you.grab( OBJECT_NONE );
     }
 }
 
@@ -4362,6 +4426,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
         // Didn't find any tent center, wreck the current tile
         if( !tentp ) {
             spawn_items( p, item_group::items_from( bash.drop_group, calendar::turn ) );
+            release_avatar_grabbed_furniture_if_destroyed( p, furnid, bash.furn_set );
             furn_set( p, bash.furn_set );
         } else {
             // Take the tent down
@@ -4383,6 +4448,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
                             fluid_grid::on_tank_removed( tripoint_abs_ms( map_local_to_abs( *this, pt ) ) );
                         }
                         spawn_items( p, item_group::items_from( recur_bash.drop_group, calendar::turn ) );
+                        release_avatar_grabbed_furniture_if_destroyed( pt, furn_obj, recur_bash.furn_set );
                         furn_set( pt, recur_bash.furn_set );
                         break;
                     }
@@ -4394,6 +4460,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
         if( furnid.fluid_grid && furnid.fluid_grid->role == fluid_grid_role::tank ) {
             fluid_grid::on_tank_removed( tripoint_abs_ms( map_local_to_abs( *this, p ) ) );
         }
+        release_avatar_grabbed_furniture_if_destroyed( p, furnid, bash.furn_set );
         furn_set( p, bash.furn_set );
         for( item * const &it : i_at( p ) )  {
             it->on_drop( p, *this );
