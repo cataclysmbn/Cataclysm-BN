@@ -30,15 +30,12 @@ on:
         default: |
           [
             { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
-            { "name": "Windows MSVC (no sound)", "platform": "windows", "artifact": "windows-tiles-no-sound-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": false, "ext": "zip", "content-type": "application/zip" },
             { "name": "Linux Tiles", "platform": "linux", "artifact": "linux-tiles-x64", "os": "ubuntu-latest", "tiles": true, "sound": true, "ext": "tar.gz", "content-type": "application/gzip" },
             { "name": "Linux Curses", "platform": "linux", "artifact": "linux-curses-x64", "os": "ubuntu-latest", "tiles": false, "sound": false, "ext": "tar.gz", "content-type": "application/gzip" },
             { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
-            { "name": "macOS Tiles (no sound)", "platform": "macos", "artifact": "osx-tiles-no-sound-x64", "os": "macos-15-intel", "preset": "osx-tiles-no-sound-x64-dist", "tiles": true, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
-            { "name": "macOS Tiles ARM (no sound)", "platform": "macos", "artifact": "osx-tiles-no-sound-arm", "os": "macos-15", "preset": "osx-tiles-no-sound-arm-dist", "tiles": true, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk" },
             { "name": "Android Bundle", "platform": "android", "artifact": "android-bundle", "os": "ubuntu-latest", "android": "bundle", "tiles": true, "ext": "aab", "content-type": "application/aab" }
           ]
@@ -172,7 +169,7 @@ jobs:
       - name: Bundle registry mods
         if: inputs.bundle-registry-mods
         continue-on-error: ${{ inputs.mode == 'ci' }}
-        run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ format('{0}', matrix.sound) == 'false' && '--exclude-package-type soundpack' || '' }}
+        run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ (((matrix.platform == 'windows' || matrix.platform == 'macos') && matrix.tiles == true && matrix.sound == true) || format('{0}', matrix.sound) == 'false') && '--exclude-package-type soundpack' || '' }}
 
       - name: Bundle CDDA tilesets
         if: matrix.tiles == true && inputs.bundle-tilesets
@@ -483,10 +480,6 @@ jobs:
           $localize = "False"
           $tests = "False"
           $release = "ON"
-          $sound = "False"
-          if ("${{ matrix.sound }}" -eq "true") {
-            $sound = "True"
-          }
           if ("${{ inputs.download-translations }}" -eq "true") {
             $localize = "True"
           }
@@ -508,7 +501,7 @@ jobs:
             -DCURSES=False `
             "-DLOCALIZE=$localize" `
             -DTILES=True `
-            "-DSOUND=$sound" `
+            -DSOUND=True `
             "-DTESTS=$tests" `
             "-DRELEASE=$release" `
             -DJSON_FORMAT=OFF `
@@ -544,9 +537,14 @@ jobs:
         if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
           $dist = "cataclysmbn-${{ inputs.version-label }}"
+          Remove-Item -Recurse -Force $dist -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force lang/mo
           cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
-
+          if ("${{ matrix.tiles }}" -eq "true" -and "${{ matrix.sound }}" -eq "true" -and "${{ inputs.bundle-registry-mods }}" -eq "true") {
+            Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.zip
+            deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts
+            cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
+          }
           Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
       - name: Verify statically linked SDL runtime (windows msvc)
@@ -589,8 +587,17 @@ jobs:
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.preset }}
 
+      - name: Create distribution package with soundpacks (macOS)
+        if: runner.os == 'macOS' && matrix.tiles == true && matrix.sound == true && inputs.bundle-registry-mods && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.dmg
+          deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts
+          cmake -E copy_directory data/mods Cataclysm.app/Contents/Resources/data/mods
+          cmake -E copy_directory data/sound Cataclysm.app/Contents/Resources/data/sound
+          dmgbuild -s build-data/osx/dmgsettings.py "Cataclysm BN" cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
+
       - name: Rename distribution package (macOS)
-        if: runner.os == 'macOS' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        if: runner.os == 'macOS' && !(matrix.tiles == true && matrix.sound == true && inputs.bundle-registry-mods) && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
 
       - name: Verify bundled SDL runtime (macOS)
@@ -852,15 +859,17 @@ jobs:
       - name: Upload to release
         if: inputs.upload-to-release
         run: |
+          release="${{ inputs.release-tag }}"
           if [ "${{ inputs.version-label }}" = "experimental" ]; then
             SHA_SHORT=$(git rev-parse --short HEAD)
             COMMIT_SUBJECT=$(git log -1 --pretty=%s)
             TIMESTAMP=$(date -u "+%F %T")
-            gh release upload experimental --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
+            release=experimental
             gh release edit experimental --title "Experimental @ $TIMESTAMP ($SHA_SHORT)" --notes "Experimental build for commit $SHA_SHORT ($COMMIT_SUBJECT) on $TIMESTAMP"
-          else
-            gh release upload ${{ inputs.release-tag }} --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
           fi
+          extra="cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.${{ matrix.ext }}"
+          [ -f "$extra" ] && gh release upload "$release" --clobber "$extra"
+          gh release upload "$release" --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
