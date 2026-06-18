@@ -4,6 +4,7 @@
 #include "fstream_utils.h"
 #include "game.h"
 #include "magic.h"
+#include "map.h"
 #include "monster.h"
 
 #include "player_helpers.h"
@@ -102,6 +103,20 @@ TEST_CASE( "spell level", "[magic][spell][level]" )
             }
         }
     }
+}
+
+TEST_CASE( "avatar sees own tile even with dirty visibility cache",
+           "[magic][spell][target][vision]" )
+{
+    clear_all_state();
+    clear_avatar();
+
+    avatar &you = get_avatar();
+    map &here = get_map();
+    here.invalidate_map_cache( you.bub_pos().z() );
+    REQUIRE( here.visibility_caches_dirty() );
+
+    CHECK( you.sees( you.bub_pos() ) );
 }
 
 TEST_CASE( "known magic remembers the last cast spell", "[magic][spell][save]" )
