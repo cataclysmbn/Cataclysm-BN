@@ -6,10 +6,13 @@
 #include <utility>
 #include <vector>
 
+#include "calendar.h"
 #include "coordinates.h"
 #include "enums.h"
 #include "map.h"
+#include "mapbuffer_registry.h"
 #include "map_extras.h"
+#include "mapgen_constructor.h"
 #include "omdata.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
@@ -38,8 +41,8 @@ TEST_CASE( "mx_minefield real spawn", "[.][map_extra][overmap]" )
 
     // For every single bridge we found, run mapgen (which will select and apply a map extra).
     for( const tripoint_abs_omt &p : bridges ) {
-        tinymap tm;
-        tm.load( project_to<coords::sm>( p ), false );
+        mapgen_constructor tm( MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() ) );
+        tm.generate( p, calendar::turn );
     }
 
     // Get all of the map extras that have been generated.
@@ -77,13 +80,13 @@ TEST_CASE( "mx_minefield theoretical spawn", "[map_extra][overmap]" )
         om.ter_set( center + om_direction::displace( om_direction::opposite( bridge_direction ), 1 ),
                     road );
 
-        tinymap tm;
-        tm.load( project_combine( om.pos(), project_to<coords::sm>( center ) ), false );
+        mapgen_constructor tm( MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() ) );
+        tm.load( project_combine( om.pos(), center ) );
 
         const string_id<map_extra> mx_minefield( "mx_minefield" );
         const map_extra_pointer mx_func = MapExtras::get_function( mx_minefield.str() );
 
-        return mx_func( tm, tm.get_abs_sub() );
+        return mx_func( tm, tm.get_abs_omt() );
     };
 
     // Pick a point in the middle of the overmap so we don't go out of bounds when setting up

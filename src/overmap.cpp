@@ -17,6 +17,7 @@
 #include <optional>
 #include <ostream>
 #include <point.h>
+#include <ranges>
 #include <set>
 #include <submap.h>
 #include <tuple>
@@ -44,7 +45,9 @@
 #include "map.h"
 #include "map_iterator.h"
 #include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "mapgen.h"
+#include "mapgen_constructor.h"
 #include "mapgen_functions.h"
 #include "math_defines.h"
 #include "messages.h"
@@ -5973,10 +5976,12 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         * begin edited editmap code TODO: Should probably just make this a
         * function, if there is one, I couldnt find it. Bascially "regenerates" an OM tile.
         */
-        tinymap tmp;
         map &here = get_map();
         owning_omb.ter_set( p, oter_id( "omt_ore_vein_" + chosen + directions[rand() % 4] ) );
-        tmp.generate( target_sub, calendar::turn );
+        mapbuffer generated_buffer;
+        generated_buffer.set_dimension_id( dimension_id_ );
+        mapgen_constructor generated_map( generated_buffer );
+        generated_map.generate( p, calendar::turn );
 
         here.set_transparency_cache_dirty( p.z() );
         here.set_outside_cache_dirty( p.z() );
@@ -5988,31 +5993,29 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         here.clear_vehicle_cache();
         here.clear_vehicle_list( p.z() );
 
-        for( int x = 0; x < 2; x++ ) {
-            for( int y = 0; y < 2; y++ ) {
-                // Apply previewed mapgen to map. Since this is a function for testing, we try avoid triggering
-                // functions that would alter the results
-                const auto dest_pos = target_sub + point_rel_sm( x, y );
-                const auto src_pos = tripoint_bub_sm{ x, y, p.z() };
+        for( const auto offset : point_range<point_omt_sm>( point_omt_sm::zero(), point_omt_sm( 1, 1 ) ) ) {
+            const auto dest_pos = target_sub + offset.raw();
 
-                submap *destsm = MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( dest_pos );
-                submap *srcsm = tmp.get_submap_at_grid( src_pos );
+            submap *destsm = MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( dest_pos );
+            submap *srcsm = generated_buffer.lookup_submap_in_memory( dest_pos );
+            if( destsm == nullptr || srcsm == nullptr ) {
+                continue;
+            }
 
-                submap::swap( *destsm,  *srcsm );
+            submap::swap( *destsm,  *srcsm );
 
-                for( auto &veh : destsm->vehicles ) {
-                    veh->abs_sm_pos = dest_pos;
-                }
+            for( auto &veh : destsm->vehicles ) {
+                veh->abs_sm_pos = dest_pos;
+            }
 
-                if( !destsm->spawns.empty() ) {                              // trigger spawnpoints
-                    here.spawn_monsters( true );
-                }
+            if( !destsm->spawns.empty() ) {                              // trigger spawnpoints
+                here.spawn_monsters( true );
             }
         }
 
         // Since we cleared the vehicle cache of the whole z-level (not just the generate map), we add it back here
-        for( int x = 0; x < here.getmapsize(); x++ ) {
-            for( int y = 0; y < here.getmapsize(); y++ ) {
+        for( const auto x : std::views::iota( 0, here.getmapsize() ) ) {
+            for( const auto y : std::views::iota( 0, here.getmapsize() ) ) {
                 const auto dest_pos = tripoint_bub_sm( x, y, p.z() );
                 const submap *destsm = here.get_submap_at_grid( dest_pos );
                 here.update_vehicle_list( destsm, p.z() ); // update real map's vcaches

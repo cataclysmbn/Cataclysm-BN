@@ -79,10 +79,7 @@ auto fire_spread_loader::request_for_fire( const dimension_id &dim, tripoint_abs
 
     // Request a single omt (radius 0) — always covers full z-pillar.
     const auto h = submap_loader.request_load(
-                       load_request_source::fire_spread,
-                       dim,
-                       pos,
-                       0 );
+                       load_request_source::fire_spread, dim, pos.xy(), 0 );
     fire_handles_[key] = h;
 }
 

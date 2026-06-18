@@ -448,7 +448,7 @@ TEST_CASE( "control_npc_updates_positions_and_reality_bubble", "[npc][control]" 
 
     avatar &you = get_avatar();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
-    npc &follower = spawn_npc( point_bub_ms( 10, 10 ), "test_talker" );
+    npc &follower = spawn_npc( tripoint_bub_ms( 10, 10, 0 ), "test_talker" );
     follower.set_fac( faction_id( "your_followers" ) );
     follower.set_attitude( NPCATT_FOLLOW );
     REQUIRE( follower.is_player_ally() );
@@ -462,7 +462,7 @@ TEST_CASE( "control_npc_updates_positions_and_reality_bubble", "[npc][control]" 
 
     CHECK( you.abs_pos() == controlled_npc_pos );
     CHECK( follower.abs_pos() == previous_avatar_pos );
-    CHECK( get_map().get_abs_sub() == player_reality_bubble_origin() );
+    CHECK( get_map().get_abs_sub() == player_reality_bubble_origin().xy() );
     CHECK( get_map().get_abs_sub() != old_map_origin );
     CHECK( get_map().inbounds( you.bub_pos() ) );
 }
@@ -481,7 +481,7 @@ TEST_CASE( "npc_can_target_player" )
     clear_creatures();
 
     Character &player_character = get_player_character();
-    npc &hostile = spawn_npc( player_character.bub_pos().xy() + point_south, "thug" );
+    npc &hostile = spawn_npc( player_character.bub_pos() + point_south, "thug" );
     REQUIRE( rl_dist( player_character.bub_pos(), hostile.bub_pos() ) <= 1 );
     hostile.set_attitude( NPCATT_KILL );
     hostile.name = "Enemy NPC";

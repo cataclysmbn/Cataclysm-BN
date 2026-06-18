@@ -329,7 +329,7 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
         node.far_load_handle = submap_loader.request_load(
                                    load_request_source::player_base,
                                    node.target_dim_id,
-                                   target_sm,
+                                   target_sm.xy(),
                                    radius );
 
         // Keep the LOCAL source submap resident too.  Without this the source
@@ -340,7 +340,7 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
         node.local_load_handle = submap_loader.request_load(
                                      load_request_source::player_base,
                                      dimension_id_,
-                                     source_sm,
+                                     source_sm.xy(),
                                      radius );
     }
 
@@ -439,14 +439,14 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         it->far_load_handle = submap_loader.request_load(
                                   load_request_source::player_base,
                                   it->target_dim_id,
-                                  target_sm,
+                                  target_sm.xy(),
                                   radius );
 
         const auto source_sm = project_to<coords::sm>( it->source_pos );
         it->local_load_handle = submap_loader.request_load(
                                     load_request_source::player_base,
                                     dimension_id_,
-                                    source_sm,
+                                    source_sm.xy(),
                                     radius );
 
         // Force-synchronous load of the far submap so power operations work

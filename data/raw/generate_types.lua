@@ -543,7 +543,7 @@ on_creature_performed_technique = {}
 on_creature_melee_attacked = {}
 
 ---@class OnMapgenPostprocessParams
----@field map Map
+---@field map MapgenConstructor
 ---@field omt TripointAbsOmt
 ---@field when TimePoint
 on_mapgen_postprocess = {}

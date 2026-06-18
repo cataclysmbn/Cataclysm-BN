@@ -41,7 +41,7 @@ local fd_smoke_vent = FieldTypeId.new("fd_smoke_vent"):int_id()
 draw_entry_room = function(data, map)
   for i = 0, 24 do
     for j = 0, 24 do
-      local pt = TripointBubMs.new(i, j, data:zlevel())
+      local pt = PointOmtMs.new(i, j)
       if i == 0 or i == 1 or i == 22 or i == 23 or
          j == 0 or j == 1 or j == 22 or j == 23 or
          ( j > 1 and j < 22 and ( i == 10 or i == 13 ) ) then
@@ -51,18 +51,18 @@ draw_entry_room = function(data, map)
       end
     end
   end
-  map:set_ter_at(TripointBubMs.new(11, 0, data:zlevel()), t_door_metal_locked)
-  map:set_ter_at(TripointBubMs.new(12, 0, data:zlevel()), t_door_metal_locked)
-  map:set_ter_at(TripointBubMs.new(11, 1, data:zlevel()), t_thconc_floor)
-  map:set_ter_at(TripointBubMs.new(12, 1, data:zlevel()), t_thconc_floor)
-  map:set_ter_at(TripointBubMs.new(10, 0, data:zlevel()), t_card_science)
-  map:set_ter_at(TripointBubMs.new(10, 12, data:zlevel()), t_door_metal_c)
-  map:set_ter_at(TripointBubMs.new(13, 12, data:zlevel()), t_door_metal_c)
-  map:set_ter_at(TripointBubMs.new(10, 11, data:zlevel()), t_door_metal_c)
-  map:set_ter_at(TripointBubMs.new(13, 11, data:zlevel()), t_door_metal_c)
-  map:set_ter_at(TripointBubMs.new(11, 21, data:zlevel()), t_stairs_down)
-  map:set_ter_at(TripointBubMs.new(12, 21, data:zlevel()), t_stairs_down)
-  local turretpos = PointBubMs.new(12, 5)
+  map:set_ter_at(PointOmtMs.new(11, 0), t_door_metal_locked)
+  map:set_ter_at(PointOmtMs.new(12, 0), t_door_metal_locked)
+  map:set_ter_at(PointOmtMs.new(11, 1), t_thconc_floor)
+  map:set_ter_at(PointOmtMs.new(12, 1), t_thconc_floor)
+  map:set_ter_at(PointOmtMs.new(10, 0), t_card_science)
+  map:set_ter_at(PointOmtMs.new(10, 12), t_door_metal_c)
+  map:set_ter_at(PointOmtMs.new(13, 12), t_door_metal_c)
+  map:set_ter_at(PointOmtMs.new(10, 11), t_door_metal_c)
+  map:set_ter_at(PointOmtMs.new(13, 11), t_door_metal_c)
+  map:set_ter_at(PointOmtMs.new(11, 21), t_stairs_down)
+  map:set_ter_at(PointOmtMs.new(12, 21), t_stairs_down)
+  local turretpos = PointOmtMs.new(12, 5)
   map:place_spawns( "GROUP_TURRET", 1, turretpos, turretpos, 1, true );
   data:nest( "lab_room_7x7", PointRelMs.new( 2, 2 ) )
   data:nest( "lab_room_7x7", PointRelMs.new( 2, 14 ) )
@@ -80,7 +80,7 @@ end
 draw_sewer_room = function(data, map, walls)
   for i = 0, 24 do
     for j = 0, 24 do
-      local pt = TripointBubMs.new( i, j, data:zlevel() )
+      local pt = PointOmtMs.new(i, j)
       map:set_ter_at(pt, t_thconc_floor)
       -- If there is a sewer nearby, down the center make a 5 tile wide sewage line
       if ( ( walls.left or walls.right ) and j > see - 3 and j < see + 2 ) or
@@ -118,61 +118,45 @@ shuffle = function(set)
   return set
 end
 
----@param map Map
+---@param map MapgenConstructor
 ---@param stair_id TerIntId
----@param zlevel integer
-local function insert_stairs_single(map, stair_id, zlevel)
+local function insert_stairs_single(map, stair_id)
   local valid_points = {}
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = TripointBubMs.new(i, j, zlevel)
+      local pt = PointOmtMs.new(i, j)
       if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
-        table.insert(valid_points, PointBubMs.new(i, j))
+        table.insert(valid_points, PointOmtMs.new(i, j))
       end
     end
   end
   if #valid_points == 0 then return end
   local final_point = valid_points[gapi.rng(1, #valid_points)]
-  map:set_ter_at(TripointBubMs.new(final_point, zlevel), stair_id)
+  map:set_ter_at(final_point, stair_id)
 end
 
--- This is the primary insert stair function, I wish there was the ability to read the square above
--- But it appears that it just registers everything as t_thconc_floor
-insert_stairs = function(map, up_id, down_id, zlevel, from_above)
+insert_stairs = function(map, up_id, down_id, from_above)
   local valid_points = {}
-  local linked_point = nil
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = TripointBubMs.new(i, j, zlevel)
-      local pt_above = TripointBubMs.new(i, j, zlevel + 1)
-      local pt_below = TripointBubMs.new(i, j, zlevel - 1)
-      -- If we somehow see a stair link take the stupid stair link
-      if ( from_above and map:get_ter_at(pt_above) == t_stairs_down ) or
-         ( not from_above and map:get_ter_at(pt_below) == t_stairs_up ) then
-        if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
-          linked_point = PointBubMs.new(i, j)
-          break
-        end
-      end
+      local pt = PointOmtMs.new(i, j)
       if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
-        table.insert(valid_points, PointBubMs.new(i, j))
+        table.insert(valid_points, PointOmtMs.new(i, j))
       end
     end
-    if linked_point then break end
   end
-  if linked_point then valid_points = { linked_point } end
   if #valid_points > 0 then
     local final_point = valid_points[gapi.rng(1, #valid_points)]
     if( from_above ) then
-      map:set_ter_at(TripointBubMs.new(final_point, zlevel), up_id)
+      map:set_ter_at(final_point, up_id)
     else
-      map:set_ter_at(TripointBubMs.new(final_point, zlevel), down_id)
+      map:set_ter_at(final_point, down_id)
     end
   else
     if( from_above ) then
-      insert_stairs_single(map, up_id, zlevel)
+      insert_stairs_single(map, up_id)
     else
-      insert_stairs_single(map, down_id, zlevel)
+      insert_stairs_single(map, down_id)
     end
   end
 end
@@ -188,9 +172,9 @@ draw_lights = function(data, map)
     for i = 0, 23 do
       for j = 0, 23 do
         if not( i * j % 2 == 0 or i + j % 4 == 0 ) and gapi.rng( 0, light_chance ) == 1 then
-          if map:get_ter_at( TripointBubMs.new(i, j, data:zlevel())) == t_thconc_floor or
-             map:get_ter_at( TripointBubMs.new(i, j, data:zlevel())) == t_strconc_floor then
-            map:set_ter_at( TripointBubMs.new(i, j, data:zlevel()), t_thconc_floor_olight)
+          if map:get_ter_at( PointOmtMs.new(i, j)) == t_thconc_floor or
+             map:get_ter_at( PointOmtMs.new(i, j)) == t_strconc_floor then
+            map:set_ter_at( PointOmtMs.new(i, j), t_thconc_floor_olight)
           end
         end
       end
@@ -205,19 +189,19 @@ draw_walls = function(data, map, walls)
     exterior_wall_ter = t_reinforced_glass
   end
   for i = 0, 23 do
-    local pt = TripointBubMs.new( i, 0, data:zlevel() )
+    local pt = PointOmtMs.new(i, 0)
     if walls.top == 0 then
       map:set_ter_at( pt, exterior_wall_ter )
       map:set_furn_at( pt, f_null )
       map:clear_items_at( pt )
     end
-    pt = TripointBubMs.new( 0, i, data:zlevel() )
+    pt = PointOmtMs.new(0, i)
     if walls.left == 0 then
       map:set_ter_at( pt, exterior_wall_ter )
       map:set_furn_at( pt, f_null )
       map:clear_items_at( pt )
     end
-    pt = TripointBubMs.new( i, 23, data:zlevel() )
+    pt = PointOmtMs.new(i, 23)
     if walls.bottom == 2 then
       if i == 11 or i == 12 then
         map:set_ter_at( pt, t_door_metal_c )
@@ -229,7 +213,7 @@ draw_walls = function(data, map, walls)
     end
     map:set_furn_at( pt, f_null )
     map:clear_items_at( pt )
-    pt = TripointBubMs.new( 23, i, data:zlevel() )
+    pt = PointOmtMs.new(23, i)
     if walls.right == 2 then
       if i == 11 or i == 12 then
         map:set_ter_at( pt, t_door_metal_c )
@@ -305,13 +289,10 @@ draw_normal_room = function(data, map)
   end
   -- Build forth the walls
   draw_walls(data, map, walls)
-  -- Ideally this should link stairs
-  -- The moment tinymaps can see above and below this will link stairs
-  -- We all know this will never happen
   if map.is_ot_match( "stairs", data:above(), ot_match_contains ) then
-    insert_stairs(map, t_stairs_up, t_stairs_down, data:zlevel(), true)
+    insert_stairs(map, t_stairs_up, t_stairs_down, true)
   elseif map.is_ot_match( "stairs", data:id(), ot_match_contains ) then
-    insert_stairs(map, t_stairs_up, t_stairs_down, data:zlevel(), false)
+    insert_stairs(map, t_stairs_up, t_stairs_down, false)
   end
   draw_lights(data, map)
 end
@@ -336,7 +317,7 @@ draw_slimepit_room = function(data, map)
   for i = 0, 23 do
     for j = 0, 23 do
       if ( j < top_wall or j > bottom_wall  or i > right_wall or i < left_wall ) then
-        local pt = TripointBubMs.new( i, j, data:zlevel() )
+        local pt = PointOmtMs.new(i, j)
         if gapi.rng(1, 5) == 1 then
           -- This pretty closely mimics make_rubble for the purposes
           map:set_ter_at( pt, t_slime )
@@ -354,7 +335,7 @@ draw_ants_room = function(data, map)
     for j = 0, 23 do
       -- Diamond area that covers 2 spaces on edge
       if i + j > 10 and i + j < 36 and math.abs( i - j ) < 13 then
-        local pt = TripointBubMs.new( i, j, data:zlevel() )
+        local pt = PointOmtMs.new(i, j)
         if map:has_ter_flag_at( "DOOR", pt ) or map:has_ter_flag_at( "WALL", pt ) then
           -- If edge
           -- Or 25% of the time
@@ -390,7 +371,7 @@ draw_fullflood_room = function(data, map)
   end
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = TripointBubMs.new( i, j, data:zlevel())
+      local pt = PointOmtMs.new(i, j)
       if gapi.rng(1, 10) ~= 1 then
         if map:get_ter_at(pt) == t_thconc_floor or map:get_ter_at(pt) == t_strconc_floor or map:get_ter_at(pt) == t_thconc_floor_olight then
           map:set_ter_at(pt, fluid)
@@ -413,7 +394,7 @@ draw_partflood_room = function(data, map)
   end
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = TripointBubMs.new( i, j, data:zlevel())
+      local pt = PointOmtMs.new(i, j)
       if gapi.rng(1, 5) == 1 then
         if map:get_ter_at(pt) == t_thconc_floor or map:get_ter_at(pt) == t_strconc_floor or map:get_ter_at(pt) == t_thconc_floor_olight then
           map:set_ter_at(pt, fluid)
@@ -432,7 +413,7 @@ draw_gasleak_room = function(data, map)
   end
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = TripointBubMs.new( i, j, data:zlevel())
+      local pt = PointOmtMs.new(i, j)
       if gapi.rng(1, 200) == 1 then
         if map:get_ter_at(pt) == t_thconc_floor or map:get_ter_at(pt) == t_strconc_floor then
           map:add_field_at( pt, field, 1, TimeDuration.from_turns(0) )
@@ -445,7 +426,7 @@ end
 draw_fungal_room = function(data, map)
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = TripointBubMs.new( i, j, data:zlevel())
+      local pt = PointOmtMs.new(i, j)
       if gapi.rng(1, 5) ~= 1 then
         if map:has_flag_at("FLAT", pt) then
           map:set_ter_at(pt, t_fungus_floor_in)
@@ -533,10 +514,10 @@ lab.ice_draw = function(data, map)
   else
     temperature = math.floor( -20 * math.log( -1 * data:zlevel() ) - 45 )
   end
-  map:set_temperature( TripointBubMs.new(0, 0, data:zlevel()), temperature)
-  map:set_temperature( TripointBubMs.new(0, 12, data:zlevel()), temperature)
-  map:set_temperature( TripointBubMs.new(12, 0, data:zlevel()), temperature)
-  map:set_temperature( TripointBubMs.new(12, 12, data:zlevel()), temperature)
+  map:set_temperature( PointOmtMs.new(0, 0), temperature)
+  map:set_temperature( PointOmtMs.new(0, 12), temperature)
+  map:set_temperature( PointOmtMs.new(12, 0), temperature)
+  map:set_temperature( PointOmtMs.new(12, 12), temperature)
   lab.draw(data, map)
 end
 

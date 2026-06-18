@@ -12,7 +12,7 @@ on:
 
 env:
   VCPKG_BINARY_SOURCES: "default"
-  EXPECTED_NIGHTLY_ASSET_COUNT: 10
+  EXPECTED_NIGHTLY_ASSET_COUNT: 14
 
 jobs:
   metadata:

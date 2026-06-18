@@ -96,6 +96,7 @@ class submap : maptile_soa<SEEX, SEEY>
         ~submap();
 
         const tripoint_abs_sm position() const { return pos; }
+        auto set_position( const tripoint_abs_sm &position ) -> void;
 
         trap_id get_trap( const point_sm_ms &p ) const {
             return trp[p.x()][p.y()];

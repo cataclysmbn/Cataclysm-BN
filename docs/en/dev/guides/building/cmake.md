@@ -267,12 +267,17 @@ tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
 
 #### Distribution Presets
 
-| Preset         | Description                             |
-| -------------- | --------------------------------------- |
-| `dist-tiles`   | Linux: Tiles + Sound + Languages        |
-| `dist-curses`  | Linux: Curses + Languages               |
-| `osx-arm-dist` | macOS ARM: Tiles + Sound + Languages    |
-| `lint`         | Minimal build for formatting tools only |
+| Preset                        | Description                             |
+| ----------------------------- | --------------------------------------- |
+| `dist-tiles`                  | Linux: Tiles + Sound + Languages        |
+| `dist-curses`                 | Linux: Curses + Languages               |
+| `osx-tiles-x64-dist`          | macOS x64: Tiles + Sound + Languages    |
+| `osx-tiles-no-sound-x64-dist` | macOS x64: Tiles + Languages            |
+| `osx-tiles-arm-dist`          | macOS ARM: Tiles + Sound + Languages    |
+| `osx-tiles-no-sound-arm-dist` | macOS ARM: Tiles + Languages            |
+| `osx-curses-x64-dist`         | macOS x64: Curses + Languages           |
+| `osx-curses-arm-dist`         | macOS ARM: Curses + Languages           |
+| `lint`                        | Minimal build for formatting tools only |
 
 #### Portable vs System Install
 

@@ -15,14 +15,14 @@
 //
 // The bad_day scenario carries FIRE_START, so game::start_game() calls
 // start_location::burn(), which is meant to ignite interior FLAMMABLE tiles around
-// the player. On current main burn() builds a single-z `tinymap` and queries
+// the player. The old burn() path built a single-z detached map and queried
 // is_outside(); a zlevels=false map cannot model the z+1 roof level, so its
 // outside_cache is filled all-true and is_outside() returns true for EVERY tile.
 // burn()'s interior filter then rejects all candidates and places zero fires.
 //
 // This test paints a roofed (=> "inside") flammable building on the live map around
 // the avatar and asserts that burn() actually places fd_fire on interior tiles.
-// It FAILS on the buggy single-z-tinymap implementation and PASSES once burn()
+// It FAILS on the buggy single-z detached-map implementation and PASSES once burn()
 // operates on the live multi-z map (g->m), whose outside cache is correct.
 
 TEST_CASE( "start_location_burn_places_fire_on_interior_flammable_tiles",
@@ -30,7 +30,6 @@ TEST_CASE( "start_location_burn_places_fire_on_interior_flammable_tiles",
 {
     clear_all_state();
     map &here = get_map();
-    REQUIRE( here.has_zlevels() );
 
     const ter_str_id floor_primitive( "t_floor_primitive" ); // interior floor, FLAMMABLE_ASH
     const ter_str_id floor_roof( "t_floor" );                // used as a roof on z+1

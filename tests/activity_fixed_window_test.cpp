@@ -106,7 +106,7 @@ TEST_CASE( "fixed window activity skip completes a short wait with active creatu
     REQUIRE( g->m.i_at( item_pos ).size() == 1 );
 
     spawn_test_monster( "mon_zombie", g->u.bub_pos() + tripoint_rel_ms( 30, 0, 0 ) );
-    auto &talker = spawn_npc( g->u.bub_pos().xy() + point( 5, 0 ), "test_talker" );
+    auto &talker = spawn_npc( g->u.bub_pos() + point( 5, 0 ), "test_talker" );
     talker.mission = NPC_MISSION_SHOPKEEP;
 
     const auto start_turn = calendar::turn;

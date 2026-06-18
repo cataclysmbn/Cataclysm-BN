@@ -272,15 +272,14 @@ static void init_bubble_config()
     init_bubble_config( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
 }
 
-static auto debug_assert_player_map_origin( const char *context, const bool check_z = true ) -> void
+static auto debug_assert_player_map_origin( const char *context ) -> void
 {
-    const auto expected = player_reality_bubble_origin();
-    const auto actual = g->m.get_abs_sub();
-    const auto matches = check_z ? actual == expected : actual.xy() == expected.xy();
+    const auto matches = g->m.get_abs_sub() == player_reality_bubble_origin().xy();
     if( !matches ) {
         debugmsg( "%s: player map loaded-grid origin %s does not match player reality-bubble "
                   "origin %s",
-                  context, actual.to_string(), expected.to_string() );
+                  context, g->m.get_abs_sub().to_string(),
+                  player_reality_bubble_origin().to_string() );
     }
 }
 
@@ -288,9 +287,7 @@ static auto discard_monster_map_for_loaded_bubble( map &here,
         const dimension_id &dimension_id ) -> void
 {
     const auto origin = here.get_abs_sub();
-    const auto zmin = here.has_zlevels() ? -OVERMAP_DEPTH : origin.z();
-    const auto zmax = here.has_zlevels() ? OVERMAP_HEIGHT : origin.z();
-    const auto z_range = std::views::iota( zmin, zmax + 1 );
+    const auto z_range = std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
     const auto xy_range = std::views::iota( 0, g_mapsize );
     std::ranges::for_each(
         cata::views::cartesian_product( z_range, xy_range, xy_range ),
@@ -410,7 +407,7 @@ static void achievement_attained( const achievement *a )
 
 // This is the main game set-up process.
 game::game() :
-    map_ptr( 1, true ),
+    map_ptr( 1 ),
     liveview( *liveview_ptr ),
     scent_ptr( *this, *map_ptr ),
     achievements_tracker_ptr( *stats_tracker_ptr, *kill_tracker_ptr, achievement_attained ),
@@ -701,7 +698,7 @@ special_game_type game::gametype() const
     return gamemode ? gamemode->id() : special_game_type::NONE;
 }
 
-void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
+void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
 {
     // Bind the map to the target dimension BEFORE m.load() so loadn() uses the
     // correct MAPBUFFER_REGISTRY slot for submap lookups and generation.
@@ -760,15 +757,15 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
 
     // Register game and map as listeners (add_listener is idempotent).
     // game must be added before map so that on_submap_unloaded deactivates
-    // entities before the map's listener clears grid[] pointers.
+    // entities before the map's listener clears cached submap pointers.
     submap_loader.add_listener( this );
     submap_loader.add_listener( &m );
 
     // The load-manager center is the middle of the loaded region, not the
     // top-left corner.  pos_sm is the top-left corner (abs_sub), so offset
     // by reality_bubble_radius_ in each horizontal direction.
-    const tripoint_abs_sm bubble_center = pos_sm + point_rel_sm( reality_bubble_radius_,
-                                          reality_bubble_radius_ );
+    const point_abs_sm bubble_center = pos_sm + point_rel_sm( reality_bubble_radius_,
+                                       reality_bubble_radius_ );
 
     // Create or update the reality bubble request.
     if( reality_bubble_handle_ == 0 ) {
@@ -977,16 +974,16 @@ bool game::start_game()
     lev.y() -= g_half_mapsize;
     const auto starting_player_pos = project_to<coords::ms>(
                                          lev + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
-    load_map( lev, /*pump_events=*/true );
+    load_map( lev.xy(), /*pump_events=*/true );
     u.setpos( starting_player_pos );
 
-    m.invalidate_map_cache( get_levz() );
-    m.build_map_cache( get_levz() );
+    m.invalidate_map_cache( lev.z() );
+    m.build_map_cache( lev.z() );
     // Do this after the map cache has been built!
-    start_loc.place_player( u );
+    start_loc.place_player( u, lev.z() );
     // ...but then rebuild it, because we want visibility cache to avoid spawning monsters in sight
-    m.invalidate_map_cache( get_levz() );
-    m.build_map_cache( get_levz() );
+    m.invalidate_map_cache( lev.z() );
+    m.build_map_cache( lev.z() );
     // Start the overmap with out immediate neighborhood visible, this needs to be after place_player
     get_overmapbuffer( current_dimension_id_ ).reveal( u.abs_omt_pos().xy(),
             get_option<int>( "DISTANCE_INITIAL_VISIBILITY" ), 0 );
@@ -1195,18 +1192,18 @@ vehicle *game::place_vehicle_nearby(
     for( const tripoint_abs_omt &goal : get_overmapbuffer( current_dimension_id_ ).find_all( omt_origin,
             find_params ) ) {
         // try place vehicle there.
-        tinymap target_map;
-        target_map.load( project_to<coords::sm>( goal ), false );
-        const tripoint_bub_ms tinymap_center( SEEX, SEEY, goal.z() );
+        map target_map( 2 );
+        target_map.load( project_to<coords::sm>( goal.xy() ), false );
+        const tripoint_bub_ms target_center( SEEX, SEEY, goal.z() );
         static constexpr std::array<units::angle, 4> angles = {{
                 0_degrees, 90_degrees, 180_degrees, 270_degrees
             }
         };
         vehicle *veh = target_map.add_vehicle(
-                           id, tinymap_center, random_entry( angles ), rng( 50, 80 ),
+                           id, target_center, random_entry( angles ), rng( 50, 80 ),
                            0, false, false, true );
         if( veh ) {
-            auto abs = map_local_to_abs( target_map, tinymap_center );
+            auto abs = map_local_to_abs( target_map, target_center );
             const auto proj = project_remain<coords::sm>( abs );
             veh->abs_sm_pos = proj.quotient_tripoint;
             veh->sm_ms_pos = proj.remainder;
@@ -1274,8 +1271,7 @@ void game::load_npcs()
         // NPCs who are out of bounds before placement would be pushed into bounds
         // This can cause NPCs to teleport around, so we don't want that
         if( sm_loc.x() < get_levx() || sm_loc.x() >= get_levx() + g_mapsize ||
-            sm_loc.y() < get_levy() || sm_loc.y() >= get_levy() + g_mapsize ||
-            ( sm_loc.z() != get_levz() && !m.has_zlevels() ) ) {
+            sm_loc.y() < get_levy() || sm_loc.y() >= get_levy() + g_mapsize ) {
             continue;
         }
 
@@ -2505,13 +2501,11 @@ auto game::has_activity_skip_active_fire() -> bool
         return false;
     };
 
-    const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : m.get_abs_sub().z();
-    const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : m.get_abs_sub().z();
     const auto axis = std::views::iota( 0, m.getmapsize() );
     for( const auto x : axis ) {
         for( const auto y : axis ) {
             const auto p = point_bub_sm( x, y );
-            for( const auto z : std::views::iota( zmin, zmax + 1 ) ) {
+            for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
                 auto *sm = m.get_submap_at_grid( tripoint_bub_sm( p, z ) );
                 if( sm != nullptr && submap_has_active_fire( *sm ) ) {
                     return true;
@@ -2748,13 +2742,11 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
 
     {
         ZoneScopedN( "activity_fixed_window_batch_submaps" );
-        const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : m.get_abs_sub().z();
-        const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : m.get_abs_sub().z();
         const auto axis = std::views::iota( 0, m.getmapsize() );
         for( const auto x : axis ) {
             for( const auto y : axis ) {
                 const auto p = point_bub_sm( x, y );
-                for( const auto z : std::views::iota( zmin, zmax + 1 ) ) {
+                for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
                     auto *sm = m.get_submap_at_grid( tripoint_bub_sm( p, z ) );
                     if( sm == nullptr ) {
                         continue;
@@ -3866,7 +3858,7 @@ bool game::load( const save_t &name )
     u.set_save_id( name.decoded_name() );
     u.name = name.decoded_name();
     // Set the correct bubble radius BEFORE unserialize() so the submap_loader
-    // request uses the right radius and update_map() does not null active grid slots.
+    // request uses the right radius and update_map() does not clear active cached slots.
     init_bubble_config();
     reality_bubble_radius_ = g_half_mapsize;
     // If a stale request exists from a previous load in the same session, release
@@ -4692,7 +4684,7 @@ static void draw_critter_internal( const catacurses::window &w, const Creature &
     if( !is_valid_in_w_terrain( point( mx, my ) ) ) {
         return;
     }
-    if( critter.bub_pos().z() != center.z() && m.has_zlevels() ) {
+    if( critter.bub_pos().z() != center.z() ) {
         static constexpr tripoint up_tripoint( tripoint_above );
         if( critter.bub_pos().z() == center.z() - 1 &&
             ( debug_mode || u.sees( critter ) ) &&
@@ -4936,19 +4928,21 @@ void game::draw_minimap()
         }
     }
 
-    const int sight_points = g->u.overmap_sight_range( g->light_level( g->u.bub_pos().z() ) );
+    const int sight_points = g->u.overmap_sight_range(
+                                 g->light_level( g->u.abs_pos().z() ) );
     for( int i = -3; i <= 3; i++ ) {
         for( int j = -3; j <= 3; j++ ) {
             if( i > -3 && i < 3 && j > -3 && j < 3 ) {
                 continue; // only do hordes on the border, skip inner map
             }
-            const tripoint_abs_omt omp( curs2 + point( i, j ), get_levz() );
-            if( get_overmapbuffer( current_dimension_id_ ).get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
+            const tripoint_abs_omt omp( curs2 + point( i, j ), g->u.abs_pos().z() );
+            if( get_overmapbuffer( current_dimension_id_ ).
+                get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
                 if( get_overmapbuffer( current_dimension_id_ ).seen( omp )
                     && g->u.overmap_los( omp, sight_points ) ) {
                     mvwputch( w_minimap, point( i + 3, j + 3 ), c_green,
-                              get_overmapbuffer( current_dimension_id_ ).get_horde_size( omp ) > HORDE_VISIBILITY_SIZE * 2 ? 'Z' :
-                              'z' );
+                              get_overmapbuffer( current_dimension_id_ ).
+                              get_horde_size( omp ) > HORDE_VISIBILITY_SIZE * 2 ? 'Z' : 'z' );
                 }
             }
         }
@@ -6776,7 +6770,7 @@ void game::knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult
             add_msg( _( "%s was stunned!" ), targ->name() );
         }
         for( size_t i = 1; i < traj.size(); i++ ) {
-            if( m.impassable( traj[i].xy() ) || m.obstructed_by_vehicle_rotation( tp, traj[i] ) ) {
+            if( m.impassable( traj[i] ) || m.obstructed_by_vehicle_rotation( tp, traj[i] ) ) {
                 targ->setpos( traj[i - 1] );
                 force_remaining = traj.size() - i;
                 if( stun != 0 ) {
@@ -6841,7 +6835,7 @@ void game::knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult
             add_msg( _( "%s was stunned!" ), targ->name );
         }
         for( size_t i = 1; i < traj.size(); i++ ) {
-            if( m.impassable( traj[i].xy() ) ||
+            if( m.impassable( traj[i] ) ||
                 m.obstructed_by_vehicle_rotation( tp, traj[i] ) ) {  // oops, we hit a wall!
                 targ->setpos( traj[i - 1] );
                 force_remaining = traj.size() - i;
@@ -7243,6 +7237,10 @@ monster *game::place_critter_around( const shared_ptr_fast<monster> &mon,
                                      bool forced )
 {
     std::optional<tripoint_bub_ms> where;
+    const auto center_sm = project_to<coords::sm>( center );
+    if( m.inbounds( center_sm ) && m.get_submap_at_grid( center_sm ) == nullptr ) {
+        m.load( m.get_abs_sub(), true );
+    }
     if( forced || can_place_monster( *mon, center ) ) {
         where = center;
     }
@@ -8924,7 +8922,7 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
         mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Sign: %s" ), sign_string );
     }
 
-    if( m.has_zlevels() && lp.z() > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
+    if( lp.z() > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
         tripoint_bub_ms below( lp.xy(), lp.z() - 1 );
         std::string tile_below = m.tername( below );
         if( m.has_furn( below ) ) {
@@ -9682,26 +9680,6 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                                       bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode mode )
 {
     bVMonsterLookFire = false;
-
-    auto zlSwitch = [&]<typename T>( T normal, T m2d, T m3d ) {
-        switch( mode ) {
-            default:
-            case LA_MODE_DEFAULT:
-                return normal;
-            case LA_MODE_2D:
-                return m2d;
-            case LA_MODE_3D:
-                return m3d;
-        };
-    };
-
-    // TODO: Make this `true`
-    const bool allow_zlev_move = zlSwitch(
-                                     m.has_zlevels(),
-                                     false,
-                                     true
-                                 );
-
     temp_exit_fullscreen();
 
     auto lp = is_moving_zone ? tripoint_bub_ms( ( start_point.raw() + end_point.raw() ) / 2 ) :
@@ -9800,8 +9778,6 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
 #endif // TILES
 
     const int old_levz = get_levz();
-    const int min_levz = zlSwitch( -OVERMAP_DEPTH, old_levz, -OVERMAP_DEPTH );
-    const int max_levz = zlSwitch( OVERMAP_HEIGHT, old_levz, OVERMAP_HEIGHT );
 
     m.update_visibility_cache( old_levz );
     const visibility_variables &cache = m.get_visibility_variables_cache();
@@ -9929,13 +9905,10 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
         } else if( action == "toggle_zone_overlay" ) {
             g->show_zone_overlay = !g->show_zone_overlay;
         } else if( action == "LEVEL_UP" || action == "LEVEL_DOWN" ) {
-            if( !allow_zlev_move ) {
-                continue;
-            }
 
             const int dz = ( action == "LEVEL_UP" ? 1 : -1 );
-            lz = clamp( lz + dz, min_levz, max_levz );
-            center.z() = clamp( center.z() + dz, min_levz, max_levz );
+            lz = clamp( lz + dz, -OVERMAP_DEPTH, OVERMAP_HEIGHT );
+            center.z() = clamp( center.z() + dz, -OVERMAP_DEPTH, OVERMAP_HEIGHT );
 
             add_msg( m_debug, "levx: %d, levy: %d, levz: %d", get_levx(), get_levy(), center.z() );
             u.view_offset.z() = center.z() - u.bub_pos().z();
@@ -10042,7 +10015,7 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
     } while( action != "QUIT" && action != "CONFIRM" && action != "SELECT" && action != "TRAVEL_TO" &&
              action != "throw_blind" );
 
-    if( m.has_zlevels() && center.z() != old_levz ) {
+    if( center.z() != old_levz ) {
         m.invalidate_map_cache( old_levz );
         m.build_map_cache( old_levz );
         u.view_offset.z() = 0;
@@ -12341,7 +12314,7 @@ std::vector<std::string> game::get_dangerous_tile( const tripoint_bub_ms &dest_l
                                true ) );
         // HACK: Hack for now, later ledge should stop being a trap
         // Note: in non-z-level mode, ledges obey different rules and so should be handled as regular traps
-        if( tr.loadid == tr_ledge && m.has_zlevels() ) {
+        if( tr.loadid == tr_ledge ) {
             if( !character_funcs::can_fly( get_avatar() ) ) {
                 if( !boardable ) {
                     harmful_stuff.emplace_back( tr.name() );
@@ -12961,7 +12934,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
         mon->process_triggers();
         m.creature_in_field( *mon );
     }
-    const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos ).xy();
+    const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos );
 
     //Auto pulp or butcher and Auto foraging
     if( get_option<bool>( "AUTO_FEATURES" ) && mostseen == 0  && !u.is_mounted() ) {
@@ -13177,9 +13150,7 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
     }
 
     m.clear_vehicle_cache( );
-    const int minz = m.has_zlevels() ? -OVERMAP_DEPTH : get_levz();
-    const int maxz = m.has_zlevels() ? OVERMAP_HEIGHT : get_levz();
-    for( int z = minz; z <= maxz; z++ ) {
+    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
         m.clear_vehicle_list( z );
     }
     m.access_cache( get_levz() ).map_memory_seen_cache.reset();
@@ -13187,9 +13158,9 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
     // player will be centered in the middle of the map.
     // TODO: fix point types
     const tripoint_abs_sm map_sm_pos(
-        project_to<coords::sm>( om_dest ).raw() + point( -g_half_mapsize, -g_half_mapsize ) );
+        project_to<coords::sm>( om_dest ) + point( -g_half_mapsize, -g_half_mapsize ) );
     const tripoint_bub_ms player_pos( u.bub_pos().xy(), map_sm_pos.z() );
-    load_map( map_sm_pos );
+    load_map( map_sm_pos.xy() );
     // update weather now as it could be different on the new location
     get_weather().nextweather = calendar::turn;
     place_player( player_pos );
@@ -13687,11 +13658,7 @@ void game::resize_reality_bubble_to( int new_size )
     {
         auto out_of_range = std::ranges::stable_partition( active_npc,
         [&]( const shared_ptr_fast<npc> &n ) {
-            const auto npc_sm = project_to<coords::sm>( n->abs_pos() );
-            if( !m.has_zlevels() && npc_sm.z() != get_levz() ) {
-                return false;  // wrong z-level — evict
-            }
-            const auto diff = npc_sm - player_abs_sm;
+            const auto diff = project_to<coords::sm>( n->abs_pos() ) - player_abs_sm;
             return std::abs( diff.x() ) <= new_half && std::abs( diff.y() ) <= new_half;
         } );
         std::ranges::for_each( out_of_range, []( const auto & n ) {
@@ -13712,19 +13679,17 @@ void game::resize_reality_bubble_to( int new_size )
     }
 
     // Update globals and rebuild the map grid.
-    // grid[] is cleared by resize(); submaps stay resident in the mapbuffer
+    // The non-owning submap cache is cleared by resize(); submaps stay resident in the mapbuffer
     // with their dirty flags intact and will be saved on normal eviction.
     init_bubble_config( new_size );
     m.resize( g_mapsize );
     reality_bubble_radius_ = g_half_mapsize;
 
     // Compute the new top-left abs_sub so load_map centers on the player.
-    const auto new_abs_sub = tripoint_abs_sm(
-                                 player_abs_sm.x() - g_half_mapsize,
-                                 player_abs_sm.y() - g_half_mapsize,
-                                 player_abs_sm.z() );
+    const auto new_abs_sub = player_abs_sm.xy() +
+                             point_rel_sm( -g_half_mapsize, -g_half_mapsize );
 
-    // Reload the map around the player; this fills grid[], recreates load handles,
+    // Reload the map around the player; this fills the submap cache, recreates load handles,
     // rebuilds distribution_grid_tracker and fluid_grid.
     load_map( new_abs_sub, /*pump_events=*/false );
     debug_assert_player_map_origin( "resize_reality_bubble_to" );
@@ -13751,7 +13716,7 @@ void game::resize_reality_bubble_to( int new_size )
 
     // Flush the load/eviction diff immediately so the first boundary crossing
     // after resize doesn't stall on a bulk eviction of the old bubble's submaps.
-    // on_submap_unloaded is safe here: map::on_submap_unloaded guards grid[]
+    // on_submap_unloaded is safe here: map::on_submap_unloaded guards cache
     // writes behind contains_abs_sm(), so old out-of-bubble positions are
     // skipped and only vehicle/active-item tracking is cleaned up.
     submap_loader.update_lazy_border_focus( current_dimension_id_, u.abs_pos() );
@@ -14127,7 +14092,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     const bool can_noclip = character_funcs::can_noclip( get_avatar() );
     int move_cost = 100;
     tripoint_bub_ms stairs( u.bub_pos().x(), u.bub_pos().y(), u.bub_pos().z() + movez );
-    if( m.has_zlevels() && !force && movez == 1 && !m.has_flag( "GOES_UP", u.bub_pos() ) &&
+    if( !force && movez == 1 && !m.has_flag( "GOES_UP", u.bub_pos() ) &&
         !u.is_underwater() && !can_fly ) {
 
         // Climbing
@@ -14299,54 +14264,6 @@ void game::vertical_move( int movez, bool force, bool peeking )
     }
 
     // Check if there are monsters are using the stairs.
-    bool slippedpast = false;
-    if( !m.has_zlevels() && !coming_to_stairs.empty() && !force ) {
-        // TODO: Allow travel if zombie couldn't reach stairs, but spawn him when we go up.
-        add_msg( m_warning, _( "You try to use the stairs.  Suddenly you are blocked by a %s!" ),
-                 coming_to_stairs[0]->name() );
-        // Roll.
-        ///\EFFECT_DEX increases chance of moving past monsters on stairs
-
-        ///\EFFECT_DODGE increases chance of moving past monsters on stairs
-        int dexroll = dice( 6, u.dex_cur + u.get_skill_level( skill_dodge ) * 2 );
-        ///\EFFECT_STR increases chance of moving past monsters on stairs
-
-        ///\EFFECT_MELEE increases chance of moving past monsters on stairs
-        int strroll = dice( 3, u.str_cur + u.get_skill_level( skill_melee ) * 1.5 );
-        if( coming_to_stairs.size() > 4 ) {
-            add_msg( _( "The are a lot of them on the %s!" ), m.tername( u.bub_pos() ) );
-            dexroll /= 4;
-            strroll /= 2;
-        } else if( coming_to_stairs.size() > 1 ) {
-            add_msg( m_warning, _( "There's something else behind it!" ) );
-            dexroll /= 2;
-        }
-
-        if( dexroll < 14 || strroll < 12 ) {
-            update_stair_monsters();
-            u.moves -= 100;
-            return;
-        }
-
-        add_msg( _( "You manage to slip past!" ) );
-        slippedpast = true;
-        u.moves -= 100;
-    }
-
-    // Shift the map up or down
-
-    std::unique_ptr<map> tmp_map_ptr;
-    if( !m.has_zlevels() ) {
-        tmp_map_ptr = std::make_unique<map>();
-    }
-
-    map &maybetmp = m.has_zlevels() ? m : *( tmp_map_ptr );
-    if( m.has_zlevels() ) {
-        // We no longer need to shift the map here! What joy
-    } else {
-        maybetmp.load( tripoint_abs_sm( get_levx(), get_levy(), z_after ), false );
-    }
-
     bool swimming = false;
     bool surfacing = false;
     bool submerging = false;
@@ -14451,7 +14368,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     const bool special_move = climbing || swimming || can_fly;
 
     if( !force && !special_move ) {
-        const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( maybetmp, z_after, rope_ladder,
+        const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( m, z_after, rope_ladder,
                 peeking );
         if( !pnt ) {
             return;
@@ -14465,64 +14382,8 @@ void game::vertical_move( int movez, bool force, bool peeking )
     // Save all monsters that can reach the stairs, remove them from the tracker,
     // then despawn the remaining monsters. Because it's a vertical shift, all
     // monsters are out of the bounds of the map and will despawn.
-    shared_ptr_fast<monster> stored_mount;
-    if( u.is_mounted() && !m.has_zlevels() ) {
-        // Store a *copy* of the mount, so we can remove the original monster instance
-        // from the tracker before the map shifts.
-        // Map shifting would otherwise just despawn the mount and would later respawn it.
-        stored_mount = make_shared_fast<monster>( *u.mounted_creature );
-        remove_zombie( *u.mounted_creature );
-    }
-    if( !m.has_zlevels() ) {
-        const auto to = u.bub_pos();
-        for( monster &critter : all_monsters() ) {
-            // if its a ladder instead of stairs - most zombies can't climb that.
-            // unless that have a special flag to allow them to do so.
-            if( ( m.has_flag( "DIFFICULT_Z", u.bub_pos() ) && !critter.climbs() ) ||
-                critter.has_effect( effect_ridden ) ||
-                critter.has_effect( effect_tied ) ) {
-                continue;
-            }
-            int turns = critter.turns_to_reach( to.xy() );
-            if( turns < 10 && coming_to_stairs.size() < 8 && critter.will_reach( to.xy() )
-                && !slippedpast ) {
-                critter.staircount = 10 + turns;
-                critter.on_unload();
-                coming_to_stairs.push_back( make_shared_fast<monster>( critter ) );
-                remove_zombie( critter );
-            }
-        }
-        auto mons = critter_tracker->find( g->u.bub_pos() );
-        if( mons != nullptr ) {
-            remove_zombie( *mons );
-        }
-        shift_monsters( tripoint_rel_sm( 0, 0, movez ) );
-    }
-
     std::vector<shared_ptr_fast<npc>> npcs_to_bring;
     std::vector<monster *> monsters_following;
-    if( !m.has_zlevels() && std::abs( movez ) == 1 ) {
-        std::copy_if( active_npc.begin(), active_npc.end(), back_inserter( npcs_to_bring ),
-        [this]( const shared_ptr_fast<npc> &np ) {
-            return np->is_walking_with() && !np->is_mounted() && !np->in_sleep_state() &&
-                   rl_dist( np->bub_pos(), u.bub_pos() ) < 2;
-        } );
-    }
-
-    if( m.has_zlevels() && std::abs( movez ) == 1 ) {
-        bool ladder = m.has_flag( "DIFFICULT_Z", u.bub_pos() );
-        for( monster &critter : all_monsters() ) {
-            if( ladder && !critter.climbs() ) {
-                continue;
-            }
-            if( critter.attack_target() == &g->u || ( !critter.has_effect( effect_ridden ) &&
-                    critter.has_effect( effect_pet ) && critter.friendly == -1 &&
-                    !critter.has_effect( effect_tied ) ) ) {
-                monsters_following.push_back( &critter );
-            }
-        }
-    }
-
     if( u.is_mounted() ) {
         monster *crit = u.mounted_creature.get();
         if( crit->has_flag( MF_RIDEABLE_MECH ) ) {
@@ -14559,7 +14420,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     const auto old_pos = g->u.bub_pos();
     const auto origin_before_setpos = m.get_abs_sub();
     u.setpos( map_local_to_abs( m, stairs ) );
-    const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos ).xy();
+    const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos );
 
     // if an NPC or monster is on the stiars when player ascends/descends
     // they may end up merged on th esame tile, do some displacement to resolve that.
@@ -14610,16 +14471,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
     // Now that we know the player's destination position, we can move their mount as well
     if( u.is_mounted() ) {
-        if( stored_mount ) {
-            assert( !m.has_zlevels() );
-            stored_mount->set_dimension( m.get_bound_dimension() );
-            stored_mount->spawn( g->u.bub_pos() );
-            if( stored_mount->get_mapbuffer().creature_tracker().add( stored_mount ) ) {
-                u.mounted_creature = stored_mount;
-            }
-        } else {
-            u.mounted_creature->setpos( g->u.bub_pos() );
-        }
+        u.mounted_creature->setpos( g->u.abs_pos() );
     }
 
     if( !npcs_to_bring.empty() ) {
@@ -14666,12 +14518,6 @@ void game::vertical_move( int movez, bool force, bool peeking )
     if( m.ter( stairs ) == t_manhole_cover ) {
         m.spawn_item( stairs + point( rng( -1, 1 ), rng( -1, 1 ) ), itype_manhole_cover );
         m.ter_set( stairs, t_manhole );
-    }
-
-    // Wouldn't work and may do strange things
-    if( u.is_hauling() && !m.has_zlevels() ) {
-        add_msg( _( "You cannot haul items here." ) );
-        u.stop_hauling();
     }
 
     if( u.is_hauling() ) {
@@ -14878,7 +14724,6 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
     // (set in activate_dimension_state()), so get_overmapbuffer(current_dimension_id_)
     // correctly targets the new dimension's buffer.
     get_overmapbuffer( current_dimension_id_ ).clear();
-    here.clear_grid();
 
     if( !loaded_dimensions_.count( dim_id ) ) {
         loaded_dimensions_[dim_id] = dimension_info{
@@ -14925,7 +14770,7 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         const auto target_load_origin = load_pos.value_or( current_abs_sm );
         const auto target_player_pos = project_to<coords::ms>(
                                            target_load_origin + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
-        load_map( target_load_origin, false );
+        load_map( target_load_origin.xy(), false );
         player.setpos( target_player_pos );
         debug_assert_player_map_origin( "travel_to_dimension" );
 
@@ -14935,14 +14780,12 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         player.load_map_memory();
 
         {
-            auto const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z();
-            auto const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z();
-            for( auto z = zmin; z <= zmax; z++ ) {
+            for( auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
                 here.access_cache( z ).map_memory_seen_cache.reset();
                 here.invalidate_map_cache( z );
             }
         }
-        here.build_map_cache( here.get_abs_sub().z() );
+        here.build_map_cache( target_player_pos.z() );
 
         load_npcs();
         here.spawn_monsters( true );
@@ -15170,7 +15013,7 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
     return stairs;
 }
 
-auto game::vertical_shift( const int z_after ) -> void
+auto game::vertical_shift( const int z_before, const int z_after ) -> void
 {
     if( z_after < -OVERMAP_DEPTH || z_after > OVERMAP_HEIGHT ) {
         debugmsg( "Tried to get z-level %d outside allowed range of %d-%d",
@@ -15178,31 +15021,11 @@ auto game::vertical_shift( const int z_after ) -> void
         return;
     }
 
-    const auto z_before = m.get_abs_sub().z();
     if( z_before == z_after ) {
         return;
     }
 
     scent.reset();
-
-    if( !m.has_zlevels() ) {
-        const auto loaded_origin = m.get_abs_sub();
-        m.clear_vehicle_cache( );
-        m.access_cache( z_before ).vehicle_list.clear();
-        m.access_cache( z_before ).zone_vehicles.clear();
-        m.access_cache( z_before ).map_memory_seen_cache.reset();
-        m.set_transparency_cache_dirty( z_before );
-        m.set_outside_cache_dirty( z_before );
-        m.set_absorption_cache_dirty( z_before );
-        m.load( tripoint_abs_sm( loaded_origin.xy(), z_after ), true );
-        shift_monsters( tripoint_rel_sm( 0, 0, z_after - z_before ) );
-        reload_npcs();
-    } else {
-        // Keep the map-local cache z-reference aligned with the avatar z-level.
-        // All z-levels are loaded simultaneously in z-level builds; no map load
-        // or unload is required for vertical movement.
-        m.set_loaded_submap_z( z_after );
-    }
     debug_assert_player_map_origin( "vertical_shift" );
 
     m.spawn_monsters( true );
@@ -15277,7 +15100,7 @@ auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
         // We need this call because even if the map hasn't shifted we may have changed z-level and can now see farther
         // TODO: only make this call if we changed z-level
         update_overmap_seen();
-        debug_assert_player_map_origin( "update_map", false );
+        debug_assert_player_map_origin( "update_map" );
         // Not actually shifting the submaps, all the stuff below would do nothing
         return point_rel_sm::zero();
     }
@@ -15300,8 +15123,8 @@ auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
     // on_submap_loaded/unloaded; the old full-rebuild has been removed.
     if( reality_bubble_handle_ != 0 ) {
         ZoneScopedN( "update_map_submap_loader" );
-        const auto new_center = player_reality_bubble_origin() +
-                                tripoint_rel_sm( reality_bubble_radius_, reality_bubble_radius_, 0 );
+        const auto new_center = player_reality_bubble_origin().xy() +
+                                point_rel_sm( reality_bubble_radius_, reality_bubble_radius_ );
         submap_loader.update_request( reality_bubble_handle_, new_center );
         // Dynamically manage lazy border based on cached option.
         if( lazy_border_enabled ) {
@@ -15392,7 +15215,7 @@ auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
     update_overmap_seen();
     // update_map() only shifts the loaded x/y window; vertical loaded-state
     // changes are handled by vertical_shift().
-    debug_assert_player_map_origin( "update_map", false );
+    debug_assert_player_map_origin( "update_map" );
 
     return shift;
 }
@@ -15463,12 +15286,9 @@ void game::update_stair_monsters()
     if( coming_to_stairs.empty() ) {
         return;
     }
-
-    if( m.has_zlevels() ) {
-        debugmsg( "%d monsters coming to stairs on a map with z-levels",
-                  coming_to_stairs.size() );
-        coming_to_stairs.clear();
-    }
+    debugmsg( "%d monsters coming to stairs on a map with z-levels",
+              coming_to_stairs.size() );
+    coming_to_stairs.clear();
 
     for( const tripoint_bub_ms &dest : m.points_on_zlevel( u.bub_pos().z() ) ) {
         if( ( from_below && m.has_flag( "GOES_DOWN", dest ) ) ||
@@ -15694,8 +15514,7 @@ void game::shift_monsters( const tripoint_rel_sm &shift )
             critter.shift( shift.xy() );
         }
 
-        if( ( shift.z() == 0 || m.has_zlevels() )
-            && m.get_submap_at( tripoint_bub_ms( critter.bub_pos() ) ) != nullptr ) {
+        if( m.get_submap_at( tripoint_bub_ms( critter.bub_pos() ) ) != nullptr ) {
             // The critter is on a loaded submap — keep it regardless of whether
             // it's inside the render-area grid (inbounds).  Creatures can validly
             // reside in loaded-but-OOB submaps (e.g. knocked into a lazy-border
@@ -15731,8 +15550,7 @@ void game::perhaps_add_random_npc()
         return;
     }
     // Create a new NPC?
-    // Only allow NPCs on 0 z-level, otherwise they can bug out due to lack of spots
-    if( !get_option<bool>( "RANDOM_NPC" ) || ( !m.has_zlevels() && get_levz() != 0 ) ) {
+    if( !get_option<bool>( "RANDOM_NPC" ) ) {
         return;
     }
 

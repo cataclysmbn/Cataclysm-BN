@@ -302,7 +302,7 @@ struct cpu_colored_light_3d_context {
     bool directional = false;
 };
 
-struct apply_cpu_colored_light_3d_options {
+struct cpu_colored_light_opt {
     tripoint_bub_ms source;
     float luminance = 0.0f;
     uint32_t color_rgb = 0u;
@@ -491,8 +491,7 @@ auto make_colored_light_callback( level_cache &cache, const uint32_t color_rgb,
     };
 }
 
-auto apply_cpu_colored_light_3d( map &here, const apply_cpu_colored_light_3d_options &opt )
--> void;
+auto apply_cpu_colored_light_3d( map &here, const cpu_colored_light_opt &opt ) -> void;
 
 } // namespace
 
@@ -1191,14 +1190,11 @@ auto map::has_direct_sunlight_at( const point_bub_ms p, const int zlev ) const -
 // Once this is complete, additional operations add more dynamic lighting.
 void map::build_sunlight_cache( int pzlev )
 {
-    const int zlev_min = zlevels ? -OVERMAP_DEPTH : pzlev;
     // Start at the topmost populated zlevel to avoid unnecessary raycasting
     // Plus one zlevel to prevent clipping inside structures
-    const int zlev_max = zlevels
-                         ? clamp( calc_max_populated_zlev() + 1,
-                                  std::min( OVERMAP_HEIGHT, pzlev + 1 ),
-                                  OVERMAP_HEIGHT )
-                         : pzlev;
+    const int zlev_max = clamp( calc_max_populated_zlev() + 1,
+                                std::min( OVERMAP_HEIGHT, pzlev + 1 ),
+                                OVERMAP_HEIGHT );
 
     // true if all previous z-levels are fully transparent to light (no floors, transparency >= air)
     bool fully_outside = true;
@@ -1216,7 +1212,7 @@ void map::build_sunlight_cache( int pzlev )
     update_solar_params();
 
     // Iterate top to bottom because sunlight cache needs to construct in that order.
-    for( int zlev = zlev_max; zlev >= zlev_min; zlev-- ) {
+    for( int zlev = zlev_max; zlev >= -OVERMAP_DEPTH; zlev-- ) {
 
         level_cache &map_cache = get_cache( zlev );
         auto &lm = map_cache.lm;
@@ -1224,20 +1220,6 @@ void map::build_sunlight_cache( int pzlev )
         const float outside_light_level = g->natural_light_level( 0 );
         // TODO: if zlev < 0 is open to sunlight, this won't calculate correct light, but neither does g->natural_light_level()
         const float inside_light_level = LIGHT_AMBIENT_LOW;
-        // Handling when z-levels are disabled is based on whether a tile is considered "outside".
-        if( !zlevels ) {
-            const auto &outside_cache = map_cache.outside_cache;
-            for( int x = 0; x < map_cache.cache_x; x++ ) {
-                for( int y = 0; y < map_cache.cache_y; y++ ) {
-                    if( outside_cache[map_cache.idx( x, y )] ) {
-                        lm[map_cache.idx( x, y )] = outside_light_level;
-                    } else {
-                        lm[map_cache.idx( x, y )] = inside_light_level;
-                    }
-                }
-            }
-            continue;
-        }
 
         // all light was blocked before
         if( fully_inside ) {
@@ -2880,10 +2862,9 @@ static const light_model k_light_model = {
 namespace
 {
 
-auto apply_cpu_colored_light_3d( map &here, const apply_cpu_colored_light_3d_options &opt )
--> void
+auto apply_cpu_colored_light_3d( map &here, const cpu_colored_light_opt &opt ) -> void
 {
-    if( !colored_lighting || !here.has_zlevels() || opt.color_rgb == 0u ||
+    if( !colored_lighting || opt.color_rgb == 0u ||
         opt.luminance <= LIGHT_AMBIENT_LOW || !here.inbounds( opt.source ) ) {
         return;
     }
