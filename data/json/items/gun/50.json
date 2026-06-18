@@ -105,7 +105,7 @@
     "copy-from": "rifle_auto",
     "type": "GUN",
     "name": { "str_sp": "M71 Heavy BR" },
-    "description": "An upsized, bullpup automatic rifle, based on the AR-15 platform but chambered in .50 cal. It was designed for soldiers in power armor, to defeat enemies also in power armor. It entered full-scale production just months before the Catacylsm. It has incredible firepower, but the stubby barrel limits long-range precision and the huge recoil is too much for unaugmented humans. Uses standardized Barret mags",
+    "description": "An upsized, bullpup automatic rifle, based on the AR-15 platform but chambered in .50 cal. It was designed for soldiers in power armor, to defeat enemies also in power armor. It entered full-scale production just months before the Catacylsm. It has incredible firepower, but the stubby barrel limits long-range precision and the huge recoil is too much for unaugmented humans. Uses standardized Barrett mags",
     "weight": "8000 g",
     "volume": "3000 ml",
     "price": "20000 USD",
