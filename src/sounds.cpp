@@ -2575,7 +2575,7 @@ void sounds::process_sound_markers( Character *who )
                                           static_cast<int>( std::floor( 1500 + 500 * volume_multiplier ) ) );
     // is the npc underground?
     const bool pcunderground = loc.z() < 0;
-    const bool pcoutdoors = map.is_outside( loc.xy() );
+    const bool pcoutdoors = map.is_outside( loc );
     const weather_manager &weather = get_weather();
     const short player_t_absorp = level_cache.absorption_cache[level_cache.idx( loc.x(), loc.y() )];
     const bool  player_indoors = !level_cache.outside_cache[level_cache.idx( loc.x(), loc.y() )];

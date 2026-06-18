@@ -406,6 +406,8 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> detached_ptr<item>;
         auto clear_items( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::vector<detached_ptr<item>>;
+        auto handle_rotten_away_item( const tripoint_abs_ms &p, const item &rotten_item,
+        mapbuffer_lookup_options options = {} ) -> void;
         auto make_item_active( const tripoint_abs_ms &p, item &target,
         mapbuffer_lookup_options options = {} ) -> bool;
         auto make_item_inactive( const tripoint_abs_ms &p, item &target,
@@ -518,6 +520,11 @@ class mapbuffer
          */
         auto generate_omt( const tripoint_abs_omt &omt_addr,
         const mapbuffer_generate_omt_options &options = {} ) -> mapgen_result;
+
+        /**
+         * Fast-forward and actualize a resident submap by absolute position.
+         */
+        auto actualize_submap( const tripoint_abs_sm &pos ) -> void;
 
         /**
          * Destroy submaps that were discarded by preload_omt() because the in-memory

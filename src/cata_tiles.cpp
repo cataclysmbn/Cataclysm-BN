@@ -3898,7 +3898,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         if( !here.has_rope_at( p ) ) {
             return;
         }
-        const auto veh_pair = here.get_rope_at( p.xy() );
+        const auto veh_pair = here.get_rope_at( p );
         auto *const veh = veh_pair.first;
         const auto veh_part = veh_pair.second;
         const auto veh_z = veh->bub_ms_location().z();
@@ -4097,22 +4097,16 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                 min_row ) + o.raw() ) );
         point_abs_sm sm_end = project_to<coords::sm>( bub_to_abs( point_bub_ms( max_col,
                               max_row ) + o.raw() ) );
-
-        bool zlevs = here.has_zlevels();
         int mapsize = here.getmapsize();
         auto mappos = here.get_abs_sub();
-        half_open_rectangle<point> maprect( mappos.xy().raw(), mappos.xy().raw() + point( mapsize,
+        half_open_rectangle<point> maprect( mappos.raw(), mappos.raw() + point( mapsize,
                                             mapsize ) );
 
-        const auto is_map = [mappos, zlevs, maprect]( const tripoint & p ) {
+        const auto is_map = [mappos, maprect]( const tripoint & p ) {
             if( !maprect.contains( p.xy() ) ) {
                 return false;
             }
-            if( zlevs ) {
-                return true;
-            } else {
-                return p.z == mappos.z();
-            }
+            return true;
         };
 
         const auto is_mapbuffer = []( const tripoint_abs_sm & p ) {
@@ -5779,7 +5773,7 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
         }
     } else if( here.has_rope_at( p ) ) {
-        auto veh_pair = here.get_rope_at( p.xy() );
+        auto veh_pair = here.get_rope_at( p );
         vehicle *veh = veh_pair.first;
         int veh_part = veh_pair.second;
 

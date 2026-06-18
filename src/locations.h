@@ -1,7 +1,6 @@
 #pragma once
 
 #include "coordinates.h"
-#include "point.h"
 #include "type_id.h"
 
 class item;
@@ -13,7 +12,6 @@ class submap;
 class vehicle;
 class monster;
 class npc;
-struct tripoint;
 template<typename T>
 class detached_ptr;
 

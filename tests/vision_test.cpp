@@ -226,7 +226,6 @@ static void full_map_test( const std::vector<std::string> &setup,
         floor_above << '\n';
     }
 
-    INFO( "zlevels: " << here.has_zlevels() );
     INFO( "origin: " << origin );
     INFO( "player: " << player_character.bub_pos() );
     INFO( "unimpaired_range: " << player_character.unimpaired_range() );
@@ -382,7 +381,7 @@ TEST_CASE( "vision_daylight", "[shadowcasting][vision]" )
         vision_test_flags::none
     };
 
-    t.test_all();
+    t.test();
 }
 
 TEST_CASE( "vision_day_indoors", "[shadowcasting][vision]" )
@@ -403,7 +402,7 @@ TEST_CASE( "vision_day_indoors", "[shadowcasting][vision]" )
         vision_test_flags::none
     };
 
-    t.test_all();
+    t.test();
 }
 
 TEST_CASE( "vision_light_shining_in", "[shadowcasting][vision]" )

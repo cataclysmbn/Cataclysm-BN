@@ -4,18 +4,21 @@
 #include <array>
 #include <cassert>
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <utility>
 #include <vector>
 
 #include "avatar.h"
+#include "batch_turns.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "creature.h"
@@ -29,18 +32,27 @@
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
+#include "harvest.h"
 #include "item.h"
+#include "itype.h"
 #include "json.h"
 #include "map.h"
 #include "mapdata.h"
+#include "mapgen_constructor.h"
 #include "map_iterator.h"
 #include "map_mutation_hooks.h"
 #include "monster.h"
 #include "npc.h"
+#include "messages.h"
+#include "mongroup.h"
+#include "mtype.h"
+#include "options.h"
 #include "overmapbuffer.h"
 #include "output.h"
 #include "popup.h"
 #include "profile.h"
+#include "rng.h"
+#include "skill.h"
 #include "string_formatter.h"
 #include "submap.h"
 #include "submap_load_manager.h"
@@ -48,10 +60,12 @@
 #include "translations.h"
 #include "trap.h"
 #include "ui_manager.h"
+#include "units_mass.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_range.h"
+#include "weather.h"
 #include "world.h"
 
 namespace
@@ -61,6 +75,27 @@ struct mapbuffer_tile_lookup {
     submap *sm = nullptr;
     point_sm_ms local;
 };
+
+struct actualize_tile_options {
+    mapbuffer &buffer;
+    submap &sm;
+    point_sm_ms local;
+    tripoint_abs_ms abs_pos;
+    std::optional<tripoint_bub_ms> active_bubble_pos;
+    time_point last_touched;
+    time_duration elapsed;
+    mapbuffer_lookup_options lookup;
+};
+
+struct add_submap_spawn_options {
+    submap &sm;
+    point_sm_ms local;
+    mtype_id type;
+    spawn_disposition disposition;
+};
+
+static const auto fault_bionic_nonsterile = fault_id( "fault_bionic_nonsterile" );
+static const auto itype_burnt_out_bionic = itype_id( "burnt_out_bionic" );
 
 auto lookup_tile( mapbuffer &buffer, const tripoint_abs_ms &p,
                   const mapbuffer_lookup_options options ) -> std::optional<mapbuffer_tile_lookup>
@@ -119,6 +154,453 @@ auto tile_has_flag( const mapbuffer_tile_lookup &tile, const std::string &flag )
 {
     return tile.sm->get_ter( tile.local ).obj().has_flag( flag ) ||
            tile.sm->get_furn( tile.local ).obj().has_flag( flag );
+}
+
+auto trap_at_tile( const submap &sm, const point_sm_ms &local ) -> const trap &
+{
+    const auto terrain_trap = sm.get_ter( local ).obj().trap;
+    if( terrain_trap != tr_null ) {
+        return terrain_trap.obj();
+    }
+
+    return sm.get_trap( local ).obj();
+}
+
+auto temperature_flag_at_tile( const submap &sm, const point_sm_ms &local ) -> temperature_flag
+{
+    if( sm.get_ter( local ) == t_rootcellar ) {
+        return temperature_flag::TEMP_ROOT_CELLAR;
+    }
+    const auto &furn = sm.get_furn( local ).obj();
+    if( furn.has_flag( TFLAG_FRIDGE ) ) {
+        return temperature_flag::TEMP_FRIDGE;
+    }
+    if( furn.has_flag( TFLAG_FREEZER ) ) {
+        return temperature_flag::TEMP_FREEZER;
+    }
+
+    return temperature_flag::TEMP_NORMAL;
+}
+
+auto add_item_to_actualized_tile( const actualize_tile_options &options,
+                                  detached_ptr<item> &&obj ) -> void
+{
+    options.buffer.add_item_or_charges( options.abs_pos, std::move( obj ), {
+        .lookup = options.lookup,
+    } );
+}
+
+auto add_spawn_to_submap( const add_submap_spawn_options &options ) -> void
+{
+    if( !options.type || MonsterGroupManager::monster_is_blacklisted( options.type ) ) {
+        return;
+    }
+
+    options.sm.spawns.emplace_back( options.type, 1, options.local, -1, -1, options.disposition );
+}
+
+auto handle_decayed_corpse( const actualize_tile_options &options, const item &corpse ) -> void
+{
+    const auto *const dead_monster = corpse.get_corpse_mon();
+    if( dead_monster == nullptr ) {
+        debugmsg( "Corpse at tripoint %s has no associated monster?!",
+                  options.abs_pos.to_string() );
+        return;
+    }
+
+    auto decayed_weight_grams = to_gram( dead_monster->weight );
+    decayed_weight_grams *= rng_float( 0.5, 0.9 );
+
+    for( const auto &entry : dead_monster->harvest.obj() ) {
+        if( entry.type == "bionic" || entry.type == "bionic_group" || entry.type == "blood" ) {
+            continue;
+        }
+
+        auto harvest = item::spawn( entry.drop, corpse.birthday() );
+        const auto random_decay_modifier = rng_float( 0.0f, static_cast<float>( MAX_SKILL ) );
+        const auto min_num = entry.scale_num.first * random_decay_modifier + entry.base_num.first;
+        const auto max_num = entry.scale_num.second * random_decay_modifier + entry.base_num.second;
+        auto roll = 0;
+        if( entry.mass_ratio != 0.00f ) {
+            roll = static_cast<int>( std::round( entry.mass_ratio * decayed_weight_grams ) );
+            roll = std::ceil( static_cast<double>( roll ) / to_gram( harvest->weight() ) );
+        } else {
+            roll = std::min<int>( entry.max, std::round( rng_float( min_num, max_num ) ) );
+        }
+        if( roll <= 0 ) {
+            continue;
+        }
+
+        for( const auto ignored : std::views::iota( 0, roll ) ) {
+            ( void )ignored;
+            if( harvest->charges > 1 ) {
+                harvest->charges = 1;
+            }
+            if( !harvest->rotten() ) {
+                add_item_to_actualized_tile( options, item::spawn( *harvest ) );
+            }
+        }
+    }
+
+    for( item *const comp : corpse.get_components() ) {
+        if( comp->is_bionic() ) {
+            if( !one_in( 10 ) ) {
+                comp->convert( itype_burnt_out_bionic );
+                if( comp->has_fault( fault_bionic_nonsterile ) ) {
+                    comp->faults.erase( fault_bionic_nonsterile );
+                }
+            }
+            add_item_to_actualized_tile( options, item::spawn( *comp ) );
+            continue;
+        }
+
+        if( one_in( 10 ) ) {
+            if( comp->has_fault( fault_bionic_nonsterile ) ) {
+                comp->faults.erase( fault_bionic_nonsterile );
+            }
+            add_item_to_actualized_tile( options, item::spawn( *comp ) );
+        }
+    }
+}
+
+auto rotten_item_spawn( const actualize_tile_options &options, const item &source ) -> void
+{
+    if( options.active_bubble_pos && g != nullptr &&
+        g->critter_at( *options.active_bubble_pos ) != nullptr ) {
+        return;
+    }
+
+    const auto &comestible = source.get_comestible();
+    if( !comestible || !comestible->rot_spawn ) {
+        return;
+    }
+
+    const auto chance = static_cast<int>( comestible->rot_spawn_chance *
+                                          get_option<float>( "CARRION_SPAWNRATE" ) );
+    if( rng( 0, 100 ) >= chance ) {
+        return;
+    }
+
+    const auto spawn_details = MonsterGroupManager::GetResultFromGroup( comestible->rot_spawn );
+    const auto disposition = source.has_own_flag( flag_SPAWN_FRIENDLY ) ?
+                             spawn_disposition::SpawnDisp_Pet :
+                             spawn_disposition::SpawnDisp_Default;
+    add_spawn_to_submap( {
+        .sm = options.sm,
+        .local = options.local,
+        .type = spawn_details.name,
+        .disposition = disposition,
+    } );
+
+    if( !options.active_bubble_pos || g == nullptr || !g->u.sees( *options.active_bubble_pos ) ) {
+        return;
+    }
+
+    if( source.is_seed() ) {
+        add_msg( m_warning, _( "Something has crawled out of the %s plants!" ),
+                 source.get_plant_name() );
+        return;
+    }
+
+    add_msg( m_warning, _( "Something has crawled out of the %s!" ), source.tname() );
+}
+
+auto remove_rotten_items( const actualize_tile_options &options,
+                          location_vector<item> &items ) -> void
+{
+    auto decayed_corpses = std::vector<detached_ptr<item>> {};
+    const auto temperature = temperature_flag_at_tile( options.sm, options.local );
+    items.remove_with( [&]( detached_ptr<item> &&it ) {
+        if( !it ) {
+            debugmsg( "remove_rotten_items: null item pointer at %s", options.abs_pos.to_string() );
+            return std::move( it );
+        }
+        if( !it->type ) {
+            debugmsg( "remove_rotten_items: item with null type at %s", options.abs_pos.to_string() );
+            return std::move( it );
+        }
+        const auto can_spawn_rot = it->is_comestible();
+        const auto can_decay_corpse = it->is_corpse();
+        auto removed_snapshot = can_spawn_rot || can_decay_corpse ?
+                                item::spawn( *it ) : detached_ptr<item>();
+        it = item::actualize_rot( std::move( it ), {
+            .position = options.abs_pos,
+            .temperature = temperature,
+            .weather = &get_weather(),
+            .local_temperature = options.sm.get_temperature(),
+        } );
+        if( !it ) {
+            if( can_spawn_rot && removed_snapshot ) {
+                rotten_item_spawn( options, *removed_snapshot );
+            } else if( can_decay_corpse && removed_snapshot ) {
+                decayed_corpses.push_back( std::move( removed_snapshot ) );
+            }
+        }
+        return std::move( it );
+    } );
+
+    for( const auto &corpse : decayed_corpses ) {
+        handle_decayed_corpse( options, *corpse );
+    }
+}
+
+auto fill_funnels( const actualize_tile_options &options ) -> void
+{
+    const auto &tr = trap_at_tile( options.sm, options.local );
+    if( !tr.is_funnel() ) {
+        return;
+    }
+
+    auto is_outside = options.sm.outside_cache[options.local.x()][options.local.y()];
+    if( options.active_bubble_pos && g != nullptr ) {
+        is_outside = g->m.is_outside( *options.active_bubble_pos );
+    }
+    if( !is_outside ) {
+        return;
+    }
+
+    auto &items = options.sm.get_items( options.local );
+    auto maxvolume = 0_ml;
+    auto biggest_container = items.end();
+    for( auto candidate = items.begin(); candidate != items.end(); ++candidate ) {
+        if( ( *candidate )->is_funnel_container( maxvolume ) ) {
+            biggest_container = candidate;
+        }
+    }
+    if( biggest_container != items.end() ) {
+        retroactively_fill_from_funnel( **biggest_container, tr, options.last_touched, calendar::turn,
+                                        options.abs_pos );
+    }
+}
+
+auto remove_fertilizer( const actualize_tile_options &options,
+                        location_vector<item> &items ) -> void
+{
+    const auto fertilizer = std::ranges::find_if( items, []( const item * const it ) {
+        return it->has_flag( flag_FERTILIZER );
+    } );
+    if( fertilizer != items.end() ) {
+        options.buffer.erase_item( options.abs_pos, {
+            .it = fertilizer,
+            .lookup = options.lookup,
+        } );
+    }
+}
+
+auto grow_plant( const actualize_tile_options &options ) -> void
+{
+    const auto &furn = options.sm.get_furn( options.local ).obj();
+    if( !furn.has_flag( "PLANT" ) ) {
+        return;
+    }
+
+    auto &items = options.sm.get_items( options.local );
+    const auto seed_it = std::ranges::find_if( items, []( const item * const it ) {
+        return it->is_seed();
+    } );
+
+    if( seed_it == items.end() ) {
+        const auto overmap_terrain = get_overmapbuffer( options.buffer.get_dimension_id() ).ter(
+                                         project_to<coords::omt>( options.abs_pos ) );
+        debugmsg( "a planted item at %s (within overmap terrain %s) has no seed data",
+                  options.abs_pos.to_string(), overmap_terrain.id().str() );
+        options.buffer.clear_items( options.abs_pos, options.lookup );
+        options.buffer.set_furn( options.abs_pos, f_null, options.lookup );
+        return;
+    }
+
+    const auto *const seed = *seed_it;
+    const auto plant_epoch = seed->get_plant_epoch();
+    if( seed->age() < plant_epoch * furn.plant->growth_multiplier ||
+        furn.has_flag( "GROWTH_HARVEST" ) ) {
+        return;
+    }
+
+    if( seed->age() < plant_epoch * 2 ) {
+        if( furn.has_flag( "GROWTH_SEEDLING" ) ) {
+            return;
+        }
+        remove_fertilizer( options, items );
+        rotten_item_spawn( options, *seed );
+        options.buffer.set_furn( options.abs_pos, furn_str_id( furn.plant->transform ), options.lookup );
+        return;
+    }
+
+    if( seed->age() < plant_epoch * 3 * furn.plant->growth_multiplier ) {
+        if( furn.has_flag( "GROWTH_MATURE" ) ) {
+            return;
+        }
+        remove_fertilizer( options, items );
+        rotten_item_spawn( options, *seed );
+        if( !furn.has_flag( "GROWTH_SEEDLING" ) ) {
+            rotten_item_spawn( options, *seed );
+        }
+        options.buffer.set_furn( options.abs_pos, furn_str_id( furn.plant->transform ), options.lookup );
+        return;
+    }
+
+    if( furn.has_flag( "GROWTH_SEEDLING" ) ) {
+        rotten_item_spawn( options, *seed );
+        rotten_item_spawn( options, *seed );
+    } else if( furn.has_flag( "GROWTH_MATURE" ) ) {
+        rotten_item_spawn( options, *seed );
+    } else {
+        rotten_item_spawn( options, *seed );
+        rotten_item_spawn( options, *seed );
+        rotten_item_spawn( options, *seed );
+    }
+    options.buffer.set_furn( options.abs_pos, furn_str_id( furn.plant->transform ), options.lookup );
+}
+
+auto restock_fruits( const actualize_tile_options &options ) -> void
+{
+    const auto &ter = options.sm.get_ter( options.local ).obj();
+    const auto &furn = options.sm.get_furn( options.local ).obj();
+    if( !ter.has_flag( TFLAG_HARVESTED ) && !furn.has_flag( TFLAG_HARVESTED ) ) {
+        return;
+    }
+
+    const auto last_touched = calendar::turn - options.elapsed;
+    if( season_of_year( calendar::turn ) == season_of_year( last_touched ) &&
+        options.elapsed < calendar::season_length() ) {
+        return;
+    }
+
+    if( ter.has_flag( TFLAG_HARVESTED ) ) {
+        options.buffer.set_ter( options.abs_pos, ter.transforms_into, options.lookup );
+    }
+    if( furn.has_flag( TFLAG_HARVESTED ) ) {
+        options.buffer.set_furn( options.abs_pos, furn.transforms_into, options.lookup );
+    }
+}
+
+auto produce_sap( const actualize_tile_options &options ) -> void
+{
+    if( options.elapsed <= 0_turns || options.sm.get_ter( options.local ) != t_tree_maple_tapped ) {
+        return;
+    }
+
+    static const auto maple_sap_per_season = 56;
+    const auto producing_length = 0.75 * calendar::season_length();
+    const auto turns_to_produce = producing_length / ( maple_sap_per_season * 4 );
+    auto time_producing = 0_turns;
+
+    if( options.elapsed >= calendar::year_length() ) {
+        time_producing = producing_length;
+    } else {
+        const auto early_spring_end = 0.5f * calendar::season_length();
+        const auto late_winter_start = 3.75f * calendar::season_length();
+        const auto last_actualize = calendar::turn - options.elapsed;
+        const auto last_actualize_tof = time_past_new_year( last_actualize );
+        const auto last_producing = last_actualize_tof >= late_winter_start ||
+                                    last_actualize_tof < early_spring_end;
+        const auto current_tof = time_past_new_year( calendar::turn );
+        const auto current_producing = current_tof >= late_winter_start ||
+                                       current_tof < early_spring_end;
+        const auto non_producing_length = 3.25 * calendar::season_length();
+
+        if( last_producing && current_producing ) {
+            time_producing = options.elapsed < non_producing_length ?
+                             options.elapsed : options.elapsed - non_producing_length;
+        } else if( !last_producing && !current_producing ) {
+            if( options.elapsed > non_producing_length ) {
+                time_producing = options.elapsed - non_producing_length;
+            }
+        } else if( last_producing && !current_producing ) {
+            time_producing = last_actualize_tof < early_spring_end ?
+                             early_spring_end - last_actualize_tof :
+                             calendar::year_length() - last_actualize_tof + early_spring_end;
+        } else if( !last_producing && current_producing ) {
+            time_producing = current_tof >= late_winter_start ?
+                             current_tof - late_winter_start :
+                             0.25f * calendar::season_length() + current_tof;
+        }
+    }
+
+    auto new_charges = roll_remainder( time_producing / turns_to_produce );
+    if( new_charges <= 0 ) {
+        return;
+    }
+
+    auto &items = options.sm.get_items( options.local );
+    for( auto &it : items ) {
+        if( !it->is_bucket() && !it->is_watertight_container() ) {
+            continue;
+        }
+
+        auto sap = item::spawn( "maple_sap", calendar::turn );
+        const auto capacity = it->get_remaining_capacity_for_liquid( *sap, true );
+        if( capacity > 0 ) {
+            new_charges = std::min( new_charges, capacity );
+            sap->poison = one_in( 10 ) ? 1 : 0;
+            sap->charges = new_charges;
+            it->fill_with( std::move( sap ) );
+        }
+        break;
+    }
+}
+
+auto rad_scorch( const actualize_tile_options &options ) -> void
+{
+    const auto rads = options.sm.get_radiation( options.local );
+    if( rads == 0 ) {
+        return;
+    }
+
+    if( !x_in_y( 1.0 * rads * rads * options.elapsed, 91_days ) ) {
+        return;
+    }
+
+    const auto &furn = options.sm.get_furn( options.local ).obj();
+    if( furn.has_flag( "PLANT" ) ) {
+        options.buffer.clear_items( options.abs_pos, options.lookup );
+        options.buffer.set_furn( options.abs_pos, f_null, options.lookup );
+    }
+
+    static const auto dies_into = std::map<ter_id, ter_str_id> {{
+            {t_grass, ter_str_id( "t_dirt" )},
+            {t_tree_young, ter_str_id( "t_dirt" )},
+            {t_tree_pine, ter_str_id( "t_tree_deadpine" )},
+            {t_tree_birch, ter_str_id( "t_tree_birch_harvested" )},
+            {t_tree_willow, ter_str_id( "t_tree_willow_harvested" )},
+            {t_tree_hickory, ter_str_id( "t_tree_hickory_dead" )},
+            {t_tree_hickory_harvested, ter_str_id( "t_tree_hickory_dead" )},
+        }
+    };
+
+    const auto tid = options.sm.get_ter( options.local );
+    const auto iter = dies_into.find( tid );
+    if( iter != dies_into.end() ) {
+        options.buffer.set_ter( options.abs_pos, iter->second, options.lookup );
+        return;
+    }
+
+    const auto &terrain = tid.obj();
+    if( terrain.has_flag( "SHRUB" ) ) {
+        options.buffer.set_ter( options.abs_pos, t_dirt, options.lookup );
+    } else if( terrain.has_flag( "TREE" ) ) {
+        options.buffer.set_ter( options.abs_pos, ter_str_id( "t_tree_dead" ), options.lookup );
+    }
+}
+
+auto decay_cosmetic_fields( const actualize_tile_options &options ) -> void
+{
+    auto &fields = options.sm.get_field( options.local );
+    for( auto &pr : fields ) {
+        auto &fd = pr.second;
+        const auto half_life = fd.get_field_type().obj().half_life;
+        if( !fd.decays_on_actualize() || half_life <= 0_turns ) {
+            continue;
+        }
+
+        const auto added_age = 2 * options.elapsed / rng( 2, 4 );
+        fd.mod_field_age( added_age );
+        const auto intensity_drop = fd.get_field_age() / half_life;
+        if( intensity_drop > 0 ) {
+            fd.set_field_intensity( fd.get_field_intensity() - intensity_drop );
+            fd.mod_field_age( -half_life * intensity_drop );
+        }
+    }
 }
 
 auto tile_allows_item_despite_noitem_flag( const item &target,
@@ -580,19 +1062,16 @@ void mapbuffer::remove_submap( tripoint_abs_sm addr )
         debugmsg( "Tried to remove non-existing submap %s", addr.to_string() );
         return;
     }
-    // Safety: skip freeing if map::grid[] still references this submap.
+    // Safety: skip freeing if submap still in bubble
     if( g != nullptr && m_target->second ) {
         const submap *doomed = m_target->second.get();
         const map &here = g->m;
-        const auto &grid_vec = here.grid;
-        for( size_t i = 0; i < grid_vec.size(); ++i ) {
-            if( grid_vec[i] == doomed ) {
-                debugmsg( "remove_submap: skipping free of submap at %s (ptr %p) "
-                          "— map::grid[%zu] still references it (dim='%s')",
-                          addr.to_string(), static_cast<const void *>( doomed ),
-                          i, dimension_id_.c_str() );
-                return;  // do NOT erase — prevent use-after-free
-            }
+        if( here.inbounds( addr ) ) {
+            debugmsg( "remove_submap: skipping free of submap at %s (ptr %p) "
+                      "— reality bubble still references it (dim='%s')",
+                      addr.to_string(), static_cast<const void *>( doomed ),
+                      dimension_id_.c_str() );
+            return;  // do NOT erase — prevent use-after-free
         }
     }
     unregister_submap_vehicles( addr );
@@ -700,21 +1179,18 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
     // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
     if( g != nullptr ) {
         const map &here = g->m;
-        const auto &grid_vec = here.grid;
         to_delete.remove_if( [&]( const tripoint_abs_sm & p ) {
             const auto it = submaps.find( p );
             if( it == submaps.end() || !it->second ) {
                 return false;
             }
             const submap *doomed = it->second.get();
-            for( size_t i = 0; i < grid_vec.size(); ++i ) {
-                if( grid_vec[i] == doomed ) {
-                    debugmsg( "unload_omt: skipping free of submap at %s (ptr %p) "
-                              "— map::grid[%zu] still references it (dim='%s')",
-                              p.to_string(), static_cast<const void *>( doomed ),
-                              i, dimension_id_.c_str() );
-                    return true;  // remove from to_delete → keep alive
-                }
+            if( here.inbounds( p ) ) {
+                debugmsg( "unload_omt: skipping free of submap at %s (ptr %p) "
+                          "— reality bubble still references it (dim='%s')",
+                          p.to_string(), static_cast<const void *>( doomed ),
+                          dimension_id_.c_str() );
+                return true;  // remove from to_delete → keep alive
             }
             return false;
         } );
@@ -2002,6 +2478,32 @@ auto mapbuffer::clear_items( const tripoint_abs_ms &p,
     return items.clear();
 }
 
+auto mapbuffer::handle_rotten_away_item( const tripoint_abs_ms &p, const item &rotten_item,
+        const mapbuffer_lookup_options options ) -> void
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return;
+    }
+
+    const auto actualize_options = actualize_tile_options {
+        .buffer = *this,
+        .sm = *tile->sm,
+        .local = tile->local,
+        .abs_pos = p,
+        .active_bubble_pos = active_reality_bubble_local( p ),
+        .last_touched = calendar::turn,
+        .elapsed = 0_turns,
+        .lookup = options,
+    };
+
+    if( rotten_item.is_comestible() ) {
+        rotten_item_spawn( actualize_options, rotten_item );
+    } else if( rotten_item.is_corpse() ) {
+        handle_decayed_corpse( actualize_options, rotten_item );
+    }
+}
+
 auto mapbuffer::make_item_active( const tripoint_abs_ms &p, item &target,
                                   const mapbuffer_lookup_options options ) -> bool
 {
@@ -2431,7 +2933,7 @@ auto mapbuffer::invalidate_active_field_add_caches( const tripoint_abs_ms &p,
         here.set_pathfinding_cache_dirty( *local );
     }
 
-    if( here.has_zlevels() && field_type.accelerated_decay ) {
+    if( field_type.accelerated_decay ) {
         here.support_dirty( *local );
     }
 }
@@ -2792,10 +3294,9 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr,
     }
 
     {
-        ZoneScopedN( "mapbuffer_generate_tinymap" );
-        tinymap tmp_map;
-        tmp_map.bind_dimension( dimension_id_ );
-        const auto generate_result = tmp_map.generate( base, calendar::turn, {
+        ZoneScopedN( "mapbuffer_generate_mapgen_constructor" );
+        auto constructor = mapgen_constructor( *this );
+        const auto generate_result = constructor.generate( omt_addr, calendar::turn, {
             .defer_postprocess_hooks = options.defer_postprocess_hooks,
             .worker_safe = options.worker_safe,
             .use_selected_mapgen = options.use_selected_mapgen,
@@ -2809,6 +3310,76 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr,
         }
     }
     return { .status = mapgen_result_status::generated, .selected_mapgen = nullptr };
+}
+
+auto mapbuffer::actualize_submap( const tripoint_abs_sm &pos ) -> void
+{
+    ZoneScopedN( "mapbuffer_actualize_submap" );
+
+    auto *const tmpsub = lookup_submap_in_memory( pos );
+    if( tmpsub == nullptr ) {
+        debugmsg( "actualize_submap called on null submap %s", pos.to_string() );
+        return;
+    }
+
+    if( tmpsub->last_touched == calendar::turn ) {
+        ZoneScopedN( "mapbuffer_actualize_skip_current_turn" );
+        return;
+    }
+
+    const auto last_touched = tmpsub->last_touched;
+    const auto elapsed = calendar::turn - last_touched;
+
+    if( last_touched < calendar::turn ) {
+        ZoneScopedN( "mapbuffer_actualize_batch_turns" );
+        const auto missed = to_turns<int>( elapsed );
+        run_submap_batch_turns( *tmpsub, missed );
+    }
+
+    // Uniform submaps (empty rock, open air, boundary fill) have no items,
+    // furniture, fields, or plants. Avoid the tile loop and just stamp time.
+    if( tmpsub->is_uniform ) {
+        tmpsub->last_touched = calendar::turn;
+        return;
+    }
+
+    const auto do_funnels = pos.z() >= 0;
+    const auto lookup_options = mapbuffer_lookup_options {
+        .mode = mapbuffer_lookup_mode::resident_only,
+    };
+
+    for( const auto p : submap_tiles() ) {
+        const auto abs_pos = project_combine( pos, p );
+        const auto options = actualize_tile_options {
+            .buffer = *this,
+            .sm = *tmpsub,
+            .local = p,
+            .abs_pos = abs_pos,
+            .active_bubble_pos = active_reality_bubble_local( abs_pos ),
+            .last_touched = last_touched,
+            .elapsed = elapsed,
+            .lookup = lookup_options,
+        };
+        auto &items = tmpsub->get_items( p );
+        if( !items.empty() ) {
+            const auto &furn = tmpsub->get_furn( p ).obj();
+            if( !furn.has_flag( "DONT_REMOVE_ROTTEN" ) ) {
+                remove_rotten_items( options, items );
+            }
+        }
+
+        if( do_funnels ) {
+            fill_funnels( options );
+        }
+
+        grow_plant( options );
+        restock_fruits( options );
+        produce_sap( options );
+        rad_scorch( options );
+        decay_cosmetic_fields( options );
+    }
+
+    tmpsub->last_touched = calendar::turn;
 }
 
 auto mapbuffer::drain_pending_submap_destroy() -> void

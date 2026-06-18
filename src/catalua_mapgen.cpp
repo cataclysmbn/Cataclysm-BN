@@ -5,6 +5,7 @@
 #include "player.h"
 #include "game.h"
 #include "mapgendata.h"
+#include "mapgen_constructor.h"
 #include "profile.h"
 #include "thread_pool.h"
 #include "sol/sol.hpp"

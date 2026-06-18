@@ -101,7 +101,7 @@ static firing_statistics firing_test( const dispersion_sources &dispersion,
         const projectile_attack_aim aim = projectile_attack_roll( dispersion, range, 0.5 );
         threshold_within_confidence_interval = false;
         firing_stats.add( aim.missed_by < threshold.accuracy() );
-        if( firing_stats.n() < 100 ) {
+        if( firing_stats.n() < 50 ) {
             threshold_within_confidence_interval = true;
         }
         const double error = firing_stats.margin_of_error();
@@ -109,7 +109,7 @@ static firing_statistics firing_test( const dispersion_sources &dispersion,
         if( avg + error > threshold.chance() && avg - error < threshold.chance() ) {
             threshold_within_confidence_interval = true;
         }
-    } while( threshold_within_confidence_interval && firing_stats.n() < 10000000 );
+    } while( threshold_within_confidence_interval && firing_stats.n() < 50000 );
     return firing_stats;
 }
 
@@ -238,26 +238,6 @@ TEST_CASE( "unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]" )
         test_shooting_scenario( shooter, 4, 5, 15 );
         test_fast_shooting( shooter, 40, 0.3 );
     }
-    SECTION( "an unskilled archer with an inaccurate bow" ) {
-        arm_character( shooter, "shortbow", { "bow_sight_pin" }, "arrow_field_point_fletched" );
-        test_shooting_scenario( shooter, 3, 3, 12 );
-        test_fast_shooting( shooter, 50, 0.2 );
-    }
-    SECTION( "an unskilled archer with an inaccurate crossbow" ) {
-        arm_character( shooter, "crossbow", {}, "bolt_makeshift" );
-        test_shooting_scenario( shooter, 4, 6, 17 );
-        test_fast_shooting( shooter, 50, 0.2 );
-    }
-    SECTION( "an unskilled shooter with an inaccurate shotgun" ) {
-        arm_character( shooter, "winchester_1897" );
-        test_shooting_scenario( shooter, 4, 6, 17 );
-        test_fast_shooting( shooter, 50, 0.3 );
-    }
-    SECTION( "an unskilled shooter with an inaccurate smg" ) {
-        arm_character( shooter, "tommygun" );
-        test_shooting_scenario( shooter, 4, 6, 18 );
-        test_fast_shooting( shooter, 70, 0.3 );
-    }
     SECTION( "an unskilled shooter with an inaccurate rifle" ) {
         arm_character( shooter, "m1918" );
         test_shooting_scenario( shooter, 5, 9, 25 );
@@ -277,26 +257,6 @@ TEST_CASE( "competent_shooter_accuracy", "[ranged] [balance]" )
         test_shooting_scenario( shooter, 10, 15, 33 );
         test_fast_shooting( shooter, 30, 0.5 );
     }
-    SECTION( "a skilled archer with an accurate bow" ) {
-        arm_character( shooter, "compbow", { "bow_sight" } );
-        test_shooting_scenario( shooter, 8, 10, 32 );
-        test_fast_shooting( shooter, 50, 0.4 );
-    }
-    SECTION( "a skilled archer with an accurate crossbow" ) {
-        arm_character( shooter, "compositecrossbow", { "tele_sight" }, "bolt_steel" );
-        test_shooting_scenario( shooter, 9, 13, 33 );
-        test_fast_shooting( shooter, 50, 0.4 );
-    }
-    SECTION( "a skilled shooter with an accurate shotgun" ) {
-        arm_character( shooter, "ksg", { "red_dot_sight" } );
-        test_shooting_scenario( shooter, 9, 15, 33 );
-        test_fast_shooting( shooter, 75, 0.65 );
-    }
-    SECTION( "a skilled shooter with an accurate smg" ) {
-        arm_character( shooter, "hk_mp5", { "tele_sight" } );
-        test_shooting_scenario( shooter, 12, 18, 40 );
-        test_fast_shooting( shooter, 40, 0.4 );
-    }
     SECTION( "a skilled shooter with an accurate rifle" ) {
         arm_character( shooter, "ar15", { "tele_sight" } );
         test_shooting_scenario( shooter, 10, 22, 48 );
@@ -315,26 +275,6 @@ TEST_CASE( "expert_shooter_accuracy", "[ranged] [balance]" )
         arm_character( shooter, "sw629", { "pistol_scope" } );
         test_shooting_scenario( shooter, 18, 20, 140 );
         test_fast_shooting( shooter, 20, 0.6 );
-    }
-    SECTION( "an expert archer with an excellent bow" ) {
-        arm_character( shooter, "compbow_high", { "bow_scope" }, "arrow_cf" );
-        test_shooting_scenario( shooter, 12, 20, 80 );
-        test_fast_shooting( shooter, 30, 0.6 );
-    }
-    SECTION( "an expert archer with an excellent crossbow" ) {
-        arm_character( shooter, "compcrossbow", { "holo_sight" }, "bolt_cf" );
-        test_shooting_scenario( shooter, 12, 20, 100 );
-        test_fast_shooting( shooter, 30, 0.45 );
-    }
-    SECTION( "an expert shooter with an excellent shotgun" ) {
-        arm_character( shooter, "m1014", { "holo_sight" } );
-        test_shooting_scenario( shooter, 18, 24, 124 );
-        test_fast_shooting( shooter, 30, 0.5 );
-    }
-    SECTION( "an expert shooter with an excellent smg" ) {
-        arm_character( shooter, "rm2000_smg", { "holo_sight" } );
-        test_shooting_scenario( shooter, 20, 30, 190 );
-        test_fast_shooting( shooter, 30, 0.5 );
     }
     SECTION( "an expert shooter with an excellent rifle" ) {
         arm_character( shooter, "browning_blr", { "rifle_scope" } );

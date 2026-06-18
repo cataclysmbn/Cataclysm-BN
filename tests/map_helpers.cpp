@@ -133,8 +133,6 @@ void clear_overmap()
 
 void clear_map()
 {
-    g->m.set_loaded_submap_z( 0 );
-
     // Clearing all z-levels is rather slow, so just clear the ones I know the
     // tests use for now.
     for( int z = -2; z <= 0; ++z ) {
@@ -166,7 +164,7 @@ auto move_player_out_of_the_way() -> void
     auto &here = get_map();
     g->u.setpos( map_local_to_abs( here,
                                    tripoint_bub_ms( g_half_mapsize_x + SEEX - 1,
-                                           g_half_mapsize_y + SEEY - 1, here.get_abs_sub().z() ) ) );
+                                           g_half_mapsize_y + SEEY - 1, g->u.abs_pos().z() ) ) );
 }
 
 monster &spawn_test_monster( const std::string &monster_type, const tripoint_bub_ms &start )

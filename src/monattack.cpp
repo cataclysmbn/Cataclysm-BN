@@ -4124,8 +4124,7 @@ void mattack::flame( monster *z, Creature *target )
             // TODO: Z
             if( here.hit_with_fire( tripoint_bub_ms( i.xy(), z->bub_pos().z() ) ) ) {
                 if( g->u.sees( i ) ) {
-                    add_msg( _( "The tongue of flame hits the %s!" ),
-                             here.tername( i.xy() ) );
+                    add_msg( _( "The tongue of flame hits the %s!" ), here.tername( i ) );
                 }
                 return;
             }
@@ -4153,19 +4152,17 @@ void mattack::flame( monster *z, Creature *target )
             } else {
                 intervening.y() = prev_point.y();
             }
-            if( here.hit_with_fire( tripoint_bub_ms( intervening.xy(), z->bub_pos().z() ) ) ) {
+            if( here.hit_with_fire( intervening ) ) {
                 if( g->u.sees( i ) ) {
-                    add_msg( _( "The tongue of flame hits the %s!" ),
-                             here.tername( intervening.xy() ) );
+                    add_msg( _( "The tongue of flame hits the %s!" ), here.tername( intervening ) );
                 }
                 return;
             }
         }
         // break out of attack if flame hits a wall
-        if( here.hit_with_fire( tripoint_bub_ms( i.xy(), z->bub_pos().z() ) ) ) {
+        if( here.hit_with_fire( i ) ) {
             if( g->u.sees( i ) ) {
-                add_msg( _( "The tongue of flame hits the %s!" ),
-                         here.tername( i.xy() ) );
+                add_msg( _( "The tongue of flame hits the %s!" ), here.tername( i ) );
             }
             return;
         }

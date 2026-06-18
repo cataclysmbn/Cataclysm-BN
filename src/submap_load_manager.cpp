@@ -114,7 +114,7 @@ submap_load_manager submap_loader;
 auto submap_load_manager::request_load(
     load_request_source source,
     const dimension_id &dim_id,
-    const tripoint_abs_sm &center,
+    const point_abs_sm &center,
     int radius ) -> load_request_handle
 {
     const load_request_handle handle = next_handle_++;
@@ -128,7 +128,7 @@ auto submap_load_manager::request_load(
 }
 
 void submap_load_manager::update_request( load_request_handle handle,
-        const tripoint_abs_sm &new_center )
+        const point_abs_sm &new_center )
 {
     auto it = requests_.find( handle );
     if( it == requests_.end() ) {
@@ -197,14 +197,13 @@ auto submap_load_manager::compute_desired_set() const -> key_set
         // The desired set is 2-D (horizontal only).  Load requests always cover
         // the full z-range; the z-level loop runs inside update() when omts are
         // actually loaded or evicted.
-        const point_abs_sm c = req.center.xy();
 
         if( req.source == load_request_source::reality_bubble ) {
             // Use the precomputed square offsets so all submaps in the full
             // (2*radius+1)×(2*radius+1) grid are protected from eviction.
             // bubble_offsets_ is populated by update_load_shape() in map::resize().
             std::ranges::for_each( bubble_offsets_, [&]( const point & off ) {
-                desired.emplace( req.dim_id, c + off );
+                desired.emplace( req.dim_id, req.center + off );
             } );
         } else {
             // Other sources (player_base, script, fire_spread) also use square.
@@ -214,7 +213,7 @@ auto submap_load_manager::compute_desired_set() const -> key_set
                 cata::views::cartesian_product( axis, axis ),
             [&]( auto pair ) {
                 auto [dx, dy] = pair;
-                desired.emplace( req.dim_id, c + point{ dx, dy } );
+                desired.emplace( req.dim_id, req.center + point{ dx, dy } );
             } );
         }
     } );
@@ -232,10 +231,11 @@ auto submap_load_manager::compute_lazy_border_omts() const -> horizontal_omt_set
         }
         // The lazy border is defined in OMT space: the current bubble's OMT
         // footprint, expanded by one horizontal OMT in every direction.
-        const auto c = req.center.xy();
         const auto r = req.radius;
-        const auto min_omt = project_to<coords::omt>( point_abs_sm{ c.x() - r, c.y() - r } );
-        const auto max_omt = project_to<coords::omt>( point_abs_sm{ c.x() + r, c.y() + r } );
+        const auto min_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() -
+                             r, req.center.y() - r } );
+        const auto max_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() +
+                             r, req.center.y() + r } );
         const auto x_range = std::views::iota( min_omt.x() - 1, max_omt.x() + 2 );
         const auto y_range = std::views::iota( min_omt.y() - 1, max_omt.y() + 2 );
         std::ranges::for_each( cata::views::cartesian_product( x_range, y_range ),
@@ -255,7 +255,7 @@ auto submap_load_manager::add_lazy_border_into( key_set &target,
         const horizontal_omt_set &border_omts ) const -> void
 {
     ZoneScoped;
-    std::ranges::for_each( border_omts, [&]( const retained_omt_key & key ) {
+    std::ranges::for_each( border_omts, [&]( const omt_column_key & key ) {
         const auto &[dim_id, omt_xy] = key;
         const auto sm_base = project_to<coords::sm>( omt_xy );
         for( const point &off : { point_zero, point_south, point_east, point_south_east } ) {
@@ -301,7 +301,7 @@ auto submap_load_manager::retained_omt_base_budget() const -> std::size_t
     return std::max( std::size_t{ 1 }, radius / 6 );
 }
 
-auto submap_load_manager::retain_omt( const retained_omt_key &key ) -> void
+auto submap_load_manager::retain_omt( const omt_column_key &key ) -> void
 {
     if( auto it = retained_omt_index_.find( key ); it != retained_omt_index_.end() ) {
         retained_omts_.splice( retained_omts_.end(), retained_omts_, it->second );
@@ -311,7 +311,7 @@ auto submap_load_manager::retain_omt( const retained_omt_key &key ) -> void
     retained_omt_index_.emplace( key, it );
 }
 
-auto submap_load_manager::erase_retained_omt( const retained_omt_key &key ) -> void
+auto submap_load_manager::erase_retained_omt( const omt_column_key &key ) -> void
 {
     const auto it = retained_omt_index_.find( key );
     if( it == retained_omt_index_.end() ) {
@@ -328,22 +328,19 @@ auto submap_load_manager::erase_desired_retained_omts( const key_set &desired ) 
     } );
 }
 
-auto submap_load_manager::evict_omt_column( const retained_omt_key &key ) -> void
+auto submap_load_manager::evict_omt_column( const omt_column_key &key ) -> void
 {
     const auto &[dim_id, omt_xy] = key;
     auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
+    const auto was_dirty = dirty_omts_.contains( key );
+    if( was_dirty ) {
+        dirty_omts_.erase( key );
+    }
     std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
     [&]( const auto z ) {
-        const auto omt_addr = tripoint_abs_omt{ omt_xy, z };
-        const auto qk = omt_key{ dim_id, omt_addr };
-        finish_lazy_omt_job( qk );
-        const auto was_dirty = dirty_omts_.contains( qk );
-        if( was_dirty ) {
-            dirty_omts_.erase( qk );
-            mb.unload_omt( omt_addr, true );
-        } else {
-            mb.unload_omt( omt_addr, false );
-        }
+        const auto pos = tripoint_abs_omt{ omt_xy, z };
+        finish_lazy_omt_job( omt_key{ dim_id, pos } );
+        mb.unload_omt( pos, was_dirty );
     } );
 }
 
@@ -448,7 +445,7 @@ auto submap_load_manager::apply_lazy_omt_result( const omt_key &key,
 {
     MAPBUFFER_REGISTRY.get( key.first ).drain_pending_submap_destroy();
     if( result.dirty || result.generated() ) {
-        dirty_omts_.insert( key );
+        dirty_omts_.insert( { key.first, key.second.xy() } );
     }
     return result.generated();
 }
@@ -565,7 +562,7 @@ auto submap_load_manager::start_lazy_omt_job( const omt_key &key ) -> bool
     return true;
 }
 
-auto submap_load_manager::lazy_omt_priority( const retained_omt_key &key ) const -> int
+auto submap_load_manager::lazy_omt_priority( const omt_column_key &key ) const -> int
 {
     if( lazy_omt_preload_direction_ == point_zero ) {
         return 0;
@@ -587,10 +584,9 @@ auto submap_load_manager::lazy_omt_priority( const retained_omt_key &key ) const
         if( req.source != load_request_source::lazy_border || req.dim_id != dim_id ) {
             return;
         }
-        const auto c = req.center.xy();
         const auto r = req.radius;
-        const auto min_omt = project_to<coords::omt>( point_abs_sm{ c.x() - r, c.y() - r } );
-        const auto max_omt = project_to<coords::omt>( point_abs_sm{ c.x() + r, c.y() + r } );
+        const auto min_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() - r, req.center.y() - r } );
+        const auto max_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() + r, req.center.y() + r } );
 
         auto score = 0;
         if( prioritize_x && lazy_omt_preload_direction_.x > 0 && omt_xy.x() > max_omt.x() ) {
@@ -610,21 +606,16 @@ auto submap_load_manager::lazy_omt_priority( const retained_omt_key &key ) const
     return best;
 }
 
-auto submap_load_manager::lazy_omt_priority( const omt_key &key ) const -> int
-{
-    return lazy_omt_priority( retained_omt_key{ key.first, key.second.xy() } );
-}
-
 auto submap_load_manager::queue_lazy_border_omts( const horizontal_omt_set &border_omts ) -> void
 {
     ZoneScopedN( "slm_queue_lazy_border_omts" );
 
-    auto candidates = std::vector<retained_omt_key> {};
-    std::ranges::for_each( border_omts, [&]( const retained_omt_key & key ) {
+    auto candidates = std::vector<omt_column_key> {};
+    std::ranges::for_each( border_omts, [&]( const omt_column_key & key ) {
         candidates.push_back( key );
     } );
-    std::ranges::sort( candidates, [&]( const retained_omt_key & lhs,
-    const retained_omt_key & rhs ) {
+    std::ranges::sort( candidates, [&]( const omt_column_key & lhs,
+    const omt_column_key & rhs ) {
         const auto lhs_priority = lazy_omt_priority( lhs );
         const auto rhs_priority = lazy_omt_priority( rhs );
         if( lhs_priority != rhs_priority ) {
@@ -641,7 +632,7 @@ auto submap_load_manager::queue_lazy_border_omts( const horizontal_omt_set &bord
 
     lazy_omt_jobs_.clear();
     lazy_omt_job_index_.clear();
-    std::ranges::for_each( candidates, [&]( const retained_omt_key & key ) {
+    std::ranges::for_each( candidates, [&]( const omt_column_key & key ) {
         const auto &[dim_id, omt_xy] = key;
         auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
         std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
@@ -672,7 +663,7 @@ auto submap_load_manager::process_lazy_border_preload() -> void
 
     const auto urgent = static_cast<std::size_t>( std::ranges::count_if(
     lazy_omt_jobs_, [&]( const omt_key & key ) {
-        return lazy_omt_priority( key ) > 0;
+        return lazy_omt_priority( { key.first, key.second.xy() } ) > 0;
     } ) );
     TracyPlot( "Lazy Border Leading OMTs", static_cast<int64_t>( urgent ) );
     TracyPlot( "Lazy Border Leading Z Jobs", static_cast<int64_t>( urgent ) );
@@ -747,7 +738,7 @@ auto submap_load_manager::process_lazy_border_preload() -> void
     TracyPlot( "Lazy Border OMT Budget", static_cast<int64_t>( budget ) );
 
     const auto started = load_budget_matching( budget, [&]( const omt_key & key ) {
-        return lazy_omt_priority( key ) > 0;
+        return lazy_omt_priority( { key.first, key.second.xy() } ) > 0;
     } );
     if( started > 0 ) {
         run_deferred_mapgen_hooks();
@@ -851,11 +842,11 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     // the desired/simulated/border sets are identical — skip the expensive
     // set construction, diffing, loading, and retention work.
     {
-        std::vector<std::pair<load_request_handle, tripoint>> cur_centers;
+        std::vector<std::pair<load_request_handle, point_abs_sm>> cur_centers;
         cur_centers.reserve( requests_.size() );
         auto bubble_delta = point_zero;
         std::ranges::for_each( requests_, [&]( const auto & kv ) {
-            cur_centers.emplace_back( kv.first, kv.second.center.raw() );
+            cur_centers.emplace_back( kv.first, kv.second.center );
             const auto &req = kv.second;
             if( req.source != load_request_source::reality_bubble ) {
                 return;
@@ -866,8 +857,8 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
             if( prev == prev_centers_.end() ) {
                 return;
             }
-            bubble_delta = point{ signum( req.center.x() - prev->second.x ),
-                                  signum( req.center.y() - prev->second.y ) };
+            bubble_delta = point{ signum( req.center.x() - prev->second.x() ),
+                                  signum( req.center.y() - prev->second.y() ) };
         } );
         if( bubble_delta != point_zero ) {
             lazy_omt_preload_direction_ = bubble_delta;
@@ -911,9 +902,7 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     // Mark ALL z-levels for newly-simulated horizontal OMTs as dirty: they
     // will receive game logic and must be saved to disk when evicted.
     for( const auto &[dim_id, omt_xy] : new_omts ) {
-        for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-            dirty_omts_.insert( { dim_id, tripoint_abs_omt{ omt_xy, z } } );
-        }
+        dirty_omts_.insert( { dim_id, omt_xy } );
     }
 
     // ---- Step 1: parallel disk preload for newly-simulated omts ----
@@ -970,7 +959,7 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     }
 
     // ---- Step 2: synchronous mapgen on the main thread ----
-    // generate_omt() calls tinymap::generate() which may invoke Lua mapgen.
+    // generate_omt() may invoke Lua mapgen.
     // Lua is not reentrant, so this must always run on the main thread.
     // Skip omts already fully resident: preload_omt loaded them from disk or
     // the pending_writes cache, so no generation is needed.
@@ -1080,9 +1069,9 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
 }
 
 auto submap_load_manager::is_requested( const dimension_id &dim_id,
-                                        const tripoint_abs_sm &pos ) const -> bool
+                                        const point_abs_sm &pos ) const -> bool
 {
-    return prev_desired_.count( { dim_id, pos.xy() } ) > 0;
+    return prev_desired_.count( { dim_id, pos } ) > 0;
 }
 
 auto submap_load_manager::is_properly_requested( const dimension_id &dim_id,
@@ -1097,26 +1086,23 @@ auto submap_load_manager::is_properly_requested( const dimension_id &dim_id,
         if( req.dim_id != dim_id ) {
             return false;
         }
-        const point_abs_sm c = req.center.xy();
-        const int dx = std::abs( p.x() - c.x() );
-        const int dy = std::abs( p.y() - c.y() );
+        const int dx = std::abs( p.x() - req.center.x() );
+        const int dy = std::abs( p.y() - req.center.y() );
         return dx <= req.radius && dy <= req.radius;
     } );
 }
 
 auto submap_load_manager::is_simulated( const dimension_id &dim_id,
-                                        const tripoint_abs_sm &pos ) const -> bool
+                                        const point_abs_sm &pos ) const -> bool
 {
     if( !is_loaded( dim_id, pos ) ) { return false; }
-    const point_abs_sm p = pos.xy();
     bool covered_by_lazy_only = false;
     for( const auto &[handle, req] : requests_ ) {
         if( req.dim_id != dim_id ) {
             continue;
         }
-        const point_abs_sm c = req.center.xy();
-        const int dx = std::abs( p.x() - c.x() );
-        const int dy = std::abs( p.y() - c.y() );
+        const int dx = std::abs( pos.x() - req.center.x() );
+        const int dy = std::abs( pos.y() - req.center.y() );
         if( !( dx <= req.radius && dy <= req.radius ) ) {
             continue;
         }
@@ -1139,9 +1125,10 @@ auto submap_load_manager::is_simulated( const dimension_id &dim_id,
 }
 
 auto submap_load_manager::is_loaded( const dimension_id &dim_id,
-                                     const tripoint_abs_sm &pos ) const -> bool
+                                     const point_abs_sm &pos ) const -> bool
 {
-    return MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( pos ) != nullptr;
+    return MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( tripoint_abs_sm{ pos, 0 } ) !=
+           nullptr;
 }
 
 auto submap_load_manager::active_dimensions() const -> std::vector<dimension_id>

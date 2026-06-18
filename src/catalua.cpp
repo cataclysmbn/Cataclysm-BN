@@ -36,6 +36,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "lua_sidebar_widgets.h"
 #include "lua_action_menu.h"
 #include "map.h"
+#include "mapgen_constructor.h"
 #include "messages.h"
 #include "mod_manager.h"
 #include "mutation.h"
@@ -1053,8 +1054,8 @@ void run_on_game_load_hooks( lua_state &state )
     run_hooks( "on_game_load", nullptr, { .state = &state } );
 }
 
-void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint_abs_omt &p,
-                                      const time_point &when )
+void run_on_mapgen_postprocess_hooks( lua_state &state, mapgen_constructor &m,
+                                      const tripoint_abs_omt &p, const time_point &when )
 {
     run_hooks( "on_mapgen_postprocess", [&]( sol::table & params ) {
         params["map"] = &m;
@@ -1063,7 +1064,7 @@ void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint_a
     }, { .state = &state } );
 }
 
-void run_on_mapgen_postprocess_hooks_batch( lua_state &state, tinymap &tmp,
+void run_on_mapgen_postprocess_hooks_batch( lua_state &state, mapgen_constructor &constructor,
         std::span<const mapgen_hook_batch_item> items )
 {
     if( items.empty() ) {
@@ -1084,16 +1085,16 @@ void run_on_mapgen_postprocess_hooks_batch( lua_state &state, tinymap &tmp,
     }
 
     // Create the params table once for the whole batch.
-    // params["map"] holds a pointer to tmp; bind_submaps_for_hook() rebinds the
-    // underlying submap grid in-place, so the Lua side always sees current data
+    // params["map"] holds a pointer to constructor; bind_existing_submaps() rebinds the
+    // underlying submap target in-place, so the Lua side always sees current data
     // without us needing to reassign params["map"] per item.
     // The results table is intentionally omitted — on_mapgen_postprocess callers
     // discard the return value, so tracking per-hook results is pure overhead.
     auto params = lua.create_table();
-    params["map"] = static_cast<map *>( &tmp );
+    params["map"] = &constructor;
 
     std::ranges::for_each( items, [&]( const mapgen_hook_batch_item & item ) {
-        tmp.bind_submaps_for_hook( item.sm_base );
+        constructor.bind_omt_for_hook( item.omt_pos );
         params["prev"] = sol::lua_nil;
         params["omt"]  = cata::detail::lua_coords::to_lua( item.omt_pos );
         params["when"] = item.when;

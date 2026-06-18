@@ -5002,6 +5002,14 @@ void item::on_contents_changed()
     }
 
     encumbrance_update_ = true;
+
+    if( !has_position() || where() != item_location_type::vehicle ) {
+        return;
+    }
+
+    if( const optional_vpart_position vp = get_map().veh_at( position() ) ) {
+        vp->vehicle().invalidate_cargo_recharge_cache();
+    }
 }
 
 void item::on_damage( int qty, damage_type )
@@ -9867,40 +9875,78 @@ bool item::has_rotten_away() const
     }
 }
 
-detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
-                                        temperature_flag temperature,
-                                        const weather_manager &weather )
+auto item::process_rot( detached_ptr<item> &&self,
+                        const absolute_rot_process_options &options ) -> detached_ptr<item>
+{
+    if( !self ) {
+        return std::move( self );
+    }
+    if( self->is_in_preserving_container() ) {
+        self->mark_rot_checked_now();
+        return std::move( self );
+    }
+
+    self->update_rot( options.context );
+
+    if( self->has_rotten_away() && options.carrier == nullptr && !options.seals ) {
+        return detached_ptr<item>();
+    }
+    return std::move( self );
+}
+
+auto item::actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
+                          const temperature_flag temperature,
+                          const weather_manager &weather ) -> detached_ptr<item>
+{
+    return actualize_rot( std::move( self ), {
+        .position = bub_to_abs( pnt ),
+        .temperature = temperature,
+        .weather = &weather,
+        .local_temperature = g != nullptr && !g->new_game ? get_map().get_temperature( pnt ) : 0,
+    } );
+}
+
+auto item::actualize_rot( detached_ptr<item> &&self,
+                          const rot_context &context ) -> detached_ptr<item>
 {
     // Guard against null or invalid items that can survive save/load cycles
     // during dimension transitions (e.g. zombie items from deferred arena cleanup).
     if( !self || !self->type || self->type == nullitem() ) {
         if( self ) {
             debugmsg( "actualize_rot: skipping item with %s type at %s",
-                      self->type ? "null-type" : "null", pnt.to_string() );
+                      self->type ? "null-type" : "null", context.position.to_string() );
         }
         return std::move( self );
     }
     if( self->goes_bad() ) {
-        return process_rot( std::move( self ), false, pnt, nullptr, temperature, weather );
+        return process_rot( std::move( self ), {
+            .seals = false,
+            .carrier = nullptr,
+            .context = context,
+        } );
     } else if( self->type->container && self->type->container->preserves ) {
         // Containers like tin cans preserves all items inside, they do not rot at all.
         return std::move( self );
     } else if( self->type->container && self->type->container->seals ) {
         // Items inside rot but do not vanish as the container seals them in.
-        self->contents.remove_top_items_with( [&pnt, &temperature, &weather]( detached_ptr<item> &&it ) {
+        self->contents.remove_top_items_with( [&context]( detached_ptr<item> &&it ) {
             if( !it || !it->type || it->type == nullitem() ) {
                 return std::move( it );
             }
             if( it->goes_bad() ) {
-                it = process_rot( std::move( it ), true, pnt, nullptr, temperature, weather );
+                it = process_rot( std::move( it ), {
+                    .seals = true,
+                    .carrier = nullptr,
+                    .context = context,
+                } );
             }
             return std::move( it );
         } );
         return std::move( self );
     } else {
         // Check and remove rotten contents, but always keep the container.
-        self->contents.remove_top_items_with( [&pnt, &temperature, &weather]( detached_ptr<item> &&it ) {
-            return actualize_rot( std::move( it ), pnt, temperature, weather );
+        self->contents.remove_top_items_with( [&context]( detached_ptr<item> &&it ) {
+            return actualize_rot( std::move( it ), context );
         } );
         return std::move( self );
     }
@@ -10037,7 +10083,8 @@ int item::processing_speed() const
     return 1;
 }
 
-detached_ptr<item> item::process_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pos )
+auto item::process_rot( detached_ptr<item> &&self,
+                        const tripoint_bub_ms &pos ) -> detached_ptr<item>
 {
     return process_rot( std::move( self ), false, pos, nullptr, temperature_flag::TEMP_NORMAL,
                         get_weather() );
@@ -10085,10 +10132,20 @@ void item::update_rot_from_location( const temperature_flag temperature )
     update_rot( pos, flag, get_weather() );
 }
 
-void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
-                       const weather_manager &weather )
+auto item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
+                       const weather_manager &weather ) -> void
 {
-    const time_point now = calendar::turn;
+    update_rot( {
+        .position = bub_to_abs( pos ),
+        .temperature = flag,
+        .weather = &weather,
+        .local_temperature = g != nullptr && !g->new_game ? get_map().get_temperature( pos ) : 0,
+    } );
+}
+
+auto item::update_rot( const rot_context &context ) -> void
+{
+    const auto now = calendar::turn;
 
     // if player debug menu'd the time backward it breaks stuff, just reset the
     // last_temp_check and last_rot_check in this case
@@ -10099,42 +10156,42 @@ void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
 
     // process rot at most once every 100_turns (10 min)
     // note we're also gated by item::processing_speed
-    constexpr time_duration smallest_interval = 10_minutes;
+    static constexpr auto smallest_interval = 10_minutes;
 
-    units::temperature temp = weather.get_temperature( bub_to_abs( pos ) );
-    temp = clip_by_temperature_flag( temp, flag );
+    const auto &weather = context.weather == nullptr ? get_weather() : *context.weather;
+    auto temp = weather.get_temperature( context.position );
+    temp = clip_by_temperature_flag( temp, context.temperature );
 
-    time_point time = last_rot_check;
+    auto time = last_rot_check;
     item_internal::scoped_goes_bad_cache _cache( this );
 
     if( now - time > 1_hours ) {
         // This code is for items that were left out of reality bubble for long time
 
-        const weather_generator &wgen = weather.get_cur_weather_gen();
-        const unsigned int seed = g->get_seed();
+        const auto &wgen = weather.get_cur_weather_gen();
+        const auto seed = g != nullptr ? g->get_seed() : 0;
         // It's a modifier, so we need to subtract 0_f
-        units::temperature local_mod = units::from_fahrenheit( g->new_game
-                                       ? 0
-                                       : get_map().get_temperature( pos ) ) - 0_f;
+        const auto local_mod = units::from_fahrenheit( g != nullptr && g->new_game ?
+                               0 : context.local_temperature ) - 0_f;
 
         // Process the past of this item since the last time it was processed
         while( now - time > 1_hours ) {
             // Get the environment temperature
-            time_duration time_delta = std::min( 1_hours, now - 1_hours - time );
+            const auto time_delta = std::min( 1_hours, now - 1_hours - time );
             time += time_delta;
 
-            //Use weather if above ground, use map temp if below
-            units::temperature env_temperature_raw;
-            if( pos.z() >= 0 ) {
-                const auto location = bub_to_abs( pos );
-                units::temperature weather_temperature = wgen.get_weather_temperature( location, time,
-                        calendar::config, seed );
-                env_temperature_raw = weather_temperature + local_mod;
-            } else {
-                env_temperature_raw = temperatures::annual_average + local_mod;
+            const auto env_temperature_raw = [&]() {
+                if( context.position.z() >= 0 ) {
+                    const auto weather_temperature = wgen.get_weather_temperature( context.position, time,
+                                                     calendar::config, seed );
+                    return weather_temperature + local_mod;
+                }
+                return temperatures::annual_average + local_mod;
             }
+            ();
 
-            units::temperature env_temperature_clipped = clip_by_temperature_flag( env_temperature_raw, flag );
+            auto env_temperature_clipped = clip_by_temperature_flag( env_temperature_raw,
+                                           context.temperature );
 
             // Calculate item rot
             rot += calc_rot( time, env_temperature_clipped );
@@ -10150,25 +10207,21 @@ void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
     }
 }
 
-detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool seals,
-                                       const tripoint_bub_ms &pos,
-                                       player *carrier, const temperature_flag flag,
-                                       const weather_manager &weather )
+auto item::process_rot( detached_ptr<item> &&self, const bool seals,
+                        const tripoint_bub_ms &pos,
+                        player *carrier, const temperature_flag flag,
+                        const weather_manager &weather ) -> detached_ptr<item>
 {
-    if( !self ) {
-        return std::move( self );
-    }
-    if( self->is_in_preserving_container() ) {
-        self->mark_rot_checked_now();
-        return std::move( self );
-    }
-
-    self->update_rot( pos, flag, weather );
-
-    if( self->has_rotten_away() && carrier == nullptr && !seals ) {
-        return detached_ptr<item>();
-    }
-    return std::move( self );
+    return process_rot( std::move( self ), {
+        .seals = seals,
+        .carrier = carrier,
+        .context = rot_context {
+            .position = bub_to_abs( pos ),
+            .temperature = flag,
+            .weather = &weather,
+            .local_temperature = g != nullptr && !g->new_game ? get_map().get_temperature( pos ) : 0,
+        },
+    } );
 }
 
 void item::process_artifact( player *carrier, const tripoint_bub_ms & /*pos*/ )
@@ -11010,15 +11063,15 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
     // All foods that go bad have temperature
     if( ( self->is_food() || self->is_corpse() ) ) {
         ZoneScopedN( "item_process_rot" );
-        item &obj = *self;
+        auto removed_snapshot = self->is_comestible() || self->is_corpse() ?
+                                item::spawn( *self ) : detached_ptr<item>();
         self = process_rot( std::move( self ), seals, pos, carrier, flag, weather_generator );
         // If the item has rotted away, then self becomes a null pointer.
-        if( !self ) {
-            if( obj.is_comestible() ) {
-                here.rotten_item_spawn( obj, pos );
-            } else if( obj.is_corpse() ) {
-                here.handle_decayed_corpse( obj, pos );
-            }
+        if( !self && removed_snapshot ) {
+            MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).handle_rotten_away_item(
+            map_local_to_abs( here, pos ), *removed_snapshot, {
+                .mode = mapbuffer_lookup_mode::resident_only,
+            } );
         }
     }
     return std::move( self );

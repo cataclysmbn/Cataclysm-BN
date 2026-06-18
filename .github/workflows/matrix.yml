@@ -138,6 +138,11 @@ jobs:
         if: ${{ env.SKIP == 'false' }}
         run: clang++ --version
 
+      - name: Setup Deno
+        if: ${{ env.SKIP == 'false' }}
+        uses: denoland/setup-deno@v2
+        with: { cache: true }
+
       #- name: Install SDL3 (ubuntu)
       #  if: ${{ env.SKIP == 'false' }}
       #  run: |
@@ -230,7 +235,7 @@ jobs:
           sleep 1
 
           test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
-          build-scripts/run-linux-test-shards.sh --mode file-tags --jobs 4 --non-slow-shards 16 "$test_bin" -- \
+          build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 --non-slow-shards 8 "$test_bin" -- \
             --min-duration 20 \
             --use-colour yes \
             --rng-seed time \
