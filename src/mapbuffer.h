@@ -782,7 +782,7 @@ class mapbuffer
             pocket_info_ = info;
         }
 
-        auto get_pocket_info() const -> const std::optional<pocket_dimension_data>& {
+        auto get_pocket_info() const -> const std::optional<pocket_dimension_data> & {
             return pocket_info_;
         }
 
