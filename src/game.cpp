@@ -2485,14 +2485,14 @@ auto game::has_activity_skip_relevant_vehicle() -> bool
 
 auto game::has_activity_skip_active_fire() -> bool
 {
-    const auto submap_has_active_fire = []( submap & sm ) {
+    const auto submap_has_active_fire = []( const submap & sm ) {
         if( sm.field_count == 0 ) {
             return false;
         }
         for( const auto &local : sm.field_cache ) {
-            auto &curfield = sm.get_field( local );
-            for( auto &field_pair : curfield ) {
-                auto &cur = field_pair.second;
+            const auto &curfield = sm.get_field( local );
+            for( const auto &field_pair : curfield ) {
+                const auto &cur = field_pair.second;
                 if( cur.is_field_alive() && cur.get_field_type().obj().has_fire ) {
                     return true;
                 }
@@ -2501,16 +2501,9 @@ auto game::has_activity_skip_active_fire() -> bool
         return false;
     };
 
-    const auto axis = std::views::iota( 0, m.getmapsize() );
-    for( const auto x : axis ) {
-        for( const auto y : axis ) {
-            const auto p = point_bub_sm( x, y );
-            for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-                auto *sm = m.get_submap_at_grid( tripoint_bub_sm( p, z ) );
-                if( sm != nullptr && submap_has_active_fire( *sm ) ) {
-                    return true;
-                }
-            }
+    for( const auto &view : m.active_submap_views() ) {
+        if( submap_has_active_fire( view.get_submap() ) ) {
+            return true;
         }
     }
 
@@ -2742,20 +2735,11 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
 
     {
         ZoneScopedN( "activity_fixed_window_batch_submaps" );
-        const auto axis = std::views::iota( 0, m.getmapsize() );
-        for( const auto x : axis ) {
-            for( const auto y : axis ) {
-                const auto p = point_bub_sm( x, y );
-                for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-                    auto *sm = m.get_submap_at_grid( tripoint_bub_sm( p, z ) );
-                    if( sm == nullptr ) {
-                        continue;
-                    }
-                    run_submap_batch_turns( *sm, skipped_turns );
-                    sm->last_touched = calendar::turn;
-                }
-            }
-        }
+        m.get_mapbuffer().run_submap_batch_turns( {
+            .begin = m.get_abs_sub(),
+            .end = m.get_abs_sub() + point_rel_sm( m.getmapsize(), m.getmapsize() ),
+            .turns = skipped_turns,
+        } );
 
         const auto current_dim = m.get_bound_dimension();
         MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim, mapbuffer & mb ) {
@@ -7234,11 +7218,11 @@ monster *game::place_critter_around( const mtype_id &id, const tripoint_bub_ms &
 monster *game::place_critter_around( const shared_ptr_fast<monster> &mon,
                                      const tripoint_bub_ms &center,
                                      const int radius,
-                                     bool forced )
+    bool forced )
 {
     std::optional<tripoint_bub_ms> where;
     const auto center_sm = project_to<coords::sm>( center );
-    if( m.inbounds( center_sm ) && m.get_submap_at_grid( center_sm ) == nullptr ) {
+    if( m.inbounds( center_sm ) && !m.active_submap_view( map_local_to_abs( m, center_sm ) ) ) {
         m.load( m.get_abs_sub(), true );
     }
     if( forced || can_place_monster( *mon, center ) ) {

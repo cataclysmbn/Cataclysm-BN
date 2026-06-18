@@ -11,6 +11,7 @@
 #include <mutex>
 #include <optional>
 #include <set>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -28,6 +29,7 @@
 #include "vpart_position.h"
 
 class submap;
+class active_tile_data;
 class computer;
 class Creature;
 class field;
@@ -42,6 +44,11 @@ template<typename T>
 class location_vector;
 template<typename T>
 class detached_ptr;
+namespace cata
+{
+template <class T>
+class poly_serialized;
+} // namespace cata
 namespace data_vars
 {
 class data_set;
@@ -100,6 +107,12 @@ struct mapbuffer_add_computer_options {
     mapbuffer_lookup_options lookup;
 };
 
+struct mapbuffer_set_furn_options {
+    furn_id furniture;
+    const cata::poly_serialized<active_tile_data> *active = nullptr;
+    mapbuffer_lookup_options lookup;
+};
+
 struct mapbuffer_item_lum_options {
     bool add_luminance = false;
     mapbuffer_lookup_options lookup;
@@ -116,6 +129,49 @@ struct mapbuffer_erase_item_options {
     location_vector<item>::const_iterator it;
     detached_ptr<item> *out = nullptr;
     mapbuffer_lookup_options lookup;
+};
+
+struct mapbuffer_mark_submap_caches_dirty_options {
+    point_abs_sm begin;
+    point_abs_sm end;
+    int zlev = 0;
+    bool transparency = false;
+    bool floor = false;
+    bool outside = false;
+    bool absorption = false;
+    bool pathfinding = false;
+};
+
+struct mapbuffer_submap_bounds_mutation_options {
+    point_abs_sm begin;
+    point_abs_sm end;
+    int z_min = -OVERMAP_DEPTH;
+    int z_max = OVERMAP_HEIGHT;
+    mapbuffer_lookup_options lookup = {
+        .mode = mapbuffer_lookup_mode::resident_only,
+    };
+};
+
+struct mapbuffer_fill_terrain_options {
+    point_abs_sm begin;
+    point_abs_sm end;
+    int z_min = -OVERMAP_DEPTH;
+    int z_max = OVERMAP_HEIGHT;
+    mapbuffer_lookup_options lookup = {
+        .mode = mapbuffer_lookup_mode::resident_only,
+    };
+    ter_id terrain;
+};
+
+struct mapbuffer_run_submap_batch_turns_options {
+    point_abs_sm begin;
+    point_abs_sm end;
+    int z_min = -OVERMAP_DEPTH;
+    int z_max = OVERMAP_HEIGHT;
+    int turns = 0;
+    mapbuffer_lookup_options lookup = {
+        .mode = mapbuffer_lookup_mode::resident_only,
+    };
 };
 
 class mapbuffer_abs_tile_view
@@ -228,16 +284,27 @@ class mapbuffer_bounds_view
             const auto index = static_cast<std::size_t>( zlev + OVERMAP_DEPTH );
             return submaps_by_zlev_[index];
         }
-        auto update( const point_abs_sm &begin, const point_abs_sm &end, mapbuffer *buffer = nullptr );
-        auto update( const point_rel_sm &offset );
+        auto get_submap_view( const tripoint_abs_sm &pos ) const
+        -> std::optional<mapbuffer_abs_submap_view>;
+        auto get_submap_view( const point_rel_sm &offset, int zlev ) const
+        -> std::optional<mapbuffer_abs_submap_view>;
+        auto is_complete() const -> bool;
+        auto update( const point_abs_sm &begin, const point_abs_sm &end,
+                     mapbuffer *buffer = nullptr ) -> void;
+        auto update( const point_rel_sm &offset ) -> void;
 
     private:
+        auto bounds_size() const -> point_rel_sm;
+        auto indexed_submap_index( const point_rel_sm &offset, int zlev ) const
+        -> std::optional<std::size_t>;
+
         mapbuffer *buffer_ = nullptr;
         mapbuffer_lookup_options options_;
         point_abs_sm begin_;
         point_abs_sm end_;
         std::vector<mapbuffer_abs_submap_view> submaps_;
         std::array<std::vector<mapbuffer_abs_submap_view>, OVERMAP_LAYERS> submaps_by_zlev_;
+        std::vector<const submap *> indexed_submaps_;
 };
 
 class mapbuffer_abs_tile_reader
@@ -322,6 +389,13 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_submap_view>;
         auto get_abs_omt_view( const tripoint_abs_omt &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_omt_view>;
+        auto mark_submap_caches_dirty( const mapbuffer_mark_submap_caches_dirty_options &options )
+        -> void;
+        auto clear_spawns( const mapbuffer_submap_bounds_mutation_options &options ) -> void;
+        auto clear_traps( const mapbuffer_submap_bounds_mutation_options &options ) -> void;
+        auto fill_terrain( const mapbuffer_fill_terrain_options &options ) -> void;
+        auto run_submap_batch_turns( const mapbuffer_run_submap_batch_turns_options &options )
+        -> void;
         auto make_abs_tile_reader( mapbuffer_lookup_options options = {} ) -> mapbuffer_abs_tile_reader;
         auto creature_tracker() -> Creature_tracker &;
         auto creature_tracker() const -> const Creature_tracker &;
@@ -348,6 +422,8 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> std::optional<furn_id>;
         auto set_furn( const tripoint_abs_ms &p, furn_id furn,
         mapbuffer_lookup_options options = {} ) -> bool;
+        auto set_furn( const tripoint_abs_ms &p,
+                       const mapbuffer_set_furn_options &options ) -> bool;
         auto veh_at( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> optional_vpart_position;
         auto move_cost( const tripoint_abs_ms &p,
@@ -452,6 +528,8 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> bool;
         auto update_item_lum( const tripoint_abs_ms &p, item &target,
                               const mapbuffer_item_lum_options &options ) -> bool;
+        auto refresh_active_item_submap_index( const tripoint_abs_ms &p,
+                                               mapbuffer_lookup_options options = {} ) -> bool;
 
         auto has_graffiti_at( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> bool;
@@ -610,7 +688,9 @@ class mapbuffer
                 const ter_id &new_id ) const -> void;
         auto sync_furniture_change_side_tables( const tripoint_abs_ms &p, submap &sm,
                                                 const point_sm_ms &local, const furn_id &old_id,
-                                                const furn_id &new_id ) const -> void;
+                                                const furn_id &new_id,
+                                                const cata::poly_serialized<active_tile_data> *new_active )
+        const -> void;
         auto invalidate_active_furniture_set_caches( const tripoint_abs_ms &p, const furn_id &old_id,
                 const furn_id &new_id ) const -> void;
         auto sync_active_trap_change_side_tables( const tripoint_abs_ms &p, const point_sm_ms &local,

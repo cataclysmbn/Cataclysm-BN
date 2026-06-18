@@ -14,6 +14,7 @@
 #include <optional>
 #include <ranges>
 #include <shared_mutex>
+#include <span>
 #include <set>
 #include <source_location>
 #include <string>
@@ -1980,6 +1981,20 @@ class map : public submap_load_listener
             return abs_sub;
         }
 
+        auto active_submap_views() const -> std::span<const mapbuffer_abs_submap_view> {
+            return active_submaps_.submaps();
+        }
+
+        auto active_submap_views( const int zlev ) const
+        -> std::span<const mapbuffer_abs_submap_view> {
+            return active_submaps_.submaps( zlev );
+        }
+
+        auto active_submap_view( const tripoint_abs_sm &pos ) const
+        -> std::optional<mapbuffer_abs_submap_view> {
+            return active_submaps_.get_submap_view( pos );
+        }
+
         bool inbounds_z( const int z ) const {
             return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
         }
@@ -2214,27 +2229,20 @@ class map : public submap_load_listener
          * anchor.
          */
         point_abs_sm abs_sub;
-        mutable std::vector<submap *> cached_submaps_;
-        mutable std::vector<bool> cached_submap_valid_;
+        mapbuffer_bounds_view active_submaps_;
 
         auto set_abs_sub( const point_abs_sm &p ) -> void {
             abs_sub = p;
-            clear_submap_cache();
+            refresh_active_submap_view();
         }
 
-        auto submap_cache_size() const -> std::size_t;
-        auto submap_cache_index( const tripoint_bub_sm &gridp ) const -> std::optional<std::size_t>;
-        auto cache_submap_at_grid( const tripoint_bub_sm &gridp, submap *sm ) const -> void;
-        auto clear_submap_cache() const -> void;
+        auto refresh_active_submap_view() -> void;
+        auto validate_active_submap_view_complete( const char *context ) const -> void;
 
     public:
 
         field &get_field( const tripoint_bub_ms &p );
 
-        /**
-         * Get a cached non-owning submap pointer by flat cache index.
-         */
-        auto getsubmap( std::size_t grididx ) const -> submap *;
         /**
          * Compatibility map-local lookup. Absolute data lookup belongs on
          * mapbuffer; simulation membership belongs on submap_load_manager.
@@ -2244,13 +2252,6 @@ class map : public submap_load_listener
          * Compatibility map-local lookup with submap-local offset.
          */
         submap *get_submap_at( const tripoint_bub_ms &p, point_sm_ms &offset_p ) const;
-        /**
-         * Get submap pointer at given grid coordinates.  For coordinates
-         * inside the reality bubble grid, returns the local cached pointer directly.
-         * For out-of-bubble coordinates, falls back to a mapbuffer lookup
-         * (may return nullptr if the submap is not loaded in memory).
-         */
-        submap *get_submap_at_grid( const tripoint_bub_sm &gridp ) const;
     private:
         /** Caclulate the greatest populated zlevel in the loaded submaps and save in the level cache.
          * fills the map::max_populated_zlev and returns it
@@ -2349,7 +2350,7 @@ class map : public submap_load_listener
         /**
         * Runs a functor over given submaps
         * over submaps in the area, getting next submap only when the current one "runs out" rather than every time.
-        * gp in the functor is Grid (like `get_submap_at_grid`) coordinate of the submap,
+        * gp in the functor is the map-local submap coordinate,
         * Will silently clip the area to map bounds.
         * @param start Starting point_bub_ms & for function
         * @param end End point_bub_ms & for function
