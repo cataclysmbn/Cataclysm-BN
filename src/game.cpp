@@ -3895,7 +3895,7 @@ bool game::load( const save_t &name )
             // bounded pocket dimension after reload.  Without this, the loaded_
             // dimensions_ entry has nullopt bounds even though the dimension IS
             // bounded.
-            .pocket_info = get_map().get_pocket_info()
+            .pocket_info = get_map().get_mapbuffer().get_pocket_info()
         };
     }
 
@@ -14690,10 +14690,10 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
 
     // Clear stale bounds then install the new ones before load_map() so that
     // loadn() knows which submaps are out-of-bounds for bounded dimensions.
-    here.clear_pocket_info();
+    here.get_mapbuffer().clear_pocket_info();
     get_overmapbuffer( current_dimension_id_ ).clear_pocket_info();
     if( pd_info ) {
-        here.set_pocket_info( *pd_info );
+        here.get_mapbuffer().set_pocket_info( *pd_info );
         get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *pd_info );
     }
 

@@ -751,31 +751,6 @@ class map : public submap_load_listener
          */
         auto resize( int new_mapsize ) -> void;
 
-        // Dimension Bounds (for bounded pocket dimensions)
-        /**
-         * Set the dimension bounds for this map.
-         * Out-of-bounds areas will be rendered as boundary terrain and are impassable.
-         */
-        void set_pocket_info( const pocket_dimension_data &info );
-        /**
-         * Get the current dimension bounds (if any).
-         * Returns the full bounds structure for secondary world capture.
-         */
-        std::optional<pocket_dimension_data> get_pocket_info() const;
-
-        /**
-         * Clear the dimension bounds (for infinite dimensions).
-         */
-        void clear_pocket_info();
-        /**
-         * Check if the map has dimension bounds set.
-         */
-        bool has_dimension_bounds() const;
-        /**
-         * Get the boundary terrain ID for out-of-bounds areas.
-         * Only valid if has_dimension_bounds() is true.
-         */
-        ter_id get_boundary_terrain() const;
         /**
          * Return the dimension ID this map is currently bound to.
          * An empty string means the primary (default) dimension.
@@ -2416,9 +2391,6 @@ class map : public submap_load_listener
         // caches the highest zlevel above which all zlevels are uniform
         // !value || value->first != the loaded-grid origin means cache is invalid
         std::optional<std::pair<tripoint_abs_sm, int>> max_populated_zlev = std::nullopt;
-
-        // Dimension info for bounded pocket dimensions (nullopt for infinite dimensions)
-        std::optional<pocket_dimension_data> pocket_info_;
 
         // The dimension ID this map is bound to (empty = primary dimension)
         dimension_id bound_dimension_;

@@ -116,7 +116,7 @@ void game::serialize( std::ostream &fout )
     }
 
     // Save dimension bounds for bounded dimensions (pocket dimensions)
-    const auto &pocket_info = m.get_pocket_info();
+    const auto &pocket_info = m.get_mapbuffer().get_pocket_info();
     if( pocket_info ) {
         json.member( "pocket_info", pocket_info );
     }
@@ -332,7 +332,7 @@ auto game::unserialize( std::istream &fin ) -> bool
         if( data.has_object( "pocket_info" ) ) {
             pocket_dimension_data pocket_info;
             data.read( "pocket_info", pocket_info );
-            m.set_pocket_info( pocket_info );
+            m.get_mapbuffer().set_pocket_info( pocket_info );
             get_overmapbuffer( current_dimension_id_ ).set_pocket_info( pocket_info );
         }
 

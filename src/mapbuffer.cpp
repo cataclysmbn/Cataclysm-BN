@@ -101,6 +101,10 @@ static const auto itype_burnt_out_bionic = itype_id( "burnt_out_bionic" );
 auto lookup_tile( mapbuffer &buffer, const tripoint_abs_ms &p,
                   const mapbuffer_lookup_options options ) -> std::optional<mapbuffer_tile_lookup>
 {
+    if( buffer.is_outside_pocket_dimension_bounds( p ) ) {
+        return std::nullopt;
+    }
+
     const auto split = project_remain<coords::sm>( p );
     auto *const sm = buffer.get_submap( split.quotient_tripoint, options );
     if( sm == nullptr ) {
@@ -1180,6 +1184,7 @@ void mapbuffer::clear()
         vehicle_footprint_by_location_.clear();
         vehicle_footprint_locations_.clear();
         submaps.clear();
+        pocket_info_.reset();
     }
     std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
     pending_writes_.clear();
@@ -1456,6 +1461,10 @@ auto mapbuffer::get_abs_tile( const tripoint_abs_ms &p,
                               const mapbuffer_lookup_options options )
 -> std::optional<mapbuffer_abs_tile_view> // *NOPAD*
 {
+    if( is_outside_pocket_dimension_bounds( p ) ) {
+        return std::nullopt;
+    }
+
     const auto split = project_remain<coords::sm>( p );
     auto *const sm = get_submap( split.quotient_tripoint, options );
     if( sm == nullptr ) {
@@ -2348,6 +2357,10 @@ auto mapbuffer::set_lum( const tripoint_abs_ms &p, const std::uint8_t luminance,
 auto mapbuffer::get_temperature( const tripoint_abs_ms &p,
                                  const mapbuffer_lookup_options options ) -> std::optional<int>
 {
+    if( is_outside_pocket_dimension_bounds( p ) ) {
+        return std::nullopt;
+    }
+
     const auto split = project_to<coords::sm>( p );
     auto *const sm = get_submap( split, options );
     if( sm == nullptr ) {
@@ -2360,6 +2373,10 @@ auto mapbuffer::get_temperature( const tripoint_abs_ms &p,
 auto mapbuffer::set_temperature( const tripoint_abs_ms &p, const int temperature,
                                  const mapbuffer_lookup_options options ) -> bool
 {
+    if( is_outside_pocket_dimension_bounds( p ) ) {
+        return false;
+    }
+
     const auto split = project_to<coords::sm>( p );
     auto *const sm = get_submap( split, options );
     if( sm == nullptr ) {

@@ -20,6 +20,7 @@
 #include "calendar.h"
 #include "coordinates.h"
 #include "creature_tracker.h"
+#include "dimension_info.h"
 #include "game_constants.h"
 #include "item_stack.h"
 #include "mapgen_functions.h"
@@ -777,6 +778,37 @@ class mapbuffer
             dimension_id_ = id;
         }
 
+        auto set_pocket_info( const pocket_dimension_data &info ) -> void {
+            pocket_info_ = info;
+        }
+
+        auto get_pocket_info() const -> const std::optional<pocket_dimension_data> & {
+            return pocket_info_;
+        }
+
+        auto clear_pocket_info() -> void {
+            pocket_info_.reset();
+        }
+
+        auto has_dimension_bounds() const -> bool {
+            return pocket_info_.has_value();
+        }
+
+        auto get_boundary_terrain() const -> ter_id {
+            if( pocket_info_ && pocket_info_->bounds.boundary_terrain.is_valid() ) {
+                return pocket_info_->bounds.boundary_terrain.id();
+            }
+            return ter_id( "t_null" );
+        }
+
+        auto is_outside_pocket_dimension_bounds( const tripoint_abs_sm &p ) const -> bool {
+            return ::is_outside_pocket_dimension_bounds( pocket_info_, p );
+        }
+
+        auto is_outside_pocket_dimension_bounds( const tripoint_abs_ms &p ) const -> bool {
+            return ::is_outside_pocket_dimension_bounds( pocket_info_, p );
+        }
+
     private:
         // There's a very good reason this is private,
         // if not handled carefully, this can erase in-use submaps and crash the game.
@@ -805,6 +837,7 @@ class mapbuffer
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.
         dimension_id dimension_id_;
+        std::optional<pocket_dimension_data> pocket_info_;
 };
 
 // Included after the full mapbuffer definition to avoid circular dependencies.
