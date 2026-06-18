@@ -10407,7 +10407,8 @@ std::vector<item *> map::get_active_items_in_radius( const tripoint_bub_ms &cent
 std::vector<item *> map::get_active_items_in_radius( const tripoint_bub_ms &center, int radius,
         special_item_type type ) const
 {
-    return get_mapbuffer().get_active_items_in_radius( map_local_to_abs( *this, center ), radius, type );
+    return get_mapbuffer().get_active_items_in_radius( map_local_to_abs( *this, center ), radius,
+            type );
 }
 
 std::vector<tripoint_bub_ms> map::find_furnitures_with_flag_in_omt( const tripoint_bub_ms &p,
