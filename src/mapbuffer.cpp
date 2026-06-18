@@ -889,8 +889,8 @@ mapbuffer_bounds_view::mapbuffer_bounds_view( mapbuffer &buffer,
     update( begin, end );
 }
 
-auto mapbuffer_bounds_view::operator=( mapbuffer_bounds_view &&rhs ) noexcept
-- > mapbuffer_bounds_view &
+auto mapbuffer_bounds_view::operator=( mapbuffer_bounds_view &&rhs )
+noexcept -> mapbuffer_bounds_view & // *NOPAD*
 {
     if( this == &rhs ) {
         return *this;
