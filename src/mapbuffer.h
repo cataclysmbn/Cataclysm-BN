@@ -529,7 +529,7 @@ class mapbuffer
         auto update_item_lum( const tripoint_abs_ms &p, item &target,
                               const mapbuffer_item_lum_options &options ) -> bool;
         auto refresh_active_item_submap_index( const tripoint_abs_ms &p,
-                                               mapbuffer_lookup_options options = {} ) -> bool;
+        mapbuffer_lookup_options options = {} ) -> bool;
 
         auto has_graffiti_at( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> bool;

@@ -1984,7 +1984,7 @@ vehicle *editmap::mapgen_veh_query( const tripoint_abs_omt &omt_tgt )
         for( int y = 0; y < 2; y++ ) {
             const auto pos = tripoint_bub_sm{ x, y, target.z() };
             submap *destsm = target_bay.get_mapbuffer().lookup_submap_in_memory(
-                                  map_local_to_abs( target_bay, pos ) );
+                                 map_local_to_abs( target_bay, pos ) );
             for( const auto &vehicle : destsm->vehicles ) {
                 possible_vehicles.push_back( vehicle.get() );
             }
@@ -2019,7 +2019,7 @@ bool editmap::mapgen_veh_destroy( const tripoint_abs_omt &omt_tgt, vehicle *car_
         for( int y = 0; y < 2; y++ ) {
             const auto pos = tripoint_bub_sm{ x, y, target.z() };
             submap *destsm = target_bay.get_mapbuffer().lookup_submap_in_memory(
-                                  map_local_to_abs( target_bay, pos ) );
+                                 map_local_to_abs( target_bay, pos ) );
             for( auto &z : destsm->vehicles ) {
                 if( z.get() == car_target ) {
                     std::unique_ptr<vehicle> old_veh = target_bay.detach_vehicle( z.get() );

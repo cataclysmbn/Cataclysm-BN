@@ -7218,7 +7218,7 @@ monster *game::place_critter_around( const mtype_id &id, const tripoint_bub_ms &
 monster *game::place_critter_around( const shared_ptr_fast<monster> &mon,
                                      const tripoint_bub_ms &center,
                                      const int radius,
-    bool forced )
+                                     bool forced )
 {
     std::optional<tripoint_bub_ms> where;
     const auto center_sm = project_to<coords::sm>( center );

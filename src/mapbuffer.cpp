@@ -890,7 +890,7 @@ mapbuffer_bounds_view::mapbuffer_bounds_view( mapbuffer &buffer,
 }
 
 auto mapbuffer_bounds_view::operator=( mapbuffer_bounds_view &&rhs ) noexcept
--> mapbuffer_bounds_view &
+- > mapbuffer_bounds_view &
 {
     if( this == &rhs ) {
         return *this;

@@ -563,7 +563,7 @@ auto map::bind_dimension( const dimension_id &dim ) -> void
 auto map::refresh_active_submap_view() -> void
 {
     active_submaps_ = mapbuffer_bounds_view( get_mapbuffer(), abs_sub,
-                      abs_sub + point_rel_sm( my_MAPSIZE, my_MAPSIZE ), {
+    abs_sub + point_rel_sm( my_MAPSIZE, my_MAPSIZE ), {
         .mode = mapbuffer_lookup_mode::resident_only,
     } );
 }
@@ -8813,7 +8813,7 @@ void map::add_roofs( const tripoint_bub_sm &grid )
     bool check_roof = grid.z() > -OVERMAP_DEPTH;
 
     submap *const sub_below = check_roof ? get_mapbuffer().lookup_submap_in_memory(
-                                   abs_grid + tripoint_below ) : nullptr;
+                                  abs_grid + tripoint_below ) : nullptr;
 
     if( check_roof && sub_below == nullptr ) {
         if( !has_dimension_bounds() ) {
@@ -9346,7 +9346,7 @@ bool map::build_floor_cache( const int zlev )
         }
         const auto sm_pos = tripoint_bub_sm( p, zlev );
         submap *cur_submap = get_mapbuffer().lookup_submap_in_memory(
-                                  map_local_to_abs( *this, sm_pos ) );
+                                 map_local_to_abs( *this, sm_pos ) );
         if( cur_submap == nullptr ) {
             // Null expected for circle corners and bounded-dimension edges.
             continue;
@@ -10988,8 +10988,8 @@ int map::calc_max_populated_zlev()
     for( const auto zlev : std::views::iota( 1, OVERMAP_HEIGHT + 1 ) ) {
         const auto submaps = active_submaps_.submaps( zlev );
         if( submaps.size() != expected_submaps ||
-            std::ranges::any_of( submaps, []( const mapbuffer_abs_submap_view & view ) {
-            return !view.get_submap().is_uniform;
+        std::ranges::any_of( submaps, []( const mapbuffer_abs_submap_view & view ) {
+        return !view.get_submap().is_uniform;
         } ) ) {
             max_z = zlev;
         }
