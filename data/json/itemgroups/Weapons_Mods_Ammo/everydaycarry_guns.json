@@ -1032,6 +1032,18 @@
     ]
   },
   {
+    "id": "everyday_m71_military",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack. With military standard attachments.",
+    "subtype": "collection",
+    "entries": [
+      { "item": "m71", "ammo-group": "on_hand_50", "charges": [ 0, 20 ], "contents-group": "military_accessories_standard" },
+      { "item": "drum_mag50", "charges-min": 0, "prob": 80 },
+      { "item": "drum_mag50", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_50", "prob": 25, "charges": [ 2, 10 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_m4a1",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

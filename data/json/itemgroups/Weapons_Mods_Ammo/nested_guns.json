@@ -1626,6 +1626,19 @@
     ]
   },
   {
+    "id": "nested_m71",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "m71", "ammo-group": "on_hand_50", "charges": [ 20, 20 ] },
+      { "item": "drum_mag50", "ammo-group": "on_hand_50" },
+      { "item": "drum_mag50", "ammo-group": "on_hand_50", "prob": 50 },
+      { "group": "on_hand_50" }
+    ]
+  },
+  {
     "id": "nested_m2010",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -2316,4 +2329,5 @@
       { "group": "on_hand_223" }
     ]
   }
+
 ]

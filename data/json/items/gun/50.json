@@ -101,6 +101,28 @@
     "flags": [ "RELOAD_EJECT" ]
   },
   {
+    "id": "m71",
+    "copy-from": "rifle_base",
+    "type": "GUN",
+    "name": { "str_sp": "M71 Heavy BR" },
+    "description": "An upsized, bullpup automatic rifle, based on the AR-15 platform but chambered in .50 cal. It was designed for soldiers in power armor, to defeat enemies also in power armor. It entered full-scale production just months before the Catacylsm. It has incredible firepower, but the stubby barrel limits long-range precision and the huge recoil is too much for unaugmented humans. Uses standardized Barret mags",
+    "weight": "8000 g",
+    "volume": "3000 ml",
+    "price": "20000 USD",
+    "price_postapoc": "300 USD",
+    "material": [ "steel", "plastic" ],
+    "ammo": "50",
+    "range": -70,
+    "ranged_damage": { "damage_type": "bullet", "amount": -8 },
+    "dispersion": 200,
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ],
+    "barrel_volume": "250 ml",
+    "reload": 200,
+    "durability": 7,
+    "magazine_well": "250 ml",
+    "magazines": [ [ "50", [ "drum_mag50", "m107a1mag" ] ] ]
+  },
+  {
     "id": "as50",
     "copy-from": "rifle_base",
     "type": "GUN",
