@@ -607,6 +607,7 @@ void item::convert( const itype_id &new_type )
 {
     type = &*new_type;
     relic_data = type->relic_data;
+    invalidate_processing_cache_upwards();
 }
 
 void item::deactivate()
@@ -616,6 +617,7 @@ void item::deactivate()
     }
 
     active = false;
+    invalidate_processing_cache_upwards();
     if( is_tool() ) {
         type->tool->turns_active = 0;
     }
@@ -648,6 +650,7 @@ void item::activate()
     }
 
     active = true;
+    invalidate_processing_cache_upwards();
 
     // Is not placed in the world, so either a template of some kind or a temporary item.
     if( !has_position() ) {
@@ -1266,6 +1269,7 @@ void item::put_in( detached_ptr<item> &&payload )
         return;
     }
     contents.insert_item( std::move( payload ) );
+    on_contents_changed();
 }
 
 void item::add_item_with_id( const itype_id &itype, int count )
@@ -5002,6 +5006,7 @@ void item::on_contents_changed()
     }
 
     encumbrance_update_ = true;
+    invalidate_processing_cache_upwards();
 
     if( !has_position() || where() != item_location_type::vehicle ) {
         return;
@@ -10069,9 +10074,43 @@ uint64_t item::make_component_hash() const
 bool item::needs_processing() const
 {
     return is_active() || has_flag( flag_RADIO_ACTIVATION ) || has_flag( flag_ETHEREAL_ITEM ) ||
-           ( !contents.empty() && is_container() && contents.front().needs_processing() ) ||
+           ( !contents.empty() && contents.has_processing_items() ) ||
            ( magazine_current() && magazine_current()->needs_processing() ) ||
            is_artifact() || is_relic() || goes_bad();
+}
+
+auto item::invalidate_processing_cache_upwards() -> void
+{
+    auto *top = this;
+    for( auto *current = this; current != nullptr; current = current->parent_item() ) {
+        current->contents.invalidate_processing_cache();
+        top = current;
+    }
+
+    if( !top->has_position() ) {
+        return;
+    }
+
+    switch( top->where() ) {
+        case item_location_type::map:
+            if( top->needs_processing() ) {
+                get_map().make_active( *top );
+            } else {
+                get_map().make_inactive( *top );
+            }
+            break;
+        case item_location_type::vehicle:
+            if( const auto vp = get_map().veh_at( top->bub_pos() ) ) {
+                if( top->needs_processing() ) {
+                    vp->vehicle().make_active( *top );
+                } else {
+                    vp->vehicle().make_inactive( *top );
+                }
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 int item::processing_speed() const

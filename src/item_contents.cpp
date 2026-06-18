@@ -15,18 +15,52 @@
 
 struct tripoint;
 
-item_contents::item_contents( item *container ) : items( new contents_item_location(
-                container ) ) {}
+item_contents::item_contents( item *container ) : owner( container ),
+    items( new contents_item_location(
+               container ) ) {}
 /** used to aid migration */
 item_contents::item_contents( item *container,
-                              std::vector<detached_ptr<item>> &items ) : items( new contents_item_location( container ),
-                                          items ) {}
+                              std::vector<detached_ptr<item>> &items ) : owner( container ),
+    items( new contents_item_location( container ),
+           items ) {}
 
 item_contents::~item_contents() = default;
 
 bool item_contents::empty() const
 {
     return items.empty();
+}
+
+auto item_contents::has_processing_items() const -> bool
+{
+    update_processing_cache();
+    return !cached_processing_items.empty();
+}
+
+auto item_contents::processing_items() const -> const std::vector<item *> & // *NOPAD*
+{
+    update_processing_cache();
+    return cached_processing_items;
+}
+
+auto item_contents::invalidate_processing_cache() const -> void
+{
+    processing_cache_dirty = true;
+}
+
+auto item_contents::update_processing_cache() const -> void
+{
+    if( !processing_cache_dirty ) {
+        return;
+    }
+
+    cached_processing_items.clear();
+    for( item * const &contained_item : items ) {
+        if( contained_item->needs_processing() ) {
+            cached_processing_items.push_back( contained_item );
+        }
+    }
+    processing_cache_dirty = false;
 }
 
 ret_val<bool> item_contents::insert_item( detached_ptr<item> &&it )
@@ -47,6 +81,11 @@ ret_val<bool> item_contents::insert_item( detached_ptr<item> &&it )
         items.push_back( std::move( it ) );
     }
 
+    if( owner != nullptr ) {
+        owner->invalidate_processing_cache_upwards();
+    } else {
+        invalidate_processing_cache();
+    }
     return ret_val<bool>::make_success();
 }
 
@@ -96,7 +135,13 @@ void item_contents::casings_handle( const std::function < detached_ptr<item>
 
 std::vector<detached_ptr<item>> item_contents::clear_items()
 {
-    return items.clear();
+    auto ret = items.clear();
+    if( owner != nullptr ) {
+        owner->invalidate_processing_cache_upwards();
+    } else {
+        invalidate_processing_cache();
+    }
+    return ret;
 }
 
 void item_contents::on_destroy()
@@ -167,13 +212,24 @@ detached_ptr<item> item_contents::remove_top( item *it )
     } );
     detached_ptr<item> ret;
     items.erase( iter, &ret );
+    if( owner != nullptr ) {
+        owner->invalidate_processing_cache_upwards();
+    } else {
+        invalidate_processing_cache();
+    }
     return ret;
 }
 
 location_vector<item>::iterator item_contents::remove_top( location_vector<item>::iterator &it,
         detached_ptr<item> *removed )
 {
-    return items.erase( it, removed );
+    const auto ret = items.erase( it, removed );
+    if( owner != nullptr ) {
+        owner->invalidate_processing_cache_upwards();
+    } else {
+        invalidate_processing_cache();
+    }
+    return ret;
 }
 
 std::vector<item *> item_contents::all_items_ptr()

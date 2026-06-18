@@ -657,7 +657,15 @@ detached_ptr<item> location_visitable<T>::remove_item( item &it )
 void item_contents::remove_items_with( const std::function < VisitResponse(
         detached_ptr<item> && ) > &filter )
 {
+    const auto old_size = items.size();
     visit_internal( filter, items );
+    if( items.size() != old_size ) {
+        if( owner != nullptr ) {
+            owner->invalidate_processing_cache_upwards();
+        } else {
+            invalidate_processing_cache();
+        }
+    }
 }
 
 /** @relates visitable */

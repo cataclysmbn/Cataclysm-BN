@@ -1315,6 +1315,7 @@ class item : public location_visitable<item>, public game_object<item>
          * Whether the item should be processed (by calling @ref process).
          */
         bool needs_processing() const;
+        auto invalidate_processing_cache_upwards() -> void;
         /**
          * The rate at which an item should be processed, in number of turns between updates.
          */
