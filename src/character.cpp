@@ -1983,7 +1983,8 @@ void Character::recalc_sight_limits()
     vision_mode_cache.reset();
 
     // Set sight_max.
-    if( is_blind() || ( in_sleep_state() && !has_enchantment_flag( enchantment_flag_id( "SLEEP_SIGHT" ) ) ) ) ||
+    if( is_blind() || ( in_sleep_state() &&
+                        !has_enchantment_flag( enchantment_flag_id( "SLEEP_SIGHT" ) ) ) ||
         has_effect( effect_narcosis ) ) {
         sight_max = 0;
     } else if( has_effect( effect_boomered ) && ( !( has_trait( trait_PER_SLIME_OK ) ) ) ) {
@@ -2045,7 +2046,7 @@ void Character::recalc_sight_limits()
     }
 
     // Not exactly a sight limit thing, but related enough
-    if( has_enchantment_flag( enchantment_flag_id( "INFRARED_VISION" ) )
+    if( has_enchantment_flag( enchantment_flag_id( "INFRARED_VISION" ) ) ||
         worn_with_flag( flag_IR_EFFECT ) ||
         ( is_mounted() && mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) ) {
         vision_mode_cache.set( IR_VISION );
@@ -7321,7 +7322,7 @@ bool Character::sees_with_specials( const Creature &critter ) const
     }
 
     // electroreceptors grants vision of robots and electric monsters through walls
-    if( ( has_trait( trait_ELECTRORECEPTORS ) || has_active_bionic( bio_electrosense ) ) &&
+    if( has_enchantment_flag( enchantment_flag_id( "ELECTROSENSE" ) ) &&
         ( critter.in_species( ROBOT ) || critter.has_flag( MF_ELECTRIC ) ) ) {
         return true;
     }

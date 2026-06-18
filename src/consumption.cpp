@@ -747,7 +747,7 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive )
 
     if( food.rotten() ) {
         const bool saprovore = has_trait( trait_SAPROVORE );
-        if( !saprophage && !saprovore && !has_bionic( bio_digestion ) ) {
+        if( !has_enchantment_flag( enchantment_flag_id( "EAT_ROTTEN" ) ) ) {
             add_consequence( _( "This is rotten and smells awful!" ), edible_rating::rotten );
         }
     }

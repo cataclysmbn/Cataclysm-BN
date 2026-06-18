@@ -2922,7 +2922,8 @@
     "points": 2,
     "description": "Your digestive system is specialized to allow you to consume decaying material.  You can eat rotten food, albeit for less nutrition than usual.",
     "cancels": [ "HERBIVORE", "RUMINANT" ],
-    "category": [ "TROGLOBITE", "CHIMERA" ]
+    "category": [ "TROGLOBITE", "CHIMERA" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN" ] } ]
   },
   {
     "type": "mutation",
@@ -6392,7 +6393,8 @@
     "points": 2,
     "description": "A network of jelly-filled electroreceptors, like that of a shark, have grown throughout your face and nose.  They are very sensitive to magnetic fields, allowing you to see robots and creatures charged with electricity through walls, but being shocked will seriously mess you up.",
     "category": [ "FISH" ],
-    "mixed_effect": true
+    "mixed_effect": true,
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "ELECTROSENSE" ] } ]
   },
   {
     "type": "mutation",
@@ -6851,7 +6853,8 @@
     "points": 99,
     "valid": false,
     "description": "Be vewwy vewwy quiet.  We're hunting bugs.",
-    "debug": true
+    "debug": true,
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "NOISE", "multiply": 0 } ] } ]
   },
   {
     "type": "mutation",

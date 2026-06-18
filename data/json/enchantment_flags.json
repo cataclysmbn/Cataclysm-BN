@@ -22,6 +22,10 @@
     "type": "enchantment_flag"
   },
   {
+    "id": "ELECTROSENSE",
+    "type": "enchantment_flag"
+  },
+  {
     "id": "ALARMCLOCK",
     "type": "enchantment_flag"
   },

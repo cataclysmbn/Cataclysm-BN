@@ -54,7 +54,8 @@
     "occupied_bodyparts": [ [ "leg_l", 3 ], [ "leg_r", 3 ] ],
     "flags": [ "BIONIC_FAULTY" ],
     "starting_bionic": true,
-    "points": -1
+    "points": -1,
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "NOISE", "add": 30 } ] } ]
   },
   {
     "id": "bio_armor_arms",
@@ -350,7 +351,8 @@
     "description": "You have been outfitted with a synthetic stomach and industrial-grade intestines.  Not only can you extract much more nutrition from food, but you are immune to foodborne illness, parasites, and can even eat rotten food.",
     "occupied_bodyparts": [ [ "torso", 5 ] ],
     "points": 3,
-    "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ]
+    "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ],
+    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "CONSUME_UNCLEAN" ] } ]
   },
   {
     "id": "bio_dis_acid",
@@ -1528,7 +1530,8 @@
     "act_cost": "20 J",
     "react_cost": "20 J",
     "time": 1,
-    "included_bionics": [ "bio_electrosense_voltmeter", "bio_electrosense_bscanner" ]
+    "included_bionics": [ "bio_electrosense_voltmeter", "bio_electrosense_bscanner" ],
+    "bio_enchantments": [ { "condition": "ACTIVE", "flags": [ "ELECTROSENSE" ] } ]
   },
   {
     "id": "bio_electrosense_voltmeter",

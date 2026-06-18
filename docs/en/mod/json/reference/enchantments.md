@@ -182,7 +182,83 @@ being applied to the base value.
 Since there's no limit on number of enchantments the character can have at a time, the final
 calculated values have hardcoded bounds to prevent unintended behavior.
 
-#### IDs of modifiable values
+For all basegame values see [here](#Basegame-Enchantment-Value-ID-List)
+
+### Flags
+
+(array) of enchantment_flag_id values
+
+For all basegame values see [here](#Basegame-Enchantment-Flag-ID-List)
+
+## Examples
+
+```json
+[
+  {
+    "//": "On-hit effect for ink glands mutation, implemented via enchantment.",
+    "type": "enchantment",
+    "id": "MEP_INK_GLAND_SPRAY",
+    "hit_me_effect": [
+      {
+        "id": "generic_blinding_spray_1",
+        "hit_self": false,
+        "once_in": 15,
+        "message": "Your ink glands spray some ink into %2$s's eyes.",
+        "npc_message": "%1$s's ink glands spay some ink into %2$s's eyes."
+      }
+    ]
+  },
+  {
+    "//": "This one would look good on a katana for an anime mod.",
+    "type": "enchantment",
+    "id": "ENCH_ULTIMATE_ASSKICK",
+    "has": "WIELD",
+    "condition": "ALWAYS",
+    "ench_effects": [{ "effect": "invisibility", "intensity": 1 }],
+    "hit_you_effect": [{ "id": "AEA_FIREBALL" }],
+    "hit_me_effect": [{ "id": "AEA_HEAL" }],
+    "mutations": ["KILLER", "PARKOUR"],
+    "values": [{ "value": "STRENGTH", "multiply": 1.1, "add": -5 }],
+    "intermittent_activation": {
+      "effects": [
+        {
+          "frequency": "1 hour",
+          "spell_effects": [
+            { "id": "AEA_ADRENALINE" }
+          ]
+        }
+      ]
+    }
+  }
+]
+```
+
+# Enchantment Values
+
+```jsonc
+{
+  "id": "RANGED_DAMAGE", // Id of the enchantment
+  "type": "enchantment_value", // Needed Type
+  "can_add": true, // Weather adding to the enchantment value will do anything
+  "can_mult": true, // Weather multiplying to the enchantment value will do anything
+  "suffixes": [ // All the suffixes. These appear as in this case RANGED_DAMAGE_XXX
+    "BASH",     // In addition suffixes will also reference the parent type when in use
+    "CUT",
+    "DARK",
+    "LIGHT",
+    "PSI",
+    "STAB",
+    "BULLET",
+    "HEAT",
+    "COLD",
+    "ELECTRIC",
+    "ACID",
+    "BIOLOGICAL"
+  ]
+},
+```
+
+## Basegame Enchantment Value ID List
 
 #### Character values
 
@@ -450,70 +526,62 @@ value, in addition to the global `ITEM_ARMOR`:
 - `ITEM_ARMOR_STAB`
 - `ITEM_ARMOR_TRUE`
 
-## Examples
-
-```json
-[
-  {
-    "//": "On-hit effect for ink glands mutation, implemented via enchantment.",
-    "type": "enchantment",
-    "id": "MEP_INK_GLAND_SPRAY",
-    "hit_me_effect": [
-      {
-        "id": "generic_blinding_spray_1",
-        "hit_self": false,
-        "once_in": 15,
-        "message": "Your ink glands spray some ink into %2$s's eyes.",
-        "npc_message": "%1$s's ink glands spay some ink into %2$s's eyes."
-      }
-    ]
-  },
-  {
-    "//": "This one would look good on a katana for an anime mod.",
-    "type": "enchantment",
-    "id": "ENCH_ULTIMATE_ASSKICK",
-    "has": "WIELD",
-    "condition": "ALWAYS",
-    "ench_effects": [{ "effect": "invisibility", "intensity": 1 }],
-    "hit_you_effect": [{ "id": "AEA_FIREBALL" }],
-    "hit_me_effect": [{ "id": "AEA_HEAL" }],
-    "mutations": ["KILLER", "PARKOUR"],
-    "values": [{ "value": "STRENGTH", "multiply": 1.1, "add": -5 }],
-    "intermittent_activation": {
-      "effects": [
-        {
-          "frequency": "1 hour",
-          "spell_effects": [
-            { "id": "AEA_ADRENALINE" }
-          ]
-        }
-      ]
-    }
-  }
-]
-```
-
-# Enchantment Values
+# Enchantment Flag
 
 ```jsonc
 {
-  "id": "RANGED_DAMAGE", // Id of the enchantment
-  "type": "enchantment_value", // Needed Type
-  "can_add": true, // Weather adding to the enchantment value will do anything
-  "can_mult": true, // Weather multiplying to the enchantment value will do anything
-  "suffixes": [ // All the suffixes. These appear as in this case RANGED_DAMAGE_XXX
-    "BASH",     // In addition suffixes will also reference the parent type when in use
-    "CUT",
-    "DARK",
-    "LIGHT",
-    "PSI",
-    "STAB",
-    "BULLET",
-    "HEAT",
-    "COLD",
-    "ELECTRIC",
-    "ACID",
-    "BIOLOGICAL"
-  ]
+  "id": "NEARSIGHTED",               // Id of the enchantment flag
+  "type": "enchantment_flag",        // Needed type
+  "conflicts": [ "FIX_NEARSIGHTED" ] // Array of other enchantment_flags of which it cancels
 },
 ```
+
+All noted effects apply to the character in possession of the enchantment granting thing
+
+## Basegame Enchantment Flag ID List
+
+##### UNDERWATER_SIGHT
+
+Makes sight underwater uninhibited
+
+##### SLEEP_SIGHT
+
+Allows sight while sleeping
+
+##### NEARSIGHTED
+
+Restricts vision greatly, solved by some glasses
+
+##### FIX_NEARSIGHTED
+
+Conflict to NEARSIGHTED, cures and removes it
+
+##### INFRARED_VISION
+
+Gain infrared vision
+
+##### ELECTROSENSE
+
+Can see robots and electrical creatures through walls
+
+##### ALARMCLOCK
+
+Gives the ability to set an alarm while sleeping
+
+##### WATCH
+
+Gives the ability to see the precise time
+
+##### EAT_ROTTEN
+
+Gives the ability to eat rotten food.
+
+##### CONSUME_UNCLEAN
+
+Gives the ability to drink unclean liquids and eat unclean foods
+
+##### CANNOT_EAT_FRESH
+
+Prevents eating fresh food, still allows drinking fresh liquids
+
+##### ROTTEN

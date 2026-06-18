@@ -178,12 +178,9 @@ static const species_id ROBOT( "ROBOT" );
 
 static const trait_flag_str_id trait_flag_CANNIBAL( "CANNIBAL" );
 
-static const bionic_id bio_digestion( "bio_digestion" );
-
 static const trait_id trait_CARNIVORE( "CARNIVORE" );
 static const trait_id trait_ILLITERATE( "ILLITERATE" );
 static const trait_id trait_LIGHTWEIGHT( "LIGHTWEIGHT" );
-static const trait_id trait_SAPROVORE( "SAPROVORE" );
 static const trait_id trait_TOLERANCE( "TOLERANCE" );
 static const trait_id trait_WOOLALLERGY( "WOOLALLERGY" );
 
@@ -2122,12 +2119,7 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
                                   "parasites</good>." ) );
         }
         if( food_item->rotten() ) {
-            if( you.has_bionic( bio_digestion ) ) {
-                info.emplace_back( "DESCRIPTION",
-                                   _( "This food has started to <neutral>rot</neutral>, "
-                                      "but <info>your bionic digestion can tolerate "
-                                      "it</info>." ) );
-            } else if( you.has_trait( trait_SAPROVORE ) ) {
+            if( you.has_enchantment_flag( enchantment_flag_id( "EAT_ROTTEN" ) ) ) {
                 info.emplace_back( "DESCRIPTION",
                                    _( "This food has started to <neutral>rot</neutral>, "
                                       "but <info>you can tolerate it</info>." ) );
