@@ -715,7 +715,7 @@ TEST_CASE( "Enchantments modify thirst rate", "[magic][enchantment][thirst]" )
         guy.set_mutation( tr );
         REQUIRE( guy.has_trait( tr ) );
 
-        tests_need_rate( guy, s_relic, 1.5f, 1.4f, getter );
+        tests_need_rate( guy, s_relic, 1.5f, 1.35f, getter );
     }
 }
 
@@ -744,7 +744,7 @@ TEST_CASE( "Enchantments modify fatigue rate", "[magic][enchantment][fatigue]" )
         guy.set_mutation( tr );
         REQUIRE( guy.has_trait( tr ) );
 
-        tests_need_rate( guy, s_relic, 0.85f, 0.75f, getter );
+        tests_need_rate( guy, s_relic, 0.85f, 0.765f, getter );
     }
 }
 

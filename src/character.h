@@ -631,6 +631,10 @@ class Character : public Creature, public location_visitable<Character>
          */
         float get_vision_threshold( float light_level ) const;
         /**
+         * Returns the vision range of night vision
+         */
+        float night_vision_sight_range() const;
+        /**
          * Flag encumbrance for updating.
         */
         void flag_encumbrance();

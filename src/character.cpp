@@ -33,7 +33,6 @@
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
-#include "character_vision.h"
 #include "clothing_utils.h"
 #include "clzones.h"
 #include "craft_command.h"
@@ -268,6 +267,7 @@ static const bionic_id bio_leukocyte( "bio_leukocyte" );
 static const bionic_id bio_lighter( "bio_lighter" );
 static const bionic_id bio_membrane( "bio_membrane" );
 static const bionic_id bio_memory( "bio_memory" );
+static const bionic_id bio_night_vision( "bio_night_vision" );
 static const bionic_id bio_ods( "bio_ods" );
 static const bionic_id bio_railgun( "bio_railgun" );
 static const bionic_id bio_recycler( "bio_recycler" );
@@ -1966,6 +1966,23 @@ void Character::calc_all_parts_hp( float hp_mod, float hp_adjustment, int str_ma
     }
 }
 
+float Character::night_vision_sight_range() const
+{
+    float best = 0;
+    if( worn_with_flag( flag_GNVE_EFFECT ) ) {
+        best = 18.0;
+    } else if( worn_with_flag( flag_RECON_VISION ) || is_mounted() &&
+               mounted_creature->has_flag( MF_MECH_RECON_VISION ) ||
+               worn_with_flag( flag_GNV_EFFECT ) || has_effect_with_flag( flag_EFFECT_NIGHT_VISION ) ) {
+        best = 10.0;
+    }
+    for( const mutation_branch *mut : cached_mutations ) {
+        best = std::max( best, mut->night_vision_range );
+    }
+    return std::max( best, float( bonus_from_enchantments( 0,
+                                  enchantment_value_id( "NIGHT_VISION" ) ) ) );
+}
+
 // This must be called when any of the following change:
 // - effects
 // - bionics
@@ -2012,25 +2029,17 @@ void Character::recalc_sight_limits()
         vision_mode_cache.set( DEBUG_NIGHTVISION );
     }
 
-    float best_bonus_nv = 0.0f;
-    for( const mutation_branch *mut : cached_mutations ) {
-        best_bonus_nv = std::max( best_bonus_nv, mut->night_vision_range );
-    }
-    const auto night_vision_level = character_vision::active_night_vision_bonus_level( *this );
-    best_bonus_nv = std::max( best_bonus_nv,
-                              character_vision::sight_range_bonus( night_vision_level ) );
+    float best_bonus_nv = night_vision_sight_range();
+
     if( worn_with_flag( flag_GNV_EFFECT ) ||
+        has_active_bionic( bio_night_vision ) ||
         has_effect_with_flag( flag_EFFECT_NIGHT_VISION ) ) {
         vision_mode_cache.set( NV_GOGGLES );
     }
     if( worn_with_flag( flag_GNVE_EFFECT ) ) {
         vision_mode_cache.set( ENV_GOGGLES );
     }
-    int ench_vision = bonus_from_enchantments( 0, enchantment_value_id( "NIGHT_VISION" ) );
-    if( ench_vision > best_bonus_nv ) {
-        vision_mode_cache.set( NV_GOGGLES );
-        best_bonus_nv = ench_vision;
-    }
+
     if( has_trait( trait_BIRD_EYE ) ) {
         vision_mode_cache.set( BIRD_EYE );
     }
