@@ -2341,11 +2341,6 @@ class map : public submap_load_listener
         std::array< std::unique_ptr<level_cache>, OVERMAP_LAYERS > caches;
 
         /**
-         * Set of submaps that contain active items in absolute coordinates.
-         */
-        std::set<tripoint_abs_sm> submaps_with_active_items;
-
-        /**
          * Flat list of all funnel trap locations in this dimension's loaded submaps.
          * Each entry is (abs_sm position, local tile point_bub_ms & within that submap).
          * Populated by on_submap_loaded() and trap_set(); pruned by on_submap_unloaded()
@@ -2431,7 +2426,7 @@ class map : public submap_load_listener
 
         // Just exposed for unit test introspection.
         const std::set<tripoint_abs_sm> &get_submaps_with_active_items() const {
-            return submaps_with_active_items;
+            return get_mapbuffer().get_submaps_with_active_items();
         }
         // Clips the area to map bounds
         tripoint_range<tripoint_bub_ms> points_in_rectangle(

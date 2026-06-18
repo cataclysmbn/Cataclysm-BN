@@ -518,7 +518,6 @@ auto map::resize( int new_mapsize ) -> void
         ptr = std::make_unique<level_cache>( SEEX * new_mapsize, SEEY * new_mapsize );
     }
     refresh_active_submap_view();
-    submaps_with_active_items.clear();
     funnel_locations_.clear();
     // Recompute the circular load footprint for the new bubble radius.
     // Radius = (mapsize - 1) / 2, matching g_half_mapsize.
@@ -587,11 +586,7 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id
         } );
     }
 
-    // Track submaps with active items across the full loaded set, not just the
-    // reality bubble.  For in-bubble submaps loadn() also does this; idempotent.
-    if( sm != nullptr && !sm->active_items.empty() ) {
-        submaps_with_active_items.emplace( p );
-    }
+    get_mapbuffer().refresh_active_item_submap_index( p, resident_item_lookup() );
 
     // Register any funnel traps so fill_water_collectors can skip the mapbuffer scan.
     if( sm != nullptr && !sm->trap_cache.empty() ) {
@@ -622,7 +617,7 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const dimension_id &di
     }
 
     // Stop tracking active items for this submap.
-    submaps_with_active_items.erase( pos );
+    get_mapbuffer().forget_active_item_submap_index( pos );
 
     // Remove any funnel locations belonging to this submap.
     std::erase_if( funnel_locations_, [&]( const auto & e ) {
@@ -5558,9 +5553,8 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
 
     // remove from the active items cache (if it isn't there does nothing)
     current_submap->active_items.remove( *it );
-    if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
-    }
+    get_mapbuffer().refresh_active_item_submap_index( project_to<coords::sm>( abs_pos ),
+            resident_item_lookup() );
 
     const auto removed_emissive = ( *it )->is_emissive();
     current_submap->update_lum_rem( l, **it );
@@ -5591,9 +5585,8 @@ detached_ptr<item> map::i_rem( const tripoint_bub_ms &p, item *it )
     }
 
     current_submap->active_items.remove( it );
-    if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
-    }
+    get_mapbuffer().refresh_active_item_submap_index( project_to<coords::sm>( abs_pos ),
+            resident_item_lookup() );
 
     const auto removed_emissive = it->is_emissive();
     current_submap->update_lum_rem( l, *it );
@@ -5621,9 +5614,8 @@ std::vector<detached_ptr<item>> map::i_clear( const tripoint_bub_ms &p )
         // remove from the active items cache (if it isn't there does nothing)
         current_submap->active_items.remove( it );
     }
-    if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
-    }
+    get_mapbuffer().refresh_active_item_submap_index( project_to<coords::sm>( abs_pos ),
+            resident_item_lookup() );
 
     const auto had_luminance = current_submap->get_lum( l ) != 0;
     current_submap->set_lum( l, 0 );
@@ -5923,12 +5915,9 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
         invalidate_lightmap_caches();
     }
     if( new_item->needs_processing() ) {
-        if( current_submap->active_items.empty() ) {
-            submaps_with_active_items.insert( tripoint_abs_sm( abs_sub.x() + p.x() / SEEX,
-                                              abs_sub.y() + p.y() / SEEY,
-                                              p.z() ) );
-        }
         current_submap->active_items.add( *new_item );
+        get_mapbuffer().refresh_active_item_submap_index( project_to<coords::sm>( abs_pos ),
+                resident_item_lookup() );
     }
 
     new_item->on_map_placement( *this, p );
@@ -6007,9 +5996,8 @@ void map::make_inactive( item &loc )
 
     // remove from the active items cache (if it isn't there does nothing)
     current_submap->active_items.remove( &loc );
-    if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( project_to<coords::sm>( abs_pos ) );
-    }
+    get_mapbuffer().refresh_active_item_submap_index( project_to<coords::sm>( abs_pos ),
+            resident_item_lookup() );
 }
 
 void map::make_active( item &loc )
@@ -6033,10 +6021,9 @@ void map::make_active( item &loc )
         return;
     }
 
-    if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.insert( project_to<coords::sm>( abs_pos ) );
-    }
     current_submap->active_items.add( *target );
+    get_mapbuffer().refresh_active_item_submap_index( project_to<coords::sm>( abs_pos ),
+            resident_item_lookup() );
 }
 
 void map::update_lum( item &loc, bool add )
@@ -6128,19 +6115,20 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
     // Direction 1: every in-grid submap with active items should be in the set.
     // Lazy-border submaps are intentionally excluded: they are pre-loaded for
     // shift performance but never registered in submaps_with_active_items.
+    const auto &active_item_submaps = get_mapbuffer().get_submaps_with_active_items();
     for( const auto &view : active_submaps_.submaps() ) {
         const submap &sm = view.get_submap();
         if( sm.active_items.empty() ) {
             continue;
         }
-        if( !submaps_with_active_items.contains( sm.position() ) ) {
+        if( !active_item_submaps.contains( sm.position() ) ) {
             result.push_back( sm.position() );
         }
     }
 
     // Direction 2: every entry in the set should point to a loaded submap with active items.
     mapbuffer &buf = get_mapbuffer();
-    for( const tripoint_abs_sm &p : submaps_with_active_items ) {
+    for( const tripoint_abs_sm &p : active_item_submaps ) {
         submap *s = buf.lookup_submap_in_memory( p );
         if( s == nullptr || s->active_items.empty() ) {
             result.push_back( p );
@@ -6189,8 +6177,9 @@ void map::process_items()
     std::vector<tripoint_abs_sm> submaps_with_active_items_copy;
     {
         ZoneScopedN( "process_items_snapshot_active_submaps" );
+        const auto &active_item_submaps = get_mapbuffer().get_submaps_with_active_items();
         submaps_with_active_items_copy = std::vector<tripoint_abs_sm>(
-                                             submaps_with_active_items.begin(), submaps_with_active_items.end() );
+                                             active_item_submaps.begin(), active_item_submaps.end() );
     }
     auto active_items = std::vector<item *> {};
     {
@@ -8197,7 +8186,6 @@ std::vector<tripoint_bub_ms> map::get_dir_circle( const tripoint_bub_ms &f,
 
 void map::load( const point_abs_sm &w, const bool update_vehicle, const bool pump_events )
 {
-    submaps_with_active_items.clear();
     funnel_locations_.clear();
     set_abs_sub( w );
     for( const auto p : bubble_submaps() ) {
@@ -8587,16 +8575,6 @@ void map::shift( const point_rel_sm &sp )
                 ZoneValue( static_cast<uint64_t>( gridz + OVERMAP_DEPTH ) );
                 for_grid_x( [&]( int gridx ) {
                     for_grid_y( [&]( int gridy ) {
-                        // Erase tracking for old occupants that are leaving the bubble.
-                        // An occupant leaves when its post-shift slot (gridx - sp.x(),
-                        // gridy - sp.y) falls outside the grid.
-                        if( ( sp.x() > 0 && gridx == 0 ) ||
-                            ( sp.x() < 0 && gridx == my_MAPSIZE - 1 ) ||
-                            ( sp.y() > 0 && gridy == 0 ) ||
-                            ( sp.y() < 0 && gridy == my_MAPSIZE - 1 ) ) {
-                            submaps_with_active_items.erase( tripoint_abs_sm{ abs_sub +
-                                                             point_rel_sm{ gridx, gridy }, gridz } );
-                        }
                         if( gridx + sp.x() >= 0 && gridx + sp.x() < my_MAPSIZE &&
                             gridy + sp.y() >= 0 && gridy + sp.y() < my_MAPSIZE ) {
                             const auto grid_pos = tripoint_bub_sm{ gridx, gridy, gridz };
@@ -8797,9 +8775,8 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
     if( get_mapbuffer().has_dimension_bounds() ) {
         apply_boundary_overlay( *tmpsub, tripoint_abs_sm( grid_abs_sub ) );
     }
-    if( !tmpsub->active_items.empty() ) {
-        submaps_with_active_items.emplace( grid_abs_sub.raw() );
-    }
+    get_mapbuffer().refresh_active_item_submap_index( tripoint_abs_sm( grid_abs_sub ),
+            resident_item_lookup() );
     // field_cache removed — field_count is queried directly on each submap
     // Destroy bugged no-part vehicles
     {
@@ -10430,40 +10407,7 @@ std::vector<item *> map::get_active_items_in_radius( const tripoint_bub_ms &cent
 std::vector<item *> map::get_active_items_in_radius( const tripoint_bub_ms &center, int radius,
         special_item_type type ) const
 {
-    std::vector<item *> result;
-
-    const point_bub_ms minp( center.xy() + point_rel_ms( -radius, -radius ) );
-    const point_bub_ms maxp( center.xy() + point_rel_ms( radius, radius ) );
-
-    const point_sm_ms ming( std::max( minp.x() / SEEX, 0 ),
-                            std::max( minp.y() / SEEY, 0 ) );
-    const point_sm_ms maxg( std::min( maxp.x() / SEEX, my_MAPSIZE - 1 ),
-                            std::min( maxp.y() / SEEY, my_MAPSIZE - 1 ) );
-
-    for( const tripoint_abs_sm &abs_submap_loc : submaps_with_active_items ) {
-        const tripoint_bub_sm submap_loc = abs_to_map_local( *this, abs_submap_loc );
-        if( submap_loc.x() < ming.x() || submap_loc.y() < ming.y() ||
-            submap_loc.x() > maxg.x() || submap_loc.y() > maxg.y() ) {
-            continue;
-        }
-        submap *sm = get_mapbuffer().lookup_submap_in_memory( abs_submap_loc );
-        if( sm == nullptr ) {
-            continue;
-        }
-        std::vector<item *> items = type == special_item_type::none ? sm->active_items.get() :
-                                    sm->active_items.get_special( type );
-        for( const auto &elem : items ) {
-            if( rl_dist( elem->bub_pos(), center ) > radius ) {
-                continue;
-            }
-
-            if( elem ) {
-                result.emplace_back( elem );
-            }
-        }
-    }
-
-    return result;
+    return get_mapbuffer().get_active_items_in_radius( map_local_to_abs( *this, center ), radius, type );
 }
 
 std::vector<tripoint_bub_ms> map::find_furnitures_with_flag_in_omt( const tripoint_bub_ms &p,
@@ -10824,21 +10768,20 @@ auto map::current_lightmap_source_signature() -> std::size_t
         }
     }
 
-    for( const tripoint_abs_sm &abs_pos : submaps_with_active_items ) {
-        if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
+    for( const auto &view : active_submaps_.submaps() ) {
+        if( !submap_loader.is_simulated( bound_dimension_, view.abs_pos() ) ) {
             continue;
         }
-        const auto view = active_submaps_.get_submap_view( abs_pos );
-        if( !view ) {
-            continue;
-        }
-        const submap &sm = view->get_submap();
-        if( sm.active_items.empty() ) {
-            continue;
-        }
-        for( const item *const itm : sm.active_items.get_const() ) {
-            if( itm != nullptr ) {
-                hash_light_item( seed, itm->bub_pos(), *itm );
+        const submap &sm = view.get_submap();
+        for( const auto sm_ms : submap_tiles() ) {
+            if( sm.get_lum( sm_ms ) == 0 ) {
+                continue;
+            }
+            const auto pos = abs_to_map_local( *this, project_combine( view.abs_pos(), sm_ms ) );
+            for( const item *const itm : sm.get_items( sm_ms ) ) {
+                if( itm != nullptr ) {
+                    hash_light_item( seed, pos, *itm );
+                }
             }
         }
     }

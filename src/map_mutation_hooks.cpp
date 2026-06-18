@@ -36,8 +36,8 @@ auto on_furniture_changed( const furniture_changed_options &options ) -> void
         return;
     }
 
-    const auto local = abs_to_bub( options.p );
-    if( !is_in_reality_bubble_bounds( local ) ) {
+    const auto local = abs_to_map_local( here, options.p );
+    if( !here.inbounds( local ) ) {
         return;
     }
 
@@ -63,8 +63,8 @@ auto prepare_item_for_placement( const item_placement_options &options ) -> bool
         return true;
     }
 
-    const auto local = abs_to_bub( options.p );
-    if( !is_in_reality_bubble_bounds( local ) ) {
+    const auto local = abs_to_map_local( here, options.p );
+    if( !here.inbounds( local ) ) {
         return true;
     }
 

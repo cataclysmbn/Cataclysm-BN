@@ -40,6 +40,7 @@ class JsonIn;
 class npc;
 class vehicle;
 enum ter_bitflags : int;
+enum class special_item_type : int;
 struct partial_con;
 template<typename T>
 class location_vector;
@@ -531,6 +532,13 @@ class mapbuffer
                               const mapbuffer_item_lum_options &options ) -> bool;
         auto refresh_active_item_submap_index( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> bool;
+        auto refresh_active_item_submap_index( const tripoint_abs_sm &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto forget_active_item_submap_index( const tripoint_abs_sm &p ) -> void;
+        auto clear_active_item_submap_index() -> void;
+        auto get_submaps_with_active_items() const -> const std::set<tripoint_abs_sm> &;
+        auto get_active_items_in_radius( const tripoint_abs_ms &center, int radius,
+                                         special_item_type type ) -> std::vector<item *>;
 
         auto has_graffiti_at( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> bool;
@@ -700,7 +708,7 @@ class mapbuffer
                 const field_type_id &type ) const -> void;
         auto invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
                 const field_type_id &type ) const -> void;
-        auto sync_active_item_submap_index( const tripoint_abs_ms &p, const submap &sm ) const -> void;
+        auto sync_active_item_submap_index( const tripoint_abs_ms &p, const submap &sm ) -> void;
         auto invalidate_active_item_luminance_cache( const tripoint_abs_ms &p ) const -> void;
         auto register_submap_vehicles( const tripoint_abs_sm &p, submap &sm ) -> void;
         auto unregister_submap_vehicles( const tripoint_abs_sm &p ) -> void;
@@ -782,7 +790,7 @@ class mapbuffer
             pocket_info_ = info;
         }
 
-        auto get_pocket_info() const -> const std::optional<pocket_dimension_data>& {
+        auto get_pocket_info() const -> const std::optional<pocket_dimension_data>& { // *NOPAD*
             return pocket_info_;
         }
 
@@ -833,6 +841,7 @@ class mapbuffer
                 vehicle_footprint_by_location_;
         std::unordered_map<const vehicle *, std::vector<tripoint_abs_ms>>
                 vehicle_footprint_locations_;
+        std::set<tripoint_abs_sm> submaps_with_active_items_;
 
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.

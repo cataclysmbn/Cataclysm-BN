@@ -1183,6 +1183,7 @@ void mapbuffer::clear()
         loaded_vehicles_.clear();
         vehicle_footprint_by_location_.clear();
         vehicle_footprint_locations_.clear();
+        submaps_with_active_items_.clear();
         submaps.clear();
         pocket_info_.reset();
     }
@@ -1199,6 +1200,9 @@ bool mapbuffer::add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &s
 
     submaps[p] = std::move( sm );
     register_submap_vehicles( p, *submaps[p] );
+    if( !submaps[p]->active_items.empty() ) {
+        submaps_with_active_items_.insert( p );
+    }
 
     return true;
 }
@@ -1223,6 +1227,7 @@ void mapbuffer::remove_submap( tripoint_abs_sm addr )
         }
     }
     unregister_submap_vehicles( addr );
+    submaps_with_active_items_.erase( addr );
     submaps.erase( m_target );
 }
 
@@ -1239,11 +1244,15 @@ void mapbuffer::transfer_all_to( mapbuffer &dest )
             continue;
         }
         dest.register_submap_vehicles( kv.first, *kv.second );
+        if( !kv.second->active_items.empty() ) {
+            dest.submaps_with_active_items_.insert( kv.first );
+        }
         dest.submaps.emplace( kv.first, std::move( kv.second ) );
     }
     loaded_vehicles_.clear();
     vehicle_footprint_by_location_.clear();
     vehicle_footprint_locations_.clear();
+    submaps_with_active_items_.clear();
     submaps.clear();
 }
 
@@ -1345,6 +1354,7 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
     }
     for( const auto &p : to_delete ) {
         unregister_submap_vehicles( p );
+        submaps_with_active_items_.erase( p );
         submaps.erase( p );
     }
 }
@@ -2958,6 +2968,78 @@ auto mapbuffer::refresh_active_item_submap_index( const tripoint_abs_ms &p,
     return true;
 }
 
+auto mapbuffer::refresh_active_item_submap_index( const tripoint_abs_sm &p,
+        const mapbuffer_lookup_options options ) -> bool
+{
+    auto *sm = get_submap( p, options );
+    if( sm == nullptr ) {
+        return false;
+    }
+
+    if( sm->active_items.empty() ) {
+        submaps_with_active_items_.erase( p );
+    } else {
+        submaps_with_active_items_.insert( p );
+    }
+    return true;
+}
+
+auto mapbuffer::forget_active_item_submap_index( const tripoint_abs_sm &p ) -> void
+{
+    submaps_with_active_items_.erase( p );
+}
+
+auto mapbuffer::clear_active_item_submap_index() -> void
+{
+    submaps_with_active_items_.clear();
+}
+
+auto mapbuffer::get_submaps_with_active_items() const -> const std::set<tripoint_abs_sm> &
+{
+    return submaps_with_active_items_;
+}
+
+auto mapbuffer::get_active_items_in_radius( const tripoint_abs_ms &center, const int radius,
+        const special_item_type type ) -> std::vector<item *>
+{
+    auto result = std::vector<item *> {};
+
+    const auto minp = center.xy() + point_rel_ms( -radius, -radius );
+    const auto maxp = center.xy() + point_rel_ms( radius, radius );
+
+    for( const tripoint_abs_sm &abs_submap_loc : submaps_with_active_items_ ) {
+        if( !submap_loader.is_simulated( dimension_id_, abs_submap_loc ) ) {
+            continue;
+        }
+
+        const auto sm_origin = project_to<coords::ms>( abs_submap_loc );
+        const auto sm_max = sm_origin.xy() + point_rel_ms( SEEX - 1, SEEY - 1 );
+        if( sm_origin.x() > maxp.x() || sm_origin.y() > maxp.y() ||
+            sm_max.x() < minp.x() || sm_max.y() < minp.y() ) {
+            continue;
+        }
+
+        auto *sm = lookup_submap_in_memory( abs_submap_loc );
+        if( sm == nullptr ) {
+            continue;
+        }
+
+        auto items = type == special_item_type::none ? sm->active_items.get() :
+                     sm->active_items.get_special( type );
+        for( item *elem : items ) {
+            if( elem == nullptr ) {
+                continue;
+            }
+            if( rl_dist( elem->abs_pos(), center ) > radius ) {
+                continue;
+            }
+            result.emplace_back( elem );
+        }
+    }
+
+    return result;
+}
+
 auto mapbuffer::has_graffiti_at( const tripoint_abs_ms &p,
                                  const mapbuffer_lookup_options options ) -> bool
 {
@@ -3367,18 +3449,13 @@ auto mapbuffer::invalidate_active_field_remove_caches( const tripoint_abs_ms &p,
 }
 
 void mapbuffer::sync_active_item_submap_index( const tripoint_abs_ms &p,
-        const submap &sm ) const
+        const submap &sm )
 {
-    if( g == nullptr || g->m.get_bound_dimension() != dimension_id_ ) {
-        return;
-    }
-
-    auto &active_submaps = g->m.submaps_with_active_items;
     const auto abs_submap = project_to<coords::sm>( p );
     if( sm.active_items.empty() ) {
-        active_submaps.erase( abs_submap );
+        submaps_with_active_items_.erase( abs_submap );
     } else {
-        active_submaps.insert( abs_submap );
+        submaps_with_active_items_.insert( abs_submap );
     }
 }
 

@@ -1553,30 +1553,31 @@ auto add_field_sources(source_accumulator& acc) -> void {
 }
 
 auto add_active_item_sources(source_accumulator& acc) -> void {
-    ZoneScopedN("gpu_lm_collect_active_item_sources");
-    for (tripoint_abs_sm const& abs_pos : acc.m.get_submaps_with_active_items()) {
-        auto const local_pos = abs_to_bub(abs_pos);
-        if (dirty_level_index(acc, local_pos.z()) < 0) { continue; }
+    ZoneScopedN("gpu_lm_collect_item_sources");
+    for (auto const z : acc.dirty_levels) {
+        for (auto const& view : acc.m.active_submap_views(z)) {
+            auto const grid = abs_to_bub(view.abs_pos());
+            auto const& sm = view.get_submap();
 
-        auto const active_sm = acc.m.active_submap_view(abs_pos);
-        if (!active_sm) { continue; }
-        auto const& sm = active_sm->get_submap();
-        if (sm.active_items.empty()) { continue; }
+            for (auto const sm_ms : submap_tiles()) {
+                if (sm.get_lum(sm_ms) == 0) { continue; }
 
-        for (item const* const itm : sm.active_items.get_const()) {
-            if (itm == nullptr) { continue; }
-            auto luminance = 0.0f;
-            auto width = 0_degrees;
-            auto direction = 0_degrees;
-            if (itm->getlight(luminance, width, direction)) {
-                auto const pos = itm->bub_pos();
-                add_source(acc, pos, luminance, light_source_kind::active_item);
-                add_colored_point_source({
-                    .acc = acc,
-                    .pos = pos,
-                    .luminance = luminance,
-                    .color_rgb = item_light_color(*itm),
-                });
+                auto const pos = project_combine(grid, sm_ms);
+                for (item const* const itm : sm.get_items(sm_ms)) {
+                    if (itm == nullptr) { continue; }
+                    auto luminance = 0.0f;
+                    auto width = 0_degrees;
+                    auto direction = 0_degrees;
+                    if (itm->getlight(luminance, width, direction)) {
+                        add_source(acc, pos, luminance, light_source_kind::active_item);
+                        add_colored_point_source({
+                            .acc = acc,
+                            .pos = pos,
+                            .luminance = luminance,
+                            .color_rgb = item_light_color(*itm),
+                        });
+                    }
+                }
             }
         }
     }
