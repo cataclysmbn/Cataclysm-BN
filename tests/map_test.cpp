@@ -76,7 +76,59 @@ auto add_absolute_test_submap( mapbuffer &buffer, const tripoint_abs_sm &pos,
     return buffer.lookup_submap_in_memory( pos );
 }
 
+auto mapgen_item_count_in_radius( mapgen_constructor &tm, const point_omt_ms &center,
+                                  const size_t radius ) -> size_t
+{
+    auto result = size_t{ 0 };
+    for( const auto &candidate : tm.points_in_radius( center, radius ) ) {
+        result += tm.i_at( candidate ).size();
+    }
+    return result;
+}
+
 } // namespace
+
+TEST_CASE( "mapgen_items_stay_on_sealed_container_tiles", "[mapgen][item][regression]" )
+{
+    clear_all_state();
+    auto &buffer = MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() );
+    auto tm = mapgen_constructor( buffer );
+    const auto target = point_omt_ms( SEEX, SEEY );
+    const auto furniture_id = furn_id( GENERATE( "f_vending_c", "f_crate_c" ) );
+    tm.reset_scratch_omt( tripoint_abs_omt( 11, 13, 0 ), ter_id( "t_floor" ), furn_id( "f_null" ),
+                          trap_id( "tr_null" ) );
+    tm.furn_set( target, furniture_id );
+    REQUIRE( tm.has_flag( "SEALED", target ) );
+    REQUIRE( tm.has_flag( "CONTAINER", target ) );
+
+    SECTION( "mapgen spawn_item places the item on the sealed target tile" ) {
+        const auto item_id = itype_id( "sheet_metal" );
+
+        tm.spawn_item( target, item_id );
+
+        auto target_items = tm.i_at( target );
+        REQUIRE( target_items.size() == 1 );
+        CHECK( target_items.only_item().typeId() == item_id );
+        CHECK( mapgen_item_count_in_radius( tm, target, 2 ) == 1 );
+    }
+
+    SECTION( "mapgen add_item_or_charges merges charges on the sealed target tile" ) {
+        const auto item_id = itype_id( "nail" );
+        auto first_stack = item::spawn( item_id );
+        first_stack->charges = 10;
+        CHECK_FALSE( tm.add_item_or_charges( target, std::move( first_stack ) ) );
+        auto second_stack = item::spawn( item_id );
+        second_stack->charges = 15;
+        CHECK_FALSE( tm.add_item_or_charges( target, std::move( second_stack ) ) );
+
+        auto target_items = tm.i_at( target );
+        REQUIRE( target_items.size() == 1 );
+        const auto &stacked_item = target_items.only_item();
+        CHECK( stacked_item.typeId() == item_id );
+        CHECK( stacked_item.charges == 25 );
+        CHECK( mapgen_item_count_in_radius( tm, target, 2 ) == 1 );
+    }
+}
 
 TEST_CASE( "moving_between_adjacent_pit_traps" )
 {
