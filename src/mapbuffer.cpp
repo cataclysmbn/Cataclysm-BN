@@ -33,6 +33,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "harvest.h"
+#include "iexamine.h"
 #include "item.h"
 #include "itype.h"
 #include "json.h"
@@ -1902,6 +1903,175 @@ auto mapbuffer::furn_vars( const tripoint_abs_ms &p,
     return &tile->sm->get_furn_vars( tile->local );
 }
 
+auto mapbuffer::furnname( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::string *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+    const auto sm = tile->sm;
+    const auto local = tile->local;
+    const furn_t &f = sm->get_furn( local ).obj();
+    if( f.has_flag( "PLANT" ) ) {
+        auto items = &sm->get_items( local );
+        for( auto it = items->begin(); it != items->end(); ++it ) {
+            if( ( *it )->is_seed() ) {
+                const std::string &plant = ( *it )->get_plant_name();
+                return &string_format( "%s (%s)", f.name(), plant );
+            }
+        }
+        debugmsg( "Missing seed for plant at (%d, %d, %d)", p.x(), p.y(), p.z() );
+        return &std::string( "null" );
+    } else {
+        return &f.name();
+    }
+}
+
+auto mapbuffer::drop_furniture( const tripoint_abs_ms &p,
+                                const mapbuffer_lookup_options options ) -> void
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return;
+    }
+
+    enum support_state {
+        SS_NO_SUPPORT = 0,
+        SS_BAD_SUPPORT, // TODO: Implement bad, shaky support
+        SS_GOOD_SUPPORT,
+        SS_FLOOR, // Like good support, but bash floor instead of tile below
+        SS_CREATURE
+    };
+
+    const auto sm = tile->sm;
+    const auto local = tile->local;
+    const furn_t &f = sm->get_furn( local ).obj();
+
+    // Checks if the tile:
+    // has floor (supports unconditionally)
+    // has support below
+    // has unsupporting furniture below (bad support, things should "slide" if possible)
+    // has no support and thus allows things to fall through
+    const auto check_tile = [this]( const tripoint_abs_ms & pt ) {
+        if( has_floor( pt ) ) {
+            return SS_FLOOR;
+        }
+
+        tripoint_abs_ms below_dest( pt.xy(), pt.z() - 1 );
+        if( supports_above( below_dest ) ) {
+            return SS_GOOD_SUPPORT;
+        }
+
+        const furn_id frn_id = furn( below_dest );
+        if( frn_id != f_null ) {
+            const furn_t &frn = frn_id.obj();
+            // Allow crushing tiny/nocollide furniture
+            if( !frn.has_flag( "TINY" ) && !frn.has_flag( "NOCOLLIDE" ) ) {
+                return SS_BAD_SUPPORT;
+            }
+        }
+
+        if( g->critter_at( below_dest ) != nullptr ) {
+            // Smash a critter
+            return SS_CREATURE;
+        }
+
+        return SS_NO_SUPPORT;
+    };
+
+    tripoint_abs_ms current( p.xy(), p.z() + 1 );
+    support_state last_state = SS_NO_SUPPORT;
+    while( last_state == SS_NO_SUPPORT && current.z() > -OVERMAP_DEPTH ) {
+        current.z()--;
+        // Check current tile
+        last_state = check_tile( current );
+    }
+
+    if( current == p ) {
+        // Nothing happened
+        if( last_state != SS_FLOOR ) {
+            support_dirty( current );
+        }
+
+        return;
+    }
+
+    furn_set( p, f_null );
+    furn_set( current, frn );
+
+    // If it's sealed, we need to drop items with it
+    const auto &frn_obj = frn.obj();
+    if( frn_obj.has_flag( TFLAG_SEALED ) && has_items( p ) ) {
+        auto old_items = i_at( p );
+        auto new_items = i_at( current );
+
+        old_items.move_all_to( &new_items );
+    }
+
+    // Approximate weight/"bulkiness" based on strength to drag
+    int weight;
+    if( frn_obj.has_flag( "TINY" ) || frn_obj.has_flag( "NOCOLLIDE" ) ) {
+        weight = 5;
+    } else {
+        weight = frn_obj.is_movable() ? frn_obj.move_str_req : 20;
+    }
+
+    if( frn_obj.has_flag( "ROUGH" ) || frn_obj.has_flag( "SHARP" ) ) {
+        weight += 5;
+    }
+
+    // TODO: Balance this.
+    int dmg = weight * ( p.z() - current.z() );
+
+    if( last_state == SS_FLOOR ) {
+        // Bash the same tile twice - once for furniture, once for the floor
+        bash( current, dmg, false, false, true );
+        bash( current, dmg, false, false, true );
+    } else if( last_state == SS_BAD_SUPPORT || last_state == SS_GOOD_SUPPORT ) {
+        bash( current, dmg, false, false, false );
+        tripoint_bub_ms below( current.xy(), current.z() - 1 );
+        bash( below, dmg, false, false, false );
+    } else if( last_state == SS_CREATURE ) {
+        const std::string &furn_name = frn_obj.name();
+        bash( current, dmg, false, false, false );
+        tripoint_bub_ms below( current.xy(), current.z() - 1 );
+        Creature *critter = g->critter_at( below );
+        if( critter == nullptr ) {
+            debugmsg( "drop_furniture couldn't find creature at %d,%d,%d",
+                      below.x(), below.y(), below.z() );
+            return;
+        }
+
+        critter->add_msg_player_or_npc( m_bad, _( "Falling %s hits you!" ),
+                                        _( "Falling %s hits <npcname>" ),
+                                        furn_name );
+        // TODO: A chance to dodge/uncanny dodge
+        player *pl = dynamic_cast<player *>( critter );
+        monster *mon = dynamic_cast<monster *>( critter );
+        if( pl != nullptr ) {
+            pl->deal_damage( nullptr, bodypart_id( "torso" ), damage_instance( DT_BASH, rng( dmg / 3, dmg ), 0,
+                             0.5f ) );
+            pl->deal_damage( nullptr, bodypart_id( "head" ),  damage_instance( DT_BASH, rng( dmg / 3, dmg ), 0,
+                             0.5f ) );
+            pl->deal_damage( nullptr, bodypart_id( "leg_l" ), damage_instance( DT_BASH, rng( dmg / 2, dmg ), 0,
+                             0.4f ) );
+            pl->deal_damage( nullptr, bodypart_id( "leg_r" ), damage_instance( DT_BASH, rng( dmg / 2, dmg ), 0,
+                             0.4f ) );
+            pl->deal_damage( nullptr, bodypart_id( "arm_l" ), damage_instance( DT_BASH, rng( dmg / 2, dmg ), 0,
+                             0.4f ) );
+            pl->deal_damage( nullptr, bodypart_id( "arm_r" ), damage_instance( DT_BASH, rng( dmg / 2, dmg ), 0,
+                             0.4f ) );
+        } else if( mon != nullptr ) {
+            // TODO: Monster's armor and size - don't crush hulks with chairs
+            mon->apply_damage( nullptr, bodypart_id( "torso" ), rng( dmg, dmg * 2 ) );
+        }
+    }
+
+    // Re-queue for another check, in case bash destroyed something
+    support_dirty( current );
+}
+
 auto mapbuffer::get_trap( const tripoint_abs_ms &p,
                           const mapbuffer_lookup_options options ) -> std::optional<trap_id>
 {
@@ -2224,6 +2394,68 @@ auto mapbuffer::get_items( const tripoint_abs_ms &p,
     }
 
     return &tile->sm->get_items( tile->local );
+}
+
+auto mapbuffer::water_from( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> detached_ptr<item> *
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    if( has_flag( "SALT_WATER", p ) ) {
+        return &item::spawn( "salt_water", calendar::start_of_cataclysm, item::INFINITE_CHARGES );
+    }
+
+    auto sm = tile->sm;
+    auto local = tile->local;
+
+    const ter_id terrain_id = sm->get_ter( local );
+    if( terrain_id == t_sewage ) {
+        detached_ptr<item> ret = item::spawn( "water_sewage", calendar::start_of_cataclysm,
+                                              item::INFINITE_CHARGES );
+        ret->poison = rng( 1, 7 );
+        return &ret;
+    }
+
+
+    // iexamine::water_source requires a valid liquid from this function.
+    if( terrain_id.obj().examine == &iexamine::water_source ) {
+        detached_ptr<item> ret = item::spawn( "water", calendar::start_of_cataclysm,
+                                              item::INFINITE_CHARGES );
+        int poison_chance = 0;
+        if( terrain_id.obj().has_flag( TFLAG_DEEP_WATER ) ) {
+            if( terrain_id.obj().has_flag( TFLAG_CURRENT ) ) {
+                poison_chance = 20;
+            } else {
+                poison_chance = 4;
+            }
+        } else {
+            if( terrain_id.obj().has_flag( TFLAG_CURRENT ) ) {
+                poison_chance = 10;
+            } else {
+                poison_chance = 3;
+            }
+        }
+        if( one_in( poison_chance ) ) {
+            ret->poison = rng( 1, 4 );
+        }
+        return &ret;
+    }
+    auto ob = sm->get_furn( local ).obj();
+    if( ob.examine == &iexamine::water_source ) {
+        return &item::spawn( "water", calendar::start_of_cataclysm, item::INFINITE_CHARGES );
+    }
+    if( ob.examine == &iexamine::clean_water_source ||
+        terrain_id.obj().examine == &iexamine::clean_water_source ) {
+        return &item::spawn( "water_clean", calendar::start_of_cataclysm, item::INFINITE_CHARGES );
+    }
+    if( ob.examine == &iexamine::liquid_source ) {
+        // Terrains have no "provides_liquids" to work with generic source
+        return &item::spawn( ob.provides_liquids, calendar::turn, item::INFINITE_CHARGES );
+    }
+    return &detached_ptr<item>();
 }
 
 auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
