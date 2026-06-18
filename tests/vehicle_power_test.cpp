@@ -313,7 +313,8 @@ TEST_CASE( "Vehicle charging station", "[vehicle][power]" )
             veh_ptr->add_item( cargo_part, std::move( det ) );
             WHEN( "An hour passes" ) {
                 // Should use vehicle::update_time, but that doesn't do charging...
-                for( int i = 0; i < to_turns<int>( 1_hours ); i++ ) {
+                for( const auto _ : std::views::iota( 0, to_turns<int>( 1_hours ) ) ) {
+                    ( void )_;
                     g->m.process_items();
                 }
 
@@ -336,7 +337,8 @@ TEST_CASE( "Vehicle charging station", "[vehicle][power]" )
             tool.reload( g->u, battery, 1 );
             veh_ptr->add_item( cargo_part, std::move( det ) );
             WHEN( "An hour passes" ) {
-                for( int i = 0; i < to_turns<int>( 1_hours ); i++ ) {
+                for( const auto _ : std::views::iota( 0, to_turns<int>( 1_hours ) ) ) {
+                    ( void )_;
                     g->m.process_items();
                 }
 
@@ -345,6 +347,53 @@ TEST_CASE( "Vehicle charging station", "[vehicle][power]" )
                 }
             }
         }
-    }
+        AND_GIVEN( "Rechargeable tool with a rechargeable battery in the station" ) {
+            detached_ptr<item> battery_det = item::spawn( "light_battery_cell" );
+            item &battery = *battery_det;
+            battery.ammo_unset();
+            REQUIRE( battery.ammo_remaining() == 0 );
+            REQUIRE( battery.has_flag( flag_RECHARGE ) );
 
+            detached_ptr<item> tool_det = item::spawn( "smart_phone_music" );
+            item &tool = *tool_det;
+            REQUIRE( tool.has_flag( flag_RECHARGE ) );
+            tool.put_in( std::move( battery_det ) );
+            REQUIRE( tool.ammo_remaining() == 0 );
+            REQUIRE( !veh_ptr->add_item( cargo_part, std::move( tool_det ) ) );
+
+            WHEN( "cargo recharge targets are cached" ) {
+                const auto targets = veh_ptr->get_cargo_recharge_targets();
+
+                THEN( "only the outer rechargeable item is cached" ) {
+                    REQUIRE( targets.size() == 1 );
+                    CHECK( targets.front().target == &tool );
+                    CHECK( targets.front().target != &battery );
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE( "vehicle battery buckets tolerate overfull batteries", "[vehicle][power]" )
+{
+    clear_all_state();
+    build_test_map( ter_id( "t_pavement" ) );
+
+    vehicle *const veh_ptr = get_map().add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 10, 10, 0 ),
+                             0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    const auto battery_part = veh_ptr->install_part( tripoint_mnt_veh::zero(),
+                              vpart_id( "storage_battery" ), true );
+    REQUIRE( battery_part >= 0 );
+
+    vehicle_part &battery = veh_ptr->part( battery_part );
+    const auto capacity = battery.ammo_capacity();
+    REQUIRE( capacity > 0 );
+    battery.ammo_set( fuel_type_battery, capacity );
+    battery.get_base().contents.front().charges = capacity + 50;
+    REQUIRE( battery.ammo_remaining() > battery.ammo_capacity() );
+
+    CHECK( veh_ptr->discharge_battery( 1, false ) == 0 );
+    CHECK( battery.ammo_remaining() == capacity + 49 );
 }
