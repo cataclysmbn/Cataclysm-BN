@@ -2407,6 +2407,7 @@ void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
         .furniture = new_furniture,
         .active = &new_active,
         .lookup = resident_item_lookup(),
+        .run_hooks = false,
     } );
     if( !changed ) {
         return;

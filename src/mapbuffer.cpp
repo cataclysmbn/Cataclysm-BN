@@ -1902,12 +1902,14 @@ auto mapbuffer::set_furn( const tripoint_abs_ms &p,
     tile->sm->set_furn( tile->local, new_id );
     sync_furniture_change_side_tables( p, *tile->sm, tile->local, old_id, new_id, options.active );
     invalidate_active_furniture_set_caches( p, old_id, new_id );
-    map_mutation_hooks::on_furniture_changed( {
-        .dim_id = dimension_id_,
-        .p = p,
-        .old_furniture = old_id,
-        .new_furniture = new_id,
-    } );
+    if( options.run_hooks ) {
+        map_mutation_hooks::on_furniture_changed( {
+            .dim_id = dimension_id_,
+            .p = p,
+            .old_furniture = old_id,
+            .new_furniture = new_id,
+        } );
+    }
     return true;
 }
 
