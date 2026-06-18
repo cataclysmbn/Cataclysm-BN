@@ -5,6 +5,7 @@
 #include "character.h"
 #include "creature.h"
 #include "debug.h"
+#include "enchantment_flag.h"
 #include "enchantment_value.h"
 #include "enum_conversions.h"
 #include "enums.h"
@@ -175,6 +176,7 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
     }
 
     optional(jo, was_loaded, "mutations", mutations);
+    optional(jo, was_loaded, "flags", flags);
 
     if (jo.has_array("values")) {
         for (const JsonObject value_obj : jo.get_array("values")) {
@@ -258,6 +260,7 @@ void enchantment::serialize(JsonOut& jsout) const {
         jsout.end_object();
     }
     jsout.end_array();
+    jsout.member("flags", flags);
 
     jsout.end_object();
 }
@@ -299,6 +302,21 @@ void enchantment::force_add(const enchantment& rhs) {
             intermittent_activation[act_pair.first].emplace_back(fake);
         }
     }
+    for (const enchantment_flag_id& ench_flag : rhs.flags) {
+        bool has_conflict = false;
+        for (const enchantment_flag_id& conf_flag : ench_flag->conflicts) {
+            if (flags.contains(conf_flag)) {
+                flags.erase(conf_flag);
+                has_conflict = true;
+            }
+        }
+        if (!has_conflict) { flags.insert(ench_flag); }
+    }
+}
+
+bool enchantment::has_flag(const enchantment_flag_id flag) const {
+    if (!flag.is_valid()) { debugmsg("Tried to get invalid enchantment flag \"%s\".", flag); }
+    return flags.contains(flag);
 }
 
 int enchantment::get_value_add(const enchantment_value_id value) const {
@@ -482,6 +500,11 @@ void enchantment::check() const {
         if (!mut->mods.empty()) {
             problems.push_back(string_format(
                 "\nmutation %s which has stat adjustments (not supported)", mut.str()));
+        }
+    }
+    for (const auto ench_flag : flags) {
+        if (!ench_flag.is_valid()) {
+            problems.push_back(string_format("\nenchantment flag %s is invalid", ench_flag.str()));
         }
     }
     auto val_add_copy = values_add;

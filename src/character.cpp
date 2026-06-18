@@ -132,7 +132,6 @@ static const activity_id ACT_TRY_SLEEP( "ACT_TRY_SLEEP" );
 static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
 
 static const bionic_id bio_eye_optic( "bio_eye_optic" );
-static const bionic_id bio_infolink( "bio_infolink" );
 
 static const matec_id WBLOCK_1( "WBLOCK_1" );
 static const matec_id WBLOCK_2( "WBLOCK_2" );
@@ -962,15 +961,10 @@ int Character::clairvoyance() const
 bool Character::sight_impaired() const
 {
     return ( ( ( has_effect( effect_boomered ) || has_effect( effect_no_sight ) ||
-                 has_effect( effect_darkness ) ) &&
-               ( !( has_trait( trait_PER_SLIME_OK ) ) ) ) ||
-             ( is_underwater() && !has_bionic( bio_membrane ) && !has_trait( trait_MEMBRANE ) &&
-               !worn_with_flag( flag_SWIM_GOGGLES ) && !has_trait( trait_PER_SLIME_OK ) &&
-               !has_trait( trait_CEPH_EYES ) && !has_trait( trait_SEESLEEP ) ) ||
-             ( ( has_trait( trait_MYOPIC ) || has_trait( trait_URSINE_EYE ) ) &&
-               !worn_with_flag( flag_FIX_NEARSIGHT ) &&
-               !has_effect( effect_contacts ) &&
-               !has_bionic( bio_eye_optic ) ) ||
+                 has_effect( effect_darkness ) ) && !has_trait( trait_PER_SLIME_OK ) ) ||
+             ( is_underwater() && !has_enchantment_flag( enchantment_flag_id( "UNDERWATER_SIGHT" ) ) ) ||
+             ( has_enchantment_flag( enchantment_flag_id( "NEARSIGHTED" ) ) &&
+               !worn_with_flag( flag_FIX_NEARSIGHT ) && !has_effect( effect_contacts ) ) ||
              has_trait( trait_PER_SLIME ) );
 }
 
@@ -980,7 +974,7 @@ bool Character::has_alarm_clock() const
     return ( has_item_with_flag( flag_ALARMCLOCK, true ) ||
              ( here.veh_at( bub_pos() ) &&
                !here.veh_at( bub_pos() )->vehicle().get_avail_parts( "ALARMCLOCK" ).empty() ) ||
-             has_bionic( bio_infolink ) );
+             has_enchantment_flag( enchantment_flag_id( "ALARMCLOCK" ) ) );
 }
 
 bool Character::has_watch() const
@@ -989,7 +983,7 @@ bool Character::has_watch() const
     return ( has_item_with_flag( flag_WATCH, true ) ||
              ( here.veh_at( bub_pos() ) &&
                !here.veh_at( bub_pos() )->vehicle().get_avail_parts( "WATCH" ).empty() ) ||
-             has_bionic( bio_infolink ) );
+             has_enchantment_flag( enchantment_flag_id( "WATCH" ) ) );
 }
 
 void Character::react_to_felt_pain( int intensity )
@@ -1989,23 +1983,21 @@ void Character::recalc_sight_limits()
     vision_mode_cache.reset();
 
     // Set sight_max.
-    if( is_blind() || ( in_sleep_state() && !has_trait( trait_SEESLEEP ) ) ||
+    if( is_blind() || ( in_sleep_state() && !has_enchantment_flag( enchantment_flag_id( "SLEEP_SIGHT" ) ) ) ) ||
         has_effect( effect_narcosis ) ) {
         sight_max = 0;
     } else if( has_effect( effect_boomered ) && ( !( has_trait( trait_PER_SLIME_OK ) ) ) ) {
         sight_max = 1;
         vision_mode_cache.set( BOOMERED );
     } else if( has_effect( effect_in_pit ) || has_effect( effect_no_sight ) ||
-               ( is_underwater() && !has_bionic( bio_membrane ) &&
-                 !has_trait( trait_MEMBRANE ) && !worn_with_flag( flag_SWIM_GOGGLES ) &&
-                 !has_trait( trait_CEPH_EYES ) && !has_trait( trait_PER_SLIME_OK ) ) ) {
+               ( is_underwater() && !worn_with_flag( flag_SWIM_GOGGLES ) &&
+                 !has_enchantment_flag( enchantment_flag_id( "UNDERWATER_SIGHT" ) ) ) ) {
         sight_max = 1;
     } else if( has_active_mutation( trait_SHELL2 ) ) {
         // You can kinda see out a bit.
         sight_max = 2;
-    } else if( ( has_trait( trait_MYOPIC ) || has_trait( trait_URSINE_EYE ) ) &&
-               !worn_with_flag( flag_FIX_NEARSIGHT ) && !has_effect( effect_contacts ) &&
-               !has_bionic( bio_eye_optic ) ) {
+    } else if( has_enchantment_flag( enchantment_flag_id( "NEARSIGHTED" ) ) &&
+               !worn_with_flag( flag_FIX_NEARSIGHT ) && !has_effect( effect_contacts ) ) {
         sight_max = 4;
     } else if( has_trait( trait_PER_SLIME ) ) {
         sight_max = 6;
@@ -2053,14 +2045,13 @@ void Character::recalc_sight_limits()
     }
 
     // Not exactly a sight limit thing, but related enough
-    if( has_active_bionic( bio_infrared ) ||
-        has_trait( trait_INFRARED ) ||
-        has_trait( trait_LIZ_IR ) ||
-        worn_with_flag( flag_IR_EFFECT ) || ( is_mounted() &&
-                mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) ) {
+    if( has_enchantment_flag( enchantment_flag_id( "INFRARED_VISION" ) )
+        worn_with_flag( flag_IR_EFFECT ) ||
+        ( is_mounted() && mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) ) {
         vision_mode_cache.set( IR_VISION );
     }
 
+    // NOTE: Enchant this eventually, makes no sense to have set values
     if( has_artifact_with( AEP_SUPER_CLAIRVOYANCE ) ||
         has_effect_with_flag( flag_EFFECT_SUPER_CLAIRVOYANCE ) ) {
         vision_mode_cache.set( VISION_CLAIRVOYANCE_SUPER );
@@ -8984,6 +8975,11 @@ void Character::rebuild_mutation_cache()
     for( const trait_id &mut : enchantment_cache->get_mutations() ) {
         cached_mutations.push_back( &mut.obj() );
     }
+}
+
+bool Character::has_enchantment_flag( enchantment_flag_id flag ) const
+{
+    return enchantment_cache->has_flag( flag );
 }
 
 double Character::bonus_from_enchantments( double base, enchantment_value_id value,

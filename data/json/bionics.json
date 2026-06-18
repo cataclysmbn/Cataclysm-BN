@@ -460,7 +460,8 @@
     "canceled_mutations": [ "HYPEROPIC", "MYOPIC" ],
     "can_uninstall": false,
     "points": 1,
-    "no_uninstall_reason": "The telescopic lenses are part of the patient's eyes now, remove them and the patient would become blind"
+    "no_uninstall_reason": "The telescopic lenses are part of the patient's eyes now, remove them and the patient would become blind",
+    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT", "FIX_NEARSIGHTED" ] } ]
   },
   {
     "id": "bio_face_mask",
@@ -648,7 +649,8 @@
     "flags": [ "BIONIC_NPC_USABLE" ],
     "act_cost": "10 J",
     "starting_bionic": true,
-    "points": 1
+    "points": 1,
+    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "ALARMCLOCK", "WATCH" ] } ]
   },
   {
     "id": "bio_infrared",
@@ -660,7 +662,8 @@
     "act_cost": "5 J",
     "react_cost": "5 J",
     "time": 1,
-    "points": 1
+    "points": 1,
+    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "INFRARED_VISION" ] } ]
   },
   {
     "id": "bio_int_enhancer",
@@ -755,7 +758,8 @@
     "description": "Your eyes have a thin membrane that closes over your eyes while underwater, negating any vision penalties.",
     "occupied_bodyparts": [ [ "eyes", 1 ] ],
     "points": 1,
-    "flags": [ "BIONIC_NPC_USABLE" ]
+    "flags": [ "BIONIC_NPC_USABLE" ],
+    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "id": "bio_memory",

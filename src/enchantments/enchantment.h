@@ -52,6 +52,9 @@ public:
     int get_value_add(enchantment_value_id value) const;
     double get_value_multiply(enchantment_value_id value) const;
 
+    // Gets weather the enchantment has a flag or not
+    bool has_flag(enchantment_flag_id flag) const;
+
     /**
      * Calculate bonus provided by this enchantment for given base value.
      */
@@ -118,6 +121,8 @@ private:
     std::map<time_duration, std::vector<fake_spell>> intermittent_activation;
 
     std::pair<has, condition> active_conditions;
+
+    std::set<enchantment_flag_id> flags;
 
     void add_activation(const time_duration& freq, const fake_spell& fake);
 

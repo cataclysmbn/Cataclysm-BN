@@ -1,0 +1,32 @@
+[
+  {
+    "id": "UNDERWATER_SIGHT",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "SLEEP_SIGHT",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "NEARSIGHTED",
+    "type": "enchantment_flag",
+    "conflicts": [ "FIX_NEARSIGHTED" ]
+  },
+  {
+    "id": "FIX_NEARSIGHTED",
+    "type": "enchantment_flag",
+    "conflicts": [ "NEARSIGHTED" ]
+  },
+  {
+    "id": "INFRARED_VISION",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "ALARMCLOCK",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "WATCH",
+    "type": "enchantment_flag"
+  }
+]

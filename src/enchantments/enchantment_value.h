@@ -1,13 +1,8 @@
 #pragma once
 
-#include "hsv_color.h"
 #include "json.h"
-#include "mapgen.h"
 #include "string_id.h"
 #include "type_id.h"
-#include "units_angle.h"
-#include "vehicle_group.h"
-#include "weighted_list.h"
 
 #include <memory>
 #include <optional>
