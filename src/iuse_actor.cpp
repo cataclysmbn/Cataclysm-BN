@@ -3616,7 +3616,7 @@ static bool damage_item( player &pl, item *fix )
             return std::move( mod );
         } );
 
-        fix->contents.spill_contents( fix->position() );
+        fix->contents.spill_contents( fix->bub_pos() );
 
         pl.add_msg_if_player( m_bad, _( "You destroy it!" ) );
         if( fix->where() == item_location_type::character ) {
@@ -3624,7 +3624,7 @@ static bool damage_item( player &pl, item *fix )
         } else {
             for( detached_ptr<item> &it : fix->contents.clear_items() ) {
                 put_into_vehicle_or_drop( pl, item_drop_reason::deliberate, std::move( it ),
-                                          fix->position() );
+                                          fix->bub_pos() );
             }
             fix->detach();
         }

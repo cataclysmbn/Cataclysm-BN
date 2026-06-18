@@ -1388,8 +1388,7 @@ static std::optional<tripoint_abs_omt> get_note_pos_from_item( const item &it )
     if( !it.has_position() ) {
         return std::nullopt;
     }
-    const auto abs_ms = bub_to_abs( it.position() );
-    return tripoint_abs_omt( project_to<coords::omt>( abs_ms ) );
+    return tripoint_abs_omt( project_to<coords::omt>( it.abs_pos() ) );
 }
 
 static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,

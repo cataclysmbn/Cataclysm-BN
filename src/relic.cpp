@@ -355,7 +355,7 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
             return carrier->has_effect( effect_sleep );
         }
         case relic_recharge_req::rad: {
-            return get_map().get_radiation( itm.position() ) > 0 || ( possess && carrier->get_rad() > 0 );
+            return get_map().get_radiation( itm.bub_pos() ) > 0 || ( possess && carrier->get_rad() > 0 );
         }
         case relic_recharge_req::wet: {
             bool soaked = false;
@@ -370,12 +370,12 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
                 if( !wt.rains || wt.acidic || wt.precip == precip_class::none ) {
                     return false;
                 }
-                soaked = get_map().is_outside( itm.position() );
+                soaked = get_map().is_outside( itm.bub_pos() );
             }
             return soaked;
         }
         case relic_recharge_req::sky: {
-            return itm.position().z() > 0;
+            return itm.abs_pos().z() > 0;
         }
         default: {
             std::abort();
@@ -401,7 +401,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
             break;
         }
         case relic_recharge_type::solar: {
-            if( !g->is_in_sunlight( itm.position() ) ) {
+            if( !g->is_in_sunlight( itm.bub_pos() ) ) {
                 return false;
             }
             break;
@@ -436,7 +436,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
         case relic_recharge_type::field: {
             bool consumed = false;
-            for( const tripoint_bub_ms &dest : here.points_in_radius( itm.position(), 1 ) ) {
+            for( const tripoint_bub_ms &dest : here.points_in_radius( itm.bub_pos(), 1 ) ) {
                 field_entry *field_at = here.field_at( dest ).find_field( rech.field_type );
                 if( !field_at ) {
                     continue;
@@ -455,7 +455,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
         case relic_recharge_type::trap: {
             bool consumed = false;
-            for( const tripoint_bub_ms &dest : here.points_in_radius( itm.position(), 1 ) ) {
+            for( const tripoint_bub_ms &dest : here.points_in_radius( itm.bub_pos(), 1 ) ) {
                 if( here.tr_at( dest ).id == rech.trap_type ) {
                     here.remove_trap( dest );
                     consumed = true;

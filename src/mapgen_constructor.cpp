@@ -225,7 +225,7 @@ auto mapgen_constructor::reset_scratch_omt( const tripoint_abs_omt &omt_pos, con
             return;
         }
         const auto abs = project_combine( abs_offset_, offset );
-        auto sm = std::make_unique<submap>( abs );
+        auto sm = std::make_unique<submap>( abs, buffer_.get_dimension_id() );
         sm->set_all_ter( terrain );
         sm->set_all_furn( furniture );
         sm->set_all_traps( trap );
@@ -246,7 +246,7 @@ auto mapgen_constructor::ensure_omt_submaps( const time_point &when ) -> bool
         if( buffer_.lookup_submap_in_memory( abs ) != nullptr ) {
             return;
         }
-        auto sm = std::make_unique<submap>( abs );
+        auto sm = std::make_unique<submap>( abs, buffer_.get_dimension_id() );
         sm->last_touched = when;
         owned_submaps_[*index] = std::move( sm );
     } );

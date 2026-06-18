@@ -884,7 +884,7 @@ void map::set_absorption_cache_dirty( const int zlev )
     }
 }
 
-static submap null_submap( tripoint_abs_sm::zero() );
+static submap null_submap( tripoint_abs_sm::zero(), dimension_id{} );
 
 maptile map::maptile_at( const tripoint_bub_ms &p ) const
 {
@@ -8963,7 +8963,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         if( bsub == nullptr ) {
             add_msg( m_debug, "[DIM-DIAG] loadn: creating boundary submap at (%d,%d,%d)",
                      grid_abs_sub.x(), grid_abs_sub.y(), grid_abs_sub.z() );
-            auto sm = std::make_unique<submap>( grid_abs_sub );
+            auto sm = std::make_unique<submap>( grid_abs_sub, bound_dimension_ );
             sm->is_uniform = true;
             sm->set_all_ter( get_boundary_terrain() );
             sm->last_touched = calendar::turn;

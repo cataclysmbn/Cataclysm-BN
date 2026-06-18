@@ -369,7 +369,7 @@ bool aim_activity_actor::load_RAS_weapon()
         {
             return false;
         }
-        if( square_dist( you.bub_pos(), you.ammo_location->position() ) > 1 )
+        if( square_dist( you.abs_pos(), you.ammo_location->abs_pos() ) > 1 )
         {
             return false;
         }
@@ -1045,7 +1045,7 @@ std::unique_ptr<activity_actor> hacking_activity_actor::deserialize( JsonIn &jsi
 
 void move_items_activity_actor::do_turn( player_activity &act, Character &who )
 {
-    const auto dest = relative_destination + who.bub_pos();
+    const auto dest = relative_destination + who.abs_pos();
 
     while( who.moves > 0 && !target_items.empty() ) {
         safe_reference<item> target = std::move( target_items.back() );
@@ -1073,7 +1073,7 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
             continue;
         }
 
-        const tripoint_bub_ms src = target->position();
+        const auto src = target->abs_pos();
         detached_ptr<item> newit = quantity == 0 ? target->detach() : target->split( quantity );
 
         const int distance = src.z() == dest.z() ? std::max( rl_dist( src, dest ), 1 ) : 1;
@@ -1082,9 +1082,9 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
         std::vector<detached_ptr<item>> vec;
         vec.push_back( std::move( newit ) );
         if( to_vehicle ) {
-            put_into_vehicle_or_drop( who, item_drop_reason::deliberate, vec, dest );
+            put_into_vehicle_or_drop( who, item_drop_reason::deliberate, vec, abs_to_bub( dest ) );
         } else {
-            drop_on_map( who, item_drop_reason::deliberate, vec, dest );
+            drop_on_map( who, item_drop_reason::deliberate, vec, abs_to_bub( dest ) );
         }
     }
 
@@ -1247,7 +1247,7 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         return;
     }
     if( tool->ammo_sufficient() ) {
-        tool->ammo_consume( tool->ammo_required(), tool->position() );
+        tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
         sfx::play_activity_sound( "tool", "hacksaw", sfx::get_heard_volume( target, 80 ) );
         if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             //~ Sound of a metal sawing tool at work!
@@ -1412,7 +1412,7 @@ void boltcutting_activity_actor::do_turn( player_activity &/* act */, Character 
         return;
     }
     if( tool->ammo_sufficient() ) {
-        tool->ammo_consume( tool->ammo_required(), tool->position() );
+        tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
     } else {
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
@@ -1835,7 +1835,7 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
 {
     // We check available charges when first starting the cut, but this prevents abnormal behavior if torch status changes mid-activity.
     if( tool->ammo_sufficient() ) {
-        tool->ammo_consume( tool->ammo_required(), tool->position() );
+        tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
         sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target, 65 ) );
         if( action_time_scale::once_every_this_tick( 2_turns ) ) {
             sound_event se;

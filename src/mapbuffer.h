@@ -385,9 +385,7 @@ class mapbuffer
         auto furn_vars( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
         auto furnname( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::string *;
-        auto drop_furniture( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> void;
+        mapbuffer_lookup_options options = {} ) -> std::string;
 
         auto get_trap( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<trap_id>;
@@ -437,7 +435,7 @@ class mapbuffer
         auto get_items( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> location_vector<item> *;
         auto water_from( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> detached_ptr<item> *;
+        mapbuffer_lookup_options options = {} ) -> detached_ptr<item>;
         auto add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
         const mapbuffer_add_item_or_charges_options &options = {} ) -> detached_ptr<item>;
         auto add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,

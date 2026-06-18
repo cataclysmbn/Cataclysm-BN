@@ -1591,7 +1591,7 @@ auto add_active_item_sources(source_accumulator& acc) -> void {
             auto width = 0_degrees;
             auto direction = 0_degrees;
             if (itm->getlight(luminance, width, direction)) {
-                auto const pos = tripoint_bub_ms(itm->position());
+                auto const pos = itm->bub_pos();
                 add_source(acc, pos, luminance, light_source_kind::active_item);
                 add_colored_point_source({
                     .acc = acc,

@@ -634,7 +634,7 @@ static auto finish_craft_activity( avatar &you ) -> void
 
 static auto resume_and_finish_craft( avatar &you, item &target ) -> void
 {
-    REQUIRE( iuse::craft( &you, &target, false, target.position() ) == 0 );
+    REQUIRE( iuse::craft( &you, &target, false, target.bub_pos() ) == 0 );
     REQUIRE( you.activity );
     finish_craft_activity( you );
 }
@@ -664,7 +664,7 @@ TEST_CASE( "resuming in-progress food craft completes the activated craft",
         here.add_item( you.bub_pos(), make_woods_soup_craft( woods_soup_recipe, true ) );
         auto &target_craft = here.i_at( you.bub_pos() ).only_item();
 
-        REQUIRE( iuse::craft( &you, &target_craft, false, target_craft.position() ) == 0 );
+        REQUIRE( iuse::craft( &you, &target_craft, false, target_craft.bub_pos() ) == 0 );
 
         REQUIRE( you.activity );
         REQUIRE( you.activity->id() == activity_id( "ACT_CRAFT" ) );
