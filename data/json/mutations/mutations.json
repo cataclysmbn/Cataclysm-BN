@@ -118,7 +118,7 @@
     "valid": false,
     "cancels": [ "BADCARDIO" ],
     "changes_to": [ "GOODCARDIO2" ],
-    "category": [ "FISH", "LUPINE", "MOUSE", "INSECT" ],
+    "category": [ "FISH", "LUPINE", "MOUSE", "INSECT", "BEAST" ],
     "max_stamina_modifier": 1.25
   },
   {
@@ -214,7 +214,7 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
-    "category": [ "MEDICAL", "CHIMERA" ]
+    "category": [ "MEDICAL", "CHIMERA", "INSECT" ]
   },
   {
     "type": "mutation",
@@ -280,6 +280,7 @@
     "description": "It takes a lot to bring you down!  You get a 20% bonus to all hit points.",
     "starting_trait": true,
     "valid": false,
+    "category": [ "INSECT" ],
     "cancels": [ "FLIMSY", "FLIMSY2", "FLIMSY3", "GLASSJAW" ],
     "changes_to": [ "TOUGH2" ],
     "social_modifiers": { "intimidate": 2 },
@@ -317,9 +318,20 @@
     "points": 1,
     "description": "Your skin is tough.  Armor is increased by 2 for your whole body.  There's a small chance you don't cut yourself on sharp terrain.",
     "starting_trait": true,
-    "category": [ "LIZARD", "CATTLE", "CHIMERA", "RAPTOR" ],
+    "category": [ "LIZARD", "CATTLE", "CHIMERA", "RAPTOR", "BEAST" ],
     "cancels": [ "THINSKIN" ],
     "armor": [ { "parts": "ALL", "physical": 2 } ]
+  },
+  {
+    "type": "mutation",
+    "id": "CAMOSKIN",
+    "name": { "str": "Camouflage Skin" },
+    "points": 1,
+    "description": "Your skin can now adapt to the surroundings, reducing your presence, allowing you to be a little bit sneakier.",
+    "starting_trait": true,
+    "category": [ "CEPHALOPOD" ],
+    "prereqs": [ "SLIMY" ],
+    "stealth_modifier": 40,
   },
   {
     "type": "mutation",
@@ -3450,8 +3462,8 @@
     "prereqs": [ "MASOCHIST", "PAINRESIST" ],
     "prereqs2": [ "PAINREC1" ],
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
-    "threshreq": [ "THRESH_MEDICAL" ],
-    "category": [ "MEDICAL" ]
+    "threshreq": [ "THRESH_MEDICAL", "THRESH_INSECT" ],
+    "category": [ "MEDICAL", "INSECT" ]
   },
   {
     "type": "mutation",
@@ -4788,7 +4800,7 @@
     "points": 1,
     "description": "You can pursue prey for miles and miles at a variety of paces until they stop from exhaustion.",
     "changes_to": [ "PERSISTENCE_HUNTER2" ],
-    "category": [ "LUPINE" ],
+    "category": [ "LUPINE", "INSECT" ],
     "fatigue_modifier": -0.1,
     "stamina_regen_modifier": 0.1
   },
@@ -4975,8 +4987,7 @@
     "bodytemp_modifiers": [ -1500, -1500 ],
     "description": "Your body is slowly wasting away!",
     "types": [ "HEALING" ],
-    "prereqs": [ "ROT2" ],
-    "category": [ "ALPHA" ],
+    "prereqs": [ "ROT2" ], 
     "healing_awake": -0.08
   },
   {
@@ -5807,8 +5818,8 @@
     "points": -1,
     "visibility": 9,
     "ugliness": 6,
-    "description": "Your arms have transformed into eight tentacles, resulting in a +1 bonus to Dexterity, permanent hand encumbrance of 30, and an inability to wear gloves.  You can make up to 7 extra attacks with them.  Somewhat decreases wet penalties.",
-    "encumbrance_always": [ [ "hand_l", 30 ], [ "hand_r", 30 ] ],
+    "description": "Your arms have transformed into eight tentacles, resulting in a +1 bonus to Dexterity, permanent hand encumbrance of 15, and an inability to wear gloves.  You can make up to 7 extra attacks with them.  Somewhat decreases wet penalties.",
+    "encumbrance_always": [ [ "hand_l", 15 ], [ "hand_r", 15 ] ],
     "restricts_gear": [ "hand_l", "hand_r" ],
     "types": [ "HANDS" ],
     "prereqs": [ "ARM_TENTACLES_4" ],
@@ -5909,7 +5920,8 @@
     "visibility": 4,
     "ugliness": 2,
     "mixed_effect": true,
-    "description": "Your lower tentacles have developed suckers.  They make land movement marginally more tiring, but do a good job of keeping you set in place.",
+    "movecost_modifier": 0.9,
+    "description": "Your lower tentacles have developed suckers.  They make land movement marginally easier again, as well as a good job of keeping you set in place.",
     "prereqs": [ "LEG_TENTACLES" ],
     "threshreq": [ "THRESH_CEPHALOPOD" ],
     "category": [ "CEPHALOPOD" ]
@@ -6303,8 +6315,8 @@
     "name": { "str": "Acidproof" },
     "points": 3,
     "description": "Your mutated flesh is immune to the damaging effects of acid.",
-    "threshreq": [ "THRESH_INSECT", "THRESH_CHIMERA", "THRESH_MEDICAL", "THRESH_SLIME" ],
-    "category": [ "INSECT", "CHIMERA", "MEDICAL", "SLIME" ]
+    "threshreq": [ "THRESH_INSECT", "THRESH_CEPHALOPOD", "THRESH_CHIMERA", "THRESH_MEDICAL", "THRESH_SLIME" ],
+    "category": [ "INSECT", "CEPHALOPOD", "CHIMERA", "MEDICAL", "SLIME" ]
   },
   {
     "type": "mutation",
@@ -6343,8 +6355,8 @@
     "visibility": 3,
     "ugliness": 4,
     "description": "Like a true fish, your eyes lack eyelids, and are instead covered by a translucent, protective membrane that blocks irritants and water, and provides 3 cut and 1 bash armor.  It also allows you to sleep with your eyes open!  Activate to cause the approach of hostile creatures to wake you up.",
-    "category": [ "FISH" ],
-    "threshreq": [ "THRESH_FISH" ],
+    "category": [ "FISH", "SERPENT" ],
+    "threshreq": [ "THRESH_FISH", "THRESH_SERPENT" ],
     "armor": [ { "parts": "eyes", "cut": 3, "bash": 1 } ],
     "active": true
   },
@@ -6364,8 +6376,8 @@
     "name": { "str": "Toxic Flesh" },
     "points": 1,
     "description": "Your flesh is highly poisonous, and creatures that bite you will receive a nasty surprise.",
-    "category": [ "FISH" ],
-    "threshreq": [ "THRESH_FISH" ],
+    "category": [ "FISH", "CEPHALOPOD"],
+    "threshreq": [ "THRESH_FISH", "THRESH_CEPHALOPOD" ],
     "purifiable": false
   },
   {
@@ -6449,7 +6461,7 @@
     "visibility": 8,
     "ugliness": 4,
     "mixed_effect": true,
-    "description": "Your snake body has grown stronger and more flexible, or maybe you're just getting used to moving with it.  It's still incredibly inconvenient to find clothes for your tail, but you're better at navigating obstacles and can even whip enemies with the end.",
+    "description": "Your snake body has grown stronger and more flexible, or maybe you're just getting used to moving with it.  It's still incredibly inconvenient to find clothes for your tail, but you're better at quietly navigating obstacles, ambushing and can even whip enemies with the end.",
     "types": [ "LEGS", "TAIL" ],
     "category": [ "SERPENT" ],
     "prereqs": [ "TAIL_SNAKE" ],
@@ -6468,6 +6480,8 @@
     "allowed_items_only": true,
     "weight_capacity_modifier": 1.25,
     "movecost_obstacle_modifier": 0.75,
+    "noise_modifier": 0,
+    "stealth_modifier": 40,
     "movecost_swim_modifier": 0.9,
     "attacks": {
       "attack_text_u": "You whap %s with your tail",
