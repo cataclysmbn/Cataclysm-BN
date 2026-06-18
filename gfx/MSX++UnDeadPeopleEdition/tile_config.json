@@ -31701,7 +31701,7 @@
           "multitile": true,
           "additional_tiles": [ { "id": "broken", "fg": 17592 } ]
         },
-        { "id": "vp_mounted_plasma_gun", "fg": 17593 },
+        { "id": "vp_mounted_plasma_gun", "fg": 17593, "rotates": true },
         {
           "id": "vp_mounted_rm298",
           "fg": 17594,
