@@ -4731,6 +4731,7 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
             std::vector<tripoint_bub_ms> trajectory = target_handler::mode_spell( you, spell_being_cast,
                     no_fail,
                     no_mana );
+            g->refresh_player_visibility_cache_if_needed();
 
             if( !trajectory.empty() ) {
                 target = trajectory.back();

@@ -11755,6 +11755,9 @@ Attitude Character::attitude_to( const Creature &other ) const
 
 bool Character::sees( const tripoint_bub_ms &t, bool, int ) const
 {
+    if( t == bub_pos() ) {
+        return true;
+    }
     const int wanted_range = rl_dist( bub_pos(), t );
     bool can_see = is_player() ? get_map().pl_sees( t, wanted_range ) :
                    Creature::sees( t );
