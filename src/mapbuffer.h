@@ -220,12 +220,10 @@ class mapbuffer_bounds_view
 
         auto begin() const -> point_abs_sm;
         auto end() const -> point_abs_sm;
-        auto submaps() const -> std::span<const mapbuffer_abs_submap_view>
-        {
+        auto submaps() const -> std::span<const mapbuffer_abs_submap_view> {
             return submaps_;
         }
-        auto submaps( int zlev ) const -> std::span<const mapbuffer_abs_submap_view>
-        {
+        auto submaps( int zlev ) const -> std::span<const mapbuffer_abs_submap_view> {
             if( zlev < -OVERMAP_DEPTH || zlev > OVERMAP_HEIGHT ) { return {}; }
             const auto index = static_cast<std::size_t>( zlev + OVERMAP_DEPTH );
             return submaps_by_zlev_[index];

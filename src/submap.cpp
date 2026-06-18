@@ -88,7 +88,8 @@ maptile_soa<sx, sy>::maptile_soa( const tripoint_abs_sm &position, const dimensi
     }
 }
 
-submap::submap( const tripoint_abs_sm &position, const dimension_id &dim ) : maptile_soa<SEEX, SEEY>( position, dim )
+submap::submap( const tripoint_abs_sm &position,
+                const dimension_id &dim ) : maptile_soa<SEEX, SEEY>( position, dim )
 {
     dim_ = dim;
     pos_ = position;

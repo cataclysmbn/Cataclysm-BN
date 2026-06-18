@@ -94,7 +94,7 @@ class submap : maptile_soa<SEEX, SEEY>
     public:
         submap( const tripoint_abs_sm &position, const dimension_id &dim );
         ~submap();
-        
+
         const dimension_id get_dimension() const { return dim_; }
         const tripoint_abs_sm position() const { return pos_; }
         auto set_dimension( const dimension_id &dim ) -> void;

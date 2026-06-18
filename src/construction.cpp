@@ -1653,7 +1653,8 @@ void place_construction( const construction_group_str_id &group )
     std::vector<detached_ptr<item>> used;
     const construction &con = *valid.find( pnt )->second;
     // create the partial construction struct
-    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( pnt, get_map().get_bound_dimension() );
+    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( pnt,
+                                      get_map().get_bound_dimension() );
     pc->id = con.id;
     pc->counter = 0;
     // Set the trap that has the examine function

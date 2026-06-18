@@ -658,7 +658,8 @@ auto mapgen_constructor::add_item_or_charges( const point_omt_ms &pos,
         {
             return false;
         }
-        if( reject_noitem && ( has_flag( "NOITEM", p ) || has_flag( "SEALED", p ) ) ) {
+        if( reject_noitem && ( has_flag( "NOITEM", p ) || has_flag( "SEALED", p ) ) )
+        {
             return false;
         }
         auto &items = sm->get_items( local );

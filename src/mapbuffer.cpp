@@ -2254,7 +2254,7 @@ auto mapbuffer::get_items( const tripoint_abs_ms &p,
 }
 
 auto mapbuffer::water_from( const tripoint_abs_ms &p,
-                           const mapbuffer_lookup_options options ) -> detached_ptr<item>
+                            const mapbuffer_lookup_options options ) -> detached_ptr<item>
 {
     const auto tile = lookup_tile( *this, p, options );
     if( !tile ) {
@@ -3292,7 +3292,8 @@ void mapbuffer::deserialize_into_vec(
                 if( !sm ) { //This whole thing is a nasty hack that relys on coordinates coming first...
                     debugmsg( "coordinates was not at the top of submap json" );
                 }
-                sm->load( jsin, submap_member_name, version, project_to<coords::ms>( submap_coordinates ), get_dimension_id() );
+                sm->load( jsin, submap_member_name, version, project_to<coords::ms>( submap_coordinates ),
+                          get_dimension_id() );
             }
         }
         if( !skip ) {

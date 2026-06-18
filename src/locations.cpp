@@ -306,7 +306,8 @@ std::string worn_item_location::describe( const Character *ch, const item * ) co
     return holder->name;
 }
 
-tile_item_location::tile_item_location( const tripoint_abs_ms &position, const dimension_id &dim_id )
+tile_item_location::tile_item_location( const tripoint_abs_ms &position,
+                                        const dimension_id &dim_id )
 {
     pos_ = position;
     dim_ = dim_id;
@@ -314,7 +315,8 @@ tile_item_location::tile_item_location( const tripoint_abs_ms &position, const d
 
 detached_ptr<item> tile_item_location::detach( item *it )
 {
-    detached_ptr<item> res = MAPBUFFER_REGISTRY.get( dim_ ).remove_item( pos_, it, resident_tile_lookup() );
+    detached_ptr<item> res = MAPBUFFER_REGISTRY.get( dim_ ).remove_item( pos_, it,
+                             resident_tile_lookup() );
     if( res ) {
         return res;
     }
@@ -681,11 +683,13 @@ void component_item_location::attach( detached_ptr<item> &&obj )
     return container->add_component( std::move( obj ) );
 }
 
-partial_con_item_location::partial_con_item_location( const tripoint_bub_ms &position, const dimension_id &dim_id ) :
+partial_con_item_location::partial_con_item_location( const tripoint_bub_ms &position,
+        const dimension_id &dim_id ) :
     tile_item_location( bub_to_abs( position ), dim_id ) {}
 
-partial_con_item_location::partial_con_item_location( const tripoint_abs_ms &position, const dimension_id &dim_id ) :
-    tile_item_location( position, dim_id  ) {}
+partial_con_item_location::partial_con_item_location( const tripoint_abs_ms &position,
+        const dimension_id &dim_id ) :
+    tile_item_location( position, dim_id ) {}
 
 detached_ptr<item> partial_con_item_location::detach( item * )
 {
