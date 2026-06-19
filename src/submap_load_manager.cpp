@@ -107,6 +107,28 @@ auto is_any_omt_zlevel_loaded( mapbuffer &mb, const tripoint_abs_omt &omt_addr )
            || mb.lookup_submap_in_memory( sm_base + point_south )
            || mb.lookup_submap_in_memory( sm_base + point_south_east );
 }
+
+auto contains_request_pos( const submap_load_request &req, const point_abs_sm &pos ) -> bool
+{
+    return pos.x() >= req.begin.x() && pos.x() < req.end.x() &&
+           pos.y() >= req.begin.y() && pos.y() < req.end.y();
+}
+
+auto request_size( const submap_load_request &req ) -> point_rel_sm
+{
+    return point_rel_sm( req.end.x() - req.begin.x(), req.end.y() - req.begin.y() );
+}
+
+auto request_center( const submap_load_request &req ) -> point_abs_sm
+{
+    const auto size = request_size( req );
+    return req.begin + point_rel_sm( size.x() / 2, size.y() / 2 );
+}
+
+auto request_inclusive_end( const submap_load_request &req ) -> point_abs_sm
+{
+    return point_abs_sm( req.end.x() - 1, req.end.y() - 1 );
+}
 } // namespace
 
 submap_load_manager submap_loader;
@@ -114,27 +136,29 @@ submap_load_manager submap_loader;
 auto submap_load_manager::request_load(
     load_request_source source,
     const dimension_id &dim_id,
-    const point_abs_sm &center,
-    int radius ) -> load_request_handle
+    const point_abs_sm &begin,
+    const point_abs_sm &end ) -> load_request_handle
 {
     const load_request_handle handle = next_handle_++;
     submap_load_request req;
     req.source = source;
     req.dim_id = dim_id;
-    req.center = center;
-    req.radius = radius;
+    req.begin = begin;
+    req.end = end;
     requests_[handle] = std::move( req );
     return handle;
 }
 
-void submap_load_manager::update_request( load_request_handle handle,
-        const point_abs_sm &new_center )
+auto submap_load_manager::update_request( const load_request_handle handle,
+        const point_abs_sm &begin,
+        const point_abs_sm &end ) -> void
 {
     auto it = requests_.find( handle );
     if( it == requests_.end() ) {
         return;
     }
-    it->second.center = new_center;
+    it->second.begin = begin;
+    it->second.end = end;
 }
 
 auto submap_load_manager::update_lazy_border_focus( const dimension_id &dim_id,
@@ -173,17 +197,6 @@ void submap_load_manager::release_load( load_request_handle handle )
     requests_.erase( handle );
 }
 
-auto submap_load_manager::update_load_shape( int radius ) -> void
-{
-    const auto axis = std::views::iota( -radius, radius + 1 );
-    bubble_offsets_.clear();
-    std::ranges::for_each( cata::views::cartesian_product( axis, axis ),
-    [&]( auto pair ) {
-        auto [dx, dy] = pair;
-        bubble_offsets_.emplace_back( dx, dy );
-    } );
-}
-
 auto submap_load_manager::compute_desired_set() const -> key_set
 {
     ZoneScoped;
@@ -198,23 +211,13 @@ auto submap_load_manager::compute_desired_set() const -> key_set
         // the full z-range; the z-level loop runs inside update() when omts are
         // actually loaded or evicted.
 
-        if( req.source == load_request_source::reality_bubble ) {
-            // Use the precomputed square offsets so all submaps in the full
-            // (2*radius+1)×(2*radius+1) grid are protected from eviction.
-            // bubble_offsets_ is populated by update_load_shape() in map::resize().
-            std::ranges::for_each( bubble_offsets_, [&]( const point & off ) {
-                desired.emplace( req.dim_id, req.center + off );
-            } );
-        } else {
-            // Other sources (player_base, script, fire_spread) also use square.
-            const int r = req.radius;
-            const auto axis = std::views::iota( -r, r + 1 );
-            std::ranges::for_each(
-                cata::views::cartesian_product( axis, axis ),
-            [&]( auto pair ) {
-                auto [dx, dy] = pair;
-                desired.emplace( req.dim_id, req.center + point{ dx, dy } );
-            } );
+        const auto size = request_size( req );
+        if( size.x() <= 0 || size.y() <= 0 ) {
+            return;
+        }
+        const auto max = request_inclusive_end( req );
+        for( const point_abs_sm &pos : point_range<point_abs_sm>( req.begin, max ) ) {
+            desired.emplace( req.dim_id, pos );
         }
     } );
     return desired;
@@ -248,11 +251,12 @@ auto submap_load_manager::compute_lazy_border_omts() const -> horizontal_omt_set
         }
         // The lazy border is defined in OMT space: the current bubble's OMT
         // footprint, expanded by one horizontal OMT in every direction.
-        const auto r = req.radius;
-        const auto min_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() -
-                             r, req.center.y() - r } );
-        const auto max_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() +
-                             r, req.center.y() + r } );
+        const auto size = request_size( req );
+        if( size.x() <= 0 || size.y() <= 0 ) {
+            return;
+        }
+        const auto min_omt = project_to<coords::omt>( req.begin );
+        const auto max_omt = project_to<coords::omt>( request_inclusive_end( req ) );
         const auto x_range = std::views::iota( min_omt.x() - 1, max_omt.x() + 2 );
         const auto y_range = std::views::iota( min_omt.y() - 1, max_omt.y() + 2 );
         std::ranges::for_each( cata::views::cartesian_product( x_range, y_range ),
@@ -281,22 +285,23 @@ auto submap_load_manager::add_lazy_border_into( key_set &target,
     } );
 }
 
-auto submap_load_manager::current_reality_bubble_radius() const -> int
+auto submap_load_manager::current_reality_bubble_half_width() const -> int
 {
-    auto radius = 0;
+    auto half_width = 0;
     std::ranges::for_each( requests_, [&]( const auto & kv ) {
         const auto &req = kv.second;
         if( req.source == load_request_source::reality_bubble ) {
-            radius = std::max( radius, req.radius );
+            const auto size = request_size( req );
+            half_width = std::max( half_width, std::max( size.x(), size.y() ) / 2 );
         }
     } );
-    return radius;
+    return half_width;
 }
 
 auto submap_load_manager::retained_omt_soft_cap() const -> std::size_t
 {
-    const auto radius = static_cast<std::size_t>( std::max( 0, current_reality_bubble_radius() ) );
-    const auto base_cap = std::max( retained_omt_min_soft_cap, radius * retained_omt_soft_scale );
+    const auto half_width = static_cast<std::size_t>( std::max( 0, current_reality_bubble_half_width() ) );
+    const auto base_cap = std::max( retained_omt_min_soft_cap, half_width * retained_omt_soft_scale );
     const auto multiplier = static_cast<std::size_t>(
                                 std::clamp( retained_omt_cache_multiplier, 1, 20 ) + 1 );
     return divide_round_up_size( base_cap * multiplier, 2 );
@@ -314,8 +319,8 @@ auto submap_load_manager::retained_omt_panic_cap() const -> std::size_t
 
 auto submap_load_manager::retained_omt_base_budget() const -> std::size_t
 {
-    const auto radius = static_cast<std::size_t>( std::max( 0, current_reality_bubble_radius() ) );
-    return std::max( std::size_t{ 1 }, radius / 6 );
+    const auto half_width = static_cast<std::size_t>( std::max( 0, current_reality_bubble_half_width() ) );
+    return std::max( std::size_t{ 1 }, half_width / 6 );
 }
 
 auto submap_load_manager::retain_omt( const omt_column_key &key ) -> void
@@ -601,9 +606,12 @@ auto submap_load_manager::lazy_omt_priority( const omt_column_key &key ) const -
         if( req.source != load_request_source::lazy_border || req.dim_id != dim_id ) {
             return;
         }
-        const auto r = req.radius;
-        const auto min_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() - r, req.center.y() - r } );
-        const auto max_omt = project_to<coords::omt>( point_abs_sm{ req.center.x() + r, req.center.y() + r } );
+        const auto size = request_size( req );
+        if( size.x() <= 0 || size.y() <= 0 ) {
+            return;
+        }
+        const auto min_omt = project_to<coords::omt>( req.begin );
+        const auto max_omt = project_to<coords::omt>( request_inclusive_end( req ) );
 
         auto score = 0;
         if( prioritize_x && lazy_omt_preload_direction_.x > 0 && omt_xy.x() > max_omt.x() ) {
@@ -855,36 +863,38 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     TracyPlot( "Thread Pool Workers", static_cast<int64_t>( get_thread_pool().num_workers() ) );
     TracyPlot( "Thread Pool Queue", static_cast<int64_t>( get_thread_pool().queue_size() ) );
 
-    // Early exit: if no request centers have changed since the last update,
+    // Early exit: if no request bounds have changed since the last update,
     // the desired/simulated/border sets are identical — skip the expensive
     // set construction, diffing, loading, and retention work.
     {
-        std::vector<std::pair<load_request_handle, point_abs_sm>> cur_centers;
-        cur_centers.reserve( requests_.size() );
+        auto cur_requests = std::vector<std::pair<load_request_handle, submap_load_request>> {};
+        cur_requests.reserve( requests_.size() );
         auto bubble_delta = point_zero;
         std::ranges::for_each( requests_, [&]( const auto & kv ) {
-            cur_centers.emplace_back( kv.first, kv.second.center );
+            cur_requests.emplace_back( kv.first, kv.second );
             const auto &req = kv.second;
             if( req.source != load_request_source::reality_bubble ) {
                 return;
             }
-            const auto prev = std::ranges::find_if( prev_centers_, [&]( const auto & entry ) {
+            const auto prev = std::ranges::find_if( prev_requests_, [&]( const auto & entry ) {
                 return entry.first == kv.first;
             } );
-            if( prev == prev_centers_.end() ) {
+            if( prev == prev_requests_.end() ) {
                 return;
             }
-            bubble_delta = point{ signum( req.center.x() - prev->second.x() ),
-                                  signum( req.center.y() - prev->second.y() ) };
+            const auto center = request_center( req );
+            const auto prev_center = request_center( prev->second );
+            bubble_delta = point{ signum( center.x() - prev_center.x() ),
+                                  signum( center.y() - prev_center.y() ) };
         } );
         if( bubble_delta != point_zero ) {
             lazy_omt_preload_direction_ = bubble_delta;
         }
-        if( cur_centers == prev_centers_ ) {
+        if( cur_requests == prev_requests_ ) {
             process_or_defer_lazy_border_work( defer_lazy_border_work );
             return;
         }
-        prev_centers_ = std::move( cur_centers );
+        prev_requests_ = std::move( cur_requests );
     }
 
     // Simulated set: positions that need full per-turn processing.
@@ -1104,9 +1114,7 @@ auto submap_load_manager::is_properly_requested( const dimension_id &dim_id,
         if( req.dim_id != dim_id ) {
             return false;
         }
-        const int dx = std::abs( p.x() - req.center.x() );
-        const int dy = std::abs( p.y() - req.center.y() );
-        return dx <= req.radius && dy <= req.radius;
+        return contains_request_pos( req, p );
     } );
 }
 
@@ -1119,9 +1127,7 @@ auto submap_load_manager::is_simulated( const dimension_id &dim_id,
         if( req.dim_id != dim_id ) {
             continue;
         }
-        const int dx = std::abs( pos.x() - req.center.x() );
-        const int dy = std::abs( pos.y() - req.center.y() );
-        if( !( dx <= req.radius && dy <= req.radius ) ) {
+        if( !contains_request_pos( req, pos ) ) {
             continue;
         }
         if( req.source != load_request_source::lazy_border ) {
@@ -1193,7 +1199,7 @@ void submap_load_manager::flush_prev_desired()
     prev_desired_.clear();
     prev_simulated_.clear();
     simulated_submaps_by_dimension_.clear();
-    prev_centers_.clear();
+    prev_requests_.clear();
     retained_omts_.clear();
     retained_omt_index_.clear();
     lazy_omt_jobs_.clear();

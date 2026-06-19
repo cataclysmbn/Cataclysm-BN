@@ -311,6 +311,46 @@ class mapbuffer_bounds_view
         std::vector<const submap *> indexed_submaps_;
 };
 
+class mapbuffer_load_region
+{
+    public:
+        mapbuffer_load_region() = default;
+        mapbuffer_load_region( mapbuffer &buffer,
+                               load_request_source source,
+                               const point_abs_sm &begin,
+                               const point_abs_sm &end,
+                               mapbuffer_lookup_options options = {
+                                   .mode = mapbuffer_lookup_mode::resident_only
+                               } );
+        ~mapbuffer_load_region();
+
+        mapbuffer_load_region( const mapbuffer_load_region & ) = delete;
+        auto operator=( const mapbuffer_load_region & ) -> mapbuffer_load_region & = delete;
+        mapbuffer_load_region( mapbuffer_load_region &&rhs ) noexcept;
+        auto operator=( mapbuffer_load_region &&rhs ) noexcept -> mapbuffer_load_region &;
+
+        auto update( const point_abs_sm &begin, const point_abs_sm &end ) -> void;
+        auto update( const point_rel_sm &offset ) -> void;
+        auto refresh_view() -> void;
+        auto release() -> void;
+
+        auto view() const -> const mapbuffer_bounds_view & {
+            return view_;
+        }
+        auto submaps() const -> std::span<const mapbuffer_abs_submap_view> {
+            return view_.submaps();
+        }
+
+    private:
+        mapbuffer *buffer_ = nullptr;
+        load_request_source source_ = load_request_source::script;
+        mapbuffer_lookup_options options_ = { .mode = mapbuffer_lookup_mode::resident_only };
+        point_abs_sm begin_;
+        point_abs_sm end_;
+        load_request_handle handle_ = 0;
+        mapbuffer_bounds_view view_;
+};
+
 class mapbuffer_abs_tile_reader
 {
     public:

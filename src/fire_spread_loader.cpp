@@ -75,9 +75,11 @@ auto fire_spread_loader::request_for_fire( const dimension_id &dim, tripoint_abs
         }
     }
 
-    // Request a single omt (radius 0) — always covers full z-pillar.
+    // Request a single submap column — always covers full z-pillar.
+    const auto begin = pos.xy();
+    const auto end = begin + point_rel_sm( 1, 1 );
     const auto h = submap_loader.request_load(
-                       load_request_source::fire_spread, dim, pos.xy(), 0 );
+                       load_request_source::fire_spread, dim, begin, end );
     fire_handles_[key] = h;
 }
 

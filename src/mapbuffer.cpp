@@ -1025,6 +1025,86 @@ auto mapbuffer_bounds_view::update( const point_rel_sm &offset ) -> void
     update( begin_ + offset, end_ + offset );
 }
 
+mapbuffer_load_region::mapbuffer_load_region( mapbuffer &buffer,
+        const load_request_source source,
+        const point_abs_sm &begin,
+        const point_abs_sm &end,
+        const mapbuffer_lookup_options options ) :
+    buffer_( &buffer ),
+    source_( source ),
+    options_( options )
+{
+    update( begin, end );
+}
+
+mapbuffer_load_region::~mapbuffer_load_region()
+{
+    release();
+}
+
+mapbuffer_load_region::mapbuffer_load_region( mapbuffer_load_region &&rhs ) noexcept
+{
+    *this = std::move( rhs );
+}
+
+auto mapbuffer_load_region::operator=( mapbuffer_load_region &&rhs ) noexcept
+-> mapbuffer_load_region &
+{
+    if( this == &rhs ) {
+        return *this;
+    }
+
+    release();
+    buffer_ = std::exchange( rhs.buffer_, nullptr );
+    source_ = rhs.source_;
+    options_ = rhs.options_;
+    begin_ = rhs.begin_;
+    end_ = rhs.end_;
+    handle_ = std::exchange( rhs.handle_, 0 );
+    view_ = std::move( rhs.view_ );
+    return *this;
+}
+
+auto mapbuffer_load_region::update( const point_abs_sm &begin,
+                                    const point_abs_sm &end ) -> void
+{
+    begin_ = begin;
+    end_ = end;
+    if( buffer_ == nullptr ) {
+        view_.update( begin_, end_ );
+        return;
+    }
+
+    if( handle_ == 0 ) {
+        handle_ = submap_loader.request_load( source_, buffer_->get_dimension_id(), begin_, end_ );
+    } else {
+        submap_loader.update_request( handle_, begin_, end_ );
+    }
+    refresh_view();
+}
+
+auto mapbuffer_load_region::update( const point_rel_sm &offset ) -> void
+{
+    update( begin_ + offset, end_ + offset );
+}
+
+auto mapbuffer_load_region::refresh_view() -> void
+{
+    if( buffer_ == nullptr ) {
+        view_.update( begin_, end_ );
+        return;
+    }
+    view_.update( begin_, end_, buffer_ );
+}
+
+auto mapbuffer_load_region::release() -> void
+{
+    if( handle_ != 0 ) {
+        submap_loader.release_load( handle_ );
+        handle_ = 0;
+    }
+}
+
 mapbuffer_abs_tile_reader::mapbuffer_abs_tile_reader( mapbuffer &buffer,
         const mapbuffer_lookup_options options ) :
     buffer_( &buffer ),

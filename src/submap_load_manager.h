@@ -80,11 +80,10 @@ using load_request_handle = uint64_t;
 struct submap_load_request {
     load_request_source source = load_request_source::reality_bubble;
     dimension_id dim_id;
-    point_abs_sm center;
-    int radius = 0;  ///< Half-width in submaps.  For reality_bubble this defines the circle
-    ///< radius; for other sources a (2*radius+1)^2 square is loaded per z-level.
-    ///< Always covers the full z-range (-OVERMAP_DEPTH to OVERMAP_HEIGHT); lazy-border
-    ///< preloading may stage individual z-level OMT jobs internally.
+    point_abs_sm begin;
+    point_abs_sm end;
+
+    auto operator==( const submap_load_request &rhs ) const -> bool = default;
 };
 
 /**
@@ -113,22 +112,16 @@ class submap_load_manager
          */
         auto request_load( load_request_source source,
                            const dimension_id &dim_id,
-                           const point_abs_sm &center,
-                           int radius ) -> load_request_handle;
-
-        auto request_load( load_request_source source,
-                           const dimension_id &dim_id,
-                           const point_abs_sm &center ) -> load_request_handle {
-            return request_load(
-                       source, dim_id, center, 0 );
-        }
+                           const point_abs_sm &begin,
+                           const point_abs_sm &end ) -> load_request_handle;
 
         /**
-         * Move the center of an existing request (e.g. on player movement).
+         * Move the bounds of an existing request (e.g. on player movement).
          * No-op if the handle is not found.
          */
-        void update_request( load_request_handle handle,
-                             const point_abs_sm &new_center );
+        auto update_request( load_request_handle handle,
+                             const point_abs_sm &begin,
+                             const point_abs_sm &end ) -> void;
 
         /**
          * Release a load request.  The submaps it was keeping loaded may be
@@ -279,17 +272,6 @@ class submap_load_manager
          */
         auto is_fully_drained() const noexcept -> bool;
 
-        /**
-         * Precompute the set of (dx, dy) offsets that form a filled square of
-         * the given @p radius and cache them for use in compute_desired_set().
-         *
-         * Must be called whenever the reality-bubble radius changes (i.e. from
-         * map::resize()).  The square footprint means ALL submaps in the full
-         * (2*radius+1)×(2*radius+1) grid are tracked and protected from eviction,
-         * matching the square grid that map::loadn() loads.
-         */
-        auto update_load_shape( int radius ) -> void;
-
         /** Register a listener to receive load/unload notifications. */
         void add_listener( submap_load_listener *listener );
 
@@ -371,7 +353,7 @@ class submap_load_manager
         auto add_lazy_border_into( key_set &target,
                                    const horizontal_omt_set &border_omts ) const -> void;
 
-        auto current_reality_bubble_radius() const -> int;
+        auto current_reality_bubble_half_width() const -> int;
         auto retained_omt_soft_cap() const -> std::size_t;
         auto retained_omt_hard_cap() const -> std::size_t;
         auto retained_omt_panic_cap() const -> std::size_t;
@@ -401,9 +383,6 @@ class submap_load_manager
         auto process_lazy_border_work() -> void;
         auto process_lazy_border_preload() -> void;
 
-        /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
-        std::vector<point> bubble_offsets_;
-
         /**
          * Omts that have entered the simulated zone at least once since they
          * were last evicted.  Only dirty omts are written to disk on eviction;
@@ -414,9 +393,9 @@ class submap_load_manager
          */
         std::unordered_set<omt_column_key, coord_pair_hash<point_abs_omt>> dirty_omts_;
 
-        /** Snapshot of all request centers from the previous update().
+        /** Snapshot of all request bounds from the previous update().
          *  Used to detect steady-state and skip expensive recomputation. */
-        std::vector<std::pair<load_request_handle, point_abs_sm>> prev_centers_;
+        std::vector<std::pair<load_request_handle, submap_load_request>> prev_requests_;
 
         std::map<dimension_id, std::vector<point_abs_sm>> simulated_submaps_by_dimension_;
 

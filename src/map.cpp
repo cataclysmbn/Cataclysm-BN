@@ -519,9 +519,6 @@ auto map::resize( int new_mapsize ) -> void
     }
     refresh_active_submap_view();
     funnel_locations_.clear();
-    // Recompute the circular load footprint for the new bubble radius.
-    // Radius = (mapsize - 1) / 2, matching g_half_mapsize.
-    submap_loader.update_load_shape( ( new_mapsize - 1 ) / 2 );
     dbg( DL::Info ) << "map::resize(): my_MAPSIZE: " << my_MAPSIZE;
 }
 

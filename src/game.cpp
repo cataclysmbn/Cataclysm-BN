@@ -761,19 +761,16 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
     submap_loader.add_listener( this );
     submap_loader.add_listener( &m );
 
-    // The load-manager center is the middle of the loaded region, not the
-    // top-left corner.  pos_sm is the top-left corner (abs_sub), so offset
-    // by reality_bubble_radius_ in each horizontal direction.
-    const point_abs_sm bubble_center = pos_sm + point_rel_sm( reality_bubble_radius_,
-                                       reality_bubble_radius_ );
+    const auto bubble_begin = pos_sm;
+    const auto bubble_end = bubble_begin + point_rel_sm( g_mapsize, g_mapsize );
 
     // Create or update the reality bubble request.
     if( reality_bubble_handle_ == 0 ) {
         reality_bubble_handle_ = submap_loader.request_load(
                                      load_request_source::reality_bubble,
-                                     new_dim_id, bubble_center, reality_bubble_radius_ );
+                                     new_dim_id, bubble_begin, bubble_end );
     } else {
-        submap_loader.update_request( reality_bubble_handle_, bubble_center );
+        submap_loader.update_request( reality_bubble_handle_, bubble_begin, bubble_end );
     }
 
     // Lazy border: one OMT-space layer kept in memory but not simulated.
@@ -781,10 +778,9 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
         if( lazy_border_handle_ == 0 ) {
             lazy_border_handle_ = submap_loader.request_load(
                                       load_request_source::lazy_border,
-                                      new_dim_id, bubble_center,
-                                      reality_bubble_radius_ );
+                                      new_dim_id, bubble_begin, bubble_end );
         } else {
-            submap_loader.update_request( lazy_border_handle_, bubble_center );
+            submap_loader.update_request( lazy_border_handle_, bubble_begin, bubble_end );
         }
     } else if( lazy_border_handle_ != 0 ) {
         submap_loader.release_load( lazy_border_handle_ );
@@ -1298,10 +1294,22 @@ void game::load_npcs()
     for( const auto &req : submap_loader.non_bubble_requests() ) {
         auto &buffer = MAPBUFFER_REGISTRY.get( req.dim_id );
         auto &overmap_buffer = get_overmapbuffer( req.dim_id );
+        const auto request_size = point_rel_sm( req.end.x() - req.begin.x(),
+                                                req.end.y() - req.begin.y() );
+        if( request_size.x() <= 0 || request_size.y() <= 0 ) {
+            continue;
+        }
+        const auto request_center = req.begin + point_rel_sm( request_size.x() / 2,
+                                    request_size.y() / 2 );
+        const auto search_distance = std::max( request_size.x(), request_size.y() ) / 2 + 1;
+        const auto contains_request = [&]( const point_abs_sm &pos ) {
+            return pos.x() >= req.begin.x() && pos.x() < req.end.x() &&
+                   pos.y() >= req.begin.y() && pos.y() < req.end.y();
+        };
 
         for( auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-            const tripoint_abs_sm center_z( req.center.raw().x, req.center.raw().y, z );
-            for( const auto &temp : overmap_buffer.get_npcs_near( center_z, req.radius ) ) {
+            const tripoint_abs_sm center_z( request_center.raw().x, request_center.raw().y, z );
+            for( const auto &temp : overmap_buffer.get_npcs_near( center_z, search_distance ) ) {
                 temp->set_dimension( req.dim_id );
                 const auto id = temp->getID();
                 const auto already_active = std::ranges::any_of( active_npc,
@@ -1312,8 +1320,7 @@ void game::load_npcs()
                     continue;
                 }
                 const auto sm_loc = project_to<coords::sm>( temp->abs_pos() );
-                if( std::abs( sm_loc.x() - req.center.x() ) > req.radius ||
-                    std::abs( sm_loc.y() - req.center.y() ) > req.radius ||
+                if( !contains_request( sm_loc.xy() ) ||
                     buffer.get_submap( sm_loc ) == nullptr ||
                     !place_npc_on_absolute_mapbuffer( *temp, buffer ) ) {
                     continue;
@@ -15039,23 +15046,22 @@ auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
         }
     }
 
-    // Keep the reality bubble request center in sync with the shifted map.
+    // Keep the reality bubble request bounds in sync with the shifted map.
     // Distribution-grid tracker updates are fully incremental via
     // on_submap_loaded/unloaded; the old full-rebuild has been removed.
     if( reality_bubble_handle_ != 0 ) {
         ZoneScopedN( "update_map_submap_loader" );
-        const auto new_center = player_reality_bubble_origin().xy() +
-                                point_rel_sm( reality_bubble_radius_, reality_bubble_radius_ );
-        submap_loader.update_request( reality_bubble_handle_, new_center );
+        const auto bubble_begin = player_reality_bubble_origin().xy();
+        const auto bubble_end = bubble_begin + point_rel_sm( g_mapsize, g_mapsize );
+        submap_loader.update_request( reality_bubble_handle_, bubble_begin, bubble_end );
         // Dynamically manage lazy border based on cached option.
         if( lazy_border_enabled ) {
             if( lazy_border_handle_ == 0 ) {
                 lazy_border_handle_ = submap_loader.request_load(
                                           load_request_source::lazy_border,
-                                          m.get_bound_dimension(), new_center,
-                                          reality_bubble_radius_ );
+                                          m.get_bound_dimension(), bubble_begin, bubble_end );
             } else {
-                submap_loader.update_request( lazy_border_handle_, new_center );
+                submap_loader.update_request( lazy_border_handle_, bubble_begin, bubble_end );
             }
         } else if( lazy_border_handle_ != 0 ) {
             submap_loader.release_load( lazy_border_handle_ );
