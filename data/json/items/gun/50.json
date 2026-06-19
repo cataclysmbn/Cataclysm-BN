@@ -101,7 +101,7 @@
     "flags": [ "RELOAD_EJECT" ]
   },
   {
-    "id": "m71",
+    "id": "rm71",
     "copy-from": "rifle_auto",
     "type": "GUN",
     "name": { "str_sp": "RM71 automatic AMR" },
