@@ -348,7 +348,7 @@ class mapbuffer_load_region
             return handle_ != 0;
         }
 
-        auto view() const -> const mapbuffer_bounds_view& {
+        auto view() const -> const mapbuffer_bounds_view & { // *NOPAD*
             return view_;
         }
         auto submaps() const -> std::span<const mapbuffer_abs_submap_view> {
