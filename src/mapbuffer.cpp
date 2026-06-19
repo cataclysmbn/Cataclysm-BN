@@ -1702,7 +1702,8 @@ auto mapbuffer::simulated_submap_views( const int zlev ) -> std::vector<mapbuffe
 {
     auto result = std::vector<mapbuffer_abs_submap_view> {};
     const auto horizontal_positions = submap_loader.simulated_submaps( dimension_id_ );
-    result.reserve( horizontal_positions.empty() ? loaded_submap_count() : horizontal_positions.size() );
+    result.reserve( horizontal_positions.empty() ? loaded_submap_count() :
+                    horizontal_positions.size() );
     const auto options = mapbuffer_lookup_options{ .mode = mapbuffer_lookup_mode::resident_only };
     for_each_simulated_submap_position( [&]( const tripoint_abs_sm & pos ) {
         auto view = get_abs_submap_view( pos, options );
