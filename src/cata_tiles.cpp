@@ -3172,7 +3172,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     };
     const auto already_drawn = half_open_rectangle<point>(
                                    point( min_col, min_row ), point( max_col, max_row ) );
-    const auto offscreen_memory_xy_without_distance = [&]( const point_bub_ms &p ) {
+    const auto offscreen_memory_xy_without_distance = [&]( const point_bub_ms & p ) {
         if( iso_mode ) {
             const auto col = p.y() + p.x() + s.x / 2 - o.y() - o.x();
             const auto row = p.y() - p.x() + s.y / 2 - o.y() + o.x();
@@ -3183,7 +3183,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         return screen_x < min_col || screen_x >= max_col ||
                screen_y < min_row || screen_y >= max_row;
     };
-    const auto offscreen_memory_xy = [&]( const point_bub_ms &p ) {
+    const auto offscreen_memory_xy = [&]( const point_bub_ms & p ) {
         if( trigdist ? rl_dist( p, center.xy() ) > g_max_view_distance :
             square_dist( p, center.xy() ) > g_max_view_distance ) {
             return false;
@@ -3970,7 +3970,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
         auto dirty_memory_candidates = std::vector<tripoint_bub_ms> {};
         auto dirty_memory_candidate_set = std::unordered_set<tripoint_bub_ms> {};
-        const auto queue_dirty_memory_candidate = [&]( const tripoint_bub_ms &candidate ) {
+        const auto queue_dirty_memory_candidate = [&]( const tripoint_bub_ms & candidate ) {
             if( !here.inbounds( candidate ) || !offscreen_memory_xy( candidate.xy() ) ) {
                 return;
             }
@@ -3996,7 +3996,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         auto offscreen_refresh_count = int64_t{ 0 };
         auto offscreen_dirty_memory_count = int64_t{ 0 };
         auto offscreen_connecting_refresh_count = int64_t{ 0 };
-        const auto memorize_offscreen_point = [&]( const tripoint_bub_ms &p,
+        const auto memorize_offscreen_point = [&]( const tripoint_bub_ms & p,
         const lit_level lighting ) {
             const auto &ch = here.access_cache( p.z() );
 
@@ -4044,7 +4044,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 here.check_and_set_seen_cache( p );
             }
         };
-        const auto memorize_full_scan_point = [&]( const point_bub_ms &mem_p ) {
+        const auto memorize_full_scan_point = [&]( const point_bub_ms & mem_p ) {
             const auto mem_x = mem_p.x();
             const auto mem_y = mem_p.y();
             lit_level lighting = _cz.visibility_cache[_cz.idx( mem_x, mem_y )];
