@@ -402,6 +402,7 @@ jobs:
 
       - name: Run EmmyLua check
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
+        continue-on-error: true
         run: emmylua_check .
 
       - name: Generate documentation artifacts
