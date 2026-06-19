@@ -447,6 +447,8 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_submap_view>;
         auto get_abs_omt_view( const tripoint_abs_omt &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_omt_view>;
+        auto for_each_simulated_submap(
+            const std::function<void( const tripoint_abs_sm &, submap & )> &fn ) -> void;
         auto simulated_submap_positions() const -> std::vector<tripoint_abs_sm>;
         auto simulated_submap_views() -> std::vector<mapbuffer_abs_submap_view>;
         auto simulated_submap_views( int zlev ) -> std::vector<mapbuffer_abs_submap_view>;
@@ -828,21 +830,6 @@ class mapbuffer
             }
         }
 
-        template<typename Fn>
-        void for_each_simulated_submap( Fn &&fn ) {
-            std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
-            for( const point_abs_sm &pos : submap_loader.simulated_submaps( dimension_id_ ) ) {
-                for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-                    const auto abs_pos = tripoint_abs_sm( pos, zlev );
-                    const auto iter = submaps.find( abs_pos );
-                    if( iter == submaps.end() || !iter->second ) {
-                        continue;
-                    }
-                    fn( abs_pos, *iter->second );
-                }
-            }
-        }
-
         auto loaded_submap_count() const -> std::size_t {
             std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
             return submaps.size();
@@ -912,6 +899,9 @@ class mapbuffer
             const std::function<bool( const tripoint_abs_sm & )> &skip_if = nullptr );
         void save_omt( const tripoint_abs_omt &omt_addr, std::list<tripoint_abs_sm> &submaps_to_delete,
                        bool delete_after_save );
+        auto for_each_simulated_submap_position(
+            const std::function<void( const tripoint_abs_sm & )> &fn,
+            std::optional<int> zlev = std::nullopt ) const -> void;
         submap_map_t submaps;
         Creature_tracker creature_tracker_;
         std::list<shared_ptr_fast<npc>> active_npcs_;

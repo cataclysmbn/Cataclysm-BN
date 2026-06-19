@@ -1628,16 +1628,58 @@ auto mapbuffer::get_abs_omt_view( const tripoint_abs_omt &p,
     return mapbuffer_abs_omt_view( p, submaps );
 }
 
+auto mapbuffer::for_each_simulated_submap_position(
+    const std::function<void( const tripoint_abs_sm & )> &fn,
+    const std::optional<int> zlev_filter ) const -> void
+{
+    if( zlev_filter && ( *zlev_filter < -OVERMAP_DEPTH || *zlev_filter > OVERMAP_HEIGHT ) ) {
+        return;
+    }
+
+    const auto horizontal_positions = submap_loader.simulated_submaps( dimension_id_ );
+    if( horizontal_positions.empty() ) {
+        std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+        for( const std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry : submaps ) {
+            const auto abs_pos = tripoint_abs_sm( entry.first );
+            if( entry.second && ( !zlev_filter || abs_pos.z() == *zlev_filter ) &&
+                submap_loader.is_simulated( dimension_id_, abs_pos ) ) {
+                fn( abs_pos );
+            }
+        }
+        return;
+    }
+
+    for( const point_abs_sm &pos : horizontal_positions ) {
+        if( zlev_filter ) {
+            fn( tripoint_abs_sm( pos, *zlev_filter ) );
+            continue;
+        }
+        for( const auto current_zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+            fn( tripoint_abs_sm( pos, current_zlev ) );
+        }
+    }
+}
+
+auto mapbuffer::for_each_simulated_submap(
+    const std::function<void( const tripoint_abs_sm &, submap & )> &fn ) -> void
+{
+    for_each_simulated_submap_position( [&]( const tripoint_abs_sm & pos ) {
+        auto *const sm = lookup_submap_in_memory( pos );
+        if( sm != nullptr ) {
+            fn( pos, *sm );
+        }
+    } );
+}
+
 auto mapbuffer::simulated_submap_positions() const -> std::vector<tripoint_abs_sm>
 {
     auto result = std::vector<tripoint_abs_sm> {};
     const auto horizontal_positions = submap_loader.simulated_submaps( dimension_id_ );
-    result.reserve( horizontal_positions.size() * static_cast<std::size_t>( OVERMAP_LAYERS ) );
-    for( const point_abs_sm &pos : horizontal_positions ) {
-        for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-            result.emplace_back( pos, zlev );
-        }
-    }
+    result.reserve( horizontal_positions.empty() ? loaded_submap_count() :
+                    horizontal_positions.size() * static_cast<std::size_t>( OVERMAP_LAYERS ) );
+    for_each_simulated_submap_position( [&]( const tripoint_abs_sm & pos ) {
+        result.push_back( pos );
+    } );
     return result;
 }
 
@@ -1659,19 +1701,15 @@ auto mapbuffer::simulated_submap_views() -> std::vector<mapbuffer_abs_submap_vie
 auto mapbuffer::simulated_submap_views( const int zlev ) -> std::vector<mapbuffer_abs_submap_view>
 {
     auto result = std::vector<mapbuffer_abs_submap_view> {};
-    if( zlev < -OVERMAP_DEPTH || zlev > OVERMAP_HEIGHT ) {
-        return result;
-    }
-
     const auto horizontal_positions = submap_loader.simulated_submaps( dimension_id_ );
-    result.reserve( horizontal_positions.size() );
+    result.reserve( horizontal_positions.empty() ? loaded_submap_count() : horizontal_positions.size() );
     const auto options = mapbuffer_lookup_options{ .mode = mapbuffer_lookup_mode::resident_only };
-    for( const point_abs_sm &pos : horizontal_positions ) {
-        auto view = get_abs_submap_view( tripoint_abs_sm( pos, zlev ), options );
+    for_each_simulated_submap_position( [&]( const tripoint_abs_sm & pos ) {
+        auto view = get_abs_submap_view( pos, options );
         if( view ) {
             result.push_back( *view );
         }
-    }
+    }, zlev );
     return result;
 }
 
