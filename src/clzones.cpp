@@ -280,7 +280,7 @@ construction_id blueprint_options::get_final_construction(
     std::set<construction_id> &skip_index
 )
 {
-    if( id->post_terrain.is_empty() && id->post_furniture.is_empty() ) {
+    if( id->post_terrain.empty() && id->post_furniture.empty() ) {
         return id;
     }
 
@@ -290,7 +290,8 @@ construction_id blueprint_options::get_final_construction(
         }
         const construction &c = *c_id;
         if( id->group == c.group &&
-            ( id->post_terrain == c.pre_terrain || id->post_furniture == c.pre_furniture ) ) {
+            ( std::ranges::find( id->post_terrain, c.pre_terrain ) != id->post_terrain.end() ||
+              std::ranges::find( id->post_furniture, c.pre_furniture ) != id->post_furniture.end() ) ) {
             skip_index.insert( id );
             return get_final_construction( list_constructions, c_id, skip_index );
         }
@@ -439,14 +440,27 @@ auto blueprint_options::query_con() -> query_con_result
 
     const construction &chosen = con_index->obj();
 
-    const construction_group_str_id &chosen_group = chosen.group;
-    const std::string &chosen_mark = chosen.post_terrain.is_empty() ?
-                                     chosen.post_furniture.str() : chosen.post_terrain.str();
+    // Select the output for the construction
+    int selected_terrain_or_furniture = chosen.query_post_terrain_or_furniture();
+    if( selected_terrain_or_furniture < 0 ) {
+        return canceled;
+    };
 
-    if( *con_index != index || chosen_group != group || chosen_mark != mark ) {
+    const construction_group_str_id &chosen_group = chosen.group;
+    std::string chosen_mark;
+    if( !chosen.post_terrain.empty() ) {
+        chosen_mark = chosen.post_terrain[selected_terrain_or_furniture].str();
+    };
+    if( !chosen.post_furniture.empty() ) {
+        chosen_mark = chosen.post_furniture[selected_terrain_or_furniture].str();
+    };
+
+    if( *con_index != index || chosen_group != group || chosen_mark != mark ||
+        selected_terrain_or_furniture != ter_or_furn_idx ) {
         group = chosen_group;
         mark = chosen_mark;
         index = *con_index;
+        ter_or_furn_idx = selected_terrain_or_furniture;
         return changed;
     } else {
         return successful;
@@ -683,6 +697,7 @@ void blueprint_options::serialize( JsonOut &json ) const
     json.member( "group", group );
     json.member( "index", index.id() );
     json.member( "layout", blueprint_layout_to_string( layout ) );
+    json.member( "ter_or_furn_idx", ter_or_furn_idx );
 }
 
 void blueprint_options::deserialize( const JsonObject &jo_zone )
@@ -700,6 +715,12 @@ void blueprint_options::deserialize( const JsonObject &jo_zone )
         layout = blueprint_layout_from_string( layout_name );
     } else {
         layout = blueprint_layout::rectangle_fill;
+    }
+    // Old saves will not have this
+    if( jo_zone.has_int( "ter_or_furn_idx" ) ) {
+        ter_or_furn_idx = jo_zone.get_int( "ter_or_furn_idx" );
+    } else {
+        ter_or_furn_idx = 0;
     }
 }
 

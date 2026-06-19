@@ -12,6 +12,7 @@ struct partial_con {
     explicit partial_con( const tripoint_abs_ms &loc,
                           const dimension_id &dim ) : components( new partial_con_item_location( loc, dim ) ) {}
     int counter = 0;
+    int ter_or_furn_idx = 0;
     location_vector<item> components;
     construction_id id = construction_id( -1 );
 };
