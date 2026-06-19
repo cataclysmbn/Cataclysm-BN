@@ -131,7 +131,7 @@ private:
 
     std::set<field_type_id> immune_fields;
 
-    std::set<enchantment_flag_id> flags;
+    std::map<enchantment_flag_id, int> flags;
 
     void add_activation(const time_duration& freq, const fake_spell& fake);
 

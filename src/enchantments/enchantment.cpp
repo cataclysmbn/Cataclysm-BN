@@ -176,7 +176,6 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
     }
 
     optional(jo, was_loaded, "mutations", mutations);
-    optional(jo, was_loaded, "flags", flags);
     optional(jo, was_loaded, "immune_effects", immune_effects);
     optional(jo, was_loaded, "immune_fields", immune_fields);
 
@@ -191,6 +190,11 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
                 const double mul = static_cast<int>(std::round(mult * 100'000)) / 100'000.0;
                 values_multiply.emplace(value, mul);
             }
+        }
+    }
+    if (jo.has_array("flags")) {
+        for (const auto flag : jo.get_string_array("flags")) {
+            flags[enchantment_flag_id(flag)] = 1;
         }
     }
 }
@@ -262,8 +266,13 @@ void enchantment::serialize(JsonOut& jsout) const {
         jsout.end_object();
     }
     jsout.end_array();
-    jsout.member("flags", flags);
 
+    jsout.start_array();
+    for (const auto& [ench_flag_id, cnt] : flags) { jsout.write(ench_flag_id.str()); }
+    jsout.end_array();
+
+    jsout.member("immune_effects", immune_effects);
+    jsout.member("immune_fields", immune_fields);
     jsout.end_object();
 }
 
@@ -307,21 +316,31 @@ void enchantment::force_add(const enchantment& rhs) {
             intermittent_activation[act_pair.first].emplace_back(fake);
         }
     }
-    for (const enchantment_flag_id& ench_flag : rhs.flags) {
-        bool has_conflict = false;
-        for (const enchantment_flag_id& conf_flag : ench_flag->conflicts) {
+    for (const auto& [ench_flag_id, count] : rhs.flags) {
+        int remains = count;
+        for (const enchantment_flag_id& conf_flag : ench_flag_id->conflicts) {
             if (flags.contains(conf_flag)) {
-                flags.erase(conf_flag);
-                has_conflict = true;
+                flags[conf_flag] -= count;
+                if (flags[conf_flag] <= 0) {
+                    remains = std::min(-flags[conf_flag], remains);
+                    flags.erase(conf_flag);
+                }
             }
         }
-        if (!has_conflict) { flags.insert(ench_flag); }
+        if (remains > 0) { flags[ench_flag_id] += remains; }
     }
 }
 
 bool enchantment::has_flag(const enchantment_flag_id flag) const {
     if (!flag.is_valid()) { debugmsg("Tried to get invalid enchantment flag \"%s\".", flag); }
-    return flags.contains(flag);
+    if (flags.contains(flag)) {
+        if (flags.at(flag) <= 0) {
+            debugmsg("Flag \"%s\" was canceled but remains in the list", flag);
+        } else {
+            return true;
+        }
+    }
+    return false;
 }
 
 int enchantment::get_value_add(const enchantment_value_id value) const {
@@ -472,9 +491,9 @@ void enchantment::finalize() {
         }
     }
     auto flags_copy = flags;
-    for (const auto& ench_flag_id : flags) {
+    for (const auto& [ench_flag_id, _] : flags) {
         auto parents = ench_flag_id->get_parents();
-        flags.insert(parents.begin(), parents.end());
+        for (const auto parent : parents) { flags[parent] = 1; }
     }
 
     if (!problems.empty()) {
@@ -513,7 +532,7 @@ void enchantment::check() const {
                 "\nmutation %s which has stat adjustments (not supported)", mut.str()));
         }
     }
-    for (const auto ench_flag : flags) {
+    for (const auto& [ench_flag, _] : flags) {
         if (!ench_flag.is_valid()) {
             problems.push_back(string_format("\nenchantment flag %s is invalid", ench_flag.str()));
         }

@@ -965,12 +965,48 @@ TEST_CASE( "Effect Immunity Enchantments", "[magic][enchantment][effects]" )
     SECTION( "Armor item with enchantment that prevents gaining antitoxin effect" ) {
         wear_item( guy, "test_socks_of_toxicity" );
 
-        guy.add_effect( antitoxin, 1_turns , bodypart_str_id::NULL_ID());
+        guy.add_effect( antitoxin, 1_turns, bodypart_str_id::NULL_ID() );
         CHECK( !guy.has_effect( antitoxin ) );
     }
 
     SECTION( "Lacking armor item antitoxin effect is gained" ) {
-        guy.add_effect( antitoxin, 1_turns , bodypart_str_id::NULL_ID());
+        guy.add_effect( antitoxin, 1_turns, bodypart_str_id::NULL_ID() );
         CHECK( guy.has_effect( antitoxin ) );
+    }
+}
+
+TEST_CASE( "Enchantment Cancels Flags", "[magic][enchantment][flags]" )
+{
+    clear_all_state();
+    Character &guy = get_player_character();
+    clear_character( *guy.as_player(), true );
+
+    const auto& nearsighted = enchantment_flag_id( "NEARSIGHTED");
+    REQUIRE( !guy.has_enchantment_flag( nearsighted ) );
+
+    WHEN( "Character receives nearsight relic" ) {
+        wear_item( guy, "test_socks_of_nearsight" );
+        wear_item( guy, "test_socks_of_nearsight" );
+        THEN( "They have nearsight" ) {
+            REQUIRE( guy.has_enchantment_flag( nearsighted ) );
+        }
+        AND_WHEN( "They gain one fix nearsight relic" ) {
+            wear_item( guy, "test_socks_of_anti_nearsight" );
+            THEN( "They still have nearsight" ) {
+                REQUIRE( guy.has_enchantment_flag( nearsighted ) );
+            }
+            AND_WHEN( "They gain two fix nearsight relics" ) {
+                wear_item( guy, "test_socks_of_anti_nearsight" );
+                THEN( "They lose nearsight" ) {
+                    REQUIRE( !guy.has_enchantment_flag( nearsighted ) );
+                }
+                AND_WHEN( "They gain three fix nearsight relics" ) {
+                    wear_item( guy, "test_socks_of_anti_nearsight" );
+                    THEN( "They have fix nearsight" ) {
+                        REQUIRE( guy.has_enchantment_flag( enchantment_flag_id( "FIX_NEARSIGHTED") ) );
+                    }
+                }
+            }
+        }
     }
 }
