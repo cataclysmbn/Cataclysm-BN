@@ -1057,8 +1057,8 @@ mapbuffer_load_region::mapbuffer_load_region( mapbuffer_load_region &&rhs ) noex
     *this = std::move( rhs );
 }
 
-auto mapbuffer_load_region::operator=( mapbuffer_load_region &&rhs ) noexcept
-- > mapbuffer_load_region &
+auto mapbuffer_load_region::operator=( mapbuffer_load_region &&rhs )
+noexcept -> mapbuffer_load_region & // *NOPAD*
 {
     if( this == &rhs ) {
         return *this;
