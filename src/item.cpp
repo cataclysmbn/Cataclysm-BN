@@ -10934,40 +10934,14 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
     const bool seals = self->type->container && self->type->container->seals;
     item &obj = *self;
 
-    std::function<detached_ptr<item>( detached_ptr<item> && )> process_content =
-        [&]( detached_ptr<item> &&it ) -> detached_ptr<item> {
-        if( !it ) {
-            return std::move( it );
-        }
-
-        item &content_obj = *it;
-        const std::vector<item *> content_processing_items = content_obj.contents.processing_items();
-        for( item *const content_item : content_processing_items ) {
-            if( content_item == nullptr ) {
-                continue;
-            }
-            content_item->attempt_detach( [&]( detached_ptr<item> &&nested ) {
-                return process_content( std::move( nested ) );
-            } );
-        }
-
+    obj.remove_items_with( [&]( detached_ptr<item> &&it ) {
         if( preserves ) {
             it->last_rot_check = calendar::turn;
         }
-        return process_internal( std::move( it ), carrier, pos, activate, seals, flag,
-                                 weather_generator );
-    };
-
-    const std::vector<item *> content_processing_items = obj.contents.processing_items();
-    for( item *const content_item : content_processing_items ) {
-        if( content_item == nullptr ) {
-            continue;
-        }
-        content_item->attempt_detach( [&]( detached_ptr<item> &&it ) {
-            return process_content( std::move( it ) );
-        } );
-    }
-
+        it = it->process_internal( std::move( it ), carrier, pos, activate, seals, flag,
+                                   weather_generator );
+        return VisitResponse::NEXT;
+    } );
     detached_ptr<item> res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
                              weather_generator );
     return res;
