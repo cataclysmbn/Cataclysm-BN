@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <unordered_map>
 
 #include "calendar.h"
@@ -187,6 +188,10 @@ class mapgendata
         bool is_groundcover( const ter_id &iid ) const;
 
         bool has_join( const cube_direction, const std::string &join_id ) const;
+        auto join_point( cube_direction dir,
+                         const std::string &join_id ) const -> std::optional<point_omt_ms>;
+        auto get_or_set_join_point( cube_direction dir, const std::string &join_id,
+                                    const point_omt_ms &candidate ) const -> std::optional<point_omt_ms>;
 
         template<typename Result>
         Result get_arg( const std::string &name ) const {

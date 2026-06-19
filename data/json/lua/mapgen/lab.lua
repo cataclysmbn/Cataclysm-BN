@@ -119,41 +119,77 @@ shuffle = function(set)
 end
 
 ---@param map MapgenConstructor
+---@param pt PointOmtMs
+local function is_valid_stair_point(map, pt)
+  return map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null
+end
+
+---@param map MapgenConstructor
 ---@param stair_id TerIntId
-local function insert_stairs_single(map, stair_id)
+---@param pt PointOmtMs
+local function place_stair(map, stair_id, pt)
+  map:set_ter_at(pt, stair_id)
+  map:set_furn_at(pt, f_null)
+  map:remove_trap_at(pt)
+  map:clear_items_at(pt)
+end
+
+---@param map MapgenConstructor
+---@return PointOmtMs[]
+local function valid_stair_points(map)
   ---@type PointOmtMs[]
   local valid_points = {}
   for i = 0, 23 do
     for j = 0, 23 do
       local pt = PointOmtMs.new(i, j)
-      if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
-        table.insert(valid_points, PointOmtMs.new(i, j))
+      if is_valid_stair_point(map, pt) then
+        table.insert(valid_points, pt)
       end
     end
   end
+  return valid_points
+end
+
+---@param map MapgenConstructor
+---@param stair_id TerIntId
+local function insert_stairs_single(map, stair_id)
+  local valid_points = valid_stair_points(map)
   if #valid_points == 0 then return end
   local final_point = valid_points[gapi.rng(1, #valid_points)]
   if final_point == nil then return end
-  map:set_ter_at(final_point, stair_id)
+  place_stair(map, stair_id, final_point)
 end
 
-insert_stairs = function(map, up_id, down_id, from_above)
-  ---@type PointOmtMs[]
-  local valid_points = {}
-  for i = 0, 23 do
-    for j = 0, 23 do
-      local pt = PointOmtMs.new(i, j)
-      if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
-        table.insert(valid_points, PointOmtMs.new(i, j))
-      end
+---@param data MapgenData
+---@param map MapgenConstructor
+---@param up_id TerIntId
+---@param down_id TerIntId
+---@param from_above boolean
+insert_stairs = function(data, map, up_id, down_id, from_above)
+  local existing_point = nil
+  if( from_above ) then
+    existing_point = data:join_point("above", "lab_to_lab")
+    if existing_point then
+      place_stair(map, up_id, existing_point)
+      return
+    end
+  else
+    existing_point = data:join_point("below", "lab_to_lab")
+    if existing_point then
+      place_stair(map, down_id, existing_point)
+      return
     end
   end
+
+  local valid_points = valid_stair_points(map)
   if #valid_points > 0 then
-    local final_point = valid_points[gapi.rng(1, #valid_points)]
+    local candidate = valid_points[gapi.rng(1, #valid_points)]
     if( from_above ) then
-      map:set_ter_at(final_point, up_id)
+      local final_point = data:get_or_set_above_join_point("lab_to_lab", candidate) or candidate
+      place_stair(map, up_id, final_point)
     else
-      map:set_ter_at(final_point, down_id)
+      local final_point = data:get_or_set_below_join_point("lab_to_lab", candidate) or candidate
+      place_stair(map, down_id, final_point)
     end
   else
     if( from_above ) then
@@ -293,9 +329,9 @@ draw_normal_room = function(data, map)
   -- Build forth the walls
   draw_walls(data, map, walls)
   if map.is_ot_match( "stairs", data:above(), ot_match_contains ) then
-    insert_stairs(map, t_stairs_up, t_stairs_down, true)
+    insert_stairs(data, map, t_stairs_up, t_stairs_down, true)
   elseif map.is_ot_match( "stairs", data:id(), ot_match_contains ) then
-    insert_stairs(map, t_stairs_up, t_stairs_down, false)
+    insert_stairs(data, map, t_stairs_up, t_stairs_down, false)
   end
   draw_lights(data, map)
 end

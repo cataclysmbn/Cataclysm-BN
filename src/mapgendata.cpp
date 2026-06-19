@@ -4,6 +4,7 @@
 
 #include "all_enum_values.h"
 #include "debug.h"
+#include "game_constants.h"
 #include "int_id.h"
 #include "mapgen_constructor.h"
 #include "mapdata.h"
@@ -15,6 +16,46 @@
 #include "regional_settings.h"
 
 static const regional_settings dummy_regional_settings;
+
+namespace
+{
+
+auto is_inside_omt_tile_bounds( const point_omt_ms &p ) -> bool
+{
+    return p.x() >= 0 && p.x() < SEEX * 2 && p.y() >= 0 && p.y() < SEEY * 2;
+}
+
+auto actual_cube_direction( const mapgendata &dat, const cube_direction dir ) -> cube_direction
+{
+    const auto ignore_rotation = dat.terrain_type()->has_flag(
+                                     oter_flags::ignore_rotation_for_adjacency );
+    const auto rotation = ignore_rotation ? 0 : dat.terrain_type()->get_rotation();
+    return dir + rotation;
+}
+
+auto opposite_cube_direction( const cube_direction dir ) -> cube_direction
+{
+    switch( dir ) {
+        case cube_direction::north:
+            return cube_direction::south;
+        case cube_direction::east:
+            return cube_direction::west;
+        case cube_direction::south:
+            return cube_direction::north;
+        case cube_direction::west:
+            return cube_direction::east;
+        case cube_direction::above:
+            return cube_direction::below;
+        case cube_direction::below:
+            return cube_direction::above;
+        case cube_direction::last:
+            break;
+    }
+    debugmsg( "Invalid cube_direction" );
+    return cube_direction::last;
+}
+
+} // namespace
 
 void mapgen_arguments::merge( const mapgen_arguments &other )
 {
@@ -222,6 +263,41 @@ bool mapgendata::has_join( const cube_direction dir, const std::string &join_id 
 {
     auto it = joins.find( dir );
     return it != joins.end() && it->second == join_id;
+}
+
+auto mapgendata::join_point( const cube_direction dir,
+                             const std::string &join_id ) const -> std::optional<point_omt_ms>
+{
+    if( !has_join( dir, join_id ) ) {
+        return std::nullopt;
+    }
+    const auto point = omapbuf_.join_point_at( { pos, actual_cube_direction( *this, dir ) } );
+    if( point && is_inside_omt_tile_bounds( *point ) ) {
+        return point;
+    }
+    return std::nullopt;
+}
+
+auto mapgendata::get_or_set_join_point( const cube_direction dir, const std::string &join_id,
+                                        const point_omt_ms &candidate ) const -> std::optional<point_omt_ms>
+{
+    if( !has_join( dir, join_id ) || !is_inside_omt_tile_bounds( candidate ) ) {
+        return std::nullopt;
+    }
+    if( const auto point = join_point( dir, join_id ) ) {
+        return point;
+    }
+    const auto actual_dir = actual_cube_direction( *this, dir );
+    omapbuf_.set_join_point( { pos, actual_dir }, candidate );
+    const auto opposite_pos = pos + displace( actual_dir );
+    const auto opposite_dir = opposite_cube_direction( actual_dir );
+    if( opposite_dir != cube_direction::last ) {
+        const auto *opposite_join = omapbuf_.join_used_at( { opposite_pos, opposite_dir } );
+        if( opposite_join != nullptr && *opposite_join == join_id ) {
+            omapbuf_.set_join_point( { opposite_pos, opposite_dir }, candidate );
+        }
+    }
+    return candidate;
 }
 
 const oter_id &mapgendata::neighbor_at( direction dir ) const

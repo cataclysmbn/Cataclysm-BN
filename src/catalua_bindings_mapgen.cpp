@@ -12,6 +12,59 @@
 #include "popup.h"
 #include "string_input_popup.h"
 
+namespace
+{
+
+auto lua_cube_direction( const std::string &direction ) -> cube_direction
+{
+    if( direction == "north" ) {
+        return cube_direction::north;
+    } else if( direction == "east" ) {
+        return cube_direction::east;
+    } else if( direction == "south" ) {
+        return cube_direction::south;
+    } else if( direction == "west" ) {
+        return cube_direction::west;
+    } else if( direction == "above" ) {
+        return cube_direction::above;
+    } else if( direction == "below" ) {
+        return cube_direction::below;
+    }
+    return cube_direction::last;
+}
+
+auto mapgen_join_point( const mapgendata &dat, const std::string &direction,
+                        const std::string &join_id ) -> sol::optional<point_omt_ms>
+{
+    const auto point = dat.join_point( lua_cube_direction( direction ), join_id );
+    if( !point ) {
+        return sol::nullopt;
+    }
+    return *point;
+}
+
+auto mapgen_get_or_set_above_join_point( const mapgendata &dat, const std::string &join_id,
+        const point_omt_ms &candidate ) -> sol::optional<point_omt_ms>
+{
+    const auto point = dat.get_or_set_join_point( cube_direction::above, join_id, candidate );
+    if( !point ) {
+        return sol::nullopt;
+    }
+    return *point;
+}
+
+auto mapgen_get_or_set_below_join_point( const mapgendata &dat, const std::string &join_id,
+        const point_omt_ms &candidate ) -> sol::optional<point_omt_ms>
+{
+    const auto point = dat.get_or_set_join_point( cube_direction::below, join_id, candidate );
+    if( !point ) {
+        return sol::nullopt;
+    }
+    return *point;
+}
+
+} // namespace
+
 void cata::detail::reg_mapgendata( sol::state &lua )
 {
     sol::usertype<mapgendata> ut = luna::new_usertype<mapgendata>( lua, luna::no_bases,
@@ -43,6 +96,24 @@ void cata::detail::reg_mapgendata( sol::state &lua )
     luna::set_fx( ut, "get_nesw", []( mapgendata & dat, int i ) { return dat.t_nesw[i]; } );
     DOC( "Gets the z-level that it is generated at." );
     luna::set_fx( ut, "zlevel", []( mapgendata & dat ) { return dat.zlevel(); } );
+    DOC( "Returns the OMT-local anchor point for a matched overmap join, or nil if none exists." );
+    DOC_PARAMS(
+        "direction: string - one of north/east/south/west/above/below",
+        "join_id: string - mutable overmap join id",
+        "returns: PointOmtMs?" );
+    luna::set_fx( ut, "join_point", &mapgen_join_point );
+    DOC( "Returns the existing OMT-local anchor point for a matched above overmap join, or initializes it from candidate." );
+    DOC_PARAMS(
+        "join_id: string - mutable overmap join id",
+        "candidate: PointOmtMs - point to store if the join has no anchor yet",
+        "returns: PointOmtMs?" );
+    luna::set_fx( ut, "get_or_set_above_join_point", &mapgen_get_or_set_above_join_point );
+    DOC( "Returns the existing OMT-local anchor point for a matched below overmap join, or initializes it from candidate." );
+    DOC_PARAMS(
+        "join_id: string - mutable overmap join id",
+        "candidate: PointOmtMs - point to store if the join has no anchor yet",
+        "returns: PointOmtMs?" );
+    luna::set_fx( ut, "get_or_set_below_join_point", &mapgen_get_or_set_below_join_point );
     DOC( "Sets the direction of the mapgen." );
     luna::set_fx( ut, "set_dir", []( mapgendata & dat, int i, int j ) { return dat.set_dir( i, j ); } );
     DOC( "Gets rotation" );

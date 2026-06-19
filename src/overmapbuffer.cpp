@@ -875,6 +875,20 @@ std::string *overmapbuffer::join_used_at( const std::pair<tripoint_abs_omt, cube
     return om_loc.om->join_used_at( { om_loc.local, p.second } );
 }
 
+auto overmapbuffer::join_point_at( const std::pair<tripoint_abs_omt, cube_direction> &p ) ->
+std::optional<point_omt_ms>
+{
+    const overmap_with_local_coords om_loc = get_om_global( p.first );
+    return om_loc.om->join_point_at( { om_loc.local, p.second } );
+}
+
+auto overmapbuffer::set_join_point( const std::pair<tripoint_abs_omt, cube_direction> &p,
+                                    const point_omt_ms &point ) -> void
+{
+    const overmap_with_local_coords om_loc = get_om_global( p.first );
+    om_loc.om->set_join_point( { om_loc.local, p.second }, point );
+}
+
 std::optional<mapgen_arguments> *overmapbuffer::mapgen_args( const tripoint_abs_omt &p )
 {
     const overmap_with_local_coords om_loc = get_om_global( p );

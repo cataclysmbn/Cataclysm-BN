@@ -3023,6 +3023,20 @@ std::string *overmap::join_used_at( const om_pos_dir &p )
     return &it->second;
 }
 
+auto overmap::join_point_at( const om_pos_dir &p ) const -> std::optional<point_omt_ms>
+{
+    const auto it = join_points.find( p );
+    if( it == join_points.end() ) {
+        return std::nullopt;
+    }
+    return it->second;
+}
+
+auto overmap::set_join_point( const om_pos_dir &p, const point_omt_ms &point ) -> void
+{
+    join_points[p] = point;
+}
+
 std::optional<mapgen_arguments> *overmap::mapgen_args( const tripoint_om_omt &p )
 {
     auto it = mapgen_args_index.find( p );
@@ -5875,6 +5889,10 @@ std::vector<tripoint_om_omt> overmap::place_special(
                 linked = build_connection( *elem.connection, stub, rp.z() );
             }
         }
+    }
+
+    for( const auto &join : result.joins_used ) {
+        joins_used.insert( join );
     }
 
     // Link grid and mapgens

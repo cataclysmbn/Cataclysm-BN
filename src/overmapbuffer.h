@@ -220,6 +220,10 @@ class overmapbuffer
         const oter_id &ter_existing( const tripoint_abs_omt &p );
         void ter_set( const tripoint_abs_omt &p, const oter_id &id );
         std::string *join_used_at( const std::pair<tripoint_abs_omt, cube_direction> & );
+        auto join_point_at( const std::pair<tripoint_abs_omt, cube_direction> & ) ->
+        std::optional<point_omt_ms>;
+        auto set_join_point( const std::pair<tripoint_abs_omt, cube_direction> &,
+                             const point_omt_ms & ) -> void;
         std::optional<mapgen_arguments> *mapgen_args( const tripoint_abs_omt & );
         /**
          * Thread-safe lazy initializer for overmap_special mapgen arguments.

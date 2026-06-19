@@ -315,6 +315,8 @@ class overmap
         void ter_set( const tripoint_om_omt &p, const oter_id &id );
         const oter_id &ter( const tripoint_om_omt &p ) const;
         std::string *join_used_at( const om_pos_dir & );
+        auto join_point_at( const om_pos_dir & ) const -> std::optional<point_omt_ms>;
+        auto set_join_point( const om_pos_dir &, const point_omt_ms & ) -> void;
         std::optional<mapgen_arguments> *mapgen_args( const tripoint_om_omt & );
 
         /** Slot returned by get_mapgen_args_slot for lock-free fast-path access. */
@@ -477,6 +479,8 @@ class overmap
         // Records the joins that were chosen during placement of a mutable
         // special, so that it can be queried later by mapgen
         std::unordered_map<om_pos_dir, std::string> joins_used;
+        // Records OMT-local tile anchors for joins that need matching mapgen surfaces.
+        std::unordered_map<om_pos_dir, point_omt_ms> join_points;
         // Records mapgen parameters required at the overmap special level
         // These are lazily evaluated; empty optional means that they have yet
         // to be evaluated.
