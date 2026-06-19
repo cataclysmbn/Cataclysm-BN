@@ -3173,7 +3173,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         const auto already_drawn = half_open_rectangle<point>(
                                        point( min_col, min_row ), point( max_col, max_row ) );
         const auto scan_distance_table = trigdist ?
-                                         &get_rl_dist_lookup_table( rl_dist_lookup_table_dimensions{
+        &get_rl_dist_lookup_table( rl_dist_lookup_table_dimensions{
             .max_dx = std::max( std::abs( min_visible_x - center.x() ),
                                 std::abs( max_visible_x - center.x() ) ),
             .max_dy = std::max( std::abs( min_visible_y - center.y() ),
@@ -3181,7 +3181,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             .max_dz = 0,
             .trigdist = trigdist,
         } ) :
-                                         nullptr;
+            nullptr;
         offscreen_memory_points.clear();
         offscreen_memory_points.reserve( static_cast<size_t>( ( max_visible_x - min_visible_x + 1 ) *
                                          ( max_visible_y - min_visible_y + 1 ) ) );

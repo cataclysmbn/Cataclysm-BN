@@ -1261,7 +1261,7 @@ void mapbuffer::transfer_all_to( mapbuffer &dest )
             dest.submaps_with_active_items_.insert( kv.first );
         }
         if( std::ranges::any_of( submap_tiles(), [&]( const point_sm_ms & pos ) {
-            return kv.second->get_lum( pos ) != 0;
+        return kv.second->get_lum( pos ) != 0;
         } ) ) {
             dest.submaps_with_luminous_items_.insert( kv.first );
         }
@@ -3096,7 +3096,7 @@ auto mapbuffer::refresh_luminous_item_submap_index( const tripoint_abs_sm &p,
     }
 
     if( std::ranges::any_of( submap_tiles(), [&]( const point_sm_ms & pos ) {
-        return sm->get_lum( pos ) != 0;
+    return sm->get_lum( pos ) != 0;
     } ) ) {
         submaps_with_luminous_items_.insert( p );
     } else {
