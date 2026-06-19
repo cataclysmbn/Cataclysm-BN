@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -236,6 +237,14 @@ class submap_load_manager
         }
 
         /**
+         * Return horizontal submap positions currently in the simulated set for
+         * @p dim_id. Load requests cover all z-levels, so callers that need
+         * concrete submap objects should expand these positions over the full
+         * z-level range.
+         */
+        auto simulated_submaps( const dimension_id &dim_id ) const -> std::span<const point_abs_sm>;
+
+        /**
          * Return the set of dimension IDs that have at least one active request.
          */
         auto active_dimensions() const -> std::vector<dimension_id>;
@@ -353,6 +362,7 @@ class submap_load_manager
 
         /** Compute the simulated desired set (excludes lazy_border). */
         key_set compute_desired_set() const;
+        auto rebuild_simulated_submaps_by_dimension( const key_set &simulated ) -> void;
 
         /** Compute OMT-space lazy-border columns. */
         auto compute_lazy_border_omts() const -> horizontal_omt_set;
@@ -407,6 +417,8 @@ class submap_load_manager
         /** Snapshot of all request centers from the previous update().
          *  Used to detect steady-state and skip expensive recomputation. */
         std::vector<std::pair<load_request_handle, point_abs_sm>> prev_centers_;
+
+        std::map<dimension_id, std::vector<point_abs_sm>> simulated_submaps_by_dimension_;
 
         point lazy_omt_preload_direction_ = point_zero;
         std::optional<lazy_omt_focus> lazy_omt_focus_;

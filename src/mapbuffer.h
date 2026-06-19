@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <span>
 #include <string>
@@ -26,6 +27,7 @@
 #include "mapgen_functions.h"
 #include "memory_fast.h"
 #include "point.h"
+#include "submap_load_manager.h"
 #include "type_id.h"
 #include "vpart_position.h"
 
@@ -391,6 +393,9 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_submap_view>;
         auto get_abs_omt_view( const tripoint_abs_omt &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_omt_view>;
+        auto simulated_submap_positions() const -> std::vector<tripoint_abs_sm>;
+        auto simulated_submap_views() -> std::vector<mapbuffer_abs_submap_view>;
+        auto simulated_submap_views( int zlev ) -> std::vector<mapbuffer_abs_submap_view>;
         auto mark_submap_caches_dirty( const mapbuffer_mark_submap_caches_dirty_options &options )
         -> void;
         auto clear_spawns( const mapbuffer_submap_bounds_mutation_options &options ) -> void;
@@ -539,6 +544,12 @@ class mapbuffer
         auto get_submaps_with_active_items() const -> const std::set<tripoint_abs_sm> &;
         auto get_active_items_in_radius( const tripoint_abs_ms &center, int radius,
                                          special_item_type type ) -> std::vector<item *>;
+        auto refresh_luminous_item_submap_index( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto refresh_luminous_item_submap_index( const tripoint_abs_sm &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto forget_luminous_item_submap_index( const tripoint_abs_sm &p ) -> void;
+        auto get_submaps_with_luminous_items() const -> const std::set<tripoint_abs_sm> &;
 
         auto has_graffiti_at( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> bool;
@@ -763,6 +774,26 @@ class mapbuffer
             }
         }
 
+        template<typename Fn>
+        void for_each_simulated_submap( Fn &&fn ) {
+            std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+            for( const point_abs_sm &pos : submap_loader.simulated_submaps( dimension_id_ ) ) {
+                for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+                    const auto abs_pos = tripoint_abs_sm( pos, zlev );
+                    const auto iter = submaps.find( abs_pos );
+                    if( iter == submaps.end() || !iter->second ) {
+                        continue;
+                    }
+                    fn( abs_pos, *iter->second );
+                }
+            }
+        }
+
+        auto loaded_submap_count() const -> std::size_t {
+            std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+            return submaps.size();
+        }
+
         bool is_submap_loaded( const tripoint_abs_sm &p ) const {
             return submaps.contains( p );
         }
@@ -837,6 +868,7 @@ class mapbuffer
         std::unordered_map<const vehicle *, std::vector<tripoint_abs_ms>>
                 vehicle_footprint_locations_;
         std::set<tripoint_abs_sm> submaps_with_active_items_;
+        std::set<tripoint_abs_sm> submaps_with_luminous_items_;
 
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.

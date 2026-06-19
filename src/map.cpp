@@ -5559,6 +5559,8 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
     const auto removed_emissive = ( *it )->is_emissive();
     current_submap->update_lum_rem( l, **it );
     if( removed_emissive ) {
+        get_mapbuffer().refresh_luminous_item_submap_index( project_to<coords::sm>( abs_pos ),
+                resident_item_lookup() );
         invalidate_lightmap_caches();
     }
 
@@ -5591,6 +5593,8 @@ detached_ptr<item> map::i_rem( const tripoint_bub_ms &p, item *it )
     const auto removed_emissive = it->is_emissive();
     current_submap->update_lum_rem( l, *it );
     if( removed_emissive ) {
+        get_mapbuffer().refresh_luminous_item_submap_index( project_to<coords::sm>( abs_pos ),
+                resident_item_lookup() );
         invalidate_lightmap_caches();
     }
 
@@ -5620,6 +5624,8 @@ std::vector<detached_ptr<item>> map::i_clear( const tripoint_bub_ms &p )
     const auto had_luminance = current_submap->get_lum( l ) != 0;
     current_submap->set_lum( l, 0 );
     if( had_luminance ) {
+        get_mapbuffer().refresh_luminous_item_submap_index( project_to<coords::sm>( abs_pos ),
+                resident_item_lookup() );
         invalidate_lightmap_caches();
     }
     return current_submap->get_items( l ).clear();
@@ -5912,6 +5918,8 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
     const auto adds_luminance = new_item->is_emissive();
     current_submap->update_lum_add( l, *new_item );
     if( adds_luminance ) {
+        get_mapbuffer().refresh_luminous_item_submap_index( project_to<coords::sm>( abs_pos ),
+                resident_item_lookup() );
         invalidate_lightmap_caches();
     }
     if( new_item->needs_processing() ) {
@@ -6056,6 +6064,8 @@ void map::update_lum( item &loc, bool add )
     } else {
         current_submap->update_lum_rem( l, *target );
     }
+    get_mapbuffer().refresh_luminous_item_submap_index( project_to<coords::sm>( abs_pos ),
+            resident_item_lookup() );
     invalidate_lightmap_caches();
 }
 
@@ -10769,16 +10779,21 @@ auto map::current_lightmap_source_signature() -> std::size_t
         }
     }
 
-    for( const auto &view : active_submaps_.submaps() ) {
-        if( !submap_loader.is_simulated( bound_dimension_, view.abs_pos() ) ) {
+    const auto &luminous_item_submaps = get_mapbuffer().get_submaps_with_luminous_items();
+    for( const tripoint_abs_sm &abs_pos : luminous_item_submaps ) {
+        if( !contains_abs_sm( abs_pos ) || !submap_loader.is_simulated( bound_dimension_, abs_pos ) ) {
             continue;
         }
-        const submap &sm = view.get_submap();
+        const submap *const sm_ptr = get_mapbuffer().lookup_submap_in_memory( abs_pos );
+        if( sm_ptr == nullptr ) {
+            continue;
+        }
+        const submap &sm = *sm_ptr;
         for( const auto sm_ms : submap_tiles() ) {
             if( sm.get_lum( sm_ms ) == 0 ) {
                 continue;
             }
-            const auto pos = abs_to_map_local( *this, project_combine( view.abs_pos(), sm_ms ) );
+            const auto pos = abs_to_map_local( *this, project_combine( abs_pos, sm_ms ) );
             for( const item *const itm : sm.get_items( sm_ms ) ) {
                 if( itm != nullptr ) {
                     hash_light_item( seed, pos, *itm );

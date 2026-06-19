@@ -2513,17 +2513,14 @@ auto game::has_activity_skip_active_fire() -> bool
         if( has_fire || ( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) ) {
             return;
         }
-        mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
+        mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos_sm, submap & sm ) {
             if( has_fire ) {
                 return;
             }
-            auto &[pos_sm, sm_ptr] = entry;
-            if( ( dim == current_dim && m.contains_abs_sm( pos_sm ) ) ||
-                !sm_ptr ||
-                !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
+            if( dim == current_dim && m.contains_abs_sm( pos_sm ) ) {
                 return;
             }
-            if( submap_has_active_fire( *sm_ptr ) ) {
+            if( submap_has_active_fire( sm ) ) {
                 has_fire = true;
                 return;
             }
@@ -2746,14 +2743,12 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
             if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
                 return;
             }
-            mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
-                auto &[pos_sm, sm_ptr] = entry;
-                if( ( dim == current_dim && m.contains_abs_sm( pos_sm ) ) ||
-                    !sm_ptr || !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
+            mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos_sm, submap & sm ) {
+                if( dim == current_dim && m.contains_abs_sm( pos_sm ) ) {
                     return;
                 }
-                run_submap_batch_turns( *sm_ptr, skipped_turns );
-                sm_ptr->last_touched = calendar::turn;
+                run_submap_batch_turns( sm, skipped_turns );
+                sm.last_touched = calendar::turn;
             } );
         } );
     }
@@ -5693,67 +5688,54 @@ void game::world_tick()
         }
 
         {
-            ZoneScopedN( "world_tick_submap_scan" );
-            mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
-                auto &[pos_sm, sm_ptr] = entry;
-                if( !sm_ptr ) {
-                    return;
-                }
-                ++total_loaded_submaps;
-
-                // Only simulate submaps that are actively requested (reality bubble,
-                // fire spread, player base, script).  Skip lazy-border and streamer
-                // pre-loaded submaps that are merely resident in memory.
-                // Use the precomputed O(1) set rather than is_simulated() which does
-                // an O(log N) mapbuffer lookup + O(R) request scan per submap.
-                if( !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
-                    return;
-                }
+            ZoneScopedN( "world_tick_simulated_submaps" );
+            total_loaded_submaps += static_cast<int64_t>( mb.loaded_submap_count() );
+            mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos_sm, submap & sm ) {
                 ++total_simulated_submaps;
 
                 ZoneScopedN( "wtd_submap_body" );
 
-                if( sm_ptr->field_count == 0 ) {
+                if( sm.field_count == 0 ) {
                     ++total_no_field_submaps;
                 } else {
                     ++total_field_submaps;
                 }
-                total_field_count += sm_ptr->field_count;
+                total_field_count += sm.field_count;
 
                 auto has_fire = false;
-                if( sm_ptr->field_count > 0 ) {
+                if( sm.field_count > 0 ) {
                     ZoneScopedN( "wtd_process_fields" );
-                    has_fire = process_fields_in_submap( dim, *sm_ptr, pos_sm, mb );
+                    has_fire = process_fields_in_submap( dim, sm, pos_sm, mb );
                 }
-                sm_ptr->last_touched = calendar::turn;
+                sm.last_touched = calendar::turn;
 
                 // Furniture field emitters — covers all loaded submaps, not just the bubble.
                 // Primary dimension only: m.emit_field() operates in primary-map coordinates.
                 // emitter_cache holds the positions of EMITTER furniture, lazily rebuilt on first
                 // use after furniture changes and iterated directly on subsequent ticks.
                 if( do_emits && dim.is_empty() ) {
-                    if( !sm_ptr->emitter_cache.has_value() ) {
+                    if( !sm.emitter_cache.has_value() ) {
                         ++total_emitter_dirty_submaps;
                         ZoneScopedN( "field_emits_rebuild" );
-                        auto &positions = sm_ptr->emitter_cache.emplace();
+                        auto &positions = sm.emitter_cache.emplace();
                         std::ranges::for_each(
                             cata::views::cartesian_product( std::views::iota( 0, SEEX ),
                                                             std::views::iota( 0, SEEY ) ),
                         [&]( const auto & xy ) {
                             const point_sm_ms p( std::get<0>( xy ), std::get<1>( xy ) );
-                            if( sm_ptr->get_furn( p ).obj().has_flag( "EMITTER" ) ) {
+                            if( sm.get_furn( p ).obj().has_flag( "EMITTER" ) ) {
                                 positions.emplace_back( p );
                             }
                         } );
                     }
-                    if( !sm_ptr->emitter_cache->empty() ) {
+                    if( !sm.emitter_cache->empty() ) {
                         ++total_emitter_active_submaps;
                         ZoneScopedN( "field_emits" );
                         const auto bub_sm_origin = abs_to_map_local( m, project_to<coords::ms>( pos_sm ) );
-                        std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point_sm_ms & lp ) {
+                        std::ranges::for_each( *sm.emitter_cache, [&]( const point_sm_ms & lp ) {
                             const tripoint_bub_ms local_pos = bub_sm_origin + tripoint_rel_ms( lp.x(), lp.y(), 0 );
                             std::ranges::for_each(
-                                sm_ptr->get_furn( lp ).obj().emissions,
+                                sm.get_furn( lp ).obj().emissions,
                             [&]( const emit_id & e ) {
                                 m.emit_field( local_pos, e );
                             } );

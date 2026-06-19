@@ -220,6 +220,23 @@ auto submap_load_manager::compute_desired_set() const -> key_set
     return desired;
 }
 
+auto submap_load_manager::rebuild_simulated_submaps_by_dimension(
+    const key_set &simulated ) -> void
+{
+    simulated_submaps_by_dimension_.clear();
+    for( const auto &[dim_id, pos] : simulated ) {
+        simulated_submaps_by_dimension_[dim_id].push_back( pos );
+    }
+    for( auto &[dim_id, positions] : simulated_submaps_by_dimension_ ) {
+        std::ranges::sort( positions, []( const point_abs_sm & lhs, const point_abs_sm & rhs ) {
+            if( lhs.x() != rhs.x() ) {
+                return lhs.x() < rhs.x();
+            }
+            return lhs.y() < rhs.y();
+        } );
+    }
+}
+
 auto submap_load_manager::compute_lazy_border_omts() const -> horizontal_omt_set
 {
     ZoneScoped;
@@ -1064,6 +1081,7 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     queue_lazy_border_omts( lazy_border_omts );
     process_or_defer_lazy_border_work( defer_lazy_border_work );
 
+    rebuild_simulated_submaps_by_dimension( simulated );
     prev_simulated_ = std::move( simulated );
     prev_desired_ = std::move( all_desired );
 }
@@ -1131,6 +1149,16 @@ auto submap_load_manager::is_loaded( const dimension_id &dim_id,
            nullptr;
 }
 
+auto submap_load_manager::simulated_submaps( const dimension_id &dim_id ) const
+-> std::span<const point_abs_sm>
+{
+    const auto it = simulated_submaps_by_dimension_.find( dim_id );
+    if( it == simulated_submaps_by_dimension_.end() ) {
+        return {};
+    }
+    return it->second;
+}
+
 auto submap_load_manager::active_dimensions() const -> std::vector<dimension_id>
 {
     std::set<dimension_id> dims;
@@ -1164,6 +1192,7 @@ void submap_load_manager::flush_prev_desired()
     assert( is_fully_drained() );
     prev_desired_.clear();
     prev_simulated_.clear();
+    simulated_submaps_by_dimension_.clear();
     prev_centers_.clear();
     retained_omts_.clear();
     retained_omt_index_.clear();

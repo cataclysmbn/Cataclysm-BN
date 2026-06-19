@@ -1554,10 +1554,15 @@ auto add_field_sources(source_accumulator& acc) -> void {
 
 auto add_active_item_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_item_sources");
+    auto const& luminous_item_submaps = acc.m.get_mapbuffer().get_submaps_with_luminous_items();
     for (auto const z : acc.dirty_levels) {
-        for (auto const& view : acc.m.active_submap_views(z)) {
-            auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+        for (tripoint_abs_sm const& abs_pos : luminous_item_submaps) {
+            if (abs_pos.z() != z || !acc.m.contains_abs_sm(abs_pos)) { continue; }
+            auto const* const sm_ptr = acc.m.get_mapbuffer().lookup_submap_in_memory(abs_pos);
+            if (sm_ptr == nullptr) { continue; }
+
+            auto const grid = abs_to_bub(abs_pos);
+            auto const& sm = *sm_ptr;
 
             for (auto const sm_ms : submap_tiles()) {
                 if (sm.get_lum(sm_ms) == 0) { continue; }
