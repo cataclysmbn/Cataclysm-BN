@@ -709,6 +709,23 @@ static std::ostream &operator<<( std::ostream &os, const ter_id &tid )
     return os;
 }
 
+TEST_CASE( "tree_terrain_supports_climbing_destination_above" )
+{
+    clear_all_state();
+    auto &here = get_map();
+
+    static const ter_str_id t_tree( "t_tree" );
+    static const ter_str_id t_open_air( "t_open_air" );
+    const auto tree_pos = tripoint_bub_ms( 65, 65, 0 );
+    const auto climb_destination = tree_pos + tripoint_above;
+
+    here.ter_set( tree_pos, t_tree );
+    here.ter_set( climb_destination, t_open_air );
+
+    CHECK( here.supports_above( tree_pos ) );
+    CHECK( here.has_floor_or_support( climb_destination ) );
+}
+
 TEST_CASE( "bash_through_roof_can_destroy_multiple_times" )
 {
     clear_all_state();

@@ -3030,8 +3030,13 @@ bool map::has_floor_or_support( const tripoint_bub_ms &p ) const
     if( p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT ) {
         return false;
     }
-    const tripoint_bub_ms below( p.xy(), p.z() - 1 );
-    return !valid_move( p, below, false, true );
+    if( has_floor( p ) ) {
+        return true;
+    }
+    if( p.z() <= -OVERMAP_DEPTH ) {
+        return false;
+    }
+    return supports_above( tripoint_bub_ms( p.xy(), p.z() - 1 ) );
 }
 
 void map::drop_everything( const tripoint_bub_ms &p )
