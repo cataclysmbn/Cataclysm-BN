@@ -330,9 +330,9 @@ class mapbuffer_load_region
                                load_request_source source,
                                const point_abs_sm &begin,
                                const point_abs_sm &end,
-                               mapbuffer_lookup_options options = {
-                                   .mode = mapbuffer_lookup_mode::resident_only
-                               } );
+        mapbuffer_lookup_options options = {
+            .mode = mapbuffer_lookup_mode::resident_only
+        } );
         ~mapbuffer_load_region();
 
         mapbuffer_load_region( const mapbuffer_load_region & ) = delete;
@@ -348,7 +348,7 @@ class mapbuffer_load_region
             return handle_ != 0;
         }
 
-        auto view() const -> const mapbuffer_bounds_view & {
+        auto view() const -> const mapbuffer_bounds_view& {
             return view_;
         }
         auto submaps() const -> std::span<const mapbuffer_abs_submap_view> {

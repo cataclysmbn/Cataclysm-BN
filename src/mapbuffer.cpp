@@ -973,7 +973,7 @@ auto mapbuffer_bounds_view::get_submap_view( const point_rel_sm &offset,
 auto mapbuffer_bounds_view::is_complete() const -> bool
 {
     return !indexed_submaps_.empty() && std::ranges::all_of(
-            indexed_submaps_, []( const auto * sm ) {
+    indexed_submaps_, []( const auto * sm ) {
         return sm != nullptr;
     } );
 }
@@ -1058,7 +1058,7 @@ mapbuffer_load_region::mapbuffer_load_region( mapbuffer_load_region &&rhs ) noex
 }
 
 auto mapbuffer_load_region::operator=( mapbuffer_load_region &&rhs ) noexcept
--> mapbuffer_load_region &
+- > mapbuffer_load_region &
 {
     if( this == &rhs ) {
         return *this;
@@ -1087,7 +1087,7 @@ auto mapbuffer_load_region::update( const point_abs_sm &begin,
 
     if( handle_ == 0 ) {
         handle_ = submap_loader.request_load( source_,
-                  buffer_->get_dimension_id(), begin_, end_ );
+                                              buffer_->get_dimension_id(), begin_, end_ );
     } else {
         submap_loader.update_request( handle_, begin_, end_ );
     }
