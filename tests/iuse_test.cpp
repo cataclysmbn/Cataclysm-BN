@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "avatar.h"
 #include "bodypart.h"
@@ -100,6 +101,56 @@ TEST_CASE( "bionic_scanner_inside_container_marks_corpses_with_cbms", "[iuse][bi
     CHECK( corpse_ptr->get_var( "bionics_scanned_by", -1 ) == you.getID().get_value() );
     CHECK( corpse_ptr->has_flag( flag_CBM_SCANNED ) );
     CHECK( scanner_ptr->ammo_remaining() == charges_before - 1 );
+}
+
+TEST_CASE( "bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bionic_scanner]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    clear_avatar();
+
+    auto &you = get_avatar();
+    you.setID( character_id( 1 ), true );
+    auto &here = get_map();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    set_time( calendar::turn_zero + 12_hours );
+    you.recalc_sight_limits();
+
+    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    REQUIRE( you.sees( corpse_pos ) );
+    auto corpse_ptrs = std::vector<item *> {};
+    for( auto i = 0; i < 10; ++i ) {
+        auto corpse = item::make_corpse( mtype_id( "mon_zombie_soldier" ), calendar::turn, "" );
+        corpse->add_component( item::spawn( "bio_power_storage", calendar::turn ) );
+        auto *const corpse_ptr = corpse.get();
+        REQUIRE_FALSE( here.add_item_or_charges( corpse_pos, std::move( corpse ), false ) );
+        corpse_ptrs.push_back( corpse_ptr );
+    }
+
+    auto backpack = item::spawn( "backpack", calendar::turn );
+    auto *const backpack_ptr = backpack.get();
+    auto scanner = item::spawn( "bionic_scanner", calendar::turn );
+    scanner->ammo_set( itype_id( "battery" ), 100 );
+    auto *const scanner_ptr = scanner.get();
+    backpack->put_in( std::move( scanner ) );
+    REQUIRE_FALSE( you.wear_item( std::move( backpack ), false ) );
+
+    REQUIRE( scanner_ptr->type->invoke( you, *scanner_ptr, you.bub_pos() ) == 0 );
+    REQUIRE( scanner_ptr->typeId() == itype_id( "bionic_scanner_on" ) );
+    REQUIRE( scanner_ptr->is_active() );
+    REQUIRE( scanner_ptr->needs_processing() );
+    REQUIRE( backpack_ptr->needs_processing() );
+    here.build_map_cache( you.bub_pos().z() );
+    here.update_visibility_cache( you.bub_pos().z() );
+    REQUIRE( you.sees( corpse_pos ) );
+
+    you.process_items();
+
+    for( const item *const corpse_ptr : corpse_ptrs ) {
+        CHECK( corpse_ptr->get_var( "bionics_scanned_by", -1 ) == you.getID().get_value() );
+        CHECK( corpse_ptr->has_flag( flag_CBM_SCANNED ) );
+    }
+    CHECK( scanner_ptr->ammo_remaining() == 90 );
 }
 
 TEST_CASE( "eyedrops", "[iuse][eyedrops]" )
