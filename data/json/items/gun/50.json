@@ -110,7 +110,7 @@
     "volume": "3 L",
     "price": "20 kUSD",
     "price_postapoc": "300 USD",
-    "material": [ "steel", "plastic" ],
+    "material": [ "superalloy", "ceramic" ],
     "ammo": "50",
     "range": -70,
     "ranged_damage": { "damage_type": "bullet", "amount": -8 },
