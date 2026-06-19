@@ -1032,7 +1032,7 @@
     ]
   },
   {
-    "id": "everyday_m71_military",
+    "id": "everyday_rm71_military",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack. With military standard attachments.",
     "subtype": "collection",
