@@ -117,8 +117,8 @@
     "dispersion": 200,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ],
     "barrel_volume": "250 ml",
-    "reload": 200,
-    "durability": 6,
+    "reload": 150,
+    "durability": 9,
     "magazine_well": "250 ml",
     "magazines": [ [ "50", [ "drum_mag50", "m107a1mag" ] ] ]
   },
