@@ -5693,8 +5693,6 @@ void game::world_tick()
             mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos_sm, submap & sm ) {
                 ++total_simulated_submaps;
 
-                ZoneScopedN( "wtd_submap_body" );
-
                 if( sm.field_count == 0 ) {
                     ++total_no_field_submaps;
                 } else {
