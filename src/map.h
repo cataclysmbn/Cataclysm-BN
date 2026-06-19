@@ -2056,12 +2056,6 @@ class map : public submap_load_listener
                 loadn( grid_pos, update_vehicles );
                 actualize_loaded_grid( grid_pos );
             }
-
-            // Note: we want it in a separate loop! It is a post-load cleanup
-            // Since we're adding roofs, we want it to go up (from lowest to highest)
-            for( const auto gridz : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-                add_roofs( tripoint_bub_sm( grid, gridz ) );
-            }
         }
         /**
          * Apply the dimension boundary terrain overlay to the edge tiles of @p sm at
@@ -2072,10 +2066,6 @@ class map : public submap_load_listener
          */
         auto apply_boundary_overlay( submap &sm,
                                      const tripoint_abs_sm &pos ) -> void;
-        /**
-         * Hacks in missing roofs. Should be removed when 3D mapgen is done.
-         */
-        void add_roofs( const tripoint_bub_sm &grid );
         void player_in_field( player &u );
         void monster_in_field( monster &z );
 

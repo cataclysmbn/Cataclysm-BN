@@ -711,7 +711,13 @@ class mapbuffer
          * main thread with the selected Lua generator.
          */
         auto generate_omt( const tripoint_abs_omt &omt_addr,
-        const mapbuffer_generate_omt_options &options = {} ) -> mapgen_result;
+                           const mapbuffer_generate_omt_options &options = {} ) -> mapgen_result;
+
+        /**
+         * Run resident-only post-generation fixes for every loaded z-level in the
+         * OMT pillar at @p omt_pos.  This does not load or generate submaps.
+         */
+        auto run_omt_pillar_post_pass( const point_abs_omt &omt_pos ) -> void;
 
         /**
          * Fast-forward and actualize a resident submap by absolute position.
@@ -785,6 +791,7 @@ class mapbuffer
         -> optional_vpart_position;
         auto vehicle_part_at_loaded_tile( const tripoint_abs_ms &p ) -> optional_vpart_position;
         auto remove_active_npc_from_location_map( const npc &guy ) -> void;
+        auto run_omt_pillar_post_pass_if_complete( const point_abs_omt &omt_pos ) -> bool;
 
         /// Guards all accesses to `submaps` that may overlap with background
         /// worker threads calling add_submap().  std::recursive_mutex allows

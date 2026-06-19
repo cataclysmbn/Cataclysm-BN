@@ -8634,33 +8634,6 @@ void map::shift( const point_rel_sm &sp )
     } // shift_grid_copy_load
 
     {
-        ZoneScopedN( "shift_add_roofs" );
-        //Go through the generated maps and fill in the roofs
-        for( const auto gridz : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-            const auto axis = std::views::iota( 0, my_MAPSIZE );
-            if( sp.x() > 0 ) {
-                for( const auto gridy : axis ) {
-                    add_roofs( {my_MAPSIZE - 1, gridy, gridz} );
-                }
-            } else if( sp.x() < 0 ) {
-                for( const auto gridy : axis ) {
-                    add_roofs( {0, gridy, gridz} );
-                }
-            }
-
-            if( sp.y() > 0 ) {
-                for( const auto gridx : axis ) {
-                    add_roofs( {gridx, my_MAPSIZE - 1, gridz} );
-                }
-            } else if( sp.y() < 0 ) {
-                for( const auto gridx : axis ) {
-                    add_roofs( {gridx, 0, gridz} );
-                }
-            }
-        }
-    }
-
-    {
         ZoneScopedN( "shift_reset_vehicle_cache" );
         reset_vehicle_cache( );
     }
@@ -8846,46 +8819,6 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
                         map_cache.zone_vehicles.insert( veh.get() );
                     }
                     add_vehicle_to_cache( veh.get() );
-                }
-            }
-        }
-    }
-}
-
-void map::add_roofs( const tripoint_bub_sm &grid )
-{
-    const auto abs_grid = map_local_to_abs( *this, grid );
-    submap *const sub_here = get_mapbuffer().lookup_submap_in_memory( abs_grid );
-    if( sub_here == nullptr ) {
-        // Null submaps are expected for corner slots outside the circular load footprint
-        // and for out-of-bounds areas in bounded pocket dimensions.
-        return;
-    }
-
-    bool check_roof = grid.z() > -OVERMAP_DEPTH;
-
-    submap *const sub_below = check_roof ? get_mapbuffer().lookup_submap_in_memory(
-                                  abs_grid + tripoint_below ) : nullptr;
-
-    if( check_roof && sub_below == nullptr ) {
-        if( !get_mapbuffer().has_dimension_bounds() ) {
-            debugmsg( "Tried to add roofs to sm at %d,%d,%d, but sm below doesn't exist",
-                      grid.x(), grid.y(), grid.z() );
-        }
-        return;
-    }
-
-    for( const auto sm_ms : submap_tiles() ) {
-        const ter_id ter_here = sub_here->get_ter( sm_ms );
-        if( ter_here == t_open_air ) {
-            if( !check_roof ) {
-                // Make sure we don't have open air at lowest z-level
-                sub_here->set_ter( sm_ms, t_rock_floor );
-            } else {
-                const ter_t &ter_below = sub_below->get_ter( sm_ms ).obj();
-                if( ter_below.roof ) {
-                    // TODO: Make roof variable a ter_id to speed this up
-                    sub_here->set_ter( sm_ms, ter_below.roof.id() );
                 }
             }
         }

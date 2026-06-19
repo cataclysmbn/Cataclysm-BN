@@ -312,6 +312,10 @@ class submap_load_manager
                 return generation.is_generated();
             }
         };
+        struct lazy_omt_start_result {
+            bool started = false;
+            bool generated = false;
+        };
         struct lazy_omt_load_options {
             bool defer_postprocess_hooks = false;
             bool worker_safe = false;
@@ -364,6 +368,8 @@ class submap_load_manager
         auto evict_omt_column( const omt_column_key &key ) -> void;
         auto evict_oldest_retained_omts( std::size_t count ) -> void;
         auto process_retained_omt_eviction() -> void;
+        auto run_deferred_mapgen_hooks_and_omt_post_passes(
+            const horizontal_omt_set &generated_omt_columns ) -> void;
         static auto load_lazy_omt_zlevel_data( mapbuffer &mb,
                                                const tripoint_abs_omt &omt_addr,
                                                const lazy_omt_load_options &options )
@@ -375,7 +381,7 @@ class submap_load_manager
                                     const lazy_omt_load_result &result ) -> bool;
         auto finish_lazy_omt_job( const omt_key &key ) -> bool;
         auto reap_lazy_omt_jobs() -> void;
-        auto start_lazy_omt_job( const omt_key &key ) -> bool;
+        auto start_lazy_omt_job( const omt_key &key ) -> lazy_omt_start_result;
         auto lazy_omt_priority( const omt_column_key &key ) const -> int;
         auto queue_lazy_border_omts( const horizontal_omt_set &border_omts ) -> void;
         auto has_lazy_border_work_pending() const -> bool;

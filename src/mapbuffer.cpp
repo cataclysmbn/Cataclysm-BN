@@ -659,6 +659,114 @@ auto omt_submap_index( const point_omt_sm &local ) -> std::optional<std::size_t>
     return static_cast<std::size_t>( local.x() + local.y() * 2 );
 }
 
+auto vertical_transition_target_below( const ter_id &source ) -> std::optional<ter_id>
+{
+    static const auto t_stairs_down_no_roof = ter_id( "t_stairs_down_no_roof" );
+    static const auto t_stairs_down_underwater = ter_id( "t_stairs_down_underwater" );
+    static const auto t_stairs_up_underwater = ter_id( "t_stairs_up_underwater" );
+    static const auto t_wood_stairs_down = ter_id( "t_wood_stairs_down" );
+    static const auto t_wood_stairs_up = ter_id( "t_wood_stairs_up" );
+    static const auto t_ladder_up_down = ter_id( "t_ladder_up_down" );
+    static const auto t_slope_down_underground = ter_id( "t_slope_down_underground" );
+    static const auto t_triffid_slope_down = ter_id( "t_triffid_slope_down" );
+    static const auto t_triffid_slope_up = ter_id( "t_triffid_slope_up" );
+
+    if( source == t_stairs_down || source == t_stairs_down_no_roof ) {
+        return t_stairs_up;
+    }
+    if( source == t_stairs_down_underwater ) {
+        return t_stairs_up_underwater;
+    }
+    if( source == t_wood_stairs_down ) {
+        return t_wood_stairs_up;
+    }
+    if( source == t_ladder_down || source == t_ladder_up_down ) {
+        return t_ladder_up;
+    }
+    if( source == t_slope_down || source == t_slope_down_underground ) {
+        return t_slope_up;
+    }
+    if( source == t_triffid_slope_down ) {
+        return t_triffid_slope_up;
+    }
+    return std::nullopt;
+}
+
+auto vertical_transition_target_above( const ter_id &source ) -> std::optional<ter_id>
+{
+    static const auto t_stairs_down = ter_id( "t_stairs_down" );
+    static const auto t_stairs_up_underwater = ter_id( "t_stairs_up_underwater" );
+    static const auto t_stairs_down_underwater = ter_id( "t_stairs_down_underwater" );
+    static const auto t_wood_stairs_down = ter_id( "t_wood_stairs_down" );
+    static const auto t_wood_stairs_up = ter_id( "t_wood_stairs_up" );
+    static const auto t_ladder_up_down = ter_id( "t_ladder_up_down" );
+    static const auto t_triffid_slope_down = ter_id( "t_triffid_slope_down" );
+    static const auto t_triffid_slope_up = ter_id( "t_triffid_slope_up" );
+
+    if( source == t_stairs_up ) {
+        return t_stairs_down;
+    }
+    if( source == t_stairs_up_underwater ) {
+        return t_stairs_down_underwater;
+    }
+    if( source == t_wood_stairs_up ) {
+        return t_wood_stairs_down;
+    }
+    if( source == t_ladder_up || source == t_ladder_up_down ) {
+        return t_ladder_down;
+    }
+    if( source == t_slope_up ) {
+        return t_slope_down;
+    }
+    if( source == t_triffid_slope_up ) {
+        return t_triffid_slope_down;
+    }
+    return std::nullopt;
+}
+
+auto terrain_has_vertical_transition_direction( const ter_t &terrain,
+        const ter_id &desired ) -> bool
+{
+    const auto &desired_terrain = desired.obj();
+    return ( desired_terrain.has_flag( TFLAG_GOES_UP ) && terrain.has_flag( TFLAG_GOES_UP ) ) ||
+           ( desired_terrain.has_flag( TFLAG_GOES_DOWN ) && terrain.has_flag( TFLAG_GOES_DOWN ) );
+}
+
+auto can_replace_with_vertical_transition( const submap &sm, const point_sm_ms &local,
+        const ter_id &desired ) -> bool
+{
+    const auto current = sm.get_ter( local );
+    const auto &current_terrain = current.obj();
+    if( terrain_has_vertical_transition_direction( current_terrain, desired ) ) {
+        return false;
+    }
+    if( current_terrain.has_flag( TFLAG_GOES_UP ) ||
+        current_terrain.has_flag( TFLAG_GOES_DOWN ) ) {
+        return false;
+    }
+    if( sm.get_furn( local ) != f_null || sm.get_trap( local ) != tr_null ||
+        !sm.get_items( local ).empty() ) {
+        return false;
+    }
+    if( current_terrain.has_flag( TFLAG_WALL ) ||
+        current_terrain.has_flag( TFLAG_LIQUID ) ) {
+        return false;
+    }
+    return current_terrain.has_flag( TFLAG_NO_FLOOR ) ||
+           current_terrain.has_flag( TFLAG_SUPPORTS_ROOF ) ||
+           current_terrain.has_flag( TFLAG_FLAT ) ||
+           current_terrain.has_flag( "ROOF" );
+}
+
+auto mark_post_pass_changed( submap &sm ) -> void
+{
+    sm.transparency_dirty = true;
+    sm.floor_dirty = true;
+    sm.outside_dirty = true;
+    sm.absorption_dirty = true;
+    sm.pf_dirty = true;
+}
+
 } // namespace
 
 mapbuffer_abs_tile_view::mapbuffer_abs_tile_view( const tripoint_abs_sm &abs_sm,
@@ -1293,7 +1401,7 @@ void mapbuffer::clear()
 
 bool mapbuffer::add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &sm )
 {
-    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
     if( submaps.contains( p ) ) {
         return false;
     }
@@ -1378,7 +1486,7 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
     // Hold the mutex for the entire save+erase so that background lazy-border
     // preload_omt() workers (which acquire the mutex per add_submap()) cannot
     // race with our submaps.find()/erase() calls.
-    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
     std::list<tripoint_abs_sm> to_delete;
     if( save ) {
         // Serialise into the pending-writes cache (no disk I/O).  The data will
@@ -1529,7 +1637,6 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
             }
         }
     }
-
     auto *result = static_cast<submap *>( nullptr );
     {
         result = lookup_submap_in_memory( p );
@@ -1990,7 +2097,7 @@ auto mapbuffer::remove_active_npc( const npc &guy ) -> void
 
 auto mapbuffer::has_loaded_vehicle( const vehicle *veh ) const -> bool
 {
-    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
     return loaded_vehicles_.contains( const_cast<vehicle *>( veh ) );
 }
 
@@ -2000,7 +2107,7 @@ auto mapbuffer::register_vehicle( vehicle *veh ) -> void
         return;
     }
 
-    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
     veh->set_dimension( dimension_id_ );
     loaded_vehicles_.insert( veh );
     index_vehicle_footprint_unlocked( *veh );
@@ -3993,7 +4100,7 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr,
 {
     ZoneScopedN( "mapbuffer_generate_omt" );
     const auto base = project_to<coords::sm>( omt_addr );
-    const bool all_loaded =
+    const auto all_loaded =
         lookup_submap_in_memory( base )
         && lookup_submap_in_memory( base + point_east )
         && lookup_submap_in_memory( base + point_south )
@@ -4004,10 +4111,12 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr,
 
     if( const auto uniform_terrain = uniform_terrain_for_omt( dimension_id_, omt_addr ) ) {
         ZoneScopedN( "mapbuffer_generate_uniform_omt" );
+        const auto generated = add_uniform_omt( *this, base, *uniform_terrain );
+        if( generated ) {
+            run_omt_pillar_post_pass_if_complete( omt_addr.xy() );
+        }
         return {
-            .status = add_uniform_omt( *this, base, *uniform_terrain )
-            ? mapgen_result_status::generated
-            : mapgen_result_status::not_generated,
+            .status = generated ? mapgen_result_status::generated : mapgen_result_status::not_generated,
             .selected_mapgen = nullptr,
         };
     }
@@ -4028,7 +4137,118 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr,
             return generate_result;
         }
     }
+    run_omt_pillar_post_pass_if_complete( omt_addr.xy() );
     return { .status = mapgen_result_status::generated, .selected_mapgen = nullptr };
+}
+
+auto mapbuffer::run_omt_pillar_post_pass_if_complete( const point_abs_omt &omt_pos ) -> bool
+{
+    ZoneScopedN( "mapbuffer_omt_pillar_post_pass_if_complete" );
+    const auto offsets = std::to_array<point_rel_sm>( {
+        point_rel_sm::zero(),
+        point_rel_sm::east(),
+        point_rel_sm::south(),
+        point_rel_sm::south_east(),
+    } );
+
+    auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
+    for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+        const auto base = project_to<coords::sm>( tripoint_abs_omt( omt_pos, zlev ) );
+        const auto missing = std::ranges::any_of( offsets, [&]( const point_rel_sm & offset ) {
+            return lookup_submap_in_memory( base + offset ) == nullptr;
+        } );
+        if( missing ) {
+            return false;
+        }
+    }
+
+    run_omt_pillar_post_pass( omt_pos );
+    return true;
+}
+
+auto mapbuffer::run_omt_pillar_post_pass( const point_abs_omt &omt_pos ) -> void
+{
+    ZoneScopedN( "mapbuffer_omt_pillar_post_pass" );
+    const auto offsets = std::to_array<point_rel_sm>( {
+        point_rel_sm::zero(),
+        point_rel_sm::east(),
+        point_rel_sm::south(),
+        point_rel_sm::south_east(),
+    } );
+
+    auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
+    struct vertical_transition_link_request {
+        tripoint_abs_sm target_pos;
+        point_sm_ms local;
+        ter_id desired;
+    };
+    const auto ensure_vertical_transition_link = [&]( const vertical_transition_link_request & request ) {
+        auto *const target_sm = lookup_submap_in_memory( request.target_pos );
+        if( target_sm == nullptr ||
+            !can_replace_with_vertical_transition( *target_sm, request.local, request.desired ) ) {
+            return;
+        }
+        target_sm->set_ter( request.local, request.desired );
+        mark_post_pass_changed( *target_sm );
+    };
+
+    for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+        const auto omt_addr = tripoint_abs_omt( omt_pos, zlev );
+        const auto base = project_to<coords::sm>( omt_addr );
+        for( const auto &offset : offsets ) {
+            const auto sm_pos = base + offset;
+            auto *const sub_here = lookup_submap_in_memory( sm_pos );
+            if( sub_here == nullptr ) {
+                continue;
+            }
+
+            auto *const sub_below = zlev > -OVERMAP_DEPTH ?
+                                    lookup_submap_in_memory( sm_pos + tripoint_below ) : nullptr;
+
+            auto changed = false;
+            for( const auto local : submap_tiles() ) {
+                const auto terrain_here = sub_here->get_ter( local );
+                if( const auto target = vertical_transition_target_below( terrain_here );
+                    target && zlev > -OVERMAP_DEPTH ) {
+                    ensure_vertical_transition_link( {
+                        .target_pos = sm_pos + tripoint_below,
+                        .local = local,
+                        .desired = *target,
+                    } );
+                }
+                if( const auto target = vertical_transition_target_above( terrain_here );
+                    target && zlev < OVERMAP_HEIGHT ) {
+                    ensure_vertical_transition_link( {
+                        .target_pos = sm_pos + tripoint_above,
+                        .local = local,
+                        .desired = *target,
+                    } );
+                }
+
+                if( terrain_here != t_open_air ) {
+                    continue;
+                }
+                if( zlev <= -OVERMAP_DEPTH ) {
+                    sub_here->set_ter( local, t_rock_floor );
+                    changed = true;
+                    continue;
+                }
+                if( sub_below == nullptr ) {
+                    continue;
+                }
+
+                const auto &ter_below = sub_below->get_ter( local ).obj();
+                if( ter_below.roof ) {
+                    sub_here->set_ter( local, ter_below.roof.id() );
+                    changed = true;
+                }
+            }
+
+            if( changed ) {
+                mark_post_pass_changed( *sub_here );
+            }
+        }
+    }
 }
 
 auto mapbuffer::actualize_submap( const tripoint_abs_sm &pos ) -> void
