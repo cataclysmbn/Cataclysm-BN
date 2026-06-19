@@ -5602,6 +5602,9 @@ units::mass item::weight( bool include_contents, bool integral ) const
         if( !magazine_integral() && magazine_current() ) {
             ret += std::max( magazine_current()->weight(), 0_gram );
         }
+
+        // clamp: prevent negative/zero weight from aggressive mod combinations
+        ret = std::max( ret, type->weight / 100 );
     } else if( include_contents ) {
         ret += contents.item_weight_modifier();
     }
@@ -5716,19 +5719,33 @@ units::volume item::volume( bool integral ) const
     }
 
     if( is_gun() ) {
+        // apply volume multipliers from gunmods (multiplicative, before additive)
+        for( const item *mod : gunmods() ) {
+            ret *= mod->type->gunmod->volume_multiplier;
+        }
+
         for( const item *elem : gunmods() ) {
             ret += elem->volume( true );
         }
 
-        // TODO: implement stock_length property for guns
+        // Deprecated: COLLAPSIBLE_STOCK flag (replaced by volume_multiplier above)
+        // Only applies when no gunmod uses the modern volume_multiplier mechanism
         if( has_flag( flag_COLLAPSIBLE_STOCK ) ) {
-            // consider only the base size of the gun (without mods)
-            ret -= ( type->volume / 3 );
+            bool has_modern_mult = std::any_of( gunmods().begin(), gunmods().end(),
+            []( const item *mod ) {
+                return mod->type->gunmod->volume_multiplier != 1.0f;
+            } );
+            if( !has_modern_mult ) {
+                ret -= ( type->volume / 3 );
+            }
         }
 
         if( gunmod_find( itype_barrel_small ) ) {
             ret -= type->gun->barrel_volume;
         }
+
+        // clamp: prevent negative/zero volume from aggressive mod combinations
+        ret = std::max( ret, type->volume / 100 );
     }
 
     return ret;

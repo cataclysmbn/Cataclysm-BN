@@ -29,8 +29,8 @@
 "phase": "solid",                            // (Optional, default = "solid") What phase it is
 "weight": "350 g",                           // Weight, weight in grams, mg and kg can be used - "50 mg", "5 g" or "5 kg". For stackable items (ammo, comestibles) this is the weight per charge.
 "volume": "250 ml",                          // Volume, volume in ml and L can be used - "50 ml" or "2 L". For stackable items (ammo, comestibles) this is the volume of stack_size charges.
-"integral_volume": 0,                        // Volume added to base item when item is integrated into another (eg. a gunmod integrated to a gun). Volume in ml and L can be used - "50 ml" or "2 L".
-"integral_weight": 0,                        // Weight added to base item when item is integrated into another (eg. a gunmod integrated to a gun)
+"integral_volume": 0,                        // Volume added to base item when item is integrated into another (eg. a gunmod integrated to a gun). Volume in ml and L can be used - "50 ml" or "2 L". Can be negative to reduce parent volume. Clamped at 1% of parent base volume.
+"integral_weight": 0,                        // Weight added to base item when item is integrated into another (eg. a gunmod integrated to a gun). Can be negative to reduce parent weight. Clamped at 1% of parent base weight.
 "rigid": false,                              // For non-rigid items volume (and for worn items encumbrance) increases proportional to contents
 "insulation": 1,                             // (Optional, default = 1) If container or vehicle part, how much insulation should it provide to the contents
 "price": 100,                                // Used when bartering with NPCs. For stackable items (ammo, comestibles) this is the price for stack_size charges. Can use string "cent" "USD" or "kUSD".
@@ -614,6 +614,8 @@ Gun mods can be defined like this:
 "ammo_to_fire_multiplier": 2.5, // Optional field increasing or decreasing main ammo consumed per shot by multiplying by given value
 "reload_modifier": -10,        // Optional field increasing or decreasing base gun reload time in percent
 "min_str_required_mod": 14,    // Optional field increasing or decreasing minimum strength required to use gun
+"weight_multiplier": 0.75,     // Optional field increasing or decreasing the weight of the parent gun by multiplying. 1.0 means no change, 0.75 means 25% lighter.
+"volume_multiplier": 0.67,     // Optional field increasing or decreasing the volume of the parent gun by multiplying. 1.0 means no change, 0.67 means ~33% reduction. Replaces the deprecated COLLAPSIBLE_STOCK flag.
 ```
 
 Alternately, every item (book, tool, armor, even food) can be used as a gunmod if it has
