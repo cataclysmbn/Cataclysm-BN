@@ -1190,7 +1190,8 @@ vehicle *game::place_vehicle_nearby(
 
     // if player spawns underground, park their car on the surface.
     const tripoint_abs_omt omt_origin( origin, 0 );
-    for( const tripoint_abs_omt &goal : get_overmapbuffer( current_dimension_id_ ).find_all( omt_origin,
+    for( const tripoint_abs_omt &goal : get_overmapbuffer(
+                                        current_dimension_id_ ).find_all( omt_origin,
             find_params ) ) {
         // try place vehicle there.
         map target_map( 2 );
@@ -1220,7 +1221,8 @@ vehicle *game::place_vehicle_nearby(
 static auto npc_can_place_at_abs( mapbuffer &buffer, const tripoint_abs_ms &pos ) -> bool
 {
     const auto passable = buffer.passable( pos );
-    const auto player_blocks = buffer.get_dimension_id() == g->get_current_dimension_id() &&
+    const auto player_blocks = buffer.get_dimension_id() == 
+                               g->get_current_dimension_id() &&
                                g->u.abs_pos() == pos;
     return passable && *passable && !player_blocks &&
            buffer.creature_tracker().find( pos ) == nullptr &&
@@ -1313,8 +1315,10 @@ void game::load_npcs()
         };
 
         for( auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-            const tripoint_abs_sm center_z( request_center.raw().x, request_center.raw().y, z );
-            for( const auto &temp : overmap_buffer.get_npcs_near( center_z, search_distance ) ) {
+            const tripoint_abs_sm center_z( request_center.x(), 
+                                            request_center.y(), z );
+            for( const auto &temp : overmap_buffer.get_npcs_near( 
+                                    center_z, search_distance ) ) {
                 temp->set_dimension( req.dim_id );
                 const auto id = temp->getID();
                 const auto already_active = std::ranges::any_of( active_npc,

@@ -972,7 +972,8 @@ auto mapbuffer_bounds_view::get_submap_view( const point_rel_sm &offset,
 
 auto mapbuffer_bounds_view::is_complete() const -> bool
 {
-    return !indexed_submaps_.empty() && std::ranges::all_of( indexed_submaps_, []( const auto * sm ) {
+    return !indexed_submaps_.empty() && std::ranges::all_of(
+            indexed_submaps_, []( const auto * sm ) {
         return sm != nullptr;
     } );
 }
@@ -999,7 +1000,8 @@ auto mapbuffer_bounds_view::update( const point_abs_sm &begin,
 
     const auto width = static_cast<std::size_t>( size.x() );
     const auto height = static_cast<std::size_t>( size.y() );
-    indexed_submaps_.assign( width * height * static_cast<std::size_t>( OVERMAP_LAYERS ), nullptr );
+    indexed_submaps_.assign( width * height *
+                             static_cast<std::size_t>( OVERMAP_LAYERS ), nullptr );
 
     const auto max = point_abs_sm( end_.x() - 1, end_.y() - 1 );
     for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
@@ -1084,7 +1086,8 @@ auto mapbuffer_load_region::update( const point_abs_sm &begin,
     }
 
     if( handle_ == 0 ) {
-        handle_ = submap_loader.request_load( source_, buffer_->get_dimension_id(), begin_, end_ );
+        handle_ = submap_loader.request_load( source_,
+                  buffer_->get_dimension_id(), begin_, end_ );
     } else {
         submap_loader.update_request( handle_, begin_, end_ );
     }
