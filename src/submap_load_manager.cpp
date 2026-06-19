@@ -1,6 +1,7 @@
 #include "submap_load_manager.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <chrono>
 #include <cstddef>
@@ -243,33 +244,29 @@ auto submap_load_manager::rebuild_simulated_submaps_by_dimension(
 auto submap_load_manager::compute_lazy_border_omts() const -> horizontal_omt_set
 {
     ZoneScoped;
-    auto border_omts = horizontal_omt_set {};
+    auto lazy_omts = horizontal_omt_set {};
     std::ranges::for_each( requests_, [&]( const auto & kv ) {
         const auto &req = kv.second;
         if( req.source != load_request_source::lazy_border ) {
             return;
         }
-        // The lazy border is defined in OMT space: the current bubble's OMT
-        // footprint, expanded by one horizontal OMT in every direction.
+        // The request is already an explicit resident-only bounds. Round that
+        // rectangle outward to OMT columns so columns stay complete.
         const auto size = request_size( req );
         if( size.x() <= 0 || size.y() <= 0 ) {
             return;
         }
         const auto min_omt = project_to<coords::omt>( req.begin );
         const auto max_omt = project_to<coords::omt>( request_inclusive_end( req ) );
-        const auto x_range = std::views::iota( min_omt.x() - 1, max_omt.x() + 2 );
-        const auto y_range = std::views::iota( min_omt.y() - 1, max_omt.y() + 2 );
+        const auto x_range = std::views::iota( min_omt.x(), max_omt.x() + 1 );
+        const auto y_range = std::views::iota( min_omt.y(), max_omt.y() + 1 );
         std::ranges::for_each( cata::views::cartesian_product( x_range, y_range ),
         [&]( const auto pair ) {
             auto [x, y] = pair;
-            if( x >= min_omt.x() && x <= max_omt.x() &&
-                y >= min_omt.y() && y <= max_omt.y() ) {
-                return;
-            }
-            border_omts.emplace( req.dim_id, point_abs_omt{ x, y } );
+            lazy_omts.emplace( req.dim_id, point_abs_omt{ x, y } );
         } );
     } );
-    return border_omts;
+    return lazy_omts;
 }
 
 auto submap_load_manager::add_lazy_border_into( key_set &target,
@@ -614,15 +611,15 @@ auto submap_load_manager::lazy_omt_priority( const omt_column_key &key ) const -
         const auto max_omt = project_to<coords::omt>( request_inclusive_end( req ) );
 
         auto score = 0;
-        if( prioritize_x && lazy_omt_preload_direction_.x > 0 && omt_xy.x() > max_omt.x() ) {
+        if( prioritize_x && lazy_omt_preload_direction_.x > 0 && omt_xy.x() == max_omt.x() ) {
             score += 2;
-        } else if( prioritize_x && lazy_omt_preload_direction_.x < 0 && omt_xy.x() < min_omt.x() ) {
+        } else if( prioritize_x && lazy_omt_preload_direction_.x < 0 && omt_xy.x() == min_omt.x() ) {
             score += 2;
         }
 
-        if( prioritize_y && lazy_omt_preload_direction_.y > 0 && omt_xy.y() > max_omt.y() ) {
+        if( prioritize_y && lazy_omt_preload_direction_.y > 0 && omt_xy.y() == max_omt.y() ) {
             score += 2;
-        } else if( prioritize_y && lazy_omt_preload_direction_.y < 0 && omt_xy.y() < min_omt.y() ) {
+        } else if( prioritize_y && lazy_omt_preload_direction_.y < 0 && omt_xy.y() == min_omt.y() ) {
             score += 2;
         }
 
@@ -713,10 +710,21 @@ auto submap_load_manager::process_lazy_border_preload() -> void
         }
         return started;
     };
+    const auto has_priority_work_at_front = [&]() {
+        return !lazy_omt_jobs_.empty() &&
+               lazy_omt_priority( { lazy_omt_jobs_.front().first,
+                                    lazy_omt_jobs_.front().second.xy() } ) > 0;
+    };
+    const auto background_budget = [&]() {
+        if( lazy_omt_jobs_.empty() || has_priority_work_at_front() ) {
+            return std::size_t{ 0 };
+        }
+        return std::max( std::size_t{ 1 },
+                         divide_round_up_size( lazy_omt_jobs_.size(), lazy_border_steps_to_cross_omt ) );
+    };
 
     if( lazy_omt_preload_direction_ == point_zero ) {
-        auto budget = divide_round_up_size( queued, lazy_border_steps_to_cross_omt );
-        budget = std::max( std::size_t{ 1 }, budget );
+        const auto budget = background_budget();
         TracyPlot( "Lazy Border OMT Deadline",
                    static_cast<int64_t>( lazy_border_steps_to_cross_omt ) );
         TracyPlot( "Lazy Border Credit x1000", int64_t{ 0 } );
@@ -744,27 +752,32 @@ auto submap_load_manager::process_lazy_border_preload() -> void
     const auto deadline = lazy_omt_focus_
                           ? turns_to_omt_edge( lazy_omt_focus_->pos, lazy_omt_preload_direction_ )
                           : lazy_border_steps_to_cross_omt;
+    auto budget = std::size_t{ 0 };
+    auto started = std::size_t{ 0 };
     if( urgent == 0 ) {
         lazy_omt_budget_credit_ = 0.0;
-        TracyPlot( "Lazy Border OMT Deadline", static_cast<int64_t>( deadline ) );
-        TracyPlot( "Lazy Border Credit x1000", int64_t{ 0 } );
-        TracyPlot( "Lazy Border OMT Budget", int64_t{ 0 } );
-        TracyPlot( "Lazy Border Z Jobs Started", int64_t{ 0 } );
-        return;
+    } else {
+        lazy_omt_budget_credit_ += static_cast<double>( urgent ) / static_cast<double>( deadline );
+        const auto priority_budget = std::min( urgent,
+                                               static_cast<std::size_t>( lazy_omt_budget_credit_ ) );
+        lazy_omt_budget_credit_ -= static_cast<double>( priority_budget );
+        budget += priority_budget;
+        started += load_budget_matching( priority_budget, [&]( const omt_key & key ) {
+            return lazy_omt_priority( { key.first, key.second.xy() } ) > 0;
+        } );
     }
 
-    lazy_omt_budget_credit_ += static_cast<double>( urgent ) / static_cast<double>( deadline );
+    const auto remaining_budget = background_budget();
+    budget += remaining_budget;
+    started += load_budget_matching( remaining_budget, []( const omt_key & ) {
+        return true;
+    } );
 
-    auto budget = std::min( urgent, static_cast<std::size_t>( lazy_omt_budget_credit_ ) );
-    lazy_omt_budget_credit_ -= static_cast<double>( budget );
     TracyPlot( "Lazy Border OMT Deadline", static_cast<int64_t>( deadline ) );
     TracyPlot( "Lazy Border Credit x1000",
                static_cast<int64_t>( lazy_omt_budget_credit_ * 1000.0 ) );
     TracyPlot( "Lazy Border OMT Budget", static_cast<int64_t>( budget ) );
 
-    const auto started = load_budget_matching( budget, [&]( const omt_key & key ) {
-        return lazy_omt_priority( { key.first, key.second.xy() } ) > 0;
-    } );
     if( started > 0 ) {
         run_deferred_mapgen_hooks();
         flush_deferred_zones();
@@ -906,6 +919,15 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
         simulated = compute_desired_set();
         all_desired = simulated;
         lazy_border_omts = compute_lazy_border_omts();
+        std::erase_if( lazy_border_omts, [&]( const omt_column_key & key ) {
+            const auto &[dim_id, omt_xy] = key;
+            const auto sm_base = project_to<coords::sm>( omt_xy );
+            const auto omt_offsets = std::array{ point_zero, point_south, point_east,
+                                                 point_south_east };
+            return std::ranges::all_of( omt_offsets, [&]( const point & off ) {
+                return simulated.contains( { dim_id, sm_base + off } );
+            } );
+        } );
         add_lazy_border_into( all_desired, lazy_border_omts );
     }
 

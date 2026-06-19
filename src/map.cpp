@@ -536,6 +536,26 @@ auto map::refresh_active_submap_view() -> void
     } );
 }
 
+auto map::update_active_load_region( const point_abs_sm &begin,
+                                     const point_abs_sm &end ) -> void
+{
+    if( !active_load_region_ ) {
+        active_load_region_ = mapbuffer_load_region( {
+            .buffer = get_mapbuffer(),
+            .source = load_request_source::reality_bubble,
+            .begin = begin,
+            .end = end,
+        } );
+        return;
+    }
+    active_load_region_.update( begin, end );
+}
+
+auto map::release_active_load_region() -> void
+{
+    active_load_region_.release();
+}
+
 auto map::validate_active_submap_view_complete( const char *context ) const -> void
 {
     if( active_submaps_.is_complete() ) {

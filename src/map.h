@@ -1976,6 +1976,13 @@ class map : public submap_load_listener
             return active_submaps_.get_submap_view( pos );
         }
 
+        auto has_active_load_region() const -> bool {
+            return static_cast<bool>( active_load_region_ );
+        }
+        auto update_active_load_region( const point_abs_sm &begin,
+                                        const point_abs_sm &end ) -> void;
+        auto release_active_load_region() -> void;
+
         bool inbounds_z( const int z ) const {
             return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
         }
@@ -2211,6 +2218,7 @@ class map : public submap_load_listener
          */
         point_abs_sm abs_sub;
         mapbuffer_bounds_view active_submaps_;
+        mapbuffer_load_region active_load_region_;
 
         auto set_abs_sub( const point_abs_sm &p ) -> void {
             abs_sub = p;

@@ -511,13 +511,16 @@ TEST_CASE( "mapbuffer_simulated_lookup_uses_load_manager_membership" )
     } );
     auto *const sm = add_absolute_test_submap( buffer, sm_pos, ter_id( "t_rock" ) );
     REQUIRE( sm != nullptr );
+    const auto request_begin = sm_pos.xy();
+    const auto request_end = request_begin + point_rel_sm( 1, 1 );
 
     const auto lazy_handle = submap_loader.request_load( load_request_source::lazy_border,
-                             dim_id, sm_pos.xy(), 0 );
+                             dim_id, request_begin, request_end );
     CHECK( buffer.get_submap( sm_pos ) == nullptr );
     submap_loader.release_load( lazy_handle );
 
-    full_handle = submap_loader.request_load( load_request_source::script, dim_id, sm_pos.xy(), 0 );
+    full_handle = submap_loader.request_load( load_request_source::script, dim_id, request_begin,
+                  request_end );
     CHECK( buffer.get_submap( sm_pos ) == sm );
 }
 

@@ -314,7 +314,18 @@ class mapbuffer_bounds_view
 class mapbuffer_load_region
 {
     public:
+        struct options {
+            mapbuffer &buffer;
+            load_request_source source = load_request_source::script;
+            point_abs_sm begin;
+            point_abs_sm end;
+            mapbuffer_lookup_options lookup = {
+                .mode = mapbuffer_lookup_mode::resident_only
+            };
+        };
+
         mapbuffer_load_region() = default;
+        explicit mapbuffer_load_region( const options &opts );
         mapbuffer_load_region( mapbuffer &buffer,
                                load_request_source source,
                                const point_abs_sm &begin,
@@ -333,6 +344,9 @@ class mapbuffer_load_region
         auto update( const point_rel_sm &offset ) -> void;
         auto refresh_view() -> void;
         auto release() -> void;
+        explicit operator bool() const {
+            return handle_ != 0;
+        }
 
         auto view() const -> const mapbuffer_bounds_view & {
             return view_;

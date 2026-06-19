@@ -1037,6 +1037,14 @@ mapbuffer_load_region::mapbuffer_load_region( mapbuffer &buffer,
     update( begin, end );
 }
 
+mapbuffer_load_region::mapbuffer_load_region( const options &opts ) :
+    buffer_( &opts.buffer ),
+    source_( opts.source ),
+    options_( opts.lookup )
+{
+    update( opts.begin, opts.end );
+}
+
 mapbuffer_load_region::~mapbuffer_load_region()
 {
     release();
