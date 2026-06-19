@@ -5230,7 +5230,7 @@
     "points": 2,
     "visibility": 7,
     "ugliness": 6,
-    "description": "Your body is coated with a fine slime.  Protects from long-term effects of acid, though not short-term ones.  Greatly increases wet benefits.",
+    "description": "Your body is coated with a fine slime.  Protects from long-term effects of acid, though not short-term ones. It also protects from other sources of slime.  Greatly increases wet benefits.",
     "leads_to": [ "SLIME_HANDS" ],
     "changes_to": [ "VISCOUS" ],
     "category": [ "FISH", "SLIME", "TROGLOBITE", "CEPHALOPOD" ],
@@ -5245,7 +5245,8 @@
       { "part": "hand_l", "neutral": 2, "good": 3 },
       { "part": "hand_r", "neutral": 2, "good": 3 },
       { "part": "torso", "neutral": 14, "good": 26 }
-    ]
+    ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "immune_fields": [ "fd_slime" ] } ]
   },
   {
     "type": "mutation",

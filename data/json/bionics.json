@@ -352,7 +352,9 @@
     "occupied_bodyparts": [ [ "torso", 5 ] ],
     "points": 3,
     "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ],
-    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "CONSUME_UNCLEAN", "FOOD_PARASITE_IMMUNE", "FOOD_POISION_IMMUNE" ] } ]
+    "bio_enchantments": [
+      { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "CONSUME_UNCLEAN", "FOOD_PARASITE_IMMUNE", "FOOD_POISION_IMMUNE" ] }
+    ]
   },
   {
     "id": "bio_dis_acid",
@@ -626,7 +628,8 @@
     "act_cost": "1 kJ",
     "react_cost": "1 kJ",
     "time": 1,
-    "points": 2
+    "points": 2,
+    "bio_enchantments": [ { "condition": "ACTIVE", "flags": [ "FIRE_FIELD_IMMUNE" ] } ]
   },
   {
     "id": "bio_hydraulics",

@@ -175,6 +175,15 @@
   },
   {
     "type": "GENERIC",
+    "id": "test_socks_of_toxicity",
+    "copy-from": "test_socks",
+    "name": "TEST relic character armor mod",
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "immune_effects": [ "antitoxin" ] } ]
+    }
+  },
+  {
+    "type": "GENERIC",
     "id": "test_relic_item_armor_mod",
     "copy-from": "test_hazmat_suit",
     "name": "TEST relic item armor mod",

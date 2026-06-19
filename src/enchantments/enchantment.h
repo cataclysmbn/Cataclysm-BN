@@ -4,6 +4,7 @@
 #include "magic.h"
 #include "type_id.h"
 
+#include <iomanip>
 #include <map>
 #include <optional>
 #include <string>
@@ -96,6 +97,10 @@ public:
 
     const std::set<trait_id>& get_mutations() const { return mutations; }
 
+    bool is_immune_effect(const efftype_id& eff) const { return immune_effects.contains(eff); }
+
+    bool is_immune_field(const field_type_id& fd) const { return immune_fields.contains(fd); }
+
     bool operator==(const enchantment& rhs) const;
 
     static void check_consistency();
@@ -121,6 +126,10 @@ private:
     std::map<time_duration, std::vector<fake_spell>> intermittent_activation;
 
     std::pair<has, condition> active_conditions;
+
+    std::set<efftype_id> immune_effects;
+
+    std::set<field_type_id> immune_fields;
 
     std::set<enchantment_flag_id> flags;
 

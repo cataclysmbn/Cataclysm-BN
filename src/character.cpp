@@ -7030,6 +7030,10 @@ bool Character::is_immune_field( const field_type_id &fid ) const
     if( has_trait( trait_DEBUG_NODMG ) ) {
         return true;
     }
+    if( enchantment_cache->is_immune_field( fid ) ) {
+        return true;
+    }
+
     // Check to see if we are immune
     const field_type &ft = fid.obj();
     for( const trait_id &t : ft.immunity_data_traits ) {
@@ -7049,7 +7053,7 @@ bool Character::is_immune_field( const field_type_id &fid ) const
         return is_elec_immune();
     }
     if( ft.has_fire ) {
-        return has_active_bionic( bio_heatsink ) || is_wearing( itype_rm13_armor_on );
+        return has_enchantment_flag( enchantment_flag_id( "FIRE_FIELD_IMMUNE" ) );
     }
     if( ft.has_acid ) {
         return !is_on_ground() && get_env_resist( bodypart_id( "foot_l" ) ) >= 15 &&
@@ -7072,6 +7076,10 @@ bool Character::is_elec_immune() const
 
 bool Character::is_immune_effect( const efftype_id &eff ) const
 {
+    if( enchantment_cache->is_immune_effect( eff ) ) {
+        return true;
+    }
+
     if( eff == effect_downed ) {
         return is_throw_immune() || ( has_trait( trait_LEG_TENT_BRACE ) && footwear_factor() == 0 );
     } else if( eff == effect_onfire ) {

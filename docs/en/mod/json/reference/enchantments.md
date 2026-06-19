@@ -190,6 +190,18 @@ For all basegame values see [here](#Basegame-Enchantment-Value-ID-List)
 
 For all basegame values see [here](#Basegame-Enchantment-Flag-ID-List)
 
+### Immune Effects
+
+(array) of effect_type_id values
+
+Prevents recieving these effects, but any present effects will persist
+
+### Immune Fields
+
+(array) of field_type_id values
+
+Prevents environmental effects of fields from being applied
+
 ## Examples
 
 ```json
@@ -228,7 +240,10 @@ For all basegame values see [here](#Basegame-Enchantment-Flag-ID-List)
           ]
         }
       ]
-    }
+    },
+    "flags": ["FOOD_POISION_IMMUNE"],
+    "immune_fields": ["fd_fire"],
+    "immune_effects": ["poison"]
   }
 ]
 ```
@@ -614,3 +629,7 @@ Gives the effects of having a themometer
 ##### WATCH
 
 Gives the ability to see the precise time
+
+##### FIRE_FIELD_IMMUNE
+
+Provides immunity to fire fields.

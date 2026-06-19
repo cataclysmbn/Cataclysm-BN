@@ -952,3 +952,25 @@ TEST_CASE( "Armor enchantments", "[magic][enchantment][armor]" )
         }
     }
 }
+
+TEST_CASE( "Effect Immunity Enchantments", "[magic][enchantment][effects]" )
+{
+    clear_all_state();
+    Character &guy = get_player_character();
+    clear_character( *guy.as_player(), true );
+
+    auto antitoxin = efftype_id( "antitoxin" );
+    REQUIRE( !guy.has_effect( antitoxin ) );
+
+    SECTION( "Armor item with enchantment that prevents gaining antitoxin effect" ) {
+        wear_item( guy, "test_socks_of_toxicity" );
+
+        guy.add_effect( antitoxin, 1_turns , bodypart_str_id::NULL_ID());
+        CHECK( !guy.has_effect( antitoxin ) );
+    }
+
+    SECTION( "Lacking armor item antitoxin effect is gained" ) {
+        guy.add_effect( antitoxin, 1_turns , bodypart_str_id::NULL_ID());
+        CHECK( guy.has_effect( antitoxin ) );
+    }
+}

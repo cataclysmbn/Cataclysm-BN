@@ -69,5 +69,9 @@
   {
     "id": "WATCH",
     "type": "enchantment_flag"
+  },
+  {
+    "id": "FIRE_FIELD_IMMUNE",
+    "type": "enchantment_flag"
   }
 ]

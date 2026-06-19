@@ -177,6 +177,8 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
 
     optional(jo, was_loaded, "mutations", mutations);
     optional(jo, was_loaded, "flags", flags);
+    optional(jo, was_loaded, "immune_effects", immune_effects);
+    optional(jo, was_loaded, "immune_fields", immune_fields);
 
     if (jo.has_array("values")) {
         for (const JsonObject value_obj : jo.get_array("values")) {
@@ -291,6 +293,9 @@ void enchantment::force_add(const enchantment& rhs) {
         .insert(hit_you_effect.end(), rhs.hit_you_effect.begin(), rhs.hit_you_effect.end());
 
     ench_effects.insert(rhs.ench_effects.begin(), rhs.ench_effects.end());
+
+    immune_effects.insert(rhs.immune_effects.begin(), rhs.immune_effects.end());
+    immune_fields.insert(rhs.immune_fields.begin(), rhs.immune_fields.end());
 
     if (rhs.emitter) { emitter = rhs.emitter; }
 
