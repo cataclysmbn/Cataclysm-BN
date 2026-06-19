@@ -981,7 +981,7 @@ TEST_CASE( "Enchantment Cancels Flags", "[magic][enchantment][flags]" )
     Character &guy = get_player_character();
     clear_character( *guy.as_player(), true );
 
-    const auto& nearsighted = enchantment_flag_id( "NEARSIGHTED");
+    const auto &nearsighted = enchantment_flag_id( "NEARSIGHTED" );
     REQUIRE( !guy.has_enchantment_flag( nearsighted ) );
 
     WHEN( "Character receives nearsight relic" ) {
@@ -1003,7 +1003,7 @@ TEST_CASE( "Enchantment Cancels Flags", "[magic][enchantment][flags]" )
                 AND_WHEN( "They gain three fix nearsight relics" ) {
                     wear_item( guy, "test_socks_of_anti_nearsight" );
                     THEN( "They have fix nearsight" ) {
-                        REQUIRE( guy.has_enchantment_flag( enchantment_flag_id( "FIX_NEARSIGHTED") ) );
+                        REQUIRE( guy.has_enchantment_flag( enchantment_flag_id( "FIX_NEARSIGHTED" ) ) );
                     }
                 }
             }
