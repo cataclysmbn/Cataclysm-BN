@@ -1626,7 +1626,7 @@
     ]
   },
   {
-    "id": "nested_m71",
+    "id": "nested_rm71",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
