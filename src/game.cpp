@@ -13117,7 +13117,7 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
         m.clear_vehicle_list( z );
     }
-    m.access_cache( get_levz() ).map_memory_seen_cache.reset();
+    m.set_memory_seen_cache_dirty( get_levz() );
     // offset because load_map expects the coordinates of the top left corner, but the
     // player will be centered in the middle of the map.
     // TODO: fix point types
@@ -14701,8 +14701,8 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         player.load_map_memory();
 
         {
-            for( auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-                here.access_cache( z ).map_memory_seen_cache.reset();
+            for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+                here.set_memory_seen_cache_dirty( z );
                 here.invalidate_map_cache( z );
             }
         }

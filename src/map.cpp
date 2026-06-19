@@ -8541,6 +8541,8 @@ void map::shift( const point_rel_sm &sp )
                 ZoneScopedN( "shift_memory_seen_cache" );
                 auto &gc = get_cache( gridz );
                 shift_bitset_cache( gc.map_memory_seen_cache, gc.cache_x, SEEX, sp );
+                gc.map_memory_seen_cache_dirty_points.clear();
+                gc.map_memory_seen_cache_dirty_all = true;
             }
             {
                 ZoneScopedN( "shift_prerequisite_caches" );
@@ -10907,8 +10909,42 @@ void map::set_memory_seen_cache_dirty( const tripoint_bub_ms &p )
     level_cache &ch = get_cache( p.z() );
     const int offset = p.x() + p.y() * ch.cache_x;
     if( offset >= 0 && offset < ch.cache_x * ch.cache_y ) {
-        ch.map_memory_seen_cache.reset( static_cast<size_t>( offset ) );
+        const auto bit = static_cast<size_t>( offset );
+        if( ch.map_memory_seen_cache[bit] ) {
+            ch.map_memory_seen_cache.reset( bit );
+            if( !ch.map_memory_seen_cache_dirty_all ) {
+                ch.map_memory_seen_cache_dirty_points.push_back( p );
+            }
+        }
     }
+}
+
+auto map::set_memory_seen_cache_dirty( const int zlev ) -> void
+{
+    level_cache &ch = get_cache( zlev );
+    ch.map_memory_seen_cache.reset();
+    ch.map_memory_seen_cache_dirty_points.clear();
+    ch.map_memory_seen_cache_dirty_all = true;
+}
+
+auto map::is_memory_seen_cache_dirty_all( const int zlev ) const -> bool
+{
+    return get_cache( zlev ).map_memory_seen_cache_dirty_all;
+}
+
+auto map::take_memory_seen_cache_dirty_points( const int zlev ) -> std::vector<tripoint_bub_ms>
+{
+    level_cache &ch = get_cache( zlev );
+    auto dirty_points = std::move( ch.map_memory_seen_cache_dirty_points );
+    ch.map_memory_seen_cache_dirty_points.clear();
+    return dirty_points;
+}
+
+auto map::mark_memory_seen_cache_dirty_all_clean( const int zlev ) -> void
+{
+    level_cache &ch = get_cache( zlev );
+    ch.map_memory_seen_cache_dirty_all = false;
+    ch.map_memory_seen_cache_dirty_points.clear();
 }
 
 void map::clip_to_bounds( point_bub_ms &p ) const

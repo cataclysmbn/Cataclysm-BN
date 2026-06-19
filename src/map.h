@@ -446,6 +446,8 @@ struct level_cache {
 
     // per-tile map-memory seen bitset (size: cache_x * cache_y), indexed [x + y * cache_x]
     cata_dynamic_bitset             map_memory_seen_cache;
+    std::vector<tripoint_bub_ms>     map_memory_seen_cache_dirty_points;
+    bool                            map_memory_seen_cache_dirty_all = true;
 
     bool veh_in_active_range = false;
     std::vector<bool>               veh_exists_at;
@@ -837,6 +839,10 @@ class map : public submap_load_listener
         /*@}*/
 
         void set_memory_seen_cache_dirty( const tripoint_bub_ms &p );
+        auto set_memory_seen_cache_dirty( int zlev ) -> void;
+        auto is_memory_seen_cache_dirty_all( int zlev ) const -> bool;
+        auto take_memory_seen_cache_dirty_points( int zlev ) -> std::vector<tripoint_bub_ms>;
+        auto mark_memory_seen_cache_dirty_all_clean( int zlev ) -> void;
 
         void invalidate_map_cache( const int zlev );
 
