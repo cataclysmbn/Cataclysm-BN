@@ -3172,11 +3172,29 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
         const auto already_drawn = half_open_rectangle<point>(
                                        point( min_col, min_row ), point( max_col, max_row ) );
+        const auto scan_distance_table = trigdist ?
+                                         &get_rl_dist_lookup_table( rl_dist_lookup_table_dimensions{
+            .max_dx = std::max( std::abs( min_visible_x - center.x() ),
+                                std::abs( max_visible_x - center.x() ) ),
+            .max_dy = std::max( std::abs( min_visible_y - center.y() ),
+                                std::abs( max_visible_y - center.y() ) ),
+            .max_dz = 0,
+            .trigdist = trigdist,
+        } ) :
+                                         nullptr;
         offscreen_memory_points.clear();
         offscreen_memory_points.reserve( static_cast<size_t>( ( max_visible_x - min_visible_x + 1 ) *
                                          ( max_visible_y - min_visible_y + 1 ) ) );
         for( const auto mem_y : std::views::iota( min_visible_y, max_visible_y + 1 ) ) {
+            const auto dy = std::abs( mem_y - center.y() );
             for( const auto mem_x : std::views::iota( min_visible_x, max_visible_x + 1 ) ) {
+                const auto dx = std::abs( mem_x - center.x() );
+                const auto dist = scan_distance_table != nullptr ?
+                                  scan_distance_table->distance_2d( dx, dy ) :
+                                  std::max( dx, dy );
+                if( dist > g_max_view_distance ) {
+                    continue;
+                }
                 if( iso_mode ) {
                     // calculate the screen position according to the drawing code above (division rounded down):
 
@@ -3989,7 +4007,12 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             if( !should_refresh_memory ) {
                 auto connect_group = 0;
                 const auto &terrain = here.ter( p );
-                connecting_refresh = terrain && terrain.obj().connects( connect_group );
+                const auto adjacent_memory_dirty = std::ranges::any_of( neighborhood, [&]( const point & dir ) {
+                    const auto np = p + dir;
+                    return here.inbounds( np ) && here.check_seen_cache( np );
+                } );
+                connecting_refresh = adjacent_memory_dirty && terrain &&
+                                     terrain.obj().connects( connect_group );
                 should_refresh_memory = connecting_refresh;
             }
             if( !should_refresh_memory ) {
