@@ -335,8 +335,8 @@ TEST_CASE( "Preserving containers stop contained food rot" )
         namespace ranges = std::ranges;
         using namespace std::views;
         auto nested_food = outer->contents.all_items_ptr()
-                           | filter( []( const item *it ) { return it->typeId() == itype_id( "sashimi" ); } )
-                           | ranges::to<std::vector>();
+        | filter( []( const item * it ) { return it->typeId() == itype_id( "sashimi" ); } )
+        | ranges::to<std::vector>();
         REQUIRE( nested_food.size() == 1 );
         CHECK( nested_food.front()->get_rot() > 0_turns );
     }
@@ -550,8 +550,8 @@ TEST_CASE( "Vehicle storage temperature controls food rot" )
         namespace ranges = std::ranges;
         using namespace std::views;
         auto nested_food = remaining.only_item().contents.all_items_ptr()
-                           | filter( []( const item *it ) { return it->typeId() == itype_id( "sashimi" ); } )
-                           | ranges::to<std::vector>();
+        | filter( []( const item * it ) { return it->typeId() == itype_id( "sashimi" ); } )
+        | ranges::to<std::vector>();
         REQUIRE( nested_food.size() == 1 );
         CHECK( nested_food.front()->get_rot() == 0_turns );
         CHECK( !nested_food.front()->rotten() );

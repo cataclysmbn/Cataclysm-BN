@@ -10948,25 +10948,28 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
     const bool seals = self->type->container && self->type->container->seals;
     item &obj = *self;
 
-    std::function<detached_ptr<item>( detached_ptr<item> &&, bool, bool )> process_content =
+    std::function < detached_ptr<item>( detached_ptr<item> &&, bool, bool ) > process_content =
         [&]( detached_ptr<item> &&it, const bool parent_preserves,
-             const bool parent_seals ) -> detached_ptr<item> {
-        if( !it ) {
+    const bool parent_seals ) -> detached_ptr<item> {
+        if( !it )
+        {
             return std::move( it );
         }
 
         const bool content_preserves = parent_preserves ||
-                                       ( it->type->container && it->type->container->preserves );
+        ( it->type->container && it->type->container->preserves );
         const bool content_seals = parent_seals ||
-                                   ( it->type->container && it->type->container->seals );
+        ( it->type->container && it->type->container->seals );
 
         auto content_processing_items = std::vector<cache_reference<item>> {};
-        for( item *const content_item : it->contents.processing_items() ) {
+        for( item *const content_item : it->contents.processing_items() )
+        {
             if( content_item != nullptr ) {
                 content_processing_items.emplace_back( *content_item );
             }
         }
-        for( const cache_reference<item> &content_item : content_processing_items ) {
+        for( const cache_reference<item> &content_item : content_processing_items )
+        {
             if( !content_item ) {
                 continue;
             }
@@ -10975,7 +10978,8 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
             } );
         }
 
-        if( content_preserves ) {
+        if( content_preserves )
+        {
             it->last_rot_check = calendar::turn;
         }
         return process_internal( std::move( it ), carrier, pos, activate, content_seals, flag,
