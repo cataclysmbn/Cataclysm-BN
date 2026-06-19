@@ -40,7 +40,7 @@ namespace
 {
 
 struct dimension_travel_options {
-    std::string dimension_id;
+    dimension_id dim_id;
     tripoint_abs_omt target_omt;
     std::optional<std::string> world_type;
     std::optional<tripoint_abs_omt> bounds_min_omt;
@@ -101,7 +101,7 @@ auto get_dimension_entry_point( const tripoint_abs_omt &target_omt ) -> tripoint
 auto parse_dimension_travel_options( const sol::table &opts ) -> dimension_travel_options
 {
     return {
-        .dimension_id = opts.get_or( "dimension_id", std::string{} ),
+        .dim_id = dimension_id( opts.get_or( "dimension_id", std::string{} ) ),
         .target_omt = read_optional_abs_omt( opts, "target_omt" ).value_or( tripoint_abs_omt( tripoint_zero ) ),
         .world_type = read_optional_string( opts, "world_type" ),
         .bounds_min_omt = read_optional_abs_omt( opts, "bounds_min_omt" ),
@@ -185,10 +185,10 @@ std::function<void()>
     const auto special_id = overmap_special_id( *opts.pregen_special_id );
 
     const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
-    const auto dimension_id = opts.dimension_id;
+    const auto dim_id = opts.dim_id;
 
-    return [dimension_id, special_id, special_omt]() {
-        auto &dim_omb = get_overmapbuffer( dimension_id );
+    return [dim_id, special_id, special_omt]() {
+        auto &dim_omb = get_overmapbuffer( dim_id );
         auto global_location = dim_omb.get_om_global( special_omt );
         overmap &om = *global_location.om;
         om.place_special_forced( special_id, global_location.local, om_direction::type::north );
@@ -214,13 +214,13 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
 
     const auto preload_callback = build_dimension_preload_callback( opts );
     const auto load_pos = get_dimension_load_position( opts.target_omt );
-    if( !g->travel_to_dimension( opts.dimension_id, world_type, pocket_data, load_pos,
+    if( !g->travel_to_dimension( opts.dim_id, world_type, pocket_data, load_pos,
                                  preload_callback ) ) {
         return false;
     }
 
     auto &avatar = get_avatar();
-    const auto target_local = get_map().abs_to_bub( get_dimension_entry_point( opts.target_omt ) );
+    const auto target_local = abs_to_bub( get_dimension_entry_point( opts.target_omt ) );
     avatar.setpos( find_safe_spawn( target_local ) );
     g->update_map( avatar );
     return true;
@@ -256,7 +256,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "Teleports player to local coordinates within active map" );
     luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
     DOC( "Returns the current dimension id. Empty string means the overworld." );
-    luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id(); } );
+    luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id().str(); } );
     DOC( "Moves the player into another dimension and loads the destination around the requested OMT." );
     luna::set_fx( lib, "place_player_dimension_at", []( sol::table opts ) -> bool {
         return place_player_dimension_at( parse_dimension_travel_options( opts ) );

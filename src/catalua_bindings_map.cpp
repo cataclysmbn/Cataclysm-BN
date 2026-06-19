@@ -360,9 +360,13 @@ void cata::detail::reg_map( sol::state &lua )
             return abs_to_bub( pos );
         } ) );
         DOC( "Returns the dimension id currently bound to this map. Empty string means the overworld." );
-        luna::set_fx( ut, "get_bound_dimension", &map::get_bound_dimension );
+        luna::set_fx( ut, "get_bound_dimension", []( const map & m ) -> std::string {
+            return m.get_bound_dimension().str();
+        } );
         DOC( "Returns whether a local map position lies outside the current dimension bounds." );
-        luna::set_fx( ut, "is_out_of_bounds", &map::is_out_of_bounds );
+        luna::set_fx( ut, "is_out_of_bounds", []( const map & m, const tripoint_bub_ms & p ) -> bool {
+            return is_outside_pocket_dimension_bounds( m.get_pocket_info(), map_local_to_abs( m, p ) );
+        } );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );
