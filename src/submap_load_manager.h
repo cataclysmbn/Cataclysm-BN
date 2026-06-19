@@ -353,7 +353,7 @@ class submap_load_manager
         auto add_lazy_border_into( key_set &target,
                                    const horizontal_omt_set &border_omts ) const -> void;
 
-        auto current_reality_bubble_half_width() const -> int;
+        auto current_lazy_border_omt_count() const -> std::size_t;
         auto retained_omt_soft_cap() const -> std::size_t;
         auto retained_omt_hard_cap() const -> std::size_t;
         auto retained_omt_panic_cap() const -> std::size_t;

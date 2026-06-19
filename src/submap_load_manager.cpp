@@ -30,8 +30,6 @@
 
 namespace
 {
-static constexpr auto retained_omt_min_soft_cap = std::size_t { 16 };
-static constexpr auto retained_omt_soft_scale = std::size_t { 4 };
 static constexpr auto retained_omt_hard_scale = std::size_t { 2 };
 static constexpr auto retained_omt_panic_scale = std::size_t { 4 };
 static constexpr auto retained_omt_max_budget_scale = std::size_t { 8 };
@@ -282,26 +280,16 @@ auto submap_load_manager::add_lazy_border_into( key_set &target,
     } );
 }
 
-auto submap_load_manager::current_reality_bubble_half_width() const -> int
+auto submap_load_manager::current_lazy_border_omt_count() const -> std::size_t
 {
-    auto half_width = 0;
-    std::ranges::for_each( requests_, [&]( const auto & kv ) {
-        const auto &req = kv.second;
-        if( req.source == load_request_source::reality_bubble ) {
-            const auto size = request_size( req );
-            half_width = std::max( half_width, std::max( size.x(), size.y() ) / 2 );
-        }
-    } );
-    return half_width;
+    return compute_lazy_border_omts().size();
 }
 
 auto submap_load_manager::retained_omt_soft_cap() const -> std::size_t
 {
-    const auto half_width = static_cast<std::size_t>( std::max( 0, current_reality_bubble_half_width() ) );
-    const auto base_cap = std::max( retained_omt_min_soft_cap, half_width * retained_omt_soft_scale );
-    const auto multiplier = static_cast<std::size_t>(
-                                std::clamp( retained_omt_cache_multiplier, 1, 20 ) + 1 );
-    return divide_round_up_size( base_cap * multiplier, 2 );
+    const auto cache_length = static_cast<std::size_t>(
+                                  std::clamp( retained_omt_cache_length, 1, 20 ) );
+    return cache_length * cache_length + current_lazy_border_omt_count();
 }
 
 auto submap_load_manager::retained_omt_hard_cap() const -> std::size_t
@@ -316,8 +304,9 @@ auto submap_load_manager::retained_omt_panic_cap() const -> std::size_t
 
 auto submap_load_manager::retained_omt_base_budget() const -> std::size_t
 {
-    const auto half_width = static_cast<std::size_t>( std::max( 0, current_reality_bubble_half_width() ) );
-    return std::max( std::size_t{ 1 }, half_width / 6 );
+    const auto cache_length = static_cast<std::size_t>(
+                                  std::clamp( retained_omt_cache_length, 1, 20 ) );
+    return std::max( std::size_t{ 1 }, cache_length / 2 );
 }
 
 auto submap_load_manager::retain_omt( const omt_column_key &key ) -> void
@@ -380,14 +369,20 @@ auto submap_load_manager::process_retained_omt_eviction() -> void
     const auto retained = retained_omt_index_.size();
     TracyPlot( "Retained OMT Columns", static_cast<int64_t>( retained ) );
 
-    const auto soft_cap = retained_omt_soft_cap();
+    const auto cache_length = static_cast<std::size_t>(
+                                  std::clamp( retained_omt_cache_length, 1, 20 ) );
+    const auto lazy_border_cap_add = current_lazy_border_omt_count();
+    const auto soft_cap = cache_length * cache_length + lazy_border_cap_add;
+    const auto hard_cap = soft_cap * retained_omt_hard_scale;
+    const auto panic_cap = hard_cap * retained_omt_panic_scale;
+    TracyPlot( "Retained OMT Soft Cap", static_cast<int64_t>( soft_cap ) );
+    TracyPlot( "Retained OMT Lazy Border Cap Add",
+               static_cast<int64_t>( lazy_border_cap_add ) );
     if( retained <= soft_cap ) {
         TracyPlot( "Retained OMT Evict Budget", int64_t{ 0 } );
         return;
     }
 
-    const auto hard_cap = retained_omt_hard_cap();
-    const auto panic_cap = retained_omt_panic_cap();
     auto budget = retained_omt_base_budget();
     if( retained > panic_cap ) {
         budget = retained - hard_cap;
