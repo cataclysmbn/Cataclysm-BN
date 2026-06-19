@@ -588,7 +588,7 @@
       { "group": "nested_m110a1", "prob": 50 },
       { "group": "nested_acr_300blk", "prob": 15 },
       { "group": "nested_m7", "prob": 15 },
-      { "group": "nested_m71", "prob": 15 },
+      { "group": "nested_rm71", "prob": 15 },
       { "group": "nested_m250", "prob": 10 }
     ]
   },
