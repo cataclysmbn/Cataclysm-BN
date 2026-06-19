@@ -86,6 +86,7 @@
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
+#include "spell_targeting.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "text_snippets.h"
@@ -4735,10 +4736,7 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
 
             if( !trajectory.empty() ) {
                 target = trajectory.back();
-                target_is_valid = spell_being_cast.is_valid_target( *p, target );
-                if( !( spell_being_cast.is_valid_target( target_ground ) || p->sees( target ) ) ) {
-                    target_is_valid = false;
-                }
+                target_is_valid = spell_target_can_be_resolved( spell_being_cast, *p, target );
             } else {
                 target_is_valid = false;
             }

@@ -10,6 +10,7 @@
 #include "map.h"
 #include "monster.h"
 #include "ranged.h"
+#include "spell_targeting.h"
 
 #include "player_helpers.h"
 #include "map_helpers.h"
@@ -157,9 +158,7 @@ TEST_CASE( "hostile targeted spells accept targets selected by spell targeting",
     REQUIRE( you.sees_with_infrared( target ) );
     REQUIRE_FALSE( you.sees( target_pos ) );
 
-    const auto spell_finish_accepts_target = hostile_spell.is_valid_target( you, target_pos ) &&
-            ( hostile_spell.is_valid_target( target_ground ) || you.sees( target_pos ) );
-    CHECK( spell_finish_accepts_target );
+    CHECK( spell_target_can_be_resolved( hostile_spell, you, target_pos ) );
 }
 
 TEST_CASE( "known magic remembers the last cast spell", "[magic][spell][save]" )
