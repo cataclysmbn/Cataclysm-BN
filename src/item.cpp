@@ -1269,7 +1269,6 @@ void item::put_in( detached_ptr<item> &&payload )
         return;
     }
     contents.insert_item( std::move( payload ) );
-    on_contents_changed();
 }
 
 void item::add_item_with_id( const itype_id &itype, int count )
