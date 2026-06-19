@@ -42,8 +42,11 @@ auto setup_shriek_stun_test() -> shriek_stun_setup
 
 TEST_CASE( "hearing protection blocks screecher daze", "[monster][sound]" )
 {
+    const auto protected_item = GENERATE( "ear_plugs", "army_powered_earmuffs_on" );
+    CAPTURE( protected_item );
+
     auto setup = setup_shriek_stun_test();
-    REQUIRE( !setup.target.wear_item( item::spawn( "ear_plugs" ), false ) );
+    REQUIRE( !setup.target.wear_item( item::spawn( protected_item ), false ) );
 
     REQUIRE( mattack::shriek_stun( &setup.screecher ) );
 
