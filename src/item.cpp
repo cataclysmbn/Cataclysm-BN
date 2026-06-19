@@ -6011,7 +6011,12 @@ bool item::can_shatter() const
 
 void item::unset_flags()
 {
+    const bool affects_processing = item_tags.count( flag_RADIO_ACTIVATION ) ||
+                                    item_tags.count( flag_ETHEREAL_ITEM );
     item_tags.clear();
+    if( affects_processing ) {
+        invalidate_processing_cache_upwards();
+    }
 }
 
 bool item::has_fault( const fault_id &fault ) const
@@ -6075,7 +6080,11 @@ bool item::has_vitamin( const vitamin_id &v ) const
 void item::set_flag( const flag_id &flag )
 {
     if( flag.is_valid() ) {
-        item_tags.insert( flag );
+        const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM;
+        const bool inserted = item_tags.insert( flag ).second;
+        if( inserted && affects_processing ) {
+            invalidate_processing_cache_upwards();
+        }
     } else {
         debugmsg( "Attempted to set invalid flag_id %s", flag.str() );
     }
@@ -6083,7 +6092,11 @@ void item::set_flag( const flag_id &flag )
 
 void item::unset_flag( const flag_id &flag )
 {
-    item_tags.erase( flag );
+    const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM;
+    const bool erased = item_tags.erase( flag ) > 0;
+    if( erased && affects_processing ) {
+        invalidate_processing_cache_upwards();
+    }
 }
 
 void item::set_flag_recursive( const flag_id &flag )
@@ -7483,9 +7496,11 @@ bool item::is_brewable() const
 
 bool item::is_food_container() const
 {
-    return ( !contents.empty() && contents.front().is_food() ) ||
-           ( is_craft() &&
-             craft_data_->making->create_result()->is_food_container() );
+    namespace ranges = std::ranges;
+    return ranges::any_of( contents.all_items_top(), []( const item * contained_item ) {
+        return contained_item != nullptr &&
+               ( contained_item->is_food() || contained_item->is_food_container() );
+    } ) || ( is_craft() && craft_data_->making->create_result()->is_food_container() );
 }
 
 bool item::is_med_container() const
@@ -10933,14 +10948,55 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
     const bool seals = self->type->container && self->type->container->seals;
     item &obj = *self;
 
-    obj.remove_items_with( [&]( detached_ptr<item> &&it ) {
-        if( preserves ) {
+    std::function<detached_ptr<item>( detached_ptr<item> &&, bool, bool )> process_content =
+        [&]( detached_ptr<item> &&it, const bool parent_preserves,
+             const bool parent_seals ) -> detached_ptr<item> {
+        if( !it ) {
+            return std::move( it );
+        }
+
+        const bool content_preserves = parent_preserves ||
+                                       ( it->type->container && it->type->container->preserves );
+        const bool content_seals = parent_seals ||
+                                   ( it->type->container && it->type->container->seals );
+
+        auto content_processing_items = std::vector<cache_reference<item>> {};
+        for( item *const content_item : it->contents.processing_items() ) {
+            if( content_item != nullptr ) {
+                content_processing_items.emplace_back( *content_item );
+            }
+        }
+        for( const cache_reference<item> &content_item : content_processing_items ) {
+            if( !content_item ) {
+                continue;
+            }
+            content_item->attempt_detach( [&]( detached_ptr<item> &&nested ) {
+                return process_content( std::move( nested ), content_preserves, content_seals );
+            } );
+        }
+
+        if( content_preserves ) {
             it->last_rot_check = calendar::turn;
         }
-        it = it->process_internal( std::move( it ), carrier, pos, activate, seals, flag,
-                                   weather_generator );
-        return VisitResponse::NEXT;
-    } );
+        return process_internal( std::move( it ), carrier, pos, activate, content_seals, flag,
+                                 weather_generator );
+    };
+
+    auto content_processing_items = std::vector<cache_reference<item>> {};
+    for( item *const content_item : obj.contents.processing_items() ) {
+        if( content_item != nullptr ) {
+            content_processing_items.emplace_back( *content_item );
+        }
+    }
+    for( const cache_reference<item> &content_item : content_processing_items ) {
+        if( !content_item ) {
+            continue;
+        }
+        content_item->attempt_detach( [&]( detached_ptr<item> &&it ) {
+            return process_content( std::move( it ), preserves, seals );
+        } );
+    }
+
     detached_ptr<item> res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
                              weather_generator );
     return res;

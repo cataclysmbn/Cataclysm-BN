@@ -5,6 +5,7 @@
 #include "active_item_cache.h"
 #include "calendar.h"
 #include "coordinates.h"
+#include "flag.h"
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
@@ -114,6 +115,62 @@ TEST_CASE( "stack_clear_updates_active_item_cache", "[item]" )
     REQUIRE( removed.size() == 1 );
     CHECK_FALSE( g->m.get_submaps_with_active_items().contains( abs_loc ) );
     CHECK( g->m.check_submap_active_item_consistency().empty() );
+}
+
+TEST_CASE( "nested_processing_flag_changes_invalidate_container_cache", "[item]" )
+{
+    clear_all_state();
+
+    auto backpack = item::spawn( "backpack" );
+    backpack->put_in( item::spawn( "rock" ) );
+    item &stored = backpack->contents.front();
+
+    REQUIRE_FALSE( backpack->needs_processing() );
+
+    stored.set_flag( flag_RADIO_ACTIVATION );
+    CHECK( backpack->needs_processing() );
+
+    stored.unset_flag( flag_RADIO_ACTIVATION );
+    CHECK_FALSE( backpack->needs_processing() );
+
+    stored.set_flag( flag_ETHEREAL_ITEM );
+    CHECK( backpack->needs_processing() );
+
+    stored.unset_flags();
+    CHECK_FALSE( backpack->needs_processing() );
+}
+
+TEST_CASE( "content_removal_helpers_invalidate_processing_cache", "[item]" )
+{
+    clear_all_state();
+    const auto loc = tripoint_bub_ms{ 60, 60, 0 };
+    g->m.i_clear( loc );
+
+    SECTION( "spill contents" ) {
+        auto backpack = item::spawn( "backpack" );
+        auto active = item::spawn( "firecracker_act", calendar::start_of_cataclysm,
+                                   item::default_charges_tag() );
+        active->activate();
+        backpack->put_in( std::move( active ) );
+
+        REQUIRE( backpack->needs_processing() );
+        backpack->contents.spill_contents( loc );
+        CHECK_FALSE( backpack->needs_processing() );
+    }
+
+    SECTION( "handle casings" ) {
+        auto backpack = item::spawn( "backpack" );
+        auto casing = item::spawn( "rock" );
+        casing->set_flag( flag_CASING );
+        casing->set_flag( flag_RADIO_ACTIVATION );
+        backpack->put_in( std::move( casing ) );
+
+        REQUIRE( backpack->needs_processing() );
+        backpack->contents.casings_handle( []( detached_ptr<item> && /*it*/ ) {
+            return detached_ptr<item>();
+        } );
+        CHECK_FALSE( backpack->needs_processing() );
+    }
 }
 
 TEST_CASE( "active_item_cache_slow_items_accrue_elapsed_time", "[item]" )

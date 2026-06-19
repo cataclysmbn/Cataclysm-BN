@@ -96,7 +96,7 @@ size_t item_contents::num_item_stacks() const
 
 bool item_contents::spill_contents( const tripoint_bub_ms &pos )
 {
-    for( detached_ptr<item> &it : items.clear() ) {
+    for( detached_ptr<item> &it : clear_items() ) {
         get_map().add_item_or_charges( pos, std::move( it ) );
     }
     return true;
@@ -104,6 +104,7 @@ bool item_contents::spill_contents( const tripoint_bub_ms &pos )
 
 void item_contents::handle_liquid_or_spill( Character &guy )
 {
+    const bool had_items = !items.empty();
     for( auto iter = items.begin(); iter != items.end(); ) {
         if( ( *iter )->made_of( LIQUID ) ) {
             detached_ptr<item> det;
@@ -115,14 +116,23 @@ void item_contents::handle_liquid_or_spill( Character &guy )
             guy.i_add_or_drop( std::move( det ) );
         }
     }
+    if( had_items ) {
+        if( owner != nullptr ) {
+            owner->invalidate_processing_cache_upwards();
+        } else {
+            invalidate_processing_cache();
+        }
+    }
 }
 
 void item_contents::casings_handle( const std::function < detached_ptr<item>
                                     ( detached_ptr<item> && ) > &func )
 {
     static const flag_id json_flag_CASING( "CASING" );
-    items.remove_with( [&func]( detached_ptr<item> &&it ) {
+    auto changed = false;
+    items.remove_with( [&func, &changed]( detached_ptr<item> &&it ) {
         if( it->has_flag( json_flag_CASING ) ) {
+            changed = true;
             it->unset_flag( json_flag_CASING );
             it = func( std::move( it ) );
             if( it ) {
@@ -131,6 +141,13 @@ void item_contents::casings_handle( const std::function < detached_ptr<item>
         }
         return std::move( it );
     } );
+    if( changed ) {
+        if( owner != nullptr ) {
+            owner->invalidate_processing_cache_upwards();
+        } else {
+            invalidate_processing_cache();
+        }
+    }
 }
 
 std::vector<detached_ptr<item>> item_contents::clear_items()
