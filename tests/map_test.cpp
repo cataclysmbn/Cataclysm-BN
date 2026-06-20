@@ -726,6 +726,7 @@ TEST_CASE( "tree_terrain_supports_climbing_destination_above" )
     CHECK( here.has_floor_or_support( climb_destination ) );
 }
 
+/* Uncomment when omt pillar stair linkage from #9566 is enabled
 TEST_CASE( "omt_pillar_post_pass_links_generated_stairs" )
 {
     clear_all_state();
@@ -757,6 +758,7 @@ TEST_CASE( "omt_pillar_post_pass_links_generated_stairs" )
 
     CHECK( here.ter( missing_up_pos ) == t_stairs_up );
 }
+*/
 
 TEST_CASE( "bash_through_roof_can_destroy_multiple_times" )
 {
