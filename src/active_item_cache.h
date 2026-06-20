@@ -48,14 +48,13 @@ class active_item_cache
     public:
         /**
          * Removes the item if it is in the cache. Does nothing if the item is not in the cache.
-         * Relies on the fact that item::processing_speed() is a constant.
          * Also removes any items that have been destroyed in the list containing it
          */
         void remove( const item *it );
 
         /**
-         * Adds the reference to the cache. Does nothing if the reference is already in the cache.
-         * Relies on the fact that item::processing_speed() is a constant.
+         * Adds the reference to the cache. Does nothing if the reference is already in the right queue.
+         * Moves existing references if item::processing_speed() changed.
          */
         void add( item &it );
 
@@ -86,7 +85,6 @@ class active_item_cache
          * n items will ever be processed.
          * Broken references encountered when collecting the items to be processed are removed from
          * the cache.
-         * Relies on the fact that item::processing_speed() is a constant.
          */
         std::vector<item *> get_for_processing();
         /**

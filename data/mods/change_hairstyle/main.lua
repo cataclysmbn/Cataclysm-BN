@@ -14,7 +14,7 @@ mod.change_hairstyle_function = function(params)
   local function get_hair_trait_type(mut_raw)
     if not mut_raw then return nil end
 
-    for _, t in ipairs(mut_raw:mutation_types()) do
+    for _, t in pairs(mut_raw:mutation_types()) do
       if t == "hair_style" then return "hair_style" end
       if t == "hair_color" then return "hair_color" end
     end
