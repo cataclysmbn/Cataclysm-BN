@@ -22,6 +22,7 @@
 #include "pimpl.h"
 #include "units.h"
 #include "pickup_token.h"
+#include "type_id.h"
 
 class Character;
 class player;
@@ -582,6 +583,7 @@ class inventory_selector
          * @return true on success.
          */
         bool select( const item *loc );
+        auto select_item_type( const itype_id &type ) -> bool;
 
         const inventory_entry &get_selected() {
             return get_active_column().get_selected();

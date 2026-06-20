@@ -185,6 +185,8 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
     bool init_selection = false;
     std::string init_filter;
     bool has_init_filter = false;
+    auto init_type = itype_id::NULL_ID();
+    bool has_init_type = false;
 
     const std::vector<activity_id> consuming {
         ACT_EAT_MENU,
@@ -200,6 +202,11 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
     if( u.has_activity( consuming ) && !u.activity->str_values.empty() ) {
         init_filter = u.activity->str_values[0];
         has_init_filter = true;
+    }
+    if( u.has_activity( consuming ) && u.activity->str_values.size() >= 2 &&
+        !u.activity->str_values[1].empty() ) {
+        init_type = itype_id( u.activity->str_values[1] );
+        has_init_type = true;
     }
 
     do {
@@ -217,7 +224,13 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
             has_init_filter = false;
         }
         // Set position after filter to keep cursor at the right position
-        if( init_selection ) {
+        auto restored_type_selection = false;
+        if( has_init_type ) {
+            restored_type_selection = inv_s.select_item_type( init_type );
+            init_selection = init_selection && !restored_type_selection;
+            has_init_type = false;
+        }
+        if( init_selection && !restored_type_selection ) {
             inv_s.select_position( init_pair );
             init_selection = false;
         }
@@ -244,6 +257,8 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
             u.activity->values.push_back( init_pair.second );
             u.activity->str_values.clear();
             u.activity->str_values.emplace_back( inv_s.get_filter() );
+            u.activity->str_values.emplace_back( location != nullptr ? location->typeId().str() :
+                                                 std::string() );
         }
 
         return location;
