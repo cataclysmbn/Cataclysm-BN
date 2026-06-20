@@ -3965,8 +3965,8 @@ void item::damage_statblock_info( std::vector<iteminfo> &info, damage_instance a
 void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *parts, int /*batch*/,
                        bool /*debug*/ ) const
 {
-    avatar &you = get_avatar();
-    int throw_range = you.throw_range( *this );
+    const avatar &you = get_avatar();
+    const int throw_range = you.throw_range( *this );
 
     if( throw_range == 0 ) {
         return;
@@ -3974,16 +3974,17 @@ void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *par
 
     insert_separation_line( info );
 
-    int dmg_bash = base_damage_thrown().type_damage( DT_BASH );
-    int dmg_cut = base_damage_thrown().type_damage( DT_CUT );
-    int dmg_stab = base_damage_thrown().type_damage( DT_STAB );
+    const int dmg_bash = base_damage_thrown().type_damage( DT_BASH );
+    const int dmg_cut = base_damage_thrown().type_damage( DT_CUT );
+    const int dmg_stab = base_damage_thrown().type_damage( DT_STAB );
 
-    projectile proj = ranged::throw_damage_projectile( *this, you.get_skill_level( skill_throw ),
-                      you.get_str() );
+    const projectile proj =
+        ranged::throw_damage_projectile( *this, you.get_skill_level( skill_throw ),
+                                         you.get_str() );
 
-    int proj_dmg_bash = proj.impact.type_damage( DT_BASH );
-    int proj_dmg_cut = proj.impact.type_damage( DT_CUT );
-    int proj_dmg_stab = proj.impact.type_damage( DT_STAB );
+    const int proj_dmg_bash = proj.impact.type_damage( DT_BASH );
+    const int proj_dmg_cut = proj.impact.type_damage( DT_CUT );
+    const int proj_dmg_stab = proj.impact.type_damage( DT_STAB );
 
     if( dmg_bash || dmg_cut || dmg_stab ) {
         std::string sep;
@@ -4021,11 +4022,11 @@ void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *par
 
     info.emplace_back( "BASE", _( "Throw range: " ), "<num>", iteminfo::no_flags, throw_range );
 
-    int throw_cost = ranged::throw_cost( you, *this );
+    const int throw_cost = ranged::throw_cost( you, *this );
     info.emplace_back( "BASE", _( "Moves per throw: " ), "<num>", iteminfo::lower_is_better,
                        throw_cost );
 
-    int stamina_cost = ranged::throw_stamina_cost( you, *this );
+    const int stamina_cost = ranged::throw_stamina_cost( you, *this );
     info.emplace_back( "BASE", _( "Stamina cost: " ), "<num>", iteminfo::lower_is_better,
                        stamina_cost );
 
