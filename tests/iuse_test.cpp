@@ -144,6 +144,54 @@ TEST_CASE( "bionic_scanner_inside_container_marks_corpses_with_cbms", "[iuse][bi
     CHECK( scanner_ptr->ammo_remaining() == charges_before - 1 );
 }
 
+TEST_CASE( "bionic_scanner_separates_detected_corpses_from_unscanned_stack",
+           "[iuse][bionic_scanner]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    clear_avatar();
+
+    auto &you = get_avatar();
+    you.setID( character_id( 1 ), true );
+    auto &here = get_map();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    set_time( calendar::turn_zero + 12_hours );
+    you.recalc_sight_limits();
+
+    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    REQUIRE( you.sees( corpse_pos ) );
+    auto corpse_ptrs = std::vector<item *> {};
+    for( auto i = 0; i < 2; ++i ) {
+        auto corpse = item::make_corpse( mtype_id( "mon_zombie_soldier" ), calendar::turn, "" );
+        corpse->add_component( item::spawn( "bio_power_storage", calendar::turn ) );
+        auto *const corpse_ptr = corpse.get();
+        REQUIRE_FALSE( here.add_item_or_charges( corpse_pos, std::move( corpse ), false ) );
+        corpse_ptrs.push_back( corpse_ptr );
+    }
+    REQUIRE( corpse_ptrs.front()->display_stacked_with( *corpse_ptrs.back() ) );
+
+    auto scanner = item::spawn( "bionic_scanner_on", calendar::turn );
+    scanner->ammo_set( itype_id( "battery" ), 1 );
+    scanner->activate();
+    REQUIRE_FALSE( here.add_item_or_charges( you.bub_pos(), std::move( scanner ), false ) );
+
+    here.process_items();
+
+    auto *detected_corpse = static_cast<item *>( nullptr );
+    auto *unscanned_corpse = static_cast<item *>( nullptr );
+    for( item *const corpse_ptr : corpse_ptrs ) {
+        if( corpse_ptr->has_flag( flag_CBM_SCANNED ) ) {
+            detected_corpse = corpse_ptr;
+        } else {
+            unscanned_corpse = corpse_ptr;
+        }
+    }
+    REQUIRE( detected_corpse != nullptr );
+    REQUIRE( unscanned_corpse != nullptr );
+    CHECK_FALSE( detected_corpse->display_stacked_with( *unscanned_corpse ) );
+    CHECK_FALSE( unscanned_corpse->display_stacked_with( *detected_corpse ) );
+}
+
 TEST_CASE( "bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bionic_scanner]" )
 {
     const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );

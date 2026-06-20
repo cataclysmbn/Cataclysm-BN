@@ -1131,7 +1131,9 @@ bool item::stacks_with( const item &rhs, bool check_components, bool skip_type_c
     }
 
     if( is_corpse() || rhs.is_corpse() ) {
-        return this->is_corpse() && rhs.is_corpse() && ( *this->get_mtype() == *rhs.get_mtype() );
+        return this->is_corpse() && rhs.is_corpse() && ( *this->get_mtype() == *rhs.get_mtype() ) &&
+               get_var( "bionics_scanned_by", -1 ) == rhs.get_var( "bionics_scanned_by", -1 ) &&
+               has_flag( flag_CBM_SCANNED ) == rhs.has_flag( flag_CBM_SCANNED );
     }
 
     if( damage_ != rhs.damage_ ) {
