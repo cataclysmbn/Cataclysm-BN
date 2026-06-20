@@ -15,6 +15,7 @@
 #include "field.h"
 #include "map.h"
 #include "map_iterator.h"
+#include "mapbuffer.h"
 #include "mapgen_constructor.h"
 #include "npc.h"
 #include "overmap.h"
@@ -365,7 +366,7 @@ void cata::detail::reg_map( sol::state &lua )
         } );
         DOC( "Returns whether a local map position lies outside the current dimension bounds." );
         luna::set_fx( ut, "is_out_of_bounds", []( const map & m, const tripoint_bub_ms & p ) -> bool {
-            return is_outside_pocket_dimension_bounds( m.get_pocket_info(), map_local_to_abs( m, p ) );
+            return m.get_mapbuffer().is_outside_pocket_dimension_bounds( map_local_to_abs( m, p ) );
         } );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
