@@ -402,15 +402,24 @@ VisitResponse visitable<T>::visit_items( const std::function<VisitResponse( item
 
 
 
-static VisitResponse visit_internal( std::function < VisitResponse( detached_ptr<item> &&e ) >
-                                     filter, location_vector<item> &items )
+namespace
 {
-    VisitResponse last = VisitResponse::NEXT;
-    items.remove_with( [&last, &filter]( detached_ptr<item> &&e ) {
+
+auto visit_internal( std::function < VisitResponse( detached_ptr<item> &&e ) > filter,
+                     location_vector<item> &items ) -> bool
+{
+    auto last = VisitResponse::NEXT;
+    auto processing_changed = false;
+    items.remove_with( [&last, &processing_changed, &filter]( detached_ptr<item> &&e ) {
         if( last == VisitResponse::ABORT ) {
             return std::move( e );
         }
+        const auto needs_processing_before = e != nullptr && e->needs_processing();
         last = filter( std::move( e ) );
+        // NOLINTNEXTLINE(bugprone-use-after-move)
+        if( e != nullptr && e->needs_processing() != needs_processing_before ) {
+            processing_changed = true;
+        }
         // NOLINTNEXTLINE(bugprone-use-after-move)
         if( last == VisitResponse::NEXT && e ) {
             e->contents.remove_items_with( [&last, &filter]( detached_ptr<item> &&e ) {
@@ -423,8 +432,10 @@ static VisitResponse visit_internal( std::function < VisitResponse( detached_ptr
         }
         return std::move( e );
     } );
-    return last == VisitResponse::ABORT ? VisitResponse::ABORT : VisitResponse::NEXT;
+    return processing_changed;
 }
+
+} // namespace
 
 // Specialize visitable<T>::visit_items() for each class that will implement the visitable interface
 
@@ -657,7 +668,16 @@ detached_ptr<item> location_visitable<T>::remove_item( item &it )
 void item_contents::remove_items_with( const std::function < VisitResponse(
         detached_ptr<item> && ) > &filter )
 {
-    visit_internal( filter, items );
+    const auto old_size = items.size();
+    const auto processing_changed = visit_internal( filter, items );
+    if( items.size() == old_size && !processing_changed ) {
+        return;
+    }
+    if( owner != nullptr ) {
+        owner->invalidate_processing_cache_upwards();
+    } else {
+        invalidate_processing_cache();
+    }
 }
 
 /** @relates visitable */

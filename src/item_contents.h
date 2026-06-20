@@ -28,6 +28,9 @@ class item_contents
         ~item_contents();
 
         bool empty() const;
+        auto has_processing_items() const -> bool;
+        auto processing_items() const -> const std::vector<item *> &; // *NOPAD*
+        auto invalidate_processing_cache() const -> void;
 
         /** returns a list of pointers to all top-level items */
         const std::vector<item *> &all_items_top() const;
@@ -111,7 +114,12 @@ class item_contents
 
         void on_destroy();
     private:
+        auto update_processing_cache() const -> void;
+
+        item *owner;
         location_vector<item> items;
+        mutable bool processing_cache_dirty = true;
+        mutable std::vector<item *> cached_processing_items;
 };
 
 

@@ -19,6 +19,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_set>
+#include <vector>
 
 #include "action_time_scale.h"
 #include "active_tile_data_def.h"
@@ -607,6 +608,7 @@ void item::convert( const itype_id &new_type )
 {
     type = &*new_type;
     relic_data = type->relic_data;
+    invalidate_processing_cache_upwards();
 }
 
 void item::deactivate()
@@ -616,25 +618,10 @@ void item::deactivate()
     }
 
     active = false;
+    invalidate_processing_cache_upwards();
     if( is_tool() ) {
         type->tool->turns_active = 0;
     }
-
-    // Is not placed in the world, so either a template of some kind or a temporary item.
-    if( !has_position() ) {
-        return;
-    }
-    switch( where() ) {
-        case item_location_type::map:
-            get_map().make_inactive( *this );
-            break;
-        case item_location_type::vehicle:
-            get_map().veh_at( abs_pos() )->vehicle().make_inactive( *this );
-            break;
-        default:
-            break;
-    }
-
 }
 
 void item::activate()
@@ -648,21 +635,7 @@ void item::activate()
     }
 
     active = true;
-
-    // Is not placed in the world, so either a template of some kind or a temporary item.
-    if( !has_position() ) {
-        return;
-    }
-    switch( where() ) {
-        case item_location_type::map:
-            get_map().make_active( *this );
-            break;
-        case item_location_type::vehicle:
-            get_map().veh_at( abs_pos() )->vehicle().make_active( *this );
-            break;
-        default:
-            break;
-    }
+    invalidate_processing_cache_upwards();
 }
 
 bool item::revert( const Character *ch, bool alert )
@@ -1101,6 +1074,25 @@ int item::charges_per_volume( const units::volume &vol ) const
     }
 }
 
+namespace
+{
+
+auto bionic_component_type_ids( const item &corpse ) -> std::vector<itype_id>
+{
+    using namespace std::views;
+    namespace ranges = std::ranges;
+    auto result = corpse.get_components()
+                  | filter( &item::is_bionic )
+                  | transform( &item::typeId )
+                  | ranges::to<std::vector>();
+    ranges::sort( result, []( const itype_id & lhs, const itype_id & rhs ) {
+        return lhs < rhs;
+    } );
+    return result;
+}
+
+} // namespace
+
 bool item::display_stacked_with( const item &rhs, bool check_components ) const
 {
     return !count_by_charges() && stacks_with( rhs, check_components );
@@ -1128,7 +1120,13 @@ bool item::stacks_with( const item &rhs, bool check_components, bool skip_type_c
     }
 
     if( is_corpse() || rhs.is_corpse() ) {
-        return this->is_corpse() && rhs.is_corpse() && ( *this->get_mtype() == *rhs.get_mtype() );
+        if( !is_corpse() || !rhs.is_corpse() || ( *get_mtype() != *rhs.get_mtype() ) ||
+            get_var( "bionics_scanned_by", -1 ) != rhs.get_var( "bionics_scanned_by", -1 ) ||
+            has_flag( flag_CBM_SCANNED ) != rhs.has_flag( flag_CBM_SCANNED ) ) {
+            return false;
+        }
+        return !has_flag( flag_CBM_SCANNED ) ||
+               bionic_component_type_ids( *this ) == bionic_component_type_ids( rhs );
     }
 
     if( damage_ != rhs.damage_ ) {
@@ -5002,6 +5000,7 @@ void item::on_contents_changed()
     }
 
     encumbrance_update_ = true;
+    invalidate_processing_cache_upwards();
 
     if( !has_position() || where() != item_location_type::vehicle ) {
         return;
@@ -6007,7 +6006,13 @@ bool item::can_shatter() const
 
 void item::unset_flags()
 {
+    const bool affects_processing = item_tags.count( flag_RADIO_ACTIVATION ) ||
+                                    item_tags.count( flag_ETHEREAL_ITEM ) ||
+                                    item_tags.count( flag_PROCESSING );
     item_tags.clear();
+    if( affects_processing ) {
+        invalidate_processing_cache_upwards();
+    }
 }
 
 bool item::has_fault( const fault_id &fault ) const
@@ -6071,7 +6076,12 @@ bool item::has_vitamin( const vitamin_id &v ) const
 void item::set_flag( const flag_id &flag )
 {
     if( flag.is_valid() ) {
-        item_tags.insert( flag );
+        const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM ||
+                                        flag == flag_PROCESSING;
+        const bool inserted = item_tags.insert( flag ).second;
+        if( inserted && affects_processing ) {
+            invalidate_processing_cache_upwards();
+        }
     } else {
         debugmsg( "Attempted to set invalid flag_id %s", flag.str() );
     }
@@ -6079,7 +6089,12 @@ void item::set_flag( const flag_id &flag )
 
 void item::unset_flag( const flag_id &flag )
 {
-    item_tags.erase( flag );
+    const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM ||
+                                    flag == flag_PROCESSING;
+    const bool erased = item_tags.erase( flag ) > 0;
+    if( erased && affects_processing ) {
+        invalidate_processing_cache_upwards();
+    }
 }
 
 void item::set_flag_recursive( const flag_id &flag )
@@ -7479,9 +7494,11 @@ bool item::is_brewable() const
 
 bool item::is_food_container() const
 {
-    return ( !contents.empty() && contents.front().is_food() ) ||
-           ( is_craft() &&
-             craft_data_->making->create_result()->is_food_container() );
+    namespace ranges = std::ranges;
+    return ranges::any_of( contents.all_items_top(), []( const item * contained_item ) {
+        return contained_item != nullptr &&
+               ( contained_item->is_food() || contained_item->is_food_container() );
+    } ) || ( is_craft() && craft_data_->making->create_result()->is_food_container() );
 }
 
 bool item::is_med_container() const
@@ -7499,17 +7516,27 @@ const mtype *item::get_mtype() const
     return corpse;
 }
 
+namespace
+{
+
 template<typename Item>
-static Item *get_food_impl( Item *it )
+auto get_food_impl( Item *it ) -> Item * // *NOPAD*
 {
     if( it->is_food() ) {
         return it;
-    } else if( it->is_food_container() && !it->contents.empty() ) {
-        return &it->contents.front();
-    } else {
-        return nullptr;
     }
+    for( auto *const contained_item : it->contents.all_items_top() ) {
+        if( contained_item == nullptr ) {
+            continue;
+        }
+        if( auto *food = get_food_impl( contained_item ) ) {
+            return food;
+        }
+    }
+    return nullptr;
 }
+
+} // namespace
 
 item *item::get_food()
 {
@@ -10069,18 +10096,58 @@ uint64_t item::make_component_hash() const
 bool item::needs_processing() const
 {
     return is_active() || has_flag( flag_RADIO_ACTIVATION ) || has_flag( flag_ETHEREAL_ITEM ) ||
-           ( !contents.empty() && is_container() && contents.front().needs_processing() ) ||
+           ( !contents.empty() && contents.has_processing_items() ) ||
            ( magazine_current() && magazine_current()->needs_processing() ) ||
            is_artifact() || is_relic() || goes_bad();
 }
 
+auto item::invalidate_processing_cache_upwards() -> void
+{
+    auto *top = this;
+    for( auto *current = this; current != nullptr; current = current->parent_item() ) {
+        current->contents.invalidate_processing_cache();
+        top = current;
+    }
+
+    if( !top->has_position() ) {
+        return;
+    }
+
+    switch( top->where() ) {
+        case item_location_type::map:
+            if( top->needs_processing() ) {
+                get_map().make_active( *top );
+            } else {
+                get_map().make_inactive( *top );
+            }
+            break;
+        case item_location_type::vehicle:
+            if( const auto vp = get_map().veh_at( top->bub_pos() ) ) {
+                if( top->needs_processing() ) {
+                    vp->vehicle().make_active( *top );
+                } else {
+                    vp->vehicle().make_inactive( *top );
+                }
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 int item::processing_speed() const
 {
-    if( is_corpse() || is_food() || is_food_container() ) {
-        return to_turns<int>( 10_minutes );
+    auto speed = is_corpse() || is_food() || is_food_container() ? to_turns<int>( 10_minutes ) : 1;
+    for( const item *contained_item : contents.processing_items() ) {
+        if( contained_item != nullptr ) {
+            speed = std::min( speed, contained_item->processing_speed() );
+        }
     }
-    // Unless otherwise indicated, update every turn.
-    return 1;
+    if( const item *magazine = magazine_current(); magazine != nullptr &&
+        magazine->needs_processing() ) {
+        speed = std::min( speed, magazine->processing_speed() );
+    }
+    return speed;
 }
 
 auto item::process_rot( detached_ptr<item> &&self,
@@ -10891,20 +10958,71 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
     if( !self ) {
         return std::move( self );
     }
-    const bool preserves = self->type->container && self->type->container->preserves;
-    const bool seals = self->type->container && self->type->container->seals;
-    item &obj = *self;
+    const auto preserves = self->type->container && self->type->container->preserves;
+    const auto seals = self->type->container && self->type->container->seals;
+    auto &obj = *self;
+    using namespace std::views;
+    namespace ranges = std::ranges;
 
-    obj.remove_items_with( [&]( detached_ptr<item> &&it ) {
-        if( preserves ) {
+    struct content_processing_options {
+        bool parent_preserves = false;
+        bool parent_seals = false;
+    };
+
+    const auto processing_items = []( const auto & contents ) {
+        return contents.processing_items()
+        | filter( []( const item * content_item ) { return content_item != nullptr; } )
+        | transform( []( item * content_item ) { return cache_reference<item>( *content_item ); } )
+        | ranges::to<std::vector>();
+    };
+
+    auto process_content = [&]( auto &&process_content, detached_ptr<item> &&it,
+    const content_processing_options & opts ) -> detached_ptr<item> {
+        if( !it )
+        {
+            return std::move( it );
+        }
+
+        const auto content_preserves = opts.parent_preserves ||
+        ( it->type->container && it->type->container->preserves );
+        const auto content_seals = opts.parent_seals ||
+        ( it->type->container && it->type->container->seals );
+
+        for( const cache_reference<item> &content_item : processing_items( it->contents ) )
+        {
+            if( !content_item ) {
+                continue;
+            }
+            content_item->attempt_detach( [&]( detached_ptr<item> &&nested ) {
+                return process_content( process_content, std::move( nested ), {
+                    .parent_preserves = content_preserves,
+                    .parent_seals = content_seals
+                } );
+            } );
+        }
+
+        if( content_preserves )
+        {
             it->last_rot_check = calendar::turn;
         }
-        it = it->process_internal( std::move( it ), carrier, pos, activate, seals, flag,
-                                   weather_generator );
-        return VisitResponse::NEXT;
-    } );
-    detached_ptr<item> res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
-                             weather_generator );
+        return process_internal( std::move( it ), carrier, pos, activate, content_seals, flag,
+                                 weather_generator );
+    };
+
+    for( const cache_reference<item> &content_item : processing_items( obj.contents ) ) {
+        if( !content_item ) {
+            continue;
+        }
+        content_item->attempt_detach( [&]( detached_ptr<item> &&it ) {
+            return process_content( process_content, std::move( it ), {
+                .parent_preserves = preserves,
+                .parent_seals = seals
+            } );
+        } );
+    }
+
+    auto res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
+                                 weather_generator );
     return res;
 }
 

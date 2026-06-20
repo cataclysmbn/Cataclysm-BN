@@ -78,6 +78,34 @@ static auto add_sashimi_to_vehicle_part( vehicle &veh, const int part_index ) ->
     add_food_to_vehicle_part( veh, part_index, itype_id( "sashimi" ) );
 }
 
+TEST_CASE( "Food lookup finds nested food after non-food contents", "[item][food]" )
+{
+    SECTION( "top-level food after non-food content" ) {
+        auto backpack = item::spawn( "backpack" );
+        backpack->put_in( item::spawn( "rock" ) );
+        backpack->put_in( item::spawn( "sashimi" ) );
+
+        REQUIRE( backpack->is_food_container() );
+        auto *food = backpack->get_food();
+        REQUIRE( food != nullptr );
+        CHECK( food->typeId() == itype_id( "sashimi" ) );
+    }
+
+    SECTION( "nested food after non-food content" ) {
+        auto outer_bag = item::spawn( "bag_canvas" );
+        auto inner_bag = item::spawn( "bag_plastic" );
+        inner_bag->put_in( item::spawn( "rock" ) );
+        inner_bag->put_in( item::spawn( "sashimi" ) );
+        outer_bag->put_in( std::move( inner_bag ) );
+
+        REQUIRE( outer_bag->is_food_container() );
+        const auto &const_outer_bag = *outer_bag;
+        const auto *food = const_outer_bag.get_food();
+        REQUIRE( food != nullptr );
+        CHECK( food->typeId() == itype_id( "sashimi" ) );
+    }
+}
+
 static auto add_bread_to_vehicle_part( vehicle &veh, const int part_index ) -> void
 {
     add_food_to_vehicle_part( veh, part_index, itype_id( "bread" ) );
@@ -318,6 +346,28 @@ TEST_CASE( "Preserving containers stop contained food rot" )
         CHECK( removed->charges == 3 );
         CHECK( removed->get_rot() == 0_turns );
     }
+
+    SECTION( "sealed outer container keeps nested rotten food from vanishing" ) {
+        prepare_map_storage_test();
+
+        auto outer = item::spawn( "bag_canvas" );
+        auto inner = item::spawn( "bag_plastic" );
+        inner->put_in( item::spawn( "sashimi" ) );
+        outer->put_in( std::move( inner ) );
+        REQUIRE( outer->needs_processing() );
+
+        calendar::turn += 25_hours;
+        outer = item::process( std::move( outer ), nullptr, tripoint_bub_ms::zero(), false,
+                               temperature_flag::TEMP_NORMAL, get_weather() );
+
+        namespace ranges = std::ranges;
+        using namespace std::views;
+        auto nested_food = outer->contents.all_items_ptr()
+        | filter( []( const item * it ) { return it->typeId() == itype_id( "sashimi" ); } )
+        | ranges::to<std::vector>();
+        REQUIRE( nested_food.size() == 1 );
+        CHECK( nested_food.front()->get_rot() > 0_turns );
+    }
 }
 
 TEST_CASE( "Items rot away" )
@@ -511,6 +561,28 @@ TEST_CASE( "Vehicle storage temperature controls food rot" )
         REQUIRE( components.size() == 1 );
         CHECK( components.front()->get_rot() == 0_turns );
         CHECK( !components.front()->rotten() );
+    }
+
+    SECTION( "powered freezer cargo protects food after non-food container contents" ) {
+        auto fixture = make_storage( vpart_id( "minifreezer" ), true );
+        auto backpack = item::spawn( "backpack" );
+        backpack->put_in( item::spawn( "rock" ) );
+        backpack->put_in( item::spawn( "sashimi" ) );
+        REQUIRE( backpack->is_food_container() );
+        REQUIRE_FALSE( fixture.veh->add_item( fixture.part_index, std::move( backpack ) ) );
+
+        process_storage_for( 25_hours );
+
+        auto remaining = fixture.veh->get_items( fixture.part_index );
+        REQUIRE( remaining.size() == 1 );
+        namespace ranges = std::ranges;
+        using namespace std::views;
+        auto nested_food = remaining.only_item().contents.all_items_ptr()
+        | filter( []( const item * it ) { return it->typeId() == itype_id( "sashimi" ); } )
+        | ranges::to<std::vector>();
+        REQUIRE( nested_food.size() == 1 );
+        CHECK( nested_food.front()->get_rot() == 0_turns );
+        CHECK( !nested_food.front()->rotten() );
     }
 
     SECTION( "powered freezer cargo keeps whole food fresh when consumed for crafting" ) {
