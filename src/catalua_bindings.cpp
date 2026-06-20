@@ -875,7 +875,7 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
 
     DOC( "Called right after mapgen has completed.  " );
     DOC( "The hook receives a table with keys:  " );
-    DOC( "* `map` (Map): The tinymap that represents 24x24 area (2x2 submaps, or 1x1 omt).  " );
+    DOC( "* `map` (MapgenConstructor): The OMT-local mapgen surface.  " );
     DOC( "* `omt` (TripointAbsOmt): The absolute overmap terrain position.  " );
     DOC( "* `when` (TimePoint): The current time (for time-based effects).  " );
     DOC_PARAMS( "params" );

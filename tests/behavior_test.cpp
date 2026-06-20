@@ -147,7 +147,7 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
     clear_all_state();
     behavior::tree npc_needs;
     npc_needs.add( &string_id<behavior::node_t>( "npc_needs" ).obj() );
-    npc &test_npc = spawn_npc( { 50, 50 }, "test_talker" );
+    npc &test_npc = spawn_npc( { 50, 50, 0 }, "test_talker" );
     clear_character( test_npc );
     behavior::character_oracle_t oracle( &test_npc );
     CHECK( npc_needs.tick( &oracle ) == "idle" );

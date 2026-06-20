@@ -2149,7 +2149,7 @@ static bool construction_activity( player &p, const zone_data * /*zone*/,
     const construction &built_chosen = act_info.con_idx->obj();
     std::vector<detached_ptr<item>> used;
     // create the partial construction struct
-    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( tripoint_bub_ms( src_loc ) );
+    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( src_loc, p.get_dimension() );
     pc->id = built_chosen.id;
     pc->counter = 0;
     map &here = get_map();
@@ -3610,7 +3610,7 @@ bool find_auto_consume( player &p, const consume_type type )
     if( p.has_effect( effect_nausea ) ) {
         return true;
     }
-    const auto pos = p.bub_pos();
+    const auto pos = p.abs_pos();
     map &here = get_map();
     zone_manager &mgr = zone_manager::get_manager();
     const zone_type_id consume_type_zone( type == consume_type::FOOD ? "AUTO_EAT" : "AUTO_DRINK" );
@@ -3667,9 +3667,9 @@ bool find_auto_consume( player &p, const consume_type type )
 
     auto get_spoil = []( const item * a ) { return a->spoilage_sort_order(); };
 
-    std::optional<item *> stalest = mgr.get_near( consume_type_zone, bub_to_abs( pos ),
+    std::optional<item *> stalest = mgr.get_near( consume_type_zone, pos,
                                     ACTIVITY_SEARCH_DISTANCE )
-                                    | views::filter( [&]( const auto & loc ) -> bool { return loc.z() == p.bub_pos().z(); } )
+                                    | views::filter( [&]( const auto & loc ) -> bool { return loc.z() == p.abs_pos().z(); } )
                                     | flat_map( get_items_at )
                                     | views::filter( ok_to_consume )
                                     | min_by( get_spoil );
@@ -3679,7 +3679,7 @@ bool find_auto_consume( player &p, const consume_type type )
 
     // actually eat
     const auto cost = pickup::cost_to_move_item( p, **stalest );
-    const auto dist = std::max( rl_dist( p.bub_pos(), ( *stalest )->position() ), 1 );
+    const auto dist = std::max( rl_dist( p.abs_pos(), ( *stalest )->abs_pos() ), 1 );
     p.mod_moves( -cost * dist );
 
     item *item_loc = &p.get_consumable_from( **stalest );

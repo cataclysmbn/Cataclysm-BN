@@ -487,11 +487,16 @@ void unpack_actor::load( const JsonObject &obj )
 
 int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
+    detached_ptr<item> unpacked = it.detach();
+    if( !unpacked ) {
+        debugmsg( "Could not detach item for unpacking" );
+        return 0;
+    }
+
+    p.add_msg_if_player( _( "You unpack the %s." ), unpacked->tname() );
+
     std::vector<detached_ptr<item>> items = item_group::items_from( unpack_group, calendar::turn );
     item *last_armor = &null_item_reference();
-
-    p.add_msg_if_player( _( "You unpack the %s." ), it.tname() );
-
     map &here = get_map();
     for( detached_ptr<item> &content : items ) {
         if( content->is_armor() ) {
@@ -510,8 +515,6 @@ int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) cons
 
         here.add_item_or_charges( p.bub_pos(), std::move( content ) );
     }
-
-    it.detach( );
 
     return 0;
 }
@@ -1389,7 +1392,7 @@ int place_npc_iuse::use( player &p, item &, bool, const tripoint_bub_ms & ) cons
         return 0;
     }
 
-    here.place_npc( target_pos.value().xy(), npc_class_id );
+    here.place_npc( target_pos.value(), npc_class_id );
     p.mod_moves( -moves );
     p.add_msg_if_player( m_info, "%s", _( summon_msg ) );
     return 1;
@@ -2191,7 +2194,7 @@ int enzlave_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) c
         p.add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    map_stack items = get_map().i_at( p.bub_pos().xy() );
+    map_stack items = get_map().i_at( p.bub_pos() );
     std::vector<const item *> corpses;
 
     for( item * const &corpse_candidate : items ) {
@@ -3613,7 +3616,7 @@ static bool damage_item( player &pl, item *fix )
             return std::move( mod );
         } );
 
-        fix->contents.spill_contents( fix->position() );
+        fix->contents.spill_contents( fix->bub_pos() );
 
         pl.add_msg_if_player( m_bad, _( "You destroy it!" ) );
         if( fix->where() == item_location_type::character ) {
@@ -3621,7 +3624,7 @@ static bool damage_item( player &pl, item *fix )
         } else {
             for( detached_ptr<item> &it : fix->contents.clear_items() ) {
                 put_into_vehicle_or_drop( pl, item_drop_reason::deliberate, std::move( it ),
-                                          fix->position() );
+                                          fix->bub_pos() );
             }
             fix->detach();
         }

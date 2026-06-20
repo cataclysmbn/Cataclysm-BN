@@ -54,7 +54,6 @@ end
 voltmeter.get_grid_connections_info = function(_who, _item, pos)
   local pos_abs_ms = gapi.bub_to_abs(pos)
   local pos_abs_omt = pos_abs_ms:to_omt()
-  ---@cast pos_abs_omt TripointAbsOmt
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
   local six_dirs = gapi.six_cardinal_directions()
@@ -84,7 +83,6 @@ end
 voltmeter.modify_grid_connections = function(who, item, pos)
   local pos_abs_ms = gapi.bub_to_abs(pos)
   local pos_abs_omt = pos_abs_ms:to_omt()
-  ---@cast pos_abs_omt TripointAbsOmt
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
   local six_dirs = gapi.six_cardinal_directions()

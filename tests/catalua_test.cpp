@@ -25,7 +25,10 @@
 #include "json.h"
 #include "map.h"
 #include "map_helpers.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "mapdata.h"
+#include "mapgen_constructor.h"
 #include "effect.h"
 #include "monster.h"
 #include "npc.h"
@@ -278,7 +281,7 @@ TEST_CASE( "minirose can be disarmed after switching to an npc and back", "[bion
     } );
 
     you.clear_bionics();
-    npc &follower = spawn_npc( point_bub_ms( 45, 30 ), "test_talker" );
+    npc &follower = spawn_npc( tripoint_bub_ms( 45, 30, 0 ), "test_talker" );
     follower.set_fac( faction_id( "your_followers" ) );
     follower.set_attitude( NPCATT_FOLLOW );
     follower.clear_bionics();
@@ -359,7 +362,7 @@ TEST_CASE( "robofac_authorization_updates_real_active_creatures", "[lua][robofac
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    auto &security = spawn_npc( point_bub_ms{ 50, 50 }, "hub_security" );
+    auto &security = spawn_npc( tripoint_bub_ms{ 50, 50, 0 }, "hub_security" );
     security.set_attitude( NPCATT_KILL );
     auto &turret = spawn_test_monster( "mon_robofac_turret_light", tripoint_bub_ms{ 51, 50, 0 } );
     test_data["security"] = &security;
@@ -380,7 +383,7 @@ TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][cre
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    auto &nearby_npc = spawn_npc( point_bub_ms{ 50, 50 }, "test_talker" );
+    auto &nearby_npc = spawn_npc( tripoint_bub_ms{ 50, 50, 0 }, "test_talker" );
     auto &nearby_monster = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 51, 50, 0 } );
     test_data["center"] = nearby_npc.abs_omt_pos();
     test_data["expected_npc"] = &nearby_npc;
@@ -410,7 +413,7 @@ TEST_CASE( "lua_npc_move_to_binding_moves_real_npc", "[lua][npc]" )
         here.furn_set( pos, furn_id( "f_null" ) );
     }
 
-    auto &moving_npc = spawn_npc( start.xy(), "test_talker" );
+    auto &moving_npc = spawn_npc( start, "test_talker" );
     moving_npc.set_moves( 1000 );
     test_data["npc"] = &moving_npc;
     test_data["destination"] = destination;
@@ -973,6 +976,40 @@ TEST_CASE( "lua_map_vehicle_replacement", "[lua]" )
                    vehicles.front().v->part_with_feature( index, "DOOR_LOCKING", false ) == index;
     }
     CHECK( !has_lock );
+}
+
+TEST_CASE( "lua_mapgen_vehicle_replacement", "[lua][mapgen]" )
+{
+    clear_all_state();
+
+    auto &buffer = MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() );
+    auto tm = mapgen_constructor( buffer );
+    const auto origin = point_omt_ms( 12, 12 );
+    const auto original_facing = -90_degrees;
+    const auto overridden_facing = 180_degrees;
+    tm.reset_scratch_omt( tripoint_abs_omt( 11, 13, 0 ), ter_id( "t_floor" ), furn_id( "f_null" ),
+                          trap_id( "tr_null" ) );
+    auto *vehicle_ptr = tm.add_vehicle( vproto_id( "bicycle" ), origin, original_facing, 0, 0 );
+    REQUIRE( vehicle_ptr != nullptr );
+
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    test_data["mapgen"] = &tm;
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "mapgen_vehicle_replacement_test.lua" );
+
+    CHECK( test_data.get<int>( "vehicle_count_before" ) == 1 );
+    CHECK( test_data.get<bool>( "replace_ok" ) );
+    CHECK( test_data.get<int>( "vehicle_count_after" ) == 1 );
+
+    const auto vehicles = tm.get_vehicles();
+    REQUIRE( vehicles.size() == 1 );
+    REQUIRE( vehicles.front() != nullptr );
+    CHECK( project_remain<coords::omt>( vehicles.front()->abs_ms_location() ).remainder == origin );
+    CHECK( vehicles.front()->type == vproto_id( "swivel_chair" ) );
+    CHECK( normalize( vehicles.front()->face.dir() ) == normalize( overridden_facing ) );
+    CHECK( vehicles.front()->static_drag() == vehicles.front()->static_drag( false ) );
 }
 
 TEST_CASE( "lua_table_serde", "[lua]" )
@@ -1917,7 +1954,7 @@ TEST_CASE( "lua_hook_wiring_npc_loaded", "[lua]" )
     hook_cleanup cleanup_cl{ cl, ci };
 
     // spawn_npc calls g->load_npcs() which calls npc::on_load() for the new NPC
-    npc &spawned = spawn_npc( point_bub_ms{ 50, 50 }, "test_talker" );
+    npc &spawned = spawn_npc( tripoint_bub_ms{ 50, 50, 0 }, "test_talker" );
 
     CHECK( *npc_ptr == &spawned );
     CHECK( *cre_ptr == static_cast<Creature *>( &spawned ) );

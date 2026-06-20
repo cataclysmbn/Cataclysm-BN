@@ -290,7 +290,7 @@ void Pathfinding::produce_d_map( point_abs_ms dest, int z, PathfindingSettings s
 
     d_map->dest = dest;
     d_map->z = z;
-    d_map->origin = project_to<coords::ms>( get_map().get_abs_sub() ).xy();
+    d_map->origin = project_to<coords::ms>( get_map().get_abs_sub() );
     d_map->settings = settings;
 
     Pathfinding::d_maps.push_back( std::move( d_map ) );
@@ -372,7 +372,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
     const map &here = get_map();
     auto &buffer = MAPBUFFER_REGISTRY.get( here.get_bound_dimension() );
 
-    auto cur_z_area = project_to<coords::ms>( here.get_abs_sub().xy() );
+    auto cur_z_area = project_to<coords::ms>( here.get_abs_sub() );
 
     if( !Pathfinding::z_caches_dirty && cur_z_area == Pathfinding::z_area &&
         ( !update_open_air || Pathfinding::z_caches_include_open_air ) ) {
@@ -742,7 +742,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                     cur_g += is_trap ? this->settings.trap_cost : 0.0;
                 }
 
-                const bool is_ledge = here.has_zlevels() && terrain.has_flag( TFLAG_NO_FLOOR );
+                const bool is_ledge = terrain.has_flag( TFLAG_NO_FLOOR );
                 if( is_ledge && !this->settings.can_fly ) {
                     // Close ledges outright for non-fliers
                     cur_g += INFINITY;

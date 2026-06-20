@@ -34,6 +34,7 @@
 #include "itype.h"
 #include "line.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "messages.h"
@@ -1718,7 +1719,8 @@ bool map::build_absorption_cache( const int zlev )
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
 
             const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-            auto *cur_submap = get_submap_at_grid( sm_pos );
+            auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                   map_local_to_abs( *this, sm_pos ) );
             const auto sm_offset = project_to<coords::ms>( sm_pos );
 
             if( cur_submap == nullptr ) {
@@ -2575,7 +2577,7 @@ void sounds::process_sound_markers( Character *who )
                                           static_cast<int>( std::floor( 1500 + 500 * volume_multiplier ) ) );
     // is the npc underground?
     const bool pcunderground = loc.z() < 0;
-    const bool pcoutdoors = map.is_outside( loc.xy() );
+    const bool pcoutdoors = map.is_outside( loc );
     const weather_manager &weather = get_weather();
     const short player_t_absorp = level_cache.absorption_cache[level_cache.idx( loc.x(), loc.y() )];
     const bool  player_indoors = !level_cache.outside_cache[level_cache.idx( loc.x(), loc.y() )];

@@ -1644,7 +1644,7 @@ void place_construction( const construction_group_str_id &group )
     // Maybe there is already a partial_con on an existing trap, that isn't caught by the usual trap-checking.
     // because the pre-requisite construction is already a trap anyway.
     // This shouldn't normally happen, unless it's a spike pit being built on a pit for example.
-    partial_con *pre_c = here.partial_con_at( tripoint_bub_ms( pnt ) );
+    partial_con *pre_c = here.partial_con_at( pnt );
     if( pre_c ) {
         add_msg( m_info,
                  _( "There is already an unfinished construction there, examine it to continue working on it" ) );
@@ -1653,7 +1653,8 @@ void place_construction( const construction_group_str_id &group )
     std::vector<detached_ptr<item>> used;
     const construction &con = *valid.find( pnt )->second;
     // create the partial construction struct
-    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( tripoint_bub_ms( pnt ) );
+    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( pnt,
+                                      get_map().get_bound_dimension() );
     pc->id = con.id;
     pc->counter = 0;
     // Set the trap that has the examine function
@@ -1836,11 +1837,11 @@ bool construct::check_support( const tripoint_bub_ms &p )
 bool construct::check_deconstruct( const tripoint_bub_ms &p )
 {
     map &here = get_map();
-    if( here.has_furn( p.xy() ) ) {
-        return here.furn( p.xy() ).obj().deconstruct.can_do;
+    if( here.has_furn( p ) ) {
+        return here.furn( p ).obj().deconstruct.can_do;
     }
     // terrain can only be deconstructed when there is no furniture in the way
-    return here.ter( p.xy() ).obj().deconstruct.can_do;
+    return here.ter( p ).obj().deconstruct.can_do;
 }
 
 bool construct::check_empty_up_OK( const tripoint_bub_ms &p )
@@ -2092,12 +2093,7 @@ static void unroll_digging( const int numer_of_2x4s )
 void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
 {
     map &here = get_map();
-    const auto abs_pos = bub_to_abs( p );
-    const auto pos_sm = project_to<coords::sm>( abs_pos );
-    tinymap tmpmap;
-    tmpmap.load( pos_sm + tripoint_rel_sm::below(), false );
-    const auto local_tmp = abs_to_map_local( tmpmap, abs_pos );
-
+    const auto below = p + tripoint_rel_ms::below();
     bool dig_muts = g->u.has_trait( trait_PAINRESIST_TROGLO ) || g->u.has_trait( trait_STOCKY_TROGLO );
 
     int no_mut_penalty = dig_muts ? 10 : 0;
@@ -2106,7 +2102,7 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
     g->u.mod_thirst( 5 + mine_penalty + no_mut_penalty );
     g->u.mod_fatigue( 10 + mine_penalty + no_mut_penalty );
 
-    if( tmpmap.ter( local_tmp ) == t_lava ) {
+    if( here.ter( below ) == t_lava ) {
         if( !( query_yn( _( "The rock feels much warmer than normal.  Proceed?" ) ) ) ) {
             here.ter_set( p, t_pit ); // You dug down a bit before detecting the problem
             unroll_digging( dig ? 8 : 12 );
@@ -2119,7 +2115,7 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
         return;
     }
 
-    bool impassable = tmpmap.impassable( local_tmp );
+    bool impassable = here.impassable( below );
     if( !impassable ) {
         add_msg( _( "You dig into a preexisting space, and improvise a ladder." ) );
     } else if( dig ) {
@@ -2129,7 +2125,8 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
     }
     here.ter_set( p, t_stairs_down ); // There's the top half
     // Again, need to use submap-local coordinates.
-    tmpmap.ter_set( local_tmp, impassable ? t_stairs_up : t_ladder_up ); // and there's the bottom half.
+    here.ter_set( p + tripoint_rel_ms::below(),
+                  impassable ? t_stairs_up : t_ladder_up ); // and there's the bottom half.
     // And save to the center coordinate of the current active map.
 }
 
@@ -2146,14 +2143,10 @@ void construct::done_mine_downstair( const tripoint_bub_ms &p )
 void construct::done_mine_upstair( const tripoint_bub_ms &p )
 {
     map &here = get_map();
-    const auto abs_pos = bub_to_abs( p );
-    const auto pos_sm = project_to<coords::sm>( abs_pos );
-    tinymap tmpmap;
-    tmpmap.load( pos_sm + tripoint_rel_sm::above(), false );
-    const auto local_tmp = abs_to_map_local( tmpmap, abs_pos );
+    const auto below = p + tripoint_rel_ms::below();
 
-    if( tmpmap.ter( local_tmp ) == t_lava ) {
-        here.ter_set( p.xy(), t_rock_floor ); // You dug a bit before discovering the problem
+    if( here.ter( below ) == t_lava ) {
+        here.ter_set( p, t_rock_floor ); // You dug a bit before discovering the problem
         add_msg( m_warning, _( "The rock overhead feels hot.  You decide *not* to mine magma." ) );
         unroll_digging( 12 );
         return;
@@ -2164,8 +2157,8 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
         }
     };
 
-    if( liquids.contains( tmpmap.ter( local_tmp ) ) ) {
-        here.ter_set( p.xy(), t_rock_floor ); // You dug a bit before discovering the problem
+    if( liquids.contains( here.ter( below ) ) ) {
+        here.ter_set( p, t_rock_floor ); // You dug a bit before discovering the problem
         add_msg( m_warning, _( "The rock above is rather damp.  You decide *not* to mine water." ) );
         unroll_digging( 12 );
         return;
@@ -2179,10 +2172,10 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
     g->u.mod_fatigue( 25 + no_mut_penalty );
 
     add_msg( _( "You drill out a passage, heading for the surface." ) );
-    here.ter_set( p.xy(), t_stairs_up ); // There's the bottom half
+    here.ter_set( p, t_stairs_up ); // There's the bottom half
     // We need to write to submap-local coordinates.
     // TODO: Add roof above
-    tmpmap.ter_set( local_tmp, t_stairs_down ); // and there's the top half.
+    here.ter_set( below, t_stairs_down ); // and there's the top half.
 }
 
 void construct::done_wood_stairs( const tripoint_bub_ms &p )

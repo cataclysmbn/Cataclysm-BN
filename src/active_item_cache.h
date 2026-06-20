@@ -76,6 +76,11 @@ class active_item_cache
         std::vector<item *> get();
 
         /**
+         * Returns all currently valid cached active item references without mutating the cache.
+         */
+        auto get_const() const -> std::vector<const item *>;
+
+        /**
          * Returns items from each list at the average rate requested by item::processing_speed().
          * Items returned are rotated through their respective lists, otherwise only the first
          * n items will ever be processed.

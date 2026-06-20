@@ -32,7 +32,7 @@ static auto update_map_after_player_setpos( player &who,
         g->update_map( who );
     }
     if( old_pos.z() != new_pos.z() ) {
-        g->vertical_shift( new_pos.z() );
+        g->vertical_shift( old_pos.z(), new_pos.z() );
     }
 }
 
@@ -69,7 +69,7 @@ player::player()
     set_value( "THIEF_MODE", "THIEF_ASK" );
 
     for( const auto &v : vitamin::all() ) {
-        vitamin_levels[ v.first ] = 0;
+        vitamin_levels[ v.id ] = 0;
     }
 
     if( g != nullptr && json_flag::is_ready() && get_anatomy().is_valid() ) {

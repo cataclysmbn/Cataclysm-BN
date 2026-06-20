@@ -36,6 +36,7 @@
 #include "zone_draw_options.h"
 #include "type_id.h"
 #include "location_vector.h"
+#include "mapbuffer.h"
 
 class Character;
 class Creature_tracker;
@@ -325,7 +326,7 @@ class game : public submap_load_listener
         std::optional<tripoint_bub_ms> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
                 bool peeking );
         /** Actual z-level movement part of vertical_move. Doesn't include stair finding, traps etc. */
-        auto vertical_shift( int z_after ) -> void;
+        auto vertical_shift( const int z_before, const int z_after ) -> void;
         /** Add goes up/down auto_notes (if turned on) */
         void vertical_notes( int z_before, int z_after );
         /** Checks to see if a player can use a computer (not illiterate, etc.) and uses if able. */
@@ -775,7 +776,7 @@ class game : public submap_load_listener
          * this function returns (for example, UIs that draw the map should be
          * disabled).
          */
-        void load_map( const tripoint_abs_sm &pos_sm, bool pump_events = false );
+        void load_map( const point_abs_sm &pos_sm, bool pump_events = false );
         /**
          * The overmap which contains the center submap of the reality bubble.
          */
@@ -1313,12 +1314,16 @@ class game : public submap_load_listener
         auto rebind_critter_tracker() -> void;
 
         /// Sequenced critical section of a dimension switch: drain all load-manager
-        /// work, release load handles, flush the desired set, update the active
+        /// work, release load requests, flush the desired set, update the active
         /// dimension ID, and clear the old dimension's distribution-grid tracker.
         /// Must only be called from travel_to_dimension() after swapping_dimensions
         /// is set and before bind_dimension().
         auto activate_dimension_state( const dimension_id &new_dim_id,
                                        const dimension_id &old_dim_id ) -> void;
+        auto release_active_load_regions() -> void;
+        auto update_active_load_regions( const dimension_id &dim_id,
+                                         const point_abs_sm &begin,
+                                         const point_abs_sm &end ) -> void;
 
         /// Dimension ID the player is currently in.  "" = overworld (primary).
         /// Always updated via set_active_dimension_id().
@@ -1333,13 +1338,7 @@ class game : public submap_load_listener
         /// slot is evicted (saved + removed from registry) and replaced with the new one.
         dimension_id kept_pocket_dimension_id_;
 
-        // Handle for the reality bubble's submap_load_manager request.
-        // 0 means no request has been issued yet.
-        load_request_handle reality_bubble_handle_ = 0;
-
-        // Handle for the lazy border around the reality bubble.
-        // Controlled by LAZY_BORDER cached option.
-        load_request_handle lazy_border_handle_ = 0;
+        mapbuffer_load_region lazy_border_region_;
 
         // True while the bubble is temporarily shrunk for an ongoing long activity.
         // Entry requires >= ACTIVITY_BUBBLE_GRACE minutes remaining; once set, stays true

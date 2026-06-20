@@ -2901,7 +2901,6 @@ target_handler::trajectory target_ui::run()
     // the targeting UI gets its first redraw.
     g->refresh_player_visibility_cache_if_needed();
     // Load settings
-    allow_zlevel_shift = here.has_zlevels();
     snap_to_target = get_option<bool>( "SNAP_TO_TARGET" );
     if( mode == TargetMode::Turrets ) {
         // Due to how cluttered the display would become, disable it by default

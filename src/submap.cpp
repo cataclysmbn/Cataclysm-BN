@@ -12,7 +12,9 @@
 #include "int_id.h"
 #include "lightmap.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
+#include "profile.h"
 #include "tileray.h"
 #include "trap.h"
 #include "vehicle.h"
@@ -21,6 +23,24 @@
 
 
 const data_vars::data_set submap::EMPTY_VARS{};
+
+auto submap::static_emitter_tiles() const -> const std::vector<point_sm_ms> &
+{
+    if( !emitter_cache.has_value() ) {
+        ZoneScopedN( "submap_rebuild_static_emitter_cache" );
+        auto emitters = std::vector<point_sm_ms> {};
+        for( const auto sm_ms : submap_tiles() ) {
+            const auto terrain = get_ter( sm_ms );
+            const auto furniture = get_furn( sm_ms );
+            if( terrain->light_emitted > LIGHT_AMBIENT_LOW ||
+                furniture->light_emitted > LIGHT_AMBIENT_LOW ) {
+                emitters.push_back( sm_ms );
+            }
+        }
+        emitter_cache = std::move( emitters );
+    }
+    return *emitter_cache;
+}
 
 template<int sx, int sy>
 void maptile_soa<sx, sy>::swap_soa_tile( const point_sm_ms &p1, const point_sm_ms &p2 )
@@ -36,7 +56,13 @@ void maptile_soa<sx, sy>::swap_soa_tile( const point_sm_ms &p1, const point_sm_m
 
 void submap::swap( submap &first, submap &second )
 {
-    std::swap( first.pos, second.pos );
+    const auto first_item_location_offset =
+        project_to<coords::ms>( second.pos_ ) - project_to<coords::ms>( first.pos_ );
+    const auto second_item_location_offset =
+        project_to<coords::ms>( first.pos_ ) - project_to<coords::ms>( second.pos_ );
+
+    std::swap( first.dim_, second.dim_ );
+    std::swap( first.pos_, second.pos_ );
     std::swap( first.ter, second.ter );
     std::swap( first.frn, second.frn );
     std::swap( first.lum, second.lum );
@@ -65,20 +91,28 @@ void submap::swap( submap &first, submap &second )
 
     for( const auto &p : submap_tiles() ) {
         std::swap( first.itm[p.x()][p.y()], second.itm[p.x()][p.y()] );
+        const auto first_dim = first.get_dimension();
+        const auto second_dim = second.get_dimension();
+        first.itm[p.x()][p.y()].set_dimension( second_dim );
+        first.itm[p.x()][p.y()].move_by( first_item_location_offset );
+        second.itm[p.x()][p.y()].set_dimension( first_dim );
+        second.itm[p.x()][p.y()].move_by( second_item_location_offset );
     }
 }
 
 template<int sx, int sy>
-maptile_soa<sx, sy>::maptile_soa( const tripoint_abs_sm &position )
+maptile_soa<sx, sy>::maptile_soa( const tripoint_abs_sm &position, const dimension_id &dim )
 {
     for( const auto &p : submap_tiles() ) {
-        itm[p.x()][p.y()].init_location( new tile_item_location( project_combine( position, p ) ) );
+        itm[p.x()][p.y()].init_location( new tile_item_location( project_combine( position, p ), dim ) );
     }
 }
 
-submap::submap( const tripoint_abs_sm &position ) : maptile_soa<SEEX, SEEY>( position )
+submap::submap( const tripoint_abs_sm &position,
+                const dimension_id &dim ) : maptile_soa<SEEX, SEEY>( position, dim )
 {
-    pos = position;
+    dim_ = dim;
+    pos_ = position;
     std::fill_n( &ter[0][0], elements, t_null );
     std::fill_n( &frn[0][0], elements, f_null );
     std::fill_n( &lum[0][0], elements, 0 );
@@ -89,6 +123,18 @@ submap::submap( const tripoint_abs_sm &position ) : maptile_soa<SEEX, SEEY>( pos
 }
 
 submap::~submap() = default;
+
+auto submap::set_position( const tripoint_abs_sm &position ) -> void
+{
+    if( pos_ == position ) {
+        return;
+    }
+    const auto offset = project_to<coords::ms>( position ) - project_to<coords::ms>( pos_ );
+    for( const auto &p : submap_tiles() ) {
+        itm[p.x()][p.y()].move_by( offset );
+    }
+    pos_ = position;
+}
 
 void submap::update_lum_rem( const point_sm_ms &p, const item &i )
 {
@@ -488,7 +534,8 @@ auto submap::rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos 
 
     const bool lowest_z = grid_pos.z() <= -OVERMAP_DEPTH;
     const submap *below = lowest_z ? nullptr
-                          : m.get_submap_at_grid( grid_pos - tripoint_rel_sm( 0, 0, 1 ) );
+                          : m.get_mapbuffer().lookup_submap_in_memory(
+                              map_local_to_abs( m, grid_pos - tripoint_rel_sm( 0, 0, 1 ) ) );
 
     for( const auto &sp : submap_tiles() ) {
         const auto &ter_obj = get_ter( sp ).obj();

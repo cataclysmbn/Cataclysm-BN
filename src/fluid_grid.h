@@ -15,6 +15,8 @@
 
 class overmap;
 class map;
+class mapbuffer;
+class overmapbuffer;
 
 namespace fluid_grid
 {
@@ -57,11 +59,20 @@ struct liquid_storage_state {
     }
 };
 
+struct seed_liquid_mapgen_opts {
+    tripoint_abs_omt p;
+    itype_id liquid_type;
+    int charges = 0;
+    overmapbuffer *overmap_buffer = nullptr;
+    mapbuffer *map_buffer = nullptr;
+};
+
 auto connections_for( overmap &om ) -> connection_map &; // *NOPAD*
 auto connections_for( const overmap &om ) -> const connection_map &; // *NOPAD*
-auto storage_for( overmap &om ) -> std::map<tripoint_om_omt, liquid_storage_state> &; // *NOPAD*
-auto storage_for( const overmap &om ) -> const std::map<tripoint_om_omt, liquid_storage_state>
-&; // *NOPAD*
+auto storage_for( overmap &om ) -> std::map<tripoint_om_omt,
+     liquid_storage_state> &; // *NOPAD*
+auto storage_for( const overmap &om ) -> const std::map<tripoint_om_omt,
+     liquid_storage_state> &; // *NOPAD*
 
 auto grid_at( const tripoint_abs_omt &p ) -> std::set<tripoint_abs_omt>;
 auto grid_connectivity_at( const tripoint_abs_omt &p ) -> std::vector<tripoint_rel_omt>;
@@ -70,8 +81,7 @@ auto liquid_charges_at( const tripoint_abs_omt &p, const itype_id &liquid_type )
 auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> bool;
 auto add_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,
                          int charges ) -> int;
-auto seed_liquid_charges_for_mapgen( const tripoint_abs_omt &p, const itype_id &liquid_type,
-                                     int charges ) -> int;
+auto seed_liquid_charges_for_mapgen( const seed_liquid_mapgen_opts &options ) -> int;
 auto drain_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,
                            int charges ) -> int;
 auto purify_water( const tripoint_abs_omt &p ) -> units::volume;
@@ -83,8 +93,10 @@ auto on_contents_changed( const tripoint_abs_ms &p ) -> void;
 auto on_structure_changed( const tripoint_abs_ms &p ) -> void;
 auto on_tank_removed( const tripoint_abs_ms &p ) -> void;
 auto disconnect_tank( const tripoint_abs_ms &p ) -> void;
-auto add_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &rhs ) -> bool;
-auto remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &rhs ) -> bool;
+auto add_grid_connection( const tripoint_abs_omt &lhs,
+                          const tripoint_abs_omt &rhs ) -> bool;
+auto remove_grid_connection( const tripoint_abs_omt &lhs,
+                             const tripoint_abs_omt &rhs ) -> bool;
 auto clear() -> void;
 
 } // namespace fluid_grid
