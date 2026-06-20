@@ -131,5 +131,38 @@
     "range": 12,
     "dispersion": 10,
     "durability": 8
+  },
+  {
+    "id": "zombie_swat_thrown_teargas",
+    "weapon_category": [ "ELASTIC" ],
+    "type": "GUN",
+    "symbol": "%",
+    "color": "red",
+    "name": { "str": "thrown tear gas grenade" },
+    "description": "Tear gas grenade thrown from practiced muscle memory.",
+    "material": [ "steel" ],
+    "flags": [
+      "PRIMITIVE_RANGED_WEAPON",
+      "NEVER_JAMS",
+      "NONCONDUCTIVE",
+      "NO_REPAIR",
+      "WATERPROOF_GUN",
+      "NO_SALVAGE",
+      "NO_UNLOAD",
+      "RELOAD_EJECT"
+    ],
+    "skill": "throw",
+    "ammo": [ "40x46mm" ],
+    "ammo_effects": [ "NEVER_MISFIRES" ],
+    "clip_size": 1,
+    "ranged_damage": { "damage_type": "bullet", "amount": -14 },
+    "weight": "1058 g",
+    "volume": "250 ml",
+    "bashing": 1,
+    "to_hit": 1,
+    "loudness": 40,
+    "range": 8,
+    "dispersion": 2000,
+    "durability": 8
   }
 ]
