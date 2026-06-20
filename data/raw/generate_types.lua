@@ -405,14 +405,16 @@ local coord_specific_annotation = function(annotations, kind, origin, scale)
       and scale.map_squares > fine_scale.map_squares
       and scale.map_squares % fine_scale.map_squares == 0
     then
-      local fine_type = coord_class_name("Point", remainder_origin, fine_scale)
-      local result_type = coord_class_name(kind, origin, fine_scale)
-      if has_coord_class(annotations, fine_type) and has_coord_class(annotations, result_type) then
-        add_unique_line(
-          lines,
-          "---@field project_combine fun(self: " .. class_name .. ", fine: " .. fine_type .. "): " .. result_type,
-          seen
-        )
+      for _, fine_kind in ipairs(kind == "Point" and { "Point", "Tripoint" } or { "Point" }) do
+        local fine_type = coord_class_name(fine_kind, remainder_origin, fine_scale)
+        local result_type = coord_class_name(kind == "Point" and fine_kind or kind, origin, fine_scale)
+        if has_coord_class(annotations, fine_type) and has_coord_class(annotations, result_type) then
+          add_unique_line(
+            lines,
+            "---@field project_combine fun(self: " .. class_name .. ", fine: " .. fine_type .. "): " .. result_type,
+            seen
+          )
+        end
       end
     end
   end
@@ -573,7 +575,7 @@ doc_gen_func.impl = function()
 ---@field mod_runtime table<string, any>
 ---@field mod_storage table<string, any>
 ---@field on_every_x_hooks table
----@field iuse_functions table<string, fun(params: ItemUseParams): integer | IuseFunctionTable>
+---@field iuse_functions table<string, (fun(params: ItemUseParams): integer) | IuseFunctionTable>
 ---@field iwieldable_functions table<string, IwieldableFunctionTable>
 ---@field iwearable_functions table<string, IwearableFunctionTable>
 ---@field iequippable_functions table<string, IequippableFunctionTable>

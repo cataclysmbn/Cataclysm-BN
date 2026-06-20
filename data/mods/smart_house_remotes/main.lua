@@ -67,14 +67,10 @@ mod.on_mapgen_postprocess_hook = function(params)
   local item_id = mod.item_id
   for y = 0, mapsize - 1 do
     for x = 0, mapsize - 1 do
-      local p = TripointBubMs.new(x, y, 0)
-      -- TODO: Check whether using has_items_at() gives a speedup in Lua.
-      --       In C++, it's supposed to be faster then !i_at( p ).empty()
-      if map:has_items_at(p) then
-        local items = map:get_items_at(p):as_item_stack():items()
-        for _, item in ipairs(items) do
-          if item:get_type():str() == item_id then mod.set_remote_base(item, p_omt) end
-        end
+      local p = PointOmtMs.new(x, y)
+      local items = map:get_items_at(p):as_item_stack():items()
+      for _, item in ipairs(items) do
+        if item:get_type():str() == item_id then mod.set_remote_base(item, p_omt) end
       end
     end
   end

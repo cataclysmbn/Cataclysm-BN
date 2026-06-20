@@ -121,6 +121,7 @@ end
 ---@param map MapgenConstructor
 ---@param stair_id TerIntId
 local function insert_stairs_single(map, stair_id)
+  ---@type PointOmtMs[]
   local valid_points = {}
   for i = 0, 23 do
     for j = 0, 23 do
@@ -132,10 +133,12 @@ local function insert_stairs_single(map, stair_id)
   end
   if #valid_points == 0 then return end
   local final_point = valid_points[gapi.rng(1, #valid_points)]
+  if final_point == nil then return end
   map:set_ter_at(final_point, stair_id)
 end
 
 insert_stairs = function(map, up_id, down_id, from_above)
+  ---@type PointOmtMs[]
   local valid_points = {}
   for i = 0, 23 do
     for j = 0, 23 do
