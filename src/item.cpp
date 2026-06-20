@@ -1104,6 +1104,21 @@ int item::charges_per_volume( const units::volume &vol ) const
     }
 }
 
+namespace
+{
+
+auto bionic_component_display_names( const item &corpse ) -> std::set<std::string>
+{
+    using namespace std::views;
+    namespace ranges = std::ranges;
+    return corpse.get_components()
+           | filter( &item::is_bionic )
+           | transform( []( const item *component ) { return component->display_name(); } )
+           | ranges::to<std::set>();
+}
+
+} // namespace
+
 bool item::display_stacked_with( const item &rhs, bool check_components ) const
 {
     return !count_by_charges() && stacks_with( rhs, check_components );
@@ -1131,9 +1146,13 @@ bool item::stacks_with( const item &rhs, bool check_components, bool skip_type_c
     }
 
     if( is_corpse() || rhs.is_corpse() ) {
-        return this->is_corpse() && rhs.is_corpse() && ( *this->get_mtype() == *rhs.get_mtype() ) &&
-               get_var( "bionics_scanned_by", -1 ) == rhs.get_var( "bionics_scanned_by", -1 ) &&
-               has_flag( flag_CBM_SCANNED ) == rhs.has_flag( flag_CBM_SCANNED );
+        if( !is_corpse() || !rhs.is_corpse() || ( *get_mtype() != *rhs.get_mtype() ) ||
+            get_var( "bionics_scanned_by", -1 ) != rhs.get_var( "bionics_scanned_by", -1 ) ||
+            has_flag( flag_CBM_SCANNED ) != rhs.has_flag( flag_CBM_SCANNED ) ) {
+            return false;
+        }
+        return !has_flag( flag_CBM_SCANNED ) ||
+               bionic_component_display_names( *this ) == bionic_component_display_names( rhs );
     }
 
     if( damage_ != rhs.damage_ ) {

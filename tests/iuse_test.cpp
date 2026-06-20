@@ -316,10 +316,69 @@ TEST_CASE( "bionic_scanner_updates_same_monster_corpse_pile_display",
 
     const auto cbm_display_name = cbm_corpse_ptr->display_name();
     const auto empty_display_name = empty_corpse_ptr->display_name();
-    CHECK( cbm_display_name.find( "bionic detected" ) != std::string::npos );
-    CHECK( empty_display_name.find( "scanned" ) != std::string::npos );
-    CHECK( cbm_display_name.find( "corpse of a zombie technician (fresh)" ) == std::string::npos );
-    CHECK( empty_display_name.find( "corpse of a zombie technician (fresh)" ) == std::string::npos );
+    using Catch::Matchers::Contains;
+    CHECK_THAT( cbm_display_name, Contains( "bionic detected" ) );
+    CHECK_THAT( empty_display_name, Contains( "scanned" ) );
+    CHECK_THAT( cbm_display_name, !Contains( "corpse of a zombie technician (fresh)" ) );
+    CHECK_THAT( empty_display_name, !Contains( "corpse of a zombie technician (fresh)" ) );
+}
+
+TEST_CASE( "bionic_scanner_separates_detected_corpse_piles_by_found_cbms",
+           "[iuse][bionic_scanner]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    clear_avatar();
+
+    auto &you = get_avatar();
+    you.setID( character_id( 1 ), true );
+    auto &here = get_map();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    set_time( calendar::turn_zero + 12_hours );
+    you.recalc_sight_limits();
+
+    const auto corpse_pos = you.bub_pos() + tripoint_south;
+    REQUIRE( you.sees( corpse_pos ) );
+    auto solar_corpse = item::make_corpse( mtype_id( "mon_zombie_electric" ), calendar::turn, "" );
+    solar_corpse->add_component( item::spawn( "bn_bio_solar", calendar::turn ) );
+    auto *const solar_corpse_ptr = solar_corpse.get();
+    here.add_item( corpse_pos, std::move( solar_corpse ) );
+
+    auto storage_corpse = item::make_corpse( mtype_id( "mon_zombie_electric" ), calendar::turn, "" );
+    storage_corpse->add_component( item::spawn( "bio_power_storage", calendar::turn ) );
+    auto *const storage_corpse_ptr = storage_corpse.get();
+    here.add_item( corpse_pos, std::move( storage_corpse ) );
+    REQUIRE( solar_corpse_ptr->display_stacked_with( *storage_corpse_ptr ) );
+
+    auto backpack = item::spawn( "backpack", calendar::turn );
+    auto scanner = item::spawn( "bionic_scanner_on", calendar::turn );
+    scanner->ammo_set( itype_id( "battery" ), 10 );
+    scanner->activate();
+    backpack->put_in( std::move( scanner ) );
+    you.i_add( std::move( backpack ) );
+
+    you.process_items();
+
+    REQUIRE( solar_corpse_ptr->has_flag( flag_CBM_SCANNED ) );
+    REQUIRE( storage_corpse_ptr->has_flag( flag_CBM_SCANNED ) );
+    CHECK_FALSE( solar_corpse_ptr->display_stacked_with( *storage_corpse_ptr ) );
+
+    const auto item_info_text = []( const item &corpse ) {
+        auto result = std::string {};
+        for( const iteminfo &entry : corpse.info() ) {
+            result += entry.sName;
+            result += entry.sFmt;
+            result += entry.sValue;
+        }
+        return result;
+    };
+    const auto solar_info = item_info_text( *solar_corpse_ptr );
+    const auto storage_info = item_info_text( *storage_corpse_ptr );
+    using Catch::Matchers::Contains;
+    CHECK_THAT( solar_info, Contains( "Solar Panels CBM" ) );
+    CHECK_THAT( solar_info, !Contains( "Power Storage CBM" ) );
+    CHECK_THAT( storage_info, Contains( "Power Storage CBM" ) );
+    CHECK_THAT( storage_info, !Contains( "Solar Panels CBM" ) );
 }
 
 TEST_CASE( "bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bionic_scanner]" )
