@@ -115,7 +115,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
             "Name", "Volume", "Weight", "Stack", "Calories", "Quench", "Healthy"
         };
         for( const auto &v : vitamin::all() ) {
-            header.push_back( v.second.name() );
+            header.push_back( v.name() );
         }
         auto dump = [&rows]( const item & obj ) {
             std::vector<std::string> r;
@@ -128,7 +128,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
             r.push_back( std::to_string( obj.get_comestible()->healthy ) );
             auto vits = obj.get_comestible()->default_nutrition.vitamins;
             for( const auto &v : vitamin::all() ) {
-                r.push_back( std::to_string( vits[ v.first ] ) );
+                r.push_back( std::to_string( vits[ v.id ] ) );
             }
             rows.push_back( r );
         };

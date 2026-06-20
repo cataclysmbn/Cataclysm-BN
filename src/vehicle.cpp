@@ -278,8 +278,7 @@ class MapgenRemovePartHandler : public RemovePartHandler
                                                 bool permit_oob ) override {
             if( !m.inbounds( loc ) ) {
                 point_sm_ms offset;
-                const auto pocket_info = m.get_pocket_info();
-                if( !is_outside_pocket_dimension_bounds( pocket_info, map_local_to_abs( m, loc ) ) &&
+                if( !m.get_mapbuffer().is_outside_pocket_dimension_bounds( map_local_to_abs( m, loc ) ) &&
                     m.get_submap_at( loc, offset ) != nullptr ) {
                     return m.add_item_or_charges( loc, std::move( it ) );
                 }

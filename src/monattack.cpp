@@ -329,6 +329,23 @@ static std::unique_ptr<npc> make_fake_npc( monster *z, int str, int dex, int int
     return tmp;
 }
 
+namespace
+{
+constexpr auto shriek_stun_hearing_protection_threshold = 40;
+
+auto has_shriek_stun_hearing_protection( const Creature &target ) -> bool
+{
+    if( target.is_immune_effect( effect_deaf ) ) {
+        return true;
+    }
+
+    const auto *const character = target.as_character();
+    return character != nullptr && character->get_char_hearing_protection() +
+           character->get_char_hearing_protection( true ) >= shriek_stun_hearing_protection_threshold;
+}
+
+} // namespace
+
 bool mattack::none( monster * )
 {
     return true;
@@ -545,7 +562,7 @@ bool mattack::shriek_stun( monster *z )
         if( target == nullptr ) {
             continue;
         }
-        if( one_in( dist / 2 ) && !( target->is_immune_effect( effect_deaf ) ) ) {
+        if( one_in( dist / 2 ) && !has_shriek_stun_hearing_protection( *target ) ) {
             target->add_effect( effect_dazed, rng( 1_minutes, 2_minutes ), bodypart_str_id::NULL_ID(),
                                 rng( 1, ( 15 - dist ) / 3 ) );
         }

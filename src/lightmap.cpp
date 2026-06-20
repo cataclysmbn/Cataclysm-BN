@@ -38,6 +38,7 @@
 #include "itype.h"
 #include "line.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "math_defines.h"
@@ -579,7 +580,8 @@ bool map::build_transparency_cache( const int zlev )
                 }
 
                 const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-                auto *cur_submap = get_submap_at_grid( sm_pos );
+                auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                       map_local_to_abs( *this, sm_pos ) );
                 const auto sm_offset = project_to<coords::ms>( sm_pos );
 
                 if( cur_submap == nullptr ) {
@@ -704,7 +706,8 @@ bool map::build_transparency_cache( const int zlev )
     const auto process_smx = [&]( int smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-            auto *cur_submap = get_submap_at_grid( sm_pos );
+            auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                   map_local_to_abs( *this, sm_pos ) );
             const auto sm_offset = project_to<coords::ms>( sm_pos );
 
             if( cur_submap == nullptr ) {
@@ -850,7 +853,8 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
                     }
 
                     const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-                    auto *cur_submap = get_submap_at_grid( sm_pos );
+                    auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                           map_local_to_abs( *this, sm_pos ) );
                     const auto sm_offset = project_to<coords::ms>( sm_pos );
 
                     if( cur_submap == nullptr ) {
@@ -1441,7 +1445,8 @@ void map::generate_lightmap_worker( const int zlev )
             auto &local = smx_accs[smx];
             for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
                 const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-                const auto cur_submap = get_submap_at_grid( sm_pos );
+                const auto cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                            map_local_to_abs( *this, sm_pos ) );
                 if( cur_submap == nullptr ) {
                     continue;
                 }

@@ -118,6 +118,20 @@ std::vector<item *> active_item_cache::get()
     return all_cached_items;
 }
 
+auto active_item_cache::get_const() const -> std::vector<const item *>
+{
+    auto all_cached_items = std::vector<const item *> {};
+    for( const auto &kv : active_items ) {
+        const active_item_queue &queue = kv.second;
+        for( const auto &active_item : queue.items ) {
+            if( active_item ) {
+                all_cached_items.push_back( &*active_item );
+            }
+        }
+    }
+    return all_cached_items;
+}
+
 std::vector<item *> active_item_cache::get_for_processing()
 {
     auto items_to_process = std::vector<item *> {};

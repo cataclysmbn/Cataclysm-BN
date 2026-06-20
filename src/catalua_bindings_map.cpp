@@ -225,6 +225,25 @@ auto replace_vehicle_impl( map &m, const replace_vehicle_target &target,
     return true;
 }
 
+auto replace_mapgen_vehicle_impl( mapgen_constructor &m, vehicle *const target,
+                                  const replace_vehicle_request &request ) -> bool
+{
+    if( target == nullptr ) {
+        return false;
+    }
+
+    const auto pos = project_remain<coords::omt>( target->abs_ms_location() ).remainder;
+    m.destroy_vehicle( target );
+    auto *const added_vehicle = m.add_vehicle( request.replacement_type, pos,
+                                request.options.orientation, -1, request.options.status,
+                                true, request.locked, request.has_keys );
+    if( added_vehicle == nullptr ) { return false; }
+
+    configure_vehicle_locks( *added_vehicle, request );
+    configure_vehicle_brake_hold( *added_vehicle );
+    return true;
+}
+
 struct item_stack_lua_it_state {
     item_stack *stack;
     size_t index;
@@ -636,6 +655,23 @@ void cata::detail::reg_map( sol::state &lua )
 
         luna::set_fx( ut, "get_vehicles",
                       []( mapgen_constructor & m ) -> std::vector<vehicle *> { return m.get_vehicles(); } );
+        luna::set_fx( ut, "replace_vehicle", []( mapgen_constructor & m, vehicle * target,
+        const std::string & vehicle_id, const sol::optional<sol::table> &opts ) -> bool {
+            if( target == nullptr )
+            {
+                return false;
+            }
+            const auto replacement = make_replace_vehicle_request( vehicle_id, replace_vehicle_target{
+                .pos = tripoint_bub_ms::zero(),
+                .veh = target,
+                .default_orientation = target->face.dir(),
+            }, opts );
+            if( !replacement.has_value() )
+            {
+                return false;
+            }
+            return replace_mapgen_vehicle_impl( m, target, *replacement );
+        } );
 
         luna::set_fx( ut, "get_map_size_in_submaps", []( const mapgen_constructor & ) -> int {
             return 2;

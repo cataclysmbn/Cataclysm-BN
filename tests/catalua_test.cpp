@@ -25,7 +25,10 @@
 #include "json.h"
 #include "map.h"
 #include "map_helpers.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "mapdata.h"
+#include "mapgen_constructor.h"
 #include "effect.h"
 #include "monster.h"
 #include "npc.h"
@@ -973,6 +976,40 @@ TEST_CASE( "lua_map_vehicle_replacement", "[lua]" )
                    vehicles.front().v->part_with_feature( index, "DOOR_LOCKING", false ) == index;
     }
     CHECK( !has_lock );
+}
+
+TEST_CASE( "lua_mapgen_vehicle_replacement", "[lua][mapgen]" )
+{
+    clear_all_state();
+
+    auto &buffer = MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() );
+    auto tm = mapgen_constructor( buffer );
+    const auto origin = point_omt_ms( 12, 12 );
+    const auto original_facing = -90_degrees;
+    const auto overridden_facing = 180_degrees;
+    tm.reset_scratch_omt( tripoint_abs_omt( 11, 13, 0 ), ter_id( "t_floor" ), furn_id( "f_null" ),
+                          trap_id( "tr_null" ) );
+    auto *vehicle_ptr = tm.add_vehicle( vproto_id( "bicycle" ), origin, original_facing, 0, 0 );
+    REQUIRE( vehicle_ptr != nullptr );
+
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    test_data["mapgen"] = &tm;
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "mapgen_vehicle_replacement_test.lua" );
+
+    CHECK( test_data.get<int>( "vehicle_count_before" ) == 1 );
+    CHECK( test_data.get<bool>( "replace_ok" ) );
+    CHECK( test_data.get<int>( "vehicle_count_after" ) == 1 );
+
+    const auto vehicles = tm.get_vehicles();
+    REQUIRE( vehicles.size() == 1 );
+    REQUIRE( vehicles.front() != nullptr );
+    CHECK( project_remain<coords::omt>( vehicles.front()->abs_ms_location() ).remainder == origin );
+    CHECK( vehicles.front()->type == vproto_id( "swivel_chair" ) );
+    CHECK( normalize( vehicles.front()->face.dir() ) == normalize( overridden_facing ) );
+    CHECK( vehicles.front()->static_drag() == vehicles.front()->static_drag( false ) );
 }
 
 TEST_CASE( "lua_table_serde", "[lua]" )

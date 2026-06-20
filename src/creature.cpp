@@ -368,8 +368,6 @@ bool Creature::is_dangerous_field( const field_entry &entry ) const
 
 bool Creature::sees( const Creature &critter ) const
 {
-    ZoneScoped;
-
     // Creatures always see themselves (simplifies drawing).
     if( &critter == this ) {
         return true;
@@ -451,7 +449,6 @@ bool Creature::sees( const Creature &critter ) const
 
 bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod ) const
 {
-    ZoneScoped;
     map &here = get_map();
     // A creature in a different dimension from the current render map cannot
     // perform a valid sight check through that map's terrain data.

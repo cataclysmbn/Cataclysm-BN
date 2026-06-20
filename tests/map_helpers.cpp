@@ -81,7 +81,8 @@ void clear_fields( const int zlevel )
     for( int x = 0; x < mapsize; ++x ) {
         for( int y = 0; y < mapsize; ++y ) {
             const tripoint_bub_sm grid_pos( x, y, zlevel );
-            submap *const sm = here.get_submap_at_grid( grid_pos );
+            submap *const sm = here.get_mapbuffer().lookup_submap_in_memory(
+                                   map_local_to_abs( here, grid_pos ) );
             if( sm == nullptr || sm->field_count == 0 ) {
                 continue;
             }

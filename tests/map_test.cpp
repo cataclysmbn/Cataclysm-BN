@@ -511,13 +511,16 @@ TEST_CASE( "mapbuffer_simulated_lookup_uses_load_manager_membership" )
     } );
     auto *const sm = add_absolute_test_submap( buffer, sm_pos, ter_id( "t_rock" ) );
     REQUIRE( sm != nullptr );
+    const auto request_begin = sm_pos.xy();
+    const auto request_end = request_begin + point_rel_sm( 1, 1 );
 
     const auto lazy_handle = submap_loader.request_load( load_request_source::lazy_border,
-                             dim_id, sm_pos.xy(), 0 );
+                             dim_id, request_begin, request_end );
     CHECK( buffer.get_submap( sm_pos ) == nullptr );
     submap_loader.release_load( lazy_handle );
 
-    full_handle = submap_loader.request_load( load_request_source::script, dim_id, sm_pos.xy(), 0 );
+    full_handle = submap_loader.request_load( load_request_source::script, dim_id, request_begin,
+                  request_end );
     CHECK( buffer.get_submap( sm_pos ) == sm );
 }
 
@@ -704,6 +707,55 @@ static std::ostream &operator<<( std::ostream &os, const ter_id &tid )
 {
     os << tid.id().c_str();
     return os;
+}
+
+TEST_CASE( "tree_terrain_supports_climbing_destination_above" )
+{
+    clear_all_state();
+    auto &here = get_map();
+
+    static const ter_str_id t_tree( "t_tree" );
+    static const ter_str_id t_open_air( "t_open_air" );
+    const auto tree_pos = tripoint_bub_ms( 65, 65, 0 );
+    const auto climb_destination = tree_pos + tripoint_above;
+
+    here.ter_set( tree_pos, t_tree );
+    here.ter_set( climb_destination, t_open_air );
+
+    CHECK( here.supports_above( tree_pos ) );
+    CHECK( here.has_floor_or_support( climb_destination ) );
+}
+
+TEST_CASE( "omt_pillar_post_pass_links_generated_stairs" )
+{
+    clear_all_state();
+    auto &here = get_map();
+
+    static const ter_str_id t_floor( "t_floor" );
+    static const ter_str_id t_open_air( "t_open_air" );
+    static const ter_str_id t_stairs_down( "t_stairs_down" );
+    static const ter_str_id t_stairs_up( "t_stairs_up" );
+
+    const auto stairs_up_pos = tripoint_bub_ms( 65, 65, 0 );
+    const auto missing_down_pos = stairs_up_pos + tripoint_above;
+    here.ter_set( stairs_up_pos, t_stairs_up );
+    here.ter_set( missing_down_pos, t_open_air );
+
+    auto &buffer = here.get_mapbuffer();
+    buffer.run_omt_pillar_post_pass(
+        project_to<coords::omt>( map_local_to_abs( here, stairs_up_pos ) ).xy() );
+
+    CHECK( here.ter( missing_down_pos ) == t_stairs_down );
+
+    const auto stairs_down_pos = tripoint_bub_ms( 66, 65, 1 );
+    const auto missing_up_pos = stairs_down_pos + tripoint_below;
+    here.ter_set( stairs_down_pos, t_stairs_down );
+    here.ter_set( missing_up_pos, t_floor );
+
+    buffer.run_omt_pillar_post_pass(
+        project_to<coords::omt>( map_local_to_abs( here, stairs_down_pos ) ).xy() );
+
+    CHECK( here.ter( missing_up_pos ) == t_stairs_up );
 }
 
 TEST_CASE( "bash_through_roof_can_destroy_multiple_times" )
