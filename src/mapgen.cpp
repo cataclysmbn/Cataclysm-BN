@@ -6037,7 +6037,7 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
 
     if( placed_vehicle != nullptr ) {
         const auto placed_vehicle_sm = abs_to_map_local( *this, placed_vehicle->abs_sm_pos );
-        auto *place_on_submap = get_submap_at_grid( placed_vehicle_sm );
+        auto *place_on_submap = get_mapbuffer().lookup_submap_in_memory( placed_vehicle->abs_sm_pos );
         place_on_submap->vehicles.push_back( std::move( placed_vehicle_up ) );
         place_on_submap->is_uniform = false;
         invalidate_max_populated_zlev( placed_vehicle_sm.z() );
@@ -6165,12 +6165,13 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
 
 computer *map::add_computer( const tripoint_bub_ms &p, const std::string &name, int security )
 {
-    // TODO: Turn this off?
-    ter_set( p, t_console );
-    point_sm_ms l;
-    submap *const place_on_submap = get_submap_at( p, l );
-    place_on_submap->set_computer( l, computer( name, security ) );
-    return place_on_submap->get_computer( l );
+    return get_mapbuffer().add_computer( map_local_to_abs( *this, p ), {
+        .name = name,
+        .security = security,
+        .lookup = {
+            .mode = mapbuffer_lookup_mode::resident_only,
+        },
+    } );
 }
 
 /**
@@ -6223,8 +6224,8 @@ void map::rotate( int turns, const bool setpos_safe )
     //
     auto swap_submaps = [&]( const tripoint_bub_sm & p1, const tripoint_bub_sm & p2 ) {
 
-        submap *sm1 = get_submap_at_grid( p1 );
-        submap *sm2 = get_submap_at_grid( p2 );
+        submap *sm1 = get_mapbuffer().lookup_submap_in_memory( map_local_to_abs( *this, p1 ) );
+        submap *sm2 = get_mapbuffer().lookup_submap_in_memory( map_local_to_abs( *this, p2 ) );
         submap::swap( *sm1, *sm2 );
 
     };
@@ -6249,7 +6250,7 @@ void map::rotate( int turns, const bool setpos_safe )
     for( int j = 0; j < 2; ++j ) {
         for( int i = 0; i < 2; ++i ) {
             tripoint_bub_sm p( i, j, player_pos.z() );
-            auto sm = get_submap_at_grid( p );
+            auto sm = get_mapbuffer().lookup_submap_in_memory( map_local_to_abs( *this, p ) );
 
             sm->rotate( turns );
 

@@ -3169,42 +3169,54 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             bub_to_abs( tripoint_bub_ms( min_mm_reg, center.z() ) ),
             bub_to_abs( tripoint_bub_ms( max_mm_reg, center.z() ) )
         );
-
-        const auto already_drawn = half_open_rectangle<point>(
-                                       point( min_col, min_row ), point( max_col, max_row ) );
+    };
+    const auto already_drawn = half_open_rectangle<point>(
+                                   point( min_col, min_row ), point( max_col, max_row ) );
+    const auto offscreen_memory_xy_without_distance = [&]( const point_bub_ms & p ) {
+        if( iso_mode ) {
+            const auto col = p.y() + p.x() + s.x / 2 - o.y() - o.x();
+            const auto row = p.y() - p.x() + s.y / 2 - o.y() + o.x();
+            return !already_drawn.contains( point( col, row ) );
+        }
+        const auto screen_x = p.x() - o.x();
+        const auto screen_y = p.y() - o.y();
+        return screen_x < min_col || screen_x >= max_col ||
+               screen_y < min_row || screen_y >= max_row;
+    };
+    const auto offscreen_memory_xy = [&]( const point_bub_ms & p ) {
+        if( trigdist ? rl_dist( p, center.xy() ) > g_max_view_distance :
+            square_dist( p, center.xy() ) > g_max_view_distance ) {
+            return false;
+        }
+        return offscreen_memory_xy_without_distance( p );
+    };
+    const auto build_full_offscreen_memory_scan = [&]() {
+        ZoneScopedN( "cata_tiles_prepare_offscreen_candidates" );
+        const auto scan_distance_table = trigdist ?
+        &get_rl_dist_lookup_table( rl_dist_lookup_table_dimensions{
+            .max_dx = std::max( std::abs( min_visible_x - center.x() ),
+                                std::abs( max_visible_x - center.x() ) ),
+            .max_dy = std::max( std::abs( min_visible_y - center.y() ),
+                                std::abs( max_visible_y - center.y() ) ),
+            .max_dz = 0,
+            .trigdist = trigdist,
+        } ) :
+            nullptr;
         offscreen_memory_points.clear();
         offscreen_memory_points.reserve( static_cast<size_t>( ( max_visible_x - min_visible_x + 1 ) *
                                          ( max_visible_y - min_visible_y + 1 ) ) );
         for( const auto mem_y : std::views::iota( min_visible_y, max_visible_y + 1 ) ) {
+            const auto dy = std::abs( mem_y - center.y() );
             for( const auto mem_x : std::views::iota( min_visible_x, max_visible_x + 1 ) ) {
-                if( iso_mode ) {
-                    // calculate the screen position according to the drawing code above (division rounded down):
-
-                    // mem_x = ( col - row - sx / 2 + sy / 2 ) / 2 + o.x;
-                    // mem_y = ( row + col - sy / 2 - sx / 2 ) / 2 + o.y;
-                    // ( col - sx / 2 ) % 2 = ( row - sy / 2 ) % 2
-                    // ||
-                    // \/
-                    const auto col = mem_y + mem_x + s.x / 2 - o.y() - o.x();
-                    const auto row = mem_y - mem_x + s.y / 2 - o.y() + o.x();
-                    if( already_drawn.contains( point( col, row ) ) ) {
-                        continue;
-                    }
-                } else {
-                    // calculate the screen position according to the drawing code above:
-
-                    // mem_x = col + o.x
-                    // mem_y = row + o.y
-                    // ||
-                    // \/
-                    // col = mem_x - o.x
-                    // row = mem_y - o.y
-                    const auto screen_x = mem_x - o.x();
-                    const auto screen_y = mem_y - o.y();
-                    if( screen_x >= min_col && screen_x < max_col &&
-                        screen_y >= min_row && screen_y < max_row ) {
-                        continue;
-                    }
+                const auto dx = std::abs( mem_x - center.x() );
+                const auto dist = scan_distance_table != nullptr ?
+                                  scan_distance_table->distance_2d( dx, dy ) :
+                                  std::max( dx, dy );
+                if( dist > g_max_view_distance ) {
+                    continue;
+                }
+                if( !offscreen_memory_xy_without_distance( point_bub_ms( mem_x, mem_y ) ) ) {
+                    continue;
                 }
                 offscreen_memory_points.emplace_back( mem_x, mem_y );
             }
@@ -3952,12 +3964,87 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     {
         ZoneScopedN( "cata_tiles_memorize_offscreen_seen" );
         const auto &_cz = here.access_cache( center.z() );
-        auto offscreen_scan_count = static_cast<int64_t>( offscreen_memory_points.size() );
+        const auto full_memory_scan = here.is_memory_seen_cache_dirty_all( center.z() );
+        if( full_memory_scan ) {
+            build_full_offscreen_memory_scan();
+        }
+        auto dirty_memory_candidates = std::vector<tripoint_bub_ms> {};
+        auto dirty_memory_candidate_set = std::unordered_set<tripoint_bub_ms> {};
+        const auto queue_dirty_memory_candidate = [&]( const tripoint_bub_ms & candidate ) {
+            if( !here.inbounds( candidate ) || !offscreen_memory_xy( candidate.xy() ) ) {
+                return;
+            }
+            if( dirty_memory_candidate_set.insert( candidate ).second ) {
+                dirty_memory_candidates.push_back( candidate );
+            }
+        };
+        if( !full_memory_scan ) {
+            for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+                if( here.is_memory_seen_cache_dirty_all( z ) ) {
+                    continue;
+                }
+                for( const tripoint_bub_ms &dirty_point : here.take_memory_seen_cache_dirty_points( z ) ) {
+                    queue_dirty_memory_candidate( dirty_point );
+                    for( const point &dir : neighborhood ) {
+                        queue_dirty_memory_candidate( dirty_point + dir );
+                    }
+                }
+            }
+        }
+        auto offscreen_scan_count = static_cast<int64_t>( full_memory_scan ?
+                                    offscreen_memory_points.size() : dirty_memory_candidates.size() );
         auto offscreen_refresh_count = int64_t{ 0 };
         auto offscreen_dirty_memory_count = int64_t{ 0 };
         auto offscreen_connecting_refresh_count = int64_t{ 0 };
-        //Memorize everything the character just saw even if it wasn't displayed.
-        for( const point_bub_ms &mem_p : offscreen_memory_points ) {
+        const auto memorize_offscreen_point = [&]( const tripoint_bub_ms & p,
+        const lit_level lighting ) {
+            const auto &ch = here.access_cache( p.z() );
+
+            if( apply_vision_effects( p, here.get_visibility( lighting, cache ) ) ) {
+                return;
+            }
+            const auto dirty_memory = here.check_seen_cache( p );
+            auto should_refresh_memory = dirty_memory;
+            auto connecting_refresh = false;
+            if( !should_refresh_memory ) {
+                auto connect_group = 0;
+                const auto &terrain = here.ter( p );
+                const auto adjacent_memory_dirty = std::ranges::any_of( neighborhood, [&]( const point & dir ) {
+                    const auto np = p + dir;
+                    return here.inbounds( np ) && here.check_seen_cache( np );
+                } );
+                connecting_refresh = adjacent_memory_dirty && terrain &&
+                                     terrain.obj().connects( connect_group );
+                should_refresh_memory = connecting_refresh;
+            }
+            if( !should_refresh_memory ) {
+                return;
+            }
+            ++offscreen_refresh_count;
+            offscreen_dirty_memory_count += dirty_memory ? int64_t{ 1 } :
+                                            int64_t{ 0 };
+            offscreen_connecting_refresh_count += connecting_refresh ? int64_t{ 1 } :
+                                                  int64_t{ 0 };
+            bool invisible[5];
+            invisible[0] = false;
+            for( const auto i : std::views::iota( 0, 4 ) ) {
+                const auto np = p + neighborhood[i];
+                invisible[1 + i] = !here.inbounds( np ) ||
+                                   np.y() < min_visible_y || np.y() > max_visible_y ||
+                                   np.x() < min_visible_x || np.x() > max_visible_x ||
+                                   would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x(), np.y() )],
+                                           cache ) );
+            }
+            // Bypass draw calls: these tiles are offscreen and only need map memory refresh.
+            memorize_live_terrain( p, invisible );
+            if( here.check_seen_cache( p ) ) {
+                memorize_live_furniture( p, invisible );
+                memorize_live_trap( p, invisible );
+                memorize_live_vehicle( p, invisible );
+                here.check_and_set_seen_cache( p );
+            }
+        };
+        const auto memorize_full_scan_point = [&]( const point_bub_ms & mem_p ) {
             const auto mem_x = mem_p.x();
             const auto mem_y = mem_p.y();
             lit_level lighting = _cz.visibility_cache[_cz.idx( mem_x, mem_y )];
@@ -3976,46 +4063,20 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 }
             }
 
-
-            const auto &ch = here.access_cache( z );
             const tripoint_bub_ms p( mem_x, mem_y, z );
 
-            if( apply_vision_effects( p, here.get_visibility( lighting, cache ) ) ) {
-                continue;
+            memorize_offscreen_point( p, lighting );
+        };
+        //Memorize everything the character just saw even if it wasn't displayed.
+        if( full_memory_scan ) {
+            for( const point_bub_ms &mem_p : offscreen_memory_points ) {
+                memorize_full_scan_point( mem_p );
             }
-            const auto dirty_memory = here.check_seen_cache( p );
-            auto should_refresh_memory = dirty_memory;
-            auto connecting_refresh = false;
-            if( !should_refresh_memory ) {
-                auto connect_group = 0;
-                const auto &terrain = here.ter( p );
-                connecting_refresh = terrain && terrain.obj().connects( connect_group );
-                should_refresh_memory = connecting_refresh;
-            }
-            if( !should_refresh_memory ) {
-                continue;
-            }
-            ++offscreen_refresh_count;
-            offscreen_dirty_memory_count += dirty_memory ? int64_t{ 1 } :
-                                            int64_t{ 0 };
-            offscreen_connecting_refresh_count += connecting_refresh ? int64_t{ 1 } :
-                                                  int64_t{ 0 };
-            bool invisible[5];
-            invisible[0] = false;
-            for( const auto i : std::views::iota( 0, 4 ) ) {
-                const auto np = p + neighborhood[i];
-                invisible[1 + i] = np.y() < min_visible_y || np.y() > max_visible_y ||
-                                   np.x() < min_visible_x || np.x() > max_visible_x ||
-                                   would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x(), np.y() )],
-                                           cache ) );
-            }
-            // Bypass draw calls: these tiles are offscreen and only need map memory refresh.
-            memorize_live_terrain( p, invisible );
-            if( here.check_seen_cache( p ) ) {
-                memorize_live_furniture( p, invisible );
-                memorize_live_trap( p, invisible );
-                memorize_live_vehicle( p, invisible );
-                here.check_and_set_seen_cache( p );
+            here.mark_memory_seen_cache_dirty_all_clean( center.z() );
+        } else {
+            for( const tripoint_bub_ms &p : dirty_memory_candidates ) {
+                const auto &ch = here.access_cache( p.z() );
+                memorize_offscreen_point( p, ch.visibility_cache[ch.idx( p.x(), p.y() )] );
             }
         }
         TracyPlot( "Cata Tiles Offscreen Memory Scanned", offscreen_scan_count );

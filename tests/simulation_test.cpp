@@ -91,8 +91,10 @@ TEST_CASE( "fire_spread_keeps_no_fire_boundary_submap_while_adjacent_to_fire",
     auto &dim = MAPBUFFER_REGISTRY.get( TEST_DIM_ID );
     const auto source_pos = tripoint_abs_sm{ 400, 400, 0 };
     const auto neighbor_pos = tripoint_abs_sm{ 401, 400, 0 };
+    const auto request_begin = source_pos.xy();
+    const auto request_end = request_begin + point_rel_sm( 1, 1 );
     const auto proper_handle = submap_loader.request_load( load_request_source::reality_bubble,
-                               TEST_DIM_ID, source_pos.xy(), 0 );
+                               TEST_DIM_ID, request_begin, request_end );
     const auto cleanup = on_out_of_scope( [&]() {
         loader.clear( submap_loader );
         submap_loader.release_load( proper_handle );

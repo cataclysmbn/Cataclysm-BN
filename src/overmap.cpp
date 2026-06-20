@@ -6017,7 +6017,8 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         for( const auto x : std::views::iota( 0, here.getmapsize() ) ) {
             for( const auto y : std::views::iota( 0, here.getmapsize() ) ) {
                 const auto dest_pos = tripoint_bub_sm( x, y, p.z() );
-                const submap *destsm = here.get_submap_at_grid( dest_pos );
+                const submap *destsm = here.get_mapbuffer().lookup_submap_in_memory(
+                                           map_local_to_abs( here, dest_pos ) );
                 here.update_vehicle_list( destsm, p.z() ); // update real map's vcaches
             }
         }

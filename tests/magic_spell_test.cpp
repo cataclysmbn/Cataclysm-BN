@@ -1,11 +1,16 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
+
 #include "avatar.h"
+#include "cata_utility.h"
 #include "fstream_utils.h"
 #include "game.h"
 #include "magic.h"
 #include "map.h"
 #include "monster.h"
+#include "ranged.h"
+#include "spell_targeting.h"
 
 #include "player_helpers.h"
 #include "map_helpers.h"
@@ -117,6 +122,43 @@ TEST_CASE( "avatar sees own tile even with dirty visibility cache",
     REQUIRE( here.visibility_caches_dirty() );
 
     CHECK( you.sees( you.bub_pos() ) );
+}
+
+TEST_CASE( "hostile targeted spells accept targets selected by spell targeting",
+           "[magic][spell][target][vision]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    const auto cleanup_test_state = on_out_of_scope( []() { clear_all_state(); } );
+
+    clear_all_state();
+    clear_avatar();
+    clear_map();
+
+    calendar::turn = calendar::turn_zero;
+    g->reset_light_level();
+
+    avatar &you = get_avatar();
+    const auto caster_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto target_pos = caster_pos + point_rel_ms( 5, 0 );
+    you.setpos( caster_pos );
+    you.set_mutation( trait_id( "INFRARED" ) );
+    you.recalc_sight_limits();
+
+    monster &target = spawn_test_monster( "mon_zombie", target_pos );
+    map &here = get_map();
+    here.invalidate_map_cache( you.bub_pos().z() );
+    g->refresh_player_visibility_cache_if_needed();
+
+    spell hostile_spell( spell_id( "test_spell_pew" ) );
+    hostile_spell.set_level( 5 );
+    REQUIRE( hostile_spell.is_valid_target( target_hostile ) );
+    REQUIRE_FALSE( hostile_spell.is_valid_target( target_ground ) );
+    REQUIRE( std::ranges::contains( ranged::targetable_creatures( you, hostile_spell.range() ),
+                                    &target ) );
+    REQUIRE( you.sees_with_infrared( target ) );
+    REQUIRE_FALSE( you.sees( target_pos ) );
+
+    CHECK( spell_target_can_be_resolved( hostile_spell, you, target_pos ) );
 }
 
 TEST_CASE( "known magic remembers the last cast spell", "[magic][spell][save]" )

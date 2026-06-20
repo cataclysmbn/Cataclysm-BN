@@ -12,7 +12,9 @@
 #include "int_id.h"
 #include "lightmap.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
+#include "profile.h"
 #include "tileray.h"
 #include "trap.h"
 #include "vehicle.h"
@@ -21,6 +23,24 @@
 
 
 const data_vars::data_set submap::EMPTY_VARS{};
+
+auto submap::static_emitter_tiles() const -> const std::vector<point_sm_ms> &
+{
+    if( !emitter_cache.has_value() ) {
+        ZoneScopedN( "submap_rebuild_static_emitter_cache" );
+        auto emitters = std::vector<point_sm_ms> {};
+        for( const auto sm_ms : submap_tiles() ) {
+            const auto terrain = get_ter( sm_ms );
+            const auto furniture = get_furn( sm_ms );
+            if( terrain->light_emitted > LIGHT_AMBIENT_LOW ||
+                furniture->light_emitted > LIGHT_AMBIENT_LOW ) {
+                emitters.push_back( sm_ms );
+            }
+        }
+        emitter_cache = std::move( emitters );
+    }
+    return *emitter_cache;
+}
 
 template<int sx, int sy>
 void maptile_soa<sx, sy>::swap_soa_tile( const point_sm_ms &p1, const point_sm_ms &p2 )
@@ -514,7 +534,8 @@ auto submap::rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos 
 
     const bool lowest_z = grid_pos.z() <= -OVERMAP_DEPTH;
     const submap *below = lowest_z ? nullptr
-                          : m.get_submap_at_grid( grid_pos - tripoint_rel_sm( 0, 0, 1 ) );
+                          : m.get_mapbuffer().lookup_submap_in_memory(
+                              map_local_to_abs( m, grid_pos - tripoint_rel_sm( 0, 0, 1 ) ) );
 
     for( const auto &sp : submap_tiles() ) {
         const auto &ter_obj = get_ter( sp ).obj();

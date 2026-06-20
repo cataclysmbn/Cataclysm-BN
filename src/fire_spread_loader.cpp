@@ -26,15 +26,13 @@ const auto cardinal_offsets = std::to_array( { tripoint_east, tripoint_west, tri
  * Return true if the submap at @p abs_sm_pos in @p mb has at least one live
  * fire field (fd_fire intensity >= 1).
  */
-// NOTE: is_field_alive() is non-const in the current codebase, so we need a
-// non-const submap reference here even though we only read.
-auto submap_has_fire( submap &sm ) -> bool
+auto submap_has_fire( const submap &sm ) -> bool
 {
     if( sm.field_count == 0 ) {
         return false;
     }
     return std::ranges::any_of( sm.field_cache, [&]( const point_sm_ms & local ) {
-        auto *fe = sm.get_field( local ).find_field( fd_fire );
+        const auto *fe = sm.get_field( local ).find_field( fd_fire );
         return fe != nullptr && fe->is_field_alive();
     } );
 }
@@ -77,9 +75,11 @@ auto fire_spread_loader::request_for_fire( const dimension_id &dim, tripoint_abs
         }
     }
 
-    // Request a single omt (radius 0) — always covers full z-pillar.
+    // Request a single submap column — always covers full z-pillar.
+    const auto begin = pos.xy();
+    const auto end = begin + point_rel_sm( 1, 1 );
     const auto h = submap_loader.request_load(
-                       load_request_source::fire_spread, dim, pos.xy(), 0 );
+                       load_request_source::fire_spread, dim, begin, end );
     fire_handles_[key] = h;
 }
 

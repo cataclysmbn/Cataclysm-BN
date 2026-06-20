@@ -119,7 +119,10 @@ jobs:
       #     clang-tidy --version
 
       - name: gather affected files
-        run: deno task affected-files --base ${{ github.event.pull_request.base.sha }} --head HEAD --output "$AFFECTED_FILES"
+        run: |
+          ref=refs/remotes/pull/${{ github.event.pull_request.number }}/merge
+          git fetch --no-tags --filter=blob:none --depth=2 origin "+refs/pull/${{ github.event.pull_request.number }}/merge:$ref"
+          deno task affected-files --base "$ref^1" --head "$ref" --output "$AFFECTED_FILES"
 
       - name: run clang-tidy
         run: bash ./build-scripts/run-clang-tidy-plugin.sh

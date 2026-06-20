@@ -1502,55 +1502,34 @@ auto add_field_sources(source_accumulator& acc, tripoint_bub_ms const& pos, fiel
     }
 }
 
-auto static_emitter_tiles(submap& sm) -> std::vector<point_sm_ms> const& {
-    if (!sm.emitter_cache.has_value()) {
-        ZoneScopedN("gpu_lm_rebuild_static_emitter_cache");
-        auto emitters = std::vector<point_sm_ms>{};
-        for (auto const sm_ms : submap_tiles()) {
-            auto const terrain = sm.get_ter(sm_ms);
-            auto const furniture = sm.get_furn(sm_ms);
-            if (terrain->light_emitted > LIGHT_AMBIENT_LOW
-                || furniture->light_emitted > LIGHT_AMBIENT_LOW) {
-                emitters.push_back(sm_ms);
-            }
-        }
-        sm.emitter_cache = std::move(emitters);
-    }
-    return *sm.emitter_cache;
-}
-
 auto add_static_emitter_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_static_emitters");
     for (auto const z : acc.dirty_levels) {
-        auto const& lc = acc.m.get_cache_ref(z);
-        for (auto const smx : std::views::iota(0, lc.cache_mapsize)) {
-            for (auto const smy : std::views::iota(0, lc.cache_mapsize)) {
-                auto const grid = tripoint_bub_sm(smx, smy, z);
-                auto* const sm = acc.m.get_submap_at_grid(grid);
-                if (sm == nullptr) { continue; }
+        for (auto const& view : acc.m.active_submap_views(z)) {
+            auto const grid = abs_to_bub(view.abs_pos());
+            auto const& sm = view.get_submap();
 
-                for (auto const sm_ms : static_emitter_tiles(*sm)) {
-                    auto const pos = project_combine(grid, sm_ms);
-                    auto const terrain = sm->get_ter(sm_ms);
-                    auto const terrain_luminance = static_cast<float>(terrain->light_emitted);
-                    add_source(acc, pos, terrain_luminance, static_emitter_kind(terrain.obj()));
-                    add_colored_point_source({
-                        .acc = acc,
-                        .pos = pos,
-                        .luminance = terrain_luminance,
-                        .color_rgb = map_data_light_color(terrain.obj()),
-                    });
+            for (auto const sm_ms : sm.static_emitter_tiles()) {
+                auto const pos = project_combine(grid, sm_ms);
+                auto const terrain = sm.get_ter(sm_ms);
+                auto const terrain_luminance = static_cast<float>(terrain->light_emitted);
+                add_source(acc, pos, terrain_luminance, static_emitter_kind(terrain.obj()));
+                add_colored_point_source({
+                    .acc = acc,
+                    .pos = pos,
+                    .luminance = terrain_luminance,
+                    .color_rgb = map_data_light_color(terrain.obj()),
+                });
 
-                    auto const furniture = sm->get_furn(sm_ms);
-                    auto const furniture_luminance = static_cast<float>(furniture->light_emitted);
-                    add_source(acc, pos, furniture_luminance, static_emitter_kind(furniture.obj()));
-                    add_colored_point_source({
-                        .acc = acc,
-                        .pos = pos,
-                        .luminance = furniture_luminance,
-                        .color_rgb = map_data_light_color(furniture.obj()),
-                    });
-                }
+                auto const furniture = sm.get_furn(sm_ms);
+                auto const furniture_luminance = static_cast<float>(furniture->light_emitted);
+                add_source(acc, pos, furniture_luminance, static_emitter_kind(furniture.obj()));
+                add_colored_point_source({
+                    .acc = acc,
+                    .pos = pos,
+                    .luminance = furniture_luminance,
+                    .color_rgb = map_data_light_color(furniture.obj()),
+                });
             }
         }
     }
@@ -1559,46 +1538,51 @@ auto add_static_emitter_sources(source_accumulator& acc) -> void {
 auto add_field_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_field_sources");
     for (auto const z : acc.dirty_levels) {
-        auto const& lc = acc.m.get_cache_ref(z);
-        for (auto const smx : std::views::iota(0, lc.cache_mapsize)) {
-            for (auto const smy : std::views::iota(0, lc.cache_mapsize)) {
-                auto const grid = tripoint_bub_sm(smx, smy, z);
-                auto const* const sm = acc.m.get_submap_at_grid(grid);
-                if (sm == nullptr || sm->field_count == 0) { continue; }
+        for (auto const& view : acc.m.active_submap_views(z)) {
+            auto const grid = abs_to_bub(view.abs_pos());
+            auto const& sm = view.get_submap();
+            if (sm.field_count == 0) { continue; }
 
-                for (auto const sm_ms : sm->field_cache) {
-                    auto const& fields = sm->get_field(sm_ms);
-                    if (fields.field_count() == 0) { continue; }
-                    add_field_sources(acc, project_combine(grid, sm_ms), fields);
-                }
+            for (auto const sm_ms : sm.field_cache) {
+                auto const& fields = sm.get_field(sm_ms);
+                if (fields.field_count() == 0) { continue; }
+                add_field_sources(acc, project_combine(grid, sm_ms), fields);
             }
         }
     }
 }
 
 auto add_active_item_sources(source_accumulator& acc) -> void {
-    ZoneScopedN("gpu_lm_collect_active_item_sources");
-    for (tripoint_abs_sm const& abs_pos : acc.m.get_submaps_with_active_items()) {
-        auto const local_pos = abs_to_bub(abs_pos);
-        if (dirty_level_index(acc, local_pos.z()) < 0) { continue; }
+    ZoneScopedN("gpu_lm_collect_item_sources");
+    auto const& luminous_item_submaps = acc.m.get_mapbuffer().get_submaps_with_luminous_items();
+    for (auto const z : acc.dirty_levels) {
+        for (tripoint_abs_sm const& abs_pos : luminous_item_submaps) {
+            if (abs_pos.z() != z || !acc.m.contains_abs_sm(abs_pos)) { continue; }
+            auto const* const sm_ptr = acc.m.get_mapbuffer().lookup_submap_in_memory(abs_pos);
+            if (sm_ptr == nullptr) { continue; }
 
-        auto* const sm = acc.m.get_submap_at_grid(local_pos);
-        if (sm == nullptr || sm->active_items.empty()) { continue; }
+            auto const grid = abs_to_bub(abs_pos);
+            auto const& sm = *sm_ptr;
 
-        for (item const* const itm : sm->active_items.get()) {
-            if (itm == nullptr) { continue; }
-            auto luminance = 0.0f;
-            auto width = 0_degrees;
-            auto direction = 0_degrees;
-            if (itm->getlight(luminance, width, direction)) {
-                auto const pos = itm->bub_pos();
-                add_source(acc, pos, luminance, light_source_kind::active_item);
-                add_colored_point_source({
-                    .acc = acc,
-                    .pos = pos,
-                    .luminance = luminance,
-                    .color_rgb = item_light_color(*itm),
-                });
+            for (auto const sm_ms : submap_tiles()) {
+                if (sm.get_lum(sm_ms) == 0) { continue; }
+
+                auto const pos = project_combine(grid, sm_ms);
+                for (item const* const itm : sm.get_items(sm_ms)) {
+                    if (itm == nullptr) { continue; }
+                    auto luminance = 0.0f;
+                    auto width = 0_degrees;
+                    auto direction = 0_degrees;
+                    if (itm->getlight(luminance, width, direction)) {
+                        add_source(acc, pos, luminance, light_source_kind::active_item);
+                        add_colored_point_source({
+                            .acc = acc,
+                            .pos = pos,
+                            .luminance = luminance,
+                            .color_rgb = item_light_color(*itm),
+                        });
+                    }
+                }
             }
         }
     }
@@ -1841,25 +1825,22 @@ auto write_source_map_to_level_caches(
 auto write_field_light_overrides_to_source_map(map const& m, std::vector<int> const& dirty_levels)
     -> void {
     for (auto const z : dirty_levels) {
-        auto const& lc = m.get_cache_ref(z);
-        for (auto const smx : std::views::iota(0, lc.cache_mapsize)) {
-            for (auto const smy : std::views::iota(0, lc.cache_mapsize)) {
-                auto const grid = tripoint_bub_sm(smx, smy, z);
-                auto const* const sm = m.get_submap_at_grid(grid);
-                if (sm == nullptr || sm->field_count == 0) { continue; }
+        for (auto const& view : m.active_submap_views(z)) {
+            auto const grid = abs_to_bub(view.abs_pos());
+            auto const& sm = view.get_submap();
+            if (sm.field_count == 0) { continue; }
 
-                for (auto const sm_ms : sm->field_cache) {
-                    auto const& fields = sm->get_field(sm_ms);
-                    if (fields.field_count() == 0) { continue; }
-                    auto const pos = project_combine(grid, sm_ms);
-                    auto& target_lc = const_cast<level_cache&>(m.get_cache_ref(pos.z()));
-                    auto& value = target_lc.sm[target_lc.idx(pos.x(), pos.y())];
-                    for (auto const& field_pair : fields) {
-                        if (!field_pair.first.is_valid()) { continue; }
-                        auto const light_override = field_pair.second.local_light_override();
-                        if (light_override >= 0.0f) {
-                            value = encode_local_light_override(light_override);
-                        }
+            for (auto const sm_ms : sm.field_cache) {
+                auto const& fields = sm.get_field(sm_ms);
+                if (fields.field_count() == 0) { continue; }
+                auto const pos = project_combine(grid, sm_ms);
+                auto& target_lc = const_cast<level_cache&>(m.get_cache_ref(pos.z()));
+                auto& value = target_lc.sm[target_lc.idx(pos.x(), pos.y())];
+                for (auto const& field_pair : fields) {
+                    if (!field_pair.first.is_valid()) { continue; }
+                    auto const light_override = field_pair.second.local_light_override();
+                    if (light_override >= 0.0f) {
+                        value = encode_local_light_override(light_override);
                     }
                 }
             }
