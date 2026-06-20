@@ -5,9 +5,11 @@
 #include <sstream>
 #include <string>
 
+#include "avatar_action.h"
 #include "character_martial_arts.h"
 #include "creature.h"
 #include "coordinates.h"
+#include "game.h"
 #include "game_constants.h"
 #include "item.h"
 #include "itype.h"
@@ -134,6 +136,27 @@ TEST_CASE( "melee technique prompt suppression guard", "[melee]" )
         const melee::technique_prompt_suppression_guard suppress_technique_prompt;
         CHECK( melee::is_technique_prompt_suppressed() );
     }
+    CHECK( !melee::is_technique_prompt_suppressed() );
+}
+
+TEST_CASE( "manual combat mode controls melee action suppression", "[melee]" )
+{
+    clear_all_state();
+
+    auto suppressed_during_callback = false;
+
+    g->manual_combat_mode = false;
+    avatar_action::handle_melee_action( [&suppressed_during_callback]() {
+        suppressed_during_callback = melee::is_technique_prompt_suppressed();
+    } );
+    CHECK( suppressed_during_callback );
+    CHECK( !melee::is_technique_prompt_suppressed() );
+
+    g->manual_combat_mode = true;
+    avatar_action::handle_melee_action( [&suppressed_during_callback]() {
+        suppressed_during_callback = melee::is_technique_prompt_suppressed();
+    } );
+    CHECK( !suppressed_during_callback );
     CHECK( !melee::is_technique_prompt_suppressed() );
 }
 

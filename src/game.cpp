@@ -3449,7 +3449,6 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "safemode" );
     ctxt.register_action( "autosafe" );
     ctxt.register_action( "autoattack" );
-    ctxt.register_action( "manual_attack" );
     ctxt.register_action( "toggle_manual_combat_mode" );
     ctxt.register_action( "ignore_enemy" );
     ctxt.register_action( "whitelist_enemy" );
@@ -8019,7 +8018,7 @@ bool game::npc_menu( npc &who, const bool &force )
         u.mod_moves( -100 );
     } else if( choice == attack ) {
         if( who.is_enemy() || query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
-            u.melee_attack( who, true );
+            avatar_action::melee_attack_while_handling_manual_combat_mode( u, who );
             who.on_attacked( u );
         }
     } else if( choice == disarm ) {
