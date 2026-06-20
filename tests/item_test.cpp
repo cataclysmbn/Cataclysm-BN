@@ -368,3 +368,71 @@ TEST_CASE( "stacking_corpses", "[item]" )
         }
     }
 }
+
+TEST_CASE( "gunmod_affects_gun_weight_and_volume", "[item][gunmod]" )
+{
+    // All test items are defined in data/mods/TEST_DATA/items.json
+    // glock_19: weight=600g, volume=500ml
+    // test_mod_neg_int: integral_weight=-100g, integral_volume=-100ml
+    // test_mod_mult: weight_multiplier=0.90, volume_multiplier=0.90
+    // test_mod_clamp: integral_weight=-999g, integral_volume=-999ml
+
+    SECTION( "negative integral modifier reduces gun weight and volume" ) {
+        detached_ptr<item> gun = item::spawn( "glock_19" );
+        REQUIRE( gun );
+
+        const units::mass w0 = gun->weight();
+        const units::volume v0 = gun->volume();
+        INFO( "base weight: " << w0 << "  base volume: " << v0 );
+
+        detached_ptr<item> mod = item::spawn( "test_mod_neg_int" );
+        REQUIRE( gun->is_gunmod_compatible( *mod ).success() );
+        gun->put_in( std::move( mod ) );
+
+        CHECK( gun->weight() == w0 - 100_gram );
+        CHECK( gun->volume() == v0 - 100_ml );
+    }
+
+    SECTION( "multiplier modifier reduces gun weight and volume" ) {
+        detached_ptr<item> gun = item::spawn( "glock_19" );
+        REQUIRE( gun );
+
+        detached_ptr<item> mod = item::spawn( "test_mod_mult" );
+        REQUIRE( gun->is_gunmod_compatible( *mod ).success() );
+        gun->put_in( std::move( mod ) );
+
+        // 600g * 0.90 = 540g, 500ml * 0.90 = 450ml
+        CHECK( gun->weight() == 540_gram );
+        CHECK( gun->volume() == 450_ml );
+    }
+
+    SECTION( "both mods together apply multiplicative then additive" ) {
+        detached_ptr<item> gun = item::spawn( "glock_19" );
+        REQUIRE( gun );
+
+        detached_ptr<item> mod_mult = item::spawn( "test_mod_mult" );
+        REQUIRE( gun->is_gunmod_compatible( *mod_mult ).success() );
+        gun->put_in( std::move( mod_mult ) );
+
+        detached_ptr<item> mod_neg = item::spawn( "test_mod_neg_int" );
+        REQUIRE( gun->is_gunmod_compatible( *mod_neg ).success() );
+        gun->put_in( std::move( mod_neg ) );
+
+        // 600 * 0.90 - 100 = 440 for weight, 500 * 0.90 - 100 = 350 for volume
+        CHECK( gun->weight() == 440_gram );
+        CHECK( gun->volume() == 350_ml );
+    }
+
+    SECTION( "clamping at 1 percent prevents near-zero values" ) {
+        detached_ptr<item> gun = item::spawn( "glock_19" );
+        REQUIRE( gun );
+
+        detached_ptr<item> mod = item::spawn( "test_mod_clamp" );
+        REQUIRE( gun->is_gunmod_compatible( *mod ).success() );
+        gun->put_in( std::move( mod ) );
+
+        // 600 - 999 clamped at 600 / 100 = 6, 500 - 999 clamped at 500 / 100 = 5
+        CHECK( gun->weight() == 6_gram );
+        CHECK( gun->volume() == 5_ml );
+    }
+}
