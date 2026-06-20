@@ -38,6 +38,15 @@
     ]
   },
   {
+    "id": "mon_zombie_cop_shieldman_death_drops",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "plastic_chunk", "prob": 75, "count": [ 12, 16 ] },
+      { "item": "shield_riot", "prob": 25, "damage": [ 1, 4 ] }
+    ]
+  },
+  {
     "type": "item_group",
     "id": "cop_gear",
     "items": [
@@ -181,8 +190,8 @@
         "prob": 25
       },
       {
-        "collection": [ { "item": "swat_armor", "prob": 50 }, { "item": "kevlar", "prob": 25 }, { "item": "tacvest", "prob": 5 } ],
-        "prob": 75
+        "collection": [ { "item": "swat_armor", "prob": 100 }, { "item": "kevlar", "prob": 25 }, { "item": "tacvest", "prob": 5 } ],
+        "prob": 100
       },
       {
         "collection": [
@@ -230,7 +239,6 @@
     "subtype": "distribution",
     "entries": [
       { "item": "mask_gas", "prob": 10 },
-      { "item": "helmet_riot", "prob": 20 },
       { "item": "tac_helmet", "prob": 10 },
       { "item": "tac_fullhelmet", "prob": 5 }
     ]
