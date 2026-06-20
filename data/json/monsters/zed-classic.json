@@ -179,23 +179,8 @@
     "death_drops": "mon_zombie_cop_shieldman_death_drops",
     "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_UPGRADE" },
     "burn_into": "mon_zombie_scorched",
-    "flags": [
-      "SEES",
-      "HEARS",
-      "SMELLS",
-      "STUMBLES",
-      "WARM",
-      "BASHES",
-      "GROUP_BASH",
-      "POISON",
-      "NO_BREATHE",
-      "REVIVES",
-      "PUSH_MON"
-    ],
-    "on_death": {
-      "death_function": [],
-      "spawn_mon": "mon_zombie_cop"
-    }
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON" ],
+    "on_death": { "death_function": [  ], "spawn_mon": "mon_zombie_cop" }
   },
   {
     "id": "mon_zombie_swat_boss",
@@ -228,13 +213,11 @@
     "armor_acid": 2,
     "vision_day": 30,
     "vision_night": 3,
-    "starting_ammo": {
-      "40x46mm_m651": 1
-    },
+    "starting_ammo": { "40x46mm_m651": 1 },
     "harvest": "zombie_maybe_survivalist_bionics",
-    "special_attacks": [ 
-      [ "GRAB", 7 ], 
-      [ "scratch", 15 ], 
+    "special_attacks": [
+      [ "GRAB", 7 ],
+      [ "scratch", 15 ],
       {
         "type": "gun",
         "cooldown": 5,
@@ -242,46 +225,19 @@
         "gun_type": "zombie_swat_thrown_teargas",
         "ammo_type": "40x46mm_m651",
         "no_ammo_sound": "",
-        "fake_skills": [
-          [
-            "gun",
-            6
-          ],
-          [
-            "throw",
-            6
-          ]
-        ],
+        "fake_skills": [ [ "gun", 6 ], [ "throw", 6 ] ],
         "fake_dex": 8,
         "fake_per": 8,
         "require_targeting_player": false,
-        "ranges": [
-          [
-            2,
-            8,
-            "DEFAULT"
-          ]
-        ],
+        "ranges": [ [ 2, 8, "DEFAULT" ] ],
         "description": "The SWAT zombie throws a tear gas grenade!",
         "no_crits": true
-      } 
+      }
     ],
     "death_drops": "mon_zombie_swat_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
-    "flags": [
-      "SEES",
-      "HEARS",
-      "SMELLS",
-      "STUMBLES",
-      "WARM",
-      "BASHES",
-      "GROUP_BASH",
-      "POISON",
-      "NO_BREATHE",
-      "REVIVES",
-      "PUSH_MON"
-    ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON" ]
   },
   {
     "id": "mon_zombie_crawler",
