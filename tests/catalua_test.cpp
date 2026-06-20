@@ -779,9 +779,18 @@ TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
     CHECK( test_data["before_map_dim"].get<std::string>() == "" );
     CHECK( test_data["noop_travel"].get<bool>() );
     CHECK_FALSE( test_data["invalid_bounds_travel"].get<bool>() );
-    CHECK( test_data["after_dim"].get<std::string>() == "" );
-    CHECK( test_data["after_map_dim"].get<std::string>() == "" );
-    CHECK_FALSE( test_data["outside_is_oob"].get<bool>() );
+    CHECK_FALSE( test_data["invalid_special_travel"].get<bool>() );
+    CHECK( test_data["after_invalid_dim"].get<std::string>() == "" );
+    CHECK( test_data["after_invalid_map_dim"].get<std::string>() == "" );
+    CHECK( test_data["entered_travel"].get<bool>() );
+    CHECK( test_data["entered_dim"].get<std::string>() == "lua_test_pocket" );
+    CHECK( test_data["entered_map_dim"].get<std::string>() == "lua_test_pocket" );
+    CHECK_FALSE( test_data["entry_is_oob"].get<bool>() );
+    CHECK( test_data["outside_is_oob"].get<bool>() );
+    CHECK( test_data["return_travel"].get<bool>() );
+    CHECK( test_data["after_return_dim"].get<std::string>() == "" );
+    CHECK( test_data["after_return_map_dim"].get<std::string>() == "" );
+    CHECK_FALSE( test_data["after_return_outside_is_oob"].get<bool>() );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )
