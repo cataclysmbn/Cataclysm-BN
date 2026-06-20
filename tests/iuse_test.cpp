@@ -98,6 +98,7 @@ TEST_CASE( "bionic_scanner_inside_ground_container_marks_corpses_with_cbms",
 
     auto backpack = item::spawn( "backpack", calendar::turn );
     backpack->put_in( item::spawn( "rock", calendar::turn ) );
+    backpack->put_in( item::spawn( "sashimi", calendar::turn ) );
     auto scanner = item::spawn( "bionic_scanner_on", calendar::turn );
     scanner->ammo_set( itype_id( "battery" ), 10 );
     scanner->activate();
@@ -105,6 +106,7 @@ TEST_CASE( "bionic_scanner_inside_ground_container_marks_corpses_with_cbms",
     const auto charges_before = scanner_ptr->ammo_remaining();
     backpack->put_in( std::move( scanner ) );
     REQUIRE( backpack->needs_processing() );
+    REQUIRE( backpack->processing_speed() == 1 );
     REQUIRE_FALSE( here.add_item_or_charges( you.bub_pos(), std::move( backpack ), false ) );
 
     here.process_items();

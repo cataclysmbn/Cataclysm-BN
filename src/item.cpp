@@ -6007,7 +6007,8 @@ bool item::can_shatter() const
 void item::unset_flags()
 {
     const bool affects_processing = item_tags.count( flag_RADIO_ACTIVATION ) ||
-                                    item_tags.count( flag_ETHEREAL_ITEM );
+                                    item_tags.count( flag_ETHEREAL_ITEM ) ||
+                                    item_tags.count( flag_PROCESSING );
     item_tags.clear();
     if( affects_processing ) {
         invalidate_processing_cache_upwards();
@@ -6075,7 +6076,8 @@ bool item::has_vitamin( const vitamin_id &v ) const
 void item::set_flag( const flag_id &flag )
 {
     if( flag.is_valid() ) {
-        const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM;
+        const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM ||
+                                        flag == flag_PROCESSING;
         const bool inserted = item_tags.insert( flag ).second;
         if( inserted && affects_processing ) {
             invalidate_processing_cache_upwards();
@@ -6087,7 +6089,8 @@ void item::set_flag( const flag_id &flag )
 
 void item::unset_flag( const flag_id &flag )
 {
-    const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM;
+    const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM ||
+                                    flag == flag_PROCESSING;
     const bool erased = item_tags.erase( flag ) > 0;
     if( erased && affects_processing ) {
         invalidate_processing_cache_upwards();
@@ -10134,11 +10137,17 @@ auto item::invalidate_processing_cache_upwards() -> void
 
 int item::processing_speed() const
 {
-    if( is_corpse() || is_food() || is_food_container() ) {
-        return to_turns<int>( 10_minutes );
+    auto speed = is_corpse() || is_food() || is_food_container() ? to_turns<int>( 10_minutes ) : 1;
+    for( const item *contained_item : contents.processing_items() ) {
+        if( contained_item != nullptr ) {
+            speed = std::min( speed, contained_item->processing_speed() );
+        }
     }
-    // Unless otherwise indicated, update every turn.
-    return 1;
+    if( const item *magazine = magazine_current(); magazine != nullptr &&
+        magazine->needs_processing() ) {
+        speed = std::min( speed, magazine->processing_speed() );
+    }
+    return speed;
 }
 
 auto item::process_rot( detached_ptr<item> &&self,

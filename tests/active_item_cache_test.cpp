@@ -140,6 +140,55 @@ TEST_CASE( "nested_processing_flag_changes_invalidate_container_cache", "[item]"
     CHECK_FALSE( backpack->needs_processing() );
 }
 
+TEST_CASE( "nested_processing_food_flag_changes_invalidate_container_cache", "[item]" )
+{
+    clear_all_state();
+
+    auto backpack = item::spawn( "backpack" );
+    backpack->put_in( item::spawn( "bread" ) );
+    item &stored = backpack->contents.front();
+    stored.deactivate();
+
+    REQUIRE_FALSE( stored.is_active() );
+    REQUIRE( backpack->needs_processing() );
+
+    stored.set_flag( flag_PROCESSING );
+    CHECK_FALSE( backpack->needs_processing() );
+
+    stored.unset_flag( flag_PROCESSING );
+    CHECK( backpack->needs_processing() );
+
+    stored.set_flag( flag_PROCESSING );
+    CHECK_FALSE( backpack->needs_processing() );
+
+    stored.unset_flags();
+    CHECK( backpack->needs_processing() );
+}
+
+TEST_CASE( "active_item_cache_moves_items_when_processing_speed_changes", "[item]" )
+{
+    clear_all_state();
+
+    auto backpack = item::spawn( "backpack" );
+    backpack->put_in( item::spawn( "sashimi" ) );
+    REQUIRE( backpack->needs_processing() );
+    REQUIRE( backpack->processing_speed() == to_turns<int>( 10_minutes ) );
+
+    auto cache = active_item_cache();
+    cache.add( *backpack );
+    CHECK( cache.count().total == 1 );
+
+    auto active = item::spawn( "firecracker_act", calendar::start_of_cataclysm,
+                               item::default_charges_tag() );
+    active->activate();
+    backpack->put_in( std::move( active ) );
+    REQUIRE( backpack->needs_processing() );
+    CHECK( backpack->processing_speed() == 1 );
+
+    cache.add( *backpack );
+    CHECK( cache.count().total == 1 );
+}
+
 TEST_CASE( "content_removal_helpers_invalidate_processing_cache", "[item]" )
 {
     clear_all_state();
