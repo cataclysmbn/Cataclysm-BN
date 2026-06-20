@@ -201,7 +201,7 @@
     "id": "mon_zombie_swat_boss",
     "type": "MONSTER",
     "name": "SWAT zombie",
-    "description": "This zombie was part of a specialized unit of law enforcement.  It still wears a battered armor with the SWAT logo emblazoned on the front, and it seems to hold a tear gas grenade in its hands.",
+    "description": "This zombie was part of a specialized unit of law enforcement.  It still wears a battered armor with the SWAT logo emblazoned on the front, and it holds a tear gas grenade in its hands.",
     "looks_like": "mon_zombie_cop",
     "bodytype": "human",
     "default_faction": "cop_zombie",
