@@ -166,11 +166,6 @@ jobs:
           commit url: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
           EOL
 
-      - name: Bundle registry mods
-        if: inputs.bundle-registry-mods
-        continue-on-error: ${{ inputs.mode == 'ci' }}
-        run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ (((matrix.platform == 'windows' || matrix.platform == 'macos') && matrix.tiles == true && matrix.sound == true) || format('{0}', matrix.sound) == 'false') && '--exclude-package-type soundpack' || '' }}
-
       - name: Bundle CDDA tilesets
         if: matrix.tiles == true && inputs.bundle-tilesets
         env:
@@ -432,6 +427,11 @@ jobs:
           echo "- \`docs/en/dev/reference/cli_options.md\`: $(wc -l < docs/en/dev/reference/cli_options.md) lines" >> $GITHUB_STEP_SUMMARY
           echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
           echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
+
+      - name: Bundle registry mods
+        if: inputs.bundle-registry-mods
+        continue-on-error: ${{ inputs.mode == 'ci' }}
+        run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ (((matrix.platform == 'windows' || matrix.platform == 'macos') && matrix.tiles == true && matrix.sound == true) || format('{0}', matrix.sound) == 'false') && '--exclude-package-type soundpack' || '' }}
 
       - name: Create distribution package (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
