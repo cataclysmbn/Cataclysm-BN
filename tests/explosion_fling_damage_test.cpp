@@ -31,7 +31,7 @@ TEST_CASE( "post_death_explosion_does_not_move_avatar_before_follower_takeover",
         clear_all_state();
         get_avatar().setID( character_id(), true );
     } );
-    npc &follower = spawn_npc( point_bub_ms( 45, 30 ), "test_talker" );
+    npc &follower = spawn_npc( tripoint_bub_ms( 45, 30, 0 ), "test_talker" );
     follower.set_fac( faction_id( "your_followers" ) );
     follower.set_attitude( NPCATT_FOLLOW );
     REQUIRE( follower.is_player_ally() );

@@ -329,6 +329,23 @@ static std::unique_ptr<npc> make_fake_npc( monster *z, int str, int dex, int int
     return tmp;
 }
 
+namespace
+{
+constexpr auto shriek_stun_hearing_protection_threshold = 40;
+
+auto has_shriek_stun_hearing_protection( const Creature &target ) -> bool
+{
+    if( target.is_immune_effect( effect_deaf ) ) {
+        return true;
+    }
+
+    const auto *const character = target.as_character();
+    return character != nullptr && character->get_char_hearing_protection() +
+           character->get_char_hearing_protection( true ) >= shriek_stun_hearing_protection_threshold;
+}
+
+} // namespace
+
 bool mattack::none( monster * )
 {
     return true;
@@ -545,7 +562,7 @@ bool mattack::shriek_stun( monster *z )
         if( target == nullptr ) {
             continue;
         }
-        if( one_in( dist / 2 ) && !( target->is_immune_effect( effect_deaf ) ) ) {
+        if( one_in( dist / 2 ) && !has_shriek_stun_hearing_protection( *target ) ) {
             target->add_effect( effect_dazed, rng( 1_minutes, 2_minutes ), bodypart_str_id::NULL_ID(),
                                 rng( 1, ( 15 - dist ) / 3 ) );
         }
@@ -4124,8 +4141,7 @@ void mattack::flame( monster *z, Creature *target )
             // TODO: Z
             if( here.hit_with_fire( tripoint_bub_ms( i.xy(), z->bub_pos().z() ) ) ) {
                 if( g->u.sees( i ) ) {
-                    add_msg( _( "The tongue of flame hits the %s!" ),
-                             here.tername( i.xy() ) );
+                    add_msg( _( "The tongue of flame hits the %s!" ), here.tername( i ) );
                 }
                 return;
             }
@@ -4153,19 +4169,17 @@ void mattack::flame( monster *z, Creature *target )
             } else {
                 intervening.y() = prev_point.y();
             }
-            if( here.hit_with_fire( tripoint_bub_ms( intervening.xy(), z->bub_pos().z() ) ) ) {
+            if( here.hit_with_fire( intervening ) ) {
                 if( g->u.sees( i ) ) {
-                    add_msg( _( "The tongue of flame hits the %s!" ),
-                             here.tername( intervening.xy() ) );
+                    add_msg( _( "The tongue of flame hits the %s!" ), here.tername( intervening ) );
                 }
                 return;
             }
         }
         // break out of attack if flame hits a wall
-        if( here.hit_with_fire( tripoint_bub_ms( i.xy(), z->bub_pos().z() ) ) ) {
+        if( here.hit_with_fire( i ) ) {
             if( g->u.sees( i ) ) {
-                add_msg( _( "The tongue of flame hits the %s!" ),
-                         here.tername( i.xy() ) );
+                add_msg( _( "The tongue of flame hits the %s!" ), here.tername( i ) );
             }
             return;
         }

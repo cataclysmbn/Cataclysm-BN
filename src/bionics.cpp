@@ -33,6 +33,7 @@
 #include "debug.h"
 #include "dispersion.h"
 #include "effect.h"
+#include "enchantments/enchantment.h"
 #include "enum_conversions.h"
 #include "enums.h"
 #include "event.h"
@@ -276,7 +277,7 @@ void bionic_data::finalize_all()
 {
     bionic_factory.finalize();
     for( const bionic_data &bd : bionic_factory.get_all() ) {
-        bd.finalize();
+        const_cast<bionic_data &>( bd ).finalize();
     }
 }
 
@@ -376,10 +377,13 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
                 charge_time > 0;
 }
 
-void bionic_data::finalize() const
+void bionic_data::finalize()
 {
     if( has_flag( STATIC( flag_id( "BIONIC_FAULTY" ) ) ) ) {
         faulty_bionics.push_back( id );
+    }
+    for( enchantment &ench : bio_enchantments ) {
+        ench.finalize();
     }
 }
 

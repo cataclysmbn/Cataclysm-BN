@@ -123,29 +123,20 @@ bool map_memory::prepare_region( const tripoint_abs_ms &p1, const tripoint_abs_m
     const auto sm_p2 = project_to<coords::sm>( p2 ) + point_south_east;
 
     const auto sm_size = sm_p2.xy() - sm_p1.xy();
-
-    bool z_levels = get_map().has_zlevels();
-
-    if( sm_p1.z() == cache_pos.z() || z_levels ) {
-        inclusive_rectangle<point_abs_sm> rect( cache_pos.xy(), cache_pos.xy() + cache_size );
-        if( rect.contains( sm_p1.xy() ) && rect.contains( sm_p2.xy() ) ) {
-            return false;
-        }
+    inclusive_rectangle<point_abs_sm> rect( cache_pos.xy(), cache_pos.xy() + cache_size );
+    if( rect.contains( sm_p1.xy() ) && rect.contains( sm_p2.xy() ) ) {
+        return false;
     }
 
     dbg( DL::Info ) << "Preparing memory map for area: pos: " << sm_p1 << " size: " << sm_size;
-
-
-    int minz = z_levels ? -OVERMAP_DEPTH : p1.z();
-    int maxz = z_levels ? OVERMAP_HEIGHT : p1.z();
 
     cache_pos = sm_p1;
     cache_size = sm_size;
 
     cached.clear();
-    cached.reserve( cache_size.x() * cache_size.y() * ( maxz - minz + 1 ) );
+    cached.reserve( cache_size.x() * cache_size.y() * ( OVERMAP_HEIGHT - -OVERMAP_DEPTH + 1 ) );
 
-    for( int z = minz; z <= maxz; z++ ) {
+    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
         for( int dy = 0; dy < cache_size.y(); dy++ ) {
             for( int dx = 0; dx < cache_size.x(); dx++ ) {
                 cached.push_back( fetch_submap( tripoint_abs_sm( cache_pos.xy(), z ) + point_rel_sm( dx, dy ) ) );
@@ -267,9 +258,7 @@ mm_submap &map_memory::get_submap( const tripoint_abs_sm &sm_pos )
     // First, try fetching from cache.
     // If it's not in cache (or cache is absent), go the long way.
     if( cache_pos != tripoint_abs_sm::zero() ) {
-        int zoffset = get_map().has_zlevels()
-                      ? ( sm_pos.z() + OVERMAP_DEPTH ) * cache_size.y() * cache_size.x()
-                      : 0;
+        int zoffset = ( sm_pos.z() + OVERMAP_DEPTH ) * cache_size.y() * cache_size.x();
         const point_rel_sm idx = ( sm_pos - cache_pos ).xy();
         if( idx.x() > 0 && idx.y() > 0 && idx.x() < cache_size.x() && idx.y() < cache_size.y() ) {
             return *cached[idx.y() * cache_size.x() + idx.x() + zoffset];

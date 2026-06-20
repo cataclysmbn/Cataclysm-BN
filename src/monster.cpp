@@ -407,6 +407,10 @@ monster::monster( const monster &source ) : Creature( source ),
     path = source.path;
     effect_cache = source.effect_cache;
     summon_time_limit = source.summon_time_limit;
+    training_level = source.training_level;
+    bonded_character_id = source.bonded_character_id;
+    pet_bond_level = source.pet_bond_level;
+    monster_flags = source.monster_flags;
 
     set_tied_item( item::spawn( *source.tied_item ) );
     set_tack_item( item::spawn( *source.tack_item ) );
@@ -1062,7 +1066,7 @@ std::string monster::extended_description() const
     std::string_view if_empty = "" ) {
         std::string flag_descriptions = enumerate_as_string( flags_names.begin(),
         flags_names.end(), [this]( const flag_description & fd ) {
-            return type->has_flag( fd.first ) ? fd.second : "";
+            return type->has_flag( fd.first ) || monster_flags.contains( fd.first ) ? fd.second : "";
         } );
         if( !flag_descriptions.empty() ) {
             ss += string_format( format, flag_descriptions ) + "\n";
@@ -1160,6 +1164,9 @@ std::string monster::extended_description() const
         if( dodge_ratio > 1.0f ) {
             ss += string_format( _( "It is %s more agile than normal." ), training_adj( dodge_ratio ) ) + "\n";
         }
+    }
+    if( monster_flags.contains( m_flag::MF_COMBAT_MOUNT ) ) {
+        ss += _( "It has been trained for combat and will not be scared easily.\n" );
     }
 
     ss += "--\n";

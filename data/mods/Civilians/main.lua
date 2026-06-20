@@ -123,7 +123,9 @@ local function process_civilian_corpse_pulping(monster, all_creatures, map)
   end
 
   local m_pos = monster:get_pos_ms()
+  ---@type Item?
   local found_corpse = nil
+  ---@type TripointBubMs?
   local corpse_pos = nil
 
   -- 2. Scan surroundings for unpulped corpses (radius 8 tiles)
@@ -148,10 +150,11 @@ local function process_civilian_corpse_pulping(monster, all_creatures, map)
     if found_corpse then break end
   end
 
-  if not found_corpse then return end
+  if not found_corpse or corpse_pos == nil then return end
+  ---@cast corpse_pos TripointBubMs
 
   -- 3. Determine distance and execute action
-  local dist = coords.rl_dist(m_pos, corpse_pos)
+  local dist = coords.rl_dist(m_pos, corpse_pos) or math.maxinteger
   if dist <= 1 then
     -- Close enough, execute pulping action
     found_corpse:set_damage(found_corpse:get_max_damage())
@@ -213,7 +216,7 @@ local function find_nearby_free_tile(map, center_p)
     local tx = center_p.x + dx
     local ty = center_p.y + dy
     if tx >= 0 and tx < map_size and ty >= 0 and ty < map_size then
-      local p = TripointBubMs.new(tx, ty, center_p.z)
+      local p = PointOmtMs.new(tx, ty)
       if is_valid_spawn_spot(map, p) then return p end
     end
   end
@@ -247,7 +250,7 @@ mod.on_mapgen_postprocess = function(params)
 
   for x = 0, size - 1 do
     for y = 0, size - 1 do
-      local local_p = TripointBubMs.new(x, y, omt_pos.z)
+      local local_p = PointOmtMs.new(x, y)
       local furn = map:get_furn_at(local_p)
 
       if furn and furn:is_valid() then
@@ -257,10 +260,7 @@ mod.on_mapgen_postprocess = function(params)
             local group_id = decide_spawn_group()
             if group_id then
               local spawn_local_p = find_nearby_free_tile(map, local_p)
-              if spawn_local_p then
-                local p2d = spawn_local_p:xy()
-                map:place_spawns(group_id, 1, p2d, p2d, 1.0, true)
-              end
+              if spawn_local_p then map:place_spawns(group_id, 1, spawn_local_p, spawn_local_p, 1.0, true) end
             end
           end
         end

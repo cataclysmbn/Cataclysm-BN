@@ -200,5 +200,14 @@
         { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR_STAB", "multiply": -0.1, "add": -3 } ] }
       ]
     }
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_relic_char_all_armor_mod",
+    "copy-from": "test_socks",
+    "name": "TEST relic character armor mod",
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR", "multiply": -0.5, "add": -2 } ] } ]
+    }
   }
 ]

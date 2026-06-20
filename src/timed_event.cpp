@@ -125,7 +125,7 @@ void timed_event::actualize()
                     if( horizontal ) {
                         monp.x() = rng( fault_point->x(), fault_point->x() + 2 * SEEX - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point_bub_ms( monp.x(), fault_point->y() + n ) ) == t_rock_floor ) {
+                            if( g->m.ter( tripoint_bub_ms( monp.x(), fault_point->y() + n, monp.z() ) ) == t_rock_floor ) {
                                 monp.y() = fault_point->y() + n;
                             }
                         }
@@ -133,7 +133,7 @@ void timed_event::actualize()
                         // Vertical fault
                         monp.y() = rng( fault_point->y(), fault_point->y() + 2 * SEEY - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point_bub_ms( fault_point->x() + n, monp.y() ) ) == t_rock_floor ) {
+                            if( g->m.ter( tripoint_bub_ms( fault_point->x() + n, monp.y(), monp.z() ) ) == t_rock_floor ) {
                                 monp.x() = fault_point->x() + n;
                             }
                         }
@@ -264,8 +264,8 @@ void timed_event::per_turn()
                     // We're safely indoors!
                     return;
                 }
-                g->place_critter_at( mon_eyebot, tripoint_bub_ms( place, g->u.bub_pos().z() ) );
-                if( g->u.sees( tripoint_bub_ms( place, g->u.bub_pos().z() ) ) ) {
+                g->place_critter_at( mon_eyebot, place );
+                if( g->u.sees( place ) ) {
                     add_msg( m_warning, _( "An eyebot swoops down nearby!" ) );
                 }
                 // One eyebot per trigger is enough, really

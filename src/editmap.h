@@ -19,7 +19,6 @@ class ui_adaptor;
 class uilist;
 class vehicle;
 class map;
-class tinymap;
 
 enum shapetype {
     editmap_rect, editmap_rect_filled, editmap_line, editmap_circle,
@@ -59,7 +58,7 @@ class editmap
         void edit_critter( Creature &critter );
         void edit_veh();
         void edit_mapgen();
-        void cleartmpmap( tinymap &tmpmap );
+        void cleartmpmap( map &tmpmap );
         void mapgen_preview( const point_abs_ms &tc, uilist &gmenu );
         vehicle *mapgen_veh_query( const tripoint_abs_omt &omt_tgt );
         bool mapgen_veh_destroy( const tripoint_abs_omt &omt_tgt, vehicle *car_target );
@@ -100,7 +99,7 @@ class editmap
         std::string info_txt_curr;
         std::string info_title_curr;
 
-        tinymap *tmpmap_ptr = nullptr;
+        map *tmpmap_ptr = nullptr;
 
         const int width = 45;
         const int offsetX = 0;
@@ -116,5 +115,4 @@ class editmap
         std::unique_ptr<game_draw_callback_t_container> draw_cb_container_;
         game_draw_callback_t_container &draw_cb_container();
 };
-
 

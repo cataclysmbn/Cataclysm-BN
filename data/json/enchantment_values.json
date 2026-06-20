@@ -1,0 +1,313 @@
+[
+  {
+    "id": "STRENGTH",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "DEXTERITY",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "PERCEPTION",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "INTELLIGENCE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "HEALTH_POINTS",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "SPEED",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "ATTACK_COST",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "MOVE_COST",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "FLAT_MOVE_COST",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "OBSTACLE_MOVE_COST",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "SWIM_MOVE_COST",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "READING_SPEED",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "CRAFTING_SPEED",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "CONSTRUCTION_SPEED",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "METABOLISM",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": true
+  },
+  {
+    "id": "MANA_CAP",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "MANA_REGEN",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": true
+  },
+  {
+    "id": "STAMINA_CAP",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": true
+  },
+  {
+    "id": "STAMINA_REGEN",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": true
+  },
+  {
+    "id": "THIRST",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": true
+  },
+  {
+    "id": "FATIGUE",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": true
+  },
+  {
+    "id": "MENDING_MULT",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "HEARING",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "NOISE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "SCENT",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "STEALTH",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "BODYTEMP_MIN",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "BODYTEMP_MAX",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "BODYTEMP_SLEEP",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "BODYTEMP_SPEED",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "LIE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "PERSUADE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "INTIMIDATE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "HEALTHY_MULT",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "FALL_DAMAGE_MULT",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "CARRY_STORAGE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "CARRY_WEIGHT",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "OVERMAP_SIGHT",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "EFFECTIVE_FOCUS",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "BONUS_DODGE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "ARMOR",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true,
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
+  },
+  {
+    "id": "RANGED_DISPERSION",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "RANGED_DAMAGE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true,
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
+  },
+  {
+    "id": "RANGED_ARMOR_PENETRATION",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true,
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
+  },
+  {
+    "id": "RANGED_RANGE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "RANGED_RECOIL",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "RANGED_RELOAD_TIME",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "RANGED_AIM_SPEED",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  },
+  {
+    "id": "ITEM_DAMAGE",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true,
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
+  },
+  {
+    "id": "ITEM_ARMOR",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true,
+    "suffixes": [ "BASH", "CUT", "DARK", "LIGHT", "PSI", "STAB", "BULLET", "HEAT", "COLD", "ELECTRIC", "ACID", "BIOLOGICAL", "TRUE" ]
+  },
+  {
+    "id": "ITEM_ATTACK_COST",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true
+  }
+]

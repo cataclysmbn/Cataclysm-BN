@@ -1269,10 +1269,6 @@ monster_action_t monster::decide_action() const
         }
     }
 
-    if( !g->m.has_zlevels() ) {
-        destination.z() = pos.z();
-    }
-
     // -----------------------------------------------------------------------
     // (6) Candidate selection — reads only.
     //     shove_vehicle() is a write; deferred to execute_action.
@@ -2802,12 +2798,9 @@ void monster::stumble()
             }
         }
     }
-
-    if( here.has_zlevels() ) {
-        tripoint_bub_ms below( bub_pos().x(), bub_pos().y(), bub_pos().z() - 1 );
-        if( here.valid_move( bub_pos(), below, false, true ) ) {
-            valid_stumbles.push_back( below );
-        }
+    tripoint_bub_ms below( bub_pos().x(), bub_pos().y(), bub_pos().z() - 1 );
+    if( here.valid_move( bub_pos(), below, false, true ) ) {
+        valid_stumbles.push_back( below );
     }
     while( !valid_stumbles.empty() && !is_dead() ) {
         const tripoint_bub_ms dest = random_entry_removed( valid_stumbles );

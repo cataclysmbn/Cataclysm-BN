@@ -54,6 +54,9 @@ using emit_id = string_id<emit>;
 class enchantment;
 using enchantment_id = string_id<enchantment>;
 
+class enchantment_value;
+using enchantment_value_id = string_id<enchantment_value>;
+
 class fault;
 using fault_id = string_id<fault>;
 

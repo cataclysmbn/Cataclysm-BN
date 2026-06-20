@@ -86,6 +86,7 @@
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
+#include "spell_targeting.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "text_snippets.h"
@@ -2843,7 +2844,7 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
         const repair_item_actor::attempt_hint attempt = actor->repair( *p, *used_tool, *fix_location );
         if( attempt != repair_item_actor::AS_CANT ) {
             if( ploc && ploc->where() == item_location_type::map ) {
-                used_tool->ammo_consume( used_tool->ammo_required(), ploc->position() );
+                used_tool->ammo_consume( used_tool->ammo_required(), ploc->bub_pos() );
             } else {
                 p->consume_charges( *used_tool, used_tool->ammo_required() );
             }
@@ -4725,18 +4726,17 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
     bool target_is_valid = false;
     if( spell_being_cast.range() > 0 && !spell_being_cast.is_valid_target( target_none ) &&
         !spell_being_cast.has_flag( RANDOM_TARGET ) ) {
+        g->refresh_player_visibility_cache_if_needed();
         do {
             avatar &you = *p->as_avatar();
             std::vector<tripoint_bub_ms> trajectory = target_handler::mode_spell( you, spell_being_cast,
                     no_fail,
                     no_mana );
+            g->refresh_player_visibility_cache_if_needed();
 
             if( !trajectory.empty() ) {
                 target = trajectory.back();
-                target_is_valid = spell_being_cast.is_valid_target( *p, target );
-                if( !( spell_being_cast.is_valid_target( target_ground ) || p->sees( target ) ) ) {
-                    target_is_valid = false;
-                }
+                target_is_valid = spell_target_can_be_resolved( spell_being_cast, *p, target );
             } else {
                 target_is_valid = false;
             }

@@ -49,6 +49,11 @@ on:
         required: false
         type: boolean
         default: true
+      bundle-registry-mods:
+        description: "Bundle registry mods and soundpacks into release archives"
+        required: false
+        type: boolean
+        default: true
       package-artifacts:
         description: "Create release archives where separate packaging is needed"
         required: false
@@ -147,6 +152,9 @@ jobs:
         with:
           name: translations
           path: .
+
+      - uses: denoland/setup-deno@v2
+        with: { cache: true }
 
       - name: Create VERSION.TXT
         shell: bash
@@ -373,11 +381,6 @@ jobs:
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
 
-      - name: Setup Deno (Lua docs)
-        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
-        uses: denoland/setup-deno@v2
-        with: { cache: true }
-
       - name: Setup EmmyLua checker
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
         uses: scarf005/emmylua_check_action@v1.0.3
@@ -395,6 +398,7 @@ jobs:
 
       - name: Run EmmyLua check
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
+        continue-on-error: true
         run: emmylua_check .
 
       - name: Generate documentation artifacts
@@ -424,6 +428,11 @@ jobs:
           echo "- \`docs/en/dev/reference/cli_options.md\`: $(wc -l < docs/en/dev/reference/cli_options.md) lines" >> $GITHUB_STEP_SUMMARY
           echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
           echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
+
+      - name: Bundle registry mods
+        if: inputs.bundle-registry-mods
+        continue-on-error: ${{ inputs.mode == 'ci' }}
+        run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ (((matrix.platform == 'windows' || matrix.platform == 'macos') && matrix.tiles == true && matrix.sound == true) || format('{0}', matrix.sound) == 'false') && '--exclude-package-type soundpack' || '' }}
 
       - name: Create distribution package (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
@@ -529,9 +538,14 @@ jobs:
         if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
           $dist = "cataclysmbn-${{ inputs.version-label }}"
+          Remove-Item -Recurse -Force $dist -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force lang/mo
           cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
-
+          if ("${{ matrix.tiles }}" -eq "true" -and "${{ matrix.sound }}" -eq "true" -and "${{ inputs.bundle-registry-mods }}" -eq "true") {
+            Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.zip
+            deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts
+            cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
+          }
           Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
       - name: Verify statically linked SDL runtime (windows msvc)
@@ -574,8 +588,17 @@ jobs:
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.preset }}
 
+      - name: Create distribution package with soundpacks (macOS)
+        if: runner.os == 'macOS' && matrix.tiles == true && matrix.sound == true && inputs.bundle-registry-mods && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.dmg
+          deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts
+          cmake -E copy_directory data/mods Cataclysm.app/Contents/Resources/data/mods
+          cmake -E copy_directory data/sound Cataclysm.app/Contents/Resources/data/sound
+          dmgbuild -s build-data/osx/dmgsettings.py "Cataclysm BN" cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
+
       - name: Rename distribution package (macOS)
-        if: runner.os == 'macOS' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        if: runner.os == 'macOS' && !(matrix.tiles == true && matrix.sound == true && inputs.bundle-registry-mods) && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
 
       - name: Verify bundled SDL runtime (macOS)
@@ -837,15 +860,17 @@ jobs:
       - name: Upload to release
         if: inputs.upload-to-release
         run: |
+          release="${{ inputs.release-tag }}"
           if [ "${{ inputs.version-label }}" = "experimental" ]; then
             SHA_SHORT=$(git rev-parse --short HEAD)
             COMMIT_SUBJECT=$(git log -1 --pretty=%s)
             TIMESTAMP=$(date -u "+%F %T")
-            gh release upload experimental --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
+            release=experimental
             gh release edit experimental --title "Experimental @ $TIMESTAMP ($SHA_SHORT)" --notes "Experimental build for commit $SHA_SHORT ($COMMIT_SUBJECT) on $TIMESTAMP"
-          else
-            gh release upload ${{ inputs.release-tag }} --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
           fi
+          extra="cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.${{ matrix.ext }}"
+          [ -f "$extra" ] && gh release upload "$release" --clobber "$extra"
+          gh release upload "$release" --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash

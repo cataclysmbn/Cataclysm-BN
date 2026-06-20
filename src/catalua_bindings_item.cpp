@@ -459,15 +459,11 @@ void reg_item( sol::state &lua )
         DOC( "Gets the faction id that owns this item" );
         SET_FX( get_owner );
 
-        DOC( "Sets the ownership of this item to a faction" );
-        luna::set_fx( ut, "set_owner",
-                      sol::resolve<void( const faction_id & )>
-                      ( &item::set_owner ) );
-
-        DOC( "Sets the ownership of this item to a character" );
-        luna::set_fx( ut, "set_owner",
-                      sol::resolve<void( const Character & )>
-                      ( &item::set_owner ) );
+        DOC( "Sets the ownership of this item to a faction or character" );
+        luna::set_fx( ut, "set_owner", sol::overload(
+                          sol::resolve<void( const faction_id & )>( &item::set_owner ),
+                          sol::resolve<void( const Character & )>( &item::set_owner )
+                      ) );
 
         SET_FX( get_owner_name );
 

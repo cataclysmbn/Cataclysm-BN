@@ -885,12 +885,6 @@ inline auto submap_tiles() -> point_range<point_sm_ms>
     return { point_sm_ms::zero(), point_sm_ms( coords::map_squares_per( coords::scale::submap ) - 1, coords::map_squares_per( coords::scale::submap ) - 1 ) };
 }
 
-// Mapgen variant, for the tiny map which is always an omt in size, but is treated as bubble space locally
-inline auto tinymap_tiles() -> point_range<point_bub_ms>
-{
-    return { point_bub_ms::zero(), point_bub_ms( coords::map_squares_per( coords::scale::overmap_terrain ) - 1, coords::map_squares_per( coords::scale::overmap_terrain ) - 1 ) };
-}
-
 inline auto overmap_terrain_tiles() -> point_range<point_omt_ms>
 {
     return { point_omt_ms::zero(), point_omt_ms( coords::map_squares_per( coords::scale::overmap_terrain ) - 1, coords::map_squares_per( coords::scale::overmap_terrain ) - 1 ) };
@@ -900,4 +894,3 @@ inline auto overmap_tiles() -> point_range<point_om_ms>
 {
     return { point_om_ms::zero(), point_om_ms( coords::map_squares_per( coords::scale::overmap ) - 1, coords::map_squares_per( coords::scale::overmap ) - 1 ) };
 }
-

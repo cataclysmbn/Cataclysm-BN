@@ -79,7 +79,8 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
     avatar &player_character = get_avatar();
     for( auto e : turret_types() ) {
         SECTION( e->name() ) {
-            vehicle *veh = here.add_vehicle( vproto_id( "none" ), point_bub_ms( 65, 65 ), 270_degrees, 0, 0 );
+            vehicle *veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 65, 65, 0 ), 270_degrees, 0,
+                                             0 );
             REQUIRE( veh );
 
             const int idx = veh->install_part( tripoint_mnt_veh::zero(), e->get_id(), true );
@@ -123,7 +124,8 @@ TEST_CASE( "vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret
 {
     clear_all_state();
     map &here = get_map();
-    vehicle *veh = here.add_vehicle( vproto_id( "none" ), point_bub_ms( 65, 65 ), 270_degrees, 0, 0 );
+    vehicle *veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 65, 65, 0 ), 270_degrees, 0,
+                                     0 );
     REQUIRE( veh );
 
     const auto turret_part_id = vpart_id( "mounted_rebar_rifle" );
@@ -182,7 +184,7 @@ TEST_CASE( "vehicle_turret_iff_protects_followers_in_line_of_fire", "[vehicle][t
     shooter.set_body();
 
     const auto follower_pos = shooter_pos + point( 3, 0 );
-    npc &follower = spawn_npc( follower_pos.xy(), "thug" );
+    npc &follower = spawn_npc( follower_pos, "thug" );
     follower.set_fac( faction_id( "your_followers" ) );
     follower.set_attitude( NPCATT_FOLLOW );
     REQUIRE( follower.is_player_ally() );
@@ -212,7 +214,7 @@ TEST_CASE( "vehicle_turret_iff_allows_clear_shots", "[vehicle][turret][npc][iff]
     shooter.set_body();
 
     const auto follower_pos = shooter_pos + point( 0, 5 );
-    npc &follower = spawn_npc( follower_pos.xy(), "thug" );
+    npc &follower = spawn_npc( follower_pos, "thug" );
     follower.set_fac( faction_id( "your_followers" ) );
     follower.set_attitude( NPCATT_FOLLOW );
     REQUIRE( follower.is_player_ally() );

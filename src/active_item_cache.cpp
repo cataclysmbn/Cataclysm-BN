@@ -55,8 +55,16 @@ void active_item_cache::add( item &it )
     // If the item is already in the cache for some reason, don't add a second reference
     active_item_queue &queue = active_items[it.processing_speed()];
     std::vector<cache_reference<item>> &target_list = queue.items;
-    if( std::find( target_list.begin(), target_list.end(), it ) != target_list.end() ) {
+    const auto references_item = [&it]( const cache_reference<item> &active_item ) { return active_item == it; };
+    if( std::ranges::any_of( target_list, references_item ) ) {
         return;
+    }
+    const auto is_cached_elsewhere = [&queue, &references_item]( const auto & active_entry ) {
+        return &active_entry.second != &queue &&
+               std::ranges::any_of( active_entry.second.items, references_item );
+    };
+    if( std::ranges::any_of( active_items, is_cached_elsewhere ) ) {
+        remove( &it );
     }
     if( target_list.empty() ) {
         queue.last_processed_turn = to_turn<int>( calendar::turn );
@@ -113,6 +121,20 @@ std::vector<item *> active_item_cache::get()
         }
         if( queue.items.empty() ) {
             reset_queue_state( queue );
+        }
+    }
+    return all_cached_items;
+}
+
+auto active_item_cache::get_const() const -> std::vector<const item *>
+{
+    auto all_cached_items = std::vector<const item *> {};
+    for( const auto &kv : active_items ) {
+        const active_item_queue &queue = kv.second;
+        for( const auto &active_item : queue.items ) {
+            if( active_item ) {
+                all_cached_items.push_back( &*active_item );
+            }
         }
     }
     return all_cached_items;

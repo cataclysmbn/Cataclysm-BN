@@ -209,6 +209,7 @@
     "//": "items that should only be crafted by the player. Excluded from all other item groups. this is just an FYI list, it's not used to spawn items in game.",
     "subtype": "distribution",
     "entries": [
+      { "item": "totally_fake", "prob": 0 },
       { "item": "chemical_thrower", "prob": 0 },
       { "item": "diamond_bayonet", "prob": 0 },
       { "item": "diamond_bayonet", "prob": 0 },

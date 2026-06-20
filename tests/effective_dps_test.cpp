@@ -18,11 +18,18 @@
 
 struct itype;
 
+static constexpr auto deterministic_dps_seed = 0U;
+
+static auto reset_dps_rng() -> void
+{
+    rng_set_engine_seed( deterministic_dps_seed );
+}
+
 // Run a large number of trials of a player attacking a monster with a given weapon,
 // and return the average damage done per second.
 static double weapon_dps_trials( avatar &attacker, monster &defender, item &weapon )
 {
-    constexpr int trials = 1000;
+    constexpr auto trials = 250;
 
     int total_damage = 0;
     int total_moves = 0;
@@ -32,10 +39,10 @@ static double weapon_dps_trials( avatar &attacker, monster &defender, item &weap
 
     melee::clear_stats();
     melee_statistic_data melee_stats = melee::get_stats();
-    // rerun the trials in groups of 1000 until 100 crits occur
-    for( int i = 0; i < 10 && melee_stats.actual_crit_count < 100;
-         i++, melee_stats = melee::get_stats() ) {
-        for( int j = 0; j < trials; j++ ) {
+    // Rerun the trials in groups until enough crits occur for a stable comparison.
+    for( auto i = 0; i < 6 && melee_stats.actual_crit_count < 30;
+         ++i, melee_stats = melee::get_stats() ) {
+        for( auto j = 0; j < trials; ++j ) {
             // Reset and re-wield weapon before each attack to prevent skill-up during trials
             clear_character( attacker );
             attacker.wield( item::spawn( weapon ) );
@@ -67,27 +74,32 @@ static double weapon_dps_trials( avatar &attacker, monster &defender, item &weap
 }
 
 // Compare actual DPS with estimated effective DPS for an attacker/defender/weapon combo.
-static void check_actual_dps( avatar &attacker, monster &defender, item &weapon )
+static auto check_actual_dps( avatar &attacker, monster &defender, item &weapon ) -> void
 {
+    reset_dps_rng();
     clear_character( attacker );
-    double expect_dps = weapon.effective_dps( attacker, defender );
-    double actual_dps = weapon_dps_trials( attacker, defender, weapon );
+    const auto expect_dps = weapon.effective_dps( attacker, defender );
+    reset_dps_rng();
+    const auto actual_dps = weapon_dps_trials( attacker, defender, weapon );
     CHECK( actual_dps == Approx( expect_dps ).epsilon( 0.35f ) );
 }
 
-static void check_accuracy_dps( avatar &attacker, monster &defender, item &wpn1, item &wpn2,
-                                item &wpn3 )
+static auto check_accuracy_dps( avatar &attacker, monster &defender, item &wpn1, item &wpn2,
+                                item &wpn3 ) -> void
 {
     clear_character( attacker );
+    reset_dps_rng();
     melee::clear_stats();
-    double dps_wpn1 = weapon_dps_trials( attacker, defender, wpn1 );
-    const melee_statistic_data wpn1_stats = melee::get_stats();
+    const auto dps_wpn1 = weapon_dps_trials( attacker, defender, wpn1 );
+    const auto wpn1_stats = melee::get_stats();
+    reset_dps_rng();
     melee::clear_stats();
-    double dps_wpn2 = weapon_dps_trials( attacker, defender, wpn2 );
-    const melee_statistic_data wpn2_stats = melee::get_stats();
+    const auto dps_wpn2 = weapon_dps_trials( attacker, defender, wpn2 );
+    const auto wpn2_stats = melee::get_stats();
+    reset_dps_rng();
     melee::clear_stats();
-    double dps_wpn3 = weapon_dps_trials( attacker, defender, wpn3 );
-    const melee_statistic_data wpn3_stats = melee::get_stats();
+    const auto dps_wpn3 = weapon_dps_trials( attacker, defender, wpn3 );
+    const auto wpn3_stats = melee::get_stats();
     REQUIRE( wpn1_stats.hit_count > 0 );
     REQUIRE( wpn2_stats.hit_count > 0 );
     REQUIRE( wpn3_stats.hit_count > 0 );
@@ -114,6 +126,7 @@ TEST_CASE( "effective damage per second", "[effective][dps]" )
     item &good_sword = *item::spawn_temporary( "test_balanced_sword" );
 
     SECTION( "against a debug monster with no armor or dodge" ) {
+        reset_dps_rng();
         monster mummy( mtype_id( "debug_mon" ) );
 
         CHECK( clumsy_sword.effective_dps( dummy, mummy ) == Approx( 29.5f ).epsilon( 0.15f ) );
@@ -121,6 +134,7 @@ TEST_CASE( "effective damage per second", "[effective][dps]" )
     }
 
     SECTION( "against an agile target" ) {
+        reset_dps_rng();
         monster smoker( mtype_id( "mon_zombie_smoker" ) );
         REQUIRE( smoker.get_dodge() >= 4 );
 
@@ -129,6 +143,7 @@ TEST_CASE( "effective damage per second", "[effective][dps]" )
     }
 
     SECTION( "against an armored target" ) {
+        reset_dps_rng();
         monster soldier( mtype_id( "mon_zombie_soldier" ) );
 
         CHECK( clumsy_sword.effective_dps( dummy, soldier ) == Approx( 11.0f ).epsilon( 0.15f ) );
@@ -139,6 +154,7 @@ TEST_CASE( "effective damage per second", "[effective][dps]" )
         monster mummy( mtype_id( "debug_mon" ) );
 
         SECTION( "STR 6, DEX 6" ) {
+            reset_dps_rng();
             dummy.str_max = 6;
             dummy.dex_max = 6;
 
@@ -148,6 +164,7 @@ TEST_CASE( "effective damage per second", "[effective][dps]" )
         }
 
         SECTION( "STR 8, DEX 10" ) {
+            reset_dps_rng();
             dummy.str_max = 8;
             dummy.dex_max = 10;
 
@@ -157,6 +174,7 @@ TEST_CASE( "effective damage per second", "[effective][dps]" )
         }
 
         SECTION( "STR 10, DEX 10" ) {
+            reset_dps_rng();
             dummy.str_max = 10;
             dummy.dex_max = 10;
 

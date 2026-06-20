@@ -19,6 +19,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_set>
+#include <vector>
 
 #include "action_time_scale.h"
 #include "active_tile_data_def.h"
@@ -46,6 +47,7 @@
 #include "dispersion.h"
 #include "drop_token.h"
 #include "effect.h" // for weed_msg
+#include "enchantments/enchantment.h"
 #include "enums.h"
 #include "explosion.h"
 #include "faction.h"
@@ -70,7 +72,6 @@
 #include "line.h"
 #include "locations.h"
 #include "magic.h"
-#include "magic_enchantment.h"
 #include "map.h"
 #include "martialarts.h"
 #include "material.h"
@@ -607,6 +608,7 @@ void item::convert( const itype_id &new_type )
 {
     type = &*new_type;
     relic_data = type->relic_data;
+    invalidate_processing_cache_upwards();
 }
 
 void item::deactivate()
@@ -616,25 +618,10 @@ void item::deactivate()
     }
 
     active = false;
+    invalidate_processing_cache_upwards();
     if( is_tool() ) {
         type->tool->turns_active = 0;
     }
-
-    // Is not placed in the world, so either a template of some kind or a temporary item.
-    if( !has_position() ) {
-        return;
-    }
-    switch( where() ) {
-        case item_location_type::map:
-            get_map().make_inactive( *this );
-            break;
-        case item_location_type::vehicle:
-            get_map().veh_at( tripoint_bub_ms( position() ) )->vehicle().make_inactive( *this );
-            break;
-        default:
-            break;
-    }
-
 }
 
 void item::activate()
@@ -648,21 +635,7 @@ void item::activate()
     }
 
     active = true;
-
-    // Is not placed in the world, so either a template of some kind or a temporary item.
-    if( !has_position() ) {
-        return;
-    }
-    switch( where() ) {
-        case item_location_type::map:
-            get_map().make_active( *this );
-            break;
-        case item_location_type::vehicle:
-            get_map().veh_at( tripoint_bub_ms( position() ) )->vehicle().make_active( *this );
-            break;
-        default:
-            break;
-    }
+    invalidate_processing_cache_upwards();
 }
 
 bool item::revert( const Character *ch, bool alert )
@@ -839,7 +812,7 @@ auto item::prepare_for_location_removal() -> void
         const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
         const auto temperature = vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
                                  rot::temperature_flag_for_location( get_map(), *this );
-        update_rot( position(), temperature, get_weather() );
+        update_rot( bub_pos(), temperature, get_weather() );
     }
 }
 
@@ -902,7 +875,7 @@ bool item::attempt_split( int qty,
     prepare_for_location_removal();
     const bool split_needs_rot_actualization = goes_bad() && is_loaded() && has_position() &&
             !split_from_preserving_container;
-    const auto split_pos = split_needs_rot_actualization ? position() : tripoint_bub_ms::zero();
+    const auto split_pos = split_needs_rot_actualization ? bub_pos() : tripoint_bub_ms::zero();
     const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
     const auto split_temperature = !split_needs_rot_actualization ? temperature_flag::TEMP_NORMAL :
                                    vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
@@ -1101,6 +1074,25 @@ int item::charges_per_volume( const units::volume &vol ) const
     }
 }
 
+namespace
+{
+
+auto bionic_component_type_ids( const item &corpse ) -> std::vector<itype_id>
+{
+    using namespace std::views;
+    namespace ranges = std::ranges;
+    auto result = corpse.get_components()
+                  | filter( &item::is_bionic )
+                  | transform( &item::typeId )
+                  | ranges::to<std::vector>();
+    ranges::sort( result, []( const itype_id & lhs, const itype_id & rhs ) {
+        return lhs < rhs;
+    } );
+    return result;
+}
+
+} // namespace
+
 bool item::display_stacked_with( const item &rhs, bool check_components ) const
 {
     return !count_by_charges() && stacks_with( rhs, check_components );
@@ -1128,7 +1120,13 @@ bool item::stacks_with( const item &rhs, bool check_components, bool skip_type_c
     }
 
     if( is_corpse() || rhs.is_corpse() ) {
-        return this->is_corpse() && rhs.is_corpse() && ( *this->get_mtype() == *rhs.get_mtype() );
+        if( !is_corpse() || !rhs.is_corpse() || ( *get_mtype() != *rhs.get_mtype() ) ||
+            get_var( "bionics_scanned_by", -1 ) != rhs.get_var( "bionics_scanned_by", -1 ) ||
+            has_flag( flag_CBM_SCANNED ) != rhs.has_flag( flag_CBM_SCANNED ) ) {
+            return false;
+        }
+        return !has_flag( flag_CBM_SCANNED ) ||
+               bionic_component_type_ids( *this ) == bionic_component_type_ids( rhs );
     }
 
     if( damage_ != rhs.damage_ ) {
@@ -2392,7 +2390,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
             // Apply enchantment bonuses to damage display
             int base_bullet_damage = static_cast<int>( total_damage );
             int ench_damage_bonus = viewer.bonus_from_enchantments( base_bullet_damage,
-                                    enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
+                                    enchantment_value_id( "RANGED_DAMAGE_" + gun_du.get_internal_name() ), true );
             int displayed_damage = total_damage + ench_damage_bonus;
 
             info.emplace_back( "GUN", "sum_of_damage", _( " = <num>" ),
@@ -2421,7 +2419,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
 
         // Show enchantment bonus if present
         int ench_range_bonus = you.bonus_from_enchantments( base_gun_range,
-                               enchant_vals::mod::RANGED_RANGE, true );
+                               enchantment_value_id( "RANGED_RANGE" ), true );
         if( ench_range_bonus != 0 ) {
             info.emplace_back( "GUN", "ench_range", _( " (enchanted: <num>)" ),
                                iteminfo::no_name | iteminfo::show_plus,
@@ -2528,7 +2526,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
             // Note: This isn't perfect because effective already includes some effects,
             // but it's consistent with how ranged.cpp applies enchantments
             int ench_dispersion_bonus = you.bonus_from_enchantments( effective_dispersion,
-                                        enchant_vals::mod::RANGED_DISPERSION, true );
+                                        enchantment_value_id( "RANGED_DISPERSION" ), true );
 
             if( ench_dispersion_bonus != 0 ) {
                 info.emplace_back( "GUN", "ench_dispersion", _( " (enchanted: <num>)" ),
@@ -2577,7 +2575,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
         if( parts->test( iteminfo_parts::GUN_RECOIL ) ) {
             int base_recoil = loaded_mod->gun_recoil();
             int ench_recoil_bonus = you.bonus_from_enchantments( base_recoil,
-                                    enchant_vals::mod::RANGED_RECOIL, true );
+                                    enchantment_value_id( "RANGED_RECOIL" ), true );
             int effective_recoil = std::max( 0, base_recoil + ench_recoil_bonus );
 
             info.emplace_back( "GUN", _( "Effective recoil: " ), "",
@@ -2619,7 +2617,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     if( parts->test( iteminfo_parts::GUN_RELOAD_TIME ) ) {
         int base_reload_time = mod->get_reload_time();
         int ench_reload_bonus = you.bonus_from_enchantments( base_reload_time,
-                                enchant_vals::mod::RANGED_RELOAD_TIME, true );
+                                enchantment_value_id( "RANGED_RELOAD_TIME" ), true );
         int effective_reload = std::max( 25, base_reload_time + ench_reload_bonus );
 
         info.emplace_back( "GUN", _( "Reload time: " ),
@@ -2688,8 +2686,8 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     if( parts->test( iteminfo_parts::GUN_AIMING_STATS ) ) {
         insert_separation_line( info );
         int final_aim = ranged::aim_per_move( you, *mod, MAX_RECOIL );
-        double add = you.bonus_from_enchantments( 0, enchant_vals::mod::RANGED_AIM_SPEED, false );
-        double mul = ( you.bonus_from_enchantments( 1000, enchant_vals::mod::RANGED_AIM_SPEED,
+        double add = you.bonus_from_enchantments( 0, enchantment_value_id( "RANGED_AIM_SPEED" ), false );
+        double mul = ( you.bonus_from_enchantments( 1000, enchantment_value_id( "RANGED_AIM_SPEED" ),
                        false ) - add ) / 1000.0;
         int base_aim = final_aim;
         if( 1.0 + mul != 0.0 ) {
@@ -5002,6 +5000,15 @@ void item::on_contents_changed()
     }
 
     encumbrance_update_ = true;
+    invalidate_processing_cache_upwards();
+
+    if( !has_position() || where() != item_location_type::vehicle ) {
+        return;
+    }
+
+    if( const optional_vpart_position vp = get_map().veh_at( abs_pos() ) ) {
+        vp->vehicle().invalidate_cargo_recharge_cache();
+    }
 }
 
 void item::on_damage( int qty, damage_type )
@@ -5735,7 +5742,8 @@ int item::lift_strength() const
 int item::attack_cost() const
 {
     int base = 65 + ( volume() / 62.5_ml + weight() / 60_gram ) / count();
-    int bonus = bonus_from_enchantments_wielded( base, enchant_vals::mod::ITEM_ATTACK_COST, true );
+    int bonus = bonus_from_enchantments_wielded( base, enchantment_value_id( "ITEM_ATTACK_COST" ),
+                true );
     return std::max( 0, base + bonus );
 }
 
@@ -5788,50 +5796,9 @@ int item::damage_melee( const attack_statblock &attack, damage_type dt ) const
         } );
 
     }
-
-    switch( dt ) {
-        case DT_BASH:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_BASH, true );
-            break;
-        case DT_CUT:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_CUT, true );
-            break;
-        case DT_STAB:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_STAB, true );
-            break;
-        case DT_BULLET:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_BULLET, true );
-            break;
-        case DT_ACID:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_ACID, true );
-            break;
-        case DT_BIOLOGICAL:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_BIO, true );
-            break;
-        case DT_COLD:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_COLD, true );
-            break;
-        case DT_DARK:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_DARK, true );
-            break;
-        case DT_ELECTRIC:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_ELECTRIC, true );
-            break;
-        case DT_HEAT:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_FIRE, true );
-            break;
-        case DT_LIGHT:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_LIGHT, true );
-            break;
-        case DT_PSI:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_PSI, true );
-            break;
-        case DT_TRUE:
-            res += bonus_from_enchantments_wielded( res, enchant_vals::mod::ITEM_DAMAGE_TRUE, true );
-            break;
-        default:
-            break;
-    }
+    auto internal_name = damage_unit( dt, 0.0 ).get_internal_name();
+    res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_" + internal_name ),
+                                            true );
     // Apply melee damage bonus
     const auto &bonus = get_melee_damage_bonus();
     res += bonus.type_damage( dt );
@@ -5873,62 +5840,8 @@ std::map<std::string, attack_statblock> item::get_attacks() const
                     break;
             }
 
-            switch( du.type ) {
-                case DT_BASH:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_BASH,
-                                 true );
-                    break;
-                case DT_CUT:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_CUT,
-                                 true );
-                    break;
-                case DT_STAB:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_STAB,
-                                 true );
-                    break;
-                case DT_BULLET:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_BULLET,
-                                 true );
-                    break;
-                case DT_ACID:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_ACID,
-                                 true );
-                    break;
-                case DT_BIOLOGICAL:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_BIO,
-                                 true );
-                    break;
-                case DT_COLD:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_COLD,
-                                 true );
-                    break;
-                case DT_DARK:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_DARK,
-                                 true );
-                    break;
-                case DT_ELECTRIC:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_ELECTRIC,
-                                 true );
-                    break;
-                case DT_HEAT:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_FIRE,
-                                 true );
-                    break;
-                case DT_LIGHT:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_LIGHT,
-                                 true );
-                    break;
-                case DT_PSI:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_PSI,
-                                 true );
-                    break;
-                case DT_TRUE:
-                    du.amount += bonus_from_enchantments_wielded( du.amount, enchant_vals::mod::ITEM_DAMAGE_TRUE,
-                                 true );
-                    break;
-                default:
-                    break;
-            }
+            du.amount += bonus_from_enchantments_wielded( du.amount,
+                         enchantment_value_id( "ITEM_DAMAGE_" + du.get_internal_name() ), true );
             // Apply melee damage bonus
             du.amount += bonus.type_damage( du.type );
         }
@@ -6093,7 +6006,13 @@ bool item::can_shatter() const
 
 void item::unset_flags()
 {
+    const bool affects_processing = item_tags.count( flag_RADIO_ACTIVATION ) ||
+                                    item_tags.count( flag_ETHEREAL_ITEM ) ||
+                                    item_tags.count( flag_PROCESSING );
     item_tags.clear();
+    if( affects_processing ) {
+        invalidate_processing_cache_upwards();
+    }
 }
 
 bool item::has_fault( const fault_id &fault ) const
@@ -6157,7 +6076,12 @@ bool item::has_vitamin( const vitamin_id &v ) const
 void item::set_flag( const flag_id &flag )
 {
     if( flag.is_valid() ) {
-        item_tags.insert( flag );
+        const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM ||
+                                        flag == flag_PROCESSING;
+        const bool inserted = item_tags.insert( flag ).second;
+        if( inserted && affects_processing ) {
+            invalidate_processing_cache_upwards();
+        }
     } else {
         debugmsg( "Attempted to set invalid flag_id %s", flag.str() );
     }
@@ -6165,7 +6089,12 @@ void item::set_flag( const flag_id &flag )
 
 void item::unset_flag( const flag_id &flag )
 {
-    item_tags.erase( flag );
+    const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM ||
+                                    flag == flag_PROCESSING;
+    const bool erased = item_tags.erase( flag ) > 0;
+    if( erased && affects_processing ) {
+        invalidate_processing_cache_upwards();
+    }
 }
 
 void item::set_flag_recursive( const flag_id &flag )
@@ -7565,9 +7494,11 @@ bool item::is_brewable() const
 
 bool item::is_food_container() const
 {
-    return ( !contents.empty() && contents.front().is_food() ) ||
-           ( is_craft() &&
-             craft_data_->making->create_result()->is_food_container() );
+    namespace ranges = std::ranges;
+    return ranges::any_of( contents.all_items_top(), []( const item * contained_item ) {
+        return contained_item != nullptr &&
+               ( contained_item->is_food() || contained_item->is_food_container() );
+    } ) || ( is_craft() && craft_data_->making->create_result()->is_food_container() );
 }
 
 bool item::is_med_container() const
@@ -7585,17 +7516,27 @@ const mtype *item::get_mtype() const
     return corpse;
 }
 
+namespace
+{
+
 template<typename Item>
-static Item *get_food_impl( Item *it )
+auto get_food_impl( Item *it ) -> Item * // *NOPAD*
 {
     if( it->is_food() ) {
         return it;
-    } else if( it->is_food_container() && !it->contents.empty() ) {
-        return &it->contents.front();
-    } else {
-        return nullptr;
     }
+    for( auto *const contained_item : it->contents.all_items_top() ) {
+        if( contained_item == nullptr ) {
+            continue;
+        }
+        if( auto *food = get_food_impl( contained_item ) ) {
+            return food;
+        }
+    }
+    return nullptr;
 }
+
+} // namespace
 
 item *item::get_food()
 {
@@ -7963,7 +7904,7 @@ const std::vector<enchantment> &item::get_enchantments() const
 }
 
 double item::bonus_from_enchantments( const Character &owner, double base,
-                                      enchant_vals::mod value, bool round ) const
+                                      enchantment_value_id value, bool round ) const
 {
     double add = 0.0;
     double mul = 0.0;
@@ -7981,7 +7922,7 @@ double item::bonus_from_enchantments( const Character &owner, double base,
     return ret;
 }
 
-double item::bonus_from_enchantments_wielded( double base, enchant_vals::mod value,
+double item::bonus_from_enchantments_wielded( double base, enchantment_value_id value,
         bool round ) const
 {
     double add = 0.0;
@@ -8350,7 +8291,8 @@ int item::gun_range( const player *p ) const
     ret *= ranged::str_draw_range_modifier( *this, *p );
 
     // Apply enchantment bonuses to range
-    int ench_range_bonus = p->bonus_from_enchantments( ret, enchant_vals::mod::RANGED_RANGE, true );
+    int ench_range_bonus = p->bonus_from_enchantments( ret, enchantment_value_id( "RANGED_RANGE" ),
+                           true );
     ret = std::max( 1, ret + ench_range_bonus );
 
     return std::max( 0, ret );
@@ -9960,40 +9902,78 @@ bool item::has_rotten_away() const
     }
 }
 
-detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
-                                        temperature_flag temperature,
-                                        const weather_manager &weather )
+auto item::process_rot( detached_ptr<item> &&self,
+                        const absolute_rot_process_options &options ) -> detached_ptr<item>
+{
+    if( !self ) {
+        return std::move( self );
+    }
+    if( self->is_in_preserving_container() ) {
+        self->mark_rot_checked_now();
+        return std::move( self );
+    }
+
+    self->update_rot( options.context );
+
+    if( self->has_rotten_away() && options.carrier == nullptr && !options.seals ) {
+        return detached_ptr<item>();
+    }
+    return std::move( self );
+}
+
+auto item::actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
+                          const temperature_flag temperature,
+                          const weather_manager &weather ) -> detached_ptr<item>
+{
+    return actualize_rot( std::move( self ), {
+        .position = bub_to_abs( pnt ),
+        .temperature = temperature,
+        .weather = &weather,
+        .local_temperature = g != nullptr && !g->new_game ? get_map().get_temperature( pnt ) : 0,
+    } );
+}
+
+auto item::actualize_rot( detached_ptr<item> &&self,
+                          const rot_context &context ) -> detached_ptr<item>
 {
     // Guard against null or invalid items that can survive save/load cycles
     // during dimension transitions (e.g. zombie items from deferred arena cleanup).
     if( !self || !self->type || self->type == nullitem() ) {
         if( self ) {
             debugmsg( "actualize_rot: skipping item with %s type at %s",
-                      self->type ? "null-type" : "null", pnt.to_string() );
+                      self->type ? "null-type" : "null", context.position.to_string() );
         }
         return std::move( self );
     }
     if( self->goes_bad() ) {
-        return process_rot( std::move( self ), false, pnt, nullptr, temperature, weather );
+        return process_rot( std::move( self ), {
+            .seals = false,
+            .carrier = nullptr,
+            .context = context,
+        } );
     } else if( self->type->container && self->type->container->preserves ) {
         // Containers like tin cans preserves all items inside, they do not rot at all.
         return std::move( self );
     } else if( self->type->container && self->type->container->seals ) {
         // Items inside rot but do not vanish as the container seals them in.
-        self->contents.remove_top_items_with( [&pnt, &temperature, &weather]( detached_ptr<item> &&it ) {
+        self->contents.remove_top_items_with( [&context]( detached_ptr<item> &&it ) {
             if( !it || !it->type || it->type == nullitem() ) {
                 return std::move( it );
             }
             if( it->goes_bad() ) {
-                it = process_rot( std::move( it ), true, pnt, nullptr, temperature, weather );
+                it = process_rot( std::move( it ), {
+                    .seals = true,
+                    .carrier = nullptr,
+                    .context = context,
+                } );
             }
             return std::move( it );
         } );
         return std::move( self );
     } else {
         // Check and remove rotten contents, but always keep the container.
-        self->contents.remove_top_items_with( [&pnt, &temperature, &weather]( detached_ptr<item> &&it ) {
-            return actualize_rot( std::move( it ), pnt, temperature, weather );
+        self->contents.remove_top_items_with( [&context]( detached_ptr<item> &&it ) {
+            return actualize_rot( std::move( it ), context );
         } );
         return std::move( self );
     }
@@ -10116,21 +10096,62 @@ uint64_t item::make_component_hash() const
 bool item::needs_processing() const
 {
     return is_active() || has_flag( flag_RADIO_ACTIVATION ) || has_flag( flag_ETHEREAL_ITEM ) ||
-           ( !contents.empty() && is_container() && contents.front().needs_processing() ) ||
+           ( !contents.empty() && contents.has_processing_items() ) ||
            ( magazine_current() && magazine_current()->needs_processing() ) ||
            is_artifact() || is_relic() || goes_bad();
 }
 
-int item::processing_speed() const
+auto item::invalidate_processing_cache_upwards() -> void
 {
-    if( is_corpse() || is_food() || is_food_container() ) {
-        return to_turns<int>( 10_minutes );
+    auto *top = this;
+    for( auto *current = this; current != nullptr; current = current->parent_item() ) {
+        current->contents.invalidate_processing_cache();
+        top = current;
     }
-    // Unless otherwise indicated, update every turn.
-    return 1;
+
+    if( !top->has_position() ) {
+        return;
+    }
+
+    switch( top->where() ) {
+        case item_location_type::map:
+            if( top->needs_processing() ) {
+                get_map().make_active( *top );
+            } else {
+                get_map().make_inactive( *top );
+            }
+            break;
+        case item_location_type::vehicle:
+            if( const auto vp = get_map().veh_at( top->bub_pos() ) ) {
+                if( top->needs_processing() ) {
+                    vp->vehicle().make_active( *top );
+                } else {
+                    vp->vehicle().make_inactive( *top );
+                }
+            }
+            break;
+        default:
+            break;
+    }
 }
 
-detached_ptr<item> item::process_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pos )
+int item::processing_speed() const
+{
+    auto speed = is_corpse() || is_food() || is_food_container() ? to_turns<int>( 10_minutes ) : 1;
+    for( const item *contained_item : contents.processing_items() ) {
+        if( contained_item != nullptr ) {
+            speed = std::min( speed, contained_item->processing_speed() );
+        }
+    }
+    if( const item *magazine = magazine_current(); magazine != nullptr &&
+        magazine->needs_processing() ) {
+        speed = std::min( speed, magazine->processing_speed() );
+    }
+    return speed;
+}
+
+auto item::process_rot( detached_ptr<item> &&self,
+                        const tripoint_bub_ms &pos ) -> detached_ptr<item>
 {
     return process_rot( std::move( self ), false, pos, nullptr, temperature_flag::TEMP_NORMAL,
                         get_weather() );
@@ -10172,16 +10193,26 @@ void item::update_rot_from_location( const temperature_flag temperature )
     auto pos = tripoint_bub_ms::zero();
     auto flag = temperature;
     if( is_loaded() && has_position() ) {
-        pos = position();
+        pos = bub_pos();
         flag = rot::temperature_flag_for_location( get_map(), *this );
     }
     update_rot( pos, flag, get_weather() );
 }
 
-void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
-                       const weather_manager &weather )
+auto item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
+                       const weather_manager &weather ) -> void
 {
-    const time_point now = calendar::turn;
+    update_rot( {
+        .position = bub_to_abs( pos ),
+        .temperature = flag,
+        .weather = &weather,
+        .local_temperature = g != nullptr && !g->new_game ? get_map().get_temperature( pos ) : 0,
+    } );
+}
+
+auto item::update_rot( const rot_context &context ) -> void
+{
+    const auto now = calendar::turn;
 
     // if player debug menu'd the time backward it breaks stuff, just reset the
     // last_temp_check and last_rot_check in this case
@@ -10192,42 +10223,42 @@ void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
 
     // process rot at most once every 100_turns (10 min)
     // note we're also gated by item::processing_speed
-    constexpr time_duration smallest_interval = 10_minutes;
+    static constexpr auto smallest_interval = 10_minutes;
 
-    units::temperature temp = weather.get_temperature( bub_to_abs( pos ) );
-    temp = clip_by_temperature_flag( temp, flag );
+    const auto &weather = context.weather == nullptr ? get_weather() : *context.weather;
+    auto temp = weather.get_temperature( context.position );
+    temp = clip_by_temperature_flag( temp, context.temperature );
 
-    time_point time = last_rot_check;
+    auto time = last_rot_check;
     item_internal::scoped_goes_bad_cache _cache( this );
 
     if( now - time > 1_hours ) {
         // This code is for items that were left out of reality bubble for long time
 
-        const weather_generator &wgen = weather.get_cur_weather_gen();
-        const unsigned int seed = g->get_seed();
+        const auto &wgen = weather.get_cur_weather_gen();
+        const auto seed = g != nullptr ? g->get_seed() : 0;
         // It's a modifier, so we need to subtract 0_f
-        units::temperature local_mod = units::from_fahrenheit( g->new_game
-                                       ? 0
-                                       : get_map().get_temperature( pos ) ) - 0_f;
+        const auto local_mod = units::from_fahrenheit( g != nullptr && g->new_game ?
+                               0 : context.local_temperature ) - 0_f;
 
         // Process the past of this item since the last time it was processed
         while( now - time > 1_hours ) {
             // Get the environment temperature
-            time_duration time_delta = std::min( 1_hours, now - 1_hours - time );
+            const auto time_delta = std::min( 1_hours, now - 1_hours - time );
             time += time_delta;
 
-            //Use weather if above ground, use map temp if below
-            units::temperature env_temperature_raw;
-            if( pos.z() >= 0 ) {
-                const auto location = bub_to_abs( pos );
-                units::temperature weather_temperature = wgen.get_weather_temperature( location, time,
-                        calendar::config, seed );
-                env_temperature_raw = weather_temperature + local_mod;
-            } else {
-                env_temperature_raw = temperatures::annual_average + local_mod;
+            const auto env_temperature_raw = [&]() {
+                if( context.position.z() >= 0 ) {
+                    const auto weather_temperature = wgen.get_weather_temperature( context.position, time,
+                                                     calendar::config, seed );
+                    return weather_temperature + local_mod;
+                }
+                return temperatures::annual_average + local_mod;
             }
+            ();
 
-            units::temperature env_temperature_clipped = clip_by_temperature_flag( env_temperature_raw, flag );
+            auto env_temperature_clipped = clip_by_temperature_flag( env_temperature_raw,
+                                           context.temperature );
 
             // Calculate item rot
             rot += calc_rot( time, env_temperature_clipped );
@@ -10243,25 +10274,21 @@ void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
     }
 }
 
-detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool seals,
-                                       const tripoint_bub_ms &pos,
-                                       player *carrier, const temperature_flag flag,
-                                       const weather_manager &weather )
+auto item::process_rot( detached_ptr<item> &&self, const bool seals,
+                        const tripoint_bub_ms &pos,
+                        player *carrier, const temperature_flag flag,
+                        const weather_manager &weather ) -> detached_ptr<item>
 {
-    if( !self ) {
-        return std::move( self );
-    }
-    if( self->is_in_preserving_container() ) {
-        self->mark_rot_checked_now();
-        return std::move( self );
-    }
-
-    self->update_rot( pos, flag, weather );
-
-    if( self->has_rotten_away() && carrier == nullptr && !seals ) {
-        return detached_ptr<item>();
-    }
-    return std::move( self );
+    return process_rot( std::move( self ), {
+        .seals = seals,
+        .carrier = carrier,
+        .context = rot_context {
+            .position = bub_to_abs( pos ),
+            .temperature = flag,
+            .weather = &weather,
+            .local_temperature = g != nullptr && !g->new_game ? get_map().get_temperature( pos ) : 0,
+        },
+    } );
 }
 
 void item::process_artifact( player *carrier, const tripoint_bub_ms & /*pos*/ )
@@ -10931,20 +10958,71 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
     if( !self ) {
         return std::move( self );
     }
-    const bool preserves = self->type->container && self->type->container->preserves;
-    const bool seals = self->type->container && self->type->container->seals;
-    item &obj = *self;
+    const auto preserves = self->type->container && self->type->container->preserves;
+    const auto seals = self->type->container && self->type->container->seals;
+    auto &obj = *self;
+    using namespace std::views;
+    namespace ranges = std::ranges;
 
-    obj.remove_items_with( [&]( detached_ptr<item> &&it ) {
-        if( preserves ) {
+    struct content_processing_options {
+        bool parent_preserves = false;
+        bool parent_seals = false;
+    };
+
+    const auto processing_items = []( const auto & contents ) {
+        return contents.processing_items()
+        | filter( []( const item * content_item ) { return content_item != nullptr; } )
+        | transform( []( item * content_item ) { return cache_reference<item>( *content_item ); } )
+        | ranges::to<std::vector>();
+    };
+
+    auto process_content = [&]( auto &&process_content, detached_ptr<item> &&it,
+    const content_processing_options & opts ) -> detached_ptr<item> {
+        if( !it )
+        {
+            return std::move( it );
+        }
+
+        const auto content_preserves = opts.parent_preserves ||
+        ( it->type->container && it->type->container->preserves );
+        const auto content_seals = opts.parent_seals ||
+        ( it->type->container && it->type->container->seals );
+
+        for( const cache_reference<item> &content_item : processing_items( it->contents ) )
+        {
+            if( !content_item ) {
+                continue;
+            }
+            content_item->attempt_detach( [&]( detached_ptr<item> &&nested ) {
+                return process_content( process_content, std::move( nested ), {
+                    .parent_preserves = content_preserves,
+                    .parent_seals = content_seals
+                } );
+            } );
+        }
+
+        if( content_preserves )
+        {
             it->last_rot_check = calendar::turn;
         }
-        it = it->process_internal( std::move( it ), carrier, pos, activate, seals, flag,
-                                   weather_generator );
-        return VisitResponse::NEXT;
-    } );
-    detached_ptr<item> res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
-                             weather_generator );
+        return process_internal( std::move( it ), carrier, pos, activate, content_seals, flag,
+                                 weather_generator );
+    };
+
+    for( const cache_reference<item> &content_item : processing_items( obj.contents ) ) {
+        if( !content_item ) {
+            continue;
+        }
+        content_item->attempt_detach( [&]( detached_ptr<item> &&it ) {
+            return process_content( process_content, std::move( it ), {
+                .parent_preserves = preserves,
+                .parent_seals = seals
+            } );
+        } );
+    }
+
+    auto res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
+                                 weather_generator );
     return res;
 }
 
@@ -11103,15 +11181,15 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
     // All foods that go bad have temperature
     if( ( self->is_food() || self->is_corpse() ) ) {
         ZoneScopedN( "item_process_rot" );
-        item &obj = *self;
+        auto removed_snapshot = self->is_comestible() || self->is_corpse() ?
+                                item::spawn( *self ) : detached_ptr<item>();
         self = process_rot( std::move( self ), seals, pos, carrier, flag, weather_generator );
         // If the item has rotted away, then self becomes a null pointer.
-        if( !self ) {
-            if( obj.is_comestible() ) {
-                here.rotten_item_spawn( obj, pos );
-            } else if( obj.is_corpse() ) {
-                here.handle_decayed_corpse( obj, pos );
-            }
+        if( !self && removed_snapshot ) {
+            MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).handle_rotten_away_item(
+            map_local_to_abs( here, pos ), *removed_snapshot, {
+                .mode = mapbuffer_lookup_mode::resident_only,
+            } );
         }
     }
     return std::move( self );

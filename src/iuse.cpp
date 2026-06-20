@@ -2243,6 +2243,10 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         return 0;
     }
 
+    if( here.visibility_caches_dirty() ) {
+        here.update_visibility_cache( p->bub_pos().z() );
+    }
+
     // Try to minimize the use of has_enough_charges() because it's kind of expensive.
     bool no_charges = false;
     for( const tripoint_bub_ms &pt : here.points_in_radius( pos, PICKUP_RANGE ) ) {
@@ -2262,7 +2266,7 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                 }
             }
 
-            int charges = static_cast<int>( cbms.size() );
+            int charges = std::max( 1, static_cast<int>( cbms.size() ) );
             charges -= it->ammo_consume( charges, pos );
             if( possess && it->has_flag( flag_USE_UPS ) ) {
                 if( p->use_charges_if_avail( itype_UPS, charges ) ) {
@@ -4303,7 +4307,8 @@ int iuse::dog_whistle( player *p, item *it, bool, const tripoint_bub_ms & )
     }
     p->add_msg_if_player( _( "You blow your dog whistle." ) );
     for( monster &critter : g->all_monsters() ) {
-        if( critter.friendly != 0 && critter.has_flag( MF_DOGFOOD ) ) {
+        if( critter.friendly != 0 && ( critter.has_flag( MF_DOGFOOD ) ||
+                                       critter.has_flag( MF_DOG_WHISTLE ) ) ) {
             bool u_see = g->u.sees( critter );
             if( critter.has_effect( effect_docile ) ) {
                 if( u_see ) {
@@ -4349,7 +4354,7 @@ int iuse::blood_draw( player *p, item *it, bool, const tripoint_bub_ms & )
     const mtype *mt = nullptr;
     bool drew_blood = false;
     bool acid_blood = false;
-    for( auto &map_it : g->m.i_at( p->bub_pos().xy() ) ) {
+    for( auto &map_it : g->m.i_at( p->bub_pos() ) ) {
         if( map_it->is_corpse() ) {
             bool has_blood = false;
             mt = map_it->get_mtype();
@@ -4447,7 +4452,7 @@ int iuse::mind_splicer( player *p, item *it, bool, const tripoint_bub_ms & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    for( auto &map_it : g->m.i_at( p->bub_pos().xy() ) ) {
+    for( auto &map_it : g->m.i_at( p->bub_pos() ) ) {
         if( map_it->typeId() == itype_rmi2_corpse &&
             query_yn( _( "Use the mind splicer kit on the %s?" ), colorize( map_it->tname(),
                       map_it->color_in_inventory() ) ) ) {
@@ -7629,7 +7634,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
     if( t ) {
 
-        if( g->m.has_flag( "SWIMMABLE", pos.xy() ) ) {
+        if( g->m.has_flag( TFLAG_SWIMMABLE, pos ) ) {
             it->unset_flag( flag_NO_UNWIELD );
             it->ammo_unset();
             it->deactivate();
@@ -7900,9 +7905,7 @@ static void emit_radio_signal( player &p, const flag_id &signal )
         return VisitResponse::NEXT;
     };
 
-    int z_min = g->m.has_zlevels() ? -OVERMAP_DEPTH : 0;
-    int z_max = g->m.has_zlevels() ? OVERMAP_HEIGHT : 0;
-    for( int zlev = z_min; zlev <= z_max; zlev++ ) {
+    for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; zlev++ ) {
         for( auto loc : g->m.points_on_zlevel( zlev ) ) {
             // Items on ground
             map_cursor mc( loc );
@@ -8926,10 +8929,6 @@ int iuse::capture_monster_act( player *p, item *it, bool, const tripoint_bub_ms 
 
 int iuse::ladder( player *p, item *, bool, const tripoint_bub_ms & )
 {
-    if( !g->m.has_zlevels() ) {
-        debugmsg( "Ladder can't be used in non-z-level mode" );
-        return 0;
-    }
     if( p->is_mounted() ) {
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
