@@ -192,6 +192,55 @@ TEST_CASE( "bionic_scanner_separates_detected_corpses_from_unscanned_stack",
     CHECK_FALSE( unscanned_corpse->display_stacked_with( *detected_corpse ) );
 }
 
+TEST_CASE( "bionic_scanner_updates_same_monster_corpse_pile_display",
+           "[iuse][bionic_scanner]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    clear_avatar();
+
+    auto &you = get_avatar();
+    you.setID( character_id( 1 ), true );
+    auto &here = get_map();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    set_time( calendar::turn_zero + 12_hours );
+    you.recalc_sight_limits();
+
+    const auto corpse_pos = you.bub_pos();
+    REQUIRE( you.sees( corpse_pos ) );
+    auto cbm_corpse = item::make_corpse( mtype_id( "mon_zombie_technician" ), calendar::turn, "" );
+    cbm_corpse->add_component( item::spawn( "bio_electrosense", calendar::turn ) );
+    auto *const cbm_corpse_ptr = cbm_corpse.get();
+    REQUIRE_FALSE( here.add_item_or_charges( corpse_pos, std::move( cbm_corpse ), false ) );
+
+    auto empty_corpse = item::make_corpse( mtype_id( "mon_zombie_technician" ), calendar::turn, "" );
+    auto *const empty_corpse_ptr = empty_corpse.get();
+    REQUIRE_FALSE( here.add_item_or_charges( corpse_pos, std::move( empty_corpse ), false ) );
+    REQUIRE( cbm_corpse_ptr->display_stacked_with( *empty_corpse_ptr ) );
+
+    auto backpack = item::spawn( "backpack", calendar::turn );
+    auto scanner = item::spawn( "bionic_scanner_on", calendar::turn );
+    scanner->ammo_set( itype_id( "battery" ), 10 );
+    scanner->activate();
+    backpack->put_in( std::move( scanner ) );
+    you.i_add( std::move( backpack ) );
+
+    you.process_items();
+
+    CHECK( cbm_corpse_ptr->get_var( "bionics_scanned_by", -1 ) == you.getID().get_value() );
+    CHECK( cbm_corpse_ptr->has_flag( flag_CBM_SCANNED ) );
+    CHECK( empty_corpse_ptr->get_var( "bionics_scanned_by", -1 ) == you.getID().get_value() );
+    CHECK_FALSE( empty_corpse_ptr->has_flag( flag_CBM_SCANNED ) );
+    CHECK_FALSE( cbm_corpse_ptr->display_stacked_with( *empty_corpse_ptr ) );
+
+    const auto cbm_display_name = cbm_corpse_ptr->display_name();
+    const auto empty_display_name = empty_corpse_ptr->display_name();
+    CHECK( cbm_display_name.find( "bionic detected" ) != std::string::npos );
+    CHECK( empty_display_name.find( "scanned" ) != std::string::npos );
+    CHECK( cbm_display_name.find( "corpse of a zombie technician (fresh)" ) == std::string::npos );
+    CHECK( empty_display_name.find( "corpse of a zombie technician (fresh)" ) == std::string::npos );
+}
+
 TEST_CASE( "bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bionic_scanner]" )
 {
     const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
