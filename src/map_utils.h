@@ -4,6 +4,7 @@
 #include "point.h"
 
 class item;
+class mapbuffer;
 
 using location_subrange =
     std::ranges::subrange<location_vector<item>::iterator, location_vector<item>::iterator>;

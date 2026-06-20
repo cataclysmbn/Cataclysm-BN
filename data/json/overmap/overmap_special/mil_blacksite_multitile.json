@@ -152,7 +152,10 @@
         "L": { "monster": "mon_turret_medium" },
         "O": { "monster": "mon_turret_light" }
       },
-      "place_vehicles": [ { "vehicle": "military_decoy_vehicles", "x": 40, "y": 36, "chance": 100, "rotation": 90, "status": 0 } ],
+      "place_vehicles": [
+        { "vehicle": "tank_m60_patton_decoy", "x": 38, "y": 36, "chance": 100, "rotation": 90, "status": 0 },
+        { "vehicle": "tank_m60_patton_decoy", "x": 30, "y": 36, "chance": 100, "rotation": 90, "status": 0 }
+      ],
       "mapping": {
         "r": {
           "items": [

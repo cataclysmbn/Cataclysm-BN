@@ -86,7 +86,7 @@ struct transparency_submap_ref {
 auto rebuild_transparency_luts(transparency_luts& luts) -> void;
 
 // Collect transparency_submap_ref records for all submaps at zlev.
-// Uses only public map accessors (get_submap_at_grid, get_cache_ref).
+// Uses only public map/cache accessors and resident mapbuffer lookup.
 auto gather_transparency_refs(map const& m, int zlev) -> std::vector<transparency_submap_ref>;
 
 // Build GPU upload records for a set of submaps.

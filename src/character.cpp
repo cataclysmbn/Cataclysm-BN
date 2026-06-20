@@ -33,6 +33,7 @@
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
+#include "character_vision.h"
 #include "clothing_utils.h"
 #include "clzones.h"
 #include "craft_command.h"
@@ -2023,19 +2024,16 @@ void Character::recalc_sight_limits()
     for( const mutation_branch *mut : cached_mutations ) {
         best_bonus_nv = std::max( best_bonus_nv, mut->night_vision_range );
     }
-    if( worn_with_flag( flag_RECON_VISION ) ||
-        ( is_mounted() && mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) ) {
-        best_bonus_nv = std::max( best_bonus_nv, 10.0f );
-    }
+    const auto night_vision_level = character_vision::active_night_vision_bonus_level( *this );
+    best_bonus_nv = std::max( best_bonus_nv,
+                              character_vision::sight_range_bonus( night_vision_level ) );
     if( worn_with_flag( flag_GNV_EFFECT ) ||
         has_active_bionic( bio_night_vision ) ||
         has_effect_with_flag( flag_EFFECT_NIGHT_VISION ) ) {
         vision_mode_cache.set( NV_GOGGLES );
-        best_bonus_nv = std::max( best_bonus_nv, 10.0f );
     }
     if( worn_with_flag( flag_GNVE_EFFECT ) ) {
         vision_mode_cache.set( ENV_GOGGLES );
-        best_bonus_nv = std::max( best_bonus_nv, 18.0f );
     }
     if( has_trait( trait_BIRD_EYE ) ) {
         vision_mode_cache.set( BIRD_EYE );
@@ -5541,18 +5539,18 @@ void Character::update_body( const time_duration &duration )
     }
 
     for( const auto &v : vitamin::all() ) {
-        const time_duration rate = vitamin_rate( v.first );
+        const time_duration rate = vitamin_rate( v.id );
         if( rate > 0_turns ) {
             int qty = calendar::ticks_between( duration, rate );
             if( qty > 0 ) {
-                vitamin_mod( v.first, 0 - qty );
+                vitamin_mod( v.id, 0 - qty );
             }
 
         } else if( rate < 0_turns ) {
             // mutations can result in vitamins being generated (but never accumulated)
             int qty = calendar::ticks_between( duration, -rate );
             if( qty > 0 ) {
-                vitamin_mod( v.first, qty );
+                vitamin_mod( v.id, qty );
             }
         }
     }
@@ -11446,9 +11444,10 @@ void Character::place_corpse()
 
 void Character::place_corpse( const tripoint_abs_omt &om_target )
 {
-    tinymap bay;
-    bay.load( project_to<coords::sm>( om_target ), false );
-    point_bub_ms fin{ rng( 1, SEEX * 2 - 2 ), rng( 1, SEEX * 2 - 2 ) };
+    const auto view = get_mapbuffer().get_abs_omt_view( om_target, { mapbuffer_lookup_mode::load_or_generate } );
+    point_omt_ms omt_ms{ rng( 1, SEEX * 2 - 2 ), rng( 1, SEEX * 2 - 2 ) };
+    const auto sm = *view->get_submap_view( project_remain<coords::sm>( omt_ms ).quotient );
+    auto sm_ms = project_remain<coords::sm>( omt_ms ).remainder;
     // This makes no sense at all. It may find a random tile without furniture, but
     // if the first try to find one fails, it will go through all tiles of the map
     // and essentially select the last one that has no furniture.
@@ -11456,27 +11455,33 @@ void Character::place_corpse( const tripoint_abs_omt &om_target )
     // Q: Why not grep a random point out of all the possible points (e.g. via random_entry)?
     // Q: Why use furn_str_id instead of f_null?
     // TODO: fix it, see above.
-    if( bay.furn( fin ) != furn_str_id( "f_null" ) ) {
-        for( const auto &p : bay.points_on_zlevel() ) {
-            if( bay.furn( p ) == furn_str_id( "f_null" ) ) {
-                fin.x() = p.x();
-                fin.y() = p.y();
+
+    if( !sm.tile( sm_ms ).passable_ter_furn() ) {
+        for( int i = 0; i < 32; i++ ) {
+            sm_ms = random_entry( sm.tiles() );
+            if( sm.tile( sm_ms ).passable_ter_furn() ) {
+                break;
             }
         }
     }
+    omt_ms = project_combine( project_remain<coords::sm>( omt_ms ).quotient, sm_ms );
+    const auto fin = project_combine( om_target, omt_ms );
 
     std::vector<detached_ptr<item>> tmp = inv_dump_remove();
     detached_ptr<item> body = item::make_corpse( mtype_id::NULL_ID(), calendar::turn, name );
     for( auto &itm : tmp ) {
-        bay.add_item_or_charges( fin, std::move( itm ) );
+        get_mapbuffer().add_item_or_charges( fin, std::move( itm ), {
+            .lookup = mapbuffer_lookup_mode::load_or_generate,
+        } );
     }
     for( const bionic &bio : get_bionic_collection() ) {
         if( bio.info().itype().is_valid() ) {
             body->put_in( item::spawn( bio.info().itype(), calendar::turn ) );
         }
     }
-
-    bay.add_item_or_charges( fin, std::move( body ) );
+    get_mapbuffer().add_item_or_charges( fin, std::move( body ), {
+        .lookup = mapbuffer_lookup_mode::load_or_generate,
+    } );
 }
 
 bool Character::sees_with_infrared( const Creature &critter ) const
@@ -11514,8 +11519,8 @@ std::vector<Creature *> Character::get_hostile_creatures( int range ) const
 {
     return g->get_creatures_if( [this, range]( const Creature & critter ) -> bool {
         // Fixes circular distance range for ranged attacks
-        float dist_to_creature = std::round( rl_dist_exact( bub_pos().raw(), critter.bub_pos().raw() ) );
-        return this != &critter && bub_pos() != critter.bub_pos() && // TODO: get rid of fake npcs (pos() check)
+        float dist_to_creature = std::round( rl_dist_exact( abs_pos(), critter.abs_pos() ) );
+        return this != &critter && abs_pos() != critter.abs_pos() && // TODO: get rid of fake npcs (pos() check)
         dist_to_creature <= range && critter.attitude_to( *this ) == Attitude::A_HOSTILE
         && sees( critter );
     } );
@@ -11750,6 +11755,9 @@ Attitude Character::attitude_to( const Creature &other ) const
 
 bool Character::sees( const tripoint_bub_ms &t, bool, int ) const
 {
+    if( t == bub_pos() ) {
+        return true;
+    }
     const int wanted_range = rl_dist( bub_pos(), t );
     bool can_see = is_player() ? get_map().pl_sees( t, wanted_range ) :
                    Creature::sees( t );

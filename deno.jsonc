@@ -21,8 +21,8 @@
       "description": "update available semantic commit types",
       "command": "deno run -R=data/mods -W=.github/semantic.yml scripts/semantic.ts",
     },
-    "docs:translation-warning": "deno run --allow-read=docs --allow-run=git,gh --allow-env=GH_TOKEN,GITHUB_TOKEN scripts/docs_translation_warning.ts",
-    "affected-files": "deno run --allow-read --allow-write --allow-run=git scripts/affected_files.ts",
+    "docs:translation-warning": "deno run --allow-read --allow-run=git,gh --allow-env=GH_TOKEN,GITHUB_TOKEN,PATH scripts/docs_translation_warning.ts",
+    "affected-files": "deno run --allow-read --allow-write --allow-run=git --allow-env=PATH scripts/affected_files.ts",
   },
   "test": { "include": ["scripts", ".agents"] },
   "lint": {
@@ -44,6 +44,7 @@
     "$outdent/": "https://deno.land/x/outdent@v0.8.0/",
     "$zod/": "https://deno.land/x/zod@v3.22.4/",
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",
+    "@david/dax": "jsr:@david/dax",
     "@deno-library/compress": "jsr:@deno-library/compress@^0.5.6",
     "@cliffy/flags": "jsr:@cliffy/flags@^1.0.0-rc.7",
     "@scarf/json-map": "jsr:@scarf/json-map@^0.0.4",

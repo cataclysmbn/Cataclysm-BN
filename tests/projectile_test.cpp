@@ -189,7 +189,7 @@ TEST_CASE( "adjacent_friendly_fire_prevention", "[projectile][ballistics]" )
     clear_projectile_test_line( here, shooter_pos, target_pos );
 
     // Create friendly NPC at adjacent position
-    auto &ally = spawn_npc( friendly_pos.xy(), "thug" );
+    auto &ally = spawn_npc( friendly_pos, "thug" );
     ally.set_fac( faction_id( "your_followers" ) );
     ally.set_attitude( NPCATT_FOLLOW );
     REQUIRE( g->critter_at( friendly_pos ) == &ally );
@@ -244,14 +244,14 @@ TEST_CASE( "npc_adjacent_friendly_fire_prevention", "[projectile][ballistics]" )
     get_avatar().setpos( centered_projectile_test_pos( 0, 2 ) );
 
     // Create NPC shooter
-    auto &shooter = spawn_npc( shooter_pos.xy(), "thug" );
+    auto &shooter = spawn_npc( shooter_pos, "thug" );
     shooter.set_fac( faction_id( "your_followers" ) );
     shooter.set_attitude( NPCATT_FOLLOW );
     REQUIRE( g->critter_at( shooter_pos ) == &shooter );
     REQUIRE( shooter.is_player_ally() );
 
     // Create friendly NPC at adjacent position
-    auto &ally = spawn_npc( friendly_pos.xy(), "thug" );
+    auto &ally = spawn_npc( friendly_pos, "thug" );
     ally.set_fac( faction_id( "your_followers" ) );
     ally.set_attitude( NPCATT_FOLLOW );
     REQUIRE( g->critter_at( friendly_pos ) == &ally );
@@ -307,7 +307,7 @@ TEST_CASE( "npc_protects_adjacent_player", "[projectile][ballistics]" )
     REQUIRE( g->critter_at( player_pos ) == &player );
 
     // Create NPC shooter
-    auto &shooter = spawn_npc( shooter_pos.xy(), "thug" );
+    auto &shooter = spawn_npc( shooter_pos, "thug" );
     shooter.set_fac( faction_id( "your_followers" ) );
     shooter.set_attitude( NPCATT_FOLLOW );
     REQUIRE( g->critter_at( shooter_pos ) == &shooter );
@@ -407,11 +407,11 @@ TEST_CASE( "hostile_npc_adjacent_ally_fire_prevention", "[projectile][ballistics
     get_avatar().setpos( centered_projectile_test_pos( 0, 2 ) );
 
     // Create two hostile NPCs from the same faction.
-    auto &shooter = spawn_npc( shooter_pos.xy(), "thug" );
+    auto &shooter = spawn_npc( shooter_pos, "thug" );
     shooter.set_fac( faction_id( "hells_raiders" ) );
     shooter.set_attitude( NPCATT_KILL );
 
-    auto &ally = spawn_npc( ally_pos.xy(), "thug" );
+    auto &ally = spawn_npc( ally_pos, "thug" );
     ally.set_fac( faction_id( "hells_raiders" ) );
     ally.set_attitude( NPCATT_KILL );
 

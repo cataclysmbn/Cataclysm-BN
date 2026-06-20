@@ -1122,7 +1122,7 @@ void avatar_action::wield( item &loc )
     // Can't use loc.obtain() here because that would cause things to spill.
     item *to_wield = &loc;
     item_location_type location_type = loc.where();
-    auto pos = loc.position();
+    auto pos = loc.bub_pos();
     int worn_index = INT_MIN;
     if( u.is_worn( loc ) ) {
         auto ret = u.can_takeoff( loc );

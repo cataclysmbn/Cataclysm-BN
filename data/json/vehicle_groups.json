@@ -537,11 +537,6 @@
   },
   {
     "type": "vehicle_group",
-    "id": "military_decoy_vehicles",
-    "vehicles": [ [ "whillys_mb", 50 ], [ "4x4_car", 50 ] ]
-  },
-  {
-    "type": "vehicle_group",
     "id": "farm_vehicles",
     "vehicles": [
       [ "tractor_plow", 1000 ],

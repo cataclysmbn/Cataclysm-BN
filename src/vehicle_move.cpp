@@ -1189,8 +1189,7 @@ bool vehicle::check_heli_descend( Character &who )
         if( part_info( idx ).has_flag( VPFLAG_NOCOLLIDEBELOW ) ) {
             continue;
         }
-        if( here.has_zlevels() && ( pt.z() < -OVERMAP_DEPTH ||
-                                    !here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pt ) ) ) {
+        if( pt.z() < -OVERMAP_DEPTH || !here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pt ) ) {
             who.add_msg_if_player( _( "You are already landed!" ) );
             return false;
         }
@@ -1757,7 +1756,6 @@ void vehicle::check_falling_or_floating()
     }
 
     map &here = get_map();
-    is_falling = here.has_zlevels();
 
     if( is_flying && is_aircraft() ) {
         is_falling = false;

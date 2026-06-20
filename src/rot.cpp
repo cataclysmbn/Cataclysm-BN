@@ -22,7 +22,7 @@ auto temperature_flag_for_location( const map &m, const item &loc ) -> temperatu
         case item_location_type::monster:
             return temperature_flag::TEMP_NORMAL;
         case item_location_type::map: {
-            auto pos = loc.position();
+            auto pos = loc.bub_pos();
             if( m.has_flag_furn( TFLAG_FREEZER, pos ) ) {
                 return temperature_flag::TEMP_FREEZER;
             }
@@ -35,7 +35,7 @@ auto temperature_flag_for_location( const map &m, const item &loc ) -> temperatu
             return temperature_flag::TEMP_NORMAL;
         }
         case item_location_type::vehicle: {
-            auto pos = loc.position();
+            auto pos = loc.bub_pos();
             optional_vpart_position veh = m.veh_at( pos );
             if( !veh ) {
                 debugmsg( "Expected vehicle at %d, %d, %d, but couldn't find any", pos.x(), pos.y(), pos.z() );

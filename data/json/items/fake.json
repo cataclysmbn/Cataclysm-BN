@@ -84,6 +84,18 @@
     "use_action": [ "ARTIFACT_ANALYZER" ]
   },
   {
+    "id": "char_purifier_fake",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "makeshift water purifier" },
+    "description": "Pseudo item for charcoal purifier furniture.",
+    "material": [ "wood", "cotton" ],
+    "sub": "water_purifier",
+    "ammo": "charcoal",
+    "max_charges": 500,
+    "flags": [ "ALLOWS_REMOTE_USE", "TRADER_AVOID" ]
+  },
+  {
     "id": "fake_goggles",
     "copy-from": "fake_item",
     "type": "TOOL",

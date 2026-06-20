@@ -36,20 +36,9 @@ auto on_furniture_changed( const furniture_changed_options &options ) -> void
         return;
     }
 
-    const auto local = abs_to_bub( options.p );
-    if( !is_in_reality_bubble_bounds( local ) ) {
+    const auto local = abs_to_map_local( here, options.p );
+    if( !here.inbounds( local ) ) {
         return;
-    }
-
-    const auto &old_furniture_type = options.old_furniture.obj();
-    const auto &new_furniture_type = options.new_furniture.obj();
-
-    auto &you = g->u;
-    if( you.get_grab_type() == OBJECT_FURNITURE &&
-        you.bub_pos() + you.grab_point == local &&
-        !new_furniture_type.is_movable() ) {
-        add_msg( _( "The %s you were grabbing is destroyed!" ), old_furniture_type.name() );
-        you.grab( OBJECT_NONE );
     }
 
     if( options.old_furniture == f_rubble && options.new_furniture == f_null ) {
@@ -74,8 +63,8 @@ auto prepare_item_for_placement( const item_placement_options &options ) -> bool
         return true;
     }
 
-    const auto local = abs_to_bub( options.p );
-    if( !is_in_reality_bubble_bounds( local ) ) {
+    const auto local = abs_to_map_local( here, options.p );
+    if( !here.inbounds( local ) ) {
         return true;
     }
 

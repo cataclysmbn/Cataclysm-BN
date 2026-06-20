@@ -82,9 +82,6 @@ auto climbing_cost( mapbuffer &buffer, const tripoint_abs_ms &from,
 auto climbing_cost( const map &m, const tripoint_bub_ms &from,
                     const tripoint_bub_ms &to ) -> std::optional<int>
 {
-    if( from.z() != to.z() && !m.has_zlevels() ) {
-        return {};
-    }
     return climbing_cost( MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ),
                           map_local_to_abs( m, from ), map_local_to_abs( m, to ) );
 }
