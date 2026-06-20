@@ -78,6 +78,34 @@ static auto add_sashimi_to_vehicle_part( vehicle &veh, const int part_index ) ->
     add_food_to_vehicle_part( veh, part_index, itype_id( "sashimi" ) );
 }
 
+TEST_CASE( "Food lookup finds nested food after non-food contents", "[item][food]" )
+{
+    SECTION( "top-level food after non-food content" ) {
+        auto backpack = item::spawn( "backpack" );
+        backpack->put_in( item::spawn( "rock" ) );
+        backpack->put_in( item::spawn( "sashimi" ) );
+
+        REQUIRE( backpack->is_food_container() );
+        auto *food = backpack->get_food();
+        REQUIRE( food != nullptr );
+        CHECK( food->typeId() == itype_id( "sashimi" ) );
+    }
+
+    SECTION( "nested food after non-food content" ) {
+        auto outer_bag = item::spawn( "bag_canvas" );
+        auto inner_bag = item::spawn( "bag_plastic" );
+        inner_bag->put_in( item::spawn( "rock" ) );
+        inner_bag->put_in( item::spawn( "sashimi" ) );
+        outer_bag->put_in( std::move( inner_bag ) );
+
+        REQUIRE( outer_bag->is_food_container() );
+        const auto &const_outer_bag = *outer_bag;
+        const auto *food = const_outer_bag.get_food();
+        REQUIRE( food != nullptr );
+        CHECK( food->typeId() == itype_id( "sashimi" ) );
+    }
+}
+
 static auto add_bread_to_vehicle_part( vehicle &veh, const int part_index ) -> void
 {
     add_food_to_vehicle_part( veh, part_index, itype_id( "bread" ) );

@@ -171,6 +171,36 @@ TEST_CASE( "content_removal_helpers_invalidate_processing_cache", "[item]" )
         } );
         CHECK_FALSE( backpack->needs_processing() );
     }
+
+    SECTION( "same-size top content mutation" ) {
+        auto backpack = item::spawn( "backpack" );
+        auto radio = item::spawn( "rock" );
+        radio->set_flag( flag_RADIO_ACTIVATION );
+        backpack->put_in( std::move( radio ) );
+
+        REQUIRE( backpack->needs_processing() );
+        backpack->contents.remove_top_items_with( []( detached_ptr<item> &&it ) {
+            it->item_tags.erase( flag_RADIO_ACTIVATION );
+            return std::move( it );
+        } );
+        CHECK_FALSE( backpack->needs_processing() );
+    }
+
+    SECTION( "same-size nested content mutation" ) {
+        auto backpack = item::spawn( "backpack" );
+        auto inner_bag = item::spawn( "bag_plastic" );
+        auto radio = item::spawn( "rock" );
+        radio->set_flag( flag_RADIO_ACTIVATION );
+        inner_bag->put_in( std::move( radio ) );
+        backpack->put_in( std::move( inner_bag ) );
+
+        REQUIRE( backpack->needs_processing() );
+        backpack->contents.front().contents.remove_top_items_with( []( detached_ptr<item> &&it ) {
+            it->item_tags.erase( flag_RADIO_ACTIVATION );
+            return std::move( it );
+        } );
+        CHECK_FALSE( backpack->needs_processing() );
+    }
 }
 
 TEST_CASE( "active_item_cache_slow_items_accrue_elapsed_time", "[item]" )

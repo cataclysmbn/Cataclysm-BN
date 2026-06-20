@@ -22,6 +22,18 @@
 #include "type_id.h"
 #include "value_ptr.h"
 
+namespace
+{
+
+auto restore_bionic_scanner_avatar_id( avatar &you ) -> on_out_of_scope
+{
+    const auto previous_id = you.getID();
+    you.setID( character_id( 1 ), true );
+    return on_out_of_scope( [&you, previous_id]() { you.setID( previous_id, true ); } );
+}
+
+} // namespace
+
 TEST_CASE( "bionic_scanner_on_ground_marks_corpses_with_cbms", "[iuse][bionic_scanner]" )
 {
     const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
@@ -29,7 +41,7 @@ TEST_CASE( "bionic_scanner_on_ground_marks_corpses_with_cbms", "[iuse][bionic_sc
     clear_avatar();
 
     auto &you = get_avatar();
-    you.setID( character_id( 1 ), true );
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
     auto &here = get_map();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     set_time( calendar::turn_zero + 12_hours );
@@ -69,7 +81,7 @@ TEST_CASE( "bionic_scanner_inside_ground_container_marks_corpses_with_cbms",
     clear_avatar();
 
     auto &you = get_avatar();
-    you.setID( character_id( 1 ), true );
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
     auto &here = get_map();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     set_time( calendar::turn_zero + 12_hours );
@@ -109,7 +121,7 @@ TEST_CASE( "bionic_scanner_inside_container_marks_corpses_with_cbms", "[iuse][bi
     clear_avatar();
 
     auto &you = get_avatar();
-    you.setID( character_id( 1 ), true );
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
     auto &here = get_map();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     set_time( calendar::turn_zero + 12_hours );
@@ -151,7 +163,7 @@ TEST_CASE( "bionic_scanner_consumes_charge_for_each_scanned_corpse", "[iuse][bio
     clear_avatar();
 
     auto &you = get_avatar();
-    you.setID( character_id( 1 ), true );
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
     auto &here = get_map();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     set_time( calendar::turn_zero + 12_hours );
@@ -192,7 +204,7 @@ TEST_CASE( "bionic_scanner_marks_new_corpse_after_activation", "[iuse][bionic_sc
     clear_avatar();
 
     auto &you = get_avatar();
-    you.setID( character_id( 1 ), true );
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
     auto &here = get_map();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     set_time( calendar::turn_zero + 12_hours );
@@ -233,7 +245,7 @@ TEST_CASE( "bionic_scanner_separates_detected_corpses_from_unscanned_stack",
     clear_avatar();
 
     auto &you = get_avatar();
-    you.setID( character_id( 1 ), true );
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
     auto &here = get_map();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     set_time( calendar::turn_zero + 12_hours );
@@ -281,7 +293,7 @@ TEST_CASE( "bionic_scanner_updates_same_monster_corpse_pile_display",
     clear_avatar();
 
     auto &you = get_avatar();
-    you.setID( character_id( 1 ), true );
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
     auto &here = get_map();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     set_time( calendar::turn_zero + 12_hours );
@@ -331,7 +343,7 @@ TEST_CASE( "bionic_scanner_separates_detected_corpse_piles_by_found_cbms",
     clear_avatar();
 
     auto &you = get_avatar();
-    you.setID( character_id( 1 ), true );
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
     auto &here = get_map();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     set_time( calendar::turn_zero + 12_hours );
@@ -381,6 +393,73 @@ TEST_CASE( "bionic_scanner_separates_detected_corpse_piles_by_found_cbms",
     CHECK_THAT( storage_info, !Contains( "Solar Panels CBM" ) );
 }
 
+TEST_CASE( "bionic_scanner_separates_detected_corpse_piles_by_duplicate_cbm_count",
+           "[iuse][bionic_scanner]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    clear_avatar();
+
+    auto &you = get_avatar();
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
+    auto &here = get_map();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    set_time( calendar::turn_zero + 12_hours );
+    you.recalc_sight_limits();
+
+    const auto corpse_pos = you.bub_pos() + tripoint_south;
+    REQUIRE( you.sees( corpse_pos ) );
+    auto one_storage_corpse = item::make_corpse( mtype_id( "mon_zombie_electric" ), calendar::turn,
+                              "" );
+    one_storage_corpse->add_component( item::spawn( "bio_power_storage", calendar::turn ) );
+    auto *const one_storage_corpse_ptr = one_storage_corpse.get();
+    here.add_item( corpse_pos, std::move( one_storage_corpse ) );
+
+    auto two_storage_corpse = item::make_corpse( mtype_id( "mon_zombie_electric" ), calendar::turn,
+                              "" );
+    two_storage_corpse->add_component( item::spawn( "bio_power_storage", calendar::turn ) );
+    two_storage_corpse->add_component( item::spawn( "bio_power_storage", calendar::turn ) );
+    auto *const two_storage_corpse_ptr = two_storage_corpse.get();
+    here.add_item( corpse_pos, std::move( two_storage_corpse ) );
+    REQUIRE( one_storage_corpse_ptr->display_stacked_with( *two_storage_corpse_ptr ) );
+
+    auto backpack = item::spawn( "backpack", calendar::turn );
+    auto scanner = item::spawn( "bionic_scanner_on", calendar::turn );
+    scanner->ammo_set( itype_id( "battery" ), 10 );
+    scanner->activate();
+    backpack->put_in( std::move( scanner ) );
+    you.i_add( std::move( backpack ) );
+
+    you.process_items();
+
+    REQUIRE( one_storage_corpse_ptr->has_flag( flag_CBM_SCANNED ) );
+    REQUIRE( two_storage_corpse_ptr->has_flag( flag_CBM_SCANNED ) );
+    CHECK_FALSE( one_storage_corpse_ptr->display_stacked_with( *two_storage_corpse_ptr ) );
+    CHECK_FALSE( two_storage_corpse_ptr->display_stacked_with( *one_storage_corpse_ptr ) );
+}
+
+TEST_CASE( "scanned corpse bionic stack comparison benchmark",
+           "[.][benchmark][item][bionic_scanner]" )
+{
+    auto left_corpse = item::make_corpse( mtype_id( "mon_zombie_electric" ), calendar::turn, "" );
+    auto right_corpse = item::make_corpse( mtype_id( "mon_zombie_electric" ), calendar::turn, "" );
+    static constexpr auto component_count = 24;
+    for( auto i = 0; i < component_count; ++i ) {
+        const auto bionic_type = i % 2 == 0 ? itype_id( "bio_power_storage" ) :
+                                 itype_id( "bn_bio_solar" );
+        left_corpse->add_component( item::spawn( bionic_type, calendar::turn ) );
+        right_corpse->add_component( item::spawn( bionic_type, calendar::turn ) );
+    }
+    left_corpse->set_var( "bionics_scanned_by", 1 );
+    right_corpse->set_var( "bionics_scanned_by", 1 );
+    left_corpse->set_flag( flag_CBM_SCANNED );
+    right_corpse->set_flag( flag_CBM_SCANNED );
+
+    BENCHMARK( "display_stacked_with duplicate scanned bionics" ) {
+        return left_corpse->display_stacked_with( *right_corpse );
+    };
+}
+
 TEST_CASE( "bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bionic_scanner]" )
 {
     const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
@@ -388,7 +467,7 @@ TEST_CASE( "bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bi
     clear_avatar();
 
     auto &you = get_avatar();
-    you.setID( character_id( 1 ), true );
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
     auto &here = get_map();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     set_time( calendar::turn_zero + 12_hours );

@@ -19,6 +19,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_set>
+#include <vector>
 
 #include "action_time_scale.h"
 #include "active_tile_data_def.h"
@@ -621,22 +622,6 @@ void item::deactivate()
     if( is_tool() ) {
         type->tool->turns_active = 0;
     }
-
-    // Is not placed in the world, so either a template of some kind or a temporary item.
-    if( !has_position() ) {
-        return;
-    }
-    switch( where() ) {
-        case item_location_type::map:
-            get_map().make_inactive( *this );
-            break;
-        case item_location_type::vehicle:
-            get_map().veh_at( abs_pos() )->vehicle().make_inactive( *this );
-            break;
-        default:
-            break;
-    }
-
 }
 
 void item::activate()
@@ -651,21 +636,6 @@ void item::activate()
 
     active = true;
     invalidate_processing_cache_upwards();
-
-    // Is not placed in the world, so either a template of some kind or a temporary item.
-    if( !has_position() ) {
-        return;
-    }
-    switch( where() ) {
-        case item_location_type::map:
-            get_map().make_active( *this );
-            break;
-        case item_location_type::vehicle:
-            get_map().veh_at( abs_pos() )->vehicle().make_active( *this );
-            break;
-        default:
-            break;
-    }
 }
 
 bool item::revert( const Character *ch, bool alert )
@@ -1107,14 +1077,18 @@ int item::charges_per_volume( const units::volume &vol ) const
 namespace
 {
 
-auto bionic_component_display_names( const item &corpse ) -> std::set<std::string>
+auto bionic_component_type_ids( const item &corpse ) -> std::vector<itype_id>
 {
     using namespace std::views;
     namespace ranges = std::ranges;
-    return corpse.get_components()
-           | filter( &item::is_bionic )
-    | transform( []( const item * component ) { return component->display_name(); } )
-    | ranges::to<std::set>();
+    auto result = corpse.get_components()
+                  | filter( &item::is_bionic )
+                  | transform( &item::typeId )
+                  | ranges::to<std::vector>();
+    ranges::sort( result, []( const itype_id & lhs, const itype_id & rhs ) {
+        return lhs < rhs;
+    } );
+    return result;
 }
 
 } // namespace
@@ -1152,7 +1126,7 @@ bool item::stacks_with( const item &rhs, bool check_components, bool skip_type_c
             return false;
         }
         return !has_flag( flag_CBM_SCANNED ) ||
-               bionic_component_display_names( *this ) == bionic_component_display_names( rhs );
+               bionic_component_type_ids( *this ) == bionic_component_type_ids( rhs );
     }
 
     if( damage_ != rhs.damage_ ) {
@@ -7539,17 +7513,27 @@ const mtype *item::get_mtype() const
     return corpse;
 }
 
+namespace
+{
+
 template<typename Item>
-static Item *get_food_impl( Item *it )
+auto get_food_impl( Item *it ) -> Item * // *NOPAD*
 {
     if( it->is_food() ) {
         return it;
-    } else if( it->is_food_container() && !it->contents.empty() ) {
-        return &it->contents.front();
-    } else {
-        return nullptr;
     }
+    for( auto *const contained_item : it->contents.all_items_top() ) {
+        if( contained_item == nullptr ) {
+            continue;
+        }
+        if( auto *food = get_food_impl( contained_item ) ) {
+            return food;
+        }
+    }
+    return nullptr;
 }
+
+} // namespace
 
 item *item::get_food()
 {
