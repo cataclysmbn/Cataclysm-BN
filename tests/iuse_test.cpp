@@ -363,7 +363,7 @@ TEST_CASE( "bionic_scanner_separates_detected_corpse_piles_by_found_cbms",
     REQUIRE( storage_corpse_ptr->has_flag( flag_CBM_SCANNED ) );
     CHECK_FALSE( solar_corpse_ptr->display_stacked_with( *storage_corpse_ptr ) );
 
-    const auto item_info_text = []( const item &corpse ) {
+    const auto item_info_text = []( const item & corpse ) {
         auto result = std::string {};
         for( const iteminfo &entry : corpse.info() ) {
             result += entry.sName;

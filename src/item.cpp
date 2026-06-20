@@ -1113,8 +1113,8 @@ auto bionic_component_display_names( const item &corpse ) -> std::set<std::strin
     namespace ranges = std::ranges;
     return corpse.get_components()
            | filter( &item::is_bionic )
-           | transform( []( const item *component ) { return component->display_name(); } )
-           | ranges::to<std::set>();
+    | transform( []( const item * component ) { return component->display_name(); } )
+    | ranges::to<std::set>();
 }
 
 } // namespace
@@ -10965,37 +10965,46 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
     if( !self ) {
         return std::move( self );
     }
-    const bool preserves = self->type->container && self->type->container->preserves;
-    const bool seals = self->type->container && self->type->container->seals;
-    item &obj = *self;
+    const auto preserves = self->type->container && self->type->container->preserves;
+    const auto seals = self->type->container && self->type->container->seals;
+    auto &obj = *self;
+    using namespace std::views;
+    namespace ranges = std::ranges;
 
-    std::function < detached_ptr<item>( detached_ptr<item> &&, bool, bool ) > process_content =
-        [&]( detached_ptr<item> &&it, const bool parent_preserves,
-    const bool parent_seals ) -> detached_ptr<item> {
+    struct content_processing_options {
+        bool parent_preserves = false;
+        bool parent_seals = false;
+    };
+
+    const auto processing_items = []( const auto & contents ) {
+        return contents.processing_items()
+        | filter( []( const item * content_item ) { return content_item != nullptr; } )
+        | transform( []( item * content_item ) { return cache_reference<item>( *content_item ); } )
+        | ranges::to<std::vector>();
+    };
+
+    auto process_content = [&]( auto &&process_content, detached_ptr<item> &&it,
+    const content_processing_options & opts ) -> detached_ptr<item> {
         if( !it )
         {
             return std::move( it );
         }
 
-        const bool content_preserves = parent_preserves ||
+        const auto content_preserves = opts.parent_preserves ||
         ( it->type->container && it->type->container->preserves );
-        const bool content_seals = parent_seals ||
+        const auto content_seals = opts.parent_seals ||
         ( it->type->container && it->type->container->seals );
 
-        auto content_processing_items = std::vector<cache_reference<item>> {};
-        for( item *const content_item : it->contents.processing_items() )
-        {
-            if( content_item != nullptr ) {
-                content_processing_items.emplace_back( *content_item );
-            }
-        }
-        for( const cache_reference<item> &content_item : content_processing_items )
+        for( const cache_reference<item> &content_item : processing_items( it->contents ) )
         {
             if( !content_item ) {
                 continue;
             }
             content_item->attempt_detach( [&]( detached_ptr<item> &&nested ) {
-                return process_content( std::move( nested ), content_preserves, content_seals );
+                return process_content( process_content, std::move( nested ), {
+                    .parent_preserves = content_preserves,
+                    .parent_seals = content_seals
+                } );
             } );
         }
 
@@ -11007,23 +11016,20 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
                                  weather_generator );
     };
 
-    auto content_processing_items = std::vector<cache_reference<item>> {};
-    for( item *const content_item : obj.contents.processing_items() ) {
-        if( content_item != nullptr ) {
-            content_processing_items.emplace_back( *content_item );
-        }
-    }
-    for( const cache_reference<item> &content_item : content_processing_items ) {
+    for( const cache_reference<item> &content_item : processing_items( obj.contents ) ) {
         if( !content_item ) {
             continue;
         }
         content_item->attempt_detach( [&]( detached_ptr<item> &&it ) {
-            return process_content( std::move( it ), preserves, seals );
+            return process_content( process_content, std::move( it ), {
+                .parent_preserves = preserves,
+                .parent_seals = seals
+            } );
         } );
     }
 
-    detached_ptr<item> res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
-                             weather_generator );
+    auto res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
+                                 weather_generator );
     return res;
 }
 
