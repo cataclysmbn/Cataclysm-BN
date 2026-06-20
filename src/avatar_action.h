@@ -17,7 +17,7 @@ class turret_data;
 namespace avatar_action
 {
 
-using melee_action_callback = std::function<auto() -> void>;
+using melee_action_callback = std::function < auto() -> void >;
 
 /** Eat food or fuel  'E' (or 'a') */
 void eat( avatar &you );

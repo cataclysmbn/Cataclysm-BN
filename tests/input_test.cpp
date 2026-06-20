@@ -87,7 +87,7 @@ TEST_CASE( "manual combat default bindings reserve backtab for the toggle", "[in
     const auto toggle_key = inp_mngr.get_first_char_for_action( "toggle_manual_combat_mode",
                             "DEFAULTMODE" );
     const auto removed_manual_attack_key = inp_mngr.get_first_char_for_action( "manual_attack",
-                                         "DEFAULTMODE" );
+                                           "DEFAULTMODE" );
 
     CHECK( autoattack_key == inp_mngr.get_keycode( "TAB" ) );
     CHECK( toggle_key == inp_mngr.get_keycode( "BACKTAB" ) );
