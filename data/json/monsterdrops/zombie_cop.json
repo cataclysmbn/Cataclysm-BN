@@ -33,8 +33,7 @@
           { "item": "cash_card", "prob": 80, "charges": [ 0, 50000 ] },
           { "item": "money_bundle", "prob": 20, "count": [ 1, 2 ] }
         ]
-      },
-      { "item": "shield_riot", "prob": 25, "damage": [ 1, 4 ] }
+      }
     ]
   },
   {
