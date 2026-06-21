@@ -743,10 +743,8 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive )
 
     const auto &comest = food.get_comestible();
 
-    if( food.rotten() ) {
-        if( !has_enchantment_flag( enchantment_flag_id( "EAT_ROTTEN" ) ) ) {
-            add_consequence( _( "This is rotten and smells awful!" ), edible_rating::rotten );
-        }
+    if( food.rotten() && !has_enchantment_flag( enchantment_flag_id( "EAT_ROTTEN" ) ) ) {
+        add_consequence( _( "This is rotten and smells awful!" ), edible_rating::rotten );
     }
 
     const bool carnivore = has_trait( trait_CARNIVORE );

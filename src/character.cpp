@@ -971,7 +971,8 @@ bool Character::sight_impaired() const
 {
     return ( ( ( has_effect( effect_boomered ) || has_effect( effect_no_sight ) ||
                  has_effect( effect_darkness ) ) && !has_trait( trait_PER_SLIME_OK ) ) ||
-             ( is_underwater() && !has_enchantment_flag( enchantment_flag_id( "UNDERWATER_SIGHT" ) ) ) ||
+             ( is_underwater() && !worn_with_flag( flag_SWIM_GOGGLES ) &&
+               !has_enchantment_flag( enchantment_flag_id( "UNDERWATER_SIGHT" ) ) ) ||
              ( has_enchantment_flag( enchantment_flag_id( "NEARSIGHTED" ) ) &&
                !worn_with_flag( flag_FIX_NEARSIGHT ) && !has_effect( effect_contacts ) ) ||
              has_trait( trait_PER_SLIME ) );
