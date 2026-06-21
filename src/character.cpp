@@ -33,7 +33,6 @@
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
-#include "character_vision.h"
 #include "clothing_utils.h"
 #include "clzones.h"
 #include "craft_command.h"
@@ -265,7 +264,6 @@ static const trait_id trait_WOOLALLERGY( "WOOLALLERGY" );
 
 static const bionic_id bio_ads( "bio_ads" );
 static const bionic_id bio_blindfold( "bio_blindfold" );
-static const bionic_id bio_climate( "bio_climate" );
 static const bionic_id bio_cloak( "bio_cloak" );
 static const bionic_id bio_earplugs( "bio_earplugs" );
 static const bionic_id bio_ears( "bio_ears" );
@@ -311,8 +309,6 @@ static const trait_id trait_ELECTRORECEPTORS( "ELECTRORECEPTORS" );
 static const trait_id trait_FASTLEARNER( "FASTLEARNER" );
 static const trait_id trait_GILLS_CEPH( "GILLS_CEPH" );
 static const trait_id trait_GILLS( "GILLS" );
-static const trait_id trait_HEAVYSLEEPER( "HEAVYSLEEPER" );
-static const trait_id trait_HEAVYSLEEPER2( "HEAVYSLEEPER2" );
 static const trait_id trait_HIBERNATE( "HIBERNATE" );
 static const trait_id trait_HOARDER( "HOARDER" );
 static const trait_id trait_HOLLOW_BONES( "HOLLOW_BONES" );
@@ -350,7 +346,6 @@ static const trait_id trait_ROOTS2( "ROOTS2" );
 static const trait_id trait_ROOTS3( "ROOTS3" );
 static const trait_id trait_SAVANT( "SAVANT" );
 static const trait_id trait_SEESLEEP( "SEESLEEP" );
-static const trait_id trait_SHELL( "SHELL" );
 static const trait_id trait_SHELL2( "SHELL2" );
 static const trait_id trait_SHOUT2( "SHOUT2" );
 static const trait_id trait_SHOUT3( "SHOUT3" );
@@ -943,9 +938,8 @@ int Character::overmap_sight_range( int light_level ) const
 
     float multiplier = mutation_value( "overmap_multiplier" );
     // Binoculars double your sight range.
-    const bool has_optic = ( has_item_with_flag( flag_ZOOM ) || has_bionic( bio_eye_optic ) ||
-                             ( is_mounted() &&
-                               mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) );
+    const bool has_optic = ( has_item_with_flag( flag_ZOOM ) || ( is_mounted() &&
+                             mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) );
     if( has_optic ) {
         multiplier += 1;
     }
@@ -957,20 +951,21 @@ int Character::overmap_sight_range( int light_level ) const
 
 int Character::clairvoyance() const
 {
-    if( vision_mode_cache[VISION_CLAIRVOYANCE_SUPER] ) {
-        return MAX_CLAIRVOYANCE;
-    }
-
-    if( vision_mode_cache[VISION_CLAIRVOYANCE_PLUS] ) {
-        return 8;
-    }
-
-    if( vision_mode_cache[VISION_CLAIRVOYANCE] ) {
-        return 3;
-    }
-
     // 0 would mean we have clairvoyance of own tile
-    return -1;
+    int max = -1;
+    if( vision_mode_cache[VISION_CLAIRVOYANCE_SUPER] ) {
+        max = MAX_CLAIRVOYANCE;
+    } else if( vision_mode_cache[VISION_CLAIRVOYANCE_PLUS] ) {
+        max = 8;
+    } else if( vision_mode_cache[VISION_CLAIRVOYANCE] ) {
+        max = 3;
+    }
+
+    int ench = bonus_from_enchantments( 0.0, enchantment_value_id( "CLAIRVOYANCE" ) );
+    if( ench > 0 ) {
+        max = ench;
+    }
+    return max;
 }
 
 bool Character::sight_impaired() const
@@ -1018,11 +1013,9 @@ void Character::react_to_felt_pain( int intensity )
     if( has_effect( effect_sleep ) && !has_effect( effect_narcosis ) ) {
         int pain_thresh = rng( 3, 5 );
 
-        if( has_trait( trait_HEAVYSLEEPER ) ) {
-            pain_thresh += 2;
-        } else if( has_trait( trait_HEAVYSLEEPER2 ) ) {
-            pain_thresh += 5;
-        }
+        pain_thresh += bonus_from_enchantments( pain_thresh, enchantment_value_id( "SLEEP_PAIN_THRESH" ) );
+
+        pain_thresh = std::max( 1, pain_thresh );
 
         if( intensity >= pain_thresh ) {
             wake_up();
@@ -1987,6 +1980,23 @@ void Character::calc_all_parts_hp( float hp_mod, float hp_adjustment, int str_ma
     }
 }
 
+float Character::night_vision_sight_range() const
+{
+    float best = 0;
+    if( worn_with_flag( flag_GNVE_EFFECT ) ) {
+        best = 18.0;
+    } else if( worn_with_flag( flag_RECON_VISION ) || is_mounted() &&
+               mounted_creature->has_flag( MF_MECH_RECON_VISION ) ||
+               worn_with_flag( flag_GNV_EFFECT ) || has_effect_with_flag( flag_EFFECT_NIGHT_VISION ) ) {
+        best = 10.0;
+    }
+    for( const mutation_branch *mut : cached_mutations ) {
+        best = std::max( best, mut->night_vision_range );
+    }
+    return std::max( best, float( bonus_from_enchantments( 0,
+                                  enchantment_value_id( "NIGHT_VISION" ) ) ) );
+}
+
 // This must be called when any of the following change:
 // - effects
 // - bionics
@@ -2033,13 +2043,8 @@ void Character::recalc_sight_limits()
         vision_mode_cache.set( DEBUG_NIGHTVISION );
     }
 
-    float best_bonus_nv = 0.0f;
-    for( const mutation_branch *mut : cached_mutations ) {
-        best_bonus_nv = std::max( best_bonus_nv, mut->night_vision_range );
-    }
-    const auto night_vision_level = character_vision::active_night_vision_bonus_level( *this );
-    best_bonus_nv = std::max( best_bonus_nv,
-                              character_vision::sight_range_bonus( night_vision_level ) );
+    float best_bonus_nv = night_vision_sight_range();
+
     if( worn_with_flag( flag_GNV_EFFECT ) ||
         has_active_bionic( bio_night_vision ) ||
         has_effect_with_flag( flag_EFFECT_NIGHT_VISION ) ) {
@@ -2048,6 +2053,7 @@ void Character::recalc_sight_limits()
     if( worn_with_flag( flag_GNVE_EFFECT ) ) {
         vision_mode_cache.set( ENV_GOGGLES );
     }
+
     if( has_trait( trait_BIRD_EYE ) ) {
         vision_mode_cache.set( BIRD_EYE );
     }
@@ -3222,15 +3228,6 @@ units::volume Character::volume_capacity_reduced_by(
             ret += i->get_storage();
         }
     }
-    if( has_bionic( bio_storage ) ) {
-        ret += 2_liter;
-    }
-    if( has_trait( trait_SHELL ) ) {
-        ret += 4_liter;
-    }
-    if( has_trait( trait_SHELL2 ) && !has_active_mutation( trait_SHELL2 ) ) {
-        ret += 6_liter;
-    }
 
     ret *= mutation_value( "packmule_modifier" );
     ret += bonus_from_enchantments( ret / 1_ml, enchantment_value_id( "CARRY_STORAGE" ) ) * 1_ml;
@@ -4077,12 +4074,23 @@ SkillLevel &Character::get_skill_level_object( const skill_id &ident )
 
 int Character::get_skill_level( const skill_id &ident ) const
 {
-    return _skills->get_skill_level( ident );
+    int skill_level = _skills->get_skill_level( ident );
+    auto ench_id = enchantment_value_id( "SKILL_LEVEL_" + to_upper_case( ident.str() ) );
+    if( ench_id.is_valid() ) {
+        skill_level += bonus_from_enchantments( skill_level, ench_id );
+    }
+    return skill_level;
 }
 
 int Character::get_skill_level( const skill_id &ident, const item &context ) const
 {
-    return _skills->get_skill_level( ident, context );
+    int skill_level = _skills->get_skill_level( ident, context );
+    const auto id = context.is_null() ? ident : context.contextualize_skill( ident );
+    auto ench_id = enchantment_value_id( "SKILL_LEVEL_" + to_upper_case( id.str() ) );
+    if( ench_id.is_valid() ) {
+        skill_level += bonus_from_enchantments( skill_level, ench_id );
+    }
+    return skill_level;
 }
 
 void Character::set_skill_level( const skill_id &ident, const int level )
@@ -4143,6 +4151,11 @@ int Character::rust_rate() const
 
 void Character::practice( const skill_id &id, int amount, int cap, bool suppress_warning )
 {
+    auto ench_id = enchantment_value_id( "SKILL_EXP_" + to_upper_case( id.str() ) );
+    if( ench_id.is_valid() ) {
+        amount += bonus_from_enchantments( amount, ench_id );
+    }
+
     SkillLevel &level = get_skill_level_object( id );
     const Skill &skill = id.obj();
     std::string skill_name = skill.name();
@@ -4658,9 +4671,6 @@ bool Character::in_climate_control()
 {
     bool regulated_area = false;
     // Check
-    if( has_active_bionic( bio_climate ) ) {
-        return true;
-    }
     map &here = get_map();
     if( has_trait( trait_M_SKIN3 ) && here.has_flag_ter_or_furn( "FUNGUS", bub_pos() ) &&
         in_sleep_state() ) {
@@ -5765,8 +5775,8 @@ needs_rates Character::calc_needs_rates() const
     static const std::string player_thirst_rate( "PLAYER_THIRST_RATE" );
     rates.thirst = get_option< float >( player_thirst_rate );
     static const std::string thirst_modifier( "thirst_modifier" );
-    rates.thirst *= 1.0f + mutation_value( thirst_modifier ) +
-                    bonus_from_enchantments( 1.0, enchantment_value_id( "THIRST" ) );
+    rates.thirst *= 1.0f + mutation_value( thirst_modifier );
+    rates.thirst += bonus_from_enchantments( rates.thirst, enchantment_value_id( "THIRST" ) );
     if( worn_with_flag( flag_SLOWS_THIRST ) ) {
         rates.thirst *= 0.7f;
     }
@@ -5774,8 +5784,8 @@ needs_rates Character::calc_needs_rates() const
     static const std::string player_fatigue_rate( "PLAYER_FATIGUE_RATE" );
     rates.fatigue = get_option< float >( player_fatigue_rate );
     static const std::string fatigue_modifier( "fatigue_modifier" );
-    rates.fatigue *= 1.0f + mutation_value( fatigue_modifier ) +
-                     bonus_from_enchantments( 1.0, enchantment_value_id( "FATIGUE" ) );
+    rates.fatigue *= 1.0f + mutation_value( fatigue_modifier );
+    rates.fatigue += bonus_from_enchantments( rates.fatigue, enchantment_value_id( "FATIGUE" ) );
 
     // Note: intentionally not in metabolic rate
     if( has_recycler ) {
@@ -6080,10 +6090,6 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     int air_humidity = get_local_humidity( weather_point.humidity, weather.weather_id,
                                            sheltered );
     // Let's cache this not to check it num_bp times
-    const bool has_bark = has_trait( trait_BARK );
-    const bool has_heatsink = has_bionic( bio_heatsink ) || is_wearing( itype_rm13_armor_on ) ||
-                              has_trait( trait_M_SKIN2 ) || has_trait( trait_M_SKIN3 );
-    const bool has_climate_control = in_climate_control();
     const bool use_floor_warmth = can_use_floor_warmth();
     // In bodytemp units
     const int ambient_norm = 1900 - BODYTEMP_NORM;
@@ -6250,19 +6256,15 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
                       + mutation_heat_low
                       + sunlight_warmth;
 
-        // Bark : lowers blister count to -5; harder to get blisters
-        // If the counter is high, your skin starts to burn
-        int blister_count = ( has_bark ? -5 : 0 );
-
         if( bp_stats.get_frostbite_timer() > 0 ) {
             bp_stats.set_frostbite_timer( bp_stats.get_frostbite_timer() - std::min( 5, h_radiation ) );
         }
-        blister_count += h_radiation - 111 > 0 ?
-                         std::max( static_cast<int>( std::sqrt( h_radiation - 111 ) ), 0 ) : 0;
+        int blister_count = h_radiation - 111 > 0 ?
+                            std::max( static_cast<int>( std::sqrt( h_radiation - 111 ) ), 0 ) : 0;
 
-        if( has_heatsink ) {
-            blister_count -= 20;
-        }
+        blister_count += bonus_from_enchantments( blister_count, enchantment_value_id( "BLISTER_COUNT" ),
+                         true );
+
         if( fire_armor_per_bp.empty() && blister_count > 0 ) {
             fire_armor_per_bp = get_armor_fire( clothing_map );
         }
@@ -6283,9 +6285,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
         }
 
         // Climate Control eases the effects of high and low ambient temps
-        if( has_climate_control ) {
-            bp_conv = temp_corrected_by_climate_control( bp_conv );
-        }
+        bp_conv = temp_corrected_by_climate_control( bp_conv );
 
         int bonus_fire_warmth = best_fire * 500;
 
@@ -7323,13 +7323,13 @@ float Character::active_light() const
 
     lumination = std::max( lumination, mut_lum );
 
-    if( lumination < 300 && has_active_bionic( bio_flashlight ) ) {
-        lumination = 300;
-    } else if( lumination < 25 && has_artifact_with( AEP_GLOW ) ) {
+    lumination = std::max( lumination, float( bonus_from_enchantments( 0,
+                           enchantment_value_id( "LUMINATION" ) ) ) );
+
+    if( lumination < 25 && has_artifact_with( AEP_GLOW ) ) {
         lumination = 25;
     } else if( lumination < 5 && ( has_effect( effect_glowing ) ||
-                                   has_effect( effect_glowy_led ) ||
-                                   has_active_bionic( bio_tattoo_led ) ) ) {
+                                   has_effect( effect_glowy_led ) ) ) {
         lumination = 5;
     }
     return lumination;
@@ -10719,24 +10719,24 @@ int Character::bodytemp_modifier_traits_floor() const
     return mod;
 }
 
-int Character::temp_corrected_by_climate_control( int temperature ) const
+int Character::temp_corrected_by_climate_control( int temperature )
 {
-    const int variation = int( BODYTEMP_NORM * 0.5 );
-    if( temperature < BODYTEMP_SCORCHING + variation &&
-        temperature > BODYTEMP_FREEZING - variation ) {
-        if( temperature > BODYTEMP_SCORCHING ) {
-            temperature = BODYTEMP_VERY_HOT;
-        } else if( temperature > BODYTEMP_VERY_HOT ) {
-            temperature = BODYTEMP_HOT;
-        } else if( temperature > BODYTEMP_HOT ) {
-            temperature = BODYTEMP_NORM;
-        } else if( temperature < BODYTEMP_FREEZING ) {
-            temperature = BODYTEMP_VERY_COLD;
-        } else if( temperature < BODYTEMP_VERY_COLD ) {
-            temperature = BODYTEMP_COLD;
-        } else if( temperature < BODYTEMP_COLD ) {
-            temperature = BODYTEMP_NORM;
+    int mutated_norm = BODYTEMP_NORM + ( ( bodytemp_modifier_traits( false ) - bodytemp_modifier_traits(
+            true ) ) / 2 );
+    if( temperature > mutated_norm ) {
+        temperature -= bonus_from_enchantments( temperature,
+                                                enchantment_value_id( "CLIMATE_CONTROL_COOLING" ) );
+        if( in_climate_control() ) {
+            temperature -= 750;
         }
+        return std::max( mutated_norm, temperature );
+    } else {
+        if( in_climate_control() ) {
+            temperature += 750;
+        }
+        temperature += bonus_from_enchantments( temperature,
+                                                enchantment_value_id( "CLIMATE_CONTROL_HEATING" ) );
+        return std::min( mutated_norm, temperature );
     }
     return temperature;
 }
@@ -11774,13 +11774,14 @@ bool Character::sees( const tripoint_bub_ms &t, bool, int ) const
         return true;
     }
     const int wanted_range = rl_dist( bub_pos(), t );
-    bool can_see = is_player() ? get_map().pl_sees( t, wanted_range ) :
-                   Creature::sees( t );
+
     // Clairvoyance is now pretty cheap, so we can check it early
-    if( wanted_range < MAX_CLAIRVOYANCE && wanted_range < clairvoyance() ) {
+    if( wanted_range < clairvoyance() ) {
         return true;
     }
 
+    bool can_see = is_player() ? get_map().pl_sees( t, wanted_range ) :
+                   Creature::sees( t );
     if( can_see && wanted_range > unimpaired_range() ) {
         can_see = false;
     }

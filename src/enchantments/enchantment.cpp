@@ -181,12 +181,14 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
             enchantment_value_id value = enchantment_value_id(value_obj.get_string("value"));
             const int add = value_obj.get_int("add", 0);
             const double mult = value_obj.get_float("multiply", 0.0);
+            const double max = value_obj.get_int("max", 0);
             if (add != 0) { values_add.emplace(value, add); }
             if (mult != 0.0) {
                 // Limit precision to minimize inconsistencies between platforms / compilers
                 const double mul = static_cast<int>(std::round(mult * 100'000)) / 100'000.0;
                 values_multiply.emplace(value, mul);
             }
+            if (max != 0) { values_max.emplace(value, max); }
         }
     }
 }
@@ -282,6 +284,12 @@ void enchantment::force_add(const enchantment& rhs) {
         values_multiply[pair_values.first] += pair_values.second;
     }
 
+    for (const auto& pair_values : rhs.values_max) {
+        if (values_max[pair_values.first] < pair_values.second) {
+            values_max[pair_values.first] = pair_values.second;
+        }
+    }
+
     hit_me_effect.insert(hit_me_effect.end(), rhs.hit_me_effect.begin(), rhs.hit_me_effect.end());
 
     hit_you_effect
@@ -319,10 +327,23 @@ double enchantment::get_value_multiply(const enchantment_value_id value) const {
     return result;
 }
 
+int enchantment::get_value_max(const enchantment_value_id value) const {
+    if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
+    int result = 0;
+    if (values_max.contains(value)) { result = values_max.at(value); }
+    if (value->has_parent()) { result = std::max(result, get_value_max(value->get_parent())); }
+
+    return result;
+}
+
 double enchantment::calc_bonus(enchantment_value_id value, double base, bool round) const {
     double add = value->can_add ? get_value_add(value) : 0.0;
     double mul = value->can_mult ? get_value_multiply(value) : 1.0;
+    double max = value->can_max ? get_value_max(value) : 0.0;
     double ret = add + base * mul;
+    // This is seperated because apparently adding 0.0 is very scrungly to the computer
+    // Caused a bunch of tests to splode
+    if (max != 0) { ret += max; }
     if (round) { ret = trunc(ret); }
     return ret;
 }
@@ -394,8 +415,8 @@ void enchantment::cast_enchantment_spell(
 bool enchantment::operator==(const enchantment& rhs) const {
     return id == rhs.id && mutations == rhs.mutations && emitter == rhs.emitter
         && ench_effects == rhs.ench_effects && values_multiply == rhs.values_multiply
-        && values_add == rhs.values_add && hit_me_effect == rhs.hit_me_effect
-        && hit_you_effect == rhs.hit_you_effect
+        && values_add == rhs.values_add && values_max == rhs.values_max
+        && hit_me_effect == rhs.hit_me_effect && hit_you_effect == rhs.hit_you_effect
         && intermittent_activation == intermittent_activation
         && active_conditions == rhs.active_conditions;
 }
@@ -430,6 +451,21 @@ void enchantment::finalize() {
                 values_add[ench_val_id->id] += val;
             } else {
                 values_add[ench_val_id->id] = val;
+            }
+        }
+    }
+    auto val_max_copy = values_max;
+    for (const auto& [ench_val_id, val] : val_max_copy) {
+        if (ench_val_id->id != ench_val_id) {
+            problems.push_back(string_format(
+                "\nenchantment value %s is using legacy enchantment name automatically migrated to "
+                "%s",
+                ench_val_id.str(), ench_val_id->id.str()));
+            values_max.erase(ench_val_id);
+            if (values_max.contains(ench_val_id->id)) {
+                values_max[ench_val_id->id] += val;
+            } else {
+                values_max[ench_val_id->id] = val;
             }
         }
     }
@@ -504,6 +540,16 @@ void enchantment::check() const {
         } else if (!ench_val_id->can_add) {
             problems.push_back(
                 string_format("\nenchantment value %s cannot be added to", ench_val_id.str()));
+        }
+    }
+    auto val_max_copy = values_max;
+    for (const auto& [ench_val_id, val] : val_max_copy) {
+        if (!ench_val_id.is_valid()) {
+            problems.push_back(
+                string_format("\nenchantment value %s is invalid", ench_val_id.str()));
+        } else if (!ench_val_id->can_max) {
+            problems.push_back(
+                string_format("\nenchantment value %s cannot use max", ench_val_id.str()));
         }
     }
     auto val_mult_copy = values_multiply;

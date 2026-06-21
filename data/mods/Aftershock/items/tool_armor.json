@@ -51,6 +51,9 @@
     "revert_to": "afs_cryopod_bodyglove",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "Your %s deactivates.", "target": "afs_cryopod_bodyglove" },
     "magazine_well": "250 ml",
-    "flags": [ "STURDY", "WATERPROOF", "THERMOMETER", "RAINPROOF", "CLIMATE_CONTROL", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "STURDY", "WATERPROOF", "THERMOMETER", "RAINPROOF", "POWERARMOR_COMPATIBLE" ],
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    }
   }
 ]

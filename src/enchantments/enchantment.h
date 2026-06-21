@@ -51,6 +51,7 @@ public:
 
     int get_value_add(enchantment_value_id value) const;
     double get_value_multiply(enchantment_value_id value) const;
+    int get_value_max(enchantment_value_id value) const;
 
     /**
      * Calculate bonus provided by this enchantment for given base value.
@@ -111,6 +112,8 @@ private:
     // values that get multiplied to the base value
     // multipliers add to each other instead of multiply against themselves
     std::map<enchantment_value_id, double> values_multiply;
+    // values from which the highest value is chosen
+    std::map<enchantment_value_id, int> values_max;
 
     std::vector<fake_spell> hit_me_effect;
     std::vector<fake_spell> hit_you_effect;

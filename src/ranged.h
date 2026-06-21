@@ -195,6 +195,12 @@ int fire_gun( Character &who, const tripoint_bub_ms &target, int shots = 1 );
 int fire_gun( Character &who, const tripoint_bub_ms &target, int shots, item &gun,
               item *ammo, const std::optional<tripoint_bub_ms> &shot_origin = std::nullopt );
 
+/** Generates a projectile for throwing the item, used to show actual damage.*/
+auto throw_damage_projectile( const item &it, const int skill, const int str ) -> projectile;
+
+/** Expected stamina cost for throwing a given item. */
+auto throw_stamina_cost( const Character &thrower, const item &item ) -> int;
+
 /** Expected thrown damage with a given item, given the thrower's effective strength and skill. */
 auto throw_damage( const item &it, const int skill, const int str ) -> int;
 

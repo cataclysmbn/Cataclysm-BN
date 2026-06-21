@@ -4,6 +4,8 @@
 #include "debug.h"
 #include "generic_factory.h"
 
+#include <optional>
+
 namespace {
 generic_factory<enchantment_value> all_enchantment_values("Enchantment Values");
 }
@@ -48,8 +50,9 @@ void enchantment_value::load_enchantment_values(const JsonObject& jo, const std:
 }
 
 void enchantment_value::load(const JsonObject& jo, const std::string& src) {
-    mandatory(jo, was_loaded, "can_add", can_add);
-    mandatory(jo, was_loaded, "can_mult", can_mult);
+    optional(jo, was_loaded, "can_add", can_add, true);
+    optional(jo, was_loaded, "can_mult", can_mult, true);
+    optional(jo, was_loaded, "can_max", can_max, false);
     if (jo.has_array("suffixes")) {
         for (std::string& suffix : jo.get_string_array("suffixes")) {
             enchantment_value suffixed = enchantment_value(*this);

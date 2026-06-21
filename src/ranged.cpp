@@ -1758,8 +1758,6 @@ int throwing_dispersion( const Character &c, const item &to_throw, Creature *cri
     return std::max( 0, dispersion );
 }
 
-namespace
-{
 auto throw_damage_projectile( const item &it, const int skill, const int str ) -> projectile
 {
     const units::mass weight = it.weight();
@@ -1780,11 +1778,21 @@ auto throw_damage_projectile( const item &it, const int skill, const int str ) -
 
     return proj;
 }
-} // namespace
 
 auto throw_damage( const item &it, const int skill, const int str ) -> int
 {
     return throw_damage_projectile( it, skill, str ).impact.total_damage();
+}
+
+auto throw_stamina_cost( const Character &thrower, const item &item ) -> int
+{
+    // Previously calculated as 2_gram * std::max( 1, str_cur )
+    // using 16_gram normalizes it to 8 str. Same effort expenditure
+    // for being able to throw farther.
+    const int weight_cost = item.weight() / ( 16_gram );
+    const int encumbrance_cost = roll_remainder(
+                                     ( thrower.encumb( body_part_arm_l ) + thrower.encumb( body_part_arm_r ) ) * 2.0f );
+    return weight_cost + encumbrance_cost - thrower.get_skill_level( skill_throw ) + 50;
 }
 
 dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &target,
@@ -1800,14 +1808,6 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
     const units::volume volume = thrown.volume();
     const units::mass weight = thrown.weight();
 
-    // Previously calculated as 2_gram * std::max( 1, str_cur )
-    // using 16_gram normalizes it to 8 str. Same effort expenditure
-    // for being able to throw farther.
-    const int weight_cost = weight / ( 16_gram );
-    const int encumbrance_cost = roll_remainder( ( who.encumb( body_part_arm_l ) + who.encumb(
-                                     body_part_arm_r ) ) * 2.0f );
-    const int stamina_cost = ( weight_cost + encumbrance_cost - throwing_skill + 50 ) * -1;
-
     bool throw_assist = false;
     int throw_assist_str = 0;
     if( who.is_mounted() ) {
@@ -1819,6 +1819,7 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
         }
     }
     if( !throw_assist ) {
+        const int stamina_cost = throw_stamina_cost( who, thrown ) * -1;
         who.mod_stamina( stamina_cost );
     }
 
