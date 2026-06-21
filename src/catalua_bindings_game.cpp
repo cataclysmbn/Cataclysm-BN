@@ -43,6 +43,7 @@ struct dimension_travel_options {
     dimension_id dim_id;
     tripoint_abs_omt target_omt;
     std::optional<tripoint_abs_ms> target_ms;
+    bool has_target = false;
     std::optional<std::string> world_type;
     std::optional<tripoint_abs_omt> bounds_min_omt;
     std::optional<tripoint_abs_omt> bounds_max_omt;
@@ -117,11 +118,13 @@ auto get_dimension_entry_point( const dimension_travel_options &opts ) -> tripoi
 auto parse_dimension_travel_options( const sol::table &opts ) -> dimension_travel_options
 {
     const auto target_ms = read_optional_abs_ms( opts, "target_ms" );
+    const auto target_omt = read_optional_abs_omt( opts, "target_omt" );
     return {
         .dim_id = dimension_id( opts.get_or( "dimension_id", std::string{} ) ),
-        .target_omt = read_optional_abs_omt( opts, "target_omt" ).value_or(
+        .target_omt = target_omt.value_or(
             target_ms ? project_to<coords::omt>( *target_ms ) : tripoint_abs_omt( tripoint_zero ) ),
         .target_ms = target_ms,
+        .has_target = target_ms.has_value() || target_omt.has_value(),
         .world_type = read_optional_string( opts, "world_type" ),
         .bounds_min_omt = read_optional_abs_omt( opts, "bounds_min_omt" ),
         .bounds_max_omt = read_optional_abs_omt( opts, "bounds_max_omt" ),
@@ -155,6 +158,10 @@ std::optional<pocket_dimension_data>
 
 auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) -> bool
 {
+    if( !opts.has_target ) {
+        return false;
+    }
+
     if( opts.bounds_min_omt.has_value() != opts.bounds_max_omt.has_value() ) {
         return false;
     }
@@ -276,7 +283,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
     DOC( "Returns the current dimension id. Empty string means the overworld." );
     luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id().str(); } );
-    DOC( "Moves the player into another dimension and loads the destination around target_ms or target_omt." );
+    DOC( "Moves the player into another dimension and loads the destination around required target_ms or target_omt." );
     luna::set_fx( lib, "place_player_dimension_at", []( sol::table opts ) -> bool {
         return place_player_dimension_at( parse_dimension_travel_options( opts ) );
     } );

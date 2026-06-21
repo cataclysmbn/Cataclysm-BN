@@ -763,6 +763,10 @@ TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
     const auto original_pos = tripoint_abs_ms( 3, 5, 0 );
     get_avatar().setpos( original_pos );
     g->update_map( get_avatar() );
+    const auto zone_type_no_auto_pickup = zone_type_id( "NO_AUTO_PICKUP" );
+    zone_manager::get_manager().add( "overworld zone", zone_type_no_auto_pickup, your_fac, false,
+                                     true, original_pos, original_pos );
+    CHECK( zone_manager::get_manager().has( zone_type_no_auto_pickup, original_pos ) );
 
     auto lua = make_lua_state();
 
@@ -780,6 +784,7 @@ TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
 
     CHECK( test_data["before_dim"].get<std::string>() == "" );
     CHECK( test_data["before_map_dim"].get<std::string>() == "" );
+    CHECK_FALSE( test_data["missing_target_travel"].get<bool>() );
     CHECK( test_data["noop_travel"].get<bool>() );
     CHECK_FALSE( test_data["invalid_bounds_travel"].get<bool>() );
     CHECK_FALSE( test_data["invalid_special_travel"].get<bool>() );
@@ -799,6 +804,7 @@ TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
     CHECK( test_data["reentered_dim"].get<std::string>() == "lua_test_pocket" );
     CHECK( test_data["reentered_map_dim"].get<std::string>() == "lua_test_pocket" );
     CHECK( test_data["reentered_outside_is_oob"].get<bool>() );
+    CHECK_FALSE( zone_manager::get_manager().has( zone_type_no_auto_pickup, original_pos ) );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )

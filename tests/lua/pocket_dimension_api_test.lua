@@ -9,9 +9,14 @@ local bounds_max_omt = test_data["bounds_max_omt"]
 test_data["before_dim"] = gapi.get_current_dimension_id()
 test_data["before_map_dim"] = map:get_bound_dimension()
 
+test_data["missing_target_travel"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_omt = nil,
+})
+
 test_data["noop_travel"] = gapi.place_player_dimension_at({
   dimension_id = "",
-  target_omt = return_omt,
+  target_ms = return_ms,
 })
 
 test_data["invalid_bounds_travel"] = gapi.place_player_dimension_at({
