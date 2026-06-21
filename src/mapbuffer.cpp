@@ -769,227 +769,6 @@ auto mark_post_pass_changed( submap &sm ) -> void
 
 } // namespace
 
-mapbuffer_abs_tile_view::mapbuffer_abs_tile_view( const tripoint_abs_sm &abs_sm,
-        const point_sm_ms &local, const submap &sm ) :
-    abs_sm_( abs_sm ),
-    local_( local ),
-    sm_( &sm )
-{
-}
-
-mapbuffer_abs_tile_view::operator bool() const
-{
-    return sm_ != nullptr;
-}
-
-auto mapbuffer_abs_tile_view::abs_pos() const -> tripoint_abs_ms
-{
-    return project_combine( abs_sm_, local_ );
-}
-
-auto mapbuffer_abs_tile_view::abs_submap_pos() const -> tripoint_abs_sm
-{
-    return abs_sm_;
-}
-
-auto mapbuffer_abs_tile_view::submap_pos() const -> point_sm_ms
-{
-    return local_;
-}
-
-auto mapbuffer_abs_tile_view::get_ter() const -> ter_id
-{
-    return sm_->get_ter( local_ );
-}
-
-auto mapbuffer_abs_tile_view::get_furn() const -> furn_id
-{
-    return sm_->get_furn( local_ );
-}
-
-auto mapbuffer_abs_tile_view::get_trap() const -> trap_id
-{
-    return sm_->get_trap( local_ );
-}
-
-auto mapbuffer_abs_tile_view::get_ter_t() const -> const ter_t &
-{
-    return get_ter().obj();
-}
-
-auto mapbuffer_abs_tile_view::get_furn_t() const -> const furn_t &
-{
-    return get_furn().obj();
-}
-
-auto mapbuffer_abs_tile_view::get_trap_t() const -> const trap &
-{
-    return get_trap().obj();
-}
-
-auto mapbuffer_abs_tile_view::get_field() const -> const field &
-{
-    return sm_->get_field( local_ );
-}
-
-auto mapbuffer_abs_tile_view::get_items() const -> const location_vector<item> &
-{
-    return sm_->get_items( local_ );
-}
-
-auto mapbuffer_abs_tile_view::get_furn_vars() const -> const data_vars::data_set &
-{
-    return sm_->get_furn_vars( local_ );
-}
-
-auto mapbuffer_abs_tile_view::get_radiation() const -> int
-{
-    return sm_->get_radiation( local_ );
-}
-
-auto mapbuffer_abs_tile_view::get_lum() const -> std::uint8_t
-{
-    return sm_->get_lum( local_ );
-}
-
-auto mapbuffer_abs_tile_view::move_cost_ter_furn() const -> int
-{
-    const auto &terrain = get_ter_t();
-    const auto &furniture = get_furn_t();
-    if( terrain.movecost == 0 || ( furniture.id && furniture.movecost < 0 ) ) {
-        return 0;
-    }
-    if( furniture.id ) {
-        return std::max( terrain.movecost + furniture.movecost, 0 );
-    }
-    return std::max( terrain.movecost, 0 );
-}
-
-auto mapbuffer_abs_tile_view::passable_ter_furn() const -> bool
-{
-    return move_cost_ter_furn() != 0;
-}
-
-auto mapbuffer_abs_tile_view::move_cost_with_vehicle(
-    const optional_vpart_position &vp ) const -> int
-{
-    return move_cost_from_tile_parts( get_ter(), get_furn(), vp );
-}
-
-auto mapbuffer_abs_tile_view::passable_with_vehicle(
-    const optional_vpart_position &vp ) const -> bool
-{
-    return move_cost_with_vehicle( vp ) != 0;
-}
-
-mapbuffer_abs_tile_with_vehicle_view::mapbuffer_abs_tile_with_vehicle_view(
-    const mapbuffer_abs_tile_view &tile,
-    const optional_vpart_position &vehicle_part ) :
-    tile_( tile ),
-    vehicle_part_( vehicle_part )
-{
-}
-
-mapbuffer_abs_tile_with_vehicle_view::operator bool() const
-{
-    return static_cast<bool>( tile_ );
-}
-
-auto mapbuffer_abs_tile_with_vehicle_view::tile()
-const -> const mapbuffer_abs_tile_view &
-{
-    return tile_;
-}
-
-auto mapbuffer_abs_tile_with_vehicle_view::vehicle_part()
-const -> const optional_vpart_position &
-{
-    return vehicle_part_;
-}
-
-auto mapbuffer_abs_tile_with_vehicle_view::move_cost() const -> int
-{
-    return tile_.move_cost_with_vehicle( vehicle_part_ );
-}
-
-auto mapbuffer_abs_tile_with_vehicle_view::passable() const -> bool
-{
-    return move_cost() != 0;
-}
-
-mapbuffer_abs_submap_view::mapbuffer_abs_submap_view( const tripoint_abs_sm &abs_sm,
-        const submap &sm ) :
-    abs_sm_( abs_sm ),
-    sm_( &sm )
-{
-}
-
-mapbuffer_abs_submap_view::operator bool() const
-{
-    return sm_ != nullptr;
-}
-
-auto mapbuffer_abs_submap_view::abs_pos() const -> tripoint_abs_sm
-{
-    return abs_sm_;
-}
-
-auto mapbuffer_abs_submap_view::get_submap() const -> const submap &
-{
-    return *sm_;
-}
-
-auto mapbuffer_abs_submap_view::tile( const point_sm_ms &local )
-const -> mapbuffer_abs_tile_view
-{
-    return mapbuffer_abs_tile_view( abs_sm_, local, *sm_ );
-}
-
-auto mapbuffer_abs_submap_view::tiles() const -> point_range<point_sm_ms>
-{
-    return submap_tiles();
-}
-
-mapbuffer_abs_omt_view::mapbuffer_abs_omt_view( const tripoint_abs_omt &abs_omt,
-        const std::array<const submap *, 4> &submaps ) :
-    abs_omt_( abs_omt ),
-    submaps_( submaps )
-{
-}
-
-mapbuffer_abs_omt_view::operator bool() const
-{
-    return has_any_submap();
-}
-
-auto mapbuffer_abs_omt_view::has_any_submap() const -> bool
-{
-    return std::ranges::any_of( submaps_, []( const auto * sm ) {
-        return sm != nullptr;
-    } );
-}
-
-auto mapbuffer_abs_omt_view::abs_pos() const -> tripoint_abs_omt
-{
-    return abs_omt_;
-}
-
-auto mapbuffer_abs_omt_view::is_complete() const -> bool
-{
-    return std::ranges::all_of( submaps_, []( const auto * sm ) {
-        return sm != nullptr;
-    } );
-}
-
-auto mapbuffer_abs_omt_view::get_submap_view( const point_omt_sm &local )
-const -> std::optional<mapbuffer_abs_submap_view>
-{
-    const auto index = omt_submap_index( local );
-    if( !index || submaps_[*index] == nullptr ) {
-        return std::nullopt;
-    }
-    return mapbuffer_abs_submap_view( project_combine( abs_omt_, local ), *submaps_[*index] );
-}
 
 // ==========================================================================
 // abs_tile_handle — absolute tile handle with embedded vehicle data
@@ -1214,7 +993,7 @@ auto mapbuffer_bounds_view::indexed_submap_index( const point_rel_sm &offset,
 }
 
 auto mapbuffer_bounds_view::get_submap_view( const tripoint_abs_sm &pos )
-const -> std::optional<mapbuffer_abs_submap_view>
+const -> std::optional<submap_ref>
 {
     if( pos.x() < begin_.x() || pos.y() < begin_.y() || pos.x() >= end_.x() ||
         pos.y() >= end_.y() ) {
@@ -1224,7 +1003,7 @@ const -> std::optional<mapbuffer_abs_submap_view>
 }
 
 auto mapbuffer_bounds_view::get_submap_view( const point_rel_sm &offset,
-        const int zlev ) const -> std::optional<mapbuffer_abs_submap_view>
+        const int zlev ) const -> std::optional<submap_ref>
 {
     const auto index = indexed_submap_index( offset, zlev );
     if( !index || *index >= indexed_submaps_.size() ) {
@@ -1236,7 +1015,7 @@ auto mapbuffer_bounds_view::get_submap_view( const point_rel_sm &offset,
         return std::nullopt;
     }
 
-    return mapbuffer_abs_submap_view( tripoint_abs_sm( begin_ + offset, zlev ), *sm );
+    return submap_ref{ .sm = sm, .pos = tripoint_abs_sm( begin_ + offset, zlev ) };
 }
 
 auto mapbuffer_bounds_view::is_complete() const -> bool
@@ -1276,17 +1055,19 @@ auto mapbuffer_bounds_view::update( const point_abs_sm &begin,
     for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         const auto z_index = static_cast<std::size_t>( zlev + OVERMAP_DEPTH );
         for( const auto pos : point_range<point_abs_sm>( begin_, max ) ) {
-            auto view = buffer_->get_abs_submap_view( tripoint_abs_sm( pos, zlev ), options_ );
-            if( !view ) {
+            const tripoint_abs_sm abs_sm( pos, zlev );
+            auto *sm = buffer_->lookup_submap_in_memory( abs_sm );
+            if( !sm ) {
                 continue;
             }
 
             const auto offset = point_rel_sm( pos.x() - begin_.x(), pos.y() - begin_.y() );
             if( const auto index = indexed_submap_index( offset, zlev ) ) {
-                indexed_submaps_[*index] = &view->get_submap();
+                indexed_submaps_[*index] = sm;
             }
-            submaps_.push_back( *view );
-            submaps_by_zlev_[z_index].push_back( *view );
+            submap_ref ref{ .sm = sm, .pos = abs_sm };
+            submaps_.push_back( ref );
+            submaps_by_zlev_[z_index].push_back( ref );
         }
     }
 }
@@ -1383,37 +1164,6 @@ auto mapbuffer_load_region::release() -> void
         submap_loader.release_load( handle_ );
         handle_ = 0;
     }
-}
-
-mapbuffer_abs_tile_reader::mapbuffer_abs_tile_reader( mapbuffer &buffer,
-        const mapbuffer_lookup_options options ) :
-    buffer_( &buffer ),
-    options_( options )
-{
-}
-
-auto mapbuffer_abs_tile_reader::get_tile( const tripoint_abs_ms &p )
-const -> std::optional<mapbuffer_abs_tile_view>
-{
-    return buffer_->get_abs_tile( p, options_ );
-}
-
-auto mapbuffer_abs_tile_reader::get_tile_with_vehicle( const tripoint_abs_ms &p )
-const -> std::optional<mapbuffer_abs_tile_with_vehicle_view>
-{
-    return buffer_->get_abs_tile_with_vehicle( p, options_ );
-}
-
-auto mapbuffer_abs_tile_reader::get_submap_view( const tripoint_abs_sm &p )
-const -> std::optional<mapbuffer_abs_submap_view>
-{
-    return buffer_->get_abs_submap_view( p, options_ );
-}
-
-auto mapbuffer_abs_tile_reader::get_omt_view( const tripoint_abs_omt &p )
-const -> std::optional<mapbuffer_abs_omt_view>
-{
-    return buffer_->get_abs_omt_view( p, options_ );
 }
 
 auto mapbuffer::register_submap_vehicles(
@@ -1910,70 +1660,6 @@ auto mapbuffer::get_submap( const tripoint_abs_sm &p,
     return nullptr;
 }
 
-auto mapbuffer::get_abs_tile( const tripoint_abs_ms &p,
-                              const mapbuffer_lookup_options options )
--> std::optional<mapbuffer_abs_tile_view> // *NOPAD*
-{
-    if( is_outside_pocket_dimension_bounds( p ) ) {
-        return std::nullopt;
-    }
-
-    const auto split = project_remain<coords::sm>( p );
-    auto *const sm = get_submap( split.quotient_tripoint, options );
-    if( sm == nullptr ) {
-        return std::nullopt;
-    }
-
-    return mapbuffer_abs_tile_view( split.quotient_tripoint, split.remainder, *sm );
-}
-
-auto mapbuffer::get_abs_tile_with_vehicle( const tripoint_abs_ms &p,
-        const mapbuffer_lookup_options options )
--> std::optional<mapbuffer_abs_tile_with_vehicle_view> // *NOPAD*
-{
-    const auto tile = get_abs_tile( p, options );
-    if( !tile ) {
-        return std::nullopt;
-    }
-
-    return mapbuffer_abs_tile_with_vehicle_view( *tile, vehicle_part_at_loaded_tile( p ) );
-}
-
-auto mapbuffer::get_abs_submap_view( const tripoint_abs_sm &p,
-                                     const mapbuffer_lookup_options options )
--> std::optional<mapbuffer_abs_submap_view> // *NOPAD*
-{
-    auto *const sm = get_submap( p, options );
-    if( sm == nullptr ) {
-        return std::nullopt;
-    }
-
-    return mapbuffer_abs_submap_view( p, *sm );
-}
-
-auto mapbuffer::get_abs_omt_view( const tripoint_abs_omt &p,
-                                  const mapbuffer_lookup_options options )
--> std::optional<mapbuffer_abs_omt_view> // *NOPAD*
-{
-    auto submaps = std::array<const submap *, 4> {};
-    auto found_any = false;
-    for( const auto &local : omt_submap_offsets() ) {
-        const auto index = omt_submap_index( local );
-        auto *const sm = get_submap( project_combine( p, local ), options );
-        if( !index ) {
-            continue;
-        }
-        submaps[*index] = sm;
-        found_any |= sm != nullptr;
-    }
-
-    if( !found_any ) {
-        return std::nullopt;
-    }
-
-    return mapbuffer_abs_omt_view( p, submaps );
-}
-
 auto mapbuffer::for_each_simulated_submap_position(
     const std::function<void( const tripoint_abs_sm & )> &fn,
     const std::optional<int> zlev_filter ) const -> void
@@ -2026,37 +1712,6 @@ auto mapbuffer::simulated_submap_positions() const -> std::vector<tripoint_abs_s
     for_each_simulated_submap_position( [&]( const tripoint_abs_sm & pos ) {
         result.push_back( pos );
     } );
-    return result;
-}
-
-auto mapbuffer::simulated_submap_views() -> std::vector<mapbuffer_abs_submap_view>
-{
-    auto result = std::vector<mapbuffer_abs_submap_view> {};
-    const auto positions = simulated_submap_positions();
-    result.reserve( positions.size() );
-    const auto options = mapbuffer_lookup_options{ .mode = mapbuffer_lookup_mode::resident_only };
-    for( const tripoint_abs_sm &pos : positions ) {
-        auto view = get_abs_submap_view( pos, options );
-        if( view ) {
-            result.push_back( *view );
-        }
-    }
-    return result;
-}
-
-auto mapbuffer::simulated_submap_views( const int zlev ) -> std::vector<mapbuffer_abs_submap_view>
-{
-    auto result = std::vector<mapbuffer_abs_submap_view> {};
-    const auto horizontal_positions = submap_loader.simulated_submaps( dimension_id_ );
-    result.reserve( horizontal_positions.empty() ? loaded_submap_count() :
-                    horizontal_positions.size() );
-    const auto options = mapbuffer_lookup_options{ .mode = mapbuffer_lookup_mode::resident_only };
-    for_each_simulated_submap_position( [&]( const tripoint_abs_sm & pos ) {
-        auto view = get_abs_submap_view( pos, options );
-        if( view ) {
-            result.push_back( *view );
-        }
-    }, zlev );
     return result;
 }
 
@@ -2191,13 +1846,6 @@ auto mapbuffer::run_submap_batch_turns(
             sm->last_touched = calendar::turn;
         }
     }
-}
-
-auto mapbuffer::make_abs_tile_reader(
-    const mapbuffer_lookup_options options )
--> mapbuffer_abs_tile_reader // *NOPAD*
-{
-    return mapbuffer_abs_tile_reader( *this, options );
 }
 
 auto mapbuffer::creature_tracker() -> Creature_tracker &

@@ -1962,17 +1962,17 @@ class map : public submap_load_listener
             return abs_sub;
         }
 
-        auto active_submap_views() const -> std::span<const mapbuffer_abs_submap_view> {
+        auto active_submap_views() const -> std::span<const submap_ref> {
             return active_submaps_.submaps();
         }
 
         auto active_submap_views( const int zlev ) const
-        -> std::span<const mapbuffer_abs_submap_view> {
+        -> std::span<const submap_ref> {
             return active_submaps_.submaps( zlev );
         }
 
         auto active_submap_view( const tripoint_abs_sm &pos ) const
-        -> std::optional<mapbuffer_abs_submap_view> {
+        -> std::optional<submap_ref> {
             return active_submaps_.get_submap_view( pos );
         }
 

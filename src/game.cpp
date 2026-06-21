@@ -7248,7 +7248,7 @@ monster *game::place_critter_around( const shared_ptr_fast<monster> &mon,
 {
     std::optional<tripoint_bub_ms> where;
     const auto center_sm = project_to<coords::sm>( center );
-    if( m.inbounds( center_sm ) && !m.active_submap_view( map_local_to_abs( m, center_sm ) ) ) {
+    if( m.inbounds( center_sm ) && !m.active_submap_view( map_local_to_abs( m, center_sm ) ).has_value() ) {
         m.load( m.get_abs_sub(), true );
     }
     if( forced || can_place_monster( *mon, center ) ) {

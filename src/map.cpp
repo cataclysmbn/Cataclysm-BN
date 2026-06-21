@@ -1912,7 +1912,7 @@ VehicleList map::get_vehicles( const tripoint_bub_sm &start, const tripoint_bub_
         if( !view ) {
             continue;
         }
-        const submap *current_submap = &view->get_submap();
+        const submap *current_submap = view->sm;
         for( const auto &elem : current_submap->vehicles ) {
             auto w = wrapped_vehicle{};
             w.v = elem.get();
@@ -6149,7 +6149,7 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
     // shift performance but never registered in submaps_with_active_items.
     const auto &active_item_submaps = get_mapbuffer().get_submaps_with_active_items();
     for( const auto &view : active_submaps_.submaps() ) {
-        const submap &sm = view.get_submap();
+        const submap &sm = *view.sm;
         if( sm.active_items.empty() ) {
             continue;
         }
@@ -8859,7 +8859,7 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
     }
     bool ignore_terrain_checks = false;
     bool ignore_inside_checks = false;
-    if( current_submap->get_submap().is_uniform ) {
+    if( current_submap->sm->is_uniform ) {
         const tripoint_bub_ms upper_left{ SEEX * gp.x(), SEEY * gp.y(), gp.z() };
         if( !allow_on_terrain( upper_left ) ||
             ( !ignore_inside_checks && !is_outside( upper_left ) ) ) {
@@ -9266,7 +9266,7 @@ void map::build_obstacle_cache( const tripoint_bub_ms &start, const tripoint_bub
                 }
                 continue;
             }
-            const submap &cur_submap = view->get_submap();
+            const submap &cur_submap = *view->sm;
 
             // TODO: Init indices to prevent iterating over unused submap sections.
             for( const auto sm_ms : submap_tiles() ) {
@@ -9379,8 +9379,8 @@ void map::update_suspension_cache( const int &z )
     std::list<point_abs_ms> &suspension_cache = ch.suspension_cache;
     if( !ch.suspension_cache_initialized ) {
         for( const auto &view : active_submaps_.submaps( z ) ) {
-            const submap &cur_submap = view.get_submap();
-            const auto abs_sm = view.abs_pos().xy();
+            const submap &cur_submap = *view.sm;
+            const auto abs_sm = view.pos.xy();
             for( const auto sm_ms : submap_tiles() ) {
                 const ter_t &terrain = cur_submap.get_ter( sm_ms ).obj();
                 if( terrain.has_flag( TFLAG_SUSPENDED ) ) {
@@ -10237,7 +10237,7 @@ auto map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &en
                 // submaps are intentionally set to null.
                 continue;
             }
-            const submap &cur_submap = view->get_submap();
+            const submap &cur_submap = *view->sm;
             const auto sm_ms_min = project_remain<coords::sm>( min ).remainder;
             const auto sm_ms_max = project_remain<coords::sm>( max ).remainder;
 
@@ -10708,8 +10708,8 @@ auto map::current_lightmap_source_signature() -> std::size_t
     }
 
     for( const auto &view : active_submaps_.submaps() ) {
-        const auto grid = abs_to_bub( view.abs_pos() );
-        const submap &sm = view.get_submap();
+        const auto grid = abs_to_bub( view.pos );
+        const submap &sm = *view.sm;
         if( sm.is_uniform ) {
             continue;
         }
@@ -10979,8 +10979,8 @@ int map::calc_max_populated_zlev()
     for( const auto zlev : std::views::iota( 1, OVERMAP_HEIGHT + 1 ) ) {
         const auto submaps = active_submaps_.submaps( zlev );
         if( submaps.size() != expected_submaps ||
-        std::ranges::any_of( submaps, []( const mapbuffer_abs_submap_view & view ) {
-        return !view.get_submap().is_uniform;
+        std::ranges::any_of( submaps, []( const submap_ref & view ) {
+        return !view.sm->is_uniform;
         } ) ) {
             max_z = zlev;
         }

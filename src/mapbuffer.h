@@ -184,92 +184,10 @@ struct mapbuffer_run_submap_batch_turns_options {
     };
 };
 
-class mapbuffer_abs_tile_view
-{
-    public:
-        mapbuffer_abs_tile_view( const tripoint_abs_sm &abs_sm, const point_sm_ms &local,
-                                 const submap &sm );
-
-        explicit operator bool() const;
-
-        auto abs_pos() const -> tripoint_abs_ms;
-        auto abs_submap_pos() const -> tripoint_abs_sm;
-        auto submap_pos() const -> point_sm_ms;
-
-        auto get_ter() const -> ter_id;
-        auto get_furn() const -> furn_id;
-        auto get_trap() const -> trap_id;
-        auto get_ter_t() const -> const ter_t &;
-        auto get_furn_t() const -> const furn_t &;
-        auto get_trap_t() const -> const trap &;
-        auto get_field() const -> const field &;
-        auto get_items() const -> const location_vector<item> &;
-        auto get_furn_vars() const -> const data_vars::data_set &;
-        auto get_radiation() const -> int;
-        auto get_lum() const -> std::uint8_t;
-        auto move_cost_ter_furn() const -> int;
-        auto passable_ter_furn() const -> bool;
-        auto move_cost_with_vehicle( const optional_vpart_position &vp ) const -> int;
-        auto passable_with_vehicle( const optional_vpart_position &vp ) const -> bool;
-
-    private:
-        tripoint_abs_sm abs_sm_;
-        point_sm_ms local_;
-        const submap *sm_ = nullptr;
-};
-
-class mapbuffer_abs_tile_with_vehicle_view
-{
-    public:
-        mapbuffer_abs_tile_with_vehicle_view( const mapbuffer_abs_tile_view &tile,
-                                              const optional_vpart_position &vehicle_part );
-
-        explicit operator bool() const;
-
-        auto tile() const -> const mapbuffer_abs_tile_view &;
-        auto vehicle_part() const -> const optional_vpart_position &;
-        auto move_cost() const -> int;
-        auto passable() const -> bool;
-
-    private:
-        mapbuffer_abs_tile_view tile_;
-        optional_vpart_position vehicle_part_;
-};
-
-class mapbuffer_abs_submap_view
-{
-    public:
-        mapbuffer_abs_submap_view( const tripoint_abs_sm &abs_sm, const submap &sm );
-
-        explicit operator bool() const;
-
-        auto abs_pos() const -> tripoint_abs_sm;
-        auto get_submap() const -> const submap &;
-        auto tile( const point_sm_ms &local ) const -> mapbuffer_abs_tile_view;
-        auto tiles() const -> point_range<point_sm_ms>;
-
-    private:
-        tripoint_abs_sm abs_sm_;
-        const submap *sm_ = nullptr;
-};
-
-class mapbuffer_abs_omt_view
-{
-    public:
-        mapbuffer_abs_omt_view( const tripoint_abs_omt &abs_omt,
-                                const std::array<const submap *, 4> &submaps );
-
-        explicit operator bool() const;
-
-        auto abs_pos() const -> tripoint_abs_omt;
-        auto has_any_submap() const -> bool;
-        auto is_complete() const -> bool;
-        auto get_submap_view( const point_omt_sm &local ) const
-        -> std::optional<mapbuffer_abs_submap_view>;
-
-    private:
-        tripoint_abs_omt abs_omt_;
-        std::array<const submap *, 4> submaps_ = {};
+/// Lightweight (submap*, position) pair — access sm and pos directly.
+struct submap_ref {
+    const submap *sm = nullptr;
+    tripoint_abs_sm pos;
 };
 
 class mapbuffer_bounds_view
@@ -286,18 +204,18 @@ class mapbuffer_bounds_view
 
         auto begin() const -> point_abs_sm;
         auto end() const -> point_abs_sm;
-        auto submaps() const -> std::span<const mapbuffer_abs_submap_view> {
+        auto submaps() const -> std::span<const submap_ref> {
             return submaps_;
         }
-        auto submaps( int zlev ) const -> std::span<const mapbuffer_abs_submap_view> {
+        auto submaps( int zlev ) const -> std::span<const submap_ref> {
             if( zlev < -OVERMAP_DEPTH || zlev > OVERMAP_HEIGHT ) { return {}; }
             const auto index = static_cast<std::size_t>( zlev + OVERMAP_DEPTH );
             return submaps_by_zlev_[index];
         }
         auto get_submap_view( const tripoint_abs_sm &pos ) const
-        -> std::optional<mapbuffer_abs_submap_view>;
+        -> std::optional<submap_ref>;
         auto get_submap_view( const point_rel_sm &offset, int zlev ) const
-        -> std::optional<mapbuffer_abs_submap_view>;
+        -> std::optional<submap_ref>;
         auto is_complete() const -> bool;
         auto update( const point_abs_sm &begin, const point_abs_sm &end,
                      mapbuffer *buffer = nullptr ) -> void;
@@ -312,8 +230,8 @@ class mapbuffer_bounds_view
         mapbuffer_lookup_options options_;
         point_abs_sm begin_;
         point_abs_sm end_;
-        std::vector<mapbuffer_abs_submap_view> submaps_;
-        std::array<std::vector<mapbuffer_abs_submap_view>, OVERMAP_LAYERS> submaps_by_zlev_;
+        std::vector<submap_ref> submaps_;
+        std::array<std::vector<submap_ref>, OVERMAP_LAYERS> submaps_by_zlev_;
         std::vector<const submap *> indexed_submaps_;
 };
 
@@ -425,7 +343,7 @@ class mapbuffer_load_region
         auto view() const -> const mapbuffer_bounds_view & { // *NOPAD*
             return view_;
         }
-        auto submaps() const -> std::span<const mapbuffer_abs_submap_view> {
+        auto submaps() const -> std::span<const submap_ref> {
             return view_.submaps();
         }
 
@@ -439,23 +357,8 @@ class mapbuffer_load_region
         mapbuffer_bounds_view view_;
 };
 
-class mapbuffer_abs_tile_reader
-{
-    public:
-        mapbuffer_abs_tile_reader( mapbuffer &buffer, mapbuffer_lookup_options options = {} );
-
-        auto get_tile( const tripoint_abs_ms &p ) const -> std::optional<mapbuffer_abs_tile_view>;
-        auto get_tile_with_vehicle( const tripoint_abs_ms &p ) const
-        -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
-        auto get_submap_view( const tripoint_abs_sm &p ) const
-        -> std::optional<mapbuffer_abs_submap_view>;
-        auto get_omt_view( const tripoint_abs_omt &p ) const
-        -> std::optional<mapbuffer_abs_omt_view>;
-
-    private:
-        mapbuffer *buffer_ = nullptr;
-        mapbuffer_lookup_options options_;
-};
+// mapbuffer_abs_tile_reader was removed in Phase 2.
+// Use abs_tile_handle::fetch() / fetch_terrain_only() instead.
 
 /**
  * Store, buffer, save and load the entire world map.
@@ -513,20 +416,12 @@ class mapbuffer
         auto get_submap( const tripoint_abs_sm &p,
         mapbuffer_lookup_options options = {} ) -> submap *;
 
-        auto get_abs_tile( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_tile_view>;
-        auto get_abs_tile_with_vehicle( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} )
-        -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
-        auto get_abs_submap_view( const tripoint_abs_sm &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_submap_view>;
-        auto get_abs_omt_view( const tripoint_abs_omt &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_omt_view>;
+        // get_abs_tile, get_abs_submap_view, get_abs_omt_view,
+        // simulated_submap_views, and make_abs_tile_reader were removed
+        // in Phase 2.  Use abs_tile_handle::fetch() / for_each_submap_tile() instead.
         auto for_each_simulated_submap(
             const std::function<void( const tripoint_abs_sm &, submap & )> &fn ) -> void;
         auto simulated_submap_positions() const -> std::vector<tripoint_abs_sm>;
-        auto simulated_submap_views() -> std::vector<mapbuffer_abs_submap_view>;
-        auto simulated_submap_views( int zlev ) -> std::vector<mapbuffer_abs_submap_view>;
         auto mark_submap_caches_dirty( const mapbuffer_mark_submap_caches_dirty_options &options )
         -> void;
         auto clear_spawns( const mapbuffer_submap_bounds_mutation_options &options ) -> void;
@@ -534,7 +429,6 @@ class mapbuffer
         auto fill_terrain( const mapbuffer_fill_terrain_options &options ) -> void;
         auto run_submap_batch_turns( const mapbuffer_run_submap_batch_turns_options &options )
         -> void;
-        auto make_abs_tile_reader( mapbuffer_lookup_options options = {} ) -> mapbuffer_abs_tile_reader;
 
         auto is_column_state( point_abs_sm col,
                               submap_column_load_state min_state ) const noexcept -> bool;

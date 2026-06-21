@@ -1506,8 +1506,8 @@ auto add_static_emitter_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_static_emitters");
     for (auto const z : acc.dirty_levels) {
         for (auto const& view : acc.m.active_submap_views(z)) {
-            auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+            auto const grid = abs_to_bub(view.pos);
+            auto const& sm = *view.sm;
 
             for (auto const sm_ms : sm.static_emitter_tiles()) {
                 auto const pos = project_combine(grid, sm_ms);
@@ -1539,8 +1539,8 @@ auto add_field_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_field_sources");
     for (auto const z : acc.dirty_levels) {
         for (auto const& view : acc.m.active_submap_views(z)) {
-            auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+            auto const grid = abs_to_bub(view.pos);
+            auto const& sm = *view.sm;
             if (sm.field_count == 0) { continue; }
 
             for (auto const sm_ms : sm.field_cache) {
@@ -1826,8 +1826,8 @@ auto write_field_light_overrides_to_source_map(map const& m, std::vector<int> co
     -> void {
     for (auto const z : dirty_levels) {
         for (auto const& view : m.active_submap_views(z)) {
-            auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+            auto const grid = abs_to_bub(view.pos);
+            auto const& sm = *view.sm;
             if (sm.field_count == 0) { continue; }
 
             for (auto const sm_ms : sm.field_cache) {

@@ -150,27 +150,23 @@ bool vertical_move_destination( const map &m, tripoint_abs_ms &t )
 {
     const auto omt = project_to<coords::omt>( t );
     auto &buffer = MAPBUFFER_REGISTRY.get( m.get_bound_dimension() );
-    const auto omt_view = buffer.get_abs_omt_view( omt );
-    if( !omt_view ) {
-        return false;
-    }
-
-    const auto submap_offsets = std::array {
-        point_omt_sm::zero(),
-        point_omt_sm( 1, 0 ),
-        point_omt_sm( 0, 1 ),
-        point_omt_sm( 1, 1 ),
+    const auto omt_offsets = std::array {
+        point_rel_sm::zero(),
+        point_rel_sm::east(),
+        point_rel_sm::south(),
+        point_rel_sm::south_east(),
     };
-    for( const auto &local_sm : submap_offsets ) {
-        const auto submap_view = omt_view->get_submap_view( local_sm );
-        if( !submap_view ) {
+    for( const auto &off : omt_offsets ) {
+        const point_abs_sm sm_base = project_to<coords::sm>( omt ).xy();
+        const tripoint_abs_sm sm_pos( sm_base + off, t.z() );
+        const submap *sm = buffer.lookup_submap_in_memory( sm_pos );
+        if( !sm ) {
             continue;
         }
 
-        for( const auto tile_pos : submap_view->tiles() ) {
-            const auto tile = submap_view->tile( tile_pos );
-            if( tile.get_ter_t().has_flag( flag ) ) {
-                t = tile.abs_pos();
+        for( const point_sm_ms &tile_pos : submap_tiles() ) {
+            if( sm->get_ter( tile_pos ).obj().has_flag( flag ) ) {
+                t = project_combine( sm_pos, tile_pos );
                 return true;
             }
         }

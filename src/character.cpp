@@ -11459,9 +11459,26 @@ void Character::place_corpse()
 
 void Character::place_corpse( const tripoint_abs_omt &om_target )
 {
-    const auto view = get_mapbuffer().get_abs_omt_view( om_target, { mapbuffer_lookup_mode::load_or_generate } );
+    auto &mb = get_mapbuffer();
+    // Ensure the OMT is loaded/generated, then pick a random submap in it.
+    mb.generate_omt( om_target );
+    const point_abs_sm sm_base = project_to<coords::sm>( om_target ).xy();
+    const auto omt_offsets = std::array {
+        point_rel_sm::zero(),
+        point_rel_sm::east(),
+        point_rel_sm::south(),
+        point_rel_sm::south_east(),
+    };
+    const auto &sm_off = random_entry( omt_offsets );
+    const tripoint_abs_sm target_sm( sm_base + sm_off, om_target.z() );
+    submap *sm = mb.lookup_submap_in_memory( target_sm );
+    if( !sm ) {
+        debugmsg( "place_corpse: submap at %s not loaded after generate_omt",
+                  target_sm.to_string() );
+        return;
+    }
+
     point_omt_ms omt_ms{ rng( 1, SEEX * 2 - 2 ), rng( 1, SEEX * 2 - 2 ) };
-    const auto sm = *view->get_submap_view( project_remain<coords::sm>( omt_ms ).quotient );
     auto sm_ms = project_remain<coords::sm>( omt_ms ).remainder;
     // This makes no sense at all. It may find a random tile without furniture, but
     // if the first try to find one fails, it will go through all tiles of the map
@@ -11471,10 +11488,10 @@ void Character::place_corpse( const tripoint_abs_omt &om_target )
     // Q: Why use furn_str_id instead of f_null?
     // TODO: fix it, see above.
 
-    if( !abs_tile_handle( sm.get_submap(), sm.abs_pos(), sm_ms ).passable() ) {
+    if( !abs_tile_handle( *sm, target_sm, sm_ms ).passable() ) {
         for( int i = 0; i < 32; i++ ) {
             sm_ms = random_entry( submap_tiles() );
-            if( abs_tile_handle( sm.get_submap(), sm.abs_pos(), sm_ms ).passable() ) {
+            if( abs_tile_handle( *sm, target_sm, sm_ms ).passable() ) {
                 break;
             }
         }
