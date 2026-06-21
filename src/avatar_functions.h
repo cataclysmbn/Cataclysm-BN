@@ -21,8 +21,6 @@ void try_to_sleep( avatar &you, const time_duration &dur = 30_minutes );
  */
 void try_disarm_npc( avatar &you, npc &target );
 
-auto can_steal_from_npc( const npc &target ) -> bool;
-
 /**
  * Try to steal an item from the NPC's inventory. May result in fail attempt, when NPC not notices you,
  * notices your steal attempt and getting angry with you, and you successfully stealing the item.

@@ -47,11 +47,6 @@ static const skill_id skill_weapon( "weapon" );
 namespace avatar_funcs
 {
 
-auto can_steal_from_npc( const npc &/*target*/ ) -> bool
-{
-    return true;
-}
-
 void try_to_sleep( avatar &you, const time_duration &dur )
 {
     map &here = get_map();

@@ -9,13 +9,13 @@
 #include <vector>
 
 #include "avatar.h"
-#include "avatar_functions.h"
 #include "calendar.h"
 #include "coordinates.h"
 #include "faction.h"
 #include "field.h"
 #include "field_type.h"
 #include "game.h"
+#include "item.h"
 #include "itype.h"
 #include "line.h"
 #include "map.h"
@@ -37,16 +37,23 @@
 
 class Creature;
 
-TEST_CASE( "hallucination_npcs_cannot_be_stolen_from", "[npc][hallucination]" )
+TEST_CASE( "hallucination_npcs_do_not_drop_inventory", "[npc][hallucination]" )
 {
     clear_all_state();
+    auto &here = get_map();
 
-    npc &real_npc = spawn_npc( tripoint_bub_ms( 60, 60, 0 ), "test_talker" );
-    npc &hallucination_npc = spawn_npc( tripoint_bub_ms( 61, 60, 0 ), "test_talker" );
+    const auto npc_pos = tripoint_bub_ms( 60, 60, 0 );
+    npc &hallucination_npc = spawn_npc( npc_pos, "test_talker" );
     hallucination_npc.hallucination = true;
+    hallucination_npc.i_add( item::spawn( "rock" ) );
 
-    CHECK( avatar_funcs::can_steal_from_npc( real_npc ) );
-    CHECK_FALSE( avatar_funcs::can_steal_from_npc( hallucination_npc ) );
+    REQUIRE( here.i_at( npc_pos ).empty() );
+
+    hallucination_npc.die( &get_avatar() );
+
+    CHECK( hallucination_npc.is_dead() );
+    CHECK( here.i_at( npc_pos ).empty() );
+    CHECK_FALSE( get_avatar().has_item_with_id( itype_id( "rock" ) ) );
 }
 
 static void on_load_test( npc &who, const time_duration &from, const time_duration &to )
