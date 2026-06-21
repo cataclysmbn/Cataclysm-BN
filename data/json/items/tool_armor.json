@@ -963,7 +963,7 @@
         {
           "has": "WORN",
           "condition": "ACTIVE",
-          "values": [ 
+          "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "NOISE", "add": -30 },
             { "value": "CLIMATE_CONTROL", "add": 750 },

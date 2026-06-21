@@ -466,7 +466,13 @@
     "can_uninstall": false,
     "points": 1,
     "no_uninstall_reason": "The telescopic lenses are part of the patient's eyes now, remove them and the patient would become blind",
-    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "OVERMAP_SIGHT", "add": 1 } ], "flags": [ "UNDERWATER_SIGHT", "FIX_NEARSIGHTED" ] } ]
+    "bio_enchantments": [
+      {
+        "condition": "ALWAYS",
+        "values": [ { "value": "OVERMAP_SIGHT", "add": 1 } ],
+        "flags": [ "UNDERWATER_SIGHT", "FIX_NEARSIGHTED" ]
+      }
+    ]
   },
   {
     "id": "bio_face_mask",
