@@ -220,6 +220,7 @@ void ma_technique::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "knockback_dist", knockback_dist, 0 );
     optional( jo, was_loaded, "knockback_spread", knockback_spread, 0 );
     optional( jo, was_loaded, "powerful_knockback", powerful_knockback, false );
+    optional( jo, was_loaded, "controlled_knockback", controlled_knockback, false );
     optional( jo, was_loaded, "knockback_follow", knockback_follow, false );
 
     optional( jo, was_loaded, "aoe", aoe, "" );
@@ -696,6 +697,7 @@ ma_technique::ma_technique()
     knockback_dist = 0;
     knockback_spread = 0; // adding randomness to knockback, like tec_throw
     powerful_knockback = false;
+    controlled_knockback = false;
     knockback_follow = false; // player follows the knocked-back party into their former tile
 
     // offensive
@@ -1505,6 +1507,11 @@ std::string ma_technique::get_description() const
     if( knockback_dist ) {
         dump += string_format( _( "* Will <info>knock back</info> enemies <stat>%d %s</stat>" ),
                                knockback_dist, vgettext( "tile", "tiles", knockback_dist ) ) + "\n";
+    }
+
+    if( controlled_knockback ) {
+        dump += _( "* Can <info>control</info> the knockback direction in manual combat mode." ) +
+                std::string( "\n" );
     }
 
     if( knockback_follow ) {

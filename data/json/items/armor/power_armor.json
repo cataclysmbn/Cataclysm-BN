@@ -96,10 +96,18 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "power armor (active)", "str_pl": "suits of power armor (active)" },
     "description": "These were the second wave of military combat exoskeleton, and got a lot of media attention, with popular Navy commercials featuring them heavily.  It consists of a muscle-boosting exoskeleton frame with overlayed segmented alloy plating.  Despite advancements over the original bulky 'tank suits', it's still highly cumbersome when inactive.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
-    "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 1500000,
     "revert_to": "power_armor_basic",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] },
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [ { "value": "STRENGTH", "add": 2 }, { "value": "CLIMATE_CONTROL", "add": 750 } ]
+        }
+      ]
+    },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -158,10 +166,18 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "heavy power armor (active)", "str_pl": "suits of heavy power armor (active)" },
     "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of resisting almost any small arms fire and most other forms of attack.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
-    "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 2250000,
     "revert_to": "power_armor_heavy",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 6 } ] } ] },
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [ { "value": "STRENGTH", "add": 6 }, { "value": "CLIMATE_CONTROL", "add": 750 } ]
+        }
+      ]
+    },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -219,10 +235,18 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "light power armor (active)", "str_pl": "suits of light power armor (active)" },
     "description": "The final iteration of military power armor before the fall of civilization, this type - a powered exoskeleton with high-tech segmented plating - was designed for actual widespread combat use and was seen on the front lines during the last days of the cataclysm.  Like the heavier suits, it is resistant to most modern weaponry, but it is much more light and maneuverable.  Unfortunately, the world ended before it could roll out in significant numbers.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
-    "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 750000,
     "revert_to": "power_armor_light",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 4 } ] } ] },
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "CLIMATE_CONTROL", "add": 750 } ]
+        }
+      ]
+    },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -278,7 +302,7 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "power armor helmet (active)", "str_pl": "power armor helmets (active)" },
     "description": "A fully enclosed combat helmet for hazardous environments, this was designed to fit with a powered exoskeleton, using cameras to expand visual range.  In practice, the cameras were unreliable and easily fouled.  The environmental controls function best with direct-skin contact.",
-    "extend": { "flags": [ "THERMOMETER", "RECON_VISION", "CLIMATE_CONTROL", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "THERMOMETER", "RECON_VISION", "TRADER_AVOID" ] },
     "power_draw": 500000,
     "qualities": [ [ "GLARE", 2 ] ],
     "revert_to": "power_armor_helmet_basic",
@@ -294,7 +318,10 @@
     "environmental_protection": 16,
     "weight_capacity_bonus": "5500 g",
     "adv_hearing_protection": 80,
-    "hearing_protection": 0
+    "hearing_protection": 0,
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    }
   },
   {
     "id": "power_armor_helmet_heavy",
@@ -338,7 +365,7 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "heavy power armor helmet (active)", "str_pl": "heavy power armor helmets (active)" },
     "description": "An extremely heavy-duty fully enclosed combat helmet for hazardous environments, this was designed to fit with a powered exoskeleton.  In the field, soldiers reported that the protection was not worth the awkward size and limited visuals.  The environmental controls function best with direct-skin contact.",
-    "extend": { "flags": [ "THERMOMETER", "RECON_VISION", "CLIMATE_CONTROL", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "THERMOMETER", "RECON_VISION", "TRADER_AVOID" ] },
     "power_draw": 750000,
     "qualities": [ [ "GLARE", 2 ] ],
     "revert_to": "power_armor_helmet_heavy",
@@ -354,7 +381,10 @@
     "environmental_protection": 16,
     "weight_capacity_bonus": "7500 g",
     "adv_hearing_protection": 80,
-    "hearing_protection": 0
+    "hearing_protection": 0,
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    }
   },
   {
     "id": "power_armor_helmet_light",
@@ -398,7 +428,7 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "light power armor helmet (active)", "str_pl": "light power armor helmets (active)" },
     "description": "This full-enclosure helmet was designed based on commercial diving equipment, in response to complaints that earlier designs were impossible to use in combat.  While still a little more restrictive than regular combat headgear - and frustrating should your nose itch - this one received far better reviews from soldiers.  Sadly, civilization ended before they could roll out in significant numbers.  The environmental controls function best with direct-skin contact.",
-    "extend": { "flags": [ "THERMOMETER", "RECON_VISION", "CLIMATE_CONTROL", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "THERMOMETER", "RECON_VISION", "TRADER_AVOID" ] },
     "power_draw": 250000,
     "qualities": [ [ "GLARE", 1 ] ],
     "revert_to": "power_armor_helmet_light",
@@ -414,7 +444,10 @@
     "environmental_protection": 16,
     "weight_capacity_bonus": "2500 g",
     "adv_hearing_protection": 80,
-    "hearing_protection": 0
+    "hearing_protection": 0,
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    }
   },
   {
     "id": "power_armor_frame",

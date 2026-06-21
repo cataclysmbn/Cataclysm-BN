@@ -1193,6 +1193,7 @@ class game : public submap_load_listener
         bool fullscreen = false;
         bool was_fullscreen = false;
         bool auto_travel_mode = false;
+        bool manual_combat_mode = false;
         bool queue_screenshot = false;
         safe_mode_type safe_mode;
         int turnssincelastmon = 0; // needed for auto run mode

@@ -781,7 +781,13 @@
     "points": -1,
     "description": "You're quite the heavy sleeper.  Noises are unlikely to wake you up.",
     "changes_to": [ "HEAVYSLEEPER2" ],
-    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ]
+    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ],
+    "mut_enchantments": [
+      {
+        "condition": "ALWAYS",
+        "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 2 }, { "value": "SLEEP_DB_RESIST", "add": 30 } ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -1664,7 +1670,8 @@
       { "part": "torso", "ignored": 60 }
     ],
     "armor": [ { "parts": "ALL", "cut": 2, "bash": 3, "bullet": 1 } ],
-    "speed_modifier": 0.8
+    "speed_modifier": 0.8,
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -1692,7 +1699,8 @@
       { "part": "torso", "ignored": 60 }
     ],
     "armor": [ { "parts": "ALL", "cut": 3, "bash": 5, "bullet": 2 } ],
-    "speed_modifier": 0.8
+    "speed_modifier": 0.8,
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -2276,7 +2284,8 @@
       { "part": "hand_r", "ignored": 3 },
       { "part": "torso", "ignored": 20 }
     ],
-    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ]
+    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -5 } ] } ]
   },
   {
     "type": "mutation",
@@ -4928,7 +4937,13 @@
     "description": "You could probably sleep through a firefight.",
     "valid": false,
     "prereqs": [ "HEAVYSLEEPER" ],
-    "category": [ "BEAST", "LUPINE" ]
+    "category": [ "BEAST", "LUPINE" ],
+    "mut_enchantments": [
+      {
+        "condition": "ALWAYS",
+        "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 5 }, { "value": "SLEEP_DB_RESIST", "add": 50 } ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -5852,7 +5867,8 @@
     "category": [ "CEPHALOPOD" ],
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "restricts_gear": [ "torso" ],
-    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ]
+    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "CARRY_STORAGE", "add": 4000 } ] } ]
   },
   {
     "type": "mutation",
@@ -5872,7 +5888,8 @@
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "active": true,
     "restricts_gear": [ "torso" ],
-    "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ]
+    "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ],
+    "mut_enchantments": [ { "condition": "INACTIVE", "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] } ]
   },
   {
     "type": "mutation",

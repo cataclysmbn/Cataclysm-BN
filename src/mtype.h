@@ -80,6 +80,7 @@ enum m_flag : int {
     MF_NOHEAD,              // Headshots not allowed!
     MF_HARDTOSHOOT,         // It's one size smaller for ranged attacks, no less then creature_size::tiny
     MF_GRABS,               // Its attacks may grab us!
+    MF_GRAB_IMMUNE,         // Cannot be grabbed by another creature
     MF_BASHES,              // Bashes down doors
     MF_DESTROYS,            // Bashes down walls and more
     MF_BORES,               // Tunnels through just about anything

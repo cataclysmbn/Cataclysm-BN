@@ -138,6 +138,23 @@
     "artifact_data": { "effects_wielded": [ "AEP_CLAIRVOYANCE_PLUS" ] }
   },
   {
+    "id": "clairvoyance_plus_plus_rod",
+    "type": "TOOL",
+    "symbol": "v",
+    "color": "red",
+    "name": { "str": "clairvoyance super rod" },
+    "description": "Item to test enchantment clairvoyance.  If this spawns randomly, then it's a bug.",
+    "price": "50 USD",
+    "material": [ "steel" ],
+    "weight": "150 g",
+    "volume": "750 ml",
+    "bashing": 1,
+    "to_hit": -1,
+    "relic_data": {
+      "passive_effects": [ { "has": "WIELD", "condition": "ALWAYS", "values": [ { "value": "CLAIRVOYANCE", "max": 10 } ] } ]
+    }
+  },
+  {
     "id": "acid_spit",
     "//": "For sound messages",
     "weapon_category": [ "WATER_CANNONS" ],

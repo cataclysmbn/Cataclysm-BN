@@ -76,6 +76,9 @@ detached_ptr<item> Single_item_creator::create_single( const time_point &birthda
     } else if( type == S_NONE ) {
         return detached_ptr<item>();
     }
+    if( !tmp ) {
+        return detached_ptr<item>();
+    }
     if( one_in( 3 ) && tmp->has_flag( flag_VARSIZE ) ) {
         tmp->set_flag( flag_FIT );
     }
@@ -404,9 +407,9 @@ std::vector<detached_ptr<item>> Single_item_creator::every_item_modified( bool m
     switch( type ) {
         case S_ITEM: {
             detached_ptr<item> itm = item::spawn( itype_id( id ) );
-            if( modifier && modify ) {
+            if( modifier && modify && itm ) {
                 items.push_back( modifier->modify( std::move( itm ) ) );
-            } else {
+            } else if( itm ) {
                 items.push_back( std::move( itm ) );
             }
             return items;
@@ -561,7 +564,9 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
             }
         } else {
             detached_ptr<item> am = ammo->create_single( new_item->birthday() );
-            new_item->ammo_set( am->typeId(), ch );
+            if( am ) {
+                new_item->ammo_set( am->typeId(), ch );
+            }
         }
         // Make sure the item is in valid state
         if( new_item->ammo_data() && new_item->magazine_integral() ) {
@@ -584,7 +589,9 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         if( spawn_ammo ) {
             if( ammo ) {
                 detached_ptr<item> am = ammo->create_single( new_item->birthday() );
-                new_item->ammo_set( am->typeId() );
+                if( am ) {
+                    new_item->ammo_set( am->typeId() );
+                }
             } else {
                 new_item->ammo_set( new_item->ammo_default() );
             }
