@@ -176,9 +176,9 @@ print("is far-away point out of bounds:", map:is_out_of_bounds(coords.tripoint_b
 이미 만들어진 뒤에는 `dimension_id` 와 `target_omt` 만으로 다시 들어갈 수 있습니다.
 
 ```lua
-local home_dimension = "sky_island_home"
-local overworld_pos = gapi.get_avatar():abs_pos()
-local home_omt = overworld_pos:to_omt()
+home_dimension = "sky_island_home"
+overworld_pos = gapi.get_avatar():abs_pos()
+home_omt = overworld_pos:to_omt()
 local home_bounds_radius = coords.tripoint_rel_omt(2, 2, 0)
 
 local entered = gapi.place_player_dimension_at({

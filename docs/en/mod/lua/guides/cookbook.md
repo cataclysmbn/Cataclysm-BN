@@ -176,9 +176,9 @@ Use `world_type` and both bounds when creating a new pocket dimension. Once it
 already exists, you can re-enter it with only `dimension_id` and `target_omt`.
 
 ```lua
-local home_dimension = "sky_island_home"
-local overworld_pos = gapi.get_avatar():abs_pos()
-local home_omt = overworld_pos:to_omt()
+home_dimension = "sky_island_home"
+overworld_pos = gapi.get_avatar():abs_pos()
+home_omt = overworld_pos:to_omt()
 local home_bounds_radius = coords.tripoint_rel_omt(2, 2, 0)
 
 local entered = gapi.place_player_dimension_at({
