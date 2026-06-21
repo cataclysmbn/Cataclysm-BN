@@ -56,7 +56,7 @@
     "symbol": ":",
     "color": "green",
     "location": "bore",
-    "mod_targets": [ "pipe_rifle" ],
+    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],
     "install_time": "5 m",
     "ammo_modifier": "22",
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]
@@ -76,7 +76,7 @@
     "symbol": ":",
     "color": "green",
     "location": "bore",
-    "mod_targets": [ "pipe_rifle" ],
+    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],
     "install_time": "5 m",
     "ammo_modifier": "38",
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]
