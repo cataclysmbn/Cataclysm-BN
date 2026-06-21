@@ -146,10 +146,10 @@ Multiple lines of items may share the same X and Y values.
 ```jsonc
 {
   "type": "vehicle_blacklist", // Mandatory type
-  "vehicles": [                // List of Vehicle Prototype Ids to blacklist
-    "car",                     // They can still be debug spawned and such
-    "4x4_car",                 // They are just prevented from spawning via vehicle groups
-    "beetle"
-  ]
+  "vehicles": [ // List of Vehicle Prototype Ids to blacklist
+    "car", // They can still be debug spawned and such
+    "4x4_car", // They are just prevented from spawning via vehicle groups
+    "beetle",
+  ],
 }
 ```
