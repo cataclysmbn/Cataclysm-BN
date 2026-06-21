@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 
 #include "calendar.h"
 #include "color.h"
@@ -482,6 +483,8 @@ struct vehicle_prototype {
     std::unique_ptr<vehicle> blueprint;
 
     static void load( const JsonObject &jo );
+    static void load_vehicle_blacklist( const JsonObject &jo );
+    static const std::unordered_set<vproto_id> get_vehicle_blacklist();
     static void reset();
     static void finalize();
 
