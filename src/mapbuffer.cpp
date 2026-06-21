@@ -1392,6 +1392,8 @@ void mapbuffer::clear()
         vehicle_footprint_locations_.clear();
         submaps_with_active_items_.clear();
         submaps_with_luminous_items_.clear();
+        column_states_.clear();
+        dirty_columns_.clear();
         submaps.clear();
         pocket_info_.reset();
     }
@@ -1415,7 +1417,53 @@ bool mapbuffer::add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &s
         .mode = mapbuffer_lookup_mode::resident_only,
     } );
 
+    // New submap is at least resident in the column-state cache.
+    column_states_.emplace( p.xy(), submap_column_load_state::resident );
+
     return true;
+}
+
+auto mapbuffer::is_column_state( const point_abs_sm col,
+                                 const submap_column_load_state min_state ) const noexcept -> bool
+{
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    const auto it = column_states_.find( col );
+    return it != column_states_.end() && it->second >= min_state;
+}
+
+void mapbuffer::set_simulated_submaps(
+    const std::unordered_set<point_abs_sm> &columns )
+{
+    auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
+
+    // Walk current column states: demote departed,
+    // promote new arrivals and mark them dirty.
+    for( auto it = column_states_.begin(); it != column_states_.end(); ) {
+        const bool should_be_simulated = columns.contains( it->first );
+        if( should_be_simulated ) {
+            if( it->second == submap_column_load_state::resident ) {
+                // First entry into simulation — mark dirty.
+                it->second = submap_column_load_state::simulated;
+                dirty_columns_.insert( it->first );
+            }
+            ++it;
+        } else {
+            if( it->second == submap_column_load_state::simulated ) {
+                // Leave simulation — stay resident, stay dirty.
+                it->second = submap_column_load_state::resident;
+            }
+            ++it;
+        }
+    }
+
+    // Columns in `columns` but not in column_states_ are theoretical
+    // (simulated implies resident), but handle them defensively.
+    for( const point_abs_sm &col : columns ) {
+        if( !column_states_.contains( col ) ) {
+            column_states_.emplace( col, submap_column_load_state::simulated );
+            dirty_columns_.insert( col );
+        }
+    }
 }
 
 void mapbuffer::remove_submap( tripoint_abs_sm addr )
@@ -1466,11 +1514,31 @@ void mapbuffer::transfer_all_to( mapbuffer &dest )
         }
         dest.submaps.emplace( kv.first, std::move( kv.second ) );
     }
+    // Transfer column state cache entries for each moved submap.
+    for( auto &kv : column_states_ ) {
+        // Only transfer entries whose submap was actually moved.
+        if( submaps.find( tripoint_abs_sm( kv.first, 0 ) ) == submaps.end() ) {
+            continue;
+        }
+        if( dest.column_states_.count( kv.first ) ) {
+            // Destination already tracks this column — keep the higher state.
+            auto &dst = dest.column_states_[kv.first];
+            dst = std::max( dst, kv.second );
+        } else {
+            dest.column_states_.emplace( kv.first, kv.second );
+        }
+        if( dirty_columns_.contains( kv.first ) ) {
+            dest.dirty_columns_.insert( kv.first );
+        }
+    }
+
     loaded_vehicles_.clear();
     vehicle_footprint_by_location_.clear();
     vehicle_footprint_locations_.clear();
     submaps_with_active_items_.clear();
     submaps_with_luminous_items_.clear();
+    column_states_.clear();
+    dirty_columns_.clear();
     submaps.clear();
 }
 
@@ -1481,25 +1549,31 @@ submap *mapbuffer::load_submap( const tripoint_abs_sm &pos )
     return lookup_submap( pos );
 }
 
-void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
+void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr )
 {
     // Hold the mutex for the entire save+erase so that background lazy-border
     // preload_omt() workers (which acquire the mutex per add_submap()) cannot
     // race with our submaps.find()/erase() calls.
     auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
-    std::list<tripoint_abs_sm> to_delete;
-    if( save ) {
-        // Serialise into the pending-writes cache (no disk I/O).  The data will
-        // be flushed to disk on the next explicit save.
-        const auto base = project_to<coords::sm>( omt_addr );
-        const std::array<tripoint_abs_sm, 4> addrs = { {
-                base,
-                base + point_rel_sm::east(),
-                base + point_rel_sm::south(),
-                base + point_rel_sm::south_east()
-            }
-        };
 
+    const auto base = project_to<coords::sm>( omt_addr );
+    const std::array<tripoint_abs_sm, 4> addrs = { {
+            base,
+            base + point_rel_sm::east(),
+            base + point_rel_sm::south(),
+            base + point_rel_sm::south_east()
+        }
+    };
+
+    // Check dirty state: if any of the four column positions was dirty,
+    // serialise the entire OMT into pending_writes before erasing.
+    const bool is_dirty = std::ranges::any_of( addrs, [&]( const tripoint_abs_sm &addr ) {
+        return dirty_columns_.contains( addr.xy() );
+    } );
+
+    std::list<tripoint_abs_sm> to_delete;
+
+    if( is_dirty ) {
         bool all_uniform = true;
         for( const tripoint_abs_sm &addr : addrs ) {
             const auto it = submaps.find( addr );
@@ -1542,13 +1616,13 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
             }
         }
     } else {
-        // Border-only omt: content is identical to what is already on disk.
+        // Not dirty: content is identical to what is already on disk.
         // Skip serialisation; just collect the four submap addresses to discard.
-        const auto base = project_to<coords::sm>( omt_addr );
-        for( const auto &off : { point_rel_sm::zero(), point_rel_sm::south(), point_rel_sm::east(), point_rel_sm::south_east() } ) {
-            to_delete.push_back( base + off );
+        for( const auto &addr : addrs ) {
+            to_delete.push_back( addr );
         }
     }
+
     // Safety: skip freeing submaps that map::grid[] still references.
     // This prevents use-after-free when submap_loader eviction races with
     // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
@@ -1570,9 +1644,13 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
             return false;
         } );
     }
+
     for( const auto &p : to_delete ) {
         unregister_submap_vehicles( p );
         submaps_with_active_items_.erase( p );
+        // Clear column state and dirty flag on eviction.
+        column_states_.erase( p.xy() );
+        dirty_columns_.erase( p.xy() );
         submaps.erase( p );
     }
 }

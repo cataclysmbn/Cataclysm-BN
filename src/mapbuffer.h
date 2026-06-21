@@ -76,6 +76,12 @@ struct mapbuffer_lookup_options {
     mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::simulated_only;
 };
 
+enum class submap_column_load_state : char {
+    resident,   // in submaps map, not receiving per-turn processing
+    simulated,  // resident + receiving per-turn processing
+    // not_loaded is cache absence (find() == end())
+};
+
 struct mapbuffer_valid_move_options {
     bool bash = false;
     bool flying = false;
@@ -460,6 +466,13 @@ class mapbuffer
         auto run_submap_batch_turns( const mapbuffer_run_submap_batch_turns_options &options )
         -> void;
         auto make_abs_tile_reader( mapbuffer_lookup_options options = {} ) -> mapbuffer_abs_tile_reader;
+
+        auto is_column_state( point_abs_sm col,
+                              submap_column_load_state min_state ) const noexcept -> bool;
+
+        auto set_simulated_submaps(
+            const std::unordered_set<point_abs_sm> &columns ) -> void;
+
         auto creature_tracker() -> Creature_tracker &;
         auto creature_tracker() const -> const Creature_tracker &;
         auto add_active_npc( const shared_ptr_fast<npc> &guy ) -> bool;
@@ -748,7 +761,7 @@ class mapbuffer
          *
          * Does nothing for omts that are fully uniform (they regenerate on demand).
          */
-        void unload_omt( const tripoint_abs_omt &omt_addr, bool save = true );
+        void unload_omt( const tripoint_abs_omt &omt_addr );
 
         /**
          * Move all submaps from this buffer into @p dest, leaving this buffer empty.
@@ -909,6 +922,13 @@ class mapbuffer
         auto for_each_simulated_submap_position(
             const std::function<void( const tripoint_abs_sm & )> &fn,
             std::optional<int> zlev = std::nullopt ) const -> void;
+        /// Sparse column-state cache: keys present in this map are at least
+        /// resident.  simulated columns have state == simulated.  Columns not
+        /// in the map are not_loaded.  Guarded by submaps_mutex_ (same as
+        /// submaps).  Written at turn boundaries; read on the hot path.
+        std::unordered_map<point_abs_sm, submap_column_load_state> column_states_;
+        std::unordered_set<point_abs_sm> dirty_columns_;
+
         submap_map_t submaps;
         Creature_tracker creature_tracker_;
         std::list<shared_ptr_fast<npc>> active_npcs_;

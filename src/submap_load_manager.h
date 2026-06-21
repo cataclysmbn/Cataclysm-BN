@@ -389,15 +389,8 @@ class submap_load_manager
         auto process_lazy_border_work() -> void;
         auto process_lazy_border_preload() -> void;
 
-        /**
-         * Omts that have entered the simulated zone at least once since they
-         * were last evicted.  Only dirty omts are written to disk on eviction;
-         * border-only omts loaded from disk are discarded without saving because
-         * their in-memory content is identical to what is already on disk.  Border
-         * omts generated from scratch or restored from pending writes are marked
-         * dirty so eviction preserves that data.
-         */
-        std::unordered_set<omt_column_key, coord_pair_hash<point_abs_omt>> dirty_omts_;
+        // dirty_omts_ removed in Phase 1 — mapbuffer owns dirty tracking
+        // via mapbuffer::dirty_columns_.  See set_simulated_submaps().
 
         /** Snapshot of all request bounds from the previous update().
          *  Used to detect steady-state and skip expensive recomputation. */

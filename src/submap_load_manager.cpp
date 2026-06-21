@@ -341,15 +341,11 @@ auto submap_load_manager::evict_omt_column( const omt_column_key &key ) -> void
 {
     const auto &[dim_id, omt_xy] = key;
     auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
-    const auto was_dirty = dirty_omts_.contains( key );
-    if( was_dirty ) {
-        dirty_omts_.erase( key );
-    }
     std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
     [&]( const auto z ) {
         const auto pos = tripoint_abs_omt{ omt_xy, z };
         finish_lazy_omt_job( omt_key{ dim_id, pos } );
-        mb.unload_omt( pos, was_dirty );
+        mb.unload_omt( pos );
     } );
 }
 
@@ -470,9 +466,6 @@ auto submap_load_manager::apply_lazy_omt_result( const omt_key &key,
         const lazy_omt_load_result &result ) -> bool
 {
     MAPBUFFER_REGISTRY.get( key.first ).drain_pending_submap_destroy();
-    if( result.dirty || result.generated() ) {
-        dirty_omts_.insert( { key.first, key.second.xy() } );
-    }
     return result.generated();
 }
 
@@ -964,11 +957,6 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
         }
     }
 
-    // Mark ALL z-levels for newly-simulated horizontal OMTs as dirty: they
-    // will receive game logic and must be saved to disk when evicted.
-    for( const auto &[dim_id, omt_xy] : new_omts ) {
-        dirty_omts_.insert( { dim_id, omt_xy } );
-    }
 
     // ---- Step 1: parallel disk preload for newly-simulated omts ----
     // preload_omt() is thread-safe (disk I/O outside submaps_mutex_; add
@@ -1063,6 +1051,17 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     {
         ZoneScopedN( "slm_mapgen_hooks_sim" );
         run_deferred_mapgen_hooks_and_omt_post_passes( generated_omt_columns );
+    }
+
+    {
+        ZoneScopedN( "slm_push_simulated_to_mapbuffer" );
+        std::unordered_map<dimension_id, std::unordered_set<point_abs_sm>> by_dim;
+        for( const desired_key &key : simulated ) {
+            by_dim[key.first].insert( key.second );
+        }
+        for( auto &[dim_id, cols] : by_dim ) {
+            MAPBUFFER_REGISTRY.get( dim_id ).set_simulated_submaps( cols );
+        }
     }
 
     // ---- Listener notifications (simulated set only) ----
@@ -1249,7 +1248,6 @@ void submap_load_manager::flush_prev_desired()
     lazy_omt_focus_.reset();
     lazy_omt_budget_credit_ = 0.0;
     lazy_omt_last_credit_turn_ = -1;
-    dirty_omts_.clear();
 }
 
 void submap_load_manager::add_listener( submap_load_listener *listener )

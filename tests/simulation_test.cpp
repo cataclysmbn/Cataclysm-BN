@@ -71,7 +71,7 @@ TEST_CASE( "fire_processes_in_loaded_submap_outside_bubble", "[simulation][field
     REQUIRE( fire != nullptr );
     CHECK( fire->get_field_age() == 1_turns );
 
-    MAPBUFFER.unload_omt( project_to<coords::omt>( FAR_SM_POS ), false );
+    MAPBUFFER.unload_omt( project_to<coords::omt>( FAR_SM_POS ) );
 }
 
 // ── Test 2 ────────────────────────────────────────────────────────────────────
