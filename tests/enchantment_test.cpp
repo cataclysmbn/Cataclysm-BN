@@ -1012,6 +1012,10 @@ TEST_CASE( "Enchantment Cancels Flags", "[magic][enchantment][flags]" )
 }
 TEST_CASE( "Skill enchantments", "[magic][enchantment][skill]" )
 {
+    clear_all_state();
+    Character &guy = get_player_character();
+    clear_character( *guy.as_player(), true );
+
     REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 0 );
 
     SECTION( "One barter skill enchantment item" ) {
