@@ -167,7 +167,7 @@ bool is_valid_in_w_terrain( point p );
 // There is only one game instance, so losing a few bytes of memory
 // due to padding is not much of a concern.
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
-class game : public submap_load_listener
+class game
 {
         friend class editmap;
         friend class advanced_inventory;
@@ -186,10 +186,7 @@ class game : public submap_load_listener
         game();
         ~game();
 
-        // submap_load_listener interface
-        auto on_submap_loaded( const tripoint_abs_sm &pos, const dimension_id &dim_id ) -> void override;
-        auto on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const dimension_id &dim_id ) -> void override;
+
 
         /** Loads static data that does not depend on mods or similar. */
         void load_static_data();
@@ -617,6 +614,10 @@ class game : public submap_load_listener
     public:
         /** Unloads, then loads the NPCs */
         void reload_npcs();
+        /** Evict NPCs and monsters whose submap left the simulated set.
+         *  Consults mapbuffer::get_last_demoted_columns().
+         *  Call after submap_loader.update() in the main game loop. */
+        void evict_creatures_on_demoted_submaps();
         /** Immediately removes NPC with the given id from active_npc. */
         void erase_npc( character_id id );
         /** True while npcmove() or sleep_skip_npc_process() is iterating active_npc. */

@@ -724,7 +724,7 @@ struct sound_cache {
  * When the player moves between submaps, the whole map is shifted, so that if the player moves one submap to the right,
  * (0, 0) now points to a tile one submap to the right from before
  */
-class map : public submap_load_listener
+class map
 {
         friend class editmap;
         friend class mapbuffer;
@@ -785,11 +785,7 @@ class map : public submap_load_listener
          */
         bool contains_abs_sm( const tripoint_abs_sm &p ) const;
 
-        // submap_load_listener implementation
-        void on_submap_loaded( const tripoint_abs_sm &pos,
-                               const dimension_id &dim_id ) override;
-        void on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const dimension_id &dim_id ) override;
+
 
         /**
          * Sets a dirty flag on the a given cache.

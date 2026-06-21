@@ -437,6 +437,21 @@ class mapbuffer
             const std::unordered_set<point_abs_sm> &columns ) -> void;
 
         /**
+         * Return the columns that were demoted from simulated to resident in the
+         * most recent set_simulated_submaps() call.  The game loop should process
+         * these (e.g. deactivate NPCs, despawn monsters) and then call
+         * clear_last_demoted_columns().
+         */
+        auto get_last_demoted_columns() const -> const std::vector<point_abs_sm> & {
+            return last_demoted_columns_;
+        }
+
+        /** Clear the demoted-column tracking after the game loop processes it. */
+        void clear_last_demoted_columns() {
+            last_demoted_columns_.clear();
+        }
+
+        /**
          * Iterate every tile in @p sm (at absolute position @p abs_sm),
          * constructing an abs_tile_handle for each and calling @p fn.
          * Vehicle data is included in the handle by default.
@@ -908,6 +923,8 @@ class mapbuffer
         /// submaps).  Written at turn boundaries; read on the hot path.
         std::unordered_map<point_abs_sm, submap_column_load_state> column_states_;
         std::unordered_set<point_abs_sm> dirty_columns_;
+        /** Columns demoted from simulated to resident in the last set_simulated_submaps() call. */
+        std::vector<point_abs_sm> last_demoted_columns_;
 
         submap_map_t submaps;
         Creature_tracker creature_tracker_;

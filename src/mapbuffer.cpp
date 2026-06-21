@@ -1347,6 +1347,13 @@ void mapbuffer::set_simulated_submaps(
 {
     auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
 
+    // First pass: collect transitions for bookkeeping below.
+    // newly_simulated: columns that just entered simulation.
+    // last_demoted_columns_: columns that just left simulation
+    // (consumed by the game loop for NPC/monster eviction).
+    std::vector<point_abs_sm> newly_simulated;
+    last_demoted_columns_.clear();
+
     // Walk current column states: demote departed,
     // promote new arrivals and mark them dirty.
     for( auto it = column_states_.begin(); it != column_states_.end(); ) {
@@ -1356,12 +1363,14 @@ void mapbuffer::set_simulated_submaps(
                 // First entry into simulation — mark dirty.
                 it->second = submap_column_load_state::simulated;
                 dirty_columns_.insert( it->first );
+                newly_simulated.push_back( it->first );
             }
             ++it;
         } else {
             if( it->second == submap_column_load_state::simulated ) {
                 // Leave simulation — stay resident, stay dirty.
                 it->second = submap_column_load_state::resident;
+                last_demoted_columns_.push_back( it->first );
             }
             ++it;
         }
@@ -1373,6 +1382,35 @@ void mapbuffer::set_simulated_submaps(
         if( !column_states_.contains( col ) ) {
             column_states_.emplace( col, submap_column_load_state::simulated );
             dirty_columns_.insert( col );
+            newly_simulated.push_back( col );
+        }
+    }
+
+    // For newly-simulated columns: refresh vehicle registry and active item
+    // index for every z-level so they are immediately queryable.
+    for( const point_abs_sm &col : newly_simulated ) {
+        for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+            const tripoint_abs_sm sm_pos{ col, z };
+            if( submaps.contains( sm_pos ) ) {
+                refresh_vehicle_registry_for_submap( sm_pos, {
+                    .mode = mapbuffer_lookup_mode::resident_only,
+                } );
+                refresh_active_item_submap_index( sm_pos, mapbuffer_lookup_options{
+                    .mode = mapbuffer_lookup_mode::resident_only,
+                } );
+            }
+        }
+    }
+
+    // For newly-demoted columns: stamp last_touched so actualize() computes
+    // the correct time-since-simulated on the next load.
+    for( const point_abs_sm &col : last_demoted_columns_ ) {
+        for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+            const tripoint_abs_sm sm_pos{ col, z };
+            const auto it = submaps.find( sm_pos );
+            if( it != submaps.end() && it->second ) {
+                it->second->last_touched = calendar::turn;
+            }
         }
     }
 }

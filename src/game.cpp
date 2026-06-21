@@ -493,8 +493,6 @@ game::game() :
     // are constructed lazily on first use.
     grid_trackers_[dimension_id()] = std::make_unique<distribution_grid_tracker>( MAPBUFFER,
                                      dimension_id() );
-    submap_loader.add_listener( grid_trackers_[dimension_id()].get() );
-
     first_redraw_since_waiting_started = true;
     reset_light_level();
     events().subscribe( &*kill_tracker_ptr );
@@ -791,7 +789,7 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
     const auto old_dim_id = m.get_bound_dimension();
 
     // If the dimension has changed, release the old reality-bubble request and
-    // flush prev_desired_ so update() does not evict freshly-generated submaps
+    // flush cached state so update() does not evict freshly-generated submaps
     // for the new dimension (use-after-free via stale m.grid pointers).
     if( m.has_active_load_region() && new_dim_id != old_dim_id ) {
         // Drain any in-flight submap load-manager tasks for the old dimension before
@@ -822,7 +820,6 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
         if( grid_trackers_.find( new_dim_id ) == grid_trackers_.end() ) {
             grid_trackers_[new_dim_id] = std::make_unique<distribution_grid_tracker>(
                                              MAPBUFFER_REGISTRY.get( new_dim_id ), new_dim_id );
-            submap_loader.add_listener( grid_trackers_[new_dim_id].get() );
         }
         auto &tracker = *grid_trackers_[new_dim_id];
         tracker.clear();
@@ -835,11 +832,8 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
 
     fluid_grid::load( m );
 
-    // Register game and map as listeners (add_listener is idempotent).
-    // game must be added before map so that on_submap_unloaded deactivates
-    // entities before the map's listener clears cached submap pointers.
-    submap_loader.add_listener( this );
-    submap_loader.add_listener( &m );
+    // NPC loading is triggered after submap_loader.update() in the game loop
+    // so that entities are registered for newly-simulated submaps.
 
     const auto bubble_begin = pos_sm;
     const auto bubble_end = bubble_begin + point_rel_sm( g_mapsize, g_mapsize );
@@ -859,7 +853,6 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
     // Destroy trackers for non-primary dimensions that have no remaining tracked submaps.
     for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
         if( !it->first.is_empty() && !it->second->has_tracked_submaps() ) {
-            submap_loader.remove_listener( it->second.get() );
             it = grid_trackers_.erase( it );
         } else {
             ++it;
@@ -1417,52 +1410,7 @@ void game::unload_npcs()
     active_npc.clear();
 }
 
-void game::on_submap_loaded( const tripoint_abs_sm &/*pos*/,
-                             const dimension_id &/*dim_id*/ )
-{
-    // Schedule an NPC activation scan on the next do_turn().  Any NPCs whose
-    // authoritative submap position falls within the newly-simulated submap
-    // will be placed on the map by load_npcs().  This covers both reality-bubble
-    // entries and non-bubble requests (fire_spread, player_base, script).
-    set_npcs_dirty();
-}
 
-void game::on_submap_unloaded( const tripoint_abs_sm &pos,
-                               const dimension_id &dim_id )
-{
-    // Deactivate any NPCs whose absolute position falls in the evicted submap.
-    // abs_pos() returns position directly (no map lookup), so this is safe to call here.
-    auto in_evicted = [&pos, &dim_id]( const shared_ptr_fast<npc> &n ) {
-        if( n->get_dimension() != dim_id ) {
-            return false;
-        }
-        const auto sm = project_to<coords::sm>( n->abs_pos() );
-        return sm.x() == pos.x() && sm.y() == pos.y() && sm.z() == pos.z();
-    };
-    std::ranges::for_each( active_npc | std::views::filter( in_evicted ),
-    []( const shared_ptr_fast<npc> &n ) {
-        n->get_mapbuffer().remove_active_npc( *n );
-        n->on_unload();
-    } );
-    std::erase_if( active_npc, in_evicted );
-
-    // Evict monsters whose absolute submap position matches the unloaded submap.
-    auto *const buffer = MAPBUFFER_REGISTRY.find( dim_id );
-    if( buffer == nullptr ) {
-        return;
-    }
-    const auto monster_refs = buffer->creature_tracker().get_monsters_list();
-    for( const shared_ptr_fast<monster> &critter_ptr : monster_refs ) {
-        if( !critter_ptr || critter_ptr->is_dead() ) {
-            continue;
-        }
-        monster &critter = *critter_ptr;
-        const auto sm = project_to<coords::sm>( critter.abs_pos() );
-        if( sm == pos ) {
-            despawn_monster( critter );
-        }
-    }
-}
 
 void game::reload_npcs()
 {
@@ -1474,6 +1422,55 @@ void game::reload_npcs()
     //needs to have all npcs loaded
     for( Character &guy : all_npcs() ) {
         guy.activity->init_all_moves( guy );
+    }
+}
+
+void game::evict_creatures_on_demoted_submaps()
+{
+    // Collect demoted columns from every active dimension's mapbuffer.
+    // Demoted columns are those that left the simulated set on the most
+    // recent submap_loader.update() call.
+    for( const dimension_id &dim_id : submap_loader.active_dimensions() ) {
+        mapbuffer *mb = MAPBUFFER_REGISTRY.find( dim_id );
+        if( mb == nullptr ) { continue; }
+        const auto &demoted = mb->get_last_demoted_columns();
+        if( demoted.empty() ) { continue; }
+
+        // Deactivate NPCs whose absolute submap position matches any demoted column.
+        for( const point_abs_sm &col : demoted ) {
+            for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+                const tripoint_abs_sm sm_pos{ col, z };
+                auto in_evicted = [&sm_pos, &dim_id]( const shared_ptr_fast<npc> &n ) {
+                    if( n->get_dimension() != dim_id ) {
+                        return false;
+                    }
+                    const auto sm = project_to<coords::sm>( n->abs_pos() );
+                    return sm == sm_pos;
+                };
+                std::ranges::for_each(
+                    active_npc | std::views::filter( in_evicted ),
+                []( const shared_ptr_fast<npc> &n ) {
+                    n->get_mapbuffer().remove_active_npc( *n );
+                    n->on_unload();
+                } );
+                std::erase_if( active_npc, in_evicted );
+
+                // Despawn monsters whose absolute submap position matches.
+                const auto monster_refs = mb->creature_tracker().get_monsters_list();
+                for( const shared_ptr_fast<monster> &critter_ptr : monster_refs ) {
+                    if( !critter_ptr || critter_ptr->is_dead() ) {
+                        continue;
+                    }
+                    monster &critter = *critter_ptr;
+                    const auto sm = project_to<coords::sm>( critter.abs_pos() );
+                    if( sm == sm_pos ) {
+                        despawn_monster( critter );
+                    }
+                }
+            }
+        }
+
+        mb->clear_last_demoted_columns();
     }
 }
 
@@ -2402,12 +2399,15 @@ bool game::do_turn()
         ZoneScopedN( "do_turn_submap_loader_update" );
         submap_loader.update( is_draw_tiles_mode() );
     }
+    // Evict NPCs and monsters whose submaps left the simulated set.
+    evict_creatures_on_demoted_submaps();
+    // Ensure NPCs are loaded for newly-simulated submaps.
+    set_npcs_dirty();
     // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
     {
         ZoneScopedN( "do_turn_cleanup_distribution_trackers" );
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
             if( !it->first.is_empty() && !it->second->has_tracked_submaps() ) {
-                submap_loader.remove_listener( it->second.get() );
                 it = grid_trackers_.erase( it );
             } else {
                 ++it;
@@ -15112,10 +15112,13 @@ auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
         }
         submap_loader.update_lazy_border_focus( m.get_bound_dimension(), u.abs_pos() );
         submap_loader.update( is_draw_tiles_mode() );
+        // Evict NPCs and monsters whose submaps left the simulated set.
+        evict_creatures_on_demoted_submaps();
+        // Ensure NPCs are loaded for newly-simulated submaps.
+        set_npcs_dirty();
         // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
             if( !it->first.is_empty() && !it->second->has_tracked_submaps() ) {
-                submap_loader.remove_listener( it->second.get() );
                 it = grid_trackers_.erase( it );
             } else {
                 ++it;
@@ -16602,8 +16605,7 @@ auto ensure_distribution_grid_tracker_for(
     g->grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
                                     MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
     auto &tracker = *g->grid_trackers_[dim_id];
-    submap_loader.add_listener( &tracker );
-    // Replay on_submap_loaded for all currently-resident submaps of this
+    // Populate the tracker for all currently-resident submaps of this
     // dimension so the new tracker picks up existing grid_link_tile nodes.
     for( auto &[raw_pos, sm_ptr] : MAPBUFFER_REGISTRY.get( dim_id ) ) {
         if( sm_ptr ) {

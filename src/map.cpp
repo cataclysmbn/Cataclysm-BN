@@ -588,60 +588,6 @@ bool map::contains_abs_sm( const tripoint_abs_sm &p ) const
     return p.z() >= -OVERMAP_DEPTH && p.z() <= OVERMAP_HEIGHT;
 }
 
-void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id )
-{
-    if( dim_id != bound_dimension_ ) {
-        return;
-    }
-
-    // Submap lookup shared by vehicle fixup, active-item tracking, and cache update.
-    submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
-
-    if( sm != nullptr && !sm->vehicles.empty() ) {
-        MAPBUFFER_REGISTRY.get( dim_id ).refresh_vehicle_registry_for_submap( p, {
-            .mode = mapbuffer_lookup_mode::resident_only,
-        } );
-    }
-
-    get_mapbuffer().refresh_active_item_submap_index( p, resident_item_lookup() );
-
-    // Register any funnel traps so fill_water_collectors can skip the mapbuffer scan.
-    if( sm != nullptr && !sm->trap_cache.empty() ) {
-        std::ranges::for_each( sm->trap_cache, [&]( const point_sm_ms & lp ) {
-            if( sm->get_trap( lp ).obj().is_funnel() ) {
-                funnel_locations_.emplace_back( p, lp );
-            }
-        } );
-    }
-
-}
-
-void map::on_submap_unloaded( const tripoint_abs_sm &pos, const dimension_id &dim_id )
-{
-    if( dim_id != bound_dimension_ ) {
-        return;
-    }
-
-    // Stamp the departure time so actualize() computes the correct time-since-simulated
-    // on the next load.  Only meaningful for submaps that were actually simulated;
-    // border-preloaded submaps that were never in the simulation set should not be
-    // touched (their last_touched reflects their real generate-or-load time).
-    if( submap_loader.is_in_simulated_set( dim_id, pos ) ) {
-        submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( pos );
-        if( sm ) {
-            sm->last_touched = calendar::turn;
-        }
-    }
-
-    // Stop tracking active items for this submap.
-    get_mapbuffer().forget_active_item_submap_index( pos );
-
-    // Remove any funnel locations belonging to this submap.
-    std::erase_if( funnel_locations_, [&]( const auto & e ) {
-        return e.first == pos;
-    } );
-
-}
 
 void map::set_transparency_cache_dirty( const int zlev )
 {
