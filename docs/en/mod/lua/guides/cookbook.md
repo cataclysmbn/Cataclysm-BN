@@ -177,14 +177,15 @@ already exists, you can re-enter it with only `dimension_id` and `target_omt`.
 
 ```lua
 local home_dimension = "sky_island_home"
-local home_omt = coords.tripoint_abs_omt(0, 0, 0)
+local home_omt = gapi.get_avatar():abs_pos():to_omt()
+local home_bounds_radius = coords.tripoint_rel_omt(2, 2, 0)
 
 local entered = gapi.place_player_dimension_at({
   dimension_id = home_dimension,
   target_omt = home_omt,
   world_type = "pocket_dimension",
-  bounds_min_omt = coords.tripoint_abs_omt(-2, -2, 0),
-  bounds_max_omt = coords.tripoint_abs_omt(2, 2, 0),
+  bounds_min_omt = home_omt - home_bounds_radius,
+  bounds_max_omt = home_omt + home_bounds_radius,
   boundary_terrain = "t_pd_border",
   boundary_overmap_terrain = "pd_border",
 })
