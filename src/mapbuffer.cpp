@@ -991,6 +991,167 @@ const -> std::optional<mapbuffer_abs_submap_view>
     return mapbuffer_abs_submap_view( project_combine( abs_omt_, local ), *submaps_[*index] );
 }
 
+// ==========================================================================
+// abs_tile_handle — absolute tile handle with embedded vehicle data
+// ==========================================================================
+
+abs_tile_handle::abs_tile_handle( const submap &sm, tripoint_abs_sm abs_sm,
+                                  point_sm_ms local ) :
+    sm_( &sm ),
+    abs_sm_( abs_sm ),
+    local_( local ),
+    veh_part_( std::optional<vpart_position>() )
+{
+}
+
+abs_tile_handle::abs_tile_handle( const submap &sm, tripoint_abs_sm abs_sm,
+                                  point_sm_ms local,
+                                  optional_vpart_position veh_part ) :
+    sm_( &sm ),
+    abs_sm_( abs_sm ),
+    local_( local ),
+    veh_part_( std::move( veh_part ) )
+{
+}
+
+abs_tile_handle::operator bool() const
+{
+    return sm_ != nullptr;
+}
+
+auto abs_tile_handle::abs_pos() const -> tripoint_abs_ms
+{
+    return project_combine( abs_sm_, local_ );
+}
+
+auto abs_tile_handle::abs_submap_pos() const -> tripoint_abs_sm
+{
+    return abs_sm_;
+}
+
+auto abs_tile_handle::submap_pos() const -> point_sm_ms
+{
+    return local_;
+}
+
+auto abs_tile_handle::ter() const -> ter_id
+{
+    return sm_->get_ter( local_ );
+}
+
+auto abs_tile_handle::furn() const -> furn_id
+{
+    return sm_->get_furn( local_ );
+}
+
+::trap_id abs_tile_handle::trap_id() const
+{
+    return sm_->get_trap( local_ );
+}
+
+auto abs_tile_handle::ter_obj() const -> const ter_t &
+{
+    return ter().obj();
+}
+
+auto abs_tile_handle::furn_obj() const -> const furn_t &
+{
+    return furn().obj();
+}
+
+auto abs_tile_handle::trap_obj() const -> const trap &
+{
+    return trap_id().obj();
+}
+
+auto abs_tile_handle::field() const -> const class field &
+{
+    return sm_->get_field( local_ );
+}
+
+auto abs_tile_handle::items() const -> const location_vector<item> &
+{
+    return sm_->get_items( local_ );
+}
+
+auto abs_tile_handle::furn_vars() const -> const data_vars::data_set &
+{
+    return sm_->get_furn_vars( local_ );
+}
+
+auto abs_tile_handle::radiation() const -> int
+{
+    return sm_->get_radiation( local_ );
+}
+
+auto abs_tile_handle::lum() const -> std::uint8_t
+{
+    return sm_->get_lum( local_ );
+}
+
+auto abs_tile_handle::move_cost() const -> int
+{
+    return move_cost_from_tile_parts( ter(), furn(), veh_part_ );
+}
+
+auto abs_tile_handle::passable() const -> bool
+{
+    return move_cost() != 0;
+}
+
+auto abs_tile_handle::vehicle_part() const -> const optional_vpart_position &
+{
+    return veh_part_;
+}
+
+auto abs_tile_handle::fetch( mapbuffer &buf, const tripoint_abs_ms p )
+-> std::optional<abs_tile_handle>
+{
+    const auto split = project_remain<coords::sm>( p );
+    auto *const sm = buf.lookup_submap_in_memory( split.quotient_tripoint );
+    if( sm == nullptr ) {
+        return std::nullopt;
+    }
+    return abs_tile_handle( *sm, split.quotient_tripoint, split.remainder,
+                            buf.vehicle_part_at_loaded_tile( p ) );
+}
+
+auto abs_tile_handle::fetch_terrain_only( mapbuffer &buf, const tripoint_abs_ms p )
+-> std::optional<abs_tile_handle>
+{
+    const auto split = project_remain<coords::sm>( p );
+    auto *const sm = buf.lookup_submap_in_memory( split.quotient_tripoint );
+    if( sm == nullptr ) {
+        return std::nullopt;
+    }
+    return abs_tile_handle( *sm, split.quotient_tripoint, split.remainder );
+}
+
+auto mapbuffer::for_each_submap_tile(
+    const submap &sm, tripoint_abs_sm abs_sm,
+    const std::function<void( const abs_tile_handle & )> &fn ) -> void
+{
+    for( const point_sm_ms &local : submap_tiles() ) {
+        fn( abs_tile_handle( sm, abs_sm, local,
+                             vehicle_part_at_loaded_tile( project_combine( abs_sm, local ) ) ) );
+    }
+}
+
+auto mapbuffer::for_each_simulated_tile(
+    const int zlev,
+    const std::function<void( const abs_tile_handle & )> &fn ) -> void
+{
+    for_each_simulated_submap( [&]( const tripoint_abs_sm &abs_sm, submap &sm ) {
+        if( abs_sm.z() != zlev ) {
+            return;
+        }
+        for( const point_sm_ms &local : submap_tiles() ) {
+            fn( abs_tile_handle( sm, abs_sm, local,
+                                 vehicle_part_at_loaded_tile( project_combine( abs_sm, local ) ) ) );
+        }
+    } );
+}
+
 mapbuffer_bounds_view::mapbuffer_bounds_view( mapbuffer &buffer,
         const point_abs_sm &begin,
         const point_abs_sm &end,
@@ -2326,7 +2487,7 @@ auto mapbuffer::vehicle_part_at_loaded_tile( const tripoint_abs_ms &p ) -> optio
 auto mapbuffer::move_cost( const tripoint_abs_ms &p,
                            const mapbuffer_lookup_options options ) -> std::optional<int>
 {
-    const auto tile = get_abs_tile_with_vehicle( p, options );
+    const auto tile = abs_tile_handle::fetch( *this, p );
     if( !tile ) {
         return std::nullopt;
     }
@@ -2337,7 +2498,7 @@ auto mapbuffer::move_cost( const tripoint_abs_ms &p,
 auto mapbuffer::passable( const tripoint_abs_ms &p,
                           const mapbuffer_lookup_options options ) -> std::optional<bool>
 {
-    const auto tile = get_abs_tile_with_vehicle( p, options );
+    const auto tile = abs_tile_handle::fetch( *this, p );
     if( !tile ) {
         return std::nullopt;
     }
@@ -2354,10 +2515,8 @@ auto mapbuffer::valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &
         return false;
     }
 
-    const auto tile_reader = make_abs_tile_reader( options.lookup );
-
     if( from.z() == to.z() ) {
-        const auto target_tile = tile_reader.get_tile_with_vehicle( to );
+        const auto target_tile = abs_tile_handle::fetch( *this, to );
         if( !target_tile ) {
             return false;
         }
@@ -2371,27 +2530,27 @@ auto mapbuffer::valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &
     const auto up_p = going_up ? to : from;
     const auto down_p = going_up ? from : to;
 
-    const auto up_tile = tile_reader.get_tile( up_p );
+    const auto up_tile = abs_tile_handle::fetch_terrain_only( *this, up_p );
     if( !up_tile ) {
         return false;
     }
-    const auto &up_ter = up_tile->get_ter_t();
+    const auto &up_ter = up_tile->ter_obj();
     if( up_ter.id.is_null() ) {
         return false;
     }
-    const auto &up_furn = up_tile->get_furn_t();
-    const auto up_trap_id = up_tile->get_trap();
+    const auto &up_furn = up_tile->furn_obj();
+    const auto up_trap_id = up_tile->trap_id();
     const auto up_is_ledge = up_ter.trap == tr_ledge || up_trap_id == tr_ledge;
 
     if( up_ter.movecost == 0 ) {
         return false;
     }
 
-    const auto down_tile = tile_reader.get_tile( down_p );
+    const auto down_tile = abs_tile_handle::fetch_terrain_only( *this, down_p );
     if( !down_tile ) {
         return false;
     }
-    const auto &down_ter = down_tile->get_ter_t();
+    const auto &down_ter = down_tile->ter_obj();
     if( down_ter.id.is_null() ) {
         return false;
     }
@@ -2439,12 +2598,12 @@ auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
         return std::nullopt;
     }
 
-    const auto center_tile = get_abs_tile( p, options );
+    const auto center_tile = abs_tile_handle::fetch_terrain_only( *this, p );
     if( !center_tile ) {
         return std::nullopt;
     }
-    const auto has_flag = []( const mapbuffer_abs_tile_view & tile, const auto & flag ) {
-        return tile.get_ter_t().has_flag( flag ) || tile.get_furn_t().has_flag( flag );
+    const auto has_flag = []( const abs_tile_handle & tile, const auto & flag ) {
+        return tile.ter_obj().has_flag( flag ) || tile.furn_obj().has_flag( flag );
     };
 
     auto best_difficulty = std::numeric_limits<int>::max();
@@ -2459,15 +2618,15 @@ auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
     }
 
     for( const auto &pt : points_in_radius( p, 1 ) ) {
-        const auto tile = get_abs_tile_with_vehicle( pt, options );
-        if( !tile || !tile->tile().passable_ter_furn() ) {
+        const auto tile = abs_tile_handle::fetch( *this, pt );
+        if( !tile || !tile->passable() ) {
             best_difficulty = std::min( best_difficulty, 10 );
             blocks_movement++;
         } else if( tile->vehicle_part() ) {
             best_difficulty = std::min( best_difficulty, 7 );
         }
 
-        if( best_difficulty > 5 && tile && has_flag( tile->tile(), "CLIMBABLE" ) ) {
+        if( best_difficulty > 5 && tile && has_flag( *tile, "CLIMBABLE" ) ) {
             best_difficulty = 5;
         }
     }
@@ -2505,11 +2664,11 @@ auto mapbuffer::has_flag_vpart( const std::string &flag, const tripoint_abs_ms &
 auto mapbuffer::has_flag_furn_or_vpart( const std::string &flag, const tripoint_abs_ms &p,
                                         const mapbuffer_lookup_options options ) -> bool
 {
-    const auto tile = get_abs_tile( p, options );
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
     if( !tile ) {
         return false;
     }
-    if( tile->get_furn_t().has_flag( flag ) ) {
+    if( tile->furn_obj().has_flag( flag ) ) {
         return true;
     }
     return static_cast<bool>( vehicle_part_at_loaded_tile( p ).part_with_feature( flag, true ) );
@@ -2639,14 +2798,14 @@ auto mapbuffer::set_trap( const tripoint_abs_ms &p, const trap_id trap,
 auto mapbuffer::creature_on_trap( Creature &critter, const bool may_avoid ) -> void
 {
     const auto pos = critter.abs_pos();
-    const auto tile = get_abs_tile( pos );
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, pos );
     if( !tile ) {
         return;
     }
 
-    auto trap_here = tile->get_ter_t().trap;
+    auto trap_here = tile->ter_obj().trap;
     if( trap_here == tr_null ) {
-        trap_here = tile->get_trap();
+        trap_here = tile->trap_id();
     }
 
     const auto &tr = trap_here.obj();

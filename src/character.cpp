@@ -11471,10 +11471,10 @@ void Character::place_corpse( const tripoint_abs_omt &om_target )
     // Q: Why use furn_str_id instead of f_null?
     // TODO: fix it, see above.
 
-    if( !sm.tile( sm_ms ).passable_ter_furn() ) {
+    if( !abs_tile_handle( sm.get_submap(), sm.abs_pos(), sm_ms ).passable() ) {
         for( int i = 0; i < 32; i++ ) {
-            sm_ms = random_entry( sm.tiles() );
-            if( sm.tile( sm_ms ).passable_ter_furn() ) {
+            sm_ms = random_entry( submap_tiles() );
+            if( abs_tile_handle( sm.get_submap(), sm.abs_pos(), sm_ms ).passable() ) {
                 break;
             }
         }

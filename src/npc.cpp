@@ -3049,9 +3049,9 @@ void npc::on_load()
 
     auto &buffer = get_mapbuffer();
     const auto pos = abs_pos();
-    const auto tile = buffer.get_abs_tile( pos );
-    const auto unstable = tile && ( tile->get_ter_t().has_flag( "UNSTABLE" ) ||
-                                    tile->get_furn_t().has_flag( "UNSTABLE" ) );
+    const auto tile = abs_tile_handle::fetch_terrain_only( buffer, pos );
+    const auto unstable = tile && ( tile->ter_obj().has_flag( "UNSTABLE" ) ||
+                                    tile->furn_obj().has_flag( "UNSTABLE" ) );
 
     // for spawned npcs
     if( unstable ) {

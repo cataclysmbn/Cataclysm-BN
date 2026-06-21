@@ -5604,17 +5604,16 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
         get_map().unboard_vehicle( p.bub_pos() );
     }
     auto &buffer = p.get_mapbuffer();
-    const auto tile_reader = buffer.make_abs_tile_reader();
-    const auto player_tile = tile_reader.get_tile( p.abs_pos() );
-    if( player_tile && player_tile->get_ter() == t_open_air &&
+    const auto player_tile = abs_tile_handle::fetch_terrain_only( buffer, p.abs_pos() );
+    if( player_tile && player_tile->ter() == t_open_air &&
         !character_funcs::can_fly( p ) ) {
         auto where = p.abs_pos();
         auto below = where + tripoint_rel_ms::below();
 
         // Keep going down until we find a tile that is NOT open air
         while( true ) {
-            const auto below_tile = tile_reader.get_tile( below );
-            if( !below_tile || below_tile->get_ter() != t_open_air ||
+            const auto below_tile = abs_tile_handle::fetch_terrain_only( buffer, below );
+            if( !below_tile || below_tile->ter() != t_open_air ||
                 !buffer.valid_move( where, below, { .flying = true } ) ) {
                 break;
             }
@@ -5637,10 +5636,10 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
     //if the tile below has a grappling hook, you can pull it up
     auto below_rope = examp;
     below_rope.z()--;
-    const auto below_rope_tile = tile_reader.get_tile( below_rope );
+    const auto below_rope_tile = abs_tile_handle::fetch_terrain_only( buffer, below_rope );
     std::optional<std::string> below_rope_name;
-    if( below_rope_tile && below_rope_tile->get_furn_t().has_flag( "REMOVE_FROM_ABOVE" ) ) {
-        below_rope_name = below_rope_tile->get_furn().obj().name();
+    if( below_rope_tile && below_rope_tile->furn_obj().has_flag( "REMOVE_FROM_ABOVE" ) ) {
+        below_rope_name = below_rope_tile->furn_obj().name();
         cmenu.addentry( ledge_action::pull_up_rope, true, 'r', _( "Pull up the %s." ),
                         *below_rope_name );
     }
@@ -5662,8 +5661,8 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
             } else if( const auto blocking_creature = buffer.creature_at( dest ) ) {
                 add_msg( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
                          blocking_creature->disp_name() );
-            } else if( const auto dest_tile = tile_reader.get_tile( dest );
-                       dest_tile && dest_tile->get_ter_t().trap == tr_ledge ) {
+            } else if( const auto dest_tile = abs_tile_handle::fetch_terrain_only( buffer, dest );
+                       dest_tile && dest_tile->ter_obj().trap == tr_ledge ) {
                 add_msg( m_warning, _( "You are not going to jump over an obstacle only to fall down." ) );
             } else {
                 add_msg( m_info, _( "You jump over an obstacle." ) );
@@ -5772,8 +5771,8 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
             auto success = false;
             for( const auto i : std::views::iota( 2, range + 1 ) ) {
                 //break at the first non empty space encountered
-                const auto tile = tile_reader.get_tile( p.abs_pos() + dir * i );
-                if( !tile || tile->get_ter() != t_open_air ) {
+                const auto tile = abs_tile_handle::fetch_terrain_only( buffer, p.abs_pos() + dir * i );
+                if( !tile || tile->ter() != t_open_air ) {
                     success_range = i;
                     success = true;
                     break;

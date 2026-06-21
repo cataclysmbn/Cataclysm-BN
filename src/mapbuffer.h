@@ -317,6 +317,74 @@ class mapbuffer_bounds_view
         std::vector<const submap *> indexed_submaps_;
 };
 
+/**
+ * Lightweight absolute-tile handle that embeds vehicle data by default.
+ *
+ * Two-tier access pattern:
+ *   1. Gate: is_column_state(col, simulated) — cheap rejection
+ *   2. Fetch: abs_tile_handle::fetch(buf, p) — one hash lookup
+ *
+ * For hot iteration over all tiles in a submap:
+ *   sm.for_each_tile(abs_sm, [](const abs_tile_handle &h) { ... });
+ */
+class abs_tile_handle
+{
+    public:
+        abs_tile_handle() = default;
+
+        /// Construct from already-retrieved submap (hot path — zero map lookups).
+        /// No vehicle data.
+        abs_tile_handle( const submap &sm, tripoint_abs_sm abs_sm, point_sm_ms local );
+        /// Construct with vehicle data.
+        abs_tile_handle( const submap &sm, tripoint_abs_sm abs_sm, point_sm_ms local,
+                         optional_vpart_position veh_part );
+
+        explicit operator bool() const;
+
+        auto abs_pos() const -> tripoint_abs_ms;
+        auto abs_submap_pos() const -> tripoint_abs_sm;
+        auto submap_pos() const -> point_sm_ms;
+
+        auto ter()     const -> ter_id;
+        auto furn()    const -> furn_id;
+        ::trap_id trap_id() const;
+        auto ter_obj()   const -> const ter_t &;
+        auto furn_obj()  const -> const furn_t &;
+        auto trap_obj()  const -> const class trap &;
+        auto field()   const -> const class field &;
+        auto items()   const -> const location_vector<item> &;
+        auto furn_vars() const -> const data_vars::data_set &;
+        auto radiation() const -> int;
+        auto lum()     const -> std::uint8_t;
+
+        /// Move cost including both terrain/furniture and vehicle.
+        auto move_cost() const -> int;
+        /// True if move_cost() != 0.
+        auto passable() const -> bool;
+
+        auto vehicle_part() const -> const optional_vpart_position &;
+
+        /**
+         * Fetch a handle from mapbuffer by absolute position.
+         * One hash lookup for the submap, plus one for the vehicle footprint.
+         */
+        static auto fetch( mapbuffer &buf, tripoint_abs_ms p )
+        -> std::optional<abs_tile_handle>;
+
+        /**
+         * Same as fetch() but skips the vehicle-footprint lookup.
+         * Use only when vehicle data is known to be irrelevant.
+         */
+        static auto fetch_terrain_only( mapbuffer &buf, tripoint_abs_ms p )
+        -> std::optional<abs_tile_handle>;
+
+    private:
+        const submap *sm_ = nullptr;
+        tripoint_abs_sm abs_sm_;
+        point_sm_ms local_;
+        optional_vpart_position veh_part_;
+};
+
 class mapbuffer_load_region
 {
     public:
@@ -394,6 +462,7 @@ class mapbuffer_abs_tile_reader
  */
 class mapbuffer
 {
+        friend class abs_tile_handle;
     public:
         mapbuffer();
         ~mapbuffer();
@@ -472,6 +541,23 @@ class mapbuffer
 
         auto set_simulated_submaps(
             const std::unordered_set<point_abs_sm> &columns ) -> void;
+
+        /**
+         * Iterate every tile in @p sm (at absolute position @p abs_sm),
+         * constructing an abs_tile_handle for each and calling @p fn.
+         * Vehicle data is included in the handle by default.
+         */
+        auto for_each_submap_tile(
+            const submap &sm, tripoint_abs_sm abs_sm,
+            const std::function<void( const abs_tile_handle & )> &fn ) -> void;
+
+        /**
+         * Iterate all simulated submaps on @p zlev, calling @p fn for
+         * every tile on every simulated submap.
+         */
+        auto for_each_simulated_tile(
+            int zlev,
+            const std::function<void( const abs_tile_handle & )> &fn ) -> void;
 
         auto creature_tracker() -> Creature_tracker &;
         auto creature_tracker() const -> const Creature_tracker &;
