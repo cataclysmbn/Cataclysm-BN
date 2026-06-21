@@ -52,7 +52,10 @@
           { "id": "tac_helmet", "fg": 44 },
           { "id": "overlay_worn_tac_helmet", "fg": 45 },
           { "id": [ "clam", "overlay_wielded_clam" ], "fg": 46 },
-          { "id": [ "clam_fried", "overlay_wielded_clam_fried" ], "fg": 47 }
+          { "id": [ "clam_fried", "overlay_wielded_clam_fried" ], "fg": 47 },
+          { "id": "mon_zombie_swat", "fg": 48, "bg": 30 },
+          { "id": "mon_zombie_swat_boss", "fg": 49, "bg": 30 },
+          { "id": "corpse_mon_zombie_swat_boss", "fg": 50 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -392,7 +393,7 @@ bool monexamine::pet_menu( monster &z )
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
-                get_player_character().melee_attack( z, true );
+                avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:
@@ -610,7 +611,7 @@ bool monexamine::mfriend_menu( monster &z )
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
-                get_player_character().melee_attack( z, true );
+                avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:

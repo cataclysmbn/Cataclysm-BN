@@ -2243,6 +2243,10 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         return 0;
     }
 
+    if( here.visibility_caches_dirty() ) {
+        here.update_visibility_cache( p->bub_pos().z() );
+    }
+
     // Try to minimize the use of has_enough_charges() because it's kind of expensive.
     bool no_charges = false;
     for( const tripoint_bub_ms &pt : here.points_in_radius( pos, PICKUP_RANGE ) ) {
@@ -2262,7 +2266,7 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                 }
             }
 
-            int charges = static_cast<int>( cbms.size() );
+            int charges = std::max( 1, static_cast<int>( cbms.size() ) );
             charges -= it->ammo_consume( charges, pos );
             if( possess && it->has_flag( flag_USE_UPS ) ) {
                 if( p->use_charges_if_avail( itype_UPS, charges ) ) {

@@ -20,4 +20,12 @@ TEST_CASE( "martial arts", "[martial_arts]" )
             CHECK( test_style_ma1->has_weapon( itype_test_weapon2 ) );
         }
     }
+
+    SECTION( "throw techniques use knockback" ) {
+        CHECK( matec_id( "tec_judo_throw" )->knockback_dist == 1 );
+        CHECK( matec_id( "tec_judo_disarm" )->knockback_dist == 1 );
+        CHECK( matec_id( "tec_judo_backthrow" )->knockback_dist == 1 );
+        CHECK( matec_id( "tec_judo_counter" )->knockback_dist == 1 );
+        CHECK( matec_id( "tec_medievalpole_hook" )->knockback_dist == 1 );
+    }
 }

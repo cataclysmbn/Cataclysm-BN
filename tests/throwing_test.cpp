@@ -11,6 +11,7 @@
 #include "ballistics.h"
 #include "calendar.h"
 #include "coordinates.h"
+#include "creature_throw.h"
 #include "damage.h"
 #include "dispersion.h"
 #include "game.h"
@@ -18,6 +19,7 @@
 #include "inventory.h"
 #include "item.h"
 #include "line.h"
+#include "map.h"
 #include "map_helpers.h"
 #include "material.h"
 #include "monster.h"
@@ -29,6 +31,7 @@
 #include "state_helpers.h"
 #include "test_statistics.h"
 #include "type_id.h"
+#include "vehicle_throw.h"
 
 TEST_CASE( "throwing distance test", "[throwing], [balance]" )
 {
@@ -37,6 +40,197 @@ TEST_CASE( "throwing distance test", "[throwing], [balance]" )
     item &grenade = *item::spawn_temporary( "grenade" );
     CHECK( thrower.throw_range( grenade ) >= 30 );
     CHECK( thrower.throw_range( grenade ) <= 35 );
+}
+
+TEST_CASE( "throwing heavier items scales with strength", "[throwing], [balance]" )
+{
+    clear_all_state();
+    const auto weak_thrower = standard_npc( "WeakThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 8, 10,
+                                            10, 10 );
+    const auto strong_thrower = standard_npc( "StrongThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 14,
+                                10, 10, 10 );
+    item &bronze_anvil = *item::spawn_temporary( "anvil_bronze" );
+
+    CHECK( weak_thrower.throw_range( bronze_anvil ) < strong_thrower.throw_range( bronze_anvil ) );
+}
+
+TEST_CASE( "grabbed creature throw stamina cost is bounded", "[throwing], [balance]" )
+{
+    CHECK( creature_throw::grabbed_stamina_cost( 1.0f ) == creature_throw::min_stamina_cost );
+    CHECK( creature_throw::grabbed_stamina_cost( 1000.0f ) == creature_throw::max_stamina_cost );
+}
+
+TEST_CASE( "grabbed creature throw velocity follows selected distance", "[throwing], [balance]" )
+{
+    CHECK( creature_throw::grabbed_throw_velocity( 1 ) == 10.0f );
+    CHECK( creature_throw::grabbed_throw_velocity( 3 ) == 30.0f );
+    CHECK( creature_throw::grabbed_throw_velocity( 15 ) == 150.0f );
+}
+
+TEST_CASE( "grabbed creature throw eligibility follows size class", "[throwing], [balance]" )
+{
+    const auto medium_player_size = creature_size::medium;
+
+    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 8,
+            creature_size::small ) );
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 8,
+                 creature_size::medium ) );
+    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size,
+            creature_throw::equal_size_throw_min_str, creature_size::medium ) );
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 15,
+                 creature_size::large ) );
+    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size,
+            creature_throw::larger_size_throw_min_str, creature_size::large ) );
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 19,
+                 creature_size::huge ) );
+    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size,
+            creature_throw::much_larger_size_throw_min_str, creature_size::huge ) );
+
+    const auto small_player_size = creature_size::small;
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( small_player_size, 20,
+                 creature_size::huge ) );
+}
+
+TEST_CASE( "vehicle throw strength thresholds follow mass", "[throwing], [balance]" )
+{
+    CHECK( vehicle_throw::strength_requirement( 20_kilogram ) == 1 );
+    CHECK( vehicle_throw::strength_requirement( 1000_kilogram ) == 10 );
+    CHECK( vehicle_throw::strength_requirement( 3000_kilogram ) == 30 );
+}
+
+TEST_CASE( "vehicle throw effective strength drops below large size", "[throwing], [balance]" )
+{
+    CHECK( vehicle_throw::strength_penalty( creature_size::huge ) == 0 );
+    CHECK( vehicle_throw::strength_penalty( creature_size::large ) == 0 );
+    CHECK( vehicle_throw::strength_penalty( creature_size::medium ) == 5 );
+    CHECK( vehicle_throw::strength_penalty( creature_size::small ) == 10 );
+    CHECK( vehicle_throw::strength_penalty( creature_size::tiny ) == 15 );
+
+    CHECK( vehicle_throw::effective_throw_strength( creature_size::large, 12 ) == 12 );
+    CHECK( vehicle_throw::effective_throw_strength( creature_size::medium, 12 ) == 7 );
+    CHECK( vehicle_throw::effective_throw_strength( creature_size::small, 12 ) == 2 );
+    CHECK( vehicle_throw::effective_throw_strength( creature_size::tiny, 12 ) == 0 );
+}
+
+TEST_CASE( "vehicle throw range grows slowly past the weight threshold", "[throwing], [balance]" )
+{
+    CHECK( vehicle_throw::throw_range( 0, 1 ) == 0 );
+    CHECK( vehicle_throw::throw_range( 1, 1 ) == 1 );
+    CHECK( vehicle_throw::throw_range( 5, 1 ) == 3 );
+    CHECK( vehicle_throw::throw_range( 6, 1 ) == 3 );
+    CHECK( vehicle_throw::throw_range( 20, 10 ) == 6 );
+    CHECK( vehicle_throw::throw_range( 22, 10 ) == 7 );
+    CHECK( vehicle_throw::throw_range( 30, 30 ) == 1 );
+    CHECK( vehicle_throw::throw_range( 35, 30 ) == 3 );
+    CHECK( vehicle_throw::throw_range( 38, 30 ) == 5 );
+    CHECK( vehicle_throw::throw_range( 50, 30 ) == 11 );
+    CHECK( vehicle_throw::throw_range( 99, 1 ) == vehicle_throw::max_throw_range );
+}
+
+TEST_CASE( "vehicle shove velocity stays bounded", "[throwing], [balance]" )
+{
+    CHECK( vehicle_throw::shove_velocity( 0, 1 ) == vehicle_throw::base_shove_velocity );
+    CHECK( vehicle_throw::shove_velocity( 1, 1 ) == vehicle_throw::base_shove_velocity );
+    CHECK( vehicle_throw::shove_velocity( 2, 1 ) ==
+           vehicle_throw::base_shove_velocity + vehicle_throw::shove_velocity_per_excess_strength );
+    CHECK( vehicle_throw::shove_velocity( 10, 1 ) == vehicle_throw::max_shove_velocity );
+    CHECK( vehicle_throw::shove_velocity( 99, 1 ) == vehicle_throw::max_shove_velocity );
+}
+
+TEST_CASE( "lighter flung creatures are worse at breaking obstacles", "[throwing], [balance]" )
+{
+    constexpr auto velocity = 30.0f;
+
+    const auto squirrel_damage = creature_throw::flung_creature_bash_damage( creature_size::tiny,
+                                 1000, velocity );
+    const auto zombie_damage = creature_throw::flung_creature_bash_damage( creature_size::medium,
+                               80000, velocity );
+
+    CHECK( squirrel_damage < zombie_damage );
+    CHECK( squirrel_damage == 3 );
+    CHECK( zombie_damage == 39 );
+}
+
+TEST_CASE( "flung creatures only trigger landing traps if they cannot fly", "[throwing][trap]" )
+{
+    clear_all_state();
+    clear_map();
+
+    auto &here = g->m;
+    const auto start = g->u.bub_pos() + tripoint_east;
+    const auto landing = start + tripoint_east;
+    const auto beartrap = trap_str_id( "tr_beartrap" );
+    const auto effect_beartrap = efftype_id( "beartrap" );
+
+    here.ter_set( start, ter_id( "t_floor" ) );
+    here.ter_set( landing, ter_id( "t_floor" ) );
+    here.trap_set( landing, beartrap );
+
+    SECTION( "non-flying creatures land on traps" ) {
+        auto &zombie = spawn_test_monster( "mon_zombie", start );
+
+        g->fling_creature( &zombie, coord_to_angle( start, landing ), 10.0f );
+
+        CHECK( zombie.bub_pos() == landing );
+        CHECK( zombie.has_effect( effect_beartrap ) );
+    }
+
+    SECTION( "flying creatures recover before landing" ) {
+        auto &bat = spawn_test_monster( "mon_bat", start );
+        REQUIRE( bat.flies() );
+
+        g->fling_creature( &bat, coord_to_angle( start, landing ), 10.0f );
+
+        CHECK( bat.bub_pos() == landing );
+        CHECK_FALSE( bat.has_effect( effect_beartrap ) );
+    }
+}
+
+TEST_CASE( "flung creatures take damage when they slam into a wall", "[throwing][impact]" )
+{
+    clear_all_state();
+    clear_map();
+
+    auto &here = g->m;
+    const auto source = tripoint_bub_ms{ 40, 30, 0 };
+    const auto target = tripoint_bub_ms{ 41, 30, 0 };
+    const auto landing = tripoint_bub_ms{ 42, 30, 0 };
+    const auto wall = tripoint_bub_ms{ 43, 30, 0 };
+
+    here.ter_set( source, ter_id( "t_floor" ) );
+    here.ter_set( target, ter_id( "t_floor" ) );
+    here.ter_set( landing, ter_id( "t_floor" ) );
+    here.ter_set( wall, ter_id( "t_wall" ) );
+    g->u.setpos( tripoint_bub_ms{ 10, 10, 0 } );
+
+    auto &zombie = spawn_test_monster( "mon_zombie", target );
+    const auto hp_before = zombie.get_hp();
+
+    g->fling_creature( &zombie, coord_to_angle( source, target ), 30.0f );
+
+    CHECK( zombie.bub_pos() == landing );
+    CHECK( zombie.get_hp() < hp_before );
+}
+
+TEST_CASE( "flung creatures stop at the reality bubble edge", "[throwing][bubble]" )
+{
+    clear_all_state();
+    clear_map();
+
+    auto &here = get_map();
+    const auto bubble_edge_x = SEEX * here.getmapsize() - 1;
+    const auto bubble_mid_y = SEEY * here.getmapsize() / 2;
+    const auto start = tripoint_bub_ms{ bubble_edge_x - 1, bubble_mid_y, 0 };
+    const auto edge = tripoint_bub_ms{ bubble_edge_x, bubble_mid_y, 0 };
+
+    here.ter_set( start, ter_id( "t_floor" ) );
+    here.ter_set( edge, ter_id( "t_floor" ) );
+
+    auto &zombie = spawn_test_monster( "mon_zombie", start );
+
+    g->fling_creature( &zombie, coord_to_angle( start, start + tripoint_east ), 30.0f );
+
+    CHECK( zombie.bub_pos() == edge );
 }
 
 struct throw_test_data {
