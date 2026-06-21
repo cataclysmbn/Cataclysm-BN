@@ -92,9 +92,6 @@ static const efftype_id effect_narcosis( "narcosis" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_slept_through_alarm( "slept_through_alarm" );
 
-static const trait_id trait_HEAVYSLEEPER2( "HEAVYSLEEPER2" );
-static const trait_id trait_HEAVYSLEEPER( "HEAVYSLEEPER" );
-
 static const itype_id fuel_type_muscle( "muscle" );
 static const itype_id fuel_type_wind( "wind" );
 static const itype_id fuel_type_battery( "battery" );
@@ -2729,17 +2726,16 @@ void sounds::process_sound_markers( Character *who )
             const int db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening );
             // See if we need to wake someone up
             // Remember we are working with dB spl volumes instead of tile volumes and dB spl is a logarithmic unit. 60dB is normal conversation, 80-100 is a car horn, ~160 is a gunshot, 180+ can kill a human.
-            // We want somewhat less swingy results, so use d10s
-            // Noise past 60dB should automatically wake up not heavy sleepers.
-            // Noise past 100dB should automatically wake up heavy sleepers.
-            // Noise past 120dB will cause pain and should automatically wake up heavy sleeper 2.
+            // Noise past +10 dB should automatically wake up normal sleepers.
+            // Noise past +40 dB should automatically wake up heavy sleepers.
+            // Noise past +60 dB will cause pain and should automatically wake up heavy sleeper 2.
             if( who->has_effect( effect_sleep ) ) {
-                if( ( ( !( who->has_trait( trait_HEAVYSLEEPER ) ||
-                           who->has_trait( trait_HEAVYSLEEPER2 ) ) && dice( 6, 10 ) <= db_vol ) ||
-                      ( who->has_trait( trait_HEAVYSLEEPER ) && dice( 10, 10 ) <= db_vol ) ||
-                      ( who->has_trait( trait_HEAVYSLEEPER2 ) && dice( 12, 10 ) <= db_vol ) ) &&
-                    !who->has_effect( effect_narcosis ) ) {
-                    //Not kidding about sleep-through-firefight
+                const int diff_db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening - tile_vol );
+                int wake_up_vol = 10;
+                wake_up_vol += who->bonus_from_enchantments( wake_up_vol,
+                               enchantment_value_id( "SLEEP_DB_RESIST" ) );
+
+                if( rng( wake_up_vol / 2, wake_up_vol ) <= db_vol && !who->has_effect( effect_narcosis ) ) {
                     who->wake_up();
                     who->add_msg_if_player( m_warning, _( "Something is making noise." ) );
                 } else {

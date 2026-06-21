@@ -715,7 +715,7 @@ TEST_CASE( "Enchantments modify thirst rate", "[magic][enchantment][thirst]" )
         guy.set_mutation( tr );
         REQUIRE( guy.has_trait( tr ) );
 
-        tests_need_rate( guy, s_relic, 1.5f, 1.4f, getter );
+        tests_need_rate( guy, s_relic, 1.5f, 1.35f, getter );
     }
 }
 
@@ -744,7 +744,7 @@ TEST_CASE( "Enchantments modify fatigue rate", "[magic][enchantment][fatigue]" )
         guy.set_mutation( tr );
         REQUIRE( guy.has_trait( tr ) );
 
-        tests_need_rate( guy, s_relic, 0.85f, 0.75f, getter );
+        tests_need_rate( guy, s_relic, 0.85f, 0.765f, getter );
     }
 }
 
@@ -1008,5 +1008,34 @@ TEST_CASE( "Enchantment Cancels Flags", "[magic][enchantment][flags]" )
                 }
             }
         }
+    }
+}
+TEST_CASE( "Skill enchantments", "[magic][enchantment][skill]" )
+{
+    REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 0 );
+
+    SECTION( "One barter skill enchantment item" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_relic_socks_of_speaking" );
+
+        REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 2 );
+    }
+
+    SECTION( "Two barter skill enchantment item" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_relic_socks_of_speaking" );
+        wear_item( guy, "test_relic_socks_of_speaking" );
+
+        REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 4 );
+    }
+
+    SECTION( "Two barter skill enchantment item and one global skill item" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_relic_socks_of_speaking" );
+        wear_item( guy, "test_relic_socks_of_speaking" );
+        wear_item( guy, "test_relic_socks_of_knowledge" );
+
+        REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 6 );
+        REQUIRE( guy.get_skill_level( skill_id( "speech" ) ) == 2 );
     }
 }

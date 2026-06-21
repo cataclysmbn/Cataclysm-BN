@@ -80,6 +80,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_NOHEAD: return "NOHEAD";
         case MF_HARDTOSHOOT: return "HARDTOSHOOT";
         case MF_GRABS: return "GRABS";
+        case MF_GRAB_IMMUNE: return "GRAB_IMMUNE";
         case MF_BASHES: return "BASHES";
         case MF_GROUP_BASH: return "GROUP_BASH";
         case MF_DESTROYS: return "DESTROYS";

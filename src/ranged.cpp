@@ -382,6 +382,20 @@ auto gunmod_find_with(
     return res != gunmods.end() ? *res : nullptr;
 }
 
+auto clamp_range_to_reality_bubble( const tripoint_bub_ms &src, const int range ) -> int
+{
+    auto &here = get_map();
+    const auto bubble_edge_x = SEEX * here.getmapsize() - 1;
+    const auto bubble_edge_y = SEEY * here.getmapsize() - 1;
+    const auto max_range = static_cast<int>( std::round( std::max( {
+        rl_dist_exact( src, tripoint_bub_ms( 0, 0, src.z() ) ),
+        rl_dist_exact( src, tripoint_bub_ms( bubble_edge_x, 0, src.z() ) ),
+        rl_dist_exact( src, tripoint_bub_ms( 0, bubble_edge_y, src.z() ) ),
+        rl_dist_exact( src, tripoint_bub_ms( bubble_edge_x, bubble_edge_y, src.z() ) ),
+    } ) ) );
+    return std::min( std::max( 1, range ), max_range );
+}
+
 } // namespace
 
 class target_ui
@@ -393,6 +407,8 @@ class target_ui
             Fire,
             Throw,
             ThrowBlind,
+            ThrowCreature,
+            ThrowVehicle,
             Turrets,
             TurretManual,
             Reach,
@@ -406,8 +422,10 @@ class target_ui
         TargetMode mode = TargetMode::Fire;
         // Weapon being fired/thrown
         item *relevant = nullptr;
-        // Cached selection range from player's position
+        // Cached selection range from the targeting source.
         int range = 0;
+        // Clamp cursor selection to live reality-bubble bounds.
+        bool limit_to_reality_bubble = false;
         // Turret being manually fired
         turret_data *turret = nullptr;
         // Turrets being fired (via vehicle controls)
@@ -424,6 +442,8 @@ class target_ui
         aim_activity_actor *activity = nullptr;
         // Generator of AoE shapes
         std::optional<shape_factory> shape_gen;
+        // Preferred initial cursor position.
+        std::optional<tripoint_bub_ms> initial_target;
 
         // Initialize UI and run the event loop
         target_handler::trajectory run();
@@ -450,7 +470,7 @@ class target_ui
         const itype *ammo = nullptr;
         // Current trajectory
         std::vector<tripoint_bub_ms> traj;
-        // Aiming source (player's position)
+        // Aiming source.
         tripoint_bub_ms src;
         // Aiming destination (cursor position)
         // Use set_cursor_pos() to modify
@@ -661,6 +681,34 @@ target_handler::trajectory target_handler::mode_throw( avatar &you, item &releva
     ui.mode = blind_throwing ? target_ui::TargetMode::ThrowBlind : target_ui::TargetMode::Throw;
     ui.relevant = &relevant;
     ui.range = you.throw_range( relevant );
+
+    restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
+    return ui.run();
+}
+
+target_handler::trajectory target_handler::mode_throw_creature( avatar &you,
+        const Creature &thrown_creature, int range )
+{
+    target_ui ui = target_ui();
+    ui.you = &you;
+    ui.mode = target_ui::TargetMode::ThrowCreature;
+    ui.range = clamp_range_to_reality_bubble( thrown_creature.bub_pos(), std::max( 1, range ) );
+    ui.limit_to_reality_bubble = true;
+    ui.initial_target = thrown_creature.bub_pos();
+
+    restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
+    return ui.run();
+}
+
+target_handler::trajectory target_handler::mode_throw_vehicle( avatar &you,
+        const tripoint_bub_ms &grabbed_part_pos, int range )
+{
+    target_ui ui = target_ui();
+    ui.you = &you;
+    ui.mode = target_ui::TargetMode::ThrowVehicle;
+    ui.range = clamp_range_to_reality_bubble( grabbed_part_pos, std::max( 1, range ) );
+    ui.limit_to_reality_bubble = true;
+    ui.initial_target = grabbed_part_pos;
 
     restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
     return ui.run();
@@ -1710,8 +1758,6 @@ int throwing_dispersion( const Character &c, const item &to_throw, Creature *cri
     return std::max( 0, dispersion );
 }
 
-namespace
-{
 auto throw_damage_projectile( const item &it, const int skill, const int str ) -> projectile
 {
     const units::mass weight = it.weight();
@@ -1732,11 +1778,21 @@ auto throw_damage_projectile( const item &it, const int skill, const int str ) -
 
     return proj;
 }
-} // namespace
 
 auto throw_damage( const item &it, const int skill, const int str ) -> int
 {
     return throw_damage_projectile( it, skill, str ).impact.total_damage();
+}
+
+auto throw_stamina_cost( const Character &thrower, const item &item ) -> int
+{
+    // Previously calculated as 2_gram * std::max( 1, str_cur )
+    // using 16_gram normalizes it to 8 str. Same effort expenditure
+    // for being able to throw farther.
+    const int weight_cost = item.weight() / ( 16_gram );
+    const int encumbrance_cost = roll_remainder(
+                                     ( thrower.encumb( body_part_arm_l ) + thrower.encumb( body_part_arm_r ) ) * 2.0f );
+    return weight_cost + encumbrance_cost - thrower.get_skill_level( skill_throw ) + 50;
 }
 
 dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &target,
@@ -1752,14 +1808,6 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
     const units::volume volume = thrown.volume();
     const units::mass weight = thrown.weight();
 
-    // Previously calculated as 2_gram * std::max( 1, str_cur )
-    // using 16_gram normalizes it to 8 str. Same effort expenditure
-    // for being able to throw farther.
-    const int weight_cost = weight / ( 16_gram );
-    const int encumbrance_cost = roll_remainder( ( who.encumb( body_part_arm_l ) + who.encumb(
-                                     body_part_arm_r ) ) * 2.0f );
-    const int stamina_cost = ( weight_cost + encumbrance_cost - throwing_skill + 50 ) * -1;
-
     bool throw_assist = false;
     int throw_assist_str = 0;
     if( who.is_mounted() ) {
@@ -1771,6 +1819,7 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
         }
     }
     if( !throw_assist ) {
+        const int stamina_cost = throw_stamina_cost( who, thrown ) * -1;
         who.mod_stamina( stamina_cost );
     }
 
@@ -2955,6 +3004,9 @@ target_handler::trajectory target_ui::run()
 
     // Initialize cursor position
     src = you->bub_pos();
+    if( ( mode == TargetMode::ThrowCreature || mode == TargetMode::ThrowVehicle ) && initial_target ) {
+        src = *initial_target;
+    }
     update_target_list();
 
     if( activity && activity->abort_if_no_targets && targets.empty() ) {
@@ -2973,7 +3025,7 @@ target_handler::trajectory target_ui::run()
             attack_was_confirmed = false;
         }
     } else {
-        initial_dst = choose_initial_target();
+        initial_dst = initial_target.value_or( choose_initial_target() );
     }
     set_cursor_pos( initial_dst );
     if( dst != initial_dst ) {
@@ -3299,6 +3351,14 @@ bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
         valid_pos.z() = clamp( valid_pos.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT );
 
         new_traj = here.find_clear_path( src, valid_pos );
+        if( limit_to_reality_bubble && !is_in_reality_bubble_bounds( valid_pos ) ) {
+            using namespace std::views;
+            const auto reversed_traj = new_traj | reverse;
+            const auto clamped_it = std::ranges::find_if( reversed_traj, []( const tripoint_bub_ms & p ) {
+                return is_in_reality_bubble_bounds( p );
+            } );
+            valid_pos = clamped_it != std::ranges::end( reversed_traj ) ? *clamped_it : src;
+        }
         if( range == 1 ) {
             // We should always be able to hit adjacent squares
             if( square_dist( src, valid_pos ) > 1 ) {
@@ -4041,6 +4101,10 @@ std::string target_ui::uitext_title()
             return string_format( _( "Throwing %s" ), relevant->tname() );
         case TargetMode::ThrowBlind:
             return string_format( _( "Blind throwing %s" ), relevant->tname() );
+        case TargetMode::ThrowCreature:
+            return _( "Throwing creature" );
+        case TargetMode::ThrowVehicle:
+            return _( "Shoving vehicle" );
         default:
             return _( "Set target" );
     }
@@ -4048,8 +4112,11 @@ std::string target_ui::uitext_title()
 
 std::string target_ui::uitext_fire()
 {
-    if( mode == TargetMode::Throw || mode == TargetMode::ThrowBlind ) {
+    if( mode == TargetMode::Throw || mode == TargetMode::ThrowBlind ||
+        mode == TargetMode::ThrowCreature ) {
         return to_translation( "[Hotkey] to throw", "to throw" ).translated();
+    } else if( mode == TargetMode::ThrowVehicle ) {
+        return to_translation( "[Hotkey] to shove", "to shove" ).translated();
     } else if( mode == TargetMode::Reach ) {
         return to_translation( "[Hotkey] to attack", "to attack" ).translated();
     } else if( mode == TargetMode::Spell ) {

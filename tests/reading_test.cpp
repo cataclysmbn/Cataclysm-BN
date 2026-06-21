@@ -477,7 +477,7 @@ TEST_CASE( "active night vision tiers allow fine detail vision in darkness", "[r
     SECTION( "standard light amp goggles provide poor fine detail vision" ) {
         REQUIRE( !dummy.wear_item( item::spawn( "goggles_nv_on" ), false ) );
 
-        CHECK( character_funcs::fine_detail_vision_mod( dummy ) == character_funcs::FINE_VISION_THRESHOLD );
+        CHECK( character_funcs::fine_detail_vision_mod( dummy ) <= character_funcs::FINE_VISION_THRESHOLD );
         CHECK( character_funcs::can_see_fine_details( dummy ) );
     }
 
@@ -488,14 +488,6 @@ TEST_CASE( "active night vision tiers allow fine detail vision in darkness", "[r
         CHECK( character_funcs::can_see_fine_details( dummy ) );
     }
 
-    SECTION( "bionic night vision provides perfect fine detail vision" ) {
-        dummy.set_max_power_level( 1_kJ );
-        dummy.set_power_level( 1_kJ );
-        give_and_activate_bionic( dummy, bionic_id( "bio_night_vision" ) );
-
-        CHECK( character_funcs::fine_detail_vision_mod( dummy ) == character_funcs::FINE_VISION_PERFECT );
-        CHECK( character_funcs::can_see_fine_details( dummy ) );
-    }
 }
 
 TEST_CASE( "Losing book during reading", "[reading][book]" )

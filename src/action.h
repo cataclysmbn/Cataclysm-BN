@@ -192,6 +192,8 @@ enum action_id : int {
     ACTION_SORT_ARMOR,
     /** Auto select and attack hostile creature within range */
     ACTION_AUTOATTACK,
+    /** Toggle whether bump attacks open the manual attack menu */
+    ACTION_TOGGLE_MANUAL_COMBAT_MODE,
     /**@}*/
 
     // Long-term / special actions

@@ -581,6 +581,8 @@ class item : public location_visitable<item>, public game_object<item>
                           bool debug ) const;
         void combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                           bool debug ) const;
+        void throw_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
+                         bool debug ) const;
         void damage_statblock_info( std::vector<iteminfo> &info, damage_instance attack,
                                     bool line_by_line ) const;
         void contents_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,

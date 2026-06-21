@@ -282,7 +282,8 @@
     "react_cost": "100 J",
     "time": 1,
     "points": 3,
-    "flags": [ "BIONIC_TOGGLED" ]
+    "flags": [ "BIONIC_TOGGLED" ],
+    "bio_enchantments": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
   },
   {
     "id": "bio_cloak",
@@ -465,7 +466,7 @@
     "can_uninstall": false,
     "points": 1,
     "no_uninstall_reason": "The telescopic lenses are part of the patient's eyes now, remove them and the patient would become blind",
-    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT", "FIX_NEARSIGHTED" ] } ]
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "OVERMAP_SIGHT", "add": 1 } ], "flags": [ "UNDERWATER_SIGHT", "FIX_NEARSIGHTED" ] } ]
   },
   {
     "id": "bio_face_mask",
@@ -542,7 +543,8 @@
     "time": 1,
     "starting_bionic": true,
     "points": 1,
-    "flags": [ "BIONIC_TOGGLED" ]
+    "flags": [ "BIONIC_TOGGLED" ],
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "LUMINATION", "max": 300 } ] } ]
   },
   {
     "id": "bio_tattoo_led",
@@ -554,7 +556,8 @@
     "time": 1,
     "starting_bionic": true,
     "points": 1,
-    "flags": [ "BIONIC_TOGGLED" ]
+    "flags": [ "BIONIC_TOGGLED" ],
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "LUMINATION", "max": 5 } ] } ]
   },
   {
     "id": "bio_glowy",
@@ -629,7 +632,7 @@
     "react_cost": "1 kJ",
     "time": 1,
     "points": 2,
-    "bio_enchantments": [ { "condition": "ACTIVE", "flags": [ "FIRE_FIELD_IMMUNE" ] } ]
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ], "flags": [ "FIRE_FIELD_IMMUNE" ] } ]
   },
   {
     "id": "bio_hydraulics",
@@ -828,7 +831,8 @@
     "flags": [ "BIONIC_TOGGLED" ],
     "act_cost": "10 J",
     "react_cost": "10 J",
-    "time": 1
+    "time": 1,
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "NIGHT_VISION", "max": 10 } ] } ]
   },
   {
     "id": "bio_noise",
