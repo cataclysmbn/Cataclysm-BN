@@ -276,8 +276,6 @@ Prevents environmental effects of fields from being applied
 
 ## Basegame Enchantment Value ID List
 
-Note: mods can add more values to this list
-
 #### Character values
 
 ##### STRENGTH
