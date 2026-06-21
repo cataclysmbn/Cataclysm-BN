@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include "action_time_scale.h"
 #include "anatomy.h"
@@ -52,6 +53,7 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "translations.h"
+#include "type_id.h"
 #include "value_ptr.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -1407,13 +1409,20 @@ void Creature::add_effect( const efftype_id &eff_id, const time_duration &dur,
             }
             if( e.get_intensity() != prev_int ) {
                 on_effect_int_change( e.get_id(), e.get_intensity(), e.get_bp() );
-            }
-            // create any valid on increment effect sounds
-            if ( e.has_increment_sounds() ){
-                auto causedsounds = e.create_increment_sounds( this );
-                if ( !causedsounds.empty() ){
-                    for ( sound_event &se : causedsounds ){
-                        sounds::sound( se );
+                // update any relevant mods in the controller 
+                if ( e.has_flag( flag_EFFECT_MODIFIES_INCOMING_SOUND ) || e.has_flag( flag_EFFECT_MODIFIES_OUTGOING_SOUND ) ) {
+                    // Make sure that the creatures controller is actually initialized.
+                    if ( smod_controller( this ) ) {
+                        smod_controller.mark_dirty( e.get_id() );
+                    }
+                }
+                // create any valid on increment effect sounds
+                if ( e.has_increment_sounds() ){
+                    auto causedsounds = e.create_increment_sounds( this );
+                    if ( !causedsounds.empty() ){
+                        for ( sound_event &se : causedsounds ){
+                            sounds::sound( se );
+                        }
                     }
                 }
             }
@@ -1472,6 +1481,13 @@ void Creature::add_effect( const efftype_id &eff_id, const time_duration &dur,
                 }
             }
         }
+        // Add any relevant sound modifiers to the creatures sound modifier controller.
+        if ( e.has_heard_sound_mods() || e.has_outgoing_sound_mods() ) {
+            // Make sure that the creatures controller is actually initialized.
+            if ( smod_controller( this ) ) {
+                smod_controller.add_mods( e );
+            }
+        }
         // Perform any effect addition effects.
         // only when not deferred
         if( !deferred ) {
@@ -1521,6 +1537,13 @@ bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &b
         return false;
     }
     const effect_type &type = eff_id.obj();
+
+    // If the sound has sound modifiers, mark them for removal
+    if ( type.has_flag( flag_EFFECT_MODIFIES_INCOMING_SOUND ) || type.has_flag(flag_EFFECT_MODIFIES_OUTGOING_SOUND)  ) {
+        if ( smod_controller( this ) ) {
+            smod_controller.mark_for_removal( eff_id );
+        }
+    }
 
     Character *ch = as_character();
     if( ch != nullptr ) {
@@ -1712,14 +1735,11 @@ void Creature::process_effects()
     // Decay/removal of effects
     for( auto &elem : *effects ) {
         for( auto &_it : elem.second ) {
+
+            effect &e = _it.second;
+
             if( _it.second.is_removed() ) {
                 to_remove.emplace_back( elem.first, _it.first, false );
-                if ( _it.second.has_remove_sounds() ) {
-                    const auto sounds = _it.second.create_remove_sounds( this );
-                    for ( const sound_event &se : sounds ){
-                        sounds::sound( se );
-                    }
-                }
                 continue;
             }
             // Add any effects that others remove to the removal list
@@ -1729,17 +1749,25 @@ void Creature::process_effects()
                     to_remove.emplace_back( removed_effect, bodypart_str_id::NULL_ID(), false );
                 }
             }
-            effect &e = _it.second;
+            
             const int prev_int = e.get_intensity();
-            // Run decay effects, marking effects for removal as necessary.
-            if( e.decay( calendar::turn, is_player() ) ) {
-                to_remove.emplace_back( elem.first, _it.first, true );
-                if ( e.has_remove_sounds() ) {
-                    const auto sounds = e.create_remove_sounds( this );
-                    for ( const sound_event &se : sounds ){
+
+            // Check to see if we have time based caused sounds, and if its time to emit them.
+            if ( e.has_time_based_sounds() ) {
+                // Only create sounds if enough time has passed.
+                const auto csounds = e.create_time_based_sounds( this );
+                if ( !csounds.empty() ){
+                    for ( auto &se : csounds ) {
                         sounds::sound( se );
                     }
                 }
+                // get new random time intervals for the random time sounds we made.
+                e.update_sound_time_intervals( true );
+            }
+
+            // Run decay effects, marking effects for removal as necessary.
+            if( e.decay( calendar::turn, is_player() ) ) {
+                to_remove.emplace_back( elem.first, _it.first, true );
             }
 
             if( e.get_intensity() != prev_int && e.get_duration() > 0_turns ) {
@@ -1759,6 +1787,14 @@ void Creature::process_effects()
                         }
                     }
                 }
+                // Mark corresponding sound modifiers for update
+                if ( e.has_heard_sound_mods() || e.has_outgoing_sound_mods() ) {
+                    if ( smod_controller( this )  ) {
+                        smod_controller.mark_dirty( e.get_id() );    
+                    }
+                }
+                // Update the time intervals if we change an effects intensity.
+                e.update_sound_time_intervals();
             }
         }
     }
@@ -1805,12 +1841,6 @@ void Creature::process_effects()
 
     for( const effect &eff : to_add ) {
         add_effect( eff );
-        if ( eff.has_apply_sounds() ) {
-            const auto sounds = eff.create_apply_sounds( this );
-            for ( const sound_event &se : sounds ){
-                sounds::sound( se );
-            }
-        }
     }
 }
 
@@ -2622,3 +2652,4 @@ bool Creature::is_simulated() const
     map &here = get_map();
     return here.is_position_simulated( abs_to_map_local( here, abs_pos() ) );
 }
+

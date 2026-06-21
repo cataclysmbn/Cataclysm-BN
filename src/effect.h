@@ -18,7 +18,7 @@
 #include "type_id.h"
 
 class Character;
-struct sound_event;
+class Creature;
 
 enum game_message_type : int;
 class JsonIn;
@@ -95,7 +95,7 @@ struct outgoing_sound_modifiers{
         // So we can do odd shenanagins with sounds, 
         // such as make a monster very good at hearing footsteps but not changing the heard volume of anything else.
         // Defaults to all sound categories.
-        std::vector<sounds::sound_t> checked_categories;
+        std::vector< sounds::sound_t > checked_categories;
 
         // String of sound descriptions we should have our modifiers affect. Defaults to empty. 
         // If left empty/default, will not check against sound descriptions when affecting heard sounds.
@@ -120,21 +120,21 @@ struct outgoing_sound_modifiers{
         std::vector<short> volume_mdB_adj; // mdB volume adjustment of qualifying sounds.
         short volume_mdB_adj_min_val = 0; // Defaults to 0 
         short volume_mdB_adj_max_val = 0; // Defaults to 0, which means uncapped. 
-        float volume_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        float volume_mdB_adj_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
         std::vector<short> volume_mdB_floor; // Force all qualifying sounds to be atleast this loud. Default 0
         short volume_mdB_floor_min_val = 0; // Defaults to 0 
         short volume_mdB_floor_max_val = 0; // Defaults to 0, which means uncapped. 
-        float volume_mdB_floor_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        float volume_mdB_floor_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
         std::vector<short> volume_mdB_ceiling; // Caps all qualifying sounds to this volume. Default 19100 mdB 
         short volume_mdB_ceiling_min_val = 0; // Defaults to 0 
         short volume_mdB_ceiling_max_val = 0; // Defaults to 0, which means uncapped. 
-        float volume_mdB_ceiling_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        float volume_mdB_ceiling_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
         auto tie() const {
             return std::tie( checked_sound_descriptions, volume_mdB_adj, volume_mdB_adj_min_val, volume_mdB_adj_max_val,
-                             volume_mdB_adj_intensity_mult, volume_mdB_floor, volume_mdB_floor_min_val, volume_mdB_floor_max_val, volume_mdB_floor_intensity_mult, volume_mdB_ceiling, volume_mdB_ceiling_min_val, volume_mdB_ceiling_max_val, volume_mdB_ceiling_intensity_mult );
+                             volume_mdB_adj_intensity_scaling, volume_mdB_floor, volume_mdB_floor_min_val, volume_mdB_floor_max_val, volume_mdB_floor_intensity_scaling, volume_mdB_ceiling, volume_mdB_ceiling_min_val, volume_mdB_ceiling_max_val, volume_mdB_ceiling_intensity_scaling );
         }
 
         bool operator==( const outgoing_sound_modifiers &rhs ) const {
@@ -182,44 +182,44 @@ struct heard_sound_modifiers{
         // optional minimum intensity to apply these modifiers at.
         int intensity_min_requirment = 0;
     
-        std::vector<short> base_mdB_volume_adj; // Adjusts the base mdB volume of all incoming sounds. Will influence deafening.
-        short base_mdb_adj_min_val = 0; // Defaults to 0 
+        std::vector<short> base_mdb_adj; // Adjusts the base mdB volume of all incoming sounds. Will influence deafening.
+        short base_mdb_adj_min_val = 0; // Defaults to 0, which means uncapped.  
         short base_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
-        float base_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        float base_mdb_adj_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
         std::vector<short> heard_vol_mdb_adj; // Adjusts the mdB volume of all heard sounds by this amount. Will influence deafening.
-        short heard_vol_mdb_adj_min_val = 0; // Defaults to 0 
+        short heard_vol_mdb_adj_min_val = 0; // Defaults to 0, which means uncapped. 
         short heard_vol_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
-        float heard_vol_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        float heard_vol_mdb_adj_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
         std::vector<short> perceived_vol_mdb_adj; // Adjusts the perceived mdB volume of all heard sounds by this amount. Does not influence deafening.
-        short perceived_vol_mdb_adj_min_val = 0; // Defaults to 0 
+        short perceived_vol_mdb_adj_min_val = 0; // Defaults to 0, which means uncapped. 
         short perceived_vol_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
-        float perceived_vol_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        float perceived_vol_mdb_adj_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
         std::vector<short> hearing_threshold_mdb_adj; // Adjusts the entities volume thresholds by this amount.
-        short hearing_threshold_mdb_adj_min_val = 0; // Defaults to 0
+        short hearing_threshold_mdb_adj_min_val = 0; // Defaults to 0, which means uncapped.
         short hearing_threshold_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
-        float hearing_threshold_mdB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        float hearing_threshold_mdb_adj_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
-        std::vector<short> hearing_protection_dB_adj;
-        short hearing_protection_basic_dB_adj_min_val= 0; // Defaults to 0
-        short hearing_protection_basic_dB_adj_max_val= 0; // Defaults to 0, which means uncapped.  
-        float hearing_protection_basic_dB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        std::vector<short> hearing_protection_mdb_adj;
+        short hearing_protection_mdb_adj_min_val = 0; // Defaults to 0, which means uncapped.
+        short hearing_protection_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped.  
+        float hearing_protection_mdb_adj_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
-        std::vector<short> hearing_protection_adv_dB_adj;
-        short hearing_protection_adv_dB_adj_min_val= 0; // Defaults to 0
-        short hearing_protection_adv_dB_adj_max_val= 0; // Defaults to 0, which means uncapped. 
-        float hearing_protection_adv_dB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        std::vector<short> hearing_protection_adv_mdb_adj;
+        short hearing_protection_adv_mdb_adj_min_val = 0; // Defaults to 0, which means uncapped.
+        short hearing_protection_adv_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
+        float hearing_protection_adv_mdb_adj_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
-        std::vector<short> permanant_hearing_loss_dB_adj;
-        short permanant_hearing_loss_dB_adj_min_val = 0; // Defaults to 0
-        short permanant_hearing_loss_dB_adj_max_val = 0; // Defaults to 0, which means uncapped. 
-        float permanant_hearing_loss_dB_adj_intensity_mult = 1; // Optional mult per intensity. Defaults to 1
+        std::vector<short> permanant_hearing_loss_mdb_adj;
+        short permanant_hearing_loss_mdb_adj_min_val = 0; // Defaults to 0, which means uncapped.
+        short permanant_hearing_loss_mdb_adj_max_val = 0; // Defaults to 0, which means uncapped. 
+        float permanant_hearing_loss_mdb_adj_intensity_scaling = 0; // Optional intensity scaling. Defaults to 0
 
         auto tie() const {
-            return std::tie( checked_sound_descriptions, base_mdB_volume_adj, base_mdb_adj_min_val, base_mdb_adj_max_val,
-                             base_mdB_adj_intensity_mult, permanant_hearing_loss_dB_adj, hearing_protection_dB_adj, hearing_protection_dB_adj );
+            return std::tie( checked_sound_descriptions, base_mdb_adj, base_mdb_adj_min_val, base_mdb_adj_max_val,
+                             base_mdb_adj_intensity_scaling, permanant_hearing_loss_mdb_adj, hearing_protection_mdb_adj, hearing_protection_mdb_adj );
         }
 
         bool operator==( const heard_sound_modifiers &rhs ) const {
@@ -276,9 +276,9 @@ struct caused_sound {
         std::vector<time_duration> base_emission_intervals;
         /**
          * optional emission time interval multiplier per parent intensity.
-         * defaulting to 1
+         * defaulting to 0
          */
-        float intensity_interval_scaling = 1;
+        time_duration intensity_interval_scaling = 0_seconds;
         /**
          * Random emission interval change minimum and maximum values.
          * Only populated if time_based is true, defaulting to 0_turns, 0_turns.
@@ -287,14 +287,14 @@ struct caused_sound {
         std::vector<std::pair<time_duration, time_duration>> random_interval_minmax;
         /**
          * optional random emission time minimum multiplier per parent intensity.
-         * defaulting to 1
+         * defaulting to 0_seconds
          */
-        float intensity_random_interval_min_mult = 1;
+        time_duration intensity_random_interval_min_scaling = 0_seconds;
         /**
          * optional random emission time maximum multiplier per parent intensity.
-         * defaulting to 1
+         * defaulting to 0_seconds
          */
-        float intensity_random_interval_max_mult = 1;
+        time_duration intensity_random_interval_max_scaling = 0_seconds;
         
         // Should we avoid actually floodfilling a sound in game and just play a sfx effect?
         // If true, base_dB_volume and intensity_scaling are used to determine the sfx volume to play at.
@@ -304,7 +304,7 @@ struct caused_sound {
         short base_dB_volume = 0;
 
         // How much should we increase the volume per parent effect intensity?
-        short intensity_dB_volume_scaling = 0;
+        float intensity_db_volume_scaling = 0;
 
         // Vector of our enums to use. If left blank will default to a single sound_t::activity entry.
         // If there is more than one entry, will choose entry to use based on parent effect intensity similar to decay messages.
@@ -412,11 +412,11 @@ class effect_type
         const std::vector<caused_sound> &get_caused_sounds() const {
             return caused_sounds;
         }
-        const std::vector<heard_sound_modifiers> &get_heard_sound_modifiers() const {
-            return in_sound_modifiers;
+        bool has_incoming_sound_mods() const {
+            return !in_sound_modifiers.empty();
         }
-        const std::vector<outgoing_sound_modifiers> &get_outgoing_sound_modifiers() const {
-            return out_sound_modifiers;
+        bool has_outgoing_sound_mods() const {
+            return !out_sound_modifiers.empty();
         }
 
 
@@ -718,7 +718,7 @@ class effect
         std::vector<sound_event> create_increment_sounds( const Creature *critter = nullptr ) const;
         std::vector<sound_event> create_decay_sounds( const Creature *critter = nullptr ) const;
         std::vector<sound_event> create_remove_sounds( const Creature *critter = nullptr ) const;
-        std::vector<sound_event> create_time_based_sounds( const Creature *critter = nullptr ) const;
+        std::vector<sound_event> create_time_based_sounds( const Creature *critter = nullptr, const time_point &time = calendar::turn );
 
         void update_sound_time_intervals( const bool &dirty_only = false );
 
@@ -751,6 +751,11 @@ class effect
         // Requires a pointer to the effected creature, see above create_xxxx_sounds comments
         sound_event create_sound_event( const caused_sound &cs, const Creature *critter = nullptr ) const;
 
+        // A vector of effect caused sound vector indexes, and the current time interval that sound will be emitted on. 
+        // Whenever we modify our intensity, we quickly re-check these to update them.
+        // We check against these to see when we should emit time based sounds, and recalc the random time interval sounds on emission.
+        std::vector<caused_sound_interval_details> caused_sound_time_intervals;
+
     protected:
         const effect_type *eff_type;
         time_duration duration;
@@ -761,11 +766,6 @@ class effect
 
         // TODO: REMOVE!
         bool permanent = false;
-
-        // A vector of effect caused sound vector indexes, and the current time interval that sound will be emitted on. 
-        // Whenever we modify our intensity, we quickly re-check these to update them.
-        // We check against these to see when we should emit time based sounds, and recalc the random time interval sounds on emission.
-        std::vector<caused_sound_interval_details> caused_sound_time_intervals;
 
     public:
         /**
@@ -804,5 +804,383 @@ class effects_map : public
     std::unordered_map<efftype_id, std::unordered_map<bodypart_str_id, effect>>
 {
 };
+
+// Handling sounds being modified by effects requires a little bit of careful juggling.
+// We want to store generally as little as possible to reduce the amount of recalc that we have to do.
+
+// Struct for holding summed and potentially conflicting incoming effect sound modifiers
+struct dummy_incoming_sound_modifier_sums {
+
+    std::vector<std::string> sound_descriptions;
+    std::vector<faction_id> npc_faction;
+    std::vector<mfaction_str_id> monfaction;
+    std::vector<short> base_mdb_adj; 
+    std::vector<short> heard_vol_mdb_adj; 
+    std::vector<short> perceived_vol_mdb_adj; 
+    std::vector<short> hearing_threshold_mdb_adj; 
+    std::vector<short> hearing_protection_mdb_adj;
+    std::vector<short> hearing_protection_adv_mdb_adj;
+    std::vector<short> permanant_hearing_loss_mdb_adj;
+
+};
+
+// Struct for holding applicable and potentially conflicting outgoing sound modifier values.
+struct dummy_outgoing_sound_modifier_sums {
+
+    std::vector<std::string> sound_descriptions;
+    std::vector<faction_id> npc_faction;
+    std::vector<mfaction_str_id> monfaction;
+    std::vector<short> volume_mdB_adj; 
+    std::vector<short> volume_mdB_floor; 
+    std::vector<short> volume_mdB_ceiling; 
+
+};
+
+
+struct outgoing_sound_modifier_instance : public sound_modifier_base
+{
+    ~outgoing_sound_modifier_instance() override;
+    short volume_mdB_adj = 0; // mdB volume adjustment of qualifying sounds.
+    short volume_mdB_floor = 0; // Force all qualifying sounds to be atleast this loud. Default 0
+    short volume_mdB_ceiling = 0; // Caps all qualifying sounds to this volume. Default 19100 mdB
+
+    bool is_outgoing() const override{
+        return true;
+    }     
+    outgoing_sound_modifier_instance *as_outgoing() override {
+        return this;
+    }
+    const outgoing_sound_modifier_instance *as_outgoing() const override {
+        return this;
+    }
+};
+
+struct incoming_sound_modifier_instance : public sound_modifier_base
+{
+    ~incoming_sound_modifier_instance() override;
+    short base_mdb_adj = 0;
+    short heard_vol_mdb_adj = 0;
+    short perceived_vol_mdb_adj = 0;
+    short hearing_threshold_mdb_adj = 0; 
+    short hearing_protection_mdb_adj = 0;
+    short hearing_protection_adv_mdb_adj = 0;
+    short permanant_hearing_loss_mdb_adj = 0;
+ 
+    bool is_incoming() const override{
+        return true;
+    }
+    incoming_sound_modifier_instance *as_incoming() override{
+        return this;
+    }
+    const incoming_sound_modifier_instance *as_incoming() const override{
+        return this;
+    }
+};
+
+struct incoming_sound_mod_holder {
+
+    // holds vectors for the sound modifiers values that change all incoming sounds.
+    std::vector<incoming_sound_modifier_instance> global_mods;
+
+    // holds calculated conditional sound modifier instances
+    std::vector<incoming_sound_modifier_instance> conditional_mods;
+
+    // compared against to see if we can skip updating checkvars
+    // we only ever have one sound event in here, but it is kept as a vector so we can clear it.
+    std::vector<sound_event> previous_sound;
+    
+    // What we actually pull values from. Must be re-calced for each sound we want to actually modify
+    // UNLESS we either: 
+    // Have no conditional mods
+    // the checked agains sound is close enough to our previous sound.
+    incoming_sound_modifier_instance checkvars;
+    
+    bool replace_description_check() {
+        return checkvars.filter[2];
+    }
+    bool replace_npc_faction_check() {
+        return checkvars.filter[4];
+    }
+    bool replace_monfaction_check() {
+        return checkvars.filter[6];
+    }
+    void try_replace_description( std::string &desc ) {
+        if ( checkvars.filter[2] ) {
+            if ( checkvars.filter[3] ) {
+                desc = checkvars.replace_with_sound_descriptions[0];
+                return;
+            } else { 
+                const int &length = checkvars.replace_with_sound_descriptions.size(); 
+                const int &index = rng( 1, length );
+                desc = checkvars.replace_with_sound_descriptions[index];
+                return;
+            }
+        } 
+    }
+    void try_replace_npc_faction( faction_id &npcfac ) {
+        if ( checkvars.filter[4] ) {
+            if ( checkvars.filter[5] ) {
+                npcfac = checkvars.npc_faction[0];
+                return;
+            } else { 
+                const int &length = checkvars.npc_faction.size();
+                const int &index = rng( 1, length );
+                npcfac = checkvars.npc_faction[index];
+                return;
+            }
+        } 
+    }
+    void try_replace_monfaction( mfaction_str_id &monfac ) {
+        if ( checkvars.filter[6] ) {
+            if ( checkvars.filter[7] ) {
+                monfac = checkvars.monfaction[0];
+                return;
+            } else { 
+                const int &length = checkvars.monfaction.size();
+                const int &index = rng( 1, length );
+                monfac = checkvars.monfaction[index];
+                return;
+            }
+        } 
+    }
+    const short &cv_base_mdb_adj() const {
+        return checkvars.base_mdb_adj;
+    }
+    const short &cv_pre_ppe_mdb_adj() const {
+        return checkvars.heard_vol_mdb_adj;
+    }
+    const short &cv_perceived_vol_mdb_adj() const {
+        return checkvars.perceived_vol_mdb_adj;
+    }
+    const short &cv_threshold_mdb_adj() const {
+        return checkvars.hearing_threshold_mdb_adj;
+    } 
+    const short &cv_ppe_mdb_adj() const { // personal protective equiptment, or PPE
+        return checkvars.hearing_protection_mdb_adj;
+    }
+    const short &cv_adv_ppe_mdb_adj() const {
+        return checkvars.hearing_protection_adv_mdb_adj;
+    }
+    const short &cv_perm_h_loss_mdb_adj() const {
+        return checkvars.permanant_hearing_loss_mdb_adj;
+    }
+
+};
+
+struct outgoing_sound_mod_holder {
+
+    // holds calculated global (effects all sounds) sound modifier instances
+    std::vector<outgoing_sound_modifier_instance> global_mods;
+
+    // holds calculated conditional sound modifier instances
+    std::vector<outgoing_sound_modifier_instance> conditional_mods;
+
+    // compared against to see if we can skip updating checkvars
+    // we only ever have one sound event in here but we keep this as a vector so we can clear it easily.
+    std::vector<sound_event> previous_sound;
+    
+    // What we actually pull values from. Must be re-calced for each sound we want to actually modify
+    // We store all of the 
+    // UNLESS we either: 
+    // Have no conditional mods
+    // the checked agains sound is close enough to our previous sound.
+    outgoing_sound_modifier_instance checkvars;
+    
+    bool replace_description_check() {
+        return checkvars.filter[2];
+    }
+    bool replace_npc_faction_check() {
+        return checkvars.filter[4];
+    }
+    bool replace_monfaction_check() {
+        return checkvars.filter[6];
+    }
+    void try_replace_description( std::string &desc ) {
+        if ( checkvars.filter[2] ) {
+            if ( checkvars.filter[3] ) {
+                desc = checkvars.replace_with_sound_descriptions[0];
+                return;
+            } else { 
+                const int &length = checkvars.replace_with_sound_descriptions.size(); 
+                const int &index = rng( 1, length );
+                desc = checkvars.replace_with_sound_descriptions[index];
+                return;
+            }
+        } 
+    }
+    void try_replace_npc_faction( faction_id &npcfac ) {
+        if ( checkvars.filter[4] ) {
+            if ( checkvars.filter[5] ) {
+                npcfac = checkvars.npc_faction[0];
+                return;
+            } else { 
+                const int &length = checkvars.npc_faction.size();
+                const int &index = rng( 1, length );
+                npcfac = checkvars.npc_faction[index];
+                return;
+            }
+        } 
+    }
+    void try_replace_monfaction( mfaction_str_id &monfac ) {
+        if ( checkvars.filter[6] ) {
+            if ( checkvars.filter[7] ) {
+                monfac = checkvars.monfaction[0];
+                return;
+            } else { 
+                const int &length = checkvars.monfaction.size();
+                const int &index = rng( 1, length );
+                monfac = checkvars.monfaction[index];
+                return;
+            }
+        } 
+    }
+    const short &cv_volume_mdB_adj() const {
+        return checkvars.volume_mdB_adj;
+    }
+    const short &cv_volume_mdB_floor() const {
+        return checkvars.volume_mdB_floor;
+    }
+    const short &cv_volume_mdB_ceiling() const {
+        return checkvars.volume_mdB_ceiling;
+    }
+
+};
+
+struct sound_modifiers_controller 
+{
+    private:
+
+        // Pointer to the creature that has this controller.
+        // This is the only thing that we actually need to worry about getting mucked with.
+        const Creature *parent = nullptr;
+
+        // Prevent direct access so that changes dont happen the controller is not aware of.
+        incoming_sound_mod_holder inmods; // holds incoming sound modifiers
+        outgoing_sound_mod_holder outmods;// holds outgoing sound modifiers
+    
+        /**
+         *  
+         *  @param indirty      = status[0]:True = This controller has dirty incoming sound modifiers
+         *  @param outdirty     = status[1]:True = This controller has dirty outgoing sound modifiers
+         *  @param inactive     = status[2]:True = This controller has active incoming sound modifiers
+         *  @param outactive    = status[3]:True = This controller has active outgoing sound modifiers
+         *  @param inrmarked    = status[4]:True = This controller has incoming sound modifiers marked for removal
+         *  @param outrmarked   = status[5]:True = This controller has outgoing sound modifiers marked for removal
+         *  @param rebuild      = status[6]:True = Indicates all modifiers should be cleared and rebuilt from the creatures active effects.
+         *  @param valid        = status[7]:True = This controller was initialized properly and its parent is not a nullptr.
+         */
+        std::bitset<8> status = 0;
+    
+    public:
+        
+        bool operator()( const Creature *p ) {
+            if ( !p ) {
+                return false;
+            } else if ( p == this->parent ) {
+                if ( this->status.test(7) ) {
+                    return true;
+                } else {
+
+                    this->status.set(7);
+                    return true;
+                }
+            } else if ( !this->parent ) {
+                // Set statuses and move on.
+                this->status.set(7);
+                this->parent = p;
+            } 
+            debugmsg( "Creature %s attempted to bind to sound modifier controller bound to Creature %s" );
+            return false;
+        }
+
+
+        // we keep this for internal functions.
+        bool is_bound() const{
+            if ( !this->parent ){
+                if ( this->status.test(7) ) {
+                    debugmsg( "A sound modifiers controller is marked as valid but was found to have a null parent pointer on is_bound check indicating improper initialization." );
+                }
+                return false;
+            } else if ( !this->status.test(7) ) {
+                debugmsg( "A sound modifiers controller with a valid parent pointer was found to be marked invalid on is_bound check indicating improper initialization." );
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        const std::bitset<8> &controller_status() const {
+            return this->status;
+        }
+        
+        // Returns true if the controller is  A: ready or B: fully updates and successfully returns to a ready state.
+        bool ready();
+
+        // Are there active incoming sound modifiers?
+        bool active_in( const bool &only_global = false );
+
+        // Are there active incoming sound modifiers that will affect a given sound event?
+        bool active_in( const sound_event &se, const bool &allow_global = true );
+
+        // Are there active outgoing sound modifiers?
+        bool active_out( const bool &only_global = false );
+
+        // Are there active outgoing sound modifiers that will affect a given sound event?
+        bool active_out( const sound_event &se, const bool &allow_global = true );
+
+        bool active(); // are there any sound modifiers in here at all.
+
+        void mark_all_dirty();
+
+        // Mark all modifiers with a given efftype_id dirty
+        void mark_dirty( const efftype_id &id );
+
+        void mark_for_removal( const efftype_id &id );
+        void remove_marked();
+
+        void update( const bool &dirty_only = true );
+        bool rebuild();
+        // Add the given effect's modifier instances if they have not already been added.
+        void add_mods( const effect &e );
+
+
+        bool is_in_checkvars_dirty() const
+        {
+            return !this->inmods.checkvars.status.test(7);
+        }
+
+        void set_in_checkvars_dirty()
+        {
+            this->inmods.checkvars.status.reset(7);
+        }
+
+        void config_in_checkvars( const sound_event &se );
+
+        const incoming_sound_modifier_instance &in_checkvars() const
+        {
+            return this->inmods.checkvars;
+        }
+
+
+        bool is_out_checkvars_dirty() const
+        {
+            return !this->outmods.checkvars.status.test(7);
+        }
+
+        void set_out_checkvars_dirty()
+        {
+            this->outmods.checkvars.status.reset(7);
+        }
+
+        void config_out_checkvars( const sound_event &se );
+
+        const outgoing_sound_modifier_instance &out_checkvars() const
+        {
+            return this->outmods.checkvars;
+        }
+
+        short get_permanant_hearing_loss();
+};
+
 
 

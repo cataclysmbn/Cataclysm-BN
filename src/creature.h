@@ -20,6 +20,7 @@
 #include "coordinates.h"
 #include "enums.h"
 #include "memory_fast.h"
+#include "effect.h"
 
 enum game_message_type : int;
 class nc_color;
@@ -562,6 +563,22 @@ class Creature
         /** Processes effects according to class (monster, player) */
         virtual void process_effects_internal() = 0;
 
+        /**
+         * Contains all the effect based sound modifiers relevant to the creature.
+         * Controller must be bound to the creature before it is used. 
+         *
+         * checking the controller as a conditional bool " if ( smod_controller( this ) ) " will return true if 
+         * the controller is properly bound and configured, or if it successfully binds and configures.
+         *
+         * As the controller cant know who owns it unless it is bound
+         * we call its functions through the parent creature to garuntee that 
+         * it is properly bound.
+         */
+        sound_modifiers_controller smod_controller;
+
+
+        
+
         /** Returns true if the player has the entered trait, returns false for non-humans */
         virtual bool has_trait( const trait_id &flag ) const;
 
@@ -1063,3 +1080,4 @@ class Creature
         int pain = 0;
         bool underwater = false;
 };
+

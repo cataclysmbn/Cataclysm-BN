@@ -14,6 +14,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "color.h"
+#include "creature.h"
 #include "debug.h"
 #include "enums.h"
 #include "game.h"
@@ -21,6 +22,7 @@
 #include "json.h"
 #include "messages.h"
 #include "monster.h"
+#include "numeric_interval.h"
 #include "output.h"
 #include "player.h"
 #include "rng.h"
@@ -32,6 +34,7 @@
 #include "units_serde.h"
 #include "generic_factory.h"
 #include "faction.h"
+#include "flag.h"
 
 static const efftype_id effect_bandaged( "bandaged" );
 static const efftype_id effect_beartrap( "beartrap" );
@@ -1550,7 +1553,10 @@ void load_effect_type( const JsonObject &jo )
                     new_etype.caused_sounds.push_back( candidate );
                 }
             }
-        }  
+        }
+        if ( !new_etype.caused_sounds.empty() ){
+            new_etype.flags.insert( flag_id( "EFFECT_CREATES_SOUND ") );
+        }
     }
     // Load up our potential incoming sound modifiers.
     if ( jo.has_array( "incoming_sound_modifiers" ) ) {
@@ -1564,7 +1570,10 @@ void load_effect_type( const JsonObject &jo )
                     new_etype.in_sound_modifiers.push_back( candidate );
                 }
             }
-        }  
+        }
+        if ( !new_etype.in_sound_modifiers.empty() ){
+            new_etype.flags.insert( flag_id( "EFFECT_MODIFIES_INCOMING_SOUND" ) );
+        }
     }
     // Load up our potential outgoing sound modifiers.
     if ( jo.has_array( "outgoing_sound_modifiers" ) ) {
@@ -1578,7 +1587,10 @@ void load_effect_type( const JsonObject &jo )
                     new_etype.out_sound_modifiers.push_back( candidate );
                 }
             }
-        }  
+        }
+        if ( !new_etype.out_sound_modifiers.empty() ){
+            new_etype.flags.insert( flag_id( "EFFECT_MODIFIES_OUTGOING_SOUND" ) );
+        }
     }
     
 
@@ -1823,7 +1835,7 @@ void outgoing_sound_modifiers::load( const JsonObject &jo ){
     if ( !volume_mdB_adj.empty() ){
         optional(jo, valid, "volume_mdB_adj_min_val" , volume_mdB_adj_min_val ); // Defaults to 0 
         optional(jo, valid, "volume_mdB_adj_max_val" , volume_mdB_adj_max_val ); // Defaults to 0, which means uncapped. 
-        optional(jo, valid, "volume_mdB_adj_intensity_mult" , volume_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+        optional(jo, valid, "volume_mdB_adj_intensity_scaling" , volume_mdB_adj_intensity_scaling ); // Optional mult per intensity. Defaults to 1
     }
 
     if( jo.has_member("volume_mdB_floor") ){
@@ -1847,7 +1859,7 @@ void outgoing_sound_modifiers::load( const JsonObject &jo ){
     if ( !volume_mdB_floor.empty() ){
         optional(jo, valid, "volume_mdB_floor_min_val" , volume_mdB_floor_min_val ); // Defaults to 0 
         optional(jo, valid, "volume_mdB_floor_max_val" , volume_mdB_floor_max_val ); // Defaults to 0, which means uncapped. 
-        optional(jo, valid, "volume_mdB_floor_intensity_mult" , volume_mdB_floor_intensity_mult ); // Optional mult per intensity. Defaults to 1
+        optional(jo, valid, "volume_mdB_floor_intensity_scaling" , volume_mdB_floor_intensity_scaling ); // Optional mult per intensity. Defaults to 1
     }
 
     if( jo.has_member("volume_mdB_ceiling") ){
@@ -1871,7 +1883,7 @@ void outgoing_sound_modifiers::load( const JsonObject &jo ){
     if ( !volume_mdB_ceiling.empty() ){
         optional(jo, valid, "volume_mdB_ceiling_min_val" , volume_mdB_ceiling_min_val ); // Defaults to 0 
         optional(jo, valid, "volume_mdB_ceiling_max_val" , volume_mdB_ceiling_max_val ); // Defaults to 0, which means uncapped. 
-        optional(jo, valid, "volume_mdB_ceiling_intensity_mult" , volume_mdB_ceiling_intensity_mult ); // Optional mult per intensity. Defaults to 1
+        optional(jo, valid, "volume_mdB_ceiling_intensity_scaling" , volume_mdB_ceiling_intensity_scaling ); // Optional mult per intensity. Defaults to 1
     }
 
     if ( !replace_with_sound_descriptions.empty() || replace_monster_faction_attribution || replace_npc_faction_attribution || !volume_mdB_ceiling.empty() || !volume_mdB_floor.empty() || !volume_mdB_adj.empty() ){
@@ -1935,10 +1947,10 @@ void heard_sound_modifiers::load( const JsonObject &jo )
     if( jo.has_member("base_mdB_volume_adj") ){
         if ( !jo.get_array("base_mdB_volume_adj").empty() ){
             for( auto entry : jo.get_array("base_mdB_volume_adj") ){
-                base_mdB_volume_adj.push_back( entry.get_int() );
+                base_mdb_adj.push_back( entry.get_int() );
             }
             bool has_nonzero = false;
-            for( auto &entry : base_mdB_volume_adj){
+            for( auto &entry : base_mdb_adj){
                 if ( entry > 0 ){
                     has_nonzero = true;
                 }
@@ -1946,14 +1958,14 @@ void heard_sound_modifiers::load( const JsonObject &jo )
             if ( !has_nonzero ){
                 jo.throw_error( R"("Heard sound modifier base_mdB_volume_adj vector must contain atleast one non-zero entry.)" );
                 // clear the vector, since there is nothing actually usable in there.
-                base_mdB_volume_adj.clear();
+                base_mdb_adj.clear();
             }
         }
     } // Adjusts the base mdB volume of all incoming sounds. Will influence deafening.
-    if ( !base_mdB_volume_adj.empty() ){
+    if ( !base_mdb_adj.empty() ){
         optional(jo, valid, "base_mdb_adj_min_val" , base_mdb_adj_min_val ); // Defaults to 0 
         optional(jo, valid, "base_mdb_adj_max_val" , base_mdb_adj_max_val ); // Defaults to 0, which means uncapped. 
-        optional(jo, valid, "base_mdB_adj_intensity_mult" , base_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+        optional(jo, valid, "base_mdB_adj_intensity_scaling" , base_mdb_adj_intensity_scaling ); // Optional mult per intensity. Defaults to 1
     }
     
     if( jo.has_member("heard_vol_mdb_adj") ){
@@ -1977,7 +1989,7 @@ void heard_sound_modifiers::load( const JsonObject &jo )
     if ( !heard_vol_mdb_adj.empty() ){
         optional(jo, valid, "heard_vol_mdb_adj_min_val" , heard_vol_mdb_adj_min_val ); // Defaults to 0 
         optional(jo, valid, "heard_vol_mdb_adj_max_val" , heard_vol_mdb_adj_max_val ); // Defaults to 0, which means uncapped. 
-        optional(jo, valid, "heard_vol_mdB_adj_intensity_mult" , heard_vol_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+        optional(jo, valid, "heard_vol_mdB_adj_intensity_scaling" , heard_vol_mdb_adj_intensity_scaling ); // Optional mult per intensity. Defaults to 1
     }
     
     if( jo.has_member("perceived_vol_mdb_adj") ){
@@ -2001,7 +2013,7 @@ void heard_sound_modifiers::load( const JsonObject &jo )
     if ( !perceived_vol_mdb_adj.empty() ){
         optional(jo, valid, "perceived_vol_mdb_adj_min_val" , perceived_vol_mdb_adj_min_val ); // Defaults to 0 
         optional(jo, valid, "perceived_vol_mdb_adj_max_val" , perceived_vol_mdb_adj_max_val ); // Defaults to 0, which means uncapped. 
-        optional(jo, valid, "perceived_vol_mdB_adj_intensity_mult" , perceived_vol_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+        optional(jo, valid, "perceived_vol_mdB_adj_intensity_scaling" , perceived_vol_mdb_adj_intensity_scaling ); // Optional mult per intensity. Defaults to 1
     }
     
     if( jo.has_member("hearing_threshold_mdb_adj") ){
@@ -2025,82 +2037,82 @@ void heard_sound_modifiers::load( const JsonObject &jo )
     if ( !hearing_threshold_mdb_adj.empty() ){
         optional(jo, valid, "hearing_threshold_mdb_adj_min_val" , hearing_threshold_mdb_adj_min_val ); // Defaults to 0
         optional(jo, valid, "hearing_threshold_mdb_adj_max_val" , hearing_threshold_mdb_adj_max_val ); // Defaults to 0, which means uncapped. 
-        optional(jo, valid, "hearing_threshold_mdB_adj_intensity_mult" , hearing_threshold_mdB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+        optional(jo, valid, "hearing_threshold_mdB_adj_intensity_scaling" , hearing_threshold_mdb_adj_intensity_scaling ); // Optional mult per intensity. Defaults to 1
     }
     
-    if( jo.has_member("hearing_protection_dB_adj") ){
-        if ( !jo.get_array("hearing_protection_dB_adj").empty() ){
-            for( auto entry : jo.get_array("hearing_protection_dB_adj") ){
-                hearing_protection_dB_adj.push_back( entry.get_int() );
+    if( jo.has_member("hearing_protection_mdb_adj") ){
+        if ( !jo.get_array("hearing_protection_mdb_adj").empty() ){
+            for( auto entry : jo.get_array("hearing_protection_mdb_adj") ){
+                hearing_protection_mdb_adj.push_back( entry.get_int() );
             }
             bool has_nonzero = false;
-            for( auto &entry : hearing_protection_dB_adj){
+            for( auto &entry : hearing_protection_mdb_adj){
                 if ( entry > 0 ){
                     has_nonzero = true;
                 }
             }
             if ( !has_nonzero ){
-                jo.throw_error( R"("Heard sound modifier hearing_protection_dB_adj vector must contain atleast one non-zero entry.)" );
+                jo.throw_error( R"("Heard sound modifier hearing_protection_mdb_adj vector must contain atleast one non-zero entry.)" );
                 // clear the vector, since there is nothing actually usable in there.
-                hearing_protection_dB_adj.clear();
+                hearing_protection_mdb_adj.clear();
             }
         }
     }
-    if ( !hearing_protection_dB_adj.empty() ){
-        optional(jo, valid, "hearing_protection_basic_dB_adj_min_val" , hearing_protection_basic_dB_adj_min_val );// Defaults to 0
-        optional(jo, valid, "hearing_protection_basic_dB_adj_max_val" , hearing_protection_basic_dB_adj_max_val );// Defaults to 0, which means uncapped.  
-        optional(jo, valid, "hearing_protection_basic_dB_adj_intensity_mult" , hearing_protection_basic_dB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    if ( !hearing_protection_mdb_adj.empty() ){
+        optional(jo, valid, "hearing_protection_basic_mdb_adj_min_val" , hearing_protection_mdb_adj_min_val );// Defaults to 0
+        optional(jo, valid, "hearing_protection_basic_mdb_adj_max_val" , hearing_protection_mdb_adj_max_val );// Defaults to 0, which means uncapped.  
+        optional(jo, valid, "hearing_protection_basic_mdb_adj_intensity_scaling" , hearing_protection_mdb_adj_intensity_scaling ); // Optional mult per intensity. Defaults to 1
     }
     
-    if( jo.has_member("hearing_protection_adv_dB_adj") ){
-        if ( !jo.get_array("hearing_protection_adv_dB_adj").empty() ){
-            for( auto entry : jo.get_array("hearing_protection_adv_dB_adj") ){
-                hearing_protection_adv_dB_adj.push_back( entry.get_int() );
+    if( jo.has_member("hearing_protection_adv_mdb_adj") ){
+        if ( !jo.get_array("hearing_protection_adv_mdb_adj").empty() ){
+            for( auto entry : jo.get_array("hearing_protection_adv_mdb_adj") ){
+                hearing_protection_adv_mdb_adj.push_back( entry.get_int() );
             }
             bool has_nonzero = false;
-            for( auto &entry : hearing_protection_adv_dB_adj){
+            for( auto &entry : hearing_protection_adv_mdb_adj){
                 if ( entry > 0 ){
                     has_nonzero = true;
                 }
             }
             if ( !has_nonzero ){
-                jo.throw_error( R"("Heard sound modifier hearing_protection_adv_dB_adj vector must contain atleast one non-zero entry.)" );
+                jo.throw_error( R"("Heard sound modifier hearing_protection_adv_mdb_adj vector must contain atleast one non-zero entry.)" );
                 // clear the vector, since there is nothing actually usable in there.
-                hearing_protection_adv_dB_adj.clear();
+                hearing_protection_adv_mdb_adj.clear();
             }
         }
     }
-    if ( !hearing_protection_adv_dB_adj.empty() ){
-        optional(jo, valid, "hearing_protection_adv_dB_adj_min_val" , hearing_protection_adv_dB_adj_min_val );// Defaults to 0
-        optional(jo, valid, "hearing_protection_adv_dB_adj_max_val" , hearing_protection_adv_dB_adj_max_val );// Defaults to 0, which means uncapped. 
-        optional(jo, valid, "hearing_protection_adv_dB_adj_intensity_mult" , hearing_protection_adv_dB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    if ( !hearing_protection_adv_mdb_adj.empty() ){
+        optional(jo, valid, "hearing_protection_adv_mdb_adj_min_val" , hearing_protection_adv_mdb_adj_min_val );// Defaults to 0
+        optional(jo, valid, "hearing_protection_adv_mdb_adj_max_val" , hearing_protection_adv_mdb_adj_max_val );// Defaults to 0, which means uncapped. 
+        optional(jo, valid, "hearing_protection_adv_mdb_adj_intensity_scaling" , hearing_protection_adv_mdb_adj_intensity_scaling ); // Optional mult per intensity. Defaults to 1
     }
     
-    if( jo.has_member("permanant_hearing_loss_dB_adj") ){
-        if ( !jo.get_array("permanant_hearing_loss_dB_adj").empty() ){
-            for( auto entry : jo.get_array("permanant_hearing_loss_dB_adj") ){
-                permanant_hearing_loss_dB_adj.push_back( entry.get_int() );
+    if( jo.has_member("permanant_hearing_loss_mdb_adj") ){
+        if ( !jo.get_array("permanant_hearing_loss_mdb_adj").empty() ){
+            for( auto entry : jo.get_array("permanant_hearing_loss_mdb_adj") ){
+                permanant_hearing_loss_mdb_adj.push_back( entry.get_int() );
             }
             bool has_nonzero = false;
-            for( auto &entry : permanant_hearing_loss_dB_adj){
+            for( auto &entry : permanant_hearing_loss_mdb_adj){
                 if ( entry > 0 ){
                     has_nonzero = true;
                 }
             }
             if ( !has_nonzero ){
-                jo.throw_error( R"("Heard sound modifier permanant_hearing_loss_dB_adj vector must contain atleast one non-zero entry.)" );
+                jo.throw_error( R"("Heard sound modifier permanant_hearing_loss_mdb_adj vector must contain atleast one non-zero entry.)" );
                 // clear the vector, since there is nothing actually usable in there.
-                permanant_hearing_loss_dB_adj.clear();
+                permanant_hearing_loss_mdb_adj.clear();
             }
         }
     }
-    if ( !permanant_hearing_loss_dB_adj.empty() ){
-        optional(jo, valid, "permanant_hearing_loss_dB_adj_min_val" , permanant_hearing_loss_dB_adj_min_val ); // Defaults to 0
-        optional(jo, valid, "permanant_hearing_loss_dB_adj_max_val" , permanant_hearing_loss_dB_adj_max_val ); // Defaults to 0, which means uncapped. 
-        optional(jo, valid, "permanant_hearing_loss_dB_adj_intensity_mult" , permanant_hearing_loss_dB_adj_intensity_mult ); // Optional mult per intensity. Defaults to 1
+    if ( !permanant_hearing_loss_mdb_adj.empty() ){
+        optional(jo, valid, "permanant_hearing_loss_mdb_adj_min_val" , permanant_hearing_loss_mdb_adj_min_val ); // Defaults to 0
+        optional(jo, valid, "permanant_hearing_loss_mdb_adj_max_val" , permanant_hearing_loss_mdb_adj_max_val ); // Defaults to 0, which means uncapped. 
+        optional(jo, valid, "permanant_hearing_loss_mdb_adj_intensity_scaling" , permanant_hearing_loss_mdb_adj_intensity_scaling ); // Optional scaling per intensity. Defaults to 1
     }
     
-    if ( !replace_with_sound_descriptions.empty() || replace_monster_faction_attribution || replace_npc_faction_attribution || !permanant_hearing_loss_dB_adj.empty() || !hearing_protection_adv_dB_adj.empty() || !hearing_protection_dB_adj.empty() || !hearing_threshold_mdb_adj.empty() || !perceived_vol_mdb_adj.empty() || !heard_vol_mdb_adj.empty() || !base_mdB_volume_adj.empty() ){
+    if ( !replace_with_sound_descriptions.empty() || replace_monster_faction_attribution || replace_npc_faction_attribution || !permanant_hearing_loss_mdb_adj.empty() || !hearing_protection_adv_mdb_adj.empty() || !hearing_protection_mdb_adj.empty() || !hearing_threshold_mdb_adj.empty() || !perceived_vol_mdb_adj.empty() || !heard_vol_mdb_adj.empty() || !base_mdb_adj.empty() ){
         // Make sure that we have atleast one usable modifier.
         valid = true;
     }  
@@ -2138,7 +2150,7 @@ void caused_sound::load( const JsonObject &jo )
     }
 
     if ( valid_time_interval ){
-        optional( jo, valid, "intensity_base_interval_mult", intensity_interval_scaling );
+        optional( jo, valid, "intensity_interval_scaling", intensity_interval_scaling );
     }
 
     if( jo.has_member( "random_time_intervals" ) ) {
@@ -2161,8 +2173,8 @@ void caused_sound::load( const JsonObject &jo )
     }
 
     if ( valid_random_time_interval ){
-        optional( jo, valid, "intensity_random_interval_min_mult", intensity_random_interval_min_mult );
-        optional( jo, valid, "intensity_random_interval_max_mult", intensity_random_interval_max_mult );
+        optional( jo, valid, "intensity_random_interval_min_scaling", intensity_random_interval_min_scaling );
+        optional( jo, valid, "intensity_random_interval_max_scaling", intensity_random_interval_max_scaling );
     }
     
     optional(jo, valid, "sfx_only", sfx_only );
@@ -2175,7 +2187,7 @@ void caused_sound::load( const JsonObject &jo )
     }
 
     // Optional: How much should we increase the volume per parent effect intensity?
-    optional(jo, valid, "intensity_dB_volume_scaling", intensity_dB_volume_scaling );
+    optional(jo, valid, "intensity_db_volume_scaling", intensity_db_volume_scaling );
 
     if( jo.has_member( "categories" ) ) {
         bool valid_category = false;
@@ -2285,7 +2297,7 @@ std::vector<sound_event> effect::create_apply_sounds( const Creature *critter ) 
 
 std::vector<sound_event> effect::create_increment_sounds( const Creature *critter ) const{
     std::vector<sound_event> created_sounds;
-    if ( has_apply_sounds() ){
+    if ( has_increment_sounds() ){
         for( const caused_sound &cs : eff_type->get_caused_sounds() ){
             if ( cs.allow_on_increment && intensity >= cs.intensity_min_requirment ){
                 created_sounds.push_back( create_sound_event( cs, critter ) );
@@ -2297,7 +2309,7 @@ std::vector<sound_event> effect::create_increment_sounds( const Creature *critte
 
 std::vector<sound_event> effect::create_decay_sounds( const Creature *critter ) const{
     std::vector<sound_event> created_sounds;
-    if ( has_apply_sounds() ){
+    if ( has_decay_sounds() ){
         for( const caused_sound &cs : eff_type->get_caused_sounds() ){
             if ( cs.allow_on_decay && intensity >= cs.intensity_min_requirment ){
                 created_sounds.push_back( create_sound_event( cs, critter ) );
@@ -2309,7 +2321,7 @@ std::vector<sound_event> effect::create_decay_sounds( const Creature *critter ) 
 
 std::vector<sound_event> effect::create_remove_sounds( const Creature *critter ) const{
     std::vector<sound_event> created_sounds;
-    if ( has_apply_sounds() ){
+    if ( has_remove_sounds() ){
         for( const caused_sound &cs : eff_type->get_caused_sounds() ){
             if ( cs.allow_on_remove && intensity >= cs.intensity_min_requirment ){
                 created_sounds.push_back( create_sound_event( cs, critter ) );
@@ -2319,12 +2331,19 @@ std::vector<sound_event> effect::create_remove_sounds( const Creature *critter )
     return created_sounds;
 }
 
-std::vector<sound_event> effect::create_time_based_sounds( const Creature *critter ) const{
+std::vector<sound_event> effect::create_time_based_sounds( const Creature *critter, const time_point &time ) {
+
     std::vector<sound_event> created_sounds;
-    if ( has_apply_sounds() ){
-        for( const caused_sound &cs : eff_type->get_caused_sounds() ){
-            if ( (cs.time_based || cs.random_time) && intensity >= cs.intensity_min_requirment ){
-                created_sounds.push_back( create_sound_event( cs, critter ) );
+    for( auto &time_details : caused_sound_time_intervals ){
+
+        const caused_sound &cs = eff_type->caused_sounds[time_details.index];
+        const auto &emit = action_time_scale::calendar_ticks_crossed_this_tick( time, time_details.interval ) > 0;
+
+        if ( intensity >= cs.intensity_min_requirment && emit ){  
+
+            created_sounds.push_back( create_sound_event( cs, critter ) );
+            if ( cs.random_time ) {
+                time_details.dirty = true;
             }
         }
     }
@@ -2386,7 +2405,7 @@ sound_event effect::create_sound_event( const caused_sound &cs, const Creature *
 
     sound.category = select_sound_cat( cs.categories, adj_intensity );
 
-    sound.volume = cs.base_dB_volume + ( ( adj_intensity - 1 ) * cs.intensity_dB_volume_scaling );
+    sound.volume = cs.base_dB_volume + std::round( ( adj_intensity - 1 ) * cs.intensity_db_volume_scaling );
 
     if ( !cs.sfx_only ){
         sound.volume = std::max<short>( 0, std::min<short>( 191, sound.volume ) );
@@ -2470,18 +2489,21 @@ void effect::update_sound_time_intervals( const bool &dirty_only )
         time_duration base_dur = 0_seconds;
         time_duration min_rand = 0_seconds;
         time_duration max_rand = 0_seconds;
+        const time_duration &base_scaling = (ce.intensity_interval_scaling == 0_seconds ) ? 0_seconds : ce.intensity_interval_scaling * ( adj_intensity - 1);
+        const time_duration &minr_scaling = (ce.intensity_random_interval_min_scaling == 0_seconds ) ? 0_seconds : ce.intensity_random_interval_min_scaling * ( adj_intensity - 1);
+        const time_duration &maxr_scaling = (ce.intensity_random_interval_max_scaling == 0_seconds ) ? 0_seconds : ce.intensity_random_interval_max_scaling * ( adj_intensity - 1);
         
         if ( ce.random_time ) {
             const auto &pairs = ce.random_interval_minmax;
             if ( pairs.empty() ){
                 debugmsg( "Effect type [%1s] attempted to get a random time interval from an empty random time intervals vector", eff_type->id.str() );
             } else if ( pairs.size() == 1 ) {
-                min_rand = pairs[0].first;
-                max_rand = pairs[0].second;
+                min_rand = pairs[0].first + minr_scaling;
+                max_rand = pairs[0].second + maxr_scaling;
             } else {
                 const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, pairs.size() ) - 1 ) );
-                min_rand = pairs[iterator].first;
-                max_rand = pairs[iterator].second;
+                min_rand = pairs[iterator].first + minr_scaling;
+                max_rand = pairs[iterator].second + maxr_scaling;
             }
         }
         if ( ce.time_based ) {
@@ -2489,15 +2511,15 @@ void effect::update_sound_time_intervals( const bool &dirty_only )
             if ( intervals.empty() ){
                 debugmsg( "Effect type [%1s] attempted to get a base time interval from an empty base time intervals vector", eff_type->id.str() );
             } else if ( intervals.size() == 1 ) {
-                base_dur = intervals[0];
+                base_dur = intervals[0] + base_scaling;
             } else {
                 const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, intervals.size() ) - 1 ) );
-                base_dur = intervals[iterator];
+                base_dur = intervals[iterator] + base_scaling;
             }
         }
 
-        const auto &minseconds = to_seconds<int>( min_rand );
-        const auto &maxseconds = to_seconds<int>( max_rand );
+        const auto &minseconds = std::max( 0, to_seconds<int>( min_rand ) );
+        const auto &maxseconds = std::max( 0, to_seconds<int>( max_rand ) );
         const auto &randresult = (maxseconds > minseconds ) ? rng( minseconds, maxseconds ) : ( minseconds == maxseconds ) ? maxseconds : rng( maxseconds, minseconds );
 
         if ( ce.random_time && !ce.time_based ){
@@ -2508,7 +2530,7 @@ void effect::update_sound_time_intervals( const bool &dirty_only )
             return base_dur;
         }
         
-        const auto &baseseconds = to_seconds<int>( base_dur );
+        const auto &baseseconds = std::max( 1, to_seconds<int>( base_dur ) );
 
         const auto &resultseconds = std::max( 1, ( baseseconds + ( (one_in(2) ? randresult : - randresult ) ) ) );
 
@@ -2543,3 +2565,1155 @@ void effect::update_sound_time_intervals( const bool &dirty_only )
         }
     }
 }
+
+sound_modifier_base::~sound_modifier_base() = default;
+
+bool sound_modifier_base::can_modify( const sound_event &se ) const{
+    if ( !status.test(6) ) {
+        return false;
+    }
+    if ( !filter.test(0) ) {
+        bool valid_cat = false;
+        for ( const sounds::sound_t &cat : checked_categories ) {
+            if ( se.category == cat ) {
+                valid_cat = true;
+            }
+        }
+        if ( !valid_cat ){
+            return false;
+        }
+    }
+    if ( !filter.test(1) ) {
+        bool valid_desc = false;
+        for ( const auto &desc : checked_sound_descriptions ) {
+            if ( se.description == desc ) {
+                valid_desc = true;
+            }
+        }
+        if ( !valid_desc ){
+            return false;
+        }
+    }
+    return true;
+}
+
+outgoing_sound_modifier_instance::~outgoing_sound_modifier_instance() = default;
+
+incoming_sound_modifier_instance::~incoming_sound_modifier_instance() = default;
+
+// If ready() fails due to being unable to properly update/remove 
+// ready() will trigger one full rebuild, and attempt the check again.
+// If that also fails, we abort, send a debugwarning, and fully clear the controller and all its bits.
+// if ready() fails due to the controller not being bound, we just abort. 
+bool sound_modifiers_controller::ready() {
+
+    // indirty      = status[0];
+    // outdirty     = status[1];
+    // inactive     = status[2];
+    // outactive    = status[3];
+    // inrmarked    = status[4];
+    // outrmarked   = status[5];
+    // rebuild      = status[6];
+    // valid        = status[7];
+    
+    auto &in_global = inmods.global_mods;
+    auto &in_conditional = inmods.conditional_mods;
+    auto &out_global = outmods.global_mods;
+    auto &out_conditional = outmods.conditional_mods;
+
+    auto ready_check = [&]() -> bool {
+        return !status.test(0) && !status.test(1) && !status.test(4) && !status.test(5) && !status.test(6);
+    };
+    
+    if ( !is_bound() ){
+        return false;
+    } else if ( ready_check() ) {
+        return true;
+    }
+    if ( !status[6] ){
+        // this will set inmods and outmods to dirty,
+        // but that is a fine precaution here as we should not ever find lingering mods marked for removal.
+        if ( status[4] || status[5] ) {
+            // Make sure that it was not just odd lingering values.
+            status[4] = false;
+            status[5] = false;
+            auto mark_remove = [&]( sound_modifier_base &inst ) -> bool {
+                return inst.marked_for_removal();
+            };
+            // Just loop through our 4 vectors and mark instanced.
+            for( auto &inst : in_global ) {
+                if( mark_remove(inst) ) {
+                    status[4] = true;
+                }
+            }
+            for( auto &inst : in_conditional ) {
+                if( mark_remove(inst) ) {
+                    status[4] = true;
+                }
+            }
+            for( auto &inst : out_global ) {
+                if( mark_remove(inst) ) {
+                    status[5] = true;
+                }
+            }
+            for( auto &inst : out_conditional ) {
+                if( mark_remove(inst) ) {
+                    status[5] = true;
+                }
+            }
+            // If we found modifiers marked for removal, remove them.
+            if ( status[4] || status[5] ) {
+                remove_marked();
+            }
+            
+        }
+        if ( status[0] || status[1] ) {
+            update();
+        }
+        if ( ready_check() ) {
+            return true;
+        } else {
+            status.set(6);
+        }
+            
+    }
+    if ( rebuild() ){
+        if ( ready_check() ) {
+            return true;
+        } else {
+            const auto loc = parent->bub_pos();
+            debugmsg( "Creature [%1s] at %i:%i:%i x:y:z has a non-valid sound_modifiers_controller after a full rebuild! dirty inmods/outmods %i:%i, remove marked inmods/outmods %i:%i "
+                                    , parent->get_name(), loc.x(), loc.y(), loc.z(), status[0], status[1], status[4], status[5] );
+        }
+    }
+    return false;
+}
+
+bool sound_modifiers_controller::active_in( const bool &only_global ) {
+    if ( ready() && !only_global) {
+        return status[2];
+    } else {
+
+        auto &in_global = inmods.global_mods;
+        auto &in_conditional = inmods.conditional_mods;
+
+        auto is_active = [&]( sound_modifier_base &inst ) -> bool {
+            const auto &cv = inst.status;
+            return !cv[0] && cv[6] && cv[7];
+        };
+
+        // Just loop through our 4 vectors and mark instances.
+        for( auto &inst : in_global ) {
+            if ( is_active( inst ) ){
+                return true;
+            }
+        }
+        if ( !only_global ){
+            for( auto &inst : in_conditional ) {
+                if ( is_active( inst ) ){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}
+
+bool sound_modifiers_controller::active_out( const bool &only_global ) {
+    if ( ready() && only_global) {
+        return status[3];
+    } else {
+
+        auto &out_global = outmods.global_mods;
+        auto &out_conditional = outmods.conditional_mods;
+
+        auto is_active = [&]( sound_modifier_base &inst ) -> bool {
+            const auto &cv = inst.status;
+            return !cv[0] && cv[6] && cv[7];
+        };
+
+        // Just loop through our 4 vectors and mark instances.
+        for( auto &inst : out_global ) {
+            if ( is_active( inst ) ){
+                return true;
+            }
+        }
+        if ( !only_global ){
+            for( auto &inst : out_conditional ) {
+                if ( is_active( inst ) ){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}
+
+bool sound_modifiers_controller::active_in( const sound_event &se, const bool &allow_global ) {
+    if ( ready() && allow_global) {
+        return status[2];
+    } else {
+
+        auto &in_global = inmods.global_mods;
+        auto &in_conditional = inmods.conditional_mods;
+
+        auto is_active = [&]( sound_modifier_base &inst ) -> bool {
+            const auto &cv = inst.status;
+            return !cv[0] && cv[6] && cv[7];
+        };
+
+        // Just loop through our 4 vectors and mark instances.
+        if ( allow_global ) {
+            for( auto &inst : in_global ) {
+            if ( is_active( inst ) ){
+                return true;
+            }
+        }}
+
+        for( auto &inst : in_conditional ) {
+            if ( is_active( inst ) && inst.can_modify( se ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+bool sound_modifiers_controller::active_out( const sound_event &se, const bool &allow_global ) {
+    if ( ready() && allow_global) {
+        return status[3];
+    } else {
+
+        auto &out_global = outmods.global_mods;
+        auto &out_conditional = outmods.conditional_mods;
+
+        auto is_active = [&]( sound_modifier_base &inst ) -> bool {
+            const auto &cv = inst.status;
+            return !cv[0] && cv[6] && cv[7];
+        };
+
+        // Just loop through our 4 vectors and mark instances.
+        if ( allow_global ) {
+            for( auto &inst : out_global ) {
+                if ( is_active( inst ) ){
+                    return true;
+                }
+            }
+        }
+        for( auto &inst : out_conditional ) {
+            if ( is_active( inst ) && inst.can_modify( se ) ){
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+bool sound_modifiers_controller::active() {
+    
+    if ( ready() ) {
+        return status[2] || status[3];
+    } 
+    return active_in() || active_out();
+}
+
+void sound_modifiers_controller::mark_all_dirty() {
+    status.set(0);
+    status.set(1);
+
+    auto &in_global = inmods.global_mods;
+    auto &in_conditional = inmods.conditional_mods;
+    auto &out_global = outmods.global_mods;
+    auto &out_conditional = outmods.conditional_mods;    
+
+    // Just loop through our 4 vectors and mark instances.
+    for( auto &inst : in_global ) {
+        inst.status.reset(0);
+    }
+    for( auto &inst : in_conditional ) {
+        inst.status.reset(0);
+    }
+    for( auto &inst : out_global ) {
+        inst.status.reset(0);
+    }
+    for( auto &inst : out_conditional ) {
+        inst.status.reset(0);
+    }
+}
+
+void sound_modifiers_controller::mark_dirty( const efftype_id &id ) {
+    bool indirty = status[0];
+    bool outdirty = status[1];
+
+    auto &in_global = inmods.global_mods;
+    auto &in_conditional = inmods.conditional_mods;
+    auto &out_global = outmods.global_mods;
+    auto &out_conditional = outmods.conditional_mods;    
+
+    auto mark_dirty = [&]( sound_modifier_base &inst ) -> bool {
+        if ( inst.parent_id == id ){
+            inst.status.reset(0);
+            return true;
+        } else {
+            return false;
+        }
+    };
+    // Just loop through our 4 vectors and mark instances.
+    for( auto &inst : in_global ) {
+        if( mark_dirty(inst) ) {
+            indirty = true;
+        }
+    }
+    for( auto &inst : in_conditional ) {
+        if( mark_dirty(inst) ) {
+            indirty = true;
+        }
+    }
+    for( auto &inst : out_global ) {
+        if( mark_dirty(inst) ) {
+            outdirty = true;
+        }
+    }
+    for( auto &inst : out_conditional ) {
+        if( mark_dirty(inst) ) {
+            outdirty = true;
+        }
+    }
+    status[0] = indirty; 
+    status[1] = outdirty; 
+}
+
+void sound_modifiers_controller::mark_for_removal( const efftype_id &id ) {
+    bool indirty = status[0];
+    bool outdirty = status[1];
+    bool inrmarked = status[4];
+    bool outrmarked = status[5];
+
+    auto &in_global = inmods.global_mods;
+    auto &in_conditional = inmods.conditional_mods;
+    auto &out_global = outmods.global_mods;
+    auto &out_conditional = outmods.conditional_mods;    
+
+    auto mark_remove = [&]( sound_modifier_base &inst ) -> bool {
+        if ( inst.parent_id == id ){
+            inst.filter.set();
+            return true;
+        } else {
+            return false;
+        }
+    };
+    // Just loop through our 4 vectors and mark instanced.
+    for( auto &inst : in_global ) {
+        if( mark_remove(inst) ) {
+            indirty = true;
+            inrmarked = true;
+        }
+    }
+    for( auto &inst : in_conditional ) {
+        if( mark_remove(inst) ) {
+            indirty = true;
+            inrmarked = true;
+        }
+    }
+    for( auto &inst : out_global ) {
+        if( mark_remove(inst) ) {
+            outdirty = true;
+            outrmarked = true;
+        }
+    }
+    for( auto &inst : out_conditional ) {
+        if( mark_remove(inst) ) {
+            outdirty = true;
+            outrmarked = true;
+        }
+    }
+
+    status[0] = indirty; 
+    status[1] = outdirty; 
+    status[4] = inrmarked; 
+    status[5] = outrmarked; 
+    // Now remove all the sounds we marked.
+    remove_marked();
+}
+
+void sound_modifiers_controller::remove_marked() {
+    bool inrmarked = status[4];
+    bool outrmarked = status[5];
+
+    auto &in_global = inmods.global_mods;
+    auto &in_conditional = inmods.conditional_mods;
+    auto &out_global = outmods.global_mods;
+    auto &out_conditional = outmods.conditional_mods;   
+
+    do {
+        std::erase_if( in_global, []( const auto & inst ) {
+            return inst.marked_for_removal();
+        } );
+        std::erase_if( in_conditional, []( const auto & inst ) {
+            return inst.marked_for_removal();
+        } );
+        bool found_marked = false;
+        for( const auto &inst : in_global ){
+            found_marked = found_marked || inst.marked_for_removal();
+        }
+        for( const auto &inst : in_conditional ){
+            found_marked = found_marked || inst.marked_for_removal();
+        }
+        inrmarked = found_marked;
+    } while ( inrmarked );
+
+    do {
+        std::erase_if( out_global, []( const auto & inst ) {
+            return inst.marked_for_removal();
+        } );
+        std::erase_if( out_conditional, []( const auto & inst ) {
+            return inst.marked_for_removal();
+        } );
+        bool found_marked = false;
+        for( const auto &inst : out_global ){
+            found_marked = found_marked || inst.marked_for_removal();
+        }
+        for( const auto &inst : out_conditional ){
+            found_marked = found_marked || inst.marked_for_removal();
+        }
+        outrmarked = found_marked;
+    } while ( outrmarked );
+    
+    status[2] = !in_global.empty() || !in_conditional.empty();
+    status[3] = !out_global.empty() || !out_conditional.empty();  
+    status[4] = inrmarked;  
+    status[5] = outrmarked; 
+}
+// will update modifier details that change with intensity. 
+void sound_modifiers_controller::update( const bool &dirty_only ) {
+    
+    if ( !dirty_only ) {
+        mark_all_dirty();
+    } 
+    if ( status[4] || status[5] ) {
+        // Remove the marked before we really get going so we can still properly update.
+        remove_marked();
+    }
+    auto &in_global = inmods.global_mods;
+    auto &in_conditional = inmods.conditional_mods;
+    auto &out_global = outmods.global_mods;
+    auto &out_conditional = outmods.conditional_mods;
+
+    // Dont try to update if all the sound modifier vectors are empty. 
+    // Clear the two checkvars and set the status bitset.
+    if ( in_global.empty() && in_conditional.empty() && out_global.empty() && out_conditional.empty() ) {
+        inmods.checkvars = incoming_sound_modifier_instance();
+        outmods.checkvars = outgoing_sound_modifier_instance();
+        inmods.previous_sound.clear();
+        outmods.previous_sound.clear();
+        status.reset(0);
+        status.reset(1);
+        status.reset(2);
+        status.reset(3);
+        status.reset(4);
+        status.reset(5);
+        status.reset(6);
+        return;
+    }
+    
+    auto short_vector_entry = [&]( const std::vector<short> &vect, const short &min, const short &max, const float &scaling, const int &adj_intensity ) -> short {
+        if ( vect.empty() ) {
+            return 0;
+        }
+        short ret = 0;
+        if ( vect.size() == 1 ) {
+            ret = vect[0];
+        } else {
+            const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, vect.size() ) - 1 ) );
+            ret = vect[iterator];
+        }
+        ret += std::round<short>( scaling * ( adj_intensity - 1 ) );
+        if ( min != 0 ) {
+            ret = std::max<short>( min, ret );
+        }
+        if ( max != 0 ) {
+            ret = std::min<short>( max, ret );
+        }
+        return ret;
+    };
+    
+    auto calc_incoming_mods = [&]( incoming_sound_modifier_instance *mod, const effect &e ) -> void {
+        const heard_sound_modifiers &sourcemods = e.get_heard_sound_mods()[mod->modifier_index];
+        const auto &intensity = e.get_intensity();
+        const bool active = intensity >= mod->intensity_minreq;
+        // Dont go through all the calcs if the modifier is not active.
+        if (active) {
+
+            const int adj_intensity = ( mod->intensity_minreq > 1 ) ? intensity - ( mod->intensity_minreq - 1 ) : intensity;
+            if ( !sourcemods.replace_with_sound_descriptions.empty() ){
+
+                // clear our mod instances replace sound descriptions with vector.
+                mod->replace_with_sound_descriptions.clear();
+
+                if ( sourcemods.replace_with_sound_descriptions.size() == 1){
+                    mod->replace_with_sound_descriptions.push_back( sourcemods.replace_with_sound_descriptions[0] );
+
+                } else if ( sourcemods.choose_random_desc ){
+                    // If its random, dump all of the descriptions in.
+                    mod->replace_with_sound_descriptions = sourcemods.replace_with_sound_descriptions;
+
+                } else {
+                    const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, sourcemods.replace_with_sound_descriptions.size() ) - 1 ) );
+                    mod->replace_with_sound_descriptions.push_back( sourcemods.replace_with_sound_descriptions[iterator] );
+
+                }
+            }
+            // behold the short vector entry army
+            mod->base_mdb_adj = short_vector_entry( sourcemods.base_mdb_adj, sourcemods.base_mdb_adj_min_val, sourcemods.base_mdb_adj_max_val, sourcemods.base_mdb_adj_intensity_scaling, adj_intensity);
+
+            mod->heard_vol_mdb_adj = short_vector_entry( sourcemods.heard_vol_mdb_adj, sourcemods.heard_vol_mdb_adj_min_val, sourcemods.heard_vol_mdb_adj_max_val, sourcemods.heard_vol_mdb_adj_intensity_scaling, adj_intensity);
+
+            mod->perceived_vol_mdb_adj = short_vector_entry( sourcemods.perceived_vol_mdb_adj, sourcemods.perceived_vol_mdb_adj_min_val, sourcemods.perceived_vol_mdb_adj_max_val, sourcemods.perceived_vol_mdb_adj_intensity_scaling, adj_intensity);
+
+            mod->hearing_threshold_mdb_adj = short_vector_entry( sourcemods.hearing_threshold_mdb_adj, sourcemods.hearing_threshold_mdb_adj_min_val, sourcemods.hearing_threshold_mdb_adj_max_val, sourcemods.hearing_threshold_mdb_adj_intensity_scaling, adj_intensity);
+
+            mod->hearing_protection_mdb_adj = short_vector_entry( sourcemods.hearing_protection_mdb_adj, sourcemods.hearing_protection_mdb_adj_min_val, sourcemods.hearing_protection_mdb_adj_max_val, sourcemods.hearing_protection_mdb_adj_intensity_scaling, adj_intensity);
+
+            mod->hearing_protection_adv_mdb_adj = short_vector_entry( sourcemods.hearing_protection_adv_mdb_adj, sourcemods.hearing_protection_adv_mdb_adj_min_val, sourcemods.hearing_protection_adv_mdb_adj_max_val, sourcemods.hearing_protection_adv_mdb_adj_intensity_scaling, adj_intensity);
+
+            mod->permanant_hearing_loss_mdb_adj = short_vector_entry( sourcemods.permanant_hearing_loss_mdb_adj, sourcemods.permanant_hearing_loss_mdb_adj_min_val, sourcemods.permanant_hearing_loss_mdb_adj_max_val, sourcemods.permanant_hearing_loss_mdb_adj_intensity_scaling, adj_intensity);
+        
+        } else {
+            // If we were not loud enough, mark the modifier as not active
+            mod->status.reset(6);
+        }  
+        // Last but not least, update the status and filter bitsets.
+        mod->status[0] = false;        
+        mod->status[1] = mod->intensity_minreq > 1;        
+        mod->status[2] = false;    
+        mod->status[3] = mod->hearing_protection_mdb_adj != 0;        
+        mod->status[4] = mod->hearing_protection_adv_mdb_adj != 0;        
+        mod->status[5] = mod->permanant_hearing_loss_mdb_adj != 0;  
+        mod->status[6] = true;       
+        mod->status[7] = true;        
+        mod->filter[0] = mod->checked_categories.empty();        
+        mod->filter[1] = mod->checked_sound_descriptions.empty();        
+        mod->filter[2] = !mod->replace_with_sound_descriptions.empty();        
+        mod->filter[3] = mod->replace_with_sound_descriptions.size() == 1;        
+        mod->filter[4] = !mod->npc_faction.empty();       
+        mod->filter[5] = mod->npc_faction.size() == 1;        
+        mod->filter[6] = !mod->monfaction.empty();      
+        mod->filter[7] = mod->monfaction.size() == 1;        
+
+    };
+
+    auto calc_outgoing_mods = [&]( outgoing_sound_modifier_instance *mod, const effect &e ) -> void {
+        const outgoing_sound_modifiers &sourcemods = e.get_outgoing_sound_mods()[mod->modifier_index];
+        const auto &intensity = e.get_intensity();
+        const bool active = intensity >= mod->intensity_minreq;
+
+        if ( active ) { 
+
+            const int adj_intensity = ( mod->intensity_minreq > 1 ) ? intensity - ( mod->intensity_minreq - 1 ) : intensity;
+            if ( !sourcemods.replace_with_sound_descriptions.empty() ){
+
+                // clear our mod instances replace sound descriptions with vector.
+                mod->replace_with_sound_descriptions.clear();
+
+                if ( sourcemods.replace_with_sound_descriptions.size() == 1){
+                    mod->replace_with_sound_descriptions.push_back( sourcemods.replace_with_sound_descriptions[0] );
+
+                } else if ( sourcemods.choose_random_desc ){
+                    // If its random, dump all of the descriptions in.
+                    mod->replace_with_sound_descriptions = sourcemods.replace_with_sound_descriptions;
+
+                } else {
+                    const auto &iterator = std::max<size_t>( 0, (std::min<size_t>( adj_intensity, sourcemods.replace_with_sound_descriptions.size() ) - 1 ) );
+                    mod->replace_with_sound_descriptions.push_back( sourcemods.replace_with_sound_descriptions[iterator] );
+
+                }
+            }
+
+            mod->volume_mdB_adj = short_vector_entry(sourcemods.volume_mdB_adj, sourcemods.volume_mdB_adj_min_val, sourcemods.volume_mdB_adj_max_val, sourcemods.volume_mdB_adj_intensity_scaling, adj_intensity );
+
+            mod->volume_mdB_floor = short_vector_entry(sourcemods.volume_mdB_floor, sourcemods.volume_mdB_floor_min_val, sourcemods.volume_mdB_floor_max_val, sourcemods.volume_mdB_floor_intensity_scaling, adj_intensity );
+
+            mod->volume_mdB_ceiling = short_vector_entry(sourcemods.volume_mdB_ceiling, sourcemods.volume_mdB_ceiling_min_val, sourcemods.volume_mdB_ceiling_max_val, sourcemods.volume_mdB_ceiling_intensity_scaling, adj_intensity );
+        } else {
+            // If we were not loud enough, mark the modifier as not active
+            mod->status.reset(6);
+        } 
+        // Last but not least, update the status and filter bitsets.
+        mod->status[0] = false;        
+        mod->status[1] = mod->intensity_minreq > 1;        
+        mod->status[2] = true;    
+        mod->status[3] = false;        
+        mod->status[4] = false;        
+        mod->status[5] = false;
+        mod->status[6] = true;       
+        mod->status[7] = true;        
+        mod->filter[0] = mod->checked_categories.empty();        
+        mod->filter[1] = mod->checked_sound_descriptions.empty();        
+        mod->filter[2] = !mod->replace_with_sound_descriptions.empty();        
+        mod->filter[3] = mod->replace_with_sound_descriptions.size() == 1;        
+        mod->filter[4] = !mod->npc_faction.empty();       
+        mod->filter[5] = mod->npc_faction.size() == 1;        
+        mod->filter[6] = !mod->monfaction.empty();      
+        mod->filter[7] = mod->monfaction.size() == 1;       
+
+    };
+    
+    auto update_modifier = [&]( sound_modifier_base *mod ) -> void {
+        // Take our easy outs.
+        if ( dirty_only && !mod->status[0]) {
+            return;
+        } else if ( !parent->has_effect(mod->parent_id) ){
+            mod->marked_for_removal();
+            return;
+        }
+        // const bool outgoing = mod->is_outgoing();
+        const effect &e = parent->get_effect(mod->parent_id);
+        
+        if ( mod->is_incoming() ) {
+            incoming_sound_modifier_instance *inmod = mod->as_incoming();
+            calc_incoming_mods( inmod, e );
+            return;
+        } else {
+            outgoing_sound_modifier_instance *outmod = mod->as_outgoing();
+            calc_outgoing_mods( outmod, e );
+            return;
+        }
+    };
+
+    for( incoming_sound_modifier_instance &inst : in_global ) {
+        auto *mod = inst.as_incoming();
+        update_modifier(mod);
+    }
+    for( incoming_sound_modifier_instance &inst : in_conditional ) {
+        auto *mod = inst.as_incoming();
+        update_modifier(mod);
+    }
+    for( outgoing_sound_modifier_instance &inst : out_global ) {
+        auto *mod = inst.as_outgoing();
+        update_modifier(mod);
+    }
+    for( outgoing_sound_modifier_instance &inst : out_conditional ) {
+        auto *mod = inst.as_outgoing();
+        update_modifier(mod);
+    }
+    // We can now set the controller's in/outdirty to false.
+    status.reset(0);
+    status.reset(1);
+}
+// Toss it all out and rebuild it.
+// Returns true if successful, false if we had to abort the rebuild.
+bool sound_modifiers_controller::rebuild() {
+
+    // Dont actually do a rebuild if we are not marked for rebuild
+    // Dont consider an abort
+    if ( !status[6] ) {
+        return true;
+    }
+    
+    // First we need to clear everything.
+    auto &in_global = inmods.global_mods;
+    auto &in_conditional = inmods.conditional_mods;
+    auto &out_global = outmods.global_mods;
+    auto &out_conditional = outmods.conditional_mods;
+    auto &in_checkvars = inmods.checkvars;
+    auto &out_checkvars = outmods.checkvars;
+
+    // Reset the checkvars
+    in_checkvars = incoming_sound_modifier_instance();
+    out_checkvars = outgoing_sound_modifier_instance();
+
+    in_global.clear();
+    in_conditional.clear();
+    out_global.clear();
+    out_conditional.clear();
+    inmods.previous_sound.clear();
+    outmods.previous_sound.clear();
+
+    // Reset the controllers status bitset
+    status[0] = true;
+    status[1] = true;
+    status[2] = false;
+    status[3] = false;
+    status[4] = false;
+    status[5] = false;
+    status[6] = false;
+
+    // Also dont rebuild if we are not actually bound to a creature. 
+    // We still want to clear everything if we are not bound to prevent potential wierdness.
+    if ( parent == nullptr || !status[7] ) {
+        // Quick paranoia check
+        if ( parent == nullptr && status[7] ) {
+            debugmsg( "A sound modifiers controller is marked as valid but was found to have a null parent pointer on rebuild! Stack trace may reveal the owning creature." );
+            status.reset(7);   
+            return false;
+        } else if ( parent != nullptr  && !status[7] ) {
+            const auto &loc = parent->bub_pos();
+            debugmsg( "Creature [%1s] at %i:%i:%i x:y:z has an inproperly initialized sound modifiers controller that attempted a rebuild."
+                                  , parent->get_name(), loc.x(), loc.y(), loc.z() );
+            return false;
+        }
+        return false;
+    }
+    for( const auto &elem : parent->get_all_effects() ) {
+        for( const auto &_it : elem.second ) {
+            const auto &e = _it.second;
+            if( !e.is_removed() && (e.has_flag( flag_EFFECT_MODIFIES_OUTGOING_SOUND ) || e.has_flag( flag_EFFECT_MODIFIES_INCOMING_SOUND ) ) ) {
+                add_mods( e );
+            }
+        }
+    }
+
+    if ( !in_global.empty() && !in_conditional.empty() && !out_global.empty() && !out_conditional.empty() ) {
+        update( false );
+    }
+    status.set(2, ( !in_global.empty() || !in_conditional.empty() ) );
+    status.set(3, ( !out_global.empty() || !out_conditional.empty() ) );
+    return true;
+}
+
+// We dont fully initialize the modifiers when they are added,
+// We put in the details that dont change with intensity and mark them dirty.
+void sound_modifiers_controller::add_mods( const effect &e ) {
+
+    auto &in_global = inmods.global_mods;
+    auto &in_conditional = inmods.conditional_mods;
+    auto &out_global = outmods.global_mods;
+    auto &out_conditional = outmods.conditional_mods;
+
+    auto not_duplicate = [&]( const efftype_id &id, const uint8_t &mindex, const bool &outgoing ) -> bool {
+        // Check to see if we already have a modifier with the same ID and vector index in the appropriate holder.
+        if ( !outgoing ) {
+            for( const auto &mod : in_global ) {
+                if ( mod.parent_id == id && mod.modifier_index == mindex ){
+                    return false;
+                }
+            }
+            for( const auto &mod : in_conditional ) {
+                if ( mod.parent_id == id && mod.modifier_index == mindex ){
+                    return false;
+                }
+            }
+        } else {
+            for( const auto &mod : out_global ) {
+                if ( mod.parent_id == id && mod.modifier_index == mindex ){
+                    return false;
+                }
+            }
+            for( const auto &mod : out_conditional ) {
+                if ( mod.parent_id == id && mod.modifier_index == mindex ){
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+    
+    auto create_in_mod = [&]( const heard_sound_modifiers &sourcemod, const uint8_t &mindex ) -> void {
+        incoming_sound_modifier_instance mod;
+        mod.parent_id = e.get_id();
+        mod.modifier_index = mindex;
+        mod.intensity_minreq = sourcemod.intensity_min_requirment;
+        mod.checked_categories = sourcemod.checked_categories;
+        mod.checked_sound_descriptions = sourcemod.checked_sound_descriptions;
+        if ( sourcemod.replace_npc_faction_attribution ){
+            mod.npc_faction.push_back( sourcemod.replace_with_npc_faction );
+        }
+        if ( sourcemod.replace_monster_faction_attribution ){
+            mod.monfaction.push_back( sourcemod.replace_with_monfaction );
+        }
+        if ( sourcemod.choose_random_desc ){
+            mod.replace_with_sound_descriptions = sourcemod.replace_with_sound_descriptions;
+        }
+        mod.status[0] = true; //dirty        
+        mod.status[1] = mod.intensity_minreq > 1;        
+        mod.status[2] = false;         
+        mod.status[7] = true; // valid     
+        mod.filter[0] = mod.checked_categories.empty();        
+        mod.filter[1] = mod.checked_sound_descriptions.empty();        
+        mod.filter[2] = !mod.replace_with_sound_descriptions.empty();        
+        mod.filter[3] = mod.replace_with_sound_descriptions.size() == 1;        
+        mod.filter[4] = !mod.npc_faction.empty();       
+        mod.filter[5] = mod.npc_faction.size() == 1;        
+        mod.filter[6] = !mod.monfaction.empty();      
+        mod.filter[7] = mod.monfaction.size() == 1;    
+
+         if ( mod.filter[0] && mod.filter[1] ){
+            in_global.push_back( mod );
+        } else {
+            in_conditional.push_back( mod );
+        }
+        // Mark that we have dirty incoming sound modifiers
+        status[0] = true;
+    };
+
+    auto create_out_mod = [&]( const outgoing_sound_modifiers &sourcemod, const uint8_t &mindex ) -> void {
+        outgoing_sound_modifier_instance mod;
+        mod.parent_id = e.get_id();
+        mod.modifier_index = mindex;
+        mod.intensity_minreq = sourcemod.intensity_min_requirment;
+        mod.checked_categories = sourcemod.checked_categories;
+        mod.checked_sound_descriptions = sourcemod.checked_sound_descriptions;
+        if ( sourcemod.replace_npc_faction_attribution ){
+            mod.npc_faction.push_back( sourcemod.replace_with_npc_faction );
+        }
+        if ( sourcemod.replace_monster_faction_attribution ){
+            mod.monfaction.push_back( sourcemod.replace_with_monfaction );
+        }
+        if ( sourcemod.choose_random_desc ){
+            mod.replace_with_sound_descriptions = sourcemod.replace_with_sound_descriptions;
+        }
+        mod.status[0] = true; //dirty        
+        mod.status[1] = mod.intensity_minreq > 1;        
+        mod.status[2] = true;         
+        mod.status[7] = true; // valid     
+        mod.filter[0] = mod.checked_categories.empty();        
+        mod.filter[1] = mod.checked_sound_descriptions.empty();        
+        mod.filter[2] = !mod.replace_with_sound_descriptions.empty();        
+        mod.filter[3] = mod.replace_with_sound_descriptions.size() == 1;        
+        mod.filter[4] = !mod.npc_faction.empty();       
+        mod.filter[5] = mod.npc_faction.size() == 1;        
+        mod.filter[6] = !mod.monfaction.empty();      
+        mod.filter[7] = mod.monfaction.size() == 1;    
+
+        if ( mod.filter[0] && mod.filter[1] ){
+            out_global.push_back( mod );
+        } else {
+            out_conditional.push_back( mod );
+        }
+        // Mark that we have dirty outgoing sound modifiers
+        status[1] = true;
+    };
+    // Just step through the two possible vectors. 
+    if ( e.has_heard_sound_mods() ){
+        uint8_t length = e.get_heard_sound_mods().size();
+        for( uint8_t i = 0; i < length; i++ ){
+            if (not_duplicate(e.get_id(), i, false ) ) {
+                const auto &sourcemods = e.get_heard_sound_mods()[i];
+                create_in_mod( sourcemods, i );
+            } 
+        }
+    }
+
+    if ( e.has_outgoing_sound_mods() ){
+        uint8_t length = e.get_outgoing_sound_mods().size();
+        for( uint8_t i = 0; i < length; i++ ){
+            if (not_duplicate(e.get_id(), i, true ) ) {
+                const auto &sourcemods = e.get_outgoing_sound_mods()[i];
+                create_out_mod( sourcemods, i );
+            }
+        }
+    }       
+}
+
+void sound_modifiers_controller::config_in_checkvars( const sound_event &se ) {
+    auto &cv = inmods.checkvars;
+    // We only actually check the first sound.
+    const auto &in_global = inmods.global_mods;
+    const auto &in_conditional = inmods.conditional_mods;
+
+    auto shortvect_sum = [&]( const std::vector<short> &vect ) -> short {
+        int ret = 0;
+        for( const auto &val : vect ) {
+                ret += val;
+        }
+        ret = std::min<int>( MAXIMUM_VOLUME_ATMOSPHERE, std::max( -MAXIMUM_VOLUME_ATMOSPHERE, ret ) );
+        return static_cast<short>(ret);
+    };
+
+    // We can garuntee that all of our modifiers are up to date by checking against ready.
+    if ( ready() && status[2] ) {
+
+        const bool global_only = in_conditional.empty();
+        const bool cv_dirty = !cv.status[7];
+        const bool has_oldse = !inmods.previous_sound.empty();
+
+        // Always recalc if our checkvars are dirty
+        if ( cv_dirty || !global_only ){
+            bool equivalent = !cv_dirty && has_oldse;
+            
+            if ( !global_only && equivalent){
+                const auto &prevse = inmods.previous_sound[0];
+                for ( const auto &mod : in_conditional ) {
+                    if ( mod.can_modify(se) != mod.can_modify(prevse) ) {
+                        equivalent = false;
+                    }
+                }
+            }
+            if ( !equivalent ) {
+                // If we only have one sound modifier, just grab that.
+                if ( in_conditional.size() + in_global.size() == 1 ) {
+                    if ( in_conditional.empty() ) {
+                        cv = in_global[0];
+                    } else {
+                        cv = in_conditional[0];
+                    }
+                    inmods.previous_sound.clear();
+                    inmods.previous_sound.push_back( se );
+                    return;
+                }
+
+                // Only recalc if our sound is not equivalent.
+                cv = incoming_sound_modifier_instance();
+                dummy_incoming_sound_modifier_sums sum;
+                
+                auto proccess_mod = [&]( const incoming_sound_modifier_instance &mod ) -> void {
+
+                    const auto &mf = mod.filter;
+                    // Check if our modifier is active and if it can affect the sound event.
+                    // can_modify already tests if the modifier is active.
+                    if ( mod.can_modify( se ) ) {
+                        if ( mf.test( 2 ) ) {
+                            for ( const auto &desc : mod.replace_with_sound_descriptions ) {
+                                sum.sound_descriptions.push_back( desc );
+                            }
+                        }
+                        if ( mf.test( 4 ) ) {
+                            for ( const auto &nfac : mod.npc_faction ) {
+                                sum.npc_faction.push_back( nfac );
+                            }
+                        }
+                        if ( mf.test( 6 ) ) {
+                            for ( const auto &mfac : mod.monfaction ) {
+                                sum.monfaction.push_back( mfac );
+                            }
+                        }
+                    }
+                    sum.base_mdb_adj.push_back( mod.base_mdb_adj );
+                    sum.heard_vol_mdb_adj.push_back( mod.heard_vol_mdb_adj );
+                    sum.perceived_vol_mdb_adj.push_back( mod.perceived_vol_mdb_adj );
+                    sum.hearing_threshold_mdb_adj.push_back( mod.hearing_threshold_mdb_adj );
+                    sum.hearing_protection_mdb_adj.push_back( mod.hearing_protection_mdb_adj );
+                    sum.hearing_protection_adv_mdb_adj.push_back( mod.hearing_protection_adv_mdb_adj );
+                    sum.permanant_hearing_loss_mdb_adj.push_back( mod.permanant_hearing_loss_mdb_adj );
+                };
+
+                for ( const auto &mod : in_global ) {
+                    proccess_mod( mod );
+                }
+                for ( const auto &mod : in_conditional ) {
+                    proccess_mod( mod );
+                }
+                // Now refill the checkvars.
+                if ( !sum.sound_descriptions.empty() ){
+                    for ( const auto &val : sum.sound_descriptions ) {
+                        cv.replace_with_sound_descriptions.push_back( val );
+                    }
+                }
+                if ( !sum.npc_faction.empty() ){
+                    for ( const auto &val : sum.npc_faction ) {
+                        cv.npc_faction.push_back( val );
+                    }
+                }
+                if ( !sum.monfaction.empty() ){
+                    for ( const auto &val : sum.monfaction ) {
+                        cv.monfaction.push_back( val );
+                    }
+                }
+                cv.base_mdb_adj = shortvect_sum( sum.base_mdb_adj );
+                cv.heard_vol_mdb_adj = shortvect_sum( sum.heard_vol_mdb_adj );
+                cv.perceived_vol_mdb_adj = shortvect_sum( sum.perceived_vol_mdb_adj );
+                cv.hearing_threshold_mdb_adj = shortvect_sum( sum.hearing_threshold_mdb_adj );
+                cv.hearing_protection_mdb_adj = shortvect_sum( sum.hearing_protection_mdb_adj );
+                cv.hearing_protection_adv_mdb_adj = shortvect_sum( sum.hearing_protection_adv_mdb_adj );
+                cv.permanant_hearing_loss_mdb_adj = shortvect_sum( sum.permanant_hearing_loss_mdb_adj );
+
+                cv.status.set(0 ); 
+                cv.status.reset(1 ); 
+                cv.status.reset(2 ); 
+                cv.status.set(3, cv.hearing_protection_mdb_adj != 0 ); 
+                cv.status.set(4, cv.hearing_protection_adv_mdb_adj != 0 ); 
+                cv.status.set(5, cv.permanant_hearing_loss_mdb_adj != 0 ); 
+                cv.status.set(6 ); 
+                cv.status.set(7 ); 
+                cv.filter.set(0 ); 
+                cv.filter.set(1 ); 
+                cv.filter.set(2, !cv.replace_with_sound_descriptions.empty() ); 
+                cv.filter.set(3, cv.replace_with_sound_descriptions.size() == 1 ); 
+                cv.filter.set(4, !cv.npc_faction.empty() ); 
+                cv.filter.set(5, cv.npc_faction.size() == 1 ); 
+                cv.filter.set(6, !cv.monfaction.empty() ); 
+                cv.filter.set(7, cv.monfaction.size() == 1 ); 
+
+                inmods.previous_sound.clear();
+                inmods.previous_sound.push_back( se );
+                
+                return;
+            }
+        }
+    } else { 
+        cv = incoming_sound_modifier_instance();
+        // Make sure no previous sounds are hanging around.
+        // We have no previous sound if we have no modifiers.
+        inmods.previous_sound.clear();
+        // Set our checkvar's status and filter.
+        cv.status.set(7);
+        cv.status.reset(2);
+        cv.filter.set(0);
+        cv.filter.set(1);
+    }
+}
+
+void sound_modifiers_controller::config_out_checkvars( const sound_event &se ) {
+    auto &cv = outmods.checkvars;
+    // We only actually check the first sound.
+    const auto &out_global = outmods.global_mods;
+    const auto &out_conditional = outmods.conditional_mods;
+
+    auto shortvect_sum = [&]( const std::vector<short> &vect ) -> short {
+        int ret = 0;
+        for( const auto &val : vect ) {
+                ret += val;
+        }
+        ret = std::min<int>( MAXIMUM_VOLUME_ATMOSPHERE, std::max( -MAXIMUM_VOLUME_ATMOSPHERE, ret ) );
+        return static_cast<short>(ret);
+    };
+
+    // We can garuntee that all of our modifiers are up to date by checking against ready.
+    if ( ready() && status[3] ) {
+
+        const bool global_only = out_conditional.empty();
+        const bool cv_dirty = !cv.status[7];
+        const bool has_oldse = !outmods.previous_sound.empty();
+
+        // Always recalc if our checkvars are dirty
+        if ( cv_dirty || !global_only ){
+            bool equivalent = !cv_dirty && has_oldse;
+            
+            if ( !global_only && equivalent){
+                const auto &prevse = outmods.previous_sound[0];
+                for ( const auto &mod : out_conditional ) {
+                    if ( mod.can_modify(se) != mod.can_modify(prevse) ) {
+                        equivalent = false;
+                    }
+                }
+            }
+            if ( !equivalent ) {
+                // If we only have one sound modifier, just grab that.
+                if ( out_conditional.size() + out_global.size() == 1 ) {
+                    if ( out_conditional.empty() ) {
+                        cv = out_global[0];
+                    } else {
+                        cv = out_conditional[0];
+                    }
+                    outmods.previous_sound.clear();
+                    outmods.previous_sound.push_back( se );
+                    return;
+                }
+
+                // Only recalc if our sound is not equivalent.
+                cv = outgoing_sound_modifier_instance();
+                dummy_outgoing_sound_modifier_sums sum;
+                
+                auto proccess_mod = [&]( const outgoing_sound_modifier_instance &mod ) -> void {
+
+                    const auto &mf = mod.filter;
+                    // Check if our modifier is active and if it can affect the sound event.
+                    // can_modify already tests if the modifier is active.
+                    if ( mod.can_modify( se ) ) {
+                        if ( mf.test( 2 ) ) {
+                            for ( const auto &desc : mod.replace_with_sound_descriptions ) {
+                                sum.sound_descriptions.push_back( desc );
+                            }
+                        }
+                        if ( mf.test( 4 ) ) {
+                            for ( const auto &nfac : mod.npc_faction ) {
+                                sum.npc_faction.push_back( nfac );
+                            }
+                        }
+                        if ( mf.test( 6 ) ) {
+                            for ( const auto &mfac : mod.monfaction ) {
+                                sum.monfaction.push_back( mfac );
+                            }
+                        }
+                    }
+                    sum.volume_mdB_adj.push_back( mod.volume_mdB_adj );
+                    sum.volume_mdB_floor.push_back( mod.volume_mdB_floor );
+                    sum.volume_mdB_ceiling.push_back( mod.volume_mdB_ceiling );
+
+                };
+
+                for ( const auto &mod : out_global ) {
+                    proccess_mod( mod );
+                }
+                for ( const auto &mod : out_conditional ) {
+                    proccess_mod( mod );
+                }
+                // Now refill the checkvars.
+                if ( !sum.sound_descriptions.empty() ){
+                    for ( const auto &val : sum.sound_descriptions ) {
+                        cv.replace_with_sound_descriptions.push_back( val );
+                    }
+                }
+                if ( !sum.npc_faction.empty() ){
+                    for ( const auto &val : sum.npc_faction ) {
+                        cv.npc_faction.push_back( val );
+                    }
+                }
+                if ( !sum.monfaction.empty() ){
+                    for ( const auto &val : sum.monfaction ) {
+                        cv.monfaction.push_back( val );
+                    }
+                }
+                cv.volume_mdB_adj = shortvect_sum( sum.volume_mdB_adj );
+                cv.volume_mdB_floor = shortvect_sum( sum.volume_mdB_floor );
+                cv.volume_mdB_ceiling = shortvect_sum( sum.volume_mdB_ceiling );
+
+                cv.status.set(0 ); 
+                cv.status.reset(1 ); 
+                cv.status.set(2 ); 
+                cv.status.reset(3); 
+                cv.status.reset(4); 
+                cv.status.reset(5); 
+                cv.status.set(6 ); 
+                cv.status.set(7 ); 
+
+                cv.filter.set(0 ); 
+                cv.filter.set(1 ); 
+                cv.filter.set(2, !cv.replace_with_sound_descriptions.empty() ); 
+                cv.filter.set(3, cv.replace_with_sound_descriptions.size() == 1 ); 
+                cv.filter.set(4, !cv.npc_faction.empty() ); 
+                cv.filter.set(5, cv.npc_faction.size() == 1 ); 
+                cv.filter.set(6, !cv.monfaction.empty() ); 
+                cv.filter.set(7, cv.monfaction.size() == 1 ); 
+
+                outmods.previous_sound.clear();
+                outmods.previous_sound.push_back( se );
+
+                return;
+            }
+        }
+    } else { 
+        cv = outgoing_sound_modifier_instance();
+        // Make sure no previous sounds are hanging around.
+        // We have no previous sound if we have no modifiers.
+        outmods.previous_sound.clear();
+        // Set our checkvar's status and filter.
+        cv.status.set(7);
+        cv.status.reset(2);
+        cv.filter.set(0);
+        cv.filter.set(1);
+    }
+}
+
+short sound_modifiers_controller::get_permanant_hearing_loss() {
+    int ret = 0;
+    if ( ready() && status[2] ){
+        const auto &in_global = inmods.global_mods;
+        const auto &in_conditional = inmods.conditional_mods;
+        for( const auto &mod : in_global ) {
+            if ( mod.status[5] && mod.status[6] ){
+                ret += mod.permanant_hearing_loss_mdb_adj;
+            }
+        }
+        for( const auto &mod : in_conditional ) {
+            if ( mod.status[5] && mod.status[6] ){
+                ret += mod.permanant_hearing_loss_mdb_adj;
+            }
+        }
+    }
+    ret = std::min<int>( MAXIMUM_VOLUME_ATMOSPHERE, std::max( -MAXIMUM_VOLUME_ATMOSPHERE, ret ) );
+    return static_cast<short>(ret);
+}
+
+
+

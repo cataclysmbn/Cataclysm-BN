@@ -27,6 +27,8 @@ class monster;
 class player;
 class translation;
 struct sound_event;
+struct outgoing_sound_modifier_instance;
+struct incoming_sound_modifier_instance;
 template <typename E> struct enum_traits;
 
 namespace sounds
@@ -1086,3 +1088,83 @@ static constexpr short approximate_dB_volume_from_legacy_tile_distance_vol( cons
     approx_vol = std::min( static_cast<int>( MAXIMUM_VOLUME_ATMOSPHERE ), approx_vol );
     return ( return_mdB ) ? approx_vol : mdBspl_to_dBspl( approx_vol );
 }
+
+// located here to facilitate inheritance and virtual shenanagins.
+struct sound_modifier_base {
+
+    virtual ~sound_modifier_base();
+    
+    /**
+     *  @param dirty    = status[0]:True = this modifier is qued for recalculation
+     *  @param minreq   = status[1]:True = has a minimum required intensity greater than 1
+     *  @param outbound = status[2]:True = this modifier is for outbound sounds; False = for inbound sounds
+     *  @param ppe      = status[3]:True = this modifier affects a creatures effective basic hearing protection
+     *  @param appe     = status[4]:True = this modifier affects a creatures effective advances hearing protection
+     *  @param permloss = status[5]:True = this modifier affects a creatures permanant hearing loss
+     *  @param active   = status[6]:True = the parent effect has a higher intensity than the intensity minreq
+     *  @param valid    = status[7]:True = this modifier was properly initialized. Checked so that we dont try to check an uninitialized efftype_id
+     */
+    std::bitset<8> status = 0;
+    /**
+     *  @param allcats  = filter[0]: True = this modifier applies to all sound categories
+     *  @param alldesc  = filter[1]: True = this modifier applies to all sound descriptions
+     *  @param repdesc  = filter[2]: True = this modifier replaces sound descriptions
+     *  @param srdesc   = filter[3]: True = there is only a single replacement description to choose from
+     *  @param repnpc   = filter[4]: True = this modifier replaces npc faction affiliation
+     *  @param srnpc    = filter[5]: True = there is only one replacement npc faction
+     *  @param repmon   = filter[6]: True = this modifier replaces monster faction affiliation
+     *  @param srmon    = filter[7]: True = there is only one replacement monster faction
+     */
+    std::bitset<8> filter = 0; // It is impossible for all bits to be true outside of unexpected behavior, so use filter.all() as our remove marker.
+
+    operator bool() const {
+        return !status[0] && status[6] && status[7];
+    }
+    
+    
+    efftype_id parent_id;
+    // The chance that we have more than 255 inbound or outbound modifiers 
+    // in a single effect type's vectors is technically possible.
+    // Json will likely explode first if you try to load that many listings.
+    uint8_t modifier_index;
+
+    uint16_t intensity_minreq = 0;
+
+    std::vector<sounds::sound_t> checked_categories;
+    std::vector<std::string> checked_sound_descriptions;
+
+    // In this case, if there are more than one replace with descriptions we randomly choose from them.
+    std::vector<std::string> replace_with_sound_descriptions;
+
+    // We randomly choose from this as well if there are more than one.
+    std::vector<faction_id> npc_faction;
+    std::vector<mfaction_str_id> monfaction;
+
+    bool can_modify( const sound_event &se ) const;
+
+    bool marked_for_removal() const
+    {
+        return filter.all();
+    }
+
+    virtual bool is_outgoing() const{
+        return false;
+    }    
+    virtual bool is_incoming() const{
+        return false;
+    }
+    virtual outgoing_sound_modifier_instance *as_outgoing() {
+        return nullptr;
+    }
+    virtual const outgoing_sound_modifier_instance *as_outgoing() const{
+        return nullptr;
+    }
+    virtual incoming_sound_modifier_instance *as_incoming() {
+        return nullptr;
+    }
+    virtual const incoming_sound_modifier_instance *as_incoming() const{
+        return nullptr;
+    }
+};
+
+

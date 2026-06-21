@@ -1863,7 +1863,8 @@ void sounds::sound( const sound_event &soundevent )
     // Make sure our sound came from a valid inbounds location.
     auto &map = get_map();
     // Make sure that we dont absolutely blast somebodies RAM/Processor during batch floodfill.
-    // 19100 attempted sound events in one turn is plenty.
+    // This is also done to prevent tests from generating and holding onto hundreds of thousands of debug sounds.
+    // 1000 attempted sound events in one turn is plenty.
     if( map.m_sound_cache.sounds_this_turn < 1000 ) {
         map.m_sound_cache.sounds_this_turn++;
     } else {
@@ -1883,14 +1884,20 @@ void sounds::sound( const sound_event &soundevent )
         return;
     }
 
+    // Check to see if there is a creature in the same tile as the sound source, and if it has outgoing sound modifiers.
+    // if ( g->critter_at( temp_se.origin )  ) {
+    //     Creature *const critter = g->critter_at<Creature>( temp_se.origin );
+        
+    // }
 
-    // Error out if volume is negative, or bail out if volume is less than 16dB.
-    // There are not anechoic chambers in game, so actually hearing such sounds after even 1 tile of distance (16dB -> 10dB 1 tile away) is very unlikely for the vast majority of creatures.
+    // Error out if volume is negative, or bail out if volume is less than 7dB.
+    // There are not anechoic chambers in game, so actually hearing such sounds after even 1 tile of distance (7dB -> 1dB 1 tile away) is very unlikely for the vast majority of creatures.
     // A good threshold for sounds that should only really be faintly audible to the player in a quiet room is 20dB.
     // Most sounds intended to be quiet but still audible to the player, and maybe to creatures very close, is 35-45dB.
     // Ambient volume minimum is usually between 35 and 55dB in game. A player with normal hearing can notice sounds 20dB below ambient.
+    // Sounds of less than 16dB are only flooded to the adjacent tiles.
 
-    if( temp_se.volume < 16 ) {
+    if( temp_se.volume < 7 ) {
 
         add_msg( m_debug,
                  "Sound with description [ %1s ] at %i:%i with a volume %i too quiet for propagation.",

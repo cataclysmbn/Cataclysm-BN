@@ -1372,6 +1372,21 @@
     "type": "json_flag"
   },
   {
+    "id": "EFFECT_MODIFIES_OUTGOING_SOUND",
+    "context": [  ],
+    "type": "json_flag"
+  },
+  {
+    "id": "EFFECT_MODIFIES_INCOMING_SOUND",
+    "context": [  ],
+    "type": "json_flag"
+  },
+  {
+    "id": "EFFECT_CREATES_SOUNDS",
+    "context": [  ],
+    "type": "json_flag"
+  },
+  {
     "id": "HIDDEN_HALLU",
     "type": "json_flag",
     "context": [ "COMESTIBLE" ],

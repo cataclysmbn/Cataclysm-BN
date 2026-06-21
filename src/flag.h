@@ -388,6 +388,9 @@ extern const flag_id flag_INITIALLY_ACTIVATE;
 extern const flag_id flag_MULTIINSTALL;
 extern const flag_id flag_BIONIC_TOOLS;
 extern const flag_id flag_TEMPORARY_ITEM;
+extern const flag_id flag_EFFECT_MODIFIES_OUTGOING_SOUND;
+extern const flag_id flag_EFFECT_MODIFIES_INCOMING_SOUND;
+extern const flag_id flag_EFFECT_CREATES_SOUNDS;
 /**
  * Flags: json entity with "type": "json_flag", defined in flags.json, vp_flags.json
  * Currently used by:
