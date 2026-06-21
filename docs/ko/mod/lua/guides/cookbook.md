@@ -177,7 +177,8 @@ print("is far-away point out of bounds:", map:is_out_of_bounds(coords.tripoint_b
 
 ```lua
 local home_dimension = "sky_island_home"
-local home_omt = gapi.get_avatar():abs_pos():to_omt()
+local overworld_pos = gapi.get_avatar():abs_pos()
+local home_omt = overworld_pos:to_omt()
 local home_bounds_radius = coords.tripoint_rel_omt(2, 2, 0)
 
 local entered = gapi.place_player_dimension_at({
@@ -202,12 +203,12 @@ local reentered = gapi.place_player_dimension_at({
 
 ### 오버월드로 돌아가기
 
-```lua
-local overworld_omt = gapi.get_avatar():abs_pos():to_omt()
+들어가기 전에 저장한 `overworld_pos` 를 사용하면 정확한 칸으로 돌아갑니다.
 
+```lua
 gapi.place_player_dimension_at({
   dimension_id = "",
-  target_omt = overworld_omt,
+  target_ms = overworld_pos,
 })
 ```
 

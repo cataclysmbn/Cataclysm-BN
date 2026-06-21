@@ -177,7 +177,8 @@ already exists, you can re-enter it with only `dimension_id` and `target_omt`.
 
 ```lua
 local home_dimension = "sky_island_home"
-local home_omt = gapi.get_avatar():abs_pos():to_omt()
+local overworld_pos = gapi.get_avatar():abs_pos()
+local home_omt = overworld_pos:to_omt()
 local home_bounds_radius = coords.tripoint_rel_omt(2, 2, 0)
 
 local entered = gapi.place_player_dimension_at({
@@ -202,12 +203,12 @@ local reentered = gapi.place_player_dimension_at({
 
 ### Returning to the overworld
 
-```lua
-local overworld_omt = gapi.get_avatar():abs_pos():to_omt()
+Use the `overworld_pos` captured before entering to return to the exact map square.
 
+```lua
 gapi.place_player_dimension_at({
   dimension_id = "",
-  target_omt = overworld_omt,
+  target_ms = overworld_pos,
 })
 ```
 

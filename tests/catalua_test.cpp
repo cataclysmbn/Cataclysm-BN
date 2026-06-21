@@ -760,6 +760,9 @@ TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
 {
     clear_all_state();
     g->place_player_overmap( tripoint_abs_omt( tripoint_zero ) );
+    const auto original_pos = tripoint_abs_ms( 3, 5, 0 );
+    get_avatar().setpos( original_pos );
+    g->update_map( get_avatar() );
 
     auto lua = make_lua_state();
 
@@ -768,7 +771,7 @@ TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
 
     test_data["target_dimension_id"] = "lua_test_pocket";
     test_data["target_omt"] = tripoint_abs_omt( tripoint_zero );
-    test_data["return_omt"] = tripoint_abs_omt( tripoint_zero );
+    test_data["return_ms"] = original_pos;
     test_data["bounds_min_omt"] = tripoint_abs_omt( -4, -4, 0 );
     test_data["bounds_max_omt"] = tripoint_abs_omt( 4, 4, 0 );
     test_data["outside_local"] = tripoint_bub_ms( 500, 500, 0 );
@@ -790,7 +793,12 @@ TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
     CHECK( test_data["return_travel"].get<bool>() );
     CHECK( test_data["after_return_dim"].get<std::string>() == "" );
     CHECK( test_data["after_return_map_dim"].get<std::string>() == "" );
+    CHECK( test_data["after_return_pos"].get<tripoint_abs_ms>() == original_pos );
     CHECK_FALSE( test_data["after_return_outside_is_oob"].get<bool>() );
+    CHECK( test_data["reentered_travel"].get<bool>() );
+    CHECK( test_data["reentered_dim"].get<std::string>() == "lua_test_pocket" );
+    CHECK( test_data["reentered_map_dim"].get<std::string>() == "lua_test_pocket" );
+    CHECK( test_data["reentered_outside_is_oob"].get<bool>() );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )

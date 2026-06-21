@@ -42,6 +42,7 @@ namespace
 struct dimension_travel_options {
     dimension_id dim_id;
     tripoint_abs_omt target_omt;
+    std::optional<tripoint_abs_ms> target_ms;
     std::optional<std::string> world_type;
     std::optional<tripoint_abs_omt> bounds_min_omt;
     std::optional<tripoint_abs_omt> bounds_max_omt;
@@ -93,16 +94,34 @@ auto read_optional_abs_omt( const sol::table &opts,
     return *value;
 }
 
+auto read_optional_abs_ms( const sol::table &opts,
+                           const char *key ) -> std::optional<tripoint_abs_ms>
+{
+    const auto value = opts.get<sol::optional<tripoint_abs_ms>>( key );
+    if( !value ) {
+        return std::nullopt;
+    }
+    return *value;
+}
+
 auto get_dimension_entry_point( const tripoint_abs_omt &target_omt ) -> tripoint_abs_ms
 {
     return project_combine( target_omt, point_omt_ms( SEEX, SEEY ) );
 }
 
+auto get_dimension_entry_point( const dimension_travel_options &opts ) -> tripoint_abs_ms
+{
+    return opts.target_ms.value_or( get_dimension_entry_point( opts.target_omt ) );
+}
+
 auto parse_dimension_travel_options( const sol::table &opts ) -> dimension_travel_options
 {
+    const auto target_ms = read_optional_abs_ms( opts, "target_ms" );
     return {
         .dim_id = dimension_id( opts.get_or( "dimension_id", std::string{} ) ),
-        .target_omt = read_optional_abs_omt( opts, "target_omt" ).value_or( tripoint_abs_omt( tripoint_zero ) ),
+        .target_omt = read_optional_abs_omt( opts, "target_omt" ).value_or(
+            target_ms ? project_to<coords::omt>( *target_ms ) : tripoint_abs_omt( tripoint_zero ) ),
+        .target_ms = target_ms,
         .world_type = read_optional_string( opts, "world_type" ),
         .bounds_min_omt = read_optional_abs_omt( opts, "bounds_min_omt" ),
         .bounds_max_omt = read_optional_abs_omt( opts, "bounds_max_omt" ),
@@ -124,7 +143,7 @@ std::optional<pocket_dimension_data>
     }
 
     auto pocket_data = pocket_dimension_data{};
-    pocket_data.entry_point = get_dimension_entry_point( opts.target_omt );
+    pocket_data.entry_point = get_dimension_entry_point( opts );
     pocket_data.bounds = dimension_bounds{
         .min_bound = project_to<coords::sm>( *opts.bounds_min_omt ),
         .max_bound = project_to<coords::sm>( *opts.bounds_max_omt ) + point_rel_sm::south_east(),
@@ -169,9 +188,9 @@ auto find_safe_spawn( const tripoint_bub_ms &target ) -> tripoint_bub_ms
     return target;
 }
 
-auto get_dimension_load_position( const tripoint_abs_omt &target_omt ) -> tripoint_abs_sm
+auto get_dimension_load_position( const dimension_travel_options &opts ) -> tripoint_abs_sm
 {
-    const auto target_sm = project_to<coords::sm>( target_omt );
+    const auto target_sm = project_to<coords::sm>( get_dimension_entry_point( opts ) );
     return target_sm - tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
 }
 
@@ -213,14 +232,14 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
     }
 
     const auto preload_callback = build_dimension_preload_callback( opts );
-    const auto load_pos = get_dimension_load_position( opts.target_omt );
+    const auto load_pos = get_dimension_load_position( opts );
     if( !g->travel_to_dimension( opts.dim_id, world_type, pocket_data, load_pos,
                                  preload_callback ) ) {
         return false;
     }
 
     auto &avatar = get_avatar();
-    const auto target_local = abs_to_bub( get_dimension_entry_point( opts.target_omt ) );
+    const auto target_local = abs_to_bub( get_dimension_entry_point( opts ) );
     avatar.setpos( find_safe_spawn( target_local ) );
     g->update_map( avatar );
     return true;
@@ -257,7 +276,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
     DOC( "Returns the current dimension id. Empty string means the overworld." );
     luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id().str(); } );
-    DOC( "Moves the player into another dimension and loads the destination around the requested OMT." );
+    DOC( "Moves the player into another dimension and loads the destination around target_ms or target_omt." );
     luna::set_fx( lib, "place_player_dimension_at", []( sol::table opts ) -> bool {
         return place_player_dimension_at( parse_dimension_travel_options( opts ) );
     } );
