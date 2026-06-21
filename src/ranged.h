@@ -45,6 +45,12 @@ trajectory mode_fire( avatar &you, aim_activity_actor &activity );
 /** Throwing item */
 trajectory mode_throw( avatar &you, item &relevant, bool blind_throwing );
 
+/** Throwing a grabbed creature */
+trajectory mode_throw_creature( avatar &you, const Creature &thrown_creature, int range );
+
+/** Throwing or shoving a grabbed vehicle */
+trajectory mode_throw_vehicle( avatar &you, const tripoint_bub_ms &grabbed_part_pos, int range );
+
 /** Reach attacking */
 trajectory mode_reach( avatar &you, item &weapon );
 

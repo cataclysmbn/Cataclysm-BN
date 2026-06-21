@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 class Character;
 class Creature;
 class monster;
@@ -39,6 +42,29 @@ extern melee_statistic_data melee_stats;
  * See @ref melee_hit_range
  */
 float hit_chance( float acc );
+auto is_technique_prompt_suppressed() -> bool;
+
+struct mutation_attack_prompt_entry {
+    std::string name;
+    std::string requirements;
+    std::string why_unavailable;
+    std::string description;
+    bool available = false;
+};
+
+auto mutation_attack_prompt_entries( const Character &self, const Creature &target ) ->
+std::vector<mutation_attack_prompt_entry>;
+
+class technique_prompt_suppression_guard
+{
+    public:
+        technique_prompt_suppression_guard();
+        ~technique_prompt_suppression_guard();
+
+        technique_prompt_suppression_guard( const technique_prompt_suppression_guard & ) = delete;
+        technique_prompt_suppression_guard &operator=( const technique_prompt_suppression_guard & ) =
+            delete;
+};
 
 // If average == true, adds expected values of random rolls instead of rolling.
 /** Adds all 3 types of physical damage to instance */
@@ -68,5 +94,3 @@ const attack_statblock &pick_attack( const Character &c, const item &weapon,
                                      const Character &target );
 
 } // namespace melee
-
-

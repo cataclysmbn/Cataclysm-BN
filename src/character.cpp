@@ -232,6 +232,19 @@ static const skill_id skill_throw( "throw" );
 static const species_id HUMAN( "HUMAN" );
 static const species_id ROBOT( "ROBOT" );
 
+namespace
+{
+
+auto grab_strength_from( const Creature &grabber ) -> int
+{
+    if( const monster *const mon = grabber.as_monster() ) {
+        return mon->get_grab_strength();
+    }
+    return std::max( 1, grabber.get_effect_int( effect_grabbing ) );
+}
+
+} // namespace
+
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
 static const trait_id trait_ACIDPROOF( "ACIDPROOF" );
 static const trait_id trait_ADRENALINE( "ADRENALINE" );
@@ -1771,10 +1784,10 @@ bool static try_remove_grab( Character &c )
             }
         }
     } else {
-        for( auto &dest : here.points_in_radius( c.bub_pos(), 1, 0 ) ) { // *NOPAD*
-            const monster *const mon = g->critter_at<monster>( dest );
-            if( mon && mon->has_effect( effect_grabbing ) ) {
-                zed_number += mon->get_grab_strength();
+        for( auto &&dest : here.points_in_radius( c.bub_pos(), 1, 0 ) ) { // *NOPAD*
+            const Creature *const grabber = g->critter_at<Creature>( dest );
+            if( grabber != nullptr && grabber != &c && grabber->has_effect( effect_grabbing ) ) {
+                zed_number += grab_strength_from( *grabber );
             }
         }
         if( zed_number == 0 ) {
@@ -1791,10 +1804,10 @@ bool static try_remove_grab( Character &c )
             c.add_msg_player_or_npc( m_good, _( "You break out of the grab!" ),
                                      _( "<npcname> breaks out of the grab!" ) );
             c.remove_effect( effect_grabbed );
-            for( auto &dest : here.points_in_radius( c.bub_pos(), 1, 0 ) ) { // *NOPAD*
-                monster *mon = g->critter_at<monster>( dest );
-                if( mon && mon->has_effect( effect_grabbing ) ) {
-                    mon->remove_effect( effect_grabbing );
+            for( auto &&dest : here.points_in_radius( c.bub_pos(), 1, 0 ) ) { // *NOPAD*
+                Creature *const grabber = g->critter_at<Creature>( dest );
+                if( grabber != nullptr && grabber != &c && grabber->has_effect( effect_grabbing ) ) {
+                    grabber->remove_effect( effect_grabbing );
                 }
             }
         }
@@ -7170,17 +7183,19 @@ int Character::throw_range( const item &it ) const
         tmp.charges = 1;
     }
 
-    /** @EFFECT_STR determines maximum weight that can be thrown */
-    if( ( tmp.weight() / 100_gram ) > static_cast<int>( str_cur * 15 ) ) {
-        return 0;
-    }
-    // Increases as weight decreases until 150 g, then decreases again
-    /** @EFFECT_STR increases throwing range, vs item weight (high or low) */
-    int str_override = str_cur;
+    auto str_override = str_cur;
     if( is_mounted() ) {
         auto mons = mounted_creature.get();
         str_override = mons->mech_str_addition() != 0 ? mons->mech_str_addition() : str_cur;
     }
+
+    /** @EFFECT_STR determines maximum weight that can be thrown */
+    const auto max_throw_weight = str_override * 15 + std::max( 0, str_override - 8 ) * 5;
+    if( ( tmp.weight() / 100_gram ) > max_throw_weight ) {
+        return 0;
+    }
+    // Increases as weight decreases until 150 g, then decreases again
+    /** @EFFECT_STR increases throwing range, vs item weight (high or low) */
     const int divisor = tmp.weight() >= 150_gram
                         ? tmp.weight() / 100_gram
                         : 10 - static_cast<int>( tmp.weight() / 15_gram );
@@ -7193,7 +7208,7 @@ int Character::throw_range( const item &it ) const
     if( ret < 1 ) {
         return 1;
     }
-    // Cap at double our strength + skill
+    // Cap at triple our strength + skill
     /** @EFFECT_STR caps throwing range */
 
     /** @EFFECT_THROW caps throwing range */
@@ -9335,7 +9350,7 @@ void Character::on_dodge( Creature *source, int difficulty )
 
     // For adjacent attackers check for techniques usable upon successful dodge
     if( source && square_dist( bub_pos(), source->bub_pos() ) == 1 ) {
-        matec_id tec = pick_technique( *source, primary_weapon(), false, true, false );
+        matec_id tec = pick_technique( *source, used_weapon(), false, true, false );
 
         if( tec != tec_none && !is_dead_state() ) {
             if( get_stamina() < get_stamina_max() / 3 ) {

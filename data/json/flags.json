@@ -1,5 +1,20 @@
 [
   {
+    "id": "GRAB",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
+    "id": "GRAB_FILTER",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
+    "id": "NO_GRAB",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "ACTIVE_CLOAKING",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],

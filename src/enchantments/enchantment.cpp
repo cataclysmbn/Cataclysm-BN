@@ -461,6 +461,25 @@ void enchantment::finalize_all() {
     }
 }
 
+bool nested_enchant_check(
+    const enchantment& ench, const enchantment_id& to_match, std::set<trait_id> mut_to_match) {
+    // Populate mutations given first
+    for (const trait_id& mut_id : ench.get_mutations()) {
+        if (mut_to_match.contains(mut_id)) { return false; }
+        mut_to_match.insert(mut_id);
+    }
+    for (const trait_id& mut_id : ench.get_mutations()) {
+        for (const enchantment_id& nested_ench : mut_id->enchantments) {
+            if (nested_ench == to_match) { return false; }
+            if (!nested_enchant_check(*nested_ench, to_match, mut_to_match)) { return false; }
+        }
+        for (const enchantment& nested_ench : mut_id->mut_enchantments) {
+            if (!nested_enchant_check(nested_ench, to_match, mut_to_match)) { return false; }
+        }
+    }
+    return true;
+}
+
 void enchantment::check() const {
     // TODO: Where was it declared? CONTEXT!
     const char* ench_desc = id.is_empty() ? "An inline enchantment" : "Enchantment";
@@ -470,18 +489,11 @@ void enchantment::check() const {
             debugmsg("%s %s has invalid mutation %s", ench_desc, id.c_str(), mut.c_str());
         }
 
-        // One enchantment is fine iif it's just us
-        if (mut->enchantments.size() > 1
-            || (mut->enchantments.size() == 1
-                && std::count(mut->enchantments.begin(), mut->enchantments.end(), id) == 0)) {
+        if (!nested_enchant_check(*this, id, std::set<trait_id>())) {
             problems.push_back(string_format(
-                "\nmutation %s which has other enchantments (not supported)", mut.str()));
-        }
-
-        // TODO: Implement or also list alpha-stat muts and slime perception
-        if (!mut->mods.empty()) {
-            problems.push_back(string_format(
-                "\nmutation %s which has stat adjustments (not supported)", mut.str()));
+                "\ninfinite loop of mutations giving enchantments or dual application of a "
+                "mutation caused by this enchantment",
+                mut.str()));
         }
     }
     auto val_add_copy = values_add;
