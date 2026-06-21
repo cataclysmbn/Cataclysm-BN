@@ -203,7 +203,7 @@ local reentered = gapi.place_player_dimension_at({
 ### 오버월드로 돌아가기
 
 ```lua
-local overworld_omt = coords.tripoint_abs_omt(0, 0, 0)
+local overworld_omt = gapi.get_avatar():abs_pos():to_omt()
 
 gapi.place_player_dimension_at({
   dimension_id = "",
