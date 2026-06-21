@@ -95,7 +95,7 @@ auto read_optional_abs_omt( const sol::table &opts,
 
 auto get_dimension_entry_point( const tripoint_abs_omt &target_omt ) -> tripoint_abs_ms
 {
-    return project_to<coords::ms>( target_omt ) + point( SEEX, SEEY );
+    return project_combine( target_omt, point_omt_ms( SEEX, SEEY ) );
 }
 
 auto parse_dimension_travel_options( const sol::table &opts ) -> dimension_travel_options
