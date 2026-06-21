@@ -85,13 +85,14 @@ TEST_CASE( "vehicle_collision_with_hallucination_terminates", "[vehicle]" )
     hallucination.hallucination = true;
     REQUIRE( g->critter_at<monster>( hallucination_pos, true ) == &hallucination );
 
-    veh_ptr->velocity = 222;
+    veh_ptr->velocity = 5000;
     const auto ret = veh_ptr->part_collision( vehicle_part_collision_options{
         .part = 0,
         .pos = hallucination_pos,
     } );
 
     CHECK( ret.type == veh_coll_body );
+    CHECK( ret.imp == 0 );
     CHECK( hallucination.is_dead() );
-    CHECK( veh_ptr->velocity == 222 );
+    CHECK( veh_ptr->velocity == 5000 );
 }

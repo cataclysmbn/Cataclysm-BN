@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_functions.h"
 #include "calendar.h"
 #include "coordinates.h"
 #include "faction.h"
@@ -35,6 +36,18 @@
 #include "vpart_position.h"
 
 class Creature;
+
+TEST_CASE( "hallucination_npcs_cannot_be_stolen_from", "[npc][hallucination]" )
+{
+    clear_all_state();
+
+    npc &real_npc = spawn_npc( tripoint_bub_ms( 60, 60, 0 ), "test_talker" );
+    npc &hallucination_npc = spawn_npc( tripoint_bub_ms( 61, 60, 0 ), "test_talker" );
+    hallucination_npc.hallucination = true;
+
+    CHECK( avatar_funcs::can_steal_from_npc( real_npc ) );
+    CHECK_FALSE( avatar_funcs::can_steal_from_npc( hallucination_npc ) );
+}
 
 static void on_load_test( npc &who, const time_duration &from, const time_duration &to )
 {
