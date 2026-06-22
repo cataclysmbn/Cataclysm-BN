@@ -189,8 +189,9 @@ JSON은 공식적으로 주석을 지원하지 않지만, 게임은 `//` 주석�
 ./build-scripts/lint-json.sh
 
 # JSON 형식 지정
-cmake -B build -DJSON_FORMAT=ON
-cmake --build build --target style-json
+just fmt-json
+# 또는
+build-scripts/format-json.sh
 ```
 
 ## 모범 사례
