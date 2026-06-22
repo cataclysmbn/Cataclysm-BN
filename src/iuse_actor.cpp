@@ -3301,8 +3301,18 @@ std::unique_ptr<iuse_actor> repair_item_actor::clone() const
     return std::make_unique<repair_item_actor>( *this );
 }
 
-bool repair_item_actor::handle_components( player &pl, const item &fix,
-        bool print_msg, bool just_check ) const
+int repair_item_actor::get_material_amt_needed( const item &fix, bool just_check ) const
+{
+    // Repairing or modifying items requires at least 1 repair item,
+    // otherwise number is related to size of item
+    // Round up if checking, but roll if actually consuming
+    // TODO: should 250_ml be part of the cost_scaling?
+    return std::max<int>( 1, just_check ?
+                          std::ceil( fix.volume() / 250_ml * cost_scaling ) :
+                          roll_remainder( fix.volume() / 250_ml * cost_scaling ) );
+}
+
+std::set<material_id> repair_item_actor::get_valid_materials( const item &fix ) const
 {
     // Entries valid for repaired items
     std::set<material_id> valid_entries;
@@ -3311,6 +3321,13 @@ bool repair_item_actor::handle_components( player &pl, const item &fix,
             valid_entries.insert( mat );
         }
     }
+    return valid_entries;
+}
+
+bool repair_item_actor::handle_components( player &pl, const item &fix,
+        bool print_msg, bool just_check ) const
+{
+    std::set<material_id> valid_entries = get_valid_materials( fix );
 
     if( valid_entries.empty() ) {
         if( print_msg ) {
@@ -3327,15 +3344,7 @@ bool repair_item_actor::handle_components( player &pl, const item &fix,
     }
 
     const inventory &crafting_inv = pl.crafting_inventory();
-
-    // Repairing or modifying items requires at least 1 repair item,
-    //  otherwise number is related to size of item
-    // Round up if checking, but roll if actually consuming
-    // TODO: should 250_ml be part of the cost_scaling?
-    const int items_needed = std::max<int>( 1, just_check ?
-                                            std::ceil( fix.volume() / 250_ml * cost_scaling ) :
-                                            roll_remainder( fix.volume() / 250_ml * cost_scaling ) );
-
+    const int items_needed = get_material_amt_needed( fix, just_check );
 
     // Go through all discovered repair items and see if we have any of them available
     std::vector<item_comp> comps;
