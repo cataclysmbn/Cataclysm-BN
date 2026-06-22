@@ -788,7 +788,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                     const auto tools_mult =
                         crafting_tools_speed_multiplier( g->u, current_con->requirements.obj() );
                     const auto mutation_mult = g->u.mutation_value( "construction_speed_modifier" );
-                    const auto ench_mult = g->u.bonus_from_enchantments( 1.0,
+                    const auto ench_mult = 1.0 + g->u.bonus_from_enchantments( 1.0,
                                            enchantment_value_id( "CONSTRUCTION_SPEED_CON" ) );
                     const auto scaling = get_option<int>( "CONSTRUCTION_SCALING" );
                     const auto game_opt_mult = scaling == 0 ? 9999.0f : 100.0f / scaling;
@@ -2461,8 +2461,8 @@ float construction::time_scale() const
         // this is hacky, but the player or their followers should only be the ones to ever construct currently.
         return ( get_option<int>( "CONSTRUCTION_SCALING" ) / 100.0f ) /
                get_player_character().mutation_value( "construction_speed_modifier" ) /
-               get_player_character().bonus_from_enchantments( 1.0,
-                       enchantment_value_id( "CONSTRUCTION_SPEED_CON" ) );
+               ( 1.0 + get_player_character().bonus_from_enchantments( 1.0,
+                       enchantment_value_id( "CONSTRUCTION_SPEED_CON" ) ) );
     }
 }
 

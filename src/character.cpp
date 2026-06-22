@@ -963,7 +963,7 @@ int Character::clairvoyance() const
 
     int ench = bonus_from_enchantments( 0.0, enchantment_value_id( "CLAIRVOYANCE" ) );
     if( ench > 0 ) {
-        max = ench;
+        max = std::max( ench, max );
     }
     return max;
 }
