@@ -870,9 +870,7 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 11,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-    "starting_ammo": {
-      "shot_00": 100
-    },
+    "starting_ammo": { "shot_00": 100 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       {
@@ -887,30 +885,10 @@
         "move_cost": 140,
         "gun_type": "bio_shotgun_gun",
         "ammo_type": "shot_00",
-        "fake_skills": [
-          [
-            "gun",
-            2
-          ],
-          [
-            "shotgun",
-            2
-          ]
-        ],
+        "fake_skills": [ [ "gun", 2 ], [ "shotgun", 2 ] ],
         "fake_dex": 8,
         "fake_per": 8,
-        "ranges": [
-          [
-            0,
-            5,
-            "burst"
-          ],
-          [
-            5,
-            10,
-            "DEFAULT"
-          ]
-        ],
+        "ranges": [ [ 0, 5, "burst" ], [ 5, 10, "DEFAULT" ] ],
         "require_targeting_player": false,
         "description": "The feral armored bio-operator fires its bionic shotgun!",
         "no_crits": true
@@ -968,9 +946,7 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 11,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-    "starting_ammo": {
-      "40x46mm_m433": 15
-    },
+    "starting_ammo": { "40x46mm_m433": 15 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       {
@@ -985,25 +961,10 @@
         "move_cost": 140,
         "gun_type": "feral_pa_boss_grenade",
         "ammo_type": "40x46mm_m433",
-        "fake_skills": [
-          [
-            "gun",
-            2
-          ],
-          [
-            "launcher",
-            2
-          ]
-        ],
+        "fake_skills": [ [ "gun", 2 ], [ "launcher", 2 ] ],
         "fake_dex": 8,
         "fake_per": 8,
-        "ranges": [
-          [
-            0,
-            20,
-            "DEFAULT"
-          ]
-        ],
+        "ranges": [ [ 0, 20, "DEFAULT" ] ],
         "require_targeting_player": false,
         "description": "The feral armored bio-operator fires its bionic grenade launcher!",
         "no_crits": true
@@ -1074,30 +1035,10 @@
         "cooldown": 40,
         "move_cost": 140,
         "gun_type": "bio_blaster_gun",
-        "fake_skills": [
-          [
-            "gun",
-            2
-          ],
-          [
-            "rifle",
-            2
-          ]
-        ],
+        "fake_skills": [ [ "gun", 2 ], [ "rifle", 2 ] ],
         "fake_dex": 8,
         "fake_per": 8,
-        "ranges": [
-          [
-            0,
-            5,
-            "burst"
-          ],
-          [
-            5,
-            20,
-            "DEFAULT"
-          ]
-        ],
+        "ranges": [ [ 0, 5, "burst" ], [ 5, 20, "DEFAULT" ] ],
         "require_targeting_player": false,
         "description": "The feral armored bio-operator fires its bionic fusion blaster!",
         "no_crits": true
