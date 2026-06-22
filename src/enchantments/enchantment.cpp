@@ -322,7 +322,7 @@ double enchantment::get_value_multiply(const enchantment_value_id value) const {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     double result = 0;
     if (values_multiply.contains(value)) { result += values_multiply.at(value); }
-    if (value->has_parent()) { result += get_value_add(value->get_parent()); }
+    if (value->has_parent()) { result += get_value_multiply(value->get_parent()); }
 
     return result;
 }
@@ -338,7 +338,7 @@ int enchantment::get_value_max(const enchantment_value_id value) const {
 
 double enchantment::calc_bonus(enchantment_value_id value, double base, bool round) const {
     double add = value->can_add ? get_value_add(value) : 0.0;
-    double mul = value->can_mult ? get_value_multiply(value) : 1.0;
+    double mul = value->can_mult ? get_value_multiply(value) : 0.0;
     double max = value->can_max ? get_value_max(value) : 0.0;
     double ret = add + base * mul;
     // This is seperated because apparently adding 0.0 is very scrungly to the computer
