@@ -266,6 +266,7 @@
       "THROW",
       "MELEE",
       "BASHING",
+      "CUTTING",
       "DODGE",
       "STABBING",
       "UNARMED"
@@ -301,6 +302,7 @@
       "THROW",
       "MELEE",
       "BASHING",
+      "CUTTING",
       "DODGE",
       "STABBING",
       "UNARMED"
