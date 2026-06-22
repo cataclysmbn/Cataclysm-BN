@@ -1229,11 +1229,84 @@ auto abs_tile_handle::fetch_terrain_only( mapbuffer &buf, const tripoint_abs_ms 
     return abs_tile_handle( *sm, split.quotient_tripoint, split.remainder );
 }
 
+// ==========================================================================
+// submap_tile_range — one-hash range over all 144 tiles in a submap
+// ==========================================================================
+
+submap_tile_range::submap_tile_range( const submap &sm, tripoint_abs_sm abs_sm,
+                                      const bool has_vehicles, mapbuffer &buf ) :
+    sm_( &sm ),
+    abs_sm_( abs_sm ),
+    has_vehicles_( has_vehicles ),
+    buf_( &buf )
+{
+}
+
+auto submap_tile_range::begin() const -> iterator
+{
+    return iterator( *sm_, abs_sm_, has_vehicles_, buf_, 0 );
+}
+
+auto submap_tile_range::end() const -> iterator
+{
+    return iterator( *sm_, abs_sm_, has_vehicles_, buf_,
+                     static_cast<int>( SEEX ) * static_cast<int>( SEEY ) );
+}
+
+submap_tile_range::iterator::iterator( const submap &sm, tripoint_abs_sm abs_sm,
+                                       const bool has_vehicles, mapbuffer *const buf,
+                                       const int idx ) :
+    sm_( &sm ),
+    abs_sm_( abs_sm ),
+    has_vehicles_( has_vehicles ),
+    buf_( buf ),
+    idx_( idx )
+{
+}
+
+auto submap_tile_range::iterator::operator*() const -> abs_tile_handle
+{
+    const point_sm_ms local( idx_ % SEEX, idx_ / SEEX );
+    if( has_vehicles_ ) {
+        return abs_tile_handle( *sm_, abs_sm_, local,
+                                buf_->vehicle_part_at_loaded_tile(
+                                    project_combine( abs_sm_, local ) ) );
+    } else {
+        return abs_tile_handle( *sm_, abs_sm_, local );
+    }
+}
+
+auto submap_tile_range::iterator::operator++() -> iterator &
+{
+    ++idx_;
+    return *this;
+}
+
+bool submap_tile_range::iterator::operator==( const iterator &other ) const
+{
+    return idx_ == other.idx_;
+}
+
+bool submap_tile_range::iterator::operator!=( const iterator &other ) const
+{
+    return idx_ != other.idx_;
+}
+
+auto mapbuffer::submap_tiles( const tripoint_abs_sm &p )
+-> std::optional<submap_tile_range>
+{
+    submap *sm = lookup_submap_in_memory( p );
+    if( !sm ) {
+        return std::nullopt;
+    }
+    return submap_tile_range( *sm, p, !sm->vehicles.empty(), *this );
+}
+
 auto mapbuffer::for_each_submap_tile(
     const submap &sm, tripoint_abs_sm abs_sm,
     const std::function<void( const abs_tile_handle & )> &fn ) -> void
 {
-    for( const point_sm_ms &local : submap_tiles() ) {
+    for( const point_sm_ms &local : ::submap_tiles() ) {
         fn( abs_tile_handle( sm, abs_sm, local,
                              vehicle_part_at_loaded_tile( project_combine( abs_sm, local ) ) ) );
     }
@@ -1247,7 +1320,7 @@ auto mapbuffer::for_each_simulated_tile(
         if( abs_sm.z() != zlev ) {
             return;
         }
-        for( const point_sm_ms &local : submap_tiles() ) {
+        for( const point_sm_ms &local : ::submap_tiles() ) {
             fn( abs_tile_handle( sm, abs_sm, local,
                                  vehicle_part_at_loaded_tile( project_combine( abs_sm, local ) ) ) );
         }
@@ -1779,7 +1852,7 @@ void mapbuffer::transfer_all_to( mapbuffer &dest )
         if( !kv.second->active_items.empty() ) {
             dest.submaps_with_active_items_.insert( kv.first );
         }
-        if( std::ranges::any_of( submap_tiles(), [&]( const point_sm_ms & pos ) {
+        if( std::ranges::any_of( ::submap_tiles(), [&]( const point_sm_ms & pos ) {
         return kv.second->get_lum( pos ) != 0;
         } ) ) {
             dest.submaps_with_luminous_items_.insert( kv.first );
@@ -2143,7 +2216,7 @@ auto mapbuffer::clear_traps( const mapbuffer_submap_bounds_mutation_options &opt
             if( sm == nullptr ) {
                 continue;
             }
-            for( const auto local : submap_tiles() ) {
+            for( const auto local : ::submap_tiles() ) {
                 if( sm->get_trap( local ) == tr_null ) {
                     continue;
                 }
@@ -3565,7 +3638,7 @@ auto mapbuffer::refresh_luminous_item_submap_index( const tripoint_abs_sm &p,
         return false;
     }
 
-    if( std::ranges::any_of( submap_tiles(), [&]( const point_sm_ms & pos ) {
+    if( std::ranges::any_of( ::submap_tiles(), [&]( const point_sm_ms & pos ) {
     return sm->get_lum( pos ) != 0;
     } ) ) {
         submaps_with_luminous_items_.insert( p );
@@ -5363,7 +5436,7 @@ auto mapbuffer::run_omt_pillar_post_pass( const point_abs_omt &omt_pos ) -> void
                                     lookup_submap_in_memory( sm_pos + tripoint_below ) : nullptr;
 
             auto changed = false;
-            for( const auto local : submap_tiles() ) {
+            for( const auto local : ::submap_tiles() ) {
                 const auto terrain_here = sub_here->get_ter( local );
                 if( const auto target = vertical_transition_target_below( terrain_here );
                     target && zlev > -OVERMAP_DEPTH ) {
@@ -5444,7 +5517,7 @@ auto mapbuffer::actualize_submap( const tripoint_abs_sm &pos ) -> void
         .mode = mapbuffer_lookup_mode::resident_only,
     };
 
-    for( const auto p : submap_tiles() ) {
+    for( const auto p : ::submap_tiles() ) {
         const auto abs_pos = project_combine( pos, p );
         const auto options = actualize_tile_options {
             .buffer = *this,

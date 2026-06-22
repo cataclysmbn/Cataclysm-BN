@@ -379,6 +379,63 @@ class abs_tile_handle
         optional_vpart_position veh_part_;
 };
 
+/**
+ * Range over all 144 tiles of a single submap, yielding abs_tile_handle
+ * with zero hash lookups per tile.  One hash lookup in the constructor,
+ * then all 144 handles share the same submap pointer.
+ *
+ * Vehicle data is included via a mapbuffer vehicle-footprint lookup on
+ * dereference.  If the submap has no vehicles (sm.vehicles.empty()), the
+ * vehicle-footprint lookup is skipped entirely — the common case.
+ *
+ * @warning The range stores a raw submap pointer.  Do not iterate across
+ * a submap_load_manager::update() call — eviction would leave a dangling
+ * pointer.
+ */
+class submap_tile_range
+{
+    public:
+        class iterator;
+        using value_type = abs_tile_handle;
+
+        submap_tile_range( const submap &sm, tripoint_abs_sm abs_sm,
+                           bool has_vehicles, mapbuffer &buf );
+
+        auto begin() const -> iterator;
+        auto end() const -> iterator;
+        static constexpr std::size_t size() {
+            return static_cast<std::size_t>( SEEX ) * static_cast<std::size_t>( SEEY );
+        }
+
+        class iterator
+        {
+            public:
+                using value_type = abs_tile_handle;
+                using reference = const abs_tile_handle &;
+
+                iterator( const submap &sm, tripoint_abs_sm abs_sm,
+                          bool has_vehicles, mapbuffer *buf, int idx );
+
+                auto operator*() const -> abs_tile_handle;
+                auto operator++() -> iterator &;
+                bool operator==( const iterator &other ) const;
+                bool operator!=( const iterator &other ) const;
+
+            private:
+                const submap *sm_;
+                tripoint_abs_sm abs_sm_;
+                bool has_vehicles_;
+                mapbuffer *buf_;
+                int idx_;
+        };
+
+    private:
+        const submap *sm_;
+        tripoint_abs_sm abs_sm_;
+        bool has_vehicles_;
+        mapbuffer *buf_;
+};
+
 class mapbuffer_load_region
 {
     public:
@@ -442,6 +499,7 @@ class mapbuffer_load_region
 class mapbuffer
 {
         friend class abs_tile_handle;
+        friend class submap_tile_range;
     public:
         mapbuffer();
         ~mapbuffer();
@@ -532,6 +590,17 @@ class mapbuffer
          * constructing an abs_tile_handle for each and calling @p fn.
          * Vehicle data is included in the handle by default.
          */
+        /**
+         * Get a range over all 144 tiles of the submap at @p p.
+         * Returns std::nullopt if the submap is not resident in memory.
+         * One hash lookup for all 144 tiles.
+         *
+         * @warning The returned range holds a raw submap pointer.  Iteration
+         * must not cross a submap_load_manager::update() call.
+         */
+        auto submap_tiles( const tripoint_abs_sm &p )
+        -> std::optional<submap_tile_range>;
+
         auto for_each_submap_tile(
             const submap &sm, tripoint_abs_sm abs_sm,
             const std::function<void( const abs_tile_handle & )> &fn ) -> void;
