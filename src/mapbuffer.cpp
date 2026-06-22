@@ -11,6 +11,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <queue>
 #include <ranges>
 #include <set>
 #include <sstream>
@@ -1302,6 +1303,135 @@ auto mapbuffer::submap_tiles( const tripoint_abs_sm &p )
     return submap_tile_range( *sm, p, !sm->vehicles.empty(), *this );
 }
 
+// ==========================================================================
+// simulated_island — connected component of simulated columns
+// ==========================================================================
+
+bool simulated_island::contains( point_abs_sm p ) const
+{
+    if( p.x() < begin.x() || p.x() >= end.x() ||
+        p.y() < begin.y() || p.y() >= end.y() ) {
+        return false;
+    }
+    const int width = end.x() - begin.x();
+    const int idx = ( p.x() - begin.x() ) + ( p.y() - begin.y() ) * width;
+    return idx >= 0 && idx < static_cast<int>( bits_.size() ) && bits_[idx];
+}
+
+auto simulated_island::columns_in( point_abs_sm r_begin, point_abs_sm r_end ) const
+-> std::vector<point_abs_sm>
+{
+    std::vector<point_abs_sm> result;
+
+    // Clamp query rect to island bounds
+    const point_abs_sm scan_begin(
+        std::max( r_begin.x(), begin.x() ),
+        std::max( r_begin.y(), begin.y() )
+    );
+    const point_abs_sm scan_end(
+        std::min( r_end.x(), end.x() ),
+        std::min( r_end.y(), end.y() )
+    );
+
+    if( scan_begin.x() >= scan_end.x() || scan_begin.y() >= scan_end.y() ) {
+        return result;  // empty intersection
+    }
+
+    const int width = end.x() - begin.x();
+    for( int y = scan_begin.y(); y < scan_end.y(); ++y ) {
+        for( int x = scan_begin.x(); x < scan_end.x(); ++x ) {
+            const int idx = ( x - begin.x() ) + ( y - begin.y() ) * width;
+            if( idx >= 0 && idx < static_cast<int>( bits_.size() ) && bits_[idx] ) {
+                result.emplace_back( x, y );
+            }
+        }
+    }
+    return result;
+}
+
+auto simulated_island::size() const -> std::size_t
+{
+    return bits_.size();
+}
+
+// ==========================================================================
+// Island builder — connected-components pass over simulated columns
+// ==========================================================================
+
+auto mapbuffer::build_islands( const std::unordered_set<point_abs_sm> &columns )
+-> std::vector<simulated_island>
+{
+    std::vector<simulated_island> islands;
+    std::unordered_set<point_abs_sm> visited;
+    visited.reserve( columns.size() );
+
+    static constexpr std::array<point_rel_sm, 4> dirs = {
+        point_rel_sm::east(),
+        point_rel_sm::west(),
+        point_rel_sm::north(),
+        point_rel_sm::south(),
+    };
+
+    for( const point_abs_sm &seed : columns ) {
+        if( visited.contains( seed ) ) {
+            continue;
+        }
+
+        // BFS for this connected component (4-directional adjacency)
+        std::vector<point_abs_sm> component;
+        std::queue<point_abs_sm> q;
+        q.push( seed );
+        visited.insert( seed );
+
+        int min_x = seed.x();
+        int min_y = seed.y();
+        int max_x = seed.x();
+        int max_y = seed.y();
+
+        while( !q.empty() ) {
+            const point_abs_sm cur = q.front();
+            q.pop();
+            component.push_back( cur );
+
+            min_x = std::min( min_x, cur.x() );
+            min_y = std::min( min_y, cur.y() );
+            max_x = std::max( max_x, cur.x() );
+            max_y = std::max( max_y, cur.y() );
+
+            for( const point_rel_sm &d : dirs ) {
+                const point_abs_sm nxt = cur + d;
+                if( columns.contains( nxt ) && !visited.contains( nxt ) ) {
+                    visited.insert( nxt );
+                    q.push( nxt );
+                }
+            }
+        }
+
+        // Build island from component
+        simulated_island island;
+        island.begin = point_abs_sm( min_x, min_y );
+        island.end = point_abs_sm( max_x + 1, max_y + 1 );  // half-open
+
+        const int w = island.end.x() - island.begin.x();
+        const int h = island.end.y() - island.begin.y();
+        island.bits_.resize( static_cast<std::size_t>( w ) * static_cast<std::size_t>( h ), false );
+        for( const point_abs_sm &p : component ) {
+            const int idx = ( p.x() - island.begin.x() ) +
+                            ( p.y() - island.begin.y() ) * w;
+            island.bits_[idx] = true;
+        }
+
+        islands.push_back( std::move( island ) );
+    }
+
+    return islands;
+}
+
+auto mapbuffer::simulated_islands() const -> std::span<const simulated_island>
+{
+    return simulated_islands_;
+}
+
 auto mapbuffer::for_each_submap_tile(
     const submap &sm, tripoint_abs_sm abs_sm,
     const std::function<void( const abs_tile_handle & )> &fn ) -> void
@@ -1701,6 +1831,7 @@ void mapbuffer::clear()
         submaps_with_luminous_items_.clear();
         column_states_.clear();
         dirty_columns_.clear();
+        simulated_islands_.clear();
         submaps.clear();
         pocket_info_.reset();
     }
@@ -1809,6 +1940,9 @@ void mapbuffer::set_simulated_submaps(
             }
         }
     }
+
+    // Rebuild simulated islands from the new column set.
+    simulated_islands_ = build_islands( columns );
 }
 
 void mapbuffer::remove_submap( tripoint_abs_sm addr )
@@ -2179,14 +2313,8 @@ auto mapbuffer::clear_spawns( const mapbuffer_submap_bounds_mutation_options &op
         return;
     }
 
-    const auto z_min = std::max( options.z_min, -OVERMAP_DEPTH );
-    const auto z_max = std::min( options.z_max, OVERMAP_HEIGHT );
-    if( z_min > z_max ) {
-        return;
-    }
-
     const auto max = point_abs_sm( options.end.x() - 1, options.end.y() - 1 );
-    for( const auto zlev : std::views::iota( z_min, z_max + 1 ) ) {
+    for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         for( const auto pos : point_range<point_abs_sm>( options.begin, max ) ) {
             auto *const sm = get_submap( tripoint_abs_sm( pos, zlev ), options.lookup );
             if( sm == nullptr ) {
@@ -2203,14 +2331,8 @@ auto mapbuffer::clear_traps( const mapbuffer_submap_bounds_mutation_options &opt
         return;
     }
 
-    const auto z_min = std::max( options.z_min, -OVERMAP_DEPTH );
-    const auto z_max = std::min( options.z_max, OVERMAP_HEIGHT );
-    if( z_min > z_max ) {
-        return;
-    }
-
     const auto max = point_abs_sm( options.end.x() - 1, options.end.y() - 1 );
-    for( const auto zlev : std::views::iota( z_min, z_max + 1 ) ) {
+    for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         for( const auto pos : point_range<point_abs_sm>( options.begin, max ) ) {
             auto *const sm = get_submap( tripoint_abs_sm( pos, zlev ), options.lookup );
             if( sm == nullptr ) {
@@ -2234,14 +2356,8 @@ auto mapbuffer::fill_terrain( const mapbuffer_fill_terrain_options &options ) ->
         return;
     }
 
-    const auto z_min = std::max( options.z_min, -OVERMAP_DEPTH );
-    const auto z_max = std::min( options.z_max, OVERMAP_HEIGHT );
-    if( z_min > z_max ) {
-        return;
-    }
-
     const auto max = point_abs_sm( options.end.x() - 1, options.end.y() - 1 );
-    for( const auto zlev : std::views::iota( z_min, z_max + 1 ) ) {
+    for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         for( const auto pos : point_range<point_abs_sm>( options.begin, max ) ) {
             auto *const sm = get_submap( tripoint_abs_sm( pos, zlev ), options.lookup );
             if( sm == nullptr ) {
@@ -2263,14 +2379,8 @@ auto mapbuffer::run_submap_batch_turns(
         return;
     }
 
-    const auto z_min = std::max( options.z_min, -OVERMAP_DEPTH );
-    const auto z_max = std::min( options.z_max, OVERMAP_HEIGHT );
-    if( z_min > z_max ) {
-        return;
-    }
-
     const auto max = point_abs_sm( options.end.x() - 1, options.end.y() - 1 );
-    for( const auto zlev : std::views::iota( z_min, z_max + 1 ) ) {
+    for( const auto zlev : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         for( const auto pos : point_range<point_abs_sm>( options.begin, max ) ) {
             auto *const sm = get_submap( tripoint_abs_sm( pos, zlev ), options.lookup );
             if( sm == nullptr ) {

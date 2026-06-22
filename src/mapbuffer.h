@@ -156,8 +156,6 @@ struct mapbuffer_mark_submap_caches_dirty_options {
 struct mapbuffer_submap_bounds_mutation_options {
     point_abs_sm begin;
     point_abs_sm end;
-    int z_min = -OVERMAP_DEPTH;
-    int z_max = OVERMAP_HEIGHT;
     mapbuffer_lookup_options lookup = {
         .mode = mapbuffer_lookup_mode::resident_only,
     };
@@ -166,8 +164,6 @@ struct mapbuffer_submap_bounds_mutation_options {
 struct mapbuffer_fill_terrain_options {
     point_abs_sm begin;
     point_abs_sm end;
-    int z_min = -OVERMAP_DEPTH;
-    int z_max = OVERMAP_HEIGHT;
     mapbuffer_lookup_options lookup = {
         .mode = mapbuffer_lookup_mode::resident_only,
     };
@@ -177,8 +173,6 @@ struct mapbuffer_fill_terrain_options {
 struct mapbuffer_run_submap_batch_turns_options {
     point_abs_sm begin;
     point_abs_sm end;
-    int z_min = -OVERMAP_DEPTH;
-    int z_max = OVERMAP_HEIGHT;
     int turns = 0;
     mapbuffer_lookup_options lookup = {
         .mode = mapbuffer_lookup_mode::resident_only,
@@ -436,6 +430,38 @@ class submap_tile_range
         mapbuffer *buf_;
 };
 
+/**
+ * A connected component of simulated submap columns.  Each island
+ * represents a set of columns that form a single connected region
+ * (4-directional adjacency) within the simulated set.
+ *
+ * The bitset provides O(1) contains() testing and efficient
+ * sub-rectangle iteration via columns_in().
+ *
+ * @warning Islands are rebuilt every time set_simulated_submaps()
+ * is called.  Do not retain references across that call.
+ */
+struct simulated_island {
+    point_abs_sm begin;   // half-open bounding box
+    point_abs_sm end;
+
+    /// True if @p p is within this island's bounding box AND the
+    /// bitset has an entry at that position.
+    bool contains( point_abs_sm p ) const;
+
+    /// Return all column positions in the intersection of
+    /// [r_begin, r_end) and [begin, end) that belong to this island.
+    auto columns_in( point_abs_sm r_begin, point_abs_sm r_end ) const
+    -> std::vector<point_abs_sm>;
+
+    /// Number of columns in this island.
+    auto size() const -> std::size_t;
+
+private:
+    std::vector<bool> bits_;
+    friend class mapbuffer;
+};
+
 class mapbuffer_load_region
 {
     public:
@@ -586,10 +612,12 @@ class mapbuffer
         }
 
         /**
-         * Iterate every tile in @p sm (at absolute position @p abs_sm),
-         * constructing an abs_tile_handle for each and calling @p fn.
-         * Vehicle data is included in the handle by default.
+         * Return the simulated islands built from the most recent
+         * set_simulated_submaps() call.  Span is stable until the next
+         * call to set_simulated_submaps().
          */
+        auto simulated_islands() const -> std::span<const simulated_island>;
+
         /**
          * Get a range over all 144 tiles of the submap at @p p.
          * Returns std::nullopt if the submap is not resident in memory.
@@ -1238,6 +1266,10 @@ class mapbuffer
             return ::is_outside_pocket_dimension_bounds( pocket_info_, p );
         }
 
+        /** Build simulated islands from a column set (connected-components BFS). */
+        static auto build_islands( const std::unordered_set<point_abs_sm> &columns )
+        -> std::vector<simulated_island>;
+
     private:
         // There's a very good reason this is private,
         // if not handled carefully, this can erase in-use submaps and crash the game.
@@ -1264,6 +1296,9 @@ class mapbuffer
         std::unordered_set<point_abs_sm> dirty_columns_;
         /** Columns demoted from simulated to resident in the last set_simulated_submaps() call. */
         std::vector<point_abs_sm> last_demoted_columns_;
+
+        /** Simulated islands built from the most recent set_simulated_submaps() call. */
+        std::vector<simulated_island> simulated_islands_;
 
         submap_map_t submaps;
         Creature_tracker creature_tracker_;
