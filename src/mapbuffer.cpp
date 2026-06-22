@@ -883,6 +883,329 @@ auto abs_tile_handle::vehicle_part() const -> const optional_vpart_position &
     return veh_part_;
 }
 
+// ----- Read-only tile property queries -----
+
+auto abs_tile_handle::has_flag( const std::string &flag ) const -> bool
+{
+    return has_flag_ter_or_furn( flag );
+}
+
+auto abs_tile_handle::has_flag_ter( const std::string &flag ) const -> bool
+{
+    return ter_obj().has_flag( flag );
+}
+
+auto abs_tile_handle::has_flag_furn( const std::string &flag ) const -> bool
+{
+    return furn_obj().has_flag( flag );
+}
+
+auto abs_tile_handle::has_flag_ter_or_furn( const std::string &flag ) const -> bool
+{
+    return ter_obj().has_flag( flag ) || furn_obj().has_flag( flag );
+}
+
+auto abs_tile_handle::has_flag_furn_or_vpart( const std::string &flag ) const -> bool
+{
+    return furn_obj().has_flag( flag ) ||
+           static_cast<bool>( veh_part_.part_with_feature( flag, true ) );
+}
+
+auto abs_tile_handle::has_flag_vpart( const std::string &flag ) const -> bool
+{
+    return static_cast<bool>( veh_part_.part_with_feature( flag, true ) );
+}
+
+auto abs_tile_handle::has_flag( const ter_bitflags flag ) const -> bool
+{
+    return has_flag_ter_or_furn( flag );
+}
+
+auto abs_tile_handle::has_flag_ter( const ter_bitflags flag ) const -> bool
+{
+    return ter_obj().has_flag( flag );
+}
+
+auto abs_tile_handle::has_flag_furn( const ter_bitflags flag ) const -> bool
+{
+    return furn_obj().has_flag( flag );
+}
+
+auto abs_tile_handle::has_flag_ter_or_furn( const ter_bitflags flag ) const -> bool
+{
+    return ter_obj().has_flag( flag ) || furn_obj().has_flag( flag );
+}
+
+auto abs_tile_handle::is_bashable( const bool allow_floor ) const -> bool
+{
+    if( veh_part_ && veh_part_->obstacle_at_part() ) {
+        return true;
+    }
+    return is_bashable_ter_furn( allow_floor );
+}
+
+auto abs_tile_handle::is_bashable_ter( const bool allow_floor ) const -> bool
+{
+    const auto &ter_bash = ter_obj().bash;
+    return ter_bash.str_max != -1 &&
+           ( ( !ter_bash.bash_below &&
+               !ter_obj().has_flag( "VEH_TREAT_AS_BASH_BELOW" ) ) || allow_floor );
+}
+
+auto abs_tile_handle::is_bashable_furn() const -> bool
+{
+    const auto furn_id = furn();
+    return furn_id != f_null && furn_id.obj().bash.str_max != -1;
+}
+
+auto abs_tile_handle::is_bashable_ter_furn( const bool allow_floor ) const -> bool
+{
+    return is_bashable_furn() || is_bashable_ter( allow_floor );
+}
+
+auto abs_tile_handle::bash_strength( const bool allow_floor ) const -> int
+{
+    const auto furn_id = furn();
+    if( furn_id != f_null && furn_id.obj().bash.str_max != -1 ) {
+        return furn_id.obj().bash.str_max;
+    }
+    const auto &ter_bash = ter_obj().bash;
+    if( ter_bash.str_max != -1 && ( !ter_bash.bash_below || allow_floor ) ) {
+        return ter_bash.str_max;
+    }
+    return -1;
+}
+
+auto abs_tile_handle::bash_resistance( const bool allow_floor ) const -> int
+{
+    const auto furn_id = furn();
+    if( furn_id != f_null && furn_id.obj().bash.str_min != -1 ) {
+        return furn_id.obj().bash.str_min;
+    }
+    const auto &ter_bash = ter_obj().bash;
+    if( ter_bash.str_min != -1 && ( !ter_bash.bash_below || allow_floor ) ) {
+        return ter_bash.str_min;
+    }
+    return -1;
+}
+
+auto abs_tile_handle::bash_rating( const int str, const bool allow_floor ) const -> int
+{
+    if( str <= 0 ) {
+        return -1;
+    }
+
+    const auto &furniture = furn_obj();
+    const auto &terrain = ter_obj();
+
+    if( veh_part_ && veh_part_->obstacle_at_part() ) {
+        return 2;
+    }
+
+    bool furn_smash = false;
+    bool ter_smash = false;
+    if( furniture.id && furniture.bash.str_max != -1 ) {
+        furn_smash = true;
+    } else if( terrain.bash.str_max != -1 && ( !terrain.bash.bash_below || allow_floor ) ) {
+        ter_smash = true;
+    }
+
+    int bash_min = 0;
+    int bash_max = 0;
+    if( furn_smash ) {
+        bash_min = furniture.bash.str_min;
+        bash_max = furniture.bash.str_max;
+    } else if( ter_smash ) {
+        bash_min = terrain.bash.str_min;
+        bash_max = terrain.bash.str_max;
+    } else {
+        return -1;
+    }
+
+    if( str < bash_min ) {
+        return 1;
+    } else if( str >= bash_min + ( bash_max - bash_min ) * 0.5 + 0.5 ) {
+        return 10;
+    } else if( str >= bash_min + ( bash_max - bash_min ) * 0.2 ) {
+        return 7;
+    } else if( str >= bash_min - bash_max * 0.2 ) {
+        return 4;
+    }
+
+    return 1;
+}
+
+auto abs_tile_handle::is_divable() const -> bool
+{
+    if( veh_part_.part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+        return false;
+    }
+    return ter_obj().has_flag( "SWIMMABLE" ) &&
+           ter_obj().has_flag( TFLAG_DEEP_WATER );
+}
+
+auto abs_tile_handle::is_water_shallow_current() const -> bool
+{
+    return ter_obj().has_flag( "CURRENT" ) &&
+           !ter_obj().has_flag( TFLAG_DEEP_WATER );
+}
+
+auto abs_tile_handle::has_items() const -> bool
+{
+    return !items().empty();
+}
+
+auto abs_tile_handle::has_field_at() const -> bool
+{
+    return sm_->field_count > 0;
+}
+
+auto abs_tile_handle::get_field_entry( const field_type_id &type ) const -> const field_entry *
+{
+    return field().find_field( type );
+}
+
+auto abs_tile_handle::get_field_age( const field_type_id &type ) const -> time_duration
+{
+    const auto *entry = get_field_entry( type );
+    return entry != nullptr ? entry->get_field_age() : -1_turns;
+}
+
+auto abs_tile_handle::get_field_intensity( const field_type_id &type ) const -> int
+{
+    const auto *entry = get_field_entry( type );
+    return entry != nullptr ? entry->get_field_intensity() : 0;
+}
+
+auto abs_tile_handle::has_graffiti_at() const -> bool
+{
+    return sm_->has_graffiti( local_ );
+}
+
+auto abs_tile_handle::graffiti_at() const -> const std::string &
+{
+    return sm_->get_graffiti( local_ );
+}
+
+auto abs_tile_handle::has_signage() const -> bool
+{
+    return sm_->has_signage( local_ );
+}
+
+auto abs_tile_handle::get_signage() const -> std::string
+{
+    return sm_->get_signage( local_ );
+}
+
+auto abs_tile_handle::has_computer() const -> bool
+{
+    return sm_->has_computer( local_ );
+}
+
+auto abs_tile_handle::get_computer() const -> const computer *
+{
+    return sm_->get_computer( local_ );
+}
+
+auto abs_tile_handle::can_put_items_ter_furn() const -> bool
+{
+    return !has_flag( "NOITEM" ) && !has_flag( "SEALED" );
+}
+
+auto abs_tile_handle::accessible_items() const -> bool
+{
+    return !has_flag( "SEALED" ) || ter_obj().has_flag( "LIQUIDCONT" );
+}
+
+auto abs_tile_handle::move_cost_ter_furn() const -> int
+{
+    const int tercost = ter_obj().movecost;
+    if( tercost == 0 ) {
+        return 0;
+    }
+    const int furncost = furn_obj().movecost;
+    if( furncost < 0 ) {
+        return 0;
+    }
+    const int cost = tercost + furncost;
+    return cost > 0 ? cost : 0;
+}
+
+auto abs_tile_handle::impassable() const -> bool
+{
+    return !passable();
+}
+
+auto abs_tile_handle::impassable_ter_furn() const -> bool
+{
+    return !passable_ter_furn();
+}
+
+auto abs_tile_handle::passable_ter_furn() const -> bool
+{
+    return move_cost_ter_furn() != 0;
+}
+
+auto abs_tile_handle::ter_vars() const -> const data_vars::data_set &
+{
+    return sm_->get_ter_vars( local_ );
+}
+
+auto abs_tile_handle::is_harvestable() const -> bool
+{
+    const auto furn_id = furn();
+    if( furn_id != f_null && furn_id.obj().examine != iexamine::none ) {
+        const auto &furniture = furn_id.obj();
+        return !furniture.has_flag( TFLAG_HARVESTED ) &&
+               !furniture.get_harvest().is_null() &&
+               !furniture.get_harvest()->empty();
+    }
+    const auto &terrain = ter_obj();
+    return !terrain.get_harvest().is_null() &&
+           !terrain.get_harvest()->empty();
+}
+
+auto abs_tile_handle::dangerous_field_at() const -> bool
+{
+    for( const auto &pr : field() ) {
+        if( pr.second.is_dangerous() ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto abs_tile_handle::furnname() const -> std::string
+{
+    const furn_t &f = furn_obj();
+    if( f.has_flag( "PLANT" ) ) {
+        const auto &item_list = items();
+        for( auto it = item_list.begin(); it != item_list.end(); ++it ) {
+            if( ( *it )->is_seed() ) {
+                return string_format( "%s (%s)", f.name(), ( *it )->get_plant_name() );
+            }
+        }
+        debugmsg( "Missing seed for plant at %s", abs_pos().to_string() );
+        return "null";
+    }
+    return f.name();
+}
+
+auto abs_tile_handle::tername() const -> std::string
+{
+    return ter_obj().name();
+}
+
+auto abs_tile_handle::name() const -> std::string
+{
+    return furn() != f_null ? furnname() : tername();
+}
+
+auto abs_tile_handle::disp_name() const -> std::string
+{
+    return string_format( _( "the %s" ), name() );
+}
+
 auto abs_tile_handle::fetch( mapbuffer &buf, const tripoint_abs_ms p )
 -> std::optional<abs_tile_handle>
 {

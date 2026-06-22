@@ -283,6 +283,81 @@ class abs_tile_handle
 
         auto vehicle_part() const -> const optional_vpart_position &;
 
+        // ----- Read-only tile property queries (zero-lookup — data from stored pointer) -----
+
+        /// True if terrain or furniture has @p flag (string).
+        auto has_flag( const std::string &flag ) const -> bool;
+        auto has_flag_ter( const std::string &flag ) const -> bool;
+        auto has_flag_furn( const std::string &flag ) const -> bool;
+        auto has_flag_ter_or_furn( const std::string &flag ) const -> bool;
+        /// Furniture flag, then vehicle part with feature as fallback.
+        auto has_flag_furn_or_vpart( const std::string &flag ) const -> bool;
+        /// Vehicle part with feature.  Requires a handle with vehicle data.
+        auto has_flag_vpart( const std::string &flag ) const -> bool;
+
+        /// True if terrain or furniture has @p flag (ter_bitflags enum).
+        auto has_flag( ter_bitflags flag ) const -> bool;
+        auto has_flag_ter( ter_bitflags flag ) const -> bool;
+        auto has_flag_furn( ter_bitflags flag ) const -> bool;
+        auto has_flag_ter_or_furn( ter_bitflags flag ) const -> bool;
+
+        /// True if tile has a bashable vehicle part, furniture, or terrain.
+        auto is_bashable( bool allow_floor = false ) const -> bool;
+        auto is_bashable_ter( bool allow_floor = false ) const -> bool;
+        auto is_bashable_furn() const -> bool;
+        auto is_bashable_ter_furn( bool allow_floor = false ) const -> bool;
+        auto bash_strength( bool allow_floor = false ) const -> int;
+        auto bash_resistance( bool allow_floor = false ) const -> int;
+        auto bash_rating( int str, bool allow_floor = false ) const -> int;
+
+        /// SWIMMABLE + DEEP_WATER terrain, no boardable vehicle part.
+        auto is_divable() const -> bool;
+        /// CURRENT flag but not DEEP_WATER.
+        auto is_water_shallow_current() const -> bool;
+
+        /// True if any items exist at this tile.
+        auto has_items() const -> bool;
+        /// True if any field exists at this tile.
+        auto has_field_at() const -> bool;
+        /// Access a specific field entry (read-only).
+        auto get_field_entry( const field_type_id &type ) const -> const field_entry *;
+        auto get_field_age( const field_type_id &type ) const -> time_duration;
+        auto get_field_intensity( const field_type_id &type ) const -> int;
+
+        auto has_graffiti_at() const -> bool;
+        auto graffiti_at() const -> const std::string &;
+        auto has_signage() const -> bool;
+        auto get_signage() const -> std::string;
+        auto has_computer() const -> bool;
+        auto get_computer() const -> const computer *;
+
+        /// True if items can be dropped here (ter/furn only, no vehicle cargo check).
+        auto can_put_items_ter_furn() const -> bool;
+        /// True if SEALED flag absent, or LIQUIDCONT flag present (items can be accessed).
+        auto accessible_items() const -> bool;
+
+        /// Move cost from terrain and furniture only (no vehicle).
+        auto move_cost_ter_furn() const -> int;
+        /// move_cost() == 0 (includes vehicle).
+        auto impassable() const -> bool;
+        /// move_cost_ter_furn() == 0.
+        auto impassable_ter_furn() const -> bool;
+        auto passable_ter_furn() const -> bool;
+
+        /// Terrain variables (read-only).
+        auto ter_vars() const -> const data_vars::data_set &;
+
+        /// True if a harvestable plant is present.
+        auto is_harvestable() const -> bool;
+        /// True if any field entry is dangerous.
+        auto dangerous_field_at() const -> bool;
+
+        /// Display names derived from stored terrain/furniture.
+        auto furnname() const -> std::string;
+        auto tername() const -> std::string;
+        auto name() const -> std::string;
+        auto disp_name() const -> std::string;
+
         /**
          * Fetch a handle from mapbuffer by absolute position.
          * One hash lookup for the submap, plus one for the vehicle footprint.
