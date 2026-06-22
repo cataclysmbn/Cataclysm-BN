@@ -1283,7 +1283,7 @@
     "time": "10 m",
     "autolearn": true,
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 } ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "scrap", 1 ] ] ]
+    "components": [ [ [ "pipe", 2 ] ], [ [ "spring", 2 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -1311,7 +1311,7 @@
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 15 ] ],
-    "components": [ [ [ "pipe", 2 ] ], [ [ "spring", 2 ] ], [ [ "steel_chunk", 3 ] ], [ [ "scrap", 3 ] ] ]
+    "components": [ [ [ "pipe", 2 ] ], [ [ "spring", 2 ] ], [ [ "steel_chunk", 3 ] ], [ [ "scrap", 4 ] ] ]
   },
   {
     "type": "recipe",
@@ -1325,7 +1325,7 @@
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ] ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
+    "components": [ [ [ "pipe", 1 ] ], [ [ "spring", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -1339,7 +1339,7 @@
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ] ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
+    "components": [ [ [ "pipe", 1 ] ], [ [ "spring", 2 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -1366,7 +1366,7 @@
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ] ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
+    "components": [ [ [ "pipe", 1 ] ], [ [ "spring", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -1380,7 +1380,7 @@
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ] ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
+    "components": [ [ [ "pipe", 1 ] ], [ [ "spring", 1 ] ], [ [ "steel_chunk", 3 ] ], [ [ "scrap", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -1394,7 +1394,7 @@
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ] ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
+    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 2 ] ] ]
   },
   {
     "type": "recipe",
@@ -1422,7 +1422,7 @@
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ] ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
+    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 3 ] ], [ [ "scrap", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -1436,6 +1436,6 @@
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ] ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 3 ] ] ]
+    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 2 ] ], [ [ "scrap", 2 ] ] ]
   }
 ]
