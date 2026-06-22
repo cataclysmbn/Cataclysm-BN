@@ -138,10 +138,7 @@
         "collection": [ { "item": "selfbow", "ammo-item": "arrow_metal" }, { "item": "arrow_metal", "charges": [ 15, 30 ] } ],
         "prob": 5
       },
-      {
-        "collection": [ { "item": "pipe_rifle" }, { "item": "22_cphp", "charges": [ 20, 40 ] } ],
-        "prob": 5
-      },
+      { "collection": [ { "item": "pipe_rifle" }, { "item": "22_cphp", "charges": [ 20, 40 ] } ], "prob": 5 },
       {
         "collection": [
           { "item": "ruger_1022", "ammo-item": "22_cphp", "charges": 10 },
@@ -166,10 +163,7 @@
         "collection": [ { "item": "savage_111f", "ammo-item": "308", "charges": 3 }, { "item": "308", "charges": [ 10, 20 ] } ],
         "prob": 5
       },
-      {
-        "collection": [ { "item": "pipe_rifle" }, { "item": "22_cphp", "charges": [ 10, 20 ] } ],
-        "prob": 25
-      },
+      { "collection": [ { "item": "pipe_rifle" }, { "item": "22_cphp", "charges": [ 10, 20 ] } ], "prob": 25 },
       { "collection": [ { "item": "m1903", "charges": 5 }, { "item": "3006", "charges": [ 10, 20 ] } ], "prob": 5 }
     ]
   },
