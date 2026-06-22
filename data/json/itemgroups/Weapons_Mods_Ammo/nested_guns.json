@@ -2319,32 +2319,23 @@
   {
     "id": "nested_pipe_rifle",
     "type": "item_group",
-    "//": "Pipe rifle with 50% chance of a caliber conversion kit installed.",
+    "//": "Pipe rifle with a caliber conversion kit pre-installed.",
     "subtype": "distribution",
-    "entries": [
-      { "item": "pipe_rifle", "contents-group": "gunmod_pipe_conversion_rifle", "prob": 50 },
-      { "item": "pipe_rifle", "prob": 50 }
-    ]
+    "entries": [ { "item": "pipe_rifle", "contents-group": "gunmod_pipe_conversion_rifle" } ]
   },
   {
     "id": "nested_pipe_pistol",
     "type": "item_group",
-    "//": "Pipe pistol with 50% chance of a caliber conversion kit installed.",
+    "//": "Pipe pistol with a caliber conversion kit pre-installed.",
     "subtype": "distribution",
-    "entries": [
-      { "item": "pipe_pistol", "contents-group": "gunmod_pipe_conversion_pistol", "prob": 50 },
-      { "item": "pipe_pistol", "prob": 50 }
-    ]
+    "entries": [ { "item": "pipe_pistol", "contents-group": "gunmod_pipe_conversion_pistol" } ]
   },
   {
     "id": "nested_2_shot_special",
     "type": "item_group",
-    "//": "2-shot special with 50% chance of a caliber conversion kit installed.",
+    "//": "2-shot special with a caliber conversion kit pre-installed.",
     "subtype": "distribution",
-    "entries": [
-      { "item": "2_shot_special", "contents-group": "gunmod_pipe_conversion_pistol", "prob": 50 },
-      { "item": "2_shot_special", "prob": 50 }
-    ]
+    "entries": [ { "item": "2_shot_special", "contents-group": "gunmod_pipe_conversion_pistol" } ]
   },
   {
     "id": "nested_handmade_carbine",

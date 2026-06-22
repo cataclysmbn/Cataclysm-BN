@@ -807,7 +807,8 @@
   {
     "id": "rifle_22",
     "type": "MIGRATION",
-    "replace": "pipe_rifle"
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_22" ]
   },
   {
     "id": "rifle_38",
