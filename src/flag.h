@@ -203,6 +203,7 @@ extern const flag_id flag_MESSY;
 extern const flag_id flag_MISSION_ITEM;
 extern const flag_id flag_MORBID;
 extern const flag_id flag_MOUNTED_GUN;
+extern const flag_id flag_MODULAR;
 extern const flag_id flag_MYCUS_OK;
 extern const flag_id flag_NANOFAB_TEMPLATE;
 extern const flag_id flag_NAT_UPS;

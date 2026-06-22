@@ -30,7 +30,8 @@
       [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
-    ]
+    ],
+    "extend": { "flags": [ "MODULAR" ] }
   },
   {
     "id": "2_shot_special",
@@ -92,7 +93,8 @@
       [ "rail", 1 ],
       [ "sights", 1 ],
       [ "underbarrel", 1 ]
-    ]
+    ],
+    "extend": { "flags": [ "MODULAR" ] }
   },
   {
     "id": "pipe_shotgun",

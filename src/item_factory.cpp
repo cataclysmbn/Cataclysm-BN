@@ -1387,7 +1387,8 @@ void Item_factory::check_definitions() const
             }
             if( type->gun->ammo.empty() ) {
                 // if gun doesn't use ammo forbid both integral or detachable magazines
-                if( static_cast<bool>( type->gun->clip ) || !type->magazines.empty() ) {
+                if( ( static_cast<bool>( type->gun->clip ) || !type->magazines.empty() ) &&
+                    !type->has_flag( flag_MODULAR ) ) {
                     msg += "cannot specify clip_size or magazine without ammo type\n";
                 }
 
