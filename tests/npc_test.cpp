@@ -15,6 +15,7 @@
 #include "field.h"
 #include "field_type.h"
 #include "game.h"
+#include "item.h"
 #include "itype.h"
 #include "line.h"
 #include "map.h"
@@ -35,6 +36,25 @@
 #include "vpart_position.h"
 
 class Creature;
+
+TEST_CASE( "hallucination_npcs_do_not_drop_inventory", "[npc][hallucination]" )
+{
+    clear_all_state();
+    auto &here = get_map();
+
+    const auto npc_pos = tripoint_bub_ms( 60, 60, 0 );
+    npc &hallucination_npc = spawn_npc( npc_pos, "test_talker" );
+    hallucination_npc.hallucination = true;
+    hallucination_npc.i_add( item::spawn( "rock" ) );
+
+    REQUIRE( here.i_at( npc_pos ).empty() );
+
+    hallucination_npc.die( &get_avatar() );
+
+    CHECK( hallucination_npc.is_dead() );
+    CHECK( here.i_at( npc_pos ).empty() );
+    CHECK_FALSE( get_avatar().has_item_with_id( itype_id( "rock" ) ) );
+}
 
 static void on_load_test( npc &who, const time_duration &from, const time_duration &to )
 {

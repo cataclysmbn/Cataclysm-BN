@@ -3963,6 +3963,10 @@ void item::damage_statblock_info( std::vector<iteminfo> &info, damage_instance a
 void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *parts, int /*batch*/,
                        bool /*debug*/ ) const
 {
+    if( !parts->test( iteminfo_parts::BASE_THROW ) ) {
+        return;
+    }
+
     const avatar &you = get_avatar();
     const int throw_range = you.throw_range( *this );
 

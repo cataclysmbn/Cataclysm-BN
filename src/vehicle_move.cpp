@@ -851,6 +851,7 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
 
             if( critter->is_hallucination() ) {
                 critter->die( driver );
+                impulse_veh = 0;
                 smashed = true;
                 break;
             }

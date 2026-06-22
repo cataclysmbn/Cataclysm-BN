@@ -3715,6 +3715,11 @@ void avatar_funcs::try_steal_from_npc( avatar &you, npc &target )
     if( !loc ) {
         return;
     }
+    if( target.is_hallucination() ) {
+        target.on_attacked( you );
+        you.mod_moves( -200 );
+        return;
+    }
 
     /** @EFFECT_DEX defines the chance to steal */
     int my_roll = dice( 3, you.get_dex() );

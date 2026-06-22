@@ -927,7 +927,15 @@ void map::add_vehicle_to_cache( vehicle *veh )
         int part = veh->part_with_feature( vpr.part_index(), VPFLAG_LADDER, true );
         if( part != -1 ) {
             // NOTE: This cache may need to be submapfied at some point
-            cached_veh_rope[p] = std::make_pair( veh, static_cast<int>( part ) );
+            // The rope hangs DOWN from the ladder part, so register the whole column from
+            // the part down to ladder_length() below it: has_rope_at() and the climb-up /
+            // rope-rendering paths look up the tile BELOW the part, not just the top tile
+            // (issue #9590). The top tile is kept so climbing down while boarded resolves.
+            const auto len = veh->part( part ).info().ladder_length();
+            const auto min_z = std::max( p.z() - len, -OVERMAP_DEPTH );
+            for( const auto z : std::views::iota( min_z, p.z() + 1 ) ) {
+                cached_veh_rope[tripoint_bub_ms( p.xy(), z )] = std::make_pair( veh, static_cast<int>( part ) );
+            }
         }
         level_cache &ch = get_cache( p.z() );
         ch.veh_in_active_range = true;
@@ -960,7 +968,22 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint_bub_ms &p
             ch.veh_exists_at[ch.idx( pt.x(), pt.y() )] = false;
         }
         ch.veh_cached_parts.erase( it );
-        cached_veh_rope.erase( pt );
+        // The rope-ladder cache stores the whole hanging column (see add_vehicle_to_cache),
+        // so a bare erase( pt ) would leave the rope tiles below the part. When pt is one of
+        // this vehicle's rope tiles (a column top), drop every tile this vehicle owns in that
+        // column. The gate keeps the common (no rope) path at a single lookup; the scan does
+        // NOT break on gaps, so an interleaved column from another vehicle can't strand this
+        // vehicle's lower tiles, and only this vehicle's entries are removed. Index-free on
+        // purpose: part indices may be stale here (this can run mid-part_removal_cleanup).
+        if( const auto top = cached_veh_rope.find( pt );
+            top != cached_veh_rope.end() && top->second.first == veh ) {
+            for( const auto z : std::views::iota( -OVERMAP_DEPTH, pt.z() + 1 ) ) {
+                const auto col_it = cached_veh_rope.find( tripoint_bub_ms( pt.xy(), z ) );
+                if( col_it != cached_veh_rope.end() && col_it->second.first == veh ) {
+                    cached_veh_rope.erase( col_it );
+                }
+            }
+        }
     }
 
 }

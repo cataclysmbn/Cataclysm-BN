@@ -1130,7 +1130,7 @@ void spell::make_sound( const tripoint_bub_ms & /*target*/, Creature &caster, in
 {
     sound_event se;
     se.origin = caster.bub_pos();
-    se.volume = loudness;
+    se.volume = std::max( 190, loudness );
     se.category = type->sound_type;
     se.description = type->sound_description.translated();
     se.movement_noise = ( type->sound_type == sounds::sound_t::movement );
