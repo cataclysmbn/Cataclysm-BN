@@ -98,7 +98,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
-#include <string_utils.h>
+#include "string_utils.h"
 
 enum creature_size : int;
 
@@ -2939,15 +2939,17 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
                 continue;
             }
             listed_components.emplace( component_id );
+            int nearby_amount = 0;
             if( item::count_by_charges( component_id ) ) {
-                if( crafting_inv.has_charges( component_id, items_needed ) ) {
-                    material_list.emplace_back( string_format( _( "%s (<color_light_blue>%d</color>)" ),
-                                                item::nname( component_id ), crafting_inv.charges_of( component_id ) ) );
+                if( crafting_inv.has_charges( component_id, 1 ) ) {
+                    nearby_amount = crafting_inv.charges_of( component_id );
                 }
-            } else if( crafting_inv.has_amount( component_id, items_needed, false, is_crafting_component ) ) {
-                material_list.emplace_back( string_format( _( "%s (<color_light_blue>%d</color>)" ),
-                                            item::nname( component_id ), crafting_inv.amount_of( component_id, false ) ) );
+            } else if( crafting_inv.has_amount( component_id, 1, false, is_crafting_component ) ) {
+                nearby_amount = crafting_inv.amount_of( component_id, false );
             }
+            std::string color = nearby_amount < items_needed ? "red" : "light_blue";
+            material_list.emplace_back( string_format( _( "%s (<color_%s>%d</color>)" ),
+                                        item::nname( component_id ), color, nearby_amount ) );
         }
         std::string material_list_string = join( material_list, ", " );
 
