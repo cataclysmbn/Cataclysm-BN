@@ -1873,6 +1873,12 @@
     "info": "This weapon <bad>can only be fired if mounted</bad> on a vehicle or furniture (window, table, mound of dirt, etc.) to fire, <info>Large or Huge</info> mutants or those with active <info>Power Armor</info> can fire from the hip with <bad>reduced accuracy</bad>."
   },
   {
+    "id": "MODULAR",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gun has no fixed caliber and <bad>requires a caliber conversion kit</bad> to be fired."
+  },
+  {
     "id": "MYCUS_OK",
     "type": "json_flag",
     "context": [  ]

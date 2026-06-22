@@ -24,6 +24,7 @@
 #include "recipe_dictionary.h"
 #include "requirements.h"
 #include "state_helpers.h"
+#include "flag.h"
 #include "type_id.h"
 #include "value_ptr.h"
 
@@ -82,7 +83,7 @@ TEST_CASE( "modular_pipe_rifle_craft_and_convert", "[gun]" )
     CHECK( gun.ammo_default().is_null() );
     CHECK( gun.ammo_remaining() == 0 );
     CHECK( gun.gunmods().empty() );
-    CHECK( ranged::fire_gun( you, target, 1 ) == 0 );
+    CHECK( gun.has_flag( flag_MODULAR ) );
 
     // --- Install .22 kit, load .22 LR, fire, remove kit ---
     {

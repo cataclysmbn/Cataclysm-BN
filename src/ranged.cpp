@@ -1280,8 +1280,8 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         return 0;
     }
 
-    if( gun.ammo_types().empty() ) {
-        debugmsg( "%s's %s has no ammo type and cannot fire.", who.name, gun.tname() );
+    if( gun.ammo_types().empty() && gun.has_flag( flag_MODULAR ) ) {
+        debugmsg( "%s's %s has no modular conversion kit and cannot fire.", who.name, gun.tname() );
         return 0;
     }
 
