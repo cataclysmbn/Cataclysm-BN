@@ -253,8 +253,15 @@ Calculated after all other multipliers
 
 ##### CONSTRUCTION_SPEED
 
-Construction speed. `base_value` is a multiplier of construction speed.
+Construction speed. `base_value` is a multiplier of construction speed for vehicles and furniture/terrain.
 Calculated after all other multipliers
+
+It has two children:
+
+- `CONSTRUCTION_SPEED_CON`
+- `CONSTRUCTION_SPEED_VEH`
+
+That would only work for furniture/terrain or vehicles respectively
 
 ##### METABOLISM
 
