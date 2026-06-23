@@ -63,7 +63,6 @@
 #include "overmap.h"
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
-#include "legacy_pathfinding.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "ranged.h"
@@ -178,7 +177,7 @@ npc::npc()
     patience = 0;
     attitude = NPCATT_NULL;
 
-    *path_settings = pathfinding_settings( 0, 1000, 1000, 10, true, true, true, false, true );
+    *path_settings = PathfindingSettings( 0, 1000, 1000, 10, true, true, true, false, true );
     ai_cache.threat_map.fill( 0.0f );
 
     // This should be in Character constructor, but because global avatar
@@ -3378,52 +3377,6 @@ bool npc::will_accept_from_player( const item &it ) const
     }
 
     return true;
-}
-
-const pathfinding_settings &npc::get_legacy_pathfinding_settings() const
-{
-    return get_legacy_pathfinding_settings( false );
-}
-
-const pathfinding_settings &npc::get_legacy_pathfinding_settings( bool no_bashing ) const
-{
-    path_settings->bash_strength = no_bashing ? 0 : smash_ability();
-    // TODO: Extract climb skill
-    const int climb = std::min( 20, get_dex() );
-    if( climb > 1 ) {
-        // Success is !one_in(dex), so 0%, 50%, 66%, 75%...
-        // Penalty for failure chance is 1/success = 1/(1-failure) = 1/(1-(1/dex)) = dex/(dex-1)
-        path_settings->climb_cost = ( 10 - climb / 5 ) * climb / ( climb - 1 );
-    } else {
-        // Climbing at this dexterity will always fail
-        path_settings->climb_cost = 0;
-    }
-
-    return *path_settings;
-}
-
-std::set<tripoint_bub_ms> npc::get_legacy_path_avoid() const
-{
-    std::set<tripoint_bub_ms> ret;
-    for( Creature &critter : g->all_creatures() ) {
-        // TODO: Cache this somewhere
-        ret.insert( critter.bub_pos() );
-    }
-    if( rules.has_flag( ally_rule::avoid_doors ) ) {
-        for( const tripoint_bub_ms &p : g->m.points_in_radius( bub_pos(), 30 ) ) {
-            if( g->m.can_open_door( this, p, true ) ) {
-                ret.insert( p );
-            }
-        }
-    }
-    if( rules.has_flag( ally_rule::hold_the_line ) ) {
-        for( const tripoint_bub_ms &p : g->m.points_in_radius( g->u.bub_pos(), 1 ) ) {
-            if( g->m.close_door( p, true, true ) || g->m.move_cost( p ) > 2 ) {
-                ret.insert( p );
-            }
-        }
-    }
-    return ret;
 }
 
 std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair()

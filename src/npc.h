@@ -52,7 +52,6 @@ class vehicle;
 struct bionic_data;
 struct mission_type;
 struct overmap_location;
-struct pathfinding_settings;
 
 enum game_message_type : int;
 class gun_mode;
@@ -1134,10 +1133,6 @@ class npc : public player
         void move_pause();
 
         void set_movement_mode( character_movemode mode ) override;
-
-        const pathfinding_settings &get_legacy_pathfinding_settings() const override;
-        const pathfinding_settings &get_legacy_pathfinding_settings( bool no_bashing ) const;
-        std::set<tripoint_bub_ms> get_legacy_path_avoid() const override; // tripoint_bub_ms
 
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair( bool no_bashing ) const;

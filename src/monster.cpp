@@ -235,8 +235,6 @@ auto get_lua_monster_attitude( const monster &mon,
 } // namespace
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
-struct pathfinding_settings;
-
 // Limit the number of iterations for next upgrade_time calculations.
 // This also sets the percentage of monsters that will never upgrade.
 // The rough formula is 2^(-x), e.g. for x = 5 it's 0.03125 (~ 3%).
@@ -4233,14 +4231,6 @@ void monster::on_load()
     } );
 }
 
-const pathfinding_settings &monster::get_legacy_pathfinding_settings() const
-{
-    return !effect_cache[PATHFINDING_OVERRIDE] ?
-           type->legacy_path_settings
-           : type->legacy_path_settings_buffed;
-
-}
-
 std::pair<PathfindingSettings, RouteSettings> monster::get_pathfinding_pair()
 const
 {
@@ -4248,11 +4238,6 @@ const
            std::make_pair( type->path_settings, type->route_settings ) :
            std::make_pair( type->path_settings_buffed, type->route_settings_buffed );
 
-}
-
-std::set<tripoint_bub_ms> monster::get_legacy_path_avoid() const
-{
-    return std::set<tripoint_bub_ms>();
 }
 
 const std::vector<item *> &monster::get_items() const

@@ -29,7 +29,6 @@
 #include "monster.h"
 #include "mtype.h"
 #include "options.h"
-#include "legacy_pathfinding.h"
 #include "rng.h"
 #include "string_id.h"
 #include "translations.h"
@@ -1122,7 +1121,6 @@ void mtype::setup_pathfinding_deferred()
     const float range_mult = get_option<float>( "PATHFINDING_RANGE_MULT" );
 
     if( this->has_flag( MF_CLIMBS ) ) {
-        this->legacy_path_settings.climb_cost = 3;
         this->path_settings.climb_cost = 3.0;
     }
 
@@ -1144,17 +1142,6 @@ void mtype::setup_pathfinding_deferred()
             out = default_val;
         }
     };
-
-    // Legacy init
-    extract_into_with_default( "max_dist", legacy_path_settings.max_dist, 0 );
-    extract_into_with_default( "max_length",
-                               legacy_path_settings.max_length,
-                               this->legacy_path_settings.max_dist * 5 );
-    extract_into_with_default( "bash_strength", legacy_path_settings.bash_strength, this->bash_skill );
-    extract_into_with_default( "allow_open_doors", legacy_path_settings.allow_open_doors, false );
-    extract_into_with_default( "avoid_traps", legacy_path_settings.avoid_traps, false );
-    extract_into_with_default( "allow_climb_stairs", legacy_path_settings.allow_climb_stairs, true );
-    extract_into_with_default( "avoid_sharp", legacy_path_settings.avoid_sharp, false );
 
     // New pathfinding init
     extract_into_with_default( "bash_strength", this->path_settings.bash_strength_val,
@@ -1217,12 +1204,8 @@ void mtype::setup_pathfinding_deferred()
     }
 
     if( range_mult < 0 ) {
-        this->legacy_path_settings.max_dist = INT_MAX;
-        this->legacy_path_settings.max_length = INT_MAX;
         this->route_settings.max_dist = INFINITY;
     } else {
-        this->legacy_path_settings.max_dist *= range_mult;
-        this->legacy_path_settings.max_length *= range_mult;
         this->route_settings.max_dist *= range_mult;
         if( this->route_settings.f_limit_based_on_max_dist ) {
             this->route_settings.max_f_coeff *= range_mult;
@@ -1237,17 +1220,6 @@ void mtype::setup_pathfinding_deferred()
     if( this->path_settings.mob_presence_penalty < 0 ) {
         this->path_settings.mob_presence_penalty = INFINITY;
     }
-
-    // Set up buffed settings
-    pathfinding_settings buffed_legacy_settings = this->legacy_path_settings;
-
-    buffed_legacy_settings.avoid_traps = true;
-    buffed_legacy_settings.avoid_sharp = true;
-    buffed_legacy_settings.allow_climb_stairs = true;
-    buffed_legacy_settings.max_length = std::max( 30, buffed_legacy_settings.max_length );
-    buffed_legacy_settings.max_dist = std::max( buffed_legacy_settings.max_length * 5,
-                                      buffed_legacy_settings.max_dist );
-    this->legacy_path_settings_buffed = buffed_legacy_settings;
 
     PathfindingSettings buffed_path_settings = this->path_settings;
     RouteSettings buffed_route_settings = this->route_settings;

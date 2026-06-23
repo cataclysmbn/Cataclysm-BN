@@ -47,7 +47,6 @@ class item;
 class npc;
 class player;
 struct dealt_projectile_attack;
-struct pathfinding_settings;
 struct trap;
 
 template<typename T>
@@ -704,9 +703,6 @@ class monster : public Creature, public location_visitable<monster>
          * the monster to upgrade itself into another monster type.
          */
         void on_load();
-
-        const pathfinding_settings &get_legacy_pathfinding_settings() const override;
-        std::set<tripoint_bub_ms> get_legacy_path_avoid() const override;
 
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
 

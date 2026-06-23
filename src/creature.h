@@ -50,7 +50,6 @@ struct damage_instance;
 struct damage_unit;
 struct dealt_damage_instance;
 struct dealt_projectile_attack;
-struct pathfinding_settings;
 struct PathfindingSettings;
 struct RouteSettings;
 struct trap;
@@ -746,11 +745,6 @@ class Creature
         virtual void mod_hit_bonus( float  nhit );
 
         virtual units::mass weight_capacity() const;
-
-        /** Returns settings for legacy pathfinding. */
-        virtual const pathfinding_settings &get_legacy_pathfinding_settings() const = 0;
-        /** Returns a set of points we do not want to path through with legacy pathfinding. */
-        virtual std::set<tripoint_bub_ms> get_legacy_path_avoid() const = 0;
 
         /** Returns a pathfinding and route settings pair for pathfinding */
         using pf_pair = std::pair<PathfindingSettings, RouteSettings>;

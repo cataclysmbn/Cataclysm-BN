@@ -63,7 +63,6 @@
 #include "name.h"
 #include "npc.h"
 #include "output.h"
-#include "legacy_pathfinding.h"
 #include "pathfinding.h"
 #include "player.h"
 #include "point.h"

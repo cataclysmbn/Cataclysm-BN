@@ -49,7 +49,6 @@
 #include "mtype.h"
 #include "npc.h"
 #include "options.h"
-#include "legacy_pathfinding.h"
 #include "pathfinding.h"
 #include "pimpl.h"
 #include "player.h"

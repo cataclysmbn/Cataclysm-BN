@@ -33,7 +33,6 @@
 #include "hash_utils.h"
 #include "item.h"
 #include "item_stack.h"
-#include "legacy_pathfinding.h"
 #include "lightmap.h"
 #include "line.h"
 #include "lru_cache.h"
@@ -99,7 +98,6 @@ using VehicleList = std::vector<wrapped_vehicle>;
 class map;
 
 enum ter_bitflags : int;
-struct pathfinding_settings;
 template<typename T>
 struct weighted_int_list;
 struct rl_vec2d;
@@ -1088,21 +1086,6 @@ class map
          */
         std::vector<tripoint_bub_ms> get_dir_circle( const tripoint_bub_ms &f,
                 const tripoint_bub_ms &t ) const;
-
-        /**
-         * Calculate the best path using A*
-         *
-         * @param f The source location from which to path.
-         * @param t The destination to which to path.
-         * @param settings Structure describing pathfinding parameters.
-         * @param pre_closed Never path through those points. They can still be the source or the destination.
-         */
-        std::vector<tripoint_bub_ms> route( const tripoint_bub_ms &f, const tripoint_bub_ms &t,
-                                            const pathfinding_settings &settings,
-        const std::set<tripoint_bub_ms> &pre_closed = {{ }} ) const;
-        std::vector<tripoint_abs_ms> route( const tripoint_abs_ms &f, const tripoint_abs_ms &t,
-                                            const pathfinding_settings &settings,
-        const std::set<tripoint_abs_ms> &pre_closed = {{ }} ) const;
 
         // Vehicles: Common to 2D and 3D
         VehicleList get_vehicles();
@@ -2408,10 +2391,6 @@ class map
         */
         sound_cache m_sound_cache;
         //std::vector< sound_instance_cache > sound_instance_caches;
-
-        /// Return the pathfinding flags for a single tile, rebuilding the per-submap
-        /// pf_cache if it has been marked dirty.  Works for any loaded position.
-        auto get_pf_special( const tripoint_bub_ms &p ) const -> pf_special;
 
         auto update_visibility_cache( int zlev,
         const std::function<void()> &while_gpu_pending = {} ) -> void;

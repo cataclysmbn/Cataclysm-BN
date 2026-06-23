@@ -95,7 +95,6 @@
 #include "options.h"
 #include "output.h"
 #include "overmapbuffer.h"
-#include "legacy_pathfinding.h"
 #include "player.h"
 #include "point.h"
 #include "point_float.h"
@@ -5802,14 +5801,15 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
         std::vector<tripoint_bub_ms> tiles = closest_points_first( pos, max_dist );
         tiles.erase( tiles.begin() ); // we already tried this position
         const int max_path_length = 4 * max_dist;
-        const pathfinding_settings setting( 0, max_dist, max_path_length, 0, false, true, false, false,
+        const PathfindingSettings setting( 0, max_dist, max_path_length, 0, false, true, false, false,
                                             false );
         for( const auto &e : tiles ) {
             if( get_mapbuffer().is_outside_pocket_dimension_bounds( map_local_to_abs( *this, e ) ) ) {
                 continue;
             }
             //must be a path to the target tile
-            if( route( pos, e, setting ).empty() ) {
+            if( Pathfinding::route( get_mapbuffer(), map_local_to_abs( *this, pos ),
+                                    map_local_to_abs( *this, e ), setting ).empty() ) {
                 continue;
             }
             if( obj->made_of( LIQUID ) || !obj->has_flag( flag_DROP_ACTION_ONLY_IF_LIQUID ) ) {
@@ -10532,19 +10532,6 @@ void map::set_pathfinding_cache_dirty( const tripoint_bub_ms &p )
         .zlev = abs_sm.z(),
         .pathfinding = true,
     } );
-}
-
-auto map::get_pf_special( const tripoint_bub_ms &p ) const -> pf_special
-{
-    point_sm_ms l;
-    submap *sm = get_submap_at( p, l );
-    if( !sm ) {
-        return PF_WALL;
-    }
-    if( sm->pf_dirty ) {
-        sm->rebuild_pf_cache( *this, project_to<coords::sm>( p ) );
-    }
-    return sm->pf_special_cache[l.x()][l.y()];
 }
 
 bool map::check_seen_cache( const tripoint_bub_ms &p ) const

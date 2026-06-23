@@ -61,7 +61,6 @@
 #include "itype.h"
 #include "iuse.h"
 #include "iuse_actor.h"
-#include "legacy_pathfinding.h"
 #include "lightmap.h"
 #include "line.h"
 #include "make_static.h"
@@ -473,7 +472,7 @@ Character::Character() :
     custom_profession.clear();
     prof = profession::generic();
 
-    *path_settings = pathfinding_settings{ 0, 1000, 1000, 0, true, true, true, false, true };
+    *path_settings = PathfindingSettings{ 0, 1000, 1000, 0, true, true, true, false, true };
 
     move_mode = CMM_WALK;
     next_expected_position = std::nullopt;
@@ -11206,25 +11205,6 @@ int Character::adjust_for_focus( int amount ) const
                        get_option<int>( "INT_BASED_LEARNING_FOCUS_ADJUSTMENT" );
     double tmp = amount * ( effective_focus / 100.0 );
     return roll_remainder( tmp );
-}
-
-std::set<tripoint_bub_ms> Character::get_legacy_path_avoid() const
-{
-    std::set<tripoint_bub_ms> ret;
-    for( npc &guy : g->all_npcs() ) {
-        if( sees( guy ) ) {
-            ret.insert( guy.bub_pos() );
-        }
-    }
-
-    // TODO: Add known traps in a way that doesn't destroy performance
-
-    return ret;
-}
-
-const pathfinding_settings &Character::get_legacy_pathfinding_settings() const
-{
-    return *path_settings;
 }
 
 std::pair<PathfindingSettings, RouteSettings> Character::get_pathfinding_pair() const

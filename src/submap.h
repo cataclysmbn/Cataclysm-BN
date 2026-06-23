@@ -18,7 +18,6 @@
 #include "field.h"
 #include "game_constants.h"
 #include "item.h"
-#include "legacy_pathfinding.h"
 #include "type_id.h"
 #include "monster.h"
 #include "point.h"
@@ -318,7 +317,6 @@ class submap : maptile_soa<SEEX, SEEY>
         bool   outside_cache[SEEX][SEEY]      = {};
         bool   sheltered_cache[SEEX][SEEY]    = {};
         char   floor_cache[SEEX][SEEY]        = {};
-        pf_special pf_special_cache[SEEX][SEEY]  = {};
         int    scent_values[SEEX][SEEY]       = {};
         short  absorption_cache[SEEX][SEEY]   = {};
         bool   sound_wall_cache[SEEX][SEEY]   = {};

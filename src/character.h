@@ -75,7 +75,6 @@ struct dealt_projectile_attack;
 struct islot_comestible;
 struct itype;
 struct mutation_branch;
-struct pathfinding_settings;
 struct points_left;
 struct trap;
 template <typename E> struct enum_traits;
@@ -2024,9 +2023,6 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns the player's modified base movement cost */
         int  run_cost( int base_cost, bool diag = false ) const;
 
-        const pathfinding_settings &get_legacy_pathfinding_settings() const override;
-        std::set<tripoint_bub_ms> get_legacy_path_avoid() const override;
-
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
 
         /** Route for overmap scale traveling */
@@ -2380,7 +2376,7 @@ class Character : public Creature, public location_visitable<Character>
          * Cache for pathfinding settings.
          * Most of it isn't changed too often, hence mutable.
          */
-        mutable pimpl<pathfinding_settings> path_settings;
+        mutable pimpl<PathfindingSettings> path_settings;
 
         // faction API versions
         // 2 - allies are in your_followers faction; NPCATT_FOLLOW is follower but not an ally

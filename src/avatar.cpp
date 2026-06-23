@@ -63,7 +63,6 @@
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
-#include "legacy_pathfinding.h"
 #include "player.h"
 #include "player_activity.h"
 #include "recipe.h"
@@ -809,7 +808,7 @@ void avatar::grab( object_type grab_type, const tripoint_rel_ms &grab_point )
     this->grab_type = grab_type;
     this->grab_point = grab_point;
 
-    path_settings->avoid_rough_terrain = grab_type != OBJECT_NONE;
+    path_settings->rough_terrain_cost = grab_type == OBJECT_NONE ? 0 : 16.0f;
 }
 
 object_type avatar::get_grab_type() const
