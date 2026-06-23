@@ -296,7 +296,6 @@
       { "item": "flour", "prob": 5, "charges": 40 },
       { "item": "flour", "prob": 12, "charges": [ 10, 120 ], "container-item": "box_medium" },
       { "item": "flour", "prob": 3, "charges": 120, "container-item": "box_medium" }
-      
     ]
   },
   {
