@@ -292,10 +292,10 @@
       { "item": "cornmeal", "prob": 8 },
       { "item": "cookbook", "prob": 3 },
       { "item": "cookbook_italian", "prob": 2 },
-      { "item": "flour", "prob": 15, "charges": [ 5, 40 ] },
+      { "item": "flour", "prob": 20, "charges": [ 5, 40 ] },
       { "item": "flour", "prob": 5, "charges": 40 },
-      { "item": "flour", "prob": 8, "charges": [ 10, 120 ], "container-item": "box_medium" },
-      { "item": "flour", "prob": 2, "charges": 120, "container-item": "box_medium" }
+      { "item": "flour", "prob": 12, "charges": [ 10, 120 ], "container-item": "box_medium" },
+      { "item": "flour", "prob": 3, "charges": 120, "container-item": "box_medium" }
       
     ]
   },
@@ -581,7 +581,7 @@
       { "item": "can_chicken", "prob": 30 },
       { "item": "sugar", "prob": 40 },
       { "item": "soysauce", "prob": 10 },
-      { "item": "flour", "prob": 15, "charges": [ 5, 40 ] },
+      { "item": "flour", "prob": 25, "charges": [ 5, 40 ] },
       { "item": "flour", "prob": 5, "charges": 40 },
       { "item": "flour", "prob": 8, "charges": [ 10, 120 ], "container-item": "box_medium" },
       { "item": "flour", "prob": 2, "charges": 120, "container-item": "box_medium" },
