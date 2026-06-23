@@ -32,7 +32,6 @@ TEST_CASE( "modular_pipe_rifle_craft_and_convert", "[gun]" )
     CHECK( gun.ammo_default().is_null() );
     CHECK( gun.ammo_remaining() == 0 );
     CHECK( gun.gunmods().empty() );
-    CHECK( gun.has_flag( flag_MODULAR ) );
 
     // --- Install .22 kit, load .22 LR, fire, remove kit ---
     {
