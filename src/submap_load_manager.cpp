@@ -39,11 +39,12 @@ static constexpr auto retained_omt_max_budget_scale = std::size_t { 8 };
 static constexpr auto lazy_border_steps_to_cross_omt = std::size_t { SEEX * 2 };
 
 template<typename Point>
-auto retained_omt_seed_id( const std::pair<std::string, Point> &key ) -> std::uint64_t
+auto retained_omt_seed_id( const std::pair<dimension_id, Point> &key ) -> std::uint64_t
 {
+    const auto raw_dim_id = key.first.str();
     return static_cast<std::uint64_t>( std::hash<Point> {}( key.second ) ) ^
            ( static_cast<std::uint64_t>( djb2_hash( reinterpret_cast<const unsigned char *>(
-                   key.first.c_str() ) ) ) << 1 );
+                   raw_dim_id.c_str() ) ) ) << 1 );
 }
 
 auto divide_round_up_size( const std::size_t numerator, const std::size_t denominator )
