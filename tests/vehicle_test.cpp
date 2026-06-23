@@ -276,8 +276,10 @@ TEST_CASE( "detaching_opaque_vehicle_invalidates_transparency_cache", "[vehicle]
     const auto origin = tripoint_bub_ms( 60, 60, 0 );
     auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
-    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_horizontal" ), true ) >= 0 );
-    const auto board = veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "clothboard_horizontal" ), true );
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_horizontal" ),
+                                    true ) >= 0 );
+    const auto board = veh_ptr->install_part( tripoint_mnt_veh::zero(),
+                       vpart_id( "clothboard_horizontal" ), true );
     REQUIRE( board >= 0 );
 
     const auto board_pos = veh_ptr->bub_part_location( board );

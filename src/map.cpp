@@ -1046,6 +1046,41 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
         z = veh->abs_sm_pos.z() = z > OVERMAP_HEIGHT ? OVERMAP_HEIGHT : -OVERMAP_DEPTH;
     }
 
+    struct detached_vehicle_footprint {
+        tripoint_abs_sm min;
+        tripoint_abs_sm max;
+    };
+
+    auto footprints = std::array<std::optional<detached_vehicle_footprint>, OVERMAP_LAYERS> {};
+    for( const vpart_reference &vp : veh->get_all_parts() ) {
+        if( vp.part().removed ) {
+            continue;
+        }
+        const auto part_sm = project_to<coords::sm>( veh->abs_part_location( vp.part() ) );
+        if( !inbounds_z( part_sm.z() ) ) {
+            continue;
+        }
+        auto &footprint = footprints[part_sm.z() + OVERMAP_DEPTH];
+        if( !footprint ) {
+            footprint = detached_vehicle_footprint{ .min = part_sm, .max = part_sm };
+            continue;
+        }
+        footprint->min.x() = std::min( footprint->min.x(), part_sm.x() );
+        footprint->min.y() = std::min( footprint->min.y(), part_sm.y() );
+        footprint->max.x() = std::max( footprint->max.x(), part_sm.x() );
+        footprint->max.y() = std::max( footprint->max.y(), part_sm.y() );
+    }
+
+    const auto mark_detached_vehicle_footprint_dirty = [&]() {
+        for( const auto &footprint : footprints ) {
+            if( !footprint ) {
+                continue;
+            }
+            on_vehicle_moved( abs_to_bub( footprint->min ), abs_to_bub( footprint->max ),
+                              footprint->min.z() );
+        }
+    };
+
     // Unboard all passengers before detaching
     for( auto const &part : veh->get_avail_parts( VPFLAG_BOARDABLE ) ) {
         player *passenger = part.get_passenger();
@@ -1061,6 +1096,7 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
                   veh->name, veh->abs_sm_pos.x(), veh->abs_sm_pos.y(), veh->abs_sm_pos.z() );
         get_mapbuffer().unregister_vehicle( veh );
         dirty_vehicle_list.erase( veh );
+        mark_detached_vehicle_footprint_dirty();
         return std::unique_ptr<vehicle>();
     }
     level_cache &ch = get_cache( z );
@@ -1076,6 +1112,7 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
                 get_overmapbuffer( bound_dimension_ ).remove_vehicle( veh );
             }
             dirty_vehicle_list.erase( veh );
+            mark_detached_vehicle_footprint_dirty();
             veh->detach();
             veh->refresh_position();
             return result;
@@ -1101,6 +1138,10 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     }
 
     auto &ch = get_cache( smz );
+    // Vehicle-only caches are cleared by build_map_cache() when a z-level has vehicle
+    // cache effects.  Keep that cleanup path active even if this movement is a
+    // removal of the last vehicle on the level.
+    ch.veh_in_active_range = true;
     invalidate_lightmap_caches();
     set_seen_cache_dirty( smz );
     mark_visibility_cache_dirty( smz );
