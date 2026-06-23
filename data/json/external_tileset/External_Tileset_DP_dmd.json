@@ -59,7 +59,12 @@
           { "id": "mon_feral_pa_boss_melee", "fg": 51 },
           { "id": "mon_feral_pa_boss_shotgun", "fg": 52 },
           { "id": "mon_feral_pa_boss_grenade", "fg": 53 },
-          { "id": "mon_feral_pa_boss_blaster", "fg": 54 }
+          { "id": "mon_feral_pa_boss_blaster", "fg": 54 },
+          { "id": [ "40x46mm_casing", "overlay_wielded_40x46mm_casing" ], "fg": 55 },
+          { "id": [ "40x53mm_casing", "overlay_wielded_40x53mm_casing" ], "fg": 56 },
+          { "id": [ "40x53mm_conversion_kit", "overlay_wielded_40x53mm_conversion_kit" ], "fg": 57 },
+          { "id": [ "kevlar", "overlay_wielded_kevlar" ], "fg": 58 },
+          { "id": "overlay_worn_kevlar", "fg": 59 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
