@@ -53,6 +53,7 @@
 #include "popup.h"
 #include "profile.h"
 #include "rng.h"
+#include "rot.h"
 #include "skill.h"
 #include "string_formatter.h"
 #include "submap.h"
@@ -173,18 +174,12 @@ auto trap_at_tile( const submap &sm, const point_sm_ms &local ) -> const trap &
 
 auto temperature_flag_at_tile( const submap &sm, const point_sm_ms &local ) -> temperature_flag
 {
-    if( sm.get_ter( local ) == t_rootcellar ) {
-        return temperature_flag::TEMP_ROOT_CELLAR;
-    }
     const auto &furn = sm.get_furn( local ).obj();
-    if( furn.has_flag( TFLAG_FRIDGE ) ) {
-        return temperature_flag::TEMP_FRIDGE;
-    }
-    if( furn.has_flag( TFLAG_FREEZER ) ) {
-        return temperature_flag::TEMP_FREEZER;
-    }
-
-    return temperature_flag::TEMP_NORMAL;
+    return rot::temp::for_tile( {
+        .root_cellar = sm.get_ter( local ) == t_rootcellar,
+        .fridge = furn.has_flag( TFLAG_FRIDGE ),
+        .freezer = furn.has_flag( TFLAG_FREEZER ),
+    } );
 }
 
 auto add_item_to_actualized_tile( const actualize_tile_options &options,
