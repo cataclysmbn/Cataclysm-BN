@@ -431,6 +431,104 @@ class submap_tile_range
 };
 
 /**
+ * Range over simulated tiles, lazily yielding abs_tile_handle.
+ *
+ * Built by the three free functions:
+ *   simulated_tiles_in_radius()
+ *   simulated_tiles_in_rectangle()
+ *   simulated_tiles_on_zlevel()
+ *
+ * Tiles are yielded in submap-major, then column-major order:
+ *   submap (col 0,0, z): tile (0,0), (1,0), ..., (SEEX-1, SEEY-1)
+ *   submap (col 1,0, z): ...
+ *
+ * @warning The range stores raw submap pointers via submap_tile_range.
+ * Do not iterate across a submap_load_manager::update() call.
+ */
+class submap_tile_iterator_range
+{
+    public:
+        class iterator;
+        using value_type = abs_tile_handle;
+
+        submap_tile_iterator_range() = default;
+
+        auto begin() const -> iterator;
+        auto end() const -> iterator;
+
+        class iterator
+        {
+            public:
+                using value_type = abs_tile_handle;
+                using reference = abs_tile_handle;
+                using pointer = const abs_tile_handle *;
+                using difference_type = std::ptrdiff_t;
+                using iterator_category = std::forward_iterator_tag;
+
+                iterator() = default;
+
+                auto operator*() const -> abs_tile_handle;
+                auto operator++() -> iterator &;
+                bool operator==( const iterator &other ) const;
+                bool operator!=( const iterator &other ) const;
+
+            private:
+                friend class submap_tile_iterator_range;
+
+                // Begin iterator — starts at the first valid tile
+                iterator( mapbuffer &buf,
+                          std::vector<point_abs_sm> columns,
+                          int z,
+                          tripoint_abs_ms center,
+                          int radius,
+                          tripoint_abs_ms rect_begin,
+                          tripoint_abs_ms rect_end,
+                          int mode );
+
+                // End sentinel
+                explicit iterator( int column_count );
+
+                /** Advance to the next tile that passes the shape filter. */
+                void advance_to_valid();
+
+                mapbuffer *buf_ = nullptr;
+                std::vector<point_abs_sm> columns_;
+                int z_ = 0;
+                tripoint_abs_ms center_;
+                int radius_ = 0;
+                tripoint_abs_ms rect_begin_;
+                tripoint_abs_ms rect_end_;
+                int column_idx_ = -1;
+                int tile_idx_ = 0;
+                int mode_ = 0; // 0=all, 1=radius, 2=rectangle
+        };
+
+    private:
+        friend auto simulated_tiles_in_radius( mapbuffer &buf,
+                tripoint_abs_ms center, int radius ) -> submap_tile_iterator_range;
+        friend auto simulated_tiles_in_rectangle( mapbuffer &buf,
+                tripoint_abs_ms begin, tripoint_abs_ms end ) -> submap_tile_iterator_range;
+        friend auto simulated_tiles_on_zlevel( mapbuffer &buf,
+                int z ) -> submap_tile_iterator_range;
+
+        mapbuffer *buf_ = nullptr;
+        std::vector<point_abs_sm> columns_;
+        int z_ = 0;
+        tripoint_abs_ms center_;
+        int radius_ = 0;
+        tripoint_abs_ms rect_begin_;
+        tripoint_abs_ms rect_end_;
+        int mode_ = 0; // 0=all, 1=radius, 2=rectangle
+
+        /// Shape filter applied during iteration.
+        enum class shape : int {
+            all,        ///< No filter — emit all tiles in the collected columns.
+            radius,     ///< Chebyshev radius from center.
+            rectangle,  ///< Inclusive rectangle bounds.
+        };
+};
+
+/**
  * A connected component of simulated submap columns.  Each island
  * represents a set of columns that form a single connected region
  * (4-directional adjacency) within the simulated set.
@@ -526,6 +624,7 @@ class mapbuffer
 {
         friend class abs_tile_handle;
         friend class submap_tile_range;
+        friend class submap_tile_iterator_range;
     public:
         mapbuffer();
         ~mapbuffer();
@@ -1317,6 +1416,28 @@ class mapbuffer
         dimension_id dimension_id_;
         std::optional<pocket_dimension_data> pocket_info_;
 };
+
+// ----- Layer 3: Island-mapped spatial iterators (free functions) -----
+
+/**
+ * All tiles within Chebyshev distance @p radius from @p center,
+ * on any simulated island at @p center.z().
+ */
+auto simulated_tiles_in_radius( mapbuffer &buf,
+                                tripoint_abs_ms center, int radius )
+-> submap_tile_iterator_range;
+
+/**
+ * All tiles in [begin, end] (inclusive both ends) that fall on
+ * simulated submaps.  Z from @p begin.z() to @p end.z().
+ */
+auto simulated_tiles_in_rectangle( mapbuffer &buf,
+                                   tripoint_abs_ms begin, tripoint_abs_ms end )
+-> submap_tile_iterator_range;
+
+/// All simulated tiles at z-level @p z in @p buf's dimension.
+auto simulated_tiles_on_zlevel( mapbuffer &buf, int z )
+-> submap_tile_iterator_range;
 
 // Included after the full mapbuffer definition to avoid circular dependencies.
 // Provides the MAPBUFFER macro and MAPBUFFER_REGISTRY global.

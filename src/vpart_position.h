@@ -99,6 +99,7 @@ class vpart_position
 class optional_vpart_position : public std::optional<vpart_position>
 {
     public:
+        optional_vpart_position() = default;
         optional_vpart_position( std::optional<vpart_position> p ) : std::optional<vpart_position>
             ( p ) { }
 

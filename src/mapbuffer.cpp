@@ -1432,6 +1432,240 @@ auto mapbuffer::simulated_islands() const -> std::span<const simulated_island>
     return simulated_islands_;
 }
 
+// ==========================================================================
+// submap_tile_iterator_range — island-mapped spatial iterators (Layer 3)
+// ==========================================================================
+
+submap_tile_iterator_range::iterator::iterator(
+    mapbuffer &buf,
+    std::vector<point_abs_sm> columns,
+    const int z,
+    const tripoint_abs_ms center,
+    const int radius,
+    const tripoint_abs_ms rect_begin,
+    const tripoint_abs_ms rect_end,
+    const int mode ) :
+    buf_( &buf ),
+    columns_( std::move( columns ) ),
+    z_( z ),
+    center_( center ),
+    radius_( radius ),
+    rect_begin_( rect_begin ),
+    rect_end_( rect_end ),
+    column_idx_( 0 ),
+    tile_idx_( 0 ),
+    mode_( mode )
+{
+    advance_to_valid();
+}
+
+submap_tile_iterator_range::iterator::iterator( const int column_count ) :
+    column_idx_( column_count ),
+    tile_idx_( 0 )
+{
+}
+
+void submap_tile_iterator_range::iterator::advance_to_valid()
+{
+    if( !buf_ || column_idx_ < 0 ) {
+        column_idx_ = -1;
+        return;
+    }
+
+    const int tiles_per_submap = SEEX * SEEY;
+
+    while( column_idx_ < static_cast<int>( columns_.size() ) ) {
+        while( tile_idx_ < tiles_per_submap ) {
+            const point_abs_sm &col = columns_[column_idx_];
+            const point_sm_ms local( tile_idx_ % SEEX, tile_idx_ / SEEX );
+            const tripoint_abs_sm sm_pos( col, z_ );
+
+            // Quick column-state check before constructing handle
+            if( !buf_->is_column_state( col, submap_column_load_state::simulated ) ) {
+                tile_idx_ = tiles_per_submap;  // skip this column
+                break;
+            }
+
+            if( mode_ == 0 ) {
+                // mode=all: no per-tile filter needed
+                return;
+            }
+
+            // Compute absolute ms position of this tile
+            const tripoint_abs_ms abs_pos = project_combine( sm_pos, local );
+
+            if( mode_ == 1 ) {
+                // radius filter: Chebyshev distance
+                if( square_dist( abs_pos.xy(), center_.xy() ) <= radius_ ) {
+                    return;
+                }
+            } else if( mode_ == 2 ) {
+                // rectangle filter: inclusive bounds
+                if( abs_pos.x() >= rect_begin_.x() && abs_pos.x() <= rect_end_.x() &&
+                    abs_pos.y() >= rect_begin_.y() && abs_pos.y() <= rect_end_.y() &&
+                    abs_pos.z() >= rect_begin_.z() && abs_pos.z() <= rect_end_.z() ) {
+                    return;
+                }
+            }
+
+            ++tile_idx_;
+        }
+
+        // Exhausted this column; move to the next
+        ++column_idx_;
+        tile_idx_ = 0;
+    }
+
+    // No more valid tiles — mark as end sentinel
+    column_idx_ = static_cast<int>( columns_.size() );
+    tile_idx_ = 0;
+}
+
+auto submap_tile_iterator_range::iterator::operator*() const -> abs_tile_handle
+{
+    const point_abs_sm &col = columns_[column_idx_];
+    const point_sm_ms local( tile_idx_ % SEEX, tile_idx_ / SEEX );
+    const tripoint_abs_sm sm_pos( col, z_ );
+
+    // Single hash lookup: find the submap pointer, then construct the handle.
+    submap *sm = buf_->lookup_submap_in_memory( sm_pos );
+    if( sm ) {
+        const bool has_veh = !sm->vehicles.empty();
+        if( has_veh ) {
+            return abs_tile_handle( *sm, sm_pos, local,
+                                    buf_->vehicle_part_at_loaded_tile(
+                                        project_combine( sm_pos, local ) ) );
+        } else {
+            return abs_tile_handle( *sm, sm_pos, local );
+        }
+    }
+
+    return abs_tile_handle();
+}
+
+auto submap_tile_iterator_range::iterator::operator++() -> iterator &
+{
+    if( column_idx_ >= static_cast<int>( columns_.size() ) ) {
+        return *this;  // already at end
+    }
+
+    ++tile_idx_;
+    advance_to_valid();
+    return *this;
+}
+
+bool submap_tile_iterator_range::iterator::operator==( const iterator &other ) const
+{
+    return column_idx_ == other.column_idx_ && tile_idx_ == other.tile_idx_;
+}
+
+bool submap_tile_iterator_range::iterator::operator!=( const iterator &other ) const
+{
+    return !( *this == other );
+}
+
+auto submap_tile_iterator_range::begin() const -> iterator
+{
+    return iterator( *buf_, columns_, z_, center_, radius_,
+                     rect_begin_, rect_end_, mode_ );
+}
+
+auto submap_tile_iterator_range::end() const -> iterator
+{
+    return iterator( static_cast<int>( columns_.size() ) );
+}
+
+// ----- Free functions (Layer 3 entry points) -----
+// These are friend functions of submap_tile_iterator_range, so they
+// access private members directly.
+
+auto simulated_tiles_in_radius( mapbuffer &buf,
+                                const tripoint_abs_ms center, const int radius )
+-> submap_tile_iterator_range
+{
+    // Compute bounding box in abs_ms coordinates
+    const tripoint_abs_ms bb_begin(
+        center.x() - radius, center.y() - radius, center.z() );
+    const tripoint_abs_ms bb_end(
+        center.x() + radius, center.y() + radius, center.z() );
+
+    // Project to submap coordinates.
+    // sm_begin rounds down (inclusive), sm_end rounds down then +1 so the
+    // half-open columns_in() interval covers all submaps that intersect
+    // the ms bounding box.
+    const point_abs_sm sm_begin = project_to<coords::sm>( bb_begin ).xy();
+    const point_abs_sm sm_end =
+        project_to<coords::sm>( bb_end ).xy() + point_rel_sm( 1, 1 );
+
+    // Collect columns from all islands intersecting the bounding box
+    std::vector<point_abs_sm> columns;
+    for( const simulated_island &island : buf.simulated_islands() ) {
+        auto island_cols = island.columns_in( sm_begin, sm_end );
+        columns.insert( columns.end(),
+                        std::make_move_iterator( island_cols.begin() ),
+                        std::make_move_iterator( island_cols.end() ) );
+    }
+
+    submap_tile_iterator_range result;
+    result.buf_ = &buf;
+    result.columns_ = std::move( columns );
+    result.z_ = center.z();
+    result.center_ = center;
+    result.radius_ = radius;
+    result.mode_ = static_cast<int>( submap_tile_iterator_range::shape::radius );
+    return result;
+}
+
+auto simulated_tiles_in_rectangle( mapbuffer &buf,
+                                   const tripoint_abs_ms begin, const tripoint_abs_ms end )
+-> submap_tile_iterator_range
+{
+    // Project the rectangle bounds to submap coordinates.
+    // sm_begin rounds down (inclusive), sm_end rounds down then +1 so the
+    // half-open columns_in() interval covers all submaps that intersect.
+    const point_abs_sm sm_begin = project_to<coords::sm>( begin ).xy();
+    const point_abs_sm sm_end =
+        project_to<coords::sm>( end ).xy() + point_rel_sm( 1, 1 );
+
+    // Collect columns from all islands intersecting the rectangle
+    std::vector<point_abs_sm> columns;
+    for( const simulated_island &island : buf.simulated_islands() ) {
+        auto island_cols = island.columns_in( sm_begin, sm_end );
+        columns.insert( columns.end(),
+                        std::make_move_iterator( island_cols.begin() ),
+                        std::make_move_iterator( island_cols.end() ) );
+    }
+
+    submap_tile_iterator_range result;
+    result.buf_ = &buf;
+    result.columns_ = std::move( columns );
+    result.z_ = begin.z();
+    result.rect_begin_ = begin;
+    result.rect_end_ = end;
+    result.mode_ = static_cast<int>( submap_tile_iterator_range::shape::rectangle );
+    return result;
+}
+
+auto simulated_tiles_on_zlevel( mapbuffer &buf, const int z )
+-> submap_tile_iterator_range
+{
+    // Collect all columns from all islands
+    std::vector<point_abs_sm> columns;
+    for( const simulated_island &island : buf.simulated_islands() ) {
+        auto island_cols = island.columns_in( island.begin, island.end );
+        columns.insert( columns.end(),
+                        std::make_move_iterator( island_cols.begin() ),
+                        std::make_move_iterator( island_cols.end() ) );
+    }
+
+    submap_tile_iterator_range result;
+    result.buf_ = &buf;
+    result.columns_ = std::move( columns );
+    result.z_ = z;
+    result.mode_ = static_cast<int>( submap_tile_iterator_range::shape::all );
+    return result;
+}
+
 auto mapbuffer::for_each_submap_tile(
     const submap &sm, tripoint_abs_sm abs_sm,
     const std::function<void( const abs_tile_handle & )> &fn ) -> void
