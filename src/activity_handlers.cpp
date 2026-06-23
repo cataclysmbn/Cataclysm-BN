@@ -4338,7 +4338,7 @@ void activity_handlers::fill_pit_finish( player_activity *act, player *p )
 
 void activity_handlers::play_with_pet_finish( player_activity *act, player *p )
 {
-    if (!act->monsters.empty()) {
+    if( !act->monsters.empty() ) {
         const auto mon = act->monsters[0].lock();
         mon->remove_effect( effect_ai_waiting );
     }
