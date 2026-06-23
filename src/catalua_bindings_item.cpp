@@ -1156,7 +1156,7 @@ void reg_islot( sol::state &lua )
         DOC( "Increases gun weight by this many times" );
         SET_MEMB_RO( weight_multiplier );
 
-        DOC( "Increases gun volume by this many times (replaces COLLAPSIBLE_STOCK flag)" );
+        DOC( "Increases gun volume by this many times" );
         SET_MEMB_RO( volume_multiplier );
 
         DOC( "Firing modes added to or replacing those of the base gun" );
