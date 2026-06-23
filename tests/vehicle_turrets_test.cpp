@@ -43,18 +43,13 @@ static std::vector<const vpart_info *> turret_types()
     return res;
 }
 
-static auto biggest_tank( const ammotype &ammo ) -> const vpart_info *
+static auto biggest_tank( const itype_id &ammo ) -> const vpart_info *
 {
     std::vector<const vpart_info *> res;
 
     for( const auto &e : vpart_info::all() ) {
         const auto &vp = e.second;
-        if( !item::spawn_temporary( vp.item )->is_watertight_container() ) {
-            continue;
-        }
-
-        const itype *fuel = &*vp.fuel_type;
-        if( fuel->ammo && fuel->ammo->type == ammo ) {
+        if( item::spawn_temporary( vp.item )->can_reload_with( ammo ) ) {
             res.push_back( &vp );
         }
     }
@@ -89,8 +84,8 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
             REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "storage_battery" ), true ) >= 0 );
             veh->charge_battery( 10000 );
 
-            auto ammo =
-                ammotype( veh->turret_query( veh->part( idx ) ).base().ammo_default().str() );
+            auto &gun = veh->part( idx ).get_base();
+            const auto ammo = gun.ammo_default();
 
             if( veh->part_flag( idx, "USE_TANKS" ) ) {
                 auto *tank = biggest_tank( ammo );
@@ -99,15 +94,14 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
 
                 auto tank_idx = veh->install_part( tripoint_mnt_veh::zero(), tank->get_id(), true );
                 REQUIRE( tank_idx >= 0 );
-                REQUIRE( veh->part( tank_idx ).ammo_set( ammo->default_ammotype() ) );
+                REQUIRE( veh->part( tank_idx ).ammo_set( ammo ) );
 
-            } else if( ammo ) {
-                veh->part( idx ).ammo_set( ammo->default_ammotype() );
+            } else if( !ammo.is_null() ) {
+                veh->part( idx ).ammo_set( ammo );
             }
 
             auto qry = veh->turret_query( veh->part( idx ) );
             REQUIRE( qry );
-
             REQUIRE( qry.query() == turret_data::status::ready );
             REQUIRE( qry.range() > 0 );
 
