@@ -12,6 +12,8 @@
 
 #include "coordinates.h"
 #include "game_constants.h"
+
+class mapbuffer;
 #include "point.h"
 #include "rng.h"
 
@@ -274,7 +276,7 @@ class Pathfinding
         //   and scan for new changes.
         // Only process OPEN_AIR changes if `update_open_air` is true. OPEN_AIR tiles are numerous on higher Z levels
         //   so they're expensive to go over and update. Do only for fliers.
-        static void update_z_caches( bool update_open_air );
+        static void update_z_caches( mapbuffer &buffer, bool update_open_air );
 
         // Get a reference to ZCache for this level
         static std::vector<ZLevelChange> &get_z_cache( const int z );
@@ -315,6 +317,7 @@ class Pathfinding
             const RouteSettings route_settings );
         // See `Pathfinding::route`
         static std::vector<tripoint_abs_ms> get_route_3d(
+            mapbuffer &buffer,
             const tripoint_abs_ms from, const tripoint_abs_ms to,
             const PathfindingSettings path_settings,
             const RouteSettings route_settings
