@@ -2720,7 +2720,7 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
         // Let NPCs push each other when non-hostile
         // TODO: Have them attack each other when hostile
         npc *np = dynamic_cast<npc *>( critter );
-        if( np != nullptr && !np->in_sleep_state() ) {
+        if( !is_hallucination() && np != nullptr && !np->in_sleep_state() ) {
             std::unique_ptr<std::set<tripoint_bub_ms>> newnomove;
             std::set<tripoint_bub_ms> *realnomove;
             if( nomove != nullptr ) {
@@ -2838,6 +2838,9 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
             facing = FD_RIGHT;
         } else {
             facing = FD_LEFT;
+        }
+        if( is_hallucination() ) {
+            return;
         }
         if( is_mounted() ) {
             if( mounted_creature->bub_pos() != bub_pos() ) {
@@ -4050,6 +4053,10 @@ bool npc::alt_attack()
 
 void npc::activate_item( int item_index )
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return;
+    }
     const int oldmoves = moves;
     item &it = i_at( item_index );
     if( it.is_tool() || it.is_food() ) {
@@ -4107,6 +4114,10 @@ void npc:: pretend_heal( Character &patient, item &used )
 
 void npc::heal_self()
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return;
+    }
     if( has_effect( effect_asthma ) ) {
         item *treatment = &null_item_reference();
         std::string iusage = "OXYGEN_BOTTLE";
@@ -4144,6 +4155,10 @@ void npc::heal_self()
 
 void npc::use_painkiller()
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return;
+    }
     // First, find the best painkiller for our pain level
     item *it = inv.most_appropriate_painkiller( get_pain() );
 
@@ -4248,6 +4263,10 @@ static float rate_food( const item &it, int want_nutr, int want_quench )
 
 bool npc::consume_food()
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return false;
+    }
     float best_weight = 0.0f;
     int index = -1;
     int want_hunger = std::max<int>( 0, ( max_stored_kcal() - get_stored_kcal() ) / 10 );
@@ -4942,6 +4961,10 @@ bool npc::complain()
 
 void npc::do_reload( item &it )
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return;
+    }
     item_reload_option reload_opt = character_funcs::select_ammo( *this, it );
 
     if( !reload_opt ) {

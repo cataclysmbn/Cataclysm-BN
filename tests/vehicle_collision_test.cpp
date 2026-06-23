@@ -5,6 +5,7 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
+#include "mtype.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle.h"
@@ -66,6 +67,30 @@ TEST_CASE( "vehicle_collision_with_wall_terminates", "[vehicle]" )
 
     CHECK( ret.type != veh_coll_nothing );
     CHECK( std::abs( veh_ptr->velocity ) < 222 );
+}
+
+TEST_CASE( "hallucination_monsters_do_not_shove_vehicles", "[vehicle][monster][hallucination]" )
+{
+    clear_all_state();
+    move_player_out_of_the_way();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_pavement" ) );
+    clear_vehicles();
+
+    const auto monster_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto veh_pos = tripoint_bub_ms( 60, 59, 0 );
+    auto *veh_ptr = here.add_vehicle( vproto_id( "bicycle_test" ), veh_pos, 270_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    auto &hallucination = spawn_test_monster( "mon_zombie_seaweed_brute", monster_pos );
+    hallucination.hallucination = true;
+    REQUIRE( hallucination.is_hallucination() );
+    REQUIRE( hallucination.has_flag( MF_PUSH_VEH ) );
+
+    hallucination.shove_vehicle( veh_pos + tripoint_north, veh_pos );
+
+    CHECK( veh_ptr->velocity == 0 );
+    CHECK( here.veh_at( veh_pos ).has_value() );
 }
 
 TEST_CASE( "vehicle_collision_with_hallucination_terminates", "[vehicle]" )

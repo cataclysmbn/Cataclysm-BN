@@ -14,10 +14,12 @@
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "coordinates.h"
+#include "field_type.h"
 #include "game.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
+#include "monster_action.h"
 #include "options_helpers.h"
 #include "options.h"
 #include "player.h"
@@ -31,6 +33,44 @@
 #include "vpart_position.h"
 
 using move_statistics = statistics<int>;
+
+TEST_CASE( "hallucination_monsters_do_not_open_real_doors", "[monster][hallucination]" )
+{
+    clear_all_state();
+    move_player_out_of_the_way();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_floor" ) );
+
+    const auto monster_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto door_pos = tripoint_bub_ms( 61, 60, 0 );
+    REQUIRE( here.ter_set( door_pos, ter_id( "t_door_c" ) ) );
+
+    auto &hallucination = spawn_test_monster( "mon_zombie_scientist", monster_pos );
+    hallucination.hallucination = true;
+    REQUIRE( hallucination.is_hallucination() );
+    hallucination.execute_action( { .kind = monster_action_kind::open_door, .dest = door_pos } );
+
+    CHECK( here.ter( door_pos ) == ter_id( "t_door_c" ) );
+}
+
+TEST_CASE( "hallucination_electric_field_does_not_ignite_items", "[monster][hallucination]" )
+{
+    clear_all_state();
+    move_player_out_of_the_way();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_pavement" ) );
+
+    const auto monster_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto fuel_pos = tripoint_bub_ms( 61, 60, 0 );
+    here.add_item_or_charges( fuel_pos, item::spawn( "gasoline" ) );
+
+    auto &hallucination = spawn_test_monster( "mon_zombie_nullfield", monster_pos );
+    hallucination.hallucination = true;
+    REQUIRE( hallucination.is_hallucination() );
+    hallucination.process_turn();
+
+    CHECK( here.get_field( fuel_pos, fd_fire ) == nullptr );
+}
 
 TEST_CASE( "MONSTER_SPEED scales monster move credit", "[monster][speed]" )
 {
