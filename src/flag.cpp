@@ -202,7 +202,6 @@ const flag_id flag_MESSY( "MESSY" );
 const flag_id flag_MISSION_ITEM( "MISSION_ITEM" );
 const flag_id flag_MORBID( "MORBID" );
 const flag_id flag_MOUNTED_GUN( "MOUNTED_GUN" );
-const flag_id flag_MODULAR( "MODULAR" );
 const flag_id flag_MYCUS_OK( "MYCUS_OK" );
 const flag_id flag_NANOFAB_TEMPLATE( "NANOFAB_TEMPLATE" );
 const flag_id flag_NAT_UPS( "NAT_UPS" );

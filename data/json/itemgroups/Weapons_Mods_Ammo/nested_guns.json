@@ -2321,21 +2321,21 @@
     "type": "item_group",
     "//": "Pipe rifle with a caliber conversion kit pre-installed.",
     "subtype": "distribution",
-    "entries": [ { "item": "pipe_rifle", "contents-group": "gunmod_pipe_conversion_rifle" } ]
+    "entries": [ { "item": "pipe_rifle", "contents-group": "gunmod_pipe_conversion" } ]
   },
   {
     "id": "nested_pipe_pistol",
     "type": "item_group",
     "//": "Pipe pistol with a caliber conversion kit pre-installed.",
     "subtype": "distribution",
-    "entries": [ { "item": "pipe_pistol", "contents-group": "gunmod_pipe_conversion_pistol" } ]
+    "entries": [ { "item": "pipe_pistol", "contents-group": "gunmod_pipe_conversion" } ]
   },
   {
     "id": "nested_2_shot_special",
     "type": "item_group",
     "//": "2-shot special with a caliber conversion kit pre-installed.",
     "subtype": "distribution",
-    "entries": [ { "item": "2_shot_special", "contents-group": "gunmod_pipe_conversion_pistol" } ]
+    "entries": [ { "item": "2_shot_special", "contents-group": "gunmod_pipe_conversion" } ]
   },
   {
     "id": "nested_handmade_carbine",

@@ -826,7 +826,6 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `FIRE_TWOHAND` Gun can only be fired if player has two free hands.
 - `IRREMOVABLE` Makes so that the gunmod cannot be removed.
 - `MECH_BAT` This is an exotic battery designed to power military mechs.
-- `MODULAR` This gun has no fixed caliber and requires a caliber conversion kit to fire.
 - `MOUNTED_GUN` Gun can only be used on terrain / furniture with the "MOUNTABLE" flag, if you're a
   normal human. If you're an oversized mutant (Inconveniently Large, Large, Freakishly Huge, Huge),
   you can fire it regularly in exchange for dispersion and recoil penalties. Wearing something with
