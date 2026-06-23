@@ -510,8 +510,8 @@ class Creature
          */
         void check_dead_state();
 
-        virtual tripoint_bub_ms bub_pos() const = 0;
-        virtual tripoint_abs_ms abs_pos() const;
+        virtual tripoint_bub_ms bub_pos() const;
+        virtual tripoint_abs_ms abs_pos() const = 0;
 
         virtual void setpos( const tripoint_bub_ms &pos ) = 0;
         virtual void setpos( const tripoint_abs_ms &pos );

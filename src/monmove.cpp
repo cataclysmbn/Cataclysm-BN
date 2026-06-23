@@ -1650,8 +1650,14 @@ void monster::execute_action( const monster_action_t &action )
         {
             ZoneScopedN( "mon_execute_route_pf" );
             auto pair = get_pathfinding_pair();
-            maybe_new_path = Pathfinding::route( bub_pos(), goal,
-                                                 pair.first, pair.second );
+            auto abs_route = Pathfinding::route( bub_to_abs( bub_pos() ), bub_to_abs( goal ),
+                            pair.first, pair.second );
+            // convert back to bubble coordinates
+            maybe_new_path.clear();
+            maybe_new_path.reserve( abs_route.size() );
+            for( const tripoint_abs_ms &p : abs_route ) {
+                maybe_new_path.push_back( abs_to_bub( p ) );
+            }
         }
         assert( maybe_new_path.empty() ? true : maybe_new_path.back() == this->goal );
         if( maybe_new_path.empty() )

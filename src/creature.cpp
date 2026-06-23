@@ -2604,9 +2604,9 @@ effects_map Creature::get_all_effects() const
     return effects_without_removed;
 }
 
-tripoint_abs_ms Creature::abs_pos() const
+tripoint_bub_ms Creature::bub_pos() const
 {
-    return bub_to_abs( bub_pos() );
+    return abs_to_bub( abs_pos() );
 }
 
 void Creature::setpos( const tripoint_abs_ms &pos )

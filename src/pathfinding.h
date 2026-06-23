@@ -235,6 +235,7 @@ class Pathfinding
         static std::map<std::tuple<bool, int, tripoint_abs_ms>, ZLevelChange> cached_closest_z_changes;
 
         // Runtime map dimensions (default MAPSIZE_X / MAPSIZE_Y; updated when bubble size changes)
+        mapbuffer &buffer_;
         int map_x_;
         int map_y_;
 
@@ -283,7 +284,7 @@ class Pathfinding
         static std::unordered_map<point_abs_ms, ZLevelChangeOpenAirPair> &get_z_cache_open_air(
             const int z );
 
-        static void produce_d_map( point_abs_ms dest, int z, PathfindingSettings settings );
+        static void produce_d_map( mapbuffer &buffer, point_abs_ms dest, int z, PathfindingSettings settings );
 
         // Get `p`-value at `p`
         float &p_at( const point_abs_ms &p );
@@ -312,6 +313,7 @@ class Pathfinding
 
         // See `Pathfinding::route`
         static std::vector<tripoint_abs_ms> get_route_2d(
+            mapbuffer &buffer,
             const point_abs_ms from, const point_abs_ms to, const int z,
             const PathfindingSettings path_settings,
             const RouteSettings route_settings );
@@ -327,14 +329,11 @@ class Pathfinding
         ExpansionOutcome expand_2d_up_to( const point_abs_ms &start, const RouteSettings &route_settings );
     public:
         // Allocates flat arrays for a map of size mx × my.
-        explicit Pathfinding( int mx, int my );
+        explicit Pathfinding( mapbuffer &buffer, int mx, int my );
 
         // get `route` from `from` to `to` if available in accordance to `route_settings` while `path_settings` defines our capabilities, otherwise empty vector.
         // Found route will include `from` and `to`.
         static std::vector<tripoint_abs_ms> route( tripoint_abs_ms from, tripoint_abs_ms to,
-                const std::optional<PathfindingSettings> path_settings = std::nullopt,
-                const std::optional<RouteSettings> route_settings = std::nullopt );
-        static std::vector<tripoint_bub_ms> route( tripoint_bub_ms from, tripoint_bub_ms to,
                 const std::optional<PathfindingSettings> path_settings = std::nullopt,
                 const std::optional<RouteSettings> route_settings = std::nullopt );
 
