@@ -37,8 +37,8 @@
     "magazine": 100,
     "subtype": "distribution",
     "entries": [
-      { "item": "flour", "prob": 45, "charges": [5, 40] },
-      { "item": "flour", "prob": 5, "charges": [5, 120], "container-item": "box_medium" },
+      { "item": "flour", "prob": 45, "charges": [ 5, 40 ] },
+      { "item": "flour", "prob": 5, "charges": [ 5, 120 ], "container-item": "box_medium" },
       { "item": "yeast", "prob": 50 },
       { "item": "cornmeal", "prob": 40 },
       { "item": "dry_meat", "prob": 10 },
