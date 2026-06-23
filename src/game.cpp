@@ -894,9 +894,11 @@ void game::suggest_auto_walk_to_stairs( Character &u, map &m, const std::string 
         return;
     }
 
-    auto route = m.route( u.bub_pos(), *stair_pos, u.get_legacy_pathfinding_settings(),
-                          u.get_legacy_path_avoid() );
-    if( route.size() <= 1 ) {
+    auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
+    const auto pair = u.get_pathfinding_pair();
+    auto abs_route = Pathfinding::route( pf_buffer, u.abs_pos(), bub_to_abs( *stair_pos ),
+                                         pair.first, pair.second );
+    if( abs_route.size() <= 1 ) {
         return;
     }
 
@@ -908,7 +910,12 @@ void game::suggest_auto_walk_to_stairs( Character &u, map &m, const std::string 
         dir_text = direction == "up" ? " (up)" : " (down)";
     }
     if( query_yn( "Walk to %s%s?", m.ter( *stair_pos ).obj().name(), dir_text ) ) {
-        route.pop_back();
+        abs_route.pop_back();
+        std::vector<tripoint_bub_ms> route;
+        route.reserve( abs_route.size() );
+        for( const tripoint_abs_ms &pt : abs_route ) {
+            route.push_back( abs_to_bub( pt ) );
+        }
         u.set_destination( route, u.remove_activity() );
         u.activity = std::make_unique<player_activity>();
     }
@@ -3585,8 +3592,15 @@ bool game::try_get_left_click_action( action_id &act, const tripoint_bub_ms &mou
     }
 
     if( new_destination ) {
-        destination_preview = m.route( u.bub_pos(), mouse_target, u.get_legacy_pathfinding_settings(),
-                                       u.get_legacy_path_avoid() );
+        auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
+        const auto pair = u.get_pathfinding_pair();
+        auto abs_route = Pathfinding::route( pf_buffer, u.abs_pos(), bub_to_abs( mouse_target ),
+                                             pair.first, pair.second );
+        destination_preview.clear();
+        destination_preview.reserve( abs_route.size() );
+        for( const tripoint_abs_ms &pt : abs_route ) {
+            destination_preview.push_back( abs_to_bub( pt ) );
+        }
         return false;
     }
 
@@ -9928,10 +9942,17 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                 continue;
             }
 
-            auto route = m.route( u.bub_pos(), lp, u.get_legacy_pathfinding_settings(),
-                                  u.get_legacy_path_avoid() );
-            if( route.size() > 1 ) {
-                route.pop_back();
+            auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
+            const auto pair = u.get_pathfinding_pair();
+            auto abs_route = Pathfinding::route( pf_buffer, u.abs_pos(), bub_to_abs( lp ),
+                                                 pair.first, pair.second );
+            if( abs_route.size() > 1 ) {
+                abs_route.pop_back();
+                std::vector<tripoint_bub_ms> route;
+                route.reserve( abs_route.size() );
+                for( const tripoint_abs_ms &pt : abs_route ) {
+                    route.push_back( abs_to_bub( pt ) );
+                }
                 u.set_destination( route );
             } else {
                 add_msg( m_info, _( "You can't travel there." ) );
@@ -11173,10 +11194,18 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             if( !u.sees( u.bub_pos() + active_pos ) ) {
                 add_msg( _( "You can't see that destination." ) );
             }
-            auto route = m.route( u.bub_pos(), u.bub_pos() + active_pos, u.get_legacy_pathfinding_settings(),
-                                  u.get_legacy_path_avoid() );
-            if( route.size() > 1 ) {
-                route.pop_back();
+            auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
+            const auto pair = u.get_pathfinding_pair();
+            auto abs_route = Pathfinding::route( pf_buffer, u.abs_pos(),
+                                                 bub_to_abs( u.bub_pos() + active_pos ),
+                                                 pair.first, pair.second );
+            if( abs_route.size() > 1 ) {
+                abs_route.pop_back();
+                std::vector<tripoint_bub_ms> route;
+                route.reserve( abs_route.size() );
+                for( const tripoint_abs_ms &pt : abs_route ) {
+                    route.push_back( abs_to_bub( pt ) );
+                }
                 u.set_destination( route );
                 recalc_unread = highlight_unread_items;
                 break;

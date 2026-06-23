@@ -1640,20 +1640,13 @@ void monster::execute_action( const monster_action_t &action )
         route_attempted = true;
         ZoneScopedN( "mon_execute_repath" );
         std::vector<tripoint_bub_ms> maybe_new_path;
-        if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) )
-        {
-            ZoneScopedN( "mon_execute_route_legacy" );
-            auto pf_settings = get_legacy_pathfinding_settings();
-            maybe_new_path = g->m.route( bub_pos(), goal, pf_settings,
-                                         get_legacy_path_avoid() );
-        } else
         {
             ZoneScopedN( "mon_execute_route_pf" );
             auto pair = get_pathfinding_pair();
             auto &pf_buffer = MAPBUFFER_REGISTRY.get( get_dimension() );
             auto abs_route = Pathfinding::route( pf_buffer, abs_pos(), bub_to_abs( goal ),
                             pair.first, pair.second );
-            // convert back to bubble coordinates
+            // convert back to bubble coordinates for downstream compatibility
             maybe_new_path.clear();
             maybe_new_path.reserve( abs_route.size() );
             for( const tripoint_abs_ms &p : abs_route ) {
@@ -2924,9 +2917,12 @@ bool monster::will_reach( const point_bub_ms &p )
         return false;
     }
 
-    auto path = g->m.route( bub_pos(), tripoint_bub_ms( p, bub_pos().z() ),
-                            get_legacy_pathfinding_settings() );
-    if( path.empty() ) {
+    auto &pf_buffer = MAPBUFFER_REGISTRY.get( get_dimension() );
+    const auto pair = get_pathfinding_pair();
+    auto abs_path = Pathfinding::route( pf_buffer, abs_pos(),
+                                        bub_to_abs( tripoint_bub_ms( p, abs_pos().z() ) ),
+                                        pair.first, pair.second );
+    if( abs_path.empty() ) {
         return false;
     }
 
@@ -2950,10 +2946,19 @@ bool monster::will_reach( const point_bub_ms &p )
 int monster::turns_to_reach( const point_bub_ms &p )
 {
     // HACK: This function is a(n old) temporary hack that should soon be removed
-    auto path = g->m.route( bub_pos(), tripoint_bub_ms( p, bub_pos().z() ),
-                            get_legacy_pathfinding_settings() );
-    if( path.empty() ) {
+    auto &pf_buffer = MAPBUFFER_REGISTRY.get( get_dimension() );
+    const auto pair = get_pathfinding_pair();
+    auto abs_route = Pathfinding::route( pf_buffer, abs_pos(),
+                                         bub_to_abs( tripoint_bub_ms( p, abs_pos().z() ) ),
+                                         pair.first, pair.second );
+    if( abs_route.empty() ) {
         return 999;
+    }
+    // Convert to bubble coords for downstream movecost / impassable checks
+    std::vector<tripoint_bub_ms> path;
+    path.reserve( abs_route.size() );
+    for( const tripoint_abs_ms &pt : abs_route ) {
+        path.push_back( abs_to_bub( pt ) );
     }
 
     double turns = 0.;

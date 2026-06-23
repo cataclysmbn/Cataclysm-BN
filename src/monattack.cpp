@@ -64,6 +64,7 @@
 #include "npc.h"
 #include "output.h"
 #include "legacy_pathfinding.h"
+#include "pathfinding.h"
 #include "player.h"
 #include "point.h"
 #include "projectile.h"
@@ -1730,9 +1731,16 @@ bool mattack::triffid_heartbeat( monster *z )
         return true;
     }
 
-    static pathfinding_settings root_pathfind( 10, 20, 50, 0, false, false, false, false, false );
-    if( rl_dist( z->bub_pos(), g->u.bub_pos() ) > 5 &&
-        !g->m.route( g->u.bub_pos(), z->bub_pos(), root_pathfind ).empty() ) {
+    static PathfindingSettings root_pf_settings;
+    root_pf_settings.bash_strength_val = 10;
+    root_pf_settings.bash_strength_quanta = 1;
+    static RouteSettings root_rt_settings;
+    root_rt_settings.max_dist = 20;
+    root_rt_settings.max_s_coeff = 2.5f;
+    auto &pf_buffer = MAPBUFFER_REGISTRY.get( g->u.get_dimension() );
+    if( rl_dist( z->abs_pos(), g->u.abs_pos() ) > 5 &&
+        !Pathfinding::route( pf_buffer, g->u.abs_pos(), z->abs_pos(),
+                             root_pf_settings, root_rt_settings ).empty() ) {
         add_msg( m_warning, _( "The root walls creak around you." ) );
         for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 3 ) ) {
             if( g->is_empty( dest ) && one_in( 4 ) ) {
@@ -1743,7 +1751,8 @@ bool mattack::triffid_heartbeat( monster *z )
         }
         // Open blank tiles as long as there's no possible route
         int tries = 0;
-        while( g->m.route( g->u.bub_pos(), z->bub_pos(), root_pathfind ).empty() &&
+        while( Pathfinding::route( pf_buffer, g->u.abs_pos(), z->abs_pos(),
+                                   root_pf_settings, root_rt_settings ).empty() &&
                tries < 20 ) {
             auto p = point_bub_ms{ rng( g->u.bub_pos().x(), z->bub_pos().x() - 3 ), rng( g->u.bub_pos().y(),
                                    z->bub_pos().y() - 3 ) };

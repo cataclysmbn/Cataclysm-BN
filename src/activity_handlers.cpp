@@ -14,6 +14,7 @@
 #include <vector>
 #include <weighted_list.h>
 
+#include "pathfinding.h"
 #include "action.h"
 #include "action_time_scale.h"
 #include "advanced_inv.h"
@@ -3196,10 +3197,16 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
                 }
             }
         }
-        const auto route_to = here.route( p->bub_pos(), centre_sub,
-                                          p->get_legacy_pathfinding_settings(),
-                                          p->get_legacy_path_avoid() );
-        if( !route_to.empty() ) {
+        auto &pf_buffer = MAPBUFFER_REGISTRY.get( p->get_dimension() );
+        const auto pair = p->get_pathfinding_pair();
+        auto abs_route = Pathfinding::route( pf_buffer, p->abs_pos(), bub_to_abs( centre_sub ),
+                                             pair.first, pair.second );
+        if( !abs_route.empty() ) {
+            std::vector<tripoint_bub_ms> route_to;
+            route_to.reserve( abs_route.size() );
+            for( const tripoint_abs_ms &pt : abs_route ) {
+                route_to.push_back( abs_to_bub( pt ) );
+            }
             const activity_id act_travel = ACT_TRAVELLING;
             p->set_destination( route_to, std::make_unique<player_activity>( act_travel ) );
         } else {
@@ -4466,12 +4473,17 @@ static void perform_zone_activity_turn( player *p,
     for( const auto &tile : tiles ) {
         const auto tile_loc = abs_to_bub( tile );
 
-        auto route = here.route( p->bub_pos(), tile_loc,
-                                 p->get_legacy_pathfinding_settings(),
-                                 p->get_legacy_path_avoid() );
-        if( route.size() > 1 ) {
-            route.pop_back();
-
+        auto &pf_buffer = MAPBUFFER_REGISTRY.get( p->get_dimension() );
+        const auto pair = p->get_pathfinding_pair();
+        auto abs_route = Pathfinding::route( pf_buffer, p->abs_pos(), bub_to_abs( tile_loc ),
+                                             pair.first, pair.second );
+        if( abs_route.size() > 1 ) {
+            abs_route.pop_back();
+            std::vector<tripoint_bub_ms> route;
+            route.reserve( abs_route.size() );
+            for( const tripoint_abs_ms &pt : abs_route ) {
+                route.push_back( abs_to_bub( pt ) );
+            }
             p->set_destination( route, p->remove_activity() );
             p->activity = std::make_unique<player_activity>( );
             return;

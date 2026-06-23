@@ -12,6 +12,7 @@
 #include <sstream>
 #include <utility>
 
+#include "pathfinding.h"
 #include "action.h"
 #include "advanced_inv.h"
 #include "animation.h"
@@ -2138,15 +2139,22 @@ bool game::handle_action()
                     ();
                     if( auto_travel_mode && !u.is_auto_moving() ) {
                         ZoneScopedN( "handle_action_auto_travel_route" );
+                        auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
+                        const auto pair = u.get_pathfinding_pair();
                         for( int i = 0; i < SEEX; i++ ) {
-                            tripoint_bub_ms auto_travel_destination( u.bub_pos().x() + dest_delta.x() * ( SEEX - i ),
-                                    u.bub_pos().y() + dest_delta.y() * ( SEEX - i ),
-                                    u.bub_pos().z() );
-                            destination_preview = m.route( u.bub_pos(),
-                                                           auto_travel_destination,
-                                                           u.get_legacy_pathfinding_settings(),
-                                                           u.get_legacy_path_avoid() );
-                            if( !destination_preview.empty() ) {
+                            const tripoint_bub_ms auto_travel_dest_bub(
+                                u.bub_pos().x() + dest_delta.x() * ( SEEX - i ),
+                                u.bub_pos().y() + dest_delta.y() * ( SEEX - i ),
+                                u.bub_pos().z() );
+                            auto abs_route = Pathfinding::route( pf_buffer, u.abs_pos(),
+                                                                 bub_to_abs( auto_travel_dest_bub ),
+                                                                 pair.first, pair.second );
+                            if( !abs_route.empty() ) {
+                                destination_preview.clear();
+                                destination_preview.reserve( abs_route.size() );
+                                for( const tripoint_abs_ms &pt : abs_route ) {
+                                    destination_preview.push_back( abs_to_bub( pt ) );
+                                }
                                 destination_preview.erase( destination_preview.begin() + 1, destination_preview.end() );
                                 u.set_destination( destination_preview );
                                 break;

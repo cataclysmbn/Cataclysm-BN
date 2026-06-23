@@ -1,6 +1,7 @@
 #include "activity_handlers.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include "pathfinding.h"
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -1030,11 +1031,17 @@ std::vector<tripoint_bub_ms> route_adjacent( const player &p, const tripoint_bub
 
     const auto &sorted = get_sorted_tiles_by_distance( p.bub_pos(), passable_tiles );
 
-    const auto &avoid = p.get_legacy_path_avoid();
+    auto &pf_buffer = MAPBUFFER_REGISTRY.get( p.get_dimension() );
+    const auto pair = p.get_pathfinding_pair();
     for( const tripoint_bub_ms &tp : sorted ) {
-        auto route = here.route( p.bub_pos(), tp, p.get_legacy_pathfinding_settings(), avoid );
-
-        if( !route.empty() ) {
+        auto abs_route = Pathfinding::route( pf_buffer, p.abs_pos(), bub_to_abs( tp ),
+                                             pair.first, pair.second );
+        if( !abs_route.empty() ) {
+            std::vector<tripoint_bub_ms> route;
+            route.reserve( abs_route.size() );
+            for( const tripoint_abs_ms &pt : abs_route ) {
+                route.push_back( abs_to_bub( pt ) );
+            }
             return route;
         }
     }
@@ -2398,12 +2405,18 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                     g->reload_npcs();
                     return;
                 }
-                std::vector<tripoint_bub_ms> route;
-                route = here.route( p.bub_pos(), src_loc, p.get_legacy_pathfinding_settings(),
-                                    p.get_legacy_path_avoid() );
-                if( route.empty() ) {
+                auto &pf_buffer = MAPBUFFER_REGISTRY.get( p.get_dimension() );
+                const auto pair = p.get_pathfinding_pair();
+                auto abs_route = Pathfinding::route( pf_buffer, p.abs_pos(), bub_to_abs( src_loc ),
+                                                     pair.first, pair.second );
+                if( abs_route.empty() ) {
                     // can't get there, can't do anything, skip it
                     continue;
+                }
+                std::vector<tripoint_bub_ms> route;
+                route.reserve( abs_route.size() );
+                for( const tripoint_abs_ms &pt : abs_route ) {
+                    route.push_back( abs_to_bub( pt ) );
                 }
                 stage = DO;
                 p.set_destination( route, p.remove_activity() );
@@ -2437,8 +2450,15 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                 // get either direct route or route to nearest adjacent tile if
                 // source tile is impassable
                 if( here.passable( src_loc ) ) {
-                    route = here.route( p.bub_pos(), src_loc, p.get_legacy_pathfinding_settings(),
-                                        p.get_legacy_path_avoid() );
+                    auto &pf_buffer2 = MAPBUFFER_REGISTRY.get( p.get_dimension() );
+                    const auto pair2 = p.get_pathfinding_pair();
+                    auto abs_route2 = Pathfinding::route( pf_buffer2, p.abs_pos(), bub_to_abs( src_loc ),
+                                                          pair2.first, pair2.second );
+                    route.clear();
+                    route.reserve( abs_route2.size() );
+                    for( const tripoint_abs_ms &pt : abs_route2 ) {
+                        route.push_back( abs_to_bub( pt ) );
+                    }
                 } else {
                     // impassable source tile (locker etc.),
                     // get route to nearest adjacent tile instead

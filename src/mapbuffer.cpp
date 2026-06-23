@@ -1,6 +1,7 @@
 #include "mapbuffer.h"
 
 #include <algorithm>
+#include "pathfinding.h"
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -3447,11 +3448,17 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
         if( !source_local || !target_local ) {
             return false;
         }
-        const auto max_dist = 2;
-        const auto max_path_length = 4 * max_dist;
-        const auto setting = pathfinding_settings( 0, max_dist, max_path_length, 0, false, true, false,
-                             false, false );
-        return !g->m.route( *source_local, *target_local, setting ).empty();
+        PathfindingSettings pf_settings;
+        pf_settings.bash_strength_val = 0;
+        RouteSettings rt_settings;
+        rt_settings.max_dist = 2;
+        rt_settings.max_s_coeff = 4.0f;
+        auto &pf_buffer = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
+        auto abs_route = Pathfinding::route( pf_buffer,
+                                             bub_to_abs( *source_local ),
+                                             bub_to_abs( *target_local ),
+                                             pf_settings, rt_settings );
+        return !abs_route.empty();
     };
 
     auto place_item = [&]( const tripoint_abs_ms & target, mapbuffer_tile_lookup & tile ) {
