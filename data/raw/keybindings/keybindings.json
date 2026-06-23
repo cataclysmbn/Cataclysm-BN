@@ -2484,6 +2484,13 @@
   },
   {
     "type": "keybinding",
+    "name": "Toggle manual combat mode",
+    "category": "DEFAULTMODE",
+    "id": "toggle_manual_combat_mode",
+    "bindings": [ { "input_method": "keyboard", "key": "BACKTAB" } ]
+  },
+  {
+    "type": "keybinding",
     "name": "Main Menu",
     "category": "DEFAULTMODE",
     "id": "main_menu",

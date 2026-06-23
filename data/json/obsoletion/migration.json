@@ -1,5 +1,29 @@
 [
   {
+    "id": "rifle_308",
+    "type": "MIGRATION",
+    "replace": "handmade_carbine",
+    "contents": [ "retool_hc_308" ]
+  },
+  {
+    "id": "surv_carbine_223",
+    "type": "MIGRATION",
+    "replace": "handmade_carbine",
+    "contents": [ "retool_hc_223" ]
+  },
+  {
+    "id": "surv_six_shooter",
+    "type": "MIGRATION",
+    "replace": "handmade_revolver",
+    "contents": [ "retool_hmr_40" ]
+  },
+  {
+    "id": "surv_hand_cannon",
+    "type": "MIGRATION",
+    "replace": "handmade_revolver",
+    "contents": [ "retool_hmr_45" ]
+  },
+  {
     "id": "arrow_fire_hardened",
     "type": "MIGRATION",
     "replace": "arrow_fire_hardened_fletched"
@@ -269,7 +293,8 @@
   {
     "id": "smg_38",
     "type": "MIGRATION",
-    "replace": "smg_45"
+    "replace": "smg_luty",
+    "contents": [ "retool_luty_45" ]
   },
   {
     "id": "smg_38_mag",
@@ -279,7 +304,7 @@
   {
     "id": "smg_22",
     "type": "MIGRATION",
-    "replace": "smg_9mm"
+    "replace": "smg_luty"
   },
   {
     "id": "smg_22_mag",
@@ -778,5 +803,70 @@
     "id": "40x46mm_makeshift_he_m199",
     "type": "MIGRATION",
     "replace": "40x46mm_makeshift_he"
+  },
+  {
+    "id": "rifle_22",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_22" ]
+  },
+  {
+    "id": "rifle_38",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_38" ]
+  },
+  {
+    "id": "rifle_40",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_40" ]
+  },
+  {
+    "id": "rifle_44",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_44" ]
+  },
+  {
+    "id": "rifle_45",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_45" ]
+  },
+  {
+    "id": "rifle_9mm",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_9mm" ]
+  },
+  {
+    "id": "rifle_223",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_223" ]
+  },
+  {
+    "id": "rifle_3006",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_3006" ]
+  },
+  {
+    "id": "smg_9mm",
+    "type": "MIGRATION",
+    "replace": "smg_luty"
+  },
+  {
+    "id": "smg_40",
+    "type": "MIGRATION",
+    "replace": "smg_luty",
+    "contents": [ "retool_luty_40" ]
+  },
+  {
+    "id": "smg_45",
+    "type": "MIGRATION",
+    "replace": "smg_luty",
+    "contents": [ "retool_luty_45" ]
   }
 ]

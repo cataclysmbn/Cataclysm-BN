@@ -141,6 +141,7 @@ std::string io::enum_to_string<action_id>( action_id data )
             PAIR( ACTION_MUTATIONS )
             PAIR( ACTION_SORT_ARMOR )
             PAIR( ACTION_AUTOATTACK )
+            PAIR( ACTION_TOGGLE_MANUAL_COMBAT_MODE )
 
             PAIR( ACTION_WAIT )
             PAIR( ACTION_CRAFT )
@@ -524,6 +525,8 @@ std::string action_ident( action_id act )
             return "SEC_SELECT";
         case ACTION_AUTOATTACK:
             return "autoattack";
+        case ACTION_TOGGLE_MANUAL_COMBAT_MODE:
+            return "toggle_manual_combat_mode";
         case ACTION_MAIN_MENU:
             return "main_menu";
         case ACTION_DIARY:

@@ -647,7 +647,9 @@
     "copy-from": "thermal_cooling_suit",
     "name": { "str": "liquid cooling suit (on)", "str_pl": "liquid cooling suits (on)" },
     "description": "This a bodysuit with a number of heatsinks and heating coils tied to a liquid coolant system, and a built-in thermometer.  It is currently working to keep the entire body at an ideal temperature, use it to turn it off.",
-    "extend": { "flags": [ "CLIMATE_CONTROL" ] },
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    },
     "power_draw": 125000,
     "revert_to": "thermal_cooling_suit",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "Your %s deactivates.", "target": "thermal_cooling_suit" }
@@ -951,13 +953,24 @@
       "ELECTRIC_IMMUNE",
       "THERMOMETER",
       "TRADER_AVOID",
-      "CLIMATE_CONTROL",
       "COMBAT_NPC_USE",
       "COMBAT_NPC_ON"
     ],
     "turns_per_charge": 18,
     "revert_to": "rm13_armor",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] },
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [
+            { "value": "STRENGTH", "add": 2 },
+            { "value": "CLIMATE_CONTROL", "add": 750 },
+            { "value": "BLISTER_COUNT", "add": -20 }
+          ]
+        }
+      ]
+    },
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "Your RM13 combat armor turns off.", "target": "rm13_armor" },
     "environmental_protection": 40,
     "encumbrance": 10,
@@ -1081,7 +1094,15 @@
     "qualities": [ [ "HV_INSULATION", 1 ] ],
     "covers": [ "head", "mouth", "eyes", "torso", "arms", "hands", "legs", "feet" ],
     "environmental_protection": 80,
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR_PSI", "add": -25 } ] } ] },
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "values": [ { "value": "ARMOR_PSI", "add": -25 }, { "value": "CLIMATE_CONTROL", "add": 750 } ]
+        }
+      ]
+    },
     "flags": [
       "RAD_PROOF",
       "STURDY",
@@ -1099,7 +1120,6 @@
       "TRADER_AVOID",
       "PSYSHIELD_PARTIAL",
       "GNV_EFFECT",
-      "CLIMATE_CONTROL",
       "COMBAT_NPC_USE",
       "COMBAT_NPC_ON"
     ],

@@ -45,6 +45,12 @@ trajectory mode_fire( avatar &you, aim_activity_actor &activity );
 /** Throwing item */
 trajectory mode_throw( avatar &you, item &relevant, bool blind_throwing );
 
+/** Throwing a grabbed creature */
+trajectory mode_throw_creature( avatar &you, const Creature &thrown_creature, int range );
+
+/** Throwing or shoving a grabbed vehicle */
+trajectory mode_throw_vehicle( avatar &you, const tripoint_bub_ms &grabbed_part_pos, int range );
+
 /** Reach attacking */
 trajectory mode_reach( avatar &you, item &weapon );
 
@@ -188,6 +194,12 @@ int fire_gun( Character &who, const tripoint_bub_ms &target, int shots = 1 );
  */
 int fire_gun( Character &who, const tripoint_bub_ms &target, int shots, item &gun,
               item *ammo, const std::optional<tripoint_bub_ms> &shot_origin = std::nullopt );
+
+/** Generates a projectile for throwing the item, used to show actual damage.*/
+auto throw_damage_projectile( const item &it, const int skill, const int str ) -> projectile;
+
+/** Expected stamina cost for throwing a given item. */
+auto throw_stamina_cost( const Character &thrower, const item &item ) -> int;
 
 /** Expected thrown damage with a given item, given the thrower's effective strength and skill. */
 auto throw_damage( const item &it, const int skill, const int str ) -> int;

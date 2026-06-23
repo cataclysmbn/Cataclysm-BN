@@ -267,6 +267,32 @@ TEST_CASE( "detaching_vehicle_unboards_passengers" )
     REQUIRE( !player_character.in_vehicle );
 }
 
+TEST_CASE( "detaching_opaque_vehicle_invalidates_transparency_cache", "[vehicle][map_cache]" )
+{
+    clear_all_state();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_pavement" ) );
+
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_horizontal" ),
+                                    true ) >= 0 );
+    const auto board = veh_ptr->install_part( tripoint_mnt_veh::zero(),
+                       vpart_id( "clothboard_horizontal" ), true );
+    REQUIRE( board >= 0 );
+
+    const auto board_pos = veh_ptr->bub_part_location( board );
+    here.add_vehicle_to_cache( veh_ptr );
+    here.build_map_cache( board_pos.z(), true );
+    REQUIRE_FALSE( here.is_transparent( board_pos ) );
+
+    here.destroy_vehicle( veh_ptr );
+    here.build_map_cache( board_pos.z(), true );
+
+    CHECK( here.is_transparent( board_pos ) );
+}
+
 TEST_CASE( "destroy_grabbed_vehicle_section" )
 {
     clear_all_state();

@@ -363,5 +363,26 @@
     "loudness_modifier": -1,
     "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ], [ "gun", 2 ] ],
     "flags": [ "NEVER_JAMS", "INSTALL_DIFFICULT", "IRREMOVABLE" ]
+  },
+  {
+    "id": "hc_bar_mag_adapter",
+    "type": "GUNMOD",
+    "name": { "str": "homemade carbine BAR magazine adapter" },
+    "description": "A modified magwell that allows a handmade carbine chambered in .30-06 to accept Browning Automatic Rifle detachable box magazines.  The adapter replaces the internal floorplate and catch assembly.",
+    "weight": "120 g",
+    "volume": "250 ml",
+    "integral_weight": "75 g",
+    "integral_volume": "50 ml",
+    "price": "50 USD",
+    "price_postapoc": "5 USD",
+    "material": "steel",
+    "symbol": ":",
+    "color": "green",
+    "location": "mechanism",
+    "mod_targets": [ "handmade_carbine" ],
+    "acceptable_ammo": [ "3006" ],
+    "install_time": "15 m",
+    "magazine_adaptor": [ [ "3006", [ "m1918mag", "m1918bigmag" ] ] ],
+    "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ]
   }
 ]

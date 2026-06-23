@@ -278,5 +278,22 @@
     "capacity": 7,
     "reliability": 10,
     "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "45_speedloader5",
+    "looks_like": "38_speedloader",
+    "type": "MAGAZINE",
+    "name": { "str": ".45 5-round speedloader" },
+    "description": "This speedloader can hold 5 rounds of .45 ACP and quickly reload a compatible revolver.",
+    "weight": "78 g",
+    "volume": "250 ml",
+    "price": "15 USD",
+    "price_postapoc": "1 USD",
+    "material": "steel",
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo_type": [ "45" ],
+    "capacity": 5,
+    "flags": [ "SPEEDLOADER" ]
   }
 ]
