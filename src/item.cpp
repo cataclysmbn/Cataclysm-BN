@@ -5805,15 +5805,17 @@ units::volume item::volume( bool integral ) const
         }
 
         // Deprecated: COLLAPSIBLE_STOCK flag (replaced by volume_multiplier above)
-        // Only applies when no gunmod uses the modern volume_multiplier mechanism
         if( has_flag( flag_COLLAPSIBLE_STOCK ) ) {
+            // This part only applies when no gunmod uses the modern volume_multiplier mechanism
+            // I'm turning these parts off and only put the legacy multiplier just in case there's a gun mod that uses both the flag and the volume_multiplier
+            /*
             bool has_modern_mult = std::any_of( gunmods().begin(), gunmods().end(),
             []( const item *mod ) {
                 return mod->type->gunmod->volume_multiplier != 1.0f;
             } );
-            if( !has_modern_mult ) {
-                ret -= ( type->volume / 3 );
-            }
+            if( !has_modern_mult ) { */
+            ret -= ( type->volume / 3 );
+            //}
         }
 
         if( gunmod_find( itype_barrel_small ) ) {
