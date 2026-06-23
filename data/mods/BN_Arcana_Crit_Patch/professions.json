@@ -1,0 +1,52 @@
+[
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "starting_mana_gem_18_essence",
+    "entries": [ { "item": "essence", "charges": 18 } ]
+  },
+  {
+    "type": "profession",
+    "id": "crt_arcanist",
+    "name": "C.R.I.T. Anomaly Investigator",
+    "description": "You were a specialist in the C.R.I.T. research department, trained and equipped to investigate anomalous activities and local persons of interest.  You developed a small network of contacts from local organizations with suspected ties to anomalous activity, but the end of the world hit before you could follow up on those leads.  Now, all you have to rely on is your training, gear, and limited research into the strange reality you now face.",
+    "points": 9,
+    "traits": [ "MARTIAL_CRT", "PROF_ARCANIST" ],
+    "skills": [
+      { "level": 3, "name": "fabrication" },
+      { "level": 3, "name": "mechanics" },
+      { "level": 3, "name": "electronics" },
+      { "level": 2, "name": "computer" },
+      { "level": 2, "name": "magic" },
+      { "level": 1, "name": "melee" },
+      { "level": 1, "name": "cutting" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "crt_rec_hat",
+          "crt_aarmor",
+          "crt_jacket",
+          "crt_rec_gloves",
+          "crt_dress_pants",
+          "socks",
+          "crt_boots",
+          "mbag",
+          "lighter",
+          "bowl_pewter",
+          "id_science",
+          "recipe_lab_arcana"
+        ],
+        "entries": [
+          { "item": "mana_gem", "contents-group": "starting_mana_gem_18_essence" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_crt", "container-item": "crt_belt" },
+          { "item": "sword_crt", "container-item": "scabbard" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  }
+]

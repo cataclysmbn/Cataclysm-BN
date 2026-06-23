@@ -1,8 +1,13 @@
 #include "character_turn.h"
 
+#include "action_time_scale.h"
+#include "active_tile_data_def.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "calendar.h"
+#include "distribution_grid.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character_effects.h"
@@ -11,13 +16,13 @@
 #include "character_martial_arts.h"
 #include "character.h"
 #include "creature.h"
+#include "enchantments/enchantment.h"
 #include "flag.h"
 #include "flag_trait.h"
 #include "game.h"
 #include "handle_liquid.h"
 #include "itype.h"
 #include "iuse.h"
-#include "magic_enchantment.h"
 #include "mutation.h"
 #include "overmapbuffer.h"
 #include "make_static.h"
@@ -37,6 +42,7 @@
 #include "weather_gen.h"
 #include "weather.h"
 #include "profile.h"
+#include <algorithm>
 
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
 static const trait_id trait_ARACHNID_ARMS_OK( "ARACHNID_ARMS_OK" );
@@ -80,6 +86,8 @@ static const efftype_id effect_depressants( "depressants" );
 static const efftype_id effect_dermatik( "dermatik" );
 static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_fungus( "fungus" );
+static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_happy( "happy" );
 static const efftype_id effect_irradiated( "irradiated" );
 static const efftype_id effect_masked_scent( "masked_scent" );
@@ -99,11 +107,26 @@ static const skill_id skill_swimming( "swimming" );
 static const skill_id skill_traps( "traps" );
 
 static const bionic_id bio_ground_sonar( "bio_ground_sonar" );
-static const bionic_id bio_hydraulics( "bio_hydraulics" );
 static const bionic_id bio_speed( "bio_speed" );
 
 static const itype_id itype_UPS( "UPS" );
 static const itype_id itype_battery( "battery" );
+
+namespace
+{
+
+auto character_has_adjacent_grabbed_target( const Character &who ) -> bool
+{
+    for( const auto &p : get_map().points_in_radius( who.bub_pos(), 1, 0 ) ) {
+        const Creature *const target = g->critter_at<Creature>( p );
+        if( target != nullptr && target != &who && target->has_effect( effect_grabbed ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+} // namespace
 
 void Character::recalc_speed_bonus()
 {
@@ -142,12 +165,14 @@ void Character::recalc_speed_bonus()
     // Ectothermic/COLDBLOOD4 is intended to buff folks in the Summer
     // Threshold-crossing has its charms ;-)
     if( g != nullptr ) {
-        if( has_trait( trait_SUNLIGHT_DEPENDENT ) && !g->is_in_sunlight( pos() ) ) {
-            mod_speed_bonus( -( g->light_level( posz() ) >= 12 ? 5 : 10 ) );
+        if( has_trait( trait_SUNLIGHT_DEPENDENT ) && !g->is_in_sunlight( bub_pos() ) ) {
+            mod_speed_bonus( -( g->light_level( bub_pos().z() ) >= 12 ? 5 : 10 ) );
         }
-        const float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
+        float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
+        temperature_speed_modifier += bonus_from_enchantments( temperature_speed_modifier,
+                                      enchantment_value_id( "BODYTEMP_SPEED" ) );
         if( temperature_speed_modifier != 0 ) {
-            const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( pos() ) );
+            const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( abs_pos() ) );
             if( has_trait( trait_COLDBLOOD4 ) || player_local_temp < 65 ) {
                 mod_speed_bonus( ( player_local_temp - 65 ) * temperature_speed_modifier );
             }
@@ -164,11 +189,7 @@ void Character::recalc_speed_bonus()
     float speed_modifier = Character::mutation_value( "speed_modifier" );
     mod_speed_mult( speed_modifier - 1 );
 
-    if( has_bionic( bio_speed ) ) { // add 10% speed bonus
-        mod_speed_mult( 0.1 );
-    }
-
-    double ench_bonus = enchantment_cache->calc_bonus( enchant_vals::mod::SPEED, get_speed() );
+    double ench_bonus = enchantment_cache->calc_bonus( enchantment_value_id( "SPEED" ), get_speed() );
     mod_speed_bonus( ench_bonus );
 }
 
@@ -179,14 +200,19 @@ void Character::process_turn()
 
     for( bionic &i : get_bionic_collection() ) {
         if( i.incapacitated_time > 0_turns ) {
-            i.incapacitated_time -= 1_turns;
-            if( i.incapacitated_time == 0_turns ) {
+            i.incapacitated_time -= action_time_scale::calendar_duration_this_tick();
+            if( i.incapacitated_time <= 0_turns ) {
+                i.incapacitated_time = 0_turns;
                 add_msg_if_player( m_bad, _( "Your %s bionic comes back online." ), i.info().name );
             }
         }
     }
 
     Creature::process_turn();
+
+    if( has_effect( effect_grabbing ) && !character_has_adjacent_grabbed_target( *this ) ) {
+        remove_effect( effect_grabbing );
+    }
 
     // If we're actively handling something we can't just drop it on the ground
     // in the middle of handling it
@@ -199,13 +225,30 @@ void Character::process_turn()
 
     suffer();
 
+    // bio_portal_tap: passively draw power from a linked portal's distribution grid.
+    if( bio_portal_tap_linked && has_bionic( bionic_id( "bio_portal_tap" ) ) ) {
+        constexpr int TAP_KJ_PER_TURN = 1;  // draw up to 1 kJ per turn from the grid
+        auto *pt = active_tiles::furn_at<portal_tile>( bio_portal_tap_pos,
+                   MAPBUFFER_REGISTRY.get( bio_portal_tap_dim_id ) );
+        if( pt != nullptr && pt->linked ) {
+            // Look up the grid at the portal position.
+            if( auto *tracker = get_distribution_grid_tracker_for( bio_portal_tap_dim_id ) ) {
+                auto grid = tracker->grid_at( bio_portal_tap_pos );
+                if( grid.get_resource() >= TAP_KJ_PER_TURN ) {
+                    grid.mod_resource( -TAP_KJ_PER_TURN );
+                    mod_power_level( units::from_kilojoule( TAP_KJ_PER_TURN ) );
+                }
+            }
+        }
+    }
+
     // Handle player and NPC morale ticks
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         update_morale();
     }
 
-    if( calendar::once_every( 9_turns ) ) {
+    if( action_time_scale::once_every_this_tick( 9_turns ) ) {
         check_and_recover_morale();
     }
 
@@ -246,7 +289,9 @@ void Character::process_turn()
         for( const trait_id &mut : get_mutations() ) {
             norm_scent *= mut.obj().scent_modifier;
         }
+        norm_scent += bonus_from_enchantments( norm_scent, enchantment_value_id( "SCENT" ) );
 
+        norm_scent = std::max( 0, norm_scent );
         // Scent increases fast at first, and slows down as it approaches normal levels.
         // Estimate it will take about norm_scent * 2 turns to go from 0 - norm_scent / 2
         // Without smelly trait this is about 1.5 hrs. Slows down significantly after that.
@@ -286,17 +331,17 @@ void Character::process_turn()
     if( !is_npc() && ( has_trait( trait_NOMAD ) || has_trait( trait_NOMAD2 ) ||
                        has_trait( trait_NOMAD3 ) ) &&
         !has_effect( effect_sleep ) && !has_effect( effect_narcosis ) ) {
-        const tripoint_abs_omt ompos = global_omt_location();
+        const tripoint_abs_omt ompos = abs_omt_pos();
         const point_abs_omt pos = ompos.xy();
         if( !overmap_time.contains( pos ) ) {
-            overmap_time[pos] = 1_turns;
+            overmap_time[pos] = action_time_scale::calendar_duration_this_tick();
         } else {
-            overmap_time[pos] += 1_turns;
+            overmap_time[pos] += action_time_scale::calendar_duration_this_tick();
         }
     }
     // Decay time spent in other overmap tiles.
-    if( !is_npc() && calendar::once_every( 1_hours ) ) {
-        const tripoint_abs_omt ompos = global_omt_location();
+    if( !is_npc() && action_time_scale::once_every_this_tick( 1_hours ) ) {
+        const tripoint_abs_omt ompos = abs_omt_pos();
         const time_point now = calendar::turn;
         time_duration decay_time = 0_days;
         if( has_trait( trait_NOMAD ) ) {
@@ -314,7 +359,8 @@ void Character::process_turn()
             }
             // Find the amount of time passed since the player touched any of the overmap tile's submaps.
             const tripoint_abs_omt tpt( it->first, 0 );
-            const time_point last_touched = ACTIVE_OVERMAP_BUFFER.scent_at( tpt ).creation_time;
+            const time_point last_touched = get_overmapbuffer( get_avatar().get_dimension() ).scent_at(
+                                                tpt ).creation_time;
             const time_duration since_visit = now - last_touched;
             // If the player has spent little time in this overmap tile, let it decay after just an hour instead of the usual extended decay time.
             const time_duration modified_decay_time = it->second > 5_minutes ? decay_time : 1_hours;
@@ -333,6 +379,11 @@ void Character::process_turn()
             it++;
         }
     }
+}
+
+auto Character::action_move_factor() const -> int
+{
+    return action_time_scale::player_tick_action_factor();
 }
 
 void Character::process_one_effect( effect &it, bool is_new )
@@ -572,7 +623,7 @@ void Character::process_one_effect( effect &it, bool is_new )
 void Character::process_effects_internal()
 {
     //Special Removals
-    if( has_effect( effect_darkness ) && g->is_in_sunlight( pos() ) ) {
+    if( has_effect( effect_darkness ) && g->is_in_sunlight( bub_pos() ) ) {
         remove_effect( effect_darkness );
     }
     // Mycus can still accidentally get infected until they pick up immunity, but won't suffer from it.
@@ -757,7 +808,7 @@ void Character::reset_stats()
     // Apply static martial arts buffs
     martial_arts_data->ma_static_effects( *this );
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         character_funcs::update_mental_focus( *this );
     }
 
@@ -776,11 +827,6 @@ void Character::reset_stats()
         }
     }
 
-    // Bionic buffs
-    if( has_active_bionic( bio_hydraulics ) ) {
-        mod_str_bonus( 20 );
-    }
-
     mod_str_bonus( get_mod_stat_from_bionic( character_stat::STRENGTH ) );
     mod_dex_bonus( get_mod_stat_from_bionic( character_stat::DEXTERITY ) );
     mod_per_bonus( get_mod_stat_from_bionic( character_stat::PERCEPTION ) );
@@ -790,16 +836,18 @@ void Character::reset_stats()
     mod_str_bonus( std::floor( mutation_value( "str_modifier" ) ) );
     mod_dodge_bonus( std::floor( mutation_value( "dodge_modifier" ) ) );
 
-    mod_str_bonus( enchantment_cache->calc_bonus( enchant_vals::mod::STRENGTH, get_str_base(), true ) );
-    mod_dex_bonus( enchantment_cache->calc_bonus( enchant_vals::mod::DEXTERITY, get_dex_base(),
+    mod_str_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "STRENGTH" ), get_str_base(),
                    true ) );
-    mod_per_bonus( enchantment_cache->calc_bonus( enchant_vals::mod::PERCEPTION, get_per_base(),
+    mod_dex_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "DEXTERITY" ), get_dex_base(),
                    true ) );
-    mod_int_bonus( enchantment_cache->calc_bonus( enchant_vals::mod::INTELLIGENCE, get_int_base(),
+    mod_per_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "PERCEPTION" ), get_per_base(),
+                   true ) );
+    mod_int_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "INTELLIGENCE" ),
+                   get_int_base(),
                    true ) );
 
     mod_num_dodges_bonus( enchantment_cache->calc_bonus(
-                              enchant_vals::mod::BONUS_DODGE,
+                              enchantment_value_id( "BONUS_DODGE" ),
                               get_num_dodges_base(),
                               true
                           ) );
@@ -870,7 +918,7 @@ void Character::process_items()
     ZoneScoped;
 
     auto process_item = [this]( detached_ptr<item> &&ptr ) {
-        return item::process( std::move( ptr ), as_player(), pos(), false );
+        return item::process( std::move( ptr ), as_player(), bub_pos(), false );
     };
     if( primary_weapon().needs_processing() ) {
         primary_weapon().attempt_detach( process_item );
@@ -1064,7 +1112,7 @@ void do_pause( Character &who )
 
     // Train swimming if underwater
     if( !who.in_vehicle ) {
-        if( ( get_map().ter( who.pos() ).id().str() == "t_open_air" ) ) {
+        if( ( get_map().ter( who.bub_pos() ).id().str() == "t_open_air" ) ) {
             if( character_funcs::can_fly( who ) ) {
                 // add flying flavor text here
                 for( const trait_id &tid : who.get_mutations() ) {
@@ -1073,8 +1121,10 @@ void do_pause( Character &who )
                         who.mutation_spend_resources( tid );
                     }
                 }
-            } else {
+            } else if( who.is_avatar() ) {
                 g->vertical_move( 0, true );
+            } else {
+                here.creature_on_trap( who, false );
             }
         }
 
@@ -1085,7 +1135,7 @@ void do_pause( Character &who )
                     bodypart_str_id( "foot_l" ), bodypart_str_id( "foot_r" ), bodypart_str_id( "hand_l" ), bodypart_str_id( "hand_r" )
                 }
             }, true );
-        } else if( here.has_flag( TFLAG_DEEP_WATER, who.pos() ) ) {
+        } else if( here.has_flag( TFLAG_DEEP_WATER, who.bub_pos() ) ) {
             // Same as above, except no head/eyes/mouth
             who.drench( 100, { {
                     bodypart_str_id( "leg_l" ), bodypart_str_id( "leg_r" ), bodypart_str_id( "torso" ), bodypart_str_id( "arm_l" ),
@@ -1093,7 +1143,7 @@ void do_pause( Character &who )
                     bodypart_str_id( "hand_r" )
                 }
             }, true );
-        } else if( here.has_flag( "SWIMMABLE", who.pos() ) ) {
+        } else if( here.has_flag( "SWIMMABLE", who.bub_pos() ) ) {
             who.drench( 40, { { bodypart_str_id( "foot_l" ), bodypart_str_id( "foot_r" ), bodypart_str_id( "leg_l" ), bodypart_str_id( "leg_r" ) } },
             false );
         }
@@ -1119,7 +1169,7 @@ void do_pause( Character &who )
         }
 
         // Don't drop on the ground when the ground is on fire
-        if( total_left > 3_turns && !who.is_dangerous_fields( here.field_at( who.pos() ) ) ) {
+        if( total_left > 3_turns && !who.is_dangerous_fields( here.field_at( who.bub_pos() ) ) ) {
             who.add_effect( effect_downed, 2_turns, bodypart_str_id::NULL_ID(), 0, true );
             who.add_msg_player_or_npc( m_warning,
                                        _( "You roll on the ground, trying to smother the fire!" ),
@@ -1171,15 +1221,15 @@ void search_surroundings( Character &who )
     // Search for traps in a larger area than before because this is the only
     // way we can "find" traps that aren't marked as visible.
     // Detection formula takes care of likelihood of seeing within this range.
-    for( const tripoint &tp : here.points_in_radius( who.pos(), 5 ) ) {
+    for( const auto &tp : here.points_in_radius( who.bub_pos(), 5 ) ) {
         const trap &tr = here.tr_at( tp );
-        if( tr.is_null() || tp == who.pos() ) {
+        if( tr.is_null() || tp == who.bub_pos() ) {
             continue;
         }
         if( who.has_active_bionic( bio_ground_sonar ) && !who.knows_trap( tp ) &&
             ( tr.loadid == tr_beartrap_buried ||
               tr.loadid == tr_landmine_buried || tr.loadid == tr_sinkhole ) ) {
-            const std::string direction = direction_name( direction_from( who.pos(), tp ) );
+            const std::string direction = direction_name( direction_from( who.bub_pos(), tp ) );
             who.add_msg_if_player( m_warning, _( "Your ground sonar detected a %1$s to the %2$s!" ),
                                    tr.name(), direction );
             who.add_known_trap( tp, tr );
@@ -1196,7 +1246,7 @@ void search_surroundings( Character &who )
             if( tr.get_visibility() > 0 ) {
                 // Only bug player about traps that aren't trivial to spot.
                 const std::string direction = direction_name(
-                                                  direction_from( who.pos(), tp ) );
+                                                  direction_from( who.bub_pos(), tp ) );
                 who.add_msg_if_player( _( "You've spotted a %1$s to the %2$s!" ),
                                        tr.name(), direction );
                 // Get a bit of experience for spotting traps.

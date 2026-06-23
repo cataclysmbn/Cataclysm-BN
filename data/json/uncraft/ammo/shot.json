@@ -58,12 +58,35 @@
     "type": "uncraft",
     "result": "shot_he",
     "skill_used": "fabrication",
-    "difficulty": 2,
+    "difficulty": 3,
     "skills_required": [ "gun", 1 ],
     "time": "10 s",
     "//": "A little more carefully...",
     "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "shot_hull", 1 ] ], [ [ "shotgun_primer", 1 ] ], [ [ "gunpowder", 3 ] ], [ [ "chem_rdx", 15 ] ] ],
+    "components": [
+      [ [ "shot_hull", 1 ] ],
+      [ [ "shotgun_primer", 1 ] ],
+      [ [ "gunpowder", 3 ] ],
+      [ [ "chem_compositionb", 24 ] ],
+      [ [ "impact_fuze", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "type": "uncraft",
+    "result": "bp_shot_he",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [
+      [ [ "shot_hull", 1 ] ],
+      [ [ "shotgun_primer", 1 ] ],
+      [ [ "chem_black_powder", 3 ] ],
+      [ [ "chem_compositionb", 24 ] ],
+      [ [ "impact_fuze", 1 ] ]
+    ],
     "charges": 1
   },
   {

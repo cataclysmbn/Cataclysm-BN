@@ -53,6 +53,7 @@
       "castaway",
       "professional_diver",
       "underwater_welder",
+      "floatplane_pilot_scenario",
       "bionic_diver",
       "fisher",
       "davy_jones",
@@ -263,7 +264,8 @@
       "prof_fursuiter",
       "clown",
       "broken_cyborg",
-      "true_foodperson"
+      "true_foodperson",
+      "elite_specops"
     ],
     "flags": [ "FIRE_START", "INFECTED", "BAD_DAY", "CHALLENGE", "CITY_START" ]
   },
@@ -275,8 +277,10 @@
     "description": "A temporal distortion has hurled you into this collapsing world. You arrive carrying only the few items that mattered most to you - the things tied to who you are, or who you were meant to become.",
     "start_name": "Wilderness",
     "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
-    "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder" ],
+    "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder", "soldier_wwii" ],
     "forbids_bionics": true,
+    "//": "The few characters modern enough for this to not look weird would still likely be better served by a more historical selection of firearms.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
   {
@@ -399,8 +403,21 @@
       "SMALL",
       "LARGE"
     ],
+    "//": "Do not give the lab rat a gun.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
-    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
+    "bionics": [
+      "afs_bio_dopamine_stimulators",
+      "bio_fuel_cell_hydrogen",
+      "bio_ground_sonar",
+      "bio_infrared",
+      "bio_leukocyte",
+      "bio_minirose",
+      "bio_painkiller",
+      "bio_reactor",
+      "bio_underwater_propellers",
+      "bio_wings"
+    ]
   },
   {
     "type": "scenario",
@@ -418,6 +435,7 @@
       "bio_medic",
       "bionic_mentat",
       "bionic_spy",
+      "bio_specops",
       "military_saboteur",
       "hacker"
     ],
@@ -426,10 +444,11 @@
     "bionics": [
       "bio_atomic_battery",
       "bio_surgical_razor",
-      "bio_metabolics",
-      "bio_torsionratchet",
-      "bio_tools",
+      "bio_fuel_cell_hydrogen",
+      "bio_synaptic_regen",
+      "bio_blood_anal",
       "bio_memory",
+      "bio_electrosense",
       "bio_geiger"
     ]
   },
@@ -468,6 +487,7 @@
     "flags": [ "WIN_START", "LONE_START" ],
     "add_professions": true,
     "professions": [
+      "wolfpack_mutant",
       "sheltered_survivor",
       "sheltered_militia",
       "winter_scavenger",
@@ -508,6 +528,7 @@
     "flags": [ "SUM_ADV_START", "LONE_START" ],
     "add_professions": true,
     "professions": [
+      "wolfpack_mutant",
       "sheltered_survivor",
       "sheltered_militia",
       "winter_scavenger",
@@ -554,7 +575,8 @@
     "allowed_locs": [ "sloc_hospital" ],
     "start_name": "Hospital",
     "forced_traits": [ "FLIMSY2" ],
-    "forbidden_traits": [ "TOUGH" ],
+    "//": "Wearing your piece under your hospital gown would generally be frowned upon in most states.",
+    "forbidden_traits": [ "TOUGH", "CARRY_PERMIT" ],
     "professions": [ "unemployed", "bionic_patient", "patient", "broken_cyborg", "senior" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
   },
@@ -577,6 +599,8 @@
       "cop",
       "convict_escape_team"
     ],
+    "//": "Most professions are convicts, the rest already have their own assigned gear",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CITY_START", "LONE_START" ]
   },
   {
@@ -598,6 +622,7 @@
       "cop",
       "convict_escape_team"
     ],
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START", "CHALLENGE", "OUTDOOR" ]
   },
   {
@@ -609,6 +634,8 @@
     "allowed_locs": [ "sloc_mi-go_camp" ],
     "start_name": "Mi-Go Camp",
     "professions": [ "captive", "migo_escapee", "migo_experiment", "rescuer", "monster_hunter", "escape_team_migo" ],
+    "//": "Most professions had their items taken on capture.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START", "CHALLENGE", "WIN_START" ]
   },
   {
@@ -619,7 +646,16 @@
     "description": "Since birth, your sole purpose in life has been the advancement of genetic science, willingly or not.  Once the Cataclysm struck, you left the lab, and wandered aimlessly, ending up in a forest.",
     "start_name": "Wilderness",
     "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
-    "professions": [ "unemployed", "mutant_patient", "mutant_volunteer", "broken_cyborg", "faulty_bionic", "cykotic", "convict_political" ],
+    "professions": [
+      "unemployed",
+      "mutant_patient",
+      "mutant_volunteer",
+      "wolfpack_mutant",
+      "broken_cyborg",
+      "faulty_bionic",
+      "cykotic",
+      "convict_political"
+    ],
     "traits": [
       "ELFAEYES",
       "NIGHTVISION2",
@@ -673,8 +709,20 @@
       "SMALL",
       "LARGE"
     ],
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START" ],
-    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
+    "bionics": [
+      "afs_bio_dopamine_stimulators",
+      "bio_fuel_cell_hydrogen",
+      "bio_ground_sonar",
+      "bio_infrared",
+      "bio_leukocyte",
+      "bio_minirose",
+      "bio_painkiller",
+      "bio_reactor",
+      "bio_underwater_propellers",
+      "bio_wings"
+    ]
   },
   {
     "type": "scenario",
@@ -732,19 +780,23 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "bionic_spy",
       "national_guard",
       "hitman",
       "assassin",
       "politician",
-      "mili_pilot"
+      "mili_pilot",
+      "fighter_pilot",
+      "major-general"
     ],
     "map_extra": "mx_helicopter",
     "flags": [ "HELI_CRASH", "LONE_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -774,7 +826,8 @@
       "bionic_hitman",
       "bio_gangster",
       "razorgirl",
-      "bio_sniper"
+      "bio_sniper",
+      "bio_specops"
     ],
     "flags": [ "CITY_START" ],
     "missions": [ "MISSION_ASSASSINATION" ]
@@ -817,6 +870,7 @@
       "gyro_pilot",
       "bird_pilot",
       "mili_pilot_blackhawk",
+      "fighter_pilot_f35",
       "airship_pilot",
       "airboat_pilot",
       "aircanoe_pilot"
@@ -834,7 +888,6 @@
       "sloc_basement_bionic",
       "sloc_basement_game",
       "sloc_basement_chem",
-      "sloc_basement_hidden_lab",
       "sloc_basement_meth",
       "sloc_basement_messed",
       "sloc_basement_survival",
@@ -869,14 +922,14 @@
     ],
     "bionics": [
       "bio_atomic_battery",
-      "bn_bio_solar",
+      "bio_fuel_cell_hydrogen",
       "bio_climate",
       "bio_evap",
-      "bio_metabolics",
+      "bio_faraday",
       "bio_recycler",
       "bio_shock_absorber",
-      "bio_tools",
-      "bio_torsionratchet",
+      "bio_soporific",
+      "bio_geiger",
       "bio_weight"
     ]
   },
@@ -903,16 +956,20 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "labtech",
       "bionic_labtech",
       "medic",
-      "mili_pilot"
+      "mili_pilot",
+      "fighter_pilot",
+      "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -970,15 +1027,19 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "medic",
       "mili_pilot",
-      "prof_combat_engineer"
+      "fighter_pilot",
+      "prof_combat_engineer",
+      "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -1003,8 +1064,8 @@
     "flags": [ "CITY_START", "LONE_START", "SUM_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -1013,5 +1074,49 @@
       "bio_blade",
       "bio_weight"
     ]
+  },
+  {
+    "type": "scenario",
+    "id": "irs_auditing",
+    "name": "Death And Taxes",
+    "points": 0,
+    "description": "Conducting an audit of a corporate office's records as part of a career-making official investigation, you found your hosts suddenly much less cooperative. It may be time to render summary judgment and haul ass out of this tower of toil.",
+    "start_name": "Office Tower",
+    "allowed_locs": [ "sloc_office_tower" ],
+    "missions": [ "MISSION_ONE_LAST_AUDIT" ],
+    "professions": [ "irs", "lawyer", "politician" ],
+    "flags": [ "LONE_START", "CITY_START" ]
+  },
+  {
+    "type": "scenario",
+    "id": "lab_cargo_staff_1",
+    "name": "Challenge - Trans-Coast Logistics Concourse",
+    "points": -6,
+    "description": "You were deemed an essential employee and required to stay behind during the facility's evacuation.  You'd better find a keycard before something finds you.",
+    "start_name": "Locked Lab",
+    "professions": [
+      "labtech",
+      "bionic_labtech",
+      "security",
+      "medic",
+      "bionic_installer",
+      "bio_medic",
+      "bionic_mentat",
+      "bionic_spy",
+      "military_saboteur",
+      "hacker"
+    ],
+    "allowed_locs": [ "sloc_lab_concourse_area" ],
+    "bionics": [
+      "bio_atomic_battery",
+      "bio_surgical_razor",
+      "bio_fuel_cell_hydrogen",
+      "bio_synaptic_regen",
+      "bio_blood_anal",
+      "bio_memory",
+      "bio_electrosense",
+      "bio_geiger"
+    ],
+    "flags": [ "CHALLENGE", "LONE_START" ]
   }
 ]

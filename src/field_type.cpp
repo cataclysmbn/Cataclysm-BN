@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 
+#include "assign.h"
 #include "bodypart.h"
 #include "debug.h"
 #include "enum_conversions.h"
@@ -44,6 +45,7 @@ std::string enum_to_string<description_affix>( description_affix data )
         // *INDENT-OFF*
         case description_affix::DESCRIPTION_AFFIX_IN: return "in";
         case description_affix::DESCRIPTION_AFFIX_COVERED_IN: return "covered_in";
+        case description_affix::DESCRIPTION_AFFIX_COVERED_IN_A: return "covered_in_a";
         case description_affix::DESCRIPTION_AFFIX_ON: return "on";
         case description_affix::DESCRIPTION_AFFIX_UNDER: return "under";
         case description_affix::DESCRIPTION_AFFIX_ILLUMINTED_BY: return "illuminated_by";
@@ -179,6 +181,8 @@ void field_type::load( const JsonObject &jo, const std::string & )
                   fallback_intensity_level.monster_spawn_group );
         optional( jao, was_loaded, "light_emitted", intensity_level.light_emitted,
                   fallback_intensity_level.light_emitted );
+        intensity_level.light_color = fallback_intensity_level.light_color;
+        assign( jao, "light_color", intensity_level.light_color );
         optional( jao, was_loaded, "light_override", intensity_level.local_light_override,
                   fallback_intensity_level.local_light_override );
         optional( jao, was_loaded, "translucency", intensity_level.translucency,

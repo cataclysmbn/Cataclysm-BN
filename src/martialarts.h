@@ -133,6 +133,7 @@ class ma_technique
         int knockback_dist = 0;
         float knockback_spread = 0.0f;  // adding randomness to knockback, like tec_throw
         bool powerful_knockback = false;
+        bool controlled_knockback = false;
         std::string aoe;                // corresponds to an aoe shape, defaults to just the target
         bool knockback_follow = false;  // Character follows the knocked-back party into their former tile
 
@@ -144,6 +145,7 @@ class ma_technique
 
         bool miss_recovery = false; // allows free recovery from misses, like tec_feint
         bool grab_break = false;    // allows grab_breaks, like tec_break
+        bool force_unarmed = false;    // no weapon bonus when performing technique
 
         int weighting = 0; //how often this technique is used
 
@@ -344,5 +346,4 @@ std::vector<matype_id> autolearn_martialart_types();
 
 /** Returns true if the character can learn the entered martial art */
 bool can_autolearn_martial_art( const Character &who, const matype_id &ma_id );
-
 

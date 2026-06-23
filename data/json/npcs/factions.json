@@ -54,6 +54,7 @@
     "type": "faction",
     "id": "robofac",
     "name": "Hub 01",
+    "mon_faction": "robofac",
     "likes_u": -200,
     "respects_u": 0,
     "known_by_u": false,
@@ -84,6 +85,7 @@
     "type": "faction",
     "id": "robofac_auxiliaries",
     "name": "Hub 01 Ancillia",
+    "mon_faction": "robofac",
     "likes_u": 15,
     "respects_u": 15,
     "known_by_u": false,
@@ -670,5 +672,29 @@
       "marloss": { "kill on sight": true }
     },
     "description": "A small group of churchgoers that formed a community in the woods.  They welcome anyone in their faction, but hate the unnatural."
+  },
+  {
+    "type": "faction",
+    "id": "tcl_holdouts",
+    "name": "TCL Personnel",
+    "likes_u": 0,
+    "respects_u": 0,
+    "known_by_u": false,
+    "size": 5,
+    "power": 5,
+    "food_supply": 10000,
+    "wealth": 10000,
+    "relations": {
+      "old_guard": {
+        "kill on sight": false,
+        "watch your back": true,
+        "share my stuff": true,
+        "guard your stuff": true,
+        "lets you in": true,
+        "defends your space": true,
+        "knows your voice": true
+      }
+    },
+    "description": "A small handful of survivors who have taken shelter in the research facility they used to work at."
   }
 ]

@@ -206,7 +206,7 @@
         "r": { "item": "fireman_gear", "chance": 50 }
       },
       "place_monsters": [ { "monster": "GROUP_FIRE", "x": [ 1, 22 ], "y": [ 1, 22 ], "density": 0.25 } ],
-      "place_vehicles": [ { "vehicle": "fire_truck", "x": 15, "y": 9, "chance": 40, "rotation": 270 } ]
+      "place_vehicles": [ { "vehicle": "fire_station_vehicles", "x": 15, "y": 9, "chance": 40, "rotation": 270 } ]
     }
   },
   {
@@ -251,8 +251,8 @@
       },
       "place_monsters": [ { "monster": "GROUP_FIRE", "x": [ 1, 22 ], "y": [ 1, 22 ], "density": 0.25 } ],
       "place_vehicles": [
-        { "vehicle": "fire_engine", "x": 3, "y": 9, "chance": 20, "rotation": 270 },
-        { "vehicle": "fire_truck", "x": 13, "y": 9, "chance": 20, "rotation": 270 }
+        { "vehicle": "fire_station_vehicles", "x": 3, "y": 9, "chance": 20, "rotation": 270 },
+        { "vehicle": "fire_station_vehicles", "x": 13, "y": 9, "chance": 20, "rotation": 270 }
       ]
     }
   },
@@ -298,7 +298,7 @@
         "t": { "item": "coffee_table", "chance": 25 }
       },
       "place_monsters": [ { "monster": "GROUP_FIRE", "x": [ 1, 22 ], "y": [ 1, 22 ], "density": 0.3 } ],
-      "place_vehicles": [ { "vehicle": "fire_engine", "x": 16, "y": 6, "chance": 20, "rotation": 90 } ]
+      "place_vehicles": [ { "vehicle": "fire_station_vehicles", "x": 16, "y": 6, "chance": 20, "rotation": 90 } ]
     }
   },
   {
@@ -342,7 +342,7 @@
       },
       "place_monsters": [ { "monster": "GROUP_FIRE", "x": [ 1, 22 ], "y": [ 1, 22 ], "density": 0.3 } ],
       "place_vehicles": [
-        { "vehicle": "fire_engine", "x": 3, "y": 6, "chance": 20, "rotation": 90 },
+        { "vehicle": "fire_station_vehicles", "x": 3, "y": 6, "chance": 20, "rotation": 90 },
         { "vehicle": "ambulance", "x": 14, "y": 5, "chance": 20, "rotation": 90 }
       ]
     }

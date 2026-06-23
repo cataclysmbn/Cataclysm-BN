@@ -5,7 +5,12 @@
 #include "player.h"
 #include "game.h"
 #include "mapgendata.h"
+#include "mapgen_constructor.h"
+#include "profile.h"
+#include "thread_pool.h"
 #include "sol/sol.hpp"
+
+#include <cassert>
 
 mapgen_function_lua::mapgen_function_lua( const std::string &func,
         int weight ) : mapgen_function( weight )
@@ -20,6 +25,9 @@ mapgen_function_lua::mapgen_function_lua( const std::string &func,
 
 void mapgen_function_lua::generate( mapgendata &dat )
 {
+    ZoneScopedN( "mapgen_lua_generate" );
+    // Lua mapgen must always run on the main thread.
+    assert( !is_pool_worker_thread() );
     if( generate_func.valid() ) {
         sol::protected_function_result res = generate_func( &dat, &dat.m );
         check_func_result( res );

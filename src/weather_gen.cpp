@@ -115,7 +115,7 @@ units::temperature weather_generator::get_weather_temperature( const tripoint_ab
             calendar_config, seed ), t );
 }
 
-w_point weather_generator::get_weather( const tripoint &location, const time_point &t,
+w_point weather_generator::get_weather( const tripoint_abs_ms &location, const time_point &t,
                                         unsigned seed ) const
 {
     return get_weather( tripoint_abs_ms( location ), t, calendar::config, seed );
@@ -203,7 +203,7 @@ int weather_generator::forecast_priority( const weather_type_id &w ) const
     return std::distance( weather_types.begin(), it );
 }
 
-const weather_type_id &weather_generator::get_weather_conditions( const tripoint &location,
+const weather_type_id &weather_generator::get_weather_conditions( const tripoint_abs_ms &location,
         const time_point &t, unsigned seed ) const
 {
     w_point w( get_weather( location, t, seed ) );
@@ -340,7 +340,7 @@ void weather_generator::test_weather( unsigned seed = 1000 ) const
         const time_point begin = calendar::turn;
         const time_point end = begin + 2 * calendar::year_length();
         for( time_point i = begin; i < end; i += 20_minutes ) {
-            w_point w = get_weather( tripoint_zero, i, seed );
+            w_point w = get_weather( tripoint_abs_ms::zero(), i, seed );
             const weather_type_id &conditions = get_weather_conditions( w );
 
             int year = to_turns<int>( i - calendar::turn_zero ) / to_turns<int>

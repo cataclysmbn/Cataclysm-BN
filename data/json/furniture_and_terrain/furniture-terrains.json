@@ -302,7 +302,7 @@
       "str_max": 1,
       "sound": "clickity clack… clack… clack",
       "sound_fail": "clickity clack… clack",
-      "sound_vol": 15,
+      "sound_vol": 75,
       "items": [
         { "item": "string_36", "count": [ 3, 15 ] },
         { "item": "stick_long", "count": 1 },
@@ -332,7 +332,7 @@
       "str_max": 1,
       "sound": "clickity clack… clack… clack!",
       "sound_fail": "clickity clack… clack",
-      "sound_vol": 15,
+      "sound_vol": 75,
       "items": [
         { "item": "string_36", "count": [ 3, 15 ] },
         { "item": "stick_long", "count": 1 },
@@ -349,7 +349,7 @@
     "color": "white",
     "move_cost_mod": 0,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "SUN_ROOF_ABOVE", "INDOORS", "FLAT", "PLACE_ITEM" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "SUN_ROOF_ABOVE", "FLAT", "PLACE_ITEM" ],
     "deconstruct": { "items": [ { "item": "sheet", "count": 1 } ] }
   },
   {
@@ -361,7 +361,7 @@
     "color": "white",
     "move_cost_mod": 0,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "INDOORS", "FLAT", "PLACE_ITEM" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "FLAT", "PLACE_ITEM" ],
     "deconstruct": { "items": [ { "item": "sheet", "count": 1 }, { "item": "plastic_sheet", "count": 1 } ] }
   },
   {
@@ -380,7 +380,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [ { "item": "rag", "count": [ 10, 20 ] }, { "item": "pointy_stick_long", "count": [ 0, 1 ] } ]
@@ -403,7 +403,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [
@@ -439,7 +439,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [ { "item": "rag", "count": [ 10, 20 ] } ]
@@ -456,14 +456,14 @@
     "move_cost_mod": 2,
     "coverage": 95,
     "required_str": -1,
-    "flags": [ "FLAMMABLE", "INDOORS", "TRANSPARENT" ],
+    "flags": [ "FLAMMABLE", "TRANSPARENT" ],
     "close": "f_canvas_door",
     "bash": {
       "str_min": 1,
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [ { "item": "rag", "count": [ 10, 20 ] } ]
@@ -489,7 +489,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [
@@ -516,14 +516,14 @@
     "move_cost_mod": 2,
     "coverage": 95,
     "required_str": -1,
-    "flags": [ "FLAMMABLE", "INDOORS", "TRANSPARENT" ],
+    "flags": [ "FLAMMABLE", "TRANSPARENT" ],
     "close": "f_large_canvas_door",
     "bash": {
       "str_min": 4,
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [
@@ -549,7 +549,7 @@
     "color": "green",
     "move_cost_mod": 0,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "INDOORS", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
+    "flags": [ "TRANSPARENT", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
     "examine_action": "portable_structure",
     "deployed_item": "tent_kit",
     "bash": {
@@ -557,7 +557,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "items": [ { "item": "broketent" } ],
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ]
     }
@@ -571,13 +571,13 @@
     "color": "green",
     "move_cost_mod": 0,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "INDOORS", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
+    "flags": [ "TRANSPARENT", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
     "bash": {
       "str_min": 1,
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "collapse_radius": 2,
       "tent_centers": [ "f_center_groundsheet" ]
     }
@@ -591,7 +591,7 @@
     "color": "green",
     "move_cost_mod": 0,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "INDOORS", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
+    "flags": [ "TRANSPARENT", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
     "examine_action": "portable_structure",
     "deployed_item": "large_tent_kit",
     "bash": {
@@ -599,7 +599,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "collapse_radius": 2,
       "items": [ { "item": "largebroketent" } ],
       "tent_centers": [ "f_center_groundsheet" ]
@@ -614,13 +614,13 @@
     "color": "green",
     "move_cost_mod": 0,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "INDOORS", "ORGANIC", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
+    "flags": [ "TRANSPARENT", "ORGANIC", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
     "bash": {
       "str_min": 1,
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ]
     }
   },
@@ -640,7 +640,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ],
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" }
@@ -663,7 +663,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ],
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" }
@@ -685,7 +685,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ]
     }
   },
@@ -698,7 +698,7 @@
     "color": "brown",
     "move_cost_mod": 0,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "INDOORS", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
+    "flags": [ "TRANSPARENT", "NOCOLLIDE", "SUN_ROOF_ABOVE" ],
     "examine_action": "portable_structure",
     "deployed_item": "shelter_kit",
     "bash": {
@@ -706,7 +706,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 8,
+      "sound_vol": 60,
       "items": [ { "item": "damaged_shelter_kit" } ],
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ]
     }
@@ -1345,7 +1345,7 @@
     "deconstruct": {
       "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "string_6", "count": 4 }, { "item": "tarp", "count": 1 } ]
     },
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "INDOORS", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
   },
   {
     "id": "f_tarptent_leather",
@@ -1371,6 +1371,6 @@
     "deconstruct": {
       "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "cordage_6", "count": 6 }, { "item": "leather_tarp", "count": 1 } ]
     },
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "THIN_OBSTACLE", "INDOORS", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "THIN_OBSTACLE", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
   }
 ]

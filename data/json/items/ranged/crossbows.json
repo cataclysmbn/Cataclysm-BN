@@ -16,6 +16,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.5, "armor_multiplier": 2 },
     "dispersion": 250,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 2
   },
@@ -36,6 +37,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.75, "armor_multiplier": 1.5 },
     "dispersion": 180,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 6
   },
@@ -56,6 +58,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.5 },
     "dispersion": 210,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 10,
     "effects": [ "NOGIB" ]
@@ -78,6 +81,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.75 },
     "dispersion": 180,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 8
@@ -98,6 +102,7 @@
     "ammo_type": "bolt",
     "dispersion": 110,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 25
   },
@@ -118,6 +123,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.8, "armor_penetration": 10, "armor_multiplier": 0.75 },
     "dispersion": 100,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 30
   },
@@ -138,6 +144,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.5 },
     "dispersion": 130,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 35,
     "effects": [ "NOGIB" ]
@@ -161,6 +168,7 @@
     "effects": [ "POISON" ],
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 25
@@ -193,6 +201,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 1.15 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 20
@@ -214,6 +223,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 1, "armor_multiplier": 1.5 },
     "dispersion": 100,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 20
@@ -235,6 +245,7 @@
     "range": 2,
     "dispersion": 70,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 35
   },
@@ -257,6 +268,7 @@
     "range": 2,
     "dispersion": 65,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 40
   },
@@ -279,6 +291,7 @@
     "range": 2,
     "dispersion": 70,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 45,
     "effects": [ "NOGIB" ]
@@ -302,6 +315,7 @@
     "range": 4,
     "dispersion": 60,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "stack_size": 10,
     "dont_recover_one_in": 30
@@ -325,6 +339,7 @@
     "range": 8,
     "dispersion": 135,
     "loudness": 0,
+    "speed": 100,
     "stack_size": 10,
     "effects": [ "COOKOFF", "EXPLOSIVE_SMALL" ]
   },
@@ -346,7 +361,7 @@
     "dispersion": 55,
     "durability": 6,
     "reload": 400,
-    "loudness": 3,
+    "loudness": 45,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "grip", 1 ],
@@ -372,7 +387,7 @@
     "material": [ "wood" ],
     "looks_like": "crossbow",
     "range": 6,
-    "loudness": 8,
+    "loudness": 50,
     "ranged_damage": { "damage_type": "stab", "amount": 30 },
     "dispersion": 500,
     "durability": 5,
@@ -391,7 +406,7 @@
     "weight": "900 g",
     "volume": "500 ml",
     "bashing": 4,
-    "loudness": 2,
+    "loudness": 40,
     "ranged_damage": { "damage_type": "stab", "amount": 40 }
   },
   {
@@ -409,7 +424,7 @@
     "volume": "1500 ml",
     "bashing": 11,
     "to_hit": 1,
-    "loudness": 10,
+    "loudness": 55,
     "ranged_damage": { "damage_type": "stab", "amount": 45 },
     "range": 22,
     "dispersion": 375,
@@ -433,7 +448,7 @@
     "to_hit": 1,
     "ranged_damage": { "damage_type": "stab", "amount": 55 },
     "range": 32,
-    "loudness": 8,
+    "loudness": 50,
     "dispersion": 350,
     "durability": 6,
     "reload": 1200
@@ -454,7 +469,7 @@
     "to_hit": 1,
     "ranged_damage": { "damage_type": "stab", "amount": 60 },
     "range": 32,
-    "loudness": 12,
+    "loudness": 60,
     "dispersion": 325,
     "durability": 6,
     "reload": 1000,
@@ -484,7 +499,7 @@
     "to_hit": -1,
     "ranged_damage": { "damage_type": "stab", "amount": 75 },
     "range": 44,
-    "loudness": 15,
+    "loudness": 65,
     "dispersion": 300,
     "recoil": 30,
     "durability": 6,
@@ -508,7 +523,7 @@
     "to_hit": -1,
     "ranged_damage": { "damage_type": "stab", "amount": 40 },
     "range": 15,
-    "loudness": 5,
+    "loudness": 45,
     "dispersion": 500,
     "recoil": 30,
     "durability": 6,
@@ -601,7 +616,7 @@
     "ranged_damage": { "damage_type": "stab", "amount": 80 },
     "looks_like": "huge_crossbow",
     "range": 45,
-    "loudness": 30,
+    "loudness": 70,
     "dispersion": 250,
     "recoil": 50,
     "durability": 5,

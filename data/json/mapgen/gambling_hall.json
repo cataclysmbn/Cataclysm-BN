@@ -151,7 +151,7 @@
           "y": 11
         },
         { "chunks": [ [ "null", 50 ], [ "roof_6x6_survivor", 50 ] ], "x": 9, "y": 16 },
-        { "chunks": [ [ "roof_16x16_help", 20 ], [ "null", 80 ] ], "x": 2, "y": 4 }
+        { "chunks": [ [ "roof_16x16_help", 20 ], [ "roof_12x12_aircraft", 5 ], [ "null", 80 ] ], "x": 2, "y": 4 }
       ]
     }
   },

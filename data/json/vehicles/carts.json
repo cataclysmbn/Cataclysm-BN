@@ -285,6 +285,7 @@
     "type": "vehicle",
     "name": "Dogsled",
     "blueprint": [  ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_light_vertical", "wood box" ] },
       { "x": -1, "y": 0, "parts": [ "frame_wood_light_vertical", "wood box" ] },

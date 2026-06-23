@@ -13,8 +13,8 @@
     "bash": {
       "str_min": 15,
       "str_max": 40,
-      "sound_vol": 3,
-      "sound_fail_vol": 2,
+      "sound_vol": 45,
+      "sound_fail_vol": 30,
       "sound": "crash!",
       "sound_fail": "smash!",
       "msg_success": "You destroy the foamcrete."

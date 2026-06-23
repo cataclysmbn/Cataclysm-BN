@@ -1,0 +1,111 @@
+[
+  {
+    "id": "bio_electrothermal_arc_projector",
+    "type": "bionic",
+    "name": { "str": "Electrothermal Arc Projector" },
+    "description": "Integrated into your left arm is a device capable of firing exotic bolts of energy that bounce from target to target, electrocuting with explosive bursts of lightning and immolating them.",
+    "occupied_bodyparts": [ [ "arm_l", 4 ] ],
+    "act_cost": "80 kJ",
+    "fake_item": "bio_electrothermal_arc_projector_gun",
+    "flags": [ "BIONIC_GUN", "BIONIC_NPC_USABLE" ],
+    "points": 3
+  },
+  {
+    "id": "bio_rift_focus_projector",
+    "type": "bionic",
+    "name": { "str": "Rift Focus Projector" },
+    "description": "Integrated into your right hand is a device capable of creating small holes in reality, focusing them into beams of supernatural energy.  Reasonably potent with good range, but utterly useless against robotic targets, and some otherworldly monsters are also immune to it.  Its shots also carry a risk of creating temporary rifts in reality.",
+    "occupied_bodyparts": [ [ "hand_r", 1 ] ],
+    "act_cost": "60 kJ",
+    "fake_item": "bio_rift_focus_projector_gun",
+    "flags": [ "BIONIC_GUN", "BIONIC_NPC_USABLE" ],
+    "points": 3
+  },
+  {
+    "id": "bio_essence_surge_cell",
+    "type": "bionic",
+    "name": { "str": "Surge Cell - Essence" },
+    "description": "A miniaturized reactor of exotic manufacture, with separate chambers to store and consume one of four different types of essence at the same time.  This component will draw on any stored standard essence.",
+    "occupied_bodyparts": [ [ "torso", 8 ] ],
+    "fuel_options": [ "essence" ],
+    "fuel_capacity": 50,
+    "fuel_efficiency": 1.0,
+    "time": 1,
+    "flags": [ "BIONIC_TOGGLED", "BIONIC_POWER_SOURCE", "BIONIC_NPC_USABLE" ],
+    "included_bionics": [ "bio_essence_blood_surge_cell", "bio_essence_dull_surge_cell", "bio_essence_pure_surge_cell" ],
+    "points": 2
+  },
+  {
+    "id": "bio_essence_blood_surge_cell",
+    "type": "bionic",
+    "name": { "str": "Surge Cell - Blood Essence" },
+    "description": "A miniaturized reactor of exotic manufacture, with separate chambers to store and consume one of four different types of essence at the same time.  This component will draw on any stored blood essence.",
+    "fuel_options": [ "essence_blood" ],
+    "fuel_capacity": 150,
+    "fuel_efficiency": 1.0,
+    "time": 1,
+    "flags": [ "BIONIC_TOGGLED", "BIONIC_POWER_SOURCE", "BIONIC_NPC_USABLE" ],
+    "included": true
+  },
+  {
+    "id": "bio_essence_dull_surge_cell",
+    "type": "bionic",
+    "name": { "str": "Surge Cell - Dull Essence" },
+    "description": "A miniaturized reactor of exotic manufacture, with separate chambers to store and consume one of four different types of essence at the same time.  This component will draw on any stored dull essence.",
+    "fuel_options": [ "essence_dull" ],
+    "fuel_capacity": 1500,
+    "fuel_efficiency": 1.0,
+    "time": 1,
+    "flags": [ "BIONIC_TOGGLED", "BIONIC_POWER_SOURCE", "BIONIC_NPC_USABLE" ],
+    "included": true
+  },
+  {
+    "id": "bio_essence_pure_surge_cell",
+    "type": "bionic",
+    "name": { "str": "Surge Cell - Crystallized Essence" },
+    "description": "A miniaturized reactor of exotic manufacture, with separate chambers to store and consume one of four different types of essence at the same time.  This component will draw on any stored crystallized essence.",
+    "fuel_options": [ "essence_pure" ],
+    "fuel_capacity": 5,
+    "fuel_efficiency": 1.0,
+    "time": 1,
+    "flags": [ "BIONIC_TOGGLED", "BIONIC_POWER_SOURCE", "BIONIC_NPC_USABLE" ],
+    "included": true
+  },
+  {
+    "id": "bio_temporal_stimulation",
+    "type": "bionic",
+    "name": { "str": "Temporal Stimulation" },
+    "description": "A network of emitters that distort time to a limited extent when activated, increasing your speed and stamina in exchange for greatly increased hunger, thirst, and fatigue.",
+    "occupied_bodyparts": [ [ "torso", 8 ], [ "arm_l", 2 ], [ "arm_r", 2 ], [ "leg_l", 3 ], [ "leg_r", 3 ] ],
+    "enchantments": [ "ENCH_CBM_TEMPORAL_STIMULATION" ],
+    "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE", "COMBAT_NPC_USE" ],
+    "act_cost": "1 kJ",
+    "react_cost": "1 kJ",
+    "time": 1,
+    "points": 3
+  },
+  {
+    "id": "bio_life_sign_suppression",
+    "type": "bionic",
+    "name": { "str": "Life Sign Suppression" },
+    "description": "An exotic device that radiates disruptive energies when active, creating a shroud that blinds the undead to your presence.  In exchange it sickens the body steadily, plus wildlife will sense that something is off…",
+    "occupied_bodyparts": [ [ "torso", 4 ] ],
+    "enchantments": [ "ENCH_CBM_LIFE_SIGN_SUPPRESSION" ],
+    "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE", "COMBAT_NPC_USE" ],
+    "act_cost": "750 J",
+    "react_cost": "750 J",
+    "time": 1,
+    "points": 4
+  },
+  {
+    "id": "bio_kinetic_amplifier",
+    "type": "bionic",
+    "name": { "str": "Kinetic Amplifier" },
+    "description": "Implanted in one arm is a device that weaponizes kinetic energy through anomalous means.  When deployed, it can give your punches a powerful knockback effect while amplifying damage and armor penetration.  It comes with the side effect of your punches sometimes giving off a blinding flashbang effect.",
+    "occupied_bodyparts": [ [ "arm_r", 3 ] ],
+    "act_cost": "50 J",
+    "fake_item": "bio_kinetic_amplifier_weapon",
+    "flags": [ "BIONIC_TOGGLED", "BIONIC_WEAPON", "BIONIC_NPC_USABLE" ],
+    "points": 3
+  }
+]

@@ -4,21 +4,21 @@
 #include <memory>
 
 #include "avatar.h"
+#include "coordinates.h"
 #include "game.h"
 #include "item.h"
 #include "monster.h"
 #include "mtype.h"
 #include "player.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "string_id.h"
 #include "type_id.h"
 
-static monster *find_adjacent_monster( const tripoint &pos )
+static monster *find_adjacent_monster( const tripoint_bub_ms &pos )
 {
-    tripoint target = pos;
-    for( target.x = pos.x - 1; target.x <= pos.x + 1; target.x++ ) {
-        for( target.y = pos.y - 1; target.y <= pos.y + 1; target.y++ ) {
+    tripoint_bub_ms target = pos;
+    for( target.x() = pos.x() - 1; target.x() <= pos.x() + 1; target.x()++ ) {
+        for( target.y() = pos.y() - 1; target.y() <= pos.y() + 1; target.y()++ ) {
             if( target == pos ) {
                 continue;
             }
@@ -44,7 +44,7 @@ TEST_CASE( "manhack", "[iuse_actor][manhack]" )
     int test_item_pos = dummy.inv_position_by_item( &test_item );
     REQUIRE( test_item_pos != INT_MIN );
 
-    monster *new_manhack = find_adjacent_monster( dummy.pos() );
+    monster *new_manhack = find_adjacent_monster( dummy.bub_pos() );
     REQUIRE( new_manhack == nullptr );
 
     dummy.invoke_item( &test_item );
@@ -52,7 +52,7 @@ TEST_CASE( "manhack", "[iuse_actor][manhack]" )
     test_item_pos = dummy.inv_position_by_item( &test_item );
     REQUIRE( test_item_pos == INT_MIN );
 
-    new_manhack = find_adjacent_monster( dummy.pos() );
+    new_manhack = find_adjacent_monster( dummy.bub_pos() );
     REQUIRE( new_manhack != nullptr );
     REQUIRE( new_manhack->type->id == mtype_id( "mon_manhack" ) );
     g->clear_zombies();

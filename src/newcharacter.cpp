@@ -30,6 +30,7 @@
 #include "character_martial_arts.h"
 #include "color.h"
 #include "cursesdef.h"
+#include "enchantments/enchantment.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "game.h"
@@ -42,7 +43,6 @@
 #include "lightmap.h"
 #include "npc_class.h"
 #include "magic.h"
-#include "magic_enchantment.h"
 #include "make_static.h"
 #include "mapsharing.h"
 #include "martialarts.h"
@@ -118,6 +118,29 @@ static auto random_age_for_profession( const profession &prof ) -> int
         return min_age;
     }
     return rng( min_age, max_age );
+}
+
+static auto scenario_is_selectable( const scenario &scen, const bool cities_enabled ) -> bool
+{
+    return !scen.scen_is_blacklisted() && ( !scen.has_flag( flag_CITY_START ) || cities_enabled );
+}
+
+static auto first_selectable_scenario( const bool cities_enabled ) -> const scenario * // *NOPAD*
+{
+    const auto &scenarios = scenario::get_all();
+    const auto iter = std::ranges::find_if( scenarios, [cities_enabled]( const scenario & scen ) {
+        return scenario_is_selectable( scen, cities_enabled );
+    } );
+    return iter != scenarios.end() ? &( *iter ) : scenario::generic();
+}
+
+static auto first_selectable_scenario( const std::vector<const scenario *> &scenarios,
+                                       const bool cities_enabled ) -> const scenario * // *NOPAD*
+{
+    const auto iter = std::ranges::find_if( scenarios, [cities_enabled]( const scenario * scen ) {
+        return scenario_is_selectable( *scen, cities_enabled );
+    } );
+    return iter != scenarios.end() ? *iter : scenarios.front();
 }
 
 // Colors used in this file: (Most else defaults to c_light_gray)
@@ -260,20 +283,23 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
     }
     // if adjusting min and max height from 145 and 200, make sure to see set_description()
     init_height = rng( 145, 200 );
-    bool cities_enabled = world_generator->active_world->info->WORLD_OPTIONS["CITY_SIZE"].getValue() !=
-                          "0";
+    const auto cities_enabled =
+        world_generator->active_world->info->WORLD_OPTIONS["CITY_SIZE"].getValue() !=
+        "0";
     if( random_scenario ) {
         std::vector<const scenario *> scenarios;
         for( const auto &scen : scenario::get_all() ) {
-            if( !scen.has_flag( flag_CHALLENGE ) &&
-                ( !scen.has_flag( flag_CITY_START ) || cities_enabled ) ) {
+            if( !scen.has_flag( flag_CHALLENGE ) && scenario_is_selectable( scen, cities_enabled ) ) {
                 scenarios.emplace_back( &scen );
             }
         }
-        g->scen = random_entry( scenarios );
-    } else if( !cities_enabled ) {
-        static const string_id<scenario> wilderness_only_scenario( "wilderness" );
-        g->scen = &wilderness_only_scenario.obj();
+        if( scenarios.empty() ) {
+            g->scen = first_selectable_scenario( cities_enabled );
+        } else {
+            g->scen = random_entry( scenarios );
+        }
+    } else if( !scenario_is_selectable( *g->scen, cities_enabled ) ) {
+        g->scen = first_selectable_scenario( cities_enabled );
     }
 
     prof = g->scen->weighted_random_profession();
@@ -431,7 +457,7 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
             case 8:
             case 9:
                 const skill_id aSkill = Skill::random_skill();
-                const int level = get_skill_level( aSkill );
+                const int level = get_skill_level( aSkill, true );
 
                 if( level < points.skill_points_left() && level < MAX_SKILL && loops > 10000 ) {
                     points.skill_points -= skill_increment_cost( *this, aSkill );
@@ -919,11 +945,14 @@ tab_direction set_stats( avatar &u, points_left &points )
     // Setting the position to -1 ensures that the INBOUNDS check in
     // map.cpp is triggered. This check prevents access to invalid position
     // on the map (like -1,0) and instead returns a dummy default value.
-    u.setx( -1 );
+    auto old_pos = u.bub_pos();
+    old_pos.x() = -1;
+    u.Character::setpos( old_pos );
     u.reset();
     // set position back to 0 to prevent out-of-bound access to lightmap
     // array in map::build_seen_cache()
-    u.setx( 0 );
+    old_pos.x() = 0;
+    u.Character::setpos( old_pos );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w );
@@ -1480,11 +1509,11 @@ tab_direction set_traits( avatar &u, points_left &points )
                     popup( _( "Your profession of %s prevents you from removing this trait." ),
                            u.prof->gender_appropriate_name( u.male ) );
                 } else {
-                    const bool is_mandatory = std::ranges::any_of( cur_trait.obj().types,
+                    const auto mandatory_type = std::ranges::find_if( cur_trait.obj().types,
                     []( const auto & t ) { return mutation_type_is_mandatory( t ); } );
-                    if( is_mandatory ) {
+                    if( mandatory_type != cur_trait.obj().types.end() ) {
                         inc_type = 0;
-                        popup( _( "You must have a trait of this type." ) );
+                        popup( _( "You need to select 1 %s." ), mutation_type_display_name( *mandatory_type ) );
                     }
                 }
             } else if( newcharacter::has_conflicting_trait( u, cur_trait ) ) {
@@ -2546,7 +2575,7 @@ tab_direction set_profession( avatar &u, points_left &points,
  */
 static int skill_increment_cost( const Character &u, const skill_id &skill )
 {
-    return std::max( 1, ( u.get_skill_level( skill ) + 1 ) / 2 );
+    return std::max( 1, ( u.get_skill_level( skill, true ) + 1 ) / 2 );
 }
 
 tab_direction set_skills( avatar &u, points_left &points )
@@ -2617,7 +2646,7 @@ tab_direction set_skills( avatar &u, points_left &points )
 
         // Write the hint as to upgrade costs
         const int cost = skill_increment_cost( u, currentSkill->ident() );
-        const int level = u.get_skill_level( currentSkill->ident() );
+        const int level = u.get_skill_level( currentSkill->ident(), true );
         const int upgrade_levels = level == 0 ? 2 : 1;
         // We have two different strings to pluralize, so we have to use two
         // translation calls.
@@ -2725,7 +2754,7 @@ tab_direction set_skills( avatar &u, points_left &points )
             if( y < iContentHeight + 5 ) {
                 // Clear the line. 2 for x-coord because category names will be scrolled over.
                 mvwprintz( w, point( 2, y ), c_light_gray, std::string( getmaxx( w ) - 3, ' ' ) );
-                if( u.get_skill_level( thisSkill->ident() ) == 0 ) {
+                if( u.get_skill_level( thisSkill->ident(), true ) == 0 ) {
                     mvwprintz( w, point( 4, y ),
                                ( i == cur_pos ? h_light_gray : c_light_gray ), thisSkill->name() );
                 } else {
@@ -2734,7 +2763,7 @@ tab_direction set_skills( avatar &u, points_left &points )
                                thisSkill->name() );
                     mvwprintz( w, point( 20, y ),
                                ( i == cur_pos ? hilite( COL_SKILL_USED ) : COL_SKILL_USED ),
-                               " (%d)", u.get_skill_level( thisSkill->ident() ) );
+                               " (%d)", u.get_skill_level( thisSkill->ident(), true ) );
                 }
             }
             for( auto &prof_skill : u.prof->skills() ) {
@@ -2765,7 +2794,7 @@ tab_direction set_skills( avatar &u, points_left &points )
         } else if( action == "RANDOMIZE" ) {
             cur_pos = modulo( rng( 0, num_skills - 1 ), num_skills );
         } else if( action == "LEFT" ) {
-            const int level = u.get_skill_level( currentSkill->ident() );
+            const int level = u.get_skill_level( currentSkill->ident(), true );
             if( level > 0 ) {
                 // For balance reasons, increasing a skill from level 0 gives 1 extra level for free, but
                 // decreasing it from level 2 forfeits the free extra level (thus changes it to 0)
@@ -2774,7 +2803,7 @@ tab_direction set_skills( avatar &u, points_left &points )
                 points.skill_points += skill_increment_cost( u, currentSkill->ident() );
             }
         } else if( action == "RIGHT" ) {
-            const int level = u.get_skill_level( currentSkill->ident() );
+            const int level = u.get_skill_level( currentSkill->ident(), true );
             if( level < MAX_SKILL ) {
                 points.skill_points -= skill_increment_cost( u, currentSkill->ident() );
                 // For balance reasons, increasing a skill from level 0 gives 1 extra level for free
@@ -3097,11 +3126,13 @@ tab_direction set_scenario( avatar &u, points_left &points,
             scenario_sorter.cities_enabled = wopts["CITY_SIZE"].getValue() != "0";
             std::stable_sort( sorted_scens.begin(), sorted_scens.end(), scenario_sorter );
 
-            // If city size is 0 but the current scenario requires cities reset the scenario
-            if( !scenario_sorter.cities_enabled && g->scen->has_flag( "CITY_START" ) ) {
-                reset_scenario( u, sorted_scens[0] );
+            // Reset if the current scenario is no longer selectable, such as when a mod whitelist hides it.
+            if( !scenario_is_selectable( *g->scen, scenario_sorter.cities_enabled ) ) {
+                const auto *fallback_scenario = first_selectable_scenario( sorted_scens,
+                                                scenario_sorter.cities_enabled );
+                reset_scenario( u, fallback_scenario );
                 points.init_from_options();
-                points.skill_points -= sorted_scens[cur_id]->point_cost();
+                points.skill_points -= g->scen->point_cost();
             }
 
             // Select the current scenario, if possible.
@@ -3441,7 +3472,8 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         profession::StartingSkillList list_skills = you.prof->skills();
         skill_displayType_id last_category = skill_displayType_id::NULL_ID();
         for( auto &elem : skillslist ) {
-            int level = you.get_skill_level( elem->ident() );
+            // Here we can display the actual level because it is not editing it
+            int level = you.get_skill_level( elem->ident(), false );
 
             if( points.limit != points_left::TRANSFER ) {
                 for( auto &prof_skill : you.prof->skills() ) {
@@ -4035,6 +4067,23 @@ trait_id Character::get_random_trait( const std::function<bool( const mutation_b
     return random_entry( vTraits );
 }
 
+
+auto newcharacter::add_default_mutation_type_traits( Character &ch ) -> void
+{
+    for( const auto &default_mutation : get_default_mutations_for_types() ) {
+        const auto mutations = get_mutations_in_type( default_mutation.type_id );
+        const auto has_mutation_type = std::ranges::any_of( mutations, [&]( const auto & trait ) {
+            return ch.has_trait( trait );
+        } );
+        if( !has_mutation_type && default_mutation.trait.is_valid() ) {
+            if( ch.has_base_trait( default_mutation.trait ) ) {
+                ch.set_mutation( default_mutation.trait );
+            } else {
+                ch.toggle_trait( default_mutation.trait );
+            }
+        }
+    }
+}
 
 void Character::randomize_cosmetic_trait( std::string mutation_type )
 {

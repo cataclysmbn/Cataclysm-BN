@@ -35,6 +35,7 @@ enum class cata_variant_type : int {
     character_id,
     character_movemode,
     efftype_id,
+    enchantment_value_id,
     flag_id,
     faction_id,
     field_type_id,
@@ -63,6 +64,7 @@ enum class cata_variant_type : int {
     trap_id,
     trap_str_id,
     vgroup_id,
+    vpalette_id,
     zone_type_id,
     num_types, // last
 };
@@ -170,7 +172,7 @@ struct convert_enum {
 };
 
 // These are the specializations of convert for each value type.
-static_assert( static_cast<int>( cata_variant_type::num_types ) == 37,
+static_assert( static_cast<int>( cata_variant_type::num_types ) == 39,
                "This assert is a reminder to add conversion support for any new types to the "
                "below specializations" );
 
@@ -227,6 +229,10 @@ struct convert<cata_variant_type::character_movemode> : convert_enum<character_m
 
 template<>
 struct convert<cata_variant_type::efftype_id> : convert_string_id<efftype_id> {};
+
+template<>
+struct convert<cata_variant_type::enchantment_value_id> :
+    convert_string_id<enchantment_value_id> {};
 
 template<>
 struct convert<cata_variant_type::flag_id> : convert_string_id<flag_id> {};
@@ -325,6 +331,9 @@ struct convert<cata_variant_type::trap_str_id> : convert_string_id<trap_str_id> 
 
 template<>
 struct convert<cata_variant_type::vgroup_id> : convert_string_id<vgroup_id> {};
+
+template<>
+struct convert<cata_variant_type::vpalette_id> : convert_string_id<vpalette_id> {};
 
 template<>
 struct convert<cata_variant_type::zone_type_id> : convert_string_id<zone_type_id> {};

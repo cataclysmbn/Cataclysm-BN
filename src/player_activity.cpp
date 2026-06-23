@@ -6,12 +6,14 @@
 #include <memory>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "activity_type.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_turn.h"
@@ -36,6 +38,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "translations.h"
+#include "type_id.h"
 
 using metric = std::pair<units::mass, units::volume>;
 
@@ -65,7 +68,31 @@ static const activity_id ACT_PICKAXE( "ACT_PICKAXE" );
 static const activity_id ACT_READ( "ACT_READ" );
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
 static const activity_id ACT_VEHICLE( "ACT_VEHICLE" );
+static const activity_id ACT_TRY_SLEEP( "ACT_TRY_SLEEP" );
+static const activity_id ACT_WAIT( "ACT_WAIT" );
+static const activity_id ACT_WAIT_NPC( "ACT_WAIT_NPC" );
 static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
+static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
+
+auto activity_uses_calendar_duration_progress( const activity_id &id ) -> bool
+{
+    return id == ACT_TRY_SLEEP || id == ACT_WAIT || id == ACT_WAIT_NPC ||
+           id == ACT_WAIT_STAMINA || id == ACT_WAIT_WEATHER;
+}
+
+static auto progress_per_calendar_turn_for( const player_activity &activity ) -> int
+{
+    return activity_uses_calendar_duration_progress( activity.id() ) ?
+           action_time_scale::base_moves_per_turn :
+           activity.speed.calendar_moves_per_turn();
+}
+
+static auto progress_per_tick_for( const player_activity &activity ) -> int
+{
+    return activity_uses_calendar_duration_progress( activity.id() ) ?
+           action_time_scale::calendar_progress_per_tick() :
+           action_time_scale::activity_progress_per_tick();
+}
 
 player_activity::player_activity() : type( activity_id::NULL_ID() ) { }
 
@@ -122,7 +149,7 @@ void player_activity::init_all_moves( Character &who )
         speed.assistant_count = assistants().size();
     }
     if( type->bench_affected() ) {
-        speed.find_best_bench( who.pos() );
+        speed.find_best_bench( who.bub_pos() );
     }
     if( actor ) {
         speed.morale_factor_custom_formula = [&]( const Character & who ) {
@@ -147,7 +174,7 @@ void player_activity::init_all_moves( Character &who )
     }
 }
 
-inline std::vector<npc *> &player_activity::assistants()
+std::vector<npc *> &player_activity::assistants()
 {
     if( !assistants_ids_.empty() && assistants_.empty() ) {
         for( npc &guy : g->all_npcs() ) {
@@ -170,10 +197,10 @@ std::vector<npc *> player_activity::get_assistants( const Character &who, unsign
             return false;
         }
         // NPCs can help craft if awake, taking orders, within pickup range and have clear path
-        bool ok = guy.is_npc() && !guy.in_sleep_state() && guy.is_obeying( who ) &&
+        bool ok = guy.is_npc() && &guy != &who && !guy.in_sleep_state() && guy.is_obeying( who ) &&
                   guy.activity->id() != ACT_ASSIST &&
-                  rl_dist( guy.pos(), who.pos() ) < PICKUP_RANGE &&
-                  get_map().clear_path( who.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
+                  rl_dist( guy.bub_pos(), who.bub_pos() ) < PICKUP_RANGE &&
+                  get_map().clear_path( who.bub_pos(), guy.bub_pos(), PICKUP_RANGE, 1, 100 );
         if( ok ) {
             n++;
         }
@@ -207,7 +234,7 @@ static std::string craft_progress_message( const avatar &u, const player_activit
 
     // Horrid copypaste warning! TODO: Functions
     const recipe &rec = craft->get_making();
-    const tripoint bench_pos = act.coords.front();
+    const auto bench_pos = act.coords.front();
     // Ugly
     const auto bench_t = bench_type( act.values[craft_bench_type_idx] );
 
@@ -228,16 +255,23 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     const float game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
                                 ? 9999
                                 : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
-    const float total_mult = light_mult * bench_mult * morale_mult * tools_mult * assist_mult *
-                             speed_mult *
-                             mutation_mult * game_opt_mult;
+
+    auto total_mult_without_enchant = bench_mult * assist_mult * tools_mult * light_mult * morale_mult *
+                                      mutation_mult * game_opt_mult;
+
+    const auto enchant_mult_add = u.bonus_from_enchantments( total_mult_without_enchant,
+                                  enchantment_value_id( "CRAFTING_SPEED" ) );
+
+    const float total_mult = total_mult_without_enchant + enchant_mult_add;
+
+    const auto enchant_mult = total_mult / total_mult_without_enchant;
 
     const double remaining_percentage = 1.0 - craft->get_counter() / 10'000'000.0;
     int remaining_turns = remaining_percentage * base_total_moves / 100 / std::max( 0.01f, total_mult );
     std::string time_desc = string_format( _( "Time left: %s" ),
                                            to_string( time_duration::from_turns( remaining_turns ) ) );
 
-    const std::array<std::pair<float, std::string>, 8> mults_with_data = { {
+    const std::array<std::pair<float, std::string>, 9> mults_with_data = { {
             { total_mult, _( "Total" ) },
             { speed_mult, _( "Speed" ) },
             { light_mult, _( "Light" ) },
@@ -245,7 +279,8 @@ static std::string craft_progress_message( const avatar &u, const player_activit
             { morale_mult, _( "Morale" ) },
             { tools_mult, _( "Tools" ) },
             { assist_mult, _( "Assistants" ) },
-            { mutation_mult, _( "Traits" ) }
+            { mutation_mult, _( "Traits" ) },
+            { enchant_mult, _( "Misc" ) }
         }
     };
     std::string mults_desc = _( "Crafting speed multipliers:\n" );
@@ -293,6 +328,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
         */
         std::string target = "";
         std::string progress_desc = "Progress: ";
+        const auto progress_per_calendar_turn = progress_per_calendar_turn_for( *this );
 
         /*
          * TODO progress for targets
@@ -315,7 +351,9 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += string_format( _( "  - Processing %s out of %s\n" ), actor->progress.get_index(),
                                                     actor->progress.get_total_tasks() );
                     progress_desc += string_format( _( "  - Estimated time: %s\n" ),
-                                                    to_string( time_duration::from_turns( actor->progress.get_moves_left() / speed.total_moves() ) ) );
+                                                    to_string( time_duration::from_turns(
+                                                            action_time_scale::turns_for_progress( actor->progress.get_moves_left(),
+                                                                    progress_per_calendar_turn ) ) ) );
                     progress_desc += " - Current: ";
                 }
                 progress_desc += string_format( "%.1f%%\n",
@@ -325,11 +363,12 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += "  - ";
                 }
                 progress_desc += string_format( _( "Time left: %s\n" ),
-                                                to_string( time_duration::from_turns( actor->progress.front().moves_left /
-                                                        speed.total_moves() ) ) );
+                                                to_string( time_duration::from_turns(
+                                                        action_time_scale::turns_for_progress( actor->progress.front().moves_left,
+                                                                progress_per_calendar_turn ) ) ) );
             }
         } else {
-            if( !targets.empty() && targets.front().is_accessible() ) {
+            if( !targets.empty() && targets.front().is_accessible() && !targets.front().is_destroyed() ) {
                 target = string_format( ": %s", targets.front()->tname( targets.front()->count() ) );
             }
             if( moves_total > 0 ) {
@@ -338,7 +377,9 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
             }
             if( moves_left > 0 ) {
                 progress_desc += string_format( _( "Time left: %s\n" ),
-                                                to_string( time_duration::from_turns( moves_left / speed.total_moves() ) ) );
+                                                to_string( time_duration::from_turns(
+                                                        action_time_scale::turns_for_progress( moves_left,
+                                                                progress_per_calendar_turn ) ) ) );
             }
             if( moves_total <= 0 && moves_left <= 0 ) {
                 progress_desc = "";
@@ -464,7 +505,7 @@ void player_activity::do_turn( player &p )
     if( *this && type->will_refuel_fires() ) {
         try_fuel_fire( *this, p );
     }
-    if( calendar::once_every( 30_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
         no_food_nearby_for_auto_consume = false;
         no_drink_nearby_for_auto_consume = false;
     }
@@ -499,57 +540,46 @@ void player_activity::do_turn( player &p )
     /*
      * Moves block
      * This might finish the activity (set it to null)
-     * Leave as is till full migration to actors for "NEITHER"
+    * Leave as is till full migration to actors for "NEITHER"
     */
     if( !type->special() ) {
-        if( type->complex_moves() ) {
-            if( calendar::once_every( 1_minutes ) ) {
-                calc_moves( p );
-            }
-
-            int moves_total = speed.total_moves();
-
-            //fancy new system
+        const auto consume_activity_progress = [&]( const int moves_total,
+        const bool complex_partial_cost ) {
             if( actor ) {
                 if( actor->progress.get_moves_left() >= moves_total ) {
-                    actor->progress.mod_moves_left( - moves_total );
+                    actor->progress.mod_moves_left( -moves_total );
                     p.moves = 0;
                 } else {
-                    p.moves -= std::round( ( moves_total - actor->progress.get_moves_left() ) * 100.0f / moves_total );
+                    const auto progress_cost = complex_partial_cost ?
+                                               moves_total - actor->progress.get_moves_left() :
+                                               actor->progress.get_moves_left();
+                    p.moves -= std::round( progress_cost * 100.0f / moves_total );
                     actor->progress.mod_moves_left( -actor->progress.get_moves_left() );
                 }
-            }
-            //old one
-            else {
+            } else {
                 if( moves_left >= moves_total ) {
                     moves_left -= moves_total;
                     p.moves = 0;
                 } else {
-                    p.moves -= std::round( ( moves_total - moves_left ) * 100.0f / moves_total );
+                    const auto progress_cost = complex_partial_cost ?
+                                               moves_total - moves_left :
+                                               moves_left;
+                    p.moves -= std::round( progress_cost * 100.0f / moves_total );
                     moves_left = 0;
                 }
             }
+        };
+
+        if( activity_uses_calendar_duration_progress( id() ) ) {
+            consume_activity_progress( progress_per_tick_for( *this ), false );
+        } else if( type->complex_moves() ) {
+            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
+                calc_moves( p );
+            }
+
+            consume_activity_progress( speed.moves_per_turn(), true );
         } else {
-            //fancy new system
-            if( actor ) {
-                if( actor->progress.get_moves_left() >= 100 ) {
-                    actor->progress.mod_moves_left( - 100 );
-                    p.moves = 0;
-                } else {
-                    p.moves -= actor->progress.get_moves_left();
-                    actor->progress.mod_moves_left( -actor->progress.get_moves_left() );
-                }
-            }
-            //old one
-            else {
-                if( moves_left >= 100 ) {
-                    moves_left -= 100;
-                    p.moves = 0;
-                } else {
-                    p.moves -= moves_left;
-                    moves_left = 0;
-                }
-            }
+            consume_activity_progress( progress_per_tick_for( *this ), false );
         }
     }
 
@@ -560,6 +590,12 @@ void player_activity::do_turn( player &p )
         type->call_do_turn( this, &p );
     }
 
+    if( *this ) {
+        const auto callback_id = cata::get_lua_activity_on_turn( *this );
+        if( !callback_id.empty() ) {
+            cata::run_lua_activity_callback( callback_id, p, *this );
+        }
+    }
 
     /*
     * Stamina block
@@ -598,7 +634,11 @@ void player_activity::do_turn( player &p )
         if( actor ) {
             actor->finish( *this, p );
         } else {
-            if( !type->call_finish( this, &p ) ) {
+            const auto callback_id = cata::get_lua_activity_on_finish( *this );
+            if( !callback_id.empty() ) {
+                cata::run_lua_activity_callback( callback_id, p, *this );
+                set_to_null();
+            } else if( !type->call_finish( this, &p ) ) {
                 // "Finish" is never a misnomer for any activity without a finish function
                 set_to_null();
             }
@@ -669,7 +709,7 @@ bool player_activity::can_resume_with( const player_activity &other, const Chara
             return false;
         }
         for( int foo : other.values ) {
-            if( std::ranges::find( values, foo ) == values.end() ) {
+            if( !std::ranges::contains( values, foo ) ) {
                 return false;
             }
         }

@@ -1,0 +1,27 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "skills_through_kills",
+    "name": "Skills Through Kills",
+    "authors": [ "Coolthulhu" ],
+    "description": "Changes the skill experience system from \"learn by doing\" to \"spend experience from kills on skills\".",
+    "category": "rebalance",
+    "lua_api_version": 2,
+    "dependencies": [ "bn" ],
+    "conflicts": [ "stats_through_kills" ]
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "SKILLS_THROUGH_KILLS",
+    "info": "Replace \"learn by doing\" by spending experience from kills on skills.",
+    "stype": "bool",
+    "value": true
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "SKILL_TRAINING_SPEED",
+    "info": "Disables regular skill training while Skills Through Kills is active.",
+    "stype": "float",
+    "value": 0.0
+  }
+]

@@ -559,8 +559,7 @@
         [ "technician_pants_gray", 1 ],
         [ "jeans", 1 ]
       ]
-    ],
-    "flags": [ "BLIND_HARD" ]
+    ]
   },
   {
     "result": "makeshift_sling",
@@ -571,7 +570,18 @@
     "time": "48 s",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "sheet", 1 ], [ "blanket", 1 ], [ "electric_blanket", 1 ] ] ],
+    "components": [
+      [
+        [ "blanket", 1 ],
+        [ "down_blanket", 1 ],
+        [ "fur_blanket", 1 ],
+        [ "electric_blanket", 1 ],
+        [ "emer_blanket", 1 ],
+        [ "afs_quilt", 1 ],
+        [ "afs_quilt_patchwork", 1 ],
+        [ "sheet", 1 ]
+      ]
+    ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -586,7 +596,7 @@
     "autolearn": true,
     "using": [ [ "cordage", 2 ] ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ] ] ]
+    "components": [ [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ], [ "bag_zipper_small", 32 ] ] ]
   },
   {
     "result": "quiver",
@@ -794,7 +804,7 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 300 ] ],
     "components": [
-      [ [ "fabric_standard", 30, "LIST" ] ],
+      [ [ "kevlar_plate", 30 ] ],
       [ [ "fabric_hides_proper", 36, "LIST" ] ],
       [ [ "backpack_hiking", 2 ], [ "backpack_tactical_large", 1 ] ],
       [
@@ -824,7 +834,7 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 200 ] ],
     "components": [
-      [ [ "fabric_standard", 18, "LIST" ] ],
+      [ [ "kevlar_plate", 18 ] ],
       [ [ "fabric_hides_proper", 20, "LIST" ] ],
       [ [ "molle_pack", 4 ], [ "duffelbag", 2 ], [ "rucksack", 4 ] ],
       [
@@ -853,7 +863,7 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 120 ] ],
     "components": [
-      [ [ "fabric_standard", 10, "LIST" ] ],
+      [ [ "kevlar_plate", 10 ] ],
       [ [ "fabric_hides_proper", 10, "LIST" ] ],
       [ [ "runner_bag", 4 ], [ "backpack", 2 ], [ "backpack_leather", 2 ], [ "mbag", 4 ] ],
       [
@@ -882,7 +892,7 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 160 ] ],
     "components": [
-      [ [ "fabric_standard", 14, "LIST" ] ],
+      [ [ "kevlar_plate", 14 ] ],
       [ [ "fabric_hides_proper", 16, "LIST" ] ],
       [ [ "backpack", 4 ], [ "backpack_leather", 4 ], [ "molle_pack", 2 ], [ "duffelbag", 1 ], [ "rucksack", 2 ] ],
       [
@@ -911,7 +921,7 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 80 ] ],
     "components": [
-      [ [ "fabric_standard", 6, "LIST" ] ],
+      [ [ "kevlar_plate", 6 ] ],
       [ [ "fabric_hides_proper", 8, "LIST" ] ],
       [ [ "runner_bag", 2 ], [ "backpack", 1 ], [ "backpack_leather", 1 ], [ "mbag", 2 ] ],
       [
@@ -940,7 +950,7 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 100 ] ],
     "components": [
-      [ [ "fabric_standard", 6, "LIST" ] ],
+      [ [ "kevlar_plate", 6 ] ],
       [ [ "fabric_hides_proper", 6, "LIST" ] ],
       [ [ "holster", 1 ], [ "sholster", 1 ] ],
       [
@@ -1103,6 +1113,18 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 10 ] ],
     "components": [ [ [ "leather", 8 ] ] ]
+  },
+  {
+    "result": "shoulder_pouch",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "tailor",
+    "difficulty": 3,
+    "time": "15 m",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 10 ] ],
+    "components": [ [ [ "legpouch", 2 ] ], [ [ "shoulder_strap", 1 ] ] ]
   },
   {
     "result": "power_armor_back_holster",
@@ -1342,5 +1364,19 @@
     "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
     "components": [ [ [ "grenadebandolier", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_shoulder_pouch",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "shoulder_pouch", 1 ] ] ]
   }
 ]

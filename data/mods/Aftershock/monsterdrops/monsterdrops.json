@@ -68,6 +68,14 @@
   },
   {
     "type": "item_group",
+    "id": "xl_uplift_monster_weapon",
+    "magazine": 100,
+    "ammo": 25,
+    "subtype": "distribution",
+    "entries": [ { "item": "hk_mp5", "prob": 100, "damage": [ 1, 4 ] } ]
+  },
+  {
+    "type": "item_group",
     "id": "xl_uplift_zed_death_drop",
     "subtype": "collection",
     "entries": [

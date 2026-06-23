@@ -402,5 +402,22 @@
       [ [ "scrap", 20 ] ],
       [ [ "delay_fuze", 1 ], [ "fuse", 1 ] ]
     ]
+  },
+  {
+    "result": "aerial_bomb",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_EXPLOSIVE",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 4 ],
+    "difficulty": 6,
+    "time": "15 m",
+    "book_learn": [ [ "manual_launcher", 6 ], [ "textbook_anarch", 7 ] ],
+    "autolearn": [ [ "fabrication", 7 ], [ "mechanics", 5 ] ],
+    "reversible": true,
+    "decomp_learn": 6,
+    "using": [ [ "steel_standard", 10 ], [ "welding_standard", 10 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 }, { "id": "DRILL", "level": 2 } ],
+    "components": [ [ [ "military_explosive", 3500, "LIST" ] ], [ [ "impact_fuze", 1 ] ], [ [ "steel_plate", 5 ] ] ]
   }
 ]

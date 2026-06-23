@@ -66,6 +66,13 @@
   "damage": 10,                              // Damage the explosion deals to player at epicenter. Damage is halved above 50% radius.
   "radius": 8,                               // Radius of the explosion. 0 means only the epicenter is affected.
   "fire": true,                              // Should the explosion leave fire
+  "fragment_effect": [ {                     // Effects data of "shrapnel"
+      "effect": "onfire",                    // Effect to apply (note that onfire has special hardcoded behaviour to check the target is flamable)
+      "odds": 2,                             // One in x chance to apply this effect
+      "min_turns": 4,                        // Min turn duration for effect
+      "max_turns": 8                         // Max turn duration for effect
+    }
+  ],
   "fragment": {                              // Projectile data of "shrapnel". This projectile will hit every target in its range and field of view exactly once.
     "damage": {                              // Damage data of the shrapnel projectile.  Uses damage_instance syntax (see below)
       "damage_type": "acid",                 // Type of damage dealt.
@@ -109,7 +116,11 @@
 "drop": "nail",             // (Optional) Defines an object that drops at the projectile location at a 100% chance.
 "drop_active": false        // (Optional) Whether the object starts active. Default is true.
 "drop_count": 1,            // (Optional) Number of items to drop. For tools, this sets their charges. 
-                            // If omitted, the drop amount defaults to the 'count' defined in its itype.
+                             // If omitted, the drop amount defaults to the 'count' defined in its itype.
+"shot": {                   // (Optional) Shot-pattern data for pellet-style ammo.
+  "count": 12,             // Number of projectile attacks spawned by one round.
+  "half_angle": 3          // Half-angle in degrees used for the pellet spread preview and pattern.
+},
 "effects" : ["COOKOFF", "SHOT"]
 ```
 
@@ -147,8 +158,10 @@ Armor can be defined like this:
 "coverage" : 80,      // What percentage of body part
 "material_thickness" : 1,  // Thickness of material, in millimeter units (approximately).  Generally ranges between 1 - 5, more unusual armor types go up to 10 or more
 "power_armor" : false, // If this is a power armor item (those are special).
-"valid_mods" : ["steel_padded"] // List of valid clothing mods. Note that if the clothing mod doesn't have "restricted" listed, this isn't needed.
-"resistance": { "cut": 0, "bullet": 1000 } // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
+"valid_mods" : ["steel_padded"], // List of valid clothing mods. Note that if the clothing mod doesn't have "restricted" listed, this isn't needed.
+"resistance": { "cut": 0, "bullet": 1000 }, // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
+"hearing_protection": 0,    // How much does this armor dampen sound hear by the wearer, in dB spl. 0 - 191. This will make all sounds harder to hear for the wearer, including deafening sounds. At a hearing_ability multiplier of one, heard sounds of 120dB+ can deafen the player, with guaranteed temporary deafness at 140dB+. Use this instead of the "DEAF" or "PARTIAL_DEAF" flags. ~40 dB spl total protection will protect against most gunfire, 80 will protect against almost any sound. Cumulative with other items with this quality.
+"adv_hearing_protection": 0 // How much does this armor dampen deafening sounds heard by the wearer, in dB spl. 0 - 191. This will reduce the damaging volume of deafening sounds by its given amount without dampening other sounds.  Cumulative with other items with this quality.
 ```
 
 Alternately, every item (book, tool, gun, even food) can be used as armor if it has armor_data:
@@ -512,11 +525,15 @@ Guns can be defined like this:
 "ammo_to_fire" 1,          // Amount of ammo used per shot, separate from any UPS cost that may be given to the weapon.
 // The legacy item flags `FIRE_20`, `FIRE_50`, and `FIRE_100` are still permitted and will override `ammo_to_fire` if present.
 "reload": 450,             // Amount of time to reload, 100 = 1 second = 1 "turn". Default 100.
+"reload_noise_volume": 6   // [DEPRECIATED] How loud is reloading the gun, in tile distance. This is depreciated, use reload_noise_volume_dB instead. This value will be converted to an appropiate dB volume if provided.
+"reload_noise_volume_dB": 40, // How loud is reloading the gun, in dB spl @1 meter reference. Default 40dB. Normal conversation is ~60dB, deafening sounds are 120dB+
 "built_in_mods": ["m203"], // An array of mods that will be integrated in the weapon using the IRREMOVABLE tag.
 "default_mods": ["m203"]   // An array of mods that will be added to a weapon on spawn.
 "barrel_volume": "30 mL",  // Amount of volume lost when the barrel is sawn. Approximately 250 ml per IRL inch is a decent approximation.
 "barrel_length": "30 mL",  // Depreciated alias of barrel_volume, which should be used instead for clarity.
 "valid_mod_locations": [ [ "accessories", 4 ], [ "grip", 1 ] ],  // The valid locations for gunmods and the mount of slots for that location.
+"loudness_modifier": 4,    // Optional field increasing or decreasing base ammo loudness, measured in dB spl.
+"speed": 100               // Optional field increasing or decreasing base ammo speed in meters per second. Speed of sound is taken at 343 meters per second.
 ```
 
 Alternately, every item (book, tool, armor, even food) can be used as gun if it has gun_data:
@@ -586,7 +603,9 @@ Gun mods can be defined like this:
 "mode_modifier": [ [ "AUTO", "auto", 5 ] ],       // Optional. Array of [mode_id, mode_name, burst_size, [...flags]?] arrays. Adds firing modes to the weapon. Optional flags array can include "MELEE", "REACH_ATTACK", etc.
 "damage_modifier": -1,         // Optional field increasing or decreasing base gun damage
 "dispersion_modifier": 15,     // Optional field increasing or decreasing base gun dispersion
-"loudness_modifier": 4,        // Optional field increasing or decreasing base guns loudness
+"loudness_modifier": 4,        // Optional field increasing or decreasing base ammo loudness, measured in dB spl.
+"speed": 100,                  // Optional field increasing or decreasing base ammo speed in meters per second. Speed of sound is taken at 343 meters per second.
+"speed": 100,                  // Optional field increasing or decreasing base ammo speed in meters per second. Speed of sound is taken at 343 meters per second.
 "range_modifier": 2,           // Optional field increasing or decreasing base gun range
 "recoil_modifier": -100,       // Optional field increasing or decreasing base gun recoil
 "ups_charges_modifier": 200,   // Optional field increasing or decreasing base gun UPS consumption (per shot) by adding given value
@@ -1099,7 +1118,7 @@ more structured function.
 },
 "use_action": {
     "type": "sew_advanced",  // Modify clothing
-    "materials": [           // materials to deal with.
+    "materials": [           // materials to deal with. Power armor can be targeted when its material matches.
         "cotton",
         "leather"
     ],
@@ -1124,8 +1143,16 @@ more structured function.
     "spell_id": "magus_escape", // The ID of the spell to be casted
     "no_fail": true,            // Whether you can fail the cast
     "level": 10,                // The level its cast at
-    "need_worn": true,           // if you need to wear it to cast the spell
+    "need_worn": true,          // if you need to wear it to cast the spell
     "need_wielding": true       // if you need to wield it to cast the spell
+},
+"use_action": {
+    "type": "paint_stuff",      // Paints terrain or vehicles using ammo
+    "charge_cost": 0            // Number of charges to use
+},
+"use_action": {
+    "type": "paint_stuff_cfg",  // Configures how it paints using paint stuff
+    "color_swap": true          // Allow the color to be swapped to any other named color
 }
 ```
 

@@ -162,6 +162,26 @@
     ]
   },
   {
+    "id": "reactor_plutonium_generator_test",
+    "type": "vehicle",
+    "name": "Reactor plutonium generator test",
+    "parts": [
+      { "x": 0, "y": 0, "part": "frame_vertical" },
+      { "x": 0, "y": 0, "parts": [ "minireactor", "vp_plut_generator" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "seat", "dashboard", "storage_battery" ] }
+    ]
+  },
+  {
+    "id": "plutonium_generator_test",
+    "type": "vehicle",
+    "name": "Plutonium generator test",
+    "parts": [
+      { "x": 0, "y": 0, "part": "frame_vertical" },
+      { "x": 0, "y": 0, "parts": [ "vp_plut_generator" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "seat", "dashboard", "storage_battery" ] }
+    ]
+  },
+  {
     "id": "solar_panel_test",
     "type": "vehicle",
     "name": "Solar test",

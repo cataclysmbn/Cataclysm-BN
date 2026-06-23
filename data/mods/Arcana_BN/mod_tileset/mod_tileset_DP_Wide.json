@@ -1,0 +1,24 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "mod_tileset/arcana_expan_dp_wide.png",
+        "tiles": [
+          { "id": "mon_dracolich", "fg": 0 },
+          { "id": "corpse_mon_dracolich", "fg": 1 },
+          {
+            "id": [ "mon_seraphic_shade", "mon_seraphic_shade_fake" ],
+            "fg": [ { "weight": 3, "sprite": 2 }, { "weight": 3, "sprite": 3 }, { "weight": 3, "sprite": 4 } ],
+            "animated": true
+          }
+        ],
+        "sprite_width": 80,
+        "sprite_height": 64,
+        "sprite_offset_x": -20,
+        "sprite_offset_y": -32
+      }
+    ]
+  }
+]

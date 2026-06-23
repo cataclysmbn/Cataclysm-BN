@@ -31,42 +31,42 @@ game.add_hook("on_game_started", function() return on_game_started() end)
 
 game.iwearable_functions["hat_hard"] = {
   can_wear = function(params) return mod.can_equip(true, params) end,
-  on_wear = function(params) return mod.on_equip(true, params) end,
+  on_wear = function(params) mod.on_equip(true, params) end,
   can_takeoff = function(params) return mod.can_unequip(true, params) end,
-  on_takeoff = function(params) return mod.on_unequip(true, params) end,
+  on_takeoff = function(params) mod.on_unequip(true, params) end,
 }
 
 game.iequippable_functions["hat_hard"] = {
-  on_durability_change = function(params) return mod.on_durability_change(params) end,
+  on_durability_change = function(params) mod.on_durability_change(params) end,
 }
 
 game.iwieldable_functions["stick_long"] = {
   can_wield = function(params) return mod.can_equip(false, params) end,
-  on_wield = function(params) return mod.on_equip(false, params) end,
+  on_wield = function(params) mod.on_equip(false, params) end,
   can_unwield = function(params) return mod.can_unequip(false, params) end,
-  on_unwield = function(params) return mod.on_unequip(false, params) end,
+  on_unwield = function(params) mod.on_unequip(false, params) end,
 }
 
 game.iequippable_functions["stick_long"] = {
-  on_durability_change = function(params) return mod.on_durability_change(params) end,
+  on_durability_change = function(params) mod.on_durability_change(params) end,
 }
 
 game.istate_functions["stick_long"] = {
-  on_tick = function(params) return mod.on_tick(params) end,
-  on_pickup = function(params) return mod.on_pickup(params) end,
+  on_tick = function(params) mod.on_tick(params) end,
+  on_pickup = function(params) mod.on_pickup(params) end,
   on_drop = function(params) return mod.on_drop(params) end,
 }
 
 game.bionic_functions["bio_perpetual_test"] = {
-  on_activate = function(params) return mod.on_activate(params) end,
-  on_deactivate = function(params) return mod.on_deactivate(params) end,
-  on_installed = function(params) return mod.on_installed(params) end,
-  on_uninstalled = function(params) return mod.on_uninstalled(params) end,
+  on_activate = function(params) mod.on_activate(params) end,
+  on_deactivate = function(params) mod.on_deactivate(params) end,
+  on_installed = function(params) mod.on_install(params) end,
+  on_removed = function(params) mod.on_uninstall(params) end,
 }
 
 game.bionic_functions["bio_taste_blocker"] = {
-  on_activate = function(params) return mod.on_activate(params) end,
-  on_deactivate = function(params) return mod.on_deactivate(params) end,
-  on_installed = function(params) return mod.on_installed(params) end,
-  on_uninstalled = function(params) return mod.on_uninstalled(params) end,
+  on_activate = function(params) mod.on_activate(params) end,
+  on_deactivate = function(params) mod.on_deactivate(params) end,
+  on_installed = function(params) mod.on_install(params) end,
+  on_removed = function(params) mod.on_uninstall(params) end,
 }

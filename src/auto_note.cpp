@@ -290,7 +290,9 @@ void auto_note_manager_gui::show()
 
                 const auto lineColor = ( i == currentLine ) ? hilite( c_white ) : c_white;
                 const auto statusColor = cacheEntry.second ? c_green : c_red;
-                const auto statusString = cacheEntry.second ? _( "yes" ) : _( "no" );
+                const auto statusString = cacheEntry.second ?
+                                          pgettext( "auto notes status value", "yes" ) :
+                                          pgettext( "auto notes status value", "no" );
                 const auto charColor = cacheEntry.first.color;
                 const auto displayChar = cacheEntry.first.get_symbol();
 

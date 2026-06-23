@@ -164,7 +164,7 @@
           "x": [ 4, 5 ],
           "y": 8
         },
-        { "chunks": [ [ "roof_16x16_help", 20 ], [ "null", 80 ] ], "x": 4, "y": 3 }
+        { "chunks": [ [ "roof_16x16_help", 20 ], [ "roof_12x12_aircraft", 5 ], [ "null", 80 ] ], "x": 4, "y": 3 }
       ]
     }
   },

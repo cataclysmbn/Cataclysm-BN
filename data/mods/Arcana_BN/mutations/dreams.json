@@ -1,0 +1,19 @@
+[
+  {
+    "type": "dream",
+    "//": "Only give dreams on gaining Paragon of The Veil.  Aftereffects of the cursed sword leaves the orders muddled.",
+    "messages": [
+      "You dream of strange imagery, of what looks like tattered cloth, fraying threads depicting an infinite host of decaying universes.",
+      "You dream of the stars aligning, of worlds almost being shaken apart.",
+      "You have a vague dream of an endless barren field, shrouded in fog.",
+      "You dream of a strange hooded figure, whispering orders in a language you don't understand.",
+      "You have a vivid dream about a horde of otherworldly monsters, scrabbling their way out of a portal.",
+      "You dream of a mass grave, countless undead laid to rest for good.",
+      "You have a dream of a portal, crumbling and collapsing.",
+      "You have a strange dream of otherworldly monsters, forced to kneel before a human figure.",
+      "You have a strange dream of an exotic forest, growing over a burnt-over battlefield."
+    ],
+    "category": "VEIL",
+    "strength": 4
+  }
+]

@@ -1,0 +1,140 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Pablo_Situation",
+    "responses": [
+      {
+        "text": "There are other settlements out there, I was asked to help find people to work at and trade with one.",
+        "topic": "TALK_REFUGEE_Pablo_CF_REP_MISSION_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            {
+              "not": { "npc_has_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Pablo_CF_REP_MISSION_4",
+    "dynamic_line": {
+      "u_has_var": "tacoma_started",
+      "type": "knowledge",
+      "context": "flag",
+      "value": "yes",
+      "yes": "I'm guessing you don't mean the commune.  As much as I want out of this place, I don't think my wife and I can afford to gamble on a complete unknown, even if they are looking for work.  There are probably others that can handle the dangers out there that might be interested, I guess.",
+      "no": "I'm glad we aren't all that's left, but I don't really know much about any other places out there.  Too much risk in it, much as I'd love to get out of this hellhole.  I know there are other people who come along that can handle the risk, though."
+    },
+    "responses": [
+      {
+        "text": "Do you know of anyone who might be able to help with that?",
+        "topic": "TALK_REFUGEE_Pablo_CF_REP_MISSION_4_ADVICE"
+      },
+      {
+        "text": "Would you be able to help keep an eye out for someone who might be interested?",
+        "topic": "TALK_REFUGEE_Pablo_CF_REP_MISSION_4_OFFER"
+      },
+      { "text": "Alright.  Thanks anyway.", "topic": "TALK_REFUGEE_Pablo_1" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Pablo_CF_REP_MISSION_4_ADVICE",
+    "dynamic_line": {
+      "u_has_var": "tacoma_started",
+      "type": "knowledge",
+      "context": "flag",
+      "value": "yes",
+      "yes": "If you haven't already checked with the merchant up front, I know some of the regular visitors here might know who to talk to.  There's some military guy, a local scavenger, few others here and there.  The broker over in that room over there also gets a fair bit of unfamiliar visitors.",
+      "no": "If you haven't already checked with the merchant up front, I know some of the regular visitors here might know who to talk to.  There's some military guy, a local scavenger, few others here and there.  Other than that, dunno."
+    },
+    "responses": [
+      {
+        "text": "Could you help keep an eye out for any other visitors who might be looking for work?",
+        "topic": "TALK_REFUGEE_Pablo_CF_REP_MISSION_4_OFFER"
+      },
+      { "text": "I'll see what I can find out, thanks.", "topic": "TALK_REFUGEE_Pablo_1" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Pablo_CF_REP_MISSION_4_OFFER",
+    "dynamic_line": "Guess I can try.  Do you know where they are, and anything else about them?",
+    "responses": [
+      {
+        "text": "They're based in an old church along the roadside not too many miles away, that they've built up into a local outpost.",
+        "topic": "TALK_REFUGEE_Pablo_CF_REP_MISSION_4_DEAL"
+      },
+      {
+        "text": "On second thought, I'll figure something else out.  Thank you though.",
+        "topic": "TALK_REFUGEE_Pablo_1"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Pablo_CF_REP_MISSION_4_DEAL",
+    "dynamic_line": "Okay, I'll keep an eye out as best as I can.  Here's hoping a little more trade in the area keeps us from starving.",
+    "responses": [
+      {
+        "text": "I've asked a couple others already, I should probably go check on them.  See you later.",
+        "effect": [
+          { "u_add_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_1",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_2",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_1",
+            "om_terrain": "cf_church_1_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_2",
+            "om_terrain": "cf_church_3_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          }
+        ],
+        "condition": { "u_has_var": "sofia_ally_seeking_2", "type": "mission", "context": "flag", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "I'll ask around a bit more while I'm at it.  See you later.",
+        "effect": [
+          { "u_add_var": "sofia_ally_seeking_2", "type": "mission", "context": "flag", "value": "yes" },
+          { "npc_add_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+        ],
+        "condition": { "u_has_var": "sofia_ally_seeking_1", "type": "mission", "context": "flag", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "I'll ask around some more as well.  See you later.",
+        "effect": [
+          { "u_add_var": "sofia_ally_seeking_1", "type": "mission", "context": "flag", "value": "yes" },
+          { "npc_add_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+        ],
+        "switch": true,
+        "default": true,
+        "topic": "TALK_DONE"
+      }
+    ]
+  }
+]

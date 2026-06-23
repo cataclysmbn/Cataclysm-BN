@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "activity_handlers.h" // put_into_vehicle_or_drop and drop_on_map
 #include "activity_speed.h"
 #include "advanced_inv.h"
@@ -17,6 +18,7 @@
 #include "character_functions.h"
 #include "construction.h"
 #include "construction_partial.h"
+#include "craft_command.h"
 #include "crafting.h"
 #include "debug.h"
 #include "enums.h"
@@ -36,6 +38,7 @@
 #include "locations.h"
 #include "map.h"
 #include "map_iterator.h"
+#include "map_selector.h"
 #include "mapdata.h"
 #include "messages.h"
 #include "npc.h"
@@ -45,6 +48,8 @@
 #include "player_activity.h"
 #include "point.h"
 #include "ranged.h"
+#include "crafting_quality.h"
+#include "recipe.h"
 #include "recipe_dictionary.h"
 #include "rng.h"
 #include "sounds.h"
@@ -180,18 +185,12 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
             return;
         }
     }
-    std::optional<shape_factory> shape_gen;
-    if( weapon->ammo_current() && weapon->ammo_current()->ammo &&
-        weapon->ammo_current()->ammo->shape ) {
-        shape_gen = weapon->ammo_current()->ammo->shape;
-    }
-
     g->temp_exit_fullscreen();
     target_handler::trajectory trajectory;
-    if( !shape_gen ) {
-        trajectory = target_handler::mode_fire( you, *this );
-    } else {
+    if( const auto shape_gen = ranged::get_shape_factory( *weapon ) ) {
         trajectory = target_handler::mode_shaped( you, *shape_gen, *this );
+    } else {
+        trajectory = target_handler::mode_fire( you, *this );
     }
     g->reenter_fullscreen();
 
@@ -338,10 +337,10 @@ item *aim_activity_actor::get_weapon()
 void aim_activity_actor::restore_view()
 {
     avatar &player_character = get_avatar();
-    bool changed_z = player_character.view_offset.z != initial_view_offset.z;
+    bool changed_z = player_character.view_offset.z() != initial_view_offset.z();
     player_character.view_offset = initial_view_offset;
     if( changed_z ) {
-        get_map().invalidate_map_cache( player_character.view_offset.z );
+        get_map().invalidate_map_cache( player_character.view_offset.z() );
         g->invalidate_main_ui_adaptor();
     }
 }
@@ -370,7 +369,7 @@ bool aim_activity_actor::load_RAS_weapon()
         {
             return false;
         }
-        if( square_dist( you.pos(), you.ammo_location->position() ) > 1 )
+        if( square_dist( you.abs_pos(), you.ammo_location->abs_pos() ) > 1 )
         {
             return false;
         }
@@ -391,13 +390,34 @@ bool aim_activity_actor::load_RAS_weapon()
 void autodrive_activity_actor::start( player_activity &/* act */, Character &who )
 {
     const bool in_vehicle = who.in_vehicle && who.controlling_vehicle;
-    const optional_vpart_position vp = get_map().veh_at( who.pos() );
+    const optional_vpart_position vp = get_map().veh_at( who.bub_pos() );
     if( !( vp && in_vehicle ) ) {
         who.cancel_activity();
         return;
     }
 
     player_vehicle = &vp->vehicle();
+    if( player_vehicle->is_flying_in_air() ) {
+        int min_speed = player_vehicle->get_takeoff_speed( "t/t" );
+        if( player_vehicle->velocity * 0.8 < min_speed * vehicles::cmps_per_tile ) {
+            if( !g->u.query_yn( "Warning: Current Speed is below recommened values, proceed?" ) ) {
+                who.cancel_activity();
+                return;
+            }
+        }
+        if( player_vehicle->min_autodrive_speed * 0.8 < min_speed ) {
+            if( !g->u.query_yn( "Warning: Min Autodrive Speed is below recommened values, proceed?" ) ) {
+                who.cancel_activity();
+                return;
+            }
+        }
+        if( player_vehicle->max_autodrive_speed * 0.5 < min_speed ) {
+            if( !g->u.query_yn( "Warning: Max Autodrive Speed is below recommened values, proceed?" ) ) {
+                who.cancel_activity();
+                return;
+            }
+        }
+    }
     player_vehicle->is_autodriving = true;
     progress.dummy();
 }
@@ -470,16 +490,27 @@ void dig_activity_actor::start( player_activity &/*act*/, Character & )
     progress.emplace( name, moves_total );
 }
 
-void dig_activity_actor::do_turn( player_activity &/*act*/, Character & )
+void dig_activity_actor::do_turn( player_activity &/*act*/, Character &who )
 {
     if( progress.front().complete() ) {
         progress.pop();
         return;
     }
-    sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location, 60 ) );
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
-        sounds::sound( location, 10, sounds::sound_t::activity, _( "hsh!" ) );
+        sound_event se;
+        se.origin = location;
+        se.volume = 60;
+        se.category = sounds::sound_t::activity;
+        se.description = _( "hsh!" );
+        se.id =  "tool";
+        se.variant = "shovel";
+        se.from_player = who.is_player();
+        se.from_npc = !se.from_player;
+        se.faction = who.get_faction()->id;
+        se.monfaction = who.get_faction()->mon_faction;
+        sounds::sound( se );
     }
 }
 
@@ -555,8 +586,8 @@ void dig_activity_actor::serialize( JsonOut &jsout ) const
 
 std::unique_ptr<activity_actor> dig_activity_actor::deserialize( JsonIn &jsin )
 {
-    std::unique_ptr<dig_activity_actor> actor( new dig_activity_actor( 0, tripoint_zero,
-            {}, tripoint_zero, {} ) );
+    std::unique_ptr<dig_activity_actor> actor( new dig_activity_actor( 0, tripoint_bub_ms::zero(),
+            {}, tripoint_bub_ms::zero(), {} ) );
 
     JsonObject data = jsin.get_object();
 
@@ -576,16 +607,27 @@ void dig_channel_activity_actor::start( player_activity &/*act*/, Character & )
     progress.emplace( here.ter( location )->name(), moves_total );
 }
 
-void dig_channel_activity_actor::do_turn( player_activity &/*act*/, Character & )
+void dig_channel_activity_actor::do_turn( player_activity &/*act*/, Character &who )
 {
     if( progress.front().complete() ) {
         progress.pop();
         return;
     }
-    sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location, 70 ) );
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
-        sounds::sound( location, 10, sounds::sound_t::activity, _( "hsh!" ) );
+        sound_event se;
+        se.origin = location;
+        se.volume = 70;
+        se.category = sounds::sound_t::activity;
+        se.description = _( "hsh!" );
+        se.id =  "tool";
+        se.variant =  "shovel";
+        se.from_player = who.is_player();
+        se.from_npc = !se.from_player;
+        se.faction = who.get_faction()->id;
+        se.monfaction = who.get_faction()->mon_faction;
+        sounds::sound( se );
     }
 }
 
@@ -625,8 +667,9 @@ void dig_channel_activity_actor::serialize( JsonOut &jsout ) const
 
 std::unique_ptr<activity_actor> dig_channel_activity_actor::deserialize( JsonIn &jsin )
 {
-    std::unique_ptr<dig_channel_activity_actor> actor( new dig_channel_activity_actor( 0, tripoint_zero,
-            {}, tripoint_zero, {} ) );
+    std::unique_ptr<dig_channel_activity_actor> actor( new dig_channel_activity_actor( 0,
+            tripoint_bub_ms::zero(),
+            {}, tripoint_bub_ms::zero(), {} ) );
 
     JsonObject data = jsin.get_object();
 
@@ -699,7 +742,7 @@ void disassemble_activity_actor::do_turn( player_activity &act, Character &who )
         if( !target.loc ) {
             debugmsg( "Lost target of ACT_DISASSEMBLY" );
         } else {
-            crafting::complete_disassemble( who, target, get_map().getlocal( pos.raw() ) );
+            crafting::complete_disassemble( who, target, abs_to_bub( pos ) );
         }
         targets.erase( targets.begin() );
         progress.pop();
@@ -755,7 +798,7 @@ std::unique_ptr<activity_actor> disassemble_activity_actor::deserialize( JsonIn 
 }
 
 drop_activity_actor::drop_activity_actor( Character &ch, const drop_locations &items,
-        bool force_ground, const tripoint &relpos )
+        bool force_ground, const tripoint_rel_ms &relpos )
     : force_ground( force_ground ), relpos( relpos )
 {
     this->items = pickup::reorder_for_dropping( ch, items );
@@ -807,7 +850,7 @@ enum hack_type {
     HACK_NULL
 };
 
-static hack_type get_hack_type( tripoint examp )
+static hack_type get_hack_type( tripoint_bub_ms examp )
 {
     hack_type type = HACK_NULL;
     const map &here = get_map();
@@ -825,7 +868,7 @@ static hack_type get_hack_type( tripoint examp )
 
 void hacking_activity_actor::start( player_activity &act, Character & )
 {
-    hack_type type = get_hack_type( act.placement );
+    hack_type type = get_hack_type( abs_to_bub( act.placement ) );
     std::string name;
 
     switch( type ) {
@@ -903,9 +946,10 @@ hacking_activity_actor::hacking_activity_actor( use_bionic )
 
 void hacking_activity_actor::finish( player_activity &act, Character &who )
 {
-    tripoint examp = act.placement;
+    tripoint_bub_ms examp = abs_to_bub( act.placement );
     hack_type type = get_hack_type( examp );
     map &here = get_map();
+    sound_event se;
     switch( hack_attempt( who, using_bionic ) ) {
         case HACK_UNABLE:
             who.add_msg_if_player( _( "You cannot hack this." ) );
@@ -914,11 +958,16 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
             // currently all things that can be hacked have equivalent alarm failure states.
             // this may not always be the case with new hackable things.
             g->events().send<event_type::triggers_alarm>( who.getID() );
-            sounds::sound( who.pos(), 60, sounds::sound_t::music, _( "an alarm sound!" ), true, "environment",
-                           "alarm" );
-            if( examp.z > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
+            se.origin = who.bub_pos();
+            se.volume = 120;
+            se.category = sounds::sound_t::music;
+            se.description = _( "an alarm sound!" );
+            se.id = "environment";
+            se.variant = "alarm";
+            sounds::sound( se );
+            if( examp.z() > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                     who.global_sm_location() );
+                                     who.abs_sm_pos() );
             }
             break;
         case HACK_NOTHING:
@@ -927,17 +976,26 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
         case HACK_SUCCESS:
             if( type == HACK_GAS ) {
                 int tankGasUnits;
-                const std::optional<tripoint> pTank_ = iexamine::getNearFilledGasTank( examp, tankGasUnits );
+                const std::optional<tripoint_bub_ms> pTank_ = iexamine::getNearFilledGasTank( examp, tankGasUnits );
                 if( !pTank_ ) {
                     break;
                 }
-                const tripoint pTank = *pTank_;
-                const std::optional<tripoint> pGasPump = iexamine::getGasPumpByNumber( examp,
+                const tripoint_bub_ms pTank = *pTank_;
+                const std::optional<tripoint_bub_ms> pGasPump = iexamine::getGasPumpByNumber( examp,
                         uistate.ags_pay_gas_selected_pump );
                 if( pGasPump && iexamine::toPumpFuel( pTank, *pGasPump, tankGasUnits ) ) {
                     who.add_msg_if_player( _( "You hack the terminal and route all available fuel to your pump!" ) );
-                    sounds::sound( examp, 6, sounds::sound_t::activity,
-                                   _( "Glug Glug Glug Glug Glug Glug Glug Glug Glug" ), true, "tool", "gaspump" );
+                    se.origin = examp;
+                    se.volume = 40;
+                    se.category = sounds::sound_t::activity;
+                    se.description = _( "Glug Glug Glug Glug Glug Glug Glug Glug Glug" );
+                    se.id = "tool";
+                    se.variant =  "gaspump";
+                    se.from_player = who.is_player();
+                    se.from_npc = !se.from_player;
+                    se.faction = who.get_faction()->id;
+                    se.monfaction = who.get_faction()->mon_faction;
+                    sounds::sound( se );
                 } else {
                     who.add_msg_if_player( _( "Nothing happens." ) );
                 }
@@ -948,7 +1006,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
                 who.add_msg_if_player( _( "You activate the panel!" ) );
                 who.add_msg_if_player( m_good, _( "The nearby doors unlock." ) );
                 here.ter_set( examp, t_card_reader_broken );
-                for( const tripoint &tmp : here.points_in_radius( ( examp ), 3 ) ) {
+                for( const tripoint_bub_ms &tmp : here.points_in_radius( ( examp ), 3 ) ) {
                     if( here.ter( tmp ) == t_door_metal_locked ) {
                         here.ter_set( tmp, t_door_metal_c );
                     }
@@ -987,7 +1045,7 @@ std::unique_ptr<activity_actor> hacking_activity_actor::deserialize( JsonIn &jsi
 
 void move_items_activity_actor::do_turn( player_activity &act, Character &who )
 {
-    const tripoint dest = relative_destination + who.pos();
+    const auto dest = relative_destination + who.abs_pos();
 
     while( who.moves > 0 && !target_items.empty() ) {
         safe_reference<item> target = std::move( target_items.back() );
@@ -1015,25 +1073,25 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
             continue;
         }
 
-        const tripoint src = target->position();
+        const auto src = target->abs_pos();
         detached_ptr<item> newit = quantity == 0 ? target->detach() : target->split( quantity );
 
-        const int distance = src.z == dest.z ? std::max( rl_dist( src, dest ), 1 ) : 1;
+        const int distance = src.z() == dest.z() ? std::max( rl_dist( src, dest ), 1 ) : 1;
         who.mod_moves( -pickup::cost_to_move_item( who, *newit ) * distance );
 
         std::vector<detached_ptr<item>> vec;
         vec.push_back( std::move( newit ) );
         if( to_vehicle ) {
-            put_into_vehicle_or_drop( who, item_drop_reason::deliberate, vec, dest );
+            put_into_vehicle_or_drop( who, item_drop_reason::deliberate, vec, abs_to_bub( dest ) );
         } else {
-            drop_on_map( who, item_drop_reason::deliberate, vec, dest );
+            drop_on_map( who, item_drop_reason::deliberate, vec, abs_to_bub( dest ) );
         }
     }
 
     if( target_items.empty() ) {
         // Nuke the current activity, leaving the backlog alone.
         act.set_to_null();
-        if( who.is_hauling() && !has_haulable_items( who.pos() ) ) {
+        if( who.is_hauling() && !has_haulable_items( who.bub_pos() ) ) {
             who.stop_hauling();
         }
     }
@@ -1055,7 +1113,7 @@ void move_items_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> move_items_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<move_items_activity_actor> actor( new move_items_activity_actor( {}, {}, false,
-            tripoint_zero ) );
+            tripoint_rel_ms::zero() ) );
 
     JsonObject data = jsin.get_object();
 
@@ -1078,7 +1136,7 @@ void pickup_activity_actor::do_turn( player_activity &act, Character &who )
 
     // If the player moves while picking up (i.e.: in a moving vehicle) cancel
     // the activity, only populate starting_pos when grabbing from the ground
-    if( starting_pos && *starting_pos != who.pos() ) {
+    if( starting_pos && *starting_pos != who.bub_pos() ) {
         who.cancel_activity();
         who.add_msg_if_player( _( "Moving canceled auto-pickup." ) );
         return;
@@ -1189,17 +1247,28 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         return;
     }
     if( tool->ammo_sufficient() ) {
-        tool->ammo_consume( tool->ammo_required(), tool->position() );
-        sfx::play_activity_sound( "tool", "hacksaw", sfx::get_heard_volume( target ) );
-        if( calendar::once_every( 1_minutes ) ) {
+        tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
+        sfx::play_activity_sound( "tool", "hacksaw", sfx::get_heard_volume( target, 80 ) );
+        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             //~ Sound of a metal sawing tool at work!
-            sounds::sound( target, 15, sounds::sound_t::destructive_activity, _( "grnd grnd grnd" ) );
+            sound_event se;
+            se.origin = target;
+            se.volume = 80;
+            se.category = sounds::sound_t::destructive_activity;
+            se.description = _( "grnd grnd grnd" );
+            se.id = "tool";
+            se.variant = "hacksaw";
+            se.from_player = who.is_player();
+            se.from_npc = !se.from_player;
+            se.faction = who.get_faction()->id;
+            se.monfaction = who.get_faction()->mon_faction;
+            sounds::sound( se );
         }
     } else {
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.pos() ) ) {
+            if( get_avatar().sees( who.bub_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1295,7 +1364,7 @@ void hacksaw_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> hacksaw_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<hacksaw_activity_actor> actor( new hacksaw_activity_actor(
-                tripoint_zero, safe_reference<item>() ) );
+                tripoint_bub_ms::zero(), safe_reference<item>() ) );
     JsonObject data = jsin.get_object();
     data.read( "progress", actor->progress );
     data.read( "target", actor->target );
@@ -1343,12 +1412,12 @@ void boltcutting_activity_actor::do_turn( player_activity &/* act */, Character 
         return;
     }
     if( tool->ammo_sufficient() ) {
-        tool->ammo_consume( tool->ammo_required(), tool->position() );
+        tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
     } else {
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.pos() ) ) {
+            if( get_avatar().sees( who.bub_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1411,13 +1480,22 @@ void boltcutting_activity_actor::finish( player_activity &act, Character &who )
         act.set_to_null();
         return;
     }
-
+    sound_event se;
+    se.origin = target;
+    se.volume = 60;
+    se.category = sounds::sound_t::combat;
+    se.id = "tool";
+    se.variant = "boltcutters";
+    se.from_player = who.is_player();
+    se.from_npc = !se.from_player;
+    se.faction = who.get_faction()->id;
+    se.monfaction = who.get_faction()->mon_faction;
     if( data->sound().empty() ) {
-        sounds::sound( target, 5, sounds::sound_t::combat, _( "Snick, snick, gachunk!" ),
-                       true, "tool", "boltcutters" );
+        se.description = _( "Snick, snick, gachunk!" );
+        sounds::sound( se );
     } else {
-        sounds::sound( target, 5, sounds::sound_t::combat, data->sound().translated(),
-                       true, "tool", "boltcutters" );
+        se.description = data->sound().translated();
+        sounds::sound( se );
     }
 
 
@@ -1453,7 +1531,7 @@ void boltcutting_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> boltcutting_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<boltcutting_activity_actor> actor( new boltcutting_activity_actor(
-                tripoint_zero, safe_reference<item>() ) );
+                tripoint_bub_ms::zero(), safe_reference<item>() ) );
 
     JsonObject data = jsin.get_object();
     data.read( "progress", actor->progress );
@@ -1465,7 +1543,7 @@ std::unique_ptr<activity_actor> boltcutting_activity_actor::deserialize( JsonIn 
 std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_item(
     int moves_total,
     item &lockpick,
-    const tripoint &target
+    const tripoint_abs_ms &target
 )
 {
     return std::unique_ptr<lockpick_activity_actor> ( new lockpick_activity_actor(
@@ -1478,7 +1556,7 @@ std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_item(
 
 std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_bionic(
     detached_ptr<item> &&fake_lockpick,
-    const tripoint &target
+    const tripoint_abs_ms &target
 )
 {
     return std::unique_ptr<lockpick_activity_actor>( new lockpick_activity_actor(
@@ -1491,7 +1569,7 @@ std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_bionic(
 
 void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
 {
-    const tripoint target = get_map().getlocal( this->target );
+    const auto target = abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -1534,7 +1612,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
 
-    const tripoint target = get_map().getlocal( this->target );
+    const auto target = abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -1619,11 +1697,17 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         && ( lock_roll + dice( 1, 30 ) ) > pick_roll ) {
 
         if( get_map().has_flag( "ALARMED", target ) ) {
-            sounds::sound( who.pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ),
-                           true, "environment", "alarm" );
+            sound_event se;
+            se.origin = who.bub_pos();
+            se.volume = 90;
+            se.category = sounds::sound_t::alarm;
+            se.description = _( "an alarm sound!" );
+            se.id = "environment";
+            se.variant = "alarm";
+            sounds::sound( se );
             if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                     who.global_sm_location() );
+                                     who.abs_sm_pos() );
             }
         } else if( veh && veh->vehicle().has_security_working() ) {
             veh->vehicle().is_alarm_on = true;
@@ -1635,7 +1719,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     }
 }
 
-bool lockpick_activity_actor::is_pickable( const tripoint &p )
+bool lockpick_activity_actor::is_pickable( const tripoint_bub_ms &p )
 {
     const ter_id ter_type = get_map().ter( p );
     const furn_id furn_type = get_map().furn( p );
@@ -1654,25 +1738,25 @@ bool lockpick_activity_actor::is_pickable( const tripoint &p )
     return result;
 }
 
-std::optional<tripoint> lockpick_activity_actor::select_location( avatar &you )
+std::optional<tripoint_bub_ms> lockpick_activity_actor::select_location( avatar &you )
 {
     if( you.is_mounted() ) {
         you.add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return std::nullopt;
     }
 
-    const std::optional<tripoint> target = choose_adjacent_highlight(
-            _( "Use your lockpick where?" ), _( "There is nothing to lockpick nearby." ), is_pickable, false );
+    const std::optional<tripoint_bub_ms> target = choose_adjacent_highlight(
+                _( "Use your lockpick where?" ), _( "There is nothing to lockpick nearby." ), is_pickable, false );
     if( !target ) {
         return std::nullopt;
     }
 
     if( is_pickable( *target ) ) {
-        return target;
+        return *target;
     }
 
     const ter_id terr_type = get_map().ter( *target );
-    if( *target == you.pos() ) {
+    if( *target == you.bub_pos() ) {
         you.add_msg_if_player( m_info, _( "You pick your nose and your sinuses swing open." ) );
     } else if( g->critter_at<npc>( *target ) ) {
         you.add_msg_if_player( m_info,
@@ -1701,7 +1785,7 @@ void lockpick_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> lockpick_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<lockpick_activity_actor> actor( new lockpick_activity_actor( 0,
-            safe_reference<item>(), detached_ptr<item>(), tripoint_zero ) );
+            safe_reference<item>(), detached_ptr<item>(), tripoint_abs_ms::zero() ) );
 
     JsonObject data = jsin.get_object();
 
@@ -1751,16 +1835,27 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
 {
     // We check available charges when first starting the cut, but this prevents abnormal behavior if torch status changes mid-activity.
     if( tool->ammo_sufficient() ) {
-        tool->ammo_consume( tool->ammo_required(), tool->position() );
-        sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target ) );
-        if( calendar::once_every( 2_turns ) ) {
-            sounds::sound( target, 10, sounds::sound_t::destructive_activity, _( "hissssssssss!" ) );
+        tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
+        sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target, 65 ) );
+        if( action_time_scale::once_every_this_tick( 2_turns ) ) {
+            sound_event se;
+            se.origin = target;
+            se.volume = 65;
+            se.category = sounds::sound_t::destructive_activity;
+            se.description = _( "hissssssssss!" );
+            se.id = "tool";
+            se.variant = "oxytorch";
+            se.from_player = who.is_player();
+            se.from_npc = !se.from_player;
+            se.faction = who.get_faction()->id;
+            se.monfaction = who.get_faction()->mon_faction;
+            sounds::sound( se );
         }
     } else {
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.pos() ) ) {
+            if( get_avatar().sees( who.bub_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1862,7 +1957,7 @@ void oxytorch_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> oxytorch_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<oxytorch_activity_actor> actor( new oxytorch_activity_actor(
-                tripoint_zero, safe_reference<item>() ) );
+                tripoint_bub_ms::zero(), safe_reference<item>() ) );
     JsonObject data = jsin.get_object();
     data.read( "progress", actor->progress );
     data.read( "target", actor->target );
@@ -1931,7 +2026,7 @@ void toggle_gate_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> toggle_gate_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<toggle_gate_activity_actor> actor( new toggle_gate_activity_actor( 0,
-            tripoint_zero ) );
+            tripoint_bub_ms::zero() ) );
 
     JsonObject data = jsin.get_object();
 
@@ -1944,7 +2039,7 @@ std::unique_ptr<activity_actor> toggle_gate_activity_actor::deserialize( JsonIn 
 
 
 stash_activity_actor::stash_activity_actor( Character &ch, const drop_locations &items,
-        const tripoint &relpos ) : relpos( relpos )
+        const tripoint_rel_ms &relpos ) : relpos( relpos )
 {
     this->items = pickup::reorder_for_dropping( ch, items );
 }
@@ -1990,7 +2085,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     }
 
     item *it = &*target;
-    std::optional<tripoint> blind_throw_pos = blind_throw_from_pos;
+    std::optional<tripoint_bub_ms> blind_throw_pos = blind_throw_from_pos;
 
     // Stop the activity. Whether we will or will not throw doesn't matter.
     act.set_to_null();
@@ -2000,12 +2095,10 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
         return;
     }
 
-    // Shift our position to our "peeking" position, so that the UI
-    // for picking a throw point lets us target the location we couldn't
-    // otherwise see.
-    const tripoint original_player_position = who.pos();
+    // Shift our position to our peeking position so the target UI can see from there.
+    const auto original_player_position = who.abs_pos();
     if( blind_throw_pos ) {
-        who.setpos( *blind_throw_pos );
+        who.setpos( bub_to_abs( *blind_throw_pos ) );
     }
 
     target_handler::trajectory trajectory = target_handler::mode_throw( *who.as_avatar(), *it,
@@ -2054,13 +2147,394 @@ std::unique_ptr<activity_actor> throw_activity_actor::deserialize( JsonIn &jsin 
 }
 
 
+// ---- craft_activity_actor ----
+
+craft_activity_actor::craft_activity_actor(
+    const recipe *rec,
+    int batch_size,
+    int craft_counter,
+    const tripoint_abs_ms &location,
+    std::vector<comp_selection<item_comp>> item_selections,
+    std::vector<comp_selection<tool_comp>> tool_selections,
+    bool tools_prepaid,
+    bool is_long
+) : rec( rec ), batch_size( batch_size ), craft_counter( craft_counter ),
+    location( location ),
+    item_selections( std::move( item_selections ) ),
+    tool_selections( std::move( tool_selections ) ),
+    tools_prepaid( tools_prepaid ),
+    is_long( is_long ),
+    is_valid( rec != nullptr )
+{}
+
+auto craft_activity_actor::find_in_progress_craft( const player_activity &act,
+        Character &who ) const -> item * // *NOPAD*
+{
+    if( !act.targets.empty() && act.targets.front() && act.targets.front()->is_craft() &&
+        &act.targets.front()->get_making() == rec ) {
+        return &*act.targets.front();
+    }
+
+    item *result = nullptr;
+    who.visit_items( [&]( item * it ) {
+        if( it->is_craft() && &it->get_making() == rec ) {
+            result = it;
+            return VisitResponse::ABORT;
+        }
+        return VisitResponse::NEXT;
+    } );
+    if( result ) {
+        return result;
+    }
+    // If not in inventory, check the map at the crafter's feet — set_item_inventory
+    // may have placed it there if the NPC was over their carry capacity.
+    map_selector sel( who.bub_pos(), 0 );
+    sel.visit_items( [&]( item * it ) {
+        if( it->is_craft() && &it->get_making() == rec ) {
+            result = it;
+            return VisitResponse::ABORT;
+        }
+        return VisitResponse::NEXT;
+    } );
+    return result;
+}
+
+void craft_activity_actor::calc_all_moves( player_activity &act, Character &who )
+{
+    if( !rec || !is_valid ) {
+        act.set_to_null();
+        return;
+    }
+
+    const int current_turn = to_turn<int>( calendar::turn );
+
+    // Catch-up: apply time elapsed while NPC was outside the reality bubble.
+    // last_turn_nr >= 0 means start() already ran in a previous session.
+    if( last_turn_nr >= 0 && current_turn > last_turn_nr ) {
+        item *craft_item = find_in_progress_craft( act, who );
+        if( craft_item ) {
+            const int elapsed_turns = current_turn - last_turn_nr;
+            const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+            // No live crafting modifiers are applied while outside the reality bubble.
+            const auto moves_elapsed = action_time_scale::activity_progress_for_turns( elapsed_turns );
+            const int old_counter = craft_item->get_counter();
+            const int new_counter = std::min(
+                                        static_cast<int>( old_counter + moves_elapsed / base_total_moves * 10'000'000.0 ),
+                                        10'000'000 );
+            craft_item->set_counter( new_counter );
+            craft_counter = new_counter;
+
+            const int five_percent_steps = new_counter / 500'000 - old_counter / 500'000;
+            if( five_percent_steps > 0 ) {
+                who.craft_skill_gain( *craft_item, five_percent_steps );
+            }
+
+            // Re-build progress counter to match updated craft state
+            const int remaining = std::max( 0, static_cast<int>(
+                                                base_total_moves * ( 1.0 - new_counter / 10'000'000.0 ) ) );
+            if( !activity_actor::progress.empty() ) {
+                activity_actor::progress.mod_moves_left(
+                    remaining - activity_actor::progress.get_moves_left() );
+            } else {
+                activity_actor::progress.emplace( craft_item->tname(),
+                                                  static_cast<int>( base_total_moves ), remaining );
+            }
+
+            if( new_counter >= 10'000'000 ) {
+                // Drain so complete() fires on the next do_turn check
+                activity_actor::progress.mod_moves_left( -activity_actor::progress.get_moves_left() );
+            }
+        }
+    }
+
+    last_turn_nr = current_turn;
+
+    // Re-build progress counter after deserialization if catch-up didn't already do it
+    if( activity_actor::progress.empty() ) {
+        item *craft_item = find_in_progress_craft( act, who );
+        const std::string name = craft_item ? craft_item->tname() : rec->result_name();
+        const int base_total = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+        const int remaining = std::max( 1, static_cast<int>(
+                                            base_total * ( 1.0 - craft_counter / 10'000'000.0 ) ) );
+        activity_actor::progress.emplace( name, base_total, remaining );
+    }
+
+    item *craft_item = find_in_progress_craft( act, who );
+    if( craft_item ) {
+        refresh_speed( act, who, *craft_item );
+    }
+}
+
+void craft_activity_actor::refresh_speed( player_activity &act, const Character &who,
+        const item &craft_item, std::optional<bench_location> bench ) const
+{
+    const bench_location resolved_bench = bench ? *bench : find_best_bench( who, craft_item );
+    const recipe &making = *rec;
+    const float tools_mult = cached_tools_mult != 0.0f ? cached_tools_mult
+                             : crafting_tools_speed_multiplier( who, making );
+    act.speed.light        = lighting_crafting_speed_multiplier( who, making );
+    act.speed.bench_factor = workbench_crafting_speed_multiplier( craft_item, resolved_bench );
+    act.speed.morale       = morale_crafting_speed_multiplier( who, making );
+    act.speed.tools        = tools_mult;
+    act.speed.player_speed = who.get_speed() / 100.0f;
+    const int assistants   = who.available_assistant_count( making );
+    if( assistants > 0 ) {
+        const double base_no_assist   = std::max( 1, making.batch_time( batch_size, 1.0f, 0 ) );
+        const double base_with_assist = std::max( 1, making.batch_time( batch_size, 1.0f, assistants ) );
+        act.speed.assist = static_cast<float>( base_no_assist / base_with_assist );
+    } else {
+        act.speed.assist = 1.0f;
+    }
+    // Mutation and game-option multipliers have no dedicated speed field; fold them
+    // into skills so act.speed.total() matches the actual crafting rate.
+    const float mutation_mult = who.mutation_value( "crafting_speed_modifier" );
+    const float game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                ? 9999.0f
+                                : 100.0f / static_cast<float>( get_option<int>( "CRAFTING_SPEED_MULT" ) );
+    act.speed.skills = mutation_mult * game_opt_mult;
+}
+
+void craft_activity_actor::start( player_activity &act, Character &who )
+{
+    if( !rec || !is_valid ) {
+        act.set_to_null();
+        return;
+    }
+
+    item *craft_item = find_in_progress_craft( act, who );
+    if( !craft_item ) {
+        who.add_msg_player_or_npc(
+            _( "You lost your in progress %s and had to stop crafting." ),
+            _( "<npcname> lost the in progress %s and had to stop crafting." ),
+            rec->result_name() );
+        act.set_to_null();
+        return;
+    }
+
+    cached_tools_mult = crafting_tools_speed_multiplier( who, *rec );
+    craft_counter = craft_item->get_counter();
+    last_turn_nr = to_turn<int>( calendar::turn );  // mark fresh start so calc_all_moves skips catch-up
+    const int base_total = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+    const int remaining = craft_counter == 0
+                          ? base_total
+                          : std::max( 1, static_cast<int>( base_total * ( 1.0 - craft_counter / 10'000'000.0 ) ) );
+    activity_actor::progress.emplace( craft_item->tname(), base_total, remaining );
+}
+
+void craft_activity_actor::do_turn( player_activity &act, Character &who )
+{
+    if( !rec || !is_valid ) {
+        act.set_to_null();
+        return;
+    }
+
+    item *craft_item = find_in_progress_craft( act, who );
+    if( !craft_item ) {
+        who.add_msg_player_or_npc(
+            _( "You no longer have the in progress craft in your possession.  "
+               "You stop crafting.  "
+               "Reactivate the in progress craft to continue crafting." ),
+            _( "<npcname> no longer has the in progress craft in their possession.  "
+               "<npcname> stops crafting." ) );
+        act.set_to_null();
+        return;
+    }
+
+    const recipe &making = *rec;
+    if( cached_tools_mult == 0.0f ) {
+        cached_tools_mult = crafting_tools_speed_multiplier( who, making );
+    }
+    const bench_location bench = find_best_bench( who, *craft_item );
+    refresh_speed( act, who, *craft_item, bench );
+    const float crafting_speed = crafting_speed_multiplier( who, *craft_item, bench, act.speed.tools );
+    const int assistants = who.available_assistant_count( making );
+
+    if( crafting_speed <= 0.0f ) {
+        who.add_msg_player_or_npc( m_bad,
+                                   _( "You cannot continue crafting." ),
+                                   _( "<npcname> cannot continue crafting." ) );
+        act.set_to_null();
+        return;
+    }
+
+    const int old_counter = craft_item->get_counter();
+    const double base_total_moves = std::max( 1, making.batch_time( batch_size, 1.0f, 0 ) );
+    const double cur_total_moves = std::max( 1, making.batch_time( batch_size, crafting_speed,
+                                   assistants ) );
+    const auto scaled_moves = action_time_scale::activity_progress_from_actor_moves( who );
+    const auto delta_progress = scaled_moves * base_total_moves / cur_total_moves;
+    const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
+    const int new_counter = std::min(
+                                static_cast<int>( std::round( current_progress / base_total_moves * 10'000'000.0 ) ),
+                                10'000'000 );
+    const int five_percent_steps = new_counter / 500'000 - old_counter / 500'000;
+    craft_item->set_counter( new_counter );
+    craft_counter = new_counter;
+
+    who.set_moves( 0 );
+
+    if( five_percent_steps > 0 ) {
+        who.craft_skill_gain( *craft_item, five_percent_steps );
+
+        if( !tools_prepaid && !who.craft_consume_tools( *craft_item, five_percent_steps, false ) ) {
+            act.set_to_null();
+            return;
+        }
+    }
+
+    // Keep the progress_counter in sync so the UI shows correct values
+    if( !activity_actor::progress.empty() ) {
+        const int new_moves_left = static_cast<int>(
+                                       base_total_moves * ( 1.0 - static_cast<double>( new_counter ) / 10'000'000.0 ) );
+        const int delta = new_moves_left - activity_actor::progress.get_moves_left();
+        if( delta != 0 ) {
+            activity_actor::progress.mod_moves_left( delta );
+        }
+    }
+
+    last_turn_nr = to_turn<int>( calendar::turn );
+
+    if( new_counter >= 10'000'000 ) {
+        // Signal completion so player_activity::do_turn calls finish()
+        if( !activity_actor::progress.empty() ) {
+            activity_actor::progress.mod_moves_left( -activity_actor::progress.get_moves_left() );
+        }
+    } else if( new_counter >= craft_item->get_next_failure_point() ) {
+        const bool destroy = craft_item->handle_craft_failure( who );
+        if( destroy ) {
+            who.add_msg_player_or_npc(
+                _( "There is nothing left of the %s to craft from." ),
+                _( "There is nothing left of the %s <npcname> was crafting." ),
+                craft_item->tname() );
+            craft_item->detach();
+            act.set_to_null();
+        }
+        // If !destroy, handle_craft_failure may have called cancel_activity already
+    }
+}
+
+void craft_activity_actor::finish( player_activity &act, Character &who )
+{
+    act.set_to_null();
+    do_complete_craft( act, who );
+}
+
+void craft_activity_actor::do_complete_craft( player_activity &act, Character &who )
+{
+    item *craft_item = find_in_progress_craft( act, who );
+    if( !craft_item ) {
+        debugmsg( "craft_activity_actor::do_complete_craft: no craft item found for %s",
+                  rec ? rec->result_name() : "unknown" );
+        return;
+    }
+    ::complete_craft( who, *craft_item );
+    craft_item->detach();
+    if( is_long && rec ) {
+        if( who.making_would_work( rec->ident(), batch_size ) ) {
+            who.last_craft->execute( abs_to_bub( location ) );
+        }
+    }
+}
+
+act_progress_message craft_activity_actor::get_progress_message(
+    const player_activity &act, const Character &who ) const
+{
+    if( !rec || !is_valid ) {
+        return act_progress_message::make_empty();
+    }
+
+    const int assistants = who.available_assistant_count( *rec );
+    const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+    const double remaining_pct = 1.0 - craft_counter / 10'000'000.0;
+    const auto total_mult = act.speed.total();
+    const auto remaining_moves = static_cast<int>( std::ceil( remaining_pct * base_total_moves ) );
+    const auto remaining_turns = action_time_scale::turns_for_progress( remaining_moves,
+                                 act.speed.calendar_moves_per_turn() );
+
+    const std::string time_desc = string_format( _( "Time left: %s" ),
+                                  to_string( time_duration::from_turns( remaining_turns ) ) );
+
+    const auto fmt_spd = [&]( float level, const std::string & name ) -> std::string {
+        const int pct = static_cast<int>( level * 100 );
+        if( pct == 100 )
+        {
+            return "";
+        }
+        nc_color col = pct > 100 ? c_green : c_red;
+        return string_format( " - %s: %s\n", name,
+                              colorize( std::to_string( pct ) + '%', col ) );
+    };
+
+    std::string mults_desc = _( "Crafting speed multipliers:\n" );
+    const int total_pct = static_cast<int>( total_mult * 100 );
+    nc_color total_col = total_pct > 100 ? c_green : c_red;
+    mults_desc += string_format( " - %s: %s\n", _( "Total" ),
+                                 colorize( std::to_string( total_pct ) + '%', total_col ) );
+    mults_desc += fmt_spd( act.speed.player_speed, _( "Speed" ) );
+    mults_desc += fmt_spd( act.speed.light, _( "Light" ) );
+    mults_desc += fmt_spd( act.speed.bench_factor, _( "Workbench" ) );
+    mults_desc += fmt_spd( act.speed.morale, _( "Morale" ) );
+    mults_desc += fmt_spd( act.speed.tools, _( "Tools" ) );
+    if( assistants > 0 ) {
+        mults_desc += fmt_spd( act.speed.assist, _( "Assistants" ) );
+    }
+
+    return act_progress_message::make_full(
+               string_format( _( "%s: %s\n\n%s\n\n%s" ),
+                              act.get_verb().translated(), rec->result_name(),
+                              time_desc, mults_desc ) );
+}
+
+void craft_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+    jsout.member( "progress", activity_actor::progress );
+    jsout.member( "recipe", rec ? rec->ident().str() : std::string() );
+    jsout.member( "batch_size", batch_size );
+    jsout.member( "craft_counter", craft_counter );
+    jsout.member( "location", location );
+    jsout.member( "item_selections", item_selections );
+    jsout.member( "tool_selections", tool_selections );
+    jsout.member( "tools_prepaid", tools_prepaid );
+    jsout.member( "is_long", is_long );
+    jsout.member( "last_turn_nr", last_turn_nr );
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> craft_activity_actor::deserialize( JsonIn &jsin )
+{
+    auto actor = std::make_unique<craft_activity_actor>();
+    JsonObject data = jsin.get_object();
+
+    data.read( "progress", actor->activity_actor::progress );
+    std::string recipe_str;
+    data.read( "recipe", recipe_str );
+    if( !recipe_str.empty() ) {
+        const recipe_id rid( recipe_str );
+        if( rid.is_valid() ) {
+            actor->rec = &*rid;
+            actor->is_valid = true;
+        }
+    }
+    data.read( "batch_size", actor->batch_size );
+    data.read( "craft_counter", actor->craft_counter );
+    data.read( "location", actor->location );
+    data.read( "item_selections", actor->item_selections );
+    data.read( "tool_selections", actor->tool_selections );
+    data.read( "tools_prepaid", actor->tools_prepaid );
+    data.read( "is_long", actor->is_long );
+    data.read( "last_turn_nr", actor->last_turn_nr );
+
+    return actor;
+}
+
 inline void construction_activity_actor::calc_all_moves( player_activity &act, Character &who )
 {
     // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
     if( !pc ) {
         map &here = get_map();
-        auto local = here.getlocal( target );
-        pc = here.partial_con_at( local );
+        auto local = abs_to_bub( target );
+        pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
     //if something goes terribly wrong we don't CTD
     if( !pc ) {
@@ -2074,8 +2548,8 @@ inline void construction_activity_actor::calc_all_moves( player_activity &act, C
 void construction_activity_actor::start( player_activity &/*act*/, Character &/*who*/ )
 {
     map &here = get_map();
-    auto local = here.getlocal( target );
-    pc = here.partial_con_at( local );
+    auto local = abs_to_bub( target );
+    pc = here.partial_con_at( tripoint_bub_ms( local ) );
     auto &built = *pc->id;
 
     std::string name;
@@ -2111,8 +2585,8 @@ void construction_activity_actor::do_turn( player_activity &act, Character &who 
     // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
     if( !pc ) {
         map &here = get_map();
-        auto local = here.getlocal( target );
-        pc = here.partial_con_at( local );
+        auto local = abs_to_bub( target );
+        pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
 
     // Maybe the player and the NPC are working on the same construction at the same time or toubles during load
@@ -2202,6 +2676,7 @@ deserialize_functions = {
     { activity_id( "ACT_AUTODRIVE" ), &autodrive_activity_actor::deserialize },
     { activity_id( "ACT_BOLTCUTTING" ), &boltcutting_activity_actor::deserialize },
     { activity_id( "ACT_BUILD" ), &construction_activity_actor::deserialize },
+    { activity_id( "ACT_CRAFT" ), &craft_activity_actor::deserialize },
     { activity_id( "ACT_DIG" ), &dig_activity_actor::deserialize },
     { activity_id( "ACT_DIG_CHANNEL" ), &dig_channel_activity_actor::deserialize },
     { activity_id( "ACT_DISASSEMBLE" ), &disassemble_activity_actor::deserialize },
@@ -2257,4 +2732,3 @@ void deserialize( std::unique_ptr<activity_actor> &actor, JsonIn &jsin )
         }
     }
 }
-

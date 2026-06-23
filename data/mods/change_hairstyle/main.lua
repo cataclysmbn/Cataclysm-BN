@@ -1,18 +1,22 @@
+---@class HairstyleOption
+---@field id MutationBranchId
+---@field name string
+
+---@class ModChangeHairstyle
+---@field change_hairstyle_function fun(params: ItemUseParams): integer
+---@type ModChangeHairstyle
 local mod = game.mod_runtime[game.current_mod]
 
+---@type fun(params: ItemUseParams): integer
 mod.change_hairstyle_function = function(params)
   local who = params.user
 
   local function get_hair_trait_type(mut_raw)
     if not mut_raw then return nil end
 
-    local success, types = pcall(function() return mut_raw:mutation_types() end)
-    if success and types then
-      for k, v in pairs(types) do
-        local t = (type(v) == "string") and v or k
-        if t == "hair_style" then return "hair_style" end
-        if t == "hair_color" then return "hair_color" end
-      end
+    for _, t in pairs(mut_raw:mutation_types()) do
+      if t == "hair_style" then return "hair_style" end
+      if t == "hair_color" then return "hair_color" end
     end
 
     local id_str = mut_raw.id:str()
@@ -32,6 +36,7 @@ mod.change_hairstyle_function = function(params)
 
   local target_type = (main_choice == 1) and "hair_style" or "hair_color"
 
+  ---@type MutationBranchId?
   local current_trait_id = nil
   local current_muts = who:get_mutations(true)
   for _, mut_id in pairs(current_muts) do
@@ -41,6 +46,7 @@ mod.change_hairstyle_function = function(params)
     end
   end
 
+  ---@type HairstyleOption[]
   local options = {}
   local all_muts_raw = MutationBranchRaw.get_all()
   for _, mut_data in pairs(all_muts_raw) do
@@ -67,7 +73,9 @@ mod.change_hairstyle_function = function(params)
 
   local choice = ui:query()
   if choice > 0 then
+    ---@type HairstyleOption?
     local selected = options[choice]
+    if not selected then return 0 end
 
     if current_trait_id and current_trait_id:str() == selected.id:str() then
       gapi.add_msg(locale.gettext("You already have this style/color."))

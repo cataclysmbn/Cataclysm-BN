@@ -22,7 +22,7 @@
  *
  * Constraints (must not be violated by submitted work):
  *  - No worker thread may call any Lua API (Lua 5.3 is not reentrant).
- *  - No worker thread may call any SDL rendering API (SDL2 renderer is single-threaded).
+ *  - No worker thread may call any SDL rendering API (SDL renderer is single-threaded).
  *
  * Threading boundaries for game systems:
  *
@@ -31,20 +31,19 @@
  *
  *   safe_reference<T>  — records_by_pointer / records_by_id are NOT mutex-protected.
  *     next_id is std::atomic (safe for concurrent serialize() calls from save workers).
- *     All other safe_reference operations (fill, remove, register_load, mark_destroyed,
- *     mark_deallocated, cleanup) must run on the main thread only.
+ *     Direct safe_reference operations other than serialize() must run on the main thread only.
+ *     cata_arena serializes its own mark_destroyed()/mark_deallocated() calls.
  *
- *   cata_arena<T>      — pending_deletion is NOT mutex-protected.
- *     mark_for_destruction() and cleanup() must run on the main thread only.
+ *   cata_arena<T>      — pending_deletion is mutex-protected.
+ *     mark_for_destruction() can overlap cleanup(), which drains outside the lock.
  *
  * In practice:
- *   • Submaps must not be destroyed on worker threads (destructor calls mark_for_destruction
- *     and safe_reference::mark_destroyed).  Use mapbuffer::drain_pending_submap_destroy()
- *     on the main thread after joining all preload_quad() futures.
+ *   • Submaps must not be destroyed on worker threads.  Use mapbuffer::drain_pending_submap_destroy()
+ *     on the main thread after joining all preload_omt() futures.
  *   • Submap deserialisation IS safe from workers because
  *     active_item_cache constructs cache_reference objects, which are now mutex-guarded.
- *   • save_quad() serialisation IS safe from workers: safe_reference::serialize() only
- *     writes to next_id (atomic) and to per-item records that are never shared across quads.
+ *   • save_omt() serialisation IS safe from workers: safe_reference::serialize() only
+ *     writes to next_id (atomic) and to per-item records that are never shared across omts.
  *   • overmapbuffer::add_extra() and add_note() ARE safe from generation workers:
  *     both acquire extras_mutex_ (a per-overmapbuffer std::mutex) after get_om_global() returns.
  *   • Auto-note discovery (auto_note_settings) and Lua spawn hooks in place_npc() are

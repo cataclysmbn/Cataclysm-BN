@@ -10,6 +10,7 @@
 
 #include "catalua_type_operators.h"
 #include "fire.h"
+#include "translations.h"
 #include "type_id.h"
 
 class material_type;
@@ -29,7 +30,7 @@ class material_type
         bool was_loaded = false;
 
     private:
-        std::string _name;
+        translation _name;
         std::optional<itype_id> _salvaged_into; // this material turns into this item when salvaged
         itype_id _repaired_with = itype_id( "null" ); // this material can be repaired with this item
         int _bash_resist = 0;                         // negative integers means susceptibility
@@ -52,9 +53,9 @@ class material_type
         bool _soft = false;
         bool _reinforces = false;
 
-        std::string _bash_dmg_verb;
-        std::string _cut_dmg_verb;
-        std::vector<std::string> _dmg_adj;
+        translation _bash_dmg_verb;
+        translation _cut_dmg_verb;
+        std::vector<translation> _dmg_adj;
 
         std::map<vitamin_id, double> _vitamins;
 

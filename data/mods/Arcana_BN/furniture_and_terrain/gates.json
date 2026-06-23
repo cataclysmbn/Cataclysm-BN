@@ -1,0 +1,17 @@
+[
+  {
+    "type": "gate",
+    "id": "t_archon_pedestral_backup",
+    "door": "t_rock_archon_barricade",
+    "floor": "t_rock_floor",
+    "walls": "t_rock_archon_vault",
+    "messages": {
+      "pull": "You pull the lever…",
+      "open": "The bricks crumble and vanish!",
+      "close": "Shifting stone rises to block the way!",
+      "fail": "Nothing happens."
+    },
+    "moves": 1000,
+    "bashing_damage": 120
+  }
+]

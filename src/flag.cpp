@@ -151,6 +151,7 @@ const flag_id flag_GAS_DISCOUNT( "GAS_DISCOUNT" );
 const flag_id flag_GAS_PROOF( "GAS_PROOF" );
 const flag_id flag_GIBBED( "GIBBED" );
 const flag_id flag_GNV_EFFECT( "GNV_EFFECT" );
+const flag_id flag_GNVE_EFFECT( "GNVE_EFFECT" );
 const flag_id flag_HEATS_FOOD( "HEATS_FOOD" );
 const flag_id flag_HEATS_FOOD_IS_CONSUMED( "HEATS_FOOD_IS_CONSUMED" );
 const flag_id flag_HEATS_FOOD_USING_CHARGES( "HEATS_FOOD_USING_CHARGES" );
@@ -204,6 +205,8 @@ const flag_id flag_MOUNTED_GUN( "MOUNTED_GUN" );
 const flag_id flag_MYCUS_OK( "MYCUS_OK" );
 const flag_id flag_NANOFAB_TEMPLATE( "NANOFAB_TEMPLATE" );
 const flag_id flag_NAT_UPS( "NAT_UPS" );
+const flag_id flag_NATURE_CAMO( "NATURE_CAMO" );
+const flag_id flag_URBAN_CAMO( "URBAN_CAMO" );
 const flag_id flag_NEEDS_NO_LUBE( "NEEDS_NO_LUBE" );
 const flag_id flag_NEEDS_UNFOLD( "NEEDS_UNFOLD" );
 const flag_id flag_NEGATIVE_MONOTONY_OK( "NEGATIVE_MONOTONY_OK" );
@@ -425,6 +428,7 @@ void json_flag::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "requires_flag", requires_flag_ );
     optional( jo, was_loaded, "taste_mod", taste_mod_ );
     optional( jo, was_loaded, "restriction", restriction_ );
+    optional( jo, was_loaded, "tag", tag_ );
 
     // FIXME: most flags have a "context" field that isn't used for anything
     // Test for it here to avoid errors about unvisited members

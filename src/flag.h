@@ -152,6 +152,7 @@ extern const flag_id flag_GAS_DISCOUNT;
 extern const flag_id flag_GAS_PROOF;
 extern const flag_id flag_GIBBED;
 extern const flag_id flag_GNV_EFFECT;
+extern const flag_id flag_GNVE_EFFECT;
 extern const flag_id flag_HEATS_FOOD;
 extern const flag_id flag_HEATS_FOOD_IS_CONSUMED;
 extern const flag_id flag_HEATS_FOOD_USING_CHARGES;
@@ -205,6 +206,8 @@ extern const flag_id flag_MOUNTED_GUN;
 extern const flag_id flag_MYCUS_OK;
 extern const flag_id flag_NANOFAB_TEMPLATE;
 extern const flag_id flag_NAT_UPS;
+extern const flag_id flag_NATURE_CAMO;
+extern const flag_id flag_URBAN_CAMO;
 extern const flag_id flag_NEEDS_NO_LUBE;
 extern const flag_id flag_NEEDS_UNFOLD;
 extern const flag_id flag_NEGATIVE_MONOTONY_OK;
@@ -436,6 +439,9 @@ class json_flag
             return requires_flag_;
         }
 
+        /** The tag to be displayed on the item's display name when it has this flag */
+        auto tag() const -> const translation & { return tag_; } // *NOPAD*
+
         /** The flag's modifier on the fun value of comestibles */
         int taste_mod() const {
             return taste_mod_;
@@ -460,6 +466,7 @@ class json_flag
         bool inherit_ = true;
         bool craft_inherit_ = false;
         std::string requires_flag_;
+        translation tag_;
         int taste_mod_ = 0;
 
         /** Load flag definition from JSON */

@@ -4,22 +4,22 @@
 #include <cctype>
 #include <string>
 
-#include "map.h"
+#include "mapgen_constructor.h"
 #include "mapdata.h"
 #include "point.h"
 
 namespace mapf
 {
 
-void formatted_set_simple( map *m, point start, const char *cstr,
+void formatted_set_simple( mapgen_constructor *m, const point_omt_ms &start, const char *cstr,
                            const format_effect<ter_id> &ter_b, const format_effect<furn_id> &furn_b )
 {
     const char *p = cstr;
-    point p2( start );
+    point_omt_ms p2( start );
     while( *p != 0 ) {
         if( *p == '\n' ) {
-            p2.y++;
-            p2.x = start.x;
+            p2.y()++;
+            p2.x() = start.x();
         } else {
             const ter_id ter = ter_b.translate( *p );
             const furn_id furn = furn_b.translate( *p );
@@ -33,7 +33,7 @@ void formatted_set_simple( map *m, point start, const char *cstr,
                     m->furn_set( p2, furn );
                 }
             }
-            p2.x++;
+            p2.x()++;
         }
         p++;
     }

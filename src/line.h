@@ -1,15 +1,18 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <functional>
+#include <span>
 #include <string>
 #include <vector>
-#include <algorithm>
 
 #include "math_defines.h"
 #include "point.h"
 #include "cached_options.h"
 #include "units_angle.h"
+#include "coordinates.h"
 
 template <typename T> struct enum_traits;
 
@@ -193,6 +196,36 @@ inline int rl_dist( point a, point b )
     return rl_dist( tripoint( a, 0 ), tripoint( b, 0 ) );
 }
 
+struct rl_dist_lookup_table_dimensions {
+    int max_dx = 0;
+    int max_dy = 0;
+    int max_dz = 0;
+    bool trigdist = false;
+};
+
+class rl_dist_lookup_table
+{
+    public:
+        auto matches( const rl_dist_lookup_table_dimensions &dimensions ) const -> bool;
+        auto reset( const rl_dist_lookup_table_dimensions &dimensions ) -> void;
+
+        auto distance_2d( int dx, int dy ) const -> int;
+        auto distance_3d( int dx, int dy, int dz ) const -> int;
+        auto row_2d( int dy ) const -> std::span<const uint16_t>;
+        auto row_3d( int dy, int dz ) const -> std::span<const uint16_t>;
+
+    private:
+        auto index_2d( int dx, int dy ) const -> size_t;
+        auto index_3d( int dx, int dy, int dz ) const -> size_t;
+
+        rl_dist_lookup_table_dimensions dimensions_;
+        std::vector<uint16_t> distances_2d_;
+        std::vector<uint16_t> distances_3d_;
+};
+
+auto get_rl_dist_lookup_table( const rl_dist_lookup_table_dimensions &dimensions ) ->
+const rl_dist_lookup_table &;
+
 /**
  * Helper type for the return value of dist_fast().
  *
@@ -276,4 +309,30 @@ void calc_ray_end( units::angle, int range, const tripoint &p, tripoint &out );
  */
 units::angle coord_to_angle( const tripoint &a, const tripoint &b );
 
+template<IsCoordPoint C>
+auto rl_dist( const C &a, const C &b ) -> int
+{
+    return rl_dist( a.raw(), b.raw() );
+}
 
+template<IsCoordPoint C>
+auto rl_dist_fast( const C &a, const C &b ) -> FastDistanceApproximation
+{
+    return rl_dist_fast( a.raw(), b.raw() );
+}
+
+template<IsCoordPoint C>
+auto line_to( const C &a, const C &b, int t = 0, int t2 = 0 ) -> std::vector<C>
+{
+    std::vector<typename C::value_type> raw_line;
+    if constexpr( C::dimension == 2 ) {
+        raw_line = line_to( a.raw(), b.raw(), t );
+    } else {
+        raw_line = line_to( a.raw(), b.raw(), t, t2 );
+    }
+    auto result = std::vector<C> {};
+    result.reserve( raw_line.size() );
+    std::ranges::transform( raw_line, std::back_inserter( result ),
+    []( const auto & p ) { return C( p ); } );
+    return result;
+}

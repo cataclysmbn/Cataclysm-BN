@@ -18,6 +18,8 @@ constexpr auto hook_names = std::array
     "on_dialogue_option",
     "on_dialogue_end",
     "on_character_reset_stats",
+    "on_character_display_skill_action",
+    "on_character_display_skill_info",
     "on_character_effect_added",
     "on_character_effect",
     "on_character_effect_removed",
@@ -36,6 +38,8 @@ constexpr auto hook_names = std::array
     "on_npc_try_move",
     "on_monster_try_move",
     "on_character_try_move",
+    "on_elevator_try_use",
+    "on_craft_result",
     "on_mapgen_postprocess",
     "on_explosion_start",
     "on_creature_spawn",
@@ -47,6 +51,9 @@ constexpr auto hook_names = std::array
     "on_creature_do_turn",
     "on_npc_do_turn",
     "on_monster_do_turn",
+    "on_make_mapgen_factory_list",
+    "on_mission_start",
+    "on_mission_end"
 };
 
 void define_hooks( lua_state &state )

@@ -7,6 +7,7 @@
 #include "catalua_luna_doc.h"
 
 #include "artifact.h"
+#include "avatar.h"
 #include "itype.h"
 #include "mtype.h"
 #include "material.h"
@@ -333,6 +334,16 @@ void reg_item( sol::state &lua )
         SET_FX( erase_var );
         DOC( "Erase all variables" );
         SET_FX( clear_vars );
+        DOC( "Returns all stored item vars as a table" );
+        luna::set_fx( ut, "vars_table", []( const item & it, sol::this_state state )
+        {
+            sol::state_view lua( state );
+            sol::table vars = lua.create_table();
+            std::ranges::for_each( it.item_vars(), [&]( const auto & entry ) {
+                vars[entry.first] = entry.second;
+            } );
+            return vars;
+        } );
 
         DOC( "Spawns a new item. Same as gapi.create_item " );
         luna::set_fx( ut, "spawn", []( const itype_id & itype, int count )
@@ -397,6 +408,10 @@ void reg_item( sol::state &lua )
 
         SET_FX( activate );
         SET_FX( deactivate );
+        DOC( "Immediately invokes this item's use action at the given map-square position. Returns the charges consumed by the use action." );
+        luna::set_fx( ut, "invoke_at", []( item & it, const tripoint_bub_ms & pos ) -> int {
+            return it.type->invoke( get_avatar(), it, pos );
+        } );
         SET_FX( set_charges );
 
         SET_FX( set_counter );
@@ -444,15 +459,11 @@ void reg_item( sol::state &lua )
         DOC( "Gets the faction id that owns this item" );
         SET_FX( get_owner );
 
-        DOC( "Sets the ownership of this item to a faction" );
-        luna::set_fx( ut, "set_owner",
-                      sol::resolve<void( const faction_id & )>
-                      ( &item::set_owner ) );
-
-        DOC( "Sets the ownership of this item to a character" );
-        luna::set_fx( ut, "set_owner",
-                      sol::resolve<void( const Character & )>
-                      ( &item::set_owner ) );
+        DOC( "Sets the ownership of this item to a faction or character" );
+        luna::set_fx( ut, "set_owner", sol::overload(
+                          sol::resolve<void( const faction_id & )>( &item::set_owner ),
+                          sol::resolve<void( const Character & )>( &item::set_owner )
+                      ) );
 
         SET_FX( get_owner_name );
 
@@ -982,10 +993,10 @@ void reg_islot( sol::state &lua )
     {
         sol::usertype<UT_CLASS> ut = luna::new_usertype<UT_CLASS>( lua, luna::no_bases, luna::no_constructor );
 
-        DOC( "Diameter of wheel in inches" );
+        DOC( "Diameter of wheel in millimeters.  Integer JSON values are legacy inches." );
         SET_MEMB_RO( diameter );
 
-        DOC( "Width of wheel in inches" );
+        DOC( "Width of wheel in millimeters.  Integer JSON values are legacy inches." );
         SET_MEMB_RO( width );
     }
 #undef UT_CLASS
@@ -1033,6 +1044,9 @@ void reg_islot( sol::state &lua )
 
         DOC( "Modifies base loudness as provided by the currently loaded ammo" );
         SET_MEMB_RO( loudness );
+
+        DOC( "Modifies projectile speed as provided by the currently loaded ammo" );
+        SET_MEMB_RO( speed );
 
         DOC( "If this uses UPS charges, how many (per shoot), 0 for no UPS charges at all" );
         SET_MEMB_RO( ups_charges );
@@ -1120,6 +1134,9 @@ void reg_islot( sol::state &lua )
 
         DOC( "Modifies base loudness as provided by the currently loaded ammo" );
         SET_MEMB_RO( loudness );
+
+        DOC( "Modifies projectile speed as provided by the currently loaded ammo" );
+        SET_MEMB_RO( speed );
 
         DOC( "How many moves does this gunmod take to install?" );
         SET_MEMB_RO( install_time );
@@ -1276,6 +1293,9 @@ void reg_islot( sol::state &lua )
         DOC( "Base loudness of ammo (possibly modified by gun/gunmods)" );
         SET_MEMB_RO( loudness );
 
+        DOC( "Base speed of ammo (possibly modified by gun/gunmods)" );
+        SET_MEMB_RO( speed );
+
         DOC( "Recoil (per shot), roughly equivalent to kinetic energy (in Joules)" );
         SET_MEMB_RO( recoil );
 
@@ -1388,7 +1408,6 @@ void reg_islot( sol::state &lua )
         SET_MEMB_RO( damage );
         SET_MEMB_RO( dispersion );
         SET_MEMB_RO( range );
-        SET_MEMB_RO( speed );
     }
 #undef UT_CLASS
 

@@ -41,8 +41,9 @@ void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
 
             receiver.i_add( std::move( to_give ) );
         } else {
+            const auto count = npc_gives ? ip.u_has : ip.npc_has;
             gift.set_owner( receiver );
-            std::ranges::for_each( ip.locs, [&]( auto * it ) {
+            std::ranges::for_each( std::views::take( ip.locs, count ), [&]( auto * it ) {
                 receiver.i_add( it->detach() );
             } );
         }
@@ -149,7 +150,7 @@ std::vector<item_pricing> npc_trading::init_buying( Character &buyer, Character 
     //nearby items owned by the NPC will only show up in
     //the trade window if the NPC is also a shopkeeper
     if( np.is_shopkeeper() ) {
-        std::ranges::for_each( map_selector( seller.pos(), PICKUP_RANGE ),
+        std::ranges::for_each( map_selector( seller.bub_pos(), PICKUP_RANGE ),
         [&]( auto & cursor ) {
             cursor.visit_items( [&check_item]( item * node ) {
                 check_item( {node}, 1 );
@@ -158,7 +159,7 @@ std::vector<item_pricing> npc_trading::init_buying( Character &buyer, Character 
         } );
     }
 
-    std::ranges::for_each( vehicle_selector( seller.pos(), 1 ), [&]( auto & cursor ) {
+    std::ranges::for_each( vehicle_selector( seller.bub_pos(), 1 ), [&]( auto & cursor ) {
         cursor.visit_items( [&check_item]( item * node ) {
             check_item( {node}, 1 );
             return VisitResponse::SKIP;

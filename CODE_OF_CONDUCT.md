@@ -21,8 +21,9 @@ appearance, race, religion, or sexual identity and orientation.
 5. If other participants complain about the way you express your ideas, please make an effort to
    cater to them.
 6. Don't raise unrelated political issues.
-7. If you feel these standards are being violated, please alert the project's "ombudsman" Jakob at
-   lamandus@hotmail.com
+7. If you feel these standards are being violated, please alert one of the repository owners
+   (scarf005, RobbieNeko, chaosvolt, or Oren Audeles) by direct message on the
+   [official Discord server](https://discord.gg/XW7XhXuZ89).
 
 ## Attribution
 

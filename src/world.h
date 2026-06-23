@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <string>
 #include "json.h"
 #include "options.h"
@@ -9,6 +10,7 @@
 #include "fstream_utils.h"
 
 class avatar;
+class sqlite_map_db;
 class sqlite3;
 
 class save_t
@@ -101,6 +103,7 @@ class world
         /**@{*/
         void start_save_tx();
         int64_t commit_save_tx();
+        void release_player_db();
         /**@}*/
 
         /*
@@ -112,10 +115,10 @@ class world
         // dim_id == "" → primary path; dim_id != "" → "dimensions/<dim_id>/..." subdir.
         // Obtain dim_id from the owning buffer, not global state.
 
-        bool read_map_quad( const std::string &dim_id, const tripoint &om_addr,
-                            file_read_json_fn reader ) const;
-        bool write_map_quad( const std::string &dim_id, const tripoint &om_addr,
-                             file_write_fn writer ) const;
+        bool read_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
+                           file_read_json_fn reader ) const;
+        bool write_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
+                            file_write_fn writer ) const;
 
         bool overmap_exists( const std::string &dim_id, const point_abs_om &p ) const;
         bool read_overmap( const std::string &dim_id, const point_abs_om &p,
@@ -127,17 +130,17 @@ class world
         bool write_overmap_player_visibility( const std::string &dim_id, const point_abs_om &p,
                                               file_write_fn writer );
 
-        bool read_player_mm_quad( const std::string &dim_id, const tripoint &p,
-                                  file_read_json_fn reader );
-        bool write_player_mm_quad( const std::string &dim_id, const tripoint &p,
-                                   file_write_fn writer );
+        bool read_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
+                                 file_read_json_fn reader );
+        bool write_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
+                                  file_write_fn writer );
 
         // Legacy overloads without dim_id — do not call from background threads.
 
-        /** @deprecated Use read_map_quad(dim_id, ...) */ // NOLINT(cata-text-style)
-        bool read_map_quad( const tripoint &om_addr, file_read_json_fn reader ) const;
-        /** @deprecated Use write_map_quad(dim_id, ...) */ // NOLINT(cata-text-style)
-        bool write_map_quad( const tripoint &om_addr, file_write_fn writer ) const;
+        /** @deprecated Use read_map_omt(dim_id, ...) */ // NOLINT(cata-text-style)
+        bool read_map_omt( const tripoint_abs_omt &omt_addr, file_read_json_fn reader ) const;
+        /** @deprecated Use write_map_omt(dim_id, ...) */ // NOLINT(cata-text-style)
+        bool write_map_omt( const tripoint_abs_omt &om_addr, file_write_fn writer ) const;
 
         /** @deprecated Use overmap_exists(dim_id, ...) */ // NOLINT(cata-text-style)
         bool overmap_exists( const point_abs_om &p ) const;
@@ -150,10 +153,10 @@ class world
         /** @deprecated Use write_overmap_player_visibility(dim_id, ...) */ // NOLINT(cata-text-style)
         bool write_overmap_player_visibility( const point_abs_om &p, file_write_fn writer );
 
-        /** @deprecated Use read_player_mm_quad(dim_id, ...) */ // NOLINT(cata-text-style)
-        bool read_player_mm_quad( const tripoint &p, file_read_json_fn reader );
-        /** @deprecated Use write_player_mm_quad(dim_id, ...) */ // NOLINT(cata-text-style)
-        bool write_player_mm_quad( const tripoint &p, file_write_fn writer );
+        /** @deprecated Use read_player_mm_omt(dim_id, ...) */ // NOLINT(cata-text-style)
+        bool read_player_mm_omt( const tripoint_abs_mmr &p, file_read_json_fn reader );
+        /** @deprecated Use write_player_mm_omt(dim_id, ...) */ // NOLINT(cata-text-style)
+        bool write_player_mm_omt( const tripoint_abs_mmr &p, file_write_fn writer );
 
         /*
          * Player-specific file operations. Paths will be prefixed with the player's save ID.
@@ -206,11 +209,10 @@ class world
         std::string overmap_player_filename( const point_abs_om &p ) const;
         std::string get_player_path() const;
 
-        sqlite3 *map_db = nullptr;
+        std::unique_ptr<sqlite_map_db> map_db;
 
         sqlite3 *save_db = nullptr;
         std::string last_save_id = "";
         sqlite3 *get_player_db();
 };
-
 

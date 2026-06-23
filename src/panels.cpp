@@ -486,9 +486,9 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                 arrowy = clamp( arrowy, 0, 6 );
             }
             char glyph = '*';
-            if( targ.z() > you.posz() ) {
+            if( targ.z() > you.bub_pos().z() ) {
                 glyph = '^';
-            } else if( targ.z() < you.posz() ) {
+            } else if( targ.z() < you.bub_pos().z() ) {
                 glyph = 'v';
             }
 
@@ -496,7 +496,7 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
         }
     }
     const int sight_points = player_character.overmap_sight_range( g->light_level(
-                                 player_character.posz() ) );
+                                 player_character.bub_pos().z() ) );
     for( int i = -3; i <= 3; i++ ) {
         for( int j = -3; j <= 3; j++ ) {
             if( i > -3 && i < 3 && j > -3 && j < 3 ) {
@@ -518,7 +518,7 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
 
 static void draw_minimap( const avatar &u, const catacurses::window &w_minimap )
 {
-    const tripoint_abs_omt curs = u.global_omt_location();
+    const tripoint_abs_omt curs = u.abs_omt_pos();
     overmap_ui::draw_overmap_chunk( w_minimap, u, curs, point( -1, -1 ), 7, 7 );
 }
 
@@ -544,7 +544,7 @@ static std::string get_temp( const avatar &u )
     std::string temp;
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
-        temp = print_temperature( get_weather().get_temperature( u.pos() ) );
+        temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
     }
     if( temp.empty() ) {
         return "-";
@@ -1398,7 +1398,7 @@ static void draw_char_narrow( avatar &u, const catacurses::window &w )
     std::string movecost = std::to_string( u.movecounter ) + "(" + move_char + ")";
     bool m_style = get_option<std::string>( "MORALE_STYLE" ) == "horizontal";
     std::string smiley = morale_emotion( morale_pair.second, get_face_type( u ), m_style );
-    mvwprintz( w, point( 8, 0 ), c_light_gray, "%s", u.volume );
+    mvwprintz( w, point( 8, 0 ), c_light_gray, std::to_string( u.volume ) );
 
     // print stamina
     auto needs_pair = std::make_pair( get_hp_bar( u.get_stamina(), u.get_stamina_max() ).second,
@@ -1443,7 +1443,7 @@ static void draw_char_wide( avatar &u, const catacurses::window &w )
     bool m_style = get_option<std::string>( "MORALE_STYLE" ) == "horizontal";
     std::string smiley = morale_emotion( morale_pair.second, get_face_type( u ), m_style );
 
-    mvwprintz( w, point( 8, 0 ), c_light_gray, "%s", u.volume );
+    mvwprintz( w, point( 8, 0 ), c_light_gray, std::to_string( u.volume ) );
     mvwprintz( w, point( 23, 0 ), morale_pair.first, "%s", smiley );
     mvwprintz( w, point( 38, 0 ), focus_color( u.focus_pool ), "%s", u.focus_pool );
 
@@ -1523,8 +1523,8 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
 {
     werase( w );
     // display location
-    const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
-    tripoint_abs_omt coord = u.global_omt_location();
+    const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
+    tripoint_abs_omt coord = u.abs_omt_pos();
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Place: " ) );
     wprintz( w, c_white, utf8_truncate( cur_ter->get_name(), getmaxx( w ) - 13 ) );
@@ -1536,7 +1536,7 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
         std::tie( abs_coord, rel_coord ) = project_remain<coords::om>( coord );
         wprintz( w, c_white, string_format( "%d'%d, %d'%d, %d", abs_coord.x(), rel_coord.x(), abs_coord.y(),
                                             rel_coord.y(),
-                                            u.global_omt_location().z() ) );
+                                            u.abs_omt_pos().z() ) );
     } else {
         wprintz( w, c_white, string_format( "%d, %d, %d", coord.x(), coord.y(), coord.z() ) );
     }
@@ -1573,7 +1573,7 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
     }
     if( minimap ) {
         const int offset = getmaxx( w ) - 6;
-        const tripoint_abs_omt curs = u.global_omt_location();
+        const tripoint_abs_omt curs = u.abs_omt_pos();
         overmap_ui::draw_overmap_chunk( w, u, curs, point( offset, -1 ), 5, 5 );
     }
     wnoutrefresh( w );
@@ -1739,7 +1739,7 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
     mvwprintz( w, point( 8, 1 ), c_light_gray, "%s", u.martial_arts_data->selected_style_name( u ) );
     // location
     mvwprintz( w, point( 8, 2 ), c_white, utf8_truncate( ACTIVE_OVERMAP_BUFFER.ter(
-                   u.global_omt_location() )->get_name(), getmaxx( w ) - 8 ) );
+                   u.abs_omt_pos() )->get_name(), getmaxx( w ) - 8 ) );
     // weather
     const weather_manager &weather = get_weather();
     if( g->get_levz() < 0 ) {
@@ -1753,15 +1753,15 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
                 character_funcs::fine_detail_vision_mod( get_avatar() ) );
     mvwprintz( w, point( 8, 4 ), ll.second, ll.first );
     // wind
-    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
-                                            u.pos(), weather.winddirection, g->is_sheltered( u.pos() ) );
+                                            u.abs_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
     mvwprintz( w, point( 8, 5 ), get_wind_color( windpower ),
                get_wind_desc( windpower ) + " " + get_wind_arrow( weather.winddirection ) );
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
-        std::string temp = print_temperature( weather.get_temperature( u.pos() ) );
+        std::string temp = print_temperature( weather.get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31 - utf8_width( temp ), 5 ), c_light_gray, temp );
     }
 
@@ -1774,10 +1774,10 @@ static void render_wind( avatar &u, const catacurses::window &w, const std::stri
     mvwprintz( w, point_zero, c_light_gray,
                //~ translation should not exceed 5 console cells
                string_format( formatstr, left_justify( _( "Wind" ), 5 ) ) );
-    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
     const weather_manager &weather = get_weather();
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
-                                            u.pos(), weather.winddirection, g->is_sheltered( u.pos() ) );
+                                            u.abs_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
     mvwprintz( w, point( 8, 0 ), get_wind_color( windpower ),
                get_wind_desc( windpower ) + " " + get_wind_arrow( weather.winddirection ) );
     wnoutrefresh( w );
@@ -2048,7 +2048,7 @@ static void draw_veh_compact( const avatar &u, const catacurses::window &w )
     // vehicle display
     vehicle *veh = g->remoteveh();
     if( veh == nullptr && u.in_vehicle ) {
-        veh = veh_pointer_or_null( get_map().veh_at( u.pos() ) );
+        veh = veh_pointer_or_null( get_map().veh_at( u.bub_pos() ) );
     }
     if( veh ) {
         mvwprintz( w, point( 0, 1 ), c_light_gray, "fuel: " );
@@ -2091,7 +2091,7 @@ static void draw_veh_padding( const avatar &u, const catacurses::window &w )
     // vehicle display
     vehicle *veh = g->remoteveh();
     if( veh == nullptr && u.in_vehicle ) {
-        veh = veh_pointer_or_null( get_map().veh_at( u.pos() ) );
+        veh = veh_pointer_or_null( get_map().veh_at( u.bub_pos() ) );
     }
     if( veh ) {
         mvwprintz( w, point( 1, 1 ), c_light_gray, "fuel: " );
@@ -2134,7 +2134,7 @@ static void draw_veh_classic( const avatar &u, const catacurses::window &w )
     // vehicle display
     vehicle *veh = g->remoteveh();
     if( veh == nullptr && u.in_vehicle ) {
-        veh = veh_pointer_or_null( get_map().veh_at( u.pos() ) );
+        veh = veh_pointer_or_null( get_map().veh_at( u.bub_pos() ) );
     }
     if( veh ) {
         mvwprintz( w, point( 0, 1 ), c_light_gray, "fuel: " );
@@ -2188,7 +2188,7 @@ static void draw_location_classic( const avatar &u, const catacurses::window &w 
 
     mvwprintz( w, point_zero, c_light_gray, _( "Location:" ) );
     mvwprintz( w, point( 10, 0 ), c_white, utf8_truncate( ACTIVE_OVERMAP_BUFFER.ter(
-                   u.global_omt_location() )->get_name(), getmaxx( w ) - 13 ) );
+                   u.abs_omt_pos() )->get_name(), getmaxx( w ) - 13 ) );
 
     wnoutrefresh( w );
 }
@@ -2293,7 +2293,7 @@ static void draw_time_classic( const avatar &u, const catacurses::window &w )
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
-        std::string temp = print_temperature( get_weather().get_temperature( u.pos() ) );
+        std::string temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31, 0 ), c_light_gray, _( "Temp : " ) + temp );
     }
 
@@ -2443,7 +2443,7 @@ static std::vector<window_panel> initialize_default_compact_panels()
     ret.emplace_back( draw_messages_classic, translate_marker( "Log" ), -2, 32, true );
     ret.emplace_back( draw_compass, translate_marker( "Compass" ), 8, 32, true );
     ret.emplace_back( draw_compass, translate_marker( "Comp.Compass" ), 3, 32, false );
-    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
+    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 32, false );
 #if defined(TILES)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
                       default_render, true );
@@ -2479,7 +2479,7 @@ static std::vector<window_panel> initialize_default_label_narrow_panels()
                       true );
     ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 32,
                       false );
-    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
+    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 32, false );
 #if defined(TILES)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
                       default_render, true );
@@ -2514,7 +2514,7 @@ static std::vector<window_panel> initialize_default_label_panels()
     ret.emplace_back( draw_armor_comp, translate_marker( "comp.Armor" ), 1, 32, false );
     ret.emplace_back( draw_compass_padding, translate_marker( "Compass" ), 8, 44,
                       true );
-    ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 32,
+    ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 44,
                       false );
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
 #if defined(TILES)

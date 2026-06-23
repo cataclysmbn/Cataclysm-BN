@@ -13,6 +13,18 @@
     "components": [ [ [ "rag", 4 ] ] ]
   },
   {
+    "result": "makeshift_headwrap",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "survival",
+    "time": "48 s",
+    "reversible": true,
+    "autolearn": true,
+    "components": [ [ [ "sheet", 1 ], [ "blanket", 1 ], [ "electric_blanket", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
     "result": "helmet_liner",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -642,7 +654,7 @@
     "components": [
       [ [ "helmet_liner", 1 ], [ "hat_cotton", 1 ], [ "rag", 3 ] ],
       [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ], [ "helmet_army", 1 ], [ "kevlar_plate", 6 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ],
       [ [ "fabric_hides_proper", 8, "LIST" ] ],
       [ [ "duct_tape", 150 ] ],
       [
@@ -674,7 +686,7 @@
     "components": [
       [ [ "helmet_liner", 1 ], [ "hat_cotton", 1 ], [ "rag", 3 ] ],
       [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ], [ "helmet_army", 1 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ],
       [ [ "steel_chunk", 2 ], [ "scrap", 6 ] ],
       [ [ "duct_tape", 75 ] ],
       [
@@ -706,7 +718,7 @@
     "components": [
       [ [ "helmet_liner", 1 ], [ "hat_cotton", 1 ], [ "rag", 3 ] ],
       [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ], [ "helmet_army", 1 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ],
       [ [ "alloy_sheet", 4 ] ],
       [ [ "duct_tape", 75 ] ],
       [
@@ -781,7 +793,7 @@
     "components": [
       [ [ "rag", 8 ] ],
       [ [ "kevlar_plate", 4 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ],
       [ [ "duct_tape", 100 ] ]
     ]
   },
@@ -795,7 +807,7 @@
     "time": "12 m",
     "autolearn": true,
     "tools": [  ],
-    "components": [ [ [ "duct_tape", 20 ] ], [ [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ], [ [ "rag", 2 ] ] ]
+    "components": [ [ [ "duct_tape", 20 ] ], [ [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ], [ [ "rag", 2 ] ] ]
   },
   {
     "result": "hood_survivor",
@@ -813,7 +825,7 @@
       [ [ "fabric_hides_proper", 6, "LIST" ] ],
       [ [ "fabric_standard", 2, "LIST" ] ],
       [ [ "kevlar_plate", 4 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ],
       [ [ "duct_tape", 100 ] ]
     ]
   },
@@ -833,7 +845,7 @@
       [ [ "fur", 8 ] ],
       [ [ "fabric_standard", 2, "LIST" ] ],
       [ [ "kevlar_plate", 4 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ],
       [ [ "duct_tape", 100 ] ]
     ]
   },
@@ -934,7 +946,13 @@
       [ "textbook_gaswarfare", 3 ]
     ],
     "components": [
-      [ [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bottle_plastic", 1 ], [ "bottle_plastic_small", 2 ] ],
+      [
+        [ "bag_plastic", 2 ],
+        [ "bag_zipper", 2 ],
+        [ "bag_zipper_small", 8 ],
+        [ "bottle_plastic", 1 ],
+        [ "bottle_plastic_small", 2 ]
+      ],
       [ [ "rag", 2 ], [ "bandana", 2 ], [ "paper", 10 ] ],
       [ [ "charcoal", 10 ] ]
     ]
@@ -1112,7 +1130,7 @@
     "reversible": true,
     "autolearn": true,
     "components": [ [ [ "tshirt", 1 ], [ "flag_shirt", 1 ], [ "linuxtshirt", 1 ], [ "tshirt_text", 1 ] ] ],
-    "flags": [ "BLIND_HARD", "NO_RESIZE" ]
+    "flags": [ "NO_RESIZE" ]
   },
   {
     "result": "mask_ski",
@@ -1213,8 +1231,21 @@
     "time": "2 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 4 ] ], [ [ "pot", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 4 ] ], [ [ "pot", 1 ] ] ]
+  },
+  {
+    "result": "bucket_helmet",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "2 m",
+    "//": "Not reversible because you just banged a bunch of holes in it.",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "tools": [ [ [ "nail", -1 ], [ "spike", -1 ], [ "sharp_rock", -1 ], [ "rebar", -1 ], [ "spear_rebar", -1 ] ] ],
+    "components": [ [ [ "rag", 4 ] ], [ [ "bucket", 1 ] ] ]
   },
   {
     "result": "rebreather",
@@ -1454,8 +1485,7 @@
     "time": "1 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 8 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 8 ] ] ]
   },
   {
     "result": "welding_mask_crude",
@@ -1530,8 +1560,7 @@
     "time": "2 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 10 ] ], [ [ "pot_canning", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 10 ] ], [ [ "pot_canning", 1 ] ] ]
   },
   {
     "result": "helmet_corinthian",
@@ -1544,6 +1573,18 @@
     "book_learn": [ [ "textbook_armwest", 5 ] ],
     "using": [ [ "forging_standard", 3 ], [ "bronzesmithing_tools", 1 ] ],
     "components": [ [ [ "scrap_bronze", 7 ] ], [ [ "fabric_hides_proper", 4, "LIST" ] ] ]
+  },
+  {
+    "result": "ear_plugs",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "10 m",
+    "autolearn": true,
+    "tools": [ [ [ "mold_plastic", -1 ] ], [ [ "surface_heat", 15, "LIST" ] ] ],
+    "components": [ [ [ "chunk_rubber", 1 ], [ "wax", 1 ] ] ]
   },
   {
     "result": "attached_ear_plugs_off",

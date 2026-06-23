@@ -1,0 +1,115 @@
+[
+  {
+    "type": "terrain",
+    "id": "t_archon_pedestral_backup",
+    "looks_like": "t_pedestal_temple",
+    "name": "strange pedestal with stone lever",
+    "//": "This is a fallback in case someone has the bright idea of trying to teleport while in the finale, and ends up getting stuck.",
+    "description": "This is a pedestal of dark basalt-like stone, with unnatural alien resin clinging like ivy to the base.  A heavy protrusion of lighter, purple porphyry is set into it, resembling a lever for some unknown contraption.",
+    "symbol": "6",
+    "color": "dark_gray",
+    "move_cost": 0,
+    "flags": [ "TRANSPARENT", "NOITEM", "THIN_OBSTACLE" ],
+    "examine_action": "controls_gate"
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_archon_vault",
+    "looks_like": "t_rock_wall",
+    "name": "dark stone wall",
+    "description": "A wall of bricks made out of what looks like basalt, chiseled into a perfectly smooth surface.",
+    "symbol": "LINE_OXOX",
+    "color": "light_gray",
+    "move_cost": 0,
+    "coverage": 100,
+    "roof": "t_flat_roof",
+    "//": "The fact it doesn't block wind, which you couldn't even notice given it spawns underground, is important for something.",
+    "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL" ],
+    "connects_to": "WALL"
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_archon_barricade",
+    "looks_like": "t_rock_wall",
+    "name": "engraved wall",
+    "description": "A wall of bricks made out of what looks like basalt, heavily engraved with strange markings that give off a peculiar glow.",
+    "symbol": "LINE_OXOX",
+    "color": "light_gray",
+    "move_cost": 0,
+    "coverage": 100,
+    "roof": "t_flat_roof",
+    "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL" ],
+    "connects_to": "WALL"
+  },
+  {
+    "type": "terrain",
+    "id": "t_dimensional_lens_array_platform",
+    "looks_like": "t_rad_platform",
+    "name": "dimensional lens array platform",
+    "description": "A slightly-elevated panel overlooking the exotic machinery attached to it, with a ruined control panel hanging from the ceiling.  A faint glow permeates it, as though charged with otherworldly energy left bottled up and unreleased.  There might still be away to activate it, whatever it does.  Or just take it apart and hopefully salvage the reason for coming here.",
+    "symbol": "0",
+    "color": "light_blue",
+    "move_cost": 2,
+    "light_emitted": 5,
+    "trap": "tr_arcane_lab_map_regen_2",
+    "flags": [ "TRANSPARENT", "FLAT" ],
+    "deconstruct": {
+      "ter_set": "t_strconc_floor",
+      "items": [
+        { "item": "dimensional_focus_lens", "count": 1 },
+        { "item": "cable", "charges": [ 8, 16 ] },
+        { "item": "scrap", "count": [ 8, 16 ] },
+        { "item": "sheet_metal", "count": [ 5, 10 ] },
+        { "item": "alloy_sheet", "count": [ 12, 18 ] },
+        { "item": "large_lcd_screen", "count": 1 },
+        { "item": "e_scrap", "count": [ 10, 16 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_root_wall_arcana",
+    "name": "root wall",
+    "looks_like": "t_root_wall",
+    "description": "A wall of solid earth permeated by thick roots.",
+    "symbol": "#",
+    "color": "brown",
+    "move_cost": 0,
+    "coverage": 100,
+    "roof": "t_thatch_roof",
+    "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT" ],
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "wham!",
+      "sound_fail": "whump!",
+      "ter_set": "t_dirt",
+      "ter_set_bashed_from_above": "t_dirt",
+      "items": [ { "group": "digging_soil_loam_200L", "count": 20 }, { "item": "splinter", "count": [ 2, 5 ] } ],
+      "//": "Variable reduction, maximum strength comparable to dirt walls",
+      "ranged": { "reduction": [ 100, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_wall_arcana_basement",
+    "name": "wall",
+    "looks_like": "t_wall",
+    "description": "A typical wall of sturdy brick construction, plastered over with drywall to give some semblance of comfort to this dreary place.  Paint job is the all too common and neutral off-white or cream color.",
+    "symbol": "LINE_OXOX",
+    "color": "light_gray",
+    "move_cost": 0,
+    "coverage": 100,
+    "roof": "t_flat_roof",
+    "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "MINEABLE", "BLOCK_WIND" ],
+    "bash": {
+      "str_min": 60,
+      "str_max": 160,
+      "sound": "crash!",
+      "sound_fail": "bash!",
+      "ter_set": "t_null",
+      "items": [ { "item": "rock", "count": [ 8, 15 ] }, { "item": "brick", "count": [ 2, 6 ] } ],
+      "ranged": { "reduction": [ 120, 120 ], "destroy_threshold": 120 }
+    }
+  }
+]

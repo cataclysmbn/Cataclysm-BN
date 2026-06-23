@@ -2,6 +2,7 @@ gdebug.log_info("Callback Lua Test: Main")
 
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
+local ui = require("lib.ui")
 mod.storage = storage
 
 local player = function() return gapi.get_avatar() end
@@ -10,11 +11,7 @@ local player_name = function() return player().name end
 
 local iname = function(item) return item:tname(1, true, 0) end
 
-local query = function(prompt)
-  local q = QueryPopup.new()
-  q:message(prompt)
-  return q:query_yn() == "YES"
-end
+local query = function(prompt) return ui.query_yn(prompt) end
 
 mod.can_equip = function(wear, params)
   local user = params.user

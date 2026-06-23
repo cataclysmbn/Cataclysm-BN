@@ -1294,6 +1294,55 @@
     "delete": { "flags": [ "HARDTOSHOOT" ] }
   },
   {
+    "id": "mon_wasp_mega_acid",
+    "type": "MONSTER",
+    "name": { "str": "giant acidic wasp queen" },
+    "description": "A yellowjacket queen grown to the size of a horse, towering over their daughters.  Even worse, it's skin seems to have taken on a green hue, and bubbling acid seems to drip from its stinger.",
+    "copy-from": "mon_wasp_guard",
+    "looks_like": "mon_wasp_mega",
+    "diff": 4,
+    "proportional": { "hp": 4, "volume": 5, "weight": 5 },
+    "speed": 100,
+    "attack_cost": 100,
+    "melee_skill": 8,
+    "melee_dice": 4,
+    "melee_dice_sides": 5,
+    "melee_damage": [ { "damage_type": "acid", "amount": 6 } ],
+    "special_attacks": [
+      [ "ACID", 10 ],
+      {
+        "id": "sting",
+        "cooldown": 5,
+        "move_cost": 200,
+        "damage_max_instance": [ { "damage_type": "stab", "amount": 15, "armor_penetration": 30 } ],
+        "min_mul": 1,
+        "max_mul": 3,
+        "effects": [ { "id": "corroding", "duration": 600 }, { "id": "downed", "duration": 1, "chance": 50 } ]
+      },
+      {
+        "type": "bite",
+        "cooldown": 3,
+        "move_cost": 100,
+        "damage_max_instance": [ { "damage_type": "cut", "amount": 10, "armor_penetration": 15 } ],
+        "min_mul": 1,
+        "max_mul": 3,
+        "body_parts": [ [ "leg_l", 2 ], [ "leg_r", 2 ], [ "head", 1 ], [ "arm_l", 2 ], [ "arm_r", 2 ], [ "torso", 4 ] ]
+      }
+    ],
+    "//": "sting 15-45 damage, 6 hits to max intensity, 8 to max duration; bite 10-30",
+    "dodge": 3,
+    "vision_night": 15,
+    "armor_bash": 8,
+    "armor_cut": 30,
+    "armor_stab": 18,
+    "armor_bullet": 22,
+    "harvest": "arachnid_wasp_queen_acid",
+    "death_function": [ "NORMAL", "ACID" ],
+    "reproduction": { "baby_egg": "egg_wasp", "baby_count": 4, "baby_timer": 5 },
+    "extend": { "flags": [ "PUSH_MON", "ACIDPROOF", "ACID_BLOOD", "POISON" ] },
+    "delete": { "flags": [ "HARDTOSHOOT" ] }
+  },
+  {
     "id": "mon_dermatik",
     "type": "MONSTER",
     "name": { "str": "dermatik" },

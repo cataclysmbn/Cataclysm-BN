@@ -1,0 +1,56 @@
+[
+  {
+    "type": "item_group",
+    "id": "NC_SCAVENGER_DOCMISSION_gloves",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "null", "prob": 30 },
+      { "item": "gloves_leather", "prob": 20 },
+      { "item": "gloves_work", "prob": 20 },
+      { "item": "gloves_fingerless", "prob": 50 },
+      { "item": "gloves_fingerless_mod", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_SCAVENGER_DOCMISSION_archery",
+    "subtype": "distribution",
+    "entries": [ { "item": "shortbow", "prob": 5 }, { "item": "crossbow", "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_SCAVENGER_DOCMISSION_pistols",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "usp_45", "prob": 30 },
+      { "item": "sw_619", "prob": 30 },
+      { "item": "colt_python", "prob": 15 },
+      { "item": "sw_610", "prob": 30 },
+      { "item": "ruger_redhawk", "prob": 5 },
+      { "item": "m9", "prob": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_SCAVENGER_DOCMISSION_rifle",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "browning_blr", "prob": 35 },
+      { "item": "remington_700", "prob": 35 },
+      { "item": "m1a", "prob": 35 },
+      { "item": "m1903", "prob": 15 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_SCAVENGER_DOCMISSION_misc",
+    "subtype": "collection",
+    "entries": [ { "group": "scavenger_medical_supplies", "prob": 100, "count": 5 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "scavenger_medical_supplies",
+    "subtype": "distribution",
+    "entries": [ { "item": "microcentrifuge", "prob": 100 }, { "group": "tools_medical", "prob": 100 } ]
+  }
+]

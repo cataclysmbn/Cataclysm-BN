@@ -1,0 +1,11 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "vehicle_color_expansion",
+    "name": "Vehicle Color Expansion",
+    "authors": [ "Wishduck" ],
+    "description": "Adds a greatly extended color list for painting, and expands vehicle palettes",
+    "category": "graphical",
+    "dependencies": [ "bn" ]
+  }
+]

@@ -176,7 +176,7 @@ std::vector<dependency_node *> dependency_node::get_dependencies_as_nodes() cons
     for( std::vector<dependency_node *>::reverse_iterator it =
              dependencies.rbegin();
          it != dependencies.rend(); ++it ) {
-        if( std::ranges::find( ret, *it ) == ret.end() ) {
+        if( !std::ranges::contains( ret, *it ) ) {
             ret.push_back( *it );
         }
     }
@@ -232,7 +232,7 @@ std::vector<dependency_node *> dependency_node::get_dependents_as_nodes() const
 
     // sort from front, keeping only one copy of the node
     for( auto &dependent : dependents ) {
-        if( std::ranges::find( ret, dependent ) == ret.end() ) {
+        if( !std::ranges::contains( ret, dependent ) ) {
             ret.push_back( dependent );
         }
     }

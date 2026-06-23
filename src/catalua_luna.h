@@ -4,9 +4,12 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <stdexcept>
+#include <string>
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "catalua_readonly.h"
@@ -67,6 +70,7 @@ constexpr std::string_view KEY_DOCTABLE = "catadoc";
 constexpr std::string_view KEY_BASES = "#bases";
 constexpr std::string_view KEY_CONSTRUCT = "#construct";
 constexpr std::string_view KEY_MEMBER = "#member";
+constexpr std::string_view KEY_MEMBER_NAMES = "#member_names";
 constexpr std::string_view KEY_MEMBER_TYPE = "type";
 constexpr std::string_view KEY_MEMBER_COMMENT = "comment";
 constexpr std::string_view KEY_MEMBER_VARIABLE_TYPE = "vartype";
@@ -119,6 +123,46 @@ inline void add_comment( sol::table &dt, std::string_view key )
 
 
 
+template<typename Key>
+auto member_key_name( const Key &key ) -> std::string
+{
+    if constexpr( std::is_same_v<std::remove_cv_t<Key>, sol::meta_function> ) {
+        return sol::to_string( key );
+    } else if constexpr( std::is_constructible_v<std::string_view, const Key &> ) {
+        return std::string( std::string_view( key ) );
+    }
+    return "<non-string>";
+}
+
+inline auto member_key_name( const sol::object &key ) -> std::string
+{
+    if( key.is<std::string>() ) {
+        return key.as<std::string>();
+    }
+    if( key.is<sol::meta_function>() ) {
+        return sol::to_string( key.as<sol::meta_function>() );
+    }
+    return "<non-string>";
+}
+
+template<typename Key>
+auto require_unique_member( sol::table &owner_dt, const Key &key ) -> void
+{
+    const auto key_name = member_key_name( key );
+    sol::state_view lua( owner_dt.lua_state() );
+    sol::table member_names = owner_dt[KEY_MEMBER_NAMES].get_or( sol::table() );
+    if( !member_names.valid() ) {
+        member_names = lua.create_table();
+        owner_dt[KEY_MEMBER_NAMES] = member_names;
+    }
+    if( member_names[key_name].get_or( false ) ) {
+        throw std::runtime_error( string_format(
+                                      "Duplicate Lua binding registration for member '%s'; use a single sol::overload(...) registration for overloads",
+                                      key_name ) );
+    }
+    member_names[key_name] = true;
+}
+
 template<typename Val>
 struct doc_typename;
 
@@ -153,6 +197,38 @@ std::string doc_type()
 {
     return doc_typename<std::remove_cvref_t<Val>> {}();
 }
+
+template<typename Ref>
+struct doc_typename<sol::basic_object<Ref>> {
+    std::string operator()() const {
+        return "any";
+    }
+};
+
+template<>
+struct doc_typename<sol::nil_t> {
+    std::string operator()() const {
+        return "nil";
+    }
+};
+
+template<typename ...Args>
+struct doc_typename<std::variant<Args...>> {
+    std::string operator()() const {
+        std::string ret = "Variant( ";
+        bool is_first = true;
+        ( [&]() {
+            if( is_first ) {
+                is_first = false;
+            } else {
+                ret += ", ";
+            }
+            ret += doc_type<Args>();
+        }
+        (), ... );
+        return ret + " )";
+    }
+};
 
 template<typename T, typename U>
 struct doc_typename<std::pair<T, U>> {
@@ -485,6 +561,18 @@ sol::table make_type_member_doctable( sol::table type_dt, const Key &key )
     return member_dt;
 }
 
+template<typename Value, typename Class, typename Key>
+auto doc_member_fake( sol::usertype<Class> &ut, Key &&key )
+{
+    sol::state_view lua( ut.lua_state() );
+    sol::table type_dt = detail::get_type_doctable<Class>( lua );
+    sol::table member_dt = detail::make_type_member_doctable( type_dt, key );
+
+    member_dt[KEY_MEMBER_TYPE] = MEMBER_IS_VAR;
+    add_comment( member_dt, KEY_MEMBER_COMMENT );
+    member_dt[KEY_MEMBER_VARIABLE_TYPE] = doc_type<Value>();
+}
+
 } // namespace detail
 
 template<typename Class, typename ConstructorScheme, typename Bases>
@@ -544,14 +632,16 @@ void set_fx(
     Func value
 )
 {
+    sol::state_view lua( ut.lua_state() );
+    sol::table type_dt = detail::get_type_doctable<Class>( lua );
+    detail::require_unique_member( type_dt, key );
+
     // Due to a bug in sol2, on GCC build protected function call may call wrong lambda
     // https://github.com/ThePhD/sol2/issues/1444
     // This happens if we register with table.set( key, func ), but for
     // some reason table[key] = func makes it work fine.
     ut[ key ] = std::forward<Func>( value );
 
-    sol::state_view lua( ut.lua_state() );
-    sol::table type_dt = detail::get_type_doctable<Class>( lua );
     sol::table member_dt = detail::make_type_member_doctable( type_dt, key );
     detail::doc_member_fx<Class>( member_dt, sol::types<Func>() );
 }
@@ -563,12 +653,47 @@ void set(
     Value &&value
 )
 {
-    ut[ key ] = std::forward<Value>( value );
-
     sol::state_view lua( ut.lua_state() );
     sol::table type_dt = detail::get_type_doctable<Class>( lua );
+    detail::require_unique_member( type_dt, key );
+    ut[ key ] = std::forward<Value>( value );
+
     sol::table member_dt = detail::make_type_member_doctable( type_dt, key );
     detail::doc_member<Class>( member_dt, sol::types<Value>() );
+}
+
+template<typename Class, typename Key, typename Getter, typename Setter>
+void set_prop(
+    sol::usertype<Class> &ut,
+    Key &&key,
+    Getter &&get,
+    Setter &&set
+)
+{
+    using std_function_type = decltype( std::function{std::forward<Getter>( get )} );
+    using Value = std_function_type::result_type;
+    sol::state_view lua( ut.lua_state() );
+    sol::table type_dt = detail::get_type_doctable<Class>( lua );
+    detail::require_unique_member( type_dt, key );
+    ut[ key ] = sol::property( std::forward<Getter>( get ), std::forward<Setter>( set ) );
+    detail::doc_member_fake<Value, Class>( ut, key );
+}
+
+
+template<typename Class, typename Key, typename Getter>
+void set_prop(
+    sol::usertype<Class> &ut,
+    Key &&key,
+    Getter &&get
+)
+{
+    using std_function_type = decltype( std::function{std::forward<Getter>( get )} );
+    using Value = std_function_type::result_type;
+    sol::state_view lua( ut.lua_state() );
+    sol::table type_dt = detail::get_type_doctable<Class>( lua );
+    detail::require_unique_member( type_dt, key );
+    ut[ key ] = sol::property( std::forward<Getter>( get ) );
+    detail::doc_member_fake<Value, Class>( ut, key );
 }
 
 template<typename E>
@@ -680,13 +805,14 @@ void set_fx(
     Func value
 )
 {
+    detail::require_unique_member( lib.dt, key );
+
     // Due to a bug in sol2, on GCC build protected function call may call wrong lambda
     // https://github.com/ThePhD/sol2/issues/1444
     // This happens if we register with table.set( key, func ), but for
     // some reason table[key] = func makes it work fine.
     lib.t[ key ] = std::forward<Func>( value );
 
-    sol::state_view lua( lib.t.lua_state() );
     sol::table member_dt = detail::make_type_member_doctable( lib.dt, key );
     detail::doc_free_fx( member_dt, sol::types<Func>() );
 }
@@ -698,9 +824,9 @@ void set(
     Value &&value
 )
 {
+    detail::require_unique_member( lib.dt, key );
     lib.t[ key ] = value;
 
-    sol::state_view lua( lib.t.lua_state() );
     sol::table member_dt = detail::make_type_member_doctable( lib.dt, key );
     detail::doc_free( member_dt, value );
 }
@@ -736,5 +862,3 @@ inline void doc_params( const Ts &... args )
 }
 
 } // namespace luna
-
-

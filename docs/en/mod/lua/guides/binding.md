@@ -227,11 +227,11 @@ Binding these can be done separately from binding `T` itself.
 5. Ensure your type's `T` `string_id` has `obj()` and `is_valid()` methods implemented. These
    methods are implemented on a case-by-case basis. Checking other `string_id`s as example is
    recommended.
-6. In `catalua_bindings_ids.cpp`, add the header where your type T is defined:
+6. In the appropriate `catalua_bindings_ids_*.cpp` chunk, add the header where your type T is defined:
    ```cpp
    #include "your_type_definition.h"
    ```
-7. In `reg_game_ids` function, register it like so:
+7. In that chunk's `reg_game_ids_*` function, register it like so:
    ```cpp
    reg_id<T, true>( lua );
    ```

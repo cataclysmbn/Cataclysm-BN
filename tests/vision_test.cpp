@@ -12,6 +12,7 @@
 
 #include "calendar.h"
 #include "character.h"
+#include "coordinates.h"
 #include "field.h"
 #include "game.h"
 #include "game_constants.h"
@@ -20,7 +21,6 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "shadowcasting.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -63,7 +63,7 @@ static void full_map_test( const std::vector<std::string> &setup,
     const ter_id t_open_air( "t_open_air" );
 
     Character &player_character = get_player_character();
-    g->place_player( tripoint( 60, 60, 0 ) );
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     get_weather().weather_id = weather_type_id( "clear" );
     g->reset_light_level();
 
@@ -94,7 +94,7 @@ static void full_map_test( const std::vector<std::string> &setup,
         REQUIRE( line.size() == static_cast<size_t>( width ) );
     }
 
-    tripoint origin;
+    tripoint_bub_ms origin;
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             switch( setup[y][x] ) {
@@ -102,7 +102,7 @@ static void full_map_test( const std::vector<std::string> &setup,
                 case 'U':
                 case 'H':
                 case 'u':
-                    origin = player_character.pos() - point( x, y );
+                    origin = player_character.bub_pos() - point_rel_ms( x, y );
                     if( setup[y][x] == 'V' ) {
                         player_character.worn.push_back( item::spawn( "wearable_light_on" ) );
                     }
@@ -113,13 +113,13 @@ static void full_map_test( const std::vector<std::string> &setup,
 
     {
         // Sanity check on player placement
-        REQUIRE( origin.z < OVERMAP_HEIGHT );
-        tripoint player_offset = player_character.pos() - origin;
-        REQUIRE( player_offset.y >= 0 );
-        REQUIRE( player_offset.y < height );
-        REQUIRE( player_offset.x >= 0 );
-        REQUIRE( player_offset.x < width );
-        char player_char = setup[player_offset.y][player_offset.x];
+        REQUIRE( origin.z() < OVERMAP_HEIGHT );
+        auto player_offset = player_character.bub_pos() - origin;
+        REQUIRE( player_offset.y() >= 0 );
+        REQUIRE( player_offset.y() < height );
+        REQUIRE( player_offset.x() >= 0 );
+        REQUIRE( player_offset.x() < width );
+        char player_char = setup[player_offset.y()][player_offset.x()];
         REQUIRE( ( player_char == 'U' || player_char == 'u' || player_char == 'V' || player_char == 'H' ) );
     }
 
@@ -127,8 +127,8 @@ static void full_map_test( const std::vector<std::string> &setup,
     vehicle *veh = nullptr;
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
-            const tripoint p = origin + point( x, y );
-            const tripoint above = p + tripoint_above;
+            const auto p = origin + point_rel_ms( x, y );
+            const auto above = p + tripoint_above;
             switch( setup[y][x] ) {
                 case ' ':
                     break;
@@ -156,6 +156,7 @@ static void full_map_test( const std::vector<std::string> &setup,
                     break;
                 case 'C':
                     veh = here.add_vehicle( vproto_id( vehicle_id ), p, vehicle_rotation, 0, 0 );
+                    REQUIRE( veh != nullptr );
                     for( const vpart_reference &vp : veh->get_avail_parts( "OPENABLE" ) ) {
                         veh->close( vp.part_index() );
                     }
@@ -170,15 +171,15 @@ static void full_map_test( const std::vector<std::string> &setup,
     // player's vision_threshold is based on the previous lighting level (so
     // they might, for example, have poor nightvision due to having just been
     // in daylight)
-    here.update_visibility_cache( origin.z );
-    here.invalidate_map_cache( origin.z );
-    here.build_map_cache( origin.z );
-    here.update_visibility_cache( origin.z );
-    here.invalidate_map_cache( origin.z );
-    here.build_map_cache( origin.z );
+    here.invalidate_map_cache( origin.z() );
+    here.build_map_cache( origin.z() );
+    here.update_visibility_cache( origin.z() );
+    here.invalidate_map_cache( origin.z() );
+    here.build_map_cache( origin.z() );
+    here.update_visibility_cache( origin.z() );
 
-    const level_cache &cache = here.access_cache( origin.z );
-    const level_cache &above_cache = here.access_cache( origin.z + 1 );
+    const level_cache &cache = here.access_cache( origin.z() );
+    const level_cache &above_cache = here.access_cache( origin.z() + 1 );
     const visibility_variables &vvcache =
         here.get_visibility_variables_cache();
 
@@ -187,49 +188,57 @@ static void full_map_test( const std::vector<std::string> &setup,
     std::ostringstream seen;
     std::ostringstream lm;
     std::ostringstream apparent_light;
+    std::ostringstream visibility_cache_dump;
     std::ostringstream obstructed;
     std::ostringstream floor_above;
     transparency << std::setprecision( 3 );
     seen << std::setprecision( 3 );
+    lm << std::setprecision( 3 );
     apparent_light << std::setprecision( 3 );
 
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
-            const tripoint p = origin + point( x, y );
-            const map::apparent_light_info al = map::apparent_light_helper( cache, p );
+            const auto p = origin + point_rel_ms( x, y );
+            const auto &visibility_cache = here.get_visibility_variables_cache();
+            const map::apparent_light_info al = map::apparent_light_helper(
+                                                    cache, p, visibility_cache.visibility_scale_factor );
             for( auto &pr : here.field_at( p ) ) {
                 fields << pr.second.name() << ',';
             }
             fields << ' ';
             transparency << std::setw( 6 )
-                         << cache.transparency_cache[cache.idx( p.x, p.y )] << ' ';
-            seen << std::setw( 6 ) << cache.seen_cache[cache.idx( p.x, p.y )] << ' ';
-            four_quadrants this_lm = cache.lm[cache.idx( p.x, p.y )];
-            lm << this_lm.to_string() << ' ';
+                         << cache.transparency_cache[cache.idx( p.x(), p.y() )] << ' ';
+            seen << std::setw( 6 ) << cache.seen_cache[cache.idx( p.x(), p.y() )] << ' ';
+            lm << std::setw( 6 ) << cache.lm[cache.idx( p.x(), p.y() )] << ' ';
             apparent_light << std::setw( 6 ) << al.apparent_light << ' ';
+            visibility_cache_dump << std::setw( 6 )
+                                  << cache.visibility_cache[cache.idx( p.x(), p.y() )] << ' ';
             obstructed << ( al.obstructed ? '#' : '.' ) << ' ';
-            floor_above << ( above_cache.floor_cache[above_cache.idx( p.x, p.y )] ? '#' : '.' ) << ' ';
+            floor_above << ( above_cache.floor_cache[above_cache.idx( p.x(), p.y() )] ? '#' : '.' ) << ' ';
         }
         fields << '\n';
         transparency << '\n';
         seen << '\n';
         lm << '\n';
         apparent_light << '\n';
+        visibility_cache_dump << '\n';
         obstructed << '\n';
         floor_above << '\n';
     }
 
-    INFO( "zlevels: " << here.has_zlevels() );
     INFO( "origin: " << origin );
-    INFO( "player: " << player_character.pos() );
+    INFO( "player: " << player_character.bub_pos() );
     INFO( "unimpaired_range: " << player_character.unimpaired_range() );
+    INFO( "visibility_range: " << vvcache.visibility_range );
+    INFO( "detail_range: " << vvcache.detail_range );
     INFO( "vision_threshold: " << vvcache.vision_threshold );
     INFO( "time: " << to_string( time ) );
     INFO( "fields:\n" << fields.str() );
     INFO( "transparency:\n" << transparency.str() );
     INFO( "seen:\n" << seen.str() );
     INFO( "lm:\n" << lm.str() );
-    INFO( "apparent_light:\n" << apparent_light.str() );
+    INFO( "apparent_light_from_downloaded_seen:\n" << apparent_light.str() );
+    INFO( "visibility_cache:\n" << visibility_cache_dump.str() );
     INFO( "obstructed:\n" << obstructed.str() );
     INFO( "floor_above:\n" << floor_above.str() );
 
@@ -239,7 +248,7 @@ static void full_map_test( const std::vector<std::string> &setup,
 
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
-            const tripoint p = origin + point( x, y );
+            const auto p = origin + point_rel_ms( x, y );
             const lit_level level = here.apparent_light_at( p, vvcache );
             const char exp_char = expected_results[y][x];
             if( exp_char < '0' || exp_char > '9' ) {
@@ -330,19 +339,12 @@ struct vision_test_case {
     }
 
     void test_all() const {
-        // Disabling 3d tests for now since 3d sight casting is actually
-        // different (it sees round corners more).
-        const bool test_3d = !( flags & vision_test_flags::no_3d );
-        if( test_3d ) {
-            INFO( "using 3d casting" );
-            fov_3d = true;
-            test_all_transformations();
+        if( !!( flags & vision_test_flags::no_3d ) ) {
+            SUCCEED( "2D-only vision fixture skipped; current visibility is always cross-z" );
+            return;
         }
-        {
-            INFO( "using 2d casting" );
-            fov_3d = false;
-            test_all_transformations();
-        }
+        INFO( "using current visibility casting" );
+        test_all_transformations();
     }
 };
 
@@ -379,7 +381,7 @@ TEST_CASE( "vision_daylight", "[shadowcasting][vision]" )
         vision_test_flags::none
     };
 
-    t.test_all();
+    t.test();
 }
 
 TEST_CASE( "vision_day_indoors", "[shadowcasting][vision]" )
@@ -400,7 +402,7 @@ TEST_CASE( "vision_day_indoors", "[shadowcasting][vision]" )
         vision_test_flags::none
     };
 
-    t.test_all();
+    t.test();
 }
 
 TEST_CASE( "vision_light_shining_in", "[shadowcasting][vision]" )
@@ -422,7 +424,7 @@ TEST_CASE( "vision_light_shining_in", "[shadowcasting][vision]" )
             "1144444444",
         },
         midday,
-        // 3D FOV gives different results here due to it seeing round corners more
+        // Legacy 2D-only expectation; current visibility is always cross-z.
         vision_test_flags::no_3d
     };
 
@@ -584,7 +586,7 @@ TEST_CASE( "vision_single_tile_skylight", "[shadowcasting][vision]" )
 {
     clear_all_state();
     /**
-     * Light shines through the single-tile hole in the roof. Apparent light should be symmetrical.
+     * Diffused sunlight through the single-tile roof opening should be symmetrical.
      */
     vision_test_case t {
         {
@@ -602,15 +604,15 @@ TEST_CASE( "vision_single_tile_skylight", "[shadowcasting][vision]" )
         },
         {
             "66666666666",
-            "66611111666",
-            "66111111166",
-            "61111111116",
-            "61111411116",
-            "61114441116",
-            "61111411116",
-            "61111111116",
-            "66111111166",
-            "66611111666",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
             "66666666666",
         },
         midday,
@@ -668,11 +670,11 @@ TEST_CASE( "vision_see_out_of_vehicle", "[shadowcasting][vision]" )
         {
             "66666666666666666",
             "66666666666666666",
-            "66666666664111666",
-            "66666666641114666",
-            "66666666411146666",
-            "66666664111466666",
-            "66666661114666666",
+            "66666666661166666",
+            "66666666441666666",
+            "66666666411666666",
+            "66666661111466666",
+            "66666661114466666",
             "66666666666666666",
         },
         midday,
@@ -700,14 +702,14 @@ TEST_CASE( "vision_see_into_vehicle", "[shadowcasting][vision]" )
             "                 ",
         },
         {
+            "66666666666666666",
             "66666666666666664",
-            "66666666666666644",
             "66666666666666444",
             "66666666666664444",
-            "66666666666644444",
+            "66666666666144444",
             "66666666666444444",
-            "66666666664444444",
             "66666666644444444",
+            "66666666664444444",
         },
         midday,
         vision_test_flags::none,

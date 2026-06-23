@@ -1,0 +1,186 @@
+[
+  {
+    "id": "fd_veil_darkness",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "shroud of darkness", "sym": "*", "color": "dark_gray", "transparent": false, "translucency": 25 },
+      { "translucency": 50 },
+      { "translucency": 0 }
+    ],
+    "priority": 9,
+    "half_life": "1 seconds",
+    "phase": "plasma",
+    "display_field": false
+  },
+  {
+    "id": "fd_veil_light",
+    "type": "field_type",
+    "//": "Light is just enough to make the tile it's in fully bright.",
+    "intensity_levels": [ { "name": "strange light", "light_emitted": 10 } ],
+    "half_life": "1 seconds",
+    "phase": "plasma",
+    "display_field": false
+  },
+  {
+    "id": "fd_archon_rift",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "wavering shadows",
+        "translucency": 50,
+        "monster_spawn_chance": 500,
+        "monster_spawn_count": 1,
+        "monster_spawn_radius": 1,
+        "monster_spawn_group": "GROUP_ARCHON",
+        "convection_temperature_mod": -75
+      }
+    ],
+    "half_life": "1 seconds",
+    "phase": "plasma",
+    "display_field": true,
+    "looks_like": "fd_smoke"
+  },
+  {
+    "id": "fd_fog_arcana",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "deathly frost",
+        "sym": "~",
+        "dangerous": true,
+        "translucency": 1,
+        "effects": [
+          {
+            "effect_id": "arcana_lingering_chill",
+            "body_part": "torso",
+            "min_duration": "5 seconds",
+            "max_duration": "10 seconds",
+            "immune_inside_vehicle": true,
+            "message": "The eerie fog saps heat from your body.",
+            "message_type": "bad"
+          }
+        ],
+        "convection_temperature_mod": -150
+      }
+    ],
+    "immunity_data": { "traits": [ "ARCANA_DRAGONFIRE" ] },
+    "priority": 8,
+    "half_life": "10 seconds",
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_fog"
+  },
+  {
+    "id": "fd_black_potion_arcana",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "black potion vapors",
+        "sym": "8",
+        "translucency": 1,
+        "effects": [
+          {
+            "effect_id": "potion_numbness",
+            "body_part": "num_bp",
+            "min_duration": "20 seconds",
+            "max_duration": "40 seconds",
+            "immune_inside_vehicle": true,
+            "message": "The vapors spread a faint numbness through your body.",
+            "message_type": "good"
+          }
+        ]
+      }
+    ],
+    "priority": 8,
+    "half_life": "15 seconds",
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_fog"
+  },
+  {
+    "id": "fd_white_potion_arcana",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "white potion vapors",
+        "sym": "8",
+        "translucency": 1,
+        "effects": [
+          {
+            "effect_id": "potion_strength",
+            "body_part": "num_bp",
+            "min_duration": "20 seconds",
+            "max_duration": "40 seconds",
+            "immune_inside_vehicle": true,
+            "message": "The vapors spread a sense of newfound strength through your body.",
+            "message_type": "good"
+          }
+        ]
+      }
+    ],
+    "priority": 8,
+    "half_life": "15 seconds",
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_fog"
+  },
+  {
+    "id": "fd_yellow_potion_arcana",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "yellow potion vapors",
+        "sym": "8",
+        "translucency": 1,
+        "effects": [
+          {
+            "effect_id": "potion_speed",
+            "body_part": "num_bp",
+            "min_duration": "20 seconds",
+            "max_duration": "40 seconds",
+            "immune_inside_vehicle": true,
+            "message": "The vapors spread a feeling of limberness through your body.",
+            "message_type": "good"
+          }
+        ]
+      }
+    ],
+    "priority": 8,
+    "half_life": "15 seconds",
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_fog"
+  },
+  {
+    "id": "fd_red_potion_arcana",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "red potion vapors",
+        "sym": "8",
+        "translucency": 1,
+        "effects": [
+          {
+            "effect_id": "potion_healing",
+            "body_part": "num_bp",
+            "min_duration": "20 seconds",
+            "max_duration": "40 seconds",
+            "immune_inside_vehicle": true,
+            "message": "The vapors spread a soothing sensation through your body.",
+            "message_type": "good"
+          }
+        ]
+      }
+    ],
+    "priority": 8,
+    "half_life": "15 seconds",
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_fog"
+  }
+]

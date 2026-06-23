@@ -117,7 +117,8 @@
       [ "spell_scroll_anomaly_ward", 30 ],
       [ "spell_scroll_electric_ward", 30 ],
       [ "spell_scroll_ice_ward", 30 ],
-      [ "spell_scroll_fire_ward", 30 ]
+      [ "spell_scroll_fire_ward", 30 ],
+      [ "spell_scroll_phase_jump", 25 ]
     ]
   },
   {
@@ -134,7 +135,8 @@
       [ "spell_scroll_fire_storm", 50 ],
       [ "spell_scroll_ice_storm", 50 ],
       [ "spell_scroll_meteor", 10 ],
-      [ "spell_scroll_acid_storm", 20 ]
+      [ "spell_scroll_acid_storm", 20 ],
+      [ "spell_scroll_mana_bomb", 20 ]
     ]
   },
   {

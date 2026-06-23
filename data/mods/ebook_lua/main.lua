@@ -260,6 +260,7 @@ mod.ebook_load = function(reader, device)
         u_input_too_big_minute = true
       else
         local selected = tmp_arr[sel + 1]
+        if not selected then return -1 end
         --You got the book on the real world!
         reader:add_item_with_id(selected.type, 1)
         --Then lemme see it.
@@ -271,6 +272,10 @@ mod.ebook_load = function(reader, device)
               break
             end
           end
+        end
+        if not book_in_real then
+          ui.query_any_key(locale.gettext("Failed to materialize the selected book."))
+          return -1
         end
 
         --The book should be labeled.
@@ -344,6 +349,7 @@ mod.ebook_return = function(reader, device)
     return -1
   else
     local it = virtual_books[sel_return]
+    if not it then return -1 end
     local ammo_type = device:ammo_current()
     device:ammo_set(ammo_type, device.charges + math.floor(it:get_var_num("ethereal", 0) / 60))
     local the_when = math.floor(it:get_var_num("its_fate_time", 0))
@@ -417,6 +423,7 @@ mod.mc_io = function(reader, device)
       mc_menu_ui:add_w_desc(-1, "Remove all book data", "Remove all book data of memory card.")
       while true do
         local that_mc = your_mc[ans_mc_sel]
+        if not that_mc then return -1 end
         mc_menu_ui:text(
           string.format(
             locale.gettext("UID: %s\n\nMemory card data I/O online.\nCurrent card: %s"),
@@ -555,14 +562,12 @@ mod.ebook_info = function(reader, device)
     if ans_info < 0 then
       return -1
     elseif ans_info == 0 then
-      local ch_lib = mod.check_lib(reader, device)
-      if ch_lib ~= -1 then return ch_lib end
+      mod.check_lib(reader, device)
     elseif ans_info == 1 then
       local mc_io = mod.mc_io(reader, device)
       if mc_io ~= -1 then return mc_io end
     elseif ans_info == 2 then
-      local clo_syn = mod.cloud_sync(reader, device)
-      if clo_syn ~= -1 then return clo_syn end
+      mod.cloud_sync(reader, device)
     elseif ans_info == 3 then
       local res_lib = mod.reset_lib(reader, device)
       if res_lib ~= -1 then return res_lib end
@@ -603,9 +608,10 @@ mod.ebook_ui = function(params)
   )
   uilist:add_w_desc(-1, locale.gettext("Info.."), locale.gettext("Shows UID, list of data, explanation for customers!"))
 
-  if var_count == 0 then
-    uilist.entries[2].ctxt = locale.gettext("No book in device!")
-    uilist.entries[2].enable = false
+  local load_entry = uilist.entries[2]
+  if var_count < 1 and load_entry ~= nil then
+    load_entry.ctxt = locale.gettext("No book in device!")
+    load_entry.enable = false
   end
 
   local actions = {

@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -10,11 +11,15 @@
 #include <memory>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "avatar.h"
+#include "coordinates.h"
+#include "field_type.h"
 #include "game.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
+#include "monster_action.h"
 #include "options_helpers.h"
 #include "options.h"
 #include "player.h"
@@ -22,13 +27,85 @@
 #include "game_constants.h"
 #include "item.h"
 #include "line.h"
-#include "point.h"
 #include "state_helpers.h"
+#include "vehicle.h"
+#include "vehicle_part.h"
+#include "vpart_position.h"
 
 using move_statistics = statistics<int>;
 
+TEST_CASE( "hallucination_monsters_do_not_open_real_doors", "[monster][hallucination]" )
+{
+    clear_all_state();
+    move_player_out_of_the_way();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_floor" ) );
+
+    const auto monster_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto door_pos = tripoint_bub_ms( 61, 60, 0 );
+    REQUIRE( here.ter_set( door_pos, ter_id( "t_door_c" ) ) );
+
+    auto &hallucination = spawn_test_monster( "mon_zombie_scientist", monster_pos );
+    hallucination.hallucination = true;
+    REQUIRE( hallucination.is_hallucination() );
+    hallucination.execute_action( { .kind = monster_action_kind::open_door, .dest = door_pos } );
+
+    CHECK( here.ter( door_pos ) == ter_id( "t_door_c" ) );
+}
+
+TEST_CASE( "hallucination_electric_field_does_not_ignite_items", "[monster][hallucination]" )
+{
+    clear_all_state();
+    move_player_out_of_the_way();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_pavement" ) );
+
+    const auto monster_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto fuel_pos = tripoint_bub_ms( 61, 60, 0 );
+    here.add_item_or_charges( fuel_pos, item::spawn( "gasoline" ) );
+
+    auto &hallucination = spawn_test_monster( "mon_zombie_nullfield", monster_pos );
+    hallucination.hallucination = true;
+    REQUIRE( hallucination.is_hallucination() );
+    hallucination.process_turn();
+
+    CHECK( here.get_field( fuel_pos, fd_fire ) == nullptr );
+}
+
+TEST_CASE( "MONSTER_SPEED scales monster move credit", "[monster][speed]" )
+{
+    clear_all_state();
+
+    const auto global_speed_percent = 50;
+    const auto monster_speed_percent = 66;
+    const auto global_speed_option = override_option( "TIME_ACTION_SCALE",
+                                     std::to_string( global_speed_percent ) );
+    const auto monster_speed_option = override_option( "MONSTER_SPEED",
+                                      std::to_string( monster_speed_percent ) );
+
+    auto &test_monster = spawn_test_monster( "mon_zombie", tripoint_bub_ms::zero() );
+    const auto base_speed = test_monster.get_speed_base();
+    const auto monster_tick_factor = action_time_scale::monster_tick_action_factor();
+    REQUIRE( base_speed == test_monster.type->speed );
+    CHECK( action_time_scale::monster_action_factor() == global_speed_percent *
+           monster_speed_percent );
+    CHECK( test_monster.get_moves() == base_speed * monster_tick_factor /
+           action_time_scale::factor_denominator );
+
+    const auto turn_count = 10;
+    for( const auto turn : std::views::iota( 0, turn_count ) ) {
+        static_cast<void>( turn );
+        test_monster.process_turn();
+    }
+
+    CHECK( test_monster.get_moves() == base_speed * monster_tick_factor * ( turn_count + 1 ) /
+           action_time_scale::factor_denominator );
+    CHECK( test_monster.get_speed_base() == base_speed );
+    CHECK( test_monster.type->speed == base_speed );
+}
+
 static int moves_to_destination( const std::string &monster_type,
-                                 const tripoint &start, const tripoint &end )
+                                 const tripoint_bub_ms &start, const tripoint_bub_ms &end )
 {
     clear_creatures();
     REQUIRE( g->num_creatures() == 1 ); // the player
@@ -46,7 +123,7 @@ static int moves_to_destination( const std::string &monster_type,
             const int moves_before = test_monster.moves;
             test_monster.move();
             moves_spent += moves_before - test_monster.moves;
-            if( test_monster.pos() == test_monster.move_target() ) {
+            if( test_monster.bub_pos() == test_monster.move_target() ) {
                 g->remove_zombie( test_monster );
                 return moves_spent;
             }
@@ -61,7 +138,7 @@ struct track {
     char participant;
     int moves;
     int distance;
-    tripoint location;
+    tripoint_bub_ms location;
 };
 
 static std::ostream &operator<<( std::ostream &os, track const &value )
@@ -84,7 +161,8 @@ static std::ostream &operator<<( std::ostream &os, const std::vector<track> &vec
 /**
  * Simulate a player running from the monster, checking if it can catch up.
  **/
-static int can_catch_player( const std::string &monster_type, const tripoint &direction_of_flight )
+static int can_catch_player( const std::string &monster_type,
+                             const tripoint_rel_ms &direction_of_flight )
 {
     clear_map();
     REQUIRE( g->num_creatures() == 1 ); // the player
@@ -93,16 +171,15 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
     std::vector<detached_ptr<item>> temp;
     while( test_player.takeoff( test_player.i_at( -2 ), &temp ) );
 
-    const tripoint center{ 65, 65, 0 };
+    const tripoint_bub_ms center{ 65, 65, 0 };
     test_player.setpos( center );
     test_player.set_moves( 0 );
     // Give the player a head start.
-    const tripoint monster_start = { -10 * direction_of_flight + test_player.pos()
-                                   };
+    const auto monster_start = test_player.bub_pos() + ( direction_of_flight * -10 );
     monster &test_monster = spawn_test_monster( monster_type, monster_start );
     // Get it riled up and give it a goal.
     test_monster.anger = 100;
-    test_monster.set_dest( test_player.pos() );
+    test_monster.set_dest( test_player.bub_pos() );
     test_monster.set_moves( 0 );
     const int monster_speed = test_monster.get_speed();
     const int target_speed = 100;
@@ -111,39 +188,39 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
     for( int turn = 0; turn < 1000; ++turn ) {
         test_player.mod_moves( target_speed );
         while( test_player.moves >= 0 ) {
-            test_player.setpos( test_player.pos() + direction_of_flight );
-            if( test_player.pos().x < SEEX * int( MAPSIZE / 2 ) ||
-                test_player.pos().y < SEEY * int( MAPSIZE / 2 ) ||
-                test_player.pos().x >= SEEX * ( 1 + int( MAPSIZE / 2 ) ) ||
-                test_player.pos().y >= SEEY * ( 1 + int( MAPSIZE / 2 ) ) ) {
-                tripoint offset = center - test_player.pos();
+            test_player.setpos( test_player.bub_pos() + direction_of_flight );
+            if( test_player.bub_pos().x() < SEEX * int( MAPSIZE / 2 ) ||
+                test_player.bub_pos().y() < SEEY * int( MAPSIZE / 2 ) ||
+                test_player.bub_pos().x() >= SEEX * ( 1 + int( MAPSIZE / 2 ) ) ||
+                test_player.bub_pos().y() >= SEEY * ( 1 + int( MAPSIZE / 2 ) ) ) {
+                auto offset = center - test_player.bub_pos();
                 test_player.setpos( center );
-                test_monster.setpos( test_monster.pos() + offset );
+                test_monster.setpos( test_monster.bub_pos() + offset );
                 // Verify that only the player and one monster are present.
                 REQUIRE( g->num_creatures() == 2 );
             }
             const int move_cost = get_map().combined_movecost(
-                                      test_player.pos(), test_player.pos() + direction_of_flight, nullptr, 0 );
-            tracker.push_back( {'p', move_cost, rl_dist( test_monster.pos(), test_player.pos() ),
-                                test_player.pos()
+                                      test_player.bub_pos(), test_player.bub_pos() + direction_of_flight, nullptr, 0 );
+            tracker.push_back( {'p', move_cost, rl_dist( test_monster.bub_pos(), test_player.bub_pos() ),
+                                test_player.bub_pos()
                                } );
             test_player.mod_moves( -move_cost );
         }
         get_map().clear_traps();
-        test_monster.set_dest( test_player.pos() );
+        test_monster.set_dest( test_player.bub_pos() );
         test_monster.mod_moves( monster_speed );
         while( test_monster.moves >= 0 ) {
             const int moves_before = test_monster.moves;
             test_monster.move();
             tracker.push_back( {'m', moves_before - test_monster.moves,
-                                rl_dist( test_monster.pos(), test_player.pos() ),
-                                test_monster.pos()
+                                rl_dist( test_monster.bub_pos(), test_player.bub_pos() ),
+                                test_monster.bub_pos()
                                } );
-            if( rl_dist( test_monster.pos(), test_player.pos() ) == 1 ) {
+            if( rl_dist( test_monster.bub_pos(), test_player.bub_pos() ) == 1 ) {
                 INFO( tracker );
                 clear_map();
                 return turn;
-            } else if( rl_dist( test_monster.pos(), test_player.pos() ) > 20 ) {
+            } else if( rl_dist( test_monster.bub_pos(), test_player.bub_pos() ) > 20 ) {
                 INFO( tracker );
                 clear_map();
                 return -turn;
@@ -156,17 +233,18 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
 
 // Verify that the named monster has the expected effective speed, not reduced
 // due to wasted motion from shambling.
-static void check_shamble_speed( const std::string &monster_type, const tripoint &destination )
+static void check_shamble_speed( const std::string &monster_type,
+                                 const tripoint_bub_ms &destination )
 {
     // Scale the scaling factor based on the ratio of diagonal to cardinal steps.
-    const float slope = get_normalized_angle( point_zero, destination.xy() );
+    const float slope = get_normalized_angle( point_zero, destination.raw().xy() );
     const float diagonal_multiplier = 1.0 + ( get_option<bool>( "CIRCLEDIST" ) ?
                                       ( slope * 0.41 ) : 0.0 );
     INFO( monster_type << " " << destination );
     // Wandering makes things nondeterministic, so look at the distribution rather than a target number.
     move_statistics move_stats;
     for( int i = 0; i < 10; ++i ) {
-        move_stats.add( moves_to_destination( monster_type, tripoint_zero, destination ) );
+        move_stats.add( moves_to_destination( monster_type, tripoint_bub_ms::zero(), destination ) );
         if( ( move_stats.avg() / ( 10000.0 * diagonal_multiplier ) ) ==
             Approx( 1.0 ).epsilon( 0.02 ) ) {
             break;
@@ -258,11 +336,11 @@ static void monster_check()
 {
     const float diagonal_multiplier = ( get_option<bool>( "CIRCLEDIST" ) ? 1.41 : 1.0 );
     // Have a monster walk some distance in a direction and measure how long it takes.
-    float vert_move = moves_to_destination( "mon_pig", tripoint_zero, {100, 0, 0} );
+    float vert_move = moves_to_destination( "mon_pig", tripoint_bub_ms::zero(), {100, 0, 0} );
     CHECK( ( vert_move / 10000.0 ) == Approx( 1.0 ) );
-    int horiz_move = moves_to_destination( "mon_pig", tripoint_zero, {0, 100, 0} );
+    int horiz_move = moves_to_destination( "mon_pig", tripoint_bub_ms::zero(), {0, 100, 0} );
     CHECK( ( horiz_move / 10000.0 ) == Approx( 1.0 ) );
-    int diag_move = moves_to_destination( "mon_pig", tripoint_zero, {100, 100, 0} );
+    int diag_move = moves_to_destination( "mon_pig", tripoint_bub_ms::zero(), {100, 100, 0} );
     CHECK( ( diag_move / ( 10000.0 * diagonal_multiplier ) ) == Approx( 1.0 ).epsilon( 0.05 ) );
 
     check_shamble_speed( "mon_pig", {100, 0, 0} );
@@ -287,17 +365,17 @@ static void monster_check()
 
     // Verify that a walking player can escape from a zombie, but is caught by a zombie dog.
     INFO( "Trigdist is " << ( get_option<bool>( "CIRCLEDIST" ) ? "on" : "off" ) );
-    CHECK( can_catch_player( "mon_zombie", tripoint_east ) < 0 );
-    CHECK( can_catch_player( "mon_zombie", tripoint_south_east ) < 0 );
-    CHECK( can_catch_player( "mon_zombie_dog", tripoint_east ) > 0 );
-    CHECK( can_catch_player( "mon_zombie_dog", tripoint_south_east ) > 0 );
+    CHECK( can_catch_player( "mon_zombie", tripoint_rel_ms::east() ) < 0 );
+    CHECK( can_catch_player( "mon_zombie", tripoint_rel_ms::south_east() ) < 0 );
+    CHECK( can_catch_player( "mon_zombie_dog", tripoint_rel_ms::east() ) > 0 );
+    CHECK( can_catch_player( "mon_zombie_dog", tripoint_rel_ms::south_east() ) > 0 );
 }
 
 // Write out a map of slope at which monster is moving to time required to reach their destination.
 TEST_CASE( "write_slope_to_speed_map_trig", "[.][!mayfail]" )
 {
     clear_all_state();
-    put_player_underground();
+    move_player_out_of_the_way();
     override_option opt( "CIRCLEDIST", "true" );
     trigdist = true;
     test_moves_to_squares( "mon_zombie_dog", true );
@@ -307,7 +385,7 @@ TEST_CASE( "write_slope_to_speed_map_trig", "[.][!mayfail]" )
 TEST_CASE( "write_slope_to_speed_map_square", "[.][!mayfail]" )
 {
     clear_all_state();
-    put_player_underground();
+    move_player_out_of_the_way();
     override_option opt( "CIRCLEDIST", "false" );
     trigdist = false;
     test_moves_to_squares( "mon_zombie_dog", true );
@@ -319,7 +397,7 @@ TEST_CASE( "write_slope_to_speed_map_square", "[.][!mayfail]" )
 TEST_CASE( "monster_speed_square", "[speed][.][!mayfail]" )
 {
     clear_all_state();
-    put_player_underground();
+    move_player_out_of_the_way();
     override_option opt( "CIRCLEDIST", "false" );
     trigdist = false;
     monster_check();
@@ -329,7 +407,7 @@ TEST_CASE( "monster_speed_square", "[speed][.][!mayfail]" )
 TEST_CASE( "monster_speed_trig", "[speed][.][!mayfail]" )
 {
     clear_all_state();
-    put_player_underground();
+    move_player_out_of_the_way();
     override_option opt( "CIRCLEDIST", "true" );
     trigdist = true;
     monster_check();
@@ -338,12 +416,12 @@ TEST_CASE( "monster_speed_trig", "[speed][.][!mayfail]" )
 TEST_CASE( "monster_move_through_vehicle_holes" )
 {
     clear_all_state();
-    put_player_underground();
-    tripoint origin( 60, 60, 0 );
+    move_player_out_of_the_way();
+    tripoint_bub_ms origin( 60, 60, 0 );
 
     get_map().add_vehicle( vproto_id( "apc" ), origin, -45_degrees, 0, 0 );
 
-    tripoint mon_origin = origin + tripoint( -2, 1, 0 );
+    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
     monster &zombie = spawn_test_monster( "mon_zombie", mon_origin );
     zombie.move_to( mon_origin + tripoint_north_west, false, false, 0.0f );
 
@@ -353,4 +431,58 @@ TEST_CASE( "monster_move_through_vehicle_holes" )
     const monster *m2 = g->critter_at<monster>( mon_origin + tripoint_north_west );
     CHECK( m2 == nullptr );
 
+}
+
+TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
+{
+    clear_all_state();
+    clear_map();
+
+    avatar &you = get_avatar();
+    auto &here = get_map();
+    const auto avatar_pos = tripoint_bub_ms{ 60, 60, 2 };
+    const auto zombie_pos = tripoint_bub_ms{ 60, 60, 1 };
+    you.setpos( avatar_pos );
+
+    monster &grabber = spawn_test_monster( "mon_zombie_grabber", zombie_pos );
+
+    SECTION( "open air does not block vertical melee" ) {
+        CHECK_FALSE( here.floor_between( zombie_pos, avatar_pos ) );
+        CHECK( grabber.attack_at( you.bub_pos() ) );
+    }
+
+    SECTION( "terrain floors block vertical melee" ) {
+        here.ter_set( avatar_pos, ter_id( "t_floor" ) );
+
+        CHECK( here.floor_between( zombie_pos, avatar_pos ) );
+        CHECK_FALSE( grabber.attack_at( you.bub_pos() ) );
+    }
+
+    SECTION( "vehicle floors block vertical melee" ) {
+        const vpart_id vpart_frame_vertical( "frame_vertical" );
+        const vpart_id vpart_seat( "seat" );
+        auto *veh = here.add_vehicle( vproto_id( "none" ), avatar_pos, 0_degrees, 0, 0 );
+
+        REQUIRE( veh != nullptr );
+        veh->install_part( tripoint_mnt_veh::zero(), vpart_frame_vertical );
+        veh->install_part( tripoint_mnt_veh::zero(), vpart_seat );
+        here.add_vehicle_to_cache( veh );
+
+        CHECK_FALSE( grabber.attack_at( you.bub_pos() ) );
+    }
+
+    SECTION( "grabber below player on blimp cannot attack through the floor" ) {
+        auto *blimp = here.add_vehicle( vproto_id( "blimp" ), avatar_pos, 0_degrees, 0, 0 );
+
+        REQUIRE( blimp != nullptr );
+        const auto cockpit_part = blimp->part_with_feature( tripoint_mnt_veh::zero(), "BOARDABLE", true );
+        REQUIRE( cockpit_part != -1 );
+
+        const auto blimp_tile = blimp->bub_part_location( cockpit_part );
+        you.setpos( blimp_tile );
+        grabber.setpos( blimp_tile + tripoint_below );
+
+        CHECK( here.veh_at( you.bub_pos() ).part_with_feature( "BOARDABLE", true ).has_value() );
+        CHECK_FALSE( grabber.attack_at( you.bub_pos() ) );
+    }
 }

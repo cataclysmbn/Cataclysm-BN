@@ -410,7 +410,7 @@
     "description": "Salty dried meat that lasts for a long time, but will make you thirsty.",
     "primary_material": "cured_meat",
     "weight": "85 g",
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "color": "brown",
     "volume": "250 ml",
     "parasites": 0,
@@ -429,7 +429,7 @@
     "name": { "str_sp": "salted fish" },
     "description": "Salty dried fish that lasts for a long time, but will make you thirsty.",
     "primary_material": "cured_meat",
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "color": "light_gray",
     "spoils_in": "0 days",
     "parasites": 0,
@@ -579,7 +579,15 @@
     "fun": -50,
     "flags": [ "IS_BLOOD" ],
     "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true },
-    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
+    "vitamins": [
+      [ "meat_allergen", 1 ],
+      [ "human_flesh_vitamin", 100 ],
+      [ "vitA", 26 ],
+      [ "vitC", 12 ],
+      [ "calcium", 1 ],
+      [ "iron", 4 ],
+      [ "vitB", 6 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -603,7 +611,7 @@
     "fun": -50,
     "flags": [ "IS_BLOOD", "NO_COOKING_BUFF" ],
     "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true },
-    "vitamins": [ [ "meat_allergen", 1 ] ]
+    "vitamins": [ [ "meat_allergen", 1 ], [ "vitA", 26 ], [ "vitC", 12 ], [ "calcium", 1 ], [ "iron", 4 ], [ "vitB", 6 ] ]
   },
   {
     "type": "COMESTIBLE",

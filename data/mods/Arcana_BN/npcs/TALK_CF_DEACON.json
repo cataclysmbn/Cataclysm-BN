@@ -1,0 +1,258 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_DEACON",
+    "dynamic_line": { "u_is_wearing": "badge_marshal", "yes": "Hello, Marshal.  How may I help you?", "no": "Hello.  How may I help you?" },
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_CF_DEACON_GM_PRELUDE"
+      },
+      {
+        "text": "[MISSION] I spoke with Sofia.  They're doing alright, so far.",
+        "condition": {
+          "and": [
+            { "u_has_effect": "sofia_deacon_message" },
+            { "not": { "u_has_mission": "MISSION_CF_DEACON_1" } },
+            { "not": { "npc_has_effect": "rural_church_aware" } }
+          ]
+        },
+        "topic": "TALK_CF_DEACON_MISSION_BACKDOOR"
+      },
+      {
+        "text": "[MISSION] Sofia asked me to find additional trade partners and labor to help build the outpost they're working on.  Can you give me any advice?",
+        "topic": "TALK_CF_DEACON_MISSION_CF_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            {
+              "not": { "npc_has_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      },
+      { "text": "Who are you?", "topic": "TALK_CF_DEACON_WHO" },
+      { "text": "What do you do here?", "topic": "TALK_CF_DEACON_DO" },
+      {
+        "text": "Need help with anything?",
+        "condition": { "not": { "u_has_effect": "already_asked_deacon" } },
+        "topic": "TALK_CF_DEACON_HELP"
+      },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_DEACON_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "I assume that Sofia or one of her compatriots has asked you to look into this matter.  I recently had to administer the Viaticum to an gravely injured man, the only survivor of an attack a few miles down the road.  They were in too much shock to recount what happened, but I recognized the signs of deep frostbite around the neck and chest, even through his armor, and severe fractures without lacerations or bruises.  Consistent with the other attacks, at night within the same wide range as the others."
+  },
+  {
+    "id": "TALK_CF_DEACON_MISSION_CF_4",
+    "type": "talk_topic",
+    "dynamic_line": "I heard they were building up around it, yes.  Suppose it's necessary to ensure their survival.  You could try talking to some of the staff here, some of the regular visitors, or the refugees in the back.",
+    "responses": [
+      { "text": "Would any of the staff be able to help?", "topic": "TALK_CF_DEACON_MISSION_CF_4_STAFF" },
+      { "text": "Think any of the visitors would be interested?", "topic": "TALK_CF_DEACON_MISSION_CF_4_VISITORS" },
+      { "text": "What about the refugees?", "topic": "TALK_CF_DEACON_MISSION_CF_4_REFUGEES" },
+      { "text": "I'll see what I can do.", "topic": "TALK_CF_DEACON" }
+    ]
+  },
+  {
+    "id": "TALK_CF_DEACON_MISSION_CF_4_STAFF",
+    "type": "talk_topic",
+    "dynamic_line": "The local merchant already has some sort of deal going on with Ms. McKinnon, so I doubt that will work.  Not many travelers stop by the doctor, but worth asking.  That just leaves the broker in the back room.  Might be worth a shot, but any trade deal would be risky without ensuring we already have a stable food supply.",
+    "responses": [
+      { "text": "Think any of the visitors would be interested?", "topic": "TALK_CF_DEACON_MISSION_CF_4_VISITORS" },
+      { "text": "What about the refugees?", "topic": "TALK_CF_DEACON_MISSION_CF_4_REFUGEES" },
+      { "text": "Thanks, I'll see what I can do.", "topic": "TALK_CF_DEACON" },
+      { "text": "That's all for now then.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_DEACON_MISSION_CF_4_VISITORS",
+    "type": "talk_topic",
+    "dynamic_line": "There's a government official of some sort who seems to have been assigned here by somebody, I'm guessing whoever's actually in charge might know something.  Other than that there's just a local scavenger or two, possibly worth inquiring with them anyway.",
+    "responses": [
+      { "text": "Would any of the staff be able to help?", "topic": "TALK_CF_DEACON_MISSION_CF_4_STAFF" },
+      { "text": "What about the refugees?", "topic": "TALK_CF_DEACON_MISSION_CF_4_REFUGEES" },
+      { "text": "I'll see what I can do.", "topic": "TALK_CF_DEACON" }
+    ]
+  },
+  {
+    "id": "TALK_CF_DEACON_MISSION_CF_4_REFUGEES",
+    "type": "talk_topic",
+    "dynamic_line": "I doubt any of them would be willing to venture out there to find work, even if Sofia might be more welcoming than the staff here.  But if you ask the right questions, someone surely has to know someone else, or might be willing to keep an eye out and assist with winning local traders and scavengers over.  I could help do the same if you would like.",
+    "responses": [
+      { "text": "Sure, that would help.", "topic": "TALK_CF_DEACON_MISSION_CF_4_DEAL" },
+      { "text": "Would any of the staff be able to help?", "topic": "TALK_CF_DEACON_MISSION_CF_4_STAFF" },
+      { "text": "Think any of the visitors would be interested?", "topic": "TALK_CF_DEACON_MISSION_CF_4_VISITORS" },
+      { "text": "I'll figure something out.  Thanks, though.", "topic": "TALK_CF_DEACON" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_DEACON_MISSION_CF_4_DEAL",
+    "dynamic_line": "I'll do what I can to speak with other scavengers that stop by.  I would suggest continuing to check with other people here, the more of us working to attract local traders, the more likely that this will succeed.  While I trust that Sofia's people can take care of any unwanted attention this may attract, the main concern is talking people into visiting a settlement that's relatively unknown.",
+    "responses": [
+      {
+        "text": "Thank you.  I've already convinced a couple others to help, I should go check with Sofia for now.",
+        "effect": [
+          { "u_add_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_1",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_2",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_1",
+            "om_terrain": "cf_church_1_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_2",
+            "om_terrain": "cf_church_3_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          }
+        ],
+        "condition": { "u_has_var": "sofia_ally_seeking_2", "type": "mission", "context": "flag", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "Thanks, I'll look around a bit more and see if anyone else can help with this.",
+        "effect": [
+          { "u_add_var": "sofia_ally_seeking_2", "type": "mission", "context": "flag", "value": "yes" },
+          { "npc_add_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+        ],
+        "condition": { "u_has_var": "sofia_ally_seeking_1", "type": "mission", "context": "flag", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "I'll keep asking around, then.  Thanks.",
+        "effect": [
+          { "u_add_var": "sofia_ally_seeking_1", "type": "mission", "context": "flag", "value": "yes" },
+          { "npc_add_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+        ],
+        "switch": true,
+        "default": true,
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_CF_DEACON_WHO",
+    "type": "talk_topic",
+    "dynamic_line": "A deacon from a local parish church.  The priest unfortunately left sometime before all this started and I've never heard from him since.  I fear the worst may have happened, but as it is there is already so much to tend to.",
+    "responses": [
+      { "text": "What is there to tend to?", "topic": "TALK_CF_DEACON_DO" },
+      { "text": "I see.", "topic": "TALK_CF_DEACON" }
+    ]
+  },
+  {
+    "id": "TALK_CF_DEACON_DO",
+    "type": "talk_topic",
+    "dynamic_line": "Many of the people here are struggling to get by and survive, and there is little that one man can do to help that.  What I can do however is help keep their spirits up, tend to the dead and dying best as I'm able as well.  I am at their service as best as I am able, no matter their faith.",
+    "responses": [
+      {
+        "text": "Need help with anything?",
+        "condition": { "not": { "u_has_effect": "already_asked_deacon" } },
+        "topic": "TALK_CF_DEACON_HELP"
+      },
+      { "text": "Oh, okay.", "topic": "TALK_CF_DEACON" }
+    ]
+  },
+  {
+    "id": "TALK_CF_DEACON_HELP",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "npc_has_effect": "rural_church_aware",
+      "yes": "No doubt the others here have ample work to be done.  As for myself, I'll manage.  I feel a bit bad having left the parish unattended though.  There's a group of survivors who knew Father Alexander currently sheltering there, and they likely will be have work to be done too.  I could direct you there if you'd like, in case you wish to visit them yourself.",
+      "no": "No doubt the others here have ample work to be done.  As for myself, I'll manage.  I feel a bit bad having left the parish unattended though.  There's a group of survivors who knew Father Alexander currently sheltering there, and while I'm confident they can take care of themselves, I'm still worried about them."
+    },
+    "responses": [
+      {
+        "text": "Okay, go ahead.",
+        "condition": { "and": [ { "npc_has_effect": "rural_church_aware" }, { "not": { "u_has_effect": "already_asked_deacon" } } ] },
+        "switch": true,
+        "effect": [
+          { "u_add_effect": "already_asked_deacon" },
+          {
+            "mapgen_update": "arcana_dummy",
+            "om_terrain": "cf_church_4",
+            "om_special": "cf_rural_church",
+            "reveal_radius": 3
+          }
+        ],
+        "topic": "TALK_CF_DEACON_DESCRIBE"
+      },
+      {
+        "text": "Perhaps I could check on them for you?",
+        "condition": { "and": [ "has_no_available_mission", { "not": { "u_has_effect": "already_asked_deacon" } } ] },
+        "switch": true,
+        "effect": [
+          { "u_add_effect": "already_asked_deacon" },
+          {
+            "mapgen_update": "arcana_dummy",
+            "om_terrain": "cf_church_4",
+            "om_special": "cf_rural_church",
+            "reveal_radius": 3
+          }
+        ],
+        "topic": "TALK_CF_DEACON_DESCRIBE"
+      },
+      {
+        "text": "Any way I could do to help with that?",
+        "condition": { "not": { "u_has_effect": "already_asked_deacon" } },
+        "switch": true,
+        "topic": "TALK_MISSION_LIST"
+      },
+      { "text": "I see.", "topic": "TALK_CF_DEACON" }
+    ]
+  },
+  {
+    "id": "TALK_CF_DEACON_DESCRIBE",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "npc_has_effect": "rural_church_aware",
+      "yes": "It's a rural church off the side of the road.  I'll mark it on your map as best as I can, though you'll have to reach it yourself.  Look for a woman there by the name of Sofia McKinnon, she should have work for you if you wish to help them out.",
+      "no": "I haven't been able to check back with them in a while, and I know they need all the help they can get.  If you can take the time to pay them a visit, speak with Sofia.  She leads the group of survivors sheltering there, and she may have work for you.  I'll go ahead and mark it on your map as best as I can, but you'll need to find it on your own."
+    },
+    "responses": [ { "text": "We'll see, then.", "topic": "TALK_CF_DEACON" } ]
+  },
+  {
+    "id": "TALK_CF_DEACON_MISSION_BACKDOOR",
+    "type": "talk_topic",
+    "dynamic_line": "Thank you.  I'm hopeful they'll be able to take care of themselves, for now I plan to stay here and help out as best as I can.  I know this isn't much, but here.  It's the least I could do.",
+    "responses": [
+      {
+        "text": "Thank you!",
+        "effect": [ { "u_buy_item": "FMCNote", "count": 5 }, { "npc_add_effect": "rural_church_aware" } ],
+        "topic": "TALK_CF_DEACON"
+      }
+    ]
+  }
+]

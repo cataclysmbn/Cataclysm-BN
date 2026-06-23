@@ -15,6 +15,7 @@
 #include "coordinates.h"
 #include "damage.h"
 #include "detached_ptr.h"
+#include "dimension_info.h"
 #include "enums.h"
 #include "flat_set.h"
 #include "game_object.h"
@@ -23,6 +24,7 @@
 #include "item_contents.h"
 #include "kill_tracker.h"
 #include "location_vector.h"
+#include "overmapbuffer.h"
 #include "pimpl.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -62,11 +64,6 @@ template<typename T>
 class ret_val;
 class item_location;
 struct attack_statblock;
-
-namespace enchant_vals
-{
-enum class mod : int;
-} // namespace enchant_vals
 
 using bodytype_id = std::string;
 using faction_id = string_id<faction>;
@@ -111,6 +108,28 @@ static const std::string p2_name = "p2";
 static const std::string source_p1_name = "source_" + p1_name;
 static const std::string source_p2_name = "source_" + p2_name;
 static const tripoint_abs_ms tripoint_abs_ms_min( tripoint_min );
+
+static const std::string TINT_VAR_PREFIX( "tint_" );
+
+static const std::string TINT_COLOR_VAR_NAME( "tint_color" );
+static const std::string TINT_COLOR_FG_VAR_NAME( "tint_color_fg" );
+static const std::string TINT_COLOR_BG_VAR_NAME( "tint_color_bg" );
+
+static const std::string TINT_MODE_VAR_NAME( "tint_blend_mode" );
+static const std::string TINT_MODE_FG_VAR_NAME( "tint_blend_mode_fg" );
+static const std::string TINT_MODE_BG_VAR_NAME( "tint_blend_mode_bg" );
+
+static const std::string TINT_SATURATION_VAR_NAME( "tint_saturation" );
+static const std::string TINT_SATURATION_FG_VAR_NAME( "tint_saturation_fg" );
+static const std::string TINT_SATURATION_BG_VAR_NAME( "tint_saturation_bg" );
+
+static const std::string TINT_CONTRAST_VAR_NAME( "tint_contrast" );
+static const std::string TINT_CONTRAST_FG_VAR_NAME( "tint_contrast_fg" );
+static const std::string TINT_CONTRAST_BG_VAR_NAME( "tint_contrast_bg" );
+
+static const std::string TINT_BRIGHTNESS_VAR_NAME( "tint_brightness" );
+static const std::string TINT_BRIGHTNESS_FG_VAR_NAME( "tint_brightness_fg" );
+static const std::string TINT_BRIGHTNESS_BG_VAR_NAME( "tint_brightness_bg" );
 
 /**
  *  Value and metadata for one property of an item
@@ -386,6 +405,12 @@ class item : public location_visitable<item>, public game_object<item>
          */
         detached_ptr<item> split( int qty );
 
+        /**
+         * Update state before removing the item from its current location.
+         * This must run while @ref loc or @ref saved_loc still identifies the old location.
+         */
+        auto prepare_for_location_removal() -> void;
+
         virtual bool attempt_detach( std::function < detached_ptr<item>( detached_ptr<item> && ) > )
         override;
 
@@ -442,7 +467,7 @@ class item : public location_visitable<item>, public game_object<item>
          * the return value can differ on successive calls.
          * @param pos The location of the item (see REVIVE_SPECIAL flag).
          */
-        bool ready_to_revive( const tripoint &pos ) const;
+        bool ready_to_revive( const tripoint_bub_ms &pos ) const;
 
         bool is_money() const;
 
@@ -556,6 +581,8 @@ class item : public location_visitable<item>, public game_object<item>
                           bool debug ) const;
         void combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                           bool debug ) const;
+        void throw_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
+                         bool debug ) const;
         void damage_statblock_info( std::vector<iteminfo> &info, damage_instance attack,
                                     bool line_by_line ) const;
         void contents_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
@@ -762,7 +789,7 @@ class item : public location_visitable<item>, public game_object<item>
          */
         static detached_ptr<item> use_charges( detached_ptr<item> &&self, const itype_id &what, int &qty,
                                                std::vector<detached_ptr<item>> &used,
-                                               const tripoint &pos,
+                                               const tripoint_bub_ms &pos,
                                                const std::function<bool( const item & )> &filter = return_true<item> );
 
         /**
@@ -771,7 +798,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param pos Where is the item being placed. Note: the item isn't there yet.
          * @return true if the item was destroyed during placement.
          */
-        bool on_drop( const tripoint &pos );
+        bool on_drop( const tripoint_bub_ms &pos );
 
         /**
          * Invokes item type's @ref itype::drop_action.
@@ -780,7 +807,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param map A map object associated with that position.
          * @return true if the item was destroyed during placement.
          */
-        bool on_drop( const tripoint &pos, map &map );
+        bool on_drop( const tripoint_bub_ms &pos, map &map );
 
         /**
          * Consume a specific amount of items of a specific type.
@@ -883,6 +910,7 @@ class item : public location_visitable<item>, public game_object<item>
         int get_quality( const quality_id &id ) const;
         std::map<quality_id, int> get_qualities() const;
         bool count_by_charges() const;
+        bool is_stackable() const;
 
         /**
          * If count_by_charges(), returns charges, otherwise 1
@@ -904,9 +932,18 @@ class item : public location_visitable<item>, public game_object<item>
          * @param weather Weather manager to supply temperature.
          * @return true if the item has rotten away and should be removed, false otherwise.
          */
-        static detached_ptr<item> actualize_rot( detached_ptr<item> &&self, const tripoint &pnt,
-                temperature_flag temperature,
-                const weather_manager &weather );
+        struct rot_context {
+            tripoint_abs_ms position;
+            temperature_flag temperature = temperature_flag::TEMP_NORMAL;
+            const weather_manager *weather = nullptr;
+            int local_temperature = 0;
+        };
+
+        static auto actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
+                                   temperature_flag temperature,
+                                   const weather_manager &weather ) -> detached_ptr<item>;
+        static auto actualize_rot( detached_ptr<item> &&self,
+                                   const rot_context &context ) -> detached_ptr<item>;
 
         /**
          * Returns rot of the item since last rot calculation.
@@ -943,10 +980,12 @@ class item : public location_visitable<item>, public game_object<item>
          * @return true if the item is fully rotten and is ready to be removed
          */
         /*@{*/
-        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  const tripoint &pos );
-        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  bool seals, const tripoint &pos,
-                                               player *carrier, temperature_flag flag,
-                                               const weather_manager &weather_generator );
+        static auto process_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pos )
+        -> detached_ptr<item>;
+        static auto process_rot( detached_ptr<item> &&self, bool seals,
+                                 const tripoint_bub_ms &pos,
+                                 player *carrier, temperature_flag flag,
+                                 const weather_manager &weather_generator ) -> detached_ptr<item>;
         /*@}*/
 
         int get_comestible_fun() const;
@@ -959,6 +998,14 @@ class item : public location_visitable<item>, public game_object<item>
 
         /** Get the shelf life of the item*/
         time_duration get_shelf_life() const;
+
+        /** Update @ref rot from current location without removing rotten-away items. */
+        void update_rot_from_location( temperature_flag temperature );
+
+        /** Update @ref rot at the specified location without removing rotten-away items. */
+        auto update_rot( const tripoint_bub_ms &pos, temperature_flag temperature,
+                         const weather_manager &weather_generator ) -> void;
+        auto update_rot( const rot_context &context ) -> void;
 
         /** Get @ref rot value relative to shelf life (or 0 if item does not spoil) */
         double get_relative_rot() const;
@@ -1002,6 +1049,7 @@ class item : public location_visitable<item>, public game_object<item>
         bool has_rotten_away() const;
 
         time_duration get_rot() const {
+            const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
             return rot;
         }
         void mod_rot( const time_duration &val ) {
@@ -1019,7 +1067,7 @@ class item : public location_visitable<item>, public game_object<item>
          * potentially destroying other items and invalidating iterators.
          * Should NOT be called on an item on the map, but on a local copy.
          */
-        static detached_ptr<item> detonate( detached_ptr<item> &&self, const tripoint &p,
+        static detached_ptr<item> detonate( detached_ptr<item> &&self, const tripoint_bub_ms &p,
                                             std::vector<detached_ptr<item>> &drops );
 
         bool will_explode_in_fire() const;
@@ -1126,6 +1174,12 @@ class item : public location_visitable<item>, public game_object<item>
         int stab_resist( bool to_self = false ) const;
         int bullet_resist( bool to_self = false ) const;
         /*@}*/
+
+        /**
+        * Returns the normal hearing protection of the item, in dB spl
+        * If advanced is true, returns the advanced (active) hearing protection of the item, in dB spl.
+        */
+        int get_hearing_protection( bool advanced = false ) const;
 
         /**
          * Assuming that specified du hit the armor, reduce du based on the item's resistance to the
@@ -1245,10 +1299,12 @@ class item : public location_visitable<item>, public game_object<item>
          * Returns false if the item is not destroyed.
          */
         /*@{*/
-        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier, const tripoint &pos,
+        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier,
+                                           const tripoint_bub_ms &pos,
                                            bool activate,
                                            temperature_flag flag = temperature_flag::TEMP_NORMAL );
-        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier, const tripoint &pos,
+        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier,
+                                           const tripoint_bub_ms &pos,
                                            bool activate,
                                            temperature_flag flag, const weather_manager &weather_generator );
         /*@}*/
@@ -1261,6 +1317,7 @@ class item : public location_visitable<item>, public game_object<item>
          * Whether the item should be processed (by calling @ref process).
          */
         bool needs_processing() const;
+        auto invalidate_processing_cache_upwards() -> void;
         /**
          * The rate at which an item should be processed, in number of turns between updates.
          */
@@ -1271,7 +1328,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param carrier The character carrying the artifact, can be null.
          * @param pos The location of the artifact (should be the player location if carried).
          */
-        void process_artifact( player *carrier, const tripoint &pos );
+        void process_artifact( player *carrier, const tripoint_bub_ms &pos );
         void process_relic( Character *carrier );
 
         bool destroyed_at_zero_charges() const;
@@ -1439,13 +1496,19 @@ class item : public location_visitable<item>, public game_object<item>
          * @param pos Position to dump the contents on.
          * @return If the item is now empty.
          */
-        bool spill_contents( const tripoint &pos );
+        bool spill_contents( const tripoint_bub_ms &pos );
 
         /** Checks if item is a holster and currently capable of storing obj
          *  @param obj object that we want to holster
          *  @param ignore only check item is compatible and ignore any existing contents
          */
         bool can_holster( const item &obj, bool ignore = false ) const;
+
+        /** Checks if item is a bandolier and currently capable of storing obj
+         *  @param obj object that we want to holster
+         *  @param ignore only check item is compatible and ignore any existing contents
+         */
+        bool can_put_in_bandolier( const item &obj, bool ignore = false ) const;
 
         /**
          * Callback when a character starts wearing the item. The item is already in the worn
@@ -1486,6 +1549,13 @@ class item : public location_visitable<item>, public game_object<item>
          * @param dt type of damage (or DT_NULL)
          */
         void on_damage( int qty, damage_type dt );
+
+        /**
+         * Callback after an item is placed on the map, for any reason
+         * @param m The Map
+         * @param p Where in the map
+         */
+        void on_map_placement( const map &m, const tripoint_bub_ms &p );
 
         std::vector<trait_id> mutations_from_wearing( const Character &guy ) const;
 
@@ -1532,14 +1602,14 @@ class item : public location_visitable<item>, public game_object<item>
          */
         /*@{*/
 
-        template<typename T>
-        T get_var( const std::string &name, const T &default_value ) const {
-            return item_vars_.get<T>( name, default_value );
+        template<typename T, typename Conv = data_vars::type_converter_t<T>>
+        T get_var( const std::string &name, const T &default_value, const Conv &conv = {} ) const {
+            return item_vars_.get<T, Conv>( name, default_value, conv );
         }
 
-        template<typename T>
-        void set_var( const std::string &name, const T &value ) {
-            item_vars_.set<T>( name, value );
+        template<typename T, typename Conv = data_vars::type_converter_t<T>>
+        void set_var( const std::string &name, const T &value, const Conv &conv = {} ) {
+            item_vars_.set<T>( name, value, conv );
         }
 
         std::string get_var( const std::string &name, const char *default_value ) const {
@@ -1569,25 +1639,26 @@ class item : public location_visitable<item>, public game_object<item>
         // NOLINTNEXTLINE(cata-no-long)
         //void set_var( const std::string &name, long value ) { item_vars_.set<long>( name, value ); };
         void set_var( const std::string &name, double value ) { item_vars_.set<double>( name, value ); };
-        void set_var( const std::string &name, const tripoint &value ) { item_vars_.set<tripoint>( name, value ); };
+        void set_var( const std::string &name, const tripoint_abs_ms &value ) { item_vars_.set<tripoint>( name, value ); };
         void set_var( const std::string &name, const std::string &value ) { item_vars_.set( name, value ); };
 
         double get_var( const std::string &name, double default_value ) const { return item_vars_.get<double>( name, default_value ); }
-        tripoint get_var( const std::string &name, const tripoint &default_value ) const { return item_vars_.get<tripoint>( name, default_value ); }
+        tripoint get_var( const std::string &name, const tripoint_bub_ms &default_value ) const { return item_vars_.get<tripoint>( name, default_value ); }
         std::string get_var( const std::string &name, const std::string &default_value ) const { return item_vars_.get( name, default_value ); }
         std::string get_var( const std::string &name ) const { return item_vars_.get( name, "" ); }
         */
 
-        bool has_var( const std::string &name ) const { return item_vars_.contains( name ); }
-        void erase_var( const std::string &name ) { item_vars_.erase( name ); }
-        void clear_vars() { item_vars_.clear(); }
+        auto has_var( const std::string &name ) const -> bool { return item_vars_.contains( name ); }
+        auto erase_var( const std::string &name ) -> void { item_vars_.erase( name ); }
+        auto clear_vars() -> void { item_vars_.clear(); }
 
         // TODO in follow-up PR:
         // remove internal usage of get_var / set_var internally
         // mark as [[deprecated]]
         // completely remove in a future update
 
-        data_vars::data_set &item_vars() { return item_vars_; }
+        auto item_vars() -> data_vars::data_set & { return item_vars_; } // *NOPAD*
+        auto item_vars() const -> const data_vars::data_set & { return item_vars_; } // *NOPAD*
 
         /** Adds child items to the contents of this one. */
         void add_item_with_id( const itype_id &itype, int count = 1 );
@@ -1984,7 +2055,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param pos current location of item, used for ejecting magazines and similar effects
          * @return amount of ammo consumed which will be between 0 and qty
          */
-        int ammo_consume( int qty, const tripoint &pos );
+        int ammo_consume( int qty, const tripoint_bub_ms &pos );
 
         /** Specific ammo data, returns nullptr if item is neither ammo nor loaded with any */
         const itype *ammo_data() const;
@@ -2250,9 +2321,9 @@ class item : public location_visitable<item>, public game_object<item>
          * See @game::place_critter for meaning of @p target and @p pos.
          * @return Whether the monster has been spawned (may fail if no space available).
          */
-        bool release_monster( const tripoint &target, int radius = 0 );
+        bool release_monster( const tripoint_bub_ms &target, int radius = 0 );
         /* add the monster at target to this item, despawning it */
-        int contain_monster( const tripoint &target );
+        int contain_monster( const tripoint_bub_ms &target );
 
         time_duration age() const;
         void set_age( const time_duration &age );
@@ -2342,46 +2413,7 @@ class item : public location_visitable<item>, public game_object<item>
         void set_cached_tool_selections( const std::vector<comp_selection<tool_comp>> &selections );
         const std::vector<comp_selection<tool_comp>> &get_cached_tool_selections() const;
 
-        /**
-         * Data for items that act as keys to pocket dimensions.
-         */
-        struct pocket_dimension_data {
-            pocket_dimension_data() {}
-            std::string dimension_id;             // Fully-qualified dim ID (e.g. "pocket_dungeon_a1b2c3d4_")
-            world_type_id world_type;             // World type metadata for this pocket
-            tripoint_abs_omt entry_point;         // Where player spawns on entry
-            tripoint_abs_omt bounds_min;          // Minimum bounds (OMT coords)
-            tripoint_abs_omt bounds_max;          // Maximum bounds (OMT coords)
-            bool is_initialized = false;          // Has the pocket data been set up?
-            bool terrain_generated = false;       // Has the terrain been generated?
-
-            // Return tracking - where to go when exiting this pocket
-            std::string return_dimension_id;      // Which dimension to return to (empty = overworld)
-            world_type_id
-            return_world_type;      // World type of the return dimension (may be null for overworld)
-            tripoint_abs_omt return_point;        // Where to place player on exit
-
-            void serialize( JsonOut &jsout ) const;
-            void deserialize( JsonIn &jsin );
-
-            bool operator==( const pocket_dimension_data &rhs ) const;
-        };
-
-        std::optional<pocket_dimension_data> pocket_dim;
-
-
-        /**
-         * Get the pocket dimension data for this item.
-         * Returns nullptr if this item is not a pocket dimension key.
-         */
-        pocket_dimension_data *get_pocket_dimension_data();
-        const pocket_dimension_data *get_pocket_dimension_data() const;
-
-        /**
-         * Initialize pocket dimension data for this item.
-         * Should only be called once when the pocket is first used.
-         */
-        void set_pocket_dimension_data( pocket_dimension_data &&data );
+        std::optional<dimension_info> pocket_dim;
 
         const std::vector<enchantment> &get_enchantments() const;
 
@@ -2389,13 +2421,13 @@ class item : public location_visitable<item>, public game_object<item>
          * Calculate bonus from enchantments that affect this item only.
          */
         double bonus_from_enchantments( const Character &owner, double base,
-                                        enchant_vals::mod value, bool round = false ) const;
+                                        enchantment_value_id value, bool round = false ) const;
 
         /**
          * Calculate bonus from enchantments that affect this item only,
          * assume it's wielded and all enchantments' conditions are satisfied.
          */
-        double bonus_from_enchantments_wielded( double base, enchant_vals::mod value,
+        double bonus_from_enchantments_wielded( double base, enchantment_value_id value,
                                                 bool round = false ) const;
 
         /** Returns the type of location where the item is found */
@@ -2420,10 +2452,20 @@ class item : public location_visitable<item>, public game_object<item>
         const std::vector<relic_recharge> &get_relic_recharge_scheme() const;
 
     private:
+        struct absolute_rot_process_options {
+            bool seals = false;
+            player *carrier = nullptr;
+            const rot_context &context;
+        };
+
         const use_function *get_use_internal( const std::string &use_name ) const;
         static detached_ptr<item> process_internal( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos, bool activate,
+                const tripoint_bub_ms &pos, bool activate,
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
+        static auto process_rot( detached_ptr<item> &&self,
+                                 const absolute_rot_process_options &options ) -> detached_ptr<item>;
+        auto is_in_preserving_container() const -> bool;
+        auto mark_rot_checked_now() -> void;
 
         /** Helper for checking reloadability. **/
         bool is_reloadable_helper( const itype_id &ammo, bool now ) const;
@@ -2464,28 +2506,28 @@ class item : public location_visitable<item>, public game_object<item>
         // processing types, just to make the process function cleaner.
         // The interface is the same as for @ref process.
         static detached_ptr<item> process_corpse( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_litcig( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_extinguish( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         // Place conditions that should remove fake smoke item in this sub-function
         static detached_ptr<item> process_fake_smoke( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_fake_cloning_vat( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_fake_mill( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_cable( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_UPS( detached_ptr<item> &&self, player *carrier,
-                                               const tripoint &pos );
+                                               const tripoint_bub_ms &pos );
         static detached_ptr<item> process_blackpowder_fouling( detached_ptr<item> &&self, player *carrier );
         static detached_ptr<item> process_tool( detached_ptr<item> &&self, player *carrier,
-                                                const tripoint &pos );
+                                                const tripoint_bub_ms &pos );
 
         //Process wet is built different because sigh
-        bool process_wet( player *carrier, const tripoint &pos );
+        bool process_wet( player *carrier, const tripoint_bub_ms &pos );
     public:
         static const int INFINITE_CHARGES;
 
@@ -2645,6 +2687,8 @@ namespace charge_removal_blacklist
 {
 const std::set<itype_id> &get();
 void load( const JsonObject &jo );
+void defer( item *, int );
+void split_deferred();
 void reset();
 } // namespace charge_removal_blacklist
 
@@ -2800,5 +2844,3 @@ struct cable_connection_data {
         con2.point = tripoint_abs_ms( tmp );
     }
 };
-
-

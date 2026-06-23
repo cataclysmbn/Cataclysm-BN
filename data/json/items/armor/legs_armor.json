@@ -151,6 +151,7 @@
     "encumbrance": 10,
     "warmth": 15,
     "material_thickness": 4,
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "OUTER", "STURDY" ]
   },
   {
@@ -194,7 +195,8 @@
     "encumbrance": 30,
     "warmth": 10,
     "material_thickness": 4,
-    "flags": [ "VARSIZE", "OUTER", "STURDY" ]
+    "flags": [ "VARSIZE", "OUTER", "STURDY" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "legguard_lightplate_superalloy",
@@ -226,6 +228,7 @@
     "encumbrance": 6,
     "warmth": 10,
     "material_thickness": 4,
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "OUTER", "WATER_FRIENDLY" ]
   },
   {

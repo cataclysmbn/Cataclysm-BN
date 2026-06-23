@@ -22,7 +22,7 @@
 #include "vehicle_part.h"
 
 #if defined(__ANDROID__)
-#   include <SDL_keyboard.h>
+#   include <SDL3/SDL.h>
 #endif
 void advanced_inventory_pane::save_settings()
 {

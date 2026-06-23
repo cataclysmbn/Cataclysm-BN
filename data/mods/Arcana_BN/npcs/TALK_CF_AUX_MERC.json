@@ -1,0 +1,139 @@
+[
+  {
+    "id": "TALK_CF_AUX_MERC",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_is_wearing": "badge_marshal",
+      "yes": "Howdy, marshal.",
+      "no": { "u_male": true, "yes": "Howdy, sir.", "no": "Howdy, ma'am." }
+    },
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_CF_AUX_MERC_GM_PRELUDE"
+      },
+      { "text": "Who are you?", "topic": "TALK_CF_AUX_MERC_WHO" },
+      { "text": "Any tips for surviving?", "topic": "TALK_CF_AUX_MERC_TIPS" },
+      { "text": "Are you… dressed up like a cowboy?", "topic": "TALK_CF_AUX_MERC_YEEHAW" },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_AUX_MERC_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "I heard what y'all are up to.  Ran into one what these fellas are lookin' for myself last patrol, picked off one and left the other chasin' squirrels.  I'll tell the padre here what I've found out, you just keep askin' around.  Take care now."
+  },
+  {
+    "id": "TALK_CF_AUX_MERC_WHO",
+    "type": "talk_topic",
+    "dynamic_line": "I'm just a ol' hired hand.  So long as there's good pay, I do what needs t' be done.",
+    "responses": [
+      { "text": "What kind of work do you do?", "topic": "TALK_CF_AUX_MERC_WORK" },
+      { "text": "Can you tell me anything else about yourself?", "topic": "TALK_CF_AUX_MERC_PERSONAL" },
+      { "text": "What would it cost to hire you?", "topic": "TALK_CF_AUX_MERC_HIRE" },
+      { "text": "I see.", "topic": "TALK_CF_AUX_MERC" }
+    ]
+  },
+  {
+    "id": "TALK_CF_AUX_MERC_WORK",
+    "type": "talk_topic",
+    "dynamic_line": "Mercenary work, these days.  Guarding caravans, bit of firepower for a posse, that sorta thing.  Still have a good eye with hunting rifles, even if it's getting harder to read clearly.",
+    "responses": [
+      { "text": "Can you tell me anything else about yourself?", "topic": "TALK_CF_AUX_MERC_PERSONAL" },
+      { "text": "What would it cost to hire you?", "topic": "TALK_CF_AUX_MERC_HIRE" },
+      { "text": "I see.", "topic": "TALK_CF_AUX_MERC" }
+    ]
+  },
+  {
+    "id": "TALK_CF_AUX_MERC_PERSONAL",
+    "type": "talk_topic",
+    "dynamic_line": "Used to work on a ranch out of state, also grew up hunting.  Fought like hell to get up here, way everything went down I'm surprised I'm still kicking.  Lot of hard fights and strange shit along the way.",
+    "responses": [
+      { "text": "What kind of work do you do?", "topic": "TALK_CF_AUX_MERC_WORK" },
+      { "text": "What would it cost to hire you?", "topic": "TALK_CF_AUX_MERC_HIRE" },
+      { "text": "I see.", "topic": "TALK_CF_AUX_MERC" }
+    ]
+  },
+  {
+    "id": "TALK_CF_AUX_MERC_HIRE",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_is_wearing": "badge_marshal",
+      "yes": "Well now marshal, I'd be willing to serve as a deputy for half my going rate. 15 Golden Scales, the stuff they use here, should cover my expenses.  After that, lead and I'll follow.",
+      "no": "30 of the Golden Scales they use here will cover my expenses.  So long as there's places to explore and loot to find, should be fine by me."
+    },
+    "responses": [
+      {
+        "text": "[GS15] You have a deal.",
+        "topic": "TALK_CF_AUX_MERC_HIRE_SUCCESS",
+        "switch": true,
+        "condition": { "and": [ { "u_is_wearing": "badge_marshal" }, { "u_has_items": { "item": "CF_golden_scale", "count": 15 } } ] },
+        "effect": { "u_consume_item": "CF_golden_scale", "count": 15 }
+      },
+      {
+        "text": "[GS30] You have a deal.",
+        "topic": "TALK_CF_AUX_MERC_HIRE_SUCCESS",
+        "switch": true,
+        "default": true,
+        "condition": { "u_has_items": { "item": "CF_golden_scale", "count": 30 } },
+        "effect": { "u_consume_item": "CF_golden_scale", "count": 30 }
+      },
+      { "text": "What can you tell me about Golden Scales?", "topic": "TALK_CF_AUX_MERC_SCALES" },
+      { "text": "I might be back.", "topic": "TALK_CF_AUX_MERC" }
+    ]
+  },
+  {
+    "id": "TALK_CF_AUX_MERC_HIRE_SUCCESS",
+    "type": "talk_topic",
+    "dynamic_line": "Lead the way, then.",
+    "responses": [
+      {
+        "text": "Glad to have you aboard.",
+        "success": { "effect": "follow", "opinion": { "trust": 1, "value": 1 }, "topic": "TALK_DONE" }
+      }
+    ]
+  },
+  {
+    "id": "TALK_CF_AUX_MERC_SCALES",
+    "type": "talk_topic",
+    "dynamic_line": "Golden Scales are those little coins the locals here use.  Seems it's picking up as a currency.  Personally I'd prefer silver dollars if we're talking hard cash, but you use what you can get if you don't like bartering your shirt away for a hot meal.  These people seem to have some other use for em, too.",
+    "responses": [
+      { "text": "I see.  Let's try this again from the start.", "topic": "TALK_CF_AUX_MERC" },
+      { "text": "Okay, how much do I need?", "topic": "TALK_CF_AUX_MERC_HIRE" },
+      { "text": "Well, thanks for the info.  Bye!", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_AUX_MERC_TIPS",
+    "type": "talk_topic",
+    "dynamic_line": [
+      "Kill what's threatening you first, then treat any casualties.  It's cold sure, but every person out of the fight makes it easier on the enemy, and it's hard to shoot back when your hands are busy tying up some poor guy's guts.",
+      "A well-placed grenade, stick of dynamite, or better yet C4 is as handy a tool as it is a weapon. If you have the time to place it and back off, you're less likely to make a costly mistake than throwing it.",
+      "Take good care of any vehicles you can get in working order. A few tons of metal at highway speeds is deer medicine, as much as a couple hundred grains of it going supersonic is.",
+      "It's only a rout if it's too little, too late to call it a retreat. Better off keeping your distance or breaking contact if it'd be too much trouble to fight it out.",
+      "Don't bring what you don't need, but keep in mind you never know for sure what's necessary until you need it.  If you're still on the fence about a piece of gear and it won't hurt any to take it, you might as well bring it along.",
+      "Being unsubtle about a mission is only a disadvantage if you don't have enough ammo for everything that might show up.",
+      "Always bring a gun, preferably the biggest one you can afford to haul around.  Even if you're more the rip and tear type, it'll pay off eventually.",
+      "Take your time aiming if you have the chance to.  Some of the things out there are tough but slow, shot placement's what saves your hide against things like that.",
+      "If you're gonna be fighting monsters, either gear up for any threat that might be out there, or stay light.  If it slows you down it needs to be worth it."
+    ],
+    "responses": [ { "text": "…", "topic": "TALK_CF_AUX_MERC" } ]
+  },
+  {
+    "id": "TALK_CF_AUX_MERC_YEEHAW",
+    "type": "talk_topic",
+    "dynamic_line": "Yep.  Used to be a ranch hand, and it's still practical for wandering the wastes.  Unholy abominations don't care so much about fancy plate carriers, and anything that'll stop a rifle bullet slows you down.",
+    "responses": [ { "text": "…", "topic": "TALK_CF_AUX_MERC" } ]
+  }
+]

@@ -29,6 +29,13 @@ extern bool json_report_strict;
  * but can be toggled in sdl build.
  */
 extern bool use_tiles;
+/** Render-only colored light tinting. Always false for non-TILES builds. */
+extern bool colored_lighting;
+
+/**
+ * Enable pinyin-based fallback matching for Chinese search text.
+ */
+extern bool use_pinyin_search;
 
 /**
  * Use tiles for 'm'ap display. Always false for ncurses build,
@@ -53,14 +60,19 @@ extern bool display_object_ids;
  */
 extern bool trigdist;
 
-/** 3D FoV enabled/disabled. */
-extern bool fov_3d;
+/** Angled sunlight shadows: trace direct natural light along the current sun angle. */
+extern bool angled_sunlight_shadows;
 
-/** 3D FoV range, in Z levels, in both directions. */
-extern int fov_3d_z_range;
-
-/** 3D FoV horizontal occlusion: clip vertical-cast results with per-z 2D horizontal shadow passes. */
-extern bool fov_3d_occlusion;
+/** High-sprite occlusion handling mode: 0 off, 1 always, 2 automatic. */
+extern int prevent_occlusion;
+/** Retract sprites that support DDA retracted offsets while handling occlusion. */
+extern bool prevent_occlusion_retract;
+/** Prefer *_transparent tile variants while handling occlusion. */
+extern bool prevent_occlusion_transp;
+/** Override minimum automatic occlusion distance. Values <= 0 use tileset metadata. */
+extern float prevent_occlusion_min_dist;
+/** Override maximum automatic occlusion distance. Values <= 0 use tileset metadata. */
+extern float prevent_occlusion_max_dist;
 
 /** Using isometric tileset. */
 extern bool tile_iso;
@@ -98,11 +110,21 @@ extern int  lod_action_budget;
 extern int  lod_macro_interval;
 extern int  lod_coarse_scent_interval;
 extern int  lod_group_morale_max_tier;
+extern int  activity_skip_monster_lod_gate;
 
 /** Out-of-bubble world-tick options. */
 extern bool reality_bubble_fire_spread;
 
+/** How visibility attenuation scales relative to the reality bubble hard cap. */
+enum class visibility_scaling_mode {
+    perfect,
+    smart,
+    no_scale
+};
+extern visibility_scaling_mode visibility_scaling;
+
 extern bool lazy_border_enabled;
+extern int retained_omt_cache_length;
 
 /**
  * Maximum number of fire-spread-loaded submaps allowed across all dimensions
@@ -187,5 +209,3 @@ extern error_log_format_t error_log_format;
 #else
 constexpr error_log_format_t error_log_format = error_log_format_t::human_readable;
 #endif
-
-

@@ -7,9 +7,7 @@
 
 #include "game_constants.h"
 #include "lightmap.h"
-
-struct point;
-struct tripoint;
+#include "coordinates.h"
 
 // Tracks whether a diagonal between two tiles is blocked by a vehicle part.
 // Stored per-tile in level_cache::vehicle_obscured_cache.
@@ -105,8 +103,8 @@ struct exp_lookup {
 // directly compatible with these signatures — no adapters needed.
 //
 // Null fields are legal when the feature is unused:
-//   update_float     — null when writing to four_quadrants output.
-//   update_quadrants — null when writing to float output.
+//   update_float     — null to skip writes (unusual; most passes provide one).
+//   update_quadrants — reserved for future use; currently always null.
 //   lookup_calc      — null to disable the exp-lookup fast path entirely.
 struct light_model {
     using calc_fn  = float( * )( const float &numerator,
@@ -197,6 +195,12 @@ inline float sight_from_lookup( const float &numerator, const float &transparenc
     return numerator * transparency;
 }
 
+struct light_update_callback {
+    void *context = nullptr;
+    void ( *update )( void *context, int z_index, int x, int y, int idx,
+                      float intensity, quadrant q ) = nullptr;
+};
+
 // ── Public shadowcasting API ──────────────────────────────────────────────────
 
 /// 2D FOV / light cast — writes to a flat float array (seen_cache, shrapnel).
@@ -210,19 +214,10 @@ void castLightAll(
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
-    const exp_lookup *weather_lookup = nullptr );
-
-/// 2D light cast — writes to a flat four_quadrants array (lm).
-void castLightAll_q(
-    four_quadrants *output_cache,
-    const float *input_array,
-    const diagonal_blocks *blocked_array,
-    int sx, int sy,
-    point offset, int offset_distance, float numerator,
-    const light_model &model,
-    const exp_lookup *weather_lookup = nullptr );
+    const exp_lookup *weather_lookup = nullptr,
+    light_update_callback callback = {} );
 
 // ── Octant bitmasks ───────────────────────────────────────────────────────────
 // Bit i selects k_octant_xforms[i].  Used by map::apply_light_source and
@@ -232,18 +227,19 @@ inline constexpr uint8_t OCTANT_EAST  = 0x44u; ///< octants 2, 6  (xy = -1 half)
 inline constexpr uint8_t OCTANT_SOUTH = 0x0Au; ///< octants 1, 3  (yy = +1 half)
 inline constexpr uint8_t OCTANT_WEST  = 0x11u; ///< octants 0, 4  (xy = +1 half)
 
-/// 2D light cast — writes to a flat four_quadrants array, casting only the
+/// 2D light cast — writes to a flat float array (lm), casting only the
 /// octants selected by @p octant_mask.  Bit i of octant_mask enables
 /// k_octant_xforms[i].  Use OCTANT_NORTH/EAST/SOUTH/WEST constants.
-void castLightOctants_q(
-    four_quadrants *output_cache,
+void castLightOctants(
+    float *output_cache,
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     uint8_t octant_mask,
-    const exp_lookup *weather_lookup = nullptr );
+    const exp_lookup *weather_lookup = nullptr,
+    light_update_callback callback = {} );
 
 /// 3D FOV cast across all z-levels.
 /// Only model.calc, model.check, and model.accumulate are consulted;
@@ -251,7 +247,8 @@ void castLightOctants_q(
 void cast_zlight(
     const array_of_grids_of<float> &output_caches,
     const array_of_grids_of<const float> &input_arrays,
-    const array_of_grids_of<const bool> &floor_caches,
+    const array_of_grids_of<const char> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
-    const tripoint &origin, int offset_distance, float numerator,
-    const light_model &model );
+    const tripoint_bub_ms &origin, int offset_distance, float numerator,
+    const light_model &model,
+    light_update_callback callback = {} );

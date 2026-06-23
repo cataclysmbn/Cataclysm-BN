@@ -386,7 +386,8 @@
     "magazine": 50,
     "items": [
       [ "101_carpentry", 1 ],
-      [ "1st_aid", 20 ],
+      [ "1st_aid", 16 ],
+      [ "1st_aid_deluxe", 4 ],
       [ "223_casing", 1 ],
       [ "2lcanteen", 3 ],
       [ "3006_casing", 1 ],

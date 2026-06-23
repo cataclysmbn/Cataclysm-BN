@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <map>
-#include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -10,11 +9,17 @@
 #include "ammo.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "creature_functions.h"
+#include "coordinates.h"
+#include "faction.h"
 #include "game.h"
 #include "item.h"
 #include "itype.h"
 #include "map.h"
-#include "point.h"
+#include "map_helpers.h"
+#include "monster.h"
+#include "npc.h"
+#include "player_helpers.h"
 #include "state_helpers.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -38,18 +43,13 @@ static std::vector<const vpart_info *> turret_types()
     return res;
 }
 
-static auto biggest_tank( const ammotype &ammo ) -> const vpart_info *
+static auto biggest_tank( const itype_id &ammo ) -> const vpart_info *
 {
     std::vector<const vpart_info *> res;
 
     for( const auto &e : vpart_info::all() ) {
         const auto &vp = e.second;
-        if( !item::spawn_temporary( vp.item )->is_watertight_container() ) {
-            continue;
-        }
-
-        const itype *fuel = &*vp.fuel_type;
-        if( fuel->ammo && fuel->ammo->type == ammo ) {
+        if( item::spawn_temporary( vp.item )->can_reload_with( ammo ) ) {
             res.push_back( &vp );
         }
     }
@@ -59,6 +59,14 @@ static auto biggest_tank( const ammotype &ammo ) -> const vpart_info *
     return *std::ranges::max_element( res, {}, &vpart_info::size );
 }
 
+static auto update_player_visibility_cache( map &here,
+        const tripoint_bub_ms &player_pos ) -> void
+{
+    here.invalidate_map_cache( player_pos.z() );
+    here.build_map_cache( player_pos.z() );
+    here.update_visibility_cache( player_pos.z() );
+}
+
 TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
 {
     clear_all_state();
@@ -66,39 +74,40 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
     avatar &player_character = get_avatar();
     for( auto e : turret_types() ) {
         SECTION( e->name() ) {
-            vehicle *veh = here.add_vehicle( vproto_id( "none" ), point( 65, 65 ), 270_degrees, 0, 0 );
+            vehicle *veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 65, 65, 0 ), 270_degrees, 0,
+                                             0 );
             REQUIRE( veh );
 
-            const int idx = veh->install_part( point_zero, e->get_id(), true );
+            const int idx = veh->install_part( tripoint_mnt_veh::zero(), e->get_id(), true );
             REQUIRE( idx >= 0 );
 
-            REQUIRE( veh->install_part( point_zero, vpart_id( "storage_battery" ), true ) >= 0 );
+            REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "storage_battery" ), true ) >= 0 );
             veh->charge_battery( 10000 );
 
-            auto ammo =
-                ammotype( veh->turret_query( veh->part( idx ) ).base().ammo_default().str() );
+            auto &gun = veh->part( idx ).get_base();
+            const auto ammo = gun.ammo_default();
 
             if( veh->part_flag( idx, "USE_TANKS" ) ) {
                 auto *tank = biggest_tank( ammo );
                 REQUIRE( tank );
                 INFO( tank->get_id().str() );
 
-                auto tank_idx = veh->install_part( point_zero, tank->get_id(), true );
+                auto tank_idx = veh->install_part( tripoint_mnt_veh::zero(), tank->get_id(), true );
                 REQUIRE( tank_idx >= 0 );
-                REQUIRE( veh->part( tank_idx ).ammo_set( ammo->default_ammotype() ) );
+                REQUIRE( veh->part( tank_idx ).ammo_set( ammo ) );
 
-            } else if( ammo ) {
-                veh->part( idx ).ammo_set( ammo->default_ammotype() );
+            } else if( !ammo.is_null() ) {
+                veh->part( idx ).ammo_set( ammo );
             }
 
             auto qry = veh->turret_query( veh->part( idx ) );
             REQUIRE( qry );
-
             REQUIRE( qry.query() == turret_data::status::ready );
             REQUIRE( qry.range() > 0 );
 
-            player_character.setpos( veh->global_part_pos3( idx ) );
-            REQUIRE( qry.fire( player_character, player_character.pos() + point( qry.range(), 0 ) ) > 0 );
+            player_character.setpos( veh->bub_part_location( idx ) );
+            REQUIRE( qry.fire( player_character, player_character.abs_pos() + point_rel_ms( qry.range(),
+                               0 ) ) > 0 );
 
             here.destroy_vehicle( veh );
         }
@@ -109,7 +118,8 @@ TEST_CASE( "vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret
 {
     clear_all_state();
     map &here = get_map();
-    vehicle *veh = here.add_vehicle( vproto_id( "none" ), point( 65, 65 ), 270_degrees, 0, 0 );
+    vehicle *veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 65, 65, 0 ), 270_degrees, 0,
+                                     0 );
     REQUIRE( veh );
 
     const auto turret_part_id = vpart_id( "mounted_rebar_rifle" );
@@ -117,12 +127,12 @@ TEST_CASE( "vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret
     const auto cargo_part_id = vpart_id( "box" );
     const auto battery_part_id = vpart_id( "storage_battery" );
 
-    const auto turret_index = veh->install_part( point_zero, turret_part_id, true );
+    const auto turret_index = veh->install_part( tripoint_mnt_veh::zero(), turret_part_id, true );
     REQUIRE( turret_index >= 0 );
-    REQUIRE( veh->install_part( point_zero, autoloader_part_id, true ) >= 0 );
-    const auto cargo_index = veh->install_part( point_zero, cargo_part_id, true );
+    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), autoloader_part_id, true ) >= 0 );
+    const auto cargo_index = veh->install_part( tripoint_mnt_veh::zero(), cargo_part_id, true );
     REQUIRE( cargo_index >= 0 );
-    REQUIRE( veh->install_part( point_zero, battery_part_id, true ) >= 0 );
+    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), battery_part_id, true ) >= 0 );
     veh->charge_battery( 10000 );
 
     vehicle_part &turret_part = veh->part( turret_index );
@@ -153,4 +163,63 @@ TEST_CASE( "vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret
         }
     }
     REQUIRE( gun.ammo_remaining() == ammo_capacity );
+}
+
+TEST_CASE( "vehicle_turret_iff_protects_followers_in_line_of_fire", "[vehicle][turret][npc][iff]" )
+{
+    clear_all_state();
+    build_test_map( ter_id( "t_dirt" ) );
+    map &here = get_map();
+    set_time( calendar::turn_zero + 12_hours );
+
+    const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
+    avatar &shooter = get_avatar();
+    shooter.setpos( shooter_pos );
+    shooter.set_body();
+
+    const auto follower_pos = shooter_pos + point( 3, 0 );
+    npc &follower = spawn_npc( follower_pos, "thug" );
+    follower.set_fac( faction_id( "your_followers" ) );
+    follower.set_attitude( NPCATT_FOLLOW );
+    REQUIRE( follower.is_player_ally() );
+    REQUIRE( shooter.attitude_to( follower ) == Attitude::A_FRIENDLY );
+
+    const auto hostile_pos = shooter_pos + point( 8, 0 );
+    monster &hostile = spawn_test_monster( "mon_zombie_tough", hostile_pos );
+    update_player_visibility_cache( here, shooter_pos );
+    REQUIRE( shooter.sees( hostile ) );
+
+    const auto target = creature_functions::auto_find_hostile_target(
+                            shooter, { .range = 20, .trail = false, .area = 0 } );
+    REQUIRE_FALSE( target.has_value() );
+    CHECK( target.error() == 1 );
+}
+
+TEST_CASE( "vehicle_turret_iff_allows_clear_shots", "[vehicle][turret][npc][iff]" )
+{
+    clear_all_state();
+    build_test_map( ter_id( "t_dirt" ) );
+    map &here = get_map();
+    set_time( calendar::turn_zero + 12_hours );
+
+    const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
+    avatar &shooter = get_avatar();
+    shooter.setpos( shooter_pos );
+    shooter.set_body();
+
+    const auto follower_pos = shooter_pos + point( 0, 5 );
+    npc &follower = spawn_npc( follower_pos, "thug" );
+    follower.set_fac( faction_id( "your_followers" ) );
+    follower.set_attitude( NPCATT_FOLLOW );
+    REQUIRE( follower.is_player_ally() );
+
+    const auto hostile_pos = shooter_pos + point( 8, 0 );
+    monster &hostile = spawn_test_monster( "mon_zombie_tough", hostile_pos );
+    update_player_visibility_cache( here, shooter_pos );
+    REQUIRE( shooter.sees( hostile ) );
+
+    const auto target = creature_functions::auto_find_hostile_target(
+                            shooter, { .range = 20, .trail = false, .area = 0 } );
+    REQUIRE( target.has_value() );
+    CHECK( &target->get() == &hostile );
 }

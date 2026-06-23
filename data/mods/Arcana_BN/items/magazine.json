@@ -1,0 +1,22 @@
+[
+  {
+    "id": "arcana_mech_power_cell",
+    "type": "MAGAZINE",
+    "category": "spare_parts",
+    "name": { "str": "essence amplification cell" },
+    "description": "A bespoke power cell designed specifically for a rare and valuable type of prototype mech, using anomalous technology to burn exotic energy sources, with spatial anomaly technology in the machine itself massively increasing efficiency.  Even then, it requires a lot of esoteric essence to make each power cell, and they need to be taken apart and remade once depleted.",
+    "weight": "10 kg",
+    "volume": "6 L",
+    "price": "1000 USD",
+    "price_postapoc": "50 USD",
+    "material": [ "steel" ],
+    "symbol": "=",
+    "color": "light_cyan",
+    "ammo_type": [ "battery" ],
+    "//": "Ten crystallized essence at 1500 kJ each, essence surge generator doubles output, distortion amp doubles output again, temporal stimulation effectively halves consumption.",
+    "count": 120000,
+    "capacity": 120000,
+    "looks_like": "battery",
+    "flags": [ "NO_SALVAGE", "NO_UNLOAD", "MECH_BAT" ]
+  }
+]

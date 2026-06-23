@@ -13,6 +13,7 @@
 #include "magic_ter_furn_transform.h"
 #include "map.h"
 #include "mapdata.h"
+#include "mapgen_constructor.h"
 #include "string_id.h"
 #include "type_id.h"
 
@@ -167,7 +168,7 @@ std::optional<furn_str_id> ter_furn_transform::next_furn( const std::string &fla
 
 template<class T, class K>
 bool ter_furn_transform::add_message( const std::map<K, ter_furn_data<T>> &list, const K &key,
-                                      const Creature &critter, const tripoint &location ) const
+                                      const Creature &critter, const tripoint_bub_ms &location ) const
 {
     const std::optional<ter_furn_data<T>> result = find_transform( list, key );
     if( result && !result->has_msg() ) {
@@ -179,13 +180,14 @@ bool ter_furn_transform::add_message( const std::map<K, ter_furn_data<T>> &list,
     return false;
 }
 
-void ter_furn_transform::add_all_messages( const Creature &critter, const tripoint &location ) const
+void ter_furn_transform::add_all_messages( const Creature &critter,
+        const tripoint_bub_ms &location ) const
 {
     add_all_messages( get_map(), critter, location );
 }
 
 void ter_furn_transform::add_all_messages( const map &m, const Creature &critter,
-        const tripoint &location ) const
+        const tripoint_bub_ms &location ) const
 {
     const ter_id ter_at_loc = m.ter( location );
     if( !add_message( ter_transform, ter_at_loc->id, critter, location ) ) {
@@ -208,12 +210,12 @@ void ter_furn_transform::add_all_messages( const map &m, const Creature &critter
     }
 }
 
-void ter_furn_transform::transform( const tripoint &location ) const
+void ter_furn_transform::transform( const tripoint_bub_ms &location ) const
 {
     transform( get_map(), location );
 }
 
-void ter_furn_transform::transform( map &m, const tripoint &location ) const
+void ter_furn_transform::transform( map &m, const tripoint_bub_ms &location ) const
 {
     const ter_id ter_at_loc = m.ter( location );
     std::optional<ter_str_id> ter_potential = next_ter( ter_at_loc->id );
@@ -234,6 +236,49 @@ void ter_furn_transform::transform( map &m, const tripoint &location ) const
             if( ter_at_loc->is_diggable() && !diggable_ter_transform.is_empty() ) {
                 ter_potential = diggable_ter_transform.pick();
             }
+        }
+    }
+
+    if( !furn_potential ) {
+        for( const std::pair<const std::string, ter_furn_data<furn_str_id>> &flag_result :
+             furn_flag_transform ) {
+            if( furn_at_loc->has_flag( flag_result.first ) ) {
+                furn_potential = next_furn( flag_result.first );
+                if( furn_potential ) {
+                    break;
+                }
+            }
+        }
+    }
+
+    if( ter_potential ) {
+        m.ter_set( location, *ter_potential );
+    }
+    if( furn_potential ) {
+        m.furn_set( location, *furn_potential );
+    }
+}
+
+auto ter_furn_transform::transform( mapgen_constructor &m,
+                                    const point_omt_ms &location ) const -> void
+{
+    const ter_id ter_at_loc = m.ter( location );
+    std::optional<ter_str_id> ter_potential = next_ter( ter_at_loc->id );
+    const furn_id furn_at_loc = m.furn( location );
+    std::optional<furn_str_id> furn_potential = next_furn( furn_at_loc->id );
+
+    if( !ter_potential ) {
+        for( const std::pair<const std::string, ter_furn_data<ter_str_id>> &flag_result :
+             ter_flag_transform ) {
+            if( ter_at_loc->has_flag( flag_result.first ) ) {
+                ter_potential = next_ter( flag_result.first );
+                if( ter_potential ) {
+                    break;
+                }
+            }
+        }
+        if( !ter_potential && ter_at_loc->is_diggable() && !diggable_ter_transform.is_empty() ) {
+            ter_potential = diggable_ter_transform.pick();
         }
     }
 

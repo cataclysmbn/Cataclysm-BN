@@ -10,7 +10,7 @@
     "type": "field_type",
     "legacy_enum_id": 1,
     "intensity_levels": [ { "name": "blood splatter", "color": "red" }, { "name": "blood stain" }, { "name": "puddle of blood" } ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,
@@ -24,7 +24,7 @@
     "type": "field_type",
     "legacy_enum_id": 2,
     "intensity_levels": [ { "name": "bile splatter", "color": "pink" }, { "name": "bile stain" }, { "name": "puddle of bile" } ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,
@@ -85,8 +85,8 @@
     "bash": {
       "str_min": 1,
       "str_max": 3,
-      "sound_vol": 2,
-      "sound_fail_vol": 2,
+      "sound_vol": 30,
+      "sound_fail_vol": 30,
       "sound": "hsh!",
       "msg_success": "You brush aside some webs."
     },
@@ -101,7 +101,7 @@
       { "name": "slime stain" },
       { "name": "puddle of slime", "color": "green" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "decay_amount_factor": 2,
     "apply_slime_factor": 10,
     "is_splattering": true,
@@ -120,7 +120,7 @@
       { "name": "acid streak" },
       { "name": "pool of acid", "color": "green" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "immunity_data": { "traits": [ "ACIDPROOF" ] },
     "underwater_age_speedup": "2 minutes",
     "has_acid": true,
@@ -191,7 +191,7 @@
         ]
       }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "is_splattering": true,
     "priority": 2,
     "half_life": "2 minutes",
@@ -208,7 +208,7 @@
       { "name": "sludge trail", "color": "dark_gray" },
       { "name": "thick sludge trail" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "is_splattering": true,
     "accelerated_decay": true,
     "priority": 2,
@@ -229,11 +229,18 @@
         "color": "yellow",
         "dangerous": true,
         "light_emitted": 20,
+        "light_color": "#ffd08a",
         "translucency": 0.7,
         "convection_temperature_mod": 300
       },
-      { "name": { "ctxt": "noun", "str": "fire" }, "color": "light_red", "light_emitted": 60, "translucency": 0.4 },
-      { "name": "raging fire", "color": "red", "light_emitted": 160, "translucency": 0.1 }
+      {
+        "name": { "ctxt": "noun", "str": "fire" },
+        "color": "light_red",
+        "light_emitted": 60,
+        "light_color": "#ffb05f",
+        "translucency": 0.4
+      },
+      { "name": "raging fire", "color": "red", "light_emitted": 160, "light_color": "#ff8a45", "translucency": 0.1 }
     ],
     "description_affix": "on",
     "decay_amount_factor": 3,
@@ -504,7 +511,11 @@
     "id": "fd_fire_vent",
     "type": "field_type",
     "legacy_enum_id": 17,
-    "intensity_levels": [ { "name": "fire vent", "light_emitted": 20 }, { "//": "repeat last entry" }, { "//": "repeat last entry" } ],
+    "intensity_levels": [
+      { "name": "fire vent", "light_emitted": 20, "light_color": "#ffb05f" },
+      { "//": "repeat last entry" },
+      { "//": "repeat last entry" }
+    ],
     "description_affix": "under",
     "has_fire": true,
     "phase": "gas",
@@ -523,7 +534,16 @@
     "id": "fd_flame_burst",
     "type": "field_type",
     "legacy_enum_id": 18,
-    "intensity_levels": [ { "name": { "ctxt": "noun", "str": "fire" }, "sym": "5", "color": "red", "dangerous": true, "light_emitted": 20 } ],
+    "intensity_levels": [
+      {
+        "name": { "ctxt": "noun", "str": "fire" },
+        "sym": "5",
+        "color": "red",
+        "dangerous": true,
+        "light_emitted": 20,
+        "light_color": "#ffb05f"
+      }
+    ],
     "description_affix": "on",
     "has_fire": true,
     "priority": 4,
@@ -736,7 +756,7 @@
       { "name": "plant sap stain" },
       { "name": "puddle of resin" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,
@@ -751,7 +771,7 @@
     "type": "field_type",
     "legacy_enum_id": 29,
     "intensity_levels": [ { "name": "bug blood splatter", "color": "green" }, { "name": "bug blood stain" }, { "name": "puddle of bug blood" } ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,
@@ -770,7 +790,7 @@
       { "name": "hemolymph stain" },
       { "name": "puddle of hemolymph" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,
@@ -961,13 +981,20 @@
     "type": "field_type",
     "legacy_enum_id": 38,
     "intensity_levels": [
-      { "name": "smoke", "sym": "8", "dangerous": true, "light_emitted": 20, "translucency": 1 },
-      { "name": "airborne incendiary", "color": "light_red", "light_emitted": 60, "translucency": 10 },
+      { "name": "smoke", "sym": "8", "dangerous": true, "light_emitted": 20, "light_color": "#ffd08a", "translucency": 1 },
+      {
+        "name": "airborne incendiary",
+        "color": "light_red",
+        "light_emitted": 60,
+        "light_color": "#ffb05f",
+        "translucency": 10
+      },
       {
         "name": "airborne incendiary",
         "color": "light_red_red",
         "transparent": false,
         "light_emitted": 160,
+        "light_color": "#ff8a45",
         "translucency": 0
       }
     ],
@@ -1381,5 +1408,26 @@
     "display_items": false,
     "display_field": true,
     "looks_like": "fd_smoke"
+  },
+  {
+    "id": "fd_fog_kraken",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "mist", "sym": "~", "dangerous": false, "transparent": false, "translucency": 1 },
+      { "name": "fog", "translucency": 1 },
+      { "name": "mysterious fog", "translucency": 10 }
+    ],
+    "decay_amount_factor": 15,
+    "gas_absorption_factor": 5,
+    "percent_spread": 55,
+    "outdoor_age_speedup": "5 minutes",
+    "dirty_transparency_cache": true,
+    "has_fume": true,
+    "priority": 8,
+    "half_life": "50 minutes",
+    "phase": "gas",
+    "display_items": true,
+    "display_field": true,
+    "looks_like": "fd_fog"
   }
 ]

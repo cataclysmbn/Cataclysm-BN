@@ -59,8 +59,8 @@ or entries.
 
 ## Formatting tool
 
-The formatting tool can be invoked via the Makefile, directly as `tools/format/json_formatter.cgi`
-(built via `make style-json`), or via cgi at http://dev.narc.ro/cataclysm/format.html
+The formatting tool can be invoked through the CMake `style-json` target, directly as
+`tools/format/json_formatter.cgi`, or via cgi at http://dev.narc.ro/cataclysm/format.html
 
 If you're using the Visual Studio solution, you can configure Visual Studio with commands to format
 all of the JSON in the project.
@@ -90,4 +90,5 @@ drag&drop: drag the json file onto the `json_formatter` icon, then wait a few se
 
 ### On *nix
 
-Run `make style-json` in main repo directory.
+Run `just fmt-json` in the main repo directory. If `just` is unavailable, run
+`build-scripts/format-json.sh` instead.

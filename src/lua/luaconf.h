@@ -53,22 +53,22 @@
 
 
 #if defined(LUA_USE_WINDOWS)
-#define LUA_DL_DLL	/* enable support for DLL */
+//#define LUA_DL_DLL	/* enable support for DLL */
 #define LUA_USE_C89	/* broadly, Windows is C89 */
 #endif
 
 
 #if defined(LUA_USE_LINUX)
 #define LUA_USE_POSIX
-#define LUA_USE_DLOPEN		/* needs an extra library: -ldl */
-#define LUA_USE_READLINE	/* needs some extra libraries */
+//#define LUA_USE_DLOPEN		/* needs an extra library: -ldl */
+//#define LUA_USE_READLINE	/* needs some extra libraries */
 #endif
 
 
 #if defined(LUA_USE_MACOSX)
 #define LUA_USE_POSIX
-#define LUA_USE_DLOPEN		/* MacOS does not need -ldl */
-#define LUA_USE_READLINE	/* needs an extra library: -lreadline */
+//#define LUA_USE_DLOPEN		/* MacOS does not need -ldl */
+//#define LUA_USE_READLINE	/* needs an extra library: -lreadline */
 #endif
 
 

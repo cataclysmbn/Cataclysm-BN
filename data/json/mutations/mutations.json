@@ -16,12 +16,11 @@
     "id": "BIOLUM1",
     "name": { "str": "Weak Photophore" },
     "points": 1,
-    "description": "A photophore has grown from your head; you can make it glow softly.  This will make you very visible in the dark, ideal for attracting a partner during mating season.",
+    "description": "A photophore has grown under the skin of your cheeks; you can make them glow softly.  This will make you very visible in the dark, ideal for attracting a partner during mating season.",
     "active": true,
     "cost": 1,
     "time": 810000,
     "hunger": true,
-    "encumbrance_covered": [ [ "head", 5 ] ],
     "changes_to": [ "BIOLUM2" ],
     "category": [ "ELFA", "INSECT", "FISH" ],
     "lumination": [ [ "head", 8 ] ]
@@ -36,7 +35,6 @@
     "cost": 1,
     "time": 405000,
     "hunger": true,
-    "encumbrance_covered": [ [ "head", 5 ] ],
     "prereqs": [ "BIOLUM1" ],
     "category": [ "ELFA", "INSECT", "FISH" ],
     "lumination": [ [ "head", 20 ] ]
@@ -166,7 +164,7 @@
     "starting_trait": true,
     "types": [ "HEALING" ],
     "changes_to": [ "FASTHEALER2" ],
-    "category": [ "MEDICAL" ],
+    "category": [ "MEDICAL", "CHIMERA" ],
     "healing_awake": 0.2,
     "healing_resting": 0.5,
     "mending_modifier": 0.5
@@ -216,7 +214,7 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL", "CHIMERA" ]
   },
   {
     "type": "mutation",
@@ -531,12 +529,13 @@
     "//": "Can't change the ID as that breaks save-compatibility.",
     "name": { "str": "Scout" },
     "points": 1,
-    "description": "You're an excellent navigator and your ability to recognize distant landmarks is unmatched.  Your sight radius on the overmap extends beyond the normal range.",
+    "description": "You're an excellent navigator and your ability to recognize distant landmarks is unmatched.  Your sight radius on the overmap extends beyond the normal range, and distant details are easier for you to resolve.",
     "valid": false,
     "starting_trait": true,
     "category": [ "BIRD", "MOUSE" ],
     "cancels": [ "MYOPIC", "UNOBSERVANT" ],
-    "overmap_sight": 5
+    "overmap_sight": 5,
+    "local_detail_sight": 10
   },
   {
     "type": "mutation",
@@ -782,7 +781,13 @@
     "points": -1,
     "description": "You're quite the heavy sleeper.  Noises are unlikely to wake you up.",
     "changes_to": [ "HEAVYSLEEPER2" ],
-    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ]
+    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ],
+    "mut_enchantments": [
+      {
+        "condition": "ALWAYS",
+        "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 2 }, { "value": "SLEEP_DB_RESIST", "add": 30 } ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -1154,7 +1159,7 @@
     "id": "JITTERY",
     "name": { "str": "Jittery" },
     "points": -3,
-    "description": "When very hungry or under the effects of stimulants, you may find your hands shaking uncontrollably, severely reducing your Dexterity.",
+    "description": "When hungry or under the effects of stimulants, you may find your hands shaking uncontrollably, severely reducing your Dexterity.",
     "starting_trait": true,
     "valid": false,
     "category": [ "MEDICAL", "MOUSE", "RABBIT" ]
@@ -1665,7 +1670,8 @@
       { "part": "torso", "ignored": 60 }
     ],
     "armor": [ { "parts": "ALL", "cut": 2, "bash": 3, "bullet": 1 } ],
-    "speed_modifier": 0.8
+    "speed_modifier": 0.8,
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -1693,7 +1699,8 @@
       { "part": "torso", "ignored": 60 }
     ],
     "armor": [ { "parts": "ALL", "cut": 3, "bash": 5, "bullet": 2 } ],
-    "speed_modifier": 0.8
+    "speed_modifier": 0.8,
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -1782,7 +1789,7 @@
     "name": { "str": "Light Bones" },
     "points": 2,
     "mixed_effect": true,
-    "description": "Your bones are very light.  This enables you to move and attack 10% faster, but also reduces your carrying weight by 20% and makes bashing attacks hurt a little more.",
+    "description": "Your bones are very light.  This enables you to move and attack 10% faster, but also reduces your carrying weight by 20% and increases the damage you take from bashing attacks by 40%.",
     "category": [ "MOUSE", "RABBIT" ],
     "changes_to": [ "HOLLOW_BONES" ],
     "movecost_modifier": 0.9,
@@ -1969,8 +1976,59 @@
     "armor": [ { "parts": "ALL", "physical": 5 } ],
     "category": [ "CHIMERA" ],
     "types": [ "SKIN" ],
+    "changes_to": [ "SUBDERMALARMOR" ],
     "prereqs": [ "PATCHSKIN1" ],
     "flags": [ "FURRY" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SUBDERMALARMOR",
+    "name": { "str": "Keratinous subdermal layer" },
+    "points": 4,
+    "visibility": 1,
+    "ugliness": 1,
+    "purifiable": false,
+    "valid": false,
+    "bodytemp_modifiers": [ 150, 250 ],
+    "bodytemp_sleep": 20,
+    "encumbrance_always": [ [ "torso", 10 ], [ "arm_l", 10 ], [ "arm_r", 10 ], [ "leg_l", 10 ], [ "leg_r", 10 ], [ "head", 10 ] ],
+    "description": "Your chaotic skin has wholly compressed all the different traits of animals into a thin, subdermal layer of armor. Not as good as fur for keeping you warm, but highly protective and you once more can blend in with the hairless apes. Though you are slightly heavier.",
+    "armor": [ { "parts": "ALL", "physical": 12 } ],
+    "passive_mods": { "dex_mod": -2 },
+    "category": [ "CHIMERA" ],
+    "types": [ "SKIN" ],
+    "prevents": [ "DEFORMED", "DEFORMED2", "DEFORMED3", "HOOVES", "UNSTABLE" ],
+    "transform": { "target": "CHIMERAARMOR", "msg_transform": "Your skin morphs into a hideous armor of... Something!", "moves": 100 },
+    "prereqs": [ "PATCHSKIN2" ]
+  },
+  {
+    "type": "mutation",
+    "id": "CHIMERAARMOR",
+    "name": { "str": "Chimera Shell" },
+    "points": 0,
+    "visibility": 10,
+    "ugliness": 80,
+    "purifiable": false,
+    "valid": false,
+    "bodytemp_modifiers": [ 250, 500 ],
+    "bodytemp_sleep": 100,
+    "prevents": [ "DEFORMED", "DEFORMED2", "DEFORMED3", "HOOVES" ],
+    "description": "Your subdermal armor has unfolded, providing a grotesque layer of protection against bullets, blades and human interaction. You shouldn't bother trying to do precise actions though, your hands are I'll suited for those things. Your metabolism has also massively accelerated, burning calories at a fast rate for increased regeneration speed.",
+    "movecost_swim_modifier": 0.8,
+    "restricts_gear": [ "TORSO", "HEAD", "leg_l", "leg_r", "arm_l", "arm_r" ],
+    "allow_soft_gear": true,
+    "metabolism_modifier": 3,
+    "mending_modifier": 2,
+    "healing_awake": 2,
+    "crafting_speed_modifier": 0.5,
+    "construction_speed_modifier": 0.5,
+    "speed_modifier": 1.2,
+    "armor": [ { "parts": "ALL", "physical": 20 } ],
+    "transform": {
+      "target": "SUBDERMALARMOR",
+      "msg_transform": "Your armor retracts, reverting you to your old, inferior look.",
+      "moves": 100
+    }
   },
   {
     "type": "mutation",
@@ -2226,7 +2284,8 @@
       { "part": "hand_r", "ignored": 3 },
       { "part": "torso", "ignored": 20 }
     ],
-    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ]
+    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -5 } ] } ]
   },
   {
     "type": "mutation",
@@ -2945,7 +3004,8 @@
     "description": "Eating rotting, long-dead flesh is good for the struggle, and safe--if still completely unappealing--for you.",
     "prereqs": [ "POISRESIST" ],
     "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE", "THRESH_SERPENT" ],
-    "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ]
+    "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ],
+    "kcal_scale": 0.15
   },
   {
     "type": "mutation",
@@ -2971,6 +3031,7 @@
     "mixed_effect": true,
     "description": "Your fangs have grown extremely large and incredibly sharp.  They make it impossible to wear mouthgear and difficult to eat… but leave nasty wounds when you bite.",
     "types": [ "TEETH" ],
+    "prevents": [ "MOUTH_FLAPS" ],
     "prereqs": [ "FANGS" ],
     "threshreq": [ "THRESH_FELINE", "THRESH_CHIMERA" ],
     "category": [ "FELINE", "CHIMERA" ],
@@ -2991,13 +3052,14 @@
     "id": "EATHEALTH",
     "name": { "str": "Hyper-Metabolism" },
     "points": 15,
-    "description": "You metabolize nutrients so rapidly that you can convert food directly into useful tissue.  Excess nutrition will convert to HP, rather than being wasted.  Activate to skip prompt for overeating.",
+    "description": "You metabolize nutrients so rapidly that you can convert food directly into useful tissue.  Excess nutrition will convert to HP, rather than being wasted. You can also store more kcal. Activate to skip prompt for overeating.",
     "prereqs": [ "HUNGER3" ],
     "types": [ "METABOLISM" ],
     "threshreq": [ "THRESH_CHIMERA" ],
     "category": [ "CHIMERA" ],
     "valid": false,
-    "active": true
+    "active": true,
+    "kcal_scale": 0.3
   },
   {
     "type": "mutation",
@@ -3597,12 +3659,9 @@
     "prereqs": [ "WINGS_STUB" ],
     "category": [ "INSECT" ],
     "active": true,
-    "cost": 20,
-    "time": 10,
-    "fatigue": true,
-    "hunger": true,
-    "thirst": true,
-    "movecost_modifier": 0.75,
+    "cost": 100,
+    "stamina": true,
+    "enchantments": [ "ENCH_INSECT_WINGS_ACTIVE" ],
     "falling_damage_multiplier": 0.75
   },
   {
@@ -3874,15 +3933,15 @@
     "name": { "str": "Inconveniently Large" },
     "points": -1,
     "visibility": 1,
-    "ugliness": 1,
     "mixed_effect": true,
-    "encumbrance_always": [ [ "torso", 10 ], [ "arm_l", 10 ], [ "arm_r", 10 ] ],
-    "description": "You have grown noticeably taller and broader.  Much of it is useful muscle mass (Strength +2), but you find it throws off your balance and you get in your own way (+10 torso and arm encumbrance).  You can also fire heavy weapons without the aid of terrain, at a penalty to accuracy.",
+    "encumbrance_always": [ [ "torso", 10 ], [ "arm_l", 10 ], [ "arm_r", 10 ], [ "leg_l", 10 ], [ "leg_r", 10 ] ],
+    "description": "You have grown noticeably taller and broader.  Much of it is useful muscle mass (Strength +2), but you find it throws off your balance and you get in your own way (+10 torso, arm, and leg encumbrance).  You can also fire heavy weapons without the aid of terrain, at a penalty to accuracy. You gain 5% to all hit points with all the increased mass.",
     "types": [ "SIZE" ],
     "prereqs": [ "STR_UP", "STR_UP_2", "STR_UP_3", "STR_UP_4" ],
     "changes_to": [ "LARGE_OK", "HUGE" ],
     "category": [ "BEAST", "URSINE", "CATTLE", "LIZARD", "SERPENT", "RAPTOR", "CHIMERA" ],
     "passive_mods": { "str_mod": 2 },
+    "hp_modifier": 0.05,
     "weight_capacity_modifier": 1.05,
     "body_size": "LARGE"
   },
@@ -3892,7 +3951,7 @@
     "name": { "str": "Large" },
     "points": 2,
     "visibility": 1,
-    "description": "You carry your rugged body with the dignity you deserve.  Strength +2, and you can fire heavy weapons without the aid of terrain at the cost of accuracy.",
+    "description": "You carry your rugged body with the dignity you deserve.  Strength +2, and you can fire heavy weapons without the aid of terrain at the cost of accuracy. You gain 10% to all hit points with all the increased mass because you're better at controlling how it soaks up damage.",
     "types": [ "SIZE" ],
     "prereqs": [ "LARGE" ],
     "prereqs2": [ "STR_UP", "STR_UP_2", "STR_UP_3", "STR_UP_4" ],
@@ -3909,7 +3968,8 @@
     "leads_to": [ "MUT_TOUGH" ],
     "category": [ "BEAST", "URSINE", "CATTLE", "LIZARD", "SERPENT", "RAPTOR", "CHIMERA" ],
     "passive_mods": { "str_mod": 2 },
-    "weight_capacity_modifier": 1.05,
+    "hp_modifier": 0.1,
+    "weight_capacity_modifier": 1.07,
     "body_size": "LARGE"
   },
   {
@@ -3918,16 +3978,15 @@
     "name": { "str": "Freakishly Huge" },
     "points": -2,
     "visibility": 4,
-    "ugliness": 4,
     "mixed_effect": true,
-    "description": "You have grown even more massive, to the point where you cannot usefully fit into human-sized clothing or vehicles.  Much of it is powerful muscle mass (Strength +4), but it's a real pain to haul around.  On the plus side, firing heavy weapons without mounting appropriate terrain is a bit easier.",
+    "description": "You have grown even more massive, to the point where you cannot usefully fit into human-sized clothing or vehicles.  Much of it is powerful muscle mass (Strength +4), but it's a real pain to haul around.  On the plus side, firing heavy weapons without mounting appropriate terrain is a bit easier. You gain 15% to all hit points with all the increased mass.",
     "types": [ "SIZE" ],
     "prereqs": [ "LARGE", "LARGE_OK" ],
     "prereqs2": [ "STR_UP_3", "STR_UP_4" ],
     "changes_to": [ "HUGE_OK" ],
     "category": [ "URSINE", "CATTLE", "RAPTOR", "CHIMERA" ],
     "passive_mods": { "str_mod": 4 },
-    "hp_adjustment": -6,
+    "hp_modifier": 0.15,
     "fatigue_modifier": 0.15,
     "restricts_gear": [ "torso", "leg_l", "leg_r", "arm_l", "arm_r", "hand_l", "hand_r", "head", "foot_l", "foot_r" ],
     "weight_capacity_modifier": 1.1,
@@ -3939,9 +3998,8 @@
     "name": { "str": "Huge" },
     "points": 2,
     "visibility": 4,
-    "ugliness": 3,
     "mixed_effect": true,
-    "description": "Your cardiovascular system has caught up with your muscular physique, so who needs pathetic human cars?  Strength +4, and you can fire heavy weapons unsupported more easily.",
+    "description": "Your cardiovascular system has caught up with your muscular physique, so who needs pathetic human cars?  Strength +4, and you can fire heavy weapons unsupported more easily. You gain 20% to all hit points with all the increased mass because you're better at controlling how it soaks up damage.",
     "types": [ "SIZE" ],
     "prereqs": [ "HUGE" ],
     "prereqs2": [ "STR_UP_3", "STR_UP_4" ],
@@ -3950,7 +4008,8 @@
     "category": [ "URSINE", "CATTLE", "RAPTOR", "CHIMERA" ],
     "passive_mods": { "str_mod": 4 },
     "restricts_gear": [ "torso", "leg_l", "leg_r", "arm_l", "arm_r", "hand_l", "hand_r", "head", "foot_l", "foot_r" ],
-    "weight_capacity_modifier": 1.1,
+    "hp_modifier": 0.2,
+    "weight_capacity_modifier": 1.3,
     "body_size": "HUGE"
   },
   {
@@ -4409,13 +4468,19 @@
     "id": "WINGS_BAT",
     "name": { "str": "Bat Wings" },
     "points": -1,
+    "mixed_effect": true,
     "visibility": 9,
     "ugliness": 4,
-    "description": "You have a pair of large, leathery wings.  You can move them a little, but they only catch enough air to reduce falling damage a bit, and in fact put you off balance, reducing your ability to dodge slightly.",
+    "description": "You have a pair of large, leathery wings.  While you can fly short distances with them, it's more taxing than more aerodynamic wings would be.  They also hinder your balance, reducing your ability to dodge.",
+    "cost": 150,
+    "stamina": true,
+    "active": true,
     "types": [ "WINGS" ],
     "prereqs": [ "WINGS_STUB" ],
     "restricts_gear": [ "torso" ],
     "allowed_items": [ "ALLOWS_WINGS" ],
+    "category": [ "CHIMERA" ],
+    "flags": [ "MUTATION_FLIGHT" ],
     "dodge_modifier": -3,
     "falling_damage_multiplier": 0.75
   },
@@ -4424,9 +4489,10 @@
     "id": "WINGS_BUTTERFLY",
     "name": { "str": "Butterfly Wings" },
     "points": -1,
+    "mixed_effect": true,
     "visibility": 10,
     "ugliness": -2,
-    "description": "You have a very large pair of brightly-colored, very beautiful wings.  They can't lift you, and they make balancing tricky, but they certainly catch air and attention!",
+    "description": "You have a very large pair of brightly-colored, very beautiful wings that allow flight across short distances.  They make balancing tricky, but they certainly catch air and attention!",
     "valid": false,
     "purifiable": false,
     "encumbrance_always": [ [ "torso", 10 ] ],
@@ -4437,6 +4503,10 @@
     "restricts_gear": [ "torso" ],
     "allowed_items": [ "ALLOWS_WINGS" ],
     "social_modifiers": { "lie": 15, "persuade": 5, "intimidate": -20 },
+    "cost": 125,
+    "stamina": true,
+    "active": true,
+    "flags": [ "MUTATION_FLIGHT" ],
     "dodge_modifier": -4,
     "movecost_modifier": 0.9,
     "//": "Hardcoded effects include a 50% chance to negate a fall outright, this multiplier kicks in if you fall that roll or when tossed by a hulk.",
@@ -4692,7 +4762,7 @@
     "name": { "str": "Hollow Bones" },
     "points": 1,
     "mixed_effect": true,
-    "description": "You have Avian Bone Syndrome--your bones are nearly hollow.  Your body is very light as a result, enabling you to move and attack 20% faster, but also frail; you can carry 40% less, and bashing attacks injure you more.",
+    "description": "You have Avian Bone Syndrome--your bones are nearly hollow.  Your body is very light as a result, enabling you to move and attack 20% faster, but also frail; you can carry 40% less, and take 80% more damage from bashing attacks.",
     "prereqs": [ "LIGHT_BONES" ],
     "category": [ "BIRD", "SLIME", "ELFA" ],
     "movecost_modifier": 0.8,
@@ -4809,7 +4879,7 @@
     "bodytemp_modifiers": [ 0, 4000 ],
     "description": "You consume three times as much food as the average human to maintain your inefficient body.  All the excess heat it generates could let you survive a snowstorm naked.",
     "prereqs": [ "HUNGER2" ],
-    "leads_to": [ "EATHEALTH" ],
+    "changes_to": [ "EATHEALTH" ],
     "types": [ "METABOLISM" ],
     "category": [ "CHIMERA" ],
     "metabolism_modifier": 2
@@ -4867,7 +4937,13 @@
     "description": "You could probably sleep through a firefight.",
     "valid": false,
     "prereqs": [ "HEAVYSLEEPER" ],
-    "category": [ "BEAST", "LUPINE" ]
+    "category": [ "BEAST", "LUPINE" ],
+    "mut_enchantments": [
+      {
+        "condition": "ALWAYS",
+        "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 5 }, { "value": "SLEEP_DB_RESIST", "add": 50 } ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -5119,8 +5195,7 @@
     "name": { "str": "Genetic Chaos" },
     "points": -4,
     "description": "Your body alters itself rapidly, and without your intervention or conscious control.",
-    "prereqs": [ "UNSTABLE", "MUT_JUNKIE" ],
-    "category": [ "CHIMERA" ]
+    "prereqs": [ "UNSTABLE", "MUT_JUNKIE" ]
   },
   {
     "type": "mutation",
@@ -5792,7 +5867,8 @@
     "category": [ "CEPHALOPOD" ],
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "restricts_gear": [ "torso" ],
-    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ]
+    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "CARRY_STORAGE", "add": 4000 } ] } ]
   },
   {
     "type": "mutation",
@@ -5812,7 +5888,8 @@
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "active": true,
     "restricts_gear": [ "torso" ],
-    "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ]
+    "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ],
+    "mut_enchantments": [ { "condition": "INACTIVE", "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] } ]
   },
   {
     "type": "mutation",
@@ -6743,6 +6820,15 @@
   },
   {
     "type": "mutation",
+    "id": "DEBUG_INFINITE_SPEED",
+    "name": { "str": "Debug Infinite Speed" },
+    "points": 99,
+    "valid": false,
+    "description": "The only problem with being faster than light is that you always live in darkness.",
+    "debug": true
+  },
+  {
+    "type": "mutation",
     "id": "DEBUG_CLOAK",
     "name": { "str": "Debug Invisibility" },
     "points": 99,
@@ -6835,6 +6921,15 @@
   },
   {
     "type": "mutation",
+    "id": "DEBUG_WEIGHTLESSNESS",
+    "name": { "str": "Debug Weightlessness" },
+    "points": 99,
+    "valid": false,
+    "description": "Newton discovered gravity in 1687. People before 1687:",
+    "debug": true
+  },
+  {
+    "type": "mutation",
     "id": "DEBUG_BIONICS",
     "name": { "str": "Debug Bionic Installation" },
     "points": 99,
@@ -6887,7 +6982,7 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
-    "cancels": [ "GUNSHY" ],
+    "cancels": [ "GUNSHY", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -6897,7 +6992,7 @@
     "points": -4,
     "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
-    "cancels": [ "BRAWLER" ],
+    "cancels": [ "BRAWLER", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -6957,6 +7052,16 @@
   },
   {
     "type": "mutation",
+    "id": "LASER_GUIDED",
+    "name": { "str": "Laser guided" },
+    "points": 0,
+    "description": "Used by fake shooters spawned by laser-guided vehicle turrets, to increase accuracy.  If you have this, it's a bug.",
+    "valid": false,
+    "purifiable": false,
+    "profession": false
+  },
+  {
+    "type": "mutation",
     "id": "HAS_NEMESIS",
     "name": { "str": "Hunted" },
     "points": -1,
@@ -6986,5 +7091,26 @@
     "initial_ma_styles": [ "style_swordsmanship" ],
     "purifiable": false,
     "profession": true
+  },
+  {
+    "type": "mutation",
+    "id": "PROF_IRS",
+    "name": { "str": "IRS Auditor" },
+    "points": 0,
+    "description": "You possess authority nationwide to lawfully seize assets, detain individuals, and deploy lethal force in the collection of Uncle Sam's undeclared revenue. You are the IRS. You are inevitable.",
+    "valid": false,
+    "purifiable": false,
+    "profession": true
+  },
+  {
+    "type": "mutation",
+    "id": "CARRY_PERMIT",
+    "name": { "str": "Carry Permit" },
+    "points": 1,
+    "starting_trait": true,
+    "description": "You prepared for trouble as best as you could, though it might not be enough for the end of the world.  In addition to any weapons your profession might start with, you start with a randomly-selected common pistol and some spare mags.  (Note: What you see in character creation does not reflect what it will select at game start.)",
+    "cancels": [ "BRAWLER", "GUNSHY" ],
+    "valid": false,
+    "purifiable": false
   }
 ]

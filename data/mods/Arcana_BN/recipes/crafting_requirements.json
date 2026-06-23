@@ -1,0 +1,214 @@
+[
+  {
+    "id": "arcana_bone_standard",
+    "type": "requirement",
+    "//": "Bones used for sacrificial recipes, favoring human bones.",
+    "components": [ [ [ "bone_human", 3 ], [ "bone_heavy", 4 ], [ "bone", 4 ], [ "bone_tainted", 5 ] ] ]
+  },
+  {
+    "id": "arcana_blood_standard",
+    "type": "requirement",
+    "//": "Any available sort of blood, ideally human blood.",
+    "components": [ [ [ "blood", 1 ], [ "animal_blood", 2 ], [ "mutant_blood", 3 ] ] ]
+  },
+  {
+    "id": "arcana_forging_tools_standard",
+    "type": "requirement",
+    "//": "Combined tool and component set for combining blacksmithing with transmutation.",
+    "qualities": [ { "id": "ANVIL", "level": 1 }, { "id": "HAMMER", "level": 2 }, { "id": "CONTAIN_HOT", "level": 1 } ],
+    "tools": [ [ [ "candle_warding_active", -1 ] ] ],
+    "components": [ [ [ "earth_talisman", 1 ] ] ]
+  },
+  {
+    "id": "arcana_essence_any",
+    "type": "requirement",
+    "//": "Any type of magical essence.",
+    "components": [ [ [ "essence", 1 ], [ "essence_blood", 3 ], [ "essence_dull", 30 ] ] ]
+  },
+  {
+    "id": "arcana_essence_exclude_dull",
+    "type": "requirement",
+    "//": "Normal or blood essence only.  Silly mage hunters!",
+    "components": [ [ [ "essence", 1 ], [ "essence_blood", 3 ] ] ]
+  },
+  {
+    "id": "arcana_essence_exclude_blood",
+    "type": "requirement",
+    "//": "Normal or dull essence only, for things the local sanguinists would turn their noses at.",
+    "components": [ [ [ "essence", 1 ], [ "essence_dull", 30 ] ] ]
+  },
+  {
+    "id": "arcana_flesh_standard",
+    "type": "requirement",
+    "//": "Flesh suitable for blood sacrifice, human meat is preferable.",
+    "components": [ [ [ "human_flesh", 1 ], [ "mutant_human_flesh", 2 ], [ "meat", 2 ], [ "mutant_meat", 3 ] ] ]
+  },
+  {
+    "id": "arcana_flora_forage",
+    "type": "requirement",
+    "//": "Used for flame talismans to equal one blood essence.",
+    "components": [
+      [
+        [ "veggy_wild", 10 ],
+        [ "salsify_raw", 15 ],
+        [ "cattail_stalk", 20 ],
+        [ "fiddlehead_raw", 20 ],
+        [ "carrot_wild", 30 ],
+        [ "wild_herbs", 100 ]
+      ]
+    ]
+  },
+  {
+    "id": "arcana_flora_flowers",
+    "type": "requirement",
+    "//": "Assorted harvestable flowers, used for carmine vulnerary and scroll of regrowth.",
+    "components": [
+      [
+        [ "poppy_bud", 1 ],
+        [ "sunflower", 1 ],
+        [ "chicory_raw", 2 ],
+        [ "bee_balm", 2 ],
+        [ "raw_dandelion", 3 ],
+        [ "rose_hips", 3 ]
+      ]
+    ]
+  },
+  {
+    "id": "arcana_holy_relic_any",
+    "type": "requirement",
+    "//": "Selection of more ornate holy symbols.",
+    "components": [ [ [ "small_relic", 1 ], [ "amulet_exotic_empowered", 1 ], [ "charm_bone_empowered", 1 ] ] ]
+  },
+  {
+    "id": "arcana_holy_symbol_any",
+    "type": "requirement",
+    "//": "Selection of basic holy symbols.",
+    "components": [ [ [ "holy_symbol", 1 ], [ "holy_symbol_wood", 1 ], [ "amulet_exotic", 1 ], [ "charm_bone", 1 ] ] ]
+  },
+  {
+    "id": "arcana_polishing_standard",
+    "type": "requirement",
+    "//": "Hammering quality plus some medium for old-school abrasion.",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "material_sand", 10 ], [ "salt", 20 ] ] ]
+  },
+  {
+    "id": "arcana_potioncraft_standard",
+    "type": "requirement",
+    "//": "Tools and components for making potions.",
+    "qualities": [ { "id": "CHEM", "level": 1 } ],
+    "tools": [ [ [ "book_potioncraft", -1 ] ] ],
+    "components": [
+      [
+        [ "hard_liquor_toxic", 1, "LIST" ],
+        [ "chem_methanol", 125 ],
+        [ "cheap_wine", 21, "LIST" ],
+        [ "worthy_wine", 15, "LIST" ]
+      ]
+    ]
+  },
+  {
+    "id": "arcana_potioncraft_upgrade",
+    "type": "requirement",
+    "//": "Tools and components for upgrading potions.",
+    "qualities": [ { "id": "CHEM", "level": 1 } ],
+    "tools": [ [ [ "book_potioncraft", -1 ] ] ]
+  },
+  {
+    "id": "arcana_purification_standard",
+    "type": "requirement",
+    "//": "Certain bowls or a select number of other containers, plus fire.  General criteria is something that would have both boiling and containing quality combined in one, neither too large nor too shallow, and would either have a large enough opening to do fine work with contents while they're inside it, or involves glass containers small enough to finely manipulate.",
+    "tools": [
+      [
+        [ "bowl_clay", -1 ],
+        [ "ceramic_bowl", -1 ],
+        [ "bowl_pewter", -1 ],
+        [ "glass_bowl", -1 ],
+        [ "flask_glass", -1 ],
+        [ "test_tube", -1 ],
+        [ "chemistry_set", -1 ],
+        [ "chemistry_set_basic", -1 ],
+        [ "crucible", -1 ],
+        [ "crucible_clay", -1 ],
+        [ "pot", -1 ],
+        [ "iron_pot", -1 ],
+        [ "clay_pot", -1 ],
+        [ "pot_copper", -1 ],
+        [ "offering_chalice", -1 ]
+      ],
+      [
+        [ "fire", -1 ],
+        [ "ref_lighter_on", -1 ],
+        [ "torch_lit", -1 ],
+        [ "candle_lit", -1 ],
+        [ "gasoline_lantern_on", -1 ],
+        [ "oil_lamp_on", -1 ],
+        [ "tinderbox_on", -1 ],
+        [ "candle_warding_active", -1 ]
+      ]
+    ]
+  },
+  {
+    "id": "arcana_scrollwriting_standard",
+    "type": "requirement",
+    "//": "Tools and components for writing scrolls, old-school style.  No ink is used, hence no consuming charcoal markers.",
+    "tools": [
+      [
+        [ "fire", -1 ],
+        [ "ref_lighter_on", -1 ],
+        [ "torch_lit", -1 ],
+        [ "candle_lit", -1 ],
+        [ "gasoline_lantern_on", -1 ],
+        [ "oil_lamp_on", -1 ],
+        [ "tinderbox_on", -1 ],
+        [ "candle_warding_active", -1 ]
+      ],
+      [ [ "survival_marker", -1 ], [ "feather", -1 ] ]
+    ],
+    "components": [ [ [ "scroll_blank", 1 ] ] ]
+  },
+  {
+    "id": "arcana_scrollwriting_rewrite",
+    "type": "requirement",
+    "//": "This is used for recipes where an existing magical scroll is altered.",
+    "tools": [
+      [
+        [ "fire", -1 ],
+        [ "ref_lighter_on", -1 ],
+        [ "torch_lit", -1 ],
+        [ "candle_lit", -1 ],
+        [ "gasoline_lantern_on", -1 ],
+        [ "oil_lamp_on", -1 ],
+        [ "tinderbox_on", -1 ],
+        [ "candle_warding_active", -1 ]
+      ],
+      [ [ "survival_marker", -1 ], [ "feather", -1 ] ]
+    ]
+  },
+  {
+    "id": "arcana_soaking_standard",
+    "type": "requirement",
+    "//": "A container plus some water, for certain items.",
+    "qualities": [ { "id": "CONTAIN", "level": 1 } ],
+    "components": [ [ [ "water", 1 ], [ "water_clean", 1 ] ] ]
+  },
+  {
+    "id": "arcana_transcription_standard",
+    "type": "requirement",
+    "//": "Tools and components for writing down essential elements of an arcane book for tool use.  No ink is used, hence no consuming charcoal markers.",
+    "tools": [
+      [
+        [ "fire", -1 ],
+        [ "ref_lighter_on", -1 ],
+        [ "torch_lit", -1 ],
+        [ "candle_lit", -1 ],
+        [ "gasoline_lantern_on", -1 ],
+        [ "oil_lamp_on", -1 ],
+        [ "tinderbox_on", -1 ],
+        [ "candle_warding_active", -1 ]
+      ],
+      [ [ "survival_marker", -1 ], [ "feather", -1 ] ]
+    ],
+    "components": [ [ [ "paper", 20 ] ], [ [ "arcana_essence_any", 1, "LIST" ] ] ]
+  }
+]

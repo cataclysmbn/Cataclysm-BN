@@ -43,6 +43,7 @@
     "dispersion": 270,
     "durability": 9,
     "clip_size": 1,
+    "loudness": 12,
     "reload": 150
   },
   {
@@ -66,6 +67,7 @@
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "barrel", 1 ],
+      [ "bore", 1 ],
       [ "sights", 1 ],
       [ "sling", 1 ],
       [ "grip", 1 ],
@@ -93,6 +95,7 @@
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "barrel", 1 ],
+      [ "bore", 1 ],
       [ "sights", 1 ],
       [ "sling", 1 ],
       [ "grip", 1 ],
@@ -108,7 +111,7 @@
     "type": "GUN",
     "name": { "str": "RM802 grenade launcher" },
     "//": "Either Rivtech or milspec would make it Expensive.  Combined, you could buy a half-decent car for the price.",
-    "description": "The Rivtech RM802 pump-action 40mm grenade launcher was designed to be a step ahead of single-shot grenade launchers by allowing sustained heavy firepower.  However, its capacity is fairly limited so it must be used with careful planning.",
+    "description": "The Rivtech RM802 pump-action 40mm grenade launcher was designed to be a step ahead of single-shot grenade launchers by allowing sustained heavy firepower, and its durable alloy receiver allows it to even fire high-velocity 40x53mm shells in a pinch.  However, its capacity is fairly limited so it must be used with careful planning.",
     "weight": "3120 g",
     "volume": "1500 ml",
     "price": "29200 USD",
@@ -116,10 +119,11 @@
     "to_hit": -1,
     "bashing": 8,
     "material": [ "superalloy", "ceramic" ],
-    "ammo": "40x46mm",
+    "ammo": [ "40x46mm", "40x53mm" ],
     "dispersion": 140,
     "durability": 9,
     "clip_size": 4,
+    "loudness": -20,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "brass catcher", 1 ],
@@ -187,6 +191,7 @@
     "durability": 6,
     "clip_size": 3,
     "reload": 150,
+    "loudness": -20,
     "flags": [ "NEVER_JAMS", "NO_UNWIELD", "TRADER_AVOID", "RELOAD_ONE" ]
   }
 ]

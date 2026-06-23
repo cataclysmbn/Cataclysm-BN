@@ -193,6 +193,7 @@
     "encumbrance": 40,
     "material_thickness": 4,
     "techniques": [ "WBLOCK_2" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "OVERSIZE", "BELTED", "RESTRICT_HANDS", "BLOCK_WHILE_WORN", "POWERARMOR_COMPATIBLE" ]
   },
   {
@@ -248,6 +249,7 @@
     "encumbrance": 10,
     "material_thickness": 3,
     "techniques": [ "WBLOCK_2" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "OVERSIZE", "BELTED", "ONLY_ONE", "BLOCK_WHILE_WORN", "STURDY", "POWERARMOR_COMPATIBLE" ]
   },
   {

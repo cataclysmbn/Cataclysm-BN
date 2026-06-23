@@ -1,8 +1,9 @@
 #include "catch/catch.hpp"
 
-#include "data_vars.h"
-
 #include <complex>
+
+#include "data_vars.h"
+#include "coordinates.h"
 
 TEST_CASE( "load_store_string", "[data_vars]" )
 {
@@ -77,11 +78,11 @@ TEST_CASE( "load_store_tripoints", "[data_vars]" )
 
     for( int i = 0; i < 1000; i++ ) {
         auto key = std::to_string( rand() % 10 );
-        tripoint p = { rand(), rand(), rand() };
+        tripoint_bub_ms p = { rand(), rand(), rand() };
 
         dv.set( key, p );
 
-        tripoint q = dv.get<tripoint>( key );
+        auto q = dv.get<tripoint_bub_ms>( key );
 
         CHECK( p == q );
     }

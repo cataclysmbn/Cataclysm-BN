@@ -183,6 +183,12 @@ bool location_ptr<T, error_if_null>::operator!=( const U against ) const
     return !( *this == against );
 }
 
+template<typename T, bool error_if_null>
+void location_ptr<T, error_if_null>::init_location( location<T> *new_loc )
+{
+    loc = std::unique_ptr<location<T>>( new_loc );
+}
+
 template <typename T, bool error_if_null>
 void location_ptr<T, error_if_null>::set_loc_hack( location<T> *new_loc )
 {

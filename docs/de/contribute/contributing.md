@@ -337,12 +337,14 @@ xxxx..xxxx  new_feature -> new_feature
 
 ## Unit-Tests
 
-Es gibt eine Testsuite, die im Quellbaum unter tests/ eingebaut ist. Du solltest die Testsuite nach **JEDER** Änderung am Spielquellcode ausführen. Ein gewöhnlicher Aufruf von `make` baut die Test-Executable unter tests/cata_test, und sie kann wie jede gewöhnliche Executable oder über `make check` aufgerufen werden. Ohne Argumente führt sie die gesamte Testsuite aus. Mit `--help` gibt sie eine Reihe von Aufrufoptionen aus, die du verwenden kannst, um ihre Arbeitsweise anzupassen.
+Es gibt eine Testsuite im Quellbaum unter `tests/`. Du solltest die Testsuite nach **JEDER** Änderung am Spielquellcode ausführen. CMake baut die Test-Executable im `tests/`-Verzeichnis des gewählten Build-Presets. Ohne Argumente führt sie die gesamte Testsuite aus. Mit `--help` gibt sie eine Reihe von Aufrufoptionen aus, die du verwenden kannst, um ihre Arbeitsweise anzupassen.
 
 ```sh
-$ make
+$ cmake --preset linux-slim
+... configuration details ...
+$ cmake --build --preset linux-slim --target cata_test-tiles
 ... compilation details ...
-$ tests/cata_test
+$ ./out/build/linux-slim/tests/cata_test-tiles
 Starting the actual test at Fri Nov  9 04:37:03 2018
 ===============================================================================
 All tests passed (1324684 assertions in 94 test cases)
@@ -350,7 +352,7 @@ Ended test at Fri Nov  9 04:37:45 2018
 The test took 41.772 seconds
 ```
 
-Ich empfehle, make gewohnheitsmäßig wie `make DEINE BUILD OPTIONEN && make check` aufzurufen.
+Ich empfehle, die CMake-Build- und Testbefehle für das gewählte Preset gewohnheitsmäßig auszuführen.
 
 ## Testen im Spiel, Testumgebung und das Debug-Menü
 

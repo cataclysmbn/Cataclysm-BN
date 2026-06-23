@@ -5,6 +5,7 @@
 #include <string>
 
 #include "creature.h"
+#include "coordinates.h"
 #include "game_constants.h"
 #include "item.h"
 #include "item_factory.h"
@@ -12,11 +13,10 @@
 #include "monster.h"
 #include "npc.h"
 #include "player.h"
-#include "point.h"
 #include "string_formatter.h"
 #include "type_id.h"
 
-static const tripoint dude_pos( g_half_mapsize_x, g_half_mapsize_y, 0 );
+static const tripoint_bub_ms dude_pos( g_half_mapsize_x, g_half_mapsize_y, 0 );
 
 static std::vector<const itype *> find_weapons()
 {
@@ -46,7 +46,7 @@ static void print_stats( const player &p, const std::vector<const itype *> &weap
     }
 }
 
-TEST_CASE( "Weak character using melee weapons against a brute", "[.][melee][slow]" )
+TEST_CASE( "Weak character using melee weapons against a brute", "[.][melee][balance]" )
 {
     monster zed( mtype_id( "mon_zombie_brute" ) );
     auto weapons = find_weapons();
@@ -57,7 +57,7 @@ TEST_CASE( "Weak character using melee weapons against a brute", "[.][melee][slo
     }
 }
 
-TEST_CASE( "Average character using melee weapons against a hulk", "[.][melee][slow]" )
+TEST_CASE( "Average character using melee weapons against a hulk", "[.][melee][balance]" )
 {
     monster zed( mtype_id( "mon_zombie_hulk" ) );
     auto weapons = find_weapons();
@@ -68,7 +68,7 @@ TEST_CASE( "Average character using melee weapons against a hulk", "[.][melee][s
     }
 }
 
-TEST_CASE( "Strong character using melee weapons against a kevlar zombie", "[.][melee][slow]" )
+TEST_CASE( "Strong character using melee weapons against a kevlar zombie", "[.][melee][balance]" )
 {
     monster zed( mtype_id( "mon_zombie_kevlar_1" ) );
     auto weapons = find_weapons();

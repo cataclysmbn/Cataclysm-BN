@@ -4,12 +4,14 @@
 #include <optional>
 #include <vector>
 
+#include "coordinates.h"
 #include "type_id.h"
 #include "weighted_list.h"
 
 class Creature;
 class JsonObject;
 class map;
+class mapgen_constructor;
 struct tripoint;
 
 // this is a small class that contains the "results" of a terrain transform.
@@ -63,18 +65,20 @@ class ter_furn_transform
         // return value is success of message found
         template <class T, class K>
         bool add_message( const std::map<K, ter_furn_data<T>> &list, const K &key, const Creature &critter,
-                          const tripoint &location ) const;
+                          const tripoint_bub_ms &location ) const;
 
     public:
 
         ter_furn_transform_id id;
         bool was_loaded = false;
 
-        void add_all_messages( const Creature &critter, const tripoint &location ) const;
-        void add_all_messages( const map &m, const Creature &critter, const tripoint &location ) const;
+        void add_all_messages( const Creature &critter, const tripoint_bub_ms &location ) const;
+        void add_all_messages( const map &m, const Creature &critter,
+                               const tripoint_bub_ms &location ) const;
 
-        void transform( const tripoint &location ) const;
-        void transform( map &m, const tripoint &location ) const;
+        void transform( const tripoint_bub_ms &location ) const;
+        void transform( map &m, const tripoint_bub_ms &location ) const;
+        auto transform( mapgen_constructor &m, const point_omt_ms &location ) const -> void;
 
         static void load_transform( const JsonObject &jo, const std::string &src );
         void load( const JsonObject &jo, const std::string & );
@@ -83,5 +87,3 @@ class ter_furn_transform
         static void reset_all();
         bool is_valid() const;
 };
-
-

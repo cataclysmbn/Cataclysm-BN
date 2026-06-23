@@ -1,6 +1,7 @@
 #include <string>
 
 #include "catalua_bindings.h"
+#include "catalua_coord.h"
 #include "catalua.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_luna.h"
@@ -39,10 +40,10 @@ void cata::detail::reg_mission( sol::state &lua )
         SET_FX_T( get_description, std::string() const );
         DOC( "Returns true if the mission has a target." );
         SET_FX( has_target );
-        DOC( "Returns the target of the mission (pointer to tripoint_abs_omt)." );
+        DOC( "Returns the target of the mission as absolute overmap terrain coordinates." );
         luna::set_fx( ut, "get_target_point",
-        []( const mission & m ) -> tripoint {
-            return m.get_target().raw(); // assuming .raw() returns tripoint
+        []( const mission & m ) -> tripoint_abs_omt {
+            return m.get_target();
         } );
         // as far as i can tell, there's no reason to include the base mission_type. we already MissionTypeIdRaw and Mission covers the rest
         DOC( "Returns the mission type of the target (pointer to mission_type)." );
@@ -98,8 +99,8 @@ void cata::detail::reg_mission( sol::state &lua )
 
         DOC( "Reserves a random mission at the specified origin and position for the given NPC. Returns the new mission." );
         luna::set_fx( ut, "reserve_random",
-        []( mission_origin origin, const tripoint & p, const character_id & npc_id ) -> mission * {
-            return mission::reserve_random( origin, tripoint_abs_omt( p ), npc_id );
+        []( mission_origin origin, const tripoint_abs_omt & p, const character_id & npc_id ) -> mission * {
+            return mission::reserve_random( origin, p, npc_id );
         } );
 
         reg_serde_functions( ut );
@@ -187,8 +188,8 @@ void cata::detail::reg_mission_type( sol::state &lua )
 
         DOC( "Returns a random mission type ID at the specified origin and overmap tile position." );
         luna::set_fx( ut, "get_random_mission_id",
-        []( mission_origin origin, const tripoint & p ) -> mission_type_id {
-            return mission_type::get_random_id( origin, tripoint_abs_omt( p ) );
+        []( mission_origin origin, const tripoint_abs_omt & p ) -> mission_type_id {
+            return mission_type::get_random_id( origin, p );
         } );
 
         SET_FX( tname );

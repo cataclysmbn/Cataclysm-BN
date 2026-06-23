@@ -115,7 +115,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
             "Name", "Volume", "Weight", "Stack", "Calories", "Quench", "Healthy"
         };
         for( const auto &v : vitamin::all() ) {
-            header.push_back( v.second.name() );
+            header.push_back( v.name() );
         }
         auto dump = [&rows]( const item & obj ) {
             std::vector<std::string> r;
@@ -128,7 +128,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
             r.push_back( std::to_string( obj.get_comestible()->healthy ) );
             auto vits = obj.get_comestible()->default_nutrition.vitamins;
             for( const auto &v : vitamin::all() ) {
-                r.push_back( std::to_string( vits[ v.first ] ) );
+                r.push_back( std::to_string( vits[ v.id ] ) );
             }
             rows.push_back( r );
         };
@@ -211,7 +211,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
         // optionally filter recipes to include only those using specified skills
         recipe_subset dict;
         for( const auto &r : recipe_dict ) {
-            if( opts.empty() || std::any_of( opts.begin(), opts.end(), [&r]( const std::string & s ) {
+            if( opts.empty() || std::ranges::any_of( opts, [&r]( const std::string & s ) {
             if( r.second.skill_used == skill_id( s ) && r.second.difficulty > 0 ) {
                     return true;
                 }
@@ -226,7 +226,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
         std::vector<Skill> sk;
         std::copy_if( Skill::skills.begin(), Skill::skills.end(),
         std::back_inserter( sk ), [&dict]( const Skill & s ) {
-            return std::any_of( dict.begin(), dict.end(), [&s]( const recipe * r ) {
+            return std::ranges::any_of( dict, [&s]( const recipe * r ) {
                 return r->skill_used == s.ident() ||
                        r->required_skills.contains( s.ident() );
             } );

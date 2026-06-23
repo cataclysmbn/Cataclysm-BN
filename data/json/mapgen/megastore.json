@@ -2097,6 +2097,7 @@
           "chunks": [
             [ "null", 5 ],
             [ "roof_16x16_help", 5 ],
+            [ "roof_12x12_aircraft", 5 ],
             [ "roof_2x2_infrastructure", 80 ],
             [ "roof_2x2_infrastructure_2", 40 ],
             [ "roof_2x2_utilities", 40 ],
@@ -2149,6 +2150,7 @@
           "chunks": [
             [ "null", 5 ],
             [ "roof_16x16_help", 5 ],
+            [ "roof_12x12_aircraft", 5 ],
             [ "roof_2x2_infrastructure", 80 ],
             [ "roof_2x2_infrastructure_2", 40 ],
             [ "roof_2x2_utilities", 40 ],
@@ -2201,6 +2203,7 @@
           "chunks": [
             [ "null", 5 ],
             [ "roof_16x16_help", 5 ],
+            [ "roof_12x12_aircraft", 5 ],
             [ "roof_2x2_infrastructure", 80 ],
             [ "roof_2x2_infrastructure_2", 40 ],
             [ "roof_2x2_utilities", 40 ],

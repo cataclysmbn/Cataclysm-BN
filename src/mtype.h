@@ -80,6 +80,7 @@ enum m_flag : int {
     MF_NOHEAD,              // Headshots not allowed!
     MF_HARDTOSHOOT,         // It's one size smaller for ranged attacks, no less then creature_size::tiny
     MF_GRABS,               // Its attacks may grab us!
+    MF_GRAB_IMMUNE,         // Cannot be grabbed by another creature
     MF_BASHES,              // Bashes down doors
     MF_DESTROYS,            // Bashes down walls and more
     MF_BORES,               // Tunnels through just about anything
@@ -172,7 +173,9 @@ enum m_flag : int {
     MF_CANPLAY,             // This monster can be played with if it's a pet.
     MF_PET_MOUNTABLE,       // This monster can be mounted and ridden when tamed.
     MF_PET_HARNESSABLE,     // This monster can be harnessed when tamed.
-    MF_DOGFOOD,             // This monster will respond to the `dog whistle` item.
+    MF_CAN_FETCH,           // This monster can fetch items for its tamer when tamed.
+    MF_DOGFOOD,             // DEPRECATED This monster will respond to the `dog whistle` item.
+    MF_DOG_WHISTLE,         // This monster will respond to the `dog whistle` item.
     MF_MILKABLE,            // This monster is milkable.
     MF_SHEARABLE,           // This monster is shearable.
     MF_NO_BREED,            // This monster doesn't breed, even though it has breed data
@@ -316,6 +319,7 @@ struct mtype {
         int speed = 0;          /** e.g. human = 100 */
         int agro = 0;           /** chance will attack [-100,100] */
         int morale = 0;         /** initial morale level at spawn */
+        std::optional<int> preferred_z;
 
         // Number of hitpoints regenerated per turn.
         int regenerates = 0;
@@ -340,6 +344,25 @@ struct mtype {
 
         // Pet food category this monster is in
         pet_food_data petfood;
+
+        struct pet_training_level_flags {
+            int level = 0;
+            std::vector<m_flag> flags;
+        };
+
+        struct pet_training_multipliers {
+            // Per-level multipliers: 1.2 means each training level gives +20% of base stat.
+            // Values below 1.0 would decrease stats; values above 1.0 increase them.
+            float hp = 1.2f;
+            float melee = 1.15f;
+            float dodge = 1.15f;
+            int max_level = 3;
+            int min_skill = 3;
+            std::vector<pet_training_level_flags> level_flags;
+        };
+        // Per-level stat multipliers when this monster is trained as a pet.
+        // Absent means this monster cannot be trained.
+        std::optional<pet_training_multipliers> pet_training;
 
         std::set<scenttype_id> scents_tracked; /**Types of scent tracked by this mtype*/
         std::set<scenttype_id> scents_ignored; /**Types of scent ignored by this mtype*/
@@ -408,6 +431,8 @@ struct mtype {
 
         // Do we indiscriminately attack characters, or should we wait until one annoys us?
         bool aggro_character = true;
+        std::optional<std::string> lua_attitude;
+        std::optional<std::string> lua_ai;
 
         mtype();
         /**
@@ -433,6 +458,10 @@ struct mtype {
          * If this monster is a rideable mech with enhanced strength, this is the strength it gives to the player
          */
         int mech_str_bonus = 0;
+        /**
+         * If present, disarming techniques will work on this creature
+         */
+        item_group_id monster_weapon;
 
         /** Emission sources that cycle each turn the monster remains alive */
         std::map<emit_id, time_duration> emit_fields;
@@ -484,4 +513,3 @@ struct mtype {
 };
 
 mon_effect_data load_mon_effect_data( const JsonObject &e );
-

@@ -128,9 +128,9 @@ end
     Formats ---@field annotation for variable members.
   ]]
 ---@param member table {name:string, vartype:string, comment?:string, hasval?:boolean, varval?:any}
----@param is_static boolean (optional) Not directly used in LuaLS field, but might be relevant contextually
+---@param _is_static boolean (optional) Not directly used in LuaLS field, but might be relevant contextually
 ---@return string
-local fmt_variable_field = function(member, is_static)
+local fmt_variable_field = function(member, _is_static)
   local ret = ""
   local member_name = tostring(member.name)
   if not string.match(member_name, "^[%a_][%w_]*$") then
@@ -154,6 +154,18 @@ end
 --[[
     Formats ---@field annotation for function members, handling overloads.
   ]]
+---@param signatures string[]
+---@return string
+local fmt_signature_union = function(signatures)
+  if #signatures <= 1 then return signatures[1] or "function" end
+
+  local wrapped = {}
+  for _, signature in ipairs(signatures) do
+    table.insert(wrapped, "(" .. signature .. ")")
+  end
+  return table.concat(wrapped, " | ")
+end
+
 ---@param member table {name:string, comment?:string, overloads:table[]}
 ---@param class_name string The name of the owning class/library
 ---@return string
@@ -167,10 +179,19 @@ local fmt_function_field = function(member, class_name)
     member_name = "['" .. member_name .. "']" -- Quote non-identifier names
   end
 
+  ---@type string[]
   local signatures = {}
+  ---@type table<string, boolean>
+  local seen_signatures = {}
+  local add_signature = function(signature)
+    if seen_signatures[signature] then return end
+    seen_signatures[signature] = true
+    table.insert(signatures, signature)
+  end
+
   if member.overloads and #member.overloads > 0 then
     for _, overload in ipairs(member.overloads) do
-      table.insert(signatures, fmt_function_signature(overload.args, overload.retval, class_name, member.comment))
+      add_signature(fmt_function_signature(overload.args, overload.retval, class_name, member.comment))
     end
   else
     -- Fallback if no overload data? Maybe treat as any function?
@@ -183,10 +204,10 @@ local fmt_function_field = function(member, class_name)
         .. member_name
         .. ". Using 'function' type.\n"
     )
-    table.insert(signatures, "function")
+    add_signature("function")
   end
 
-  local signature_union = table.concat(signatures, " | ")
+  local signature_union = fmt_signature_union(signatures)
   ret = ret .. "---@field " .. member_name .. " " .. signature_union
   if member.comment and member.comment ~= "" then
     local op = function(m)
@@ -199,6 +220,222 @@ local fmt_function_field = function(member, class_name)
     ret = ret .. " @" .. string_concat_matches(member.comment, "([^\r\n]+)", "<br />", op)
   end
   return ret .. "\n"
+end
+
+---@param annotations string
+---@param class_name string
+---@param annotation string
+---@return string
+local add_class_annotation = function(annotations, class_name, annotation)
+  local pattern = "(---@class " .. class_name .. " : [^\n]+\n)"
+  return (annotations:gsub(pattern, "%1" .. annotation .. "\n"))
+end
+
+---@class LuaCoordNamePart
+---@field suffix string
+
+---@class LuaCoordScaleSpec : LuaCoordNamePart
+---@field method string
+---@field map_squares integer
+
+---@type LuaCoordNamePart[]
+local coord_origins = {
+  { suffix = "Rel" },
+  { suffix = "Abs" },
+  { suffix = "Bub" },
+  { suffix = "Mnt" },
+  { suffix = "Sm" },
+  { suffix = "Omt" },
+  { suffix = "Mmr" },
+  { suffix = "Seg" },
+  { suffix = "Om" },
+}
+
+---@type LuaCoordScaleSpec[]
+local coord_scales = {
+  { suffix = "Ms", method = "ms", map_squares = 1 },
+  { suffix = "Veh", method = "veh", map_squares = 1 },
+  { suffix = "Sm", method = "sm", map_squares = 12 },
+  { suffix = "Omt", method = "omt", map_squares = 24 },
+  { suffix = "Mmr", method = "mmr", map_squares = 96 },
+  { suffix = "Seg", method = "seg", map_squares = 768 },
+  { suffix = "Om", method = "om", map_squares = 4320 },
+}
+
+---@type table<string, LuaCoordNamePart>
+local coord_origin_by_remainder_scale = {
+  Veh = { suffix = "Mnt" },
+  Sm = { suffix = "Sm" },
+  Omt = { suffix = "Omt" },
+  Mmr = { suffix = "Mmr" },
+  Seg = { suffix = "Seg" },
+  Om = { suffix = "Om" },
+}
+
+---@param kind "Point" | "Tripoint"
+---@param origin LuaCoordNamePart
+---@param scale LuaCoordScaleSpec
+---@return string
+local coord_class_name = function(kind, origin, scale) return kind .. origin.suffix .. scale.suffix end
+
+---@param annotations string
+---@param class_name string
+---@return boolean
+local has_coord_class = function(annotations, class_name)
+  return string.find(annotations, "---@class " .. class_name .. " : ", 1, true) ~= nil
+end
+
+---@param lines string[]
+---@param line string
+---@param seen table<string, boolean>
+local add_unique_line = function(lines, line, seen)
+  if seen[line] then return end
+  seen[line] = true
+  table.insert(lines, line)
+end
+
+---@param source LuaCoordScaleSpec
+---@param result LuaCoordScaleSpec
+---@return boolean
+local exact_scale_conversion = function(source, result)
+  if source.map_squares > result.map_squares then return source.map_squares % result.map_squares == 0 end
+  return result.map_squares % source.map_squares == 0
+end
+
+---@param source LuaCoordScaleSpec
+---@param result LuaCoordScaleSpec
+---@return boolean
+local can_project_remain_scale = function(source, result)
+  return result.map_squares > source.map_squares and result.map_squares % source.map_squares == 0
+end
+
+---@param class_name string
+---@return string[]
+local raw_offset_types_for = function(class_name)
+  if string.match(class_name, "^Point") then return { "Point" } end
+  return { "Point", "Tripoint" }
+end
+
+---@param annotations string
+---@param kind "Point" | "Tripoint"
+---@param origin LuaCoordNamePart
+---@param scale LuaCoordScaleSpec
+---@return string
+local coord_specific_annotation = function(annotations, kind, origin, scale)
+  local class_name = coord_class_name(kind, origin, scale)
+  if not has_coord_class(annotations, class_name) then return "" end
+
+  ---@type string[]
+  local lines = {}
+  ---@type table<string, boolean>
+  local seen = {}
+
+  if kind == "Tripoint" then
+    local xy_type = coord_class_name("Point", origin, scale)
+    if has_coord_class(annotations, xy_type) then
+      add_unique_line(lines, "---@field xy fun(self: " .. class_name .. "): " .. xy_type, seen)
+    end
+  end
+
+  for _, result_scale in ipairs(coord_scales) do
+    local result_type = coord_class_name(kind, origin, result_scale)
+    if
+      result_scale.suffix ~= scale.suffix
+      and exact_scale_conversion(scale, result_scale)
+      and has_coord_class(annotations, result_type)
+    then
+      add_unique_line(
+        lines,
+        "---@field to_" .. result_scale.method .. " fun(self: " .. class_name .. "): " .. result_type,
+        seen
+      )
+    end
+
+    local remainder_origin = coord_origin_by_remainder_scale[result_scale.suffix]
+    if remainder_origin and can_project_remain_scale(scale, result_scale) then
+      local quotient_type = coord_class_name(kind, origin, result_scale)
+      local remainder_type = coord_class_name("Point", remainder_origin, scale)
+      if has_coord_class(annotations, quotient_type) and has_coord_class(annotations, remainder_type) then
+        add_unique_line(
+          lines,
+          "---@field project_remain_"
+            .. result_scale.method
+            .. " fun(self: "
+            .. class_name
+            .. "): ("
+            .. quotient_type
+            .. ", "
+            .. remainder_type
+            .. ")",
+          seen
+        )
+      end
+    end
+  end
+
+  for _, raw_offset_type in ipairs(raw_offset_types_for(class_name)) do
+    add_unique_line(lines, "---@operator add(" .. raw_offset_type .. "): " .. class_name, seen)
+    add_unique_line(lines, "---@operator sub(" .. raw_offset_type .. "): " .. class_name, seen)
+  end
+
+  local relative_result_type = coord_class_name(kind, { suffix = "Rel" }, scale)
+  if origin.suffix ~= "Rel" and has_coord_class(annotations, relative_result_type) then
+    for _, relative_kind in ipairs(kind == "Tripoint" and { "Point", "Tripoint" } or { "Point" }) do
+      local relative_type = coord_class_name(relative_kind, { suffix = "Rel" }, scale)
+      if has_coord_class(annotations, relative_type) then
+        add_unique_line(lines, "---@operator add(" .. relative_type .. "): " .. class_name, seen)
+        add_unique_line(lines, "---@operator sub(" .. relative_type .. "): " .. class_name, seen)
+      end
+    end
+    add_unique_line(lines, "---@operator sub(" .. class_name .. "): " .. relative_result_type, seen)
+  elseif origin.suffix == "Rel" then
+    add_unique_line(lines, "---@operator mul(integer): " .. class_name, seen)
+    for _, other_origin in ipairs(coord_origins) do
+      local other_type = coord_class_name(kind, other_origin, scale)
+      if other_origin.suffix ~= "Rel" and has_coord_class(annotations, other_type) then
+        add_unique_line(lines, "---@operator add(" .. other_type .. "): " .. other_type, seen)
+      end
+    end
+  end
+
+  for _, fine_scale in ipairs(coord_scales) do
+    local remainder_origin = coord_origin_by_remainder_scale[scale.suffix]
+    if
+      remainder_origin
+      and scale.map_squares > fine_scale.map_squares
+      and scale.map_squares % fine_scale.map_squares == 0
+    then
+      for _, fine_kind in ipairs(kind == "Point" and { "Point", "Tripoint" } or { "Point" }) do
+        local fine_type = coord_class_name(fine_kind, remainder_origin, fine_scale)
+        local result_type = coord_class_name(kind == "Point" and fine_kind or kind, origin, fine_scale)
+        if has_coord_class(annotations, fine_type) and has_coord_class(annotations, result_type) then
+          add_unique_line(
+            lines,
+            "---@field project_combine fun(self: " .. class_name .. ", fine: " .. fine_type .. "): " .. result_type,
+            seen
+          )
+        end
+      end
+    end
+  end
+
+  return table.concat(lines, "\n")
+end
+
+---@param annotations string
+---@return string
+local add_coord_specific_annotations = function(annotations)
+  for _, kind in ipairs({ "Point", "Tripoint" }) do
+    for _, origin in ipairs(coord_origins) do
+      for _, scale in ipairs(coord_scales) do
+        local annotation = coord_specific_annotation(annotations, kind, origin, scale)
+        if annotation ~= "" then
+          annotations = add_class_annotation(annotations, coord_class_name(kind, origin, scale), annotation)
+        end
+      end
+    end
+  end
+  return annotations
 end
 
 --[[
@@ -219,7 +456,7 @@ local fmt_constructor_field = function(typename, ctors)
   table.insert(lines, "---@return " .. type)
   for _, cpp_arg_list in ipairs(ctors) do
     if cpp_arg_list and #cpp_arg_list > 0 then
-      table.insert(lines, "---@overload " .. fmt_function_signature(cpp_arg_list, typename, typename, nil))
+      table.insert(lines, "---@overload " .. fmt_function_signature(cpp_arg_list, typename, typename, ""))
     end
   end
   table.insert(lines, "function " .. type .. ".new() end")
@@ -251,12 +488,108 @@ doc_gen_func.impl = function()
 
 ---@alias HookEntry HookCallback | HookConfig
 
+---@class ItemUseParams
+---@field user Character
+---@field item Item
+---@field pos TripointBubMs
+
+---@class ItemEquipCheckParams
+---@field user Character
+---@field item Item
+
+---@class ItemEquipParams : ItemEquipCheckParams
+---@field move_cost integer
+
+---@class ItemStateParams
+---@field user Character
+---@field item Item
+---@field pos TripointBubMs
+
+---@class ItemDurabilityChangeParams
+---@field user Character
+---@field item Item
+---@field old_damage integer
+---@field new_damage integer
+
+---@class BionicCallbackParams
+---@field user Character
+---@field bionic Bionic
+
+---@class LuaActivityOptions
+---@field type ActivityTypeId @activity type to assign
+---@field duration TimeDuration @activity duration
+---@field on_finish? string @key in game.activity_functions to run when the activity finishes
+---@field on_turn? string @key in game.activity_functions to run every turn
+---@field name? string @display/debug name, also forwarded as callback params.name
+---@field pos? TripointBubMs @activity target position; stored and forwarded as TripointAbsMs
+---@field data? table @serializable named payload forwarded as callback params.data
+---@field interruptable? boolean @whether pause can cancel this activity; defaults to true
+
+---@class LuaActivityCallbackParams
+---@field user Character
+---@field activity PlayerActivity
+---@field name string
+---@field pos? TripointAbsMs
+---@field data table
+
+---@alias LuaActivityFinishParams LuaActivityCallbackParams
+---@alias LuaActivityFinishFunction fun(params: LuaActivityCallbackParams)
+---@alias LuaActivityTurnFunction fun(params: LuaActivityCallbackParams)
+
+---@class IuseFunctionTable
+---@field use fun(params: ItemUseParams): integer
+---@field can_use? fun(params: ItemUseParams): boolean
+
+---@class IwieldableFunctionTable
+---@field on_wield? fun(params: ItemEquipParams)
+---@field on_unwield? fun(params: ItemEquipCheckParams)
+---@field can_wield? fun(params: ItemEquipCheckParams): boolean
+---@field can_unwield? fun(params: ItemEquipCheckParams): boolean
+
+---@class IwearableFunctionTable
+---@field on_wear? fun(params: ItemEquipParams)
+---@field on_takeoff? fun(params: ItemEquipCheckParams)
+---@field can_wear? fun(params: ItemEquipCheckParams): boolean
+---@field can_takeoff? fun(params: ItemEquipCheckParams): boolean
+
+---@class IequippableFunctionTable
+---@field on_durability_change? fun(params: ItemDurabilityChangeParams)
+---@field on_repair? fun(params: ItemDurabilityChangeParams)
+---@field on_break? fun(params: ItemDurabilityChangeParams)
+
+---@class IstateFunctionTable
+---@field on_tick? fun(params: ItemStateParams)
+---@field on_pickup? fun(params: ItemStateParams)
+---@field on_drop? fun(params: ItemStateParams): boolean
+
+---@class BionicFunctionTable
+---@field on_activate? fun(params: BionicCallbackParams)
+---@field on_deactivate? fun(params: BionicCallbackParams)
+---@field on_installed? fun(params: BionicCallbackParams)
+---@field on_removed? fun(params: BionicCallbackParams)
+
+---@alias MapgenFunction fun(...: any): any
+
 ---@class game
 ---@field active_mods string[]
 ---@field mod_runtime table<string, any>
 ---@field mod_storage table<string, any>
 ---@field on_every_x_hooks table
----@field iuse_functions table
+---@field iuse_functions table<string, (fun(params: ItemUseParams): integer) | IuseFunctionTable>
+---@field iwieldable_functions table<string, IwieldableFunctionTable>
+---@field iwearable_functions table<string, IwearableFunctionTable>
+---@field iequippable_functions table<string, IequippableFunctionTable>
+---@field istate_functions table<string, IstateFunctionTable>
+---@field imelee_functions table<string, table<string, function>>
+---@field iranged_functions table<string, table<string, function>>
+---@field bionic_functions table<string, BionicFunctionTable>
+---@field mutation_functions table<string, table<string, function>>
+---@field horde_behaviours table<string, function>
+---@field monster_ai_functions table<string, function>
+---@field monster_attitude_functions table<string, function>
+---@field mapgen_functions table<string, MapgenFunction>
+---@field examine_functions table<string, fun(params: { user: Character, pos: TripointBubMs })>
+---@field activity_functions table<string, LuaActivityFinishFunction>
 ---@field hooks hooks
 ---@field current_mod string
 ---@field current_mod_path string
@@ -266,32 +599,50 @@ game = {}
 
 ---@class OnPlayerTryMoveParams
 ---@field player Avatar
----@field from Tripoint
----@field to Tripoint
+---@field from TripointBubMs
+---@field to TripointBubMs
 ---@field movement_mode CharacterMoveMode
 ---@field via_ramp boolean
----@field is_mounted boolean
+---@field mounted boolean
 ---@field mount Creature?
 on_player_try_move = {}
 
 ---@class OnNPCTryMoveParams
----@field npc NPC
----@field from Tripoint
----@field to Tripoint
+---@field npc Npc
+---@field from TripointBubMs
+---@field to TripointBubMs
 ---@field movement_mode CharacterMoveMode
 ---@field via_ramp boolean
----@field is_mounted boolean
+---@field mounted boolean
 ---@field mount Creature?
 on_npc_try_move = {}
 
 ---@class OnMonsterTryMoveParams
 ---@field monster Monster
----@field from Tripoint
----@field to Tripoint
----@field movement_mode CharacterMoveMode
----@field via_ramp boolean
+---@field from TripointBubMs
+---@field to TripointBubMs
 ---@field force boolean
 on_monster_try_move = {}
+
+---@class OnCharacterTryMoveParams
+---@field char Character
+---@field from TripointBubMs
+---@field to TripointBubMs
+---@field movement_mode CharacterMoveMode
+---@field via_ramp boolean
+---@field mounted boolean
+---@field mount Creature?
+on_character_try_move = {}
+
+---@class OnCraftResultParams
+---@field crafter Character
+---@field craft Item?
+---@field item Item
+---@field recipe RecipeRaw
+---@field batch_size integer
+---@field hot_result boolean
+---@field dehydrated_result boolean
+on_craft_result = {}
 
 ---@class OnCharacterResetStatsParams
 ---@field character Character
@@ -323,13 +674,13 @@ on_mon_effect = {}
 on_mon_death = {}
 
 ---@class OnCharacterDeathParams
----@field character Character
+---@field char Character
 ---@field killer Creature?
 on_character_death = {}
 
 ---@class OnShootParams
 ---@field shooter Character
----@field target_pos Tripoint
+---@field target_pos TripointBubMs
 ---@field shots integer
 ---@field gun Item
 ---@field ammo Item?
@@ -337,17 +688,17 @@ on_shoot = {}
 
 ---@class OnThrowParams
 ---@field thrower Character
----@field target_pos Tripoint
----@field throw_from_pos Tripoint
----@field item Item
+---@field target_pos TripointBubMs
+---@field throw_from_pos TripointBubMs
+---@field thrown Item
 on_throw = {}
 
 ---@class OnTryNPCInterationParams
----@field npc NPC
+---@field npc Npc
 on_try_npc_interaction = {}
 
 ---@class OnNPCInterationParams
----@field npc NPC
+---@field npc Npc
 on_npc_interaction = {}
 
 ---@class OnTryMonsterInteractionParams
@@ -355,17 +706,19 @@ on_npc_interaction = {}
 on_try_monster_interaction = {}
 
 ---@class OnDialogueStartParams
----@field npc NPC
+---@field npc Npc
 ---@field next_topic string
+---@field prev string?
 on_dialogue_start = {}
 
 ---@class OnDialogueOptionParams
----@field npc NPC
+---@field npc Npc
 ---@field next_topic string
+---@field prev string?
 on_dialogue_option = {}
 
 ---@class OnDialogueEndParams
----@field npc NPC
+---@field npc Npc
 on_dialogue_end = {}
 
 ---@class OnCreatureDodgedParams
@@ -397,13 +750,13 @@ on_creature_performed_technique = {}
 on_creature_melee_attacked = {}
 
 ---@class OnMapgenPostprocessParams
----@field map Map
----@field omt Tripoint
+---@field map MapgenConstructor
+---@field omt TripointAbsOmt
 ---@field when TimePoint
 on_mapgen_postprocess = {}
 
 ---@class OnExplodeParams
----@field pos Tripoint
+---@field pos TripointBubMs
 ---@field damage integer
 ---@field radius integer
 ---@field fire boolean
@@ -451,7 +804,7 @@ on_npc_loaded = {}
     ret = ret .. "--================---- " .. section_name .. " ----================\n\n"
 
     for _, item in ipairs(section_sorted) do
-      local name = item.k -- Class or Library name
+      local name = tostring(item.k) -- Class or Library name
       local data = item.v or {}
       local comment = data.type_comment or data.lib_comment or ""
       local bases = data["#bases"] or {}
@@ -497,11 +850,8 @@ on_npc_loaded = {}
 
       for _, item in
         ipairs(sort_by(formatted, function(a, b)
-          local a_priority = field_sort_order(a.member)
-          local b_priority = field_sort_order(b.member)
-
-          if a_priority ~= b_priority then return a_priority < b_priority end
-          if a.member.name ~= b.member.name then return a.member.name < b.member.name end
+          if field_sort_less(a.member, b.member) then return true end
+          if field_sort_less(b.member, a.member) then return false end
           return a.value < b.value
         end))
       do
@@ -577,7 +927,15 @@ on_npc_loaded = {}
     full_ret = full_ret .. "}\n\n"
   end
 
-  -- No second pass needed anymore
+  full_ret = full_ret:gsub("%-%-%-@class (Point%u[%w]*)\n", function(name)
+    if name == "PointCoord" then return "---@class " .. name .. "\n" end
+    return "---@class " .. name .. " : PointCoord\n"
+  end)
+  full_ret = full_ret:gsub("%-%-%-@class (Tripoint%u[%w]*)\n", function(name)
+    if name == "TripointCoord" then return "---@class " .. name .. "\n" end
+    return "---@class " .. name .. " : TripointCoord\n"
+  end)
+  full_ret = add_coord_specific_annotations(full_ret)
 
   return full_ret
 end

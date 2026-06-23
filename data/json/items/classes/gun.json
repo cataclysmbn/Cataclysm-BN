@@ -201,6 +201,7 @@
     "bashing": 12,
     "skill": "rifle",
     "handling": 20,
+    "loudness": -4,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],
@@ -279,7 +280,7 @@
     "dispersion": 550,
     "durability": 6,
     "blackpowder_tolerance": 72,
-    "loudness": 25,
+    "loudness": -2,
     "clip_size": 1,
     "reload": 200,
     "valid_mod_locations": [
@@ -303,6 +304,7 @@
     "weapon_category": [ "RIFLES", "ENERGY_WEAPONS" ],
     "name": { "str": "energy rifle" },
     "looks_like": "laser_rifle",
+    "loudness": 0,
     "//": "No conventional faults because it uses non-conventional systems.",
     "flags": [ "NEVER_JAMS", "NO_UNLOAD", "NON_FOULING", "NEEDS_NO_LUBE" ],
     "valid_mod_locations": [
@@ -325,6 +327,7 @@
     "weapon_category": [ "RIFLES", "MAGNETIC" ],
     "name": { "str": "magnetic rifle" },
     "looks_like": "hk_g80",
+    "loudness": 0,
     "//": "No conventional faults because it uses non-conventional systems.",
     "flags": [ "NEVER_JAMS", "NON_FOULING", "NEEDS_NO_LUBE" ],
     "valid_mod_locations": [
@@ -351,6 +354,7 @@
     "flags": [ "RELOAD_ONE", "STR_RELOAD", "WATERPROOF_GUN", "UNDERWATER_GUN", "NEVER_JAMS", "NON_FOULING", "NEEDS_NO_LUBE" ],
     "dispersion": 90,
     "reload": 700,
+    "loudness": 0,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "grip", 1 ],
@@ -373,6 +377,7 @@
     "flags": [ "NEVER_JAMS", "NON_FOULING", "NEEDS_NO_LUBE" ],
     "dispersion": 350,
     "reload": 600,
+    "loudness": 0,
     "valid_mod_locations": [
       [ "accessories", 3 ],
       [ "sights", 1 ],
@@ -395,6 +400,7 @@
     "looks_like": "remington_870",
     "ammo": "shot",
     "handling": 20,
+    "loudness": -4,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],
@@ -463,6 +469,7 @@
     "ascii_picture": "hk_mp5a2",
     "skill": "smg",
     "handling": 30,
+    "loudness": -2,
     "valid_mod_locations": [
       [ "accessories", 3 ],
       [ "barrel", 1 ],
@@ -505,6 +512,7 @@
     "valid_mod_locations": [ [ "brass catcher", 1 ], [ "sling", 1 ], [ "rail", 1 ], [ "sights", 1 ] ],
     "flags": [ "MOUNTED_GUN" ],
     "blackpowder_tolerance": 48,
+    "loudness": -4,
     "faults": [ "fault_gun_blackpowder", "fault_gun_dirt" ]
   },
   {
@@ -516,6 +524,7 @@
     "bashing": 8,
     "reload": 200,
     "handling": 40,
+    "loudness": 0,
     "flags": [ "NO_UNLOAD", "NEVER_JAMS", "NON_FOULING" ],
     "valid_mod_locations": [ [ "sling", 1 ], [ "rail", 1 ], [ "sights", 1 ] ],
     "faults": [  ]

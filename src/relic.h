@@ -3,16 +3,16 @@
 #include <string>
 #include <vector>
 
+#include "coordinates.h"
 #include "json_source_location.h"
 #include "magic.h"
-#include "magic_enchantment.h"
+#include "enchantments/enchantment.h"
 #include "translations.h"
 
 class Creature;
 class JsonIn;
 class JsonObject;
 class JsonOut;
-struct tripoint;
 
 enum class relic_recharge_type {
     /** Recharges slowly with time */
@@ -115,7 +115,7 @@ class relic
 
         std::string name() const;
         // returns number of charges that should be consumed
-        int activate( Creature &caster, const tripoint &target ) const;
+        int activate( Creature &caster, const tripoint_bub_ms &target ) const;
 
         void load( const JsonObject &jo );
 
@@ -137,6 +137,8 @@ class relic
         }
 
         void check() const;
+
+        void finalize();
 };
 
 namespace relic_funcs

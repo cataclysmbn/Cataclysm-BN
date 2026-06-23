@@ -41,22 +41,6 @@
   },
   {
     "type": "enchantment",
-    "id": "ENCH_BIO_UNDERWATER_PROPELLERS",
-    "condition": "ACTIVE",
-    "mutations": [ "ENCH_BIO_UNDERWATER_PROPELLERS_EFFECT" ]
-  },
-  {
-    "type": "mutation",
-    "id": "ENCH_BIO_UNDERWATER_PROPELLERS_EFFECT",
-    "name": { "str": "Underwater Propellers" },
-    "points": 0,
-    "valid": false,
-    "description": "Your underwater propellers are currently extended, enabling you to maneuver at greater speeds when submerged.",
-    "movecost_swim_modifier": 0.75,
-    "player_display": false
-  },
-  {
-    "type": "enchantment",
     "id": "ENCH_WEAPON_DEBUGGY_ACIDIC",
     "condition": "ALWAYS",
     "has": "WIELD",
@@ -69,5 +53,12 @@
     "description": "Fix'em all!",
     "copy-from": "hammer",
     "relic_data": { "passive_effects": [ { "id": "ENCH_WEAPON_DEBUGGY_ACIDIC" } ] }
+  },
+  {
+    "type": "enchantment",
+    "id": "ENCH_INSECT_WINGS_ACTIVE",
+    "has": "HELD",
+    "condition": "ACTIVE",
+    "values": [ { "value": "MOVE_COST", "multiply": -0.25 } ]
   }
 ]

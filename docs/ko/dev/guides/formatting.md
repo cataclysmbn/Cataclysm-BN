@@ -6,13 +6,14 @@ Cataclysm: Bright Nights에서 코드를 포맷하고 린트하는 방법을 설
 
 ## 빠른 참조
 
-| 파일 타입       | 도구           | 명령어                                             |
-| --------------- | -------------- | -------------------------------------------------- |
-| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target astyle`              |
-| JSON            | json_formatter | `cmake --build build --target style-json-parallel` |
-| Markdown        | deno fmt       | `deno fmt`                                         |
-| TypeScript      | deno fmt       | `deno fmt`                                         |
-| Lua             | dprint         | `deno task dprint fmt`                             |
+| 범위            | 도구                | 명령어           |
+| --------------- | ------------------- | ---------------- |
+| staged 파일     | 모든 포매터         | `just fmt`       |
+| 모든 파일       | 모든 포매터         | `just fmt --all` |
+| C++ (`.cpp/.h`) | astyle/clang-format | `just fmt-cpp`   |
+| JSON            | json_formatter      | `just fmt-json`  |
+| Markdown/TS     | deno fmt            | `just fmt-docs`  |
+| Lua             | dprint              | `just fmt-lua`   |
 
 ## 자동 포매팅
 
@@ -26,47 +27,42 @@ Cataclysm: Bright Nights에서 코드를 포맷하고 린트하는 방법을 설
 
 ## C++ 포매팅
 
-C++ 파일은 [astyle](http://astyle.sourceforge.net/)로 포맷됩니다.
+최상위 C++ 파일은 [astyle](http://astyle.sourceforge.net/)로 포맷됩니다. 소스 하위 디렉터리의 C++ 파일은 [clang-format](https://clang.llvm.org/docs/ClangFormat.html)으로 포맷됩니다.
 
 ```sh
-# astyle 설치 (Ubuntu/Debian)
-sudo apt install astyle
+# 포매터 설치 (Ubuntu/Debian)
+sudo apt install astyle clang-format
 
-# astyle 설치 (Fedora)
-sudo dnf install astyle
+# 포매터 설치 (Fedora)
+sudo dnf install astyle clang-tools-extra
 
-# astyle 설치 (macOS)
-brew install astyle
+# 포매터 설치 (macOS)
+brew install astyle clang-format
 ```
 
-### CMake 사용
+### 스크립트 사용
 
 ```sh
-# 구성 (한 번만 필요하거나 기존 빌드 사용)
-cmake --preset lint
-
-# 모든 C++ 파일 포맷
-cmake --build build --target astyle
+just fmt-cpp
+# 또는
+build-scripts/format-cpp.sh
 ```
 
-스타일 설정은 저장소 루트의 `.astylerc`에 있습니다.
+스타일 설정은 저장소 루트의 `.astylerc`와 `.clang-format`에 있습니다.
 
 ## JSON 포매팅
 
 JSON 파일은 프로젝트 소스에서 빌드된 커스텀 도구 `json_formatter`로 포맷됩니다.
 
-### CMake 사용
+### 스크립트 사용
 
 ```sh
-# 구성 (한 번만 필요하거나 기존 빌드 사용)
-cmake --preset lint
-
-# 모든 JSON 파일을 병렬로 포맷
-cmake --build build --target style-json-parallel
-
-# 모든 JSON 파일을 순차적으로 포맷 (느리지만 디버깅에 유용)
-cmake --build build --target style-json
+just fmt-json
+# 또는
+build-scripts/format-json.sh
 ```
+
+이 스크립트는 `out/build/json-format`에 `json_formatter`를 빌드하고 JSON 파일을 포맷합니다. 구성된 게임 빌드나 CMake 프리셋은 필요하지 않습니다. 필요하면 `CATA_JSON_FORMAT_BUILD_DIR`로 보조 빌드 디렉터리를 바꿀 수 있습니다.
 
 > [!NOTE]
 > `data/names/` 디렉토리는 이름 파일이 특별한 포맷 요구사항을 가지고 있어 포맷에서 제외됩니다.
@@ -112,17 +108,30 @@ tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*
 
 ## 커밋 전 워크플로우
 
-커밋하기 전에 다음 검사를 실행하세요:
+[`prek`](https://github.com/j178/prek)를 사용하는 선택적 pre-commit 훅을 설치할 수 있습니다:
 
 ```sh
-# 한 번만 구성 (포매팅 도구가 포함된 빌드 디렉토리 생성)
-cmake --preset lint
+prek install
+# 또는
+just hooks-setup
+```
 
-# 모든 코드 포맷
-cmake --build build --target astyle           # C++
-cmake --build build --target style-json-parallel  # JSON
-deno fmt                                       # Markdown/TypeScript
-deno task dprint fmt                           # Lua
+커밋할 때 훅은 `just fmt`를 실행합니다. Deno와 dprint는 일반적으로 실행되고, C++ 및 JSON 포매터는 staged된 생성/수정 파일만 처리합니다. 포맷된 staged 파일은 같은 커밋에 포함되도록 다시 `git add`됩니다.
+
+staged 파일에 같은 포매팅을 수동으로 실행하려면:
+
+```sh
+just fmt
+```
+
+훅 없이 커밋하기 전에 실행할 명령:
+
+```sh
+# staged 파일 포맷
+just fmt
+
+# 포맷 가능한 모든 파일 포맷
+just fmt --all
 ```
 
 ## CI 통합
@@ -130,7 +139,7 @@ deno task dprint fmt                           # Lua
 CI 파이프라인은 이러한 검사를 자동으로 실행합니다:
 
 1. **JSON 구문 검증** - `build-scripts/lint-json.sh`
-2. **JSON 포매팅** - `cmake --build build --target style-json-parallel`
+2. **JSON 포매팅** - `build-scripts/format-json.sh`
 3. **대화 검증** - `tools/dialogue_validator.py`
 
 검사가 실패하면 빌드가 실패합니다. 푸시하기 전에 위 명령어로 로컬에서 문제를 수정하세요.
@@ -143,6 +152,33 @@ CI 파이프라인은 이러한 검사를 자동으로 실행합니다:
 
 - **C++**: [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) (astyle 통합 포함)
 - **Deno**: [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno) (Markdown/TypeScript용)
+
+### Visual Studio
+
+PowerShell에서 포매터를 한 번 설치합니다. LLVM은 `clang-format`과 `clang-tidy`를 제공합니다.
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm get.scoop.sh | iex
+scoop install llvm astyle
+clang-format --version
+clang-tidy --version
+astyle --version
+```
+
+Scoop을 이미 설치했다면 `scoop install llvm astyle`만 실행하세요. 버전 확인 명령을 찾지 못하면 PowerShell과
+Visual Studio를 닫았다가 다시 열어 `PATH`를 다시 읽게 하세요.
+
+도구를 설치한 뒤:
+
+1. 저장소 폴더를 Visual Studio에서 CMake 프로젝트로 엽니다.
+2. CMake를 구성합니다. 포매터를 설치하기 전에 Visual Studio가 프로젝트를 이미 구성했다면 CMake 캐시를 재구성합니다.
+3. **View > Other Windows > CMake Targets View**를 엽니다.
+4. 커밋하기 전에 `format` 타겟을 빌드합니다.
+
+Visual Studio의 일반 **Format Document** 명령은 이 타겟을 실행하지 않습니다. 저장소 스타일을 적용하려면
+`format` 타겟을 사용하세요. 이 타겟은 top-level C++ 파일에는 `astyle`을, `src/` 하위 디렉터리의 C++ 파일에는
+`clang-format`을 실행합니다.
 
 ### Vim/Neovim
 
@@ -158,37 +194,38 @@ autocmd BufWritePre *.md,*.ts !deno fmt %
 
 ## 문제 해결
 
-### "json_formatter not found" 또는 "style-json-parallel target not found"
+### "json_formatter not found"
 
-`lint` 프리셋으로 CMake를 구성했거나 `-DJSON_FORMAT=ON`을 사용했는지 확인하세요:
+JSON 포매터 스크립트를 실행하세요. 보조 포매터를 자동으로 구성하고 빌드합니다:
 
 ```sh
-cmake --preset lint
-cmake --build build --target json_formatter
+build-scripts/format-json.sh
 ```
 
-### "astyle target not found"
+### C++ 포매터를 찾을 수 없음
 
-`astyle`이 설치되어 있고 PATH에 있는지 확인하세요:
+`astyle`과 `clang-format`이 설치되어 있고 PATH에 있는지 확인하세요:
 
 ```sh
-# astyle이 사용 가능한지 확인
+# 포매터가 사용 가능한지 확인
 which astyle
+which clang-format
 
 # 없으면 설치 (Ubuntu/Debian)
-sudo apt install astyle
+sudo apt install astyle clang-format
 ```
 
-그런 다음 CMake를 재구성:
+그런 다음 다시 실행하세요:
 
 ```sh
-cmake --preset lint
+build-scripts/format-cpp.sh
 ```
 
-### astyle이 다른 결과를 생성
+### C++ 포매터가 다른 결과를 생성
 
-저장소 루트의 `.astylerc`를 사용하고 있는지 확인하세요:
+저장소 루트의 포매터 설정을 사용하는지 확인하세요:
 
 ```sh
 astyle --options=.astylerc src/*.cpp
+clang-format -i src/utils/*.cpp src/utils/*.h
 ```

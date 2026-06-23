@@ -49,6 +49,11 @@
       [ "g36_stanag_adapter", 40 ],
       [ "aug_nato_conversion", 40 ],
       [ "breacher_grip", 10 ],
+      [ "acog_scope", 70 ],
+      [ "holo_sight", 70 ],
+      [ "rifle_scope", 60 ],
+      [ "suppressor", 40 ],
+      [ "suppressor_compact", 30 ],
       { "group": "auto_sears", "prob": 40 }
     ]
   },
@@ -61,6 +66,7 @@
       [ "holo_sight", 100 ],
       [ "m203", 30 ],
       [ "m320_mod", 10 ],
+      [ "40x53mm_conversion_kit", 5 ],
       [ "masterkey", 30 ],
       [ "rm121aux", 10 ],
       [ "sword_bayonet", 10 ],
@@ -76,6 +82,48 @@
       { "item": "m203", "ammo-item": "40x46mm_m433", "prob": 75, "charges": 1 },
       { "item": "m320_mod", "ammo-item": "40x46mm_m433", "prob": 25, "charges": 1 }
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_standard",
+    "subtype": "collection",
+    "//": "Standard attachments for military rifles.",
+    "entries": [
+      { "group": "military_accessories_sight", "prob": 100 },
+      { "group": "military_accessories_tactical", "prob": 100 },
+      { "group": "military_accessories_muzzle", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_sight",
+    "subtype": "distribution",
+    "//": "Standard military sights mounted on rifles",
+    "entries": [
+      { "item": "red_dot_sight", "prob": 10 },
+      { "item": "holo_sight", "prob": 40 },
+      { "item": "acog_scope", "prob": 40 },
+      { "item": "rifle_scope", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_tactical",
+    "subtype": "distribution",
+    "//": "Standard military tactical accessories mounted on rifles",
+    "entries": [
+      { "item": "offset_sights", "prob": 25 },
+      { "item": "rail_laser_sight", "prob": 25 },
+      { "item": "grip", "prob": 20 },
+      { "item": "sword_bayonet", "prob": 30 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_muzzle",
+    "subtype": "distribution",
+    "//": "Standard military muzzle accessories mounted on rifles",
+    "entries": [ { "item": "muzzle_brake", "prob": 70 }, { "item": "suppressor", "prob": 30 } ]
   },
   {
     "type": "item_group",
@@ -188,5 +236,52 @@
       [ "universal_autolink", 10 ],
       [ "universal_auto_conversion_kit", 5 ]
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_pipe_conversion",
+    "//": "All pipe gun caliber conversion kits installable in the pipe rifle/pistol/2-shot special.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_pipe_22", "prob": 40 },
+      { "item": "retool_pipe_38", "prob": 40 },
+      { "item": "retool_pipe_40", "prob": 40 },
+      { "item": "retool_pipe_44", "prob": 40 },
+      { "item": "retool_pipe_45", "prob": 40 },
+      { "item": "retool_pipe_9mm", "prob": 40 },
+      { "item": "retool_pipe_223", "prob": 30 },
+      { "item": "retool_pipe_3006", "prob": 20 },
+      { "item": "retool_pipe_308", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_hc_mods",
+    "//": "Handmade carbine unique mods: caliber conversion kits and BAR magazine adapter.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_hc_223", "prob": 40 },
+      { "item": "retool_hc_308", "prob": 30 },
+      { "item": "hc_bar_mag_adapter", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_hmr_conversion",
+    "//": "Handmade revolver caliber conversion kits.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_hmr_40", "prob": 40 },
+      { "item": "retool_hmr_44", "prob": 30 },
+      { "item": "retool_hmr_45", "prob": 40 },
+      { "item": "retool_hmr_9mm", "prob": 40 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_luty_conversion",
+    "//": "Luty SMG caliber conversion kits.",
+    "subtype": "distribution",
+    "entries": [ { "item": "retool_luty_40", "prob": 40 }, { "item": "retool_luty_45", "prob": 40 } ]
   }
 ]

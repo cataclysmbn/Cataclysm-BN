@@ -30,7 +30,18 @@ auto clear_states( const enum_bitset<test_state> &states ) -> void
     }
 
     if( normalized_states.test( state::weather ) ) {
-        get_weather().weather_id = weather_type_id( "clear" );
+        auto &weather = get_weather();
+        weather.weather_id = weather_type_id( "clear" );
+        weather.weather_override = weather_type_id::NULL_ID();
+        weather.nextweather = calendar::before_time_starts;
+        weather.temperature = 0_c;
+        weather.water_temperature = 0_c;
+        weather.lightning_active = false;
+        weather.winddirection = 0;
+        weather.windspeed = 0;
+        weather.wind_direction_override = std::nullopt;
+        weather.windspeed_override = std::nullopt;
+        weather.clear_temp_cache();
     }
 
     if( normalized_states.test( state::avatar ) ) {

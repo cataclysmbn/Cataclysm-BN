@@ -272,7 +272,7 @@
     "time": "2 h",
     "autolearn": true,
     "using": [ [ "sewing_standard", 80 ] ],
-    "components": [ [ [ "felt_patch", 20 ] ], [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ] ] ]
+    "components": [ [ [ "felt_patch", 20 ] ], [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ], [ "bag_zipper_small", 32 ] ] ]
   },
   {
     "result": "boots_wsurvivor",
@@ -340,8 +340,7 @@
     "time": "1 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 6 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 6 ] ] ]
   },
   {
     "result": "footrags_fur",
@@ -454,8 +453,7 @@
     "skill_used": "survival",
     "time": "1 m",
     "autolearn": true,
-    "components": [ [ [ "plastic_shopping_bag", 2 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "plastic_shopping_bag", 2 ] ] ]
   },
   {
     "result": "socks_wool",

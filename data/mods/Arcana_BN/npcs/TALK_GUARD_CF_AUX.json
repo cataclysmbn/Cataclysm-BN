@@ -1,0 +1,53 @@
+[
+  {
+    "id": "TALK_GUARD_CF_AUX",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "npc_has_trait": "CF_AUX_MARKER_3",
+      "yes": [
+        "I'm just a guard, boss is in the back room if you need anything.",
+        "Man, I feel like this place doesn't even need a security detail…",
+        "If you're looking for a trader or business, back room's over there.",
+        "Sorry, I'm not in charge here.",
+        "If it's a raider or zombie problem go tell the boss, if it's spooky shit see the masked boys about it.  Can't help ya with nothing else."
+      ],
+      "no": {
+        "npc_has_trait": "CF_AUX_MARKER_2",
+        "yes": [
+          "Why do I feel like this is all way above my pay grade…",
+          "Afraid I'm not in charge here.  Doc's in the back, and the people in the church over there run this place.",
+          "Greetings.  Been kinda busy here, you'll want to speak with the people in charge here.",
+          "Hey there.  Bit busy I'm afraid.",
+          {
+            "u_is_wearing": "badge_marshal",
+            "yes": [
+              "Sorry Marshal, no time to chat.  They're keeping us fairly busy these days.",
+              "How did you find this bunch of eccentrics, Marshal…",
+              "Nice to see a friendly face, Marshal.",
+              "I really hope top brass doesn't screw this assignment up…"
+            ],
+            "no": "Sorry, don't have time to chat."
+          }
+        ],
+        "no": {
+          "npc_has_trait": "CF_AUX_MARKER_1",
+          "yes": [
+            "Not sure what to make of this place.  Hunting's good out here, bit of an odd vibe to the place though…",
+            "Howdy.  Boss is in the back room if you need something.",
+            "I'm just the hired help, you'll want to talk to someone else if y'need something.",
+            "Sorry, I'm not the one in charge.  I just help with the scavenging runs.",
+            "Fella in the back is in charge of the hunts, and the guys in the masks run the show.",
+            "Ain't much time to talk these days, they keep me busy 'round here.  Good t'see you though."
+          ],
+          "no": [
+            "Well, this place cleans up nicely, should talk to them about throwing a party once the workload winds down a bit…",
+            "Trader is in the back room, if you need anything.",
+            "Bit busy, been a lot to do lately.",
+            "Hi there.  No time for talk, sorry."
+          ]
+        }
+      }
+    },
+    "responses": [ { "text": "Don't mind me…", "topic": "TALK_DONE" } ]
+  }
+]

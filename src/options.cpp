@@ -1,6 +1,7 @@
 #include "options.h"
 
 #include <algorithm>
+#include <array>
 #include <locale>
 #include <cfloat>
 #include <climits>
@@ -28,6 +29,7 @@
 #include "mapsharing.h"
 #include "output.h"
 #include "path_info.h"
+#include "preload_config.h"
 #include "point.h"
 #include "popup.h"
 #include "sdlsound.h"
@@ -36,6 +38,7 @@
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "string_utils.h"
+#include "title_screen.h"
 #include "translations.h"
 #include "ui_manager.h"
 #include "worldfactory.h"
@@ -177,7 +180,17 @@ options_manager::options_manager()
     pages_.emplace_back( android, to_translation( "Android" ) );
 #endif
 
-    mMigrateOption = { {"DELETE_WORLD", { "WORLD_END", { {"no", "keep" }, {"yes", "delete"} } } } };
+    mMigrateOption = {
+        {"DELETE_WORLD", { "WORLD_END", { {"no", "keep" }, {"yes", "delete"} } } },
+        {
+            "COMPUTE_ACCELERATION", {
+                "COMPUTE_ACCELERATION", { {"off", "cpu" },
+                    {"software", "gpu_software" },
+                    {"force", "gpu" }
+                }
+            }
+        },
+    };
 
     enable_json( "DEFAULT_REGION" );
     // to allow class based init_data functions to add values to a 'string' type option, add:
@@ -222,6 +235,21 @@ void options_manager::add_value( const std::string &lvar, const std::string &lva
         }
 
     }
+}
+
+auto options_manager::refresh_title_screen_option() -> void
+{
+    auto iter = options.find( title_screen::option_id );
+    if( iter == options.end() || iter->second.sType != "string_select" ) {
+        return;
+    }
+
+    auto &option = iter->second;
+    const auto old_value = option.getValue();
+    option.vItems = title_screen::get_options();
+    option.sDefault = title_screen::default_option_id;
+    option.setValue( option.getItemPos( old_value ) != -1 ? old_value :
+                     title_screen::default_option_id );
 }
 
 void options_manager::addOptionToPage( const std::string &name, const std::string &page )
@@ -1112,7 +1140,7 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
     std::vector<options_manager::id_and_option> user_tilesets = load_tilesets_from(
                 PATH_INFO::user_gfx() );
     for( const options_manager::id_and_option &id : user_tilesets ) {
-        if( std::ranges::find( result, id ) == result.end() ) {
+        if( !std::ranges::contains( result, id ) ) {
             result.emplace_back( id );
         }
     }
@@ -1164,8 +1192,8 @@ std::vector<options_manager::id_and_option> options_manager::build_soundpacks_li
 #if defined(__ANDROID__)
 bool options_manager::android_get_default_setting( const char *settings_name, bool default_value )
 {
-    JNIEnv *env = static_cast< JNIEnv *>( SDL_AndroidGetJNIEnv() );
-    jobject activity = static_cast< jobject>( SDL_AndroidGetActivity() );
+    JNIEnv *env = static_cast< JNIEnv *>( SDL_GetAndroidJNIEnv() );
+    jobject activity = static_cast< jobject>( SDL_GetAndroidActivity() );
     jclass clazz( env->GetObjectClass( activity ) );
     jmethodID method_id = env->GetMethodID( clazz, "getDefaultSetting", "(Ljava/lang/String;Z)Z" );
     jboolean ans = env->CallBooleanMethod( activity, method_id, env->NewStringUTF( settings_name ),
@@ -1554,6 +1582,12 @@ void options_manager::add_options_interface()
 
     add_empty_line();
 
+    add( title_screen::option_id, interface, translate_marker( "Title screen" ),
+         translate_marker( "Title screen ASCII art to display on the main menu." ),
+         title_screen::get_all_options(), title_screen::default_option_id );
+
+    add_empty_line();
+
     add( "HEALTH_STYLE", interface, translate_marker( "Health Display Style" ),
     translate_marker( "Switch health-related display styling such as HP and hunger" ), {
         {"number", translate_marker( "Numerical" ) },
@@ -1618,13 +1652,19 @@ void options_manager::add_options_interface()
          //~ 12h time, e.g.  11:59pm
     {   { "12h", translate_marker( "12h" ) },
         //~ Military time, e.g.  2359
-        { "military", translate_marker( "Military" ) },
+        { "military", translate_marker_context( "time format", "Military" ) },
         //~ 24h time, e.g.  23:59
         { "24h", translate_marker( "24h" ) }
     },
     "12h" );
 
     add_empty_line();
+
+    add( "USE_PINYIN_SEARCH", interface, translate_marker( "Use pinyin in search" ),
+         translate_marker( "If true, pinyin can be used in searching and filtering Chinese text.  "
+                           "May slow down searches with many entries." ),
+         false
+       );
 
     add( "FORCE_CAPITAL_YN", interface, translate_marker( "Force Y/N in prompts" ),
          translate_marker( "If true, Y/N prompts are case-sensitive and y and n are not accepted." ),
@@ -1825,6 +1865,11 @@ void options_manager::add_options_interface()
          translate_marker( "If true, Advanced Inventory Manager filters will be reset when leaving the menu" ),
          false );
 
+    add( "NEW_PICKUP_MENU", interface,
+         translate_marker( "Use new pickup menu ui (EXPERIMENTAL)" ),
+         translate_marker( "Whether to use the new or old pickup menu ui. WARNING: Is experimental feature" ),
+         false );
+
     add_empty_line();
 
     add( "MOVE_VIEW_OFFSET", interface, translate_marker( "Move view offset" ),
@@ -1995,6 +2040,21 @@ void options_manager::add_options_graphics()
 
     get_option( "NIGHT_VISION_COLOR" ).setPrerequisite( "NIGHT_VISION_DEFAULT_COLOR", "custom" );
 
+    add( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR", graphics,
+         translate_marker( "Enhanced Night Vision Default Colors" ),
+    translate_marker( "Choose from default night vision colors." ), {
+        { "#6cf5e7", translate_marker( "White Phosphor" ) },
+        { "#33e84e", translate_marker( "Green Phosphor" ) },
+        { "#888888", translate_marker( "Gray" ) },
+        { "custom", translate_marker( "Custom" ) }
+    }, "#6cf5e7" );
+
+    add( "ENHANCED_NIGHT_VISION_COLOR", graphics, translate_marker( "Enhanced Night Vision Color" ),
+         translate_marker( "Sets custom night vision color." ), "#6cf5e7", 60 );
+
+    get_option( "ENHANCED_NIGHT_VISION_COLOR" ).setPrerequisite( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR",
+            "custom" );
+
     add_empty_line();
 
     add( "TERMINAL_X", graphics, translate_marker( "Terminal width" ),
@@ -2055,6 +2115,17 @@ void options_manager::add_options_graphics()
          true, COPT_CURSES_HIDE
        );
 
+#if defined(__ANDROID__)
+    const auto default_colored_lighting = false;
+#else
+    const auto default_colored_lighting = true;
+#endif
+    add( "COLORED_LIGHTING", graphics, translate_marker( "Colored lighting" ),
+         translate_marker( "If true, map tiles and entities can be tinted by colored light sources." ),
+         default_colored_lighting, COPT_CURSES_HIDE
+       );
+    get_option( "COLORED_LIGHTING" ).setPrerequisite( "USE_TILES" );
+
     add( "TILES", graphics, translate_marker( "Choose tileset" ),
          translate_marker( "Choose the tileset you want to use." ),
          build_tilesets_list(), "UNDEAD_PEOPLE_BASE", COPT_CURSES_HIDE
@@ -2091,6 +2162,13 @@ void options_manager::add_options_graphics()
        );
 
     get_option( "USE_CHARACTER_PREVIEW" ).setPrerequisite( "USE_TILES" );
+
+    add( "LOADING_SCREEN_IMAGES", graphics, translate_marker( "Loading screen images" ),
+         translate_marker( "If true, shows loading splash images when available." ),
+         true, COPT_CURSES_HIDE
+       );
+
+    get_option( "LOADING_SCREEN_IMAGES" ).setPrerequisite( "USE_TILES" );
 
     add_empty_line();
 
@@ -2235,6 +2313,17 @@ void options_manager::add_options_graphics()
        );
 #endif
 
+#if defined(TILES)
+    add( "TEXTURE_STREAMING", graphics, translate_marker( "Texture Streaming" ),
+         translate_marker( "Use texture-streaming instead of render-to-texture for dynamic graphics. Requires restart." ),
+    {
+        { "auto", translate_marker( "Auto" ) },
+        { "on", translate_marker( "Enable" ) },
+        { "off", translate_marker( "Disable" ) }
+    },
+    "auto" );
+#endif
+
 #if defined(SDL_HINT_RENDER_BATCHING)
     add( "RENDER_BATCHING", graphics, translate_marker( "Allow render batching" ),
          translate_marker( "Use render batching for 2D render API to make it more efficient.  Requires restart." ),
@@ -2272,6 +2361,19 @@ void options_manager::add_options_graphics()
         { "4", translate_marker( "4x" ) }
     },
     "1", COPT_CURSES_HIDE );
+#endif
+
+#if defined(CATA_SDL)
+    add_empty_line();
+    add( "COMPUTE_ACCELERATION", graphics, translate_marker( "Compute Acceleration" ),
+         translate_marker( "Controls compute backend selection for lighting, visibility, and line of sight.  Requires restart." ),
+    {
+        { "auto", translate_marker( "Auto" ) },
+        { "gpu", translate_marker( "GPU" ) },
+        { "cpu", translate_marker( "CPU compute" ) },
+        { "gpu_software", translate_marker( "Software GPU (debug)" ) }
+    },
+    "auto" );
 #endif
 
 }
@@ -2367,6 +2469,14 @@ void options_manager::add_options_performance()
                                "0 = Tier-0 only (default, cheapest).  1 = Tier-0 and Tier-1 monsters also "
                                "run group-morale/swarm checks. " ),
              0, 1, 0 );
+        add( "ACTIVITY_SKIP_MONSTER_LOD_GATE", page_id,
+             translate_marker( "Activity Skip Monster Gate" ),
+             translate_marker( "Highest real monster LOD tier allowed to run activity-skip AI.  "
+                               "Allowed monsters act one LOD tier less detailed than normal.  "
+                               "0 lets only Tier-0 monsters act as Tier-1.  "
+                               "1 lets Tier-0 and Tier-1 monsters act as Tier-1 and Tier-2, "
+                               "which is the default.  2 also lets Tier-2 monsters run macro AI." ),
+             0, 2, 1 );
     } );
 
     get_option( "LOD_ACTION_BUDGET" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
@@ -2376,28 +2486,44 @@ void options_manager::add_options_performance()
     get_option( "LOD_DEMOTION_COOLDOWN" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
     get_option( "LOD_COARSE_SCENT_INTERVAL" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
     get_option( "LOD_GROUP_MORALE_MAX_TIER" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+    get_option( "ACTIVITY_SKIP_MONSTER_LOD_GATE" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
 
     add_empty_line();
 
     add_option_group( performance, Group( "fov_3d", to_translation( "3D Field of Vision" ),
                                           to_translation( "Configure three-dimensional visibility across z-levels." ) ),
     [&]( auto & page_id ) {
-        add( "FOV_3D", page_id, translate_marker( "3D field of vision" ),
-             translate_marker( "If false, vision is limited to current z-level.  If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
-             true
-           );
-        add( "FOV_3D_Z_RANGE", page_id, translate_marker( "Vertical range of 3D field of vision" ),
-             translate_marker( "How many levels up and down the experimental 3D field of vision reaches.  (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
-             0, OVERMAP_LAYERS, is_android ? 3 : 5
-           );
-        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV horizontal occlusion" ),
-             translate_marker( "When enabled, obstacles at other z-levels correctly cast 3D shadows.  Requires 3D FoV.  Significantly slower than disabled." ),
+        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "Angled Sunlight Shadows" ),
+             translate_marker( "When enabled, direct sunlight follows the current sun angle and roofs or overhangs cast time-dependent shadows." ),
              false
            );
+        add( "PREVENT_OCCLUSION", page_id, translate_marker( "Handle occlusion by high sprites" ),
+             translate_marker( "Draw tall sprites normal (Off), retracted/transparent (On), or automatically retracting/transparent near the player (Auto)." ),
+        {
+            { "off", translate_marker( "Off" ) },
+            { "on", translate_marker( "On" ) },
+            { "auto", translate_marker( "Auto" ) }
+        },
+        "auto" );
+        add( "PREVENT_OCCLUSION_TRANSP", page_id, translate_marker( "Prevent occlusion via transparency" ),
+             translate_marker( "Prevent high-sprite occlusion by using semi-transparent *_transparent tile variants when available." ),
+             true
+           );
+        add( "PREVENT_OCCLUSION_RETRACT", page_id, translate_marker( "Prevent occlusion via retraction" ),
+             translate_marker( "Prevent high-sprite occlusion by retracting sprites that define retracted offsets." ),
+             true
+           );
+        add( "PREVENT_OCCLUSION_MIN_DIST", page_id,
+             translate_marker( "Minimum distance for automatic occlusion handling" ),
+             translate_marker( "Minimum distance for automatic occlusion handling. Values above zero override tileset settings." ),
+             0.0, 60.0, 0.0, 0.1
+           );
+        add( "PREVENT_OCCLUSION_MAX_DIST", page_id,
+             translate_marker( "Maximum distance for automatic occlusion handling" ),
+             translate_marker( "Maximum distance for automatic occlusion handling. Values above zero override tileset settings." ),
+             0.0, 60.0, 0.0, 0.1
+           );
     } );
-
-    get_option( "FOV_3D_Z_RANGE" ).setPrerequisite( "FOV_3D" );
-    get_option( "FOV_3D_OCCLUSION" ).setPrerequisite( "FOV_3D" );
 
     add_empty_line();
 
@@ -2407,7 +2533,7 @@ void options_manager::add_options_performance()
                            "Higher values reduce redundant ray traces at the cost of more RAM.  "
                            "Reduce if memory is tight; increase on machines with spare RAM and many "
                            "on-screen creatures." ),
-         1000, 500000, is_android ? 64000 : 128000 );
+         1024, 4194304, is_android ? 65536 : 262144 );
 
     add_empty_line();
 
@@ -2457,13 +2583,6 @@ void options_manager::add_options_performance()
                                "Disable on machines where the ~70 k-cell work unit is too small to "
                                "amortize dispatch latency.  Requires restart." ),
              true );
-        add( "LAZY_BORDER", page_id,
-             translate_marker( "Pre-load Border" ),
-             translate_marker( "Keep a border of submaps loaded around the reality bubble.  "
-                               "These are pre-loaded from disk in the background so that map "
-                               "shifts are faster (the data is already in memory).  Uses more "
-                               "memory but reduces stalls when the map scrolls.  " ),
-             !is_android );
     } );
 
     get_option( "THREAD_POOL_WORKERS" ).setPrerequisite( "MULTITHREADING_ENABLED" );
@@ -2471,7 +2590,6 @@ void options_manager::add_options_performance()
     get_option( "MONSTER_PLAN_CHUNK_SIZE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_MAP_CACHE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_SCENT_UPDATE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
-    get_option( "LAZY_BORDER" ).setPrerequisite( "MULTITHREADING_ENABLED" );
 
     add_empty_line();
 
@@ -2486,6 +2604,23 @@ void options_manager::add_options_performance()
                                "Larger values increase the loaded area and memory usage; "
                                "smaller values reduce both. " ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
+        add( "VISIBILITY_SCALING", page_id,
+             translate_marker( "Visibility Scaling" ),
+             translate_marker( "Controls how clear-air visibility attenuation scales with the reality bubble.  "
+                               "Perfect scales directly with the current bubble size.  Smart keeps visibility "
+                               "near the size 6 baseline while still giving small bubbles less range and large "
+                               "bubbles more range.  None keeps visibility at the size 6 baseline and only uses "
+        "bubble size as a hard view cap." ), {
+            { "perfect", translate_marker( "Perfect Scale" ) },
+            { "smart", translate_marker( "Smart Scale" ) },
+            { "none", translate_marker( "No Scale" ) }
+        }, "smart" );
+        add( "LAZY_BORDER", page_id,
+             translate_marker( "Pre-load Border" ),
+             translate_marker( "Preload a one-overmap-tile border around the reality bubble over several turns.  "
+                               "This reduces map-shift hitches at the cost of extra per-turn loading work and    "
+                               "some additional memory usage." ),
+             !is_android );
         add( "ACTIVITY_MOBILE_BUBBLE_SIZE", page_id,
              translate_marker( "Mobile Activity Bubble Size" ),
              translate_marker( "Shrink the reality bubble to this radius while the player is performing a "
@@ -2537,25 +2672,33 @@ void options_manager::add_options_performance()
                                           to_translation( "Configure how submaps are loaded and "
                                                   "processed outside of the reality bubble." ) ),
     [&]( auto & page_id ) {
-        add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
-             translate_marker( "Out-of-Bubble Fire Spread" ),
-             translate_marker( "Controls whether fire can keep areas loaded outside of render "
-                               "distance. 'None': fire burns out in place. "
-                               "'Adjacent': fire can spread into unloaded areas, and keeps "
-        "close enough." ), {
-            { "none", translate_marker( "None (pause spread)" ) },
-            { "adjacent", translate_marker( "Adjacent (one layer)" ) }
-        },
-        is_android ? "none" : "adjacent"
-           );
-        add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
-             translate_marker( "Fire Spread Submap Cap" ),
-             translate_marker( "Maximum number of submaps that fire spread may keep loaded "
-                               "simultaneously across all dimensions. Higher values allow larger "
-                               "fires to be simulated correctly. "
-                               "0 disables out-of-bubble fire spread loading entirely. " ),
-             0, 250, 25 );
-        add( "POWER_PORTAL_LOAD_RADIUS", performance,
+        // Temporary fix for #8726: disable out-of-bubble fire spread until
+        // fire-loaded submaps can safely handle vehicle state.
+        // add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
+        //      translate_marker( "Out-of-Bubble Fire Spread" ),
+        //      translate_marker( "Controls whether fire can keep areas loaded outside of render "
+        //                        "distance. 'None': fire burns out in place. "
+        //                        "'Adjacent': fire can spread into unloaded areas, and keeps "
+        //                        "close enough." ), {
+        //     { "none", translate_marker( "None (pause spread)" ) },
+        //     { "adjacent", translate_marker( "Adjacent (one layer)" ) }
+        // },
+        // is_android ? "none" : "adjacent"
+        //    );
+        // add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
+        //      translate_marker( "Fire Spread Submap Cap" ),
+        //      translate_marker( "Maximum number of submaps that fire spread may keep loaded "
+        //                        "simultaneously across all dimensions. Higher values allow larger "
+        //                        "fires to be simulated correctly. "
+        //                        "0 disables out-of-bubble fire spread loading entirely. " ),
+        //      0, 250, 25 );
+        add( "RETAINED_OMT_CACHE_LENGTH", page_id,
+             translate_marker( "Retained Map Cache" ),
+             translate_marker( "Side length of the extra overmap-terrain MRU cache. "
+                               "The retained cache budget is this value squared; lazy border "
+                               "loading is budgeted separately." ),
+             4, 50, is_android ? 10 : 24 );
+        add( "POWER_PORTAL_LOAD_RADIUS", page_id,
              translate_marker( "Power portal load radius (submaps)" ),
              translate_marker( "Radius in submaps around each end of a power-portal link that is "
                                "force-loaded while the link is active." ),
@@ -2563,7 +2706,7 @@ void options_manager::add_options_performance()
            );
     } );
 
-    get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
+    // get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
 }
 
 void options_manager::add_options_debug()
@@ -2576,6 +2719,10 @@ void options_manager::add_options_debug()
          translate_marker( "If true, will show additional warnings for JSON data correctness." ),
          true
        );
+
+    add( "MIGRATION_CHECKS", debug, translate_marker( "Migration checks" ),
+         translate_marker( "If true, the game will report any migrated items in itemgroups. This will not function with certain mods that depend on migrations" ),
+         false );
 
     add( "FORCE_TILESET_RELOAD", debug, translate_marker( "Force tileset reload" ),
          translate_marker( "If false, the game will keep tileset in memory after first load to speed up subsequent loadings of game data.  Enable this if you're working on a tileset for the game or a mod." ),
@@ -2694,14 +2841,6 @@ void options_manager::add_options_debug()
 
     add_empty_line();
 
-    add( "MIN_AUTODRIVE_SPEED", debug, translate_marker( "Minimum auto-drive speed" ),
-         translate_marker( "Set the minimum speed for the auto-drive feature.  In tiles/s.  Default is 1 (6 km/h or 4 mph)." ),
-         1, 100, 1 );
-
-    add( "MAX_AUTODRIVE_SPEED", debug, translate_marker( "Maximum auto-drive speed" ),
-         translate_marker( "Set the maximum speed for the auto-drive feature.  In tiles/s.  Default is 9 (57 km/h or 36 mph)." ),
-         1, 100, 9 );
-
     add( "LIMITED_BAYONETS", debug, translate_marker( "New bayonet system" ),
          translate_marker( "If true, bayonets replace weapon attack instead of adding to it.  WIP feature, weakens bayonets heavily at the moment." ),
          false );
@@ -2712,6 +2851,15 @@ void options_manager::add_options_debug()
          translate_marker( "Use legacy pathfinding" ),
          translate_marker( "If true, opt out of new pathfinding in favor of legacy one. This makes pathfinding mods not work." ),
          false );
+    add( "PATHFINDING_MAX_DIST", debug,
+         translate_marker( "Legacy Pathfinder Distance Cap" ),
+         translate_marker( "Hard cap on straight-line pathfinding distance (in tiles) for the legacy pathfinder.  "
+                           "Monsters and NPCs whose configured range exceeds this value are limited to it.  "
+                           "The old fixed map allowed at most 120 tiles end-to-end; "
+                           "the default of 96 is 50%% larger than the old per-side maximum of 60.  "
+                           "Raise this if mods require longer paths; lower it to reduce pathfinding cost at large bubble sizes." ),
+         16, 1000, 96 );
+    get_option( "PATHFINDING_MAX_DIST" ).setPrerequisite( "USE_LEGACY_PATHFINDING" );
 }
 
 void options_manager::add_options_world_default()
@@ -2795,6 +2943,20 @@ void options_manager::add_options_world_default()
          translate_marker( "A scaling factor that determines the time between monster upgrades.  A higher number means slower evolution.  Set to 0.00 to turn off monster upgrades." ),
          0.0, 100, 2.0, 0.01
        );
+
+    add( "EVOLVE_MAX_ITERS", world_default,
+         translate_marker( "Maximum Evolution Half Lives" ),
+         translate_marker( "The maximum number of attempts for a zombie to evolve at the next half life for one evolution stage" ),
+         0, 200, 5 );
+
+    add( "ALWAYS_EVOLVE", world_default,
+         translate_marker( "Zombies Always Evolve" ),
+         translate_marker( "When reaching the maximum half lives, instead of never evolving they will evolve at that time." ),
+         false );
+    add( "CROWD_CRUSH", world_default,
+         translate_marker( "Crowd crush" ),
+         translate_marker( "When enabled, being grabbed by enough adjacent creatures can drain breath and eventually cause crushing damage." ),
+         false );
 
     add_empty_line();
 
@@ -3032,10 +3194,54 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
-    add( "MONSTER_SPEED", world_default, translate_marker( "Monster speed percentage" ),
-         translate_marker( "Determines the movement rate of monsters.  A higher value increases monster speed and a lower reduces it.  Requires world reset." ),
-         1, 1000, 100, COPT_NO_HIDE, "%i%%"
-       );
+    struct time_scale_option {
+        const char *id;
+        const char *name;
+        const char *description;
+    };
+
+    static constexpr auto time_scale_max_percent = 10000;
+    static constexpr auto time_scale_options = std::array<time_scale_option, 7> {{
+            {
+                "TIME_ACTION_SCALE", translate_marker( "Global action speed percentage" ),
+                translate_marker( "Determines the baseline action rate for creatures and activities.  A higher value allows more actions per in-game second, while a lower value makes calendar time pass faster relative to actions." )
+            },
+            {
+                "PLAYER_ACTION_SCALE", translate_marker( "Player action speed percentage" ),
+                translate_marker( "Determines the player's action rate as a percentage of the global action speed.  A higher value allows more player actions per in-game second and a lower value allows fewer." )
+            },
+            {
+                "NPC_ACTION_SCALE", translate_marker( "NPC action speed percentage" ),
+                translate_marker( "Determines NPC action rate as a percentage of the global action speed.  A higher value allows more NPC actions per in-game second and a lower value allows fewer." )
+            },
+            {
+                "ACTIVITY_PROGRESS_SCALE", translate_marker( "Activity progress percentage" ),
+                translate_marker( "Determines long activity and crafting progress as a percentage of the global action speed.  A higher value completes activities faster per in-game second and a lower value completes them slower." )
+            },
+            {
+                "VEHICLE_CONTROL_SCALE", translate_marker( "Vehicle control speed percentage" ),
+                translate_marker( "Determines driver control action rate as a percentage of the global action speed without changing physical vehicle movement.  A higher value allows more steering, braking, and throttle inputs per in-game second and a lower value allows fewer." )
+            },
+            {
+                "OVERMAP_HORDE_SCALE", translate_marker( "Overmap horde speed percentage" ),
+                translate_marker( "Determines overmap horde movement speed as a percentage of global action speed and monster speed.  A higher value makes hordes travel faster over the overmap and a lower value makes them slower." )
+            },
+            {
+                "MONSTER_SPEED", translate_marker( "Monster speed percentage" ),
+                translate_marker( "Determines monster action rate as a percentage of the global action speed.  A higher value allows more monster actions per in-game second and a lower value allows fewer." )
+            },
+        }
+    };
+
+    add_option_group( world_default, Group( "time_scaling",
+                                            to_translation( "Time Scaling" ),
+                                            to_translation( "Configure experimental calendar and action-rate scaling." ) ),
+    [&]( const std::string & page_id ) {
+        for( const auto &option : time_scale_options ) {
+            add( option.id, page_id, option.name, option.description,
+                 1, time_scale_max_percent, 100, COPT_NO_HIDE, "%i%%" );
+        }
+    } );
 
     add( "MONSTER_RESILIENCE", world_default,
          translate_marker( "Monster resilience percentage" ),
@@ -3052,11 +3258,6 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
-    add( "INITIAL_TIME", world_default, translate_marker( "Initial time" ),
-         translate_marker( "Initial starting time of day on character generation." ),
-         0, 23, 8
-       );
-
     add( "INITIAL_DAY", world_default, translate_marker( "Initial day" ),
          translate_marker( "How many days into the year the cataclysm occurred.  Day 0 is Spring 1.  Day -1 randomizes the start date.  Can be overridden by scenarios.  This does not advance food rot or monster evolution." ),
          -1, 999, 15
@@ -3067,9 +3268,39 @@ void options_manager::add_options_world_default()
          0, 9999, 0
        );
 
+    add( "INITIAL_TIME", world_default, translate_marker( "Initial time" ),
+         translate_marker( "Hour of the day at which the player starts the game." ),
+         0, 23, 8
+       );
+
     add( "SEASON_LENGTH", world_default, translate_marker( "Season length" ),
          translate_marker( "Season length, in days." ),
          14, 127, 30
+       );
+
+    add( "SUNRISE_SUMMER", world_default, translate_marker( "Sunrise hour (summer)" ),
+         translate_marker( "Hour of sunrise at the summer solstice for the base dimension.  Per-dimension overrides can be set in world_types JSON." ),
+         0, 12, 5
+       );
+    add( "SUNRISE_WINTER", world_default, translate_marker( "Sunrise hour (winter)" ),
+         translate_marker( "Hour of sunrise at the winter solstice for the base dimension." ),
+         0, 12, 7
+       );
+    add( "SUNRISE_EQUINOX", world_default, translate_marker( "Sunrise hour (equinox)" ),
+         translate_marker( "Hour of sunrise at the spring and autumn equinox for the base dimension." ),
+         0, 12, 6
+       );
+    add( "SUNSET_SUMMER", world_default, translate_marker( "Sunset hour (summer)" ),
+         translate_marker( "Hour of sunset at the summer solstice for the base dimension." ),
+         12, 23, 21
+       );
+    add( "SUNSET_WINTER", world_default, translate_marker( "Sunset hour (winter)" ),
+         translate_marker( "Hour of sunset at the winter solstice for the base dimension." ),
+         12, 23, 17
+       );
+    add( "SUNSET_EQUINOX", world_default, translate_marker( "Sunset hour (equinox)" ),
+         translate_marker( "Hour of sunset at the spring and autumn equinox for the base dimension." ),
+         12, 23, 19
        );
 
     add( "CONSTRUCTION_SCALING", world_default,
@@ -3589,6 +3820,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             *world_options.value() :
             OPTIONS;
 
+    if( !world_options_only ) {
+        refresh_title_screen_option();
+    }
+
     auto OPTIONS_OLD = OPTIONS;
     auto WOPTIONS_OLD = ACTIVE_WORLD_OPTIONS;
     if( world_generator->active_world == nullptr ) {
@@ -3983,6 +4218,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     bool pixel_minimap_changed = false;
     bool terminal_size_changed = false;
     bool force_tile_change = false;
+    bool colored_lighting_changed = false;
 
     for( auto &iter : OPTIONS_OLD ) {
         if( iter.second != OPTIONS[iter.first] ) {
@@ -4000,10 +4236,14 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
 
             } else if( iter.first == "TILES" || iter.first == "USE_TILES" || iter.first == "STATICZEFFECT" ||
                        iter.first == "MEMORY_MAP_MODE" || iter.first == "OVERMAP_TILES" ||
-                       iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ) {
+                       iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ||
+                       iter.first == "ENHANCED_NIGHT_VISION_COLOR" ||
+                       iter.first == "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) {
                 used_tiles_changed = true;
                 if( iter.first == "STATICZEFFECT" || iter.first == "MEMORY_MAP_MODE" ||
-                    iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ) {
+                    iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ||
+                    iter.first == "ENHANCED_NIGHT_VISION_COLOR" ||
+                    iter.first == "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) {
                     force_tile_change = true;
                 }
             } else if( iter.first == "USE_LANG" ) {
@@ -4011,6 +4251,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
 
             } else if( iter.first == "TERMINAL_X" || iter.first == "TERMINAL_Y" ) {
                 terminal_size_changed = true;
+            }
+            if( iter.first == "COLORED_LIGHTING" || iter.first == "USE_TILES" ) {
+                colored_lighting_changed = true;
             }
         }
     }
@@ -4033,12 +4276,16 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                 world_generator->active_world->info->WORLD_OPTIONS = ACTIVE_WORLD_OPTIONS;
                 world_generator->active_world->info->save();
             }
+            if( ingame && colored_lighting_changed ) {
+                g->m.invalidate_lightmap_caches();
+            }
             g->on_options_changed();
         } else {
             lang_changed = false;
             terminal_size_changed = false;
             used_tiles_changed = false;
             pixel_minimap_changed = false;
+            colored_lighting_changed = false;
             OPTIONS = OPTIONS_OLD;
             if( ingame && world_options_changed ) {
                 ACTIVE_WORLD_OPTIONS = WOPTIONS_OLD;
@@ -4157,17 +4404,25 @@ void options_manager::cache_to_globals()
     trigdist = ::get_option<bool>( "CIRCLEDIST" );
 #if defined(TILES)
     use_tiles = ::get_option<bool>( "USE_TILES" );
+    colored_lighting = use_tiles && ::get_option<bool>( "COLORED_LIGHTING" );
     use_tiles_overmap = ::get_option<bool>( "USE_TILES_OVERMAP" );
 #else
     use_tiles = false;
+    colored_lighting = false;
     use_tiles_overmap = false;
 #endif
+    use_pinyin_search = ::get_option<bool>( "USE_PINYIN_SEARCH" );
     log_from_top = ::get_option<std::string>( "LOG_FLOW" ) == "new_top";
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );
-    fov_3d = ::get_option<bool>( "FOV_3D" );
-    fov_3d_z_range = ::get_option<int>( "FOV_3D_Z_RANGE" );
-    fov_3d_occlusion = ::get_option<bool>( "FOV_3D_OCCLUSION" );
+    angled_sunlight_shadows = ::get_option<bool>( "FOV_3D_OCCLUSION" );
+    const auto prevent_occlusion_option = ::get_option<std::string>( "PREVENT_OCCLUSION" );
+    prevent_occlusion = prevent_occlusion_option == "off" ? 0 : prevent_occlusion_option == "on" ? 1 :
+                        2;
+    prevent_occlusion_retract = ::get_option<bool>( "PREVENT_OCCLUSION_RETRACT" );
+    prevent_occlusion_transp = ::get_option<bool>( "PREVENT_OCCLUSION_TRANSP" );
+    prevent_occlusion_min_dist = ::get_option<float>( "PREVENT_OCCLUSION_MIN_DIST" );
+    prevent_occlusion_max_dist = ::get_option<float>( "PREVENT_OCCLUSION_MAX_DIST" );
     static_z_effect = ::get_option<bool>( "STATICZEFFECT" );
     overmap_transparency = ::get_option<bool>( "OVERMAP_TRANSPARENCY" );
     PICKUP_RANGE = ::get_option<int>( "PICKUP_RANGE" );
@@ -4180,10 +4435,18 @@ void options_manager::cache_to_globals()
     lod_macro_interval        = ::get_option<int>( "LOD_MACRO_INTERVAL" );
     lod_coarse_scent_interval = ::get_option<int>( "LOD_COARSE_SCENT_INTERVAL" );
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
+    activity_skip_monster_lod_gate = ::get_option<int>( "ACTIVITY_SKIP_MONSTER_LOD_GATE" );
 
-    reality_bubble_fire_spread =
-        ::get_option<std::string>( "REALITY_BUBBLE_FIRE_SPREAD" ) == "adjacent";
-    fire_spread_submap_cap = ::get_option<int>( "FIRE_SPREAD_SUBMAP_CAP" );
+    // Temporary fix for #8726: force out-of-bubble fire spread off while the
+    // corresponding options are commented out above.
+    reality_bubble_fire_spread = false;
+    fire_spread_submap_cap = 0;
+    {
+        const auto opt = ::get_option<std::string>( "VISIBILITY_SCALING" );
+        visibility_scaling = opt == "perfect" ? visibility_scaling_mode::perfect
+                             : opt == "none" ? visibility_scaling_mode::no_scale
+                             : visibility_scaling_mode::smart;
+    }
 
     {
         const auto psl_str = ::get_option<std::string>( "POCKET_SIMULATION_LEVEL" );
@@ -4208,6 +4471,7 @@ void options_manager::cache_to_globals()
     parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
     parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
     lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
+    retained_omt_cache_length = ::get_option<int>( "RETAINED_OMT_CACHE_LENGTH" );
 
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );
@@ -4221,6 +4485,22 @@ void options_manager::cache_to_globals()
 #if defined(SDL_SOUND)
     sounds::sound_enabled = ::get_option<bool>( "SOUND_ENABLED" );
 #endif
+
+#if defined(CATA_SDL)
+    if( options.contains( "COMPUTE_ACCELERATION" ) ) {
+        preload_config::set_compute_accel(
+            preload_config::compute_accel_from_string(
+                ::get_option<std::string>( "COMPUTE_ACCELERATION" ) ) );
+    }
+#endif
+
+#if defined(TILES)
+    if( options.contains( "TEXTURE_STREAMING" ) ) {
+        preload_config::set_texture_streaming(
+            preload_config::tristate_from_string(
+                ::get_option<std::string>( "TEXTURE_STREAMING" ) ) );
+    }
+#endif
 }
 
 bool options_manager::save()
@@ -4229,10 +4509,16 @@ bool options_manager::save()
     cache_to_globals();
     update_volumes();
 
-    return write_to_file( savefile, [&]( std::ostream & fout ) {
+    auto const ok = write_to_file( savefile, [&]( std::ostream & fout ) {
         JsonOut jout( fout, true );
         serialize( jout );
     }, _( "options" ) );
+
+#if defined(CATA_SDL)
+    preload_config::save();
+#endif
+
+    return ok;
 }
 
 void options_manager::load()

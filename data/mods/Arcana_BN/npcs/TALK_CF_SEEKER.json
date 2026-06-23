@@ -1,0 +1,105 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_SEEKER",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+      "yes": { "u_male": "Welcome, Brother.  May you find peace here.", "no": "Welcome, Sister.  May you find peace here." },
+      "no": {
+        "u_has_trait": "PROF_SANGUINE",
+        "yes": {
+          "u_has_effect": "cf_mission_1",
+          "yes": "Greetings.  I'm hopeful that we will continue to work together.",
+          "no": "For what purpose are you here?  Others will have what you seek."
+        },
+        "no": {
+          "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL" ],
+          "yes": {
+            "u_has_effect": "cf_mission_1",
+            "yes": "Greetings, Keeper.  How can I assist you?",
+            "no": "I do not know if I have what you seek, Keeper.  But welcome, regardless."
+          },
+          "no": "Welcome.  May you find peace here."
+        }
+      }
+    },
+    "responses": [
+      { "text": "Who are you?", "topic": "TALK_CF_SEEKER_WHO" },
+      { "text": "What can you tell me about this place?", "topic": "TALK_CF_SEEKER_WHERE" },
+      { "text": "What do you do here?", "topic": "TALK_CF_SEEKER_DO" },
+      {
+        "text": "Do you have anything to trade?",
+        "effect": "start_trade",
+        "condition": { "u_has_effect": "cf_seeker_traded" },
+        "topic": "TALK_CF_SEEKER"
+      },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_SEEKER_WHO",
+    "type": "talk_topic",
+    "dynamic_line": "Little more than a scholar of our holy words, name's Matthew.  My father had been among the founders as Sofia and Jonathan were, and passed the title of his old order down to me.",
+    "responses": [ { "text": "What old order?", "topic": "TALK_CF_SEEKER_ORDER" }, { "text": "I see.", "topic": "TALK_CF_SEEKER" } ]
+  },
+  {
+    "id": "TALK_CF_SEEKER_ORDER",
+    "type": "talk_topic",
+    "dynamic_line": "A collection of scholars and theologians.  Jonathan's group and Sofia's own preceded mine, and a fourth followed.  From there we gathered others, of an even greater range of faiths, few as we were in the end.",
+    "responses": [
+      { "text": "What else can you tell me about those groups?", "topic": "TALK_CF_SEEKER_FAITHS" },
+      { "text": "Oh, I see.", "topic": "TALK_CF_SEEKER" }
+    ]
+  },
+  {
+    "id": "TALK_CF_SEEKER_FAITHS",
+    "type": "talk_topic",
+    "dynamic_line": "The Grandmaster's kin came from a self-styled knightly order, Catholic in origin.  Sofia's, a fellowship of neo-pagans.  My own, predominantly Muslim.  And the fourth was pagan of another sort, if any of them remain and find this place, perhaps they'll be able to tell you more.",
+    "responses": [
+      {
+        "text": "That seems remarkably …syncretic.",
+        "condition": { "u_has_trait": "SPIRITUAL" },
+        "topic": "TALK_CF_SEEKER_SPIRITUAL"
+      },
+      { "text": "I see, thank you.", "topic": "TALK_CF_SEEKER" }
+    ]
+  },
+  {
+    "id": "TALK_CF_SEEKER_SPIRITUAL",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+      "yes": "\"Cast aside your schisms and strife. It has ended countless groups, but it shall not end us.  We are brothers and sisters, and we shall respect the gods in equal measure, disparate though they may be.\"  We are more than simply people of the book together with heathens, we are brethren.  Our duties demand it.",
+      "no": "Correct, but the circumstances that warranted our joining were quite severe.  Over the years, the others have worked hard to keep us focused on our goal of protecting others.  As one of our tenets states, \"we are brothers and sisters, and we shall respect the gods in equal measure, disparate though they may be.\"  If that is what it takes in these trying times, so be it."
+    },
+    "responses": [ { "text": "Okay…", "topic": "TALK_CF_SEEKER" } ]
+  },
+  {
+    "id": "TALK_CF_SEEKER_WHERE",
+    "type": "talk_topic",
+    "dynamic_line": "I know only that it had been chosen as a sanctum.  I heard of it while visiting with a few survivors, who themselves heard of this place at some point.",
+    "responses": [ { "text": "I see.", "topic": "TALK_CF_SEEKER" } ]
+  },
+  {
+    "id": "TALK_CF_SEEKER_DO",
+    "type": "talk_topic",
+    "dynamic_line": "I help keep records and preserve knowledge that the others have collected.  If you have need of anything, I have gathered a few supplies and books to spare, and could trade for them if you wish.",
+    "responses": [
+      {
+        "text": "Let's trade then.",
+        "effect": "start_trade",
+        "switch": true,
+        "condition": { "u_has_effect": "cf_seeker_traded" },
+        "topic": "TALK_CF_SEEKER"
+      },
+      {
+        "text": "Let's trade then.",
+        "effect": [ { "u_add_effect": "cf_seeker_traded" }, "start_trade" ],
+        "switch": true,
+        "default": true,
+        "topic": "TALK_CF_SEEKER"
+      },
+      { "text": "It's fine.  Nevermind.", "topic": "TALK_CF_SEEKER" }
+    ]
+  }
+]

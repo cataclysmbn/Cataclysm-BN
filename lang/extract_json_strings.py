@@ -162,7 +162,6 @@ automatically_convertible = {
     "GENERIC",
     "item_action",
     "ITEM_CATEGORY",
-    "json_flag",
     "mutation_flag",
     "keybinding",
     "LOOT_ZONE",
@@ -819,6 +818,13 @@ def extract_fault(state, item):
             writestr(state, method["success_msg"], format_strings=True, comment=f"Success message for mending method '{method['name']}' of fault '{item['name']}'")
 
 
+def extract_json_flag(state, item):
+    flag_id = item.get("id")
+    for field in ["info", "restriction", "tag"]:
+        if field in item:
+            writestr(state, item[field], comment=f"{field} for JSON flag '{flag_id}'")
+
+
 def extract_snippet(state, item):
     text = item["text"];
     if type(text) is not list:
@@ -861,6 +867,7 @@ extract_specials = {
     "recipe": extract_recipe,
     "scenario": extract_scenario,
     "skill_display_type": extract_skill_display_type,
+    "json_flag": extract_json_flag,
     "snippet": extract_snippet,
     "talk_topic": extract_talk_topic,
     "technique": extract_technique,

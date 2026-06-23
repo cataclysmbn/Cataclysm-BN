@@ -35,6 +35,22 @@
   },
   {
     "type": "GENERIC",
+    "id": "compact_reactor_assembly",
+    "name": { "str": "compact reactor assembly" },
+    "description": "A heavily shielded, vehicle-sized reactor package salvaged from a much larger nuclear core.  With enough supporting electronics and fuel, it could become the heart of a minireactor or plutonium generator.",
+    "weight": "38 kg",
+    "to_hit": -4,
+    "color": "light_cyan",
+    "symbol": ":",
+    "material": [ "superalloy", "ceramic", "lead" ],
+    "volume": "60 L",
+    "bashing": 6,
+    "category": "veh_parts",
+    "price": "2 kUSD",
+    "price_postapoc": "100 USD"
+  },
+  {
+    "type": "GENERIC",
     "id": "mountable_cooler",
     "name": { "str": "vehicle cooler" },
     "description": "A vehicle-mounted area cooler.",
@@ -235,5 +251,22 @@
     "category": "veh_parts",
     "price": "30 USD",
     "price_postapoc": "50 cent"
+  },
+  {
+    "type": "GENERIC",
+    "id": "vehicle_shower",
+    "name": { "str": "vehicle shower" },
+    "description": "A compact shower head and drain that can be attached to a water tank.",
+    "looks_like": "f_shower",
+    "weight": "2500 g",
+    "to_hit": -1,
+    "color": "light_gray",
+    "symbol": ";",
+    "material": [ "steel", "plastic" ],
+    "volume": "2 L",
+    "bashing": 2,
+    "category": "veh_parts",
+    "price": "60 USD",
+    "price_postapoc": "1 USD"
   }
 ]

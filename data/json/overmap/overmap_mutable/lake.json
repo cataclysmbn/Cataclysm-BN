@@ -26,5 +26,18 @@
       { "point": [ 0, 0, -4 ], "overmap": "empty_rock", "locations": [ "lake_water_cube" ] },
       { "point": [ 0, 0, -5 ], "overmap": "empty_rock", "locations": [ "lake_bed" ] }
     ]
+  },
+  {
+    "type": "overmap_special",
+    "id": "island_sand_column",
+    "locations": [ "lake_water_cube" ],
+    "occurrences": [ 0, 0 ],
+    "flags": [ "RESTRICTED" ],
+    "overmaps": [
+      { "point": [ 0, 0, -2 ], "overmap": "island_sand_column_north", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -3 ], "overmap": "island_sand_column_north", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -4 ], "overmap": "island_sand_column_north", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -5 ], "overmap": "island_sand_lakebed_north", "locations": [ "lake_bed" ] }
+    ]
   }
 ]
