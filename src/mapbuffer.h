@@ -756,76 +756,35 @@ class mapbuffer
         auto refresh_vehicle_registry_for_submap( const tripoint_abs_sm &p,
         mapbuffer_lookup_options options = {} ) -> void;
 
-        auto get_ter( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<ter_id>;
         auto set_ter( const tripoint_abs_ms &p, ter_id terrain,
         mapbuffer_lookup_options options = {} ) -> bool;
 
-        auto get_furn( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<furn_id>;
         auto set_furn( const tripoint_abs_ms &p, furn_id furn,
         mapbuffer_lookup_options options = {} ) -> bool;
         auto set_furn( const tripoint_abs_ms &p,
                        const mapbuffer_set_furn_options &options ) -> bool;
         auto veh_at( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> optional_vpart_position;
-        auto move_cost( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-        auto passable( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<bool>;
         auto valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
         mapbuffer_valid_move_options options = {} ) -> bool;
         auto climb_difficulty( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-        auto has_flag( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_ter( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_furn( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_vpart( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_furn_or_vpart( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag( ter_bitflags flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_ter( ter_bitflags flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_furn( ter_bitflags flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_ter_or_furn( ter_bitflags flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto passable( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<bool>;
         auto ter_vars( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
         auto furn_vars( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
-        auto furnname( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::string;
-
         auto get_trap( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<trap_id>;
-        auto set_trap( const tripoint_abs_ms &p, trap_id trap,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto creature_on_trap( Creature &critter, bool may_avoid = true ) -> void;
-
         auto get_radiation( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-        auto set_radiation( const tripoint_abs_ms &p, int radiation,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto adjust_radiation( const tripoint_abs_ms &p, int delta,
-        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-
         auto get_lum( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<std::uint8_t>;
-        auto set_lum( const tripoint_abs_ms &p, std::uint8_t luminance,
-        mapbuffer_lookup_options options = {} ) -> bool;
 
         auto get_temperature( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-        auto set_temperature( const tripoint_abs_ms &p, int temperature,
-        mapbuffer_lookup_options options = {} ) -> bool;
 
         auto get_field( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> field *;
@@ -837,6 +796,21 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> std::optional<time_duration>;
         auto get_field_intensity( const tripoint_abs_ms &p, const field_type_id &type,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto set_trap( const tripoint_abs_ms &p, trap_id trap,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto creature_on_trap( Creature &critter, bool may_avoid = true ) -> void;
+
+        auto set_radiation( const tripoint_abs_ms &p, int radiation,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto adjust_radiation( const tripoint_abs_ms &p, int delta,
+        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+
+        auto set_lum( const tripoint_abs_ms &p, std::uint8_t luminance,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto set_temperature( const tripoint_abs_ms &p, int temperature,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
         auto mod_field_age( const tripoint_abs_ms &p,
                             const mapbuffer_field_age_options &options ) -> std::optional<time_duration>;
         auto mod_field_intensity( const tripoint_abs_ms &p,
@@ -851,8 +825,6 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> bool;
         auto get_items( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> location_vector<item> *;
-        auto water_from( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> detached_ptr<item>;
         auto add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
         const mapbuffer_add_item_or_charges_options &options = {} ) -> detached_ptr<item>;
         auto add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,

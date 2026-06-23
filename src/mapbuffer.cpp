@@ -2810,17 +2810,6 @@ auto mapbuffer::refresh_vehicle_registry_for_submap( const tripoint_abs_sm &p,
     register_submap_vehicles( p, *sm );
 }
 
-auto mapbuffer::get_ter( const tripoint_abs_ms &p,
-                         const mapbuffer_lookup_options options ) -> std::optional<ter_id>
-{
-    const auto tile = lookup_tile( *this, p, options );
-    if( !tile ) {
-        return std::nullopt;
-    }
-
-    return tile->sm->get_ter( tile->local );
-}
-
 auto mapbuffer::set_ter( const tripoint_abs_ms &p, const ter_id terrain,
                          const mapbuffer_lookup_options options ) -> bool
 {
@@ -2837,17 +2826,6 @@ auto mapbuffer::set_ter( const tripoint_abs_ms &p, const ter_id terrain,
     tile->sm->set_ter( tile->local, terrain );
     invalidate_active_terrain_set_caches( p, old_id, terrain );
     return true;
-}
-
-auto mapbuffer::get_furn( const tripoint_abs_ms &p,
-                          const mapbuffer_lookup_options options ) -> std::optional<furn_id>
-{
-    const auto tile = lookup_tile( *this, p, options );
-    if( !tile ) {
-        return std::nullopt;
-    }
-
-    return tile->sm->get_furn( tile->local );
 }
 
 auto mapbuffer::set_furn( const tripoint_abs_ms &p, const furn_id furn,
@@ -2908,28 +2886,6 @@ auto mapbuffer::vehicle_part_at_loaded_tile( const tripoint_abs_ms &p ) -> optio
 
     std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
     return indexed_vehicle_part_at_unlocked( p );
-}
-
-auto mapbuffer::move_cost( const tripoint_abs_ms &p,
-                           const mapbuffer_lookup_options options ) -> std::optional<int>
-{
-    const auto tile = abs_tile_handle::fetch( *this, p );
-    if( !tile ) {
-        return std::nullopt;
-    }
-
-    return tile->move_cost();
-}
-
-auto mapbuffer::passable( const tripoint_abs_ms &p,
-                          const mapbuffer_lookup_options options ) -> std::optional<bool>
-{
-    const auto tile = abs_tile_handle::fetch( *this, p );
-    if( !tile ) {
-        return std::nullopt;
-    }
-
-    return tile->passable();
 }
 
 auto mapbuffer::valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
@@ -3060,82 +3016,92 @@ auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
     return std::max( 0, best_difficulty - blocks_movement );
 }
 
-auto mapbuffer::has_flag( const std::string &flag, const tripoint_abs_ms &p,
-                          const mapbuffer_lookup_options options ) -> bool
-{
-    return has_flag_ter_or_furn( flag, p, options );
-}
-
-auto mapbuffer::has_flag_ter( const std::string &flag, const tripoint_abs_ms &p,
-                              const mapbuffer_lookup_options options ) -> bool
+auto mapbuffer::get_lum( const tripoint_abs_ms &p,
+                         const mapbuffer_lookup_options options ) -> std::optional<std::uint8_t>
 {
     const auto tile = lookup_tile( *this, p, options );
-    return tile && tile->sm->get_ter( tile->local ).obj().has_flag( flag );
-}
-
-auto mapbuffer::has_flag_furn( const std::string &flag, const tripoint_abs_ms &p,
-                               const mapbuffer_lookup_options options ) -> bool
-{
-    const auto tile = lookup_tile( *this, p, options );
-    return tile && tile->sm->get_furn( tile->local ).obj().has_flag( flag );
-}
-
-auto mapbuffer::has_flag_vpart( const std::string &flag, const tripoint_abs_ms &p,
-                                const mapbuffer_lookup_options options ) -> bool
-{
-    const auto vp = veh_at( p, options );
-    return static_cast<bool>( vp.part_with_feature( flag, true ) );
-}
-
-auto mapbuffer::has_flag_furn_or_vpart( const std::string &flag, const tripoint_abs_ms &p,
-                                        const mapbuffer_lookup_options options ) -> bool
-{
-    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
     if( !tile ) {
-        return false;
+        return std::nullopt;
     }
-    if( tile->furn_obj().has_flag( flag ) ) {
-        return true;
-    }
-    return static_cast<bool>( vehicle_part_at_loaded_tile( p ).part_with_feature( flag, true ) );
+
+    return tile->sm->get_lum( tile->local );
 }
 
-auto mapbuffer::has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
-                                      const mapbuffer_lookup_options options ) -> bool
+auto mapbuffer::get_temperature( const tripoint_abs_ms &p,
+                                 const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    if( is_outside_pocket_dimension_bounds( p ) ) {
+        return std::nullopt;
+    }
+
+    const auto split = project_to<coords::sm>( p );
+    auto *const sm = get_submap( split, options );
+    if( sm == nullptr ) {
+        return std::nullopt;
+    }
+
+    return sm->get_temperature();
+}
+
+auto mapbuffer::get_field( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> field *
 {
     const auto tile = lookup_tile( *this, p, options );
-    return tile &&
-           ( tile->sm->get_ter( tile->local ).obj().has_flag( flag ) ||
-             tile->sm->get_furn( tile->local ).obj().has_flag( flag ) );
+    if( !tile ) {
+        return nullptr;
+    }
+
+    return &tile->sm->get_field( tile->local );
 }
 
-auto mapbuffer::has_flag( const ter_bitflags flag, const tripoint_abs_ms &p,
-                          const mapbuffer_lookup_options options ) -> bool
-{
-    return has_flag_ter_or_furn( flag, p, options );
-}
-
-auto mapbuffer::has_flag_ter( const ter_bitflags flag, const tripoint_abs_ms &p,
+auto mapbuffer::has_field_at( const tripoint_abs_ms &p,
                               const mapbuffer_lookup_options options ) -> bool
 {
     const auto tile = lookup_tile( *this, p, options );
-    return tile && tile->sm->get_ter( tile->local ).obj().has_flag( flag );
+    return tile && tile->sm->field_count > 0;
 }
 
-auto mapbuffer::has_flag_furn( const ter_bitflags flag, const tripoint_abs_ms &p,
-                               const mapbuffer_lookup_options options ) -> bool
+auto mapbuffer::get_field_entry( const tripoint_abs_ms &p, const field_type_id &type,
+                                 const mapbuffer_lookup_options options ) -> field_entry *
 {
-    const auto tile = lookup_tile( *this, p, options );
-    return tile && tile->sm->get_furn( tile->local ).obj().has_flag( flag );
+    if( !has_field_at( p, options ) ) {
+        return nullptr;
+    }
+
+    return get_field( p, options )->find_field( type );
 }
 
-auto mapbuffer::has_flag_ter_or_furn( const ter_bitflags flag, const tripoint_abs_ms &p,
-                                      const mapbuffer_lookup_options options ) -> bool
+auto mapbuffer::get_field_age( const tripoint_abs_ms &p, const field_type_id &type,
+                               const mapbuffer_lookup_options options ) -> std::optional<time_duration>
 {
-    const auto tile = lookup_tile( *this, p, options );
-    return tile &&
-           ( tile->sm->get_ter( tile->local ).obj().has_flag( flag ) ||
-             tile->sm->get_furn( tile->local ).obj().has_flag( flag ) );
+    if( !get_field( p, options ) ) {
+        return std::nullopt;
+    }
+
+    const auto *const field_ptr = get_field_entry( p, type, options );
+    return field_ptr == nullptr ? -1_turns : field_ptr->get_field_age();
+}
+
+auto mapbuffer::get_field_intensity( const tripoint_abs_ms &p, const field_type_id &type,
+                                     const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    if( !get_field( p, options ) ) {
+        return std::nullopt;
+    }
+
+    const auto *const field_ptr = get_field_entry( p, type, options );
+    return field_ptr == nullptr ? 0 : field_ptr->get_field_intensity();
+}
+
+auto mapbuffer::passable( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::optional<bool>
+{
+    const auto tile = abs_tile_handle::fetch( *this, p );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->passable();
 }
 
 auto mapbuffer::ter_vars( const tripoint_abs_ms &p,
@@ -3160,32 +3126,6 @@ auto mapbuffer::furn_vars( const tripoint_abs_ms &p,
     return &tile->sm->get_furn_vars( tile->local );
 }
 
-auto mapbuffer::furnname( const tripoint_abs_ms &p,
-                          const mapbuffer_lookup_options options ) -> std::string
-{
-    const auto tile = lookup_tile( *this, p, options );
-    if( !tile ) {
-        debugmsg( "Invalid tile at (%d, %d, %d)", p.x(), p.y(), p.z() );
-        return "null";
-    }
-    const auto sm = tile->sm;
-    const auto local = tile->local;
-    const furn_t &f = sm->get_furn( local ).obj();
-    if( f.has_flag( "PLANT" ) ) {
-        auto items = &sm->get_items( local );
-        for( auto it = items->begin(); it != items->end(); ++it ) {
-            if( ( *it )->is_seed() ) {
-                const std::string &plant = ( *it )->get_plant_name();
-                return string_format( "%s (%s)", f.name(), plant );
-            }
-        }
-        debugmsg( "Missing seed for plant at (%d, %d, %d)", p.x(), p.y(), p.z() );
-        return "null";
-    } else {
-        return f.name();
-    }
-}
-
 auto mapbuffer::get_trap( const tripoint_abs_ms &p,
                           const mapbuffer_lookup_options options ) -> std::optional<trap_id>
 {
@@ -3195,6 +3135,17 @@ auto mapbuffer::get_trap( const tripoint_abs_ms &p,
     }
 
     return tile->sm->get_trap( tile->local );
+}
+
+auto mapbuffer::get_radiation( const tripoint_abs_ms &p,
+                               const mapbuffer_lookup_options options ) -> std::optional<int>
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return std::nullopt;
+    }
+
+    return tile->sm->get_radiation( tile->local );
 }
 
 auto mapbuffer::set_trap( const tripoint_abs_ms &p, const trap_id trap,
@@ -3250,17 +3201,6 @@ auto mapbuffer::creature_on_trap( Creature &critter, const bool may_avoid ) -> v
     tr.trigger( bubble_pos, &critter );
 }
 
-auto mapbuffer::get_radiation( const tripoint_abs_ms &p,
-                               const mapbuffer_lookup_options options ) -> std::optional<int>
-{
-    const auto tile = lookup_tile( *this, p, options );
-    if( !tile ) {
-        return std::nullopt;
-    }
-
-    return tile->sm->get_radiation( tile->local );
-}
-
 auto mapbuffer::set_radiation( const tripoint_abs_ms &p, const int radiation,
                                const mapbuffer_lookup_options options ) -> bool
 {
@@ -3286,17 +3226,6 @@ auto mapbuffer::adjust_radiation( const tripoint_abs_ms &p, const int delta,
     return adjusted;
 }
 
-auto mapbuffer::get_lum( const tripoint_abs_ms &p,
-                         const mapbuffer_lookup_options options ) -> std::optional<std::uint8_t>
-{
-    const auto tile = lookup_tile( *this, p, options );
-    if( !tile ) {
-        return std::nullopt;
-    }
-
-    return tile->sm->get_lum( tile->local );
-}
-
 auto mapbuffer::set_lum( const tripoint_abs_ms &p, const std::uint8_t luminance,
                          const mapbuffer_lookup_options options ) -> bool
 {
@@ -3320,22 +3249,6 @@ auto mapbuffer::set_lum( const tripoint_abs_ms &p, const std::uint8_t luminance,
     return true;
 }
 
-auto mapbuffer::get_temperature( const tripoint_abs_ms &p,
-                                 const mapbuffer_lookup_options options ) -> std::optional<int>
-{
-    if( is_outside_pocket_dimension_bounds( p ) ) {
-        return std::nullopt;
-    }
-
-    const auto split = project_to<coords::sm>( p );
-    auto *const sm = get_submap( split, options );
-    if( sm == nullptr ) {
-        return std::nullopt;
-    }
-
-    return sm->get_temperature();
-}
-
 auto mapbuffer::set_temperature( const tripoint_abs_ms &p, const int temperature,
                                  const mapbuffer_lookup_options options ) -> bool
 {
@@ -3351,56 +3264,6 @@ auto mapbuffer::set_temperature( const tripoint_abs_ms &p, const int temperature
 
     sm->set_temperature( temperature );
     return true;
-}
-
-auto mapbuffer::get_field( const tripoint_abs_ms &p,
-                           const mapbuffer_lookup_options options ) -> field *
-{
-    const auto tile = lookup_tile( *this, p, options );
-    if( !tile ) {
-        return nullptr;
-    }
-
-    return &tile->sm->get_field( tile->local );
-}
-
-auto mapbuffer::has_field_at( const tripoint_abs_ms &p,
-                              const mapbuffer_lookup_options options ) -> bool
-{
-    const auto tile = lookup_tile( *this, p, options );
-    return tile && tile->sm->field_count > 0;
-}
-
-auto mapbuffer::get_field_entry( const tripoint_abs_ms &p, const field_type_id &type,
-                                 const mapbuffer_lookup_options options ) -> field_entry *
-{
-    if( !has_field_at( p, options ) ) {
-        return nullptr;
-    }
-
-    return get_field( p, options )->find_field( type );
-}
-
-auto mapbuffer::get_field_age( const tripoint_abs_ms &p, const field_type_id &type,
-                               const mapbuffer_lookup_options options ) -> std::optional<time_duration>
-{
-    if( !get_field( p, options ) ) {
-        return std::nullopt;
-    }
-
-    const auto *const field_ptr = get_field_entry( p, type, options );
-    return field_ptr == nullptr ? -1_turns : field_ptr->get_field_age();
-}
-
-auto mapbuffer::get_field_intensity( const tripoint_abs_ms &p, const field_type_id &type,
-                                     const mapbuffer_lookup_options options ) -> std::optional<int>
-{
-    if( !get_field( p, options ) ) {
-        return std::nullopt;
-    }
-
-    const auto *const field_ptr = get_field_entry( p, type, options );
-    return field_ptr == nullptr ? 0 : field_ptr->get_field_intensity();
 }
 
 auto mapbuffer::mod_field_age( const tripoint_abs_ms &p,
@@ -3519,68 +3382,6 @@ auto mapbuffer::get_items( const tripoint_abs_ms &p,
     }
 
     return &tile->sm->get_items( tile->local );
-}
-
-auto mapbuffer::water_from( const tripoint_abs_ms &p,
-                            const mapbuffer_lookup_options options ) -> detached_ptr<item>
-{
-    const auto tile = lookup_tile( *this, p, options );
-    if( !tile ) {
-        return detached_ptr<item>();
-    }
-
-    if( has_flag( "SALT_WATER", p ) ) {
-        return item::spawn( "salt_water", calendar::start_of_cataclysm, item::INFINITE_CHARGES );
-    }
-
-    auto sm = tile->sm;
-    auto local = tile->local;
-
-    const ter_id terrain_id = sm->get_ter( local );
-    if( terrain_id == t_sewage ) {
-        detached_ptr<item> ret = item::spawn( "water_sewage", calendar::start_of_cataclysm,
-                                              item::INFINITE_CHARGES );
-        ret->poison = rng( 1, 7 );
-        return ret;
-    }
-
-
-    // iexamine::water_source requires a valid liquid from this function.
-    if( terrain_id.obj().examine == &iexamine::water_source ) {
-        detached_ptr<item> ret = item::spawn( "water", calendar::start_of_cataclysm,
-                                              item::INFINITE_CHARGES );
-        int poison_chance = 0;
-        if( terrain_id.obj().has_flag( TFLAG_DEEP_WATER ) ) {
-            if( terrain_id.obj().has_flag( TFLAG_CURRENT ) ) {
-                poison_chance = 20;
-            } else {
-                poison_chance = 4;
-            }
-        } else {
-            if( terrain_id.obj().has_flag( TFLAG_CURRENT ) ) {
-                poison_chance = 10;
-            } else {
-                poison_chance = 3;
-            }
-        }
-        if( one_in( poison_chance ) ) {
-            ret->poison = rng( 1, 4 );
-        }
-        return ret;
-    }
-    const furn_t ob = sm->get_furn( local ).obj();
-    if( ob.examine == &iexamine::water_source ) {
-        return item::spawn( "water", calendar::start_of_cataclysm, item::INFINITE_CHARGES );
-    }
-    if( ob.examine == &iexamine::clean_water_source ||
-        terrain_id.obj().examine == &iexamine::clean_water_source ) {
-        return item::spawn( "water_clean", calendar::start_of_cataclysm, item::INFINITE_CHARGES );
-    }
-    if( ob.examine == &iexamine::liquid_source ) {
-        // Terrains have no "provides_liquids" to work with generic source
-        return item::spawn( ob.provides_liquids, calendar::turn, item::INFINITE_CHARGES );
-    }
-    return detached_ptr<item>();
 }
 
 auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
@@ -4424,9 +4225,10 @@ auto mapbuffer::has_nearby_fire( const tripoint_abs_ms &p, const int radius,
         if( field_entry != nullptr ) {
             return true;
         }
-        if( has_flag_ter_or_furn( "USABLE_FIRE", pt, options ) ) {
+        { auto h = abs_tile_handle::fetch_terrain_only( *this, pt );
+          if( h && h->has_flag_ter_or_furn( "USABLE_FIRE" ) ) {
             return true;
-        }
+        } }
     }
     return false;
 }
@@ -4436,9 +4238,10 @@ auto mapbuffer::has_nearby_table( const tripoint_abs_ms &p, const int radius,
 {
     for( const tripoint_abs_ms &pt : points_in_radius( p, radius ) ) {
         const auto vp = veh_at( pt, options );
-        if( has_flag( "FLAT_SURF", pt, options ) ) {
+        { auto h = abs_tile_handle::fetch_terrain_only( *this, pt );
+          if( h && h->has_flag_ter_or_furn( "FLAT_SURF" ) ) {
             return true;
-        }
+        } }
         if( vp && vp->vehicle().has_part( "FLAT_SURF" ) ) {
             return true;
         }
@@ -4451,9 +4254,10 @@ auto mapbuffer::has_nearby_chair( const tripoint_abs_ms &p, const int radius,
 {
     for( const tripoint_abs_ms &pt : points_in_radius( p, radius ) ) {
         const auto vp = veh_at( pt, options );
-        if( has_flag( "CAN_SIT", pt, options ) ) {
+        { auto h = abs_tile_handle::fetch_terrain_only( *this, pt );
+          if( h && h->has_flag_ter_or_furn( "CAN_SIT" ) ) {
             return true;
-        }
+        } }
         if( vp && vp->vehicle().has_part( "SEAT" ) ) {
             return true;
         }
@@ -4476,7 +4280,8 @@ auto mapbuffer::can_put_items( const tripoint_abs_ms &p,
 auto mapbuffer::can_put_items_ter_furn( const tripoint_abs_ms &p,
                                         const mapbuffer_lookup_options options ) -> bool
 {
-    return !has_flag( "NOITEM", p, options ) && !has_flag( "SEALED", p, options );
+    auto h = abs_tile_handle::fetch_terrain_only( *this, p );
+    return h && !h->has_flag( "NOITEM" ) && !h->has_flag( "SEALED" );
 }
 
 auto mapbuffer::dangerous_field_at( const tripoint_abs_ms &p,
@@ -4506,7 +4311,8 @@ auto mapbuffer::is_harvestable( const tripoint_abs_ms &p,
 auto mapbuffer::accessible_items( const tripoint_abs_ms &p,
                                   const mapbuffer_lookup_options options ) -> bool
 {
-    return !has_flag( "SEALED", p, options ) || has_flag( "LIQUIDCONT", p, options );
+    auto h = abs_tile_handle::fetch_terrain_only( *this, p );
+    return h && ( !h->has_flag( "SEALED" ) || h->has_flag( "LIQUIDCONT" ) );
 }
 
 auto mapbuffer::is_wall_adjacent( const tripoint_abs_ms &p,
@@ -4514,8 +4320,8 @@ auto mapbuffer::is_wall_adjacent( const tripoint_abs_ms &p,
 {
     for( const tripoint_abs_ms &pt : points_in_radius( p, 1 ) ) {
         if( pt != p ) {
-            const auto cost = move_cost( pt, options );
-            if( cost.has_value() && cost.value() == 0 ) {
+            auto h = abs_tile_handle::fetch( *this, pt );
+            if( h && h->move_cost() == 0 ) {
                 return true;
             }
         }
@@ -4529,12 +4335,10 @@ auto mapbuffer::is_flammable( const tripoint_abs_ms &p,
     if( flammable_items_at( p, 0, options ) ) {
         return true;
     }
-    if( has_flag( "FLAMMABLE", p, options ) ) {
+    { auto h = abs_tile_handle::fetch_terrain_only( *this, p );
+      if( h && ( h->has_flag( "FLAMMABLE" ) || h->has_flag( "FLAMMABLE_ASH" ) ) ) {
         return true;
-    }
-    if( has_flag( "FLAMMABLE_ASH", p, options ) ) {
-        return true;
-    }
+    } }
     if( get_field_intensity( p, fd_web, options ).value_or( 0 ) > 0 ) {
         return true;
     }
@@ -4776,8 +4580,8 @@ auto mapbuffer::features( const tripoint_abs_ms &p,
 auto mapbuffer::ranged_target_size( const tripoint_abs_ms &p,
                                     const mapbuffer_lookup_options options ) -> double
 {
-    const auto cost = move_cost( p, options );
-    if( cost.has_value() && cost.value() == 0 ) {
+    auto h = abs_tile_handle::fetch( *this, p );
+    if( h && h->move_cost() == 0 ) {
         return 1.0;
     }
     // No floor check in mapbuffer — return 0 for open air-like terrains
@@ -5120,15 +4924,15 @@ auto mapbuffer::make_rubble( const tripoint_abs_ms &p, const furn_id &rubble_typ
             set_furn( p, f_null, options );
         }
         // Leave the terrain alone unless it interferes with furniture placement
-        const auto cost = move_cost( p, options );
-        if( cost.has_value() && cost.value() == 0 && is_bashable_ter( p, true, options ) ) {
+        { auto h_mc = abs_tile_handle::fetch( *this, p );
+          if( h_mc && h_mc->move_cost() == 0 && is_bashable_ter( p, true, options ) ) {
             set_ter( p, floor_type, options );
-        }
+        } }
         // Check again for new terrain after potential destruction
-        const auto cost2 = move_cost( p, options );
-        if( cost2.has_value() && cost2.value() == 0 ) {
+        { auto h_mc2 = abs_tile_handle::fetch( *this, p );
+          if( h_mc2 && h_mc2->move_cost() == 0 ) {
             set_ter( p, floor_type, options );
-        }
+        } }
 
         set_furn( p, rubble_type, options );
     }

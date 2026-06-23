@@ -263,19 +263,25 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
 
     const auto tile_pos = project_to<coords::ms>( sm_pos ) + tripoint_rel_ms( 3, 4, 0 );
     const auto local_tile_pos = point_sm_ms( 3, 4 );
-    const auto terrain = buffer.get_ter( tile_pos, resident_only );
-    REQUIRE( terrain.has_value() );
-    CHECK( *terrain == ter_id( "t_rock" ) );
+    { auto h = abs_tile_handle::fetch( buffer, tile_pos );
+      REQUIRE( h );
+      CHECK( h->ter() == ter_id( "t_rock" ) ); }
     CHECK( buffer.set_ter( tile_pos, ter_id( "t_dirt" ), resident_only ) );
-    CHECK( buffer.get_ter( tile_pos, resident_only ) == ter_id( "t_dirt" ) );
+    { auto h = abs_tile_handle::fetch( buffer, tile_pos );
+      REQUIRE( h );
+      CHECK( h->ter() == ter_id( "t_dirt" ) ); }
     REQUIRE( buffer.ter_vars( tile_pos, resident_only ) != nullptr );
     buffer.ter_vars( tile_pos, resident_only )->set( "test_var", "terrain" );
     CHECK( sm->get_ter_vars( local_tile_pos ).get( "test_var" ) == "terrain" );
 
     const auto furniture = furn_str_id( "f_console_table" ).id();
-    CHECK( buffer.get_furn( tile_pos, resident_only ) == f_null );
+    { auto h = abs_tile_handle::fetch( buffer, tile_pos );
+      CHECK( h );
+      CHECK( h->furn() == f_null ); }
     CHECK( buffer.set_furn( tile_pos, furniture, resident_only ) );
-    CHECK( buffer.get_furn( tile_pos, resident_only ) == furniture );
+    { auto h = abs_tile_handle::fetch( buffer, tile_pos );
+      CHECK( h );
+      CHECK( h->furn() == furniture ); }
     REQUIRE( buffer.furn_vars( tile_pos, resident_only ) != nullptr );
     buffer.furn_vars( tile_pos, resident_only )->set( "test_var", "furniture" );
     CHECK( sm->get_furn_vars( local_tile_pos ).get( "test_var" ) == "furniture" );
@@ -309,7 +315,9 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
         .lookup = resident_only,
     } ) );
     REQUIRE( buffer.get_field_entry( tile_pos, fd_fire, resident_only ) != nullptr );
-    CHECK( buffer.has_field_at( tile_pos, resident_only ) );
+    { auto h = abs_tile_handle::fetch( buffer, tile_pos );
+      CHECK( h );
+      CHECK( h->has_field_at() ); }
     CHECK( sm->field_count == 1 );
     REQUIRE_FALSE( sm->field_cache.empty() );
     CHECK( sm->field_cache.back() == local_tile_pos );
@@ -341,7 +349,9 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     CHECK_FALSE( buffer.remove_field( tile_pos, fd_fire, resident_only ) );
     CHECK_FALSE( buffer.has_field_at( tile_pos, resident_only ) );
     CHECK( sm->field_count == 0 );
-    CHECK( buffer.get_items( tile_pos, resident_only ) == &sm->get_items( local_tile_pos ) );
+    { auto h = abs_tile_handle::fetch( buffer, tile_pos );
+      CHECK( h );
+      CHECK( &h->items() == &sm->get_items( local_tile_pos ) ); }
     CHECK( sm->get_items( local_tile_pos ).empty() );
     CHECK( buffer.set_furn( tile_pos, f_null, resident_only ) );
     auto aspirin_stack = item::spawn( "aspirin", calendar::start_of_cataclysm,
@@ -418,7 +428,9 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
         .security = 2,
         .lookup = resident_only,
     } ) != nullptr );
-    CHECK( buffer.get_ter( tile_pos, resident_only ) == t_console );
+    { auto h = abs_tile_handle::fetch( buffer, tile_pos );
+      CHECK( h );
+      CHECK( h->ter() == t_console ); }
     CHECK( buffer.has_computer( tile_pos, resident_only ) );
     CHECK( buffer.partial_con_at( tile_pos, resident_only ) == nullptr );
     CHECK( buffer.partial_con_set( tile_pos, std::make_unique<partial_con>(
@@ -431,10 +443,11 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     const auto missing_sm = sm_pos + tripoint_rel_sm( 10, 0, 0 );
     const auto missing_tile = project_to<coords::ms>( missing_sm );
     CHECK( buffer.get_submap( missing_sm, resident_only ) == nullptr );
-    CHECK_FALSE( buffer.get_ter( missing_tile, resident_only ).has_value() );
+    CHECK_FALSE( abs_tile_handle::fetch( buffer, missing_tile ) );
     CHECK_FALSE( buffer.set_ter( missing_tile, ter_id( "t_dirt" ), resident_only ) );
     CHECK( buffer.ter_vars( missing_tile, resident_only ) == nullptr );
-    CHECK_FALSE( buffer.get_furn( missing_tile, resident_only ).has_value() );
+    { auto h = abs_tile_handle::fetch( buffer, missing_tile );
+      CHECK_FALSE( h ); }
     CHECK_FALSE( buffer.set_furn( missing_tile, furniture, resident_only ) );
     CHECK( buffer.furn_vars( missing_tile, resident_only ) == nullptr );
     CHECK_FALSE( buffer.get_trap( missing_tile, resident_only ).has_value() );
@@ -447,7 +460,7 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
     CHECK_FALSE( buffer.get_temperature( missing_tile, resident_only ).has_value() );
     CHECK_FALSE( buffer.set_temperature( missing_tile, 42, resident_only ) );
     CHECK( buffer.get_field( missing_tile, resident_only ) == nullptr );
-    CHECK_FALSE( buffer.has_field_at( missing_tile, resident_only ) );
+    CHECK_FALSE( abs_tile_handle::fetch( buffer, missing_tile ) );
     CHECK( buffer.get_field_entry( missing_tile, fd_fire, resident_only ) == nullptr );
     CHECK_FALSE( buffer.get_field_age( missing_tile, fd_fire, resident_only ).has_value() );
     CHECK_FALSE( buffer.get_field_intensity( missing_tile, fd_fire, resident_only ).has_value() );
@@ -467,7 +480,7 @@ TEST_CASE( "mapbuffer_resident_lookup_uses_absolute_coordinates" )
         .lookup = resident_only,
     } ) );
     CHECK_FALSE( buffer.remove_field( missing_tile, fd_fire, resident_only ) );
-    CHECK( buffer.get_items( missing_tile, resident_only ) == nullptr );
+    CHECK_FALSE( abs_tile_handle::fetch( buffer, missing_tile ) );
     auto missing_item = item::spawn( "rock" );
     auto unplaced_item = buffer.add_item( missing_tile, std::move( missing_item ), resident_only );
     CHECK( unplaced_item != nullptr );
@@ -550,7 +563,7 @@ TEST_CASE( "mapbuffer_load_or_generate_lookup_is_explicit" )
     submap *const generated = buffer.get_submap( sm_pos, load_or_generate );
     REQUIRE( generated != nullptr );
     CHECK( buffer.lookup_submap_in_memory( sm_pos ) == generated );
-    CHECK( buffer.get_ter( project_to<coords::ms>( sm_pos ), resident_only ).has_value() );
+    CHECK( abs_tile_handle::fetch( buffer, project_to<coords::ms>( sm_pos ) ).has_value() );
 }
 
 TEST_CASE( "creature_mapbuffer_cache_tracks_dimension_registry_slots" )

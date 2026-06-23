@@ -473,14 +473,14 @@ auto map_stack::clear() -> std::vector<detached_ptr<item>>
 units::volume map_stack::max_volume() const
 {
     if( myorigin != nullptr ) {
-        const auto furniture = myorigin->get_furn( location, resident_item_lookup() );
-        if( furniture && *furniture != f_null ) {
-            return furniture->obj().max_volume;
-        }
-        const auto terrain = myorigin->get_ter( location, resident_item_lookup() );
-        if( terrain ) {
-            return terrain->obj().max_volume;
-        }
+        { auto h = abs_tile_handle::fetch( *myorigin, location );
+          if( h && h->furn() != f_null ) {
+            return h->furn_obj().max_volume;
+        } }
+        { auto h = abs_tile_handle::fetch_terrain_only( *myorigin, location );
+          if( h ) {
+            return h->ter_obj().max_volume;
+        } }
         return 0_ml;
     }
     const auto local = local_location();
@@ -6870,7 +6870,8 @@ bool map::has_field_at( const tripoint_bub_ms &p, bool check_bounds )
         get_mapbuffer().is_outside_pocket_dimension_bounds( map_local_to_abs( *this, p ) ) ) {
         return false;
     }
-    return get_mapbuffer().has_field_at( map_local_to_abs( *this, p ), resident_item_lookup() );
+    auto h = abs_tile_handle::fetch( get_mapbuffer(), map_local_to_abs( *this, p ) );
+    return h && h->has_field_at();
 }
 
 field_entry *map::get_field( const tripoint_bub_ms &p, const field_type_id &type )
