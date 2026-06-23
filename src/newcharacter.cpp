@@ -80,6 +80,7 @@ static const std::string flag_CITY_START( "CITY_START" );
 static const std::string flag_SECRET( "SECRET" );
 
 static const std::string type_hair_style( "hair_style" );
+static const std::string type_hair_color( "hair_color" );
 
 static const flag_id json_flag_no_auto_equip( "no_auto_equip" );
 static const flag_id json_flag_auto_wield( "auto_wield" );
@@ -487,7 +488,7 @@ void Character::clear_cosmetic_traits( std::string mutation_type, trait_id new_t
 namespace
 {
 
-void set_cosmetic_trait( Character &c, std::string mutation_type, const trait_id &trait )
+auto set_cosmetic_trait( Character &c, std::string mutation_type, const trait_id &trait ) -> void
 {
     if( trait.is_valid() ) {
         c.clear_cosmetic_traits( mutation_type, trait );
@@ -495,6 +496,43 @@ void set_cosmetic_trait( Character &c, std::string mutation_type, const trait_id
         if( !c.has_trait( trait ) ) {
             c.toggle_trait( trait );
         }
+    }
+}
+
+auto selected_cosmetic_trait( const Character &c,
+                              const std::string &mutation_type ) -> std::optional<trait_id>
+{
+    const auto mutations = get_mutations_in_type( mutation_type );
+    const auto has_trait = std::bind_front( &Character::has_trait, &c );
+    const auto selected = std::ranges::find_if( mutations, has_trait );
+    return selected != mutations.end() ? std::optional<trait_id>( *selected ) : std::nullopt;
+}
+
+auto restore_cosmetic_trait( Character &c, const std::string &mutation_type,
+                             const std::optional<trait_id> &trait ) -> void
+{
+    if( trait && g->scen->traitquery( *trait ) ) {
+        set_cosmetic_trait( c, mutation_type, *trait );
+    }
+}
+
+auto default_hair_style_for( const avatar &u ) -> trait_id
+{
+    static const auto male_default_hair_style = trait_id( "hair_medium" );
+    static const auto female_default_hair_style = trait_id( "hair_long" );
+    return u.male ? male_default_hair_style : female_default_hair_style;
+}
+
+auto set_default_hair_style( avatar &u ) -> void
+{
+    set_cosmetic_trait( u, type_hair_style, default_hair_style_for( u ) );
+}
+
+auto restore_or_default_hair_style( avatar &u, const std::optional<trait_id> &hair_style ) -> void
+{
+    restore_cosmetic_trait( u, type_hair_style, hair_style );
+    if( !selected_cosmetic_trait( u, type_hair_style ) ) {
+        set_default_hair_style( u );
     }
 }
 
@@ -528,16 +566,12 @@ bool avatar::create( character_type type, const std::string &tempname )
     int tab = 0;
     points_left points = points_left();
 
-    static auto male_default_hair_style = trait_id( "hair_medium" );
-    static auto female_default_hair_style = trait_id( "hair_long" );
-
     switch( type ) {
         case character_type::CUSTOM:
             // We can randomize cosmetics for a custom character, it's fine. Not sure I like the idea of a "default" appearance
             randomize_cosmetics();
             // don't make them bald!
-            set_cosmetic_trait( *this, type_hair_style,
-                                male ? male_default_hair_style : female_default_hair_style );
+            set_default_hair_style( *this );
             break;
         case character_type::RANDOM:
             //random scenario, default name if exist
@@ -4242,6 +4276,9 @@ void reset_scenario( avatar &u, const scenario *scen )
     const profession_id &default_prof = *std::min_element( permitted.begin(), permitted.end(),
                                         psorter );
 
+    const auto previous_hair_style = selected_cosmetic_trait( u, type_hair_style );
+    const auto previous_hair_color = selected_cosmetic_trait( u, type_hair_color );
+
     u.random_start_location = true;
     u.str_max = 8;
     u.dex_max = 8;
@@ -4260,6 +4297,8 @@ void reset_scenario( avatar &u, const scenario *scen )
     u.clear_skills();
     u.clear_bionics();
     newcharacter::add_traits( u );
+    restore_cosmetic_trait( u, type_hair_color, previous_hair_color );
+    restore_or_default_hair_style( u, previous_hair_style );
 }
 
 points_left::points_left()
