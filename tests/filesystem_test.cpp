@@ -55,7 +55,7 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
     std::string writebuf2 = s2;
     std::string readbuf;
     const auto reader = [&readbuf]( std::istream & s ) {
-        s >> readbuf;
+        safe_getline( s, readbuf );
     };
     const auto writer = [&writebuf]( std::ostream & s ) {
         s << writebuf;
