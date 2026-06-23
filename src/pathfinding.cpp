@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <queue>
 #include <ranges>
@@ -21,6 +22,9 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+
+// Static member definitions
+std::recursive_mutex Pathfinding::d_maps_mutex;
 
 static constexpr std::array<point_rel_ms, 8> DIRS_2D = {
     point_rel_ms::north_east(),
@@ -250,12 +254,28 @@ point_rel_ms Pathfinding::map_pos_offset( const point_abs_ms &p ) const
 float &Pathfinding::p_at( const point_abs_ms &p )
 {
     const auto offset = this->map_pos_offset( p );
-    return this->p_map[offset.y() * this->map_x_ + offset.x()];
+    const int idx = offset.y() * this->map_x_ + offset.x();
+    if( idx < 0 || idx >= static_cast<int>( this->p_map.size() ) ) {
+        debugmsg( "p_at OOB: p=(%d,%d) origin=(%d,%d) offset=(%d,%d) mx=%d my=%d idx=%d size=%zu",
+                  p.x(), p.y(), this->origin.x(), this->origin.y(),
+                  offset.x(), offset.y(), this->map_x_, this->map_y_,
+                  idx, this->p_map.size() );
+        return this->p_map[0];
+    }
+    return this->p_map[idx];
 };
 float &Pathfinding::g_at( const point_abs_ms &p )
 {
     const auto offset = this->map_pos_offset( p );
-    return this->g_map[offset.y() * this->map_x_ + offset.x()];
+    const int idx = offset.y() * this->map_x_ + offset.x();
+    if( idx < 0 || idx >= static_cast<int>( this->g_map.size() ) ) {
+        debugmsg( "g_at OOB: p=(%d,%d) origin=(%d,%d) offset=(%d,%d) mx=%d my=%d idx=%d size=%zu",
+                  p.x(), p.y(), this->origin.x(), this->origin.y(),
+                  offset.x(), offset.y(), this->map_x_, this->map_y_,
+                  idx, this->g_map.size() );
+        return this->g_map[0];
+    }
+    return this->g_map[idx];
 };
 float Pathfinding::get_f_unbiased( const point_abs_ms &p )
 {
@@ -273,25 +293,65 @@ Pathfinding::State &Pathfinding::tile_state_at( const point_abs_ms &p )
     return this->tile_state[( offset.y() + 1 ) * ( this->map_x_ + 2 ) + ( offset.x() + 1 )];
 }
 /// Pathfinding: d-map wide changes
-void Pathfinding::produce_d_map( mapbuffer &buffer, point_abs_ms dest, int z, PathfindingSettings settings )
+void Pathfinding::produce_d_map( mapbuffer &buffer,
+    point_abs_ms from, point_abs_ms dest, int z,
+    PathfindingSettings settings, const RouteSettings &route_settings )
 {
-    if( Pathfinding::d_maps_store.empty() ) {
-        std::unique_ptr<Pathfinding> d_map = std::make_unique<Pathfinding>( buffer, g_mapsize_x, g_mapsize_y );
-        Pathfinding::d_maps_store.push_back( std::move( d_map ) );
-    }
+    // Size the grid to the bounding box of the route endpoints plus a
+    // search-radius margin.  This ensures the grid covers all tiles the
+    // A* expansion might visit, whether the route is across a tiny portal
+    // island or a large merged (bubble + base) island.
+    const point_abs_ms min_point(
+        std::min( from.x(), dest.x() ),
+        std::min( from.y(), dest.y() ) );
+    const point_abs_ms max_point(
+        std::max( from.x(), dest.x() ),
+        std::max( from.y(), dest.y() ) );
 
-    std::unique_ptr<Pathfinding> d_map = std::move( Pathfinding::d_maps_store.back() );
-    Pathfinding::d_maps_store.pop_back();
+    // Margin sized to the reality bubble extent.  The bubble is the largest
+    // single load request; overlapping requests merge into larger islands,
+    // but the route is bounded by the island's size which is at most a
+    // few bubble-widths.  Using g_mapsize_x/y gives a safe overestimate
+    // while keeping the grid manageable.
+    // TODO: Query the simulated island's actual bounding box for tight sizing.
+
+    const point_abs_ms grid_min(
+        min_point.x() - g_mapsize_x,
+        min_point.y() - g_mapsize_y );
+    const point_abs_ms grid_max(
+        max_point.x() + g_mapsize_x,
+        max_point.y() + g_mapsize_y );
+
+    const int mx = grid_max.x() - grid_min.x() + 1;
+    const int my = grid_max.y() - grid_min.y() + 1;
+
+    // Reuse a blank d-map with matching dimensions, or create one.
+    auto store_it = std::ranges::find_if( Pathfinding::d_maps_store,
+    [mx, my]( auto &m ) {
+        return m->map_x_ == mx && m->map_y_ == my;
+    } );
+
+    std::unique_ptr<Pathfinding> d_map;
+    if( store_it != Pathfinding::d_maps_store.end() ) {
+        d_map = std::move( *store_it );
+        // Erase without preserving order (swap-pop).
+        std::swap( *store_it, Pathfinding::d_maps_store.back() );
+        Pathfinding::d_maps_store.pop_back();
+    } else {
+        d_map = std::make_unique<Pathfinding>( buffer, mx, my );
+    }
 
     d_map->dest = dest;
     d_map->z = z;
-    d_map->origin = point_abs_ms::zero();
+    d_map->origin = grid_min;
     d_map->settings = settings;
+    d_map->domain = Pathfinding::MapDomain::ABSOLUTE_DOMAIN;
 
     Pathfinding::d_maps.push_back( std::move( d_map ) );
 }
 void Pathfinding::clear_d_maps()
 {
+    std::lock_guard<std::recursive_mutex> lock( Pathfinding::d_maps_mutex );
     for( auto &map : Pathfinding::d_maps ) {
         map->reset_maps();
         map->reset_tile_state();
@@ -309,6 +369,7 @@ void Pathfinding::clear_d_maps()
 void Pathfinding::clear_pool()
 {
     clear_d_maps();
+    std::lock_guard<std::recursive_mutex> lock( Pathfinding::d_maps_mutex );
     Pathfinding::d_maps_store.clear();
 }
 void Pathfinding::mark_dirty_z_cache()
@@ -910,16 +971,23 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_2d(
         return std::vector<tripoint_abs_ms> { tripoint_abs_ms( from, z ), tripoint_abs_ms( to, z ) };
     }
 
+    // Cache hit: same destination, z-level, and settings, AND the grid
+    // covers the start point.
+    std::lock_guard<std::recursive_mutex> lock( Pathfinding::d_maps_mutex );
     auto d_map_it = std::ranges::find_if(
                         Pathfinding::d_maps,
-    [&to, &path_settings, z]( auto & map ) {
-        return map->dest == to && map->z == z && map->settings == path_settings;
+    [&from, &to, &path_settings, z]( auto & map ) {
+        return map->dest == to && map->z == z && map->settings == path_settings
+               && map->in_bounds( from );
     } );
 
     Pathfinding *d_map;
     if( d_map_it == Pathfinding::d_maps.end() ) {
-        Pathfinding::produce_d_map( buffer, to, z, path_settings );
-        d_map = Pathfinding::d_maps.back().get();
+        Pathfinding::produce_d_map( buffer, from, to, z, path_settings, route_settings );
+        {
+            std::lock_guard<std::recursive_mutex> lock( Pathfinding::d_maps_mutex );
+            d_map = Pathfinding::d_maps.back().get();
+        }
     } else {
         d_map = d_map_it->get();
     }

@@ -4,6 +4,7 @@
 #include <cstring>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <unordered_map>
@@ -222,6 +223,10 @@ class Pathfinding
         // Global state: memoized dijikstra d_maps. Transfer to `d_maps_store` every game turn.
         static std::vector<std::unique_ptr<Pathfinding>> d_maps;
 
+        // Guards d_maps and d_maps_store against concurrent access from
+        // parallel monster planning (monmove parallel_for_chunked).
+        static std::recursive_mutex d_maps_mutex;
+
         // Per-dimension z-level transition caches.
         struct dimension_z_cache {
             point_abs_ms z_area;
@@ -293,7 +298,10 @@ class Pathfinding
         static std::unordered_map<point_abs_ms, ZLevelChangeOpenAirPair> &get_z_cache_open_air(
             const dimension_id &dim, const int z );
 
-        static void produce_d_map( mapbuffer &buffer, point_abs_ms dest, int z, PathfindingSettings settings );
+        static void produce_d_map( mapbuffer &buffer,
+                                   point_abs_ms from, point_abs_ms dest, int z,
+                                   PathfindingSettings settings,
+                                   const RouteSettings &route_settings );
 
         // Get `p`-value at `p`
         float &p_at( const point_abs_ms &p );

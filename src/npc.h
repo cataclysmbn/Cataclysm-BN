@@ -1300,7 +1300,7 @@ class npc : public player
         bool has_new_items = false; // If true, we have something new and should re-equip
         int worst_item_value = 0; // The value of our least-wanted item
 
-        std::vector<tripoint_bub_ms> path; // Our movement plans
+        std::vector<tripoint_abs_ms> path; // Our movement plans
 
         // Personality & other defining characteristics
         std::string companion_mission_role_id; //Set mission source or squad leader for a patrol

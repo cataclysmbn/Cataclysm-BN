@@ -73,6 +73,7 @@
 #include "ret_val.h"
 #include "rng.h"
 #include "sounds.h"
+#include "pathfinding.h"
 #include "stomach.h"
 #include "translations.h"
 #include "units.h"
@@ -319,7 +320,7 @@ tripoint_bub_ms npc::good_escape_direction( bool include_pos )
         if( retreat_target && *retreat_target != abs_pos() ) {
             update_path( abs_to_bub( tripoint_abs_ms( *retreat_target ) ) );
             if( !path.empty() ) {
-                return path[0];
+                return abs_to_bub( path[0] );
             }
         }
     }
@@ -1435,7 +1436,7 @@ void npc::execute_action( npc_action action )
             // Try to find the last destination
             // This is mount point, not actual position
             point last_dest( INT_MIN, INT_MIN );
-            if( !path.empty() && veh_pointer_or_null( here.veh_at( path[path.size() - 1] ) ) == veh ) {
+            if( !path.empty() && veh_pointer_or_null( here.veh_at( abs_to_bub( path[path.size() - 1] ) ) ) == veh ) {
                 last_dest = vp->mount().xy().raw();
             }
 
@@ -2535,43 +2536,48 @@ bool npc::aim()
 bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool force )
 {
     ZoneScopedN( "npc_update_path" );
-    ZoneValue( rl_dist( bub_pos(), p ) );
+    const tripoint_abs_ms abs_p = bub_to_abs( p );
+    ZoneValue( rl_dist( abs_pos(), abs_p ) );
 
-    if( p == bub_pos() ) {
+    if( abs_p == abs_pos() ) {
         path.clear();
         return true;
     }
 
-    while( !path.empty() && path[0] == bub_pos() ) {
+    while( !path.empty() && path[0] == abs_pos() ) {
         path.erase( path.begin() );
     }
 
     if( !path.empty() ) {
         const auto &last = path[path.size() - 1];
-        if( last == p && ( path[0].z() != bub_pos().z()
-                           || rl_dist( path[0], bub_pos() ) <= 1 ) ) {
+        if( last == abs_p && ( path[0].z() != abs_pos().z()
+                               || rl_dist( path[0], abs_pos() ) <= 1 ) ) {
             // Our path already leads to that point, no need to recalculate
             return true;
         }
     }
 
-    auto new_path = [&]() {
+    auto new_path = [&]() -> std::vector<tripoint_abs_ms> {
         ZoneScopedN( "npc_update_path_route" );
-        return get_map().route( bub_pos(), p, get_legacy_pathfinding_settings( no_bashing ),
-                                get_legacy_path_avoid() );
+        auto &pf_buffer = MAPBUFFER_REGISTRY.get( get_dimension() );
+        const auto pair = get_pathfinding_pair( no_bashing );
+        return Pathfinding::route( pf_buffer, abs_pos(), abs_p,
+                                   pair.first, pair.second );
     }
     ();
     if( new_path.empty() ) {
         if( !ai_cache.sound_alerts.empty() ) {
             ai_cache.sound_alerts.erase( ai_cache.sound_alerts.begin() );
             add_msg( m_debug, "failed to path to sound alert %d,%d,%d->%d,%d,%d",
-                     bub_pos().x(), bub_pos().y(), bub_pos().z(), p.x(), p.y(), p.z() );
+                     abs_pos().x(), abs_pos().y(), abs_pos().z(),
+                     abs_p.x(), abs_p.y(), abs_p.z() );
         }
         add_msg( m_debug, "Failed to path %d,%d,%d->%d,%d,%d",
-                 bub_pos().x(), bub_pos().y(), bub_pos().z(), p.x(), p.y(), p.z() );
+                 abs_pos().x(), abs_pos().y(), abs_pos().z(),
+                 abs_p.x(), abs_p.y(), abs_p.z() );
     }
 
-    while( !new_path.empty() && new_path[0] == bub_pos() ) {
+    while( !new_path.empty() && new_path[0] == abs_pos() ) {
         new_path.erase( new_path.begin() );
     }
 
@@ -2881,7 +2887,7 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
 
 void npc::move_to_next()
 {
-    while( !path.empty() && bub_pos() == path[0] ) {
+    while( !path.empty() && abs_pos() == path[0] ) {
         path.erase( path.begin() );
     }
 
@@ -2892,8 +2898,8 @@ void npc::move_to_next()
         return;
     }
 
-    move_to( path[0] );
-    if( !path.empty() && bub_pos() == path[0] ) { // Move was successful
+    move_to( abs_to_bub( path[0] ) );
+    if( !path.empty() && abs_pos() == path[0] ) { // Move was successful
         path.erase( path.begin() );
     }
 }
@@ -3348,7 +3354,7 @@ void npc::pick_up_item()
                       get_map().obstructed_by_vehicle_rotation( bub_pos(), wanted_item_pos );
     if( cant_reach && !path.empty() ) {
         add_msg( m_debug, "Moving; [%d, %d, %d] => [%d, %d, %d]",
-                 bub_pos().x(), bub_pos().y(), bub_pos().z(), path[0].x(), path[0].y(), path[0].z() );
+                 abs_pos().x(), abs_pos().y(), abs_pos().z(), path[0].x(), path[0].y(), path[0].z() );
 
         move_to_next();
         return;
@@ -4378,8 +4384,8 @@ void npc::look_for_player( const Character &sought )
     }
 
     if (!path.empty()) {
-        const tripoint_bub_ms &dest = path[path.size() - 1];
-        if( !sees( dest ) ) {
+        const tripoint_abs_ms &dest = path[path.size() - 1];
+        if( !sees( abs_to_bub( dest ) ) ) {
             move_to_next();
             return;
         }
@@ -4627,10 +4633,13 @@ void npc::go_to_omt_destination()
     }
     {
         ZoneScopedN( "npc_goto_destination_route" );
-        path = here.route( bub_pos(), centre_sub, get_legacy_pathfinding_settings(),
-                           get_legacy_path_avoid() );
+        const tripoint_abs_ms abs_centre = bub_to_abs( centre_sub );
+        auto &pf_buffer = MAPBUFFER_REGISTRY.get( get_dimension() );
+        const auto pair = get_pathfinding_pair();
+        path = Pathfinding::route( pf_buffer, abs_pos(), abs_centre,
+                                   pair.first, pair.second );
     }
-    while( !path.empty() && path.front() == bub_pos() ) {
+    while( !path.empty() && path.front() == abs_pos() ) {
         path.erase( path.begin() );
     }
     add_msg( m_debug, "%s going %s->%s", name, omt_pos.to_string(), goal.to_string() );

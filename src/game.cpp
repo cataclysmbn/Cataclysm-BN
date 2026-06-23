@@ -13684,13 +13684,8 @@ void game::resize_reality_bubble_to( int new_size )
         critter_tracker->rebuild_cache();
     }
 
-    // NPC positions are stored as absolute coordinates and do not need re-anchoring
-    // when the bubble shifts. Clear paths since local-coordinate routes are now stale.
-    {
-        std::ranges::for_each( active_npc, []( const auto & n ) {
-            n->path.clear();
-        } );
-    }
+    // NPC paths are stored as absolute coordinates and remain valid after a
+    // bubble shift — the world does not move, only the player's view does.
 
     // Flush the load/eviction diff immediately so the first boundary crossing
     // after resize doesn't stall on a bulk eviction of the old bubble's submaps.
