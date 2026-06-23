@@ -948,14 +948,15 @@ body_part_set item::get_covered_body_parts( const side s ) const
 {
     body_part_set res;
 
-    if( is_gun() ) {
-        // Currently only used for guns with the should strap mod, other guns might
-        // go on another bodypart.
-        res.set( bodypart_str_id( "torso" ) );
-    }
-
     const islot_armor *armor = find_armor_data();
     if( armor == nullptr ) {
+        // Mods currently cannot set armor data
+        // So for the two strap mods, force it to use torso
+        // But as there are worn guns now, this is inapplicable to all guns
+        // Only those without armor data
+        if( is_gun() ) {
+            res.set( bodypart_str_id( "torso" ) );
+        }
         return res;
     }
 

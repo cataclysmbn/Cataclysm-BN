@@ -53,7 +53,8 @@
   },
   {
     "id": "CONSTRUCTION_SPEED",
-    "type": "enchantment_value"
+    "type": "enchantment_value",
+    "suffixes": [ "CON", "VEH" ]
   },
   {
     "id": "METABOLISM",
@@ -265,6 +266,7 @@
       "THROW",
       "MELEE",
       "BASHING",
+      "CUTTING",
       "DODGE",
       "STABBING",
       "UNARMED"
@@ -300,6 +302,7 @@
       "THROW",
       "MELEE",
       "BASHING",
+      "CUTTING",
       "DODGE",
       "STABBING",
       "UNARMED"

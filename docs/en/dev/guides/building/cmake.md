@@ -176,7 +176,7 @@ There's multiple predefined [build presets](https://cmake.org/cmake/help/latest/
 
 ```sh
 cmake --preset linux-slim
-cmake --build build --preset linux-slim --target cataclysm-bn-tiles
+cmake --build --preset linux-slim --target cataclysm-bn-tiles
 ```
 
 This will place the executables into `out/build/linux-slim/`.
@@ -188,13 +188,13 @@ This will place the executables into `out/build/linux-slim/`.
 > You can build multiple targets at once with:
 >
 > ```sh
-> cmake --build build --preset linux-slim --target cataclysm-bn-tiles cata_test-tiles
+> cmake --build --preset linux-slim --target cataclysm-bn-tiles cata_test-tiles
 > ```
 >
 > Or limit maximum number of threads with `--parallel` option:
 >
 > ```sh
-> cmake --build build --preset linux-slim --target cataclysm-bn-tiles --parallel 4
+> cmake --build --preset linux-slim --target cataclysm-bn-tiles --parallel 4
 > ```
 
 #### Build without Presets
@@ -202,18 +202,18 @@ This will place the executables into `out/build/linux-slim/`.
 To build CataclysmBN out of source:
 
 ```sh
-mkdir build
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+mkdir -p out/build/custom
+cmake -B out/build/custom -DCMAKE_BUILD_TYPE=Release
+cmake --build out/build/custom
 ```
 
-The above example creates a build directory inside the source directory, but that's not required -
-you can just as easily create it in a completely different location.
+The above example creates a build directory under `out/build/`, but that's not required - you can
+just as easily create it in a completely different location.
 
 To install CataclysmBN after building (as root using su or sudo if necessary):
 
 ```sh
-cmake --install build
+cmake --install out/build/custom
 ```
 
 ### Creating Distribution Packages
@@ -285,15 +285,15 @@ tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
 To change build options, you can either pass the options on the command line:
 
 ```sh
-cmake .. -DOPTION_NAME=option_value
+cmake -B out/build/custom -DOPTION_NAME=option_value
 ```
 
 Or use either the `ccmake` or `cmake-gui` front-ends, which display all options and their cached
 values on a console and graphical UI, respectively.
 
 ```sh
-ccmake ..
-cmake-gui ..
+ccmake out/build/custom
+cmake-gui -S . -B out/build/custom
 ```
 
 ## Build for Visual Studio / MSBuild
@@ -343,24 +343,22 @@ set SDL2MIXERDIR=C:\path\to\SDL2_mixer-devel-2.0.4-VC
 
 (for powershell the syntax is `$env:SDL2DIR="C:\path\to\SDL2-devel-2.0.9-VC"`).
 
-Make a build directory and run cmake configuration step
+Run the CMake configuration step
 
 ```sh
 cd <path to cbn sources>
-mkdir build
-cmake -B build -DTILES=ON -DLANGUAGES=none -DBACKTRACE=OFF -DSOUND=ON
+cmake -B out/build/msbuild -DTILES=ON -DLANGUAGES=none -DBACKTRACE=OFF -DSOUND=ON
 ```
 
 Build!
 
 ```
-cmake --build build -j 2 -- /p:Configuration=Release
+cmake --build out/build/msbuild --config Release --parallel 2
 ```
 
-The `-j 2` flag controls build parallelism - you can omit it if you wish. The
-`/p:Configuration=Release` flag is passed directly to MSBuild and controls optimizations. If you
-omit it, the `Debug` configuration would be built instead. For powershell you'll need to have an
-extra `--` after the first one.
+The `--parallel 2` flag controls build parallelism - you can omit it if you wish. The
+`--config Release` flag selects the optimized Visual Studio configuration. If you omit it, the
+`Debug` configuration would be built instead.
 
 The resulting files will be put into a `Release` directory inside your source Cataclysm-BN folder.
 To make them run you'd need to first move them to the source Cataclysm-BN directory itself (so that
@@ -538,8 +536,8 @@ Build the `json_formatter` tool and enable `style-json` / `style-json-parallel` 
 formatting JSON files. See [Formatting & Linting](../formatting.md) for usage.
 
 So a CMake command for building Cataclysm-BN in release mode with tiles and sound support will look
-as follows, provided it is run in build directory located in the project.
+as follows, provided it is run from the repository root.
 
 ```sh
-cmake ../ -DCMAKE_BUILD_TYPE=Release -DTILES=ON -DSOUND=ON
+cmake -B out/build/custom -DCMAKE_BUILD_TYPE=Release -DTILES=ON -DSOUND=ON
 ```

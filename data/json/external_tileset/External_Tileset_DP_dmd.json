@@ -55,7 +55,11 @@
           { "id": [ "clam_fried", "overlay_wielded_clam_fried" ], "fg": 47 },
           { "id": "mon_zombie_swat", "fg": 48, "bg": 30 },
           { "id": "mon_zombie_swat_boss", "fg": 49, "bg": 30 },
-          { "id": "corpse_mon_zombie_swat_boss", "fg": 50 }
+          { "id": "corpse_mon_zombie_swat_boss", "fg": 50 },
+          { "id": "mon_feral_pa_boss_melee", "fg": 51 },
+          { "id": "mon_feral_pa_boss_shotgun", "fg": 52 },
+          { "id": "mon_feral_pa_boss_grenade", "fg": 53 },
+          { "id": "mon_feral_pa_boss_blaster", "fg": 54 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

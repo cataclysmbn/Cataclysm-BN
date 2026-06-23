@@ -1024,8 +1024,11 @@ static int scale_time( const std::map<skill_id, int> &sk, int mv, const Characte
     } );
     // 10% per excess level (reduced proportionally if >1 skill required) with max 50% reduction
     // 10% reduction per assisting NPC
-    return mv * ( 1.0 - std::min( static_cast<double>( lvl ) / sk.size() / 10.0, 0.5 ) )
-           * ( 10 - character_funcs::get_crafting_helpers( who, 3 ).size() ) / 10;
+    int time_norm = mv * ( 1.0 - std::min( static_cast<double>( lvl ) / sk.size() / 10.0, 0.5 ) )
+                    * ( 10 - character_funcs::get_crafting_helpers( who, 3 ).size() ) / 10;
+    time_norm += who.bonus_from_enchantments( time_norm,
+                 enchantment_value_id( "CONSTRUCTION_SPEED_VEH" ) );
+    return time_norm;
 }
 
 int vpart_info::install_time( const Character &who ) const

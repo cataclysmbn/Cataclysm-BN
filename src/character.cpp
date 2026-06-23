@@ -963,7 +963,7 @@ int Character::clairvoyance() const
 
     int ench = bonus_from_enchantments( 0.0, enchantment_value_id( "CLAIRVOYANCE" ) );
     if( ench > 0 ) {
-        max = ench;
+        max = std::max( ench, max );
     }
     return max;
 }
@@ -4074,23 +4074,40 @@ SkillLevel &Character::get_skill_level_object( const skill_id &ident )
 
 int Character::get_skill_level( const skill_id &ident ) const
 {
+    return get_skill_level( ident, false );
+}
+
+int Character::get_skill_level( const skill_id &ident, const bool no_enchant ) const
+{
     int skill_level = _skills->get_skill_level( ident );
+    if( no_enchant ) {
+        return skill_level;
+    }
     auto ench_id = enchantment_value_id( "SKILL_LEVEL_" + to_upper_case( ident.str() ) );
     if( ench_id.is_valid() ) {
         skill_level += bonus_from_enchantments( skill_level, ench_id );
     }
-    return skill_level;
+    return std::max( 0, skill_level );
 }
 
 int Character::get_skill_level( const skill_id &ident, const item &context ) const
 {
+    return get_skill_level( ident, context, false );
+}
+
+int Character::get_skill_level( const skill_id &ident, const item &context,
+                                const bool no_enchant ) const
+{
     int skill_level = _skills->get_skill_level( ident, context );
+    if( no_enchant ) {
+        return skill_level;
+    }
     const auto id = context.is_null() ? ident : context.contextualize_skill( ident );
     auto ench_id = enchantment_value_id( "SKILL_LEVEL_" + to_upper_case( id.str() ) );
     if( ench_id.is_valid() ) {
         skill_level += bonus_from_enchantments( skill_level, ench_id );
     }
-    return skill_level;
+    return std::max( 0, skill_level );
 }
 
 void Character::set_skill_level( const skill_id &ident, const int level )
