@@ -6522,16 +6522,15 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
         cleanup_dead();
     }
 
-    // The remaining monsters are all alive, but may be outside of the reality bubble.
+    // The remaining monsters are all alive, but may no longer be in a simulated submap.
     // If so, despawn them. This is not the same as dying, they will be stored for later and the
     // monster::die function is not called.
+    // Simulation membership (is_simulated) is the single correctness gate — the player's
+    // reality-bubble position is irrelevant for gameplay islands.
     {
         ZoneScopedN( "monmove_despawn_oob" );
         for( monster &critter : all_monsters() ) {
-            if( critter.bub_pos().x() < 0 - ( g_mapsize_x ) / 6 ||
-                critter.bub_pos().y() < 0 - ( g_mapsize_y ) / 6 ||
-                critter.bub_pos().x() > ( g_mapsize_x * 7 ) / 6 ||
-                critter.bub_pos().y() > ( g_mapsize_y * 7 ) / 6 ) {
+            if( !critter.is_simulated() ) {
                 despawn_monster( critter );
             }
         }
@@ -15297,14 +15296,6 @@ void game::update_stair_monsters()
         const tripoint_bub_ms dest {
             mpos, g->get_levz()
         };
-
-        // We might be not be visible.
-        if( ( critter.bub_pos().x() < 0 - ( g_mapsize_x ) / 6 ||
-              critter.bub_pos().y() < 0 - ( g_mapsize_y ) / 6 ||
-              critter.bub_pos().x() > ( g_mapsize_x * 7 ) / 6 ||
-              critter.bub_pos().y() > ( g_mapsize_y * 7 ) / 6 ) ) {
-            continue;
-        }
 
         critter.staircount -= 4;
         // Let the player know zombies are trying to come.

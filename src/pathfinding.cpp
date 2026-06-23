@@ -35,12 +35,7 @@ static constexpr std::array<point_rel_ms, 8> DIRS_2D = {
 
 decltype( Pathfinding::d_maps_store ) Pathfinding::d_maps_store = {};
 decltype( Pathfinding::d_maps ) Pathfinding::d_maps = {};
-decltype( Pathfinding::z_area ) Pathfinding::z_area = {};
-decltype( Pathfinding::z_caches_dirty ) Pathfinding::z_caches_dirty = true;
-decltype( Pathfinding::z_caches_include_open_air ) Pathfinding::z_caches_include_open_air = false;
-decltype( Pathfinding::z_caches ) Pathfinding::z_caches = {};
-decltype( Pathfinding::z_caches_open_air ) Pathfinding::z_caches_open_air = {};
-decltype( Pathfinding::cached_closest_z_changes ) Pathfinding::cached_closest_z_changes = {};
+decltype( Pathfinding::z_caches_by_dimension ) Pathfinding::z_caches_by_dimension = {};
 
 // Thanks for nothing, MVSC
 // For our MVSC builds, std::is_nan and std::is_inf are not constexpr
@@ -307,7 +302,9 @@ void Pathfinding::clear_d_maps()
         Pathfinding::d_maps_store.push_back( std::move( map ) );
     }
     Pathfinding::d_maps.clear();
-    Pathfinding::cached_closest_z_changes.clear();
+    for( auto &[_, zc] : Pathfinding::z_caches_by_dimension ) {
+        zc.cached_closest_z_changes.clear();
+    }
 }
 void Pathfinding::clear_pool()
 {
@@ -316,9 +313,19 @@ void Pathfinding::clear_pool()
 }
 void Pathfinding::mark_dirty_z_cache()
 {
-    Pathfinding::z_caches_dirty = true;
-    Pathfinding::z_caches_include_open_air = false;
-    Pathfinding::cached_closest_z_changes.clear();
+    for( auto &[_, zc] : Pathfinding::z_caches_by_dimension ) {
+        zc.z_caches_dirty = true;
+        zc.z_caches_include_open_air = false;
+        zc.cached_closest_z_changes.clear();
+    }
+}
+
+void Pathfinding::mark_dirty_z_cache( const dimension_id &dim )
+{
+    dimension_z_cache &zc = get_z_cache_for_dim( dim );
+    zc.z_caches_dirty = true;
+    zc.z_caches_include_open_air = false;
+    zc.cached_closest_z_changes.clear();
 }
 void Pathfinding::reset_maps()
 {
@@ -352,34 +359,43 @@ void Pathfinding::reset_tile_state()
     }
 }
 /// Pathfinding: Z-levels
+auto Pathfinding::get_z_cache_for_dim( const dimension_id &dim ) -> dimension_z_cache &
+{
+    return z_caches_by_dimension.try_emplace( dim ).first->second;
+}
+
 std::unordered_map<point_abs_ms, Pathfinding::ZLevelChangeOpenAirPair>
-&Pathfinding::get_z_cache_open_air( const int z )
+&Pathfinding::get_z_cache_open_air( const dimension_id &dim, const int z )
 {
     assert( -OVERMAP_DEPTH <= z && z <= OVERMAP_HEIGHT );
 
-    return Pathfinding::z_caches_open_air[z + OVERMAP_DEPTH];
+    return get_z_cache_for_dim( dim ).caches_open_air[z + OVERMAP_DEPTH];
 }
 
-std::vector<Pathfinding::ZLevelChange> &Pathfinding::get_z_cache( const int z )
+std::vector<Pathfinding::ZLevelChange> &Pathfinding::get_z_cache( const dimension_id &dim,
+        const int z )
 {
     assert( -OVERMAP_DEPTH <= z && z <= OVERMAP_HEIGHT );
 
-    return Pathfinding::z_caches[z + OVERMAP_DEPTH];
+    return get_z_cache_for_dim( dim ).caches[z + OVERMAP_DEPTH];
 }
 
-void Pathfinding::update_z_caches( mapbuffer &buffer, bool update_open_air )
+void Pathfinding::update_z_caches( mapbuffer &buffer, const dimension_id &dim,
+                                   bool update_open_air )
 {
-    if( !Pathfinding::z_caches_dirty && !update_open_air ) {
+    dimension_z_cache &zc = get_z_cache_for_dim( dim );
+
+    if( !zc.z_caches_dirty && !update_open_air ) {
         return;
     }
 
-    for( auto &target : Pathfinding::z_caches ) {
+    for( auto &target : zc.caches ) {
         target.clear();
     }
-    for( auto &target : Pathfinding::z_caches_open_air ) {
+    for( auto &target : zc.caches_open_air ) {
         target.clear();
     }
-    Pathfinding::cached_closest_z_changes.clear();
+    zc.cached_closest_z_changes.clear();
     for( const int z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         for( const auto &cur_tile : simulated_tiles_on_zlevel( buffer, z ) ) {
             const auto abs_pos = cur_tile.abs_pos();
@@ -403,10 +419,10 @@ void Pathfinding::update_z_caches( mapbuffer &buffer, bool update_open_air )
                     .from = below_us_abs, .to = abs_pos, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
 
                 // This is stored separately from other changes because it requires a different type of processing
-                Pathfinding::get_z_cache_open_air( z ).emplace( abs_pos.xy(), Pathfinding::ZLevelChangeOpenAirPair{
+                Pathfinding::get_z_cache_open_air( dim, z ).emplace( abs_pos.xy(), Pathfinding::ZLevelChangeOpenAirPair{
                     .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
 
-                auto &lower_level = Pathfinding::get_z_cache_open_air( z - 1 );
+                auto &lower_level = Pathfinding::get_z_cache_open_air( dim, z - 1 );
                 if( lower_level.contains( abs_pos.xy() ) ) {
                     lower_level[abs_pos.xy()].reach_from_above = going_to_below;
                 } else {
@@ -432,8 +448,8 @@ void Pathfinding::update_z_caches( mapbuffer &buffer, bool update_open_air )
                                                                      .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         const ZLevelChange stairs_down = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos,
                                                                        .type = Pathfinding::ZLevelChange::Type::STAIRS };
-                        Pathfinding::get_z_cache( z ).push_back( stairs_down );
-                        Pathfinding::get_z_cache( z + 1 ).push_back( stairs_up );
+                        Pathfinding::get_z_cache( dim, z ).push_back( stairs_down );
+                        Pathfinding::get_z_cache( dim, z + 1 ).push_back( stairs_up );
                         break;
                     }
                 }
@@ -456,8 +472,8 @@ void Pathfinding::update_z_caches( mapbuffer &buffer, bool update_open_air )
                                                                        .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         const ZLevelChange stairs_up = ZLevelChange{ .from = maybe_stairs_abs, .to = abs_pos,
                                                                      .type = Pathfinding::ZLevelChange::Type::STAIRS };
-                        Pathfinding::get_z_cache( z ).push_back( stairs_up );
-                        Pathfinding::get_z_cache( z - 1 ).push_back( stairs_down );
+                        Pathfinding::get_z_cache( dim, z ).push_back( stairs_up );
+                        Pathfinding::get_z_cache( dim, z - 1 ).push_back( stairs_down );
                         break;
                     }
                 }
@@ -467,20 +483,20 @@ void Pathfinding::update_z_caches( mapbuffer &buffer, bool update_open_air )
                 }
                 const ZLevelChange ramp_up = ZLevelChange{ .from = abs_pos, .to = abs_pos + tripoint_rel_ms::above(),
                                                            .type = Pathfinding::ZLevelChange::Type::RAMP };
-                Pathfinding::get_z_cache( z + 1 ).push_back( ramp_up );
+                Pathfinding::get_z_cache( dim, z + 1 ).push_back( ramp_up );
             } else if( cur_ter.has_flag( TFLAG_RAMP_DOWN ) ) {
                 if( z <= -OVERMAP_DEPTH ) {
                     continue;
                 }
                 const ZLevelChange ramp_down = ZLevelChange{ .from = abs_pos, .to = abs_pos + tripoint_rel_ms::below(),
                                                              .type = Pathfinding::ZLevelChange::Type::RAMP };
-                Pathfinding::get_z_cache( z - 1 ).push_back( ramp_down );
+                Pathfinding::get_z_cache( dim, z - 1 ).push_back( ramp_down );
             }
         }
     }
 
-    Pathfinding::z_caches_dirty = false;
-    Pathfinding::z_caches_include_open_air = update_open_air;
+    zc.z_caches_dirty = false;
+    zc.z_caches_include_open_air = update_open_air;
 }
 /// Pathfinding: main loops
 void Pathfinding::detect_culled_frontier(
@@ -994,7 +1010,7 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
     // Instead, we will **only** consider taking z_changes that bring us closer to target's Z level.
     const bool we_go_up = to.z() > from.z();
 
-    Pathfinding::update_z_caches( buffer, path_settings.can_fly );
+    Pathfinding::update_z_caches( buffer, buffer.get_dimension_id(), path_settings.can_fly );
 
     // Determine our Z-path
     std::vector<ZLevelChange> z_path;
@@ -1006,12 +1022,15 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
             Pathfinding::ZLevelChange best_z_change;
             std::tuple<bool, int, tripoint_abs_ms> cache_pair{ we_go_up, path_settings.z_move_type(), cur_origin };
 
-            if( Pathfinding::cached_closest_z_changes.contains( cache_pair ) ) {
-                best_z_change = Pathfinding::cached_closest_z_changes.at( cache_pair );
+            dimension_z_cache &zc = get_z_cache_for_dim( buffer.get_dimension_id() );
+
+            if( zc.cached_closest_z_changes.contains( cache_pair ) ) {
+                best_z_change = zc.cached_closest_z_changes.at( cache_pair );
             } else {
                 std::vector<Pathfinding::ZLevelChange> candidates;
 
-                for( const Pathfinding::ZLevelChange &z_change : Pathfinding::get_z_cache( cur_origin.z() ) ) {
+                for( const Pathfinding::ZLevelChange &z_change :
+                     Pathfinding::get_z_cache( buffer.get_dimension_id(), cur_origin.z() ) ) {
                     bool can_be_taken = true;
                     switch( z_change.type ) {
                         case Pathfinding::ZLevelChange::Type::STAIRS:
@@ -1061,7 +1080,7 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
                 // Open air processing
                 if( path_settings.can_fly ) {
                     std::unordered_map<point_abs_ms, ZLevelChangeOpenAirPair> &target =
-                        Pathfinding::get_z_cache_open_air( cur_origin.z() );
+                        Pathfinding::get_z_cache_open_air( buffer.get_dimension_id(), cur_origin.z() );
 
                     // There's a rare case where no valid non-open-air way exists to this Z-level
                     //   in which case `closest_points_first` would return a INT_MAX radius of points
@@ -1109,7 +1128,7 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
                     return std::vector<tripoint_abs_ms>();
                 }
 
-                Pathfinding::cached_closest_z_changes.insert_or_assign( cache_pair, best_z_change );
+                zc.cached_closest_z_changes.insert_or_assign( cache_pair, best_z_change );
             }
 
             z_path.push_back( best_z_change );
@@ -1172,6 +1191,7 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
 }
 
 std::vector<tripoint_abs_ms> Pathfinding::route(
+    mapbuffer &buffer,
     tripoint_abs_ms from, tripoint_abs_ms to,
     const std::optional<PathfindingSettings> maybe_path_settings,
     const std::optional<RouteSettings> maybe_route_settings )
@@ -1185,12 +1205,27 @@ std::vector<tripoint_abs_ms> Pathfinding::route(
         return std::vector<tripoint_abs_ms>();
     }
 
+    // Endpoint validation: both from and to must fall within a simulated island
+    // in this buffer.  If not, there's no valid path to compute.
+    {
+        const point_abs_sm from_sm = project_to<coords::sm>( from.xy() );
+        const point_abs_sm to_sm = project_to<coords::sm>( to.xy() );
+        bool in_same_island = false;
+        for( const simulated_island &island : buffer.simulated_islands() ) {
+            if( island.contains( from_sm ) && island.contains( to_sm ) ) {
+                in_same_island = true;
+                break;
+            }
+        }
+        if( !in_same_island ) {
+            return std::vector<tripoint_abs_ms>();
+        }
+    }
+
     if( from.z() == to.z() ) {
-        auto &buffer = MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() );
         return Pathfinding::get_route_2d( buffer, from.xy(), to.xy(), from.z(),
                                           path_settings, route_settings );
     }
-    auto &buffer = MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() );
     return Pathfinding::get_route_3d( buffer,
                                       from, to, path_settings, route_settings );
-};
+}
