@@ -1758,6 +1758,8 @@ void vehicle::check_falling_or_floating()
 
     map &here = get_map();
 
+    is_falling = true;
+
     if( is_flying && is_aircraft() ) {
         is_falling = false;
     } else {
