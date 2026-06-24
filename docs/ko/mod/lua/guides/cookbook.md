@@ -173,6 +173,7 @@ print("is far-away point out of bounds:", map:is_out_of_bounds(coords.tripoint_b
 ### 포켓 디멘션에 들어가고 다시 들어가기
 
 새 포켓 디멘션을 만들 때는 `world_type` 과 두 경계를 모두 넘겨야 합니다.
+선택 사항인 `overmap_terrain` 은 `bounds_min_omt` 기준 z/y/x 테이블입니다.
 이미 만들어진 뒤에는 `dimension_id` 와 `target_omt` 만으로 다시 들어갈 수 있습니다.
 
 ```lua
@@ -189,6 +190,13 @@ local entered = gapi.place_player_dimension_at({
   bounds_max_omt = home_omt + home_bounds_radius,
   boundary_terrain = "t_pd_border",
   boundary_overmap_terrain = "pd_border",
+  overmap_terrain = {
+    {
+      { "forest", "field", "forest" },
+      { "field", "field", "field" },
+      { "forest", "field", "forest" },
+    },
+  },
 })
 
 if entered then

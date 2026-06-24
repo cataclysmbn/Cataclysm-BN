@@ -28,6 +28,7 @@
 #include "map_helpers.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
+#include "overmapbuffer.h"
 #include "mapdata.h"
 #include "mapgen_constructor.h"
 #include "effect.h"
@@ -779,6 +780,15 @@ TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
     test_data["bounds_min_omt"] = tripoint_abs_omt( -4, -4, 0 );
     test_data["bounds_max_omt"] = tripoint_abs_omt( 4, 4, 0 );
     test_data["outside_local"] = tripoint_bub_ms( 500, 500, 0 );
+    const auto layout_res = lua.safe_script( R"(
+test_data["overmap_terrain"] = {
+  {
+    { "forest", "field" },
+    { "field", "forest" },
+  },
+}
+)" );
+    REQUIRE( layout_res.valid() );
 
     run_lua_test_script( lua, "pocket_dimension_api_test.lua" );
 
@@ -788,11 +798,16 @@ TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
     CHECK( test_data["noop_travel"].get<bool>() );
     CHECK_FALSE( test_data["invalid_bounds_travel"].get<bool>() );
     CHECK_FALSE( test_data["invalid_special_travel"].get<bool>() );
+    CHECK_FALSE( test_data["invalid_overmap_terrain_travel"].get<bool>() );
     CHECK( test_data["after_invalid_dim"].get<std::string>() == "" );
     CHECK( test_data["after_invalid_map_dim"].get<std::string>() == "" );
     CHECK( test_data["entered_travel"].get<bool>() );
     CHECK( test_data["entered_dim"].get<std::string>() == "lua_test_pocket" );
     CHECK( test_data["entered_map_dim"].get<std::string>() == "lua_test_pocket" );
+    auto &pocket_overmap = get_overmapbuffer( dimension_id( "lua_test_pocket" ) );
+    CHECK( pocket_overmap.ter( tripoint_abs_omt( -4, -4, 0 ) ) == oter_str_id( "forest" ).id() );
+    CHECK( pocket_overmap.ter( tripoint_abs_omt( -3, -4, 0 ) ) == oter_str_id( "field" ).id() );
+    CHECK( pocket_overmap.ter( tripoint_abs_omt( -3, -3, 0 ) ) == oter_str_id( "forest" ).id() );
     CHECK_FALSE( test_data["entry_is_oob"].get<bool>() );
     CHECK( test_data["outside_is_oob"].get<bool>() );
     CHECK( test_data["return_travel"].get<bool>() );

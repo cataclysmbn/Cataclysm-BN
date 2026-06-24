@@ -39,6 +39,11 @@
 namespace
 {
 
+struct overmap_terrain_entry {
+    tripoint_rel_omt offset;
+    oter_str_id terrain;
+};
+
 struct dimension_travel_options {
     dimension_id dim_id;
     tripoint_abs_omt target_omt;
@@ -49,6 +54,7 @@ struct dimension_travel_options {
     std::optional<tripoint_abs_omt> bounds_max_omt;
     std::optional<std::string> boundary_terrain;
     std::optional<std::string> boundary_overmap_terrain;
+    std::optional<std::vector<overmap_terrain_entry>> overmap_terrain;
     std::optional<std::string> pregen_special_id;
     std::optional<tripoint_abs_omt> pregen_special_omt;
 };
@@ -105,6 +111,71 @@ auto read_optional_abs_ms( const sol::table &opts,
     return *value;
 }
 
+auto read_optional_overmap_terrain_layout( const sol::table &opts ) ->
+std::optional<std::vector<overmap_terrain_entry>>
+{
+    const auto value = opts.get<sol::object>( "overmap_terrain" );
+    if( value == sol::nil ) {
+        return std::vector<overmap_terrain_entry> {};
+    }
+    if( !value.is<sol::table>() ) {
+        return std::nullopt;
+    }
+
+    const auto layers = value.as<sol::table>();
+    auto entries = std::vector<overmap_terrain_entry> {};
+    auto invalid = false;
+    std::ranges::for_each( std::views::iota( 1, static_cast<int>( layers.size() ) + 1 ),
+    [&]( const int z_idx ) {
+        if( invalid ) {
+            return;
+        }
+        const auto layer_obj = layers.get<sol::object>( z_idx );
+        if( !layer_obj.is<sol::table>() ) {
+            invalid = true;
+            return;
+        }
+        const auto rows = layer_obj.as<sol::table>();
+        std::ranges::for_each( std::views::iota( 1, static_cast<int>( rows.size() ) + 1 ),
+        [&]( const int y_idx ) {
+            if( invalid ) {
+                return;
+            }
+            const auto row_obj = rows.get<sol::object>( y_idx );
+            if( !row_obj.is<sol::table>() ) {
+                invalid = true;
+                return;
+            }
+            const auto row = row_obj.as<sol::table>();
+            std::ranges::for_each( std::views::iota( 1, static_cast<int>( row.size() ) + 1 ),
+            [&]( const int x_idx ) {
+                if( invalid ) {
+                    return;
+                }
+                const auto terrain_obj = row.get<sol::object>( x_idx );
+                if( !terrain_obj.is<std::string>() ) {
+                    invalid = true;
+                    return;
+                }
+                const auto terrain = oter_str_id( terrain_obj.as<std::string>() );
+                if( !terrain.is_valid() ) {
+                    invalid = true;
+                    return;
+                }
+                entries.push_back( overmap_terrain_entry{
+                    .offset = tripoint_rel_omt( x_idx - 1, y_idx - 1, z_idx - 1 ),
+                    .terrain = terrain,
+                } );
+            } );
+        } );
+    } );
+
+    if( invalid || ( entries.empty() && layers.size() > 0 ) ) {
+        return std::nullopt;
+    }
+    return entries;
+}
+
 auto get_dimension_entry_point( const tripoint_abs_omt &target_omt ) -> tripoint_abs_ms
 {
     return project_combine( target_omt, point_omt_ms( SEEX, SEEY ) );
@@ -130,6 +201,7 @@ auto parse_dimension_travel_options( const sol::table &opts ) -> dimension_trave
         .bounds_max_omt = read_optional_abs_omt( opts, "bounds_max_omt" ),
         .boundary_terrain = read_optional_string( opts, "boundary_terrain" ),
         .boundary_overmap_terrain = read_optional_string( opts, "boundary_overmap_terrain" ),
+        .overmap_terrain = read_optional_overmap_terrain_layout( opts ),
         .pregen_special_id = read_optional_string( opts, "pregen_special_id" ),
         .pregen_special_omt = read_optional_abs_omt( opts, "pregen_special_omt" ),
     };
@@ -156,6 +228,23 @@ std::optional<pocket_dimension_data>
     return pocket_data;
 }
 
+auto overmap_terrain_layout_fits_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.overmap_terrain || opts.overmap_terrain->empty() ) {
+        return true;
+    }
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return false;
+    }
+
+    return std::ranges::all_of( *opts.overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+        const auto pos = *opts.bounds_min_omt + entry.offset;
+        return pos.x() >= opts.bounds_min_omt->x() && pos.x() <= opts.bounds_max_omt->x() &&
+               pos.y() >= opts.bounds_min_omt->y() && pos.y() <= opts.bounds_max_omt->y() &&
+               pos.z() >= opts.bounds_min_omt->z() && pos.z() <= opts.bounds_max_omt->z();
+    } );
+}
+
 auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) -> bool
 {
     if( !opts.has_target ) {
@@ -163,6 +252,10 @@ auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) ->
     }
 
     if( opts.bounds_min_omt.has_value() != opts.bounds_max_omt.has_value() ) {
+        return false;
+    }
+
+    if( !opts.overmap_terrain || !overmap_terrain_layout_fits_bounds( opts ) ) {
         return false;
     }
 
@@ -204,20 +297,28 @@ auto get_dimension_load_position( const dimension_travel_options &opts ) -> trip
 auto build_dimension_preload_callback( const dimension_travel_options &opts ) ->
 std::function<void()>
 {
-    if( !opts.pregen_special_id ) {
+    const auto has_overmap_terrain = opts.overmap_terrain && !opts.overmap_terrain->empty();
+    if( !opts.pregen_special_id && !has_overmap_terrain ) {
         return {};
     }
 
-    const auto special_id = overmap_special_id( *opts.pregen_special_id );
-
+    const auto special_id = opts.pregen_special_id ? std::optional<overmap_special_id>(
+                                *opts.pregen_special_id ) : std::nullopt;
     const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
     const auto dim_id = opts.dim_id;
+    const auto overmap_terrain_origin = opts.bounds_min_omt.value_or( opts.target_omt );
+    const auto overmap_terrain = opts.overmap_terrain.value_or( std::vector<overmap_terrain_entry> {} );
 
-    return [dim_id, special_id, special_omt]() {
+    return [dim_id, special_id, special_omt, overmap_terrain_origin, overmap_terrain]() {
         auto &dim_omb = get_overmapbuffer( dim_id );
-        auto global_location = dim_omb.get_om_global( special_omt );
-        overmap &om = *global_location.om;
-        om.place_special_forced( special_id, global_location.local, om_direction::type::north );
+        if( special_id ) {
+            auto global_location = dim_omb.get_om_global( special_omt );
+            auto &om = *global_location.om;
+            om.place_special_forced( *special_id, global_location.local, om_direction::type::north );
+        }
+        std::ranges::for_each( overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+            dim_omb.ter_set( overmap_terrain_origin + entry.offset, entry.terrain.id() );
+        } );
     };
 }
 

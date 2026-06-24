@@ -173,6 +173,7 @@ print("is far-away point out of bounds:", map:is_out_of_bounds(coords.tripoint_b
 ### ポケットディメンションへ入って再入場する
 
 新しいポケットディメンションを作る時は `world_type` と両方の境界を渡します。
+任意の `overmap_terrain` は `bounds_min_omt` 基準の z/y/x テーブルです。
 作成済みであれば、再入場には `dimension_id` と `target_omt` だけで足ります。
 
 ```lua
@@ -189,6 +190,13 @@ local entered = gapi.place_player_dimension_at({
   bounds_max_omt = home_omt + home_bounds_radius,
   boundary_terrain = "t_pd_border",
   boundary_overmap_terrain = "pd_border",
+  overmap_terrain = {
+    {
+      { "forest", "field", "forest" },
+      { "field", "field", "field" },
+      { "forest", "field", "forest" },
+    },
+  },
 })
 
 if entered then

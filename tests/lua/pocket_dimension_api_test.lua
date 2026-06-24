@@ -5,6 +5,7 @@ local target_omt = test_data["target_omt"]
 local return_ms = test_data["return_ms"]
 local bounds_min_omt = test_data["bounds_min_omt"]
 local bounds_max_omt = test_data["bounds_max_omt"]
+local overmap_terrain = test_data["overmap_terrain"]
 
 test_data["before_dim"] = gapi.get_current_dimension_id()
 test_data["before_map_dim"] = map:get_bound_dimension()
@@ -35,6 +36,15 @@ test_data["invalid_special_travel"] = gapi.place_player_dimension_at({
   pregen_special_id = "lua_test_missing_special",
 })
 
+test_data["invalid_overmap_terrain_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = { { { "lua_test_missing_omt" } } },
+})
+
 test_data["after_invalid_dim"] = gapi.get_current_dimension_id()
 test_data["after_invalid_map_dim"] = gapi.get_map():get_bound_dimension()
 
@@ -44,6 +54,7 @@ test_data["entered_travel"] = gapi.place_player_dimension_at({
   world_type = "pocket_dimension",
   bounds_min_omt = bounds_min_omt,
   bounds_max_omt = bounds_max_omt,
+  overmap_terrain = overmap_terrain,
 })
 
 local dimension_map = gapi.get_map()

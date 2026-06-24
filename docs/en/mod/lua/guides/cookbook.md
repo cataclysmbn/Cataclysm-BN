@@ -172,8 +172,9 @@ print("is far-away point out of bounds:", map:is_out_of_bounds(coords.tripoint_b
 
 ### Entering and re-entering a pocket dimension
 
-Use `world_type` and both bounds when creating a new pocket dimension. Once it
-already exists, you can re-enter it with only `dimension_id` and `target_omt`.
+Use `world_type` and both bounds when creating a new pocket dimension. Optional
+`overmap_terrain` is a z/y/x table anchored at `bounds_min_omt`. Once it already
+exists, you can re-enter it with only `dimension_id` and `target_omt`.
 
 ```lua
 home_dimension = "sky_island_home"
@@ -189,6 +190,13 @@ local entered = gapi.place_player_dimension_at({
   bounds_max_omt = home_omt + home_bounds_radius,
   boundary_terrain = "t_pd_border",
   boundary_overmap_terrain = "pd_border",
+  overmap_terrain = {
+    {
+      { "forest", "field", "forest" },
+      { "field", "field", "field" },
+      { "forest", "field", "forest" },
+    },
+  },
 })
 
 if entered then
