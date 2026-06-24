@@ -200,7 +200,7 @@ class vpart_info
     public:
         vpart_id id;
 
-        bool was_loaded;
+        bool was_loaded = false;
 
         /** Translated name of a part */
         std::string name() const;
