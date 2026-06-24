@@ -93,7 +93,7 @@
       { "direction": "vertical_right", "symbol": "H" },
       { "direction": "horizontal_front", "symbol": "T" },
       { "direction": "horizontal_front_edge", "symbol": "^" },
-      { "direction": "horizontal_rear", "symbol": "B" },
+      { "direction": "horizontal_rear", "symbol": "B" }
     ]
   },
   {
@@ -115,7 +115,7 @@
       { "direction": "vertical_right", "symbol": "H" },
       { "direction": "horizontal_front", "symbol": "T" },
       { "direction": "horizontal_front_edge", "symbol": "^" },
-      { "direction": "horizontal_rear", "symbol": "B" },
+      { "direction": "horizontal_rear", "symbol": "B" }
     ]
   },
   {
@@ -131,7 +131,7 @@
       { "direction": "vertical_left", "symbol": "[" },
       { "direction": "vertical_right", "symbol": "]" },
       { "direction": "horizontal_front", "symbol": "h" },
-      { "direction": "horizontal_rear_edge", "symbol": "B" },
+      { "direction": "horizontal_rear_edge", "symbol": "B" }
     ]
   }
 ]
