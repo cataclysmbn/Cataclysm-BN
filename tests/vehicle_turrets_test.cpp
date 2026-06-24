@@ -34,9 +34,9 @@ static std::vector<const vpart_info *> turret_types()
 {
     std::vector<const vpart_info *> res;
 
-    for( const auto &e : vpart_info::all() ) {
-        if( e.second.has_flag( "TURRET" ) ) {
-            res.push_back( &e.second );
+    for( const auto &vp : vpart_info::get_all() ) {
+        if( vp.has_flag( "TURRET" ) ) {
+            res.push_back( &vp );
         }
     }
 
@@ -47,8 +47,7 @@ static auto biggest_tank( const itype_id &ammo ) -> const vpart_info *
 {
     std::vector<const vpart_info *> res;
 
-    for( const auto &e : vpart_info::all() ) {
-        const auto &vp = e.second;
+    for( const auto &vp : vpart_info::get_all() ) {
         if( item::spawn_temporary( vp.item )->can_reload_with( ammo ) ) {
             res.push_back( &vp );
         }

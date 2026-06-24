@@ -630,6 +630,9 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
             all_vparts.insert( shape );
         }
     }
+    // Unused field that some mods use for some reason
+    // TODO: Implement or delete
+    jo.get_string_array( "categories" );
 }
 
 void vpart_info::set_flag( const std::string &flag )
