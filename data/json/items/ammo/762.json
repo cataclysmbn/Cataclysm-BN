@@ -63,19 +63,5 @@
     },
     "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] },
     "delete": { "effects": [ "NEVER_MISFIRES" ] }
-  },
-  {
-    "id": "762_burst",
-    "copy-from": "762_m43",
-    "type": "AMMO",
-    "name": { "str": "7.62x39mm air burst" },
-    "description": "A prototype round developed by North Korea, and probably imported for use by DPRK sleeper cells. Its shaped charge explodes shortly before impact, releasing a tight cone of supersonic shrapnel. It performs similarly to 00 shotgun pellets, but maintains rifle-grade precision and range.",
-    "proportional": {
-      "price": 5,
-      "price_postapoc": 5,
-      "damage": { "damage_type": "bullet", "amount": 2, "armor_penetration": 0.6, "armor_multiplier": 5 },
-      "dispersion": 0.9
-    },
-    "material": [ "steel", "powder", "plastic" ]
   }
 ]
