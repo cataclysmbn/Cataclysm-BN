@@ -16,6 +16,7 @@
 #include "messages.h"
 #include "rng.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "weighted_list.h"
 
 anatomy_id human_anatomy( "human_anatomy" );
@@ -27,17 +28,7 @@ generic_factory<anatomy> anatomy_factory( "anatomy" );
 
 } // namespace
 
-template<>
-bool anatomy_id::is_valid() const
-{
-    return anatomy_factory.is_valid( *this );
-}
-
-template<>
-const anatomy &anatomy_id::obj() const
-{
-    return anatomy_factory.obj( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( anatomy, anatomy_factory );
 
 void anatomy::load_anatomy( const JsonObject &jo, const std::string &src )
 {

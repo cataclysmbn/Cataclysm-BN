@@ -1514,20 +1514,14 @@ class repair_inventory_preset: public inventory_selector_preset
                                  player &character ) :
             actor( actor ), main_tool( main_tool ), character( character ) {
             append_cell( [ this, actor, &character ]( const item * loc ) {
-                const auto comp_needed = std::max<int>( 1,
-                                                        std::ceil( loc->volume() / 250_ml * actor->cost_scaling ) );
-                auto valid_entries = std::set<material_id> {};
-                std::ranges::for_each( actor->materials, [ &valid_entries, &loc ]( const auto & mat ) {
-                    if( loc->made_of( mat ) ) {
-                        valid_entries.emplace( mat );
-                    }
-                } );
+                int comp_needed = actor->get_material_amt_needed( *loc, true );
+                auto valid_entries = actor->get_valid_materials( *loc );
 
                 const auto &crafting_inv = character.crafting_inventory();
                 auto listed_components = std::set<itype_id> {};
                 auto material_list = std::vector<std::string> {};
                 std::ranges::for_each( valid_entries, [ this, &listed_components, &material_list, &crafting_inv,
-                      &comp_needed ]( const auto & entry ) {
+                      comp_needed ]( const auto & entry ) {
                     const auto &component_id = entry.obj().repaired_with();
                     if( listed_components.contains( component_id ) ) {
                         return;
@@ -1546,6 +1540,11 @@ class repair_inventory_preset: public inventory_selector_preset
                 }
                 return ret;
             }, _( "MATERIALS AVAILABLE" ) );
+
+            append_cell( [ this, actor ]( const item * loc ) {
+                const auto amt = actor->get_material_amt_needed( *loc, true );
+                return string_format( _( "%d" ), amt );
+            }, _( "NEED" ) );
 
             append_cell( [ this ]( const item * loc ) {
                 const auto chance = get_cached_repair_chance( *loc );

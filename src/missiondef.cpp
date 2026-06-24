@@ -14,6 +14,7 @@
 #include "item.h"
 #include "json.h"
 #include "npc.h"
+#include "type_id_implement.h"
 #include "rng.h"
 
 enum legacy_mission_type_id {
@@ -198,19 +199,7 @@ std::string enum_to_string<mission_goal>( mission_goal data )
 generic_factory<mission_type> mission_type_factory( "mission_type" );
 static DynamicDataLoader::deferred_json deferred;
 
-/** @relates string_id */
-template<>
-const mission_type &string_id<mission_type>::obj() const
-{
-    return mission_type_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<mission_type>::is_valid() const
-{
-    return mission_type_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( mission_type, mission_type_factory );
 
 void mission_type::load_mission_type( const JsonObject &jo, const std::string &src )
 {

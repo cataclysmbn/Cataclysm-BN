@@ -16,6 +16,7 @@
 #include "rng.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "units.h"
 
 #include <algorithm>
@@ -87,13 +88,7 @@ namespace {
 generic_factory<enchantment> enchant_factory("enchantment");
 } // namespace
 
-template <> const enchantment& string_id<enchantment>::obj() const {
-    return enchant_factory.obj(*this);
-}
-
-template <> bool string_id<enchantment>::is_valid() const {
-    return enchant_factory.is_valid(*this);
-}
+IMPLEMENT_STRING_AND_INT_IDS(enchantment, enchant_factory);
 
 void enchantment::load_enchantment(const JsonObject& jo, const std::string& src) {
     enchant_factory.load(jo, src);

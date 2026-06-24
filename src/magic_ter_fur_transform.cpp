@@ -16,6 +16,7 @@
 #include "mapgen_constructor.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 
 struct tripoint;
 template <typename T> struct weighted_int_list;
@@ -25,17 +26,7 @@ namespace
 generic_factory<ter_furn_transform> ter_furn_transform_factory( "ter_furn_transform" );
 } // namespace
 
-template<>
-const ter_furn_transform &string_id<ter_furn_transform>::obj() const
-{
-    return ter_furn_transform_factory.obj( *this );
-}
-
-template<>
-bool string_id<ter_furn_transform>::is_valid() const
-{
-    return ter_furn_transform_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( ter_furn_transform, ter_furn_transform_factory );
 
 void ter_furn_transform::load_transform( const JsonObject &jo, const std::string &src )
 {
