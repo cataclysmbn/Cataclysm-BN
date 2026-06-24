@@ -810,13 +810,15 @@ void vpart_info::check() const
     const itype &base_item_type = *item;
     // Fuel type errors are serious and need fixing now
     if( !fuel_type.is_valid() ) {
-        throw string_format( "vehicle part %s uses undefined fuel %s", id.c_str(), fuel_type.c_str() );
+        throw JsonError( string_format( "vehicle part %s uses undefined fuel %s", id.c_str(),
+                                        fuel_type.c_str() ) );
     } else if( fuel_type && !fuel_type->fuel &&
                ( !base_item_type.container || !base_item_type.container->watertight ) ) {
         // HACK: Tanks are allowed to specify non-fuel "fuel",
         // because currently legacy blazemod uses it as a hack to restrict content types
-        throw string_format( "non-tank vehicle part %s uses non-fuel item %s as fuel, setting to null",
-                             id.c_str(), fuel_type.c_str() );
+        throw JsonError(
+            string_format( "non-tank vehicle part %s uses non-fuel item %s as fuel, setting to null",
+                           id.c_str(), fuel_type.c_str() ) );
     }
     if( has_flag( "TURRET" ) && !base_item_type.gun ) {
         debugmsg( "vehicle part %s has the TURRET flag, but is not made from a gun item", id.c_str() );
