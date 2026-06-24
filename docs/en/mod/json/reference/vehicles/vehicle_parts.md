@@ -126,6 +126,24 @@ This does not work for items nor for working with nearby liquid sources
 "electric" : 3
 ```
 
+### Shapes
+
+A field to automatically create the copy from versions of vehicle parts with different sprites
+
+This will automatically create proper objects out of abstracts.
+
+
+```jsonc
+"shapes": [
+  {
+    "direction": "left",     // What is appended to the id, so wing_metal would become wing_metal_left. Additionally is appended to the looks_like field
+    "symbol": "y",           // Same as the symbol definition above
+    "broken_symbol": "y",    // Same as the broken symbol definition above
+    "looks_like": "board_nw" // Same as the looks_like definition above, overwrites changes from direction
+  },
+]
+```
+
 ### Vehicles
 
 See also `vehicles_spawning.md`
