@@ -1128,6 +1128,7 @@
       { "group": "everyday_carbon_pistol", "prob": 5 },
       { "group": "carried_guns_shotgun_common", "prob": 60 },
       { "group": "carried_guns_pistol_common", "prob": 40 }
+
     ]
   },
   {

@@ -1591,6 +1591,7 @@
       { "item": "thermos", "prob": 25 },
       { "item": "textbook_launcher", "prob": 3 },
       { "item": "on_hand_762", "prob": 3, "charges": [ 1, 100 ] }
+      
     ]
   },
   {
