@@ -270,8 +270,7 @@
       { "item": "277_fmj", "prob": 15, "charges": [ 1, 100 ] },
       { "item": "277_hybrid", "prob": 10, "charges": [ 1, 100 ] },
       { "item": "762_m43", "prob": 5, "charges": [ 1, 100 ] },
-      { "item": "762_m87", "prob": 10, "charges": [ 1, 100 ] },
-      { "item": "762_burst", "prob": 3, "charges": [ 1, 100 ] }
+      { "item": "762_m87", "prob": 10, "charges": [ 1, 100 ] }
     ]
   },
   {
