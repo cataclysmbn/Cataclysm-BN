@@ -305,7 +305,7 @@
     "price_postapoc": "3 USD",
     "material": [ "veggy" ],
     "primary_material": "dried_vegetable",
-    "volume": "60 ml",
+    "volume": "720 ml",
     "cooks_like": "rice_cooked",
     "milling": { "into": "flour", "conversion_rate": 3 },
     "charges": 12,
