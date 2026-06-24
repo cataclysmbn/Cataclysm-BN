@@ -16,16 +16,16 @@ static auto reset_queue_state( active_item_queue &queue ) -> void
 
 void active_item_cache::remove( const item *it )
 {
-    for( auto &list : active_items ) {
-        active_item_queue &queue = list.second;
-        int count = 0;
-        queue.items.erase( std::remove_if( queue.items.begin(),
-        queue.items.end(), [it, &count, &queue]( const cache_reference<item> &active_item ) {
+    for( auto &[processing_speed, queue] : active_items ) {
+        static_cast<void>( processing_speed );
+        auto count = 0;
+        std::erase_if( queue.items,
+        [it, &count, &queue]( const auto & active_item ) {
             if( !active_item ) {
                 count++;
                 return true;
             }
-            item *const target = &*active_item;
+            const auto target = &*active_item;
             if( !target || target == it ) {
                 if( count >= queue.cursor ) {
                     queue.cursor = std::max( 0, queue.cursor - 1 );
@@ -35,14 +35,14 @@ void active_item_cache::remove( const item *it )
             }
             count++;
             return false;
-        } ), queue.items.end() );
+        } );
         if( queue.items.empty() ) {
             reset_queue_state( queue );
         }
     }
     const auto remove_special = [this, it]( const special_item_type type ) {
-        std::vector<cache_reference<item>> &items = special_items[type];
-        items.erase( std::remove( items.begin(), items.end(), it ), items.end() );
+        auto &items = special_items[type];
+        std::erase_if( items, [it]( const auto & ref ) { return ref == it; } );
     };
     remove_special( special_item_type::corpse );
     remove_special( special_item_type::bionic_scannable_corpse );
@@ -52,9 +52,9 @@ void active_item_cache::remove( const item *it )
 void active_item_cache::add( item &it )
 {
     // If the item is already in the cache for some reason, don't add a second reference
-    active_item_queue &queue = active_items[it.processing_speed()];
-    std::vector<cache_reference<item>> &target_list = queue.items;
-    const auto references_item = [&it]( const cache_reference<item> &active_item ) { return active_item == it; };
+    auto &queue = active_items[it.processing_speed()];
+    auto &target_list = queue.items;
+    const auto references_item = [&it]( const auto & active_item ) { return active_item == it; };
     if( std::ranges::any_of( target_list, references_item ) ) {
         return;
     }

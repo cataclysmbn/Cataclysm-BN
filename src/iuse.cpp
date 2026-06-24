@@ -2244,9 +2244,9 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
     }
 
     // Try to minimize the use of has_enough_charges() because it's kind of expensive.
-    bool no_charges = false;
-    bool visibility_cache_updated = false;
-    for( item *const corpse : here.get_active_items_in_radius( pos, PICKUP_RANGE,
+    auto no_charges = false;
+    auto visibility_cache_updated = false;
+    for( const auto corpse : here.get_active_items_in_radius( pos, PICKUP_RANGE,
             special_item_type::bionic_scannable_corpse ) ) {
         if( corpse == nullptr || !corpse->is_corpse() ||
             corpse->get_var( "bionics_scanned_by", -1 ) == p->getID().get_value() ) {
@@ -2261,14 +2261,13 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             continue;
         }
 
-        std::vector<const item *> cbms;
-        for( const item * const &maybe_cbm : corpse->get_components() ) {
-            if( maybe_cbm->is_bionic() ) {
-                cbms.push_back( maybe_cbm );
-            }
-        }
+        using namespace std::views;
+        namespace ranges = std::ranges;
+        auto cbms = corpse->get_components()
+                    | filter( &item::is_bionic )
+                    | ranges::to<std::vector>();
 
-        int charges = std::max( 1, static_cast<int>( cbms.size() ) );
+        auto charges = std::max( 1, static_cast<int>( cbms.size() ) );
         charges -= it->ammo_consume( charges, pos );
         if( possess && it->has_flag( flag_USE_UPS ) ) {
             if( p->use_charges_if_avail( itype_UPS, charges ) ) {
@@ -2289,11 +2288,8 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         corpse->set_var( "bionics_scanned_by", p->getID().get_value() );
         if( !cbms.empty() ) {
             corpse->set_flag( flag_CBM_SCANNED );
-            std::string bionics_string =
-                enumerate_as_string( cbms.begin(), cbms.end(),
-            []( const item * entry ) -> std::string {
-                return entry->display_name();
-            }, enumeration_conjunction::none );
+            auto bionics_string = enumerate_as_string( cbms.begin(), cbms.end(),
+            []( const auto entry ) { return entry->display_name(); }, enumeration_conjunction::none );
             //~ %1 is corpse name, %2 is direction, %3 is bionic name
             p->add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
                                   corpse->display_name().c_str(),
