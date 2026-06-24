@@ -72,6 +72,9 @@ void reset_markers();
 void process_sounds();
 // Processes sounds for a given NPC at their tripoint and applies the sounds to the NPC's AI
 void process_sounds_npc();
+/// Process sounds for off-bubble NPCs using direct distance-based attenuation.
+/// Skips in-bubble NPCs (they get full floodfill via process_sounds_npc).
+void process_sounds_npc_abs();
 // process_sound_markers applies sound events to the player and records them for display.
 void process_sound_markers( Character *who );
 // Returns the sound direction index from source to listener.
@@ -575,7 +578,7 @@ struct sound_event {
     short volume = 0;
 
     // What is the position of the sound source?
-    tripoint_bub_ms origin;
+    tripoint_abs_ms origin;
 
     // What enum sound category is this?
     sounds::sound_t category = sounds::sound_t::background;

@@ -37,7 +37,7 @@ auto finish_migo_nerve_cage_removal( const tripoint_bub_ms &p, const bool spawn_
         add_msg( _( "The nerve cluster collapses in on itself, to no discernible effect." ) );
     }
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 120;
     se.category = sounds::sound_t::combat;
     se.description = _( "a loud alien shriek reverberating through the structure!" );

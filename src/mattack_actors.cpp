@@ -614,13 +614,13 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint_bub_
         bool found_controls = false;
 
         for( const vpart_reference &vp : v.v->get_avail_parts( "CONTROLS" ) ) {
-            if( !z.sees( vp.pos() ) ) {
+            if( !z.sees( vp.bub_pos() ) ) {
                 continue;
             }
 
-            int new_dist = rl_dist( z.bub_pos(), vp.pos() );
+            int new_dist = rl_dist( z.abs_pos(), vp.abs_pos() );
             if( new_dist <= range ) {
-                aim_at = vp.pos();
+                aim_at = vp.bub_pos();
                 range = new_dist;
                 found = true;
                 found_controls = true;
@@ -735,7 +735,7 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
     if( not_targeted || not_laser_locked ) {
         if( targeting_volume > 0 && !targeting_sound.empty() ) {
             sound_event se;
-            se.origin = z.bub_pos();
+            se.origin = z.abs_pos();
             se.volume = targeting_volume;
             se.category = sounds::sound_t::alarm;
             se.description = _( targeting_sound );
@@ -784,7 +784,7 @@ void gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode
     if( !gun->ammo_sufficient() ) {
         if( !no_ammo_sound.empty() ) {
             sound_event se;
-            se.origin = z.bub_pos();
+            se.origin = z.abs_pos();
             se.volume = 60;
             se.category = sounds::sound_t::combat;
             se.description = _( no_ammo_sound );

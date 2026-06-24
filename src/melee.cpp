@@ -1684,7 +1684,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
             if( !is_quiet() ) { // check martial arts silence
                 //sound generated later
                 sound_event se;
-                se.origin = bub_pos();
+                se.origin = abs_pos();
                 se.volume = 50;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "whack!" );
@@ -3164,7 +3164,7 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
         }
 
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = 70;
         se.category = sounds::sound_t::combat;
         se.description = _( "Crack!" );

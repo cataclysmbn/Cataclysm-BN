@@ -86,11 +86,6 @@ struct pathfinding_tile {
     }
 };
 
-auto pathfinding_lookup_options() -> mapbuffer_lookup_options
-{
-    return { .mode = mapbuffer_lookup_mode::simulated_only };
-}
-
 auto get_pathfinding_tile( mapbuffer &buf, const tripoint_abs_ms &pos )
 -> std::optional<pathfinding_tile>
 {

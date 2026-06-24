@@ -1646,7 +1646,7 @@ void explosion_funcs::regular( const queued_explosion &qe )
     // Cap the max volume to 191dB
     const int noise = std::min( ( base_noise + ( ex.fire ? 70 : 90 ) ), 191 );
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = noise;
     se.category = sounds::sound_t::combat;
 
@@ -1793,7 +1793,7 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
         }
     }
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 180;
     se.category = sounds::sound_t::combat;
     se.description = _( "a huge boom!" );
@@ -1820,7 +1820,7 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
     draw_explosion( p, sw.radius, c_blue, qe.graphics_name );
 
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = sw.force * sw.force * ( sw.dam_mult / 2 );
     se.category = sounds::sound_t::combat;
     se.description = _( "Crack!" );

@@ -1145,8 +1145,7 @@ bool game::start_game()
             std::string search = std::string( "helicopter" );
             if( name.find( search ) != std::string::npos ) {
                 for( const vpart_reference &vp : v.v->get_any_parts( VPFLAG_CONTROLS ) ) {
-                    const tripoint_bub_ms pos = vp.pos();
-                    u.setpos( pos );
+                    u.setpos( vp.abs_pos() );
 
                     // Delete the items that would have spawned here from a "corpse"
                     for( auto sp : v.v->parts_at_relative( vp.mount(), true ) ) {
@@ -1157,7 +1156,7 @@ bool game::start_game()
                         }
                     }
 
-                    auto mons = critter_tracker->find( pos );
+                    auto mons = critter_tracker->find( vp.abs_pos() );
                     if( mons != nullptr ) {
                         remove_zombie( *mons );
                     }
@@ -2297,6 +2296,9 @@ bool game::do_turn()
         // Apply remaining sounds to NPC AI here so that they are reacting to the most recent monster noises and player noises, not recent player noises and prior turn monster noises.
         // process_sounds_npc also marks all sounds present in the vector as heard by npcs.
         sounds::process_sounds_npc();
+        // Off-bubble NPC hearing: direct distance-based attenuation for
+        // NPCs in non-player-bubble simulated regions.
+        sounds::process_sounds_npc_abs();
     }
 
     if( !npcperf ) {
@@ -12743,7 +12745,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
                 volume -= 10;
             }
             sound_event se;
-            se.origin = dest_loc;
+            se.origin = bub_to_abs( dest_loc );
             se.category = sounds::sound_t::movement;
             se.movement_noise = true;
             se.id = "none";
@@ -12790,7 +12792,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
 
         if( one_in( 20 ) && u.has_artifact_with( AEP_MOVEMENT_NOISE ) ) {
             sound_event se;
-            se.origin = u.bub_pos();
+            se.origin = u.abs_pos();
             se.volume = 80;
             se.category = sounds::sound_t::movement;
             se.description = _( "a rattling sound." );
@@ -13537,7 +13539,7 @@ auto game::grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool
         }
     }
     sound_event se;
-    se.origin = fdest;
+    se.origin = bub_to_abs( fdest );
     se.volume = std::min( 80, 40 + ( furntype.move_str_req * 2 ) );
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
@@ -15343,7 +15345,7 @@ void game::update_stair_monsters()
             add_msg( m_warning, dump );
         } else {
             sound_event se;
-            se.origin = dest;
+            se.origin = bub_to_abs( dest );
             se.volume = 60;
             se.category = sounds::sound_t::movement;
             se.movement_noise = true;

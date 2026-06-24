@@ -10,7 +10,7 @@ auto vehicle_grab_target_at_exact( const map &here,
                                    const tripoint_bub_ms &pos ) -> std::optional<vehicle_grab_target>
 {
     if( const auto vp = here.veh_at( pos ) ) {
-        return vehicle_grab_target{ .pos = vp->pos(), .vp = *vp };
+        return vehicle_grab_target{ .pos = vp->bub_pos(), .vp = *vp };
     }
 
     return std::nullopt;

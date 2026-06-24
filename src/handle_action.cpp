@@ -570,7 +570,7 @@ inline static void rcdrive( point_rel_ms d )
     if( here.impassable( dest ) || !here.can_put_items_ter_furn( dest ) ||
         here.has_furn( dest ) ) {
         sound_event se;
-        se.origin = dest;
+        se.origin = bub_to_abs( dest );
         se.volume = 65;
         se.category = sounds::sound_t::combat;
         se.description = _( "sound of a collision with an obstacle." );
@@ -585,7 +585,7 @@ inline static void rcdrive( point_rel_ms d )
         here.add_item_or_charges( dest, std::move( det_car ) );
         //~ Sound of moving a remote controlled car
         sound_event se;
-        se.origin = src;
+        se.origin = bub_to_abs( src );
         se.volume = 50;
         se.category = sounds::sound_t::movement;
         se.movement_noise = true;
@@ -867,7 +867,7 @@ static void smash()
             return;
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
             sound_event se;
-            se.origin = smashp;
+            se.origin = bub_to_abs( smashp );
             se.volume = bash_info.sound_vol.value_or( 0 );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound.translated();
@@ -882,7 +882,7 @@ static void smash()
             return;
         } else {
             sound_event se;
-            se.origin = smashp;
+            se.origin = bub_to_abs( smashp );
             se.volume = bash_info.sound_fail_vol.value_or( 0 );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound_fail.translated();
@@ -949,7 +949,7 @@ static void smash()
                 add_msg( m_bad, _( "Your %s shatters!" ), weapon.tname() );
                 weapon.spill_contents( u.bub_pos() );
                 sound_event se;
-                se.origin = u.bub_pos();
+                se.origin = u.abs_pos();
                 se.volume = 70;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "CRACK!" );

@@ -2131,7 +2131,7 @@ int iuse::radio_on( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             message = string_format( _( "radio: %s" ), segments[index] );
         }
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 60;
         se.category = sounds::sound_t::electronic_speech;
         se.description = message;
@@ -2206,7 +2206,7 @@ int iuse::noise_emitter_on( player *p, item *it, bool t, const tripoint_bub_ms &
     if( t ) { // Normal use
         //~ the sound of a noise emitter when turned on
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 100;
         se.category = sounds::sound_t::alarm;
         se.description = _( "KXSHHHHRRCRKLKKK!" );
@@ -2454,7 +2454,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
 
         if( pry->noise > 0 ) {
             sound_event se;
-            se.origin = pnt;
+            se.origin = bub_to_abs( pnt );
             se.volume = pry->noise;
             se.category = sounds::sound_t::combat;
             se.description = pry->sound.translated();
@@ -2466,7 +2466,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
         if( pry->alarm ) {
             g->events().send<event_type::triggers_alarm>( p->getID() );
             sound_event se;
-            se.origin = p->bub_pos();
+            se.origin = p->abs_pos();
             se.volume = 100;
             se.category = sounds::sound_t::alarm;
             se.description = _( "an alarm sound!" );
@@ -2488,7 +2488,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
                                     p->str_cur ) ) * pry_level ) {
                 p->add_msg_if_player( m_mixed, pry->break_message );
                 sound_event se;
-                se.origin = pnt;
+                se.origin = bub_to_abs( pnt );
                 se.volume = pry->break_noise;
                 se.category = sounds::sound_t::combat;
                 se.description = pry->break_sound.translated();
@@ -2506,7 +2506,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
                     se.category = sounds::sound_t::alarm;
                     se.description = _( "an alarm sound!" );
                     se.volume = 100;
-                    se.origin = p->bub_pos();
+                    se.origin = p->abs_pos();
                     se.id = "environment";
                     se.variant = "alarm";
                     sounds::sound( se );
@@ -3116,7 +3116,7 @@ int iuse::geiger( player *p, item *it, bool t, const tripoint_bub_ms &pos )
                                 rads > 25 ? _( "geiger_medium" ) : _( "geiger_low" );
 
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 50;
         se.category = sounds::sound_t::alarm;
         se.description = description;
@@ -3278,7 +3278,7 @@ int iuse::throwable_extinguisher_act( player *, item *it, bool, const tripoint_b
     }
     if( g->m.get_field( pos, fd_fire ) != nullptr ) {
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 90;
         se.category = sounds::sound_t::combat;
         se.description = _( "Bang!" );
@@ -3338,7 +3338,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint_bub_ms 
     if( t ) { // Simple timer effects
         // Vol 0 = only heard if you hold it
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 40;
         se.category = sounds::sound_t::electronic_speech;
         se.description = _( "Merged!" );
@@ -3359,7 +3359,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint_bub_ms 
             current_stat = std::max( current_stat, modified_stat );
         };
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 120;
         se.category = sounds::sound_t::electronic_speech;
         se.id = "speech";
@@ -3543,7 +3543,7 @@ int iuse::grenade_inc_act( player *p, item *it, bool t, const tripoint_bub_ms &p
         // Simple timer effects
         // Vol 0 = only heard if you hold it
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 40;
         se.category = sounds::sound_t::alarm;
         se.description = _( "Tick!" );
@@ -3653,7 +3653,7 @@ int iuse::firecracker_pack_act( player *, item *it, bool, const tripoint_bub_ms 
     time_duration timer = it->age();
     if( timer < 2_turns ) {
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 30;
         se.category = sounds::sound_t::alarm;
         se.description = _( "ssss…" );
@@ -3669,7 +3669,7 @@ int iuse::firecracker_pack_act( player *, item *it, bool, const tripoint_bub_ms 
         }
         for( i = 0; i < ex; i++ ) {
             sound_event se;
-            se.origin = pos;
+            se.origin = bub_to_abs( pos );
             se.volume = 80;
             se.category = sounds::sound_t::combat;
             se.description = _( "Bang!" );
@@ -3710,7 +3710,7 @@ int iuse::firecracker_act( player *p, item *it, bool t, const tripoint_bub_ms &p
 
     if( t ) { // Simple timer effects
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 40;
         se.category = sounds::sound_t::alarm;
         se.description = _( "ssss…" );
@@ -3725,7 +3725,7 @@ int iuse::firecracker_act( player *p, item *it, bool t, const tripoint_bub_ms &p
 
     if( it->charges == 0 ) { // When that timer runs down...
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 80;
         se.category = sounds::sound_t::combat;
         se.description = _( "Bang!" );
@@ -3948,7 +3948,7 @@ void iuse::play_music( player &p, const tripoint_bub_ms &source, const int volum
     // do not process mp3 player
     if( volume != 0 ) {
         sound_event se;
-        se.origin = source;
+        se.origin = bub_to_abs( source );
         se.volume = volume;
         se.category = sounds::sound_t::music;
         se.description = sound;
@@ -4859,7 +4859,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
         sound_event se;
         switch( used ) {
             case AEA_STORM: {
-                se.origin = p->bub_pos();
+                se.origin = p->abs_pos();
                 se.volume = 160;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "Ka-BOOM!" );
@@ -4952,7 +4952,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
             break;
 
             case AEA_PULSE:
-                se.origin = p->bub_pos();
+                se.origin = p->abs_pos();
                 se.volume = 80;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "The earth shakes!" );
@@ -5090,7 +5090,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
                 break;
 
             case AEA_NOISE:
-                se.origin = p->bub_pos();
+                se.origin = p->abs_pos();
                 se.volume = 135;
                 se.category = sounds::sound_t::combat;
                 se.description = string_format( _( "a deafening boom from %s %s" ),
@@ -5101,7 +5101,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
                 break;
 
             case AEA_SCREAM:
-                se.origin = p->bub_pos();
+                se.origin = p->abs_pos();
                 se.volume = 100;
                 se.category = sounds::sound_t::alert;
                 se.description = string_format( _( "a disturbing scream from %s %s" ),
@@ -5344,7 +5344,7 @@ int iuse::unfold_generic( player *p, item *it, bool, const tripoint_bub_ms & )
         if( vp.info().location != "structure" && !vp.info().has_flag( VPFLAG_EXTENDABLE ) ) {
             continue;
         }
-        const tripoint_bub_ms pp = vp.pos();
+        const tripoint_bub_ms pp = vp.bub_pos();
         if( invalid_pos( pp, can_float ) ) {
             p->add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it->tname() );
             g->m.destroy_vehicle( veh );
@@ -5505,7 +5505,7 @@ int iuse::talking_doll( player *p, item *it, bool, const tripoint_bub_ms & )
     const SpeechBubble &speech = get_speech( it->typeId().str() );
 
     sound_event se;
-    se.origin = p->bub_pos();
+    se.origin = p->abs_pos();
     se.volume = speech.volume;
     se.category = sounds::sound_t::electronic_speech;
     se.description = speech.text.translated();
@@ -5595,7 +5595,7 @@ int iuse::gun_repair( player *p, item *it, bool, const tripoint_bub_ms & )
     const float vision_mod = character_funcs::fine_detail_vision_mod( *p );
     // TODO: this may render player unable to move for minutes, and so should start an activity instead
     sound_event se;
-    se.origin = p->bub_pos();
+    se.origin = p->abs_pos();
     se.category = sounds::sound_t::activity;
     se.description = _( "crunch" );
     se.id = "tool";
@@ -5703,7 +5703,7 @@ int iuse::bell( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     if( it->typeId() == itype_cow_bell ) {
         sound_event se;
-        se.origin = p->bub_pos();
+        se.origin = p->abs_pos();
         se.volume = 70;
         se.category = sounds::sound_t::music;
         se.description = _( "Clank!  Clank!" );
@@ -5723,7 +5723,7 @@ int iuse::bell( player *p, item *it, bool, const tripoint_bub_ms & )
         }
     } else {
         sound_event se;
-        se.origin = p->bub_pos();
+        se.origin = p->abs_pos();
         se.volume = 40;
         se.category = sounds::sound_t::music;
         se.description = _( "Ring!  Ring!" );
@@ -7372,7 +7372,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
 
         p->moves -= 50;
         sound_event se;
-        se.origin = p->bub_pos();
+        se.origin = p->abs_pos();
         se.volume = 50;
         se.category = sounds::sound_t::activity;
         se.description = _( "Click." );
@@ -7645,7 +7645,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         if( it->charges == 0 ) {
 
             sound_event se;
-            se.origin = p->bub_pos();
+            se.origin = p->abs_pos();
             se.volume = 40;
             se.category = sounds::sound_t::combat;
             se.description = "Click.";
@@ -7679,7 +7679,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
         if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             sound_event se;
-            se.origin = p->bub_pos();
+            se.origin = p->abs_pos();
             se.volume = 70;
             se.category = sounds::sound_t::alarm;
             se.description = _( "a police siren, whoop WHOOP." );
@@ -7742,7 +7742,7 @@ int iuse::foodperson( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             const SpeechBubble &speech = get_speech( "foodperson_mask" );
             sound_event se;
-            se.origin = pos;
+            se.origin = bub_to_abs( pos );
             se.volume = speech.volume;
             se.category = sounds::sound_t::alarm;
             se.description = speech.text.translated();
@@ -7843,7 +7843,7 @@ int iuse::radiocaron( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     if( t ) {
         //~Sound of a radio controlled car moving around
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 50;
         se.category = sounds::sound_t::movement;
         se.movement_noise = true;
@@ -7887,7 +7887,7 @@ static void emit_radio_signal( player &p, const flag_id &signal )
         if( it.has_flag( flag_RADIO_ACTIVATION ) && it.has_flag( signal ) )
         {
             sound_event se;
-            se.origin = loc;
+            se.origin = bub_to_abs( loc );
             se.volume = 50;
             se.category = sounds::sound_t::alarm;
             se.description = _( "beep" );
@@ -8204,9 +8204,9 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         const auto rctrl_parts = veh->get_avail_parts( "REMOTE_CONTROLS" );
         // Revert to original behavior if we can't find remote controls.
         if( rctrl_parts.empty() ) {
-            veh->use_controls( tripoint_bub_ms( pos ) );
+            veh->use_controls( pos );
         } else {
-            veh->use_controls( tripoint_bub_ms( rctrl_parts.begin()->pos() ) );
+            veh->use_controls( rctrl_parts.begin()->bub_pos() );
         }
     }
 

@@ -280,7 +280,7 @@ void mdeath::boomer( monster &z )
 {
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -308,7 +308,7 @@ void mdeath::boomer_glow( monster &z )
 {
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -409,7 +409,7 @@ void mdeath::fungus( monster &z )
 {
     //~ the sound of a fungus dying
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 60;
     se.category = sounds::sound_t::combat;
     se.description = _( "Pouf!" );
@@ -776,7 +776,7 @@ void mdeath::gas( monster &z )
 {
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -792,7 +792,7 @@ void mdeath::smokeburst( monster &z )
 {
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -816,7 +816,7 @@ void mdeath::fungalburst( monster &z )
 
     std::string explode = string_format( _( "a %s explodes!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 90;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -1035,7 +1035,7 @@ void mdeath::fireball( monster &z )
         std::string explode = string_format( _( "a %s explode!" ),
                                              z.name() );
         sound_event se;
-        se.origin = z.bub_pos();
+        se.origin = z.abs_pos();
         se.volume = 140;
         se.category = sounds::sound_t::combat;
         se.description = explode;
@@ -1060,7 +1060,7 @@ void mdeath::conflagration( monster &z )
         }
         const std::string explode = string_format( _( "a %s explode!" ), z.name() );
         sound_event se;
-        se.origin = z.bub_pos();
+        se.origin = z.abs_pos();
         se.volume = 110;
         se.category = sounds::sound_t::combat;
         se.description = explode;

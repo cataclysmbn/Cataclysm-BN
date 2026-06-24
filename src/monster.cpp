@@ -3051,7 +3051,7 @@ void monster::process_turn()
         if( has_effect( effect_emp ) ) {
             if( action_time_scale::once_every_this_tick( 10_turns ) ) {
                 sound_event se;
-                se.origin = bub_pos();
+                se.origin = abs_pos();
                 se.volume = 50;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "hummmmm." );
@@ -3069,7 +3069,7 @@ void monster::process_turn()
                     if( item->made_of( LIQUID ) && item->flammable() ) { // start a fire!
                         g->m.add_field( zap, fd_fire, 2, 1_minutes );
                         sound_event se;
-                        se.origin = bub_pos();
+                        se.origin = abs_pos();
                         se.volume = 60;
                         se.category = sounds::sound_t::combat;
                         se.description = _( "fwoosh!" );
@@ -3104,7 +3104,7 @@ void monster::process_turn()
                 g->m.is_outside( bub_pos() ) ) {
                 get_weather().lightning_active = false; // only one supercharge per strike
                 sound_event se;
-                se.origin = bub_pos();
+                se.origin = abs_pos();
                 se.volume = 180;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "BOOOOOOOM!!!" );
@@ -3128,7 +3128,7 @@ void monster::process_turn()
             } else if( has_effect( effect_supercharged ) &&
                        action_time_scale::once_every_this_tick( 5_turns ) ) {
                 sound_event se;
-                se.origin = bub_pos();
+                se.origin = abs_pos();
                 se.volume = 80;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "VMMMMMMMMM!" );

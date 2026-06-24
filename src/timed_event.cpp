@@ -89,7 +89,7 @@ void timed_event::actualize()
             // You could drop the flag, you know.
             if( g->u.has_amount( itype_petrified_eye, 1 ) ) {
                 sound_event se;
-                se.origin = g->u.bub_pos();
+                se.origin = g->u.abs_pos();
                 se.volume = 100;
                 se.category = sounds::sound_t::alert;
                 se.description = _( "a tortured scream!" );

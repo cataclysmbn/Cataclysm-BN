@@ -799,7 +799,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         add_msg_activate();
         //~Sound of a bionic sonic-resonator shaking the area
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = 80;
         se.category = sounds::sound_t::combat;
         se.description = _( "VRRRRMP!" );
@@ -925,7 +925,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         add_msg_if_player( m_good, _( "Your muscles hiss as hydraulic strength fills them!" ) );
         //~ Sound of hissing hydraulic muscle! (not quite as loud as a car horn)
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = 65;
         se.category = sounds::sound_t::activity;
         se.description = _( "HISISSS!" );
@@ -1846,7 +1846,7 @@ void Character::process_bionic( bionic &bio )
     } else if( bio.id == bio_hydraulics ) {
         // Sound of hissing hydraulic muscle! (not quite as loud as a car horn)
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = 65;
         se.category = sounds::sound_t::activity;
         se.description = _( "HISISSS!" );

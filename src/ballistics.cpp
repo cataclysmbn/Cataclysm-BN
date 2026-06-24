@@ -116,7 +116,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
         // TODO: Non-glass breaking
         // TODO: Wine glass breaking vs. entire sheet of glass breaking
         sound_event se;
-        se.origin = pt;
+        se.origin = bub_to_abs( pt );
         se.volume = 75;
         se.category = sounds::sound_t::combat;
         se.description = _( "glass breaking!" );
@@ -189,7 +189,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
 
         if( proj.has_effect( ammo_effect_HEAVY_HIT ) ) {
             sound_event se;
-            se.origin = pt;
+            se.origin = bub_to_abs( pt );
             se.category = sounds::sound_t::combat;
             se.id = "bullet_hit";
             se.variant = "hit_wall";

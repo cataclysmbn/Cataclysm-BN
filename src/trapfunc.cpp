@@ -99,7 +99,7 @@ bool trapfunc::bubble( const tripoint_bub_ms &p, Creature *c, item * )
         }
     }
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 65;
     se.category = sounds::sound_t::alarm;
     se.description = _( "Pop!" );
@@ -133,7 +133,7 @@ bool trapfunc::glass( const tripoint_bub_ms &p, Creature *c, item * )
     }
     add_msg( _( "The shards shatter!" ) );
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 60;
     se.category = sounds::sound_t::combat;
     se.description = _( "glass cracking!" );
@@ -167,7 +167,7 @@ bool trapfunc::beartrap( const tripoint_bub_ms &p, Creature *c, item * )
     // Increased volume relative to its origional 8 tile distance, bear traps are actually quite loud.
     // This helps players hear if a trap they set nearby went off.
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = _( "SNAP!" );
@@ -283,7 +283,7 @@ bool trapfunc::caltrops_glass( const tripoint_bub_ms &p, Creature *c, item * )
     if( g->u.sees( p ) ) {
         add_msg( _( "The shards shatter!" ) );
         sound_event se;
-        se.origin = p;
+        se.origin = bub_to_abs( p );
         se.volume = 60;
         se.category = sounds::sound_t::combat;
         se.description = _( "glass cracking!" );
@@ -448,7 +448,7 @@ bool trapfunc::crossbow( const tripoint_bub_ms &p, Creature *c, item * )
 bool trapfunc::shotgun( const tripoint_bub_ms &p, Creature *c, item * )
 {
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 160;
     se.category = sounds::sound_t::combat;
     se.description = _( "Kerblam!" );
@@ -548,7 +548,7 @@ bool trapfunc::blade( const tripoint_bub_ms &p, Creature *c, item * )
 bool trapfunc::snare_light( const tripoint_bub_ms &p, Creature *c, item * )
 {
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 40;
     se.category = sounds::sound_t::combat;
     se.description = _( "Snap!" );
@@ -582,7 +582,7 @@ bool trapfunc::snare_light( const tripoint_bub_ms &p, Creature *c, item * )
 bool trapfunc::snare_heavy( const tripoint_bub_ms &p, Creature *c, item * )
 {
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 50;
     se.category = sounds::sound_t::combat;
     se.description = _( "Snap!" );
@@ -674,7 +674,7 @@ bool trapfunc::telepad( const tripoint_bub_ms &p, Creature *c, item * )
 {
     //~ the sound of a telepad functioning
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 70;
     se.category = sounds::sound_t::movement;
     se.description = _( "vvrrrRRMM*POP!*" );
@@ -753,7 +753,7 @@ bool trapfunc::dissector( const tripoint_bub_ms &p, Creature *c, item * )
             //The monster is a robot. So the dissector should not try to dissect the monsters flesh.
             //Dissector error sound.
             sound_event se;
-            se.origin = p;
+            se.origin = bub_to_abs( p );
             se.volume = 60;
             se.category = sounds::sound_t::electronic_speech;
             se.description = _( "BEEPBOOP!  Please remove non-organic object." );
@@ -788,7 +788,7 @@ bool trapfunc::dissector( const tripoint_bub_ms &p, Creature *c, item * )
 
     //~ the sound of a dissector dissecting
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 70;
     se.category = sounds::sound_t::combat;
     se.description = _( "BRZZZAP" );
@@ -1396,7 +1396,7 @@ bool trapfunc::hum( const tripoint_bub_ms &p, Creature *, item * )
         sfx = _( "VRMMMMMM" );
     }
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = volume;
     se.category = sounds::sound_t::activity;
     se.description = sfx;
@@ -1496,7 +1496,7 @@ bool trapfunc::snake( const tripoint_bub_ms &p, Creature *, item * )
 {
     //~ the sound a snake makes
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 40;
     se.category = sounds::sound_t::movement;
     se.description = _( "ssssssss" );

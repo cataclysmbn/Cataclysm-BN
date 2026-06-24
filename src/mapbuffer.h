@@ -32,6 +32,7 @@
 #include "type_id.h"
 #include "vpart_position.h"
 
+enum class lit_level : int;
 class submap;
 class active_tile_data;
 class computer;
@@ -1050,6 +1051,85 @@ class mapbuffer
         /// True if terrain+furniture is passable (ignoring vehicles).
         auto passable_ter_furn( const tripoint_abs_ms &p,
                                 mapbuffer_lookup_options options = {} ) -> bool;
+
+        // ----- Movement execution helpers (off-bubble support) -----
+
+        /// Terrain ID at @p p.
+        auto ter( const tripoint_abs_ms &p,
+                  mapbuffer_lookup_options options = {} ) -> std::optional<ter_id>;
+
+        /// Furniture name at @p p.
+        auto furnname( const tripoint_abs_ms &p,
+                       mapbuffer_lookup_options options = {} ) -> std::string;
+
+        /// True if terrain or furniture at @p p has the string @p flag.
+        auto has_flag( const std::string &flag, const tripoint_abs_ms &p,
+                       mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain or furniture at @p p has the ter_bitflags @p flag.
+        auto has_flag( ter_bitflags flag, const tripoint_abs_ms &p,
+                       mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain at @p p has the string @p flag.
+        auto has_flag_ter( const std::string &flag, const tripoint_abs_ms &p,
+                           mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain or furniture at @p p has the string @p flag.
+        auto has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
+                                   mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain or furniture at @p p has @p flag (ter_bitflags enum).
+        auto has_flag_ter_or_furn( ter_bitflags flag, const tripoint_abs_ms &p,
+                                   mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// True if @p p has a floor or support (checks submap floor cache).
+        auto has_floor_or_support( const tripoint_abs_ms &p,
+                                   mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// True if @p p is outside (checks submap outside cache).
+        auto is_outside( const tripoint_abs_ms &p,
+                         mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// Combined move cost (terrain + vehicle) from @p from to @p to.
+        auto combined_movecost( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
+                                mapbuffer_lookup_options options = {} ) -> int;
+
+        /// Move cost including vehicles at @p p.
+        auto move_cost( const tripoint_abs_ms &p,
+                        mapbuffer_lookup_options options = {} ) -> int;
+
+        /// True if a vehicle at @p from blocks movement toward @p to via rotation.
+        auto obstructed_by_vehicle_rotation( const tripoint_abs_ms &from,
+                                            const tripoint_abs_ms &to,
+                                            mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// Check if an entity can open a door at @p p (checks OPENCLOSE_INSIDE flag and mounting).
+        auto can_open_door( const tripoint_abs_ms &p, bool inside,
+                            mapbuffer_lookup_options options = {} ) -> bool;
+        /// Open a door at @p p (mutates terrain/furniture to its open variant).
+        auto open_door( const tripoint_abs_ms &p, bool inside,
+                        mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// Bash terrain/furniture at @p p with given @p strength.
+        auto bash( const tripoint_abs_ms &p, int str, bool silent = false,
+                   mapbuffer_lookup_options options = {} ) -> int;
+
+        /// Board a vehicle at @p p with @p who as passenger.
+        auto board_vehicle( const tripoint_abs_ms &p, Character &who,
+                            mapbuffer_lookup_options options = {} ) -> bool;
+        /// Unboard a vehicle at @p p.
+        auto unboard_vehicle( const tripoint_abs_ms &p, bool dead_passenger = false,
+                              mapbuffer_lookup_options options = {} ) -> void;
+
+        /// Apply field effects at the creature's position.
+        auto creature_in_field( Creature &critter,
+                                mapbuffer_lookup_options options = {} ) -> void;
+
+        /// Iterate all loaded vehicles.
+        auto for_each_vehicle( const std::function<void( vehicle & )> &fn ) -> void;
+        /// Iterate all loaded vehicles (const overload).
+        auto for_each_vehicle( const std::function<void( const vehicle & )> &fn ) const -> void;
+
+        /// Cheap light query for off-bubble AI — sky + nearby sources + simple LOS.
+        /// No shadowcasting, no diffusion. Not suitable for rendering.
+        auto cheap_light_at( const tripoint_abs_ms &p,
+                             mapbuffer_lookup_options options = {} ) -> lit_level;
 
         // ----- Field operations -----
 

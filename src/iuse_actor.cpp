@@ -649,7 +649,7 @@ int explosion_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &pos
     if( t ) {
         if( sound_volume >= 0 ) {
             sound_event se;
-            se.origin = pos;
+            se.origin = bub_to_abs( pos );
             se.volume = sound_volume;
             se.category = sounds::sound_t::alarm;
             se.movement_noise = true;
@@ -2358,7 +2358,7 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
     if( rng( 0, 10 ) - it.damage_level( 4 ) > success_chance && !p.is_underwater() ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = p.abs_pos();
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( success_message );
@@ -2443,7 +2443,7 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
     } else if( one_in( noise_chance ) ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = p.abs_pos();
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( noise_message );
@@ -2488,7 +2488,7 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
         p.moves -= moves;
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = p.abs_pos();
             se.volume = noise;
             se.category = sounds::sound_t::activity;
             se.description = noise_message.empty() ? _( "Hsss" ) : _( noise_message );
@@ -2623,7 +2623,7 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint_b
     }
 
     sound_event se;
-    se.origin = p.bub_pos();
+    se.origin = p.abs_pos();
     se.volume = volume;
     se.category = sounds::sound_t::music;
     se.description = desc;
@@ -4809,7 +4809,7 @@ int mutagen_iv_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
         p.mod_pain( m_category.iv_pain );
         /** @EFFECT_STR increases volume of painful shouting when using IV mutagen */
         sound_event se;
-        se.origin = p.bub_pos();
+        se.origin = p.abs_pos();
         se.volume = m_category.iv_noise + p.str_cur;
         se.category = sounds::sound_t::alert;
         se.description = m_category.iv_sound_message();
@@ -5558,7 +5558,7 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint_bub_ms 
                  it.display_name() );
         //sounds::sound( pos, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
         sound_event se;
-        se.origin = pos;
+            se.origin = bub_to_abs( pos );
         se.volume = 50;
         se.category = sounds::sound_t::alarm;
         se.description = _( "beep!" );
@@ -5893,7 +5893,7 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &p
 
             //sounds::sound( pos, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
             sound_event se;
-            se.origin = pos;
+            se.origin = bub_to_abs( pos );
             se.volume = 50;
             se.category = sounds::sound_t::alarm;
             se.description = _( "ding!" );

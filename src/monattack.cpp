@@ -479,7 +479,7 @@ bool mattack::shriek( monster *z )
     // It takes a while
     z->moves -= 240;
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 120;
     se.category = sounds::sound_t::alert;
     se.description = _( "a terrible shriek!" );
@@ -510,7 +510,7 @@ bool mattack::shriek_alert( monster *z )
 
     z->moves -= 150;
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 120;
     se.category = sounds::sound_t::alert;
     se.description = _( "a piercing wail!" );
@@ -584,7 +584,7 @@ bool mattack::howl( monster *z )
     // It takes a while
     z->moves -= 200;
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 100;
     se.category = sounds::sound_t::alert;
     se.description = _( "an ear-piercing howl!" );
@@ -626,7 +626,7 @@ bool mattack::rattle( monster *z )
     // It takes a very short while
     z->moves -= 20;
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 60;
     se.category = sounds::sound_t::alert;
     se.description = _( "a sibilant rattling sound!" );
@@ -658,7 +658,7 @@ bool mattack::acid( monster *z )
     // It takes a while
     z->moves -= 300;
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 60;
     se.category = sounds::sound_t::combat;
     se.description = _( "a spitting noise." );
@@ -1710,7 +1710,7 @@ bool mattack::spit_sap( monster *z )
 bool mattack::triffid_heartbeat( monster *z )
 {
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 70;
     se.category = sounds::sound_t::movement;
     se.description = _( "thu-THUMP." );
@@ -1793,7 +1793,7 @@ bool mattack::fungus( monster *z )
 
     //~ the sound of a fungus releasing spores
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 60;
     se.category = sounds::sound_t::combat;
     se.description = _( "Pouf!" );
@@ -1835,7 +1835,7 @@ bool mattack::fungus_advanced( monster *z )
 
     //~ the sound of a fungus releasing spores
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 60;
     se.category = sounds::sound_t::combat;
     se.description = _( "Pouf!" );
@@ -1904,7 +1904,7 @@ bool mattack::fungus_haze( monster *z )
 {
     //~ That spore sound again
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 60;
     se.category = sounds::sound_t::combat;
     se.description = _( "Pouf!" );
@@ -1947,7 +1947,7 @@ bool mattack::fungus_big_blossom( monster *z )
         }
         //~Sound of a giant fungal blossom inhaling
         sound_event in;
-        in.origin = z->bub_pos();
+        in.origin = z->abs_pos();
         in.volume = 80;
         in.category = sounds::sound_t::combat;
         in.description = _( "WOOOSH!" );
@@ -1962,7 +1962,7 @@ bool mattack::fungus_big_blossom( monster *z )
         }
         //~Sound of a giant fungal blossom blowing out the dangerous fire!
         sound_event se;
-        se.origin = z->bub_pos();
+        se.origin = z->abs_pos();
         se.volume = 80;
         se.category = sounds::sound_t::combat;
         se.description = _( "POUFF!" );
@@ -1976,7 +1976,7 @@ bool mattack::fungus_big_blossom( monster *z )
         // No fire detected, routine haze-emission
         //~ That spore sound, much louder
         sound_event se;
-        se.origin = z->bub_pos();
+        se.origin = z->abs_pos();
         se.volume = 70;
         se.category = sounds::sound_t::combat;
         se.description = _( "POUF" );
@@ -3171,7 +3171,7 @@ bool mattack::nurse_check_up( monster *z )
 
         // First we offer the check up then we wait to the player to come close
         sound_event se;
-        se.origin = z->bub_pos();
+        se.origin = z->abs_pos();
         se.volume = 60;
         se.category = sounds::sound_t::electronic_speech;
 
@@ -3230,7 +3230,7 @@ bool mattack::nurse_assist( monster *z )
         if( target->is_wearing( itype_badge_doctor ) ||
             z->attitude_to( *target ) == Attitude::A_FRIENDLY ) {
             sound_event se;
-            se.origin = z->bub_pos();
+            se.origin = z->abs_pos();
             se.volume = 60;
             se.category = sounds::sound_t::electronic_speech;
             se.description = string_format(
@@ -3322,7 +3322,7 @@ bool mattack::nurse_operate( monster *z )
                 monster *mon = dynamic_cast<monster *>( critter );
                 if( mon != nullptr && mon != z ) {
                     sound_event se;
-                    se.origin = z->bub_pos();
+                    se.origin = z->abs_pos();
                     se.volume = 60;
                     se.category = sounds::sound_t::electronic_speech;
                     se.from_monster = true;
@@ -3360,7 +3360,7 @@ bool mattack::nurse_operate( monster *z )
 bool mattack::check_money_left( monster *z )
 {
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.category = sounds::sound_t::electronic_speech;
     se.from_monster = true;
     se.monfaction = z->faction.id();
@@ -3515,7 +3515,7 @@ bool mattack::photograph( monster *z )
         cname = g->u.name;
     }
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::alert;
     se.description = string_format( _( "a robotic voice boom, \"Citizen %s!\"" ), cname );
@@ -3610,7 +3610,7 @@ void mattack::rifle( monster *z, Creature *target )
     // No need to aim
     tmp->recoil = 0;
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.from_monster = true;
     se.monfaction = z->faction.id();
     if( target == &g->u ) {
@@ -3676,7 +3676,7 @@ void mattack::frag( monster *z, Creature *target ) // This is for the bots, not 
         z->ammo[ammo_type] = 200;
     }
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.from_monster = true;
     se.monfaction = z->faction.id();
     se.faction = faction_id( "no_faction" );
@@ -3762,7 +3762,7 @@ void mattack::tankgun( monster *z, Creature *target )
         return;
     }
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
 
     se.from_monster = true;
     se.monfaction = z->faction.id();
@@ -3839,7 +3839,7 @@ void mattack::atgm( monster *z, Creature *target )
         return;
     }
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.from_monster = true;
     se.monfaction = z->faction->id;
     se.category = sounds::sound_t::combat;
@@ -4218,7 +4218,7 @@ bool mattack::copbot( monster *z )
 
     if( rl_dist( z->bub_pos(), target->bub_pos() ) > 2 || foe == nullptr || !z->sees( *target ) ) {
         sound_event se;
-        se.origin = z->bub_pos();
+        se.origin = z->abs_pos();
         se.category = sounds::sound_t::alert;
         se.from_monster = true;
         se.monfaction = z->faction.id();
@@ -4471,7 +4471,7 @@ bool mattack::ratking( monster *z )
 bool mattack::generator( monster *z )
 {
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 90;
     se.category = sounds::sound_t::activity;
     se.description = "hmmmm";
@@ -4739,7 +4739,7 @@ bool mattack::flesh_golem( monster *z )
             z->moves -= 200;
             // It doesn't "nearly deafen you" when it roars from the other side of bubble
             sound_event se;
-            se.origin = z->bub_pos();
+            se.origin = z->abs_pos();
             se.volume = 120;
             se.category = sounds::sound_t::alert;
             se.description = _( "a terrifying roar!" );
@@ -5038,7 +5038,7 @@ static void parrot_common( monster *parrot )
 {
     const SpeechBubble &speech = get_speech( parrot->type->id.str() );
     sound_event se;
-    se.origin = parrot->bub_pos();
+    se.origin = parrot->abs_pos();
     se.volume = speech.volume;
     se.category = sounds::sound_t::speech;
     se.description = speech.text.translated();
@@ -5053,7 +5053,7 @@ bool mattack::parrot( monster *z )
 {
     if( z->has_effect( effect_shrieking ) ) {
         sound_event se;
-        se.origin = z->bub_pos();
+        se.origin = z->abs_pos();
         se.volume = 120;
         se.category = sounds::sound_t::alert;
         se.description = _( "a piercing wail!" );
@@ -5264,7 +5264,7 @@ bool mattack::riotbot( monster *z )
         }
     }
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.from_monster = true;
     se.monfaction = z->faction.id();
     //already arrested?
@@ -5649,7 +5649,7 @@ bool mattack::flesh_tendril( monster *z )
 {
     Creature *target = z->attack_target();
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.category = sounds::sound_t::alert;
     se.from_monster = true;
     se.monfaction = z->faction.id();
@@ -6438,7 +6438,7 @@ bool mattack::doot( monster *z )
         }
     }
     sound_event se;
-    se.origin = z->bub_pos();
+    se.origin = z->abs_pos();
     se.volume = 140;
     se.category = sounds::sound_t::music;
     se.description = _( "DOOT." );

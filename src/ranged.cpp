@@ -2488,7 +2488,7 @@ void ranged::make_gun_sound_effect( const Character &who, bool burst, const item
     const item::sound_data data = gun.gun_noise( burst );
     if( data.volume > 0 ) {
         sound_event se;
-        se.origin = who.bub_pos();
+        se.origin = who.abs_pos();
         se.volume = std::min( 191, data.volume );
         se.category = sounds::sound_t::combat;
         se.description = data.sound.empty() ? _( "Bang!" ) : data.sound;

@@ -276,7 +276,7 @@ static void eff_fun_hallu( player &u, effect &it )
             loudness = std::min( 90, std::max( 30, loudness ) );
 
             sound_event se;
-            se.origin = u.bub_pos();
+            se.origin = u.abs_pos();
             se.volume = loudness;
             se.category = sounds::sound_t::speech;
             se.description = _( random_entry_ref( npc_hallu ) );
@@ -811,7 +811,7 @@ void Character::hardcoded_effects( effect &it )
                 sfx = _( "VRMMMMMM" );
             }
             sound_event se;
-            se.origin = bub_pos();
+            se.origin = abs_pos();
             se.volume = volume;
             se.category = sounds::sound_t::activity;
             se.description = sfx;
@@ -1297,7 +1297,7 @@ void Character::hardcoded_effects( effect &it )
                 } else if( dur == 2_turns ) {
                     // let the sound code handle the wake-up part
                     sound_event se;
-                    se.origin = bub_pos();
+                    se.origin = abs_pos();
                     se.volume = 70;
                     se.category = sounds::sound_t::alarm;
                     se.description = _( "beep-beep-beep!" );
@@ -1310,7 +1310,7 @@ void Character::hardcoded_effects( effect &it )
             if( dur == 1_turns ) {
                 if( is_avatar() && has_alarm_clock() ) {
                     sound_event se;
-                    se.origin = bub_pos();
+                    se.origin = abs_pos();
                     se.volume = 70;
                     se.category = sounds::sound_t::alarm;
                     se.description = _( "beep-beep-beep!" );

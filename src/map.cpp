@@ -1455,7 +1455,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
         const int volume = std::min<int>( 120, std::sqrt( impulse ) );
         // TODO: Center the sound at weighted (by impulse) average of collisions
         sound_event se;
-        se.origin = veh.bub_ms_location();
+        se.origin = veh.abs_ms_location();
         se.volume = volume;
         se.category = sounds::sound_t::combat;
         se.description = _( "crash!" );
@@ -1543,7 +1543,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
             const auto wheel_p = veh.bub_part_location( w );
             if( one_in( 2 ) && displace_water( wheel_p ) ) {
                 sound_event se;
-                se.origin = wheel_p;
+                se.origin = bub_to_abs( wheel_p );
                 se.volume = 50;
                 se.category = sounds::sound_t::movement;
                 se.movement_noise = true;
@@ -4225,7 +4225,7 @@ bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params 
         static const std::string soundfxid = "smash_success";
         const auto sound_volume = get_sound_volume( bash, params );
         sound_event se;
-        se.origin = p;
+        se.origin = bub_to_abs( p );
         se.volume = sound_volume;
         se.category = sounds::sound_t::combat;
         se.description = bash.sound.translated();
@@ -4414,7 +4414,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
         static const std::string soundfxid = "smash_success";
         const auto sound_volume = get_sound_volume( bash, params );
         sound_event se;
-        se.origin = p;
+        se.origin = bub_to_abs( p );
         se.volume = sound_volume;
         se.category = sounds::sound_t::combat;
         se.description = bash.sound.translated();
@@ -4476,7 +4476,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
     // TODO: what if silent is true?
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
         sound_event se;
-        se.origin = p;
+        se.origin = bub_to_abs( p );
         se.volume = 90;
         se.category = sounds::sound_t::alarm;
         se.description = _( "an alarm go off!" );
@@ -4497,7 +4497,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
         if( impassable( p ) ) {
             if( !params.silent ) {
                 sound_event se;
-                se.origin = p;
+                se.origin = bub_to_abs( p );
                 se.volume = 80;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "thump!" );
@@ -4557,7 +4557,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
         result.did_bash = true;
         if( !params.silent ) {
             sound_event se;
-            se.origin = p;
+            se.origin = bub_to_abs( p );
             se.volume = sound_volume;
             se.category = sounds::sound_t::combat;
             se.description = bash->sound_fail.translated();
@@ -4693,7 +4693,7 @@ bash_results map::bash_items( const tripoint_bub_ms &p, const bash_params &param
     // Add a glass sound even when something else also breaks
     if( smashed_glass && !params.silent ) {
         sound_event se;
-        se.origin = p;
+        se.origin = bub_to_abs( p );
         se.volume = 70;
         se.category = sounds::sound_t::combat;
         se.description = _( "glass shattering" );
@@ -4713,7 +4713,7 @@ bash_results map::bash_vehicle( const tripoint_bub_ms &p, const bash_params &par
         vp->vehicle().damage( vp->part_index(), params.strength, DT_BASH, true );
         if( !params.silent ) {
             sound_event se;
-            se.origin = p;
+            se.origin = bub_to_abs( p );
             se.volume = 70;
             se.category = sounds::sound_t::combat;
             se.description = _( "crash!" );
@@ -4863,7 +4863,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
 
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
         sound_event se;
-        se.origin = p;
+        se.origin = bub_to_abs( p );
         se.volume = 90;
         se.category = sounds::sound_t::alarm;
         se.description = _( "an alarm sound!" );
@@ -5195,7 +5195,7 @@ bool map::open_door_ter(
     }
 
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 50;
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
@@ -5256,7 +5256,7 @@ bool map::open_door_furn(
     }
 
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 50;
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
@@ -5397,7 +5397,7 @@ bool map::close_door( const tripoint_bub_ms &p, const bool inside, const bool ch
     const auto &ter = this->ter( p ).obj();
     const auto &furn = this->furn( p ).obj();
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 60;
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
@@ -6121,34 +6121,26 @@ void map::process_items()
     auto total_active_items = int64_t{ 0 };
     auto total_rottable_active_items = int64_t{ 0 };
 
-    // Process vehicle items from in-bubble submaps via per-z-level caches.
-    // Out-of-bubble vehicle items are handled by batch_turns_items().
+    // Process vehicle items from ALL simulated submaps (not just bubble-local).
+    // Uses for_each_simulated_submap to cover both in-bubble and off-bubble regions.
     {
         ZoneScopedN( "process_items_vehicles" );
-        std::set<submap *> veh_submaps;
-        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
-            for( vehicle *veh : get_cache( z ).vehicle_list ) {
-                submap *sm = get_mapbuffer().lookup_submap_in_memory(
-                                 veh->abs_sm_pos );
-                if( sm != nullptr ) {
-                    veh_submaps.insert( sm );
-                }
-            }
-        }
-        std::ranges::for_each( veh_submaps, [&]( submap * sm ) {
-            {
-                ZoneScopedN( "process_items_count_vehicle_active_items" );
-                for( const auto &veh : sm->vehicles ) {
+        get_mapbuffer().for_each_simulated_submap(
+            [&]( const tripoint_abs_sm &pos, submap &sm ) {
+                bool has_vehicle_with_items = false;
+                for( const auto &veh : sm.vehicles ) {
                     if( !veh ) {
                         continue;
                     }
                     const auto counts = veh->active_items.count();
                     total_active_items += counts.total;
                     total_rottable_active_items += counts.rottable;
+                    has_vehicle_with_items = has_vehicle_with_items || counts.total > 0;
                 }
-            }
-            process_items_in_vehicles( *sm );
-        } );
+                if( has_vehicle_with_items ) {
+                    process_items_in_vehicles( sm );
+                }
+            } );
     }
     // Snapshot because processing can add or remove active submaps.
     ZoneScopedN( "process_items_submaps" );
@@ -6254,7 +6246,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
 {
     const bool engine_heater_is_on = cur_veh.has_part( "E_HEATER", true ) && cur_veh.engine_on;
     for( const vpart_reference &vp : cur_veh.get_any_parts( VPFLAG_FLUIDTANK ) ) {
-        vp.part().process_contents( vp.pos(), engine_heater_is_on );
+        vp.part().process_contents( vp.bub_pos(), engine_heater_is_on );
     }
 
     // If there is nothing to process, skip the expensive cargo-part collection.
@@ -6286,7 +6278,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         const item &target = *active_item_ref;
         // Find the cargo part and coordinates corresponding to the current active item.
         const vehicle_part &pt = it->part();
-        const auto item_loc = it->pos();
+        const auto item_loc = it->bub_pos();
         auto items = cur_veh.get_items( static_cast<int>( it->part_index() ) );
         temperature_flag flag = temperature_flag::TEMP_NORMAL;
         if( target.is_food() || target.is_food_container() || target.is_corpse() ) {
@@ -10250,13 +10242,13 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
     for( auto &wrapped_veh : vehs ) {
         vehicle &veh = *( wrapped_veh.v );
         for( const vpart_reference &vp : veh.get_any_parts( VPFLAG_OBSTACLE ) ) {
-            mark_vehicle_obstruction( vp.pos() );
+            mark_vehicle_obstruction( vp.bub_pos() );
         }
 
         // Doors, but only the closed ones
         for( const vpart_reference &vp : veh.get_any_parts( VPFLAG_OPENABLE ) ) {
             if( !vp.part().open ) {
-                mark_vehicle_obstruction( vp.pos() );
+                mark_vehicle_obstruction( vp.bub_pos() );
             }
         }
     }
@@ -10488,8 +10480,12 @@ sound_instance_cache::sound_instance_cache( sound_event &input_sound,
       dist_enum( d_e ),
       flood_radius( f_r ),
       origin( input_sound.origin ),
-      envelope_index_point( tripoint( origin.x() - flood_radius, origin.y() - flood_radius,
-                                      origin.z() ) ),
+      envelope_index_point( [&]() {
+          const tripoint_bub_ms local_origin = abs_to_bub( input_sound.origin );
+          return tripoint_bub_ms( local_origin.x() - flood_radius,
+                                  local_origin.y() - flood_radius,
+                                  local_origin.z() );
+      }() ),
       offset_x( envelope_index_point.x() ),
       offset_y( envelope_index_point.y() ),
       // 4r^2 + 4r + 1 equals our total area, for some (2r + 1) by (2r + 1) flood envelope.
@@ -10756,7 +10752,7 @@ auto map::current_lightmap_source_signature() -> std::size_t
                 continue;
             }
             const auto part_index = static_cast<int>( vp.part_index() );
-            const auto pos = vp.pos();
+            const auto pos = vp.bub_pos();
             if( !inbounds( pos ) ) {
                 continue;
             }

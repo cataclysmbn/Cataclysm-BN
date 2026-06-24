@@ -957,7 +957,7 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
                 critter->bleed();
             } else {
                 sound_event se;
-                se.origin = p;
+                se.origin = bub_to_abs( p );
                 se.volume = 70;
                 se.category = sounds::sound_t::combat;
                 se.description = snd;
@@ -981,7 +981,7 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
         }
 
         sound_event se;
-        se.origin = p;
+        se.origin = bub_to_abs( p );
         se.volume = smashed ? 90 : 70;
         se.category = sounds::sound_t::combat;
         se.description = snd;
@@ -1052,7 +1052,7 @@ void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
     if( veh_data.chance >= rng( 1, 100 ) ) {
         if( veh_data.sound_volume > 0 ) {
             sound_event se;
-            se.origin = p;
+            se.origin = bub_to_abs( p );
             se.volume = veh_data.sound_volume;
             se.category = sounds::sound_t::combat;
             se.description = veh_data.sound.translated();

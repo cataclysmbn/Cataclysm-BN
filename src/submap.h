@@ -340,7 +340,6 @@ class submap : maptile_soa<SEEX, SEEY>
         // sheltered_cache: true when some overhead cover exists within 3×3 of the tile.
         auto rebuild_outside_cache( const level_cache *above, const tripoint_bub_sm &grid_pos ) -> void;
         auto rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
-        auto rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.
         auto rebuild_transparency_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
 

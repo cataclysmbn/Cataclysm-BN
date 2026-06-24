@@ -1635,7 +1635,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
         for (vpart_reference const& part : lights) {
             auto const& info = part.info();
             auto const& vehicle_part = part.part();
-            auto const pos = part.pos();
+            auto const pos = part.bub_pos();
             if (!acc.m.inbounds(pos)) { continue; }
 
             auto const flags = vehicle_light_flags(part);
@@ -1691,7 +1691,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
         for (vpart_reference const& part : veh->get_all_parts()) {
             if (!part.has_feature(VPFLAG_CARGO) || part.has_feature("COVERED")) { continue; }
 
-            auto const pos = part.pos();
+            auto const pos = part.bub_pos();
             if (!acc.m.inbounds(pos)) { continue; }
 
             auto const part_index = static_cast<int>(part.part_index());
@@ -2205,7 +2205,7 @@ auto collect_vehicle_optics(map const& m, tripoint_bub_ms const& origin, int con
     auto cam_control = -1;
 
     for (vpart_reference const& part_ref : veh->get_avail_parts(VPFLAG_EXTENDS_VISION)) {
-        auto const optic_pos = part_ref.pos();
+        auto const optic_pos = part_ref.bub_pos();
         if (!target_cache.inbounds(optic_pos.xy())) { continue; }
         auto const is_camera_control = part_ref.info().has_flag("CAMERA_CONTROL");
         auto const part_index = static_cast<int>(part_ref.part_index());

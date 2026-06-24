@@ -586,7 +586,7 @@ bool vehicle::remote_controlled( const Character &who ) const
     }
 
     for( const vpart_reference &vp : get_avail_parts( "REMOTE_CONTROLS" ) ) {
-        if( rl_dist( who.bub_pos(), vp.pos() ) <= 40 ) {
+        if( rl_dist( who.abs_pos(), vp.abs_pos() ) <= 40 ) {
             return true;
         }
     }
@@ -1275,7 +1275,7 @@ void vehicle::drive_to_local_target( const tripoint_abs_ms &target, bool follow_
     if( stop ) {
         if( autopilot_on ) {
             sound_event se;
-            se.origin = bub_ms_location();
+            se.origin = abs_ms_location();
             se.volume = 60;
             se.category = sounds::sound_t::alert;
             se.description = string_format( _( "the %s emitting a beep and saying \"Obstacle detected!\"" ),
@@ -1675,9 +1675,8 @@ bool vehicle::has_security_working() const
 
 void vehicle::backfire( const int e ) const
 {
-    const auto pos = bub_part_location( engines[e] );
     sound_event se;
-    se.origin = pos;
+    se.origin = abs_part_location( engines[e] );
     se.volume = 100 + rng( 0, 20 ) + rng( 0, 20 );
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
@@ -2869,7 +2868,7 @@ void vehicle::relocate_passengers( const std::vector<Character *> &passengers )
     for( auto *passenger : passengers ) {
         for( const vpart_reference &vp : boardables ) {
             if( vp.part().passenger_id == passenger->getID() ) {
-                passenger->setpos( vp.pos() );
+                passenger->setpos( vp.abs_pos() );
             }
         }
     }
@@ -3952,7 +3951,7 @@ std::vector<rider_data> vehicle::get_riders() const
 {
     std::vector<rider_data> res;
     for( const vpart_reference &vp : get_avail_parts( VPFLAG_BOARDABLE ) ) {
-        Creature *rider = g->critter_at( vp.pos() );
+        Creature *rider = g->critter_at( vp.abs_pos() );
         if( rider ) {
             rider_data r;
             r.prt = vp.part_index();
@@ -4580,7 +4579,7 @@ bool vehicle::do_environmental_effects()
         /* Only lower blood level if:
          * - The part is outside.
          * - The weather is any effect that would cause the player to be wet. */
-        if( vp.part().blood > 0 && g->m.is_outside( vp.pos() ) ) {
+        if( vp.part().blood > 0 && g->m.is_outside( vp.bub_pos() ) ) {
             needed = true;
             if( get_weather().weather_id->rains &&
                 get_weather().weather_id->precip != precip_class::very_light ) {
@@ -4710,7 +4709,7 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     vehicle_noise = static_cast<unsigned char>( noise );
     // TODO: other noises for non-rotor aircraft?
     sound_event se;
-    se.origin = bub_ms_location();
+    se.origin = abs_ms_location();
     se.volume = noise;
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
@@ -8073,9 +8072,14 @@ tripoint_mnt_veh vpart_position::mount() const
     return vehicle().part( part_index() ).mount;
 }
 
-tripoint_bub_ms vpart_position::pos() const
+tripoint_bub_ms vpart_position::bub_pos() const
 {
     return vehicle().bub_part_location( part_index() );
+}
+
+tripoint_abs_ms vpart_position::abs_pos() const
+{
+    return vehicle().abs_part_location( part_index() );
 }
 
 bool vpart_reference::has_feature( const std::string &f ) const

@@ -493,7 +493,7 @@ struct sound_instance_cache {
     int flood_radius = 3;
 
     // Normal tripoint origin of the sound instance.
-    tripoint_bub_ms origin;
+    tripoint_abs_ms origin;
 
     // The tripoint that corresponds to index location 0.
     // Calculated off the origin point - flood radius to x and y.

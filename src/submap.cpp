@@ -548,61 +548,6 @@ auto submap::rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos 
     floor_dirty = false;
 }
 
-auto submap::rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void
-{
-    if( !pf_dirty ) {
-        return;
-    }
-    for( const auto &sp : submap_tiles() ) {
-        const tripoint_bub_ms p = project_combine( grid_pos, sp );
-        auto cur_value = PF_NORMAL;
-
-        const auto &terrain   = get_ter( sp ).obj();
-        const auto &furniture = get_furn( sp ).obj();
-        int vpart = -1;
-        const vehicle *veh = m.veh_at_internal( p, vpart );
-        const int cost = m.move_cost_internal( furniture, terrain, veh, vpart );
-
-        if( cost > 2 ) {
-            cur_value |= PF_SLOW;
-        } else if( cost <= 0 ) {
-            cur_value |= PF_WALL;
-            if( terrain.has_flag( TFLAG_CLIMBABLE ) ) {
-                cur_value |= PF_CLIMBABLE;
-            }
-        }
-
-        if( veh != nullptr ) {
-            cur_value |= PF_VEHICLE;
-        }
-
-        for( const auto &fld : get_field( sp ) ) {
-            const auto &cur_fld = fld.second;
-            if( cur_fld.get_field_type().obj().get_dangerous(
-                    cur_fld.get_field_intensity() - 1 ) ) {
-                cur_value |= PF_FIELD;
-            }
-        }
-
-        if( !get_trap( sp ).obj().is_benign() || !terrain.trap.obj().is_benign() ) {
-            cur_value |= PF_TRAP;
-        }
-
-        if( terrain.has_flag( TFLAG_GOES_DOWN ) || terrain.has_flag( TFLAG_GOES_UP ) ||
-            terrain.has_flag( TFLAG_RAMP )      || terrain.has_flag( TFLAG_RAMP_UP ) ||
-            terrain.has_flag( TFLAG_RAMP_DOWN ) ) {
-            cur_value |= PF_UPDOWN;
-        }
-
-        if( terrain.has_flag( TFLAG_SHARP ) ) {
-            cur_value |= PF_SHARP;
-        }
-
-        pf_special_cache[sp.x()][sp.y()] = cur_value;
-    }
-    pf_dirty = false;
-}
-
 auto submap::rebuild_transparency_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void
 {
     if( !transparency_dirty ) {

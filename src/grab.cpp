@@ -33,7 +33,7 @@ namespace
 auto make_scraping_noise( const tripoint_bub_ms &pos, const int volume ) -> void
 {
     sound_event se;
-    se.origin = pos;
+    se.origin = bub_to_abs( pos );
     se.volume = volume;
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;

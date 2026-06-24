@@ -1247,7 +1247,7 @@ void iexamine::cardreader_foodplace( player &p, const tripoint_bub_ms &examp )
             add_msg( _( "You press your face on the reader." ) );
             add_msg( m_good, _( "The nearby doors are unlocked." ) );
             sound_event se;
-            se.origin = examp;
+            se.origin = bub_to_abs( examp );
             se.volume = 50;
             se.category = sounds::sound_t::electronic_speech;
             se.description =  _( "\"Hello Foodperson.  Welcome home.\"" );
@@ -1271,7 +1271,7 @@ void iexamine::cardreader_foodplace( player &p, const tripoint_bub_ms &examp )
     } else if( p.has_amount( itype_id( "foodperson_mask" ), 1 ) ||
                p.has_amount( itype_id( "foodperson_mask_on" ), 1 ) ) {
         sound_event se;
-        se.origin = examp;
+        se.origin = bub_to_abs( examp );
         se.volume = 50;
         se.category = sounds::sound_t::electronic_speech;
         se.description = _( "\"FOODPERSON DETECTED.  Please make yourself presentable.\"" );
@@ -1280,7 +1280,7 @@ void iexamine::cardreader_foodplace( player &p, const tripoint_bub_ms &examp )
         sounds::sound( se );
     } else {
         sound_event se;
-        se.origin = examp;
+        se.origin = bub_to_abs( examp );
         se.volume = 50;
         se.category = sounds::sound_t::electronic_speech;
         se.description = _( "\"Your face is inadequate.  Please go away.\"" );
@@ -1997,7 +1997,7 @@ void iexamine::pedestal_wyrm( player &p, const tripoint_bub_ms &examp )
             }
 
             sound_event se;
-            se.origin = examp;
+            se.origin = bub_to_abs( examp );
             se.volume = 100;
             se.category = sounds::sound_t::combat;
             se.description = _( "an ominous grinding noise…" );
@@ -4573,7 +4573,7 @@ void iexamine::recycle_compactor( player &, const tripoint_bub_ms &examp )
     double recover_factor = rng( 6, 9 ) / 10.0;
     sum_weight = sum_weight * recover_factor;
     sound_event se;
-    se.origin = examp;
+    se.origin = bub_to_abs( examp );
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = _( "Ka-klunk!" );
@@ -5536,7 +5536,7 @@ void iexamine::pay_gas( player &p, const tripoint_bub_ms &examp )
         }
 
         sound_event se;
-        se.origin = p.bub_pos();
+        se.origin = p.abs_pos();
         se.volume = 50;
         se.category = sounds::sound_t::activity;
         se.description = _( "Glug Glug Glug" );
@@ -5572,7 +5572,7 @@ void iexamine::pay_gas( player &p, const tripoint_bub_ms &examp )
         int amount = pGasPump ? fromPumpFuel( pTank, *pGasPump ) : 0;
         if( amount >= 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = p.abs_pos();
             se.volume = 50;
             se.category = sounds::sound_t::activity;
             se.description = _( "Glug Glug Glug" );
@@ -6715,7 +6715,7 @@ void iexamine::cloning_vat_finalize( const tripoint_bub_ms &examp, const time_po
 
         // sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
         sound_event se;
-        se.origin = examp;
+        se.origin = bub_to_abs( examp );
         se.volume = 50;
         se.category = sounds::sound_t::alarm;
         se.description = _( "beep!" );
@@ -6729,7 +6729,7 @@ void iexamine::cloning_vat_finalize( const tripoint_bub_ms &examp, const time_po
     // success: spawn the completed artificial womb
     // sounds::sound( examp, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
     sound_event se;
-    se.origin = examp;
+    se.origin = bub_to_abs( examp );
     se.volume = 50;
     se.category = sounds::sound_t::alarm;
     se.description = _( "ding!" );
@@ -7117,7 +7117,7 @@ void iexamine::cloning_vat_examine( player &p, const tripoint_bub_ms &examp )
 
         // sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
         sound_event se;
-        se.origin = examp;
+        se.origin = bub_to_abs( examp );
         se.volume = 50;
         se.category = sounds::sound_t::alarm;
         se.description = _( "beep!" );

@@ -21,6 +21,7 @@
 
 #include "avatar.h"
 #include "batch_turns.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "creature.h"
@@ -98,6 +99,7 @@ struct add_submap_spawn_options {
 };
 
 static const auto fault_bionic_nonsterile = fault_id( "fault_bionic_nonsterile" );
+static const std::string str_OPENCLOSE_INSIDE( "OPENCLOSE_INSIDE" );
 static const auto itype_burnt_out_bionic = itype_id( "burnt_out_bionic" );
 
 auto lookup_tile( mapbuffer &buffer, const tripoint_abs_ms &p,
@@ -4808,6 +4810,428 @@ auto mapbuffer::passable_ter_furn( const tripoint_abs_ms &p,
     return move_cost_ter_furn( p, options ) > 0;
 }
 
+// ----- Movement execution helpers (off-bubble support) -----
+
+auto mapbuffer::ter( const tripoint_abs_ms &p,
+                     const mapbuffer_lookup_options options ) -> std::optional<ter_id>
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return std::nullopt;
+    }
+    return tile->ter();
+}
+
+auto mapbuffer::furnname( const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> std::string
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return std::string();
+    }
+    return tile->furnname();
+}
+
+auto mapbuffer::has_flag( const std::string &flag, const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    return tile->has_flag( flag );
+}
+
+auto mapbuffer::has_flag( ter_bitflags flag, const tripoint_abs_ms &p,
+                          const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    return tile->has_flag( flag );
+}
+
+auto mapbuffer::has_flag_ter( const std::string &flag, const tripoint_abs_ms &p,
+                              const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    return tile->has_flag_ter( flag );
+}
+
+auto mapbuffer::has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
+                                      const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    return tile->has_flag_ter_or_furn( flag );
+}
+
+auto mapbuffer::has_flag_ter_or_furn( ter_bitflags flag, const tripoint_abs_ms &p,
+                                      const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    return tile->has_flag_ter_or_furn( flag );
+}
+
+auto mapbuffer::has_floor_or_support( const tripoint_abs_ms &p,
+                                      const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    // Check terrain/furniture has_floor property + submap floor cache fallback
+    // has_floor is a property derived from the terrain type and floor cache
+    return !tile->ter_obj().has_flag( TFLAG_NO_FLOOR );
+}
+
+auto mapbuffer::is_outside( const tripoint_abs_ms &p,
+                            const mapbuffer_lookup_options options ) -> bool
+{
+    if( const auto local = active_reality_bubble_local( p ) ) {
+        return g->m.is_outside( *local );
+    }
+    const auto sm_pos = project_to<coords::sm>( p );
+    const auto sm = get_submap( sm_pos, options );
+    if( !sm ) {
+        return false;
+    }
+    const auto split = project_remain<coords::sm>( p );
+    return sm->outside_cache[split.remainder.x()][split.remainder.y()];
+}
+
+auto mapbuffer::combined_movecost( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
+                                   const mapbuffer_lookup_options options ) -> int
+{
+    const int cost1 = move_cost( from, options );
+    const int cost2 = move_cost( to, options );
+    const int mults[4] = { 0, 50, 71, 100 };
+    size_t match = trigdist ? ( from.x() != to.x() ) + ( from.y() != to.y() ) +
+                   ( from.z() != to.z() ) : 1;
+    if( from.z() == to.z() ) {
+        return ( cost1 + cost2 ) * mults[match] / 2;
+    }
+    // Inter-z-level movement by foot (not flying)
+    if( !valid_move( from, to ) ) {
+        return 0;
+    }
+    return ( cost1 + cost2 ) * mults[match] / 2;
+}
+
+auto mapbuffer::move_cost( const tripoint_abs_ms &p,
+                           const mapbuffer_lookup_options options ) -> int
+{
+    const auto tile = abs_tile_handle::fetch( *this, p );
+    if( !tile ) {
+        return 0;
+    }
+    return tile->move_cost();
+}
+
+auto mapbuffer::obstructed_by_vehicle_rotation( const tripoint_abs_ms &from,
+        const tripoint_abs_ms &to,
+        const mapbuffer_lookup_options options ) -> bool
+{
+    // Only meaningful in the player bubble where vehicles actually move each turn
+    if( const auto local_from = active_reality_bubble_local( from ) ) {
+        if( const auto local_to = active_reality_bubble_local( to ) ) {
+            return g->m.obstructed_by_vehicle_rotation( *local_from, *local_to );
+        }
+    }
+    return false;
+}
+
+auto mapbuffer::can_open_door( const tripoint_abs_ms &p, bool inside,
+                               const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    const auto &ter = tile->ter_obj();
+    if( ter.open ) {
+        return !has_flag( str_OPENCLOSE_INSIDE, p, options ) || inside;
+    }
+    const auto &furn = tile->furn_obj();
+    if( furn.open ) {
+        return !has_flag( str_OPENCLOSE_INSIDE, p, options ) || inside;
+    }
+    const auto vp = veh_at( p, options );
+    if( vp ) {
+        // Check for openable vehicle door part
+        return vp->part_with_feature( "OPENABLE", true ).has_value();
+    }
+    return false;
+}
+
+auto mapbuffer::open_door( const tripoint_abs_ms &p, bool inside,
+                           const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return false;
+    }
+
+    // Try terrain door
+    const auto &ter = tile->ter_obj();
+    if( ter.open ) {
+        if( has_flag( str_OPENCLOSE_INSIDE, p, options ) && !inside ) {
+            return false;
+        }
+        return set_ter( p, ter.open, options );
+    }
+
+    // Try furniture door
+    const auto &furn = tile->furn_obj();
+    if( furn.open ) {
+        if( has_flag( str_OPENCLOSE_INSIDE, p, options ) && !inside ) {
+            return false;
+        }
+        return set_furn( p, furn.open, options );
+    }
+
+    // Try vehicle door
+    return false;
+}
+
+auto mapbuffer::bash( const tripoint_abs_ms &p, int str, bool silent,
+                      const mapbuffer_lookup_options options ) -> int
+{
+    // Dimension bounds cannot be bashed
+    if( is_outside_pocket_dimension_bounds( p ) ) {
+        return 0;
+    }
+
+    // Bash field (mostly fire/acid-based field removal)
+    const auto field_p = get_field( p, options );
+    if( field_p ) {
+        for( auto &field_entry_it : *field_p ) {
+            field_entry &cur = field_entry_it.second;
+            if( cur.is_field_alive() ) {
+                // Reduce field intensity based on bash strength
+                const int reduction = str / 10;
+                if( reduction > 0 ) {
+                    cur.set_field_intensity( std::max( 0, cur.get_field_intensity() - reduction ) );
+                }
+            }
+        }
+    }
+
+    // Bash items
+    auto *items = get_items( p, options );
+    if( items ) {
+        for( auto it = items->begin(); it != items->end(); ) {
+            if( ( *it )->can_shatter() && one_in( 2 ) ) {
+                it = items->erase( it );
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    // Bash terrain/furniture
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return 0;
+    }
+
+    if( !is_bashable_ter_furn( p, false, options ) ) {
+        return 0;
+    }
+
+    const auto &ter = tile->ter_obj();
+    if( is_bashable_ter( p, false, options ) && ter.bash.str_max >= 0 ) {
+        if( str >= rng( ter.bash.str_min, ter.bash.str_max ) ) {
+            set_ter( p, ter_id( ter.bash.ter_set ), options );
+            if( !ter.bash.furn_set.is_null() ) {
+                set_furn( p, furn_id( ter.bash.furn_set ), options );
+            }
+            return str;
+        }
+    }
+
+    const auto &furn = tile->furn_obj();
+    if( is_bashable_furn( p, options ) && furn.bash.str_max >= 0 ) {
+        if( str >= rng( furn.bash.str_min, furn.bash.str_max ) ) {
+            set_furn( p, furn_id( furn.bash.furn_set ), options );
+            if( !furn.bash.ter_set.is_null() ) {
+                set_ter( p, ter_id( furn.bash.ter_set ), options );
+            }
+            return str;
+        }
+    }
+
+    return 0;
+}
+
+auto mapbuffer::board_vehicle( const tripoint_abs_ms &p, Character &who,
+                               const mapbuffer_lookup_options options ) -> bool
+{
+    auto vp = veh_at( p, options ).part_with_feature( VPFLAG_BOARDABLE, true );
+    if( !vp ) {
+        return false;
+    }
+    if( vp->part().has_flag( vehicle_part::passenger_flag ) ) {
+        Character *existing = g->critter_by_id<Character>( vp->part().passenger_id );
+        if( existing ) {
+            unboard_vehicle( p, false, options );
+        }
+    }
+    vp->part().set_flag( vehicle_part::passenger_flag );
+    vp->part().passenger_id = who.getID();
+    vp->vehicle().invalidate_mass();
+    who.in_vehicle = true;
+    return true;
+}
+
+auto mapbuffer::unboard_vehicle( const tripoint_abs_ms &p, bool dead_passenger,
+                                 const mapbuffer_lookup_options options ) -> void
+{
+    auto vp = veh_at( p, options ).part_with_feature( VPFLAG_BOARDABLE, false );
+    if( !vp ) {
+        return;
+    }
+    vp->part().remove_flag( vehicle_part::passenger_flag );
+    vp->vehicle().invalidate_mass();
+    Character *passenger = g->critter_by_id<Character>( vp->part().passenger_id );
+    if( passenger && !dead_passenger ) {
+        passenger->in_vehicle = false;
+        if( passenger->controlling_vehicle ) {
+            vp->vehicle().skidding = true;
+        }
+        passenger->controlling_vehicle = false;
+    }
+}
+
+auto mapbuffer::creature_in_field( Creature &critter,
+                                   const mapbuffer_lookup_options options ) -> void
+{
+    const auto pos = critter.abs_pos();
+    auto *curfield = get_field( pos, options );
+    if( !curfield ) {
+        return;
+    }
+
+    // Check vehicle status
+    bool in_vehicle = false;
+    if( const auto *u = critter.as_player() ) {
+        in_vehicle = u->in_vehicle;
+        if( in_vehicle ) {
+            if( const auto vp = veh_at( pos, options ) ) {
+                if( vp->part_with_feature( VPFLAG_NOFIELDS, true ) ) {
+                    return;
+                }
+            }
+        }
+    }
+
+    for( auto &field_entry_it : *curfield ) {
+        field_entry &cur = field_entry_it.second;
+        if( !cur.is_field_alive() ) {
+            continue;
+        }
+        const field_type_id cur_field_id = cur.get_field_type();
+
+        for( const auto &fe : cur.field_effects() ) {
+            if( in_vehicle && fe.immune_in_vehicle ) {
+                continue;
+            }
+            if( critter.is_immune_field( cur_field_id ) ||
+                critter.is_immune_effect( fe.get_effect().get_id() ) ) {
+                continue;
+            }
+            const effect field_fx = fe.get_effect();
+            critter.add_effect( field_fx.get_id(), field_fx.get_duration(),
+                                field_fx.get_bp(), field_fx.get_intensity() );
+        }
+    }
+}
+
+auto mapbuffer::for_each_vehicle( const std::function<void( vehicle & )> &fn ) -> void
+{
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    for( vehicle *veh : loaded_vehicles_ ) {
+        if( veh ) {
+            fn( *veh );
+        }
+    }
+}
+
+auto mapbuffer::for_each_vehicle( const std::function<void( const vehicle & )> &fn ) const -> void
+{
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+    for( const vehicle *veh : loaded_vehicles_ ) {
+        if( veh ) {
+            fn( *veh );
+        }
+    }
+}
+
+auto mapbuffer::cheap_light_at( const tripoint_abs_ms &p,
+                                const mapbuffer_lookup_options options ) -> lit_level
+{
+    // Skip pocket dimension bounds
+    if( is_outside_pocket_dimension_bounds( p ) ) {
+        return lit_level::DARK;
+    }
+
+    // Step 1: Natural light level (coordinate-independent, based on z-level + time)
+    const float natural_light = g != nullptr ? g->natural_light_level( p.z() ) : LIGHT_AMBIENT_MINIMAL;
+
+    // Step 2: Check if tile is outside for sky access
+    const bool outside = is_outside( p, options );
+
+    // Base ambient light: outside gets natural light, inside gets minimal
+    float ambient = outside ? natural_light : LIGHT_AMBIENT_MINIMAL;
+
+    // Step 3: Scan nearby luminous items (r=5) if we have luminous submap index
+    const auto sm_pos = project_to<coords::sm>( p );
+    const auto &luminous_submaps = get_submaps_with_luminous_items();
+    if( luminous_submaps.contains( sm_pos ) ) {
+        // Check items on this tile for luminance
+        auto *items = get_items( p, options );
+        if( items ) {
+            for( const auto &it : *items ) {
+                if( it->is_active() && it->getlight_emit() > 0 ) {
+                    const float light_val = it->getlight_emit();
+                    const int dist = 1; // same tile
+                    ambient = std::max( ambient, light_val / ( dist * dist ) );
+                }
+            }
+        }
+    }
+
+    // Step 4: Check terrain/furniture luminance
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( tile ) {
+        const auto lum = tile->lum();
+        if( lum > 0 ) {
+            ambient = std::max( ambient, static_cast<float>( lum ) );
+        }
+    }
+
+    // Step 5: Classify and return
+    if( ambient >= LIGHT_SOURCE_BRIGHT ) {
+        return lit_level::BRIGHT;
+    }
+    if( ambient >= LIGHT_AMBIENT_LIT ) {
+        return lit_level::LIT;
+    }
+    if( ambient >= LIGHT_AMBIENT_LOW ) {
+        return lit_level::LOW;
+    }
+    return lit_level::DARK;
+}
+
 // ----- Field operations -----
 
 auto mapbuffer::add_splatter( const field_type_id &type, const tripoint_abs_ms &where,
@@ -5018,6 +5442,7 @@ auto mapbuffer::invalidate_active_terrain_set_caches( const tripoint_abs_ms &p,
     here.set_pathfinding_cache_dirty( *local );
     here.support_dirty( tripoint_bub_ms( local->xy(), local->z() + 1 ) );
     here.invalidate_lightmap_caches();
+    here.set_absorption_cache_dirty( *local );
 }
 
 auto mapbuffer::sync_furniture_change_side_tables( const tripoint_abs_ms &p, submap &sm,
@@ -5099,6 +5524,7 @@ auto mapbuffer::invalidate_active_furniture_set_caches( const tripoint_abs_ms &p
     here.set_pathfinding_cache_dirty( *local );
     here.support_dirty( *local );
     here.support_dirty( tripoint_bub_ms( local->xy(), local->z() + 1 ) );
+    here.set_absorption_cache_dirty( *local );
 }
 
 auto mapbuffer::sync_active_trap_change_side_tables( const tripoint_abs_ms &p,

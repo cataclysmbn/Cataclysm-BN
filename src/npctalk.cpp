@@ -882,7 +882,6 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
         return;
     }
 
-    const auto s_abs_pos = bub_to_abs( sound.origin );
     const std::string &description = sound.description.empty() ? _( "a noise" ) : sound.description;
 
     const auto &source_monster = sound.from_monster;
@@ -891,7 +890,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
 
     add_msg( m_debug, "%s heard '%s', priority %d at volume %d mdB from %d:%d, my pos %d:%d",
              disp_name(), description, static_cast<int>( sound.category ), heard_vol,
-             s_abs_pos.x(), s_abs_pos.y(), abs_pos().x(), abs_pos().y() );
+             sound.origin.x(), sound.origin.y(), abs_pos().x(), abs_pos().y() );
 
     // bool player_ally = get_player_character().bub_pos() == spos && is_player_ally();
     player *const sound_source = g->critter_at<player>( spos );
@@ -899,7 +898,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
 
     // Is the player the source of the sound, and is the NPC an ally of the player?
     const bool player_ally = ( ( source_player ||
-                                 ( get_player_character().bub_pos() == sound.origin ) ) &&
+                                 ( get_player_character().abs_pos() == sound.origin ) ) &&
                                is_player_ally() ) ;
 
     // ONLY reference this in cases where we know the sound source is an NPC
@@ -922,7 +921,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
     }
 
     // Dont react to a sound if the NPC sees the source. Hallucinations dont react to sound.
-    if( sees( spos ) || is_hallucination() ) {
+    if( sees( abs_to_bub( spos ) ) || is_hallucination() ) {
         return;
     }
 
@@ -949,7 +948,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
         // and listener is friendly and sound source is combat or alert only.
         if( is_player_ally() ) {
             // Moved the sees check behind a relevant filter as its a bit more expensive.
-            if( get_avatar().sees( sound.origin ) ) {
+            if( get_avatar().sees( abs_to_bub( sound.origin ) ) ) {
                 add_msg( m_debug, "NPC %s ignored low priority noise that player can see", name );
                 return;
                 // discount if sound source is player, or seen by player,
@@ -976,13 +975,13 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
     }
     if( ai_cache.total_danger < 1.0f ) {
         if( sound.category == sounds::sound_t::movement && !in_vehicle ) {
-            bool should_check = rl_dist( bub_pos(), sound.origin ) < investigate_dist;
+            bool should_check = rl_dist( abs_pos(), sound.origin ) < investigate_dist;
             if( should_check ) {
                 const zone_manager &mgr = zone_manager::get_manager();
-                if( mgr.has( zone_type_npc_no_investigate, s_abs_pos, fac_id ) ) {
+                if( mgr.has( zone_type_npc_no_investigate, sound.origin, fac_id ) ) {
                     should_check = false;
                 } else if( mgr.has( zone_type_npc_investigate_only, abs_pos(), fac_id ) &&
-                           !mgr.has( zone_type_npc_investigate_only, s_abs_pos, fac_id ) ) {
+                           !mgr.has( zone_type_npc_investigate_only, sound.origin, fac_id ) ) {
                     should_check = false;
                 }
             }
@@ -1004,14 +1003,14 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
                     temp_warning.type = "combat_noise";
                     temp_warning.duration = rng( 1, 10 ) * 1_minutes;
                     ai_cache.warn_about_queue.push_back( temp_warning );
-                    add_msg( m_debug, "%s added noise at pos %d:%d", name, s_abs_pos.x(), s_abs_pos.y() );
+                    add_msg( m_debug, "%s added noise at pos %d:%d", name, sound.origin.x(), sound.origin.y() );
                     dangerous_sound temp_sound;
-                    temp_sound.abs_pos = s_abs_pos;
+                    temp_sound.abs_pos = sound.origin;
                     // Convert out of mdB spl to dB spl
                     temp_sound.volume = std::floor( 0.01 * heard_vol );
                     temp_sound.type = sound.category;
                     if( !ai_cache.sound_alerts.empty() ) {
-                        if( ai_cache.sound_alerts.back().abs_pos != s_abs_pos ) {
+                        if( ai_cache.sound_alerts.back().abs_pos != sound.origin ) {
                             ai_cache.sound_alerts.push_back( temp_sound );
                         }
                     } else {
@@ -1055,16 +1054,16 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
                     }
 
                     if( should_check ) {
-                        add_msg( m_debug, "%s added noise at pos %d:%d", name, s_abs_pos.x(), s_abs_pos.y() );
+                        add_msg( m_debug, "%s added noise at pos %d:%d", name, sound.origin.x(), sound.origin.y() );
                         dangerous_sound temp_sound;
 
-                        temp_sound.abs_pos = s_abs_pos;
+                        temp_sound.abs_pos = sound.origin;
                         // Convert out of mdB spl to dB spl
                         temp_sound.volume = std::floor( 0.01 * heard_vol );
                         temp_sound.type = sound.category;
                         if( !ai_cache.sound_alerts.empty() ) {
 
-                            if( ai_cache.sound_alerts.back().abs_pos != s_abs_pos ) {
+                            if( ai_cache.sound_alerts.back().abs_pos != sound.origin ) {
 
                                 ai_cache.sound_alerts.push_back( temp_sound );
                             }

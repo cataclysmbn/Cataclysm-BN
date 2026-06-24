@@ -8603,7 +8603,7 @@ void Character::cough( bool harmful, int loudness )
         add_msg( m_bad, _( "You cough heavily." ) );
     }
     sound_event se;
-    se.origin = bub_pos();
+    se.origin = abs_pos();
     se.volume = loudness;
     se.category = sounds::sound_t::speech;
     se.description = _( "a hacking cough." );
@@ -8745,7 +8745,7 @@ void Character::shout( std::string msg, bool order )
     }
 
     sound_event se;
-    se.origin = bub_pos();
+    se.origin = abs_pos();
     se.volume = noise;
     se.category = order ? sounds::sound_t::order : sounds::sound_t::alert;
     se.description = msg;
@@ -9879,7 +9879,7 @@ void Character::spores()
     fungal_effects fe( *g, here );
     //~spore-release sound
     sound_event se;
-    se.origin = bub_pos();
+    se.origin = abs_pos();
     se.volume = 50;
     se.category = sounds::sound_t::combat;
     se.description = _( "Pouf!" );
@@ -9902,7 +9902,7 @@ void Character::blossoms()
 {
     // Player blossoms are shorter-ranged, but you can fire much more frequently if you like.
     sound_event se;
-    se.origin = bub_pos();
+    se.origin = abs_pos();
     se.volume = 50;
     se.category = sounds::sound_t::combat;
     se.description = _( "Pouf!" );

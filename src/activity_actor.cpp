@@ -500,7 +500,7 @@ void dig_activity_actor::do_turn( player_activity &/*act*/, Character &who )
     if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
         sound_event se;
-        se.origin = location;
+        se.origin = bub_to_abs( location );
         se.volume = 60;
         se.category = sounds::sound_t::activity;
         se.description = _( "hsh!" );
@@ -617,7 +617,7 @@ void dig_channel_activity_actor::do_turn( player_activity &/*act*/, Character &w
     if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
         sound_event se;
-        se.origin = location;
+        se.origin = bub_to_abs( location );
         se.volume = 70;
         se.category = sounds::sound_t::activity;
         se.description = _( "hsh!" );
@@ -958,7 +958,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
             // currently all things that can be hacked have equivalent alarm failure states.
             // this may not always be the case with new hackable things.
             g->events().send<event_type::triggers_alarm>( who.getID() );
-            se.origin = who.bub_pos();
+            se.origin = who.abs_pos();
             se.volume = 120;
             se.category = sounds::sound_t::music;
             se.description = _( "an alarm sound!" );
@@ -985,7 +985,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
                         uistate.ags_pay_gas_selected_pump );
                 if( pGasPump && iexamine::toPumpFuel( pTank, *pGasPump, tankGasUnits ) ) {
                     who.add_msg_if_player( _( "You hack the terminal and route all available fuel to your pump!" ) );
-                    se.origin = examp;
+                    se.origin = bub_to_abs( examp );
                     se.volume = 40;
                     se.category = sounds::sound_t::activity;
                     se.description = _( "Glug Glug Glug Glug Glug Glug Glug Glug Glug" );
@@ -1252,7 +1252,7 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             //~ Sound of a metal sawing tool at work!
             sound_event se;
-            se.origin = target;
+            se.origin = bub_to_abs( target );
             se.volume = 80;
             se.category = sounds::sound_t::destructive_activity;
             se.description = _( "grnd grnd grnd" );
@@ -1481,7 +1481,7 @@ void boltcutting_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
     sound_event se;
-    se.origin = target;
+    se.origin = bub_to_abs( target );
     se.volume = 60;
     se.category = sounds::sound_t::combat;
     se.id = "tool";
@@ -1698,7 +1698,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
 
         if( get_map().has_flag( "ALARMED", target ) ) {
             sound_event se;
-            se.origin = who.bub_pos();
+            se.origin = who.abs_pos();
             se.volume = 90;
             se.category = sounds::sound_t::alarm;
             se.description = _( "an alarm sound!" );
@@ -1839,7 +1839,7 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
         sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target, 65 ) );
         if( action_time_scale::once_every_this_tick( 2_turns ) ) {
             sound_event se;
-            se.origin = target;
+            se.origin = bub_to_abs( target );
             se.volume = 65;
             se.category = sounds::sound_t::destructive_activity;
             se.description = _( "hissssssssss!" );

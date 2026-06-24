@@ -191,7 +191,7 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
                 continue;
             }
             sound_event se;
-            se.origin = m.bub_pos();
+            se.origin = m.abs_pos();
             se.volume = 80;
             se.category = sounds::sound_t::alert;
             se.description = _( "Detected shots from unseen attacker, return fire mode engaged." );

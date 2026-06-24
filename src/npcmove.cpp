@@ -2646,23 +2646,16 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
         !char_hook_results.get_or( "allowed", true ) ) {
         return;
     }
+    mapbuffer &buf = get_mapbuffer();
+    const auto abs_p = bub_to_abs( p );
+    const auto abs_here = abs_pos();
 
-    map &here = get_map();
-    bool ceiling_blocking_climb = !here.has_floor_or_support( bub_pos() ) ||
-                                  here.has_floor_or_support( p + tripoint_above );
-    if( sees_dangerous_field( p )
-        || ( nomove != nullptr && nomove->contains( p ) ) ) {
-        // Move to a neighbor field instead, if possible.
-        // Maybe this code already exists somewhere?
-        auto other_points = here.get_dir_circle( bub_pos(), p );
-        for( const tripoint_bub_ms &ot : other_points ) {
-            if( could_move_onto( ot )
-                && ( nomove == nullptr || !nomove->contains( ot ) ) ) {
+    bool ceiling_blocking_climb = !buf.has_floor_or_support( abs_here ) ||
+                                    buf.has_floor_or_support( abs_p + tripoint_above );
 
-                p = ot;
-                break;
-            }
-        }
+    if( sees_dangerous_field( p ) || ( nomove != nullptr && nomove->contains( p ) ) ) {
+        move_pause();
+        return;
     }
 
     recoil = MAX_RECOIL;
@@ -2673,215 +2666,103 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
         p.z() = bub_pos().z();
     }
 
-    // nomove is used to resolve recursive invocation, so reset destination no
-    // matter it was changed by stunned effect or not.
     if( nomove != nullptr && nomove->contains( p ) ) {
         p = bub_pos();
     }
 
-    // "Long steps" are allowed when crossing z-levels
-    // Stairs teleport the player too
     if( rl_dist( bub_pos(), p ) > 1 && p.z() == bub_pos().z() ) {
-        // On the same level? Not so much. Something weird happened
         path.clear();
         move_pause();
     }
 
-    if( here.obstructed_by_vehicle_rotation( bub_pos(), p ) ) {
-        move_pause();
-        return;
-    }
-
-    bool attacking = false;
-    if( g->critter_at<monster>( p ) ) {
-        attacking = true;
-    }
+    bool attacking = buf.creature_at( abs_p ) != nullptr;
     if( !move_effects( attacking ) ) {
         mod_moves( -100 );
         return;
     }
 
-    Creature *critter = g->critter_at( p );
+    Creature *critter = const_cast<Creature *>( buf.creature_at( abs_p ) );
     if( critter != nullptr ) {
-        if( critter == this ) { // We're just pausing!
-            move_pause();
-            return;
-        }
+        if( critter == this ) { move_pause(); return; }
         const auto att = attitude_to( *critter );
         if( att == Attitude::A_HOSTILE ) {
             if( !no_bashing ) {
                 warn_about( "cant_flee", 5_turns + rng( 0, 5 ) * 1_turns );
                 melee_attack( *critter, true );
-            } else {
-                move_pause();
-            }
-
+            } else { move_pause(); }
             return;
         }
-
-        if( critter->is_avatar() ) {
-            say( "<let_me_pass>" );
-        }
-
-        // Let NPCs push each other when non-hostile
-        // TODO: Have them attack each other when hostile
+        if( critter->is_avatar() ) { say( "<let_me_pass>" ); }
         npc *np = dynamic_cast<npc *>( critter );
         if( np != nullptr && !np->in_sleep_state() ) {
-            std::unique_ptr<std::set<tripoint_bub_ms>> newnomove;
-            std::set<tripoint_bub_ms> *realnomove;
-            if( nomove != nullptr ) {
-                realnomove = nomove;
-            } else {
-                // create the no-move list
-                newnomove = std::make_unique<std::set<tripoint_bub_ms>>();
-                realnomove = newnomove.get();
-            }
-            // other npcs should not try to move into this npc anymore,
-            // so infinite loop can be avoided.
-            realnomove->insert( bub_pos() );
-            // Don't spam player with messages over followers blunder into each other.
-            if( !np->is_following() ) {
-                say( "<let_me_pass>" );
-            }
-            np->move_away_from( bub_pos(), true, realnomove );
-            // if we moved NPC, readjust their path, so NPCs don't jostle each other out of their activity paths.
-            if( np->attitude == NPCATT_ACTIVITY ) {
-                std::vector<tripoint_bub_ms> activity_route = np->get_auto_move_route();
-                if( !activity_route.empty() && !np->has_destination_activity() ) {
-                    tripoint_bub_ms final_destination;
-                    if( destination_point ) {
-                        final_destination = abs_to_bub( *destination_point );
-                    } else {
-                        final_destination = activity_route.back();
-                    }
-                    np->update_path( final_destination );
-                }
-            }
+            np->move_away_from( bub_pos(), true, nullptr );
         }
-
-        if( critter->bub_pos() == p ) {
-            move_pause();
-            return;
-        }
+        if( critter->bub_pos() == p ) { move_pause(); return; }
     }
 
-    // Boarding moving vehicles is fine, unboarding isn't
+    // Movement (no vehicle boarding off-bubble)
     bool moved = false;
-    if( const optional_vpart_position vp = here.veh_at( bub_pos() ) ) {
-        const optional_vpart_position ovp = here.veh_at( p );
-        if( vp->vehicle().is_moving() &&
-            ( veh_pointer_or_null( ovp ) != veh_pointer_or_null( vp ) ||
-              !ovp.part_with_feature( VPFLAG_BOARDABLE, true ) ) ) {
-            move_pause();
-            return;
-        }
-    }
-
     if( p.z() != bub_pos().z() ) {
-        // Z-level move
-        // For now just teleport to the destination
-        // TODO: Make it properly find the tile to move to
-        if( is_mounted() ) {
-            move_pause();
-            return;
-        }
+        if( is_mounted() ) { move_pause(); return; }
         moves -= 100;
         moved = true;
-    } else if( here.passable( p ) && !here.has_flag( "DOOR", p ) ) {
+    } else if( buf.passable( abs_p ).value_or( false ) && !buf.has_flag( "DOOR", abs_p ) ) {
         bool diag = trigdist && bub_pos().x() != p.x() && bub_pos().y() != p.y();
         if( is_mounted() ) {
-            const double base_moves = run_cost( here.combined_movecost( bub_pos(), p ),
-                                                diag ) * 100.0 / mounted_creature->get_speed();
-            const double encumb_moves = get_weight() / 4800.0_gram;
-            moves -= static_cast<int>( std::ceil( base_moves + encumb_moves ) );
+            double base_moves = run_cost( buf.combined_movecost( abs_here, abs_p ), diag ) * 100.0 / mounted_creature->get_speed();
+            moves -= static_cast<int>( std::ceil( base_moves + get_weight() / 4800.0_gram ) );
             if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
                 mounted_creature->use_mech_power( -1 );
             }
         } else {
-            moves -= run_cost( here.combined_movecost( bub_pos(), p ), diag );
+            moves -= run_cost( buf.combined_movecost( abs_here, abs_p ), diag );
         }
         moved = true;
-    } else if( here.can_open_door( this, p, !here.is_outside( bub_pos() ) ) ) {
-        if( !is_hallucination() ) { // hallucinations don't open doors
-            here.open_door( this, p, !here.is_outside( bub_pos() ) );
+    } else if( buf.can_open_door( abs_p, !buf.is_outside( abs_here ) ) ) {
+        if( !is_hallucination() ) {
+            buf.open_door( abs_p, !buf.is_outside( abs_here ) );
             moves -= 100;
-        } else { // hallucinations teleport through doors
-            moves -= 100;
-            moved = true;
-        }
-    } else if( get_dex() > 1 && here.has_flag_ter_or_furn( "CLIMBABLE", p ) &&
-               !ceiling_blocking_climb ) {
-        ///\EFFECT_DEX_NPC increases chance to climb CLIMBABLE furniture or terrain
+        } else { moves -= 100; moved = true; }
+    } else if( get_dex() > 1 && buf.has_flag_ter_or_furn( "CLIMBABLE", abs_p ) && !ceiling_blocking_climb ) {
         int climb = get_dex();
         if( one_in( climb ) ) {
-            add_msg_if_npc( m_neutral, _( "%1$s tries to climb the %2$s but slips." ), name,
-                            here.tername( p ) );
+            add_msg_if_npc( m_neutral, _( "%1$s tries to climb the %2$s but slips." ), name, buf.tername( abs_p ) );
             moves -= 400;
         } else {
-            add_msg_if_npc( m_neutral, _( "%1$s climbs over the %2$s." ), name, here.tername( p ) );
+            add_msg_if_npc( m_neutral, _( "%1$s climbs over the %2$s." ), name, buf.tername( abs_p ) );
             moves -= ( 500 - ( rng( 0, climb ) * 20 ) );
             moved = true;
         }
-    } else if( !no_bashing && smash_ability() > 0 && here.is_bashable( p ) &&
-               here.bash_rating( smash_ability(), p ) > 0 ) {
+    } else if( !no_bashing && smash_ability() > 0 && buf.is_bashable( abs_p ) &&
+                buf.bash_rating( smash_ability(), abs_p ) > 0 ) {
         moves -= !is_armed() ? 80 : primary_weapon().attack_cost() * 0.8;
-        here.bash( p, smash_ability() );
-    } else {
-        if( attitude == NPCATT_MUG ||
-            attitude == NPCATT_KILL ||
-            attitude == NPCATT_WAIT_FOR_LEAVE ) {
-            set_attitude( NPCATT_FLEE_TEMP );
-        }
-
-        moves = 0;
-    }
+        buf.bash( abs_p, smash_ability() );
+    } else { moves = 0; }
 
     if( moved ) {
         const auto old_pos = bub_pos();
         setpos_preserving_movement_state( p );
-        set_underwater( g->m.is_divable( p ) );
-        if( old_pos.x() - p.x() < 0 ) {
-            facing = FD_RIGHT;
-        } else {
-            facing = FD_LEFT;
+        set_underwater( buf.is_divable( abs_p ) );
+        if( old_pos.x() - p.x() < 0 ) { facing = FD_RIGHT; } else { facing = FD_LEFT; }
+        if( is_mounted() && mounted_creature->bub_pos() != bub_pos() ) {
+            mounted_creature->setpos( bub_pos() );
+            mounted_creature->facing = facing;
+            mounted_creature->process_triggers();
+            buf.creature_in_field( *mounted_creature );
+            buf.creature_on_trap( *mounted_creature );
         }
-        if( is_mounted() ) {
-            if( mounted_creature->bub_pos() != bub_pos() ) {
-                mounted_creature->setpos( bub_pos() );
-                mounted_creature->facing = facing;
-                mounted_creature->process_triggers();
-                here.creature_in_field( *mounted_creature );
-                here.creature_on_trap( *mounted_creature );
-            }
-        }
-        if( here.has_flag( "UNSTABLE", bub_pos() ) ) {
+        if( buf.has_flag( "UNSTABLE", abs_here ) ) {
             add_effect( effect_bouldering, 1_turns, bodypart_str_id::NULL_ID() );
         } else if( has_effect( effect_bouldering ) ) {
             remove_effect( effect_bouldering );
         }
-
-        if( here.has_flag_ter_or_furn( TFLAG_NO_SIGHT, bub_pos() ) ) {
+        if( buf.has_flag_ter_or_furn( TFLAG_NO_SIGHT, abs_here ) ) {
             add_effect( effect_no_sight, 1_turns, bodypart_str_id::NULL_ID() );
         } else if( has_effect( effect_no_sight ) ) {
             remove_effect( effect_no_sight );
         }
-
-        if( in_vehicle ) {
-            here.unboard_vehicle( old_pos );
-        }
-
-        // Close doors behind self (if you can)
-        if( ( rules.has_flag( ally_rule::close_doors ) &&
-              is_player_ally() ) && !is_hallucination() ) {
-            doors::close_door( here, *this, old_pos );
-        }
-
-        if( here.veh_at( p ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
-            here.board_vehicle( p, this );
-        }
-
-        here.creature_on_trap( *this );
-        here.creature_in_field( *this );
+        buf.creature_on_trap( *this );
+        buf.creature_in_field( *this );
     }
 }
 

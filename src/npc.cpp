@@ -1775,7 +1775,7 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
     // Sound happens even if we can't hear it
     if( spriority == sounds::sound_t::order || spriority == sounds::sound_t::alert ) {
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = get_shout_volume();
         se.category = spriority;
         se.description = sound;
@@ -1788,7 +1788,7 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
         sounds::sound( se );
     } else {
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = 80;
         se.category = sounds::sound_t::speech;
         se.description = sound;
