@@ -5,12 +5,15 @@
 #include <set>
 
 #include "generic_factory.h"
+#include "type_id_implement.h"
 #include "json.h"
 
 namespace
 {
 generic_factory<skill_boost> all_skill_boosts( "skill boost", "stat" );
 } // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( skill_boost, all_skill_boosts );
 
 const std::vector<skill_boost> &skill_boost::get_all()
 {

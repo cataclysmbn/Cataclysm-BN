@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "json.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "generic_factory.h"
 
 const flag_id flag_NULL = flag_id( "null" ); // intentionally invalid flag
@@ -392,19 +393,7 @@ namespace
 generic_factory<json_flag> json_flags_all( "json_flags" );
 } // namespace
 
-/** @relates string_id */
-template<>
-bool flag_id ::is_valid() const
-{
-    return json_flags_all.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const json_flag &flag_id::obj() const
-{
-    return json_flags_all.obj( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( json_flag, json_flags_all );
 
 json_flag::operator bool() const
 {

@@ -50,6 +50,7 @@
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "ui.h"
 #include "units.h"
 #include "faction.h"
@@ -130,17 +131,7 @@ namespace
 generic_factory<spell_type> spell_factory( "spell" );
 } // namespace
 
-template<>
-const spell_type &string_id<spell_type>::obj() const
-{
-    return spell_factory.obj( *this );
-}
-
-template<>
-bool string_id<spell_type>::is_valid() const
-{
-    return spell_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( spell_type, spell_factory );
 
 void spell_type::load_spell( const JsonObject &jo, const std::string &src )
 {

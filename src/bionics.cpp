@@ -71,6 +71,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
+#include "type_id_implement.h"
 #include "requirements.h"
 #include "regen.h"
 #include "rng.h"
@@ -220,21 +221,7 @@ auto scaled_operation_duration( const int difficulty ) -> time_duration
 }
 } //namespace
 
-/** @relates string_id */
-template<>
-const bionic_data &string_id<bionic_data>::obj() const
-{
-    return bionic_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<bionic_data>::is_valid() const
-{
-    return bionic_factory.is_valid( *this );
-}
-
-
+IMPLEMENT_STRING_AND_INT_IDS( bionic_data, bionic_factory );
 
 std::vector<bodypart_id> get_occupied_bodyparts( const bionic_id &bid )
 {

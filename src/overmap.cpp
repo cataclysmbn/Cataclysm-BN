@@ -76,6 +76,7 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "weighted_list.h"
 #include "world.h"
 #include "world_type.h"
@@ -273,30 +274,10 @@ generic_factory<oter_t> terrains( "overmap terrain" );
 generic_factory<overmap_special> specials( "overmap special" );
 
 } // namespace
-
-template<>
-const overmap_land_use_code &overmap_land_use_code_id::obj() const
-{
-    return land_use_codes.obj( *this );
-}
-
-template<>
-bool overmap_land_use_code_id::is_valid() const
-{
-    return land_use_codes.is_valid( *this );
-}
-
-template<>
-const overmap_special &overmap_special_id::obj() const
-{
-    return specials.obj( *this );
-}
-
-template<>
-bool overmap_special_id::is_valid() const
-{
-    return specials.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( overmap_land_use_code, land_use_codes );
+IMPLEMENT_STRING_AND_INT_IDS( oter_type_t, terrain_types );
+IMPLEMENT_STRING_AND_INT_IDS( oter_t, terrains );
+IMPLEMENT_STRING_AND_INT_IDS( overmap_special, specials );
 
 city::city( const point_om_omt &P, int const S )
     : pos( P )
@@ -317,90 +298,6 @@ radio_tower::radio_tower( const point_om_sm &p, int S, const std::string &M, rad
     pos( p ), strength( S ), type( T ), message( M )
 {
     frequency = rng( 0, std::numeric_limits<int32_t>::max() );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<oter_type_t>::is_valid() const
-{
-    return terrain_types.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-const string_id<oter_type_t> &int_id<oter_type_t>::id() const
-{
-    return terrain_types.convert( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<oter_type_t> string_id<oter_type_t>::id() const
-{
-    return terrain_types.convert( *this, int_id<oter_type_t>( 0 ) );
-}
-
-/** @relates int_id */
-template<>
-int_id<oter_type_t>::int_id( const string_id<oter_type_t> &id ) : _id( id.id() ) {}
-
-template<>
-const oter_type_t &int_id<oter_type_t>::obj() const
-{
-    return terrain_types.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-const oter_type_t &string_id<oter_type_t>::obj() const
-{
-    return terrain_types.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<oter_t>::is_valid() const
-{
-    return terrains.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const oter_t &string_id<oter_t>::obj() const
-{
-    return terrains.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<oter_t> string_id<oter_t>::id() const
-{
-    return terrains.convert( *this, ot_null );
-}
-
-/** @relates int_id */
-template<>
-int_id<oter_t>::int_id( const string_id<oter_t> &id ) : _id( id.id() ) {}
-
-/** @relates int_id */
-template<>
-bool int_id<oter_t>::is_valid() const
-{
-    return terrains.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-const oter_t &int_id<oter_t>::obj() const
-{
-    return terrains.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const string_id<oter_t> &int_id<oter_t>::id() const
-{
-    return terrains.convert( *this );
 }
 
 bool operator==( const int_id<oter_t> &lhs, const char *rhs )
