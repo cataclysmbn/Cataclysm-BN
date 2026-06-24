@@ -13,7 +13,6 @@
       { "item": "ak47", "prob": 20 },
       { "item": "akmag30", "prob": 20 },
       { "item": "762_m43", "prob": 20 },
-      { "item": "762_burst", "prob": 5 },
       { "item": "cig", "prob": 10 },
       { "item": "joint_roach", "prob": 20 },
       { "item": "cig_butt", "prob": 20 },

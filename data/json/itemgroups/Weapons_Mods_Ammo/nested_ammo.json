@@ -98,11 +98,7 @@
     "type": "item_group",
     "//": "a collection of ammo that would be found with a loaded gun.",
     "subtype": "distribution",
-    "entries": [ 
-      { "item": "762_m43", "prob": 100, "charges": [ 15, 30 ] },
-      { "item": "762_m87", "prob": 100, "charges": [ 15, 30 ] },
-      { "item": "762_burst", "prob": 20, "charges": [ 15, 30 ] }
-    ]
+    "entries": [ { "item": "762_m43", "prob": 100, "charges": [ 15, 30 ] }, { "item": "762_m87", "prob": 100, "charges": [ 15, 30 ] } ]
   },
   {
     "id": "on_hand_40",
