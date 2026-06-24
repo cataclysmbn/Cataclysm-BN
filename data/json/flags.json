@@ -1560,8 +1560,7 @@
   {
     "id": "COLLAPSIBLE_STOCK",
     "type": "json_flag",
-    "context": [  ],
-    "info": "DEPRECATED: Use volume_multiplier in gunmod definition instead. This flag previously reduced gun volume by 1/3 when inherited."
+    "context": [  ]
   },
   {
     "id": "CONDUCTIVE",
