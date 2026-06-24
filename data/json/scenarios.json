@@ -1128,5 +1128,5 @@
     "allowed_locs": [ "sloc_subway" ],
     "start_name": "Subway Tunnels",
     "flags": [ "CITY_START", "LONE_START" ]
-  },
+  }
 ]
