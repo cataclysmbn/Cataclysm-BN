@@ -132,6 +132,7 @@ A field to automatically create the copy from versions of vehicle parts with dif
 
 This will automatically create proper objects out of abstracts.
 
+Note: this field does not support copy from, it must be defined on each object
 
 ```jsonc
 "shapes": [
