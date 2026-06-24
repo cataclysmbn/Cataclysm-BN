@@ -958,7 +958,7 @@
   {
     "id": "survivor_pack",
     "type": "ARMOR",
-    "name": { "str": "survivor backpack" },
+    "name": { "str": "survivor MOLLE pack" },
     "description": "A custom-built backpack.  Durable and carefully crafted to hold as much stuff as possible, as well as covered with equipment straps for quick access to weapons.",
     "weight": "600 g",
     "volume": "2500 ml",
