@@ -238,16 +238,21 @@ auto find_grabbed_creature( const avatar &you ) -> Creature *
     return nullptr;
 }
 
-auto throw_descriptor( const float throwforce ) -> std::string
+auto throw_message( const float throwforce, const std::string &target_name ) -> std::string
 {
-    if( throwforce < 30.0f ) {
-        return _( "shove" );
-    } else if( throwforce < 40.0f ) {
-        return _( "throw" );
-    } else if( throwforce < 60.0f ) {
-        return _( "hurl" );
+    if( throwforce >= 60.0f ) {
+        return string_format( _( "You send %s flying!" ), target_name );
     }
-    return _( "send flying" );
+
+    auto action = std::string {};
+    if( throwforce < 30.0f ) {
+        action = _( "shove" );
+    } else if( throwforce < 40.0f ) {
+        action = _( "throw" );
+    } else {
+        action = _( "hurl" );
+    }
+    return string_format( _( "You %1$s %2$s!" ), action, target_name );
 }
 
 auto apply_thrown_creature_downed_effect( Creature &target ) -> void
@@ -342,7 +347,7 @@ auto throw_grabbed_creature( avatar &you ) -> bool
         mon->on_hit( &you, body_part_torso.id(), nullptr, false );
     }
 
-    add_msg( _( "You %1$s %2$s!" ), throw_descriptor( fling_velocity ), target->disp_name() );
+    add_msg( throw_message( fling_velocity, target->disp_name() ) );
     g->fling_creature( target, target_angle, fling_velocity );
     apply_thrown_creature_downed_effect( *target );
     return true;

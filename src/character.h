@@ -1593,8 +1593,12 @@ class Character : public Creature, public location_visitable<Character>
         std::vector<overlay_entry> get_overlay_ids() const;
 
         // --------------- Skill Stuff ---------------
+        // These are calling the following with no_enchant = false -> for catalua bindings
         int get_skill_level( const skill_id &ident ) const;
         int get_skill_level( const skill_id &ident, const item &context ) const;
+
+        int get_skill_level( const skill_id &ident, const bool no_enchant ) const;
+        int get_skill_level( const skill_id &ident, const item &context, const bool no_enchant ) const;
 
         const SkillLevelMap &get_all_skills() const;
         SkillLevel &get_skill_level_object( const skill_id &ident );

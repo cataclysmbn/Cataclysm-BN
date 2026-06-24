@@ -789,7 +789,7 @@ jobs:
           $target = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
           cmake --build $buildDir --target $target --config Release
 
-      - name: Run tests (desktop)
+      - name: Run sharded tests (desktop)
         if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
         shell: pwsh
         run: |
@@ -814,39 +814,17 @@ jobs:
             "--rng-seed", "time",
             "--error-format=github-action"
           )
-          if ($IsLinux) {
+          if ($IsLinux -and "${{ matrix.tiles }}" -eq "true") {
             $testOpts += "--gpu-backend=software"
           }
-          $filters = @("[slow] ~starting_items", "~[slow] ~[.],starting_items")
-          $jobs = @()
-          for ($i = 0; $i -lt $filters.Count; ++$i) {
-            $userDir = "test_user_dir_$($i + 1)"
-            $jobs += Start-Job -Name "cata-test-$($i + 1)" -ScriptBlock {
-              param($bin, $opts, $filter, $userDir)
-              & $bin @opts "--user-dir=$userDir" $filter
-              if ($LASTEXITCODE -ne 0) {
-                throw "Test shard '$filter' exited with code $LASTEXITCODE"
-              }
-            } -ArgumentList $testBin, $testOpts, $filters[$i], $userDir
-          }
-
-          while ($jobs | Where-Object { $_.State -eq "Running" }) {
-            Start-Sleep -Seconds 30
-            $running = ($jobs | Where-Object { $_.State -eq "Running" }).Name -join ", "
-            Write-Host "Still running: $running"
-          }
-
-          $failed = $false
-          foreach ($job in $jobs) {
-            Receive-Job $job -ErrorAction Continue
-            if ($job.State -ne "Completed") {
-              $failed = $true
-              Write-Host "$($job.Name) failed with state $($job.State)"
-            }
-          }
-          if ($failed) {
-            throw "One or more test shards failed"
-          }
+          deno run --allow-read --allow-write --allow-run --allow-env `
+            build-scripts/run-linux-test-shards.ts `
+            --mode file-tags `
+            --jobs 4 `
+            --non-slow-shards 8 `
+            $testBin `
+            -- `
+            @testOpts
 
       # Upload artifacts
       - name: Upload packaged build artifact

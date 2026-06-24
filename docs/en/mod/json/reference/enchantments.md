@@ -343,8 +343,15 @@ Calculated after all other multipliers
 
 ##### CONSTRUCTION_SPEED
 
-Construction speed. `base_value` is a multiplier of construction speed.
+Construction speed. `base_value` is a multiplier of construction speed for vehicles and furniture/terrain.
 Calculated after all other multipliers
+
+It has two children:
+
+- `CONSTRUCTION_SPEED_CON`
+- `CONSTRUCTION_SPEED_VEH`
+
+That would only work for furniture/terrain or vehicles respectively
 
 ##### METABOLISM
 
@@ -568,6 +575,7 @@ In addition there are the following children of this enchantment
 - `SKILL_LEVEL_THROW`
 - `SKILL_LEVEL_MELEE`
 - `SKILL_LEVEL_BASHING`
+- `SKILL_LEVEL_CUTTING`
 - `SKILL_LEVEL_DODGE`
 - `SKILL_LEVEL_STABBING`
 - `SKILL_LEVEL_UNARMED`
@@ -602,6 +610,7 @@ In addition there are the following children of this enchantment
 - `SKILL_EXP_THROW`
 - `SKILL_EXP_MELEE`
 - `SKILL_EXP_BASHING`
+- `SKILL_EXP_CUTTING`
 - `SKILL_EXP_DODGE`
 - `SKILL_EXP_STABBING`
 - `SKILL_EXP_UNARMED`

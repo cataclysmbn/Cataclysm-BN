@@ -3049,7 +3049,7 @@ void monster::process_turn()
         }
     }
     // We update electrical fields here since they act every turn.
-    if( has_flag( MF_ELECTRIC_FIELD ) ) {
+    if( !is_hallucination() && has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
             if( action_time_scale::once_every_this_tick( 10_turns ) ) {
                 sound_event se;

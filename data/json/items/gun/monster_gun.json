@@ -164,5 +164,26 @@
     "range": 8,
     "dispersion": 2000,
     "durability": 8
+  },
+  {
+    "id": "feral_pa_boss_grenade",
+    "copy-from": "launcher_base",
+    "type": "GUN",
+    "name": { "str": "feral armored bio-operator grenade launcher" },
+    "description": "Fake grenade launcher used for the grenade launcher feral armored bio-op.",
+    "volume": "2250 ml",
+    "price": "0 cent",
+    "to_hit": -2,
+    "bashing": 9,
+    "material": [ "steel", "plastic" ],
+    "looks_like": "bio_int_enhancer",
+    "color": "magenta",
+    "ammo": [ "40x46mm", "40x53mm" ],
+    "dispersion": 3000,
+    "durability": 6,
+    "clip_size": 3,
+    "reload": 150,
+    "loudness": -20,
+    "flags": [ "NEVER_JAMS", "NO_UNWIELD", "TRADER_AVOID", "RELOAD_ONE" ]
   }
 ]

@@ -458,22 +458,6 @@
     ]
   },
   {
-    "id": "rifle_223",
-    "copy-from": "rifle_home_made",
-    "type": "GUN",
-    "name": { "str": "pipe rifle: 5.56x45mm", "str_pl": "pipe rifles: 5.56x45mm" },
-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",
-    "weight": "4080 g",
-    "volume": "3 L",
-    "price": "1100 USD",
-    "price_postapoc": "5 USD",
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "223",
-    "ranged_damage": { "damage_type": "bullet", "amount": -2 },
-    "barrel_volume": "1000 ml"
-  },
-  {
     "id": "ruger_mini",
     "copy-from": "rifle_semi",
     "type": "GUN",
@@ -622,61 +606,6 @@
       [ "underbarrel", 1 ]
     ],
     "magazines": [ [ "223", [ "augmag_30rd", "augmag_10rd", "augmag_42rd", "augmag_100rd" ] ] ]
-  },
-  {
-    "id": "surv_carbine_223",
-    "copy-from": "rifle_manual",
-    "type": "GUN",
-    "name": { "str": "handmade carbine" },
-    "//": "It's smaller than an M4A1, plus it's a homemade firearm.",
-    "description": "A well-designed improvised lever-action carbine with a shortened barrel.  Accepting crude detachable magazines or STANAG magazines, this is one of the better homemade weapons.",
-    "weight": "1950 g",
-    "volume": "1500 ml",
-    "barrel_volume": "250 ml",
-    "price": "100 USD",
-    "price_postapoc": "2750 cent",
-    "bashing": 6,
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "223",
-    "ranged_damage": { "damage_type": "bullet", "amount": -4 },
-    "dispersion": 550,
-    "durability": 6,
-    "loudness": -2,
-    "reload": 200,
-    "valid_mod_locations": [
-      [ "accessories", 2 ],
-      [ "barrel", 1 ],
-      [ "brass catcher", 1 ],
-      [ "muzzle", 1 ],
-      [ "sling", 1 ],
-      [ "stock", 1 ],
-      [ "underbarrel", 1 ],
-      [ "grip", 1 ],
-      [ "rail", 1 ],
-      [ "sights", 1 ]
-    ],
-    "magazines": [
-      [
-        "223",
-        [
-          "survivor223mag",
-          "carbonmag_223",
-          "stanag30",
-          "stanag5",
-          "stanag10",
-          "stanag20",
-          "stanag40",
-          "stanag50",
-          "stanag60",
-          "stanag60drum",
-          "stanag90",
-          "stanag100",
-          "stanag100drum",
-          "stanag150"
-        ]
-      ]
-    ]
   },
   {
     "id": "carbon_rifle",

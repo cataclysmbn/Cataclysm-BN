@@ -1116,7 +1116,7 @@
     "id": "shock_foil",
     "type": "TOOL",
     "copy-from": "fencing_foil_sharpened",
-    "name": { "str": "electrified foil (off)" },
+    "name": { "str": "electrified foil (off)", "str_pl": "electrified foils (off)" },
     "description": "The modifications made to this fencing foil may not be sporting, but they might give you an edge in this final competition.  Extra effort has been made to insulate the grip and a high voltage stun gun has been attached to the guard, wired through the electronic scoring circuit to the tip.  Activate the switch to elecrocute your foes!",
     "ammo": "battery",
     "price_postapoc": "1250 cent",

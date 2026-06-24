@@ -1449,13 +1449,23 @@ void Item_factory::check_definitions() const
                     for( const auto &pr : type->mod->magazine_adaptor ) {
                         acceptable_ammo.insert( pr.first );
                     }
-                    auto &acceptable_magazines = !type->mod->magazine_adaptor.empty()
-                                                 ? type->mod->magazine_adaptor
-                                                 : target->magazines;
-                    for( const ammotype &ammo : acceptable_ammo ) {
-                        if( !acceptable_magazines.contains( ammo ) ) {
-                            msg += string_format( "gunmod can be applied to %s, which has no magazines for ammo %s\n",
-                                                  t.c_str(), ammo.str() );
+                    // Only check magazine compatibility if either the mod provides
+                    // magazine adaptors or the target gun uses external magazines.
+                    // Guns with only internal clip_size (no magazine_well, no magazines
+                    // map) load rounds directly and don't need magazine entries for the
+                    // converted ammo type.
+                    bool mod_has_adaptor = !type->mod->magazine_adaptor.empty();
+                    bool gun_uses_magazines = !target->magazines.empty() ||
+                                              target->magazine_well > 0_ml;
+                    if( mod_has_adaptor || gun_uses_magazines ) {
+                        auto &acceptable_magazines = mod_has_adaptor
+                                                     ? type->mod->magazine_adaptor
+                                                     : target->magazines;
+                        for( const ammotype &ammo : acceptable_ammo ) {
+                            if( !acceptable_magazines.contains( ammo ) ) {
+                                msg += string_format( "gunmod can be applied to %s, which has no magazines for ammo %s\n",
+                                                      t.c_str(), ammo.str() );
+                            }
                         }
                     }
                 }

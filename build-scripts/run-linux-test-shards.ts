@@ -2,7 +2,7 @@
 /**
  * @module
  *
- * Runs Cataclysm: Bright Nights Linux tests as filename-tag shards.
+ * Runs Cataclysm: Bright Nights tests as filename-tag shards.
  *
  * The runner discovers Catch2 filename tags, builds deterministic shards, starts the heaviest shards
  * first, and defaults local runs to the detected CPU count while CI can pass explicit limits.
@@ -276,6 +276,9 @@ const discoverTags = async (
   return { allTags: extractFileTags(all.stdout), slowTags: extractFileTags(slow.stdout), testOpts }
 }
 
+const defaultCpuShardCompute = (): string | undefined =>
+  Deno.build.os === "windows" ? undefined : "cpu"
+
 const runShard = async (
   options: Options & { jobs: number; nonSlowShards: number },
   testOpts: string[],
@@ -285,19 +288,20 @@ const runShard = async (
   const compute = explicitCompute ??
     (shard.compute === "gpu_software"
       ? Deno.env.get("CATA_TEST_VISIBILITY_COMPUTE_ACCELERATION") ?? "gpu_software"
-      : "cpu")
+      : defaultCpuShardCompute())
   const userDirPrefix = Deno.env.get("CATA_TEST_USER_DIR_PREFIX") ?? "test_user_dir"
   const userDir = `${userDirPrefix}_${shard.name}`
   const filter = shard.filters.join(",")
   const start = Date.now()
-  console.log(`Starting shard ${shard.name} with ${compute} compute`)
+  console.log(`Starting shard ${shard.name} with ${compute ?? "default"} compute`)
+  const env: Record<string, string> = compute === undefined
+    ? {}
+    : { CATA_TEST_COMPUTE_ACCELERATION: compute }
   const result = await commandOutput(options.testBin, [
     ...testOpts,
     `--user-dir=${userDir}`,
     filter,
-  ], {
-    CATA_TEST_COMPUTE_ACCELERATION: compute,
-  })
+  ], env)
   if (result.stdout) {
     console.log(result.stdout.trimEnd())
   }
@@ -377,8 +381,8 @@ Deno.test("buildShardPlan keeps visibility on its GPU shard", () => {
 if (import.meta.main) {
   try {
     const { options, args, literal } = await new Command()
-      .name("run-linux-test-shards")
-      .description("Run Cataclysm: Bright Nights Linux tests as filename-tag shards")
+      .name("run-test-shards")
+      .description("Run Cataclysm: Bright Nights tests as filename-tag shards")
       .option("--mode <mode:string>", "auto, file-tags, tiles, or legacy", { default: "auto" })
       .option("--jobs <jobs:string>", "concurrent shard jobs, or auto", { default: "auto" })
       .option("--slow-shards <slowShards:string>", "accepted for compatibility", { default: "4" })

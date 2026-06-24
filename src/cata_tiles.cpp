@@ -81,6 +81,7 @@
 #include "submap_load_manager.h"
 #include "tileray.h"
 #include "translations.h"
+#include "travel/travel_destination.h"
 #include "trap.h"
 #include "type_id.h"
 #include "veh_type.h"
@@ -6949,12 +6950,15 @@ void cata_tiles::draw_line()
         return;
     }
     static std::string line_overlay = "animation_line";
-    for( auto it = line_trajectory.begin(); it != line_trajectory.end() - 1; ++it ) {
-        draw_from_id_string(
-        {line_overlay, C_NONE, empty_string, 0, 0},
-        *it, std::nullopt, std::nullopt,
-        lit_level::LIT, false, 0, false
-        );
+    const auto target_known = avatar_knows_travel_destination( g->u, line_pos );
+    if( should_draw_travel_line_overlay( is_target_line, target_known ) ) {
+        for( auto it = line_trajectory.begin(); it != line_trajectory.end() - 1; ++it ) {
+            draw_from_id_string(
+            {line_overlay, C_NONE, empty_string, 0, 0},
+            *it, std::nullopt, std::nullopt,
+            lit_level::LIT, false, 0, false
+            );
+        }
     }
 
     draw_from_id_string(

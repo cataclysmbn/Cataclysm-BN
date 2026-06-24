@@ -1,31 +1,5 @@
 [
   {
-    "id": "2_shot_special",
-    "copy-from": "pistol_1shot",
-    "type": "GUN",
-    "name": { "str": "2 Shot Special" },
-    "//": "It's hard to say just how big this is, although it's (very large) pistol sized. But it is a handmade weapon.",
-    "description": "A crudely made double barrel pistol firing 38 special ammo.  Unfortunately, the name is less about the double barrels and more about the number of shots you'll get before it breaks down on you.",
-    "weight": "750 g",
-    "volume": "700 ml",
-    "barrel_volume": "75 ml",
-    "price": "20 USD",
-    "price_postapoc": "5 USD",
-    "ascii_picture": "2_shot_special",
-    "bashing": 3,
-    "material": [ "steel" ],
-    "color": "brown",
-    "ammo": "38",
-    "dispersion": 620,
-    "durability": 3,
-    "clip_size": 2,
-    "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],
-    "reload": 200,
-    "loudness": 2,
-    "valid_mod_locations": [ [ "accessories", 4 ], [ "grip", 1 ], [ "sights", 1 ], [ "underbarrel", 1 ], [ "rail", 1 ], [ "stock", 1 ] ],
-    "delete": { "flags": "NEVER_JAMS" }
-  },
-  {
     "id": "cop_38",
     "copy-from": "pistol_1shot",
     "type": "GUN",
@@ -69,23 +43,6 @@
     "color": "dark_gray",
     "ammo": "38",
     "magazines": [ [ "38", [ "38_speedloader6" ] ] ]
-  },
-  {
-    "id": "rifle_38",
-    "copy-from": "rifle_home_made",
-    "type": "GUN",
-    "name": { "str": "pipe rifle: .38 Special", "str_pl": "pipe rifles: .38 Special" },
-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",
-    "weight": "2114 g",
-    "volume": "2 L",
-    "price": "100 USD",
-    "price_postapoc": "5 USD",
-    "ascii_picture": "ps_pipe_gun",
-    "bashing": 10,
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "38",
-    "barrel_volume": "750 ml"
   },
   {
     "id": "ruger_lcr_38",
@@ -217,5 +174,38 @@
       [ "rail", 1 ],
       [ "underbarrel", 1 ]
     ]
+  },
+  {
+    "id": "handmade_revolver",
+    "copy-from": "pistol_revolver",
+    "type": "GUN",
+    "name": { "str": "handmade revolver" },
+    "description": "A sturdy improvised revolver chambered for .38 Special and .357 Magnum.  Its simple design allows for field conversion to 9mm, .40 S&W, .44 Magnum, or .45 ACP with replacement barrel and cylinder assemblies.",
+    "weight": "1250 g",
+    "volume": "875 ml",
+    "barrel_volume": "100 ml",
+    "price": "400 USD",
+    "price_postapoc": "750 cent",
+    "material": [ "steel" ],
+    "color": "dark_gray",
+    "ammo": [ "357mag", "38" ],
+    "ranged_damage": { "damage_type": "bullet", "amount": -1 },
+    "dispersion": 620,
+    "durability": 6,
+    "magazines": [ [ "38", [ "38_speedloader6" ] ] ],
+    "reload": 285,
+    "loudness": 2,
+    "valid_mod_locations": [
+      [ "accessories", 2 ],
+      [ "barrel", 1 ],
+      [ "bore", 1 ],
+      [ "grip", 1 ],
+      [ "sights", 1 ],
+      [ "stock", 1 ],
+      [ "underbarrel", 1 ],
+      [ "rail", 1 ]
+    ],
+    "flags": [ "RELOAD_ONE", "NEVER_JAMS", "RELOAD_EJECT" ],
+    "delete": { "faults": "fault_gun_chamber_spent" }
   }
 ]

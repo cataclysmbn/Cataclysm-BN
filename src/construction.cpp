@@ -59,6 +59,7 @@
 #include "string_input_popup.h"
 #include "string_utils.h"
 #include "trap.h"
+#include "type_id.h"
 #include "type_id_implement.h"
 #include "ui_manager.h"
 #include "uistate.h"
@@ -787,6 +788,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                     const auto tools_mult =
                         crafting_tools_speed_multiplier( g->u, current_con->requirements.obj() );
                     const auto mutation_mult = g->u.mutation_value( "construction_speed_modifier" );
+                    const auto ench_mult = 1.0 + g->u.bonus_from_enchantments( 1.0,
+                                           enchantment_value_id( "CONSTRUCTION_SPEED_CON" ) );
                     const auto scaling = get_option<int>( "CONSTRUCTION_SCALING" );
                     const auto game_opt_mult = scaling == 0 ? 9999.0f : 100.0f / scaling;
                     const auto total_mult =
@@ -794,12 +797,13 @@ std::optional<construction_id> construction_menu( const bool blueprint )
 
                     const auto total_label = _( "Total" );
                     const auto multipliers =
-                    std::array<std::pair<std::string, float>, 5> { {
+                    std::array<std::pair<std::string, float>, 6> { {
                             { total_label, total_mult },
                             { _( "Assistants" ), assistants_mult },
                             { _( "Tools" ), tools_mult },
                             { _( "Traits" ), mutation_mult },
-                            { _( "Game option" ), game_opt_mult }
+                            { _( "Game option" ), game_opt_mult },
+                            { _( "Enchantments" ), ench_mult }
                         }
                     };
 
@@ -2456,7 +2460,9 @@ float construction::time_scale() const
     } else {
         // this is hacky, but the player or their followers should only be the ones to ever construct currently.
         return ( get_option<int>( "CONSTRUCTION_SCALING" ) / 100.0f ) /
-               get_player_character().mutation_value( "construction_speed_modifier" );
+               get_player_character().mutation_value( "construction_speed_modifier" ) /
+               ( 1.0 + get_player_character().bonus_from_enchantments( 1.0,
+                       enchantment_value_id( "CONSTRUCTION_SPEED_CON" ) ) );
     }
 }
 
