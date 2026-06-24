@@ -46,6 +46,7 @@
 #include <map>
 #include <numeric>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -1389,6 +1390,28 @@ bool inventory_selector::select( const item *loc )
     }
 
     return res;
+}
+
+auto inventory_selector::select_item_type( const itype_id &type ) -> bool
+{
+    namespace ranges = std::ranges;
+
+    prepare_layout();
+    for( const auto index : std::views::iota( size_t{}, columns.size() ) ) {
+        auto *column = columns[index];
+        if( !column->visible() || !column->activatable() ) {
+            continue;
+        }
+        const auto entries = column->get_entries( []( const auto & entry ) { return entry.is_selectable(); } );
+        const auto iter = ranges::find_if( entries, [&type]( const auto * entry ) {
+            return entry->any_item()->typeId() == type;
+        } );
+        if( iter != entries.end() && column->select( ( *iter )->any_item() ) ) {
+            set_active_column( index );
+            return true;
+        }
+    }
+    return false;
 }
 
 inventory_entry *inventory_selector::find_entry_by_invlet( int invlet ) const

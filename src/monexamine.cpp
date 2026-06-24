@@ -882,8 +882,9 @@ void monexamine::play_with( monster &z )
 {
     std::string pet_name = z.get_name();
     avatar &you = get_avatar();
-    int turns = rng( 50, 125 ) * 100;
+    const int turns = rng( 50, 125 ) * 100;
     you.assign_activity( ACT_PLAY_WITH_PET, turns );
+    you.activity->monsters.push_back( g->shared_from( z ) );
     you.activity->str_values.push_back( pet_name );
     z.add_effect( effect_ai_waiting, time_duration::from_turns( turns ) );
     z.on_pet_bonding( you.as_character() );

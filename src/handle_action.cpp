@@ -93,6 +93,7 @@
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "translations.h"
+#include "travel/travel_destination.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include "utils/url.h"
@@ -1954,13 +1955,13 @@ bool game::handle_action()
             const std::optional<tripoint_bub_ms> mouse_pos = ctxt.get_coordinates( w_terrain );
             if( !mouse_pos ) {
                 return false;
-            } else if( !u.sees( *mouse_pos ) ) {
-                // Not clicked in visible terrain
-                return false;
             }
             mouse_target = mouse_pos;
 
             if( act == ACTION_SELECT ) {
+                if( !avatar_knows_travel_destination( u, *mouse_target ) ) {
+                    return false;
+                }
                 // Note: The following has the potential side effect of
                 // setting auto-move destination state in addition to setting
                 // act.
@@ -1968,6 +1969,10 @@ bool game::handle_action()
                     return false;
                 }
             } else if( act == ACTION_SEC_SELECT ) {
+                if( !u.sees( *mouse_target ) ) {
+                    // Right-click actions examine or target current terrain and creatures.
+                    return false;
+                }
                 if( !try_get_right_click_action( act, *mouse_target ) ) {
                     return false;
                 }

@@ -185,6 +185,8 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
     bool init_selection = false;
     std::string init_filter;
     bool has_init_filter = false;
+    auto init_type = itype_id::NULL_ID();
+    bool has_init_type = false;
 
     const std::vector<activity_id> consuming {
         ACT_EAT_MENU,
@@ -200,6 +202,11 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
     if( u.has_activity( consuming ) && !u.activity->str_values.empty() ) {
         init_filter = u.activity->str_values[0];
         has_init_filter = true;
+    }
+    if( u.has_activity( consuming ) && u.activity->str_values.size() >= 2 &&
+        !u.activity->str_values[1].empty() ) {
+        init_type = itype_id( u.activity->str_values[1] );
+        has_init_type = true;
     }
 
     do {
@@ -217,7 +224,13 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
             has_init_filter = false;
         }
         // Set position after filter to keep cursor at the right position
-        if( init_selection ) {
+        auto restored_type_selection = false;
+        if( has_init_type ) {
+            restored_type_selection = inv_s.select_item_type( init_type );
+            init_selection = init_selection && !restored_type_selection;
+            has_init_type = false;
+        }
+        if( init_selection && !restored_type_selection ) {
             inv_s.select_position( init_pair );
             init_selection = false;
         }
@@ -244,6 +257,8 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
             u.activity->values.push_back( init_pair.second );
             u.activity->str_values.clear();
             u.activity->str_values.emplace_back( inv_s.get_filter() );
+            u.activity->str_values.emplace_back( location != nullptr ? location->typeId().str() :
+                                                 std::string() );
         }
 
         return location;
@@ -1499,20 +1514,14 @@ class repair_inventory_preset: public inventory_selector_preset
                                  player &character ) :
             actor( actor ), main_tool( main_tool ), character( character ) {
             append_cell( [ this, actor, &character ]( const item * loc ) {
-                const auto comp_needed = std::max<int>( 1,
-                                                        std::ceil( loc->volume() / 250_ml * actor->cost_scaling ) );
-                auto valid_entries = std::set<material_id> {};
-                std::ranges::for_each( actor->materials, [ &valid_entries, &loc ]( const auto & mat ) {
-                    if( loc->made_of( mat ) ) {
-                        valid_entries.emplace( mat );
-                    }
-                } );
+                int comp_needed = actor->get_material_amt_needed( *loc, true );
+                auto valid_entries = actor->get_valid_materials( *loc );
 
                 const auto &crafting_inv = character.crafting_inventory();
                 auto listed_components = std::set<itype_id> {};
                 auto material_list = std::vector<std::string> {};
                 std::ranges::for_each( valid_entries, [ this, &listed_components, &material_list, &crafting_inv,
-                      &comp_needed ]( const auto & entry ) {
+                      comp_needed ]( const auto & entry ) {
                     const auto &component_id = entry.obj().repaired_with();
                     if( listed_components.contains( component_id ) ) {
                         return;
@@ -1531,6 +1540,11 @@ class repair_inventory_preset: public inventory_selector_preset
                 }
                 return ret;
             }, _( "MATERIALS AVAILABLE" ) );
+
+            append_cell( [ this, actor ]( const item * loc ) {
+                const auto amt = actor->get_material_amt_needed( *loc, true );
+                return string_format( _( "%d" ), amt );
+            }, _( "NEED" ) );
 
             append_cell( [ this ]( const item * loc ) {
                 const auto chance = get_cached_repair_chance( *loc );

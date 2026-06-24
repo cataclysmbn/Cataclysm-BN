@@ -19,6 +19,7 @@
 #include "posix_time.h"
 #include "ranged.h"
 #include "translations.h"
+#include "travel/travel_destination.h"
 #include "type_id.h"
 #include "ui_manager.h"
 #include "weather.h"
@@ -869,7 +870,7 @@ void draw_line_curses( game &g, const tripoint_bub_ms &center,
 void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
                       const std::vector<tripoint_bub_ms> &points, bool noreveal )
 {
-    if( !noreveal && !u.sees( p ) ) {
+    if( !noreveal && !avatar_knows_travel_destination( u, p ) ) {
         return;
     }
 
@@ -884,7 +885,7 @@ void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
 void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
                       const std::vector<tripoint_bub_ms> &points, bool noreveal )
 {
-    if( !noreveal && !u.sees( p ) ) {
+    if( !noreveal && !avatar_knows_travel_destination( u, p ) ) {
         return;
     }
 
