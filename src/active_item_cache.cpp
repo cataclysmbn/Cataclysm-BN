@@ -40,14 +40,13 @@ void active_item_cache::remove( const item *it )
             reset_queue_state( queue );
         }
     }
-    if( it->can_revive() ) {
-        std::vector<cache_reference<item>> &corpse = special_items[ special_item_type::corpse ];
-        corpse.erase( std::remove( corpse.begin(), corpse.end(), it ), corpse.end() );
-    }
-    if( it->get_use( "explosion" ) ) {
-        std::vector<cache_reference<item>> &explosive = special_items[ special_item_type::explosive ];
-        explosive.erase( std::remove( explosive.begin(), explosive.end(), it ), explosive.end() );
-    }
+    const auto remove_special = [this, it]( const special_item_type type ) {
+        std::vector<cache_reference<item>> &items = special_items[type];
+        items.erase( std::remove( items.begin(), items.end(), it ), items.end() );
+    };
+    remove_special( special_item_type::corpse );
+    remove_special( special_item_type::bionic_scannable_corpse );
+    remove_special( special_item_type::explosive );
 }
 
 void active_item_cache::add( item &it )
@@ -71,6 +70,9 @@ void active_item_cache::add( item &it )
     }
     if( it.can_revive() ) {
         special_items[ special_item_type::corpse ].emplace_back( it );
+    }
+    if( it.is_corpse() ) {
+        special_items[ special_item_type::bionic_scannable_corpse ].emplace_back( it );
     }
     if( it.get_use( "explosion" ) ) {
         special_items[ special_item_type::explosive ].emplace_back( it );
