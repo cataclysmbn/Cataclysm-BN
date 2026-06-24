@@ -13,7 +13,8 @@
       [ "pistol_lanyard", 50 ],
       [ "suppressor", 60 ],
       [ "suppressor_compact", 40 ],
-      [ "cheek_pad", 25 ]
+      [ "cheek_pad", 25 ],
+      [ "light_grip", 40 ]
     ]
   },
   {
@@ -54,7 +55,11 @@
       [ "rifle_scope", 60 ],
       [ "suppressor", 40 ],
       [ "suppressor_compact", 30 ],
-      { "group": "auto_sears", "prob": 40 }
+      { "group": "auto_sears", "prob": 40 },
+      [ "carbon_grip", 30 ],
+      [ "carbon_receiver", 15 ],
+      [ "carbon_stock", 30 ],
+      [ "barrel_takedown_kit", 20 ]
     ]
   },
   {

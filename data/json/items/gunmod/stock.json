@@ -170,5 +170,33 @@
     "weight_multiplier": 0.75,
     "handling_modifier": -5,
     "flags": [ "IRREMOVABLE" ]
+  },
+  {
+    "id": "carbon_stock",
+    "type": "GUNMOD",
+    "name": { "str": "carbon fiber stock" },
+    "description": "A 3D-printed carbon fiber replacement stock.  Lighter than polymer or wood stocks with a minor handling penalty due to reduced mass in the rear of the weapon.",
+    "weight": "120 g",
+    "volume": "500 ml",
+    "integral_volume": "0 ml",
+    "integral_weight": "0 g",
+    "price": "450 USD",
+    "price_postapoc": "8 USD",
+    "material": [ "carbon_fiber" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "stock",
+    "mod_target_category": [
+      [ "SUBMACHINE_GUNS" ],
+      [ "RIFLES" ],
+      [ "MACHINE_GUNS" ],
+      [ "GATLING_GUNS" ],
+      [ "SHOTGUNS" ],
+      [ "M_XBOWS" ],
+      [ "GRENADE_LAUNCHERS" ],
+      [ "ROCKET_LAUNCHERS" ]
+    ],
+    "weight_multiplier": 0.85,
+    "handling_modifier": -2
   }
 ]

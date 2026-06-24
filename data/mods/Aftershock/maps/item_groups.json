@@ -13,6 +13,12 @@
     ]
   },
   {
+    "id": "afs_gunmods_rare",
+    "type": "item_group",
+    "//": "Rare titanium gunmods found in military and science locations.",
+    "items": [ [ "afs_titanium_barrel", 10 ], [ "afs_titanium_barrel_short", 10 ], [ "afs_titanium_bolt_carrier", 15 ] ]
+  },
+  {
     "id": "afs_lab_mechanics_books",
     "type": "item_group",
     "items": [
