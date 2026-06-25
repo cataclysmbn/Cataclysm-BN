@@ -3515,7 +3515,7 @@ bool mattack::photograph( monster *z )
         }
 
         for( monster &target : g->all_monsters() ) {
-            if( z->sees( target ) && rl_dist_fast( target.pos(), z->bub_pos() ) <= 25 &&
+            if( z->sees( target ) && rl_dist_fast( target.bub_pos(), z->bub_pos() ) <= 25 &&
                 target.attitude_to( g->u ) == Attitude::A_HOSTILE ) {
                 target.add_effect( effect_drone_marker, rng( 15_turns, 30_turns ) );
             }
