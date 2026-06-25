@@ -819,7 +819,11 @@ test_data["overmap_terrain"] = {
     CHECK( test_data["reentered_dim"].get<std::string>() == "lua_test_pocket" );
     CHECK( test_data["reentered_map_dim"].get<std::string>() == "lua_test_pocket" );
     CHECK( test_data["reentered_outside_is_oob"].get<bool>() );
-    CHECK_FALSE( zone_manager::get_manager().has( zone_type_no_auto_pickup, original_pos ) );
+    CHECK( test_data["final_return_travel"].get<bool>() );
+    CHECK( test_data["final_dim"].get<std::string>() == "" );
+    CHECK( test_data["final_map_dim"].get<std::string>() == "" );
+    CHECK( test_data["final_pos"].get<tripoint_abs_ms>() == original_pos );
+    CHECK( zone_manager::get_manager().has( zone_type_no_auto_pickup, original_pos ) );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )
