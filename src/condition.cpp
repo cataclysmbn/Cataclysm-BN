@@ -739,6 +739,14 @@ void conditional_t<T>::set_npc_train_styles()
 }
 
 template<class T>
+void conditional_t<T>::set_npc_is_sleepy()
+{
+    condition = []( const T & d ) {
+        return d.beta->get_fatigue() >= fatigue_levels::tired;
+    };
+}
+
+template<class T>
 void conditional_t<T>::set_at_safe_space()
 {
     condition = []( const T & d ) {
@@ -1135,7 +1143,9 @@ conditional_t<T>::conditional_t( const std::string &type )
     } else if( type == "npc_has_activity" ) {
         set_has_activity( is_npc );
     } else if( type == "npc_is_riding" ) {
-        set_is_riding( is_npc );
+        set_is_riding( is_npc );    }
+    else if( type == "npc_is_sleepy" ) {
+        set_npc_is_sleepy();
     } else if( type == "is_day" ) {
         set_is_day();
     } else if( type == "u_has_stolen_item" ) {
