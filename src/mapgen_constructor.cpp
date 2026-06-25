@@ -484,6 +484,13 @@ auto mapgen_constructor::furn_set( const point_omt_ms &p, const furn_id &furnitu
         return false;
     }
     sm->set_furn( local, furniture );
+    const auto &new_furniture = furniture.obj();
+    if( new_furniture.active ) {
+        cata::poly_serialized<active_tile_data> atd;
+        atd.reset( new_furniture.active->clone() );
+        atd->set_last_updated( calendar::turn );
+        sm->active_furniture[local] = atd;
+    }
     return true;
 }
 
