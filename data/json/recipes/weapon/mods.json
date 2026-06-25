@@ -1493,7 +1493,7 @@
     "book_learn": [ [ "textbook_mechanics", 4 ], [ "manual_rifle", 4 ], [ "manual_shotgun", 4 ] ],
     "using": [ [ "welding_standard", 10 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
-    "components": [ [ [ "pipe", 1 ] ], [ [ "scrap", 4 ] ], [ [ "steel_small", 2, "LIST" ] ] ]
+    "components": [ [ [ "pipe", 1 ] ], [ [ "scrap", 4 ] ], [ [ "steel_chunk", 2 ] ] ]
   },
   {
     "type": "recipe",
