@@ -171,7 +171,7 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
     avatar &you = get_avatar();
 
     item *weapon = get_weapon();
-    if( !weapon || !avatar_action::can_fire_weapon( you, get_map(), *weapon ) ) {
+    if( !weapon || !avatar_action::can_fire_weapon( you, *weapon ) ) {
         aborted = true;
         progress.pop();
         return;
@@ -1268,7 +1268,7 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.bub_pos() ) ) {
+            if( get_avatar().sees( who.abs_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1417,7 +1417,7 @@ void boltcutting_activity_actor::do_turn( player_activity &/* act */, Character 
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.bub_pos() ) ) {
+            if( get_avatar().sees( who.abs_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1855,7 +1855,7 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.bub_pos() ) ) {
+            if( get_avatar().sees( who.abs_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -2085,7 +2085,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     }
 
     item *it = &*target;
-    std::optional<tripoint_bub_ms> blind_throw_pos = blind_throw_from_pos;
+    std::optional<tripoint_abs_ms> blind_throw_pos = blind_throw_from_pos;
 
     // Stop the activity. Whether we will or will not throw doesn't matter.
     act.set_to_null();
@@ -2098,7 +2098,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // Shift our position to our peeking position so the target UI can see from there.
     const auto original_player_position = who.abs_pos();
     if( blind_throw_pos ) {
-        who.setpos( bub_to_abs( *blind_throw_pos ) );
+        who.setpos( *blind_throw_pos );
     }
 
     target_handler::trajectory trajectory = target_handler::mode_throw( *who.as_avatar(), *it,

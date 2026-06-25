@@ -62,6 +62,32 @@ std::optional<tripoint_bub_ms> random_point( const tripoint_range<tripoint_bub_m
     return random_entry( suitable );
 }
 
+std::optional<tripoint_abs_ms> random_point( const tripoint_range<tripoint_abs_ms> &range,
+        const std::function<bool( const tripoint_abs_ms & )> &predicate )
+{
+    // Optimist approach: just assume there are plenty of suitable places and a randomly
+    // chosen point will have a good chance to hit one of them.
+    // If there are only few suitable places, we have to find them all, otherwise this loop may never finish.
+    for( int tries = 0; tries < 10; ++tries ) {
+        const tripoint_abs_ms p( rng( range.min().x(), range.max().x() ), rng( range.min().y(),
+                                 range.max().y() ),
+                                 rng( range.min().z(), range.max().z() ) );
+        if( predicate( p ) ) {
+            return p;
+        }
+    }
+    std::vector<tripoint_abs_ms> suitable;
+    for( const auto &p : range ) {
+        if( predicate( p ) ) {
+            suitable.push_back( p );
+        }
+    }
+    if( suitable.empty() ) {
+        return {};
+    }
+    return random_entry( suitable );
+}
+
 map_cursor::map_cursor( const tripoint_abs_ms &pos )
 {
     pos_ = g ? abs_to_bub( pos ) : pos.reinterpret_as<tripoint_bub_ms>();

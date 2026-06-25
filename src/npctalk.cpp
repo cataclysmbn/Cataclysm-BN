@@ -431,8 +431,8 @@ void game::chat()
 
     const std::vector<npc *> available = get_npcs_if( [&]( const npc & guy ) {
         // TODO: Get rid of the z-level check when z-level vision gets "better"
-        return u.bub_pos().z() == guy.bub_pos().z() && u.sees( guy.bub_pos() ) &&
-               rl_dist( u.bub_pos(), guy.bub_pos() ) <= SEEX * 2;
+        return u.abs_pos().z() == guy.abs_pos().z() && u.sees( guy.abs_pos() ) &&
+               rl_dist( u.abs_pos(), guy.abs_pos() ) <= SEEX * 2;
     } );
     const int available_count = available.size();
     const std::vector<npc *> followers = get_npcs_if( [&]( const npc & guy ) {
@@ -868,10 +868,9 @@ void game::chat()
 
 void npc::handle_sound( const short heard_vol, sound_event sound )
 {
-
     // Remember that our heard volume is in milli-decibels spl
     // Only sounds that are marked as being from a monster/npc/the player are passed to handle_sound, so we have a source creature.
-    map &here = get_map();
+    auto &here = get_mapbuffer();
     const auto &spos = sound.origin;
 
     // What entity is the source of the sound? We effectively have two logic cases, source is a monster or source is a "player" i.e., the player character or an npc.
@@ -921,7 +920,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
     }
 
     // Dont react to a sound if the NPC sees the source. Hallucinations dont react to sound.
-    if( sees( abs_to_bub( spos ) ) || is_hallucination() ) {
+    if( sees( spos ) || is_hallucination() ) {
         return;
     }
 
@@ -948,7 +947,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
         // and listener is friendly and sound source is combat or alert only.
         if( is_player_ally() ) {
             // Moved the sees check behind a relevant filter as its a bit more expensive.
-            if( get_avatar().sees( abs_to_bub( sound.origin ) ) ) {
+            if( get_avatar().sees( sound.origin ) ) {
                 add_msg( m_debug, "NPC %s ignored low priority noise that player can see", name );
                 return;
                 // discount if sound source is player, or seen by player,

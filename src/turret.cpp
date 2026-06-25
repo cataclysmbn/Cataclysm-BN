@@ -317,8 +317,8 @@ int turret_data::fire( Character &who, const tripoint_abs_ms &target )
     auto mode = base().gun_current_mode();
 
     prepare_fire( who );
-    shots = ranged::fire_gun( who, abs_to_bub( target ), mode.qty, *mode, nullptr,
-                              veh->mount_to_bubble( part->mount ) );
+    shots = ranged::fire_gun( who, target, mode.qty, *mode, nullptr,
+                              veh->mount_to_abs( part->mount ) );
     post_fire( who, shots );
     return shots;
 }
@@ -423,7 +423,7 @@ bool vehicle::turrets_aim( std::vector<vehicle_part *> &turrets )
 
     bool got_target = !trajectory.empty();
     if( got_target ) {
-        auto target = bub_to_abs( trajectory.back() );
+        auto target = trajectory.back();
         // Set target for any turret in range
         for( vehicle_part *t : turrets ) {
             if( turret_query( *t ).in_range( target ) ) {
@@ -607,7 +607,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
         area += area == 1 ? 1 : 2;
     }
 
-    const bool u_see = g->u.sees( pos );
+    const bool u_see = g->u.sees( bub_to_abs( pos ) );
     const bool u_hear = !g->u.is_deaf();
     // The current target of the turret.
     auto &target = pt.target;
@@ -666,7 +666,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
 
     shots = gun.fire( *cpu, targ );
 
-    if( shots && u_see && !g->u.sees( abs_to_bub( targ ) ) ) {
+    if( shots && u_see && !g->u.sees( targ ) ) {
         add_msg( _( "The %1$s fires its %2$s!" ), name, pt.name() );
     }
 

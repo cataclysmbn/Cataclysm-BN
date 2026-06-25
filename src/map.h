@@ -492,19 +492,16 @@ struct sound_instance_cache {
     // our bounds are actually radius * 2, radius * 2
     int flood_radius = 3;
 
-    // Normal tripoint origin of the sound instance.
-    tripoint_abs_ms origin;
+    // The offset from the sound origin to the bottom-left corner of the
+    // floodfill envelope (in relative ms).  Added to
+    // abs_to_bub(sound.origin) at processing time to get the current
+    // bubble-space envelope position, which keeps it consistent even if
+    // the player moves between sound creation and processing.
+    point_rel_ms envelope_offset;
 
-    // The tripoint that corresponds to index location 0.
-    // Calculated off the origin point - flood radius to x and y.
-    tripoint_bub_ms envelope_index_point;
-
-    // Offsets are used to get the right envelope index when using bubble tripoints.
-
-    // The numerical offset between index_point.x and 0. Must be calced on sound instance creation.
-    int offset_x;
-    // the numerical offset between index_point.y and 0. Must be calced on sound instance creation.
-    int offset_y;
+    // Returns the bubble-space bottom-left corner of the flood envelope,
+    // computed from the current player position via abs_to_bub.
+    tripoint_bub_ms envelope_index_point() const;
 
     // Volume in 100ths of a dB (mdB) of the sound in question
     // Indexed as: vec[x * (flood_radius * 2) + y]
@@ -530,29 +527,32 @@ struct sound_instance_cache {
     auto env_index( const point_rel_ms &p ) const -> int { return ( ( p.x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() ) ); }
 
     // Returns the corresponding flood envelope volume index provided a bubble point.
-    auto p_to_env_index( const point_bub_ms &p ) const -> int { return ( ( p.x() - offset_x ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - offset_y ) ); }
+    auto p_to_env_index( const point_bub_ms &p ) const -> int { return ( ( p.x() - envelope_index_point().x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - envelope_index_point().y() ) ); }
     // Returns the corresponding flood envelope volume index provided a bubble tripoint.
-    auto p_to_env_index( const tripoint_bub_ms &p ) const -> int { return ( ( p.x() - offset_x ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - offset_y ) ); }
+    auto p_to_env_index( const tripoint_bub_ms &p ) const -> int { return ( ( p.x() - envelope_index_point().x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - envelope_index_point().y() ) ); }
 
     // Returns true if a given bubble tripoint is inside our envelope.
     // X and Y offsets taken from our index point, the bottom left corner of our envelope.
     bool in_envelope( const tripoint_bub_ms &tp ) const {
-        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
-               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
-               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+        const tripoint_bub_ms env_pt = envelope_index_point();
+        return ( tp.x() - env_pt.x() ) >= 0 && ( tp.y() - env_pt.y() ) >= 0 &&
+               ( tp.x() - env_pt.x() ) < get_flood_envelope_by_enum( dist_enum ) &&
+               ( tp.y() - env_pt.y() ) < get_flood_envelope_by_enum( dist_enum );
     }
     // Returns true if a given bubble point is inside our envelope.
     // X and Y offsets taken from our index point, the bottom left corner of our envelope.
     bool in_envelope( const point_bub_ms &tp ) const {
-        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
-               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
-               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+        const tripoint_bub_ms env_pt = envelope_index_point();
+        return ( tp.x() - env_pt.x() ) >= 0 && ( tp.y() - env_pt.y() ) >= 0 &&
+               ( tp.x() - env_pt.x() ) < get_flood_envelope_by_enum( dist_enum ) &&
+               ( tp.y() - env_pt.y() ) < get_flood_envelope_by_enum( dist_enum );
     }
 
     // Returns true if a given point is on the border of the flood envelope.
     bool on_envelope_border( const point_bub_ms &p ) const {
-        return ( p.x() - offset_x ) == 0 || ( p.x() - offset_x ) == ( flood_radius * 2 ) ||
-               ( p.y() - offset_y ) == 0 || ( p.y() - offset_y ) == ( flood_radius * 2 );
+        const tripoint_bub_ms env_pt = envelope_index_point();
+        return ( p.x() - env_pt.x() ) == 0 || ( p.x() - env_pt.x() ) == ( flood_radius * 2 ) ||
+               ( p.y() - env_pt.y() ) == 0 || ( p.y() - env_pt.y() ) == ( flood_radius * 2 );
     }
 
     // Checks if a bubble tripoint is within the floodfill envelope. Returns the volume if true, -1 if not.

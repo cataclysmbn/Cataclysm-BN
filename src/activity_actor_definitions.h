@@ -27,7 +27,7 @@ class aim_activity_actor : public activity_actor
         location_ptr<item> fake_weapon;
         units::energy bp_cost_per_shot = 0_J;
         int stamina_cost_per_shot = 0;
-        std::vector<tripoint_bub_ms> fin_trajectory;
+        std::vector<tripoint_abs_ms> fin_trajectory;
 
     public:
         std::string action;
@@ -618,13 +618,13 @@ class throw_activity_actor : public activity_actor
     private:
 
         safe_reference<item> target;
-        std::optional<tripoint_bub_ms> blind_throw_from_pos;
+        std::optional<tripoint_abs_ms> blind_throw_from_pos;
 
     public:
         throw_activity_actor() = default;
         throw_activity_actor(
             item &target,
-            std::optional<tripoint_bub_ms> blind_throw_from_pos
+            std::optional<tripoint_abs_ms> blind_throw_from_pos
         ) : target( &target ),
             blind_throw_from_pos( blind_throw_from_pos ) {}
         ~throw_activity_actor() = default;

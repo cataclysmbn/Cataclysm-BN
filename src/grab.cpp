@@ -105,14 +105,14 @@ auto get_vehicle_str_requirement( vehicle *veh ) -> int
 
 bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 {
-    const auto grabbed_vehicle_target = vehicle_grab_target_at( m, u.bub_pos() + u.grab_point );
+    const auto grabbed_vehicle_target = vehicle_grab_target_at( u.get_mapbuffer(), u.abs_pos() + u.grab_point );
     if( !grabbed_vehicle_target ) {
         add_msg( m_info, _( "No vehicle at grabbed point." ) );
         u.grab( OBJECT_NONE );
         return false;
     }
     const auto &grabbed_vehicle_vp = grabbed_vehicle_target->vp;
-    u.grab_point = grabbed_vehicle_target->pos - u.bub_pos();
+    u.grab_point = grabbed_vehicle_target->pos - u.abs_pos();
     auto *grabbed_vehicle = &grabbed_vehicle_vp.vehicle();
     if( !grabbed_vehicle ||
         !grabbed_vehicle->handle_potential_theft( u ) ) {
@@ -134,7 +134,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
         return false;
     }
 
-    const auto player_next_pos = tripoint_bub_ms( u.bub_pos() + dp );
+    const auto player_next_pos = u.abs_pos() + dp;
     const auto horizontal_dp = tripoint_rel_ms( dp.xy(), 0 );
     const auto horizontal_grab = tripoint_rel_ms( u.grab_point.xy(), 0 );
     auto dp_veh = -horizontal_grab;
@@ -216,7 +216,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 
         // Grabbed part has to stay at distance 1 to the player
         // and in roughly the same direction.
-        const auto new_part_pos = grabbed_vehicle->bub_ms_location() +
+        const auto new_part_pos = grabbed_vehicle->abs_ms_location() +
                                   grabbed_vehicle->part( grabbed_part ).precalc[ 1 ];
         const auto expected_pos = player_next_pos + from;
         const auto actual_dir = tripoint_rel_ms( expected_pos.xy() - new_part_pos.xy(), 0 );
@@ -261,11 +261,11 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
         return false;
     }
 
-    u.grab_point = grabbed_vehicle->bub_part_location( grabbed_part ) - player_next_pos;
+    u.grab_point = grabbed_vehicle->abs_part_location( grabbed_part ) - player_next_pos;
 
     for( const auto p : grabbed_vehicle->wheelcache ) {
         if( one_in( 2 ) ) {
-            const auto wheel_p = grabbed_vehicle->bub_part_location( p );
+            const auto wheel_p = grabbed_vehicle->abs_part_location( p );
             grabbed_vehicle->handle_trap( wheel_p, p );
         }
     }

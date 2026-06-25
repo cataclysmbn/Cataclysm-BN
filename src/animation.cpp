@@ -104,7 +104,7 @@ class wave_animation : public basic_animation
 
 bool is_point_visible( const tripoint_bub_ms &p, int margin = 0 )
 {
-    return g->is_in_viewport( p, margin ) && g->u.sees( p );
+    return g->is_in_viewport( p, margin ) && g->u.sees( bub_to_abs( p ) );
 }
 
 bool is_radius_visible( const tripoint_bub_ms &center, int radius )
@@ -849,7 +849,7 @@ void draw_line_curses( game &g, const tripoint_bub_ms &center,
         // NPCs and monsters get drawn with inverted colors
         if( critter && g.u.sees( *critter ) ) {
             critter->draw( g.w_terrain, center, true );
-        } else if( noreveal && !g.u.sees( p ) ) {
+        } else if( noreveal && !g.u.sees( bub_to_abs( p ) ) ) {
             // Draw a meaningless symbol. Avoids revealing tile, but keeps feedback
             const char sym = '?';
             const nc_color col = c_dark_gray;
@@ -869,7 +869,7 @@ void draw_line_curses( game &g, const tripoint_bub_ms &center,
 void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
                       const std::vector<tripoint_bub_ms> &points, bool noreveal )
 {
-    if( !noreveal && !u.sees( p ) ) {
+    if( !noreveal && !u.sees( bub_to_abs( p ) ) ) {
         return;
     }
 

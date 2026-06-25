@@ -477,9 +477,9 @@ void editmap::uber_draw_ter( const catacurses::window &w, map *m )
                 }
                 if( refresh_mplans ) {
                     monster *mon = dynamic_cast<monster *>( critter );
-                    if( mon != nullptr && mon->bub_pos() != mon->move_target() ) {
-                        for( auto &location : line_to( mon->bub_pos(), mon->move_target() ) ) {
-                            hilights["mplan"].points[location] = 1;
+                    if( mon != nullptr && mon->abs_pos() != mon->move_target() ) {
+                        for( auto &location : line_to( mon->abs_pos(), mon->move_target() ) ) {
+                            hilights["mplan"].points[abs_to_bub( location )] = 1;
                         }
                     }
                 }
@@ -737,7 +737,7 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
     }
     const auto &map_cache = here.get_cache( target.z() );
 
-    const auto u_see_msg = player_character.sees( target ) ?
+    const auto u_see_msg = player_character.sees( bub_to_abs( target ) ) ?
                            pgettext( "map editor visibility value", "yes" ) :
                            pgettext( "map editor visibility value", "no" );
     mvwprintw( w_info, point( 1, off++ ), _( "dist: %d u_see: %s veh: %s scent: %d" ),

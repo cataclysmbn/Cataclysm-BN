@@ -155,7 +155,7 @@ npc::npc()
     position = tripoint_abs_ms::zero();
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
-    wanted_item_pos = tripoint_bub_ms::min();
+    wanted_item_pos = tripoint_abs_ms::min();
     guard_pos = tripoint_abs_ms::min();
     goal = tripoint_abs_omt( tripoint_min );
     fetching_item = false;
@@ -187,16 +187,16 @@ npc::npc()
     character_funcs::normalize( *this );
 }
 
-standard_npc::standard_npc( const std::string &name, const tripoint_bub_ms &pos,
+standard_npc::standard_npc( const std::string &name, const tripoint_abs_ms &pos,
                             const std::vector<std::string> &clothing,
                             int sk_lvl, int s_str, int s_dex, int s_int, int s_per )
 {
     this->name = name;
     // Resolve tripoint_min sentinel to the runtime bubble center.
-    const auto map_local_pos = ( pos == tripoint_bub_ms::min() )
-                               ? tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 )
+    const auto final_pos = ( pos == tripoint_abs_ms::min() )
+                               ? bub_to_abs( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) )
                                : pos;
-    position = map_local_to_abs( get_map(), map_local_pos );
+    position = final_pos;
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -801,10 +801,10 @@ auto npc::clear_transient_movement_state_after_reposition() -> void
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
     goto_to_this_pos = std::nullopt;
-    wanted_item_pos = tripoint_bub_ms::min();
+    wanted_item_pos = tripoint_abs_ms::min();
     guard_pos = tripoint_abs_ms::min();
     goal = no_goal_point;
-    pulp_location = std::nullopt;
+    pulp_position = std::nullopt;
     fetching_item = false;
     ai_cache.sound_alerts.clear();
     ai_cache.s_abs_pos = tripoint_abs_ms::zero();
@@ -1020,7 +1020,7 @@ void npc::finish_read( item *it )
     // NPCs don't need to identify the book or learn recipes yet.
     // NPCs don't read to other NPCs yet.
     const bool display_messages = my_fac->id == faction_id( "your_followers" ) &&
-                                  g->u.sees( bub_pos() );
+                                  g->u.sees( abs_pos() );
     bool continuous = false; //whether to continue reading or not
 
     int book_fun_for = character_funcs::get_book_fun_for( *this, book );
@@ -1144,7 +1144,7 @@ void npc::do_npc_read()
             return;
         }
         if( can_read( *loc, fail_reasons ) ) {
-            if( g->u.sees( bub_pos() ) ) {
+            if( g->u.sees( abs_pos() ) ) {
                 add_msg( m_info, _( "%s starts reading." ), disp_name() );
             }
             start_read( *loc, pl );
@@ -1306,7 +1306,7 @@ void npc::stow_weapon( )
     detached = wear_item( std::move( detached ), false );
     if( !detached ) {
         // Wearing the item was successful, remove weapon and post message.
-        if( g->u.sees( bub_pos() ) ) {
+        if( g->u.sees( abs_pos() ) ) {
             add_msg_if_npc( m_info, _( "<npcname> wears the %s." ), weapon.tname() );
         }
         moves -= 15;
@@ -1317,7 +1317,7 @@ void npc::stow_weapon( )
 
     for( auto &e : worn ) {
         if( e->can_holster( weapon ) ) {
-            if( g->u.sees( bub_pos() ) ) {
+            if( g->u.sees( abs_pos() ) ) {
                 //~ %1$s: weapon name, %2$s: holster name
                 add_msg_if_npc( m_info, _( "<npcname> puts away the %1$s in the %2$s." ),
                                 weapon.tname(), e->tname() );
@@ -1329,13 +1329,13 @@ void npc::stow_weapon( )
         }
     }
     if( volume_carried() + weapon.volume() <= volume_capacity() ) {
-        if( g->u.sees( bub_pos() ) ) {
+        if( g->u.sees( abs_pos() ) ) {
             add_msg_if_npc( m_info, _( "<npcname> puts away the %s." ), weapon.tname() );
         }
         i_add( std::move( detached ) );
         moves -= 15;
     } else { // No room for weapon, so we drop it
-        if( g->u.sees( bub_pos() ) ) {
+        if( g->u.sees( abs_pos() ) ) {
             add_msg_if_npc( m_info, _( "<npcname> drops the %s." ), weapon.tname() );
         }
         g->m.add_item_or_charges( bub_pos(), std::move( detached ) );
@@ -1357,7 +1357,7 @@ bool npc::wield( item &it )
     moves -= 15;
     set_primary_weapon( it.detach() );
 
-    if( g->u.sees( bub_pos() ) ) {
+    if( g->u.sees( abs_pos() ) ) {
         add_msg_if_npc( m_info, _( "<npcname> wields a %s." ),  primary_weapon().tname() );
     }
     invalidate_range_cache();
@@ -1546,7 +1546,7 @@ void npc::mutiny()
     if( !my_fac || !is_player_ally() ) {
         return;
     }
-    const bool seen = g->u.sees( bub_pos() );
+    const bool seen = g->u.sees( abs_pos() );
     if( seen ) {
         add_msg( m_bad, _( "%s is tired of your incompetent leadership and abuse!" ), disp_name() );
     }
@@ -2685,32 +2685,6 @@ std::string npc::opinion_text() const
     return ret;
 }
 
-static void maybe_shift( std::optional<tripoint_bub_ms> &pos, point_rel_ms d )
-{
-    if( pos ) {
-        *pos = *pos + d;
-    }
-}
-
-static void maybe_shift( tripoint_bub_ms &pos, point_rel_ms d )
-{
-    if( pos != tripoint_bub_ms::min() ) {
-        pos = pos + d;
-    }
-}
-
-void npc::shift( point_rel_sm s )
-{
-    const auto shift = project_to<coords::ms>( s );
-
-    // position is absolute and doesn't need adjustment when the bubble shifts.
-    // Bubble-space cached fields still need offsetting.
-    maybe_shift( wanted_item_pos, point_rel_ms( -shift.x(), -shift.y() ) );
-    maybe_shift( last_player_seen_pos, point_rel_ms( -shift.x(), -shift.y() ) );
-    maybe_shift( pulp_location, point_rel_ms( -shift.x(), -shift.y() ) );
-    path.clear();
-}
-
 bool npc::is_dead() const
 {
     return dead || is_dead_state();
@@ -2727,7 +2701,7 @@ void npc::reboot()
     path.clear();
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
-    wanted_item_pos = tripoint_bub_ms::min();
+    wanted_item_pos = tripoint_abs_ms::min();
     guard_pos = tripoint_abs_ms::min();
     goal = no_goal_point;
     fetching_item = false;

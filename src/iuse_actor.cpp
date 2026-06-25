@@ -547,7 +547,7 @@ int countdown_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &po
         return 0;
     }
 
-    if( p.sees( pos ) && !message.empty() ) {
+    if( p.sees( bub_to_abs( pos ) ) && !message.empty() ) {
         p.add_msg_if_player( m_neutral, _( message ), it.tname() );
     }
 
@@ -4328,23 +4328,23 @@ bool place_trap_actor::is_allowed( player &p, const tripoint_bub_ms &pos,
     }
     const trap &existing_trap = here.tr_at( pos );
     if( !existing_trap.is_null() ) {
-        if( existing_trap.can_see( pos, p ) ) {
+        if( existing_trap.can_see( bub_to_abs( pos ), p ) ) {
             p.add_msg_if_player( m_info, _( "You can't place a %s there.  It contains a trap already." ),
                                  name );
         } else {
             p.add_msg_if_player( m_bad, _( "You trigger a %s!" ), existing_trap.name() );
-            existing_trap.trigger( pos, &p );
+            existing_trap.trigger( bub_to_abs( pos ), &p );
         }
         return false;
     }
     return true;
 }
 
-static void place_and_add_as_known( player &p, const tripoint_bub_ms &pos, const trap_str_id &id )
+static void place_and_add_as_known( player &p, const tripoint_abs_ms &pos, const trap_str_id &id )
 {
-    map &here = get_map();
-    here.trap_set( pos, id );
-    const trap &tr = here.tr_at( pos );
+    auto &here = p.get_mapbuffer();
+    here.set_trap( pos, id );
+    const trap &tr = here.get_trap( pos )->obj();
     if( !tr.can_see( pos, p ) ) {
         p.add_known_trap( pos, tr );
     }
@@ -4366,23 +4366,22 @@ int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     if( !pos_ ) {
         return 0;
     }
-    auto pos = *pos_;
+    auto pos = bub_to_abs( *pos_ );
 
-    if( !is_allowed( p, pos, it.tname() ) ) {
+    if( !is_allowed( p, *pos_, it.tname() ) ) {
         return 0;
     }
 
-    map &here = get_map();
+    auto &here = p.get_mapbuffer();
     int distance_to_trap_center = unburied_data.trap.obj().get_trap_radius() +
                                   outer_layer_trap.obj().get_trap_radius() + 1;
     if( unburied_data.trap.obj().get_trap_radius() > 0 ) {
         // Math correction for multi-tile traps
-        pos.x() = ( pos.x() - p.bub_pos().x() ) * distance_to_trap_center + p.bub_pos().x();
-        pos.y() = ( pos.y() - p.bub_pos().y() ) * distance_to_trap_center + p.bub_pos().y();
-        for( const tripoint_bub_ms &t : here.points_in_radius( pos,
-                outer_layer_trap.obj().get_trap_radius(),
-                0 ) ) {
-            if( !is_allowed( p, t, it.tname() ) ) {
+        pos.x() = ( pos.x() - p.abs_pos().x() ) * distance_to_trap_center + p.abs_pos().x();
+        pos.y() = ( pos.y() - p.abs_pos().y() ) * distance_to_trap_center + p.abs_pos().y();
+        for( const auto &t : simulated_tiles_in_radius( here, pos,
+                outer_layer_trap.obj().get_trap_radius() ) ) {
+            if( !is_allowed( p, abs_to_bub( t.abs_pos() ), it.tname() ) ) {
                 p.add_msg_if_player( m_info,
                                      _( "That trap needs a space in %d tiles radius to be clear, centered %d tiles from you." ),
                                      outer_layer_trap.obj().get_trap_radius(), distance_to_trap_center );
@@ -4392,7 +4391,7 @@ int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     }
 
     const bool has_shovel = p.has_quality( quality_id( "DIG" ), 3 );
-    const bool is_diggable = here.ter( pos )->is_diggable();
+    const bool is_diggable = here.ter( pos )->obj().is_diggable();
     bool bury = false;
     if( could_bury && has_shovel && is_diggable ) {
         bury = query_yn( _( bury_question ) );
@@ -4404,10 +4403,9 @@ int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     p.mod_moves( -data.moves );
 
     place_and_add_as_known( p, pos, data.trap );
-    for( const tripoint_bub_ms &t : here.points_in_radius( pos, data.trap.obj().get_trap_radius(),
-            0 ) ) {
-        if( t != pos ) {
-            place_and_add_as_known( p, t, outer_layer_trap );
+    for( const auto &t : simulated_tiles_in_radius( here, pos, data.trap.obj().get_trap_radius() ) ) {
+        if( t.abs_pos() != pos ) {
+            place_and_add_as_known( p, t.abs_pos(), outer_layer_trap );
         }
     }
     return 1;

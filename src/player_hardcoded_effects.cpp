@@ -520,6 +520,8 @@ void Character::hardcoded_effects( effect &it )
         return;
     }
 
+    auto &here = get_mapbuffer();
+
     const time_duration dur = it.get_duration();
     int intense = it.get_intensity();
     body_part bp = it.get_bp()->token;
@@ -572,7 +574,7 @@ void Character::hardcoded_effects( effect &it )
                 //~ %s is bodypart in accusative.
                 add_msg( m_warning, _( "You start scratching your %s!" ), body_part_name_accusative( bp ) );
                 g->u.cancel_activity();
-            } else if( g->u.sees( bub_pos() ) ) {
+            } else if( g->u.sees( abs_pos() ) ) {
                 //~ 1$s is NPC name, 2$s is bodypart in accusative.
                 add_msg( _( "%1$s starts scratching their %2$s!" ), name, body_part_name_accusative( bp ) );
             }
@@ -735,25 +737,26 @@ void Character::hardcoded_effects( effect &it )
         if( intense > 4 ) {
             // Once every 4 hours baseline, once every 2 hours max
             if( one_turn_in( 14_hours - ( intense * 90_minutes ) ) ) {
-                tripoint_bub_ms dest( 0, 0, bub_pos().z() );
+                
+                tripoint_abs_ms dest( 0, 0, abs_pos().z() );
                 int &x = dest.x();
                 int &y = dest.y();
                 int tries = 0;
                 do {
-                    x = bub_pos().x() + rng( -4, 4 );
-                    y = bub_pos().y() + rng( -4, 4 );
+                    x = abs_pos().x() + rng( -4, 4 );
+                    y = abs_pos().y() + rng( -4, 4 );
                     tries++;
                     if( tries >= 10 ) {
                         break;
                     }
                 } while( g->critter_at( dest ) );
                 if( tries < 10 ) {
-                    if( g->m.impassable( dest ) ) {
-                        g->m.make_rubble( dest, f_rubble_rock );
+                    if( !here.passable( dest ) ) {
+                        here.make_rubble( dest, f_rubble_rock );
                     }
                     MonsterGroupResult spawn_details = MonsterGroupManager::GetResultFromGroup(
                                                            GROUP_NETHER );
-                    g->place_critter_at( spawn_details.name, dest );
+                    g->place_critter_at( spawn_details.name, abs_to_bub( dest ) );
                     if( g->u.sees( dest ) ) {
                         g->cancel_activity_or_ignore_query( distraction_type::hostile_spotted_far,
                                                             _( "A monster appears nearby!" ) );

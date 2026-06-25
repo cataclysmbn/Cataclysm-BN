@@ -50,7 +50,7 @@ auto finish_migo_nerve_cage_removal( const tripoint_bub_ms &p, const bool spawn_
     }
     // Don't give the mi-go free shots against the player
     spawn->mod_moves( -300 );
-    if( get_player_character().sees( p ) ) {
+    if( get_player_character().sees( bub_to_abs( p ) ) ) {
         add_msg( m_bad, _( "Something stirs and clambers out of the ruined mass of flesh and nerves!" ) );
     }
 }

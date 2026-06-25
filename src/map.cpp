@@ -1307,7 +1307,7 @@ static bool sees_veh( const Creature &c, vehicle &veh, bool force_recalc )
 {
     const auto &veh_points = veh.get_points( force_recalc );
     return std::ranges::any_of( veh_points, [&c]( const tripoint_abs_ms & pt ) {
-        return c.sees( abs_to_bub( pt ) );
+        return c.sees( pt );
     } );
 }
 
@@ -1540,10 +1540,11 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
         const float vehicle_mass_kg = to_kilogram( veh.total_mass() );
 
         for( auto &w : wheel_indices ) {
-            const auto wheel_p = veh.bub_part_location( w );
-            if( one_in( 2 ) && displace_water( wheel_p ) ) {
+            const auto wheel_abs = veh.abs_part_location( w );
+            const auto wheel_bub = veh.bub_part_location( w );
+            if( one_in( 2 ) && displace_water( wheel_bub ) ) {
                 sound_event se;
-                se.origin = bub_to_abs( wheel_p );
+                se.origin = wheel_abs;
                 se.volume = 50;
                 se.category = sounds::sound_t::movement;
                 se.movement_noise = true;
@@ -1553,8 +1554,8 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
                 sounds::sound( se );
             }
 
-            veh.handle_trap( wheel_p, w );
-            if( !has_flag( "SEALED", wheel_p ) ) {
+            veh.handle_trap( wheel_abs, w );
+            if( !has_flag( "SEALED", wheel_bub ) ) {
                 const float wheel_area =  veh.part( w ).wheel_area();
 
                 // Damage is calculated based on the weight of the vehicle,
@@ -1564,7 +1565,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
                                          vehicle_mass_kg ) * weight_to_damage_factor );
 
                 //~ %1$s: vehicle name
-                smash_items( wheel_p, wheel_damage, string_format( _( "weight of %1$s" ), veh.disp_name() ),
+                smash_items( wheel_bub, wheel_damage, string_format( _( "weight of %1$s" ), veh.disp_name() ),
                              false );
             }
         }
@@ -3987,7 +3988,7 @@ void map::smash_trap( const tripoint_bub_ms &p, const int power, const std::stri
     dummy.set_fake( true );
     dummy.name = cause_message;
     dummy.setpos( p );
-    tr.trigger( p, &dummy );
+    tr.trigger( bub_to_abs( p ), &dummy );
 }
 
 void map::smash_items( const tripoint_bub_ms &p, const int power, const std::string &cause_message,
@@ -4086,16 +4087,16 @@ void map::smash_items( const tripoint_bub_ms &p, const int power, const std::str
             return std::move( it );
         }
     } );
-
+    const auto abs_pos = bub_to_abs( p );
     // Let the player know that the item was damaged if they can see it.
-    if( items_destroyed > 1 && g->u.sees( p ) ) {
+    if( items_destroyed > 1 && g->u.sees( abs_pos ) ) {
         add_msg( m_bad, _( "The %s destroys several items!" ), cause_message );
-    } else if( items_destroyed == 1 && items_damaged == 1 && g->u.sees( p ) )  {
+    } else if( items_destroyed == 1 && items_damaged == 1 && g->u.sees( abs_pos ) )  {
         //~ %1$s: the cause of destruction, %2$s: destroyed item name
         add_msg( m_bad, _( "The %1$s destroys the %2$s!" ), cause_message, damaged_item_name );
-    } else if( items_damaged > 1 && g->u.sees( p ) ) {
+    } else if( items_damaged > 1 && g->u.sees( abs_pos ) ) {
         add_msg( m_bad, _( "The %s damages several items." ), cause_message );
-    } else if( items_damaged == 1 && g->u.sees( p ) )  {
+    } else if( items_damaged == 1 && g->u.sees( abs_pos ) )  {
         //~ %1$s: the cause of damage, %2$s: damaged item name
         add_msg( m_bad, _( "The %1$s damages the %2$s." ), cause_message, damaged_item_name );
     }
@@ -4897,6 +4898,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
 
     double range = rl_dist( origin, p );
     const bool point_blank = range <= 1;
+    const auto abs_pos = bub_to_abs( p );
     if( furn.bash.ranged ) {
         // Damage cover like a crit if we're breaching at point blank range, otherwise randomize like a normal hit.
         float destroy_roll = point_blank ? dam * 1.5 : dam * rng_float( 0.9, 1.1 );
@@ -4907,7 +4909,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         } else if( proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES ) ) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle and stop the shot.
-            if( get_avatar().sees( p ) ) {
+            if( get_avatar().sees( abs_pos ) ) {
                 add_msg( _( "The shot strikes the %s!" ), furnname( p ) );
             }
             if( phys ) {
@@ -4924,7 +4926,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
                             0.0f );
             pen = std::max( 0.0f, pen - pen_reduction );
             // Only print if we hit something we can see enemies through, so we know cover did its job
-            if( get_avatar().sees( p ) ) {
+            if( get_avatar().sees( abs_pos ) ) {
                 if( dam <= 0 ) {
                     add_msg( _( "The shot is stopped by the %s!" ), furnname( p ) );
                     // Only bother mentioning it punched through if it had any resistance, so zip through canvas with no message.
@@ -4958,7 +4960,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         } else if( proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES ) ) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle if it was a thrown rock or the like, then stop the shot.
-            if( get_avatar().sees( p ) ) {
+            if( get_avatar().sees( abs_pos ) ) {
                 add_msg( _( "The shot strikes the %s!" ), tername( p ) );
             }
             if( phys ) {
@@ -4975,7 +4977,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
                             0.0f );
             pen = std::max( 0.0f, pen - pen_reduction );
             // Only print if we hit something we can see enemies through, so we know cover did its job
-            if( get_avatar().sees( p ) ) {
+            if( get_avatar().sees( abs_pos ) ) {
                 if( dam <= 0 ) {
                     add_msg( _( "The shot is stopped by the %s!" ), tername( p ) );
                     // Only bother mentioning it punched through if it had any resistance, so zip through canvas with no message.
@@ -5001,7 +5003,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         dam = 0;
     }
 
-    apply_ammo_trail_effects( p, proj.get_ammo_effects(), 1.0 );
+    apply_ammo_trail_effects( bub_to_abs( p ), proj.get_ammo_effects(), 1.0 );
 
     // Check fields?
     const field_entry *fieldhit = get_field( p, fd_web );
@@ -6648,7 +6650,7 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint_bub_ms &origin,
 
 bool map::can_see_trap_at( const tripoint_bub_ms &p, const Character &c ) const
 {
-    return tr_at( p ).can_see( p, c );
+    return tr_at( p ).can_see( bub_to_abs( p ), c );
 }
 
 const trap &map::tr_at( const tripoint_bub_ms &p ) const
@@ -6719,7 +6721,7 @@ void map::disarm_trap( const tripoint_bub_ms &p )
     // Some traps are not actual traps. Skip the rolls, different message and give the option to grab it right away.
     if( tr.get_avoidance() == 0 && tr.get_difficulty() == 0 ) {
         add_msg( _( "The %s is taken down." ), tr.name() );
-        tr.on_disarmed( *this, p );
+        tr.on_disarmed( get_mapbuffer(), bub_to_abs( p ) );
         return;
     }
 
@@ -6736,7 +6738,7 @@ void map::disarm_trap( const tripoint_bub_ms &p )
         const int morale_buff = tr.get_avoidance() * 0.4 + tr.get_difficulty() + rng( 0, 4 );
         g->u.rem_morale( MORALE_FAILURE );
         g->u.add_morale( MORALE_ACCOMPLISHMENT, morale_buff, 40 );
-        tr.on_disarmed( *this, p );
+        tr.on_disarmed( get_mapbuffer(), bub_to_abs( p ) );
         if( diff > 1.25 * tSkillLevel ) { // failure might have set off trap
             g->u.practice( skill_traps, tReward );
         }
@@ -6753,7 +6755,7 @@ void map::disarm_trap( const tripoint_bub_ms &p )
         const int morale_debuff = -rng( 12, 24 );
         g->u.rem_morale( MORALE_ACCOMPLISHMENT );
         g->u.add_morale( MORALE_FAILURE, morale_debuff, -40 );
-        tr.trigger( p, &g->u );
+        tr.trigger( bub_to_abs( p ), &g->u );
         g->u.practice( skill_traps, tReward / 4 );
     }
     g->u.mod_moves( -100 );
@@ -6761,7 +6763,7 @@ void map::disarm_trap( const tripoint_bub_ms &p )
 
 void map::remove_trap( const tripoint_bub_ms &p )
 {
-    get_mapbuffer().set_trap( map_local_to_abs( *this, p ), tr_null, resident_item_lookup() );
+    get_mapbuffer().remove_trap( map_local_to_abs( *this, p ), resident_item_lookup() );
 }
 /*
  * Get wrapper for all fields at xyz
@@ -7426,7 +7428,7 @@ bool map::draw_maptile( const catacurses::window &w, const tripoint_bub_ms &p,
         param.show_items( false ); // Can only see underwater items if WE are underwater
     }
     // If there's a trap here, and we have sufficient perception, draw that instead
-    if( curr_trap.can_see( p, g->u ) ) {
+    if( curr_trap.can_see( bub_to_abs( p ), g->u ) ) {
         tercol = curr_trap.color;
         if( curr_trap.sym == '%' ) {
             switch( rng( 1, 5 ) ) {
@@ -8868,7 +8870,7 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
     for( auto &tmp : group.monsters ) {
         for( int tries = 0; tries < 10 && !locations.empty(); tries++ ) {
             const auto p = random_entry_removed( locations );
-            if( !tmp.can_move_to( p ) ) {
+            if( !tmp.can_move_to( bub_to_abs( p ) ) ) {
                 continue; // target can not contain the monster
             }
             if( group.horde ) {
@@ -8876,7 +8878,7 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
                 const auto rand_dest = abs_to_map_local( *this, horde_target ) +
                                        point_rel_ms( rng( 0, SEEX ), rng( 0, SEEY ) );
                 const int turns = rl_dist( p, rand_dest ) + group.interest;
-                tmp.wander_to( rand_dest, turns );
+                tmp.wander_to( bub_to_abs( rand_dest ), turns );
                 add_msg( m_debug, "%s targeting %d,%d,%d", tmp.disp_name(),
                          tmp.wander_pos.x(), tmp.wander_pos.y(), tmp.wander_pos.z() );
             }
@@ -8936,7 +8938,7 @@ void map::spawn_monsters_submap( const tripoint_bub_sm &gp, bool ignore_sight )
             const auto valid_location = [&]( const tripoint_bub_ms & p ) {
                 // Checking for creatures via g is only meaningful if this is the main game map.
                 // If it's some local map instance, the coordinates will most likely not even match.
-                return ( !g || &get_map() != this || !g->critter_at( p ) ) && tmp.can_move_to( p );
+                return ( !g || &get_map() != this || !g->critter_at( p ) ) && tmp.can_move_to( bub_to_abs( p ) );
             };
 
             const auto place_it = [&]( const tripoint_bub_ms & p ) {
@@ -10479,15 +10481,7 @@ sound_instance_cache::sound_instance_cache( sound_event &input_sound,
     : sound( input_sound ),
       dist_enum( d_e ),
       flood_radius( f_r ),
-      origin( input_sound.origin ),
-      envelope_index_point( [&]() {
-          const tripoint_bub_ms local_origin = abs_to_bub( input_sound.origin );
-          return tripoint_bub_ms( local_origin.x() - flood_radius,
-                                  local_origin.y() - flood_radius,
-                                  local_origin.z() );
-      }() ),
-      offset_x( envelope_index_point.x() ),
-      offset_y( envelope_index_point.y() ),
+      envelope_offset( point_rel_ms( -flood_radius, -flood_radius ) ),
       // 4r^2 + 4r + 1 equals our total area, for some (2r + 1) by (2r + 1) flood envelope.
       volume( static_cast<size_t>( ( 1 + ( 4 * flood_radius ) + ( 4 * ( flood_radius *
                                      flood_radius ) ) ) ), 0 ),
@@ -10497,6 +10491,10 @@ sound_instance_cache::sound_instance_cache( sound_event &input_sound,
       from_npc( input_sound.from_npc )
 {
 
+}
+
+tripoint_bub_ms sound_instance_cache::envelope_index_point() const {
+    return abs_to_bub( sound.origin ) + envelope_offset;
 }
 
 sound_filter_key::sound_filter_key() = default;

@@ -1016,16 +1016,16 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
     return ret;
 }
 
-void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
+void vehicle::handle_trap( const tripoint_abs_ms &p, int part )
 {
     int pwh = part_with_feature( part, VPFLAG_WHEEL, true );
     if( pwh < 0 ) {
         return;
     }
-    map &here = get_map();
     Character &player_character = get_player_character();
+    auto &here = player_character.get_mapbuffer();
 
-    const trap &tr = here.tr_at( p );
+    const trap &tr = here.get_trap( p )->obj();
     const trap_id t = tr.loadid;
 
     if( t == tr_null ) {
@@ -1052,7 +1052,7 @@ void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
     if( veh_data.chance >= rng( 1, 100 ) ) {
         if( veh_data.sound_volume > 0 ) {
             sound_event se;
-            se.origin = bub_to_abs( p );
+            se.origin = p;
             se.volume = veh_data.sound_volume;
             se.category = sounds::sound_t::combat;
             se.description = veh_data.sound.translated();
@@ -1062,14 +1062,14 @@ void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
             sounds::sound( se );
         }
         if( veh_data.do_explosion ) {
-            explosion_handler::explosion( p, nullptr, veh_data.damage, 0.5f, false, veh_data.shrapnel );
+            explosion_handler::explosion( abs_to_bub( p ), nullptr, veh_data.damage, 0.5f, false, veh_data.shrapnel );
         } else {
             // Hit the wheel directly since it ran right over the trap.
             damage_direct( pwh, veh_data.damage );
         }
         bool still_has_trap = true;
         if( veh_data.remove_trap || veh_data.do_explosion ) {
-            here.remove_trap( p );
+            here.set_trap( p, tr_null );
             still_has_trap = false;
         }
         for( const auto &it : veh_data.spawn_items ) {
@@ -1079,18 +1079,18 @@ void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
             }
         }
         if( veh_data.set_trap ) {
-            here.trap_set( p, veh_data.set_trap.id() );
+            here.set_trap( p, veh_data.set_trap.id() );
             still_has_trap = true;
         }
         if( still_has_trap ) {
-            const trap &tr = here.tr_at( p );
+            const trap &tr = here.get_trap( p )->obj();
             if( seen || known ) {
                 // known status has been reset by map::trap_set()
                 player_character.add_known_trap( p, tr );
             }
             if( seen && !known ) {
                 // hard to miss!
-                const std::string direction = direction_name( direction_from( player_character.bub_pos(), p ) );
+                const std::string direction = direction_name( direction_from( player_character.abs_pos(), p ) );
                 add_msg( _( "You've spotted a %1$s to the %2$s!" ), tr.name(), direction );
             }
         }
@@ -1874,10 +1874,10 @@ units::angle map::shake_vehicle( vehicle &veh, const int velocity_before,
             continue;
         }
 
-        const auto part_pos = veh.bub_part_location( ps );
-        if( rider->bub_pos() != part_pos ) {
+        const auto part_pos = veh.abs_part_location( ps );
+        if( rider->abs_pos() != part_pos ) {
             debugmsg( "throw passenger: passenger at %d,%d,%d, part at %d,%d,%d",
-                      rider->bub_pos().x(), rider->bub_pos().y(), rider->bub_pos().z(),
+                      rider->abs_pos().x(), rider->abs_pos().y(), rider->abs_pos().z(),
                       part_pos.x(), part_pos.y(), part_pos.z() );
             veh.part( ps ).remove_flag( vehicle_part::passenger_flag );
             continue;
@@ -1954,7 +1954,7 @@ units::angle map::shake_vehicle( vehicle &veh, const int velocity_before,
                                                "the power of the impact!" ),
                                             _( "<npcname> is hurled from the %s's seat by "
                                                "the power of the impact!" ), veh.name );
-                unboard_vehicle( part_pos );
+                unboard_vehicle( abs_to_bub( part_pos ) );
             } else if( get_player_character().sees( part_pos ) ) {
                 add_msg( m_bad, _( "%s is hurled from %s's by the power of the impact!" ),
                          pet->disp_name( false, true ), veh.name );

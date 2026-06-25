@@ -81,8 +81,8 @@ bool Creature_tracker::add( const shared_ptr_fast<monster> &critter_ptr )
         } else if( critter.is_hallucination() ) {
             return false;
         } else {
-            debugmsg( "there's already a monster at %d,%d,%d", critter.bub_pos().x(), critter.bub_pos().y(),
-                      critter.bub_pos().z() );
+            debugmsg( "there's already a monster at %d,%d,%d", critter.abs_pos().x(), critter.abs_pos().y(),
+                      critter.abs_pos().z() );
             return false;
         }
     }
@@ -157,6 +157,10 @@ auto Creature_tracker::update_pos( const monster &critter, const tripoint_abs_ms
         auto &othermon = *new_critter_ptr;
         if( othermon.is_hallucination() ) {
             othermon.die( nullptr );
+        } else if( new_critter_ptr.get() == &critter ) {
+            // The monster is already at this position in the tracker.
+            // This is a no-op — the caller moved to where we already are.
+            return true;
         } else {
             debugmsg( "update_zombie_pos: wanted to move %s to %d,%d,%d, but new location already has %s",
                       critter.disp_name(),
@@ -272,8 +276,8 @@ void Creature_tracker::swap_positions( monster &first, monster &second )
     }
     // implied: (first_ptr != second_ptr) or (first_ptr == nullptr && second_ptr == nullptr)
 
-    auto temp = second.bub_pos();
-    second.spawn( first.bub_pos() );
+    auto temp = second.abs_pos();
+    second.spawn( first.abs_pos() );
     first.spawn( temp );
 
     // If the pointers have been taken out of the list, put them back in.

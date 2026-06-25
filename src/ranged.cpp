@@ -167,8 +167,8 @@ static const std::string flag_SHOOT_ME( "SHOOT_ME" );
 static constexpr int AIF_DURATION_LIMIT = 10;
 
 static projectile make_gun_projectile( const item &gun );
-static void cycle_action( item &weap, const tripoint_bub_ms &pos );
-static dispersion_sources calculate_dispersion( const map &m, const Character &who, const item &gun,
+static void cycle_action( item &weap, const tripoint_abs_ms &pos );
+static dispersion_sources calculate_dispersion( const Character &who, const item &gun,
         int at_recoil, bool burst );
 
 namespace
@@ -178,15 +178,15 @@ constexpr auto vehicle_recoil_velocity_scale = 1.4;
 constexpr auto vehicle_recoil_lateral_scale = 0.1;
 
 struct shot_target_options {
-    tripoint_bub_ms source;
-    const tripoint_bub_ms &target;
+    tripoint_abs_ms source;
+    const tripoint_abs_ms &target;
     const projectile &proj;
     const dispersion_sources &dispersion;
 };
 
 struct pellet_target_options {
-    tripoint_bub_ms source;
-    const tripoint_bub_ms &target;
+    tripoint_abs_ms source;
+    const tripoint_abs_ms &target;
     double half_angle;
 };
 
@@ -235,7 +235,7 @@ auto get_shot_half_angle( const item &gun ) -> double
     return shot_data->half_angle;
 }
 
-auto get_shot_target( const shot_target_options &options ) -> tripoint_bub_ms
+auto get_shot_target( const shot_target_options &options ) -> tripoint_abs_ms
 {
     const auto range = rl_dist( options.source, options.target );
     Creature *target_critter = g->critter_at( options.target );
@@ -254,7 +254,7 @@ auto get_shot_target( const shot_target_options &options ) -> tripoint_bub_ms
     rad += ( one_in( 2 ) ? 1 : -1 ) * dispersion_angle;
 
     const auto no_overshoot = options.proj.has_effect( ammo_effect_NO_OVERSHOOT ) ||
-                              ( g->critter_at( options.target ) == nullptr && get_map().passable( options.target ) );
+                              ( g->critter_at( options.target ) == nullptr && MAPBUFFER_REGISTRY.get( g->get_current_dimension_id() ).passable( options.target ).value_or( false ) );
     const auto offset = std::min<int>( range, std::sqrt( aim.missed_by_tiles ) );
     auto new_range = no_overshoot ? range + rng( -offset, offset ) : rng( range - offset,
                      options.proj.range );
@@ -269,7 +269,7 @@ auto get_shot_target( const shot_target_options &options ) -> tripoint_bub_ms
     return shot_target;
 }
 
-auto get_pellet_target( const pellet_target_options &options ) -> tripoint_bub_ms
+auto get_pellet_target( const pellet_target_options &options ) -> tripoint_abs_ms
 {
     if( options.half_angle <= 0.0 ) {
         return options.target;
@@ -382,8 +382,9 @@ auto gunmod_find_with(
     return res != gunmods.end() ? *res : nullptr;
 }
 
-auto clamp_range_to_reality_bubble( const tripoint_bub_ms &src, const int range ) -> int
+auto clamp_range_to_reality_bubble( const tripoint_abs_ms &abs_src, const int range ) -> int
 {
+    const auto src = abs_to_bub( abs_src );
     auto &here = get_map();
     const auto bubble_edge_x = SEEX * here.getmapsize() - 1;
     const auto bubble_edge_y = SEEY * here.getmapsize() - 1;
@@ -443,7 +444,7 @@ class target_ui
         // Generator of AoE shapes
         std::optional<shape_factory> shape_gen;
         // Preferred initial cursor position.
-        std::optional<tripoint_bub_ms> initial_target;
+        std::optional<tripoint_abs_ms> initial_target;
 
         // Initialize UI and run the event loop
         target_handler::trajectory run();
@@ -469,12 +470,12 @@ class target_ui
         // Cached current ammo to display
         const itype *ammo = nullptr;
         // Current trajectory
-        std::vector<tripoint_bub_ms> traj;
+        std::vector<tripoint_abs_ms> traj;
         // Aiming source.
-        tripoint_bub_ms src;
+        tripoint_abs_ms src;
         // Aiming destination (cursor position)
         // Use set_cursor_pos() to modify
-        tripoint_bub_ms dst;
+        tripoint_abs_ms dst;
         // Creature currently under cursor. nullptr if aiming at empty tile,
         // yourself or a creature you cannot see
         Creature *dst_critter = nullptr;
@@ -518,15 +519,15 @@ class target_ui
 
         // For AOE spells, list of tiles affected by the spell
         // relevant for TargetMode::Spell
-        std::set<tripoint_bub_ms> spell_aoe;
+        std::set<tripoint_abs_ms> spell_aoe;
 
         // For shaped attacks, we want both points and coverage
-        std::map<tripoint_bub_ms, double> shape_coverage;
+        std::map<tripoint_abs_ms, double> shape_coverage;
 
         // Represents a turret and a straight line from that turret to target
         struct turret_with_lof {
             vehicle_part *turret;
-            std::vector<tripoint_bub_ms> line;
+            std::vector<tripoint_abs_ms> line;
         };
 
         // List of vehicle turrets in range (out of those listed in 'vturrets')
@@ -547,7 +548,7 @@ class target_ui
         // Set cursor position. If new position is out of range,
         // selects closest position in range.
         // Returns 'false' if cursor position did not change
-        bool set_cursor_pos( const tripoint_bub_ms &new_pos );
+        bool set_cursor_pos( const tripoint_abs_ms &new_pos );
 
         // Called when range/ammo changes (or may have changed)
         void on_range_ammo_changed();
@@ -556,7 +557,7 @@ class target_ui
         void update_target_list();
 
         // Choose where to position the cursor when opening the ui
-        tripoint_bub_ms choose_initial_target();
+        tripoint_abs_ms choose_initial_target();
 
         /**
          * Try to re-acquire target for aim-and-fire.
@@ -564,13 +565,13 @@ class target_ui
          * @param new_dst where to move aim cursor (if e.g. critter moved)
          * @returns true on success
          */
-        bool try_reacquire_target( bool critter, tripoint_bub_ms &new_dst );
+        bool try_reacquire_target( bool critter, tripoint_abs_ms &new_dst );
 
         // Update 'status' variable
         void update_status();
 
         // Calculates distance from 'src'. For consistency, prefer using this over rl_dist.
-        int dist_fn( const tripoint_bub_ms &p );
+        int dist_fn( const tripoint_abs_ms &p );
 
         // Set creature (or tile) under cursor as player's last target
         void set_last_target();
@@ -692,16 +693,16 @@ target_handler::trajectory target_handler::mode_throw_creature( avatar &you,
     target_ui ui = target_ui();
     ui.you = &you;
     ui.mode = target_ui::TargetMode::ThrowCreature;
-    ui.range = clamp_range_to_reality_bubble( thrown_creature.bub_pos(), std::max( 1, range ) );
+    ui.range = clamp_range_to_reality_bubble( thrown_creature.abs_pos(), std::max( 1, range ) );
     ui.limit_to_reality_bubble = true;
-    ui.initial_target = thrown_creature.bub_pos();
+    ui.initial_target = thrown_creature.abs_pos();
 
     restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
     return ui.run();
 }
 
 target_handler::trajectory target_handler::mode_throw_vehicle( avatar &you,
-        const tripoint_bub_ms &grabbed_part_pos, int range )
+        const tripoint_abs_ms &grabbed_part_pos, int range )
 {
     target_ui ui = target_ui();
     ui.you = &you;
@@ -747,13 +748,13 @@ target_handler::trajectory target_handler::mode_turrets( avatar &you, vehicle &v
     int range_total = 0;
     for( vehicle_part *t : turrets ) {
         int range = veh.turret_query( *t ).range();
-        tripoint_bub_ms pos = veh.bub_part_location( *t );
+        tripoint_abs_ms pos = veh.abs_part_location( *t );
 
         int res = 0;
-        res = std::max( res, rl_dist( you.bub_pos(), pos + point_rel_ms( range, 0 ) ) );
-        res = std::max( res, rl_dist( you.bub_pos(), pos + point_rel_ms( -range, 0 ) ) );
-        res = std::max( res, rl_dist( you.bub_pos(), pos + point_rel_ms( 0, range ) ) );
-        res = std::max( res, rl_dist( you.bub_pos(), pos + point_rel_ms( 0, -range ) ) );
+        res = std::max( res, rl_dist( you.abs_pos(), pos + point_rel_ms( range, 0 ) ) );
+        res = std::max( res, rl_dist( you.abs_pos(), pos + point_rel_ms( -range, 0 ) ) );
+        res = std::max( res, rl_dist( you.abs_pos(), pos + point_rel_ms( 0, range ) ) );
+        res = std::max( res, rl_dist( you.abs_pos(), pos + point_rel_ms( 0, -range ) ) );
         range_total = std::max( range_total, res );
     }
 
@@ -1075,7 +1076,7 @@ void npc::pretend_fire( npc *source, int shots, item &gun )
 namespace
 {
 
-auto is_mountable( const map &m, const tripoint_bub_ms &pos ) -> bool
+auto is_mountable( mapbuffer &m, const tripoint_abs_ms &pos ) -> bool
 {
     // usage of any attached bipod is dependent upon terrain
     // only allow mounting passable OR climable terrain
@@ -1087,33 +1088,34 @@ auto is_mountable( const map &m, const tripoint_bub_ms &pos ) -> bool
 
     if( const optional_vpart_position vp = m.veh_at( pos ) ) {
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        return m.passable( pos ) && vp->vehicle().has_part( tripoint_bub_ms( pos ), "MOUNTABLE" );
+        return m.passable( pos ) && vp->vehicle().has_part( pos, "MOUNTABLE" );
     }
     return false;
 }
 
-auto is_mountable_nearby( const map &m, const tripoint_bub_ms &pos ) -> bool
+auto is_mountable_nearby( mapbuffer &m, const tripoint_abs_ms &pos ) -> bool
 {
     const auto &xs = closest_points_first( pos, 1 );
     return std::any_of( xs.begin(), xs.end(),
-                        [&m]( const tripoint_bub_ms & x ) -> bool { return is_mountable( m, x ); } );
+                        [&m]( const tripoint_abs_ms & x ) -> bool { return is_mountable( m, x ); } );
 }
 
-auto can_use_heavy_weapon( const Character &who, const map &m, const tripoint_bub_ms &pos ) -> bool
+auto can_use_heavy_weapon( const Character &who, const tripoint_abs_ms &pos ) -> bool
 {
     if( who.is_mounted() && who.mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
         return true;
     }
-    return is_mountable_nearby( m, pos );
+    return is_mountable_nearby( who.get_mapbuffer(), pos );
 }
 
-auto firing_vehicle( map &here, const Character &who ) -> vehicle * // *NOPAD*
+auto firing_vehicle( const Character &who ) -> vehicle * // *NOPAD*
 {
     if( !who.in_vehicle && !who.has_effect( effect_on_roof ) ) {
         return nullptr;
     }
 
-    const auto vp = here.veh_at( who.bub_pos() );
+    auto &here = who.get_mapbuffer();
+    const auto vp = here.veh_at( who.abs_pos() );
     if( !vp ) {
         return nullptr;
     }
@@ -1138,14 +1140,14 @@ auto has_only_rigid_wheels( const vehicle &veh ) -> bool
     return has_wheels;
 }
 
-auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoint_bub_ms &target,
-                                  const tripoint_bub_ms &shot_origin, const int gun_recoil, const int shots ) -> void
+auto apply_gun_recoil_to_vehicle( const Character &who, const tripoint_abs_ms &target,
+                                  const tripoint_abs_ms &shot_origin, const int gun_recoil, const int shots ) -> void
 {
     if( gun_recoil <= 0 || shots <= 0 ) {
         return;
     }
-
-    auto *const veh = firing_vehicle( here, who );
+    auto &here = who.get_mapbuffer();
+    auto *const veh = firing_vehicle( who );
     if( veh == nullptr ) {
         return;
     }
@@ -1206,10 +1208,10 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
 } // namespace
 
 
-dispersion_sources calculate_dispersion( const map &m, const Character &who, const item &gun,
+dispersion_sources calculate_dispersion( const Character &who, const item &gun,
         int at_recoil, bool burst )
 {
-    const bool bipod = can_use_heavy_weapon( who, m, who.bub_pos() );
+    const bool bipod = can_use_heavy_weapon( who, who.abs_pos() );
 
     const int gun_recoil = gun.gun_recoil( bipod );
     const int eff_recoil = at_recoil + ( burst ? ranged::burst_penalty( who, gun, gun_recoil ) : 0 );
@@ -1265,13 +1267,13 @@ static int calc_gun_volume( const item &gun )
     return noise;
 }
 
-int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int shots )
+int ranged::fire_gun( Character &who, const tripoint_abs_ms &target, int shots )
 {
     return fire_gun( who, target, shots, who.primary_weapon(), nullptr, std::nullopt );
 }
 
-int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_shots, item &gun,
-                      item *ammo, const std::optional<tripoint_bub_ms> &shot_origin )
+int ranged::fire_gun( Character &who, const tripoint_abs_ms &target, int max_shots, item &gun,
+                      item *ammo, const std::optional<tripoint_abs_ms> &shot_origin )
 {
     int attack_moves = time_to_attack( who, gun, ammo );
 
@@ -1316,16 +1318,16 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
 
     std::optional<shape_factory> shape = ranged::get_shape_factory( gun );
 
-    map &here = get_map();
+    auto &here = who.get_mapbuffer();
     // Shaped attacks don't allow aiming, so they don't suffer from lack of aim either
     int character_recoil = shape ? recoil_vehicle( who ) : recoil_total( who );
     // Penalty is (intentionally) based off mode shots, not ammo-limited.
-    dispersion_sources dispersion = calculate_dispersion( here, who, gun, character_recoil,
+    dispersion_sources dispersion = calculate_dispersion( who, gun, character_recoil,
                                     max_shots > 1 );
 
     bool aoe_attack = gun.gun_skill() == skill_launcher || shape;
     auto aim = target;
-    const auto recoil_origin = shot_origin.value_or( who.bub_pos() );
+    const auto recoil_origin = shot_origin.value_or( who.abs_pos() );
     int curshot = 0;
     int hits = 0; // total shots on target
     while( curshot != shots ) {
@@ -1344,7 +1346,7 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
 
         // If this is a vehicle mounted turret, which vehicle is it mounted on?
         const vehicle *in_veh = who.has_effect( effect_on_roof )
-                                ? veh_pointer_or_null( here.veh_at( who.bub_pos() ) )
+                                ? veh_pointer_or_null( here.veh_at( who.abs_pos() ) )
                                 : nullptr;
         projectile projectile = make_gun_projectile( gun );
         const auto shot_count = get_shot_count( gun );
@@ -1399,7 +1401,7 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
             auto shell_hit = false;
             auto shell_headshot = false;
             const auto shell_target = shot_count > 1 ? get_shot_target( {
-                .source = who.bub_pos(),
+                .source = who.abs_pos(),
                 .target = aim,
                 .proj = projectile,
                 .dispersion = dispersion,
@@ -1408,15 +1410,20 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
                                            dispersion;
             for( int projectile_index = 0; projectile_index < shot_count; projectile_index++ ) {
                 const auto pellet_target = shot_count > 1 ? get_pellet_target( {
-                    .source = who.bub_pos(),
+                    .source = who.abs_pos(),
                     .target = shell_target,
                     .half_angle = shot_half_angle,
                 } ) : shell_target;
-                auto shot = projectile_attack( render_projectile, who.bub_pos(), pellet_target, pellet_dispersion,
+                auto shot = projectile_attack( render_projectile, who.abs_pos(), pellet_target, pellet_dispersion,
                                                &who,
                                                &gun, in_veh, shot_count > 1 );
                 if( render_multishot ) {
-                    projectile_trajectories.push_back( shot.trajectory );
+                    std::vector<tripoint_bub_ms> trajectory;
+                    trajectory.reserve( shot.trajectory.size() );
+                    for( const auto &point : shot.trajectory ) {
+                        trajectory.push_back( abs_to_bub( point ) );
+                    }
+                    projectile_trajectories.push_back( trajectory );
                 }
                 if( shot_count > 1 ) {
                     add_grouped_shot_hit( grouped_shot_hits, shot );
@@ -1454,11 +1461,11 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
             // 30 degree cap, like for projectiles
             double angle_offset_arcmin = std::min( dispersion.roll(), 1800.0 ) * ( one_in( 2 ) ? 1 : -1 );
             double angle_offset = units::to_radians( units::from_arcmin( angle_offset_arcmin ) );
-            double dx = aim.x() - who.bub_pos().x();
-            double dy = aim.y() - who.bub_pos().y();
+            double dx = aim.x() - who.abs_pos().x();
+            double dy = aim.y() - who.abs_pos().y();
             double new_angle = atan2( dy, dx ) + angle_offset;
             // Always using trig here, rotations in maximum metric are weird
-            double length = trig_dist( who.bub_pos(), aim );
+            double length = trig_dist( who.abs_pos().raw(), aim.raw() );
             rl_vec3d vec_pos( who.bub_pos() );
             rl_vec3d new_aim = vec_pos + rl_vec3d( length, 0, 0 ).rotated( new_angle );
             ranged::execute_shaped_attack( *shape->create( vec_pos, new_aim ), projectile, who, &gun, in_veh );
@@ -1475,7 +1482,7 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         }
         ranged::make_gun_sound_effect( who, shots > 1, gun );
 
-        cycle_action( gun, who.bub_pos() );
+        cycle_action( gun, who.abs_pos() );
 
         if( who.has_trait( trait_PYROMANIA ) &&
             !who.has_morale( MORALE_PYROMANIA_STARTFIRE ) &&
@@ -1508,12 +1515,12 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         const Character &shooter = who;
         // Now actually apply recoil for the future shots
         // But only for one shot, because bursts kinda suck
-        int gun_recoil = gun.gun_recoil( can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) );
+        int gun_recoil = gun.gun_recoil( can_use_heavy_weapon( shooter, shooter.abs_pos() ) );
 
         // If user is currently able to fire a mounted gun freely, penalize dispersion
         // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
         if( gun.has_flag( flag_MOUNTED_GUN ) &&
-            !can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
+            !can_use_heavy_weapon( shooter, shooter.abs_pos() ) ) {
             if( who.get_size() == creature_size::large ) {
                 gun_recoil = gun_recoil * 2;
             } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -1522,7 +1529,7 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
             }
         }
 
-        apply_gun_recoil_to_vehicle( here, who, target, recoil_origin, gun_recoil, curshot );
+        apply_gun_recoil_to_vehicle( who, target, recoil_origin, gun_recoil, curshot );
 
         who.recoil += gun_recoil;
         if( is_mech_weapon ) {
@@ -1543,14 +1550,14 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
 
     // Lua iranged on_fire callback: returns false to zero out hits (force miss)
     if( const auto *iranged_cb = gun.type->iranged_callbacks ) {
-        if( !iranged_cb->call_on_fire( who, gun, target, curshot ) ) {
+        if( !iranged_cb->call_on_fire( who, gun, abs_to_bub( target ), curshot ) ) {
             hits = 0;
         }
     }
 
     cata::run_hooks( "on_shoot", [ & ]( auto & params ) {
         params["shooter"] = &who;
-        params["target_pos"] = cata::detail::lua_coords::to_lua( target );
+        params["target_pos"] = cata::detail::lua_coords::to_lua( abs_to_bub( target ) );
         params["shots"] = curshot;
         params["gun"] = &gun;
         params["ammo"] = ammo;
@@ -1795,9 +1802,9 @@ auto throw_stamina_cost( const Character &thrower, const item &item ) -> int
     return weight_cost + encumbrance_cost - thrower.get_skill_level( skill_throw ) + 50;
 }
 
-dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &target,
+dealt_projectile_attack throw_item( Character &who, const tripoint_abs_ms &target,
                                     detached_ptr<item> &&to_throw,
-                                    std::optional<tripoint_bub_ms> blind_throw_from_pos )
+                                    std::optional<tripoint_abs_ms> blind_throw_from_pos )
 {
     item &thrown = *to_throw;
 
@@ -1922,7 +1929,7 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
 
     // Throw from the player's position, unless we're blind throwing, in which case
     // throw from the the blind throw position instead.
-    const auto throw_from = blind_throw_from_pos.value_or( who.bub_pos() );
+    const auto throw_from = blind_throw_from_pos.has_value() ? *blind_throw_from_pos : who.abs_pos();
 
     float range = rl_dist( throw_from, target );
     proj.range = range;
@@ -1953,8 +1960,8 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
 
     cata::run_hooks( "on_throw", [ & ]( auto & params ) {
         params["thrower"] = &who;
-        params["target_pos"] = cata::detail::lua_coords::to_lua( target );
-        params["throw_from_pos"] = cata::detail::lua_coords::to_lua( throw_from );
+        params["target_pos"] = cata::detail::lua_coords::to_lua( abs_to_bub( target ) );
+        params["throw_from_pos"] = cata::detail::lua_coords::to_lua( abs_to_bub( throw_from ) );
         params["thrown"] = &thrown;
     } );
     return dealt_attack;
@@ -2207,14 +2214,14 @@ static bool pl_sees( const Creature &cr )
 }
 
 // Handle capping aim level when the player cannot see the target tile or there is nothing to aim at.
-static double calculate_aim_cap( const Character &p, const tripoint_bub_ms &target )
+static double calculate_aim_cap( const Character &p, const tripoint_abs_ms &target )
 {
     double min_recoil = 0.0;
     const Creature *victim = g->critter_at( target, true );
     // No p.sees_with_specials() here because special senses are not precise enough
     // to give creature's exact size & position, only which tile it occupies
     if( victim == nullptr || ( !p.sees( *victim ) && !p.sees_with_infrared( *victim ) ) ) {
-        const int range = rl_dist( p.bub_pos(), target );
+        const int range = rl_dist( p.abs_pos(), target );
         // Get angle of triangle that spans the target square.
         const double angle = atan2( 1, range );
         // Convert from radians to arcmin.
@@ -2225,7 +2232,7 @@ static double calculate_aim_cap( const Character &p, const tripoint_bub_ms &targ
 
 static int print_aim( const Character &p, const catacurses::window &w, int line_number,
                       input_context &ctxt, item &weapon,
-                      const double target_size, const tripoint_bub_ms &pos, double predicted_recoil,
+                      const double target_size, const tripoint_abs_ms &pos, double predicted_recoil,
                       item *load_loc )
 {
     // This is absolute accuracy for the player.
@@ -2258,14 +2265,14 @@ static int print_aim( const Character &p, const catacurses::window &w, int line_
     int shots = std::max( 1, weapon.gun_current_mode().qty );
     const auto dispersion_fun = [&]( const ranged::aim_type & at ) {
         int at_recoil = at.has_threshold ? at.threshold : static_cast<int>( predicted_recoil );
-        return calculate_dispersion( get_map(), p, weapon, at_recoil, shots > 1 );
+        return calculate_dispersion( p, weapon, at_recoil, shots > 1 );
     };
     const auto cost_fun = [&]( const ranged::aim_type & at ) {
         int at_recoil = at.has_threshold ? at.threshold : static_cast<int>( predicted_recoil );
         return ranged::gun_engagement_moves( p, weapon, at_recoil, p.recoil ) +
                ranged::time_to_attack( p, weapon, load_loc );
     };
-    const double range = rl_dist( p.bub_pos(), pos );
+    const double range = rl_dist( p.abs_pos(), pos );
     line_number = print_steadiness( w, line_number, steadiness );
     return print_ranged_chance( w, line_number, ctxt, weapon, ranged::get_aim_types( p, weapon ),
                                 dispersion_fun, cost_fun, confidence_config, range, target_size );
@@ -2273,7 +2280,7 @@ static int print_aim( const Character &p, const catacurses::window &w, int line_
 
 static int draw_throw_aim( const player &p, const catacurses::window &w, int line_number,
                            input_context &ctxt,
-                           const item &weapon, const tripoint_bub_ms &target_pos, bool is_blind_throw )
+                           const item &weapon, const tripoint_abs_ms &target_pos, bool is_blind_throw )
 {
     Creature *target = g->critter_at( target_pos, true );
     if( target != nullptr && !p.sees( *target ) ) {
@@ -2282,7 +2289,7 @@ static int draw_throw_aim( const player &p, const catacurses::window &w, int lin
 
     const dispersion_sources dispersion(
         ranged::throwing_dispersion( p, weapon, target, is_blind_throw ) );
-    const double range = rl_dist( p.bub_pos(), target_pos );
+    const double range = rl_dist( p.abs_pos(), target_pos );
 
     const double target_size = target != nullptr ? target->ranged_target_size() : 1.0f;
 
@@ -2428,14 +2435,14 @@ int ranged::time_to_attack( const Character &p, const item &firing, const item *
     return std::max( info.min_time, base_time + ench_reload_bonus );
 }
 
-static void cycle_action( item &weap, const tripoint_bub_ms &pos )
+static void cycle_action( item &weap, const tripoint_abs_ms &pos )
 {
-    map &here = get_map();
+    auto &here = g->u.get_mapbuffer();
     // eject casings and linkages in random direction avoiding walls using player position as fallback
-    std::vector<tripoint_bub_ms> tiles = closest_points_first( pos, 1 );
+    auto tiles = closest_points_first( pos, 1 );
     tiles.erase( tiles.begin() );
     tiles.erase( std::remove_if( tiles.begin(), tiles.end(), [&pos,
-    &here]( const tripoint_bub_ms & e ) {
+    &here]( const tripoint_abs_ms & e ) {
         return !here.passable( e ) || here.obstructed_by_vehicle_rotation( pos, e );
     } ), tiles.end() );
     auto eject = tiles.empty() ? pos : random_entry( tiles );
@@ -2444,7 +2451,7 @@ static void cycle_action( item &weap, const tripoint_bub_ms &pos )
     const optional_vpart_position vp = here.veh_at( pos );
     std::vector<vehicle_part *> cargo;
     if( vp && weap.has_flag( flag_VEHICLE ) ) {
-        cargo = vp->vehicle().get_parts_at( tripoint_bub_ms( pos ), "CARGO", part_status_flag::any );
+        cargo = vp->vehicle().get_parts_at( pos, "CARGO", part_status_flag::any );
     }
 
     item &parent = ( weap.parent_item() != nullptr &&
@@ -2463,8 +2470,8 @@ static void cycle_action( item &weap, const tripoint_bub_ms &pos )
                 vp->vehicle().add_item( *cargo.front(), item::spawn( casing ) );
             }
             // Take the dB volume of ejecting to be 60.
-            sfx::play_variant_sound( "fire_gun", "brass_eject", sfx::get_heard_volume( eject, 60 ),
-                                     sfx::get_heard_angle( eject ) );
+            sfx::play_variant_sound( "fire_gun", "brass_eject", sfx::get_heard_volume( abs_to_bub( eject ), 60 ),
+                                     sfx::get_heard_angle( abs_to_bub( eject ) ) );
         }
     }
 
@@ -2692,7 +2699,7 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     // If user is currently able to fire a mounted gun freely, penalize dispersion
     // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
-    if( obj.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
+    if( obj.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( who, who.abs_pos() ) ) {
         if( who.get_size() == creature_size::large ) {
             dispersion.add_range( 500 );
         } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -2851,8 +2858,8 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
 {
     const vehicle *veh_from_turret = turret ? turret.get_veh() : nullptr;
     return g->get_creatures_if( [&c, range, veh_from_turret]( const Creature & critter ) -> bool {
-        const auto shooter_pos = c.bub_pos();
-        const auto critter_pos = critter.bub_pos();
+        const auto shooter_pos = c.abs_pos();
+        const auto critter_pos = critter.abs_pos();
         if( std::round( rl_dist_exact( shooter_pos, critter_pos ) ) > range )
         {
             return false;
@@ -2876,12 +2883,11 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
             return false;
         }
 
-        map &here = get_map();
+        auto &here = c.get_mapbuffer();
 
         // TODO: It should use projectile passability checks when finding path, not vision checks.
-        std::vector<tripoint_bub_ms> path = here.find_clear_path( shooter_pos, critter_pos );
         auto prev_point = shooter_pos;
-        for( const tripoint_bub_ms &point : path )
+        for( const auto &point : here.find_clear_path( shooter_pos, critter_pos ) )
         {
             if( here.obstructed_by_vehicle_rotation( prev_point, point ) ) {
                 //Blocked by a rotated vehicle's walls
@@ -2900,7 +2906,7 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
                 // Vehicles don't have impassable-but-shootable-through parts
                 return false;
             }
-            if( !here.has_flag_ter( TFLAG_TRANSPARENT, point ) ) {
+            if( !here.has_flag( TFLAG_TRANSPARENT, point ) ) {
                 // If it's transparent, it's either glass (fine) or reinforced glass (not fine)
                 // Hack it with the more common case for now
                 // TODO: Handle armored glass
@@ -3003,7 +3009,7 @@ target_handler::trajectory target_ui::run()
     }
 
     // Initialize cursor position
-    src = you->bub_pos();
+    src = you->abs_pos();
     if( ( mode == TargetMode::ThrowCreature || mode == TargetMode::ThrowVehicle ) && initial_target ) {
         src = *initial_target;
     }
@@ -3017,7 +3023,7 @@ target_handler::trajectory target_ui::run()
         traj.clear();
         return traj;
     }
-    tripoint_bub_ms initial_dst = src;
+    auto initial_dst = src;
     if( reentered ) {
         if( !try_reacquire_target( resume_critter, initial_dst ) ) {
             // Target lost
@@ -3300,7 +3306,7 @@ bool target_ui::handle_cursor_movement( const std::string &action, bool &skip_re
     } else if( action == "SELECT" && ( mouse_pos = ctxt.get_coordinates( g->w_terrain ) ) ) {
         // Set pos by clicking with mouse
         mouse_pos->z() = you->bub_pos().z() + you->view_offset.z();
-        set_cursor_pos( *mouse_pos );
+        set_cursor_pos( bub_to_abs( *mouse_pos ) );
     } else if( action == "LEVEL_UP" || action == "LEVEL_DOWN" ) {
         // Shift view/cursor up/down one z level
         auto delta = tripoint_rel_ms( 0, 0, action == "LEVEL_UP" ? 1 : -1 );
@@ -3322,7 +3328,7 @@ bool target_ui::handle_cursor_movement( const std::string &action, bool &skip_re
     return true;
 }
 
-bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
+bool target_ui::set_cursor_pos( const tripoint_abs_ms &new_pos )
 {
     const auto refresh_dst_critter = [this]() {
         if( src != dst ) {
@@ -3343,19 +3349,21 @@ bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
     }
 
     // Make sure new position is valid or find a closest valid position
-    std::vector<tripoint_bub_ms> new_traj;
-    tripoint_bub_ms valid_pos = new_pos;
-    map &here = get_map();
+    std::vector<tripoint_abs_ms> new_traj;
+    tripoint_abs_ms valid_pos = new_pos;
+    
+    auto &here = g->u.get_mapbuffer();
+
     if( new_pos != src ) {
         // On Z axis, make sure we do not exceed map boundaries
         valid_pos.z() = clamp( valid_pos.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT );
 
         new_traj = here.find_clear_path( src, valid_pos );
-        if( limit_to_reality_bubble && !is_in_reality_bubble_bounds( valid_pos ) ) {
+        if( limit_to_reality_bubble && !is_in_reality_bubble_bounds( abs_to_bub( valid_pos ) ) ) {
             using namespace std::views;
             const auto reversed_traj = new_traj | reverse;
-            const auto clamped_it = std::ranges::find_if( reversed_traj, []( const tripoint_bub_ms & p ) {
-                return is_in_reality_bubble_bounds( p );
+            const auto clamped_it = std::ranges::find_if( reversed_traj, []( const tripoint_abs_ms & p ) {
+                return is_in_reality_bubble_bounds( abs_to_bub( p ) );
             } );
             valid_pos = clamped_it != std::ranges::end( reversed_traj ) ? *clamped_it : src;
         }
@@ -3494,7 +3502,7 @@ void target_ui::update_target_list()
     } );
 }
 
-tripoint_bub_ms target_ui::choose_initial_target()
+tripoint_abs_ms target_ui::choose_initial_target()
 {
     // If we're casting a spell, don't lock onto enemies if the spell is meant for using on friendlies.
     if( mode == TargetMode::Spell && !casting->is_valid_target( valid_target::target_hostile ) ) {
@@ -3503,22 +3511,22 @@ tripoint_bub_ms target_ui::choose_initial_target()
 
     // Try previously targeted creature
     shared_ptr_fast<Creature> cr = you->last_target.lock();
-    if( cr && pl_sees( *cr ) && dist_fn( cr->bub_pos() ) <= range ) {
-        return cr->bub_pos();
+    if( cr && pl_sees( *cr ) && dist_fn( cr->abs_pos() ) <= range ) {
+        return cr->abs_pos();
     }
 
     // Try closest creature
     if( !targets.empty() ) {
-        return targets[0]->bub_pos();
+        return targets[0]->abs_pos();
     }
 
     // Try closest practice target
-    map &here = get_map();
-    const std::vector<tripoint_bub_ms> nearby = closest_points_first( src, range );
+    auto &here = you->get_mapbuffer();
+    const auto nearby = closest_points_first( src, range );
     const auto target_spot = std::find_if( nearby.begin(), nearby.end(),
-    [this, &here]( const tripoint_bub_ms & pt ) {
+    [this, &here]( const tripoint_abs_ms & pt ) {
         return ( here.has_flag_ter_or_furn( flag_SHOOT_ME, pt ) ||
-                 here.tr_at( pt ).id == tr_practice_target ) && this->you->sees( pt );
+                 here.get_trap( pt )->id() == tr_practice_target ) && this->you->sees( pt );
     } );
     if( target_spot != nearby.end() ) {
         return *target_spot;
@@ -3528,13 +3536,13 @@ tripoint_bub_ms target_ui::choose_initial_target()
     return src;
 }
 
-bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
+bool target_ui::try_reacquire_target( bool critter, tripoint_abs_ms &new_dst )
 {
     // Prefer creature identity over the saved tile.  If aiming_at_critter was
     // lost for one UI pass, last_target still tells us what the aim was tracking.
     const auto cr = you->last_target.lock();
-    if( cr && pl_sees( *cr ) && dist_fn( cr->bub_pos() ) <= range ) {
-        new_dst = cr->bub_pos();
+    if( cr && pl_sees( *cr ) && dist_fn( cr->abs_pos() ) <= range ) {
+        new_dst = cr->abs_pos();
         return true;
     }
 
@@ -3544,11 +3552,10 @@ bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
     }
 
     // Try to re-acquire target tile or tile where the target creature used to be
-    auto local_lt = abs_to_bub( *you->last_target_pos );
-    if( dist_fn( local_lt ) <= range ) {
-        new_dst = local_lt;
+    if( dist_fn( *you->last_target_pos ) <= range ) {
+        new_dst = *you->last_target_pos;
         // Abort aiming if a creature moved in
-        return !critter && !g->critter_at( local_lt, true );
+        return !critter && !g->critter_at( *you->last_target_pos, true );
     }
 
     // We moved out of range
@@ -3562,13 +3569,13 @@ void target_ui::update_status()
         // None of the turrets are in range
         status = Status::OutOfRange;
     } else if( mode == TargetMode::Fire &&
-               ( !ranged::gunmode_checks_common( *you, get_map(), msgbuf, relevant->gun_current_mode() ) ||
-                 !ranged::gunmode_checks_weapon( *you, get_map(), msgbuf, relevant->gun_current_mode() ) ) ) {
+               ( !ranged::gunmode_checks_common( *you, msgbuf, relevant->gun_current_mode() ) ||
+                 !ranged::gunmode_checks_weapon( *you, msgbuf, relevant->gun_current_mode() ) ) ) {
         // Selected gun mode is empty
         // TODO: it might be some other error, but that's highly unlikely to happen, so a catch-all 'Out of ammo' is fine
         status = Status::OutOfAmmo;
     } else if( mode == TargetMode::TurretManual && ( turret->query() != turret_data::status::ready ||
-               !ranged::gunmode_checks_common( *you, get_map(), msgbuf, relevant->gun_current_mode() ) ) ) {
+               !ranged::gunmode_checks_common( *you, msgbuf, relevant->gun_current_mode() ) ) ) {
         status = Status::OutOfAmmo;
     } else if( ( src == dst ) && !( mode == TargetMode::Spell &&
                                     casting->is_valid_target( valid_target::target_self ) ) ) {
@@ -3584,14 +3591,14 @@ void target_ui::update_status()
     }
 }
 
-int target_ui::dist_fn( const tripoint_bub_ms &p )
+int target_ui::dist_fn( const tripoint_abs_ms &p )
 {
     return static_cast<int>( std::round( rl_dist_exact( src, p ) ) );
 }
 
 void target_ui::set_last_target()
 {
-    you->last_target_pos = bub_to_abs( dst );
+    you->last_target_pos = dst;
     if( dst_critter ) {
         you->last_target = g->shared_from( *dst_critter );
     } else {
@@ -3653,7 +3660,7 @@ std::vector<weak_ptr_fast<Creature>> target_ui::list_friendlies_in_lof()
         debugmsg( "Not implemented" );
         return ret;
     }
-    for( const tripoint_bub_ms &p : traj ) {
+    for( const tripoint_abs_ms &p : traj ) {
         if( p != dst && p != src ) {
             Creature *cr = g->critter_at( p, true );
             if( cr && you->sees( *cr ) ) {
@@ -3694,7 +3701,7 @@ void target_ui::cycle_targets( int direction )
         if( t != targets.end() ) {
             size_t idx = std::distance( targets.begin(), t );
             new_target = ( idx + targets.size() + direction ) % targets.size();
-            set_cursor_pos( targets[new_target]->bub_pos() );
+            set_cursor_pos( targets[new_target]->abs_pos() );
             return;
         }
     }
@@ -3702,9 +3709,9 @@ void target_ui::cycle_targets( int direction )
     // There is either no creature under the cursor or the player can't see it.
     // Use the closest/farthest target in this case
     if( direction == 1 ) {
-        set_cursor_pos( targets.front()->bub_pos() );
+        set_cursor_pos( targets.front()->abs_pos() );
     } else {
-        set_cursor_pos( targets.back()->bub_pos() );
+        set_cursor_pos( targets.back()->abs_pos() );
     }
 }
 
@@ -3729,8 +3736,8 @@ void target_ui::update_turrets_in_range()
     turrets_in_range.clear();
     for( vehicle_part *t : *vturrets ) {
         turret_data td = veh->turret_query( *t );
-        if( td.in_range( bub_to_abs( dst ) ) ) {
-            tripoint_bub_ms src = veh->bub_part_location( *t );
+        if( td.in_range( dst ) ) {
+            auto src = veh->abs_part_location( *t );
             turrets_in_range.push_back( { t, line_to( src, dst ) } );
         }
     }
@@ -3745,13 +3752,13 @@ void target_ui::recalc_aim_turning_penalty()
     }
 
     double curr_recoil = you->recoil;
-    tripoint_bub_ms curr_recoil_pos;
+    tripoint_abs_ms curr_recoil_pos;
     shared_ptr_fast<Creature> ptr_lock = you->last_target.lock();
     const Creature *lt_ptr = ptr_lock.get();
     if( lt_ptr ) {
-        curr_recoil_pos = lt_ptr->bub_pos();
+        curr_recoil_pos = lt_ptr->abs_pos();
     } else if( you->last_target_pos ) {
-        curr_recoil_pos = abs_to_bub( *you->last_target_pos );
+        curr_recoil_pos = *you->last_target_pos;
     } else {
         curr_recoil_pos = src;
     }
@@ -3950,13 +3957,13 @@ bool target_ui::action_aim_and_shoot( const std::string &action )
 
 void target_ui::draw_terrain_overlay()
 {
-    auto center = you->bub_pos() + you->view_offset;
+    auto center = you->abs_pos() + you->view_offset;
 
     // Removes parts that don't belong to currently visible Z level
-    const auto filter_this_z = [&center]( const std::vector<tripoint_bub_ms> &traj ) {
-        std::vector<tripoint_bub_ms> this_z = traj;
+    const auto filter_this_z = [&center]( const std::vector<tripoint_abs_ms> &traj ) {
+        std::vector<tripoint_abs_ms> this_z = traj;
         this_z.erase( std::remove_if( this_z.begin(), this_z.end(),
-        [&center]( const tripoint_bub_ms & p ) {
+        [&center]( const tripoint_abs_ms & p ) {
             return p.z() != center.z();
         } ), this_z.end() );
         return this_z;
@@ -3969,67 +3976,76 @@ void target_ui::draw_terrain_overlay()
     if( mode == TargetMode::Turrets && draw_turret_lines ) {
         // TODO: TILES version doesn't know how to draw more than 1 line at a time.
         //       We merge all lines together and draw them as a big malformed one
-        std::set<tripoint_bub_ms> points;
+        std::set<tripoint_abs_ms> points;
         for( const turret_with_lof &it : turrets_in_range ) {
-            std::vector<tripoint_bub_ms> this_z = filter_this_z( it.line );
-            for( const tripoint_bub_ms &p : this_z ) {
+            std::vector<tripoint_abs_ms> this_z = filter_this_z( it.line );
+            for( const tripoint_abs_ms &p : this_z ) {
                 points.insert( p );
             }
         }
         // Since "trajectory" for each turret is just a straight line,
         // we can draw it even if the player can't see some parts
         points.erase( dst ); // Workaround for fake cursor on TILES
-        std::vector<tripoint_bub_ms> l( points.begin(), points.end() );
+        std::vector<tripoint_abs_ms> l( points.begin(), points.end() );
         if( dst.z() == center.z() ) {
             // Workaround for fake cursor bug on TILES
             l.push_back( dst );
         }
-        g->draw_line( src, center, l, true );
+        std::vector<tripoint_bub_ms> bub_traj;
+        bub_traj.reserve( l.size() );
+        for( const tripoint_abs_ms &p : l ) {
+            bub_traj.push_back( abs_to_bub( p ) );
+        }
+        g->draw_line( abs_to_bub( src ), abs_to_bub( center ), bub_traj, true );
     }
 
     // Draw trajectory
     if( mode != TargetMode::Turrets && dst != src ) {
-        std::vector<tripoint_bub_ms> this_z = filter_this_z( traj );
-
-        g->draw_line( dst, center, this_z, true );
+        std::vector<tripoint_abs_ms> this_z = filter_this_z( traj );
+        std::vector<tripoint_bub_ms> bub_traj;
+        bub_traj.reserve( this_z.size() );
+        for( const tripoint_abs_ms &p : this_z ) {
+            bub_traj.push_back( abs_to_bub( p ) );
+        }
+        g->draw_line( abs_to_bub( dst ), abs_to_bub( center ), bub_traj, true );
     }
 
     // TILES draw_line uses a target endpoint sprite.  Keep the cursor explicit
     // so aiming at empty tiles and z-level edges has the normal cursor marker.
     if( dst.z() == center.z() ) {
-        g->draw_cursor( dst );
+        g->draw_cursor( abs_to_bub( dst ) );
     }
 
     // Draw spell AOE
     if( mode == TargetMode::Spell ) {
-        drawsq_params params = drawsq_params().highlight( true ).center( center );
-        for( const tripoint_bub_ms &tile : spell_aoe ) {
+        drawsq_params params = drawsq_params().highlight( true ).center( abs_to_bub( center ) );
+        for( const tripoint_abs_ms &tile : spell_aoe ) {
             if( tile.z() != center.z() ) {
                 continue;
             }
 #ifdef TILES
             if( use_tiles ) {
-                g->draw_highlight( tile );
+                g->draw_highlight( abs_to_bub( tile ) );
             } else {
 #endif
-                get_map().drawsq( g->w_terrain, tile, params );
+                get_map().drawsq( g->w_terrain, abs_to_bub( tile ), params );
 #ifdef TILES
             }
 #endif
         }
     } else if( mode == TargetMode::Shape || ( mode == TargetMode::Fire && shape_gen ) ) {
-        drawsq_params params = drawsq_params().highlight( true ).center( center );
-        for( const std::pair<const tripoint_bub_ms, double> &pr : shape_coverage ) {
-            const tripoint_bub_ms &tile = pr.first;
+        drawsq_params params = drawsq_params().highlight( true ).center( abs_to_bub( center ) );
+        for( const std::pair<const tripoint_abs_ms, double> &pr : shape_coverage ) {
+            const tripoint_abs_ms &tile = pr.first;
 #ifdef TILES
             if( use_tiles ) {
-                g->draw_highlight( tile );
+                g->draw_highlight( abs_to_bub( tile ) );
             } else {
 #endif
-                get_map().drawsq( g->w_terrain, tile, params );
+                get_map().drawsq( g->w_terrain, abs_to_bub( tile ), params );
                 Creature *critter = g->critter_at( tile );
                 if( critter != nullptr ) {
-                    g->draw_critter_highlighted( *critter, center );
+                    g->draw_critter_highlighted( *critter, abs_to_bub( center ) );
                 }
 #ifdef TILES
             }
@@ -4482,7 +4498,7 @@ void target_ui::on_target_accepted( bool harmful )
     }
 }
 
-bool ranged::gunmode_checks_common( avatar &you, const map &m, std::vector<std::string> &messages,
+bool ranged::gunmode_checks_common( avatar &you, std::vector<std::string> &messages,
                                     const gun_mode &gmode )
 {
     bool result = true;
@@ -4494,7 +4510,7 @@ bool ranged::gunmode_checks_common( avatar &you, const map &m, std::vector<std::
         result = false;
     }
 
-    const optional_vpart_position vp = m.veh_at( you.bub_pos() );
+    const optional_vpart_position vp = you.get_mapbuffer().veh_at( you.abs_pos() );
     if( vp && vp->vehicle().player_in_control( you ) && ( gmode->is_two_handed( you ) ||
             gmode->has_flag( flag_FIRE_TWOHAND ) ) ) {
 
@@ -4546,7 +4562,7 @@ bool ranged::gunmode_checks_common( avatar &you, const map &m, std::vector<std::
     return result;
 }
 
-auto ranged::gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::string> &messages,
+auto ranged::gunmode_checks_weapon( avatar &you, std::vector<std::string> &messages,
                                     const gun_mode &gmode ) -> bool
 {
     bool result = true;
@@ -4591,7 +4607,7 @@ auto ranged::gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::
 
     if( gmode->has_flag( flag_MOUNTED_GUN ) ) {
         const Character &shooter = you;
-        if( !can_use_heavy_weapon( shooter, m, shooter.bub_pos() ) &&
+        if( !can_use_heavy_weapon( shooter, shooter.abs_pos() ) &&
             !( you.get_size() > creature_size::medium ) &&
             !you.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) ) {
             messages.push_back( string_format(

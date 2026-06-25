@@ -219,7 +219,7 @@ static std::string moves_to_string( const int moves )
 void spell_type::load( const JsonObject &jo, const std::string & )
 {
     static const
-    std::map<std::string, std::function<void( const spell &, Creature &, const tripoint_bub_ms & )>>
+    std::map<std::string, std::function<void( const spell &, Creature &, const tripoint_abs_ms & )>>
     effect_map{
         { "pain_split", spell_effect::pain_split },
         { "target_attack", spell_effect::target_attack },
@@ -628,7 +628,7 @@ int spell::aoe() const
     }
 }
 
-bool spell::in_aoe( const tripoint_bub_ms &source, const tripoint_bub_ms &target ) const
+bool spell::in_aoe( const tripoint_abs_ms &source, const tripoint_abs_ms &target ) const
 {
     if( has_flag( spell_flag::RANDOM_AOE ) ) {
         return rl_dist( source, target ) <= type->max_aoe;
@@ -1094,7 +1094,7 @@ bool spell::bp_is_affected( body_part bp ) const
     return type->affected_bps.contains( convert_bp( bp ) );
 }
 
-void spell::create_field( const tripoint_bub_ms &at ) const
+void spell::create_field( const tripoint_abs_ms &at ) const
 {
     if( !type->field ) {
         return;
@@ -1106,16 +1106,16 @@ void spell::create_field( const tripoint_bub_ms &at ) const
     }
     if( one_in( type->field_chance ) ) {
         map &here = get_map();
-        field_entry *field = here.get_field( at, *type->field );
+        field_entry *field = here.get_field( abs_to_bub( at ), *type->field );
         if( field ) {
             field->set_field_intensity( field->get_field_intensity() + intensity );
         } else {
-            here.add_field( at, *type->field, intensity, -duration_turns() );
+            here.add_field( abs_to_bub( at ), *type->field, intensity, -duration_turns() );
         }
     }
 }
 
-void spell::make_sound( const tripoint_bub_ms &target, Creature &caster ) const
+void spell::make_sound( const tripoint_abs_ms &target, Creature &caster ) const
 {
     if( !has_flag( spell_flag::SILENT ) ) {
         int loudness = ( 40 + ( std::abs( damage() ) ) );
@@ -1126,7 +1126,7 @@ void spell::make_sound( const tripoint_bub_ms &target, Creature &caster ) const
     }
 }
 
-void spell::make_sound( const tripoint_bub_ms & /*target*/, Creature &caster, int loudness ) const
+void spell::make_sound( const tripoint_abs_ms & /*target*/, Creature &caster, int loudness ) const
 {
     sound_event se;
     se.origin = caster.abs_pos();
@@ -1162,9 +1162,9 @@ energy_type spell::energy_source() const
     return type->energy_source;
 }
 
-bool spell::is_target_in_range( const Creature &caster, const tripoint_bub_ms &p ) const
+bool spell::is_target_in_range( const Creature &caster, const tripoint_abs_ms &p ) const
 {
-    return rl_dist( caster.bub_pos(), p ) <= range();
+    return rl_dist( caster.abs_pos(), p ) <= range();
 }
 
 bool spell::is_valid_target( valid_target t ) const
@@ -1172,15 +1172,15 @@ bool spell::is_valid_target( valid_target t ) const
     return type->valid_targets[t];
 }
 
-bool spell::is_valid_target( const Creature &caster, const tripoint_bub_ms &p ) const
+bool spell::is_valid_target( const Creature &caster, const tripoint_abs_ms &p ) const
 {
     bool valid = false;
     if( Creature *const cr = g->critter_at<Creature>( p ) ) {
         Attitude cr_att = cr->attitude_to( caster );
         valid = valid || ( cr_att != Attitude::A_FRIENDLY && is_valid_target( target_hostile ) );
         valid = valid || ( cr_att == Attitude::A_FRIENDLY && is_valid_target( target_ally ) &&
-                           p != caster.bub_pos() );
-        valid = valid || ( is_valid_target( target_self ) && p == caster.bub_pos() );
+                           p != caster.abs_pos() );
+        valid = valid || ( is_valid_target( target_self ) && p == caster.abs_pos() );
         valid = valid && target_by_monster_id( p );
     } else {
         valid = is_valid_target( target_ground );
@@ -1193,7 +1193,7 @@ bool spell::is_valid_effect_target( valid_target t ) const
     return type->effect_targets[t];
 }
 
-bool spell::target_by_monster_id( const tripoint_bub_ms &p ) const
+bool spell::target_by_monster_id( const tripoint_abs_ms &p ) const
 {
     if( type->targeted_monster_ids.empty() ) {
         return true;
@@ -1440,7 +1440,7 @@ vproto_id spell::summon_vehicle_id() const
     return vproto_id( type->effect_str );
 }
 
-int spell::heal( const tripoint_bub_ms &target ) const
+int spell::heal( const tripoint_abs_ms &target ) const
 {
     monster *const mon = g->critter_at<monster>( target );
     if( mon ) {
@@ -1454,12 +1454,12 @@ int spell::heal( const tripoint_bub_ms &target ) const
     return -1;
 }
 
-void spell::cast_spell_effect( Creature &source, const tripoint_bub_ms &target ) const
+void spell::cast_spell_effect( Creature &source, const tripoint_abs_ms &target ) const
 {
     type->effect( *this, source, target );
 }
 
-void spell::cast_all_effects( Creature &source, const tripoint_bub_ms &target ) const
+void spell::cast_all_effects( Creature &source, const tripoint_abs_ms &target ) const
 {
     if( has_flag( spell_flag::WONDER ) ) {
         const auto iter = type->additional_spells.begin();
@@ -1477,13 +1477,13 @@ void spell::cast_all_effects( Creature &source, const tripoint_bub_ms &target ) 
             source.add_msg_if_player( sp.message() );
 
             if( sp.has_flag( RANDOM_TARGET ) ) {
-                if( const std::optional<tripoint_bub_ms> new_target = sp.random_valid_target( source,
-                        _self ? source.bub_pos() : target ) ) {
+                if( const std::optional<tripoint_abs_ms> new_target = sp.random_valid_target( source,
+                        _self ? source.abs_pos() : target ) ) {
                     sp.cast_all_effects( source, *new_target );
                 }
             } else {
                 if( _self ) {
-                    sp.cast_all_effects( source, source.bub_pos() );
+                    sp.cast_all_effects( source, source.abs_pos() );
                 } else {
                     sp.cast_all_effects( source, target );
                 }
@@ -1495,13 +1495,13 @@ void spell::cast_all_effects( Creature &source, const tripoint_bub_ms &target ) 
         for( const fake_spell &extra_spell : type->additional_spells ) {
             spell sp = extra_spell.get_spell( get_level() );
             if( sp.has_flag( RANDOM_TARGET ) ) {
-                if( const std::optional<tripoint_bub_ms> new_target = sp.random_valid_target( source,
-                        extra_spell.self ? source.bub_pos() : target ) ) {
+                if( const std::optional<tripoint_abs_ms> new_target = sp.random_valid_target( source,
+                        extra_spell.self ? source.abs_pos() : target ) ) {
                     sp.cast_all_effects( source, *new_target );
                 }
             } else {
                 if( extra_spell.self ) {
-                    sp.cast_all_effects( source, source.bub_pos() );
+                    sp.cast_all_effects( source, source.abs_pos() );
                 } else {
                     sp.cast_all_effects( source, target );
                 }
@@ -1510,11 +1510,11 @@ void spell::cast_all_effects( Creature &source, const tripoint_bub_ms &target ) 
     }
 }
 
-std::optional<tripoint_bub_ms> spell::random_valid_target( const Creature &caster,
-        const tripoint_bub_ms &caster_pos ) const
+std::optional<tripoint_abs_ms> spell::random_valid_target( const Creature &caster,
+        const tripoint_abs_ms &caster_pos ) const
 {
-    std::set<tripoint_bub_ms> valid_area;
-    for( const tripoint_bub_ms &target : spell_effect::spell_effect_blast( *this, caster_pos,
+    std::set<tripoint_abs_ms> valid_area;
+    for( const tripoint_abs_ms &target : spell_effect::spell_effect_blast( *this, caster_pos,
             caster_pos,
             range(), false ) ) {
         if( is_valid_target( caster, target ) ) {

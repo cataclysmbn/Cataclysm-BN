@@ -42,6 +42,7 @@ class field_entry;
 class item;
 class JsonIn;
 class npc;
+struct sound_event;
 class vehicle;
 enum ter_bitflags : int;
 enum class special_item_type : int;
@@ -272,7 +273,7 @@ class abs_tile_handle
         auto lum()     const -> std::uint8_t;
 
         /// Move cost including both terrain/furniture and vehicle.
-        auto move_cost() const -> int;
+        auto move_cost( const vehicle *ignored_vehicle = nullptr ) const -> int;
         /// True if move_cost() != 0.
         auto passable() const -> bool;
 
@@ -748,8 +749,9 @@ class mapbuffer
         auto remove_active_npc( const npc &guy ) -> void;
         auto find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_fast<npc>;
         auto creature_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const
-        -> const Creature *;
+        -> Creature *;
         auto has_creature_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const -> bool;
+        auto tile_empty( const tripoint_abs_ms &p ) -> bool;
         auto has_loaded_vehicle( const vehicle *veh ) const -> bool;
         auto register_vehicle( vehicle *veh ) -> void;
         auto unregister_vehicle( vehicle *veh ) -> void;
@@ -770,6 +772,19 @@ class mapbuffer
         mapbuffer_valid_move_options options = {} ) -> bool;
         auto climb_difficulty( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+
+        /// Checks if there's a floor between two tiles exactly 1 z-level apart.
+        /// True = solid floor blocks the vertical attack/movement.
+        auto floor_between( const tripoint_abs_ms &first, const tripoint_abs_ms &second,
+                            mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// Checks LOS + move_cost constraints along a bresenham line between @p f and @p t.
+        /// Same semantics as map::clear_path but operates in absolute coordinates.
+        auto clear_path( const tripoint_abs_ms &f, const tripoint_abs_ms &t, int range,
+                         int cost_min, int cost_max,
+                         mapbuffer_lookup_options options = {} ) -> bool;
+        auto find_clear_path( const tripoint_abs_ms &source,
+        const tripoint_abs_ms &destination ) -> std::vector<tripoint_abs_ms>;
 
         auto passable( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<bool>;
@@ -799,6 +814,9 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
         auto set_trap( const tripoint_abs_ms &p, trap_id trap,
         mapbuffer_lookup_options options = {} ) -> bool;
+        /** Remove whatever trap is at @p p.  No-op if there's no trap or only tr_null. */
+        auto remove_trap( const tripoint_abs_ms &p,
+                          mapbuffer_lookup_options options = {} ) -> bool;
         auto creature_on_trap( Creature &critter, bool may_avoid = true ) -> void;
 
         auto set_radiation( const tripoint_abs_ms &p, int radiation,
@@ -999,6 +1017,12 @@ class mapbuffer
         /// Returns the name of the obstacle (terrain/furniture/vehicle) at p.
         auto obstacle_name( const tripoint_abs_ms &p,
                             mapbuffer_lookup_options options = {} ) -> std::string;
+        auto sees( const tripoint_abs_ms &F, const tripoint_abs_ms &T, int range,
+                   int &bresenham_slope, mapbuffer_lookup_options options = {} ) -> const bool;
+        auto sees( const tripoint_abs_ms &F, const tripoint_abs_ms &T, int range,
+                   mapbuffer_lookup_options options = {} ) -> const bool;
+        auto obstacle_coverage( const tripoint_abs_ms &loc1, const tripoint_abs_ms &loc2,
+                                const mapbuffer_lookup_options options = {} ) -> const int;
         /// Returns a string containing relevant flags (e.g. "sharp", "rough").
         auto features( const tripoint_abs_ms &p,
                        mapbuffer_lookup_options options = {} ) -> std::string;
@@ -1058,6 +1082,10 @@ class mapbuffer
         auto ter( const tripoint_abs_ms &p,
                   mapbuffer_lookup_options options = {} ) -> std::optional<ter_id>;
 
+        /// Terrain ID at @p p.
+        auto furn( const tripoint_abs_ms &p,
+                  mapbuffer_lookup_options options = {} ) -> std::optional<furn_id>;
+
         /// Furniture name at @p p.
         auto furnname( const tripoint_abs_ms &p,
                        mapbuffer_lookup_options options = {} ) -> std::string;
@@ -1082,23 +1110,36 @@ class mapbuffer
         auto has_floor_or_support( const tripoint_abs_ms &p,
                                    mapbuffer_lookup_options options = {} ) -> bool;
 
+        /// True if there is a physical floor at @p p (tile has no TFLAG_NO_FLOOR).
+        auto has_floor( const tripoint_abs_ms &p, bool visible_only = false,
+                        mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// True if the tile at @p p is transparent (you can see past it).
+        auto is_transparent( const tripoint_abs_ms &p,
+                             mapbuffer_lookup_options options = {} ) -> bool;
+
         /// True if @p p is outside (checks submap outside cache).
         auto is_outside( const tripoint_abs_ms &p,
                          mapbuffer_lookup_options options = {} ) -> bool;
 
         /// Combined move cost (terrain + vehicle) from @p from to @p to.
         auto combined_movecost( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
+                                const vehicle *ignored_vehicle = nullptr,
+                                int modifier = 0, bool flying = false, bool via_ramp = false,
                                 mapbuffer_lookup_options options = {} ) -> int;
 
         /// Move cost including vehicles at @p p.
-        auto move_cost( const tripoint_abs_ms &p,
+        auto move_cost( const tripoint_abs_ms &p, const vehicle *ignored_vehicle = nullptr,
                         mapbuffer_lookup_options options = {} ) -> int;
 
         /// True if a vehicle at @p from blocks movement toward @p to via rotation.
         auto obstructed_by_vehicle_rotation( const tripoint_abs_ms &from,
                                             const tripoint_abs_ms &to,
                                             mapbuffer_lookup_options options = {} ) -> bool;
-
+        auto hit_with_acid( const tripoint_abs_ms &p,
+                            const mapbuffer_lookup_options options = {} ) -> bool;
+        auto hit_with_fire( const tripoint_abs_ms &p,
+                            const mapbuffer_lookup_options options = {} ) -> bool;
         /// Check if an entity can open a door at @p p (checks OPENCLOSE_INSIDE flag and mounting).
         auto can_open_door( const tripoint_abs_ms &p, bool inside,
                             mapbuffer_lookup_options options = {} ) -> bool;
@@ -1129,7 +1170,7 @@ class mapbuffer
         /// Cheap light query for off-bubble AI — sky + nearby sources + simple LOS.
         /// No shadowcasting, no diffusion. Not suitable for rendering.
         auto cheap_light_at( const tripoint_abs_ms &p,
-                             mapbuffer_lookup_options options = {} ) -> lit_level;
+                             mapbuffer_lookup_options options = {} ) -> float;
 
         // ----- Field operations -----
 
@@ -1409,6 +1450,19 @@ class mapbuffer
 
         auto get_boundary_terrain() const -> ter_id;
 
+        // --- Per-island sound queues ---
+        // Sounds are routed to the simulated island they originate in.
+        // Creatures read from their own island's queue, using the flood-fill
+        // path (in-bubble / primary dimension) or simple distance attenuation
+        // (out-of-bubble / other dimensions).
+        /// Queue @p evt into the island containing its origin column.
+        void queue_sound( sound_event evt );
+        /// Get the sound queue for the island containing @p col, or nullptr
+        /// if that column is not currently simulated.
+        auto island_sounds_for( point_abs_sm col ) -> std::vector<sound_event> *;
+        /// Look up the island containing @p col, or nullptr.
+        auto island_for( point_abs_sm col ) const -> const simulated_island *;
+
         auto is_outside_pocket_dimension_bounds( const tripoint_abs_sm &p ) const -> bool {
             return ::is_outside_pocket_dimension_bounds( pocket_info_, p );
         }
@@ -1463,6 +1517,11 @@ class mapbuffer
         std::set<tripoint_abs_sm> submaps_with_active_items_;
         std::set<tripoint_abs_sm> submaps_with_luminous_items_;
 
+        /// Column → island-index lookup (rebuilt alongside simulated_islands_).
+        std::unordered_map<point_abs_sm, size_t> column_to_island_;
+        /// Per-island sound queues (indexed parallel to simulated_islands_).
+        std::vector<std::vector<sound_event>> island_sounds_;
+
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.
         dimension_id dimension_id_;
@@ -1494,3 +1553,5 @@ auto simulated_tiles_on_zlevel( mapbuffer &buf, int z )
 // Included after the full mapbuffer definition to avoid circular dependencies.
 // Provides the MAPBUFFER macro and MAPBUFFER_REGISTRY global.
 #include "mapbuffer_registry.h"
+
+

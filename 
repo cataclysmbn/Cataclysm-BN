@@ -1,0 +1,1843 @@
+[1mdiff --git a/.github/workflows/build.yml b/.github/workflows/build.yml[m
+[1mindex 124e30df4a..9c221aaa8f 100644[m
+[1m--- a/.github/workflows/build.yml[m
+[1m+++ b/.github/workflows/build.yml[m
+[36m@@ -789,7 +789,7 @@[m [mjobs:[m
+           $target = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }[m
+           cmake --build $buildDir --target $target --config Release[m
+ [m
+[31m-      - name: Run sharded tests (desktop)[m
+[32m+[m[32m      - name: Run tests (desktop)[m
+         if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))[m
+         shell: pwsh[m
+         run: |[m
+[36m@@ -814,17 +814,39 @@[m [mjobs:[m
+             "--rng-seed", "time",[m
+             "--error-format=github-action"[m
+           )[m
+[31m-          if ($IsLinux -and "${{ matrix.tiles }}" -eq "true") {[m
+[32m+[m[32m          if ($IsLinux) {[m
+             $testOpts += "--gpu-backend=software"[m
+           }[m
+[31m-          deno run --allow-read --allow-write --allow-run --allow-env `[m
+[31m-            build-scripts/run-linux-test-shards.ts `[m
+[31m-            --mode file-tags `[m
+[31m-            --jobs 4 `[m
+[31m-            --non-slow-shards 8 `[m
+[31m-            $testBin `[m
+[31m-            -- `[m
+[31m-            @testOpts[m
+[32m+[m[32m          $filters = @("[slow] ~starting_items", "~[slow] ~[.],starting_items")[m
+[32m+[m[32m          $jobs = @()[m
+[32m+[m[32m          for ($i = 0; $i -lt $filters.Count; ++$i) {[m
+[32m+[m[32m            $userDir = "test_user_dir_$($i + 1)"[m
+[32m+[m[32m            $jobs += Start-Job -Name "cata-test-$($i + 1)" -ScriptBlock {[m
+[32m+[m[32m              param($bin, $opts, $filter, $userDir)[m
+[32m+[m[32m              & $bin @opts "--user-dir=$userDir" $filter[m
+[32m+[m[32m              if ($LASTEXITCODE -ne 0) {[m
+[32m+[m[32m                throw "Test shard '$filter' exited with code $LASTEXITCODE"[m
+[32m+[m[32m              }[m
+[32m+[m[32m            } -ArgumentList $testBin, $testOpts, $filters[$i], $userDir[m
+[32m+[m[32m          }[m
+[32m+[m
+[32m+[m[32m          while ($jobs | Where-Object { $_.State -eq "Running" }) {[m
+[32m+[m[32m            Start-Sleep -Seconds 30[m
+[32m+[m[32m            $running = ($jobs | Where-Object { $_.State -eq "Running" }).Name -join ", "[m
+[32m+[m[32m            Write-Host "Still running: $running"[m
+[32m+[m[32m          }[m
+[32m+[m
+[32m+[m[32m          $failed = $false[m
+[32m+[m[32m          foreach ($job in $jobs) {[m
+[32m+[m[32m            Receive-Job $job -ErrorAction Continue[m
+[32m+[m[32m            if ($job.State -ne "Completed") {[m
+[32m+[m[32m              $failed = $true[m
+[32m+[m[32m              Write-Host "$($job.Name) failed with state $($job.State)"[m
+[32m+[m[32m            }[m
+[32m+[m[32m          }[m
+[32m+[m[32m          if ($failed) {[m
+[32m+[m[32m            throw "One or more test shards failed"[m
+[32m+[m[32m          }[m
+ [m
+       # Upload artifacts[m
+       - name: Upload packaged build artifact[m
+[1mdiff --git a/build-scripts/run-linux-test-shards.ts b/build-scripts/run-linux-test-shards.ts[m
+[1mindex bbccfc5e33..c981df0536 100755[m
+[1m--- a/build-scripts/run-linux-test-shards.ts[m
+[1m+++ b/build-scripts/run-linux-test-shards.ts[m
+[36m@@ -2,7 +2,7 @@[m
+ /**[m
+  * @module[m
+  *[m
+[31m- * Runs Cataclysm: Bright Nights tests as filename-tag shards.[m
+[32m+[m[32m * Runs Cataclysm: Bright Nights Linux tests as filename-tag shards.[m
+  *[m
+  * The runner discovers Catch2 filename tags, builds deterministic shards, starts the heaviest shards[m
+  * first, and defaults local runs to the detected CPU count while CI can pass explicit limits.[m
+[36m@@ -276,9 +276,6 @@[m [mconst discoverTags = async ([m
+   return { allTags: extractFileTags(all.stdout), slowTags: extractFileTags(slow.stdout), testOpts }[m
+ }[m
+ [m
+[31m-const defaultCpuShardCompute = (): string | undefined =>[m
+[31m-  Deno.build.os === "windows" ? undefined : "cpu"[m
+[31m-[m
+ const runShard = async ([m
+   options: Options & { jobs: number; nonSlowShards: number },[m
+   testOpts: string[],[m
+[36m@@ -288,20 +285,19 @@[m [mconst runShard = async ([m
+   const compute = explicitCompute ??[m
+     (shard.compute === "gpu_software"[m
+       ? Deno.env.get("CATA_TEST_VISIBILITY_COMPUTE_ACCELERATION") ?? "gpu_software"[m
+[31m-      : defaultCpuShardCompute())[m
+[32m+[m[32m      : "cpu")[m
+   const userDirPrefix = Deno.env.get("CATA_TEST_USER_DIR_PREFIX") ?? "test_user_dir"[m
+   const userDir = `${userDirPrefix}_${shard.name}`[m
+   const filter = shard.filters.join(",")[m
+   const start = Date.now()[m
+[31m-  console.log(`Starting shard ${shard.name} with ${compute ?? "default"} compute`)[m
+[31m-  const env: Record<string, string> = compute === undefined[m
+[31m-    ? {}[m
+[31m-    : { CATA_TEST_COMPUTE_ACCELERATION: compute }[m
+[32m+[m[32m  console.log(`Starting shard ${shard.name} with ${compute} compute`)[m
+   const result = await commandOutput(options.testBin, [[m
+     ...testOpts,[m
+     `--user-dir=${userDir}`,[m
+     filter,[m
+[31m-  ], env)[m
+[32m+[m[32m  ], {[m
+[32m+[m[32m    CATA_TEST_COMPUTE_ACCELERATION: compute,[m
+[32m+[m[32m  })[m
+   if (result.stdout) {[m
+     console.log(result.stdout.trimEnd())[m
+   }[m
+[36m@@ -381,8 +377,8 @@[m [mDeno.test("buildShardPlan keeps visibility on its GPU shard", () => {[m
+ if (import.meta.main) {[m
+   try {[m
+     const { options, args, literal } = await new Command()[m
+[31m-      .name("run-test-shards")[m
+[31m-      .description("Run Cataclysm: Bright Nights tests as filename-tag shards")[m
+[32m+[m[32m      .name("run-linux-test-shards")[m
+[32m+[m[32m      .description("Run Cataclysm: Bright Nights Linux tests as filename-tag shards")[m
+       .option("--mode <mode:string>", "auto, file-tags, tiles, or legacy", { default: "auto" })[m
+       .option("--jobs <jobs:string>", "concurrent shard jobs, or auto", { default: "auto" })[m
+       .option("--slow-shards <slowShards:string>", "accepted for compatibility", { default: "4" })[m
+[1mdiff --git a/data/json/enchantment_values.json b/data/json/enchantment_values.json[m
+[1mindex 5dd439544d..39c7155288 100644[m
+[1m--- a/data/json/enchantment_values.json[m
+[1m+++ b/data/json/enchantment_values.json[m
+[36m@@ -53,8 +53,7 @@[m
+   },[m
+   {[m
+     "id": "CONSTRUCTION_SPEED",[m
+[31m-    "type": "enchantment_value",[m
+[31m-    "suffixes": [ "CON", "VEH" ][m
+[32m+[m[32m    "type": "enchantment_value"[m
+   },[m
+   {[m
+     "id": "METABOLISM",[m
+[36m@@ -266,7 +265,6 @@[m
+       "THROW",[m
+       "MELEE",[m
+       "BASHING",[m
+[31m-      "CUTTING",[m
+       "DODGE",[m
+       "STABBING",[m
+       "UNARMED"[m
+[36m@@ -302,7 +300,6 @@[m
+       "THROW",[m
+       "MELEE",[m
+       "BASHING",[m
+[31m-      "CUTTING",[m
+       "DODGE",[m
+       "STABBING",[m
+       "UNARMED"[m
+[1mdiff --git a/data/json/external_tileset/External_Tileset_DP_Normal.json b/data/json/external_tileset/External_Tileset_DP_Normal.json[m
+[1mindex 7aec4e27e0..47df0d31c6 100644[m
+[1m--- a/data/json/external_tileset/External_Tileset_DP_Normal.json[m
+[1m+++ b/data/json/external_tileset/External_Tileset_DP_Normal.json[m
+[36m@@ -338,8 +338,7 @@[m
+           { "id": [ "helm_trench", "overlay_wielded_helm_trench" ], "fg": 230 },[m
+           { "id": "overlay_worn_helm_trench", "fg": 231 },[m
+           { "id": "vp_light_white", "fg": 232 },[m
+[31m-          { "id": "f_mannequin", "fg": 234 },[m
+[31m-          { "id": "overlay_wielded_creepy_doll", "fg": 235 }[m
+[32m+[m[32m          { "id": "f_mannequin", "fg": 234 }[m
+         ],[m
+         "sprite_width": 32,[m
+         "sprite_height": 32[m
+[1mdiff --git a/data/json/external_tileset/External_Tileset_DP_Normal.png b/data/json/external_tileset/External_Tileset_DP_Normal.png[m
+[1mindex c461fba5e6..724d600f6c 100644[m
+Binary files a/data/json/external_tileset/External_Tileset_DP_Normal.png and b/data/json/external_tileset/External_Tileset_DP_Normal.png differ
+[1mdiff --git a/data/json/external_tileset/External_Tileset_DP_Tall.json b/data/json/external_tileset/External_Tileset_DP_Tall.json[m
+[1mindex ffe96b8e93..3cb1117c69 100644[m
+[1m--- a/data/json/external_tileset/External_Tileset_DP_Tall.json[m
+[1m+++ b/data/json/external_tileset/External_Tileset_DP_Tall.json[m
+[36m@@ -64,8 +64,7 @@[m
+           { "id": "mon_wasp_mega_acid", "fg": 44 },[m
+           { "id": "corpse_mon_wasp_mega_acid", "fg": 45 },[m
+           { "id": "mon_kraken_boss", "fg": 46 },[m
+[31m-          { "id": "mon_kraken_boss_tentacle", "fg": 47 },[m
+[31m-          { "id": "creepy_doll", "fg": 48 }[m
+[32m+[m[32m          { "id": "mon_kraken_boss_tentacle", "fg": 47 }[m
+         ],[m
+         "sprite_width": 64,[m
+         "sprite_height": 80,[m
+[1mdiff --git a/data/json/external_tileset/External_Tileset_DP_Tall.png b/data/json/external_tileset/External_Tileset_DP_Tall.png[m
+[1mindex 87411af84e..0c1d7f2820 100644[m
+Binary files a/data/json/external_tileset/External_Tileset_DP_Tall.png and b/data/json/external_tileset/External_Tileset_DP_Tall.png differ
+[1mdiff --git a/data/json/external_tileset/External_Tileset_DP_dmd.json b/data/json/external_tileset/External_Tileset_DP_dmd.json[m
+[1mindex 64caa16c32..004ecfaa44 100644[m
+[1m--- a/data/json/external_tileset/External_Tileset_DP_dmd.json[m
+[1m+++ b/data/json/external_tileset/External_Tileset_DP_dmd.json[m
+[36m@@ -55,16 +55,7 @@[m
+           { "id": [ "clam_fried", "overlay_wielded_clam_fried" ], "fg": 47 },[m
+           { "id": "mon_zombie_swat", "fg": 48, "bg": 30 },[m
+           { "id": "mon_zombie_swat_boss", "fg": 49, "bg": 30 },[m
+[31m-          { "id": "corpse_mon_zombie_swat_boss", "fg": 50 },[m
+[31m-          { "id": "mon_feral_pa_boss_melee", "fg": 51 },[m
+[31m-          { "id": "mon_feral_pa_boss_shotgun", "fg": 52 },[m
+[31m-          { "id": "mon_feral_pa_boss_grenade", "fg": 53 },[m
+[31m-          { "id": "mon_feral_pa_boss_blaster", "fg": 54 },[m
+[31m-          { "id": [ "40x46mm_casing", "overlay_wielded_40x46mm_casing" ], "fg": 55 },[m
+[31m-          { "id": [ "40x53mm_casing", "overlay_wielded_40x53mm_casing" ], "fg": 56 },[m
+[31m-          { "id": [ "40x53mm_conversion_kit", "overlay_wielded_40x53mm_conversion_kit" ], "fg": 57 },[m
+[31m-          { "id": [ "kevlar", "overlay_wielded_kevlar" ], "fg": 58 },[m
+[31m-          { "id": "overlay_worn_kevlar", "fg": 59 }[m
+[32m+[m[32m          { "id": "corpse_mon_zombie_swat_boss", "fg": 50 }[m
+         ],[m
+         "sprite_width": 32,[m
+         "sprite_height": 32[m
+[1mdiff --git a/data/json/external_tileset/External_Tileset_DP_dmd.png b/data/json/external_tileset/External_Tileset_DP_dmd.png[m
+[1mindex 1dc2e68817..20918b2f06 100644[m
+Binary files a/data/json/external_tileset/External_Tileset_DP_dmd.png and b/data/json/external_tileset/External_Tileset_DP_dmd.png differ
+[1mdiff --git a/data/json/game_balance.json b/data/json/game_balance.json[m
+[1mindex bbb32f8623..3ed8a45444 100644[m
+[1m--- a/data/json/game_balance.json[m
+[1m+++ b/data/json/game_balance.json[m
+[36m@@ -264,12 +264,5 @@[m
+     "info": "If true, always display the mana in the sidebar. Primarily useful for magic-related mods.",[m
+     "stype": "bool",[m
+     "value": false[m
+[31m-  },[m
+[31m-  {[m
+[31m-    "type": "EXTERNAL_OPTION",[m
+[31m-    "name": "SKILL_TRAINING_SPEED",[m
+[31m-    "info": "A multiplier on the amount of XP you gain from skills. 0 completely disables it (a la skills through kills)",[m
+[31m-    "stype": "float",[m
+[31m-    "value": 1.0[m
+   }[m
+ ][m
+[1mdiff --git a/data/json/itemgroups/Food/food.json b/data/json/itemgroups/Food/food.json[m
+[1mindex c988064e4c..c47b381fb3 100644[m
+[1m--- a/data/json/itemgroups/Food/food.json[m
+[1m+++ b/data/json/itemgroups/Food/food.json[m
+[36m@@ -32,13 +32,11 @@[m
+   {[m
+     "type": "item_group",[m
+     "id": "dry_goods",[m
+[31m-    "//": "mostly used for household spawns.",[m
+     "ammo": 75,[m
+     "magazine": 100,[m
+     "subtype": "distribution",[m
+     "entries": [[m
+[31m-      { "item": "flour", "prob": 45, "charges": [ 5, 40 ] },[m
+[31m-      { "item": "flour", "prob": 5, "charges": [ 5, 120 ], "container-item": "box_medium" },[m
+[32m+[m[32m      { "item": "flour", "prob": 50 },[m
+       { "item": "yeast", "prob": 50 },[m
+       { "item": "cornmeal", "prob": 40 },[m
+       { "item": "dry_meat", "prob": 10 },[m
+[36m@@ -212,7 +210,7 @@[m
+       { "item": "soup_dumplings", "prob": 15 },[m
+       { "item": "curry_veggy", "prob": 15 },[m
+       { "item": "curry_meat", "prob": 15 },[m
+[31m-      { "item": "flour", "prob": 30, "charges": [ 5, 40 ] },[m
+[32m+[m[32m      { "item": "flour", "prob": 30 },[m
+       { "item": "milk_powder", "prob": 20 },[m
+       { "item": "cornmeal", "prob": 30 },[m
+       { "item": "powder_eggs", "prob": 20 },[m
+[1mdiff --git a/data/json/itemgroups/Weapons_Mods_Ammo/gunmod.json b/data/json/itemgroups/Weapons_Mods_Ammo/gunmod.json[m
+[1mindex 96de69d6fb..24f6535e1e 100644[m
+[1m--- a/data/json/itemgroups/Weapons_Mods_Ammo/gunmod.json[m
+[1m+++ b/data/json/itemgroups/Weapons_Mods_Ammo/gunmod.json[m
+[36m@@ -236,52 +236,5 @@[m
+       [ "universal_autolink", 10 ],[m
+       [ "universal_auto_conversion_kit", 5 ][m
+     ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "type": "item_group",[m
+[31m-    "id": "gunmod_pipe_conversion",[m
+[31m-    "//": "All pipe gun caliber conversion kits installable in the pipe rifle/pistol/2-shot special.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [[m
+[31m-      { "item": "retool_pipe_22", "prob": 40 },[m
+[31m-      { "item": "retool_pipe_38", "prob": 40 },[m
+[31m-      { "item": "retool_pipe_40", "prob": 40 },[m
+[31m-      { "item": "retool_pipe_44", "prob": 40 },[m
+[31m-      { "item": "retool_pipe_45", "prob": 40 },[m
+[31m-      { "item": "retool_pipe_9mm", "prob": 40 },[m
+[31m-      { "item": "retool_pipe_223", "prob": 30 },[m
+[31m-      { "item": "retool_pipe_3006", "prob": 20 },[m
+[31m-      { "item": "retool_pipe_308", "prob": 20 }[m
+[31m-    ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "type": "item_group",[m
+[31m-    "id": "gunmod_hc_mods",[m
+[31m-    "//": "Handmade carbine unique mods: caliber conversion kits and BAR magazine adapter.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [[m
+[31m-      { "item": "retool_hc_223", "prob": 40 },[m
+[31m-      { "item": "retool_hc_308", "prob": 30 },[m
+[31m-      { "item": "hc_bar_mag_adapter", "prob": 25 }[m
+[31m-    ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "type": "item_group",[m
+[31m-    "id": "gunmod_hmr_conversion",[m
+[31m-    "//": "Handmade revolver caliber conversion kits.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [[m
+[31m-      { "item": "retool_hmr_40", "prob": 40 },[m
+[31m-      { "item": "retool_hmr_44", "prob": 30 },[m
+[31m-      { "item": "retool_hmr_45", "prob": 40 },[m
+[31m-      { "item": "retool_hmr_9mm", "prob": 40 }[m
+[31m-    ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "type": "item_group",[m
+[31m-    "id": "gunmod_luty_conversion",[m
+[31m-    "//": "Luty SMG caliber conversion kits.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [ { "item": "retool_luty_40", "prob": 40 }, { "item": "retool_luty_45", "prob": 40 } ][m
+   }[m
+ ][m
+[1mdiff --git a/data/json/itemgroups/Weapons_Mods_Ammo/guns.json b/data/json/itemgroups/Weapons_Mods_Ammo/guns.json[m
+[1mindex 1197fae58c..a6b9264838 100644[m
+[1m--- a/data/json/itemgroups/Weapons_Mods_Ammo/guns.json[m
+[1m+++ b/data/json/itemgroups/Weapons_Mods_Ammo/guns.json[m
+[36m@@ -268,8 +268,8 @@[m
+     "//": "Makeshift or otherwise poor quality pistols.",[m
+     "items": [[m
+       { "item": "ashot", "prob": 100 },[m
+[31m-      { "group": "nested_pipe_pistol", "prob": 100 },[m
+[31m-      { "group": "nested_handmade_revolver", "prob": 100 }[m
+[32m+[m[32m      { "item": "surv_hand_cannon", "prob": 100, "charges-min": 0, "charges-max": 5 },[m
+[32m+[m[32m      { "item": "surv_six_shooter", "prob": 100, "charges-min": 0, "charges-max": 6 }[m
+     ][m
+   },[m
+   {[m
+[36m@@ -395,7 +395,7 @@[m
+     "type": "item_group",[m
+     "id": "guns_smg_improvised",[m
+     "//": "Makeshift or otherwise poor quality SMGs.",[m
+[31m-    "items": [ { "group": "nested_smg_luty", "prob": 100 } ][m
+[32m+[m[32m    "items": [ [ "smg_40", 40 ], [ "smg_45", 40 ], [ "smg_9mm", 100 ] ][m
+   },[m
+   {[m
+     "type": "item_group",[m
+[36m@@ -735,7 +735,12 @@[m
+     "type": "item_group",[m
+     "id": "guns_rifle_improvised",[m
+     "//": "Makeshift or otherwise poor quality rifles.",[m
+[31m-    "items": [ { "group": "nested_pipe_rifle", "prob": 60 }, { "group": "nested_handmade_carbine", "prob": 120 } ][m
+[32m+[m[32m    "items": [[m
+[32m+[m[32m      { "item": "rifle_22", "prob": 60 },[m
+[32m+[m[32m      { "item": "rifle_3006", "prob": 30 },[m
+[32m+[m[32m      { "item": "rifle_9mm", "prob": 60 },[m
+[32m+[m[32m      { "item": "surv_carbine_223", "prob": 120, "charges-min": 0, "charges-max": 5 }[m
+[32m+[m[32m    ][m
+   },[m
+   {[m
+     "type": "item_group",[m
+[1mdiff --git a/data/json/itemgroups/Weapons_Mods_Ammo/nested_guns.json b/data/json/itemgroups/Weapons_Mods_Ammo/nested_guns.json[m
+[1mindex de8d262ca7..bc6f6ac6dd 100644[m
+[1m--- a/data/json/itemgroups/Weapons_Mods_Ammo/nested_guns.json[m
+[1m+++ b/data/json/itemgroups/Weapons_Mods_Ammo/nested_guns.json[m
+[36m@@ -2315,59 +2315,5 @@[m
+       { "group": "nested_stanag_carbon_mag", "ammo-group": "on_hand_223", "prob": 50 },[m
+       { "group": "on_hand_223" }[m
+     ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "nested_pipe_rifle",[m
+[31m-    "type": "item_group",[m
+[31m-    "//": "Pipe rifle with a caliber conversion kit pre-installed.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [ { "item": "pipe_rifle", "contents-group": "gunmod_pipe_conversion" } ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "nested_pipe_pistol",[m
+[31m-    "type": "item_group",[m
+[31m-    "//": "Pipe pistol with a caliber conversion kit pre-installed.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [ { "item": "pipe_pistol", "contents-group": "gunmod_pipe_conversion" } ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "nested_2_shot_special",[m
+[31m-    "type": "item_group",[m
+[31m-    "//": "2-shot special with a caliber conversion kit pre-installed.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [ { "item": "2_shot_special", "contents-group": "gunmod_pipe_conversion" } ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "nested_handmade_carbine",[m
+[31m-    "type": "item_group",[m
+[31m-    "//": "Handmade carbine with 50% chance of a caliber conversion kit or BAR mag adapter installed.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [[m
+[31m-      { "item": "handmade_carbine", "contents-group": "gunmod_hc_mods", "prob": 50 },[m
+[31m-      { "item": "handmade_carbine", "prob": 50 }[m
+[31m-    ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "nested_smg_luty",[m
+[31m-    "type": "item_group",[m
+[31m-    "//": "Luty SMG with 50% chance of a caliber conversion kit installed.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [ { "item": "smg_luty", "contents-group": "gunmod_luty_conversion", "prob": 50 }, { "item": "smg_luty", "prob": 50 } ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "nested_handmade_revolver",[m
+[31m-    "type": "item_group",[m
+[31m-    "//": "Handmade revolver with 50% chance of a caliber conversion kit installed.",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [[m
+[31m-      {[m
+[31m-        "item": "handmade_revolver",[m
+[31m-        "charges-min": 0,[m
+[31m-        "charges-max": 6,[m
+[31m-        "contents-group": "gunmod_hmr_conversion",[m
+[31m-        "prob": 50[m
+[31m-      },[m
+[31m-      { "item": "handmade_revolver", "charges-min": 0, "charges-max": 6, "prob": 50 }[m
+[31m-    ][m
+   }[m
+ ][m
+[1mdiff --git a/data/json/itemgroups/defense_mode.json b/data/json/itemgroups/defense_mode.json[m
+[1mindex 916aec942d..c92441b7da 100644[m
+[1m--- a/data/json/itemgroups/defense_mode.json[m
+[1m+++ b/data/json/itemgroups/defense_mode.json[m
+[36m@@ -103,7 +103,7 @@[m
+       { "item": "whiskey" },[m
+       { "item": "can_beans" },[m
+       { "item": "mre_beef" },[m
+[31m-      { "item": "flour", "charges": [ 5, 40 ] },[m
+[32m+[m[32m      { "item": "flour" },[m
+       { "item": "inhaler" },[m
+       { "item": "codeine" },[m
+       { "item": "oxycodone" },[m
+[1mdiff --git a/data/json/itemgroups/food_service.json b/data/json/itemgroups/food_service.json[m
+[1mindex 2ed5c003bc..e1b6c24aee 100644[m
+[1m--- a/data/json/itemgroups/food_service.json[m
+[1m+++ b/data/json/itemgroups/food_service.json[m
+[36m@@ -282,20 +282,16 @@[m
+   {[m
+     "id": "pizza_kitchen",[m
+     "type": "item_group",[m
+[31m-    "subtype": "distribution",[m
+[31m-    "entries": [[m
+[31m-      { "item": "seasoning_italian", "prob": 23 },[m
+[31m-      { "item": "seasoning_salt", "prob": 13 },[m
+[31m-      { "item": "pepper", "prob": 5 },[m
+[31m-      { "item": "yeast", "prob": 10 },[m
+[31m-      { "item": "sugar", "prob": 9 },[m
+[31m-      { "item": "cornmeal", "prob": 8 },[m
+[31m-      { "item": "cookbook", "prob": 3 },[m
+[31m-      { "item": "cookbook_italian", "prob": 2 },[m
+[31m-      { "item": "flour", "prob": 20, "charges": [ 5, 40 ] },[m
+[31m-      { "item": "flour", "prob": 5, "charges": 40 },[m
+[31m-      { "item": "flour", "prob": 12, "charges": [ 10, 120 ], "container-item": "box_medium" },[m
+[31m-      { "item": "flour", "prob": 3, "charges": 120, "container-item": "box_medium" }[m
+[32m+[m[32m    "items": [[m
+[32m+[m[32m      [ "seasoning_italian", 23 ],[m
+[32m+[m[32m      [ "seasoning_salt", 13 ],[m
+[32m+[m[32m      [ "pepper", 5 ],[m
+[32m+[m[32m      [ "yeast", 10 ],[m
+[32m+[m[32m      [ "sugar", 9 ],[m
+[32m+[m[32m      [ "cornmeal", 8 ],[m
+[32m+[m[32m      [ "flour", 25 ],[m
+[32m+[m[32m      [ "cookbook", 3 ],[m
+[32m+[m[32m      [ "cookbook_italian", 2 ][m
+     ][m
+   },[m
+   {[m
+[36m@@ -580,10 +576,7 @@[m
+       { "item": "can_chicken", "prob": 30 },[m
+       { "item": "sugar", "prob": 40 },[m
+       { "item": "soysauce", "prob": 10 },[m
+[31m-      { "item": "flour", "prob": 25, "charges": [ 5, 40 ] },[m
+[31m-      { "item": "flour", "prob": 5, "charges": 40 },[m
+[31m-      { "item": "flour", "prob": 8, "charges": [ 10, 120 ], "container-item": "box_medium" },[m
+[31m-      { "item": "flour", "prob": 2, "charges": 120, "container-item": "box_medium" },[m
+[32m+[m[32m      { "item": "flour", "prob": 40 },[m
+       { "item": "curry_powder", "prob": 40 },[m
+       { "item": "cornmeal", "prob": 52 }[m
+     ][m
+[36m@@ -720,8 +713,7 @@[m
+     "type": "item_group",[m
+     "subtype": "distribution",[m
+     "entries": [[m
+[31m-      { "item": "flour", "prob": 60, "charges": 40 },[m
+[31m-      { "item": "flour", "prob": 5, "charges": 120, "container-item": "box_medium" },[m
+[32m+[m[32m      { "item": "flour", "prob": 65 },[m
+       { "item": "cornmeal", "prob": 50 },[m
+       { "item": "yeast", "prob": 40 },[m
+       { "item": "powder_eggs", "prob": 55 },[m
+[36m@@ -944,10 +936,7 @@[m
+       [ "pepper", 15 ],[m
+       [ "salt", 20 ],[m
+       [ "sugar", 5 ],[m
+[31m-      { "item": "flour", "prob": 10, "charges": [ 5, 40 ] },[m
+[31m-      { "item": "flour", "prob": 2, "charges": 40 },[m
+[31m-      { "item": "flour", "prob": 4, "charges": [ 10, 120 ], "container-item": "box_medium" },[m
+[31m-      { "item": "flour", "prob": 1, "charges": 120, "container-item": "box_medium" },[m
+[32m+[m[32m      [ "flour", 17 ],[m
+       [ "soysauce", 25 ],[m
+       [ "cooking_oil", 20 ],[m
+       [ "cooking_oil2", 20 ],[m
+[1mdiff --git a/data/json/itemgroups/supplies.json b/data/json/itemgroups/supplies.json[m
+[1mindex b78389b841..90d20068de 100644[m
+[1m--- a/data/json/itemgroups/supplies.json[m
+[1m+++ b/data/json/itemgroups/supplies.json[m
+[36m@@ -702,7 +702,7 @@[m
+       {[m
+         "distribution": [[m
+           { "item": "hardtack", "charges": [ 1, 40 ], "container-item": "bag_canvas_small", "prob": 50 },[m
+[31m-          { "item": "flour", "charges": [ 1, 40 ], "container-item": "bag_canvas_small", "prob": 25 },[m
+[32m+[m[32m          { "item": "flour", "charges": [ 1, 20 ], "container-item": "bag_canvas_small", "prob": 25 },[m
+           { "item": "dry_beans", "charges": [ 1, 12 ], "container-item": "bag_canvas_small", "prob": 25 }[m
+         ],[m
+         "prob": 75[m
+[1mdiff --git a/data/json/items/armor/storage.json b/data/json/items/armor/storage.json[m
+[1mindex 3dc1df67e3..962c991ba8 100644[m
+[1m--- a/data/json/items/armor/storage.json[m
+[1m+++ b/data/json/items/armor/storage.json[m
+[36m@@ -958,8 +958,8 @@[m
+   {[m
+     "id": "survivor_pack",[m
+     "type": "ARMOR",[m
+[31m-    "name": { "str": "survivor MOLLE pack" },[m
+[31m-    "description": "A custom-built backpack.  Durable and carefully crafted to hold as much stuff as possible, as well as covered with equipment straps for quick access to weapons.",[m
+[32m+[m[32m    "name": { "str": "survivor backpack" },[m
+[32m+[m[32m    "description": "A custom-built backpack.  Durable and carefully crafted to hold as much stuff as possible.",[m
+     "weight": "600 g",[m
+     "volume": "2500 ml",[m
+     "price": "240 USD",[m
+[36m@@ -976,17 +976,6 @@[m
+     "storage": "16 L",[m
+     "material_thickness": 2,[m
+     "valid_mods": [ "resized_large", "resized_small" ],[m
+[31m-    "use_action": {[m
+[31m-      "type": "holster",[m
+[31m-      "holster_prompt": "Stow gear",[m
+[31m-      "holster_msg": "You stow your %s",[m
+[31m-      "min_volume": "250ml",[m
+[31m-      "max_volume": "2500ml",[m
+[31m-      "multi": 2,[m
+[31m-      "draw_cost": 120,[m
+[31m-      "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "SHEATH_AXE", "MAG_COMPACT", "MAG_BULKY", "MAG_BELT", "SPEEDLOADER", "BELT_CLIP" ],[m
+[31m-      "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ][m
+[31m-    },[m
+     "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "ALLOWS_WINGS" ][m
+   },[m
+   {[m
+[1mdiff --git a/data/json/items/gun/22.json b/data/json/items/gun/22.json[m
+[1mindex be6da6082b..5015fe8126 100644[m
+[1m--- a/data/json/items/gun/22.json[m
+[1m+++ b/data/json/items/gun/22.json[m
+[36m@@ -76,6 +76,24 @@[m
+     "faults": [ "fault_gun_blackpowder", "fault_gun_dirt" ],[m
+     "flags": [ "RELOAD_ONE", "NEVER_JAMS", "RELOAD_EJECT" ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "rifle_22",[m
+[32m+[m[32m    "copy-from": "rifle_home_made",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "pipe rifle: .22", "str_pl": "pipe rifles: .22" },[m
+[32m+[m[32m    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[32m+[m[32m    "weight": "1953 g",[m
+[32m+[m[32m    "volume": "1750 ml",[m
+[32m+[m[32m    "price": "100 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+[32m+[m[32m    "bashing": 10,[m
+[32m+[m[32m    "ascii_picture": "sm_pipe_gun",[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "22",[m
+[32m+[m[32m    "blackpowder_tolerance": 96,[m
+[32m+[m[32m    "barrel_volume": "500 ml"[m
+[32m+[m[32m  },[m
+   {[m
+     "id": "ruger_1022",[m
+     "copy-from": "rifle_base",[m
+[1mdiff --git a/data/json/items/gun/223.json b/data/json/items/gun/223.json[m
+[1mindex 145d058085..0eb812bc1d 100644[m
+[1m--- a/data/json/items/gun/223.json[m
+[1m+++ b/data/json/items/gun/223.json[m
+[36m@@ -457,6 +457,22 @@[m
+       ][m
+     ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "rifle_223",[m
+[32m+[m[32m    "copy-from": "rifle_home_made",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "pipe rifle: 5.56x45mm", "str_pl": "pipe rifles: 5.56x45mm" },[m
+[32m+[m[32m    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[32m+[m[32m    "weight": "4080 g",[m
+[32m+[m[32m    "volume": "3 L",[m
+[32m+[m[32m    "price": "1100 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "223",[m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": -2 },[m
+[32m+[m[32m    "barrel_volume": "1000 ml"[m
+[32m+[m[32m  },[m
+   {[m
+     "id": "ruger_mini",[m
+     "copy-from": "rifle_semi",[m
+[36m@@ -607,6 +623,61 @@[m
+     ],[m
+     "magazines": [ [ "223", [ "augmag_30rd", "augmag_10rd", "augmag_42rd", "augmag_100rd" ] ] ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "surv_carbine_223",[m
+[32m+[m[32m    "copy-from": "rifle_manual",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "handmade carbine" },[m
+[32m+[m[32m    "//": "It's smaller than an M4A1, plus it's a homemade firearm.",[m
+[32m+[m[32m    "description": "A well-designed improvised lever-action carbine with a shortened barrel.  Accepting crude detachable magazines or STANAG magazines, this is one of the better homemade weapons.",[m
+[32m+[m[32m    "weight": "1950 g",[m
+[32m+[m[32m    "volume": "1500 ml",[m
+[32m+[m[32m    "barrel_volume": "250 ml",[m
+[32m+[m[32m    "price": "100 USD",[m
+[32m+[m[32m    "price_postapoc": "2750 cent",[m
+[32m+[m[32m    "bashing": 6,[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "223",[m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": -4 },[m
+[32m+[m[32m    "dispersion": 550,[m
+[32m+[m[32m    "durability": 6,[m
+[32m+[m[32m    "loudness": -2,[m
+[32m+[m[32m    "reload": 200,[m
+[32m+[m[32m    "valid_mod_locations": [[m
+[32m+[m[32m      [ "accessories", 2 ],[m
+[32m+[m[32m      [ "barrel", 1 ],[m
+[32m+[m[32m      [ "brass catcher", 1 ],[m
+[32m+[m[32m      [ "muzzle", 1 ],[m
+[32m+[m[32m      [ "sling", 1 ],[m
+[32m+[m[32m      [ "stock", 1 ],[m
+[32m+[m[32m      [ "underbarrel", 1 ],[m
+[32m+[m[32m      [ "grip", 1 ],[m
+[32m+[m[32m      [ "rail", 1 ],[m
+[32m+[m[32m      [ "sights", 1 ][m
+[32m+[m[32m    ],[m
+[32m+[m[32m    "magazines": [[m
+[32m+[m[32m      [[m
+[32m+[m[32m        "223",[m
+[32m+[m[32m        [[m
+[32m+[m[32m          "survivor223mag",[m
+[32m+[m[32m          "carbonmag_223",[m
+[32m+[m[32m          "stanag30",[m
+[32m+[m[32m          "stanag5",[m
+[32m+[m[32m          "stanag10",[m
+[32m+[m[32m          "stanag20",[m
+[32m+[m[32m          "stanag40",[m
+[32m+[m[32m          "stanag50",[m
+[32m+[m[32m          "stanag60",[m
+[32m+[m[32m          "stanag60drum",[m
+[32m+[m[32m          "stanag90",[m
+[32m+[m[32m          "stanag100",[m
+[32m+[m[32m          "stanag100drum",[m
+[32m+[m[32m          "stanag150"[m
+[32m+[m[32m        ][m
+[32m+[m[32m      ][m
+[32m+[m[32m    ][m
+[32m+[m[32m  },[m
+   {[m
+     "id": "carbon_rifle",[m
+     "copy-from": "rifle_auto",[m
+[1mdiff --git a/data/json/items/gun/3006.json b/data/json/items/gun/3006.json[m
+[1mindex 6f9be65370..adbec628de 100644[m
+[1m--- a/data/json/items/gun/3006.json[m
+[1m+++ b/data/json/items/gun/3006.json[m
+[36m@@ -125,41 +125,20 @@[m
+     "flags": [ "RELOAD_ONE", "NEVER_JAMS" ][m
+   },[m
+   {[m
+[31m-    "id": "handmade_carbine",[m
+[31m-    "copy-from": "rifle_manual",[m
+[32m+[m[32m    "id": "rifle_3006",[m
+[32m+[m[32m    "copy-from": "rifle_home_made",[m
+     "type": "GUN",[m
+[31m-    "name": { "str": "handmade carbine" },[m
+[31m-    "looks_like": "rifle_308",[m
+[31m-    "description": "A modular handmade lever-action carbine chambered in .30-06 with a 5-round internal magazine.  A marked improvement over the crude single-shot pipe rifle, its simple design allows for field conversion to .223 or .308, and various magazine adapters can be fitted.",[m
+[31m-    "weight": "2125 g",[m
+[31m-    "volume": "1750 ml",[m
+[31m-    "price": "100 USD",[m
+[31m-    "price_postapoc": "2500 cent",[m
+[31m-    "bashing": 8,[m
+[32m+[m[32m    "name": { "str": "pipe rifle: .30-06", "str_pl": "pipe rifles: .30-06" },[m
+[32m+[m[32m    "//": "It's the same size as the others, but it's still a scrap weapon.",[m
+[32m+[m[32m    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[32m+[m[32m    "weight": "4080 g",[m
+[32m+[m[32m    "volume": "3 L",[m
+[32m+[m[32m    "price": "1100 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+     "material": [ "steel", "wood" ],[m
+     "color": "brown",[m
+     "ammo": "3006",[m
+[31m-    "ranged_damage": { "damage_type": "bullet", "amount": -5 },[m
+[31m-    "dispersion": 550,[m
+[31m-    "durability": 6,[m
+[31m-    "clip_size": 5,[m
+[31m-    "reload": 200,[m
+[31m-    "loudness": -2,[m
+[31m-    "barrel_volume": "375 ml",[m
+[31m-    "flags": [ "RELOAD_ONE" ],[m
+[31m-    "valid_mod_locations": [[m
+[31m-      [ "accessories", 4 ],[m
+[31m-      [ "barrel", 1 ],[m
+[31m-      [ "bore", 1 ],[m
+[31m-      [ "brass catcher", 1 ],[m
+[31m-      [ "grip", 1 ],[m
+[31m-      [ "mechanism", 4 ],[m
+[31m-      [ "muzzle", 1 ],[m
+[31m-      [ "rail", 1 ],[m
+[31m-      [ "sights", 1 ],[m
+[31m-      [ "sling", 1 ],[m
+[31m-      [ "stock", 1 ],[m
+[31m-      [ "underbarrel", 1 ][m
+[31m-    ][m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": -2 },[m
+[32m+[m[32m    "barrel_volume": "1000 ml"[m
+   }[m
+ ][m
+[1mdiff --git a/data/json/items/gun/308.json b/data/json/items/gun/308.json[m
+[1mindex 319df15540..1063e37c2d 100644[m
+[1m--- a/data/json/items/gun/308.json[m
+[1m+++ b/data/json/items/gun/308.json[m
+[36m@@ -199,6 +199,43 @@[m
+     ],[m
+     "magazines": [ [ "308", [ "belt308" ] ] ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "rifle_308",[m
+[32m+[m[32m    "copy-from": "rifle_manual",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "handmade heavy carbine" },[m
+[32m+[m[32m    "//": "It's amongst the smallest of the 7.62x51mm(.308) firearms, and a scrap weapon as well. This means a short handmade barrel, and considerable loss of energy.",[m
+[32m+[m[32m    "description": "A homemade lever-action magazine-fed smoothbore rifle.  While still a primitive pipe and 2x4 design, some minor improvements have been made, such as being able to accept G3 compatible magazines, and chambering the more powerful 7.62x51mm (.308) rounds.",[m
+[32m+[m[32m    "weight": "2311 g",[m
+[32m+[m[32m    "volume": "2 L",[m
+[32m+[m[32m    "price": "100 USD",[m
+[32m+[m[32m    "price_postapoc": "2250 cent",[m
+[32m+[m[32m    "bashing": 10,[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "308",[m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": -5 },[m
+[32m+[m[32m    "dispersion": 550,[m
+[32m+[m[32m    "durability": 6,[m
+[32m+[m[32m    "reload": 200,[m
+[32m+[m[32m    "loudness": -2,[m
+[32m+[m[32m    "barrel_volume": "500 ml",[m
+[32m+[m[32m    "valid_mod_locations": [[m
+[32m+[m[32m      [ "accessories", 4 ],[m
+[32m+[m[32m      [ "barrel", 1 ],[m
+[32m+[m[32m      [ "bore", 1 ],[m
+[32m+[m[32m      [ "brass catcher", 1 ],[m
+[32m+[m[32m      [ "muzzle", 1 ],[m
+[32m+[m[32m      [ "stock", 1 ],[m
+[32m+[m[32m      [ "mechanism", 4 ],[m
+[32m+[m[32m      [ "sights", 1 ],[m
+[32m+[m[32m      [ "sling", 1 ],[m
+[32m+[m[32m      [ "grip", 1 ],[m
+[32m+[m[32m      [ "rail", 1 ],[m
+[32m+[m[32m      [ "underbarrel", 1 ][m
+[32m+[m[32m    ],[m
+[32m+[m[32m    "magazines": [ [ "308", [ "g3_makeshiftmag", "g3mag", "g3bigmag" ] ] ][m
+[32m+[m[32m  },[m
+   {[m
+     "id": "savage_111f",[m
+     "copy-from": "rifle_manual",[m
+[1mdiff --git a/data/json/items/gun/38.json b/data/json/items/gun/38.json[m
+[1mindex 72c98e9938..a848d0a706 100644[m
+[1m--- a/data/json/items/gun/38.json[m
+[1m+++ b/data/json/items/gun/38.json[m
+[36m@@ -1,4 +1,30 @@[m
+ [[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "2_shot_special",[m
+[32m+[m[32m    "copy-from": "pistol_1shot",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "2 Shot Special" },[m
+[32m+[m[32m    "//": "It's hard to say just how big this is, although it's (very large) pistol sized. But it is a handmade weapon.",[m
+[32m+[m[32m    "description": "A crudely made double barrel pistol firing 38 special ammo.  Unfortunately, the name is less about the double barrels and more about the number of shots you'll get before it breaks down on you.",[m
+[32m+[m[32m    "weight": "750 g",[m
+[32m+[m[32m    "volume": "700 ml",[m
+[32m+[m[32m    "barrel_volume": "75 ml",[m
+[32m+[m[32m    "price": "20 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+[32m+[m[32m    "ascii_picture": "2_shot_special",[m
+[32m+[m[32m    "bashing": 3,[m
+[32m+[m[32m    "material": [ "steel" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "38",[m
+[32m+[m[32m    "dispersion": 620,[m
+[32m+[m[32m    "durability": 3,[m
+[32m+[m[32m    "clip_size": 2,[m
+[32m+[m[32m    "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],[m
+[32m+[m[32m    "reload": 200,[m
+[32m+[m[32m    "loudness": 2,[m
+[32m+[m[32m    "valid_mod_locations": [ [ "accessories", 4 ], [ "grip", 1 ], [ "sights", 1 ], [ "underbarrel", 1 ], [ "rail", 1 ], [ "stock", 1 ] ],[m
+[32m+[m[32m    "delete": { "flags": "NEVER_JAMS" }[m
+[32m+[m[32m  },[m
+   {[m
+     "id": "cop_38",[m
+     "copy-from": "pistol_1shot",[m
+[36m@@ -44,6 +70,23 @@[m
+     "ammo": "38",[m
+     "magazines": [ [ "38", [ "38_speedloader6" ] ] ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "rifle_38",[m
+[32m+[m[32m    "copy-from": "rifle_home_made",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "pipe rifle: .38 Special", "str_pl": "pipe rifles: .38 Special" },[m
+[32m+[m[32m    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[32m+[m[32m    "weight": "2114 g",[m
+[32m+[m[32m    "volume": "2 L",[m
+[32m+[m[32m    "price": "100 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+[32m+[m[32m    "ascii_picture": "ps_pipe_gun",[m
+[32m+[m[32m    "bashing": 10,[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "38",[m
+[32m+[m[32m    "barrel_volume": "750 ml"[m
+[32m+[m[32m  },[m
+   {[m
+     "id": "ruger_lcr_38",[m
+     "copy-from": "pistol_revolver",[m
+[36m@@ -174,38 +217,5 @@[m
+       [ "rail", 1 ],[m
+       [ "underbarrel", 1 ][m
+     ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "handmade_revolver",[m
+[31m-    "copy-from": "pistol_revolver",[m
+[31m-    "type": "GUN",[m
+[31m-    "name": { "str": "handmade revolver" },[m
+[31m-    "description": "A sturdy improvised revolver chambered for .38 Special and .357 Magnum.  Its simple design allows for field conversion to 9mm, .40 S&W, .44 Magnum, or .45 ACP with replacement barrel and cylinder assemblies.",[m
+[31m-    "weight": "1250 g",[m
+[31m-    "volume": "875 ml",[m
+[31m-    "barrel_volume": "100 ml",[m
+[31m-    "price": "400 USD",[m
+[31m-    "price_postapoc": "750 cent",[m
+[31m-    "material": [ "steel" ],[m
+[31m-    "color": "dark_gray",[m
+[31m-    "ammo": [ "357mag", "38" ],[m
+[31m-    "ranged_damage": { "damage_type": "bullet", "amount": -1 },[m
+[31m-    "dispersion": 620,[m
+[31m-    "durability": 6,[m
+[31m-    "magazines": [ [ "38", [ "38_speedloader6" ] ] ],[m
+[31m-    "reload": 285,[m
+[31m-    "loudness": 2,[m
+[31m-    "valid_mod_locations": [[m
+[31m-      [ "accessories", 2 ],[m
+[31m-      [ "barrel", 1 ],[m
+[31m-      [ "bore", 1 ],[m
+[31m-      [ "grip", 1 ],[m
+[31m-      [ "sights", 1 ],[m
+[31m-      [ "stock", 1 ],[m
+[31m-      [ "underbarrel", 1 ],[m
+[31m-      [ "rail", 1 ][m
+[31m-    ],[m
+[31m-    "flags": [ "RELOAD_ONE", "NEVER_JAMS", "RELOAD_EJECT" ],[m
+[31m-    "delete": { "faults": "fault_gun_chamber_spent" }[m
+   }[m
+ ][m
+[1mdiff --git a/data/json/items/gun/40.json b/data/json/items/gun/40.json[m
+[1mindex 3921682b89..439823d6f8 100644[m
+[1m--- a/data/json/items/gun/40.json[m
+[1m+++ b/data/json/items/gun/40.json[m
+[36m@@ -74,6 +74,23 @@[m
+     "magazine_well": "250 ml",[m
+     "magazines": [ [ "40", [ "px4_40mag" ] ] ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "rifle_40",[m
+[32m+[m[32m    "copy-from": "rifle_home_made",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "pipe rifle: .40 S&W", "str_pl": "pipe rifles: .40 S&W" },[m
+[32m+[m[32m    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[32m+[m[32m    "weight": "2114 g",[m
+[32m+[m[32m    "volume": "2 L",[m
+[32m+[m[32m    "price": "100 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+[32m+[m[32m    "ascii_picture": "ps_pipe_gun",[m
+[32m+[m[32m    "bashing": 10,[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "40",[m
+[32m+[m[32m    "barrel_volume": "750 ml"[m
+[32m+[m[32m  },[m
+   {[m
+     "id": "sig_40",[m
+     "copy-from": "pistol_base",[m
+[36m@@ -107,6 +124,77 @@[m
+     "magazine_well": "250 ml",[m
+     "magazines": [ [ "40", [ "sig40mag" ] ] ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "smg_40",[m
+[32m+[m[32m    "copy-from": "smg_base",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "Luty SMG: .40 S&W", "str_pl": "Luty SMGs: .40 S&W" },[m
+[32m+[m[32m    "description": "A Luty pattern makeshift smoothbore SMG crudely constructed out of various steel parts using some of the more advanced powered hand tools; likely one of the most complex guns that are feasible to make outside of a machine shop, but still very unreliable.  This one is chambered for .40 S&W cartridges and accepts custom-made makeshift magazines.",[m
+[32m+[m[32m    "//": "Crafting recipe must make use of angle grinder, bench grinder, set square and vise, which don't yet exist in game. No factory mags until UMP40, mp5/40, or other straight .40 mags are implemented.",[m
+[32m+[m[32m    "weight": "3274 g",[m
+[32m+[m[32m    "volume": "1750 ml",[m
+[32m+[m[32m    "price": "200 USD",[m
+[32m+[m[32m    "price_postapoc": "15 USD",[m
+[32m+[m[32m    "material": "steel",[m
+[32m+[m[32m    "color": "dark_gray",[m
+[32m+[m[32m    "ammo": "40",[m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": -4 },[m
+[32m+[m[32m    "dispersion": 590,[m
+[32m+[m[32m    "durability": 4,[m
+[32m+[m[32m    "blackpowder_tolerance": 24,[m
+[32m+[m[32m    "min_cycle_recoil": 425,[m
+[32m+[m[32m    "handling": 20,[m
+[32m+[m[32m    "loudness": 0,[m
+[32m+[m[32m    "modes": [ [ "DEFAULT", "burst", 5 ] ],[m
+[32m+[m[32m    "barrel_volume": "250 ml",[m
+[32m+[m[32m    "valid_mod_locations": [[m
+[32m+[m[32m      [ "accessories", 3 ],[m
+[32m+[m[32m      [ "barrel", 1 ],[m
+[32m+[m[32m      [ "brass catcher", 1 ],[m
+[32m+[m[32m      [ "grip", 1 ],[m
+[32m+[m[32m      [ "magazine", 1 ],[m
+[32m+[m[32m      [ "muzzle", 1 ],[m
+[32m+[m[32m      [ "rail", 1 ],[m
+[32m+[m[32m      [ "sights", 1 ],[m
+[32m+[m[32m      [ "sling", 1 ],[m
+[32m+[m[32m      [ "stock", 1 ],[m
+[32m+[m[32m      [ "underbarrel", 1 ][m
+[32m+[m[32m    ],[m
+[32m+[m[32m    "magazines": [ [ "40", [ "smg_40_mag" ] ] ][m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "surv_six_shooter",[m
+[32m+[m[32m    "copy-from": "pistol_revolver",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "handmade six-shooter" },[m
+[32m+[m[32m    "description": "A homemade 6-shot revolver.  While it's not as good as the pre-Cataclysm manufactured weapons, it's a decent piece of work, all things considered.",[m
+[32m+[m[32m    "weight": "1333 g",[m
+[32m+[m[32m    "volume": "750 ml",[m
+[32m+[m[32m    "barrel_volume": "100 ml",[m
+[32m+[m[32m    "price": "150 USD",[m
+[32m+[m[32m    "price_postapoc": "750 cent",[m
+[32m+[m[32m    "material": [ "steel" ],[m
+[32m+[m[32m    "color": "dark_gray",[m
+[32m+[m[32m    "ammo": "40",[m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": -1 },[m
+[32m+[m[32m    "dispersion": 620,[m
+[32m+[m[32m    "durability": 6,[m
+[32m+[m[32m    "magazines": [ [ "40", [ "40_speedloader6" ] ] ],[m
+[32m+[m[32m    "reload": 285,[m
+[32m+[m[32m    "loudness": 2,[m
+[32m+[m[32m    "valid_mod_locations": [[m
+[32m+[m[32m      [ "accessories", 2 ],[m
+[32m+[m[32m      [ "barrel", 1 ],[m
+[32m+[m[32m      [ "bore", 1 ],[m
+[32m+[m[32m      [ "grip", 1 ],[m
+[32m+[m[32m      [ "sights", 1 ],[m
+[32m+[m[32m      [ "stock", 1 ],[m
+[32m+[m[32m      [ "underbarrel", 1 ],[m
+[32m+[m[32m      [ "rail", 1 ][m
+[32m+[m[32m    ],[m
+[32m+[m[32m    "flags": [ "RELOAD_ONE", "NEVER_JAMS", "RELOAD_EJECT" ],[m
+[32m+[m[32m    "delete": { "faults": "fault_gun_chamber_spent" }[m
+[32m+[m[32m  },[m
+   {[m
+     "id": "sw_610",[m
+     "copy-from": "pistol_revolver",[m
+[1mdiff --git a/data/json/items/gun/44.json b/data/json/items/gun/44.json[m
+[1mindex 793cfcae63..87cdcfeb8e 100644[m
+[1m--- a/data/json/items/gun/44.json[m
+[1m+++ b/data/json/items/gun/44.json[m
+[36m@@ -67,6 +67,23 @@[m
+       [ "underbarrel", 1 ][m
+     ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "rifle_44",[m
+[32m+[m[32m    "copy-from": "rifle_home_made",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "pipe rifle: .44 Magnum", "str_pl": "pipe rifles: .44 Magnum" },[m
+[32m+[m[32m    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[32m+[m[32m    "weight": "2114 g",[m
+[32m+[m[32m    "volume": "2 L",[m
+[32m+[m[32m    "price": "100 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+[32m+[m[32m    "ascii_picture": "lg_pipe_gun",[m
+[32m+[m[32m    "bashing": 10,[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "44",[m
+[32m+[m[32m    "barrel_volume": "750 ml"[m
+[32m+[m[32m  },[m
+   {[m
+     "id": "ruger_redhawk",[m
+     "copy-from": "pistol_revolver",[m
+[1mdiff --git a/data/json/items/gun/45.json b/data/json/items/gun/45.json[m
+[1mindex 32184fa17d..cb4dc8f59e 100644[m
+[1m--- a/data/json/items/gun/45.json[m
+[1m+++ b/data/json/items/gun/45.json[m
+[36m@@ -108,6 +108,84 @@[m
+     "magazine_well": "250 ml",[m
+     "magazines": [ [ "45", [ "mac10mag", "smg_45_mag" ] ] ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "rifle_45",[m
+[32m+[m[32m    "copy-from": "rifle_home_made",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "pipe rifle: .45", "str_pl": "pipe rifles: .45" },[m
+[32m+[m[32m    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[32m+[m[32m    "weight": "2114 g",[m
+[32m+[m[32m    "volume": "2 L",[m
+[32m+[m[32m    "price": "100 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+[32m+[m[32m    "ascii_picture": "ps_pipe_gun",[m
+[32m+[m[32m    "bashing": 10,[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "45",[m
+[32m+[m[32m    "barrel_volume": "750 ml"[m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "smg_45",[m
+[32m+[m[32m    "copy-from": "smg_base",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "Luty SMG: .45", "str_pl": "Luty SMGs: .45" },[m
+[32m+[m[32m    "description": "A Luty pattern makeshift smoothbore SMG crudely constructed out of various steel parts using some of the more advanced powered hand tools; likely one of the most complex guns that are feasible to make outside of a machine shop, but still very unreliable.  This one is chambered for .45 ACP cartridges and accepts MAC-10 compatible magazines.",[m
+[32m+[m[32m    "//": "Crafting recipe must make use of angle grinder, bench grinder, set square and vise, which don't yet exist in game.",[m
+[32m+[m[32m    "weight": "3274 g",[m
+[32m+[m[32m    "volume": "1750 ml",[m
+[32m+[m[32m    "price": "200 USD",[m
+[32m+[m[32m    "price_postapoc": "15 USD",[m
+[32m+[m[32m    "material": "steel",[m
+[32m+[m[32m    "color": "dark_gray",[m
+[32m+[m[32m    "ammo": "45",[m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": -4 },[m
+[32m+[m[32m    "dispersion": 590,[m
+[32m+[m[32m    "durability": 4,[m
+[32m+[m[32m    "blackpowder_tolerance": 24,[m
+[32m+[m[32m    "min_cycle_recoil": 456,[m
+[32m+[m[32m    "modes": [ [ "DEFAULT", "burst", 5 ] ],[m
+[32m+[m[32m    "barrel_volume": "250 ml",[m
+[32m+[m[32m    "handling": 20,[m
+[32m+[m[32m    "loudness": 0,[m
+[32m+[m[32m    "valid_mod_locations": [[m
+[32m+[m[32m      [ "accessories", 3 ],[m
+[32m+[m[32m      [ "barrel", 1 ],[m
+[32m+[m[32m      [ "brass catcher", 1 ],[m
+[32m+[m[32m      [ "grip", 1 ],[m
+[32m+[m[32m      [ "magazine", 1 ],[m
+[32m+[m[32m      [ "muzzle", 1 ],[m
+[32m+[m[32m      [ "rail", 1 ],[m
+[32m+[m[32m      [ "sights", 1 ],[m
+[32m+[m[32m      [ "sling", 1 ],[m
+[32m+[m[32m      [ "stock", 1 ],[m
+[32m+[m[32m      [ "underbarrel", 1 ][m
+[32m+[m[32m    ],[m
+[32m+[m[32m    "magazines": [ [ "45", [ "smg_45_mag", "mac10mag" ] ] ][m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "surv_hand_cannon",[m
+[32m+[m[32m    "copy-from": "pistol_revolver",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "homemade hand cannon" },[m
+[32m+[m[32m    "//": "On one hand, it's very big for a handgun. On the other, it's still a scrap weapon.",[m
+[32m+[m[32m    "description": "A large and heavy revolver evidently welded from scrap.  It's not pretty, but the .45 it's chambered with packs a serious punch.  Just watch out for the kick.",[m
+[32m+[m[32m    "weight": "1200 g",[m
+[32m+[m[32m    "volume": "1 L",[m
+[32m+[m[32m    "barrel_volume": "100 ml",[m
+[32m+[m[32m    "price": "600 USD",[m
+[32m+[m[32m    "price_postapoc": "750 cent",[m
+[32m+[m[32m    "to_hit": -3,[m
+[32m+[m[32m    "bashing": 12,[m
+[32m+[m[32m    "material": [ "steel" ],[m
+[32m+[m[32m    "color": "dark_gray",[m
+[32m+[m[32m    "ammo": "45",[m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": 2 },[m
+[32m+[m[32m    "dispersion": 620,[m
+[32m+[m[32m    "durability": 7,[m
+[32m+[m[32m    "clip_size": 5,[m
+[32m+[m[32m    "loudness": 2[m
+[32m+[m[32m  },[m
+   {[m
+     "id": "tommygun",[m
+     "copy-from": "smg_base",[m
+[1mdiff --git a/data/json/items/gun/9mm.json b/data/json/items/gun/9mm.json[m
+[1mindex 8b4aac67d8..e5ae8dfa5b 100644[m
+[1m--- a/data/json/items/gun/9mm.json[m
+[1m+++ b/data/json/items/gun/9mm.json[m
+[36m@@ -331,6 +331,49 @@[m
+     "magazine_well": "250 ml",[m
+     "magazines": [ [ "9mm", [ "px4mag" ] ] ][m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "rifle_9mm",[m
+[32m+[m[32m    "copy-from": "rifle_home_made",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "pipe rifle: 9x19mm", "str_pl": "pipe rifles: 9x19mm" },[m
+[32m+[m[32m    "//": "Despite its quality, it IS a small rifle, although not as effective as a genuine pistol carbine.",[m
+[32m+[m[32m    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[32m+[m[32m    "weight": "2114 g",[m
+[32m+[m[32m    "volume": "2 L",[m
+[32m+[m[32m    "price": "100 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+[32m+[m[32m    "ascii_picture": "ps_pipe_gun",[m
+[32m+[m[32m    "bashing": 10,[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "color": "brown",[m
+[32m+[m[32m    "ammo": "9mm",[m
+[32m+[m[32m    "barrel_volume": "750 ml"[m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "smg_9mm",[m
+[32m+[m[32m    "copy-from": "smg_base",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "Luty SMG: 9x19mm", "str_pl": "Luty SMGs: 9x19mm" },[m
+[32m+[m[32m    "description": "A Luty pattern makeshift smoothbore SMG crudely constructed out of various steel parts using some of the more advanced powered hand tools; likely one of the most complex guns that are feasible to make outside of a machine shop, but still very unreliable.  This one is chambered for 9x19mm cartridges and accepts STEN compatible magazines.",[m
+[32m+[m[32m    "//": "Crafting recipe must make use of angle grinder, bench grinder, set square and vise, which don't yet exist in game.",[m
+[32m+[m[32m    "weight": "3274 g",[m
+[32m+[m[32m    "volume": "1750 ml",[m
+[32m+[m[32m    "price": "200 USD",[m
+[32m+[m[32m    "price_postapoc": "750 cent",[m
+[32m+[m[32m    "material": "steel",[m
+[32m+[m[32m    "color": "dark_gray",[m
+[32m+[m[32m    "ammo": "9mm",[m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": -3 },[m
+[32m+[m[32m    "dispersion": 590,[m
+[32m+[m[32m    "durability": 4,[m
+[32m+[m[32m    "blackpowder_tolerance": 24,[m
+[32m+[m[32m    "min_cycle_recoil": 380,[m
+[32m+[m[32m    "handling": 20,[m
+[32m+[m[32m    "loudness": 0,[m
+[32m+[m[32m    "modes": [ [ "DEFAULT", "burst", 5 ] ],[m
+[32m+[m[32m    "barrel_volume": "250 ml",[m
+[32m+[m[32m    "magazines": [ [ "9mm", [ "survivor9mm_mag", "stenmag" ] ] ][m
+[32m+[m[32m  },[m
+   {[m
+     "id": "sten",[m
+     "copy-from": "smg_base",[m
+[36m@@ -666,31 +709,5 @@[m
+     "magazines": [[m
+       [ "9mm", [ "kriss_vector_9mm_mag", "glock17_17", "glock17_22", "glock_drum_50rd", "glock_drum_100rd", "glockbigmag" ] ][m
+     ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "smg_luty",[m
+[31m-    "copy-from": "smg_base",[m
+[31m-    "type": "GUN",[m
+[31m-    "name": { "str": "Luty SMG" },[m
+[31m-    "looks_like": "smg_9mm",[m
+[31m-    "description": "A Luty pattern makeshift smoothbore SMG crudely constructed out of various steel parts using some of the more advanced powered hand tools; likely one of the most complex guns that are feasible to make outside of a machine shop, but still very unreliable.  This one is chambered for 9x19mm cartridges by default and accepts STEN compatible magazines.  The modular design allows for field conversion to .40 S&W or .45 ACP.",[m
+[31m-    "//": "Crafting recipe must make use of angle grinder, bench grinder, set square and vise, which don't yet exist in game.",[m
+[31m-    "weight": "3275 g",[m
+[31m-    "volume": "1750 ml",[m
+[31m-    "price": "200 USD",[m
+[31m-    "price_postapoc": "750 cent",[m
+[31m-    "material": "steel",[m
+[31m-    "color": "dark_gray",[m
+[31m-    "ammo": "9mm",[m
+[31m-    "ranged_damage": { "damage_type": "bullet", "amount": -3 },[m
+[31m-    "dispersion": 590,[m
+[31m-    "durability": 4,[m
+[31m-    "blackpowder_tolerance": 24,[m
+[31m-    "min_cycle_recoil": 380,[m
+[31m-    "handling": 20,[m
+[31m-    "loudness": 0,[m
+[31m-    "modes": [ [ "DEFAULT", "burst", 5 ] ],[m
+[31m-    "barrel_volume": "250 ml",[m
+[31m-    "magazines": [ [ "9mm", [ "survivor9mm_mag", "stenmag" ] ] ][m
+   }[m
+ ][m
+[1mdiff --git a/data/json/items/gun/monster_gun.json b/data/json/items/gun/monster_gun.json[m
+[1mindex 1371f81f69..6039dbc97b 100644[m
+[1m--- a/data/json/items/gun/monster_gun.json[m
+[1m+++ b/data/json/items/gun/monster_gun.json[m
+[36m@@ -164,26 +164,5 @@[m
+     "range": 8,[m
+     "dispersion": 2000,[m
+     "durability": 8[m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "feral_pa_boss_grenade",[m
+[31m-    "copy-from": "launcher_base",[m
+[31m-    "type": "GUN",[m
+[31m-    "name": { "str": "feral armored bio-operator grenade launcher" },[m
+[31m-    "description": "Fake grenade launcher used for the grenade launcher feral armored bio-op.",[m
+[31m-    "volume": "2250 ml",[m
+[31m-    "price": "0 cent",[m
+[31m-    "to_hit": -2,[m
+[31m-    "bashing": 9,[m
+[31m-    "material": [ "steel", "plastic" ],[m
+[31m-    "looks_like": "bio_int_enhancer",[m
+[31m-    "color": "magenta",[m
+[31m-    "ammo": [ "40x46mm", "40x53mm" ],[m
+[31m-    "dispersion": 3000,[m
+[31m-    "durability": 6,[m
+[31m-    "clip_size": 3,[m
+[31m-    "reload": 150,[m
+[31m-    "loudness": -20,[m
+[31m-    "flags": [ "NEVER_JAMS", "NO_UNWIELD", "TRADER_AVOID", "RELOAD_ONE" ][m
+   }[m
+ ][m
+[1mdiff --git a/data/json/items/gun/pipe_gun.json b/data/json/items/gun/pipe_gun.json[m
+[1mdeleted file mode 100644[m
+[1mindex dc1de9e5e9..0000000000[m
+[1m--- a/data/json/items/gun/pipe_gun.json[m
+[1m+++ /dev/null[m
+[36m@@ -1,156 +0,0 @@[m
+[31m-[[m
+[31m-  {[m
+[31m-    "id": "pipe_pistol",[m
+[31m-    "copy-from": "pistol_1shot",[m
+[31m-    "type": "GUN",[m
+[31m-    "name": { "str": "modular pipe pistol" },[m
+[31m-    "looks_like": "2_shot_special",[m
+[31m-    "description": "A home-made pistol.  It is simply a short pipe attached to a grip, with a hammer to strike the single round it holds.  A pipe gun caliber conversion kit can be installed to change its caliber.",[m
+[31m-    "weight": "550 g",[m
+[31m-    "volume": "650 ml",[m
+[31m-    "barrel_volume": "75 ml",[m
+[31m-    "price": "75 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "bashing": 6,[m
+[31m-    "material": [ "steel", "wood" ],[m
+[31m-    "color": "brown",[m
+[31m-    "ammo": "38",[m
+[31m-    "dispersion": 620,[m
+[31m-    "durability": 5,[m
+[31m-    "ranged_damage": { "damage_type": "bullet", "amount": -2 },[m
+[31m-    "handling": 8,[m
+[31m-    "blackpowder_tolerance": 96,[m
+[31m-    "clip_size": 1,[m
+[31m-    "valid_mod_locations": [[m
+[31m-      [ "accessories", 4 ],[m
+[31m-      [ "bore", 1 ],[m
+[31m-      [ "grip", 1 ],[m
+[31m-      [ "muzzle", 1 ],[m
+[31m-      [ "rail", 1 ],[m
+[31m-      [ "sights", 1 ],[m
+[31m-      [ "sling", 1 ],[m
+[31m-      [ "stock", 1 ],[m
+[31m-      [ "underbarrel", 1 ][m
+[31m-    ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "2_shot_special",[m
+[31m-    "copy-from": "pipe_pistol",[m
+[31m-    "type": "GUN",[m
+[31m-    "name": { "str": "2 Shot Special" },[m
+[31m-    "//": "It's hard to say just how big this is, although it's (very large) pistol sized. But it is a handmade weapon.",[m
+[31m-    "description": "A crudely made double barrel pistol.  Unfortunately, the name is less about the double barrels and more about the number of shots you'll get before it breaks down on you.  A pipe gun caliber conversion kit can be installed to change its caliber.",[m
+[31m-    "weight": "750 g",[m
+[31m-    "volume": "700 ml",[m
+[31m-    "barrel_volume": "75 ml",[m
+[31m-    "price": "20 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "ascii_picture": "2_shot_special",[m
+[31m-    "bashing": 3,[m
+[31m-    "material": [ "steel" ],[m
+[31m-    "color": "brown",[m
+[31m-    "ammo": "38",[m
+[31m-    "dispersion": 620,[m
+[31m-    "durability": 3,[m
+[31m-    "clip_size": 2,[m
+[31m-    "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],[m
+[31m-    "reload": 200,[m
+[31m-    "loudness": 2,[m
+[31m-    "valid_mod_locations": [[m
+[31m-      [ "accessories", 4 ],[m
+[31m-      [ "bore", 1 ],[m
+[31m-      [ "grip", 1 ],[m
+[31m-      [ "sights", 1 ],[m
+[31m-      [ "underbarrel", 1 ],[m
+[31m-      [ "rail", 1 ],[m
+[31m-      [ "stock", 1 ][m
+[31m-    ],[m
+[31m-    "delete": { "flags": "NEVER_JAMS" }[m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "pipe_rifle",[m
+[31m-    "copy-from": "rifle_home_made",[m
+[31m-    "type": "GUN",[m
+[31m-    "name": { "str": "modular pipe rifle" },[m
+[31m-    "looks_like": "rifle_223",[m
+[31m-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds. A pipe gun caliber conversion kit can be installed to change its caliber.",[m
+[31m-    "weight": "1500 g",[m
+[31m-    "volume": "1250 ml",[m
+[31m-    "price": "100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "bashing": 10,[m
+[31m-    "ascii_picture": "ps_pipe_gun",[m
+[31m-    "material": [ "steel", "wood" ],[m
+[31m-    "color": "brown",[m
+[31m-    "ammo": "22",[m
+[31m-    "blackpowder_tolerance": 96,[m
+[31m-    "barrel_volume": "500 ml",[m
+[31m-    "valid_mod_locations": [[m
+[31m-      [ "accessories", 2 ],[m
+[31m-      [ "bore", 1 ],[m
+[31m-      [ "muzzle", 1 ],[m
+[31m-      [ "sling", 1 ],[m
+[31m-      [ "stock", 1 ],[m
+[31m-      [ "grip", 1 ],[m
+[31m-      [ "rail", 1 ],[m
+[31m-      [ "sights", 1 ],[m
+[31m-      [ "underbarrel", 1 ][m
+[31m-    ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "pipe_shotgun",[m
+[31m-    "copy-from": "shotgun_1shot",[m
+[31m-    "type": "GUN",[m
+[31m-    "name": { "str": "pipe shotgun" },[m
+[31m-    "description": "A home-made shotgun.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[31m-    "weight": "2250 g",[m
+[31m-    "volume": "2200 ml",[m
+[31m-    "price": "200 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "ascii_picture": "lg_pipe_gun",[m
+[31m-    "material": [ "steel", "wood" ],[m
+[31m-    "handling": 10,[m
+[31m-    "ranged_damage": { "damage_type": "bullet", "amount": 2 },[m
+[31m-    "dispersion": 855,[m
+[31m-    "durability": 6,[m
+[31m-    "clip_size": 1,[m
+[31m-    "reload": 200,[m
+[31m-    "loudness": -2,[m
+[31m-    "barrel_volume": "500 ml",[m
+[31m-    "valid_mod_locations": [[m
+[31m-      [ "accessories", 2 ],[m
+[31m-      [ "sling", 1 ],[m
+[31m-      [ "stock", 1 ],[m
+[31m-      [ "barrel", 1 ],[m
+[31m-      [ "muzzle", 1 ],[m
+[31m-      [ "grip", 1 ],[m
+[31m-      [ "rail", 1 ],[m
+[31m-      [ "sights", 1 ],[m
+[31m-      [ "underbarrel", 1 ][m
+[31m-    ],[m
+[31m-    "flags": [ "NEVER_JAMS", "RELOAD_EJECT" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "pipe_double_shotgun",[m
+[31m-    "copy-from": "pipe_shotgun",[m
+[31m-    "type": "GUN",[m
+[31m-    "name": { "str": "double-barrel pipe shotgun" },[m
+[31m-    "description": "A home-made double-barreled shotgun.  It is simply two pipes attached to a stock, with a pair of hammers to strike the two rounds it holds.",[m
+[31m-    "clip_size": 2,[m
+[31m-    "ascii_picture": "db_pipe_gun",[m
+[31m-    "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],[m
+[31m-    "relative": { "weight": "500 g", "volume": "250 ml", "price": "50 USD" },[m
+[31m-    "barrel_volume": "750 ml",[m
+[31m-    "valid_mod_locations": [[m
+[31m-      [ "accessories", 2 ],[m
+[31m-      [ "sling", 1 ],[m
+[31m-      [ "stock", 1 ],[m
+[31m-      [ "barrel", 1 ],[m
+[31m-      [ "grip", 1 ],[m
+[31m-      [ "rail", 1 ],[m
+[31m-      [ "sights", 1 ],[m
+[31m-      [ "underbarrel", 1 ][m
+[31m-    ],[m
+[31m-    "extend": { "flags": [ "RELOAD_ONE" ] }[m
+[31m-  }[m
+[31m-][m
+[1mdiff --git a/data/json/items/gun/shot.json b/data/json/items/gun/shot.json[m
+[1mindex 37533d0692..3b70cee944 100644[m
+[1m--- a/data/json/items/gun/shot.json[m
+[1m+++ b/data/json/items/gun/shot.json[m
+[36m@@ -285,6 +285,62 @@[m
+     ],[m
+     "extend": { "flags": [ "RELOAD_ONE" ] }[m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "pipe_double_shotgun",[m
+[32m+[m[32m    "copy-from": "pipe_shotgun",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "double-barrel pipe shotgun" },[m
+[32m+[m[32m    "description": "A home-made double-barreled shotgun.  It is simply two pipes attached to a stock, with a pair of hammers to strike the two rounds it holds.",[m
+[32m+[m[32m    "clip_size": 2,[m
+[32m+[m[32m    "ascii_picture": "db_pipe_gun",[m
+[32m+[m[32m    "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],[m
+[32m+[m[32m    "relative": { "weight": "500 g", "volume": "250 ml", "price": "50 USD" },[m
+[32m+[m[32m    "barrel_volume": "750 ml",[m
+[32m+[m[32m    "valid_mod_locations": [[m
+[32m+[m[32m      [ "accessories", 2 ],[m
+[32m+[m[32m      [ "sling", 1 ],[m
+[32m+[m[32m      [ "stock", 1 ],[m
+[32m+[m[32m      [ "barrel", 1 ],[m
+[32m+[m[32m      [ "grip", 1 ],[m
+[32m+[m[32m      [ "rail", 1 ],[m
+[32m+[m[32m      [ "sights", 1 ],[m
+[32m+[m[32m      [ "underbarrel", 1 ][m
+[32m+[m[32m    ],[m
+[32m+[m[32m    "extend": { "flags": [ "RELOAD_ONE" ] }[m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "id": "pipe_shotgun",[m
+[32m+[m[32m    "copy-from": "shotgun_1shot",[m
+[32m+[m[32m    "type": "GUN",[m
+[32m+[m[32m    "name": { "str": "pipe shotgun" },[m
+[32m+[m[32m    "description": "A home-made shotgun.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",[m
+[32m+[m[32m    "weight": "2267 g",[m
+[32m+[m[32m    "volume": "2250 ml",[m
+[32m+[m[32m    "price": "200 USD",[m
+[32m+[m[32m    "price_postapoc": "5 USD",[m
+[32m+[m[32m    "ascii_picture": "lg_pipe_gun",[m
+[32m+[m[32m    "material": [ "steel", "wood" ],[m
+[32m+[m[32m    "handling": 10,[m
+[32m+[m[32m    "ranged_damage": { "damage_type": "bullet", "amount": 2 },[m
+[32m+[m[32m    "dispersion": 855,[m
+[32m+[m[32m    "durability": 6,[m
+[32m+[m[32m    "clip_size": 1,[m
+[32m+[m[32m    "reload": 200,[m
+[32m+[m[32m    "loudness": -2,[m
+[32m+[m[32m    "barrel_volume": "500 ml",[m
+[32m+[m[32m    "valid_mod_locations": [[m
+[32m+[m[32m      [ "accessories", 2 ],[m
+[32m+[m[32m      [ "sling", 1 ],[m
+[32m+[m[32m      [ "stock", 1 ],[m
+[32m+[m[32m      [ "barrel", 1 ],[m
+[32m+[m[32m      [ "muzzle", 1 ],[m
+[32m+[m[32m      [ "grip", 1 ],[m
+[32m+[m[32m      [ "rail", 1 ],[m
+[32m+[m[32m      [ "sights", 1 ],[m
+[32m+[m[32m      [ "underbarrel", 1 ][m
+[32m+[m[32m    ],[m
+[32m+[m[32m    "flags": [ "NEVER_JAMS", "RELOAD_EJECT" ][m
+[32m+[m[32m  },[m
+   {[m
+     "id": "remington_870",[m
+     "copy-from": "shotgun_pump_3gun",[m
+[1mdiff --git a/data/json/items/gunmod/conversions.json b/data/json/items/gunmod/conversions.json[m
+[1mindex 35b42b6eec..33404c1c69 100644[m
+[1m--- a/data/json/items/gunmod/conversions.json[m
+[1m+++ b/data/json/items/gunmod/conversions.json[m
+[36m@@ -40,384 +40,5 @@[m
+     "ammo_modifier": [ "40x46mm", "40x53mm" ],[m
+     "min_skills": [ [ "weapon", 3 ], [ "mechanics", 2 ] ],[m
+     "flags": [ "IRREMOVABLE" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_pipe_22",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".22 LR pipe gun conversion kit" },[m
+[31m-    "description": "A replacement barrel and chamber assembly for a pipe gun, bored out to fire .22 LR cartridges.",[m
+[31m-    "weight": "250 g",[m
+[31m-    "volume": "125 ml",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "integral_weight": "0 g",[m
+[31m-    "price": "100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],[m
+[31m-    "install_time": "5 m",[m
+[31m-    "ammo_modifier": "22",[m
+[31m-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_pipe_38",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".38 Special pipe gun conversion kit" },[m
+[31m-    "description": "A replacement barrel and chamber assembly for a pipe gun, bored out to fire .38 Special cartridges.",[m
+[31m-    "weight": "250 g",[m
+[31m-    "volume": "125 ml",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "integral_weight": "0 g",[m
+[31m-    "price": "100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],[m
+[31m-    "install_time": "5 m",[m
+[31m-    "ammo_modifier": "38",[m
+[31m-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_pipe_40",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".40 S&W pipe gun conversion kit" },[m
+[31m-    "description": "A replacement barrel and chamber assembly for a pipe gun, chambered for the .40 S&W cartridge.",[m
+[31m-    "weight": "250 g",[m
+[31m-    "volume": "125 ml",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "integral_weight": "0 g",[m
+[31m-    "price": "100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],[m
+[31m-    "install_time": "5 m",[m
+[31m-    "ammo_modifier": "40",[m
+[31m-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_pipe_44",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".44 Magnum pipe gun conversion kit" },[m
+[31m-    "description": "A reinforced replacement barrel and chamber assembly for a pipe gun, allowing it to fire the powerful .44 Magnum cartridge.",[m
+[31m-    "weight": "250 g",[m
+[31m-    "volume": "125 ml",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "integral_weight": "0 g",[m
+[31m-    "price": "100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],[m
+[31m-    "install_time": "5 m",[m
+[31m-    "ammo_modifier": "44",[m
+[31m-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_pipe_45",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".45 ACP pipe gun conversion kit" },[m
+[31m-    "description": "A replacement barrel and chamber assembly for a pipe gun, chambered for .45 ACP cartridges.",[m
+[31m-    "weight": "250 g",[m
+[31m-    "volume": "125 ml",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "integral_weight": "0 g",[m
+[31m-    "price": "100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],[m
+[31m-    "install_time": "5 m",[m
+[31m-    "ammo_modifier": "45",[m
+[31m-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_pipe_9mm",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": "9x19mm pipe gun conversion kit" },[m
+[31m-    "description": "A replacement barrel and chamber assembly for a pipe gun, chambered for 9x19mm Parabellum cartridges.",[m
+[31m-    "weight": "250 g",[m
+[31m-    "volume": "125 ml",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "integral_weight": "0 g",[m
+[31m-    "price": "100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],[m
+[31m-    "install_time": "5 m",[m
+[31m-    "ammo_modifier": "9mm",[m
+[31m-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_pipe_223",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": "5.56x45mm pipe gun conversion kit" },[m
+[31m-    "description": "A heavy-barreled replacement assembly for a pipe gun, chambered for the high-pressure 5.56x45mm cartridge.  The longer barrel and reinforced action make the weapon noticeably heavier.",[m
+[31m-    "weight": "500 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "150 g",[m
+[31m-    "integral_volume": "200 ml",[m
+[31m-    "price": "1100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "223",[m
+[31m-    "damage_modifier": { "damage_type": "bullet", "amount": -3 },[m
+[31m-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_pipe_3006",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".30-06 pipe gun conversion kit" },[m
+[31m-    "description": "A heavy, full-length barrel and reinforced action assembly for a pipe gun, chambered for the powerful .30-06 Springfield cartridge.  The long barrel and strengthened receiver make the weapon considerably heavier.",[m
+[31m-    "weight": "500 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "175 g",[m
+[31m-    "integral_volume": "250 ml",[m
+[31m-    "price": "1100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "3006",[m
+[31m-    "damage_modifier": { "damage_type": "bullet", "amount": -3 },[m
+[31m-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 2 ] ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_pipe_308",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": "7.62x51mm pipe gun conversion kit" },[m
+[31m-    "description": "A heavy, full-length barrel and reinforced action assembly for a pipe gun, chambered for the powerful 7.62x51mm NATO cartridge.  Even with reinforcement, the high pressures produced by this round take a heavy toll on the improvised action.",[m
+[31m-    "weight": "500 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "200 g",[m
+[31m-    "integral_volume": "250 ml",[m
+[31m-    "price": "1100 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "pipe_rifle", "pipe_pistol", "2_shot_special" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "308",[m
+[31m-    "damage_modifier": { "damage_type": "bullet", "amount": -3 },[m
+[31m-    "min_skills": [ [ "weapon", 1 ], [ "mechanics", 2 ] ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_hc_223",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": "5.56x45mm handmade carbine conversion kit" },[m
+[31m-    "description": "A replacement barrel and receiver assembly for a handmade carbine, converting it to fire 5.56x45mm NATO .223 rounds.  The action is adapted to accept the smaller cartridge and standard STANAG magazines.",[m
+[31m-    "weight": "1000 g",[m
+[31m-    "volume": "500 ml",[m
+[31m-    "integral_weight": "0 g",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "price": "150 USD",[m
+[31m-    "price_postapoc": "10 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "handmade_carbine" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "223",[m
+[31m-    "magazine_adaptor": [[m
+[31m-      [[m
+[31m-        "223",[m
+[31m-        [[m
+[31m-          "stanag30",[m
+[31m-          "stanag5",[m
+[31m-          "stanag10",[m
+[31m-          "stanag20",[m
+[31m-          "stanag40",[m
+[31m-          "stanag50",[m
+[31m-          "stanag60",[m
+[31m-          "stanag60drum",[m
+[31m-          "stanag90",[m
+[31m-          "stanag100",[m
+[31m-          "stanag100drum",[m
+[31m-          "stanag150",[m
+[31m-          "carbonmag_223",[m
+[31m-          "survivor223mag"[m
+[31m-        ][m
+[31m-      ][m
+[31m-    ],[m
+[31m-    "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],[m
+[31m-    "flags": [ "INSTALL_DIFFICULT" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_hc_308",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": "7.62x51mm handmade carbine conversion kit" },[m
+[31m-    "description": "A replacement barrel and receiver assembly for a handmade carbine, converting it to fire 7.62x51mm .308 rounds and accept G3 detachable box magazines.",[m
+[31m-    "weight": "1000 g",[m
+[31m-    "volume": "500 ml",[m
+[31m-    "integral_weight": "250 g",[m
+[31m-    "integral_volume": "125 ml",[m
+[31m-    "price": "150 USD",[m
+[31m-    "price_postapoc": "10 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "handmade_carbine" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "308",[m
+[31m-    "magazine_adaptor": [ [ "308", [ "g3mag", "g3bigmag", "g3_makeshiftmag" ] ] ],[m
+[31m-    "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],[m
+[31m-    "flags": [ "INSTALL_DIFFICULT" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_luty_40",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".40 S&W Luty SMG conversion kit" },[m
+[31m-    "description": "A replacement bolt and barrel assembly for a Luty SMG, converting it to fire .40 S&W cartridges and accept custom-made makeshift magazines.",[m
+[31m-    "weight": "500 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "50 g",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "price": "150 USD",[m
+[31m-    "price_postapoc": "10 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "smg_luty" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "40",[m
+[31m-    "magazine_adaptor": [ [ "40", [ "smg_40_mag" ] ] ],[m
+[31m-    "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],[m
+[31m-    "flags": [ "INSTALL_DIFFICULT" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_luty_45",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".45 ACP Luty SMG conversion kit" },[m
+[31m-    "description": "A replacement bolt and barrel assembly for a Luty SMG, converting it to fire .45 ACP cartridges and accept MAC-10 compatible magazines.",[m
+[31m-    "weight": "500 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "75 g",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "price": "150 USD",[m
+[31m-    "price_postapoc": "10 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "smg_luty" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "45",[m
+[31m-    "magazine_adaptor": [ [ "45", [ "mac10mag", "smg_45_mag" ] ] ],[m
+[31m-    "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],[m
+[31m-    "flags": [ "INSTALL_DIFFICULT" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_hmr_40",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".40 S&W handmade revolver conversion kit" },[m
+[31m-    "description": "A replacement barrel and cylinder assembly for a handmade revolver, converting it to fire .40 S&W cartridges.",[m
+[31m-    "weight": "500 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "25 g",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "price": "150 USD",[m
+[31m-    "price_postapoc": "10 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "handmade_revolver" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "40",[m
+[31m-    "magazine_adaptor": [ [ "40", [ "40_speedloader6" ] ] ],[m
+[31m-    "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],[m
+[31m-    "flags": [ "INSTALL_DIFFICULT" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_hmr_44",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".44 Magnum handmade revolver conversion kit" },[m
+[31m-    "description": "A reinforced replacement barrel and cylinder assembly for a handmade revolver, converting it to fire .44 Magnum cartridges.",[m
+[31m-    "weight": "500 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "100 g",[m
+[31m-    "integral_volume": "50 ml",[m
+[31m-    "price": "150 USD",[m
+[31m-    "price_postapoc": "10 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "handmade_revolver" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "44",[m
+[31m-    "magazine_adaptor": [ [ "44", [ "44_speedloader6" ] ] ],[m
+[31m-    "min_skills": [ [ "weapon", 3 ], [ "mechanics", 3 ] ],[m
+[31m-    "flags": [ "INSTALL_DIFFICULT" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_hmr_45",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": ".45 ACP handmade revolver conversion kit" },[m
+[31m-    "description": "A replacement barrel and cylinder assembly for a handmade revolver, converting it to fire .45 ACP cartridges.",[m
+[31m-    "weight": "500 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "100 g",[m
+[31m-    "integral_volume": "50 ml",[m
+[31m-    "price": "150 USD",[m
+[31m-    "price_postapoc": "10 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "handmade_revolver" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "45",[m
+[31m-    "magazine_adaptor": [ [ "45", [ "45_speedloader5" ] ] ],[m
+[31m-    "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],[m
+[31m-    "flags": [ "INSTALL_DIFFICULT" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "retool_hmr_9mm",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": "9x19mm handmade revolver conversion kit" },[m
+[31m-    "description": "A replacement barrel and cylinder assembly for a handmade revolver, converting it to fire 9x19mm Parabellum cartridges.",[m
+[31m-    "weight": "500 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "0 g",[m
+[31m-    "integral_volume": "0 ml",[m
+[31m-    "price": "150 USD",[m
+[31m-    "price_postapoc": "10 USD",[m
+[31m-    "material": "steel",[m
+[31m-    "symbol": ":",[m
+[31m-    "color": "green",[m
+[31m-    "location": "bore",[m
+[31m-    "mod_targets": [ "handmade_revolver" ],[m
+[31m-    "install_time": "10 m",[m
+[31m-    "ammo_modifier": "9mm",[m
+[31m-    "magazine_adaptor": [ [ "9mm", [ "9mm_speedloader6" ] ] ],[m
+[31m-    "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ],[m
+[31m-    "flags": [ "INSTALL_DIFFICULT" ][m
+   }[m
+ ][m
+[1mdiff --git a/data/json/items/gunmod/mechanism.json b/data/json/items/gunmod/mechanism.json[m
+[1mindex 36d8f884ca..6003584b11 100644[m
+[1m--- a/data/json/items/gunmod/mechanism.json[m
+[1m+++ b/data/json/items/gunmod/mechanism.json[m
+[36m@@ -363,26 +363,5 @@[m
+     "loudness_modifier": -1,[m
+     "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ], [ "gun", 2 ] ],[m
+     "flags": [ "NEVER_JAMS", "INSTALL_DIFFICULT", "IRREMOVABLE" ][m
+[31m-  },[m
+[31m-  {[m
+[31m-    "id": "hc_bar_mag_adapter",[m
+[31m-    "type": "GUNMOD",[m
+[31m-    "name": { "str": "homemade carbine BAR magazine adapter" },[m
+[31m-    "description": "A modified magwell that allows a handmade carbine chambered in .30-06 to accept Browning Automatic Rifle detachable box magazines.  The adapter replaces the internal floorplate and catch assembly.",[m
+[31m-    "weight": "120 g",[m
+[31m-    "volume": "250 ml",[m
+[31m-    "integral_weight": "75 g",[m
+[31m-    "integral_volume": "50 ml",[m
+[31m-    "price": "50 USD",[m
+[31m-    "price_postapoc": "5 USD",[m
+[31m-    "material": "stee

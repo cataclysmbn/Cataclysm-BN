@@ -3199,16 +3199,11 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
         }
         auto &pf_buffer = MAPBUFFER_REGISTRY.get( p->get_dimension() );
         const auto pair = p->get_pathfinding_pair();
-        auto abs_route = Pathfinding::route( pf_buffer, p->abs_pos(), bub_to_abs( centre_sub ),
+        auto route = Pathfinding::route( pf_buffer, p->abs_pos(), bub_to_abs( centre_sub ),
                                              pair.first, pair.second );
-        if( !abs_route.empty() ) {
-            std::vector<tripoint_bub_ms> route_to;
-            route_to.reserve( abs_route.size() );
-            for( const tripoint_abs_ms &pt : abs_route ) {
-                route_to.push_back( abs_to_bub( pt ) );
-            }
+        if( !route.empty() ) {
             const activity_id act_travel = ACT_TRAVELLING;
-            p->set_destination( route_to, std::make_unique<player_activity>( act_travel ) );
+            p->set_destination( route, std::make_unique<player_activity>( act_travel ) );
         } else {
             p->add_msg_if_player( _( "You cannot reach that destination" ) );
         }
@@ -3415,7 +3410,7 @@ void activity_handlers::find_mount_do_turn( player_activity *act, player *p )
         guy.revert_after_activity();
         return;
     }
-    if( rl_dist( guy.bub_pos(), mon->bub_pos() ) <= 1 ) {
+    if( rl_dist( guy.abs_pos(), mon->abs_pos() ) <= 1 ) {
         if( mon->has_effect( effect_ai_waiting ) ) {
             mon->remove_effect( effect_ai_waiting );
         }
@@ -3430,7 +3425,7 @@ void activity_handlers::find_mount_do_turn( player_activity *act, player *p )
             return;
         }
     } else {
-        const auto route = route_adjacent( *p, guy.chosen_mount.lock()->bub_pos() );
+        const auto route = route_adjacent( *p, guy.chosen_mount.lock()->abs_pos() );
         if( route.empty() ) {
             act->set_to_null();
             guy.revert_after_activity();
@@ -3559,7 +3554,7 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
     const bionic_id bid( act->str_values[cbm_id] );
     const bionic_id upbid = bid->upgraded_bionic;
     const bool autodoc = act->str_values[is_autodoc] == "true";
-    const bool u_see = g->u.sees( p->bub_pos() ) && ( !g->u.has_effect( effect_narcosis ) ||
+    const bool u_see = g->u.sees( p->abs_pos() ) && ( !g->u.has_effect( effect_narcosis ) ||
                        g->u.has_bionic( bio_painkiller ) || g->u.has_trait( trait_NOPAIN ) );
 
     if( act->values.size() <= operation_attempted_value ) {
@@ -4448,15 +4443,10 @@ static void perform_zone_activity_turn( player *p,
 
         auto &pf_buffer = MAPBUFFER_REGISTRY.get( p->get_dimension() );
         const auto pair = p->get_pathfinding_pair();
-        auto abs_route = Pathfinding::route( pf_buffer, p->abs_pos(), bub_to_abs( tile_loc ),
+        auto route = Pathfinding::route( pf_buffer, p->abs_pos(), bub_to_abs( tile_loc ),
                                              pair.first, pair.second );
-        if( abs_route.size() > 1 ) {
-            abs_route.pop_back();
-            std::vector<tripoint_bub_ms> route;
-            route.reserve( abs_route.size() );
-            for( const tripoint_abs_ms &pt : abs_route ) {
-                route.push_back( abs_to_bub( pt ) );
-            }
+        if( route.size() > 1 ) {
+            route.pop_back();
             p->set_destination( route, p->remove_activity() );
             p->activity = std::make_unique<player_activity>( );
             return;
@@ -4707,14 +4697,14 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
 
     // choose target for spell (if the spell has a range > 0)
 
-    auto target = p->bub_pos();
+    auto target = p->abs_pos();
     bool target_is_valid = false;
     if( spell_being_cast.range() > 0 && !spell_being_cast.is_valid_target( target_none ) &&
         !spell_being_cast.has_flag( RANDOM_TARGET ) ) {
         g->refresh_player_visibility_cache_if_needed();
         do {
             avatar &you = *p->as_avatar();
-            std::vector<tripoint_bub_ms> trajectory = target_handler::mode_spell( you, spell_being_cast,
+            std::vector<tripoint_abs_ms> trajectory = target_handler::mode_spell( you, spell_being_cast,
                     no_fail,
                     no_mana );
             g->refresh_player_visibility_cache_if_needed();
@@ -4732,8 +4722,8 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
             }
         } while( !target_is_valid );
     } else if( spell_being_cast.has_flag( RANDOM_TARGET ) ) {
-        const std::optional<tripoint_bub_ms> target_ = spell_being_cast.random_valid_target( *p,
-                p->bub_pos() );
+        const std::optional<tripoint_abs_ms> target_ = spell_being_cast.random_valid_target( *p,
+                p->abs_pos() );
         if( !target_ ) {
             p->add_msg_if_player( game_message_params{ m_bad, gmf_bypass_cooldown },
                                   _( "Your spell can't find a suitable target." ) );

@@ -581,6 +581,7 @@ int iuse::fungicide( player *p, item *it, bool, const tripoint_bub_ms & )
     if( p->is_npc() && !has_fungus && !has_spores ) {
         return 0;
     }
+    auto &here = p->get_mapbuffer();
 
     p->add_msg_player_or_npc( _( "You use your fungicide." ), _( "<npcname> uses some fungicide" ) );
     if( has_fungus && ( one_in( 3 ) ) ) {
@@ -594,18 +595,18 @@ int iuse::fungicide( player *p, item *it, bool, const tripoint_bub_ms & )
         }
         p->remove_effect( effect_spores );
         int spore_count = rng( 1, 6 );
-        for( const tripoint_bub_ms &dest : g->m.points_in_radius( p->bub_pos(), 1 ) ) {
+        for( const auto &dest : simulated_tiles_in_radius( here, p->abs_pos(), 1 ) ) {
             if( spore_count == 0 ) {
                 break;
             }
-            if( dest == p->bub_pos() ) {
+            if( dest.abs_pos() == p->abs_pos() ) {
                 continue;
             }
-            if( g->m.passable( dest ) && !get_map().obstructed_by_vehicle_rotation( p->bub_pos(), dest ) &&
+            if( dest.passable() && !here.obstructed_by_vehicle_rotation( p->abs_pos(), dest.abs_pos() ) &&
                 x_in_y( spore_count, 8 ) ) {
-                if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
+                if( monster *const mon_ptr = g->critter_at<monster>( dest.abs_pos() ) ) {
                     monster &critter = *mon_ptr;
-                    if( g->u.sees( dest ) &&
+                    if( g->u.sees( dest.abs_pos() ) &&
                         !critter.type->in_species( FUNGUS ) ) {
                         add_msg( m_warning, _( "The %s is covered in tiny spores!" ),
                                  critter.name() );
@@ -614,7 +615,7 @@ int iuse::fungicide( player *p, item *it, bool, const tripoint_bub_ms & )
                         critter.die( p ); // counts as kill by player
                     }
                 } else {
-                    g->place_critter_at( mon_spore, dest );
+                    g->place_critter_at( mon_spore, abs_to_bub( dest.abs_pos() ) );
                 }
                 spore_count--;
             }
@@ -2222,7 +2223,7 @@ int iuse::noise_emitter_on( player *p, item *it, bool t, const tripoint_bub_ms &
 }
 
 // Ugly and uses variables that shouldn't be public
-int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos )
+int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos_ )
 {
     const bool possess = p->has_item( *it );
 
@@ -2235,7 +2236,9 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         // Not supported at the moment
         return 0;
     }
-    map &here = get_map();
+    auto &here = p->get_mapbuffer();
+    auto &m = get_map();
+    auto pos = bub_to_abs( pos_ );
 
     if( !p->has_enough_charges( *it, false ) ) {
         it->revert( p, true );
@@ -2243,17 +2246,17 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         return 0;
     }
 
-    if( here.visibility_caches_dirty() ) {
-        here.update_visibility_cache( p->bub_pos().z() );
+    if( m.visibility_caches_dirty() ) {
+        m.update_visibility_cache( p->bub_pos().z() );
     }
 
     // Try to minimize the use of has_enough_charges() because it's kind of expensive.
     bool no_charges = false;
-    for( const tripoint_bub_ms &pt : here.points_in_radius( pos, PICKUP_RANGE ) ) {
-        if( !here.has_items( pt ) || !p->sees( pt ) ) {
+    for( const auto &pt : simulated_tiles_in_radius( here, pos, PICKUP_RANGE ) ) {
+        if( !pt.has_items() || !p->sees( pt.abs_pos() ) ) {
             continue;
         }
-        for( item * const &corpse : here.i_at( pt ) ) {
+        for( item * const &corpse : pt.items() ) {
             if( !corpse->is_corpse() ||
                 corpse->get_var( "bionics_scanned_by", -1 ) == p->getID().get_value() ) {
                 continue;
@@ -2267,7 +2270,7 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             }
 
             int charges = std::max( 1, static_cast<int>( cbms.size() ) );
-            charges -= it->ammo_consume( charges, pos );
+            charges -= it->ammo_consume( charges, pos_ );
             if( possess && it->has_flag( flag_USE_UPS ) ) {
                 if( p->use_charges_if_avail( itype_UPS, charges ) ) {
                     charges = 0;
@@ -2295,7 +2298,7 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                 //~ %1 is corpse name, %2 is direction, %3 is bionic name
                 p->add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
                                       corpse->display_name().c_str(),
-                                      direction_name( direction_from( p->bub_pos(), pt ) ).c_str(),
+                                      direction_name( direction_from( p->abs_pos(), pt.abs_pos() ) ).c_str(),
                                       bionics_string.c_str()
                                     );
             }
@@ -3231,7 +3234,7 @@ int iuse::can_goo( player *p, item *it, bool, const tripoint_bub_ms & )
     }
     if( monster *const mon_ptr = g->critter_at<monster>( goop ) ) {
         monster &critter = *mon_ptr;
-        if( g->u.sees( goop ) ) {
+        if( g->u.sees( bub_to_abs( goop ) ) ) {
             add_msg( _( "Black goo emerges from the canister and envelopes a %s!" ),
                      critter.name() );
         }
@@ -3240,7 +3243,7 @@ int iuse::can_goo( player *p, item *it, bool, const tripoint_bub_ms & )
         critter.set_speed_base( critter.get_speed_base() - rng( 5, 25 ) );
         critter.set_hp( critter.get_speed() );
     } else {
-        if( g->u.sees( goop ) ) {
+        if( g->u.sees( bub_to_abs( goop ) ) ) {
             add_msg( _( "Living black goo emerges from the canister!" ) );
         }
         if( monster *const goo = g->place_critter_at( mon_blob, goop ) ) {
@@ -3257,7 +3260,7 @@ int iuse::can_goo( player *p, item *it, bool, const tripoint_bub_ms & )
             found = g->m.passable( goop ) && g->m.tr_at( goop ).is_null();
         } while( !found && tries < 10 );
         if( found ) {
-            if( g->u.sees( goop ) ) {
+            if( g->u.sees( bub_to_abs( goop ) ) ) {
                 add_msg( m_warning, _( "A nearby splatter of goo forms into a goo pit." ) );
             }
             g->m.trap_set( goop, tr_goo );
@@ -4846,6 +4849,8 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
     }
     g->events().send<event_type::activates_artifact>( p->getID(), it->tname( 1, false ) );
 
+    auto &here = p->get_mapbuffer();
+
     const auto &art = it->type->artifact;
     size_t num_used = rng( 1, art->effects_activated.size() );
     if( num_used < art->effects_activated.size() ) {
@@ -4923,9 +4928,9 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
 
             case AEA_BLOOD: {
                 bool blood = false;
-                for( const tripoint_bub_ms &tmp : g->m.points_in_radius( p->bub_pos(), 4 ) ) {
-                    if( !one_in( 4 ) && g->m.add_field( tmp, fd_blood, 3 ) &&
-                        ( blood || g->u.sees( tmp ) ) ) {
+                for( const auto &tmp : simulated_tiles_in_radius( here, p->abs_pos(), 4 ) ) {
+                    if( !one_in( 4 ) && here.add_field( tmp.abs_pos(), { .type = fd_blood, .intensity = 3 } ) &&
+                        ( blood || g->u.sees( tmp.abs_pos() ) ) ) {
                         blood = true;
                     }
                 }
@@ -5031,7 +5036,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
                 break;
 
             case AEA_GROWTH: {
-                monster tmptriffid( mtype_id::NULL_ID(), p->bub_pos() );
+                monster tmptriffid( mtype_id::NULL_ID(), p->abs_pos() );
                 mattack::growplants( &tmptriffid );
             }
             break;
@@ -8771,9 +8776,9 @@ int iuse::directional_hologram( player *p, item *it, bool, const tripoint_bub_ms
         p->add_msg_if_player( m_info, _( "Can't create a hologram there." ) );
         return 0;
     }
-    tripoint_bub_ms target = pos;
-    target.x() = p->bub_pos().x() + 4 * SEEX * ( posp.x() - p->bub_pos().x() );
-    target.y() = p->bub_pos().y() + 4 * SEEY * ( posp.y() - p->bub_pos().y() );
+    auto target = bub_to_abs( pos );
+    target.x() = p->bub_pos().x() + 4 * SEEX * ( posp.x() - p->abs_pos().x() );
+    target.y() = p->bub_pos().y() + 4 * SEEY * ( posp.y() - p->abs_pos().y() );
     hologram->friendly = -1;
     hologram->add_effect( effect_docile, 1_hours );
     hologram->wandf = -30;

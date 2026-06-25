@@ -332,7 +332,7 @@ class Creature
          * @param tr is the trap that was triggered.
          * @param pos is the location of the trap (not necessarily of the creature) in the main map.
          */
-        virtual bool avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const = 0;
+        virtual bool avoid_trap( const tripoint_abs_ms &pos, const trap &tr ) const = 0;
 
         /**
          * The functions check whether this creature can see the target.
@@ -344,7 +344,7 @@ class Creature
          */
         /*@{*/
         virtual bool sees( const Creature &critter ) const;
-        virtual bool sees( const tripoint_bub_ms &t, bool is_avatar = false, int range_mod = 0 ) const;
+        virtual bool sees( const tripoint_abs_ms &t, bool is_avatar = false, int range_mod = 0 ) const;
         /*@}*/
 
         /**
@@ -390,9 +390,9 @@ class Creature
         virtual void absorb_hit( const bodypart_id &bp, damage_instance &dam ) = 0;
 
         // TODO: this is just a shim so knockbacks work
-        void knock_back_from( const tripoint_bub_ms &p );
+        void knock_back_from( const tripoint_abs_ms &p );
         /** Knocks the creature to a specified tile */
-        virtual void knock_back_to( const tripoint_bub_ms &to ) = 0;
+        virtual void knock_back_to( const tripoint_abs_ms &to ) = 0;
 
         int size_melee_penalty() const;
         // begins a melee attack against the creature
@@ -495,7 +495,7 @@ class Creature
         /** Returns multiplier on fall damage at low velocity (knockback/pit/1 z-level, not 5 z-levels) */
         virtual float fall_damage_mod() const = 0;
         /** Deals falling/collision damage with terrain/creature at pos */
-        virtual int impact( int force, const tripoint_bub_ms &pos ) = 0;
+        virtual int impact( int force, const tripoint_abs_ms &pos ) = 0;
 
         /**
          * This function checks the creatures @ref is_dead_state and (if true) calls @ref die.

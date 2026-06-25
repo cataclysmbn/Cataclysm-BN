@@ -745,9 +745,9 @@ void mdeath::broken( monster &z )
     }
 
     // TODO: make mdeath::splatter work for robots
-    if( ( broken_mon_ref.damage() >= broken_mon_ref.max_damage() ) && g->u.sees( z.bub_pos() ) ) {
+    if( ( broken_mon_ref.damage() >= broken_mon_ref.max_damage() ) && g->u.sees( z.abs_pos() ) ) {
         add_msg( m_good, _( "The %s is destroyed!" ), z.name() );
-    } else if( g->u.sees( z.bub_pos() ) ) {
+    } else if( g->u.sees( z.abs_pos() ) ) {
         add_msg( m_good, _( "The %s collapses!" ), z.name() );
     }
 }
@@ -873,6 +873,8 @@ void mdeath::detonate( monster &z )
         amm_list.add( amm.first, amm.second );
     }
 
+    auto &here = z.get_mapbuffer();
+
     std::vector<itype_id> pre_dets;
     for( int i = 0; i < 3; i++ ) {
         if( amm_list.get_weight() <= 0 ) {
@@ -934,13 +936,13 @@ void mdeath::detonate( monster &z )
         detached_ptr<item> bomb_item = item::spawn( bombs.first, calendar::start_of_cataclysm );
         bomb_item->charges = bombs.second;
         bomb_item->activate();
-        g->m.add_item_or_charges( z.bub_pos(), std::move( bomb_item ) );
+        here.add_item_or_charges( z.abs_pos(), std::move( bomb_item ) );
     }
 }
 
 void mdeath::broken_ammo( monster &z )
 {
-    if( g->u.sees( z.bub_pos() ) ) {
+    if( g->u.sees( z.abs_pos() ) ) {
         //~ %s is the possessive form of the monster's name
         add_msg( m_info, _( "The %s's interior compartment sizzles with destructive energy." ),
                  z.name() );

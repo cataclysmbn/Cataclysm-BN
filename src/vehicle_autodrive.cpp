@@ -649,7 +649,7 @@ bool vehicle::autodrive_controller::check_drivable( tripoint_bub_ms pt ) const
     // we reach them
     if( pt_omt == data.current_omt ) {
         // driver must see the tile or have seen it before in order to plan a route over it
-        if( !driver.sees( pt ) ) {
+        if( !driver.sees( pt_abs ) ) {
             if( !driver.is_avatar() ) {
                 return false;
             } else if( !driver.as_avatar()->has_memorized_tile_for_autodrive( pt_abs ) ) {
@@ -1026,7 +1026,7 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( orie
     const point forward_offset( face_dir.dx(), face_dir.dy() );
     bool blind = true;
     for( point p : data.profile( to_orientation( face_dir.dir() ) ).collision_points ) {
-        if( driver.sees( veh_pos + forward_offset + p ) ) {
+        if( driver.sees( driven_veh.abs_ms_location() + forward_offset + p ) ) {
             blind = false;
         }
     }
@@ -1066,7 +1066,7 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( orie
         }
     }
     for( point p : collision_zone ) {
-        if( !driver.sees( veh_pos + p ) ) {
+        if( !driver.sees( driven_veh.abs_ms_location() + p ) ) {
             return collision_check_result::slow_down;
         }
         if( !check_drivable( veh_pos + p ) ) {

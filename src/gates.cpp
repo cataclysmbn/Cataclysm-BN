@@ -249,7 +249,7 @@ void gates::toggle_gate( const tripoint_bub_ms &pos )
         }
     }
 
-    if( g->u.sees( pos ) ) {
+    if( g->u.sees( bub_to_abs( pos ) ) ) {
         if( open ) {
             add_msg( gate.open_message );
         } else if( close ) {

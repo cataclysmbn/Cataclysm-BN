@@ -161,7 +161,7 @@ void timed_event::actualize()
             for( const tripoint_bub_ms &p : g->m.points_on_zlevel() ) {
                 if( g->m.ter( p ) == t_grate ) {
                     g->m.ter_set( p, t_stairs_down );
-                    if( !saw_grate && g->u.sees( p ) ) {
+                    if( !saw_grate && g->u.sees( bub_to_abs( p ) ) ) {
                         saw_grate = true;
                     }
                 }
@@ -225,7 +225,7 @@ void timed_event::actualize()
                     g->memorial().add(
                         pgettext( "memorial_male", "Water level reached the ceiling." ),
                         pgettext( "memorial_female", "Water level reached the ceiling." ) );
-                    avatar_action::swim( g->m, g->u, g->u.bub_pos() );
+                    avatar_action::swim( g->u, g->u.abs_pos() );
                 }
             }
             // flood_buf is filled with correct tiles; now copy them back to g->m
@@ -265,7 +265,7 @@ void timed_event::per_turn()
                     return;
                 }
                 g->place_critter_at( mon_eyebot, place );
-                if( g->u.sees( place ) ) {
+                if( g->u.sees( bub_to_abs( place ) ) ) {
                     add_msg( m_warning, _( "An eyebot swoops down nearby!" ) );
                 }
                 // One eyebot per trigger is enough, really

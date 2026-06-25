@@ -4619,7 +4619,7 @@ void iexamine::trap( player &p, const tripoint_bub_ms &examp )
         return;
     }
     const int possible = tr.get_difficulty();
-    bool seen = tr.can_see( examp, p );
+    bool seen = tr.can_see( bub_to_abs( examp ), p );
     if( tr.loadid == tr_unfinished_construction || here.partial_con_at( tripoint_bub_ms( examp ) ) ) {
         partial_con *pc = here.partial_con_at( tripoint_bub_ms( examp ) );
         if( pc ) {

@@ -606,16 +606,16 @@ const inventory &Character::crafting_inventory( bool clear_path )
 const inventory &Character::crafting_inventory( const tripoint_bub_ms &src_pos, int radius,
         bool clear_path )
 {
-    auto inv_pos = src_pos;
-    if( src_pos == tripoint_bub_ms::zero() ) {
-        inv_pos = bub_pos();
+    auto inv_pos = bub_to_abs( src_pos );
+    if( inv_pos == tripoint_abs_ms::zero() ) {
+        inv_pos = abs_pos();
     }
     const auto cache_hit = cached_time == calendar::turn
                            && cached_position == inv_pos;
     if( cache_hit ) {
         return cached_crafting_inventory;
     }
-    cached_crafting_inventory.form_from_map( inv_pos, radius, this, false, clear_path );
+    cached_crafting_inventory.form_from_map( abs_to_bub( inv_pos ), radius, this, false, clear_path );
     cached_crafting_inventory.add_items( inv, true );
     cached_crafting_inventory.add_item( primary_weapon(), true );
     cached_crafting_inventory.add_items( worn, true );
@@ -643,7 +643,7 @@ const inventory &Character::crafting_inventory( const tripoint_bub_ms &src_pos, 
 void Character::invalidate_crafting_inventory()
 {
     cached_time = calendar::before_time_starts;
-    cached_position = tripoint_bub_ms::min();
+    cached_position = tripoint_abs_ms::min();
 }
 
 void Character::make_craft( const recipe_id &id_to_make, int batch_size,

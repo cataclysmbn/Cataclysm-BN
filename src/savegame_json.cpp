@@ -1650,7 +1650,7 @@ void npc::load( const JsonObject &data )
             last_player_seen_pos->z() = bub_pos().z();
         }
         // old code used tripoint_min to indicate "not a valid point"
-        if( *last_player_seen_pos == tripoint_bub_ms::zero() ) {
+        if( *last_player_seen_pos == tripoint_abs_ms::zero() ) {
             last_player_seen_pos.reset();
         }
     } else {
@@ -1669,18 +1669,32 @@ void npc::load( const JsonObject &data )
     } else if( activity ) {
         current_activity_id = activity->id();
     }
-
+    
     if( data.has_member( "pulp_locationx" ) ) {
-        pulp_location.emplace();
-        data.read( "pulp_locationx", pulp_location->x() );
-        data.read( "pulp_locationy", pulp_location->y() );
-        data.read( "pulp_locationz", pulp_location->z() );
+        tripoint_bub_ms loc;
+        pulp_position.emplace();
+        data.read( "pulp_locationx", loc.x() );
+        data.read( "pulp_locationy", loc.y() );
+        data.read( "pulp_locationz", loc.z() );
         // old code used tripoint_min to indicate "not a valid point"
-        if( *pulp_location == tripoint_bub_ms::zero() ) {
-            pulp_location.reset();
+        if( loc == tripoint_bub_ms::zero() ) {
+            pulp_position.reset();
+        } else {
+            pulp_position.emplace();
+            pulp_position = bub_to_abs( loc );
+        }
+    } else if ( data.has_member( "pulp_location" ) ) {
+        // absolute migration
+        std::optional<tripoint_bub_ms> loc;
+        loc.emplace();
+        data.read( "pulp_location", loc );
+        if( loc ) {
+            pulp_position.emplace();
+            pulp_position = bub_to_abs( *loc );
         }
     } else {
-        data.read( "pulp_location", pulp_location );
+        pulp_position.emplace();
+        data.read( "pulp_position", pulp_position );
     }
     data.read( "chair_pos", chair_pos );
     data.read( "wander_pos", wander_pos );
@@ -1853,7 +1867,7 @@ void npc::store( JsonOut &json ) const
     json.member( "guardy", guard_pos.y() );
     json.member( "guardz", guard_pos.z() );
     json.member( "current_activity_id", current_activity_id.str() );
-    json.member( "pulp_location", pulp_location );
+    json.member( "pulp_position", pulp_position );
     json.member( "chair_pos", chair_pos );
     json.member( "wander_pos", wander_pos );
     // TODO: stringid
@@ -2013,12 +2027,12 @@ auto monster::load( const JsonObject &data,
     }
 
     wandf = 0;
-    wander_pos = abs_to_bub( pos_abs );
+    wander_pos = pos_abs;
     if( !legacy_context ) {
         auto stored_wander_pos_abs = tripoint_abs_ms::zero();
         if( data.read( "wander_pos_abs", stored_wander_pos_abs ) ) {
             data.read( "wandf", wandf );
-            wander_pos = abs_to_bub( stored_wander_pos_abs );
+            wander_pos = stored_wander_pos_abs;
         } else {
             const auto has_legacy_wander_x = data.read( "wandx", wander_pos.x() );
             const auto has_legacy_wander_y = data.read( "wandy", wander_pos.y() );
@@ -2114,21 +2128,15 @@ auto monster::load( const JsonObject &data,
     data.read( "aggro_character", aggro_character );
     data.read( "stairscount", staircount ); // really?
     data.read( "fish_population", fish_population );
-    // Load legacy plans.
+    // Load legacy plans, but just discard them.
     std::vector<tripoint> plans;
     data.read( "plans", plans );
-    if( !plans.empty() ) {
-        goal = tripoint_bub_ms( plans.back() );
-    }
 
     data.read( "summon_time_limit", summon_time_limit );
 
-    // This is relative to the monster so it isn't invalidated by map shifting.
-    tripoint destination;
+    tripoint_abs_ms destination;
     data.read( "destination", destination );
-    const auto load_bub_pos = has_legacy_x &&
-                              has_legacy_y ? legacy_bub_pos : abs_to_bub( pos_abs );
-    goal = load_bub_pos + destination;
+    goal = destination;
 
     upgrades = data.get_bool( "upgrades", type->upgrades );
     upgrade_time = data.get_int( "upgrade_time", -1 );
@@ -2201,7 +2209,7 @@ auto monster::store( JsonOut &json, bool include_local_state ) const -> void
     json.member( "unique_name", unique_name );
     json.member( "pos_abs", pos_abs );
     if( include_local_state ) {
-        json.member( "wander_pos_abs", bub_to_abs( wander_pos ) );
+        json.member( "wander_pos_abs", wander_pos );
         json.member( "wandf", wandf );
     }
     json.member( "hp", hp );
@@ -2245,8 +2253,7 @@ auto monster::store( JsonOut &json, bool include_local_state ) const -> void
     if( battery_item ) {
         json.member( "battery_item", *battery_item );
     }
-    // Store the relative position of the goal so it loads correctly after a map shift.
-    json.member( "destination", goal - bub_pos() );
+    json.member( "destination", goal );
     json.member( "ammo", ammo );
     json.member( "upgrades", upgrades );
     json.member( "upgrade_time", upgrade_time );

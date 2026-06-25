@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "sounds.h"
 #include "batch_turns.h"
 #include "cached_options.h"
 #include "calendar.h"
@@ -274,8 +275,7 @@ auto handle_decayed_corpse( const actualize_tile_options &options, const item &c
 
 auto rotten_item_spawn( const actualize_tile_options &options, const item &source ) -> void
 {
-    if( options.active_bubble_pos && g != nullptr &&
-        g->critter_at( *options.active_bubble_pos ) != nullptr ) {
+    if( options.buffer.creature_at( options.abs_pos ) != nullptr ) {
         return;
     }
 
@@ -301,7 +301,7 @@ auto rotten_item_spawn( const actualize_tile_options &options, const item &sourc
         .disposition = disposition,
     } );
 
-    if( !options.active_bubble_pos || g == nullptr || !g->u.sees( *options.active_bubble_pos ) ) {
+    if( !g->u.sees( options.abs_pos ) ) {
         return;
     }
 
@@ -872,9 +872,11 @@ auto abs_tile_handle::lum() const -> std::uint8_t
     return sm_->get_lum( local_ );
 }
 
-auto abs_tile_handle::move_cost() const -> int
+auto abs_tile_handle::move_cost( const vehicle *ignored_vehicle ) const -> int
 {
-    return move_cost_from_tile_parts( ter(), furn(), veh_part_ );
+    return move_cost_from_tile_parts( ter(), furn(), veh_part_ && ignored_vehicle &&
+                                                     &veh_part_->vehicle() == ignored_vehicle ?
+                                                     optional_vpart_position{} : veh_part_ );
 }
 
 auto abs_tile_handle::passable() const -> bool
@@ -2068,6 +2070,8 @@ void mapbuffer::clear()
         submaps_with_luminous_items_.clear();
         column_states_.clear();
         dirty_columns_.clear();
+        column_to_island_.clear();
+        island_sounds_.clear();
         simulated_islands_.clear();
         submaps.clear();
         pocket_info_.reset();
@@ -2180,6 +2184,23 @@ void mapbuffer::set_simulated_submaps(
 
     // Rebuild simulated islands from the new column set.
     simulated_islands_ = build_islands( columns );
+
+    // Rebuild column → island index map and resize per-island sound queues.
+    column_to_island_.clear();
+    column_to_island_.reserve( columns.size() );
+    island_sounds_.resize( simulated_islands_.size() );
+    for( size_t idx = 0; idx < simulated_islands_.size(); ++idx ) {
+        const simulated_island &isl = simulated_islands_[idx];
+        for( int y = isl.begin.y(); y < isl.end.y(); ++y ) {
+            for( int x = isl.begin.x(); x < isl.end.x(); ++x ) {
+                const point_abs_sm p( x, y );
+                if( isl.contains( p ) ) {
+                    column_to_island_[p] = idx;
+                }
+            }
+        }
+        island_sounds_[idx].clear();
+    }
 }
 
 void mapbuffer::remove_submap( tripoint_abs_sm addr )
@@ -2544,6 +2565,34 @@ auto mapbuffer::mark_submap_caches_dirty(
     }
 }
 
+auto mapbuffer::queue_sound( sound_event evt ) -> void
+{
+    const auto col = project_to<coords::sm>( evt.origin.xy() );
+    const auto it = column_to_island_.find( col );
+    if( it != column_to_island_.end() ) {
+        island_sounds_[it->second].push_back( std::move( evt ) );
+    }
+    // Sound origin not in a simulated column — discard.
+}
+
+auto mapbuffer::island_sounds_for( point_abs_sm col ) -> std::vector<sound_event> *
+{
+    const auto it = column_to_island_.find( col );
+    if( it != column_to_island_.end() ) {
+        return &island_sounds_[it->second];
+    }
+    return nullptr;
+}
+
+auto mapbuffer::island_for( point_abs_sm col ) const -> const simulated_island *
+{
+    const auto it = column_to_island_.find( col );
+    if( it != column_to_island_.end() ) {
+        return &simulated_islands_[it->second];
+    }
+    return nullptr;
+}
+
 auto mapbuffer::clear_spawns( const mapbuffer_submap_bounds_mutation_options &options ) -> void
 {
     if( options.begin.x() >= options.end.x() || options.begin.y() >= options.end.y() ) {
@@ -2653,7 +2702,7 @@ auto mapbuffer::find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_
 
 auto mapbuffer::creature_at( const tripoint_abs_ms &p,
                              const bool allow_hallucination )
-const -> const Creature * // *NOPAD*
+const -> Creature * // *NOPAD*
 {
     if( const auto mon_ptr = creature_tracker_.find( p ) ) {
         if( allow_hallucination || !mon_ptr->is_hallucination() ) {
@@ -2675,6 +2724,11 @@ auto mapbuffer::has_creature_at(
     const bool allow_hallucination ) const -> bool // *NOPAD*
 {
     return creature_at( p, allow_hallucination ) != nullptr;
+}
+
+auto mapbuffer::tile_empty( const tripoint_abs_ms &p ) -> bool
+{
+    return ( passable( p ) || has_flag( TFLAG_LIQUID, p ) ) && !has_creature_at( p );
 }
 
 auto mapbuffer::add_active_npc( const shared_ptr_fast<npc> &guy ) -> bool
@@ -3019,6 +3073,142 @@ auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
     return std::max( 0, best_difficulty - blocks_movement );
 }
 
+auto mapbuffer::floor_between( const tripoint_abs_ms &first, const tripoint_abs_ms &second,
+                               const mapbuffer_lookup_options options ) -> bool
+{
+    int diff = std::abs( first.z() - second.z() );
+    if( diff == 0 ) {
+        return false;
+    }
+    if( diff != 1 ) {
+        debugmsg( "mapbuffer::floor_between should only be called on tiles that are "
+                  "exactly 1 z level apart" );
+        return true;
+    }
+    int upper = std::max( first.z(), second.z() );
+    if( first.xy() == second.xy() ) {
+        return has_floor( tripoint_abs_ms( first.xy(), upper ), false, options );
+    }
+    return has_floor( tripoint_abs_ms( first.xy(), upper ), false, options ) &&
+           has_floor( tripoint_abs_ms( second.xy(), upper ), false, options );
+}
+
+auto mapbuffer::clear_path( const tripoint_abs_ms &f, const tripoint_abs_ms &t, int range,
+                            int cost_min, int cost_max,
+                            const mapbuffer_lookup_options options ) -> bool
+{
+    if( f.z() == t.z() ) {
+        if( range >= 0 && range < rl_dist( f.xy(), t.xy() ) ) {
+            return false; // Out of range!
+        }
+        bool is_clear = true;
+        point_abs_ms last_point = f.xy();
+        bresenham( f.xy().raw(), t.xy().raw(), 0,
+        [this, &is_clear, cost_min, cost_max, &t, &last_point]( const point & new_point ) {
+            // Exit before checking the last square, it's still reachable even if it is an obstacle.
+            if( new_point == t.xy().raw() ) {
+                return false;
+            }
+
+            const tripoint_abs_ms p( point_abs_ms( new_point ), t.z() );
+            const tripoint_abs_ms lp( point_abs_ms( last_point ), t.z() );
+            const int cost = move_cost( p );
+            if( cost < cost_min || cost > cost_max ||
+                obstructed_by_vehicle_rotation( lp, p ) ) {
+                is_clear = false;
+                return false;
+            }
+
+            last_point = point_abs_ms( new_point );
+            return true;
+        } );
+        return is_clear;
+    }
+
+    if( range >= 0 && range < rl_dist( f, t ) ) {
+        return false; // Out of range!
+    }
+    bool is_clear = true;
+    tripoint_abs_ms last_point = f;
+    bresenham( f.raw(), t.raw(), 0, 0,
+    [this, &is_clear, cost_min, cost_max, t, &last_point]( const tripoint & new_point ) {
+        // Exit before checking the last square, it's still reachable even if it is an obstacle.
+        if( new_point == t.raw() ) {
+            return false;
+        }
+
+        const tripoint_abs_ms pt( new_point );
+        // We have to check a weird case where the move is both vertical and horizontal
+        if( new_point.z == last_point.z() ) {
+            const int cost = move_cost( pt );
+            if( cost < cost_min || cost > cost_max ||
+                obstructed_by_vehicle_rotation( last_point, pt ) ) {
+                is_clear = false;
+                return false;
+            }
+        } else {
+            bool this_clear = false;
+            const int max_z = std::max( new_point.z, last_point.z() );
+            const point_abs_ms new_xy( new_point.x, new_point.y );
+            const tripoint_abs_ms no_floor_check( new_xy, max_z );
+            if( !has_floor_or_support( no_floor_check ) ) {
+                const tripoint_abs_ms from_prev_z( new_xy, last_point.z() );
+                const int cost = move_cost( from_prev_z );
+                if( cost > cost_min && cost < cost_max &&
+                    !obstructed_by_vehicle_rotation( last_point, pt ) ) {
+                    this_clear = true;
+                }
+            }
+
+            if( !this_clear ) {
+                const tripoint_abs_ms floor_check( last_point.xy(), max_z );
+                if( has_floor_or_support( floor_check ) ) {
+                    const tripoint_abs_ms from_new_z( last_point.xy(), new_point.z );
+                    const int cost = move_cost( from_new_z );
+                    if( cost > cost_min && cost < cost_max &&
+                        !obstructed_by_vehicle_rotation( last_point, pt ) ) {
+                        this_clear = true;
+                    }
+                }
+            }
+
+            if( !this_clear ) {
+                is_clear = false;
+                return false;
+            }
+        }
+
+        last_point = pt;
+        return true;
+    } );
+    return is_clear;
+}
+
+// This method tries a bunch of initial offsets for the line to try and find a clear one.
+// Basically it does, "Find a line from any point in the source that ends up in the target square".
+auto mapbuffer::find_clear_path( const tripoint_abs_ms &source,
+        const tripoint_abs_ms &destination ) -> std::vector<tripoint_abs_ms>
+{
+    // TODO: Push this junk down into the Bresenham method, it's already doing it.
+    const point_rel_ms d = destination.xy() - source.xy();
+    const point_rel_ms a( std::abs( d.x() ) * 2, std::abs( d.y() ) * 2 );
+    const int dominant = std::max( a.x(), a.y() );
+    const int minor = std::min( a.x(), a.y() );
+    // This seems to be the method for finding the ideal start value for the error value.
+    const int ideal_start_offset = minor - dominant / 2;
+    const int start_sign = ( ideal_start_offset > 0 ) - ( ideal_start_offset < 0 );
+    // Not totally sure of the derivation.
+    const int max_start_offset = std::abs( ideal_start_offset ) * 2 + 1;
+    for( int horizontal_offset = -1; horizontal_offset <= max_start_offset; ++horizontal_offset ) {
+        int candidate_offset = horizontal_offset * start_sign;
+        if( sees( source, destination, rl_dist( source, destination ), candidate_offset ) ) {
+            return line_to( source, destination, candidate_offset, 0 );
+        }
+    }
+    // If we couldn't find a clear LoS, just return the ideal one.
+    return line_to( source, destination, ideal_start_offset, 0 );
+}
+
 auto mapbuffer::get_lum( const tripoint_abs_ms &p,
                          const mapbuffer_lookup_options options ) -> std::optional<std::uint8_t>
 {
@@ -3175,6 +3365,24 @@ auto mapbuffer::set_trap( const tripoint_abs_ms &p, const trap_id trap,
     return true;
 }
 
+auto mapbuffer::remove_trap( const tripoint_abs_ms &p,
+                             const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = lookup_tile( *this, p, options );
+    if( !tile ) {
+        return false;
+    }
+
+    const auto old_id = tile->sm->get_trap( tile->local );
+    if( old_id == tr_null ) {
+        return false;
+    }
+
+    tile->sm->set_trap( tile->local, tr_null );
+    sync_active_trap_change_side_tables( p, tile->local, old_id, tr_null );
+    return true;
+}
+
 auto mapbuffer::creature_on_trap( Creature &critter, const bool may_avoid ) -> void
 {
     const auto pos = critter.abs_pos();
@@ -3197,11 +3405,10 @@ auto mapbuffer::creature_on_trap( Creature &critter, const bool may_avoid ) -> v
         return;
     }
 
-    const auto bubble_pos = abs_to_bub( pos );
-    if( may_avoid && critter.avoid_trap( bubble_pos, tr ) ) {
+    if( may_avoid && critter.avoid_trap( pos, tr ) ) {
         return;
     }
-    tr.trigger( bubble_pos, &critter );
+    tr.trigger( pos, &critter );
 }
 
 auto mapbuffer::set_radiation( const tripoint_abs_ms &p, const int radiation,
@@ -3334,7 +3541,8 @@ auto mapbuffer::add_field( const tripoint_abs_ms &p,
                            const mapbuffer_add_field_options &options ) -> bool
 {
     if( !options.type ) {
-        debugmsg( "Tried to add null field" );
+        debugmsg( "Tried to add null field at %d,%d,%d",
+                 p.x(), p.y(), p.z() );
         return false;
     }
 
@@ -4525,6 +4733,125 @@ auto mapbuffer::obstacle_name( const tripoint_abs_ms &p,
     return tile->sm->get_ter( tile->local ).obj().name();
 }
 
+auto mapbuffer::sees( const tripoint_abs_ms &F, const tripoint_abs_ms &T, const int range,
+                      mapbuffer_lookup_options options ) -> const bool
+{
+    int dummy = 0;
+    return sees( F, T, range, dummy );
+}
+
+/**
+ * This one is internal-only, we don't want to expose the slope tweaking ickiness outside the map class.
+ **/
+auto mapbuffer::sees( const tripoint_abs_ms &F, const tripoint_abs_ms &T, const int range,
+                int &bresenham_slope, mapbuffer_lookup_options options ) -> const bool
+{
+    if( ( range >= 0 && range < rl_dist( F, T ) ) ) {
+        bresenham_slope = 0;
+        return false; // Out of range!
+    }
+    // Cannonicalize the order of the tripoints so the cache is reflexive.
+    const tripoint_abs_ms &min = F < T ? F : T;
+    const tripoint_abs_ms &max = !( F < T ) ? F : T;
+
+    bool visible = true;
+
+    // Ugly `if` for now
+    if( F.z() == T.z() ) {
+
+        auto last_point = F.xy();
+        // Please someone make bresenham work with typed points, I'm running out of willpower
+        bresenham( F.xy().raw(), T.xy().raw(), bresenham_slope,
+        [this, &visible, &T, &last_point]( const point & new_point ) {
+            // Exit before checking the last square, it's still visible even if opaque.
+            if( new_point.x == T.x() && new_point.y == T.y() ) {
+                return false;
+            }
+            const auto new_tripoint = tripoint_abs_ms( point_abs_ms( new_point ), T.z() );
+            if( !is_transparent( new_tripoint ) ||
+                obstructed_by_vehicle_rotation( tripoint_abs_ms( last_point, T.z() ),
+                                                new_tripoint ) ) {
+                visible = false;
+                return false;
+            }
+            last_point = new_tripoint.xy();
+            return true;
+        } );
+        return visible;
+    }
+
+    auto last_point = F;
+    bresenham( F.raw(), T.raw(), bresenham_slope, 0,
+    [this, &visible, &T, &last_point]( const tripoint & new_point ) {
+        // Exit before checking the last square if it's not a vertical transition,
+        // it's still visible even if opaque.
+        if( new_point == T.raw() && last_point.z() == T.z() ) {
+            return false;
+        }
+
+        // TODO: Allow transparent floors (and cache them!)
+        if( new_point.z == last_point.z() ) {
+            if( !is_transparent( tripoint_abs_ms( new_point ) ) ||
+                obstructed_by_vehicle_rotation( last_point, tripoint_abs_ms( new_point ) ) ) {
+                visible = false;
+                return false;
+            }
+        } else {
+            const int max_z = std::max( new_point.z, last_point.z() );
+            if( ( has_floor( tripoint_abs_ms{ new_point.x, new_point.y, max_z }, true ) ||
+                  !is_transparent( tripoint_abs_ms{ new_point.x, new_point.y, last_point.z() } ) ) &&
+                ( has_floor( {last_point.xy(), max_z}, true ) ||
+                  !is_transparent( {last_point.xy(), new_point.z} ) ) ) {
+                visible = false;
+                return false;
+            }
+        }
+
+        last_point = tripoint_abs_ms( new_point );
+        return true;
+    } );
+    return visible;
+}
+
+auto mapbuffer::obstacle_coverage( const tripoint_abs_ms &loc1, const tripoint_abs_ms &loc2,
+                                   const mapbuffer_lookup_options options ) -> const int
+{
+    const auto tile1 = lookup_tile( *this, loc1, options );
+    const auto tile2 = lookup_tile( *this, loc2, options );
+    if( !tile1 || !tile2 ) {
+        return 100;
+    }
+    // Can't hide if you are standing on furniture, or non-flat slowing-down terrain tile.
+    if( tile1->sm->get_furn( tile1->local ).obj().id || ( move_cost( loc2 ) > 2 &&
+        !tile2->sm->get_ter( tile2->local ).obj().has_flag( TFLAG_FLAT ) ) ) {
+        return 0;
+    }
+    const point_bub_ms a( std::abs( loc1.x() - loc2.x() ) * 2, std::abs( loc1.y() - loc2.y() ) * 2 );
+    int offset = std::min( a.x(), a.y() ) - ( std::max( a.x(), a.y() ) / 2 );
+    tripoint_abs_ms obstaclepos;
+    bresenham( loc2.raw(), loc1.raw(), offset, 0, [&obstaclepos]( const tripoint & new_point ) {
+        // Only adjacent tile between you and enemy is checked for cover.
+        obstaclepos = tripoint_abs_ms( new_point );
+        return false;
+    } );
+    const auto obst_tile = lookup_tile( *this, obstaclepos, options );
+    if( !obst_tile ) {
+        return 100;
+    }
+    const auto obstacle_f = obst_tile->sm->get_furn( obst_tile->local );
+    if( obstacle_f != f_null ) {
+        return obstacle_f->coverage;
+    }
+    if( const auto vp = veh_at( obstaclepos ) ) {
+        if( vp->obstacle_at_part() ) {
+            return 60;
+        } else if( !vp->part_with_feature( VPFLAG_AISLE, true ) ) {
+            return 45;
+        }
+    }
+    return obst_tile->sm->get_ter( obst_tile->local )->coverage;
+}
+
 auto mapbuffer::features( const tripoint_abs_ms &p,
                           const mapbuffer_lookup_options options ) -> std::string
 {
@@ -4822,6 +5149,16 @@ auto mapbuffer::ter( const tripoint_abs_ms &p,
     return tile->ter();
 }
 
+auto mapbuffer::furn( const tripoint_abs_ms &p,
+                     const mapbuffer_lookup_options options ) -> std::optional<furn_id>
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return std::nullopt;
+    }
+    return tile->furn();
+}
+
 auto mapbuffer::furnname( const tripoint_abs_ms &p,
                           const mapbuffer_lookup_options options ) -> std::string
 {
@@ -4894,6 +5231,42 @@ auto mapbuffer::has_floor_or_support( const tripoint_abs_ms &p,
     return !tile->ter_obj().has_flag( TFLAG_NO_FLOOR );
 }
 
+auto mapbuffer::has_floor( const tripoint_abs_ms &p, bool visible_only,
+                           const mapbuffer_lookup_options options ) -> bool
+{
+    if( p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT ) {
+        return false;
+    }
+    // Check the submap floor cache for a fast answer
+    const auto sm_pos = project_to<coords::sm>( p );
+    const submap *sm = get_submap( sm_pos, options );
+    if( !sm ) {
+        return false;
+    }
+    const auto split = project_remain<coords::sm>( p );
+    const auto &cache = sm->floor_cache;
+    // If floor cache is dirty we can't rebuild it here (needs map pointer),
+    // fall back to has_floor_or_support which checks TFLAG_NO_FLOOR.
+    if( sm->floor_dirty ) {
+        return has_floor_or_support( p, options ) ||
+               ( !visible_only && has_flag( TFLAG_Z_TRANSPARENT, p, options ) );
+    }
+    return cache[split.remainder.x()][split.remainder.y()] ||
+           ( !visible_only && has_flag( TFLAG_Z_TRANSPARENT, p, options ) );
+}
+
+auto mapbuffer::is_transparent( const tripoint_abs_ms &p,
+                                const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    // Transparency determined by terrain/furniture opacity
+    return tile->ter_obj().transparent &&
+           tile->furn_obj().transparent;
+}
+
 auto mapbuffer::is_outside( const tripoint_abs_ms &p,
                             const mapbuffer_lookup_options options ) -> bool
 {
@@ -4910,31 +5283,33 @@ auto mapbuffer::is_outside( const tripoint_abs_ms &p,
 }
 
 auto mapbuffer::combined_movecost( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
+                                   const vehicle *ignored_vehicle,
+                                   const int modifier, const bool flying, const bool via_ramp,
                                    const mapbuffer_lookup_options options ) -> int
 {
-    const int cost1 = move_cost( from, options );
-    const int cost2 = move_cost( to, options );
+    const int cost1 = move_cost( from, ignored_vehicle, options );
+    const int cost2 = move_cost( to, ignored_vehicle, options );
     const int mults[4] = { 0, 50, 71, 100 };
     size_t match = trigdist ? ( from.x() != to.x() ) + ( from.y() != to.y() ) +
                    ( from.z() != to.z() ) : 1;
-    if( from.z() == to.z() ) {
+    if( flying || from.z() == to.z() ) {
         return ( cost1 + cost2 ) * mults[match] / 2;
     }
     // Inter-z-level movement by foot (not flying)
-    if( !valid_move( from, to ) ) {
+    if( !valid_move( from, to, { .flying = flying, .via_ramp = via_ramp } ) ) {
         return 0;
     }
-    return ( cost1 + cost2 ) * mults[match] / 2;
+    return ( cost1 + cost2 + modifier ) * mults[match] / 2;
 }
 
-auto mapbuffer::move_cost( const tripoint_abs_ms &p,
+auto mapbuffer::move_cost( const tripoint_abs_ms &p, const vehicle *ignored_vehicle,
                            const mapbuffer_lookup_options options ) -> int
 {
     const auto tile = abs_tile_handle::fetch( *this, p );
     if( !tile ) {
         return 0;
     }
-    return tile->move_cost();
+    return tile->move_cost( ignored_vehicle );
 }
 
 auto mapbuffer::obstructed_by_vehicle_rotation( const tripoint_abs_ms &from,
@@ -4948,6 +5323,66 @@ auto mapbuffer::obstructed_by_vehicle_rotation( const tripoint_abs_ms &from,
         }
     }
     return false;
+}
+
+auto mapbuffer::hit_with_acid( const tripoint_abs_ms &p,
+                               const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    if( tile->passable() ) {
+        return false;    // Didn't hit the tile!
+    }
+    const ter_id t = tile->ter();
+    if( t == t_wall_glass || t == t_wall_glass_alarm ||
+        t == t_vat ) {
+        set_ter( p, t_floor, options );
+    } else if( t == t_door_c || t == t_door_locked || t == t_door_locked_peep ||
+               t == t_door_locked_alarm ) {
+        if( one_in( 3 ) ) {
+            set_ter( p, t_door_b, options );
+        }
+    } else if( t == t_door_bar_c || t == t_door_bar_o || t == t_door_bar_locked || t == t_bars ||
+               t == t_reb_cage ) {
+        set_ter( p, t_floor, options );
+        add_msg( m_warning, _( "The metal bars melt!" ) );
+    } else if( t == t_door_b ) {
+        if( one_in( 4 ) ) {
+            set_ter( p, t_door_frame, options );
+        } else {
+            return false;
+        }
+    } else if( t == t_window || t == t_window_alarm || t == t_window_no_curtains ) {
+        set_ter( p, t_window_empty, options );
+    } else if( t == t_wax ) {
+        set_ter( p, t_floor_wax, options );
+    } else if( t == t_gas_pump || t == t_gas_pump_smashed ) {
+        return false;
+    } else if( t == t_card_science || t == t_card_military || t == t_card_industrial ) {
+        set_ter( p, t_card_reader_broken, options );
+    }
+    return true;
+}
+
+// returns true if terrain stops fire
+auto mapbuffer::hit_with_fire( const tripoint_abs_ms &p,
+                               const mapbuffer_lookup_options options ) -> bool
+{
+    const auto tile = abs_tile_handle::fetch( *this, p );
+    if( !tile ) {
+        return false;
+    }
+    if( tile->passable() ) {
+        return false;    // Didn't hit the tile!
+    }
+
+    // non passable but flammable terrain, set it on fire
+    if( tile->has_flag( "FLAMMABLE" ) || tile->has_flag( "FLAMMABLE_ASH" ) ) {
+        add_field( p, { .type = fd_fire, .intensity = 3, .lookup = options } );
+    }
+    return true;
 }
 
 auto mapbuffer::can_open_door( const tripoint_abs_ms &p, bool inside,
@@ -5177,11 +5612,11 @@ auto mapbuffer::for_each_vehicle( const std::function<void( const vehicle & )> &
 }
 
 auto mapbuffer::cheap_light_at( const tripoint_abs_ms &p,
-                                const mapbuffer_lookup_options options ) -> lit_level
+                                const mapbuffer_lookup_options options ) -> float
 {
     // Skip pocket dimension bounds
     if( is_outside_pocket_dimension_bounds( p ) ) {
-        return lit_level::DARK;
+        return 0.0f;
     }
 
     // Step 1: Natural light level (coordinate-independent, based on z-level + time)
@@ -5219,17 +5654,7 @@ auto mapbuffer::cheap_light_at( const tripoint_abs_ms &p,
         }
     }
 
-    // Step 5: Classify and return
-    if( ambient >= LIGHT_SOURCE_BRIGHT ) {
-        return lit_level::BRIGHT;
-    }
-    if( ambient >= LIGHT_AMBIENT_LIT ) {
-        return lit_level::LIT;
-    }
-    if( ambient >= LIGHT_AMBIENT_LOW ) {
-        return lit_level::LOW;
-    }
-    return lit_level::DARK;
+    return ambient;
 }
 
 // ----- Field operations -----
@@ -5539,7 +5964,7 @@ auto mapbuffer::sync_active_trap_change_side_tables( const tripoint_abs_ms &p,
     const auto sm_abs = project_to<coords::sm>( p );
 
     if( old_id != tr_null ) {
-        g->u.add_known_trap( *local, tr_null.obj() );
+        g->u.add_known_trap( bub_to_abs( *local ), tr_null.obj() );
         if( old_id.obj().is_funnel() ) {
             std::erase_if( here.funnel_locations_, [&]( const auto & entry ) {
                 return entry.first == sm_abs && entry.second == local_tile;

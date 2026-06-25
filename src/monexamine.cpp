@@ -687,8 +687,8 @@ void monexamine::push( monster &z )
 
     add_msg( _( "You pushed the %s." ), pet_name );
 
-    auto delta = z.bub_pos().xy() - you.bub_pos().xy();
-    z.move_to( z.bub_pos() + delta );
+    auto delta = z.abs_pos().xy() - you.abs_pos().xy();
+    z.move_to( z.abs_pos() + delta );
 }
 
 void monexamine::rename_pet( monster &z )

@@ -16,7 +16,7 @@ class dispersion_sources;
 class gun_mode;
 class item;
 class item_location;
-class map;
+class mapbuffer;
 class player;
 class spell;
 class turret_data;
@@ -35,7 +35,7 @@ class detached_ptr;
 namespace target_handler
 {
 // Trajectory to target. Empty if selection was aborted or player ran out of moves
-using trajectory = std::vector<tripoint_bub_ms>;
+using trajectory = std::vector<tripoint_abs_ms>;
 
 /**
  * Firing ranged weapon. This mode allows spending moves on aiming.
@@ -49,7 +49,7 @@ trajectory mode_throw( avatar &you, item &relevant, bool blind_throwing );
 trajectory mode_throw_creature( avatar &you, const Creature &thrown_creature, int range );
 
 /** Throwing or shoving a grabbed vehicle */
-trajectory mode_throw_vehicle( avatar &you, const tripoint_bub_ms &grabbed_part_pos, int range );
+trajectory mode_throw_vehicle( avatar &you, const tripoint_abs_ms &grabbed_part_pos, int range );
 
 /** Reach attacking */
 trajectory mode_reach( avatar &you, item &weapon );
@@ -78,7 +78,7 @@ namespace ranged
  * @param messages Used to store messages describing failed checks
  * @return True if all conditions are true
  */
-bool gunmode_checks_common( avatar &you, const map &m, std::vector<std::string> &messages,
+bool gunmode_checks_common( avatar &you, std::vector<std::string> &messages,
                             const gun_mode &gmode );
 
 /**
@@ -86,7 +86,7 @@ bool gunmode_checks_common( avatar &you, const map &m, std::vector<std::string> 
  * @param messages Used to store messages describing failed checks
  * @return True if all conditions are true
  */
-bool gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::string> &messages,
+bool gunmode_checks_weapon( avatar &you, std::vector<std::string> &messages,
                             const gun_mode &gmode );
 
 std::vector<Creature *> targetable_creatures( const Character &c, int range );
@@ -118,8 +118,8 @@ std::optional<shape_factory> get_target_shape_factory( const item &gun );
 void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &attacker,
                             item *source_weapon, const vehicle *in_veh = nullptr );
 
-std::map<tripoint_bub_ms, double> expected_coverage( const shape &sh, const map &here,
-        int bash_power );
+std::map<tripoint_abs_ms, double> expected_coverage( const shape &sh, mapbuffer &here,
+                                                     int bash_power );
 
 void draw_cone_aoe( const tripoint_bub_ms &origin, const std::map<tripoint_bub_ms, double> &aoe );
 
@@ -182,7 +182,7 @@ void make_gun_sound_effect( const Character &who, bool burst, const item &gun );
  * @param shots Maximum number of shots to fire (less may be fired in some circumstances)
  * @return Number of shots actually fired
  */
-int fire_gun( Character &who, const tripoint_bub_ms &target, int shots = 1 );
+int fire_gun( Character &who, const tripoint_abs_ms &target, int shots = 1 );
 
 /**
  * Fire a gun or auxiliary gunmod (ignoring any current mode)
@@ -192,8 +192,8 @@ int fire_gun( Character &who, const tripoint_bub_ms &target, int shots = 1 );
  * @param gun Item to fire (which does not necessary have to be in the characters possession)
  * @return Number of shots actually fired
  */
-int fire_gun( Character &who, const tripoint_bub_ms &target, int shots, item &gun,
-              item *ammo, const std::optional<tripoint_bub_ms> &shot_origin = std::nullopt );
+int fire_gun( Character &who, const tripoint_abs_ms &target, int shots, item &gun,
+              item *ammo, const std::optional<tripoint_abs_ms> &shot_origin = std::nullopt );
 
 /** Generates a projectile for throwing the item, used to show actual damage.*/
 auto throw_damage_projectile( const item &it, const int skill, const int str ) -> projectile;
@@ -210,8 +210,8 @@ auto throw_damage( const item &it, const int skill, const int str ) -> int;
  * @param to_throw Item being thrown
  * @param blind_throw_from_pos Position of blind throw (if blind throwing)
  */
-auto throw_item( Character &who, const tripoint_bub_ms &target,
+auto throw_item( Character &who, const tripoint_abs_ms &target,
                  detached_ptr<item> &&to_throw,
-                 std::optional<tripoint_bub_ms> blind_throw_from_pos ) -> dealt_projectile_attack;
+                 std::optional<tripoint_abs_ms> blind_throw_from_pos ) -> dealt_projectile_attack;
 
 } // namespace ranged

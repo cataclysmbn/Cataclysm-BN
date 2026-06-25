@@ -172,7 +172,7 @@ bool ter_furn_transform::add_message( const std::map<K, ter_furn_data<T>> &list,
 {
     const std::optional<ter_furn_data<T>> result = find_transform( list, key );
     if( result && !result->has_msg() ) {
-        if( critter.sees( location ) ) {
+        if( critter.sees( bub_to_abs( location ) ) ) {
             result->add_msg( critter );
         }
         return true;

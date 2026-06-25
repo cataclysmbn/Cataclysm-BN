@@ -31,7 +31,7 @@ class teleporter_list
 
         // calls the necessary functions to select translocator location
         // and teleports the target(s) there
-        void translocate( const std::set<tripoint_bub_ms> &targets );
+        void translocate( const std::set<tripoint_abs_ms> &targets );
 
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );

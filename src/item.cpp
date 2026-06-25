@@ -5012,8 +5012,8 @@ void item::handle_pickup_ownership( Character &c )
             std::vector<npc *> witnesses;
             for( npc &elem : g->all_npcs() ) {
                 // If they already want to murder you, no point in confronting you about theft
-                if( rl_dist( elem.bub_pos(), you.bub_pos() ) < g_max_view_distance && elem.get_faction() &&
-                    is_owned_by( elem ) && elem.sees( you.bub_pos() ) && !elem.guaranteed_hostile() ) {
+                if( rl_dist( elem.abs_pos(), you.abs_pos() ) < g_max_view_distance && elem.get_faction() &&
+                    is_owned_by( elem ) && elem.sees( you.abs_pos() ) && !elem.guaranteed_hostile() ) {
                     elem.say( "<witnessed_thievery>", 7 );
                     npc *npc_to_add = &elem;
                     witnesses.push_back( npc_to_add );
@@ -8068,7 +8068,6 @@ bool item::spill_contents( const tripoint_bub_ms &pos )
     if( !is_container() || is_container_empty() ) {
         return true;
     }
-
     for( detached_ptr<item> &it : contents.clear_items() ) {
         get_map().add_item_or_charges( pos, std::move( it ) );
     }
@@ -9936,7 +9935,7 @@ detached_ptr<item> item::detonate( detached_ptr<item> &&self, const tripoint_bub
 
         if( ammo_type.special_cookoff ) {
             // If it has a special effect just trigger it.
-            apply_ammo_effects( p, ammo_type.ammo_effects, self->activated_by );
+            apply_ammo_effects( bub_to_abs( p ), ammo_type.ammo_effects, self->activated_by );
         }
         charges_remaining -= rounds_exploded;
         if( charges_remaining > 0 ) {
@@ -10443,7 +10442,7 @@ detached_ptr<item> item::process_corpse( detached_ptr<item> &&self, player *carr
     if( rng( 0, self->volume() / units::legacy_volume_factor ) > self->burnt &&
         g->revive_corpse( pos, *self ) ) {
         if( carrier == nullptr ) {
-            if( get_avatar().sees( pos ) ) {
+            if( get_avatar().sees( bub_to_abs( pos ) ) ) {
                 if( self->corpse->in_species( ROBOT ) ) {
                     add_msg( m_warning, _( "A nearby robot has repaired itself and stands up!" ) );
                 } else {
