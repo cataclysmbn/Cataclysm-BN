@@ -1205,9 +1205,10 @@ auto mapgen_constructor::add_vehicle( const std::variant<vgroup_id, vproto_id> &
     }
     auto result = add_vehicle( std::move( veh ), true );
     if( result ) {
+        auto *const real_result = result.get();
         place_on_submap->vehicles.push_back( std::move( result ) );
         place_on_submap->is_uniform = false;
-        return result.get();
+        return real_result;
     }
     return nullptr;
 }
