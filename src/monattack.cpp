@@ -3532,19 +3532,60 @@ bool mattack::photograph( monster *z )
         } else if( one_in( 3 ) ) {
             cname = g->u.name;
         }
-        sounds::sound( z->bub_pos(), 15, sounds::sound_t::alert,
-                       string_format( _( "a robotic voice boom, \"Citizen %s!\"" ), cname ), false, "speech",
-                       z->type->id.str() );
+        {
+            sound_event se;
+            se.origin = z->bub_pos();
+            se.volume = 80;
+            se.category = sounds::sound_t::alert;
+            se.description = string_format( _( "a robotic boice boom, \"Citizen %s!\"" ), cname );
+            se.movement_noise = false;
+            se.from_monster = true;
+            se.monfaction = z->faction.id();
+            se.id = "shout";
+            se.variant = z->type->id.str();
+            sounds::sound( se );
+        }
 
         if( g->u.primary_weapon().is_gun() ) {
-            sounds::sound( z->bub_pos(), 15, sounds::sound_t::alert, _( "\"Drop your gun!  Now!\"" ) );
+            sound_event se;
+            se.origin = z->bub_pos();
+            se.volume = 80;
+            se.category = sounds::sound_t::alert;
+            se.description = _( "\"Drop your gun! Now!\"" );
+            se.movement_noise = false;
+            se.from_monster = true;
+            se.monfaction = z->faction.id();
+            se.id = "shout";
+            se.variant = z->type->id.str();
+            sounds::sound( se );
         } else if( g->u.is_armed() ) {
-            sounds::sound( z->bub_pos(), 15, sounds::sound_t::alert, _( "\"Drop your weapon!  Now!\"" ) );
+            sound_event se;
+            se.origin = z->bub_pos();
+            se.volume = 80;
+            se.category = sounds::sound_t::alert;
+            se.description = _( "\"Drop your weapon! Now!\"" );
+            se.movement_noise = false;
+            se.from_monster = true;
+            se.monfaction = z->faction.id();
+            se.id = "shout";
+            se.variant = z->type->id.str();
+            sounds::sound( se );
         }
-        const SpeechBubble &speech = get_speech( z->type->id.str() );
-        sounds::sound( z->bub_pos(), speech.volume, sounds::sound_t::alert, speech.text.translated() );
+        {
+            const SpeechBubble &speech = get_speech( z->type->id.str() );
+            sound_event se;
+            se.origin = z->bub_pos();
+            se.volume = speech.volume;
+            se.category = sounds::sound_t::alert;
+            se.description = speech.text.translated();
+            se.from_monster = true;
+            se.monfaction = z->faction.id();
+            se.id = "speech";
+            se.variant = z->type->id.str();
+            sounds::sound( se );
+        }
         g->timed_events.add( TIMED_EVENT_ROBOT_ATTACK, calendar::turn + rng( 15_turns, 30_turns ), 0,
-                             g->u.global_sm_location() );
+                             g->u.abs_sm_pos() );
         z->add_effect( effect_eyebot_depleted, 1_turns );
         return true;
     }
