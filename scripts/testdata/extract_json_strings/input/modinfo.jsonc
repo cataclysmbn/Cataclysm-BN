@@ -10,6 +10,6 @@
       "str": "Fixture description",
     },
     "category": "content",
-    "dependencies": [ "bn", ],
+    "dependencies": ["bn"],
   },
 ]
