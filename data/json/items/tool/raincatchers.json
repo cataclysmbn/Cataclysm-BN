@@ -5,7 +5,7 @@
     "category": "deployables",
     "name": { "str": "birchbark funnel" },
     "description": "This is a small birchbark funnel.  Place it above an outdoor container to collect rainwater.",
-    "weight": "150 g",
+    "weight": "50 g",
     "volume": "250 ml",
     "price": "0 cent",
     "price_postapoc": "10 cent",
