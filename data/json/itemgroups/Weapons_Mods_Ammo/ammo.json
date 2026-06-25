@@ -64,8 +64,6 @@
     "entries": [
       { "item": "36navy", "prob": 50, "charges": [ 1, 100 ] },
       { "item": "44army", "prob": 100, "charges": [ 1, 100 ] },
-      { "item": "762_m43", "prob": 10, "charges": [ 1, 100 ] },
-      { "item": "762_m87", "prob": 20, "charges": [ 1, 100 ] },
       { "item": "8mm_civilian", "prob": 30, "charges": [ 1, 100 ] }
     ]
   },
@@ -269,12 +267,10 @@
     "entries": [
       { "item": "300blk", "prob": 15, "charges": [ 1, 100 ] },
       { "item": "300blk_ss", "prob": 10, "charges": [ 1, 100 ] },
-      { "item": "50_incendiary", "prob": 1, "charges": [ 1, 100 ] },
-      { "item": "50bmg", "prob": 2, "charges": [ 1, 100 ] },
-      { "item": "50match", "prob": 1, "charges": [ 1, 100 ] },
-      { "item": "50ss", "prob": 1, "charges": [ 1, 100 ] },
       { "item": "277_fmj", "prob": 15, "charges": [ 1, 100 ] },
-      { "item": "277_hybrid", "prob": 10, "charges": [ 1, 100 ] }
+      { "item": "277_hybrid", "prob": 10, "charges": [ 1, 100 ] },
+      { "item": "762_m43", "prob": 5, "charges": [ 1, 100 ] },
+      { "item": "762_m87", "prob": 10, "charges": [ 1, 100 ] }
     ]
   },
   {

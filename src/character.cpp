@@ -10738,22 +10738,20 @@ int Character::bodytemp_modifier_traits_floor() const
 
 int Character::temp_corrected_by_climate_control( int temperature )
 {
-    int mutated_norm = BODYTEMP_NORM + ( ( bodytemp_modifier_traits( false ) - bodytemp_modifier_traits(
-            true ) ) / 2 );
-    if( temperature > mutated_norm ) {
+    if( temperature > BODYTEMP_NORM ) {
         temperature -= bonus_from_enchantments( temperature,
                                                 enchantment_value_id( "CLIMATE_CONTROL_COOLING" ) );
         if( in_climate_control() ) {
             temperature -= 750;
         }
-        return std::max( mutated_norm, temperature );
+        return std::max( BODYTEMP_NORM, temperature );
     } else {
         if( in_climate_control() ) {
             temperature += 750;
         }
         temperature += bonus_from_enchantments( temperature,
                                                 enchantment_value_id( "CLIMATE_CONTROL_HEATING" ) );
-        return std::min( mutated_norm, temperature );
+        return std::min( BODYTEMP_NORM, temperature );
     }
     return temperature;
 }

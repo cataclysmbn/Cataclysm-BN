@@ -24,12 +24,15 @@
 #include "pldata.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 
 namespace
 {
 generic_factory<profession> all_profs( "profession" );
 const profession_id generic_profession_id( "unemployed" );
 } // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( profession, all_profs );
 
 static class json_item_substitution
 {
@@ -64,20 +67,6 @@ static class json_item_substitution
         std::vector<detached_ptr<item>> get_substitution( const item &it,
                                      const std::vector<trait_id> &traits ) const;
 } item_substitutions;
-
-/** @relates string_id */
-template<>
-const profession &string_id<profession>::obj() const
-{
-    return all_profs.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<profession>::is_valid() const
-{
-    return all_profs.is_valid( *this );
-}
 
 profession::profession()
     : _name_male( no_translation( "null" ) ),

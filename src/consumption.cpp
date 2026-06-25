@@ -1075,7 +1075,7 @@ void Character::modify_morale( item &food, int nutr )
             food_morale( MORALE_FOOD_HOT );
         }
     } else if( food.has_flag( flag_EATEN_COLD ) ) {
-        const auto temp = rot::temperature_flag_for_location( get_map(), food );
+        const auto temp = rot::temp::for_location( get_map(), food );
 
         if( temp == temperature_flag::TEMP_FREEZER ) {
             add_msg_if_player( m_good, _( "This stuff is icy!" ), food.tname() );

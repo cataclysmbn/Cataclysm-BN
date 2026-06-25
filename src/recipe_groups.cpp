@@ -12,7 +12,7 @@
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
-
+#include "type_id_implement.h"
 // recipe_groups namespace
 
 namespace
@@ -36,6 +36,8 @@ struct recipe_group_data {
 generic_factory<recipe_group_data> recipe_groups_data( "recipe group type" );
 
 } // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( recipe_group_data, recipe_groups_data );
 
 void recipe_group_data::load( const JsonObject &jo, const std::string & )
 {

@@ -29,6 +29,7 @@
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 
 static const std::string flag_TRANSPARENT( "TRANSPARENT" );
 
@@ -118,101 +119,8 @@ auto parse_fluid_grid_role( const std::string &role ) -> std::optional<fluid_gri
 
 } // namespace
 
-/** @relates int_id */
-template<>
-bool int_id<ter_t>::is_valid() const
-{
-    return terrain_data.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-const ter_t &int_id<ter_t>::obj() const
-{
-    return terrain_data.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const string_id<ter_t> &int_id<ter_t>::id() const
-{
-    return terrain_data.convert( *this );
-}
-
-/** @relates int_id */
-template<>
-int_id<ter_t> string_id<ter_t>::id() const
-{
-    return terrain_data.convert( *this, t_null );
-}
-
-/** @relates int_id */
-template<>
-int_id<ter_t>::int_id( const string_id<ter_t> &id ) : _id( id.id() )
-{
-}
-
-/** @relates string_id */
-template<>
-const ter_t &string_id<ter_t>::obj() const
-{
-    return terrain_data.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<ter_t>::is_valid() const
-{
-    return terrain_data.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-bool int_id<furn_t>::is_valid() const
-{
-    return furniture_data.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-const furn_t &int_id<furn_t>::obj() const
-{
-    return furniture_data.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const string_id<furn_t> &int_id<furn_t>::id() const
-{
-    return furniture_data.convert( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<furn_t>::is_valid() const
-{
-    return furniture_data.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const furn_t &string_id<furn_t>::obj() const
-{
-    return furniture_data.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<furn_t> string_id<furn_t>::id() const
-{
-    return furniture_data.convert( *this, f_null );
-}
-
-/** @relates int_id */
-template<>
-int_id<furn_t>::int_id( const string_id<furn_t> &id ) : _id( id.id() )
-{
-}
+IMPLEMENT_STRING_AND_INT_IDS( ter_t, terrain_data );
+IMPLEMENT_STRING_AND_INT_IDS( furn_t, furniture_data );
 
 static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { {
         { "DESTROY_ITEM",             TFLAG_DESTROY_ITEM },   // add/spawn_item*()

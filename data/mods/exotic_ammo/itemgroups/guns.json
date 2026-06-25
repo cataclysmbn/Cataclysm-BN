@@ -157,6 +157,7 @@
     "items": [
       { "group": "nested_trex_gun", "prob": 20 },
       { "group": "nested_ak74", "prob": 50 },
+      { "group": "everyday_draco", "prob": 50 },
       { "group": "nested_an94", "prob": 40 },
       { "group": "everyday_lbase223", "prob": 40 },
       { "group": "everyday_lcar223", "prob": 10 },

@@ -102,6 +102,7 @@
 #include "projectile.h"
 #include "profile.h"
 #include "rng.h"
+#include "rot.h"
 #include "safe_reference.h"
 #include "scent_map.h"
 #include "sounds.h"
@@ -6304,21 +6305,6 @@ void map::process_items()
     TracyPlot( "Total Rottable Active Items", total_rottable_active_items );
 }
 
-static temperature_flag temperature_flag_at_point( const map &m, const tripoint_bub_ms &p )
-{
-    if( m.ter( p ) == t_rootcellar ) {
-        return temperature_flag::TEMP_ROOT_CELLAR;
-    }
-    if( m.has_flag_furn( TFLAG_FRIDGE, p ) ) {
-        return temperature_flag::TEMP_FRIDGE;
-    }
-    if( m.has_flag_furn( TFLAG_FREEZER, p ) ) {
-        return temperature_flag::TEMP_FREEZER;
-    }
-
-    return temperature_flag::TEMP_NORMAL;
-}
-
 auto map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp,
                                    std::vector<item *> &active_items ) -> void
 {
@@ -6340,7 +6326,7 @@ auto map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm
             }
 
             const auto map_location = active_item_ref->bub_pos();
-            temperature_flag flag = temperature_flag_at_point( *this, tripoint_bub_ms( map_location ) );
+            const auto flag = rot::temp::for_location( *this, *active_item_ref );
             process_map_items( active_item_ref, map_location, flag );
         }
     }
@@ -6403,21 +6389,10 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         }
         const item &target = *active_item_ref;
         // Find the cargo part and coordinates corresponding to the current active item.
-        const vehicle_part &pt = it->part();
         const auto item_loc = it->pos();
-        auto items = cur_veh.get_items( static_cast<int>( it->part_index() ) );
-        temperature_flag flag = temperature_flag::TEMP_NORMAL;
+        auto flag = temperature_flag::TEMP_NORMAL;
         if( target.is_food() || target.is_food_container() || target.is_corpse() ) {
-            const vpart_info &pti = pt.info();
-            if( engine_heater_is_on ) {
-                flag = temperature_flag::TEMP_HEATER;
-            }
-
-            if( pt.enabled && pti.has_flag( VPFLAG_FRIDGE ) ) {
-                flag = temperature_flag::TEMP_FRIDGE;
-            } else if( pt.enabled && pti.has_flag( VPFLAG_FREEZER ) ) {
-                flag = temperature_flag::TEMP_FREEZER;
-            }
+            flag = rot::temp::for_part( cur_veh, it->part_index(), engine_heater_is_on );
         }
         if( !process_map_items( active_item_ref, item_loc, flag ) ) {
             // If the item was NOT destroyed, we can skip the remainder,
@@ -6700,58 +6675,42 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint_bub_ms &origin,
         const std::optional<vpart_reference> autoclavepart = vp.part_with_feature( "AUTOCLAVE", true );
         const std::optional<vpart_reference> cargo = vp.part_with_feature( "CARGO", true );
 
-        if( crafterpart ) {
-            for( itype_id id : crafterpart->info().craftertools() ) {
-                if( type == id ) {
-                    detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-                    tmp->charges = crafterpart->vehicle().drain( itype_battery, quantity );
-                    quantity -= tmp->charges;
-                    ret.push_back( std::move( tmp ) );
+        auto drain_vehicle_pseudo_item = [&ret, &quantity, &type]( vehicle & veh,
+        const itype_id & drain_type ) -> bool {
+            const auto drained = veh.drain( drain_type, quantity );
+            quantity -= drained;
+            if( drained <= 0 )
+            {
+                return quantity == 0;
+            }
+            auto tmp = item::spawn( type, calendar::turn );
+            tmp->charges = drained;
+            ret.push_back( std::move( tmp ) );
+            return quantity == 0;
+        };
 
-                    if( quantity == 0 ) {
-                        return ret;
-                    }
+        if( crafterpart ) {
+            for( const auto &id : crafterpart->info().craftertools() ) {
+                if( type == id && drain_vehicle_pseudo_item( crafterpart->vehicle(), itype_battery ) ) {
+                    return ret;
                 }
             }
         }
         if( faupart ) { // we have a faucet, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
-
-            ftype = type;
-
-            // TODO: add a sane birthday arg
-            //TODO!: check if we actually need the return  here
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = faupart->vehicle().drain( ftype, quantity );
             // TODO: Handle water poison when crafting starts respecting it
-            quantity -= tmp->charges;
-            // Don't return a 0-charge phantom for types the tanks can't provide:
-            // it would replace the real component during crafting (#9440)
-            if( tmp->charges > 0 ) {
-                ret.push_back( std::move( tmp ) );
-            }
-
-            if( quantity == 0 ) {
+            if( drain_vehicle_pseudo_item( faupart->vehicle(), type ) ) {
                 return ret;
             }
         }
 
         if( autoclavepart ) { // we have an autoclave, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
+            auto ftype = itype_id::NULL_ID();
 
             if( type == itype_autoclave ) {
                 ftype = itype_battery;
             }
 
-            // TODO: add a sane birthday arg
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = autoclavepart->vehicle().drain( ftype, quantity );
-            quantity -= tmp->charges;
-            if( tmp->charges > 0 ) {
-                ret.push_back( std::move( tmp ) );
-            }
-
-            if( quantity == 0 ) {
+            if( drain_vehicle_pseudo_item( autoclavepart->vehicle(), ftype ) ) {
                 return ret;
             }
         }
