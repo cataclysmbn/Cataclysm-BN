@@ -46,6 +46,7 @@
     "blackpowder_tolerance": 24,
     "built_in_mods": [ "folding_stock" ],
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
+    "magazine_well": "100 ml",
     "magazines": [ [ "45", [ "ump45mag", "ump45_makeshiftmag" ] ] ]
   },
   {
@@ -231,6 +232,7 @@
     "dispersion": 170,
     "durability": 10,
     "min_cycle_recoil": 400,
+    "magazine_well": "150 ml",
     "magazines": [ [ "45", [ "glock_21mag", "glock_21mag26", "glock21drum40rd" ] ] ]
   }
 ]

@@ -19,6 +19,7 @@
     "ammo": "10mm",
     "blackpowder_tolerance": 24,
     "min_cycle_recoil": 570,
+    "magazine_well": "150 ml",
     "magazines": [ [ "10mm", [ "glock20mag", "glock20bigmag", "glock20drum50rd" ] ] ]
   },
   {

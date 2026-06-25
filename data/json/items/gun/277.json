@@ -55,6 +55,7 @@
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "25 ml",
     "magazines": [ [ "277", [ "belt277" ] ] ]
   }
 ]

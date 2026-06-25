@@ -137,6 +137,7 @@
       [ "sling", 1 ],
       [ "stock", 1 ]
     ],
+    "magazine_well": "100 ml",
     "magazines": [ [ "9mm", [ "mp5mag", "mp5bigmag" ] ] ]
   },
   {
@@ -238,6 +239,7 @@
     "armor_data": { "covers": [ "arm_either", "hand_either" ], "coverage": 10, "encumbrance": 30, "material_thickness": 2 },
     "flags": [ "OVERSIZE", "RELOAD_EJECT", "BELTED", "RESTRICT_HANDS", "WORN_GUN" ],
     "valid_mod_locations": [  ],
+    "magazine_well": "500 ml",
     "magazines": [ [ "9mm", [ "mp5mag" ] ] ]
   },
   {
@@ -365,6 +367,7 @@
       [ "sights", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "100 ml",
     "magazines": [ [ "9mm", [ "stenmag", "survivor9mm_mag" ] ] ]
   },
   {
@@ -663,6 +666,7 @@
     "handling": 40,
     "built_in_mods": [ "folding_stock" ],
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 2 ], [ "AUTO", "auto", 6 ] ],
+    "magazine_well": "500 ml",
     "magazines": [
       [ "9mm", [ "kriss_vector_9mm_mag", "glock17_17", "glock17_22", "glock_drum_50rd", "glock_drum_100rd", "glockbigmag" ] ]
     ]
@@ -691,6 +695,7 @@
     "loudness": 0,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
     "barrel_volume": "250 ml",
+    "magazine_well": "100 ml",
     "magazines": [ [ "9mm", [ "survivor9mm_mag", "stenmag" ] ] ]
   }
 ]
