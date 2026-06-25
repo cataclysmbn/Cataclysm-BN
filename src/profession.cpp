@@ -2,12 +2,14 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <iterator>
 #include <map>
 
 #include "addiction.h"
 #include "calendar.h"
 #include "debug.h"
+#include "detached_ptr.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "generic_factory.h"
@@ -22,12 +24,15 @@
 #include "pldata.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 
 namespace
 {
 generic_factory<profession> all_profs( "profession" );
 const profession_id generic_profession_id( "unemployed" );
 } // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( profession, all_profs );
 
 static class json_item_substitution
 {
@@ -56,25 +61,12 @@ static class json_item_substitution
         };
         std::map<itype_id, std::vector<substitution>> substitutions;
         std::vector<std::pair<itype_id, trait_requirements>> bonuses;
+        std::vector<std::pair<item_group_id, trait_requirements>> itemgroup_bonuses;
     public:
-        std::vector<itype_id> get_bonus_items( const std::vector<trait_id> &traits ) const;
+        std::vector<detached_ptr<item>> get_bonus_items( const std::vector<trait_id> &traits ) const;
         std::vector<detached_ptr<item>> get_substitution( const item &it,
                                      const std::vector<trait_id> &traits ) const;
 } item_substitutions;
-
-/** @relates string_id */
-template<>
-const profession &string_id<profession>::obj() const
-{
-    return all_profs.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<profession>::is_valid() const
-{
-    return all_profs.is_valid( *this );
-}
 
 profession::profession()
     : _name_male( no_translation( "null" ) ),
@@ -481,18 +473,10 @@ std::vector<detached_ptr<item>> profession::items( bool male,
                    std::make_move_iterator( group_gender.begin() ),
                    std::make_move_iterator( group_gender.end() ) );
 
-    std::vector<itype_id> bonus = item_substitutions.get_bonus_items( traits );
-    for( const itype_id &elem : bonus ) {
-        if( elem != no_bonus ) {
-            auto bonus_item = item::spawn( elem, advanced_spawn_time(), item::default_charges_tag {} );
-            if( !bonus_item->magazine_current() &&
-                bonus_item->magazine_default() != itype_id::NULL_ID() ) {
-                bonus_item->put_in( item::spawn( bonus_item->magazine_default(),
-                                                 bonus_item->birthday() ) );
-            }
-            result.push_back( std::move( bonus_item ) );
-        }
-    }
+    std::vector<detached_ptr<item>> bonus = item_substitutions.get_bonus_items( traits );
+    result.insert( result.end(),
+                   std::make_move_iterator( bonus.begin() ),
+                   std::make_move_iterator( bonus.end() ) );
     for( auto iter = result.begin(); iter != result.end(); ) {
         auto sub = item_substitutions.get_substitution( **iter, traits );
         if( !sub.empty() ) {
@@ -654,6 +638,7 @@ void json_item_substitution::reset()
 {
     substitutions.clear();
     bonuses.clear();
+    itemgroup_bonuses.clear();
 }
 
 json_item_substitution::substitution::info::info( const JsonValue &value )
@@ -683,7 +668,9 @@ json_item_substitution::trait_requirements::trait_requirements( const JsonObject
 void json_item_substitution::load( const JsonObject &jo )
 {
     const bool item_mode = jo.has_string( "item" );
-    const std::string title = jo.get_string( item_mode ? "item" : "trait" );
+    const bool itemgroup_mode = jo.has_string( "item_group" );
+    const std::string title = jo.get_string( item_mode ? "item" : itemgroup_mode ? "item_group" :
+                              "trait" );
 
     auto check_duplicate_item = [&]( const itype_id & it ) {
         return substitutions.contains( it ) ||
@@ -710,6 +697,12 @@ void json_item_substitution::load( const JsonObject &jo )
                 s.infos.emplace_back( info );
             }
             substitutions[itype_id( title )].push_back( s );
+        }
+    } else if( itemgroup_mode ) {
+        if( jo.has_member( "bonus" ) ) {
+            itemgroup_bonuses.emplace_back( item_group::load_item_group( jo.get_member( "item_group" ),
+                                            "collection" ),
+                                            trait_requirements( jo.get_object( "bonus" ) ) );
         }
     } else {
         for( const JsonObject sub : jo.get_array( "sub" ) ) {
@@ -818,13 +811,26 @@ std::vector<detached_ptr<item>> json_item_substitution::get_substitution( const 
     return ret;
 }
 
-std::vector<itype_id> json_item_substitution::get_bonus_items( const std::vector<trait_id>
-        &traits ) const
+std::vector<detached_ptr<item>> json_item_substitution::get_bonus_items( const std::vector<trait_id>
+                             &traits ) const
 {
-    std::vector<itype_id> ret;
+    std::vector<detached_ptr<item>> ret;
     for( const auto &pair : bonuses ) {
         if( pair.second.meets_condition( traits ) ) {
-            ret.push_back( pair.first );
+            auto bonus_item = item::spawn( pair.first, advanced_spawn_time(), item::default_charges_tag {} );
+            if( !bonus_item->magazine_current() &&
+                bonus_item->magazine_default() != itype_id::NULL_ID() ) {
+                bonus_item->put_in( item::spawn( bonus_item->magazine_default(), bonus_item->birthday() ) );
+            }
+            ret.push_back( std::move( bonus_item ) );
+        }
+    }
+    for( const auto &pair : itemgroup_bonuses ) {
+        if( pair.second.meets_condition( traits ) ) {
+            auto items = item_group::items_from( pair.first );
+            ret.insert( ret.end(),
+                        std::make_move_iterator( items.begin() ),
+                        std::make_move_iterator( items.end() ) );
         }
     }
     return ret;

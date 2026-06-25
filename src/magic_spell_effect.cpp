@@ -137,8 +137,6 @@ static void swap_pos( Creature &caster, const tripoint_bub_ms &target )
         critter->setpos( caster.bub_pos() );
     }
     caster.setpos( target );
-    //update map in case a monster swapped positions with the player
-    g->update_map( get_avatar() );
 }
 
 void spell_effect::pain_split( const spell &sp, Creature &caster, const tripoint_bub_ms & )
@@ -147,7 +145,7 @@ void spell_effect::pain_split( const spell &sp, Creature &caster, const tripoint
     if( p == nullptr ) {
         return;
     }
-    sp.make_sound( caster.bub_pos() );
+    sp.make_sound( caster.bub_pos(), caster );
     add_msg( m_info, _( "Your injuries even out." ) );
     int num_limbs = 0; // number of limbs effected (broken don't count)
     int total_hp = 0; // total hp among limbs
@@ -492,7 +490,7 @@ static void damage_targets( const spell &sp, Creature &caster,
             continue;
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
-            sp.make_sound( target );
+            sp.make_sound( target, caster );
             sound_played = true;
         }
         sp.create_field( target );
@@ -761,7 +759,7 @@ void spell_effect::area_pull( const spell &sp, Creature &caster, const tripoint_
 
         spell_move( sp, caster, node.position, node.from );
     }
-    sp.make_sound( caster.bub_pos() );
+    sp.make_sound( caster.bub_pos(), caster );
 }
 
 void spell_effect::area_push( const spell &sp, Creature &caster, const tripoint_bub_ms &center )
@@ -779,7 +777,7 @@ void spell_effect::area_push( const spell &sp, Creature &caster, const tripoint_
 
         spell_move( sp, caster, node.from, node.position );
     }
-    sp.make_sound( caster.bub_pos() );
+    sp.make_sound( caster.bub_pos(), caster );
 }
 
 static void character_push_effects( Creature *caster, Character &guy,
@@ -924,7 +922,7 @@ void spell_effect::spawn_ethereal_item( const spell &sp, Creature &caster, const
             you.i_add( item::spawn( as_item ) );
         }
     }
-    sp.make_sound( caster.bub_pos() );
+    sp.make_sound( caster.bub_pos(), caster );
 }
 
 void spell_effect::recover_energy( const spell &sp, Creature &caster,
@@ -965,7 +963,7 @@ void spell_effect::recover_energy( const spell &sp, Creature &caster,
     } else {
         debugmsg( "Invalid effect_str %s for spell %s", energy_source, sp.name() );
     }
-    sp.make_sound( caster.bub_pos() );
+    sp.make_sound( caster.bub_pos(), caster );
 }
 
 void spell_effect::timed_event( const spell &sp, Creature &caster, const tripoint_bub_ms & )
@@ -991,7 +989,7 @@ void spell_effect::timed_event( const spell &sp, Creature &caster, const tripoin
         spell_event = iter->second;
     }
 
-    sp.make_sound( caster.bub_pos() );
+    sp.make_sound( caster.bub_pos(), caster );
     g->timed_events.add( spell_event, calendar::turn + sp.duration_turns() );
 }
 
@@ -1044,7 +1042,7 @@ void spell_effect::spawn_summoned_monster( const spell &sp, Creature &caster,
             num_mons--;
             if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
                 sound_played = true;
-                sp.make_sound( *iter );
+                sp.make_sound( *iter, caster );
             }
         }
         // whether or not we succeed in spawning a monster, we don't want to try this tripoint_bub_ms again
@@ -1106,9 +1104,9 @@ void spell_effect::transform_blast( const spell &sp, Creature &caster,
     }
 }
 
-void spell_effect::noise( const spell &sp, Creature &, const tripoint_bub_ms &target )
+void spell_effect::noise( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
 {
-    sp.make_sound( target, sp.damage() );
+    sp.make_sound( target, caster, sp.damage() );
 }
 
 void spell_effect::vomit( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
@@ -1126,7 +1124,7 @@ void spell_effect::vomit( const spell &sp, Creature &caster, const tripoint_bub_
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( target );
+            sp.make_sound( target, caster );
         }
         ch->vomit();
     }
@@ -1163,7 +1161,7 @@ void spell_effect::mod_moves( const spell &sp, Creature &caster, const tripoint_
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( potential_target );
+            sp.make_sound( potential_target, caster );
         }
         critter->moves += sp.damage();
     }
@@ -1205,7 +1203,7 @@ void spell_effect::morale( const spell &sp, Creature &caster, const tripoint_bub
                                    sp.duration_turns() / 10, false );
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( potential_target );
+            sp.make_sound( potential_target, caster );
         }
     }
 }
@@ -1225,7 +1223,7 @@ void spell_effect::charm_monster( const spell &sp, Creature &caster, const tripo
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( potential_target );
+            sp.make_sound( potential_target, caster );
         }
         if( mon->friendly == 0 && mon->get_hp() <= sp.damage() ) {
             mon->unset_dest();
@@ -1272,7 +1270,7 @@ void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint_bub
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( potential_target );
+            sp.make_sound( potential_target, caster );
         }
     }
 }
@@ -1292,9 +1290,8 @@ void spell_effect::bash( const spell &sp, Creature &caster, const tripoint_bub_m
 
 void spell_effect::dash( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
 {
-    ::map &here = get_map();
     const auto start = caster.abs_pos();
-    std::vector<tripoint_abs_ms> trajectory = line_to( start, here.bub_to_abs( target ) );
+    std::vector<tripoint_abs_ms> trajectory = line_to( start, bub_to_abs( target ) );
     avatar *caster_you = caster.as_avatar();
     auto walk_point = trajectory.begin();
     if( *walk_point == start ) {
@@ -1306,12 +1303,12 @@ void spell_effect::dash( const spell &sp, Creature &caster, const tripoint_bub_m
     caster.add_effect( dashing_effect, 1_turns );
     while( walk_point != trajectory.end() ) {
         if( caster_you != nullptr ) {
-            if( g->critter_at( here.abs_to_bub( *walk_point ) ) ||
-                !g->walk_move( here.abs_to_bub( *walk_point ), false ) ) {
+            if( g->critter_at( *walk_point ) ||
+                !g->walk_move( abs_to_bub( *walk_point ), false ) ) {
                 --walk_point;
                 break;
             } else {
-                sp.create_field( here.abs_to_bub( *( walk_point - 1 ) ) );
+                sp.create_field( abs_to_bub( *( walk_point - 1 ) ) );
                 g->draw_ter();
             }
         }

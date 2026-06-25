@@ -8,12 +8,13 @@
     "weight": "4100 g",
     "price": "230 USD",
     "price_postapoc": "30 USD",
+    "loudness": -2,
     "relative": {
-      "volume": -2,
+      "volume": "-500 ml",
       "range": -6,
       "ranged_damage": { "damage_type": "bullet", "amount": -3 },
       "dispersion": 60,
-      "barrel_volume": -2
+      "barrel_volume": "-500 ml"
     }
   },
   {
@@ -39,7 +40,7 @@
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
-    "relative": { "price": 10000 }
+    "relative": { "price": "100 USD" }
   },
   {
     "id": "mosin91_30",
@@ -95,6 +96,6 @@
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
-    "relative": { "price": 10000 }
+    "relative": { "price": "100 USD" }
   }
 ]

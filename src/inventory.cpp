@@ -16,10 +16,10 @@
 #include "debug.h"
 #include "diary.h"
 #include "distribution_grid.h"
+#include "enchantments/enchantment.h"
 #include "game.h"
 #include "iexamine.h"
 #include "locations.h"
-#include "magic_enchantment.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "mapdata.h"
@@ -457,7 +457,7 @@ void inventory::form_from_zone( map &m, std::unordered_set<tripoint_abs_ms> &zon
     std::vector<tripoint_bub_ms> pts;
     pts.reserve( zone_pts.size() );
     for( const auto &elem : zone_pts ) {
-        pts.push_back( m.abs_to_bub( elem ) );
+        pts.push_back( abs_to_bub( elem ) );
     }
     form_from_map( m, pts, pl, assign_invlet );
 }
@@ -503,7 +503,7 @@ void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const C
                     const itype_id &ammo = furn_item.ammo_default();
                     if( furn_item.has_flag( flag_USES_GRID_POWER ) ) {
                         // TODO: The grid tracker should correspond to map!
-                        auto &grid = get_distribution_grid_tracker().grid_at( tripoint_abs_ms( m.bub_to_abs( p ) ) );
+                        auto &grid = get_distribution_grid_tracker().grid_at( bub_to_abs( p ) );
                         furn_item.charges = grid.get_resource();
                     } else {
                         furn_item.charges = ammo ? count_charges_in_list( &*ammo, m.i_at( p ) ) : 0;

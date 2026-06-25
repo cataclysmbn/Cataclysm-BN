@@ -3,14 +3,21 @@
 #include "shadowcasting.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include <array>
+#include <atomic>
 #include <cmath>
 #include <ranges>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <span>
+#include <source_location>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -24,11 +31,14 @@
 #include "fragment_cloud.h" // IWYU pragma: keep
 #include "game.h"
 #include "game_constants.h"
+#include "hsv_color.h"
 #include "int_id.h"
 #include "item.h"
 #include "item_stack.h"
+#include "itype.h"
 #include "line.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "math_defines.h"
@@ -46,23 +56,449 @@
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_lighting.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "weather.h"
+#if defined( CATA_SDL )
+#include "compute/compute_backend.h"
+#include "compute/gpu_lm.h"
+#include "compute/gpu_platform.h"
+#include "compute/gpu_transparency.h"
+#endif
+
+namespace
+{
+
+std::atomic<int64_t> cpu_lm_light_reads_valid{ 0 };
+std::atomic<int64_t> cpu_lm_light_reads_stale{ 0 };
+std::atomic<int64_t> cpu_lm_ambient_reads_valid{ 0 };
+std::atomic<int64_t> cpu_lm_ambient_reads_stale{ 0 };
+std::atomic<int64_t> cpu_lm_ambient_cache_hits{ 0 };
+std::atomic<int64_t> cpu_lm_ambient_cache_misses{ 0 };
+
+static constexpr auto SOLAR_SHADOW_SCATTER = 0.09f;
+
+auto has_vertical_light_blocker( const level_cache &cache, const int x, const int y ) -> bool
+{
+    const auto idx = cache.idx( x, y );
+    return cache.floor_cache[idx] || cache.vehicle_floor_cache[idx];
+}
+
+struct vehicle_external_light_cache_scope {
+    level_cache &cache;
+    std::vector<std::pair<std::size_t, float>> transparency_restore;
+    std::vector<std::pair<std::size_t, diagonal_blocks>> obscured_restore;
+    std::vector<std::pair<std::size_t, float>> lm_restore;
+    std::vector<std::pair<std::size_t, float>> sm_restore;
+
+    vehicle_external_light_cache_scope( level_cache &cache, vehicle &veh, const int zlev ) :
+        cache( cache ) {
+        for( const auto &part : veh.get_all_parts() ) {
+            const auto pos = part.pos();
+            if( pos.z() != zlev || !cache.inbounds( pos.xy() ) ) {
+                continue;
+            }
+
+            const auto idx = static_cast<std::size_t>( cache.idx( pos.x(), pos.y() ) );
+            const auto already_touched = std::ranges::any_of( lm_restore, [idx]( const auto & entry ) {
+                return entry.first == idx;
+            } );
+            if( already_touched ) {
+                continue;
+            }
+
+            transparency_restore.emplace_back( idx, cache.transparency_cache[idx] );
+            obscured_restore.emplace_back( idx, cache.vehicle_obscured_cache[idx] );
+            lm_restore.emplace_back( idx, cache.lm[idx] );
+            sm_restore.emplace_back( idx, cache.sm[idx] );
+            cache.transparency_cache[idx] = LIGHT_TRANSPARENCY_OPEN_AIR;
+            cache.vehicle_obscured_cache[idx] = diagonal_blocks{ false, false };
+        }
+    }
+
+    ~vehicle_external_light_cache_scope() {
+        for( const auto &[idx, value] : transparency_restore ) {
+            cache.transparency_cache[idx] = value;
+        }
+        for( const auto &[idx, value] : obscured_restore ) {
+            cache.vehicle_obscured_cache[idx] = value;
+        }
+        for( const auto &[idx, value] : lm_restore ) {
+            cache.lm[idx] = value;
+        }
+        for( const auto &[idx, value] : sm_restore ) {
+            cache.sm[idx] = value;
+        }
+    }
+};
+
+struct ambient_cache_key {
+    const map *owner = nullptr;
+    int x = 0;
+    int y = 0;
+    int z = 0;
+    int turn = 0;
+    uint64_t generation = 0;
+
+    friend auto operator==( const ambient_cache_key &lhs,
+                            const ambient_cache_key &rhs ) -> bool {
+        return lhs.owner == rhs.owner && lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z &&
+               lhs.turn == rhs.turn &&
+               lhs.generation == rhs.generation;
+    }
+};
+
+struct ambient_cache_key_hash {
+    auto operator()( const ambient_cache_key &key ) const -> std::size_t {
+        auto seed = std::hash<const map *> {}( key.owner );
+        seed ^= static_cast<std::size_t>( key.x ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        seed ^= static_cast<std::size_t>( key.y ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        seed ^= static_cast<std::size_t>( key.z ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        seed ^= static_cast<std::size_t>( key.turn ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        seed ^= static_cast<std::size_t>( key.generation ) + 0x9e3779b97f4a7c15ull +
+                ( seed << 6 ) + ( seed >> 2 );
+        return seed;
+    }
+};
+
+struct ambient_cache_entry {
+    ambient_cache_key key;
+    float light = 0.0f;
+    bool occupied = false;
+};
+
+constexpr auto ambient_cache_slots = std::size_t { 4096 };
+
+auto ambient_cache_index( const ambient_cache_key &key ) -> std::size_t
+{
+    return ambient_cache_key_hash{}( key ) & ( ambient_cache_slots - 1 );
+}
+
+#if defined( USE_TRACY )
+struct ambient_read_location_key {
+    const char *file = nullptr;
+    std::uint_least32_t line = 0;
+
+    friend auto operator==( const ambient_read_location_key &lhs,
+                            const ambient_read_location_key &rhs ) -> bool {
+        return lhs.file == rhs.file && lhs.line == rhs.line;
+    }
+};
+
+struct ambient_read_location_hash {
+    auto operator()( const ambient_read_location_key &key ) const -> std::size_t {
+        auto seed = std::hash<const char *> {}( key.file );
+        seed ^= static_cast<std::size_t>( key.line ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        return seed;
+    }
+};
+
+struct ambient_read_location_counts {
+    int64_t valid = 0;
+    int64_t stale = 0;
+    std::string valid_plot;
+    std::string stale_plot;
+};
+
+std::mutex cpu_lm_ambient_location_mutex;
+std::unordered_map<ambient_read_location_key, ambient_read_location_counts,
+    ambient_read_location_hash>
+    cpu_lm_ambient_location_counts;
+
+auto basename_view( const char *path ) -> std::string_view
+{
+    auto view = std::string_view{ path == nullptr ? "<unknown>" : path };
+    const auto slash = view.find_last_of( "/\\" );
+    return slash == std::string_view::npos ? view : view.substr( slash + 1 );
+}
+
+auto ambient_read_plot_name( const std::source_location &location,
+                             const std::string_view suffix ) -> std::string
+{
+    auto name = std::string{ "CPU LM Ambient " };
+    name += basename_view( location.file_name() );
+    name += ":";
+    name += std::to_string( location.line() );
+    name += " ";
+    name += suffix;
+    return name;
+}
+
+void record_cpu_lm_ambient_location( const bool valid, const std::source_location &location )
+{
+    const auto key = ambient_read_location_key{
+        .file = location.file_name(),
+        .line = location.line(),
+    };
+    const auto guard = std::lock_guard<std::mutex> { cpu_lm_ambient_location_mutex };
+    auto [iter, inserted] = cpu_lm_ambient_location_counts.try_emplace( key );
+    if( inserted ) {
+        iter->second.valid_plot = ambient_read_plot_name( location, "Valid" );
+        iter->second.stale_plot = ambient_read_plot_name( location, "Stale" );
+    }
+    auto &count = valid ? iter->second.valid : iter->second.stale;
+    ++count;
+}
+
+void flush_cpu_lm_ambient_location_counters()
+{
+    const auto guard = std::lock_guard<std::mutex> { cpu_lm_ambient_location_mutex };
+    for( auto &[key, counts] : cpu_lm_ambient_location_counts ) {
+        static_cast<void>( key );
+        TracyPlot( counts.valid_plot.c_str(), counts.valid );
+        TracyPlot( counts.stale_plot.c_str(), counts.stale );
+        counts.valid = 0;
+        counts.stale = 0;
+    }
+}
+
+#else
+void record_cpu_lm_ambient_location( const bool, const std::source_location & )
+{
+}
+
+void flush_cpu_lm_ambient_location_counters()
+{
+}
+#endif
+
+void record_cpu_lm_read( const bool valid, std::atomic<int64_t> &valid_counter,
+                         std::atomic<int64_t> &stale_counter )
+{
+    auto &counter = valid ? valid_counter : stale_counter;
+    counter.fetch_add( 1, std::memory_order_relaxed );
+}
+
+[[maybe_unused]] auto take_counter( std::atomic<int64_t> &counter ) -> int64_t
+{
+    return counter.exchange( 0, std::memory_order_relaxed );
+}
+
+struct cpu_colored_item_light {
+    float luminance = 0.0f;
+    uint32_t color_rgb = 0u;
+};
+
+struct cpu_colored_light_cache_context {
+    level_cache *cache = nullptr;
+    uint32_t color_rgb = 0u;
+};
+
+struct cpu_colored_light_3d_context {
+    map *here = nullptr;
+    tripoint_bub_ms source;
+    float luminance = 0.0f;
+    int skip_zlev = 0;
+    float dir_x = 0.0f;
+    float dir_y = 0.0f;
+    float cone_cos = -1.0f;
+    uint32_t color_rgb = 0u;
+    bool directional = false;
+};
+
+struct cpu_colored_light_opt {
+    tripoint_bub_ms source;
+    float luminance = 0.0f;
+    uint32_t color_rgb = 0u;
+    float dir_x = 0.0f;
+    float dir_y = 0.0f;
+    float cone_cos = -1.0f;
+    bool directional = false;
+    int skip_zlev = 0;
+};
+
+auto color_is_set( const RGBColor &color ) -> bool
+{
+    return color.a != 0 && ( color.r != 0 || color.g != 0 || color.b != 0 );
+}
+
+auto pack_rgb( const RGBColor &color ) -> uint32_t
+{
+    return ( static_cast<uint32_t>( color.r ) << 16 ) |
+           ( static_cast<uint32_t>( color.g ) << 8 ) |
+           static_cast<uint32_t>( color.b );
+}
+
+auto color_rgb_from_optional( const std::optional<RGBColor> &color ) -> std::optional<uint32_t>
+{
+    if( !color || !color_is_set( *color ) ) {
+        return std::nullopt;
+    }
+    return pack_rgb( *color );
+}
+
+auto item_light_color( const item &itm ) -> std::optional<uint32_t>
+{
+    return color_rgb_from_optional( itm.typeId().obj().light_color );
+}
+
+auto field_light_color( const field_entry &entry ) -> std::optional<uint32_t>
+{
+    return color_rgb_from_optional(
+               entry.get_field_type().obj().get_light_color( entry.get_field_intensity() - 1 ) );
+}
+
+auto map_data_light_color( const map_data_common_t &data ) -> std::optional<uint32_t>
+{
+    return color_rgb_from_optional( data.light_color );
+}
+
+auto vehicle_light_color( const vpart_reference &part ) -> std::optional<uint32_t>
+{
+    if( part.info().light_color && color_is_set( *part.info().light_color ) ) {
+        return pack_rgb( *part.info().light_color );
+    }
+
+    const auto [bg, fg] = part.part().get_color( true );
+    if( color_is_set( fg ) ) {
+        return pack_rgb( fg );
+    }
+    if( color_is_set( bg ) ) {
+        return pack_rgb( bg );
+    }
+    return std::nullopt;
+}
+
+auto character_colored_item_light( const Character &ch ) -> std::optional<cpu_colored_item_light>
+{
+    auto best = std::optional<cpu_colored_item_light> {};
+    ch.has_item_with( [&best]( const item & itm ) {
+        const auto color_rgb = item_light_color( itm );
+        const auto luminance = static_cast<float>( itm.getlight_emit() );
+        if( color_rgb && luminance > LIGHT_AMBIENT_LOW && ( !best || luminance > best->luminance ) ) {
+            best = cpu_colored_item_light{
+                .luminance = luminance,
+                .color_rgb = *color_rgb,
+            };
+        }
+        return false;
+    } );
+    return best;
+}
+
+auto packed_colored_light_value( const float intensity, const uint32_t color_rgb ) -> uint32_t
+{
+    if( intensity <= LIGHT_AMBIENT_LOW || color_rgb == 0u ) {
+        return 0u;
+    }
+    const auto rank = static_cast<uint32_t>(
+                          std::clamp( static_cast<int>( std::lround( intensity * 2.0f ) ), 1, 255 ) );
+    return ( rank << 24 ) | ( color_rgb & 0x00ffffffu );
+}
+
+auto atomic_colored_light_max( uint32_t &cell, const uint32_t value ) -> void
+{
+    if( value == 0u ) {
+        return;
+    }
+#if defined( __cpp_lib_atomic_ref )
+    auto atomic_cell = std::atomic_ref<uint32_t> { cell };
+    auto expected = atomic_cell.load( std::memory_order_relaxed );
+    while( expected < value &&
+           !atomic_cell.compare_exchange_weak( expected, value, std::memory_order_relaxed ) ) {
+    }
+#else
+    auto expected = __atomic_load_n( &cell, __ATOMIC_RELAXED );
+    while( expected < value &&
+           !__atomic_compare_exchange_n( &cell, &expected, value, true, __ATOMIC_RELAXED,
+                                         __ATOMIC_RELAXED ) ) {
+    }
+#endif
+}
+
+auto write_colored_light_cache( level_cache &cache, const int idx, const float intensity,
+                                const uint32_t color_rgb ) -> void
+{
+    atomic_colored_light_max( cache.colored_light_cache[idx],
+                              packed_colored_light_value( intensity, color_rgb ) );
+}
+
+auto cpu_colored_light_allows_direction( const cpu_colored_light_3d_context &ctx, const int x,
+        const int y ) -> bool
+{
+    if( !ctx.directional ) {
+        return true;
+    }
+    const auto dx = static_cast<float>( x - ctx.source.x() );
+    const auto dy = static_cast<float>( y - ctx.source.y() );
+    const auto dist_xy_sq = dx * dx + dy * dy;
+    if( dist_xy_sq <= 0.0001f ) {
+        return false;
+    }
+    const auto cone_dot = ( dx * ctx.dir_x + dy * ctx.dir_y ) / std::sqrt( dist_xy_sq );
+    return cone_dot >= ctx.cone_cos;
+}
+
+auto update_cpu_colored_light_cache( void *context, const int, const int, const int,
+                                     const int idx, const float intensity, quadrant ) -> void
+{
+    auto &ctx = *static_cast<cpu_colored_light_cache_context *>( context );
+    if( ctx.cache == nullptr ) {
+        return;
+    }
+    write_colored_light_cache( *ctx.cache, idx, intensity, ctx.color_rgb );
+}
+
+auto update_cpu_colored_light_cache_3d( void *context, const int z_index, const int x,
+                                        const int y, const int idx, const float intensity,
+                                        quadrant ) -> void
+{
+    auto &ctx = *static_cast<cpu_colored_light_3d_context *>( context );
+    if( ctx.here == nullptr || intensity <= LIGHT_AMBIENT_LOW ) {
+        return;
+    }
+    const auto zlev = z_index - OVERMAP_DEPTH;
+    if( zlev == ctx.skip_zlev || !cpu_colored_light_allows_direction( ctx, x, y ) ) {
+        return;
+    }
+    auto adjusted_intensity = intensity;
+    const auto dx = static_cast<float>( x - ctx.source.x() );
+    const auto dy = static_cast<float>( y - ctx.source.y() );
+    const auto dz = static_cast<float>( zlev - ctx.source.z() ) * Z_LEVEL_SCALE;
+    const auto distance = std::sqrt( dx * dx + dy * dy + dz * dz );
+    if( distance > 0.5f ) {
+        adjusted_intensity = std::min( adjusted_intensity,
+                                       ctx.luminance /
+                                       ( std::exp( LIGHT_TRANSPARENCY_OPEN_AIR * distance ) * distance ) );
+    }
+    if( adjusted_intensity <= LIGHT_AMBIENT_LOW ) {
+        return;
+    }
+    auto &cache = ctx.here->access_cache( zlev );
+    write_colored_light_cache( cache, idx, adjusted_intensity, ctx.color_rgb );
+}
+
+auto make_colored_light_callback( level_cache &cache, const uint32_t color_rgb,
+                                  cpu_colored_light_cache_context &context )
+-> light_update_callback
+{
+    if( !colored_lighting || color_rgb == 0u ) {
+        return {};
+    }
+    context = cpu_colored_light_cache_context{
+        .cache = &cache,
+        .color_rgb = color_rgb,
+    };
+    return light_update_callback{
+        .context = &context,
+        .update = update_cpu_colored_light_cache,
+    };
+}
+
+auto apply_cpu_colored_light_3d( map &here, const cpu_colored_light_opt &opt ) -> void;
+
+} // namespace
 
 static const efftype_id effect_haslight( "haslight" );
+static const efftype_id effect_boomered( "boomered" );
 static const efftype_id effect_onfire( "onfire" );
-
-// Fraction of default_daylight_level() seen by outdoor tiles in shadow (not in direct solar LOS).
-// Must be < LIGHT_SOURCE_BRIGHT / default_daylight_level() = 10/100 = 0.10 so shadow tiles
-// render as LOW (dim, visible) rather than BRIGHT (same as direct sunlight).
-static constexpr float SOLAR_SHADOW_SCATTER = 0.09f;
-
-static auto outside_player_3d_z_range( const tripoint_bub_ms &target ) -> bool
-{
-    return fov_3d && std::abs( target.z() - g->u.bub_pos().z() ) > fov_3d_z_range;
-}
 
 void map::add_light_from_items( const tripoint_bub_ms &p, const item_stack::iterator &begin,
                                 const item_stack::iterator &end )
@@ -72,10 +508,17 @@ void map::add_light_from_items( const tripoint_bub_ms &p, const item_stack::iter
         units::angle iwidth = 0_degrees; // 0-360 degrees. 0 is a circular light_source
         units::angle idir = 0_degrees;   // otherwise, it's a light_arc pointed in this direction
         if( ( *itm_it )->getlight( ilum, iwidth, idir ) ) {
+            const auto color_rgb = item_light_color( **itm_it ).value_or( 0u );
             if( iwidth > 0_degrees ) {
-                apply_light_arc( p, idir, ilum, iwidth );
+                apply_light_arc( {
+                    .p = p,
+                    .angle = idir,
+                    .luminance = ilum,
+                    .wideangle = iwidth,
+                    .color_rgb = color_rgb,
+                } );
             } else {
-                add_light_source( p, ilum );
+                add_light_source( p, ilum, color_rgb );
             }
         }
     }
@@ -116,6 +559,145 @@ bool map::build_transparency_cache( const int zlev )
                    static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
     }
 
+#if defined( CATA_SDL ) && !defined( CATA_GPU_VERIFY )
+    if( cata_compute::uses_sdl_gpu_compute() ) {
+        ZoneScopedN( "build_transparency_cache_gpu" );
+        SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+        if( gpu_device == nullptr ) {
+            debugmsg( "SDL_GPU transparency is required, but no GPU device is available" );
+            return false;
+        }
+
+        auto refs = std::vector<cata_gpu::transparency_submap_ref> {};
+        refs.reserve( static_cast<size_t>( map_cache.cache_mapsize * map_cache.cache_mapsize ) );
+        auto resident_output_complete = true;
+
+        for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
+            for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
+                if( !rebuild_all && !map_cache.transparency_cache_dirty.test(
+                        static_cast<size_t>( map_cache.bidx( smx, smy ) ) ) ) {
+                    continue;
+                }
+
+                const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
+                auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                       map_local_to_abs( *this, sm_pos ) );
+                const auto sm_offset = project_to<coords::ms>( sm_pos );
+
+                if( cur_submap == nullptr ) {
+                    resident_output_complete = false;
+                    if( !rebuild_all ) {
+                        for( const auto sx : std::views::iota( 0, SEEX ) ) {
+                            std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x() + sx,
+                                         sm_offset.y() ), SEEY, LIGHT_TRANSPARENCY_OPEN_AIR );
+                        }
+                    }
+                    continue;
+                }
+
+                cur_submap->transparency_dirty = true;
+                if( cur_submap->outside_dirty ) {
+                    const level_cache *above = zlev < OVERMAP_HEIGHT ? &get_cache_ref( zlev + 1 ) : nullptr;
+                    cur_submap->rebuild_outside_cache( above, sm_pos );
+                }
+                refs.push_back( { cur_submap, sm_offset.x(), sm_offset.y() } );
+            }
+        }
+
+        if( refs.empty() ) {
+            map_cache.transparency_cache_dirty.reset();
+            return true;
+        }
+
+        static auto luts = cata_gpu::transparency_luts {};
+        static auto luts_valid = false;
+        if( !luts_valid ) {
+            cata_gpu::rebuild_transparency_luts( luts );
+            luts_valid = true;
+        }
+
+        static auto inputs = std::vector<cata_gpu::transparency_submap_in> {};
+        cata_gpu::prepare_transparency_inputs( refs, inputs );
+
+        const auto push = cata_gpu::transparency_push_constants {
+            .sight_penalty = get_weather().weather_id->sight_penalty,
+            .cache_y = map_cache.cache_y,
+            .num_submaps = static_cast<uint32_t>( inputs.size() ),
+            .output_offset = 0,
+        };
+
+        static auto gpu_result = std::vector<float> {};
+        const auto cache_size = map_cache.cache_x * map_cache.cache_y;
+        const auto resident_output = cata_gpu::prepare_lighting_transparency_output( {
+            .device = gpu_device,
+            .cache_x = map_cache.cache_x,
+            .cache_y = map_cache.cache_y,
+            .z_count = OVERMAP_LAYERS,
+            .zlev = zlev,
+        } );
+        if( resident_output.buffer == nullptr ) {
+            debugmsg( "SDL_GPU transparency resident output allocation failed; see debug.log for details" );
+            return false;
+        }
+        const auto resident_level_was_valid =
+            cata_gpu::lighting_transparency_level_is_valid( zlev );
+        if( !cata_gpu::dispatch_transparency( {
+        .device = gpu_device,
+        .luts = &luts,
+        .submaps = &inputs,
+        .push = push,
+        .cache_size = cache_size,
+        .out_buffer = &gpu_result,
+        .output = {
+            .buffer = resident_output.buffer,
+            .output_offset = resident_output.output_offset,
+        },
+    } ) || gpu_result.empty() ) {
+            debugmsg( "SDL_GPU transparency dispatch failed; see debug.log for details" );
+            return false;
+        }
+        const auto expected_compact_result_size =
+            refs.size() * static_cast<size_t>( SEEX * SEEY );
+        if( gpu_result.size() != expected_compact_result_size ) {
+            debugmsg( "SDL_GPU transparency dispatch returned %zu compact values, expected %zu",
+                      gpu_result.size(), expected_compact_result_size );
+            return false;
+        }
+        if( rebuild_all ? resident_output_complete : resident_level_was_valid ) {
+            cata_gpu::mark_lighting_transparency_level_updated( zlev );
+        }
+
+        auto normalized_flat_value = [&]( const float value ) {
+            if( std::fabs( value - LIGHT_TRANSPARENCY_OPEN_AIR ) <= 0.0001f ) {
+                return LIGHT_TRANSPARENCY_OPEN_AIR;
+            }
+            if( std::fabs( value - weather_lookup_.transparency ) <= 0.0001f ) {
+                return weather_lookup_.transparency;
+            }
+            return value;
+        };
+
+        auto ref_index = size_t{ 0 };
+        for( const auto &ref : refs ) {
+            auto *cur_submap = const_cast<submap *>( ref.sm );
+            for( const auto sm_ms : submap_tiles() ) {
+                const auto x = ref.offset_x + sm_ms.x();
+                const auto y = ref.offset_y + sm_ms.y();
+                const auto compact_idx = ref_index * static_cast<size_t>( SEEX * SEEY ) +
+                                         static_cast<size_t>( sm_ms.x() * SEEY + sm_ms.y() );
+                const auto value = gpu_result[compact_idx];
+                cur_submap->transparency_cache[sm_ms.x()][sm_ms.y()] = value;
+                transparency_cache[map_cache.idx( x, y )] = normalized_flat_value( value );
+            }
+            cur_submap->transparency_dirty = false;
+            ++ref_index;
+        }
+
+        map_cache.transparency_cache_dirty.reset();
+        return true;
+    }
+#endif
+
     // Traverse the submaps; delegate to per-submap rebuild, then copy the
     // 12×12 result into the flat render cache.
     //
@@ -124,7 +706,8 @@ bool map::build_transparency_cache( const int zlev )
     const auto process_smx = [&]( int smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-            auto *cur_submap = get_submap_at_grid( sm_pos );
+            auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                   map_local_to_abs( *this, sm_pos ) );
             const auto sm_offset = project_to<coords::ms>( sm_pos );
 
             if( cur_submap == nullptr ) {
@@ -185,7 +768,217 @@ bool map::build_transparency_cache( const int zlev )
 
     map_cache.transparency_cache_dirty.reset();
 
+#if defined( CATA_SDL ) && defined( CATA_GPU_VERIFY )
+    cata_gpu::verify_transparency_against_cpu( *this, zlev,
+            get_weather().weather_id->sight_penalty );
+#endif
+
     return true;
+}
+
+auto map::build_transparency_caches( const int minz, const int maxz ) -> std::vector<int>
+{
+    auto dirty_levels = std::vector<int> {};
+#if defined( CATA_SDL ) && !defined( CATA_GPU_VERIFY )
+    if( cata_compute::uses_sdl_gpu_compute() ) {
+        ZoneScopedN( "build_transparency_caches_gpu" );
+
+        struct transparency_level_batch_state {
+            int zlev = 0;
+            bool rebuild_all = false;
+            bool resident_output_complete = true;
+            bool resident_level_was_valid = false;
+        };
+
+        auto level_states = std::vector<transparency_level_batch_state> {};
+        auto refs = std::vector<cata_gpu::transparency_submap_ref> {};
+        auto ref_levels = std::vector<int> {};
+        auto *resident_buffer = static_cast<SDL_GPUBuffer *>( nullptr );
+        auto cache_size = 0;
+
+        auto *const gpu_device = cata_gpu::get_device();
+        for( const auto zlev : std::views::iota( minz, maxz + 1 ) ) {
+            auto &map_cache = get_cache( zlev );
+            auto &transparency_cache = map_cache.transparency_cache;
+
+            if( map_cache.transparency_cache_dirty.none() ) {
+                continue;
+            }
+
+            dirty_levels.push_back( zlev );
+            const auto rebuild_all = map_cache.transparency_cache_dirty.all();
+            if( rebuild_all ) {
+                std::fill( transparency_cache.begin(), transparency_cache.end(),
+                           static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
+            }
+
+            if( gpu_device == nullptr ) {
+                debugmsg( "SDL_GPU transparency is required, but no GPU device is available" );
+                return dirty_levels;
+            }
+
+            const auto resident_output = cata_gpu::prepare_lighting_transparency_output( {
+                .device = gpu_device,
+                .cache_x = map_cache.cache_x,
+                .cache_y = map_cache.cache_y,
+                .z_count = OVERMAP_LAYERS,
+                .zlev = zlev,
+            } );
+            if( resident_output.buffer == nullptr ) {
+                debugmsg( "SDL_GPU transparency resident output allocation failed; see debug.log for details" );
+                return dirty_levels;
+            }
+            if( resident_buffer == nullptr ) {
+                resident_buffer = resident_output.buffer;
+                cache_size = map_cache.cache_x * map_cache.cache_y * OVERMAP_LAYERS;
+            } else if( resident_buffer != resident_output.buffer ) {
+                debugmsg( "SDL_GPU transparency resident buffer changed during batched dispatch" );
+                return dirty_levels;
+            }
+
+            auto state = transparency_level_batch_state {
+                .zlev = zlev,
+                .rebuild_all = rebuild_all,
+                .resident_output_complete = true,
+                .resident_level_was_valid = cata_gpu::lighting_transparency_level_is_valid( zlev ),
+            };
+
+            refs.reserve( refs.size() + static_cast<size_t>( map_cache.cache_mapsize *
+                          map_cache.cache_mapsize ) );
+            for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
+                for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
+                    if( !rebuild_all && !map_cache.transparency_cache_dirty.test(
+                            static_cast<size_t>( map_cache.bidx( smx, smy ) ) ) ) {
+                        continue;
+                    }
+
+                    const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
+                    auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                           map_local_to_abs( *this, sm_pos ) );
+                    const auto sm_offset = project_to<coords::ms>( sm_pos );
+
+                    if( cur_submap == nullptr ) {
+                        state.resident_output_complete = false;
+                        if( !rebuild_all ) {
+                            for( const auto sx : std::views::iota( 0, SEEX ) ) {
+                                std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x() + sx,
+                                             sm_offset.y() ), SEEY, LIGHT_TRANSPARENCY_OPEN_AIR );
+                            }
+                        }
+                        continue;
+                    }
+
+                    cur_submap->transparency_dirty = true;
+                    if( cur_submap->outside_dirty ) {
+                        const auto *above = zlev < OVERMAP_HEIGHT ? &get_cache_ref( zlev + 1 ) : nullptr;
+                        cur_submap->rebuild_outside_cache( above, sm_pos );
+                    }
+                    refs.push_back( {
+                        .sm = cur_submap,
+                        .offset_x = sm_offset.x(),
+                        .offset_y = sm_offset.y(),
+                        .output_offset = resident_output.output_offset,
+                    } );
+                    ref_levels.push_back( zlev );
+                }
+            }
+            level_states.push_back( state );
+        }
+
+        if( dirty_levels.empty() ) {
+            return dirty_levels;
+        }
+        if( refs.empty() ) {
+            for( const auto &state : level_states ) {
+                get_cache( state.zlev ).transparency_cache_dirty.reset();
+            }
+            return dirty_levels;
+        }
+
+        static auto luts = cata_gpu::transparency_luts {};
+        static auto luts_valid = false;
+        if( !luts_valid ) {
+            cata_gpu::rebuild_transparency_luts( luts );
+            luts_valid = true;
+        }
+
+        static auto inputs = std::vector<cata_gpu::transparency_submap_in> {};
+        cata_gpu::prepare_transparency_inputs( refs, inputs );
+
+        const auto &first_cache = get_cache_ref( dirty_levels.front() );
+        const auto push = cata_gpu::transparency_push_constants {
+            .sight_penalty = get_weather().weather_id->sight_penalty,
+            .cache_y = first_cache.cache_y,
+            .num_submaps = static_cast<uint32_t>( inputs.size() ),
+            .output_offset = 0,
+        };
+
+        static auto gpu_result = std::vector<float> {};
+        if( !cata_gpu::dispatch_transparency( {
+        .device = gpu_device,
+        .luts = &luts,
+        .submaps = &inputs,
+        .push = push,
+        .cache_size = cache_size,
+        .out_buffer = &gpu_result,
+        .output = {
+            .buffer = resident_buffer,
+            .output_offset = 0,
+        },
+    } ) || gpu_result.empty() ) {
+            debugmsg( "SDL_GPU batched transparency dispatch failed; see debug.log for details" );
+            return dirty_levels;
+        }
+
+        const auto expected_compact_result_size = refs.size() * static_cast<size_t>( SEEX * SEEY );
+        if( gpu_result.size() != expected_compact_result_size ) {
+            debugmsg( "SDL_GPU batched transparency dispatch returned %zu compact values, expected %zu",
+                      gpu_result.size(), expected_compact_result_size );
+            return dirty_levels;
+        }
+
+        auto normalized_flat_value = [&]( const float value ) {
+            if( std::fabs( value - LIGHT_TRANSPARENCY_OPEN_AIR ) <= 0.0001f ) {
+                return LIGHT_TRANSPARENCY_OPEN_AIR;
+            }
+            if( std::fabs( value - weather_lookup_.transparency ) <= 0.0001f ) {
+                return weather_lookup_.transparency;
+            }
+            return value;
+        };
+
+        for( const auto ref_index : std::views::iota( size_t{ 0 }, refs.size() ) ) {
+            const auto &ref = refs[ref_index];
+            auto &map_cache = get_cache( ref_levels[ref_index] );
+            auto &transparency_cache = map_cache.transparency_cache;
+            auto *cur_submap = const_cast<submap *>( ref.sm );
+            for( const auto sm_ms : submap_tiles() ) {
+                const auto x = ref.offset_x + sm_ms.x();
+                const auto y = ref.offset_y + sm_ms.y();
+                const auto compact_idx = ref_index * static_cast<size_t>( SEEX * SEEY ) +
+                                         static_cast<size_t>( sm_ms.x() * SEEY + sm_ms.y() );
+                const auto value = gpu_result[compact_idx];
+                cur_submap->transparency_cache[sm_ms.x()][sm_ms.y()] = value;
+                transparency_cache[map_cache.idx( x, y )] = normalized_flat_value( value );
+            }
+            cur_submap->transparency_dirty = false;
+        }
+
+        for( const auto &state : level_states ) {
+            get_cache( state.zlev ).transparency_cache_dirty.reset();
+            if( state.rebuild_all ? state.resident_output_complete : state.resident_level_was_valid ) {
+                cata_gpu::mark_lighting_transparency_level_updated( state.zlev );
+            }
+        }
+        return dirty_levels;
+    }
+#endif
+    for( const auto zlev : std::views::iota( minz, maxz + 1 ) ) {
+        if( build_transparency_cache( zlev ) ) {
+            dirty_levels.push_back( zlev );
+        }
+    }
+    return dirty_levels;
 }
 
 
@@ -249,6 +1042,17 @@ bool map::build_vision_transparency_cache( const Character &player )
     return dirty;
 }
 
+auto map::vision_transparency_block_mask() const -> uint32_t
+{
+    auto mask = uint32_t{ 0 };
+    for( const auto index : std::views::iota( std::size_t{ 0 }, std::size_t{ 8 } ) ) {
+        if( vision_transparency_cache[index] == VISION_ADJUST_SOLID ) {
+            mask |= uint32_t{ 1 } << index;
+        }
+    }
+    return mask;
+}
+
 void map::apply_character_light( Character &p )
 {
     if( p.has_effect( effect_onfire ) ) {
@@ -258,7 +1062,13 @@ void map::apply_character_light( Character &p )
     }
 
     const float held_luminance = p.active_light();
-    if( held_luminance > LIGHT_AMBIENT_LOW ) {
+    const auto colored_light = colored_lighting ? character_colored_item_light( p ) :
+                               std::optional<cpu_colored_item_light> {};
+    if( colored_light ) {
+        apply_light_source( p.bub_pos(), colored_light->luminance, colored_light->color_rgb );
+    }
+    if( held_luminance > LIGHT_AMBIENT_LOW &&
+        ( !colored_light || held_luminance > colored_light->luminance ) ) {
         apply_light_source( p.bub_pos(), held_luminance );
     }
 
@@ -300,72 +1110,83 @@ void map::update_solar_params()
     const auto sin_c = std::sin( theta_clamped );
     const auto cos_c = std::cos( theta_clamped );
 
-    // dx_per_z = SOLAR_SHADOW_SCALE * Z_LEVEL_SCALE * cot(theta_clamped).
+    // dx_per_z is the horizontal shadow displacement per z-level.
+    // The sky-access ray back toward the sun uses the inverse of this vector.
+    // Morning sun rises from the east, so morning shadows go west (-x when +x is east).
+    // dx_per_z = -SOLAR_SHADOW_SCALE * Z_LEVEL_SCALE * cot(theta_clamped).
     // SOLAR_SHADOW_SCALE (1.5) is a tuning multiplier; SOLAR_SHADOW_MAX caps extreme values.
     // Flip SUN_EAST_SIGN to -1 if +x does not map to east in the tileset.
     static constexpr auto SUN_EAST_SIGN      = 1.f;
     static constexpr auto SOLAR_SHADOW_SCALE = 1.5f;
     static constexpr auto SOLAR_SHADOW_MAX   = 6.f;
-    const auto raw = SUN_EAST_SIGN * SOLAR_SHADOW_SCALE * Z_LEVEL_SCALE * cos_c / sin_c;
+    const auto raw = -SUN_EAST_SIGN * SOLAR_SHADOW_SCALE * Z_LEVEL_SCALE * cos_c / sin_c;
     m_solar.dx_per_z = std::clamp( raw, -SOLAR_SHADOW_MAX, SOLAR_SHADOW_MAX );
     m_solar.dy_per_z = 0.f;  // No latitude tilt modelled.
 }
 
-void map::build_angled_sunlight_cache( const int zlev )
+auto map::direct_sunlight_state_at( const point_bub_ms p,
+                                    const int zlev ) const -> direct_sunlight_state
 {
-    level_cache &ch      = get_cache( zlev );
-    auto &solar_cache    = ch.angled_sunlight_cache;
-
-    if( !m_solar.direct_active ) {
-        std::ranges::fill( solar_cache, false );
-        return;
+    if( zlev >= OVERMAP_HEIGHT ) {
+        return direct_sunlight_state::direct;
     }
 
-    const auto step_x  = m_solar.dx_per_z;
-    const auto step_y  = m_solar.dy_per_z;
-    const auto max_step = OVERMAP_HEIGHT - zlev;
-
-    std::ranges::for_each(
-        std::views::iota( 0, ch.cache_x ),
-    [&]( int x ) {
-        std::ranges::for_each(
-            std::views::iota( 0, ch.cache_y ),
-        [&]( int y ) {
-            // A floor directly overhead always blocks, regardless of sun angle.
-            // Without this, angled rays jump laterally past the roof tile at step 1.
-            if( zlev + 1 <= OVERMAP_HEIGHT ) {
-                const level_cache &above = get_cache_ref( zlev + 1 );
-                const auto aidx = above.idx( x, y );
-                if( above.floor_cache[aidx] ) {
-                    solar_cache[ch.idx( x, y )] = false;
-                    return;
-                }
-            }
-            // Trace the sun ray upward one z-level at a time.
-            // Solar-lit if the ray exits the map bounds without hitting a floor.
-            const auto blocked = std::ranges::any_of(
-                                     std::views::iota( 1, max_step + 1 )
-            | std::views::transform( [&]( int step ) {
-                return std::pair{ step, point{
-                        x + static_cast<int>( std::roundf( step_x * static_cast<float>( step ) ) ),
-                        y + static_cast<int>( std::roundf( step_y * static_cast<float>( step ) ) )
-                    } };
-            } )
-            | std::views::take_while( [&]( const auto & sp ) {
-                return sp.second.x >= 0 && sp.second.x < ch.cache_x
-                       && sp.second.y >= 0 && sp.second.y < ch.cache_y;
-            } ),
-            [&]( const auto & sp ) {
-                const level_cache &uch = get_cache_ref( zlev + sp.first );
-                const auto uidx = uch.idx( sp.second.x, sp.second.y );
-                return static_cast<bool>( uch.floor_cache[uidx] );
-            }
-                                 );
-            solar_cache[ch.idx( x, y )] = !blocked;
+    const auto angled_sunlight = angled_sunlight_shadows && m_solar.direct_active;
+    const auto levels_up = OVERMAP_HEIGHT - zlev;
+    for( const auto step : std::views::iota( 1, levels_up + 1 ) ) {
+        const auto &above = get_cache_ref( zlev + step );
+        if( has_vertical_light_blocker( above, p.x(), p.y() ) ) {
+            return direct_sunlight_state::none;
         }
-        );
     }
-    );
+    if( !angled_sunlight ) {
+        return direct_sunlight_state::direct;
+    }
+
+    for( const auto step : std::views::iota( 1, levels_up + 1 ) ) {
+        const auto ray_step = -( static_cast<float>( step ) - 0.5f );
+        const auto sx = p.x() + static_cast<int>( std::lround( m_solar.dx_per_z * ray_step ) );
+        const auto sy = p.y() + static_cast<int>( std::lround( m_solar.dy_per_z * ray_step ) );
+        const auto &above = get_cache_ref( zlev + step );
+        if( sx < 0 || sy < 0 || sx >= above.cache_x || sy >= above.cache_y ) {
+            return direct_sunlight_state::direct;
+        }
+        if( above.floor_cache[above.idx( sx, sy )] ) {
+            return direct_sunlight_state::shadow;
+        }
+    }
+
+    const auto dx_to_sky = -m_solar.dx_per_z * static_cast<float>( levels_up );
+    const auto dy_to_sky = -m_solar.dy_per_z * static_cast<float>( levels_up );
+    const auto total = std::max( { std::abs( dx_to_sky ), std::abs( dy_to_sky ),
+                                   static_cast<float>( levels_up ) } );
+    const auto steps = std::max( static_cast<int>( std::ceil( total ) ), 1 );
+    for( const auto i : std::views::iota( 1, steps + 1 ) ) {
+        const auto t = static_cast<float>( i ) / static_cast<float>( steps );
+        const auto sx = p.x() + static_cast<int>( std::lround( dx_to_sky * t ) );
+        const auto sy = p.y() + static_cast<int>( std::lround( dy_to_sky * t ) );
+        const auto sz = std::clamp( zlev + static_cast<int>( std::lround(
+                                        static_cast<float>( levels_up ) * t ) ), zlev, OVERMAP_HEIGHT );
+        if( sx < 0 || sy < 0 ) {
+            return direct_sunlight_state::direct;
+        }
+        const auto &ray_cache = get_cache_ref( sz );
+        if( sx >= ray_cache.cache_x || sy >= ray_cache.cache_y ) {
+            return direct_sunlight_state::direct;
+        }
+        if( sx == p.x() && sy == p.y() && sz == zlev ) {
+            continue;
+        }
+        if( ray_cache.transparency_cache[ray_cache.idx( sx, sy )] <= LIGHT_TRANSPARENCY_SOLID ) {
+            return direct_sunlight_state::shadow;
+        }
+    }
+    return direct_sunlight_state::direct;
+}
+
+auto map::has_direct_sunlight_at( const point_bub_ms p, const int zlev ) const -> bool
+{
+    return direct_sunlight_state_at( p, zlev ) == direct_sunlight_state::direct;
 }
 
 // toward the lower limit. Since it's sunlight, the rays are parallel.
@@ -373,14 +1194,11 @@ void map::build_angled_sunlight_cache( const int zlev )
 // Once this is complete, additional operations add more dynamic lighting.
 void map::build_sunlight_cache( int pzlev )
 {
-    const int zlev_min = zlevels ? -OVERMAP_DEPTH : pzlev;
     // Start at the topmost populated zlevel to avoid unnecessary raycasting
     // Plus one zlevel to prevent clipping inside structures
-    const int zlev_max = zlevels
-                         ? clamp( calc_max_populated_zlev() + 1,
-                                  std::min( OVERMAP_HEIGHT, pzlev + 1 ),
-                                  OVERMAP_HEIGHT )
-                         : pzlev;
+    const int zlev_max = clamp( calc_max_populated_zlev() + 1,
+                                std::min( OVERMAP_HEIGHT, pzlev + 1 ),
+                                OVERMAP_HEIGHT );
 
     // true if all previous z-levels are fully transparent to light (no floors, transparency >= air)
     bool fully_outside = true;
@@ -395,47 +1213,21 @@ void map::build_sunlight_cache( int pzlev )
     //    ↓
     // when fully below ground: fully_outside=false, fully_inside=true  (fast fill)
 
-    // Rebuild the directional sunlight cache once per in-game hour (expensive path only).
-    if( fov_3d_occlusion ) {
-        const auto current_hour = to_hours<int>( time_past_midnight( calendar::turn ) );
-        if( current_hour != m_solar.last_built_hour ) {
-            update_solar_params();
-            std::ranges::for_each(
-                std::views::iota( zlev_min, zlev_max + 1 ),
-            [this]( int z ) { build_angled_sunlight_cache( z ); }
-            );
-            m_solar.last_built_hour = current_hour;
-        }
-    }
+    update_solar_params();
 
     // Iterate top to bottom because sunlight cache needs to construct in that order.
-    for( int zlev = zlev_max; zlev >= zlev_min; zlev-- ) {
+    for( int zlev = zlev_max; zlev >= -OVERMAP_DEPTH; zlev-- ) {
 
         level_cache &map_cache = get_cache( zlev );
         auto &lm = map_cache.lm;
         // Grab illumination at ground level.
         const float outside_light_level = g->natural_light_level( 0 );
         // TODO: if zlev < 0 is open to sunlight, this won't calculate correct light, but neither does g->natural_light_level()
-        const float inside_light_level = ( zlev >= 0 && outside_light_level > LIGHT_SOURCE_BRIGHT ) ?
-                                         LIGHT_AMBIENT_DIM * 0.8 : LIGHT_AMBIENT_LOW;
-        // Handling when z-levels are disabled is based on whether a tile is considered "outside".
-        if( !zlevels ) {
-            const auto &outside_cache = map_cache.outside_cache;
-            for( int x = 0; x < map_cache.cache_x; x++ ) {
-                for( int y = 0; y < map_cache.cache_y; y++ ) {
-                    if( outside_cache[map_cache.idx( x, y )] ) {
-                        lm[map_cache.idx( x, y )].fill( outside_light_level );
-                    } else {
-                        lm[map_cache.idx( x, y )].fill( inside_light_level );
-                    }
-                }
-            }
-            continue;
-        }
+        const float inside_light_level = LIGHT_AMBIENT_LOW;
 
         // all light was blocked before
         if( fully_inside ) {
-            std::fill( lm.begin(), lm.end(), four_quadrants( inside_light_level ) );
+            std::ranges::fill( lm, inside_light_level );
             continue;
         }
 
@@ -443,62 +1235,45 @@ void map::build_sunlight_cache( int pzlev )
         // for light to be blocked.
         if( fully_outside ) {
             // No floors above: every tile has unobstructed sky, so all get the natural outdoor level.
-            // Shadow dimming (SOLAR_SHADOW_SCATTER) is applied in ambient_light_at / apparent_light_at,
-            // not here, so lm always carries full outdoor brightness for cascade and bleed purposes.
             const auto sky_level = outside_light_level;
-            std::fill( lm.begin(), lm.end(), four_quadrants( sky_level ) );
+            std::ranges::fill( lm, sky_level );
 
-            const auto &this_floor_cache = map_cache.floor_cache;
-            const auto &this_vehicle_floor_cache = map_cache.vehicle_floor_cache;
             const auto &this_transparency_cache = map_cache.transparency_cache;
             fully_inside = true; // recalculate
 
             for( int x = 0; x < map_cache.cache_x; ++x ) {
                 for( int y = 0; y < map_cache.cache_y; ++y ) {
+                    const auto blocks_vertical_light = has_vertical_light_blocker( map_cache, x, y );
                     // && semantics below is important, we want to skip the evaluation if possible, do not replace with &=
 
                     // fully_outside stays true if tile is transparent and there is no floor
                     fully_outside = fully_outside &&
                                     this_transparency_cache[map_cache.idx( x, y )] >= LIGHT_TRANSPARENCY_OPEN_AIR
-                                    && !this_floor_cache[map_cache.idx( x, y )]
-                                    && !this_vehicle_floor_cache[map_cache.idx( x, y )];
+                                    && !blocks_vertical_light;
                     // fully_inside stays true if tile is opaque OR there is floor
                     fully_inside = fully_inside &&
                                    ( this_transparency_cache[map_cache.idx( x, y )] <= LIGHT_TRANSPARENCY_SOLID ||
-                                     this_floor_cache[map_cache.idx( x, y )] ||
-                                     this_vehicle_floor_cache[map_cache.idx( x, y )] );
+                                     blocks_vertical_light );
                 }
             }
             continue;
         }
 
-        // Directional sunlight is handled via angled_sunlight_cache (see build_angled_sunlight_cache).
-        // The cascade here provides indoor bleed and scatter propagation; it samples directly above.
+        // The cascade here provides indoor bleed and scatter propagation.
         const point offset = point_zero;
         const level_cache &prev_map_cache = get_cache_ref( zlev + 1 );
         const auto &prev_lm = prev_map_cache.lm;
         const auto &prev_transparency_cache = prev_map_cache.transparency_cache;
-        const auto &prev_floor_cache = prev_map_cache.floor_cache;
-        const auto &prev_vehicle_floor_cache = prev_map_cache.vehicle_floor_cache;
         const auto &outside_cache = map_cache.outside_cache;
         const float sight_penalty = get_weather().weather_id->sight_penalty;
-        // TODO: Replace these with a lookup inside the four_quadrants class.
         constexpr std::array<point, 5> cardinals = {
             {point_zero, point_north, point_west, point_east, point_south}
-        };
-        constexpr std::array<std::array<quadrant, 2>, 5> dir_quadrants = {{
-                {{quadrant::NE, quadrant::NW}},
-                {{quadrant::NE, quadrant::NW}},
-                {{quadrant::SW, quadrant::NW}},
-                {{quadrant::SE, quadrant::NE}},
-                {{quadrant::SE, quadrant::SW}},
-            }
         };
 
         fully_inside = true; // recalculate
 
         // Fall back to minimal light level if we don't find anything.
-        std::fill( lm.begin(), lm.end(), four_quadrants( inside_light_level ) );
+        std::ranges::fill( lm, inside_light_level );
 
         for( int x = 0; x < map_cache.cache_x; ++x ) {
             for( int y = 0; y < map_cache.cache_y; ++y ) {
@@ -522,37 +1297,41 @@ void map::build_sunlight_cache( int pzlev )
                     }
 
                     if( prev_transparency > LIGHT_TRANSPARENCY_SOLID &&
-                        !prev_floor_cache[prev_map_cache.idx( prev_x, prev_y )] &&
-                        !prev_vehicle_floor_cache[prev_map_cache.idx( prev_x, prev_y )] &&
-                        ( prev_light_max = prev_lm[prev_map_cache.idx( prev_x, prev_y )].max() ) > 0.0 ) {
+                        !has_vertical_light_blocker( prev_map_cache, prev_x, prev_y ) &&
+                        ( prev_light_max = prev_lm[prev_map_cache.idx( prev_x, prev_y )] ) > 0.0 ) {
                         const float light_level = clamp( prev_light_max * LIGHT_TRANSPARENCY_OPEN_AIR / prev_transparency,
                                                          inside_light_level, prev_light_max );
 
+                        fully_inside &= light_level <= inside_light_level;
                         if( i == 0 ) {
-                            lm[map_cache.idx( x, y )].fill( light_level );
-                            fully_inside &= light_level <= inside_light_level;
+                            lm[map_cache.idx( x, y )] = light_level;
                             break;
                         } else {
-                            fully_inside &= light_level <= inside_light_level;
-                            lm[map_cache.idx( x, y )][dir_quadrants[i][0]] = light_level;
-                            lm[map_cache.idx( x, y )][dir_quadrants[i][1]] = light_level;
+                            lm[map_cache.idx( x, y )] = std::max( lm[map_cache.idx( x, y )], light_level );
                         }
                     }
                 }
             }
         }
 
-        // Override solar-lit outdoor tiles to full outside_light_level.
-        // Shadow tiles are left at cascade-computed values; scatter dimming is applied
-        // in apparent_light_at (rendering only) so distance decay works correctly.
-        if( fov_3d_occlusion && m_solar.direct_active ) {
-            const auto &solar_cache = map_cache.angled_sunlight_cache;
+        // Override direct-sun tiles to full outside_light_level.
+        if( angled_sunlight_shadows && m_solar.direct_active ) {
+            const auto max_shadow_light = static_cast<float>( default_daylight_level() ) *
+                                          SOLAR_SHADOW_SCATTER;
+            const auto shadow_light_level =
+                std::max( inside_light_level, std::min( outside_light_level, max_shadow_light ) );
             std::ranges::for_each(
                 std::views::iota( 0, map_cache.cache_x * map_cache.cache_y ),
             [&]( int i ) {
                 const auto idx = static_cast<size_t>( i );
-                if( outside_cache[idx] && solar_cache[idx] ) {
-                    lm[idx].fill( outside_light_level );
+                const auto x = i / map_cache.cache_y;
+                const auto y = i % map_cache.cache_y;
+                const auto sun_state = direct_sunlight_state_at( point_bub_ms( x, y ), zlev );
+                if( sun_state == direct_sunlight_state::direct ) {
+                    lm[idx] = outside_light_level;
+                    fully_inside = false;
+                } else if( sun_state == direct_sunlight_state::shadow ) {
+                    lm[idx] = shadow_light_level;
                     fully_inside = false;
                 }
             }
@@ -567,10 +1346,16 @@ void map::generate_lightmap( const int zlev )
     auto &lm = map_cache.lm;
     auto &sm = map_cache.sm;
     auto &light_source_buffer = map_cache.light_source_buffer;
+    auto &colored_light_source_buffer = map_cache.colored_light_source_buffer;
+    auto &light_source_color_buffer = map_cache.light_source_color_buffer;
+    auto &light_source_points = map_cache.light_source_points;
 
-    std::fill( lm.begin(), lm.end(), four_quadrants( 0.0f ) );
+    std::ranges::fill( lm, 0.0f );
     std::fill( sm.begin(), sm.end(), 0.0f );
     std::fill( light_source_buffer.begin(), light_source_buffer.end(), 0.0f );
+    std::fill( colored_light_source_buffer.begin(), colored_light_source_buffer.end(), 0.0f );
+    std::fill( light_source_color_buffer.begin(), light_source_color_buffer.end(), 0u );
+    light_source_points.clear();
 
     build_sunlight_cache( zlev );
 
@@ -605,32 +1390,27 @@ void map::generate_lightmap_worker( const int zlev )
     auto &map_cache = get_cache( zlev );
     auto &lm = map_cache.lm;
     auto &outside_cache = map_cache.outside_cache;
-    auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
-    auto &prev_vehicle_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH,
-                                     OVERMAP_DEPTH ) ).vehicle_floor_cache;
-    bool top_floor = zlev == OVERMAP_DEPTH;
+    const auto &prev_map_cache = get_cache_ref( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) );
+    bool top_floor = zlev == OVERMAP_HEIGHT;
 
     /* Bulk light sources wastefully cast rays into neighbors; a burning hospital can produce
          significant slowdown, so for stuff like fire and lava:
      * Step 1: Store the position and luminance in buffer via add_light_source, for efficient
          checking of neighbors.
-     * Step 2: After everything else, iterate buffer and apply_light_source only in non-redundant
-         directions
+     * Step 2: After everything else, iterate the buffer and apply_light_source only in
+     *     non-redundant directions.
      * Step 3: ????
      * Step 4: Profit!
-     */
+    */
     auto &light_source_buffer = map_cache.light_source_buffer;
+    auto add_deferred_point_light = [&]( const tripoint_bub_ms & source,
+    const float luminance, const uint32_t color_rgb = 0u ) {
+        add_light_source( source, luminance, color_rgb );
+    };
 
     constexpr std::array<int, 4> dir_x = { {  0, -1, 1, 0 } };    //    [0]
     constexpr std::array<int, 4> dir_y = { { -1,  0, 0, 1 } };    // [1][X][2]
     constexpr std::array<int, 4> dir_d = { { 90, 0, 180, 270 } }; //    [3]
-    constexpr std::array<std::array<quadrant, 2>, 4> dir_quadrants = { {
-            {{ quadrant::NE, quadrant::NW }},
-            {{ quadrant::SW, quadrant::NW }},
-            {{ quadrant::SE, quadrant::NE }},
-            {{ quadrant::SE, quadrant::SW }},
-        }
-    };
 
     const float natural_light = g->natural_light_level( zlev );
 
@@ -645,12 +1425,14 @@ void map::generate_lightmap_worker( const int zlev )
             tripoint_bub_ms p;
             int direction;
             float luminance;
+            uint32_t color_rgb = 0u;
         };
         struct arc_light_def {
             tripoint_bub_ms p;
             units::angle dir;
             float luminance;
             units::angle width;
+            uint32_t color_rgb = 0u;
         };
         struct smx_acc {
             std::vector<std::pair<tripoint_bub_ms, float>> lm_override;
@@ -663,20 +1445,38 @@ void map::generate_lightmap_worker( const int zlev )
             auto &local = smx_accs[smx];
             for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
                 const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-                const auto cur_submap = get_submap_at_grid( sm_pos );
+                const auto cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                            map_local_to_abs( *this, sm_pos ) );
                 if( cur_submap == nullptr ) {
                     continue;
                 }
                 for( const auto sm_ms : submap_tiles() ) {
                     const auto p = project_combine( sm_pos, sm_ms );
                     // Project light into any openings into buildings.
-                    // Check both terrain floor_cache and vehicle_floor_cache since vehicle
-                    // roofs are no longer written into floor_cache.
                     auto has_floor_above = [&]( int idx ) {
-                        return prev_floor_cache[idx] || prev_vehicle_floor_cache[idx];
+                        return prev_map_cache.floor_cache[idx] || prev_map_cache.vehicle_floor_cache[idx];
                     };
-                    if( !outside_cache[map_cache.idx( p.x(), p.y() )] || ( !top_floor &&
-                            has_floor_above( map_cache.idx( p.x(), p.y() ) ) ) ) {
+                    const int cur_idx = map_cache.idx( p.x(), p.y() );
+                    auto direct_sky = [&]( const point_bub_ms & tile ) {
+                        return top_floor || has_direct_sunlight_at( tile, zlev );
+                    };
+                    auto inbounds_light_neighbour = [&]( const auto & neighbour ) {
+                        if( neighbour.x() < 0 || neighbour.y() < 0 ||
+                            neighbour.x() >= map_cache.cache_x || neighbour.y() >= map_cache.cache_y ) {
+                            return false;
+                        }
+                        return true;
+                    };
+                    auto direct_light_neighbour = [&]( const auto & neighbour ) {
+                        return inbounds_light_neighbour( neighbour ) &&
+                               direct_sky( neighbour );
+                    };
+                    auto open_sky_neighbour = [&]( const auto & neighbour ) {
+                        return inbounds_light_neighbour( neighbour ) &&
+                               direct_sky( neighbour );
+                    };
+
+                    if( !outside_cache[cur_idx] || ( !top_floor && has_floor_above( cur_idx ) ) ) {
                         // Apply light sources for external/internal divide.
                         // Skip outdoor tiles (outside_cache=true) unless they have a ceiling above
                         // without this guard every z=10 tile (all outside) enters the loop.
@@ -687,33 +1487,24 @@ void map::generate_lightmap_worker( const int zlev )
                         // also has no floor above.
                         for( int i = 0; i < 4; ++i ) {
                             const auto neighbour = p.xy() + point( dir_x[i], dir_y[i] );
-                            if( neighbour.x() < 0 || neighbour.y() < 0 ||
-                                neighbour.x() >= map_cache.cache_x || neighbour.y() >= map_cache.cache_y ) {
-                                continue;
-                            }
-                            if( !( top_floor || !has_floor_above( map_cache.idx( neighbour.x(), neighbour.y() ) ) ) ) {
+                            if( !direct_light_neighbour( neighbour ) ) {
                                 continue;
                             }
                             const bool nb_has_open_sky_neighbour = std::ranges::any_of(
                             std::views::iota( 0, 4 ), [&]( int j ) {
                                 const auto cn = neighbour + point( dir_x[j], dir_y[j] );
-                                return cn != p.xy() &&
-                                       cn.x() >= 0 && cn.y() >= 0 &&
-                                       cn.x() < map_cache.cache_x && cn.y() < map_cache.cache_y &&
-                                       !has_floor_above( map_cache.idx( cn.x(), cn.y() ) );
+                                return cn != p.xy() && open_sky_neighbour( cn );
                             } );
                             if( !nb_has_open_sky_neighbour ) {
                                 continue;
                             }
                             const float source_light =
-                                std::min( natural_light, lm[map_cache.idx( neighbour.x(), neighbour.y() )].max() );
+                                std::min( natural_light, lm[map_cache.idx( neighbour.x(), neighbour.y() )] );
+                            const auto lm_idx = map_cache.idx( p.x(), p.y() );
+                            lm[lm_idx] = std::max( lm[lm_idx], source_light );
                             if( light_transparency( p ) > LIGHT_TRANSPARENCY_SOLID ) {
-                                update_light_quadrants( lm[map_cache.idx( p.x(), p.y() )], source_light, quadrant::default_ );
-                                // apply_directional_light writes to arbitrary lm positions — defer.
+                                // apply_directional_light writes to arbitrary lm positions; defer.
                                 local.dir_lights.push_back( { p, dir_d[i], source_light } );
-                            } else {
-                                update_light_quadrants( lm[map_cache.idx( p.x(), p.y() )], source_light, dir_quadrants[i][0] );
-                                update_light_quadrants( lm[map_cache.idx( p.x(), p.y() )], source_light, dir_quadrants[i][1] );
                             }
                         }
                     }
@@ -726,11 +1517,12 @@ void map::generate_lightmap_worker( const int zlev )
                             units::angle iwidth = 0_degrees;
                             units::angle idir = 0_degrees;
                             if( ( *itm_it )->getlight( ilum, iwidth, idir ) ) {
+                                const auto color_rgb = item_light_color( **itm_it ).value_or( 0u );
                                 if( iwidth > 0_degrees ) {
-                                    // apply_light_arc writes to arbitrary lm positions — defer.
-                                    local.arc_lights.push_back( { p, idir, ilum, iwidth } );
+                                    // apply_light_arc writes to arbitrary lm positions; defer.
+                                    local.arc_lights.push_back( { p, idir, ilum, iwidth, color_rgb } );
                                 } else {
-                                    add_light_source( p, ilum );
+                                    add_deferred_point_light( p, ilum, color_rgb );
                                 }
                             }
                         }
@@ -738,11 +1530,13 @@ void map::generate_lightmap_worker( const int zlev )
 
                     const ter_id terrain = cur_submap->get_ter( sm_ms );
                     if( terrain->light_emitted > 0 ) {
-                        add_light_source( p, terrain->light_emitted );
+                        add_deferred_point_light( p, terrain->light_emitted,
+                                                  map_data_light_color( terrain.obj() ).value_or( 0u ) );
                     }
                     const furn_id furniture = cur_submap->get_furn( sm_ms );
                     if( furniture->light_emitted > 0 ) {
-                        add_light_source( p, furniture->light_emitted );
+                        add_deferred_point_light( p, furniture->light_emitted,
+                                                  map_data_light_color( furniture.obj() ).value_or( 0u ) );
                     }
 
                     std::ranges::for_each( cur_submap->get_field( sm_ms ), [&]( auto & fld ) {
@@ -757,7 +1551,8 @@ void map::generate_lightmap_worker( const int zlev )
                         const auto *cur = &fld.second;
                         const int light_emitted = cur->light_emitted();
                         if( light_emitted > 0 ) {
-                            add_light_source( p, light_emitted );
+                            add_deferred_point_light( p, light_emitted,
+                                                      field_light_color( *cur ).value_or( 0u ) );
                         }
                         const float light_override = cur->local_light_override();
                         if( light_override >= 0.0 ) {
@@ -776,40 +1571,107 @@ void map::generate_lightmap_worker( const int zlev )
             }
         }
 
-        // Merge per-smx accumulators.  App.y() deferred shadowcasts serially to avoid lm races.
+        // Merge per-smx accumulators.  Apply deferred shadowcasts serially to avoid lm races.
         std::ranges::for_each( smx_accs, [&]( auto & local ) {
             lm_override.insert( lm_override.end(), local.lm_override.begin(), local.lm_override.end() );
             std::ranges::for_each( local.dir_lights, [&]( auto & dl ) {
-                apply_directional_light( dl.p, dl.direction, dl.luminance );
+                apply_directional_light( {
+                    .p = dl.p,
+                    .direction = dl.direction,
+                    .luminance = dl.luminance,
+                    .color_rgb = dl.color_rgb,
+                } );
             } );
             std::ranges::for_each( local.arc_lights, [&]( auto & al ) {
-                apply_light_arc( al.p, al.dir, al.luminance, al.width );
+                apply_light_arc( {
+                    .p = al.p,
+                    .angle = al.dir,
+                    .luminance = al.luminance,
+                    .wideangle = al.width,
+                    .color_rgb = al.color_rgb,
+                } );
             } );
         } );
 
 
-        // App.y() any vehicle light sources
-        VehicleList vehs = get_vehicles();
+        // Apply any vehicle light sources.
+        auto vehs = get_vehicles();
         for( auto &vv : vehs ) {
-            vehicle *v = vv.v;
+            auto *v = vv.v;
+            if( v == nullptr ) {
+                continue;
+            }
 
-            auto lights = v->lights( true );
+            auto lights = vehicle_lighting::active_light_parts( *v );
 
-            float veh_luminance = 0.0;
-            float iteration = 1.0;
+            auto veh_luminance = 0.0f;
+            auto iteration = 1.0f;
 
-            for( const auto pt : lights ) {
-                const auto &vp = pt->info();
+            for( const auto &part : lights ) {
+                const auto &vp = part.info();
                 if( vp.has_flag( VPFLAG_CONE_LIGHT ) ||
                     vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
                     veh_luminance += vp.bonus / iteration;
-                    iteration = iteration * 1.1;
+                    iteration = iteration * 1.1f;
                 }
             }
 
-            for( const auto pt : lights ) {
-                const auto &vp = pt->info();
-                tripoint_bub_ms src = v->bub_part_location( *pt );
+            auto apply_external_light = [&]( const auto & apply_light ) {
+                auto scope = vehicle_external_light_cache_scope( map_cache, *v, zlev );
+                apply_light();
+            };
+
+            struct vehicle_arc_light_def {
+                tripoint_bub_ms src;
+                units::angle direction = 0_degrees;
+                float luminance = 0.0f;
+                units::angle width = 0_degrees;
+                bool external = false;
+                uint32_t color_rgb = 0u;
+            };
+            struct vehicle_point_light_def {
+                tripoint_bub_ms src;
+                float luminance = 0.0f;
+                bool external = false;
+                uint32_t color_rgb = 0u;
+            };
+
+            auto apply_vehicle_arc = [&]( const vehicle_arc_light_def & def ) {
+                if( def.external ) {
+                    apply_external_light( [&]() {
+                        apply_light_arc( {
+                            .p = def.src,
+                            .angle = def.direction,
+                            .luminance = def.luminance,
+                            .wideangle = def.width,
+                            .color_rgb = def.color_rgb,
+                        } );
+                    } );
+                } else {
+                    apply_light_arc( {
+                        .p = def.src,
+                        .angle = def.direction,
+                        .luminance = def.luminance,
+                        .wideangle = def.width,
+                        .color_rgb = def.color_rgb,
+                    } );
+                }
+            };
+
+            auto apply_vehicle_point = [&]( const vehicle_point_light_def & def ) {
+                if( def.external ) {
+                    apply_external_light( [&]() {
+                        apply_light_source( def.src, def.luminance, def.color_rgb );
+                    } );
+                } else {
+                    add_deferred_point_light( def.src, def.luminance, def.color_rgb );
+                }
+            };
+
+            for( const auto &part : lights ) {
+                const auto &vp = part.info();
+                const auto &vehicle_part = part.part();
+                const auto src = part.pos();
 
                 if( !inbounds( src ) ) {
                     continue;
@@ -818,35 +1680,76 @@ void map::generate_lightmap_worker( const int zlev )
                     continue;
                 }
 
+                const auto external = vehicle_lighting::is_external( part );
+                const auto color_rgb = vehicle_light_color( part ).value_or( 0u );
                 if( vp.has_flag( VPFLAG_CONE_LIGHT ) ) {
                     if( veh_luminance > lit_level::LIT ) {
-                        add_light_source( src, M_SQRT2 ); // Add a little surrounding light
-                        apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
-                                         45_degrees );
+                        apply_vehicle_arc( {
+                            .src = src,
+                            .direction = v->face.dir() + vehicle_part.direction,
+                            .luminance = veh_luminance,
+                            .width = vehicle_lighting::arc_width( vp ),
+                            .external = external,
+                            .color_rgb = color_rgb,
+                        } );
                     }
 
                 } else if( vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
                     if( veh_luminance > lit_level::LIT ) {
-                        add_light_source( src, M_SQRT2 ); // Add a little surrounding light
-                        apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
-                                         90_degrees );
+                        apply_vehicle_arc( {
+                            .src = src,
+                            .direction = v->face.dir() + vehicle_part.direction,
+                            .luminance = veh_luminance,
+                            .width = vehicle_lighting::arc_width( vp ),
+                            .external = external,
+                            .color_rgb = color_rgb,
+                        } );
                     }
 
+                } else if( vp.rotating_light ) {
+                    const auto &rotating_light = *vp.rotating_light;
+                    const auto base_direction = v->face.dir() + vehicle_part.direction;
+                    const auto direction = rotating_light.direction_at( base_direction, calendar::turn );
+                    for( const auto beam_index : std::views::iota( 0, rotating_light.beam_count() ) ) {
+                        const auto beam_direction =
+                            direction + rotating_light.beam_spacing() * static_cast<double>( beam_index );
+                        apply_vehicle_arc( {
+                            .src = src,
+                            .direction = beam_direction,
+                            .luminance = static_cast<float>( vp.bonus ),
+                            .width = rotating_light.arc_width(),
+                            .external = external,
+                            .color_rgb = color_rgb,
+                        } );
+                    }
                 } else if( vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
-                    add_light_source( src, M_SQRT2 ); // Add a little surrounding light
-                    apply_light_arc( src, v->face.dir() + pt->direction, vp.bonus, 180_degrees );
+                    apply_vehicle_arc( {
+                        .src = src,
+                        .direction = v->face.dir() + vehicle_part.direction,
+                        .luminance = static_cast<float>( vp.bonus ),
+                        .width = vehicle_lighting::arc_width( vp ),
+                        .external = external,
+                        .color_rgb = color_rgb,
+                    } );
 
                 } else if( vp.has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
-                    const bool odd_turn = calendar::once_every( 2_turns );
-                    if( ( odd_turn && vp.has_flag( VPFLAG_ODDTURN ) ) ||
-                        ( !odd_turn && vp.has_flag( VPFLAG_EVENTURN ) ) ||
-                        ( !( vp.has_flag( VPFLAG_EVENTURN ) || vp.has_flag( VPFLAG_ODDTURN ) ) ) ) {
-
-                        add_light_source( src, vp.bonus );
+                    const auto odd_turn = calendar::once_every( 2_turns );
+                    if( vehicle_lighting::circle_light_is_active( vp, odd_turn ) ) {
+                        apply_vehicle_point( {
+                            .src = src,
+                            .luminance = static_cast<float>( vp.bonus ),
+                            .external = external,
+                            .color_rgb = color_rgb,
+                        } );
                     }
 
                 } else {
-                    add_light_source( src, vp.bonus );
+                    apply_vehicle_point( {
+                        .src = src,
+                        .luminance = static_cast<float>( vp.bonus ),
+                        .external = external,
+                        .color_rgb = color_rgb,
+                    } );
                 }
             }
 
@@ -875,25 +1778,46 @@ void map::generate_lightmap_worker( const int zlev )
     */
     {
         ZoneScopedN( "generate_lightmap_flush" );
-        const tripoint_bub_ms cache_start( 0, 0, zlev );
-        const tripoint_bub_ms cache_end( map_cache.cache_x, map_cache.cache_y, zlev );
-        for( const auto &p : points_in_rectangle( cache_start, cache_end ) ) {
-            if( light_source_buffer[map_cache.idx( p.x(), p.y() )] > 0.0 ) {
-                apply_light_source( p, light_source_buffer[map_cache.idx( p.x(), p.y() )] );
+        for( const auto &source : map_cache.light_source_points ) {
+            const auto p = tripoint_bub_ms( source, zlev );
+            const auto idx = map_cache.idx( p.x(), p.y() );
+            const auto luminance = light_source_buffer[idx];
+            const auto colored_luminance = map_cache.colored_light_source_buffer[idx];
+            const auto color_rgb = map_cache.light_source_color_buffer[idx];
+            if( luminance <= 0.0f && colored_luminance <= 0.0f ) {
+                continue;
+            }
+            if( color_rgb != 0u && colored_luminance >= luminance ) {
+                apply_light_source( p, colored_luminance, color_rgb );
+            } else {
+                if( luminance > 0.0f ) {
+                    apply_light_source( p, luminance );
+                }
+                if( color_rgb != 0u && colored_luminance > 0.0f ) {
+                    apply_light_source( p, colored_luminance, color_rgb );
+                }
             }
         }
         for( const std::pair<tripoint_bub_ms, float> &elem : lm_override ) {
-            lm[map_cache.idx( elem.first.x(), elem.first.y() )].fill( elem.second );
+            lm[map_cache.idx( elem.first.x(), elem.first.y() )] = elem.second;
         }
-    } // ZoneScopedN generate_lightmap_flush
+    }
 }
 
-void map::add_light_source( const tripoint_bub_ms &p, float luminance )
+void map::add_light_source( const tripoint_bub_ms &p, float luminance, uint32_t color_rgb )
 {
     auto &cache = get_cache( p.z() );
     auto &light_source_buffer = cache.light_source_buffer;
-    light_source_buffer[cache.idx( p.x(), p.y() )] = std::max( luminance,
-            light_source_buffer[cache.idx( p.x(), p.y() )] );
+    const auto idx = cache.idx( p.x(), p.y() );
+    if( light_source_buffer[idx] <= 0.0f && cache.colored_light_source_buffer[idx] <= 0.0f ) {
+        cache.light_source_points.push_back( p.xy() );
+    }
+    light_source_buffer[idx] = std::max( luminance, light_source_buffer[idx] );
+    if( colored_lighting && color_rgb != 0u &&
+        luminance >= cache.colored_light_source_buffer[idx] ) {
+        cache.colored_light_source_buffer[idx] = luminance;
+        cache.light_source_color_buffer[idx] = color_rgb;
+    }
 }
 
 // Tile light/transparency: 3D
@@ -905,13 +1829,15 @@ lit_level map::light_at( const tripoint_bub_ms &p ) const
     }
 
     const auto &map_cache = get_cache_ref( p.z() );
+    record_cpu_lm_read( map_cache.lm_cpu_cache_valid, cpu_lm_light_reads_valid,
+                        cpu_lm_light_reads_stale );
     const auto &lm = map_cache.lm;
     const auto &sm = map_cache.sm;
     if( sm[map_cache.idx( p.x(), p.y() )] >= LIGHT_SOURCE_BRIGHT ) {
         return lit_level::BRIGHT;
     }
 
-    const float max_light = lm[map_cache.idx( p.x(), p.y() )].max();
+    const float max_light = lm[map_cache.idx( p.x(), p.y() )];
     if( max_light >= LIGHT_AMBIENT_LIT ) {
         return lit_level::LIT;
     }
@@ -923,24 +1849,60 @@ lit_level map::light_at( const tripoint_bub_ms &p ) const
     return lit_level::DARK;
 }
 
-float map::ambient_light_at( const tripoint_bub_ms &p ) const
+float map::ambient_light_at( const tripoint_bub_ms &p,
+                             const std::source_location location ) const
 {
     if( !inbounds( p ) ) {
         return 0.0f;
     }
 
     const auto &map_cache = get_cache_ref( p.z() );
-    float light = map_cache.lm[map_cache.idx( p.x(), p.y() )].max();
-
-    if( fov_3d_occlusion && m_solar.direct_active ) {
-        const auto idx = static_cast<size_t>( map_cache.idx( p.x(), p.y() ) );
-        if( map_cache.outside_cache[idx] && !map_cache.angled_sunlight_cache[idx] ) {
-            light = std::min( light,
-                              static_cast<float>( default_daylight_level() ) * SOLAR_SHADOW_SCATTER );
+    if( map_cache.lm_cpu_cache_valid ) {
+        const auto key = ambient_cache_key{
+            .owner = this,
+            .x = p.x(),
+            .y = p.y(),
+            .z = p.z(),
+            .turn = to_turns<int>( calendar::turn - calendar::turn_zero ),
+            .generation = map_cache.lm_cpu_cache_generation,
+        };
+        thread_local auto cpu_lm_ambient_cache =
+            std::array<ambient_cache_entry, ambient_cache_slots> {};
+        auto &entry = cpu_lm_ambient_cache[ambient_cache_index( key )];
+        if( entry.occupied && entry.key == key ) {
+            cpu_lm_ambient_cache_hits.fetch_add( 1, std::memory_order_relaxed );
+            return entry.light;
         }
+        cpu_lm_ambient_cache_misses.fetch_add( 1, std::memory_order_relaxed );
+        const auto light = map_cache.lm[map_cache.idx( p.x(), p.y() )];
+        entry = ambient_cache_entry{
+            .key = key,
+            .light = light,
+            .occupied = true,
+        };
+        record_cpu_lm_read( true, cpu_lm_ambient_reads_valid, cpu_lm_ambient_reads_stale );
+        record_cpu_lm_ambient_location( true, location );
+        return light;
     }
 
+    record_cpu_lm_read( map_cache.lm_cpu_cache_valid, cpu_lm_ambient_reads_valid,
+                        cpu_lm_ambient_reads_stale );
+    record_cpu_lm_ambient_location( map_cache.lm_cpu_cache_valid, location );
+    const auto light = map_cache.lm[map_cache.idx( p.x(), p.y() )];
+
     return light;
+}
+
+void map::flush_lightmap_cpu_read_counters() const
+{
+    ZoneScopedN( "flush_lightmap_cpu_read_counters" );
+    TracyPlot( "CPU LM Light Reads Valid", take_counter( cpu_lm_light_reads_valid ) );
+    TracyPlot( "CPU LM Light Reads Stale", take_counter( cpu_lm_light_reads_stale ) );
+    TracyPlot( "CPU LM Ambient Reads Valid", take_counter( cpu_lm_ambient_reads_valid ) );
+    TracyPlot( "CPU LM Ambient Reads Stale", take_counter( cpu_lm_ambient_reads_stale ) );
+    TracyPlot( "CPU LM Ambient Cache Hits", take_counter( cpu_lm_ambient_cache_hits ) );
+    TracyPlot( "CPU LM Ambient Cache Misses", take_counter( cpu_lm_ambient_cache_misses ) );
+    flush_cpu_lm_ambient_location_counters();
 }
 
 bool map::is_transparent( const tripoint_bub_ms &p ) const
@@ -959,6 +1921,14 @@ float map::light_transparency( const tripoint_bub_ms &p ) const
 static auto scaled_visibility_for_view_distance( const float vis,
         const float visibility_scale_factor ) -> float
 {
+    static constexpr auto lut_steps = size_t { 16384 };
+    struct visibility_scale_lut {
+        float factor = 0.0f;
+        std::array < float, lut_steps + 1 > values = {};
+        bool valid = false;
+    };
+    static thread_local auto lut = visibility_scale_lut {};
+
     if( vis <= LIGHT_TRANSPARENCY_SOLID ) {
         return 0.0f;
     }
@@ -968,7 +1938,106 @@ static auto scaled_visibility_for_view_distance( const float vis,
     if( visibility_scale_factor == 1.0f ) {
         return vis;
     }
-    return std::pow( vis, visibility_scale_factor );
+    if( !lut.valid || std::fabs( lut.factor - visibility_scale_factor ) > 0.0001f ) {
+        lut.factor = visibility_scale_factor;
+        lut.valid = true;
+        for( const auto i : std::views::iota( size_t { 0 }, lut_steps + 1 ) ) {
+            const auto sample = static_cast<float>( i ) / static_cast<float>( lut_steps );
+            lut.values[i] = std::pow( sample, visibility_scale_factor );
+        }
+    }
+
+    const auto scaled_index = vis * static_cast<float>( lut_steps );
+    const auto lower_index = static_cast<size_t>( scaled_index );
+    const auto upper_index = std::min( lower_index + 1, lut_steps );
+    const auto blend = scaled_index - static_cast<float>( lower_index );
+    return std::lerp( lut.values[lower_index], lut.values[upper_index], blend );
+}
+
+static auto smart_visibility_range() -> float
+{
+    static constexpr auto baseline_bubble_size = 6;
+    static constexpr auto baseline_range = 84.0f;
+    static constexpr auto lower_slope = 5.0f;
+    static constexpr auto upper_slope = 8.0f;
+
+    const auto delta = g_reality_bubble_size - baseline_bubble_size;
+    if( delta < 0 ) {
+        return baseline_range - lower_slope * std::log2( 1.0f + static_cast<float>( std::abs( delta ) ) );
+    }
+    if( delta > 0 ) {
+        return baseline_range + upper_slope * std::log2( 1.0f + static_cast<float>( delta ) );
+    }
+    return baseline_range;
+}
+
+static auto visibility_range_scale() -> float
+{
+    static constexpr auto baseline_range = 84.0f;
+
+    switch( visibility_scaling ) {
+        case visibility_scaling_mode::perfect:
+            return static_cast<float>( g_max_view_distance ) / baseline_range;
+        case visibility_scaling_mode::smart:
+            return smart_visibility_range() / baseline_range;
+        case visibility_scaling_mode::no_scale:
+            return 1.0f;
+    }
+    return 1.0f;
+}
+
+static auto clamp_visibility_range( const float range ) -> float
+{
+    return clamp( range, 1.0f, static_cast<float>( g_max_view_distance ) );
+}
+
+static auto scaled_visibility_range( const float base_range ) -> float
+{
+    return clamp_visibility_range( base_range * visibility_range_scale() );
+}
+
+static auto perception_visibility_range_base( const Character &viewer ) -> float
+{
+    static constexpr auto baseline_range = 84.0f;
+    static constexpr auto perception_baseline = 10;
+    static constexpr auto visibility_perception_divisor = 6.0f;
+    return baseline_range + static_cast<float>( viewer.get_per() - perception_baseline ) /
+           visibility_perception_divisor;
+}
+
+static auto perception_detail_range_base( const Character &viewer ) -> float
+{
+    static constexpr auto baseline_range = 84.0f;
+    static constexpr auto perception_baseline = 10;
+    return baseline_range + static_cast<float>( viewer.get_per() - perception_baseline ) +
+           viewer.mutation_value( "local_detail_sight" );
+}
+
+static auto visibility_scale_factor_from_range( const float visibility_range ) -> float
+{
+    return 60.0f / std::max( 1.0f, visibility_range );
+}
+
+auto map::make_visibility_variables( const int zlev ) const -> visibility_variables
+{
+    auto variables = visibility_variables {};
+    const auto player_pos = g->u.bub_pos();
+    variables.variables_set = true;
+    variables.g_light_level = static_cast<int>( g->light_level( zlev ) );
+    const auto &plr_ch = get_cache_ref( player_pos.z() );
+    variables.vision_threshold = g->u.get_vision_threshold(
+                                     plr_ch.lm[plr_ch.idx( player_pos.x(), player_pos.y() )] );
+    variables.u_clairvoyance = g->u.clairvoyance();
+    variables.u_unimpaired_range = g->u.unimpaired_range();
+    variables.u_sight_impaired = g->u.sight_impaired();
+    variables.u_is_boomered = g->u.has_effect( effect_boomered );
+    variables.detail_range = scaled_visibility_range( perception_detail_range_base( g->u ) );
+    variables.visibility_range = std::max(
+                                     variables.detail_range,
+                                     scaled_visibility_range( perception_visibility_range_base( g->u ) ) );
+    variables.visibility_scale_factor =
+        visibility_scale_factor_from_range( variables.visibility_range );
+    return variables;
 }
 
 map::apparent_light_info map::apparent_light_helper( const level_cache &map_cache,
@@ -976,10 +2045,10 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
 {
     const float vis = std::max( map_cache.seen_cache[map_cache.idx( p.x(), p.y() )],
                                 map_cache.camera_cache[map_cache.idx( p.x(), p.y() )] );
-    // Use g_visible_threshold which scales with g_max_view_distance.
+    // Use the hard view cutoff so the visible area remains circular inside the loaded square.
     const bool obstructed = vis <= LIGHT_TRANSPARENCY_SOLID + g_visible_threshold;
 
-    // vis^(60/g_max) stretches the 1/exp(t*d) decay curve to match the current bubble size.
+    // The visibility scale factor maps ray attenuation to the selected visibility range.
     const auto scaled_vis = scaled_visibility_for_view_distance( vis, visibility_scale_factor );
 
     auto is_opaque = [&map_cache]( point_bub_ms  p ) {
@@ -991,28 +2060,16 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
     float apparent_light;
 
     if( p_opaque && scaled_vis > 0 ) {
-        // This is the complicated case.  We want to check which quadrants the
-        // player can see the tile from, and only count light values from those
-        // quadrants.
-        struct offset_and_quadrants {
-            point offset;
-            std::array<quadrant, 2> quadrants;
-        };
-        static constexpr std::array<offset_and_quadrants, 8> adjacent_offsets = {{
-                { point_south,      {{ quadrant::SE, quadrant::SW }} },
-                { point_north,      {{ quadrant::NE, quadrant::NW }} },
-                { point_east,       {{ quadrant::SE, quadrant::NE }} },
-                { point_south_east, {{ quadrant::SE, quadrant::SE }} },
-                { point_north_east, {{ quadrant::NE, quadrant::NE }} },
-                { point_west,       {{ quadrant::SW, quadrant::NW }} },
-                { point_south_west, {{ quadrant::SW, quadrant::SW }} },
-                { point_north_west, {{ quadrant::NW, quadrant::NW }} },
+        // Opaque tile: light is only visible from adjacent transparent tiles the player can see.
+        static constexpr std::array<point, 8> adjacent_offsets = {{
+                point_south, point_north, point_east, point_south_east,
+                point_north_east, point_west, point_south_west, point_north_west,
             }
         };
 
-        four_quadrants seen_from( 0 );
-        for( const offset_and_quadrants &oq : adjacent_offsets ) {
-            const auto neighbour = p.xy() + oq.offset;
+        auto visible_surface_light = 0.0f;
+        for( const point &offset : adjacent_offsets ) {
+            const auto neighbour = p.xy() + offset;
 
             if( neighbour.x() < 0 || neighbour.y() < 0 ||
                 neighbour.x() >= map_cache.cache_x || neighbour.y() >= map_cache.cache_y ) {
@@ -1025,16 +2082,13 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
                 map_cache.camera_cache[map_cache.idx( neighbour.x(), neighbour.y() )] == 0 ) {
                 continue;
             }
-            // This is a non-opaque visible neighbour, so count visibility from the relevant
-            // quadrants. Use scaled_vis to stretch the falloff over g_max_view_distance.
-            seen_from[oq.quadrants[0]] = scaled_vis;
-            seen_from[oq.quadrants[1]] = scaled_vis;
+            visible_surface_light = std::max( visible_surface_light,
+                                              map_cache.lm[map_cache.idx( neighbour.x(), neighbour.y() )] );
         }
-        apparent_light = ( seen_from * map_cache.lm[map_cache.idx( p.x(), p.y() )] ).max();
+        apparent_light = scaled_vis * visible_surface_light;
     } else {
-        // This is the simple case, for a non-opaque tile light from all
-        // directions is equivalent. Use scaled_vis for the brightness calculation.
-        apparent_light = scaled_vis * map_cache.lm[map_cache.idx( p.x(), p.y() )].max();
+        // Non-opaque tile: light from all directions is equivalent.
+        apparent_light = scaled_vis * map_cache.lm[map_cache.idx( p.x(), p.y() )];
     }
     return { obstructed, apparent_light };
 }
@@ -1053,20 +2107,14 @@ lit_level map::apparent_light_at( const tripoint_bub_ms &p,
         return lit_level::BRIGHT;
     }
     const auto &map_cache = get_cache_ref( p.z() );
+#if defined( CATA_SDL )
+    if( cache.variables_set && !map_cache.visibility_cache_dirty ) {
+        return map_cache.visibility_cache[map_cache.idx( p.x(), p.y() )];
+    }
+#endif
     const apparent_light_info a = apparent_light_helper( map_cache, p, cache.visibility_scale_factor );
 
     float apparent_light = a.apparent_light;
-
-    // Shadow cap: outdoor tiles without direct solar LOS are capped at scatter level.
-    // Uses min rather than multip.y() so distance decay acts on full daylight first —
-    // shadow tiles stay visible at full render distance and only fade at the edge.
-    if( fov_3d_occlusion && m_solar.direct_active && !a.obstructed ) {
-        const auto idx = static_cast<size_t>( map_cache.idx( p.x(), p.y() ) );
-        if( map_cache.outside_cache[idx] && !map_cache.angled_sunlight_cache[idx] ) {
-            apparent_light = std::min( apparent_light,
-                                       static_cast<float>( default_daylight_level() ) * SOLAR_SHADOW_SCATTER );
-        }
-    }
 
     // Unimpaired range is an override to strictly limit vision range based on various conditions,
     // but the player can still see light sources.
@@ -1076,6 +2124,12 @@ lit_level map::apparent_light_at( const tripoint_bub_ms &p,
         } else {
             return lit_level::DARK;
         }
+    }
+    const auto cache_idx = map_cache.idx( p.x(), p.y() );
+    const auto source_light = map_cache.sm[cache_idx] > 0.0;
+    const auto camera_visible = map_cache.camera_cache[cache_idx] > LIGHT_TRANSPARENCY_SOLID;
+    if( static_cast<float>( dist ) > cache.detail_range && !camera_visible ) {
+        return !a.obstructed && source_light ? lit_level::BRIGHT_ONLY : lit_level::BLANK;
     }
     if( a.obstructed ) {
         if( apparent_light > LIGHT_AMBIENT_LIT ) {
@@ -1096,7 +2150,7 @@ lit_level map::apparent_light_at( const tripoint_bub_ms &p,
         }
     }
     // Then we just search for the light level in descending order.
-    if( apparent_light > LIGHT_SOURCE_BRIGHT || map_cache.sm[map_cache.idx( p.x(), p.y() )] > 0.0 ) {
+    if( apparent_light > LIGHT_SOURCE_BRIGHT || source_light ) {
         return lit_level::BRIGHT;
     }
     if( apparent_light > LIGHT_AMBIENT_LIT ) {
@@ -1115,22 +2169,25 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
         return false;
     }
 
-    if( outside_player_3d_z_range( t ) ) {
-        return false;
-    }
-
     if( max_range >= 0 && square_dist( t, g->u.bub_pos() ) > max_range ) {
         return false;    // Out of range!
     }
 
+#if defined( CATA_SDL )
     const auto &map_cache = get_cache_ref( t.z() );
-    const auto visibility_scale_factor = 60.0f / static_cast<float>( g_max_view_distance );
-    const auto a = apparent_light_helper( map_cache, t, visibility_scale_factor );
-    const auto light_at_player = map_cache.lm[map_cache.idx( g->u.bub_pos().x(),
-                                                g->u.bub_pos().y() )].max();
-    return !a.obstructed &&
-           ( a.apparent_light >= g->u.get_vision_threshold( light_at_player ) ||
-             map_cache.sm[map_cache.idx( t.x(), t.y() )] > 0.0 );
+    if( !map_cache.visibility_cache_dirty && visibility_variables_cache.variables_set ) {
+        const auto ll = map_cache.visibility_cache[map_cache.idx( t.x(), t.y() )];
+        return get_visibility( ll, visibility_variables_cache ) == VIS_CLEAR;
+    }
+
+    // Normal SDL gameplay should consume the pre-refreshed visibility_cache.
+    // If a caller asks before the game/UI refresh point, avoid geometry-only
+    // visibility because it produces false safe-mode and monster-info warnings.
+    return false;
+#else
+    const auto variables = make_visibility_variables( t.z() );
+    return get_visibility( apparent_light_at( t, variables ), variables ) == VIS_CLEAR;
+#endif
 }
 
 bool map::pl_line_of_sight( const tripoint_bub_ms &t, const int max_range ) const
@@ -1139,19 +2196,19 @@ bool map::pl_line_of_sight( const tripoint_bub_ms &t, const int max_range ) cons
         return false;
     }
 
-    if( outside_player_3d_z_range( t ) ) {
-        return false;
-    }
-
     if( max_range >= 0 && square_dist( t, g->u.bub_pos() ) > max_range ) {
         // Out of range!
         return false;
     }
 
+#if defined( CATA_SDL )
+    return sees( g->u.bub_pos(), t, -1 );
+#else
     const auto &map_cache = get_cache_ref( t.z() );
     // Any epsilon > 0 is fine - it means lightmap processing visited the point
     return map_cache.seen_cache[map_cache.idx( t.x(), t.y() )] > 0.0f ||
            map_cache.camera_cache[map_cache.idx( t.x(), t.y() )] > 0.0f;
+#endif
 }
 
 //Alters the vision caches to the player specific version, the restore caches will be filled so it can be undone with restore_vision_transparency_cache
@@ -1266,65 +2323,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                                          blocked_restore_cache );
     }
 
-    if( !fov_3d ) {
-        ZoneScopedN( "build_seen_cache_2d" );
-        std::vector<int> levels_to_build;
-        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-            auto &cur_cache = get_cache( z );
-            if( z == target_z || cur_cache.seen_cache_dirty ) {
-                std::fill( cur_cache.seen_cache.begin(), cur_cache.seen_cache.end(),
-                           light_transparency_solid );
-                std::fill( cur_cache.camera_cache.begin(), cur_cache.camera_cache.end(),
-                           light_transparency_solid );
-                cur_cache.seen_cache_dirty = false;
-                levels_to_build.push_back( z );
-            }
-        }
-
-        for( const int level : levels_to_build ) {
-            auto &lc = get_cache( level );
-            lc.seen_cache[lc.idx( origin.x(), origin.y() )] = VISIBILITY_FULL;
-            castLightAll( lc.seen_cache.data(), lc.transparency_cache.data(),
-                          lc.vehicle_obscured_cache.data(), lc.cache_x, lc.cache_y,
-                          origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
-        }
-
-        // Floor-blocking pass for non-origin z-levels: accumulate floor_cache going
-        // down then up from origin.z() (same vert_blocked sweep as the 3D fast path).
-        // Without this, the independent 2D casts above let players see through floors
-        // to caves below buildings, rooftops above, etc.
-        {
-            const auto &origin_lc = get_cache( origin.z() );
-            const int cache_sz = origin_lc.cache_x * origin_lc.cache_y;
-            std::vector<char> vert_blocked( cache_sz, 0 );
-
-            // Going down: floor_cache[z+1] blocks crossing from z+1 to z.
-            std::ranges::fill( vert_blocked, 0 );
-            for( int z = origin.z() - 1; z >= -OVERMAP_DEPTH; --z ) {
-                const auto &fc = get_cache( z + 1 ).floor_cache;
-                std::ranges::transform( vert_blocked, fc, vert_blocked.begin(),
-                                        []( char a, char b ) -> char { return a | b; } );
-                auto &zc = get_cache( z );
-                std::ranges::transform( zc.seen_cache, vert_blocked, zc.seen_cache.begin(),
-                []( float s, char blocked ) -> float {
-                    return blocked ? 0.0f : s;
-                } );
-            }
-
-            // Going up: floor_cache[z] blocks crossing from z-1 to z.
-            std::ranges::fill( vert_blocked, 0 );
-            for( int z = origin.z() + 1; z <= OVERMAP_HEIGHT; ++z ) {
-                const auto &fc = get_cache( z ).floor_cache;
-                std::ranges::transform( vert_blocked, fc, vert_blocked.begin(),
-                                        []( char a, char b ) -> char { return a | b; } );
-                auto &zc = get_cache( z );
-                std::ranges::transform( zc.seen_cache, vert_blocked, zc.seen_cache.begin(),
-                []( float s, char blocked ) -> float {
-                    return blocked ? 0.0f : s;
-                } );
-            }
-        }
-    } else {
+    {
         ZoneScopedN( "build_seen_cache_3d" );
         // Cache per-z-level data pointers.
         array_of_grids_of<const float> transparency_caches;
@@ -1346,8 +2345,9 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
         }
 
         auto &origin_cache = get_cache( origin.z() );
+        static constexpr bool use_3d_shadowcasting = true;
 
-        if( fov_3d_occlusion ) {
+        if( use_3d_shadowcasting ) {
             // Accurate path: cast_zlight computes proper 3D shadows across all octants.
             // It fully populates origin.z() (delta.z == 0 octants) as well as off-levels.
             // Always set the origin tile so blind-spot fill can use it as origin_vis source
@@ -1366,12 +2366,12 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
 
         // Fill off-level tiles from origin.z's seen_cache.
         //
-        // fov_3d_occlusion=true:  cast_zlight filled non-blind-spot tiles; this pass
+        // 3D shadowcasting path: cast_zlight filled non-blind-spot tiles; this pass
         //   fills steep-angle blind spots (sc==0) from the projected origin.z() result,
         //   and validates cast_zlight-lit tiles via a per-level 2D cast + DDA check.
         //   The per-level cast uses the target z-level's own transparency, so walls
         //   on that level correctly trigger the DDA and produce proper 3D shadows.
-        // fov_3d_occlusion=false: cast_zlight skipped; all off-level tiles filled by
+        // Projection-only path: cast_zlight skipped; all off-level tiles filled by
         //   projecting origin.z() visibility through the cumulative floor filter.
         //
         // vert_blocked[tile_idx] accumulates floor_cache OR across levels between
@@ -1382,7 +2382,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
 
             // 3D DDA: walk the line from origin to (tx, ty, tz), returning false if any
             // intermediate tile is solid or a floor crosses the ray.
-            // Only invoked for the fov_3d_occlusion=true path.
+            // Only invoked for the 3D shadowcasting path.
             const auto is_3d_clear = [&]( int tx, int ty, int tz ) -> bool {
                 const float dx    = static_cast<float>( tx - origin.x() );
                 const float dy    = static_cast<float>( ty - origin.y() );
@@ -1403,7 +2403,6 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                 //               so check floor_cache at z=(origin.z-k).
                 //   Going up:   crossing k separates z=(origin.z+k) from z=(origin.z+k+1),
                 //               so check floor_cache at z=(origin.z+k+1).
-                // The origin tile is exempted: the player stands on top of that floor.
                 {
                     const int n_cross = static_cast<int>( std::abs( dz ) );
                     for( int k = 0; k < n_cross; ++k )
@@ -1413,13 +2412,9 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                                                                static_cast<float>( origin.x() ) + t * dx ) );
                         const int   fy = static_cast<int>( std::lround(
                                                                static_cast<float>( origin.y() ) + t * dy ) );
-                        if( k == 0 && dz < 0.0f &&
-                            fx == origin.x() && fy == origin.y() ) {
-                            continue; // player's own floor; they stand on top of it
-                        }
                         const int floor_z = ( dz < 0.0f )
-                                            ? static_cast<int>( origin.z() ) - k
-                                            : static_cast<int>( origin.z() ) + k + 1;
+                        ? static_cast<int>( origin.z() ) - k
+                        : static_cast<int>( origin.z() ) + k + 1;
                         if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
                             continue;
                         }
@@ -1489,13 +2484,9 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                                                            static_cast<float>( origin.x() ) + t * dx ) );
                     const int   fy = static_cast<int>( std::lround(
                                                            static_cast<float>( origin.y() ) + t * dy ) );
-                    if( k == 0 && dz < 0.0f &&
-                        fx == origin.x() && fy == origin.y() ) {
-                        continue; // player's own floor
-                    }
                     const int floor_z = ( dz < 0.0f )
-                                        ? static_cast<int>( origin.z() ) - k
-                                        : static_cast<int>( origin.z() ) + k + 1;
+                    ? static_cast<int>( origin.z() ) - k
+                    : static_cast<int>( origin.z() ) + k + 1;
                     if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
                         continue;
                     }
@@ -1515,7 +2506,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
             // Accurate path only: 2D cast at the target level used to gate blind-spot fill.
             // Prevents the pyramid artifact by excluding tiles unreachable at their own level.
             std::vector<float> temp_seen;
-            if( fov_3d_occlusion ) {
+            if( use_3d_shadowcasting ) {
                 temp_seen.resize( cache_sz );
             }
 
@@ -1528,7 +2519,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
 
                 // Accurate path: 2D cast at the target level gates both the DDA check
                 // and the blind-spot fill; only tiles reachable at their own level are kept.
-                if( fov_3d_occlusion ) {
+                if( use_3d_shadowcasting ) {
                     std::fill( temp_seen.begin(), temp_seen.end(), light_transparency_solid );
                     temp_seen[zc.idx( origin.x(), origin.y() )] = VISIBILITY_FULL;
                     castLightAll( temp_seen.data(), zc.transparency_cache.data(),
@@ -1542,7 +2533,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                         float    &sc       = zc.seen_cache[tile_idx];
                         if( sc > 0.0f ) {
                             // cast_zlight lit this tile; validate to correct octant leaks.
-                            if( !fov_3d_occlusion ) {
+                            if( !use_3d_shadowcasting ) {
                                 continue; // fast path: trust cast_zlight
                             }
                             if( temp_seen[tile_idx] > 0.0f ) {
@@ -1572,7 +2563,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                         // DDA distance formula changes, this threshold must be updated to match.
                         const float origin_vis = origin_seen[tile_idx];
                         if( !vert_blocked[tile_idx] && origin_vis > 0.0f ) {
-                            if( fov_3d_occlusion ) {
+                            if( use_3d_shadowcasting ) {
                                 const float fdz = static_cast<float>( std::abs( z - origin.z() ) );
                                 const float fdh = static_cast<float>(
                                                       std::max( std::abs( x - origin.x() ),
@@ -1597,7 +2588,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                 // now-unused temp_seen buffer) prevents cascade: a tile filled in
                 // this pass cannot itself become a neighbour source for other tiles
                 // in the same pass.
-                if( fov_3d_occlusion ) {
+                if( use_3d_shadowcasting ) {
                     std::ranges::copy( zc.seen_cache, temp_seen.begin() );
                     for( int x = 1; x < zc.cache_x - 1; ++x ) {
                         for( int y = 1; y < zc.cache_y - 1; ++y ) {
@@ -1624,7 +2615,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                 // Fast path: one-ring neighbor propagation for tiles adjacent to a
                 // directly-projected tile. Handles wall faces visible laterally through
                 // a gap when the wall itself sits under a solid floor above it.
-                if( !fov_3d_occlusion ) {
+                if( !use_3d_shadowcasting ) {
                     static constexpr std::array<std::pair<int, int>, 4> k_dirs = {{
                             { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
                         }
@@ -1659,8 +2650,8 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                 }
             };
 
-            const int z_lo = std::max( -OVERMAP_DEPTH, origin.z() - fov_3d_z_range );
-            const int z_hi = std::min( OVERMAP_HEIGHT, origin.z() + fov_3d_z_range );
+            constexpr int z_lo = -OVERMAP_DEPTH;
+            constexpr int z_hi = OVERMAP_HEIGHT;
 
             // Going down: crossing from z=k to z=k-1 is blocked by floor_cache[k].
             // Accumulate one level at a time so each step is a single OR-sweep.
@@ -1739,6 +2730,64 @@ void map::apply_vehicle_optics( const tripoint_bub_ms &origin, const int target_
         }
     }
 
+    auto apply_camera_visibility = [&]( const tripoint_bub_ms & camera_pos,
+    const int camera_range ) {
+        if( camera_range <= 0 || !target_cache.inbounds( camera_pos.xy() ) ) {
+            return;
+        }
+
+        const auto camera_idx = target_cache.idx( camera_pos.x(), camera_pos.y() );
+        target_cache.camera_cache[camera_idx] = VISIBILITY_FULL;
+
+        const auto min_x = std::max( 0, camera_pos.x() - camera_range );
+        const auto max_x = std::min( target_cache.cache_x - 1, camera_pos.x() + camera_range );
+        const auto min_y = std::max( 0, camera_pos.y() - camera_range );
+        const auto max_y = std::min( target_cache.cache_y - 1, camera_pos.y() + camera_range );
+
+        for( const auto x : std::views::iota( min_x, max_x + 1 ) ) {
+            for( const auto y : std::views::iota( min_y, max_y + 1 ) ) {
+                const point_bub_ms target( x, y );
+                const auto distance = rl_dist( camera_pos.xy(), target );
+                if( distance == 0 || distance > camera_range ) {
+                    continue;
+                }
+
+                auto cumulative_transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
+                auto transparent_steps = 0;
+                auto blocked = false;
+
+                for( const point_bub_ms &step : line_to( camera_pos.xy(), target ) ) {
+                    if( !target_cache.inbounds( step ) ) {
+                        blocked = true;
+                        break;
+                    }
+
+                    const auto step_transparency =
+                        target_cache.transparency_cache[target_cache.idx( step.x(), step.y() )];
+                    if( step_transparency <= LIGHT_TRANSPARENCY_SOLID ) {
+                        blocked = step != target;
+                        break;
+                    }
+
+                    ++transparent_steps;
+                    cumulative_transparency = accumulate_transparency( cumulative_transparency,
+                                              step_transparency, transparent_steps );
+                }
+
+                if( blocked ) {
+                    continue;
+                }
+
+                const auto visibility = sight_calc( VISIBILITY_FULL, cumulative_transparency,
+                                                    distance );
+                auto &target_visibility = target_cache.camera_cache[target_cache.idx( x, y )];
+                target_visibility = std::max( target_visibility, visibility );
+            }
+        }
+
+        target_cache.camera_cache[camera_idx] = VISIBILITY_FULL;
+    };
+
     for( const int mirror : mirrors ) {
         const bool is_camera = veh->part_info( mirror ).has_flag( "CAMERA" );
         if( is_camera && cam_control < 0 ) {
@@ -1747,17 +2796,16 @@ void map::apply_vehicle_optics( const tripoint_bub_ms &origin, const int target_
 
         const tripoint_bub_ms mirror_pos = veh->bub_part_location( mirror );
 
+        if( is_camera ) {
+            const auto raw_range = veh->part_info( mirror ).bonus *
+                                   veh->part( mirror ).hp() / veh->part_info( mirror ).durability;
+            apply_camera_visibility( mirror_pos, std::clamp( raw_range, 0, g_max_view_distance ) );
+            continue;
+        }
+
         // Determine how far the light has already traveled so mirrors
         // don't cheat the light distance falloff.
-        int offset_distance;
-        if( !is_camera ) {
-            offset_distance = rl_dist( origin, mirror_pos );
-        } else {
-            offset_distance = g_max_view_distance - veh->part_info( mirror ).bonus *
-                              veh->part( mirror ).hp() / veh->part_info( mirror ).durability;
-            target_cache.camera_cache[target_cache.idx( mirror_pos.x(),
-                                                        mirror_pos.y() )] = LIGHT_TRANSPARENCY_OPEN_AIR;
-        }
+        const auto offset_distance = rl_dist( origin, mirror_pos );
 
         // TODO: Factor in the mirror facing and only cast in the
         // directions the player's line of sight reflects to.
@@ -1793,7 +2841,7 @@ float fastexp( float x )
 static float light_calc( const float &numerator, const float &transparency,
                          const int &distance )
 {
-    // Light needs inverse square falloff in addition to attenuation.
+    // Light uses exponential attenuation divided by linear distance.
     return numerator  / ( fastexp( transparency * distance ) * distance );
 }
 
@@ -1809,14 +2857,63 @@ static float light_from_lookup( const float &numerator, const float &transparenc
 }
 
 // Light model for apply_light_source / apply_directional_light.
-// Uses fastexp + inverse-square falloff; lookup_calc provides the matching fast
+// Uses fastexp plus linear distance falloff; lookup_calc provides the matching fast
 // path for the common open-air / weather transparency cases.
 static const light_model k_light_model = {
-    light_calc, light_check, nullptr, update_light_quadrants, light_from_lookup,
+    light_calc, light_check, update_light, nullptr, light_from_lookup,
     accumulate_transparency
 };
 
-void map::apply_light_source( const tripoint_bub_ms &p, float luminance )
+namespace
+{
+
+auto apply_cpu_colored_light_3d( map &here, const cpu_colored_light_opt &opt ) -> void
+{
+    if( !colored_lighting || opt.color_rgb == 0u ||
+        opt.luminance <= LIGHT_AMBIENT_LOW || !here.inbounds( opt.source ) ) {
+        return;
+    }
+    const auto adjacent_z_intensity =
+        opt.luminance /
+        ( std::exp( LIGHT_TRANSPARENCY_OPEN_AIR * Z_LEVEL_SCALE ) * Z_LEVEL_SCALE );
+    if( adjacent_z_intensity <= LIGHT_AMBIENT_LOW ) {
+        return;
+    }
+
+    auto transparency_caches = array_of_grids_of<const float> {};
+    auto floor_caches = array_of_grids_of<const char> {};
+    auto blocked_caches = array_of_grids_of<const diagonal_blocks> {};
+    auto output_caches = array_of_grids_of<float> {};
+    for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+        auto &cache = here.access_cache( z );
+        const auto idx = z + OVERMAP_DEPTH;
+        transparency_caches[idx] = { cache.transparency_cache.data(), cache.cache_x, cache.cache_y };
+        floor_caches[idx] = { cache.floor_cache.data(), cache.cache_x, cache.cache_y };
+        blocked_caches[idx] = { cache.vehicle_obscured_cache.data(), cache.cache_x, cache.cache_y };
+        output_caches[idx] = { nullptr, cache.cache_x, cache.cache_y };
+    }
+
+    auto context = cpu_colored_light_3d_context{
+        .here = &here,
+        .source = opt.source,
+        .luminance = opt.luminance,
+        .skip_zlev = opt.skip_zlev,
+        .dir_x = opt.dir_x,
+        .dir_y = opt.dir_y,
+        .cone_cos = opt.cone_cos,
+        .color_rgb = opt.color_rgb,
+        .directional = opt.directional,
+    };
+    cast_zlight( output_caches, transparency_caches, floor_caches, blocked_caches, opt.source, 0,
+    opt.luminance, k_light_model, {
+        .context = &context,
+        .update = update_cpu_colored_light_cache_3d,
+    } );
+}
+
+} // namespace
+
+void map::apply_light_source( const tripoint_bub_ms &p, float luminance, uint32_t color_rgb )
 {
     auto &cache = get_cache( p.z() );
     auto *lm_data        = cache.lm.data();
@@ -1831,8 +2928,11 @@ void map::apply_light_source( const tripoint_bub_ms &p, float luminance )
 
     if( inbounds( p ) ) {
         const float min_light = std::max( static_cast<float>( lit_level::LOW ), luminance );
-        lm_data[p2.x() * sy + p2.y()] = elementwise_max( lm_data[p2.x() * sy + p2.y()], min_light );
+        lm_data[p2.x() * sy + p2.y()] = std::max( lm_data[p2.x() * sy + p2.y()], min_light );
         sm_data[p2.x() * sy + p2.y()] = std::max( sm_data[p2.x() * sy + p2.y()], luminance );
+        if( colored_lighting && color_rgb != 0u ) {
+            write_colored_light_cache( cache, cache.idx( p2.x(), p2.y() ), luminance, color_rgb );
+        }
     }
     if( luminance <= lit_level::LOW ) {
         return;
@@ -1878,16 +2978,35 @@ void map::apply_light_source( const tripoint_bub_ms &p, float luminance )
         mask |= OCTANT_WEST;
     }
     if( mask != 0 ) {
-        castLightOctants_q( lm_data, trans_data, blocked_data, sx, sy, p2, 0, luminance,
-                            k_light_model, mask, &weather_lookup_ );
+        auto colored_context = cpu_colored_light_cache_context {};
+        castLightOctants( lm_data, trans_data, blocked_data, sx, sy, p2, 0, luminance,
+                          k_light_model, mask, &weather_lookup_,
+                          make_colored_light_callback( cache, color_rgb, colored_context ) );
+    }
+    if( color_rgb != 0u ) {
+        apply_cpu_colored_light_3d( *this, {
+            .source = p,
+            .luminance = luminance,
+            .color_rgb = color_rgb,
+            .skip_zlev = p.z(),
+        } );
     }
 }
 
 void map::apply_directional_light( const tripoint_bub_ms &p, int direction, float luminance )
 {
-    const auto p2 = p.xy();
+    apply_directional_light( {
+        .p = p,
+        .direction = direction,
+        .luminance = luminance,
+    } );
+}
 
-    auto &cache = get_cache( p.z() );
+auto map::apply_directional_light( const apply_directional_light_options &opt ) -> void
+{
+    const auto p2 = opt.p.xy();
+
+    auto &cache = get_cache( opt.p.z() );
     auto *lm_data      = cache.lm.data();
     auto *trans_data   = cache.transparency_cache.data();
     auto *blocked_data = cache.vehicle_obscured_cache.data();
@@ -1898,46 +3017,64 @@ void map::apply_directional_light( const tripoint_bub_ms &p, int direction, floa
     // 270=south-facing (north), 180=west-facing (east).  Each maps to the two octants
     // covering the relevant half-space in k_octant_xforms.
     auto mask = uint8_t{};
-    if( direction == 90 ) {
+    if( opt.direction == 90 ) {
         mask = OCTANT_NORTH;
-    } else if( direction == 0 ) {
+    } else if( opt.direction == 0 ) {
         mask = OCTANT_EAST;
-    } else if( direction == 270 ) {
+    } else if( opt.direction == 270 ) {
         mask = OCTANT_SOUTH;
-    } else if( direction == 180 ) {
+    } else if( opt.direction == 180 ) {
         mask = OCTANT_WEST;
     }
     if( mask != 0 ) {
-        castLightOctants_q( lm_data, trans_data, blocked_data, sx, sy, p2, 0, luminance,
-                            k_light_model, mask, &weather_lookup_ );
+        auto colored_context = cpu_colored_light_cache_context {};
+        castLightOctants( lm_data, trans_data, blocked_data, sx, sy, p2, 0, opt.luminance,
+                          k_light_model, mask, &weather_lookup_,
+                          make_colored_light_callback( cache, opt.color_rgb, colored_context ) );
     }
 }
 
 void map::apply_light_arc( const tripoint_bub_ms &p, units::angle angle, float luminance,
                            units::angle wideangle )
 {
-    if( luminance <= LIGHT_SOURCE_LOCAL ) {
+    apply_light_arc( {
+        .p = p,
+        .angle = angle,
+        .luminance = luminance,
+        .wideangle = wideangle,
+    } );
+}
+
+auto map::apply_light_arc( const apply_light_arc_options &opt ) -> void
+{
+    if( opt.luminance <= LIGHT_SOURCE_LOCAL ) {
         return;
     }
 
-    const auto &arc_cache = get_cache( p.z() );
+    const auto &arc_cache = get_cache( opt.p.z() );
     auto lit = std::vector<bool>( static_cast<size_t>( arc_cache.cache_x ) * arc_cache.cache_y,
                                   false );
 
-    apply_light_source( p, LIGHT_SOURCE_LOCAL );
+    apply_light_source( opt.p, LIGHT_SOURCE_LOCAL );
 
     // Normalize (should work with negative values too)
-    const units::angle wangle = wideangle / 2.0;
+    const units::angle wangle = opt.wideangle / 2.0;
 
-    units::angle nangle = fmod( angle, 360_degrees );
+    units::angle nangle = fmod( opt.angle, 360_degrees );
 
     tripoint_bub_ms end;
-    int range = LIGHT_RANGE( luminance );
-    calc_ray_end( nangle, range, p, end );
-    apply_light_ray( lit, p, end, luminance );
+    auto range = LIGHT_RANGE( opt.luminance );
+    calc_ray_end( nangle, range, opt.p, end );
+    apply_light_ray( {
+        .lit = lit,
+        .s = opt.p,
+        .e = end,
+        .luminance = opt.luminance,
+        .color_rgb = opt.color_rgb,
+    } );
 
     tripoint_bub_ms test;
-    calc_ray_end( wangle + nangle, range, p, test );
+    calc_ray_end( wangle + nangle, range, opt.p, test );
 
     const float wdist = hypot( end.x() - test.x(), end.y() - test.y() );
     if( wdist <= 0.5 ) {
@@ -1950,61 +3087,97 @@ void map::apply_light_arc( const tripoint_bub_ms &p, units::angle angle, float l
     // NOLINTNEXTLINE(clang-analyzer-security.FloatLoopCounter)
     for( units::angle ao = wstep; ao <= wangle; ao += wstep ) {
         if( trigdist ) {
-            double fdist = ( ao * M_PI_2 ) / wangle;
+            auto fdist = ( ao * M_PI_2 ) / wangle;
             end.x() = static_cast<int>(
-                          p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle + ao ) );
+                          opt.p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle + ao ) );
             end.y() = static_cast<int>(
-                          p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle + ao ) );
-            apply_light_ray( lit, p, end, luminance );
+                          opt.p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle + ao ) );
+            apply_light_ray( {
+                .lit = lit,
+                .s = opt.p,
+                .e = end,
+                .luminance = opt.luminance,
+                .color_rgb = opt.color_rgb,
+            } );
 
             end.x() = static_cast<int>(
-                          p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle - ao ) );
+                          opt.p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle - ao ) );
             end.y() = static_cast<int>(
-                          p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle - ao ) );
-            apply_light_ray( lit, p, end, luminance );
+                          opt.p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle - ao ) );
+            apply_light_ray( {
+                .lit = lit,
+                .s = opt.p,
+                .e = end,
+                .luminance = opt.luminance,
+                .color_rgb = opt.color_rgb,
+            } );
         } else {
-            calc_ray_end( nangle + ao, range, p, end );
-            apply_light_ray( lit, p, end, luminance );
-            calc_ray_end( nangle - ao, range, p, end );
-            apply_light_ray( lit, p, end, luminance );
+            calc_ray_end( nangle + ao, range, opt.p, end );
+            apply_light_ray( {
+                .lit = lit,
+                .s = opt.p,
+                .e = end,
+                .luminance = opt.luminance,
+                .color_rgb = opt.color_rgb,
+            } );
+            calc_ray_end( nangle - ao, range, opt.p, end );
+            apply_light_ray( {
+                .lit = lit,
+                .s = opt.p,
+                .e = end,
+                .luminance = opt.luminance,
+                .color_rgb = opt.color_rgb,
+            } );
         }
     }
-}
-
-// Local helper for apply_light_ray — maps a direction sign pair to the quadrant
-// that is the source of that direction.  Assumes x != 0 && y != 0.
-// NOLINTNEXTLINE(cata-xy)
-static constexpr quadrant quadrant_from_x_y( int x, int y )
-{
-    return ( x > 0 ) ?
-           ( ( y > 0 ) ? quadrant::NW : quadrant::SW ) :
-           ( ( y > 0 ) ? quadrant::NE : quadrant::SE );
+    if( opt.color_rgb != 0u ) {
+        apply_cpu_colored_light_3d( *this, {
+            .source = opt.p,
+            .luminance = opt.luminance,
+            .color_rgb = opt.color_rgb,
+            .dir_x = static_cast<float>( units::cos( opt.angle ) ),
+            .dir_y = static_cast<float>( units::sin( opt.angle ) ),
+            .cone_cos = static_cast<float>( units::cos( opt.wideangle / 2.0 ) ),
+            .directional = true,
+            .skip_zlev = opt.p.z(),
+        } );
+    }
 }
 
 void map::apply_light_ray( std::vector<bool> &lit,
                            const tripoint_bub_ms &s, const tripoint_bub_ms &e, float luminance )
 {
-    point_bub_ms a( std::abs( e.x() - s.x() ) * 2, std::abs( e.y() - s.y() ) * 2 );
-    point_bub_ms d( ( s.x() < e.x() ) ? 1 : -1, ( s.y() < e.y() ) ? 1 : -1 );
-    auto p = s.xy();
+    apply_light_ray( {
+        .lit = lit,
+        .s = s,
+        .e = e,
+        .luminance = luminance,
+    } );
+}
 
-    quadrant quad = quadrant_from_x_y( d.x(), d.y() );
+auto map::apply_light_ray( const apply_light_ray_options &opt ) -> void
+{
+    auto a = point_bub_ms( std::abs( opt.e.x() - opt.s.x() ) * 2,
+                           std::abs( opt.e.y() - opt.s.y() ) * 2 );
+    auto d = point_bub_ms( ( opt.s.x() < opt.e.x() ) ? 1 : -1,
+                           ( opt.s.y() < opt.e.y() ) ? 1 : -1 );
+    auto p = opt.s.xy();
 
     // TODO: Invert that z comparison when it's sane
-    if( s.z() != e.z() || ( s.x() == e.x() && s.y() == e.y() ) ) {
+    if( opt.s.z() != opt.e.z() || ( opt.s.x() == opt.e.x() && opt.s.y() == opt.e.y() ) ) {
         return;
     }
 
-    auto &cache_ref = get_cache( s.z() );
+    auto &cache_ref = get_cache( opt.s.z() );
     auto *lm_data          = cache_ref.lm.data();
     auto *trans_data       = cache_ref.transparency_cache.data();
     const int sx = cache_ref.cache_x;
     const int sy = cache_ref.cache_y;
 
-    float distance = 1.0;
-    float transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
-    const float scaling_factor = static_cast<float>( rl_dist( s, e ) ) /
-                                 static_cast<float>( square_dist( s, e ) );
+    auto distance = 1.0f;
+    auto transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
+    const float scaling_factor = static_cast<float>( rl_dist( opt.s, opt.e ) ) /
+                                 static_cast<float>( square_dist( opt.s, opt.e ) );
     // TODO: [lightmap] Pull out the common code here rather than duplication
     if( a.x() > a.y() ) {
         int t = a.y() - ( a.x() / 2 );
@@ -2020,14 +3193,16 @@ void map::apply_light_ray( std::vector<bool> &lit,
             // TODO: clamp coordinates to map bounds before this method is called.
             if( p.x() >= 0 && p.y() >= 0 && p.x() < sx && p.y() < sy ) {
                 const int idx = p.x() * sy + p.y();
-                float current_transparency = trans_data[idx];
-                bool is_opaque = ( current_transparency == LIGHT_TRANSPARENCY_SOLID );
-                if( !lit[idx] ) {
+                auto current_transparency = trans_data[idx];
+                auto is_opaque = current_transparency == LIGHT_TRANSPARENCY_SOLID;
+                if( !opt.lit[idx] ) {
                     // Multiple rays will pass through the same squares so we need to record that
-                    lit[idx] = true;
-                    float lm_val = luminance / ( fastexp( transparency * distance ) * distance );
-                    quadrant q = is_opaque ? quad : quadrant::default_;
-                    lm_data[idx][q] = std::max( lm_data[idx][q], lm_val );
+                    opt.lit[idx] = true;
+                    auto lm_val = opt.luminance / ( fastexp( transparency * distance ) * distance );
+                    lm_data[idx] = std::max( lm_data[idx], lm_val );
+                    if( colored_lighting && opt.color_rgb != 0u ) {
+                        write_colored_light_cache( cache_ref, idx, lm_val, opt.color_rgb );
+                    }
                 }
                 if( is_opaque ) {
                     break;
@@ -2039,7 +3214,7 @@ void map::apply_light_ray( std::vector<bool> &lit,
             }
 
             distance += scaling_factor;
-        } while( !( p.x() == e.x() && p.y() == e.y() ) );
+        } while( !( p.x() == opt.e.x() && p.y() == opt.e.y() ) );
     } else {
         int t = a.x() - ( a.y() / 2 );
         do {
@@ -2053,14 +3228,16 @@ void map::apply_light_ray( std::vector<bool> &lit,
 
             if( p.x() >= 0 && p.y() >= 0 && p.x() < sx && p.y() < sy ) {
                 const int idx = p.x() * sy + p.y();
-                float current_transparency = trans_data[idx];
-                bool is_opaque = ( current_transparency == LIGHT_TRANSPARENCY_SOLID );
-                if( !lit[idx] ) {
+                auto current_transparency = trans_data[idx];
+                auto is_opaque = current_transparency == LIGHT_TRANSPARENCY_SOLID;
+                if( !opt.lit[idx] ) {
                     // Multiple rays will pass through the same squares so we need to record that
-                    lit[idx] = true;
-                    float lm_val = luminance / ( fastexp( transparency * distance ) * distance );
-                    quadrant q = is_opaque ? quad : quadrant::default_;
-                    lm_data[idx][q] = std::max( lm_data[idx][q], lm_val );
+                    opt.lit[idx] = true;
+                    auto lm_val = opt.luminance / ( fastexp( transparency * distance ) * distance );
+                    lm_data[idx] = std::max( lm_data[idx], lm_val );
+                    if( colored_lighting && opt.color_rgb != 0u ) {
+                        write_colored_light_cache( cache_ref, idx, lm_val, opt.color_rgb );
+                    }
                 }
                 if( is_opaque ) {
                     break;
@@ -2072,6 +3249,6 @@ void map::apply_light_ray( std::vector<bool> &lit,
             }
 
             distance += scaling_factor;
-        } while( !( p.x() == e.x() && p.y() == e.y() ) );
+        } while( !( p.x() == opt.e.x() && p.y() == opt.e.y() ) );
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <shared_mutex>
 #include <sstream>
 #include <iomanip>
 #include <list>
@@ -67,6 +68,7 @@ struct cached_converter {
     private:
         Inner _conv;
 
+        static inline std::shared_mutex listlock;
         static inline std::list<std::pair<key_type, value_type>> _list;
         static inline std::unordered_map<key_type, typename decltype( _list )::iterator> _map;
 
@@ -121,6 +123,7 @@ struct cached_converter {
         }
 
         static void cache_put( const key_type &key, const value_type &value )  {
+            std::unique_lock lock( listlock );
             const auto it = _map.find( key );
             _list.push_front( {key, value} );
             if( it != _map.end() ) {
@@ -137,6 +140,7 @@ struct cached_converter {
         }
 
         static const value_type &cache_get( const key_type &key ) {
+            std::shared_lock lock( listlock );
             const auto it = _map.find( key );
             if( it == _map.end() ) {
                 throw std::range_error( "Invalid key" );
@@ -146,15 +150,18 @@ struct cached_converter {
         }
 
         static bool cache_contains( const key_type &key ) {
+            std::shared_lock lock( listlock );
             return _map.contains( key );
         }
 
         static void cache_clear() {
+            std::unique_lock lock( listlock );
             _list.clear();
             _map.clear();
         }
 
         static  size_t cache_size() {
+            std::shared_lock lock( listlock );
             return _map.size();
         }
 

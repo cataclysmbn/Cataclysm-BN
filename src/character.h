@@ -584,6 +584,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Processes effects which may prevent the Character from moving (bear traps, crushed, etc.).
          *  Returns false if movement is stopped. */
         bool move_effects( bool attacking ) override;
+        auto move_effects( bool attacking, bool skip_pit_escape ) -> bool;
 
         void wait_effects();
 
@@ -599,6 +600,7 @@ class Character : public Creature, public location_visitable<Character>
          * Handles end-of-turn processing.
          */
         void process_turn() override;
+        auto action_move_factor() const -> int override;
         /** Processes human-specific effects of effects before calling Creature::process_effects(). */
         void process_effects_internal() override;
         /** Handles the still hard-coded effects. */
@@ -628,6 +630,10 @@ class Character : public Creature, public location_visitable<Character>
          * to simulate glare, etc, night vision only works if you are in the dark.
          */
         float get_vision_threshold( float light_level ) const;
+        /**
+         * Returns the vision range of night vision
+         */
+        float night_vision_sight_range() const;
         /**
          * Flag encumbrance for updating.
         */
@@ -674,6 +680,18 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns a random valid technique */
         matec_id pick_technique( Creature &t, const item &weap,
                                  bool crit, bool dodge_counter, bool block_counter );
+        struct technique_query_options {
+            Creature &target;
+            const item &weapon;
+            bool critical_hit = false;
+            bool dodge_counter = false;
+            bool block_counter = false;
+            bool use_weighting = true;
+            bool allow_counter_techniques = false;
+            bool allow_defensive_techniques = false;
+        };
+        /** Returns all valid techniques for the current combat context */
+        std::vector<matec_id> get_valid_techniques( const technique_query_options &options );
         void perform_technique( const ma_technique &technique, Creature &t, damage_instance &di,
                                 int &move_cost );
 
@@ -921,7 +939,7 @@ class Character : public Creature, public location_visitable<Character>
         /**
          * Calculate bonus from enchantments for given base value.
          */
-        double bonus_from_enchantments( double base, enchant_vals::mod value, bool round = false ) const;
+        double bonus_from_enchantments( double base, enchantment_value_id value, bool round = false ) const;
 
         /** Returns true if the player has any martial arts buffs attached */
         bool has_mabuff( const mabuff_id &buff_id ) const;
@@ -1571,8 +1589,12 @@ class Character : public Creature, public location_visitable<Character>
         std::vector<overlay_entry> get_overlay_ids() const;
 
         // --------------- Skill Stuff ---------------
+        // These are calling the following with no_enchant = false -> for catalua bindings
         int get_skill_level( const skill_id &ident ) const;
         int get_skill_level( const skill_id &ident, const item &context ) const;
+
+        int get_skill_level( const skill_id &ident, const bool no_enchant ) const;
+        int get_skill_level( const skill_id &ident, const item &context, const bool no_enchant ) const;
 
         const SkillLevelMap &get_all_skills() const;
         SkillLevel &get_skill_level_object( const skill_id &ident );
@@ -1715,7 +1737,7 @@ class Character : public Creature, public location_visitable<Character>
         efftype_id last_emote;
 
         // bio_portal_tap: persistent link to a powered portal for passive bionic charging.
-        std::string bio_portal_tap_dim_id;
+        dimension_id bio_portal_tap_dim_id;
         tripoint_abs_ms bio_portal_tap_pos;
         bool bio_portal_tap_linked = false;
 
@@ -1892,6 +1914,11 @@ class Character : public Creature, public location_visitable<Character>
         int get_armor_type( damage_type dt, bodypart_id bp ) const override;
         std::map<bodypart_id, int> get_all_armor_type( damage_type dt,
                 const std::map<bodypart_id, std::vector<const item *>> &clothing_map ) const;
+        /**
+        * Returns the total normal hearing protection of a characters worn items, in dB spl.
+        * If bool advanced is true, gets the advanced hearing protection.
+        */
+        int get_char_hearing_protection( bool advanced = false ) const;
 
         int get_stim() const;
         void set_stim( int new_stim );
@@ -2046,7 +2073,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Correction factor of the body temperature due to traits and mutations for player lying on the floor **/
         int bodytemp_modifier_traits_floor() const;
         /** Value of the body temperature corrected by climate control **/
-        int temp_corrected_by_climate_control( int temperature ) const;
+        int temp_corrected_by_climate_control( int temperature );
 
         bool in_sleep_state() const override;
 

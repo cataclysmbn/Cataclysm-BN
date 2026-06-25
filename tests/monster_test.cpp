@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -10,12 +11,15 @@
 #include <memory>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "coordinates.h"
+#include "field_type.h"
 #include "game.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
+#include "monster_action.h"
 #include "options_helpers.h"
 #include "options.h"
 #include "player.h"
@@ -29,6 +33,76 @@
 #include "vpart_position.h"
 
 using move_statistics = statistics<int>;
+
+TEST_CASE( "hallucination_monsters_do_not_open_real_doors", "[monster][hallucination]" )
+{
+    clear_all_state();
+    move_player_out_of_the_way();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_floor" ) );
+
+    const auto monster_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto door_pos = tripoint_bub_ms( 61, 60, 0 );
+    REQUIRE( here.ter_set( door_pos, ter_id( "t_door_c" ) ) );
+
+    auto &hallucination = spawn_test_monster( "mon_zombie_scientist", monster_pos );
+    hallucination.hallucination = true;
+    REQUIRE( hallucination.is_hallucination() );
+    hallucination.execute_action( { .kind = monster_action_kind::open_door, .dest = door_pos } );
+
+    CHECK( here.ter( door_pos ) == ter_id( "t_door_c" ) );
+}
+
+TEST_CASE( "hallucination_electric_field_does_not_ignite_items", "[monster][hallucination]" )
+{
+    clear_all_state();
+    move_player_out_of_the_way();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_pavement" ) );
+
+    const auto monster_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto fuel_pos = tripoint_bub_ms( 61, 60, 0 );
+    here.add_item_or_charges( fuel_pos, item::spawn( "gasoline" ) );
+
+    auto &hallucination = spawn_test_monster( "mon_zombie_nullfield", monster_pos );
+    hallucination.hallucination = true;
+    REQUIRE( hallucination.is_hallucination() );
+    hallucination.process_turn();
+
+    CHECK( here.get_field( fuel_pos, fd_fire ) == nullptr );
+}
+
+TEST_CASE( "MONSTER_SPEED scales monster move credit", "[monster][speed]" )
+{
+    clear_all_state();
+
+    const auto global_speed_percent = 50;
+    const auto monster_speed_percent = 66;
+    const auto global_speed_option = override_option( "TIME_ACTION_SCALE",
+                                     std::to_string( global_speed_percent ) );
+    const auto monster_speed_option = override_option( "MONSTER_SPEED",
+                                      std::to_string( monster_speed_percent ) );
+
+    auto &test_monster = spawn_test_monster( "mon_zombie", tripoint_bub_ms::zero() );
+    const auto base_speed = test_monster.get_speed_base();
+    const auto monster_tick_factor = action_time_scale::monster_tick_action_factor();
+    REQUIRE( base_speed == test_monster.type->speed );
+    CHECK( action_time_scale::monster_action_factor() == global_speed_percent *
+           monster_speed_percent );
+    CHECK( test_monster.get_moves() == base_speed * monster_tick_factor /
+           action_time_scale::factor_denominator );
+
+    const auto turn_count = 10;
+    for( const auto turn : std::views::iota( 0, turn_count ) ) {
+        static_cast<void>( turn );
+        test_monster.process_turn();
+    }
+
+    CHECK( test_monster.get_moves() == base_speed * monster_tick_factor * ( turn_count + 1 ) /
+           action_time_scale::factor_denominator );
+    CHECK( test_monster.get_speed_base() == base_speed );
+    CHECK( test_monster.type->speed == base_speed );
+}
 
 static int moves_to_destination( const std::string &monster_type,
                                  const tripoint_bub_ms &start, const tripoint_bub_ms &end )
@@ -301,7 +375,7 @@ static void monster_check()
 TEST_CASE( "write_slope_to_speed_map_trig", "[.][!mayfail]" )
 {
     clear_all_state();
-    put_player_underground();
+    move_player_out_of_the_way();
     override_option opt( "CIRCLEDIST", "true" );
     trigdist = true;
     test_moves_to_squares( "mon_zombie_dog", true );
@@ -311,7 +385,7 @@ TEST_CASE( "write_slope_to_speed_map_trig", "[.][!mayfail]" )
 TEST_CASE( "write_slope_to_speed_map_square", "[.][!mayfail]" )
 {
     clear_all_state();
-    put_player_underground();
+    move_player_out_of_the_way();
     override_option opt( "CIRCLEDIST", "false" );
     trigdist = false;
     test_moves_to_squares( "mon_zombie_dog", true );
@@ -323,7 +397,7 @@ TEST_CASE( "write_slope_to_speed_map_square", "[.][!mayfail]" )
 TEST_CASE( "monster_speed_square", "[speed][.][!mayfail]" )
 {
     clear_all_state();
-    put_player_underground();
+    move_player_out_of_the_way();
     override_option opt( "CIRCLEDIST", "false" );
     trigdist = false;
     monster_check();
@@ -333,7 +407,7 @@ TEST_CASE( "monster_speed_square", "[speed][.][!mayfail]" )
 TEST_CASE( "monster_speed_trig", "[speed][.][!mayfail]" )
 {
     clear_all_state();
-    put_player_underground();
+    move_player_out_of_the_way();
     override_option opt( "CIRCLEDIST", "true" );
     trigdist = true;
     monster_check();
@@ -342,7 +416,7 @@ TEST_CASE( "monster_speed_trig", "[speed][.][!mayfail]" )
 TEST_CASE( "monster_move_through_vehicle_holes" )
 {
     clear_all_state();
-    put_player_underground();
+    move_player_out_of_the_way();
     tripoint_bub_ms origin( 60, 60, 0 );
 
     get_map().add_vehicle( vproto_id( "apc" ), origin, -45_degrees, 0, 0 );

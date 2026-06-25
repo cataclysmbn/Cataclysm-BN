@@ -6,23 +6,14 @@
 #include "item.h"
 #include "json.h"
 #include "string_id.h"
+#include "type_id_implement.h"
 
 namespace
 {
 generic_factory<item_category> item_category_factory( "item_category" );
 } // namespace
 
-template<>
-const item_category &string_id<item_category>::obj() const
-{
-    return item_category_factory.obj( *this );
-}
-
-template<>
-bool string_id<item_category>::is_valid() const
-{
-    return item_category_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( item_category, item_category_factory );
 
 void zone_priority_data::deserialize( JsonIn &jsin )
 {
@@ -99,4 +90,9 @@ std::optional<zone_type_id> item_category::priority_zone( const item &it ) const
 int item_category::sort_rank() const
 {
     return sort_rank_;
+}
+
+float item_category::get_spawn_rate() const
+{
+    return spawn_rate;
 }

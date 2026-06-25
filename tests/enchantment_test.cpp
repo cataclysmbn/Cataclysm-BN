@@ -1,7 +1,7 @@
 #include "catch/catch.hpp"
 
 #include "magic.h"
-#include "magic_enchantment.h"
+#include "enchantments/enchantment.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "item.h"
@@ -130,27 +130,22 @@ TEST_CASE( "Enchantments apply effects", "[magic][enchantment][effect]" )
         REQUIRE( !guy.has_effect( effect_debug_clairvoyance ) );
         AND_WHEN( "Character receives relic" ) {
             give_item( guy, s_relic );
-            THEN( "Character still doesn't have effect" ) {
-                CHECK_FALSE( guy.has_effect( effect_debug_clairvoyance ) );
+            THEN( "Character gains the effect." ) {
+                CHECK( guy.has_effect( effect_debug_clairvoyance ) );
             }
             AND_WHEN( "Turn passes" ) {
                 advance_turn( guy );
-                THEN( "Character receives effect" ) {
+                THEN( "Character still has effect" ) {
                     CHECK( guy.has_effect( effect_debug_clairvoyance ) );
                 }
                 AND_WHEN( "Character loses relic" ) {
                     clear_items( guy );
-                    THEN( "Character still has effect" ) {
-                        CHECK( guy.has_effect( effect_debug_clairvoyance ) );
+                    THEN( "Character loses effect" ) {
+                        CHECK_FALSE( guy.has_effect( effect_debug_clairvoyance ) );
                     }
                     AND_WHEN( "Turn passes" ) {
                         advance_turn( guy );
-
-                        // FIXME: effects should go away after 1 turn!
-                        CHECK( guy.has_effect( effect_debug_clairvoyance ) );
-                        advance_turn( guy );
-
-                        THEN( "Character loses effect" ) {
+                        THEN( "Character still doesnt have effect" ) {
                             CHECK_FALSE( guy.has_effect( effect_debug_clairvoyance ) );
                         }
                     }
@@ -720,7 +715,7 @@ TEST_CASE( "Enchantments modify thirst rate", "[magic][enchantment][thirst]" )
         guy.set_mutation( tr );
         REQUIRE( guy.has_trait( tr ) );
 
-        tests_need_rate( guy, s_relic, 1.5f, 1.4f, getter );
+        tests_need_rate( guy, s_relic, 1.5f, 1.35f, getter );
     }
 }
 
@@ -749,7 +744,7 @@ TEST_CASE( "Enchantments modify fatigue rate", "[magic][enchantment][fatigue]" )
         guy.set_mutation( tr );
         REQUIRE( guy.has_trait( tr ) );
 
-        tests_need_rate( guy, s_relic, 0.85f, 0.75f, getter );
+        tests_need_rate( guy, s_relic, 0.85f, 0.765f, getter );
     }
 }
 
@@ -919,7 +914,7 @@ TEST_CASE( "Armor enchantments", "[magic][enchantment][armor]" )
         }
     }
 
-    SECTION( "Armor item with no enchantments + socks of protection" ) {
+    SECTION( "Armor item with no enchantments + socks of protection ( test_relic_char_armor_mod )" ) {
         wear_item( guy, "test_hazmat_suit" );
         // The socks provide character-wide protection regardless of what body parts they cover
         wear_item( guy, "test_relic_char_armor_mod" );
@@ -936,5 +931,58 @@ TEST_CASE( "Armor enchantments", "[magic][enchantment][armor]" )
             // 10 (incoming) + (10 * -0.1 - 3) (enchantment) - 3 (base item stab armor) = 3 (7 absorbed)
             CHECK( calc_damage_absorb( guy, damage_type::DT_STAB, 10 ) == 7 );
         }
+    }
+
+    SECTION( "Armor item with no enchantments + socks of complete protection ( complete armor mod )" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_hazmat_suit" );
+        // The socks provide character-wide protection regardless of what body parts they cover
+        wear_item( guy, "test_relic_char_all_armor_mod" );
+
+        // 10 (incoming) + (10 * -0.5 - 2) (enchantment) - 4 (base item cut armor) = -1 (10 absorbed)
+        // This is the same for all of them hopefully
+        SECTION( "Cut" ) {
+            CHECK( calc_damage_absorb( guy, damage_type::DT_CUT, 10 ) == 10 );
+        }
+        SECTION( "Bash" ) {
+            CHECK( calc_damage_absorb( guy, damage_type::DT_BASH, 10 ) == 10 );
+        }
+        SECTION( "Stab" ) {
+            CHECK( calc_damage_absorb( guy, damage_type::DT_STAB, 10 ) == 10 );
+        }
+    }
+}
+
+TEST_CASE( "Skill enchantments", "[magic][enchantment][skill]" )
+{
+    clear_all_state();
+    Character &guy = get_player_character();
+    clear_character( *guy.as_player(), true );
+
+    REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 0 );
+
+    SECTION( "One barter skill enchantment item" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_relic_socks_of_speaking" );
+
+        REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 2 );
+    }
+
+    SECTION( "Two barter skill enchantment item" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_relic_socks_of_speaking" );
+        wear_item( guy, "test_relic_socks_of_speaking" );
+
+        REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 4 );
+    }
+
+    SECTION( "Two barter skill enchantment item and one global skill item" ) {
+        // This is pretty much parent enchantment testing here
+        wear_item( guy, "test_relic_socks_of_speaking" );
+        wear_item( guy, "test_relic_socks_of_speaking" );
+        wear_item( guy, "test_relic_socks_of_knowledge" );
+
+        REQUIRE( guy.get_skill_level( skill_id( "barter" ) ) == 6 );
+        REQUIRE( guy.get_skill_level( skill_id( "speech" ) ) == 2 );
     }
 }

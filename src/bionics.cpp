@@ -10,9 +10,11 @@
 #include <list>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <type_traits>
 
 #include "action.h"
+#include "action_time_scale.h"
 #include "activity_actor_definitions.h"
 #include "assign.h"
 #include "avatar.h"
@@ -26,11 +28,13 @@
 #include "character_stat.h"
 #include "color.h"
 #include "consistency_report.h"
+#include "coordinates.h"
 #include "cursesdef.h"
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
 #include "effect.h"
+#include "enchantments/enchantment.h"
 #include "enum_conversions.h"
 #include "enums.h"
 #include "event.h"
@@ -68,6 +72,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
+#include "type_id_implement.h"
 #include "requirements.h"
 #include "regen.h"
 #include "rng.h"
@@ -87,6 +92,7 @@
 #include "weather.h"
 #include "weather_gen.h"
 #include "active_tile_data_def.h"
+#include "action_time_scale.h"
 #include "distribution_grid.h"
 
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
@@ -208,23 +214,15 @@ namespace
 {
 generic_factory<bionic_data> bionic_factory( "bionic" );
 std::vector<bionic_id> faulty_bionics;
+
+auto scaled_operation_duration( const int difficulty ) -> time_duration
+{
+    return time_duration::from_turns(
+               action_time_scale::activity_turns_for_progress( to_moves<int>( difficulty * 20_minutes ) ) );
+}
 } //namespace
 
-/** @relates string_id */
-template<>
-const bionic_data &string_id<bionic_data>::obj() const
-{
-    return bionic_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<bionic_data>::is_valid() const
-{
-    return bionic_factory.is_valid( *this );
-}
-
-
+IMPLEMENT_STRING_AND_INT_IDS( bionic_data, bionic_factory );
 
 std::vector<bodypart_id> get_occupied_bodyparts( const bionic_id &bid )
 {
@@ -267,7 +265,7 @@ void bionic_data::finalize_all()
 {
     bionic_factory.finalize();
     for( const bionic_data &bd : bionic_factory.get_all() ) {
-        bd.finalize();
+        const_cast<bionic_data &>( bd ).finalize();
     }
 }
 
@@ -340,6 +338,26 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
     assign( jsobj, "no_uninstall_reason", no_uninstall_reason, strict );
     assign( jsobj, "starting_bionic", starting_bionic, strict );
     assign( jsobj, "points", points, strict );
+    if( jsobj.has_array( "bio_enchantments" ) ) {
+        for( JsonObject jo : jsobj.get_array( "bio_enchantments" ) ) {
+            enchantment ench;
+            ench.load( jo );
+            if( !ench.id.is_empty() ) {
+                ench = ench.id.obj();
+            }
+            bool addable = false;
+            // If it can be combined with another one combine it
+            for( enchantment &oench : bio_enchantments ) {
+                if( oench.add( ench ) ) {
+                    addable = true;
+                    break;
+                }
+            }
+            if( !addable ) {
+                bio_enchantments.push_back( ench );
+            }
+        }
+    }
 
 
     activated = has_flag( flag_BIONIC_TOGGLED ) ||
@@ -347,10 +365,13 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
                 charge_time > 0;
 }
 
-void bionic_data::finalize() const
+void bionic_data::finalize()
 {
     if( has_flag( STATIC( flag_id( "BIONIC_FAULTY" ) ) ) ) {
         faulty_bionics.push_back( id );
+    }
+    for( enchantment &ench : bio_enchantments ) {
+        ench.finalize();
     }
 }
 
@@ -395,6 +416,9 @@ void bionic_data::check() const
         if( !eid.is_valid() ) {
             rep.warn( "uses undefined enchantment \"%s\"", eid.str() );
         }
+    }
+    for( const auto &ench : id->bio_enchantments ) {
+        ench.check();
     }
     for( const auto &it : occupied_bodyparts ) {
         if( !it.first.is_valid() ) {
@@ -658,6 +682,9 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         if( !bio.id->enchantments.empty() ) {
             recalculate_enchantment_cache();
         }
+        if( !bio.id->bio_enchantments.empty() ) {
+            recalculate_enchantment_cache();
+        }
     }
 
     auto add_msg_activate = [&]() {
@@ -759,9 +786,19 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
     } else if( bio.id == bio_resonator ) {
         add_msg_activate();
         //~Sound of a bionic sonic-resonator shaking the area
-        sounds::sound( bub_pos(), 30, sounds::sound_t::combat, _( "VRRRRMP!" ), false, "bionic",
-                       static_cast<std::string>( bio_resonator ) );
-        for( const auto &bashpoint : here.points_in_radius( bub_pos(), 1 ) ) {
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = 80;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "VRRRRMP!" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.faction = get_faction()->id;
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "bionic";
+        se.variant = static_cast<std::string>( bio_resonator );
+        sounds::sound( se );
+        for( const tripoint_bub_ms &bashpoint : here.points_in_radius( bub_pos(), 1 ) ) {
             here.bash( bashpoint, 110 );
             // Multibash effect, so that doors &c will fall
             here.bash( bashpoint, 110 );
@@ -875,8 +912,18 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         add_msg_activate();
         add_msg_if_player( m_good, _( "Your muscles hiss as hydraulic strength fills them!" ) );
         //~ Sound of hissing hydraulic muscle! (not quite as loud as a car horn)
-        sounds::sound( bub_pos(), 19, sounds::sound_t::activity, _( "HISISSS!" ), false, "bionic",
-                       static_cast<std::string>( bio_hydraulics ) );
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = 65;
+        se.category = sounds::sound_t::activity;
+        se.description = _( "HISISSS!" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.faction = get_faction()->id;
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "bionic";
+        se.variant = static_cast<std::string>( bio_hydraulics );
+        sounds::sound( se );
     } else if( bio.id == bio_water_extractor ) {
         bool no_target = true;
         bool extracted = false;
@@ -964,7 +1011,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         if( target.has_value() ) {
             add_msg_activate();
             assign_activity( std::make_unique<player_activity>( lockpick_activity_actor::use_bionic(
-                                 item::spawn( bio.info().fake_item ), g->m.bub_to_abs( *target ) ) ) );
+                                 item::spawn( bio.info().fake_item ), bub_to_abs( *target ) ) ) );
             if( close_bionics_ui ) {
                 *close_bionics_ui = true;
             }
@@ -1262,6 +1309,9 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
     if( !bio.id->enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
+    if( !bio.id->bio_enchantments.empty() ) {
+        recalculate_enchantment_cache();
+    }
 
     // Also reset crafting inventory cache if this bionic spawned a fake item
     if( !bio.info().fake_item.is_empty() ) {
@@ -1333,9 +1383,9 @@ bool Character::burn_fuel( bionic &bio, bool start )
             } else if( is_perpetual_fuel ) {
                 current_fuel_stock = 1;
             } else if( is_cable_powered ) {
-                current_fuel_stock = std::stoi( get_value( "rem_" + fuel.str() ) );
+                current_fuel_stock = get_value_as_int( "rem_" + fuel.str() ).value_or( 0 );
             } else {
-                current_fuel_stock = std::stoi( get_value( fuel.str() ) );
+                current_fuel_stock = get_value_as_int( fuel.str() ).value_or( 0 );
             }
 
             if( !bio.has_flag( flag_SAFE_FUEL_OFF ) &&
@@ -1722,11 +1772,7 @@ void Character::process_bionic( bionic &bio )
         std::vector<itype_id> fuel_available = get_fuel_available( bio.id );
         if( bio.id->is_remote_fueled ) {
             const itype_id rem_fuel = find_remote_fuel();
-            const std::string rem_amount = get_value( "rem_" + rem_fuel.str() );
-            int rem_fuel_stock = 0;
-            if( !rem_amount.empty() ) {
-                rem_fuel_stock = std::stoi( rem_amount );
-            }
+            const auto rem_fuel_stock = get_value_as_int( "rem_" + rem_fuel.str() ).value_or( 0 );
             if( !rem_fuel.is_empty() && ( rem_fuel_stock > 0 || rem_fuel->has_flag( flag_PERPETUAL ) ) ) {
                 fuel_available.emplace_back( rem_fuel );
             }
@@ -1734,7 +1780,7 @@ void Character::process_bionic( bionic &bio )
         if( !fuel_available.empty() && get_power_level() <= start_threshold * get_max_power_level() ) {
             g->u.activate_bionic( bio );
         } else if( get_power_level() <= start_threshold * get_max_power_level() &&
-                   calendar::once_every( 1_hours ) ) {
+                   action_time_scale::once_every_this_tick( 1_hours ) ) {
             add_msg_player_or_npc( m_bad, _( "Your %s does not have enough fuel to use Auto Start." ),
                                    _( "<npcname>'s %s does not have enough fuel to use Auto Start." ),
                                    bio.info().name );
@@ -1787,8 +1833,18 @@ void Character::process_bionic( bionic &bio )
         }
     } else if( bio.id == bio_hydraulics ) {
         // Sound of hissing hydraulic muscle! (not quite as loud as a car horn)
-        sounds::sound( bub_pos(), 19, sounds::sound_t::activity, _( "HISISSS!" ), false, "bionic",
-                       static_cast<std::string>( bio_hydraulics ) );
+        sound_event se;
+        se.origin = bub_pos();
+        se.volume = 65;
+        se.category = sounds::sound_t::activity;
+        se.description = _( "HISISSS!" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.faction = get_faction()->id;
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "bionic";
+        se.variant = static_cast<std::string>( bio_hydraulics );
+        sounds::sound( se );
     } else if( bio.id == bio_nanobots ) {
         int threshold_kcal = bio.info().kcal_trigger > 0 ? 0.85f * max_stored_kcal() +
                              bio.info().kcal_trigger : 0;
@@ -1803,7 +1859,7 @@ void Character::process_bionic( bionic &bio )
             deactivate_bionic( bio );
             return;
         }
-        if( calendar::once_every( 30_turns ) ) {
+        if( action_time_scale::once_every_this_tick( 30_turns ) ) {
             std::vector<effect *> bleeding_list = get_all_effects_of_type( effect_bleed );
             // Essential parts (Head/Torso) first.
             std::ranges::sort( bleeding_list,
@@ -1820,7 +1876,7 @@ void Character::process_bionic( bionic &bio )
                     e->set_removed();
                 }
             }
-            if( calendar::once_every( 2_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 2_minutes ) ) {
                 // Essential parts are considered 10 HP lower than non-essential parts for the purpose of determining priority.
                 // I'd use the essential_value, but it's tied up in the heal_actor class of iuse_actor.
                 const auto effective_hp = [this]( const bodypart_id & bp ) -> int {
@@ -1876,7 +1932,7 @@ void Character::process_bionic( bionic &bio )
     } else if( bio.id == bio_evap ) {
         // Aero-Evaporator provides water at 60 watts with 2 L / kWh efficiency
         // which is 10 mL per 5 minutes.  Humidity can modify the amount gained.
-        if( calendar::once_every( 5_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 5_minutes ) ) {
             const w_point &weatherPoint = get_weather().get_precise();
             int humidity = get_local_humidity( weatherPoint.humidity, get_weather().weather_id,
                                                g->is_sheltered( g->u.bub_pos() ) );
@@ -1933,53 +1989,54 @@ void Character::process_bionic( bionic &bio )
         add_morale( MORALE_FEELING_GOOD, 20, 20, 30_minutes, 20_minutes, true );
     } else if( bio.id == bio_electrosense_bscanner ) {
         // This is a horrible mess but can't use the active iuse behavior directly
-        map &here = get_map();
-        for( const auto &pt : here.points_in_radius( bub_pos(), PICKUP_RANGE ) ) {
-            if( !here.has_items( pt ) || !sees( pt ) ) {
+        auto &here = get_map();
+        auto visibility_cache_updated = false;
+        for( const auto corpse : here.get_active_items_in_radius( bub_pos(), PICKUP_RANGE,
+                special_item_type::bionic_scannable_corpse ) ) {
+            if( corpse == nullptr || !corpse->is_corpse() ||
+                corpse->get_var( "bionics_scanned_by", -1 ) == getID().get_value() ) {
                 continue;
             }
-            for( item * const &corpse : here.i_at( pt ) ) {
-                if( !corpse->is_corpse() ||
-                    corpse->get_var( "bionics_scanned_by", -1 ) == getID().get_value() ) {
+            const auto pt = corpse->bub_pos();
+            if( !visibility_cache_updated && here.visibility_caches_dirty() ) {
+                here.update_visibility_cache( bub_pos().z() );
+                visibility_cache_updated = true;
+            }
+            if( !sees( pt ) ) {
+                continue;
+            }
+
+            using namespace std::views;
+            namespace ranges = std::ranges;
+            auto cbms = corpse->get_components()
+                        | filter( &item::is_bionic )
+                        | ranges::to<std::vector>();
+
+            auto enrg = static_cast<int>( cbms.size() ) * bio.info().power_trigger;
+            if( get_power_level() >= enrg ) {
+                mod_power_level( -enrg );
+            } else {
+                add_msg_if_player( m_bad,
+                                   _( "Your %s doesn't have enough power for the %s" ),
+                                   bio.info().name, corpse->display_name().c_str() );
+                if( get_power_level() < bio.info().power_trigger ) {
+                    break;
+                } else {
                     continue;
                 }
+            }
 
-                std::vector<const item *> cbms;
-                for( const item * const &maybe_cbm : corpse->get_components() ) {
-                    if( maybe_cbm->is_bionic() ) {
-                        cbms.push_back( maybe_cbm );
-                    }
-                }
-
-                units::energy enrg = cbms.size() * bio.info().power_trigger;
-                if( get_power_level() >= enrg ) {
-                    mod_power_level( -enrg );
-                } else {
-                    add_msg_if_player( m_bad,
-                                       _( "Your %s doesn't have enough power for the %s" ),
-                                       bio.info().name, corpse->display_name().c_str() );
-                    if( get_power_level() < bio.info().power_trigger ) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-
-                corpse->set_var( "bionics_scanned_by", getID().get_value() );
-                if( !cbms.empty() ) {
-                    corpse->set_flag( flag_CBM_SCANNED );
-                    std::string bionics_string =
-                        enumerate_as_string( cbms.begin(), cbms.end(),
-                    []( const item * entry ) -> std::string {
-                        return entry->display_name();
-                    }, enumeration_conjunction::none );
-                    //~ %1 is corpse name, %2 is direction, %3 is bionic name
-                    add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
-                                       corpse->display_name().c_str(),
-                                       direction_name( direction_from( bub_pos(), pt ) ).c_str(),
-                                       bionics_string.c_str()
-                                     );
-                }
+            corpse->set_var( "bionics_scanned_by", getID().get_value() );
+            if( !cbms.empty() ) {
+                corpse->set_flag( flag_CBM_SCANNED );
+                auto bionics_string = enumerate_as_string( cbms.begin(), cbms.end(),
+                []( const auto entry ) { return entry->display_name(); }, enumeration_conjunction::none );
+                //~ %1 is corpse name, %2 is direction, %3 is bionic name
+                add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
+                                   corpse->display_name().c_str(),
+                                   direction_name( direction_from( bub_pos(), pt ) ).c_str(),
+                                   bionics_string.c_str()
+                                 );
             }
             if( get_power_level() < bio.info().power_trigger ) {
                 add_msg_if_player( m_bad, _( "Your %s doesn't have enough power and shuts down." ),
@@ -1989,7 +2046,7 @@ void Character::process_bionic( bionic &bio )
             }
         }
     } else if( bio.id == bio_radscrubber ) {
-        if( calendar::once_every( 10_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 10_minutes ) ) {
             const units::energy trigger_cost = bio.info().power_trigger;
 
             if( get_rad() > 0 && bio.energy_stored >= trigger_cost ) {
@@ -2298,6 +2355,7 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
     activity->values.push_back( success );
     activity->values.push_back( units::to_kilojoule( b_id->capacity ) );
     activity->values.push_back( pl_skill );
+    activity->values.push_back( 0 );
     activity->str_values.emplace_back( "uninstall" );
     activity->str_values.push_back( b_id.str() );
     activity->str_values.emplace_back( "" ); // installer_name is unused for uninstall
@@ -2306,8 +2364,9 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
     } else {
         activity->str_values.emplace_back( "false" );
     }
+    const auto operation_duration = scaled_operation_duration( difficulty );
     for( const std::pair<const bodypart_str_id, int> &elem : b_id->occupied_bodyparts ) {
-        add_effect( effect_under_op, difficulty * 20_minutes, elem.first, difficulty );
+        add_effect( effect_under_op, operation_duration, elem.first, difficulty );
     }
 
     return true;
@@ -2585,6 +2644,7 @@ bool Character::install_bionics( const itype &type, Character &installer, bool a
     activity->values.push_back( success );
     activity->values.push_back( units::to_joule( bioid->capacity ) );
     activity->values.push_back( pl_skill );
+    activity->values.push_back( 0 );
     activity->str_values.emplace_back( "install" );
     activity->str_values.push_back( bioid.str() );
 
@@ -2598,8 +2658,9 @@ bool Character::install_bionics( const itype &type, Character &installer, bool a
     } else {
         activity->str_values.emplace_back( "false" );
     }
+    const auto operation_duration = scaled_operation_duration( difficulty );
     for( const std::pair<const bodypart_str_id, int> &elem : bioid->occupied_bodyparts ) {
-        add_effect( effect_under_op, difficulty * 20_minutes, elem.first, difficulty );
+        add_effect( effect_under_op, operation_duration, elem.first, difficulty );
     }
 
     return true;
@@ -2895,6 +2956,9 @@ void Character::add_bionic( const bionic_id &b )
     reset_encumbrance();
     recalc_sight_limits();
     if( !b->enchantments.empty() ) {
+        recalculate_enchantment_cache();
+    }
+    if( !b->bio_enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
 }

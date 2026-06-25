@@ -48,11 +48,11 @@
     },
     "material_thickness": 3,
     "environmental_protection": 16,
+    "hearing_protection": 6,
     "qualities": [ [ "GLARE", 1 ] ],
     "flags": [
       "WATERPROOF",
       "STURDY",
-      "PARTIAL_DEAF",
       "SUN_GLASSES",
       "VARSIZE",
       "GAS_PROOF",
@@ -108,7 +108,6 @@
     "flags": [
       "WATERPROOF",
       "STURDY",
-      "PARTIAL_DEAF",
       "SUN_GLASSES",
       "FLASH_PROTECTION",
       "ELECTRIC_IMMUNE",
@@ -123,6 +122,8 @@
       "COMBAT_NPC_ON",
       "DRONE_CAM"
     ]
+    "hearing_protection": 6,
+    "adv_hearing_protection": 24
   },
   {
     "id": "crt_em_vest",

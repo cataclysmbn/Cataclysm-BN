@@ -3,24 +3,29 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "avatar.h"
+#include "calendar.h"
 #include "cata_utility.h"
 #include "coordinates.h"
+#include "creature_tracker.h"
 #include "damage.h"
 #include "debug.h"
 #include "enums.h"
 #include "game.h"
+#include "game_constants.h"
 #include "item.h"
 #include "json.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "mongroup.h"
 #include "monster.h"
+#include "options_helpers.h"
 #include "overmapbuffer.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -48,8 +53,7 @@ struct horde_vehicle_spawn_fixture {
 
 auto point_has_monster( const tripoint_abs_ms &p ) -> bool
 {
-    const auto &here = get_map();
-    return g->critter_at<monster>( here.abs_to_bub( p ) ) != nullptr;
+    return g->critter_tracker->find( p ) != nullptr;
 }
 
 auto vehicle_points_contain_monster( const std::set<tripoint_abs_ms> &vehicle_points ) -> bool
@@ -65,13 +69,13 @@ auto make_horde_vehicle_spawn_fixture(
 
     auto &here = get_map();
     auto &you = get_avatar();
-    const auto target_submap = tripoint_bub_sm( here.getmapsize() / 2, here.getmapsize() / 2, 0 );
-    const auto target_submap_abs = here.bub_to_abs( target_submap );
+    const auto target_submap = tripoint_bub_sm( g_half_mapsize, g_half_mapsize, 0 );
+    const auto target_submap_abs = map_local_to_abs( here, target_submap );
     const auto target_submap_origin = project_to<coords::ms>( target_submap );
     const auto target_submap_end = target_submap_origin + tripoint( SEEX - 1, SEEY - 1, 0 );
     const auto vehicle_origin = target_submap_origin + tripoint( SEEX / 2, SEEY / 2, 0 );
 
-    you.setpos( vehicle_origin + tripoint( 0, 0, -2 ) );
+    you.setpos( map_local_to_abs( here, target_submap_origin ) );
     const auto veh = here.add_vehicle( vproto_id( "car" ), vehicle_origin, 0_degrees, 0, 0 );
     REQUIRE( veh != nullptr );
 
@@ -101,7 +105,7 @@ auto make_horde_vehicle_spawn_fixture(
     const auto horde_spawn_blocking_terrain = ter_id( "t_wall" );
     std::ranges::for_each( here.points_in_rectangle( target_submap_origin, target_submap_end ),
     [&]( const auto & p ) {
-        if( !vehicle_points.contains( here.bub_to_abs( p ) ) ) {
+        if( !vehicle_points.contains( map_local_to_abs( here, p ) ) ) {
             here.ter_set( p, horde_spawn_blocking_terrain );
         }
     } );
@@ -263,6 +267,32 @@ TEST_CASE( "detaching_vehicle_unboards_passengers" )
     REQUIRE( !player_character.in_vehicle );
 }
 
+TEST_CASE( "detaching_opaque_vehicle_invalidates_transparency_cache", "[vehicle][map_cache]" )
+{
+    clear_all_state();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_pavement" ) );
+
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_horizontal" ),
+                                    true ) >= 0 );
+    const auto board = veh_ptr->install_part( tripoint_mnt_veh::zero(),
+                       vpart_id( "clothboard_horizontal" ), true );
+    REQUIRE( board >= 0 );
+
+    const auto board_pos = veh_ptr->bub_part_location( board );
+    here.add_vehicle_to_cache( veh_ptr );
+    here.build_map_cache( board_pos.z(), true );
+    REQUIRE_FALSE( here.is_transparent( board_pos ) );
+
+    here.destroy_vehicle( veh_ptr );
+    here.build_map_cache( board_pos.z(), true );
+
+    CHECK( here.is_transparent( board_pos ) );
+}
+
 TEST_CASE( "destroy_grabbed_vehicle_section" )
 {
     clear_all_state();
@@ -323,6 +353,82 @@ TEST_CASE( "moving_flying_vehicle_can_use_wait_menu", "[vehicle][wait]" )
     veh_ptr->set_flying( true );
     CHECK_FALSE( vehicle_wait::is_wait_blocked_by_movement( *veh_ptr ) );
     CHECK( vehicle_wait::should_offer_flying_wait_durations( *veh_ptr ) );
+}
+
+TEST_CASE( "vehicle control scale modifies throttle move cost", "[vehicle][speed]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "50" );
+    const auto vehicle_control_scale = override_option( "VEHICLE_CONTROL_SCALE", "100" );
+
+    auto &you = get_avatar();
+    you.set_moves( 25 );
+
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    veh_ptr->cruise_on = false;
+    veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
+
+    CHECK( you.get_moves() == -25 );
+}
+
+TEST_CASE( "vehicle speed control free in cruise mode", "[vehicle][speed]" )
+{
+    clear_all_state();
+
+    auto &you = get_avatar();
+    you.set_moves( 25 );
+
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    veh_ptr->cruise_on = true;
+    veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
+
+    CHECK( you.get_moves() == 25 );
+}
+
+TEST_CASE( "can autodrive", "[vehicle][autodrive]" )
+{
+    clear_all_state();
+    set_time( calendar::turn_zero + 12_hours );
+
+    auto &here = get_map();
+    auto &you = get_avatar();
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    you.setpos( origin );
+    you.clear_map_memory();
+    you.set_moves( 1000 );
+
+    auto *veh_ptr = here.add_vehicle( vproto_id( "car" ), origin, 0_degrees, 100, 0, true, false,
+                                      true );
+    REQUIRE( veh_ptr != nullptr );
+    here.board_vehicle( origin, &you );
+    veh_ptr->start_engines( true, true );
+    veh_ptr->engine_on = true;
+    REQUIRE( veh_ptr->player_in_control( you ) );
+
+    const auto current_omt = project_to<coords::omt>( veh_ptr->abs_ms_location() );
+    const auto memory_origin = project_to<coords::ms>( current_omt );
+    // Keep path planning deterministic; the regression check is the dirty live visibility cache.
+    using namespace std::views;
+    constexpr auto omt_size = coords::map_squares_per( coords::omt );
+    for( const auto x : iota( 0, omt_size * 2 ) ) {
+        for( const auto y : iota( 0, omt_size ) ) {
+            you.memorize_tile( memory_origin + tripoint_rel_ms( x, y, 0 ), "t_grass", 0, 0 );
+        }
+    }
+    you.omt_path = { current_omt + tripoint_rel_omt( 1, 0, 0 ) };
+    veh_ptr->is_autodriving = true;
+
+    here.invalidate_visibility_caches();
+    REQUIRE( here.visibility_caches_dirty() );
+
+    CHECK( veh_ptr->do_autodrive( you ) == autodrive_result::ok );
 }
 
 TEST_CASE( "horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]" )

@@ -31,9 +31,9 @@ voltmeter.menu = function(params)
   return 0
 end
 
----@type fun(who: Character, item: Item, pos: Tripoint): string
+---@type fun(who: Character, item: Item, pos: TripointBubMs): string
 voltmeter.get_grid_charge_info = function(_who, _item, pos)
-  local pos_abs = gapi.get_map():get_abs_ms(pos)
+  local pos_abs = gapi.bub_to_abs(pos)
   local grid = gapi.get_distribution_grid_tracker():grid_at(pos_abs)
   local amt = grid:get_resource()
   if not amt then return "" end
@@ -50,11 +50,10 @@ voltmeter.get_grid_charge_info = function(_who, _item, pos)
   return msg
 end
 
----@type fun(who: Character, item: Item, pos: Tripoint): string
+---@type fun(who: Character, item: Item, pos: TripointBubMs): string
 voltmeter.get_grid_connections_info = function(_who, _item, pos)
-  local pos_abs_ms = gapi.get_map():bub_to_abs(pos)
+  local pos_abs_ms = gapi.bub_to_abs(pos)
   local pos_abs_omt = pos_abs_ms:to_omt()
-  ---@cast pos_abs Tripoint
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
   local six_dirs = gapi.six_cardinal_directions()
@@ -80,11 +79,10 @@ voltmeter.get_grid_connections_info = function(_who, _item, pos)
   return msg
 end
 
----@type fun(who: Character, item: Item, pos: Tripoint): integer
+---@type fun(who: Character, item: Item, pos: TripointBubMs): integer
 voltmeter.modify_grid_connections = function(who, item, pos)
-  local pos_abs_ms = gapi.get_map():bub_to_abs(pos)
+  local pos_abs_ms = gapi.bub_to_abs(pos)
   local pos_abs_omt = pos_abs_ms:to_omt()
-  ---@cast pos_abs Tripoint
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
   local six_dirs = gapi.six_cardinal_directions()
@@ -179,7 +177,7 @@ voltmeter.modify_grid_connections = function(who, item, pos)
     end
 
     -- Get the requirement and multiply by cost
-    local requirement_base = get_requirement("add_grid_connection")
+    local requirement_base = requirements.get("add_grid_connection")
     if not requirement_base then
       gapi.add_msg(MsgType.warning, locale.gettext("Error: requirement not found."))
       return 0

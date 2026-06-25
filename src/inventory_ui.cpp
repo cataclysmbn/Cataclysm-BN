@@ -46,6 +46,7 @@
 #include <map>
 #include <numeric>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -141,11 +142,12 @@ std::string pickup_inventory_preset::get_denial( const item *loc ) const
     if( !p.has_item( *loc ) ) {
         if( loc->made_of( LIQUID ) ) {
             return _( "Can't pick up spilt liquids" );
-        } else if( !p.can_pick_volume( *loc ) && p.is_armed() ) {
-            return _( "Too big to pick up" );
-        } else if( !p.can_pick_weight( *loc, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ) {
-            return _( "Too heavy to pick up" );
         }
+        // else if( !p.can_pick_volume( *loc ) && p.is_armed() ) {
+        //     return _( "Too big to pick up" );
+        // } else if( !p.can_pick_weight( *loc, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ) {
+        //     return _( "Too heavy to pick up" );
+        // }
     }
 
     return std::string();
@@ -684,7 +686,7 @@ std::vector<inventory_entry *> inventory_column::get_all_entries(
 
 std::vector<inventory_entry *> inventory_column::get_all_entries() const
 {
-    auto func = []( const inventory_entry & entry ) { return true; };
+    auto func = []( const inventory_entry & /*entry*/ ) { return true; };
     return get_all_entries( func );
 }
 
@@ -702,7 +704,7 @@ void inventory_column::set_stack_favorite( const item *location, bool favorite )
             g->u.inv_set_stack_favorite( position, !selected_item->is_favorite ); // in inventory
         }
     } else if( location->where() == item_location_type::map ) {
-        auto items = g->m.i_at( location->position() );
+        auto items = g->m.i_at( location->bub_pos() );
 
         for( auto &item : items ) {
             if( item->stacks_with( *selected_item ) ) {
@@ -714,7 +716,7 @@ void inventory_column::set_stack_favorite( const item *location, bool favorite )
         }
     } else if( location->where() == item_location_type::vehicle ) {
         const std::optional<vpart_reference> vp = g->m.veh_at(
-                    location->position() ).part_with_feature( "CARGO", true );
+                    location->abs_pos() ).part_with_feature( "CARGO", true );
         assert( vp );
 
         auto items = vp->vehicle().get_items( vp->part_index() );
@@ -1247,7 +1249,7 @@ void inventory_selector::add_items( inventory_column &target_column,
         if( custom_category == nullptr ) {
             nat_category = &loc->get_category();
         } else if( nat_category == nullptr && preset.is_shown( loc ) ) {
-            nat_category = naturalize_category( *custom_category, loc->position() );
+            nat_category = naturalize_category( *custom_category, loc->bub_pos() );
         }
 
         add_entry( target_column, std::move( locations ), nat_category );
@@ -1388,6 +1390,28 @@ bool inventory_selector::select( const item *loc )
     }
 
     return res;
+}
+
+auto inventory_selector::select_item_type( const itype_id &type ) -> bool
+{
+    namespace ranges = std::ranges;
+
+    prepare_layout();
+    for( const auto index : std::views::iota( size_t{}, columns.size() ) ) {
+        auto *column = columns[index];
+        if( !column->visible() || !column->activatable() ) {
+            continue;
+        }
+        const auto entries = column->get_entries( []( const auto & entry ) { return entry.is_selectable(); } );
+        const auto iter = ranges::find_if( entries, [&type]( const auto * entry ) {
+            return entry->any_item()->typeId() == type;
+        } );
+        if( iter != entries.end() && column->select( ( *iter )->any_item() ) ) {
+            set_active_column( index );
+            return true;
+        }
+    }
+    return false;
 }
 
 inventory_entry *inventory_selector::find_entry_by_invlet( int invlet ) const
@@ -2163,7 +2187,6 @@ void inventory_multiselector::set_chosen_count( inventory_entry &entry, size_t c
     }
 }
 
-[[clang::optnone]]
 std::vector<inventory_entry *> inventory_multiselector::get_selection_column_items() const
 {
     auto func = []( const inventory_entry & e ) { return e.is_item();};
@@ -2588,10 +2611,19 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             std::vector<item *> locations;
             std::vector<int> counts;
 
-            for( auto entry_ptr : get_selection_column_items() ) {
-                for( size_t i = 0; i < entry_ptr->locations.size() && i < entry_ptr->chosen_count; ++i ) {
-                    locations.push_back( entry_ptr->locations[i] );
-                    counts.push_back( 1 );
+            for( auto entry_ptr : map_column.get_all_entries() ) {
+                int count = 0;
+                int chosen_count = entry_ptr->chosen_count;
+                for( size_t i = 0; i < entry_ptr->locations.size() && count < chosen_count &&
+                     count < max_chosen_count; ++i ) {
+                    item *item = entry_ptr->locations[i];
+                    int needed_count = std::max( 0, chosen_count - count );
+                    int to_add = std::min( needed_count, item->count() );
+                    if( to_add > 0 ) {
+                        locations.push_back( entry_ptr->locations[i] );
+                        counts.push_back( to_add );
+                        count += to_add;
+                    }
                 }
             }
 
@@ -2617,7 +2649,7 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             }
         }
 
-        if( no_items ) {
+        if( no_items && ( input.action == "WIELD" || input.action == "WEAR" ) ) {
             return std::vector<pickup::pick_drop_selection>();
         }
     }
@@ -2637,8 +2669,20 @@ inventory_selector::stats inventory_pickup_selector::get_raw_stats() const
     //Add the weights and volumes of selected items
     //which might be picked up
     for( auto entry_ptr : selected_items ) {
-        weight_carried += entry_ptr->any_item()->weight() * entry_ptr->chosen_count;
-        volume_carried += entry_ptr->any_item()->volume() * entry_ptr->chosen_count;
+        int count = 0;
+        int chosen_count = entry_ptr->chosen_count;
+        for( size_t i = 0; i < entry_ptr->locations.size() && count < chosen_count &&
+             count < max_chosen_count; ++i ) {
+            item *item = entry_ptr->locations[i];
+            int needed_count = std::max( 0, chosen_count - count );
+            int to_add = std::min( needed_count, item->count() );
+            count += to_add;
+            //WARNING: This specific order of operations and casts are needed
+            //to ensure volume and weight are accurate, because of the fact the game
+            //works in base volumes of 1ml and 1mg
+            weight_carried += item->weight() * ( static_cast<double>( to_add ) / item->count() );
+            volume_carried += item->volume() * ( static_cast<double>( to_add ) / item->count() );
+        }
     }
 
     return get_weight_and_volume_stats(

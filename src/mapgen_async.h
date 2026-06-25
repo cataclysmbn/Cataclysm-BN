@@ -4,6 +4,7 @@
 
 #include "calendar.h"
 #include "coordinates.h"
+#include "type_id.h"
 
 namespace cata
 {
@@ -13,19 +14,17 @@ struct lua_state;
 /**
  * Deferred Lua mapgen post-process hook.
  *
- * When map::generate() runs on a worker thread, the Lua
+ * When mapgen_constructor::generate() runs on a worker thread, the Lua
  * on_mapgen_postprocess hook cannot execute in place (Lua is not
  * thread-safe).  Instead, the hook parameters are pushed here and
  * drained on the main thread after worker mapgen completes.
  *
- * The submaps are already in the mapbuffer when the hook runs (saven()
- * is called before the hook), so the main thread reconstructs a
- * temporary tinymap from the mapbuffer to give the hook a live map
- * reference identical in content to what it would have received on the
- * main thread.
+ * The submaps are already in the mapbuffer when the hook runs, so the main
+ * thread binds a mapgen constructor to those resident submaps to give the hook
+ * the same mapgen surface it would have received on the main thread.
  */
 struct deferred_mapgen_hook {
-    std::string       dim;
+    dimension_id      dim;
     tripoint_abs_omt  omt_pos;
     time_point        when;
 };
@@ -39,7 +38,7 @@ struct deferred_mapgen_hook {
  * logic that would have run inline on the main thread.
  */
 struct deferred_autonote {
-    std::string       dim;
+    dimension_id      dim;
     tripoint_abs_omt  omt_pos;
     std::string       extra_id;   // raw string backing a string_id<map_extra>
 };
@@ -62,9 +61,9 @@ void refresh_mapgen_postprocess_hook_presence( cata::lua_state &state );
 /**
  * Drain all deferred hooks and run each one on the main thread.
  *
- * For each entry, loads the already-saved submaps from the mapbuffer into a
- * temporary tinymap and calls run_on_mapgen_postprocess_hooks().  Modifications
- * from the hook land directly on the mapbuffer-owned submap objects.
+ * For each entry, binds a mapgen constructor to the mapbuffer-owned submaps and
+ * calls run_on_mapgen_postprocess_hooks(). Modifications from the hook land
+ * directly on those submap objects.
  *
  * Must be called on the main thread only (Lua is not thread-safe).
  * Called by map::shift() and the submap load manager after worker mapgen completes.

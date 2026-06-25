@@ -4,9 +4,15 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
+    inputs:
+      date:
+        description: "Nightly date to build, in UTC YYYY-MM-DD. Defaults to today."
+        required: false
+        type: string
 
 env:
   VCPKG_BINARY_SOURCES: "default"
+  EXPECTED_NIGHTLY_ASSET_COUNT: 13
 
 jobs:
   metadata:
@@ -17,23 +23,35 @@ jobs:
       release_name: ${{ steps.env_vars.outputs.release_name }}
       last_tag_name: ${{ steps.env_vars.outputs.last_tag_name }}
       yesterday_tag_name: ${{ steps.env_vars.outputs.yesterday_tag_name }}
+      source_sha: ${{ steps.env_vars.outputs.source_sha }}
     steps:
       - uses: actions/checkout@v4
       - id: env_vars
+        env:
+          REQUESTED_DATE: ${{ inputs.date || '' }}
         run: |
-          TAG_NAME=$(date -u --iso-8601)
-          YESTERDAY_TAG_NAME=$(date -u --iso-8601 --date='1 day ago')
+          TAG_NAME=${REQUESTED_DATE:-$(date -u --iso-8601)}
+          if ! [[ "$TAG_NAME" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || [ "$(date -u --date="$TAG_NAME" +%F)" != "$TAG_NAME" ]; then
+            echo "::error::date must be a valid UTC date in YYYY-MM-DD format"
+            exit 1
+          fi
+
+          YESTERDAY_TAG_NAME=$(date -u --iso-8601 --date="$TAG_NAME 1 day ago")
           LAST_TAG_NAME=$(git for-each-ref --sort=-creatordate --format '%(creatordate:short)' refs/tags | head -n 1)
           COMMITS=$(git log --oneline --since="$YESTERDAY_TAG_NAME" --until="$TAG_NAME" | wc -l)
           RELEASE_NAME="Nightly $TAG_NAME"
+          SOURCE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG_NAME" | awk '{ print $1 }')
+          SOURCE_SHA=${SOURCE_SHA:-$GITHUB_SHA}
 
           echo "commits yesterday ($YESTERDAY_TAG_NAME): $COMMITS" >> "$GITHUB_STEP_SUMMARY"
+          echo "source commit: $SOURCE_SHA" >> "$GITHUB_STEP_SUMMARY"
 
           echo "count=$COMMITS" >> "$GITHUB_OUTPUT"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "last_tag_name=$LAST_TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "yesterday_tag_name=$YESTERDAY_TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "release_name=$RELEASE_NAME" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
 
   release:
     needs: metadata
@@ -43,7 +61,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || fromJson(needs.metadata.outputs.count) > 0
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
-      release_already_exists: ${{ steps.tag_check.outputs.exists }}
+      tag_exists: ${{ steps.tag_check.outputs.exists }}
+      release_exists: ${{ steps.release_check.outputs.exists }}
+      upload_assets: ${{ steps.asset_check.outputs.upload_assets }}
 
     steps:
       - name: Check if there is existing git tag
@@ -53,6 +73,17 @@ jobs:
           tag: ${{ needs.metadata.outputs.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if release exists
+        id: release_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ needs.metadata.outputs.tag_name }}" --json tagName --jq .tagName > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/checkout@v4
 
@@ -66,6 +97,7 @@ jobs:
           tag_prefix: ""
 
       - name: Build Changelog
+        if: ${{ steps.release_check.outputs.exists == 'false' }}
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@v4.2.0
         with:
@@ -76,6 +108,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release
+        if: ${{ steps.release_check.outputs.exists == 'false' }}
         id: create_release
         uses: softprops/action-gh-release@v2.0.2
         env:
@@ -85,23 +118,41 @@ jobs:
           name: ${{ needs.metadata.outputs.release_name }}
           body: |
             ${{ steps.build_changelog.outputs.changelog }}
-            These are the outputs for the build of commit [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            These are the outputs for the build of commit [${{ needs.metadata.outputs.source_sha }}](https://github.com/${{ github.repository }}/commit/${{ needs.metadata.outputs.source_sha }})
           draft: false
           prerelease: true
 
+      - name: Check release assets
+        id: asset_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          asset_count=$(gh release view "${{ needs.metadata.outputs.tag_name }}" --json assets --jq '.assets | length' 2>/dev/null || echo 0)
+          echo "asset_count=$asset_count" >> "$GITHUB_STEP_SUMMARY"
+          echo "asset_count=$asset_count" >> "$GITHUB_OUTPUT"
+
+          if [ "$asset_count" -lt "$EXPECTED_NIGHTLY_ASSET_COUNT" ]; then
+            echo "upload_assets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload_assets=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build-translations:
     needs: [metadata, release]
-    if: ${{ needs.release.outputs.release_already_exists == 'false' }}
+    if: ${{ needs.release.outputs.upload_assets == 'true' }}
     uses: ./.github/workflows/build-translations.yml
+    with:
+      checkout-ref: ${{ needs.metadata.outputs.tag_name }}
     secrets:
       TX_TOKEN: ${{ secrets.TX_TOKEN }}
 
   builds:
     needs: [metadata, release, build-translations]
-    if: ${{ needs.release.outputs.release_already_exists == 'false' }}
+    if: ${{ needs.release.outputs.upload_assets == 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: ${{ needs.metadata.outputs.tag_name }}
+      checkout-ref: ${{ needs.metadata.outputs.tag_name }}
       upload-to-release: true
       release-tag: ${{ needs.metadata.outputs.tag_name }}
     secrets: inherit

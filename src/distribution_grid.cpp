@@ -286,7 +286,7 @@ distribution_grid_tracker::distribution_grid_tracker()
     : distribution_grid_tracker( MAPBUFFER, {} )
 {}
 
-distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer, std::string dim_id )
+distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer, dimension_id dim_id )
     : mb( buffer )
     , dimension_id_( std::move( dim_id ) )
 {
@@ -326,22 +326,26 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
 
         // Keep the far end's submap resident so the cross-dimension grid works.
         const auto target_sm = project_to<coords::sm>( node.target_pos );
+        const auto target_begin = target_sm.xy() - point_rel_sm( radius, radius );
+        const auto target_end = target_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         node.far_load_handle = submap_loader.request_load(
                                    load_request_source::player_base,
                                    node.target_dim_id,
-                                   target_sm,
-                                   radius );
+                                   target_begin,
+                                   target_end );
 
         // Keep the LOCAL source submap resident too.  Without this the source
         // submap unloads when the player leaves → on_submap_unloaded removes
         // the export node → far_load_handle released → far end unloads → the
         // link collapses after one turn.
         const auto source_sm = project_to<coords::sm>( node.source_pos );
+        const auto source_begin = source_sm.xy() - point_rel_sm( radius, radius );
+        const auto source_end = source_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         node.local_load_handle = submap_loader.request_load(
                                      load_request_source::player_base,
                                      dimension_id_,
-                                     source_sm,
-                                     radius );
+                                     source_begin,
+                                     source_end );
     }
 
     // Give the link a grace period before the first upkeep check.
@@ -436,18 +440,22 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         const int radius = get_option<int>( "POWER_PORTAL_LOAD_RADIUS" );
 
         const auto target_sm = project_to<coords::sm>( it->target_pos );
+        const auto target_begin = target_sm.xy() - point_rel_sm( radius, radius );
+        const auto target_end = target_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         it->far_load_handle = submap_loader.request_load(
                                   load_request_source::player_base,
                                   it->target_dim_id,
-                                  target_sm,
-                                  radius );
+                                  target_begin,
+                                  target_end );
 
         const auto source_sm = project_to<coords::sm>( it->source_pos );
+        const auto source_begin = source_sm.xy() - point_rel_sm( radius, radius );
+        const auto source_end = source_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         it->local_load_handle = submap_loader.request_load(
                                     load_request_source::player_base,
                                     dimension_id_,
-                                    source_sm,
-                                    radius );
+                                    source_begin,
+                                    source_end );
 
         // Force-synchronous load of the far submap so power operations work
         // on the same turn as resume.  request_load() is async (SLM needs at
@@ -478,7 +486,7 @@ distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
         DebugLog( DL::Warn, DC::Map ) << string_format(
                                           "make_distribution_grid_at: no overmap grid data for submap %s "
                                           "(dim '%s') — power operations will be silently dropped this tick",
-                                          sm_pos.to_string(), dimension_id_ );
+                                          sm_pos.to_string(), dimension_id_.c_str() );
         static distribution_grid empty_grid( {}, MAPBUFFER );
         return empty_grid;
     }
@@ -540,7 +548,7 @@ std::array<tripoint_abs_omt, 5> distribution_grid_tracker::get_omt_and_cardinal_
 }
 
 void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
-        const std::string &dim_id )
+        const dimension_id &dim_id )
 {
     ZoneScoped;
     // Each tracker only manages submaps for its own dimension.
@@ -577,7 +585,7 @@ void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
 }
 
 void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
-        const std::string &dim_id )
+        const dimension_id &dim_id )
 {
     ZoneScoped;
     if( dim_id != dimension_id_ ) {
@@ -738,17 +746,18 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
 
         const furn_t &old_t = sm->get_furn( p_within_sm ).obj();
         const furn_t &new_t = qt.id.obj();
-        const auto pos_local = m.abs_to_bub( qt.p );
+        const auto pos_player = abs_to_bub( qt.p );
+        const auto pos_local = abs_to_map_local( m, qt.p );
 
         if( !qt.msg.empty() ) {
-            if( u.sees( pos_local ) ) {
+            if( u.sees( pos_player ) ) {
                 add_msg( "%s", _( qt.msg ) );
             }
         }
 
         if( m.inbounds( pos_local ) ) {
             m.furn_set( pos_local, qt.id );
-            return;
+            continue;
         }
 
         // Something is transforming from an unloaded map...?
@@ -790,4 +799,3 @@ void distribution_grid_tracker::update( time_point to )
     transform_queue.apply( mb, *this, get_player_character(), get_map() );
     transform_queue.clear();
 }
-

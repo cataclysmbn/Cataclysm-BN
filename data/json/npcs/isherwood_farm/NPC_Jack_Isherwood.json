@@ -139,10 +139,9 @@
         "prob": 5
       },
       {
-        "collection": [ { "item": "rifle_22", "ammo-item": "22_cphp", "charges": 1 }, { "item": "22_cphp", "charges": [ 20, 40 ] } ],
+        "collection": [ { "item": "pipe_rifle", "ammo-item": "22_cphp", "charges": 1 }, { "item": "22_cphp", "charges": [ 20, 40 ] } ],
         "prob": 5
       },
-      { "collection": [ { "item": "rifle_9mm", "charges": 1 }, { "item": "9mm", "charges": [ 20, 40 ] } ], "prob": 5 },
       {
         "collection": [
           { "item": "ruger_1022", "ammo-item": "22_cphp", "charges": 10 },
@@ -168,7 +167,7 @@
         "prob": 5
       },
       {
-        "collection": [ { "item": "rifle_22", "ammo-item": "22_cphp", "charges": 19 }, { "item": "22_cphp", "charges": [ 10, 20 ] } ],
+        "collection": [ { "item": "pipe_rifle", "ammo-item": "22_cphp", "charges": 19 }, { "item": "22_cphp", "charges": [ 10, 20 ] } ],
         "prob": 25
       },
       { "collection": [ { "item": "m1903", "charges": 5 }, { "item": "3006", "charges": [ 10, 20 ] } ], "prob": 5 }

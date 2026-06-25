@@ -14,6 +14,7 @@
 #include "item.h"
 #include "itype.h"
 #include "flag.h"
+#include "game.h"
 #include "map.h"
 #include "map_selector.h"
 #include "map_helpers.h"
@@ -26,10 +27,12 @@
 #include "skill.h"
 #include "state_helpers.h"
 #include "type_id.h"
+#include "units.h"
 #include "value_ptr.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vehicle_selector.h"
+#include "weather.h"
 
 class player;
 
@@ -448,6 +451,43 @@ static void destroyed_book_test_helper( avatar &u, item *loc )
             }
         }
     }
+}
+
+TEST_CASE( "active night vision tiers allow fine detail vision in darkness", "[reading][vision]" )
+{
+    clear_all_state();
+    clear_avatar();
+    set_time( calendar::turn_zero );
+    get_weather().weather_id = weather_type_id( "clear" );
+
+    auto &dummy = get_avatar();
+    constexpr auto pos = tripoint_bub_ms( 60, 60, 0 );
+    g->place_player( pos );
+
+    auto &here = get_map();
+    here.ter_set( pos, ter_id( "t_floor" ) );
+    here.furn_set( pos, furn_id( "f_null" ) );
+    here.ter_set( pos + tripoint_above, ter_id( "t_flat_roof" ) );
+    here.invalidate_map_cache( pos.z() );
+    here.build_map_cache( pos.z() );
+    here.update_visibility_cache( pos.z() );
+
+    REQUIRE_FALSE( character_funcs::can_see_fine_details( dummy ) );
+
+    SECTION( "standard light amp goggles provide poor fine detail vision" ) {
+        REQUIRE( !dummy.wear_item( item::spawn( "goggles_nv_on" ), false ) );
+
+        CHECK( character_funcs::fine_detail_vision_mod( dummy ) <= character_funcs::FINE_VISION_THRESHOLD );
+        CHECK( character_funcs::can_see_fine_details( dummy ) );
+    }
+
+    SECTION( "enhanced light amp goggles provide perfect fine detail vision" ) {
+        REQUIRE( !dummy.wear_item( item::spawn( "goggles_nv_enhanced_on" ), false ) );
+
+        CHECK( character_funcs::fine_detail_vision_mod( dummy ) == character_funcs::FINE_VISION_PERFECT );
+        CHECK( character_funcs::can_see_fine_details( dummy ) );
+    }
+
 }
 
 TEST_CASE( "Losing book during reading", "[reading][book]" )

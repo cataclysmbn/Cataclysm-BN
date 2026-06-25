@@ -32,6 +32,7 @@
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "translations.h"
+#include "type_id.h"
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
@@ -840,7 +841,7 @@ static void draw_skills_tab( ui_adaptor &ui, const catacurses::window &w_skills,
             const bool training = level.isTraining();
             const bool rusting = level.isRusting();
             int exercise = level.exercise();
-            int level_num = level.level();
+            int level_num = you.get_skill_level( aSkill->ident() );
             bool locked = false;
             if( you.has_active_bionic( bionic_id( "bio_cqb" ) ) && is_cqb_skill( aSkill->ident() ) ) {
                 level_num = 5;
@@ -980,7 +981,10 @@ static void draw_speed_tab( const catacurses::window &w_speed,
         ++line;
     }
 
-    const float temperature_speed_modifier = you.mutation_value( "temperature_speed_modifier" );
+    float temperature_speed_modifier = you.mutation_value( "temperature_speed_modifier" );
+    temperature_speed_modifier += you.bonus_from_enchantments( temperature_speed_modifier,
+                                  enchantment_value_id( "BODYTEMP_SPEED" ) );
+
     if( temperature_speed_modifier != 0 ) {
         nc_color pen_color;
         std::string pen_sign;
@@ -1004,7 +1008,6 @@ static void draw_speed_tab( const catacurses::window &w_speed,
 
     int quick_bonus = static_cast<int>( std::round( ( you.mutation_value( "speed_modifier" ) - 1 ) *
                                         100 ) );
-    int bio_speed_bonus = 10;
     if( quick_bonus != 0 ) {
         std::string pen_sign = quick_bonus >= 0 ? "+" : "-";
         nc_color pen_color = quick_bonus >= 0 ? c_green : c_red;
@@ -1013,9 +1016,15 @@ static void draw_speed_tab( const catacurses::window &w_speed,
                    left_justify( _( "Mutations" ), 20 ), pen_sign, std::abs( quick_bonus ) );
         ++line;
     }
-    if( you.has_bionic( bionic_id( "bio_speed" ) ) ) {
+    const auto ench_speed = int( ceil( you.bonus_from_enchantments( 100,
+                                       enchantment_value_id( "SPEED" ) ) ) );
+    if( ench_speed > 0 ) {
         mvwprintz( w_speed, point( 1, line ), c_green,
-                   pgettext( "speed bonus", "Bionic Speed        +%2d%%" ), bio_speed_bonus );
+                   pgettext( "speed bonus", "Misc Speed        +%2d%%" ), ench_speed );
+        ++line;
+    } else if( ench_speed < 0 ) {
+        mvwprintz( w_speed, point( 1, line ), c_red,
+                   pgettext( "speed bonus", "Misc Speed        -%2d%%" ), abs( ench_speed ) );
         ++line;
     }
 

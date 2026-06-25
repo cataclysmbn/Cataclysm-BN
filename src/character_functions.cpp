@@ -248,8 +248,10 @@ float fine_detail_vision_mod( const Character &who, const tripoint_bub_ms &p )
           !who.has_trait( trait_PER_SLIME_OK ) ) ) {
         return 11.0;
     }
-    // Regular NV trait isn't enough to help at all, while Full Night Vision allows reading at a penalty
-    float nvbonus = who.mutation_value( "night_vision_range" ) >= 8 ? 4 : 0;
+    // Previously above 8 added 4 to help night vision reading on mutations
+    // Thusly nearsight help to night vision ratio is 2
+    float nvbonus = who.night_vision_sight_range() / 2;
+
     // Scale linearly as light level approaches LIGHT_AMBIENT_LIT.
     // If we're actually a source of light, assume we can direct it where we need it.
     // Therefore give a hefty bonus relative to ambient light.

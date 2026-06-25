@@ -18,6 +18,7 @@
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
+#include "json.h"
 #include "mutation.h"
 #include "newcharacter.h"
 #include "pldata.h"
@@ -28,6 +29,8 @@
 #include "string_id.h"
 #include "type_id.h"
 
+auto reset_scenario( avatar &u, const scenario *scen ) -> void;
+
 static std::ostream &operator<<( std::ostream &s, const std::vector<trait_id> &v )
 {
     for( const auto &e : v ) {
@@ -36,20 +39,25 @@ static std::ostream &operator<<( std::ostream &s, const std::vector<trait_id> &v
     return s;
 }
 
-static std::vector<trait_id> next_subset( const std::vector<trait_id> &set )
-{
-    // Doing it this way conveniently returns a vector containing solely set[foo] before
-    // it returns any other vectors with set[foo] in it
-    static unsigned bitset = 0;
-    std::vector<trait_id> ret;
+using starting_item_trait_set = std::vector<trait_id>;
+using starting_item_trait_sets_t = std::vector<starting_item_trait_set>;
 
-    ++bitset;
-    // Check each bit position for a match
-    for( size_t idx = 0; idx < set.size(); idx++ ) {
-        if( bitset & ( 1 << idx ) ) {
-            ret.push_back( set[idx] );
-        }
+static auto starting_item_trait_sets( const std::vector<trait_id> &traits ) ->
+starting_item_trait_sets_t
+{
+    auto ret = starting_item_trait_sets_t{};
+    for( const auto &trait : traits ) {
+        ret.push_back( { trait } );
     }
+    ret.insert( ret.end(), {
+        { trait_id( "ANTIWHEAT" ), trait_id( "MEATARIAN" ) },
+        { trait_id( "ANTIWHEAT" ), trait_id( "VEGETARIAN" ) },
+        { trait_id( "ANTIFRUIT" ), trait_id( "MEATARIAN" ) },
+        { trait_id( "ANTIFRUIT" ), trait_id( "ANTIJUNK" ) },
+        { trait_id( "ANTIWHEAT" ), trait_id( "ANTIJUNK" ) },
+        { trait_id( "LACTOSE" ), trait_id( "VEGETARIAN" ) },
+        { trait_id( "ANTIWHEAT" ), trait_id( "ANTIJUNK" ), trait_id( "MEATARIAN" ) },
+    } );
     return ret;
 }
 
@@ -57,7 +65,7 @@ static bool try_set_traits( Character &ch, const std::vector<trait_id> &traits )
 {
     ch.clear_mutations();
     newcharacter::add_traits( ch ); // mandatory prof/scen traits
-    for( const trait_id &tr : traits ) {
+    for( const auto &tr : traits ) {
         if( newcharacter::has_conflicting_trait( ch, tr ) || !g->scen->traitquery( tr ) ) {
             return false;
         } else if( !ch.has_trait( tr ) ) {
@@ -80,6 +88,24 @@ static avatar get_sanitized_player()
     ret.set_thirst( 10000 );
     return ret;
 }
+
+static auto load_scenario_whitelist( const std::string &scenario_id ) -> void
+{
+    const auto json = std::string( R"({ "subtype": "whitelist", "scenarios": [ ")" ) +
+                      scenario_id + R"(" ] })";
+    auto stream = std::istringstream( json );
+    auto jsin = JsonIn( stream );
+    auto jo = jsin.get_object();
+    scen_blacklist::load_scen_blacklist( jo, "test" );
+    scenario::check_definitions();
+}
+
+struct scoped_scenario_blacklist_reset {
+    ~scoped_scenario_blacklist_reset() {
+        reset_scenarios_blacklist();
+        scenario::check_definitions();
+    }
+};
 
 struct failure {
     string_id<profession> prof;
@@ -127,6 +153,53 @@ TEST_CASE( "skin_tone_is_mandatory_with_default", "[new_character][traits]" )
     CHECK( ch.has_trait( skin_lighter ) );
 }
 
+TEST_CASE( "default_character_respects_scenario_whitelist", "[new_character][scenario]" )
+{
+    const auto whitelisted_scenario = string_id<scenario>( "wilderness" );
+    [[maybe_unused]] const auto reset_blacklist = scoped_scenario_blacklist_reset{};
+    load_scenario_whitelist( whitelisted_scenario.c_str() );
+
+    auto ch = get_sanitized_player();
+    auto points = points_left();
+    g->scen = scenario::generic();
+
+    ch.randomize( false, points, true );
+
+    CHECK( g->scen->ident() == whitelisted_scenario );
+}
+
+TEST_CASE( "scenario_reset_preserves_or_defaults_hair_style", "[new_character][scenario][traits]" )
+{
+    clear_all_state();
+
+    const auto *target_scenario = &string_id<scenario>( "wilderness" ).obj();
+    const auto default_hair_style = trait_id( "hair_medium" );
+    const auto bald_hair_style = trait_id( "HAIR_BALD" );
+
+    auto ch = get_sanitized_player();
+    ch.male = true;
+    ch.prof = profession::generic();
+    g->scen = scenario::generic();
+
+    SECTION( "uses the default hair style when no hair style is selected" ) {
+        reset_scenario( ch, target_scenario );
+
+        CHECK( ch.has_trait( default_hair_style ) );
+        CHECK( !ch.has_trait( bald_hair_style ) );
+    }
+
+    SECTION( "preserves explicitly selected bald hair style" ) {
+        ch.set_mutation( bald_hair_style );
+
+        reset_scenario( ch, target_scenario );
+
+        CHECK( ch.has_trait( bald_hair_style ) );
+        CHECK( !ch.has_trait( default_hair_style ) );
+    }
+
+    g->scen = scenario::generic();
+}
+
 TEST_CASE( "starting_items", "[slow]" )
 {
     clear_all_state();
@@ -165,19 +238,18 @@ TEST_CASE( "starting_items", "[slow]" )
     // Avoid false positives from ingredients like salt and cornmeal.
     const avatar control = get_sanitized_player();
 
-    std::vector<trait_id> traits = next_subset( mutations );
-    for( ; !traits.empty(); traits = next_subset( mutations ) ) {
+    for( const auto &traits : starting_item_trait_sets( mutations ) ) {
         for( const auto &pair : scen_prof_combos ) {
             g->scen = pair.first;
-            for( const string_id<profession> &prof : pair.second ) {
+            for( const auto &prof : pair.second ) {
                 ch.prof = prof;
                 if( !try_set_traits( ch, traits ) ) {
                     continue; // Trait conflict: this prof/scen/trait combo is impossible to attain
                 }
-                for( int i = 0; i < 2; i++ ) {
+                for( const auto male : { true, false } ) {
                     ch.worn.clear();
                     ch.reset_encumbrance();
-                    ch.male = i == 0;
+                    ch.male = male;
                     std::vector<detached_ptr<item>> items = prof->items( ch.male, traits );
                     /*
                     for( item * const &it : items ) {

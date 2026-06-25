@@ -21,13 +21,13 @@
 #include "cata_utility.h"
 #include "craft_command.h"
 #include "debug.h"
+#include "enchantments/enchantment.h"
 #include "enums.h"
 #include "flat_set.h"
 #include "flag.h"
 #include "game.h"
 #include "item_contents.h"
 #include "itype.h"
-#include "magic_enchantment.h"
 #include "map.h"
 #include "material.h"
 #include "messages.h"
@@ -604,7 +604,7 @@ float Character::metabolic_rate_base() const
     const float hunger_rate = get_option< float >( hunger_rate_string );
     const float mut_bonus = 1.0f + mutation_value( metabolism_modifier );
     const float with_mut = hunger_rate * mut_bonus;
-    const float ench_bonus = bonus_from_enchantments( with_mut, enchant_vals::mod::METABOLISM );
+    const float ench_bonus = bonus_from_enchantments( with_mut, enchantment_value_id( "METABOLISM" ) );
 
     return std::max( 0.0f, with_mut + ench_bonus );
 }
@@ -1075,7 +1075,7 @@ void Character::modify_morale( item &food, int nutr )
             food_morale( MORALE_FOOD_HOT );
         }
     } else if( food.has_flag( flag_EATEN_COLD ) ) {
-        const auto temp = rot::temperature_flag_for_location( get_map(), food );
+        const auto temp = rot::temp::for_location( get_map(), food );
 
         if( temp == temperature_flag::TEMP_FREEZER ) {
             add_msg_if_player( m_good, _( "This stuff is icy!" ), food.tname() );

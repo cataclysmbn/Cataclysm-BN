@@ -8,6 +8,7 @@
 
 #include "debug.h"
 #include "game_constants.h"
+#include "generic_factory.h"
 #include "hsv_color.h"
 #include "json.h"
 #include "map.h"
@@ -15,67 +16,61 @@
 #include "options.h"
 #include "point.h"
 #include "rng.h"
+#include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "units_angle.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
-/** @relates string_id */
-template<>
-const VehiclePalette &string_id<VehiclePalette>::obj() const
+namespace
 {
-    const auto iter = vehicle_color_palettes.find( *this );
-    if( iter == vehicle_color_palettes.end() ) {
-        debugmsg( "invalid vehicle color palette id %s", c_str() );
-        static const VehiclePalette dummy{};
-        return dummy;
-    }
-    return iter->second;
+generic_factory<VehiclePalette> all_palettes( "Vehicle Palettes" );
 }
 
-/** @relates string_id */
-template<>
-bool string_id<VehiclePalette>::is_valid() const
+IMPLEMENT_STRING_AND_INT_IDS( VehiclePalette, all_palettes );
+
+void VehiclePalette::load_palette( const JsonObject &jo, const std::string &src )
 {
-    return vehicle_color_palettes.contains( *this );
+    all_palettes.load( jo, src );
 }
 
-void VehiclePalette::load( const JsonObject &jo )
+void VehiclePalette::load( const JsonObject &jo, const std::string & )
 {
-    VehiclePalette &palette = vehicle_color_palettes[vpalette_id( jo.get_string( "id" ) )];
-
     if( jo.has_bool( "clear" ) && jo.get_bool( "clear" ) ) {
-        palette.fuzzy_color_match.clear();
-        palette.colors.clear();
+        fuzzy_color_match.clear();
+        colors.clear();
     }
-    palette.id = vpalette_id( jo.get_string( "id" ) );
     for( const JsonObject obj : jo.get_array( "palette" ) ) {
         for( const std::string &id : obj.get_string_array( "fuzzy_ids" ) ) {
-            palette.fuzzy_color_match[id] = palette.colors.size();
+            fuzzy_color_match[id] = colors.size();
         }
         auto weights = weighted_int_list<std::string>();
         for( const JsonObject col : obj.get_array( "colors" ) ) {
             weights.add( col.get_string( "color" ), col.get_int( "weight" ) );
         }
-        palette.colors.push_back( weights );
+        colors.push_back( weights );
     }
 }
 
-void VehiclePalette::check()
+void VehiclePalette::check_definitions()
 {
-    for( auto palette : vehicle_color_palettes ) {
-        for( auto colorlist : palette.second.colors ) {
-            for( auto colorstr : colorlist ) {
-                std::optional<RGBColor> color = RGBColor::try_parse( colorstr.obj );
-                if( !color ) {
-                    debugmsg( "Invalid Color %s in Vehicle Palette %s", colorstr.obj, palette.first.str() );
-                }
+    all_palettes.check();
+}
+void VehiclePalette::check() const
+{
+    for( auto colorlist : colors ) {
+        for( auto colorstr : colorlist ) {
+            std::optional<RGBColor> color = RGBColor::try_parse( colorstr.obj );
+            if( !color ) {
+                debugmsg( "Invalid Color %s in Vehicle Palette %s", colorstr.obj, id.str() );
             }
         }
     }
 }
+
 int VehiclePalette::fuzzy_to_index( const vpart_id &id ) const
 {
     for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
@@ -103,6 +98,6 @@ std::vector<RGBColor> VehiclePalette::pick_colors() const
 
 void VehiclePalette::reset()
 {
-    vehicle_color_palettes.clear();
+    all_palettes.reset();
 }
 

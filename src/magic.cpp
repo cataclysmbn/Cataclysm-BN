@@ -21,6 +21,7 @@
 #include "cursesdef.h"
 #include "damage.h"
 #include "debug.h"
+#include "enchantments/enchantment.h"
 #include "enum_conversions.h"
 #include "enums.h"
 #include "event.h"
@@ -33,7 +34,6 @@
 #include "item.h"
 #include "json.h"
 #include "line.h"
-#include "magic_enchantment.h"
 #include "map.h"
 #include "messages.h"
 #include "monster.h"
@@ -50,8 +50,10 @@
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "ui.h"
 #include "units.h"
+#include "faction.h"
 
 static const trait_id trait_NONE( "NONE" );
 static const trait_id trait_BRAWLER( "BRAWLER" );
@@ -129,17 +131,7 @@ namespace
 generic_factory<spell_type> spell_factory( "spell" );
 } // namespace
 
-template<>
-const spell_type &string_id<spell_type>::obj() const
-{
-    return spell_factory.obj( *this );
-}
-
-template<>
-bool string_id<spell_type>::is_valid() const
-{
-    return spell_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( spell_type, spell_factory );
 
 void spell_type::load_spell( const JsonObject &jo, const std::string &src )
 {
@@ -1114,21 +1106,41 @@ void spell::create_field( const tripoint_bub_ms &at ) const
     }
 }
 
-void spell::make_sound( const tripoint_bub_ms &target ) const
+void spell::make_sound( const tripoint_bub_ms &target, Creature &caster ) const
 {
     if( !has_flag( spell_flag::SILENT ) ) {
-        int loudness = std::abs( damage() ) / 3;
+        int loudness = ( 40 + ( std::abs( damage() ) ) );
         if( has_flag( spell_flag::LOUD ) ) {
-            loudness += 1 + damage() / 3;
+            loudness += 20 + ( damage() / 2 );
         }
-        make_sound( target, loudness );
+        make_sound( target, caster, loudness );
     }
 }
 
-void spell::make_sound( const tripoint_bub_ms &target, int loudness ) const
+void spell::make_sound( const tripoint_bub_ms & /*target*/, Creature &caster, int loudness ) const
 {
-    sounds::sound( target, loudness, type->sound_type, type->sound_description.translated(),
-                   type->sound_ambient, type->sound_id, type->sound_variant );
+    sound_event se;
+    se.origin = caster.bub_pos();
+    se.volume = std::max( 190, loudness );
+    se.category = type->sound_type;
+    se.description = type->sound_description.translated();
+    se.movement_noise = ( type->sound_type == sounds::sound_t::movement );
+    se.from_player = caster.is_avatar();
+    se.from_npc = caster.is_npc();
+    se.from_monster = caster.is_monster();
+    se.id = type->sound_id;
+    se.variant = type->sound_variant;
+    // If we have a character, grab their associated factions.
+    if( se.from_player || se.from_npc ) {
+        const Character &nerd = dynamic_cast<const Character &>( caster );
+        se.faction = nerd.get_faction()->id;
+        se.monfaction = nerd.get_faction()->mon_faction;
+    }
+    // If we have a monster, lets grab our monster faction.
+    if( se.from_monster ) {
+        se.monfaction = caster.as_monster()->faction.id();
+    }
+    sounds::sound( se );
 }
 
 std::string spell::effect() const
@@ -1733,7 +1745,8 @@ int known_magic::max_mana( const Character &guy ) const
     float mut_add = guy.mutation_value( "mana_modifier" );
     int natural_cap = std::max( 0.0f, ( ( mana_base + int_bonus ) * mut_mul ) + mut_add );
 
-    int ench_bonus = guy.bonus_from_enchantments( natural_cap, enchant_vals::mod::MANA_CAP, true );
+    int ench_bonus = guy.bonus_from_enchantments( natural_cap, enchantment_value_id( "MANA_CAP" ),
+                     true );
 
     return std::max( 0, natural_cap + ench_bonus );
 }
@@ -1757,7 +1770,8 @@ double known_magic::mana_regen_rate( const Character &guy ) const
     double natural_regen = std::max( 0.0, base_rate * mut_mul );
 
 
-    double ench_bonus = guy.bonus_from_enchantments( natural_regen, enchant_vals::mod::MANA_REGEN );
+    double ench_bonus = guy.bonus_from_enchantments( natural_regen,
+                        enchantment_value_id( "MANA_REGEN" ) );
 
     return std::max( 0.0, natural_regen + ench_bonus );
 }

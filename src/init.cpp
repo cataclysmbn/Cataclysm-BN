@@ -42,6 +42,8 @@
 #include "dialogue.h"
 #include "disease.h"
 #include "effect.h"
+#include "enchantments/enchantment.h"
+#include "enchantments/enchantment_value.h"
 #include "emit.h"
 #include "event_statistics.h"
 #include "faction.h"
@@ -61,7 +63,6 @@
 #include "loading_ui.h"
 #include "lru_cache.h"
 #include "magic.h"
-#include "magic_enchantment.h"
 #include "magic_ter_furn_transform.h"
 #include "map_extras.h"
 #include "mapbuffer.h"
@@ -292,6 +293,7 @@ void DynamicDataLoader::initialize()
     add( "SCENARIO_BLACKLIST", &scen_blacklist::load_scen_blacklist );
     add( "skill_boost", &skill_boost::load_boost );
     add( "enchantment", &enchantment::load_enchantment );
+    add( "enchantment_value", &enchantment_value::load_enchantment_values );
     add( "hit_range", &Creature::load_hit_range );
     add( "scent_type", &scent_type::load_scent_type );
     add( "disease_type", &disease_type::load_disease_type );
@@ -313,7 +315,7 @@ void DynamicDataLoader::initialize()
     } );
 
     add( "vehicle_part",  &vpart_info::load );
-    add( "vehicle_color_palette",  &VehiclePalette::load );
+    add( "vehicle_color_palette",  &VehiclePalette::load_palette );
     add( "vehicle",  &vehicle_prototype::load );
     add( "vehicle_group",  &VehicleGroup::load );
     add( "vehicle_placement",  &VehiclePlacement::load );
@@ -580,6 +582,7 @@ void DynamicDataLoader::unload_data()
     dreams::clear();
     emit::reset();
     enchantment::reset();
+    enchantment_value::reset();
     event_statistic::reset();
     event_transformation::reset();
     faction_template::reset();
@@ -732,6 +735,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Mutations" ), &mutation_branch::finalize },
             { _( "Achievements" ), &achievement::finalize },
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
+            { _( "Enchantments" ), &enchantment::finalize_all },
 #if defined(TILES)
             { _( "Tileset" ), &load_tileset },
 #endif
@@ -779,7 +783,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Materials" ), &materials::check },
             { _( "Engine faults" ), &fault::check_consistency },
             { _( "Vehicle parts" ), &vpart_info::check },
-            { _( "Vehicle palettes" ), &VehiclePalette::check },
+            { _( "Vehicle palettes" ), &VehiclePalette::check_definitions },
             { _( "Vehicle groups" ), &VehicleGroup::check },
             { _( "Mapgen definitions" ), &check_mapgen_definitions },
             { _( "Mapgen palettes" ), &mapgen_palette::check_definitions },
@@ -825,6 +829,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Anatomies" ), &anatomy::check_consistency },
             { _( "Spells" ), &spell_type::check_consistency },
             { _( "Enchantments" ), &enchantment::check_consistency },
+            { _( "Enchantment Values" ), &enchantment_value::check_consistency },
             { _( "Transformations" ), &event_transformation::check_consistency },
             { _( "Statistics" ), &event_statistic::check_consistency },
             { _( "Scent types" ), &scent_type::check_scent_consistency },
@@ -1006,7 +1011,8 @@ void init::load_world_modfiles( loading_ui &ui, const world *world,
     load_and_finalize_packs( ui, _( "Loading files" ), mods );
 }
 
-bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opts )
+auto init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opts,
+                                  const check_mods_mode mode ) -> bool
 {
     const dependency_tree &tree = world_generator->get_mod_manager().get_tree();
 
@@ -1030,15 +1036,20 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         to_check.emplace( id );
     }
 
-    // If no specific mods specified check all non-obsolete mods
     if( to_check.empty() ) {
-        for( const mod_id &mod : world_generator->get_mod_manager().all_mods() ) {
-            if( !mod->obsolete ) {
+        if( mode == check_mods_mode::all_mods ) {
+            for( const mod_id &mod : world_generator->get_mod_manager().all_mods() ) {
+                if( !mod->obsolete ) {
+                    to_check.emplace( mod );
+                }
+            }
+        } else {
+            for( const mod_id &mod : world_generator->get_mod_manager().get_default_mods() ) {
                 to_check.emplace( mod );
             }
         }
     }
-    // If no mods are available then test core data only
+    // If no mode-selected mods are available then test core data only
     if( to_check.empty() ) {
         to_check.emplace( mod_management::get_default_core_content_pack() );
     }

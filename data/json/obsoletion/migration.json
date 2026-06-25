@@ -1,5 +1,29 @@
 [
   {
+    "id": "rifle_308",
+    "type": "MIGRATION",
+    "replace": "handmade_carbine",
+    "contents": [ "retool_hc_308" ]
+  },
+  {
+    "id": "surv_carbine_223",
+    "type": "MIGRATION",
+    "replace": "handmade_carbine",
+    "contents": [ "retool_hc_223" ]
+  },
+  {
+    "id": "surv_six_shooter",
+    "type": "MIGRATION",
+    "replace": "handmade_revolver",
+    "contents": [ "retool_hmr_40" ]
+  },
+  {
+    "id": "surv_hand_cannon",
+    "type": "MIGRATION",
+    "replace": "handmade_revolver",
+    "contents": [ "retool_hmr_45" ]
+  },
+  {
     "id": "arrow_fire_hardened",
     "type": "MIGRATION",
     "replace": "arrow_fire_hardened_fletched"
@@ -269,7 +293,8 @@
   {
     "id": "smg_38",
     "type": "MIGRATION",
-    "replace": "smg_45"
+    "replace": "smg_luty",
+    "contents": [ "retool_luty_45" ]
   },
   {
     "id": "smg_38_mag",
@@ -279,7 +304,7 @@
   {
     "id": "smg_22",
     "type": "MIGRATION",
-    "replace": "smg_9mm"
+    "replace": "smg_luty"
   },
   {
     "id": "smg_22_mag",
@@ -379,12 +404,27 @@
   {
     "id": "40mm_casing",
     "type": "MIGRATION",
-    "replace": "40x46mm_m118_casing"
+    "replace": "40x46mm_casing"
   },
   {
-    "id": "solar_panel_v3",
+    "id": "40x46mm_m118_casing",
     "type": "MIGRATION",
-    "replace": "solar_panel_v2"
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m195_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m199_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m212_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
   },
   {
     "id": "q_solarpack",
@@ -728,5 +768,105 @@
     "id": "multi_cooker_filled",
     "type": "MIGRATION",
     "replace": "multi_cooker"
+  },
+  {
+    "id": "40x53mm_m169_casing",
+    "type": "MIGRATION",
+    "replace": "40x53mm_casing"
+  },
+  {
+    "id": "40x46mm_buckshot_m118",
+    "type": "MIGRATION",
+    "replace": "40x46mm_m576"
+  },
+  {
+    "id": "40x46mm_slug_m118",
+    "type": "MIGRATION",
+    "replace": "40x46mm_slug"
+  },
+  {
+    "id": "40x46mm_slug_m199",
+    "type": "MIGRATION",
+    "replace": "40x46mm_slug"
+  },
+  {
+    "id": "40x46mm_flechette_m118",
+    "type": "MIGRATION",
+    "replace": "40x46mm_flechette"
+  },
+  {
+    "id": "40x46mm_flechette_m199",
+    "type": "MIGRATION",
+    "replace": "40x46mm_flechette"
+  },
+  {
+    "id": "40x46mm_makeshift_he_m199",
+    "type": "MIGRATION",
+    "replace": "40x46mm_makeshift_he"
+  },
+  {
+    "id": "rifle_22",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_22" ]
+  },
+  {
+    "id": "rifle_38",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_38" ]
+  },
+  {
+    "id": "rifle_40",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_40" ]
+  },
+  {
+    "id": "rifle_44",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_44" ]
+  },
+  {
+    "id": "rifle_45",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_45" ]
+  },
+  {
+    "id": "rifle_9mm",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_9mm" ]
+  },
+  {
+    "id": "rifle_223",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_223" ]
+  },
+  {
+    "id": "rifle_3006",
+    "type": "MIGRATION",
+    "replace": "pipe_rifle",
+    "contents": [ "retool_pipe_3006" ]
+  },
+  {
+    "id": "smg_9mm",
+    "type": "MIGRATION",
+    "replace": "smg_luty"
+  },
+  {
+    "id": "smg_40",
+    "type": "MIGRATION",
+    "replace": "smg_luty",
+    "contents": [ "retool_luty_40" ]
+  },
+  {
+    "id": "smg_45",
+    "type": "MIGRATION",
+    "replace": "smg_luty",
+    "contents": [ "retool_luty_45" ]
   }
 ]

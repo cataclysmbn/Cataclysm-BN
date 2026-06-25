@@ -20,6 +20,7 @@
 #include "itype.h"
 #include "make_static.h"
 #include "map.h"
+#include "map_helpers.h"
 #include "material.h"
 #include "npc.h"
 #include "pimpl.h"
@@ -126,7 +127,7 @@ void clear_character( player &dummy, bool debug_storage )
     dummy.dodges_left = 1;
 
     const tripoint_bub_ms spot( 60, 60, 0 );
-    dummy.setpos( spot );
+    dummy.setpos( map_local_to_abs( get_map(), spot ) );
 
     dummy.invalidate_crafting_inventory();
 }
@@ -146,7 +147,7 @@ void process_activity( player &dummy )
     } while( dummy.activity );
 }
 
-npc &spawn_npc( const point_bub_ms &p, const std::string &npc_class )
+npc &spawn_npc( const tripoint_bub_ms &p, const std::string &npc_class )
 {
     const string_id<npc_template> test_guy( npc_class );
     const character_id model_id = g->m.place_npc( p, test_guy, true );

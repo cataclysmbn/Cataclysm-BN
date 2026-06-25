@@ -43,8 +43,8 @@ void old_scent_map_update( const tripoint_bub_ms &center, map &m,
     const int diffusivity = 100;
 
     // The new scent flag searching function. Should be wayyy faster than the old one.
-    m.scent_blockers( monkey, MAPSIZE_Y, point_bub_ms( scentmap_minx - 1, scentmap_miny - 1 ),
-                      point_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1 ) );
+    m.scent_blockers( monkey, MAPSIZE_Y, tripoint_bub_ms( scentmap_minx - 1, scentmap_miny - 1, 0 ),
+                      tripoint_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1, 0 ) );
 
     for( int x = 0; x < MAPSIZE_X; x++ ) {
         for( int y = 0; y < MAPSIZE_Y; y++ ) {
@@ -137,7 +137,8 @@ TEST_CASE( "scent_blockers_ignore_vehicle_parts_outside_cache", "[scent]" )
     REQUIRE( veh->install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "windshield" ), true ) >= 0 );
 
     auto scent_transfer = std::vector<char>( MAPSIZE_X * MAPSIZE_Y, 5 );
-    here.scent_blockers( scent_transfer, MAPSIZE_Y, point_bub_ms( -5, -5 ), point_bub_ms( 5, 5 ) );
+    here.scent_blockers( scent_transfer, MAPSIZE_Y, tripoint_bub_ms( -5, -5, 0 ), tripoint_bub_ms( 5, 5,
+                         0 ) );
 
     CHECK( scent_transfer[MAPSIZE_Y] == 1 );
 }

@@ -26,6 +26,8 @@ class translation;
 class activity_ptr;
 class npc;
 
+auto activity_uses_calendar_duration_progress( const activity_id &id ) -> bool;
+
 class player_activity
 {
     private:
@@ -116,7 +118,7 @@ class player_activity
             return moves_left <= 0;
         }
         //Wrapper func to return assistants array properly
-        inline std::vector<npc *> &assistants();
+        std::vector<npc *> &assistants();
         /*
         * Members to work with activity_actor.
         */
@@ -143,6 +145,16 @@ class player_activity
         }
         bool rooted() const {
             return type != activity_id::NULL_ID() && type->rooted();
+        }
+        auto has_idle_bubble_effect() const -> bool {
+            return type != activity_id::NULL_ID() &&
+                   type->bubble_effect() == activity_bubble_effect::idle;
+        }
+        auto has_special_turns() const -> bool {
+            return type != activity_id::NULL_ID() && type->special();
+        }
+        auto light_affected() const -> bool {
+            return type != activity_id::NULL_ID() && type->light_affected();
         }
 
         // Question to ask when the activity is to be stopped,
@@ -222,5 +234,3 @@ class player_activity
     private:
         std::vector<safe_reference<item>> tools_;
 };
-
-

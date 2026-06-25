@@ -98,7 +98,14 @@ bool trapfunc::bubble( const tripoint_bub_ms &p, Creature *c, item * )
             add_msg( m_warning, _( "Your %s steps on some bubble wrap!" ), c->get_name() );
         }
     }
-    sounds::sound( p, 18, sounds::sound_t::alarm, _( "Pop!" ), false, "trap", "bubble_wrap" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 65;
+    se.category = sounds::sound_t::alarm;
+    se.description = _( "Pop!" );
+    se.id = "trap";
+    se.variant = "bubble_wrap";
+    sounds::sound( se );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
 }
@@ -124,7 +131,15 @@ bool trapfunc::glass( const tripoint_bub_ms &p, Creature *c, item * )
             c->check_dead_state();
         }
     }
-    sounds::sound( p, 10, sounds::sound_t::combat, _( "glass cracking!" ), false, "trap", "glass" );
+    add_msg( _( "The shards shatter!" ) );
+    sound_event se;
+    se.origin = p;
+    se.volume = 60;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "glass cracking!" );
+    se.id = "trap";
+    se.variant = "glass";
+    sounds::sound( se );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
 }
@@ -149,7 +164,16 @@ bool trapfunc::beartrap( const tripoint_bub_ms &p, Creature *c, item * )
     if( c != nullptr && c->get_size() == creature_size::tiny ) {
         return false;
     }
-    sounds::sound( p, 8, sounds::sound_t::combat, _( "SNAP!" ), false, "trap", "bear_trap" );
+    // Increased volume relative to its origional 8 tile distance, bear traps are actually quite loud.
+    // This helps players hear if a trap they set nearby went off.
+    sound_event se;
+    se.origin = p;
+    se.volume = 80;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "SNAP!" );
+    se.id = "trap";
+    se.variant = "bear_trap";
+    sounds::sound( se );
     if( c != nullptr ) {
         // What got hit?
         const bodypart_id hit = one_in( 2 ) ? bodypart_id( "leg_l" ) : bodypart_id( "leg_r" );
@@ -258,8 +282,14 @@ bool trapfunc::caltrops_glass( const tripoint_bub_ms &p, Creature *c, item * )
     c->check_dead_state();
     if( g->u.sees( p ) ) {
         add_msg( _( "The shards shatter!" ) );
-        sounds::sound( p, 8, sounds::sound_t::combat, _( "glass cracking!" ), false, "trap",
-                       "glass_caltrops" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 60;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "glass cracking!" );
+        se.id = "trap";
+        se.variant = "glass_caltrops";
+        sounds::sound( se );
     }
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
@@ -292,7 +322,6 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
                 z->setpos( g->u.bub_pos() );
             }
             g->u.moves -= 150;
-            g->update_map( g->u );
         } else {
             z->stumble();
         }
@@ -310,9 +339,6 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
             n->setpos( random_entry( valid ) );
         }
         n->moves -= 150;
-        if( c == &g->u ) {
-            g->update_map( g->u );
-        }
         if( !n->is_mounted() ) {
             ///\EFFECT_DEX decreases chance of taking damage from a tripwire trap
             if( rng( 5, 20 ) > n->dex_cur ) {
@@ -421,8 +447,14 @@ bool trapfunc::crossbow( const tripoint_bub_ms &p, Creature *c, item * )
 
 bool trapfunc::shotgun( const tripoint_bub_ms &p, Creature *c, item * )
 {
-    sounds::sound( p, 60, sounds::sound_t::combat, _( "Kerblam!" ), false, "fire_gun",
-                   g->m.tr_at( p ).loadid == tr_shotgun_1 ? "shotgun_s" : "shotgun_d" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 160;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Kerblam!" );
+    se.id = "fire_gun";
+    se.variant = g->m.tr_at( p ).loadid == tr_shotgun_1 ? "shotgun_s" : "shotgun_d";
+    sounds::sound( se );
     int shots = ( g->m.tr_at( p ).loadid == tr_shotgun_2 ? 2 : 1 );
     if( c != nullptr ) {
         if( c->has_effect( effect_ridden ) ) {
@@ -515,7 +547,14 @@ bool trapfunc::blade( const tripoint_bub_ms &p, Creature *c, item * )
 
 bool trapfunc::snare_light( const tripoint_bub_ms &p, Creature *c, item * )
 {
-    sounds::sound( p, 2, sounds::sound_t::combat, _( "Snap!" ), false, "trap", "snare" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 40;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Snap!" );
+    se.id = "trap";
+    se.variant = "snare";
+    sounds::sound( se );
     if( c == nullptr ) {
         return false;
     }
@@ -542,7 +581,14 @@ bool trapfunc::snare_light( const tripoint_bub_ms &p, Creature *c, item * )
 
 bool trapfunc::snare_heavy( const tripoint_bub_ms &p, Creature *c, item * )
 {
-    sounds::sound( p, 4, sounds::sound_t::combat, _( "Snap!" ), false, "trap", "snare" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 50;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Snap!" );
+    se.id = "trap";
+    se.variant = "snare";
+    sounds::sound( se );
     if( c == nullptr ) {
         return false;
     }
@@ -627,7 +673,15 @@ bool trapfunc::boobytrap( const tripoint_bub_ms &p, Creature *c, item * )
 bool trapfunc::telepad( const tripoint_bub_ms &p, Creature *c, item * )
 {
     //~ the sound of a telepad functioning
-    sounds::sound( p, 6, sounds::sound_t::movement, _( "vvrrrRRMM*POP!*" ), false, "trap", "teleport" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 70;
+    se.category = sounds::sound_t::movement;
+    se.description = _( "vvrrrRRMM*POP!*" );
+    se.movement_noise = true;
+    se.id = "trap";
+    se.variant = "teleport";
+    sounds::sound( se );
     if( c == nullptr ) {
         return false;
     }
@@ -698,8 +752,15 @@ bool trapfunc::dissector( const tripoint_bub_ms &p, Creature *c, item * )
         if( z->type->in_species( ROBOT ) ) {
             //The monster is a robot. So the dissector should not try to dissect the monsters flesh.
             //Dissector error sound.
-            sounds::sound( p, 4, sounds::sound_t::electronic_speech,
-                           _( "BEEPBOOP!  Please remove non-organic object." ), false, "speech", "robot" );
+            sound_event se;
+            se.origin = p;
+            se.volume = 60;
+            se.category = sounds::sound_t::electronic_speech;
+            se.description = _( "BEEPBOOP!  Please remove non-organic object." );
+            se.id = "speech";
+            se.variant = "robot";
+
+            sounds::sound( se );
             c->add_msg_player_or_npc( m_bad, _( "The dissector lights up, and shuts down." ),
                                       _( "The dissector lights up, and shuts down." ) );
             return false;
@@ -726,7 +787,14 @@ bool trapfunc::dissector( const tripoint_bub_ms &p, Creature *c, item * )
     }
 
     //~ the sound of a dissector dissecting
-    sounds::sound( p, 10, sounds::sound_t::combat, _( "BRZZZAP!" ), false, "trap", "dissector" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 70;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "BRZZZAP" );
+    se.id = "trap";
+    se.variant = "dissector";
+    sounds::sound( se );
     if( g->u.sees( p ) ) {
         add_msg( m_bad, _( "Electrical beams emit from the floor and slice the %s!" ), c->get_name() );
     }
@@ -1062,9 +1130,6 @@ static bool sinkhole_safety_roll( player *p, const itype_id &itemname, const int
         p->add_msg_player_or_npc( m_good, _( "You pull yourself to safety!" ),
                                   _( "<npcname> steps on a sinkhole, but manages to pull themselves to safety." ) );
         p->setpos( random_entry( safe ) );
-        if( p == &g->u ) {
-            g->update_map( *p );
-        }
 
         return true;
     }
@@ -1126,37 +1191,6 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
     monster *m = dynamic_cast<monster *>( c );
     if( m != nullptr && m->flies() ) {
         return false;
-    }
-    if( !g->m.has_zlevels() ) {
-        if( c == &g->u ) {
-            if( !character_funcs::can_fly( get_avatar() ) ) {
-                add_msg( m_warning, _( "You fall down a level!" ) );
-                g->vertical_move( -1, true );
-                if( get_avatar().has_trait( trait_WINGS_BIRD ) || ( one_in( 2 ) &&
-                        get_avatar().has_trait( trait_WINGS_BUTTERFLY ) ) ) {
-                    add_msg( _( "You flap your wings and flutter down gracefully." ) );
-                } else if( get_avatar().has_trait( trait_WEB_RAPPEL ) ) {
-                    add_msg( _( "You quickly spin a line of silk and rappel down." ) );
-                } else if( get_avatar().has_active_bionic( bio_shock_absorber ) ) {
-                    add_msg( m_info,
-                             _( "You hit the ground hard, but your shock absorbers handle the impact admirably!" ) );
-                } else {
-                    get_avatar().impact( 20, p );
-                }
-            }
-        } else {
-            c->add_msg_if_npc( _( "<npcname> falls down a level!" ) );
-            auto dest = c->bub_pos();
-            dest.z()--;
-            c->impact( 20, dest );
-            c->setpos( dest );
-            if( m != nullptr ) {
-                g->despawn_monster( *m );
-            }
-        }
-        // Unlikely you'd want a single-use ledge, but could allow for skylights breaking and spawning glass.
-        g->m.tr_at( p ).trigger_aftermath( g->m, p );
-        return true;
     }
 
     int height = 0;
@@ -1346,22 +1380,29 @@ bool trapfunc::glow( const tripoint_bub_ms &p, Creature *c, item * )
 
 bool trapfunc::hum( const tripoint_bub_ms &p, Creature *, item * )
 {
-    int volume = rng( 1, 200 );
+    int volume = rng( 35, 120 );
     std::string sfx;
-    if( volume <= 10 ) {
+    if( volume <= 40 ) {
         //~ a quiet humming sound
         sfx = _( "hrm" );
-    } else if( volume <= 50 ) {
+    } else if( volume <= 70 ) {
         //~ a humming sound
         sfx = _( "hrmmm" );
-    } else if( volume <= 100 ) {
+    } else if( volume <= 90 ) {
         //~ a loud humming sound
         sfx = _( "HRMMM" );
     } else {
         //~ a very loud humming sound
         sfx = _( "VRMMMMMM" );
     }
-    sounds::sound( p, volume, sounds::sound_t::activity, sfx, false, "humming", "machinery" );
+    sound_event se;
+    se.origin = p;
+    se.volume = volume;
+    se.category = sounds::sound_t::activity;
+    se.description = sfx;
+    se.id = "humming";
+    se.variant = "machinery";
+    sounds::sound( se );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
 }
@@ -1446,7 +1487,7 @@ bool trapfunc::cast_spell( const tripoint_bub_ms &p, Creature *critter, item * )
     const spell trap_spell = g->m.tr_at( p ).spell_data.get_spell( 0 );
     npc dummy;
     trap_spell.cast_all_effects( dummy, critter->bub_pos() );
-    trap_spell.make_sound( p );
+    trap_spell.make_sound( p, dummy );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
 }
@@ -1454,7 +1495,14 @@ bool trapfunc::cast_spell( const tripoint_bub_ms &p, Creature *critter, item * )
 bool trapfunc::snake( const tripoint_bub_ms &p, Creature *, item * )
 {
     //~ the sound a snake makes
-    sounds::sound( p, 10, sounds::sound_t::movement, _( "ssssssss" ), false, "misc", "snake_hiss" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 40;
+    se.category = sounds::sound_t::movement;
+    se.description = _( "ssssssss" );
+    se.id = "misc";
+    se.variant = "snake_hiss";
+    sounds::sound( se );
     if( one_in( 6 ) ) {
         g->m.remove_trap( p );
     }

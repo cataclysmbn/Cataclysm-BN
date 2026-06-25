@@ -4,12 +4,14 @@
 #include <optional>
 #include <vector>
 
+#include "coordinates.h"
 #include "type_id.h"
 #include "weighted_list.h"
 
 class Creature;
 class JsonObject;
 class map;
+class mapgen_constructor;
 struct tripoint;
 
 // this is a small class that contains the "results" of a terrain transform.
@@ -76,6 +78,7 @@ class ter_furn_transform
 
         void transform( const tripoint_bub_ms &location ) const;
         void transform( map &m, const tripoint_bub_ms &location ) const;
+        auto transform( mapgen_constructor &m, const point_omt_ms &location ) const -> void;
 
         static void load_transform( const JsonObject &jo, const std::string &src );
         void load( const JsonObject &jo, const std::string & );
@@ -84,5 +87,3 @@ class ter_furn_transform
         static void reset_all();
         bool is_valid() const;
 };
-
-

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <optional>
 
 #include "coordinates.h"
 #include "calendar.h"
@@ -61,9 +62,10 @@ class timed_event_manager
         /// @returns One of the queued events of the given type, or `nullptr`
         /// if no event of that type is queued.
         timed_event *get( timed_event_type type );
+        /// @returns The next queued event time, or std::nullopt when no events are queued.
+        auto next_event_time() const -> std::optional<time_point>;
         /// Process all queued events, potentially altering the game state and
         /// modifying the event queue.
         void process();
 };
-
 

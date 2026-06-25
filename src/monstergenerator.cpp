@@ -80,6 +80,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_NOHEAD: return "NOHEAD";
         case MF_HARDTOSHOOT: return "HARDTOSHOOT";
         case MF_GRABS: return "GRABS";
+        case MF_GRAB_IMMUNE: return "GRAB_IMMUNE";
         case MF_BASHES: return "BASHES";
         case MF_GROUP_BASH: return "GROUP_BASH";
         case MF_DESTROYS: return "DESTROYS";
@@ -173,7 +174,9 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_CANPLAY: return "CANPLAY";
         case MF_PET_MOUNTABLE: return "PET_MOUNTABLE";
         case MF_PET_HARNESSABLE: return "PET_HARNESSABLE";
+        case MF_CAN_FETCH: return "CAN_FETCH";
         case MF_DOGFOOD: return "DOGFOOD";
+        case MF_DOG_WHISTLE: return "DOG_WHISTLE";
         case MF_MILKABLE: return "MILKABLE";
         case MF_SHEARABLE: return "SHEARABLE";
         case MF_NO_BREED: return "NO_BREED";
@@ -218,6 +221,7 @@ std::string enum_to_string<m_flag>( m_flag data )
 
 } // namespace io
 
+// TODO: Make this like any other generic factory so we can use type_id_implement
 /** @relates string_id */
 template<>
 const mtype &string_id<mtype>::obj() const
@@ -387,7 +391,6 @@ void MonsterGenerator::finalize_mtypes()
 
         if( !mon.has_flag( MF_RIDEABLE_MECH ) ) {
             // adjust for worldgen difficulty parameters
-            mon.speed *= get_option<int>( "MONSTER_SPEED" )      / 100.0;
             mon.hp    *= get_option<int>( "MONSTER_RESILIENCE" ) / 100.0;
         }
 
@@ -833,6 +836,8 @@ void mtype::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "mech_str_bonus", mech_str_bonus, 0 );
     optional( jo, was_loaded, "mech_battery", mech_battery, itype_id() );
     optional( jo, was_loaded, "aggro_character", aggro_character, true );
+    assign( jo, "lua_attitude", lua_attitude );
+    assign( jo, "lua_ai", lua_ai );
 
     // TODO: make this work with `was_loaded`
     if( jo.has_array( "melee_damage" ) ) {

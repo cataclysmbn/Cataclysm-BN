@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -392,7 +393,7 @@ bool monexamine::pet_menu( monster &z )
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
-                get_player_character().melee_attack( z, true );
+                avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:
@@ -408,7 +409,7 @@ void monexamine::shear_animal( monster &z )
                                          qual_shear ) ) );
 
     you.assign_activity( activity_id( "ACT_SHEAR" ), moves, -1 );
-    you.activity->coords.push_back( get_map().bub_to_abs( z.bub_pos() ) );
+    you.activity->coords.push_back( z.abs_pos() );
     // pin the sheep in place if it isn't already
     if( !z.has_effect( effect_tied ) ) {
         z.add_effect( effect_tied, 1_turns );
@@ -610,7 +611,7 @@ bool monexamine::mfriend_menu( monster &z )
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
-                get_player_character().melee_attack( z, true );
+                avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:
@@ -881,10 +882,12 @@ void monexamine::play_with( monster &z )
 {
     std::string pet_name = z.get_name();
     avatar &you = get_avatar();
-    int turns = rng( 50, 125 ) * 100;
+    const int turns = rng( 50, 125 ) * 100;
     you.assign_activity( ACT_PLAY_WITH_PET, turns );
+    you.activity->monsters.push_back( g->shared_from( z ) );
     you.activity->str_values.push_back( pet_name );
     z.add_effect( effect_ai_waiting, time_duration::from_turns( turns ) );
+    z.on_pet_bonding( you.as_character() );
 }
 
 void monexamine::train_pet( monster &z )
@@ -1062,7 +1065,7 @@ void monexamine::milk_source( monster &source_mon )
     if( milkable_ammo->second > 0 ) {
         const int moves = to_moves<int>( time_duration::from_minutes( milkable_ammo->second / 2 ) );
         you.assign_activity( ACT_MILK, moves, -1 );
-        you.activity->coords.push_back( get_map().bub_to_abs( source_mon.bub_pos() ) );
+        you.activity->coords.push_back( source_mon.abs_pos() );
         // pin the cow in place if it isn't already
         bool temp_tie = !source_mon.has_effect( effect_tied );
         if( temp_tie ) {

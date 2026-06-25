@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <set>
 #include <string>
 #include <tuple>
@@ -17,6 +18,7 @@
 #include "color.h"
 #include "effect.h"
 #include "enums.h"
+#include "hsv_color.h"
 #include "mapdata.h"
 #include "translations.h"
 #include "type_id.h"
@@ -126,6 +128,7 @@ struct field_intensity_level {
     int monster_spawn_radius = 0;
     mongroup_id monster_spawn_group;
     float light_emitted = 0.0f;
+    std::optional<RGBColor> light_color;
     float local_light_override = -1.0f;
     float translucency = 0.0f;
     int convection_temperature_mod = 0;
@@ -246,6 +249,9 @@ struct field_type {
         float get_light_emitted( int level = 0 ) const {
             return get_intensity_level( level ).light_emitted;
         }
+        std::optional<RGBColor> get_light_color( int level = 0 ) const {
+            return get_intensity_level( level ).light_color;
+        }
         float get_local_light_override( int level = 0 )const {
             return get_intensity_level( level ).local_light_override;
         }
@@ -342,5 +348,4 @@ extern field_type_id fd_null,
        fd_smoke_vent,
        fd_tindalos_rift
        ;
-
 

@@ -139,7 +139,7 @@
     "ranged_damage": { "damage_type": "stab", "amount": 22 },
     "dispersion": 90,
     "durability": 6,
-    "loudness": 15,
+    "loudness": 55,
     "ups_charges": 40,
     "reload": 600,
     "valid_mod_locations": [

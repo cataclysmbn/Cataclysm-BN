@@ -21,6 +21,9 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  LLVM_VERSION: "22"
+
 jobs:
   skip-duplicates:
     continue-on-error: true
@@ -43,28 +46,53 @@ jobs:
         with:
           paths_ignore: '["docs/**", "doxygen_doc/**", "lgtm/**", "utilities/**", "scripts/**", "**.md", "**.mdx"]'
 
-  varied_builds:
+  shader-artifacts:
     needs: skip-duplicates
+    name: Generate shader artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shadercross dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev
+
+      - name: Install shadercross
+        run: bash build-scripts/install-shadercross-vcpkg.sh
+
+      - name: Generate shaders
+        run: bash build-scripts/generate-shaders.sh
+
+      - name: Upload generated shaders
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-shaders-ci
+          path: data/shaders/
+          if-no-files-found: error
+
+  varied_builds:
+    needs: [skip-duplicates, shader-artifacts]
     strategy:
       fail-fast: ${{ github.ref_name == 'main' }}
       max-parallel: ${{ github.ref_name == 'main' && 20 || 2 }}
       matrix:
         include:
-          - title: gcc, curses
+          - title: clang, curses
             preset: ci-curses
             os: ubuntu-latest
             tiles: 0
             test-stage: 1
             ccache_limit: 2G
-            ccache_key: linux-gcc-curses
+            ccache_key: linux-clang-curses
             always-run: true
 
-          - title: gcc, tiles, i18n
+          - title: clang, tiles, i18n
             preset: ci-tiles
             os: ubuntu-latest
             tiles: 1
             ccache_limit: 2G
-            ccache_key: linux-gcc-tiles
+            ccache_key: linux-clang-tiles
             upload-artifact: true
 
     name: ${{ matrix.title }}
@@ -82,16 +110,38 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Download generated shaders
+        if: ${{ env.SKIP == 'false' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders-ci
+          path: data/shaders
+
       - name: install dependencies (ubuntu)
         if: ${{ env.SKIP == 'false' }}
         run: |
           sudo apt-get update
-          sudo apt-get install gcc-14 libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev ninja-build
+          sudo apt-get install -y libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb autoconf autoconf-archive automake libtool libltdl-dev
           sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
 
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-          g++ --version
+      - name: Setup LLVM build tools
+        if: ${{ env.SKIP == 'false' }}
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          clang-format: ${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          setup-cpp: false
+
+      - name: Show Clang version
+        if: ${{ env.SKIP == 'false' }}
+        run: clang++ --version
+
+      - name: Setup Deno
+        if: ${{ env.SKIP == 'false' }}
+        uses: denoland/setup-deno@v2
+        with: { cache: true }
 
       #- name: Install SDL3 (ubuntu)
       #  if: ${{ env.SKIP == 'false' }}
@@ -109,7 +159,7 @@ jobs:
             libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev \
             libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev
 
-      # problem matchers are only ran on GCC to reduce error spam
+      # Problem matchers are only run on the always-on validation leg to reduce error spam.
       - name: add problem matcher
         if: ${{ matrix.always-run == true }}
         run: |
@@ -135,8 +185,6 @@ jobs:
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
-      - uses: ammaraskar/gcc-problem-matcher@master
-
       - name: run JSON syntax validation (test-stage only)
         if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
         run: |
@@ -154,7 +202,8 @@ jobs:
       - name: run JSON formatting check (test-stage only)
         if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
         run: |
-          cmake --build build --target style-json-parallel
+          build-scripts/format-json.sh
+          git diff --exit-code -- '*.json'
           tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 
       - name: create Linux tiles playtest package
@@ -174,28 +223,24 @@ jobs:
           path: cbn-linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}.tar.gz
           if-no-files-found: error
 
-      - name: Publish Linux artifact link
-        if: ${{ success() && github.event_name == 'pull_request' && env.SKIP == 'false' && matrix.upload-artifact == true }}
-        continue-on-error: true
-        uses: ./.github/actions/publish-pr-artifact-body
-        with:
-          repository: ${{ github.repository }}
-          pr-number: ${{ github.event.pull_request.number }}
-          run-id: ${{ github.run_id }}
-          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          head-sha: ${{ github.event.pull_request.head.sha }}
-          token: ${{ github.token }}
-
       - name: run tests
         if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
         run: |
           # Run tests using parallel execution
-          test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
-          test_opts="--min-duration 20 --use-colour yes --rng-seed time --error-format=github-action"
+          Xvfb :99 -screen 0 1280x1024x24 &
+          xvfb_pid=$!
+          trap 'kill "$xvfb_pid" 2>/dev/null || true' EXIT
+          export DISPLAY=:99
+          export LP_NUM_THREADS=2
+          sleep 1
 
-          parallel --verbose --linebuffer \
-            "$test_bin $test_opts --user-dir=test_user_dir_{#} {}" \
-            ::: "[slow] ~starting_items" "~[slow] ~[.],starting_items"
+          test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
+          build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 --non-slow-shards 8 "$test_bin" -- \
+            --min-duration 20 \
+            --use-colour yes \
+            --rng-seed time \
+            --error-format=github-action \
+            --gpu-backend=software
 
           # Run test with all mods (test-stage only)
           if [ "${{ env.TEST_STAGE }}" = "1" ]; then
@@ -214,6 +259,30 @@ jobs:
           path: build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}
           if-no-files-found: ignore
 
+  cache-warm-builds:
+    needs: skip-duplicates
+    if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: experimental
+      mode: ci
+      matrix-json: |
+        [
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
+          { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk" }
+        ]
+      download-translations: false
+      bundle-tilesets: false
+      package-artifacts: false
+      run-tests: true
+      android-localize: false
+      upload-artifacts: false
+    secrets: inherit
+
   builds:
     needs: skip-duplicates
     if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
@@ -224,7 +293,7 @@ jobs:
       artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
       matrix-json: |
         [
-          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-latest", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip", "upload-artifact": true },
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip", "upload-artifact": true },
           { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage", "upload-artifact": true },
           { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },

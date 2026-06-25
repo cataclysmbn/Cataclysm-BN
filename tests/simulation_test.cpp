@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include "avatar.h"
 #include "cached_options.h"
 #include "cata_utility.h"
 #include "coordinates.h"
@@ -14,10 +15,11 @@
 #include "submap.h"
 #include "submap_fields.h"
 #include "submap_load_manager.h"
+#include "type_id.h"
 #include "units.h"
 
 // Dimension ID used only by these tests — never appears in game data.
-static constexpr const char *TEST_DIM_ID = "sim_test_dim";
+static const dimension_id TEST_DIM_ID( "sim_test_dim" );
 
 // Far enough from the test map centre that it is never inside the reality bubble.
 static const tripoint_abs_sm FAR_SM_POS{ 200, 200, 0 };
@@ -26,7 +28,7 @@ static const tripoint_abs_sm FAR_SM_POS{ 200, 200, 0 };
 // Ownership is transferred to @p mb.
 static auto make_blank_submap( mapbuffer &mb, const tripoint_abs_sm &pos ) -> submap *
 {
-    auto sm = std::make_unique<submap>( pos );
+    auto sm = std::make_unique<submap>( pos, mb.get_dimension_id() );
     mb.add_submap( pos, sm );
     return mb.lookup_submap_in_memory( pos );
 }
@@ -62,7 +64,8 @@ TEST_CASE( "fire_processes_in_loaded_submap_outside_bubble", "[simulation][field
     plant_fire( *sm, fire_pt );
     REQUIRE( sm->get_field( fire_pt ).find_field( fd_fire ) != nullptr );
 
-    process_fields_in_submap( *sm, FAR_SM_POS, MAPBUFFER );
+    auto &dummy = get_avatar();
+    process_fields_in_submap( dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER );
 
     const auto *fire = sm->get_field( fire_pt ).find_field( fd_fire );
     REQUIRE( fire != nullptr );
@@ -88,8 +91,10 @@ TEST_CASE( "fire_spread_keeps_no_fire_boundary_submap_while_adjacent_to_fire",
     auto &dim = MAPBUFFER_REGISTRY.get( TEST_DIM_ID );
     const auto source_pos = tripoint_abs_sm{ 400, 400, 0 };
     const auto neighbor_pos = tripoint_abs_sm{ 401, 400, 0 };
+    const auto request_begin = source_pos.xy();
+    const auto request_end = request_begin + point_rel_sm( 1, 1 );
     const auto proper_handle = submap_loader.request_load( load_request_source::reality_bubble,
-                               TEST_DIM_ID, source_pos, 0 );
+                               TEST_DIM_ID, request_begin, request_end );
     const auto cleanup = on_out_of_scope( [&]() {
         loader.clear( submap_loader );
         submap_loader.release_load( proper_handle );
@@ -145,7 +150,7 @@ TEST_CASE( "fire_isolated_between_dimensions", "[simulation][field][dimension]" 
     }
 
     // Process only the secondary dimension.
-    process_fields_in_submap( *dim_sm, FAR_SM_POS, dim );
+    process_fields_in_submap( TEST_DIM_ID, *dim_sm, FAR_SM_POS, dim );
 
     // Fire in the secondary dimension must have aged (processing occurred).
     const auto *dim_fire = dim_sm->get_field( fire_pt ).find_field( fd_fire );

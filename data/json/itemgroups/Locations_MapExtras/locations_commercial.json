@@ -990,7 +990,7 @@
       { "item": "mayonnaise", "prob": 3 },
       { "group": "ketchup_sealed_rng", "prob": 3 },
       { "group": "mustard_sealed_rng", "prob": 3 },
-      { "item": "pickle", "prob": 5, "charges": 6, "container-item": "jar_glass_sealed" },
+      { "item": "pickle", "prob": 5, "charges": 2, "container-item": "jar_glass_sealed" },
       { "item": "cheeseburger", "prob": 10 },
       { "item": "hamburger", "prob": 8 },
       { "item": "sloppyjoe", "prob": 6 },
@@ -1046,7 +1046,8 @@
       { "item": "box_small", "prob": 30 },
       { "item": "rag", "prob": 20 },
       { "item": "bag_plastic", "prob": 15 },
-      { "item": "bag_zipper", "prob": 5 },
+      { "item": "bag_zipper_small", "prob": 5 },
+      { "item": "bag_zipper", "prob": 2 },
       { "item": "news_regional", "prob": 15 },
       { "item": "mag_news", "prob": 15 }
     ]
@@ -1725,7 +1726,8 @@
       [ "backpack", 5 ],
       [ "plastic_shopping_bag", 10 ],
       [ "bag_plastic", 15 ],
-      [ "bag_zipper", 5 ],
+      [ "bag_zipper_small", 5 ],
+      [ "bag_zipper", 2 ],
       [ "basket_laundry", 30 ]
     ]
   },
@@ -1779,7 +1781,8 @@
     "type": "item_group",
     "items": [
       [ "bandages", 50 ],
-      [ "1st_aid", 10 ],
+      [ "1st_aid", 8 ],
+      [ "1st_aid_deluxe", 2 ],
       [ "saline", 20 ],
       [ "vitamins", 15 ],
       [ "calcium_tablet", 15 ],
@@ -1808,7 +1811,8 @@
       [ "gloves_rubber", 25 ],
       [ "rag_bloody", 10 ],
       [ "bag_plastic", 10 ],
-      [ "bag_zipper", 10 ],
+      [ "bag_zipper_small", 10 ],
+      [ "bag_zipper", 5 ],
       [ "string_6", 5 ]
     ]
   },
@@ -1830,7 +1834,8 @@
       [ "rag", 15 ],
       [ "rag_bloody", 2 ],
       [ "bag_plastic", 10 ],
-      [ "bag_zipper", 10 ],
+      [ "bag_zipper_small", 10 ],
+      [ "bag_zipper", 5 ],
       [ "jerky", 40 ]
     ]
   },
@@ -1849,7 +1854,8 @@
       [ "codeine", 15 ],
       [ "saline", 15 ],
       [ "smoxygen_tank", 10 ],
-      [ "1st_aid", 30 ],
+      [ "1st_aid", 24 ],
+      [ "1st_aid_deluxe", 6 ],
       [ "medical_tape", 35 ],
       [ "blood", 5 ],
       [ "vaccine_shot", 15 ],

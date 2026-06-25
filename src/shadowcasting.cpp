@@ -47,7 +47,7 @@ static const exp_lookup s_openair_lookup{ LIGHT_TRANSPARENCY_OPEN_AIR };
 // physics: one z-level is ~1.8 horizontal tiles in height.
 //
 // Table layout: [dy * (Z+1) * (R+1) + dz * (R+1) + dx]
-// where R = g_max_view_distance, Z = fov_3d_z_range.
+// where R = g_max_view_distance, Z = full overmap z span.
 // Rebuilt whenever those two runtime values change.
 
 static std::mutex            s_zdist_mutex;
@@ -59,7 +59,7 @@ static void rebuild_zdist_table()
 {
     const std::lock_guard<std::mutex> lock( s_zdist_mutex );
     const int R = g_max_view_distance;
-    const int Z = fov_3d_z_range;
+    const int Z = OVERMAP_HEIGHT + OVERMAP_DEPTH;
     if( R == s_zdist_R && Z == s_zdist_Z ) {
         return;
     }
@@ -192,7 +192,7 @@ struct octant_xform_3d {
 };
 
 // The 8 octant transforms for 2D casting.  Bit i of the octant_mask passed to
-// castLightOctants_q selects k_octant_xforms[i].
+// castLightOctants selects k_octant_xforms[i].
 static constexpr std::array<octant_xform, 8> k_octant_xforms = {{
         { 0,  1,  1,  0 },
         { 1,  0,  0,  1 },
@@ -235,7 +235,7 @@ static constexpr std::array<octant_xform_3d, 16> k_zlight_xforms = {{
 // @p lookup  Active fast-path table, or null for full exp() computation.
 //            When a tile's transparency differs from lookup->transparency the
 //            cast recurses with lookup=nullptr (slow path).
-// @p Out     float or four_quadrants — selects which update_* to invoke.
+// @p Out     float — selects which update_* to invoke.
 
 template<typename Out>
 static void castLight(
@@ -248,7 +248,8 @@ static void castLight(
     octant_xform xf,
     int row, float start, float end,
     float cumulative_transparency,
-    const exp_lookup *lookup )
+    const exp_lookup *lookup,
+    light_update_callback callback )
 {
     if( start < end ) {
         return;
@@ -342,6 +343,10 @@ static void castLight(
             } else {
                 model.update_quadrants( output_cache[idx], last_intensity, update_quad );
             }
+            if( callback.update != nullptr ) {
+                callback.update( callback.context, 0, current.x, current.y, idx, last_intensity,
+                                 update_quad );
+            }
 
             if( new_transparency == current_transparency ) {
                 continue;
@@ -364,7 +369,7 @@ static void castLight(
                 castLight<Out>( output_cache, input_array, blocked_array, sx, sy,
                                 offset, offset_distance, numerator, model, xf,
                                 distance + 1, start, trailing_edge,
-                                next_cumulative, next_lookup );
+                                next_cumulative, next_lookup, callback );
             }
 
             // Advance the leading edge.
@@ -392,7 +397,7 @@ static void castLight(
                             offset, offset_distance, numerator, model, xf,
                             distance + 1, start, end,
                             model.accumulate( lookup->transparency, current_transparency, distance ),
-                            nullptr );
+                            nullptr, callback );
             return;
         }
 
@@ -405,7 +410,7 @@ static void castLight(
     }
 }
 
-// ── castLightAll / castLightAll_q ─────────────────────────────────────────────
+// ── castLightAll / castLightOctants ───────────────────────────────────────────
 
 void castLightAll(
     float *output_cache,
@@ -414,7 +419,8 @@ void castLightAll(
     int sx, int sy,
     point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
-    const exp_lookup *weather_lookup )
+    const exp_lookup *weather_lookup,
+    light_update_callback callback )
 {
     ZoneScoped;
 
@@ -436,50 +442,20 @@ void castLightAll(
 
         castLight<float>( output_cache, input_array, blocked_array, sx, sy,
                           offset, offset_distance, numerator, model, xf,
-                          1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast );
+                          1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast, callback );
     }
 }
 
-void castLightAll_q(
-    four_quadrants *output_cache,
-    const float *input_array,
-    const diagonal_blocks *blocked_array,
-    int sx, int sy,
-    point_bub_ms offset, int offset_distance, float numerator,
-    const light_model &model,
-    const exp_lookup *weather_lookup )
-{
-    ZoneScoped;
-
-    for( const auto &xf : k_octant_xforms ) {
-        const exp_lookup *fast = nullptr;
-        if( model.lookup_calc != nullptr ) {
-            const point first{ offset.x() - xf.xy, offset.y() - xf.yy };
-            if( first.x >= 0 && first.y >= 0 && first.x < sx && first.y < sy ) {
-                const float t = input_array[first.x * sy + first.y];
-                if( t == LIGHT_TRANSPARENCY_OPEN_AIR ) {
-                    fast = &s_openair_lookup;
-                } else if( weather_lookup != nullptr && t == weather_lookup->transparency ) {
-                    fast = weather_lookup;
-                }
-            }
-        }
-
-        castLight<four_quadrants>( output_cache, input_array, blocked_array, sx, sy,
-                                   offset, offset_distance, numerator, model, xf,
-                                   1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast );
-    }
-}
-
-void castLightOctants_q(
-    four_quadrants *output_cache,
+void castLightOctants(
+    float *output_cache,
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
     point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     uint8_t octant_mask,
-    const exp_lookup *weather_lookup )
+    const exp_lookup *weather_lookup,
+    light_update_callback callback )
 {
     ZoneScoped;
 
@@ -500,9 +476,9 @@ void castLightOctants_q(
                 }
             }
         }
-        castLight<four_quadrants>( output_cache, input_array, blocked_array, sx, sy,
-                                   offset, offset_distance, numerator, model, xf,
-                                   1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast );
+        castLight<float>( output_cache, input_array, blocked_array, sx, sy,
+                          offset, offset_distance, numerator, model, xf,
+                          1, 1.0f, 0.0f, LIGHT_TRANSPARENCY_OPEN_AIR, fast, callback );
     }
 }
 
@@ -525,7 +501,8 @@ static void cast_zlight_segment(
     float start_major = 0.0f, float end_major = 1.0f,
     float start_minor = 0.0f, float end_minor = 1.0f,
     float cumulative_transparency = LIGHT_TRANSPARENCY_OPEN_AIR,
-    int x_skip = -1, int z_skip = -1 )
+    int x_skip = -1, int z_skip = -1,
+    light_update_callback callback = {} )
 {
     if( start_major >= end_major || start_minor > end_minor ) {
         return;
@@ -575,7 +552,8 @@ static void cast_zlight_segment(
         // z_start is mutable within the z loop (floor handling advances it).
         int z_start = z_start_init;
 
-        for( delta.z = z_start; delta.z <= std::min( fov_3d_z_range, z_limit ); ++delta.z ) {
+        for( delta.z = z_start; delta.z <= std::min( OVERMAP_HEIGHT + OVERMAP_DEPTH, z_limit );
+             ++delta.z ) {
             const tripoint world_offset = xf.apply( 0, delta.y, delta.z );
             tripoint current;
             current.z = offset.z() + world_offset.z;
@@ -630,8 +608,15 @@ static void cast_zlight_segment(
                     last_intensity = model.calc( numerator, cumulative_transparency, dist_2d );
                 }
 
-                float &out_cell = output_caches[z_index].at( current.x, current.y );
-                atomic_float_max<UseAtomic>( out_cell, last_intensity );
+                const auto idx = current.x * ic.sy + current.y;
+                if( output_caches[z_index].data != nullptr ) {
+                    float &out_cell = output_caches[z_index].at( current.x, current.y );
+                    atomic_float_max<UseAtomic>( out_cell, last_intensity );
+                }
+                if( callback.update != nullptr ) {
+                    callback.update( callback.context, z_index, current.x, current.y, idx,
+                                     last_intensity, quad );
+                }
 
                 if( new_transparency != current_transparency || new_floor != current_floor ) {
                     // ── Split: A (past rows), B (processed x so far), C (rest) ─
@@ -662,7 +647,7 @@ static void cast_zlight_segment(
                             start_major, std::min( mid_major, end_major ),
                             start_minor, end_minor,
                             next_cumulative,
-                            -1, -1 );
+                            -1, -1, callback );
                     }
 
                     const float mid_minor = ( current_transparency < new_transparency )
@@ -676,7 +661,7 @@ static void cast_zlight_segment(
                         distance,
                         std::max( mid_major, start_major ), end_major,
                         std::max( mid_minor, start_minor ), end_minor,
-                        cumulative_transparency, delta.x, delta.z );
+                        cumulative_transparency, delta.x, delta.z, callback );
 
                     // Continue with section B (already-processed x tiles).
                     if( delta.x == x_start ) {
@@ -707,7 +692,7 @@ static void cast_zlight_segment(
                         start_major, top_edge,
                         start_minor, end_minor,
                         next_cumulative,
-                        -1, -1 );
+                        -1, -1, callback );
                 }
                 start_major = ( delta.z + 0.5f ) / ( delta.y - 0.5001f );
                 if( start_major >= end_major ) {
@@ -738,26 +723,29 @@ void cast_zlight(
     const array_of_grids_of<const char> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
     const tripoint_bub_ms &origin, int offset_distance, float numerator,
-    const light_model &model )
+    const light_model &model,
+    light_update_callback callback )
 {
     ZoneScoped;
 
     // Ensure the z-distance lookup table matches current runtime settings.
     rebuild_zdist_table();
 
-    if( parallel_enabled ) {
+    if( parallel_enabled && !is_pool_worker_thread() ) {
         parallel_for_chunked( 0, static_cast<int>( k_zlight_xforms.size() ), 1, [&]( int i ) {
             cast_zlight_segment<true>(
                 output_caches, input_arrays, floor_caches, blocked_caches,
                 origin, offset_distance, numerator, model, k_zlight_xforms[i],
-                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
+                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1,
+                callback );
         } );
     } else {
         std::ranges::for_each( k_zlight_xforms, [&]( const octant_xform_3d & xf ) {
             cast_zlight_segment<false>(
                 output_caches, input_arrays, floor_caches, blocked_caches,
                 origin, offset_distance, numerator, model, xf,
-                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
+                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1,
+                callback );
         } );
     }
 }

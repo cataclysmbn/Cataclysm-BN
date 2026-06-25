@@ -68,7 +68,7 @@
     "material": [ "fruit", "veggy" ],
     "symbol": "%",
     "color": "green",
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "calories": 400,
     "vitamins": [
       [ "calcium", 30 ],

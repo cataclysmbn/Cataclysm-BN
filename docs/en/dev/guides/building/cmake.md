@@ -9,9 +9,8 @@ CataclysmBN:
 
 - General
   - `cmake` >= 3.0.0
-  - `gcc` >= 14
-  - `clang` >= 19
-  - `gcc-libs`
+  - `clang` >= 22
+  - `gcc-libs` or equivalent C++ runtime libraries
   - `glibc`
   - `zlib`
   - `bzip2`
@@ -51,7 +50,7 @@ Obtain packages specified above with your system package manager.
 - For Ubuntu-based distros (24.04 onwards):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 llvm-20 ccache \
+sudo apt install git cmake ninja-build mold clang-22 llvm-22 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -68,59 +67,33 @@ sqlite-devel zlib-devel
 
 #### Verifying Compiler Version
 
-You need to have at least `gcc` 14 **and** `clang` 19 to build CataclysmBN. You can check your compiler version with:
+You need Clang 22 or newer to build CataclysmBN. You can check your compiler version with:
 
 ```sh
-$ g++ --version
-g++ (GCC) 15.2.1 20250808 (Red Hat 15.2.1-1)
-Copyright (C) 2025 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
 $ clang++ --version
-clang version 20.1.8 (Fedora 20.1.8-4.fc42)
+clang version 22.1.6 (Fedora 22.1.6-1.fc44)
 Target: x86_64-redhat-linux-gnu
 Thread model: posix
 InstalledDir: /usr/bin
-Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 ```
 
 > [!TIP]
 >
-> **when intalled `gcc-{version}` but `gcc` is not found**
+> **when installed `clang-{version}` but `clang` is not found**
 >
-> Use `update-alternatives` to set the default gcc version:
+> Use `update-alternatives` to set the default Clang version:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-> sudo update-alternatives --display gcc
-> gcc - auto mode
->   link best version is /usr/bin/gcc-14
->   link currently points to /usr/bin/gcc-14
->   link gcc is /usr/bin/gcc
-> /usr/bin/gcc-14 - priority 100
-> sudo update-alternatives --display g++
-> g++ - auto mode
->   link best version is /usr/bin/g++-14
->   link currently points to /usr/bin/g++-14
->   link g++ is /usr/bin/g++
-> /usr/bin/g++-14 - priority 100
+> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-22 100
+> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 100
 > ```
 >
-> The same applies to `clang`.
+> If Ubuntu only installs versioned LLVM binutils such as `llvm-ar-22` and
+> `llvm-ranlib-22`, register those names too:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
-> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
-> ```
->
-> If Ubuntu only installs versioned LLVM binutils such as `llvm-ar-20` and
-> `llvm-ranlib-20`, register those names too:
->
-> ```sh
-> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-20 100
-> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-20 100
+> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-22 100
+> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-22 100
 > ```
 
 ### macOS Environment
@@ -203,7 +176,7 @@ There's multiple predefined [build presets](https://cmake.org/cmake/help/latest/
 
 ```sh
 cmake --preset linux-slim
-cmake --build build --preset linux-slim --target cataclysm-bn-tiles
+cmake --build --preset linux-slim --target cataclysm-bn-tiles
 ```
 
 This will place the executables into `out/build/linux-slim/`.
@@ -215,13 +188,13 @@ This will place the executables into `out/build/linux-slim/`.
 > You can build multiple targets at once with:
 >
 > ```sh
-> cmake --build build --preset linux-slim --target cataclysm-bn-tiles cata_test-tiles
+> cmake --build --preset linux-slim --target cataclysm-bn-tiles cata_test-tiles
 > ```
 >
 > Or limit maximum number of threads with `--parallel` option:
 >
 > ```sh
-> cmake --build build --preset linux-slim --target cataclysm-bn-tiles --parallel 4
+> cmake --build --preset linux-slim --target cataclysm-bn-tiles --parallel 4
 > ```
 
 #### Build without Presets
@@ -229,18 +202,18 @@ This will place the executables into `out/build/linux-slim/`.
 To build CataclysmBN out of source:
 
 ```sh
-mkdir build
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+mkdir -p out/build/custom
+cmake -B out/build/custom -DCMAKE_BUILD_TYPE=Release
+cmake --build out/build/custom
 ```
 
-The above example creates a build directory inside the source directory, but that's not required -
-you can just as easily create it in a completely different location.
+The above example creates a build directory under `out/build/`, but that's not required - you can
+just as easily create it in a completely different location.
 
 To install CataclysmBN after building (as root using su or sudo if necessary):
 
 ```sh
-cmake --install build
+cmake --install out/build/custom
 ```
 
 ### Creating Distribution Packages
@@ -312,15 +285,15 @@ tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
 To change build options, you can either pass the options on the command line:
 
 ```sh
-cmake .. -DOPTION_NAME=option_value
+cmake -B out/build/custom -DOPTION_NAME=option_value
 ```
 
 Or use either the `ccmake` or `cmake-gui` front-ends, which display all options and their cached
 values on a console and graphical UI, respectively.
 
 ```sh
-ccmake ..
-cmake-gui ..
+ccmake out/build/custom
+cmake-gui -S . -B out/build/custom
 ```
 
 ## Build for Visual Studio / MSBuild
@@ -370,24 +343,22 @@ set SDL2MIXERDIR=C:\path\to\SDL2_mixer-devel-2.0.4-VC
 
 (for powershell the syntax is `$env:SDL2DIR="C:\path\to\SDL2-devel-2.0.9-VC"`).
 
-Make a build directory and run cmake configuration step
+Run the CMake configuration step
 
 ```sh
 cd <path to cbn sources>
-mkdir build
-cmake -B build -DTILES=ON -DLANGUAGES=none -DBACKTRACE=OFF -DSOUND=ON
+cmake -B out/build/msbuild -DTILES=ON -DLANGUAGES=none -DBACKTRACE=OFF -DSOUND=ON
 ```
 
 Build!
 
 ```
-cmake --build build -j 2 -- /p:Configuration=Release
+cmake --build out/build/msbuild --config Release --parallel 2
 ```
 
-The `-j 2` flag controls build parallelism - you can omit it if you wish. The
-`/p:Configuration=Release` flag is passed directly to MSBuild and controls optimizations. If you
-omit it, the `Debug` configuration would be built instead. For powershell you'll need to have an
-extra `--` after the first one.
+The `--parallel 2` flag controls build parallelism - you can omit it if you wish. The
+`--config Release` flag selects the optimized Visual Studio configuration. If you omit it, the
+`Debug` configuration would be built instead.
 
 The resulting files will be put into a `Release` directory inside your source Cataclysm-BN folder.
 To make them run you'd need to first move them to the source Cataclysm-BN directory itself (so that
@@ -536,6 +507,9 @@ much faster.
 
 [libbacktrace]: https://github.com/ianlancetaylor/libbacktrace
 
+Supported installed external dependencies are preferred before downloading source fallbacks. Set
+`CMAKE_PREFIX_PATH` to a local prefix such as `$HOME/.local` to use locally installed packages.
+
 - USE_TRACY=`<boolean>`
 
 Use tracy profiler. See [Profiling with tracy](../tracy.md) for more information.
@@ -562,8 +536,8 @@ Build the `json_formatter` tool and enable `style-json` / `style-json-parallel` 
 formatting JSON files. See [Formatting & Linting](../formatting.md) for usage.
 
 So a CMake command for building Cataclysm-BN in release mode with tiles and sound support will look
-as follows, provided it is run in build directory located in the project.
+as follows, provided it is run from the repository root.
 
 ```sh
-cmake ../ -DCMAKE_BUILD_TYPE=Release -DTILES=ON -DSOUND=ON
+cmake -B out/build/custom -DCMAKE_BUILD_TYPE=Release -DTILES=ON -DSOUND=ON
 ```

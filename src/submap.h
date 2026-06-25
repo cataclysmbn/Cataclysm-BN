@@ -23,6 +23,7 @@
 #include "monster.h"
 #include "point.h"
 #include "poly_serialized.h"
+#include "sounds.h"
 
 class JsonIn;
 class JsonOut;
@@ -75,7 +76,7 @@ struct spawn_point {
 template<int sx, int sy>
 struct maptile_soa {
     protected:
-        maptile_soa( const tripoint_abs_sm &position );
+        maptile_soa( const tripoint_abs_sm &position, const dimension_id &dim );
     public:
         ter_id             ter[sx][sy];  // Terrain on each square
         furn_id            frn[sx][sy];  // Furniture on each square
@@ -91,10 +92,13 @@ struct maptile_soa {
 class submap : maptile_soa<SEEX, SEEY>
 {
     public:
-        submap( const tripoint_abs_sm &position );
+        submap( const tripoint_abs_sm &position, const dimension_id &dim );
         ~submap();
 
-        const tripoint_abs_sm position() const { return pos; }
+        const dimension_id get_dimension() const { return dim_; }
+        const tripoint_abs_sm position() const { return pos_; }
+        auto set_dimension( const dimension_id &dim ) -> void;
+        auto set_position( const tripoint_abs_sm &position ) -> void;
 
         trap_id get_trap( const point_sm_ms &p ) const {
             return trp[p.x()][p.y()];
@@ -144,11 +148,13 @@ class submap : maptile_soa<SEEX, SEEY>
 
         void set_ter( const point_sm_ms &p, ter_id terr ) {
             is_uniform = false;
+            emitter_cache = std::nullopt;
             ter[p.x()][p.y()] = terr;
         }
 
         void set_all_ter( const ter_id &terr ) {
             std::fill_n( &ter[0][0], elements, terr );
+            emitter_cache = std::nullopt;
         }
 
         int get_radiation( const point_sm_ms &p ) const {
@@ -163,6 +169,8 @@ class submap : maptile_soa<SEEX, SEEY>
         uint8_t get_lum( const point_sm_ms &p ) const {
             return lum[p.x()][p.y()];
         }
+
+        auto static_emitter_tiles() const -> const std::vector<point_sm_ms> &;
 
         void set_lum( const point_sm_ms &p, uint8_t luminance ) {
             is_uniform = false;
@@ -264,7 +272,7 @@ class submap : maptile_soa<SEEX, SEEY>
 
         void store( JsonOut &jsout ) const;
         void load( JsonIn &jsin, const std::string &member_name, int version,
-                   const tripoint_abs_ms offset );
+                   const tripoint_abs_ms offset, const dimension_id &dim );
 
         // If is_uniform is true, this submap is a solid block of terrain
         // Uniform submaps aren't saved/loaded, because regenerating them is faster
@@ -290,11 +298,11 @@ class submap : maptile_soa<SEEX, SEEY>
         // sparse ones, and multiple masks can be ANDed cheaply to combine conditions.
         // Deferred because it is a broader refactor touching all cache consumers.
 
-        /** Positions of EMITTER furniture on this submap.
+        /** Positions of terrain/furniture with emitted light on this submap.
          *  std::nullopt = dirty (needs rebuild by scanning all tiles).
          *  Empty vector = no emitters present.
-         *  Rebuilt lazily; invalidated by set_furn / set_all_furn. */
-        std::optional<std::vector<point_sm_ms>> emitter_cache;
+         *  Rebuilt lazily; invalidated by set_ter/set_all_ter/set_furn/set_all_furn. */
+        mutable std::optional<std::vector<point_sm_ms>> emitter_cache;
         // Serialized as "turn_last_touched" (absolute turn number).
         // Initialized to calendar::turn_zero; legacy saves that predate
         // serialization will receive the maximum-capped catchup on first load.
@@ -309,9 +317,11 @@ class submap : maptile_soa<SEEX, SEEY>
         float  transparency_cache[SEEX][SEEY] = {};
         bool   outside_cache[SEEX][SEEY]      = {};
         bool   sheltered_cache[SEEX][SEEY]    = {};
-        char   floor_cache[SEEX][SEEY]         = {};
+        char   floor_cache[SEEX][SEEY]        = {};
         pf_special pf_special_cache[SEEX][SEEY]  = {};
-        int    scent_values[SEEX][SEEY]        = {};
+        int    scent_values[SEEX][SEEY]       = {};
+        short  absorption_cache[SEEX][SEEY]   = {};
+        bool   sound_wall_cache[SEEX][SEEY]   = {};
         // True if any scent_values cell is non-zero. Set in raw_scent_set; cleared by
         // scent_map::decay once all values reach zero. Lets decay() skip unvisited submaps.
         bool has_scent = false;
@@ -320,6 +330,10 @@ class submap : maptile_soa<SEEX, SEEY>
         bool outside_dirty      = true;
         bool floor_dirty        = true;
         bool pf_dirty           = true;
+        bool absorption_dirty   = true;
+
+        // Since we rebuild the sound_wall_cache at the same time as the absorption cache, we dont need this.
+        // bool sound_wall_dirty   = true;
 
         // Rebuild per-submap caches from terrain/furniture/field data.
         // grid_pos = submap grid coordinates within map m (x,y = submap index, z = z-level).
@@ -331,6 +345,11 @@ class submap : maptile_soa<SEEX, SEEY>
         auto rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.
         auto rebuild_transparency_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
+
+        // Rebuilds the per-submap sound absorption cache from terrain and furniture data.
+        // This will also rebuild the sound wall cache for the submap.
+        // Check sounds.cpp for implimentation.
+        auto rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         /**
          * Vehicles on this submap (their (0,0) point is on this submap).
          * This vehicle objects are deleted by this submap when it gets
@@ -345,7 +364,8 @@ class submap : maptile_soa<SEEX, SEEY>
 
     private:
         static const data_vars::data_set EMPTY_VARS;
-        tripoint_abs_sm pos;
+        dimension_id dim_;
+        tripoint_abs_sm pos_;
         std::unordered_map<point_sm_ms, data_vars::data_set> ter_vars;
         std::unordered_map<point_sm_ms, data_vars::data_set> frn_vars;
 

@@ -180,6 +180,21 @@ TEST_CASE( "item rigidity", "[item][iteminfo][rigidity]" )
     }
 }
 
+TEST_CASE( "throwing ratings and costs", "[item][iteminfo][throwing]" )
+{
+    clear_all_state();
+    const auto q = q_vec( { iteminfo_parts::BASE_THROW } );
+
+    test_info_equals(
+        "test_rock", q,
+        "--\n"
+        "<color_c_white>Base throw damage</color>: Bash: <color_c_yellow>7</color>\n"
+        "<color_c_white>Throw damage</color>: Bash: <color_c_yellow>9</color>\n"
+        "Throw range: <color_c_yellow>13</color>\n"
+        "Moves per throw: <color_c_yellow>70</color>\n"
+        "Stamina cost: <color_c_yellow>91</color>\n" );
+}
+
 TEST_CASE( "weapon attack ratings and moves", "[item][iteminfo][weapon]" )
 {
     clear_all_state();

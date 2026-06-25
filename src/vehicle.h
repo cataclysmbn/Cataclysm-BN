@@ -28,6 +28,7 @@ class Creature;
 class JsonIn;
 class JsonOut;
 class map;
+class mapgen_constructor;
 class monster;
 class nc_color;
 class npc;
@@ -66,6 +67,12 @@ struct rider_data {
     int prt = -1;
     bool moved = false;
 };
+
+struct cargo_recharge_target {
+    safe_reference<item> target;
+    int cargo_part = -1;
+};
+
 //collision factor for vehicle-vehicle collision; delta_v in m/s
 float get_collision_factor( float delta_v );
 
@@ -120,12 +127,21 @@ struct veh_collision {
     veh_collision() = default;
 };
 
+struct vehicle_collision_options {
+    std::vector<veh_collision> &colls;
+    tripoint_rel_ms dp;
+    bool just_detect = false;
+    bool bash_floor = false;
+    const Creature *ignored_critter = nullptr;
+};
+
 struct vehicle_part_collision_options {
     int part = 0;
     tripoint_bub_ms pos;
     bool just_detect = false;
     bool bash_floor = false;
     bool vertical = false;
+    const Creature *ignored_critter = nullptr;
 };
 //TODO!: location stuffs here
 class vehicle_stack : public item_stack
@@ -540,6 +556,11 @@ class vehicle
         void smash( map &m, float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
                     float percent_of_parts_to_affect = 1.0f, tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(),
                     float damage_size = 0 );
+        auto smash( mapgen_constructor &m, float hp_percent_loss_min = 0.1f,
+                    float hp_percent_loss_max = 1.2f,
+                    float percent_of_parts_to_affect = 1.0f,
+                    tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(),
+                    float damage_size = 0 ) -> void;
 
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
@@ -1280,9 +1301,7 @@ class vehicle
         }
 
         // Returns if any collision occurred
-        bool collision( std::vector<veh_collision> &colls,
-                        const tripoint_rel_ms &dp,
-                        bool just_detect, bool bash_floor = false );
+        auto collision( const vehicle_collision_options &options ) -> bool;
 
         // Handle given part collision with vehicle, monster/NPC/player or terrain obstacle
         // Returns collision, which has type, impulse, part, & target.
@@ -1323,6 +1342,9 @@ class vehicle
          * hot or perishable liquid to a container.
          */
         void make_active( item &target );
+        /// Rebuild-on-demand cache for cargo recharge candidates.
+        auto get_cargo_recharge_targets() -> std::vector<cargo_recharge_target>;
+        auto invalidate_cargo_recharge_cache() -> void;
         /**
          * Try to add an item to part's cargo.
          */
@@ -1365,7 +1387,8 @@ class vehicle
         // must exceed certain threshold to be subtracted from hp
         // (a lot light collisions will not destroy parts)
         // Returns damage bypassed
-        int damage( int p, int dmg, damage_type type = DT_BASH, bool aimed = true );
+        int damage( int p, int dmg, damage_type type = DT_BASH, bool aimed = true,
+                    bool random_part = true );
 
         // damage all parts (like shake from strong collision), range from dmg1 to dmg2
         void damage_all( int dmg1, int dmg2, damage_type type, const tripoint_mnt_veh &impact );
@@ -1650,6 +1673,7 @@ class vehicle
         void shift_zlevel();
 
         std::vector<int> alternators;      // List of alternator indices
+        std::vector<int> battery_parts;    // List of battery indices
         std::vector<int> engines;          // List of engine indices
         std::vector<int> reactors;         // List of reactor indices
         std::vector<int> solar_panels;     // List of solar panel indices
@@ -1712,6 +1736,8 @@ class vehicle
         std::map<itype_id, float> fuel_used_last_turn;
         std::unordered_multimap<tripoint_mnt_veh, zone_data> loot_zones;
         active_item_cache active_items;
+        std::vector<cargo_recharge_target> cargo_recharge_targets_;
+        bool cargo_recharge_targets_dirty = true;
         // a magic vehicle, powered by magic.gif
         bool magic = false;
         // when does the magic vehicle disappear?
@@ -1758,12 +1784,11 @@ class vehicle
         // id of the om_vehicle struct corresponding to this vehicle
         int om_id = -1;
 
-        // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
-        // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
-        // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_ = "";  // empty = primary dimension
-        auto get_dimension() const -> const std::string & { // *NOPAD*
+        auto get_dimension() const -> const dimension_id & { // *NOPAD*
             return dimension_id_;
+        }
+        auto set_dimension( const dimension_id &dim_id ) -> void {
+            dimension_id_ = dim_id;
         }
         // direction, to which vehicle is turning (player control). will rotate frame on next move
         // must be a multiple of 15 degrees
@@ -1876,9 +1901,9 @@ class vehicle
 
         // Set cruise control
         void set_cruise_control_speed();
-};
 
-namespace rot
-{
-temperature_flag temperature_flag_for_part( const vehicle &veh, size_t part );
-} // namespace rot
+    private:
+        // ID of the dimension this vehicle belongs to.  Empty = primary dimension.
+        // Persisted across saves so cross-dimension processing survives reload.
+        dimension_id dimension_id_;
+};

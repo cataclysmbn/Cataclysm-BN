@@ -26,6 +26,7 @@
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "translations.h"
+#include "translocator_utils.h"
 #include "type_id.h"
 #include "ui.h"
 
@@ -63,12 +64,12 @@ static std::optional<tripoint_abs_ms> find_valid_teleporters_omt( const tripoint
     // this is the top left hand square of the global absolute coordinate
     // of the overmap terrain we want to try to teleport to.
     // an OMT is SEEX * SEEY in size
-    const tripoint_abs_sm sm_pt = project_to<coords::sm>( omt_pt );
-    tinymap checker;
+    const auto sm_pt = project_to<coords::sm>( omt_pt.xy() );
+    map checker( 2 );
     checker.load( sm_pt, true );
     for( const auto &p : checker.points_on_zlevel() ) {
         if( checker.has_flag_furn( "TRANSLOCATOR", p ) ) {
-            return checker.bub_to_abs( p );
+            return map_local_to_abs( checker, p );
         }
     }
     return std::nullopt;
@@ -76,15 +77,16 @@ static std::optional<tripoint_abs_ms> find_valid_teleporters_omt( const tripoint
 
 bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_omt &omt_pt ) const
 {
-    tinymap omt_dest( 2, true );
-    tripoint_abs_sm sm_dest = project_to<coords::sm>( omt_pt );
-    // TODO: fix point types
+    map omt_dest( 2 );
+    const auto sm_dest = project_to<coords::sm>( omt_pt.xy() );
     omt_dest.load( sm_dest, true );
     std::optional<tripoint_abs_ms> global_dest = find_valid_teleporters_omt( omt_pt );
     if( !global_dest ) {
         return false;
     }
-    auto local_dest = omt_dest.abs_to_bub( *global_dest ) + point( 60, 60 );
+    const auto omt_local_dest = abs_to_map_local( omt_dest, *global_dest );
+    const auto local_dest = translocator::local_dest( omt_local_dest, point_bub_ms( g_half_mapsize_x,
+                            g_half_mapsize_y ) );
     you.add_effect( efftype_id( "ignore_fall_damage" ), 1_seconds, bodypart_str_id::NULL_ID(), 0,
                     true );
     g->place_player_overmap( omt_pt );

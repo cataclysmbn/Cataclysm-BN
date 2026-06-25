@@ -1,3 +1,13 @@
+#!/usr/bin/env -S deno run --allow-read --allow-write --allow-run --allow-env --allow-net
+/**
+ * @module
+ *
+ * Migrates legacy integer units in JSON data to explicit unit strings.
+ *
+ * Handles unit fields from PR#3312 and relative overrides that use the same
+ * loader paths as their top-level counterparts.
+ */
+
 import { cliOptions } from "$catjazz/utils/cli.ts"
 import {
   fromLegacyCurrency,
@@ -5,15 +15,15 @@ import {
   fromLegacyVolume,
   fromLegacyWeight,
 } from "$catjazz/units/mod.ts"
-import { z } from "$catjazz/deps/zod.ts"
 import { Command } from "@cliffy/command"
+import { deepMerge } from "@std/collections"
+import * as v from "@valibot/valibot"
 import { timeit } from "$catjazz/utils/timeit.ts"
-import { applyRecursively } from "$catjazz/utils/transform.ts"
 import { fmtJsonRecursively } from "$catjazz/utils/json_fmt.ts"
-import { CataEntry, Entry, parseCataJson, readJSONsRec } from "$catjazz/utils/parse.ts"
+import { parseCataJson, readJSONsRec } from "$catjazz/utils/parse.ts"
+import type { CataEntry, Entry } from "$catjazz/utils/parse.ts"
 import { match, P } from "$catjazz/deps/ts_pattern.ts"
 import { id } from "$catjazz/utils/id.ts"
-import { deepMerge } from "@std/collections"
 
 /**
  * [PR#3312](https://github.com/cataclysmbn/Cataclysm-BN/pull/3312)
@@ -21,81 +31,108 @@ import { deepMerge } from "@std/collections"
 
 const desc = "Migrates Legacy units into new literal format."
 
-const int = z.number().int()
-
 export type Currency = `${number} ${"cent" | "USD" | "kUSD"}`
 
 export const migrate = <const T>(fromLegacy: (x: number) => T) =>
-  z.union([int.transform(fromLegacy), z.string()]).optional()
+  v.optional(v.union([v.pipe(v.number(), v.integer(), v.transform(fromLegacy)), v.string()]))
+
+const isRecord = (input: unknown): input is Record<string, unknown> =>
+  typeof input === "object" && input !== null && !Array.isArray(input)
+
+const object = <const T extends v.ObjectEntries>(entries: T) =>
+  v.pipe(v.custom<Record<string, unknown>>(isRecord), v.looseObject(entries))
 
 const unpack = (xs: string[] | Entry[]) =>
   match(xs)
     .with(P.array(P.string), id)
     .otherwise((xs) => xs.map(({ path }) => path))
 
+const applyChangedRecursively = (fn: (text: string) => string) => async (entries: Entry[]) => {
+  await Promise.all(
+    entries.map(async ({ path, text }) => {
+      const transformed = fn(text)
+      if (transformed === text) {
+        return
+      }
+      await Deno.writeTextFile(path, transformed)
+    }),
+  )
+}
+
 const migrateWeight = migrate(fromLegacyWeight)
 const migrateVolume = migrate(fromLegacyVolume)
 const migrateCurrency = migrate(fromLegacyCurrency)
 const migrateEnergy = migrate(fromLegacyEnergy)
 
-export const base = z
-  .object({
-    // GUN
-    barrel_length: migrateVolume,
+const volumeFields = {
+  barrel_length: migrateVolume,
+  barrel_volume: migrateVolume,
+  storage: migrateVolume,
+  max_pet_vol: migrateVolume,
+  min_pet_vol: migrateVolume,
+  contains: migrateVolume,
+  volume: migrateVolume,
+  integral_volume: migrateVolume,
+  magazine_well: migrateVolume,
+  max_volume: migrateVolume,
+  min_volume: migrateVolume,
+  size: migrateVolume,
+  // TODO: burn_data[].volume_per_turn
+}
 
-    armor_data: z.object({ storage: migrateVolume }).passthrough().optional(),
+const weightFields = {
+  weight: migrateWeight,
+  integral_weight: migrateWeight,
+  weight_capacity_bonus: migrateWeight,
+  max_weight: migrateWeight,
+  trigger_weight: migrateWeight,
+}
 
-    storage: migrateVolume,
+const currencyFields = {
+  price: migrateCurrency,
+  price_postapoc: migrateCurrency,
+}
 
-    max_pet_vol: migrateVolume,
-    min_pet_vol: migrateVolume,
+const unitFields = {
+  ...volumeFields,
+  ...weightFields,
+  ...currencyFields,
+}
 
-    contains: migrateVolume,
+export const base = object({
+  ...unitFields,
 
-    volume: migrateVolume,
-    integral_volume: migrateVolume,
-    magazine_well: migrateVolume,
+  relative: v.optional(object(unitFields)),
 
-    max_volume: migrateVolume,
-    min_volume: migrateVolume,
+  armor_data: v.optional(object({ storage: migrateVolume })),
 
-    use_action: z.string().or(
-      z.object({
+  use_action: v.optional(
+    v.union([
+      v.string(),
+      object({
         max_volume: migrateVolume,
         min_volume: migrateVolume,
-
         max_weight: migrateWeight,
-      }).passthrough(),
-    ).optional(),
+      }),
+      v.unknown(),
+    ]),
+  ),
 
-    size: migrateVolume,
-    // TODO: burn_data[].volume_per_turn
+  workbench: v.optional(object({
+    volume: migrateVolume,
+    mass: migrateWeight,
+  })),
+})
 
-    weight: migrateWeight,
-    integral_weight: migrateWeight,
-    weight_capacity_bonus: migrateWeight,
-
-    trigger_weight: migrateWeight,
-
-    workbench: z.object({
-      volume: migrateVolume,
-      mass: migrateWeight,
-    }).passthrough().optional(),
-
-    price: migrateCurrency,
-    price_postapoc: migrateCurrency,
-  })
-  .passthrough()
-
-export const vehiclePart = z.object({
-  type: z.literal("vehicle_part"),
+export const vehiclePart = object({
+  type: v.literal("vehicle_part"),
   folded_volume: migrateVolume,
   size: migrateVolume,
+  relative: v.optional(object(volumeFields)),
 })
-  .passthrough()
 
-export const bionic = z.object({
-  type: z.literal("bionic"),
+export const bionic = object({
+  type: v.literal("bionic"),
 
   act_cost: migrateEnergy,
   deact_cost: migrateEnergy,
@@ -106,20 +143,21 @@ export const bionic = z.object({
 
 const schemas = [base, vehiclePart, bionic]
 
-const attempt = (schema: z.ZodTypeAny) => (x: CataEntry): CataEntry =>
-  match(schema.safeParse(x))
+const attempt = (schema: v.GenericSchema) => (x: CataEntry): CataEntry =>
+  match(v.safeParse(schema, x))
     .with(
-      { success: true, data: P.select() },
-      (parsed) => deepMerge(x, parsed, { arrays: "replace" }) as unknown as CataEntry,
+      { success: true, output: P.select() },
+      (parsed) =>
+        deepMerge(x, parsed as Record<PropertyKey, unknown>, {
+          arrays: "replace",
+        }) as unknown as CataEntry,
     )
     .otherwise(() => x)
 
-export const schemasTransformer = (schemas: z.ZodTypeAny[]) => {
+export const schemasTransformer = (schemas: v.GenericSchema[]) => {
   const matchers = schemas.map((schema) => attempt(schema))
 
-  return (entries: CataEntry[]) =>
-    entries
-      .map((x) => matchers.reduce((acc, fn) => fn(acc), x))
+  return (entries: CataEntry[]) => entries.map((x) => matchers.reduce((acc, fn) => fn(acc), x))
 }
 const main = () =>
   new Command()
@@ -138,10 +176,17 @@ const main = () =>
 
       const mapgenIgnoringTransformer = (text: string) => {
         const entries = parseCataJson(text)
-        return ignore(entries) ? text : JSON.stringify(transformer(entries), null, 2)
+        if (ignore(entries)) {
+          return text
+        }
+
+        const transformed = transformer(entries)
+        return JSON.stringify(transformed) === JSON.stringify(entries)
+          ? text
+          : JSON.stringify(transformed, null, 2)
       }
 
-      const recursiveTransformer = applyRecursively(mapgenIgnoringTransformer)
+      const recursiveTransformer = applyChangedRecursively(mapgenIgnoringTransformer)
 
       const entries = await timeIt({ name: "reading JSON", val: readJSONsRec(paths) })
 

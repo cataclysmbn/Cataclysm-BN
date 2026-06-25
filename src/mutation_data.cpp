@@ -12,15 +12,16 @@
 #include "bodypart.h"
 #include "color.h"
 #include "debug.h"
+#include "enchantments/enchantment.h"
 #include "generic_factory.h"
 #include "json.h"
-#include "magic_enchantment.h"
 #include "memory_fast.h"
 #include "rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "trait_group.h"
 #include "translations.h"
+#include "type_id_implement.h"
 
 using TraitGroupMap =
     std::map<trait_group::Trait_group_tag, shared_ptr_fast<Trait_group>>;
@@ -35,21 +36,11 @@ namespace
 generic_factory<mutation_branch> trait_factory( "trait" );
 } // namespace
 
+IMPLEMENT_STRING_AND_INT_IDS( mutation_branch, trait_factory );
+
 static std::vector<dream> all_dreams;
 std::map<mutation_category_id, std::vector<trait_id> > mutations_category;
 std::map<mutation_category_id, mutation_category_trait> mutation_category_traits;
-
-template<>
-const mutation_branch &string_id<mutation_branch>::obj() const
-{
-    return trait_factory.obj( *this );
-}
-
-template<>
-bool string_id<mutation_branch>::is_valid() const
-{
-    return trait_factory.is_valid( *this );
-}
 
 template<>
 bool string_id<Trait_group>::is_valid() const
@@ -411,6 +402,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "overmap_sight", overmap_sight, 0.0f );
     optional( jo, was_loaded, "overmap_multiplier", overmap_multiplier, 1.0f );
     optional( jo, was_loaded, "night_vision_range", night_vision_range, 0.0f );
+    optional( jo, was_loaded, "local_detail_sight", local_detail_sight, 0.0f );
     optional( jo, was_loaded, "reading_speed_multiplier", reading_speed_multiplier, 1.0f );
     optional( jo, was_loaded, "skill_rust_multiplier", skill_rust_multiplier, 1.0f );
     optional( jo, was_loaded, "packmule_modifier", packmule_modifier, 1.0f );
@@ -468,6 +460,26 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "flags", flags, auto_flags_reader<trait_flag_str_id> {} );
     optional( jo, was_loaded, "types", types, string_reader{} );
     optional( jo, was_loaded, "enchantments", enchantments );
+    if( jo.has_array( "mut_enchantments" ) ) {
+        for( JsonObject jsobj : jo.get_array( "mut_enchantments" ) ) {
+            enchantment ench;
+            ench.load( jsobj );
+            if( !ench.id.is_empty() ) {
+                ench = ench.id.obj();
+            }
+            bool addable = false;
+            // If it can be combined with another one combine it
+            for( enchantment &oench : mut_enchantments ) {
+                if( oench.add( ench ) ) {
+                    addable = true;
+                    break;
+                }
+            }
+            if( !addable ) {
+                mut_enchantments.push_back( ench );
+            }
+        }
+    }
 
     for( const std::string s : jo.get_array( "no_cbm_on_bp" ) ) {
         no_cbm_on_bp.emplace( s );
@@ -630,6 +642,9 @@ void mutation_branch::check_consistency()
         for( const enchantment_id &ench : mdata.enchantments ) {
             ench->check();
         }
+        for( const auto &ench : mdata.mut_enchantments ) {
+            ench.check();
+        }
         for( const auto &flag : mdata.flags ) {
             if( !flag.is_valid() ) {
                 debugmsg( "mutation %s refers to undefined mutation flag %s", mid, flag );
@@ -753,6 +768,12 @@ bool mutation_branch::trait_is_blacklisted( const trait_id &tid )
 
 void mutation_branch::finalize()
 {
+    for( const auto &mdata : get_all() ) {
+        for( const auto &ench : mdata.mut_enchantments ) {
+            const_cast<enchantment &>( ench ).finalize();
+        }
+    }
+
     for( const mutation_branch &branch : get_all() ) {
         for( const mutation_category_id &cat : branch.category ) {
             mutations_category[cat].emplace_back( branch.id );

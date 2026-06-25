@@ -4,6 +4,7 @@
 #include "point.h"
 
 class item;
+class mapbuffer;
 
 using location_subrange =
     std::ranges::subrange<location_vector<item>::iterator, location_vector<item>::iterator>;
@@ -14,5 +15,8 @@ using location_subrange =
 auto get_items_at( const tripoint_abs_ms &loc ) -> location_subrange;
 
 /// Take down deployed furniture and drop its item form.
+auto take_down_deployed_furniture( mapbuffer &buffer,
+                                   const tripoint_abs_ms &furniture_pos,
+                                   const tripoint_abs_ms &drop_pos ) -> void;
 auto take_down_deployed_furniture( const tripoint_bub_ms &furniture_pos,
                                    const tripoint_bub_ms &drop_pos ) -> void;

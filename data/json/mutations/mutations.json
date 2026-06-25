@@ -529,12 +529,13 @@
     "//": "Can't change the ID as that breaks save-compatibility.",
     "name": { "str": "Scout" },
     "points": 1,
-    "description": "You're an excellent navigator and your ability to recognize distant landmarks is unmatched.  Your sight radius on the overmap extends beyond the normal range.",
+    "description": "You're an excellent navigator and your ability to recognize distant landmarks is unmatched.  Your sight radius on the overmap extends beyond the normal range, and distant details are easier for you to resolve.",
     "valid": false,
     "starting_trait": true,
     "category": [ "BIRD", "MOUSE" ],
     "cancels": [ "MYOPIC", "UNOBSERVANT" ],
-    "overmap_sight": 5
+    "overmap_sight": 5,
+    "local_detail_sight": 10
   },
   {
     "type": "mutation",
@@ -780,7 +781,13 @@
     "points": -1,
     "description": "You're quite the heavy sleeper.  Noises are unlikely to wake you up.",
     "changes_to": [ "HEAVYSLEEPER2" ],
-    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ]
+    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ],
+    "mut_enchantments": [
+      {
+        "condition": "ALWAYS",
+        "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 2 }, { "value": "SLEEP_DB_RESIST", "add": 30 } ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -1663,7 +1670,8 @@
       { "part": "torso", "ignored": 60 }
     ],
     "armor": [ { "parts": "ALL", "cut": 2, "bash": 3, "bullet": 1 } ],
-    "speed_modifier": 0.8
+    "speed_modifier": 0.8,
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -1691,7 +1699,8 @@
       { "part": "torso", "ignored": 60 }
     ],
     "armor": [ { "parts": "ALL", "cut": 3, "bash": 5, "bullet": 2 } ],
-    "speed_modifier": 0.8
+    "speed_modifier": 0.8,
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -2275,7 +2284,8 @@
       { "part": "hand_r", "ignored": 3 },
       { "part": "torso", "ignored": 20 }
     ],
-    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ]
+    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -5 } ] } ]
   },
   {
     "type": "mutation",
@@ -4927,7 +4937,13 @@
     "description": "You could probably sleep through a firefight.",
     "valid": false,
     "prereqs": [ "HEAVYSLEEPER" ],
-    "category": [ "BEAST", "LUPINE" ]
+    "category": [ "BEAST", "LUPINE" ],
+    "mut_enchantments": [
+      {
+        "condition": "ALWAYS",
+        "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 5 }, { "value": "SLEEP_DB_RESIST", "add": 50 } ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -5851,7 +5867,8 @@
     "category": [ "CEPHALOPOD" ],
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "restricts_gear": [ "torso" ],
-    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ]
+    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "CARRY_STORAGE", "add": 4000 } ] } ]
   },
   {
     "type": "mutation",
@@ -5871,7 +5888,8 @@
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "active": true,
     "restricts_gear": [ "torso" ],
-    "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ]
+    "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ],
+    "mut_enchantments": [ { "condition": "INACTIVE", "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] } ]
   },
   {
     "type": "mutation",
@@ -6802,6 +6820,15 @@
   },
   {
     "type": "mutation",
+    "id": "DEBUG_INFINITE_SPEED",
+    "name": { "str": "Debug Infinite Speed" },
+    "points": 99,
+    "valid": false,
+    "description": "The only problem with being faster than light is that you always live in darkness.",
+    "debug": true
+  },
+  {
+    "type": "mutation",
     "id": "DEBUG_CLOAK",
     "name": { "str": "Debug Invisibility" },
     "points": 99,
@@ -6955,7 +6982,7 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
-    "cancels": [ "GUNSHY" ],
+    "cancels": [ "GUNSHY", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -6965,7 +6992,7 @@
     "points": -4,
     "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
-    "cancels": [ "BRAWLER" ],
+    "cancels": [ "BRAWLER", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -7074,5 +7101,16 @@
     "valid": false,
     "purifiable": false,
     "profession": true
+  },
+  {
+    "type": "mutation",
+    "id": "CARRY_PERMIT",
+    "name": { "str": "Carry Permit" },
+    "points": 1,
+    "starting_trait": true,
+    "description": "You prepared for trouble as best as you could, though it might not be enough for the end of the world.  In addition to any weapons your profession might start with, you start with a randomly-selected common pistol and some spare mags.  (Note: What you see in character creation does not reflect what it will select at game start.)",
+    "cancels": [ "BRAWLER", "GUNSHY" ],
+    "valid": false,
+    "purifiable": false
   }
 ]

@@ -7,10 +7,34 @@
 #include "enums.h"
 #include "flag.h"
 #include "game.h"
+#include "map.h"
 #include "messages.h"
 #include "output.h"
 #include "string_id.h"
 #include "vitamin.h"
+
+static auto update_map_after_player_setpos( player &who,
+        const tripoint_abs_ms &old_pos ) -> void
+{
+    if( g == nullptr || !who.is_avatar() ) {
+        return;
+    }
+
+    const auto new_pos = who.abs_pos();
+    if( old_pos == new_pos ) {
+        return;
+    }
+
+    const auto old_sm = project_to<coords::sm>( old_pos );
+    const auto new_sm = project_to<coords::sm>( new_pos );
+
+    if( old_sm.xy() != new_sm.xy() ) {
+        g->update_map( who );
+    }
+    if( old_pos.z() != new_pos.z() ) {
+        g->vertical_shift( old_pos.z(), new_pos.z() );
+    }
+}
 
 player::player()
 {
@@ -45,7 +69,7 @@ player::player()
     set_value( "THIEF_MODE", "THIEF_ASK" );
 
     for( const auto &v : vitamin::all() ) {
-        vitamin_levels[ v.first ] = 0;
+        vitamin_levels[ v.id ] = 0;
     }
 
     if( g != nullptr && json_flag::is_ready() && get_anatomy().is_valid() ) {
@@ -59,6 +83,18 @@ player::player()
 player::~player() = default;
 player::player( player && )  noexcept = default;
 player &player::operator=( player && )  noexcept = default;
+
+auto player::setpos( const tripoint_bub_ms &p ) -> void
+{
+    setpos( map_local_to_abs( get_map(), p ) );
+}
+
+auto player::setpos( const tripoint_abs_ms &p ) -> void
+{
+    const auto old_pos = position;
+    position = p;
+    update_map_after_player_setpos( *this, old_pos );
+}
 
 
 //message related stuff

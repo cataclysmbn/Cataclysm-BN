@@ -129,6 +129,10 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
 
     draw_cone_aoe( origin, final_coverage );
 
+    for( const auto &[point, coverage] : final_coverage ) {
+        apply_ammo_trail_effects( point, proj.get_ammo_effects(), coverage );
+    }
+
     // Here and not above because we want the animation first
     // Terrain will be shown damaged, but having it in unknown state would complicate timing the animation
     for( const auto &[point, coverage] : final_coverage ) {

@@ -22,6 +22,7 @@
 #include "drop_token.h"
 #include "enum_conversions.h"
 #include "faction.h"
+#include "game_constants.h"
 #include "hash_utils.h"
 #include "int_id.h"
 #include "json.h"
@@ -94,27 +95,29 @@ void game::serialize( std::ostream &fout )
     json.member( "initial_season", static_cast<int>( calendar_config._initial_season ) );
     json.member( "auto_travel_mode", auto_travel_mode );
     json.member( "run_mode", static_cast<int>( safe_mode ) );
+    json.member( "manual_combat_mode", manual_combat_mode );
     json.member( "mostseen", mostseen );
     json.member( "show_zone_overlay", show_zone_overlay );
     // current map coordinates
-    auto pos_sm = m.get_abs_sub();
+    auto pos_sm = player_reality_bubble_origin();
     const auto pos_decomp = project_remain<coords::om>( pos_sm );
     json.member( "levx", pos_decomp.remainder.x() );
     json.member( "levy", pos_decomp.remainder.y() );
     json.member( "levz", pos_sm.z() );
     json.member( "om_x", pos_decomp.quotient.x() );
     json.member( "om_y", pos_decomp.quotient.y() );
+    json.member( "reality_bubble_size", g_reality_bubble_size );
 
     // Save the current dimension ID (replaces the old world_type + pocket_instance_id pair)
-    json.member( "current_dimension_id", current_dimension_id_ );
+    json.member( "current_dimension_id", current_dimension_id_.str() );
     // Save the kept pocket dimension ID so the single preserved pocket survives reload.
     // The dimension_info metadata is reconstructed on entry from the item's pocket_dimension_data.
-    if( !kept_pocket_dimension_id_.empty() ) {
-        json.member( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
+    if( !kept_pocket_dimension_id_.is_empty() ) {
+        json.member( "kept_pocket_dimension_id", kept_pocket_dimension_id_.str() );
     }
 
     // Save dimension bounds for bounded dimensions (pocket dimensions)
-    const auto &pocket_info = m.get_pocket_info();
+    const auto &pocket_info = m.get_mapbuffer().get_pocket_info();
     if( pocket_info ) {
         json.member( "pocket_info", pocket_info );
     }
@@ -127,7 +130,7 @@ void game::serialize( std::ostream &fout )
     std::ranges::for_each( loaded_dimensions_, [&]( const auto & kv ) {
         const auto &info = kv.second;
         json.start_object();
-        json.member( "dimension_id", info.dimension_id );
+        json.member( "dimension_id", info.id.str() );
         json.member( "world_type", info.world_type.str() );
         json.member( "display_name", info.display_name );
         if( info.pocket_info ) {
@@ -235,12 +238,24 @@ auto game::unserialize( std::istream &fin ) -> bool
         data.read( "levz", lev.z );
         data.read( "om_x", com.x );
         data.read( "om_y", com.y );
+        auto saved_reality_bubble_size = g_reality_bubble_size;
+        const auto has_saved_reality_bubble_size = data.read( "reality_bubble_size",
+                saved_reality_bubble_size );
+        auto saved_player_abs = tripoint_abs_ms::zero();
+        auto has_saved_player_abs = false;
+        if( data.has_object( "player" ) ) {
+            auto player_data = data.get_object( "player" );
+            player_data.allow_omitted_members();
+            has_saved_player_abs = player_data.read( "abs_pos", saved_player_abs );
+        }
 
         // Load the current dimension ID before load_map so get_dimension_prefix()
         // returns the correct value.  Fall back to reconstructing it from legacy
         // world_type + pocket_instance_id fields for old saves.
         if( data.has_member( "current_dimension_id" ) ) {
-            data.read( "current_dimension_id", current_dimension_id_ );
+            auto raw_current_dimension_id = std::string{};
+            data.read( "current_dimension_id", raw_current_dimension_id );
+            current_dimension_id_ = dimension_id( raw_current_dimension_id );
         } else if( data.has_member( "world_type" ) ) {
             // Legacy compat: reconstruct dimension_id from world_type + instance_id
             world_type_id wt;
@@ -248,14 +263,17 @@ auto game::unserialize( std::istream &fin ) -> bool
             std::string pocket_id;
             data.read( "pocket_instance_id", pocket_id );
             if( wt.is_valid() ) {
-                current_dimension_id_ = wt.obj().save_prefix + pocket_id;
-                if( !pocket_id.empty() && !current_dimension_id_.ends_with( "_" ) ) {
-                    current_dimension_id_ += "_";
+                auto raw_current_dimension_id = wt.obj().save_prefix + pocket_id;
+                if( !pocket_id.empty() && !raw_current_dimension_id.ends_with( "_" ) ) {
+                    raw_current_dimension_id += "_";
                 }
+                current_dimension_id_ = dimension_id( raw_current_dimension_id );
             }
         }
         set_active_dimension_id( current_dimension_id_ );
-        data.read( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
+        auto raw_kept_pocket_dimension_id = std::string{};
+        data.read( "kept_pocket_dimension_id", raw_kept_pocket_dimension_id );
+        kept_pocket_dimension_id_ = dimension_id( raw_kept_pocket_dimension_id );
 
         // Restore all dimension metadata.  The current dimension is also included
         // in this array, so the explicit reconstruction below becomes a fallback
@@ -264,7 +282,9 @@ auto game::unserialize( std::istream &fin ) -> bool
         if( data.has_array( "loaded_dimensions" ) ) {
             for( JsonObject dim_data : data.get_array( "loaded_dimensions" ) ) {
                 auto info = dimension_info{};
-                dim_data.read( "dimension_id", info.dimension_id );
+                auto raw_dimension_id = std::string{};
+                dim_data.read( "dimension_id", raw_dimension_id );
+                info.id = dimension_id( raw_dimension_id );
                 auto wt_str = std::string{};
                 dim_data.read( "world_type", wt_str );
                 info.world_type = world_type_id( wt_str );
@@ -296,7 +316,7 @@ auto game::unserialize( std::istream &fin ) -> bool
                     pocket_data.bounds = bounds;
                     info.pocket_info = pocket_data;
                 }
-                loaded_dimensions_[info.dimension_id] = info;
+                loaded_dimensions_[info.id] = info;
             }
         }
 
@@ -313,19 +333,38 @@ auto game::unserialize( std::istream &fin ) -> bool
         if( data.has_object( "pocket_info" ) ) {
             pocket_dimension_data pocket_info;
             data.read( "pocket_info", pocket_info );
-            m.set_pocket_info( pocket_info );
+            m.get_mapbuffer().set_pocket_info( pocket_info );
             get_overmapbuffer( current_dimension_id_ ).set_pocket_info( pocket_info );
         }
 
-        load_map(
-            tripoint_abs_sm( lev.x + com.x * OMAPX * 2, lev.y + com.y * OMAPY * 2, lev.z ),
-            /*pump_events=*/true
-        );
+        // Absolute player position is authoritative when present.  Saves with
+        // reality_bubble_size can reconstruct the player submap from their saved
+        // bubble origin.  Older saves keep levx/levy/levz as the authoritative
+        // legacy origin so remaining bubble-space fields still decode against
+        // that offset.
+        const auto saved_origin = tripoint_abs_sm( lev.x + com.x * OMAPX * 2,
+                                  lev.y + com.y * OMAPY * 2, lev.z );
+        auto load_origin = saved_origin;
+        auto player_pos = project_to<coords::ms>(
+                              saved_origin + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
+        if( has_saved_player_abs ) {
+            player_pos = saved_player_abs;
+            load_origin = reality_bubble_origin_from_player( player_pos, g_reality_bubble_size );
+        } else if( has_saved_reality_bubble_size ) {
+            const auto saved_player_sm = reality_bubble_center_from_origin( saved_origin,
+                                         saved_reality_bubble_size );
+            player_pos = project_to<coords::ms>( saved_player_sm );
+            load_origin = reality_bubble_origin_from_player( player_pos, g_reality_bubble_size );
+        }
+        load_map( load_origin.xy(), /*pump_events=*/true );
+        u.setpos( player_pos );
 
         safe_mode = static_cast<safe_mode_type>( tmprun );
         if( get_option<bool>( "SAFEMODE" ) && safe_mode == SAFE_MODE_OFF ) {
             safe_mode = SAFE_MODE_ON;
         }
+        manual_combat_mode = false;
+        data.read( "manual_combat_mode", manual_combat_mode );
 
         // Silently discard old grscent/typescent flat-array data; scent now lives on submaps.
         {
@@ -335,11 +374,20 @@ auto game::unserialize( std::istream &fin ) -> bool
         }
         scent.reset();
         data.read( "active_monsters", *critter_tracker );
+        // Older saves only had current-bubble monsters here and no per-monster dimension.
+        for( auto &critter : all_monsters() ) {
+            if( critter.get_dimension().is_empty() ) {
+                critter.set_dimension( current_dimension_id_ );
+            }
+        }
 
         coming_to_stairs.clear();
         for( auto elem : data.get_array( "stair_monsters" ) ) {
             shared_ptr_fast<monster> stairtmp = make_shared_fast<monster>();
             elem.read( *stairtmp );
+            if( stairtmp->get_dimension().is_empty() ) {
+                stairtmp->set_dimension( current_dimension_id_ );
+            }
             coming_to_stairs.push_back( stairtmp );
         }
 
@@ -375,6 +423,8 @@ auto game::unserialize( std::istream &fin ) -> bool
         data.read( "token_provider", token_provider_ptr );
         inp_mngr.pump_events();
         Messages::deserialize( data );
+
+        charge_removal_blacklist::split_deferred();
 
     } catch( const JsonError &jsonerr ) {
         debugmsg( "Bad save json\n%s", jsonerr.c_str() );

@@ -1594,7 +1594,7 @@ static void draw_om_sidebar(
     std::string dim_name;
     if( const dimension_info *dim = g->get_current_dimension_info() ) {
         dim_name = dim->display_name.empty()
-                   ? ( dim->world_type.is_valid() ? dim->world_type.obj().name.translated() : dim->dimension_id )
+                   ? ( dim->world_type.is_valid() ? dim->world_type.obj().name.translated() : dim->id.str() )
                    : dim->display_name;
     }
     mvwprintz( wbar, point( 1, getmaxy( wbar ) - 2 ), c_cyan, dim_name );
@@ -1818,7 +1818,7 @@ static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs, const tripo
 
         mvwprintz( w_search, point( 1, 3 ), c_light_blue, _( "Direction:" ) );
         mvwprintz( w_search, point( align_width, 3 ), c_light_red, "%d %s",
-                   trig_dist( orig, tripoint_abs_omt( locations[i], orig.z() ) ),
+                   static_cast<int>( trig_dist( orig, tripoint_abs_omt( locations[i], orig.z() ) ) ),
                    direction_name_short( direction_from( orig, tripoint_abs_omt( locations[i], orig.z() ) ) ) );
 
         if( locations.size() > 1 ) {

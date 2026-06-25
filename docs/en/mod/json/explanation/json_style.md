@@ -90,5 +90,5 @@ drag&drop: drag the json file onto the `json_formatter` icon, then wait a few se
 
 ### On *nix
 
-Configure with `cmake -B build -DJSON_FORMAT=ON`, then run
-`cmake --build build --target style-json` in the main repo directory.
+Run `just fmt-json` in the main repo directory. If `just` is unavailable, run
+`build-scripts/format-json.sh` instead.

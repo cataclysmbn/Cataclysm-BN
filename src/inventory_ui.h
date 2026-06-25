@@ -22,6 +22,7 @@
 #include "pimpl.h"
 #include "units.h"
 #include "pickup_token.h"
+#include "type_id.h"
 
 class Character;
 class player;
@@ -582,6 +583,7 @@ class inventory_selector
          * @return true on success.
          */
         bool select( const item *loc );
+        auto select_item_type( const itype_id &type ) -> bool;
 
         const inventory_entry &get_selected() {
             return get_active_column().get_selected();
@@ -608,6 +610,8 @@ class inventory_selector
         void set_active_column( size_t index );
 
         inventory_column own_gear_column;    // Column for own gear (weapon, armor) items
+        inventory_column own_inv_column;     // Column for own inventory items
+        inventory_column map_column;         // Column for map and vehicle items
     protected:
         size_t get_columns_width( const std::vector<inventory_column *> &columns ) const;
         /** @return Percentage of the window occupied by columns */
@@ -651,9 +655,6 @@ class inventory_selector
         size_t active_column_index;
         std::list<item_category> categories;
         navigation_mode mode;
-
-        inventory_column own_inv_column;     // Column for own inventory items
-        inventory_column map_column;         // Column for map and vehicle items
 
         const int border = 1;                // Width of the window border
         std::string filter;

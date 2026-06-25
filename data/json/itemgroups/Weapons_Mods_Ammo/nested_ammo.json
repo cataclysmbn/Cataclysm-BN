@@ -63,14 +63,20 @@
     ]
   },
   {
+    "id": "on_hand_longrifle_flintlock",
+    "type": "item_group",
+    "//": "a collection of ammo that would be found with a loaded gun.",
+    "subtype": "distribution",
+    "entries": [ { "item": "flintlock_ammo", "prob": 100, "charges": [ 15, 30 ] } ]
+  },
+  {
     "id": "on_hand_8x40",
     "type": "item_group",
     "//": "a collection of ammo that would be found with a loaded gun.",
     "subtype": "distribution",
     "entries": [
-      { "item": "8mm_caseless", "prob": 100, "charges": [ 20, 40 ] },
+      { "item": "8mm_caseless", "prob": 200, "charges": [ 20, 40 ] },
       { "item": "8mm_civilian", "prob": 100, "charges": [ 20, 40 ] },
-      { "item": "8mm_fmj", "prob": 100, "charges": [ 20, 40 ] },
       { "item": "8mm_jhp", "prob": 100, "charges": [ 20, 40 ] },
       { "item": "8mm_hvp", "prob": 30, "charges": [ 20, 40 ] },
       { "item": "8mm_inc", "prob": 30, "charges": [ 20, 40 ] }
@@ -156,8 +162,7 @@
     "//": "a collection of ammo that would be found with a loaded gun.",
     "subtype": "distribution",
     "entries": [
-      { "item": "22_cphp", "prob": 100, "charges": [ 50, 100 ] },
-      { "item": "22_fmj", "prob": 100, "charges": [ 50, 100 ] },
+      { "item": "22_cphp", "prob": 200, "charges": [ 50, 100 ] },
       { "item": "22_lr", "prob": 100, "charges": [ 50, 100 ] },
       { "item": "22_ratshot", "prob": 100, "charges": [ 50, 100 ] }
     ]

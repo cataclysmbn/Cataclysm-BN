@@ -570,7 +570,18 @@
     "time": "48 s",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "sheet", 1 ], [ "blanket", 1 ], [ "electric_blanket", 1 ] ] ],
+    "components": [
+      [
+        [ "blanket", 1 ],
+        [ "down_blanket", 1 ],
+        [ "fur_blanket", 1 ],
+        [ "electric_blanket", 1 ],
+        [ "emer_blanket", 1 ],
+        [ "afs_quilt", 1 ],
+        [ "afs_quilt_patchwork", 1 ],
+        [ "sheet", 1 ]
+      ]
+    ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -585,7 +596,7 @@
     "autolearn": true,
     "using": [ [ "cordage", 2 ] ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ] ] ]
+    "components": [ [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ], [ "bag_zipper_small", 32 ] ] ]
   },
   {
     "result": "quiver",

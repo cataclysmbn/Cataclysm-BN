@@ -1,0 +1,70 @@
+[
+  {
+    "//1": "Here to not bloat the main enchant value json file",
+    "//2": "Copy from is so this is always loaded last",
+    "id": "ATTACK_COST",
+    "copy-from": "ATTACK_COST",
+    "type": "enchantment_value",
+    "alias": [ "ATTACK_SPEED" ]
+  },
+  {
+    "id": "MANA_REGEN",
+    "copy-from": "MANA_REGEN",
+    "type": "enchantment_value",
+    "alias": [ "REGEN_MANA" ]
+  },
+  {
+    "id": "MANA_CAP",
+    "copy-from": "MANA_CAP",
+    "type": "enchantment_value",
+    "alias": [ "MAX_MANA" ]
+  },
+  {
+    "id": "STAMINA_REGEN",
+    "copy-from": "STAMINA_REGEN",
+    "type": "enchantment_value",
+    "alias": [ "REGEN_STAMINA" ]
+  },
+  {
+    "id": "STAMINA_CAP",
+    "copy-from": "STAMINA_CAP",
+    "type": "enchantment_value",
+    "alias": [ "MAX_STAMINA" ]
+  },
+  {
+    "id": "ITEM_DAMAGE_ELECTRIC",
+    "copy-from": "ITEM_DAMAGE_ELECTRIC",
+    "type": "enchantment_value",
+    "alias": [ "ITEM_DAMAGE_ELEC" ]
+  },
+  {
+    "id": "ITEM_ARMOR_ELECTRIC",
+    "copy-from": "ITEM_ARMOR_ELECTRIC",
+    "type": "enchantment_value",
+    "alias": [ "ITEM_ARMOR_ELEC" ]
+  },
+  {
+    "id": "ARMOR_ELECTRIC",
+    "copy-from": "ARMOR_ELECTRIC",
+    "type": "enchantment_value",
+    "alias": [ "ARMOR_ELEC" ]
+  },
+  {
+    "id": "ITEM_DAMAGE_BIOLOGICAL",
+    "copy-from": "ITEM_DAMAGE_BIOLOGICAL",
+    "type": "enchantment_value",
+    "alias": [ "ITEM_DAMAGE_BIO" ]
+  },
+  {
+    "id": "ITEM_ARMOR_BIOLOGICAL",
+    "copy-from": "ITEM_ARMOR_BIOLOGICAL",
+    "type": "enchantment_value",
+    "alias": [ "ITEM_ARMOR_BIO" ]
+  },
+  {
+    "id": "ARMOR_BIOLOGICAL",
+    "copy-from": "ARMOR_BIOLOGICAL",
+    "type": "enchantment_value",
+    "alias": [ "ARMOR_BIO" ]
+  }
+]

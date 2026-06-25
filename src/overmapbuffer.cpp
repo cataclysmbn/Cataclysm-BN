@@ -293,7 +293,7 @@ void overmapbuffer::fix_npcs( overmap &new_overmap )
     }
 }
 
-void overmapbuffer::save( const std::string &dim_id )
+auto overmapbuffer::save( const dimension_id &dim_id ) -> void
 {
     read_lock<std::shared_mutex> _l( mutex );
 
@@ -1643,8 +1643,7 @@ std::vector<shared_ptr_fast<npc>> overmapbuffer::get_npcs_near_player( int radiu
     // get_npcs_near needs submap coordinates
     tripoint_abs_sm plpos = project_to<coords::sm>( plpos_omt );
     // INT_MIN is a (a bit ugly) way to inform get_npcs_near not to filter by z-level
-    const int zpos = get_map().has_zlevels() ? INT_MIN : plpos.z();
-    return get_npcs_near( tripoint_abs_sm( plpos.xy(), zpos ), radius );
+    return get_npcs_near( tripoint_abs_sm( plpos.xy(), INT_MIN ), radius );
 }
 
 std::vector<overmap *> overmapbuffer::get_overmaps_near( const tripoint_abs_sm &location,
@@ -1924,7 +1923,7 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         monster &this_monster = monster_entry.second;
         const auto ms = this_monster.abs_pos();
         const map &here = get_map();
-        const auto local = here.abs_to_bub( ms );
+        const auto local = abs_to_bub( ms );
         if( !here.inbounds( local ) ) {
             debugmsg( "Monster at bub( %s, %s, %s ), abs( %s, %s, %s ) was out of bounds. Skipping spawn",
                       local.x(), local.y(), local.z(), ms.x(), ms.y(), ms.z() );

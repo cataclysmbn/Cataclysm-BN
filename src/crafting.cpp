@@ -10,11 +10,13 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "avatar.h"
@@ -31,6 +33,7 @@
 #include "crafting_gui.h"
 #include "crafting_quality.h"
 #include "debug.h"
+#include "enchantments/enchantment.h"
 #include "enums.h"
 #include "faction.h"
 #include "flag.h"
@@ -293,12 +296,13 @@ float workbench_crafting_speed_multiplier( const item &craft, const bench_locati
 float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
 {
     const auto tools_multi = crafting_tools_speed_multiplier( who, rec );
-    const auto result = morale_crafting_speed_multiplier( who, rec ) *
-                        lighting_crafting_speed_multiplier( who,
-                                rec ) * tools_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
-                                        ? 9999
-                                        : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
-                        who.mutation_value( "crafting_speed_modifier" );
+    auto result = morale_crafting_speed_multiplier( who, rec ) *
+                  lighting_crafting_speed_multiplier( who,
+                          rec ) * tools_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                  ? 9999
+                                  : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
+                  who.mutation_value( "crafting_speed_modifier" );
+    result += who.bonus_from_enchantments( result, enchantment_value_id( "CRAFTING_SPEED" ) );
 
     return result;
 }
@@ -324,9 +328,10 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     const float game_opt_multi = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0 ? 9999 :
                                  100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
 
-    const auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
-                             game_opt_multi;
+    auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
+                       game_opt_multi;
 
+    total_multi += who.bonus_from_enchantments( total_multi, enchantment_value_id( "CRAFTING_SPEED" ) );
     if( light_multi <= 0.0f ) {
         who.add_msg_player_or_npc( m_bad,
                                    _( "You can no longer see well enough to keep crafting." ),
@@ -350,11 +355,11 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     }
 
     // If we're working below 20% speed, just suggest giving up
-    if( calendar::once_every( 1_hours ) && total_multi <= 0.2f ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) && total_multi <= 0.2f ) {
         who.add_msg_if_player( m_bad, _( "You are too frustrated to continue and should just give up." ) );
     }
 
-    if( calendar::once_every( 1_hours ) && total_multi < 0.75f ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) && total_multi < 0.75f ) {
         if( light_multi <= 0.5f ) {
             who.add_msg_if_player( m_bad, _( "You can't see well and are working slowly." ) );
         }
@@ -1089,6 +1094,21 @@ void item::inherit_flags( const std::vector<item *> &parents, const recipe &maki
     }
 }
 
+static auto component_relative_rot( const item *component ) -> double
+{
+    return component != nullptr && component->goes_bad() ? component->get_relative_rot() : 0.0;
+}
+
+static auto highest_component_relative_rot( const std::vector<item *> &components ) -> double
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    if( components.empty() ) {
+        return 0.0;
+    }
+    return ranges::max( components | transform( component_relative_rot ) );
+}
+
 void complete_craft( Character &who, item &craft )
 {
     if( !craft.is_craft() ) {
@@ -1104,7 +1124,7 @@ void complete_craft( Character &who, item &craft )
     for( detached_ptr<item> &it : used ) {
         used_items.push_back( &*it );
     }
-    const double relative_rot = craft.get_relative_rot();
+    const auto relative_rot = highest_component_relative_rot( used_items );
     const bool ignore_component = making.has_flag( "NUTRIENT_OVERRIDE" );
 
     // Set up the new item, and assign an inventory letter if available
@@ -1644,17 +1664,25 @@ std::vector<detached_ptr<item>> Character::consume_items( map &m,
 {
     std::vector<detached_ptr<item>> ret;
 
-    if( has_trait( trait_DEBUG_HS ) ) {
-        return ret;
-    }
-
     item_comp selected_comp = is.comp;
 
-    const tripoint_bub_ms &loc = origin;
     const bool by_charges = item::count_by_charges( selected_comp.type ) && selected_comp.count > 0;
     // Count given to use_amount/use_charges, changed by those functions!
     int real_count = ( selected_comp.count > 0 ) ? selected_comp.count * batch : std::abs(
                          selected_comp.count );
+
+    if( has_trait( trait_DEBUG_HS ) ) {
+        if( by_charges ) {
+            ret.push_back( item::spawn( selected_comp.type, calendar::start_of_cataclysm, real_count ) );
+        } else {
+            for( auto i = 0; i < real_count; i++ ) {
+                ret.push_back( item::spawn( selected_comp.type ) );
+            }
+        }
+        return ret;
+    }
+
+    const tripoint_bub_ms &loc = origin;
     // First try to get everything from the map, than (remaining amount) from player
     if( is.use_from & usage_from::map ) {
         if( by_charges ) {
@@ -2195,7 +2223,7 @@ static bool prompt_disassemble_single( avatar &you, item *target, bool interacti
     loc.loc = target;
     loc.count = res.batches ? *res.batches : 1;
 
-    tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.bub_pos() ) );
+    tripoint_abs_ms pos_abs( you.abs_pos() );
 
     you.assign_activity( std::make_unique<player_activity>
     ( std::make_unique<disassemble_activity_actor>( std::vector<iuse_location> {{ loc }}, pos_abs,
@@ -2232,7 +2260,7 @@ bool crafting::disassemble_all( avatar &you, bool recursively )
     }
 
     if( !targets.empty() ) {
-        tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.bub_pos() ) );
+        tripoint_abs_ms pos_abs( you.abs_pos() );
 
         you.assign_activity( std::make_unique<player_activity>
                              ( std::make_unique<disassemble_activity_actor>( std::move(

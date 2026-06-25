@@ -39,6 +39,22 @@ void energy::serialize( JsonOut &jsout ) const
 }
 
 template<>
+void money::serialize( JsonOut &jsout ) const
+{
+    if( value_ % 100 == 0 ) {
+        jsout.write( string_format( "%d USD", value_ / 100 ) );
+    } else {
+        jsout.write( string_format( "%d cent", value_ / 100 ) );
+    }
+}
+
+template<>
+void money::deserialize( JsonIn &jsin )
+{
+    *this = read_from_json_string<money>( jsin, units::money_units );
+}
+
+template<>
 void energy::deserialize( JsonIn &jsin )
 {
     *this = read_from_json_string( jsin, units::energy_units );

@@ -17,6 +17,27 @@
 5. アクティビティアクターを構築し、`player_activity`のコンストラクタに渡します。新しく構築されたアクティビティはキャラ
    クターに割り当てられ、`Character::assign_activity`を使用して開始できます。
 
+## Lua ベースのアクティビティ
+
+Lua スクリプトは、`game.activity_functions[id]` の Lua コールバックを持つアクティビティを開始できます:
+
+```lua
+game.activity_functions["MY_ACTIVITY_FINISH"] = function(params)
+  -- params.user, params.activity, params.name, params.pos, params.data
+end
+
+who:assign_lua_activity({
+  type = ActivityTypeId.new("ACT_WASH_SELF"),
+  duration = TimeDuration.from_minutes(5),
+  on_finish = "MY_ACTIVITY_FINISH",
+  on_turn = "MY_ACTIVITY_TURN", -- 任意
+  pos = target_pos,
+  data = { mode = "example" },
+})
+```
+
+保存可能な Lua 状態は `data` に入れてください。`pos` は開始時にはバブル座標で渡し、コールバックでは絶対マップ平方座標として渡されます。
+
 ## JSONプロパティ
 
 - verb: アクティビティを停止するか確認する際のクエリや、状況説明に使用される記述的な用語です。 例: `"verb": "mining"`

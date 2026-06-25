@@ -186,8 +186,8 @@
     "description": "A pair metal skateboard trucks, for attaching wheels to.",
     "weight": "600 g",
     "volume": "250 ml",
-    "price": 200,
-    "price_postapoc": 20,
+    "price": "2 USD",
+    "price_postapoc": "20 cent",
     "to_hit": -2,
     "material": [ "steel" ],
     "symbol": "]",
@@ -406,7 +406,7 @@
     "type": "WHEEL",
     "name": { "str": "banded wooden cart wheel" },
     "description": "A wooden cart wheel with metal bands for durability, hand made.",
-    "relative": { "weight": 500 }
+    "relative": { "weight": "500 g" }
   },
   {
     "id": "wheel_mount_light_wood",

@@ -10,6 +10,7 @@
 #include "avatar_action.h"
 #include "inventory.h"
 #include "item.h"
+#include "game.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "state_helpers.h"
@@ -22,10 +23,11 @@
 TEST_CASE( "reload_on_vehicle_cargo", "[magazine] [visitable] [item] [item_location]" )
 {
     clear_all_state();
-    const tripoint_bub_ms vehicle_center = tripoint_bub_ms( 65, 65, 0 );
-    put_player_underground();
+    const auto z = g->u.abs_pos().z();
+    move_player_out_of_the_way();
 
     map &here = get_map();
+    const auto vehicle_center = tripoint_bub_ms( 65, 65, z );
     const vproto_id car_id( "car" );
     const itype_id ups_id( "UPS_off" );
     vehicle *veh = here.add_vehicle( car_id, vehicle_center, 0_radians, 0, 0, false );

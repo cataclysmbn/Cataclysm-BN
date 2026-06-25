@@ -279,6 +279,8 @@
     "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
     "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder", "soldier_wwii" ],
     "forbids_bionics": true,
+    "//": "The few characters modern enough for this to not look weird would still likely be better served by a more historical selection of firearms.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
   {
@@ -401,8 +403,21 @@
       "SMALL",
       "LARGE"
     ],
+    "//": "Do not give the lab rat a gun.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
-    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
+    "bionics": [
+      "afs_bio_dopamine_stimulators",
+      "bio_fuel_cell_hydrogen",
+      "bio_ground_sonar",
+      "bio_infrared",
+      "bio_leukocyte",
+      "bio_minirose",
+      "bio_painkiller",
+      "bio_reactor",
+      "bio_underwater_propellers",
+      "bio_wings"
+    ]
   },
   {
     "type": "scenario",
@@ -429,10 +444,11 @@
     "bionics": [
       "bio_atomic_battery",
       "bio_surgical_razor",
-      "bio_metabolics",
-      "bio_torsionratchet",
-      "bio_tools",
+      "bio_fuel_cell_hydrogen",
+      "bio_synaptic_regen",
+      "bio_blood_anal",
       "bio_memory",
+      "bio_electrosense",
       "bio_geiger"
     ]
   },
@@ -559,7 +575,8 @@
     "allowed_locs": [ "sloc_hospital" ],
     "start_name": "Hospital",
     "forced_traits": [ "FLIMSY2" ],
-    "forbidden_traits": [ "TOUGH" ],
+    "//": "Wearing your piece under your hospital gown would generally be frowned upon in most states.",
+    "forbidden_traits": [ "TOUGH", "CARRY_PERMIT" ],
     "professions": [ "unemployed", "bionic_patient", "patient", "broken_cyborg", "senior" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
   },
@@ -582,6 +599,8 @@
       "cop",
       "convict_escape_team"
     ],
+    "//": "Most professions are convicts, the rest already have their own assigned gear",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "CITY_START", "LONE_START" ]
   },
   {
@@ -603,6 +622,7 @@
       "cop",
       "convict_escape_team"
     ],
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START", "CHALLENGE", "OUTDOOR" ]
   },
   {
@@ -614,6 +634,8 @@
     "allowed_locs": [ "sloc_mi-go_camp" ],
     "start_name": "Mi-Go Camp",
     "professions": [ "captive", "migo_escapee", "migo_experiment", "rescuer", "monster_hunter", "escape_team_migo" ],
+    "//": "Most professions had their items taken on capture.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START", "CHALLENGE", "WIN_START" ]
   },
   {
@@ -687,8 +709,20 @@
       "SMALL",
       "LARGE"
     ],
+    "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "LONE_START" ],
-    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
+    "bionics": [
+      "afs_bio_dopamine_stimulators",
+      "bio_fuel_cell_hydrogen",
+      "bio_ground_sonar",
+      "bio_infrared",
+      "bio_leukocyte",
+      "bio_minirose",
+      "bio_painkiller",
+      "bio_reactor",
+      "bio_underwater_propellers",
+      "bio_wings"
+    ]
   },
   {
     "type": "scenario",
@@ -761,8 +795,8 @@
     "flags": [ "HELI_CRASH", "LONE_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -854,7 +888,6 @@
       "sloc_basement_bionic",
       "sloc_basement_game",
       "sloc_basement_chem",
-      "sloc_basement_hidden_lab",
       "sloc_basement_meth",
       "sloc_basement_messed",
       "sloc_basement_survival",
@@ -889,14 +922,14 @@
     ],
     "bionics": [
       "bio_atomic_battery",
-      "bn_bio_solar",
+      "bio_fuel_cell_hydrogen",
       "bio_climate",
       "bio_evap",
-      "bio_metabolics",
+      "bio_faraday",
       "bio_recycler",
       "bio_shock_absorber",
-      "bio_tools",
-      "bio_torsionratchet",
+      "bio_soporific",
+      "bio_geiger",
       "bio_weight"
     ]
   },
@@ -935,8 +968,8 @@
     "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -1005,8 +1038,8 @@
     "flags": [ "CHALLENGE", "LONE_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -1031,8 +1064,8 @@
     "flags": [ "CITY_START", "LONE_START", "SUM_START" ],
     "bionics": [
       "bio_reactor",
-      "bio_metabolics",
-      "bio_ethanol",
+      "bio_adrenaline",
+      "bio_ads",
       "bio_ups",
       "bio_targeting",
       "bio_geiger",
@@ -1074,6 +1107,26 @@
       "hacker"
     ],
     "allowed_locs": [ "sloc_lab_concourse_area" ],
+    "bionics": [
+      "bio_atomic_battery",
+      "bio_surgical_razor",
+      "bio_fuel_cell_hydrogen",
+      "bio_synaptic_regen",
+      "bio_blood_anal",
+      "bio_memory",
+      "bio_electrosense",
+      "bio_geiger"
+    ],
     "flags": [ "CHALLENGE", "LONE_START" ]
+  },
+  {
+    "type": "scenario",
+    "id": "subway",
+    "name": "The Metro",
+    "points": -2,
+    "description": "In the chaos of the Cataclysm, you decided to make a run for the subway tunnels, hoping to find refuge away from the horrors on the surface.  Now, you find yourself in the dark tunnels of the subway system, and yet you feel like you're not alone...",
+    "allowed_locs": [ "sloc_subway" ],
+    "start_name": "Subway Tunnels",
+    "flags": [ "CITY_START", "LONE_START" ]
   }
 ]

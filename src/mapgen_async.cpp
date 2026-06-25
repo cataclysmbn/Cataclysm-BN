@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <atomic>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -13,6 +15,8 @@
 #include "init.h"
 #include "map.h"
 #include "map_extras.h"
+#include "mapbuffer_registry.h"
+#include "mapgen_constructor.h"
 #include "options.h"
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
@@ -118,17 +122,15 @@ void run_deferred_mapgen_hooks()
         return;
     }
 
-    // Sort by dimension so bind_dimension() is only called when it changes
-    // (in practice almost all omts share the overworld dimension).
+    // Sort by dimension so each batch can reuse one constructor.
     std::ranges::sort( pending, []( const auto & a, const auto & b ) {
         return a.dim < b.dim;
     } );
 
-    // Reuse one tinymap across the entire batch.  Accumulate items per
-    // dimension group and dispatch them together so the batch function can
-    // amortise Lua table allocation and hook-table lookup over all omts.
-    tinymap tmp;
-    std::string cur_dim;
+    // Reuse one constructor per dimension group so the batch function can
+    // amortise Lua table allocation and hook-table lookup over all OMTs.
+    auto constructor = std::unique_ptr<mapgen_constructor>();
+    auto cur_dim = std::optional<dimension_id>();
     std::vector<cata::mapgen_hook_batch_item> batch;
     batch.reserve( pending.size() );
 
@@ -137,18 +139,17 @@ void run_deferred_mapgen_hooks()
             return;
         }
         cata::run_on_mapgen_postprocess_hooks_batch(
-            *DynamicDataLoader::get_instance().lua, tmp, batch );
+            *DynamicDataLoader::get_instance().lua, *constructor, batch );
         batch.clear();
     };
 
     std::ranges::for_each( pending, [&]( const auto & h ) {
-        if( h.dim != cur_dim ) {
+        if( !cur_dim || h.dim != *cur_dim ) {
             flush();
             cur_dim = h.dim;
-            tmp.bind_dimension( cur_dim );
+            constructor = std::make_unique<mapgen_constructor>( MAPBUFFER_REGISTRY.get( h.dim ) );
         }
         batch.push_back( {
-            .sm_base = project_to<coords::sm>( h.omt_pos ),
             .omt_pos = h.omt_pos,
             .when    = h.when,
         } );

@@ -383,7 +383,7 @@
     "color": "light_gray",
     "name": { "str": "cluster of gas sacs", "str_pl": "clusters of gas sacs" },
     "description": "This is a cluster of membranous bubbles, each about the size of a grape, retrieved from inside a mutant insect.  They float like tiny helium balloons, and are likely full of a lighter-than-air gas helping the bug to fly.",
-    "price": 0,
+    "price": "0 USD",
     "stackable": true,
     "material": [ "flesh" ],
     "flags": [ "NO_SALVAGE" ],
@@ -3371,6 +3371,15 @@
     "symbol": ",",
     "color": "green",
     "name": { "str": "broken light turret" },
+    "weight": "30 kg",
+    "copy-from": "broken_turret"
+  },
+  {
+    "type": "GENERIC",
+    "id": "broken_robofac_turret_light",
+    "symbol": ",",
+    "color": "green",
+    "name": { "str": "broken Hub 01 light turret" },
     "weight": "30 kg",
     "copy-from": "broken_turret"
   },

@@ -1,5 +1,6 @@
 #include "character_turn.h"
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -15,13 +16,13 @@
 #include "character_martial_arts.h"
 #include "character.h"
 #include "creature.h"
+#include "enchantments/enchantment.h"
 #include "flag.h"
 #include "flag_trait.h"
 #include "game.h"
 #include "handle_liquid.h"
 #include "itype.h"
 #include "iuse.h"
-#include "magic_enchantment.h"
 #include "mutation.h"
 #include "overmapbuffer.h"
 #include "make_static.h"
@@ -41,6 +42,7 @@
 #include "weather_gen.h"
 #include "weather.h"
 #include "profile.h"
+#include <algorithm>
 
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
 static const trait_id trait_ARACHNID_ARMS_OK( "ARACHNID_ARMS_OK" );
@@ -84,6 +86,8 @@ static const efftype_id effect_depressants( "depressants" );
 static const efftype_id effect_dermatik( "dermatik" );
 static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_fungus( "fungus" );
+static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_happy( "happy" );
 static const efftype_id effect_irradiated( "irradiated" );
 static const efftype_id effect_masked_scent( "masked_scent" );
@@ -103,11 +107,26 @@ static const skill_id skill_swimming( "swimming" );
 static const skill_id skill_traps( "traps" );
 
 static const bionic_id bio_ground_sonar( "bio_ground_sonar" );
-static const bionic_id bio_hydraulics( "bio_hydraulics" );
 static const bionic_id bio_speed( "bio_speed" );
 
 static const itype_id itype_UPS( "UPS" );
 static const itype_id itype_battery( "battery" );
+
+namespace
+{
+
+auto character_has_adjacent_grabbed_target( const Character &who ) -> bool
+{
+    for( const auto &p : get_map().points_in_radius( who.bub_pos(), 1, 0 ) ) {
+        const Creature *const target = g->critter_at<Creature>( p );
+        if( target != nullptr && target != &who && target->has_effect( effect_grabbed ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+} // namespace
 
 void Character::recalc_speed_bonus()
 {
@@ -149,7 +168,9 @@ void Character::recalc_speed_bonus()
         if( has_trait( trait_SUNLIGHT_DEPENDENT ) && !g->is_in_sunlight( bub_pos() ) ) {
             mod_speed_bonus( -( g->light_level( bub_pos().z() ) >= 12 ? 5 : 10 ) );
         }
-        const float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
+        float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
+        temperature_speed_modifier += bonus_from_enchantments( temperature_speed_modifier,
+                                      enchantment_value_id( "BODYTEMP_SPEED" ) );
         if( temperature_speed_modifier != 0 ) {
             const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( abs_pos() ) );
             if( has_trait( trait_COLDBLOOD4 ) || player_local_temp < 65 ) {
@@ -168,11 +189,7 @@ void Character::recalc_speed_bonus()
     float speed_modifier = Character::mutation_value( "speed_modifier" );
     mod_speed_mult( speed_modifier - 1 );
 
-    if( has_bionic( bio_speed ) ) { // add 10% speed bonus
-        mod_speed_mult( 0.1 );
-    }
-
-    double ench_bonus = enchantment_cache->calc_bonus( enchant_vals::mod::SPEED, get_speed() );
+    double ench_bonus = enchantment_cache->calc_bonus( enchantment_value_id( "SPEED" ), get_speed() );
     mod_speed_bonus( ench_bonus );
 }
 
@@ -183,14 +200,19 @@ void Character::process_turn()
 
     for( bionic &i : get_bionic_collection() ) {
         if( i.incapacitated_time > 0_turns ) {
-            i.incapacitated_time -= 1_turns;
-            if( i.incapacitated_time == 0_turns ) {
+            i.incapacitated_time -= action_time_scale::calendar_duration_this_tick();
+            if( i.incapacitated_time <= 0_turns ) {
+                i.incapacitated_time = 0_turns;
                 add_msg_if_player( m_bad, _( "Your %s bionic comes back online." ), i.info().name );
             }
         }
     }
 
     Creature::process_turn();
+
+    if( has_effect( effect_grabbing ) && !character_has_adjacent_grabbed_target( *this ) ) {
+        remove_effect( effect_grabbing );
+    }
 
     // If we're actively handling something we can't just drop it on the ground
     // in the middle of handling it
@@ -222,11 +244,11 @@ void Character::process_turn()
 
     // Handle player and NPC morale ticks
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         update_morale();
     }
 
-    if( calendar::once_every( 9_turns ) ) {
+    if( action_time_scale::once_every_this_tick( 9_turns ) ) {
         check_and_recover_morale();
     }
 
@@ -267,7 +289,9 @@ void Character::process_turn()
         for( const trait_id &mut : get_mutations() ) {
             norm_scent *= mut.obj().scent_modifier;
         }
+        norm_scent += bonus_from_enchantments( norm_scent, enchantment_value_id( "SCENT" ) );
 
+        norm_scent = std::max( 0, norm_scent );
         // Scent increases fast at first, and slows down as it approaches normal levels.
         // Estimate it will take about norm_scent * 2 turns to go from 0 - norm_scent / 2
         // Without smelly trait this is about 1.5 hrs. Slows down significantly after that.
@@ -310,13 +334,13 @@ void Character::process_turn()
         const tripoint_abs_omt ompos = abs_omt_pos();
         const point_abs_omt pos = ompos.xy();
         if( !overmap_time.contains( pos ) ) {
-            overmap_time[pos] = 1_turns;
+            overmap_time[pos] = action_time_scale::calendar_duration_this_tick();
         } else {
-            overmap_time[pos] += 1_turns;
+            overmap_time[pos] += action_time_scale::calendar_duration_this_tick();
         }
     }
     // Decay time spent in other overmap tiles.
-    if( !is_npc() && calendar::once_every( 1_hours ) ) {
+    if( !is_npc() && action_time_scale::once_every_this_tick( 1_hours ) ) {
         const tripoint_abs_omt ompos = abs_omt_pos();
         const time_point now = calendar::turn;
         time_duration decay_time = 0_days;
@@ -355,6 +379,11 @@ void Character::process_turn()
             it++;
         }
     }
+}
+
+auto Character::action_move_factor() const -> int
+{
+    return action_time_scale::player_tick_action_factor();
 }
 
 void Character::process_one_effect( effect &it, bool is_new )
@@ -779,7 +808,7 @@ void Character::reset_stats()
     // Apply static martial arts buffs
     martial_arts_data->ma_static_effects( *this );
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         character_funcs::update_mental_focus( *this );
     }
 
@@ -798,11 +827,6 @@ void Character::reset_stats()
         }
     }
 
-    // Bionic buffs
-    if( has_active_bionic( bio_hydraulics ) ) {
-        mod_str_bonus( 20 );
-    }
-
     mod_str_bonus( get_mod_stat_from_bionic( character_stat::STRENGTH ) );
     mod_dex_bonus( get_mod_stat_from_bionic( character_stat::DEXTERITY ) );
     mod_per_bonus( get_mod_stat_from_bionic( character_stat::PERCEPTION ) );
@@ -812,16 +836,18 @@ void Character::reset_stats()
     mod_str_bonus( std::floor( mutation_value( "str_modifier" ) ) );
     mod_dodge_bonus( std::floor( mutation_value( "dodge_modifier" ) ) );
 
-    mod_str_bonus( enchantment_cache->calc_bonus( enchant_vals::mod::STRENGTH, get_str_base(), true ) );
-    mod_dex_bonus( enchantment_cache->calc_bonus( enchant_vals::mod::DEXTERITY, get_dex_base(),
+    mod_str_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "STRENGTH" ), get_str_base(),
                    true ) );
-    mod_per_bonus( enchantment_cache->calc_bonus( enchant_vals::mod::PERCEPTION, get_per_base(),
+    mod_dex_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "DEXTERITY" ), get_dex_base(),
                    true ) );
-    mod_int_bonus( enchantment_cache->calc_bonus( enchant_vals::mod::INTELLIGENCE, get_int_base(),
+    mod_per_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "PERCEPTION" ), get_per_base(),
+                   true ) );
+    mod_int_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "INTELLIGENCE" ),
+                   get_int_base(),
                    true ) );
 
     mod_num_dodges_bonus( enchantment_cache->calc_bonus(
-                              enchant_vals::mod::BONUS_DODGE,
+                              enchantment_value_id( "BONUS_DODGE" ),
                               get_num_dodges_base(),
                               true
                           ) );

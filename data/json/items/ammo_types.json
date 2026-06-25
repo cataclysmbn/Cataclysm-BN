@@ -548,6 +548,12 @@
   },
   {
     "type": "ammunition_type",
+    "id": "hellfire",
+    "name": "Hellfire missile",
+    "default": "hellfire_heat"
+  },
+  {
+    "type": "ammunition_type",
     "id": "unfinished_char",
     "name": "semi-charred fuel",
     "default": "unfinished_charcoal"

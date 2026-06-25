@@ -33,7 +33,15 @@
           { "item": "cash_card", "prob": 80, "charges": [ 0, 50000 ] },
           { "item": "money_bundle", "prob": 20, "count": [ 1, 2 ] }
         ]
-      },
+      }
+    ]
+  },
+  {
+    "id": "mon_zombie_cop_shieldman_death_drops",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "plastic_chunk", "prob": 75, "count": [ 12, 16 ] },
       { "item": "shield_riot", "prob": 25, "damage": [ 1, 4 ] }
     ]
   },
@@ -41,7 +49,8 @@
     "type": "item_group",
     "id": "cop_gear",
     "items": [
-      [ "1st_aid", 30 ],
+      [ "1st_aid", 24 ],
+      [ "1st_aid_deluxe", 6 ],
       [ "gasbomb", 5 ],
       [ "airhorn", 5 ],
       [ "bandages", 20 ],
@@ -169,10 +178,19 @@
     "id": "swat_zombie_gear",
     "subtype": "collection",
     "entries": [
-      { "collection": [ { "item": "bandages", "prob": 60 }, { "item": "1st_aid", "prob": 20 } ], "prob": 25 },
       {
-        "collection": [ { "item": "swat_armor", "prob": 50 }, { "item": "kevlar", "prob": 25 }, { "item": "tacvest", "prob": 5 } ],
-        "prob": 75
+        "collection": [
+          { "item": "bandages", "prob": 60 },
+          {
+            "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ],
+            "prob": 20
+          }
+        ],
+        "prob": 25
+      },
+      {
+        "collection": [ { "item": "swat_armor", "prob": 100 }, { "item": "kevlar", "prob": 25 }, { "item": "tacvest", "prob": 5 } ],
+        "prob": 100
       },
       {
         "collection": [
@@ -218,12 +236,7 @@
     "id": "swat_helmet",
     "type": "item_group",
     "subtype": "distribution",
-    "entries": [
-      { "item": "mask_gas", "prob": 10 },
-      { "item": "helmet_riot", "prob": 20 },
-      { "item": "tac_helmet", "prob": 10 },
-      { "item": "tac_fullhelmet", "prob": 5 }
-    ]
+    "entries": [ { "item": "mask_gas", "prob": 10 }, { "item": "tac_helmet", "prob": 10 }, { "item": "tac_fullhelmet", "prob": 5 } ]
   },
   {
     "id": "swat_pants",

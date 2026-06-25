@@ -1,5 +1,6 @@
 #include "game.h" // IWYU pragma: associated
 
+#include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <chrono>
@@ -20,6 +21,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "avatar_functions.h"
+#include "bodypart.h"
 #include "bionics.h"
 #include "bionics_ui.h"
 #include "calendar.h"
@@ -71,6 +73,7 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "mutation_ui.h"
+#include "npc.h"
 #include "options.h"
 #include "output.h"
 #include "overmap_ui.h"
@@ -78,6 +81,7 @@
 #include "player.h"
 #include "player_activity.h"
 #include "popup.h"
+#include "profile.h"
 #include "ranged.h"
 #include "rng.h"
 #include "safemode_ui.h"
@@ -89,6 +93,7 @@
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "translations.h"
+#include "travel/travel_destination.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include "utils/url.h"
@@ -120,6 +125,8 @@ static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
 static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
 
 static const efftype_id effect_alarm_clock( "alarm_clock" );
+static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_laserlocked( "laserlocked" );
 static const efftype_id effect_relax_gas( "relax_gas" );
 
@@ -129,6 +136,78 @@ static const itype_id itype_pistol_lanyard( "pistol_lanyard" );
 static const skill_id skill_melee( "melee" );
 
 static const quality_id qual_CUT( "CUT" );
+
+namespace
+{
+
+const flag_id flag_NO_GRAB( "NO_GRAB" );
+
+auto nearby_grabbed_creature( const avatar &you ) -> Creature *
+{
+    for( const auto &p : get_map().points_in_radius( you.bub_pos(), 1 ) ) {
+        Creature *const target = g->critter_at<Creature>( p, true );
+        if( target != nullptr && target != &you && target->has_effect( effect_grabbed ) ) {
+            return target;
+        }
+    }
+    return nullptr;
+}
+
+auto release_grabbed_creature( avatar &you ) -> bool
+{
+    if( !you.has_effect( effect_grabbing ) ) {
+        return false;
+    }
+
+    Creature *const target = nearby_grabbed_creature( you );
+    if( target != nullptr ) {
+        add_msg( _( "You release %s." ), target->disp_name() );
+        target->remove_effect( effect_grabbed );
+    } else {
+        add_msg( _( "You release your grip." ) );
+    }
+    you.remove_effect( effect_grabbing );
+    return true;
+}
+
+auto can_grab_creature( const Creature &target ) -> bool
+{
+    return !target.is_hallucination() && !target.has_effect_with_flag( flag_NO_GRAB ) &&
+           !target.has_effect( effect_grabbed ) && !target.has_flag( MF_GRAB_IMMUNE );
+}
+
+auto confirm_grab_npc( const npc &target ) -> bool
+{
+    return target.is_enemy() ||
+           query_yn( _( "You may be attacked!  Proceed?" ) );
+}
+
+auto grab_creature( avatar &you, Creature &target ) -> void
+{
+    if( !can_grab_creature( target ) ) {
+        add_msg( m_info, _( "You can't grab %s." ), target.disp_name() );
+        return;
+    }
+
+    if( npc *const guy = target.as_npc(); guy != nullptr && !confirm_grab_npc( *guy ) ) {
+        return;
+    }
+
+    if( monster *const mon = target.as_monster() ) {
+        mon->on_hit( &you, body_part_torso.id(), nullptr, false );
+    } else if( npc *const guy = target.as_npc(); guy != nullptr && !guy->is_enemy() ) {
+        guy->make_angry();
+    }
+
+    const auto grab_strength = std::clamp( you.get_str() / 2, 1, 15 );
+    target.add_effect( effect_grabbed, 1_days, body_part_torso, grab_strength );
+    you.add_effect( effect_grabbing, 1_days, body_part_torso, grab_strength );
+    you.mod_moves( -100 );
+    you.mod_stamina( -std::max( 50, grab_strength * 20 ) );
+    add_msg( _( "You grab %s." ), target.disp_name() );
+}
+
+} // namespace
 
 static const bionic_id bio_remote( "bio_remote" );
 
@@ -257,36 +336,40 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
 
 input_context game::get_player_input( std::string &action )
 {
+    ZoneScopedN( "get_player_input" );
     input_context ctxt;
-    if( uquit == QUIT_WATCH ) {
-        ctxt = input_context( "DEFAULTMODE" );
-        ctxt.set_iso( true );
-        // The list of allowed actions in death-cam mode in game::handle_action
-        // *INDENT-OFF*
-        for( const action_id id : {
-            ACTION_TOGGLE_MAP_MEMORY,
-            ACTION_CENTER,
-            ACTION_SHIFT_N,
-            ACTION_SHIFT_NE,
-            ACTION_SHIFT_E,
-            ACTION_SHIFT_SE,
-            ACTION_SHIFT_S,
-            ACTION_SHIFT_SW,
-            ACTION_SHIFT_W,
-            ACTION_SHIFT_NW,
-            ACTION_LOOK,
-            ACTION_KEYBINDINGS,
-        } ) {
-            ctxt.register_action( action_ident( id ) );
+    {
+        ZoneScopedN( "get_player_input_context" );
+        if( uquit == QUIT_WATCH ) {
+            ctxt = input_context( "DEFAULTMODE" );
+            ctxt.set_iso( true );
+            // The list of allowed actions in death-cam mode in game::handle_action
+            // *INDENT-OFF*
+            for( const action_id id : {
+                ACTION_TOGGLE_MAP_MEMORY,
+                ACTION_CENTER,
+                ACTION_SHIFT_N,
+                ACTION_SHIFT_NE,
+                ACTION_SHIFT_E,
+                ACTION_SHIFT_SE,
+                ACTION_SHIFT_S,
+                ACTION_SHIFT_SW,
+                ACTION_SHIFT_W,
+                ACTION_SHIFT_NW,
+                ACTION_LOOK,
+                ACTION_KEYBINDINGS,
+            } ) {
+                ctxt.register_action( action_ident( id ) );
+            }
+            // *INDENT-ON*
+            ctxt.register_action( "QUIT", to_translation( "Accept your fate" ) );
+        } else {
+            ctxt = get_default_mode_input_context();
         }
-        // *INDENT-ON*
-        ctxt.register_action( "QUIT", to_translation( "Accept your fate" ) );
-    } else {
-        ctxt = get_default_mode_input_context();
     }
 
     user_turn current_turn;
-
+    const auto realtime_turns = get_option<float>( "TURN_DURATION" ) > 0.005f;
 
     // Checking early if we will need to handle animations
     // If we do not need to handle animations that will not change as long as the user has not selected an action
@@ -295,6 +378,7 @@ input_context game::get_player_input( std::string &action )
     bool animate_weather = false;
     bool animate_sct = false;
     bool do_animations = [&]() {
+        ZoneScopedN( "get_player_input_animation_decision" );
         if( get_option<bool>( "ANIMATIONS" ) ) {
             const bool weather_has_anim = init_weather_anim( get_weather().weather_id, wPrint );
 
@@ -302,7 +386,7 @@ input_context game::get_player_input( std::string &action )
             animate_sct = !SCT.vSCT.empty() && uquit != QUIT_WATCH && get_option<bool>( "ANIMATION_SCT" );
 
 #if defined(TILES)
-            // Always animate, minimap and terrain may have animations to run
+            // Tiles need the animation-aware loop so minimap and terrain animation state can be checked.
             return true;
 #else
             // Otherwise we need to see if we actually should animate.
@@ -315,7 +399,7 @@ input_context game::get_player_input( std::string &action )
     ();
 
     if( do_animations ) {
-        ctxt.set_timeout( 125 );
+        ZoneScopedN( "get_player_input_animation_loop" );
 
         shared_ptr_fast<game::draw_callback_t> animation_cb =
         make_shared_fast<game::draw_callback_t>( [&]() {
@@ -331,11 +415,13 @@ input_context game::get_player_input( std::string &action )
 
         do {
             if( animate_weather ) {
+                ZoneScopedN( "get_player_input_weather_anim_frame" );
                 invalidate_main_ui_adaptor();
                 generate_weather_anim_frame( get_weather().weather_id, wPrint );
             }
             // don't bother calculating SCT if we won't show it
             if( animate_sct ) {
+                ZoneScopedN( "get_player_input_sct_anim_frame" );
                 invalidate_main_ui_adaptor();
 
                 SCT.advanceAllSteps();
@@ -370,13 +456,21 @@ input_context game::get_player_input( std::string &action )
                 animate_sct = !SCT.vSCT.empty();
             }
             // We don't cache these checks as their result may change after 1st redraw
-            if( minimap_requires_animation() || terrain_requires_animation() ) {
+            auto needs_map_animation = false;
+            {
+                ZoneScopedN( "get_player_input_map_anim_check" );
+                needs_map_animation = minimap_requires_animation() || terrain_requires_animation();
+            }
+            if( needs_map_animation ) {
                 // TODO: we redraw *everything* just to animate a couple blinking dots
                 //       on the minimap or a few tiles.
                 //       This is far from ideal, and can probably be done much cheaper
                 //       (update only part of the screen? draw static parts into a texture?)
                 invalidate_main_ui_adaptor();
             }
+            const auto needs_timed_poll = realtime_turns || animate_weather || animate_sct ||
+                                          needs_map_animation || uquit == QUIT_WATCH;
+            TracyPlot( "Input Timed Polling", static_cast<int64_t>( needs_timed_poll ? 1 : 0 ) );
 
             std::unique_ptr<static_popup> deathcam_msg_popup;
             if( uquit == QUIT_WATCH ) {
@@ -386,22 +480,58 @@ input_context game::get_player_input( std::string &action )
                 .on_top( true );
             }
 
-            ui_manager::redraw_invalidated();
-        } while( handle_mouseview( ctxt, action ) && uquit != QUIT_WATCH
-                 && ( action != "TIMEOUT" || !current_turn.has_timeout_elapsed() ) );
-        ctxt.reset_timeout();
-    } else {
-        invalidate_main_ui_adaptor();
-        ui_manager::redraw_invalidated();
-        SCT.vSCT.clear();
-
-        ctxt.set_timeout( 125 );
-        while( handle_mouseview( ctxt, action ) ) {
-            if( action == "TIMEOUT" && current_turn.has_timeout_elapsed() ) {
+            {
+                ZoneScopedN( "get_player_input_redraw_invalidated" );
+                ui_manager::redraw_invalidated();
+            }
+            auto keep_waiting = false;
+            {
+                ZoneScopedN( "get_player_input_handle_mouseview" );
+                if( needs_timed_poll ) {
+                    ctxt.set_timeout( 125 );
+                } else {
+                    ctxt.reset_timeout();
+                }
+                keep_waiting = handle_mouseview( ctxt, action );
+            }
+            if( !keep_waiting || uquit == QUIT_WATCH ||
+                ( action == "TIMEOUT" && current_turn.has_timeout_elapsed() ) ) {
                 break;
             }
-        }
+        } while( true );
         ctxt.reset_timeout();
+    } else {
+        ZoneScopedN( "get_player_input_no_animation" );
+        {
+            ZoneScopedN( "get_player_input_noanim_redraw" );
+            invalidate_main_ui_adaptor();
+            ui_manager::redraw_invalidated();
+        }
+        SCT.vSCT.clear();
+
+        if( realtime_turns || uquit == QUIT_WATCH ) {
+            ctxt.set_timeout( 125 );
+            while( true ) {
+                auto keep_waiting = false;
+                {
+                    ZoneScopedN( "get_player_input_noanim_handle_mouseview" );
+                    keep_waiting = handle_mouseview( ctxt, action );
+                }
+                if( !keep_waiting ) {
+                    break;
+                }
+                if( action == "TIMEOUT" && current_turn.has_timeout_elapsed() ) {
+                    break;
+                }
+            }
+            ctxt.reset_timeout();
+        } else {
+            {
+                ZoneScopedN( "get_player_input_noanim_blocking_handle_mouseview" );
+                ctxt.reset_timeout();
+                handle_mouseview( ctxt, action );
+            }
+        }
     }
 
     return ctxt;
@@ -439,15 +569,31 @@ inline static void rcdrive( point_rel_ms d )
     auto dest = c + d;
     if( here.impassable( dest ) || !here.can_put_items_ter_furn( dest ) ||
         here.has_furn( dest ) ) {
-        sounds::sound( dest, 7, sounds::sound_t::combat,
-                       _( "sound of a collision with an obstacle." ), true, "misc", "rc_car_hits_obstacle" );
+        sound_event se;
+        se.origin = dest;
+        se.volume = 65;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "sound of a collision with an obstacle." );
+        se.id = "misc";
+        se.variant = "rc_car_hits_obstacle";
+
+        sounds::sound( se );
         return;
     } else {
         tripoint_bub_ms src( c );
         detached_ptr<item> det_car = here.i_rem( src, rc_car );
         here.add_item_or_charges( dest, std::move( det_car ) );
         //~ Sound of moving a remote controlled car
-        sounds::sound( src, 6, sounds::sound_t::movement, _( "zzz…" ), true, "misc", "rc_car_drives" );
+        sound_event se;
+        se.origin = src;
+        se.volume = 50;
+        se.category = sounds::sound_t::movement;
+        se.movement_noise = true;
+        se.description = _( "zzz…" );
+        se.id = "misc";
+        se.variant = "rc_car_drives";
+
+        sounds::sound( se );
         u.moves -= 50;
 
         u.set_value( "remote_controlling", serialize_wrapper( [&]( JsonOut & jo ) {
@@ -499,10 +645,6 @@ static void pldrive( const tripoint_rel_veh &p )
             add_msg( m_info, _( "Can't drive this vehicle remotely.  It has no working controls." ) );
             return;
         }
-    }
-    if( p.z() != 0 && !here.has_zlevels() ) {
-        u.add_msg_if_player( m_info, _( "This vehicle doesn't look very airworthy." ) );
-        return;
     }
     if( p.z() == -1 ) {
         if( veh->check_heli_descend( u ) ) {
@@ -587,6 +729,10 @@ static void grab()
     avatar &you = g->u;
     map &here = get_map();
 
+    if( release_grabbed_creature( you ) ) {
+        return;
+    }
+
     if( you.get_grab_type() != OBJECT_NONE ) {
         if( const auto target = vehicle_grab_target_at( here, you.bub_pos() + you.grab_point ) ) {
             add_msg( _( "You release the %s." ), target->vp.vehicle().name );
@@ -610,7 +756,9 @@ static void grab()
         you.grab( OBJECT_NONE );
         return;
     }
-    if( const auto target = vehicle_grab_target_at( here, grabp ) ) {
+    if( Creature *const target = g->critter_at<Creature>( grabp, false ) ) {
+        grab_creature( you, *target );
+    } else if( const auto target = vehicle_grab_target_at( here, grabp ) ) {
         if( !target->vp.vehicle().handle_potential_theft( get_avatar() ) ) {
             return;
         }
@@ -687,10 +835,7 @@ static void smash()
     } else {
         smashskill = u.str_cur + weapon.damage_melee( DT_BASH );
     }
-
-    const bool allow_floor_bash = here.has_zlevels();
-    const std::optional<tripoint_bub_ms> smashp_ = choose_adjacent( _( "Smash where?" ),
-            allow_floor_bash );
+    const std::optional<tripoint_bub_ms> smashp_ = choose_adjacent( _( "Smash where?" ), true );
     if( !smashp_ ) {
         return;
     }
@@ -721,16 +866,30 @@ static void smash()
             add_msg( m_neutral, _( "You don't seem to be damaging the %s." ), fd_to_smsh.first->get_name() );
             return;
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
-            sounds::sound( smashp, bash_info.sound_vol.value_or( -1 ),
-                           sounds::sound_t::combat, bash_info.sound, true, "smash", "field" );
+            sound_event se;
+            se.origin = smashp;
+            se.volume = bash_info.sound_vol.value_or( 0 );
+            se.category = sounds::sound_t::combat;
+            se.description = bash_info.sound.translated();
+            se.id = "smash";
+            se.variant = "field";
+
+            sounds::sound( se );
             here.remove_field( smashp, fd_to_smsh.first );
             here.spawn_items( smashp, item_group::items_from( bash_info.drop_group, calendar::turn ) );
             u.mod_moves( - bash_info.fd_bash_move_cost );
             add_msg( m_info, bash_info.field_bash_msg_success.translated() );
             return;
         } else {
-            sounds::sound( smashp, bash_info.sound_fail_vol.value_or( -1 ),
-                           sounds::sound_t::combat, bash_info.sound_fail, true, "smash", "field" );
+            sound_event se;
+            se.origin = smashp;
+            se.volume = bash_info.sound_fail_vol.value_or( 0 );
+            se.category = sounds::sound_t::combat;
+            se.description = bash_info.sound_fail.translated();
+            se.id = "smash";
+            se.variant = "field";
+
+            sounds::sound( se );
             return;
         }
     }
@@ -754,7 +913,7 @@ static void smash()
     if( should_pulp ) {
         // do activity forever. ACT_PULP stops itself
         u.assign_activity( std::make_unique<player_activity>( ACT_PULP, calendar::INDEFINITELY_LONG, 0 ) );
-        u.activity->placement = here.bub_to_abs( smashp );
+        u.activity->placement = bub_to_abs( smashp );
         return; // don't smash terrain if we've smashed a corpse
     }
 
@@ -764,7 +923,17 @@ static void smash()
             return;
         }
     }
-    didit = here.bash( smashp, smashskill, false, false, smash_floor ).did_bash;
+    const auto bash = bash_params{
+        .strength = smashskill,
+        .silent = false,
+        .destroy = false,
+        .bash_floor = smash_floor,
+        .roll = static_cast<float>( rng_float( 0, 1.0f ) ),
+        .bashing_from_above = false,
+        .do_recurse = true,
+        .caused_by_player = true
+    };
+    didit = here.bash( smashp, bash ).did_bash;
     if( didit ) {
         if( !mech_smash ) {
             u.handle_melee_wear( weapon );
@@ -779,7 +948,15 @@ static void smash()
                 rng( 0, vol + 3 ) < vol ) {
                 add_msg( m_bad, _( "Your %s shatters!" ), weapon.tname() );
                 weapon.spill_contents( u.bub_pos() );
-                sounds::sound( u.bub_pos(), 24, sounds::sound_t::combat, "CRACK!", true, "smash", "glass" );
+                sound_event se;
+                se.origin = u.bub_pos();
+                se.volume = 70;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "CRACK!" );
+                se.id = "smash";
+                se.variant = "glass";
+
+                sounds::sound( se );
                 u.deal_damage( nullptr, bodypart_id( "hand_r" ), damage_instance( DT_CUT, rng( 0, vol ) ) );
                 if( vol > 20 ) {
                     // Hurt left arm too, if it was big
@@ -851,7 +1028,6 @@ static int try_set_alarm()
 
     return as_m.ret;
 }
-
 
 static auto parse_custom_wait_duration( const std::string &value ) -> std::optional<time_duration>
 {
@@ -1062,7 +1238,7 @@ static void wait()
         }
 
         u.assign_activity( std::make_unique<player_activity>( actType,
-                           100 * ( to_turns<int>( time_to_wait ) ), 0 ), false );
+                           to_moves<int>( time_to_wait ), 0 ), false );
     }
 }
 
@@ -1145,9 +1321,8 @@ static void sleep()
        and loop until we get a valid answer. */
     as_m.query();
 
-    if( as_m.ret == 1 ) {
-        g->quicksave();
-    } else if( as_m.ret == 2 || as_m.ret < 0 ) {
+    const auto save_before_sleep = as_m.ret == 1;
+    if( as_m.ret == 2 || as_m.ret < 0 ) {
         return;
     }
 
@@ -1184,6 +1359,10 @@ static void sleep()
         } else if( as_m.ret < 0 ) {
             return;
         }
+    }
+
+    if( save_before_sleep ) {
+        g->quicksave();
     }
 
     u.moves = 0;
@@ -1662,25 +1841,32 @@ void game::open_consume_item_menu()
 
 bool game::handle_action()
 {
+    ZoneScopedN( "handle_action" );
     std::string action;
     input_context ctxt;
     action_id act = ACTION_NULL;
     user_turn current_turn;
-    // Check if we have an auto-move destination
-    if( u.has_destination() ) {
-        act = u.get_next_auto_move_direction();
-        if( act == ACTION_NULL ) {
-            add_msg( m_info, _( "Auto-move canceled" ) );
-            u.clear_destination();
+    {
+        ZoneScopedN( "handle_action_get_action" );
+        // Check if we have an auto-move destination
+        if( u.has_destination() ) {
+            ZoneScopedN( "handle_action_get_auto_move" );
+            act = u.get_next_auto_move_direction();
+            if( act == ACTION_NULL ) {
+                add_msg( m_info, _( "Auto-move canceled" ) );
+                u.clear_destination();
+                return false;
+            }
+        } else if( u.has_destination_activity() ) {
+            ZoneScopedN( "handle_action_start_destination_activity" );
+            // starts destination activity after the player successfully reached his destination
+            u.start_destination_activity();
             return false;
+        } else {
+            ZoneScopedN( "handle_action_get_player_input" );
+            // No auto-move, ask player for input
+            ctxt = get_player_input( action );
         }
-    } else if( u.has_destination_activity() ) {
-        // starts destination activity after the player successfully reached his destination
-        u.start_destination_activity();
-        return false;
-    } else {
-        // No auto-move, ask player for input
-        ctxt = get_player_input( action );
     }
 
     const optional_vpart_position vp = m.veh_at( u.bub_pos() );
@@ -1702,6 +1888,7 @@ bool game::handle_action()
     }
 
     if( act == ACTION_NULL ) {
+        ZoneScopedN( "handle_action_resolve_action" );
         act = look_up_action( action );
 
         if( act == ACTION_KEYBINDINGS ) {
@@ -1768,13 +1955,13 @@ bool game::handle_action()
             const std::optional<tripoint_bub_ms> mouse_pos = ctxt.get_coordinates( w_terrain );
             if( !mouse_pos ) {
                 return false;
-            } else if( !u.sees( *mouse_pos ) ) {
-                // Not clicked in visible terrain
-                return false;
             }
             mouse_target = mouse_pos;
 
             if( act == ACTION_SELECT ) {
+                if( !avatar_knows_travel_destination( u, *mouse_target ) ) {
+                    return false;
+                }
                 // Note: The following has the potential side effect of
                 // setting auto-move destination state in addition to setting
                 // act.
@@ -1782,6 +1969,10 @@ bool game::handle_action()
                     return false;
                 }
             } else if( act == ACTION_SEC_SELECT ) {
+                if( !u.sees( *mouse_target ) ) {
+                    // Right-click actions examine or target current terrain and creatures.
+                    return false;
+                }
                 if( !try_get_right_click_action( act, *mouse_target ) ) {
                     return false;
                 }
@@ -1799,6 +1990,7 @@ bool game::handle_action()
     }
 
     if( act == ACTION_NULL ) {
+        ZoneScopedN( "handle_action_unknown_command" );
         const input_event &&evt = ctxt.get_raw_input();
         if( !evt.sequence.empty() ) {
             const int ch = evt.get_first_input();
@@ -1817,14 +2009,22 @@ bool game::handle_action()
     }
 
     // This has no action unless we're in a special game mode.
-    gamemode->pre_action( act );
+    {
+        ZoneScopedN( "handle_action_gamemode_pre_action" );
+        gamemode->pre_action( act );
+    }
 
-    int soffset = get_option<int>( "MOVE_VIEW_OFFSET" );
+    int soffset = 0;
+    {
+        ZoneScopedN( "handle_action_move_view_option" );
+        soffset = get_option<int>( "MOVE_VIEW_OFFSET" );
+    }
 
-    int before_action_moves = u.moves;
+    const auto before_action_moves = u.moves;
 
     // These actions are allowed while deathcam is active. Registered in game::get_player_input
     if( uquit == QUIT_WATCH || !u.is_dead_state() ) {
+        ZoneScopedN( "handle_action_watch_switch" );
         switch( act ) {
             case ACTION_TOGGLE_MAP_MEMORY:
                 u.toggle_map_memory();
@@ -1873,6 +2073,7 @@ bool game::handle_action()
 
     // actions allowed only while alive
     if( !u.is_dead_state() ) {
+        ZoneScopedN( "handle_action_alive_switch" );
         switch( act ) {
             case ACTION_NULL:
             case NUM_ACTIONS:
@@ -1921,18 +2122,27 @@ bool game::handle_action()
             case ACTION_MOVE_BACK:
             case ACTION_MOVE_BACK_LEFT:
             case ACTION_MOVE_LEFT:
-            case ACTION_MOVE_FORTH_LEFT:
+            case ACTION_MOVE_FORTH_LEFT: {
+                ZoneScopedN( "handle_action_movement" );
                 if( !u.get_value( "remote_controlling" ).empty() &&
                     ( u.has_active_item_with_action( "RADIOCONTROL" ) ||
                       u.has_active_bionic( bio_remote ) ) ) {
+                    ZoneScopedN( "handle_action_remote_drive" );
                     rcdrive( get_delta_from_movement_action( act, iso_rotate::yes ) );
                 } else if( veh_ctrl ) {
+                    ZoneScopedN( "handle_action_vehicle_drive" );
                     // vehicle control uses x for steering and y for ac/deceleration,
                     // so no rotation needed
                     pldrive( get_delta_from_movement_action( act, iso_rotate::no ).reinterpret_as<point_rel_veh>() );
                 } else {
-                    auto dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
+                    ZoneScopedN( "handle_action_movement_avatar" );
+                    auto dest_delta = [&]() {
+                        ZoneScopedN( "handle_action_get_move_delta" );
+                        return get_delta_from_movement_action( act, iso_rotate::yes );
+                    }
+                    ();
                     if( auto_travel_mode && !u.is_auto_moving() ) {
+                        ZoneScopedN( "handle_action_auto_travel_route" );
                         for( int i = 0; i < SEEX; i++ ) {
                             tripoint_bub_ms auto_travel_destination( u.bub_pos().x() + dest_delta.x() * ( SEEX - i ),
                                     u.bub_pos().y() + dest_delta.y() * ( SEEX - i ),
@@ -1954,12 +2164,19 @@ bool game::handle_action()
                         }
                         dest_delta = dest_next;
                     }
-                    if( !avatar_action::move( u, m, dest_delta ) ) {
+                    auto moved = false;
+                    {
+                        ZoneScopedN( "handle_action_call_avatar_move" );
+                        moved = avatar_action::move( u, m, dest_delta );
+                    }
+                    if( !moved ) {
+                        ZoneScopedN( "handle_action_clear_failed_move" );
                         // auto-move should be canceled due to a failed move or obstacle
                         u.clear_destination();
                     }
                 }
                 break;
+            }
             case ACTION_MOVE_DOWN:
                 if( u.is_mounted() ) {
                     const monster *mon = u.mounted_creature.get();
@@ -2816,6 +3033,20 @@ bool game::handle_action()
                 display_outside();
                 break;
 
+            case ACTION_DISPLAY_SOUND_ABSORPTION:
+                if( MAP_SHARING::isCompetitive() && !MAP_SHARING::isDebugger() ) {
+                    break;    //don't do anything when sharing and not debugger
+                }
+                display_sound_absorption();
+                break;
+
+            case ACTION_DISPLAY_SOUND_WALLS:
+                if( MAP_SHARING::isCompetitive() && !MAP_SHARING::isDebugger() ) {
+                    break;    //don't do anything when sharing and not debugger
+                }
+                display_sound_walls();
+                break;
+
             case ACTION_DISPLAY_SUBMAP_GRID:
                 g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
                 break;
@@ -2858,16 +3089,27 @@ bool game::handle_action()
                 avatar_action::autoattack( u, m );
                 break;
 
+            case ACTION_TOGGLE_MANUAL_COMBAT_MODE:
+                avatar_action::toggle_manual_combat_mode();
+                break;
+
             default:
                 break;
         }
     }
     if( act != ACTION_TIMEOUT ) {
+        ZoneScopedN( "handle_action_elapsed_moves" );
         u.mod_moves( -current_turn.moves_elapsed() );
     }
     gamemode->post_action( act );
+    const auto moves_before_debug_restore = u.moves;
+    if( act != ACTION_PAUSE ) {
+        restore_debug_infinite_speed_moves( before_action_moves );
+    }
 
-    u.movecounter = ( !u.is_dead_state() ? ( before_action_moves - u.moves ) : 0 );
+    const auto action_moves_spent = u.moves > moves_before_debug_restore ? 0 :
+                                    before_action_moves - u.moves;
+    u.movecounter = ( !u.is_dead_state() ? action_moves_spent : 0 );
     dbg( DL::Info ) << string_format( "%s: [%d] %d - %d = %d", action_ident( act ),
                                       to_turn<int>( calendar::turn ), before_action_moves, u.movecounter, u.moves );
     return ( !u.is_dead_state() );

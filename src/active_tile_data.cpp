@@ -486,7 +486,7 @@ void grid_link_tile::store( JsonOut &jsout ) const
     jsout.member( "linked", linked );
     jsout.member( "paused", paused );
     if( linked ) {
-        jsout.member( "target_dim_id", target_dim_id );
+        jsout.member( "target_dim_id", target_dim_id.str() );
         jsout.member( "target_pos", target_pos.raw() );
     }
 }
@@ -496,7 +496,9 @@ void grid_link_tile::load( JsonObject &jo )
     jo.read( "linked", linked );
     jo.read( "paused", paused );
     if( linked ) {
-        jo.read( "target_dim_id", target_dim_id );
+        auto raw_target_dim_id = std::string{};
+        jo.read( "target_dim_id", raw_target_dim_id );
+        target_dim_id = dimension_id( raw_target_dim_id );
         tripoint raw;
         jo.read( "target_pos", raw );
         target_pos = tripoint_abs_ms( raw );
@@ -511,13 +513,15 @@ void portal_tile::update_internal( time_point, const tripoint_abs_ms &p, distrib
         return;
     }
     // Keep target area resident each tick if a load_radius is configured.
-    const auto center_sm = project_to<coords::sm>( target_pos );
+    const auto center_sm = project_to<coords::sm>( target_pos.xy() );
+    const auto begin = center_sm - point_rel_sm( load_radius, load_radius );
+    const auto end = center_sm + point_rel_sm( load_radius + 1, load_radius + 1 );
     if( preload_handle_ == 0 ) {
         preload_handle_ = submap_loader.request_load(
                               load_request_source::portal_preload,
-                              target_dim_id, center_sm, load_radius );
+                              target_dim_id, begin, end );
     } else {
-        submap_loader.update_request( preload_handle_, center_sm );
+        submap_loader.update_request( preload_handle_, begin, end );
     }
     ( void )p;
 }
@@ -549,7 +553,7 @@ void portal_tile::store( JsonOut &jsout ) const
         jsout.member( "dynamic_special", dynamic_special );
     }
     if( linked ) {
-        jsout.member( "target_dim_id", target_dim_id );
+        jsout.member( "target_dim_id", target_dim_id.str() );
         jsout.member( "target_pos", target_pos.raw() );
     }
 }
@@ -565,7 +569,9 @@ void portal_tile::load( JsonObject &jo )
         jo.read( "dynamic_special", dynamic_special );
     }
     if( linked ) {
-        jo.read( "target_dim_id", target_dim_id );
+        auto raw_target_dim_id = std::string{};
+        jo.read( "target_dim_id", raw_target_dim_id );
+        target_dim_id = dimension_id( raw_target_dim_id );
         tripoint raw;
         jo.read( "target_pos", raw );
         target_pos = tripoint_abs_ms( raw );

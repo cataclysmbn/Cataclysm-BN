@@ -3,6 +3,7 @@
 #include "cata_utility.h"
 
 #include <filesystem>
+#include <sstream>
 #include <string>
 
 #include "debug.h"
@@ -36,4 +37,19 @@ TEST_CASE( "failed save load blocks saving over the broken save", "[save][load]"
     CHECK( debug_message.find( "Bad save json" ) != std::string::npos );
     CHECK_FALSE( g->save( false ) );
     CHECK( read_entire_file( save_path.string() ) == before_load );
+}
+
+TEST_CASE( "manual combat mode is serialized in save data", "[save]" )
+{
+    clear_all_state();
+    const auto cleanup = on_out_of_scope( []() {
+        clear_all_state();
+    } );
+
+    g->manual_combat_mode = true;
+
+    std::ostringstream save_data;
+    g->serialize( save_data );
+
+    CHECK( save_data.str().find( R"("manual_combat_mode": true)" ) != std::string::npos );
 }

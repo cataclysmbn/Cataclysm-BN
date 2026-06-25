@@ -24,12 +24,10 @@ map_selector::map_selector( const tripoint_bub_ms &pos, int radius, bool accessi
 
 tripoint_range<tripoint_bub_ms> points_in_range( const map &m )
 {
-    const int z = m.get_abs_sub().z();
-    const bool hasz = m.has_zlevels();
     return tripoint_range<tripoint_bub_ms>(
-               tripoint_bub_ms( 0, 0, hasz ? -OVERMAP_DEPTH : z ),
+               tripoint_bub_ms( 0, 0, -OVERMAP_DEPTH ),
                tripoint_bub_ms( SEEX * m.getmapsize() - 1, SEEY * m.getmapsize() - 1,
-                                hasz ? OVERMAP_HEIGHT : z ) );
+                                OVERMAP_HEIGHT ) );
 }
 
 std::optional<tripoint_bub_ms> random_point( const map &m,
@@ -66,7 +64,7 @@ std::optional<tripoint_bub_ms> random_point( const tripoint_range<tripoint_bub_m
 
 map_cursor::map_cursor( const tripoint_abs_ms &pos )
 {
-    pos_ = g ? get_map().abs_to_bub( pos ) : pos.reinterpret_as<tripoint_bub_ms>();
+    pos_ = g ? abs_to_bub( pos ) : pos.reinterpret_as<tripoint_bub_ms>();
 }
 
 map_cursor::map_cursor( const tripoint_bub_ms &pos )
@@ -76,7 +74,7 @@ map_cursor::map_cursor( const tripoint_bub_ms &pos )
 
 map_cursor::operator tripoint_abs_ms() const
 {
-    return g ? get_map().bub_to_abs( pos_ ) : pos_.reinterpret_as<tripoint_abs_ms>();
+    return g ? bub_to_abs( pos_ ) : pos_.reinterpret_as<tripoint_abs_ms>();
 }
 
 map_cursor::operator tripoint_bub_ms() const

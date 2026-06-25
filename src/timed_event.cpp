@@ -1,10 +1,12 @@
 #include "timed_event.h"
 
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <optional>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "debug.h"
@@ -29,6 +31,7 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "type_id.h"
+#include "faction.h"
 
 static const itype_id itype_petrified_eye( "petrified_eye" );
 
@@ -85,9 +88,17 @@ void timed_event::actualize()
             }
             // You could drop the flag, you know.
             if( g->u.has_amount( itype_petrified_eye, 1 ) ) {
-                sounds::sound( g->u.bub_pos(), 60, sounds::sound_t::alert, _( "a tortured scream!" ), false,
-                               "shout",
-                               "scream_tortured" );
+                sound_event se;
+                se.origin = g->u.bub_pos();
+                se.volume = 100;
+                se.category = sounds::sound_t::alert;
+                se.description = _( "a tortured scream!" );
+                se.from_monster = true;
+                se.monfaction = g->u.get_faction()->mon_faction;
+                se.faction = g->u.get_faction()->id;
+                se.id = "shout";
+                se.variant = "scream_tortured";
+                sounds::sound( se );
                 if( !g->u.is_deaf() ) {
                     add_msg( _( "The eye you're carrying lets out a tortured scream!" ) );
                     g->u.add_morale( MORALE_SCREAM, -15, 0, 30_minutes, 30_seconds );
@@ -114,7 +125,7 @@ void timed_event::actualize()
                     if( horizontal ) {
                         monp.x() = rng( fault_point->x(), fault_point->x() + 2 * SEEX - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point_bub_ms( monp.x(), fault_point->y() + n ) ) == t_rock_floor ) {
+                            if( g->m.ter( tripoint_bub_ms( monp.x(), fault_point->y() + n, monp.z() ) ) == t_rock_floor ) {
                                 monp.y() = fault_point->y() + n;
                             }
                         }
@@ -122,7 +133,7 @@ void timed_event::actualize()
                         // Vertical fault
                         monp.y() = rng( fault_point->y(), fault_point->y() + 2 * SEEY - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point_bub_ms( fault_point->x() + n, monp.y() ) ) == t_rock_floor ) {
+                            if( g->m.ter( tripoint_bub_ms( fault_point->x() + n, monp.y(), monp.z() ) ) == t_rock_floor ) {
                                 monp.x() = fault_point->x() + n;
                             }
                         }
@@ -253,8 +264,8 @@ void timed_event::per_turn()
                     // We're safely indoors!
                     return;
                 }
-                g->place_critter_at( mon_eyebot, tripoint_bub_ms( place, g->u.bub_pos().z() ) );
-                if( g->u.sees( tripoint_bub_ms( place, g->u.bub_pos().z() ) ) ) {
+                g->place_critter_at( mon_eyebot, place );
+                if( g->u.sees( place ) ) {
                     add_msg( m_warning, _( "An eyebot swoops down nearby!" ) );
                 }
                 // One eyebot per trigger is enough, really
@@ -265,16 +276,17 @@ void timed_event::per_turn()
 
         case TIMED_EVENT_SPAWN_WYRMS:
             if( g->get_levz() >= 0 ) {
-                when -= 1_turns;
+                when -= action_time_scale::calendar_duration_this_tick();
                 return;
             }
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) && !g->u.is_deaf() ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) &&
+                !g->u.is_deaf() ) {
                 add_msg( m_warning, _( "You hear screeches from the rock above and around you!" ) );
             }
             break;
 
         case TIMED_EVENT_AMIGARA:
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
                 add_msg( m_warning, _( "The entire cavern shakes!" ) );
             }
             break;
@@ -288,7 +300,7 @@ void timed_event::per_turn()
                 }
             }
 
-            if( calendar::once_every( 10_seconds ) && faults ) {
+            if( action_time_scale::once_every_this_tick( 10_seconds ) && faults ) {
                 add_msg( m_info, "You hear someone whispering \"%s\"",
                          SNIPPET.random_from_category( "amigara_whispers" ).value_or( translation() ) );
             }
@@ -296,7 +308,7 @@ void timed_event::per_turn()
         break;
 
         case TIMED_EVENT_TEMPLE_OPEN:
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
                 add_msg( m_warning, _( "The earth rumbles." ) );
             }
             break;
@@ -337,6 +349,19 @@ void timed_event_manager::add( const timed_event_type type, const time_point &wh
 bool timed_event_manager::queued( const timed_event_type type ) const
 {
     return const_cast<timed_event_manager &>( *this ).get( type ) != nullptr;
+}
+
+auto timed_event_manager::next_event_time() const -> std::optional<time_point>
+{
+    if( events.empty() ) {
+        return std::nullopt;
+    }
+
+    auto next_time = events.front().when;
+    for( const timed_event &event : events ) {
+        next_time = std::min( next_time, event.when );
+    }
+    return next_time;
 }
 
 timed_event *timed_event_manager::get( const timed_event_type type )

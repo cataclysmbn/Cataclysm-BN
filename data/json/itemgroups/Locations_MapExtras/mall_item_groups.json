@@ -5,7 +5,8 @@
     "items": [
       [ "flyer", 10 ],
       [ "bag_plastic", 8 ],
-      [ "bag_zipper", 2 ],
+      [ "bag_zipper_small", 2 ],
+      [ "bag_zipper", 1 ],
       [ "bottle_plastic", 10 ],
       [ "cup_plastic", 10 ],
       [ "bottle_glass", 10 ],
@@ -70,7 +71,8 @@
     "type": "item_group",
     "items": [
       [ "bandages", 25 ],
-      [ "1st_aid", 20 ],
+      [ "1st_aid", 16 ],
+      [ "1st_aid_deluxe", 4 ],
       [ "vitamins", 75 ],
       [ "calcium_tablet", 75 ],
       [ "aspirin", 45 ],

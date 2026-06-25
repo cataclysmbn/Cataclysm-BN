@@ -101,7 +101,9 @@ TEST_CASE( "bionics", "[bionics] [item]" )
 
 static const bionic_id bio_reactor( "bio_reactor" );
 static const bionic_id bio_advreactor( "bio_advreactor" );
+static const auto bio_reactoroverride = bionic_id( "bio_reactoroverride" );
 static const itype_id itype_plut_cell( "plut_cell" );
+static const auto malformed_fuel_stock = std::string( "not-a-number" );
 
 /// Helper: set up a character with power storage and a reactor bionic loaded with fuel.
 /// Returns a reference to the installed bionic.
@@ -197,6 +199,73 @@ TEST_CASE( "microreactor_fuel_consumption", "[bionics] [reactor]" )
         auto active_gain = dummy.get_power_level() - power_before_active;
 
         CHECK( active_gain > passive_gain );
+    }
+
+    SECTION( "bio_reactoroverride without plutonium powers down instead of throwing" ) {
+        setup_reactor( dummy, bio_reactor, 0 );
+        REQUIRE( dummy.has_bionic( bio_reactoroverride ) );
+        auto &safety_override = dummy.get_bionic_state( bio_reactoroverride );
+
+        dummy.set_power_level( safety_override.info().power_activate );
+        REQUIRE( dummy.activate_bionic( safety_override ) );
+        REQUIRE( safety_override.powered );
+
+        CHECK_NOTHROW( dummy.process_turn() );
+        CHECK_FALSE( safety_override.powered );
+    }
+
+    SECTION( "bio_reactoroverride produces extra power and radiation while reactor runs" ) {
+        auto &reactor = setup_reactor( dummy, bio_reactor, 1000 );
+        REQUIRE( dummy.has_bionic( bio_reactoroverride ) );
+        auto &safety_override = dummy.get_bionic_state( bio_reactoroverride );
+
+        REQUIRE( dummy.activate_bionic( reactor ) );
+        dummy.set_power_level( safety_override.info().power_activate );
+        REQUIRE( dummy.activate_bionic( safety_override ) );
+        REQUIRE( safety_override.powered );
+
+        const auto power_before = dummy.get_power_level();
+        const auto rad_before = dummy.get_rad();
+        dummy.process_turn();
+
+        CHECK( safety_override.powered );
+        CHECK( dummy.get_power_level() > power_before );
+        CHECK( dummy.get_rad() > rad_before );
+    }
+
+    SECTION( "bio_reactor with malformed plutonium powers down instead of throwing" ) {
+        auto &reactor = setup_reactor( dummy, bio_reactor, 0 );
+        dummy.set_value( itype_plut_cell.str(), malformed_fuel_stock );
+
+        REQUIRE( dummy.activate_bionic( reactor ) );
+        REQUIRE( reactor.powered );
+        reactor.charge_timer = 0;
+
+        CHECK_NOTHROW( dummy.process_turn() );
+        CHECK_FALSE( reactor.powered );
+    }
+
+    SECTION( "bio_reactoroverride with malformed plutonium powers down instead of throwing" ) {
+        setup_reactor( dummy, bio_reactor, 0 );
+        dummy.set_value( itype_plut_cell.str(), malformed_fuel_stock );
+        auto &safety_override = dummy.get_bionic_state( bio_reactoroverride );
+
+        dummy.set_power_level( safety_override.info().power_activate );
+        REQUIRE( dummy.activate_bionic( safety_override ) );
+        REQUIRE( safety_override.powered );
+
+        CHECK_NOTHROW( dummy.process_turn() );
+        CHECK_FALSE( safety_override.powered );
+    }
+
+    SECTION( "bionic fuel storage helpers treat malformed fuel as empty" ) {
+        setup_reactor( dummy, bio_reactor, 0 );
+        dummy.set_value( itype_plut_cell.str(), malformed_fuel_stock );
+
+        CHECK_NOTHROW( dummy.get_fuel_type_available( itype_plut_cell ) );
+        CHECK( dummy.get_fuel_type_available( itype_plut_cell ) == 0 );
+        CHECK_NOTHROW( dummy.get_fuel_capacity( itype_plut_cell ) );
+        CHECK_NOTHROW( dummy.update_fuel_storage( itype_plut_cell ) );
     }
 }
 

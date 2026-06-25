@@ -141,7 +141,7 @@ struct cross_dimension_export_node {
     /// Anchor tile in this (source) dimension.
     tripoint_abs_ms source_pos;
     /// Dimension of the far-end anchor ("" = primary dimension).
-    std::string     target_dim_id;
+    dimension_id    target_dim_id;
     /// Absolute position of the far-end anchor tile.
     tripoint_abs_ms target_pos;
     /// True when the link is paused (power failure or manual).
@@ -217,7 +217,7 @@ class distribution_grid_tracker : public submap_load_listener
          * "" means the primary/overworld dimension.
          * Set at construction time and never changes.
          */
-        std::string dimension_id_;
+        dimension_id dimension_id_;
 
         /**
          * Stub cross-dimension export nodes installed on this tracker.
@@ -240,12 +240,12 @@ class distribution_grid_tracker : public submap_load_listener
 
     public:
         distribution_grid_tracker();
-        distribution_grid_tracker( mapbuffer &buffer, std::string dim_id = {} );
+        distribution_grid_tracker( mapbuffer &buffer, dimension_id dim_id = {} );
         distribution_grid_tracker( distribution_grid_tracker && ) = default;
         ~distribution_grid_tracker();
 
         /** The dimension this tracker serves ("" = overworld). */
-        auto get_dimension_id() const -> const std::string & { // *NOPAD*
+        auto get_dimension_id() const -> const dimension_id & { // *NOPAD*
             return dimension_id_;
         }
 
@@ -311,14 +311,14 @@ class distribution_grid_tracker : public submap_load_listener
          * Inserts the position into tracked_submaps_ and builds the grid cluster.
          */
         void on_submap_loaded( const tripoint_abs_sm &pos,
-                               const std::string &dim_id ) override;
+                               const dimension_id &dim_id ) override;
 
         /**
          * Called just before the submap at @p pos in dimension @p dim_id is evicted.
          * Removes from tracked_submaps_ and invalidates all 4 submaps of the affected OMT.
          */
         void on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const std::string &dim_id ) override;
+                                 const dimension_id &dim_id ) override;
 
         /**
          * Updates grid at given global map square coordinate.
@@ -389,12 +389,12 @@ distribution_grid_tracker &get_distribution_grid_tracker();
  * no tracker exists for @p dim_id.  Used by portal-link code that needs to access
  * a tracker for a dimension other than the player's current one.
  */
-distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string &dim_id );
+auto get_distribution_grid_tracker_for( const dimension_id &dim_id ) -> distribution_grid_tracker *;
 
 /**
  * Returns the distribution grid tracker for @p dim_id, creating it and
  * registering it with the submap_load_manager if it doesn't already exist.
  * Used by add_export_node() to guarantee the remote tracker is available.
  */
-distribution_grid_tracker &ensure_distribution_grid_tracker_for( const std::string &dim_id );
-
+auto ensure_distribution_grid_tracker_for(
+    const dimension_id &dim_id ) -> distribution_grid_tracker &;

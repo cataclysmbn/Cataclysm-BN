@@ -64,7 +64,7 @@
     "charges_per_use": 30,
     "ammo": "essence_dull_type",
     "use_action": { "type": "cast_spell", "spell_id": "arcana_item_gilded_aegis_healing", "no_fail": true, "level": 0, "need_worn": true },
-    "relative": { "weight": 3020, "material_thickness": 3 },
+    "relative": { "weight": "3020 g", "material_thickness": 3 },
     "extend": { "flags": [ "NO_SALVAGE", "HELMET_COMPAT", "FANCY" ] }
   },
   {
@@ -126,7 +126,8 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT", "PARTIAL_DEAF" ] }
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "adv_hearing_protection": 65
   },
   {
     "id": "somen_clairvoyance_xl",
@@ -186,7 +187,8 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT", "PARTIAL_DEAF" ] }
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "adv_hearing_protection": 65
   },
   {
     "id": "armor_wyrm",
@@ -204,7 +206,7 @@
     "ammo": "essence_blood_type",
     "coverage": 95,
     "encumbrance": 9,
-    "storage": 0,
+    "storage": "0 L",
     "environmental_protection": 10,
     "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_wyrmskin_acid", "no_fail": true, "level": 0, "need_worn": true } ],
     "relative": { "weight": "722 g", "volume": "1500 ml" },
@@ -307,7 +309,7 @@
         "type": "transform"
       }
     ],
-    "relative": { "weight": 616, "volume": -1 },
+    "relative": { "weight": "616 g", "volume": "-250 ml" },
     "extend": { "flags": [ "NO_SALVAGE", "COMBAT_NPC_USE" ] }
   },
   {
@@ -412,7 +414,7 @@
         "need_worn": true
       }
     ],
-    "relative": { "weight": 210, "material_thickness": 1 },
+    "relative": { "weight": "210 g", "material_thickness": 1 },
     "extend": { "flags": [ "NO_SALVAGE" ] }
   },
   {
@@ -441,7 +443,7 @@
         "need_worn": true
       }
     ],
-    "relative": { "weight": 120, "material_thickness": 1 },
+    "relative": { "weight": "120 g", "material_thickness": 1 },
     "extend": { "flags": [ "NO_SALVAGE", "ALLOWS_NATURAL_ATTACKS", "OVERSIZE", "OUTER" ] }
   },
   {
@@ -526,7 +528,6 @@
     },
     "extend": {
       "flags": [
-        "CLIMATE_CONTROL",
         "LIGHT_60",
         "NO_TAKEOFF",
         "PSYSHIELD_PARTIAL",
@@ -541,6 +542,9 @@
         "UNBREAKABLE",
         "COMBAT_NPC_ON"
       ]
+    },
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
     },
     "qualities": [ [ "HV_INSULATION", 1 ] ]
   },
@@ -590,7 +594,7 @@
         "need_worn": true
       }
     ],
-    "relative": { "weight": 3020, "price": "550 USD", "material_thickness": 1 },
+    "relative": { "weight": "3020 g", "price": "550 USD", "material_thickness": 1 },
     "extend": { "flags": [ "NO_SALVAGE", "USE_PLAYER_ENERGY", "ELECTRIC_IMMUNE", "RAINPROOF", "COMBAT_NPC_USE" ] },
     "qualities": [ [ "HV_INSULATION", 1 ] ]
   },
@@ -607,17 +611,10 @@
     "use_action": { "target": "hauberk_jade", "msg": "The glow emanating from your jade hauberk fades.", "type": "transform" },
     "qualities": [ [ "GLARE", 1 ] ],
     "extend": {
-      "flags": [
-        "GAS_PROOF",
-        "RAD_PROOF",
-        "SUN_GLASSES",
-        "CUT_IMMUNE",
-        "STAB_IMMUNE",
-        "HEAT_IMMUNE",
-        "CLIMATE_CONTROL",
-        "UNBREAKABLE",
-        "COMBAT_NPC_ON"
-      ]
+      "flags": [ "GAS_PROOF", "RAD_PROOF", "SUN_GLASSES", "CUT_IMMUNE", "STAB_IMMUNE", "HEAT_IMMUNE", "UNBREAKABLE", "COMBAT_NPC_ON" ]
+    },
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
     }
   },
   {
@@ -745,7 +742,10 @@
     "turns_per_charge": 150,
     "revert_to": "jade_wreath",
     "use_action": { "target": "jade_wreath", "msg": "The glowing carvings on the jade wreath fade.", "type": "transform" },
-    "extend": { "flags": [ "CLIMATE_CONTROL", "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] }
+    "extend": { "flags": [ "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] },
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    }
   },
   {
     "id": "meteoric_talisman",

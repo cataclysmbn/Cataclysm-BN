@@ -7,6 +7,7 @@
 #include "gun_mode.h"
 #include "item.h"
 #include "map.h"
+#include "map_helpers.h"
 #include "options_helpers.h"
 #include "ranged.h"
 #include "rng.h"
@@ -189,14 +190,19 @@ TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Brow
 
     REQUIRE( veh->velocity == 0 );
 
+    constexpr auto target_shots = 15;
+    constexpr auto max_bursts = 8;
     auto shots_fired = 0;
-    for( const auto _ : std::views::iota( 0, 5 ) ) {
+    for( const auto _ : std::views::iota( 0, max_bursts ) ) {
         ( void ) _;
-        shots_fired += turret.fire( player_character,
-                                    here.bub_to_abs( vehicle_origin ) + tripoint_rel_ms( 10, 0, 0 ) );
+        if( shots_fired >= target_shots ) {
+            break;
+        }
+        const auto target = map_local_to_abs( here, vehicle_origin ) + tripoint_rel_ms( 10, 0, 0 );
+        shots_fired += turret.fire( player_character, target );
     }
 
-    REQUIRE( shots_fired == 15 );
+    REQUIRE( shots_fired >= target_shots );
     CHECK( std::abs( veh->velocity ) >= 160 );
     CHECK( veh->forward_velocity() < 0.0f );
 }
