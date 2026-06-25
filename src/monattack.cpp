@@ -3515,7 +3515,7 @@ bool mattack::photograph( monster *z )
         }
 
         for( monster &target : g->all_monsters() ) {
-            if( z->sees( target ) && rl_dist_fast( target.pos(), z->pos() ) <= 25 &&
+            if( z->sees( target ) && rl_dist_fast( target.pos(), z->bub_pos() ) <= 25 &&
                 target.attitude_to( g->u ) == Attitude::A_HOSTILE ) {
                 target.add_effect( effect_drone_marker, rng( 15_turns, 30_turns ) );
             }
@@ -3532,17 +3532,17 @@ bool mattack::photograph( monster *z )
         } else if( one_in( 3 ) ) {
             cname = g->u.name;
         }
-        sounds::sound( z->pos(), 15, sounds::sound_t::alert,
+        sounds::sound( z->bub_pos(), 15, sounds::sound_t::alert,
                        string_format( _( "a robotic voice boom, \"Citizen %s!\"" ), cname ), false, "speech",
                        z->type->id.str() );
 
         if( g->u.primary_weapon().is_gun() ) {
-            sounds::sound( z->pos(), 15, sounds::sound_t::alert, _( "\"Drop your gun!  Now!\"" ) );
+            sounds::sound( z->bub_pos(), 15, sounds::sound_t::alert, _( "\"Drop your gun!  Now!\"" ) );
         } else if( g->u.is_armed() ) {
-            sounds::sound( z->pos(), 15, sounds::sound_t::alert, _( "\"Drop your weapon!  Now!\"" ) );
+            sounds::sound( z->bub_pos(), 15, sounds::sound_t::alert, _( "\"Drop your weapon!  Now!\"" ) );
         }
         const SpeechBubble &speech = get_speech( z->type->id.str() );
-        sounds::sound( z->pos(), speech.volume, sounds::sound_t::alert, speech.text.translated() );
+        sounds::sound( z->bub_pos(), speech.volume, sounds::sound_t::alert, speech.text.translated() );
         g->timed_events.add( TIMED_EVENT_ROBOT_ATTACK, calendar::turn + rng( 15_turns, 30_turns ), 0,
                              g->u.global_sm_location() );
         z->add_effect( effect_eyebot_depleted, 1_turns );
