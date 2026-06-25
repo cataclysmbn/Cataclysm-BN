@@ -986,3 +986,8 @@ void talk_function::clear_overrides( npc &p )
 {
     p.rules.clear_overrides();
 }
+
+void talk_function::go_to_sleep( npc &p )
+{
+    p.execute_action( "npc_sleep" );
+}
