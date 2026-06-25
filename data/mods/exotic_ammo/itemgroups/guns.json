@@ -43,7 +43,7 @@
     "items": [
       { "group": "everyday_skorpion_82", "prob": 100 },
       { "group": "everyday_ppsh", "prob": 150 },
-      { "group": "everyday_rm360", "prob": 150 }
+      { "group": "everyday_rm360", "prob": 50 }
     ]
   },
   {
