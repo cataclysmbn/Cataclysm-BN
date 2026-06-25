@@ -1193,9 +1193,10 @@ void npc::move()
     }
 }
 
-void npc::execute_action( const std::string &action_str ) {
-    if (const auto _act = npc_action_map.find(action_str); _act != npc_action_map.end()) {
-        this->execute_action(_act->second);
+void npc::execute_action( const std::string &action_str )
+{
+    if( const auto _act = npc_action_map.find( action_str ); _act != npc_action_map.end() ) {
+        this->execute_action( _act->second );
     } else {
         debugmsg( "Unknown npc action %s", action_str );
     }

@@ -1143,8 +1143,8 @@ conditional_t<T>::conditional_t( const std::string &type )
     } else if( type == "npc_has_activity" ) {
         set_has_activity( is_npc );
     } else if( type == "npc_is_riding" ) {
-        set_is_riding( is_npc );    }
-    else if( type == "npc_is_sleepy" ) {
+        set_is_riding( is_npc );
+    } else if( type == "npc_is_sleepy" ) {
         set_npc_is_sleepy();
     } else if( type == "is_day" ) {
         set_is_day();

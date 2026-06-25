@@ -1036,7 +1036,7 @@ class npc : public player
 
         // Movement; the following are defined in npcmove.cpp
         void move(); // Picks an action & a target and calls execute_action
-        void execute_action(const std::string &action_str);
+        void execute_action( const std::string &action_str );
 
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
