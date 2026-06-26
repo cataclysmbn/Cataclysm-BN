@@ -767,11 +767,11 @@ void lua_itrap_actor::call_on_trigger( Character &who, item &trap, const tripoin
 
 void lua_itrap_actor::call_on_trigger_aftermath( Character &who, item &trap, const tripoint_bub_ms &loc ) const
 {
-    if( on_trigger_func == sol::lua_nil ) {
+    if( on_trigger_aftermath_func == sol::lua_nil ) {
         return;
     }
     try {
-        sol::state_view lua( on_trigger_func.lua_state() );
+        sol::state_view lua( on_trigger_aftermath_func.lua_state() );
         auto params = lua.create_table();
         params["target"] = &who;
         params["trap"] = &trap;
@@ -785,7 +785,7 @@ void lua_itrap_actor::call_on_trigger_aftermath( Character &who, item &trap, con
 
 bool lua_itrap_actor::call_can_trigger( Character &who, item &trap, const tripoint_bub_ms &loc ) const
 {
-    if( on_trigger_func == sol::lua_nil ) {
+    if( can_trigger_func == sol::lua_nil ) {
         return true;
     }
     try {
