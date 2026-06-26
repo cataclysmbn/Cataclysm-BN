@@ -45,6 +45,40 @@ test_data["invalid_overmap_terrain_travel"] = gapi.place_player_dimension_at({
   overmap_terrain = { { { "lua_test_missing_omt" } } },
 })
 
+test_data["overmap_terrain_without_bounds_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  overmap_terrain = { { { "forest" } } },
+})
+
+test_data["overmap_terrain_out_of_bounds_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_min_omt,
+  overmap_terrain = { { { "forest", "field" } } },
+})
+
+test_data["non_array_overmap_terrain_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = { label = { { "forest" } } },
+})
+
+test_data["sparse_overmap_terrain_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = { [2] = { { "forest" } } },
+})
+
 test_data["after_invalid_dim"] = gapi.get_current_dimension_id()
 test_data["after_invalid_map_dim"] = gapi.get_map():get_bound_dimension()
 

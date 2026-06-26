@@ -111,6 +111,29 @@ auto read_optional_abs_ms( const sol::table &opts,
     return *value;
 }
 
+auto is_dense_lua_array( const sol::table &table ) -> bool
+{
+    const auto length = static_cast<int>( table.size() );
+    auto key_count = 0;
+    auto valid = true;
+    table.for_each( [&]( const sol::object & key, const sol::object & /*value*/ ) {
+        if( !valid ) {
+            return;
+        }
+        if( !key.is<int>() ) {
+            valid = false;
+            return;
+        }
+        const auto index = key.as<int>();
+        if( index < 1 || index > length ) {
+            valid = false;
+            return;
+        }
+        ++key_count;
+    } );
+    return valid && key_count == length;
+}
+
 auto read_optional_overmap_terrain_layout( const sol::table &opts ) ->
 std::optional<std::vector<overmap_terrain_entry>>
 {
@@ -123,6 +146,9 @@ std::optional<std::vector<overmap_terrain_entry>>
     }
 
     const auto layers = value.as<sol::table>();
+    if( !is_dense_lua_array( layers ) ) {
+        return std::nullopt;
+    }
     auto entries = std::vector<overmap_terrain_entry> {};
     auto invalid = false;
     std::ranges::for_each( std::views::iota( 1, static_cast<int>( layers.size() ) + 1 ),
@@ -136,6 +162,10 @@ std::optional<std::vector<overmap_terrain_entry>>
             return;
         }
         const auto rows = layer_obj.as<sol::table>();
+        if( !is_dense_lua_array( rows ) ) {
+            invalid = true;
+            return;
+        }
         std::ranges::for_each( std::views::iota( 1, static_cast<int>( rows.size() ) + 1 ),
         [&]( const int y_idx ) {
             if( invalid ) {
@@ -147,6 +177,10 @@ std::optional<std::vector<overmap_terrain_entry>>
                 return;
             }
             const auto row = row_obj.as<sol::table>();
+            if( !is_dense_lua_array( row ) ) {
+                invalid = true;
+                return;
+            }
             std::ranges::for_each( std::views::iota( 1, static_cast<int>( row.size() ) + 1 ),
             [&]( const int x_idx ) {
                 if( invalid ) {
@@ -385,6 +419,20 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "Returns the current dimension id. Empty string means the overworld." );
     luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id().str(); } );
     DOC( "Moves the player into another dimension and loads the destination around required target_ms or target_omt." );
+    DOC( "@alias OvermapTerrainLayout string[][][]" );
+    DOC( "@class DimensionTravelOptions" );
+    DOC( "@field dimension_id? string Target dimension id. Empty string means the overworld." );
+    DOC( "@field target_ms? TripointAbsMs Absolute map-square destination. Required when target_omt is absent." );
+    DOC( "@field target_omt? TripointAbsOmt Absolute overmap-terrain destination. Required when target_ms is absent." );
+    DOC( "@field world_type? string World type for creating a new non-overworld dimension." );
+    DOC( "@field bounds_min_omt? TripointAbsOmt Inclusive pocket dimension minimum overmap-terrain bound." );
+    DOC( "@field bounds_max_omt? TripointAbsOmt Inclusive pocket dimension maximum overmap-terrain bound." );
+    DOC( "@field boundary_terrain? string Map terrain used outside pocket bounds." );
+    DOC( "@field boundary_overmap_terrain? string Overmap terrain used outside pocket bounds." );
+    DOC( "@field overmap_terrain? OvermapTerrainLayout Optional z/y/x table anchored at bounds_min_omt." );
+    DOC( "@field pregen_special_id? string Overmap special to force before loading the destination." );
+    DOC( "@field pregen_special_omt? TripointAbsOmt Overmap-terrain position for pregen_special_id; defaults to target_omt." );
+    DOC_PARAMS( "opts: DimensionTravelOptions" );
     luna::set_fx( lib, "place_player_dimension_at", []( sol::table opts ) -> bool {
         return place_player_dimension_at( parse_dimension_travel_options( opts ) );
     } );
