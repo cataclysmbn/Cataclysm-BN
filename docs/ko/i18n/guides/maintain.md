@@ -6,8 +6,7 @@
 
 1. 번역을 '.po' 형식으로 다운로드합니다.
 2. 번역 파일을 `lang/incoming/`에 넣고 `lang/po/`에 있는 파일과 이름이 일치하도록 합니다.
-3. `lang/update_pot.sh`를 실행하여 `lang/po/cataclysm-BN.pot`을 업데이트합니다(`polib` 및
-   `luaparser` 모듈이 설치된 파이썬이 필요함).
+3. `lang/update_pot.sh`를 실행하여 `lang/po/cataclysm-BN.pot`을 업데이트합니다(Deno 필요).
 4. `lang/merge_po.sh`를 실행하여 `lang/po/*.po`를 업데이트합니다. (로컬에서 번역을 테스트할 때만
    쓰입니다. 지금은 Transifex로 프로젝트를 번역하기 때문입니다.) 이렇게 하면 `lang/incoming/`의
    번역도 병합됩니다.

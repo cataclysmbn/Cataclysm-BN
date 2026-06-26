@@ -68,14 +68,13 @@ translator.
 
 ## Setting up environment for string extraction
 
-You'll need Python 3 with `polib` and `luaparser` modules installed (available via `pip`).
+You'll need Deno for string extraction and POT deduplication.
 
-Scripts for string extraction can be found in the `lang` subdirectory of the repository:
+Scripts for string extraction can be found in the repository:
 
-- `extract_json_strings.py` - main string extraction routines
-- `dedup_pot_file.py` - fixes errors in POT file produces by the 1st script
-- `extract_mod_strings.bat` (`extract_mod_strings.sh` for Linux/MacOS) - to automate the other 2
-  scripts
+- `scripts/extract_json_strings.ts` - main string extraction routines
+- `scripts/pot_tools.ts` - fixes errors in the POT file produced by the extractor
+- `lang/extract_mod_strings.bat` (`lang/extract_mod_strings.sh` for Linux/MacOS) - automates the extraction and deduplication steps
 
 ## Extracting strings
 

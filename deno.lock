@@ -39,7 +39,9 @@
     "jsr:@std/internal@^1.0.9": "1.0.12",
     "jsr:@std/io@0.225": "0.225.2",
     "jsr:@std/io@0.225.0": "0.225.0",
-    "jsr:@std/path@1": "1.1.2",
+    "jsr:@std/json@^1.0.2": "1.0.3",
+    "jsr:@std/jsonc@^1.0.2": "1.0.2",
+    "jsr:@std/path@1": "1.1.4",
     "jsr:@std/path@1.0.8": "1.0.8",
     "jsr:@std/path@1.1.2": "1.1.2",
     "jsr:@std/path@^1.0.7": "1.1.4",
@@ -58,7 +60,9 @@
     "jsr:@zip-js/zip-js@^2.8.26": "2.8.26",
     "npm:dprint@*": "0.47.5",
     "npm:json-order@*": "1.1.3",
+    "npm:luaparse@0.3.1": "0.3.1",
     "npm:markdown-table@3.0.4": "3.0.4",
+    "npm:pofile@^1.1.4": "1.1.4",
     "npm:sharp@~0.33.5": "0.33.5",
     "npm:ts-pattern@5.0.5": "5.0.5",
     "npm:type-fest@*": "4.27.0"
@@ -220,6 +224,15 @@
       "integrity": "3c740cd4ee4c082e6cfc86458f47e2ab7cb353dc6234d5e9b1f91a2de5f4d6c7",
       "dependencies": [
         "jsr:@std/bytes@^1.0.5"
+      ]
+    },
+    "@std/json@1.0.3": {
+      "integrity": "97d5710996293a027b7aa5f0d1f4fa29f246f269e6b5597e08807613f37d426c"
+    },
+    "@std/jsonc@1.0.2": {
+      "integrity": "909605dae3af22bd75b1cbda8d64a32cf1fd2cf6efa3f9e224aba6d22c0f44c7",
+      "dependencies": [
+        "jsr:@std/json"
       ]
     },
     "@std/path@1.0.8": {
@@ -492,8 +505,15 @@
     "lodash.clonedeep@4.5.0": {
       "integrity": "sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ=="
     },
+    "luaparse@0.3.1": {
+      "integrity": "sha512-b21h2bFEbtGXmVqguHogbyrMAA0wOHyp9u/rx+w6Yc9pW1t9YjhGUsp87lYcp7pFRqSWN/PhFkrdIqKEUzRjjQ==",
+      "bin": true
+    },
     "markdown-table@3.0.4": {
       "integrity": "sha512-wiYz4+JrLyb/DqW2hkFJxP7Vd7JuTDm77fvbM8VfEQdmSMqcImWeeRbHwZjBjIFki/VaMK2BhFi7oUUZeM5bqw=="
+    },
+    "pofile@1.1.4": {
+      "integrity": "sha512-r6Q21sKsY1AjTVVjOuU02VYKVNQGJNQHjTIvs4dEbeuuYfxgYk/DGD2mqqq4RDaVkwdSq0VEtmQUOPe/wH8X3g=="
     },
     "semver@7.7.3": {
       "integrity": "sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==",
@@ -803,11 +823,13 @@
       "jsr:@std/fmt@^1.0.8",
       "jsr:@std/front-matter@^1.0.9",
       "jsr:@std/fs@^1.0.19",
+      "jsr:@std/jsonc@^1.0.2",
       "jsr:@std/path@^1.1.2",
       "jsr:@std/yaml@^1.0.10",
       "jsr:@valibot/valibot@^1.1.0",
       "jsr:@zip-js/zip-js@^2.8.26",
-      "npm:markdown-table@3.0.4"
+      "npm:markdown-table@3.0.4",
+      "npm:pofile@^1.1.4"
     ]
   }
 }

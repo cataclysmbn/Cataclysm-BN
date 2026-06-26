@@ -19,7 +19,7 @@ fi
 echo "> Extracting strings from json"
 if ! lang/bn_extract_json_strings.sh "$@" --output $TEMP_POT_FROM_JSON
 then
-    echo "Error in extract_json_strings.py. Aborting"
+    echo "Error in JSON string extraction. Aborting"
     exit 1
 fi
 
@@ -62,16 +62,16 @@ then
 fi
 
 echo "> Combining JSON and source code strings"
-if ! lang/concat_pot_files.py $TEMP_POT_FROM_JSON $TEMP_POT_FROM_CODE $FINAL_POT_FILE
+if ! deno run --allow-read --allow-write scripts/pot_tools.ts concat $TEMP_POT_FROM_JSON $TEMP_POT_FROM_CODE $FINAL_POT_FILE
 then
-    echo "Error in concat_pot_files.py. Aborting"
+    echo "Error in POT concatenation. Aborting"
     exit 1
 fi
 
 echo "> Resolving duplicates and conflicts"
-if ! lang/dedup_pot_file.py $FINAL_POT_FILE
+if ! deno run --allow-read --allow-write scripts/pot_tools.ts dedup $FINAL_POT_FILE
 then
-    echo "Error in dedup_pot_file.py. Aborting"
+    echo "Error in POT deduplication. Aborting"
     exit 1
 fi
 
@@ -85,7 +85,7 @@ fi
 
 # Check for broken Unicode symbols
 echo "> Checking for wrong Unicode symbols"
-if ! lang/unicode_check.py $FINAL_POT_FILE
+if ! deno run --allow-read scripts/pot_tools.ts unicode-check $FINAL_POT_FILE
 then
     echo "Updated pot file contain broken Unicode symbols. Aborting."
     exit 1

@@ -6,8 +6,7 @@
 
 1. 翻訳ファイルを `.po` 形式でダウンロードします。
 2. ダウンロードしたファイルを `lang/incoming/`に配置します。この際、`lang/po/`内のファイルと一貫した命名規則であることを確認してください。
-3. `lang/update_pot.sh` を実行して、`lang/po/cataclysm-BN.pot` を更新します (これには `polib` および
-   `luaparser` モジュールがインストールされたPythonが必要です)。
+3. `lang/update_pot.sh` を実行して、`lang/po/cataclysm-BN.pot` を更新します (Deno が必要です)。
 4. `lang/merge_po.sh` を実行して、`lang/po/*.po` を更新します。 (現在、プロジェクトは翻訳に Transifex を使用しているため、これは通常、翻訳をローカルでテストするためだけに使用されます)
 
    これにより、`lang/incoming/` からの翻訳も統合されます。

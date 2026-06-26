@@ -1,0 +1,15 @@
+[
+  // regular comment
+  {
+    "type": "MOD_INFO",
+    "id": "extractor_fixture",
+    //~ display name translator note
+    "name": "Extractor Fixture",
+    "description": {
+      //~ description translator note
+      "str": "Fixture description",
+    },
+    "category": "content",
+    "dependencies": [ "bn", ],
+  },
+]
