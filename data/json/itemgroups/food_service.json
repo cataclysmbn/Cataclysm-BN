@@ -958,7 +958,7 @@
       [ "chilly-p", 15 ],
       [ "curry_powder", 15 ],
       { "item": "spaghetti_raw", "prob": 40, "charges": [ 1, 8 ] },
-      [ "lasagne_raw", 20 ],
+      { "item": "lasagne_raw", "prob": 20, "charges": [ 1, 8 ] },
       { "item": "macaroni_raw", "prob": 20, "charges": [ 1, 8 ] },
       [ "foodplace_food", 5 ],
       [ "cola_syrup", 2 ],
