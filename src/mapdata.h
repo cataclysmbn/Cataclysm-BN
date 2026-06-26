@@ -330,6 +330,7 @@ enum ter_bitflags : int {
     TFLAG_ELEVATOR,
     TFLAG_NO_MEMORY,
     TFLAG_ROAD,
+    TFLAG_BASH_TRANSFORM,
     NUM_TERFLAGS
 };
 
