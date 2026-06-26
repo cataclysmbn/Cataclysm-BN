@@ -1188,11 +1188,6 @@
   },
   {
     "type": "recipe",
-    "result": "smg_luty",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "smg_9mm",
     "obsolete": true
   },
@@ -2360,11 +2355,6 @@
   {
     "type": "recipe",
     "result": "rifle_3006",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "rifle_308",
     "obsolete": true
   }
 ]
