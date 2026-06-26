@@ -380,7 +380,7 @@ class Item_factory
         void add_istate_actor( const itype_id &id, std::unique_ptr<lua_istate_actor> actor );
         void add_imelee_actor( const itype_id &id, std::unique_ptr<lua_imelee_actor> actor );
         void add_iranged_actor( const itype_id &id, std::unique_ptr<lua_iranged_actor> actor );
-        void add_itrap_actor(const itype_id &id, std::unique_ptr<lua_itrap_actor> actor);
+        void add_itrap_actor( const itype_id &id, std::unique_ptr<lua_itrap_actor> actor );
 
         /** Wire callback actor pointers onto itype objects. Called during finalize(). */
         void resolve_lua_callbacks();

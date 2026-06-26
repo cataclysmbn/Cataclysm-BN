@@ -738,16 +738,17 @@ void lua_mutation_callback_actor::call_on_loss( Character &who, const trait_id &
 }
 
 lua_itrap_actor::lua_itrap_actor( const std::string &item_id,
-                                      sol::protected_function &&on_trigger_aftermath,
-                                      sol::protected_function &&on_trigger,
-                                      sol::protected_function &&can_trigger)
+                                  sol::protected_function &&on_trigger_aftermath,
+                                  sol::protected_function &&on_trigger,
+                                  sol::protected_function &&can_trigger )
 
     : lua_icallback_actor_base( item_id ),
       on_trigger_aftermath_func( std::move( on_trigger_aftermath ) ),
       on_trigger_func( std::move( on_trigger ) ),
       can_trigger_func( std::move( can_trigger ) ) {}
 
-void lua_itrap_actor::call_on_trigger( Character &who, item &trap, const tripoint_bub_ms &loc ) const
+void lua_itrap_actor::call_on_trigger( Character &who, item &trap,
+                                       const tripoint_bub_ms &loc ) const
 {
     if( on_trigger_func == sol::lua_nil ) {
         return;
@@ -765,7 +766,8 @@ void lua_itrap_actor::call_on_trigger( Character &who, item &trap, const tripoin
     }
 }
 
-void lua_itrap_actor::call_on_trigger_aftermath( Character &who, item &trap, const tripoint_bub_ms &loc ) const
+void lua_itrap_actor::call_on_trigger_aftermath( Character &who, item &trap,
+        const tripoint_bub_ms &loc ) const
 {
     if( on_trigger_aftermath_func == sol::lua_nil ) {
         return;
@@ -783,7 +785,8 @@ void lua_itrap_actor::call_on_trigger_aftermath( Character &who, item &trap, con
     }
 }
 
-bool lua_itrap_actor::call_can_trigger( Character &who, item &trap, const tripoint_bub_ms &loc ) const
+bool lua_itrap_actor::call_can_trigger( Character &who, item &trap,
+                                        const tripoint_bub_ms &loc ) const
 {
     if( can_trigger_func == sol::lua_nil ) {
         return true;

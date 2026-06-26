@@ -3124,7 +3124,7 @@ void Item_factory::add_iranged_actor( const itype_id &id,
 }
 
 void Item_factory::add_itrap_actor( const itype_id &id,
-                                      std::unique_ptr<lua_itrap_actor> actor )
+                                    std::unique_ptr<lua_itrap_actor> actor )
 {
     itrap_actors[id] = std::move( actor );
 }
