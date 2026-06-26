@@ -355,7 +355,8 @@ void spell_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "final_casting_time", final_casting_time, base_casting_time );
     optional( jo, was_loaded, "casting_time_increment", casting_time_increment, 0.0f );
 
-    optional(jo, was_loaded, "volume", volume, -255); // -255 used as default because it would never be set that low on purpose otherwise
+    optional( jo, was_loaded, "volume", volume,
+              -255 ); // -255 used as default because it would never be set that low on purpose otherwise
 
     std::vector<std::string> temp_vector;
     std::vector<std::string> default_vector;
@@ -701,13 +702,14 @@ time_duration spell::duration_turns() const
     return 1_turns * duration() / 100;
 }
 
-short spell::volume() const {
+short spell::volume() const
+{
     // If the spell is flagged to be silent, then it is silent
     if( has_flag( spell_flag::SILENT ) ) {
         return -255;
     }
     // If the spell has a manually-defined volume, use that
-    if (type->volume > -255) {
+    if( type->volume > -255 ) {
         return type->volume;
     }
     // If none of the above, calculate it manually
@@ -1129,7 +1131,7 @@ void spell::make_sound( const tripoint_bub_ms &target, Creature &caster ) const
 {
     short const loudness = volume();
     // The spell is silent, so let's return early
-    if (loudness == -255){
+    if( loudness == -255 ) {
         return;
     }
     make_sound( target, caster, loudness );
