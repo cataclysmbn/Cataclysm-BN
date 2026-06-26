@@ -70,13 +70,21 @@ if (( ${#json_files[@]} > 0 )); then
     cmake "${cmake_args[@]}"
     cmake --build "$build_dir" --target json_formatter --parallel "$jobs"
 
-    for file in "${json_files[@]}"; do
-        file_status=0
-        "$json_formatter" "$file" || file_status=$?
-        if (( file_status != 0 && file_status != 1 )); then
-            json_status="$file_status"
-        fi
-    done
+    json_formatter_status=0
+    printf '%s\0' "${json_files[@]}" |
+        xargs -0 -n 1 -P "$jobs" bash -c '
+            formatter="$1"
+            file="$2"
+            file_status=0
+            "$formatter" "$file" || file_status=$?
+            if (( file_status == 1 )); then
+                exit 0
+            fi
+            exit "$file_status"
+        ' _ "$json_formatter" || json_formatter_status=$?
+    if (( json_formatter_status != 0 )); then
+        json_status="$json_formatter_status"
+    fi
 fi
 
 if (( ${#jsonc_files[@]} > 0 )); then
