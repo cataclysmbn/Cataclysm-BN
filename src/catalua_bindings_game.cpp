@@ -151,58 +151,49 @@ std::optional<std::vector<overmap_terrain_entry>>
     }
     auto entries = std::vector<overmap_terrain_entry> {};
     auto invalid = false;
-    std::ranges::for_each( std::views::iota( 1, static_cast<int>( layers.size() ) + 1 ),
-    [&]( const int z_idx ) {
-        if( invalid ) {
-            return;
-        }
+    const auto layer_count = static_cast<int>( layers.size() );
+    for( auto z_idx = 1; z_idx <= layer_count && !invalid; ++z_idx ) {
         const auto layer_obj = layers.get<sol::object>( z_idx );
         if( !layer_obj.is<sol::table>() ) {
             invalid = true;
-            return;
+            break;
         }
         const auto rows = layer_obj.as<sol::table>();
         if( !is_dense_lua_array( rows ) ) {
             invalid = true;
-            return;
+            break;
         }
-        std::ranges::for_each( std::views::iota( 1, static_cast<int>( rows.size() ) + 1 ),
-        [&]( const int y_idx ) {
-            if( invalid ) {
-                return;
-            }
+        const auto row_count = static_cast<int>( rows.size() );
+        for( auto y_idx = 1; y_idx <= row_count && !invalid; ++y_idx ) {
             const auto row_obj = rows.get<sol::object>( y_idx );
             if( !row_obj.is<sol::table>() ) {
                 invalid = true;
-                return;
+                break;
             }
             const auto row = row_obj.as<sol::table>();
             if( !is_dense_lua_array( row ) ) {
                 invalid = true;
-                return;
+                break;
             }
-            std::ranges::for_each( std::views::iota( 1, static_cast<int>( row.size() ) + 1 ),
-            [&]( const int x_idx ) {
-                if( invalid ) {
-                    return;
-                }
+            const auto column_count = static_cast<int>( row.size() );
+            for( auto x_idx = 1; x_idx <= column_count; ++x_idx ) {
                 const auto terrain_obj = row.get<sol::object>( x_idx );
                 if( !terrain_obj.is<std::string>() ) {
                     invalid = true;
-                    return;
+                    break;
                 }
                 const auto terrain = oter_str_id( terrain_obj.as<std::string>() );
                 if( !terrain.is_valid() ) {
                     invalid = true;
-                    return;
+                    break;
                 }
                 entries.push_back( overmap_terrain_entry{
                     .offset = tripoint_rel_omt( x_idx - 1, y_idx - 1, z_idx - 1 ),
                     .terrain = terrain,
                 } );
-            } );
-        } );
-    } );
+            }
+        }
+    }
 
     if( invalid || ( entries.empty() && layers.size() > 0 ) ) {
         return std::nullopt;
