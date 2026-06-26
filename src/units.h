@@ -52,6 +52,11 @@ inline std::ostream &operator<<( std::ostream &o, temperature_in_millidegree_cel
     return o << "mC";
 }
 
+inline std::ostream &operator<<( std::ostream &o, temperature_delta_in_millidegree_celsius_tag )
+{
+    return o << "mC_delta";
+}
+
 inline std::ostream &operator<<( std::ostream &o, probability_in_one_in_million_tag )
 {
     return o << "pm";

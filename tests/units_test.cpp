@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include <array>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -10,6 +11,7 @@
 #include "units.h"
 #include "units_serde.h"
 #include "units_utility.h"
+#include "weather.h"
 
 TEST_CASE( "units_have_correct_ratios", "[units]" )
 {
@@ -42,6 +44,32 @@ TEST_CASE( "units_have_correct_ratios", "[units]" )
     CHECK( 60_arcmin == 1_degrees );
 
     CHECK( 1_c == units::from_celsius( 1 ) );
+}
+
+TEST_CASE( "body_temperature_units_preserve_legacy_body_temperature_scale", "[units][bodytemp]" )
+{
+    const auto thresholds = std::array{
+        std::pair{ BODYTEMP_FREEZING, 500 },
+        std::pair{ BODYTEMP_VERY_COLD, 2000 },
+        std::pair{ BODYTEMP_COLD, 3500 },
+        std::pair{ BODYTEMP_NORM, 5000 },
+        std::pair{ BODYTEMP_HOT, 6500 },
+        std::pair{ BODYTEMP_VERY_HOT, 8000 },
+        std::pair{ BODYTEMP_SCORCHING, 9500 },
+    };
+
+    for( const auto &[temperature, legacy] : thresholds ) {
+        CAPTURE( legacy );
+        CHECK( units::to_legacy_bodypart_temp( temperature ) == legacy );
+        CHECK( units::from_legacy_bodypart_temp( legacy ) == temperature );
+    }
+
+    const auto hot_delta = BODYTEMP_HOT - BODYTEMP_NORM;
+    CHECK( units::to_legacy_bodypart_temp_delta( hot_delta ) == 1500 );
+    CHECK( units::from_legacy_bodypart_temp_delta( 1500 ) == hot_delta );
+    CHECK( BODYTEMP_NORM + units::from_legacy_bodypart_temp_delta( 1500 ) == BODYTEMP_HOT );
+    CHECK( units::from_legacy_bodypart_temp( 5250 ) == 37.5_c );
+    CHECK( units::to_legacy_bodypart_temp( 37.5_c ) == 5250 );
 }
 
 static units::energy parse_energy_quantity( const std::string &json )

@@ -18,26 +18,24 @@
 /**
  * @name BODYTEMP
  * Body temperature.
- * Body temperature is measured on a scale of 0u to 10000u, where 10u = 0.02C and 5000u is 37C
- * Outdoor temperature uses similar numbers, but on a different scale: 2200u = 22C, where 10u = 0.1C.
- * Most values can be changed with no impact on calculations.
- * Maximum heat cannot pass 15000u, otherwise the player will vomit to death.
+ * Body temperature is stored as real temperature units.
+ * Legacy save and JSON values use a scale where 5000u is 37C and 500u is 1C.
  */
 ///@{
 //!< More aggressive cold effects.
-static constexpr int BODYTEMP_FREEZING = 500;
+static constexpr auto BODYTEMP_FREEZING = 28_c;
 //!< This value means frostbite occurs at the warmest temperature of 1C. If changed, the temp_conv calculation should be reexamined.
-static constexpr int BODYTEMP_VERY_COLD = 2000;
+static constexpr auto BODYTEMP_VERY_COLD = 31_c;
 //!< Frostbite timer will not improve while below this point.
-static constexpr int BODYTEMP_COLD = 3500;
-//!< Do not change this value, it is an arbitrary anchor on which other calculations are made.
-static constexpr int BODYTEMP_NORM = 5000;
+static constexpr auto BODYTEMP_COLD = 34_c;
+//!< Normal body temperature.
+static constexpr auto BODYTEMP_NORM = 37_c;
 //!< Level 1 hotness.
-static constexpr int BODYTEMP_HOT = 6500;
+static constexpr auto BODYTEMP_HOT = 40_c;
 //!< Level 2 hotness.
-static constexpr int BODYTEMP_VERY_HOT = 8000;
+static constexpr auto BODYTEMP_VERY_HOT = 43_c;
 //!< Level 3 hotness.
-static constexpr int BODYTEMP_SCORCHING = 9500;
+static constexpr auto BODYTEMP_SCORCHING = 46_c;
 ///@}
 
 class Character;

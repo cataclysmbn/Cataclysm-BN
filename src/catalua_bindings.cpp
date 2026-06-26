@@ -41,6 +41,7 @@
 #include "units_angle.h"
 #include "units_energy.h"
 #include "units_mass.h"
+#include "units_temperature.h"
 #include "units_volume.h"
 #include "vitamin.h"
 
@@ -134,6 +135,31 @@ void cata::detail::reg_units( sol::state &lua )
         luna::set_fx( ut, sol::meta_function::equal_to, &units::volume::operator== );
         luna::set_fx( ut, sol::meta_function::less_than, &units::volume::operator< );
         luna::set_fx( ut, sol::meta_function::less_than_or_equal_to, &units::volume::operator<= );
+    }
+    {
+        auto ut = luna::new_usertype<units::temperature>(
+                      lua,
+                      luna::no_bases,
+                      luna::no_constructor
+                  );
+
+        luna::set_fx( ut, "from_celsius",
+                      []( const double value ) -> units::temperature { return units::from_celsius( value ); } );
+        luna::set_fx( ut, "to_celsius",
+                      []( const units::temperature & value ) -> double { return units::to_celsius<double>( value ); } );
+        luna::set_fx( ut, "from_fahrenheit",
+                      []( const double value ) -> units::temperature { return units::from_fahrenheit( value ); } );
+        luna::set_fx( ut, "to_fahrenheit",
+                      []( const units::temperature & value ) -> double { return units::to_fahrenheit<double>( value ); } );
+        luna::set_fx( ut, "from_kelvin", []( const double value ) -> units::temperature {
+            return units::from_millidegree_celsius( ( value - 273.15 ) * 1000 );
+        } );
+        luna::set_fx( ut, "to_kelvin",
+                      []( const units::temperature & value ) -> double { return units::to_kelvins<double>( value ); } );
+
+        luna::set_fx( ut, sol::meta_function::equal_to, &units::temperature::operator== );
+        luna::set_fx( ut, sol::meta_function::less_than, &units::temperature::operator< );
+        luna::set_fx( ut, sol::meta_function::less_than_or_equal_to, &units::temperature::operator<= );
     }
 }
 

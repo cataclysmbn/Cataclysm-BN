@@ -12,6 +12,7 @@
 #include "string_id.h"
 #include "translations.h"
 #include "location_ptr.h"
+#include "units/body_temperature.h"
 
 class JsonObject;
 class JsonIn;
@@ -191,9 +192,8 @@ class bodypart
         int damage_bandaged = 0;
         int damage_disinfected = 0;
 
-        // @todo BODYTEMP_NORM
-        int temp_cur = 5000;
-        int temp_conv = 5000;
+        units::temperature temp_cur = 37_c;
+        units::temperature temp_conv = 37_c;
         int frostbite_timer = 0;
 
         int wetness = 0;
@@ -239,17 +239,17 @@ class bodypart
         void mod_damage_bandaged( int mod );
         void mod_damage_disinfected( int mod );
 
-        int get_temp_cur() const {
+        auto get_temp_cur() const -> units::temperature {
             return temp_cur;
         }
-        void set_temp_cur( int set ) {
+        auto set_temp_cur( units::temperature set ) -> void {
             temp_cur = set;
         }
 
-        int get_temp_conv() const {
+        auto get_temp_conv() const -> units::temperature {
             return temp_conv;
         }
-        void set_temp_conv( int set ) {
+        auto set_temp_conv( units::temperature set ) -> void {
             temp_conv = set;
         }
 
