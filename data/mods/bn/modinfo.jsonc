@@ -8,8 +8,8 @@
     "category": "core",
     "core": true,
     "lua_api_version": 2,
-    "loading_images": [ "loading/" ],
+    "loading_images": ["loading/"],
     "path": "../../json",
-    "conflicts": [ "Tankmod_Revived", "Heavy miners", "Mining_Mod" ],
+    "conflicts": ["Tankmod_Revived", "Heavy miners", "Mining_Mod"],
   },
 ]

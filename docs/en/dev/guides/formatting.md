@@ -54,6 +54,7 @@ The style configurations are in `.astylerc` and `.clang-format` at the repositor
 ## JSON Formatting
 
 JSON files are formatted with `json_formatter`, a custom tool built from the project source.
+JSONC files are formatted with Deno through the same script.
 
 ### Using the script
 
@@ -63,9 +64,9 @@ just fmt-json
 build-scripts/format-json.sh
 ```
 
-The script builds `json_formatter` in `out/build/json-format` and formats JSON files. It does not
-require a configured game build or a CMake preset. Override the helper build directory with
-`CATA_JSON_FORMAT_BUILD_DIR` if needed.
+The script builds `json_formatter` in `out/build/json-format` when JSON files need formatting and
+uses Deno for JSONC files. It does not require a configured game build or a CMake preset. Override
+the helper build directory with `CATA_JSON_FORMAT_BUILD_DIR` if needed.
 
 > [!NOTE]
 > The `data/names/` directory is excluded from formatting because name files have special formatting
