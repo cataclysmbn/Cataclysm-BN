@@ -736,3 +736,70 @@ void lua_mutation_callback_actor::call_on_loss( Character &who, const trait_id &
         debugmsg( "Failed to run mutation on_loss for '%s': %s", trait_str_id, e.what() );
     }
 }
+
+lua_itrap_actor::lua_itrap_actor( const std::string &item_id,
+                                      sol::protected_function &&on_trigger_aftermath,
+                                      sol::protected_function &&on_trigger,
+                                      sol::protected_function &&can_trigger)
+
+    : lua_icallback_actor_base( item_id ),
+      on_trigger_aftermath_func( std::move( on_trigger_aftermath ) ),
+      on_trigger_func( std::move( on_trigger ) ),
+      can_trigger_func( std::move( can_trigger ) ) {}
+
+void lua_itrap_actor::call_on_trigger( Character &who, item &trap, const tripoint_bub_ms &loc ) const
+{
+    if( on_trigger_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::state_view lua( on_trigger_func.lua_state() );
+        auto params = lua.create_table();
+        params["target"] = &who;
+        params["trap"] = &trap;
+        params["pos"] = cata::detail::lua_coords::to_lua( loc );
+        sol::protected_function_result res = on_trigger_func( params );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run itrap on_trigger for '%s': %s", item_id, e.what() );
+    }
+}
+
+void lua_itrap_actor::call_on_trigger_aftermath( Character &who, item &trap, const tripoint_bub_ms &loc ) const
+{
+    if( on_trigger_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::state_view lua( on_trigger_func.lua_state() );
+        auto params = lua.create_table();
+        params["target"] = &who;
+        params["trap"] = &trap;
+        params["pos"] = cata::detail::lua_coords::to_lua( loc );
+        sol::protected_function_result res = on_trigger_func( params );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run itrap on_trigger for '%s': %s", item_id, e.what() );
+    }
+}
+
+bool lua_itrap_actor::call_can_trigger( Character &who, item &trap, const tripoint_bub_ms &loc ) const
+{
+    if( on_trigger_func == sol::lua_nil ) {
+        return true;
+    }
+    try {
+        sol::state_view lua( can_trigger_func.lua_state() );
+        auto params = lua.create_table();
+        params["target"] = &who;
+        params["trap"] = &trap;
+        params["pos"] = cata::detail::lua_coords::to_lua( loc );
+        sol::protected_function_result res = can_trigger_func( params );
+        check_func_result( res );
+        const bool ret = res;
+        return ret;
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run itrap on_trigger for '%s': %s", item_id, e.what() );
+    }
+    return true;
+}

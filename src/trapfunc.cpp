@@ -1531,6 +1531,13 @@ bool trapfunc::snake( const tripoint_bub_ms &p, Creature *, item * )
     return true;
 }
 
+bool trapfunc::lua( const tripoint_bub_ms &p, Creature *, item * )
+{
+    // This is to respect other json fields, like remove_on_trigger
+    g->m.tr_at( p ).trigger_aftermath( g->m, p );
+    return true;
+}
+
 /**
  * Takes the name of a trap function and returns a function pointer to it.
  * @param function_name The name of the trapfunc function to find.
@@ -1574,7 +1581,8 @@ const trap_function &trap_function_from_string( const std::string &function_name
             { "map_regen", trapfunc::map_regen },
             { "drain", trapfunc::drain },
             { "spell", trapfunc::cast_spell },
-            { "snake", trapfunc::snake }
+            { "snake", trapfunc::snake },
+            { "lua", trapfunc::lua }
         }
     };
 

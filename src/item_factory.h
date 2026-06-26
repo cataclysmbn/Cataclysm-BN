@@ -23,6 +23,7 @@ class lua_iequippable_actor;
 class lua_istate_actor;
 class lua_imelee_actor;
 class lua_iranged_actor;
+class lua_itrap_actor;
 class relic;
 
 namespace cata
@@ -379,6 +380,7 @@ class Item_factory
         void add_istate_actor( const itype_id &id, std::unique_ptr<lua_istate_actor> actor );
         void add_imelee_actor( const itype_id &id, std::unique_ptr<lua_imelee_actor> actor );
         void add_iranged_actor( const itype_id &id, std::unique_ptr<lua_iranged_actor> actor );
+        void add_itrap_actor(const itype_id &id, std::unique_ptr<lua_itrap_actor> actor);
 
         /** Wire callback actor pointers onto itype objects. Called during finalize(). */
         void resolve_lua_callbacks();
@@ -391,6 +393,7 @@ class Item_factory
         std::map<itype_id, std::unique_ptr<lua_istate_actor>> istate_actors;
         std::map<itype_id, std::unique_ptr<lua_imelee_actor>> imelee_actors;
         std::map<itype_id, std::unique_ptr<lua_iranged_actor>> iranged_actors;
+        std::map<itype_id, std::unique_ptr<lua_itrap_actor>> itrap_actors;
 
         std::map<itype_id, migration> migrations;
 

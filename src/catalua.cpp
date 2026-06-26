@@ -686,6 +686,7 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
     const sol::table istate_funcs = lua.globals()["game"]["istate_functions"];
     const sol::table imelee_funcs = lua.globals()["game"]["imelee_functions"];
     const sol::table iranged_funcs = lua.globals()["game"]["iranged_functions"];
+    const sol::table itrap_funcs = lua.globals()["game"]["itrap_functions"];
 
     auto it = iuse_funcs.begin();
     while( it != iuse_funcs.end() ) {
@@ -947,6 +948,34 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                                                     std::move( on_gain ), std::move( on_loss ) );
             } catch( std::runtime_error &e ) {
                 debugmsg( "Failed to extract mutation_functions k='%s': %s", key, e.what() );
+                break;
+            }
+            ++it;
+        }
+    }
+
+    // --- itrap registration ---
+    {
+        auto it = itrap_funcs.begin();
+        while( it != itrap_funcs.end() ) {
+            const auto ref = *it;
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "itrap entry must be a table" );
+                }
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_trigger_aftermath_func = tbl.get_or<sol::function>( "on_trigger_aftermath_func", sol::lua_nil );
+                auto on_trigger_func = tbl.get_or<sol::function>( "on_trigger_func", sol::lua_nil );
+                auto can_trigger_func = tbl.get_or<sol::function>( "can_trigger_func", sol::lua_nil );
+                ifactory.add_itrap_actor(
+                    itype_id( key ),
+                    std::make_unique<lua_itrap_actor>(
+                        key, std::move( on_trigger_aftermath_func ), std::move( on_trigger_func ),
+                        std::move( can_trigger_func ) ) );
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract itrap_functions k='%s': %s", key, e.what() );
                 break;
             }
             ++it;
