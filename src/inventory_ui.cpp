@@ -899,6 +899,17 @@ bool inventory_column::select( const item *loc )
     return false;
 }
 
+auto inventory_column::select_position_if_item_type( const size_t new_index,
+        const itype_id &type ) -> bool
+{
+    if( new_index >= entries.size() || !entries[new_index].is_selectable() ||
+        entries[new_index].any_item()->typeId() != type ) {
+        return false;
+    }
+    select( new_index, scroll_direction::FORWARD );
+    return true;
+}
+
 size_t inventory_column::get_entry_indent( const inventory_entry &entry ) const
 {
     if( !entry.is_item() ) {
@@ -1394,10 +1405,22 @@ bool inventory_selector::select( const item *loc )
 
 auto inventory_selector::select_item_type( const itype_id &type ) -> bool
 {
+    return select_item_type( type, 0 );
+}
+
+auto inventory_selector::select_item_type( const itype_id &type,
+        const size_t preferred_column ) -> bool
+{
     namespace ranges = std::ranges;
 
     prepare_layout();
-    for( const auto index : std::views::iota( size_t{}, columns.size() ) ) {
+    auto search_order = std::views::iota( size_t{}, columns.size() ) | ranges::to<std::vector>();
+    if( preferred_column < columns.size() ) {
+        std::erase( search_order, preferred_column );
+        search_order.insert( search_order.begin(), preferred_column );
+    }
+
+    for( const auto index : search_order ) {
         auto *column = columns[index];
         if( !column->visible() || !column->activatable() ) {
             continue;
@@ -1412,6 +1435,46 @@ auto inventory_selector::select_item_type( const itype_id &type ) -> bool
         }
     }
     return false;
+}
+
+auto inventory_selector::select_position_if_item_type( const std::pair<size_t, size_t> position,
+        const itype_id &type ) -> bool
+{
+    prepare_layout();
+    if( position.first >= columns.size() ) {
+        return false;
+    }
+
+    auto *column = columns[position.first];
+    if( !column->visible() || !column->activatable() ||
+        !column->select_position_if_item_type( position.second, type ) ) {
+        return false;
+    }
+
+    set_active_column( position.first );
+    return true;
+}
+
+auto inventory_selector::restore_selection( const std::pair<size_t, size_t> position,
+        const itype_id &type ) -> bool
+{
+    const auto restored = select_position_if_item_type( position, type ) ||
+                          select_item_type( type, position.first );
+    if( !restored ) {
+        prepare_layout();
+        for( const auto index : std::views::iota( size_t{}, columns.size() ) ) {
+            auto *column = columns[index];
+            if( !column->visible() || !column->activatable() ) {
+                continue;
+            }
+            column->select( 0, scroll_direction::FORWARD );
+            if( column->get_selected() ) {
+                set_active_column( index );
+                break;
+            }
+        }
+    }
+    return restored;
 }
 
 inventory_entry *inventory_selector::find_entry_by_invlet( int invlet ) const
