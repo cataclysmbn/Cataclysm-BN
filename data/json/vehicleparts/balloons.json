@@ -2,7 +2,7 @@
   {
     "abstract": "balloon",
     "type": "vehicle_part",
-    "location": "anywhere",
+    "location": "on_roof",
     "symbol": "|",
     "color": "light_blue",
     "looks_like": "inflatable_airbag",

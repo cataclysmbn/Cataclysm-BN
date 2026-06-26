@@ -108,7 +108,7 @@
     "damage_modifier": 50,
     "durability": 120,
     "item": "NBC_seal",
-    "location": "anywhere",
+    "location": "on_ceiling",
     "flags": [ "NOFIELDS", "SHOCK_IMMUNE", "ON_ROOF" ],
     "requirements": {
       "install": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ] ] },
