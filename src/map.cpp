@@ -7948,8 +7948,14 @@ void map::reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts,
     for( const tripoint_bub_ms &p : points_in_radius( f, range ) ) {
         const tripoint_bub_ms tp = { p.xy(), f.z() };
         const int tp_cost = move_cost( tp );
+        const auto &veh = veh_at( tp );
+        const auto &veh_wall = veh.obstacle_at_part();
+        // Move cost is in right bounds
+        const bool bad_move_cost = tp_cost < cost_min || tp_cost > cost_max;
+        // It lacks floor in terrain or in veh
+        const bool no_floor = !has_floor_or_support( tp ) && ( veh_wall || !veh );
         // rejection conditions
-        if( tp_cost < cost_min || tp_cost > cost_max || !has_floor_or_support( tp ) ) {
+        if( bad_move_cost || no_floor || veh_wall ) {
             continue;
         }
         // set initial cost for grid point
