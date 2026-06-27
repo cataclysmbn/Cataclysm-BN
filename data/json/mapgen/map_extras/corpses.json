@@ -103,7 +103,7 @@
       "place_nested": [
         { "chunks": [ [ "lost_squad_chunk_bodies", 100 ] ], "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 2, 6 ] },
         {
-          "chunks": [ [ "lost_squad_chunk_zombies", 60 ], [ "lost_squad_chunk_robot", 40 ] ],
+          "chunks": [ [ "lost_squad_chunk_zombies", 50 ], [ "lost_squad_chunk_robot", 50 ] ],
           "x": [ 1, 22 ],
           "y": [ 1, 22 ]
         }
