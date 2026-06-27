@@ -906,5 +906,18 @@
     "color": "light_gray",
     "location": "accessories",
     "dispersion_modifier": 0
+  },
+  {
+    "id": "test_large_container",
+    "type": "GENERIC",
+    "name": "TEST large container",
+    "description": "A storage container larger than the old int-based volume limit.",
+    "weight": "1 kg",
+    "volume": "1 L",
+    "price": "0 cent",
+    "material": "steel",
+    "symbol": "]",
+    "color": "light_gray",
+    "container_data": { "contains": "3000000 L" }
   }
 ]

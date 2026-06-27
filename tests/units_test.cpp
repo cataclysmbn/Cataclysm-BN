@@ -1,15 +1,25 @@
 #include "catch/catch.hpp"
 
+#include <cstdint>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "calendar.h"
+#include "fstream_utils.h"
 #include "json.h"
 #include "options_helpers.h"
 #include "units.h"
 #include "units_serde.h"
 #include "units_utility.h"
+
+static units::volume parse_volume_quantity( const std::string &json )
+{
+    std::istringstream buffer( json );
+    JsonIn jsin( buffer );
+    return read_from_json_string<units::volume>( jsin, units::volume_units );
+}
 
 TEST_CASE( "units_have_correct_ratios", "[units]" )
 {
@@ -42,6 +52,19 @@ TEST_CASE( "units_have_correct_ratios", "[units]" )
     CHECK( 60_arcmin == 1_degrees );
 
     CHECK( 1_c == units::from_celsius( 1 ) );
+}
+
+TEST_CASE( "large_volume_json_round_trip", "[units][volume]" )
+{
+    const auto large_volume = units::from_milliliter(
+                                  static_cast<std::int64_t>( std::numeric_limits<int>::max() ) + 1 );
+    const auto serialized_volume = serialize_wrapper( [&]( JsonOut & jsout ) {
+        jsout.write( large_volume );
+    } );
+
+    CHECK( units::from_liter( 3000000 ) == 3000000_liter );
+    CHECK( serialized_volume == "\"2147483648 ml\"" );
+    CHECK( parse_volume_quantity( serialized_volume ) == large_volume );
 }
 
 static units::energy parse_energy_quantity( const std::string &json )

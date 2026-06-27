@@ -286,12 +286,6 @@ void Item_factory::finalize_pre( itype &obj )
         return f.str().starts_with( "LIGHT_" );
     } );
 
-    // Set max volume for containers to prevent integer overflow
-    if( obj.container && obj.container->contains > 10000_liter ) {
-        debugmsg( obj.id.str() + " storage volume is too large, reducing to 10000 liters" );
-        obj.container->contains = 10000_liter;
-    }
-
     if( obj.ammo ) {
         // for ammo not specifying loudness (or an explicit less than zero) derive value from other properties
         // 343 is the speed of sound in atmosphere, but guns are still loud.

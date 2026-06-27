@@ -224,6 +224,25 @@ auto vehicle_with_invalid_part_and_legacy_pivot_json() -> std::string
 
 } // namespace
 
+TEST_CASE( "vehicle_cargo_uses_full_part_volume", "[vehicle][cargo][volume]" )
+{
+    clear_map();
+
+    auto &here = get_map();
+    const auto vehicle_origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), vehicle_origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ),
+                                    true ) >= 0 );
+
+    const auto cargo_index = veh_ptr->install_part( tripoint_mnt_veh::zero(),
+                             vpart_id( "test_large_cargo_space" ), true );
+    REQUIRE( cargo_index >= 0 );
+
+    CHECK( veh_ptr->max_volume( cargo_index ) == 3000000_liter );
+    CHECK( veh_ptr->free_volume( cargo_index ) == 3000000_liter );
+}
+
 TEST_CASE( "vehicle deserialize accepts legacy two coordinate pivot", "[vehicle][save]" )
 {
     auto json = std::istringstream( vehicle_with_legacy_pivot_json() );

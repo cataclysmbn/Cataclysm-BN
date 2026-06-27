@@ -3530,8 +3530,10 @@ void npc::drop_items( units::mass drop_weight, units::volume drop_volume, int mi
         // decreasing that variable is not important.
         int dWeight = units::to_gram<int>( drop_weight ) <= 0 ? -1 :
                       units::to_gram<int>( drop_weight - weight_dropped ) / 250;
-        int dVolume = units::to_milliliter<int>( drop_volume ) <= 0 ? -1 :
-                      units::to_milliliter<int>( drop_volume - volume_dropped ) / 250;
+        const auto d_volume = drop_volume <= 0_ml ? -1 : std::min(
+                                  units::to_milliliter( drop_volume - volume_dropped ) / 250,
+                                  static_cast<decltype( units::to_milliliter( drop_volume ) )>( INT_MAX ) );
+        const auto dVolume = static_cast<int>( d_volume );
         int index;
         // Which is more important, weight or volume?
         if( dWeight > dVolume ) {

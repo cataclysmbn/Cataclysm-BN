@@ -1098,16 +1098,20 @@ int item::charges_per_volume( const units::volume &vol ) const
             debugmsg( "Item '%s' with zero volume", tname() );
             return INFINITE_CHARGES;
         }
-        // Type cast to prevent integer overflow with large volume containers like the cargo
-        // dimension
-        return vol * static_cast<int64_t>( type->stack_size ) / type->volume;
+        if( type->stack_size > 0 && vol > units::volume_max / type->stack_size ) {
+            return INFINITE_CHARGES;
+        }
+        const auto result = vol * static_cast<decltype( units::to_milliliter( vol ) )>(
+                                type->stack_size ) / type->volume;
+        return static_cast<int>( std::min( result, static_cast<decltype( result )>( INFINITE_CHARGES ) ) );
     } else {
         units::volume my_volume = volume();
         if( my_volume == 0_ml ) {
             debugmsg( "Item '%s' with zero volume", tname() );
             return INFINITE_CHARGES;
         }
-        return vol / my_volume;
+        const auto result = vol / my_volume;
+        return static_cast<int>( std::min( result, static_cast<decltype( result )>( INFINITE_CHARGES ) ) );
     }
 }
 
@@ -5381,7 +5385,11 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         tagtext += string_format( " (%s)", group_id_str );
     } else if( has_var( "NANOFAB_ITEM_ID" ) ) {
         itype_id item = itype_id( get_var( "NANOFAB_ITEM_ID" ) );
-        tagtext += string_format( " (%s [%d])", nname( item ), std::max( 1, item->volume / 250_ml ) * 5 );
+        const auto volume_ratio = item->volume / 250_ml;
+        const auto min_charge_units = decltype( volume_ratio ) { 1 };
+        const auto max_charge_units = decltype( volume_ratio ) { INT_MAX / 5 };
+        const auto charge_units = std::clamp( volume_ratio, min_charge_units, max_charge_units );
+        tagtext += string_format( " (%s [%d])", nname( item ), static_cast<int>( charge_units * 5 ) );
     }
 
     if( already_used_by_player( you ) ) {
@@ -6849,7 +6857,9 @@ int item::get_avg_coverage() const
     const islot_armor *armor = find_armor_data();
     if( !armor ) {
         // handle wearable guns (e.g. shoulder strap) as special case
-        return is_gun() ? std::min( volume() / 500_ml, 100 ) : 0;
+        const auto volume_coverage = volume() / 500_ml;
+        const auto max_coverage = decltype( volume_coverage ) { 100 };
+        return is_gun() ? static_cast<int>( std::min( volume_coverage, max_coverage ) ) : 0;
     }
     int avg_coverage = 0;
     int avg_ctr = 0;

@@ -271,8 +271,9 @@ void iexamine::cvdmachine( player &p, const tripoint_bub_ms & )
     }
 
     // Require materials proportional to selected item volume
-    auto qty = loc->volume() / units::legacy_volume_factor;
-    qty = std::max( 1, qty );
+    const auto volume_ratio = loc->volume() / units::legacy_volume_factor;
+    const auto volume_qty = std::max( volume_ratio, decltype( volume_ratio ) { 1 } );
+    const auto qty = static_cast<int>( std::min( volume_qty, decltype( volume_qty ) { INT_MAX } ) );
     auto reqs = *requirement_id( "cvd_diamond" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
@@ -347,8 +348,12 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
         menu.text = _( "Choose a recipe:" );
         for( size_t i = 0; i < recipe_ids.size(); ++i ) {
             itype_id item = itype_id( recipe_ids[i] );
+            const auto volume_ratio = item->volume / 250_ml;
+            const auto min_charge_units = decltype( volume_ratio ) { 1 };
+            const auto max_charge_units = decltype( volume_ratio ) { INT_MAX / 5 };
+            const auto charge_units = std::clamp( volume_ratio, min_charge_units, max_charge_units );
             auto button_text = string_format( "%s [%d]", item->nname( 1 ),
-                                              std::max( 1, item->volume / 250_ml ) * 5 );
+                                              static_cast<int>( charge_units * 5 ) );
             menu.addentry( i, true, -1, button_text );
         }
         menu.query();
@@ -380,7 +385,9 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
         new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn, item_count );
     }
 
-    auto qty = std::max( 1, new_item->volume() / 250_ml );
+    const auto volume_ratio = new_item->volume() / 250_ml;
+    const auto requested_qty = std::max( volume_ratio, decltype( volume_ratio ) { 1 } );
+    const auto qty = static_cast<int>( std::min( requested_qty, decltype( requested_qty ) { INT_MAX } ) );
     auto reqs = *requirement_id( "nanofabricator" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
