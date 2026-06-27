@@ -336,5 +336,14 @@
       { "monster": "mon_feral_militia", "starts": 500, "freq": 1, "cost_multiplier": 2 },
       { "monster": "mon_feral_jackboot", "starts": 500, "freq": 2, "cost_multiplier": 5 }
     ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ROBOT_MX_MILITARY",
+    "default": "mon_secubot",
+    "monsters": [
+      { "monster": "mon_secubot", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_talon_m249", "freq": 100, "cost_multiplier": 0 }
+    ]
   }
 ]
