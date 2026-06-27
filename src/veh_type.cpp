@@ -537,7 +537,15 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
 
     // This was used in old copy from logic, force looks like of the parent
     if( jo.has_string( "copy-from" ) ) {
-        looks_like = jo.get_string( "copy-from" );
+        const auto copied = jo.get_string( "copy-from" );
+        if( vpart_id( copied ).is_valid() ) {
+            // If not abstract, always look like parent unless overwritten below
+            looks_like = copied;
+        } else if( looks_like.empty() ) {
+            // If abstract, dont look like abstract if there is a looks like
+            // Due to graphics logic being unable to work with abstracts
+            looks_like = copied;
+        }
     }
 
     jo.read( "looks_like", looks_like );
