@@ -241,7 +241,7 @@ Prevents environmental effects of fields from being applied
         }
       ]
     },
-    "flags": ["FOOD_POISION_IMMUNE"],
+    "flags": ["FOOD_POISON_IMMUNE"],
     "immune_fields": ["fd_fire"],
     "immune_effects": ["poison"]
   }
@@ -725,9 +725,9 @@ Gives the ability to drink unclean liquids and eat unclean foods
 
 Prevents gaining parasites from consuming food
 
-##### FOOD_POISION_IMMUNE
+##### FOOD_POISON_IMMUNE
 
-Prevents gaining poision from consuming food
+Prevents gaining poison from consuming food
 
 ### Miscellaneous
 

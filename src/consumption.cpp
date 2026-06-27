@@ -864,7 +864,7 @@ bool Character::eat( item &food, bool force )
             add_msg_if_player( m_good, _( "Mmm, this %s tastes delicious…" ), food.tname() );
         }
         if( !has_enchantment_flag( enchantment_flag_id( "EAT_ROTTEN" ) ) &&
-            !has_enchantment_flag( enchantment_flag_id( "FOOD_POISION_IMMUNE" ) ) ) {
+            !has_enchantment_flag( enchantment_flag_id( "FOOD_POISON_IMMUNE" ) ) ) {
             add_effect( effect_foodpoison, rng( 6_minutes, ( nutr + 1 ) * 6_minutes ) );
         }
     }
@@ -1707,7 +1707,7 @@ void consume_poison( Character &consumer, item &food )
     // If it's poisonous... poison us.
     // TODO: Move this to a flag
     if( food.poison > 0 &&
-        !consumer.has_enchantment_flag( enchantment_flag_id( "FOOD_POISION_IMMUNE" ) ) ) {
+        !consumer.has_enchantment_flag( enchantment_flag_id( "FOOD_POISON_IMMUNE" ) ) ) {
         if( food.poison >= rng( 2, 4 ) ) {
             consumer.add_effect( effect_poison, food.poison * 1_minutes );
         }

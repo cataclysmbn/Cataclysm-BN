@@ -236,7 +236,7 @@
     "description": "Your system is rather tolerant of poisons and toxins, and most will affect you less.",
     "starting_trait": true,
     "category": [ "INSECT", "SERPENT", "SLIME", "SPIDER", "MEDICAL" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISION_IMMUNE" ] } ]
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISON_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -3015,7 +3015,7 @@
     "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE", "THRESH_SERPENT" ],
     "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ],
     "kcal_scale": 0.15,
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISION_IMMUNE" ] } ]
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISON_IMMUNE" ] } ]
   },
   {
     "type": "mutation",

@@ -354,7 +354,7 @@
     "points": 3,
     "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ],
     "bio_enchantments": [
-      { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "CONSUME_UNCLEAN", "FOOD_PARASITE_IMMUNE", "FOOD_POISION_IMMUNE" ] }
+      { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "CONSUME_UNCLEAN", "FOOD_PARASITE_IMMUNE", "FOOD_POISON_IMMUNE" ] }
     ]
   },
   {
