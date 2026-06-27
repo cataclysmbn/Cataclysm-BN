@@ -10745,12 +10745,12 @@ int Character::temp_corrected_by_climate_control( int temperature )
         temperature -= bonus_from_enchantments( temperature,
                                                 enchantment_value_id( "CLIMATE_CONTROL_COOLING" ) );
         if( in_climate_control() ) {
-            temperature -= 750;
+            temperature -= 1250;
         }
         return std::max( BODYTEMP_NORM, temperature );
     } else {
         if( in_climate_control() ) {
-            temperature += 750;
+            temperature += 1250;
         }
         temperature += bonus_from_enchantments( temperature,
                                                 enchantment_value_id( "CLIMATE_CONTROL_HEATING" ) );
