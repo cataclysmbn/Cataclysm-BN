@@ -1538,6 +1538,16 @@ bool trapfunc::lua( const tripoint_bub_ms &p, Creature *, item * )
     return true;
 }
 
+bool lua_trap_can_trigger_check( Creature *target, item *trap, const tripoint_bub_ms &loc) {
+    // Lua itrap can_trigger prevents triggering when returning false
+    if( const auto *itrap_cb = trap->get_itrap_callbacks() ) {
+        if( !itrap_cb->call_can_trigger( target, trap, loc ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
 /**
  * Takes the name of a trap function and returns a function pointer to it.
  * @param function_name The name of the trapfunc function to find.

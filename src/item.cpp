@@ -11929,3 +11929,7 @@ std::optional<cable_connection_data> cable_connection_data::make_data( const ite
         return std::nullopt;
     }
 }
+
+lua_itrap_actor item::get_itrap_callbacks() const {
+    return *type->itrap_callbacks;
+}

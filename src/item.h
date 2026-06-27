@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "catalua_icallback_actor.h"
 #include "coordinates.h"
 #include "damage.h"
 #include "detached_ptr.h"
@@ -2675,6 +2676,8 @@ class item : public location_visitable<item>, public game_object<item>
         void add_npc_kill( std::string );
         void show_kill_list();
         int kill_count();
+
+        lua_itrap_actor get_itrap_callbacks() const;
 };
 
 bool item_compare_by_charges( const item &left, const item &right );
