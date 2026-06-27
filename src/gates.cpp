@@ -31,6 +31,7 @@
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "units.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -82,6 +83,8 @@ gate_id get_gate_id( const tripoint_bub_ms &pos )
 generic_factory<gate_data> gates_data( "gate type" );
 
 } // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( gate_data, gates_data );
 
 void gate_data::load( const JsonObject &jo, const std::string & )
 {

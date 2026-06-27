@@ -11,6 +11,7 @@
 #include "int_id.h"
 #include "json.h"
 #include "string_id.h"
+#include "type_id_implement.h"
 
 namespace io
 {
@@ -81,53 +82,7 @@ generic_factory<field_type> all_field_types( "field types" );
 
 } // namespace
 
-/** @relates int_id */
-template<>
-bool int_id<field_type>::is_valid() const
-{
-    return all_field_types.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-const field_type &int_id<field_type>::obj() const
-{
-    return all_field_types.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const string_id<field_type> &int_id<field_type>::id() const
-{
-    return all_field_types.convert( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<field_type>::is_valid() const
-{
-    return all_field_types.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const field_type &string_id<field_type>::obj() const
-{
-    return all_field_types.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<field_type> string_id<field_type>::id() const
-{
-    return all_field_types.convert( *this, fd_null );
-}
-
-/** @relates int_id */
-template<>
-int_id<field_type>::int_id( const string_id<field_type> &id ) : _id( id.id() )
-{
-}
+IMPLEMENT_STRING_AND_INT_IDS( field_type, all_field_types );
 
 const field_intensity_level &field_type::get_intensity_level( int level ) const
 {

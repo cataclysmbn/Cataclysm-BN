@@ -18,6 +18,7 @@
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "barrel_volume": "250 ml",
     "built_in_mods": [ "folding_stock" ],
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "300blk",
@@ -70,6 +71,7 @@
       [ "sling", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "300blk",

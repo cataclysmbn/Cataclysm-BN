@@ -4,6 +4,7 @@
 #include "flag_trait.h"
 #include "json.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "generic_factory.h"
 
 namespace
@@ -11,53 +12,7 @@ namespace
 generic_factory<json_trait_flag> json_trait_flags_all( "json_trait_flags" );
 } // namespace
 
-/** @relates int_id */
-template<>
-bool trait_flag_id ::is_valid() const
-{
-    return json_trait_flags_all.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-const json_trait_flag &trait_flag_id::obj() const
-{
-    return json_trait_flags_all.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const trait_flag_str_id &trait_flag_id::id() const
-{
-    return json_trait_flags_all.convert( *this );
-}
-
-/** @relates string_id */
-template<>
-bool trait_flag_str_id ::is_valid() const
-{
-    return json_trait_flags_all.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const json_trait_flag &trait_flag_str_id::obj() const
-{
-    return json_trait_flags_all.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-trait_flag_id trait_flag_str_id::id() const
-{
-    return json_trait_flags_all.convert( *this, trait_flag_id( -1 ) );
-}
-
-/** @relates int_id */
-template<>
-trait_flag_id::int_id( const trait_flag_str_id &id ) : _id( id.id() )
-{
-}
+IMPLEMENT_STRING_AND_INT_IDS( json_trait_flag, json_trait_flags_all );
 
 json_trait_flag::operator bool() const
 {

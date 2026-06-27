@@ -292,6 +292,7 @@ class inventory_column
 
         /** Selects the specified location. */
         bool select( const item *loc );
+        auto select_position_if_item_type( size_t new_index, const itype_id &type ) -> bool;
 
         /**
          * Change the selection.
@@ -584,6 +585,10 @@ class inventory_selector
          */
         bool select( const item *loc );
         auto select_item_type( const itype_id &type ) -> bool;
+        auto select_item_type( const itype_id &type, size_t preferred_column ) -> bool;
+        auto select_position_if_item_type( std::pair<size_t, size_t> position,
+                                           const itype_id &type ) -> bool;
+        auto restore_selection( std::pair<size_t, size_t> position, const itype_id &type ) -> bool;
 
         const inventory_entry &get_selected() {
             return get_active_column().get_selected();

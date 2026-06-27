@@ -78,8 +78,9 @@
     "price": "120 cent",
     "price_postapoc": "1 USD",
     "material": [ "wheat" ],
-    "volume": "62 ml",
+    "volume": "496 ml",
     "flags": [ "RAW", "NO_COOKING_BUFF" ],
+    "charges": 8,
     "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ], [ "wheat_allergen", 1 ] ],
     "fun": -8
   },
@@ -98,8 +99,9 @@
     "price": "120 cent",
     "price_postapoc": "1 USD",
     "material": [ "wheat" ],
-    "volume": "62 ml",
+    "volume": "496 ml",
     "flags": [ "RAW", "NO_COOKING_BUFF" ],
+    "charges": 8,
     "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ], [ "wheat_allergen", 1 ] ],
     "fun": -8
   },
@@ -139,7 +141,8 @@
     "price_postapoc": "1 USD",
     "material": [ "wheat" ],
     "flags": [ "RAW", "NO_COOKING_BUFF" ],
-    "volume": "62 ml",
+    "volume": "496 ml",
+    "charges": 8,
     "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ], [ "wheat_allergen", 1 ] ],
     "fun": -6
   },

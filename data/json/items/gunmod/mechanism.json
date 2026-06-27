@@ -384,5 +384,24 @@
     "install_time": "15 m",
     "magazine_adaptor": [ [ "3006", [ "m1918mag", "m1918bigmag" ] ] ],
     "min_skills": [ [ "weapon", 2 ], [ "mechanics", 2 ] ]
+  },
+  {
+    "id": "carbon_receiver",
+    "type": "GUNMOD",
+    "name": { "str": "carbon fiber upper receiver" },
+    "description": "A 3D-printed carbon fiber replacement upper receiver for AR-15 pattern rifles.  Significantly lighter than the original aluminum receiver with no impact on accuracy or reliability.",
+    "weight": "80 g",
+    "volume": "250 ml",
+    "integral_volume": "0 ml",
+    "integral_weight": "-400 g",
+    "price": "600 USD",
+    "price_postapoc": "10 USD",
+    "material": [ "carbon_fiber" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "mechanism",
+    "mod_targets": [ "ar15", "m4a1", "m16a4", "ar_pistol", "h&k416a5", "m27iar" ],
+    "install_time": "30 m",
+    "min_skills": [ [ "mechanics", 3 ], [ "fabrication", 2 ] ]
   }
 ]

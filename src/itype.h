@@ -653,6 +653,9 @@ struct islot_gunmod : common_ranged_data {
     /** Increases gun weight by this many times */
     float weight_multiplier = 1.0f;
 
+    /** Increases gun volume by this many times (replaces COLLAPSIBLE_STOCK flag) */
+    float volume_multiplier = 1.0f;
+
     /** Firing modes added to or replacing those of the base gun */
     std::map<gun_mode_id, gun_modifier_data> mode_modifier;
 

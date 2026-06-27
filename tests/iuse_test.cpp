@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include <array>
+#include <cstddef>
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -8,6 +9,7 @@
 
 #include "avatar.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_id.h"
@@ -30,6 +32,91 @@ auto restore_bionic_scanner_avatar_id( avatar &you ) -> on_out_of_scope
     const auto previous_id = you.getID();
     you.setID( character_id( 1 ), true );
     return on_out_of_scope( [&you, previous_id]() { you.setID( previous_id, true ); } );
+}
+
+struct active_bionic_scanner_benchmark_options {
+    std::size_t item_tile_count = 17;
+    std::size_t items_per_tile = 96;
+    int scanner_charges = 100;
+};
+
+struct active_bionic_scanner_benchmark_fixture {
+    avatar *you = nullptr;
+    item *scanner = nullptr;
+    item *corpse = nullptr;
+    std::size_t nearby_item_count = 0;
+};
+
+auto add_nearby_bionic_scanner_benchmark_items( map &here, const tripoint_bub_ms &center,
+        const active_bionic_scanner_benchmark_options &opts ) -> std::size_t
+{
+    auto item_tiles = std::vector<tripoint_bub_ms> {};
+    for( const tripoint_bub_ms &pt : here.points_in_radius( center, PICKUP_RANGE ) ) {
+        if( pt == center ) {
+            continue;
+        }
+        item_tiles.push_back( pt );
+        if( item_tiles.size() == opts.item_tile_count ) {
+            break;
+        }
+    }
+    REQUIRE( item_tiles.size() == opts.item_tile_count );
+
+    auto item_count = std::size_t{ 0 };
+    for( const tripoint_bub_ms &item_pos : item_tiles ) {
+        for( auto item_index = std::size_t{ 0 }; item_index < opts.items_per_tile; ++item_index ) {
+            auto rock = item::spawn( "rock", calendar::turn );
+            rock->set_var( "benchmark_item_index", static_cast<int>( item_count ) );
+            here.add_item( item_pos, std::move( rock ) );
+            ++item_count;
+        }
+    }
+    return item_count;
+}
+
+auto add_bionic_scanner_benchmark_corpse( map &here,
+        const tripoint_bub_ms &corpse_pos ) -> item * // *NOPAD*
+{
+    auto corpse = item::make_corpse( mtype_id( "mon_zombie_soldier" ), calendar::turn, "" );
+    corpse->add_component( item::spawn( "bio_power_storage", calendar::turn ) );
+    auto *const corpse_ptr = corpse.get();
+    here.add_item( corpse_pos, std::move( corpse ) );
+    return corpse_ptr;
+}
+
+auto make_active_bionic_scanner_benchmark_fixture( avatar &you,
+        const active_bionic_scanner_benchmark_options &opts ) -> active_bionic_scanner_benchmark_fixture
+{
+    auto &here = get_map();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    set_time( calendar::turn_zero + 12_hours );
+    you.recalc_sight_limits();
+
+    const auto item_count = add_nearby_bionic_scanner_benchmark_items( here, you.bub_pos(), opts );
+    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    auto *const corpse_ptr = add_bionic_scanner_benchmark_corpse( here, corpse_pos );
+    REQUIRE( you.sees( corpse_pos ) );
+
+    auto backpack = item::spawn( "backpack", calendar::turn );
+    auto scanner = item::spawn( "bionic_scanner_on", calendar::turn );
+    scanner->ammo_set( itype_id( "battery" ), opts.scanner_charges );
+    scanner->activate();
+    auto *const scanner_ptr = scanner.get();
+    backpack->put_in( std::move( scanner ) );
+    REQUIRE( backpack->needs_processing() );
+    REQUIRE_FALSE( you.wear_item( std::move( backpack ), false ) );
+    REQUIRE( scanner_ptr->is_active() );
+    REQUIRE( scanner_ptr->needs_processing() );
+
+    here.build_map_cache( you.bub_pos().z() );
+    here.update_visibility_cache( you.bub_pos().z() );
+
+    return active_bionic_scanner_benchmark_fixture{
+        .you = &you,
+        .scanner = scanner_ptr,
+        .corpse = corpse_ptr,
+        .nearby_item_count = item_count,
+    };
 }
 
 } // namespace
@@ -459,6 +546,37 @@ TEST_CASE( "scanned corpse bionic stack comparison benchmark",
 
     BENCHMARK( "display_stacked_with duplicate scanned bionics" ) {
         return left_corpse->display_stacked_with( *right_corpse );
+    };
+}
+
+TEST_CASE( "active bionic scanner process_items benchmark near map items",
+           "[.][benchmark][item][bionic_scanner]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    clear_avatar();
+
+    auto &you = get_avatar();
+    const auto restore_avatar_id = restore_bionic_scanner_avatar_id( you );
+    static constexpr auto item_tile_count = std::size_t{ 17 };
+    static constexpr auto items_per_tile = std::size_t{ 96 };
+    const auto fixture = make_active_bionic_scanner_benchmark_fixture( you, {
+        .item_tile_count = item_tile_count,
+        .items_per_tile = items_per_tile,
+    } );
+    REQUIRE( fixture.nearby_item_count == item_tile_count * items_per_tile );
+
+    fixture.you->process_items();
+    REQUIRE( fixture.corpse->get_var( "bionics_scanned_by", -1 ) == you.getID().get_value() );
+    REQUIRE( fixture.corpse->has_flag( flag_CBM_SCANNED ) );
+    REQUIRE( fixture.scanner->is_active() );
+
+    BENCHMARK_ADVANCED( "process_items with worn active scanner near 1632 map items" )
+    ( Catch::Benchmark::Chronometer meter ) {
+        meter.measure( [&fixture]() {
+            fixture.you->process_items();
+            return fixture.scanner->ammo_remaining();
+        } );
     };
 }
 

@@ -9,6 +9,8 @@
 #include "json.h"
 #include "string_formatter.h"
 #include "debug.h"
+#include "type_id.h"
+#include "type_id_implement.h"
 
 // Legacy crap
 const morale_type MORALE_NULL( "morale_null" );
@@ -94,18 +96,7 @@ generic_factory<morale_type_data> morale_data( "morale type" );
 
 } // namespace
 
-template<>
-const morale_type_data &morale_type::obj() const
-{
-    return morale_data.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool morale_type::is_valid() const
-{
-    return morale_data.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( morale_type_data, morale_data );
 
 void morale_type_data::load_type( const JsonObject &jo, const std::string &src )
 {

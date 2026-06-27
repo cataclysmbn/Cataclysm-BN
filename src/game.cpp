@@ -11044,7 +11044,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
 
             if( iItemNum > 0 && activeItem ) {
                 const item &loc = *activeItem->example;
-                temperature_flag temperature = rot::temperature_flag_for_location( m, loc );
+                temperature_flag temperature = rot::temp::for_location( m, loc );
                 std::vector<iteminfo> this_item = activeItem->example->info( temperature );
                 std::vector<iteminfo> item_info_dummy;
 
@@ -11116,7 +11116,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             const item *example_item = activeItem->example;
             // TODO: const_item_location
             const item &loc = *example_item;
-            temperature_flag temperature = rot::temperature_flag_for_location( m, loc );
+            temperature_flag temperature = rot::temp::for_location( m, loc );
             std::vector<iteminfo> this_item = example_item->info( temperature );
 
             item_info_data info_data( example_item->tname(), example_item->type_name(), this_item, dummy );

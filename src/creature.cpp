@@ -878,6 +878,9 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
     const double ammo_severity_bonus = proj.aimedcritbonus;
     const double ammo_severity_max_bonus = proj.aimedcritmaxbonus;
 
+    // Targeting UI teardown can dirty the SDL visibility cache just before a shot resolves.
+    // Ranged damage messages depend on the same visibility query, so refresh it here first.
+    g->refresh_player_visibility_cache_if_needed();
     const bool u_see_this = g->u.sees( *this );
 
     const int avoid_roll = dodge_roll();

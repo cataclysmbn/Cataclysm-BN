@@ -40,7 +40,11 @@
     "type": "item_group",
     "id": "carried_guns_smg_obscure",
     "//": "Imported or otherwise very obscure SMGs. Just mags, no loose ammo.",
-    "items": [ { "group": "everyday_skorpion_82", "prob": 100 }, { "group": "everyday_ppsh", "prob": 150 } ]
+    "items": [
+      { "group": "everyday_skorpion_82", "prob": 100 },
+      { "group": "everyday_ppsh", "prob": 150 },
+      { "group": "everyday_rm360", "prob": 50 }
+    ]
   },
   {
     "type": "item_group",
@@ -157,6 +161,7 @@
     "items": [
       { "group": "nested_trex_gun", "prob": 20 },
       { "group": "nested_ak74", "prob": 50 },
+      { "group": "everyday_draco", "prob": 50 },
       { "group": "nested_an94", "prob": 40 },
       { "group": "everyday_lbase223", "prob": 40 },
       { "group": "everyday_lcar223", "prob": 10 },

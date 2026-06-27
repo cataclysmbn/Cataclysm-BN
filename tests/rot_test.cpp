@@ -9,6 +9,7 @@
 #include "crafting.h"
 #include "enums.h"
 #include "item.h"
+#include "itype.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "game.h" // Just for get_convection_temperature(), TODO: Remove
@@ -76,6 +77,54 @@ static auto add_food_to_vehicle_part( vehicle &veh, const int part_index,
 static auto add_sashimi_to_vehicle_part( vehicle &veh, const int part_index ) -> void
 {
     add_food_to_vehicle_part( veh, part_index, itype_id( "sashimi" ) );
+}
+
+static auto make_backpack_with_sashimi() -> detached_ptr<item>
+{
+    auto backpack = item::spawn( "backpack" );
+    backpack->put_in( item::spawn( "rock" ) );
+    backpack->put_in( item::spawn( "sashimi" ) );
+    REQUIRE( backpack->is_food_container() );
+    return backpack;
+}
+
+static auto add_backpack_with_sashimi_to_vehicle_part( vehicle &veh, const int part_index ) -> void
+{
+    REQUIRE_FALSE( veh.add_item( part_index, make_backpack_with_sashimi() ) );
+}
+
+static auto nested_sashimi_in( item &container ) -> item *; // *NOPAD*
+
+static auto make_plastic_bag_with_sashimi() -> detached_ptr<item>
+{
+    auto bag = item::spawn( "bag_plastic" );
+    REQUIRE( bag->is_container() );
+    bag->put_in( item::spawn( "sashimi" ) );
+    return bag;
+}
+
+static auto make_sealed_carton_with_rotten_nested_sashimi() -> detached_ptr<item>
+{
+    auto carton = item::spawn( "carton_unsealed" );
+    REQUIRE( carton->is_container() );
+    REQUIRE( carton->type->container->seals );
+    REQUIRE_FALSE( carton->type->container->preserves );
+    carton->put_in( make_plastic_bag_with_sashimi() );
+    item *sashimi = nested_sashimi_in( *carton );
+    sashimi->set_relative_rot( 3.0 );
+    REQUIRE( sashimi->has_rotten_away() );
+    return carton;
+}
+
+static auto nested_sashimi_in( item &container ) -> item * // *NOPAD*
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    const auto nested_food = container.contents.all_items_ptr()
+    | filter( []( const item * it ) { return it->typeId() == itype_id( "sashimi" ); } )
+    | ranges::to<std::vector>();
+    REQUIRE( nested_food.size() == 1 );
+    return nested_food.front();
 }
 
 TEST_CASE( "Food lookup finds nested food after non-food contents", "[item][food]" )
@@ -170,6 +219,12 @@ static auto add_food_to_map( const tripoint_bub_ms &pos, const itype_id &food_ty
 static auto add_sashimi_to_map( const tripoint_bub_ms &pos ) -> void
 {
     add_food_to_map( pos, itype_id( "sashimi" ) );
+}
+
+static auto add_backpack_with_sashimi_to_map( const tripoint_bub_ms &pos ) -> void
+{
+    get_map().add_item( pos, make_backpack_with_sashimi() );
+    REQUIRE( get_map().i_at( pos ).size() == 1 );
 }
 
 TEST_CASE( "Rate of rotting" )
@@ -431,39 +486,50 @@ TEST_CASE( "Items don't rot away on map load if in a freezer" )
     m.load( test_location.xy(), false );
 
     const tripoint_bub_ms freezer_pnt = {13, 13, 0};
-    const tripoint_bub_ms sealed_pnt = {14, 13, 0};
-    const tripoint_bub_ms normal_pnt = {15, 13, 0};
+    const tripoint_bub_ms powered_freezer_pnt = {14, 13, 0};
+    const tripoint_bub_ms sealed_pnt = {15, 13, 0};
+    const tripoint_bub_ms normal_pnt = {16, 13, 0};
     m.furn_set( freezer_pnt, f_atomic_freezer );
+    m.furn_set( powered_freezer_pnt, f_test_minifreezer_on );
     m.furn_set( sealed_pnt, furn_str_id::NULL_ID() );
     m.furn_set( normal_pnt, furn_str_id::NULL_ID() );
     m.ter_set( freezer_pnt, t_grass );
+    m.ter_set( powered_freezer_pnt, t_grass );
     m.ter_set( sealed_pnt, t_grass );
     m.ter_set( normal_pnt, t_grass );
-
+    REQUIRE( m.has_flag_furn( TFLAG_FREEZER, freezer_pnt ) );
+    REQUIRE( m.has_flag_furn( TFLAG_FREEZER, powered_freezer_pnt ) );
 
     detached_ptr<item> normal_item_d = item::spawn( "meat_cooked" );
     item &normal_item = *normal_item_d;
     detached_ptr<item> freeze_item_d = item::spawn( "offal_canned" );
     item &freeze_item = *freeze_item_d;
+    auto powered_freeze_item_d = item::spawn( "meat_cooked" );
+    item &powered_freeze_item = *powered_freeze_item_d;
     detached_ptr<item> sealed_item_d = item::in_its_container( item::spawn( "offal_canned" ) );
     item &sealed_item = *sealed_item_d;
 
     set_map_temperature( weather, 18_c );
 
     m.i_clear( freezer_pnt );
+    m.i_clear( powered_freezer_pnt );
     m.i_clear( sealed_pnt );
     m.i_clear( normal_pnt );
 
     m.add_item( freezer_pnt, std::move( freeze_item_d ) );
+    m.add_item( powered_freezer_pnt, std::move( powered_freeze_item_d ) );
     m.add_item( sealed_pnt, std::move( sealed_item_d ) );
     m.add_item( normal_pnt, std::move( normal_item_d ) );
 
     REQUIRE( normal_item.get_rot() == 0_turns );
     REQUIRE( sealed_item.get_rot() == 0_turns );
     REQUIRE( freeze_item.get_rot() == 0_turns );
+    REQUIRE( powered_freeze_item.get_rot() == 0_turns );
 
     auto freezer_stack = m.i_at( freezer_pnt );
     REQUIRE( freezer_stack.size() == 1 );
+    auto powered_freezer_stack = m.i_at( powered_freezer_pnt );
+    REQUIRE( powered_freezer_stack.size() == 1 );
     auto sealed_stack = m.i_at( sealed_pnt );
     REQUIRE( sealed_stack.size() == 1 );
     auto normal_stack = m.i_at( normal_pnt );
@@ -476,8 +542,14 @@ TEST_CASE( "Items don't rot away on map load if in a freezer" )
     calendar::turn += 365_days;
     m.load( test_location.xy(), false );
 
+    CHECK( m.has_flag_furn( TFLAG_FREEZER, freezer_pnt ) );
+    CHECK( m.has_flag_furn( TFLAG_FREEZER, powered_freezer_pnt ) );
     auto freezer_stack_after = m.i_at( freezer_pnt );
     REQUIRE( freezer_stack_after.size() == 1 );
+    auto powered_freezer_stack_after = m.i_at( powered_freezer_pnt );
+    REQUIRE( powered_freezer_stack_after.size() == 1 );
+    CHECK( powered_freezer_stack_after.only_item().get_rot() == 0_turns );
+    CHECK( !powered_freezer_stack_after.only_item().rotten() );
     auto sealed_stack_after = m.i_at( sealed_pnt );
     REQUIRE( sealed_stack_after.size() == 1 );
     auto normal_stack_after = m.i_at( normal_pnt );
@@ -503,6 +575,22 @@ TEST_CASE( "Vehicle storage temperature controls food rot" )
 
         CHECK( !carried->rotten() );
         CHECK( carried->get_rot() == 0_turns );
+    }
+
+    SECTION( "powered freezers preserve nested food when removed after missed processing" ) {
+        auto fixture = make_storage( vpart_id( "minifreezer" ), true );
+        add_backpack_with_sashimi_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        auto freezer_items = fixture.veh->get_items( fixture.part_index );
+        REQUIRE( freezer_items.size() == 1 );
+
+        calendar::turn += 21_days;
+        auto *carried = move_to_inventory_with_attempt_detach( freezer_items.only_item() );
+        REQUIRE( carried != nullptr );
+        auto *food = nested_sashimi_in( *carried );
+
+        CHECK( food->get_rot() == 0_turns );
+        CHECK( !food->rotten() );
     }
 
     SECTION( "powered fridges catch up partial rot when removed after missed processing" ) {
@@ -696,11 +784,28 @@ TEST_CASE( "Contained item keeps parent location while temporarily detached" )
     container->contents.remove_top_items_with( [&]( detached_ptr<item> &&it ) {
         checked = true;
         CHECK( it->parent_item() == &*container );
-        CHECK( rot::temperature_flag_for_location( get_map(), *it ) == temperature_flag::TEMP_NORMAL );
+        CHECK( rot::temp::for_location( get_map(), *it ) == temperature_flag::TEMP_NORMAL );
         return std::move( it );
     } );
 
     CHECK( checked );
+}
+
+TEST_CASE( "Sealed containers keep rotten nested contents on location removal", "[item][rot]" )
+{
+    prepare_map_storage_test();
+    const auto pos = tripoint_bub_ms( 60, 60, 0 );
+    get_map().set_temperature( pos, 100 );
+    get_map().add_item( pos, make_sealed_carton_with_rotten_nested_sashimi() );
+
+    auto items = get_map().i_at( pos );
+    REQUIRE( items.size() == 1 );
+    auto *carried = move_to_inventory_with_attempt_detach( items.only_item() );
+    REQUIRE( carried != nullptr );
+    auto *food = nested_sashimi_in( *carried );
+
+    CHECK( food->rotten() );
+    CHECK( food->has_rotten_away() );
 }
 
 TEST_CASE( "Map powered fridge and freezer furniture controls food rot" )
@@ -751,6 +856,25 @@ TEST_CASE( "Map powered fridge and freezer furniture controls food rot" )
         REQUIRE( carried != nullptr );
         CHECK( carried->get_rot() == 0_turns );
         CHECK( !carried->rotten() );
+    }
+
+    SECTION( "powered freezer furniture keeps nested food fresh after missed processing" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        get_map().furn_set( pos, f_test_minifreezer_on );
+        add_backpack_with_sashimi_to_map( pos );
+
+        calendar::turn += 21_days;
+
+        auto items = get_map().i_at( pos );
+        REQUIRE( items.size() == 1 );
+        auto *carried = move_to_inventory_with_attempt_detach( items.only_item() );
+        REQUIRE( carried != nullptr );
+        auto *food = nested_sashimi_in( *carried );
+
+        CHECK( food->get_rot() == 0_turns );
+        CHECK( !food->rotten() );
     }
 
     SECTION( "powered freezer furniture keeps whole food fresh when consumed for crafting" ) {

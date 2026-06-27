@@ -1015,6 +1015,17 @@
   },
   {
     "type": "item_group",
+    "id": "carried_guns_obscure",
+    "//": "Imported or otherwise very obscure guns of all types. Can be found, rarely, on survivors and other gun nuts.",
+    "items": [
+      { "group": "carried_guns_pistol_obscure", "prob": 100 },
+      { "group": "carried_guns_smg_obscure", "prob": 30 },
+      { "group": "carried_guns_rifle_obscure", "prob": 50 },
+      { "group": "carried_guns_shotgun_obscure", "prob": 30 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "guns_improvised",
     "//": "Makeshift or otherwise poor quality guns of all types.",
     "items": [

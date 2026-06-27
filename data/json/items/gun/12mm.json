@@ -16,6 +16,7 @@
     "ups_charges": 5,
     "loudness": 60,
     "modes": [ [ "DEFAULT", "semi-auto", 1 ], [ "BURST", "auto", 3 ] ],
+    "magazine_well": "150 ml",
     "magazines": [ [ "12mm", [ "hk_g80mag" ] ] ]
   }
 ]

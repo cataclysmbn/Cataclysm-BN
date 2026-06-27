@@ -18,6 +18,7 @@
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "barrel_volume": "250 ml",
     "built_in_mods": [ "folding_stock" ],
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",
@@ -58,6 +59,7 @@
     "dispersion": 150,
     "durability": 7,
     "min_cycle_recoil": 1350,
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",
@@ -103,6 +105,7 @@
     "durability": 6,
     "min_cycle_recoil": 1350,
     "loudness": 4,
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",
@@ -156,6 +159,7 @@
       [ "sling", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",
@@ -193,6 +197,7 @@
     "dispersion": 180,
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",
@@ -232,6 +237,7 @@
     "dispersion": 150,
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
+    "magazine_well": "150 ml",
     "magazines": [ [ "223", [ "g36mag_30rd", "g36mag_100rd" ] ] ]
   },
   {
@@ -255,6 +261,7 @@
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "burst", 4 ] ],
     "built_in_mods": [ "bipod" ],
+    "magazine_well": "25 ml",
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],
@@ -341,6 +348,7 @@
     "durability": 6,
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",
@@ -381,6 +389,7 @@
     "durability": 7,
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 3 ] ],
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",
@@ -435,6 +444,7 @@
     "dispersion": 380,
     "durability": 6,
     "min_cycle_recoil": 1350,
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",
@@ -489,6 +499,7 @@
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "100 ml",
     "magazines": [ [ "223", [ "ruger20", "ruger5", "ruger10", "ruger30", "ruger90", "ruger100", "ruger_makeshiftmag" ] ] ]
   },
   {
@@ -510,6 +521,7 @@
     "dispersion": 150,
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",
@@ -551,6 +563,7 @@
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 3 ], [ "AUTO", "auto", 4 ] ],
     "built_in_mods": [ "folding_stock" ],
+    "magazine_well": "100 ml",
     "magazines": [
       [
         "223",
@@ -605,6 +618,7 @@
       [ "sling", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "150 ml",
     "magazines": [ [ "223", [ "augmag_30rd", "augmag_10rd", "augmag_42rd", "augmag_100rd" ] ] ]
   },
   {
@@ -624,6 +638,7 @@
     "dispersion": 150,
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ],
+    "magazine_well": "150 ml",
     "magazines": [
       [
         "223",

@@ -50,6 +50,7 @@
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "ui.h"
 #include "units.h"
 #include "faction.h"
@@ -130,17 +131,7 @@ namespace
 generic_factory<spell_type> spell_factory( "spell" );
 } // namespace
 
-template<>
-const spell_type &string_id<spell_type>::obj() const
-{
-    return spell_factory.obj( *this );
-}
-
-template<>
-bool string_id<spell_type>::is_valid() const
-{
-    return spell_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( spell_type, spell_factory );
 
 void spell_type::load_spell( const JsonObject &jo, const std::string &src )
 {
@@ -363,6 +354,9 @@ void spell_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "base_casting_time", base_casting_time, 0 );
     optional( jo, was_loaded, "final_casting_time", final_casting_time, base_casting_time );
     optional( jo, was_loaded, "casting_time_increment", casting_time_increment, 0.0f );
+
+    optional( jo, was_loaded, "volume", volume,
+              -255 ); // -255 used as default because it would never be set that low on purpose otherwise
 
     std::vector<std::string> temp_vector;
     std::vector<std::string> default_vector;
@@ -706,6 +700,24 @@ std::string spell::duration_string() const
 time_duration spell::duration_turns() const
 {
     return 1_turns * duration() / 100;
+}
+
+short spell::volume() const
+{
+    // If the spell is flagged to be silent, then it is silent
+    if( has_flag( spell_flag::SILENT ) ) {
+        return -255;
+    }
+    // If the spell has a manually-defined volume, use that
+    if( type->volume > -255 ) {
+        return type->volume;
+    }
+    // If none of the above, calculate it manually
+    int loudness = ( 40 + ( ( std::abs( damage() ) ) / 3 ) );
+    if( has_flag( spell_flag::LOUD ) ) {
+        loudness += 20 + ( damage() / 2 );
+    }
+    return loudness;
 }
 
 void spell::gain_level()
@@ -1117,20 +1129,19 @@ void spell::create_field( const tripoint_bub_ms &at ) const
 
 void spell::make_sound( const tripoint_bub_ms &target, Creature &caster ) const
 {
-    if( !has_flag( spell_flag::SILENT ) ) {
-        int loudness = ( 40 + ( std::abs( damage() ) ) );
-        if( has_flag( spell_flag::LOUD ) ) {
-            loudness += 20 + ( damage() / 2 );
-        }
-        make_sound( target, caster, loudness );
+    short const loudness = volume();
+    // The spell is silent, so let's return early
+    if( loudness == -255 ) {
+        return;
     }
+    make_sound( target, caster, loudness );
 }
 
 void spell::make_sound( const tripoint_bub_ms & /*target*/, Creature &caster, int loudness ) const
 {
     sound_event se;
     se.origin = caster.bub_pos();
-    se.volume = std::max( 190, loudness );
+    se.volume = std::min( 150, loudness );
     se.category = type->sound_type;
     se.description = type->sound_description.translated();
     se.movement_noise = ( type->sound_type == sounds::sound_t::movement );

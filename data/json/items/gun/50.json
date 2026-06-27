@@ -49,6 +49,7 @@
       [ "rail", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "50 ml",
     "magazines": [ [ "50", [ "belt50" ] ] ],
     "flags": [ "MOUNTED_GUN" ]
   },

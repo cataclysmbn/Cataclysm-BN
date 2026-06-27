@@ -11,6 +11,7 @@
 #include "item.h"
 #include "map.h"
 #include "state_helpers.h"
+#include "type_id.h"
 
 TEST_CASE( "active_item_cache_ignores_expired_references", "[item]" )
 {
@@ -23,6 +24,22 @@ TEST_CASE( "active_item_cache_ignores_expired_references", "[item]" )
         REQUIRE_FALSE( cache.empty() );
     }
     CHECK( cache.empty() );
+}
+
+TEST_CASE( "active_item_cache_tracks_bionic_scannable_corpses", "[item]" )
+{
+    auto cache = active_item_cache();
+    auto corpse = item::make_corpse( mtype_id( "mon_zombie_soldier" ), calendar::turn, "" );
+    REQUIRE( corpse->is_corpse() );
+    REQUIRE( corpse->needs_processing() );
+
+    cache.add( *corpse );
+    auto scannable_corpses = cache.get_special( special_item_type::bionic_scannable_corpse );
+    REQUIRE( scannable_corpses.size() == 1 );
+    CHECK( scannable_corpses.front() == corpse.get() );
+
+    cache.remove( corpse.get() );
+    CHECK( cache.get_special( special_item_type::bionic_scannable_corpse ).empty() );
 }
 
 TEST_CASE( "nonperishable_food_does_not_enter_active_item_cache", "[item]" )

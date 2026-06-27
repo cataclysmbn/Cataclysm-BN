@@ -220,6 +220,7 @@ std::string enum_to_string<m_flag>( m_flag data )
 
 } // namespace io
 
+// TODO: Make this like any other generic factory so we can use type_id_implement
 /** @relates string_id */
 template<>
 const mtype &string_id<mtype>::obj() const
