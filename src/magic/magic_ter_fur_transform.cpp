@@ -10,7 +10,7 @@
 #include "enums.h"
 #include "generic_factory.h"
 #include "json.h"
-#include "magic_ter_furn_transform.h"
+#include "magic/magic_ter_furn_transform.h"
 #include "map.h"
 #include "mapdata.h"
 #include "mapgen_constructor.h"

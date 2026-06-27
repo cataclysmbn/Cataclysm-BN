@@ -50,7 +50,7 @@
 #include "item_functions.h"
 #include "itype.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "material.h"
 #include "math_defines.h"

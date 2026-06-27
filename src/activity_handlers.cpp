@@ -62,7 +62,7 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "material.h"
 #include "map.h"
 #include "map_iterator.h"

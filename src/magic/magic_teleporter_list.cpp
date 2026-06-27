@@ -1,4 +1,4 @@
-#include "magic_teleporter_list.h"
+#include "magic/magic_teleporter_list.h"
 
 #include <cstddef>
 #include <algorithm>

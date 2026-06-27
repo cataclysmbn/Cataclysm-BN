@@ -3,7 +3,7 @@
 #include "character.h"
 #include "creature.h"
 #include "game.h"
-#include "magic.h"
+#include "magic/magic.h"
 
 namespace
 {

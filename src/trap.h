@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "color.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"

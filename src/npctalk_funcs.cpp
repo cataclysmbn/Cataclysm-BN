@@ -27,7 +27,7 @@
 #include "game_inventory.h"
 #include "item.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "messages.h"
 #include "mission.h"

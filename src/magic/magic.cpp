@@ -1,4 +1,4 @@
-#include "magic.h"
+#include "magic/magic.h"
 
 #include <algorithm>
 #include <array>
