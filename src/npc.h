@@ -1277,6 +1277,8 @@ class npc : public player
         std::optional<tripoint_bub_ms> last_player_seen_pos; // Where we last saw the player
         // Player orders a friendly NPC to move to this position
         std::optional<tripoint_abs_ms> goto_to_this_pos;
+        // When the npc wants to sleep it doesn't have to recalculate every turn
+        std::optional<tripoint_abs_ms> sleep_at_this_pos;
         int last_seen_player_turn = 0; // Timeout to forgetting
         tripoint_bub_ms wanted_item_pos; // The square containing an item we want
         tripoint_abs_ms

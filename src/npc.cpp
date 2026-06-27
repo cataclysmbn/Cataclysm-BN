@@ -802,6 +802,7 @@ auto npc::clear_transient_movement_state_after_reposition() -> void
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
     goto_to_this_pos = std::nullopt;
+    sleep_at_this_pos = std::nullopt;
     wanted_item_pos = tripoint_bub_ms::min();
     guard_pos = tripoint_abs_ms::min();
     goal = no_goal_point;
