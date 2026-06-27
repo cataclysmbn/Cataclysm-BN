@@ -71,8 +71,8 @@
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "b" },
-      { "direction": "vertical_2", "symbol": "b" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
     ]
   },
   {
@@ -104,8 +104,8 @@
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "b" },
-      { "direction": "vertical_2", "symbol": "b" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
     ]
   },
   {
@@ -136,8 +136,8 @@
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "b" },
-      { "direction": "vertical_2", "symbol": "b" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
     ]
   },
   {
@@ -165,8 +165,8 @@
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "b" },
-      { "direction": "vertical_2", "symbol": "b" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
     ]
   },
   {
@@ -198,8 +198,8 @@
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "b" },
-      { "direction": "vertical_2", "symbol": "b" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
     ]
   },
   {
@@ -228,8 +228,8 @@
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "b" },
-      { "direction": "vertical_2", "symbol": "b" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
     ]
   },
   {
@@ -262,8 +262,8 @@
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "b" },
-      { "direction": "vertical_2", "symbol": "b" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
     ]
   },
   {
