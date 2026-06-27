@@ -220,8 +220,9 @@ static damage_type damage_type_from_string(std::string& str) {
     } else if (str == "TRUE") {
         return DT_TRUE;
     } else if (str == "NONE") {
-        debugmsg(_("ERROR: 'None' damage is not not valid and obsoleted for spells!  Please switch "
-                   "to 'True' instead"));
+        debugmsg(_(
+            "ERROR: 'None' damage is not not valid and obsoleted for spells!  Please switch "
+            "to 'True' instead"));
         return DT_TRUE;
     } else {
         // Bash is much less problematic than defaulting to True damage, bypassing any and all
@@ -1573,8 +1574,11 @@ double known_magic::mana_regen_rate(const Character& guy) const {
     double natural_regen = std::max(0.0, base_rate * mut_mul);
 
 
-    double ench_bonus = guy.bonus_from_enchantments(natural_regen, enchantment_value_id("MANA_"
-                                                                                        "REGEN"));
+    double ench_bonus = guy.bonus_from_enchantments(
+        natural_regen,
+        enchantment_value_id(
+            "MANA_"
+            "REGEN"));
 
     return std::max(0.0, natural_regen + ench_bonus);
 }
