@@ -407,8 +407,9 @@ TEST_CASE( "lua_npc_move_to_binding_moves_real_npc", "[lua][npc]" )
 
     map &here = get_map();
     const auto start = tripoint_bub_ms{ 50, 50, 0 };
-    const auto destination = tripoint_bub_ms{ 51, 50, 0 };
-    for( const tripoint_bub_ms &pos : { start, destination } ) {
+    const auto destination_bub = tripoint_bub_ms{ 51, 50, 0 };
+    const auto destination_abs = map_local_to_abs( here, destination_bub );
+    for( const tripoint_bub_ms &pos : { start, destination_bub } ) {
         here.ter_set( pos, ter_id( "t_dirt" ) );
         here.furn_set( pos, furn_id( "f_null" ) );
     }
@@ -416,12 +417,12 @@ TEST_CASE( "lua_npc_move_to_binding_moves_real_npc", "[lua][npc]" )
     auto &moving_npc = spawn_npc( start, "test_talker" );
     moving_npc.set_moves( 1000 );
     test_data["npc"] = &moving_npc;
-    test_data["destination"] = destination;
+    test_data["destination"] = destination_abs;
 
     run_lua_test_script( lua, "npc_move_to_test.lua" );
 
     CHECK( test_data.get<bool>( "moved" ) );
-    CHECK( moving_npc.bub_pos() == destination );
+    CHECK( moving_npc.abs_pos() == destination_abs );
 }
 
 TEST_CASE( "lua_place_monster_pins_upgrade_time", "[lua][monster]" )

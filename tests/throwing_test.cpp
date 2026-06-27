@@ -36,7 +36,7 @@
 TEST_CASE( "throwing distance test", "[throwing], [balance]" )
 {
     clear_all_state();
-    const standard_npc thrower( "Thrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 10, 10, 10, 10 );
+    const standard_npc thrower( "Thrower", tripoint_abs_ms( 60, 60, 0 ), {}, 4, 10, 10, 10, 10 );
     item &grenade = *item::spawn_temporary( "grenade" );
     CHECK( thrower.throw_range( grenade ) >= 30 );
     CHECK( thrower.throw_range( grenade ) <= 35 );
@@ -45,9 +45,9 @@ TEST_CASE( "throwing distance test", "[throwing], [balance]" )
 TEST_CASE( "throwing heavier items scales with strength", "[throwing], [balance]" )
 {
     clear_all_state();
-    const auto weak_thrower = standard_npc( "WeakThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 8, 10,
+    const auto weak_thrower = standard_npc( "WeakThrower", tripoint_abs_ms( 60, 60, 0 ), {}, 4, 8, 10,
                                             10, 10 );
-    const auto strong_thrower = standard_npc( "StrongThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 14,
+    const auto strong_thrower = standard_npc( "StrongThrower", tripoint_abs_ms( 60, 60, 0 ), {}, 4, 14,
                                 10, 10, 10 );
     item &bronze_anvil = *item::spawn_temporary( "anvil_bronze" );
 
@@ -317,7 +317,7 @@ static void test_throwing_player_versus(
             return;
         }
 
-        dealt_projectile_attack atk = ranged::throw_item( p, mon.bub_pos(), std::move( det ),
+        dealt_projectile_attack atk = ranged::throw_item( p, mon.abs_pos(), std::move( det ),
                                       std::nullopt );
         data.hits.add( atk.hit_critter != nullptr );
         data.dmg.add( atk.dealt_dam.total_damage() );

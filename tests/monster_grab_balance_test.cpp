@@ -92,9 +92,9 @@ TEST_CASE( "Avatar drags manually grabbed monster while moving", "[player][melee
 
     const auto effect_grabbed = efftype_id( "grabbed" );
     const auto effect_grabbing = efftype_id( "grabbing" );
-    const auto avatar_start = dummy.bub_pos();
+    const auto avatar_start = dummy.abs_pos();
     const auto monster_start = avatar_start + tripoint_north;
-    auto &zed = spawn_test_monster( "debug_mon", monster_start );
+    auto &zed = spawn_test_monster( "debug_mon", abs_to_bub( monster_start ) );
 
     dummy.add_effect( effect_grabbing, 1_days, body_part_torso );
     zed.add_effect( effect_grabbed, 1_days );
@@ -106,8 +106,8 @@ TEST_CASE( "Avatar drags manually grabbed monster while moving", "[player][melee
     const auto avatar_destination = avatar_start + tripoint_east;
     REQUIRE( g->walk_move( avatar_destination, false ) );
 
-    CHECK( dummy.bub_pos() == avatar_destination );
-    CHECK( zed.bub_pos() == avatar_start );
+    CHECK( dummy.abs_pos() == avatar_destination );
+    CHECK( zed.abs_pos() == avatar_start );
     CHECK( g->critter_at<monster>( avatar_start ) == &zed );
 }
 
@@ -120,10 +120,10 @@ TEST_CASE( "Manually grabbed monster cannot walk away", "[player][melee][grab]" 
     const auto effect_grabbed = efftype_id( "grabbed" );
     const auto effect_grabbing = efftype_id( "grabbing" );
 
-    const auto avatar_start = dummy.bub_pos();
+    const auto avatar_start = dummy.abs_pos();
     const auto monster_start = avatar_start + tripoint_north;
     const auto monster_destination = monster_start + tripoint_north;
-    auto &zed = spawn_test_monster( "debug_mon", monster_start );
+    auto &zed = spawn_test_monster( "debug_mon", abs_to_bub( monster_start ) );
 
     dummy.add_effect( effect_grabbing, 1_days, body_part_torso );
     zed.add_effect( effect_grabbed, 1_days );
@@ -132,7 +132,7 @@ TEST_CASE( "Manually grabbed monster cannot walk away", "[player][melee][grab]" 
     CHECK_FALSE( zed.can_move_to( monster_destination ) );
     CHECK( zed.can_move_to( monster_start ) );
     CHECK_FALSE( zed.move_to( monster_destination ) );
-    CHECK( zed.bub_pos() == monster_start );
+    CHECK( zed.abs_pos() == monster_start );
 }
 
 TEST_CASE( "Crowd crush does not drain breath when disabled", "[player][melee][grab]" )

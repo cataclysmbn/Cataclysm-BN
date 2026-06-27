@@ -593,7 +593,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_abs_ms &sourc
                 rand.y() = prev_point.y();
             }
             if( in_veh == nullptr || veh_pointer_or_null( here.veh_at( rand ) ) != in_veh ) {
-                here.shoot( abs_to_bub( source ), abs_to_bub( rand ), proj, false );
+                here.shoot( abs_to_map_local( here, source ), abs_to_map_local( here, rand ), proj, false );
                 if( proj.impact.total_damage() <= 0 ) {
                     //If the projectile stops here move it back a square so it doesn't end up inside the vehicle
                     traj_len = i - 1;
@@ -661,7 +661,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_abs_ms &sourc
         } else {
             // Track damage before processing so we'll know if we actually hit any cover.
             const float dmg_before_penetration = proj.impact.total_damage();
-            here.shoot( abs_to_bub( source ), abs_to_bub( tp ), proj, !no_item_damage && tp == target );
+            here.shoot( abs_to_map_local( here, source ), abs_to_map_local( here, tp ), proj, !no_item_damage && tp == target );
             const float dmg_after_penetration = proj.impact.total_damage();
             has_momentum = dmg_after_penetration > 0 || ( no_damage && mb.passable( tp ) );
             // We lost momentum from hitting something, penalize range.

@@ -513,7 +513,7 @@ TEST_CASE( "npc_move_through_vehicle_holes" )
     ACTIVE_OVERMAP_BUFFER.insert_npc( guy );
     g->load_npcs();
 
-    guy->move_to( mon_origin + tripoint_north_west, true, nullptr );
+    guy->move_to( map_local_to_abs( here, mon_origin + tripoint_north_west ), true, nullptr );
 
     const npc *m = g->critter_at<npc>( mon_origin );
     CHECK( m != nullptr );

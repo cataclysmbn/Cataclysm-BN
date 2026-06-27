@@ -201,7 +201,13 @@ TEST_CASE( "weapon attack ratings and moves", "[item][iteminfo][weapon]" )
             "Typical damage per second:\n"
             "Best: <color_c_yellow>5.20</color>"
             "  Vs. Agile: <color_c_yellow>1.62</color>"
-            "  Vs. Armored: <color_c_yellow>0.00</color>\n" );
+            "  Vs. Armored: <color_c_yellow>0.00</color>\n"
+            "--\n"
+            "<color_c_white>Base throw damage</color>: Bash: <color_c_yellow>7</color>\n"
+            "<color_c_white>Throw damage</color>: Bash: <color_c_yellow>9</color>\n"
+            "Throw range: <color_c_yellow>13</color>\n"
+            "Moves per throw: <color_c_yellow>70</color>\n"
+            "Stamina cost: <color_c_yellow>91</color>\n" );
     }
 
     SECTION( "bash and cut damage" ) {
@@ -216,7 +222,13 @@ TEST_CASE( "weapon attack ratings and moves", "[item][iteminfo][weapon]" )
             "Typical damage per second:\n"
             "Best: <color_c_yellow>10.94</color>"
             "  Vs. Agile: <color_c_yellow>5.60</color>"
-            "  Vs. Armored: <color_c_yellow>0.78</color>\n" );
+            "  Vs. Armored: <color_c_yellow>0.78</color>\n"
+            "--\n"
+            "<color_c_white>Base throw damage</color>: Bash: <color_c_yellow>23</color>\n"
+            "<color_c_white>Throw damage</color>: Bash: <color_c_yellow>39</color>\n"
+            "Throw range: <color_c_yellow>1</color>\n"
+            "Moves per throw: <color_c_yellow>136</color>\n"
+            "Stamina cost: <color_c_yellow>275</color>\n" );
     }
 
     SECTION( "bash and pierce damage" ) {
@@ -232,7 +244,12 @@ TEST_CASE( "weapon attack ratings and moves", "[item][iteminfo][weapon]" )
             "Best: <color_c_yellow>9.61</color>"
             "  Vs. Agile: <color_c_yellow>3.95</color>"
             "  Vs. Armored: <color_c_yellow>0.00</color>\n"
-        );
+            "--\n"
+            "<color_c_white>Base throw damage</color>: Bash: <color_c_yellow>3</color> Pierce: <color_c_yellow>9</color>\n"
+            "<color_c_white>Throw damage</color>: Bash: <color_c_yellow>7</color> Pierce: <color_c_yellow>9</color>\n"
+            "Throw range: <color_c_yellow>7</color>\n"
+            "Moves per throw: <color_c_yellow>92</color>\n"
+            "Stamina cost: <color_c_yellow>106</color>\n" );
     }
 
     SECTION( "melee and ranged damaged" ) {
@@ -247,11 +264,21 @@ TEST_CASE( "weapon attack ratings and moves", "[item][iteminfo][weapon]" )
             "Typical damage per second:\n"
             "Best: <color_c_yellow>5.25</color>"
             "  Vs. Agile: <color_c_yellow>2.09</color>"
-            "  Vs. Armored: <color_c_yellow>0.00</color>\n" );
+            "  Vs. Armored: <color_c_yellow>0.00</color>\n"
+            "--\n"
+            "<color_c_white>Base throw damage</color>: Bash: <color_c_yellow>2</color>\n"
+            "<color_c_white>Throw damage</color>: Bash: <color_c_yellow>3</color>\n"
+            "Throw range: <color_c_yellow>10</color>\n"
+            "Moves per throw: <color_c_yellow>56</color>\n"
+            "Stamina cost: <color_c_yellow>68</color>\n" );
     }
 
     SECTION( "no damage" ) {
-        test_info_equals( "test_rag", q, "" );
+        test_info_equals( "test_rag", q,
+            "--\n"
+            "Throw range: <color_c_yellow>16</color>\n"
+            "Moves per throw: <color_c_yellow>62</color>\n"
+            "Stamina cost: <color_c_yellow>55</color>\n" );
     }
 }
 

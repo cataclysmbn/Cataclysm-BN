@@ -3327,6 +3327,13 @@ auto mapbuffer::get_trap( const tripoint_abs_ms &p,
         return std::nullopt;
     }
 
+    // Check terrain-associated trap (e.g. t_pit carries tr_pit).
+    // Mirroring map::tr_at() which checks both sources.
+    const auto &ter_trap = tile->sm->get_ter( tile->local ).obj().trap;
+    if( ter_trap != tr_null ) {
+        return ter_trap;
+    }
+
     return tile->sm->get_trap( tile->local );
 }
 

@@ -754,13 +754,6 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
             }
         }
 
-        if( m.inbounds( pos_player ) ) {
-            m.furn_set( pos_player, qt.id );
-            continue;
-        }
-
-        // Something is transforming from an unloaded map...?
-
         // TODO: this is copy-pasted from map.cpp
         sm->set_furn( p_within_sm, qt.id );
         if( old_t.active ) {

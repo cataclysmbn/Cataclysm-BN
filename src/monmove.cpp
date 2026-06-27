@@ -2338,6 +2338,11 @@ bool monster::attack_at( const tripoint_abs_ms &p )
         if( buf.floor_between( abs_pos(), p ) || vehicle_floor_between ) {
             return false;
         }
+        // No floor between — attempt attack through open air
+        if( auto critter = buf.creature_at( p ) ) {
+            melee_attack( *critter );
+            return true;
+        }
         return false;
     }
 

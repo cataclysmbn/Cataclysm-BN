@@ -32,7 +32,7 @@ auto setup_shriek_stun_test() -> shriek_stun_setup
     target.setpos( map_local_to_abs( get_map(), target_pos ) );
 
     auto &screecher = spawn_test_monster( "mon_zombie_screecher", screecher_pos );
-    screecher.set_dest( target.bub_pos() );
+    screecher.set_dest( target.abs_pos() );
     screecher.add_effect( effect_shrieking, 1_minutes );
 
     return { .screecher = screecher, .target = target };

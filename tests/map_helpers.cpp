@@ -54,6 +54,7 @@ void wipe_map_terrain()
         }
     }
     clear_vehicles();
+    g->m.clear_vehicle_cache();
     g->m.invalidate_map_cache( 0 );
     g->m.build_map_cache( 0, true );
 }

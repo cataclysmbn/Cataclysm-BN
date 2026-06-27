@@ -51,8 +51,8 @@ auto setup_adjacent_pit_move( const ter_id &origin_terrain,
     g->place_player( origin );
     here.ter_set( origin, origin_terrain );
     here.ter_set( destination, destination_terrain );
-    g->u.add_known_trap( origin, here.tr_at( origin ) );
-    g->u.add_known_trap( destination, here.tr_at( destination ) );
+    g->u.add_known_trap( map_local_to_abs( here, origin ), here.get_mapbuffer().get_trap( map_local_to_abs( here, origin ) )->obj() );
+    g->u.add_known_trap( map_local_to_abs( here, destination ), here.get_mapbuffer().get_trap( map_local_to_abs( here, destination ) )->obj() );
     g->u.add_effect( effect_in_pit, 1_turns, bodypart_str_id::NULL_ID() );
     g->u.str_cur = 0;
     g->u.dex_cur = 0;
@@ -137,7 +137,7 @@ TEST_CASE( "moving_between_adjacent_pit_traps" )
         const auto hp_before = g->u.get_hp();
 
         CHECK( g->get_dangerous_tile( positions.destination ).empty() );
-        REQUIRE( avatar_action::move( g->u, get_map(), tripoint_rel_ms::east() ) );
+        REQUIRE( avatar_action::move( g->u, tripoint_rel_ms::east() ) );
 
         CHECK( g->u.bub_pos() == positions.destination );
         CHECK( g->u.get_hp() == hp_before );
@@ -150,7 +150,7 @@ TEST_CASE( "moving_between_adjacent_pit_traps" )
         const auto hp_before = g->u.get_hp();
 
         CHECK_FALSE( g->get_dangerous_tile( positions.destination ).empty() );
-        REQUIRE( avatar_action::move( g->u, get_map(), tripoint_rel_ms::east() ) );
+        REQUIRE( avatar_action::move( g->u, tripoint_rel_ms::east() ) );
 
         CHECK( g->u.bub_pos() == positions.destination );
         CHECK( g->u.get_hp() < hp_before );
@@ -162,7 +162,7 @@ TEST_CASE( "moving_between_adjacent_pit_traps" )
         const auto hp_before = g->u.get_hp();
 
         CHECK_FALSE( g->get_dangerous_tile( positions.destination ).empty() );
-        REQUIRE( avatar_action::move( g->u, get_map(), tripoint_rel_ms::east() ) );
+        REQUIRE( avatar_action::move( g->u, tripoint_rel_ms::east() ) );
 
         CHECK( g->u.bub_pos() == positions.destination );
         CHECK( g->u.get_hp() < hp_before );
@@ -173,7 +173,7 @@ TEST_CASE( "moving_between_adjacent_pit_traps" )
         const auto hp_before = g->u.get_hp();
 
         CHECK( g->get_dangerous_tile( positions.destination ).empty() );
-        REQUIRE( avatar_action::move( g->u, get_map(), tripoint_rel_ms::east() ) );
+        REQUIRE( avatar_action::move( g->u, tripoint_rel_ms::east() ) );
 
         CHECK( g->u.bub_pos() == positions.destination );
         CHECK( g->u.get_hp() == hp_before );
@@ -184,7 +184,7 @@ TEST_CASE( "moving_between_adjacent_pit_traps" )
         const auto positions = setup_adjacent_pit_move( ter_id( "t_pit" ) );
         auto &here = get_map();
         here.ter_set( positions.destination, ter_id( "t_pit_spiked" ) );
-        g->u.add_known_trap( positions.destination, here.tr_at( positions.destination ) );
+        g->u.add_known_trap( map_local_to_abs( here, positions.destination ), here.get_mapbuffer().get_trap( map_local_to_abs( here, positions.destination ) )->obj() );
 
         CHECK_FALSE( g->get_dangerous_tile( positions.destination ).empty() );
     }

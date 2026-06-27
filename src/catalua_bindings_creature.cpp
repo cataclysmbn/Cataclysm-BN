@@ -223,7 +223,7 @@ void cata::detail::reg_creature( sol::state &lua )
         SET_FX_T( is_immune_effect, bool( const efftype_id & ) const );
         SET_FX_T( is_immune_damage, bool( damage_type ) const );
 
-        SET_FX_N_T( bub_pos, "get_pos_ms", tripoint_bub_ms() const );
+        SET_FX_N_T( abs_pos, "get_pos_ms", tripoint_abs_ms() const );
 
         SET_FX_N_T( bub_pos, "bub_pos", tripoint_bub_ms() const );
 

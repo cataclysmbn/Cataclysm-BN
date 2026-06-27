@@ -546,24 +546,26 @@ bool mattack::shriek_stun( monster *z )
     int dist = rl_dist( z->abs_pos(), target->abs_pos() );
     // Currently the cone is 2D, so don't use it for 3D attacks
     if( dist > 7 ||
-        z->bub_pos().z() != target->bub_pos().z() ||
+        z->abs_pos().z() != target->abs_pos().z() ||
         !z->sees( *target ) ) {
         return false;
     }
 
     units::angle target_angle = coord_to_angle( z->abs_pos(), target->abs_pos() );
     units::angle cone_angle = 20_degrees;
+    mapbuffer &buf = z->get_mapbuffer();
     map &here = get_map();
-    for( const tripoint_bub_ms &cone : here.points_in_radius( z->bub_pos(), 4 ) ) {
-        units::angle tile_angle = coord_to_angle( z->bub_pos(), cone );
+    for( const auto &tile : simulated_tiles_in_radius( buf, z->abs_pos(), 4 ) ) {
+        const tripoint_abs_ms cone = tile.abs_pos();
+        units::angle tile_angle = coord_to_angle( z->abs_pos(), cone );
         units::angle diff = units::fabs( target_angle - tile_angle );
         // Skip the target, because it's outside cone or it's the source
-        if( diff + cone_angle > 360_degrees || diff > cone_angle || cone == z->bub_pos() ) {
+        if( diff + cone_angle > 360_degrees || diff > cone_angle || cone == z->abs_pos() ) {
             continue;
         }
         // Affect the target
         // Small bash to every square, silent to not flood message box
-        here.bash( cone, 4, true );
+        here.bash( abs_to_map_local( here, cone ), 4, true );
 
         // If a monster is there, chance for stun
         Creature *target = g->critter_at( cone );

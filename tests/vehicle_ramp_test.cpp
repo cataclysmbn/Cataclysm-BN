@@ -119,8 +119,8 @@ static auto check_avatar_still_grabs( const vehicle &expected_vehicle ) -> void
 {
     auto &player_character = get_avatar();
     CHECK( player_character.get_grab_type() == OBJECT_VEHICLE );
-    const auto grabbed_target = vehicle_grab_target_at( get_map(),
-                                player_character.bub_pos() + player_character.grab_point );
+    const auto grabbed_target = vehicle_grab_target_at( get_map().get_mapbuffer(),
+                                player_character.abs_pos() + player_character.grab_point );
     REQUIRE( grabbed_target );
     CHECK( &grabbed_target->vp.vehicle() == &expected_vehicle );
 }
@@ -200,7 +200,7 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
             }
             const tripoint_mnt_veh &pmount = vp.mount();
             CAPTURE( pmount );
-            const tripoint_bub_ms &ppos = vp.pos();
+            const tripoint_bub_ms &ppos = vp.bub_pos();
             CAPTURE( ppos );
             if( cycles > ( transition_cycle - pmount.x() ) ) {
                 CHECK( ppos.z() == target_z );
@@ -251,12 +251,12 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pulled_up_ramp", "[vehicle][ramp][grab]
     const auto player_start_abs = player_character.abs_pos();
     const auto cart_start_abs = cart.abs_ms_location();
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -1, 0, 1 ) );
     CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -1, 0, 0 ) );
     check_avatar_still_grabs( cart );
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -2, 0, 1 ) );
     CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -2, 0, 1 ) );
     check_avatar_still_grabs( cart );
@@ -272,7 +272,7 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pulled_on_flat_ground", "[vehicle][grab
     auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 61, 60, 0 ),
                  tripoint_bub_ms( 62, 60, 0 ) );
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.bub_pos() == tripoint_bub_ms( 60, 60, 0 ) );
     CHECK( cart.bub_ms_location() == tripoint_bub_ms( 61, 60, 0 ) );
     check_avatar_still_grabs( cart );
@@ -289,7 +289,7 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pulled_with_debug_noclip", "[vehicle][g
                  tripoint_bub_ms( 62, 60, 0 ) );
     player_character.set_mutation( trait_id( "DEBUG_NOCLIP" ) );
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.bub_pos() == tripoint_bub_ms( 60, 60, 0 ) );
     CHECK( cart.bub_ms_location() == tripoint_bub_ms( 61, 60, 0 ) );
     check_avatar_still_grabs( cart );
@@ -305,7 +305,7 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pushed_on_flat_ground", "[vehicle][grab
     auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 62, 60, 0 ),
                  tripoint_bub_ms( 61, 60, 0 ) );
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.bub_pos() == tripoint_bub_ms( 61, 60, 0 ) );
     CHECK( cart.bub_ms_location() == tripoint_bub_ms( 60, 60, 0 ) );
     check_avatar_still_grabs( cart );
@@ -322,7 +322,7 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pushed_with_debug_noclip", "[vehicle][g
                  tripoint_bub_ms( 61, 60, 0 ) );
     player_character.set_mutation( trait_id( "DEBUG_NOCLIP" ) );
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.bub_pos() == tripoint_bub_ms( 61, 60, 0 ) );
     CHECK( cart.bub_ms_location() == tripoint_bub_ms( 60, 60, 0 ) );
     check_avatar_still_grabs( cart );
@@ -340,12 +340,12 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pushed_up_ramp", "[vehicle][ramp][grab]
     const auto player_start_abs = player_character.abs_pos();
     const auto cart_start_abs = cart.abs_ms_location();
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -1, 0, 0 ) );
     CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -1, 0, 1 ) );
     check_avatar_still_grabs( cart );
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -2, 0, 1 ) );
     CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -2, 0, 1 ) );
     check_avatar_still_grabs( cart );
@@ -363,12 +363,12 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pulled_down_ramp", "[vehicle][ramp][gra
     const auto player_start_abs = player_character.abs_pos();
     const auto cart_start_abs = cart.abs_ms_location();
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -1, 0, -1 ) );
     CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -1, 0, 0 ) );
     check_avatar_still_grabs( cart );
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -2, 0, -1 ) );
     CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -2, 0, -1 ) );
     check_avatar_still_grabs( cart );
@@ -386,12 +386,12 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pushed_down_ramp", "[vehicle][ramp][gra
     const auto player_start_abs = player_character.abs_pos();
     const auto cart_start_abs = cart.abs_ms_location();
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -1, 0, 0 ) );
     CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -1, 0, -1 ) );
     check_avatar_still_grabs( cart );
 
-    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    REQUIRE( avatar_action::move( player_character, tripoint_rel_ms::west() ) );
     CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -2, 0, -1 ) );
     CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -2, 0, -1 ) );
     check_avatar_still_grabs( cart );

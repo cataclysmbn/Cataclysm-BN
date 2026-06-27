@@ -2608,7 +2608,7 @@ bool npc::can_move_to( const tripoint_abs_ms &p, bool no_bashing ) const
     auto &here = get_mapbuffer();
     // Allow moving into any bashable spots, but penalize them during pathing
     // Doors are not passable for hallucinations
-    return( rl_dist( abs_pos(), p ) <= 1 && here.has_floor_or_support( p ) && !g->is_dangerous_tile( abs_to_bub( p ) ) &&
+    return( rl_dist( abs_pos(), p ) <= 1 && here.has_floor_or_support( p ) && !sees_dangerous_field( p ) &&
             ( here.passable( p ) || ( can_open_door( p, !here.is_outside( abs_pos() ) ) &&
                                       !is_hallucination() ) ||
               ( !no_bashing && here.bash_rating( smash_ability(), p ) > 0 ) )

@@ -1,6 +1,6 @@
 ---@type NPC
 local moving_npc = test_data.npc
----@type TripointBubMs
+---@type TripointAbsMs
 local destination = test_data.destination
 
 moving_npc:move_to(destination)
