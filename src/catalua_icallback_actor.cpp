@@ -738,15 +738,15 @@ void lua_mutation_callback_actor::call_on_loss( Character &who, const trait_id &
 }
 
 lua_itrap_actor::lua_itrap_actor( const std::string &item_id,
-                                    sol::protected_function &&can_trigger,
-                                    sol::protected_function &&on_trigger,
-                                    sol::protected_function &&on_trigger_aftermath
-                                   )
+                                  sol::protected_function &&can_trigger,
+                                  sol::protected_function &&on_trigger,
+                                  sol::protected_function &&on_trigger_aftermath
+                                )
 
     : lua_icallback_actor_base( item_id ),
-        can_trigger_func( std::move( can_trigger ) ),
-        on_trigger_func( std::move( on_trigger ) ),
-        on_trigger_aftermath_func( std::move( on_trigger_aftermath ) ) {}
+      can_trigger_func( std::move( can_trigger ) ),
+      on_trigger_func( std::move( on_trigger ) ),
+      on_trigger_aftermath_func( std::move( on_trigger_aftermath ) ) {}
 
 void lua_itrap_actor::call_on_trigger( Character &who, item &trap,
                                        const tripoint_bub_ms &loc ) const
