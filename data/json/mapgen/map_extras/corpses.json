@@ -101,22 +101,17 @@
     "update_mapgen_id": "mx_military",
     "object": {
       "place_nested": [
-        {
-          "chunks": [ [ "lost_squad_chunk_bodies", 100 ] ],
-          "x": [ 1, 22 ],
-          "y": [ 1, 22 ],
-          "repeat": [ 2, 6 ]
-        },
+        { "chunks": [ [ "lost_squad_chunk_bodies", 100 ] ], "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 2, 6 ] },
         {
           "chunks": [ [ "lost_squad_chunk_zombies", 60 ], [ "lost_squad_chunk_robot", 40 ] ],
           "x": [ 1, 22 ],
           "y": [ 1, 22 ]
         }
       ],
-      "place_loot": [ 
-        { "group": "military", "chance": 50, "x": [ 1, 22 ], "y": [ 1, 22 ] }, 
+      "place_loot": [
+        { "group": "military", "chance": 50, "x": [ 1, 22 ], "y": [ 1, 22 ] },
         { "group": "mass_grave_casings", "chance": 80, "repeat": 30, "x": [ 1, 22 ], "y": [ 1, 22 ] },
-        { "group": "military_standard_guns", "chance": 40, "repeat": 2, "x": [ 1, 22 ], "y": [ 1, 22 ] } 
+        { "group": "military_standard_guns", "chance": 40, "repeat": 2, "x": [ 1, 22 ], "y": [ 1, 22 ] }
       ]
     }
   },
@@ -134,7 +129,14 @@
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "lost_squad_chunk_zombies",
-    "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "group": "GROUP_MIL_STRONG", "chance": 100, "x": 0, "y": 0, "repeat": [ 1, 2 ] }, { "monster": "mon_zombie_supply_sergeant", "chance": 100, "x": 0, "y": 0 }, { "monster": "mon_feral_soldier", "chance": 100, "x": 0, "y": 0, "repeat": [ 1, 2 ] } ] }
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "place_monster": [
+        { "group": "GROUP_MIL_STRONG", "chance": 100, "x": 0, "y": 0, "repeat": [ 1, 2 ] },
+        { "monster": "mon_zombie_supply_sergeant", "chance": 100, "x": 0, "y": 0 },
+        { "monster": "mon_feral_soldier", "chance": 100, "x": 0, "y": 0, "repeat": [ 1, 2 ] }
+      ]
+    }
   },
   {
     "type": "mapgen",
