@@ -29,7 +29,7 @@
 #include "player.h"
 #include "pldata.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "type_id_implement.h"
 #include "string_id.h"
 

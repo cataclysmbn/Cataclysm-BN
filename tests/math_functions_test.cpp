@@ -4,7 +4,7 @@
 #include <cstddef>
 
 #include "cata_utility.h"
-#include "rng.h"
+#include "random/rng.h"
 
 TEST_CASE( "fast_floor", "[math]" )
 {

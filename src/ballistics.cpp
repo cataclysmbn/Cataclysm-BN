@@ -37,7 +37,7 @@
 #include "mtype.h"
 #include "options.h"
 #include "projectile.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "translations.h"
 #include "trap.h"

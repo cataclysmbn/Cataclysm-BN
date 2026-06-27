@@ -6,7 +6,7 @@
 
 #include "coordinates.h"
 #include "line.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "point.h"
 #include "point_float.h"
 

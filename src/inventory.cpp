@@ -37,7 +37,7 @@
 #include "enums.h"
 #include "flag.h"
 #include "player.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "material.h"
 #include "type_id.h"
 #include "flat_set.h"

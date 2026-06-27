@@ -53,7 +53,7 @@
 #include "overmapbuffer.h"
 #include "path_info.h"
 #include "pldata.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "state_helpers.h"
 #include "string_utils.h"
 #include "string_formatter.h"

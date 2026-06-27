@@ -20,7 +20,7 @@
 #include "mod_manager.h"
 #include "output.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sdltiles.h"
 #include "sdl_wrappers.h"
 #include "string_utils.h"

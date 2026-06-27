@@ -29,7 +29,7 @@
 #include "mutation_data.h"
 #include "player_activity.h"
 #include "pldata.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sdl_wrappers.h"
 #include "sounds.h"
 #include "stomach.h"

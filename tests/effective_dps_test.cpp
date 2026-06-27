@@ -13,7 +13,7 @@
 #include "sounds.h"
 #include "state_helpers.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "type_id.h"
 
 struct itype;

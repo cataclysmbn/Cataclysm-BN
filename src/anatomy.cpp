@@ -14,7 +14,7 @@
 #include "int_id.h"
 #include "json.h"
 #include "messages.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "type_id.h"
 #include "type_id_implement.h"
 #include "weighted_list.h"

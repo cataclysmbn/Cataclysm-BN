@@ -19,7 +19,7 @@
 #include "map.h"
 #include "map_iterator.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_id.h"
 #include "translations.h"
 

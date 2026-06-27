@@ -24,7 +24,7 @@
 #include "overmap.h"
 #include "overmapbuffer.h"
 #include "popup.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "translations.h"
 

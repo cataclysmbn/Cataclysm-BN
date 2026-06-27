@@ -101,7 +101,7 @@
 #include "point_float.h"
 #include "projectile.h"
 #include "profile.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "rot.h"
 #include "safe_reference.h"
 #include "scent_map.h"

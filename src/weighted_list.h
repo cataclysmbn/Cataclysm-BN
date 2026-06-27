@@ -1,7 +1,7 @@
 #pragma once
 
 #include "json.h"
-#include "rng.h"
+#include "random/rng.h"
 
 #include <climits>
 #include <cstdlib>

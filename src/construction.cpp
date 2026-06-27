@@ -52,7 +52,7 @@
 #include "player_activity.h"
 #include "point.h"
 #include "requirements.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "string_formatter.h"
 #include "string_id.h"

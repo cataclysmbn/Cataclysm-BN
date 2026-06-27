@@ -32,7 +32,7 @@
 #include "player.h"
 #include "point.h"
 #include "ranged.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "translations.h"
 #include "vehicle.h"

@@ -1,7 +1,7 @@
 #include "cata_generators.h"
 
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 
 class RandomPointGenerator final :
     public Catch::Generators::IGenerator<point>

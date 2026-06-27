@@ -40,7 +40,7 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "rot.h"
 #include "stomach.h"
 #include "string_formatter.h"

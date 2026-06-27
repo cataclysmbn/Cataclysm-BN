@@ -49,7 +49,7 @@
 #include "point.h"
 #include "projectile.h"
 #include "ranged.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_id.h"
 #include "string_utils.h"
 #include "submap_load_manager.h"

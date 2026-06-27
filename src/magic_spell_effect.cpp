@@ -47,7 +47,7 @@
 #include "player.h"
 #include "projectile.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_id.h"
 #include "teleport.h"
 #include "timed_event.h"

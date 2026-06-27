@@ -3,7 +3,7 @@
 #include "cata_libintl.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 
 #include <algorithm>

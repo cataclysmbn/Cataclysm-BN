@@ -58,7 +58,7 @@
 #include "projectile.h"
 #include "ranged.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"

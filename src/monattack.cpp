@@ -68,7 +68,7 @@
 #include "point.h"
 #include "projectile.h"
 #include "ranged.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "speech.h"
 #include "string_formatter.h"

@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <functional>
 #include <future>
 #include <ranges>
 #include <set>
@@ -27,6 +28,7 @@
 #include "overmapbuffer.h"
 #include "point.h"
 #include "profile.h"
+#include "random/rng.h"
 #include "thread_pool.h"
 
 namespace
@@ -35,6 +37,15 @@ static constexpr auto retained_omt_hard_scale = std::size_t { 2 };
 static constexpr auto retained_omt_panic_scale = std::size_t { 4 };
 static constexpr auto retained_omt_max_budget_scale = std::size_t { 8 };
 static constexpr auto lazy_border_steps_to_cross_omt = std::size_t { SEEX * 2 };
+
+template<typename Point>
+auto retained_omt_seed_id( const std::pair<dimension_id, Point> &key ) -> std::uint64_t
+{
+    const auto raw_dim_id = key.first.str();
+    return static_cast<std::uint64_t>( std::hash<Point> {}( key.second ) ) ^
+           ( static_cast<std::uint64_t>( djb2_hash( reinterpret_cast<const unsigned char *>(
+                   raw_dim_id.c_str() ) ) ) << 1 );
+}
 
 auto divide_round_up_size( const std::size_t numerator, const std::size_t denominator )
 -> std::size_t
@@ -570,7 +581,9 @@ auto submap_load_manager::start_lazy_omt_job( const omt_key &key ) -> lazy_omt_s
             }
 
             lazy_omt_futures_.emplace( key,
-            get_thread_pool().submit_returning( [&mb, omt_addr = key.second, selected_mapgen]() {
+                                       get_thread_pool().submit_returning( { .stream = 0x6c617a796f6d745fULL,
+                                               .id = retained_omt_seed_id( key ) },
+            [&mb, omt_addr = key.second, selected_mapgen]() {
                 return load_lazy_omt_zlevel_data( mb, omt_addr, {
                     .defer_postprocess_hooks = true,
                     .worker_safe = true,
@@ -583,7 +596,9 @@ auto submap_load_manager::start_lazy_omt_job( const omt_key &key ) -> lazy_omt_s
     }
 
     lazy_omt_futures_.emplace( key,
-    get_thread_pool().submit_returning( [&mb, omt_addr = key.second]() {
+                               get_thread_pool().submit_returning( { .stream = 0x6c617a796f6d745fULL,
+                                       .id = retained_omt_seed_id( key ) },
+    [&mb, omt_addr = key.second]() {
         return load_lazy_omt_zlevel_data( mb, omt_addr, {
             .defer_postprocess_hooks = true,
             .worker_safe = true,
@@ -999,7 +1014,9 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
                     continue;
                 }
                 ++preloaded_zlevels;
-                preload_futures.push_back( get_thread_pool().submit_returning(
+                preload_futures.push_back( get_thread_pool().submit_returning( {
+                    .stream = 0x7072656c6f61645fULL,
+                    .id = retained_omt_seed_id( qk ) },
                 [&mb, omt_addr]() {
                     mb.preload_omt( omt_addr );
                 } ) );

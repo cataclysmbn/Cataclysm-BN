@@ -16,7 +16,7 @@
 #include "map.h"
 #include "map_iterator.h"
 #include "messages.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"

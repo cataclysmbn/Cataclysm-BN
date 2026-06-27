@@ -30,7 +30,7 @@
 #include "overmap.h"
 #include "point.h"
 #include "regional_settings.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_id.h"
 #include "trap.h"
 #include "vehicle_group.h"

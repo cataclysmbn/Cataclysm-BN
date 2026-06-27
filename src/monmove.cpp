@@ -54,7 +54,7 @@
 #include "pimpl.h"
 #include "player.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "scent_map.h"
 #include "sounds.h"
 #include "string_formatter.h"

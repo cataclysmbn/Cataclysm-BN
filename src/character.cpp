@@ -93,7 +93,7 @@
 #include "recipe_dictionary.h"
 #include "regen.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "scent_map.h"
 #include "skill.h"
 #include "skill_boost.h"

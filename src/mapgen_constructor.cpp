@@ -30,7 +30,7 @@
 #include "overmapbuffer.h"
 #include "point.h"
 #include "point_float.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "submap.h"
 #include "text_snippets.h"
 #include "thread_pool.h"

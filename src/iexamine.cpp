@@ -99,7 +99,7 @@
 #include "recipe.h"
 #include "relic.h"
 #include "requirements.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "cloning_utils.h"
 #include "string_formatter.h"

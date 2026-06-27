@@ -21,7 +21,7 @@
 #include "item_factory.h"
 #include "iuse.h"
 #include "json.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"

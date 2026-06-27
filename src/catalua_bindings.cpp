@@ -32,7 +32,7 @@
 #include "name.h"
 #include "npc.h"
 #include "player.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "sounds.h"
 #include "translations.h"
