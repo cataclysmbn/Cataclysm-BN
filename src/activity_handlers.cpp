@@ -87,7 +87,7 @@
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
-#include "spell_targeting.h"
+#include "magic/spell_targeting.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "text_snippets.h"
