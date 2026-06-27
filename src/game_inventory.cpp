@@ -223,17 +223,15 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
             inv_s.set_filter( init_filter );
             has_init_filter = false;
         }
-        // Set position after filter to keep cursor at the right position
-        auto restored_type_selection = false;
-        if( has_init_type ) {
-            restored_type_selection = inv_s.select_item_type( init_type );
-            init_selection = init_selection && !restored_type_selection;
-            has_init_type = false;
+        // Set position after filter to keep cursor at the right position.
+        // Stored types guard against restoring a stale row that now holds another item.
+        if( init_selection && has_init_type ) {
+            inv_s.restore_selection( init_pair, init_type );
+        } else if( has_init_type ) {
+            inv_s.select_item_type( init_type );
         }
-        if( init_selection && !restored_type_selection ) {
-            inv_s.select_position( init_pair );
-            init_selection = false;
-        }
+        init_selection = false;
+        has_init_type = false;
 
         if( inv_s.empty() ) {
             const std::string msg = none_message.empty()

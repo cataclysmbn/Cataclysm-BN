@@ -290,6 +290,9 @@ class spell_type
         // max or min casting time
         int final_casting_time = 0;
 
+        // Manually defined flat sound value for people who are interested. Directly used as loudness instead of calculating.
+        short volume;
+
         // Does leveling this spell lead to learning another spell?
         std::map<std::string, int> learn_spells;
 
@@ -409,6 +412,8 @@ class spell
         // how long does this spell's effect last
         int duration() const;
         time_duration duration_turns() const;
+        // How loud is the spell?
+        short volume() const;
         // how often does the spell fail
         // based on difficulty, level of spell, spellcraft skill, intelligence
         float spell_fail( const Character &guy ) const;

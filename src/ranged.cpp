@@ -1969,6 +1969,9 @@ static void do_aim( avatar &you, const item &relevant, const double min_recoil )
         // Increase aim at the cost of moves
         you.mod_moves( -1 );
         you.recoil = std::max( min_recoil, you.recoil - aim_amount );
+    } else {
+        // If aim is already maxed, we're just waiting, so pass the turn.
+        you.set_moves( 0 );
     }
 }
 
@@ -2207,7 +2210,7 @@ static bool pl_sees( const Creature &cr )
 }
 
 // Handle capping aim level when the player cannot see the target tile or there is nothing to aim at.
-static double calculate_aim_cap( const Character &p, const tripoint_bub_ms &target )
+double ranged::calculate_aim_cap( const Character &p, const tripoint_bub_ms &target )
 {
     double min_recoil = 0.0;
     const Creature *victim = g->critter_at( target, true );
@@ -2236,7 +2239,7 @@ static int print_aim( const Character &p, const catacurses::window &w, int line_
     dispersion_sources dispersion = ranged::get_weapon_dispersion( p, weapon );
     dispersion.add_range( ranged::recoil_vehicle( p ) );
 
-    const double min_recoil = calculate_aim_cap( p, pos );
+    const double min_recoil = ranged::calculate_aim_cap( p, pos );
     const double effective_recoil = ranged::effective_dispersion( p,
                                     p.primary_weapon().sight_dispersion() );
     const double min_dispersion = std::max( min_recoil, effective_recoil );
@@ -3907,7 +3910,7 @@ bool target_ui::action_aim()
 {
     set_last_target();
     apply_aim_turning_penalty();
-    const double min_recoil = calculate_aim_cap( *you, dst );
+    const double min_recoil = ranged::calculate_aim_cap( *you, dst );
     for( int i = 0; i < 10; ++i ) {
         do_aim( *you, *relevant, min_recoil );
     }
@@ -3933,7 +3936,7 @@ bool target_ui::action_aim_and_shoot( const std::string &action )
     int aim_threshold = it->threshold;
     set_last_target();
     apply_aim_turning_penalty();
-    const double min_recoil = calculate_aim_cap( *you, dst );
+    const double min_recoil = ranged::calculate_aim_cap( *you, dst );
     do {
         do_aim( *you, relevant ? *relevant : null_item_reference(), min_recoil );
     } while( you->moves > 0 && you->recoil > aim_threshold &&

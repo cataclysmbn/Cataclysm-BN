@@ -23,6 +23,7 @@
     "modes": [ [ "DEFAULT", "semi-auto", 1 ], [ "BURST", "low auto", 2 ], [ "AUTO", "high auto", 4 ] ],
     "reload": 500,
     "ups_charges": 10,
+    "magazine_well": "75 ml",
     "magazines": [ [ "25mm", [ "belt25mm" ] ] ]
   },
   {
@@ -100,6 +101,7 @@
     "modes": [ [ "DEFAULT", "auto", 10 ] ],
     "reload": 500,
     "ups_charges": 12,
+    "magazine_well": "75 ml",
     "magazines": [ [ "25mm", [ "belt25mm" ] ] ],
     "extend": { "flags": [ "STR_RELOAD", "NEVER_JAMS" ] }
   },

@@ -108,5 +108,25 @@
     "magazines": [ [ "flammable", [ "aux_pressurized_tank" ] ] ],
     "min_skills": [ [ "weapon", 2 ], [ "launcher", 1 ] ],
     "flags": [ "FIRE_100", "PUMP_RAIL_COMPATIBLE", "NON_FOULING" ]
+  },
+  {
+    "id": "barrel_takedown_kit",
+    "type": "GUNMOD",
+    "name": { "str": "barrel takedown kit" },
+    "description": "A takedown barrel assembly that allows the barrel to be folded or detached for compact storage.  Reduces the weapon's volume when stowed but the hinged mechanism is less rigid than a fixed barrel, impacting handling.  Must be unfolded before firing.",
+    "weight": "200 g",
+    "volume": "250 ml",
+    "integral_volume": "0 ml",
+    "price": "500 USD",
+    "price_postapoc": "8 USD",
+    "material": [ "steel" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "barrel",
+    "mod_target_category": [ [ "RIFLES" ], [ "SHOTGUNS" ] ],
+    "install_time": "20 m",
+    "volume_multiplier": 0.8,
+    "handling_modifier": -5,
+    "flags": [ "NEEDS_UNFOLD" ]
   }
 ]

@@ -4204,6 +4204,8 @@ auto mapbuffer::run_omt_pillar_post_pass( const point_abs_omt &omt_pos ) -> void
             auto changed = false;
             for( const auto local : submap_tiles() ) {
                 const auto terrain_here = sub_here->get_ter( local );
+                /* DO NOT UNCOMMENT THIS UNTIL IT IS MADE TOGGLEABLE BY OMT OR TILE
+                   BADLY EFFECTED MAPGENS INCLUDE: REF CENTER, LMOE SHELTER, and multiple modded OMTs
                 if( const auto target = vertical_transition_target_below( terrain_here );
                     target && zlev > -OVERMAP_DEPTH ) {
                     ensure_vertical_transition_link( {
@@ -4220,7 +4222,7 @@ auto mapbuffer::run_omt_pillar_post_pass( const point_abs_omt &omt_pos ) -> void
                         .desired = *target,
                     } );
                 }
-
+                */
                 if( terrain_here != t_open_air ) {
                     continue;
                 }

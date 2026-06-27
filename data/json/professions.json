@@ -100,14 +100,14 @@
       },
       {
         "collection": [
-          { "item": "hi_power_40", "container-item": "bholster" },
+          { "item": "hi_power_40", "container-item": "holster" },
           { "item": "legpouch_large", "contents-item": [ "bhp40mag", "bhp40mag" ] }
         ],
         "prob": 10
       },
       {
         "collection": [
-          { "item": "hi_power_9mm", "container-item": "bholster" },
+          { "item": "hi_power_9mm", "container-item": "holster" },
           { "item": "legpouch_large", "contents-item": [ "bhp9mag_13rd", "bhp9mag_13rd" ] }
         ],
         "prob": 10
@@ -181,7 +181,7 @@
       },
       {
         "collection": [
-          { "item": "model_10_revolver", "container-item": "bholster" },
+          { "item": "model_10_revolver", "container-item": "holster" },
           { "item": "legpouch_large", "contents-group": "speedloaders_38_carry" }
         ],
         "prob": 20
@@ -279,7 +279,7 @@
       },
       {
         "collection": [
-          { "item": "taurus_judge", "container-item": "XL_holster" },
+          { "item": "taurus_judge", "container-item": "holster" },
           { "item": "ammo_satchel_leg", "contents-group": "ammopouch_410_carry" }
         ],
         "prob": 25

@@ -44,6 +44,7 @@
     "weight": "500 g",
     "volume": "125 ml",
     "integral_volume": "0 ml",
+    "volume_multiplier": 0.67,
     "price": "420 USD",
     "price_postapoc": "10 USD",
     "material": [ "plastic", "steel" ],
@@ -62,7 +63,7 @@
     "dispersion_modifier": -25,
     "handling_modifier": 5,
     "min_skills": [ [ "weapon", 1 ] ],
-    "flags": [ "NEEDS_UNFOLD", "COLLAPSIBLE_STOCK" ]
+    "flags": [ "NEEDS_UNFOLD" ]
   },
   {
     "id": "beam_difractor",

@@ -1188,11 +1188,6 @@
   },
   {
     "type": "recipe",
-    "result": "smg_luty",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "smg_9mm",
     "obsolete": true
   },
@@ -2320,6 +2315,11 @@
   {
     "type": "recipe",
     "result": "40x46mm_makeshift_he_m199",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "rifle_22",
     "obsolete": true
   },
   {

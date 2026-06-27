@@ -810,8 +810,10 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `BIPOD` Handling bonus only applies on MOUNTABLE map/vehicle tiles. Does not include wield time
   penalty (see SLOW_WIELD).
 - `CHARGE` Has to be charged to fire. Higher charges do more damage.
-- `COLLAPSIBLE_STOCK` Reduces weapon volume proportional to the base size of the gun (excluding any
-  mods). Does not include wield time penalty (see NEEDS_UNFOLD).
+- `COLLAPSIBLE_STOCK` **DEPRECATED**: Use `volume_multiplier` in gunmod definitions instead.
+  Previously reduced weapon volume proportional to the base size of the gun (excluding any
+  mods). `volume_multiplier: 0.67` replicates the old behavior. Does not include wield time
+  penalty (see NEEDS_UNFOLD).
 - `CONSUMABLE` Makes a gunpart have a chance to get damaged depending on ammo fired, and definable
   fields 'consume_chance' and 'consume_divisor'.
 - `CROSSBOW` Counts as a crossbow for the purpose of gunmod compatibility. Default behavior is to
