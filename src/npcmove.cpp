@@ -1034,7 +1034,7 @@ void npc::move()
                      ai_cache.s_abs_pos.x(), ai_cache.s_abs_pos.y() );
         }
     } else {
-        if ( goto_to_this_pos.has_value() ) {
+        if ( sleep_at_this_pos.has_value() ) {
             action = npc_sleep;
         }
         // No present danger
@@ -1273,6 +1273,7 @@ void npc::execute_action( npc_action action )
             auto sleep_or_move = [this, &player_character](tripoint_abs_ms target_pos) {
                 // TODO: Handle empty path better
                 if( target_pos == abs_pos() || path.empty() ) {
+                    sleep_at_this_pos = std::nullopt;
                     move_pause();
                     if( !has_effect( effect_lying_down ) ) {
                         activate_bionic_by_id( bio_soporific );

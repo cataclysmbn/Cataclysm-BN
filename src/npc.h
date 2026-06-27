@@ -928,6 +928,7 @@ class npc : public player
         /** Is the item safe or does the NPC trust you enough? */
         bool will_accept_from_player( const item &it ) const;
 
+        void wake_up() override;
         bool wants_to_sell( const item &it ) const;
         bool wants_to_sell( const item &/*it*/, int at_price, int market_price ) const;
         bool wants_to_buy( const item &it ) const;
