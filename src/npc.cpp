@@ -902,10 +902,11 @@ int npc::best_skill_level() const
     return highest_level;
 }
 
-void npc::wake_up() {
+void npc::wake_up()
+{
     Character::wake_up();  // Call the base implementation first
 
-    if (sleep_at_this_pos.has_value()) {
+    if( sleep_at_this_pos.has_value() ) {
         sleep_at_this_pos = std::nullopt;
     }
 }
