@@ -1220,9 +1220,6 @@ class npc : public player
 
         std::pair<std::string, nc_color> hp_description() const;
 
-        // Note: NPCs use a different speed rating than players
-        // Because they can't run yet
-        float speed_rating() const override;
         /**
          * Places the NPC in the active map's local coordinates.
          * Use the absolute overload for mapgen when the active map context is
