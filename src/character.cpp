@@ -11125,6 +11125,7 @@ void Character::use_fire( const int quantity )
 
 void Character::on_item_wear( item &it )
 {
+    recalculate_enchantment_cache();
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_effect( mut );
         recalc_sight_limits();
@@ -11143,6 +11144,7 @@ void Character::on_item_wear( item &it )
 
 void Character::on_item_takeoff( item &it )
 {
+    recalculate_enchantment_cache();
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_loss_effect( mut );
         recalc_sight_limits();
