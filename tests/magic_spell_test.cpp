@@ -6,11 +6,11 @@
 #include "cata_utility.h"
 #include "fstream_utils.h"
 #include "game.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "monster.h"
 #include "ranged.h"
-#include "spell_targeting.h"
+#include "magic/spell_targeting.h"
 
 #include "player_helpers.h"
 #include "map_helpers.h"
