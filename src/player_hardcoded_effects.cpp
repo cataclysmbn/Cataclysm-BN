@@ -37,6 +37,7 @@
 #include "teleport.h"
 #include "text_snippets.h"
 #include "translations.h"
+#include "type_id.h"
 #include "weather.h"
 #include "vitamin.h"
 #include <algorithm>
@@ -98,8 +99,6 @@ const vitamin_id vitamin_mutant_toxin( "mutant_toxin" );
 static const mongroup_id GROUP_NETHER( "GROUP_NETHER" );
 
 static const mtype_id mon_dermatik_larva( "mon_dermatik_larva" );
-
-static const bionic_id bio_infolink( "bio_infolink" );
 
 static const trait_id trait_CHLOROMORPH( "CHLOROMORPH" );
 static const trait_id trait_HEAVYSLEEPER2( "HEAVYSLEEPER2" );
@@ -1168,8 +1167,8 @@ void Character::hardcoded_effects( effect &it )
         bool woke_up = false;
         int tirednessVal = rng( 5, 200 ) + rng( 0, std::abs( get_fatigue() * 2 * 5 ) );
         if( !is_blind() && !has_effect( effect_narcosis ) ) {
-            if( !has_trait(
-                    trait_SEESLEEP ) ) { // People who can see while sleeping are acclimated to the light.
+            if( !has_enchantment_flag(
+                    enchantment_flag_id( "SLEEP_SIGHT" ) ) ) { // People who can see while sleeping are acclimated to the light.
                 if( has_trait( trait_HEAVYSLEEPER2 ) && !has_trait( trait_HIBERNATE ) ) {
                     // So you can too sleep through noon
                     if( ( tirednessVal * 1.25 ) < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
@@ -1195,7 +1194,7 @@ void Character::hardcoded_effects( effect &it )
                     it.set_duration( 0_turns );
                     woke_up = true;
                 }
-            } else if( has_active_mutation( trait_SEESLEEP ) ) {
+            } else if( !has_enchantment_flag( enchantment_flag_id( "SLEEP_SIGHT" ) ) ) {
                 Creature *hostile_critter = g->is_hostile_very_close();
                 if( hostile_critter != nullptr ) {
                     add_msg_if_player( _( "You see %s approaching!" ),
@@ -1271,7 +1270,7 @@ void Character::hardcoded_effects( effect &it )
     } else if( id == effect_alarm_clock ) {
         if( in_sleep_state() ) {
             const bool asleep = has_effect( effect_sleep );
-            if( has_bionic( bio_infolink ) ) {
+            if( has_enchantment_flag( enchantment_flag_id( "INTERNAL_ALARMCLOCK" ) ) ) {
                 if( dur == 1_turns ) {
                     if( !asleep ) {
                         add_msg_if_player( _( "Your internal chronometer went off and you haven't slept a wink." ) );

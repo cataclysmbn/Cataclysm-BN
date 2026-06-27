@@ -1,0 +1,77 @@
+[
+  {
+    "id": "UNDERWATER_SIGHT",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "SLEEP_SIGHT",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "NEARSIGHTED",
+    "type": "enchantment_flag",
+    "conflicts": [ "FIX_NEARSIGHTED" ]
+  },
+  {
+    "id": "FIX_NEARSIGHTED",
+    "type": "enchantment_flag",
+    "conflicts": [ "NEARSIGHTED" ]
+  },
+  {
+    "id": "INFRARED_VISION",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "ELECTROSENSE",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "EAT_ROTTEN",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "ONLY_EAT_ROTTEN",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "EAT_ROTTEN_MORALE",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "CONSUME_UNCLEAN",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "FOOD_PARASITE_IMMUNE",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "FOOD_POISON_IMMUNE",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "ALARMCLOCK",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "INTERNAL_ALARMCLOCK",
+    "type": "enchantment_flag",
+    "parents": [ "ALARMCLOCK" ]
+  },
+  {
+    "id": "RADIO",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "THERMOMETER",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "WATCH",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "FIRE_FIELD_IMMUNE",
+    "type": "enchantment_flag"
+  }
+]

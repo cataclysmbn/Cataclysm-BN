@@ -175,6 +175,27 @@
   },
   {
     "type": "GENERIC",
+    "id": "test_socks_of_toxicity",
+    "copy-from": "test_socks",
+    "name": "TEST relic character armor mod",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "immune_effects": [ "antitoxin" ] } ] }
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_socks_of_nearsight",
+    "copy-from": "test_socks",
+    "name": "TEST relic nearsight",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "flags": [ "NEARSIGHTED" ] } ] }
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_socks_of_anti_nearsight",
+    "copy-from": "test_socks",
+    "name": "TEST relic anti nearsight",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "flags": [ "FIX_NEARSIGHTED" ] } ] }
+  },
+  {
+    "type": "GENERIC",
     "id": "test_relic_item_armor_mod",
     "copy-from": "test_hazmat_suit",
     "name": "TEST relic item armor mod",

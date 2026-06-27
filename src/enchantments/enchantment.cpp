@@ -5,6 +5,7 @@
 #include "character.h"
 #include "creature.h"
 #include "debug.h"
+#include "enchantment_flag.h"
 #include "enchantment_value.h"
 #include "enum_conversions.h"
 #include "enums.h"
@@ -170,6 +171,8 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
     }
 
     optional(jo, was_loaded, "mutations", mutations);
+    optional(jo, was_loaded, "immune_effects", immune_effects);
+    optional(jo, was_loaded, "immune_fields", immune_fields);
 
     if (jo.has_array("values")) {
         for (const JsonObject value_obj : jo.get_array("values")) {
@@ -184,6 +187,11 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
                 values_multiply.emplace(value, mul);
             }
             if (max != 0) { values_max.emplace(value, max); }
+        }
+    }
+    if (jo.has_array("flags")) {
+        for (const auto flag : jo.get_string_array("flags")) {
+            flags[enchantment_flag_id(flag)] = 1;
         }
     }
 }
@@ -256,6 +264,12 @@ void enchantment::serialize(JsonOut& jsout) const {
     }
     jsout.end_array();
 
+    jsout.start_array();
+    for (const auto& [ench_flag_id, cnt] : flags) { jsout.write(ench_flag_id.str()); }
+    jsout.end_array();
+
+    jsout.member("immune_effects", immune_effects);
+    jsout.member("immune_fields", immune_fields);
     jsout.end_object();
 }
 
@@ -292,6 +306,9 @@ void enchantment::force_add(const enchantment& rhs) {
 
     ench_effects.insert(rhs.ench_effects.begin(), rhs.ench_effects.end());
 
+    immune_effects.insert(rhs.immune_effects.begin(), rhs.immune_effects.end());
+    immune_fields.insert(rhs.immune_fields.begin(), rhs.immune_fields.end());
+
     if (rhs.emitter) { emitter = rhs.emitter; }
 
     for (const trait_id& branch : rhs.mutations) { mutations.emplace(branch); }
@@ -302,6 +319,31 @@ void enchantment::force_add(const enchantment& rhs) {
             intermittent_activation[act_pair.first].emplace_back(fake);
         }
     }
+    for (const auto& [ench_flag_id, count] : rhs.flags) {
+        int remains = count;
+        for (const enchantment_flag_id& conf_flag : ench_flag_id->conflicts) {
+            if (flags.contains(conf_flag)) {
+                flags[conf_flag] -= count;
+                if (flags[conf_flag] <= 0) {
+                    remains = std::min(-flags[conf_flag], remains);
+                    flags.erase(conf_flag);
+                }
+            }
+        }
+        if (remains > 0) { flags[ench_flag_id] += remains; }
+    }
+}
+
+bool enchantment::has_flag(const enchantment_flag_id flag) const {
+    if (!flag.is_valid()) { debugmsg("Tried to get invalid enchantment flag \"%s\".", flag); }
+    if (flags.contains(flag)) {
+        if (flags.at(flag) <= 0) {
+            debugmsg("Flag \"%s\" was canceled but remains in the list", flag);
+        } else {
+            return true;
+        }
+    }
+    return false;
 }
 
 int enchantment::get_value_add(const enchantment_value_id value) const {
@@ -479,6 +521,12 @@ void enchantment::finalize() {
             }
         }
     }
+    auto flags_copy = flags;
+    for (const auto& [ench_flag_id, _] : flags) {
+        auto parents = ench_flag_id->get_parents();
+        for (const auto parent : parents) { flags[parent] = 1; }
+    }
+
     if (!problems.empty()) {
         debugmsg("%s %s has: %s", ench_desc, id.c_str(),
                  enumerate_as_string(problems, enumeration_conjunction::none));
@@ -525,6 +573,11 @@ void enchantment::check() const {
                 "\ninfinite loop of mutations giving enchantments or dual application of a "
                 "mutation caused by this enchantment",
                 mut.str()));
+        }
+    }
+    for (const auto& [ench_flag, _] : flags) {
+        if (!ench_flag.is_valid()) {
+            problems.push_back(string_format("\nenchantment flag %s is invalid", ench_flag.str()));
         }
     }
     auto val_add_copy = values_add;

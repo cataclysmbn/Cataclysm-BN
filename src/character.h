@@ -937,6 +937,10 @@ class Character : public Creature, public location_visitable<Character>
         void rebuild_mutation_cache();
 
         /**
+         * Checks weather we have an enchantment flag
+         */
+        bool has_enchantment_flag( enchantment_flag_id value ) const;
+        /**
          * Calculate bonus from enchantments for given base value.
          */
         double bonus_from_enchantments( double base, enchantment_value_id value, bool round = false ) const;

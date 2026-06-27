@@ -44,6 +44,7 @@
 #include "effect.h"
 #include "enchantments/enchantment.h"
 #include "enchantments/enchantment_value.h"
+#include "enchantments/enchantment_flag.h"
 #include "emit.h"
 #include "event_statistics.h"
 #include "faction.h"
@@ -294,6 +295,7 @@ void DynamicDataLoader::initialize()
     add( "skill_boost", &skill_boost::load_boost );
     add( "enchantment", &enchantment::load_enchantment );
     add( "enchantment_value", &enchantment_value::load_enchantment_values );
+    add( "enchantment_flag", &enchantment_flag::load_enchantment_flags );
     add( "hit_range", &Creature::load_hit_range );
     add( "scent_type", &scent_type::load_scent_type );
     add( "disease_type", &disease_type::load_disease_type );
@@ -583,6 +585,7 @@ void DynamicDataLoader::unload_data()
     emit::reset();
     enchantment::reset();
     enchantment_value::reset();
+    enchantment_flag::reset();
     event_statistic::reset();
     event_transformation::reset();
     faction_template::reset();
@@ -830,6 +833,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Spells" ), &spell_type::check_consistency },
             { _( "Enchantments" ), &enchantment::check_consistency },
             { _( "Enchantment Values" ), &enchantment_value::check_consistency },
+            { _( "Enchantment Flags" ), &enchantment_flag::check_consistency },
             { _( "Transformations" ), &event_transformation::check_consistency },
             { _( "Statistics" ), &event_statistic::check_consistency },
             { _( "Scent types" ), &scent_type::check_scent_consistency },

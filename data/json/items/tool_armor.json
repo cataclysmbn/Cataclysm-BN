@@ -965,9 +965,11 @@
           "condition": "ACTIVE",
           "values": [
             { "value": "STRENGTH", "add": 2 },
+            { "value": "NOISE", "add": -30 },
             { "value": "CLIMATE_CONTROL", "add": 750 },
             { "value": "BLISTER_COUNT", "add": -20 }
-          ]
+          ],
+          "flags": [ "FIRE_FIELD_IMMUNE" ]
         }
       ]
     },

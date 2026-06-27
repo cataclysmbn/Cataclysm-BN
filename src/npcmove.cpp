@@ -75,6 +75,7 @@
 #include "sounds.h"
 #include "stomach.h"
 #include "translations.h"
+#include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
 #include "veh_type.h"
@@ -165,7 +166,6 @@ static const bionic_id bio_furnace( "bio_furnace" );
 static const bionic_id bio_heat_absorb( "bio_heat_absorb" );
 static const bionic_id bio_heatsink( "bio_heatsink" );
 static const bionic_id bio_hydraulics( "bio_hydraulics" );
-static const bionic_id bio_infolink( "bio_infolink" );
 static const bionic_id bio_leukocyte( "bio_leukocyte" );
 static const bionic_id bio_nanobots( "bio_nanobots" );
 static const bionic_id bio_ods( "bio_ods" );
@@ -4453,8 +4453,9 @@ void npc::reach_omt_destination()
             if( rl_dist( player_character.bub_pos(), bub_pos() ) > SEEX * 2 ||
                 !player_character.sees( bub_pos() ) ) {
                 if( ( player_character.has_item_with_flag( flag_TWO_WAY_RADIO, true ) ||
-                      player_character.has_bionic( bio_infolink ) ) &&
-                    ( has_item_with_flag( flag_TWO_WAY_RADIO, true ) || has_bionic( bio_infolink ) ) ) {
+                      player_character.has_enchantment_flag( enchantment_flag_id( "RADIO" ) ) ) &&
+                    ( has_item_with_flag( flag_TWO_WAY_RADIO, true ) ||
+                      has_enchantment_flag( enchantment_flag_id( "RADIO" ) ) ) ) {
                     add_msg( m_info, _( "From your two-way radio you hear %s reporting in, "
                                         "'I've arrived, boss!'" ), disp_name() );
                 }

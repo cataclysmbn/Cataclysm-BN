@@ -235,7 +235,8 @@
     "points": 1,
     "description": "Your system is rather tolerant of poisons and toxins, and most will affect you less.",
     "starting_trait": true,
-    "category": [ "INSECT", "SERPENT", "SLIME", "SPIDER", "MEDICAL" ]
+    "category": [ "INSECT", "SERPENT", "SLIME", "SPIDER", "MEDICAL" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISON_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -728,7 +729,8 @@
     "description": "Without glasses, your seeing radius is severely reduced!  However, you are guaranteed to start with a pair of glasses.",
     "starting_trait": true,
     "cancels": [ "URSINE_EYE", "EAGLEEYED", "HYPEROPIC" ],
-    "category": [ "BEAST", "TROGLOBITE", "URSINE" ]
+    "category": [ "BEAST", "TROGLOBITE", "URSINE" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "NEARSIGHTED" ] } ]
   },
   {
     "type": "mutation",
@@ -1367,7 +1369,8 @@
     "description": "Your eyes still bulge, yet your pupils look different somehow.  Water doesn't seem to cause any trouble at all, though.",
     "leads_to": [ "NIGHTVISION3" ],
     "cancels": [ "BIRD_EYE", "LIZ_EYE", "FEL_EYE", "URSINE_EYE", "COMPOUND_EYES", "ELFAEYES" ],
-    "category": [ "CEPHALOPOD" ]
+    "category": [ "CEPHALOPOD" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -1416,7 +1419,8 @@
     "prereqs": [ "NIGHTVISION3" ],
     "cancels": [ "LIZ_IR" ],
     "category": [ "INSECT", "TROGLOBITE", "SPIDER" ],
-    "threshreq": [ "THRESH_INSECT", "THRESH_TROGLOBITE", "THRESH_SPIDER" ]
+    "threshreq": [ "THRESH_INSECT", "THRESH_TROGLOBITE", "THRESH_SPIDER" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "INFRARED_VISION" ] } ]
   },
   {
     "type": "mutation",
@@ -1439,7 +1443,8 @@
     "description": "Your optic nerves and brain have mutated to catch up with your eyes, allowing you to see in the infrared spectrum.",
     "prereqs": [ "LIZ_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "INFRARED" ],
-    "category": [ "LIZARD", "SERPENT", "RAPTOR" ]
+    "category": [ "LIZARD", "SERPENT", "RAPTOR" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "INFRARED_VISION" ] } ]
   },
   {
     "type": "mutation",
@@ -1587,7 +1592,8 @@
     "description": "You have a set of clear lenses which lower over your eyes while underwater, allowing you to see as though you were wearing goggles.  Slightly decreases wet penalties.",
     "prereqs": [ "EYEBULGE" ],
     "category": [ "LIZARD", "FISH" ],
-    "wet_protection": [ { "part": "eyes", "neutral": 1 } ]
+    "wet_protection": [ { "part": "eyes", "neutral": 1 } ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -2723,7 +2729,8 @@
     "points": 1,
     "description": "Your body is unusually inhospitable to parasitic lifeforms.  You will never become infested with internal parasites.",
     "starting_trait": true,
-    "category": [ "ELFA", "CHIMERA", "MEDICAL", "SLIME" ]
+    "category": [ "ELFA", "CHIMERA", "MEDICAL", "SLIME" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_PARASITE_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -2926,7 +2933,8 @@
     "points": 2,
     "description": "Your digestive system is specialized to allow you to consume decaying material.  You can eat rotten food, albeit for less nutrition than usual.",
     "cancels": [ "HERBIVORE", "RUMINANT" ],
-    "category": [ "TROGLOBITE", "CHIMERA" ]
+    "category": [ "TROGLOBITE", "CHIMERA" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE" ] } ]
   },
   {
     "type": "mutation",
@@ -2941,7 +2949,8 @@
     "threshreq": [ "THRESH_PLANT" ],
     "cancels": [ "HERBIVORE", "CARNIVORE", "GRAZER" ],
     "leads_to": [ "CHLOROMORPH" ],
-    "category": [ "PLANT" ]
+    "category": [ "PLANT" ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE", "ONLY_EAT_ROTTEN" ] } ]
   },
   {
     "type": "mutation",
@@ -3005,7 +3014,8 @@
     "prereqs": [ "POISRESIST" ],
     "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE", "THRESH_SERPENT" ],
     "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ],
-    "kcal_scale": 0.15
+    "kcal_scale": 0.15,
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISON_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -4290,7 +4300,8 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
-    "passive_mods": { "per_mod": 5 }
+    "passive_mods": { "per_mod": 5 },
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -5234,7 +5245,7 @@
     "points": 2,
     "visibility": 7,
     "ugliness": 6,
-    "description": "Your body is coated with a fine slime.  Protects from long-term effects of acid, though not short-term ones.  Greatly increases wet benefits.",
+    "description": "Your body is coated with a fine slime.  Protects from long-term effects of acid, though not short-term ones. It also protects from other sources of slime.  Greatly increases wet benefits.",
     "leads_to": [ "SLIME_HANDS" ],
     "changes_to": [ "VISCOUS" ],
     "category": [ "FISH", "SLIME", "TROGLOBITE", "CEPHALOPOD" ],
@@ -5249,7 +5260,8 @@
       { "part": "hand_l", "neutral": 2, "good": 3 },
       { "part": "hand_r", "neutral": 2, "good": 3 },
       { "part": "torso", "neutral": 14, "good": 26 }
-    ]
+    ],
+    "mut_enchantments": [ { "condition": "ALWAYS", "immune_fields": [ "fd_slime" ] } ]
   },
   {
     "type": "mutation",
@@ -6363,7 +6375,8 @@
     "category": [ "FISH" ],
     "threshreq": [ "THRESH_FISH" ],
     "armor": [ { "parts": "eyes", "cut": 3, "bash": 1 } ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT", "SLEEP_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -6402,7 +6415,8 @@
     "points": 2,
     "description": "A network of jelly-filled electroreceptors, like that of a shark, have grown throughout your face and nose.  They are very sensitive to magnetic fields, allowing you to see robots and creatures charged with electricity through walls, but being shocked will seriously mess you up.",
     "category": [ "FISH" ],
-    "mixed_effect": true
+    "mixed_effect": true,
+    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "ELECTROSENSE" ] } ]
   },
   {
     "type": "mutation",
@@ -6861,7 +6875,8 @@
     "points": 99,
     "valid": false,
     "description": "Be vewwy vewwy quiet.  We're hunting bugs.",
-    "debug": true
+    "debug": true,
+    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "NOISE", "multiply": 0 } ] } ]
   },
   {
     "type": "mutation",

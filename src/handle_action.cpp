@@ -93,6 +93,7 @@
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "translations.h"
+#include "type_id.h"
 #include "travel/travel_destination.h"
 #include "ui.h"
 #include "ui_manager.h"
@@ -1329,7 +1330,7 @@ static void sleep()
     time_duration try_sleep_dur = 24_hours;
     std::string deaf_text;
     // Infolink alarm is silent and works even if deaf
-    if( g->u.is_deaf() && !g->u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
+    if( g->u.is_deaf() && !g->u.has_enchantment_flag( enchantment_flag_id( "INTERNAL_ALARMCLOCK" ) ) ) {
         deaf_text = _( "<color_c_red> (DEAF!)</color>" );
     }
     if( u.has_alarm_clock() ) {
