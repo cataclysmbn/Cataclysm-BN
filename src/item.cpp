@@ -6733,30 +6733,29 @@ int item::get_encumber( const Character &who, const bodypart_id &bodypart ) cons
 
     contents_volume += contents.item_size_modifier();
 
-    if( who.is_worn( *this ) ) {
+    if( who.is_worn( *this ) && this->is_non_rigid() ) {
         const islot_armor *armor = find_armor_data();
 
         if( armor != nullptr ) {
             for( const armor_portion_data &entry : armor->data ) {
-                if( entry.covers.test( bodypart.id() ) ) {
-                    if( entry.max_encumber != 0 ) {
-                        units::volume rigid_storage( 0_ml );
-                        units::volume non_rigid_storage( 0_ml );
-                        const units::volume volume_carried = who.volume_carried();
+                if( entry.max_encumber != 0 && entry.covers.test( bodypart.id() ) ) {
+                    units::volume rigid_storage( 0_ml );
+                    units::volume non_rigid_storage( 0_ml );
+                    const units::volume volume_carried = who.volume_carried();
 
-                        for( const item * const &e : who.worn ) {
-                            if( e->is_non_rigid() ) {
-                                non_rigid_storage += e->get_storage();
-                            } else {
-                                rigid_storage += e->get_storage();
-                            }
+                    for( const item * const &e : who.worn ) {
+                        if( e->is_non_rigid() ) {
+                            non_rigid_storage += e->get_storage();
+                        } else {
+                            rigid_storage += e->get_storage();
                         }
+                    }
 
-                        if( volume_carried > rigid_storage ) {
-                            // Cast up to 64 to prevent overflow. Dividing before would prevent this but lose data.
-                            contents_volume += units::from_milliliter( static_cast<int64_t>( armor->storage.value() ) *
-                                               ( volume_carried - rigid_storage ) / non_rigid_storage );
-                        }
+                    if( volume_carried > rigid_storage && non_rigid_storage > 0_ml ) {
+                        // Cast up to 64 to prevent overflow. Dividing before would prevent this but lose data.
+                        contents_volume += units::from_milliliter( static_cast<int64_t>( armor->storage.value() ) *
+                                           ( static_cast<int64_t>( volume_carried.value() ) - rigid_storage.value() ) /
+                                           non_rigid_storage.value() );
                     }
                 }
             }
@@ -6781,11 +6780,7 @@ int item::get_encumber_when_containing(
         if( entry.covers.test( bodypart.id() ) ) {
             encumber = entry.encumber;
             // Non-rigid items add additional encumbrance proportional to their volume
-            bool any_encumb_increase = std::ranges::any_of( armor->data,
-            []( armor_portion_data data ) {
-                return data.encumber != data.max_encumber;
-            } );
-            if( !type->rigid || any_encumb_increase ) {
+            if( this->is_non_rigid() ) {
                 const int capacity = get_total_capacity().value();
                 if( entry.max_encumber == 0 ) {
                     encumber += contents_volume / 500_ml;
