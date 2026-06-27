@@ -11930,6 +11930,7 @@ std::optional<cable_connection_data> cable_connection_data::make_data( const ite
     }
 }
 
-const lua_itrap_actor *item::get_itrap_callbacks() const {
+const lua_itrap_actor *item::get_itrap_callbacks() const
+{
     return type->itrap_callbacks;
 }
