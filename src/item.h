@@ -2677,7 +2677,7 @@ class item : public location_visitable<item>, public game_object<item>
         void show_kill_list();
         int kill_count();
 
-        lua_itrap_actor get_itrap_callbacks() const;
+        const lua_itrap_actor *get_itrap_callbacks() const;
 };
 
 bool item_compare_by_charges( const item &left, const item &right );
