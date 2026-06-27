@@ -13,6 +13,7 @@
 #include "mattack_common.h"
 #include "translations.h"
 #include "type_id.h"
+#include "units.h"
 #include "weighted_list.h"
 
 class Creature;
@@ -176,7 +177,7 @@ class gun_actor : public mattack_actor
         int targeting_timeout_extend = 3; /** Increase timeout by this many turns after each shot */
 
         std::string targeting_sound;
-        int targeting_volume = 6; /** If set to zero don't emit any targeting sounds */
+        units::sound targeting_volume = 6_dB; /** If set to zero don't emit any targeting sounds */
 
         bool laser_lock = false; /** Does switching between targets incur further targeting penalty */
         bool no_crits =

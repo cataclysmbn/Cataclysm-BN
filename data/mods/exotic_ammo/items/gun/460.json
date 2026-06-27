@@ -61,7 +61,7 @@
     "id": "l_long_45",
     "looks_like": "sw_619",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "name": { "str_sp": "L1820 Long Ranger" },
     "weapon_category": [ "RIFLES", "MANUAL_ACTION" ],
     "//": "If it's based off the Winchester 94, it's likely got a 20 inch barrel. For sanity's sake though, let's cap it at +4.",

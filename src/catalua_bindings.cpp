@@ -135,6 +135,21 @@ void cata::detail::reg_units( sol::state &lua )
         luna::set_fx( ut, sol::meta_function::less_than, &units::volume::operator< );
         luna::set_fx( ut, sol::meta_function::less_than_or_equal_to, &units::volume::operator<= );
     }
+    {
+        sol::usertype<units::sound> ut =
+            luna::new_usertype<units::sound>(
+                lua,
+                luna::no_bases,
+                luna::no_constructor
+            );
+
+        luna::set_fx( ut, "from_decibel", &units::from_decibel<int> );
+        luna::set_fx( ut, "to_decibel", &units::to_decibel<int> );
+
+        luna::set_fx( ut, sol::meta_function::equal_to, &units::sound::operator== );
+        luna::set_fx( ut, sol::meta_function::less_than, &units::sound::operator< );
+        luna::set_fx( ut, sol::meta_function::less_than_or_equal_to, &units::sound::operator<= );
+    }
 }
 
 void cata::detail::reg_skill_level_map( sol::state &lua )

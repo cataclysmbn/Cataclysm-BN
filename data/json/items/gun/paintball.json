@@ -5,7 +5,7 @@
     "weapon_category": [ "SUBMACHINE_GUNS", "PNEUMATIC" ],
     "looks_like": "hk_mp5",
     "type": "GUN",
-    "reload_noise_volume": 6,
+    "reload_noise_volume": "35 dB",
     "color": "light_gray",
     "name": { "str": "Paintball gun" },
     "description": "A fairly harmless gun that shoots small paintballs.",

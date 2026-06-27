@@ -48,7 +48,7 @@
     "turns_per_charge": 1,
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin; try throwing it instead.",
       "explosion": { "power": 175, "shrapnel": { "casing_mass": 162, "fragment_mass": 0.4 } }
@@ -222,7 +222,7 @@
     "id": "v29_cheap",
     "copy-from": "v29",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "name": { "str": "homemade laser pistol" },
     "description": "This laser pistol was based on the V29 laser pistol designed in the mid-21st century.  While little more than duct tape and electronics, it runs on a standard UPS.",
     "volume": "2 L",
@@ -320,7 +320,7 @@
     "explosion": { "power": 100 },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": { "power": 120 }
@@ -347,7 +347,7 @@
     "explosion": { "power": 88, "shrapnel": { "casing_mass": 3, "fragment_mass": 0.12 } },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Kshhh.",
       "no_deactivate_msg": "You've already lit the fuse - throw it!",
       "explosion": { "power": 88, "shrapnel": { "casing_mass": 3, "fragment_mass": 0.12 } }
@@ -992,7 +992,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Kshhh.",
       "no_deactivate_msg": "You've already lit the fuse - what are you waiting for?",
       "explosion": { "power": 1340, "shrapnel": { "casing_mass": 1000, "fragment_mass": 0.01 } }
@@ -1089,7 +1089,7 @@
     "price_postapoc": "20 USD",
     "bashing": 12,
     "armor_data": { "covers": [ "torso" ], "coverage": 5, "material_thickness": 1, "encumbrance": 20 },
-    "reload_noise_volume": 3,
+    "reload_noise_volume": "29 dB",
     "loudness": 55,
     "ranged_damage": { "damage_type": "stab", "amount": 32 },
     "range": 14,
@@ -1117,7 +1117,7 @@
     "price_postapoc": "20 USD",
     "bashing": 12,
     "armor_data": { "covers": [ "torso" ], "coverage": 5, "material_thickness": 1, "encumbrance": 14 },
-    "reload_noise_volume": 3,
+    "reload_noise_volume": "29 dB",
     "loudness": 45,
     "ranged_damage": { "damage_type": "stab", "amount": 33 },
     "range": 12,
@@ -1145,7 +1145,7 @@
     "price_postapoc": "50 USD",
     "bashing": 12,
     "armor_data": { "covers": [ "torso" ], "coverage": 5, "material_thickness": 1, "encumbrance": 20 },
-    "reload_noise_volume": 3,
+    "reload_noise_volume": "29 dB",
     "loudness": 50,
     "ranged_damage": { "damage_type": "stab", "amount": 38 },
     "range": 14,
@@ -1173,7 +1173,7 @@
     "price_postapoc": "60 USD",
     "bashing": 12,
     "armor_data": { "covers": [ "torso" ], "coverage": 5, "material_thickness": 1, "encumbrance": 14 },
-    "reload_noise_volume": 3,
+    "reload_noise_volume": "29 dB",
     "loudness": 50,
     "ranged_damage": { "damage_type": "stab", "amount": 30 },
     "range": 18,

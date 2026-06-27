@@ -2,7 +2,7 @@
   {
     "id": "25mm_autocannon",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "symbol": "(",
     "color": "dark_gray",
     "name": { "str_sp": "M242 Bushmaster autocannon" },
@@ -29,7 +29,7 @@
   {
     "id": "25mm_autocannon_sawn",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "symbol": "(",
     "color": "dark_gray",
     "name": { "str_sp": "stripped-down 25mm cannon" },
@@ -55,7 +55,7 @@
   {
     "id": "25mm_cannon_crude",
     "type": "GUN",
-    "reload_noise_volume": 20,
+    "reload_noise_volume": "46 dB",
     "symbol": "(",
     "color": "dark_gray",
     "name": { "str_sp": "makeshift 25mm cannon" },

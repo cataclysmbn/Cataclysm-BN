@@ -190,7 +190,7 @@ class explosion_iuse : public iuse_actor
         /** Calls game::scrambler_blast if >= 0 */
         int scrambler_blast_radius = -1;
         /** Volume of sound each turn, -1 means no sound at all */
-        int sound_volume = -1;
+        units::sound sound_volume = -1_dB;
         std::string sound_msg;
         /** Message shown when the player tries to deactivate the item,
          * which is not allowed. */

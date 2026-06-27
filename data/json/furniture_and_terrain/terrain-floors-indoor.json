@@ -62,8 +62,8 @@
       "str_max": 12,
       "sound": "glass breaking!",
       "sound_fail": "whack!",
-      "sound_vol": 90,
-      "sound_fail_vol": 75,
+      "sound_vol": "90 dB",
+      "sound_fail_vol": "75 dB",
       "ter_set": "t_thconc_floor",
       "items": [ { "item": "glass_shard", "count": [ 0, 2 ] } ]
     }
@@ -835,8 +835,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
-      "sound_fail_vol": 50,
+      "sound_vol": "60 dB",
+      "sound_fail_vol": "50 dB",
       "ter_set": "t_null"
     }
   },
@@ -855,8 +855,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
-      "sound_fail_vol": 50,
+      "sound_vol": "60 dB",
+      "sound_fail_vol": "50 dB",
       "ter_set": "t_null"
     }
   },
@@ -876,8 +876,8 @@
       "str_min_supported": 30,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 75,
-      "sound_fail_vol": 60,
+      "sound_vol": "75 dB",
+      "sound_fail_vol": "60 dB",
       "ter_set": "t_null"
     }
   },
@@ -896,8 +896,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
-      "sound_fail_vol": 50,
+      "sound_vol": "60 dB",
+      "sound_fail_vol": "50 dB",
       "ter_set": "t_null"
     }
   },
