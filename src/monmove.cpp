@@ -2416,7 +2416,7 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
         params["to"] = cata::detail::lua_coords::to_lua( p );
         params["force"] = force;
     } );
-    const auto can_move = hook_results.get_or( "allowed", true );
+    const auto can_move = hook_results.allowed;
     if( !can_move ) {
         return false;
     }

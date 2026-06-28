@@ -594,16 +594,17 @@ auto has_hooks( std::string_view hook_name, const hook_opts &opts ) -> bool
     return !entries.empty();
 }
 
-auto run_hooks( std::string_view hook_name,
-                std::function < auto( sol::table &params ) -> void > init,
-                const hook_opts &opts ) -> sol::table
+auto run_hooks( std::string_view hook_name, hook_init_fn init,
+                const hook_opts &opts ) -> hook_run_result
 {
     auto &state = opts.state ? *opts.state : *DynamicDataLoader::get_instance().lua;
     auto &lua = state.lua;
 
     auto params = lua.create_table();
     auto results = lua.create_table();
-    results["allowed"] = true;
+    auto returns = std::vector<hook_return> {};
+    auto allowed = true;
+    results["allowed"] = allowed;
 
     params["results"] = results;
     params["prev"] = sol::lua_nil;
@@ -614,13 +615,12 @@ auto run_hooks( std::string_view hook_name,
 
     const auto maybe_hooks = lua.globals()["game"]["hooks"][hook_name].get<sol::optional<sol::table>>();
     if( !maybe_hooks ) {
-        return results;
+        return { .allowed = allowed, .results = results, .returns = returns };
     }
 
     const auto &hooks = *maybe_hooks;
     const auto &entries = get_hook_entries( lua, hook_name, hooks );
 
-    auto out_idx = 1;
     auto i = size_t{ 0 };
     while( i < entries.size() ) {
         const hook_entry &e = entries[i];
@@ -649,17 +649,11 @@ auto run_hooks( std::string_view hook_name,
             }
 
             params["prev"] = result;
-
-            sol::table one = lua.create_table();
-            one["mod_id"] = e.mod_id;
-            one["priority"] = e.priority;
-            if( result != sol::lua_nil ) {
-                one["result"] = result;
-            }
-            results[out_idx++] = one;
+            returns.push_back( { .mod_id = e.mod_id, .priority = e.priority, .value = result } );
 
             if( result.is<bool>() && !result.as<bool>() ) {
-                results["allowed"] = false;
+                allowed = false;
+                results["allowed"] = allowed;
                 if( opts.exit_early ) {
                     break;
                 }
@@ -671,7 +665,7 @@ auto run_hooks( std::string_view hook_name,
         ++i;
     }
 
-    return results;
+    return { .allowed = allowed, .results = results, .returns = returns };
 }
 
 

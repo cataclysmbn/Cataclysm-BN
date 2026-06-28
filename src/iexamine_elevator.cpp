@@ -242,7 +242,7 @@ void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
         params["pos"] = cata::detail::lua_coords::to_lua( examp );
         params["om_terrain"] = om_terrain;
     }, { .exit_early = true } );
-    if( !hook_results.get_or( "allowed", true ) ) {
+    if( !hook_results.allowed ) {
         return;
     }
 
