@@ -703,7 +703,7 @@ class mapbuffer
          * these (e.g. deactivate NPCs, despawn monsters) and then call
          * clear_last_demoted_columns().
          */
-        auto get_last_demoted_columns() const -> const std::vector<point_abs_sm>& {
+        auto get_last_demoted_columns() const -> const std::vector<point_abs_sm>& {  // *NOPAD*
             return last_demoted_columns_;
         }
 
