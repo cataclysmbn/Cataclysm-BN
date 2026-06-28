@@ -160,6 +160,7 @@ static const efftype_id effect_deaf( "deaf" );
 static const efftype_id effect_disabled( "disabled" );
 static const efftype_id effect_disinfected( "disinfected" );
 static const efftype_id effect_downed( "downed" );
+static const efftype_id effect_drone_marker( "drone_marker" );
 static const efftype_id effect_drunk( "drunk" );
 static const efftype_id effect_took_antinarcoleptic( "took_antinarcoleptic" );
 static const efftype_id effect_earphones( "earphones" );
@@ -7370,6 +7371,11 @@ bool Character::sees_with_specials( const Creature &critter ) const
         // walls don't block sonar which is transmitted in the ground, not the air.
         // TODO: this might need checks whether the player is in the air, or otherwise not connected
         // to the ground. It also might need a range check.
+        return true;
+    }
+    // Friendly eyebots can designate targets for the player
+    if( critter.has_effect( effect_drone_marker ) && ( has_item_with_flag( flag_DRONE_CAM ) ||
+            has_bionic( bio_infolink ) ) ) {
         return true;
     }
 

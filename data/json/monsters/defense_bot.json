@@ -109,7 +109,9 @@
     "vision_day": 50,
     "revert_to_itype": "bot_secubot",
     "starting_ammo": { "556": 30 },
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
     "special_attacks": [
+      [ "PHOTOGRAPH", 60 ],
       {
         "type": "gun",
         "cooldown": 3,
@@ -171,7 +173,9 @@
     "vision_day": 50,
     "revert_to_itype": "bot_talon_m202a1",
     "starting_ammo": { "m235tpa": 4 },
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
     "special_attacks": [
+      [ "PHOTOGRAPH", 60 ],
       {
         "type": "gun",
         "cooldown": 5,
@@ -423,7 +427,8 @@
     "vision_night": 10,
     "revert_to_itype": "bot_dispatch",
     "starting_ammo": { "bot_c4_hack": 2, "bot_flashbang_hack": 3, "bot_gasbomb_hack": 3, "bot_grenade_hack": 10 },
-    "special_attacks": [ [ "GRENADIER", 10 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "GRENADIER", 10 ] ],
     "death_drops": { "groups": [ [ "robots", 1 ] ] },
     "death_function": [ "BROKEN" ],
     "flags": [
@@ -469,7 +474,8 @@
     "vision_night": 10,
     "revert_to_itype": "bot_dispatch_military",
     "starting_ammo": { "bot_c4_hack": 10, "bot_flashbang_hack": 10, "bot_gasbomb_hack": 10, "bot_grenade_hack": 20, "bot_mininuke_hack": 1 },
-    "special_attacks": [ [ "GRENADIER_ELITE", 10 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "GRENADIER_ELITE", 10 ] ],
     "death_drops": { "groups": [ [ "robots", 1 ] ] },
     "death_function": [ "BROKEN" ],
     "flags": [
@@ -516,7 +522,8 @@
     "revert_to_itype": "bot_tankbot",
     "starting_ammo": { "556": 1000, "40x46mm_m433": 20, "atgm_heat": 4 },
     "path_settings": { "max_dist": 20 },
-    "special_attacks": [ [ "MULTI_ROBOT", 3 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "MULTI_ROBOT", 3 ] ],
     "death_drops": { "groups": [ [ "robots", 4 ], [ "tankbot", 1 ] ] },
     "death_function": [ "BROKEN" ],
     "anger_triggers": [ "HURT", "FRIEND_ATTACKED" ],
@@ -562,7 +569,8 @@
     "armor_bullet": 6,
     "path_settings": { "max_dist": 5 },
     "revert_to_itype": "bot_tripod",
-    "special_attacks": [ [ "FLAMETHROWER", 10 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "FLAMETHROWER", 10 ] ],
     "death_drops": { "groups": [ [ "robots", 4 ], [ "tripod", 1 ] ] },
     "death_function": [ "BROKEN" ],
     "flags": [
@@ -606,7 +614,8 @@
     "revert_to_itype": "bot_chickenbot",
     "starting_ammo": { "556": 1000, "40x46mm_m433": 100 },
     "path_settings": { "max_dist": 10 },
-    "special_attacks": [ [ "CHICKENBOT", 4 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "CHICKENBOT", 4 ] ],
     "death_function": [ "BROKEN" ],
     "flags": [ "FACTION_MEMORY", "SEES", "HEARS", "BASHES", "NO_BREATHE", "ELECTRONIC", "PRIORITIZE_TARGETS", "DROPS_AMMO" ]
   },
@@ -639,7 +648,9 @@
     "armor_fire": 5,
     "vision_day": 50,
     "starting_ammo": { "120mm_usable_heat": 25 },
+    "//2": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
     "special_attacks": [
+      [ "PHOTOGRAPH", 60 ],
       [ "PARROT", 20 ],
       {
         "type": "gun",

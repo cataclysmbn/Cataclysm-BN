@@ -130,7 +130,7 @@
     "type": "TOOL",
     "copy-from": "laptop",
     "name": { "str": "control laptop" },
-    "description": "A modified laptop, now capable of transmitting in the ultra-high frequencies utilized by robots.  Activate it to command robots from afar, or to toggle charging via UPS.",
+    "description": "A modified laptop, now capable of transmitting in the ultra-high frequencies utilized by robots.  Activate it to command robots from afar, or to toggle charging via UPS.  It will also automatically display any targeting data provided by friendly drones in the area.",
     "price": "100 USD",
     "price_postapoc": "80 USD",
     "charges_per_use": 2,
@@ -160,7 +160,7 @@
     "ammo": "battery",
     "initial_charges": 500,
     "max_charges": 700,
-    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
   },
   {
     "id": "control_laptop_screen_lit",
@@ -170,7 +170,7 @@
     "power_draw": 5000,
     "revert_to": "laptop",
     "use_action": { "target": "control_laptop", "msg": "You stop lighting up the screen.", "menu_text": "Turn off", "type": "transform" },
-    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
   },
   {
     "id": "control_laptop_music",
@@ -180,7 +180,7 @@
     "power_draw": 7000,
     "revert_to": "control_laptop",
     "use_action": "MP3_ON",
-    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
   },
   {
     "type": "TOOL_ARMOR",
@@ -316,7 +316,7 @@
     "id": "wrist_comp_control",
     "name": { "str": "wrist control computer" },
     "copy-from": "wrist_comp_budget",
-    "description": "A fancy wrist-mounted computer, with a menagerie of useful features, such as SD reading, a built-in thermometer, and even a radiation monitor!",
+    "description": "A fancy wrist-mounted computer, with a menagerie of useful features, such as SD reading, a built-in thermometer, and even a radiation monitor!  This upgraded model can also control vehicles and hack robots, and automatically displays targeting info from friendly drones in the area.",
     "weight": "112 g",
     "price": "120 USD",
     "price_postapoc": "100 USD",
@@ -357,7 +357,8 @@
       "NO_UNLOAD",
       "NO_RELOAD",
       "THERMOMETER",
-      "FANCY"
+      "FANCY",
+      "DRONE_CAM"
     ],
     "coverage": 15,
     "symbol": "[",

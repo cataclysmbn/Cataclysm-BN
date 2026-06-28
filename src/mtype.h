@@ -210,6 +210,7 @@ enum m_flag : int {
     MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
     MF_COMBAT_MOUNT,        // This monster is trained for combat
     MF_CANT_TRAIN,            // This monster can't be trained for combat
+    MF_POLICE_EYEBOT,            // A drone capable of summoning reinforcements, see mattack::photograph
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };

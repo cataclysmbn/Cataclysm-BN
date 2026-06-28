@@ -471,7 +471,7 @@
     "looks_like": "broken_eyebot",
     "type": "TOOL",
     "name": { "str": "inactive eyebot" },
-    "description": "This is an inactive eyebot.  Using this item involves turning it on and launching the UAV.  If reprogrammed and rewired successfully the eyebot will then keep watch for intruders.  An inhumanly strong user could also deploy it remotely by throwing it.",
+    "description": "This is an inactive eyebot.  Using this item involves turning it on and launching the UAV.  If programmed successfully the eyebot will then keep watch for intruders, marking targets that can be tracked if you possess a control laptop, military scouter, or similar equipment; or have a bionic infolink installed.  An inhumanly strong user could also deploy it remotely by throwing it.",
     "weight": "9400 g",
     "volume": "20 L",
     "price": "100 USD",

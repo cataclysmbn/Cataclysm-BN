@@ -903,7 +903,8 @@
       "SWIM_GOGGLES",
       "SUN_GLASSES",
       "RAD_RESIST",
-      "COMBAT_NPC_USE"
+      "COMBAT_NPC_USE",
+      "DRONE_CAM"
     ],
     "price": "500 kUSD",
     "price_postapoc": "100 USD",
@@ -954,7 +955,8 @@
       "THERMOMETER",
       "TRADER_AVOID",
       "COMBAT_NPC_USE",
-      "COMBAT_NPC_ON"
+      "COMBAT_NPC_ON",
+      "DRONE_CAM"
     ],
     "turns_per_charge": 18,
     "revert_to": "rm13_armor",
@@ -3342,7 +3344,7 @@
     "repairs_like": "scouter",
     "type": "TOOL_ARMOR",
     "name": { "str": "upgraded scouting visor" },
-    "description": "This device is a head-mounted, UPS-powered, augmented reality scanning tool that projects a HUD onto a transparent screen that goes over your eye.  This particular visor has been illegally upgraded to use military GPS satellite connections, broadening its range.",
+    "description": "This device is a head-mounted, UPS-powered, augmented reality scanning tool that projects a HUD onto a transparent screen that goes over your eye.  This particular visor has been illegally upgraded to use military GPS satellite connections, broadening its range and allowing it to receive targeting info from any nearby friendly drones.",
     "use_action": [
       "PORTABLE_GAME",
       "WEATHER_TOOL",
@@ -3358,7 +3360,8 @@
         "need_charges_msg": "The %s's batteries are dead."
       },
       "TOGGLE_UPS_CHARGING"
-    ]
+    ],
+    "extend": { "flags": [ "DRONE_CAM" ] }
   },
   {
     "id": "mil_scouter_nv_on",

@@ -1643,6 +1643,12 @@
     "context": [  ]
   },
   {
+    "id": "DRONE_CAM",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This item <good>allows you to view</good> the position of enemies <info>marked by friendly drones</info>."
+  },
+  {
     "id": "FAKE_MILL",
     "type": "json_flag",
     "context": [  ]

@@ -103,8 +103,10 @@ static const efftype_id effect_darkness( "darkness" );
 static const efftype_id effect_dazed( "dazed" );
 static const efftype_id effect_deaf( "deaf" );
 static const efftype_id effect_dermatik( "dermatik" );
+static const efftype_id effect_drone_marker( "drone_marker" );
 static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_dragging( "dragging" );
+static const efftype_id effect_eyebot_depleted( "eyebot_depleted" );
 static const efftype_id effect_fearparalyze( "fearparalyze" );
 static const efftype_id effect_fungus( "fungus" );
 static const efftype_id effect_glowing( "glowing" );
@@ -3399,140 +3401,196 @@ bool mattack::check_money_left( monster *z )
 }
 bool mattack::photograph( monster *z )
 {
-    if( !within_visual_range( z, 6 ) ) {
-        return false;
+    // Non-friendly bots only do something interesting if they're a police bot
+    // Todo: possibly allow non-friendly military bots to alert other bots to the player's position?
+    if( !z->friendly ) {
+        // We're a police bot, but we're either too far away from the player, or we already summoned backup
+        if( z->has_flag( MF_POLICE_EYEBOT ) && ( !within_visual_range( z, 6 ) ||
+                z->has_effect( effect_eyebot_depleted ) ) ) {
+            return false;
+        } else if( !z->has_flag( MF_POLICE_EYEBOT ) ) {
+            return false;
+        }
     }
 
     // Badges should NOT be swappable between roles.
     // Hence separate checking.
     // If you are in fact listed as a police officer
-    if( g->u.has_trait( trait_PROF_POLICE ) ) {
-        // And you're wearing your badge
-        if( g->u.is_wearing( itype_badge_deputy ) ) {
-            if( one_in( 3 ) ) {
-                add_msg( m_info, _( "The %s flashes a LED and departs.  Human officer on scene." ),
-                         z->name() );
-                z->no_corpse_quiet = true;
-                z->no_extra_death_drops = true;
-                z->die( nullptr );
-                return false;
-            } else {
-                add_msg( m_info,
-                         _( "The %s acknowledges you as an officer responding, but hangs around to watch." ),
-                         z->name() );
-                add_msg( m_info, _( "Probably some now-obsolete Internal Affairs subroutine…" ) );
-                return true;
+    if( !z->friendly && z->has_flag( MF_POLICE_EYEBOT ) ) {
+        if( g->u.has_trait( trait_PROF_POLICE ) ) {
+            // And you're wearing your badge
+            if( g->u.is_wearing( itype_badge_deputy ) ) {
+                if( one_in( 3 ) ) {
+                    add_msg( m_info, _( "The %s flashes a LED and departs.  Human officer on scene." ),
+                             z->name() );
+                    z->no_corpse_quiet = true;
+                    z->no_extra_death_drops = true;
+                    z->die( nullptr );
+                    return false;
+                } else {
+                    add_msg( m_info,
+                             _( "The %s acknowledges you as an officer responding, but hangs around to watch." ),
+                             z->name() );
+                    add_msg( m_info, _( "Probably some now-obsolete Internal Affairs subroutine…" ) );
+                    return true;
+                }
             }
         }
-    }
 
-    if( g->u.has_trait( trait_PROF_PD_DET ) ) {
-        // And you have your shield on
-        if( g->u.is_wearing( itype_badge_detective ) ) {
-            if( one_in( 4 ) ) {
-                add_msg( m_info, _( "The %s flashes a LED and departs.  Human officer on scene." ),
-                         z->name() );
-                z->no_corpse_quiet = true;
-                z->no_extra_death_drops = true;
-                z->die( nullptr );
-                return false;
-            } else {
-                add_msg( m_info,
-                         _( "The %s acknowledges you as an officer responding, but hangs around to watch." ),
-                         z->name() );
-                add_msg( m_info, _( "Ops used to do that in case you needed backup…" ) );
-                return true;
+        if( g->u.has_trait( trait_PROF_PD_DET ) ) {
+            // And you have your shield on
+            if( g->u.is_wearing( itype_badge_detective ) ) {
+                if( one_in( 4 ) ) {
+                    add_msg( m_info, _( "The %s flashes a LED and departs.  Human officer on scene." ),
+                             z->name() );
+                    z->no_corpse_quiet = true;
+                    z->no_extra_death_drops = true;
+                    z->die( nullptr );
+                    return false;
+                } else {
+                    add_msg( m_info,
+                             _( "The %s acknowledges you as an officer responding, but hangs around to watch." ),
+                             z->name() );
+                    add_msg( m_info, _( "Ops used to do that in case you needed backup…" ) );
+                    return true;
+                }
+            }
+        } else if( g->u.has_trait( trait_PROF_SWAT ) ) {
+            // And you're wearing your badge
+            if( g->u.is_wearing( itype_badge_swat ) ) {
+                if( one_in( 3 ) ) {
+                    add_msg( m_info, _( "The %s flashes a LED and departs.  SWAT's working the area." ),
+                             z->name() );
+                    z->no_corpse_quiet = true;
+                    z->no_extra_death_drops = true;
+                    z->die( nullptr );
+                    return false;
+                } else {
+                    add_msg( m_info, _( "The %s acknowledges you as SWAT onsite, but hangs around to watch." ),
+                             z->name() );
+                    add_msg( m_info, _( "Probably some now-obsolete Internal Affairs subroutine…" ) );
+                    return true;
+                }
+            }
+        } else if( g->u.has_trait( trait_PROF_CYBERCO ) ) {
+            // And you're wearing your badge
+            if( g->u.is_wearing( itype_badge_cybercop ) ) {
+                if( one_in( 3 ) ) {
+                    add_msg( m_info, _( "The %s winks a LED and departs.  One machine to another?" ),
+                             z->name() );
+                    z->no_corpse_quiet = true;
+                    z->no_extra_death_drops = true;
+                    z->die( nullptr );
+                    return false;
+                } else {
+                    add_msg( m_info,
+                             _( "The %s acknowledges you as an officer responding, but hangs around to watch." ),
+                             z->name() );
+                    add_msg( m_info, _( "Apparently yours aren't the only systems kept alive post-apocalypse." ) );
+                    return true;
+                }
             }
         }
-    } else if( g->u.has_trait( trait_PROF_SWAT ) ) {
-        // And you're wearing your badge
-        if( g->u.is_wearing( itype_badge_swat ) ) {
-            if( one_in( 3 ) ) {
-                add_msg( m_info, _( "The %s flashes a LED and departs.  SWAT's working the area." ),
-                         z->name() );
-                z->no_corpse_quiet = true;
-                z->no_extra_death_drops = true;
-                z->die( nullptr );
-                return false;
-            } else {
-                add_msg( m_info, _( "The %s acknowledges you as SWAT onsite, but hangs around to watch." ),
-                         z->name() );
-                add_msg( m_info, _( "Probably some now-obsolete Internal Affairs subroutine…" ) );
-                return true;
-            }
-        }
-    } else if( g->u.has_trait( trait_PROF_CYBERCO ) ) {
-        // And you're wearing your badge
-        if( g->u.is_wearing( itype_badge_cybercop ) ) {
-            if( one_in( 3 ) ) {
-                add_msg( m_info, _( "The %s winks a LED and departs.  One machine to another?" ),
-                         z->name() );
-                z->no_corpse_quiet = true;
-                z->no_extra_death_drops = true;
-                z->die( nullptr );
-                return false;
-            } else {
-                add_msg( m_info,
-                         _( "The %s acknowledges you as an officer responding, but hangs around to watch." ),
-                         z->name() );
-                add_msg( m_info, _( "Apparently yours aren't the only systems kept alive post-apocalypse." ) );
-                return true;
-            }
-        }
-    }
 
-    if( g->u.has_trait( trait_PROF_FED ) ) {
-        // And you're wearing your badge
-        if( g->u.is_wearing( itype_badge_marshal ) ) {
-            add_msg( m_info, _( "The %s flashes a LED and departs.  The Feds got this." ), z->name() );
-            z->no_corpse_quiet = true;
-            z->no_extra_death_drops = true;
-            z->die( nullptr );
+        if( g->u.has_trait( trait_PROF_FED ) ) {
+            // And you're wearing your badge
+            if( g->u.is_wearing( itype_badge_marshal ) ) {
+                add_msg( m_info, _( "The %s flashes a LED and departs.  The Feds got this." ), z->name() );
+                z->no_corpse_quiet = true;
+                z->no_extra_death_drops = true;
+                z->die( nullptr );
+                return false;
+            }
+        }
+        if( g->u.primary_weapon().typeId() == itype_e_handcuffs ) {
+            // Ignore arrested suspects.
             return false;
         }
     }
 
-    if( z->friendly || g->u.primary_weapon().typeId() == itype_e_handcuffs ) {
-        // Friendly (hacked?) bot ignore the player. Arrested suspect ignored too.
-        // TODO: might need to be revisited when it can target npcs.
-        return false;
-    }
-    z->moves -= 150;
-    add_msg( m_warning, _( "The %s takes your picture!" ), z->name() );
-    // TODO: Make the player known to the faction
-    std::string cname = _( "…database connection lost!" );
-    if( one_in( 6 ) ) {
-        cname = Name::generate( g->u.male );
-    } else if( one_in( 3 ) ) {
-        cname = g->u.name;
-    }
-    sound_event se;
-    se.origin = z->bub_pos();
-    se.volume = 80;
-    se.category = sounds::sound_t::alert;
-    se.description = string_format( _( "a robotic voice boom, \"Citizen %s!\"" ), cname );
-    se.from_monster = true;
-    se.monfaction = z->faction.id();
-    se.faction = faction_id( "no_faction" );
-    se.id = "speech";
-    se.variant = z->type->id.str();
-    sounds::sound( se );
 
-    if( g->u.primary_weapon().is_gun() ) {
-        se.description = _( "\"Drop your gun!  Now!\"" );
-        sounds::sound( se );
-    } else if( g->u.is_armed() ) {
-        se.description = _( "\"Drop your weapon!  Now!\"" );
-        sounds::sound( se );
-    }
-    const SpeechBubble &speech = get_speech( z->type->id.str() );
-    se.description = speech.text.translated();
-    se.volume = speech.volume;
-    sounds::sound( se );
-    g->timed_events.add( TIMED_EVENT_ROBOT_ATTACK, calendar::turn + rng( 15_turns, 30_turns ), 0,
-                         g->u.abs_sm_pos() );
+    if( z->friendly ) {
+        if( g->u.sees( *z ) ) {
+            add_msg( m_good, _( "The %s scans the surrounding area." ), z->name() );
+        }
 
-    return true;
+        for( monster &target : g->all_monsters() ) {
+            if( z->sees( target ) && rl_dist_fast( target.bub_pos(), z->bub_pos() ) <= 25 &&
+                target.attitude_to( g->u ) == Attitude::A_HOSTILE ) {
+                target.add_effect( effect_drone_marker, rng( 15_turns, 30_turns ) );
+            }
+        }
+        return true;
+
+    } else if( z->has_flag( MF_POLICE_EYEBOT ) && !z->has_effect( effect_eyebot_depleted ) ) {
+        z->moves -= 150;
+        add_msg( m_warning, _( "The %s takes your picture!" ), z->name() );
+        // TODO: Make the player known to the faction
+        std::string cname = _( "…database connection lost!" );
+        if( one_in( 6 ) ) {
+            cname = Name::generate( g->u.male );
+        } else if( one_in( 3 ) ) {
+            cname = g->u.name;
+        }
+        {
+            sound_event se;
+            se.origin = z->bub_pos();
+            se.volume = 80;
+            se.category = sounds::sound_t::alert;
+            se.description = string_format( _( "a robotic boice boom, \"Citizen %s!\"" ), cname );
+            se.movement_noise = false;
+            se.from_monster = true;
+            se.monfaction = z->faction.id();
+            se.id = "shout";
+            se.variant = z->type->id.str();
+            sounds::sound( se );
+        }
+
+        if( g->u.primary_weapon().is_gun() ) {
+            sound_event se;
+            se.origin = z->bub_pos();
+            se.volume = 80;
+            se.category = sounds::sound_t::alert;
+            se.description = _( "\"Drop your gun! Now!\"" );
+            se.movement_noise = false;
+            se.from_monster = true;
+            se.monfaction = z->faction.id();
+            se.id = "shout";
+            se.variant = z->type->id.str();
+            sounds::sound( se );
+        } else if( g->u.is_armed() ) {
+            sound_event se;
+            se.origin = z->bub_pos();
+            se.volume = 80;
+            se.category = sounds::sound_t::alert;
+            se.description = _( "\"Drop your weapon! Now!\"" );
+            se.movement_noise = false;
+            se.from_monster = true;
+            se.monfaction = z->faction.id();
+            se.id = "shout";
+            se.variant = z->type->id.str();
+            sounds::sound( se );
+        }
+        {
+            const SpeechBubble &speech = get_speech( z->type->id.str() );
+            sound_event se;
+            se.origin = z->bub_pos();
+            se.volume = speech.volume;
+            se.category = sounds::sound_t::alert;
+            se.description = speech.text.translated();
+            se.from_monster = true;
+            se.monfaction = z->faction.id();
+            se.id = "speech";
+            se.variant = z->type->id.str();
+            sounds::sound( se );
+        }
+        g->timed_events.add( TIMED_EVENT_ROBOT_ATTACK, calendar::turn + rng( 15_turns, 30_turns ), 0,
+                             g->u.abs_sm_pos() );
+        z->add_effect( effect_eyebot_depleted, 1_turns );
+        return true;
+    }
+    // Fallback
+    return false;
 }
 
 bool mattack::tazer( monster *z )

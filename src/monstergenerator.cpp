@@ -210,6 +210,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_FACTION_MEMORY: return "FACTION_MEMORY";
         case MF_COMBAT_MOUNT: return "COMBAT_MOUNT";
         case MF_CANT_TRAIN: return "CANT_TRAIN";
+        case MF_POLICE_EYEBOT: return "POLICE_EYEBOT";
         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;

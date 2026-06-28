@@ -6240,7 +6240,7 @@
     "name": "Drone Operator",
     "description": "You had a job programming machines such as automatic street cleaners, newsbots and pizza delivery drones.  Now all the drones carry guns instead of pizza.",
     "points": 1,
-    "CBMs": [ "bio_batteries", "bio_power_storage", "bio_remote" ],
+    "CBMs": [ "bio_batteries", "bio_power_storage", "bio_remote", "bio_infolink" ],
     "skills": [ { "level": 2, "name": "computer" } ],
     "items": {
       "both": { "items": [ "jumpsuit", "socks", "boots", "smart_phone", "wristwatch" ] },

@@ -221,6 +221,7 @@ to find which flags work elsewhere.
   cooler depending on ambient and bodily temperature.
 - `COLLAR` This piece of clothing has a wide collar that can keep your mouth warm.
 - `DEAF` Makes the player deaf.
+- `DRONE_CAM` Allows you to see targets marked by friendly drones such as eyebots.
 - `ELECTRIC_IMMUNE` This gear completely protects you from electric discharges.
 - `FANCY` Wearing this clothing gives a morale bonus if the player doesn't have the
   `Fashion Deficient` trait.
@@ -1141,6 +1142,8 @@ Multiple death functions can be used. Not all combinations make sense.
 - `PAY_BOT` Creature can be turned into a pet for a limited time in exchange of e-money.
 - `PET_MOUNTABLE` Creature can be ridden or attached to an harness.
 - `PET_HARNESSABLE`Creature can be attached to an harness.
+- `POLICE_EYEBOT` Changes the behavior of the `PHOTOGRAPH` special attack. Without it, the attack will only
+  do anything if the user is friendly, with it non-friendly bots can summon reinforcements.
 - `MOUNTABLE_STAIRS` Player can go up/down stairs while riding this creature.
 - `MOUNTABLE_LADDER` Player can go up/down stairs that have the difficult_z flag while riding this creature.
 - `MOUNTABLE_OBSTACLES` Player can travel over fences/doors while riding this creature.
@@ -1257,7 +1260,8 @@ example, impale and scratch.
 - `PARROT_AT_DANGER` Performs the same function as PARROT, but only if the creature sees an angry
   monster from a hostile faction.
 - `PAID_BOT` For creature with PAY_BOT flag, removes the ally status when the pet effect runs out.
-- `PHOTOGRAPH` Photograph the player. Causes a robot attack?
+- `PHOTOGRAPH` If friendly, scans the surrounding area to mark targets for the player. If non-friendly,
+  photographs the player and summons reinforcements if user has the `POLICE_EYEBOT` flag, otherwise no effect.
 - `PLANT` Fungal spores take seed and grow into a fungaloid.
 - `PULL_METAL_WEAPON` Pull weapon that's made of iron or steel from the player's hand.
 - `RANGED_PULL` Pull targets towards attacker.

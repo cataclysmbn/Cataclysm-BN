@@ -304,6 +304,15 @@
   },
   {
     "type": "effect_type",
+    "id": "eyebot_depleted",
+    "name": [ "Eyebot Depleted" ],
+    "permanent": true,
+    "desc": [
+      "Marks a non-friendly eyebot as having already summoned reinforcements, preventing it from doing so again.  This is a bug if you have it."
+    ]
+  },
+  {
+    "type": "effect_type",
     "id": "monster_disarmed",
     "name": [ "Disarmed" ],
     "desc": [ "AI tag for a monster's attacks being disabled due to disarming tecs.  This is a bug if you have it." ],
@@ -2341,6 +2350,12 @@
     "max_intensity": 1000,
     "int_dur_factor": "1 s",
     "rating": "bad"
+  },
+  {
+    "type": "effect_type",
+    "id": "drone_marker",
+    "//": "Used by friendly eyebots to designate targets that become temporarily visible to the player if they have the right items or bionics.",
+    "max_duration": "1 m"
   },
   {
     "type": "effect_type",
