@@ -1531,7 +1531,8 @@ bool trapfunc::snake( const tripoint_bub_ms &p, Creature *, item * )
     return true;
 }
 
-static bool lua_trap_can_trigger_check( const Character &target, const trap &trap, const tripoint_bub_ms &loc)
+static bool lua_trap_can_trigger_check( const Character &target, const trap &trap,
+                                        const tripoint_bub_ms &loc )
 {
     // Lua itrap can_trigger prevents triggering when returning false
     if( const auto *itrap_cb = trap.lua_callbacks ) {
@@ -1542,7 +1543,7 @@ static bool lua_trap_can_trigger_check( const Character &target, const trap &tra
     return true;
 }
 
-static void lua_trap_on_trigger( Character &target, trap &trap, const tripoint_bub_ms &loc)
+static void lua_trap_on_trigger( Character &target, trap &trap, const tripoint_bub_ms &loc )
 {
     // Lua itrap can_trigger prevents triggering when returning false
     if( const auto *itrap_cb = trap.lua_callbacks ) {
@@ -1550,7 +1551,8 @@ static void lua_trap_on_trigger( Character &target, trap &trap, const tripoint_b
     }
 }
 
-static void lua_trap_on_trigger_aftermath( Character &target, trap &trap, const tripoint_bub_ms &loc)
+static void lua_trap_on_trigger_aftermath( Character &target, trap &trap,
+        const tripoint_bub_ms &loc )
 {
     // Lua itrap can_trigger prevents triggering when returning false
     if( const auto *itrap_cb = trap.lua_callbacks ) {
@@ -1562,16 +1564,15 @@ bool trapfunc::lua( const tripoint_bub_ms &p, Creature *target, item * )
 {
     const auto character = target->as_character();
     auto trap = g->m.tr_at( p ); // Maybe this should be passed instead?
-    if (!lua_trap_can_trigger_check(*character, trap, p))
-    {
+    if( !lua_trap_can_trigger_check( *character, trap, p ) ) {
         return false;
     }
-    lua_trap_on_trigger(*character, trap, p);
+    lua_trap_on_trigger( *character, trap, p );
 
     // This is to respect other json fields, like remove_on_trigger
     trap.trigger_aftermath( g->m, p );
 
-    lua_trap_on_trigger_aftermath(*character, trap, p);
+    lua_trap_on_trigger_aftermath( *character, trap, p );
     return true;
 }
 
