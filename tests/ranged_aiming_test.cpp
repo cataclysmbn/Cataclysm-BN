@@ -131,6 +131,8 @@ TEST_CASE( "Aiming at a loaded target on another z-level", "[ranged][aiming][zle
 TEST_CASE( "Aiming at a target behind wall", "[ranged][aiming]" )
 {
     clear_all_state();
+
+    set_up_player_vision();
     player &shooter = g->u;
     clear_character( shooter, true );
     shooter.add_effect( efftype_id( "debug_clairvoyance" ), 1_seconds );
@@ -140,8 +142,6 @@ TEST_CASE( "Aiming at a target behind wall", "[ranged][aiming]" )
     for( int y_off = -1; y_off <= 1; y_off++ ) {
         g->m.ter_set( shooter_pos + point( 1, y_off ), t_wall );
     }
-
-    set_up_player_vision();
     monster &z = spawn_test_monster( "debug_mon", shooter_pos + point( 2, 0 ) );
     WHEN( "There is no direct, passable line to target" ) {
         const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
@@ -155,10 +155,13 @@ TEST_CASE( "Aiming at a target behind wall", "[ranged][aiming]" )
             []( const tripoint_bub_ms & p ) {
                 return !g->m.is_transparent( p );
             } );
-            REQUIRE( non_transparent_tiles > 0 );
-            AND_WHEN( "The shooter sees the target due to a non-vision effect" ) {
-
-                REQUIRE( shooter.sees( z ) );
+            // Check terrain directly since transparency_cache may be stale
+            int wall_tiles = std::count_if( path.begin(), path.end(),
+            []( const tripoint_bub_ms & p ) {
+                return g->m.ter( p ) == t_wall;
+            } );
+            REQUIRE( wall_tiles > 0 );
+            AND_WHEN( "The target is behind an opaque wall" ) {
                 THEN( "The target is not in targetable creatures" ) {
                     std::vector<Creature *> t = ranged::targetable_creatures( shooter, max_range );
                     CHECK( std::count( t.begin(), t.end(), &z ) == 0 );

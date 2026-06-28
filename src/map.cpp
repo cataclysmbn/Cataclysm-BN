@@ -3461,6 +3461,11 @@ bool map::is_divable( const tripoint_bub_ms &p ) const
     return false;
 }
 
+bool map::is_outside( const tripoint_abs_ms &p ) const
+{
+    return get_mapbuffer().is_outside( p );
+}
+
 bool map::is_outside( const tripoint_bub_ms &p ) const
 {
     point_sm_ms l;
@@ -6137,7 +6142,8 @@ void map::process_items()
                     const auto counts = veh->active_items.count();
                     total_active_items += counts.total;
                     total_rottable_active_items += counts.rottable;
-                    has_vehicle_with_items = has_vehicle_with_items || counts.total > 0;
+                    has_vehicle_with_items = has_vehicle_with_items || counts.total > 0
+                                             || veh->has_cargo_recharge;
                 }
                 if( has_vehicle_with_items ) {
                     process_items_in_vehicles( sm );

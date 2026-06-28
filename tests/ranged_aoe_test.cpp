@@ -8,6 +8,7 @@
 #include <set>
 #include <vector>
 
+#include "avatar.h"
 #include "ballistics.h"
 #include "calendar.h"
 #include "dispersion.h"
@@ -16,6 +17,7 @@
 #include "shape_impl.h"
 #include "map.h"
 #include "npc.h"
+#include "simulated_island_helpers.h"
 #include "ranged.h"
 #include "projectile.h"
 #include "map_helpers.h"
@@ -190,6 +192,8 @@ TEST_CASE( "expected shape coverage mass test", "[shape]" )
 TEST_CASE( "expected shape coverage without obstacles", "[shape]" )
 {
     clear_all_state();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    ensure_simulated_islands_for( g->u.abs_pos() );
     cone_factory c( 22.5_degrees, 10.0 );
     const tripoint_abs_ms origin = map_local_to_abs( get_map(), tripoint_bub_ms( 60, 60, 0 ) );
     const tripoint_rel_ms offset( 5, 5, 0 );
@@ -208,6 +212,8 @@ TEST_CASE( "expected shape coverage without obstacles", "[shape]" )
 TEST_CASE( "expected shape coverage through windows", "[shape]" )
 {
     clear_all_state();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    ensure_simulated_islands_for( g->u.abs_pos() );
     cone_factory c( 22.5_degrees, 10.0 );
     const tripoint_abs_ms origin = map_local_to_abs( get_map(), tripoint_bub_ms( 60, 60, 0 ) );
     const tripoint_rel_ms offset( 5, 0, 0 );
@@ -229,6 +235,8 @@ TEST_CASE( "expected shape coverage through windows", "[shape]" )
 TEST_CASE( "shaped attacks apply trail ammo effects", "[ranged][projectile]" )
 {
     clear_all_state();
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    ensure_simulated_islands_for( g->u.abs_pos() );
 
     auto &attacker = get_player_character();
     auto &here = attacker.get_mapbuffer();

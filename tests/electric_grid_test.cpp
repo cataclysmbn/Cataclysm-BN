@@ -164,7 +164,10 @@ TEST_CASE( "grid_and_vehicle_outside_bubble", "[grids][vehicle]" )
     map &m = get_map();
     const auto old_abs_sub = m.get_abs_sub();
     // Ugly: we move the real map instead of the detached test map to reuse clear_map() results
-    m.load( m.get_abs_sub() + point( m.getmapsize(), 0 ), true );
+    // Use the runtime bubble size (g_mapsize) rather than the compile-time MAPSIZE,
+    // since the test map is never resized by game::setup() and retains the default
+    // constructor size of MAPSIZE=35.
+    m.load( m.get_abs_sub() + point( g_mapsize, 0 ), true );
     GIVEN( "vehicle and battery are on one grid" ) {
         map tm( 2 );
         tm.load( old_abs_sub, false );

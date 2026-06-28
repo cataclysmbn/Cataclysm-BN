@@ -4,4 +4,4 @@ local moving_npc = test_data.npc
 local destination = test_data.destination
 
 moving_npc:move_to(destination)
-test_data.moved = moving_npc:get_pos_ms() == destination
+test_data.moved = moving_npc:abs_pos() == destination

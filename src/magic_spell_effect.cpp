@@ -403,7 +403,8 @@ std::set<tripoint_abs_ms> calculate_spell_effect_area( const spell &sp,
     std::set<tripoint_abs_ms> targets = { target }; // initialize with epicenter
 
     const int aoe_radius = sp.aoe();
-    targets = aoe_func( sp, caster.abs_pos(), target, aoe_radius, ignore_walls );
+    std::set<tripoint_abs_ms> aoe_targets = aoe_func( sp, caster.abs_pos(), target, aoe_radius, ignore_walls );
+    targets.insert( aoe_targets.begin(), aoe_targets.end() );
 
     for( std::set<tripoint_abs_ms>::iterator it = targets.begin(); it != targets.end(); ) {
         if( !sp.is_valid_target( caster, *it ) ) {

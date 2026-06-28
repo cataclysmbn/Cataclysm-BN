@@ -1323,6 +1323,7 @@ class map
         }
 
         bool is_outside( const tripoint_bub_ms &p ) const;
+        bool is_outside( const tripoint_abs_ms &p ) const;
         // True when the tile has some overhead coverage within 3×3 (floor or sheltered tile
         // at z+1).  A tile can be outside yet sheltered (building overhang).
         bool is_sheltered( const tripoint_bub_ms &p ) const;

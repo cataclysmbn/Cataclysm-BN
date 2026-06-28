@@ -185,9 +185,8 @@ int distribution_grid::get_resource( bool recurse ) const
         }
     }
 
-    // TODO: Giga ugly. We only charge the first vehicle to get it to use its recursive graph traversal because it's inaccessible from here due to being a template method
     if( !connected_vehicles.empty() ) {
-        res = connected_vehicles.front()->fuel_left( itype_battery, true );
+        res += connected_vehicles.front()->fuel_left( itype_battery, false );
     }
     if( !recurse ) {
         cached_amount_here = res;
@@ -746,7 +745,6 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
 
         const furn_t &old_t = sm->get_furn( p_within_sm ).obj();
         const furn_t &new_t = qt.id.obj();
-        const auto pos_player = abs_to_bub( qt.p );
 
         if( !qt.msg.empty() ) {
             if( u.sees( qt.p ) ) {
