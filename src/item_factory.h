@@ -23,7 +23,6 @@ class lua_iequippable_actor;
 class lua_istate_actor;
 class lua_imelee_actor;
 class lua_iranged_actor;
-class lua_itrap_actor;
 class relic;
 
 namespace cata

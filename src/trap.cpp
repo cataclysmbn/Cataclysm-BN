@@ -101,10 +101,10 @@ const std::vector<const trap *> &trap::get_funnels()
 // }
 
 void trap::resolve_lua_callbacks(
-    const std::map<trap_id, std::unique_ptr<lua_itrap_actor>> &actors )
+    const std::map<std::string, std::unique_ptr<lua_itrap_actor>> &actors )
 {
     for( const trap &mb : trap_factory.get_all() ) {
-        auto it = actors.find( mb.id );
+        auto it = actors.find( mb.id.str() );
         if( it != actors.end() ) {
             mb.lua_callbacks = it->second.get();
         }

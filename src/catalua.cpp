@@ -471,7 +471,7 @@ namespace
 // Populated during reg_lua_icallback_actors(), resolved during resolve_lua_bionic_and_mutation_callbacks().
 std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> bionic_callback_actors;
 std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> mutation_callback_actors;
-std::map<trap_id, std::unique_ptr<lua_itrap_actor>> lua_itrap_actors;
+std::map<std::string, std::unique_ptr<lua_itrap_actor>> lua_itrap_actors;
 } // namespace
 
 namespace
@@ -967,7 +967,6 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             std::string key;
             try {
                 key = ref.first.as<std::string>();
-                auto _trap_id = trap_id(key);
                 // if (!_trap_id.is_valid())
                 // {
                 //     throw std::runtime_error( string_format("trap_id %s does not exist", key) );
@@ -980,7 +979,7 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                 auto on_trigger_aftermath = tbl.get_or<sol::function>( "on_trigger_aftermath", sol::lua_nil );
                 auto on_trigger = tbl.get_or<sol::function>( "on_trigger", sol::lua_nil );
                 auto can_trigger = tbl.get_or<sol::function>( "can_trigger", sol::lua_nil );
-                lua_itrap_actors[_trap_id] = std::make_unique<lua_itrap_actor>(
+                lua_itrap_actors[key] = std::make_unique<lua_itrap_actor>(
                     key,
                     std::move( on_trigger_aftermath ),
                     std::move( on_trigger ),
