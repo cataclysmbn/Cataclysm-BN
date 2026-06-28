@@ -16,7 +16,7 @@
     "ammo_type": "380",
     "casing": "380_casing",
     "range": 13,
-    "damage": { "damage_type": "bullet", "amount": 23, "armor_penetration": 10 },
+    "damage": { "damage_type": "bullet", "amount": 21, "armor_penetration": 9 },
     "dispersion": 60,
     "recoil": 300,
     "loudness": 158,
@@ -32,7 +32,7 @@
     "//": "Hollowpoint damage increase of 25%",
     "loudness": 158,
     "speed": 312,
-    "damage": { "damage_type": "bullet", "amount": 29, "armor_penetration": 0 }
+    "damage": { "damage_type": "bullet", "amount": 26, "armor_penetration": 0 }
   },
   {
     "id": "380_p",
