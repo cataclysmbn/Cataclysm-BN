@@ -2141,8 +2141,19 @@ explosion_queue &get_explosion_queue()
 
 void explosion_queue::execute()
 {
+    // Drain deferral (issue #9696) -- the primary fix. An item being processed can
+    // be detached but still in the map stack; a re-entrant drain (e.g. an EMP
+    // bomb's blast killing a searchlight) would re-detonate it forever. Defer to
+    // the turn-loop drain, which runs after processing (same turn).
+    if( drains_deferred() ) {
+        return;
+    }
+
+    // Per-drain backstop (not the #9696 fix): cap one runaway drain that re-feeds
+    // its own queue. Per drain, not per turn, so it never drops a later,
+    // independently-queued explosion.
     explosion_count = 0;
-    while( !elems.empty() ) {
+    while( !elems.empty() && explosion_count < max_pending_explosions ) {
         queued_explosion exp = std::move( elems.front() );
         elems.pop_front();
         explosion_count++;
@@ -2163,6 +2174,14 @@ void explosion_queue::execute()
                 debugmsg( "Explosion type not implemented." );
                 break;
         }
+    }
+    if( !elems.empty() ) {
+        // Leftovers mean the loop stopped at the per-drain cap (a runaway): drop
+        // them to avoid an OOM/hang and report once.
+        const auto dropped = static_cast<int>( elems.size() );
+        elems.clear();
+        debugmsg( "Explosion queue exceeded the per-drain cap of %d; dropped %d "
+                  "queued explosions to avoid a hang.", max_pending_explosions, dropped );
     }
 }
 
