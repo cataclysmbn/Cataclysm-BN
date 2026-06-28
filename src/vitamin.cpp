@@ -13,6 +13,7 @@
 #include "json.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "units.h"
 #include "units_serde.h"
 
@@ -21,26 +22,7 @@ namespace
 generic_factory<vitamin> all_vitamins( "Vitamins" );
 }
 
-/** @relates string_id */
-template<>
-bool string_id<vitamin>::is_valid() const
-{
-    return all_vitamins.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const vitamin &string_id<vitamin>::obj() const
-{
-    return all_vitamins.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<vitamin> string_id<vitamin>::id() const
-{
-    return all_vitamins.convert( *this, int_id<vitamin>( INVALID_CID ) );
-}
+IMPLEMENT_STRING_AND_INT_IDS( vitamin, all_vitamins );
 
 void vitamin::load_vitamin( const JsonObject &jo, const std::string &src )
 {

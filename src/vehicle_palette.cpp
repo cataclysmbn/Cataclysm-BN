@@ -19,6 +19,7 @@
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "units_angle.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -29,26 +30,7 @@ namespace
 generic_factory<VehiclePalette> all_palettes( "Vehicle Palettes" );
 }
 
-/** @relates string_id */
-template<>
-const VehiclePalette &string_id<VehiclePalette>::obj() const
-{
-    return all_palettes.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<VehiclePalette>::is_valid() const
-{
-    return all_palettes.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<VehiclePalette> string_id<VehiclePalette>::id() const
-{
-    return all_palettes.convert( *this, int_id<VehiclePalette>( INVALID_CID ) );
-}
+IMPLEMENT_STRING_AND_INT_IDS( VehiclePalette, all_palettes );
 
 void VehiclePalette::load_palette( const JsonObject &jo, const std::string &src )
 {

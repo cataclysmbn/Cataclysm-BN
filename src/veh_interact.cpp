@@ -239,8 +239,7 @@ veh_interact::veh_interact( vehicle &veh, tripoint_mnt_veh p )
     get_avatar().view_offset = tripoint_rel_ms::zero();
 
     // Only build the shapes map and the wheel list once
-    for( const auto &e : vpart_info::all() ) {
-        const vpart_info &vp = e.second;
+    for( const auto &vp : vpart_info::get_all() ) {
         vpart_shapes[ vp.name() + vp.item.str() ].push_back( &vp );
         if( vp.has_flag( "WHEEL" ) ) {
             wheel_types.push_back( &vp );
@@ -2317,8 +2316,7 @@ void veh_interact::move_cursor( tripoint_rel_veh d, int dstart_at )
     can_mount.clear();
     if( !obstruct ) {
         int divider_index = 0;
-        for( const auto &e : vpart_info::all() ) {
-            const vpart_info &vp = e.second;
+        for( const auto &vp : vpart_info::get_all() ) {
             if( has_critter && vp.has_flag( VPFLAG_OBSTACLE ) ) {
                 continue;
             }

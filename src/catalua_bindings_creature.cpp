@@ -33,7 +33,7 @@
 #include "game.h"
 #include "inventory.h"
 #include "json.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "monfaction.h"
 #include "monster.h"

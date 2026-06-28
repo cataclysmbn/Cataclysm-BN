@@ -282,16 +282,20 @@
   {
     "id": "pizza_kitchen",
     "type": "item_group",
-    "items": [
-      [ "seasoning_italian", 23 ],
-      [ "seasoning_salt", 13 ],
-      [ "pepper", 5 ],
-      [ "yeast", 10 ],
-      [ "sugar", 9 ],
-      [ "cornmeal", 8 ],
-      [ "flour", 25 ],
-      [ "cookbook", 3 ],
-      [ "cookbook_italian", 2 ]
+    "subtype": "distribution",
+    "entries": [
+      { "item": "seasoning_italian", "prob": 23 },
+      { "item": "seasoning_salt", "prob": 13 },
+      { "item": "pepper", "prob": 5 },
+      { "item": "yeast", "prob": 10 },
+      { "item": "sugar", "prob": 9 },
+      { "item": "cornmeal", "prob": 8 },
+      { "item": "cookbook", "prob": 3 },
+      { "item": "cookbook_italian", "prob": 2 },
+      { "item": "flour", "prob": 20, "charges": [ 5, 40 ] },
+      { "item": "flour", "prob": 5, "charges": 40 },
+      { "item": "flour", "prob": 12, "charges": [ 10, 120 ], "container-item": "box_medium" },
+      { "item": "flour", "prob": 3, "charges": 120, "container-item": "box_medium" }
     ]
   },
   {
@@ -576,7 +580,10 @@
       { "item": "can_chicken", "prob": 30 },
       { "item": "sugar", "prob": 40 },
       { "item": "soysauce", "prob": 10 },
-      { "item": "flour", "prob": 40 },
+      { "item": "flour", "prob": 25, "charges": [ 5, 40 ] },
+      { "item": "flour", "prob": 5, "charges": 40 },
+      { "item": "flour", "prob": 8, "charges": [ 10, 120 ], "container-item": "box_medium" },
+      { "item": "flour", "prob": 2, "charges": 120, "container-item": "box_medium" },
       { "item": "curry_powder", "prob": 40 },
       { "item": "cornmeal", "prob": 52 }
     ]
@@ -713,7 +720,8 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
-      { "item": "flour", "prob": 65 },
+      { "item": "flour", "prob": 60, "charges": 40 },
+      { "item": "flour", "prob": 5, "charges": 120, "container-item": "box_medium" },
       { "item": "cornmeal", "prob": 50 },
       { "item": "yeast", "prob": 40 },
       { "item": "powder_eggs", "prob": 55 },
@@ -936,7 +944,10 @@
       [ "pepper", 15 ],
       [ "salt", 20 ],
       [ "sugar", 5 ],
-      [ "flour", 17 ],
+      { "item": "flour", "prob": 10, "charges": [ 5, 40 ] },
+      { "item": "flour", "prob": 2, "charges": 40 },
+      { "item": "flour", "prob": 4, "charges": [ 10, 120 ], "container-item": "box_medium" },
+      { "item": "flour", "prob": 1, "charges": 120, "container-item": "box_medium" },
       [ "soysauce", 25 ],
       [ "cooking_oil", 20 ],
       [ "cooking_oil2", 20 ],
@@ -946,9 +957,9 @@
       [ "knife_steak", 15 ],
       [ "chilly-p", 15 ],
       [ "curry_powder", 15 ],
-      [ "spaghetti_raw", 20 ],
-      [ "lasagne_raw", 20 ],
-      [ "macaroni_raw", 20 ],
+      { "item": "spaghetti_raw", "prob": 40, "charges": [ 1, 8 ] },
+      { "item": "lasagne_raw", "prob": 20, "charges": [ 1, 8 ] },
+      { "item": "macaroni_raw", "prob": 20, "charges": [ 1, 8 ] },
       [ "foodplace_food", 5 ],
       [ "cola_syrup", 2 ],
       [ "colamdew_syrup", 2 ],

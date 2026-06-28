@@ -59,6 +59,7 @@
 #include "string_input_popup.h"
 #include "string_utils.h"
 #include "trap.h"
+#include "type_id.h"
 #include "type_id_implement.h"
 #include "ui_manager.h"
 #include "uistate.h"
@@ -787,6 +788,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                     const auto tools_mult =
                         crafting_tools_speed_multiplier( g->u, current_con->requirements.obj() );
                     const auto mutation_mult = g->u.mutation_value( "construction_speed_modifier" );
+                    const auto ench_mult = 1.0 + g->u.bonus_from_enchantments( 1.0,
+                                           enchantment_value_id( "CONSTRUCTION_SPEED_CON" ) );
                     const auto scaling = get_option<int>( "CONSTRUCTION_SCALING" );
                     const auto game_opt_mult = scaling == 0 ? 9999.0f : 100.0f / scaling;
                     const auto total_mult =
@@ -794,12 +797,13 @@ std::optional<construction_id> construction_menu( const bool blueprint )
 
                     const auto total_label = _( "Total" );
                     const auto multipliers =
-                    std::array<std::pair<std::string, float>, 5> { {
+                    std::array<std::pair<std::string, float>, 6> { {
                             { total_label, total_mult },
                             { _( "Assistants" ), assistants_mult },
                             { _( "Tools" ), tools_mult },
                             { _( "Traits" ), mutation_mult },
-                            { _( "Game option" ), game_opt_mult }
+                            { _( "Game option" ), game_opt_mult },
+                            { _( "Enchantments" ), ench_mult }
                         }
                     };
 
@@ -1957,8 +1961,7 @@ void construct::done_grave( const tripoint_bub_ms &p )
 
 static vpart_id vpart_from_item( const itype_id &item_id )
 {
-    for( const auto &e : vpart_info::all() ) {
-        const vpart_info &vp = e.second;
+    for( const auto &vp : vpart_info::get_all() ) {
         if( vp.item == item_id && vp.has_flag( flag_INITIAL_PART ) ) {
             return vp.get_id();
         }
@@ -1966,8 +1969,7 @@ static vpart_id vpart_from_item( const itype_id &item_id )
     // The INITIAL_PART flag is optional, if no part (based on the given item) has it, just use the
     // first part that is based in the given item (this is fine for example if there is only one
     // such type anyway).
-    for( const auto &e : vpart_info::all() ) {
-        const vpart_info &vp = e.second;
+    for( const auto &vp : vpart_info::get_all() ) {
         if( vp.item == item_id ) {
             return vp.get_id();
         }
@@ -2414,8 +2416,7 @@ void construction::finalize()
     }
     if( vehicle_start ) {
         std::vector<item_comp> frame_items;
-        for( const auto &e : vpart_info::all() ) {
-            const vpart_info &vp = e.second;
+        for( const auto &vp : vpart_info::get_all() ) {
             if( !vp.has_flag( flag_INITIAL_PART ) ) {
                 continue;
             }
@@ -2456,7 +2457,9 @@ float construction::time_scale() const
     } else {
         // this is hacky, but the player or their followers should only be the ones to ever construct currently.
         return ( get_option<int>( "CONSTRUCTION_SCALING" ) / 100.0f ) /
-               get_player_character().mutation_value( "construction_speed_modifier" );
+               get_player_character().mutation_value( "construction_speed_modifier" ) /
+               ( 1.0 + get_player_character().bonus_from_enchantments( 1.0,
+                       enchantment_value_id( "CONSTRUCTION_SPEED_CON" ) ) );
     }
 }
 

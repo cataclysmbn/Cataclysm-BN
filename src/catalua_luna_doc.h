@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "action.h"
 #include "coordinates.h"
 #include "calendar.h"
@@ -126,7 +128,7 @@ class mass_in_milligram_tag;
 using mass = quantity<std::int64_t, mass_in_milligram_tag>;
 
 class volume_in_milliliter_tag;
-using volume = quantity<int, volume_in_milliliter_tag>;
+using volume = quantity<std::int64_t, volume_in_milliliter_tag>;
 } // namespace units
 
 struct islot_container;

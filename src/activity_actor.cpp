@@ -245,7 +245,8 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
         }
     }
 
-    if( !get_option<bool>( "AIM_AFTER_FIRING" ) ) {
+    if( !get_option<bool>( "AIM_AFTER_FIRING" ) ||
+        who.recoil <= ranged::calculate_aim_cap( who, fin_trajectory.back() ) ) {
         restore_view();
         return;
     }

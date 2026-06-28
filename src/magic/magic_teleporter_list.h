@@ -36,5 +36,3 @@ class teleporter_list
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
 };
-
-

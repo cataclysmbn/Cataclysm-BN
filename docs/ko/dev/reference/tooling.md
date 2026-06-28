@@ -19,7 +19,7 @@ astyle --options=.astylerc --recursive src/*.cpp,*.h tests/*.cpp,*.h tools/*.cpp
 CMake 빌드 트리를 설정한 경우:
 
 ```sh
-cmake --build build --target astyle
+cmake --build <build-dir> --target astyle
 ```
 
 ### pre-commit 훅을 통해 astyle 호출

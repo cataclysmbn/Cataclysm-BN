@@ -2315,5 +2315,59 @@
       { "group": "nested_stanag_carbon_mag", "ammo-group": "on_hand_223", "prob": 50 },
       { "group": "on_hand_223" }
     ]
+  },
+  {
+    "id": "nested_pipe_rifle",
+    "type": "item_group",
+    "//": "Pipe rifle with a caliber conversion kit pre-installed.",
+    "subtype": "distribution",
+    "entries": [ { "item": "pipe_rifle", "contents-group": "gunmod_pipe_conversion" } ]
+  },
+  {
+    "id": "nested_pipe_pistol",
+    "type": "item_group",
+    "//": "Pipe pistol with a caliber conversion kit pre-installed.",
+    "subtype": "distribution",
+    "entries": [ { "item": "pipe_pistol", "contents-group": "gunmod_pipe_conversion" } ]
+  },
+  {
+    "id": "nested_2_shot_special",
+    "type": "item_group",
+    "//": "2-shot special with a caliber conversion kit pre-installed.",
+    "subtype": "distribution",
+    "entries": [ { "item": "2_shot_special", "contents-group": "gunmod_pipe_conversion" } ]
+  },
+  {
+    "id": "nested_handmade_carbine",
+    "type": "item_group",
+    "//": "Handmade carbine with 50% chance of a caliber conversion kit or BAR mag adapter installed.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "handmade_carbine", "contents-group": "gunmod_hc_mods", "prob": 50 },
+      { "item": "handmade_carbine", "prob": 50 }
+    ]
+  },
+  {
+    "id": "nested_smg_luty",
+    "type": "item_group",
+    "//": "Luty SMG with 50% chance of a caliber conversion kit installed.",
+    "subtype": "distribution",
+    "entries": [ { "item": "smg_luty", "contents-group": "gunmod_luty_conversion", "prob": 50 }, { "item": "smg_luty", "prob": 50 } ]
+  },
+  {
+    "id": "nested_handmade_revolver",
+    "type": "item_group",
+    "//": "Handmade revolver with 50% chance of a caliber conversion kit installed.",
+    "subtype": "distribution",
+    "entries": [
+      {
+        "item": "handmade_revolver",
+        "charges-min": 0,
+        "charges-max": 6,
+        "contents-group": "gunmod_hmr_conversion",
+        "prob": 50
+      },
+      { "item": "handmade_revolver", "charges-min": 0, "charges-max": 6, "prob": 50 }
+    ]
   }
 ]

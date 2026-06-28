@@ -5,21 +5,26 @@
 #include <list>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <vector>
 
 #include "avatar.h"
 #include "avatar_action.h"
+#include "ballistics.h"
 #include "calendar.h"
 #include "coordinates.h"
+#include "dispersion.h"
 #include "game.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "npc.h"
 #include "item.h"
+#include "options_helpers.h"
 #include "player.h"
 #include "player_helpers.h"
+#include "projectile.h"
 #include "ranged.h"
 #include "state_helpers.h"
 #include "vehicle.h"
@@ -98,6 +103,46 @@ TEST_CASE( "Aiming at a clearly visible target", "[ranged][aiming]" )
             CHECK( std::count( t.begin(), t.end(), &z2 ) == 0 );
         }
     }
+}
+
+TEST_CASE( "Projectile damage message visibility survives dirty target-ui cache",
+           "[ranged][aiming][issue-9669]" )
+{
+#if defined( CATA_SDL )
+    clear_all_state();
+    set_up_player_vision();
+    const auto no_projectile_animation = override_option( "ANIMATION_PROJECTILES", "false" );
+    auto &shooter = g->u;
+    arm_character( shooter, "glock_19" );
+
+    auto &here = get_map();
+    const auto target_pos = shooter_pos + point( 5, 0 );
+    for( const auto x : std::views::iota( 0, 6 ) ) {
+        const auto pos = shooter_pos + point( x, 0 );
+        here.ter_set( pos, ter_id( "t_dirt" ) );
+        here.furn_set( pos, furn_id( "f_null" ) );
+    }
+
+    auto &z = spawn_test_monster( "debug_mon", target_pos );
+    update_player_visibility_cache();
+    const auto starting_hp = z.get_hp();
+    REQUIRE( shooter.sees( z ) );
+
+    here.invalidate_map_cache( shooter_pos.z() );
+    REQUIRE( here.visibility_caches_dirty() );
+
+    auto test_proj = projectile {};
+    auto &gun = shooter.primary_weapon();
+    test_proj.speed = gun.gun_speed();
+    test_proj.range = gun.gun_range();
+    test_proj.impact = gun.gun_damage();
+    const auto attack = projectile_attack( test_proj, shooter_pos, target_pos, dispersion_sources {},
+                                           &shooter, &gun );
+
+    REQUIRE( attack.hit_critter == &z );
+    REQUIRE( z.get_hp() < starting_hp );
+    CHECK( shooter.sees( z ) );
+#endif // CATA_SDL
 }
 
 TEST_CASE( "Aiming at a loaded target on another z-level", "[ranged][aiming][zlevel]" )

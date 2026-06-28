@@ -3080,7 +3080,9 @@ std::vector<tripoint_bub_ms> sounds::get_footstep_markers()
     std::vector<tripoint_bub_ms> footsteps;
     footsteps.reserve( sound_markers.size() );
     for( const auto &mark : sound_markers ) {
-        footsteps.push_back( mark.first );
+        if( !g->u.sees( bub_to_abs( mark.first ) ) ) {
+            footsteps.push_back( mark.first );
+        }
     }
     return footsteps;
 }

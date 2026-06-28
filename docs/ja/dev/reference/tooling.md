@@ -20,7 +20,7 @@ astyle --options=.astylerc --recursive src/*.cpp,*.h tests/*.cpp,*.h tools/*.cpp
 CMake ビルドツリーを設定済みの場合は、以下を使用します。
 
 ```sh
-cmake --build build --target astyle
+cmake --build <build-dir> --target astyle
 ```
 
 ### pre-commit hook を介して astyle を呼び出す

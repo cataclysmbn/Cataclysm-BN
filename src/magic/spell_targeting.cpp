@@ -1,9 +1,9 @@
-#include "spell_targeting.h"
+#include "magic/spell_targeting.h"
 
 #include "character.h"
 #include "creature.h"
 #include "game.h"
-#include "magic.h"
+#include "magic/magic.h"
 
 namespace
 {

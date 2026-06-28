@@ -21,7 +21,7 @@ astyle --options=.astylerc --recursive src/*.cpp,*.h tests/*.cpp,*.h tools/*.cpp
 If you have configured a CMake build tree, use:
 
 ```sh
-cmake --build build --target astyle
+cmake --build <build-dir> --target astyle
 ```
 
 ### Invoking astyle via pre-commit hook

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "calendar.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "type_id.h"
 
 #include <map>

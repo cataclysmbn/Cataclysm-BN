@@ -2700,10 +2700,43 @@ void npc::move_to( const tripoint_abs_ms &pt, bool no_bashing, std::set<tripoint
         }
         if( critter->is_avatar() ) { say( "<let_me_pass>" ); }
         npc *np = dynamic_cast<npc *>( critter );
-        if( np != nullptr && !np->in_sleep_state() ) {
-            np->move_away_from( abs_pos(), true, nullptr );
+        if( !is_hallucination() && np != nullptr && !np->in_sleep_state() ) {
+            std::unique_ptr<std::set<tripoint_abs_ms>> newnomove;
+            std::set<tripoint_abs_ms> *realnomove;
+            if( nomove != nullptr ) {
+                realnomove = nomove;
+            } else {
+                // create the no-move list
+                newnomove = std::make_unique<std::set<tripoint_abs_ms>>();
+                realnomove = newnomove.get();
+            }
+            // other npcs should not try to move into this npc anymore,
+            // so infinite loop can be avoided.
+            realnomove->insert( abs_pos() );
+            // Don't spam player with messages over followers blunder into each other.
+            if( !np->is_following() ) {
+                say( "<let_me_pass>" );
+            }
+            np->move_away_from( abs_pos(), true, realnomove );
+            // if we moved NPC, readjust their path, so NPCs don't jostle each other out of their activity paths.
+            if( np->attitude == NPCATT_ACTIVITY ) {
+                std::vector<tripoint_abs_ms> activity_route = np->get_auto_move_route();
+                if( !activity_route.empty() && !np->has_destination_activity() ) {
+                    tripoint_abs_ms final_destination;
+                    if( destination_point ) {
+                        final_destination = *destination_point;
+                    } else {
+                        final_destination = activity_route.back();
+                    }
+                    np->update_path( final_destination );
+                }
+            }
         }
-        if( critter->abs_pos() == p ) { move_pause(); return; }
+
+        if( critter->abs_pos() == p ) {
+            move_pause();
+            return;
+        }
     }
 
     // Movement (no vehicle boarding off-bubble)
@@ -2756,6 +2789,18 @@ void npc::move_to( const tripoint_abs_ms &pt, bool no_bashing, std::set<tripoint
             mounted_creature->process_triggers();
             buf.creature_in_field( *mounted_creature );
             buf.creature_on_trap( *mounted_creature );
+        }
+        if( is_hallucination() ) {
+            return;
+        }
+        if( is_mounted() ) {
+            if( mounted_creature->abs_pos() != abs_pos() ) {
+                mounted_creature->setpos( abs_pos() );
+                mounted_creature->facing = facing;
+                mounted_creature->process_triggers();
+                buf.creature_in_field( *mounted_creature );
+                buf.creature_on_trap( *mounted_creature );
+            }
         }
         if( buf.has_flag( "UNSTABLE", abs_here ) ) {
             add_effect( effect_bouldering, 1_turns, bodypart_str_id::NULL_ID() );
@@ -3428,8 +3473,10 @@ void npc::drop_items( units::mass drop_weight, units::volume drop_volume, int mi
         // decreasing that variable is not important.
         int dWeight = units::to_gram<int>( drop_weight ) <= 0 ? -1 :
                       units::to_gram<int>( drop_weight - weight_dropped ) / 250;
-        int dVolume = units::to_milliliter<int>( drop_volume ) <= 0 ? -1 :
-                      units::to_milliliter<int>( drop_volume - volume_dropped ) / 250;
+        const auto d_volume = drop_volume <= 0_ml ? -1 : std::min(
+                                  units::to_milliliter( drop_volume - volume_dropped ) / 250,
+                                  static_cast<decltype( units::to_milliliter( drop_volume ) )>( INT_MAX ) );
+        const auto dVolume = static_cast<int>( d_volume );
         int index;
         // Which is more important, weight or volume?
         if( dWeight > dVolume ) {
@@ -3958,6 +4005,10 @@ bool npc::alt_attack()
 
 void npc::activate_item( int item_index )
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return;
+    }
     const int oldmoves = moves;
     item &it = i_at( item_index );
     if( it.is_tool() || it.is_food() ) {
@@ -4015,6 +4066,10 @@ void npc:: pretend_heal( Character &patient, item &used )
 
 void npc::heal_self()
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return;
+    }
     if( has_effect( effect_asthma ) ) {
         item *treatment = &null_item_reference();
         std::string iusage = "OXYGEN_BOTTLE";
@@ -4052,6 +4107,10 @@ void npc::heal_self()
 
 void npc::use_painkiller()
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return;
+    }
     // First, find the best painkiller for our pain level
     item *it = inv.most_appropriate_painkiller( get_pain() );
 
@@ -4156,6 +4215,10 @@ static float rate_food( const item &it, int want_nutr, int want_quench )
 
 bool npc::consume_food()
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return false;
+    }
     float best_weight = 0.0f;
     int index = -1;
     int want_hunger = std::max<int>( 0, ( max_stored_kcal() - get_stored_kcal() ) / 10 );
@@ -4853,6 +4916,10 @@ bool npc::complain()
 
 void npc::do_reload( item &it )
 {
+    if( is_hallucination() ) {
+        move_pause();
+        return;
+    }
     item_reload_option reload_opt = character_funcs::select_ammo( *this, it );
 
     if( !reload_opt ) {

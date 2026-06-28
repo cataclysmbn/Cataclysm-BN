@@ -648,7 +648,7 @@
     "name": { "str": "liquid cooling suit (on)", "str_pl": "liquid cooling suits (on)" },
     "description": "This a bodysuit with a number of heatsinks and heating coils tied to a liquid coolant system, and a built-in thermometer.  It is currently working to keep the entire body at an ideal temperature, use it to turn it off.",
     "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 1250 } ] } ]
     },
     "power_draw": 125000,
     "revert_to": "thermal_cooling_suit",
@@ -965,7 +965,7 @@
           "condition": "ACTIVE",
           "values": [
             { "value": "STRENGTH", "add": 2 },
-            { "value": "CLIMATE_CONTROL", "add": 750 },
+            { "value": "CLIMATE_CONTROL", "add": 1250 },
             { "value": "BLISTER_COUNT", "add": -20 }
           ]
         }
@@ -1099,7 +1099,7 @@
         {
           "has": "WORN",
           "condition": "ALWAYS",
-          "values": [ { "value": "ARMOR_PSI", "add": -25 }, { "value": "CLIMATE_CONTROL", "add": 750 } ]
+          "values": [ { "value": "ARMOR_PSI", "add": -25 }, { "value": "CLIMATE_CONTROL", "add": 1250 } ]
         }
       ]
     },

@@ -101,20 +101,24 @@
     "update_mapgen_id": "mx_military",
     "object": {
       "place_nested": [
+        { "chunks": [ [ "lost_squad_chunk_bodies", 100 ] ], "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 2, 6 ] },
         {
-          "chunks": [ [ "lost_squad_chunk_1", 90 ], [ "lost_squad_chunk_2", 5 ], [ "lost_squad_chunk_3", 5 ] ],
+          "chunks": [ [ "lost_squad_chunk_zombies", 50 ], [ "lost_squad_chunk_robot", 50 ] ],
           "x": [ 1, 22 ],
-          "y": [ 1, 22 ],
-          "repeat": [ 2, 6 ]
+          "y": [ 1, 22 ]
         }
       ],
-      "place_loot": [ { "group": "military", "chance": 50, "x": [ 1, 22 ], "y": [ 1, 22 ] } ]
+      "place_loot": [
+        { "group": "military", "chance": 50, "x": [ 1, 22 ], "y": [ 1, 22 ] },
+        { "group": "mass_grave_casings", "chance": 80, "repeat": 30, "x": [ 1, 22 ], "y": [ 1, 22 ] },
+        { "group": "military_standard_guns", "chance": 40, "repeat": 2, "x": [ 1, 22 ], "y": [ 1, 22 ] }
+      ]
     }
   },
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "lost_squad_chunk_1",
+    "nested_mapgen_id": "lost_squad_chunk_bodies",
     "object": {
       "mapgensize": [ 1, 1 ],
       "place_loot": [ { "group": "map_extra_corpse", "x": 0, "y": 0 } ],
@@ -124,14 +128,28 @@
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "lost_squad_chunk_2",
-    "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "group": "GROUP_MIL_STRONG", "chance": 100, "x": 0, "y": 0 } ] }
+    "nested_mapgen_id": "lost_squad_chunk_zombies",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "place_monster": [
+        { "group": "GROUP_MIL_STRONG", "chance": 100, "x": 0, "y": 0, "repeat": [ 1, 2 ] },
+        { "monster": "mon_zombie_supply_sergeant", "chance": 100, "x": 0, "y": 0 },
+        { "monster": "mon_feral_soldier", "chance": 100, "x": 0, "y": 0, "repeat": [ 1, 2 ] }
+      ]
+    }
   },
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "lost_squad_chunk_3",
-    "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "group": "GROUP_ROBOTS_MIL", "chance": 100, "x": 0, "y": 0 } ] }
+    "nested_mapgen_id": "lost_squad_chunk_robot",
+    "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "group": "GROUP_ROBOT_MX_MILITARY", "chance": 100, "x": 0, "y": 0 } ] }
+  },
+  {
+    "//": "unused until traps are correctly visible again",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lost_squad_chunk_portal",
+    "object": { "mapgensize": [ 1, 1 ], "set": [ { "point": "trap", "id": "tr_portal", "x": 0, "y": 0 } ] }
   },
   {
     "type": "mapgen",

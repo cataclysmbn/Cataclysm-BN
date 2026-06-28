@@ -3,8 +3,8 @@
 #include <sstream>
 
 #include "json.h"
-#include "magic.h"
-#include "magic_spell_effect_helpers.h"
+#include "magic/magic.h"
+#include "magic/magic_spell_effect_helpers.h"
 #include "npc.h"
 #include "player_helpers.h"
 #include "state_helpers.h"

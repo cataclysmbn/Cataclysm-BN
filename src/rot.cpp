@@ -7,10 +7,25 @@
 #include "veh_type.h"
 #include "vpart_position.h"
 
-namespace rot
+namespace rot::temp
 {
 
-auto temperature_flag_for_location( const map &m, const item &loc ) -> temperature_flag
+auto for_tile( const tile_flags &flags ) -> temperature_flag
+{
+    if( flags.root_cellar ) {
+        return temperature_flag::TEMP_ROOT_CELLAR;
+    }
+    if( flags.freezer ) {
+        return temperature_flag::TEMP_FREEZER;
+    }
+    if( flags.fridge ) {
+        return temperature_flag::TEMP_FRIDGE;
+    }
+
+    return temperature_flag::TEMP_NORMAL;
+}
+
+auto for_location( const map &m, const item &loc ) -> temperature_flag
 {
     if( !loc.has_position() ) {
         return temperature_flag::TEMP_NORMAL;
@@ -22,17 +37,12 @@ auto temperature_flag_for_location( const map &m, const item &loc ) -> temperatu
         case item_location_type::monster:
             return temperature_flag::TEMP_NORMAL;
         case item_location_type::map: {
-            auto pos = loc.bub_pos();
-            if( m.has_flag_furn( TFLAG_FREEZER, pos ) ) {
-                return temperature_flag::TEMP_FREEZER;
-            }
-            if( m.has_flag_furn( TFLAG_FRIDGE, pos ) ) {
-                return temperature_flag::TEMP_FRIDGE;
-            }
-            if( m.ter( pos ) == t_rootcellar ) {
-                return temperature_flag::TEMP_ROOT_CELLAR;
-            }
-            return temperature_flag::TEMP_NORMAL;
+            const auto pos = loc.bub_pos();
+            return for_tile( {
+                .root_cellar = m.ter( pos ) == t_rootcellar,
+                .fridge = m.has_flag_furn( TFLAG_FRIDGE, pos ),
+                .freezer = m.has_flag_furn( TFLAG_FREEZER, pos ),
+            } );
         }
         case item_location_type::vehicle: {
             auto pos = loc.bub_pos();
@@ -45,14 +55,14 @@ auto temperature_flag_for_location( const map &m, const item &loc ) -> temperatu
             if( cargo_index < 0 ) {
                 return temperature_flag::TEMP_NORMAL;
             }
-            return temperature_flag_for_part( veh->vehicle(), cargo_index );
+            return for_part( veh->vehicle(), cargo_index );
         }
         case item_location_type::container: {
             const auto parent = loc.parent_item();
             if( parent == nullptr ) {
                 return temperature_flag::TEMP_NORMAL;
             }
-            return temperature_flag_for_location( m, *parent );
+            return for_location( m, *parent );
         }
         default:
             debugmsg( "Invalid item location %d", static_cast<int>( loc.where() ) );
@@ -60,22 +70,24 @@ auto temperature_flag_for_location( const map &m, const item &loc ) -> temperatu
     }
 }
 
-auto temperature_flag_for_part( const vehicle &veh, size_t part_index ) -> temperature_flag
+auto for_part( const vehicle &veh, const size_t part_index,
+               const bool engine_heater_is_on ) -> temperature_flag
 {
-    const vehicle_part &part = veh.cpart( part_index );
-    const vpart_info &info = part.info();
-    if( !part.enabled ) {
-        return temperature_flag::TEMP_NORMAL;
-    }
-
-    if( info.has_flag( VPFLAG_FREEZER ) ) {
+    const auto &part = veh.cpart( part_index );
+    const auto &info = part.info();
+    if( part.enabled && info.has_flag( VPFLAG_FREEZER ) ) {
         return temperature_flag::TEMP_FREEZER;
     }
 
-    if( info.has_flag( VPFLAG_FRIDGE ) ) {
+    if( part.enabled && info.has_flag( VPFLAG_FRIDGE ) ) {
         return temperature_flag::TEMP_FRIDGE;
     }
+
+    if( engine_heater_is_on ) {
+        return temperature_flag::TEMP_HEATER;
+    }
+
     return temperature_flag::TEMP_NORMAL;
 }
 
-} // namespace rot
+} // namespace rot::temp

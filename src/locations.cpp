@@ -550,7 +550,7 @@ void vehicle_item_location::attach( detached_ptr<item> &&obj )
 auto vehicle_item_location::storage_temperature() const -> temperature_flag
 {
     const auto part_index = veh->get_part_id_hack( hack_id );
-    return part_index >= 0 ? rot::temperature_flag_for_part( *veh,
+    return part_index >= 0 ? rot::temp::for_part( *veh,
             part_index ) : temperature_flag::TEMP_NORMAL;
 }
 

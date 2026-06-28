@@ -224,6 +224,25 @@ auto vehicle_with_invalid_part_and_legacy_pivot_json() -> std::string
 
 } // namespace
 
+TEST_CASE( "vehicle_cargo_uses_full_part_volume", "[vehicle][cargo][volume]" )
+{
+    clear_map();
+
+    auto &here = get_map();
+    const auto vehicle_origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), vehicle_origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ),
+                                    true ) >= 0 );
+
+    const auto cargo_index = veh_ptr->install_part( tripoint_mnt_veh::zero(),
+                             vpart_id( "test_large_cargo_space" ), true );
+    REQUIRE( cargo_index >= 0 );
+
+    CHECK( veh_ptr->max_volume( cargo_index ) == 3000000_liter );
+    CHECK( veh_ptr->free_volume( cargo_index ) == 3000000_liter );
+}
+
 TEST_CASE( "vehicle deserialize accepts legacy two coordinate pivot", "[vehicle][save]" )
 {
     auto json = std::istringstream( vehicle_with_legacy_pivot_json() );
@@ -265,6 +284,32 @@ TEST_CASE( "detaching_vehicle_unboards_passengers" )
     REQUIRE( player_character.in_vehicle );
     here.detach_vehicle( veh_ptr );
     REQUIRE( !player_character.in_vehicle );
+}
+
+TEST_CASE( "detaching_opaque_vehicle_invalidates_transparency_cache", "[vehicle][map_cache]" )
+{
+    clear_all_state();
+    auto &here = get_map();
+    build_test_map( ter_id( "t_pavement" ) );
+
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_horizontal" ),
+                                    true ) >= 0 );
+    const auto board = veh_ptr->install_part( tripoint_mnt_veh::zero(),
+                       vpart_id( "clothboard_horizontal" ), true );
+    REQUIRE( board >= 0 );
+
+    const auto board_pos = veh_ptr->bub_part_location( board );
+    here.add_vehicle_to_cache( veh_ptr );
+    here.build_map_cache( board_pos.z(), true );
+    REQUIRE_FALSE( here.is_transparent( board_pos ) );
+
+    here.destroy_vehicle( veh_ptr );
+    here.build_map_cache( board_pos.z(), true );
+
+    CHECK( here.is_transparent( board_pos ) );
 }
 
 TEST_CASE( "destroy_grabbed_vehicle_section" )

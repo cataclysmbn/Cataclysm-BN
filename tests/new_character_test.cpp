@@ -29,6 +29,8 @@
 #include "string_id.h"
 #include "type_id.h"
 
+auto reset_scenario( avatar &u, const scenario *scen ) -> void;
+
 static std::ostream &operator<<( std::ostream &s, const std::vector<trait_id> &v )
 {
     for( const auto &e : v ) {
@@ -164,6 +166,38 @@ TEST_CASE( "default_character_respects_scenario_whitelist", "[new_character][sce
     ch.randomize( false, points, true );
 
     CHECK( g->scen->ident() == whitelisted_scenario );
+}
+
+TEST_CASE( "scenario_reset_preserves_or_defaults_hair_style", "[new_character][scenario][traits]" )
+{
+    clear_all_state();
+
+    const auto *target_scenario = &string_id<scenario>( "wilderness" ).obj();
+    const auto default_hair_style = trait_id( "hair_medium" );
+    const auto bald_hair_style = trait_id( "HAIR_BALD" );
+
+    auto ch = get_sanitized_player();
+    ch.male = true;
+    ch.prof = profession::generic();
+    g->scen = scenario::generic();
+
+    SECTION( "uses the default hair style when no hair style is selected" ) {
+        reset_scenario( ch, target_scenario );
+
+        CHECK( ch.has_trait( default_hair_style ) );
+        CHECK( !ch.has_trait( bald_hair_style ) );
+    }
+
+    SECTION( "preserves explicitly selected bald hair style" ) {
+        ch.set_mutation( bald_hair_style );
+
+        reset_scenario( ch, target_scenario );
+
+        CHECK( ch.has_trait( bald_hair_style ) );
+        CHECK( !ch.has_trait( default_hair_style ) );
+    }
+
+    g->scen = scenario::generic();
 }
 
 TEST_CASE( "starting_items", "[slow]" )

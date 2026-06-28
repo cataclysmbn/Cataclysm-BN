@@ -4,6 +4,8 @@
  * Measurement units (de-)serialization.
  */
 
+#include <cstdint>
+
 #include "json.h"
 #include "units_def.h"
 
@@ -46,7 +48,7 @@ T read_from_json_string( JsonIn &jsin, const std::vector<std::pair<std::string, 
     }
     T result{};
     do {
-        int sign_value = +1;
+        std::int64_t sign_value = +1;
         if( s[i] == '-' ) {
             sign_value = -1;
             ++i;
@@ -56,7 +58,7 @@ T read_from_json_string( JsonIn &jsin, const std::vector<std::pair<std::string, 
         if( i >= s.size() || !isdigit( s[i] ) ) {
             error( "invalid quantity string: number expected" );
         }
-        int value = 0;
+        std::int64_t value = 0;
         for( ; i < s.size() && isdigit( s[i] ); ++i ) {
             value = value * 10 + ( s[i] - '0' );
         }

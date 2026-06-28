@@ -1090,327 +1090,247 @@ TEST_CASE( "tool selection ui", "[crafting][ui]" )
     }
 }
 
+namespace
+{
+
+struct vehicle_craft_fixture_options {
+    vpart_id work_part;
+    bool install_battery = false;
+    bool install_freezer = false;
+};
+
+struct vehicle_craft_fixture {
+    avatar *you = nullptr;
+    map *here = nullptr;
+    vehicle *veh = nullptr;
+    int work_part = -1;
+    int freezer_part = -1;
+    tripoint_bub_ms vehicle_pos = tripoint_bub_ms::zero();
+    tripoint_bub_ms stand_pos = tripoint_bub_ms::zero();
+};
+
+auto old_world_craft_turn() -> time_point
+{
+    return calendar::start_of_cataclysm + 19_days + 12_hours;
+}
+
+auto setup_vehicle_rot_test_at( const time_point turn ) -> void
+{
+    clear_all_state();
+    calendar::turn = turn;
+    get_weather().temperature = 18_c;
+    get_weather().clear_temp_cache();
+    clear_avatar();
+}
+
+auto install_part_on_frame( vehicle &veh, const tripoint_mnt_veh &mount,
+                            const vpart_id &part ) -> int
+{
+    REQUIRE( veh.install_part( mount, vpart_id( "frame_vertical" ), true ) >= 0 );
+    const auto part_index = veh.install_part( mount, part, true );
+    REQUIRE( part_index >= 0 );
+    return part_index;
+}
+
+auto make_vehicle_craft_fixture( const vehicle_craft_fixture_options &opts ) ->
+vehicle_craft_fixture
+{
+    auto &you = get_avatar();
+    auto &here = get_map();
+    const auto vehicle_pos = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh = here.add_vehicle( vproto_id( "none" ), vehicle_pos, 0_degrees, 0, 0 );
+    REQUIRE( veh != nullptr );
+
+    const auto work_part = install_part_on_frame( *veh, tripoint_mnt_veh::zero(), opts.work_part );
+    auto freezer_part = -1;
+    if( opts.install_battery ) {
+        static_cast<void>( install_part_on_frame( *veh, tripoint_mnt_veh( 1, 0, 0 ),
+                           vpart_id( "storage_battery" ) ) );
+        veh->charge_battery( 5000 );
+    }
+    if( opts.install_freezer ) {
+        freezer_part = install_part_on_frame( *veh, tripoint_mnt_veh( -1, 0, 0 ),
+                                              vpart_id( "minifreezer" ) );
+        veh->part( freezer_part ).enabled = true;
+    }
+
+    here.add_vehicle_to_cache( veh );
+    here.build_map_cache( vehicle_pos.z(), true );
+    REQUIRE( here.veh_at( vehicle_pos ) );
+
+    const auto stand_pos = vehicle_pos + tripoint( 0, 1, 0 );
+    you.setpos( stand_pos );
+    REQUIRE_FALSE( here.veh_at( stand_pos ) );
+
+    return vehicle_craft_fixture{
+        .you = &you,
+        .here = &here,
+        .veh = veh,
+        .work_part = work_part,
+        .freezer_part = freezer_part,
+        .vehicle_pos = vehicle_pos,
+        .stand_pos = stand_pos,
+    };
+}
+
+auto add_fresh_meat_to_part( vehicle_craft_fixture &fixture, const int part ) -> void
+{
+    auto meat = item::spawn( "meat" );
+    REQUIRE( meat->goes_bad() );
+    INFO( "spawned meat bday_turn=" << to_turn<int>( meat->birthday() )
+          << " now=" << to_turn<int>( calendar::turn ) );
+    REQUIRE_FALSE( fixture.veh->add_item( part, std::move( meat ) ) );
+}
+
+auto add_fresh_meat_to_work_part( vehicle_craft_fixture &fixture ) -> void
+{
+    add_fresh_meat_to_part( fixture, fixture.work_part );
+}
+
+auto add_inventory_cooking_tools( avatar &you ) -> void
+{
+    you.i_add( item::spawn( "hotplate", calendar::turn, 20 ) );
+    you.i_add( item::spawn( "pot", calendar::turn ) );
+}
+
+auto keep_meat_frozen_then_move_to_work_part( vehicle_craft_fixture &fixture ) -> void
+{
+    REQUIRE( fixture.freezer_part >= 0 );
+    calendar::turn += 19_days;
+
+    auto frozen_items = fixture.veh->get_items( fixture.freezer_part );
+    REQUIRE( frozen_items.size() == 1 );
+    auto &frozen = frozen_items.only_item();
+    INFO( "POST-FREEZE meat bday_turn=" << to_turn<int>( frozen.birthday() )
+          << " relative_rot=" << frozen.get_relative_rot()
+          << " rot_turns=" << to_turns<int>( frozen.get_rot() )
+          << " now=" << to_turn<int>( calendar::turn ) );
+    REQUIRE( frozen.get_rot() == 0_turns );
+    REQUIRE( frozen.attempt_detach( [&fixture]( detached_ptr<item> &&it ) {
+        return fixture.veh->add_item( fixture.work_part, std::move( it ) );
+    } ) );
+
+    REQUIRE( fixture.veh->get_items( fixture.freezer_part ).empty() );
+    REQUIRE( fixture.veh->get_items( fixture.work_part ).size() == 1 );
+}
+
+auto find_cooked_meat_result( const vehicle_craft_fixture &fixture ) -> item *
+{
+    auto *result = static_cast<item *>( nullptr );
+    fixture.you->visit_items( [&result]( item * it ) {
+        if( it->typeId() == itype_id( "meat_cooked" ) ) {
+            result = it;
+            return VisitResponse::ABORT;
+        }
+        return VisitResponse::NEXT;
+    } );
+
+    for( const auto &p : { fixture.vehicle_pos, fixture.stand_pos } ) {
+        if( result != nullptr ) {
+            break;
+        }
+        for( auto *it : fixture.here->i_at( p ) ) {
+            if( it->typeId() == itype_id( "meat_cooked" ) ) {
+                result = it;
+                break;
+            }
+        }
+    }
+    if( result == nullptr ) {
+        for( auto *it : fixture.veh->get_items( fixture.work_part ) ) {
+            if( it->typeId() == itype_id( "meat_cooked" ) ) {
+                result = it;
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+auto craft_cooked_meat_at_vehicle( const vehicle_craft_fixture &fixture ) -> item *
+{
+    auto &you = *fixture.you;
+    const auto rid = recipe_id( "meat_cooked" );
+    const auto &rec = rid.obj();
+    you.set_skill_level( rec.skill_used, std::max( rec.difficulty, 2 ) );
+    you.learn_recipe( &rec );
+    set_time( calendar::turn );
+
+    you.invalidate_crafting_inventory();
+    REQUIRE( you.crafting_inventory().has_components( itype_id( "meat" ), 1 ) );
+
+    you.make_craft( rid, 1, fixture.vehicle_pos );
+    REQUIRE( you.activity );
+    auto guard = 0;
+    while( you.activity && you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
+        you.moves = 100;
+        you.activity->do_turn( you );
+        guard += 1;
+        REQUIRE( guard <= 100000 );
+    }
+
+    auto *result = find_cooked_meat_result( fixture );
+    REQUIRE( result != nullptr );
+    return result;
+}
+
+auto check_cooked_meat_is_fresh( item &result ) -> void
+{
+    INFO( "result relative_rot = " << result.get_relative_rot() );
+    INFO( "result rot turns = " << to_turns<int>( result.get_rot() ) );
+    CHECK_FALSE( result.rotten() );
+    CHECK( result.get_relative_rot() < 0.5 );
+}
+
+} // namespace
+
 // REPRO for issue #9254: cooking in a vehicle kitchen with a fresh vehicle-stored
 // component should NOT produce a rotten result.
 TEST_CASE( "vehicle kitchen craft preserves fresh component rot", "[crafting][rot]" )
 {
-    clear_all_state();
-    // Day 19, midday for crafting light.
-    calendar::turn = calendar::start_of_cataclysm + 19_days + 12_hours;
-    get_weather().temperature = 18_c;
-    get_weather().clear_temp_cache();
-
-    avatar &you = get_avatar();
-    clear_avatar();
-
-    auto &here = get_map();
-    const tripoint_bub_ms vpos( 60, 60, 0 );
-    auto *veh = here.add_vehicle( vproto_id( "none" ), vpos, 0_degrees, 0, 0 );
-    REQUIRE( veh != nullptr );
-    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ), true ) >= 0 );
-    const int kitchen = veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "kitchen_unit" ), true );
-    REQUIRE( kitchen >= 0 );
-    // Give the kitchen battery power for the hotplate (on an adjacent mount).
-    REQUIRE( veh->install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ),
-                                true ) >= 0 );
-    const int batt = veh->install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "storage_battery" ),
-                                        true );
-    REQUIRE( batt >= 0 );
-    veh->charge_battery( 5000 );
-    here.add_vehicle_to_cache( veh );
-    here.build_map_cache( vpos.z(), true );
-    REQUIRE( here.veh_at( vpos ) );
-
-    // Fresh meat (bday = now = day 19) into the kitchen cargo.
-    auto meat = item::spawn( "meat" );
-    REQUIRE( meat->goes_bad() );
-    INFO( "spawned meat bday_turn=" << to_turn<int>( meat->birthday() )
-          << " now=" << to_turn<int>( calendar::turn ) );
-    REQUIRE_FALSE( veh->add_item( kitchen, std::move( meat ) ) );
-
-    // Stand adjacent to the kitchen (kitchen is an OBSTACLE), like the real repro.
-    const tripoint_bub_ms stand = vpos + tripoint( 0, 1, 0 );
-    you.setpos( stand );
-    REQUIRE_FALSE( here.veh_at( stand ) );
-    REQUIRE( here.veh_at( vpos ) );
-
-    const recipe_id rid( "meat_cooked" );
-    const recipe &rec = rid.obj();
-    you.set_skill_level( rec.skill_used, std::max( rec.difficulty, 2 ) );
-    you.learn_recipe( &rec );
-    set_time( calendar::turn ); // refresh light at current (day 19 midday)
-
-    you.invalidate_crafting_inventory();
-    REQUIRE( you.crafting_inventory().has_components( itype_id( "meat" ), 1 ) );
-
-    you.make_craft( rid, 1, vpos );
-    REQUIRE( you.activity );
-    int guard = 0;
-    while( you.activity && you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
-        you.moves = 100;
-        you.activity->do_turn( you );
-        if( ++guard > 100000 ) {
-            break;
-        }
-    }
-
-    // Find the cooked meat result (inventory, ground, or vehicle).
-    item *result = nullptr;
-    you.visit_items( [&]( item * it ) {
-        if( it->typeId() == itype_id( "meat_cooked" ) ) {
-            result = it;
-            return VisitResponse::ABORT;
-        }
-        return VisitResponse::NEXT;
+    setup_vehicle_rot_test_at( old_world_craft_turn() );
+    auto fixture = make_vehicle_craft_fixture( {
+        .work_part = vpart_id( "kitchen_unit" ),
+        .install_battery = true,
     } );
-    for( const tripoint_bub_ms &p : { vpos, stand } ) {
-        if( result ) {
-            break;
-        }
-        for( item *&it : here.i_at( p ) ) {
-            if( it->typeId() == itype_id( "meat_cooked" ) ) {
-                result = it;
-            }
-        }
-    }
-    if( !result ) {
-        for( item *&it : veh->get_items( kitchen ) ) {
-            if( it->typeId() == itype_id( "meat_cooked" ) ) {
-                result = it;
-            }
-        }
-    }
-    REQUIRE( result != nullptr );
-    INFO( "result relative_rot = " << result->get_relative_rot() );
-    INFO( "result rot turns = " << to_turns<int>( result->get_rot() ) );
-    CHECK_FALSE( result->rotten() );
-    CHECK( result->get_relative_rot() < 0.5 );
+    add_fresh_meat_to_work_part( fixture );
+
+    auto &result = *craft_cooked_meat_at_vehicle( fixture );
+
+    check_cooked_meat_is_fresh( result );
 }
 
-// AUTOCLAVE variant of the BN9254 test above: map::use_charges' AUTOCLAVE branch has the
-// same phantom-injection hole as the FAUCET branch (for non-autoclave requests ftype stays
-// NULL_ID, drain returns 0, and the 0-charge phantom was pushed unconditionally). The
-// autoclave part is CARGO+AUTOCLAVE on one tile, so the phantom always precedes the real
-// component. Cooking tools come from the avatar's inventory so the autoclave is the only
-// vehicle feature in play; the vehicle deliberately has no battery.
+// AUTOCLAVE variant of the BN9254 test above: the autoclave part is
+// CARGO+AUTOCLAVE on one tile, so any phantom from map::use_charges precedes the
+// real component. Cooking tools come from inventory so the vehicle has no battery.
 TEST_CASE( "vehicle autoclave craft preserves fresh component rot", "[crafting][rot]" )
 {
-    clear_all_state();
-    // Day 19, midday for crafting light.
-    calendar::turn = calendar::start_of_cataclysm + 19_days + 12_hours;
-    get_weather().temperature = 18_c;
-    get_weather().clear_temp_cache();
-
-    avatar &you = get_avatar();
-    clear_avatar();
-
-    auto &here = get_map();
-    const tripoint_bub_ms vpos( 60, 60, 0 );
-    auto *veh = here.add_vehicle( vproto_id( "none" ), vpos, 0_degrees, 0, 0 );
-    REQUIRE( veh != nullptr );
-    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ), true ) >= 0 );
-    const int clave = veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "autoclave" ), true );
-    REQUIRE( clave >= 0 );
-    here.add_vehicle_to_cache( veh );
-    here.build_map_cache( vpos.z(), true );
-    REQUIRE( here.veh_at( vpos ) );
-
-    // Fresh meat (bday = now = day 19) into the autoclave's cargo space.
-    auto meat = item::spawn( "meat" );
-    REQUIRE( meat->goes_bad() );
-    INFO( "spawned meat bday_turn=" << to_turn<int>( meat->birthday() )
-          << " now=" << to_turn<int>( calendar::turn ) );
-    REQUIRE_FALSE( veh->add_item( clave, std::move( meat ) ) );
-
-    // Stand adjacent (the autoclave is an OBSTACLE); cooking tools live in inventory.
-    const tripoint_bub_ms stand = vpos + tripoint( 0, 1, 0 );
-    you.setpos( stand );
-    REQUIRE_FALSE( here.veh_at( stand ) );
-    you.i_add( item::spawn( "hotplate", calendar::turn, 20 ) );
-    you.i_add( item::spawn( "pot", calendar::turn ) );
-
-    const recipe_id rid( "meat_cooked" );
-    const recipe &rec = rid.obj();
-    you.set_skill_level( rec.skill_used, std::max( rec.difficulty, 2 ) );
-    you.learn_recipe( &rec );
-    set_time( calendar::turn ); // refresh light at current (day 19 midday)
-
-    you.invalidate_crafting_inventory();
-    REQUIRE( you.crafting_inventory().has_components( itype_id( "meat" ), 1 ) );
-
-    you.make_craft( rid, 1, vpos );
-    REQUIRE( you.activity );
-    int guard = 0;
-    while( you.activity && you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
-        you.moves = 100;
-        you.activity->do_turn( you );
-        if( ++guard > 100000 ) {
-            break;
-        }
-    }
-
-    // Find the cooked meat result (inventory, ground, or vehicle).
-    item *result = nullptr;
-    you.visit_items( [&]( item * it ) {
-        if( it->typeId() == itype_id( "meat_cooked" ) ) {
-            result = it;
-            return VisitResponse::ABORT;
-        }
-        return VisitResponse::NEXT;
+    setup_vehicle_rot_test_at( old_world_craft_turn() );
+    auto fixture = make_vehicle_craft_fixture( {
+        .work_part = vpart_id( "autoclave" ),
     } );
-    for( const tripoint_bub_ms &p : { vpos, stand } ) {
-        if( result ) {
-            break;
-        }
-        for( item *&it : here.i_at( p ) ) {
-            if( it->typeId() == itype_id( "meat_cooked" ) ) {
-                result = it;
-            }
-        }
-    }
-    if( !result ) {
-        for( item *&it : veh->get_items( clave ) ) {
-            if( it->typeId() == itype_id( "meat_cooked" ) ) {
-                result = it;
-            }
-        }
-    }
-    REQUIRE( result != nullptr );
-    INFO( "result relative_rot = " << result->get_relative_rot() );
-    INFO( "result rot turns = " << to_turns<int>( result->get_rot() ) );
-    CHECK_FALSE( result->rotten() );
-    CHECK( result->get_relative_rot() < 0.5 );
+    add_fresh_meat_to_work_part( fixture );
+    add_inventory_cooking_tools( *fixture.you );
+
+    auto &result = *craft_cooked_meat_at_vehicle( fixture );
+
+    check_cooked_meat_is_fresh( result );
 }
 
-// REPRO for issue #9440: cooking with a FROZEN ingredient (kept fresh for 19 days in a
-// powered vehicle freezer) in a vehicle kitchen should NOT produce a rotten result.
-// Frozen variant of the BN9254 test above: the FAUCET phantom-component mechanism
-// predicts the same poisoned result regardless of the real component's frozen state,
-// because the consumed front item is a counterfeit spawned at start_of_cataclysm.
-// NOTE: BN has no per-item FROZEN tag; "frozen" is positional (rot.cpp
-// temperature_flag_for_part -> TEMP_FREEZER while stored in an enabled freezer part).
-// The item is frozen for 19 days in a minifreezer, then moved into the kitchen cargo
-// on the craft turn (same-tile-as-faucet, deterministic consume order; no rot accrues
-// in the same turn).
+// REPRO for issue #9440: cooking with a frozen ingredient kept fresh for 19 days
+// in a powered vehicle freezer near a kitchen should NOT produce a rotten result.
 TEST_CASE( "vehicle kitchen craft preserves frozen component rot", "[crafting][rot]" )
 {
-    clear_all_state();
-    // Spawn at day 0 + 12h; freeze 19 days; craft at day 19, midday (same craft time
-    // as the BN9254 test).
-    calendar::turn = calendar::start_of_cataclysm + 12_hours;
-    get_weather().temperature = 18_c;
-    get_weather().clear_temp_cache();
-
-    avatar &you = get_avatar();
-    clear_avatar();
-
-    auto &here = get_map();
-    const tripoint_bub_ms vpos( 60, 60, 0 );
-    auto *veh = here.add_vehicle( vproto_id( "none" ), vpos, 0_degrees, 0, 0 );
-    REQUIRE( veh != nullptr );
-    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ), true ) >= 0 );
-    const int kitchen = veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "kitchen_unit" ), true );
-    REQUIRE( kitchen >= 0 );
-    // Battery power for the hotplate.
-    REQUIRE( veh->install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ),
-                                true ) >= 0 );
-    const int batt = veh->install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "storage_battery" ),
-                                        true );
-    REQUIRE( batt >= 0 );
-    // Working freezer on a third mount.
-    REQUIRE( veh->install_part( tripoint_mnt_veh( -1, 0, 0 ), vpart_id( "frame_vertical" ),
-                                true ) >= 0 );
-    const int freezer = veh->install_part( tripoint_mnt_veh( -1, 0, 0 ), vpart_id( "minifreezer" ),
-                                           true );
-    REQUIRE( freezer >= 0 );
-    veh->part( freezer ).enabled = true;
-    veh->charge_battery( 5000 );
-    here.add_vehicle_to_cache( veh );
-    here.build_map_cache( vpos.z(), true );
-    REQUIRE( here.veh_at( vpos ) );
-
-    // Fresh meat (bday = day 0 + 12h) into the powered freezer.
-    auto meat = item::spawn( "meat" );
-    REQUIRE( meat->goes_bad() );
-    INFO( "spawned meat bday_turn=" << to_turn<int>( meat->birthday() )
-          << " now=" << to_turn<int>( calendar::turn ) );
-    REQUIRE_FALSE( veh->add_item( freezer, std::move( meat ) ) );
-
-    // 19 days pass; the freezer keeps the meat at zero rot.
-    calendar::turn += 19_days;
-    {
-        auto frozen_items = veh->get_items( freezer );
-        REQUIRE( frozen_items.size() == 1 );
-        item &frozen = frozen_items.only_item();
-        // get_relative_rot() actualizes rot using the freezer's TEMP_FREEZER flag.
-        INFO( "POST-FREEZE meat bday_turn=" << to_turn<int>( frozen.birthday() )
-              << " relative_rot=" << frozen.get_relative_rot()
-              << " rot_turns=" << to_turns<int>( frozen.get_rot() )
-              << " now=" << to_turn<int>( calendar::turn ) );
-        REQUIRE( frozen.get_rot() == 0_turns );
-        // Move the still-frozen-fresh meat into the kitchen cargo on the craft turn.
-        frozen.attempt_detach( [&]( detached_ptr<item> &&it ) {
-            return veh->add_item( kitchen, std::move( it ) );
-        } );
-    }
-    REQUIRE( veh->get_items( freezer ).empty() );
-    REQUIRE( veh->get_items( kitchen ).size() == 1 );
-
-    // Stand adjacent to the kitchen (kitchen is an OBSTACLE), like the real repro.
-    const tripoint_bub_ms stand = vpos + tripoint( 0, 1, 0 );
-    you.setpos( stand );
-    REQUIRE_FALSE( here.veh_at( stand ) );
-    REQUIRE( here.veh_at( vpos ) );
-
-    const recipe_id rid( "meat_cooked" );
-    const recipe &rec = rid.obj();
-    you.set_skill_level( rec.skill_used, std::max( rec.difficulty, 2 ) );
-    you.learn_recipe( &rec );
-    set_time( calendar::turn ); // refresh light at current (day 19 midday)
-
-    you.invalidate_crafting_inventory();
-    REQUIRE( you.crafting_inventory().has_components( itype_id( "meat" ), 1 ) );
-
-    you.make_craft( rid, 1, vpos );
-    REQUIRE( you.activity );
-    int guard = 0;
-    while( you.activity && you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
-        you.moves = 100;
-        you.activity->do_turn( you );
-        if( ++guard > 100000 ) {
-            break;
-        }
-    }
-
-    // Find the cooked meat result (inventory, ground, or vehicle).
-    item *result = nullptr;
-    you.visit_items( [&]( item * it ) {
-        if( it->typeId() == itype_id( "meat_cooked" ) ) {
-            result = it;
-            return VisitResponse::ABORT;
-        }
-        return VisitResponse::NEXT;
+    setup_vehicle_rot_test_at( calendar::start_of_cataclysm + 12_hours );
+    auto fixture = make_vehicle_craft_fixture( {
+        .work_part = vpart_id( "kitchen_unit" ),
+        .install_battery = true,
+        .install_freezer = true,
     } );
-    for( const tripoint_bub_ms &p : { vpos, stand } ) {
-        if( result ) {
-            break;
-        }
-        for( item *&it : here.i_at( p ) ) {
-            if( it->typeId() == itype_id( "meat_cooked" ) ) {
-                result = it;
-            }
-        }
-    }
-    if( !result ) {
-        for( item *&it : veh->get_items( kitchen ) ) {
-            if( it->typeId() == itype_id( "meat_cooked" ) ) {
-                result = it;
-            }
-        }
-    }
-    REQUIRE( result != nullptr );
-    INFO( "result relative_rot = " << result->get_relative_rot() );
-    INFO( "result rot turns = " << to_turns<int>( result->get_rot() ) );
-    CHECK_FALSE( result->rotten() );
-    CHECK( result->get_relative_rot() < 0.5 );
+    add_fresh_meat_to_part( fixture, fixture.freezer_part );
+    keep_meat_frozen_then_move_to_work_part( fixture );
+
+    auto &result = *craft_cooked_meat_at_vehicle( fixture );
+
+    check_cooked_meat_is_fresh( result );
 }

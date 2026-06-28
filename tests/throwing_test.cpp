@@ -191,6 +191,8 @@ TEST_CASE( "flung creatures take damage when they slam into a wall", "[throwing]
     clear_all_state();
     clear_map();
 
+    g->u.setpos( tripoint_bub_ms{ 10, 10, 0 } );
+
     auto &here = g->m;
     g->u.setpos( tripoint_bub_ms{ 10, 10, 0 } );
 
@@ -202,7 +204,9 @@ TEST_CASE( "flung creatures take damage when they slam into a wall", "[throwing]
     here.ter_set( source, ter_id( "t_floor" ) );
     here.ter_set( target, ter_id( "t_floor" ) );
     here.ter_set( landing, ter_id( "t_floor" ) );
-    here.ter_set( wall, ter_id( "t_wall" ) );
+    here.ter_set( wall, ter_id( "t_test_indestructible_wall" ) );
+    REQUIRE( here.impassable( wall ) );
+    REQUIRE_FALSE( here.is_bashable( wall ) );
 
     auto &zombie = spawn_test_monster( "mon_zombie", target );
     const auto hp_before = zombie.get_hp();
@@ -219,18 +223,18 @@ TEST_CASE( "flung creatures stop at the reality bubble edge", "[throwing][bubble
     clear_map();
 
     auto &here = get_map();
-    g->u.setpos( tripoint_bub_ms{ 10, 10, 0 } );
-
     // Use the runtime bubble size (g_mapsize) rather than the compile-time MAPSIZE,
     // since the test map is never resized by game::setup() and retains the default
     // constructor size of MAPSIZE=35.
-    const auto bubble_edge_x = SEEX * g_mapsize - 1;
-    const auto bubble_mid_y = SEEY * g_mapsize / 2;
+    const auto bubble_mapsize = 2 * g_reality_bubble_size + 3;
+    const auto bubble_edge_x = SEEX * bubble_mapsize - 1;
+    const auto bubble_mid_y = SEEY * bubble_mapsize / 2;
     const auto start = tripoint_bub_ms{ bubble_edge_x - 1, bubble_mid_y, 0 };
     const auto edge = tripoint_bub_ms{ bubble_edge_x, bubble_mid_y, 0 };
 
     here.ter_set( start, ter_id( "t_floor" ) );
     here.ter_set( edge, ter_id( "t_floor" ) );
+    REQUIRE( is_in_reality_bubble_bounds( edge ) );
 
     auto &zombie = spawn_test_monster( "mon_zombie", start );
 

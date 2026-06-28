@@ -1,6 +1,6 @@
 #include "catch/catch.hpp"
 
-#include "magic.h"
+#include "magic/magic.h"
 #include "enchantments/enchantment.h"
 #include "map.h"
 #include "map_helpers.h"

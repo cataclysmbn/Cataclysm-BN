@@ -47,7 +47,7 @@
 #include "json.h"
 #include "line.h"
 #include "make_static.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "mapgen_functions.h"
 #include "martialarts.h"

@@ -1773,8 +1773,11 @@ void monster::execute_action( const monster_action_t &action )
         }
         case monster_action_kind::open_door: {
             ZoneScopedN( "mon_execute_open_door" );
-            did_something = !pacified && can_open_doors &&
-                            here.open_door( dest, !here.is_outside( abs_pos() ) );
+            if( !pacified && can_open_doors ) {
+                did_something = is_hallucination()
+                                ? move_to( dest, false, false, resolved_action.stagger_adjust )
+                                : here.open_door( dest, !here.is_outside( abs_pos() ) );
+            }
             break;
         }
         case monster_action_kind::bash: {
@@ -1931,7 +1934,7 @@ void monster::nursebot_operate( player *dragged_foe )
 // Values converted from tiles to dB
 void monster::footsteps( const tripoint_abs_ms &p )
 {
-    if( made_footstep ) {
+    if( is_hallucination() || made_footstep ) {
         return;
     }
     made_footstep = true;
@@ -2948,6 +2951,9 @@ int monster::turns_to_reach( const point_bub_ms &p )
 void monster::shove_vehicle( const tripoint_abs_ms &remote_destination,
                              const tripoint_abs_ms &nearby_destination )
 {
+    if( is_hallucination() ) {
+        return;
+    }
     if( this->has_flag( MF_PUSH_VEH ) ) {
         auto vp = get_mapbuffer().veh_at( nearby_destination );
         if( vp ) {

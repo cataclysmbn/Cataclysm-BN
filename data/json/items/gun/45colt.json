@@ -81,8 +81,8 @@
     "bashing": 12,
     "material": [ "steel", "plastic" ],
     "color": "light_gray",
-    "weight": "2070 g",
-    "volume": "1175 ml",
+    "weight": "820 g",
+    "volume": "750 ml",
     "clip_size": 5,
     "dispersion": 360,
     "valid_mod_locations": [
