@@ -14,6 +14,7 @@
 #include "units.h"
 #include "catalua_type_operators.h"
 
+class lua_itrap_actor;
 class Character;
 class Creature;
 class JsonObject;
@@ -264,6 +265,17 @@ struct trap {
          * Checks internal consistency (reference to other things like item ids etc.)
          */
         static void check_consistency();
+
+        const std::map<trap_id, std::unique_ptr<lua_itrap_actor>> &get_itrap_callbacks();
+
+        static void resolve_lua_callbacks(const std::map<trap_id, std::unique_ptr<lua_itrap_actor>> &actors);
+
+        // static void add_itrap_actor(const itype_id &id, std::unique_ptr<lua_itrap_actor> actor);
+
+        /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+         *  Mutable because it is wired post-construction through const factory references. */
+        mutable const lua_itrap_actor *lua_callbacks = nullptr;
+
         /*@}*/
         static size_t count();
 

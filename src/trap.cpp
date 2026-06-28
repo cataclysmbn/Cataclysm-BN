@@ -93,6 +93,26 @@ const std::vector<const trap *> &trap::get_funnels()
     return funnel_traps;
 }
 
+
+// static void trap::add_itrap_actor( const itype_id &id, std::unique_ptr<lua_itrap_actor> actor )
+// {
+//     // TODO Check out std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>>  !!!!
+//     itrap_actors[id] = std::move( actor );
+// }
+
+void trap::resolve_lua_callbacks(
+    const std::map<trap_id, std::unique_ptr<lua_itrap_actor>> &actors )
+{
+    for( const trap &mb : trap_factory.get_all() ) {
+        auto it = actors.find( mb.id );
+        if( it != actors.end() ) {
+            mb.lua_callbacks = it->second.get();
+        }
+    }
+}
+
+
+
 size_t trap::count()
 {
     return trap_factory.size();

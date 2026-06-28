@@ -3082,7 +3082,6 @@ void Item_factory::clear()
     istate_actors.clear();
     imelee_actors.clear();
     iranged_actors.clear();
-    itrap_actors.clear();
 
     frozen = false;
 }
@@ -3121,12 +3120,6 @@ void Item_factory::add_iranged_actor( const itype_id &id,
                                       std::unique_ptr<lua_iranged_actor> actor )
 {
     iranged_actors[id] = std::move( actor );
-}
-
-void Item_factory::add_itrap_actor( const itype_id &id,
-                                    std::unique_ptr<lua_itrap_actor> actor )
-{
-    itrap_actors[id] = std::move( actor );
 }
 
 void Item_factory::resolve_lua_callbacks()
@@ -3177,14 +3170,6 @@ void Item_factory::resolve_lua_callbacks()
             it->second.iranged_callbacks = actor.get();
         } else {
             debugmsg( "iranged_functions refers to unknown item type '%s'", id.c_str() );
-        }
-    }
-    for( auto &[id, actor] : itrap_actors ) {
-        auto it = m_templates.find( id );
-        if( it != m_templates.end() ) {
-            it->second.itrap_callbacks = actor.get();
-        } else {
-            debugmsg( "itrap_functions refers to unknown item type '%s'", id.c_str() );
         }
     }
 }

@@ -12,6 +12,9 @@
 #include <string_view>
 #include <vector>
 
+#include "iexamine.h"
+#include "trap.h"
+
 constexpr int LUA_API_VERSION = 2;
 
 #include "action_time_scale.h"
@@ -468,6 +471,7 @@ namespace
 // Populated during reg_lua_icallback_actors(), resolved during resolve_lua_bionic_and_mutation_callbacks().
 std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> bionic_callback_actors;
 std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> mutation_callback_actors;
+std::map<trap_id, std::unique_ptr<lua_itrap_actor>> lua_itrap_actors;
 } // namespace
 
 namespace
@@ -963,18 +967,25 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             std::string key;
             try {
                 key = ref.first.as<std::string>();
+                auto _trap_id = trap_id(key);
+                // if (!_trap_id.is_valid())
+                // {
+                //     throw std::runtime_error( string_format("trap_id %s does not exist", key) );
+                // }
                 if( ref.second.get_type() != sol::type::table ) {
                     throw std::runtime_error( "itrap entry must be a table" );
                 }
+
                 const auto tbl = ref.second.as<sol::table>();
                 auto on_trigger_aftermath = tbl.get_or<sol::function>( "on_trigger_aftermath", sol::lua_nil );
                 auto on_trigger = tbl.get_or<sol::function>( "on_trigger", sol::lua_nil );
                 auto can_trigger = tbl.get_or<sol::function>( "can_trigger", sol::lua_nil );
-                ifactory.add_itrap_actor(
-                    itype_id( key ),
-                    std::make_unique<lua_itrap_actor>(
-                        key, std::move( on_trigger_aftermath ), std::move( on_trigger ),
-                        std::move( can_trigger ) ) );
+                lua_itrap_actors[_trap_id] = std::make_unique<lua_itrap_actor>(
+                    key,
+                    std::move( on_trigger_aftermath ),
+                    std::move( on_trigger ),
+                    std::move( can_trigger )
+                );
             } catch( std::runtime_error &e ) {
                 debugmsg( "Failed to extract itrap_functions k='%s': %s", key, e.what() );
                 break;
@@ -988,6 +999,9 @@ void resolve_lua_bionic_and_mutation_callbacks()
 {
     bionic_data::resolve_lua_callbacks( bionic_callback_actors );
     mutation_branch::resolve_lua_callbacks( mutation_callback_actors );
+    // TODO Maybe move?
+    trap::resolve_lua_callbacks( lua_itrap_actors );
+
 }
 
 void run_on_every_x_hooks( lua_state &state )

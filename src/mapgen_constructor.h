@@ -24,7 +24,7 @@ class item;
 class mapbuffer;
 class mapgendata;
 class submap;
-class trap;
+struct trap;
 class vehicle;
 struct json_source_location;
 struct rl_vec2d;
