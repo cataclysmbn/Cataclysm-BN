@@ -28,6 +28,7 @@
 #include "options_helpers.h"
 #include "overmapbuffer.h"
 #include "state_helpers.h"
+#include "submap.h"
 #include "type_id.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -587,6 +588,39 @@ static void test_coord_translate( units::angle dir, const tripoint_mnt_veh &pivo
     tdir.advance( p.x() - pivot.x() );
     q.x() = tdir.dx() + tdir.ortho_dx( p.y() - pivot.y() );
     q.y() = tdir.dy() + tdir.ortho_dy( p.y() - pivot.y() );
+}
+
+TEST_CASE( "rotating_submap_with_vehicle_on_ramp_does_not_shift_vehicle_z",
+           "[vehicle][submap][mapgen][9249]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    build_test_map( ter_id( "t_pavement" ) );
+
+    const auto vehicle_origin = tripoint_bub_ms( SEEX * 2 + 1, SEEY * 2 + 1, 0 );
+    const auto projected_vehicle_origin = project_remain<coords::sm>( bub_to_abs( vehicle_origin ) );
+    auto rotated_vehicle = std::make_unique<vehicle>( vproto_id( "shopping_cart" ), 0, 0 );
+    rotated_vehicle->abs_sm_pos = projected_vehicle_origin.quotient_tripoint;
+    rotated_vehicle->sm_ms_pos = projected_vehicle_origin.remainder;
+    rotated_vehicle->attach();
+
+    const auto expected_position = rotated_vehicle->sm_ms_pos.rotate( 1, { SEEX, SEEY } );
+    const auto rotated_origin = abs_to_bub( project_combine( rotated_vehicle->abs_sm_pos,
+                                            expected_position ) );
+    here.ter_set( rotated_origin, ter_id( "t_ramp_up_high" ) );
+    here.invalidate_map_cache( rotated_origin.z() );
+    here.build_map_cache( rotated_origin.z(), true );
+    auto generated_submap = submap( rotated_vehicle->abs_sm_pos, here.get_bound_dimension() );
+    generated_submap.vehicles.push_back( std::move( rotated_vehicle ) );
+
+    const auto debug_msg = capture_debugmsg_during( [&]() { generated_submap.rotate( 1 ); } );
+
+    INFO( debug_msg );
+    CHECK( debug_msg.empty() );
+    REQUIRE( !generated_submap.vehicles.empty() );
+    CHECK( generated_submap.vehicles.front()->sm_ms_pos == expected_position );
+    CHECK( generated_submap.vehicles.front()->turn_dir == 90_degrees );
 }
 
 TEST_CASE( "check_vehicle_rotation_against_old", "[.]" )
