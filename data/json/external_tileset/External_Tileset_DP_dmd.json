@@ -73,7 +73,17 @@
             "fg": 63
           },
           { "id": [ "overlay_worn_exosuit_survivor", "overlay_worn_exosuit_survivor_on" ], "fg": 64 },
-          { "id": [ "improve_sights", "overlay_wielded_improve_sights", "offset_sights", "overlay_wielded_offset_sights", "offset_sights_mod", "overlay_wielded_offset_sights_mod" ], "fg": 65 },
+          {
+            "id": [
+              "improve_sights",
+              "overlay_wielded_improve_sights",
+              "offset_sights",
+              "overlay_wielded_offset_sights",
+              "offset_sights_mod",
+              "overlay_wielded_offset_sights_mod"
+            ],
+            "fg": 65
+          },
           { "id": [ "holo_sight", "overlay_wielded_holo_sight" ], "fg": 66 },
           { "id": [ "hybrid_sight", "overlay_wielded_hybrid_sight" ], "fg": 67 }
         ],

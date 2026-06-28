@@ -227,7 +227,12 @@
     "subtype": "collection",
     "entries": [
       {
-        "distribution": [ { "item": "hybrid_sight", "prob": 50 }, { "item": "holo_sight", "prob": 30 }, { "item": "acog_scope", "prob": 10 }, { "item": "red_dot_sight", "prob": 10 } ]
+        "distribution": [
+          { "item": "hybrid_sight", "prob": 50 },
+          { "item": "holo_sight", "prob": 30 },
+          { "item": "acog_scope", "prob": 10 },
+          { "item": "red_dot_sight", "prob": 10 }
+        ]
       },
       { "distribution": [ { "item": "grip", "prob": 70 }, { "item": "m203", "prob": 30 } ] },
       { "item": "offset_sights", "prob": 30 },

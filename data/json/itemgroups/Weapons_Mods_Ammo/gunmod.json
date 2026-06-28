@@ -121,10 +121,7 @@
     "id": "military_accessories_lmg",
     "subtype": "collection",
     "//": "Standard attachments for military lmgs and other heavy weapons.",
-    "entries": [
-      { "group": "military_accessories_sight", "prob": 75 },
-      { "item": "shoulder_strap", "prob": 75 }
-    ]
+    "entries": [ { "group": "military_accessories_sight", "prob": 75 }, { "item": "shoulder_strap", "prob": 75 } ]
   },
   {
     "type": "item_group",
@@ -146,7 +143,7 @@
       { "item": "holo_sight", "prob": 30 },
       { "item": "acog_scope", "prob": 30 },
       { "item": "rifle_scope", "prob": 10 },
-      { "item": "hybrid_sight", "prob": 20 } 
+      { "item": "hybrid_sight", "prob": 20 }
     ]
   },
   {
