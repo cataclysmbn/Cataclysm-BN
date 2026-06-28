@@ -86,7 +86,7 @@
     "id": "SpiritArmorBasic",
     "type": "ARMOR",
     "name": { "str": "Spirit Armor" },
-    "description": "A magical barrier made of the user's conviction, will and faith, draining inertia from anything that could harm the user. Physically protective, the magic works better against fast moving objects with low mass, like bullets, arrows, rain and alpha particles. Untill the spell expires or untill the armor is discarded your mana regeneration is used to maintain the effect. ",
+    "description": "A magical barrier made of the user's conviction, will and faith. Feels like super light, permeable bubble arround you and your equipement that hardens on impact. Most of it's power comes from draining inertia from anything that could harm. The magic works more efficiently on faster moving objects with low mass, like bullets, arrows, rain and alpha particles. It does not protect you from getting grabbed. Untill the spell expires or untill the armor is discarded your mana regeneration is used to maintain the effect.",
     "weight": "1 g",
     "volume": "1 ml",
     "price": "0 USD",
