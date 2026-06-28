@@ -158,6 +158,68 @@ local new_npc = map:place_npc(place_point, "thug")
 new_npc:erase()
 ```
 
+## Dimensions
+
+### Checking the current dimension
+
+```lua
+local map = gapi.get_map()
+
+print("game dimension:", gapi.get_current_dimension_id())
+print("map dimension:", map:get_bound_dimension())
+print("is far-away point out of bounds:", map:is_out_of_bounds(coords.tripoint_bub_ms(500, 500, 0)))
+```
+
+### Entering and re-entering a pocket dimension
+
+Use `world_type` and both bounds when creating a new pocket dimension. Optional
+`overmap_terrain` is a z/y/x table anchored at `bounds_min_omt`. Once it already
+exists, you can re-enter it with only `dimension_id` and `target_omt`.
+
+```lua
+home_dimension = "sky_island_home"
+overworld_pos = gapi.get_avatar():abs_pos()
+home_omt = overworld_pos:to_omt()
+local home_bounds_radius = coords.tripoint_rel_omt(2, 2, 0)
+
+local entered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = home_omt - home_bounds_radius,
+  bounds_max_omt = home_omt + home_bounds_radius,
+  boundary_terrain = "t_pd_border",
+  boundary_overmap_terrain = "pd_border",
+  overmap_terrain = {
+    {
+      { "forest", "field", "forest" },
+      { "field", "field", "field" },
+      { "forest", "field", "forest" },
+    },
+  },
+})
+
+if entered then
+  gapi.add_msg("Pocket home loaded.")
+end
+
+local reentered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+})
+```
+
+### Returning to the overworld
+
+Use the `overworld_pos` captured before entering to return to the exact map square.
+
+```lua
+gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = overworld_pos,
+})
+```
+
 ## Weather Hooks
 
 ### Reacting to weather changes

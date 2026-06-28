@@ -14609,6 +14609,12 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
 
     // For the overworld, effective_wt may still be null; guard all uses below.
     const struct world_type *target_type = effective_wt.is_valid() ? &effective_wt.obj() : nullptr;
+    auto effective_pd_info = pd_info;
+    if( !effective_pd_info ) {
+        if( auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+            effective_pd_info = it->second.pocket_info;
+        }
+    }
     map &here = get_map();
     avatar &player = get_avatar();
 
@@ -14668,11 +14674,11 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         const bool old_is_bounded = !old_dim_id.is_empty() &&
                                     loaded_dimensions_.count( old_dim_id ) &&
                                     loaded_dimensions_.at( old_dim_id ).pocket_info.has_value();
-        if( old_is_bounded && !pd_info.has_value() ) {
+        if( old_is_bounded && !effective_pd_info.has_value() ) {
             // Exiting a bounded pocket → remember it.
             kept_pocket_dimension_id_ = old_dim_id;
             add_msg( m_debug, "[DIM] Marking pocket '%s' as kept", old_dim_id.c_str() );
-        } else if( pd_info.has_value() ) {
+        } else if( effective_pd_info.has_value() ) {
             // Entering any pocket → forget the previous kept marker.
             kept_pocket_dimension_id_ = dimension_id();
         }
@@ -14712,7 +14718,7 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
             .id                  = dim_id,
             .world_type          = effective_wt,
             .display_name        = target_type ? target_type->name.translated() : dim_id.str(),
-            .pocket_info         = pd_info
+            .pocket_info         = effective_pd_info
         };
     }
 
@@ -14733,9 +14739,9 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
     // loadn() knows which submaps are out-of-bounds for bounded dimensions.
     here.get_mapbuffer().clear_pocket_info();
     get_overmapbuffer( current_dimension_id_ ).clear_pocket_info();
-    if( pd_info ) {
-        here.get_mapbuffer().set_pocket_info( *pd_info );
-        get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *pd_info );
+    if( effective_pd_info ) {
+        here.get_mapbuffer().set_pocket_info( *effective_pd_info );
+        get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *effective_pd_info );
     }
 
     // Invoke pre-load callback (e.g. place overmap specials) before loading submaps

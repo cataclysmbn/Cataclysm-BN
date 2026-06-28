@@ -26,14 +26,44 @@ function string_concat_matches(str, pat, sep, op)
   return table.concat(tbl, sep)
 end
 
-function get_meta_params(meta)
+---@class LuaDocParamSpec
+---@field name string
+---@field type? string
+
+---@param raw string
+---@return LuaDocParamSpec
+function parse_meta_param(raw)
+  local name, type_name = string.match(raw, "^([%w_]+%??)%s*:%s*(.+)$")
+  if name ~= nil then return { name = name, type = type_name } end
+  return { name = raw }
+end
+
+---@param meta string
+---@return LuaDocParamSpec[]
+function get_meta_param_specs(meta)
   local tbl = {}
   if meta == nil or meta == "" then return tbl end
   for line in string.gmatch(meta, "[^\r\n]+") do
-    local name = string.match(line, "^@param (.*)$")
-    if name ~= nil then table.insert(tbl, name) end
+    local raw = string.match(line, "^@param (.*)$")
+    if raw ~= nil then table.insert(tbl, parse_meta_param(raw)) end
   end
   return tbl
+end
+
+function get_meta_params(meta)
+  local tbl = {}
+  for _, param in ipairs(get_meta_param_specs(meta)) do
+    table.insert(tbl, param.name)
+  end
+  return tbl
+end
+
+---@param line string
+---@return boolean
+function is_luals_metadata_line(line)
+  return string.match(line, "^@alias%s+") ~= nil
+    or string.match(line, "^@class%s+") ~= nil
+    or string.match(line, "^@field%s+") ~= nil
 end
 
 ---@param a any

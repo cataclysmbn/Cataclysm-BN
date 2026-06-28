@@ -158,6 +158,68 @@ local new_npc = map:place_npc(place_point, "thug")
 new_npc:erase()
 ```
 
+## 차원
+
+### 현재 차원 확인하기
+
+```lua
+local map = gapi.get_map()
+
+print("game dimension:", gapi.get_current_dimension_id())
+print("map dimension:", map:get_bound_dimension())
+print("is far-away point out of bounds:", map:is_out_of_bounds(coords.tripoint_bub_ms(500, 500, 0)))
+```
+
+### 포켓 디멘션에 들어가고 다시 들어가기
+
+새 포켓 디멘션을 만들 때는 `world_type` 과 두 경계를 모두 넘겨야 합니다.
+선택 사항인 `overmap_terrain` 은 `bounds_min_omt` 기준 z/y/x 테이블입니다.
+이미 만들어진 뒤에는 `dimension_id` 와 `target_omt` 만으로 다시 들어갈 수 있습니다.
+
+```lua
+home_dimension = "sky_island_home"
+overworld_pos = gapi.get_avatar():abs_pos()
+home_omt = overworld_pos:to_omt()
+local home_bounds_radius = coords.tripoint_rel_omt(2, 2, 0)
+
+local entered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = home_omt - home_bounds_radius,
+  bounds_max_omt = home_omt + home_bounds_radius,
+  boundary_terrain = "t_pd_border",
+  boundary_overmap_terrain = "pd_border",
+  overmap_terrain = {
+    {
+      { "forest", "field", "forest" },
+      { "field", "field", "field" },
+      { "forest", "field", "forest" },
+    },
+  },
+})
+
+if entered then
+  gapi.add_msg("Pocket home loaded.")
+end
+
+local reentered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+})
+```
+
+### 오버월드로 돌아가기
+
+들어가기 전에 저장한 `overworld_pos` 를 사용하면 정확한 칸으로 돌아갑니다.
+
+```lua
+gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = overworld_pos,
+})
+```
+
 ## 날씨 훅
 
 ### 날씨 변화에 반응하기
