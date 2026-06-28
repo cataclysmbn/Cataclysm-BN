@@ -456,7 +456,15 @@ void map::cull_heard_sounds()
 // Fear nothing but the consequences of your own poor decisions.
 void map::flood_fill_sound( const sound_event soundevent, const int zlev )
 {
+    if( !inbounds_z( zlev ) ) {
+        return;
+    }
+
     const auto &map_cache = get_cache( zlev );
+    if( !map_cache.inbounds( soundevent.origin.xy() ) ) {
+        return;
+    }
+
     const auto &absorption_cache = map_cache.absorption_cache;
     const auto &outside_cache = map_cache.outside_cache;
     const auto &wall_present = map_cache.sound_wall_cache;
@@ -939,6 +947,9 @@ void map::batch_flood_fill_sounds()
                 // We still floodfill these sounds out later, just when we get to the right z-level.
                 continue;
             } else if( flooded_sound.volume < 7 ) {
+                num_invalidated_sounds++;
+                continue;
+            } else if( !map_cache.inbounds( flooded_sound.origin.xy() ) ) {
                 num_invalidated_sounds++;
                 continue;
             } else {
@@ -2172,6 +2183,14 @@ void sounds::process_sounds()
     // Monsters just go to the loudest thing they hear, so we run through that here.
     // Monsters ignore movement sounds from their own faction, a bit omiscient but it simplifies things.
     for( monster &critter : g->all_monsters() ) {
+        const auto &critterloc = critter.bub_pos();
+        if( !critter.is_simulated() || !map.inbounds( critterloc ) ) {
+            continue;
+        }
+        const auto &level_cache = map.get_cache_ref( critterloc.z() );
+        if( !level_cache.inbounds( critterloc.xy() ) ) {
+            continue;
+        }
 
         // Monster is deaf, skip. We also skip hallucinations and monsters not loaded in.
         if( !critter.can_hear() || critter.is_hallucination() || !map.inbounds( critter.bub_pos() ) ) {
@@ -2193,8 +2212,6 @@ void sounds::process_sounds()
         const bool player_ally = critter.friendly != 0;
         filter_key.horde_monster = !player_ally && !fears_enemy_sounds && filter_key.noise_angers;
         const auto &horde_monster = filter_key.horde_monster;
-
-        const auto &critterloc = critter.bub_pos();
 
         // Check to see if there is a matching filtered list, or if our list list empty.
         if( !filtered_sounds.contains( filter_key ) || filtered_sounds.empty() ) {
@@ -2232,7 +2249,6 @@ void sounds::process_sounds()
         const short critter_vol_threshold = std::max( ( critter_ambient_vol -
                                             ( goodhearing ? 2000 : 1000 ) ), 1000 );
 
-        const auto &level_cache = map.get_cache_ref( critterloc.z() );
         const short critter_t_absorb = level_cache.absorption_cache[level_cache.idx( critterloc.x(),
                                                         critterloc.y() )];
         const bool critter_indoors = !level_cache.outside_cache[level_cache.idx( critterloc.x(),

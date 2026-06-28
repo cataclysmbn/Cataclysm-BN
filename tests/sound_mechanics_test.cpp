@@ -2,10 +2,15 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 #include <unordered_set>
 
+#include "debug.h"
 #include "map.h"
+#include "map_helpers.h"
+#include "monster.h"
 #include "sounds.h"
+#include "state_helpers.h"
 
 namespace
 {
@@ -60,4 +65,58 @@ TEST_CASE( "sound_filter_key_distinguishes_noise_fear", "[sound]" )
     filter_keys.insert( fears_noise );
 
     CHECK( filter_keys.size() == 2 );
+}
+
+TEST_CASE( "flood_fill_sound_skips_out_of_cache_origins", "[sound][cache]" )
+{
+    clear_all_state();
+    auto &here = get_map();
+    const auto &level_cache = here.get_cache_ref( 0 );
+    const auto invalid_origin = tripoint_bub_ms( -1, 60, 0 );
+    auto out_of_cache_sound = sound_event{
+        .volume = 80,
+        .origin = invalid_origin,
+        .category = sounds::sound_t::alarm,
+        .description = "out of cache regression sound"
+    };
+
+    REQUIRE_FALSE( level_cache.inbounds( invalid_origin.xy() ) );
+
+    const auto debug_msg = capture_debugmsg_during( [&]() {
+        here.flood_fill_sound( out_of_cache_sound, invalid_origin.z() );
+    } );
+
+    CHECK( debug_msg.empty() );
+    CHECK( here.m_sound_cache.sound_instances.empty() );
+}
+
+TEST_CASE( "process_sounds_skips_out_of_cache_monsters", "[sound][cache]" )
+{
+    clear_all_state();
+    auto &here = get_map();
+    const auto &level_cache = here.get_cache_ref( 0 );
+    auto source_sound = sound_event{
+        .volume = 80,
+        .origin = tripoint_bub_ms( 60, 60, 0 ),
+        .category = sounds::sound_t::alarm,
+        .description = "monster cache regression sound"
+    };
+    auto cache = sound_instance_cache( source_sound, get_flood_dist_enum( source_sound.volume ),
+                                       get_flood_radius_by_enum( get_flood_dist_enum( source_sound.volume ) ) );
+    cache.terrain_sound_absorbtion_at_source = level_cache.absorption_cache[level_cache.idx(
+                source_sound.origin.x(), source_sound.origin.y() )];
+    here.m_sound_cache.sound_instances.push_back( cache );
+
+    auto &critter = spawn_test_monster( "mon_zombie", tripoint_bub_ms( 60, 61, 0 ) );
+    const auto invalid_critter_pos = tripoint_bub_ms( level_cache.cache_x, 60, 0 );
+    critter.setpos( invalid_critter_pos );
+
+    REQUIRE_FALSE( level_cache.inbounds( invalid_critter_pos.xy() ) );
+
+    const auto debug_msg = capture_debugmsg_during( [&]() {
+        sounds::process_sounds();
+    } );
+
+    CHECK( debug_msg.empty() );
+    CHECK( here.m_sound_cache.sound_instances.front().heard_by_monsters );
 }
