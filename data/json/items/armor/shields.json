@@ -121,6 +121,21 @@
     "flags": [ "OVERSIZE", "BELTED", "RESTRICT_HANDS", "STURDY", "BLOCK_WHILE_WORN", "POWERARMOR_COMPATIBLE" ]
   },
   {
+    "id": "shield_kevlar",
+    "copy-from": "shield_leather",
+    "type": "ARMOR",
+    "name": { "str": "kevlar-lined shield" },
+    "description": "A simple shield made of wood, faced with a layer of kevlar to improve ballistic resistance.",
+    "weight": "3300 g",
+    "price": "100 USD",
+    "price_postapoc": "10 USD",
+    "//": "Rigid kevlar so it's weighted more towards ballistic resistance, and so it can't be repaired by sewing.",
+    "material": [ "wood", "kevlar_rigid" ],
+    "looks_like": "shield_leather",
+    "color": "green",
+    "encumbrance": 18
+  },
+  {
     "id": "shield_banded",
     "type": "ARMOR",
     "name": { "str": "banded shield" },
@@ -156,6 +171,20 @@
     "to_hit": -2,
     "bashing": 10,
     "encumbrance": 26,
+    "techniques": [ "WBLOCK_3" ]
+  },
+  {
+    "id": "shield_kevlar_large",
+    "copy-from": "shield_kevlar",
+    "looks_like": "shield_leather_large",
+    "type": "ARMOR",
+    "name": { "str": "large kevlar-lined shield" },
+    "description": "A large shield made of wood, faced with a layer of kevlar to improve ballistic resistance.",
+    "volume": "5 L",
+    "weight": "5300 g",
+    "price": "120 USD",
+    "price_postapoc": "12 USD",
+    "encumbrance": 28,
     "techniques": [ "WBLOCK_3" ]
   },
   {
