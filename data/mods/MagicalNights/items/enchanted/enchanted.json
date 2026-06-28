@@ -105,10 +105,7 @@
         {
           "has": "WORN",
           "condition": "ALWAYS",
-          "values": [
-            { "value": "ARMOR_BULLET", "add":-3, "multiply": -0.5 },
-            { "value": "MANA_REGEN", "multiply": -0.99 },
-          ]
+          "values": [ { "value": "ARMOR_BULLET", "add": -3, "multiply": -0.5 }, { "value": "MANA_REGEN", "multiply": -0.99 } ]
         }
       ]
     },
