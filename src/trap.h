@@ -270,9 +270,7 @@ struct trap {
 
         static void resolve_lua_callbacks( const std::map<std::string, std::unique_ptr<lua_itrap_actor>>
                                            &actors );
-
-        // static void add_itrap_actor(const itype_id &id, std::unique_ptr<lua_itrap_actor> actor);
-
+    
         /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
          *  Mutable because it is wired post-construction through const factory references. */
         mutable const lua_itrap_actor *lua_callbacks = nullptr;

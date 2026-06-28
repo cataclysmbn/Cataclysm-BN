@@ -2676,7 +2676,6 @@ class item : public location_visitable<item>, public game_object<item>
         void add_npc_kill( std::string );
         void show_kill_list();
         int kill_count();
-
 };
 
 bool item_compare_by_charges( const item &left, const item &right );
