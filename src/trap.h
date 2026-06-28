@@ -268,7 +268,8 @@ struct trap {
 
         const std::map<trap_id, std::unique_ptr<lua_itrap_actor>> &get_itrap_callbacks();
 
-        static void resolve_lua_callbacks(const std::map<std::string, std::unique_ptr<lua_itrap_actor>> &actors);
+        static void resolve_lua_callbacks( const std::map<std::string, std::unique_ptr<lua_itrap_actor>>
+                                           &actors );
 
         // static void add_itrap_actor(const itype_id &id, std::unique_ptr<lua_itrap_actor> actor);
 

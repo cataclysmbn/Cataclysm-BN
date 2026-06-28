@@ -980,11 +980,11 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                 auto on_trigger = tbl.get_or<sol::function>( "on_trigger", sol::lua_nil );
                 auto can_trigger = tbl.get_or<sol::function>( "can_trigger", sol::lua_nil );
                 lua_itrap_actors[key] = std::make_unique<lua_itrap_actor>(
-                    key,
-                    std::move( on_trigger_aftermath ),
-                    std::move( on_trigger ),
-                    std::move( can_trigger )
-                );
+                                            key,
+                                            std::move( on_trigger_aftermath ),
+                                            std::move( on_trigger ),
+                                            std::move( can_trigger )
+                                        );
             } catch( std::runtime_error &e ) {
                 debugmsg( "Failed to extract itrap_functions k='%s': %s", key, e.what() );
                 break;
