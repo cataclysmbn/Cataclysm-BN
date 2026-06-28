@@ -120,7 +120,8 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
                 double coverage = sigdist_to_coverage( sh.distance_at( child.abs_pos().raw() ) );
                 if( coverage > 0.0 && !here.obstructed_by_vehicle_rotation( p, child.abs_pos() ) &&
                     !closed.contains( child.abs_pos() ) &&
-                    ( !open.contains( child.abs_pos() ) || open.at( child.abs_pos() ).parent_coverage < current_coverage ) ) {
+                    ( !open.contains( child.abs_pos() ) ||
+                      open.at( child.abs_pos() ).parent_coverage < current_coverage ) ) {
                     open[child.abs_pos()] = aoe_flood_node( p, current_coverage );
                     queue.emplace( child.abs_pos(), trig_dist_squared( origin, child.abs_pos() ) );
                 }
@@ -225,7 +226,8 @@ std::map<tripoint_abs_ms, double> expected_coverage( const shape &sh, mapbuffer 
                 double coverage = sigdist_to_coverage( sh.distance_at( child.abs_pos().raw() ) );
                 if( coverage > 0.0 && !here.obstructed_by_vehicle_rotation( p, child.abs_pos() ) &&
                     !closed.contains( child.abs_pos() ) &&
-                    ( !open.contains( child.abs_pos() ) || open.at( child.abs_pos() ).parent_coverage < current_coverage ) ) {
+                    ( !open.contains( child.abs_pos() ) ||
+                      open.at( child.abs_pos() ).parent_coverage < current_coverage ) ) {
                     open[child.abs_pos()] = aoe_flood_node( p, current_coverage );
                     queue.emplace( child.abs_pos(), trig_dist_squared( origin, child.abs_pos() ) );
                 }

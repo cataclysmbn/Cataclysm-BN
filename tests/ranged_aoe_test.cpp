@@ -143,7 +143,8 @@ static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
     p.impact = damage_instance();
     p.impact.add_damage( DT_STAB, 10 );
     auto cov = ranged::expected_coverage( *s, get_map().get_mapbuffer(), 200 );
-    const auto reachable_shape_points = reachable_shape_points_no_obstacle( *s, get_map().get_mapbuffer() );
+    const auto reachable_shape_points = reachable_shape_points_no_obstacle( *s,
+                                        get_map().get_mapbuffer() );
 
     inclusive_cuboid<tripoint> bb = s->bounding_box();
     REQUIRE( bb.p_min != bb.p_max );

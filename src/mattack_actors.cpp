@@ -605,7 +605,7 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint_abs_
     auto &here = z.get_mapbuffer();
     bool found = false;
     tripoint_abs_ms aim_at;
-    here.for_each_vehicle( [&]( vehicle &v ) {
+    here.for_each_vehicle( [&]( vehicle & v ) {
         if( !is_different_plane( v, z ) && v.velocity != 0 ) {
             bool found_controls = false;
             for( const vpart_reference &vp : v.get_avail_parts( "CONTROLS" ) ) {

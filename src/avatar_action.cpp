@@ -83,7 +83,8 @@ auto try_shove_grabbed_vehicle( avatar &you ) -> bool
         return false;
     }
 
-    auto grabbed_vehicle_target = vehicle_grab_target_at( you.get_mapbuffer(), you.abs_pos() + you.grab_point );
+    auto grabbed_vehicle_target = vehicle_grab_target_at( you.get_mapbuffer(),
+                                  you.abs_pos() + you.grab_point );
     if( !grabbed_vehicle_target ) {
         add_msg( m_info, _( "No vehicle at grabbed point." ) );
         you.grab( OBJECT_NONE );
@@ -403,7 +404,8 @@ bool avatar_action::move( avatar &you, const tripoint_rel_ms &d )
     }
 
     if( here.has_flag( TFLAG_MINEABLE, dest_loc ) && g->mostseen == 0 &&
-        auto_mine && !here.veh_at( dest_loc ) && !you.is_underwater() && !you.has_effect( effect_stunned ) &&
+        auto_mine && !here.veh_at( dest_loc ) && !you.is_underwater() &&
+        !you.has_effect( effect_stunned ) &&
         !is_riding ) {
         item &digging_tool = you.primary_weapon();
         if( digging_tool.has_flag( flag_DIG_TOOL ) ) {
@@ -527,8 +529,8 @@ bool avatar_action::move( avatar &you, const tripoint_rel_ms &d )
     const auto &tr1 = here.get_trap( you.abs_pos() );
     const auto &tr2 = here.get_trap( dest_loc );
     const auto skip_pit_escape = pit_trap_helpers::skips_pit_escape_check(
-                                 tr1 ? tr1->obj() : trap{},
-                                 tr2 ? tr2->obj() : trap{} );
+                                     tr1 ? tr1->obj() : trap{},
+                                     tr2 ? tr2->obj() : trap{} );
     if( !you.move_effects( attacking, skip_pit_escape ) ) {
         you.moves -= 100;
         return false;

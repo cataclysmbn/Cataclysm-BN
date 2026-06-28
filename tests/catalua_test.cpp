@@ -960,7 +960,8 @@ TEST_CASE( "lua_map_vehicle_replacement", "[lua]" )
     const auto origin = tripoint_abs_ms( 60, 60, 0 );
     const auto original_facing = -90_degrees;
     const auto overridden_facing = 180_degrees;
-    auto *vehicle_ptr = here.add_vehicle( vproto_id( "bicycle" ), abs_to_bub( origin ), original_facing, 0, 0 );
+    auto *vehicle_ptr = here.add_vehicle( vproto_id( "bicycle" ), abs_to_bub( origin ), original_facing,
+                                          0, 0 );
     REQUIRE( vehicle_ptr != nullptr );
 
     sol::state lua = make_lua_state();

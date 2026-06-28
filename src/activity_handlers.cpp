@@ -1881,7 +1881,7 @@ void activity_handlers::pickaxe_do_turn( player_activity *act, player *p )
 {
     sfx::play_activity_sound( "tool", "pickaxe",
                               sfx::get_heard_volume( abs_to_bub(
-                              act->placement ), 80 ) );
+                                          act->placement ), 80 ) );
     // each turn is too much
     if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a Pickaxe at work!
@@ -3232,7 +3232,7 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
         auto &pf_buffer = MAPBUFFER_REGISTRY.get( p->get_dimension() );
         const auto pair = p->get_pathfinding_pair();
         auto route = Pathfinding::route( pf_buffer, p->abs_pos(), bub_to_abs( centre_sub ),
-                                             pair.first, pair.second );
+                                         pair.first, pair.second );
         if( !route.empty() ) {
             const activity_id act_travel = ACT_TRAVELLING;
             p->set_destination( route, std::make_unique<player_activity>( act_travel ) );
@@ -4481,7 +4481,7 @@ static void perform_zone_activity_turn( player *p,
         auto &pf_buffer = MAPBUFFER_REGISTRY.get( p->get_dimension() );
         const auto pair = p->get_pathfinding_pair();
         auto route = Pathfinding::route( pf_buffer, p->abs_pos(), bub_to_abs( tile_loc ),
-                                             pair.first, pair.second );
+                                         pair.first, pair.second );
         if( route.size() > 1 ) {
             route.pop_back();
             p->set_destination( route, p->remove_activity() );

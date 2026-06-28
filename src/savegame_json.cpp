@@ -1669,7 +1669,7 @@ void npc::load( const JsonObject &data )
     } else if( activity ) {
         current_activity_id = activity->id();
     }
-    
+
     if( data.has_member( "pulp_locationx" ) ) {
         tripoint_bub_ms loc;
         pulp_position.emplace();
@@ -1683,7 +1683,7 @@ void npc::load( const JsonObject &data )
             pulp_position.emplace();
             pulp_position = bub_to_abs( loc );
         }
-    } else if ( data.has_member( "pulp_location" ) ) {
+    } else if( data.has_member( "pulp_location" ) ) {
         // absolute migration
         std::optional<tripoint_bub_ms> loc;
         loc.emplace();

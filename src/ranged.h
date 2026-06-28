@@ -120,7 +120,7 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
                             item *source_weapon, const vehicle *in_veh = nullptr );
 
 std::map<tripoint_abs_ms, double> expected_coverage( const shape &sh, mapbuffer &here,
-                                                     int bash_power );
+        int bash_power );
 
 void draw_cone_aoe( const tripoint_bub_ms &origin, const std::map<tripoint_bub_ms, double> &aoe );
 

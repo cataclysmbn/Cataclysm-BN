@@ -389,7 +389,7 @@ bool Creature::sees( const Creature &critter ) const
     auto visible = []( const Character * ch ) {
         return ch == nullptr || !ch->is_invisible();
     };
-    
+
     auto &here = get_mapbuffer();
     auto &map = get_map();
     const bool in_bubble = get_dimension() == map.get_bound_dimension() &&
@@ -411,7 +411,7 @@ bool Creature::sees( const Creature &critter ) const
     } else if( ( wanted_range > 1 && critter.digging() ) ||
                ( critter.has_flag( MF_NIGHT_INVISIBILITY ) &&
                  in_bubble ? map.light_at( critter.bub_pos() ) <= lit_level::LOW :
-                             here.cheap_light_at( critter.abs_pos() ) <= LIGHT_AMBIENT_LOW ) ||
+                 here.cheap_light_at( critter.abs_pos() ) <= LIGHT_AMBIENT_LOW ) ||
                ( target && critter.is_underwater() && !is_underwater() && target->is_divable() ) ||
                ( target && target->has_flag_ter_or_furn( TFLAG_HIDE_PLACE ) &&
                  !( std::abs( bub_pos().x() - critter.bub_pos().x() ) <= 1 &&
@@ -484,7 +484,7 @@ bool Creature::sees( const tripoint_abs_ms &t, bool /*is_avatar*/, int range_mod
         return false;
     }
     const auto ambient = in_bubble ? get_map().ambient_light_at( abs_to_bub( t ) ) :
-                                     here.cheap_light_at( t );
+                         here.cheap_light_at( t );
     const auto range_cur = sight_range( ambient );
     const auto range_min = std::min( range_cur, range_max );
     const auto natural_light = g->natural_light_level( t.z() );
@@ -499,7 +499,7 @@ bool Creature::sees( const tripoint_abs_ms &t, bool /*is_avatar*/, int range_mod
             range = std::min( range, range_mod );
         }
         return in_bubble ? get_map().sees( bub_pos(), abs_to_bub( t ), range ) :
-                           here.sees( abs_pos(), t, range );
+               here.sees( abs_pos(), t, range );
     } else {
         return false;
     }

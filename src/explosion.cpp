@@ -1154,7 +1154,8 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
                     const auto bash_str = static_cast<int>( std::lerp( std::sqrt( total_dmg ), total_dmg, 0.6 ) );
                     const auto bash_result = here.bash( new_position, bash_str );
 
-                    if( bash_result.did_bash && bash_result.success && get_avatar().sees( bub_to_abs( new_position ) ) ) {
+                    if( bash_result.did_bash && bash_result.success &&
+                        get_avatar().sees( bub_to_abs( new_position ) ) ) {
                         //~ %1$s: item name
                         add_msg( _( "%1$s flies and smashes into something!" ), target->tname() );
                     }

@@ -2395,7 +2395,7 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                 auto &pf_buffer = MAPBUFFER_REGISTRY.get( p.get_dimension() );
                 const auto pair = p.get_pathfinding_pair();
                 auto route = Pathfinding::route( pf_buffer, p.abs_pos(), bub_to_abs( src_loc ),
-                                                     pair.first, pair.second );
+                                                 pair.first, pair.second );
                 stage = DO;
                 p.set_destination( route, p.remove_activity() );
                 return;
@@ -2431,7 +2431,7 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                     auto &pf_buffer2 = MAPBUFFER_REGISTRY.get( p.get_dimension() );
                     const auto pair2 = p.get_pathfinding_pair();
                     route = Pathfinding::route( pf_buffer2, p.abs_pos(), bub_to_abs( src_loc ),
-                                                          pair2.first, pair2.second );
+                                                pair2.first, pair2.second );
                 } else {
                     // impassable source tile (locker etc.),
                     // get route to nearest adjacent tile instead
@@ -3188,7 +3188,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                     for( const auto &point_elem : here.points_in_radius( src_loc, PICKUP_RANGE - 1 ) ) {
                         // we don't want to place the components where they could interfere with our ( or someone else's ) construction spots
                         if( !p.sees( bub_to_abs( point_elem ) ) || ( std::ranges::find( local_src_set,
-                                                       point_elem ) != local_src_set.end() ) || !here.can_put_items_ter_furn( point_elem ) ) {
+                                point_elem ) != local_src_set.end() ) || !here.can_put_items_ter_furn( point_elem ) ) {
                             continue;
                         }
                         candidates.push_back( point_elem );

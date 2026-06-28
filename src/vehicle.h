@@ -1798,7 +1798,7 @@ class vehicle
         auto set_dimension( const dimension_id &dim_id ) -> void {
             dimension_id_ = dim_id;
         }
-        auto get_mapbuffer() const -> mapbuffer & {
+        auto get_mapbuffer() const -> mapbuffer& {
             return MAPBUFFER_REGISTRY.get( get_dimension() );
         }
         // direction, to which vehicle is turning (player control). will rotate frame on next move

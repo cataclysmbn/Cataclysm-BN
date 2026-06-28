@@ -101,7 +101,8 @@ TEST_CASE( "projectiles_through_obstacles", "[projectile]" )
     INFO( "rifle bullet vs. wooden wall" );
     CHECK( projectile_end_point( range, *gun_penetrating, 3 ) == map_local_to_abs( here, range[2] ) );
     INFO( "dragon's breath shell vs. wooden wall" );
-    CHECK( projectile_end_point( range, *gun_nonpenetrating, 3 ) == map_local_to_abs( here, range[1] ) );
+    CHECK( projectile_end_point( range, *gun_nonpenetrating, 3 ) == map_local_to_abs( here,
+            range[1] ) );
 
     // Change obstacle to something tougher
     here.ter_set( range[1], ter_id( "t_rock" ) );

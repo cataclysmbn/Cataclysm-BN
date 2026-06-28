@@ -5565,7 +5565,7 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint_bub_ms 
                  it.display_name() );
         //sounds::sound( pos, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
         sound_event se;
-            se.origin = bub_to_abs( pos );
+        se.origin = bub_to_abs( pos );
         se.volume = 50;
         se.category = sounds::sound_t::alarm;
         se.description = _( "beep!" );

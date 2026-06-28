@@ -1070,7 +1070,8 @@ bool trapfunc::lava( const tripoint_abs_ms &p, Creature *c, item * )
         n->deal_damage( nullptr, bodypart_id( "leg_r" ), damage_instance( DT_HEAT, 20 ) );
     } else if( z != nullptr ) {
         if( z->has_effect( effect_ridden ) ) {
-            add_msg( m_bad, _( "Your %1$s is burned by the %2$s!" ), z->get_name(), here.get_trap( p )->obj().name() );
+            add_msg( m_bad, _( "Your %1$s is burned by the %2$s!" ), z->get_name(),
+                     here.get_trap( p )->obj().name() );
         }
         // TODO: MATERIALS use fire resistance
         int dam = 30;
@@ -1140,7 +1141,8 @@ static bool sinkhole_safety_roll( player *p, const itype_id &itemname, const int
 
     std::vector<tripoint_abs_ms> safe;
     for( const auto &tmp : simulated_tiles_in_radius( here, p->abs_pos(), 1 ) ) {
-        if( here.passable( tmp.abs_pos() ) && !here.obstructed_by_vehicle_rotation( p->abs_pos(), tmp.abs_pos() ) &&
+        if( here.passable( tmp.abs_pos() ) &&
+            !here.obstructed_by_vehicle_rotation( p->abs_pos(), tmp.abs_pos() ) &&
             here.get_trap( tmp.abs_pos() )->obj().loadid != tr_pit ) {
             safe.push_back( tmp.abs_pos() );
         }

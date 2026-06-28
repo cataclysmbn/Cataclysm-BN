@@ -364,7 +364,7 @@ tripoint_abs_ms npc::good_escape_direction( bool include_pos )
 bool npc::sees_dangerous_field( const tripoint_abs_ms &p ) const
 {
     const auto fields = get_mapbuffer().get_field( p );
-    if( !fields ) return false;
+    if( !fields ) { return false; }
     return is_dangerous_fields( *fields );
 }
 
@@ -1446,7 +1446,8 @@ void npc::execute_action( npc_action action )
             // Try to find the last destination
             // This is mount point, not actual position
             point last_dest( INT_MIN, INT_MIN );
-            if( !path.empty() && veh_pointer_or_null( here.veh_at( abs_to_bub( path[path.size() - 1] ) ) ) == veh ) {
+            if( !path.empty() &&
+                veh_pointer_or_null( here.veh_at( abs_to_bub( path[path.size() - 1] ) ) ) == veh ) {
                 last_dest = vp->mount().xy().raw();
             }
 
@@ -1698,7 +1699,8 @@ npc_action npc::method_of_attack()
 
     // reach attacks are silent and consume no ammo so prefer these if available
     int reach_range = primary_weapon().reach_range( *this );
-    if( reach_range > 1 && reach_range >= dist && clear_shot_reach( get_mapbuffer(), abs_pos(), tar ) ) {
+    if( reach_range > 1 && reach_range >= dist &&
+        clear_shot_reach( get_mapbuffer(), abs_pos(), tar ) ) {
         add_msg( m_debug, "%s is trying a reach attack", disp_name() );
         return npc_reach_attack;
     }
@@ -2560,7 +2562,7 @@ bool npc::update_path( const tripoint_abs_ms &p, const bool no_bashing, bool for
     if( !path.empty() ) {
         const auto &last = path[path.size() - 1];
         if( last == p && ( path[0].z() != abs_pos().z()
-                               || rl_dist( path[0], abs_pos() ) <= 1 ) ) {
+                           || rl_dist( path[0], abs_pos() ) <= 1 ) ) {
             // Our path already leads to that point, no need to recalculate
             return true;
         }
@@ -2608,7 +2610,8 @@ bool npc::can_move_to( const tripoint_abs_ms &p, bool no_bashing ) const
     auto &here = get_mapbuffer();
     // Allow moving into any bashable spots, but penalize them during pathing
     // Doors are not passable for hallucinations
-    return( rl_dist( abs_pos(), p ) <= 1 && here.has_floor_or_support( p ) && !sees_dangerous_field( p ) &&
+    return( rl_dist( abs_pos(), p ) <= 1 && here.has_floor_or_support( p ) &&
+            !sees_dangerous_field( p ) &&
             ( here.passable( p ) || ( can_open_door( p, !here.is_outside( abs_pos() ) ) &&
                                       !is_hallucination() ) ||
               ( !no_bashing && here.bash_rating( smash_ability(), p ) > 0 ) )
@@ -2659,7 +2662,7 @@ void npc::move_to( const tripoint_abs_ms &pt, bool no_bashing, std::set<tripoint
     const auto abs_here = abs_pos();
 
     bool ceiling_blocking_climb = !buf.has_floor_or_support( abs_here ) ||
-                                    buf.has_floor_or_support( p + tripoint_above );
+                                  buf.has_floor_or_support( p + tripoint_above );
 
     if( sees_dangerous_field( p ) || ( nomove != nullptr && nomove->contains( p ) ) ) {
         move_pause();
@@ -2748,7 +2751,8 @@ void npc::move_to( const tripoint_abs_ms &pt, bool no_bashing, std::set<tripoint
     } else if( buf.passable( p ).value_or( false ) && !buf.has_flag( "DOOR", p ) ) {
         bool diag = trigdist && abs_pos().x() != p.x() && abs_pos().y() != p.y();
         if( is_mounted() ) {
-            double base_moves = run_cost( buf.combined_movecost( abs_here, p ), diag ) * 100.0 / mounted_creature->get_speed();
+            double base_moves = run_cost( buf.combined_movecost( abs_here, p ),
+                                          diag ) * 100.0 / mounted_creature->get_speed();
             moves -= static_cast<int>( std::ceil( base_moves + get_weight() / 4800.0_gram ) );
             if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
                 mounted_creature->use_mech_power( -1 );
@@ -2762,7 +2766,8 @@ void npc::move_to( const tripoint_abs_ms &pt, bool no_bashing, std::set<tripoint
             buf.open_door( p, !buf.is_outside( abs_here ) );
             moves -= 100;
         } else { moves -= 100; moved = true; }
-    } else if( get_dex() > 1 && buf.has_flag_ter_or_furn( "CLIMBABLE", p ) && !ceiling_blocking_climb ) {
+    } else if( get_dex() > 1 && buf.has_flag_ter_or_furn( "CLIMBABLE", p ) &&
+               !ceiling_blocking_climb ) {
         int climb = get_dex();
         if( one_in( climb ) ) {
             add_msg_if_npc( m_neutral, _( "%1$s tries to climb the %2$s but slips." ), name, buf.tername( p ) );
@@ -2773,7 +2778,7 @@ void npc::move_to( const tripoint_abs_ms &pt, bool no_bashing, std::set<tripoint
             moved = true;
         }
     } else if( !no_bashing && smash_ability() > 0 && buf.is_bashable( p ) &&
-                buf.bash_rating( smash_ability(), p ) > 0 ) {
+               buf.bash_rating( smash_ability(), p ) > 0 ) {
         moves -= !is_armed() ? 80 : primary_weapon().attack_cost() * 0.8;
         buf.bash( p, smash_ability() );
     } else { moves = 0; }
@@ -2782,7 +2787,8 @@ void npc::move_to( const tripoint_abs_ms &pt, bool no_bashing, std::set<tripoint
         const auto old_pos = abs_pos();
         setpos_preserving_movement_state( p );
         set_underwater( buf.is_divable( p ) );
-        if( old_pos.x() - p.x() < 0 ) { facing = FD_RIGHT; } else { facing = FD_LEFT; }
+        if( old_pos.x() - p.x() < 0 ) { facing = FD_RIGHT; }
+        else { facing = FD_LEFT; }
         if( is_mounted() && mounted_creature->abs_pos() != abs_pos() ) {
             mounted_creature->setpos( abs_pos() );
             mounted_creature->facing = facing;
@@ -3233,7 +3239,8 @@ void npc::find_item()
     // TODO: Move that check above, make it multi-target pathing and use it
     // to limit tiles available for choice of items
     const int dist_to_item = rl_dist( wanted_item_pos, abs_pos() );
-    if( const std::optional<tripoint_abs_ms> dest = nearest_passable( get_mapbuffer(), wanted_item_pos, abs_pos() ) ) {
+    if( const std::optional<tripoint_abs_ms> dest = nearest_passable( get_mapbuffer(), wanted_item_pos,
+            abs_pos() ) ) {
         update_path( *dest );
     }
 
@@ -3281,7 +3288,8 @@ void npc::pick_up_item()
     add_msg( m_debug, "%s::pick_up_item(); [%d, %d, %d] => [%d, %d, %d]", name,
              abs_pos().x(), abs_pos().y(), abs_pos().z(), wanted_item_pos.x(), wanted_item_pos.y(),
              wanted_item_pos.z() );
-    if( const std::optional<tripoint_abs_ms> dest = nearest_passable( get_mapbuffer(), wanted_item_pos, abs_pos() ) ) {
+    if( const std::optional<tripoint_abs_ms> dest = nearest_passable( get_mapbuffer(), wanted_item_pos,
+            abs_pos() ) ) {
         update_path( *dest );
     }
 
@@ -3547,9 +3555,9 @@ bool npc::find_corpse_to_pulp()
 
         auto items = here.get_items( p );
         const item *found = nullptr;
-        if( items ) {
-            for( const item *const &it : *items )
-            {
+        if( items )
+        {
+            for( const item * const &it : *items ) {
                 // Pulp only stuff that revives, but don't pulp acid stuff
                 // That is, if you aren't protected from this stuff!
                 if( it->can_revive() ) {

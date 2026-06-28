@@ -1063,7 +1063,8 @@ void vehicle::handle_trap( const tripoint_abs_ms &p, int part )
             sounds::sound( se );
         }
         if( veh_data.do_explosion ) {
-            explosion_handler::explosion( abs_to_bub( p ), nullptr, veh_data.damage, 0.5f, false, veh_data.shrapnel );
+            explosion_handler::explosion( abs_to_bub( p ), nullptr, veh_data.damage, 0.5f, false,
+                                          veh_data.shrapnel );
         } else {
             // Hit the wheel directly since it ran right over the trap.
             damage_direct( pwh, veh_data.damage );

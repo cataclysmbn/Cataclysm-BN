@@ -5450,7 +5450,8 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
                        ll, true, z_drop, false, height_3d );
         }
     }
-    if( overridden || ( !invisible[0] && neighborhood_overridden && tr_id.obj().can_see( bub_to_abs( p ), g->u ) ) ) {
+    if( overridden || ( !invisible[0] && neighborhood_overridden &&
+                        tr_id.obj().can_see( bub_to_abs( p ), g->u ) ) ) {
         // and then draw the override trap
         const trap_id &tr2 = overridden ? override->second : tr_id;
         if( tr2 ) {

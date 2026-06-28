@@ -289,8 +289,8 @@ Pathfinding::State &Pathfinding::tile_state_at( const point_abs_ms &p )
 }
 /// Pathfinding: d-map wide changes
 void Pathfinding::produce_d_map( mapbuffer &buffer,
-    point_abs_ms from, point_abs_ms dest, int z,
-    PathfindingSettings settings, const RouteSettings &route_settings )
+                                 point_abs_ms from, point_abs_ms dest, int z,
+                                 PathfindingSettings settings, const RouteSettings &route_settings )
 {
     // Size the grid to the bounding box of the route endpoints plus a
     // search-radius margin.  This ensures the grid covers all tiles the
@@ -322,7 +322,7 @@ void Pathfinding::produce_d_map( mapbuffer &buffer,
 
     // Reuse a blank d-map with matching dimensions, or create one.
     auto store_it = std::ranges::find_if( Pathfinding::d_maps_store,
-    [mx, my]( auto &m ) {
+    [mx, my]( auto & m ) {
         return m->map_x_ == mx && m->map_y_ == my;
     } );
 
@@ -475,7 +475,8 @@ void Pathfinding::update_z_caches( mapbuffer &buffer, const dimension_id &dim,
                     .from = below_us_abs, .to = abs_pos, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
 
                 // This is stored separately from other changes because it requires a different type of processing
-                Pathfinding::get_z_cache_open_air( dim, z ).emplace( abs_pos.xy(), Pathfinding::ZLevelChangeOpenAirPair{
+                Pathfinding::get_z_cache_open_air( dim, z ).emplace( abs_pos.xy(),
+                Pathfinding::ZLevelChangeOpenAirPair{
                     .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
 
                 auto &lower_level = Pathfinding::get_z_cache_open_air( dim, z - 1 );

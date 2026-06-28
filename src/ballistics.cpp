@@ -423,7 +423,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_abs_ms &sourc
         range = rl_dist( target, source );
         extend_to_range = range;
         // Take the volume of bullet impacts on walls at 90dB.
-        sfx::play_variant_sound( "bullet_hit", "hit_wall", sfx::get_heard_volume( abs_to_bub( target ), 90 ),
+        sfx::play_variant_sound( "bullet_hit", "hit_wall", sfx::get_heard_volume( abs_to_bub( target ),
+                                 90 ),
                                  sfx::get_heard_angle( abs_to_bub( target ) ) );
         // TODO: Z dispersion
         // If we missed, just draw a straight line.
@@ -527,7 +528,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_abs_ms &sourc
                 for( const auto &point : trajectory ) {
                     bubble_traj.push_back( abs_to_bub( point ) );
                 }
-                g->draw_bullet( abs_to_bub( tp ), static_cast<int>( i ), bubble_traj, bullet, custom_bullet_sprite );
+                g->draw_bullet( abs_to_bub( tp ), static_cast<int>( i ), bubble_traj, bullet,
+                                custom_bullet_sprite );
                 projectile_skip_current_frame = 0;
                 // If we missed recalculate the skip factor so they spread out.
                 projectile_skip_calculation =
@@ -661,7 +663,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_abs_ms &sourc
         } else {
             // Track damage before processing so we'll know if we actually hit any cover.
             const float dmg_before_penetration = proj.impact.total_damage();
-            here.shoot( abs_to_map_local( here, source ), abs_to_map_local( here, tp ), proj, !no_item_damage && tp == target );
+            here.shoot( abs_to_map_local( here, source ), abs_to_map_local( here, tp ), proj, !no_item_damage &&
+                        tp == target );
             const float dmg_after_penetration = proj.impact.total_damage();
             has_momentum = dmg_after_penetration > 0 || ( no_damage && mb.passable( tp ) );
             // We lost momentum from hitting something, penalize range.

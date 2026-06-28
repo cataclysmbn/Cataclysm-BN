@@ -209,7 +209,7 @@ bool monster::will_move_to( const tripoint_abs_ms &p ) const
                 return false;
             }
         } else if( !( can_climb() && buf.has_flag( "CLIMBABLE", p ) &&
-                        !buf.has_floor_or_support( above_p ) ) ) {
+                      !buf.has_floor_or_support( above_p ) ) ) {
             return false;
         }
     }
@@ -300,7 +300,8 @@ bool monster::can_reach_to( const tripoint_abs_ms &p ) const
     // This is why this exists.
     //                                                                   - DeltaEpsilon7787
     // TODO: FIX THIS DUMB ASS SHIT
-    const bool is_moving_out_of_reality = abs_pos().z() > OVERMAP_HEIGHT || abs_pos().z() < -OVERMAP_DEPTH;
+    const bool is_moving_out_of_reality = abs_pos().z() > OVERMAP_HEIGHT ||
+                                          abs_pos().z() < -OVERMAP_DEPTH;
 
     const bool is_z_move = p.z() != abs_pos().z();
     if( !is_z_move || is_moving_out_of_reality ) {
@@ -373,7 +374,8 @@ void monster::wander_to( const tripoint_abs_ms &p, int f )
 static auto terrain_los_cache_blocks_current_positions( const Creature &seer,
         const Creature &target ) -> bool
 {
-    return g->terrain_los_blocks_sight_between( seer.bub_pos(), target.bub_pos() );  // Uses bubble coords for LOS cache lookup
+    return g->terrain_los_blocks_sight_between( seer.bub_pos(),
+            target.bub_pos() );  // Uses bubble coords for LOS cache lookup
 }
 
 float monster::rate_target( Creature &c, float best, bool smart, int precalc_dist ) const
@@ -1637,11 +1639,12 @@ void monster::execute_action( const monster_action_t &action )
             ZoneScopedN( "mon_execute_route_pf" );
             auto pair = get_pathfinding_pair();
             auto abs_route = Pathfinding::route( here, abs_pos(), goal,
-                            pair.first, pair.second );
+                                                 pair.first, pair.second );
             // convert back to bubble coordinates for downstream compatibility
             maybe_new_path.clear();
             maybe_new_path.reserve( abs_route.size() );
-            for( const tripoint_abs_ms &p : abs_route ) {
+            for( const tripoint_abs_ms &p : abs_route )
+            {
                 maybe_new_path.push_back( p );
             }
         }
@@ -1697,7 +1700,7 @@ void monster::execute_action( const monster_action_t &action )
 
     const auto vp2 = here.veh_at( abs_pos() );
     const bool harness_part = static_cast<bool>(
-                                    vp2.part_with_feature( "ANIMAL_CTRL", true ) );
+                                  vp2.part_with_feature( "ANIMAL_CTRL", true ) );
     if( vp2 && vp2->vehicle().is_moving() &&
         vp2->vehicle().get_pet( vp2->part_index() ) ) {
         moves = 0;
@@ -1991,7 +1994,8 @@ void monster::footsteps( const tripoint_abs_ms &p )
 tripoint_abs_ms monster::scent_move() const
 {
     // Scent map is player-bubble only — off-bubble/different-dimension monsters cannot scent-track.
-    if( g == nullptr || !g->m.inbounds( bub_pos() ) || get_dimension() != g->get_current_dimension_id() ) {
+    if( g == nullptr || !g->m.inbounds( bub_pos() ) ||
+        get_dimension() != g->get_current_dimension_id() ) {
         return { -1, -1, INT_MIN };
     }
 
@@ -2400,7 +2404,7 @@ bool monster::move_to( const tripoint_abs_ms &p, bool force, bool step_on_critte
                        const float stagger_adjustment )
 {
     mapbuffer &here = get_mapbuffer();
-    
+
     const auto &pos_handle = *abs_tile_handle::fetch( here, abs_pos() );
     const bool on_ground = !digging() && !flies();
 
@@ -2436,7 +2440,7 @@ bool monster::move_to( const tripoint_abs_ms &p, bool force, bool step_on_critte
     if( !can_move ) {
         return false;
     }
-    
+
     const auto &dest_handle = *abs_tile_handle::fetch( here, destination );
 
     // Climbing
@@ -2539,31 +2543,31 @@ bool monster::move_to( const tripoint_abs_ms &p, bool force, bool step_on_critte
     // Diggers turn the dirt into dirtmound
     {
         if( digging() && pos_handle.ter().obj().is_diggable() ) {
-        int factor = 0;
-        switch( type->size ) {
-            case creature_size::tiny:
-                factor = 100;
-                break;
-            case creature_size::small:
-                factor = 30;
-                break;
-            case creature_size::medium:
-                factor = 6;
-                break;
-            case creature_size::large:
-                factor = 3;
-                break;
-            case creature_size::huge:
-                factor = 1;
-                break;
-            default:
-                factor = 6;
-                break;
-        }
-        // TODO: make this take terrain type into account so diggers traveling under sand will create mounds of sand etc.
-        if( one_in( factor ) ) {
-            here.set_ter( pos_handle.abs_pos(), t_dirtmound );
-        }
+            int factor = 0;
+            switch( type->size ) {
+                case creature_size::tiny:
+                    factor = 100;
+                    break;
+                case creature_size::small:
+                    factor = 30;
+                    break;
+                case creature_size::medium:
+                    factor = 6;
+                    break;
+                case creature_size::large:
+                    factor = 3;
+                    break;
+                case creature_size::huge:
+                    factor = 1;
+                    break;
+                default:
+                    factor = 6;
+                    break;
+            }
+            // TODO: make this take terrain type into account so diggers traveling under sand will create mounds of sand etc.
+            if( one_in( factor ) ) {
+                here.set_ter( pos_handle.abs_pos(), t_dirtmound );
+            }
         }
     }
     // Acid trail monsters leave... a trail of acid
@@ -2893,8 +2897,8 @@ bool monster::will_reach( const point_bub_ms &p )
     auto &pf_buffer = MAPBUFFER_REGISTRY.get( get_dimension() );
     const auto pair = get_pathfinding_pair();
     auto path = Pathfinding::route( pf_buffer, abs_pos(),
-                                        bub_to_abs( tripoint_bub_ms( p, abs_pos().z() ) ),
-                                        pair.first, pair.second );
+                                    bub_to_abs( tripoint_bub_ms( p, abs_pos().z() ) ),
+                                    pair.first, pair.second );
     if( path.empty() ) {
         return false;
     }

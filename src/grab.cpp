@@ -105,7 +105,8 @@ auto get_vehicle_str_requirement( vehicle *veh ) -> int
 
 bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 {
-    const auto grabbed_vehicle_target = vehicle_grab_target_at( u.get_mapbuffer(), u.abs_pos() + u.grab_point );
+    const auto grabbed_vehicle_target = vehicle_grab_target_at( u.get_mapbuffer(),
+                                        u.abs_pos() + u.grab_point );
     if( !grabbed_vehicle_target ) {
         add_msg( m_info, _( "No vehicle at grabbed point." ) );
         u.grab( OBJECT_NONE );

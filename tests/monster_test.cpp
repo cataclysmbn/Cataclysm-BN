@@ -423,7 +423,8 @@ TEST_CASE( "monster_move_through_vehicle_holes" )
 
     tripoint_bub_ms mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
     monster &zombie = spawn_test_monster( "mon_zombie", mon_origin );
-    zombie.move_to( map_local_to_abs( get_map(), mon_origin + tripoint_north_west ), false, false, 0.0f );
+    zombie.move_to( map_local_to_abs( get_map(), mon_origin + tripoint_north_west ), false, false,
+                    0.0f );
 
     const monster *m = g->critter_at<monster>( mon_origin );
     CHECK( m != nullptr );

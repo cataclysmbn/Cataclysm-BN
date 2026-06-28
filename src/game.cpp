@@ -898,7 +898,7 @@ void game::suggest_auto_walk_to_stairs( Character &u, map &m, const std::string 
     auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
     const auto pair = u.get_pathfinding_pair();
     auto route = Pathfinding::route( pf_buffer, u.abs_pos(), bub_to_abs( *stair_pos ),
-                                         pair.first, pair.second );
+                                     pair.first, pair.second );
     if( route.size() <= 1 ) {
         return;
     }
@@ -3591,7 +3591,7 @@ bool game::try_get_left_click_action( action_id &act, const tripoint_bub_ms &mou
         auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
         const auto pair = u.get_pathfinding_pair();
         auto route = Pathfinding::route( pf_buffer, u.abs_pos(), bub_to_abs( mouse_target ),
-                                             pair.first, pair.second );
+                                         pair.first, pair.second );
         destination_preview.clear();
         destination_preview.reserve( route.size() );
         for( const tripoint_abs_ms &pt : route ) {
@@ -9948,7 +9948,7 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
             auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
             const auto pair = u.get_pathfinding_pair();
             auto route = Pathfinding::route( pf_buffer, u.abs_pos(), bub_to_abs( lp ),
-                                                 pair.first, pair.second );
+                                             pair.first, pair.second );
             if( route.size() > 1 ) {
                 route.pop_back();
                 u.set_destination( route );
@@ -11196,8 +11196,8 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
             const auto pair = u.get_pathfinding_pair();
             auto route = Pathfinding::route( pf_buffer, u.abs_pos(),
-                                                 bub_to_abs( u.bub_pos() + active_pos ),
-                                                 pair.first, pair.second );
+                                             bub_to_abs( u.bub_pos() + active_pos ),
+                                             pair.first, pair.second );
             if( route.size() > 1 ) {
                 route.pop_back();
                 u.set_destination( route );
@@ -12610,7 +12610,7 @@ bool game::walk_move( const tripoint_abs_ms &dest_loc, const bool via_ramp )
     }
 
     const int mcost = here.combined_movecost( u.abs_pos(), dest_loc, grabbed_vehicle, modifier,
-                                           via_ramp ) * multiplier;
+                      via_ramp ) * multiplier;
     if( grabbed_move( dp, allow_furniture_z_move ) ) {
         return true;
     } else if( mcost == 0 && !character_funcs::can_noclip( u ) ) {

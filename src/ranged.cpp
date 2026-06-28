@@ -254,7 +254,9 @@ auto get_shot_target( const shot_target_options &options ) -> tripoint_abs_ms
     rad += ( one_in( 2 ) ? 1 : -1 ) * dispersion_angle;
 
     const auto no_overshoot = options.proj.has_effect( ammo_effect_NO_OVERSHOOT ) ||
-                              ( g->critter_at( options.target ) == nullptr && MAPBUFFER_REGISTRY.get( g->get_current_dimension_id() ).passable( options.target ).value_or( false ) );
+                              ( g->critter_at( options.target ) == nullptr &&
+                                MAPBUFFER_REGISTRY.get( g->get_current_dimension_id() ).passable( options.target ).value_or(
+                                    false ) );
     const auto offset = std::min<int>( range, std::sqrt( aim.missed_by_tiles ) );
     auto new_range = no_overshoot ? range + rng( -offset, offset ) : rng( range - offset,
                      options.proj.range );
@@ -2473,7 +2475,8 @@ static void cycle_action( item &weap, const tripoint_abs_ms &pos )
                 vp->vehicle().add_item( *cargo.front(), item::spawn( casing ) );
             }
             // Take the dB volume of ejecting to be 60.
-            sfx::play_variant_sound( "fire_gun", "brass_eject", sfx::get_heard_volume( abs_to_bub( eject ), 60 ),
+            sfx::play_variant_sound( "fire_gun", "brass_eject", sfx::get_heard_volume( abs_to_bub( eject ),
+                                     60 ),
                                      sfx::get_heard_angle( abs_to_bub( eject ) ) );
         }
     }
@@ -3354,7 +3357,7 @@ bool target_ui::set_cursor_pos( const tripoint_abs_ms &new_pos )
     // Make sure new position is valid or find a closest valid position
     std::vector<tripoint_abs_ms> new_traj;
     tripoint_abs_ms valid_pos = new_pos;
-    
+
     auto &here = g->u.get_mapbuffer();
 
     if( new_pos != src ) {

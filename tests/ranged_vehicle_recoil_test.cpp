@@ -221,8 +221,9 @@ TEST_CASE( "perpendicular gun recoil keeps full sideways push on rigid-wheel veh
         units::angle move_dir = 0_degrees;
     };
 
-    const auto fire_recoil = [&here, vehicle_origin]( const vproto_id & vehicle_type, const units::angle facing,
-                                  const tripoint_abs_ms & target,
+    const auto fire_recoil = [&here, vehicle_origin]( const vproto_id & vehicle_type,
+                             const units::angle facing,
+                             const tripoint_abs_ms & target,
     const std::optional<tripoint_abs_ms> &shot_origin ) -> recoil_result {
         clear_all_state();
         rng_set_engine_seed( 0 );

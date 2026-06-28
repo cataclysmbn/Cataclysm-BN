@@ -659,7 +659,7 @@ bool mattack::acid( monster *z )
     if( target == nullptr ) {
         return false;
     }
-    
+
     auto &here = z->get_mapbuffer();
 
     // Can't see/reach target, no attack
@@ -819,7 +819,7 @@ bool mattack::shockstorm( monster *z )
     if( target == nullptr ) {
         return false;
     }
-    
+
     auto &here = z->get_mapbuffer();
 
     bool seen = g->u.sees( *z );
@@ -883,7 +883,7 @@ bool mattack::pull_metal_weapon( monster *z )
     if( target == nullptr ) {
         return false;
     }
-    
+
     auto &here = z->get_mapbuffer();
 
     // Can't see/reach target, no attack
@@ -945,7 +945,7 @@ bool mattack::boomer( monster *z )
     if( target == nullptr || rl_dist( z->abs_pos(), target->abs_pos() ) > 3 || !z->sees( *target ) ) {
         return false;
     }
-    
+
     auto &here = z->get_mapbuffer();
 
     // It takes a while
@@ -973,7 +973,7 @@ bool mattack::boomer( monster *z )
             here.add_field( i, { .type = fd_bile, .intensity = 3 } );
             if( g->u.sees( i ) ) {
                 add_msg( _( "Bile splatters on the %s!" ),
-                            here.tername( i ) );
+                         here.tername( i ) );
             }
             return true;
         }
@@ -1003,7 +1003,7 @@ bool mattack::boomer_glow( monster *z )
     if( target == nullptr || rl_dist( z->abs_pos(), target->abs_pos() ) > 3 || !z->sees( *target ) ) {
         return false;
     }
-    
+
     auto &here = z->get_mapbuffer();
 
     // It takes a while
@@ -2841,7 +2841,7 @@ bool mattack::ranged_pull( monster *z )
         z->has_effect( effect_grabbing ) ) {
         return false;
     }
-    
+
     auto &here = z->get_mapbuffer();
 
     player *foe = dynamic_cast< player * >( target );
@@ -3284,7 +3284,7 @@ bool mattack::nurse_operate( monster *z )
         }
         return false;
     }
-    
+
     auto &here = z->get_mapbuffer();
 
     bool found_target = false;
@@ -3292,7 +3292,7 @@ bool mattack::nurse_operate( monster *z )
     auto tmp_pos( z->abs_pos() + point_rel_ms( 12, 12 ) );
     for( auto maybe_critter : simulated_tiles_in_radius( here, z->abs_pos(), 6 ) ) {
         auto critter = here.creature_at( maybe_critter.abs_pos() );
-        if ( !critter ) {
+        if( !critter ) {
             continue;
         }
         auto tmp_player = critter->as_player();
@@ -4143,7 +4143,7 @@ bool mattack::flamethrower( monster *z )
 void mattack::flame( monster *z, Creature *target )
 {
     int dist = rl_dist( z->abs_pos(), target->abs_pos() );
-    
+
     auto &here = z->get_mapbuffer();
 
     if( target != &g->u ) {
@@ -4640,7 +4640,7 @@ bool mattack::stretch_bite( monster *z )
     }
 
     z->moves -= 150;
-    
+
     auto &here = z->get_mapbuffer();
 
     auto prev_point = z->abs_pos();
@@ -4951,7 +4951,7 @@ bool mattack::longswipe( monster *z )
         return false;
     }
     auto &here = z->get_mapbuffer();
-    
+
     //Is there something impassable blocking the claw?
     bool obstructed = false;
     auto prev_point = z->abs_pos();
@@ -4971,8 +4971,8 @@ bool mattack::longswipe( monster *z )
                 return false;
             }
             target->add_msg_player_or_npc( _( "The %1$s thrusts a claw at you, but it bounces off the %2$s!" ),
-                                            _( "The %1$s thrusts a claw at <npcname>, but it bounces off the %2$s!" ),
-                                            z->name(), here.obstacle_name( pnt ) );
+                                           _( "The %1$s thrusts a claw at <npcname>, but it bounces off the %2$s!" ),
+                                           z->name(), here.obstacle_name( pnt ) );
             z->mod_moves( -150 );
             return true;
         }
@@ -6332,7 +6332,7 @@ bool mattack::stretch_attack( monster *z )
     if( distance < 2 || distance > 3 || !z->sees( *target ) ) {
         return false;
     }
-    
+
     auto &here = z->get_mapbuffer();
 
     int dam = rng( 5, 10 );

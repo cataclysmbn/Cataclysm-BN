@@ -1362,7 +1362,8 @@ bool monster::made_of( phase_id p ) const
 void monster::set_goal( const tripoint_abs_ms &p )
 {
     const auto &here = get_mapbuffer();
-    if( !here.is_column_state( project_to<coords::sm>( p ).xy(), submap_column_load_state::simulated ) ) {
+    if( !here.is_column_state( project_to<coords::sm>( p ).xy(),
+                               submap_column_load_state::simulated ) ) {
         return;
     }
 
@@ -3052,7 +3053,8 @@ void monster::process_turn()
                     }
                 }
                 if( zap.abs_pos() != abs_pos() ) {
-                    explosion_handler::emp_blast( abs_to_bub( zap.abs_pos() ) ); // Fries electronics due to the intensity of the field
+                    explosion_handler::emp_blast( abs_to_bub(
+                                                      zap.abs_pos() ) ); // Fries electronics due to the intensity of the field
                 }
                 const auto t = zap.ter();
                 if( t == ter_str_id( "t_gas_pump" ) || t == ter_str_id( "t_gas_pump_a" ) ) {
@@ -4128,7 +4130,8 @@ void monster::hear_sound( const sound_event &source, const short heard_vol, cons
         max_error = ( goodhearing ) ? 1 : 4;
     }
 
-    auto target = source.origin + point_rel_ms( rng( -max_error, max_error ), rng( -max_error, max_error ) );
+    auto target = source.origin + point_rel_ms( rng( -max_error, max_error ), rng( -max_error,
+                  max_error ) );
     // Allowing for z level error would cause consistant issues with monsters trying to path into solid rock.
 
     // A goodhearing monster will follow a heard_sound of 100dB for 26 turns (10 + 16).

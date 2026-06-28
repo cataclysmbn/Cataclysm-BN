@@ -473,14 +473,18 @@ auto map_stack::clear() -> std::vector<detached_ptr<item>>
 units::volume map_stack::max_volume() const
 {
     if( myorigin != nullptr ) {
-        { auto h = abs_tile_handle::fetch( *myorigin, location );
-          if( h && h->furn() != f_null ) {
-            return h->furn_obj().max_volume;
-        } }
-        { auto h = abs_tile_handle::fetch_terrain_only( *myorigin, location );
-          if( h ) {
-            return h->ter_obj().max_volume;
-        } }
+        {
+            auto h = abs_tile_handle::fetch( *myorigin, location );
+            if( h && h->furn() != f_null ) {
+                return h->furn_obj().max_volume;
+            }
+        }
+        {
+            auto h = abs_tile_handle::fetch_terrain_only( *myorigin, location );
+            if( h ) {
+                return h->ter_obj().max_volume;
+            }
+        }
         return 0_ml;
     }
     const auto local = local_location();
@@ -5874,7 +5878,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
         tiles.erase( tiles.begin() ); // we already tried this position
         const int max_path_length = 4 * max_dist;
         const PathfindingSettings setting( 0, max_dist, max_path_length, 0, false, true, false, false,
-                                            false );
+                                           false );
         for( const auto &e : tiles ) {
             if( get_mapbuffer().is_outside_pocket_dimension_bounds( map_local_to_abs( *this, e ) ) ) {
                 continue;
@@ -6198,22 +6202,22 @@ void map::process_items()
     {
         ZoneScopedN( "process_items_vehicles" );
         get_mapbuffer().for_each_simulated_submap(
-            [&]( const tripoint_abs_sm &pos, submap &sm ) {
-                bool has_vehicle_with_items = false;
-                for( const auto &veh : sm.vehicles ) {
-                    if( !veh ) {
-                        continue;
-                    }
-                    const auto counts = veh->active_items.count();
-                    total_active_items += counts.total;
-                    total_rottable_active_items += counts.rottable;
-                    has_vehicle_with_items = has_vehicle_with_items || counts.total > 0
-                                             || veh->has_cargo_recharge;
+        [&]( const tripoint_abs_sm & pos, submap & sm ) {
+            bool has_vehicle_with_items = false;
+            for( const auto &veh : sm.vehicles ) {
+                if( !veh ) {
+                    continue;
                 }
-                if( has_vehicle_with_items ) {
-                    process_items_in_vehicles( sm );
-                }
-            } );
+                const auto counts = veh->active_items.count();
+                total_active_items += counts.total;
+                total_rottable_active_items += counts.rottable;
+                has_vehicle_with_items = has_vehicle_with_items || counts.total > 0
+                                         || veh->has_cargo_recharge;
+            }
+            if( has_vehicle_with_items ) {
+                process_items_in_vehicles( sm );
+            }
+        } );
     }
     // Snapshot because processing can add or remove active submaps.
     ZoneScopedN( "process_items_submaps" );
@@ -10528,7 +10532,8 @@ sound_instance_cache::sound_instance_cache( sound_event &input_sound,
 
 }
 
-tripoint_bub_ms sound_instance_cache::envelope_index_point() const {
+tripoint_bub_ms sound_instance_cache::envelope_index_point() const
+{
     return abs_to_bub( sound.origin ) + envelope_offset;
 }
 
@@ -10944,7 +10949,7 @@ int map::calc_max_populated_zlev()
         if( submaps.size() != expected_submaps ||
         std::ranges::any_of( submaps, []( const submap_ref & view ) {
         return !view.sm->is_uniform;
-        } ) ) {
+    } ) ) {
             max_z = zlev;
         }
     }

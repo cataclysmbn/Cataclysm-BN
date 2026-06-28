@@ -844,7 +844,7 @@ auto abs_tile_handle::trap_obj() const -> const trap &
 
 auto abs_tile_handle::field() const -> const class field &
 {
-    return sm_->get_field( local_ );
+        return sm_->get_field( local_ );
 }
 
 auto abs_tile_handle::items() const -> const location_vector<item> &
@@ -870,8 +870,8 @@ auto abs_tile_handle::lum() const -> std::uint8_t
 auto abs_tile_handle::move_cost( const vehicle *ignored_vehicle ) const -> int
 {
     return move_cost_from_tile_parts( ter(), furn(), veh_part_ && ignored_vehicle &&
-                                                     &veh_part_->vehicle() == ignored_vehicle ?
-                                                     optional_vpart_position{} : veh_part_ );
+                                      &veh_part_->vehicle() == ignored_vehicle ?
+                                      optional_vpart_position{} : veh_part_ );
 }
 
 auto abs_tile_handle::passable() const -> bool
@@ -1208,7 +1208,7 @@ auto abs_tile_handle::disp_name() const -> std::string
 }
 
 auto abs_tile_handle::fetch( mapbuffer &buf, const tripoint_abs_ms p )
--> std::optional<abs_tile_handle>
+- > std::optional<abs_tile_handle>
 {
     const auto split = project_remain<coords::sm>( p );
     auto *const sm = buf.lookup_submap_in_memory( split.quotient_tripoint );
@@ -1220,7 +1220,7 @@ auto abs_tile_handle::fetch( mapbuffer &buf, const tripoint_abs_ms p )
 }
 
 auto abs_tile_handle::fetch_terrain_only( mapbuffer &buf, const tripoint_abs_ms p )
--> std::optional<abs_tile_handle>
+- > std::optional<abs_tile_handle>
 {
     const auto split = project_remain<coords::sm>( p );
     auto *const sm = buf.lookup_submap_in_memory( split.quotient_tripoint );
@@ -1294,7 +1294,7 @@ bool submap_tile_range::iterator::operator!=( const iterator &other ) const
 }
 
 auto mapbuffer::submap_tiles( const tripoint_abs_sm &p )
--> std::optional<submap_tile_range>
+- > std::optional<submap_tile_range>
 {
     submap *sm = lookup_submap_in_memory( p );
     if( !sm ) {
@@ -1319,7 +1319,7 @@ bool simulated_island::contains( point_abs_sm p ) const
 }
 
 auto simulated_island::columns_in( point_abs_sm r_begin, point_abs_sm r_end ) const
--> std::vector<point_abs_sm>
+- > std::vector<point_abs_sm>
 {
     std::vector<point_abs_sm> result;
 
@@ -1359,7 +1359,7 @@ auto simulated_island::size() const -> std::size_t
 // ==========================================================================
 
 auto mapbuffer::build_islands( const std::unordered_set<point_abs_sm> &columns )
--> std::vector<simulated_island>
+- > std::vector<simulated_island>
 {
     std::vector<simulated_island> islands;
     std::unordered_set<point_abs_sm> visited;
@@ -1581,7 +1581,7 @@ auto submap_tile_iterator_range::end() const -> iterator
 
 auto simulated_tiles_in_radius( mapbuffer &buf,
                                 const tripoint_abs_ms center, const int radius )
--> submap_tile_iterator_range
+- > submap_tile_iterator_range
 {
     // Compute bounding box in abs_ms coordinates
     const tripoint_abs_ms bb_begin(
@@ -1618,7 +1618,7 @@ auto simulated_tiles_in_radius( mapbuffer &buf,
 
 auto simulated_tiles_in_rectangle( mapbuffer &buf,
                                    const tripoint_abs_ms begin, const tripoint_abs_ms end )
--> submap_tile_iterator_range
+- > submap_tile_iterator_range
 {
     // Project the rectangle bounds to submap coordinates.
     // sm_begin rounds down (inclusive), sm_end rounds down then +1 so the
@@ -1647,7 +1647,7 @@ auto simulated_tiles_in_rectangle( mapbuffer &buf,
 }
 
 auto simulated_tiles_on_zlevel( mapbuffer &buf, const int z )
--> submap_tile_iterator_range
+- > submap_tile_iterator_range
 {
     // Collect all columns from all islands
     std::vector<point_abs_sm> columns;
@@ -1680,7 +1680,7 @@ auto mapbuffer::for_each_simulated_tile(
     const int zlev,
     const std::function<void( const abs_tile_handle & )> &fn ) -> void
 {
-    for_each_simulated_submap( [&]( const tripoint_abs_sm &abs_sm, submap &sm ) {
+    for_each_simulated_submap( [&]( const tripoint_abs_sm & abs_sm, submap & sm ) {
         if( abs_sm.z() != zlev ) {
             return;
         }
@@ -2299,7 +2299,7 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr )
 
     // Check dirty state: if any of the four column positions was dirty,
     // serialise the entire OMT into pending_writes before erasing.
-    const bool is_dirty = std::ranges::any_of( addrs, [&]( const tripoint_abs_sm &addr ) {
+    const bool is_dirty = std::ranges::any_of( addrs, [&]( const tripoint_abs_sm & addr ) {
         return dirty_columns_.contains( addr.xy() );
     } );
 
@@ -3184,7 +3184,7 @@ auto mapbuffer::clear_path( const tripoint_abs_ms &f, const tripoint_abs_ms &t, 
 // This method tries a bunch of initial offsets for the line to try and find a clear one.
 // Basically it does, "Find a line from any point in the source that ends up in the target square".
 auto mapbuffer::find_clear_path( const tripoint_abs_ms &source,
-        const tripoint_abs_ms &destination ) -> std::vector<tripoint_abs_ms>
+                                 const tripoint_abs_ms &destination ) -> std::vector<tripoint_abs_ms>
 {
     // TODO: Push this junk down into the Bresenham method, it's already doing it.
     const point_rel_ms d = destination.xy() - source.xy();
@@ -3546,7 +3546,7 @@ auto mapbuffer::add_field( const tripoint_abs_ms &p,
 {
     if( !options.type ) {
         debugmsg( "Tried to add null field at %d,%d,%d",
-                 p.x(), p.y(), p.z() );
+                  p.x(), p.y(), p.z() );
         return false;
     }
 
@@ -4446,10 +4446,12 @@ auto mapbuffer::has_nearby_fire( const tripoint_abs_ms &p, const int radius,
         if( field_entry != nullptr ) {
             return true;
         }
-        { auto h = abs_tile_handle::fetch_terrain_only( *this, pt );
-          if( h && h->has_flag_ter_or_furn( "USABLE_FIRE" ) ) {
-            return true;
-        } }
+        {
+            auto h = abs_tile_handle::fetch_terrain_only( *this, pt );
+            if( h && h->has_flag_ter_or_furn( "USABLE_FIRE" ) ) {
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -4459,10 +4461,12 @@ auto mapbuffer::has_nearby_table( const tripoint_abs_ms &p, const int radius,
 {
     for( const tripoint_abs_ms &pt : points_in_radius( p, radius ) ) {
         const auto vp = veh_at( pt, options );
-        { auto h = abs_tile_handle::fetch_terrain_only( *this, pt );
-          if( h && h->has_flag_ter_or_furn( "FLAT_SURF" ) ) {
-            return true;
-        } }
+        {
+            auto h = abs_tile_handle::fetch_terrain_only( *this, pt );
+            if( h && h->has_flag_ter_or_furn( "FLAT_SURF" ) ) {
+                return true;
+            }
+        }
         if( vp && vp->vehicle().has_part( "FLAT_SURF" ) ) {
             return true;
         }
@@ -4475,10 +4479,12 @@ auto mapbuffer::has_nearby_chair( const tripoint_abs_ms &p, const int radius,
 {
     for( const tripoint_abs_ms &pt : points_in_radius( p, radius ) ) {
         const auto vp = veh_at( pt, options );
-        { auto h = abs_tile_handle::fetch_terrain_only( *this, pt );
-          if( h && h->has_flag_ter_or_furn( "CAN_SIT" ) ) {
-            return true;
-        } }
+        {
+            auto h = abs_tile_handle::fetch_terrain_only( *this, pt );
+            if( h && h->has_flag_ter_or_furn( "CAN_SIT" ) ) {
+                return true;
+            }
+        }
         if( vp && vp->vehicle().has_part( "SEAT" ) ) {
             return true;
         }
@@ -4556,10 +4562,12 @@ auto mapbuffer::is_flammable( const tripoint_abs_ms &p,
     if( flammable_items_at( p, 0, options ) ) {
         return true;
     }
-    { auto h = abs_tile_handle::fetch_terrain_only( *this, p );
-      if( h && ( h->has_flag( "FLAMMABLE" ) || h->has_flag( "FLAMMABLE_ASH" ) ) ) {
-        return true;
-    } }
+    {
+        auto h = abs_tile_handle::fetch_terrain_only( *this, p );
+        if( h && ( h->has_flag( "FLAMMABLE" ) || h->has_flag( "FLAMMABLE_ASH" ) ) ) {
+            return true;
+        }
+    }
     if( get_field_intensity( p, fd_web, options ).value_or( 0 ) > 0 ) {
         return true;
     }
@@ -4748,7 +4756,7 @@ auto mapbuffer::sees( const tripoint_abs_ms &F, const tripoint_abs_ms &T, const 
  * This one is internal-only, we don't want to expose the slope tweaking ickiness outside the map class.
  **/
 auto mapbuffer::sees( const tripoint_abs_ms &F, const tripoint_abs_ms &T, const int range,
-                int &bresenham_slope, mapbuffer_lookup_options options ) -> const bool
+                      int &bresenham_slope, mapbuffer_lookup_options options ) -> const bool
 {
     if( ( range >= 0 && range < rl_dist( F, T ) ) ) {
         bresenham_slope = 0;
@@ -4827,7 +4835,7 @@ auto mapbuffer::obstacle_coverage( const tripoint_abs_ms &loc1, const tripoint_a
     }
     // Can't hide if you are standing on furniture, or non-flat slowing-down terrain tile.
     if( tile1->sm->get_furn( tile1->local ).obj().id || ( move_cost( loc2 ) > 2 &&
-        !tile2->sm->get_ter( tile2->local ).obj().has_flag( TFLAG_FLAT ) ) ) {
+            !tile2->sm->get_ter( tile2->local ).obj().has_flag( TFLAG_FLAT ) ) ) {
         return 0;
     }
     const point_bub_ms a( std::abs( loc1.x() - loc2.x() ) * 2, std::abs( loc1.y() - loc2.y() ) * 2 );
@@ -5154,7 +5162,7 @@ auto mapbuffer::ter( const tripoint_abs_ms &p,
 }
 
 auto mapbuffer::furn( const tripoint_abs_ms &p,
-                     const mapbuffer_lookup_options options ) -> std::optional<furn_id>
+                      const mapbuffer_lookup_options options ) -> std::optional<furn_id>
 {
     const auto tile = abs_tile_handle::fetch_terrain_only( *this, p );
     if( !tile ) {
@@ -5757,7 +5765,7 @@ auto mapbuffer::spawn_item( const tripoint_abs_ms &p, const itype_id &type_id,
 auto mapbuffer::spawn_items( const tripoint_abs_ms &p,
                              std::vector<detached_ptr<item>> new_items,
                              const mapbuffer_lookup_options options )
--> std::vector<detached_ptr<item>>
+- > std::vector<detached_ptr<item>>
 {
     std::vector<detached_ptr<item>> remaining;
     for( auto &it : new_items ) {
@@ -5784,15 +5792,19 @@ auto mapbuffer::make_rubble( const tripoint_abs_ms &p, const furn_id &rubble_typ
             set_furn( p, f_null, options );
         }
         // Leave the terrain alone unless it interferes with furniture placement
-        { auto h_mc = abs_tile_handle::fetch( *this, p );
-          if( h_mc && h_mc->move_cost() == 0 && is_bashable_ter( p, true, options ) ) {
-            set_ter( p, floor_type, options );
-        } }
+        {
+            auto h_mc = abs_tile_handle::fetch( *this, p );
+            if( h_mc && h_mc->move_cost() == 0 && is_bashable_ter( p, true, options ) ) {
+                set_ter( p, floor_type, options );
+            }
+        }
         // Check again for new terrain after potential destruction
-        { auto h_mc2 = abs_tile_handle::fetch( *this, p );
-          if( h_mc2 && h_mc2->move_cost() == 0 ) {
-            set_ter( p, floor_type, options );
-        } }
+        {
+            auto h_mc2 = abs_tile_handle::fetch( *this, p );
+            if( h_mc2 && h_mc2->move_cost() == 0 ) {
+                set_ter( p, floor_type, options );
+            }
+        }
 
         set_furn( p, rubble_type, options );
     }
