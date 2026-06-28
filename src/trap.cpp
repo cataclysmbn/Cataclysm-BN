@@ -104,8 +104,6 @@ void trap::resolve_lua_callbacks(
     }
 }
 
-
-
 size_t trap::count()
 {
     return trap_factory.size();

@@ -967,10 +967,6 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             std::string key;
             try {
                 key = ref.first.as<std::string>();
-                // if (!_trap_id.is_valid())
-                // {
-                //     throw std::runtime_error( string_format("trap_id %s does not exist", key) );
-                // }
                 if( ref.second.get_type() != sol::type::table ) {
                     throw std::runtime_error( "itrap entry must be a table" );
                 }
