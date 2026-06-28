@@ -783,7 +783,7 @@ void lua_itrap_actor::call_on_trigger_aftermath( Character &who, trap &trap,
         sol::protected_function_result res = on_trigger_aftermath_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
-        debugmsg( "Failed to run itrap on_trigger for '%s': %s", item_id, e.what() );
+        debugmsg( "Failed to run itrap on_trigger_aftermath for '%s': %s", item_id, e.what() );
     }
 }
 
@@ -804,7 +804,7 @@ bool lua_itrap_actor::call_can_trigger( const Character &who, const trap &trap,
         const bool ret = res;
         return ret;
     } catch( std::runtime_error &e ) {
-        debugmsg( "Failed to run itrap on_trigger for '%s': %s", item_id, e.what() );
+        debugmsg( "Failed to run itrap can_trigger for '%s': %s", item_id, e.what() );
     }
     return true;
 }
