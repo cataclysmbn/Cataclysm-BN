@@ -10,7 +10,6 @@
 #include "calendar.h"
 #include "coordinates.h"
 #include "memory_fast.h"
-#include "point.h"
 #include "submap_load_manager.h"
 #include "type_id.h"
 
@@ -116,7 +115,7 @@ class grid_furn_transform_queue
             queue.emplace_back( transform_queue_entry{ p, id, msg } );
         }
 
-        void apply( mapbuffer &mb, distribution_grid_tracker &grid_tracker, Character &u, map &m );
+        void apply( mapbuffer &mb, distribution_grid_tracker &grid_tracker, Character &u );
 
         void clear() {
             queue.clear();

@@ -156,7 +156,7 @@ auto add_uniform_omt( mapbuffer &dest, const tripoint_abs_sm &base,
         sm->is_uniform = true;
         sm->set_all_ter( terrain_type );
         sm->last_touched = calendar::turn;
-        added_any |= dest.add_submap( pos, sm );
+        added_any |= dest.add_submap( pos, sm, { .skip_luminance_refresh = true } );
     } );
     return added_any;
 }
@@ -2105,6 +2105,32 @@ auto mapbuffer::is_column_state( const point_abs_sm col,
     return it != column_states_.end() && it->second >= min_state;
 }
 
+// Overload: add a submap without updating the luminous item index.
+// Used by add_uniform_omt since uniform submaps have zero items.
+bool mapbuffer::add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &sm,
+                            const mapbuffer_add_submap_options opts )
+{
+    auto lk = std::lock_guard<std::recursive_mutex>( submaps_mutex_ );
+    if( submaps.contains( p ) ) {
+        return false;
+    }
+
+    submaps[p] = std::move( sm );
+    register_submap_vehicles( p, *submaps[p] );
+    if( !submaps[p]->active_items.empty() ) {
+        submaps_with_active_items_.insert( p );
+    }
+    if( !opts.skip_luminance_refresh ) {
+        refresh_luminous_item_submap_index( p, {
+            .mode = mapbuffer_lookup_mode::resident_only,
+        } );
+    }
+
+    column_states_.emplace( p.xy(), submap_column_load_state::resident );
+
+    return true;
+}
+
 void mapbuffer::set_simulated_submaps(
     const std::unordered_set<point_abs_sm> &columns )
 {
@@ -2149,8 +2175,9 @@ void mapbuffer::set_simulated_submaps(
         }
     }
 
-    // For newly-simulated columns: refresh vehicle registry and active item
-    // index for every z-level so they are immediately queryable.
+    // For newly-simulated columns: refresh vehicle registry, active item
+    // index, and distribution grid for every z-level so they are immediately
+    // queryable.
     for( const point_abs_sm &col : newly_simulated ) {
         for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
             const tripoint_abs_sm sm_pos{ col, z };
@@ -2161,18 +2188,25 @@ void mapbuffer::set_simulated_submaps(
                 refresh_active_item_submap_index( sm_pos, mapbuffer_lookup_options{
                     .mode = mapbuffer_lookup_mode::resident_only,
                 } );
+                if( auto *tracker = get_distribution_grid_tracker_for( dimension_id_ ) ) {
+                    tracker->on_submap_loaded( sm_pos, dimension_id_ );
+                }
             }
         }
     }
 
     // For newly-demoted columns: stamp last_touched so actualize() computes
-    // the correct time-since-simulated on the next load.
+    // the correct time-since-simulated on the next load, and notify the
+    // distribution grid tracker.
     for( const point_abs_sm &col : last_demoted_columns_ ) {
         for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
             const tripoint_abs_sm sm_pos{ col, z };
             const auto it = submaps.find( sm_pos );
             if( it != submaps.end() && it->second ) {
                 it->second->last_touched = calendar::turn;
+            }
+            if( auto *tracker = get_distribution_grid_tracker_for( dimension_id_ ) ) {
+                tracker->on_submap_unloaded( sm_pos, dimension_id_ );
             }
         }
     }

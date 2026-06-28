@@ -27,7 +27,6 @@
 #include "mapdata.h"
 #include "mapgen_functions.h"
 #include "memory_fast.h"
-#include "point.h"
 #include "submap_load_manager.h"
 #include "type_id.h"
 #include "vpart_position.h"
@@ -77,6 +76,10 @@ enum class mapbuffer_lookup_mode : int {
 
 struct mapbuffer_lookup_options {
     mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::simulated_only;
+};
+
+struct mapbuffer_add_submap_options {
+    bool skip_luminance_refresh = false;
 };
 
 enum class submap_column_load_state : char {
@@ -660,6 +663,8 @@ class mapbuffer
          * is not stored and the given unique_ptr retains ownsership.
          */
         bool add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &sm );
+        bool add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &sm,
+                         mapbuffer_add_submap_options opts );
 
         /**
          * Absolute submap lookup with explicit residency/loading policy.
