@@ -10,6 +10,7 @@
 #include "avatar.h"
 #include "creature.h"
 #include "coordinates.h"
+#include "explosion.h"
 #include "explosion_queue.h"
 #include "game.h"
 #include "item.h"
@@ -41,6 +42,21 @@ void set_off_explosion( item &explosive, const tripoint_bub_ms &origin )
     explosive.charges = 0;
     explosive.type->invoke( g->u, explosive, origin );
     explosion_handler::get_explosion_queue().execute();
+}
+
+auto set_off_explosion( const explosion_data &explosion, const tripoint_bub_ms &origin ) -> void
+{
+    explosion_handler::get_explosion_queue().clear();
+    explosion_handler::explosion( origin, explosion, nullptr );
+    explosion_handler::get_explosion_queue().execute();
+}
+
+auto test_fragment( const int damage, const int range ) -> projectile
+{
+    auto fragment = projectile{};
+    fragment.impact = damage_instance( DT_BULLET, damage );
+    fragment.range = range;
+    return fragment;
 }
 
 void check_lethality( const std::string &explosive_id, const int range, float lethality,
@@ -164,6 +180,62 @@ TEST_CASE( "grenade_vs_vehicle", "[grenade][explosion][balance]" )
 {
     clear_all_state();
     check_vehicle_damage( "test_grenade_act", "test_explosion_vehicle", 5 );
+}
+
+TEST_CASE( "explosion_obstacle_damage_multipliers", "[explosion][balance]" )
+{
+    clear_all_state();
+    put_player_underground();
+    const auto origin = tripoint_bub_ms( 30, 30, 0 );
+    const auto wall_position = origin + point_east;
+    g->m.ter_set( wall_position, t_wall_metal );
+    const auto &monster = spawn_test_monster( "mon_zombie", origin + point_west );
+
+    set_off_explosion( {
+        .damage = 1000,
+        .radius = 1,
+        .terrain_damage_mult = 0.0f
+    }, origin );
+
+    CHECK( g->m.ter( wall_position ) == t_wall_metal );
+    CHECK( monster.is_dead_state() );
+
+    clear_map();
+    const auto vehicle_position = tripoint_bub_ms( 30, 30, 0 );
+    auto *target_vehicle = get_map().add_vehicle( vproto_id( "car" ), vehicle_position, 0_degrees, -1,
+                           0 );
+    const auto before_hp = get_part_hp( target_vehicle );
+    auto explosion_position = vehicle_position;
+    while( get_map().veh_at( explosion_position ) ) {
+        explosion_position.x()++;
+    }
+    explosion_position.x() += 1;
+
+    set_off_explosion( {
+        .damage = 1000,
+        .radius = 3,
+        .vehicle_damage_mult = 0.0f
+    }, explosion_position );
+
+    CHECK( get_part_hp( target_vehicle ) == before_hp );
+}
+
+TEST_CASE( "shrapnel damage falls off with range", "[grenade][explosion][balance]" )
+{
+    clear_all_state();
+    put_player_underground();
+    const auto origin = tripoint_bub_ms( 30, 30, 0 );
+    const auto near_position = origin + point_east;
+    const auto far_position = origin + 4 * point_east;
+    auto &near_target = spawn_test_monster( "mon_zombie", near_position );
+    auto &far_target = spawn_test_monster( "mon_zombie", far_position );
+
+    auto explosion = explosion_data{};
+    explosion.fragment = test_fragment( 40, 4 );
+    set_off_explosion( explosion, origin );
+
+    CHECK( near_target.get_hp() < far_target.get_hp() );
+    CHECK( far_target.hp_percentage() < 100 );
 }
 
 TEST_CASE( "shrapnel behind wall", "[grenade][explosion][balance]" )

@@ -446,13 +446,15 @@
     "volume": "250 ml",
     "weight": "22725 g",
     "ammo_type": "120mm",
-    "damage": { "damage_type": "stab", "amount": 40, "armor_penetration": 10 },
+    "damage": { "damage_type": "bullet", "amount": 2600, "armor_penetration": 1700 },
     "range": 80,
     "dispersion": 5,
     "recoil": 30,
     "speed": 1600,
     "loudness": 188,
-    "effects": [ "EXPLOSIVE_HUGE", "TRAIL" ]
+    "effects": [ "CUSTOM_EXPLOSION", "TRAIL", "NO_PENETRATE_OBSTACLES" ],
+    "explode_in_fire": true,
+    "explosion": { "damage": 840, "radius": 4, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.3 }
   },
   {
     "type": "AMMO",

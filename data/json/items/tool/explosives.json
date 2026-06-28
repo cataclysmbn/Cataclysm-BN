@@ -119,7 +119,7 @@
       "sound_volume": 0,
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already set the %s's timer, you might want to get away from it.",
-      "explosion": { "damage": 200, "radius": 6 }
+      "explosion": { "damage": 650, "radius": 4, "terrain_damage_mult": 0.35, "vehicle_damage_mult": 0.5 }
     },
     "flags": [ "TRADER_AVOID", "ALLOWS_REMOTE_USE" ]
   },
@@ -139,7 +139,7 @@
     "symbol": "*",
     "color": "red",
     "explode_in_fire": true,
-    "explosion": { "damage": 100, "radius": 6 },
+    "explosion": { "damage": 400, "radius": 4, "terrain_damage_mult": 0.2, "vehicle_damage_mult": 0.25 },
     "use_action": {
       "target": "dynamite_act",
       "msg": "You light the dynamite.",
@@ -168,13 +168,13 @@
     "color": "red",
     "turns_per_charge": 1,
     "explode_in_fire": true,
-    "explosion": { "damage": 100, "radius": 6 },
+    "explosion": { "damage": 400, "radius": 4, "terrain_damage_mult": 0.2, "vehicle_damage_mult": 0.25 },
     "use_action": {
       "type": "explosion",
       "sound_volume": 0,
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
-      "explosion": { "damage": 100, "radius": 6 }
+      "explosion": { "damage": 400, "radius": 4, "terrain_damage_mult": 0.2, "vehicle_damage_mult": 0.25 }
     },
     "flags": [ "TRADER_AVOID", "BOMB" ]
   },
@@ -196,9 +196,11 @@
     "color": "red",
     "explode_in_fire": true,
     "explosion": {
-      "damage": 70,
-      "radius": 6,
-      "fragment": { "impact": { "damage_type": "bullet", "amount": 100, "armor_multiplier": 2.5 }, "range": 10 }
+      "damage": 250,
+      "radius": 4,
+      "terrain_damage_mult": 0.15,
+      "vehicle_damage_mult": 0.2,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 100, "armor_penetration": 10, "armor_multiplier": 1.2 }, "range": 10 }
     },
     "use_action": {
       "target": "dynamite_bomb_act",
@@ -230,9 +232,11 @@
     "turns_per_charge": 1,
     "explode_in_fire": true,
     "explosion": {
-      "damage": 70,
-      "radius": 6,
-      "fragment": { "impact": { "damage_type": "bullet", "amount": 100, "armor_multiplier": 2.5 }, "range": 10 }
+      "damage": 250,
+      "radius": 4,
+      "terrain_damage_mult": 0.15,
+      "vehicle_damage_mult": 0.2,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 100, "armor_penetration": 10, "armor_multiplier": 1.2 }, "range": 10 }
     },
     "use_action": {
       "type": "explosion",
@@ -240,9 +244,11 @@
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": {
-        "damage": 70,
-        "radius": 6,
-        "fragment": { "impact": { "damage_type": "bullet", "amount": 100, "armor_multiplier": 2.5 }, "range": 10 }
+        "damage": 250,
+        "radius": 4,
+        "terrain_damage_mult": 0.15,
+        "vehicle_damage_mult": 0.2,
+        "fragment": { "impact": { "damage_type": "bullet", "amount": 100, "armor_penetration": 10, "armor_multiplier": 1.2 }, "range": 10 }
       }
     },
     "flags": [ "TRADER_AVOID", "BOMB", "ALLOWS_REMOTE_USE" ]
@@ -639,9 +645,11 @@
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin; try throwing it instead.",
       "explosion": {
-        "damage": 70,
-        "radius": 2,
-        "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_multiplier": 1.8 }, "range": 7 }
+        "damage": 30,
+        "radius": 1,
+        "terrain_damage_mult": 0.05,
+        "vehicle_damage_mult": 0.1,
+        "fragment": { "impact": { "damage_type": "bullet", "amount": 85, "armor_penetration": 12 }, "range": 8 }
       }
     },
     "flags": [ "BOMB", "TRADER_AVOID" ]
@@ -873,9 +881,11 @@
     "color": "green",
     "explode_in_fire": true,
     "explosion": {
-      "damage": 40,
-      "radius": 3,
-      "fragment": { "impact": { "damage_type": "bullet", "amount": 40, "armor_multiplier": 3 }, "range": 6 }
+      "damage": 25,
+      "radius": 1,
+      "terrain_damage_mult": 0.05,
+      "vehicle_damage_mult": 0.08,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_penetration": 6, "armor_multiplier": 1.2 }, "range": 6 }
     },
     "use_action": {
       "target": "improvised_grenade_act",
@@ -904,9 +914,11 @@
       "sound_msg": "sssssh.",
       "no_deactivate_msg": "You've already lit the %s's fuse; try throwing it instead.",
       "explosion": {
-        "damage": 40,
-        "radius": 3,
-        "fragment": { "impact": { "damage_type": "bullet", "amount": 40, "armor_multiplier": 3 }, "range": 6 }
+        "damage": 25,
+        "radius": 1,
+        "terrain_damage_mult": 0.05,
+        "vehicle_damage_mult": 0.08,
+        "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_penetration": 6, "armor_multiplier": 1.2 }, "range": 6 }
       }
     },
     "flags": [ "BOMB", "TRADER_AVOID" ]
@@ -966,9 +978,10 @@
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already set the %s's timer, you might want to get away from it.",
       "explosion": {
-        "damage": 3000,
-        "radius": 20,
-        "fragment": { "impact": { "damage_type": "heat", "amount": 3000, "armor_multiplier": 2 }, "range": 24 }
+        "damage": 80000,
+        "radius": 24,
+        "terrain_damage_mult": 0.08,
+        "fragment": { "impact": { "damage_type": "heat", "amount": 80000, "armor_multiplier": 2 }, "range": 24 }
       }
     },
     "//": "Allowed to 'use' remotely so that triggering the message telling you to run won't put it back in your inventory and cause a YASD",
@@ -1460,9 +1473,11 @@
     "looks_like": "tool_improvised_barrel_bomb",
     "explode_in_fire": true,
     "explosion": {
-      "damage": 300,
-      "radius": 15,
-      "fragment": { "impact": { "damage_type": "bullet", "amount": 200, "armor_multiplier": 2 }, "range": 30 }
+      "damage": 2500,
+      "radius": 12,
+      "terrain_damage_mult": 0.25,
+      "vehicle_damage_mult": 0.5,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 300, "armor_penetration": 30, "armor_multiplier": 1.2 }, "range": 30 }
     },
     "use_action": {
       "target": "aerial_bomb_armed",
@@ -1493,9 +1508,11 @@
     "drop_action": {
       "type": "explosion",
       "explosion": {
-        "damage": 300,
-        "radius": 15,
-        "fragment": { "impact": { "damage_type": "bullet", "amount": 200, "armor_multiplier": 2 }, "range": 30 }
+        "damage": 2500,
+        "radius": 12,
+        "terrain_damage_mult": 0.25,
+        "vehicle_damage_mult": 0.5,
+        "fragment": { "impact": { "damage_type": "bullet", "amount": 300, "armor_penetration": 30, "armor_multiplier": 1.2 }, "range": 30 }
       }
     },
     "extend": { "flags": [ "TRADER_AVOID" ] }

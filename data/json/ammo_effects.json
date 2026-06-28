@@ -189,9 +189,10 @@
       "check_sees_radius": 3
     },
     "explosion": {
-      "damage": 3000,
-      "radius": 20,
-      "fragment": { "impact": { "damage_type": "heat", "amount": 3000, "armor_multiplier": 2 }, "range": 24 }
+      "damage": 10000,
+      "radius": 24,
+      "terrain_damage_mult": 0.08,
+      "fragment": { "impact": { "damage_type": "heat", "amount": 10000, "armor_multiplier": 2 }, "range": 24 }
     }
   },
   {
@@ -433,19 +434,23 @@
     "id": "AMMO_25MM_HEI",
     "type": "ammo_effect",
     "explosion": {
-      "damage": 10,
+      "damage": 40,
       "radius": 1,
+      "terrain_damage_mult": 0.05,
+      "vehicle_damage_mult": 0.1,
       "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
-      "fragment": { "impact": { "damage_type": "bullet", "amount": 5, "armor_multiplier": 1 }, "range": 2 }
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 15 }, "range": 2 }
     }
   },
   {
     "id": "AMMO_155MM_FRAG",
     "type": "ammo_effect",
     "explosion": {
-      "damage": 100,
-      "fragment": { "impact": { "damage_type": "bullet", "amount": 400, "armor_multiplier": 3 }, "range": 10 },
-      "radius": 10
+      "damage": 1000,
+      "radius": 10,
+      "terrain_damage_mult": 0.15,
+      "vehicle_damage_mult": 0.3,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 400, "armor_penetration": 40, "armor_multiplier": 1.2 }, "range": 15 }
     }
   },
   {
@@ -467,8 +472,10 @@
     "type": "ammo_effect",
     "explosion": {
       "damage": 70,
-      "radius": 1,
-      "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_multiplier": 1.6 }, "range": 7 }
+      "radius": 2,
+      "terrain_damage_mult": 0.08,
+      "vehicle_damage_mult": 0.15,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 75, "armor_penetration": 8, "armor_multiplier": 1.2 }, "range": 7 }
     }
   },
   {
