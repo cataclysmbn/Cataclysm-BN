@@ -737,6 +737,7 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
         items.pop_front();
     }
 
+    p.recalculate_enchantment_cache();
     return res;
 }
 
