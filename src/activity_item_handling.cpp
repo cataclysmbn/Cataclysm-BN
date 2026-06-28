@@ -50,6 +50,7 @@
 #include "iuse.h"
 #include "line.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "map_iterator.h"
 #include "map_selector.h"
 #include "mapdata.h"

@@ -1208,7 +1208,7 @@ auto abs_tile_handle::disp_name() const -> std::string
 }
 
 auto abs_tile_handle::fetch( mapbuffer &buf, const tripoint_abs_ms p )
-- > std::optional<abs_tile_handle>
+                             -> std::optional<abs_tile_handle> // *NOPAD*
 {
     const auto split = project_remain<coords::sm>( p );
     auto *const sm = buf.lookup_submap_in_memory( split.quotient_tripoint );
@@ -1220,7 +1220,7 @@ auto abs_tile_handle::fetch( mapbuffer &buf, const tripoint_abs_ms p )
 }
 
 auto abs_tile_handle::fetch_terrain_only( mapbuffer &buf, const tripoint_abs_ms p )
-- > std::optional<abs_tile_handle>
+                                          -> std::optional<abs_tile_handle> // *NOPAD*
 {
     const auto split = project_remain<coords::sm>( p );
     auto *const sm = buf.lookup_submap_in_memory( split.quotient_tripoint );
@@ -1294,7 +1294,7 @@ bool submap_tile_range::iterator::operator!=( const iterator &other ) const
 }
 
 auto mapbuffer::submap_tiles( const tripoint_abs_sm &p )
-- > std::optional<submap_tile_range>
+                              -> std::optional<submap_tile_range> // *NOPAD*
 {
     submap *sm = lookup_submap_in_memory( p );
     if( !sm ) {
@@ -1319,7 +1319,7 @@ bool simulated_island::contains( point_abs_sm p ) const
 }
 
 auto simulated_island::columns_in( point_abs_sm r_begin, point_abs_sm r_end ) const
-- > std::vector<point_abs_sm>
+                                   -> std::vector<point_abs_sm> // *NOPAD*
 {
     std::vector<point_abs_sm> result;
 
@@ -1359,7 +1359,7 @@ auto simulated_island::size() const -> std::size_t
 // ==========================================================================
 
 auto mapbuffer::build_islands( const std::unordered_set<point_abs_sm> &columns )
-- > std::vector<simulated_island>
+                               -> std::vector<simulated_island> // *NOPAD*
 {
     std::vector<simulated_island> islands;
     std::unordered_set<point_abs_sm> visited;
@@ -1581,7 +1581,7 @@ auto submap_tile_iterator_range::end() const -> iterator
 
 auto simulated_tiles_in_radius( mapbuffer &buf,
                                 const tripoint_abs_ms center, const int radius )
-- > submap_tile_iterator_range
+                                -> submap_tile_iterator_range // *NOPAD*
 {
     // Compute bounding box in abs_ms coordinates
     const tripoint_abs_ms bb_begin(
@@ -1618,7 +1618,7 @@ auto simulated_tiles_in_radius( mapbuffer &buf,
 
 auto simulated_tiles_in_rectangle( mapbuffer &buf,
                                    const tripoint_abs_ms begin, const tripoint_abs_ms end )
-- > submap_tile_iterator_range
+                                   -> submap_tile_iterator_range // *NOPAD*
 {
     // Project the rectangle bounds to submap coordinates.
     // sm_begin rounds down (inclusive), sm_end rounds down then +1 so the
@@ -1647,7 +1647,7 @@ auto simulated_tiles_in_rectangle( mapbuffer &buf,
 }
 
 auto simulated_tiles_on_zlevel( mapbuffer &buf, const int z )
-- > submap_tile_iterator_range
+                                -> submap_tile_iterator_range // *NOPAD*
 {
     // Collect all columns from all islands
     std::vector<point_abs_sm> columns;
@@ -5765,7 +5765,7 @@ auto mapbuffer::spawn_item( const tripoint_abs_ms &p, const itype_id &type_id,
 auto mapbuffer::spawn_items( const tripoint_abs_ms &p,
                              std::vector<detached_ptr<item>> new_items,
                              const mapbuffer_lookup_options options )
-- > std::vector<detached_ptr<item>>
+                             -> std::vector<detached_ptr<item>> // *NOPAD*
 {
     std::vector<detached_ptr<item>> remaining;
     for( auto &it : new_items ) {

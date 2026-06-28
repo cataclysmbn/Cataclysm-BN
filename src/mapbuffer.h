@@ -1536,7 +1536,7 @@ class mapbuffer
  */
 auto simulated_tiles_in_radius( mapbuffer &buf,
                                 tripoint_abs_ms center, int radius )
-- > submap_tile_iterator_range;
+                                -> submap_tile_iterator_range; // *NOPAD*
 
 /**
  * All tiles in [begin, end] (inclusive both ends) that fall on
@@ -1544,11 +1544,11 @@ auto simulated_tiles_in_radius( mapbuffer &buf,
  */
 auto simulated_tiles_in_rectangle( mapbuffer &buf,
                                    tripoint_abs_ms begin, tripoint_abs_ms end )
-- > submap_tile_iterator_range;
+                                   -> submap_tile_iterator_range; // *NOPAD*
 
 /// All simulated tiles at z-level @p z in @p buf's dimension.
 auto simulated_tiles_on_zlevel( mapbuffer &buf, int z )
-- > submap_tile_iterator_range;
+                                -> submap_tile_iterator_range; // *NOPAD*
 
 // Included after the full mapbuffer definition to avoid circular dependencies.
 // Provides the MAPBUFFER macro and MAPBUFFER_REGISTRY global.
