@@ -23,6 +23,7 @@ constexpr auto hook_names = std::array
     "on_character_effect_added",
     "on_character_effect",
     "on_character_effect_removed",
+    "on_character_consumed_food",
     "on_mon_effect_added",
     "on_mon_effect",
     "on_mon_effect_removed",

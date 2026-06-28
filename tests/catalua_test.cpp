@@ -1825,6 +1825,48 @@ TEST_CASE( "lua_hook_wiring_character_reset_stats", "[lua]" )
     CHECK( *char_ptr == &get_avatar() );
 }
 
+TEST_CASE( "lua_hook_wiring_character_consumed_food", "[lua][consumption]" )
+{
+    clear_all_state();
+    auto &state = *DynamicDataLoader::get_instance().lua;
+    sol::state &lua = state.lua;
+
+    const auto char_ptr = std::make_shared<Character *>( nullptr );
+    const auto item_ptr = std::make_shared<item *>( nullptr );
+    const auto item_id = std::make_shared<std::string>();
+    const auto calories = std::make_shared<int>( 0 );
+    const auto nutrition = std::make_shared<int>( 0 );
+    const auto when = std::make_shared<time_point>();
+
+    const auto [list, idx] = push_hook( lua, "on_character_consumed_food",
+    [char_ptr, item_ptr, item_id, calories, nutrition, when]( sol::table params ) {
+        *char_ptr = params["character"].get<sol::optional<Character *>>().value_or( nullptr );
+        *item_ptr = params["food"].get<sol::optional<item *>>().value_or( nullptr );
+        *item_id = ( *item_ptr )->typeId().str();
+        *calories = params["calories"].get<int>();
+        *nutrition = params["nutrition"].get<int>();
+        *when = params["when"].get<time_point>();
+    } );
+    hook_cleanup cleanup{ list, idx };
+
+    auto meds = item( itype_id( "aspirin" ), calendar::turn, item::default_charges_tag{} );
+    REQUIRE( meds.is_medication() );
+    REQUIRE( get_avatar().consume_effects( meds ) );
+    CHECK( *char_ptr == nullptr );
+
+    auto food = item( itype_id( "apple" ), calendar::turn, item::default_charges_tag{} );
+    REQUIRE( food.is_food() );
+
+    REQUIRE( get_avatar().consume_effects( food ) );
+
+    CHECK( *char_ptr == &get_avatar() );
+    CHECK( *item_ptr == &food );
+    CHECK( *item_id == "apple" );
+    CHECK( *calories > 0 );
+    CHECK( *nutrition > 0 );
+    CHECK( *when == calendar::turn );
+}
+
 TEST_CASE( "lua_hook_wiring_monster_loaded", "[lua]" )
 {
     clear_all_state();

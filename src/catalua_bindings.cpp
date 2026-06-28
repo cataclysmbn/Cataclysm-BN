@@ -765,6 +765,21 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_effect_removed", []( const sol::table & ) {} );
 
+    DOC( "Called after a character successfully consumes food or drink.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `character` (Character): The consuming character  " );
+    DOC( "* `food` (Item): The consumed food before charge removal  " );
+    DOC( "* `nutrition` (integer): Nutrition value used by normal food morale  " );
+    DOC( "* `calories` (integer): Calories ingested after nutrition adjustments  " );
+    DOC( "* `quench` (integer): Thirst modifier from the comestible  " );
+    DOC( "* `healthy` (integer): Hidden-health modifier from the comestible  " );
+    DOC( "* `fun` (integer): Immediate fun value after built-in monotony  " );
+    DOC( "* `fun_cap` (integer): Built-in fun morale cap  " );
+    DOC( "* `spoiled` (boolean): Whether the food was rotten  " );
+    DOC( "* `when` (TimePoint): The current turn  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_consumed_food", []( const sol::table & ) {} );
+
     DOC( "Called when a character is dead.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );

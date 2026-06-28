@@ -100,6 +100,7 @@ scopes:
   - mods/test_lua_require
   - mods/udp_redux
   - mods/underground_dynamic_temperature
+  - mods/varied_diet
   - mods/vehicle_color_expansion
   - mods/weather_variants
   - mods
