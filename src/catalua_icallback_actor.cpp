@@ -780,7 +780,7 @@ void lua_itrap_actor::call_on_trigger_aftermath( Character &who, trap &trap,
         params["target"] = &who;
         params["trap"] = &trap;
         params["pos"] = cata::detail::lua_coords::to_lua( loc );
-        sol::protected_function_result res = on_trigger_func( params );
+        sol::protected_function_result res = on_trigger_aftermath_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run itrap on_trigger for '%s': %s", item_id, e.what() );
