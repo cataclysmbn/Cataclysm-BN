@@ -1556,10 +1556,11 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
             }
             const submap *doomed = it->second.get();
             if( here.inbounds( p ) ) {
-                debugmsg( "unload_omt: skipping free of submap at %s (ptr %p) "
-                          "— reality bubble still references it (dim='%s')",
-                          p.to_string(), static_cast<const void *>( doomed ),
-                          dimension_id_.c_str() );
+                DebugLog( DL::Warn, DC::MapMem ) << string_format(
+                                                     "unload_omt: skipping free of submap at %s (ptr %p) "
+                                                     "— reality bubble still references it (dim='%s')",
+                                                     p.to_string(), static_cast<const void *>( doomed ),
+                                                     dimension_id_.c_str() );
                 return true;  // remove from to_delete → keep alive
             }
             return false;

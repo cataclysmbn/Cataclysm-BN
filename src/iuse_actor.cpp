@@ -7174,6 +7174,8 @@ void iuse_dimension_travel::load( const JsonObject &obj )
     }
     obj.read( "travel_radius", travel_radius );
     obj.read( "need_charges", need_charges );
+    obj.read( "transform_to", transform_to );
+    obj.read( "transform_message", transform_message );
     obj.read( "fail_message", fail_message );
     obj.read( "success_message", success_message );
     if( travel_radius < 1 ) {
@@ -7183,7 +7185,20 @@ void iuse_dimension_travel::load( const JsonObject &obj )
 
 int iuse_dimension_travel::use( player &p, item &it, bool, const tripoint_bub_ms &pos ) const
 {
-    dimension_travel( p, it, pos );
+    if( !dimension_travel( p, it, pos ) ) {
+        return 0;
+    }
+    if( !transform_to.is_null() ) {
+        if( transform_to.is_valid() ) {
+            if( !transform_message.empty() ) {
+                p.add_msg_if_player( m_info, "%s", _( transform_message ) );
+            }
+            it.convert( transform_to );
+        } else {
+            debugmsg( "iuse_dimension_travel: transform_to '%s' is not a valid item type",
+                      transform_to.str() );
+        }
+    }
     return need_charges;
 }
 
@@ -7196,16 +7211,16 @@ ret_val<bool> iuse_dimension_travel::can_use( const Character &, const item &it,
     return ret_val<bool>::make_success();
 }
 
-void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_bub_ms &pos ) const
+bool iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_bub_ms &pos ) const
 {
     if( destination.is_empty() ) {
         p.add_msg_if_player( m_bad, _( "This item has no destination configured." ) );
-        return;
+        return false;
     }
     if( !destination.is_valid() ) {
         debugmsg( "iuse_dimension_travel: destination '%s' is not a valid world_type",
                   destination.str() );
-        return;
+        return false;
     }
 
     // Debug: Show current and target dimensions
@@ -7225,7 +7240,7 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
     if( g->get_current_dimension_id() == target_dim_id ) {
         p.add_msg_if_player( m_info, _( "You are already in that dimension." ) );
         add_msg( m_debug, "[DIM_TRAVEL] Already in target dimension" );
-        return;
+        return false;
     }
 
     avatar &u = get_avatar();
@@ -7238,7 +7253,7 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
         } else {
             p.add_msg_if_player( m_bad, "%s", _( fail_message ) );
         }
-        return;
+        return false;
     }
 
     if( success_message.empty() ) {
@@ -7289,6 +7304,7 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
     if( abs_pos.has_value() ) {
         p.setpos( abs_pos.value() );
     }
+    return true;
 }
 
 std::unique_ptr<iuse_actor> iuse_pocket_dimension::clone() const

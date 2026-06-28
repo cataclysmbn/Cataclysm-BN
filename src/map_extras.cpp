@@ -34,6 +34,7 @@
 #include "mapgen_constructor.h"
 #include "mapgen_async.h"
 #include "submap_fields.h"
+#include "weighted_list.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "mapgen.h"
@@ -48,6 +49,7 @@
 #include "point_float.h"
 #include "regional_settings.h"
 #include "rng.h"
+#include "sets_intersect.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "text_snippets.h"
@@ -3097,8 +3099,13 @@ void debug_spawn_test()
 
 void map_extra::load( const JsonObject &jo, const std::string & )
 {
-    mandatory( jo, was_loaded, "name", _name );
-    mandatory( jo, was_loaded, "description", _description );
+    if( !was_loaded || !jo.has_string( "copy-from" ) ) {
+        mandatory( jo, was_loaded, "name", _name );
+        mandatory( jo, was_loaded, "description", _description );
+    } else {
+        optional( jo, was_loaded, "name", _name );
+        optional( jo, was_loaded, "description", _description );
+    }
     if( jo.has_object( "generator" ) ) {
         JsonObject jg = jo.get_object( "generator" );
         generator_method = jg.get_enum_value<map_extra_method>( "generator_method",
@@ -3109,10 +3116,61 @@ void map_extra::load( const JsonObject &jo, const std::string & )
     color = jo.has_member( "color" ) ? color_from_string( jo.get_string( "color" ) ) : c_white;
     optional( jo, was_loaded, "looks_like", looks_like );
     optional( jo, was_loaded, "autonote", autonote, false );
+
+    if( jo.has_array( "flags" ) ) {
+        for( const std::string &flag : jo.get_array( "flags" ) ) {
+            flags.emplace( flag );
+        }
+    }
+
+    if( jo.has_array( "min_max_zlevel" ) ) {
+        JsonArray zlevels = jo.get_array( "min_max_zlevel" );
+        min_max_zlevel = std::pair<int, int>( zlevels.get_int( 0 ), zlevels.get_int( 1 ) );
+    }
+
+    if( jo.has_object( "extend" ) ) {
+        JsonObject extend = jo.get_object( "extend" );
+        if( extend.has_array( "flags" ) ) {
+            for( const std::string &flag : extend.get_array( "flags" ) ) {
+                flags.emplace( flag );
+            }
+        }
+    }
 }
 
-extern std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_json>> >
-        update_mapgen;
+extern std::map<std::string, update_mapgen_function_json_list> update_mapgen;
+
+auto map_extra::is_valid_for( const mapgendata &md ) const -> bool
+{
+    if( min_max_zlevel && ( md.zlevel() < min_max_zlevel->first ||
+                            md.zlevel() > min_max_zlevel->second ) ) {
+        return false;
+    }
+    if( !md.region.overmap_feature_flag.blacklist.empty() &&
+        cata::sets_intersect( md.region.overmap_feature_flag.blacklist, flags ) ) {
+        return false;
+    }
+    if( !md.region.overmap_feature_flag.whitelist.empty() &&
+        !cata::sets_intersect( md.region.overmap_feature_flag.whitelist, flags ) ) {
+        return false;
+    }
+    return true;
+}
+
+auto map_extras::filtered_by( const mapgendata &dat ) const -> map_extras
+{
+    auto result = map_extras { chance };
+    for( const auto &extra : values ) {
+        const auto extra_id = string_id<map_extra>( extra.obj );
+        if( extra_id.is_valid() && extra_id.obj().is_valid_for( dat ) ) {
+            result.values.add( extra.obj, extra.weight );
+        }
+    }
+    if( !values.empty() && result.values.empty() ) {
+        result.chance = 0;
+    }
+    return result;
+}
 
 void map_extra::check() const
 {

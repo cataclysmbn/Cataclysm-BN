@@ -584,6 +584,38 @@ bool is_ot_match( const std::string &name, const oter_id &oter,
     }
 }
 
+namespace
+{
+
+auto read_see_cost( const JsonObject &jo, unsigned char &see_cost, const bool strict ) -> void
+{
+    if( !jo.has_string( "see_cost" ) ) {
+        assign( jo, "see_cost", see_cost, strict );
+        return;
+    }
+
+    const auto value = jo.get_string( "see_cost" );
+    if( value == "all_clear" || value == "none" ) {
+        see_cost = 0;
+    } else if( value == "low" ) {
+        see_cost = 1;
+    } else if( value == "medium" ) {
+        see_cost = 2;
+    } else if( value == "spaced_high" ) {
+        see_cost = 4;
+    } else if( value == "high" ) {
+        see_cost = 5;
+    } else if( value == "full_high" ) {
+        see_cost = 10;
+    } else if( value == "opaque" ) {
+        see_cost = 255;
+    } else {
+        jo.throw_error( "Unknown see_cost", "see_cost" );
+    }
+}
+
+} // namespace
+
 /*
  * load mapgen functions from an overmap_terrain json entry
  * suffix is for roads/subways/etc which have "_straight", "_curved", "_tee", "_four_way" function mappings
@@ -619,7 +651,7 @@ void oter_type_t::load( const JsonObject &jo, const std::string &src )
     }
 
     assign( jo, "name", name, strict );
-    assign( jo, "see_cost", see_cost, strict );
+    read_see_cost( jo, see_cost, strict );
     assign( jo, "travel_cost", travel_cost, strict );
     assign( jo, "extras", extras, strict );
     assign( jo, "mondensity", mondensity, strict );
@@ -903,6 +935,8 @@ void overmap_terrains::finalize()
         debugmsg( "ERROR: can't find default overmap settings (region_map_settings 'default'), "
                   "cataclysm pending.  And not the fun kind." );
     }
+
+    finalize_compat_region_settings();
 
     for( auto &elem : region_settings_map ) {
         elem.second.finalize();
@@ -2864,15 +2898,7 @@ auto overmap::populate( const dimension_id &dim_id ) -> void
 
 oter_id overmap::get_default_terrain( int z ) const
 {
-    if( z == 0 ) {
-        return settings->default_oter.id();
-    } else {
-        // // TODO: Get rid of the hard-coded ids.
-        static const oter_str_id open_air( "open_air" );
-        static const oter_str_id empty_rock( "empty_rock" );
-
-        return z > 0 ? open_air.id() : empty_rock.id();
-    }
+    return settings->default_oter[OVERMAP_DEPTH + z].id();
 }
 
 void overmap::init_layers()
@@ -4133,7 +4159,7 @@ void overmap::place_forest_trailheads()
 
 void overmap::place_forests()
 {
-    const oter_id default_oter_id( settings->default_oter );
+    const auto default_oter_id = get_default_terrain( 0 );
     const oter_id forest( "forest" );
     const oter_id forest_thick( "forest_thick" );
 
@@ -4762,7 +4788,7 @@ void overmap::place_cities()
         //attempt to generate a city with a finale if it's not tiny. If it's tiny just run once via a do while.
         do  {
             //std::unordered_map<tripoint_om_omt, std::string> oter_id_migrations;
-            if( ter( p ) == settings->default_oter ) {
+            if( ter( p ) == get_default_terrain( 0 ) ) {
                 placement_attempts = 0;
                 ter_set( p, oter_id( "road_nesw_manhole" ) ); // every city starts with an intersection
                 ter_set( p + tripoint_below, oter_id( "sewer_isolated" ) );

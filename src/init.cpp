@@ -424,6 +424,17 @@ void DynamicDataLoader::initialize()
     add( "map_extra", &MapExtras::load );
     add( "map_feature_description", &map_feature_descriptions::load_map_feature_descriptions );
 
+    add( "weather_generator", &load_compat_weather_generator );
+    add( "forest_biome_feature", &load_compat_forest_biome_feature );
+    add( "forest_biome_component", &load_compat_forest_biome_feature );
+    add( "forest_biome_mapgen", &load_compat_forest_biome_mapgen );
+    add( "map_extra_collection", &load_compat_map_extra_collection );
+    add( "region_settings_map_extras", &load_compat_region_settings_map_extras );
+    add( "region_terrain_furniture", &load_compat_region_terrain_furniture );
+    add( "region_settings_terrain_furniture", &load_compat_region_settings_terrain_furniture );
+    add( "region_settings_forest_mapgen", &load_compat_region_settings_forest_mapgen );
+    add( "region_settings_city", &load_compat_region_settings_city );
+    add( "region_settings_forest", &load_compat_region_settings_forest );
     add( "region_settings", &load_region_settings );
     add( "region_overlay", &load_region_overlay );
     add( "ITEM_BLACKLIST", []( const JsonObject & jo ) {

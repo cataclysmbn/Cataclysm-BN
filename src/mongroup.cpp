@@ -29,6 +29,84 @@ MonsterGroupManager::t_string_set MonsterGroupManager::monster_categories_blackl
 MonsterGroupManager::t_string_set MonsterGroupManager::monster_categories_whitelist;
 bool monster_whitelist_is_exclusive = false;
 
+namespace
+{
+
+struct pending_nested_monster_group {
+    mongroup_id target_group;
+    mongroup_id nested_group;
+    int frequency = 0;
+    int cost = 1;
+    int pack_min = 1;
+    int pack_max = 1;
+    time_duration starts = 0_turns;
+    time_duration ends = 0_turns;
+    std::vector<std::string> conditions;
+};
+
+auto pending_nested_groups = std::vector<pending_nested_monster_group> {};
+auto auto_total_groups = std::set<mongroup_id> {};
+
+auto monster_frequency_total( const FreqDef &monsters ) -> int
+{
+    auto total = 0;
+    for( const auto &entry : monsters ) {
+        total += entry.frequency;
+    }
+    return total;
+}
+
+auto read_monster_group_time( const JsonObject &jo, const std::string &member,
+                              const float mon_upgrade_factor ) -> time_duration
+{
+    if( !jo.has_member( member ) ) {
+        return 0_turns;
+    }
+    const auto factor = mon_upgrade_factor > 0 ? mon_upgrade_factor : 1;
+    if( jo.has_string( member ) ) {
+        return read_from_json_string<time_duration>( *jo.get_raw( member ), time_duration::units ) * factor;
+    }
+    return 1_hours * jo.get_int( member ) * factor;
+}
+
+auto append_monster_entry_conditions( MonsterGroupEntry &entry,
+                                      const std::vector<std::string> &conditions ) -> void
+{
+    entry.conditions.insert( entry.conditions.end(), conditions.begin(), conditions.end() );
+}
+
+auto append_nested_group_entries( MonsterGroup &target,
+                                  const pending_nested_monster_group &nested ) -> bool
+{
+    if( !MonsterGroupManager::isValidMonsterGroup( nested.nested_group ) ) {
+        return false;
+    }
+    const auto &nested_group = MonsterGroupManager::GetMonsterGroup( nested.nested_group );
+    const auto nested_total = std::max( nested_group.freq_total, 1 );
+    const auto inherited_frequency = std::max( nested.frequency, 1 );
+    const auto nested_default_frequency = nested_group.freq_total - monster_frequency_total(
+            nested_group.monsters );
+    if( nested_group.defaultMonster != mtype_id::NULL_ID() && nested_default_frequency > 0 ) {
+        const auto scaled_freq = std::max( 1,
+                                           nested_default_frequency * inherited_frequency / nested_total );
+        auto new_mon_group = MonsterGroupEntry( nested_group.defaultMonster, scaled_freq, nested.cost,
+                                                nested.pack_min, nested.pack_max, nested.starts, nested.ends );
+        append_monster_entry_conditions( new_mon_group, nested.conditions );
+        target.monsters.push_back( new_mon_group );
+    }
+    for( const auto &nested_entry : nested_group.monsters ) {
+        const auto scaled_freq = std::max( 1, nested_entry.frequency * inherited_frequency / nested_total );
+        auto new_mon_group = MonsterGroupEntry( nested_entry.name, scaled_freq, nested.cost,
+                                                nested.pack_min, nested.pack_max, nested.starts, nested.ends );
+        new_mon_group.conditions = nested_entry.conditions;
+        append_monster_entry_conditions( new_mon_group, nested.conditions );
+        target.monsters.push_back( new_mon_group );
+    }
+    return true;
+}
+
+} // namespace
+
 /** @relates string_id */
 template<>
 bool string_id<MonsterGroup>::is_valid() const
@@ -349,6 +427,26 @@ bool MonsterGroupManager::monster_is_blacklisted( const mtype_id &m )
 
 void MonsterGroupManager::FinalizeMonsterGroups()
 {
+    for( const auto &pending : pending_nested_groups ) {
+        const auto target_iter = monsterGroupMap.find( pending.target_group );
+        if( target_iter == monsterGroupMap.end() ) {
+            debugmsg( "monster group %s extends missing group %s", pending.target_group.c_str(),
+                      pending.nested_group.c_str() );
+            continue;
+        }
+        if( !append_nested_group_entries( target_iter->second, pending ) ) {
+            debugmsg( "monster group %s references unknown nested group %s",
+                      pending.target_group.c_str(), pending.nested_group.c_str() );
+        }
+    }
+    pending_nested_groups.clear();
+    for( const auto &group_id : auto_total_groups ) {
+        const auto group_iter = monsterGroupMap.find( group_id );
+        if( group_iter != monsterGroupMap.end() ) {
+            group_iter->second.freq_total = monster_frequency_total( group_iter->second.monsters );
+        }
+    }
+
     for( auto &mtid : monster_whitelist ) {
         if( !mtype_id( mtid ).is_valid() ) {
             debugmsg( "monster on whitelist %s does not exist", mtid.c_str() );
@@ -381,24 +479,29 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
 
     MonsterGroup g;
 
-    g.name = mongroup_id( jo.get_string( "name" ) );
+    if( jo.has_string( "name" ) ) {
+        g.name = mongroup_id( jo.get_string( "name" ) );
+    } else if( jo.has_string( "id" ) ) {
+        g.name = mongroup_id( jo.get_string( "id" ) );
+    } else {
+        jo.throw_error( "missing required field \"name\" or \"id\"" );
+    }
     bool extending = false;  //If already a group with that name, add to it instead of overwriting it
     bool allow_override = jo.get_bool( "override", false );
     if( monsterGroupMap.contains( g.name ) && !allow_override ) {
         g = monsterGroupMap[g.name];
         extending = true;
     }
-    if( !extending
-        || jo.has_string( "default" ) ) { //Not mandatory to specify default if extending existing group
+    const bool has_default = jo.has_string( "default" );
+    if( has_default ) { //Not mandatory to specify default if extending existing group
         g.defaultMonster = mtype_id( jo.get_string( "default" ) );
     }
     g.is_animal = jo.get_bool( "is_animal", false );
     if( jo.has_array( "monsters" ) ) {
         for( JsonObject mon : jo.get_array( "monsters" ) ) {
-            const mtype_id name = mtype_id( mon.get_string( "monster" ) );
-
-            int freq = mon.get_int( "freq" );
-            int cost = mon.get_int( "cost_multiplier" );
+            const bool has_group = mon.has_string( "group" );
+            const auto freq = mon.get_int( "freq", mon.get_int( "weight", 0 ) );
+            const auto cost = mon.get_int( "cost_multiplier", 1 );
             int pack_min = 1;
             int pack_max = 1;
             if( mon.has_member( "pack_size" ) ) {
@@ -406,23 +509,36 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
                 pack_min = packarr.next_int();
                 pack_max = packarr.next_int();
             }
-            static const time_duration tdfactor = 1_hours;
-            time_duration starts = 0_turns;
-            time_duration ends = 0_turns;
-            if( mon.has_member( "starts" ) ) {
-                starts = tdfactor * mon.get_int( "starts" ) * ( mon_upgrade_factor > 0 ? mon_upgrade_factor : 1 );
-            }
-            if( mon.has_member( "ends" ) ) {
-                ends = tdfactor * mon.get_int( "ends" ) * ( mon_upgrade_factor > 0 ? mon_upgrade_factor : 1 );
-            }
-            MonsterGroupEntry new_mon_group = MonsterGroupEntry( name, freq, cost, pack_min, pack_max, starts,
-                                              ends );
+            const auto starts = read_monster_group_time( mon, "starts", mon_upgrade_factor );
+            const auto ends = read_monster_group_time( mon, "ends", mon_upgrade_factor );
+            auto conditions = std::vector<std::string> {};
             if( mon.has_member( "conditions" ) ) {
                 for( const std::string line : mon.get_array( "conditions" ) ) {
-                    new_mon_group.conditions.push_back( line );
+                    conditions.push_back( line );
                 }
             }
 
+            if( has_group ) {
+                auto nested = pending_nested_monster_group {
+                    .target_group = g.name,
+                    .nested_group = mongroup_id( mon.get_string( "group" ) ),
+                    .frequency = freq,
+                    .cost = cost,
+                    .pack_min = pack_min,
+                    .pack_max = pack_max,
+                    .starts = starts,
+                    .ends = ends,
+                    .conditions = conditions
+                };
+                if( !append_nested_group_entries( g, nested ) ) {
+                    pending_nested_groups.push_back( std::move( nested ) );
+                }
+                continue;
+            }
+
+            const auto name = mtype_id( mon.get_string( "monster" ) );
+            auto new_mon_group = MonsterGroupEntry( name, freq, cost, pack_min, pack_max, starts, ends );
+            append_monster_entry_conditions( new_mon_group, conditions );
             g.monsters.push_back( new_mon_group );
         }
     }
@@ -434,13 +550,13 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
     assign( jo, "evolve_repeat", g.evolve_repeat, false, 0 );
     g.is_safe = jo.get_bool( "is_safe", false );
 
+    const auto has_freq_total = jo.has_int( "freq_total" );
     g.freq_total = jo.get_int( "freq_total", ( extending ? g.freq_total : 1000 ) );
-    if( jo.get_bool( "auto_total", false ) ) { //Fit the max size to the sum of all freqs
-        int total = 0;
-        for( MonsterGroupEntry &mon : g.monsters ) {
-            total += mon.frequency;
-        }
-        g.freq_total = total;
+    if( jo.get_bool( "auto_total", false ) || ( !has_default && !has_freq_total && !extending ) ) {
+        g.freq_total = monster_frequency_total( g.monsters );
+        auto_total_groups.emplace( g.name );
+    } else {
+        auto_total_groups.erase( g.name );
     }
 
     monsterGroupMap[g.name] = g;
@@ -455,6 +571,8 @@ bool MonsterGroupManager::is_animal( const mongroup_id &group_name )
 void MonsterGroupManager::ClearMonsterGroups()
 {
     monsterGroupMap.clear();
+    pending_nested_groups.clear();
+    auto_total_groups.clear();
     monster_blacklist.clear();
     monster_whitelist.clear();
     monster_whitelist_is_exclusive = false;
@@ -466,7 +584,7 @@ void MonsterGroupManager::check_group_definitions()
 {
     for( auto &e : monsterGroupMap ) {
         const MonsterGroup &mg = e.second;
-        if( !mg.defaultMonster.is_valid() ) {
+        if( mg.defaultMonster != mtype_id::NULL_ID() && !mg.defaultMonster.is_valid() ) {
             debugmsg( "monster group %s has unknown default monster %s", mg.name.c_str(),
                       mg.defaultMonster.c_str() );
         }

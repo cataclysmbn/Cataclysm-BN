@@ -2385,6 +2385,13 @@ class map : public submap_load_listener
             return *caches[zlev + OVERMAP_DEPTH];
         }
 
+        auto get_cache_lazy( int zlev ) const -> level_cache * { // *NOPAD*
+            if( zlev < -OVERMAP_DEPTH || zlev > OVERMAP_HEIGHT ) {
+                return nullptr;
+            }
+            return caches[zlev + OVERMAP_DEPTH].get();
+        }
+
         visibility_variables visibility_variables_cache;
 
         // caches the highest zlevel above which all zlevels are uniform

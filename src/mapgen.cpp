@@ -189,13 +189,13 @@ auto mapgen_constructor::generate( const tripoint_abs_omt &omt_pos, const time_p
         const auto &region_extras = omap.get_settings( omt_pos ).region_extras;
         const auto extra_it = region_extras.find( terrain_type->get_extras() );
         if( extra_it != region_extras.end() ) {
-            const map_extras &ex = extra_it->second;
+            const auto ex = extra_it->second.filtered_by( dat );
             if( ex.chance > 0 && one_in( ex.chance ) ) {
-                const std::string *extra = ex.values.pick();
+                const auto *extra = ex.values.pick();
                 if( extra == nullptr ) {
                     debugmsg( "failed to pick extra for type %s", terrain_type->get_extras() );
                 } else {
-                    MapExtras::apply_function( *( ex.values.pick() ), *this, omt_pos );
+                    MapExtras::apply_function( *extra, *this, omt_pos );
                 }
             }
         }
@@ -488,7 +488,7 @@ static mapgen_factory oter_mapgen;
  */
 std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_json_nested>> >
         nested_mapgen;
-std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_json>> > update_mapgen;
+std::map<std::string, update_mapgen_function_json_list> update_mapgen;
 
 using nested_mapgen_function_list =
     weighted_int_list<std::shared_ptr<mapgen_function_json_nested>>;
@@ -540,7 +540,7 @@ void calculate_mapgen_weights()   // TODO: rename as it runs jsonfunction setup 
     }
     for( auto &pr : update_mapgen ) {
         for( auto &ptr : pr.second ) {
-            ptr->setup();
+            ptr.obj->setup();
             inp_mngr.pump_events();
         }
     }
@@ -555,7 +555,7 @@ void calculate_mapgen_weights()   // TODO: rename as it runs jsonfunction setup 
     }
     for( auto &pr : update_mapgen ) {
         for( auto &ptr : pr.second ) {
-            ptr->finalize_parameters();
+            ptr.obj->finalize_parameters();
             inp_mngr.pump_events();
         }
     }
@@ -571,7 +571,7 @@ void check_mapgen_definitions()
     }
     for( auto &oter_definition : update_mapgen ) {
         for( auto &mapgen_function_ptr : oter_definition.second ) {
-            mapgen_function_ptr->check( oter_definition.first );
+            mapgen_function_ptr.obj->check( oter_definition.first );
         }
     }
 }
@@ -612,7 +612,7 @@ load_mapgen_function( const JsonObject &jio, const point_rel_omt &offset,
         jio.allow_omitted_members();
         return nullptr; // nothing
     }
-    const std::string mgtype = jio.get_string( "method" );
+    const std::string mgtype = jio.get_string( "method", "json" );
     if( mgtype == "builtin" ) {
         if( const building_gen_pointer ptr = get_mapgen_cfunction( jio.get_string( "name" ) ) ) {
             return std::make_shared<mapgen_function_builtin>( ptr, mgweight );
@@ -650,7 +650,7 @@ void load_and_add_mapgen_function( const JsonObject &jio, const std::string &id_
 
 static void load_nested_mapgen( const JsonObject &jio, const std::string &id_base )
 {
-    const std::string mgtype = jio.get_string( "method" );
+    const std::string mgtype = jio.get_string( "method", "json" );
     if( mgtype == "json" ) {
         if( jio.has_object( "object" ) ) {
             int weight = jio.get_int( "weight", 1000 );
@@ -669,14 +669,14 @@ static void load_nested_mapgen( const JsonObject &jio, const std::string &id_bas
 
 static void load_update_mapgen( const JsonObject &jio, const std::string &id_base )
 {
-    const std::string mgtype = jio.get_string( "method" );
+    const std::string mgtype = jio.get_string( "method", "json" );
     if( mgtype == "json" ) {
         if( jio.has_object( "object" ) ) {
+            const auto weight = jio.get_int( "weight", 1000 );
             JsonObject jo = jio.get_object( "object" );
             const json_source_location jsrc = jo.get_source_location();
             jo.allow_omitted_members();
-            update_mapgen[id_base].push_back(
-                std::make_unique<update_mapgen_function_json>( jsrc ) );
+            update_mapgen[id_base].add( std::make_shared<update_mapgen_function_json>( jsrc ), weight );
         } else {
             debugmsg( "Update mapgen: Invalid mapgen function (missing \"object\" object)",
                       id_base.c_str() );
@@ -1890,6 +1890,7 @@ class jmapgen_vending_machine : public jmapgen_piece
         mapgen_value<item_group_id> group_id;
         jmapgen_vending_machine( const JsonObject &jsi ) :
             reinforced( jsi.get_bool( "reinforced", false ) ) {
+            jsi.get_bool( "powered", false );
             if( jsi.has_member( "item_group" ) ) {
                 group_id = mapgen_value<item_group_id>( jsi.get_member( "item_group" ) );
             } else {
@@ -3748,6 +3749,9 @@ bool mapgen_function_json_base::setup_common( const JsonObject &jo )
     JsonArray parray;
     JsonArray sparray;
     JsonObject pjo;
+    if( jo.has_array( "flags" ) ) {
+        static_cast<void>( jo.get_tags<std::string>( "flags" ) );
+    }
 
     // just like mapf::basic_bind("stuff",blargle("foo", etc) ), only json input and faster when applying
     if( jo.has_array( "rows" ) ) {
@@ -6628,8 +6632,10 @@ bool run_mapgen_update_func( const std::string &update_mapgen_id, const tripoint
     if( update_function == update_mapgen.end() || update_function->second.empty() ) {
         return false;
     }
-    return update_function->second[0]->update_map( omt_pos, tripoint_rel_ms::zero(), miss,
-            cancel_on_collision );
+    const auto update_mapgen_function = update_function->second.pick();
+    return update_mapgen_function != nullptr &&
+           ( *update_mapgen_function )->update_map( omt_pos, tripoint_rel_ms::zero(), miss,
+                   cancel_on_collision );
 }
 
 bool run_mapgen_update_func( const std::string &update_mapgen_id, mapgendata &dat,
@@ -6639,7 +6645,9 @@ bool run_mapgen_update_func( const std::string &update_mapgen_id, mapgendata &da
     if( update_function == update_mapgen.end() || update_function->second.empty() ) {
         return false;
     }
-    return update_function->second[0]->update_map( dat, point_rel_ms::zero(), cancel_on_collision );
+    const auto update_mapgen_function = update_function->second.pick();
+    return update_mapgen_function != nullptr &&
+           ( *update_mapgen_function )->update_map( dat, point_rel_ms::zero(), cancel_on_collision );
 }
 
 std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_update(
@@ -6661,21 +6669,22 @@ std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_up
         return std::make_pair( terrains, furnitures );
     }
 
-    auto scratch_buffer = mapbuffer();
-    auto scratch_map = mapgen_constructor( scratch_buffer );
-    scratch_map.reset_scratch_omt( tripoint_abs_omt( 0, 0, fake_map_z ), t_dirt, f_null, tr_null );
+    for( const auto &function : update_function->second ) {
+        auto scratch_buffer = mapbuffer();
+        auto scratch_map = mapgen_constructor( scratch_buffer );
+        scratch_map.reset_scratch_omt( tripoint_abs_omt( 0, 0, fake_map_z ), t_dirt, f_null, tr_null );
+        mapgendata fake_md( scratch_map, mapgendata::dummy_settings );
 
-    mapgendata fake_md( scratch_map, mapgendata::dummy_settings );
-
-    if( update_function->second[0]->update_map( fake_md ) ) {
-        for( const auto &pos : scratch_map.points_on_zlevel() ) {
-            ter_id ter_at_pos = scratch_map.ter( pos );
-            if( ter_at_pos != t_dirt ) {
-                terrains[ter_at_pos] += 1;
-            }
-            if( scratch_map.has_furn( pos ) ) {
-                furn_id furn_at_pos = scratch_map.furn( pos );
-                furnitures[furn_at_pos] += 1;
+        if( function.obj->update_map( fake_md ) ) {
+            for( const auto &pos : scratch_map.points_on_zlevel() ) {
+                const auto ter_at_pos = scratch_map.ter( pos );
+                if( ter_at_pos != t_dirt ) {
+                    terrains[ter_at_pos] += 1;
+                }
+                if( scratch_map.has_furn( pos ) ) {
+                    const auto furn_at_pos = scratch_map.furn( pos );
+                    furnitures[furn_at_pos] += 1;
+                }
             }
         }
     }

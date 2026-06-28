@@ -84,6 +84,7 @@ void scenario::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "flags", flags, auto_flags_reader<> {} );
     optional( jo, was_loaded, "map_extra", _map_extra, "mx_null" );
     optional( jo, was_loaded, "missions", _missions, auto_flags_reader<mission_type_id> {} );
+    optional( jo, was_loaded, "start_dimension", _start_dimension, world_type_id( "default" ) );
 
     if( jo.has_string( "vehicle" ) ) {
         _starting_vehicle = vproto_id( jo.get_string( "vehicle" ) );
@@ -189,6 +190,10 @@ void scenario::check_definition() const
     check_bionics( _forced_bionics, id );
     check_bionics( _forbidden_bionics, id );
     MapExtras::get_function( _map_extra ); // triggers a debug message upon invalid input
+    if( !_start_dimension.is_valid() ) {
+        debugmsg( "starting dimension %s for scenario %s does not exist", _start_dimension.c_str(),
+                  id.c_str() );
+    }
 
     check_bionics( _forbidden_bionics, id );
     for( auto &m : _missions ) {
@@ -405,6 +410,10 @@ std::string scenario::start_name() const
     return _start_name.translated();
 }
 
+const world_type_id &scenario::start_dimension() const
+{
+    return _start_dimension;
+}
 
 int scenario::start_location_count() const
 {

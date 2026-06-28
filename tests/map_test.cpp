@@ -10,6 +10,7 @@
 #include "coordinates.h"
 #include "cata_utility.h"
 #include "data_vars.h"
+#include "dimension_info.h"
 #include "enums.h"
 #include "field_type.h"
 #include "game.h"
@@ -23,6 +24,8 @@
 #include "monster.h"
 #include "npc.h"
 #include "options_helpers.h"
+#include "point.h"
+#include "start_location.h"
 #include "state_helpers.h"
 #include "submap.h"
 #include "submap_load_manager.h"
@@ -701,6 +704,32 @@ TEST_CASE( "placed_monsters_inherit_bound_dimension" )
 
     REQUIRE( mon != nullptr );
     CHECK( mon->get_dimension() == test_dim );
+}
+
+TEST_CASE( "start_location_prepare_map_uses_active_dimension", "[map][dimension][.]" )
+{
+    clear_all_state();
+    const auto cleanup = on_out_of_scope( []() {
+        clear_all_state();
+    } );
+
+    static const world_type_id pocket_dimension( "pocket_dimension" );
+    static const start_location_id sloc_field( "sloc_field" );
+
+    const auto bounds = dimension_bounds{
+        .min_bound = tripoint_abs_sm( 0, 0, 0 ),
+        .max_bound = tripoint_abs_sm( 3, 3, 0 ),
+        .boundary_terrain = ter_str_id( "t_pd_border" ),
+        .boundary_overmap_terrain = oter_str_id( "pd_border" )
+    };
+
+    auto pocket_data = pocket_dimension_data{};
+    pocket_data.bounds = bounds;
+    REQUIRE( g->travel_to_dimension( dimension_id( "start_prepare_map_test" ), pocket_dimension,
+                                     pocket_data, tripoint_abs_sm( 0, 0, 0 ) ) );
+
+    const auto omtstart = project_to<coords::omt>( tripoint_abs_sm( 0, 0, 0 ) );
+    CHECK_NOTHROW( sloc_field.obj().prepare_map( omtstart ) );
 }
 
 static std::ostream &operator<<( std::ostream &os, const ter_id &tid )

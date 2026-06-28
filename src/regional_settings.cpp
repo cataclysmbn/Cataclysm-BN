@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -34,6 +35,807 @@ void read_and_set_or_throw( const JsonObject &jo, const std::string &member, T &
         }
     } else {
         target = tmp;
+    }
+}
+
+namespace
+{
+
+struct compat_map_extra_collection {
+    std::optional<std::string> copy_from;
+    unsigned int chance = 0;
+    weighted_int_list<std::string> values;
+};
+
+struct compat_region_settings_map_extras {
+    std::optional<std::string> copy_from;
+    std::vector<std::string> extras;
+};
+
+struct compat_region_terrain_furniture {
+    std::optional<std::string> copy_from;
+    std::optional<std::string> replaced_terrain_id;
+    std::optional<std::string> replaced_furniture_id;
+    weighted_int_list<ter_id> terrain;
+    weighted_int_list<furn_id> furniture;
+};
+
+struct compat_region_settings_terrain_furniture {
+    std::optional<std::string> copy_from;
+    std::vector<std::string> ter_furn;
+};
+
+struct compat_forest_biome_component {
+    std::optional<std::string> copy_from;
+    forest_biome_component component;
+};
+
+struct compat_forest_biome_mapgen {
+    std::optional<std::string> copy_from;
+    std::vector<std::string> terrains;
+    std::vector<std::string> components;
+    forest_biome biome;
+};
+
+struct compat_region_settings_forest_mapgen {
+    std::optional<std::string> copy_from;
+    std::vector<std::string> biomes;
+};
+
+struct compat_region_settings_city {
+    std::optional<std::string> copy_from;
+    city_settings city;
+};
+
+struct compat_region_settings_forest {
+    std::optional<std::string> copy_from;
+    overmap_forest_settings forest;
+};
+
+struct compat_region_references {
+    std::optional<std::string> cities;
+    std::optional<std::string> weather;
+    std::optional<std::string> map_extras;
+    std::optional<std::string> forest_composition;
+    std::optional<std::string> forests;
+    std::optional<std::string> terrain_furniture;
+};
+
+auto compat_weather_generators = std::unordered_map<std::string, weather_generator> {};
+auto compat_map_extra_collection_defs =
+std::unordered_map<std::string, compat_map_extra_collection> {};
+auto compat_region_settings_map_extras_defs = std::unordered_map<std::string,
+compat_region_settings_map_extras> {};
+auto compat_region_terrain_furniture_defs = std::unordered_map<std::string,
+compat_region_terrain_furniture> {};
+auto compat_region_settings_terrain_furniture_defs = std::unordered_map<std::string,
+compat_region_settings_terrain_furniture> {};
+auto compat_forest_biome_component_defs = std::unordered_map<std::string,
+compat_forest_biome_component> {};
+auto compat_forest_biome_mapgen_defs = std::unordered_map<std::string,
+compat_forest_biome_mapgen> {};
+auto compat_region_settings_forest_mapgen_defs = std::unordered_map<std::string,
+compat_region_settings_forest_mapgen> {};
+auto compat_region_settings_city_defs = std::unordered_map<std::string,
+compat_region_settings_city> {};
+auto compat_region_settings_forest_defs = std::unordered_map<std::string,
+compat_region_settings_forest> {};
+auto compat_region_refs = std::unordered_map<std::string, compat_region_references> {};
+
+auto get_default_region_settings() -> const regional_settings *
+{
+    const auto iter = region_settings_map.find( "default" );
+    return iter == region_settings_map.end() ? nullptr : &iter->second;
+}
+
+auto get_default_weather_generator() -> weather_generator
+{
+    if( const auto *default_region = get_default_region_settings() ) {
+        return default_region->weather;
+    }
+    return weather_generator {};
+}
+
+auto get_region_settings( const std::string &id ) -> const regional_settings *
+{
+    const auto iter = region_settings_map.find( id );
+    return iter == region_settings_map.end() ? nullptr : &iter->second;
+}
+
+auto get_default_forest_biome( const std::string &terrain ) -> std::optional<forest_biome>
+{
+    const auto *default_region = get_default_region_settings();
+    if( default_region == nullptr ) {
+        return std::nullopt;
+    }
+    const auto biome_iter = default_region->forest_composition.unfinalized_biomes.find( terrain );
+    if( biome_iter == default_region->forest_composition.unfinalized_biomes.end() ) {
+        return std::nullopt;
+    }
+    return biome_iter->second;
+}
+
+auto get_default_forest_component( const std::string &copy_from ) ->
+std::optional<forest_biome_component>
+{
+    const auto biome = get_default_forest_biome( "forest" );
+    if( !biome ) {
+        return std::nullopt;
+    }
+    const auto component_name = copy_from == "trees_forest" ? "trees" :
+                                copy_from == "shrubs_and_flowers_forest" ? "shrubs_and_flowers" :
+                                copy_from == "clutter_forest" ? "clutter" : copy_from;
+    const auto component_iter = biome->unfinalized_biome_components.find( component_name );
+    if( component_iter == biome->unfinalized_biome_components.end() ) {
+        return std::nullopt;
+    }
+    return component_iter->second;
+}
+
+auto get_region_city_settings( const std::string &id ) -> std::optional<city_settings>
+{
+    if( const auto *region = get_region_settings( id ) ) {
+        return region->city_spec;
+    }
+    return std::nullopt;
+}
+
+auto get_region_forest_settings( const std::string &id ) -> std::optional<overmap_forest_settings>
+{
+    if( const auto *region = get_region_settings( id ) ) {
+        return region->overmap_forest;
+    }
+    return std::nullopt;
+}
+
+auto consume_bool_if_present( const JsonObject &jo, const std::string &member ) -> void
+{
+    if( jo.has_bool( member ) ) {
+        ( void )jo.get_bool( member );
+    }
+}
+
+auto disable_lakes( regional_settings &region ) -> void
+{
+    region.overmap_lake.noise_threshold_lake = 0.0;
+}
+
+auto disable_forests( regional_settings &region ) -> void
+{
+    region.overmap_forest.noise_threshold_forest = 0.0;
+    region.overmap_forest.noise_threshold_forest_thick = 0.0;
+}
+
+auto make_legacy_default_oter( const oter_str_id &surface_oter ) ->
+std::array<oter_str_id, OVERMAP_LAYERS>
+{
+    auto result = std::array<oter_str_id, OVERMAP_LAYERS> {};
+    const auto open_air = oter_str_id( "open_air" );
+    const auto empty_rock = oter_str_id( "empty_rock" );
+    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
+        result[OVERMAP_DEPTH + z] = z == 0 ? surface_oter : ( z > 0 ? open_air : empty_rock );
+    }
+    return result;
+}
+
+auto read_default_oter( const JsonObject &jo,
+                        std::array<oter_str_id, OVERMAP_LAYERS> &default_oter ) -> bool
+{
+    if( !jo.has_member( "default_oter" ) ) {
+        return false;
+    }
+
+    if( jo.has_array( "default_oter" ) ) {
+        auto default_oter_array = jo.get_array( "default_oter" );
+        if( default_oter_array.size() != OVERMAP_LAYERS ) {
+            jo.throw_error( string_format( "default_oter must contain %d entries", OVERMAP_LAYERS ) );
+        }
+        for( int i = 0; i < OVERMAP_LAYERS; ++i ) {
+            default_oter[i] = oter_str_id( default_oter_array.get_string( i ) );
+        }
+        std::ranges::reverse( default_oter );
+        return true;
+    }
+
+    auto surface_oter = oter_str_id();
+    if( jo.read( "default_oter", surface_oter ) ) {
+        default_oter = make_legacy_default_oter( surface_oter );
+        return true;
+    }
+
+    return false;
+}
+
+auto read_unfinalized_weighted_strings( const JsonObject &jo, const std::string &member,
+                                        std::map<std::string, int> &values ) -> void
+{
+    if( !jo.has_member( member ) ) {
+        return;
+    }
+    values.clear();
+    if( jo.has_object( member ) ) {
+        for( const JsonMember entry : jo.get_object( member ) ) {
+            if( entry.is_comment() ) {
+                continue;
+            }
+            values[entry.name()] = entry.get_int();
+        }
+        return;
+    }
+    for( const JsonValue entry : jo.get_array( member ) ) {
+        if( entry.test_string() ) {
+            values[entry.get_string()] = 100;
+        } else if( entry.test_array() ) {
+            auto pair = entry.get_array();
+            values[pair.get_string( 0 )] = pair.get_int( 1 );
+        } else {
+            entry.throw_error( "expected string or [ id, weight ] pair" );
+        }
+    }
+}
+
+auto append_unfinalized_weighted_strings( const JsonObject &jo, const std::string &member,
+        std::map<std::string, int> &values ) -> void
+{
+    if( !jo.has_member( member ) ) {
+        return;
+    }
+    if( jo.has_object( member ) ) {
+        for( const JsonMember entry : jo.get_object( member ) ) {
+            if( entry.is_comment() ) {
+                continue;
+            }
+            values[entry.name()] = entry.get_int();
+        }
+        return;
+    }
+    for( const JsonValue entry : jo.get_array( member ) ) {
+        if( entry.test_string() ) {
+            values[entry.get_string()] = 100;
+        } else if( entry.test_array() ) {
+            auto pair = entry.get_array();
+            values[pair.get_string( 0 )] = pair.get_int( 1 );
+        } else {
+            entry.throw_error( "expected string or [ id, weight ] pair" );
+        }
+    }
+}
+
+auto read_string_list( const JsonObject &jo, const std::string &member,
+                       std::vector<std::string> &values, const bool replace ) -> void
+{
+    if( !jo.has_array( member ) ) {
+        return;
+    }
+    if( replace ) {
+        values.clear();
+    }
+    for( const auto value : jo.get_tags<std::string>( member ) ) {
+        values.emplace_back( value );
+    }
+}
+
+auto read_weighted_string_array( const JsonObject &jo, const std::string &member,
+                                 weighted_int_list<std::string> &values,
+                                 const bool replace ) -> void
+{
+    if( !jo.has_array( member ) ) {
+        return;
+    }
+    if( replace ) {
+        values = weighted_int_list<std::string> {};
+    }
+    for( JsonArray entry : jo.get_array( member ) ) {
+        values.add_or_replace( entry.get_string( 0 ), entry.get_int( 1 ) );
+    }
+}
+
+auto read_city_buildings( const JsonObject &jo, const std::string &member,
+                          building_bin &dest ) -> void
+{
+    if( !jo.has_array( member ) ) {
+        return;
+    }
+    for( JsonArray entry : jo.get_array( member ) ) {
+        dest.add( overmap_special_id( entry.get_string( 0 ) ), entry.get_int( 1 ) );
+    }
+}
+
+auto read_compat_forest_terrain_furniture( const JsonObject &jo, forest_biome &biome ) -> void
+{
+    if( !jo.has_object( "terrain_furniture" ) ) {
+        return;
+    }
+    biome.unfinalized_terrain_dependent_furniture.clear();
+    for( const JsonMember entry : jo.get_object( "terrain_furniture" ) ) {
+        if( entry.is_comment() ) {
+            continue;
+        }
+        auto terrain_furniture = entry.get_object();
+        auto &result = biome.unfinalized_terrain_dependent_furniture[entry.name()];
+        terrain_furniture.read( "chance", result.chance );
+        read_unfinalized_weighted_strings( terrain_furniture, "furniture", result.unfinalized_furniture );
+    }
+}
+
+auto resolve_compat_forest_biome( const compat_forest_biome_mapgen &compat_biome ) -> forest_biome
+{
+    auto result = compat_biome.biome;
+    for( const auto &component_id : compat_biome.components ) {
+        const auto iter = compat_forest_biome_component_defs.find( component_id );
+        if( iter == compat_forest_biome_component_defs.end() ) {
+            throw std::runtime_error( string_format( "unknown forest_biome_feature '%s'", component_id ) );
+        }
+        result.unfinalized_biome_components[component_id] = iter->second.component;
+    }
+    return result;
+}
+
+template<typename T>
+auto read_compat_copy_from( const JsonObject &jo, const std::unordered_map<std::string, T> &defs,
+                            T &result, const std::string &type_name ) -> void
+{
+    if( !jo.has_string( "copy-from" ) ) {
+        return;
+    }
+    const auto copy_from = jo.get_string( "copy-from" );
+    const auto iter = defs.find( copy_from );
+    if( iter == defs.end() ) {
+        jo.throw_error( string_format( "unknown %s copy-from '%s'", type_name, copy_from ), "copy-from" );
+    }
+    result = iter->second;
+    result.copy_from = copy_from;
+}
+
+} // namespace
+
+auto load_compat_weather_generator( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = get_default_weather_generator();
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_weather_generators.find( copy_from );
+            iter != compat_weather_generators.end() ) {
+            result = iter->second;
+        } else if( const auto *copy_region = get_region_settings( copy_from ) ) {
+            result = copy_region->weather;
+        } else {
+            jo.throw_error( string_format( "unknown weather_generator copy-from '%s'", copy_from ),
+                            "copy-from" );
+        }
+    }
+    if( jo.has_number( "base_temperature" ) ) {
+        const auto base_temp = jo.get_float( "base_temperature" );
+        for( auto &season : result.season_stats ) {
+            season.average_temperature = units::from_celsius( base_temp );
+        }
+    }
+    jo.read( "base_humidity", result.base_humidity );
+    jo.read( "base_pressure", result.base_pressure );
+    jo.read( "base_wind", result.base_wind );
+    jo.read( "base_wind_distrib_peaks", result.base_wind_distrib_peaks );
+    jo.read( "base_wind_season_variation", result.base_wind_season_variation );
+    if( jo.has_array( "weather_types" ) ) {
+        result.weather_types.clear();
+        jo.read( "weather_types", result.weather_types );
+    }
+    if( result.weather_types.empty() ) {
+        jo.throw_error( "weather_generator requires weather_types or a copy-from/default weather with weather_types" );
+    }
+    if( jo.has_array( "weather_black_list" ) ) {
+        ( void )jo.get_array( "weather_black_list" );
+    }
+    compat_weather_generators[id] = result;
+}
+
+auto load_compat_forest_biome_feature( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_forest_biome_component {};
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_forest_biome_component_defs.find( copy_from );
+            iter != compat_forest_biome_component_defs.end() ) {
+            result = iter->second;
+        } else if( const auto component = get_default_forest_component( copy_from ) ) {
+            result.component = *component;
+        } else {
+            jo.throw_error( string_format( "unknown forest_biome_feature copy-from '%s'", copy_from ),
+                            "copy-from" );
+        }
+        result.copy_from = copy_from;
+    }
+    jo.read( "chance", result.component.chance );
+    jo.read( "sequence", result.component.sequence );
+    read_unfinalized_weighted_strings( jo, "types", result.component.unfinalized_types );
+    if( jo.has_object( "extend" ) ) {
+        append_unfinalized_weighted_strings( jo.get_object( "extend" ), "types",
+                                             result.component.unfinalized_types );
+    }
+    compat_forest_biome_component_defs[id] = result;
+}
+
+auto load_compat_forest_biome_mapgen( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_forest_biome_mapgen {};
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_forest_biome_mapgen_defs.find( copy_from );
+            iter != compat_forest_biome_mapgen_defs.end() ) {
+            result = iter->second;
+        } else if( copy_from == "biome_forest_default" ) {
+            if( const auto biome = get_default_forest_biome( "forest" ) ) {
+                result.biome = *biome;
+                result.terrains = { "forest" };
+            } else {
+                jo.throw_error( "unknown forest_biome_mapgen copy-from 'biome_forest_default'",
+                                "copy-from" );
+            }
+        } else {
+            jo.throw_error( string_format( "unknown forest_biome_mapgen copy-from '%s'", copy_from ),
+                            "copy-from" );
+        }
+        result.copy_from = copy_from;
+    }
+    read_string_list( jo, "terrains", result.terrains, true );
+    if( jo.has_member( "components" ) ) {
+        result.biome.unfinalized_biome_components.clear();
+    }
+    read_string_list( jo, "components", result.components, true );
+    jo.read( "sparseness_adjacency_factor", result.biome.sparseness_adjacency_factor );
+    jo.read( "item_group", result.biome.item_group );
+    jo.read( "item_group_chance", result.biome.item_group_chance );
+    jo.read( "item_spawn_iterations", result.biome.item_spawn_iterations );
+    read_unfinalized_weighted_strings( jo, "groundcover", result.biome.unfinalized_groundcover );
+    read_compat_forest_terrain_furniture( jo, result.biome );
+    if( jo.has_object( "extend" ) ) {
+        const auto extend = jo.get_object( "extend" );
+        read_string_list( extend, "terrains", result.terrains, false );
+        read_string_list( extend, "components", result.components, false );
+    }
+    compat_forest_biome_mapgen_defs[id] = result;
+}
+
+auto load_compat_map_extra_collection( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_map_extra_collection {};
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_map_extra_collection_defs.find( copy_from );
+            iter != compat_map_extra_collection_defs.end() ) {
+            result = iter->second;
+        } else if( const auto *default_region = get_default_region_settings(); default_region != nullptr ) {
+            const auto extra_iter = default_region->region_extras.find( copy_from );
+            if( extra_iter == default_region->region_extras.end() ) {
+                jo.throw_error( string_format( "unknown map_extra_collection copy-from '%s'", copy_from ),
+                                "copy-from" );
+            }
+            result.chance = extra_iter->second.chance;
+            result.values = extra_iter->second.values;
+        } else {
+            jo.throw_error( string_format( "unknown map_extra_collection copy-from '%s'", copy_from ),
+                            "copy-from" );
+        }
+        result.copy_from = copy_from;
+    }
+    jo.read( "chance", result.chance );
+    read_weighted_string_array( jo, "extras", result.values, true );
+    if( jo.has_object( "extend" ) ) {
+        read_weighted_string_array( jo.get_object( "extend" ), "extras", result.values, false );
+    }
+    compat_map_extra_collection_defs[id] = result;
+}
+
+auto load_compat_region_settings_map_extras( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_region_settings_map_extras {};
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_region_settings_map_extras_defs.find( copy_from );
+            iter != compat_region_settings_map_extras_defs.end() ) {
+            result = iter->second;
+        } else if( const auto *region = get_region_settings( copy_from ) ) {
+            for( const auto &extra : region->region_extras ) {
+                result.extras.emplace_back( extra.first );
+            }
+        } else {
+            jo.throw_error( string_format( "unknown region_settings_map_extras copy-from '%s'", copy_from ),
+                            "copy-from" );
+        }
+        result.copy_from = copy_from;
+    }
+    read_string_list( jo, "extras", result.extras, true );
+    if( jo.has_object( "extend" ) ) {
+        read_string_list( jo.get_object( "extend" ), "extras", result.extras, false );
+    }
+    compat_region_settings_map_extras_defs[id] = result;
+}
+
+auto load_compat_region_terrain_furniture( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_region_terrain_furniture {};
+    read_compat_copy_from( jo, compat_region_terrain_furniture_defs, result,
+                           "region_terrain_furniture" );
+    if( jo.has_string( "ter_id" ) ) {
+        result.replaced_terrain_id = jo.get_string( "ter_id" );
+    }
+    if( jo.has_string( "furn_id" ) ) {
+        result.replaced_furniture_id = jo.get_string( "furn_id" );
+    }
+    if( jo.has_array( "replace_with_terrain" ) ) {
+        result.terrain = weighted_int_list<ter_id> {};
+        for( JsonArray entry : jo.get_array( "replace_with_terrain" ) ) {
+            result.terrain.add_or_replace( ter_id( entry.get_string( 0 ) ), entry.get_int( 1 ) );
+        }
+    }
+    if( jo.has_array( "replace_with_furniture" ) ) {
+        result.furniture = weighted_int_list<furn_id> {};
+        for( JsonArray entry : jo.get_array( "replace_with_furniture" ) ) {
+            result.furniture.add_or_replace( furn_id( entry.get_string( 0 ) ), entry.get_int( 1 ) );
+        }
+    }
+    compat_region_terrain_furniture_defs[id] = result;
+}
+
+auto load_compat_region_settings_terrain_furniture( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_region_settings_terrain_furniture {};
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_region_settings_terrain_furniture_defs.find( copy_from );
+            iter != compat_region_settings_terrain_furniture_defs.end() ) {
+            result = iter->second;
+        } else if( get_region_settings( copy_from ) == nullptr ) {
+            jo.throw_error( string_format( "unknown region_settings_terrain_furniture copy-from '%s'",
+                                           copy_from ), "copy-from" );
+        }
+        result.copy_from = copy_from;
+    }
+    read_string_list( jo, "ter_furn", result.ter_furn, true );
+    if( jo.has_object( "extend" ) ) {
+        read_string_list( jo.get_object( "extend" ), "ter_furn", result.ter_furn, false );
+    }
+    compat_region_settings_terrain_furniture_defs[id] = result;
+}
+
+auto load_compat_region_settings_forest_mapgen( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_region_settings_forest_mapgen {};
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_region_settings_forest_mapgen_defs.find( copy_from );
+            iter != compat_region_settings_forest_mapgen_defs.end() ) {
+            result = iter->second;
+        } else if( get_region_settings( copy_from ) == nullptr ) {
+            jo.throw_error( string_format( "unknown region_settings_forest_mapgen copy-from '%s'",
+                                           copy_from ), "copy-from" );
+        }
+        result.copy_from = copy_from;
+    }
+    read_string_list( jo, "biomes", result.biomes, true );
+    if( jo.has_object( "extend" ) ) {
+        read_string_list( jo.get_object( "extend" ), "biomes", result.biomes, false );
+    }
+    compat_region_settings_forest_mapgen_defs[id] = result;
+}
+
+auto load_compat_region_settings_city( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_region_settings_city {};
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_region_settings_city_defs.find( copy_from );
+            iter != compat_region_settings_city_defs.end() ) {
+            result = iter->second;
+        } else if( const auto city = get_region_city_settings( copy_from ) ) {
+            result.city = *city;
+        } else {
+            jo.throw_error( string_format( "unknown region_settings_city copy-from '%s'", copy_from ),
+                            "copy-from" );
+        }
+        result.copy_from = copy_from;
+    }
+    jo.read( "city_size", result.city.city_size );
+    if( jo.has_bool( "is_megacity" ) ) {
+        ( void )jo.get_bool( "is_megacity" );
+    }
+    if( jo.has_string( "name_snippet" ) ) {
+        ( void )jo.get_string( "name_snippet" );
+    }
+    jo.read( "city_spacing", result.city.city_spacing );
+    jo.read( "shop_radius", result.city.shop_radius );
+    jo.read( "shop_sigma", result.city.shop_sigma );
+    jo.read( "park_radius", result.city.park_radius );
+    jo.read( "park_sigma", result.city.park_sigma );
+    read_city_buildings( jo, "houses", result.city.houses );
+    read_city_buildings( jo, "shops", result.city.shops );
+    read_city_buildings( jo, "parks", result.city.parks );
+    read_city_buildings( jo, "finales", result.city.finales );
+    if( jo.has_object( "extend" ) ) {
+        const auto extend = jo.get_object( "extend" );
+        read_city_buildings( extend, "houses", result.city.houses );
+        read_city_buildings( extend, "shops", result.city.shops );
+        read_city_buildings( extend, "parks", result.city.parks );
+        read_city_buildings( extend, "finales", result.city.finales );
+    }
+    compat_region_settings_city_defs[id] = result;
+}
+
+auto load_compat_region_settings_forest( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_region_settings_forest {};
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_region_settings_forest_defs.find( copy_from );
+            iter != compat_region_settings_forest_defs.end() ) {
+            result = iter->second;
+        } else if( const auto forest = get_region_forest_settings( copy_from ) ) {
+            result.forest = *forest;
+        } else {
+            jo.throw_error( string_format( "unknown region_settings_forest copy-from '%s'", copy_from ),
+                            "copy-from" );
+        }
+        result.copy_from = copy_from;
+    }
+    jo.read( "noise_threshold_forest", result.forest.noise_threshold_forest );
+    jo.read( "noise_threshold_forest_thick", result.forest.noise_threshold_forest_thick );
+    jo.read( "noise_threshold_swamp_adjacent_water",
+             result.forest.noise_threshold_swamp_adjacent_water );
+    jo.read( "noise_threshold_swamp_isolated", result.forest.noise_threshold_swamp_isolated );
+    jo.read( "river_floodplain_buffer_distance_min",
+             result.forest.river_floodplain_buffer_distance_min );
+    jo.read( "river_floodplain_buffer_distance_max",
+             result.forest.river_floodplain_buffer_distance_max );
+    if( jo.has_number( "forest_threshold_limit" ) ) {
+        ( void )jo.get_float( "forest_threshold_limit" );
+    }
+    if( jo.has_array( "forest_threshold_increase" ) ) {
+        ( void )jo.get_array( "forest_threshold_increase" );
+    }
+    compat_region_settings_forest_defs[id] = result;
+}
+
+[[noreturn]] auto throw_unknown_compat_ref( const std::string &type_name,
+        const std::string &id ) -> void
+{
+    throw std::runtime_error( string_format( "unknown %s '%s'", type_name, id ) );
+}
+
+auto apply_compat_map_extras_ref( regional_settings &region,
+                                  const std::string &map_extras_id ) -> void
+{
+    const auto settings_iter = compat_region_settings_map_extras_defs.find( map_extras_id );
+    if( settings_iter == compat_region_settings_map_extras_defs.end() ) {
+        throw_unknown_compat_ref( "region_settings_map_extras", map_extras_id );
+    }
+    for( const auto &extra_id : settings_iter->second.extras ) {
+        if( const auto extra_iter = compat_map_extra_collection_defs.find( extra_id );
+            extra_iter != compat_map_extra_collection_defs.end() ) {
+            auto extras = map_extras { extra_iter->second.chance };
+            extras.values = extra_iter->second.values;
+            region.region_extras[extra_id] = extras;
+        } else if( !region.region_extras.contains( extra_id ) ) {
+            throw_unknown_compat_ref( "map_extra_collection", extra_id );
+        }
+    }
+}
+
+auto apply_compat_forest_mapgen_ref( regional_settings &region,
+                                     const std::string &forest_composition_id ) -> void
+{
+    const auto settings_iter = compat_region_settings_forest_mapgen_defs.find( forest_composition_id );
+    if( settings_iter == compat_region_settings_forest_mapgen_defs.end() ) {
+        throw_unknown_compat_ref( "region_settings_forest_mapgen", forest_composition_id );
+    }
+    const auto preserve_existing = settings_iter->second.copy_from &&
+                                   get_region_settings( *settings_iter->second.copy_from ) != nullptr;
+    if( !preserve_existing ) {
+        region.forest_composition.unfinalized_biomes.clear();
+    }
+    for( const auto &biome_id : settings_iter->second.biomes ) {
+        const auto biome_iter = compat_forest_biome_mapgen_defs.find( biome_id );
+        if( biome_iter == compat_forest_biome_mapgen_defs.end() ) {
+            throw_unknown_compat_ref( "forest_biome_mapgen", biome_id );
+        }
+        const auto biome = resolve_compat_forest_biome( biome_iter->second );
+        for( const auto &terrain : biome_iter->second.terrains ) {
+            region.forest_composition.unfinalized_biomes[terrain] = biome;
+        }
+    }
+}
+
+auto apply_compat_terrain_furniture_ref( regional_settings &region,
+        const std::string &terrain_furniture_id ) -> void
+{
+    const auto settings_iter = compat_region_settings_terrain_furniture_defs.find(
+                                   terrain_furniture_id );
+    if( settings_iter == compat_region_settings_terrain_furniture_defs.end() ) {
+        throw_unknown_compat_ref( "region_settings_terrain_furniture", terrain_furniture_id );
+    }
+    for( const auto &ter_furn_id : settings_iter->second.ter_furn ) {
+        const auto ter_furn_iter = compat_region_terrain_furniture_defs.find( ter_furn_id );
+        if( ter_furn_iter == compat_region_terrain_furniture_defs.end() ) {
+            throw_unknown_compat_ref( "region_terrain_furniture", ter_furn_id );
+        }
+        const auto &ter_furn = ter_furn_iter->second;
+        if( ter_furn.replaced_terrain_id ) {
+            for( const auto &replacement : ter_furn.terrain ) {
+                region.region_terrain_and_furniture.unfinalized_terrain[*ter_furn.replaced_terrain_id]
+                [replacement.obj.id().str()] = replacement.weight;
+            }
+        }
+        if( ter_furn.replaced_furniture_id ) {
+            for( const auto &replacement : ter_furn.furniture ) {
+                region.region_terrain_and_furniture.unfinalized_furniture[*ter_furn.replaced_furniture_id]
+                [replacement.obj.id().str()] = replacement.weight;
+            }
+        }
+    }
+}
+
+auto apply_compat_region_references( regional_settings &region,
+                                     const compat_region_references &refs ) -> void
+{
+    if( refs.cities ) {
+        if( const auto city_iter = compat_region_settings_city_defs.find( *refs.cities );
+            city_iter != compat_region_settings_city_defs.end() ) {
+            region.city_spec = city_iter->second.city;
+        } else if( *refs.cities != "no_cities" ) {
+            throw_unknown_compat_ref( "region_settings_city", *refs.cities );
+        }
+    }
+    if( refs.weather ) {
+        if( const auto weather_iter = compat_weather_generators.find( *refs.weather );
+            weather_iter != compat_weather_generators.end() ) {
+            region.weather = weather_iter->second;
+        } else {
+            throw_unknown_compat_ref( "weather_generator", *refs.weather );
+        }
+    }
+    if( refs.map_extras ) {
+        apply_compat_map_extras_ref( region, *refs.map_extras );
+    }
+    if( refs.forest_composition ) {
+        apply_compat_forest_mapgen_ref( region, *refs.forest_composition );
+    }
+    if( refs.forests ) {
+        if( const auto forest_iter = compat_region_settings_forest_defs.find( *refs.forests );
+            forest_iter != compat_region_settings_forest_defs.end() ) {
+            region.overmap_forest = forest_iter->second.forest;
+        } else {
+            throw_unknown_compat_ref( "region_settings_forest", *refs.forests );
+        }
+    }
+    if( refs.terrain_furniture ) {
+        apply_compat_terrain_furniture_ref( region, *refs.terrain_furniture );
+    }
+}
+
+auto record_compat_region_reference( const std::string &region_id, const std::string &member,
+                                     const std::string &value ) -> void
+{
+    auto &refs = compat_region_refs[region_id];
+    if( member == "cities" ) {
+        refs.cities = value;
+    } else if( member == "weather" ) {
+        refs.weather = value;
+    } else if( member == "map_extras" ) {
+        refs.map_extras = value;
+    } else if( member == "forest_composition" ) {
+        refs.forest_composition = value;
+    } else if( member == "forests" ) {
+        refs.forests = value;
+    } else if( member == "terrain_furniture" ) {
+        refs.terrain_furniture = value;
     }
 }
 
@@ -419,8 +1221,18 @@ void load_region_settings( const JsonObject &jo )
     if( !jo.read( "id", new_region.id ) ) {
         jo.throw_error( "No 'id' field." );
     }
-    bool strict = new_region.id == "default";
-    if( !jo.read( "default_oter", new_region.default_oter ) && strict ) {
+    const auto region_id = new_region.id;
+    if( jo.has_string( "copy-from" ) ) {
+        const auto copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = region_settings_map.find( copy_from ); iter != region_settings_map.end() ) {
+            new_region = iter->second;
+            new_region.id = region_id;
+        } else {
+            jo.throw_error( string_format( "unknown region_settings copy-from '%s'", copy_from ), "copy-from" );
+        }
+    }
+    const auto strict = new_region.id == "default";
+    if( !read_default_oter( jo, new_region.default_oter ) && strict ) {
         jo.throw_error( "default_oter required for default ( though it should probably remain 'field' )" );
     }
     if( !jo.read( "river_scale", new_region.river_scale ) && strict ) {
@@ -484,12 +1296,19 @@ void load_region_settings( const JsonObject &jo )
         }
     }
 
-    load_forest_mapgen_settings( jo, new_region.forest_composition, strict, false );
+    const auto strict_forest_mapgen = strict && !jo.has_string( "forest_composition" );
+    load_forest_mapgen_settings( jo, new_region.forest_composition, strict_forest_mapgen, false );
+    if( jo.has_string( "forest_composition" ) ) {
+        record_compat_region_reference( region_id, "forest_composition",
+                                        jo.get_string( "forest_composition" ) );
+    }
 
-    load_forest_trail_settings( jo, new_region.forest_trail, strict, false );
+    const auto strict_forest_trail = strict && !jo.has_member( "forest_trails" );
+    load_forest_trail_settings( jo, new_region.forest_trail, strict_forest_trail, false );
 
+    const auto strict_map_extras = strict && !jo.has_string( "map_extras" );
     if( !jo.has_object( "map_extras" ) ) {
-        if( strict ) {
+        if( strict_map_extras ) {
             jo.throw_error( "\"map_extras\": { … } required for default" );
         }
     } else {
@@ -500,12 +1319,12 @@ void load_region_settings( const JsonObject &jo )
             JsonObject zjo = zone.get_object();
             map_extras extras( 0 );
 
-            if( !zjo.read( "chance", extras.chance ) && strict ) {
+            if( !zjo.read( "chance", extras.chance ) && strict_map_extras ) {
                 zjo.throw_error( "chance required for default" );
             }
 
             if( !zjo.has_object( "extras" ) ) {
-                if( strict ) {
+                if( strict_map_extras ) {
                     zjo.throw_error( "\"extras\": { … } required for default" );
                 }
             } else {
@@ -520,10 +1339,22 @@ void load_region_settings( const JsonObject &jo )
             new_region.region_extras[zone.name()] = extras;
         }
     }
+    if( jo.has_string( "map_extras" ) ) {
+        record_compat_region_reference( region_id, "map_extras", jo.get_string( "map_extras" ) );
+    }
 
     if( !jo.has_object( "city" ) ) {
-        if( strict ) {
+        if( strict && !jo.has_string( "cities" ) ) {
             jo.throw_error( "\"city\": { … } required for default" );
+        }
+        if( jo.has_string( "cities" ) ) {
+            const auto cities_id = jo.get_string( "cities" );
+            if( cities_id == "no_cities" ) {
+                new_region.city_spec.city_size = 0;
+                new_region.city_spec.city_spacing = 0;
+            } else {
+                record_compat_region_reference( region_id, "cities", cities_id );
+            }
         }
     } else {
         JsonObject cjo = jo.get_object( "city" );
@@ -565,8 +1396,11 @@ void load_region_settings( const JsonObject &jo )
     }
 
     if( !jo.has_object( "weather" ) ) {
-        if( strict ) {
+        if( strict && !jo.has_string( "weather" ) ) {
             jo.throw_error( "\"weather\": { … } required for default" );
+        }
+        if( jo.has_string( "weather" ) ) {
+            record_compat_region_reference( region_id, "weather", jo.get_string( "weather" ) );
         }
     } else {
         JsonObject wjo = jo.get_object( "weather" );
@@ -612,23 +1446,133 @@ void load_region_settings( const JsonObject &jo )
         }
     }
 
-    load_overmap_feature_flag_settings( jo, new_region.overmap_feature_flag, strict, false );
+    if( jo.has_object( "feature_flag_settings" ) ) {
+        auto feature_flag_settings = jo.get_object( "feature_flag_settings" );
+        read_and_set_or_throw<bool>( feature_flag_settings, "clear_blacklist",
+                                     new_region.overmap_feature_flag.clear_blacklist, false );
+        read_and_set_or_throw<bool>( feature_flag_settings, "clear_whitelist",
+                                     new_region.overmap_feature_flag.clear_whitelist, false );
+        if( new_region.overmap_feature_flag.clear_blacklist ) {
+            new_region.overmap_feature_flag.blacklist.clear();
+        }
+        if( new_region.overmap_feature_flag.clear_whitelist ) {
+            new_region.overmap_feature_flag.whitelist.clear();
+        }
+        for( const auto &value : feature_flag_settings.get_tags<std::string>( "blacklist" ) ) {
+            new_region.overmap_feature_flag.blacklist.emplace( value );
+        }
+        for( const auto &value : feature_flag_settings.get_tags<std::string>( "whitelist" ) ) {
+            new_region.overmap_feature_flag.whitelist.emplace( value );
+        }
+    } else {
+        load_overmap_feature_flag_settings( jo, new_region.overmap_feature_flag, strict, false );
+    }
 
-    load_overmap_forest_settings( jo, new_region.overmap_forest, strict, false );
+    consume_bool_if_present( jo, "place_swamps" );
+    consume_bool_if_present( jo, "place_roads" );
+    consume_bool_if_present( jo, "place_railroads" );
+    consume_bool_if_present( jo, "place_railroads_before_roads" );
+    consume_bool_if_present( jo, "place_specials" );
+    consume_bool_if_present( jo, "neighbor_connections" );
 
-    load_overmap_lake_settings( jo, new_region.overmap_lake, strict, false );
+    if( jo.has_member( "rivers" ) && jo.has_null( "rivers" ) ) {
+        new_region.river_scale = 0.0;
+    }
+    if( jo.has_member( "lakes" ) && jo.has_null( "lakes" ) ) {
+        disable_lakes( new_region );
+    }
+    if( jo.has_member( "ocean" ) && jo.has_null( "ocean" ) ) {
+        // BN has no separate ocean settings block here.
+    }
+    if( jo.has_member( "forests" ) && jo.has_null( "forests" ) ) {
+        disable_forests( new_region );
+    } else if( jo.has_string( "forests" ) ) {
+        record_compat_region_reference( region_id, "forests", jo.get_string( "forests" ) );
+    }
+    if( jo.has_member( "forest_trails" ) && jo.has_null( "forest_trails" ) ) {
+        new_region.forest_trail.chance = 0;
+    }
+    if( jo.has_member( "ravines" ) && jo.has_null( "ravines" ) ) {
+        // BN has no ravines settings block here.
+    }
+    if( jo.has_member( "highways" ) && jo.has_null( "highways" ) ) {
+        // BN has no highways settings block here.
+    }
 
-    load_region_terrain_and_furniture_settings( jo, new_region.region_terrain_and_furniture, strict,
-            false );
+    const auto strict_overmap_forest = strict && !jo.has_member( "forests" );
+    load_overmap_forest_settings( jo, new_region.overmap_forest, strict_overmap_forest, false );
+
+    const auto strict_overmap_lake = strict && !jo.has_member( "lakes" );
+    load_overmap_lake_settings( jo, new_region.overmap_lake, strict_overmap_lake, false );
+
+    const auto strict_region_terrain_and_furniture = strict && !jo.has_string( "terrain_furniture" );
+    load_region_terrain_and_furniture_settings( jo, new_region.region_terrain_and_furniture,
+            strict_region_terrain_and_furniture, false );
+    if( jo.has_string( "terrain_furniture" ) ) {
+        record_compat_region_reference( region_id, "terrain_furniture",
+                                        jo.get_string( "terrain_furniture" ) );
+    }
 
     jo.read( "display_oter", new_region.display_oter );
 
     region_settings_map[new_region.id] = new_region;
 }
 
+auto finalize_compat_region_settings() -> void
+{
+    for( const auto &[region_id, city] : compat_region_settings_city_defs ) {
+        if( auto region_iter = region_settings_map.find( region_id );
+            region_iter != region_settings_map.end() ) {
+            region_iter->second.city_spec = city.city;
+        }
+    }
+    for( const auto &[region_id, forest] : compat_region_settings_forest_defs ) {
+        if( auto region_iter = region_settings_map.find( region_id );
+            region_iter != region_settings_map.end() ) {
+            region_iter->second.overmap_forest = forest.forest;
+        }
+    }
+    for( const auto &[region_id, refs] : compat_region_refs ) {
+        auto region_iter = region_settings_map.find( region_id );
+        if( region_iter == region_settings_map.end() ) {
+            throw_unknown_compat_ref( "region_settings", region_id );
+        }
+        apply_compat_region_references( region_iter->second, refs );
+    }
+    for( const auto &[region_id, map_extras] : compat_region_settings_map_extras_defs ) {
+        if( auto region_iter = region_settings_map.find( region_id );
+            region_iter != region_settings_map.end() ) {
+            apply_compat_map_extras_ref( region_iter->second, region_id );
+        }
+    }
+    for( const auto &[region_id, forest_mapgen] : compat_region_settings_forest_mapgen_defs ) {
+        if( auto region_iter = region_settings_map.find( region_id );
+            region_iter != region_settings_map.end() ) {
+            apply_compat_forest_mapgen_ref( region_iter->second, region_id );
+        }
+    }
+    for( const auto &[region_id, terrain_furniture] : compat_region_settings_terrain_furniture_defs ) {
+        if( auto region_iter = region_settings_map.find( region_id );
+            region_iter != region_settings_map.end() ) {
+            apply_compat_terrain_furniture_ref( region_iter->second, region_id );
+        }
+    }
+}
+
 void reset_region_settings()
 {
     region_settings_map.clear();
+    compat_weather_generators.clear();
+    compat_map_extra_collection_defs.clear();
+    compat_region_settings_map_extras_defs.clear();
+    compat_region_terrain_furniture_defs.clear();
+    compat_region_settings_terrain_furniture_defs.clear();
+    compat_forest_biome_component_defs.clear();
+    compat_forest_biome_mapgen_defs.clear();
+    compat_region_settings_forest_mapgen_defs.clear();
+    compat_region_settings_city_defs.clear();
+    compat_region_settings_forest_defs.clear();
+    compat_region_refs.clear();
 }
 
 /*
@@ -664,8 +1608,36 @@ void load_region_overlay( const JsonObject &jo )
 
 void apply_region_overlay( const JsonObject &jo, regional_settings &region )
 {
-    jo.read( "default_oter", region.default_oter );
+    read_default_oter( jo, region.default_oter );
     jo.read( "river_scale", region.river_scale );
+    consume_bool_if_present( jo, "place_swamps" );
+    consume_bool_if_present( jo, "place_roads" );
+    consume_bool_if_present( jo, "place_railroads" );
+    consume_bool_if_present( jo, "place_railroads_before_roads" );
+    consume_bool_if_present( jo, "place_specials" );
+    consume_bool_if_present( jo, "neighbor_connections" );
+    if( jo.has_member( "rivers" ) && jo.has_null( "rivers" ) ) {
+        region.river_scale = 0.0;
+    }
+    if( jo.has_member( "lakes" ) && jo.has_null( "lakes" ) ) {
+        disable_lakes( region );
+    }
+    if( jo.has_member( "ocean" ) && jo.has_null( "ocean" ) ) {
+        // BN has no separate ocean settings block here.
+    }
+    if( jo.has_member( "forests" ) && jo.has_null( "forests" ) ) {
+        disable_forests( region );
+    }
+    if( jo.has_member( "forest_trails" ) && jo.has_null( "forest_trails" ) ) {
+        region.forest_trail.chance = 0;
+    }
+    if( jo.has_member( "ravines" ) && jo.has_null( "ravines" ) ) {
+        // BN has no ravines settings block here.
+    }
+    if( jo.has_member( "highways" ) && jo.has_null( "highways" ) ) {
+        // BN has no highways settings block here.
+    }
+
     if( jo.has_array( "default_groundcover" ) ) {
         region.default_groundcover_str.reset( new weighted_int_list<ter_str_id> );
         for( JsonArray inner : jo.get_array( "default_groundcover" ) ) {
@@ -723,9 +1695,16 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
     }
 
     load_forest_mapgen_settings( jo, region.forest_composition, false, true );
+    if( jo.has_string( "forest_composition" ) ) {
+        record_compat_region_reference( region.id, "forest_composition",
+                                        jo.get_string( "forest_composition" ) );
+    }
 
     load_forest_trail_settings( jo, region.forest_trail, false, true );
 
+    if( jo.has_string( "map_extras" ) ) {
+        record_compat_region_reference( region.id, "map_extras", jo.get_string( "map_extras" ) );
+    }
     for( const JsonMember zone : jo.get_object( "map_extras" ) ) {
         if( zone.is_comment() ) {
             continue;
@@ -745,6 +1724,15 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
         }
     }
 
+    if( jo.has_string( "cities" ) ) {
+        const auto cities_id = jo.get_string( "cities" );
+        if( cities_id == "no_cities" ) {
+            region.city_spec.city_size = 0;
+            region.city_spec.city_spacing = 0;
+        } else {
+            record_compat_region_reference( region.id, "cities", cities_id );
+        }
+    }
     JsonObject cityjo = jo.get_object( "city" );
 
     cityjo.read( "city_size", region.city_spec.city_size );
@@ -770,13 +1758,23 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
     if( cityjo.has_member( "finales" ) ) {
         load_building_types( "finales", region.city_spec.finales );
     }
+    if( jo.has_string( "weather" ) ) {
+        record_compat_region_reference( region.id, "weather", jo.get_string( "weather" ) );
+    }
 
     load_overmap_feature_flag_settings( jo, region.overmap_feature_flag, false, true );
 
+    if( jo.has_string( "forests" ) ) {
+        record_compat_region_reference( region.id, "forests", jo.get_string( "forests" ) );
+    }
     load_overmap_forest_settings( jo, region.overmap_forest, false, true );
 
     load_overmap_lake_settings( jo, region.overmap_lake, false, true );
 
+    if( jo.has_string( "terrain_furniture" ) ) {
+        record_compat_region_reference( region.id, "terrain_furniture",
+                                        jo.get_string( "terrain_furniture" ) );
+    }
     load_region_terrain_and_furniture_settings( jo, region.region_terrain_and_furniture, false, true );
 
     jo.read( "display_oter", region.display_oter );
@@ -784,7 +1782,9 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
 
 void groundcover_extra::finalize()   // FIXME: return bool for failure
 {
-    default_ter = ter_id( default_ter_str );
+    if( !default_ter_str.empty() ) {
+        default_ter = ter_id( default_ter_str );
+    }
 
     ter_furn_id tf_id;
     int wtotal = 0;
@@ -944,7 +1944,11 @@ void forest_biome::finalize()
 
     for( auto &pr : unfinalized_terrain_dependent_furniture ) {
         pr.second.finalize();
-        const ter_id t( pr.first );
+        const ter_str_id tid( pr.first );
+        if( !tid.is_valid() ) {
+            continue;
+        }
+        const auto t = tid.id();
         terrain_dependent_furniture[t] = pr.second;
     }
 }
@@ -969,7 +1973,9 @@ void forest_trail_settings::finalize()
         trail_terrain.add( tid.id(), pr.second );
     }
 
-    trailheads.finalize();
+    if( !trailheads.unfinalized_buildings.empty() ) {
+        trailheads.finalize();
+    }
 }
 
 void overmap_lake_settings::finalize()
@@ -1105,11 +2111,21 @@ overmap_special_id city_settings::pick_finale() const
 
 void city_settings::finalize()
 {
-    houses.finalize();
-    urban_houses.finalize();
-    shops.finalize();
-    urban_shops.finalize();
-    parks.finalize();
+    if( !houses.unfinalized_buildings.empty() ) {
+        houses.finalize();
+    }
+    if( !urban_houses.unfinalized_buildings.empty() ) {
+        urban_houses.finalize();
+    }
+    if( !shops.unfinalized_buildings.empty() ) {
+        shops.finalize();
+    }
+    if( !urban_shops.unfinalized_buildings.empty() ) {
+        urban_shops.finalize();
+    }
+    if( !parks.unfinalized_buildings.empty() ) {
+        parks.finalize();
+    }
     if( !finales.unfinalized_buildings.empty() ) {
         finales.finalize();
     }
