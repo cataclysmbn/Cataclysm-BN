@@ -967,7 +967,7 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             std::string key;
             try {
                 key = ref.first.as<std::string>();
-                auto _trap_id = trap_id(key);
+                auto _trap_id = trap_id( key );
                 // if (!_trap_id.is_valid())
                 // {
                 //     throw std::runtime_error( string_format("trap_id %s does not exist", key) );
@@ -981,11 +981,11 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                 auto on_trigger = tbl.get_or<sol::function>( "on_trigger", sol::lua_nil );
                 auto can_trigger = tbl.get_or<sol::function>( "can_trigger", sol::lua_nil );
                 lua_itrap_actors[_trap_id] = std::make_unique<lua_itrap_actor>(
-                    key,
-                    std::move( on_trigger_aftermath ),
-                    std::move( on_trigger ),
-                    std::move( can_trigger )
-                );
+                                                 key,
+                                                 std::move( on_trigger_aftermath ),
+                                                 std::move( on_trigger ),
+                                                 std::move( can_trigger )
+                                             );
             } catch( std::runtime_error &e ) {
                 debugmsg( "Failed to extract itrap_functions k='%s': %s", key, e.what() );
                 break;
