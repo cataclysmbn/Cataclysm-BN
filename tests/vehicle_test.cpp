@@ -1,17 +1,7 @@
-#include "catch/catch.hpp"
-
-#include <algorithm>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <set>
-#include <sstream>
-#include <string>
-#include <vector>
-
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catch/catch.hpp"
 #include "coordinates.h"
 #include "creature_tracker.h"
 #include "damage.h"
@@ -29,17 +19,25 @@
 #include "overmapbuffer.h"
 #include "state_helpers.h"
 #include "type_id.h"
+#include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vehicle_wait.h"
 #include "vpart_position.h"
-#include "veh_type.h"
 
-namespace
-{
+#include <algorithm>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
-const auto horde_spawn_test_group = mongroup_id( "GROUP_ZOMBIE" );
-const auto horde_spawn_test_monster = mtype_id( "mon_zombie" );
+namespace {
+
+const auto horde_spawn_test_group = mongroup_id("GROUP_ZOMBIE");
+const auto horde_spawn_test_monster = mtype_id("mon_zombie");
 
 struct horde_vehicle_spawn_options {
     bool owned = false;
@@ -48,75 +46,67 @@ struct horde_vehicle_spawn_options {
 
 struct horde_vehicle_spawn_fixture {
     std::set<tripoint_abs_ms> vehicle_points;
-    mongroup *horde = nullptr;
+    mongroup* horde = nullptr;
 };
 
-auto point_has_monster( const tripoint_abs_ms &p ) -> bool
-{
-    return g->critter_tracker->find( p ) != nullptr;
+auto point_has_monster(const tripoint_abs_ms& p) -> bool {
+    return g->critter_tracker->find(p) != nullptr;
 }
 
-auto vehicle_points_contain_monster( const std::set<tripoint_abs_ms> &vehicle_points ) -> bool
-{
-    return std::ranges::any_of( vehicle_points, point_has_monster );
+auto vehicle_points_contain_monster(const std::set<tripoint_abs_ms>& vehicle_points) -> bool {
+    return std::ranges::any_of(vehicle_points, point_has_monster);
 }
 
-auto make_horde_vehicle_spawn_fixture(
-    const horde_vehicle_spawn_options &options ) -> horde_vehicle_spawn_fixture
-{
+auto make_horde_vehicle_spawn_fixture(const horde_vehicle_spawn_options& options)
+    -> horde_vehicle_spawn_fixture {
     clear_all_state();
     ACTIVE_OVERMAP_BUFFER.clear();
 
-    auto &here = get_map();
-    auto &you = get_avatar();
-    const auto target_submap = tripoint_bub_sm( g_half_mapsize, g_half_mapsize, 0 );
-    const auto target_submap_abs = map_local_to_abs( here, target_submap );
-    const auto target_submap_origin = project_to<coords::ms>( target_submap );
-    const auto target_submap_end = target_submap_origin + tripoint( SEEX - 1, SEEY - 1, 0 );
-    const auto vehicle_origin = target_submap_origin + tripoint( SEEX / 2, SEEY / 2, 0 );
+    auto& here = get_map();
+    auto& you = get_avatar();
+    const auto target_submap = tripoint_bub_sm(g_half_mapsize, g_half_mapsize, 0);
+    const auto target_submap_abs = map_local_to_abs(here, target_submap);
+    const auto target_submap_origin = project_to<coords::ms>(target_submap);
+    const auto target_submap_end = target_submap_origin + tripoint(SEEX - 1, SEEY - 1, 0);
+    const auto vehicle_origin = target_submap_origin + tripoint(SEEX / 2, SEEY / 2, 0);
 
-    you.setpos( map_local_to_abs( here, target_submap_origin ) );
-    const auto veh = here.add_vehicle( vproto_id( "car" ), vehicle_origin, 0_degrees, 0, 0 );
-    REQUIRE( veh != nullptr );
+    you.setpos(map_local_to_abs(here, target_submap_origin));
+    const auto veh = here.add_vehicle(vproto_id("car"), vehicle_origin, 0_degrees, 0, 0);
+    REQUIRE(veh != nullptr);
 
-    auto group = mongroup( horde_spawn_test_group, target_submap_abs, 1, 0 );
+    auto group = mongroup(horde_spawn_test_group, target_submap_abs, 1, 0);
     group.horde = true;
     group.interest = 10;
-    group.monsters.emplace_back( horde_spawn_test_monster );
+    group.monsters.emplace_back(horde_spawn_test_monster);
 
-    ACTIVE_OVERMAP_BUFFER.get( project_remain<coords::om>( target_submap_abs ).quotient );
-    auto target_groups = ACTIVE_OVERMAP_BUFFER.groups_at( target_submap_abs );
-    std::ranges::for_each( target_groups, []( mongroup * const target_group ) {
+    ACTIVE_OVERMAP_BUFFER.get(project_remain<coords::om>(target_submap_abs).quotient);
+    auto target_groups = ACTIVE_OVERMAP_BUFFER.groups_at(target_submap_abs);
+    std::ranges::for_each(target_groups, [](mongroup* const target_group) {
         target_group->clear();
-    } );
-    ACTIVE_OVERMAP_BUFFER.discard_monster_map( target_submap_abs );
+    });
+    ACTIVE_OVERMAP_BUFFER.discard_monster_map(target_submap_abs);
 
-    const auto horde = ACTIVE_OVERMAP_BUFFER.create_horde( group );
-    REQUIRE( horde != nullptr );
+    const auto horde = ACTIVE_OVERMAP_BUFFER.create_horde(group);
+    REQUIRE(horde != nullptr);
 
-    if( options.owned ) {
-        veh->set_owner( you );
-    }
-    if( options.tracked ) {
-        veh->toggle_tracking();
-    }
+    if (options.owned) { veh->set_owner(you); }
+    if (options.tracked) { veh->toggle_tracking(); }
 
-    const auto vehicle_points = veh->get_points( true );
-    const auto horde_spawn_blocking_terrain = ter_id( "t_wall" );
-    std::ranges::for_each( here.points_in_rectangle( target_submap_origin, target_submap_end ),
-    [&]( const auto & p ) {
-        if( !vehicle_points.contains( map_local_to_abs( here, p ) ) ) {
-            here.ter_set( p, horde_spawn_blocking_terrain );
-        }
-    } );
-    here.invalidate_map_cache( target_submap.z() );
-    here.build_map_cache( target_submap.z(), true );
+    const auto vehicle_points = veh->get_points(true);
+    const auto horde_spawn_blocking_terrain = ter_id("t_wall");
+    std::ranges::for_each(
+        here.points_in_rectangle(target_submap_origin, target_submap_end), [&](const auto& p) {
+            if (!vehicle_points.contains(map_local_to_abs(here, p))) {
+                here.ter_set(p, horde_spawn_blocking_terrain);
+            }
+        });
+    here.invalidate_map_cache(target_submap.z());
+    here.build_map_cache(target_submap.z(), true);
 
-    return horde_vehicle_spawn_fixture{ .vehicle_points = vehicle_points, .horde = horde };
+    return horde_vehicle_spawn_fixture{.vehicle_points = vehicle_points, .horde = horde};
 }
 
-auto vehicle_with_legacy_pivot_json() -> std::string
-{
+auto vehicle_with_legacy_pivot_json() -> std::string {
     return R"json(
            {
            "type": "none",
@@ -160,8 +150,7 @@ auto vehicle_with_legacy_pivot_json() -> std::string
            )json";
 }
 
-auto vehicle_with_invalid_part_and_legacy_pivot_json() -> std::string
-{
+auto vehicle_with_invalid_part_and_legacy_pivot_json() -> std::string {
     return R"json(
            {
            "type": "none",
@@ -224,451 +213,429 @@ auto vehicle_with_invalid_part_and_legacy_pivot_json() -> std::string
 
 } // namespace
 
-TEST_CASE( "vehicle_cargo_uses_full_part_volume", "[vehicle][cargo][volume]" )
-{
+TEST_CASE("vehicle_cargo_uses_full_part_volume", "[vehicle][cargo][volume]") {
     clear_map();
 
-    auto &here = get_map();
-    const auto vehicle_origin = tripoint_bub_ms( 60, 60, 0 );
-    auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), vehicle_origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
-    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ),
-                                    true ) >= 0 );
+    auto& here = get_map();
+    const auto vehicle_origin = tripoint_bub_ms(60, 60, 0);
+    auto* veh_ptr = here.add_vehicle(vproto_id("none"), vehicle_origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
+    REQUIRE(veh_ptr->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"), true) >= 0);
 
-    const auto cargo_index = veh_ptr->install_part( tripoint_mnt_veh::zero(),
-                             vpart_id( "test_large_cargo_space" ), true );
-    REQUIRE( cargo_index >= 0 );
+    const auto cargo_index =
+        veh_ptr->install_part(tripoint_mnt_veh::zero(), vpart_id("test_large_cargo_space"), true);
+    REQUIRE(cargo_index >= 0);
 
-    CHECK( veh_ptr->max_volume( cargo_index ) == 3000000_liter );
-    CHECK( veh_ptr->free_volume( cargo_index ) == 3000000_liter );
+    CHECK(veh_ptr->max_volume(cargo_index) == 3000000_liter);
+    CHECK(veh_ptr->free_volume(cargo_index) == 3000000_liter);
 }
 
-TEST_CASE( "vehicle deserialize accepts legacy two coordinate pivot", "[vehicle][save]" )
-{
-    auto json = std::istringstream( vehicle_with_legacy_pivot_json() );
-    auto jsin = JsonIn( json );
+TEST_CASE("vehicle deserialize accepts legacy two coordinate pivot", "[vehicle][save]") {
+    auto json = std::istringstream(vehicle_with_legacy_pivot_json());
+    auto jsin = JsonIn(json);
     auto veh = vehicle();
 
-    REQUIRE( jsin.read( veh, true ) );
-    CHECK( veh.mount_to_abs( tripoint_mnt_veh( -1, 0, 0 ) ) == tripoint_abs_ms( 5, 6, 0 ) );
-    CHECK( veh.mount_to_abs( tripoint_mnt_veh( 0, 0, 0 ) ) == tripoint_abs_ms( 4, 6, 0 ) );
+    REQUIRE(jsin.read(veh, true));
+    CHECK(veh.mount_to_abs(tripoint_mnt_veh(-1, 0, 0)) == tripoint_abs_ms(5, 6, 0));
+    CHECK(veh.mount_to_abs(tripoint_mnt_veh(0, 0, 0)) == tripoint_abs_ms(4, 6, 0));
 }
 
-TEST_CASE( "vehicle deserialize keeps valid saved parts after an invalid part", "[vehicle][save]" )
-{
-    auto json = std::istringstream( vehicle_with_invalid_part_and_legacy_pivot_json() );
-    auto jsin = JsonIn( json );
+TEST_CASE("vehicle deserialize keeps valid saved parts after an invalid part", "[vehicle][save]") {
+    auto json = std::istringstream(vehicle_with_invalid_part_and_legacy_pivot_json());
+    auto jsin = JsonIn(json);
     auto veh = vehicle();
     auto loaded = false;
 
-    const auto debug_msg = capture_debugmsg_during( [&]() {
-        loaded = jsin.read( veh, true );
-    } );
+    const auto debug_msg = capture_debugmsg_during([&]() { loaded = jsin.read(veh, true); });
 
-    REQUIRE( loaded );
-    CHECK( debug_msg.find( "Skipping invalid saved vehicle part" ) != std::string::npos );
-    CHECK( debug_msg.find( "missing_saved_vehicle_part" ) != std::string::npos );
-    CHECK( veh.part_count() == 1 );
-    CHECK( veh.mount_to_abs( tripoint_mnt_veh( 0, 0, 0 ) ) == tripoint_abs_ms( 4, 6, 0 ) );
+    REQUIRE(loaded);
+    CHECK(debug_msg.find("Skipping invalid saved vehicle part") != std::string::npos);
+    CHECK(debug_msg.find("missing_saved_vehicle_part") != std::string::npos);
+    CHECK(veh.part_count() == 1);
+    CHECK(veh.mount_to_abs(tripoint_mnt_veh(0, 0, 0)) == tripoint_abs_ms(4, 6, 0));
 }
 
-TEST_CASE( "detaching_vehicle_unboards_passengers" )
-{
+TEST_CASE("detaching_vehicle_unboards_passengers") {
     clear_all_state();
-    const tripoint_bub_ms test_origin( 60, 60, 0 );
+    const tripoint_bub_ms test_origin(60, 60, 0);
     const auto vehicle_origin = test_origin;
-    avatar &player_character = get_avatar();
-    map &here = get_map();
-    vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), vehicle_origin, -90_degrees, 0, 0 );
-    here.board_vehicle( test_origin, &player_character );
-    REQUIRE( player_character.in_vehicle );
-    here.detach_vehicle( veh_ptr );
-    REQUIRE( !player_character.in_vehicle );
+    avatar& player_character = get_avatar();
+    map& here = get_map();
+    vehicle* veh_ptr = here.add_vehicle(vproto_id("bicycle"), vehicle_origin, -90_degrees, 0, 0);
+    here.board_vehicle(test_origin, &player_character);
+    REQUIRE(player_character.in_vehicle);
+    here.detach_vehicle(veh_ptr);
+    REQUIRE(!player_character.in_vehicle);
 }
 
-TEST_CASE( "detaching_opaque_vehicle_invalidates_transparency_cache", "[vehicle][map_cache]" )
-{
+TEST_CASE("detaching_opaque_vehicle_invalidates_transparency_cache", "[vehicle][map_cache]") {
     clear_all_state();
-    auto &here = get_map();
-    build_test_map( ter_id( "t_pavement" ) );
+    auto& here = get_map();
+    build_test_map(ter_id("t_pavement"));
 
-    const auto origin = tripoint_bub_ms( 60, 60, 0 );
-    auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
-    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_horizontal" ),
-                                    true ) >= 0 );
-    const auto board = veh_ptr->install_part( tripoint_mnt_veh::zero(),
-                       vpart_id( "clothboard_horizontal" ), true );
-    REQUIRE( board >= 0 );
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    auto* veh_ptr = here.add_vehicle(vproto_id("none"), origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
+    REQUIRE(
+        veh_ptr->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_horizontal"), true) >= 0);
+    const auto board =
+        veh_ptr->install_part(tripoint_mnt_veh::zero(), vpart_id("clothboard_horizontal"), true);
+    REQUIRE(board >= 0);
 
-    const auto board_pos = veh_ptr->bub_part_location( board );
-    here.add_vehicle_to_cache( veh_ptr );
-    here.build_map_cache( board_pos.z(), true );
-    REQUIRE_FALSE( here.is_transparent( board_pos ) );
+    const auto board_pos = veh_ptr->bub_part_location(board);
+    here.add_vehicle_to_cache(veh_ptr);
+    here.build_map_cache(board_pos.z(), true);
+    REQUIRE_FALSE(here.is_transparent(board_pos));
 
-    here.destroy_vehicle( veh_ptr );
-    here.build_map_cache( board_pos.z(), true );
+    here.destroy_vehicle(veh_ptr);
+    here.build_map_cache(board_pos.z(), true);
 
-    CHECK( here.is_transparent( board_pos ) );
+    CHECK(here.is_transparent(board_pos));
 }
 
-TEST_CASE( "destroy_grabbed_vehicle_section" )
-{
+TEST_CASE("destroy_grabbed_vehicle_section") {
     clear_all_state();
-    GIVEN( "A vehicle grabbed by the player" ) {
-        map &here = get_map();
-        const tripoint_bub_ms test_origin( 60, 60, 0 );
-        avatar &player_character = get_avatar();
-        player_character.setpos( test_origin );
+    GIVEN("A vehicle grabbed by the player") {
+        map& here = get_map();
+        const tripoint_bub_ms test_origin(60, 60, 0);
+        avatar& player_character = get_avatar();
+        player_character.setpos(test_origin);
         const auto vehicle_origin = test_origin + tripoint_south_east;
-        vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), vehicle_origin, -90_degrees, 0, 0 );
-        REQUIRE( veh_ptr != nullptr );
+        vehicle* veh_ptr =
+            here.add_vehicle(vproto_id("bicycle"), vehicle_origin, -90_degrees, 0, 0);
+        REQUIRE(veh_ptr != nullptr);
         tripoint_bub_ms grab_point = test_origin + tripoint_rel_ms::east();
-        player_character.grab( OBJECT_VEHICLE, tripoint_rel_ms::east() );
-        REQUIRE( player_character.get_grab_type() != OBJECT_NONE );
-        REQUIRE( player_character.grab_point == tripoint_rel_ms::east() );
-        WHEN( "The vehicle section grabbed by the player is destroyed" ) {
-            here.destroy( grab_point );
-            REQUIRE( veh_ptr->get_parts_at( grab_point, "", part_status_flag::available ).empty() );
-            THEN( "The player's grab is released" ) {
-                CHECK( player_character.get_grab_type() == OBJECT_NONE );
-                CHECK( player_character.grab_point == tripoint_rel_ms::zero() );
+        player_character.grab(OBJECT_VEHICLE, tripoint_rel_ms::east());
+        REQUIRE(player_character.get_grab_type() != OBJECT_NONE);
+        REQUIRE(player_character.grab_point == tripoint_rel_ms::east());
+        WHEN("The vehicle section grabbed by the player is destroyed") {
+            here.destroy(grab_point);
+            REQUIRE(veh_ptr->get_parts_at(grab_point, "", part_status_flag::available).empty());
+            THEN("The player's grab is released") {
+                CHECK(player_character.get_grab_type() == OBJECT_NONE);
+                CHECK(player_character.grab_point == tripoint_rel_ms::zero());
             }
         }
     }
 }
 
-TEST_CASE( "taking_control_of_vehicle_without_engine", "[vehicle]" )
-{
+TEST_CASE("taking_control_of_vehicle_without_engine", "[vehicle]") {
     clear_all_state();
-    const auto origin = tripoint_bub_ms( 60, 60, 0 );
-    auto &player_character = get_avatar();
-    player_character.setpos( origin );
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    auto& player_character = get_avatar();
+    player_character.setpos(origin);
 
-    auto *veh_ptr = get_map().add_vehicle( vproto_id( "shopping_cart" ), origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
-    REQUIRE_FALSE( player_character.controlling_vehicle );
-    REQUIRE_FALSE( veh_ptr->engine_on );
+    auto* veh_ptr = get_map().add_vehicle(vproto_id("shopping_cart"), origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
+    REQUIRE_FALSE(player_character.controlling_vehicle);
+    REQUIRE_FALSE(veh_ptr->engine_on);
 
-    veh_ptr->start_engines( true );
+    veh_ptr->start_engines(true);
 
-    CHECK( player_character.controlling_vehicle );
-    CHECK_FALSE( veh_ptr->engine_on );
-    CHECK( !player_character.activity );
+    CHECK(player_character.controlling_vehicle);
+    CHECK_FALSE(veh_ptr->engine_on);
+    CHECK(!player_character.activity);
 }
 
-TEST_CASE( "moving_flying_vehicle_can_use_wait_menu", "[vehicle][wait]" )
-{
+TEST_CASE("moving_flying_vehicle_can_use_wait_menu", "[vehicle][wait]") {
     clear_all_state();
-    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    const auto origin = tripoint_bub_ms(60, 60, 0);
 
-    auto *veh_ptr = get_map().add_vehicle( vproto_id( "plane_small" ), origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
+    auto* veh_ptr = get_map().add_vehicle(vproto_id("plane_small"), origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
 
     veh_ptr->velocity = 100;
-    CHECK( vehicle_wait::is_wait_blocked_by_movement( *veh_ptr ) );
-    CHECK_FALSE( vehicle_wait::should_offer_flying_wait_durations( *veh_ptr ) );
+    CHECK(vehicle_wait::is_wait_blocked_by_movement(*veh_ptr));
+    CHECK_FALSE(vehicle_wait::should_offer_flying_wait_durations(*veh_ptr));
 
-    veh_ptr->set_flying( true );
-    CHECK_FALSE( vehicle_wait::is_wait_blocked_by_movement( *veh_ptr ) );
-    CHECK( vehicle_wait::should_offer_flying_wait_durations( *veh_ptr ) );
+    veh_ptr->set_flying(true);
+    CHECK_FALSE(vehicle_wait::is_wait_blocked_by_movement(*veh_ptr));
+    CHECK(vehicle_wait::should_offer_flying_wait_durations(*veh_ptr));
 }
 
-TEST_CASE( "vehicle control scale modifies throttle move cost", "[vehicle][speed]" )
-{
+TEST_CASE("vehicle control scale modifies throttle move cost", "[vehicle][speed]") {
     clear_all_state();
-    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
-    const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "50" );
-    const auto vehicle_control_scale = override_option( "VEHICLE_CONTROL_SCALE", "100" );
+    const auto global_scale = override_option("TIME_ACTION_SCALE", "50");
+    const auto player_scale = override_option("PLAYER_ACTION_SCALE", "50");
+    const auto vehicle_control_scale = override_option("VEHICLE_CONTROL_SCALE", "100");
 
-    auto &you = get_avatar();
-    you.set_moves( 25 );
+    auto& you = get_avatar();
+    you.set_moves(25);
 
-    const auto origin = tripoint_bub_ms( 60, 60, 0 );
-    auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    auto* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
 
     veh_ptr->cruise_on = false;
-    veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
+    veh_ptr->pldrive(you, tripoint_rel_veh{0, 1, 0});
 
-    CHECK( you.get_moves() == -25 );
+    CHECK(you.get_moves() == -25);
 }
 
-TEST_CASE( "vehicle speed control free in cruise mode", "[vehicle][speed]" )
-{
+TEST_CASE("vehicle speed control free in cruise mode", "[vehicle][speed]") {
     clear_all_state();
 
-    auto &you = get_avatar();
-    you.set_moves( 25 );
+    auto& you = get_avatar();
+    you.set_moves(25);
 
-    const auto origin = tripoint_bub_ms( 60, 60, 0 );
-    auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    auto* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
 
     veh_ptr->cruise_on = true;
-    veh_ptr->pldrive( you, tripoint_rel_veh{ 0, 1, 0 } );
+    veh_ptr->pldrive(you, tripoint_rel_veh{0, 1, 0});
 
-    CHECK( you.get_moves() == 25 );
+    CHECK(you.get_moves() == 25);
 }
 
-TEST_CASE( "can autodrive", "[vehicle][autodrive]" )
-{
+TEST_CASE("can autodrive", "[vehicle][autodrive]") {
     clear_all_state();
-    set_time( calendar::turn_zero + 12_hours );
+    set_time(calendar::turn_zero + 12_hours);
 
-    auto &here = get_map();
-    auto &you = get_avatar();
-    const auto origin = tripoint_bub_ms( 60, 60, 0 );
-    you.setpos( origin );
+    auto& here = get_map();
+    auto& you = get_avatar();
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    you.setpos(origin);
     you.clear_map_memory();
-    you.set_moves( 1000 );
+    you.set_moves(1000);
 
-    auto *veh_ptr = here.add_vehicle( vproto_id( "car" ), origin, 0_degrees, 100, 0, true, false,
-                                      true );
-    REQUIRE( veh_ptr != nullptr );
-    here.board_vehicle( origin, &you );
-    veh_ptr->start_engines( true, true );
+    auto* veh_ptr =
+        here.add_vehicle(vproto_id("car"), origin, 0_degrees, 100, 0, true, false, true);
+    REQUIRE(veh_ptr != nullptr);
+    here.board_vehicle(origin, &you);
+    veh_ptr->start_engines(true, true);
     veh_ptr->engine_on = true;
-    REQUIRE( veh_ptr->player_in_control( you ) );
+    REQUIRE(veh_ptr->player_in_control(you));
 
-    const auto current_omt = project_to<coords::omt>( veh_ptr->abs_ms_location() );
-    const auto memory_origin = project_to<coords::ms>( current_omt );
+    const auto current_omt = project_to<coords::omt>(veh_ptr->abs_ms_location());
+    const auto memory_origin = project_to<coords::ms>(current_omt);
     // Keep path planning deterministic; the regression check is the dirty live visibility cache.
     using namespace std::views;
-    constexpr auto omt_size = coords::map_squares_per( coords::omt );
-    for( const auto x : iota( 0, omt_size * 2 ) ) {
-        for( const auto y : iota( 0, omt_size ) ) {
-            you.memorize_tile( memory_origin + tripoint_rel_ms( x, y, 0 ), "t_grass", 0, 0 );
+    constexpr auto omt_size = coords::map_squares_per(coords::omt);
+    for (const auto x : iota(0, omt_size * 2)) {
+        for (const auto y : iota(0, omt_size)) {
+            you.memorize_tile(memory_origin + tripoint_rel_ms(x, y, 0), "t_grass", 0, 0);
         }
     }
-    you.omt_path = { current_omt + tripoint_rel_omt( 1, 0, 0 ) };
+    you.omt_path = {current_omt + tripoint_rel_omt(1, 0, 0)};
     veh_ptr->is_autodriving = true;
 
     here.invalidate_visibility_caches();
-    REQUIRE( here.visibility_caches_dirty() );
+    REQUIRE(here.visibility_caches_dirty());
 
-    CHECK( veh_ptr->do_autodrive( you ) == autodrive_result::ok );
+    CHECK(veh_ptr->do_autodrive(you) == autodrive_result::ok);
 }
 
-TEST_CASE( "horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]" )
-{
-    const auto cleanup = on_out_of_scope( [] {
+TEST_CASE("horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]") {
+    const auto cleanup = on_out_of_scope([] {
         clear_all_state();
         ACTIVE_OVERMAP_BUFFER.clear();
-    } );
+    });
 
-    SECTION( "unowned and untracked vehicle tiles remain valid horde spawn locations" ) {
-        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{} );
+    SECTION("unowned and untracked vehicle tiles remain valid horde spawn locations") {
+        const auto fixture = make_horde_vehicle_spawn_fixture(horde_vehicle_spawn_options{});
 
-        get_map().spawn_monsters( true );
+        get_map().spawn_monsters(true);
 
-        CHECK( vehicle_points_contain_monster( fixture.vehicle_points ) );
-        CHECK( fixture.horde->empty() );
+        CHECK(vehicle_points_contain_monster(fixture.vehicle_points));
+        CHECK(fixture.horde->empty());
     }
 
-    SECTION( "tracked but unowned vehicle tiles remain valid horde spawn locations" ) {
-        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{ .tracked = true } );
+    SECTION("tracked but unowned vehicle tiles remain valid horde spawn locations") {
+        const auto fixture = make_horde_vehicle_spawn_fixture(
+            horde_vehicle_spawn_options{.tracked = true});
 
-        get_map().spawn_monsters( true );
+        get_map().spawn_monsters(true);
 
-        CHECK( vehicle_points_contain_monster( fixture.vehicle_points ) );
-        CHECK( fixture.horde->empty() );
+        CHECK(vehicle_points_contain_monster(fixture.vehicle_points));
+        CHECK(fixture.horde->empty());
     }
 
-    SECTION( "owned but untracked vehicle tiles are excluded from horde spawn locations" ) {
-        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{ .owned = true } );
+    SECTION("owned but untracked vehicle tiles are excluded from horde spawn locations") {
+        const auto fixture = make_horde_vehicle_spawn_fixture(
+            horde_vehicle_spawn_options{.owned = true});
 
-        get_map().spawn_monsters( true );
+        get_map().spawn_monsters(true);
 
-        CHECK_FALSE( vehicle_points_contain_monster( fixture.vehicle_points ) );
-        CHECK_FALSE( fixture.horde->empty() );
+        CHECK_FALSE(vehicle_points_contain_monster(fixture.vehicle_points));
+        CHECK_FALSE(fixture.horde->empty());
     }
 
-    SECTION( "owned and tracked vehicle tiles are excluded from horde spawn locations" ) {
-        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{ .owned = true,
-                             .tracked = true } );
+    SECTION("owned and tracked vehicle tiles are excluded from horde spawn locations") {
+        const auto fixture = make_horde_vehicle_spawn_fixture(
+            horde_vehicle_spawn_options{.owned = true, .tracked = true});
 
-        get_map().spawn_monsters( true );
+        get_map().spawn_monsters(true);
 
-        CHECK_FALSE( vehicle_points_contain_monster( fixture.vehicle_points ) );
-        CHECK_FALSE( fixture.horde->empty() );
+        CHECK_FALSE(vehicle_points_contain_monster(fixture.vehicle_points));
+        CHECK_FALSE(fixture.horde->empty());
     }
 }
 
-TEST_CASE( "add_item_to_broken_vehicle_part" )
-{
+TEST_CASE("add_item_to_broken_vehicle_part") {
     clear_all_state();
-    const tripoint_bub_ms test_origin( 60, 60, 0 );
+    const tripoint_bub_ms test_origin(60, 60, 0);
     const auto vehicle_origin = test_origin;
-    vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
+    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
 
     const tripoint_bub_ms pos = vehicle_origin + tripoint_rel_ms::west();
-    auto cargo_parts = veh_ptr->get_parts_at( pos, "CARGO", part_status_flag::any );
-    REQUIRE( !cargo_parts.empty( ) );
-    vehicle_part *cargo_part = cargo_parts.front();
-    REQUIRE( cargo_part != nullptr );
-    //Must not be broken yet
-    REQUIRE( !cargo_part->is_broken() );
-    //For some reason (0 - cargo_part->hp()) is just not enough to destroy a part
-    REQUIRE( veh_ptr->mod_hp( *cargo_part, -( 1 + cargo_part->hp() ), DT_BASH ) );
-    //Now it must be broken
-    REQUIRE( cargo_part->is_broken() );
-    //Now part is really broken, adding an item should fail
-    detached_ptr<item> itm2 = item::spawn( "jeans" );
-    itm2 = veh_ptr->add_item( *cargo_part, std::move( itm2 ) );
-    CHECK( itm2 );
+    auto cargo_parts = veh_ptr->get_parts_at(pos, "CARGO", part_status_flag::any);
+    REQUIRE(!cargo_parts.empty());
+    vehicle_part* cargo_part = cargo_parts.front();
+    REQUIRE(cargo_part != nullptr);
+    // Must not be broken yet
+    REQUIRE(!cargo_part->is_broken());
+    // For some reason (0 - cargo_part->hp()) is just not enough to destroy a part
+    REQUIRE(veh_ptr->mod_hp(*cargo_part, -(1 + cargo_part->hp()), DT_BASH));
+    // Now it must be broken
+    REQUIRE(cargo_part->is_broken());
+    // Now part is really broken, adding an item should fail
+    detached_ptr<item> itm2 = item::spawn("jeans");
+    itm2 = veh_ptr->add_item(*cargo_part, std::move(itm2));
+    CHECK(itm2);
 }
 
-TEST_CASE( "damage_vehicle_oob" )
-{
+TEST_CASE("damage_vehicle_oob") {
     clear_all_state();
-    const tripoint_bub_ms test_origin( 60, 60, 0 );
-    g->place_player( test_origin );
-    const tripoint_bub_ms vehicle_origin( SEEX, 0, 0 );
-    vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
+    const tripoint_bub_ms test_origin(60, 60, 0);
+    g->place_player(test_origin);
+    const tripoint_bub_ms vehicle_origin(SEEX, 0, 0);
+    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
 
-    //Put an item in the vehicle
+    // Put an item in the vehicle
     const tripoint_bub_ms cargo_pos = vehicle_origin + tripoint_rel_ms::west();
-    auto cargo_parts = veh_ptr->get_parts_at( cargo_pos, "CARGO", part_status_flag::any );
-    REQUIRE( !cargo_parts.empty( ) );
-    vehicle_part *cargo_part = cargo_parts.front();
-    REQUIRE( cargo_part != nullptr );
-    REQUIRE( !veh_ptr->add_item( *cargo_part, item::spawn( "jeans" ) ) );
+    auto cargo_parts = veh_ptr->get_parts_at(cargo_pos, "CARGO", part_status_flag::any);
+    REQUIRE(!cargo_parts.empty());
+    vehicle_part* cargo_part = cargo_parts.front();
+    REQUIRE(cargo_part != nullptr);
+    REQUIRE(!veh_ptr->add_item(*cargo_part, item::spawn("jeans")));
 
-    //Shift the vehicle half off the map
-    g->place_player( test_origin + tripoint_east * SEEX );
+    // Shift the vehicle half off the map
+    g->place_player(test_origin + tripoint_east * SEEX);
 
-    //Check the vehicle is still there.
-    optional_vpart_position part_pos = get_map().veh_at( tripoint_bub_ms::zero() );
-    REQUIRE( part_pos );
+    // Check the vehicle is still there.
+    optional_vpart_position part_pos = get_map().veh_at(tripoint_bub_ms::zero());
+    REQUIRE(part_pos);
 
-    // TODO: vehicle is at origin so tripoint_west == bubble pos; use parts_at_relative( point(-1,0), true ) directly
-    auto parts = veh_ptr->parts_at_relative( veh_ptr->bubble_to_mount( tripoint_bub_ms(
-                     tripoint_west ) ), true );
-    REQUIRE( !parts.empty( ) );
-    for( int part : parts ) {
-        //We aren't actually smashing each chosen part in turn here
-        //it's picking a random one each time, hence why we smash them all
-        veh_ptr->damage( part, 10000 );
+    // TODO: vehicle is at origin so tripoint_west == bubble pos; use parts_at_relative(
+    // point(-1,0), true ) directly
+    auto parts =
+        veh_ptr->parts_at_relative(veh_ptr->bubble_to_mount(tripoint_bub_ms(tripoint_west)), true);
+    REQUIRE(!parts.empty());
+    for (int part : parts) {
+        // We aren't actually smashing each chosen part in turn here
+        // it's picking a random one each time, hence why we smash them all
+        veh_ptr->damage(part, 10000);
     }
 }
 
-static void check_wreckage( int zlevel )
-{
-    const tripoint_bub_ms test_origin( 60, 60, zlevel );
+static void check_wreckage(int zlevel) {
+    const tripoint_bub_ms test_origin(60, 60, zlevel);
     const auto vehicle_origin = test_origin;
 
-    vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
+    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
 
-    vehicle *veh_ptr2 = get_map().add_vehicle( vproto_id( "car" ), vehicle_origin + tripoint_north_west,
-                        0_degrees, 0, 0 );
-    REQUIRE( veh_ptr2 != nullptr );
+    vehicle* veh_ptr2 = get_map().add_vehicle(
+        vproto_id("car"), vehicle_origin + tripoint_north_west, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr2 != nullptr);
 
-    INFO( veh_ptr2->name );
-    CHECK( veh_ptr2->name == "Wreckage" );
+    INFO(veh_ptr2->name);
+    CHECK(veh_ptr2->name == "Wreckage");
 }
 
-TEST_CASE( "overlapping_vehicles_make_wreck" )
-{
+TEST_CASE("overlapping_vehicles_make_wreck") {
     clear_all_state();
-    check_wreckage( 0 );
-    check_wreckage( OVERMAP_HEIGHT );
-    check_wreckage( -OVERMAP_DEPTH );
+    check_wreckage(0);
+    check_wreckage(OVERMAP_HEIGHT);
+    check_wreckage(-OVERMAP_DEPTH);
 }
 
-static void test_coord_translate( units::angle dir, const tripoint_mnt_veh &pivot,
-                                  const tripoint_mnt_veh &p,
-                                  tripoint_rel_ms &q )
-{
-    tileray tdir( dir );
-    tdir.advance( p.x() - pivot.x() );
-    q.x() = tdir.dx() + tdir.ortho_dx( p.y() - pivot.y() );
-    q.y() = tdir.dy() + tdir.ortho_dy( p.y() - pivot.y() );
+static void test_coord_translate(
+    units::angle dir, const tripoint_mnt_veh& pivot, const tripoint_mnt_veh& p,
+    tripoint_rel_ms& q) {
+    tileray tdir(dir);
+    tdir.advance(p.x() - pivot.x());
+    q.x() = tdir.dx() + tdir.ortho_dx(p.y() - pivot.y());
+    q.y() = tdir.dy() + tdir.ortho_dy(p.y() - pivot.y());
 }
 
-TEST_CASE( "check_vehicle_rotation_against_old", "[.]" )
-{
+TEST_CASE("check_vehicle_rotation_against_old", "[.]") {
     clear_all_state();
-    const tripoint_bub_ms test_origin( 60, 60, 0 );
+    const tripoint_bub_ms test_origin(60, 60, 0);
     const auto vehicle_origin = test_origin;
-    vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
+    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
     const tripoint_mnt_veh pivot;
 
-    for( int dir = 0; dir < 24; dir++ ) {
-        for( int x = -5; x <= 5; x++ ) {
-            for( int y = -5; y <= 5; y++ ) {
+    for (int dir = 0; dir < 24; dir++) {
+        for (int x = -5; x <= 5; x++) {
+            for (int y = -5; y <= 5; y++) {
                 tripoint_mnt_veh p = {x, y, 0};
                 point_rel_ms oldRes;
-                veh_ptr->coord_translate( 15_degrees * dir, pivot, p, oldRes );
+                veh_ptr->coord_translate(15_degrees * dir, pivot, p, oldRes);
 
                 tripoint_rel_ms newRes;
-                test_coord_translate( 15_degrees * dir, pivot, p, newRes );
+                test_coord_translate(15_degrees * dir, pivot, p, newRes);
 
-                CHECK( oldRes.x() == newRes.x() );
-                CHECK( oldRes.y() == newRes.y() );
-
+                CHECK(oldRes.x() == newRes.x());
+                CHECK(oldRes.y() == newRes.y());
             }
         }
     }
 }
 
-TEST_CASE( "vehicle_rotation_reverse" )
-{
+TEST_CASE("vehicle_rotation_reverse") {
     clear_all_state();
-    const tripoint_bub_ms test_origin( 60, 60, 0 );
+    const tripoint_bub_ms test_origin(60, 60, 0);
     const auto vehicle_origin = test_origin;
-    vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
+    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
     const tripoint_mnt_veh pivot;
 
-    for( int dir = 0; dir < 24; dir++ ) {
-        for( int x = -5; x <= 5; x++ ) {
-            for( int y = -5; y <= 5; y++ ) {
+    for (int dir = 0; dir < 24; dir++) {
+        for (int x = -5; x <= 5; x++) {
+            for (int y = -5; y <= 5; y++) {
                 tripoint_mnt_veh p = {x, y, 0};
                 point_rel_ms result;
-                veh_ptr->coord_translate( 15_degrees * dir, pivot, p, result );
+                veh_ptr->coord_translate(15_degrees * dir, pivot, p, result);
 
                 tripoint_mnt_veh reversed;
-                veh_ptr->coord_translate_reverse( 15_degrees * dir, pivot, tripoint_rel_ms( result, 0 ), reversed );
+                veh_ptr->coord_translate_reverse(
+                    15_degrees * dir, pivot, tripoint_rel_ms(result, 0), reversed);
 
-                CHECK( reversed.x() == p.x() );
-                CHECK( reversed.y() == p.y() );
-
+                CHECK(reversed.x() == p.x());
+                CHECK(reversed.y() == p.y());
             }
         }
     }
 }
 
-TEST_CASE( "broken_door_and_lock_can_be_removed", "[vehicle]" )
-{
+TEST_CASE("broken_door_and_lock_can_be_removed", "[vehicle]") {
     clear_all_state();
-    const auto origin = tripoint_bub_ms( 60, 60, 0 );
-    auto *veh_ptr = get_map().add_vehicle( vproto_id( "cross_split_test" ), origin, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    auto* veh_ptr = get_map().add_vehicle(vproto_id("cross_split_test"), origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
 
-    const auto door_mount = tripoint_mnt_veh( 1, 0, 0 );
-    const auto door_idx = veh_ptr->part_with_feature( door_mount, "OPENABLE", true );
-    const auto lock_idx = veh_ptr->part_with_feature( door_mount, "DOOR_LOCKING", true );
-    REQUIRE( door_idx >= 0 );
-    REQUIRE( lock_idx >= 0 );
+    const auto door_mount = tripoint_mnt_veh(1, 0, 0);
+    const auto door_idx = veh_ptr->part_with_feature(door_mount, "OPENABLE", true);
+    const auto lock_idx = veh_ptr->part_with_feature(door_mount, "DOOR_LOCKING", true);
+    REQUIRE(door_idx >= 0);
+    REQUIRE(lock_idx >= 0);
 
-    auto &door_part = veh_ptr->part( door_idx );
-    auto &lock_part = veh_ptr->part( lock_idx );
+    auto& door_part = veh_ptr->part(door_idx);
+    auto& lock_part = veh_ptr->part(lock_idx);
     // DOORS CAN SPAWN OPEN GUYS
-    if( door_part.open ) {
-        door_part.open = false;
-    }
-    REQUIRE_FALSE( door_part.open );
+    if (door_part.open) { door_part.open = false; }
+    REQUIRE_FALSE(door_part.open);
 
-    REQUIRE( veh_ptr->mod_hp( door_part, -( door_part.hp() + 1 ), DT_BASH ) );
-    REQUIRE( veh_ptr->mod_hp( lock_part, -( lock_part.hp() + 1 ), DT_BASH ) );
-    REQUIRE( door_part.is_broken() );
-    REQUIRE( lock_part.is_broken() );
+    REQUIRE(veh_ptr->mod_hp(door_part, -(door_part.hp() + 1), DT_BASH));
+    REQUIRE(veh_ptr->mod_hp(lock_part, -(lock_part.hp() + 1), DT_BASH));
+    REQUIRE(door_part.is_broken());
+    REQUIRE(lock_part.is_broken());
 
     auto door_reason = std::string{};
     auto lock_reason = std::string{};
-    CHECK( veh_ptr->can_unmount( door_idx, door_reason ) );
-    CHECK( veh_ptr->can_unmount( lock_idx, lock_reason ) );
+    CHECK(veh_ptr->can_unmount(door_idx, door_reason));
+    CHECK(veh_ptr->can_unmount(lock_idx, lock_reason));
 }

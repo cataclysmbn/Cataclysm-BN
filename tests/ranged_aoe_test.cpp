@@ -1,4 +1,22 @@
+#include "avatar.h"
+#include "ballistics.h"
+#include "calendar.h"
 #include "catch/catch.hpp"
+#include "dispersion.h"
+#include "field_type.h"
+#include "game.h"
+#include "itype.h"
+#include "map.h"
+#include "map_helpers.h"
+#include "npc.h"
+#include "projectile.h"
+#include "ranged.h"
+#include "rng.h"
+#include "shape.h"
+#include "shape_impl.h"
+#include "simulated_island_helpers.h"
+#include "skill.h"
+#include "state_helpers.h"
 
 #include <algorithm>
 #include <array>
@@ -8,305 +26,270 @@
 #include <set>
 #include <vector>
 
-#include "avatar.h"
-#include "ballistics.h"
-#include "calendar.h"
-#include "dispersion.h"
-#include "field_type.h"
-#include "shape.h"
-#include "shape_impl.h"
-#include "map.h"
-#include "npc.h"
-#include "simulated_island_helpers.h"
-#include "ranged.h"
-#include "projectile.h"
-#include "map_helpers.h"
-#include "game.h"
-#include "itype.h"
-#include "rng.h"
-#include "skill.h"
-#include "state_helpers.h"
+static const skill_id skill_gun("gun");
+static const skill_id skill_shotgun("shotgun");
 
-static const skill_id skill_gun( "gun" );
-static const skill_id skill_shotgun( "shotgun" );
+constexpr auto deterministic_rng_seeds = std::array{1U, 2U, 3U, 4U, 5U, 4242424242U};
 
-constexpr auto deterministic_rng_seeds = std::array { 1U, 2U, 3U, 4U, 5U, 4242424242U };
-
-static auto make_direct_gun_projectile( const item &gun ) -> projectile
-{
-    auto probe = projectile {};
+static auto make_direct_gun_projectile(const item& gun) -> projectile {
+    auto probe = projectile{};
     probe.speed = gun.gun_speed();
     probe.impact = gun.gun_damage();
     probe.range = gun.gun_range();
-    for( const auto &ammo_effect : gun.ammo_effects() ) {
-        probe.add_effect( ammo_effect );
-    }
+    for (const auto& ammo_effect : gun.ammo_effects()) { probe.add_effect(ammo_effect); }
     return probe;
 }
 
-static auto fire_shell_at_target( const itype_id &ammo_id,
-                                  const std::vector<itype_id> &armor_ids, const unsigned int seed ) -> int
-{
+static auto fire_shell_at_target(
+    const itype_id& ammo_id, const std::vector<itype_id>& armor_ids, const unsigned int seed)
+    -> int {
     clear_all_state();
-    rng_set_engine_seed( seed );
+    rng_set_engine_seed(seed);
 
-    const auto shooter_pos = tripoint_abs_ms( 60, 60, 0 );
-    const auto target_pos = tripoint_abs_ms( 62, 60, 0 );
-    auto &target = get_player_character();
+    const auto shooter_pos = tripoint_abs_ms(60, 60, 0);
+    const auto target_pos = tripoint_abs_ms(62, 60, 0);
+    auto& target = get_player_character();
     target.set_body();
-    target.setpos( target_pos );
+    target.setpos(target_pos);
     target.worn.clear();
-    target.set_dodge_bonus( -100.0f );
-    for( const auto &armor_id : armor_ids ) {
-        target.worn.push_back( item::spawn( armor_id ) );
-    }
-    REQUIRE( g->critter_at<avatar>( target_pos ) != nullptr );
+    target.set_dodge_bonus(-100.0f);
+    for (const auto& armor_id : armor_ids) { target.worn.push_back(item::spawn(armor_id)); }
+    REQUIRE(g->critter_at<avatar>(target_pos) != nullptr);
 
-    auto shooter = standard_npc( "shooter", shooter_pos );
-    shooter.set_skill_level( skill_gun, 10 );
-    shooter.set_skill_level( skill_shotgun, 10 );
+    auto shooter = standard_npc("shooter", shooter_pos);
+    shooter.set_skill_level(skill_gun, 10);
+    shooter.set_skill_level(skill_shotgun, 10);
 
-    detached_ptr<item> gun = item::spawn( itype_id( "test_shotgun" ) );
-    gun->ammo_set( ammo_id );
+    detached_ptr<item> gun = item::spawn(itype_id("test_shotgun"));
+    gun->ammo_set(ammo_id);
 
-    REQUIRE( gun->ammo_data() != nullptr );
-    REQUIRE( gun->ammo_data()->ammo != nullptr );
-    REQUIRE( gun->ammo_data()->ammo->shot.has_value() );
-    REQUIRE( gun->ammo_data()->ammo->shot->count > 1 );
-    REQUIRE_FALSE( ranged::get_shape_factory( *gun ).has_value() );
-    REQUIRE( ranged::get_target_shape_factory( *gun ).has_value() );
-    REQUIRE( gun->gun_range() >= rl_dist( shooter_pos, target_pos ) );
+    REQUIRE(gun->ammo_data() != nullptr);
+    REQUIRE(gun->ammo_data()->ammo != nullptr);
+    REQUIRE(gun->ammo_data()->ammo->shot.has_value());
+    REQUIRE(gun->ammo_data()->ammo->shot->count > 1);
+    REQUIRE_FALSE(ranged::get_shape_factory(*gun).has_value());
+    REQUIRE(ranged::get_target_shape_factory(*gun).has_value());
+    REQUIRE(gun->gun_range() >= rl_dist(shooter_pos, target_pos));
 
     const auto pellet_count = gun->ammo_data()->ammo->shot->count;
     const auto target_hp_total_before = target.get_hp();
-    shooter.wield( std::move( gun ) );
+    shooter.wield(std::move(gun));
 
     const auto shells_to_fire = 5;
-    for( const auto _ : std::views::iota( 0, shells_to_fire * pellet_count ) ) {
-        ( void ) _;
-        auto probe = make_direct_gun_projectile( shooter.primary_weapon() );
-        projectile_attack( probe, shooter_pos, target_pos, dispersion_sources {}, &shooter,
-                           &shooter.primary_weapon(), nullptr, true );
+    for (const auto _ : std::views::iota(0, shells_to_fire * pellet_count)) {
+        (void)_;
+        auto probe = make_direct_gun_projectile(shooter.primary_weapon());
+        projectile_attack(probe, shooter_pos, target_pos, dispersion_sources{}, &shooter,
+                          &shooter.primary_weapon(), nullptr, true);
     }
     return target_hp_total_before - target.get_hp();
 }
 
-static auto fire_shells_at_target( const itype_id &ammo_id,
-                                   const std::vector<itype_id> &armor_ids ) -> int
-{
+static auto fire_shells_at_target(const itype_id& ammo_id, const std::vector<itype_id>& armor_ids)
+    -> int {
     auto total_damage = 0;
-    for( const auto seed : deterministic_rng_seeds ) {
-        CAPTURE( seed );
-        total_damage += fire_shell_at_target( ammo_id, armor_ids, seed );
+    for (const auto seed : deterministic_rng_seeds) {
+        CAPTURE(seed);
+        total_damage += fire_shell_at_target(ammo_id, armor_ids, seed);
     }
     return total_damage;
 }
 
-static auto reachable_shape_points_no_obstacle( const shape &s,
-        mapbuffer &here ) -> std::set<tripoint_abs_ms>
-{
-    const auto origin = tripoint_abs_ms( s.get_origin() );
+static auto reachable_shape_points_no_obstacle(const shape& s, mapbuffer& here)
+    -> std::set<tripoint_abs_ms> {
+    const auto origin = tripoint_abs_ms(s.get_origin());
     auto queue = std::queue<tripoint_abs_ms>();
     auto reachable = std::set<tripoint_abs_ms>();
 
-    auto try_enqueue = [&s, &here, &queue, &reachable]( const tripoint_abs_ms & from,
-    const tripoint_abs_ms & candidate ) {
-        if( reachable.contains( candidate ) || s.distance_at( candidate.raw() ) >= 0.0 ||
-            here.obstructed_by_vehicle_rotation( from, candidate ) ) {
-            return;
-        }
-        reachable.insert( candidate );
-        queue.push( candidate );
+    auto try_enqueue =
+        [&s, &here, &queue,
+         &reachable](const tripoint_abs_ms& from, const tripoint_abs_ms& candidate) {
+            if (reachable.contains(candidate) || s.distance_at(candidate.raw()) >= 0.0
+                || here.obstructed_by_vehicle_rotation(from, candidate)) {
+                return;
+            }
+            reachable.insert(candidate);
+            queue.push(candidate);
+        };
+
+    for (auto tile : simulated_tiles_in_radius(here, origin, 1)) {
+        try_enqueue(origin, tile.abs_pos());
     };
 
-    for( auto tile : simulated_tiles_in_radius( here, origin, 1 ) ) {
-        try_enqueue( origin, tile.abs_pos() );
-    };
-
-    while( !queue.empty() ) {
+    while (!queue.empty()) {
         const auto p = queue.front();
         queue.pop();
-        for( auto tile : simulated_tiles_in_radius( here, p, 1 ) ) {
-            try_enqueue( p, tile.abs_pos() );
-        };
+        for (auto tile : simulated_tiles_in_radius(here, p, 1)) { try_enqueue(p, tile.abs_pos()); };
     }
 
-    reachable.erase( origin );
+    reachable.erase(origin);
     return reachable;
 }
 
-static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
-        const tripoint_abs_ms &origin, const tripoint_abs_ms &end )
-{
-    std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
+static void shape_coverage_vs_distance_no_obstacle(
+    const shape_factory_impl& c, const tripoint_abs_ms& origin, const tripoint_abs_ms& end) {
+    std::shared_ptr<shape> s = c.create(rl_vec3d(origin), rl_vec3d(end));
     projectile p;
     p.impact = damage_instance();
-    p.impact.add_damage( DT_STAB, 10 );
-    auto cov = ranged::expected_coverage( *s, get_map().get_mapbuffer(), 200 );
-    const auto reachable_shape_points = reachable_shape_points_no_obstacle( *s,
-                                        get_map().get_mapbuffer() );
+    p.impact.add_damage(DT_STAB, 10);
+    auto cov = ranged::expected_coverage(*s, get_map().get_mapbuffer(), 200);
+    const auto reachable_shape_points =
+        reachable_shape_points_no_obstacle(*s, get_map().get_mapbuffer());
 
     inclusive_cuboid<tripoint> bb = s->bounding_box();
-    REQUIRE( bb.p_min != bb.p_max );
-    const auto origin_coverage = cov.contains( origin ) ? cov.at( origin ) : 0.0;
-    CAPTURE( origin );
-    CAPTURE( end );
-    CAPTURE( cov.size() );
-    CAPTURE( reachable_shape_points.size() );
-    CHECK( s->distance_at( rl_vec3d( origin ) ) > 0.0 );
-    CHECK( origin_coverage <= 0.0 );
+    REQUIRE(bb.p_min != bb.p_max);
+    const auto origin_coverage = cov.contains(origin) ? cov.at(origin) : 0.0;
+    CAPTURE(origin);
+    CAPTURE(end);
+    CAPTURE(cov.size());
+    CAPTURE(reachable_shape_points.size());
+    CHECK(s->distance_at(rl_vec3d(origin)) > 0.0);
+    CHECK(origin_coverage <= 0.0);
 
-    std::ranges::for_each( cov, [&bb, &reachable_shape_points,
-         &s]( const std::pair<const tripoint_abs_ms, double> &entry ) {
-        const auto &p = entry.first;
-        const auto coverage = entry.second;
-        const auto signed_distance = s->distance_at( p.raw() );
-        CAPTURE( p );
-        CAPTURE( signed_distance );
-        CAPTURE( coverage );
-        CHECK( coverage > 0.0 );
-        CHECK( reachable_shape_points.contains( p ) );
-        CHECK( signed_distance < 0.0 );
-        CHECK( bb.contains( p.raw() ) );
-    } );
+    std::ranges::for_each(
+        cov,
+        [&bb, &reachable_shape_points, &s](const std::pair<const tripoint_abs_ms, double>& entry) {
+            const auto& p = entry.first;
+            const auto coverage = entry.second;
+            const auto signed_distance = s->distance_at(p.raw());
+            CAPTURE(p);
+            CAPTURE(signed_distance);
+            CAPTURE(coverage);
+            CHECK(coverage > 0.0);
+            CHECK(reachable_shape_points.contains(p));
+            CHECK(signed_distance < 0.0);
+            CHECK(bb.contains(p.raw()));
+        });
 
-    std::ranges::for_each( reachable_shape_points, [&cov]( const tripoint_abs_ms & p ) {
-        CAPTURE( p );
-        CHECK( cov.contains( p ) );
-    } );
+    std::ranges::for_each(reachable_shape_points, [&cov](const tripoint_abs_ms& p) {
+        CAPTURE(p);
+        CHECK(cov.contains(p));
+    });
 }
 
-TEST_CASE( "expected shape coverage mass test", "[shape]" )
-{
+TEST_CASE("expected shape coverage mass test", "[shape]") {
     clear_all_state();
-    cone_factory c( 15_degrees, 10.0 );
-    const tripoint_abs_ms origin = map_local_to_abs( get_map(), tripoint_bub_ms( 60, 60, 0 ) );
-    for( const tripoint_abs_ms &end : points_in_radius<tripoint_abs_ms>( origin, 5 ) ) {
-        shape_coverage_vs_distance_no_obstacle( c, origin, end );
+    cone_factory c(15_degrees, 10.0);
+    const tripoint_abs_ms origin = map_local_to_abs(get_map(), tripoint_bub_ms(60, 60, 0));
+    for (const tripoint_abs_ms& end : points_in_radius<tripoint_abs_ms>(origin, 5)) {
+        shape_coverage_vs_distance_no_obstacle(c, origin, end);
     }
 
     // Hard case
-    shape_coverage_vs_distance_no_obstacle( c, {65, 65, 0}, tripoint_abs_ms{65, 65, 0} + point_rel_ms(
-            2, 1 ) );
+    shape_coverage_vs_distance_no_obstacle(
+        c, {65, 65, 0}, tripoint_abs_ms{65, 65, 0} + point_rel_ms(2, 1));
 }
 
-TEST_CASE( "expected shape coverage without obstacles", "[shape]" )
-{
+TEST_CASE("expected shape coverage without obstacles", "[shape]") {
     clear_all_state();
-    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
-    ensure_simulated_islands_for( g->u.abs_pos() );
-    cone_factory c( 22.5_degrees, 10.0 );
-    const tripoint_abs_ms origin = map_local_to_abs( get_map(), tripoint_bub_ms( 60, 60, 0 ) );
-    const tripoint_rel_ms offset( 5, 5, 0 );
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(g->u.abs_pos());
+    cone_factory c(22.5_degrees, 10.0);
+    const tripoint_abs_ms origin = map_local_to_abs(get_map(), tripoint_bub_ms(60, 60, 0));
+    const tripoint_rel_ms offset(5, 5, 0);
     const tripoint_abs_ms end = origin + offset;
-    std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
-    auto cov = ranged::expected_coverage( *s, get_map().get_mapbuffer(), 3 );
+    std::shared_ptr<shape> s = c.create(rl_vec3d(origin), rl_vec3d(end));
+    auto cov = ranged::expected_coverage(*s, get_map().get_mapbuffer(), 3);
 
-    for( size_t i = 1; i <= 4; i++ ) {
-        CHECK( cov[origin + point( i, i )] == 1.0 );
+    for (size_t i = 1; i <= 4; i++) { CHECK(cov[origin + point(i, i)] == 1.0); }
+
+    CHECK(cov[origin + point(2, 1)] == 1.0);
+    CHECK(cov[origin + point(1, 2)] == 1.0);
+}
+
+TEST_CASE("expected shape coverage through windows", "[shape]") {
+    clear_all_state();
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(g->u.abs_pos());
+    cone_factory c(22.5_degrees, 10.0);
+    const tripoint_abs_ms origin = map_local_to_abs(get_map(), tripoint_bub_ms(60, 60, 0));
+    const tripoint_rel_ms offset(5, 0, 0);
+    const tripoint_abs_ms end = origin + offset;
+    auto& here = get_map().get_mapbuffer();
+    for (int wall_offset = -10; wall_offset <= 10; wall_offset++) {
+        here.set_ter(origin + tripoint_rel_ms(2, wall_offset, 0), ter_id("test_t_window"));
     }
 
-    CHECK( cov[origin + point( 2, 1 )] == 1.0 );
-    CHECK( cov[origin + point( 1, 2 )] == 1.0 );
+    std::shared_ptr<shape> s = c.create(rl_vec3d(origin), rl_vec3d(end));
+    auto cov = ranged::expected_coverage(*s, here, 3);
+    CHECK(cov[origin + point_east] == 1.0);
+
+    CHECK(cov[origin + 2 * point_east] == Approx(0.25));
+    CHECK(cov[origin + 3 * point_east] == Approx(0.25));
+    CHECK(cov[origin + 4 * point_east] == Approx(0.25));
 }
 
-TEST_CASE( "expected shape coverage through windows", "[shape]" )
-{
+TEST_CASE("shaped attacks apply trail ammo effects", "[ranged][projectile]") {
     clear_all_state();
-    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
-    ensure_simulated_islands_for( g->u.abs_pos() );
-    cone_factory c( 22.5_degrees, 10.0 );
-    const tripoint_abs_ms origin = map_local_to_abs( get_map(), tripoint_bub_ms( 60, 60, 0 ) );
-    const tripoint_rel_ms offset( 5, 0, 0 );
-    const tripoint_abs_ms end = origin + offset;
-    auto &here = get_map().get_mapbuffer();
-    for( int wall_offset = -10; wall_offset <= 10; wall_offset++ ) {
-        here.set_ter( origin + tripoint_rel_ms( 2, wall_offset, 0 ), ter_id( "test_t_window" ) );
-    }
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(g->u.abs_pos());
 
-    std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
-    auto cov = ranged::expected_coverage( *s, here, 3 );
-    CHECK( cov[origin + point_east] == 1.0 );
-
-    CHECK( cov[origin + 2 * point_east] == Approx( 0.25 ) );
-    CHECK( cov[origin + 3 * point_east] == Approx( 0.25 ) );
-    CHECK( cov[origin + 4 * point_east] == Approx( 0.25 ) );
-}
-
-TEST_CASE( "shaped attacks apply trail ammo effects", "[ranged][projectile]" )
-{
-    clear_all_state();
-    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
-    ensure_simulated_islands_for( g->u.abs_pos() );
-
-    auto &attacker = get_player_character();
-    auto &here = attacker.get_mapbuffer();
-    const auto origin = bub_to_abs( tripoint_bub_ms( 60, 60, 0 ) );
+    auto& attacker = get_player_character();
+    auto& here = attacker.get_mapbuffer();
+    const auto origin = bub_to_abs(tripoint_bub_ms(60, 60, 0));
     const auto target = origin + 5 * point_east;
     attacker.set_body();
-    attacker.setpos( origin );
+    attacker.setpos(origin);
 
-    const auto shape_factory = cone_factory( 15_degrees, 6.0 );
-    const auto attack_shape = shape_factory.create( rl_vec3d( origin ), rl_vec3d( target ) );
-    auto proj = projectile {};
+    const auto shape_factory = cone_factory(15_degrees, 6.0);
+    const auto attack_shape = shape_factory.create(rl_vec3d(origin), rl_vec3d(target));
+    auto proj = projectile{};
     proj.speed = 1000;
     proj.range = 6;
-    proj.impact.add_damage( DT_HEAT, 1 );
-    proj.add_effect( ammo_effect_str_id( "TEST_TRAIL" ) );
+    proj.impact.add_damage(DT_HEAT, 1);
+    proj.add_effect(ammo_effect_str_id("TEST_TRAIL"));
 
-    ranged::execute_shaped_attack( *attack_shape, proj, attacker, nullptr );
+    ranged::execute_shaped_attack(*attack_shape, proj, attacker, nullptr);
 
-    const auto trail_field = field_type_id( "test_fd_trail" );
-    CHECK( here.get_field_entry( origin + point_east, trail_field ) );
-    CHECK( here.get_field_entry( origin + 2 * point_east, trail_field ) );
+    const auto trail_field = field_type_id("test_fd_trail");
+    CHECK(here.get_field_entry(origin + point_east, trail_field));
+    CHECK(here.get_field_entry(origin + 2 * point_east, trail_field));
 }
 
-TEST_CASE( "character using birdshot against another character", "[ranged]" )
-{
-    const auto damage = fire_shells_at_target( itype_id( "test_birdshot" ), {} );
+TEST_CASE("character using birdshot against another character", "[ranged]") {
+    const auto damage = fire_shells_at_target(itype_id("test_birdshot"), {});
 
-    CHECK( damage > 0 );
+    CHECK(damage > 0);
 }
 
-TEST_CASE( "birdshot pellets are much worse against armor", "[ranged][balance]" )
-{
-    const auto unarmored_damage = fire_shells_at_target( itype_id( "test_birdshot" ), {} );
-    const auto armored_damage = fire_shells_at_target( itype_id( "test_birdshot" ),
-    { itype_id( "test_override_armor" ) } );
+TEST_CASE("birdshot pellets are much worse against armor", "[ranged][balance]") {
+    const auto unarmored_damage = fire_shells_at_target(itype_id("test_birdshot"), {});
+    const auto armored_damage =
+        fire_shells_at_target(itype_id("test_birdshot"), {itype_id("test_override_armor")});
 
-    CHECK( unarmored_damage > armored_damage );
-    CHECK( unarmored_damage >= armored_damage * 2 );
+    CHECK(unarmored_damage > armored_damage);
+    CHECK(unarmored_damage >= armored_damage * 2);
 }
 
-TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
-           "[ranged][projectile]" )
-{
+TEST_CASE(
+    "pellet projectile keeps last hit critter after overpenetration", "[ranged][projectile]") {
     clear_all_state();
-    rng_set_engine_seed( deterministic_rng_seeds.front() );
+    rng_set_engine_seed(deterministic_rng_seeds.front());
 
-    const auto shooter_pos = tripoint_abs_ms( 60, 60, 0 );
-    const auto target_pos = tripoint_abs_ms( 62, 60, 0 );
-    auto &target = get_player_character();
+    const auto shooter_pos = tripoint_abs_ms(60, 60, 0);
+    const auto target_pos = tripoint_abs_ms(62, 60, 0);
+    auto& target = get_player_character();
     target.set_body();
-    target.setpos( target_pos );
+    target.setpos(target_pos);
     target.worn.clear();
-    target.set_dodge_bonus( -100.0f );
-    REQUIRE( g->critter_at<avatar>( target_pos ) != nullptr );
+    target.set_dodge_bonus(-100.0f);
+    REQUIRE(g->critter_at<avatar>(target_pos) != nullptr);
 
-    auto shooter = standard_npc( "shooter", shooter_pos );
-    set_time( calendar::turn_zero + 12_hours );
-    shooter.set_skill_level( skill_gun, 10 );
-    shooter.set_skill_level( skill_shotgun, 10 );
+    auto shooter = standard_npc("shooter", shooter_pos);
+    set_time(calendar::turn_zero + 12_hours);
+    shooter.set_skill_level(skill_gun, 10);
+    shooter.set_skill_level(skill_shotgun, 10);
 
-    detached_ptr<item> gun = item::spawn( itype_id( "test_shotgun" ) );
-    gun->ammo_set( itype_id( "test_buckshot" ) );
-    shooter.wield( std::move( gun ) );
+    detached_ptr<item> gun = item::spawn(itype_id("test_shotgun"));
+    gun->ammo_set(itype_id("test_buckshot"));
+    shooter.wield(std::move(gun));
 
-    auto probe = make_direct_gun_projectile( shooter.primary_weapon() );
-    const auto probe_attack = projectile_attack( probe, shooter_pos, target_pos, dispersion_sources {},
-                              &shooter, &shooter.primary_weapon(), nullptr, true );
+    auto probe = make_direct_gun_projectile(shooter.primary_weapon());
+    const auto probe_attack = projectile_attack(
+        probe, shooter_pos, target_pos, dispersion_sources{}, &shooter, &shooter.primary_weapon(),
+        nullptr, true);
 
-    CHECK( probe_attack.hit_critter != nullptr );
-    CHECK( probe_attack.dealt_dam.total_damage() > 0 );
-    CHECK( probe_attack.end_point != target_pos );
+    CHECK(probe_attack.hit_critter != nullptr);
+    CHECK(probe_attack.dealt_dam.total_damage() > 0);
+    CHECK(probe_attack.end_point != target_pos);
 }

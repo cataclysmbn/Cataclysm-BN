@@ -9,7 +9,7 @@ if (( $# > 0 )); then
     for file in "$@"; do
         file="${file#"$repo_root/"}"
         file="${file#./}"
-        if [[ -f "$file" && "$file" == *.json && "$file" != data/names/* ]]; then
+        if [[ -f "$file" && "$file" == *.json && "$file" != data/names/* && "$file" != .vscode/* ]]; then
             json_files+=( "$file" )
         fi
     done

@@ -102,9 +102,7 @@ Cataclysm テストバイナリプロジェクト (`Cataclysm-test-vcpkg-static`
 
 ### コードスタイル
 
-私たちは、C++ コードのスタイルの一貫性を保つために `Artistic Style` ソースコードフォーマッターを使用しています。これはビルド済みの Windows 実行可能ファイルとしても利用可能で、インストールして実行したり、コミット前にコードを自動的にフォーマットするように設定したりできますが、Visual Studio ユーザーにとってさらに便利なオプションは、特定の拡張機能をインストールすることです。詳細については、ツール関連のドキュメントにある
-["Astyle extensions for Visual Studio" in tooling](../../reference/tooling.md#astyle-extensions-for-visual-studio)
-を参照してください。
+C++ の変更をコミットする前に `just fmt-cpp` を実行してください。`bash` が `PATH` にある場合は、Visual Studio から CMake の `format` ターゲットも使えます。
 
 2022年10月現在、コードスタイルチェックは GitHub の各プルリクエスト (PR) で自動的に実行されるため、変更のスタイル設定を忘れた場合、対応するチェックが失敗するのを確認できます。
 

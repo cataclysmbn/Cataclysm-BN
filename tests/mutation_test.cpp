@@ -1,14 +1,6 @@
-#include "catch/catch.hpp"
-
-#include <algorithm>
-#include <map>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "bodypart.h"
 #include "calendar.h"
+#include "catch/catch.hpp"
 #include "item.h"
 #include "mutation.h"
 #include "npc.h"
@@ -18,133 +10,131 @@
 #include "string_id.h"
 #include "type_id.h"
 
-static const efftype_id effect_accumulated_mutagen( "accumulated_mutagen" );
-static const auto trait_marloss = trait_id( "MARLOSS" );
+#include <algorithm>
+#include <map>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
-std::string get_mutations_as_string( const player &p );
+static const efftype_id effect_accumulated_mutagen("accumulated_mutagen");
+static const auto trait_marloss = trait_id("MARLOSS");
+
+std::string get_mutations_as_string(const player& p);
 
 // Note: If a category has two mutually-exclusive mutations (like pretty/ugly for Lupine), the
 // one they ultimately end up with depends on the order they were loaded from JSON
-static void give_all_mutations( player &p, const mutation_category_trait &category,
-                                const bool include_postthresh )
-{
+static void give_all_mutations(
+    player& p, const mutation_category_trait& category, const bool include_postthresh) {
     const std::vector<trait_id> category_mutations = mutations_category[category.id];
 
     // Add the threshold mutations first
-    if( include_postthresh && !category.threshold_muts.empty() ) {
-        for( unsigned int i = 1; i < category.threshold_muts.size();
-             i++ ) { // starts at 1 because 0 is NULL for aligning tier to index
-            p.set_mutation( category.threshold_muts[i] );
+    if (include_postthresh && !category.threshold_muts.empty()) {
+        for (unsigned int i = 1; i < category.threshold_muts.size(); i++) { // starts at 1 because 0
+                                                                            // is NULL for aligning
+                                                                            // tier to index
+            p.set_mutation(category.threshold_muts[i]);
         }
     }
 
-    for( auto &m : category_mutations ) {
-        const auto &mdata = m.obj();
-        if( include_postthresh || ( !mdata.threshold && mdata.threshold_tier == 0 ) ) {
+    for (auto& m : category_mutations) {
+        const auto& mdata = m.obj();
+        if (include_postthresh || (!mdata.threshold && mdata.threshold_tier == 0)) {
             int mutation_attempts = 10;
-            while( mutation_attempts > 0 && p.mutation_ok( m, false, false ) ) {
-                INFO( "Current mutations: " << get_mutations_as_string( p ) );
-                INFO( "Mutating towards " << m.c_str() );
-                if( !p.mutate_towards( m ) ) {
-                    --mutation_attempts;
-                }
-                CHECK( mutation_attempts > 0 );
+            while (mutation_attempts > 0 && p.mutation_ok(m, false, false)) {
+                INFO("Current mutations: " << get_mutations_as_string(p));
+                INFO("Mutating towards " << m.c_str());
+                if (!p.mutate_towards(m)) { --mutation_attempts; }
+                CHECK(mutation_attempts > 0);
             }
         }
     }
 }
 
-static int get_total_category_strength( const player &p )
-{
+static int get_total_category_strength(const player& p) {
     int total = 0;
-    for( auto &i : p.mutation_category_level ) {
-        total += i.second;
-    }
+    for (auto& i : p.mutation_category_level) { total += i.second; }
 
     return total;
 }
 
 // Returns the list of mutations a player has as a string, for debugging
-std::string get_mutations_as_string( const player &p )
-{
+std::string get_mutations_as_string(const player& p) {
     std::ostringstream s;
-    for( auto &m : p.get_mutations() ) {
-        s << static_cast<std::string>( m ) << " ";
-    }
+    for (auto& m : p.get_mutations()) { s << static_cast<std::string>(m) << " "; }
     return s.str();
 }
 
-TEST_CASE( "Having all mutations give correct highest category", "[mutations]" )
-{
-    for( auto &cat : mutation_category_trait::get_all() ) {
-        const auto &cur_cat = cat.second;
-        const auto &cat_id = cur_cat.id;
-        if( cat_id == mutation_category_id( "ANY" ) || cat_id == mutation_category_id( "MYCUS" ) ) {
+TEST_CASE("Having all mutations give correct highest category", "[mutations]") {
+    for (auto& cat : mutation_category_trait::get_all()) {
+        const auto& cur_cat = cat.second;
+        const auto& cat_id = cur_cat.id;
+        if (cat_id == mutation_category_id("ANY") || cat_id == mutation_category_id("MYCUS")) {
             continue;
         }
 
-        GIVEN( "The player has all pre-threshold mutations for " + cat_id.str() ) {
+        GIVEN("The player has all pre-threshold mutations for " + cat_id.str()) {
             npc dummy;
-            give_all_mutations( dummy, cur_cat, false );
+            give_all_mutations(dummy, cur_cat, false);
 
-            THEN( cat_id.str() + " is the strongest category" ) {
-                INFO( "MUTATIONS: " << get_mutations_as_string( dummy ) );
-                CHECK( dummy.get_highest_category() == cat_id );
+            THEN(cat_id.str() + " is the strongest category") {
+                INFO("MUTATIONS: " << get_mutations_as_string(dummy));
+                CHECK(dummy.get_highest_category() == cat_id);
             }
         }
 
-        GIVEN( "The player has all mutations for " + cat_id.str() ) {
+        GIVEN("The player has all mutations for " + cat_id.str()) {
             npc dummy;
-            give_all_mutations( dummy, cur_cat, true );
+            give_all_mutations(dummy, cur_cat, true);
 
-            THEN( cat_id.str() + " is the strongest category" ) {
-                INFO( "MUTATIONS: " << get_mutations_as_string( dummy ) );
-                CHECK( dummy.get_highest_category() == cat_id );
+            THEN(cat_id.str() + " is the strongest category") {
+                INFO("MUTATIONS: " << get_mutations_as_string(dummy));
+                CHECK(dummy.get_highest_category() == cat_id);
             }
         }
     }
 }
 
-TEST_CASE( "Having all pre-threshold mutations gives a sensible threshold breach chance",
-           "[mutations]" )
-{
+TEST_CASE(
+    "Having all pre-threshold mutations gives a sensible threshold breach chance",
+    "[mutation"
+    "s]") {
     const float BREACH_CHANCE_MIN = 0.15f;
     const float BREACH_CHANCE_MAX = 0.5f;
 
-    for( auto &cat : mutation_category_trait::get_all() ) {
-        const auto &cur_cat = cat.second;
-        const auto &cat_id = cur_cat.id;
-        if( cat_id == mutation_category_id( "ANY" ) || cat_id == mutation_category_id( "MYCUS" ) ) {
+    for (auto& cat : mutation_category_trait::get_all()) {
+        const auto& cur_cat = cat.second;
+        const auto& cat_id = cur_cat.id;
+        if (cat_id == mutation_category_id("ANY") || cat_id == mutation_category_id("MYCUS")) {
             continue;
         }
 
-        GIVEN( "The player has all pre-threshold mutations for " + cat_id.str() ) {
+        GIVEN("The player has all pre-threshold mutations for " + cat_id.str()) {
             npc dummy;
-            give_all_mutations( dummy, cur_cat, false );
+            give_all_mutations(dummy, cur_cat, false);
 
             const int category_strength = dummy.mutation_category_level[cat_id];
-            const int total_strength = get_total_category_strength( dummy );
-            float breach_chance = category_strength / static_cast<float>( total_strength );
+            const int total_strength = get_total_category_strength(dummy);
+            float breach_chance = category_strength / static_cast<float>(total_strength);
 
-            THEN( "Threshold breach chance is at least 0.15" ) {
-                INFO( "MUTATIONS: " << get_mutations_as_string( dummy ) );
-                CHECK( breach_chance >= BREACH_CHANCE_MIN );
+            THEN("Threshold breach chance is at least 0.15") {
+                INFO("MUTATIONS: " << get_mutations_as_string(dummy));
+                CHECK(breach_chance >= BREACH_CHANCE_MIN);
             }
-            THEN( "Threshold breach chance is at most 0.4" ) {
-                INFO( "MUTATIONS: " << get_mutations_as_string( dummy ) );
-                CHECK( breach_chance <= BREACH_CHANCE_MAX );
+            THEN("Threshold breach chance is at most 0.4") {
+                INFO("MUTATIONS: " << get_mutations_as_string(dummy));
+                CHECK(breach_chance <= BREACH_CHANCE_MAX);
             }
         }
     }
 }
 
-static float sum_without_category( const std::map<trait_id, float> &chances,
-                                   const mutation_category_id &cat )
-{
+static float sum_without_category(
+    const std::map<trait_id, float>& chances, const mutation_category_id& cat) {
     float sum = 0.0f;
-    for( const auto &c : chances ) {
-        const auto &mut_categories = c.first->category;
-        if( std::find( mut_categories.begin(), mut_categories.end(), cat ) == mut_categories.end() ) {
+    for (const auto& c : chances) {
+        const auto& mut_categories = c.first->category;
+        if (std::find(mut_categories.begin(), mut_categories.end(), cat) == mut_categories.end()) {
             sum += c.second;
         }
     }
@@ -152,73 +142,71 @@ static float sum_without_category( const std::map<trait_id, float> &chances,
     return sum;
 }
 
-TEST_CASE( "Gaining a mutation in category makes mutations from other categories less likely",
-           "[mutations]" )
-{
-    for( auto &cat : mutation_category_trait::get_all() ) {
-        const auto &cur_cat = cat.second;
-        const auto &cat_id = cur_cat.id;
-        if( cat_id == mutation_category_id( "ANY" ) || cat_id == mutation_category_id( "MYCUS" ) ) {
+TEST_CASE(
+    "Gaining a mutation in category makes mutations from other categories less likely",
+    "[mut"
+    "atio"
+    "ns"
+    "]") {
+    for (auto& cat : mutation_category_trait::get_all()) {
+        const auto& cur_cat = cat.second;
+        const auto& cat_id = cur_cat.id;
+        if (cat_id == mutation_category_id("ANY") || cat_id == mutation_category_id("MYCUS")) {
             continue;
         }
 
         npc zero_mut_dummy;
         std::map<trait_id, float> chances_pre = zero_mut_dummy.mutation_chances();
-        float sum_pre = sum_without_category( chances_pre, cat_id );
-        for( const mutation_branch &mut : mutation_branch::get_all() ) {
-            if( zero_mut_dummy.mutation_ok( mut.id, false, false ) ) {
-                continue;
-            }
-            GIVEN( "The player gains a mutation " + mut.name() ) {
+        float sum_pre = sum_without_category(chances_pre, cat_id);
+        for (const mutation_branch& mut : mutation_branch::get_all()) {
+            if (zero_mut_dummy.mutation_ok(mut.id, false, false)) { continue; }
+            GIVEN("The player gains a mutation " + mut.name()) {
                 npc dummy;
-                dummy.mutate_towards( mut.id );
-                THEN( "Sum of chances for mutations not of this category is lower than before" ) {
+                dummy.mutate_towards(mut.id);
+                THEN("Sum of chances for mutations not of this category is lower than before") {
                     std::map<trait_id, float> chances_post = dummy.mutation_chances();
-                    float sum_post = sum_without_category( chances_post, cat_id );
-                    CHECK( sum_post < sum_pre );
+                    float sum_post = sum_without_category(chances_post, cat_id);
+                    CHECK(sum_post < sum_pre);
                 }
             }
         }
     }
 }
 
-TEST_CASE( "Mutating with full mutagen accumulation results in multiple mutations",
-           "[mutations][.]" )
-{
-    REQUIRE( get_option<bool>( "BALANCED_MUTATIONS" ) );
-    GIVEN( "Player with maximum intensity accumulated mutagen" ) {
+TEST_CASE(
+    "Mutating with full mutagen accumulation results in multiple mutations",
+    "[mutations][."
+    "]") {
+    REQUIRE(get_option<bool>("BALANCED_MUTATIONS"));
+    GIVEN("Player with maximum intensity accumulated mutagen") {
         npc dummy;
-        dummy.add_effect( effect_accumulated_mutagen, 30_days, bodypart_str_id::NULL_ID() );
-        AND_GIVEN( "The player mutates" ) {
+        dummy.add_effect(effect_accumulated_mutagen, 30_days, bodypart_str_id::NULL_ID());
+        AND_GIVEN("The player mutates") {
             dummy.mutate();
-            THEN( "The player has >3 mutations" ) {
-                CHECK( dummy.get_mutations().size() > 3 );
-            }
+            THEN("The player has >3 mutations") { CHECK(dummy.get_mutations().size() > 3); }
         }
     }
 }
 
-TEST_CASE( "resized rigid armor fits tailed mutants", "[mutations][armor]" )
-{
+TEST_CASE("resized rigid armor fits tailed mutants", "[mutations][armor]") {
     npc dummy;
-    clear_character( dummy );
-    dummy.set_mutation( trait_id( "TAIL_FLUFFY" ) );
+    clear_character(dummy);
+    dummy.set_mutation(trait_id("TAIL_FLUFFY"));
 
-    auto power_armor = item( "test_resizable_power_armor" );
-    CHECK_FALSE( dummy.can_wear( power_armor ).success() );
-    power_armor.set_flag( flag_id( "resized_large" ) );
-    CHECK( dummy.can_wear( power_armor ).success() );
+    auto power_armor = item("test_resizable_power_armor");
+    CHECK_FALSE(dummy.can_wear(power_armor).success());
+    power_armor.set_flag(flag_id("resized_large"));
+    CHECK(dummy.can_wear(power_armor).success());
 
-    auto rigid_armor = item( "test_resizable_rigid_leg_armor" );
-    CHECK_FALSE( dummy.can_wear( rigid_armor ).success() );
-    rigid_armor.set_flag( flag_id( "resized_large" ) );
-    CHECK( dummy.can_wear( rigid_armor ).success() );
+    auto rigid_armor = item("test_resizable_rigid_leg_armor");
+    CHECK_FALSE(dummy.can_wear(rigid_armor).success());
+    rigid_armor.set_flag(flag_id("resized_large"));
+    CHECK(dummy.can_wear(rigid_armor).success());
 }
 
-TEST_CASE( "Mutating marloss does not crash on missing category data", "[mutations]" )
-{
+TEST_CASE("Mutating marloss does not crash on missing category data", "[mutations]") {
     npc dummy;
 
-    CHECK( dummy.mutate_towards( trait_marloss ) );
-    CHECK( dummy.has_trait( trait_marloss ) );
+    CHECK(dummy.mutate_towards(trait_marloss));
+    CHECK(dummy.has_trait(trait_marloss));
 }

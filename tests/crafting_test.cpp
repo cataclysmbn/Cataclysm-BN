@@ -1,22 +1,10 @@
-#include "catch/catch.hpp"
-
-#include <algorithm>
-#include <climits>
-#include <cmath>
-#include <map>
-#include <memory>
-#include <set>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "activity_actor_definitions.h"
 #include "avatar.h"
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catch/catch.hpp"
 #include "character_functions.h"
 #include "coordinates.h"
 #include "craft_command.h"
@@ -45,203 +33,210 @@
 #include "vehicle_part.h"
 #include "weather.h"
 
+#include <algorithm>
+#include <climits>
+#include <cmath>
+#include <map>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
 class inventory;
 
-static const bionic_id bio_digestion( "bio_digestion" );
-static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
-static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
+static const bionic_id bio_digestion("bio_digestion");
+static const trait_id trait_DEBUG_HS("DEBUG_HS");
+static const trait_id trait_DEBUG_STORAGE("DEBUG_STORAGE");
 
-TEST_CASE( "recipe_subset" )
-{
+TEST_CASE("recipe_subset") {
     clear_all_state();
     recipe_subset subset;
 
-    REQUIRE( subset.size() == 0 );
-    GIVEN( "a recipe of rum" ) {
-        const recipe *r = &recipe_id( "brew_rum" ).obj();
+    REQUIRE(subset.size() == 0);
+    GIVEN("a recipe of rum") {
+        const recipe* r = &recipe_id("brew_rum").obj();
 
-        WHEN( "the recipe is included" ) {
-            subset.include( r );
+        WHEN("the recipe is included") {
+            subset.include(r);
 
-            THEN( "it's in the subset" ) {
-                CHECK( subset.size() == 1 );
-                CHECK( subset.contains( *r ) );
+            THEN("it's in the subset") {
+                CHECK(subset.size() == 1);
+                CHECK(subset.contains(*r));
             }
-            THEN( "it has its default difficulty" ) {
-                CHECK( subset.get_custom_difficulty( r ) == r->difficulty );
+            THEN("it has its default difficulty") {
+                CHECK(subset.get_custom_difficulty(r) == r->difficulty);
             }
-            THEN( "it's in the right category" ) {
-                const auto cat_recipes( subset.in_category( "CC_FOOD" ) );
+            THEN("it's in the right category") {
+                const auto cat_recipes(subset.in_category("CC_FOOD"));
 
-                CHECK( cat_recipes.size() == 1 );
-                CHECK( std::find( cat_recipes.begin(), cat_recipes.end(), r ) != cat_recipes.end() );
+                CHECK(cat_recipes.size() == 1);
+                CHECK(std::find(cat_recipes.begin(), cat_recipes.end(), r) != cat_recipes.end());
             }
-            THEN( "it uses water" ) {
-                const auto comp_recipes( subset.of_component( itype_id( "water" ) ) );
+            THEN("it uses water") {
+                const auto comp_recipes(subset.of_component(itype_id("water")));
 
-                CHECK( comp_recipes.size() == 1 );
-                CHECK( std::find( comp_recipes.begin(), comp_recipes.end(), r ) != comp_recipes.end() );
+                CHECK(comp_recipes.size() == 1);
+                CHECK(std::find(comp_recipes.begin(), comp_recipes.end(), r) != comp_recipes.end());
             }
-            AND_WHEN( "the subset is cleared" ) {
+            AND_WHEN("the subset is cleared") {
                 subset.clear();
 
-                THEN( "it's no longer in the subset" ) {
-                    CHECK( subset.size() == 0 );
-                    CHECK_FALSE( subset.contains( *r ) );
+                THEN("it's no longer in the subset") {
+                    CHECK(subset.size() == 0);
+                    CHECK_FALSE(subset.contains(*r));
                 }
             }
         }
-        WHEN( "the recipe is included with higher difficulty" ) {
-            subset.include( r, r->difficulty + 1 );
+        WHEN("the recipe is included with higher difficulty") {
+            subset.include(r, r->difficulty + 1);
 
-            THEN( "it's harder to perform" ) {
-                CHECK( subset.get_custom_difficulty( r ) == r->difficulty + 1 );
+            THEN("it's harder to perform") {
+                CHECK(subset.get_custom_difficulty(r) == r->difficulty + 1);
             }
-            AND_WHEN( "it's included again with default difficulty" ) {
-                subset.include( r );
+            AND_WHEN("it's included again with default difficulty") {
+                subset.include(r);
 
-                THEN( "it recovers its normal difficulty" ) {
-                    CHECK( subset.get_custom_difficulty( r ) == r->difficulty );
+                THEN("it recovers its normal difficulty") {
+                    CHECK(subset.get_custom_difficulty(r) == r->difficulty);
                 }
             }
-            AND_WHEN( "it's included again with lower difficulty" ) {
-                subset.include( r, r->difficulty - 1 );
+            AND_WHEN("it's included again with lower difficulty") {
+                subset.include(r, r->difficulty - 1);
 
-                THEN( "it becomes easier to perform" ) {
-                    CHECK( subset.get_custom_difficulty( r ) == r->difficulty - 1 );
+                THEN("it becomes easier to perform") {
+                    CHECK(subset.get_custom_difficulty(r) == r->difficulty - 1);
                 }
             }
         }
-        WHEN( "the recipe is included with lower difficulty" ) {
-            subset.include( r, r->difficulty - 1 );
+        WHEN("the recipe is included with lower difficulty") {
+            subset.include(r, r->difficulty - 1);
 
-            THEN( "it's easier to perform" ) {
-                CHECK( subset.get_custom_difficulty( r ) == r->difficulty - 1 );
+            THEN("it's easier to perform") {
+                CHECK(subset.get_custom_difficulty(r) == r->difficulty - 1);
             }
-            AND_WHEN( "it's included again with default difficulty" ) {
-                subset.include( r );
+            AND_WHEN("it's included again with default difficulty") {
+                subset.include(r);
 
-                THEN( "it's still easier to perform" ) {
-                    CHECK( subset.get_custom_difficulty( r ) == r->difficulty - 1 );
+                THEN("it's still easier to perform") {
+                    CHECK(subset.get_custom_difficulty(r) == r->difficulty - 1);
                 }
             }
-            AND_WHEN( "it's included again with higher difficulty" ) {
-                subset.include( r, r->difficulty + 1 );
+            AND_WHEN("it's included again with higher difficulty") {
+                subset.include(r, r->difficulty + 1);
 
-                THEN( "it's still easier to perform" ) {
-                    CHECK( subset.get_custom_difficulty( r ) == r->difficulty - 1 );
+                THEN("it's still easier to perform") {
+                    CHECK(subset.get_custom_difficulty(r) == r->difficulty - 1);
                 }
             }
         }
     }
 }
 
-TEST_CASE( "available_recipes", "[recipes]" )
-{
+TEST_CASE("available_recipes", "[recipes]") {
     clear_all_state();
-    const recipe *r = &recipe_id( "magazine_battery_light_mod" ).obj();
+    const recipe* r = &recipe_id("magazine_battery_light_mod").obj();
     avatar dummy;
 
-    REQUIRE( dummy.get_skill_level( r->skill_used ) == 0 );
-    REQUIRE_FALSE( dummy.knows_recipe( r ) );
-    REQUIRE( r->skill_used );
+    REQUIRE(dummy.get_skill_level(r->skill_used) == 0);
+    REQUIRE_FALSE(dummy.knows_recipe(r));
+    REQUIRE(r->skill_used);
 
-    GIVEN( "a recipe that can be automatically learned" ) {
-        WHEN( "the player has lower skill" ) {
-            for( const std::pair<const skill_id, int> &skl : r->required_skills ) {
-                dummy.set_skill_level( skl.first, skl.second - 1 );
+    GIVEN("a recipe that can be automatically learned") {
+        WHEN("the player has lower skill") {
+            for (const std::pair<const skill_id, int>& skl : r->required_skills) {
+                dummy.set_skill_level(skl.first, skl.second - 1);
             }
 
-            THEN( "he can't craft it" ) {
-                CHECK_FALSE( dummy.knows_recipe( r ) );
-            }
+            THEN("he can't craft it") { CHECK_FALSE(dummy.knows_recipe(r)); }
         }
-        WHEN( "the player has just the skill that's required" ) {
-            dummy.set_skill_level( r->skill_used, r->difficulty );
-            for( const std::pair<const skill_id, int> &skl : r->required_skills ) {
-                dummy.set_skill_level( skl.first, skl.second );
+        WHEN("the player has just the skill that's required") {
+            dummy.set_skill_level(r->skill_used, r->difficulty);
+            for (const std::pair<const skill_id, int>& skl : r->required_skills) {
+                dummy.set_skill_level(skl.first, skl.second);
             }
 
-            THEN( "he can craft it now!" ) {
-                CHECK( dummy.knows_recipe( r ) );
+            THEN("he can craft it now!") {
+                CHECK(dummy.knows_recipe(r));
 
-                AND_WHEN( "his skill rusts" ) {
-                    dummy.set_skill_level( r->skill_used, 0 );
-                    for( const std::pair<const skill_id, int> &skl : r->required_skills ) {
-                        dummy.set_skill_level( skl.first, 0 );
+                AND_WHEN("his skill rusts") {
+                    dummy.set_skill_level(r->skill_used, 0);
+                    for (const std::pair<const skill_id, int>& skl : r->required_skills) {
+                        dummy.set_skill_level(skl.first, 0);
                     }
 
-                    THEN( "he still remembers how to craft it" ) {
-                        CHECK( dummy.knows_recipe( r ) );
-                    }
+                    THEN("he still remembers how to craft it") { CHECK(dummy.knows_recipe(r)); }
                 }
             }
         }
     }
 
-    GIVEN( "an appropriate book" ) {
-        detached_ptr<item> det = item::spawn( "manual_electronics" );
-        item &craftbook = *det;
-        dummy.i_add( std::move( det ) );
+    GIVEN("an appropriate book") {
+        detached_ptr<item> det = item::spawn("manual_electronics");
+        item& craftbook = *det;
+        dummy.i_add(std::move(det));
 
-        REQUIRE( craftbook.is_book() );
-        REQUIRE_FALSE( craftbook.type->book->recipes.empty() );
-        REQUIRE_FALSE( dummy.knows_recipe( r ) );
+        REQUIRE(craftbook.is_book());
+        REQUIRE_FALSE(craftbook.type->book->recipes.empty());
+        REQUIRE_FALSE(dummy.knows_recipe(r));
 
-        WHEN( "the player read it and has an appropriate skill" ) {
-            dummy.do_read( &craftbook );
-            dummy.set_skill_level( r->skill_used, 2 );
+        WHEN("the player read it and has an appropriate skill") {
+            dummy.do_read(&craftbook);
+            dummy.set_skill_level(r->skill_used, 2);
             // Secondary skills are just set to be what the autolearn requires
             // but the primary is not
-            for( const std::pair<const skill_id, int> &skl : r->required_skills ) {
-                dummy.set_skill_level( skl.first, skl.second );
+            for (const std::pair<const skill_id, int>& skl : r->required_skills) {
+                dummy.set_skill_level(skl.first, skl.second);
             }
 
-            AND_WHEN( "he searches for the recipe in the book" ) {
-                THEN( "he finds it!" ) {
-                    CHECK( dummy.get_recipes_from_books( dummy.crafting_inventory() ).contains( *r ) );
+            AND_WHEN("he searches for the recipe in the book") {
+                THEN("he finds it!") {
+                    CHECK(dummy.get_recipes_from_books(dummy.crafting_inventory()).contains(*r));
                 }
-                THEN( "it's easier in the book" ) {
-                    CHECK( dummy.get_recipes_from_books( dummy.crafting_inventory() ).get_custom_difficulty( r ) == 2 );
+                THEN("it's easier in the book") {
+                    CHECK(dummy.get_recipes_from_books(dummy.crafting_inventory())
+                              .get_custom_difficulty(r)
+                          == 2);
                 }
-                THEN( "he still hasn't the recipe memorized" ) {
-                    CHECK_FALSE( dummy.knows_recipe( r ) );
-                }
+                THEN("he still hasn't the recipe memorized") { CHECK_FALSE(dummy.knows_recipe(r)); }
             }
-            AND_WHEN( "he gets rid of the book" ) {
-                craftbook.detach( );
+            AND_WHEN("he gets rid of the book") {
+                craftbook.detach();
 
-                THEN( "he can't brew the recipe anymore" ) {
-                    CHECK_FALSE( dummy.get_recipes_from_books( dummy.crafting_inventory() ).contains( *r ) );
+                THEN("he can't brew the recipe anymore") {
+                    CHECK_FALSE(
+                        dummy.get_recipes_from_books(dummy.crafting_inventory()).contains(*r));
                 }
             }
         }
     }
 
-    GIVEN( "an eink pc with a sushi recipe" ) {
-        const recipe *r2 = &recipe_id( "sushi_rice" ).obj();
-        detached_ptr<item> det = item::spawn( "eink_tablet_pc" );
-        item &eink = *det;
-        dummy.i_add( std::move( det ) );
-        eink.set_var( "EIPC_RECIPES", ",sushi_rice," );
-        REQUIRE_FALSE( dummy.knows_recipe( r2 ) );
+    GIVEN("an eink pc with a sushi recipe") {
+        const recipe* r2 = &recipe_id("sushi_rice").obj();
+        detached_ptr<item> det = item::spawn("eink_tablet_pc");
+        item& eink = *det;
+        dummy.i_add(std::move(det));
+        eink.set_var("EIPC_RECIPES", ",sushi_rice,");
+        REQUIRE_FALSE(dummy.knows_recipe(r2));
 
-        WHEN( "the player holds it and has an appropriate skill" ) {
-            dummy.set_skill_level( r2->skill_used, 2 );
+        WHEN("the player holds it and has an appropriate skill") {
+            dummy.set_skill_level(r2->skill_used, 2);
 
-            AND_WHEN( "he searches for the recipe in the tablet" ) {
-                THEN( "he finds it!" ) {
-                    CHECK( dummy.get_recipes_from_books( dummy.crafting_inventory() ).contains( *r2 ) );
+            AND_WHEN("he searches for the recipe in the tablet") {
+                THEN("he finds it!") {
+                    CHECK(dummy.get_recipes_from_books(dummy.crafting_inventory()).contains(*r2));
                 }
-                THEN( "he still hasn't the recipe memorized" ) {
-                    CHECK_FALSE( dummy.knows_recipe( r2 ) );
+                THEN("he still hasn't the recipe memorized") {
+                    CHECK_FALSE(dummy.knows_recipe(r2));
                 }
             }
-            AND_WHEN( "he gets rid of the tablet" ) {
-                eink.detach( );
+            AND_WHEN("he gets rid of the tablet") {
+                eink.detach();
 
-                THEN( "he can't make the recipe anymore" ) {
-                    CHECK_FALSE( dummy.get_recipes_from_books( dummy.crafting_inventory() ).contains( *r2 ) );
+                THEN("he can't make the recipe anymore") {
+                    CHECK_FALSE(
+                        dummy.get_recipes_from_books(dummy.crafting_inventory()).contains(*r2));
                 }
             }
         }
@@ -249,83 +244,81 @@ TEST_CASE( "available_recipes", "[recipes]" )
 }
 
 // This crashes subsequent testcases for some reason.
-TEST_CASE( "crafting_with_a_companion", "[.]" )
-{
+TEST_CASE("crafting_with_a_companion", "[.]") {
     clear_all_state();
-    const recipe *r = &recipe_id( "brew_mead" ).obj();
+    const recipe* r = &recipe_id("brew_mead").obj();
     avatar dummy;
 
-    REQUIRE( dummy.get_skill_level( r->skill_used ) == 0 );
-    REQUIRE_FALSE( dummy.knows_recipe( r ) );
-    REQUIRE( r->skill_used );
+    REQUIRE(dummy.get_skill_level(r->skill_used) == 0);
+    REQUIRE_FALSE(dummy.knows_recipe(r));
+    REQUIRE(r->skill_used);
 
-    GIVEN( "a companion who can help with crafting" ) {
-        standard_npc who( "helper" );
+    GIVEN("a companion who can help with crafting") {
+        standard_npc who("helper");
 
-        who.set_attitude( NPCATT_FOLLOW );
-        who.spawn_at_sm( tripoint_abs_sm::zero() );
+        who.set_attitude(NPCATT_FOLLOW);
+        who.spawn_at_sm(tripoint_abs_sm::zero());
 
         g->load_npcs();
 
-        CHECK( !dummy.in_vehicle );
-        dummy.setpos( who.bub_pos() );
-        const auto helpers( character_funcs::get_crafting_helpers( dummy ) );
+        CHECK(!dummy.in_vehicle);
+        dummy.setpos(who.bub_pos());
+        const auto helpers(character_funcs::get_crafting_helpers(dummy));
 
-        REQUIRE( std::find( helpers.begin(), helpers.end(), &who ) != helpers.end() );
-        REQUIRE_FALSE( dummy.get_available_recipes( dummy.crafting_inventory(), &helpers ).contains( *r ) );
-        REQUIRE_FALSE( who.knows_recipe( r ) );
+        REQUIRE(std::find(helpers.begin(), helpers.end(), &who) != helpers.end());
+        REQUIRE_FALSE(
+            dummy.get_available_recipes(dummy.crafting_inventory(), &helpers).contains(*r));
+        REQUIRE_FALSE(who.knows_recipe(r));
 
-        WHEN( "you have the required skill" ) {
-            dummy.set_skill_level( r->skill_used, r->difficulty );
+        WHEN("you have the required skill") {
+            dummy.set_skill_level(r->skill_used, r->difficulty);
 
-            AND_WHEN( "he knows the recipe" ) {
-                who.learn_recipe( r );
+            AND_WHEN("he knows the recipe") {
+                who.learn_recipe(r);
 
-                THEN( "he helps you" ) {
-                    CHECK( dummy.get_available_recipes( dummy.crafting_inventory(), &helpers ).contains( *r ) );
+                THEN("he helps you") {
+                    CHECK(dummy.get_available_recipes(dummy.crafting_inventory(), &helpers)
+                              .contains(*r));
                 }
             }
-            AND_WHEN( "he has the cookbook in his inventory" ) {
-                detached_ptr<item> det = item::spawn( "brewing_cookbook" );
-                item &cookbook = *det;
-                who.i_add( std::move( det ) );
+            AND_WHEN("he has the cookbook in his inventory") {
+                detached_ptr<item> det = item::spawn("brewing_cookbook");
+                item& cookbook = *det;
+                who.i_add(std::move(det));
 
-                REQUIRE( cookbook.is_book() );
-                REQUIRE_FALSE( cookbook.type->book->recipes.empty() );
+                REQUIRE(cookbook.is_book());
+                REQUIRE_FALSE(cookbook.type->book->recipes.empty());
 
-                THEN( "he shows it to you" ) {
-                    CHECK( dummy.get_available_recipes( dummy.crafting_inventory(), &helpers ).contains( *r ) );
+                THEN("he shows it to you") {
+                    CHECK(dummy.get_available_recipes(dummy.crafting_inventory(), &helpers)
+                              .contains(*r));
                 }
             }
         }
     }
 }
 
-static void prep_craft( const recipe_id &rid, std::vector<detached_ptr<item>> &tools,
-                        bool expect_craftable )
-{
+static void prep_craft(
+    const recipe_id& rid, std::vector<detached_ptr<item>>& tools, bool expect_craftable) {
     clear_avatar();
-    const tripoint_bub_ms test_origin( 60, 60, 0 );
-    g->u.setpos( test_origin );
-    g->u.wear_item( item::spawn( "backpack" ), false );
-    for( detached_ptr<item> &gear : tools ) {
-        g->u.i_add( std::move( gear ) );
-    }
+    const tripoint_bub_ms test_origin(60, 60, 0);
+    g->u.setpos(test_origin);
+    g->u.wear_item(item::spawn("backpack"), false);
+    for (detached_ptr<item>& gear : tools) { g->u.i_add(std::move(gear)); }
 
-    const recipe &r = rid.obj();
+    const recipe& r = rid.obj();
 
     // Ensure adequate skill for all "required" skills
-    for( const std::pair<const skill_id, int> &skl : r.required_skills ) {
-        g->u.set_skill_level( skl.first, skl.second );
+    for (const std::pair<const skill_id, int>& skl : r.required_skills) {
+        g->u.set_skill_level(skl.first, skl.second);
     }
     // and just in case "used" skill difficulty is higher, set that too
-    g->u.set_skill_level( r.skill_used, std::max( r.difficulty,
-                          g->u.get_skill_level( r.skill_used ) ) );
+    g->u.set_skill_level(r.skill_used, std::max(r.difficulty, g->u.get_skill_level(r.skill_used)));
 
-    const inventory &crafting_inv = g->u.crafting_inventory();
-    bool can_craft = r.deduped_requirements().can_make_with_inventory(
-                         crafting_inv, r.get_component_filter() );
-    REQUIRE( can_craft == expect_craftable );
+    const inventory& crafting_inv = g->u.crafting_inventory();
+    bool can_craft =
+        r.deduped_requirements().can_make_with_inventory(crafting_inv, r.get_component_filter());
+    REQUIRE(can_craft == expect_craftable);
 }
 
 static time_point midnight = calendar::turn_zero + 0_hours;
@@ -333,509 +326,489 @@ static time_point midday = calendar::turn_zero + 12_hours;
 
 // This tries to actually run the whole craft activity, which is more thorough,
 // but slow
-static int actually_test_craft( const recipe_id &rid, std::vector<detached_ptr<item>> &tools,
-                                int interrupt_after_turns )
-{
-    avatar &you = get_avatar();
-    prep_craft( rid, tools, true );
-    set_time( midday ); // Ensure light for crafting
-    const recipe &rec = rid.obj();
-    REQUIRE( morale_crafting_speed_multiplier( you, rec ) == 1.0 );
-    REQUIRE( lighting_crafting_speed_multiplier( you, rec ) == 1.0 );
-    REQUIRE( !you.activity );
+static int actually_test_craft(
+    const recipe_id& rid, std::vector<detached_ptr<item>>& tools, int interrupt_after_turns) {
+    avatar& you = get_avatar();
+    prep_craft(rid, tools, true);
+    set_time(midday); // Ensure light for crafting
+    const recipe& rec = rid.obj();
+    REQUIRE(morale_crafting_speed_multiplier(you, rec) == 1.0);
+    REQUIRE(lighting_crafting_speed_multiplier(you, rec) == 1.0);
+    REQUIRE(!you.activity);
 
-    // This really shouldn't be needed, but for some reason the tests fail for mingw builds without it
-    you.learn_recipe( &rec );
-    REQUIRE( you.has_recipe( &rec, you.crafting_inventory(),
-                             character_funcs::get_crafting_helpers( you ) ) != -1 );
+    // This really shouldn't be needed, but for some reason the tests fail for mingw builds without
+    // it
+    you.learn_recipe(&rec);
+    REQUIRE(
+        you.has_recipe(&rec, you.crafting_inventory(), character_funcs::get_crafting_helpers(you))
+        != -1);
 
-    you.make_craft( rid, 1 );
-    REQUIRE( you.activity );
-    REQUIRE( you.activity->id() == activity_id( "ACT_CRAFT" ) );
+    you.make_craft(rid, 1);
+    REQUIRE(you.activity);
+    REQUIRE(you.activity->id() == activity_id("ACT_CRAFT"));
     int turns = 0;
-    while( you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
+    while (you.activity->id() == activity_id("ACT_CRAFT")) {
         ++turns;
-        if( turns > interrupt_after_turns ) {
+        if (turns > interrupt_after_turns) {
             you.cancel_activity();
             break;
         }
         you.moves = 100;
-        you.activity->do_turn( you );
+        you.activity->do_turn(you);
     }
     return turns;
 }
 
-static void add_tool( std::vector<detached_ptr<item>> &tools, const char *type, int count = 1 )
-{
-    while( count-- ) {
-        tools.push_back( item::spawn( type ) );
-    }
+static void add_tool(std::vector<detached_ptr<item>>& tools, const char* type, int count = 1) {
+    while (count--) { tools.push_back(item::spawn(type)); }
 }
 
-TEST_CASE( "tools use charge to craft", "[crafting][charge]" )
-{
+TEST_CASE("tools use charge to craft", "[crafting][charge]") {
     clear_all_state();
     std::vector<detached_ptr<item>> tools;
 
-    GIVEN( "recipe and required tools/materials" ) {
-        recipe_id carver( "carver_off" );
+    GIVEN("recipe and required tools/materials") {
+        recipe_id carver("carver_off");
         // Uses fabrication skill
         // Requires electronics 3
         // Difficulty 4
         // Learned from advanced_electronics or textbook_electronics
 
         // Tools needed:
-        add_tool( tools, "screwdriver" );
-        add_tool( tools, "mold_plastic" );
+        add_tool(tools, "screwdriver");
+        add_tool(tools, "mold_plastic");
 
         // Materials needed
-        add_tool( tools, "solder_wire", 10 );
-        add_tool( tools, "plastic_chunk", 6 );
-        add_tool( tools, "blade", 2 );
-        add_tool( tools, "cable", 5 );
-        add_tool( tools, "motor_tiny" );
-        add_tool( tools, "power_supply" );
-        add_tool( tools, "scrap" );
+        add_tool(tools, "solder_wire", 10);
+        add_tool(tools, "plastic_chunk", 6);
+        add_tool(tools, "blade", 2);
+        add_tool(tools, "cable", 5);
+        add_tool(tools, "motor_tiny");
+        add_tool(tools, "power_supply");
+        add_tool(tools, "scrap");
 
         // Charges needed to craft:
         // - 10 charges of soldering iron
         // - 10 charges of surface heat
 
-        WHEN( "each tool has enough charges" ) {
-            tools.push_back( item::spawn( "hotplate", calendar::start_of_cataclysm, 20 ) );
-            tools.push_back( item::spawn( "soldering_iron", calendar::start_of_cataclysm, 20 ) );
+        WHEN("each tool has enough charges") {
+            tools.push_back(item::spawn("hotplate", calendar::start_of_cataclysm, 20));
+            tools.push_back(item::spawn("soldering_iron", calendar::start_of_cataclysm, 20));
 
-            THEN( "crafting succeeds, and uses charges from each tool" ) {
-                int turns = actually_test_craft( recipe_id( "carver_off" ), tools, INT_MAX );
-                CAPTURE( turns );
-                CHECK( get_remaining_charges( "hotplate" ) == 10 );
-                CHECK( get_remaining_charges( "soldering_iron" ) == 10 );
+            THEN("crafting succeeds, and uses charges from each tool") {
+                int turns = actually_test_craft(recipe_id("carver_off"), tools, INT_MAX);
+                CAPTURE(turns);
+                CHECK(get_remaining_charges("hotplate") == 10);
+                CHECK(get_remaining_charges("soldering_iron") == 10);
             }
         }
 
-        WHEN( "multiple tools have enough combined charges" ) {
-            tools.emplace_back( item::spawn( "hotplate", calendar::start_of_cataclysm, 5 ) );
-            tools.emplace_back( item::spawn( "hotplate", calendar::start_of_cataclysm, 5 ) );
-            tools.emplace_back( item::spawn( "soldering_iron", calendar::start_of_cataclysm, 5 ) );
-            tools.emplace_back( item::spawn( "soldering_iron", calendar::start_of_cataclysm, 5 ) );
+        WHEN("multiple tools have enough combined charges") {
+            tools.emplace_back(item::spawn("hotplate", calendar::start_of_cataclysm, 5));
+            tools.emplace_back(item::spawn("hotplate", calendar::start_of_cataclysm, 5));
+            tools.emplace_back(item::spawn("soldering_iron", calendar::start_of_cataclysm, 5));
+            tools.emplace_back(item::spawn("soldering_iron", calendar::start_of_cataclysm, 5));
 
-            THEN( "crafting succeeds, and uses charges from multiple tools" ) {
-                actually_test_craft( recipe_id( "carver_off" ), tools, INT_MAX );
-                CHECK( get_remaining_charges( "hotplate" ) == 0 );
-                CHECK( get_remaining_charges( "soldering_iron" ) == 0 );
+            THEN("crafting succeeds, and uses charges from multiple tools") {
+                actually_test_craft(recipe_id("carver_off"), tools, INT_MAX);
+                CHECK(get_remaining_charges("hotplate") == 0);
+                CHECK(get_remaining_charges("soldering_iron") == 0);
             }
         }
 
-        WHEN( "UPS-modded tools have enough charges" ) {
-            detached_ptr<item> hotplate = item::spawn( "hotplate", calendar::start_of_cataclysm, 0 );
-            hotplate->put_in( item::spawn( "battery_ups" ) );
-            tools.push_back( std::move( hotplate ) );
-            detached_ptr<item> soldering_iron = item::spawn( "soldering_iron", calendar::start_of_cataclysm,
-                                                0 );
-            soldering_iron->put_in( item::spawn( "battery_ups" ) );
-            tools.push_back( std::move( soldering_iron ) );
-            tools.push_back( item::spawn( "UPS_off", calendar::start_of_cataclysm, 500 ) );
+        WHEN("UPS-modded tools have enough charges") {
+            detached_ptr<item> hotplate = item::spawn("hotplate", calendar::start_of_cataclysm, 0);
+            hotplate->put_in(item::spawn("battery_ups"));
+            tools.push_back(std::move(hotplate));
+            detached_ptr<item> soldering_iron =
+                item::spawn("soldering_iron", calendar::start_of_cataclysm, 0);
+            soldering_iron->put_in(item::spawn("battery_ups"));
+            tools.push_back(std::move(soldering_iron));
+            tools.push_back(item::spawn("UPS_off", calendar::start_of_cataclysm, 500));
 
-            THEN( "crafting succeeds, and uses charges from the UPS" ) {
-                actually_test_craft( recipe_id( "carver_off" ), tools, INT_MAX );
-                CHECK( get_remaining_charges( "hotplate" ) == 0 );
-                CHECK( get_remaining_charges( "soldering_iron" ) == 0 );
-                CHECK( get_remaining_charges( "UPS_off" ) == 480 );
+            THEN("crafting succeeds, and uses charges from the UPS") {
+                actually_test_craft(recipe_id("carver_off"), tools, INT_MAX);
+                CHECK(get_remaining_charges("hotplate") == 0);
+                CHECK(get_remaining_charges("soldering_iron") == 0);
+                CHECK(get_remaining_charges("UPS_off") == 480);
             }
         }
 
-        WHEN( "UPS-modded tools do not have enough charges" ) {
-            detached_ptr<item> hotplate = item::spawn( "hotplate", calendar::start_of_cataclysm, 0 );
-            hotplate->put_in( item::spawn( "battery_ups" ) );
-            tools.push_back( std::move( hotplate ) );
-            detached_ptr<item> soldering_iron = item::spawn( "soldering_iron", calendar::start_of_cataclysm,
-                                                0 );
-            soldering_iron->put_in( item::spawn( "battery_ups" ) );
-            tools.push_back( std::move( soldering_iron ) );
-            tools.push_back( item::spawn( "UPS_off", calendar::start_of_cataclysm, 10 ) );
+        WHEN("UPS-modded tools do not have enough charges") {
+            detached_ptr<item> hotplate = item::spawn("hotplate", calendar::start_of_cataclysm, 0);
+            hotplate->put_in(item::spawn("battery_ups"));
+            tools.push_back(std::move(hotplate));
+            detached_ptr<item> soldering_iron =
+                item::spawn("soldering_iron", calendar::start_of_cataclysm, 0);
+            soldering_iron->put_in(item::spawn("battery_ups"));
+            tools.push_back(std::move(soldering_iron));
+            tools.push_back(item::spawn("UPS_off", calendar::start_of_cataclysm, 10));
 
-            THEN( "crafting fails, and no charges are used" ) {
-                prep_craft( recipe_id( "carver_off" ), tools, false );
-                CHECK( get_remaining_charges( "UPS_off" ) == 10 );
+            THEN("crafting fails, and no charges are used") {
+                prep_craft(recipe_id("carver_off"), tools, false);
+                CHECK(get_remaining_charges("UPS_off") == 10);
             }
         }
     }
 }
 
-TEST_CASE( "tool_use", "[crafting][tool]" )
-{
+TEST_CASE("tool_use", "[crafting][tool]") {
     clear_all_state();
-    SECTION( "clean_water" ) {
+    SECTION("clean_water") {
         std::vector<detached_ptr<item>> tools;
-        tools.push_back( item::spawn( "hotplate", calendar::start_of_cataclysm, 20 ) );
-        detached_ptr<item> plastic_bottle = item::spawn( "bottle_plastic" );
-        plastic_bottle->put_in( item::spawn( "water", calendar::start_of_cataclysm, 2 ) );
-        tools.push_back( std::move( plastic_bottle ) );
-        tools.push_back( item::spawn( "pot" ) );
+        tools.push_back(item::spawn("hotplate", calendar::start_of_cataclysm, 20));
+        detached_ptr<item> plastic_bottle = item::spawn("bottle_plastic");
+        plastic_bottle->put_in(item::spawn("water", calendar::start_of_cataclysm, 2));
+        tools.push_back(std::move(plastic_bottle));
+        tools.push_back(item::spawn("pot"));
 
         // Can't actually test crafting here since crafting a liquid currently causes a ui prompt
-        prep_craft( recipe_id( "water_clean" ), tools, true );
+        prep_craft(recipe_id("water_clean"), tools, true);
     }
-    SECTION( "clean_water_in_occupied_cooking_vessel" ) {
+    SECTION("clean_water_in_occupied_cooking_vessel") {
         std::vector<detached_ptr<item>> tools;
-        tools.push_back( item::spawn( "hotplate", calendar::start_of_cataclysm, 20 ) );
-        detached_ptr<item> plastic_bottle = item::spawn( "bottle_plastic" );
-        plastic_bottle->put_in( item::spawn( "water", calendar::start_of_cataclysm, 2 ) );
-        tools.push_back( std::move( plastic_bottle ) );
-        detached_ptr<item> jar = item::spawn( "jar_glass" );
+        tools.push_back(item::spawn("hotplate", calendar::start_of_cataclysm, 20));
+        detached_ptr<item> plastic_bottle = item::spawn("bottle_plastic");
+        plastic_bottle->put_in(item::spawn("water", calendar::start_of_cataclysm, 2));
+        tools.push_back(std::move(plastic_bottle));
+        detached_ptr<item> jar = item::spawn("jar_glass");
         // If it's not watertight the water will spill.
-        REQUIRE( jar->is_watertight_container() );
-        jar->put_in( item::spawn( "water", calendar::start_of_cataclysm, 2 ) );
-        tools.push_back( std::move( jar ) );
+        REQUIRE(jar->is_watertight_container());
+        jar->put_in(item::spawn("water", calendar::start_of_cataclysm, 2));
+        tools.push_back(std::move(jar));
 
-        prep_craft( recipe_id( "water_clean" ), tools, false );
+        prep_craft(recipe_id("water_clean"), tools, false);
     }
 }
 
-TEST_CASE( "Component same as tool", "[crafting][tool]" )
-{
+TEST_CASE("Component same as tool", "[crafting][tool]") {
     clear_all_state();
-    SECTION( "primitive_hammer with one rock" ) {
+    SECTION("primitive_hammer with one rock") {
         std::vector<detached_ptr<item>> tools;
-        tools.push_back( item::spawn( "rock" ) );
-        tools.push_back( item::spawn( "2x4" ) );
-        tools.push_back( item::spawn( "thread", calendar::turn, 100 ) );
+        tools.push_back(item::spawn("rock"));
+        tools.push_back(item::spawn("2x4"));
+        tools.push_back(item::spawn("thread", calendar::turn, 100));
 
-        prep_craft( recipe_id( "primitive_hammer" ), tools, false );
+        prep_craft(recipe_id("primitive_hammer"), tools, false);
     }
-    SECTION( "primitive_hammer with two rocks" ) {
+    SECTION("primitive_hammer with two rocks") {
         std::vector<detached_ptr<item>> tools;
-        tools.push_back( item::spawn( "rock" ) );
-        tools.push_back( item::spawn( "rock" ) );
-        tools.push_back( item::spawn( "2x4" ) );
-        tools.push_back( item::spawn( "thread", calendar::turn, 100 ) );
+        tools.push_back(item::spawn("rock"));
+        tools.push_back(item::spawn("rock"));
+        tools.push_back(item::spawn("2x4"));
+        tools.push_back(item::spawn("thread", calendar::turn, 100));
 
-        prep_craft( recipe_id( "primitive_hammer" ), tools, true );
+        prep_craft(recipe_id("primitive_hammer"), tools, true);
     }
 }
 
 // Resume the first in progress craft found in the player's inventory
-static int resume_craft()
-{
-    avatar &you = get_avatar();
-    std::vector<item *> crafts = you.items_with( []( const item & itm ) {
-        return itm.is_craft();
-    } );
-    REQUIRE( crafts.size() == 1 );
-    item *craft = crafts.front();
-    set_time( midday ); // Ensure light for crafting
-    REQUIRE( crafting_speed_multiplier( you, *craft, bench_location{bench_type::hands, you.abs_pos()} )
-             == 1.0 );
-    REQUIRE( !you.activity );
-    avatar_funcs::use_item( you, *craft );
-    REQUIRE( you.activity );
-    REQUIRE( you.activity->id() == activity_id( "ACT_CRAFT" ) );
+static int resume_craft() {
+    avatar& you = get_avatar();
+    std::vector<item*> crafts = you.items_with([](const item& itm) { return itm.is_craft(); });
+    REQUIRE(crafts.size() == 1);
+    item* craft = crafts.front();
+    set_time(midday); // Ensure light for crafting
+    REQUIRE(crafting_speed_multiplier(you, *craft, bench_location{bench_type::hands, you.abs_pos()})
+            == 1.0);
+    REQUIRE(!you.activity);
+    avatar_funcs::use_item(you, *craft);
+    REQUIRE(you.activity);
+    REQUIRE(you.activity->id() == activity_id("ACT_CRAFT"));
     int turns = 0;
-    while( you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
+    while (you.activity->id() == activity_id("ACT_CRAFT")) {
         ++turns;
         you.moves = 100;
-        you.activity->do_turn( you );
+        you.activity->do_turn(you);
     }
     return turns;
 }
 
-static auto make_food_craft_with_components( const recipe &recipe_to_make,
-        std::vector<detached_ptr<item>> components ) -> detached_ptr<item>
-{
-    auto craft = item::spawn( &recipe_to_make, 1, std::move( components ), std::vector<item_comp> {} );
-    craft->set_tools_to_continue( true );
-    craft->set_var( "craft_tools_fully_prepaid", 1 );
+static auto make_food_craft_with_components(
+    const recipe& recipe_to_make, std::vector<detached_ptr<item>> components)
+    -> detached_ptr<item> {
+    auto craft = item::spawn(&recipe_to_make, 1, std::move(components), std::vector<item_comp>{});
+    craft->set_tools_to_continue(true);
+    craft->set_var("craft_tools_fully_prepaid", 1);
     return craft;
 }
 
-static auto make_food_craft( const recipe &recipe_to_make,
-                             const bool with_pine_nuts ) -> detached_ptr<item>
-{
-    auto components = std::vector<detached_ptr<item>> {};
-    if( with_pine_nuts ) {
-        components.push_back( item::spawn( "pine_nuts", calendar::turn, 1 ) );
+static auto make_food_craft(const recipe& recipe_to_make, const bool with_pine_nuts)
+    -> detached_ptr<item> {
+    auto components = std::vector<detached_ptr<item>>{};
+    if (with_pine_nuts) {
+        components.push_back(item::spawn("pine_nuts", calendar::turn, 1));
     } else {
-        components.push_back( item::spawn( "meat_smoked" ) );
+        components.push_back(item::spawn("meat_smoked"));
     }
-    return make_food_craft_with_components( recipe_to_make, std::move( components ) );
+    return make_food_craft_with_components(recipe_to_make, std::move(components));
 }
 
-static auto make_woods_soup_components( const bool with_pine_nuts ) ->
-std::vector<detached_ptr<item>>
-{
-    auto components = std::vector<detached_ptr<item>> {};
-    components.push_back( item::spawn( "broth", calendar::turn, 2 ) );
-    components.push_back( item::spawn( "meat_smoked", calendar::turn, 1 ) );
-    components.push_back( with_pine_nuts ? item::spawn( "pine_nuts", calendar::turn, 2 ) :
-                          item::spawn( "chili_pepper_roasted", calendar::turn, 2 ) );
+static auto make_woods_soup_components(const bool with_pine_nuts)
+    -> std::vector<detached_ptr<item>> {
+    auto components = std::vector<detached_ptr<item>>{};
+    components.push_back(item::spawn("broth", calendar::turn, 2));
+    components.push_back(item::spawn("meat_smoked", calendar::turn, 1));
+    components.push_back(
+        with_pine_nuts
+            ? item::spawn("pine_nuts", calendar::turn, 2)
+            : item::spawn("chili_pepper_roasted", calendar::turn, 2));
     return components;
 }
 
-static auto make_woods_soup_craft( const recipe &recipe_to_make,
-                                   const bool with_pine_nuts ) -> detached_ptr<item>
-{
-    return make_food_craft_with_components( recipe_to_make,
-                                            make_woods_soup_components( with_pine_nuts ) );
+static auto make_woods_soup_craft(const recipe& recipe_to_make, const bool with_pine_nuts)
+    -> detached_ptr<item> {
+    return make_food_craft_with_components(
+        recipe_to_make, make_woods_soup_components(with_pine_nuts));
 }
 
-static auto expected_woods_soup_kcal( const Character &you, const bool with_pine_nuts ) -> int
-{
-    auto soup = item::spawn( "soup_woods", calendar::turn, 2 );
+static auto expected_woods_soup_kcal(const Character& you, const bool with_pine_nuts) -> int {
+    auto soup = item::spawn("soup_woods", calendar::turn, 2);
     soup->recipe_charges = 2;
-    auto &components = soup->get_components();
-    for( auto &component : make_woods_soup_components( with_pine_nuts ) ) {
-        components.push_back( std::move( component ) );
+    auto& components = soup->get_components();
+    for (auto& component : make_woods_soup_components(with_pine_nuts)) {
+        components.push_back(std::move(component));
     }
-    return you.compute_effective_nutrients( *soup ).kcal;
+    return you.compute_effective_nutrients(*soup).kcal;
 }
 
-static auto has_component( const item &crafted, const itype_id &type ) -> bool
-{
+static auto has_component(const item& crafted, const itype_id& type) -> bool {
     const auto components = crafted.get_components().as_vector();
-    return std::ranges::any_of( components,
-    [&type]( const item * component ) { return component->typeId() == type; } );
+    return std::ranges::any_of(components, [&type](const item* component) {
+        return component->typeId() == type;
+    });
 }
 
-static auto finished_foods( Character &you, const itype_id &type ) -> std::vector<item *>
-{
-    return you.items_with( [&type]( const item & it ) { return it.typeId() == type; } );
+static auto finished_foods(Character& you, const itype_id& type) -> std::vector<item*> {
+    return you.items_with([&type](const item& it) { return it.typeId() == type; });
 }
 
-static auto finished_sandwiches( Character &you ) -> std::vector<item *>
-{
-    return finished_foods( you, itype_id( "sandwich_pb" ) );
+static auto finished_sandwiches(Character& you) -> std::vector<item*> {
+    return finished_foods(you, itype_id("sandwich_pb"));
 }
 
-static auto in_progress_crafts( Character &you ) -> std::vector<item *>
-{
-    return you.items_with( []( const item & it ) { return it.is_craft(); } );
+static auto in_progress_crafts(Character& you) -> std::vector<item*> {
+    return you.items_with([](const item& it) { return it.is_craft(); });
 }
 
-static auto assign_completed_craft_activity( Character &you, const recipe &recipe_to_make,
-        item *target = nullptr ) -> void
-{
-    auto actor = std::make_unique<craft_activity_actor>( &recipe_to_make, 1, 10'000'000,
-                 you.abs_pos(), std::vector<comp_selection<item_comp>> {},
-                 std::vector<comp_selection<tool_comp>> {}, true, false );
-    auto act = std::make_unique<player_activity>( std::move( actor ) );
-    if( target != nullptr ) {
-        act->targets.emplace_back( *target );
-    }
-    you.assign_activity( std::move( act ) );
+static auto assign_completed_craft_activity(
+    Character& you, const recipe& recipe_to_make, item* target = nullptr) -> void {
+    auto actor = std::make_unique<craft_activity_actor>(
+        &recipe_to_make, 1, 10'000'000, you.abs_pos(), std::vector<comp_selection<item_comp>>{},
+        std::vector<comp_selection<tool_comp>>{}, true, false);
+    auto act = std::make_unique<player_activity>(std::move(actor));
+    if (target != nullptr) { act->targets.emplace_back(*target); }
+    you.assign_activity(std::move(act));
 }
 
-static auto finish_craft_activity( avatar &you ) -> void
-{
-    REQUIRE( you.activity->id() == activity_id( "ACT_CRAFT" ) );
-    you.set_moves( 100 );
-    you.activity->do_turn( you );
-    REQUIRE( you.activity->id() == activity_id::NULL_ID() );
+static auto finish_craft_activity(avatar& you) -> void {
+    REQUIRE(you.activity->id() == activity_id("ACT_CRAFT"));
+    you.set_moves(100);
+    you.activity->do_turn(you);
+    REQUIRE(you.activity->id() == activity_id::NULL_ID());
 }
 
-static auto resume_and_finish_craft( avatar &you, item &target ) -> void
-{
-    REQUIRE( iuse::craft( &you, &target, false, target.bub_pos() ) == 0 );
-    REQUIRE( you.activity );
-    finish_craft_activity( you );
+static auto resume_and_finish_craft(avatar& you, item& target) -> void {
+    REQUIRE(iuse::craft(&you, &target, false, target.bub_pos()) == 0);
+    REQUIRE(you.activity);
+    finish_craft_activity(you);
 }
 
-TEST_CASE( "resuming in-progress food craft completes the activated craft",
-           "[crafting][food][resume]" )
-{
+TEST_CASE(
+    "resuming in-progress food craft completes the activated craft",
+    "[crafting][food]["
+    "resume]") {
     clear_all_state();
     clear_map();
     clear_avatar();
 
-    auto &you = get_avatar();
-    auto &here = get_map();
-    const auto &sandwich_recipe = recipe_id( "sandwich_pb" ).obj();
-    const auto &woods_soup_recipe = recipe_id( "soup_woods" ).obj();
-    you.learn_recipe( &sandwich_recipe );
-    you.learn_recipe( &woods_soup_recipe );
-    you.set_mutation( trait_DEBUG_HS );
-    you.add_bionic( bio_digestion );
+    auto& you = get_avatar();
+    auto& here = get_map();
+    const auto& sandwich_recipe = recipe_id("sandwich_pb").obj();
+    const auto& woods_soup_recipe = recipe_id("soup_woods").obj();
+    you.learn_recipe(&sandwich_recipe);
+    you.learn_recipe(&woods_soup_recipe);
+    you.set_mutation(trait_DEBUG_HS);
+    you.add_bionic(bio_digestion);
 
-    SECTION( "activated map woods soup craft is stored as the activity target" ) {
-        const auto target_kcal = expected_woods_soup_kcal( you, true );
-        const auto decoy_kcal = expected_woods_soup_kcal( you, false );
-        REQUIRE( target_kcal > decoy_kcal );
+    SECTION("activated map woods soup craft is stored as the activity target") {
+        const auto target_kcal = expected_woods_soup_kcal(you, true);
+        const auto decoy_kcal = expected_woods_soup_kcal(you, false);
+        REQUIRE(target_kcal > decoy_kcal);
 
-        you.i_add( make_woods_soup_craft( woods_soup_recipe, false ) );
-        here.add_item( you.bub_pos(), make_woods_soup_craft( woods_soup_recipe, true ) );
-        auto &target_craft = here.i_at( you.bub_pos() ).only_item();
+        you.i_add(make_woods_soup_craft(woods_soup_recipe, false));
+        here.add_item(you.bub_pos(), make_woods_soup_craft(woods_soup_recipe, true));
+        auto& target_craft = here.i_at(you.bub_pos()).only_item();
 
-        REQUIRE( iuse::craft( &you, &target_craft, false, target_craft.bub_pos() ) == 0 );
+        REQUIRE(iuse::craft(&you, &target_craft, false, target_craft.bub_pos()) == 0);
 
-        REQUIRE( you.activity );
-        REQUIRE( you.activity->id() == activity_id( "ACT_CRAFT" ) );
-        REQUIRE( !you.activity->targets.empty() );
-        CHECK( &*you.activity->targets.front() == &target_craft );
-        CHECK( has_component( target_craft, itype_id( "pine_nuts" ) ) );
-        CHECK( !has_component( target_craft, itype_id( "chili_pepper_roasted" ) ) );
+        REQUIRE(you.activity);
+        REQUIRE(you.activity->id() == activity_id("ACT_CRAFT"));
+        REQUIRE(!you.activity->targets.empty());
+        CHECK(&*you.activity->targets.front() == &target_craft);
+        CHECK(has_component(target_craft, itype_id("pine_nuts")));
+        CHECK(!has_component(target_craft, itype_id("chili_pepper_roasted")));
     }
 
-    SECTION( "activated map craft completes over an inventory craft with the same recipe" ) {
-        you.i_add( make_food_craft( sandwich_recipe, false ) );
-        here.add_item( you.bub_pos(), make_food_craft( sandwich_recipe, true ) );
-        auto &target_craft = here.i_at( you.bub_pos() ).only_item();
-        target_craft.set_counter( 10'000'000 );
+    SECTION("activated map craft completes over an inventory craft with the same recipe") {
+        you.i_add(make_food_craft(sandwich_recipe, false));
+        here.add_item(you.bub_pos(), make_food_craft(sandwich_recipe, true));
+        auto& target_craft = here.i_at(you.bub_pos()).only_item();
+        target_craft.set_counter(10'000'000);
 
-        resume_and_finish_craft( you, target_craft );
+        resume_and_finish_craft(you, target_craft);
 
-        const auto sandwiches = finished_sandwiches( you );
-        REQUIRE( sandwiches.size() == 1 );
-        CHECK( has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
-        CHECK( !has_component( *sandwiches.front(), itype_id( "meat_smoked" ) ) );
-        CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 76 );
-        CHECK( in_progress_crafts( you ).size() == 1 );
-        CHECK( here.i_at( you.bub_pos() ).empty() );
+        const auto sandwiches = finished_sandwiches(you);
+        REQUIRE(sandwiches.size() == 1);
+        CHECK(has_component(*sandwiches.front(), itype_id("pine_nuts")));
+        CHECK(!has_component(*sandwiches.front(), itype_id("meat_smoked")));
+        CHECK(you.compute_effective_nutrients(*sandwiches.front()).kcal == 76);
+        CHECK(in_progress_crafts(you).size() == 1);
+        CHECK(here.i_at(you.bub_pos()).empty());
     }
 
-    SECTION( "activated later inventory craft wins over an earlier same-recipe inventory craft" ) {
-        you.i_add( make_food_craft( sandwich_recipe, false ) );
-        auto &target_craft = you.i_add( make_food_craft( sandwich_recipe, true ) );
-        target_craft.set_counter( 10'000'000 );
+    SECTION("activated later inventory craft wins over an earlier same-recipe inventory craft") {
+        you.i_add(make_food_craft(sandwich_recipe, false));
+        auto& target_craft = you.i_add(make_food_craft(sandwich_recipe, true));
+        target_craft.set_counter(10'000'000);
 
-        resume_and_finish_craft( you, target_craft );
+        resume_and_finish_craft(you, target_craft);
 
-        const auto sandwiches = finished_sandwiches( you );
-        REQUIRE( sandwiches.size() == 1 );
-        CHECK( has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
-        CHECK( !has_component( *sandwiches.front(), itype_id( "meat_smoked" ) ) );
-        CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 76 );
-        CHECK( in_progress_crafts( you ).size() == 1 );
+        const auto sandwiches = finished_sandwiches(you);
+        REQUIRE(sandwiches.size() == 1);
+        CHECK(has_component(*sandwiches.front(), itype_id("pine_nuts")));
+        CHECK(!has_component(*sandwiches.front(), itype_id("meat_smoked")));
+        CHECK(you.compute_effective_nutrients(*sandwiches.front()).kcal == 76);
+        CHECK(in_progress_crafts(you).size() == 1);
     }
 }
 
-TEST_CASE( "craft activity completes the targeted in-progress craft", "[crafting][food]" )
-{
+TEST_CASE("craft activity completes the targeted in-progress craft", "[crafting][food]") {
     clear_all_state();
     clear_map();
     clear_avatar();
 
-    auto &you = get_avatar();
-    auto &here = get_map();
-    const auto &sandwich_recipe = recipe_id( "sandwich_pb" ).obj();
+    auto& you = get_avatar();
+    auto& here = get_map();
+    const auto& sandwich_recipe = recipe_id("sandwich_pb").obj();
 
-    SECTION( "targeted map craft wins over inventory craft with the same recipe" ) {
-        you.i_add( make_food_craft( sandwich_recipe, false ) );
-        here.add_item( you.bub_pos(), make_food_craft( sandwich_recipe, true ) );
-        auto &target_craft = here.i_at( you.bub_pos() ).only_item();
-        target_craft.set_counter( 10'000'000 );
+    SECTION("targeted map craft wins over inventory craft with the same recipe") {
+        you.i_add(make_food_craft(sandwich_recipe, false));
+        here.add_item(you.bub_pos(), make_food_craft(sandwich_recipe, true));
+        auto& target_craft = here.i_at(you.bub_pos()).only_item();
+        target_craft.set_counter(10'000'000);
 
-        assign_completed_craft_activity( you, sandwich_recipe, &target_craft );
-        finish_craft_activity( you );
+        assign_completed_craft_activity(you, sandwich_recipe, &target_craft);
+        finish_craft_activity(you);
 
-        const auto sandwiches = finished_sandwiches( you );
-        REQUIRE( sandwiches.size() == 1 );
-        CHECK( has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
-        CHECK( !has_component( *sandwiches.front(), itype_id( "meat_smoked" ) ) );
-        CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 51 );
-        CHECK( in_progress_crafts( you ).size() == 1 );
-        CHECK( here.i_at( you.bub_pos() ).empty() );
+        const auto sandwiches = finished_sandwiches(you);
+        REQUIRE(sandwiches.size() == 1);
+        CHECK(has_component(*sandwiches.front(), itype_id("pine_nuts")));
+        CHECK(!has_component(*sandwiches.front(), itype_id("meat_smoked")));
+        CHECK(you.compute_effective_nutrients(*sandwiches.front()).kcal == 51);
+        CHECK(in_progress_crafts(you).size() == 1);
+        CHECK(here.i_at(you.bub_pos()).empty());
     }
 
-    SECTION( "targeted inventory craft is preserved when a map craft has the same recipe" ) {
-        auto &target_craft = you.i_add( make_food_craft( sandwich_recipe, false ) );
-        target_craft.set_counter( 10'000'000 );
-        here.add_item( you.bub_pos(), make_food_craft( sandwich_recipe, true ) );
+    SECTION("targeted inventory craft is preserved when a map craft has the same recipe") {
+        auto& target_craft = you.i_add(make_food_craft(sandwich_recipe, false));
+        target_craft.set_counter(10'000'000);
+        here.add_item(you.bub_pos(), make_food_craft(sandwich_recipe, true));
 
-        assign_completed_craft_activity( you, sandwich_recipe, &target_craft );
-        finish_craft_activity( you );
+        assign_completed_craft_activity(you, sandwich_recipe, &target_craft);
+        finish_craft_activity(you);
 
-        const auto sandwiches = finished_sandwiches( you );
-        REQUIRE( sandwiches.size() == 1 );
-        CHECK( has_component( *sandwiches.front(), itype_id( "meat_smoked" ) ) );
-        CHECK( !has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
-        CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 101 );
-        CHECK( in_progress_crafts( you ).empty() );
-        REQUIRE( here.i_at( you.bub_pos() ).size() == 1 );
-        CHECK( here.i_at( you.bub_pos() ).only_item().is_craft() );
+        const auto sandwiches = finished_sandwiches(you);
+        REQUIRE(sandwiches.size() == 1);
+        CHECK(has_component(*sandwiches.front(), itype_id("meat_smoked")));
+        CHECK(!has_component(*sandwiches.front(), itype_id("pine_nuts")));
+        CHECK(you.compute_effective_nutrients(*sandwiches.front()).kcal == 101);
+        CHECK(in_progress_crafts(you).empty());
+        REQUIRE(here.i_at(you.bub_pos()).size() == 1);
+        CHECK(here.i_at(you.bub_pos()).only_item().is_craft());
     }
 
-    SECTION( "missing target falls back to an available matching craft" ) {
-        auto &fallback_craft = you.i_add( make_food_craft( sandwich_recipe, true ) );
-        fallback_craft.set_counter( 10'000'000 );
+    SECTION("missing target falls back to an available matching craft") {
+        auto& fallback_craft = you.i_add(make_food_craft(sandwich_recipe, true));
+        fallback_craft.set_counter(10'000'000);
 
-        assign_completed_craft_activity( you, sandwich_recipe );
-        finish_craft_activity( you );
+        assign_completed_craft_activity(you, sandwich_recipe);
+        finish_craft_activity(you);
 
-        const auto sandwiches = finished_sandwiches( you );
-        REQUIRE( sandwiches.size() == 1 );
-        CHECK( has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
-        CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 51 );
-        CHECK( in_progress_crafts( you ).empty() );
+        const auto sandwiches = finished_sandwiches(you);
+        REQUIRE(sandwiches.size() == 1);
+        CHECK(has_component(*sandwiches.front(), itype_id("pine_nuts")));
+        CHECK(you.compute_effective_nutrients(*sandwiches.front()).kcal == 51);
+        CHECK(in_progress_crafts(you).empty());
     }
 }
 
-static void verify_inventory( const std::vector<std::string> &has,
-                              const std::vector<std::string> &hasnt )
-{
+static void verify_inventory(
+    const std::vector<std::string>& has, const std::vector<std::string>& hasnt) {
     std::ostringstream os;
     os << "Inventory:\n";
-    for( const item *i : g->u.inv_dump() ) {
+    for (const item* i : g->u.inv_dump()) {
         os << "  " << i->typeId().str() << " (" << i->charges << ")\n";
     }
     os << "Wielded:\n" << g->u.primary_weapon().tname() << "\n";
-    INFO( os.str() );
-    for( const std::string &i : has ) {
-        INFO( "expecting " << i );
+    INFO(os.str());
+    for (const std::string& i : has) {
+        INFO("expecting " << i);
         const bool has_item =
-            player_has_item_of_type( i ) || g->u.primary_weapon().type->get_id() == itype_id( i );
-        REQUIRE( has_item );
+            player_has_item_of_type(i) || g->u.primary_weapon().type->get_id() == itype_id(i);
+        REQUIRE(has_item);
     }
-    for( const std::string &i : hasnt ) {
-        INFO( "not expecting " << i );
+    for (const std::string& i : hasnt) {
+        INFO("not expecting " << i);
         const bool hasnt_item =
-            !player_has_item_of_type( i ) && !( g->u.primary_weapon().type->get_id() == itype_id( i ) );
-        REQUIRE( hasnt_item );
+            !player_has_item_of_type(i) && !(g->u.primary_weapon().type->get_id() == itype_id(i));
+        REQUIRE(hasnt_item);
     }
 }
 
-TEST_CASE( "total crafting time with or without interruption", "[crafting][time][resume]" )
-{
+TEST_CASE("total crafting time with or without interruption", "[crafting][time][resume]") {
     clear_all_state();
-    GIVEN( "a recipe and all the required tools and materials to craft it" ) {
-        recipe_id test_recipe( "crude_picklock" );
-        int expected_time_taken = test_recipe->batch_time( 1, 1, 0 );
-        int expected_turns_taken = divide_round_up( expected_time_taken, 100 );
+    GIVEN("a recipe and all the required tools and materials to craft it") {
+        recipe_id test_recipe("crude_picklock");
+        int expected_time_taken = test_recipe->batch_time(1, 1, 0);
+        int expected_turns_taken = divide_round_up(expected_time_taken, 100);
 
         std::vector<detached_ptr<item>> tools;
-        tools.push_back( item::spawn( "hammer" ) );
+        tools.push_back(item::spawn("hammer"));
 
         // Will interrupt after 2 turns, so craft needs to take at least that long
-        REQUIRE( expected_turns_taken > 2 );
+        REQUIRE(expected_turns_taken > 2);
         int actual_turns_taken;
 
-        WHEN( "crafting begins, and continues until the craft is completed" ) {
-            tools.push_back( item::spawn( "scrap", calendar::start_of_cataclysm, 1 ) );
-            actual_turns_taken = actually_test_craft( test_recipe, tools, INT_MAX );
+        WHEN("crafting begins, and continues until the craft is completed") {
+            tools.push_back(item::spawn("scrap", calendar::start_of_cataclysm, 1));
+            actual_turns_taken = actually_test_craft(test_recipe, tools, INT_MAX);
 
-            THEN( "it should take the expected number of turns" ) {
-                CHECK( actual_turns_taken == expected_turns_taken );
+            THEN("it should take the expected number of turns") {
+                CHECK(actual_turns_taken == expected_turns_taken);
 
-                AND_THEN( "the finished item should be in the inventory" ) {
-                    verify_inventory( { "crude_picklock" }, { "scrap" } );
+                AND_THEN("the finished item should be in the inventory") {
+                    verify_inventory({"crude_picklock"}, {"scrap"});
                 }
             }
         }
 
-        WHEN( "crafting begins, but is interrupted after 2 turns" ) {
-            tools.push_back( item::spawn( "scrap", calendar::start_of_cataclysm, 1 ) );
-            actual_turns_taken = actually_test_craft( test_recipe, tools, 2 );
-            REQUIRE( actual_turns_taken == 3 );
+        WHEN("crafting begins, but is interrupted after 2 turns") {
+            tools.push_back(item::spawn("scrap", calendar::start_of_cataclysm, 1));
+            actual_turns_taken = actually_test_craft(test_recipe, tools, 2);
+            REQUIRE(actual_turns_taken == 3);
 
-            THEN( "the in-progress craft should be in the inventory" ) {
-                verify_inventory( { "craft" }, { "crude_picklock" } );
+            THEN("the in-progress craft should be in the inventory") {
+                verify_inventory({"craft"}, {"crude_picklock"});
 
-                AND_WHEN( "crafting resumes until the craft is finished" ) {
+                AND_WHEN("crafting resumes until the craft is finished") {
                     actual_turns_taken = resume_craft();
 
-                    THEN( "it should take the remaining number of turns" ) {
-                        CHECK( actual_turns_taken == expected_turns_taken - 2 );
+                    THEN("it should take the remaining number of turns") {
+                        CHECK(actual_turns_taken == expected_turns_taken - 2);
 
-                        AND_THEN( "the finished item should be in the inventory" ) {
-                            verify_inventory( { "crude_picklock" }, { "craft" } );
+                        AND_THEN("the finished item should be in the inventory") {
+                            verify_inventory({"crude_picklock"}, {"craft"});
                         }
                     }
                 }
@@ -844,180 +817,176 @@ TEST_CASE( "total crafting time with or without interruption", "[crafting][time]
     }
 }
 
-TEST_CASE( "debug hammerspace", "[crafting]" )
-{
+TEST_CASE("debug hammerspace", "[crafting]") {
     clear_all_state();
-    static const auto test_recipe = recipe_id( "nodachi" );
+    static const auto test_recipe = recipe_id("nodachi");
 
-    GIVEN( "A character with debug hammerspace trait" ) {
+    GIVEN("A character with debug hammerspace trait") {
         avatar dummy;
-        dummy.toggle_trait( trait_DEBUG_HS );
+        dummy.toggle_trait(trait_DEBUG_HS);
         // TODO: Shouldn't be needed!
         dummy.set_body();
         // TODO: Debug vision should handle this part
-        dummy.toggle_trait( trait_DEBUG_STORAGE );
-        dummy.i_add( item::spawn( itype_id( "atomic_lamp" ) ) );
-        REQUIRE( character_funcs::can_see_fine_details( dummy ) );
+        dummy.toggle_trait(trait_DEBUG_STORAGE);
+        dummy.i_add(item::spawn(itype_id("atomic_lamp")));
+        REQUIRE(character_funcs::can_see_fine_details(dummy));
 
-        WHEN( "The character tries to craft a no-dachi" ) {
-            craft_command command( &*test_recipe, 1, false, &dummy );
-            item *craft_item = dummy.start_craft( command, dummy.bub_pos() );
+        WHEN("The character tries to craft a no-dachi") {
+            craft_command command(&*test_recipe, 1, false, &dummy);
+            item* craft_item = dummy.start_craft(command, dummy.bub_pos());
 
-            THEN( "The craft item is created" ) {
-                REQUIRE( ( craft_item && !craft_item->is_null() ) );
-                AND_WHEN( "The character spends a second performing the activity set when starting the craft" ) {
-                    dummy.set_moves( 100 );
-                    dummy.activity->do_turn( dummy );
-                    THEN( "The activity isn't finished yet" ) {
-                        CHECK( !dummy.activity->is_null() );
-                    }
+            THEN("The craft item is created") {
+                REQUIRE((craft_item && !craft_item->is_null()));
+                AND_WHEN(
+                    "The character spends a second performing the activity set when starting "
+                    "the craft") {
+                    dummy.set_moves(100);
+                    dummy.activity->do_turn(dummy);
+                    THEN("The activity isn't finished yet") { CHECK(!dummy.activity->is_null()); }
                 }
             }
         }
     }
 }
 
-TEST_CASE( "craft catch-up uses activity progress scale", "[crafting][speed]" )
-{
+TEST_CASE("craft catch-up uses activity progress scale", "[crafting][speed]") {
     clear_all_state();
-    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
-    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "50" );
-    static const auto test_recipe = recipe_id( "nodachi" );
+    const auto global_scale = override_option("TIME_ACTION_SCALE", "50");
+    const auto activity_scale = override_option("ACTIVITY_PROGRESS_SCALE", "50");
+    static const auto test_recipe = recipe_id("nodachi");
 
-    auto &dummy = get_avatar();
+    auto& dummy = get_avatar();
     clear_avatar();
-    set_time( midday );
-    dummy.set_mutation( trait_DEBUG_HS );
+    set_time(midday);
+    dummy.set_mutation(trait_DEBUG_HS);
     dummy.set_body();
-    dummy.set_mutation( trait_DEBUG_STORAGE );
-    dummy.i_add( item::spawn( itype_id( "atomic_lamp" ) ) );
-    REQUIRE( character_funcs::can_see_fine_details( dummy ) );
+    dummy.set_mutation(trait_DEBUG_STORAGE);
+    dummy.i_add(item::spawn(itype_id("atomic_lamp")));
+    REQUIRE(character_funcs::can_see_fine_details(dummy));
 
-    const auto &recipe = *test_recipe;
-    auto command = craft_command( &recipe, 1, false, &dummy );
-    auto *craft_item = dummy.start_craft( command, dummy.bub_pos() );
+    const auto& recipe = *test_recipe;
+    auto command = craft_command(&recipe, 1, false, &dummy);
+    auto* craft_item = dummy.start_craft(command, dummy.bub_pos());
 
-    REQUIRE( craft_item );
-    REQUIRE( dummy.activity );
-    REQUIRE( dummy.activity->id() == activity_id( "ACT_CRAFT" ) );
-    REQUIRE( craft_item->get_counter() == 0 );
+    REQUIRE(craft_item);
+    REQUIRE(dummy.activity);
+    REQUIRE(dummy.activity->id() == activity_id("ACT_CRAFT"));
+    REQUIRE(craft_item->get_counter() == 0);
 
     const auto elapsed_turns = 10;
-    calendar::turn += time_duration::from_turns( elapsed_turns );
-    dummy.activity->init_all_moves( dummy );
+    calendar::turn += time_duration::from_turns(elapsed_turns);
+    dummy.activity->init_all_moves(dummy);
 
-    const auto base_total_moves = std::max( 1, recipe.batch_time( 1, 1.0f, 0 ) );
+    const auto base_total_moves = std::max(1, recipe.batch_time(1, 1.0f, 0));
     const auto expected_progress = elapsed_turns * 25.0 / base_total_moves * 10'000'000.0;
-    const auto expected_counter = std::min(
-                                      static_cast<int>( expected_progress ), 10'000'000 );
-    CHECK( craft_item->get_counter() == expected_counter );
+    const auto expected_counter = std::min(static_cast<int>(expected_progress), 10'000'000);
+    CHECK(craft_item->get_counter() == expected_counter);
 }
 
-TEST_CASE( "craft progress uses activity scale", "[crafting][speed]" )
-{
+TEST_CASE("craft progress uses activity scale", "[crafting][speed]") {
     clear_all_state();
-    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
-    const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "50" );
-    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "100" );
-    static const auto test_recipe = recipe_id( "nodachi" );
+    const auto global_scale = override_option("TIME_ACTION_SCALE", "50");
+    const auto player_scale = override_option("PLAYER_ACTION_SCALE", "50");
+    const auto activity_scale = override_option("ACTIVITY_PROGRESS_SCALE", "100");
+    static const auto test_recipe = recipe_id("nodachi");
 
-    auto &dummy = get_avatar();
+    auto& dummy = get_avatar();
     clear_avatar();
-    set_time( midday );
-    dummy.set_mutation( trait_DEBUG_HS );
+    set_time(midday);
+    dummy.set_mutation(trait_DEBUG_HS);
     dummy.set_body();
-    dummy.set_mutation( trait_DEBUG_STORAGE );
-    dummy.i_add( item::spawn( itype_id( "atomic_lamp" ) ) );
-    REQUIRE( character_funcs::can_see_fine_details( dummy ) );
+    dummy.set_mutation(trait_DEBUG_STORAGE);
+    dummy.i_add(item::spawn(itype_id("atomic_lamp")));
+    REQUIRE(character_funcs::can_see_fine_details(dummy));
 
-    const auto &recipe = *test_recipe;
-    auto command = craft_command( &recipe, 1, false, &dummy );
-    auto *craft_item = dummy.start_craft( command, dummy.bub_pos() );
+    const auto& recipe = *test_recipe;
+    auto command = craft_command(&recipe, 1, false, &dummy);
+    auto* craft_item = dummy.start_craft(command, dummy.bub_pos());
 
-    REQUIRE( craft_item );
-    REQUIRE( dummy.activity );
-    REQUIRE( dummy.activity->id() == activity_id( "ACT_CRAFT" ) );
-    REQUIRE( craft_item->get_counter() == 0 );
+    REQUIRE(craft_item);
+    REQUIRE(dummy.activity);
+    REQUIRE(dummy.activity->id() == activity_id("ACT_CRAFT"));
+    REQUIRE(craft_item->get_counter() == 0);
 
-    dummy.set_moves( 25 );
-    dummy.activity->do_turn( dummy );
+    dummy.set_moves(25);
+    dummy.activity->do_turn(dummy);
 
-    const auto base_total_moves = std::max( 1, recipe.batch_time( 1, 1.0f, 0 ) );
+    const auto base_total_moves = std::max(1, recipe.batch_time(1, 1.0f, 0));
     const auto expected_progress = 50.0 / base_total_moves * 10'000'000.0;
-    const auto expected_counter = std::min(
-                                      static_cast<int>( std::round( expected_progress ) ), 10'000'000 );
-    CHECK( craft_item->get_counter() == expected_counter );
-    CHECK( dummy.get_moves() == 0 );
+    const auto expected_counter =
+        std::min(static_cast<int>(std::round(expected_progress)), 10'000'000);
+    CHECK(craft_item->get_counter() == expected_counter);
+    CHECK(dummy.get_moves() == 0);
 }
 
-TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
-{
+TEST_CASE("oven electric grid", "[crafting][overmap][grids][slow]") {
     clear_all_state();
-    map &m = get_map();
-    avatar &u = get_avatar();
-    constexpr tripoint_bub_ms start_pos = tripoint_bub_ms( 60, 60, 0 );
-    const tripoint_abs_ms start_pos_abs( map_local_to_abs( m, start_pos ) );
-    u.setpos( start_pos );
+    map& m = get_map();
+    avatar& u = get_avatar();
+    constexpr tripoint_bub_ms start_pos = tripoint_bub_ms(60, 60, 0);
+    const tripoint_abs_ms start_pos_abs(map_local_to_abs(m, start_pos));
+    u.setpos(start_pos);
     clear_avatar();
-    GIVEN( "player is near an oven on an electric grid with a battery on it" ) {
+    GIVEN("player is near an oven on an electric grid with a battery on it") {
         // TODO: clear_grids()
-        auto om = ACTIVE_OVERMAP_BUFFER.get_om_global( u.abs_omt_pos() );
-        om.om->set_electric_grid_connections( om.local, {} );
+        auto om = ACTIVE_OVERMAP_BUFFER.get_om_global(u.abs_omt_pos());
+        om.om->set_electric_grid_connections(om.local, {});
 
-        m.furn_set( start_pos + point( 10, 0 ), furn_str_id( "f_battery" ) );
-        m.furn_set( start_pos + point_east, furn_str_id( "f_oven" ) );
+        m.furn_set(start_pos + point(10, 0), furn_str_id("f_battery"));
+        m.furn_set(start_pos + point_east, furn_str_id("f_oven"));
 
-        distribution_grid_tracker &grid_tracker = get_distribution_grid_tracker();
-        distribution_grid &grid = grid_tracker.grid_at( start_pos_abs + point( 10, 0 ) );
-        REQUIRE( !grid.empty() );
+        distribution_grid_tracker& grid_tracker = get_distribution_grid_tracker();
+        distribution_grid& grid = grid_tracker.grid_at(start_pos_abs + point(10, 0));
+        REQUIRE(!grid.empty());
         // We need the grid to be the same for both the oven and the battery
-        REQUIRE( &grid == &grid_tracker.grid_at( start_pos_abs + point_east ) );
-        WHEN( "the grid is charged with 10 units of power" ) {
-            grid.mod_resource( 10 );
-            REQUIRE( grid.get_resource() == 10 );
-            AND_WHEN( "crafting inventory is built" ) {
+        REQUIRE(&grid == &grid_tracker.grid_at(start_pos_abs + point_east));
+        WHEN("the grid is charged with 10 units of power") {
+            grid.mod_resource(10);
+            REQUIRE(grid.get_resource() == 10);
+            AND_WHEN("crafting inventory is built") {
                 u.invalidate_crafting_inventory();
-                const inventory &crafting_inv = u.crafting_inventory();
-                THEN( "it contains an oven item with 10 charges" ) {
-                    REQUIRE( crafting_inv.has_charges( itype_id( "fake_oven" ), 10 ) );
+                const inventory& crafting_inv = u.crafting_inventory();
+                THEN("it contains an oven item with 10 charges") {
+                    REQUIRE(crafting_inv.has_charges(itype_id("fake_oven"), 10));
                 }
             }
 
             // Massive ladder of when/then
             // Any way to clean it up without re-running the slow test for every check?
-            AND_WHEN( "the player is near a pot and a chunk of meat" ) {
+            AND_WHEN("the player is near a pot and a chunk of meat") {
                 u.invalidate_crafting_inventory();
-                m.add_item( u.bub_pos(), item::spawn( "pot" ) );
-                m.add_item( u.bub_pos(), item::spawn( "meat" ) );
-                THEN( "cooked meat can be crafted" ) {
-                    const recipe &r = *recipe_id( "meat_cooked" );
-                    const inventory &crafting_inv = u.crafting_inventory();
-                    const deduped_requirement_data &ddrd = r.deduped_requirements();
-                    bool can_craft = ddrd.can_make_with_inventory( crafting_inv, r.get_component_filter() );
-                    REQUIRE( can_craft );
-                    AND_THEN( "there is only one possible tool/component selection" ) {
+                m.add_item(u.bub_pos(), item::spawn("pot"));
+                m.add_item(u.bub_pos(), item::spawn("meat"));
+                THEN("cooked meat can be crafted") {
+                    const recipe& r = *recipe_id("meat_cooked");
+                    const inventory& crafting_inv = u.crafting_inventory();
+                    const deduped_requirement_data& ddrd = r.deduped_requirements();
+                    bool can_craft =
+                        ddrd.can_make_with_inventory(crafting_inv, r.get_component_filter());
+                    REQUIRE(can_craft);
+                    AND_THEN("there is only one possible tool/component selection") {
                         const auto filter = r.get_component_filter();
                         const auto tool_options = ddrd.feasible_alternatives(
-                                                      u.crafting_inventory(), filter, 1, cost_adjustment::start_only );
-                        REQUIRE( tool_options.size() == 1u );
-                        AND_WHEN( "the player crafts cooked meat" ) {
-                            u.make_craft( r.ident(), 1 );
-                            REQUIRE( u.activity->id() == activity_id( "ACT_CRAFT" ) );
+                            u.crafting_inventory(), filter, 1, cost_adjustment::start_only);
+                        REQUIRE(tool_options.size() == 1u);
+                        AND_WHEN("the player crafts cooked meat") {
+                            u.make_craft(r.ident(), 1);
+                            REQUIRE(u.activity->id() == activity_id("ACT_CRAFT"));
                             // TODO: Nice way to finish a craft job
-                            for( size_t i = 0; i < 10000; i++ ) {
-                                u.set_moves( 100000 );
-                                u.activity->do_turn( u );
-                                if( u.activity->id() == activity_id::NULL_ID() ) {
-                                    break;
-                                }
+                            for (size_t i = 0; i < 10000; i++) {
+                                u.set_moves(100000);
+                                u.activity->do_turn(u);
+                                if (u.activity->id() == activity_id::NULL_ID()) { break; }
                             }
-                            REQUIRE( u.activity->id() == activity_id::NULL_ID() );
-                            THEN( "the crafting inventory now contains cooked meat" ) {
+                            REQUIRE(u.activity->id() == activity_id::NULL_ID());
+                            THEN("the crafting inventory now contains cooked meat") {
                                 u.invalidate_crafting_inventory();
-                                //TODO: Reinstate the below check. Prior to isolation improvements it would pass when run as part of the full suite but fail alone
-                                //CHECK( u.crafting_inventory().has_amount( itype_id( "meat_cooked" ), 1 ) );
-                                AND_THEN( "the grid contains less than 10 power" ) {
-                                    CHECK( grid.get_resource() < 10 );
+                                // TODO: Reinstate the below check. Prior to isolation improvements
+                                // it would pass when run as part of the full suite but fail alone
+                                // CHECK( u.crafting_inventory().has_amount( itype_id( "meat_cooked"
+                                // ), 1 ) );
+                                AND_THEN("the grid contains less than 10 power") {
+                                    CHECK(grid.get_resource() < 10);
                                 }
                             }
                         }
@@ -1028,8 +997,7 @@ TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
     }
 }
 
-TEST_CASE( "tool selection ui", "[crafting][ui]" )
-{
+TEST_CASE("tool selection ui", "[crafting][ui]") {
     clear_all_state();
     npc dummy;
 
@@ -1038,60 +1006,54 @@ TEST_CASE( "tool selection ui", "[crafting][ui]" )
 
     inventory map_inv;
 
-    GIVEN( "One compatible tool in map inventory" ) {
-        tool_comp tool_component( itype_id( "test_soldering_iron" ), 10 );
+    GIVEN("One compatible tool in map inventory") {
+        tool_comp tool_component(itype_id("test_soldering_iron"), 10);
         tools = {tool_component};
-        map_inv.add_item( *item::spawn_temporary( tool_component.type, calendar::start_of_cataclysm,
-                          100 ), false );
+        map_inv.add_item(
+            *item::spawn_temporary(tool_component.type, calendar::start_of_cataclysm, 100), false);
 
-        comp_selection<tool_comp> result = crafting::select_tool_component( tools, 1, map_inv,
-                                           &dummy, false,
-                                           DEFAULT_HOTKEYS, cost_adjustment::none );
+        comp_selection<tool_comp> result = crafting::select_tool_component(
+            tools, 1, map_inv, &dummy, false, DEFAULT_HOTKEYS, cost_adjustment::none);
 
-        THEN( "That tool is selected and is from map" ) {
-            REQUIRE( map_inv.size() == 1 );
-            CAPTURE( map_inv.find_item( 0 ).display_name() );
-            CHECK( result.comp.type == tool_component.type );
-            CHECK( result.use_from == usage_from::map );
+        THEN("That tool is selected and is from map") {
+            REQUIRE(map_inv.size() == 1);
+            CAPTURE(map_inv.find_item(0).display_name());
+            CHECK(result.comp.type == tool_component.type);
+            CHECK(result.use_from == usage_from::map);
         }
     }
 
-    GIVEN( "Two compatible tools in map inventory, one free and one costly" ) {
-        tool_comp costly( itype_id( "test_soldering_iron" ), 10 );
-        tool_comp free( itype_id( "test_screwdriver" ), -1 );
+    GIVEN("Two compatible tools in map inventory, one free and one costly") {
+        tool_comp costly(itype_id("test_soldering_iron"), 10);
+        tool_comp free(itype_id("test_screwdriver"), -1);
         tools = {costly, free};
-        map_inv.add_item( *item::spawn_temporary( costly.type ), false );
-        map_inv.add_item( *item::spawn_temporary( free.type ), false );
+        map_inv.add_item(*item::spawn_temporary(costly.type), false);
+        map_inv.add_item(*item::spawn_temporary(free.type), false);
 
-        comp_selection<tool_comp> result = crafting::select_tool_component( tools, 1, map_inv,
-                                           &dummy, false,
-                                           DEFAULT_HOTKEYS, cost_adjustment::none );
+        comp_selection<tool_comp> result = crafting::select_tool_component(
+            tools, 1, map_inv, &dummy, false, DEFAULT_HOTKEYS, cost_adjustment::none);
 
-        THEN( "Use from is set to none" ) {
-            CHECK( result.use_from == usage_from::none );
-        }
+        THEN("Use from is set to none") { CHECK(result.use_from == usage_from::none); }
     }
 
-    GIVEN( "Two compatible tools in map inventory, one with enough charges for entire craft and one with half" ) {
-        tool_comp too_little( itype_id( "test_soldering_iron" ), 200 );
-        tool_comp enough( itype_id( "test_battery_tool" ), 100 );
+    GIVEN("Two compatible tools in map inventory, one with enough charges for entire craft and one "
+          "with half") {
+        tool_comp too_little(itype_id("test_soldering_iron"), 200);
+        tool_comp enough(itype_id("test_battery_tool"), 100);
         tools = {too_little, enough};
-        map_inv.add_item( *item::spawn_temporary( too_little.type, calendar::start_of_cataclysm, 100 ),
-                          false );
-        map_inv.add_item( *item::spawn_temporary( enough.type, calendar::start_of_cataclysm, 100 ), false );
+        map_inv.add_item(
+            *item::spawn_temporary(too_little.type, calendar::start_of_cataclysm, 100), false);
+        map_inv.add_item(
+            *item::spawn_temporary(enough.type, calendar::start_of_cataclysm, 100), false);
 
-        comp_selection<tool_comp> result = crafting::select_tool_component( tools, 1, map_inv,
-                                           &dummy, false,
-                                           DEFAULT_HOTKEYS, cost_adjustment::none );
+        comp_selection<tool_comp> result = crafting::select_tool_component(
+            tools, 1, map_inv, &dummy, false, DEFAULT_HOTKEYS, cost_adjustment::none);
 
-        THEN( "The tool with enough charges is selected" ) {
-            CHECK( result.comp.type == enough.type );
-        }
+        THEN("The tool with enough charges is selected") { CHECK(result.comp.type == enough.type); }
     }
 }
 
-namespace
-{
+namespace {
 
 struct vehicle_craft_fixture_options {
     vpart_id work_part;
@@ -1100,22 +1062,20 @@ struct vehicle_craft_fixture_options {
 };
 
 struct vehicle_craft_fixture {
-    avatar *you = nullptr;
-    map *here = nullptr;
-    vehicle *veh = nullptr;
+    avatar* you = nullptr;
+    map* here = nullptr;
+    vehicle* veh = nullptr;
     int work_part = -1;
     int freezer_part = -1;
     tripoint_bub_ms vehicle_pos = tripoint_bub_ms::zero();
     tripoint_bub_ms stand_pos = tripoint_bub_ms::zero();
 };
 
-auto old_world_craft_turn() -> time_point
-{
+auto old_world_craft_turn() -> time_point {
     return calendar::start_of_cataclysm + 19_days + 12_hours;
 }
 
-auto setup_vehicle_rot_test_at( const time_point turn ) -> void
-{
+auto setup_vehicle_rot_test_at(const time_point turn) -> void {
     clear_all_state();
     calendar::turn = turn;
     get_weather().temperature = 18_c;
@@ -1123,44 +1083,42 @@ auto setup_vehicle_rot_test_at( const time_point turn ) -> void
     clear_avatar();
 }
 
-auto install_part_on_frame( vehicle &veh, const tripoint_mnt_veh &mount,
-                            const vpart_id &part ) -> int
-{
-    REQUIRE( veh.install_part( mount, vpart_id( "frame_vertical" ), true ) >= 0 );
-    const auto part_index = veh.install_part( mount, part, true );
-    REQUIRE( part_index >= 0 );
+auto install_part_on_frame(vehicle& veh, const tripoint_mnt_veh& mount, const vpart_id& part)
+    -> int {
+    REQUIRE(veh.install_part(mount, vpart_id("frame_vertical"), true) >= 0);
+    const auto part_index = veh.install_part(mount, part, true);
+    REQUIRE(part_index >= 0);
     return part_index;
 }
 
-auto make_vehicle_craft_fixture( const vehicle_craft_fixture_options &opts ) ->
-vehicle_craft_fixture
-{
-    auto &you = get_avatar();
-    auto &here = get_map();
-    const auto vehicle_pos = tripoint_bub_ms( 60, 60, 0 );
-    auto *veh = here.add_vehicle( vproto_id( "none" ), vehicle_pos, 0_degrees, 0, 0 );
-    REQUIRE( veh != nullptr );
+auto make_vehicle_craft_fixture(const vehicle_craft_fixture_options& opts)
+    -> vehicle_craft_fixture {
+    auto& you = get_avatar();
+    auto& here = get_map();
+    const auto vehicle_pos = tripoint_bub_ms(60, 60, 0);
+    auto* veh = here.add_vehicle(vproto_id("none"), vehicle_pos, 0_degrees, 0, 0);
+    REQUIRE(veh != nullptr);
 
-    const auto work_part = install_part_on_frame( *veh, tripoint_mnt_veh::zero(), opts.work_part );
+    const auto work_part = install_part_on_frame(*veh, tripoint_mnt_veh::zero(), opts.work_part);
     auto freezer_part = -1;
-    if( opts.install_battery ) {
-        static_cast<void>( install_part_on_frame( *veh, tripoint_mnt_veh( 1, 0, 0 ),
-                           vpart_id( "storage_battery" ) ) );
-        veh->charge_battery( 5000 );
+    if (opts.install_battery) {
+        static_cast<void>(
+            install_part_on_frame(*veh, tripoint_mnt_veh(1, 0, 0), vpart_id("storage_battery")));
+        veh->charge_battery(5000);
     }
-    if( opts.install_freezer ) {
-        freezer_part = install_part_on_frame( *veh, tripoint_mnt_veh( -1, 0, 0 ),
-                                              vpart_id( "minifreezer" ) );
-        veh->part( freezer_part ).enabled = true;
+    if (opts.install_freezer) {
+        freezer_part =
+            install_part_on_frame(*veh, tripoint_mnt_veh(-1, 0, 0), vpart_id("minifreezer"));
+        veh->part(freezer_part).enabled = true;
     }
 
-    here.add_vehicle_to_cache( veh );
-    here.build_map_cache( vehicle_pos.z(), true );
-    REQUIRE( here.veh_at( vehicle_pos ) );
+    here.add_vehicle_to_cache(veh);
+    here.build_map_cache(vehicle_pos.z(), true);
+    REQUIRE(here.veh_at(vehicle_pos));
 
-    const auto stand_pos = vehicle_pos + tripoint( 0, 1, 0 );
-    you.setpos( stand_pos );
-    REQUIRE_FALSE( here.veh_at( stand_pos ) );
+    const auto stand_pos = vehicle_pos + tripoint(0, 1, 0);
+    you.setpos(stand_pos);
+    REQUIRE_FALSE(here.veh_at(stand_pos));
 
     return vehicle_craft_fixture{
         .you = &you,
@@ -1173,72 +1131,65 @@ vehicle_craft_fixture
     };
 }
 
-auto add_fresh_meat_to_part( vehicle_craft_fixture &fixture, const int part ) -> void
-{
-    auto meat = item::spawn( "meat" );
-    REQUIRE( meat->goes_bad() );
-    INFO( "spawned meat bday_turn=" << to_turn<int>( meat->birthday() )
-          << " now=" << to_turn<int>( calendar::turn ) );
-    REQUIRE_FALSE( fixture.veh->add_item( part, std::move( meat ) ) );
+auto add_fresh_meat_to_part(vehicle_craft_fixture& fixture, const int part) -> void {
+    auto meat = item::spawn("meat");
+    REQUIRE(meat->goes_bad());
+    INFO("spawned meat bday_turn="
+         << to_turn<int>(meat->birthday()) << " now=" << to_turn<int>(calendar::turn));
+    REQUIRE_FALSE(fixture.veh->add_item(part, std::move(meat)));
 }
 
-auto add_fresh_meat_to_work_part( vehicle_craft_fixture &fixture ) -> void
-{
-    add_fresh_meat_to_part( fixture, fixture.work_part );
+auto add_fresh_meat_to_work_part(vehicle_craft_fixture& fixture) -> void {
+    add_fresh_meat_to_part(fixture, fixture.work_part);
 }
 
-auto add_inventory_cooking_tools( avatar &you ) -> void
-{
-    you.i_add( item::spawn( "hotplate", calendar::turn, 20 ) );
-    you.i_add( item::spawn( "pot", calendar::turn ) );
+auto add_inventory_cooking_tools(avatar& you) -> void {
+    you.i_add(item::spawn("hotplate", calendar::turn, 20));
+    you.i_add(item::spawn("pot", calendar::turn));
 }
 
-auto keep_meat_frozen_then_move_to_work_part( vehicle_craft_fixture &fixture ) -> void
-{
-    REQUIRE( fixture.freezer_part >= 0 );
+auto keep_meat_frozen_then_move_to_work_part(vehicle_craft_fixture& fixture) -> void {
+    REQUIRE(fixture.freezer_part >= 0);
     calendar::turn += 19_days;
 
-    auto frozen_items = fixture.veh->get_items( fixture.freezer_part );
-    REQUIRE( frozen_items.size() == 1 );
-    auto &frozen = frozen_items.only_item();
-    INFO( "POST-FREEZE meat bday_turn=" << to_turn<int>( frozen.birthday() )
-          << " relative_rot=" << frozen.get_relative_rot()
-          << " rot_turns=" << to_turns<int>( frozen.get_rot() )
-          << " now=" << to_turn<int>( calendar::turn ) );
-    REQUIRE( frozen.get_rot() == 0_turns );
-    REQUIRE( frozen.attempt_detach( [&fixture]( detached_ptr<item> &&it ) {
-        return fixture.veh->add_item( fixture.work_part, std::move( it ) );
-    } ) );
+    auto frozen_items = fixture.veh->get_items(fixture.freezer_part);
+    REQUIRE(frozen_items.size() == 1);
+    auto& frozen = frozen_items.only_item();
+    INFO("POST-FREEZE meat bday_turn="
+         << to_turn<int>(frozen.birthday()) << " relative_rot=" << frozen.get_relative_rot()
+         << " rot_turns=" << to_turns<int>(frozen.get_rot())
+         << " now=" << to_turn<int>(calendar::turn));
+    REQUIRE(frozen.get_rot() == 0_turns);
+    REQUIRE(frozen.attempt_detach([&fixture](detached_ptr<item>&& it) {
+        return fixture.veh->add_item(fixture.work_part, std::move(it));
+    }));
 
-    REQUIRE( fixture.veh->get_items( fixture.freezer_part ).empty() );
-    REQUIRE( fixture.veh->get_items( fixture.work_part ).size() == 1 );
+    REQUIRE(fixture.veh->get_items(fixture.freezer_part).empty());
+    REQUIRE(fixture.veh->get_items(fixture.work_part).size() == 1);
 }
 
-auto find_cooked_meat_result( const vehicle_craft_fixture &fixture ) -> item *
-{
-    auto *result = static_cast<item *>( nullptr );
-    fixture.you->visit_items( [&result]( item * it ) {
-        if( it->typeId() == itype_id( "meat_cooked" ) ) {
+auto find_cooked_meat_result(const vehicle_craft_fixture& fixture) -> item* {
+    auto* result = static_cast<item*>(nullptr);
+    fixture.you->visit_items([&result](item* it) {
+        if (it->typeId() == itype_id("meat_cooked")) {
             result = it;
             return VisitResponse::ABORT;
         }
         return VisitResponse::NEXT;
-    } );
+    });
 
-    for( const auto &p : { fixture.vehicle_pos, fixture.stand_pos } ) {
-        if( result != nullptr ) {
-            break;
-        }
-        for( auto *it : fixture.here->i_at( p ) ) {
-            if( it->typeId() == itype_id( "meat_cooked" ) ) {
+    for (const auto& p : {fixture.vehicle_pos, fixture.stand_pos}) {
+        if (result != nullptr) { break; }
+        for (auto* it : fixture.here->i_at(p)) {
+            if (it->typeId() == itype_id("meat_cooked")) {
                 result = it;
                 break;
             }
         }
     }
-    if( result == nullptr ) {
-        for( auto *it : fixture.veh->get_items( fixture.work_part ) ) {
-            if( it->typeId() == itype_id( "meat_cooked" ) ) {
+    if (result == nullptr) {
+        for (auto* it : fixture.veh->get_items(fixture.work_part)) {
+            if (it->typeId() == itype_id("meat_cooked")) {
                 result = it;
                 break;
             }
@@ -1247,90 +1198,85 @@ auto find_cooked_meat_result( const vehicle_craft_fixture &fixture ) -> item *
     return result;
 }
 
-auto craft_cooked_meat_at_vehicle( const vehicle_craft_fixture &fixture ) -> item *
-{
-    auto &you = *fixture.you;
-    const auto rid = recipe_id( "meat_cooked" );
-    const auto &rec = rid.obj();
-    you.set_skill_level( rec.skill_used, std::max( rec.difficulty, 2 ) );
-    you.learn_recipe( &rec );
-    set_time( calendar::turn );
+auto craft_cooked_meat_at_vehicle(const vehicle_craft_fixture& fixture) -> item* {
+    auto& you = *fixture.you;
+    const auto rid = recipe_id("meat_cooked");
+    const auto& rec = rid.obj();
+    you.set_skill_level(rec.skill_used, std::max(rec.difficulty, 2));
+    you.learn_recipe(&rec);
+    set_time(calendar::turn);
 
     you.invalidate_crafting_inventory();
-    REQUIRE( you.crafting_inventory().has_components( itype_id( "meat" ), 1 ) );
+    REQUIRE(you.crafting_inventory().has_components(itype_id("meat"), 1));
 
-    you.make_craft( rid, 1, fixture.vehicle_pos );
-    REQUIRE( you.activity );
+    you.make_craft(rid, 1, fixture.vehicle_pos);
+    REQUIRE(you.activity);
     auto guard = 0;
-    while( you.activity && you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
+    while (you.activity && you.activity->id() == activity_id("ACT_CRAFT")) {
         you.moves = 100;
-        you.activity->do_turn( you );
+        you.activity->do_turn(you);
         guard += 1;
-        REQUIRE( guard <= 100000 );
+        REQUIRE(guard <= 100000);
     }
 
-    auto *result = find_cooked_meat_result( fixture );
-    REQUIRE( result != nullptr );
+    auto* result = find_cooked_meat_result(fixture);
+    REQUIRE(result != nullptr);
     return result;
 }
 
-auto check_cooked_meat_is_fresh( item &result ) -> void
-{
-    INFO( "result relative_rot = " << result.get_relative_rot() );
-    INFO( "result rot turns = " << to_turns<int>( result.get_rot() ) );
-    CHECK_FALSE( result.rotten() );
-    CHECK( result.get_relative_rot() < 0.5 );
+auto check_cooked_meat_is_fresh(item& result) -> void {
+    INFO("result relative_rot = " << result.get_relative_rot());
+    INFO("result rot turns = " << to_turns<int>(result.get_rot()));
+    CHECK_FALSE(result.rotten());
+    CHECK(result.get_relative_rot() < 0.5);
 }
 
 } // namespace
 
 // REPRO for issue #9254: cooking in a vehicle kitchen with a fresh vehicle-stored
 // component should NOT produce a rotten result.
-TEST_CASE( "vehicle kitchen craft preserves fresh component rot", "[crafting][rot]" )
-{
-    setup_vehicle_rot_test_at( old_world_craft_turn() );
-    auto fixture = make_vehicle_craft_fixture( {
-        .work_part = vpart_id( "kitchen_unit" ),
+TEST_CASE("vehicle kitchen craft preserves fresh component rot", "[crafting][rot]") {
+    setup_vehicle_rot_test_at(old_world_craft_turn());
+    auto fixture = make_vehicle_craft_fixture({
+        .work_part = vpart_id("kitchen_unit"),
         .install_battery = true,
-    } );
-    add_fresh_meat_to_work_part( fixture );
+    });
+    add_fresh_meat_to_work_part(fixture);
 
-    auto &result = *craft_cooked_meat_at_vehicle( fixture );
+    auto& result = *craft_cooked_meat_at_vehicle(fixture);
 
-    check_cooked_meat_is_fresh( result );
+    check_cooked_meat_is_fresh(result);
 }
 
 // AUTOCLAVE variant of the BN9254 test above: the autoclave part is
 // CARGO+AUTOCLAVE on one tile, so any phantom from map::use_charges precedes the
 // real component. Cooking tools come from inventory so the vehicle has no battery.
-TEST_CASE( "vehicle autoclave craft preserves fresh component rot", "[crafting][rot]" )
-{
-    setup_vehicle_rot_test_at( old_world_craft_turn() );
-    auto fixture = make_vehicle_craft_fixture( {
-        .work_part = vpart_id( "autoclave" ),
-    } );
-    add_fresh_meat_to_work_part( fixture );
-    add_inventory_cooking_tools( *fixture.you );
+TEST_CASE("vehicle autoclave craft preserves fresh component rot", "[crafting][rot]") {
+    setup_vehicle_rot_test_at(old_world_craft_turn());
+    auto fixture = make_vehicle_craft_fixture({
+        .work_part = vpart_id("autoclave"),
+    });
+    add_fresh_meat_to_work_part(fixture);
+    add_inventory_cooking_tools(*fixture.you);
 
-    auto &result = *craft_cooked_meat_at_vehicle( fixture );
+    auto& result = *craft_cooked_meat_at_vehicle(fixture);
 
-    check_cooked_meat_is_fresh( result );
+    check_cooked_meat_is_fresh(result);
 }
 
 // REPRO for issue #9440: cooking with a frozen ingredient kept fresh for 19 days
 // in a powered vehicle freezer near a kitchen should NOT produce a rotten result.
-TEST_CASE( "vehicle kitchen craft preserves frozen component rot", "[crafting][rot]" )
-{
-    setup_vehicle_rot_test_at( calendar::start_of_cataclysm + 12_hours );
-    auto fixture = make_vehicle_craft_fixture( {
-        .work_part = vpart_id( "kitchen_unit" ),
+TEST_CASE("vehicle kitchen craft preserves frozen component rot", "[crafting][rot]") {
+    setup_vehicle_rot_test_at(calendar::start_of_cataclysm + 12_hours);
+    auto fixture = make_vehicle_craft_fixture({
+        .work_part = vpart_id("kitchen_unit"),
         .install_battery = true,
         .install_freezer = true,
-    } );
-    add_fresh_meat_to_part( fixture, fixture.freezer_part );
-    keep_meat_frozen_then_move_to_work_part( fixture );
+    });
+    add_fresh_meat_to_part(fixture, fixture.freezer_part);
+    keep_meat_frozen_then_move_to_work_part(fixture);
 
-    auto &result = *craft_cooked_meat_at_vehicle( fixture );
+    auto& result = *craft_cooked_meat_at_vehicle(fixture);
 
-    check_cooked_meat_is_fresh( result );
+    check_cooked_meat_is_fresh(result);
 }

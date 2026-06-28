@@ -1,27 +1,27 @@
 #if defined(CATA_SDL)
-#include "gpu_transparency.h"
+#    include "gpu_transparency.h"
 
-#include "coordinates.h"
-#include "debug.h"
-#include "field.h"
-#include "gpu_platform.h"
-#include "map.h"
-#include "mapbuffer.h"
-#include "mapdata.h"
-#include "path_info.h"
-#include "profile.h"
-#include "submap.h"
+#    include "coordinates.h"
+#    include "debug.h"
+#    include "field.h"
+#    include "gpu_platform.h"
+#    include "map.h"
+#    include "mapbuffer.h"
+#    include "mapdata.h"
+#    include "path_info.h"
+#    include "profile.h"
+#    include "submap.h"
 
-#include <SDL3/SDL_gpu.h>
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstring>
-#include <fstream>
-#include <ranges>
-#include <string>
-#include <string_view>
-#include <vector>
+#    include <SDL3/SDL_gpu.h>
+#    include <algorithm>
+#    include <array>
+#    include <cmath>
+#    include <cstring>
+#    include <fstream>
+#    include <ranges>
+#    include <string>
+#    include <string_view>
+#    include <vector>
 
 namespace cata_gpu {
 
@@ -611,7 +611,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     return true;
 }
 
-#if defined(CATA_GPU_VERIFY)
+#    if defined(CATA_GPU_VERIFY)
 
 auto verify_transparency_against_cpu(map const& m, int const zlev, float const sight_penalty)
     -> void {
@@ -710,7 +710,7 @@ auto verify_transparency_readback(
     // Legacy no-op hook retained for CATA_GPU_VERIFY call sites.
 }
 
-#endif // defined( CATA_GPU_VERIFY )
+#    endif // defined( CATA_GPU_VERIFY )
 
 } // namespace cata_gpu
 #endif // defined( CATA_SDL )

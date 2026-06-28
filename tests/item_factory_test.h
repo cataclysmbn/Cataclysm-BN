@@ -4,8 +4,7 @@
 #include "iuse.h"
 #include "json.h"
 
-namespace item_factory_test
-{
+namespace item_factory_test {
 const std::string TEST_ITEM_JSON_FILENAME = "tests/data/item_factory.json";
 
 const std::string BASE_MEMBER_IS_STRING = "base_member_is_string";
@@ -23,5 +22,5 @@ const std::string USE_ACTION = "use_action";
 const std::string BASE_IUSE_ID = "CAMERA";
 const std::string TEST_IUSE_ID = "RPGDIE";
 
-const itype *get_item( Item_factory &test_factory, const std::string &name );
+const itype* get_item(Item_factory& test_factory, const std::string& name);
 } // namespace item_factory_test
