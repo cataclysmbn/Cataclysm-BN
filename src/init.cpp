@@ -494,7 +494,8 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
     // But not the other way round.
 
     // get a list of all files in the directory
-    str_vec files = get_files_from_path( ".json", path, true, true );
+    auto files = get_files_from_path( std::vector<std::string> { ".json", ".jsonc" }, path, true,
+                                      true );
     if( files.empty() ) {
         std::ifstream tmp( path.c_str(), std::ios::in );
         if( tmp ) {

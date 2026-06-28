@@ -7,8 +7,7 @@ There are scripts available for these, so usually the process will be as follows
 
 1. Download the translations in `.po` format.
 2. Put them in `lang/incoming/`, ensuring they are named consistently with the files in `lang/po/`.
-3. Run `lang/update_pot.sh` to update `lang/po/cataclysm-BN.pot` (requires python with `polib` and
-   `luaparser` modules installed).
+3. Run `lang/update_pot.sh` to update `lang/po/cataclysm-BN.pot` (requires Deno).
 4. Run `lang/merge_po.sh` to update `lang/po/*.po`. (This is only used to test translations locally
    as the project now uses Transifex for translation)
 

@@ -465,7 +465,7 @@ class Tilesheet {
     this.maxIndex = this.tileset.pngnum
   }
 
-  async nullImage(): Promise<sharp.Sharp> {
+  nullImage(): sharp.Sharp {
     const buffer = Buffer.alloc(this.spriteWidth * this.spriteHeight * 4)
     return sharp(buffer, {
       raw: {
@@ -1016,7 +1016,7 @@ class TileSheetData {
   parseTileEntry(tileEntry: DecomposeTileEntry, refs: PngRefs): string | null {
     if (this.checkForExpansion(tileEntry)) return null
 
-    const [tileId, allTileIds] = this.parseId(tileEntry)
+    const [tileId] = this.parseId(tileEntry)
     if (!tileId) return null
 
     const safeTileId = tileId.replace(/\//g, "_")
@@ -1245,7 +1245,7 @@ class PngRefs {
     if (typeof pngnum !== "number") return
     if (this.pngnumToTsPathname.has(pngnum)) return
 
-    for (const [tsFilename, tsData] of this.tsData) {
+    for (const tsData of this.tsData.values()) {
       if (pngnum >= tsData.pngnumMin && pngnum <= tsData.pngnumMax) {
         this.pngnumToTsPathname.set(pngnum, tsData.tsPathname)
         return
@@ -1396,7 +1396,7 @@ async function unpack(tilesetDir: string, deleteFile?: string): Promise<void> {
     if (!outData.valid) continue
     await outData.writeExpansions()
 
-    for (const [tileId, tileEntries] of Object.entries(outData.tsData.tileIdToTileEntries)) {
+    for (const tileEntries of Object.values(outData.tsData.tileIdToTileEntries)) {
       for (let idx = 0; idx < tileEntries.length; idx++) {
         const tileEntry = tileEntries[idx]
         const subdirPathname = outData.incrementDir()

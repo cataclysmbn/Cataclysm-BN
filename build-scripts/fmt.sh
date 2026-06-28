@@ -79,7 +79,7 @@ if [[ "$mode" == staged ]]; then
                 cpp_files+=( "$file" )
                 append_stage_file "$file"
                 ;;
-            *.json)
+            *.json|*.jsonc)
                 if [[ "$file" != data/names/* ]]; then
                     json_files+=( "$file" )
                     append_stage_file "$file"

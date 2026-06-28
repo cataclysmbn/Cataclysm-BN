@@ -74,6 +74,28 @@ TEST_CASE( "serialize_set", "[json]" )
     test_serialization( enum_set, string_format( R"([%d])", static_cast<int>( bp_foot_l ) ) );
 }
 
+TEST_CASE( "read_jsonc", "[json]" )
+{
+    const auto json = R"(
+        // line comment before an object
+        {
+          "name": "jsonc",
+          "numbers": [ 1, 2, ],
+          /* block comment before a trailing object comma */
+        }
+    )";
+    auto iss = std::istringstream( json );
+    auto jsin = JsonIn( iss );
+    auto jo = jsin.get_object();
+    auto numbers = jo.get_array( "numbers" );
+
+    CHECK( jo.get_string( "name" ) == "jsonc" );
+    REQUIRE( numbers.size() == 2 );
+    CHECK( numbers.get_int( 0 ) == 1 );
+    CHECK( numbers.get_int( 1 ) == 2 );
+    jo.finish();
+}
+
 template<typename Matcher>
 static void test_translation_text_style_check( Matcher &&matcher, const std::string &json )
 {
