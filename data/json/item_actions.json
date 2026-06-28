@@ -391,6 +391,11 @@
   },
   {
     "type": "item_action",
+    "id": "EBOOK_READER",
+    "name": { "str": "Manage e-books" }
+  },
+  {
+    "type": "item_action",
     "id": "EXTINGUISHER",
     "name": { "str": "Spray" }
   },

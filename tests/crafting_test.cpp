@@ -218,6 +218,35 @@ TEST_CASE( "available_recipes", "[recipes]" )
         }
     }
 
+    GIVEN( "an e-book device with a stored book" ) {
+        const recipe *r2 = &recipe_id( "electrohack" ).obj();
+        detached_ptr<item> det = item::spawn( "eink_tablet_pc" );
+        item &eink = *det;
+        dummy.i_add( std::move( det ) );
+        eink.set_var( "EBOOK_STORED_BOOKS", "advanced_electronics" );
+        REQUIRE_FALSE( dummy.knows_recipe( r2 ) );
+
+        WHEN( "the player holds it and has an appropriate skill" ) {
+            dummy.set_skill_level( r2->skill_used, 5 );
+
+            AND_WHEN( "he searches for the recipe in the stored book" ) {
+                THEN( "he finds it!" ) {
+                    CHECK( dummy.get_recipes_from_books( dummy.crafting_inventory() ).contains( *r2 ) );
+                }
+                THEN( "he still hasn't the recipe memorized" ) {
+                    CHECK_FALSE( dummy.knows_recipe( r2 ) );
+                }
+            }
+            AND_WHEN( "he gets rid of the device" ) {
+                eink.detach( );
+
+                THEN( "he can't make the recipe anymore" ) {
+                    CHECK_FALSE( dummy.get_recipes_from_books( dummy.crafting_inventory() ).contains( *r2 ) );
+                }
+            }
+        }
+    }
+
     GIVEN( "an eink pc with a sushi recipe" ) {
         const recipe *r2 = &recipe_id( "sushi_rice" ).obj();
         detached_ptr<item> det = item::spawn( "eink_tablet_pc" );
