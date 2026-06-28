@@ -215,7 +215,8 @@
     "dispersion": 80,
     "range": 32,
     "speed": 500,
-    "damage": { "damage_type": "bullet", "amount": 57, "armor_penetration": 18, "armor_multiplier": 1 },
+    "//": "Balanced as FMJ but with armor penetration halved",
+    "damage": { "damage_type": "bullet", "amount": 64, "armor_penetration": 14 },
     "proportional": { "recoil": 1.4 },
     "delete": { "effects": [ "SHOT" ] }
   }

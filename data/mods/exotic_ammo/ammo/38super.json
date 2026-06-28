@@ -17,7 +17,7 @@
     "casing": "38super_casing",
     "range": 14,
     "//": "Base damage of 26, balance increase of two-nineths.",
-    "damage": { "damage_type": "bullet", "amount": 32, "armor_penetration": 18 },
+    "damage": { "damage_type": "bullet", "amount": 32, "armor_penetration": 14 },
     "dispersion": 30,
     "recoil": 550,
     "effects": [ "COOKOFF" ]
