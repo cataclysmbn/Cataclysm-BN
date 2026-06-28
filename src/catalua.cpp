@@ -994,13 +994,11 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
     }
 }
 
-void resolve_lua_bionic_and_mutation_callbacks()
+void resolve_extra_lua_callbacks()
 {
     bionic_data::resolve_lua_callbacks( bionic_callback_actors );
     mutation_branch::resolve_lua_callbacks( mutation_callback_actors );
-    // TODO Maybe move?
     trap::resolve_lua_callbacks( lua_itrap_actors );
-
 }
 
 void run_on_every_x_hooks( lua_state &state )
