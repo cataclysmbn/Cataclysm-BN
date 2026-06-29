@@ -16,62 +16,50 @@
 #include <llvm/Support/Casting.h>
 #include <string>
 
-namespace clang
-{
+namespace clang {
 class Decl;
 class Stmt;
 
-namespace tidy
-{
-namespace cata
-{
+namespace tidy {
+namespace cata {
 
-inline StringRef getText(
-    const ast_matchers::MatchFinder::MatchResult &Result, SourceRange Range )
-{
-    return Lexer::getSourceText( CharSourceRange::getTokenRange( Range ),
-                                 *Result.SourceManager,
-                                 Result.Context->getLangOpts() );
+inline StringRef getText(const ast_matchers::MatchFinder::MatchResult& Result, SourceRange Range) {
+    return Lexer::getSourceText(
+        CharSourceRange::getTokenRange(Range), *Result.SourceManager,
+        Result.Context->getLangOpts());
 }
 
 template <typename T>
-inline StringRef getText( const ast_matchers::MatchFinder::MatchResult &Result, T *Node )
-{
-    if( const CXXDefaultArgExpr *Default = dyn_cast<clang::CXXDefaultArgExpr>( Node ) ) {
-        return getText( Result, Default->getExpr() );
+inline StringRef getText(const ast_matchers::MatchFinder::MatchResult& Result, T* Node) {
+    if (const CXXDefaultArgExpr* Default = dyn_cast<clang::CXXDefaultArgExpr>(Node)) {
+        return getText(Result, Default->getExpr());
     }
-    return getText( Result, Node->getSourceRange() );
+    return getText(Result, Node->getSourceRange());
 }
 
-template<typename T, typename U>
-static const T *getParent( const ast_matchers::MatchFinder::MatchResult &Result, const U *Node )
-{
-    for( const DynTypedNode &parent : Result.Context->getParents( *Node ) ) {
-        if( const T *Candidate = parent.get<T>() ) {
-            return Candidate;
-        }
+template <typename T, typename U>
+static const T* getParent(const ast_matchers::MatchFinder::MatchResult& Result, const U* Node) {
+    for (const DynTypedNode& parent : Result.Context->getParents(*Node)) {
+        if (const T* Candidate = parent.get<T>()) { return Candidate; }
     }
 
     return nullptr;
 }
 
-template<typename T>
-static const FunctionDecl *getContainingFunction(
-    const ast_matchers::MatchFinder::MatchResult &Result, const T *Node )
-{
-    for( const DynTypedNode &parent : Result.Context->getParents( *Node ) ) {
-        if( const Decl *Candidate = parent.get<Decl>() ) {
-            if( const FunctionDecl *ContainingFunction = dyn_cast<FunctionDecl>( Candidate ) ) {
+template <typename T>
+static const FunctionDecl* getContainingFunction(
+    const ast_matchers::MatchFinder::MatchResult& Result, const T* Node) {
+    for (const DynTypedNode& parent : Result.Context->getParents(*Node)) {
+        if (const Decl* Candidate = parent.get<Decl>()) {
+            if (const FunctionDecl* ContainingFunction = dyn_cast<FunctionDecl>(Candidate)) {
                 return ContainingFunction;
             }
-            if( const FunctionDecl *ContainingFunction =
-                    getContainingFunction( Result, Candidate ) ) {
+            if (const FunctionDecl* ContainingFunction = getContainingFunction(Result, Candidate)) {
                 return ContainingFunction;
             }
         }
-        if( const Stmt *Candidate = parent.get<Stmt>() ) {
-            if( const FunctionDecl *ContainingFunction =
-                    getContainingFunction( Result, Candidate ) ) {
+        if (const Stmt* Candidate = parent.get<Stmt>()) {
+            if (const FunctionDecl* ContainingFunction = getContainingFunction(Result, Candidate)) {
                 return ContainingFunction;
             }
         }
@@ -80,104 +68,74 @@ static const FunctionDecl *getContainingFunction(
     return nullptr;
 }
 
-inline bool isPointType( const CXXRecordDecl *R )
-{
-    if( !R ) {
-        return false;
-    }
+inline bool isPointType(const CXXRecordDecl* R) {
+    if (!R) { return false; }
     StringRef name = R->getName();
     return name == "point" || name == "tripoint";
 }
 
-inline auto isPointType()
-{
+inline auto isPointType() {
     using namespace clang::ast_matchers;
-    return cxxRecordDecl( anyOf( hasName( "point" ), hasName( "tripoint" ) ) );
+    return cxxRecordDecl(anyOf(hasName("point"), hasName("tripoint")));
 }
 
-inline auto isPointOrCoordPointType()
-{
+inline auto isPointOrCoordPointType() {
     using namespace clang::ast_matchers;
-    return cxxRecordDecl(
-               anyOf( hasName( "point" ), hasName( "tripoint" ), hasName( "coord_point" ) )
-           );
+    return cxxRecordDecl(anyOf(hasName("point"), hasName("tripoint"), hasName("coord_point")));
 }
 
-inline auto isPointConstructor()
-{
+inline auto isPointConstructor() {
     using namespace clang::ast_matchers;
-    return cxxConstructorDecl( ofClass( isPointType() ) );
+    return cxxConstructorDecl(ofClass(isPointType()));
 }
 
 // This returns a matcher that always matches, but binds "temp" if the
 // constructor call is constructing a temporary object.
-inline auto testWhetherConstructingTemporary()
-{
+inline auto testWhetherConstructingTemporary() {
     using namespace clang::ast_matchers;
-    return cxxConstructExpr(
-               anyOf(
-                   hasParent( materializeTemporaryExpr().bind( "temp" ) ),
-                   hasParent(
-                       implicitCastExpr( hasParent( materializeTemporaryExpr().bind( "temp" ) ) )
-                   ),
-                   hasParent( callExpr().bind( "temp" ) ),
-                   hasParent( initListExpr().bind( "temp" ) ),
-                   anything()
-               )
-           );
+    return cxxConstructExpr(anyOf(
+        hasParent(materializeTemporaryExpr().bind("temp")),
+        hasParent(implicitCastExpr(hasParent(materializeTemporaryExpr().bind("temp")))),
+        hasParent(callExpr().bind("temp")), hasParent(initListExpr().bind("temp")), anything()));
 }
 
-inline auto isXParam()
-{
+inline auto isXParam() {
     using namespace clang::ast_matchers;
-    return matchesName( "[xX]" );
+    return matchesName("[xX]");
 }
 
-inline auto isYParam()
-{
+inline auto isYParam() {
     using namespace clang::ast_matchers;
-    return matchesName( "[yY]" );
+    return matchesName("[yY]");
 }
 
-inline bool isPointMethod( const FunctionDecl *d )
-{
-    if( const CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>( d ) ) {
-        const CXXRecordDecl *Record = Method->getParent();
-        if( isPointType( Record ) ) {
-            return true;
-        }
+inline bool isPointMethod(const FunctionDecl* d) {
+    if (const CXXMethodDecl* Method = dyn_cast_or_null<CXXMethodDecl>(d)) {
+        const CXXRecordDecl* Record = Method->getParent();
+        if (isPointType(Record)) { return true; }
     }
     return false;
 }
 
 // Struct to help identify and construct names of associated points and
 // coordinates
-class NameConvention
-{
-    public:
-        NameConvention( StringRef xName );
+class NameConvention {
+public:
+    NameConvention(StringRef xName);
 
-        enum MatchResult {
-            XName,
-            YName,
-            ZName,
-            None
-        };
+    enum MatchResult { XName, YName, ZName, None };
 
-        MatchResult Match( StringRef name ) const;
+    MatchResult Match(StringRef name) const;
 
-        bool operator!() const {
-            return !valid;
-        }
+    bool operator!() const { return !valid; }
 
-        const std::string &getRoot() const {
-            return root;
-        }
-    private:
-        std::string root;
-        bool capital;
-        bool atEnd;
-        bool valid = true;
+    const std::string& getRoot() const { return root; }
+
+private:
+    std::string root;
+    bool capital;
+    bool atEnd;
+    bool valid = true;
 };
 
 } // namespace cata

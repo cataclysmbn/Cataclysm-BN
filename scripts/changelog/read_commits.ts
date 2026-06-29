@@ -2,9 +2,11 @@ import type { MergeExclusive } from "npm:type-fest"
 
 type DateLike = string | Date
 
-type RangeOption =
+type DateRangeOption =
   & MergeExclusive<{ after?: DateLike }, { since?: DateLike }>
   & MergeExclusive<{ before?: DateLike }, { until?: DateLike }>
+
+type RangeOption = DateRangeOption | { range: string }
 
 type Coauthor = {
   name: string
@@ -35,7 +37,7 @@ const parseCoauthors = (body: string): string[] => {
 }
 
 const rangeArgs = (option: RangeOption): string[] =>
-  Object.entries(option)
+  "range" in option ? [option.range] : Object.entries(option)
     .map(([k, v]) => `--${k}=${typeof v === "string" ? v : v.toISOString()}`)
 
 const gitLog = async (option: RangeOption): Promise<string> => {

@@ -67,7 +67,25 @@
           { "id": "overlay_worn_kevlar", "fg": 59 },
           { "id": "mon_talon_m249", "fg": 60 },
           { "id": [ "bot_talon_m249", "overlay_wielded_bot_talon_m249" ], "fg": 61 },
-          { "id": [ "broken_talon_m249", "overlay_wielded_broken_talon_m249" ], "fg": 62 }
+          { "id": [ "broken_talon_m249", "overlay_wielded_broken_talon_m249" ], "fg": 62 },
+          {
+            "id": [ "exosuit_survivor", "overlay_wielded_exosuit_survivor", "exosuit_survivor_on", "overlay_wielded_exosuit_survivor_on" ],
+            "fg": 63
+          },
+          { "id": [ "overlay_worn_exosuit_survivor", "overlay_worn_exosuit_survivor_on" ], "fg": 64 },
+          {
+            "id": [
+              "improve_sights",
+              "overlay_wielded_improve_sights",
+              "offset_sights",
+              "overlay_wielded_offset_sights",
+              "offset_sights_mod",
+              "overlay_wielded_offset_sights_mod"
+            ],
+            "fg": 65
+          },
+          { "id": [ "holo_sight", "overlay_wielded_holo_sight" ], "fg": 66 },
+          { "id": [ "hybrid_sight", "overlay_wielded_hybrid_sight" ], "fg": 67 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

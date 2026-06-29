@@ -1,7 +1,7 @@
 #pragma once
 #if defined(CATA_SDL)
 
-#include <SDL3/SDL_gpu.h>
+#    include <SDL3/SDL_gpu.h>
 
 namespace cata_gpu {
 

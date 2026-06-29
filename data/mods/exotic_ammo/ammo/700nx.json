@@ -16,7 +16,6 @@
     "ammo_type": "700nx",
     "casing": "700nx_casing",
     "range": 42,
-    "//": "Base damage of 110, balance reduction to roughly 80%.",
     "damage": { "damage_type": "bullet", "amount": 90, "armor_penetration": 39 },
     "dispersion": 15,
     "recoil": 12100,

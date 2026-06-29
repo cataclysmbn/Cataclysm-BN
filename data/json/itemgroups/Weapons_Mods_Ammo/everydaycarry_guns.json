@@ -1261,6 +1261,18 @@
     ]
   },
   {
+    "id": "everyday_m2010_military",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "m2010", "ammo-group": "on_hand_300", "charges": [ 0, 5 ], "contents-group": "military_accessories_sniper" },
+      { "item": "m2010mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_300" },
+      { "item": "m2010mag", "charges-min": 0, "ammo-group": "on_hand_300", "prob": 50 },
+      { "group": "on_hand_300", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_rm11b_sniper_rifle",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -2079,12 +2091,42 @@
     ]
   },
   {
+    "id": "everyday_m240_military",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "m240", "ammo-group": "on_hand_308", "charges": [ 0, 100 ], "contents-group": "military_accessories_lmg" },
+      {
+        "distribution": [
+          { "item": "belt308", "ammo-group": "on_hand_308", "charges": [ 1, 100 ], "prob": 50 },
+          { "group": "on_hand_308", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+        ]
+      }
+    ]
+  },
+  {
     "id": "everyday_m249",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
       { "item": "m249", "ammo-group": "on_hand_223", "charges": [ 0, 100 ] },
+      {
+        "distribution": [
+          { "item": "belt223", "ammo-group": "on_hand_223", "charges": [ 1, 100 ], "prob": 50 },
+          { "group": "on_hand_223", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "everyday_m249_military",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "m249", "ammo-group": "on_hand_223", "charges": [ 0, 100 ], "contents-group": "military_accessories_lmg" },
       {
         "distribution": [
           { "item": "belt223", "ammo-group": "on_hand_223", "charges": [ 1, 100 ], "prob": 50 },

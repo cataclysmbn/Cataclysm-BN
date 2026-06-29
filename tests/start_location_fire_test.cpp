@@ -1,6 +1,5 @@
-#include "catch/catch.hpp"
-
 #include "avatar.h"
+#include "catch/catch.hpp"
 #include "coordinates.h"
 #include "field_type.h"
 #include "game.h"
@@ -25,52 +24,50 @@
 // It FAILS on the buggy single-z detached-map implementation and PASSES once burn()
 // operates on the live multi-z map (g->m), whose outside cache is correct.
 
-TEST_CASE( "start_location_burn_places_fire_on_interior_flammable_tiles",
-           "[start_location][field][fire]" )
-{
+TEST_CASE(
+    "start_location_burn_places_fire_on_interior_flammable_tiles",
+    "[start_location][field]["
+    "fire]") {
     clear_all_state();
-    map &here = get_map();
+    map& here = get_map();
 
-    const ter_str_id floor_primitive( "t_floor_primitive" ); // interior floor, FLAMMABLE_ASH
-    const ter_str_id floor_roof( "t_floor" );                // used as a roof on z+1
+    const ter_str_id floor_primitive("t_floor_primitive"); // interior floor, FLAMMABLE_ASH
+    const ter_str_id floor_roof("t_floor");                // used as a roof on z+1
 
     // Build an 11x11 flammable interior at z=0 with a roof one tile larger at z=1,
     // so the 3x3-above check marks every interior tile as "inside".
-    for( int x = 54; x <= 66; ++x ) {
-        for( int y = 54; y <= 66; ++y ) {
-            here.ter_set( tripoint_bub_ms( x, y, 1 ), floor_roof );
-            if( x >= 55 && x <= 65 && y >= 55 && y <= 65 ) {
-                here.ter_set( tripoint_bub_ms( x, y, 0 ), floor_primitive );
+    for (int x = 54; x <= 66; ++x) {
+        for (int y = 54; y <= 66; ++y) {
+            here.ter_set(tripoint_bub_ms(x, y, 1), floor_roof);
+            if (x >= 55 && x <= 65 && y >= 55 && y <= 65) {
+                here.ter_set(tripoint_bub_ms(x, y, 0), floor_primitive);
             }
         }
     }
-    here.invalidate_map_cache( 0 );
-    here.build_map_cache( 0, true );
+    here.invalidate_map_cache(0);
+    here.build_map_cache(0, true);
 
     // Place the avatar inside the building.
-    const tripoint_bub_ms center( 60, 60, 0 );
-    get_avatar().setpos( center );
+    const tripoint_bub_ms center(60, 60, 0);
+    get_avatar().setpos(center);
 
     // Preconditions: a flammable interior tile, inside, beyond burn()'s safe radius (3).
-    const tripoint_bub_ms interior_far( 64, 60, 0 );
-    REQUIRE_FALSE( here.is_outside( interior_far ) );
-    REQUIRE( ( here.has_flag( "FLAMMABLE", interior_far ) ||
-               here.has_flag( "FLAMMABLE_ASH", interior_far ) ) );
+    const tripoint_bub_ms interior_far(64, 60, 0);
+    REQUIRE_FALSE(here.is_outside(interior_far));
+    REQUIRE(
+        (here.has_flag("FLAMMABLE", interior_far) || here.has_flag("FLAMMABLE_ASH", interior_far)));
 
     // bad_day passes the player's OMT to burn().
-    const tripoint_abs_omt omtstart =
-        project_to<coords::omt>( get_avatar().abs_pos() );
+    const tripoint_abs_omt omtstart = project_to<coords::omt>(get_avatar().abs_pos());
 
     const start_location sl;
-    sl.burn( omtstart, /*count=*/3, /*rad=*/3 );
+    sl.burn(omtstart, /*count=*/3, /*rad=*/3);
 
     int fires = 0;
-    for( const tripoint_bub_ms &p : here.points_in_rectangle(
-             tripoint_bub_ms( 55, 55, 0 ), tripoint_bub_ms( 65, 65, 0 ) ) ) {
-        if( here.get_field( p, fd_fire ) != nullptr ) {
-            ++fires;
-        }
+    for (const tripoint_bub_ms& p :
+         here.points_in_rectangle(tripoint_bub_ms(55, 55, 0), tripoint_bub_ms(65, 65, 0))) {
+        if (here.get_field(p, fd_fire) != nullptr) { ++fires; }
     }
-    INFO( "fd_fire fields placed inside the building: " << fires );
-    CHECK( fires > 0 );
+    INFO("fd_fire fields placed inside the building: " << fires);
+    CHECK(fires > 0);
 }

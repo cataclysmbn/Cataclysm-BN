@@ -5,16 +5,15 @@
     "type": "AMMO",
     "name": { "str": ".38 FMJ" },
     "description": ".38 Special ammunition with brass jacketed 130gr bullets.  The .38 Special round has been known from its inception for its accuracy and low recoil.",
-    "//": "Base damage of 20, balance increase of two-nineths.",
     "loudness": 156,
     "speed": 240,
-    "relative": { "damage": { "damage_type": "bullet", "amount": -6, "armor_penetration": 14 } }
+    "relative": { "damage": { "damage_type": "bullet", "amount": -5, "armor_penetration": 9 } }
   },
   {
     "id": "38_special",
     "type": "AMMO",
     "name": { "str": ".38 Special" },
-    "description": ".38 Special ammunition with 130gr FMJ bullets.  The .38 Special round was extremely common among US police forces during the 20th century.",
+    "description": ".38 Special ammunition with 130gr JHP bullets.  The .38 Special round was extremely common among US police forces during the 20th century.",
     "weight": "8 g",
     "volume": "250 ml",
     "price": "210 cent",
@@ -28,7 +27,7 @@
     "casing": "38_casing",
     "range": 14,
     "//": "Hollowpoint damage bonus of 25%.",
-    "damage": { "damage_type": "bullet", "amount": 30 },
+    "damage": { "damage_type": "bullet", "amount": 26 },
     "dispersion": 30,
     "recoil": 300,
     "loudness": 155,

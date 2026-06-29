@@ -1,12 +1,9 @@
-#include "catch/catch.hpp"
-
-#include <sstream>
-
 #include "avatar.h"
+#include "catch/catch.hpp"
+#include "coordinates.h"
+#include "map.h"
 #include "map_helpers.h"
 #include "map_setup_helpers.h"
-#include "map.h"
-#include "coordinates.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
@@ -14,35 +11,35 @@
 #include "type_id.h"
 #include "units_utility.h"
 #include "veh_type.h"
-#include "vehicle_move.h"
 #include "vehicle.h"
+#include "vehicle_move.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
 
-static map_helpers::canvas_legend legend = {{
-        { U' ', "t_open_air" },
-        { U'.', "t_pavement" },
-        { U'#', "t_wall" },
-        { U'x', "t_railroad_track" },
-        { U'b', "t_railroad_track_ramp_up_low" },
-        { U'B', "t_railroad_track_ramp_up_high" },
-        { U'c', "t_railroad_track_ramp_down_high" },
-        { U'C', "t_railroad_track_ramp_down_low" },
-        { U'u', "t_ramp_up_low" },
-        { U'U', "t_ramp_up_high" },
-        { U'd', "t_ramp_down_high" },
-        { U'D', "t_ramp_down_low" },
-    }
-};
+#include <sstream>
 
-namespace tcscope
-{
+static map_helpers::canvas_legend legend = {{
+    {U' ', "t_open_air"},
+    {U'.', "t_pavement"},
+    {U'#', "t_wall"},
+    {U'x', "t_railroad_track"},
+    {U'b', "t_railroad_track_ramp_up_low"},
+    {U'B', "t_railroad_track_ramp_up_high"},
+    {U'c', "t_railroad_track_ramp_down_high"},
+    {U'C', "t_railroad_track_ramp_down_low"},
+    {U'u', "t_ramp_up_low"},
+    {U'U', "t_ramp_up_high"},
+    {U'd', "t_ramp_down_high"},
+    {U'D', "t_ramp_down_low"},
+}};
+
+namespace tcscope {
 constexpr uint32_t barebones = 0;
 
-constexpr uint32_t check_back_turns =   1 << 0;
-constexpr uint32_t check_back_move =    1 << 1;
-constexpr uint32_t check_on_rails =     1 << 2;
+constexpr uint32_t check_back_turns = 1 << 0;
+constexpr uint32_t check_back_move = 1 << 1;
+constexpr uint32_t check_on_rails = 1 << 2;
 
 constexpr uint32_t full = check_back_turns | check_back_move | check_on_rails;
 constexpr uint32_t no_back_turns = full & ~check_back_turns;
@@ -67,52 +64,55 @@ struct test_case {
 
     map_helpers::canvas canvas;
 
-    test_case( const std::string &veh_id, uint32_t scope, units::angle start_dir,
-               units::angle end_dir_straight, units::angle end_dir_left,
-               units::angle end_dir_right, map_helpers::canvas &&canvas_arg ) :
-        veh_id( veh_id ), scope( scope ), start_dir( start_dir ),
-        end_dir_straight( end_dir_straight ), end_dir_left( end_dir_left ),
-        end_dir_right( end_dir_right ), canvas( canvas_arg ) {
-        start_pos.raw() = canvas.replace_unique( U'*', U'x' );
-        end_pos_straight.raw() = canvas.replace_unique( U'o', U'x' );
-        end_pos_left.raw() = canvas.replace_opt( U'l', U'x' ).value_or( end_pos_straight.raw() );
-        end_pos_right.raw() = canvas.replace_opt( U'r', U'x' ).value_or( end_pos_straight.raw() );
+    test_case(
+        const std::string& veh_id, uint32_t scope, units::angle start_dir,
+        units::angle end_dir_straight, units::angle end_dir_left, units::angle end_dir_right,
+        map_helpers::canvas&& canvas_arg)
+        : veh_id(veh_id),
+          scope(scope),
+          start_dir(start_dir),
+          end_dir_straight(end_dir_straight),
+          end_dir_left(end_dir_left),
+          end_dir_right(end_dir_right),
+          canvas(canvas_arg) {
+        start_pos.raw() = canvas.replace_unique(U'*', U'x');
+        end_pos_straight.raw() = canvas.replace_unique(U'o', U'x');
+        end_pos_left.raw() = canvas.replace_opt(U'l', U'x').value_or(end_pos_straight.raw());
+        end_pos_right.raw() = canvas.replace_opt(U'r', U'x').value_or(end_pos_straight.raw());
     }
 };
 
-const efftype_id effect_blind( "blind" );
+const efftype_id effect_blind("blind");
 
-static void clear_game( const ter_id &terrain )
-{
+static void clear_game(const ter_id& terrain) {
     // Set to turn 0 to prevent solars from producing power
     calendar::turn = calendar::turn_zero;
-    clear_states( state::avatar | state::vehicle );
+    clear_states(state::avatar | state::vehicle);
 
-    avatar &u = get_avatar();
+    avatar& u = get_avatar();
     // Move player somewhere safe
-    REQUIRE_FALSE( u.in_vehicle );
-    u.setpos( tripoint_bub_ms( g_half_mapsize_x + SEEX - 1,
-                               g_half_mapsize_y + SEEY - 1, -2 ) );
+    REQUIRE_FALSE(u.in_vehicle);
+    u.setpos(tripoint_bub_ms(g_half_mapsize_x + SEEX - 1, g_half_mapsize_y + SEEY - 1, -2));
     // Blind the player to avoid needless drawing-related overhead
-    u.add_effect( effect_blind, 365_days, bodypart_str_id::NULL_ID() );
+    u.add_effect(effect_blind, 365_days, bodypart_str_id::NULL_ID());
 
-    build_test_map( terrain );
+    build_test_map(terrain);
 }
 
-static void build_map_from_canvas( const map_helpers::canvas &canvas, const tripoint &canvas_pos )
-{
-    auto adapter = map_helpers::canvas_adapter( legend )
-    .with_setter( [canvas_pos]( const tripoint & p, const std::string & s ) {
-        get_map().ter_set( tripoint_bub_ms( p ) + canvas_pos, ter_str_id( s ).id() );
-    } )
-    .with_getter( [canvas_pos]( const tripoint & p ) {
-        return get_map().ter( tripoint_bub_ms( p ) + canvas_pos ).id().str();
-    } );
+static void build_map_from_canvas(const map_helpers::canvas& canvas, const tripoint& canvas_pos) {
+    auto adapter =
+        map_helpers::canvas_adapter(legend)
+            .with_setter([canvas_pos](const tripoint& p, const std::string& s) {
+                get_map().ter_set(tripoint_bub_ms(p) + canvas_pos, ter_str_id(s).id());
+            })
+            .with_getter([canvas_pos](const tripoint& p) {
+                return get_map().ter(tripoint_bub_ms(p) + canvas_pos).id().str();
+            });
 
-    adapter.set_all( canvas );
+    adapter.set_all(canvas);
 
     // Sanity check
-    adapter.check_matches_expected( canvas, true );
+    adapter.check_matches_expected(canvas, true);
 }
 
 // This function spawns a moving vehicle and ensures its pivot point is
@@ -128,84 +128,72 @@ static void build_map_from_canvas( const map_helpers::canvas &canvas, const trip
 //     3. Give it some velocity and ensure it can maintain it
 //     4. Advance movement a couple times, forcing pivot recalculation
 //     5. Displace it into desired position
-static vehicle &add_moving_vehicle(
-    map &here,
-    const std::string &veh_id,
-    tripoint_bub_ms vehicle_pos,
-    units::angle face_dir
-)
-{
-    tripoint_bub_ms initial_veh_pos( g_mapsize_x * 3 / 4, g_mapsize_y * 3 / 4, 0 );
-    vehicle *veh_ptr = here.add_vehicle( vproto_id( veh_id ), initial_veh_pos, face_dir, 45, 0 );
-    REQUIRE( veh_ptr != nullptr );
-    vehicle &veh = *veh_ptr;
+static vehicle& add_moving_vehicle(
+    map& here, const std::string& veh_id, tripoint_bub_ms vehicle_pos, units::angle face_dir) {
+    tripoint_bub_ms initial_veh_pos(g_mapsize_x * 3 / 4, g_mapsize_y * 3 / 4, 0);
+    vehicle* veh_ptr = here.add_vehicle(vproto_id(veh_id), initial_veh_pos, face_dir, 45, 0);
+    REQUIRE(veh_ptr != nullptr);
+    vehicle& veh = *veh_ptr;
 
     // Remove all items from cargo to normalize weight.
     // Keep fuel in tanks to allow cruise control.
-    for( const vpart_reference vp : veh.get_all_parts() ) {
-        veh_ptr->get_items( vp.part_index() ).clear();
+    for (const vpart_reference vp : veh.get_all_parts()) {
+        veh_ptr->get_items(vp.part_index()).clear();
     }
-    for( const vpart_reference vp : veh.get_avail_parts( "OPENABLE" ) ) {
-        veh.close( vp.part_index() );
-    }
+    for (const vpart_reference vp : veh.get_avail_parts("OPENABLE")) { veh.close(vp.part_index()); }
 
     veh.refresh_insides();
 
-    veh.tags.insert( "IN_CONTROL_OVERRIDE" );
+    veh.tags.insert("IN_CONTROL_OVERRIDE");
     veh.engine_on = true;
     const int tgt_velocity = 89;
-    REQUIRE( veh.safe_velocity( true ) >= std::abs( tgt_velocity ) );
+    REQUIRE(veh.safe_velocity(true) >= std::abs(tgt_velocity));
     veh.cruise_on = true;
     veh.cruise_velocity = tgt_velocity;
     veh.velocity = tgt_velocity;
     veh.vertical_velocity = 0;
 
-    const auto pivot_bub_ms_location = []( const vehicle & veh ) -> tripoint_bub_ms {
-        return veh.bub_ms_location() + veh.coord_translate( veh.pivot_point() );
+    const auto pivot_bub_ms_location = [](const vehicle& veh) -> tripoint_bub_ms {
+        return veh.bub_ms_location() + veh.coord_translate(veh.pivot_point());
     };
 
-    CAPTURE( veh.bub_ms_location() );
-    CAPTURE( veh.pivot_point() );
-    CAPTURE( veh.coord_translate( veh.pivot_point() ) );
-    CAPTURE( pivot_bub_ms_location( veh ) );
+    CAPTURE(veh.bub_ms_location());
+    CAPTURE(veh.pivot_point());
+    CAPTURE(veh.coord_translate(veh.pivot_point()));
+    CAPTURE(pivot_bub_ms_location(veh));
 
     here.vehmove();
-    veh.idle( true );
+    veh.idle(true);
     here.vehmove();
-    veh.idle( true );
+    veh.idle(true);
     here.vehmove();
-    veh.idle( true );
+    veh.idle(true);
 
-    here.displace_vehicle( veh, vehicle_pos - tripoint_bub_ms( veh.bub_ms_location() ) );
+    here.displace_vehicle(veh, vehicle_pos - tripoint_bub_ms(veh.bub_ms_location()));
 
-    CAPTURE( veh.bub_ms_location() );
-    CAPTURE( veh.pivot_point() );
-    CAPTURE( veh.coord_translate( veh.pivot_point() ) );
-    CAPTURE( pivot_bub_ms_location( veh ) );
+    CAPTURE(veh.bub_ms_location());
+    CAPTURE(veh.pivot_point());
+    CAPTURE(veh.coord_translate(veh.pivot_point()));
+    CAPTURE(pivot_bub_ms_location(veh));
 
-    REQUIRE( pivot_bub_ms_location( veh ) == veh.bub_ms_location() );
-    REQUIRE( pivot_bub_ms_location( veh ) == vehicle_pos );
+    REQUIRE(pivot_bub_ms_location(veh) == veh.bub_ms_location());
+    REQUIRE(pivot_bub_ms_location(veh) == vehicle_pos);
 
     return veh;
 }
 
-static void test_rail_movement( const test_case &t,
-                                int move_dir,
-                                tripoint_bub_ms vehicle_pos,
-                                units::angle face_dir,
-                                units::angle turn_delta,
-                                tripoint_bub_ms expected_pos,
-                                units::angle expected_dir )
-{
-    CAPTURE( vehicle_pos );
-    CAPTURE( face_dir );
-    CAPTURE( turn_delta );
-    CAPTURE( expected_pos );
-    CAPTURE( expected_dir );
+static void test_rail_movement(
+    const test_case& t, int move_dir, tripoint_bub_ms vehicle_pos, units::angle face_dir,
+    units::angle turn_delta, tripoint_bub_ms expected_pos, units::angle expected_dir) {
+    CAPTURE(vehicle_pos);
+    CAPTURE(face_dir);
+    CAPTURE(turn_delta);
+    CAPTURE(expected_pos);
+    CAPTURE(expected_dir);
 
-    map &here = get_map();
-    vehicle &veh = add_moving_vehicle( here, t.veh_id, vehicle_pos, face_dir );
-    veh.turn_dir = normalize( face_dir + turn_delta );
+    map& here = get_map();
+    vehicle& veh = add_moving_vehicle(here, t.veh_id, vehicle_pos, face_dir);
+    veh.turn_dir = normalize(face_dir + turn_delta);
     int tgt_velocity = 89 * move_dir;
     veh.cruise_velocity = tgt_velocity;
     veh.velocity = tgt_velocity;
@@ -215,59 +203,54 @@ static void test_rail_movement( const test_case &t,
 
     int cycles_left = 80;
     bool always_on_rails = true;
-    for( ;; ) {
-        if( cycles_left == 0 ) {
+    for (;;) {
+        if (cycles_left == 0) {
             scan_log << "exceeded max scan cycles\n";
             break;
         }
         cycles_left -= 1;
 
-        bool is_on_rails = vehicle_movement::is_on_rails( here, veh );
+        bool is_on_rails = vehicle_movement::is_on_rails(here, veh);
         always_on_rails &= is_on_rails;
 
         here.vehmove();
-        veh.idle( true );
+        veh.idle(true);
         // If the vehicle starts skidding, the effects become random and test is RUINED
-        if( veh.skidding ) {
+        if (veh.skidding) {
             // 'REQUIRE' here is behind an if check to reduce impact on Catch statistics
-            REQUIRE( !veh.skidding );
+            REQUIRE(!veh.skidding);
         }
-        for( const tripoint_abs_ms &pos : veh.get_points() ) {
-            ter_id ter_here = here.ter( abs_to_map_local( here, pos ) );
-            if( !ter_here ) {
+        for (const tripoint_abs_ms& pos : veh.get_points()) {
+            ter_id ter_here = here.ter(abs_to_map_local(here, pos));
+            if (!ter_here) {
                 // 'REQUIRE' here is behind an if check to reduce impact on Catch statistics
-                REQUIRE( ter_here );
+                REQUIRE(ter_here);
             }
         }
 
         auto pos = veh.bub_ms_location();
-        scan_log << string_format( "pos: %s dir: %d vel: %d/%d  on_rails:%d\n",
-                                   pos.to_string(),
-                                   static_cast<int>( units::to_degrees( veh.face.dir() ) ),
-                                   veh.velocity,
-                                   veh.vertical_velocity,
-                                   is_on_rails ? 1 : 0
-                                 );
+        scan_log << string_format(
+            "pos: %s dir: %d vel: %d/%d  on_rails:%d\n", pos.to_string(),
+            static_cast<int>(units::to_degrees(veh.face.dir())), veh.velocity,
+            veh.vertical_velocity, is_on_rails ? 1 : 0);
 
-        if( pos == expected_pos ) {
-            break;
-        }
+        if (pos == expected_pos) { break; }
     }
 
     auto got_pos = veh.bub_ms_location();
-    units::angle got_dir = normalize( veh.face.dir() );
-    here.destroy_vehicle( &veh );
+    units::angle got_dir = normalize(veh.face.dir());
+    here.destroy_vehicle(&veh);
 
-    CAPTURE( got_pos );
-    CAPTURE( got_dir );
-    CAPTURE( always_on_rails );
-    CAPTURE( scan_log.str() );
+    CAPTURE(got_pos);
+    CAPTURE(got_dir);
+    CAPTURE(always_on_rails);
+    CAPTURE(scan_log.str());
 
-    if( units::to_degrees( got_dir ) != Approx( units::to_degrees( expected_dir ) ) ||
-        got_pos != expected_pos ) {
-        FAIL( "direction and/or position mismatch" );
-    } else if( ( t.scope & tcscope::check_on_rails ) && !always_on_rails ) {
-        FAIL( "'on_rails' check has failed" );
+    if (units::to_degrees(got_dir) != Approx(units::to_degrees(expected_dir))
+        || got_pos != expected_pos) {
+        FAIL("direction and/or position mismatch");
+    } else if ((t.scope & tcscope::check_on_rails) && !always_on_rails) {
+        FAIL("'on_rails' check has failed");
     } else {
         SUCCEED();
     }
@@ -275,771 +258,413 @@ static void test_rail_movement( const test_case &t,
 
 constexpr units::angle turn_step = 15_degrees;
 
-static void run_test_case_at_rotation( const test_case &t, int i_rot )
-{
-    CAPTURE( i_rot );
-    map_helpers::canvas canvas = t.canvas.rotated( i_rot );
-    tripoint canvas_pos = tripoint( ( point( g_mapsize_x, g_mapsize_y ) - canvas.size().xy() ) / 2, 0 );
+static void run_test_case_at_rotation(const test_case& t, int i_rot) {
+    CAPTURE(i_rot);
+    map_helpers::canvas canvas = t.canvas.rotated(i_rot);
+    tripoint canvas_pos = tripoint((point(g_mapsize_x, g_mapsize_y) - canvas.size().xy()) / 2, 0);
 
     point sz = t.canvas.size().xy();
-    auto start_pos = tripoint_bub_ms( canvas_pos ) + t.start_pos.raw().rotate_2d( i_rot, sz );
-    auto end_pos_s = tripoint_bub_ms( canvas_pos ) + t.end_pos_straight.raw().rotate_2d( i_rot, sz );
-    auto end_pos_l = tripoint_bub_ms( canvas_pos ) + t.end_pos_left.raw().rotate_2d( i_rot, sz );
-    auto end_pos_r = tripoint_bub_ms( canvas_pos ) + t.end_pos_right.raw().rotate_2d( i_rot, sz );
+    auto start_pos = tripoint_bub_ms(canvas_pos) + t.start_pos.raw().rotate_2d(i_rot, sz);
+    auto end_pos_s = tripoint_bub_ms(canvas_pos) + t.end_pos_straight.raw().rotate_2d(i_rot, sz);
+    auto end_pos_l = tripoint_bub_ms(canvas_pos) + t.end_pos_left.raw().rotate_2d(i_rot, sz);
+    auto end_pos_r = tripoint_bub_ms(canvas_pos) + t.end_pos_right.raw().rotate_2d(i_rot, sz);
 
     units::angle rot = i_rot * 90_degrees;
-    units::angle start_dir = normalize( t.start_dir + rot );
-    units::angle end_dir_s = normalize( t.end_dir_straight + rot );
-    units::angle end_dir_l = normalize( t.end_dir_left + rot );
-    units::angle end_dir_r = normalize( t.end_dir_right + rot );
-    clear_game( t_floor );
-    build_map_from_canvas( canvas, canvas_pos );
+    units::angle start_dir = normalize(t.start_dir + rot);
+    units::angle end_dir_s = normalize(t.end_dir_straight + rot);
+    units::angle end_dir_l = normalize(t.end_dir_left + rot);
+    units::angle end_dir_r = normalize(t.end_dir_right + rot);
+    clear_game(t_floor);
+    build_map_from_canvas(canvas, canvas_pos);
 
     // This tripoint_bub_ms cast is making me cry
     // I don't want to fix the cascading issues from proper declaration
-    const auto run_case = [&]( const char *label, const int move_dir,
-                               const tripoint_bub_ms & vehicle_pos, const units::angle face_dir,
-                               const units::angle turn_delta, const tripoint_bub_ms & expected_pos,
-    const units::angle expected_dir ) {
-        CAPTURE( label );
-        test_rail_movement( t, move_dir, tripoint_bub_ms( vehicle_pos ), face_dir,
-                            turn_delta, expected_pos, expected_dir );
-    };
+    const auto run_case =
+        [&](const char* label, const int move_dir, const tripoint_bub_ms& vehicle_pos,
+            const units::angle face_dir, const units::angle turn_delta,
+            const tripoint_bub_ms& expected_pos, const units::angle expected_dir) {
+            CAPTURE(label);
+            test_rail_movement(
+                t, move_dir, tripoint_bub_ms(vehicle_pos), face_dir, turn_delta, expected_pos,
+                expected_dir);
+        };
 
-    run_case( "moving forward without turning", 1, start_pos, start_dir,
-              0_degrees, end_pos_s, end_dir_s );
-    run_case( "moving forward turning right", 1, start_pos, start_dir,
-              turn_step, end_pos_r, end_dir_r );
-    run_case( "moving forward turning left", 1, start_pos, start_dir,
-              -turn_step, end_pos_l, end_dir_l );
+    run_case("moving forward without turning", 1, start_pos, start_dir, 0_degrees, end_pos_s,
+             end_dir_s);
+    run_case("moving forward turning right", 1, start_pos, start_dir, turn_step, end_pos_r,
+             end_dir_r);
+    run_case("moving forward turning left", 1, start_pos, start_dir, -turn_step, end_pos_l,
+             end_dir_l);
 
-    if( t.scope & tcscope::check_back_move ) {
-        run_case( "moving backwards from straight path without turning", -1,
-                  end_pos_s, end_dir_s, 0_degrees, start_pos, start_dir );
-        if( t.scope & tcscope::check_back_turns ) {
-            run_case( "moving backwards from straight path turning right", -1,
-                      end_pos_s, end_dir_s, turn_step, start_pos, start_dir );
-            run_case( "moving backwards from straight path turning left", -1,
-                      end_pos_s, end_dir_s, -turn_step, start_pos, start_dir );
+    if (t.scope & tcscope::check_back_move) {
+        run_case("moving backwards from straight path without turning", -1, end_pos_s, end_dir_s,
+                 0_degrees, start_pos, start_dir);
+        if (t.scope & tcscope::check_back_turns) {
+            run_case("moving backwards from straight path turning right", -1, end_pos_s, end_dir_s,
+                     turn_step, start_pos, start_dir);
+            run_case("moving backwards from straight path turning left", -1, end_pos_s, end_dir_s,
+                     -turn_step, start_pos, start_dir);
         }
-        if( end_pos_r != end_pos_s ) {
-            run_case( "moving backwards from right path without turning", -1,
-                      end_pos_r, end_dir_r, 0_degrees, start_pos, start_dir );
-            if( t.scope & tcscope::check_back_turns ) {
-                run_case( "moving backwards from right path turning right", -1,
-                          end_pos_r, end_dir_r, turn_step, start_pos, start_dir );
-                run_case( "moving backwards from right path turning left", -1,
-                          end_pos_r, end_dir_r, -turn_step, start_pos, start_dir );
+        if (end_pos_r != end_pos_s) {
+            run_case("moving backwards from right path without turning", -1, end_pos_r, end_dir_r,
+                     0_degrees, start_pos, start_dir);
+            if (t.scope & tcscope::check_back_turns) {
+                run_case("moving backwards from right path turning right", -1, end_pos_r, end_dir_r,
+                         turn_step, start_pos, start_dir);
+                run_case("moving backwards from right path turning left", -1, end_pos_r, end_dir_r,
+                         -turn_step, start_pos, start_dir);
             }
         }
-        if( end_pos_l != end_pos_s ) {
-            run_case( "moving backwards from left path without turning", -1,
-                      end_pos_l, end_dir_l, 0_degrees, start_pos, start_dir );
-            if( t.scope & tcscope::check_back_turns ) {
-                run_case( "moving backwards from left path turning right", -1,
-                          end_pos_l, end_dir_l, turn_step, start_pos, start_dir );
-                run_case( "moving backwards from left path turning left", -1,
-                          end_pos_l, end_dir_l, -turn_step, start_pos, start_dir );
+        if (end_pos_l != end_pos_s) {
+            run_case("moving backwards from left path without turning", -1, end_pos_l, end_dir_l,
+                     0_degrees, start_pos, start_dir);
+            if (t.scope & tcscope::check_back_turns) {
+                run_case("moving backwards from left path turning right", -1, end_pos_l, end_dir_l,
+                         turn_step, start_pos, start_dir);
+                run_case("moving backwards from left path turning left", -1, end_pos_l, end_dir_l,
+                         -turn_step, start_pos, start_dir);
             }
         }
     }
 }
 
-static void run_test_case( const test_case &t )
-{
+static void run_test_case(const test_case& t) {
     clear_all_state();
-    CAPTURE( t.veh_id );
+    CAPTURE(t.veh_id);
     constexpr auto rotation_count = 2;
-    for( auto i_rot = 0; i_rot < rotation_count; ++i_rot ) {
-        run_test_case_at_rotation( t, i_rot );
-    }
+    for (auto i_rot = 0; i_rot < rotation_count; ++i_rot) { run_test_case_at_rotation(t, i_rot); }
 }
 
-static map_helpers::canvas empty_terrain()
-{
-    return { {
-            U".........",
-            U".........",
-            U".........",
-            U".........",
-            U"..l.o.r..",
-            U".........",
-            U".........",
-            U".........",
-            U".........",
-            U".........",
-            U".........",
-            U".........",
-            U".........",
-            U".........",
-            U"....*....",
-            U".........",
-            U".........",
-            U".........",
-            U".........",
-        }
-    };
+static map_helpers::canvas empty_terrain() {
+    return {{
+        U".........", U".........", U".........", U".........", U"..l.o.r..",
+        U".........", U".........", U".........", U".........", U".........",
+        U".........", U".........", U".........", U".........", U"....*....",
+        U".........", U".........", U".........", U".........",
+    }};
 }
 
-static map_helpers::canvas rails_straight()
-{
-    return { {
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..o..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..*..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-            U".x..x..x.",
-        }
-    };
+static map_helpers::canvas rails_straight() {
+    return {{
+        U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..o..x.", U".x..x..x.",
+        U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.",
+        U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..*..x.",
+        U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.",
+    }};
 }
 
-static map_helpers::canvas rails_diag_start()
-{
-    return { {
-            U"................x..x..x.",
-            U"...............x..x..x..",
-            U"..............x..x..x...",
-            U".............x..x..x....",
-            U"............x..o..x.....",
-            U"...........x..x..x......",
-            U"..........x..x..x.......",
-            U".........x..x..x........",
-            U"........x..x..x.........",
-            U".......x..x..x..........",
-            U"......x..x..x...........",
-            U".....x..x..x............",
-            U"....x..x..x.............",
-            U"...x..x..x..............",
-            U"..x..x..x...............",
-            U".x..x..x................",
-            U".x..x..x................",
-            U".x..x..x................",
-            U".x..x..x................",
-            U".x..x..x................",
-            U".x..x..x................",
-            U".x..*..x................",
-            U".x..x..x................",
-            U".x..x..x................",
-            U".x..x..x................",
-            U".x..x..x................",
-        }
-    };
+static map_helpers::canvas rails_diag_start() {
+    return {{
+        U"................x..x..x.", U"...............x..x..x..", U"..............x..x..x...",
+        U".............x..x..x....", U"............x..o..x.....", U"...........x..x..x......",
+        U"..........x..x..x.......", U".........x..x..x........", U"........x..x..x.........",
+        U".......x..x..x..........", U"......x..x..x...........", U".....x..x..x............",
+        U"....x..x..x.............", U"...x..x..x..............", U"..x..x..x...............",
+        U".x..x..x................", U".x..x..x................", U".x..x..x................",
+        U".x..x..x................", U".x..x..x................", U".x..x..x................",
+        U".x..*..x................", U".x..x..x................", U".x..x..x................",
+        U".x..x..x................", U".x..x..x................",
+    }};
 }
 
-static map_helpers::canvas rails_diag_end()
-{
-    return { {
-            U"..............................",
-            U".....................xxxxxxxxx",
-            U"....................x.........",
-            U"...................x..........",
-            U"..................x..xxxxoxxxx",
-            U".................x..x.........",
-            U"................x..x..........",
-            U"...............x..x..xxxxxxxxx",
-            U"..............x..x..x.........",
-            U".............x..x..x..........",
-            U"............x..x..x...........",
-            U"...........x..x..x............",
-            U"..........x..x..x.............",
-            U".........x..x..x..............",
-            U"........x..x..x...............",
-            U".......x..x..x................",
-            U"......x..x..x.................",
-            U".....x..x..x..................",
-            U"....x..*..x...................",
-            U"...x..x..x....................",
-            U"..x..x..x.....................",
-            U".x..x..x......................",
-            U"x..x..x.......................",
-            U"..x..x........................",
-            U".x..x.........................",
-            U"x..x..........................",
-            U"..x...........................",
-            U".x............................",
-            U"x.............................",
-            U"..............................",
-        }
-    };
+static map_helpers::canvas rails_diag_end() {
+    return {{
+        U"..............................", U".....................xxxxxxxxx",
+        U"....................x.........", U"...................x..........",
+        U"..................x..xxxxoxxxx", U".................x..x.........",
+        U"................x..x..........", U"...............x..x..xxxxxxxxx",
+        U"..............x..x..x.........", U".............x..x..x..........",
+        U"............x..x..x...........", U"...........x..x..x............",
+        U"..........x..x..x.............", U".........x..x..x..............",
+        U"........x..x..x...............", U".......x..x..x................",
+        U"......x..x..x.................", U".....x..x..x..................",
+        U"....x..*..x...................", U"...x..x..x....................",
+        U"..x..x..x.....................", U".x..x..x......................",
+        U"x..x..x.......................", U"..x..x........................",
+        U".x..x.........................", U"x..x..........................",
+        U"..x...........................", U".x............................",
+        U"x.............................", U"..............................",
+    }};
 }
 
-static map_helpers::canvas rails_cross()
-{
-    return { {
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..o..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..*..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-            U"..............x..x..x.............",
-        }
-    };
+static map_helpers::canvas rails_cross() {
+    return {{
+        U"..............x..x..x.............", U"..............x..x..x.............",
+        U"..............x..x..x.............", U"..............x..x..x.............",
+        U"..............x..o..x.............", U"..............x..x..x.............",
+        U"..............x..x..x.............", U"..............x..x..x.............",
+        U"..............x..x..x.............", U"..............x..x..x.............",
+        U"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", U"..............x..x..x.............",
+        U"..............x..x..x.............", U"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        U"..............x..x..x.............", U"..............x..x..x.............",
+        U"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", U"..............x..x..x.............",
+        U"..............x..x..x.............", U"..............x..x..x.............",
+        U"..............x..x..x.............", U"..............x..x..x.............",
+        U"..............x..*..x.............", U"..............x..x..x.............",
+        U"..............x..x..x.............", U"..............x..x..x.............",
+        U"..............x..x..x.............",
+    }};
 }
 
-static map_helpers::canvas rails_tee_straight()
-{
-    return { {
-            U".x..x..x........x..x..x................",
-            U"..x..x..x.......x..x..x................",
-            U"...x..x..x......x..x..x................",
-            U"....x..x..x.....x..x..x................",
-            U".....x..l..x....x..o..x................",
-            U"......x..x..x...x..x..x................",
-            U".......x..x..x..x..x..x................",
-            U"........x..x..x.x..x..x................",
-            U".........x..x..xx..x..x................",
-            U"..........x..x..x..x..x................",
-            U"...........x..x.xx.x..x................",
-            U"............x..xx.xx..x................",
-            U".............x..x..x..x........x..x..x.",
-            U"..............x.xx.xx.x.......x..x..x..",
-            U"...............xx.xx.xx......x..x..x...",
-            U"................x..x..x.....x..x..x....",
-            U"................x..x..x....x..r..x.....",
-            U"................x..x..x...x..x..x......",
-            U"................x..x..x..x..x..x.......",
-            U"................x..x..x.x..x..x........",
-            U"................x..x..xx..x..x.........",
-            U"................x..x..x..x..x..........",
-            U"................x..x.xx.x..x...........",
-            U"................x..xx.xx..x............",
-            U"................x..x..x..x.............",
-            U"................x.xx.xx.x..............",
-            U"................xx.xx.xx...............",
-            U"................x..x..x................",
-            U"................x..x..x................",
-            U"................x..*..x................",
-            U"................x..x..x................",
-            U"................x..x..x................",
-            U"................x..x..x................",
-            U"................x..x..x................",
-        }
-    };
+static map_helpers::canvas rails_tee_straight() {
+    return {{
+        U".x..x..x........x..x..x................", U"..x..x..x.......x..x..x................",
+        U"...x..x..x......x..x..x................", U"....x..x..x.....x..x..x................",
+        U".....x..l..x....x..o..x................", U"......x..x..x...x..x..x................",
+        U".......x..x..x..x..x..x................", U"........x..x..x.x..x..x................",
+        U".........x..x..xx..x..x................", U"..........x..x..x..x..x................",
+        U"...........x..x.xx.x..x................", U"............x..xx.xx..x................",
+        U".............x..x..x..x........x..x..x.", U"..............x.xx.xx.x.......x..x..x..",
+        U"...............xx.xx.xx......x..x..x...", U"................x..x..x.....x..x..x....",
+        U"................x..x..x....x..r..x.....", U"................x..x..x...x..x..x......",
+        U"................x..x..x..x..x..x.......", U"................x..x..x.x..x..x........",
+        U"................x..x..xx..x..x.........", U"................x..x..x..x..x..........",
+        U"................x..x.xx.x..x...........", U"................x..xx.xx..x............",
+        U"................x..x..x..x.............", U"................x.xx.xx.x..............",
+        U"................xx.xx.xx...............", U"................x..x..x................",
+        U"................x..x..x................", U"................x..*..x................",
+        U"................x..x..x................", U"................x..x..x................",
+        U"................x..x..x................", U"................x..x..x................",
+    }};
 }
 
-static map_helpers::canvas rails_tee_diag()
-{
-    return { {
-            U"..................x..x..x.........x..x..x..",
-            U"..................x..x..x........x..x..x...",
-            U"..................x..x..x.......x..x..x....",
-            U"..................x..x..x......x..x..x.....",
-            U"..................x..l..x.....x..o..x......",
-            U"..................x..x..x....x..x..x.......",
-            U"..................x..x..x...x..x..x........",
-            U"..................x..x..x..x..x..x.........",
-            U"..................x..x..x.x..x..x..........",
-            U"..................x..x..xx..x..x...........",
-            U"..................x..x..x..x..x............",
-            U"..................x..x.xx.x..x.............",
-            U"..................x..xx.xx..x..............",
-            U"..................x..x..x..x...............",
-            U"..................x.xx.xx.x................",
-            U"..................xx.xx.xx.................",
-            U"..................x..x..x..................",
-            U".................x..x..x...................",
-            U"................x..x..x....................",
-            U"...............x..x..x.....................",
-            U"..............x..x..x......................",
-            U".............xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-            U"............x..x..x........................",
-            U"...........x..x..x.........................",
-            U"..........x..xxxxxxxxxxxxxxxxxxxxxxxxrxxxxx",
-            U".........x..x..x...........................",
-            U"........x..x..x............................",
-            U".......x..x..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-            U"......x..x..x..............................",
-            U".....x..x..x...............................",
-            U"....x..*..x................................",
-            U"...x..x..x.................................",
-            U"..x..x..x..................................",
-            U".x..x..x...................................",
-            U"x..x..x....................................",
-            U"..x..x.....................................",
-            U".x..x......................................",
-            U"x..x.......................................",
-            U"..x........................................",
-            U".x.........................................",
-            U"x..........................................",
-            U"...........................................",
-        }
-    };
+static map_helpers::canvas rails_tee_diag() {
+    return {{
+        U"..................x..x..x.........x..x..x..",
+        U"..................x..x..x........x..x..x...",
+        U"..................x..x..x.......x..x..x....",
+        U"..................x..x..x......x..x..x.....",
+        U"..................x..l..x.....x..o..x......",
+        U"..................x..x..x....x..x..x.......",
+        U"..................x..x..x...x..x..x........",
+        U"..................x..x..x..x..x..x.........",
+        U"..................x..x..x.x..x..x..........",
+        U"..................x..x..xx..x..x...........",
+        U"..................x..x..x..x..x............",
+        U"..................x..x.xx.x..x.............",
+        U"..................x..xx.xx..x..............",
+        U"..................x..x..x..x...............",
+        U"..................x.xx.xx.x................",
+        U"..................xx.xx.xx.................",
+        U"..................x..x..x..................",
+        U".................x..x..x...................",
+        U"................x..x..x....................",
+        U"...............x..x..x.....................",
+        U"..............x..x..x......................",
+        U".............xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        U"............x..x..x........................",
+        U"...........x..x..x.........................",
+        U"..........x..xxxxxxxxxxxxxxxxxxxxxxxxrxxxxx",
+        U".........x..x..x...........................",
+        U"........x..x..x............................",
+        U".......x..x..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        U"......x..x..x..............................",
+        U".....x..x..x...............................",
+        U"....x..*..x................................",
+        U"...x..x..x.................................",
+        U"..x..x..x..................................",
+        U".x..x..x...................................",
+        U"x..x..x....................................",
+        U"..x..x.....................................",
+        U".x..x......................................",
+        U"x..x.......................................",
+        U"..x........................................",
+        U".x.........................................",
+        U"x..........................................",
+        U"...........................................",
+    }};
 }
 
-static map_helpers::canvas rails_straight_shifting_left()
-{
-    return { {
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..o..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..*..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-        }
-    };
+static map_helpers::canvas rails_straight_shifting_left() {
+    return {{
+        U".x..x..x...", U".x..x..x...", U".x..x..x...", U".x..x..x...", U".x..o..x...",
+        U".x..x..x...", U".x..x..x...", U".x..x..x...", U".x..x..x...", U".x..x..x...",
+        U".x..x..x...", U"..x..x..x..", U"..x..x..x..", U"..x..x..x..", U"..x..x..x..",
+        U"..x..x..x..", U"..x..x..x..", U"...x..x..x.", U"...x..x..x.", U"...x..x..x.",
+        U"...x..x..x.", U"...x..x..x.", U"...x..x..x.", U"...x..*..x.", U"...x..x..x.",
+        U"...x..x..x.", U"...x..x..x.", U"...x..x..x.",
+    }};
 }
 
-static map_helpers::canvas rails_straight_shifting_right()
-{
-    return { {
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..o..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"...x..x..x.",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U"..x..x..x..",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..*..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-            U".x..x..x...",
-        }
-    };
+static map_helpers::canvas rails_straight_shifting_right() {
+    return {{
+        U"...x..x..x.", U"...x..x..x.", U"...x..x..x.", U"...x..x..x.", U"...x..o..x.",
+        U"...x..x..x.", U"...x..x..x.", U"...x..x..x.", U"...x..x..x.", U"...x..x..x.",
+        U"...x..x..x.", U"..x..x..x..", U"..x..x..x..", U"..x..x..x..", U"..x..x..x..",
+        U"..x..x..x..", U"..x..x..x..", U".x..x..x...", U".x..x..x...", U".x..x..x...",
+        U".x..x..x...", U".x..x..x...", U".x..x..x...", U".x..*..x...", U".x..x..x...",
+        U".x..x..x...", U".x..x..x...", U".x..x..x...",
+    }};
 }
 
-static map_helpers::canvas rails_diag_shifting_left()
-{
-    return { {
-            U"....................x..x..x..",
-            U"...................x..x..x...",
-            U"..................x..x..x....",
-            U".................x..x..x.....",
-            U"................x..o..x......",
-            U"...............x..x..x.......",
-            U"..............x..x..x........",
-            U".............x..x..x.........",
-            U"............x..x..x..........",
-            U"...........x..x..x...........",
-            U"..........x..x..x............",
-            U"..........x..x..x............",
-            U".........x..x..x.............",
-            U"........x..x..x..............",
-            U".......x..x..x...............",
-            U".......x..x..x...............",
-            U"......x..x..x................",
-            U".....x..x..x.................",
-            U"....x..x..x..................",
-            U"...x..x..x...................",
-            U"..x..*..x....................",
-            U".x..x..x.....................",
-            U"x..x..x......................",
-            U"..x..x.......................",
-            U".x..x........................",
-            U"x..x.........................",
-            U"..x..........................",
-            U".x...........................",
-            U"x............................"
-        }
-    };
+static map_helpers::canvas rails_diag_shifting_left() {
+    return {
+        {U"....................x..x..x..", U"...................x..x..x...",
+         U"..................x..x..x....", U".................x..x..x.....",
+         U"................x..o..x......", U"...............x..x..x.......",
+         U"..............x..x..x........", U".............x..x..x.........",
+         U"............x..x..x..........", U"...........x..x..x...........",
+         U"..........x..x..x............", U"..........x..x..x............",
+         U".........x..x..x.............", U"........x..x..x..............",
+         U".......x..x..x...............", U".......x..x..x...............",
+         U"......x..x..x................", U".....x..x..x.................",
+         U"....x..x..x..................", U"...x..x..x...................",
+         U"..x..*..x....................", U".x..x..x.....................",
+         U"x..x..x......................", U"..x..x.......................",
+         U".x..x........................", U"x..x.........................",
+         U"..x..........................", U".x...........................",
+         U"x............................"}};
 }
 
-static map_helpers::canvas rails_diag_shifting_right()
-{
-    return { {
-            U"......................x..x..x..",
-            U".....................x..x..x...",
-            U"....................x..x..x....",
-            U"...................x..x..x.....",
-            U"..................x..o..x......",
-            U".................x..x..x.......",
-            U"................x..x..x........",
-            U"...............x..x..x.........",
-            U"..............x..x..x..........",
-            U".............x..x..x...........",
-            U"...........xx.xx.xx............",
-            U"..........x..x..x..............",
-            U".........x..x..x...............",
-            U".......xx.xx.xx................",
-            U"......x..x..x..................",
-            U".....x..x..x...................",
-            U"....x..x..x....................",
-            U"...x..x..x.....................",
-            U"..x..*..x......................",
-            U".x..x..x.......................",
-            U"x..x..x........................",
-            U"..x..x.........................",
-            U".x..x..........................",
-            U"x..x...........................",
-            U"..x............................",
-            U".x.............................",
-            U"x.............................."
-        }
-    };
+static map_helpers::canvas rails_diag_shifting_right() {
+    return {
+        {U"......................x..x..x..", U".....................x..x..x...",
+         U"....................x..x..x....", U"...................x..x..x.....",
+         U"..................x..o..x......", U".................x..x..x.......",
+         U"................x..x..x........", U"...............x..x..x.........",
+         U"..............x..x..x..........", U".............x..x..x...........",
+         U"...........xx.xx.xx............", U"..........x..x..x..............",
+         U".........x..x..x...............", U".......xx.xx.xx................",
+         U"......x..x..x..................", U".....x..x..x...................",
+         U"....x..x..x....................", U"...x..x..x.....................",
+         U"..x..*..x......................", U".x..x..x.......................",
+         U"x..x..x........................", U"..x..x.........................",
+         U".x..x..........................", U"x..x...........................",
+         U"..x............................", U".x.............................",
+         U"x.............................."}};
 }
 
-static map_helpers::canvas rails_straight_ramp()
-{
-    return map_helpers::canvas::make_multilevel( {{
-            { {
-                    U"#########",
-                    U"#########",
-                    U"#########",
-                    U"#########",
-                    U"#########",
-                    U"#########",
-                    U"#########",
-                    U"#########",
-                    U"#########",
-                    U"UBUUBUUBU",
-                    U"ubuubuubu",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..*..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                }
-            }, { {
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..o..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U".x..x..x.",
-                    U"dcddcddcd",
-                    U"DCDDCDDCD",
-                    U"         ",
-                    U"         ",
-                    U"         ",
-                    U"         ",
-                    U"         ",
-                    U"         ",
-                    U"         ",
-                    U"         ",
-                    U"         ",
-                    U"         ",
-                    U"         ",
-                }
-            }
-        }} );
+static map_helpers::canvas rails_straight_ramp() {
+    return map_helpers::canvas::make_multilevel(
+        {{{{
+              U"#########", U"#########", U"#########", U"#########", U"#########", U"#########",
+              U"#########", U"#########", U"#########", U"UBUUBUUBU", U"ubuubuubu", U".x..x..x.",
+              U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..*..x.",
+              U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.",
+          }},
+          {{
+              U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..x..x.", U".x..o..x.", U".x..x..x.",
+              U".x..x..x.", U".x..x..x.", U".x..x..x.", U"dcddcddcd", U"DCDDCDDCD", U"         ",
+              U"         ", U"         ", U"         ", U"         ", U"         ", U"         ",
+              U"         ", U"         ", U"         ", U"         ",
+          }}}});
 }
 
-static map_helpers::canvas rails_straight_start_outside()
-{
-    return { {
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..l..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..o..x.........",
-            U".........x..x..x.....r...",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x.........",
-            U"......*..x..x..x.........",
-            U".........x..x..x.........",
-            U".........x..x..x........."
-        }
-    };
+static map_helpers::canvas rails_straight_start_outside() {
+    return {
+        {U".........x..x..x.........", U".........x..x..x.........", U".........x..x..x.........",
+         U".........x..x..x.........", U".........x..l..x.........", U".........x..x..x.........",
+         U".........x..x..x.........", U".........x..x..x.........", U".........x..x..x.........",
+         U".........x..x..x.........", U".........x..x..x.........", U".........x..x..x.........",
+         U".........x..x..x.........", U".........x..o..x.........", U".........x..x..x.....r...",
+         U".........x..x..x.........", U".........x..x..x.........", U".........x..x..x.........",
+         U".........x..x..x.........", U".........x..x..x.........", U".........x..x..x.........",
+         U".........x..x..x.........", U".........x..x..x.........", U".........x..x..x.........",
+         U".........x..x..x.........", U".........x..x..x.........", U".........x..x..x.........",
+         U".........x..x..x.........", U".........x..x..x.........", U"......*..x..x..x.........",
+         U".........x..x..x.........", U".........x..x..x........."}};
 }
 
-TEST_CASE( "vehicle_rail_movement_derailed", "[vehicle][railroad]" )
-{
-    SECTION( "no_rails" ) {
+TEST_CASE("vehicle_rail_movement_derailed", "[vehicle][railroad]") {
+    SECTION("no_rails") {
         // On normal ground rail vehicle behaves like normal vehicle
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::barebones,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees - turn_step,
-            -90_degrees + turn_step,
-            empty_terrain()
-        } );
+        run_test_case(
+            test_case{"motorcycle_rail", tcscope::barebones, -90_degrees, -90_degrees,
+                      -90_degrees - turn_step, -90_degrees + turn_step, empty_terrain()});
 
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::barebones,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees - turn_step,
-            -90_degrees + turn_step,
-            empty_terrain()
-        } );
+        run_test_case(
+            test_case{"motorized_draisine_trirail", tcscope::barebones, -90_degrees, -90_degrees,
+                      -90_degrees - turn_step, -90_degrees + turn_step, empty_terrain()});
     }
-    SECTION( "get_on_straight_rails" ) {
+    SECTION("get_on_straight_rails") {
         // Derailed rail vehicle must snap onto rails, but only at angle <= 30 degrees,
         // and only when rail configuration matches expected
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::barebones,
-            -60_degrees,
-            -90_degrees,
-            -90_degrees,
-            -45_degrees,
-            rails_straight_start_outside()
-        } );
+        run_test_case(
+            test_case{"motorized_draisine_trirail", tcscope::barebones, -60_degrees, -90_degrees,
+                      -90_degrees, -45_degrees, rails_straight_start_outside()});
     }
 }
 
-TEST_CASE( "vehicle_rail_movement_basic_straight", "[vehicle][railroad]" )
-{
+TEST_CASE("vehicle_rail_movement_basic_straight", "[vehicle][railroad]") {
     // Rail vehicle must follow straight rails regardless of desired turn dir.
-    run_test_case( test_case{
-        "motorized_draisine_trirail",
-        tcscope::full,
-        -90_degrees,
-        -90_degrees,
-        -90_degrees,
-        -90_degrees,
-        rails_straight()
-    } );
+    run_test_case(
+        test_case{"motorized_draisine_trirail", tcscope::full, -90_degrees, -90_degrees,
+                  -90_degrees, -90_degrees, rails_straight()});
 }
 
-TEST_CASE( "vehicle_rail_movement_basic_enter_diagonal", "[vehicle][railroad]" )
-{
+TEST_CASE("vehicle_rail_movement_basic_enter_diagonal", "[vehicle][railroad]") {
     // Rail vehicle must follow tracks and turn regardless of desired turn dir.
-    run_test_case( test_case{
-        "motorcycle_rail",
-        tcscope::full,
-        -90_degrees,
-        -45_degrees,
-        -45_degrees,
-        -45_degrees,
-        rails_diag_start()
-    } );
+    run_test_case(
+        test_case{"motorcycle_rail", tcscope::full, -90_degrees, -45_degrees, -45_degrees,
+                  -45_degrees, rails_diag_start()});
 }
 
-TEST_CASE( "vehicle_rail_movement_basic_leave_diagonal", "[vehicle][railroad]" )
-{
+TEST_CASE("vehicle_rail_movement_basic_leave_diagonal", "[vehicle][railroad]") {
     // Rail vehicle must follow tracks and turn regardless of desired turn dir.
-    run_test_case( test_case{
-        "motorized_draisine_trirail",
-        tcscope::full,
-        -45_degrees,
-        0_degrees,
-        0_degrees,
-        0_degrees,
-        rails_diag_end()
-    } );
+    run_test_case(
+        test_case{"motorized_draisine_trirail", tcscope::full, -45_degrees, 0_degrees, 0_degrees,
+                  0_degrees, rails_diag_end()});
 }
 
-TEST_CASE( "vehicle_rail_movement_basic_crossing", "[vehicle][railroad]" )
-{
+TEST_CASE("vehicle_rail_movement_basic_crossing", "[vehicle][railroad]") {
     // Rail vehicle must follow straight rails regardless of desired turn dir.
-    run_test_case( test_case{
-        "motorcycle_rail",
-        tcscope::full,
-        -90_degrees,
-        -90_degrees,
-        -90_degrees,
-        -90_degrees,
-        rails_cross()
-    } );
+    run_test_case(
+        test_case{"motorcycle_rail", tcscope::full, -90_degrees, -90_degrees, -90_degrees,
+                  -90_degrees, rails_cross()});
 }
 
-TEST_CASE( "vehicle_rail_movement_fork", "[vehicle][railroad]" )
-{
-    SECTION( "rails_tee_straight" ) {
+TEST_CASE("vehicle_rail_movement_fork", "[vehicle][railroad]") {
+    SECTION("rails_tee_straight") {
         // Rail vehicle must follow straight rails by default,
         // but can switch tracks depending on desired turn dir
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees - 45_degrees,
-            -90_degrees + 45_degrees,
-            rails_tee_straight()
-        } );
+        run_test_case(
+            test_case{"motorized_draisine_trirail", tcscope::full, -90_degrees, -90_degrees,
+                      -90_degrees - 45_degrees, -90_degrees + 45_degrees, rails_tee_straight()});
     }
-    SECTION( "rails_tee_diag" ) {
+    SECTION("rails_tee_diag") {
         // Rail vehicle must follow straight rails by default,
         // but can switch tracks depending on desired turn dir
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::no_back_turns,
-            -45_degrees,
-            -45_degrees,
-            -45_degrees - 45_degrees,
-            -45_degrees + 45_degrees,
-            rails_tee_diag()
-        } );
+        run_test_case(
+            test_case{"motorcycle_rail", tcscope::no_back_turns, -45_degrees, -45_degrees,
+                      -45_degrees - 45_degrees, -45_degrees + 45_degrees, rails_tee_diag()});
     }
-
 }
 
-TEST_CASE( "vehicle_rail_movement_shifting_straight_left", "[vehicle][railroad]" )
-{
+TEST_CASE("vehicle_rail_movement_shifting_straight_left", "[vehicle][railroad]") {
     // Rail vehicle must shift by 1 tile left or right if the rails shift left or right.
-    run_test_case( test_case{
-        "motorized_draisine_trirail",
-        tcscope::full,
-        -90_degrees,
-        -90_degrees,
-        -90_degrees,
-        -90_degrees,
-        rails_straight_shifting_left()
-    } );
+    run_test_case(
+        test_case{"motorized_draisine_trirail", tcscope::full, -90_degrees, -90_degrees,
+                  -90_degrees, -90_degrees, rails_straight_shifting_left()});
 }
 
-TEST_CASE( "vehicle_rail_movement_shifting_straight_right", "[vehicle][railroad]" )
-{
+TEST_CASE("vehicle_rail_movement_shifting_straight_right", "[vehicle][railroad]") {
     // Rail vehicle must shift by 1 tile left or right if the rails shift left or right.
-    run_test_case( test_case{
-        "motorcycle_rail",
-        tcscope::full,
-        -90_degrees,
-        -90_degrees,
-        -90_degrees,
-        -90_degrees,
-        rails_straight_shifting_right()
-    } );
+    run_test_case(
+        test_case{"motorcycle_rail", tcscope::full, -90_degrees, -90_degrees, -90_degrees,
+                  -90_degrees, rails_straight_shifting_right()});
 }
 
-TEST_CASE( "vehicle_rail_movement_shifting_diagonal_left", "[vehicle][railroad]" )
-{
-    run_test_case( test_case{
-        "motorized_draisine_trirail",
-        tcscope::full,
-        -45_degrees,
-        -45_degrees,
-        -45_degrees,
-        -45_degrees,
-        rails_diag_shifting_left()
-    } );
+TEST_CASE("vehicle_rail_movement_shifting_diagonal_left", "[vehicle][railroad]") {
+    run_test_case(
+        test_case{"motorized_draisine_trirail", tcscope::full, -45_degrees, -45_degrees,
+                  -45_degrees, -45_degrees, rails_diag_shifting_left()});
 }
 
-TEST_CASE( "vehicle_rail_movement_shifting_diagonal_right", "[vehicle][railroad]" )
-{
-    run_test_case( test_case{
-        "motorcycle_rail",
-        tcscope::full,
-        -45_degrees,
-        -45_degrees,
-        -45_degrees,
-        -45_degrees,
-        rails_diag_shifting_right()
-    } );
+TEST_CASE("vehicle_rail_movement_shifting_diagonal_right", "[vehicle][railroad]") {
+    run_test_case(
+        test_case{"motorcycle_rail", tcscope::full, -45_degrees, -45_degrees, -45_degrees,
+                  -45_degrees, rails_diag_shifting_right()});
 }
 
-TEST_CASE( "vehicle_rail_movement_ramp", "[vehicle][railroad][ramp]" )
-{
-    SECTION( "straight_ramp" ) {
+TEST_CASE("vehicle_rail_movement_ramp", "[vehicle][railroad][ramp]") {
+    SECTION("straight_ramp") {
         // Rail vehicle must go up the ramp while following rails
-        run_test_case( test_case{
-            "motorcycle_rail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_straight_ramp()
-        } );
+        run_test_case(
+            test_case{"motorcycle_rail", tcscope::full, -90_degrees, -90_degrees, -90_degrees,
+                      -90_degrees, rails_straight_ramp()});
 
-        run_test_case( test_case{
-            "motorized_draisine_trirail",
-            tcscope::full,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            -90_degrees,
-            rails_straight_ramp()
-        } );
+        run_test_case(
+            test_case{"motorized_draisine_trirail", tcscope::full, -90_degrees, -90_degrees,
+                      -90_degrees, -90_degrees, rails_straight_ramp()});
     }
 }
