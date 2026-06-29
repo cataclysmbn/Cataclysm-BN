@@ -787,7 +787,7 @@
     "coverage": 95,
     "encumbrance": 40,
     "warmth": 20,
-    "material_thickness": 6,
+    "material_thickness": 8,
     "environmental_protection": 3,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "max_charges": 500,
