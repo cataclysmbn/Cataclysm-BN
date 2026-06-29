@@ -128,7 +128,7 @@
     "id": "power_armor_heavy",
     "type": "TOOL_ARMOR",
     "name": { "str": "heavy power armor", "str_pl": "suits of heavy power armor" },
-    "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of shrugging off .50 BMG rounds.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
+    "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of negating anything up to armor-piercing .30-06 rounds.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
     "weight": "54 kg",
     "volume": "81 L",
     "price": "115 kUSD",
@@ -159,7 +159,6 @@
       "set_charges": 2,
       "set_charges_msg": "You need a UPS or a bionic armor interface to power this."
     },
-    "resistance": { "bullet": 145 },
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE" ]
   },
   {
@@ -357,7 +356,6 @@
       "active": true
     },
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "resistance": { "bullet": 145 },
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
     "hearing_protection": 80
   },
