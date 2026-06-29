@@ -168,7 +168,7 @@
     "looks_like": "power_armor_heavy",
     "type": "TOOL_ARMOR",
     "name": { "str": "heavy power armor (active)", "str_pl": "suits of heavy power armor (active)" },
-    "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of shrugging off .50 BMG rounds.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
+    "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of negating anything up to armor-piercing .30-06 rounds.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
     "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 2250000,
     "revert_to": "power_armor_heavy",
