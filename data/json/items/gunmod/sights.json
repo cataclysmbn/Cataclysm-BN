@@ -113,8 +113,8 @@
       [ "FLAMETHROWERS" ],
       [ "SPRAY_GUNS" ]
     ],
-    "sight_dispersion": 0,
-    "aim_speed": 8,
+    "sight_dispersion": 8,
+    "aim_speed": 9,
     "flags": [ "DISABLE_SIGHTS", "ZOOM" ]
   },
   {
