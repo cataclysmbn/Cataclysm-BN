@@ -2148,7 +2148,7 @@
   },
   {
     "type": "profession",
-    "id": "prof_combat_engineer",
+    "id": "prof_combat_medic",
     "name": "Military Corpsman",
     "description": "You were trained to keep your platoon in top shape, while still having to lug all the same kit as any other soldier alongside your medical supplies.  Now you're on your own against the undead, and that rifle they saddled you with is your only line of defense.",
     "age": { "min": 20, "max": 40 },
