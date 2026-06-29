@@ -201,7 +201,7 @@ if (TILES)
     endif()
 
     if (CATA_SHADERS)
-        add_dependencies(cataclysm-bn-tiles-common cataclysm-shaders)
+        add_dependencies(cataclysm-bn-tiles-common cata_shaders)
     endif ()
 endif ()
 
@@ -237,7 +237,7 @@ if (CURSES)
     target_link_libraries(cataclysm-bn PRIVATE cataclysm-bn-common)
 
     if (CATA_SHADERS)
-        add_dependencies(cataclysm-bn-common cataclysm-shaders)
+        add_dependencies(cataclysm-bn-common cata_shaders)
     endif ()
 
     if (RELEASE)

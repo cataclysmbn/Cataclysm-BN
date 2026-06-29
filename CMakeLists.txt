@@ -562,9 +562,9 @@ if (CATA_SDL)
 
         endforeach ()
 
-        add_custom_target(cataclysm-shaders ALL DEPENDS ${CATA_SHADER_OUTPUTS})
+        add_custom_target(cata_shaders ALL DEPENDS ${CATA_SHADER_OUTPUTS})
         if (SHADERCROSS_TARGET)
-            add_dependencies(cataclysm-shaders ${SHADERCROSS_TARGET})
+            add_dependencies(cata_shaders ${SHADERCROSS_TARGET})
         endif ()
     else ()
 
@@ -598,7 +598,7 @@ if (CATA_SDL)
 
         set(CATA_SHADERS ON)
         message(STATUS "BUILD_SHADERCROSS disabled; using precompiled shaders from data/shaders")
-        add_custom_target(cataclysm-shaders DEPENDS ${CATA_PRECOMPILED_SHADER_OUTPUTS})
+        add_custom_target(cata_shaders DEPENDS ${CATA_PRECOMPILED_SHADER_OUTPUTS})
     endif ()
 endif ()
 
