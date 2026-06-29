@@ -255,19 +255,19 @@ It does NOT affect:
 
 10 and more - **Perfectly reliable**. Almost never malfunctions. Factory specification or milspec only, and extremely high quality on top. Most guns with this much durability also have the NEVER_JAMS flag, but if they don't a pristine gun (not damaged, no fouling) will malfunction roughly once every 6000 shots. 
 
-9 - **Reliable**. Rarely malfunctions. Factiry specification or milspec only. A pristine gun will malfunction roughly once every 3000 shots. 
+9 - **Reliable**. Rarely malfunctions. Factory specification or milspec only. A pristine gun will malfunction roughly once every 3000 shots. 
 
 8 - **Dependable**. Malfunctions infrequently. Guns of very high quality. Highest durability possible for guns crafted **with** gunsmithing tools. A pristine gun will malfunction roughly once every 1500 shots. 
 
 7 - **Serviceable**. Malfunctions infrequently. Higher quality guns, or guns built to chew through lots of ammo, like the m249. A pristine gun will malfunction once every 768 shots, on average. 
 
-6 - **Acceptable**. Failures can be problematic. Highest durability possible for guns crafted **without** gunsmithing tools. Includes lots of mass-produces guns, like glocks and m4a1 carbines. A pristine gun will malfunction once every 384 shots, on average. 
+6 - **Acceptable**. Malfunctions occasionally. Highest durability possible for guns crafted **without** gunsmithing tools. Includes lots of mass-produces guns, like glocks and m4a1 carbines. A pristine gun will malfunction once every 384 shots, on average. 
 
-5 - **Usable**. Failures can be problematic and more serious. Decently handmade guns, or infamously cheap guns like the sten. A pristine gun will malfunction once every 192 shots, on average. 
+5 - **Usable**. Malfunctions frequently. Decently handmade guns, or infamously cheap guns like the sten. A pristine gun will malfunction once every 192 shots, on average. 
 
-4 - **Poor**. Significant risk of malfunction. Badly assembled guns. A pristine gun will malfunction once every 96 shots, on average. 
+4 - **Poor**. Malfunctions often. Badly assembled guns. A pristine gun will malfunction once every 96 shots, on average. 
 
-3 - **Terrible**. Significant risk of malfunction. 3d printed guns, or haphazardly assembled pipe guns. A pristine gun will malfunction once every 48 shots, on average. 
+3 - **Terrible**. Malfunctions constantly. 3d printed guns, or haphazardly assembled pipe guns. A pristine gun will malfunction once every 48 shots, on average. 
 
 2 or less - **Unusuable**. Extreme risk of malfunction. Not applied by default to any item.
 
@@ -288,7 +288,7 @@ This is a value separate from gun durability. It indicates, as a percentage*, ho
 
 48 - It takes 96 blackpowder shots to fully foul a gun. Most rifles. 
 
-72 - It takes 176 blackpowder shots to fully foul a gun. Durable guns or very old service weapons, like the Mosin-Nagant or Marlin 39A.
+72 - It takes 176 blackpowder shots to fully foul a gun. Durable guns or very old weapons, like the Mosin-Nagant or Marlin 39A.
 
 96 - It takes 1112 blackpowder shots to fully foul a gun. Flintlocks and other guns specifically designed to use blackpowder rounds. 
 
