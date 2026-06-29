@@ -837,6 +837,11 @@ void inventory_column::prepare_paging( const std::string &filter )
         return !entry.is_item() || !filter_fn( entry );
     } );
     entries.erase( new_end, entries.end() );
+    // Refresh the display-name cache the sort comparator relies on. PR #9038 dropped
+    // the only update_cache() call, leaving cached_name empty so the alphabetic
+    // tiebreak was dead and equal-keyed entries sorted in an unspecified,
+    // platform-dependent order (issue #9713).
+    std::ranges::for_each( entries, &inventory_entry::update_cache );
     // Then sort them with respect to categories
     auto sort_function = [this]( const inventory_entry & lhs, const inventory_entry & rhs ) {
         if( *lhs.get_category_ptr() != *rhs.get_category_ptr() ) {
@@ -845,7 +850,10 @@ void inventory_column::prepare_paging( const std::string &filter )
             return preset.sort_compare( lhs, rhs );
         }
     };
-    std::sort( entries.begin(), entries.end(), sort_function );
+    // stable_sort keeps entries that compare equal (same category and name) in their
+    // deterministic insertion order, so the result is identical across stdlib
+    // implementations instead of the unspecified order std::sort leaves equal items in.
+    std::ranges::stable_sort( entries, sort_function );
 
     // Recover categories
     const item_category *current_category = nullptr;

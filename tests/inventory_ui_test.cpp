@@ -221,3 +221,41 @@ TEST_CASE(
     REQUIRE(selector.restore_selection(invalid_position, map_bandages->typeId()));
     CHECK(selector.get_selected().any_item() == inventory_bandages.get());
 }
+
+TEST_CASE(
+    "inventory selector populates the name cache and sorts deterministically",
+    "[inventory][ui][consume]") {
+    clear_avatar();
+    auto& dummy = get_avatar();
+
+    // Two comestibles share the "food" category, so their relative order is
+    // decided purely by the name tiebreak in the sort comparator.
+    auto orange_soda = item::spawn("orangesoda");
+    auto maple_syrup = item::spawn("syrup");
+    REQUIRE(orange_soda->tname(1) != maple_syrup->tname(1));
+
+    auto selector = inventory_selector(dummy);
+    // Add in non-alphabetical order so the sort has to reorder them.
+    selector.add_item(selector.own_inv_column, orange_soda.get());
+    selector.add_item(selector.own_inv_column, maple_syrup.get());
+
+    // Triggers prepare_paging(): refreshes cached_name and sorts the column.
+    REQUIRE(selector.select_item_type(maple_syrup->typeId()));
+
+    const auto selectable = [](const auto& entry) { return entry.is_selectable(); };
+    const auto entries = selector.own_inv_column.get_entries(selectable);
+    REQUIRE(entries.size() == 2);
+    // Precondition: both items must share a category so the name comparison (not the
+    // category sort) decides their order; otherwise the order check below could pass
+    // via category ordering and silently stop covering the regression.
+    REQUIRE(entries.front()->get_category_ptr() == entries.back()->get_category_ptr());
+
+    // Regression for #9713: PR #9038 dropped the only update_cache() call, leaving
+    // cached_name empty so the alphabetic tiebreak was dead and equal-keyed comestibles
+    // sorted in an unspecified order that differs across stdlib implementations.
+    REQUIRE_FALSE(entries.front()->cached_name.empty());
+    CHECK(entries.front()->cached_name == entries.front()->any_item()->tname(1));
+
+    // The column is now ordered by name deterministically.
+    CHECK(entries.front()->any_item()->tname(1) < entries.back()->any_item()->tname(1));
+}
