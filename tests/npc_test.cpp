@@ -82,7 +82,8 @@ TEST_CASE("hallucination_npcs_do_not_board_real_vehicles", "[npc][hallucination]
 
     const auto npc_pos = tripoint_abs_ms(63, 59, 0);
     const auto seat_pos = tripoint_abs_ms(63, 60, 0);
-    auto* veh_ptr = here.add_vehicle(vproto_id("bicycle_test"), abs_to_bub(seat_pos), 0_degrees, 0, 0);
+    auto* veh_ptr =
+        here.add_vehicle(vproto_id("bicycle_test"), abs_to_bub(seat_pos), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
     REQUIRE(here.veh_at(seat_pos).part_with_feature(VPFLAG_BOARDABLE, true).has_value());
 

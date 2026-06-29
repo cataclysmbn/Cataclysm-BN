@@ -263,8 +263,8 @@ TEST_CASE("Aiming a turret from a solid vehicle", "[ranged][aiming]") {
         });
     REQUIRE(impassable_tiles_before == 0);
 
-    vehicle* veh =
-        g->m.add_vehicle(vproto_id("turret_test"), abs_to_bub(shooter_pos), 0_degrees, 100, 0, false);
+    vehicle* veh = g->m.add_vehicle(
+        vproto_id("turret_test"), abs_to_bub(shooter_pos), 0_degrees, 100, 0, false);
     REQUIRE(veh != nullptr);
     update_player_visibility_cache();
 

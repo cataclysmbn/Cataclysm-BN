@@ -73,7 +73,8 @@ TEST_CASE("hallucination_monsters_do_not_shove_vehicles", "[vehicle][monster][ha
 
     const auto monster_pos = tripoint_abs_ms(60, 60, 0);
     const auto veh_pos = tripoint_abs_ms(60, 59, 0);
-    auto* veh_ptr = here.add_vehicle(vproto_id("bicycle_test"), abs_to_bub(veh_pos), 270_degrees, 0, 0);
+    auto* veh_ptr =
+        here.add_vehicle(vproto_id("bicycle_test"), abs_to_bub(veh_pos), 270_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     auto& hallucination = spawn_test_monster("mon_zombie_seaweed_brute", abs_to_bub(monster_pos));
