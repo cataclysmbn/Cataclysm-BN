@@ -7,7 +7,7 @@
     "description": ".38 Special ammunition with brass jacketed 130gr bullets.  The .38 Special round has been known from its inception for its accuracy and low recoil.",
     "loudness": 156,
     "speed": 240,
-    "relative": { "damage": { "damage_type": "bullet", "amount": -6, "armor_penetration": 11 } }
+    "relative": { "damage": { "damage_type": "bullet", "amount": -5, "armor_penetration": 9 } }
   },
   {
     "id": "38_special",
@@ -27,7 +27,7 @@
     "casing": "38_casing",
     "range": 14,
     "//": "Hollowpoint damage bonus of 25%.",
-    "damage": { "damage_type": "bullet", "amount": 30 },
+    "damage": { "damage_type": "bullet", "amount": 26 },
     "dispersion": 30,
     "recoil": 300,
     "loudness": 155,

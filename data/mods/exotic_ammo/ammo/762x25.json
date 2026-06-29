@@ -16,7 +16,7 @@
     "ammo_type": "762x25",
     "casing": "762_25_casing",
     "range": 13,
-    "damage": { "damage_type": "bullet", "amount": 37, "armor_penetration": 16 },
+    "damage": { "damage_type": "bullet", "amount": 22, "armor_penetration": 10 },
     "dispersion": 120,
     "recoil": 540,
     "effects": [ "COOKOFF" ]
@@ -44,7 +44,7 @@
     "relative": {
       "price": "20 USD",
       "range": -1,
-      "damage": { "damage_type": "bullet", "amount": -5, "armor_penetration": 11 },
+      "damage": { "damage_type": "bullet", "amount": -3, "armor_penetration": 7 },
       "recoil": -270
     }
   },

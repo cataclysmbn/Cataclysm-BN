@@ -7,7 +7,7 @@
     "description": ".45 ACP ammunition with 230gr FMJ bullets.  Noted for its stopping power, the .45 ACP round has been common for almost 150 years.",
     "loudness": 157,
     "speed": 290,
-    "relative": { "damage": { "damage_type": "bullet", "amount": -8, "armor_penetration": 14 } }
+    "relative": { "damage": { "damage_type": "bullet", "amount": -8, "armor_penetration": 13 } }
   },
   {
     "id": "45_jhp",
@@ -26,7 +26,7 @@
     "ammo_type": "45",
     "casing": "45_casing",
     "range": 16,
-    "damage": { "damage_type": "bullet", "amount": 41 },
+    "damage": { "damage_type": "bullet", "amount": 38 },
     "dispersion": 50,
     "recoil": 600,
     "loudness": 156,

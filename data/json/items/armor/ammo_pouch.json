@@ -272,7 +272,7 @@
     "id": "modularvest",
     "type": "ARMOR",
     "name": { "str": "MBR vest (empty)", "str_pl": "MBR vests (empty)" },
-    "description": "A Modular Bullet Resistant Vest.  It has pouches for extra armor inserts, but without them provides little more protection over a regular vest.  It has four pouches capable of carrying magazines.",
+    "description": "A Modular Bullet Resistant Vest.  It has pouches for extra armor inserts, but even without them it will protect against anything up to .45 ACP.  It has four pouches capable of carrying magazines.",
     "weight": "3 kg",
     "volume": "6 L",
     "price": "299 USD",
@@ -288,7 +288,7 @@
     "encumbrance": 10,
     "storage": "2500 ml",
     "warmth": 15,
-    "material_thickness": 5,
+    "material_thickness": 8,
     "use_action": {
       "type": "holster",
       "holster_prompt": "Stash ammo",

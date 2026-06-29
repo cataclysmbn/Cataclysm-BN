@@ -16,7 +16,7 @@
     "ammo_type": "9x18",
     "casing": "9x18mm_casing",
     "range": 13,
-    "damage": { "damage_type": "bullet", "amount": 21, "armor_penetration": 9 },
+    "damage": { "damage_type": "bullet", "amount": 24, "armor_penetration": 11 },
     "dispersion": 60,
     "recoil": 450,
     "effects": [ "COOKOFF" ]
@@ -31,7 +31,7 @@
     "price_postapoc": "10 USD",
     "count": 25,
     "//": "Balanced as +p",
-    "relative": { "range": 2, "damage": { "damage_type": "bullet", "amount": 5 }, "dispersion": -10 },
+    "relative": { "range": 2, "damage": { "damage_type": "bullet", "amount": 6 }, "dispersion": -10 },
     "proportional": { "recoil": 1.1 }
   },
   {
@@ -43,7 +43,7 @@
     "price": "2 USD",
     "price_postapoc": "31 USD",
     "//": "AP variant, 7/8 damage relative to FMJ variant, 6/7 armor penetration.",
-    "relative": { "damage": { "damage_type": "bullet", "amount": -3, "armor_penetration": 6 } }
+    "relative": { "damage": { "damage_type": "bullet", "amount": -3, "armor_penetration": 7 } }
   },
   {
     "id": "bp_9x18mm",
