@@ -2362,12 +2362,12 @@
     "entries": [
       {
         "item": "handmade_revolver",
-        "charges_min": 0,
-        "charges_max": 6,
+        "charges-min": 0,
+        "charges-max": 6,
         "contents-group": "gunmod_hmr_conversion",
         "prob": 50
       },
-      { "item": "handmade_revolver", "charges_min": 0, "charges_max": 6, "prob": 50 }
+      { "item": "handmade_revolver", "charges-min": 0, "charges-max": 6, "prob": 50 }
     ]
   }
 ]
