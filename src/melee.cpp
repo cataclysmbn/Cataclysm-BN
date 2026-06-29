@@ -2104,15 +2104,14 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
     float bash_cap = 2 * stat + 2 * skill;
     float bash_mul = 1.0f;
 
-    if ( unarmed ) {
+    if( unarmed ) {
         // 80%, 88%, 96%, 104%, 112%, 116%, 120%, 124%, 128%, 132%
         if( skill < 5 ) {
             bash_mul = 0.8 + 0.08 * skill;
         } else {
             bash_mul = 0.96 + 0.04 * skill;
         }
-    }
-    else {
+    } else {
         // 70%, 74%, 78%, 82%, 86%, 90%, 94%, 98%, 102%, 106%
         bash_mul = 0.7 + 0.04 * skill;
     }
