@@ -757,6 +757,8 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
     cityjo.read( "city_spacing", region.city_spec.city_spacing );
     cityjo.read( "shop_radius", region.city_spec.shop_radius );
     cityjo.read( "shop_sigma", region.city_spec.shop_sigma );
+    cityjo.read( "apartment_radius", region.city_spec.shop_radius );
+    cityjo.read( "apartment_sigma", region.city_spec.shop_sigma );
     cityjo.read( "park_radius", region.city_spec.park_radius );
     cityjo.read( "park_sigma", region.city_spec.park_sigma );
 
