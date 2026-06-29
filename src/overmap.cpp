@@ -4801,7 +4801,7 @@ overmap_special_id overmap::pick_random_building_to_place( int town_dist, int to
     int shop_radius = city_spec.shop_radius;
     int apartment_radius = city_spec.apartment_radius;
     int park_radius = city_spec.park_radius;
-    
+
     int shop_sigma = city_spec.shop_sigma;
     int apartment_sigma = city_spec.apartment_sigma;
     int park_sigma = city_spec.park_sigma;
@@ -4811,8 +4811,9 @@ overmap_special_id overmap::pick_random_building_to_place( int town_dist, int to
     //Parks are nearly guaranteed to have a non-zero chance of spawning anywhere in the city.
     int shop_normal = std::max( static_cast<int>( normal_roll( shop_radius, shop_sigma ) ),
                                 shop_radius );
-    int apartment_normal = std::max( static_cast<int>( normal_roll( apartment_radius, apartment_sigma ) ),
-                                apartment_radius );
+    int apartment_normal = std::max( static_cast<int>( normal_roll( apartment_radius,
+                                     apartment_sigma ) ),
+                                     apartment_radius );
     int park_normal = std::max( static_cast<int>( normal_roll( park_radius, park_sigma ) ),
                                 park_radius );
 
@@ -4830,10 +4831,9 @@ overmap_special_id overmap::pick_random_building_to_place( int town_dist, int to
         return city_spec.pick_park();
     } else {
         if( town_size > 10 ) {
-            if ( apartment_normal > town_dist ) {
+            if( apartment_normal > town_dist ) {
                 return city_spec.pick_urban_house();
-            }
-            else {
+            } else {
                 return city_spec.pick_house();
             }
         } else {
