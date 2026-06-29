@@ -109,7 +109,7 @@
         }
       ]
     },
-    "flags": [ "RAINPROOF", "STURDY", "RAD_PROOF", "AURA", "POWERARMOR_COMPATIBLE", "NO_SALVAGE", "ONLY_ONE", "PSYSHIELD_PARTIAL" ]
+    "flags": [ "RAINPROOF", "STURDY", "RAD_RESIST", "AURA", "POWERARMOR_COMPATIBLE", "NO_SALVAGE", "ONLY_ONE", "PSYSHIELD_PARTIAL" ]
   },
   {
     "id": "debug_fireball_hammer",
