@@ -535,6 +535,12 @@ void load_region_settings( const JsonObject &jo )
         if( !cjo.read( "shop_sigma", new_region.city_spec.shop_sigma ) && strict ) {
             jo.throw_error( "city: shop_sigma required for default" );
         }
+        if( !cjo.read( "apartment_radius", new_region.city_spec.apartment_radius ) && strict ) {
+            jo.throw_error( "city: shop_radius required for default" );
+        }
+        if( !cjo.read( "apartment_sigma", new_region.city_spec.apartment_sigma ) && strict ) {
+            jo.throw_error( "city: shop_sigma required for default" );
+        }
         if( !cjo.read( "park_radius", new_region.city_spec.park_radius ) && strict ) {
             jo.throw_error( "city: park_radius required for default" );
         }
