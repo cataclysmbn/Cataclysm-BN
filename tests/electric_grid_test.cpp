@@ -387,7 +387,7 @@ TEST_CASE("grid_furn_transform_queue_in_bubble", "[grids]") {
     REQUIRE(get_map().furn(pos_local).id() != f_floor_lamp_on);
     REQUIRE(active_tiles::furn_at<active_tile_data>(pos_abs) == nullptr);
 
-    tf_queue.apply(MAPBUFFER, get_distribution_grid_tracker(), get_player_character(), get_map());
+    tf_queue.apply(MAPBUFFER, get_distribution_grid_tracker(), get_player_character());
 
     REQUIRE(get_map().furn(pos_local).id() == f_floor_lamp_on);
     REQUIRE(active_tiles::furn_at<steady_consumer_tile>(pos_abs) != nullptr);
@@ -421,7 +421,7 @@ TEST_CASE("grid_furn_transform_queue_outside_bubble", "[grids]") {
     REQUIRE(sm->get_furn(pos_in_sm).id() != f_floor_lamp_on);
     REQUIRE(active_tiles::furn_at<active_tile_data>(pos_abs) == nullptr);
 
-    tf_queue.apply(MAPBUFFER, get_distribution_grid_tracker(), get_player_character(), get_map());
+    tf_queue.apply(MAPBUFFER, get_distribution_grid_tracker(), get_player_character());
 
     sm = MAPBUFFER.lookup_submap(pos_abs_sm);
     REQUIRE(sm);
