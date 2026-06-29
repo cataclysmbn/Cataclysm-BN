@@ -119,27 +119,27 @@ TEST_CASE("effective damage per second", "[effective][dps]") {
 
     SECTION("against a debug monster with no armor or dodge") {
         reset_dps_rng();
-        monster mummy(mtype_id("debug_mon"));
+        monster debug_unarmored(mtype_id("debug_mon"));
 
-        CHECK(clumsy_sword.effective_dps(dummy, mummy) == Approx(29.5f).epsilon(0.15f));
-        CHECK(good_sword.effective_dps(dummy, mummy) == Approx(45.0f).epsilon(0.15f));
+        CHECK(clumsy_sword.effective_dps(dummy, debug_unarmored) == Approx(29.5f).epsilon(0.15f));
+        CHECK(good_sword.effective_dps(dummy, debug_unarmored) == Approx(45.0f).epsilon(0.15f));
     }
 
-    SECTION("against an agile target") {
+    SECTION("against an debug agile target") {
         reset_dps_rng();
-        monster smoker(mtype_id("mon_zombie_smoker"));
-        REQUIRE(smoker.get_dodge() >= 4);
+        monster debug_agile(mtype_id("debug_mon_agile"));
+        REQUIRE(debug_agile.get_dodge() >= 4);
 
-        CHECK(clumsy_sword.effective_dps(dummy, smoker) == Approx(13.75f).epsilon(0.15f));
-        CHECK(good_sword.effective_dps(dummy, smoker) == Approx(30.0f).epsilon(0.15f));
+        CHECK(clumsy_sword.effective_dps(dummy, debug_agile) == Approx(10.5f).epsilon(0.15f));
+        CHECK(good_sword.effective_dps(dummy, debug_agile) == Approx(30.0f).epsilon(0.15f));
     }
 
     SECTION("against an armored target") {
         reset_dps_rng();
-        monster soldier(mtype_id("mon_zombie_soldier"));
+        monster debug_mon_armored(mtype_id("debug_mon_armored"));
 
-        CHECK(clumsy_sword.effective_dps(dummy, soldier) == Approx(11.0f).epsilon(0.15f));
-        CHECK(good_sword.effective_dps(dummy, soldier) == Approx(22.0f).epsilon(0.15f));
+        CHECK(clumsy_sword.effective_dps(dummy, debug_mon_armored) == Approx(5.7f).epsilon(0.15f));
+        CHECK(good_sword.effective_dps(dummy, debug_mon_armored) == Approx(11.9f).epsilon(0.15f));
     }
 
     SECTION("effect of STR and DEX on damage per second") {
@@ -183,6 +183,8 @@ TEST_CASE("effective vs actual damage per second", "[actual][dps]") {
     avatar& dummy = g->u;
     clear_character(dummy);
 
+    // WE HOPE AND PRAY THIS NEVER BREAKS
+    // IF IT DOES DELETE IT
     monster soldier(mtype_id("mon_zombie_soldier"));
     monster smoker(mtype_id("mon_zombie_smoker"));
     monster survivor(mtype_id("mon_zombie_survivor"));
