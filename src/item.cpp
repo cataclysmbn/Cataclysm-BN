@@ -4002,7 +4002,13 @@ void item::damage_statblock_info( std::vector<iteminfo> &info, damage_instance a
 void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *parts, int /*batch*/,
                        bool /*debug*/ ) const
 {
-    if( !parts->test( iteminfo_parts::BASE_THROW ) ) {
+    // Show throw info when BASE_THROW is explicitly requested, or when melee
+    // combat info (damage, to-hit, moves) is being displayed — these sections
+    // are closely related and users expect to see both.
+    if( !parts->test( iteminfo_parts::BASE_THROW ) &&
+        !parts->test( iteminfo_parts::BASE_DAMAGE ) &&
+        !parts->test( iteminfo_parts::BASE_TOHIT ) &&
+        !parts->test( iteminfo_parts::BASE_MOVES ) ) {
         return;
     }
 

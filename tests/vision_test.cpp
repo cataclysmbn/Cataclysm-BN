@@ -540,9 +540,6 @@ TEST_CASE("vision_single_tile_skylight", "[shadowcasting][vision]") {
     /**
      * Diffused sunlight through the single-tile roof opening should be symmetrical.
      */
-    // Note: Light diffusion from a single-tile skylight now produces a
-    // localized lit area around the opening rather than illuminating the
-    // entire interior, due to the mapbuffer-based visibility calculation.
     vision_test_case t{
         {
             "-----------",
@@ -559,15 +556,15 @@ TEST_CASE("vision_single_tile_skylight", "[shadowcasting][vision]") {
         },
         {
             "66666666666",
-            "66666666666",
-            "66666666666",
-            "66666666666",
-            "66661116666",
-            "66661116666",
-            "66661116666",
-            "66666666666",
-            "66666666666",
-            "66666666666",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
             "66666666666",
         },
         midday,
