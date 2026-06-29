@@ -168,7 +168,7 @@
       "draw_cost": 60,
       "flags": [ "MAG_COMPACT" ]
     },
-    "resistance": { "bullet": 70 },
+    "resistance": { "bullet": 90 },
     "flags": [ "STURDY", "OUTER", "NO_REPAIR", "ALLOWS_WINGS" ]
   },
   {
