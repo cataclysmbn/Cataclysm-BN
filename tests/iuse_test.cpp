@@ -88,8 +88,8 @@ auto make_active_bionic_scanner_benchmark_fixture(
     you.recalc_sight_limits();
 
     const auto item_count = add_nearby_bionic_scanner_benchmark_items(here, you.bub_pos(), opts);
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
-    auto* const corpse_ptr = add_bionic_scanner_benchmark_corpse(here, corpse_pos);
+    const auto corpse_pos = you.abs_pos() + tripoint_east;
+    auto* const corpse_ptr = add_bionic_scanner_benchmark_corpse(here, abs_to_bub(corpse_pos));
     REQUIRE(you.sees(corpse_pos));
 
     auto backpack = item::spawn("backpack", calendar::turn);

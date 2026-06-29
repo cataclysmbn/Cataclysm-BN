@@ -36,14 +36,14 @@ using move_statistics = statistics<int>;
 TEST_CASE("hallucination_monsters_do_not_open_real_doors", "[monster][hallucination]") {
     clear_all_state();
     move_player_out_of_the_way();
-    auto& here = get_map();
+    auto& here = get_map().get_mapbuffer();
     build_test_map(ter_id("t_floor"));
 
-    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
-    const auto door_pos = tripoint_bub_ms(61, 60, 0);
-    REQUIRE(here.ter_set(door_pos, ter_id("t_door_c")));
+    const auto monster_pos = tripoint_abs_ms(60, 60, 0);
+    const auto door_pos = tripoint_abs_ms(61, 60, 0);
+    REQUIRE(here.set_ter(door_pos, ter_id("t_door_c")));
 
-    auto& hallucination = spawn_test_monster("mon_zombie_scientist", monster_pos);
+    auto& hallucination = spawn_test_monster("mon_zombie_scientist", abs_to_bub(monster_pos));
     hallucination.hallucination = true;
     REQUIRE(hallucination.is_hallucination());
     hallucination.execute_action({.kind = monster_action_kind::open_door, .dest = door_pos});
@@ -54,19 +54,19 @@ TEST_CASE("hallucination_monsters_do_not_open_real_doors", "[monster][hallucinat
 TEST_CASE("hallucination_electric_field_does_not_ignite_items", "[monster][hallucination]") {
     clear_all_state();
     move_player_out_of_the_way();
-    auto& here = get_map();
+    auto& here = get_map().get_mapbuffer();
     build_test_map(ter_id("t_pavement"));
 
-    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
-    const auto fuel_pos = tripoint_bub_ms(61, 60, 0);
+    const auto monster_pos = tripoint_abs_ms(60, 60, 0);
+    const auto fuel_pos = tripoint_abs_ms(61, 60, 0);
     here.add_item_or_charges(fuel_pos, item::spawn("gasoline"));
 
-    auto& hallucination = spawn_test_monster("mon_zombie_nullfield", monster_pos);
+    auto& hallucination = spawn_test_monster("mon_zombie_nullfield", abs_to_bub(monster_pos));
     hallucination.hallucination = true;
     REQUIRE(hallucination.is_hallucination());
     hallucination.process_turn();
 
-    CHECK(here.get_field(fuel_pos, fd_fire) == nullptr);
+    CHECK(here.get_field_entry(fuel_pos, fd_fire) == nullptr);
 }
 
 TEST_CASE("MONSTER_SPEED scales monster move credit", "[monster][speed]") {
@@ -160,12 +160,12 @@ static int can_catch_player(
     std::vector<detached_ptr<item>> temp;
     while (test_player.takeoff(test_player.i_at(-2), &temp));
 
-    const tripoint_bub_ms center{65, 65, 0};
+    const tripoint_abs_ms center{65, 65, 0};
     test_player.setpos(center);
     test_player.set_moves(0);
     // Give the player a head start.
-    const auto monster_start = test_player.bub_pos() + (direction_of_flight * -10);
-    monster& test_monster = spawn_test_monster(monster_type, monster_start);
+    const auto monster_start = test_player.abs_pos() + (direction_of_flight * -10);
+    monster& test_monster = spawn_test_monster(monster_type, abs_to_bub(monster_start));
     // Get it riled up and give it a goal.
     test_monster.anger = 100;
     test_monster.set_dest(test_player.abs_pos());
@@ -177,21 +177,21 @@ static int can_catch_player(
     for (int turn = 0; turn < 1000; ++turn) {
         test_player.mod_moves(target_speed);
         while (test_player.moves >= 0) {
-            test_player.setpos(test_player.bub_pos() + direction_of_flight);
-            if (test_player.bub_pos().x() < SEEX * int(MAPSIZE / 2)
-                || test_player.bub_pos().y() < SEEY * int(MAPSIZE / 2)
-                || test_player.bub_pos().x() >= SEEX * (1 + int(MAPSIZE / 2))
-                || test_player.bub_pos().y() >= SEEY * (1 + int(MAPSIZE / 2))) {
-                auto offset = center - test_player.bub_pos();
+            test_player.setpos(test_player.abs_pos() + direction_of_flight);
+            if (test_player.abs_pos().x() < SEEX * int(MAPSIZE / 2)
+                || test_player.abs_pos().y() < SEEY * int(MAPSIZE / 2)
+                || test_player.abs_pos().x() >= SEEX * (1 + int(MAPSIZE / 2))
+                || test_player.abs_pos().y() >= SEEY * (1 + int(MAPSIZE / 2))) {
+                auto offset = center - test_player.abs_pos();
                 test_player.setpos(center);
-                test_monster.setpos(test_monster.bub_pos() + offset);
+                test_monster.setpos(test_monster.abs_pos() + offset);
                 // Verify that only the player and one monster are present.
                 REQUIRE(g->num_creatures() == 2);
             }
             const int move_cost = get_map().combined_movecost(
                 test_player.bub_pos(), test_player.bub_pos() + direction_of_flight, nullptr, 0);
             tracker.push_back(
-                {'p', move_cost, rl_dist(test_monster.bub_pos(), test_player.bub_pos()),
+                {'p', move_cost, rl_dist(test_monster.abs_pos(), test_player.abs_pos()),
                  test_player.bub_pos()});
             test_player.mod_moves(-move_cost);
         }
