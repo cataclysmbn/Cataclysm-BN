@@ -199,7 +199,11 @@ std::map<tripoint_abs_ms, double> expected_coverage( const shape &sh, mapbuffer 
         }
 
         double current_coverage = parent_coverage;
-        const auto &tile = *abs_tile_handle::fetch( here, p );
+        const auto tile_opt = abs_tile_handle::fetch( here, p );
+        if( !tile_opt ) {
+            continue;
+        }
+        const auto &tile = *tile_opt;
         if( tile.passable() ||
             // Necessary evil. TODO: Make map::shoot not evil.
             ( here.is_transparent( p ) && tile.has_flag( TFLAG_PERMEABLE ) ) ) {
