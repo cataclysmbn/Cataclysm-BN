@@ -892,7 +892,7 @@
     "symbol": "[",
     "color": "dark_gray",
     "name": { "str": "RM13 combat armor" },
-    "description": "Internally powered by a maximum of ten plutonium fuel cells, this full-body suit of sleek black military armor represents the pinnacle of Rivtech's non-rigid powered armor technology.  While inactive it can protect from most pistol rounds, its powered ballistic shielding can shrug off 5.56x45mm when active.  Use it to turn it on.",
+    "description": "Internally powered by a maximum of ten plutonium fuel cells, this full-body suit of sleek black military armor represents the pinnacle of Rivtech's non-rigid powered armor technology.  While inactive it can protect from most pistol rounds.  When active, its powered ballistic shielding can shrug off 5.56x45mm.  Use it to turn it on.",
     "flags": [
       "VARSIZE",
       "STURDY",
