@@ -11,12 +11,7 @@
     "book_learn": [ [ "tailor_portfolio", 7 ], [ "textbook_tailor", 8 ], [ "textbook_fireman", 6 ] ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "tools": [ [ [ "soldering_standard", 160, "LIST" ], [ "surface_heat", 160, "LIST" ] ] ],
-    "components": [
-      [ [ "cleansuit", 1 ] ],
-      [ [ "duct_tape", 600 ] ],
-      [ [ "kevlar_plate", 24 ] ],
-      [ [ "plastic_sheet", 1 ] ]
-    ]
+    "components": [ [ [ "cleansuit", 1 ] ], [ [ "duct_tape", 600 ] ], [ [ "kevlar_plate", 24 ] ], [ [ "plastic_sheet", 1 ] ] ]
   },
   {
     "result": "anbc_suit",
@@ -30,12 +25,7 @@
     "book_learn": [ [ "tailor_portfolio", 7 ], [ "textbook_fireman", 7 ] ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "tools": [ [ [ "soldering_standard", 160, "LIST" ], [ "surface_heat", 160, "LIST" ] ] ],
-    "components": [
-      [ [ "hazmat_suit", 1 ] ],
-      [ [ "duct_tape", 800 ] ],
-      [ [ "kevlar_plate", 36 ] ],
-      [ [ "plastic_sheet", 1 ] ]
-    ]
+    "components": [ [ [ "hazmat_suit", 1 ] ], [ [ "duct_tape", 800 ] ], [ [ "kevlar_plate", 36 ] ], [ [ "plastic_sheet", 1 ] ] ]
   },
   {
     "result": "armor_blarmor",
@@ -442,11 +432,7 @@
     "book_learn": [ [ "textbook_fireman", 8 ], [ "tailor_portfolio", 8 ] ],
     "using": [ [ "sewing_standard", 200 ] ],
     "tools": [ [ [ "soldering_standard", 40, "LIST" ], [ "surface_heat", 40, "LIST" ] ] ],
-    "components": [
-      [ [ "nomex", 40 ] ],
-      [ [ "adhesive", 5, "LIST" ] ],
-      [ [ "kevlar_plate", 25 ] ]
-    ]
+    "components": [ [ [ "nomex", 40 ] ], [ [ "adhesive", 5, "LIST" ] ], [ [ "kevlar_plate", 25 ] ] ]
   },
   {
     "result": "fsurvivor_suit",
