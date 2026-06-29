@@ -257,7 +257,7 @@ It does NOT affect:
 
 9 - **Reliable**. Rarely malfunctions. Factory specification or milspec only. A pristine gun will malfunction roughly once every 3000 shots. 
 
-8 - **Dependable**. Malfunctions infrequently. Guns of very high quality. Highest durability possible for guns crafted **with** gunsmithing tools. A pristine gun will malfunction roughly once every 1500 shots. 
+8 - **Dependable**. Malfunctions infrequently. Guns of very high quality. Highest durability possible for guns crafted **without** advanced fabricators. A pristine gun will malfunction roughly once every 1500 shots. 
 
 7 - **Serviceable**. Malfunctions infrequently. Higher quality guns, or guns built to chew through lots of ammo, like the m249. A pristine gun will malfunction once every 768 shots, on average. 
 
@@ -294,9 +294,9 @@ This is a value separate from gun durability. It indicates, as a percentage*, ho
 
 ### A note on "NEVER_JAMS"
 
-Guns with this will not suffer jams/misfires normally. 
-However they can still build up fouling, and jam that way. 
-Additionally their durability value still affects how often they will jam underwater.
+Guns with this will not suffer malfunction normally. 
+However they can still build up fouling, and jam because of it.
+Additionally they can still malfunction underwater, keeping the durability value relevant.
 
 ## Magazines
 
