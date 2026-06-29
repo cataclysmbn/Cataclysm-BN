@@ -669,12 +669,15 @@ auto sfx::play_ambient_variant_sound( const std::string &id, const std::string &
     const int vol = eff->volume * get_option<int>( "AMBIENT_SOUND_VOLUME" ) * volume / ( 100 * 100 );
     MIX_SetTrackGain( track, volume_to_gain( vol ) );
     MIX_SetTrackAudio( track, audio );
-    MIX_SetTrackLoops( track, loops );
 
-    // Apply fade-in via play properties if requested
-    SDL_PropertiesID props = 0;
+    const auto props = SDL_CreateProperties();
+    if( !props ) {
+        dbg( DL::Debug ) << "Failed to create ambient play properties { id: " << id
+                         << ", variant: " << variant << " }: " << SDL_GetError();
+        return;
+    }
+    SDL_SetNumberProperty( props, MIX_PROP_PLAY_LOOPS_NUMBER, loops );
     if( fade_in_duration > 0 ) {
-        props = SDL_CreateProperties();
         SDL_SetNumberProperty( props, MIX_PROP_PLAY_FADE_IN_FRAMES_NUMBER,
                                ms_to_frames( fade_in_duration ) );
     }
@@ -682,15 +685,11 @@ auto sfx::play_ambient_variant_sound( const std::string &id, const std::string &
     if( !MIX_PlayTrack( track, props ) ) {
         dbg( DL::Debug ) << "Failed to play ambient sound { id: " << id
                          << ", variant: " << variant << " }: " << SDL_GetError();
-        if( props ) {
-            SDL_DestroyProperties( props );
-        }
+        SDL_DestroyProperties( props );
         return;
     }
 
-    if( props ) {
-        SDL_DestroyProperties( props );
-    }
+    SDL_DestroyProperties( props );
 
     current_ambient.id               = id;
     current_ambient.variant          = variant;
