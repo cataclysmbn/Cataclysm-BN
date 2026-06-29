@@ -892,7 +892,7 @@
     "symbol": "[",
     "color": "dark_gray",
     "name": { "str": "RM13 combat armor" },
-    "description": "Internally powered by a maximum of ten plutonium fuel cells, this full-body suit of sleek black military armor represents the pinnacle of Rivtech's non-rigid powered armor technology.  Use it to turn it on.",
+    "description": "Internally powered by a maximum of ten plutonium fuel cells, this full-body suit of sleek black military armor represents the pinnacle of Rivtech's non-rigid powered armor technology.  While inactive it can protect from most pistol rounds.  When active, its powered ballistic shielding can shrug off 5.56x45mm.  Use it to turn it on.",
     "flags": [
       "VARSIZE",
       "STURDY",
@@ -930,6 +930,7 @@
     "encumbrance": 30,
     "coverage": 100,
     "material_thickness": 4,
+    "resistance": { "bullet": 50 },
     "hearing_protection": 12
   },
   {
@@ -938,7 +939,7 @@
     "repairs_like": "rm13_armor",
     "type": "TOOL_ARMOR",
     "name": { "str": "RM13 combat armor (on)", "str_pl": "RM13 combat armors (on)" },
-    "description": "Internally powered by a maximum of ten plutonium fuel cells, this full-body suit of sleek black military armor represents the pinnacle of Rivtech's non-rigid powered armor technology.  It is turned on, and continually draining power.  Use it to turn it off.",
+    "description": "Internally powered by a maximum of ten plutonium fuel cells, this full-body suit of sleek black military armor represents the pinnacle of Rivtech's non-rigid powered armor technology.  It is turned on and continually draining power, its powered ballistic shielding protecting against anything up to 5.56x45mm.  Use it to turn it off.",
     "flags": [
       "VARSIZE",
       "STURDY",
@@ -976,6 +977,7 @@
     "encumbrance": 10,
     "qualities": [ [ "GLARE", 2 ], [ "HV_INSULATION", 1 ] ],
     "material_thickness": 7,
+    "resistance": { "bullet": 75 },
     "adv_hearing_protection": 120,
     "hearing_protection": 0
   },

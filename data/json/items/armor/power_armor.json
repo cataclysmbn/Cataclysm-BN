@@ -4,7 +4,7 @@
     "type": "ARMOR",
     "name": { "str": "salvaged power armor" },
     "//": "These are much cheaper than powered suits, because they're extremely heavy and impractical.  The good stuff is gone!",
-    "description": "This used to be a powered exoskeleton with a set of heavy armor plates, made wearable by the assist of the servos.  Now it's just the armor plating and a stripped down chassis: as one might expect, it's a lot harder to wear.",
+    "description": "This used to be a powered exoskeleton with a set of heavy armor plates, its chassis stripped down.  More cumbersome and without the bells and whistles of a proper powered suit, but less encumbering than an unpowered suit.  Stripping out the chemical bodyglove allows wearing it over other equipment, at the expense of environmental protection and ballistic resistance.",
     "weight": "11 kg",
     "volume": "23 L",
     "price": "700 USD",
@@ -20,16 +20,17 @@
     "encumbrance": 30,
     "storage": "4 L",
     "warmth": 50,
-    "material_thickness": 7,
+    "material_thickness": 6,
     "environmental_protection": 6,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "resistance": { "bullet": 60 },
     "flags": [ "WATERPROOF", "STURDY" ]
   },
   {
     "id": "depowered_helmet",
     "type": "ARMOR",
     "name": { "str": "salvaged power armor helmet" },
-    "description": "This used to be a military-grade full-head helmet with advanced optics and environmental filters.  It looks like it was decommissioned or otherwise stripped for parts; now it's a very expensive hat.  It's still quite durable, but quite hard to see out of.",
+    "description": "This used to be a military-grade full-head helmet, its advanced optics and environmental filters having been stripped for parts.  While still quite durable, it's harder to see out of than an active power helmet.",
     "weight": "1 kg",
     "volume": "2 L",
     "price": "300 USD",
@@ -44,17 +45,18 @@
     "coverage": 100,
     "encumbrance": 30,
     "warmth": 50,
-    "material_thickness": 7,
+    "material_thickness": 6,
     "environmental_protection": 6,
     "qualities": [ [ "GLARE", 2 ] ],
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "resistance": { "bullet": 60 },
     "flags": [ "WATERPROOF", "STURDY", "SUN_GLASSES" ]
   },
   {
     "id": "power_armor_basic",
     "type": "TOOL_ARMOR",
     "name": { "str": "power armor", "str_pl": "suits of power armor" },
-    "description": "These were the second wave of military combat exoskeleton, and got a lot of media attention, with popular Navy commercials featuring them heavily.  It consists of a muscle-boosting exoskeleton frame with overlayed segmented alloy plating.  Despite advancements over the original bulky 'tank suits', it's still highly cumbersome when inactive.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
+    "description": "These were the second wave of military combat exoskeleton, and got a lot of media attention, with popular Navy commercials featuring them heavily.  It consists of a muscle-boosting exoskeleton frame with overlayed segmented alloy plating, rated to provide complete protection against 7.62x51mm rounds.  Despite advancements over the original bulky 'tank suits', it's still highly cumbersome when inactive.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
     "//": "Armor makes up 90% the weight and volume of the combined set, helm the other 10%",
     "weight": "36 kg",
     "volume": "54 L",
@@ -86,6 +88,7 @@
       "set_charges": 2,
       "set_charges_msg": "You need a UPS or a bionic armor interface to power this."
     },
+    "resistance": { "bullet": 90 },
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE" ]
   },
   {
@@ -95,7 +98,7 @@
     "looks_like": "power_armor_basic",
     "type": "TOOL_ARMOR",
     "name": { "str": "power armor (active)", "str_pl": "suits of power armor (active)" },
-    "description": "These were the second wave of military combat exoskeleton, and got a lot of media attention, with popular Navy commercials featuring them heavily.  It consists of a muscle-boosting exoskeleton frame with overlayed segmented alloy plating.  Despite advancements over the original bulky 'tank suits', it's still highly cumbersome when inactive.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
+    "description": "These were the second wave of military combat exoskeleton, and got a lot of media attention, with popular Navy commercials featuring them heavily.  It consists of a muscle-boosting exoskeleton frame with overlayed segmented alloy plating, rated to provide complete protection against 7.62x51mm rounds.  Despite advancements over the original bulky 'tank suits', it's still highly cumbersome when inactive.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
     "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 1500000,
     "revert_to": "power_armor_basic",
@@ -125,7 +128,7 @@
     "id": "power_armor_heavy",
     "type": "TOOL_ARMOR",
     "name": { "str": "heavy power armor", "str_pl": "suits of heavy power armor" },
-    "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of resisting almost any small arms fire and most other forms of attack.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
+    "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of negating anything up to armor-piercing .30-06 rounds.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
     "weight": "54 kg",
     "volume": "81 L",
     "price": "115 kUSD",
@@ -165,7 +168,7 @@
     "looks_like": "power_armor_heavy",
     "type": "TOOL_ARMOR",
     "name": { "str": "heavy power armor (active)", "str_pl": "suits of heavy power armor (active)" },
-    "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of resisting almost any small arms fire and most other forms of attack.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
+    "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of negating anything up to armor-piercing .30-06 rounds.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
     "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 2250000,
     "revert_to": "power_armor_heavy",
@@ -195,7 +198,7 @@
     "id": "power_armor_light",
     "type": "TOOL_ARMOR",
     "name": { "str": "light power armor", "str_pl": "suits of light power armor" },
-    "description": "The final iteration of military power armor before the fall of civilization, this type - a powered exoskeleton with high-tech segmented plating - was designed for actual widespread combat use and was seen on the front lines during the last days of the cataclysm.  Like the heavier suits, it is resistant to most modern weaponry, but it is much more light and maneuverable.  Unfortunately, the world ended before it could roll out in significant numbers.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
+    "description": "The final iteration of military power armor before the fall of civilization, this type - a powered exoskeleton with high-tech segmented plating - was designed for actual widespread combat use and was seen on the front lines during the last days of the cataclysm.  Much more light and maneuverable than the heavier suits, and still reliably protects against anything up to 5.56x45mm.  Unfortunately, the world ended before it could roll out in significant numbers.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
     "weight": "18 kg",
     "volume": "27 L",
     "price": "115 kUSD",
@@ -225,6 +228,7 @@
       "set_charges": 2,
       "set_charges_msg": "You need a UPS or a bionic armor interface to power this."
     },
+    "resistance": { "bullet": 70 },
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE" ]
   },
   {
@@ -234,7 +238,7 @@
     "looks_like": "power_armor_light",
     "type": "TOOL_ARMOR",
     "name": { "str": "light power armor (active)", "str_pl": "suits of light power armor (active)" },
-    "description": "The final iteration of military power armor before the fall of civilization, this type - a powered exoskeleton with high-tech segmented plating - was designed for actual widespread combat use and was seen on the front lines during the last days of the cataclysm.  Like the heavier suits, it is resistant to most modern weaponry, but it is much more light and maneuverable.  Unfortunately, the world ended before it could roll out in significant numbers.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
+    "description": "The final iteration of military power armor before the fall of civilization, this type - a powered exoskeleton with high-tech segmented plating - was designed for actual widespread combat use and was seen on the front lines during the last days of the cataclysm.  Much more light and maneuverable than the heavier suits, and still reliably protects against anything up to 5.56x45mm.  Unfortunately, the world ended before it could roll out in significant numbers.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
     "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 750000,
     "revert_to": "power_armor_light",
@@ -291,6 +295,7 @@
       "active": true
     },
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "resistance": { "bullet": 90 },
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
     "hearing_protection": 80
   },
@@ -411,6 +416,7 @@
     },
     "qualities": [ [ "GLARE", 1 ] ],
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "resistance": { "bullet": 70 },
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
     "hearing_protection": 80
   },

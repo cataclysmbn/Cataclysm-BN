@@ -2356,5 +2356,10 @@
     "type": "recipe",
     "result": "rifle_3006",
     "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "xlkevlar",
+    "obsolete": true
   }
 ]
