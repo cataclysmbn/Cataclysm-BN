@@ -18,7 +18,7 @@
     "coverage": 95,
     "encumbrance": 12,
     "warmth": 12,
-    "material_thickness": 6,
+    "material_thickness": 9,
     "//": "Ceramic disks inside block addition of steel plating modification",
     "flags": [ "OUTER", "NO_REPAIR", "ALLOWS_WINGS" ]
   },
@@ -42,7 +42,7 @@
     "coverage": 25,
     "encumbrance": 6,
     "warmth": 10,
-    "material_thickness": 3,
+    "material_thickness": 7,
     "flags": [ "STURDY", "OUTER", "ALLOWS_WINGS" ]
   },
   {
