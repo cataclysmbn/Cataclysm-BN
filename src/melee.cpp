@@ -2117,7 +2117,6 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
         bash_mul = 0.7 + 0.04 * skill;
     }
 
-
     if( bash_cap < weap_dam && !weap.is_null() ) {
         // If damage goes over cap due to low stats/skills,
         // scale the post-armor damage down halfway between damage and cap
