@@ -16,8 +16,7 @@
     "ammo_type": "762x25",
     "casing": "762_25_casing",
     "range": 13,
-    "//": "Base damage of 24, balance increase of two-nineths.",
-    "damage": { "damage_type": "bullet", "amount": 37, "armor_penetration": 16 },
+    "damage": { "damage_type": "bullet", "amount": 22, "armor_penetration": 10 },
     "dispersion": 120,
     "recoil": 540,
     "effects": [ "COOKOFF" ]
@@ -38,14 +37,14 @@
     "type": "AMMO",
     "name": { "str": "7.62x25mm Type P" },
     "//": "Stopgap price of $1 per.  Anti-China prejudice in the pre-Cataclysm US may have made this ammo tougher to come by.",
-    "//2": "AP variant, 7/8 damage relative to FMJ variant, armor penetration matches damage.",
+    "//2": "AP variant, 7/8 damage relative to FMJ variant, armor penetration 6/7 of damage.",
     "description": "A subsonic cartridge derived from the 7.62x25mm, designed for silenced firearms.  It offers good armor penetration at the cost of slightly less damage.",
     "weight": "12 g",
     "count": 50,
     "relative": {
       "price": "20 USD",
       "range": -1,
-      "damage": { "damage_type": "bullet", "amount": -5, "armor_penetration": 16 },
+      "damage": { "damage_type": "bullet", "amount": -3, "armor_penetration": 7 },
       "recoil": -270
     }
   },

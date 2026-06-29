@@ -23,9 +23,9 @@
     "melee_cut": 0,
     "dodge": 3,
     "//": "Armor values match that of light survivor body armor.",
-    "armor_bash": 6,
-    "armor_cut": 10,
-    "armor_bullet": 14,
+    "armor_bash": 8,
+    "armor_cut": 13,
+    "armor_bullet": 18,
     "armor_acid": 4,
     "vision_day": 50,
     "vision_night": 3,
@@ -53,8 +53,8 @@
     "color": "light_red_green",
     "attack_cost": 100,
     "//": "Armor values match that of survivor suit.",
-    "armor_bash": 10,
-    "armor_cut": 20,
+    "armor_bash": 12,
+    "armor_cut": 18,
     "armor_bullet": 30,
     "death_drops": "mon_zombie_survivor_elite_death_drops"
   }
