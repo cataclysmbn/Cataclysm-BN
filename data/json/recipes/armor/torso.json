@@ -665,7 +665,7 @@
     "reversible": true,
     "decomp_learn": 0,
     "autolearn": true,
-    "components": [ [ [ "modularvest", 1 ] ], [ [ "ceramic_armor", 4 ] ] ],
+    "components": [ [ [ "modularvest", 1 ] ], [ [ "ceramic_armor", 8 ] ] ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -704,7 +704,7 @@
     "reversible": true,
     "decomp_learn": 0,
     "autolearn": true,
-    "components": [ [ [ "modularvest", 1 ] ], [ [ "alloy_sheet", 4 ] ] ],
+    "components": [ [ [ "modularvest", 1 ] ], [ [ "alloy_sheet", 8 ] ] ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -1304,20 +1304,6 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 15 ] ],
     "components": [ [ [ "nylon", 10 ] ] ]
-  },
-  {
-    "result": "xlkevlar",
-    "type": "recipe",
-    "category": "CC_ARMOR",
-    "subcategory": "CSC_ARMOR_TORSO",
-    "skill_used": "tailor",
-    "difficulty": 6,
-    "time": "50 m",
-    "reversible": true,
-    "decomp_learn": 4,
-    "autolearn": true,
-    "using": [ [ "sewing_standard", 54 ] ],
-    "components": [ [ [ "kevlar_plate", 43 ] ] ]
   },
   {
     "result": "vest_leather",

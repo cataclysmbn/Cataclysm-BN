@@ -69,10 +69,10 @@
   },
   {
     "id": "helmet_army",
-    "repairs_like": "xlkevlar",
+    "repairs_like": "kevlar",
     "type": "ARMOR",
     "name": { "str": "army helmet" },
-    "description": "A heavy helmet that provides excellent protection from all sorts of damage.  It is labeled as the advanced combat helmet.",
+    "description": "A heavy helmet that provides excellent protection from fragmentation and can resist pistol rounds up to .40 S&W.  It is labeled as the advanced combat helmet.",
     "weight": "1383 g",
     "volume": "1750 ml",
     "price": "150 USD",
@@ -97,7 +97,7 @@
     "repairs_like": "barbute",
     "type": "ARMOR",
     "name": { "str": "steel combat helmet" },
-    "description": "A heavy helmet made of hardened steel with a chin strap.  Various designs were once used by armies around the world, modern ballistic helmets have mostly relegated this to military surplus.",
+    "description": "A heavy helmet made of hardened steel with a chin strap.  Designed to protect against shrapnel and impacts, but can handle pistol rounds up to 9x19mm.  Various designs were once used by armies around the world, modern ballistic helmets have mostly relegated this to military surplus.",
     "weight": "1500 g",
     "volume": "1 L",
     "price": "80 USD",
@@ -112,7 +112,7 @@
   },
   {
     "id": "tac_fullhelmet",
-    "repairs_like": "xlkevlar",
+    "repairs_like": "kevlar",
     "type": "ARMOR",
     "name": { "str": "tactical full helmet" },
     "description": "An all-encompassing black helmet that covers your entire face and neck, providing excellent protection from all sorts of damage.",
@@ -137,7 +137,7 @@
   },
   {
     "id": "tac_helmet",
-    "repairs_like": "xlkevlar",
+    "repairs_like": "kevlar",
     "type": "ARMOR",
     "name": { "str": "tactical helmet" },
     "description": "A lightweight black helmet that provides excellent protection from all sorts of damage.",
@@ -507,7 +507,7 @@
   },
   {
     "id": "helmet_lobster",
-    "repairs_like": "xlkevlar",
+    "repairs_like": "kevlar",
     "type": "ARMOR",
     "name": { "str": "lobster helmet" },
     "description": "A heavy helmet that provides excellent protection from all sorts of damage.  It has a tail coming off the back that provides protection to your neck.",

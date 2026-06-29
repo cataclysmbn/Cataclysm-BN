@@ -2360,14 +2360,8 @@
     "//": "Handmade revolver with 50% chance of a caliber conversion kit installed.",
     "subtype": "distribution",
     "entries": [
-      {
-        "item": "handmade_revolver",
-        "charges-min": 0,
-        "charges-max": 6,
-        "contents-group": "gunmod_hmr_conversion",
-        "prob": 50
-      },
-      { "item": "handmade_revolver", "charges-min": 0, "charges-max": 6, "prob": 50 }
+      { "item": "handmade_revolver", "contents-group": "gunmod_hmr_conversion", "prob": 50 },
+      { "item": "handmade_revolver", "prob": 50 }
     ]
   }
 ]
