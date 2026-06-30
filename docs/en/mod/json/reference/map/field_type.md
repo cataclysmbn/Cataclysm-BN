@@ -37,7 +37,7 @@
       // Misc
       "convection_temperature_mod": 10, // Amount of temperature to add
       // Effects
-      "effects": [ {
+      "effects": [{
         // Basic information
         "effect_id": "sap", // Effect id to apply
         "body_part": "torso", // Bodypart with the stated id
@@ -52,13 +52,13 @@
         "immune_inside_vehicle": true, // Immune when on a vehicle part that qualifies as inside
         "chance_inside_vehicle": 10, // One in x chance to get the effect when meeting above condition
         "immune_outside_vehicle": true, // Immune when not on a vehicle part that qualifies as inside
-        "chance_outside_vehicle": 10 // On in x chance to get the effect when meeting above condition
+        "chance_outside_vehicle": 10, // On in x chance to get the effect when meeting above condition
         // Messages
         "message": "The sap is sticky!", // Message to print when recieving the effect
         "message_npc": "The sap sticks to <npcname>!", // Message to print when NPC gets effect
-        "message_type": "bad" // What type of message is this?        
-      } ]
-    }
+        "message_type": "bad", // What type of message is this?
+      }],
+    },
   ],
   // Graphical
   "display_items": true, // Display the items on the files or not?
@@ -66,10 +66,10 @@
   "priority": 1, // Priority to display the field's symbol / sprite
   // Immunities
   "immunity_data": {
-    "traits": [ "M_IMMUNE" ], // Array of traits that prevent effects from the field
-    "body_part_env_resistance": [ [ "mouth", 15 ], [ "eyes", 15 ] ] // Environemental resistance on bodyparts required to protect from the field
+    "traits": ["M_IMMUNE"], // Array of traits that prevent effects from the field
+    "body_part_env_resistance": [["mouth", 15], ["eyes", 15]], // Environemental resistance on bodyparts required to protect from the field
   },
-  "immune_mtypes": [ "mon_zombie" ], // Monster Types immune to the field
+  "immune_mtypes": ["mon_zombie"], // Monster Types immune to the field
   "has_fire": true, // Does fire immunity make you immune to this field
   "has_acid": true, // Does acid immunity?
   "has_elec": true, // What about electricity?
@@ -86,7 +86,7 @@
   // Misc
   "gas_absorbption_factor": 10, // Number of charges to eat from the gas mask
   "dirty_transparency_cache": true, // Weather to forcefully recalc the transparency cache. It is automatically set with transparent being false
-  "description_affix": "covered in" // Puts this in front of every intensity level name
+  "description_affix": "covered in", // Puts this in front of every intensity level name
   "phase": "solid", // Is it solid liquid gas or plasma? Mainly gas has effect on propagation
   "is_splattering": true, // Does this apply blood to vehicle parts?
   // Bash data
@@ -104,11 +104,11 @@
       { "item": "nail", "charges": [6, 8] },
       {
         "item": "splinter",
-        "count": [3, 6]
+        "count": [3, 6],
       },
       { "item": "rag", "count": [40, 55] },
-      { "item": "scrap", "count": [10, 20] }
-    ]
-  }
+      { "item": "scrap", "count": [10, 20] },
+    ],
+  },
 }
 ```
