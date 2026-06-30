@@ -489,8 +489,3 @@ If you do not have Transifex access, use the artifact produced by the translatio
 
 > [!NOTE]
 > Release archives only include compiled `lang/mo` files for packaged builds. They do not contain the `lang/po` sources required to rebuild translations locally.
-
-
-- USE_TRACY=`<boolean>`
-
-Use tracy profiler. See [Profiling with tracy](../tracy.md) for more information.
