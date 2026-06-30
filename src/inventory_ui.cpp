@@ -850,9 +850,6 @@ void inventory_column::prepare_paging( const std::string &filter )
             return preset.sort_compare( lhs, rhs );
         }
     };
-    // stable_sort keeps entries that compare equal (same category and name) in their
-    // deterministic insertion order, so the result is identical across stdlib
-    // implementations instead of the unspecified order std::sort leaves equal items in.
     std::ranges::stable_sort( entries, sort_function );
 
     // Recover categories
