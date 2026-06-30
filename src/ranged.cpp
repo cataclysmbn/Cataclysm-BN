@@ -1251,11 +1251,11 @@ static int calc_gun_volume( const item &gun )
     if( suppressed ) {
         // Speed of sound in atmosphere @ seat level is 343 m/s
         if( speed < 344 ) {
-            // We are suppressed and subsonic. We take the least of 100 or current noise.
-            noise = std::min( 100, noise );
+            // We are suppressed and subsonic. We take the least of 100 or current noise minus 15.
+            noise = std::min( 100, noise - 15 );
         } else {
             // We are suppressed but still super sonic. Cap our volume to 120.
-            noise = std::min( 120, noise );
+            noise = std::min( 120, noise);
         }
     }
 
