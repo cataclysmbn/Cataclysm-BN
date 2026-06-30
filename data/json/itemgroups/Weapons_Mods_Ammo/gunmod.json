@@ -13,7 +13,8 @@
       [ "pistol_lanyard", 50 ],
       [ "suppressor", 60 ],
       [ "suppressor_compact", 40 ],
-      [ "cheek_pad", 25 ]
+      [ "cheek_pad", 25 ],
+      [ "light_grip", 40 ]
     ]
   },
   {
@@ -51,10 +52,15 @@
       [ "breacher_grip", 10 ],
       [ "acog_scope", 70 ],
       [ "holo_sight", 70 ],
+      [ "hybrid_sight", 30 ],
       [ "rifle_scope", 60 ],
       [ "suppressor", 40 ],
       [ "suppressor_compact", 30 ],
-      { "group": "auto_sears", "prob": 40 }
+      { "group": "auto_sears", "prob": 40 },
+      [ "carbon_grip", 30 ],
+      [ "carbon_receiver", 15 ],
+      [ "carbon_stock", 30 ],
+      [ "barrel_takedown_kit", 20 ]
     ]
   },
   {
@@ -64,6 +70,7 @@
     "items": [
       [ "acog_scope", 100 ],
       [ "holo_sight", 100 ],
+      [ "hybrid_sight", 100 ],
       [ "m203", 30 ],
       [ "m320_mod", 10 ],
       [ "40x53mm_conversion_kit", 5 ],
@@ -76,6 +83,49 @@
   {
     "type": "item_group",
     "id": "military_accessories_grenadier",
+    "subtype": "collection",
+    "//": "Standard attachments + underbarrel grenade launcher",
+    "entries": [
+      { "group": "military_accessories_sight", "prob": 75 },
+      { "group": "military_accessories_muzzle", "prob": 75 },
+      { "group": "military_accessories_underbarrel_gl", "prob": 100 },
+      { "item": "shoulder_strap", "prob": 75 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_standard",
+    "subtype": "collection",
+    "//": "Standard attachments for military rifles.",
+    "entries": [
+      { "group": "military_accessories_sight", "prob": 75 },
+      { "group": "military_accessories_tactical", "prob": 75 },
+      { "group": "military_accessories_muzzle", "prob": 75 },
+      { "item": "shoulder_strap", "prob": 75 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_sniper",
+    "subtype": "collection",
+    "//": "Standard attachments for military sniper rifles.",
+    "entries": [
+      { "item": "rifle_scope", "prob": 100 },
+      { "group": "military_accessories_muzzle", "prob": 75 },
+      { "item": "bipod", "prob": 90 },
+      { "item": "shoulder_strap", "prob": 75 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_lmg",
+    "subtype": "collection",
+    "//": "Standard attachments for military lmgs and other heavy weapons.",
+    "entries": [ { "group": "military_accessories_sight", "prob": 75 }, { "item": "shoulder_strap", "prob": 75 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_underbarrel_gl",
     "subtype": "distribution",
     "//": "For underbarrel launchers mounted on rifles used by fireteam grenadiers",
     "entries": [
@@ -85,25 +135,15 @@
   },
   {
     "type": "item_group",
-    "id": "military_accessories_standard",
-    "subtype": "collection",
-    "//": "Standard attachments for military rifles.",
-    "entries": [
-      { "group": "military_accessories_sight", "prob": 100 },
-      { "group": "military_accessories_tactical", "prob": 100 },
-      { "group": "military_accessories_muzzle", "prob": 100 }
-    ]
-  },
-  {
-    "type": "item_group",
     "id": "military_accessories_sight",
     "subtype": "distribution",
     "//": "Standard military sights mounted on rifles",
     "entries": [
       { "item": "red_dot_sight", "prob": 10 },
-      { "item": "holo_sight", "prob": 40 },
-      { "item": "acog_scope", "prob": 40 },
-      { "item": "rifle_scope", "prob": 10 }
+      { "item": "holo_sight", "prob": 30 },
+      { "item": "acog_scope", "prob": 30 },
+      { "item": "rifle_scope", "prob": 10 },
+      { "item": "hybrid_sight", "prob": 20 }
     ]
   },
   {
@@ -134,6 +174,7 @@
       [ "offset_sights", 6 ],
       [ "red_dot_sight", 42 ],
       [ "holo_sight", 18 ],
+      [ "hybrid_sight", 6 ],
       [ "laser_sight", 15 ],
       [ "rail_laser_sight", 6 ],
       [ "acog_scope", 21 ],
@@ -168,6 +209,7 @@
       [ "improve_sights", 84 ],
       [ "red_dot_sight", 42 ],
       [ "holo_sight", 18 ],
+      [ "hybrid_sight", 6 ],
       [ "laser_sight", 15 ],
       [ "rail_laser_sight", 6 ],
       [ "offset_sights", 6 ],
@@ -236,5 +278,52 @@
       [ "universal_autolink", 10 ],
       [ "universal_auto_conversion_kit", 5 ]
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_pipe_conversion",
+    "//": "All pipe gun caliber conversion kits installable in the pipe rifle/pistol/2-shot special.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_pipe_22", "prob": 40 },
+      { "item": "retool_pipe_38", "prob": 40 },
+      { "item": "retool_pipe_40", "prob": 40 },
+      { "item": "retool_pipe_44", "prob": 40 },
+      { "item": "retool_pipe_45", "prob": 40 },
+      { "item": "retool_pipe_9mm", "prob": 40 },
+      { "item": "retool_pipe_223", "prob": 30 },
+      { "item": "retool_pipe_3006", "prob": 20 },
+      { "item": "retool_pipe_308", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_hc_mods",
+    "//": "Handmade carbine unique mods: caliber conversion kits and BAR magazine adapter.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_hc_223", "prob": 40 },
+      { "item": "retool_hc_308", "prob": 30 },
+      { "item": "hc_bar_mag_adapter", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_hmr_conversion",
+    "//": "Handmade revolver caliber conversion kits.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "retool_hmr_40", "prob": 40 },
+      { "item": "retool_hmr_44", "prob": 30 },
+      { "item": "retool_hmr_45", "prob": 40 },
+      { "item": "retool_hmr_9mm", "prob": 40 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gunmod_luty_conversion",
+    "//": "Luty SMG caliber conversion kits.",
+    "subtype": "distribution",
+    "entries": [ { "item": "retool_luty_40", "prob": 40 }, { "item": "retool_luty_45", "prob": 40 } ]
   }
 ]

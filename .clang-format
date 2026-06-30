@@ -26,10 +26,12 @@ IndentWidth: 4
 UseTab: Never
 TabWidth: 4
 ContinuationIndentWidth: 4
+IndentPPDirectives: AfterHash
 AccessModifierOffset: -4
 
 # Line length
 ColumnLimit: 100
+BreakStringLiterals: false
 
 # Pointer alignment
 PointerAlignment: Left

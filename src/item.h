@@ -361,7 +361,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param alert whether to display any messages
          * @return true if item reverted or false if no revert available.
          */
-        bool revert( const Character *ch, bool alert = true );
+        bool revert( Character *ch, bool alert = true );
 
         /**
          * Add or remove energy from a battery.
@@ -2462,9 +2462,15 @@ class item : public location_visitable<item>, public game_object<item>
         static detached_ptr<item> process_internal( detached_ptr<item> &&self, player *carrier,
                 const tripoint_bub_ms &pos, bool activate,
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
+        static auto actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
+                                   temperature_flag temperature,
+                                   const weather_manager &weather, bool seals ) -> detached_ptr<item>;
+        static auto actualize_rot( detached_ptr<item> &&self,
+                                   const rot_context &context, bool seals ) -> detached_ptr<item>;
         static auto process_rot( detached_ptr<item> &&self,
                                  const absolute_rot_process_options &options ) -> detached_ptr<item>;
         auto is_in_preserving_container() const -> bool;
+        auto is_in_sealing_container() const -> bool;
         auto mark_rot_checked_now() -> void;
 
         /** Helper for checking reloadability. **/

@@ -704,8 +704,8 @@
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road" } ],
     "place_nested": [ { "point": [ 0, 0, -1 ], "special": "lab_basement" } ],
     "city_distance": [ 4, -1 ],
-    "occurrences": [ 75, 100 ],
-    "flags": [ "LAB", "UNIQUE" ]
+    "occurrences": [ 0, 3 ],
+    "flags": [ "LAB" ]
   },
   {
     "type": "overmap_special",
@@ -1650,7 +1650,7 @@
     "city_sizes": [ 1, -1 ],
     "city_distance": [ 12, -1 ],
     "occurrences": [ 30, 100 ],
-    "flags": [ "UNIQUE" ]
+    "flags": [ "UNIQUE", "GLOBALLY_UNIQUE" ]
   },
   {
     "type": "overmap_special",
@@ -2095,7 +2095,7 @@
     "city_distance": [ 3, -1 ],
     "rotate": false,
     "occurrences": [ 30, 100 ],
-    "flags": [ "UNIQUE" ]
+    "flags": [ "UNIQUE", "GLOBALLY_UNIQUE" ]
   },
   {
     "type": "overmap_special",

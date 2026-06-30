@@ -17,7 +17,7 @@
     "casing": "38super_casing",
     "range": 14,
     "//": "Base damage of 26, balance increase of two-nineths.",
-    "damage": { "damage_type": "bullet", "amount": 32, "armor_penetration": 18 },
+    "damage": { "damage_type": "bullet", "amount": 27, "armor_penetration": 12 },
     "dispersion": 30,
     "recoil": 550,
     "effects": [ "COOKOFF" ]
@@ -32,7 +32,7 @@
     "price_postapoc": "6 USD",
     "count": 20,
     "//": "Hollowpoint damage increase of 25%.",
-    "damage": { "damage_type": "bullet", "amount": 40, "armor_penetration": 0 }
+    "damage": { "damage_type": "bullet", "amount": 34, "armor_penetration": 0 }
   },
   {
     "id": "bp_38super_fmj",

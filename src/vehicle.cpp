@@ -384,8 +384,7 @@ detached_ptr<item> vehicle_stack::remove( item *to_remove )
 units::volume vehicle_stack::max_volume() const
 {
     if( myorigin->part_flag( part_num, "CARGO" ) && !myorigin->part( part_num ).is_broken() ) {
-        // Set max volume for vehicle cargo to prevent integer overflow
-        return std::min( myorigin->part( part_num ).info().size, 10000_liter );
+        return myorigin->part( part_num ).info().size;
     }
     return 0_ml;
 }

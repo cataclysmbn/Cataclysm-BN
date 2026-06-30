@@ -1,5 +1,6 @@
 #include "itype.h"
 
+#include <algorithm>
 #include <cstdlib>
 
 #include "catalua_icallback_actor.h"
@@ -145,7 +146,14 @@ int itype::charges_per_volume( const units::volume &vol ) const
         // TODO: items should not have 0 volume at all!
         return item::INFINITE_CHARGES;
     }
-    return ( count_by_charges() ? stack_size : 1 ) * vol / volume;
+    const auto effective_stack_size = count_by_charges() ? stack_size : 1;
+    if( effective_stack_size > 0 && vol > units::volume_max / effective_stack_size ) {
+        return item::INFINITE_CHARGES;
+    }
+    const auto result = vol * static_cast<decltype( units::to_milliliter( vol ) )>(
+                            effective_stack_size ) / volume;
+    return static_cast<int>( std::min( result,
+                                       static_cast<decltype( result )>( item::INFINITE_CHARGES ) ) );
 }
 
 // Members of iuse struct, which is slowly morphing into a class.

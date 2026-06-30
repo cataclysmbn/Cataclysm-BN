@@ -1,15 +1,7 @@
-#include "catch/catch.hpp"
-
-#include <algorithm>
-#include <list>
-#include <memory>
-#include <ostream>
-#include <string>
-#include <vector>
-
 #include "avatar.h"
 #include "ballistics.h"
 #include "calendar.h"
+#include "catch/catch.hpp"
 #include "coordinates.h"
 #include "creature_throw.h"
 #include "damage.h"
@@ -33,216 +25,211 @@
 #include "type_id.h"
 #include "vehicle_throw.h"
 
-TEST_CASE( "throwing distance test", "[throwing], [balance]" )
-{
+#include <algorithm>
+#include <list>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <vector>
+
+TEST_CASE("throwing distance test", "[throwing], [balance]") {
     clear_all_state();
-    const standard_npc thrower( "Thrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 10, 10, 10, 10 );
-    item &grenade = *item::spawn_temporary( "grenade" );
-    CHECK( thrower.throw_range( grenade ) >= 30 );
-    CHECK( thrower.throw_range( grenade ) <= 35 );
+    const standard_npc thrower("Thrower", tripoint_bub_ms(60, 60, 0), {}, 4, 10, 10, 10, 10);
+    item& grenade = *item::spawn_temporary("grenade");
+    CHECK(thrower.throw_range(grenade) >= 30);
+    CHECK(thrower.throw_range(grenade) <= 35);
 }
 
-TEST_CASE( "throwing heavier items scales with strength", "[throwing], [balance]" )
-{
+TEST_CASE("throwing heavier items scales with strength", "[throwing], [balance]") {
     clear_all_state();
-    const auto weak_thrower = standard_npc( "WeakThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 8, 10,
-                                            10, 10 );
-    const auto strong_thrower = standard_npc( "StrongThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 14,
-                                10, 10, 10 );
-    item &bronze_anvil = *item::spawn_temporary( "anvil_bronze" );
+    const auto weak_thrower =
+        standard_npc("WeakThrower", tripoint_bub_ms(60, 60, 0), {}, 4, 8, 10, 10, 10);
+    const auto strong_thrower =
+        standard_npc("StrongThrower", tripoint_bub_ms(60, 60, 0), {}, 4, 14, 10, 10, 10);
+    item& bronze_anvil = *item::spawn_temporary("anvil_bronze");
 
-    CHECK( weak_thrower.throw_range( bronze_anvil ) < strong_thrower.throw_range( bronze_anvil ) );
+    CHECK(weak_thrower.throw_range(bronze_anvil) < strong_thrower.throw_range(bronze_anvil));
 }
 
-TEST_CASE( "grabbed creature throw stamina cost is bounded", "[throwing], [balance]" )
-{
-    CHECK( creature_throw::grabbed_stamina_cost( 1.0f ) == creature_throw::min_stamina_cost );
-    CHECK( creature_throw::grabbed_stamina_cost( 1000.0f ) == creature_throw::max_stamina_cost );
+TEST_CASE("grabbed creature throw stamina cost is bounded", "[throwing], [balance]") {
+    CHECK(creature_throw::grabbed_stamina_cost(1.0f) == creature_throw::min_stamina_cost);
+    CHECK(creature_throw::grabbed_stamina_cost(1000.0f) == creature_throw::max_stamina_cost);
 }
 
-TEST_CASE( "grabbed creature throw velocity follows selected distance", "[throwing], [balance]" )
-{
-    CHECK( creature_throw::grabbed_throw_velocity( 1 ) == 10.0f );
-    CHECK( creature_throw::grabbed_throw_velocity( 3 ) == 30.0f );
-    CHECK( creature_throw::grabbed_throw_velocity( 15 ) == 150.0f );
+TEST_CASE("grabbed creature throw velocity follows selected distance", "[throwing], [balance]") {
+    CHECK(creature_throw::grabbed_throw_velocity(1) == 10.0f);
+    CHECK(creature_throw::grabbed_throw_velocity(3) == 30.0f);
+    CHECK(creature_throw::grabbed_throw_velocity(15) == 150.0f);
 }
 
-TEST_CASE( "grabbed creature throw eligibility follows size class", "[throwing], [balance]" )
-{
+TEST_CASE("grabbed creature throw eligibility follows size class", "[throwing], [balance]") {
     const auto medium_player_size = creature_size::medium;
 
-    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 8,
-            creature_size::small ) );
-    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 8,
-                 creature_size::medium ) );
-    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size,
-            creature_throw::equal_size_throw_min_str, creature_size::medium ) );
-    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 15,
-                 creature_size::large ) );
-    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size,
-            creature_throw::larger_size_throw_min_str, creature_size::large ) );
-    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 19,
-                 creature_size::huge ) );
-    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size,
-            creature_throw::much_larger_size_throw_min_str, creature_size::huge ) );
+    CHECK(creature_throw::can_throw_grabbed_creature_size(
+        medium_player_size, 8, creature_size::small));
+    CHECK_FALSE(creature_throw::can_throw_grabbed_creature_size(
+        medium_player_size, 8, creature_size::medium));
+    CHECK(creature_throw::can_throw_grabbed_creature_size(
+        medium_player_size, creature_throw::equal_size_throw_min_str, creature_size::medium));
+    CHECK_FALSE(creature_throw::can_throw_grabbed_creature_size(
+        medium_player_size, 15, creature_size::large));
+    CHECK(creature_throw::can_throw_grabbed_creature_size(
+        medium_player_size, creature_throw::larger_size_throw_min_str, creature_size::large));
+    CHECK_FALSE(creature_throw::can_throw_grabbed_creature_size(
+        medium_player_size, 19, creature_size::huge));
+    CHECK(creature_throw::can_throw_grabbed_creature_size(
+        medium_player_size, creature_throw::much_larger_size_throw_min_str, creature_size::huge));
 
     const auto small_player_size = creature_size::small;
-    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( small_player_size, 20,
-                 creature_size::huge ) );
+    CHECK_FALSE(
+        creature_throw::can_throw_grabbed_creature_size(small_player_size, 20, creature_size::huge));
 }
 
-TEST_CASE( "vehicle throw strength thresholds follow mass", "[throwing], [balance]" )
-{
-    CHECK( vehicle_throw::strength_requirement( 20_kilogram ) == 1 );
-    CHECK( vehicle_throw::strength_requirement( 1000_kilogram ) == 10 );
-    CHECK( vehicle_throw::strength_requirement( 3000_kilogram ) == 30 );
+TEST_CASE("vehicle throw strength thresholds follow mass", "[throwing], [balance]") {
+    CHECK(vehicle_throw::strength_requirement(20_kilogram) == 1);
+    CHECK(vehicle_throw::strength_requirement(1000_kilogram) == 10);
+    CHECK(vehicle_throw::strength_requirement(3000_kilogram) == 30);
 }
 
-TEST_CASE( "vehicle throw effective strength drops below large size", "[throwing], [balance]" )
-{
-    CHECK( vehicle_throw::strength_penalty( creature_size::huge ) == 0 );
-    CHECK( vehicle_throw::strength_penalty( creature_size::large ) == 0 );
-    CHECK( vehicle_throw::strength_penalty( creature_size::medium ) == 5 );
-    CHECK( vehicle_throw::strength_penalty( creature_size::small ) == 10 );
-    CHECK( vehicle_throw::strength_penalty( creature_size::tiny ) == 15 );
+TEST_CASE("vehicle throw effective strength drops below large size", "[throwing], [balance]") {
+    CHECK(vehicle_throw::strength_penalty(creature_size::huge) == 0);
+    CHECK(vehicle_throw::strength_penalty(creature_size::large) == 0);
+    CHECK(vehicle_throw::strength_penalty(creature_size::medium) == 5);
+    CHECK(vehicle_throw::strength_penalty(creature_size::small) == 10);
+    CHECK(vehicle_throw::strength_penalty(creature_size::tiny) == 15);
 
-    CHECK( vehicle_throw::effective_throw_strength( creature_size::large, 12 ) == 12 );
-    CHECK( vehicle_throw::effective_throw_strength( creature_size::medium, 12 ) == 7 );
-    CHECK( vehicle_throw::effective_throw_strength( creature_size::small, 12 ) == 2 );
-    CHECK( vehicle_throw::effective_throw_strength( creature_size::tiny, 12 ) == 0 );
+    CHECK(vehicle_throw::effective_throw_strength(creature_size::large, 12) == 12);
+    CHECK(vehicle_throw::effective_throw_strength(creature_size::medium, 12) == 7);
+    CHECK(vehicle_throw::effective_throw_strength(creature_size::small, 12) == 2);
+    CHECK(vehicle_throw::effective_throw_strength(creature_size::tiny, 12) == 0);
 }
 
-TEST_CASE( "vehicle throw range grows slowly past the weight threshold", "[throwing], [balance]" )
-{
-    CHECK( vehicle_throw::throw_range( 0, 1 ) == 0 );
-    CHECK( vehicle_throw::throw_range( 1, 1 ) == 1 );
-    CHECK( vehicle_throw::throw_range( 5, 1 ) == 3 );
-    CHECK( vehicle_throw::throw_range( 6, 1 ) == 3 );
-    CHECK( vehicle_throw::throw_range( 20, 10 ) == 6 );
-    CHECK( vehicle_throw::throw_range( 22, 10 ) == 7 );
-    CHECK( vehicle_throw::throw_range( 30, 30 ) == 1 );
-    CHECK( vehicle_throw::throw_range( 35, 30 ) == 3 );
-    CHECK( vehicle_throw::throw_range( 38, 30 ) == 5 );
-    CHECK( vehicle_throw::throw_range( 50, 30 ) == 11 );
-    CHECK( vehicle_throw::throw_range( 99, 1 ) == vehicle_throw::max_throw_range );
+TEST_CASE("vehicle throw range grows slowly past the weight threshold", "[throwing], [balance]") {
+    CHECK(vehicle_throw::throw_range(0, 1) == 0);
+    CHECK(vehicle_throw::throw_range(1, 1) == 1);
+    CHECK(vehicle_throw::throw_range(5, 1) == 3);
+    CHECK(vehicle_throw::throw_range(6, 1) == 3);
+    CHECK(vehicle_throw::throw_range(20, 10) == 6);
+    CHECK(vehicle_throw::throw_range(22, 10) == 7);
+    CHECK(vehicle_throw::throw_range(30, 30) == 1);
+    CHECK(vehicle_throw::throw_range(35, 30) == 3);
+    CHECK(vehicle_throw::throw_range(38, 30) == 5);
+    CHECK(vehicle_throw::throw_range(50, 30) == 11);
+    CHECK(vehicle_throw::throw_range(99, 1) == vehicle_throw::max_throw_range);
 }
 
-TEST_CASE( "vehicle shove velocity stays bounded", "[throwing], [balance]" )
-{
-    CHECK( vehicle_throw::shove_velocity( 0, 1 ) == vehicle_throw::base_shove_velocity );
-    CHECK( vehicle_throw::shove_velocity( 1, 1 ) == vehicle_throw::base_shove_velocity );
-    CHECK( vehicle_throw::shove_velocity( 2, 1 ) ==
-           vehicle_throw::base_shove_velocity + vehicle_throw::shove_velocity_per_excess_strength );
-    CHECK( vehicle_throw::shove_velocity( 10, 1 ) == vehicle_throw::max_shove_velocity );
-    CHECK( vehicle_throw::shove_velocity( 99, 1 ) == vehicle_throw::max_shove_velocity );
+TEST_CASE("vehicle shove velocity stays bounded", "[throwing], [balance]") {
+    CHECK(vehicle_throw::shove_velocity(0, 1) == vehicle_throw::base_shove_velocity);
+    CHECK(vehicle_throw::shove_velocity(1, 1) == vehicle_throw::base_shove_velocity);
+    CHECK(
+        vehicle_throw::shove_velocity(2, 1)
+        == vehicle_throw::base_shove_velocity + vehicle_throw::shove_velocity_per_excess_strength);
+    CHECK(vehicle_throw::shove_velocity(10, 1) == vehicle_throw::max_shove_velocity);
+    CHECK(vehicle_throw::shove_velocity(99, 1) == vehicle_throw::max_shove_velocity);
 }
 
-TEST_CASE( "lighter flung creatures are worse at breaking obstacles", "[throwing], [balance]" )
-{
+TEST_CASE("lighter flung creatures are worse at breaking obstacles", "[throwing], [balance]") {
     constexpr auto velocity = 30.0f;
 
-    const auto squirrel_damage = creature_throw::flung_creature_bash_damage( creature_size::tiny,
-                                 1000, velocity );
-    const auto zombie_damage = creature_throw::flung_creature_bash_damage( creature_size::medium,
-                               80000, velocity );
+    const auto squirrel_damage =
+        creature_throw::flung_creature_bash_damage(creature_size::tiny, 1000, velocity);
+    const auto zombie_damage =
+        creature_throw::flung_creature_bash_damage(creature_size::medium, 80000, velocity);
 
-    CHECK( squirrel_damage < zombie_damage );
-    CHECK( squirrel_damage == 3 );
-    CHECK( zombie_damage == 39 );
+    CHECK(squirrel_damage < zombie_damage);
+    CHECK(squirrel_damage == 3);
+    CHECK(zombie_damage == 39);
 }
 
-TEST_CASE( "flung creatures only trigger landing traps if they cannot fly", "[throwing][trap]" )
-{
+TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[throwing][trap]") {
     clear_all_state();
     clear_map();
 
-    auto &here = g->m;
+    auto& here = g->m;
     const auto start = g->u.bub_pos() + tripoint_east;
     const auto landing = start + tripoint_east;
-    const auto beartrap = trap_str_id( "tr_beartrap" );
-    const auto effect_beartrap = efftype_id( "beartrap" );
+    const auto beartrap = trap_str_id("tr_beartrap");
+    const auto effect_beartrap = efftype_id("beartrap");
 
-    here.ter_set( start, ter_id( "t_floor" ) );
-    here.ter_set( landing, ter_id( "t_floor" ) );
-    here.trap_set( landing, beartrap );
+    here.ter_set(start, ter_id("t_floor"));
+    here.ter_set(landing, ter_id("t_floor"));
+    here.trap_set(landing, beartrap);
 
-    SECTION( "non-flying creatures land on traps" ) {
-        auto &zombie = spawn_test_monster( "mon_zombie", start );
+    SECTION("non-flying creatures land on traps") {
+        auto& zombie = spawn_test_monster("mon_zombie", start);
 
-        g->fling_creature( &zombie, coord_to_angle( start, landing ), 10.0f );
+        g->fling_creature(&zombie, coord_to_angle(start, landing), 10.0f);
 
-        CHECK( zombie.bub_pos() == landing );
-        CHECK( zombie.has_effect( effect_beartrap ) );
+        CHECK(zombie.bub_pos() == landing);
+        CHECK(zombie.has_effect(effect_beartrap));
     }
 
-    SECTION( "flying creatures recover before landing" ) {
-        auto &bat = spawn_test_monster( "mon_bat", start );
-        REQUIRE( bat.flies() );
+    SECTION("flying creatures recover before landing") {
+        auto& bat = spawn_test_monster("mon_bat", start);
+        REQUIRE(bat.flies());
 
-        g->fling_creature( &bat, coord_to_angle( start, landing ), 10.0f );
+        g->fling_creature(&bat, coord_to_angle(start, landing), 10.0f);
 
-        CHECK( bat.bub_pos() == landing );
-        CHECK_FALSE( bat.has_effect( effect_beartrap ) );
+        CHECK(bat.bub_pos() == landing);
+        CHECK_FALSE(bat.has_effect(effect_beartrap));
     }
 }
 
-TEST_CASE( "flung creatures take damage when they slam into a wall", "[throwing][impact]" )
-{
+TEST_CASE("flung creatures take damage when they slam into a wall", "[throwing][impact]") {
     clear_all_state();
     clear_map();
 
-    g->u.setpos( tripoint_bub_ms{ 10, 10, 0 } );
+    g->u.setpos(tripoint_bub_ms{10, 10, 0});
 
-    auto &here = g->m;
-    const auto source = tripoint_bub_ms{ 40, 30, 0 };
-    const auto target = tripoint_bub_ms{ 41, 30, 0 };
-    const auto landing = tripoint_bub_ms{ 42, 30, 0 };
-    const auto wall = tripoint_bub_ms{ 43, 30, 0 };
+    auto& here = g->m;
+    const auto source = tripoint_bub_ms{40, 30, 0};
+    const auto target = tripoint_bub_ms{41, 30, 0};
+    const auto landing = tripoint_bub_ms{42, 30, 0};
+    const auto wall = tripoint_bub_ms{43, 30, 0};
 
-    here.ter_set( source, ter_id( "t_floor" ) );
-    here.ter_set( target, ter_id( "t_floor" ) );
-    here.ter_set( landing, ter_id( "t_floor" ) );
-    here.ter_set( wall, ter_id( "t_test_indestructible_wall" ) );
-    REQUIRE( here.impassable( wall ) );
-    REQUIRE_FALSE( here.is_bashable( wall ) );
+    here.ter_set(source, ter_id("t_floor"));
+    here.ter_set(target, ter_id("t_floor"));
+    here.ter_set(landing, ter_id("t_floor"));
+    here.ter_set(wall, ter_id("t_test_indestructible_wall"));
+    REQUIRE(here.impassable(wall));
+    REQUIRE_FALSE(here.is_bashable(wall));
 
-    auto &zombie = spawn_test_monster( "mon_zombie", target );
+    auto& zombie = spawn_test_monster("mon_zombie", target);
     const auto hp_before = zombie.get_hp();
 
-    g->fling_creature( &zombie, coord_to_angle( source, target ), 30.0f );
+    g->fling_creature(&zombie, coord_to_angle(source, target), 30.0f);
 
-    CHECK( zombie.bub_pos() == landing );
-    CHECK( zombie.get_hp() < hp_before );
+    CHECK(zombie.bub_pos() == landing);
+    CHECK(zombie.get_hp() < hp_before);
 }
 
-TEST_CASE( "flung creatures stop at the reality bubble edge", "[throwing][bubble]" )
-{
+TEST_CASE("flung creatures stop at the reality bubble edge", "[throwing][bubble]") {
     clear_all_state();
     clear_map();
 
-    auto &here = get_map();
+    auto& here = get_map();
     const auto bubble_mapsize = 2 * g_reality_bubble_size + 3;
     const auto bubble_edge_x = SEEX * bubble_mapsize - 1;
     const auto bubble_mid_y = SEEY * bubble_mapsize / 2;
-    const auto start = tripoint_bub_ms{ bubble_edge_x - 1, bubble_mid_y, 0 };
-    const auto edge = tripoint_bub_ms{ bubble_edge_x, bubble_mid_y, 0 };
+    const auto start = tripoint_bub_ms{bubble_edge_x - 1, bubble_mid_y, 0};
+    const auto edge = tripoint_bub_ms{bubble_edge_x, bubble_mid_y, 0};
 
-    here.ter_set( start, ter_id( "t_floor" ) );
-    here.ter_set( edge, ter_id( "t_floor" ) );
-    REQUIRE( is_in_reality_bubble_bounds( edge ) );
+    here.ter_set(start, ter_id("t_floor"));
+    here.ter_set(edge, ter_id("t_floor"));
+    REQUIRE(is_in_reality_bubble_bounds(edge));
 
-    auto &zombie = spawn_test_monster( "mon_zombie", start );
+    auto& zombie = spawn_test_monster("mon_zombie", start);
 
-    g->fling_creature( &zombie, coord_to_angle( start, start + tripoint_east ), 30.0f );
+    g->fling_creature(&zombie, coord_to_angle(start, start + tripoint_east), 30.0f);
 
-    CHECK( zombie.bub_pos() == edge );
+    CHECK(zombie.bub_pos() == edge);
 }
 
 struct throw_test_data {
     statistics<bool> hits;
     statistics<double> dmg;
 
-    throw_test_data() : dmg( Z95 ) {}
+    throw_test_data(): dmg(Z95) {}
 };
 
 struct throw_test_pstats {
@@ -252,26 +239,24 @@ struct throw_test_pstats {
     int per;
 };
 
-static std::ostream &operator<<( std::ostream &stream, const throw_test_pstats &pstats )
-{
-    return( stream << "STR: " << pstats.str << " DEX: " << pstats.dex <<
-            " PER: " << pstats.per << " SKL: " << pstats.skill_lvl );
+static std::ostream& operator<<(std::ostream& stream, const throw_test_pstats& pstats) {
+    return (stream << "STR: " << pstats.str << " DEX: " << pstats.dex << " PER: " << pstats.per
+                   << " SKL: " << pstats.skill_lvl);
 }
 
-static const skill_id skill_throw = skill_id( "throw" );
+static const skill_id skill_throw = skill_id("throw");
 
-static void reset_player( player &p, const throw_test_pstats &pstats, const tripoint_bub_ms &pos )
-{
-    clear_character( p );
-    CHECK( !p.in_vehicle );
-    p.setpos( pos );
+static void reset_player(player& p, const throw_test_pstats& pstats, const tripoint_bub_ms& pos) {
+    clear_character(p);
+    CHECK(!p.in_vehicle);
+    p.setpos(pos);
     p.str_max = pstats.str;
     p.dex_max = pstats.dex;
     p.per_max = pstats.per;
-    p.set_str_bonus( 0 );
-    p.set_per_bonus( 0 );
-    p.set_dex_bonus( 0 );
-    p.set_skill_level( skill_throw, pstats.skill_lvl );
+    p.set_str_bonus(0);
+    p.set_per_bonus(0);
+    p.set_dex_bonus(0);
+    p.set_skill_level(skill_throw, pstats.skill_lvl);
 }
 
 // If tests are routinely failing you should:
@@ -287,171 +272,198 @@ constexpr int max_throw_test_iterations = 10000;
 // tighter thresholds here will increase accuracy but also increase average test
 // time since more samples are required to get a more accurate test
 static void test_throwing_player_versus(
-    player &p, const std::string &mon_id, const std::string &throw_id,
-    const int range, const throw_test_pstats &pstats,
-    const epsilon_threshold &hit_thresh, const epsilon_threshold &dmg_thresh )
-{
-    const auto player_start = tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 );
-    const auto monster_start = player_start + tripoint_rel_ms( range, 0, 0 );
+    player& p, const std::string& mon_id, const std::string& throw_id, const int range,
+    const throw_test_pstats& pstats, const epsilon_threshold& hit_thresh,
+    const epsilon_threshold& dmg_thresh) {
+    const auto player_start = tripoint_bub_ms(g_half_mapsize_x, g_half_mapsize_y, 0);
+    const auto monster_start = player_start + tripoint_rel_ms(range, 0, 0);
     bool hit_thresh_met = false;
     bool dmg_thresh_met = false;
     throw_test_data data;
 
 
     do {
-        reset_player( p, pstats, player_start );
-        p.set_moves( 1000 );
-        p.set_stamina( p.get_stamina_max() );
-        detached_ptr<item> det = item::spawn( throw_id );
-        item &it = *det;
-        monster &mon = spawn_test_monster( mon_id, monster_start );
-        mon.set_moves( 0 );
+        reset_player(p, pstats, player_start);
+        p.set_moves(1000);
+        p.set_stamina(p.get_stamina_max());
+        detached_ptr<item> det = item::spawn(throw_id);
+        item& it = *det;
+        monster& mon = spawn_test_monster(mon_id, monster_start);
+        mon.set_moves(0);
 
-        double actual_hit_chance =
-            ranged::hit_chance(
-                dispersion_sources( ranged::throwing_dispersion( p, it, &mon, false ) ),
-                range,
-                mon.ranged_target_size() );
-        if( std::fabs( actual_hit_chance - hit_thresh.midpoint ) > hit_thresh.epsilon / 4.0 ) {
-            CAPTURE( hit_thresh.midpoint );
-            CAPTURE( hit_thresh.epsilon / 4.0 );
-            CAPTURE( actual_hit_chance );
-            CAPTURE( range );
-            CAPTURE( mon.ranged_target_size() );
-            FAIL_CHECK( "Expected and calculated midpoints must be within epsilon/4 or the test is too fragile" );
+        double actual_hit_chance = ranged::hit_chance(
+            dispersion_sources(ranged::throwing_dispersion(p, it, &mon, false)), range,
+            mon.ranged_target_size());
+        if (std::fabs(actual_hit_chance - hit_thresh.midpoint) > hit_thresh.epsilon / 4.0) {
+            CAPTURE(hit_thresh.midpoint);
+            CAPTURE(hit_thresh.epsilon / 4.0);
+            CAPTURE(actual_hit_chance);
+            CAPTURE(range);
+            CAPTURE(mon.ranged_target_size());
+            FAIL_CHECK(
+                "Expected and calculated midpoints must be within epsilon/4 or the test is "
+                "too fragile");
             return;
         }
 
-        dealt_projectile_attack atk = ranged::throw_item( p, mon.bub_pos(), std::move( det ),
-                                      std::nullopt );
-        data.hits.add( atk.hit_critter != nullptr );
-        data.dmg.add( atk.dealt_dam.total_damage() );
+        dealt_projectile_attack atk =
+            ranged::throw_item(p, mon.bub_pos(), std::move(det), std::nullopt);
+        data.hits.add(atk.hit_critter != nullptr);
+        data.dmg.add(atk.dealt_dam.total_damage());
 
-        if( data.hits.n() >= min_throw_test_iterations ) {
+        if (data.hits.n() >= min_throw_test_iterations) {
             // ideally we should actually still checking the threshold after we
             // meet it but we're busy people and don't have time for that
-            if( !hit_thresh_met ) {
-                hit_thresh_met = data.hits.test_threshold( hit_thresh );
-            }
+            if (!hit_thresh_met) { hit_thresh_met = data.hits.test_threshold(hit_thresh); }
             // don't do an else here because it's possible we just made
             // hit_thresh_met true
-            if( hit_thresh_met ) {
+            if (hit_thresh_met) {
                 // commenting this out is a super easy way to force all the
                 // test to fail if you want to reset the baseline after
                 // making balance changes or if many of the tests are failing
-                dmg_thresh_met = data.dmg.test_threshold( dmg_thresh );
+                dmg_thresh_met = data.dmg.test_threshold(dmg_thresh);
             }
         }
-        g->remove_zombie( mon );
+        g->remove_zombie(mon);
         // only need to check dmg_thresh_met because it can only be true if
         // hit_thresh_met first
-    } while( !dmg_thresh_met && data.hits.n() < max_throw_test_iterations );
+    } while (!dmg_thresh_met && data.hits.n() < max_throw_test_iterations);
 
-    INFO( "Monster: '" << mon_id << "' Item: '" << throw_id );
-    INFO( "Range: " << range << " Pstats: " << pstats );
-    INFO( "Total throws: " << data.hits.n() );
-    INFO( "Ratio: " << data.hits.avg() * 100 << "%" );
-    INFO( "Hit Lower: " << data.hits.lower() * 100 << "% Hit Upper: " << data.hits.upper() * 100 <<
-          "%" );
-    INFO( "Hit Thresh: " << ( hit_thresh.midpoint - hit_thresh.epsilon ) * 100 << "% - " <<
-          ( hit_thresh.midpoint + hit_thresh.epsilon ) * 100 << "%" );
-    INFO( "Adj Wald error: " << data.hits.margin_of_error() );
-    INFO( "Avg total damage: " << data.dmg.avg() );
-    INFO( "Dmg Lower: " << data.dmg.lower() << " Dmg Upper: " << data.dmg.upper() );
-    INFO( "Dmg Thresh: " << dmg_thresh.midpoint - dmg_thresh.epsilon << " - " <<
-          dmg_thresh.midpoint + dmg_thresh.epsilon );
-    INFO( "Margin of error: " << data.hits.margin_of_error() );
-    CHECK( dmg_thresh_met );
+    INFO("Monster: '" << mon_id << "' Item: '" << throw_id);
+    INFO("Range: " << range << " Pstats: " << pstats);
+    INFO("Total throws: " << data.hits.n());
+    INFO("Ratio: " << data.hits.avg() * 100 << "%");
+    INFO("Hit Lower: " << data.hits.lower() * 100 << "% Hit Upper: " << data.hits.upper() * 100
+                       << "%");
+    INFO("Hit Thresh: " << (hit_thresh.midpoint - hit_thresh.epsilon) * 100 << "% - "
+                        << (hit_thresh.midpoint + hit_thresh.epsilon) * 100 << "%");
+    INFO("Adj Wald error: " << data.hits.margin_of_error());
+    INFO("Avg total damage: " << data.dmg.avg());
+    INFO("Dmg Lower: " << data.dmg.lower() << " Dmg Upper: " << data.dmg.upper());
+    INFO("Dmg Thresh: " << dmg_thresh.midpoint - dmg_thresh.epsilon << " - "
+                        << dmg_thresh.midpoint + dmg_thresh.epsilon);
+    INFO("Margin of error: " << data.hits.margin_of_error());
+    CHECK(dmg_thresh_met);
 }
 
-constexpr throw_test_pstats lo_skill_base_stats = { 0, 8, 8, 8 };
-constexpr throw_test_pstats mid_skill_base_stats = { MAX_SKILL / 2, 8, 8, 8 };
-constexpr throw_test_pstats hi_skill_base_stats = { MAX_SKILL, 8, 8, 8 };
-constexpr throw_test_pstats hi_skill_athlete_stats = { MAX_SKILL, 12, 12, 12 };
+constexpr throw_test_pstats lo_skill_base_stats = {0, 8, 8, 8};
+constexpr throw_test_pstats mid_skill_base_stats = {MAX_SKILL / 2, 8, 8, 8};
+constexpr throw_test_pstats hi_skill_base_stats = {MAX_SKILL, 8, 8, 8};
+constexpr throw_test_pstats hi_skill_athlete_stats = {MAX_SKILL, 12, 12, 12};
 
-TEST_CASE( "basic_throwing_sanity_tests", "[throwing],[balance]" )
-{
+TEST_CASE("basic_throwing_sanity_tests", "[throwing],[balance]") {
     clear_all_state();
-    player &p = g->u;
+    player& p = g->u;
 
-    SECTION( "test_player_vs_zombie_rock_basestats" ) {
-        test_throwing_player_versus( p, "mon_zombie", "rock", 1, lo_skill_base_stats, { 0.99, 0.10 }, { 10, 3 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 5, lo_skill_base_stats, { 0.77, 0.10 }, { 5.5, 2 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 10, lo_skill_base_stats, { 0.27, 0.10 }, { 2, 2 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 15, lo_skill_base_stats, { 0.13, 0.10 }, { 1, 2 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 20, lo_skill_base_stats, { 0.095, 0.10 }, { 0.5, 2 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 25, lo_skill_base_stats, { 0.08, 0.10 }, { 0.5, 2 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 30, lo_skill_base_stats, { 0.06, 0.10 }, { 0.5, 2 } );
+    SECTION("test_player_vs_zombie_rock_basestats") {
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 1, lo_skill_base_stats, {0.99, 0.10}, {10, 3});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 5, lo_skill_base_stats, {0.77, 0.10}, {5.5, 2});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 10, lo_skill_base_stats, {0.27, 0.10}, {2, 2});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 15, lo_skill_base_stats, {0.13, 0.10}, {1, 2});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 20, lo_skill_base_stats, {0.095, 0.10}, {0.5, 2});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 25, lo_skill_base_stats, {0.08, 0.10}, {0.5, 2});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 30, lo_skill_base_stats, {0.06, 0.10}, {0.5, 2});
     }
 
-    SECTION( "test_player_vs_zombie_javelin_iron_basestats" ) {
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 1, lo_skill_base_stats, { 1.00, 0.10 }, { 33, 5 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 5, lo_skill_base_stats, { 0.64, 0.10 }, { 13, 3 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 10, lo_skill_base_stats, { 0.20, 0.10 }, { 4, 2 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 15, lo_skill_base_stats, { 0.11, 0.10 }, { 1.29, 3 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 20, lo_skill_base_stats, { 0.08, 0.10 }, { 1.66, 2 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 25, lo_skill_base_stats, { 0.06, 0.10 }, { 1.0, 2 } );
+    SECTION("test_player_vs_zombie_javelin_iron_basestats") {
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 1, lo_skill_base_stats, {1.00, 0.10}, {33, 5});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 5, lo_skill_base_stats, {0.64, 0.10}, {13, 3});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 10, lo_skill_base_stats, {0.20, 0.10}, {4, 2});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 15, lo_skill_base_stats, {0.11, 0.10}, {1.29, 3});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 20, lo_skill_base_stats, {0.08, 0.10}, {1.66, 2});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 25, lo_skill_base_stats, {0.06, 0.10}, {1.0, 2});
     }
-    // Changes to aimed crit damage and hit location makes high skill throwing perform more consistantly.
-    // Tests fail when not adjusted to account for this increase in performance.
-    SECTION( "test_player_vs_zombie_rock_athlete" ) {
-        test_throwing_player_versus( p, "mon_zombie", "rock", 1, hi_skill_athlete_stats, { 1.00, 0.10 }, { 16.5, 8 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 5, hi_skill_athlete_stats, { 1.00, 0.10 }, { 16.5, 8 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 10, hi_skill_athlete_stats, { 1.00, 0.10 }, { 16.27, 8 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 15, hi_skill_athlete_stats, { 0.97, 0.10 }, { 12.83, 8 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 20, hi_skill_athlete_stats, { 0.77, 0.10 }, { 9.10, 8 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 25, hi_skill_athlete_stats, { 0.58, 0.10 }, { 6.54, 6 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 30, hi_skill_athlete_stats, { 0.43, 0.10 }, { 4.90, 4 } );
+    // Changes to aimed crit damage and hit location makes high skill throwing perform more
+    // consistantly. Tests fail when not adjusted to account for this increase in performance.
+    SECTION("test_player_vs_zombie_rock_athlete") {
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 1, hi_skill_athlete_stats, {1.00, 0.10}, {16.5, 8});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 5, hi_skill_athlete_stats, {1.00, 0.10}, {16.5, 8});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 10, hi_skill_athlete_stats, {1.00, 0.10}, {16.27, 8});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 15, hi_skill_athlete_stats, {0.97, 0.10}, {12.83, 8});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 20, hi_skill_athlete_stats, {0.77, 0.10}, {9.10, 8});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 25, hi_skill_athlete_stats, {0.58, 0.10}, {6.54, 6});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 30, hi_skill_athlete_stats, {0.43, 0.10}, {4.90, 4});
     }
 
-    SECTION( "test_player_vs_zombie_javelin_iron_athlete" ) {
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 1, hi_skill_athlete_stats, { 1.00, 0.10 }, { 59.00, 8 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 5, hi_skill_athlete_stats, { 1.00, 0.10 }, {  50.55, 8 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 10, hi_skill_athlete_stats, { 1.00, 0.10 }, { 40.00, 10 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 15, hi_skill_athlete_stats, { 0.97, 0.10 }, { 38.00, 10 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 20, hi_skill_athlete_stats, { 0.77, 0.10 }, { 30.00, 10 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 25, hi_skill_athlete_stats, { 0.58, 0.10 }, { 25.00, 10 } );
-        test_throwing_player_versus( p, "mon_zombie", "javelin_iron", 30, hi_skill_athlete_stats, { 0.43, 0.10 }, { 15.31, 10 } );
+    SECTION("test_player_vs_zombie_javelin_iron_athlete") {
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 1, hi_skill_athlete_stats, {1.00, 0.10}, {59.00, 8});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 5, hi_skill_athlete_stats, {1.00, 0.10}, {50.55, 8});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 10, hi_skill_athlete_stats, {1.00, 0.10}, {40.00, 10});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 15, hi_skill_athlete_stats, {0.97, 0.10}, {38.00, 10});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 20, hi_skill_athlete_stats, {0.77, 0.10}, {30.00, 10});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 25, hi_skill_athlete_stats, {0.58, 0.10}, {25.00, 10});
+        test_throwing_player_versus(
+            p, "mon_zombie", "javelin_iron", 30, hi_skill_athlete_stats, {0.43, 0.10}, {15.31, 10});
     }
 }
 
-TEST_CASE( "throwing_skill_impact_test", "[throwing],[balance]" )
-{
+TEST_CASE("throwing_skill_impact_test", "[throwing],[balance]") {
     clear_all_state();
-    player &p = g->u;
+    player& p = g->u;
     // we already cover low stats in the sanity tests and we only cover a few
     // ranges here because what we're really trying to capture is the effect
     // the throwing skill has while the sanity tests are more explicit.
-    SECTION( "mid_skill_basestats_rock" ) {
-        test_throwing_player_versus( p, "mon_zombie", "rock", 5, mid_skill_base_stats, { 1.00, 0.10 }, { 12, 6 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 10, mid_skill_base_stats, { 0.92, 0.10 }, { 11.6, 4 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 15, mid_skill_base_stats, { 0.62, 0.10 }, { 7, 2 } );
+    SECTION("mid_skill_basestats_rock") {
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 5, mid_skill_base_stats, {1.00, 0.10}, {12, 6});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 10, mid_skill_base_stats, {0.92, 0.10}, {11.6, 4});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 15, mid_skill_base_stats, {0.62, 0.10}, {7, 2});
     }
 
-    SECTION( "hi_skill_basestats_rock" ) {
-        test_throwing_player_versus( p, "mon_zombie", "rock", 5, hi_skill_base_stats, { 1.00, 0.10 }, { 18, 5 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 10, hi_skill_base_stats, { 1.00, 0.10 }, { 16, 5 } );
-        test_throwing_player_versus( p, "mon_zombie", "rock", 15, hi_skill_base_stats, { 0.97, 0.10 }, { 15, 4 } );
+    SECTION("hi_skill_basestats_rock") {
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 5, hi_skill_base_stats, {1.00, 0.10}, {18, 5});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 10, hi_skill_base_stats, {1.00, 0.10}, {16, 5});
+        test_throwing_player_versus(
+            p, "mon_zombie", "rock", 15, hi_skill_base_stats, {0.97, 0.10}, {15, 4});
     }
 }
 
-TEST_CASE( "time_to_throw_independent_of_number_of_projectiles", "[throwing],[balance]" )
-{
+TEST_CASE("time_to_throw_independent_of_number_of_projectiles", "[throwing],[balance]") {
     clear_all_state();
-    player &p = g->u;
+    player& p = g->u;
 
-    detached_ptr<item> det = item::spawn( "throwing_stick", calendar::turn, 10 );
-    item &thrown = *det;
-    REQUIRE( thrown.charges > 1 );
-    REQUIRE( thrown.count_by_charges() );
-    p.wield( std::move( det ) );
+    detached_ptr<item> det = item::spawn("throwing_stick", calendar::turn, 10);
+    item& thrown = *det;
+    REQUIRE(thrown.charges > 1);
+    REQUIRE(thrown.count_by_charges());
+    p.wield(std::move(det));
     int initial_moves = -1;
-    while( thrown.charges > 0 ) {
-        const int cost = ranged::throw_cost( p, thrown );
-        if( initial_moves < 0 ) {
+    while (thrown.charges > 0) {
+        const int cost = ranged::throw_cost(p, thrown);
+        if (initial_moves < 0) {
             initial_moves = cost;
         } else {
-            CHECK( initial_moves == cost );
+            CHECK(initial_moves == cost);
         }
         thrown.charges--;
     }

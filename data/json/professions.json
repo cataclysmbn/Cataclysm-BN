@@ -100,14 +100,14 @@
       },
       {
         "collection": [
-          { "item": "hi_power_40", "container-item": "bholster" },
+          { "item": "hi_power_40", "container-item": "holster" },
           { "item": "legpouch_large", "contents-item": [ "bhp40mag", "bhp40mag" ] }
         ],
         "prob": 10
       },
       {
         "collection": [
-          { "item": "hi_power_9mm", "container-item": "bholster" },
+          { "item": "hi_power_9mm", "container-item": "holster" },
           { "item": "legpouch_large", "contents-item": [ "bhp9mag_13rd", "bhp9mag_13rd" ] }
         ],
         "prob": 10
@@ -181,7 +181,7 @@
       },
       {
         "collection": [
-          { "item": "model_10_revolver", "container-item": "bholster" },
+          { "item": "model_10_revolver", "container-item": "holster" },
           { "item": "legpouch_large", "contents-group": "speedloaders_38_carry" }
         ],
         "prob": 20
@@ -279,7 +279,7 @@
       },
       {
         "collection": [
-          { "item": "taurus_judge", "container-item": "XL_holster" },
+          { "item": "taurus_judge", "container-item": "holster" },
           { "item": "ammo_satchel_leg", "contents-group": "ammopouch_410_carry" }
         ],
         "prob": 25
@@ -2148,7 +2148,7 @@
   },
   {
     "type": "profession",
-    "id": "prof_combat_engineer",
+    "id": "prof_combat_medic",
     "name": "Military Corpsman",
     "description": "You were trained to keep your platoon in top shape, while still having to lug all the same kit as any other soldier alongside your medical supplies.  Now you're on your own against the undead, and that rifle they saddled you with is your only line of defense.",
     "age": { "min": 20, "max": 40 },

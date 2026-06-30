@@ -54,6 +54,7 @@
 #include "event.h"
 #include "event_bus.h"
 #include "explosion.h"
+#include "explosion_queue.h"
 #include "field.h"
 #include "field_type.h"
 #include "flag.h"
@@ -102,6 +103,7 @@
 #include "projectile.h"
 #include "profile.h"
 #include "rng.h"
+#include "rot.h"
 #include "safe_reference.h"
 #include "scent_map.h"
 #include "sounds.h"
@@ -927,7 +929,15 @@ void map::add_vehicle_to_cache( vehicle *veh )
         int part = veh->part_with_feature( vpr.part_index(), VPFLAG_LADDER, true );
         if( part != -1 ) {
             // NOTE: This cache may need to be submapfied at some point
-            cached_veh_rope[p] = std::make_pair( veh, static_cast<int>( part ) );
+            // The rope hangs DOWN from the ladder part, so register the whole column from
+            // the part down to ladder_length() below it: has_rope_at() and the climb-up /
+            // rope-rendering paths look up the tile BELOW the part, not just the top tile
+            // (issue #9590). The top tile is kept so climbing down while boarded resolves.
+            const auto len = veh->part( part ).info().ladder_length();
+            const auto min_z = std::max( p.z() - len, -OVERMAP_DEPTH );
+            for( const auto z : std::views::iota( min_z, p.z() + 1 ) ) {
+                cached_veh_rope[tripoint_bub_ms( p.xy(), z )] = std::make_pair( veh, static_cast<int>( part ) );
+            }
         }
         level_cache &ch = get_cache( p.z() );
         ch.veh_in_active_range = true;
@@ -960,7 +970,22 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint_bub_ms &p
             ch.veh_exists_at[ch.idx( pt.x(), pt.y() )] = false;
         }
         ch.veh_cached_parts.erase( it );
-        cached_veh_rope.erase( pt );
+        // The rope-ladder cache stores the whole hanging column (see add_vehicle_to_cache),
+        // so a bare erase( pt ) would leave the rope tiles below the part. When pt is one of
+        // this vehicle's rope tiles (a column top), drop every tile this vehicle owns in that
+        // column. The gate keeps the common (no rope) path at a single lookup; the scan does
+        // NOT break on gaps, so an interleaved column from another vehicle can't strand this
+        // vehicle's lower tiles, and only this vehicle's entries are removed. Index-free on
+        // purpose: part indices may be stale here (this can run mid-part_removal_cleanup).
+        if( const auto top = cached_veh_rope.find( pt );
+            top != cached_veh_rope.end() && top->second.first == veh ) {
+            for( const auto z : std::views::iota( -OVERMAP_DEPTH, pt.z() + 1 ) ) {
+                const auto col_it = cached_veh_rope.find( tripoint_bub_ms( pt.xy(), z ) );
+                if( col_it != cached_veh_rope.end() && col_it->second.first == veh ) {
+                    cached_veh_rope.erase( col_it );
+                }
+            }
+        }
     }
 
 }
@@ -1023,6 +1048,41 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
         z = veh->abs_sm_pos.z() = z > OVERMAP_HEIGHT ? OVERMAP_HEIGHT : -OVERMAP_DEPTH;
     }
 
+    struct detached_vehicle_footprint {
+        tripoint_abs_sm min;
+        tripoint_abs_sm max;
+    };
+
+    auto footprints = std::array<std::optional<detached_vehicle_footprint>, OVERMAP_LAYERS> {};
+    for( const vpart_reference &vp : veh->get_all_parts() ) {
+        if( vp.part().removed ) {
+            continue;
+        }
+        const auto part_sm = project_to<coords::sm>( veh->abs_part_location( vp.part() ) );
+        if( !inbounds_z( part_sm.z() ) ) {
+            continue;
+        }
+        auto &footprint = footprints[part_sm.z() + OVERMAP_DEPTH];
+        if( !footprint ) {
+            footprint = detached_vehicle_footprint{ .min = part_sm, .max = part_sm };
+            continue;
+        }
+        footprint->min.x() = std::min( footprint->min.x(), part_sm.x() );
+        footprint->min.y() = std::min( footprint->min.y(), part_sm.y() );
+        footprint->max.x() = std::max( footprint->max.x(), part_sm.x() );
+        footprint->max.y() = std::max( footprint->max.y(), part_sm.y() );
+    }
+
+    const auto mark_detached_vehicle_footprint_dirty = [&]() {
+        for( const auto &footprint : footprints ) {
+            if( !footprint ) {
+                continue;
+            }
+            on_vehicle_moved( abs_to_bub( footprint->min ), abs_to_bub( footprint->max ),
+                              footprint->min.z() );
+        }
+    };
+
     // Unboard all passengers before detaching
     for( auto const &part : veh->get_avail_parts( VPFLAG_BOARDABLE ) ) {
         player *passenger = part.get_passenger();
@@ -1038,6 +1098,7 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
                   veh->name, veh->abs_sm_pos.x(), veh->abs_sm_pos.y(), veh->abs_sm_pos.z() );
         get_mapbuffer().unregister_vehicle( veh );
         dirty_vehicle_list.erase( veh );
+        mark_detached_vehicle_footprint_dirty();
         return std::unique_ptr<vehicle>();
     }
     level_cache &ch = get_cache( z );
@@ -1053,6 +1114,7 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
                 get_overmapbuffer( bound_dimension_ ).remove_vehicle( veh );
             }
             dirty_vehicle_list.erase( veh );
+            mark_detached_vehicle_footprint_dirty();
             veh->detach();
             veh->refresh_position();
             return result;
@@ -1078,6 +1140,10 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     }
 
     auto &ch = get_cache( smz );
+    // Vehicle-only caches are cleared by build_map_cache() when a z-level has vehicle
+    // cache effects.  Keep that cleanup path active even if this movement is a
+    // removal of the last vehicle on the level.
+    ch.veh_in_active_range = true;
     invalidate_lightmap_caches();
     set_seen_cache_dirty( smz );
     mark_visibility_cache_dirty( smz );
@@ -6172,6 +6238,10 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
 
 void map::process_items()
 {
+    // Defer explosion drains during processing: an item here can be detached but
+    // still in-stack, and a re-entrant drain would re-detonate it forever (#9696).
+    explosion_handler::scoped_drain_deferral defer_explosion_drains;
+
     auto total_active_items = int64_t{ 0 };
     auto total_rottable_active_items = int64_t{ 0 };
 
@@ -6240,21 +6310,6 @@ void map::process_items()
     TracyPlot( "Total Rottable Active Items", total_rottable_active_items );
 }
 
-static temperature_flag temperature_flag_at_point( const map &m, const tripoint_bub_ms &p )
-{
-    if( m.ter( p ) == t_rootcellar ) {
-        return temperature_flag::TEMP_ROOT_CELLAR;
-    }
-    if( m.has_flag_furn( TFLAG_FRIDGE, p ) ) {
-        return temperature_flag::TEMP_FRIDGE;
-    }
-    if( m.has_flag_furn( TFLAG_FREEZER, p ) ) {
-        return temperature_flag::TEMP_FREEZER;
-    }
-
-    return temperature_flag::TEMP_NORMAL;
-}
-
 auto map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp,
                                    std::vector<item *> &active_items ) -> void
 {
@@ -6276,7 +6331,7 @@ auto map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm
             }
 
             const auto map_location = active_item_ref->bub_pos();
-            temperature_flag flag = temperature_flag_at_point( *this, tripoint_bub_ms( map_location ) );
+            const auto flag = rot::temp::for_location( *this, *active_item_ref );
             process_map_items( active_item_ref, map_location, flag );
         }
     }
@@ -6339,21 +6394,10 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         }
         const item &target = *active_item_ref;
         // Find the cargo part and coordinates corresponding to the current active item.
-        const vehicle_part &pt = it->part();
         const auto item_loc = it->pos();
-        auto items = cur_veh.get_items( static_cast<int>( it->part_index() ) );
-        temperature_flag flag = temperature_flag::TEMP_NORMAL;
+        auto flag = temperature_flag::TEMP_NORMAL;
         if( target.is_food() || target.is_food_container() || target.is_corpse() ) {
-            const vpart_info &pti = pt.info();
-            if( engine_heater_is_on ) {
-                flag = temperature_flag::TEMP_HEATER;
-            }
-
-            if( pt.enabled && pti.has_flag( VPFLAG_FRIDGE ) ) {
-                flag = temperature_flag::TEMP_FRIDGE;
-            } else if( pt.enabled && pti.has_flag( VPFLAG_FREEZER ) ) {
-                flag = temperature_flag::TEMP_FREEZER;
-            }
+            flag = rot::temp::for_part( cur_veh, it->part_index(), engine_heater_is_on );
         }
         if( !process_map_items( active_item_ref, item_loc, flag ) ) {
             // If the item was NOT destroyed, we can skip the remainder,
@@ -6636,58 +6680,42 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint_bub_ms &origin,
         const std::optional<vpart_reference> autoclavepart = vp.part_with_feature( "AUTOCLAVE", true );
         const std::optional<vpart_reference> cargo = vp.part_with_feature( "CARGO", true );
 
-        if( crafterpart ) {
-            for( itype_id id : crafterpart->info().craftertools() ) {
-                if( type == id ) {
-                    detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-                    tmp->charges = crafterpart->vehicle().drain( itype_battery, quantity );
-                    quantity -= tmp->charges;
-                    ret.push_back( std::move( tmp ) );
+        auto drain_vehicle_pseudo_item = [&ret, &quantity, &type]( vehicle & veh,
+        const itype_id & drain_type ) -> bool {
+            const auto drained = veh.drain( drain_type, quantity );
+            quantity -= drained;
+            if( drained <= 0 )
+            {
+                return quantity == 0;
+            }
+            auto tmp = item::spawn( type, calendar::turn );
+            tmp->charges = drained;
+            ret.push_back( std::move( tmp ) );
+            return quantity == 0;
+        };
 
-                    if( quantity == 0 ) {
-                        return ret;
-                    }
+        if( crafterpart ) {
+            for( const auto &id : crafterpart->info().craftertools() ) {
+                if( type == id && drain_vehicle_pseudo_item( crafterpart->vehicle(), itype_battery ) ) {
+                    return ret;
                 }
             }
         }
         if( faupart ) { // we have a faucet, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
-
-            ftype = type;
-
-            // TODO: add a sane birthday arg
-            //TODO!: check if we actually need the return  here
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = faupart->vehicle().drain( ftype, quantity );
             // TODO: Handle water poison when crafting starts respecting it
-            quantity -= tmp->charges;
-            // Don't return a 0-charge phantom for types the tanks can't provide:
-            // it would replace the real component during crafting (#9440)
-            if( tmp->charges > 0 ) {
-                ret.push_back( std::move( tmp ) );
-            }
-
-            if( quantity == 0 ) {
+            if( drain_vehicle_pseudo_item( faupart->vehicle(), type ) ) {
                 return ret;
             }
         }
 
         if( autoclavepart ) { // we have an autoclave, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
+            auto ftype = itype_id::NULL_ID();
 
             if( type == itype_autoclave ) {
                 ftype = itype_battery;
             }
 
-            // TODO: add a sane birthday arg
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = autoclavepart->vehicle().drain( ftype, quantity );
-            quantity -= tmp->charges;
-            if( tmp->charges > 0 ) {
-                ret.push_back( std::move( tmp ) );
-            }
-
-            if( quantity == 0 ) {
+            if( drain_vehicle_pseudo_item( autoclavepart->vehicle(), ftype ) ) {
                 return ret;
             }
         }
@@ -7925,8 +7953,14 @@ void map::reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts,
     for( const tripoint_bub_ms &p : points_in_radius( f, range ) ) {
         const tripoint_bub_ms tp = { p.xy(), f.z() };
         const int tp_cost = move_cost( tp );
+        const auto &veh = veh_at( tp );
+        const auto &veh_wall = veh.obstacle_at_part();
+        // Move cost is in right bounds
+        const bool bad_move_cost = tp_cost < cost_min || tp_cost > cost_max;
+        // It lacks floor in terrain or in veh
+        const bool no_floor = !has_floor_or_support( tp ) && ( veh_wall || !veh );
         // rejection conditions
-        if( tp_cost < cost_min || tp_cost > cost_max || !has_floor_or_support( tp ) ) {
+        if( bad_move_cost || no_floor || veh_wall ) {
             continue;
         }
         // set initial cost for grid point

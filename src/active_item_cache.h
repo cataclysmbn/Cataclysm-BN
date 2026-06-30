@@ -14,6 +14,7 @@ class item;
 enum class special_item_type : int {
     none,
     corpse,
+    bionic_scannable_corpse,
     explosive
 };
 

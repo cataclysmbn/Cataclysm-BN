@@ -1907,8 +1907,3 @@ class vehicle
         // Persisted across saves so cross-dimension processing survives reload.
         dimension_id dimension_id_;
 };
-
-namespace rot
-{
-temperature_flag temperature_flag_for_part( const vehicle &veh, size_t part );
-} // namespace rot

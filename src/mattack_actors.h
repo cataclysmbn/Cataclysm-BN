@@ -9,7 +9,7 @@
 
 #include "bodypart.h"
 #include "damage.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "mattack_common.h"
 #include "translations.h"
 #include "type_id.h"

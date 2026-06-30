@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <ctime>
 #include <chrono>
 
@@ -126,9 +127,9 @@ void cata::detail::reg_units( sol::state &lua )
                 luna::no_constructor
             );
 
-        luna::set_fx( ut, "from_milliliter", &units::from_milliliter<int> );
-        luna::set_fx( ut, "from_liter", &units::from_liter<int> );
-        luna::set_fx( ut, "to_milliliter", &units::to_milliliter<int> );
+        luna::set_fx( ut, "from_milliliter", &units::from_milliliter<std::int64_t> );
+        luna::set_fx( ut, "from_liter", &units::from_liter<std::int64_t> );
+        luna::set_fx( ut, "to_milliliter", &units::to_milliliter<std::int64_t> );
         luna::set_fx( ut, "to_liter", &units::to_liter );
 
         luna::set_fx( ut, sol::meta_function::equal_to, &units::volume::operator== );

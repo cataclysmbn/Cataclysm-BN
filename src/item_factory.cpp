@@ -249,11 +249,11 @@ void Item_factory::finalize_pre( itype &obj )
         obj.price_post = obj.price;
     }
     // use base volume if integral volume unspecified
-    if( obj.integral_volume < 0_ml ) {
+    if( obj.integral_volume == -1_ml ) {
         obj.integral_volume = obj.volume;
     }
     // use base weight if integral weight unspecified
-    if( obj.integral_weight < 0_gram ) {
+    if( obj.integral_weight == -1_gram ) {
         obj.integral_weight = obj.weight;
     }
     // for ammo and comestibles stack size defaults to count of initial charges
@@ -285,12 +285,6 @@ void Item_factory::finalize_pre( itype &obj )
     erase_if( obj.item_tags, []( const flag_id & f ) {
         return f.str().starts_with( "LIGHT_" );
     } );
-
-    // Set max volume for containers to prevent integer overflow
-    if( obj.container && obj.container->contains > 10000_liter ) {
-        debugmsg( obj.id.str() + " storage volume is too large, reducing to 10000 liters" );
-        obj.container->contains = 10000_liter;
-    }
 
     if( obj.ammo ) {
         // for ammo not specifying loudness (or an explicit less than zero) derive value from other properties
@@ -1449,13 +1443,23 @@ void Item_factory::check_definitions() const
                     for( const auto &pr : type->mod->magazine_adaptor ) {
                         acceptable_ammo.insert( pr.first );
                     }
-                    auto &acceptable_magazines = !type->mod->magazine_adaptor.empty()
-                                                 ? type->mod->magazine_adaptor
-                                                 : target->magazines;
-                    for( const ammotype &ammo : acceptable_ammo ) {
-                        if( !acceptable_magazines.contains( ammo ) ) {
-                            msg += string_format( "gunmod can be applied to %s, which has no magazines for ammo %s\n",
-                                                  t.c_str(), ammo.str() );
+                    // Only check magazine compatibility if either the mod provides
+                    // magazine adaptors or the target gun uses external magazines.
+                    // Guns with only internal clip_size (no magazine_well, no magazines
+                    // map) load rounds directly and don't need magazine entries for the
+                    // converted ammo type.
+                    bool mod_has_adaptor = !type->mod->magazine_adaptor.empty();
+                    bool gun_uses_magazines = !target->magazines.empty() ||
+                                              target->magazine_well > 0_ml;
+                    if( mod_has_adaptor || gun_uses_magazines ) {
+                        auto &acceptable_magazines = mod_has_adaptor
+                                                     ? type->mod->magazine_adaptor
+                                                     : target->magazines;
+                        for( const ammotype &ammo : acceptable_ammo ) {
+                            if( !acceptable_magazines.contains( ammo ) ) {
+                                msg += string_format( "gunmod can be applied to %s, which has no magazines for ammo %s\n",
+                                                      t.c_str(), ammo.str() );
+                            }
                         }
                     }
                 }
@@ -2453,6 +2457,7 @@ void Item_factory::load( islot_gunmod &slot, const JsonObject &jo, const std::st
     assign( jo, "ammo_to_fire_multiplier", slot.ammo_to_fire_multiplier );
     assign( jo, "ammo_to_fire_modifier", slot.ammo_to_fire_modifier );
     assign( jo, "weight_multiplier", slot.weight_multiplier );
+    assign( jo, "volume_multiplier", slot.volume_multiplier );
     assign( jo, "speed", slot.speed );
     assign( jo, "aimedcritbonus", slot.aimedcritbonus );
     assign( jo, "aimedcritmaxbonus", slot.aimedcritmaxbonus );
@@ -2659,12 +2664,12 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
 
     assign( jo, "category", def.category_force, strict );
     assign( jo, "weight", def.weight, strict, 0_gram );
-    assign( jo, "integral_weight", def.integral_weight, strict, 0_gram );
+    assign( jo, "integral_weight", def.integral_weight );
     assign( jo, "volume", def.volume );
+    assign( jo, "integral_volume", def.integral_volume );
     assign( jo, "price", def.price, false, 0_cent );
     assign( jo, "price_postapoc", def.price_post, false, 0_cent );
     assign( jo, "stackable", def.stackable_, strict );
-    assign( jo, "integral_volume", def.integral_volume );
     assign( jo, "bashing", def.melee[DT_BASH], strict, 0 );
     assign( jo, "cutting", def.melee[DT_CUT], strict, 0 );
     assign( jo, "to_hit", def.m_to_hit, strict );

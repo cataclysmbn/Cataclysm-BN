@@ -10,6 +10,7 @@
 #include <list>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <type_traits>
 
 #include "action.h"
@@ -51,7 +52,7 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "make_static.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -71,6 +72,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
+#include "type_id_implement.h"
 #include "requirements.h"
 #include "regen.h"
 #include "rng.h"
@@ -220,21 +222,7 @@ auto scaled_operation_duration( const int difficulty ) -> time_duration
 }
 } //namespace
 
-/** @relates string_id */
-template<>
-const bionic_data &string_id<bionic_data>::obj() const
-{
-    return bionic_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<bionic_data>::is_valid() const
-{
-    return bionic_factory.is_valid( *this );
-}
-
-
+IMPLEMENT_STRING_AND_INT_IDS( bionic_data, bionic_factory );
 
 std::vector<bodypart_id> get_occupied_bodyparts( const bionic_id &bid )
 {
@@ -2001,53 +1989,54 @@ void Character::process_bionic( bionic &bio )
         add_morale( MORALE_FEELING_GOOD, 20, 20, 30_minutes, 20_minutes, true );
     } else if( bio.id == bio_electrosense_bscanner ) {
         // This is a horrible mess but can't use the active iuse behavior directly
-        map &here = get_map();
-        for( const auto &pt : here.points_in_radius( bub_pos(), PICKUP_RANGE ) ) {
-            if( !here.has_items( pt ) || !sees( pt ) ) {
+        auto &here = get_map();
+        auto visibility_cache_updated = false;
+        for( const auto corpse : here.get_active_items_in_radius( bub_pos(), PICKUP_RANGE,
+                special_item_type::bionic_scannable_corpse ) ) {
+            if( corpse == nullptr || !corpse->is_corpse() ||
+                corpse->get_var( "bionics_scanned_by", -1 ) == getID().get_value() ) {
                 continue;
             }
-            for( item * const &corpse : here.i_at( pt ) ) {
-                if( !corpse->is_corpse() ||
-                    corpse->get_var( "bionics_scanned_by", -1 ) == getID().get_value() ) {
+            const auto pt = corpse->bub_pos();
+            if( !visibility_cache_updated && here.visibility_caches_dirty() ) {
+                here.update_visibility_cache( bub_pos().z() );
+                visibility_cache_updated = true;
+            }
+            if( !sees( pt ) ) {
+                continue;
+            }
+
+            using namespace std::views;
+            namespace ranges = std::ranges;
+            auto cbms = corpse->get_components()
+                        | filter( &item::is_bionic )
+                        | ranges::to<std::vector>();
+
+            auto enrg = static_cast<int>( cbms.size() ) * bio.info().power_trigger;
+            if( get_power_level() >= enrg ) {
+                mod_power_level( -enrg );
+            } else {
+                add_msg_if_player( m_bad,
+                                   _( "Your %s doesn't have enough power for the %s" ),
+                                   bio.info().name, corpse->display_name().c_str() );
+                if( get_power_level() < bio.info().power_trigger ) {
+                    break;
+                } else {
                     continue;
                 }
+            }
 
-                std::vector<const item *> cbms;
-                for( const item * const &maybe_cbm : corpse->get_components() ) {
-                    if( maybe_cbm->is_bionic() ) {
-                        cbms.push_back( maybe_cbm );
-                    }
-                }
-
-                units::energy enrg = cbms.size() * bio.info().power_trigger;
-                if( get_power_level() >= enrg ) {
-                    mod_power_level( -enrg );
-                } else {
-                    add_msg_if_player( m_bad,
-                                       _( "Your %s doesn't have enough power for the %s" ),
-                                       bio.info().name, corpse->display_name().c_str() );
-                    if( get_power_level() < bio.info().power_trigger ) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-
-                corpse->set_var( "bionics_scanned_by", getID().get_value() );
-                if( !cbms.empty() ) {
-                    corpse->set_flag( flag_CBM_SCANNED );
-                    std::string bionics_string =
-                        enumerate_as_string( cbms.begin(), cbms.end(),
-                    []( const item * entry ) -> std::string {
-                        return entry->display_name();
-                    }, enumeration_conjunction::none );
-                    //~ %1 is corpse name, %2 is direction, %3 is bionic name
-                    add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
-                                       corpse->display_name().c_str(),
-                                       direction_name( direction_from( bub_pos(), pt ) ).c_str(),
-                                       bionics_string.c_str()
-                                     );
-                }
+            corpse->set_var( "bionics_scanned_by", getID().get_value() );
+            if( !cbms.empty() ) {
+                corpse->set_flag( flag_CBM_SCANNED );
+                auto bionics_string = enumerate_as_string( cbms.begin(), cbms.end(),
+                []( const auto entry ) { return entry->display_name(); }, enumeration_conjunction::none );
+                //~ %1 is corpse name, %2 is direction, %3 is bionic name
+                add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
+                                   corpse->display_name().c_str(),
+                                   direction_name( direction_from( bub_pos(), pt ) ).c_str(),
+                                   bionics_string.c_str()
+                                 );
             }
             if( get_power_level() < bio.info().power_trigger ) {
                 add_msg_if_player( m_bad, _( "Your %s doesn't have enough power and shuts down." ),

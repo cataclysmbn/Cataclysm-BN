@@ -127,7 +127,7 @@
 #include "loading_ui.h"
 #include "locations.h"
 #include "npc.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "map_functions.h"
 #include "map_item_stack.h"
@@ -192,6 +192,7 @@
 #include "tileray.h"
 #include "timed_event.h"
 #include "translations.h"
+#include "travel/travel_destination.h"
 #include "trap.h"
 #include "ui.h"
 #include "ui_manager.h"
@@ -9924,8 +9925,8 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
             u.view_offset.z() = center.z() - u.bub_pos().z();
             m.invalidate_map_cache( center.z() );
         } else if( action == "TRAVEL_TO" ) {
-            if( !u.sees( lp ) ) {
-                add_msg( _( "You can't see that destination." ) );
+            if( !avatar_knows_travel_destination( u, lp ) ) {
+                add_msg( _( "You don't know that destination." ) );
                 continue;
             }
 
@@ -11043,7 +11044,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
 
             if( iItemNum > 0 && activeItem ) {
                 const item &loc = *activeItem->example;
-                temperature_flag temperature = rot::temperature_flag_for_location( m, loc );
+                temperature_flag temperature = rot::temp::for_location( m, loc );
                 std::vector<iteminfo> this_item = activeItem->example->info( temperature );
                 std::vector<iteminfo> item_info_dummy;
 
@@ -11115,7 +11116,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             const item *example_item = activeItem->example;
             // TODO: const_item_location
             const item &loc = *example_item;
-            temperature_flag temperature = rot::temperature_flag_for_location( m, loc );
+            temperature_flag temperature = rot::temp::for_location( m, loc );
             std::vector<iteminfo> this_item = example_item->info( temperature );
 
             item_info_data info_data( example_item->tname(), example_item->type_name(), this_item, dummy );
@@ -11171,8 +11172,9 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             mSortCategory.clear();
             refilter = true;
         } else if( action == "TRAVEL_TO" && activeItem ) {
-            if( !u.sees( u.bub_pos() + active_pos ) ) {
-                add_msg( _( "You can't see that destination." ) );
+            if( !avatar_knows_travel_destination( u, u.bub_pos() + active_pos ) ) {
+                add_msg( _( "You don't know that destination." ) );
+                continue;
             }
             auto route = m.route( u.bub_pos(), u.bub_pos() + active_pos, u.get_legacy_pathfinding_settings(),
                                   u.get_legacy_path_avoid() );

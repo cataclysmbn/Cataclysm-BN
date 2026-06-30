@@ -2104,11 +2104,16 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
     float bash_cap = 2 * stat + 2 * skill;
     float bash_mul = 1.0f;
 
-    // 80%, 88%, 96%, 104%, 112%, 116%, 120%, 124%, 128%, 132%
-    if( skill < 5 ) {
-        bash_mul = 0.8 + 0.08 * skill;
+    if( unarmed ) {
+        // 80%, 88%, 96%, 104%, 112%, 116%, 120%, 124%, 128%, 132%
+        if( skill < 5 ) {
+            bash_mul = 0.8 + 0.08 * skill;
+        } else {
+            bash_mul = 0.96 + 0.04 * skill;
+        }
     } else {
-        bash_mul = 0.96 + 0.04 * skill;
+        // 70%, 74%, 78%, 82%, 86%, 90%, 94%, 98%, 102%, 106%
+        bash_mul = 0.7 + 0.04 * skill;
     }
 
     if( bash_cap < weap_dam && !weap.is_null() ) {
@@ -3713,6 +3718,11 @@ void avatar_funcs::try_steal_from_npc( avatar &you, npc &target )
 
     item *loc = game_menus::inv::steal( you, target );
     if( !loc ) {
+        return;
+    }
+    if( target.is_hallucination() ) {
+        target.on_attacked( you );
+        you.mod_moves( -200 );
         return;
     }
 

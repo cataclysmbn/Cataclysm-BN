@@ -62,7 +62,8 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
+#include "material.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "mapdata.h"
@@ -86,7 +87,7 @@
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
-#include "spell_targeting.h"
+#include "magic/spell_targeting.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "text_snippets.h"
@@ -97,6 +98,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+#include "string_utils.h"
 
 enum creature_size : int;
 
@@ -2925,6 +2927,32 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
             action_type = repair_item_actor::RT_PRACTICE;
         }
 
+        int items_needed = actor->get_material_amt_needed( fix, true );
+        const auto valid_materials = actor->get_valid_materials( fix );
+        const auto &crafting_inv = p->crafting_inventory();
+        auto listed_components = std::set<itype_id> {};
+        auto material_list = std::vector<std::string> {};
+
+        for( const auto &entry : valid_materials ) {
+            const itype_id &component_id = entry.obj().repaired_with();
+            if( listed_components.find( component_id ) != listed_components.end() ) {
+                continue;
+            }
+            listed_components.emplace( component_id );
+            int nearby_amount = 0;
+            if( item::count_by_charges( component_id ) ) {
+                if( crafting_inv.has_charges( component_id, 1 ) ) {
+                    nearby_amount = crafting_inv.charges_of( component_id );
+                }
+            } else if( crafting_inv.has_amount( component_id, 1, false, is_crafting_component ) ) {
+                nearby_amount = crafting_inv.amount_of( component_id, false );
+            }
+            std::string color = nearby_amount < items_needed ? "red" : "light_blue";
+            material_list.emplace_back( string_format( _( "%s (<color_%s>%d</color>)" ),
+                                        item::nname( component_id ), color, nearby_amount ) );
+        }
+        std::string material_list_string = join( material_list, ", " );
+
         std::string title = string_format( _( "%s %s\n" ),
                                            repair_item_actor::action_description( action_type ),
                                            fix.tname() );
@@ -2932,6 +2960,10 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
                                 used_tool->ammo_remaining(), used_tool->ammo_capacity(),
                                 item::nname( used_tool->ammo_current() ),
                                 used_tool->ammo_required() );
+        title += string_format( _( "Materials available: %s\n" ),
+                                material_list_string );
+        title += string_format( _( "Materials needed: <color_light_blue>%d</color>\n" ),
+                                items_needed );
         title += string_format( _( "Skill used: <color_light_blue>%s (%s)</color>\n" ),
                                 actor->used_skill->name(), level );
         title += string_format( _( "Success chance: <color_light_blue>%.1f</color>%%\n" ),
@@ -4338,6 +4370,11 @@ void activity_handlers::fill_pit_finish( player_activity *act, player *p )
 
 void activity_handlers::play_with_pet_finish( player_activity *act, player *p )
 {
+    if( !act->monsters.empty() ) {
+        const auto mon = act->monsters[0].lock();
+        mon->remove_effect( effect_ai_waiting );
+    }
+
     p->add_morale( MORALE_PLAY_WITH_PET, rng( 3, 10 ), 10, 5_hours, 25_minutes );
     p->add_msg_if_player( m_good, _( "Playing with your %s has lifted your spirits a bit." ),
                           act->str_values[0] );

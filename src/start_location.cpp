@@ -30,6 +30,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "rng.h"
+#include "type_id_implement.h"
 #include "string_id.h"
 
 class item;
@@ -41,26 +42,7 @@ namespace
 generic_factory<start_location> all_start_locations( "start locations" );
 } // namespace
 
-/** @relates string_id */
-template<>
-const start_location &string_id<start_location>::obj() const
-{
-    return all_start_locations.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<start_location>::is_valid() const
-{
-    return all_start_locations.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<start_location> string_id<start_location>::id() const
-{
-    return all_start_locations.convert( *this, int_id<start_location>( INVALID_CID ) );
-}
+IMPLEMENT_STRING_AND_INT_IDS( start_location, all_start_locations );
 
 std::string start_location::name() const
 {

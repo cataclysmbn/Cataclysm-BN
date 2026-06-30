@@ -1,13 +1,13 @@
 #pragma once
 #if defined(CATA_SDL)
 
-#include "coordinates.h"
-#include "game_constants.h"
-#include "map.h"
+#    include "coordinates.h"
+#    include "game_constants.h"
+#    include "map.h"
 
-#include <SDL3/SDL_gpu.h>
-#include <cstdint>
-#include <vector>
+#    include <SDL3/SDL_gpu.h>
+#    include <cstdint>
+#    include <vector>
 
 namespace cata_gpu {
 

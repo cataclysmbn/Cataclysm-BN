@@ -113,5 +113,32 @@
     ],
     "handling_modifier": -10,
     "dispersion_modifier": 50
+  },
+  {
+    "id": "carbon_grip",
+    "type": "GUNMOD",
+    "name": { "str": "carbon fiber furniture" },
+    "description": "A set of carbon fiber replacement grips and furniture, 3D-printed for maximum weight savings.  Significantly lighter than polymer furniture at the cost of reduced handling and melee effectiveness.",
+    "weight": "140 g",
+    "volume": "250 ml",
+    "integral_volume": "0 ml",
+    "price": "800 USD",
+    "price_postapoc": "12 USD",
+    "material": [ "carbon_fiber" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "grip",
+    "mod_target_category": [
+      [ "PISTOLS" ],
+      [ "REVOLVERS" ],
+      [ "SUBMACHINE_GUNS" ],
+      [ "RIFLES" ],
+      [ "MACHINE_GUNS" ],
+      [ "GATLING_GUNS" ],
+      [ "SHOTGUNS" ]
+    ],
+    "handling_modifier": -5,
+    "weight_multiplier": 0.7,
+    "flags": [ "REDUCED_BASHING" ]
   }
 ]

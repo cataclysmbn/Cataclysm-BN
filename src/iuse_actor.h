@@ -981,6 +981,10 @@ class repair_item_actor : public iuse_actor
         /** Checks if we are allowed to use the tool. */
         bool can_use_tool( const player &p, const item &tool, bool print_msg ) const;
 
+        /** Returns the number of repair items needed for repair. Will round up if just_check = true, and roll remainder otherwise. */
+        int get_material_amt_needed( const item &fix, bool just_check ) const;
+        /** Returns a list of materials that can be used to repair this item using this tool. */
+        std::set<material_id> get_valid_materials( const item &fix ) const;
         /** Returns if components are available. Consumes them if `just_check` is false. */
         bool handle_components( player &pl, const item &fix, bool print_msg, bool just_check ) const;
         /** Returns the chance to repair and to damage an item. */

@@ -4,7 +4,7 @@
     "id": "rocky_zombies",
     "name": "Rocky Zombies",
     "authors": [ "RoyalFox" ],
-    "maintainers": [ "RoyalFox" ],
+    "maintainers": [ "scarf005" ],
     "description": "zombies now throw rocks at you. they really hate kites for some reason",
     "category": "content",
     "dependencies": [ "bn", "lethal_zeds" ]

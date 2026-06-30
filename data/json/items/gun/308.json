@@ -17,6 +17,7 @@
     "min_cycle_recoil": 2700,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "barrel_volume": "500 ml",
+    "magazine_well": "50 ml",
     "magazines": [ [ "308", [ "falmag", "falbigmag", "fal_makeshiftmag" ] ] ]
   },
   {
@@ -37,6 +38,7 @@
     "dispersion": 150,
     "min_cycle_recoil": 2700,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 3 ], [ "AUTO", "auto", 4 ] ],
+    "magazine_well": "50 ml",
     "magazines": [ [ "308", [ "g3mag", "g3bigmag", "g3_makeshiftmag" ] ] ]
   },
   {
@@ -58,6 +60,7 @@
     "durability": 9,
     "modes": [ [ "DEFAULT", "low auto", 6 ], [ "AUTO", "high auto", 18 ] ],
     "magazines": [ [ "308", [ "belt308" ] ] ],
+    "magazine_well": "25 ml",
     "extend": { "flags": [ "NEVER_JAMS" ] }
   },
   {
@@ -126,6 +129,7 @@
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "50 ml",
     "magazines": [ [ "308", [ "m14mag", "m14smallmag", "m14_makeshiftmag" ] ] ]
   },
   {
@@ -162,6 +166,7 @@
       [ "sling", 1 ],
       [ "stock", 1 ]
     ],
+    "magazine_well": "25 ml",
     "magazines": [ [ "308", [ "belt308" ] ] ]
   },
   {
@@ -197,44 +202,8 @@
       [ "sling", 1 ],
       [ "stock", 1 ]
     ],
+    "magazine_well": "25 ml",
     "magazines": [ [ "308", [ "belt308" ] ] ]
-  },
-  {
-    "id": "rifle_308",
-    "copy-from": "rifle_manual",
-    "type": "GUN",
-    "name": { "str": "handmade heavy carbine" },
-    "//": "It's amongst the smallest of the 7.62x51mm(.308) firearms, and a scrap weapon as well. This means a short handmade barrel, and considerable loss of energy.",
-    "description": "A homemade lever-action magazine-fed smoothbore rifle.  While still a primitive pipe and 2x4 design, some minor improvements have been made, such as being able to accept G3 compatible magazines, and chambering the more powerful 7.62x51mm (.308) rounds.",
-    "weight": "2311 g",
-    "volume": "2 L",
-    "price": "100 USD",
-    "price_postapoc": "2250 cent",
-    "bashing": 10,
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "308",
-    "ranged_damage": { "damage_type": "bullet", "amount": -5 },
-    "dispersion": 550,
-    "durability": 6,
-    "reload": 200,
-    "loudness": -2,
-    "barrel_volume": "500 ml",
-    "valid_mod_locations": [
-      [ "accessories", 4 ],
-      [ "barrel", 1 ],
-      [ "bore", 1 ],
-      [ "brass catcher", 1 ],
-      [ "muzzle", 1 ],
-      [ "stock", 1 ],
-      [ "mechanism", 4 ],
-      [ "sights", 1 ],
-      [ "sling", 1 ],
-      [ "grip", 1 ],
-      [ "rail", 1 ],
-      [ "underbarrel", 1 ]
-    ],
-    "magazines": [ [ "308", [ "g3_makeshiftmag", "g3mag", "g3bigmag" ] ] ]
   },
   {
     "id": "savage_111f",
@@ -323,6 +292,7 @@
     "min_cycle_recoil": 2700,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "default_mods": [ "adjustable_stock" ],
+    "magazine_well": "150 ml",
     "magazines": [ [ "308", [ "hk417mag_20rd", "hk417mag_10rd", "hk417_makeshiftmag" ] ] ]
   },
   {
@@ -343,6 +313,7 @@
     "dispersion": 120,
     "min_cycle_recoil": 2700,
     "default_mods": [ "adjustable_stock", "bipod", "rifle_scope", "suppressor" ],
+    "magazine_well": "150 ml",
     "magazines": [ [ "308", [ "hk417mag_20rd", "hk417mag_10rd", "hk417_makeshiftmag" ] ] ]
   },
   {
@@ -363,6 +334,7 @@
     "dispersion": 150,
     "durability": 7,
     "min_cycle_recoil": 2700,
+    "magazine_well": "150 ml",
     "magazines": [ [ "308", [ "ar10mag_20rd", "ar10_makeshiftmag" ] ] ]
   }
 ]

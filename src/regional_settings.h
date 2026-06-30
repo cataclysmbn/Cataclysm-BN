@@ -41,6 +41,9 @@ struct city_settings {
     int shop_radius = 30;
     int shop_sigma = 20;
 
+    int apartment_radius = 80;
+    int apartment_sigma = 20;
+
     // Set the same as shop radius, let parks bleed through via normal rolls
     int park_radius = shop_radius;
     // We'll spread this out to the rest of the town.

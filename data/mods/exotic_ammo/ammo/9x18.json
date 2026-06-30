@@ -16,8 +16,7 @@
     "ammo_type": "9x18",
     "casing": "9x18mm_casing",
     "range": 13,
-    "//": "Base damage of 16, balance increase of one-third.",
-    "damage": { "damage_type": "bullet", "amount": 21, "armor_penetration": 12 },
+    "damage": { "damage_type": "bullet", "amount": 24, "armor_penetration": 11 },
     "dispersion": 60,
     "recoil": 450,
     "effects": [ "COOKOFF" ]
@@ -31,7 +30,8 @@
     "price": "150 cent",
     "price_postapoc": "10 USD",
     "count": 25,
-    "relative": { "range": 2, "damage": { "damage_type": "bullet", "amount": 4 }, "dispersion": -10 },
+    "//": "Balanced as +p",
+    "relative": { "range": 2, "damage": { "damage_type": "bullet", "amount": 6 }, "dispersion": -10 },
     "proportional": { "recoil": 1.1 }
   },
   {
@@ -42,8 +42,8 @@
     "description": "9x18mm Makarov RG028 ammunition.  The RG028 round uses bullets with a hardened steel core to improve armor penetration.",
     "price": "2 USD",
     "price_postapoc": "31 USD",
-    "//": "AP variant, 7/8 damage relative to FMJ variant, armor penetration matches damage.",
-    "relative": { "damage": { "damage_type": "bullet", "amount": -3, "armor_penetration": 6 } }
+    "//": "AP variant, 7/8 damage relative to FMJ variant, 6/7 armor penetration.",
+    "relative": { "damage": { "damage_type": "bullet", "amount": -3, "armor_penetration": 7 } }
   },
   {
     "id": "bp_9x18mm",

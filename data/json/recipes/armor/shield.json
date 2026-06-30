@@ -58,6 +58,30 @@
     "components": [ [ [ "shield_wooden_large", 1 ] ], [ [ "fur", 8 ], [ "leather", 8 ] ] ]
   },
   {
+    "result": "shield_kevlar",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SHIELD",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "1 h",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "shield_wooden", 1 ] ], [ [ "kevlar_plate", 6 ] ], [ [ "adhesive_proper", 3, "LIST" ] ] ]
+  },
+  {
+    "result": "shield_kevlar_large",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SHIELD",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "1 h",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "shield_wooden_large", 1 ] ], [ [ "kevlar_plate", 12 ] ], [ [ "adhesive_proper", 6, "LIST" ] ] ]
+  },
+  {
     "result": "shield_banded",
     "type": "recipe",
     "category": "CC_ARMOR",

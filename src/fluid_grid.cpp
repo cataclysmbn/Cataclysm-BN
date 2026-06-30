@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <memory>
@@ -211,8 +212,7 @@ auto batches_for_inputs( const std::vector<fluid_grid_transform_io> &inputs,
 
     auto max_batches = std::numeric_limits<double>::max();
     std::ranges::for_each( inputs, [&]( const fluid_grid_transform_io & io ) {
-        const auto amount_ml = units::to_milliliter<int>( io.amount );
-        if( amount_ml <= 0 ) {
+        if( io.amount <= 0_ml ) {
             max_batches = 0.0;
             return;
         }
@@ -807,13 +807,13 @@ auto split_storage_state( const fluid_grid::liquid_storage_state &state,
         return { .lhs = lhs_state, .rhs = rhs_state };
     }
 
-    const auto total_capacity_ml = units::to_milliliter<int>( total_capacity );
-    const auto lhs_capacity_ml = units::to_milliliter<int>( lhs_capacity );
+    const auto total_capacity_ml = units::to_milliliter( total_capacity );
+    const auto lhs_capacity_ml = units::to_milliliter( lhs_capacity );
     const auto ratio = static_cast<double>( lhs_capacity_ml ) / total_capacity_ml;
 
     std::ranges::for_each( state.stored_by_type, [&]( const auto & entry ) {
-        const auto liquid_ml = units::to_milliliter<int>( entry.second );
-        const auto lhs_liquid_ml = static_cast<int>( std::round( liquid_ml * ratio ) );
+        const auto liquid_ml = units::to_milliliter( entry.second );
+        const auto lhs_liquid_ml = static_cast<decltype( liquid_ml )>( std::round( liquid_ml * ratio ) );
 
         lhs_state.stored_by_type[entry.first] = units::from_milliliter( lhs_liquid_ml );
         rhs_state.stored_by_type[entry.first] =
@@ -1571,7 +1571,7 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
         std::ranges::for_each( request.recipe->inputs, [&]( const fluid_grid_transform_io & io ) {
             const auto amount_ml = units::to_milliliter<double>( io.amount );
             const auto volume_ml = amount_ml * adjusted_batches;
-            const auto volume_ml_floor = static_cast<int>( std::floor( volume_ml ) );
+            const auto volume_ml_floor = static_cast<std::int64_t>( std::floor( volume_ml ) );
             if( volume_ml_floor <= 0 ) {
                 return;
             }
@@ -1591,7 +1591,7 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
         std::ranges::for_each( request.recipe->outputs, [&]( const fluid_grid_transform_io & io ) {
             const auto amount_ml = units::to_milliliter<double>( io.amount );
             const auto volume_ml = amount_ml * adjusted_batches;
-            const auto volume_ml_floor = static_cast<int>( std::floor( volume_ml ) );
+            const auto volume_ml_floor = static_cast<std::int64_t>( std::floor( volume_ml ) );
             if( volume_ml_floor <= 0 ) {
                 return;
             }

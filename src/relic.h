@@ -5,7 +5,7 @@
 
 #include "coordinates.h"
 #include "json_source_location.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "enchantments/enchantment.h"
 #include "translations.h"
 

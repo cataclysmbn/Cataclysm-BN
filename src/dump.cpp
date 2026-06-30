@@ -293,8 +293,8 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
             r.push_back( std::to_string( obj.size / units::legacy_volume_factor ) );
             rows.push_back( r );
         };
-        for( const auto &e : vpart_info::all() ) {
-            dump( e.second );
+        for( const auto &vp : vpart_info::get_all() ) {
+            dump( vp );
         }
 
     } else {

@@ -963,7 +963,7 @@ int Character::clairvoyance() const
 
     int ench = bonus_from_enchantments( 0.0, enchantment_value_id( "CLAIRVOYANCE" ) );
     if( ench > 0 ) {
-        max = ench;
+        max = std::max( ench, max );
     }
     return max;
 }
@@ -4074,23 +4074,40 @@ SkillLevel &Character::get_skill_level_object( const skill_id &ident )
 
 int Character::get_skill_level( const skill_id &ident ) const
 {
+    return get_skill_level( ident, false );
+}
+
+int Character::get_skill_level( const skill_id &ident, const bool no_enchant ) const
+{
     int skill_level = _skills->get_skill_level( ident );
+    if( no_enchant ) {
+        return skill_level;
+    }
     auto ench_id = enchantment_value_id( "SKILL_LEVEL_" + to_upper_case( ident.str() ) );
     if( ench_id.is_valid() ) {
         skill_level += bonus_from_enchantments( skill_level, ench_id );
     }
-    return skill_level;
+    return std::max( 0, skill_level );
 }
 
 int Character::get_skill_level( const skill_id &ident, const item &context ) const
 {
+    return get_skill_level( ident, context, false );
+}
+
+int Character::get_skill_level( const skill_id &ident, const item &context,
+                                const bool no_enchant ) const
+{
     int skill_level = _skills->get_skill_level( ident, context );
+    if( no_enchant ) {
+        return skill_level;
+    }
     const auto id = context.is_null() ? ident : context.contextualize_skill( ident );
     auto ench_id = enchantment_value_id( "SKILL_LEVEL_" + to_upper_case( id.str() ) );
     if( ench_id.is_valid() ) {
         skill_level += bonus_from_enchantments( skill_level, ench_id );
     }
-    return skill_level;
+    return std::max( 0, skill_level );
 }
 
 void Character::set_skill_level( const skill_id &ident, const int level )
@@ -8511,7 +8528,8 @@ int Character::item_handling_cost( const item &it, bool penalties, int base_cost
     int mv = base_cost;
     if( penalties ) {
         // 40 moves per liter, up to 200 at 5 liters
-        mv += std::min( 200, it.volume() / 20_ml );
+        const auto volume_moves = it.volume() / 20_ml;
+        mv += static_cast<int>( std::min( volume_moves, decltype( volume_moves ) { 200 } ) );
     }
 
     if( primary_weapon().typeId() == itype_e_handcuffs ) {
@@ -9337,8 +9355,10 @@ void Character::on_dodge( Creature *source, int difficulty )
     // dodging throws of our aim unless we are either skilled at dodging or using a small weapon
     const item &weapon = primary_weapon();
     if( is_armed() && weapon.is_gun() ) {
-        recoil += std::max( weapon.volume() / 250_ml - get_skill_level( skill_dodge ), 0 ) * rng( 0,
-                  100 );
+        const auto dodge_volume_recoil = weapon.volume() / 250_ml - get_skill_level( skill_dodge );
+        const auto volume_recoil = std::max( dodge_volume_recoil, decltype( dodge_volume_recoil ) { 0 } );
+        recoil += static_cast<int>( std::min( volume_recoil,
+                                              static_cast<decltype( volume_recoil )>( MAX_RECOIL ) ) ) * rng( 0, 100 );
         recoil = std::min( MAX_RECOIL, recoil );
     }
 
@@ -10721,22 +10741,20 @@ int Character::bodytemp_modifier_traits_floor() const
 
 int Character::temp_corrected_by_climate_control( int temperature )
 {
-    int mutated_norm = BODYTEMP_NORM + ( ( bodytemp_modifier_traits( false ) - bodytemp_modifier_traits(
-            true ) ) / 2 );
-    if( temperature > mutated_norm ) {
+    if( temperature > BODYTEMP_NORM ) {
         temperature -= bonus_from_enchantments( temperature,
                                                 enchantment_value_id( "CLIMATE_CONTROL_COOLING" ) );
         if( in_climate_control() ) {
-            temperature -= 750;
+            temperature -= 1250;
         }
-        return std::max( mutated_norm, temperature );
+        return std::max( BODYTEMP_NORM, temperature );
     } else {
         if( in_climate_control() ) {
-            temperature += 750;
+            temperature += 1250;
         }
         temperature += bonus_from_enchantments( temperature,
                                                 enchantment_value_id( "CLIMATE_CONTROL_HEATING" ) );
-        return std::min( mutated_norm, temperature );
+        return std::min( BODYTEMP_NORM, temperature );
     }
     return temperature;
 }
@@ -11107,6 +11125,7 @@ void Character::use_fire( const int quantity )
 
 void Character::on_item_wear( item &it )
 {
+    recalculate_enchantment_cache();
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_effect( mut );
         recalc_sight_limits();
@@ -11125,6 +11144,7 @@ void Character::on_item_wear( item &it )
 
 void Character::on_item_takeoff( item &it )
 {
+    recalculate_enchantment_cache();
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_loss_effect( mut );
         recalc_sight_limits();

@@ -544,6 +544,8 @@
     "city": {
       "shop_radius": 30,
       "shop_sigma": 50,
+      "apartment_radius": 110,
+      "apartment_sigma": 0,
       "park_radius": 20,
       "park_sigma": 80,
       "houses": {

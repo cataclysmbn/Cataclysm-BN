@@ -1,44 +1,40 @@
 # Developer Tooling
 
-## Code style (astyle)
+## Code style (C++)
 
-Automatic formatting of the source code is performed by
-[Artistic Style](http://astyle.sourceforge.net/), or `astyle` for short.
+C++ formatting uses [Artistic Style](http://astyle.sourceforge.net/) only for top-level
+`src/*.cpp` and `src/*.h`. Most other C++ files use
+[clang-format](https://clang.llvm.org/docs/ClangFormat.html). Formatter-sensitive fixtures such as
+`tools/clang-tidy-plugin/test/` are left unchanged. Use the repository helpers so each file goes
+through the right formatter.
 
-There are multiple ways to invoke it on the codebase, depending on your system or personal
-preferences.
-
-### Invoking astyle directly
-
-If you only have `astyle` installed, use:
+### Invoking C++ formatting
 
 ```sh
-astyle --options=.astylerc --recursive src/*.cpp,*.h tests/*.cpp,*.h tools/*.cpp,*.h
+just fmt
+# or, for C++ only
+just fmt-cpp
 ```
 
-### Invoking astyle through CMake
+### Invoking C++ formatting through CMake
 
-If you have configured a CMake build tree, use:
+If you have configured a CMake build tree with `bash` available, this target calls the same C++ helper:
 
 ```sh
-cmake --build build --target astyle
+cmake --build <build-dir> --target format
 ```
 
-### Invoking astyle via pre-commit hook
+### Invoking formatting via pre-commit hook
 
-If you have all the relevant tools installed, you can have git automatically check the style of code
-and json by adding these commands to your git pre-commit hook (typically at
-`.git/hooks/pre-commit`):
+Install the optional hook with:
 
 ```sh
-git diff --cached --name-only -z HEAD | grep -z 'data/.*\.json' | \
-    xargs -r -0 -L 1 ./tools/format/json_formatter.[ce]* || exit 1
-
-astyle --options=.astylerc --dry-run -X -Q src/*.cpp src/*.h tests/*.cpp tests/*.h tools/*/*.cpp tools/*/*.h || exit 1
+just hooks-setup
 ```
 
 ### Astyle extensions for Visual Studio
 
+Use these only for top-level `src/*.cpp` and `src/*.h`; use `just fmt-cpp` for repository style.
 There are astyle extensions in the Visual Studio Marketplace, but none of them have been confirmed
 (yet) to correctly work for our purposes on VS2019 or VS2022.
 

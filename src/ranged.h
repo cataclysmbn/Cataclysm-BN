@@ -73,6 +73,7 @@ int range_with_even_chance_of_good_hit( int dispersion );
 namespace ranged
 {
 
+double calculate_aim_cap( const Character &p, const tripoint_bub_ms &target );
 /**
  * Common checks for gunmode (when firing a weapon / manually firing turret)
  * @param messages Used to store messages describing failed checks

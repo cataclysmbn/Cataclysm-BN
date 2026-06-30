@@ -99,7 +99,7 @@ $ cmake --build profiler/build --config Release --parallel $(nproc)
 [cmake](../guides/building/cmake.md)에서 `-D USE_TRACY=ON` 플래그로 빌드합니다. 예를 들어:
 
 ```sh
-$ cmake -B build -DUSE_TRACY=ON ...기타 플래그...
+$ cmake -B out/build/tracy -DUSE_TRACY=ON ...기타 플래그...
 ```
 
 더 많은 정보는 [CMake 옵션](building/cmake.md#cataclysmbn-specific-options)을 참조하세요.
