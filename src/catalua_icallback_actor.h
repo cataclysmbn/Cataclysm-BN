@@ -247,26 +247,22 @@ struct lua_menu_entry {
 /** Lua callbacks for per-mutation events. */
 class lua_pet_callback_actor
 {
-private:
-    std::string mon_str_id;
-    sol::protected_function on_tame_func;
-    sol::protected_function get_examine_menu_entries_func;
-    sol::protected_function on_examine_menu_entry_func;
-    // Not sure what the others should be,
-    // being able to give orders to your pet would help?
-    // would on pet death be a duplicate of mon death?
+    private:
+        std::string mon_str_id;
+        sol::protected_function on_tame_func;
+        sol::protected_function get_examine_menu_entries_func;
+        sol::protected_function on_examine_menu_entry_func;
 
+    public:
+        lua_pet_callback_actor( const std::string &mon_str_id,
+                                sol::protected_function &&on_tame_func,
+                                sol::protected_function &&get_examine_menu_entries,
+                                sol::protected_function &&on_examine_menu_entry_func
+                              );
 
-public:
-    lua_pet_callback_actor( const std::string &mon_str_id,
-                                 sol::protected_function &&on_tame_func,
-                                 sol::protected_function &&get_examine_menu_entries,
-                                 sol::protected_function &&on_examine_menu_entry_func
-                                 );
+        void call_on_tame( Character &who, monster &pet ) const;
+        std::vector<lua_menu_entry>  call_get_examine_menu_entries( Character &who, monster &pet ) const;
+        void call_on_examine_menu_entry( Character &who, monster &pet, std::string entry ) const;
 
-    void call_on_tame( Character &who, monster &pet ) const;
-    std::vector<lua_menu_entry>  call_get_examine_menu_entries( Character &who, monster &pet ) const;
-    void call_on_examine_menu_entry( Character &who, monster &pet, std::string entry ) const;
-
-    std::string get_mon_str_id() const;
+        std::string get_mon_str_id() const;
 };

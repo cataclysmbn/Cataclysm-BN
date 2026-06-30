@@ -969,12 +969,13 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                 }
                 const auto tbl = ref.second.as<sol::table>();
                 auto on_tame = tbl.get_or<sol::function>( "on_tame", sol::lua_nil );
-                auto get_examine_menu_entries = tbl.get_or<sol::function>( "get_examine_menu_entries", sol::lua_nil );
+                auto get_examine_menu_entries = tbl.get_or<sol::function>( "get_examine_menu_entries",
+                                                sol::lua_nil );
                 auto on_examine_menu_entry = tbl.get_or<sol::function>( "on_examine_menu_entry", sol::lua_nil );
                 pet_callback_actors[key] = std::make_unique<lua_pet_callback_actor>(
-                                                    key, std::move( on_tame ), std::move( get_examine_menu_entries ),
-                                                    std::move( on_examine_menu_entry )
-                                                    );
+                                               key, std::move( on_tame ), std::move( get_examine_menu_entries ),
+                                               std::move( on_examine_menu_entry )
+                                           );
 
             } catch( std::runtime_error &e ) {
                 debugmsg( "Failed to extract pet_functions k='%s': %s", key, e.what() );
@@ -1040,11 +1041,13 @@ auto get_lua_activity_on_turn( const player_activity &act ) -> std::string
     return get_lua_activity_prefixed_value( act, lua_activity_on_turn_prefix );
 }
 
-const std::map<std::string, std::unique_ptr<lua_pet_callback_actor>>& get_lua_pet_actors() {
+const std::map<std::string, std::unique_ptr<lua_pet_callback_actor>> &get_lua_pet_actors()
+{
     return pet_callback_actors;
 }
 
-bool has_lua() {
+bool has_lua()
+{
 }
 
 auto run_lua_activity_callback( const std::string &callback_id, player &who,

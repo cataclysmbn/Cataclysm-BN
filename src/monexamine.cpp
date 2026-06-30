@@ -115,7 +115,6 @@ bool monexamine::pet_menu( monster &z )
         attack,
         COUNT
     };
-    // TODO WILL HAVE TO MAP ENTRIES TO FUNCTIONS
 
     uilist amenu;
     std::string pet_name = z.get_name();
@@ -303,24 +302,25 @@ bool monexamine::pet_menu( monster &z )
     // Call lua related hooks, resolved dynamically because of wildcard support
     const auto lua_pet_actors = z.get_lua_pet_actors();
     std::vector<lua_menu_entry> lua_entries {};
-    std::map<int, lua_menu_entry> lua_entries_map; {};
+    std::map<int, lua_menu_entry> lua_entries_map;
+    {};
     for( const lua_pet_callback_actor *cb_actor : lua_pet_actors ) {
-        const auto entries = cb_actor->call_get_examine_menu_entries(you, z);
-        for ( const auto entry : entries ) {
-            if (entry.valid()) {
-                lua_entries.push_back(entry);
+        const auto entries = cb_actor->call_get_examine_menu_entries( you, z );
+        for( const auto entry : entries ) {
+            if( entry.valid() ) {
+                lua_entries.push_back( entry );
             }
         }
     }
-    std::ranges::sort(lua_entries, [](const lua_menu_entry &a, const lua_menu_entry &b) {
+    std::ranges::sort( lua_entries, []( const lua_menu_entry & a, const lua_menu_entry & b ) {
         return a.menu_label > b.menu_label;
-    });
+    } );
 
     int last_int = COUNT - 1;
-    for ( const auto entry : lua_entries ) {
+    for( const auto entry : lua_entries ) {
         last_int++;
-        lua_entries_map.emplace(last_int, entry);
-        amenu.addentry(last_int, true, ' ', entry.menu_label);
+        lua_entries_map.emplace( last_int, entry );
+        amenu.addentry( last_int, true, ' ', entry.menu_label );
     }
 
     amenu.query();
@@ -458,14 +458,14 @@ bool monexamine::pet_menu( monster &z )
             }
             break;
         default:
-            if (choice >= COUNT) {
+            if( choice >= COUNT ) {
                 entry_str_id = lua_entries_map[choice].menu_id;
             }
             break;
     }
-    if (!entry_str_id.empty()) {
+    if( !entry_str_id.empty() ) {
         for( const lua_pet_callback_actor *cb_actor : lua_pet_actors ) {
-            cb_actor->call_on_examine_menu_entry(you, z, entry_str_id);
+            cb_actor->call_on_examine_menu_entry( you, z, entry_str_id );
         }
     }
 

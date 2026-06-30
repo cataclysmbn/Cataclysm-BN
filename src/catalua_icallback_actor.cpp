@@ -745,7 +745,7 @@ lua_pet_callback_actor::lua_pet_callback_actor( const std::string &mon_str_id,
         sol::protected_function &&on_tame,
         sol::protected_function &&get_examine_menu_entries,
         sol::protected_function &&on_examine_menu_entry
-        )
+                                              )
     : mon_str_id( mon_str_id ),
       on_tame_func( std::move( on_tame ) ),
       get_examine_menu_entries_func( std::move( get_examine_menu_entries ) ),
@@ -768,7 +768,8 @@ void lua_pet_callback_actor::call_on_tame( Character &who, monster &pet ) const
     }
 }
 
-std::vector<lua_menu_entry> lua_pet_callback_actor::call_get_examine_menu_entries( Character &who, monster &pet ) const
+std::vector<lua_menu_entry> lua_pet_callback_actor::call_get_examine_menu_entries( Character &who,
+        monster &pet ) const
 {
     if( get_examine_menu_entries_func == sol::lua_nil ) {
         return std::vector<lua_menu_entry>();
@@ -785,33 +786,36 @@ std::vector<lua_menu_entry> lua_pet_callback_actor::call_get_examine_menu_entrie
         if( value.is<sol::table>() ) {
             const sol::table entries_table = value.as<sol::table>();
             const int size = entries_table.size();
-            entries.reserve(size);
-            for(int i = 1; i <= size; ++i) {
+            entries.reserve( size );
+            for( int i = 1; i <= size; ++i ) {
                 sol::optional<sol::table> entry_opt = entries_table[i];
-                if(!entry_opt.has_value()) {
-                    debugmsg("Empty entry at index %d", i);
+                if( !entry_opt.has_value() ) {
+                    debugmsg( "Empty entry at index %d", i );
                     continue;
                 }
 
                 const sol::table entry = *entry_opt;
-                std::string id = entry.get<std::string>("menu_id");
-                std::string label = entry.get<std::string>("menu_label");
-                auto lua_entry = lua_menu_entry(id, label);
-                entries.push_back(lua_entry);
+                std::string id = entry.get<std::string>( "menu_id" );
+                std::string label = entry.get<std::string>( "menu_label" );
+                auto lua_entry = lua_menu_entry( id, label );
+                entries.push_back( lua_entry );
             }
 
-        } else if (value.is<sol::nil_t>()) {
-            debugmsg( "Wrong pet get_examine_menu_entries return type for '%s' ('%s')", pet.get_name(), mon_str_id );
+        } else if( value.is<sol::nil_t>() ) {
+            debugmsg( "Wrong pet get_examine_menu_entries return type for '%s' ('%s')", pet.get_name(),
+                      mon_str_id );
         }
 
         return entries;
     } catch( std::runtime_error &e ) {
-        debugmsg( "Failed to run pet get_examine_menu_entries for '%s' ('%s'): %s", pet.get_name(), mon_str_id, e.what() );
+        debugmsg( "Failed to run pet get_examine_menu_entries for '%s' ('%s'): %s", pet.get_name(),
+                  mon_str_id, e.what() );
     }
     return std::vector<lua_menu_entry>();
 }
 
-void lua_pet_callback_actor::call_on_examine_menu_entry( Character &who, monster &pet, std::string entry ) const
+void lua_pet_callback_actor::call_on_examine_menu_entry( Character &who, monster &pet,
+        std::string entry ) const
 {
     if( on_examine_menu_entry_func == sol::lua_nil ) {
         return;
@@ -825,9 +829,11 @@ void lua_pet_callback_actor::call_on_examine_menu_entry( Character &who, monster
         sol::protected_function_result res = on_examine_menu_entry_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
-        debugmsg( "Failed to run pet on_examine_menu_entry_func for '%s' ('%s'): %s", pet.get_name(), entry, e.what() );
+        debugmsg( "Failed to run pet on_examine_menu_entry_func for '%s' ('%s'): %s", pet.get_name(), entry,
+                  e.what() );
     }
 }
-std::string lua_pet_callback_actor::get_mon_str_id() const {
+std::string lua_pet_callback_actor::get_mon_str_id() const
+{
     return mon_str_id;
 }
