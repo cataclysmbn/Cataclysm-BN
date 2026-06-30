@@ -1443,7 +1443,7 @@ bool trapfunc::map_regen( const tripoint_bub_ms &p, Creature *c, item * )
         player *n = dynamic_cast<player *>( c );
         if( n ) {
             map &here = get_map();
-            //n->add_msg_if_player( m_warning, _( "Your surroundings shift!" ) );
+            n->add_msg_if_player( m_warning, _( "Your surroundings shift!" ) );
             tripoint_abs_omt omt_pos = n->abs_omt_pos();
             const std::string &regen_mapgen = here.tr_at( p ).map_regen_target();
             here.remove_trap( p );
