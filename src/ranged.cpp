@@ -823,24 +823,31 @@ double Creature::ranged_target_size() const
         return 0.0;
     }
     bool is_crouched = false;
+    bool is_prone = false;
     if( Character *ch = const_cast<Creature &>( *this ).as_character() ) {
         if( ch->movement_mode_is( CMM_CROUCH ) ) {
             is_crouched = true;
         }
+        if( ch->movement_mode_is( CMM_PRONE ) ) {
+            is_prone = true;
+        }
     }
-    if( has_flag( MF_HARDTOSHOOT ) || is_crouched ) {
+    if( has_flag( MF_HARDTOSHOOT ) || is_crouched || is_prone ) {
         switch( get_size() ) {
             case creature_size::tiny:
                 // We can't be smaller than tiny, but we can make the hit rate lower.
                 return 0.05;
             case creature_size::small:
-                return occupied_tile_fraction( creature_size::tiny );
+                return is_prone ? 0.05 : occupied_tile_fraction( creature_size::tiny );
             case creature_size::medium:
-                return occupied_tile_fraction( creature_size::small );
+                return is_prone ? occupied_tile_fraction( creature_size::tiny )
+                       : occupied_tile_fraction( creature_size::small );
             case creature_size::large:
-                return occupied_tile_fraction( creature_size::medium );
+                return is_prone ? occupied_tile_fraction( creature_size::small )
+                       : occupied_tile_fraction( creature_size::medium );
             case creature_size::huge:
-                return occupied_tile_fraction( creature_size::large );
+                return is_prone ? occupied_tile_fraction( creature_size::medium )
+                       : occupied_tile_fraction( creature_size::large );
             default:
                 break;
         }
@@ -1102,6 +1109,9 @@ auto is_mountable_nearby( const map &m, const tripoint_bub_ms &pos ) -> bool
 auto can_use_heavy_weapon( const Character &who, const map &m, const tripoint_bub_ms &pos ) -> bool
 {
     if( who.is_mounted() && who.mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
+        return true;
+    }
+    if( who.movement_mode_is( CMM_PRONE ) ) {
         return true;
     }
     return is_mountable_nearby( m, pos );
@@ -2677,6 +2687,10 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
     // If we're crouched, it's easier to steady our aim.
     if( who.movement_mode_is( CMM_CROUCH ) ) {
         dispersion.add_multiplier( 0.75 );
+    }
+    // If we're prone, even more stable aim.
+    if( who.movement_mode_is( CMM_PRONE ) ) {
+        dispersion.add_multiplier( 0.5 );
     }
 
     // Remotely-fired turrets with installed laser designator

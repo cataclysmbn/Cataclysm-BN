@@ -125,6 +125,7 @@ enum character_movemode : int {
     CMM_WALK = 0,
     CMM_RUN,
     CMM_CROUCH,
+    CMM_PRONE,
     CMM_COUNT
 };
 

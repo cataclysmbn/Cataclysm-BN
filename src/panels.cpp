@@ -1124,6 +1124,8 @@ static nc_color move_mode_color( avatar &u )
         return c_red;
     } else if( u.movement_mode_is( CMM_CROUCH ) ) {
         return c_light_blue;
+    } else if( u.movement_mode_is( CMM_PRONE ) ) {
+        return c_brown;
     } else {
         return c_light_gray;
     }
@@ -1135,6 +1137,8 @@ static std::string move_mode_string( avatar &u )
         return pgettext( "movement-type", "R" );
     } else if( u.movement_mode_is( CMM_CROUCH ) ) {
         return pgettext( "movement-type", "C" );
+    } else if( u.movement_mode_is( CMM_PRONE ) ) {
+        return pgettext( "movement-type", "P" );
     } else {
         return pgettext( "movement-type", "W" );
     }

@@ -80,6 +80,7 @@ std::string io::enum_to_string<action_id>( action_id data )
             PAIR( ACTION_RESET_MOVE )
             PAIR( ACTION_TOGGLE_RUN )
             PAIR( ACTION_TOGGLE_CROUCH )
+            PAIR( ACTION_TOGGLE_PRONE )
             PAIR( ACTION_OPEN_MOVEMENT )
             PAIR( ACTION_TOGGLE_MAP_MEMORY )
             PAIR( ACTION_CENTER )
@@ -299,6 +300,8 @@ std::string action_ident( action_id act )
             return "toggle_run";
         case ACTION_TOGGLE_CROUCH:
             return "toggle_crouch";
+        case ACTION_TOGGLE_PRONE:
+            return "toggle_prone";
         case ACTION_OPEN_MOVEMENT:
             return "open_movement";
         case ACTION_OPEN:
@@ -979,6 +982,10 @@ action_id handle_action_menu()
     if( g->u.movement_mode_is( CMM_CROUCH ) ) {
         action_weightings[ACTION_TOGGLE_CROUCH] = 300;
     }
+    // If we're already prone, make it simple to toggle prone to off.
+    if( g->u.movement_mode_is( CMM_PRONE ) ) {
+        action_weightings[ACTION_TOGGLE_PRONE] = 300;
+    }
 
     map &here = get_map();
     // Check if we're on a vehicle, if so, vehicle controls should be top.
@@ -1147,7 +1154,7 @@ action_id handle_action_menu()
         } else if( category_id == "combat" ) {
             register_actions( {
                 ACTION_CYCLE_MOVE, ACTION_RESET_MOVE, ACTION_TOGGLE_RUN, ACTION_TOGGLE_CROUCH,
-                ACTION_OPEN_MOVEMENT, ACTION_FIRE, ACTION_RELOAD_ITEM, ACTION_RELOAD_WEAPON,
+                ACTION_TOGGLE_PRONE, ACTION_OPEN_MOVEMENT, ACTION_FIRE, ACTION_RELOAD_ITEM, ACTION_RELOAD_WEAPON,
                 ACTION_RELOAD_WIELDED, ACTION_CAST_SPELL, ACTION_CAST_LAST_SPELL,
                 ACTION_SELECT_FIRE_MODE,
                 ACTION_SELECT_DEFAULT_AMMO, ACTION_THROW, ACTION_FIRE_BURST, ACTION_PICK_STYLE,

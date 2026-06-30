@@ -24,6 +24,8 @@ std::optional<std::string> get_character_state_for_group(
                 return "run";
             case CMM_CROUCH:
                 return "crouch";
+            case CMM_PRONE:
+                return "prone";
             default:
                 return "walk";
         }
