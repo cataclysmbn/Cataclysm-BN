@@ -202,7 +202,7 @@
     "calories": 150,
     "description": "Dry flakes of flattened grain.  Tasty and nutritious when cooked, it also doubles as food for horses while dry.",
     "price": "20 cent",
-    "price_postapoc": "20 cent",
+    "price_postapoc": "1 USD",
     "material": [ "wheat" ],
     "volume": "250 ml",
     "cooks_like": "oatmeal_cooked",
