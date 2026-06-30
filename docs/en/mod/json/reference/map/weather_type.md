@@ -45,10 +45,10 @@ All members are mandatory.
 
 #### Universal fields
 
-| Identifier | Description                                                                  |
-| ---------- | ---------------------------------------------------------------------------- |
-| name       | One of the below listed effects, completely changes the json loaded for some |
-| intensity  | Intensity of the effect to give                                              |
+| Identifier | Description                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------ |
+| name       | (_mandatory_) One of the below listed effects, completely changes the json loaded for some |
+| intensity  | (_mandatory_) Intensity of the effect to give                                              |
 
 ##### Names
 
@@ -62,6 +62,7 @@ All members are mandatory.
 
 | Identifier           | Description                                                                                                     |
 | -------------------- | --------------------------------------------------------------------------------------------------------------- |
+| intensity            | (_mandatory_) This effect is applied every x turns                                                              |
 | bonus                | (_mandatory_) Amount of morale each stack gives                                                                 |
 | max_bonus            | (_mandatory_) Max amount of morale gained                                                                       |
 | duration             | (_mandatory_) Duration of the morale effect                                                                     |
@@ -71,7 +72,7 @@ All members are mandatory.
 | morale_msg_frequency | (_mandatory_) Percent chance to display the message on gaining effect                                           |
 | message_type         | (_mandatory_) Type of message; 0 == Good, 1 == Bad, 2 == Mixed, 3 == Warning, 4 == Info, 5 == Neutral           |
 
-Example:
+##### Example:
 
 ```json
 {
@@ -88,27 +89,42 @@ Example:
 }
 ```
 
-Example effect:
+#### Effect
 
-```jsonc
+| Identifier                   | Description                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| intensity                    | (_mandatory_) This effect will be applied every x turns                                                                              |
+| duration                     | (_mandatory_) How long the effect lasts                                                                                              |
+| effect_id_str                | (_mandatory_) String of the effect id to give                                                                                        |
+| effect_intensity             | (_mandatory_) Intensity of the effect to give                                                                                        |
+| bodypart_string              | (_optional_) Bodypart to apply the effect to, default whole body                                                                     |
+| effect_msg                   | (_mandatory_) Message to give when gaining the effect                                                                                |
+| effect_msg_frequency         | (_mandatory_) Percent chance to display the message on gaining effect                                                                |
+| effect_msg_blocked_frequency | (_mandatory_) Percent chance to display the protection message on preventing effect                                                  |
+| message_type                 | (_mandatory_) Type of message; 0 == Good, 1 == Bad, 2 == Mixed, 3 == Warning, 4 == Info, 5 == Neutral                                |
+| precipitation_name           | (_mandatory_) Name to display in string "The <field> is blocked by your umbrella!" messages appear                                   |
+| protection_data              | (_mandatory_) Array of `check` flags or traits ( along with default ) and `odds` ( one in x chance ) to be protected from the effect |
+
+##### Example:
+
+```json
 {
   "name": "effect",
-  "intensity": 3, // this effect will be applied every X turns.
-  "duration": "30 s", // amount of time the effect will last.
+  "intensity": 3,
+  "duration": "30 s",
   "effect_id_str": "emp",
-  "effect_intensity": 0, // intensity of the effect applied.
-  "precipitation_name": "brain waves", // name of precipitation to display when "The <PRECIPITATION> is blocked by your umbrella!" type messages display.
-  "bodypart_string": "head", // bodypart to apply the effect on.
-  "effect_msg": "You feel an odd wave-like sensation pass through your head.", // message to display in chat when the player is afflicted
-  "effect_msg_frequency": 16, // chance to display this message every time the player is afflicted.
-  "effect_msg_blocked_frequency": 32, // chance to display this message every time the player blocks the effect with clothing.
-  "message_type": 2, // type of message to display: good, bad, mixed, etc.
+  "effect_intensity": 0,
+  "precipitation_name": "brain waves",
+  "bodypart_string": "head",
+  "effect_msg": "You feel an odd wave-like sensation pass through your head.",
+  "effect_msg_frequency": 16,
+  "effect_msg_blocked_frequency": 32,
+  "message_type": 2,
   "protection_data": [
     { "check": "RAIN_PROTECT", "odds": 1 },
     { "check": "ACIDPROOF", "odds": 1 },
-    { "check": "DEFAULT", "odds": 2 },
-  ], //Check is a flag/trait the player may have, odds is the one in x chance this flag/trait will protect the player from this weather effect.
-  //"check": "DEFAULT" has special behaviour and will roll the one in x chance without checking if the player has a flag/trait actually called "DEFAULT"
+    { "check": "DEFAULT", "odds": 2 }
+  ]
 }
 ```
 
