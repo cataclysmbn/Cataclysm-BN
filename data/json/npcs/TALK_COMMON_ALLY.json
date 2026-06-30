@@ -860,6 +860,12 @@
         "effect": "do_butcher"
       },
       {
+        "text": "Please dissect any corpses that you can.",
+        "topic": "TALK_DONE",
+        "condition": { "not": "npc_has_activity" },
+        "effect": "do_dissect"
+      },
+      {
         "text": "Please chop any trees in the designated areas.",
         "topic": "TALK_DONE",
         "condition": { "not": "npc_has_activity" },
