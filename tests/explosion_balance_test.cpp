@@ -1,7 +1,9 @@
 #include "avatar.h"
+#include "calendar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "creature.h"
+#include "explosion.h"
 #include "explosion_queue.h"
 #include "game.h"
 #include "item.h"
@@ -11,6 +13,7 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
+#include "options_helpers.h"
 #include "state_helpers.h"
 #include "string_id.h"
 #include "test_statistics.h"
@@ -263,4 +266,70 @@ TEST_CASE("rotated_vehicle_walls_block_explosions") {
     REQUIRE(m != nullptr);
     CHECK(m == &s);
     CHECK(m->get_hp() == m->get_hp_max());
+}
+
+// Regression tests for issue #9696 ("EMP Bomb Crashes the game"). An active
+// explosive being processed is detached (loc == nullptr) but still in the map
+// stack; draining the explosion queue in that window re-detonates it forever.
+// scoped_drain_deferral defers drains during map::process_items() to the
+// turn-loop drain, which runs after the item is removed, so the chain is finite.
+
+TEST_CASE("explosion queue defers drains during item processing", "[explosion][emp]") {
+    clear_all_state();
+    auto& queue = explosion_handler::get_explosion_queue();
+    queue.clear();
+
+    const auto origin = tripoint_bub_ms{60, 60, 0};
+    const auto ex = explosion_data{.damage = 10, .radius = 2.0f};
+
+    {
+        // Stands in for the map::process_items() window.
+        explosion_handler::scoped_drain_deferral defer;
+        explosion_handler::explosion(origin, ex, nullptr);
+        REQUIRE_FALSE(queue.empty());
+
+        // A re-entrant drain must not run here (it would re-detonate forever).
+        queue.execute();
+        CHECK_FALSE(queue.empty());
+    }
+
+    // The turn-loop drain (outside the window) empties the queue.
+    queue.execute();
+    CHECK(queue.empty());
+}
+
+TEST_CASE("EMP bomb processed next to a searchlight does not run away", "[explosion][emp]") {
+    clear_all_state();
+
+    // Sympathetic detonation must be on for the runaway (default; set explicitly).
+    const auto explodium = override_option("MADE_OF_EXPLODIUM", "30");
+
+    const auto bomb_pos = tripoint_bub_ms{60, 60, 0};
+    const auto sl_pos = tripoint_bub_ms{61, 60, 0};
+    g->m.i_clear(bomb_pos);
+
+    // A searchlight the EMP kills; its FOCUSEDBEAM death drains the queue.
+    auto& searchlight = spawn_test_monster("mon_turret_searchlight", sl_pos);
+    searchlight.set_hp(1);
+
+    // Active EMP bomb on its own tile, charges 0 so it detonates on its tick.
+    auto bomb =
+        item::spawn("EMPbomb_act", calendar::start_of_cataclysm, item::default_charges_tag());
+    bomb->activate();
+    bomb->charges = 0;
+    g->m.add_item(bomb_pos, std::move(bomb));
+
+    auto& queue = explosion_handler::get_explosion_queue();
+    queue.clear();
+
+    // Processing detonates the bomb and kills the searchlight; before the fix the
+    // re-entrant drain looped forever (cap fires + debugmsg -> test fails). Tick a
+    // few times in case the countdown needs more than one pass.
+    for (int i = 0; i < 12 && !searchlight.is_dead(); i++) {
+        g->m.process_items();
+        queue.execute();
+    }
+
+    REQUIRE(searchlight.is_dead()); // scenario actually triggered
+    CHECK(queue.empty());           // ...and terminated with no runaway
 }

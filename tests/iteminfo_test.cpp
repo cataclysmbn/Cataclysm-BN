@@ -197,15 +197,9 @@ TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {
             "Moves per attack: <color_c_yellow>79</color>\n"
             "Stamina Cost: <color_c_yellow>91</color>\n"
             "Typical damage per second:\n"
-            "Best: <color_c_yellow>5.20</color>"
-            "  Vs. Agile: <color_c_yellow>1.62</color>"
-            "  Vs. Armored: <color_c_yellow>0.00</color>\n"
-            "--\n"
-            "<color_c_white>Base throw damage</color>: Bash: <color_c_yellow>7</color>\n"
-            "<color_c_white>Throw damage</color>: Bash: <color_c_yellow>9</color>\n"
-            "Throw range: <color_c_yellow>13</color>\n"
-            "Moves per throw: <color_c_yellow>70</color>\n"
-            "Stamina cost: <color_c_yellow>91</color>\n");
+            "Best: <color_c_yellow>4.49</color>"
+            "  Vs. Agile: <color_c_yellow>1.39</color>"
+            "  Vs. Armored: <color_c_yellow>0.00</color>\n");
     }
 
     SECTION("bash and cut damage") {
@@ -218,15 +212,9 @@ TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {
             "Moves per attack: <color_c_yellow>145</color>\n"
             "Stamina Cost: <color_c_yellow>275</color>\n"
             "Typical damage per second:\n"
-            "Best: <color_c_yellow>10.94</color>"
-            "  Vs. Agile: <color_c_yellow>5.60</color>"
-            "  Vs. Armored: <color_c_yellow>0.78</color>\n"
-            "--\n"
-            "<color_c_white>Base throw damage</color>: Bash: <color_c_yellow>23</color>\n"
-            "<color_c_white>Throw damage</color>: Bash: <color_c_yellow>39</color>\n"
-            "Throw range: <color_c_yellow>1</color>\n"
-            "Moves per throw: <color_c_yellow>136</color>\n"
-            "Stamina cost: <color_c_yellow>275</color>\n");
+            "Best: <color_c_yellow>10.13</color>"
+            "  Vs. Agile: <color_c_yellow>5.20</color>"
+            "  Vs. Armored: <color_c_yellow>0.62</color>\n");
     }
 
     SECTION("bash and pierce damage") {
@@ -239,15 +227,9 @@ TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {
             "Moves per attack: <color_c_yellow>100</color>\n"
             "Stamina Cost: <color_c_yellow>106</color>\n"
             "Typical damage per second:\n"
-            "Best: <color_c_yellow>9.61</color>"
-            "  Vs. Agile: <color_c_yellow>3.95</color>"
-            "  Vs. Armored: <color_c_yellow>0.00</color>\n"
-            "--\n"
-            "<color_c_white>Base throw damage</color>: Bash: <color_c_yellow>3</color> Pierce: <color_c_yellow>9</color>\n"
-            "<color_c_white>Throw damage</color>: Bash: <color_c_yellow>7</color> Pierce: <color_c_yellow>9</color>\n"
-            "Throw range: <color_c_yellow>7</color>\n"
-            "Moves per throw: <color_c_yellow>92</color>\n"
-            "Stamina cost: <color_c_yellow>106</color>\n");
+            "Best: <color_c_yellow>8.90</color>"
+            "  Vs. Agile: <color_c_yellow>3.65</color>"
+            "  Vs. Armored: <color_c_yellow>0.00</color>\n");
     }
 
     SECTION("melee and ranged damaged") {
@@ -260,25 +242,12 @@ TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {
             "Moves per attack: <color_c_yellow>65</color>\n"
             "Stamina Cost: <color_c_yellow>68</color>\n"
             "Typical damage per second:\n"
-            "Best: <color_c_yellow>5.25</color>"
-            "  Vs. Agile: <color_c_yellow>2.09</color>"
-            "  Vs. Armored: <color_c_yellow>0.00</color>\n"
-            "--\n"
-            "<color_c_white>Base throw damage</color>: Bash: <color_c_yellow>2</color>\n"
-            "<color_c_white>Throw damage</color>: Bash: <color_c_yellow>3</color>\n"
-            "Throw range: <color_c_yellow>10</color>\n"
-            "Moves per throw: <color_c_yellow>56</color>\n"
-            "Stamina cost: <color_c_yellow>68</color>\n");
+            "Best: <color_c_yellow>4.08</color>"
+            "  Vs. Agile: <color_c_yellow>1.60</color>"
+            "  Vs. Armored: <color_c_yellow>0.00</color>\n");
     }
 
-    SECTION("no damage") {
-        test_info_equals(
-            "test_rag", q,
-            "--\n"
-            "Throw range: <color_c_yellow>16</color>\n"
-            "Moves per throw: <color_c_yellow>62</color>\n"
-            "Stamina cost: <color_c_yellow>55</color>\n");
-    }
+    SECTION("no damage") { test_info_equals("test_rag", q, ""); }
 }
 
 TEST_CASE("techniques when wielded", "[item][iteminfo][weapon]") {
@@ -289,7 +258,8 @@ TEST_CASE("techniques when wielded", "[item][iteminfo][weapon]") {
         "test_halligan", q,
         "--\n"
         "<color_c_white>Techniques when wielded</color>:"
-        " <color_c_light_blue>Brutal Strike</color>: <color_c_cyan>Stun 1 turn, knockback 1 tile, crit only</color>,"
+        " <color_c_light_blue>Brutal Strike</color>: <color_c_cyan>Stun 1 turn, knockback 1 tile, "
+        "crit only</color>,"
         " <color_c_light_blue>Sweep Attack</color>: <color_c_cyan>Down 2 turns</color>, and"
         " <color_c_light_blue>Block</color>: <color_c_cyan>Medium blocking ability</color>\n");
 }
@@ -868,7 +838,8 @@ TEST_CASE("food freshness and lifetime", "[item][iteminfo][food]") {
             " an estimated nominal shelf life of <color_c_cyan>3 seasons</color>.\n"
             "* Current storage conditions <color_c_red>do not</color> protect this item"
             " from rot.\n"
-            "* This food looks <color_c_red>old</color>.  It's on the brink of becoming inedible.\n");
+            "* This food looks <color_c_red>old</color>.  It's on the brink of becoming "
+            "inedible.\n");
     }
 
     SECTION("food is stored in a fridge") {
@@ -943,7 +914,8 @@ TEST_CASE("list of item qualities", "[item][iteminfo][quality]") {
         test_info_equals(
             "test_jack_small", q,
             "--\n"
-            "Has level <color_c_cyan>4 jacking</color> quality and is rated at <color_c_cyan>4409</color> lbs\n");
+            "Has level <color_c_cyan>4 jacking</color> quality and is rated at "
+            "<color_c_cyan>4409</color> lbs\n");
     }
 
     SECTION("sonic screwdriver") {
@@ -964,11 +936,15 @@ TEST_CASE("repairable and with what tools", "[item][iteminfo][repair]") {
 
     test_info_contains(
         *item::spawn("test_halligan"), q,
-        "<color_c_white>Repair</color> using advanced 3D printer, charcoal forge, Advanced Grid 3D Printer, grid forge, grid welder, electric forge, integrated toolset, arc welder, or makeshift arc welder.\n");
+        "<color_c_white>Repair</color> using advanced 3D printer, charcoal forge, Advanced Grid 3D "
+        "Printer, grid forge, grid welder, electric forge, integrated toolset, arc welder, or "
+        "makeshift arc welder.\n");
 
     test_info_contains(
         *item::spawn("test_hazmat_suit"), q,
-        "<color_c_white>Repair</color> using advanced 3D printer, 3D printer, Grid 3D Printer, Advanced Grid 3D Printer, grid soldering iron, alcohol-fueled soldering iron, electric soldering iron, TEST soldering iron, or integrated toolset.\n");
+        "<color_c_white>Repair</color> using advanced 3D printer, 3D printer, Grid 3D Printer, "
+        "Advanced Grid 3D Printer, grid soldering iron, alcohol-fueled soldering iron, electric "
+        "soldering iron, TEST soldering iron, or integrated toolset.\n");
 
     test_info_contains(
         *item::spawn("test_rock"), q, "* This item is <color_c_red>not repairable</color>.\n");
@@ -1005,7 +981,8 @@ TEST_CASE("item description flags", "[item][iteminfo]") {
     test_info_equals(
         "test_halligan", q,
         "--\n"
-        "* This item can be clipped on to a <color_c_cyan>belt loop</color> of the appropriate size.\n"
+        "* This item can be clipped on to a <color_c_cyan>belt loop</color> of the appropriate "
+        "size.\n"
         "* As a weapon, this item is <color_c_green>well-made</color> and will"
         " <color_c_cyan>withstand the punishment of combat</color>.\n");
 

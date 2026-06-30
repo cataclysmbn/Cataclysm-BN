@@ -21,14 +21,16 @@ Deno.test("findTranslationWarnings() flags stale and missing language variants",
   ])
 })
 
-Deno.test("findTranslationWarnings() ignores a single changed doc path", () => {
+Deno.test("findTranslationWarnings() flags a single changed doc path", () => {
   const warnings = findTranslationWarnings(
     [{ filename: "docs/en/foo.md", status: "modified" }],
     ["en", "ja", "ko"],
     [],
   )
 
-  assertEquals(warnings, [])
+  assertEquals(warnings, [
+    { path: "foo.md", changed: ["en"], stale: [], missing: ["ja", "ko"] },
+  ])
 })
 
 Deno.test("findTranslationWarnings() ignores docs updated in every language", () => {

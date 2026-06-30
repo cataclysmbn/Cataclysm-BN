@@ -361,7 +361,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param alert whether to display any messages
          * @return true if item reverted or false if no revert available.
          */
-        bool revert( const Character *ch, bool alert = true );
+        bool revert( Character *ch, bool alert = true );
 
         /**
          * Add or remove energy from a battery.

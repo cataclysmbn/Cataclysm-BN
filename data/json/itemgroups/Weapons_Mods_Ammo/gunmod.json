@@ -52,6 +52,7 @@
       [ "breacher_grip", 10 ],
       [ "acog_scope", 70 ],
       [ "holo_sight", 70 ],
+      [ "hybrid_sight", 30 ],
       [ "rifle_scope", 60 ],
       [ "suppressor", 40 ],
       [ "suppressor_compact", 30 ],
@@ -69,6 +70,7 @@
     "items": [
       [ "acog_scope", 100 ],
       [ "holo_sight", 100 ],
+      [ "hybrid_sight", 100 ],
       [ "m203", 30 ],
       [ "m320_mod", 10 ],
       [ "40x53mm_conversion_kit", 5 ],
@@ -81,6 +83,49 @@
   {
     "type": "item_group",
     "id": "military_accessories_grenadier",
+    "subtype": "collection",
+    "//": "Standard attachments + underbarrel grenade launcher",
+    "entries": [
+      { "group": "military_accessories_sight", "prob": 75 },
+      { "group": "military_accessories_muzzle", "prob": 75 },
+      { "group": "military_accessories_underbarrel_gl", "prob": 100 },
+      { "item": "shoulder_strap", "prob": 75 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_standard",
+    "subtype": "collection",
+    "//": "Standard attachments for military rifles.",
+    "entries": [
+      { "group": "military_accessories_sight", "prob": 75 },
+      { "group": "military_accessories_tactical", "prob": 75 },
+      { "group": "military_accessories_muzzle", "prob": 75 },
+      { "item": "shoulder_strap", "prob": 75 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_sniper",
+    "subtype": "collection",
+    "//": "Standard attachments for military sniper rifles.",
+    "entries": [
+      { "item": "rifle_scope", "prob": 100 },
+      { "group": "military_accessories_muzzle", "prob": 75 },
+      { "item": "bipod", "prob": 90 },
+      { "item": "shoulder_strap", "prob": 75 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_lmg",
+    "subtype": "collection",
+    "//": "Standard attachments for military lmgs and other heavy weapons.",
+    "entries": [ { "group": "military_accessories_sight", "prob": 75 }, { "item": "shoulder_strap", "prob": 75 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_underbarrel_gl",
     "subtype": "distribution",
     "//": "For underbarrel launchers mounted on rifles used by fireteam grenadiers",
     "entries": [
@@ -90,25 +135,15 @@
   },
   {
     "type": "item_group",
-    "id": "military_accessories_standard",
-    "subtype": "collection",
-    "//": "Standard attachments for military rifles.",
-    "entries": [
-      { "group": "military_accessories_sight", "prob": 100 },
-      { "group": "military_accessories_tactical", "prob": 100 },
-      { "group": "military_accessories_muzzle", "prob": 100 }
-    ]
-  },
-  {
-    "type": "item_group",
     "id": "military_accessories_sight",
     "subtype": "distribution",
     "//": "Standard military sights mounted on rifles",
     "entries": [
       { "item": "red_dot_sight", "prob": 10 },
-      { "item": "holo_sight", "prob": 40 },
-      { "item": "acog_scope", "prob": 40 },
-      { "item": "rifle_scope", "prob": 10 }
+      { "item": "holo_sight", "prob": 30 },
+      { "item": "acog_scope", "prob": 30 },
+      { "item": "rifle_scope", "prob": 10 },
+      { "item": "hybrid_sight", "prob": 20 }
     ]
   },
   {
@@ -139,6 +174,7 @@
       [ "offset_sights", 6 ],
       [ "red_dot_sight", 42 ],
       [ "holo_sight", 18 ],
+      [ "hybrid_sight", 6 ],
       [ "laser_sight", 15 ],
       [ "rail_laser_sight", 6 ],
       [ "acog_scope", 21 ],
@@ -173,6 +209,7 @@
       [ "improve_sights", 84 ],
       [ "red_dot_sight", 42 ],
       [ "holo_sight", 18 ],
+      [ "hybrid_sight", 6 ],
       [ "laser_sight", 15 ],
       [ "rail_laser_sight", 6 ],
       [ "offset_sights", 6 ],

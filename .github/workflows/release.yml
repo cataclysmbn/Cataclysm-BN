@@ -20,14 +20,15 @@ jobs:
     outputs:
       count: ${{ steps.env_vars.outputs.count }}
       tag_name: ${{ steps.env_vars.outputs.tag_name }}
-      release_name: ${{ steps.env_vars.outputs.release_name }}
-      last_tag_name: ${{ steps.env_vars.outputs.last_tag_name }}
-      yesterday_tag_name: ${{ steps.env_vars.outputs.yesterday_tag_name }}
+      previous_tag_name: ${{ steps.env_vars.outputs.previous_tag_name }}
+      previous_tag_sha: ${{ steps.env_vars.outputs.previous_tag_sha }}
       source_sha: ${{ steps.env_vars.outputs.source_sha }}
+      changelog_fetch_depth: ${{ steps.env_vars.outputs.changelog_fetch_depth }}
     steps:
       - uses: actions/checkout@v4
       - id: env_vars
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REQUESTED_DATE: ${{ inputs.date || '' }}
         run: |
           TAG_NAME=${REQUESTED_DATE:-$(date -u --iso-8601)}
@@ -36,22 +37,39 @@ jobs:
             exit 1
           fi
 
-          YESTERDAY_TAG_NAME=$(date -u --iso-8601 --date="$TAG_NAME 1 day ago")
-          LAST_TAG_NAME=$(git for-each-ref --sort=-creatordate --format '%(creatordate:short)' refs/tags | head -n 1)
-          COMMITS=$(git log --oneline --since="$YESTERDAY_TAG_NAME" --until="$TAG_NAME" | wc -l)
-          RELEASE_NAME="Nightly $TAG_NAME"
+          PREVIOUS_TAG_NAME=$(
+            git ls-remote --tags --refs origin "refs/tags/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]" \
+              | awk '{ sub("refs/tags/", "", $2); print $2 }' \
+              | awk -v tag="$TAG_NAME" '$0 < tag' \
+              | sort \
+              | tail -n 1
+          )
+          if [ -z "$PREVIOUS_TAG_NAME" ]; then
+            echo "::error::no previous nightly tag found before $TAG_NAME"
+            exit 1
+          fi
+
+          PREVIOUS_TAG_SHA=$(git ls-remote --tags origin "refs/tags/$PREVIOUS_TAG_NAME" | awk '{ print $1 }')
+          if [ -z "$PREVIOUS_TAG_SHA" ]; then
+            echo "::error::no git tag SHA found for previous nightly tag $PREVIOUS_TAG_NAME"
+            exit 1
+          fi
+
           SOURCE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG_NAME" | awk '{ print $1 }')
           SOURCE_SHA=${SOURCE_SHA:-$GITHUB_SHA}
+          COMMITS=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${PREVIOUS_TAG_NAME}...${SOURCE_SHA}" --jq .total_commits)
+          CHANGELOG_FETCH_DEPTH=$((COMMITS + 1))
 
-          echo "commits yesterday ($YESTERDAY_TAG_NAME): $COMMITS" >> "$GITHUB_STEP_SUMMARY"
+          echo "commits since $PREVIOUS_TAG_NAME: $COMMITS" >> "$GITHUB_STEP_SUMMARY"
           echo "source commit: $SOURCE_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "changelog fetch depth: $CHANGELOG_FETCH_DEPTH" >> "$GITHUB_STEP_SUMMARY"
 
           echo "count=$COMMITS" >> "$GITHUB_OUTPUT"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
-          echo "last_tag_name=$LAST_TAG_NAME" >> "$GITHUB_OUTPUT"
-          echo "yesterday_tag_name=$YESTERDAY_TAG_NAME" >> "$GITHUB_OUTPUT"
-          echo "release_name=$RELEASE_NAME" >> "$GITHUB_OUTPUT"
+          echo "previous_tag_name=$PREVIOUS_TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "previous_tag_sha=$PREVIOUS_TAG_SHA" >> "$GITHUB_OUTPUT"
           echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "changelog_fetch_depth=$CHANGELOG_FETCH_DEPTH" >> "$GITHUB_OUTPUT"
 
   release:
     needs: metadata
@@ -60,67 +78,58 @@ jobs:
 
     if: github.event_name == 'workflow_dispatch' || fromJson(needs.metadata.outputs.count) > 0
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      tag_exists: ${{ steps.tag_check.outputs.exists }}
-      release_exists: ${{ steps.release_check.outputs.exists }}
       upload_assets: ${{ steps.asset_check.outputs.upload_assets }}
 
     steps:
-      - name: Check if there is existing git tag
-        id: tag_check
-        uses: mukunku/tag-exists-action@v1.6.0
-        with:
-          tag: ${{ needs.metadata.outputs.tag_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check if release exists
+      - name: Check release state
         id: release_check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if gh release view "${{ needs.metadata.outputs.tag_name }}" --json tagName --jq .tagName > /dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "release_exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: actions/checkout@v4
-
-      - name: Push tag
-        if: ${{ steps.tag_check.outputs.exists == 'false' }}
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_tag: ${{ needs.metadata.outputs.tag_name }}
-          tag_prefix: ""
+          ref: ${{ needs.metadata.outputs.source_sha }}
+          fetch-depth: ${{ needs.metadata.outputs.changelog_fetch_depth }}
+          filter: blob:none
+          sparse-checkout: |
+            .
+            scripts
 
-      - name: Build Changelog
-        if: ${{ steps.release_check.outputs.exists == 'false' }}
+      - uses: denoland/setup-deno@v2
+        with: { cache: true }
+
+      - name: Build changelog
+        if: ${{ steps.release_check.outputs.release_exists == 'false' }}
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v4.2.0
-        with:
-          configuration: "changelog.json"
-          fromTag: ${{ needs.metadata.outputs.last_tag_name }}
-          toTag: ${{ needs.metadata.outputs.tag_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          changelog_file="$RUNNER_TEMP/changelog.md"
+          deno run -A scripts/changelog/main.ts \
+            --range "${{ needs.metadata.outputs.previous_tag_sha }}..HEAD" \
+            --output "$changelog_file" \
+            --quiet
+          echo "path=$changelog_file" >> "$GITHUB_OUTPUT"
 
       - name: Create release
-        if: ${{ steps.release_check.outputs.exists == 'false' }}
-        id: create_release
-        uses: softprops/action-gh-release@v2.0.2
+        if: ${{ steps.release_check.outputs.release_exists == 'false' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.metadata.outputs.tag_name }}
-          name: ${{ needs.metadata.outputs.release_name }}
-          body: |
-            ${{ steps.build_changelog.outputs.changelog }}
-            These are the outputs for the build of commit [${{ needs.metadata.outputs.source_sha }}](https://github.com/${{ github.repository }}/commit/${{ needs.metadata.outputs.source_sha }})
-          draft: false
-          prerelease: true
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_body="$RUNNER_TEMP/release-body.md"
+          cat "${{ steps.build_changelog.outputs.path }}" > "$release_body"
+          echo >> "$release_body"
+          echo "These are the outputs for the build of commit [${{ needs.metadata.outputs.source_sha }}](https://github.com/${{ github.repository }}/commit/${{ needs.metadata.outputs.source_sha }})" >> "$release_body"
+
+          gh release create "${{ needs.metadata.outputs.tag_name }}" \
+            --title "Nightly ${{ needs.metadata.outputs.tag_name }}" \
+            --notes-file "$release_body" \
+            --prerelease \
+            --target "${{ needs.metadata.outputs.source_sha }}"
 
       - name: Check release assets
         id: asset_check

@@ -17,7 +17,7 @@
     "casing": "46mm_casing",
     "range": 14,
     "//": "Base damage of 20, balance increase of one third.",
-    "damage": { "damage_type": "bullet", "amount": 24, "armor_penetration": 24 },
+    "damage": { "damage_type": "bullet", "amount": 24, "armor_penetration": 21 },
     "dispersion": 40,
     "recoil": 300,
     "effects": [ "COOKOFF" ]
