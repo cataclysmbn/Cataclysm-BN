@@ -781,17 +781,27 @@ std::vector<lua_menu_entry> lua_pet_callback_actor::call_get_examine_menu_entrie
         sol::protected_function_result res = get_examine_menu_entries_func( params );
         check_func_result( res );
         std::vector<lua_menu_entry> entries;
-        if (sol::object ret_val = res[0]; ret_val.is<sol::table>()) {
-            const sol::table entries_table = ret_val.as<sol::table>();
-            entries.reserve(entries_table.size());
-            for (const auto &val: entries_table | std::views::values) {
-                auto id_label_pair = val.as<std::pair<std::string, std::string>>();
-                auto lua_entry = lua_menu_entry(id_label_pair.first, id_label_pair.second);
+        const auto value = res.get<sol::object>();
+        if( value.is<sol::table>() ) {
+            const sol::table entries_table = value.as<sol::table>();
+            const int size = entries_table.size();
+            entries.reserve(size);
+            for(int i = 1; i <= size; ++i) {
+                sol::optional<sol::table> entry_opt = entries_table[i];
+                if(!entry_opt.has_value()) {
+                    debugmsg("Empty entry at index %d", i);
+                    continue;
+                }
+
+                const sol::table entry = *entry_opt;
+                std::string id = entry.get<std::string>("menu_id");
+                std::string label = entry.get<std::string>("menu_label");
+                auto lua_entry = lua_menu_entry(id, label);
                 entries.push_back(lua_entry);
             }
 
-        } else if (ret_val.is<sol::nil_t>()) {
-            debugmsg( "Wrong pet get_examine_menu_entries return type for '%s' ('%s'): %s", pet.get_name(), mon_str_id );
+        } else if (value.is<sol::nil_t>()) {
+            debugmsg( "Wrong pet get_examine_menu_entries return type for '%s' ('%s')", pet.get_name(), mon_str_id );
         }
 
         return entries;

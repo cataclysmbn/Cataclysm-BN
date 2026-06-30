@@ -1044,6 +1044,9 @@ const std::map<std::string, std::unique_ptr<lua_pet_callback_actor>>& get_lua_pe
     return pet_callback_actors;
 }
 
+bool has_lua() {
+}
+
 auto run_lua_activity_callback( const std::string &callback_id, player &who,
                                 player_activity &act ) -> void
 {
@@ -1075,6 +1078,7 @@ void lua_state_deleter::operator()( lua_state *state ) const
     cata::lua_action_menu::clear_entries();
     bionic_callback_actors.clear();
     mutation_callback_actors.clear();
+    pet_callback_actors.clear();
     get_hook_cache().clear();
     delete state;
 }

@@ -320,6 +320,7 @@ bool monexamine::pet_menu( monster &z )
     for ( const auto entry : lua_entries ) {
         last_int++;
         lua_entries_map.emplace(last_int, entry);
+        amenu.addentry(last_int, true, ' ', entry.menu_label);
     }
 
     amenu.query();
