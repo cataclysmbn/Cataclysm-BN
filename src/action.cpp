@@ -771,7 +771,7 @@ bool can_butcher_at( const tripoint_bub_ms &p )
     map_stack items = get_map().i_at( p );
 
     const inventory &crafting_inv = you.crafting_inventory();
-    for( item*&items_it : items ) {
+    for( item *&items_it : items ) {
         if( items_it->is_corpse() ) {
             if( factor != INT_MIN  || factorD != INT_MIN ) {
                 return true;

@@ -6438,7 +6438,7 @@ auto vehicle::get_cargo_recharge_targets() -> std::vector<cargo_recharge_target>
     if( cargo_recharge_targets_dirty ) {
         cargo_recharge_targets_.clear();
         for( const vpart_reference &vp : get_parts_including_carried( VPFLAG_CARGO ) ) {
-            for( item*&outer : get_items( static_cast<int>( vp.part_index() ) ) ) {
+            for( item *&outer : get_items( static_cast<int>( vp.part_index() ) ) ) {
                 outer->visit_items( [this, &vp]( item * it ) {
                     if( !is_cargo_recharge_candidate( *it ) ) {
                         return VisitResponse::NEXT;
