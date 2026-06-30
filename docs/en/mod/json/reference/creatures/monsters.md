@@ -218,6 +218,13 @@ hostility on detection)
 Monster morale. Defines how low monster HP can get before it retreats. This number is treated as %
 of their max HP.
 
+## "tracking_distance"
+
+(integer, optional, default `8`)
+
+Distance in tiles that the monster keeps between itself and its current target when it has the
+`KEEP_DISTANCE` flag. This also controls how close following monsters approach their goal.
+
 ## "aggro_character"
 
 (bool, optional, default true)
