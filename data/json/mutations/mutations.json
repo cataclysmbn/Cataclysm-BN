@@ -6657,6 +6657,24 @@
   },
   {
     "type": "mutation",
+    "id": "PROF_MA_MIL",
+    "name": { "str": "Combatives" },
+    "points": 0,
+    "description": "Hand-to-hand combat was a significant part of your job, and you were instructed by the finest to make sure that if the enemy doesn't have a gun, they lose much faster.",
+    "initial_ma_styles": [
+      "style_boxing",
+      "style_kickboxing",
+      "style_judo",
+      "style_krav_maga",
+      "style_muay_thai",
+      "style_taekwondo"
+    ],
+    "valid": false,
+    "purifiable": false,
+    "profession": true
+  },
+  {
+    "type": "mutation",
     "id": "PROF_BOXER",
     "name": { "str": "Pugilist" },
     "points": 0,
