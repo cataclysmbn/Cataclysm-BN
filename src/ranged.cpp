@@ -2714,7 +2714,8 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     // If user is currently able to fire a mounted gun freely, penalize dispersion
     // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
-    if( obj.has_flag( flag_MOUNTED_GUN ) && !ranged::can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
+    if( obj.has_flag( flag_MOUNTED_GUN ) &&
+        !ranged::can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
         if( who.get_size() == creature_size::large ) {
             dispersion.add_range( 500 );
         } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&

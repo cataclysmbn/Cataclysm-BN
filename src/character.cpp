@@ -7131,7 +7131,7 @@ void Character::add_effect( const efftype_id &eff_id, const time_duration &dur,
 }
 
 bool Character::remove_effect( const efftype_id &eff_id,
-                                const bodypart_str_id &bp )
+                               const bodypart_str_id &bp )
 {
     bool const was_downed = eff_id == effect_downed && has_effect( effect_downed );
     bool const ret = Creature::remove_effect( eff_id, bp );
