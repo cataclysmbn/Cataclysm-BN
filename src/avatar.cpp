@@ -1290,7 +1290,7 @@ void avatar::set_movement_mode( character_movemode new_mode )
             } else {
                 // Spend moves to stand up if crouched or prone, otherwise just stop running.
                 if( move_mode == CMM_PRONE ) {
-                    mod_moves( -150 );
+                    mod_moves( -300 );
                     recoil = MAX_RECOIL;
                     add_msg( _( "You get up from the ground." ) );
                 } else if( move_mode == CMM_CROUCH ) {
@@ -1317,7 +1317,7 @@ void avatar::set_movement_mode( character_movemode new_mode )
                 } else {
                     // Spend moves to stand up if crouched or prone, otherwise just stop running.
                     if( move_mode == CMM_PRONE ) {
-                        mod_moves( -150 );
+                        mod_moves( -300 );
                         recoil = MAX_RECOIL;
                         add_msg( _( "You get up from the ground and start running." ) );
                     } else if( move_mode == CMM_CROUCH ) {
@@ -1356,7 +1356,7 @@ void avatar::set_movement_mode( character_movemode new_mode )
                     add_msg( _( "You start crouching." ) );
                 } else if( move_mode == CMM_PRONE ) {
                     recoil = MAX_RECOIL;
-                    mod_moves( -100 );
+                    mod_moves( -200 );
                     add_msg( _( "You rise from prone to a crouch." ) );
                 }
             }
@@ -1380,11 +1380,11 @@ void avatar::set_movement_mode( character_movemode new_mode )
             }
             // Spend moves to go prone — cost depends on current stance
             if( move_mode == CMM_CROUCH ) {
-                mod_moves( -100 );
+                mod_moves( -200 );
                 recoil = MAX_RECOIL;
                 add_msg( _( "You go prone from a crouching position." ) );
             } else if( move_mode != CMM_PRONE ) {
-                mod_moves( -150 );
+                mod_moves( -300 );
                 recoil = MAX_RECOIL;
                 add_msg( _( "You drop to the ground." ) );
             } else {
