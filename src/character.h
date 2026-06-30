@@ -1666,6 +1666,15 @@ class Character : public Creature, public location_visitable<Character>
         bool is_rad_immune() const;
         /** Returns true if the player is immune to throws */
         bool is_throw_immune() const;
+        using Creature::add_effect;
+        /** Override to handle stance changes when applying effects (e.g. knockdown → prone). */
+        void add_effect( const efftype_id &eff_id, const time_duration &dur,
+                         const bodypart_str_id &bp, int intensity = 0,
+                         bool force = false, bool deferred = false ) override;
+        using Creature::remove_effect;
+        /** Override to restore stance when removing effects (e.g. downed recovery → restore stance). */
+        bool remove_effect( const efftype_id &eff_id,
+                            const bodypart_str_id &bp = bodypart_str_id::NULL_ID() ) override;
 
         /**
          * Returns >0 if character is sitting/lying and relatively inactive.
@@ -2397,6 +2406,10 @@ class Character : public Creature, public location_visitable<Character>
         faction *my_fac = nullptr;
 
         character_movemode move_mode = CMM_WALK;
+        /** Saved movement mode before being knocked down (restored on recovery). */
+        character_movemode pre_down_mode = CMM_WALK;
+        /** Saved movement mode before falling asleep (restored on wake). */
+        character_movemode pre_sleep_mode = CMM_WALK;
         /** Current deficiency/excess quantity for each vitamin */
         std::map<vitamin_id, int> vitamin_levels;
 

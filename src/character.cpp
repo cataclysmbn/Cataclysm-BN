@@ -7111,6 +7111,39 @@ bool Character::is_elec_immune() const
     return is_immune_damage( DT_ELECTRIC );
 }
 
+void Character::add_effect( const efftype_id &eff_id, const time_duration &dur,
+                            const bodypart_str_id &bp,
+                            int intensity, bool force, bool deferred )
+{
+    bool const already_downed = has_effect( effect_downed );
+    Creature::add_effect( eff_id, dur, bp, intensity, force, deferred );
+    if( eff_id == effect_downed && has_effect( effect_downed ) ) {
+        if( !already_downed ) {
+            pre_down_mode = move_mode;
+        }
+        move_mode = CMM_PRONE;
+        get_map().set_seen_cache_dirty( bub_pos().z() );
+    } else if( eff_id == effect_sleep && has_effect( effect_sleep ) ) {
+        pre_sleep_mode = move_mode;
+        move_mode = CMM_PRONE;
+        get_map().set_seen_cache_dirty( bub_pos().z() );
+    }
+}
+
+bool Character::remove_effect( const efftype_id &eff_id,
+                                const bodypart_str_id &bp )
+{
+    bool const was_downed = eff_id == effect_downed && has_effect( effect_downed );
+    bool const ret = Creature::remove_effect( eff_id, bp );
+    if( was_downed && ret ) {
+        if( move_mode != pre_down_mode ) {
+            get_map().set_seen_cache_dirty( bub_pos().z() );
+        }
+        move_mode = pre_down_mode;
+    }
+    return ret;
+}
+
 bool Character::is_immune_effect( const efftype_id &eff ) const
 {
     if( eff == effect_downed ) {
@@ -8658,6 +8691,10 @@ void Character::wake_up()
     remove_effect( effect_alarm_clock );
     if( has_effect( effect_sleep ) ) {
         g->events().send<event_type::character_wakes_up>( getID() );
+        // Restore the movement mode from before sleep, unless still downed.
+        if( !has_effect( effect_downed ) ) {
+            move_mode = pre_sleep_mode;
+        }
         remove_effect( effect_sleep );
         // Wake up might be called more than once per turn, but we only need to recalc after removing sleep
         recalc_sight_limits();

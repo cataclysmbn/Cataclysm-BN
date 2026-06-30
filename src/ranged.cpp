@@ -1079,7 +1079,7 @@ void npc::pretend_fire( npc *source, int shots, item &gun )
 }
 
 
-namespace
+namespace ranged
 {
 
 auto is_mountable( const map &m, const tripoint_bub_ms &pos ) -> bool
@@ -1116,6 +1116,11 @@ auto can_use_heavy_weapon( const Character &who, const map &m, const tripoint_bu
     }
     return is_mountable_nearby( m, pos );
 }
+
+} // namespace ranged
+
+namespace
+{
 
 auto firing_vehicle( map &here, const Character &who ) -> vehicle * // *NOPAD*
 {
@@ -1219,7 +1224,7 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
 dispersion_sources calculate_dispersion( const map &m, const Character &who, const item &gun,
         int at_recoil, bool burst )
 {
-    const bool bipod = can_use_heavy_weapon( who, m, who.bub_pos() );
+    const bool bipod = ranged::can_use_heavy_weapon( who, m, who.bub_pos() );
 
     const int gun_recoil = gun.gun_recoil( bipod );
     const int eff_recoil = at_recoil + ( burst ? ranged::burst_penalty( who, gun, gun_recoil ) : 0 );
@@ -1518,12 +1523,12 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         const Character &shooter = who;
         // Now actually apply recoil for the future shots
         // But only for one shot, because bursts kinda suck
-        int gun_recoil = gun.gun_recoil( can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) );
+        int gun_recoil = gun.gun_recoil( ranged::can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) );
 
         // If user is currently able to fire a mounted gun freely, penalize dispersion
         // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
         if( gun.has_flag( flag_MOUNTED_GUN ) &&
-            !can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
+            !ranged::can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
             if( who.get_size() == creature_size::large ) {
                 gun_recoil = gun_recoil * 2;
             } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -2709,7 +2714,7 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     // If user is currently able to fire a mounted gun freely, penalize dispersion
     // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
-    if( obj.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
+    if( obj.has_flag( flag_MOUNTED_GUN ) && !ranged::can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
         if( who.get_size() == creature_size::large ) {
             dispersion.add_range( 500 );
         } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -4608,7 +4613,7 @@ auto ranged::gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::
 
     if( gmode->has_flag( flag_MOUNTED_GUN ) ) {
         const Character &shooter = you;
-        if( !can_use_heavy_weapon( shooter, m, shooter.bub_pos() ) &&
+        if( !ranged::can_use_heavy_weapon( shooter, m, shooter.bub_pos() ) &&
             !( you.get_size() > creature_size::medium ) &&
             !you.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) ) {
             messages.push_back( string_format(
