@@ -101,7 +101,7 @@
   {
     "type": "monstergroup",
     "name": "GROUP_SOLDIER_UPGRADE",
-    "default": "mon_zombie_kevlar_1",
+    "default": "mon_zombie_kevlar_0",
     "//": "Masters pick from here when upgrading.",
     "monsters": [
       { "monster": "mon_zombie_supply_sergeant", "freq": 100, "cost_multiplier": 2 },
@@ -113,7 +113,7 @@
   {
     "type": "monstergroup",
     "name": "GROUP_ZOMBIE_BURNER_UPGRADE",
-    "default": "mon_zombie_kevlar_1",
+    "default": "mon_zombie_kevlar_0",
     "monsters": [
       { "monster": "mon_zombie_soldier_blackops_1", "freq": 100, "cost_multiplier": 2 },
       { "monster": "mon_zombie_soldier_acid_1", "freq": 125, "cost_multiplier": 2 },
@@ -168,7 +168,7 @@
   {
     "type": "monstergroup",
     "name": "GROUP_ZOMBIE_SWAT_UPGRADE",
-    "default": "mon_zombie_kevlar_1",
+    "default": "mon_zombie_kevlar_0",
     "monsters": [
       { "monster": "mon_zombie_tough", "freq": 250, "cost_multiplier": 2 },
       { "monster": "mon_zombie_hunter", "freq": 100, "cost_multiplier": 2 },
