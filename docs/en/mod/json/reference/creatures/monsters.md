@@ -386,6 +386,8 @@ Can freely be a collection to imply two weapons wielded in both hands, as items 
 An item group that is used to spawn items when the monster dies. This can be an inlined item group,
 see ITEM_SPAWN.md. The default subtype is "distribution".
 
+Use `"extend": { "death_drops": ... }` in an inherited or overridden monster to add another drop group without replacing existing death drops. A top-level `"death_drops"` member replaces inherited death drops.
+
 ## "death_function"
 
 (array of strings, optional)

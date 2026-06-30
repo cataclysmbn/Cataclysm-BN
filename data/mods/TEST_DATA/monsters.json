@@ -25,5 +25,45 @@
     "species": [ "ZOMBIE", "HUMAN" ],
     "symbol": "Z",
     "upgrades": { "age_grow": 14, "into": "mon_zombie" }
+  },
+  {
+    "type": "item_group",
+    "id": "test_monster_death_drop_base",
+    "subtype": "collection",
+    "items": [ "rock" ]
+  },
+  {
+    "type": "item_group",
+    "id": "test_monster_death_drop_append",
+    "subtype": "collection",
+    "items": [ "stick" ]
+  },
+  {
+    "id": "mon_test_death_drops_append",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "death drop append test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": "test_monster_death_drop_base"
+  },
+  {
+    "id": "mon_test_death_drops_append",
+    "copy-from": "mon_test_death_drops_append",
+    "type": "MONSTER",
+    "extend": { "death_drops": "test_monster_death_drop_append" }
+  },
+  {
+    "id": "mon_test_death_drops_clear",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "death drop clear test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": "test_monster_death_drop_base"
+  },
+  {
+    "id": "mon_test_death_drops_clear",
+    "copy-from": "mon_test_death_drops_clear",
+    "type": "MONSTER",
+    "death_drops": ""
   }
 ]

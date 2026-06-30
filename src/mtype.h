@@ -288,8 +288,8 @@ struct mtype {
         mtype_id id;
 
         std::map<itype_id, int> starting_ammo; // Amount of ammo the monster spawns with.
-        // Name of item group that is used to create item dropped upon death, or empty.
-        item_group_id death_drops;
+        // Names of item groups used to create items dropped upon death.
+        std::vector<item_group_id> death_drops;
 
         /** Stores effect data for effects placed on attack */
         std::vector<mon_effect_data> atk_effs;
