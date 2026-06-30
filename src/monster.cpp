@@ -523,6 +523,15 @@ void monster::allow_upgrade()
 int monster::next_upgrade_time()
 {
     if( type->age_grow > 0 ) {
+        const int scaling = get_option<int>( "ANIMAL_LIFE_CYCLE_SCALING" );
+        if( type->has_flag( MF_ANIMAL ) && scaling == 0 ) {
+            return std::max( 1, static_cast<int>( std::ceil( type->age_grow *
+                                                  calendar::season_ratio() ) ) );
+        }
+        if( type->has_flag( MF_ANIMAL ) ) {
+            return std::max( 1, static_cast<int>( std::ceil( type->age_grow * scaling /
+                                                  100.0 ) ) );
+        }
         return type->age_grow;
     }
     const int scaled_half_life = type->half_life * get_option<float>( "MONSTER_UPGRADE_FACTOR" );
@@ -617,10 +626,21 @@ void monster::try_reproduce()
     if( !type->baby_timer ) {
         return;
     }
+    time_duration baby_timer_scaling = *type->baby_timer;
+    const int scaling = get_option<int>( "ANIMAL_LIFE_CYCLE_SCALING" );
+    if( type->has_flag( MF_ANIMAL ) && scaling == 0 ) {
+        baby_timer_scaling = time_duration::from_days( std::max( 1,
+                             static_cast<int>( std::ceil( to_days<int>( *type->baby_timer ) *
+                                               calendar::season_ratio() ) ) ) );
+    } else if( type->has_flag( MF_ANIMAL ) ) {
+        baby_timer_scaling = time_duration::from_days( std::max( 1,
+                             static_cast<int>( std::ceil( to_days<int>( *type->baby_timer ) *
+                                               scaling / 100.0 ) ) ) );
+    }
 
     if( !baby_timer ) {
         // Assume this is a freshly spawned monster (because baby_timer is not set yet), set the point when it reproduce to somewhere in the future.
-        baby_timer.emplace( calendar::turn + *type->baby_timer );
+        baby_timer.emplace( calendar::turn + baby_timer_scaling );
     }
 
     bool season_spawn = false;
@@ -658,7 +678,7 @@ void monster::try_reproduce()
         if( ( season_match && female && one_in( chance ) ) ) {
             reproduce();
         }
-        *baby_timer += *type->baby_timer;
+        *baby_timer += baby_timer_scaling;
     }
 }
 
