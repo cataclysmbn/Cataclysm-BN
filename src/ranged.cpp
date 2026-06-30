@@ -1224,8 +1224,6 @@ static int calc_gun_volume( const item &gun )
     const item &parent = ( gun.parent_item() != nullptr &&
                            gun.has_flag( flag_USE_PARENT_GUN ) ) ? *gun.parent_item() : gun;
     const bool am_dat = gun.ammo_data();
-    // If our ammo is subsonic, loudness mods from the gun and gunmods can reduce noise freely.
-    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will still make a sonic boom.
     // Start our noise at zero.
     int noise = 0;
     int speed = parent.gun_speed( am_dat );
