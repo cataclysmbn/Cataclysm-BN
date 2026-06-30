@@ -81,12 +81,15 @@ struct activity_reason_info {
     bool can_do;
     //construction index
     std::optional<construction_id> con_idx;
+    std::optional<int> ter_or_fur_idx;
 
     activity_reason_info( do_activity_reason reason_, bool can_do_,
-                          const std::optional<construction_id> &con_idx_ = std::nullopt ) :
+                          const std::optional<construction_id> &con_idx_ = std::nullopt,
+                          const std::optional<int> &ter_or_furn_idx_ = std::nullopt ) :
         reason( reason_ ),
         can_do( can_do_ ),
-        con_idx( con_idx_ )
+        con_idx( con_idx_ ),
+        ter_or_fur_idx( ter_or_furn_idx_ )
     { }
 
     static activity_reason_info ok( const do_activity_reason &reason_ ) {
@@ -94,8 +97,8 @@ struct activity_reason_info {
     }
 
     static activity_reason_info build( const do_activity_reason &reason_, bool can_do_,
-                                       const construction_id &con_idx_ ) {
-        return activity_reason_info( reason_, can_do_, con_idx_ );
+                                       const construction_id &con_idx_, const int &ter_or_fur_idx_ ) {
+        return activity_reason_info( reason_, can_do_, con_idx_, ter_or_fur_idx_ );
     }
 
     static activity_reason_info fail( const do_activity_reason &reason_ ) {

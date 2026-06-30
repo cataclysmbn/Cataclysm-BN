@@ -2565,12 +2565,13 @@ void construction_activity_actor::start( player_activity &/*act*/, Character &/*
             name = ter_type->name();
         }
     } else {
-        name = built.post_furniture.is_empty()
-               ? ""
-               : built.post_furniture->name();
-        name = built.post_terrain.is_empty()
-               ? name
-               : built.post_terrain->name();
+        const auto index = static_cast<size_t>( pc->ter_or_furn_idx );
+        if( index < built.post_furniture.size() ) {
+            name = built.post_furniture[index]->name();
+        }
+        if( index < built.post_terrain.size() ) {
+            name = built.post_terrain[index]->name();
+        }
     }
 
     int total_time = std::max( 1, built.adjusted_time() );
