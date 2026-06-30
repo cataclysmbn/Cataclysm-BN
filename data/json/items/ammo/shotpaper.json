@@ -17,7 +17,7 @@
     "stack_size": 20,
     "ammo_type": "shotpaper",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 13, "armor_penetration": 6 },
+    "damage": { "damage_type": "bullet", "amount": 13, "armor_penetration": 24 },
     "recoil": 2000,
     "loudness": 144,
     "speed": 200,
