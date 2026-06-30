@@ -10471,31 +10471,6 @@ static auto find_visible_vehicles( avatar &viewer, map &here, int radius ) -> ve
     return vehicles;
 }
 
-static auto vehicle_damage_summary( const vehicle &veh ) -> std::pair<std::string, nc_color>
-{
-    const vehicle_part_range vpr = veh.get_all_parts();
-    const int total_damage = std::accumulate( vpr.begin(), vpr.end(), 0,
-    []( int lhs, const vpart_reference & rhs ) {
-        return lhs + std::max( rhs.part().damage(), 0 );
-    } );
-    const int total_max = std::accumulate( vpr.begin(), vpr.end(), 0,
-    []( int lhs, const vpart_reference & rhs ) {
-        return lhs + rhs.part().max_damage();
-    } );
-    const int pct = total_max ? 100 * total_damage / total_max : 0;
-
-    if( pct < 5 ) {
-        return { _( "like new" ), c_light_green };
-    } else if( pct < 33 ) {
-        return { _( "dented" ), c_yellow };
-    } else if( pct < 66 ) {
-        return { _( "battered" ), c_magenta };
-    } else if( pct < 100 ) {
-        return { _( "wrecked" ), c_red };
-    }
-    return { _( "destroyed" ), c_dark_gray };
-}
-
 static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_ret
 {
     avatar &viewer = get_avatar();
@@ -10622,7 +10597,7 @@ static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_
                                                 _( "This vehicle does not have enough wheels." );
                 const int info_width = getmaxx( w_vehicle_info );
                 const bool is_boat = !cur_vehicle->floating.empty();
-                const auto [status_text, status_color] = vehicle_damage_summary( *cur_vehicle );
+                const auto [status_text, status_color] = cur_vehicle->vehicle_damage_summary();
                 units::volume total_cargo = 0_ml;
                 units::volume free_cargo = 0_ml;
                 for( const vpart_reference &vp : cur_vehicle->get_any_parts( "CARGO" ) ) {

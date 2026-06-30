@@ -877,6 +877,9 @@ class vehicle
         // get color for map
         nc_color part_color( int p, bool exact = false ) const;
 
+        // get text and color of damage summary (e.g. "like new" or "battered")
+        auto vehicle_damage_summary() const -> std::pair<std::string, nc_color>;
+
         // Get all printable fuel types
         std::vector<itype_id> get_printable_fuel_types() const;
 
