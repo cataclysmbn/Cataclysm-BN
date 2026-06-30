@@ -85,7 +85,9 @@
             "fg": 65
           },
           { "id": [ "holo_sight", "overlay_wielded_holo_sight" ], "fg": 66 },
-          { "id": [ "hybrid_sight", "overlay_wielded_hybrid_sight" ], "fg": 67 }
+          { "id": [ "hybrid_sight", "overlay_wielded_hybrid_sight" ], "fg": 67 },
+          { "id": "mon_zombie_kevlar_0", "fg": 68, "bg": 30 },
+          { "id": "corpse_mon_zombie_kevlar_0", "fg": 69 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
