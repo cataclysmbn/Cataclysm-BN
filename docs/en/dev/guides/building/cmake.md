@@ -21,7 +21,7 @@ CataclysmBN:
   - `ncurses`
 - Tiles
   - `SDL_image` >= 3.0.0 (with PNG and JPEG support) *
-  - `SDL_mixer` >= 3.0.0 (with Ogg Vorbis support) * 
+  - `SDL_mixer` >= 3.0.0 (with Ogg Vorbis support) *
   - `SDL_ttf` >= 3.0.0 *
   - `freetype`
 - Sound
@@ -113,6 +113,7 @@ Install dependencies via [Homebrew](https://brew.sh/):
 brew install cmake ninja ccache sdl3 sdl3_image sdl3_ttf sdl3_mixer \
   freetype gettext sqlite pkg-config ncurses flac
 ```
+
 > [!NOTE]
 > Apple Clang shipped with Xcode 16+ supports the C++23 features required by CataclysmBN.
 > You do **not** need to install a separate compiler.
@@ -346,7 +347,6 @@ Run the game. Should work.
 
 ## Build Options
 
-
 To change build options, you may either pass the options on the command line:
 
 ```sh
@@ -414,9 +414,9 @@ Check the [cmake docs](https://cmake.org/cmake/help/latest/manual/cmake-presets.
 | `linux-curses`             | Linux Slim Build (Curses)                           |
 | `linux-slim`               | Linux Slim Build (Tiles, Sounds)                    |
 | `linux-full`               | Linux Full Build (Tiles, Sounds, Clang-Tidy, Tracy) |
-| `linux-cross-aarch64`
-| `linux-slim-cross-aarch64`
-| `linux-full-cross-aarch64`
+| `linux-cross-aarch64`      |                                                     |
+| `linux-slim-cross-aarch64` |                                                     |
+| `linux-full-cross-aarch64` |                                                     |
 | `dist-tiles`               | Linux Distribution (Tiles, Sounds, Languages)       |
 | `dist-curses`              | Linux Distribution (Curses, Languages)              |
 | `osx-curses-x64-dist`      | macOS x64 Distribution (Curses, Languages)          |
@@ -433,10 +433,10 @@ Check the [cmake docs](https://cmake.org/cmake/help/latest/manual/cmake-presets.
 >
 > The macOS distribution presets build a DMG with the `dmgdist` target. `dmgbuild` must be available on `PATH`.
 > If you do not have dmgdist and biplist installed already, you can install them using pip
+>
 > ```sh
 > python3 -m pip install dmgbuild biplist
 > ```
-
 
 ### Building with Translations Locally
 
