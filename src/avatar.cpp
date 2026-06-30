@@ -1165,12 +1165,12 @@ bool avatar::is_hallucination() const
 bool avatar::is_dead_state() const
 {
     if( cached_dead_state.has_value() ) {
-    return cached_dead_state.value();
+        return cached_dead_state.value();
     }
 
     if( Character::is_dead_state() ) {
-    cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
-        params["char"] = this;
+        cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
+            params["char"] = this;
         } );
         cached_dead_state.reset();
     }
