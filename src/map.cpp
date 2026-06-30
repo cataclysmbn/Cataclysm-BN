@@ -4688,7 +4688,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
             sounds::sound( se );
         }
 
-        if( !smash_ter && smax > 0 ) {
+        if( !smash_ter && has_flag( TFLAG_BASH_TRANSFORM, p ) && smax > 0 ) {
             const auto flipped_version = get_furn_transforms_into( p );
             if( flipped_version != furn_str_id::NULL_ID() ) {
                 const int damage_percent = ( params.strength * 100 ) / smax;

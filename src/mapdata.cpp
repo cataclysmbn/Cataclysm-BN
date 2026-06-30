@@ -180,6 +180,7 @@ static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { 
         { "ELEVATOR",                 TFLAG_ELEVATOR },       // This is an elevator.
         { "NO_MEMORY",                TFLAG_NO_MEMORY },      // This should not be added to map memory
         { "ROAD",                     TFLAG_ROAD },           // Some floors have this flag, as do some passable transformation of otherwise impassible terrain/furniture. Very notably, open doors.
+        { "BASH_TRANSFORM",           TFLAG_BASH_TRANSFORM }, // Bashing this terrain/furniture but failing to destroy it has a chance to transform it, if it's capable of transforming.
     }
 };
 

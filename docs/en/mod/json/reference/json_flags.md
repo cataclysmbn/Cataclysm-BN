@@ -554,6 +554,8 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `BARRICADABLE_DOOR` Door that can be barricaded.
 - `BARRICADABLE_WINDOW_CURTAINS`
 - `BARRICADABLE_WINDOW` Window that can be barricaded.
+- `BASH_TRANSFORM` If this furniture possesses the `transform` examine action, bashing has a chance
+  to trigger (e.g. flipping tables).
 - `BASHABLE` Players + Monsters can bash this.
 - `BLOCK_WIND` This terrain will block the effects of wind.
 - `BURROWABLE` Burrowing monsters can travel under this terrain, while most others can't (e.g.
