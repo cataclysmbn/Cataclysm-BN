@@ -814,17 +814,20 @@ auto abs_tile_handle::submap_pos() const -> point_sm_ms
 
 auto abs_tile_handle::ter() const -> ter_id
 {
-    return sm_->get_ter( local_ );
+    return sm_ ? sm_->get_ter( local_ ) : t_null;
 }
 
 auto abs_tile_handle::furn() const -> furn_id
 {
+    if( !sm_ ) {
+        return f_null;
+    }
     return sm_->get_furn( local_ );
 }
 
 ::trap_id abs_tile_handle::trap_id() const
 {
-    return sm_->get_trap( local_ );
+    return sm_ ? sm_->get_trap( local_ ) : tr_null;
 }
 
 auto abs_tile_handle::ter_obj() const -> const ter_t &
@@ -844,27 +847,30 @@ auto abs_tile_handle::trap_obj() const -> const trap &
 
 auto abs_tile_handle::field() const -> const class field &
 {
-        return sm_->get_field( local_ );
+    static const class field null_field;
+    return sm_? sm_->get_field( local_ ) : null_field;
 }
 
 auto abs_tile_handle::items() const -> const location_vector<item> &
 {
-    return sm_->get_items( local_ );
+    static const location_vector<item> null_items;
+    return sm_? sm_->get_items( local_ ) : null_items;
 }
 
 auto abs_tile_handle::furn_vars() const -> const data_vars::data_set &
 {
-    return sm_->get_furn_vars( local_ );
+    static const data_vars::data_set null_vars;
+    return sm_ ? sm_->get_furn_vars( local_ ) : null_vars;
 }
 
 auto abs_tile_handle::radiation() const -> int
 {
-    return sm_->get_radiation( local_ );
+    return sm_ ? sm_->get_radiation( local_ ) : 0;
 }
 
 auto abs_tile_handle::lum() const -> std::uint8_t
 {
-    return sm_->get_lum( local_ );
+    return sm_ ? sm_->get_lum( local_ ) : 0;
 }
 
 auto abs_tile_handle::move_cost( const vehicle *ignored_vehicle ) const -> int
@@ -1058,7 +1064,7 @@ auto abs_tile_handle::has_items() const -> bool
 
 auto abs_tile_handle::has_field_at() const -> bool
 {
-    return sm_->field_count > 0;
+    return sm_ ? sm_->field_count > 0 : false;
 }
 
 auto abs_tile_handle::get_field_entry( const field_type_id &type ) const -> const field_entry *
@@ -1080,32 +1086,33 @@ auto abs_tile_handle::get_field_intensity( const field_type_id &type ) const -> 
 
 auto abs_tile_handle::has_graffiti_at() const -> bool
 {
-    return sm_->has_graffiti( local_ );
+    return sm_ ? sm_->has_graffiti( local_ ) : false;
 }
 
 auto abs_tile_handle::graffiti_at() const -> const std::string &
 {
-    return sm_->get_graffiti( local_ );
+    static const std::string empty;
+    return sm_ ? sm_->get_graffiti( local_ ) : empty;
 }
 
 auto abs_tile_handle::has_signage() const -> bool
 {
-    return sm_->has_signage( local_ );
+    return sm_ ? sm_->has_signage( local_ ) : false;
 }
 
 auto abs_tile_handle::get_signage() const -> std::string
 {
-    return sm_->get_signage( local_ );
+    return sm_ ? sm_->get_signage( local_ ) : std::string{};
 }
 
 auto abs_tile_handle::has_computer() const -> bool
 {
-    return sm_->has_computer( local_ );
+    return sm_ ? sm_->has_computer( local_ ) : false;
 }
 
 auto abs_tile_handle::get_computer() const -> const computer *
 {
-    return sm_->get_computer( local_ );
+    return sm_ ? sm_->get_computer( local_ ) : nullptr;
 }
 
 auto abs_tile_handle::can_put_items_ter_furn() const -> bool
@@ -1149,7 +1156,8 @@ auto abs_tile_handle::passable_ter_furn() const -> bool
 
 auto abs_tile_handle::ter_vars() const -> const data_vars::data_set &
 {
-    return sm_->get_ter_vars( local_ );
+    static const data_vars::data_set null_vars;
+    return sm_ ? sm_->get_ter_vars( local_ ) : null_vars;
 }
 
 auto abs_tile_handle::is_harvestable() const -> bool
@@ -5733,7 +5741,11 @@ auto mapbuffer::add_splatter_trail( const field_type_id &type, const tripoint_ab
 {
     const auto trail = line_to( from.xy(), to.xy() );
     for( const auto &p : trail ) {
-        add_splatter( type, tripoint_abs_ms( p, from.z() ), 1, options );
+        const tripoint_abs_ms pos( p, from.z() );
+        if( is_column_state( project_to<coords::sm>( pos ).xy(),
+                             submap_column_load_state::resident ) ) {
+            add_splatter( type, pos, 1, options );
+        }
     }
 }
 
@@ -5741,8 +5753,8 @@ auto mapbuffer::add_splash( const field_type_id &type, const tripoint_abs_ms &ce
                             const int radius, const int intensity,
                             const mapbuffer_lookup_options options ) -> void
 {
-    for( const tripoint_abs_ms &p : points_in_radius( center, radius ) ) {
-        add_splatter( type, p, intensity, options );
+    for( const auto &pt : simulated_tiles_in_radius( *this, center, radius ) ) {
+        add_splatter( type, pt.abs_pos(), intensity, options );
     }
 }
 
@@ -5751,22 +5763,21 @@ auto mapbuffer::propagate_field( const tripoint_abs_ms &center, const field_type
                                  const mapbuffer_lookup_options options ) -> void
 {
     // Propagate to all adjacent tiles
-    for( const tripoint_abs_ms &pt : points_in_radius( center, 1 ) ) {
-        if( pt == center ) {
+    for( const auto &pt : simulated_tiles_in_radius( *this, center, 1 ) ) {
+        if( pt.abs_pos() == center ) {
             continue;
         }
-        const auto existing = get_field_intensity( pt, type, options );
-        const int cur_intensity = existing.value_or( 0 );
+        const auto cur_intensity = pt.get_field_intensity( type );
 
         if( cur_intensity > 0 && cur_intensity < max_intensity ) {
-            set_field_intensity( pt, {
+            set_field_intensity( pt.abs_pos(), {
                 .type = type,
                 .intensity = cur_intensity + 1,
                 .isoffset = false,
                 .lookup = options,
             } );
         } else if( cur_intensity == 0 ) {
-            add_field( pt, {
+            add_field( pt.abs_pos(), {
                 .type = type,
                 .intensity = std::min( 1, max_intensity ),
                 .age = 0_turns,
@@ -5775,7 +5786,7 @@ auto mapbuffer::propagate_field( const tripoint_abs_ms &center, const field_type
         }
 
         if( amount > 1 ) {
-            propagate_field( pt, type, amount - 1, max_intensity, options );
+            propagate_field( pt.abs_pos(), type, amount - 1, max_intensity, options );
         }
     }
 }

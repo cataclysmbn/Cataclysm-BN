@@ -295,12 +295,7 @@ comfort_response_t base_comfort_value( const Character &who, const tripoint_abs_
 
     auto &here = who.get_mapbuffer();
     const optional_vpart_position vp = here.veh_at( p );
-    const auto tile_opt = abs_tile_handle::fetch( here, p );
-    if( !tile_opt ) {
-        comfort_response.level = comfort_level::neutral;
-        return comfort_response;
-    }
-    const auto &tile = *tile_opt;
+    const auto &tile = *abs_tile_handle::fetch( here, p );
     const trap &trap_at_pos = tile.trap_obj();
     const ter_id ter_at_pos = tile.ter();
     const furn_id furn_at_pos = tile.furn();

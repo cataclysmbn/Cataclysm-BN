@@ -2405,11 +2405,7 @@ bool monster::move_to( const tripoint_abs_ms &p, bool force, bool step_on_critte
 {
     mapbuffer &here = get_mapbuffer();
 
-    const auto pos_handle_opt = abs_tile_handle::fetch( here, abs_pos() );
-    if( !pos_handle_opt ) {
-        return false;
-    }
-    const auto &pos_handle = *pos_handle_opt;
+    const auto &pos_handle = *abs_tile_handle::fetch( here, abs_pos() );
     const bool on_ground = !digging() && !flies();
 
     const bool z_move = p.z() != abs_pos().z();
@@ -2445,11 +2441,7 @@ bool monster::move_to( const tripoint_abs_ms &p, bool force, bool step_on_critte
         return false;
     }
 
-    const auto dest_handle_opt = abs_tile_handle::fetch( here, destination );
-    if( !dest_handle_opt ) {
-        return false;
-    }
-    const auto &dest_handle = *dest_handle_opt;
+    const auto &dest_handle = *abs_tile_handle::fetch( here, destination );
 
     // Climbing
     auto critter = here.creature_at( dest_handle.abs_pos(), is_hallucination() );

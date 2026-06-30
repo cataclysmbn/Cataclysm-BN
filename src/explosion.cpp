@@ -2002,9 +2002,9 @@ void emp_blast( const tripoint_bub_ms &pos )
         }
     }
     // Drain any items of their battery charge
-    const auto tile = abs_tile_handle::fetch( here, p );
-    if( tile && tile->has_items() ) {
-        for( auto &it : tile->items() ) {
+    const auto &tile = *abs_tile_handle::fetch( here, p );
+    if( tile.has_items() ) {
+        for( auto &it : tile.items() ) {
             if( it->is_tool() && it->ammo_current() == itype_battery ) {
                 it->charges = 0;
             }

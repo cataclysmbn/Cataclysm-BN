@@ -22,13 +22,14 @@ struct shriek_stun_setup {
 
 auto setup_shriek_stun_test() -> shriek_stun_setup {
     clear_all_state();
+    build_test_map( ter_id( "t_floor" ) );
 
     auto& target = get_avatar();
-    const auto screecher_pos = tripoint_bub_ms(60, 60, 0);
-    const auto target_pos = tripoint_bub_ms(62, 60, 0);
-    target.setpos(map_local_to_abs(get_map(), target_pos));
+    const auto screecher_pos = tripoint_abs_ms(60, 60, 0);
+    const auto target_pos = tripoint_abs_ms(62, 60, 0);
+    target.setpos(target_pos);
 
-    auto& screecher = spawn_test_monster("mon_zombie_screecher", screecher_pos);
+    auto& screecher = spawn_test_monster("mon_zombie_screecher", abs_to_bub(screecher_pos));
     screecher.set_dest(target.abs_pos());
     screecher.add_effect(effect_shrieking, 1_minutes);
     screecher.moves = 100;
