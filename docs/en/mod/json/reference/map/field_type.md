@@ -6,7 +6,7 @@
   "type": "field_type", // this is a field type
   "id": "fd_gum_web", // id of the field
   // Array of intensities of the field.
-  // The first one is the best, last the worst
+  // The first one is intensity 1, they increase by one each time
   "intensity_levels": [
     {
       "name": "shadow", // name of this level of intensity
