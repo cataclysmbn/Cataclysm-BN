@@ -171,7 +171,7 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
     avatar &you = get_avatar();
 
     item *weapon = get_weapon();
-    if( !weapon || !avatar_action::can_fire_weapon( you, get_map(), *weapon ) ) {
+    if( !weapon || !avatar_action::can_fire_weapon( you, *weapon ) ) {
         aborted = true;
         progress.pop();
         return;
@@ -501,7 +501,7 @@ void dig_activity_actor::do_turn( player_activity &/*act*/, Character &who )
     if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
         sound_event se;
-        se.origin = location;
+        se.origin = bub_to_abs( location );
         se.volume = 60;
         se.category = sounds::sound_t::activity;
         se.description = _( "hsh!" );
@@ -618,7 +618,7 @@ void dig_channel_activity_actor::do_turn( player_activity &/*act*/, Character &w
     if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
         sound_event se;
-        se.origin = location;
+        se.origin = bub_to_abs( location );
         se.volume = 70;
         se.category = sounds::sound_t::activity;
         se.description = _( "hsh!" );
@@ -959,7 +959,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
             // currently all things that can be hacked have equivalent alarm failure states.
             // this may not always be the case with new hackable things.
             g->events().send<event_type::triggers_alarm>( who.getID() );
-            se.origin = who.bub_pos();
+            se.origin = who.abs_pos();
             se.volume = 120;
             se.category = sounds::sound_t::music;
             se.description = _( "an alarm sound!" );
@@ -986,7 +986,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
                         uistate.ags_pay_gas_selected_pump );
                 if( pGasPump && iexamine::toPumpFuel( pTank, *pGasPump, tankGasUnits ) ) {
                     who.add_msg_if_player( _( "You hack the terminal and route all available fuel to your pump!" ) );
-                    se.origin = examp;
+                    se.origin = bub_to_abs( examp );
                     se.volume = 40;
                     se.category = sounds::sound_t::activity;
                     se.description = _( "Glug Glug Glug Glug Glug Glug Glug Glug Glug" );
@@ -1253,7 +1253,7 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             //~ Sound of a metal sawing tool at work!
             sound_event se;
-            se.origin = target;
+            se.origin = bub_to_abs( target );
             se.volume = 80;
             se.category = sounds::sound_t::destructive_activity;
             se.description = _( "grnd grnd grnd" );
@@ -1269,7 +1269,7 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.bub_pos() ) ) {
+            if( get_avatar().sees( who.abs_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1418,7 +1418,7 @@ void boltcutting_activity_actor::do_turn( player_activity &/* act */, Character 
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.bub_pos() ) ) {
+            if( get_avatar().sees( who.abs_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1482,7 +1482,7 @@ void boltcutting_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
     sound_event se;
-    se.origin = target;
+    se.origin = bub_to_abs( target );
     se.volume = 60;
     se.category = sounds::sound_t::combat;
     se.id = "tool";
@@ -1699,7 +1699,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
 
         if( get_map().has_flag( "ALARMED", target ) ) {
             sound_event se;
-            se.origin = who.bub_pos();
+            se.origin = who.abs_pos();
             se.volume = 90;
             se.category = sounds::sound_t::alarm;
             se.description = _( "an alarm sound!" );
@@ -1840,7 +1840,7 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
         sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target, 65 ) );
         if( action_time_scale::once_every_this_tick( 2_turns ) ) {
             sound_event se;
-            se.origin = target;
+            se.origin = bub_to_abs( target );
             se.volume = 65;
             se.category = sounds::sound_t::destructive_activity;
             se.description = _( "hissssssssss!" );
@@ -1856,7 +1856,7 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.bub_pos() ) ) {
+            if( get_avatar().sees( who.abs_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -2086,7 +2086,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     }
 
     item *it = &*target;
-    std::optional<tripoint_bub_ms> blind_throw_pos = blind_throw_from_pos;
+    std::optional<tripoint_abs_ms> blind_throw_pos = blind_throw_from_pos;
 
     // Stop the activity. Whether we will or will not throw doesn't matter.
     act.set_to_null();
@@ -2099,7 +2099,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // Shift our position to our peeking position so the target UI can see from there.
     const auto original_player_position = who.abs_pos();
     if( blind_throw_pos ) {
-        who.setpos( bub_to_abs( *blind_throw_pos ) );
+        who.setpos( *blind_throw_pos );
     }
 
     target_handler::trajectory trajectory = target_handler::mode_throw( *who.as_avatar(), *it,

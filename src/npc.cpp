@@ -63,7 +63,6 @@
 #include "overmap.h"
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
-#include "legacy_pathfinding.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "ranged.h"
@@ -156,7 +155,7 @@ npc::npc()
     position = tripoint_abs_ms::zero();
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
-    wanted_item_pos = tripoint_bub_ms::min();
+    wanted_item_pos = tripoint_abs_ms::min();
     guard_pos = tripoint_abs_ms::min();
     goal = tripoint_abs_omt( tripoint_min );
     fetching_item = false;
@@ -178,7 +177,7 @@ npc::npc()
     patience = 0;
     attitude = NPCATT_NULL;
 
-    *path_settings = pathfinding_settings( 0, 1000, 1000, 10, true, true, true, false, true );
+    *path_settings = PathfindingSettings( 0, 1000, 1000, 10, true, true, true, false, true );
     ai_cache.threat_map.fill( 0.0f );
 
     // This should be in Character constructor, but because global avatar
@@ -188,16 +187,16 @@ npc::npc()
     character_funcs::normalize( *this );
 }
 
-standard_npc::standard_npc( const std::string &name, const tripoint_bub_ms &pos,
+standard_npc::standard_npc( const std::string &name, const tripoint_abs_ms &pos,
                             const std::vector<std::string> &clothing,
                             int sk_lvl, int s_str, int s_dex, int s_int, int s_per )
 {
     this->name = name;
     // Resolve tripoint_min sentinel to the runtime bubble center.
-    const auto map_local_pos = ( pos == tripoint_bub_ms::min() )
-                               ? tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 )
-                               : pos;
-    position = map_local_to_abs( get_map(), map_local_pos );
+    const auto final_pos = ( pos == tripoint_abs_ms::min() )
+                           ? bub_to_abs( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) )
+                           : pos;
+    position = final_pos;
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -802,10 +801,10 @@ auto npc::clear_transient_movement_state_after_reposition() -> void
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
     goto_to_this_pos = std::nullopt;
-    wanted_item_pos = tripoint_bub_ms::min();
+    wanted_item_pos = tripoint_abs_ms::min();
     guard_pos = tripoint_abs_ms::min();
     goal = no_goal_point;
-    pulp_location = std::nullopt;
+    pulp_position = std::nullopt;
     fetching_item = false;
     ai_cache.sound_alerts.clear();
     ai_cache.s_abs_pos = tripoint_abs_ms::zero();
@@ -1021,7 +1020,7 @@ void npc::finish_read( item *it )
     // NPCs don't need to identify the book or learn recipes yet.
     // NPCs don't read to other NPCs yet.
     const bool display_messages = my_fac->id == faction_id( "your_followers" ) &&
-                                  g->u.sees( bub_pos() );
+                                  g->u.sees( abs_pos() );
     bool continuous = false; //whether to continue reading or not
 
     int book_fun_for = character_funcs::get_book_fun_for( *this, book );
@@ -1145,7 +1144,7 @@ void npc::do_npc_read()
             return;
         }
         if( can_read( *loc, fail_reasons ) ) {
-            if( g->u.sees( bub_pos() ) ) {
+            if( g->u.sees( abs_pos() ) ) {
                 add_msg( m_info, _( "%s starts reading." ), disp_name() );
             }
             start_read( *loc, pl );
@@ -1307,7 +1306,7 @@ void npc::stow_weapon( )
     detached = wear_item( std::move( detached ), false );
     if( !detached ) {
         // Wearing the item was successful, remove weapon and post message.
-        if( g->u.sees( bub_pos() ) ) {
+        if( g->u.sees( abs_pos() ) ) {
             add_msg_if_npc( m_info, _( "<npcname> wears the %s." ), weapon.tname() );
         }
         moves -= 15;
@@ -1318,7 +1317,7 @@ void npc::stow_weapon( )
 
     for( auto &e : worn ) {
         if( e->can_holster( weapon ) ) {
-            if( g->u.sees( bub_pos() ) ) {
+            if( g->u.sees( abs_pos() ) ) {
                 //~ %1$s: weapon name, %2$s: holster name
                 add_msg_if_npc( m_info, _( "<npcname> puts away the %1$s in the %2$s." ),
                                 weapon.tname(), e->tname() );
@@ -1330,13 +1329,13 @@ void npc::stow_weapon( )
         }
     }
     if( volume_carried() + weapon.volume() <= volume_capacity() ) {
-        if( g->u.sees( bub_pos() ) ) {
+        if( g->u.sees( abs_pos() ) ) {
             add_msg_if_npc( m_info, _( "<npcname> puts away the %s." ), weapon.tname() );
         }
         i_add( std::move( detached ) );
         moves -= 15;
     } else { // No room for weapon, so we drop it
-        if( g->u.sees( bub_pos() ) ) {
+        if( g->u.sees( abs_pos() ) ) {
             add_msg_if_npc( m_info, _( "<npcname> drops the %s." ), weapon.tname() );
         }
         g->m.add_item_or_charges( bub_pos(), std::move( detached ) );
@@ -1358,7 +1357,7 @@ bool npc::wield( item &it )
     moves -= 15;
     set_primary_weapon( it.detach() );
 
-    if( g->u.sees( bub_pos() ) ) {
+    if( g->u.sees( abs_pos() ) ) {
         add_msg_if_npc( m_info, _( "<npcname> wields a %s." ),  primary_weapon().tname() );
     }
     invalidate_range_cache();
@@ -1547,7 +1546,7 @@ void npc::mutiny()
     if( !my_fac || !is_player_ally() ) {
         return;
     }
-    const bool seen = g->u.sees( bub_pos() );
+    const bool seen = g->u.sees( abs_pos() );
     if( seen ) {
         add_msg( m_bad, _( "%s is tired of your incompetent leadership and abuse!" ), disp_name() );
     }
@@ -1776,7 +1775,7 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
     // Sound happens even if we can't hear it
     if( spriority == sounds::sound_t::order || spriority == sounds::sound_t::alert ) {
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = get_shout_volume();
         se.category = spriority;
         se.description = sound;
@@ -1789,7 +1788,7 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
         sounds::sound( se );
     } else {
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = 80;
         se.category = sounds::sound_t::speech;
         se.description = sound;
@@ -2686,32 +2685,6 @@ std::string npc::opinion_text() const
     return ret;
 }
 
-static void maybe_shift( std::optional<tripoint_bub_ms> &pos, point_rel_ms d )
-{
-    if( pos ) {
-        *pos = *pos + d;
-    }
-}
-
-static void maybe_shift( tripoint_bub_ms &pos, point_rel_ms d )
-{
-    if( pos != tripoint_bub_ms::min() ) {
-        pos = pos + d;
-    }
-}
-
-void npc::shift( point_rel_sm s )
-{
-    const auto shift = project_to<coords::ms>( s );
-
-    // position is absolute and doesn't need adjustment when the bubble shifts.
-    // Bubble-space cached fields still need offsetting.
-    maybe_shift( wanted_item_pos, point_rel_ms( -shift.x(), -shift.y() ) );
-    maybe_shift( last_player_seen_pos, point_rel_ms( -shift.x(), -shift.y() ) );
-    maybe_shift( pulp_location, point_rel_ms( -shift.x(), -shift.y() ) );
-    path.clear();
-}
-
 bool npc::is_dead() const
 {
     return dead || is_dead_state();
@@ -2728,7 +2701,7 @@ void npc::reboot()
     path.clear();
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
-    wanted_item_pos = tripoint_bub_ms::min();
+    wanted_item_pos = tripoint_abs_ms::min();
     guard_pos = tripoint_abs_ms::min();
     goal = no_goal_point;
     fetching_item = false;
@@ -3049,9 +3022,9 @@ void npc::on_load()
 
     auto &buffer = get_mapbuffer();
     const auto pos = abs_pos();
-    const auto tile = buffer.get_abs_tile( pos );
-    const auto unstable = tile && ( tile->get_ter_t().has_flag( "UNSTABLE" ) ||
-                                    tile->get_furn_t().has_flag( "UNSTABLE" ) );
+    const auto tile = abs_tile_handle::fetch_terrain_only( buffer, pos );
+    const auto unstable = tile && ( tile->ter_obj().has_flag( "UNSTABLE" ) ||
+                                    tile->furn_obj().has_flag( "UNSTABLE" ) );
 
     // for spawned npcs
     if( unstable ) {
@@ -3378,52 +3351,6 @@ bool npc::will_accept_from_player( const item &it ) const
     }
 
     return true;
-}
-
-const pathfinding_settings &npc::get_legacy_pathfinding_settings() const
-{
-    return get_legacy_pathfinding_settings( false );
-}
-
-const pathfinding_settings &npc::get_legacy_pathfinding_settings( bool no_bashing ) const
-{
-    path_settings->bash_strength = no_bashing ? 0 : smash_ability();
-    // TODO: Extract climb skill
-    const int climb = std::min( 20, get_dex() );
-    if( climb > 1 ) {
-        // Success is !one_in(dex), so 0%, 50%, 66%, 75%...
-        // Penalty for failure chance is 1/success = 1/(1-failure) = 1/(1-(1/dex)) = dex/(dex-1)
-        path_settings->climb_cost = ( 10 - climb / 5 ) * climb / ( climb - 1 );
-    } else {
-        // Climbing at this dexterity will always fail
-        path_settings->climb_cost = 0;
-    }
-
-    return *path_settings;
-}
-
-std::set<tripoint_bub_ms> npc::get_legacy_path_avoid() const
-{
-    std::set<tripoint_bub_ms> ret;
-    for( Creature &critter : g->all_creatures() ) {
-        // TODO: Cache this somewhere
-        ret.insert( critter.bub_pos() );
-    }
-    if( rules.has_flag( ally_rule::avoid_doors ) ) {
-        for( const tripoint_bub_ms &p : g->m.points_in_radius( bub_pos(), 30 ) ) {
-            if( g->m.can_open_door( this, p, true ) ) {
-                ret.insert( p );
-            }
-        }
-    }
-    if( rules.has_flag( ally_rule::hold_the_line ) ) {
-        for( const tripoint_bub_ms &p : g->m.points_in_radius( g->u.bub_pos(), 1 ) ) {
-            if( g->m.close_door( p, true, true ) || g->m.move_cost( p ) > 2 ) {
-                ret.insert( p );
-            }
-        }
-    }
-    return ret;
 }
 
 std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair()

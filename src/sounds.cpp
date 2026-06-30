@@ -295,16 +295,16 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
     // Oddly enough everything should still work if we get asked for a noise outside of the bubble, with a simple check.
 
     // Good idea to track this.
-    const bool samez = sound_inst.origin.z() == tri.z();
+    const bool samez = sound_inst.sound.origin.z() == tri.z();
     // Lets go for our easy solution first.
     if( sound_inst.in_envelope( tri ) && map.inbounds( tri ) ) {
         if( samez ) {
             return sound_inst.vol_at_tri( tri );
         } else {
             // Return the loudest of either the tile vol or the vertical escape vol - vol_z_adjust, minimum 0.
-            const auto &vertical_escape_vol = ( sound_inst.origin.z() > tri.z() ) ?
+            const auto &vertical_escape_vol = ( sound_inst.sound.origin.z() > tri.z() ) ?
                                               sound_inst.base_distance_vol_by_dir[SDI_UP] : sound_inst.base_distance_vol_by_dir[SDI_DOWN];
-            const short zadj = vol_z_adjust( sound_inst.origin, tri, lineofsight );
+            const short zadj = vol_z_adjust( abs_to_bub( sound_inst.sound.origin ), tri, lineofsight );
             if( zadj >= std::max( sound_inst.vol_at_tri( tri ), vertical_escape_vol ) ) {
                 return 0;
             }
@@ -312,15 +312,16 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
         }
     }
     // Use manhattan distance as our flood envelopes are actually squares, not circles.
-    const int distance = manhattan_dist( sound_inst.origin.xy(), tri.xy() );
-    const auto dir_index = sounds::direction_index_to_sound_source( sound_inst.origin, tri );
+    const int distance = manhattan_dist( abs_to_bub( sound_inst.sound.origin ).xy(), tri.xy() );
+    const auto dir_index = sounds::direction_index_to_sound_source( abs_to_bub(
+                               sound_inst.sound.origin ), tri );
     const auto &san_dir = get_sound_direction_index( dir_index );
     // We know at this point that we are out of the envelope so our distance is greater than our flood radius.
     // We use a different escape volume depending upon a couple of factors.
     // Apologies for the messy ternary.
 
     // For vertical escape use up by default.
-    const auto &vertical_escape_vol = ( sound_inst.origin.z() <= tri.z() ) ?
+    const auto &vertical_escape_vol = ( sound_inst.sound.origin.z() <= tri.z() ) ?
                                       sound_inst.base_distance_vol_by_dir[SDI_UP] : sound_inst.base_distance_vol_by_dir[SDI_DOWN];
     // Determine if we can use the up escape.
     // Broken out for readability. If we are not on the same Z level we can use the vertical escape, or if we are outside, the sound is indoors and escaped.
@@ -335,13 +336,13 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
         vol_escape > dBspl_to_mdBspl( sound_inst.sound.volume ) ) {
         const uint8_t actualdir = ( use_vert_escape &&
                                     vertical_escape_vol > sound_inst.base_distance_vol_by_dir[san_dir] ) ? ( (
-                                                sound_inst.origin.z() <= tri.z() ) ? SDI_UP : SDI_DOWN ) : san_dir;
+                                                sound_inst.sound.origin.z() <= tri.z() ) ? SDI_UP : SDI_DOWN ) : san_dir;
         add_msg( m_debug,
                  "Error in sounds::svol:at(). Sound [ %1s ] from %i:%i:%i with origin volume of %i dB, has impossible escape vol in %i direction of %i mdB.",
                  sound_inst.sound.description, sound_inst.sound.origin.x(), sound_inst.sound.origin.y(),
                  sound_inst.sound.origin.z(), sound_inst.sound.volume, actualdir, vol_escape );
     }
-    const int zadj = vol_z_adjust( sound_inst.origin, tri, lineofsight );
+    const int zadj = vol_z_adjust( abs_to_bub( sound_inst.sound.origin ), tri, lineofsight );
     const int cumulative_dist_loss = get_cumulative_vol_dist_loss( sound_inst.flood_radius, distance,
                                      t_absorp );
     if( ( zadj + cumulative_dist_loss ) > MAXIMUM_VOLUME_ATMOSPHERE ) {
@@ -360,7 +361,7 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
         heard_volume > dBspl_to_mdBspl( sound_inst.sound.volume ) ) {
         const uint8_t actualdir = ( use_vert_escape &&
                                     vertical_escape_vol > sound_inst.base_distance_vol_by_dir[san_dir] ) ? ( (
-                                                sound_inst.origin.z() <= tri.z() ) ? SDI_UP : SDI_DOWN ) : san_dir;
+                                                sound_inst.sound.origin.z() <= tri.z() ) ? SDI_UP : SDI_DOWN ) : san_dir;
         add_msg( m_debug,
                  "Error in sounds::svol:at(). Sound [ %1s ] from %i:%i:%i with origin volume of %i dB, has impossible heard vol in %i direction of %i mdB at a distance of %i manhattan.xt",
                  sound_inst.sound.description, sound_inst.sound.origin.x(), sound_inst.sound.origin.y(),
@@ -377,8 +378,8 @@ struct propagation_tile {
     uint8_t dist;// Tile distance in meters the sound has traveled. 1 tile = 1 meter.
 };
 
-// Vector of sound events qued for batch floodfilling for efficiency. By default all monster and NPC sounds are batch floodfilled.
-static std::vector<sound_event> sound_batch_floodfill_que;
+// Sound events are queued per-island via mapbuffer::queue_sound().
+// Consumers read from their own island's queue via island_sounds_for().
 
 // Returns the reduction in dB due to terrain in mdB (100ths of a decibel) for a given terrain
 // If horde signal is true, returns reducion due to terrain at a distance of ~312m
@@ -494,12 +495,21 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
         sound_instance_cache temp_sound_cache( sound_event_copy, vol_enum, f_radius );
         auto &svol = temp_sound_cache.volume;
 
-        temp_sound_cache.source_indoors = !outside_cache[map_cache.idx( temp_sound_cache.origin.x(),
-                                                         temp_sound_cache.origin.y() )];
+        const tripoint_bub_ms bub_origin = abs_to_bub( temp_sound_cache.sound.origin );
+        // Sound sources outside the reality bubble are not flood-filled
+        // (simple distance attenuation used instead).
+        // Hook the out-of-bubble simple-attenuation path here:
+        // Out-of-bubble: handled via the sound's island queue in mapbuffer.
+        // Creatures read from their own island in process_sounds*().
+        if( !is_in_reality_bubble_bounds( bub_origin ) ) {
+            return;
+        }
+        temp_sound_cache.source_indoors = !outside_cache[map_cache.idx( bub_origin.x(),
+                                                         bub_origin.y() )];
 
         // Set this for use with the slightly cheaper direct line propagation.
         temp_sound_cache.terrain_sound_absorbtion_at_source = absorption_cache[map_cache.idx(
-                    temp_sound_cache.origin.x(), temp_sound_cache.origin.y() )];
+                    bub_origin.x(), bub_origin.y() )];
         // And lets make a pair of vectors to store our up and down escapes. Stored as volume, distance. We seed the first value at 0,0.
         std::vector<std::pair<const short, const uint8_t>> up_escape_vector = {{0, 0}};
         std::vector<std::pair<const short, const uint8_t>> down_escape_vector = {{0, 0}};
@@ -512,9 +522,9 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
         const auto &actual_check_radius = total_check_radius_by_index[vol_enum_index];
         // const auto &actual_env_length = total_check_envelop_by_index[vol_enum_index];
         // As our checkvar envelope is of a set size, we need to mark our absolute index position and our "relative" index position.
-        const auto checkvar_index_p = temp_sound_cache.origin + point{-total_check_radius_DEAFENING, -total_check_radius_DEAFENING};
-        // const auto checkvar_rel_index_p = temp_sound_cache.origin + point{-total_check_radius, -total_check_radius};
-        // const auto checkvar_rel_index_opp_p = temp_sound_cache.origin + point{total_check_radius, total_check_radius};
+        const auto checkvar_index_p = bub_origin + point{-total_check_radius_DEAFENING, -total_check_radius_DEAFENING};
+        // const auto checkvar_rel_index_p = temp_sound_cache.sound.origin + point{-total_check_radius, -total_check_radius};
+        // const auto checkvar_rel_index_opp_p = temp_sound_cache.sound.origin + point{total_check_radius, total_check_radius};
         // Our checkvar index point is located at 0,0 of our checkvar envelope.
         // We only actually check from our rel_index_p to our rell_index_opp_p
         const auto cv_env_rel_ms_adj = point{-checkvar_index_p.x(), -checkvar_index_p.y()};
@@ -581,7 +591,8 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
         // We dont apply directional sound propagation penalties at the very start.
         // the volume vector in the sound instance IS NOT aligned with normal game tripoints, and uses a limited local "area"
         // The origin will always be located at (radius, radius), equivalent to and index position of (radius * ( (2 * radius) + 1 ) + radius)
-        svol[temp_sound_cache.p_to_env_index( temp_sound_cache.origin )] =  origin_volume;
+        svol[temp_sound_cache.p_to_env_index( abs_to_bub( temp_sound_cache.sound.origin ) )] =
+            origin_volume;
         auto &checkvars_origin = checkvars[total_check_radius_DEAFENING][total_check_radius_DEAFENING];
 
         // If we are not indoors and there is no floor on the tile above us, escape up.
@@ -595,7 +606,7 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
         if( checkvars_origin[5] ) {
             down_escape_vector.push_back( {origin_volume, 1} );
         }
-        adjacent_tiles = get_adjacent_tiles( temp_sound_cache.origin.xy() );
+        adjacent_tiles = get_adjacent_tiles( abs_to_bub( temp_sound_cache.sound.origin ).xy() );
 
         // Returns the flood envelope volume vector index position given some normal tripoint.
         // We only want to flood fill within the boundries of our floodfill envelope. We get our index point from our origin point and floodfill radius.
@@ -644,7 +655,8 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
                     if( tile_svol > origin_volume ) {
                         debugmsg( "Sound with description [ %1s ] attempted to propagate from %i:%i at %i mdB to %i:%i at %i mdB, a louder volume than the origin volume of %i mdB!"
                                   , soundevent.description, soundevent.origin.x(), soundevent.origin.y(),
-                                  svol[temp_sound_cache.p_to_env_index( soundevent.origin )], tile.x(), tile.y(), tile_svol,
+                                  svol[temp_sound_cache.p_to_env_index( abs_to_bub( soundevent.origin ) )], tile.x(), tile.y(),
+                                  tile_svol,
                                   origin_volume );
                         // Dont break the laws of physics
                         continue;
@@ -849,7 +861,7 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
         for( uint8_t dir : sanitized_sound_direction_indexes_full ) {
             auto &esc_vol = escape_direction_vol[dir];
             if( esc_vol > origin_volume ) {
-                const auto &sop = temp_sound_cache.origin;
+                const auto &sop = temp_sound_cache.sound.origin;
                 debugmsg( "Sound with description [ %1s ] from %i:%i:%i at %i mdB has impossible escape volume in direction %i of %i mdB ",
                           temp_sound_cache.sound.description, sop.x(), sop.y(), sop.z(), origin_volume, dir, esc_vol );
                 esc_vol = origin_volume;
@@ -875,8 +887,14 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
 void map::batch_flood_fill_sounds()
 {
     ZoneScoped;
-    // Our que of sound events to flood fill
-    auto &batch_que = sound_batch_floodfill_que;
+    // Read sounds from the bubble's simulated island — this is the island
+    // containing the player's origin submap.  Out-of-bubble sounds are in
+    // their own island queues and are not flood-filled here.
+    auto *bubble_sounds = get_mapbuffer().island_sounds_for( get_abs_sub() );
+    if( !bubble_sounds || bubble_sounds->empty() ) {
+        return;
+    }
+    auto &batch_que = *bubble_sounds;
     const bool is_winter =  season_of_year( calendar::turn ) == WINTER;
     const auto &snowbonus = ( is_winter ) ? SOUND_ABSORPTION_SNOW_BONUS : SOUND_ABSORPTION_OPEN_FIELD;
 
@@ -951,17 +969,26 @@ void map::batch_flood_fill_sounds()
                                                                flooded_sound.volume ) ) );
                 auto &svol = temp_sound_cache.volume;
                 auto &f_radius = temp_sound_cache.flood_radius;
-                temp_sound_cache.source_indoors = !outside_cache[map_cache.idx( temp_sound_cache.origin.x(),
-                                                                 temp_sound_cache.origin.y() )];
+                const tripoint_bub_ms bub_origin = abs_to_bub( temp_sound_cache.sound.origin );
+                // Only flood-fill sounds inside the reality bubble.  Sounds outside
+                // the bubble need simple distance-based attenuation (no terrain
+                // absorption, no z-level escape, no sound-wall occlusion).
+                //   Out-of-bubble: handled via the sound's island queue in mapbuffer.
+                //   Creatures read from their own island in process_sounds*().
+                if( !is_in_reality_bubble_bounds( bub_origin ) ) {
+                    num_invalidated_sounds++;
+                    continue;
+                }
+                temp_sound_cache.source_indoors = !outside_cache[map_cache.idx( bub_origin.x(), bub_origin.y() )];
                 auto &escape_vol = temp_sound_cache.base_distance_vol_by_dir;
                 // Set this for use with the slightly cheaper direct line propagation.
                 temp_sound_cache.terrain_sound_absorbtion_at_source = absorption_cache[map_cache.idx(
-                            temp_sound_cache.origin.x(), temp_sound_cache.origin.y() )];
+                            bub_origin.x(), bub_origin.y() )];
                 const auto vol_enum_index = get_san_dir( static_cast<uint8_t>( get_flood_dist_enum(
                                                 flooded_sound.volume ) ) );
                 const auto &actual_check_radius = total_check_radius_by_index[vol_enum_index];
                 // const auto &actual_env_length = total_check_envelop_by_index[vol_enum_index];
-                const auto checkvar_index_p = temp_sound_cache.origin + point{-total_check_radius_DEAFENING, -total_check_radius_DEAFENING};
+                const auto checkvar_index_p = bub_origin + point{-total_check_radius_DEAFENING, -total_check_radius_DEAFENING};
                 // Our checkvar index point is located at 0,0 of our checkvar envelope.
                 const auto cv_env_rel_ms_adj = point{-checkvar_index_p.x(), -checkvar_index_p.y()};
                 // Located at 0,0 of our flood envelope
@@ -1050,11 +1077,11 @@ void map::batch_flood_fill_sounds()
                 // Set our initial conditions. We want 100ths of a decibel for the volume
                 // We dont apply directional sound propagation penalties at the very start.
                 // The center of our flood envelope is always (flood radius, flood radius). Index location math is (radius * ( ( 2 * radius ) + 1 ) + radius) = 2 * ( radius * radius ) + ( 2 * radius )
-                auto &origin_volume = svol[temp_sound_cache.p_to_env_index( temp_sound_cache.origin )];
+                auto &origin_volume = svol[temp_sound_cache.p_to_env_index( bub_origin )];
                 origin_volume =  dBspl_to_mdBspl( temp_sound_cache.sound.volume );
-                adjacent_tiles = get_adjacent_tiles( temp_sound_cache.sound.origin.xy() );
+                adjacent_tiles = get_adjacent_tiles( bub_origin.xy() );
 
-                const auto &orig_to_cv = temp_sound_cache.origin + cv_env_rel_ms_adj;
+                const auto &orig_to_cv = bub_origin + cv_env_rel_ms_adj;
                 check_escape( orig_to_cv.x(), orig_to_cv.y(),
                               origin_volume - dist_vol_loss[2], 2 );
 
@@ -1226,7 +1253,7 @@ void map::batch_flood_fill_sounds()
                 for( uint8_t dir : sanitized_sound_direction_indexes_full ) {
                     auto &esc_vol = escape_vol[dir];
                     if( esc_vol > origin_volume ) {
-                        const auto &sop = temp_sound_cache.origin;
+                        const auto &sop = temp_sound_cache.sound.origin;
                         debugmsg( "Sound with description [ %1s ] from %i:%i:%i at %i mdB has impossible escape volume in direction %i of %i mdB ",
                                   temp_sound_cache.sound.description, sop.x(), sop.y(), sop.z(), origin_volume, dir, esc_vol );
                         esc_vol = origin_volume;
@@ -1875,13 +1902,10 @@ void sounds::sound( const sound_event &soundevent )
         map.m_sound_cache.sound_instances.clear();
 
     }
-    if( !map.inbounds( temp_se.origin ) ) {
-        debugmsg( "Sound with description [ %1s ] attempted to propagate from out of bounds location %i:%i:%i!",
-                  temp_se.description, temp_se.origin.x(),
-                  temp_se.origin.y(), temp_se.origin.z() );
-        return;
-    }
-
+    // Bounds are checked at processing time (batch_flood_fill_sounds /
+    // flood_fill_sound) via is_in_reality_bubble_bounds.  All sounds are
+    // allowed into the queue — out-of-bubble sounds get simple distance
+    // attenuation instead of terrain-aware flood fill.
 
     // Error out if volume is negative, or bail out if volume is less than 16dB.
     // There are not anechoic chambers in game, so actually hearing such sounds after even 1 tile of distance (16dB -> 10dB 1 tile away) is very unlikely for the vast majority of creatures.
@@ -1947,7 +1971,7 @@ void sounds::sound( const sound_event &soundevent )
             map.m_sound_cache.attempted_NPC_sounds++;
         }
 
-        sound_batch_floodfill_que.push_back( temp_se );
+        map.get_mapbuffer().queue_sound( std::move( temp_se ) );
 
     } else {
         map.flood_fill_sound( temp_se, temp_se.origin.z() );
@@ -2038,6 +2062,47 @@ static int get_signal_for_hordes( const sound_event centr, const short ambient_v
     }
 }
 
+// Compute heard volume from a raw sound_event using direct distance-based
+// attenuation (no flood envelope).  For in-bubble listeners, terrain
+// absorption at the listener's position is applied as a cumulative loss.
+static short compute_heard_volume( const sound_event &se,
+                                   const tripoint_abs_ms &listener,
+                                   bool in_bubble )
+{
+    const int dist = rl_dist( se.origin, listener );
+    if( dist <= 0 ) {
+        return dBspl_to_mdBspl( se.volume );
+    }
+
+    // Inverse-square distance attenuation: 20*log10(dist) dB in mdB.
+    const short atten = static_cast<short>(
+                            20.0 * std::log10( static_cast<double>( std::max( dist, 1 ) ) ) * 100.0 );
+    short vol = dBspl_to_mdBspl( se.volume ) - atten;
+
+    // z-level penalty: 1 dB per z-level difference.
+    if( se.origin.z() != listener.z() ) {
+        vol -= dBspl_to_mdBspl( static_cast<short>( std::abs( se.origin.z() - listener.z() ) ) );
+    }
+
+    // In-bubble: apply terrain absorption at the listener's tile as an
+    // approximation of cumulative path loss.  This replaces the old flood
+    // envelope approach.
+    if( in_bubble ) {
+        auto &map = get_map();
+        const tripoint_bub_ms bub_pos = abs_to_bub( listener );
+        if( map.inbounds( bub_pos ) ) {
+            const auto &cache = map.get_cache_ref( bub_pos.z() );
+            const int idx = cache.idx( bub_pos.x(), bub_pos.y() );
+            const short absorption = cache.absorption_cache[idx];
+            if( absorption > 0 ) {
+                vol -= get_cumulative_vol_dist_loss( dist / 2, dist, absorption );
+            }
+        }
+    }
+
+    return std::max( short( 0 ), vol );
+}
+
 // Proccess sounds for monsters.
 void sounds::process_sounds()
 {
@@ -2045,6 +2110,7 @@ void sounds::process_sounds()
 
     map &map = get_map();
     auto &sound_cache = map.m_sound_cache;
+    mapbuffer &mb = map.get_mapbuffer();
 
     // If the player is underground there is effectively no wind or significant weather noises.
     // However we still assume a minimum above ground ambient of 40dB, and a minimum underground of 20dB
@@ -2099,7 +2165,7 @@ void sounds::process_sounds()
         // Mark all our sound_instance_caches as heard by monsters, easier to do here than reiterate later.
         sound.heard_by_monsters = true;
         // Sounds louder than 110dB are potentially valid for horde signal.
-        const auto &s_origin = sound.sound.origin;
+        const auto &s_origin = abs_to_bub( sound.sound.origin );
         // We assume that we dont have a direct line of sight so we actually check for floors and walls.
         const auto surface_origin = tripoint_bub_ms( s_origin.x(), s_origin.y(), 0 );
         const auto alt_adjust = vol_z_adjust( s_origin, surface_origin, false, true );
@@ -2173,10 +2239,39 @@ void sounds::process_sounds()
     // Monsters ignore movement sounds from their own faction, a bit omiscient but it simplifies things.
     for( monster &critter : g->all_monsters() ) {
 
-        // Monster is deaf, skip. We also skip hallucinations and monsters not loaded in.
-        if( !critter.can_hear() || critter.is_hallucination() || !map.inbounds( critter.bub_pos() ) ) {
+        // Monster is deaf, skip. We also skip hallucinations.
+        if( !critter.can_hear() || critter.is_hallucination() ) {
             continue;
         }
+
+        const auto &critterloc = critter.abs_pos();
+
+        // Out-of-bubble monsters: read from their own island queue, direct distance math.
+        if( !map.inbounds( abs_to_bub( critterloc ) ) ) {
+            auto *island_sounds = mb.island_sounds_for( project_to<coords::sm>( critterloc.xy() ) );
+            if( !island_sounds ) {
+                continue;
+            }
+            const short critter_ambient_vol = ( critterloc.z() < 0 )
+                                              ? AMBIENT_VOLUME_UNDERGROUND
+                                              : OUTDOOR_AMBIENT;
+            const short critter_vol_threshold = std::max( critter_ambient_vol - 1000, 1000 );
+            short loudest_vol = 0;
+            const sound_event *loudest_se = nullptr;
+            for( const auto &se : *island_sounds ) {
+                const short tile_vol = compute_heard_volume( se, critterloc, false );
+                if( tile_vol >= critter_vol_threshold && tile_vol > loudest_vol ) {
+                    loudest_vol = tile_vol;
+                    loudest_se = &se;
+                }
+            }
+            if( loudest_se ) {
+                critter.hear_sound( *loudest_se, loudest_vol, critter_ambient_vol, false, false );
+            }
+            continue;
+        }
+
+        // In-bubble monster: use the existing envelope-cache path.
         sound_filter_key filter_key;
         filter_key.monfaction = critter.faction.id();
         const auto &critterfact = filter_key.monfaction;
@@ -2194,7 +2289,7 @@ void sounds::process_sounds()
         filter_key.horde_monster = !player_ally && !fears_enemy_sounds && filter_key.noise_angers;
         const auto &horde_monster = filter_key.horde_monster;
 
-        const auto &critterloc = critter.bub_pos();
+        auto &here = critter.get_mapbuffer();
 
         // Check to see if there is a matching filtered list, or if our list list empty.
         if( !filtered_sounds.contains( filter_key ) || filtered_sounds.empty() ) {
@@ -2224,7 +2319,7 @@ void sounds::process_sounds()
 
 
         // Grab the ambient volume at the critter in dB spl
-        const short critter_ambient_vol = ( ambient( critterloc.z(), !map.is_outside( critterloc ) ) );
+        const short critter_ambient_vol = ( ambient( critterloc.z(), !here.is_outside( critterloc ) ) );
 
         // Working in mdB when dealing with tile volumes.
         // Make sure our volume threshold is not nonsensically low. Underground monsters are especially prone to getting too or below the volume threshold.
@@ -2232,30 +2327,31 @@ void sounds::process_sounds()
         const short critter_vol_threshold = std::max( ( critter_ambient_vol -
                                             ( goodhearing ? 2000 : 1000 ) ), 1000 );
 
-        const auto &level_cache = map.get_cache_ref( critterloc.z() );
-        const short critter_t_absorb = level_cache.absorption_cache[level_cache.idx( critterloc.x(),
-                                                        critterloc.y() )];
-        const bool critter_indoors = !level_cache.outside_cache[level_cache.idx( critterloc.x(),
-                                                      critterloc.y() )];
+        const tripoint_bub_ms critter_bub = abs_to_bub( critterloc );
+        const auto &level_cache = map.get_cache_ref( critter_bub.z() );
+        const short critter_t_absorb = level_cache.absorption_cache[level_cache.idx( critter_bub.x(),
+                                                        critter_bub.y() )];
+        const bool critter_indoors = !map.is_outside( critter_bub );
 
         for( auto &iter : s_list ) {
             const auto &sound = sound_instance_caches[iter];
             const auto &s_category = sound.sound.category;
             // Do a quick check to see if we even have a hope of hearing the sound.
             if( critter_vol_threshold >= SOUND_MINIMUM_VOLUME_FOR_PROPAGATION && !goodhearing &&
-                rl_dist( critterloc, sound.origin ) > sound.approximate_minvol_distance ) {
+                rl_dist( critterloc, sound.sound.origin ) > sound.approximate_minvol_distance ) {
                 continue;
             }
             // Alot of our simpler sorting should already be done by this point.
             // What we have left to do is checking distance, volume, and some specific stuff on monsters that are the players pets.
 
-            const bool lineofsight = critter.sees( sound.origin );
+            const bool lineofsight = critter.sees( sound.sound.origin );
             // We grab either the average of our terrain absorption, or zero if both are zero.
             const short avg_t_absorp = ( sound.terrain_sound_absorbtion_at_source == 0 &&
                                          critter_t_absorb == 0 ) ? 0 : std::round( ( sound.terrain_sound_absorbtion_at_source +
                                                  critter_t_absorb ) / 2 );
             // Which we already have a handler for.
-            const short heard_vol = svol_at( sound, critterloc, avg_t_absorp, critter_indoors, lineofsight );
+            const short heard_vol = svol_at( sound, abs_to_bub( critterloc ), avg_t_absorp, critter_indoors,
+                                             lineofsight );
 
 
             if( heard_vol >= critter_vol_threshold ) {
@@ -2400,6 +2496,7 @@ void sounds::process_sounds_npc()
 {
     ZoneScoped;
     auto &map = get_map();
+    mapbuffer &mb = map.get_mapbuffer();
     auto &sound_vector = map.m_sound_cache.sound_instances;
     const weather_manager &weather = get_weather();
     // Set all of our sounds to be heard by NPCs for culling purposes.
@@ -2444,8 +2541,44 @@ void sounds::process_sounds_npc()
 
     // Now we work through all of our active NPCs.
     for( npc &who : g->all_npcs() ) {
-        // We only want NPCs who are simulated and inbounds to hear noises.
-        if( who.is_simulated() && map.inbounds( who.bub_pos() ) ) {
+        if( !who.is_simulated() || who.is_dead_state() ) {
+            continue;
+        }
+        const bool in_bubble = map.inbounds( who.bub_pos() );
+        if( !in_bubble ) {
+            // Out-of-bubble NPCs read from their own island's sound queue
+            // using direct distance-based attenuation.
+            const auto abs_loc = who.abs_pos();
+            auto *island_sounds = mb.island_sounds_for( project_to<coords::sm>( abs_loc.xy() ) );
+            if( !island_sounds ) {
+                continue;
+            }
+            const bool is_deaf = who.is_deaf();
+            const float volume_multiplier = who.hearing_ability();
+            const short below_ambient = std::min( 3000.0f,
+                                                  std::floor( 1500 + 500 * volume_multiplier ) );
+            short ambient_vol;
+            if( abs_loc.z() < 0 ) {
+                ambient_vol = AMBIENT_VOLUME_UNDERGROUND;
+            } else {
+                ambient_vol = who.get_mapbuffer().is_outside( abs_loc ) ? OUTDOOR_AMBIENT : INDOOR_AMBIENT;
+            }
+            const short passive_sound_dampening = dBspl_to_mdBspl(
+                    who.get_char_hearing_protection() );
+            const short min_vol = std::max( 1000, ambient_vol - below_ambient + passive_sound_dampening );
+
+            for( const auto &se : *island_sounds ) {
+                const short tile_vol = compute_heard_volume( se, abs_loc, false );
+                if( tile_vol > min_vol && !is_deaf &&
+                    ( se.from_player || se.from_monster || se.from_npc ) ) {
+                    who.handle_sound( tile_vol - passive_sound_dampening, se );
+                }
+            }
+            continue;
+        }
+
+        // In-bubble NPC: use the flood-filled envelope cache.
+        if( who.is_simulated() ) {
             bool is_deaf = who.is_deaf();
             const auto &loc = who.bub_pos();
             const auto &level_cache = map.get_cache_ref( loc.z() );
@@ -2497,7 +2630,7 @@ void sounds::process_sounds_npc()
                 // Do an early filter for sounds that would always be indaudible.
                 // Check to see if the NPC is deaf here as well, as we may deafen them part way through the process.
                 const auto tile_vol = svol_at( element, who.bub_pos(), average_t_absorp,
-                                               npc_indoors, who.sees( element.origin, element.from_player ) );
+                                               npc_indoors, who.sees( element.sound.origin, element.from_player ) );
 
                 if( tile_vol <= min_vol ) {
                     continue;
@@ -2558,14 +2691,17 @@ void sounds::process_sounds_npc()
         element.heard_by_npcs = true;
     }
 }
+
+
 // Process sounds for the player character. Once upon a time this was also used for NPCs.
 void sounds::process_sound_markers( Character *who )
 {
 
     bool is_deaf = who->is_deaf();
     const float volume_multiplier = who->hearing_ability();
-    const auto &loc = who->bub_pos();
+    const auto &loc = who->abs_pos();
     auto &map = get_map();
+    auto &here = who->get_mapbuffer();
     const auto &level_cache = map.get_cache_ref( loc.z() );
     auto &sound_vector = map.m_sound_cache.sound_instances;
     // We want constant ints for our x/y, makes the compiler happier when getting cache[x][y].
@@ -2574,10 +2710,12 @@ void sounds::process_sound_markers( Character *who )
                                           static_cast<int>( std::floor( 1500 + 500 * volume_multiplier ) ) );
     // is the npc underground?
     const bool pcunderground = loc.z() < 0;
-    const bool pcoutdoors = map.is_outside( loc );
+    const bool pcoutdoors = here.is_outside( loc );
     const weather_manager &weather = get_weather();
-    const short player_t_absorp = level_cache.absorption_cache[level_cache.idx( loc.x(), loc.y() )];
-    const bool  player_indoors = !level_cache.outside_cache[level_cache.idx( loc.x(), loc.y() )];
+    const tripoint_bub_ms loc_bub = abs_to_bub( loc );
+    const short player_t_absorp = level_cache.absorption_cache[level_cache.idx( loc_bub.x(),
+                                                   loc_bub.y() )];
+    const bool  player_indoors = !map.is_outside( loc_bub );
 
     // Ambient underground is 20dB, ambient in a above ground building is 40. The assumption is that there are zombies making noise, and its not perfectly dead quiet.
     // Weather sound attenuation ranges from 0 - 8. We add this to existing ambient if applicable to approximate the sound of rain, snow, etc.
@@ -2635,11 +2773,11 @@ void sounds::process_sound_markers( Character *who )
             continue;
         }
         num_sounds_checked++;
-        const int distance_to_sound = rl_dist( loc, element.origin );
+        const int distance_to_sound = rl_dist( loc, element.sound.origin );
         if( element.approximate_minvol_distance >= distance_to_sound ) {
             num_sounds_in_minvol_dist++;
         }
-        if( element.in_envelope( loc.xy() ) ) {
+        if( element.in_envelope( abs_to_bub( loc.xy() ) ) ) {
             num_sound_in_envelope++;
         }
         // And set the sound as having been heard by the player, before we potentially skip it for volume reasons.
@@ -2657,8 +2795,8 @@ void sounds::process_sound_markers( Character *who )
                                          element.terrain_sound_absorbtion_at_source == 0 ) ? 0 : static_cast<short>( std::round( ( (
                                                  player_t_absorp +
                                                  element.terrain_sound_absorbtion_at_source ) * 0.5 ) ) );
-        const short tile_vol = svol_at( element, loc, average_t_absorp, player_indoors,
-                                        who->sees( element.origin ) );
+        const short tile_vol = svol_at( element, abs_to_bub( loc ), average_t_absorp, player_indoors,
+                                        who->sees( element.sound.origin ) );
 
         // Set our dummy sound event. This is just the sound event (description, origin, etc), not the full flooded sound instance.
         // Also set a few relevant bits of info instead of recording the whole
@@ -2666,7 +2804,8 @@ void sounds::process_sound_markers( Character *who )
             loudest_sound_dummy = element.sound;
             loudest_sound_minvol_radius = element.approximate_minvol_distance;
             loudest_sound_flood_radius = element.flood_radius;
-            loudest_sound_escape_dir = sounds::direction_index_to_sound_source( loc, element.sound.origin );
+            loudest_sound_escape_dir = sounds::direction_index_to_sound_source( abs_to_bub( loc ),
+                                       abs_to_bub( element.sound.origin ) );
             loudest_sound_escape_vol = element.base_distance_vol_by_dir[get_sound_direction_index(
                                            loudest_sound_escape_dir )];
         }
@@ -2747,8 +2886,8 @@ void sounds::process_sound_markers( Character *who )
 
             // don't print our own noise or things without descriptions
             if( ( element.sound.from_monster || element.sound.from_player || element.sound.from_npc ) &&
-                ( element.sound.origin != who->bub_pos() ) &&
-                !get_map().pl_sees( element.sound.origin, distance_to_sound ) ) {
+                ( element.sound.origin != who->abs_pos() ) &&
+                !get_map().pl_sees( abs_to_bub( element.sound.origin ), distance_to_sound ) ) {
                 if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
                     !get_safemode().is_sound_safe( element.sound.description, distance_to_sound ) ) {
                     const std::string final_description = ensure_punctuation( description, '!' );
@@ -2758,7 +2897,7 @@ void sounds::process_sound_markers( Character *who )
             }
 
             // skip some sounds to avoid message spam
-            if( describe_sound( element.sound.category, element.sound.origin == who->bub_pos() ) ) {
+            if( describe_sound( element.sound.category, element.sound.origin == who->abs_pos() ) ) {
                 game_message_type severity = m_info;
                 if( element.sound.category == sound_t::combat || element.sound.category == sound_t::alarm ) {
                     severity = m_warning;
@@ -2767,12 +2906,12 @@ void sounds::process_sound_markers( Character *who )
                 std::string final_description = ensure_punctuation( description, '.' );
 
                 // if we can see it, don't print a direction
-                if( element.sound.origin == who->bub_pos() ) {
+                if( element.sound.origin == who->abs_pos() ) {
                     add_msg( severity, _( "From your position you hear %1$s" ), final_description );
                 } else if( who->sees( element.sound.origin ) ) {
                     add_msg( severity, _( "You hear %1$s" ), final_description );
                 } else {
-                    std::string direction = direction_name( direction_from( who->bub_pos(), element.sound.origin ) );
+                    std::string direction = direction_name( direction_from( who->abs_pos(), element.sound.origin ) );
                     add_msg( severity, _( "From the %1$s you hear %2$s" ), direction, final_description );
                 }
             }
@@ -2801,12 +2940,13 @@ void sounds::process_sound_markers( Character *who )
             const std::string &sfx_id = element.sound.id;
             const std::string &sfx_variant = element.sound.variant;
             if( !sfx_id.empty() ) {
-                sfx::play_variant_sound( sfx_id, sfx_variant, sfx::get_heard_volume( element.sound.origin,
-                                         element.sound.volume ) );
+                sfx::play_variant_sound( sfx_id, sfx_variant,
+                                         sfx::get_heard_volume( abs_to_bub( element.sound.origin ),
+                                                 element.sound.volume ) );
             }
 
             // Place footstep markers.
-            if( element.sound.origin == who->bub_pos() || who->sees( element.sound.origin ) ) {
+            if( element.sound.origin == who->abs_pos() || who->sees( element.sound.origin ) ) {
                 // If we are or can see the source, don't draw a marker.
                 continue;
             }
@@ -2821,15 +2961,15 @@ void sounds::process_sound_markers( Character *who )
             }
 
             // If Z-coordinate is different, draw even when you can see the source
-            const bool diff_z = element.sound.origin.z() != who->bub_pos().z();
+            const bool diff_z = element.sound.origin.z() != who->abs_pos().z();
 
             // Enumerate the valid points the player *cannot* see.
             // Unless the source is on a different z-level, then any point is fine
             std::vector<tripoint_bub_ms> unseen_points;
-            for( const tripoint_bub_ms &newp : get_map().points_in_radius( element.sound.origin,
+            for( const auto &newp : simulated_tiles_in_radius( here, element.sound.origin,
                     err_offset ) ) {
-                if( diff_z || !who->sees( newp ) ) {
-                    unseen_points.emplace_back( newp );
+                if( diff_z || !who->sees( newp.abs_pos() ) ) {
+                    unseen_points.emplace_back( abs_to_bub( newp.abs_pos() ) );
                 }
             }
 
@@ -2865,11 +3005,13 @@ void sounds::process_sound_markers( Character *who )
 // Use map::cull_sound_instance_caches for managing the sound_instance_caches vector during play.
 void sounds::reset_sounds()
 {
+    // Per-island sound queues are cleared automatically when islands are
+    // rebuilt each turn in set_simulated_submaps().  We only need to reset
+    // the UI markers and in-bubble processed caches here.
     auto &map = get_map();
     map.m_sound_cache.sound_instances.clear();
     sound_markers.clear();
     map.m_sound_cache.sound_list_filtered.clear();
-    sound_batch_floodfill_que.clear();
 }
 
 auto sounds::shift_sound_positions( const point_rel_ms &offset ) -> void
@@ -2878,34 +3020,12 @@ auto sounds::shift_sound_positions( const point_rel_ms &offset ) -> void
         return;
     }
 
-    const auto sound_bounds = half_open_rectangle<point_bub_ms>(
-                                  point_bub_ms::zero(), point_bub_ms( g_mapsize_x, g_mapsize_y ) );
-    auto &sound_cache = get_map().m_sound_cache;
-
-    for( auto &sound : sound_cache.sound_instances ) {
-        sound.origin = sound.origin + offset;
-        sound.sound.origin = sound.sound.origin + offset;
-        sound.envelope_index_point = sound.envelope_index_point + offset;
-        sound.offset_x += offset.x();
-        sound.offset_y += offset.y();
-    }
-    std::erase_if( sound_cache.sound_instances, [&]( const auto & sound ) {
-        return !sound_bounds.contains( sound.origin.xy() );
-    } );
-    sound_cache.sound_list_filtered.clear();
-
-    for( auto &sound : sound_batch_floodfill_que ) {
-        sound.origin = sound.origin + offset;
-    }
-    std::erase_if( sound_batch_floodfill_que, [&]( const auto & sound ) {
-        return !sound_bounds.contains( sound.origin.xy() );
-    } );
+    auto &map = get_map();
 
     auto shifted_markers = std::unordered_map<tripoint_bub_ms, sound_event>();
     for( auto &marker : sound_markers ) {
         const auto shifted_marker_pos = marker.first + offset;
-        if( sound_bounds.contains( shifted_marker_pos.xy() ) ) {
-            marker.second.origin = marker.second.origin + offset;
+        if( map.inbounds( shifted_marker_pos.xy() ) ) {
             shifted_markers.emplace( shifted_marker_pos, std::move( marker.second ) );
         }
     }
@@ -2926,13 +3046,13 @@ void sounds::clear_floodfill_que( const bool &soundperf )
                  "Batch flooded %i sounds from monsters and %i sounds from NPCs. %i sounds invalidated during batch flooding.",
                  map.m_sound_cache.batch_flooded_monster_sounds, map.m_sound_cache.batch_flooded_NPC_sounds,
                  map.m_sound_cache.invalidated_batch_sounds );
+        // TODO: aggregate per-island queue sizes for debug display.
         add_msg( m_debug,
-                 "Caught %i sounds still in floodfill que. Cleared %i sound filter lists out of %i sound filter lists made.",
-                 sound_batch_floodfill_que.size(),
+                 "Caught %i sound filter lists out of %i sound filter lists made.",
                  map.m_sound_cache.filtered_sound_lists_cleared, map.m_sound_cache.filtered_sound_lists_made );
         add_msg( m_debug,
-                 "Culled %i sounds this turn. Sounds vector size %i end of turn. Prior turn sound vector size %i",
-                 map.m_sound_cache.sounds_culled_this_turn, sound_batch_floodfill_que.size(),
+                 "Culled %i sounds this turn. Prior turn sound vector size %i",
+                 map.m_sound_cache.sounds_culled_this_turn,
                  map.m_sound_cache.filtered_sound_lists_cleared, map.m_sound_cache.filtered_sound_lists_made );
     }
     map.m_sound_cache.prior_turn_sound_vector_size = ( soundperf ) ? 0 :
@@ -2950,7 +3070,6 @@ void sounds::clear_floodfill_que( const bool &soundperf )
     map.m_sound_cache.filtered_sound_lists_cleared = 0;
     // Also kill our filtered sound lists, just in case.
     map.m_sound_cache.sound_list_filtered.clear();
-    sound_batch_floodfill_que.clear();
     if( soundperf ) {
         // If we are on sound performance mode, wipe any sounds that slipped through.
         map.m_sound_cache.sound_instances.clear();
@@ -2968,7 +3087,7 @@ std::vector<tripoint_bub_ms> sounds::get_footstep_markers()
     std::vector<tripoint_bub_ms> footsteps;
     footsteps.reserve( sound_markers.size() );
     for( const auto &mark : sound_markers ) {
-        if( !g->u.sees( mark.first ) ) {
+        if( !g->u.sees( bub_to_abs( mark.first ) ) ) {
             footsteps.push_back( mark.first );
         }
     }
@@ -2981,9 +3100,10 @@ std::pair< std::vector<tripoint_bub_ms>, std::vector<tripoint_bub_ms>> sounds::g
     std::vector<tripoint_bub_ms> monster_sounds;
     map &map = get_map();
     for( auto &soundcache : map.m_sound_cache.sound_instances ) {
-        allsounds.emplace_back( soundcache.sound.origin );
         if( soundcache.from_monster ) {
-            monster_sounds.emplace_back( soundcache.sound.origin );
+            monster_sounds.emplace_back( abs_to_bub( soundcache.sound.origin ) );
+        } else {
+            allsounds.emplace_back( abs_to_bub( soundcache.sound.origin ) );
         }
     }
     return { allsounds, monster_sounds };
@@ -3134,7 +3254,7 @@ void sfx::do_vehicle_exterior_engine_sfx()
 
     static const channel ch = channel::exterior_engine_sound;
     const avatar &player_character = get_avatar();
-    const auto &ploc = player_character.bub_pos();
+    const auto &ploc = player_character.abs_pos();
     // early bail-outs for efficiency
     if( player_character.in_vehicle ) {
         fade_audio_channel( ch, 300 );
@@ -3160,7 +3280,7 @@ void sfx::do_vehicle_exterior_engine_sfx()
 
     for( wrapped_vehicle vehicle : vehs ) {
         if( vehicle.v->vehicle_noise > 0 ) {
-            const auto &veh_loc = vehicle.v->bub_ms_location();
+            const auto &veh_loc = vehicle.v->abs_ms_location();
             // This is a jank fix to get vehicles to not be deafening from accross the map.
             const int dist = rl_dist( ploc, veh_loc );
             const short unadjusted_vol = std::min( MAXIMUM_VOLUME_ATMOSPHERE,
@@ -3169,8 +3289,9 @@ void sfx::do_vehicle_exterior_engine_sfx()
             const auto &t_absorp_avg = static_cast<short>( std::round( ( t_absorp_player + ( map.get_cache_ref(
                                            veh_loc.z() ).absorption_cache[veh_idx] ) ) / 2 ) );
             const short adjusted_vol = mdBspl_to_dBspl( std::max( 0,
-                                       unadjusted_vol - get_cumulative_vol_dist_loss( 1, dist, t_absorp_avg ) - vol_z_adjust( veh_loc,
-                                               ploc, player_character.sees( veh_loc ) ) ) );
+                                       unadjusted_vol - get_cumulative_vol_dist_loss( 1, dist, t_absorp_avg ) -
+                                       vol_z_adjust( abs_to_bub( veh_loc ),
+                                               abs_to_bub( ploc ), player_character.sees( veh_loc ) ) ) );
             if( adjusted_vol > noise_factor ) {
 
                 noise_factor = adjusted_vol;
@@ -3984,17 +4105,18 @@ void sfx::do_obstacle( const std::string & ) { }
   * @param in_mdB: Was the origin volume supplied in mdB spl instead of dB spl?
   */
 /*@{*/
-int sfx::get_heard_volume( const tripoint_bub_ms &source, const short &origin_volume,
+int sfx::get_heard_volume( const tripoint_bub_ms &local_source, const short &origin_volume,
                            const bool &in_mdB )
 {
     // Dont play any sfx if a sound is out of bounds or if it has no volume.
-    if( !get_map().inbounds( source ) || origin_volume == 0 ) {
+    if( !get_map().inbounds( local_source ) || origin_volume == 0 ) {
         return 0;
     }
-    if( source == get_avatar().bub_pos() ) {
+    const auto &source = bub_to_abs( local_source );
+    if( source == get_avatar().abs_pos() ) {
         return ( 100 * g_sfx_volume_multiplier );
     }
-    const int distance = rl_dist( get_avatar().bub_pos(), source );
+    const int distance = rl_dist( get_avatar().abs_pos(), source );
     const auto &ploc = get_avatar().bub_pos();
     const auto &lev_cache = get_map().get_cache_ref( ploc.z() );
     const auto &absorp_cache = lev_cache.absorption_cache;
@@ -4003,7 +4125,7 @@ int sfx::get_heard_volume( const tripoint_bub_ms &source, const short &origin_vo
     const auto &o_vol = ( in_mdB ) ? origin_volume : dBspl_to_mdBspl( origin_volume );
     // We are currently working in mdB spl. We will need to convert this to our sfx volume, which is 0 - 100.
     int heard_volume = std::max( 0, o_vol - get_cumulative_vol_dist_loss( 1, distance,
-                                 avg_t_absorp ) - vol_z_adjust( source, ploc, get_avatar().sees( source ) ) );
+                                 avg_t_absorp ) - vol_z_adjust( local_source, ploc, get_avatar().sees( source ) ) );
     // Return 0 if we were too far to hear it to avoid a divide by zero error.
     if( heard_volume == 0 ) {
         return 0;

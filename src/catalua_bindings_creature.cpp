@@ -188,7 +188,7 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_T( attitude_to, Attitude( const Creature & ) const );
 
-        luna::set_fx( ut, "sees", []( const Creature & cr, const tripoint_bub_ms & t ) -> bool { return cr.sees( t ); } );
+        luna::set_fx( ut, "sees", []( const Creature & cr, const tripoint_abs_ms & t ) -> bool { return cr.sees( t ); } );
 
         SET_FX_T( sight_range, int( int ) const );
 
@@ -198,7 +198,7 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_T( ranged_target_size, double() const );
 
-        SET_FX_T( knock_back_to, void( const tripoint_bub_ms & ) );
+        SET_FX_T( knock_back_to, void( const tripoint_abs_ms & ) );
 
         SET_FX_T( deal_damage, dealt_damage_instance( Creature * source, bodypart_id bp,
                   const damage_instance & dam ) );
@@ -223,7 +223,7 @@ void cata::detail::reg_creature( sol::state &lua )
         SET_FX_T( is_immune_effect, bool( const efftype_id & ) const );
         SET_FX_T( is_immune_damage, bool( damage_type ) const );
 
-        SET_FX_N_T( bub_pos, "get_pos_ms", tripoint_bub_ms() const );
+        SET_FX_N_T( abs_pos, "get_pos_ms", tripoint_abs_ms() const );
 
         SET_FX_N_T( bub_pos, "bub_pos", tripoint_bub_ms() const );
 
@@ -445,7 +445,7 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( try_upgrade, void( bool ) );
         SET_FX_T( try_reproduce, void() );
         SET_FX_T( refill_udders, void() );
-        SET_FX_T( spawn, void( const tripoint_bub_ms & ) );
+        SET_FX_T( spawn, void( const tripoint_abs_ms & ) );
 
         SET_FX_T( name, std::string( unsigned int ) const );
         SET_FX_T( name_with_armor, std::string() const );
@@ -461,24 +461,20 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( climbs, bool() const );
         SET_FX_T( swims, bool() const );
 
-        SET_FX_T( move_target, tripoint_bub_ms() );
+        SET_FX_T( move_target, tripoint_abs_ms() );
         SET_FX_N_T( is_wandering, "is_wandering", bool() const );
 
-        SET_FX_T( wander_to, void( const tripoint_bub_ms & p, int f ) );
-        luna::set_fx( ut, "set_move_target", sol::overload(
-        []( monster & mon, const tripoint_bub_ms & p ) -> void {
+        SET_FX_T( wander_to, void( const tripoint_abs_ms & p, int f ) );
+        luna::set_fx( ut, "set_move_target", []( monster & mon, const tripoint_abs_ms & p ) -> void {
             mon.set_dest( p );
-        },
-        []( monster & mon, const tripoint & p ) -> void {
-            mon.set_dest( tripoint_bub_ms( p ) );
-        } ) );
+        } );
         luna::set_fx( ut, "set_target", []( monster & mon, Creature * target ) -> void {
             if( target == nullptr )
             {
                 mon.unset_dest();
                 return;
             }
-            mon.set_dest( target->bub_pos() );
+            mon.set_dest( target->abs_pos() );
         } );
         luna::set_fx( ut, "clear_move_target", []( monster & mon ) -> void {
             mon.unset_dest();
@@ -488,22 +484,13 @@ void cata::detail::reg_monster( sol::state &lua )
             const auto action = mon.decide_action();
             mon.execute_action( action );
         } );
-        luna::set_fx( ut, "move_to", sol::overload(
-                          []( monster & mon, const tripoint_bub_ms & p, bool force, bool step_on_critter,
+        luna::set_fx( ut, "move_to", []( monster & mon, const tripoint_abs_ms & p, bool force, bool step_on_critter,
         float stagger_adjustment ) -> bool {
             return mon.move_to( p, force, step_on_critter, stagger_adjustment );
-        },
-        []( monster & mon, const tripoint & p, bool force, bool step_on_critter,
-            float stagger_adjustment ) -> bool {
-            return mon.move_to( tripoint_bub_ms( p ), force, step_on_critter, stagger_adjustment );
-        } ) );
-        luna::set_fx( ut, "bash_at", sol::overload(
-        []( monster & mon, const tripoint_bub_ms & p ) -> bool {
+        } );
+        luna::set_fx( ut, "bash_at", []( monster & mon, const tripoint_abs_ms & p ) -> bool {
             return mon.bash_at( p );
-        },
-        []( monster & mon, const tripoint & p ) -> bool {
-            return mon.bash_at( tripoint_bub_ms( p ) );
-        } ) );
+        } );
 
         SET_FX_T( attitude, monster_attitude( const Character * ) const );
         luna::set_fx( ut, "set_attitude", []( monster & mon, monster_attitude att ) -> void {
@@ -1239,7 +1226,7 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX( knows_trap );
 
         DOC( "Character learns that the given trap is on the given tripoint. If the trap is null, the character learns that there is no trap there." );
-        luna::set_fx( ut, "add_known_trap", []( UT_CLASS & c, const tripoint_bub_ms & p, const trap_id & tr )
+        luna::set_fx( ut, "add_known_trap", []( UT_CLASS & c, const tripoint_abs_ms & p, const trap_id & tr )
         {
             c.add_known_trap( p, tr.obj() );
         } );
@@ -1477,25 +1464,19 @@ void cata::detail::reg_npc( sol::state &lua )
 
         SET_FX_T( evaluate_enemy, float( const Creature & ) const );
 
-        SET_FX_T( can_open_door, bool( const tripoint_bub_ms &, bool ) const );
+        SET_FX_T( can_open_door, bool( const tripoint_abs_ms &, bool ) const );
 
-        SET_FX_T( can_move_to, bool( const tripoint_bub_ms &, bool ) const );
+        SET_FX_T( can_move_to, bool( const tripoint_abs_ms &, bool ) const );
 
         DOC( "Attempts to move the NPC to an adjacent map square." );
-        luna::set_fx( ut, "move_to", []( UT_CLASS & npchar, const tripoint_bub_ms & pos,
+        luna::set_fx( ut, "move_to", []( UT_CLASS & npchar, const tripoint_abs_ms & pos,
         sol::optional<bool> no_bashing ) -> void {
             npchar.move_to( pos, no_bashing.value_or( false ), nullptr );
         } );
-        luna::set_fx( ut, "set_move_target", sol::overload(
-                          []( npc & npchar, const tripoint_bub_ms & p,
+        luna::set_fx( ut, "set_move_target", []( npc & npchar, const tripoint_abs_ms & p,
         sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
             return npchar.update_path( p, no_bashing.value_or( false ), force.value_or( true ) );
-        },
-        []( npc & npchar, const tripoint & p,
-            sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
-            return npchar.update_path( tripoint_bub_ms( p ), no_bashing.value_or( false ),
-                                       force.value_or( true ) );
-        } ) );
+        } );
 
         SET_FX_T( saw_player_recently, bool() const );
 

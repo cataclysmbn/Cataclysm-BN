@@ -18,6 +18,7 @@
 #include "game_constants.h"
 #include "item.h"
 #include "item_stack.h"
+#include "mapbuffer_registry.h"
 #include "point.h"
 #include "tileray.h"
 #include "type_id.h"
@@ -784,6 +785,9 @@ class vehicle
          *  @param enabled if set part must also be enabled to be considered
          */
         bool has_part( const tripoint_bub_ms &pos, const std::string &flag, bool enabled = false ) const;
+        bool has_part( const tripoint_abs_ms &pos, const std::string &flag, bool enabled = false ) const;
+        bool has_part( const tripoint_bub_ms &pos, const vpart_bitflags &flag, bool enabled = false ) const;
+        bool has_part( const tripoint_abs_ms &pos, const vpart_bitflags &flag, bool enabled = false ) const;
 
         /**
          *  Get all enabled, available, unbroken vehicle parts at specified position
@@ -793,7 +797,11 @@ class vehicle
          */
         std::vector<vehicle_part *> get_parts_at( const tripoint_bub_ms &pos, const std::string &flag,
                 part_status_flag condition );
+        std::vector<vehicle_part *> get_parts_at( const tripoint_abs_ms &pos, const std::string &flag,
+                part_status_flag condition );
         std::vector<const vehicle_part *> get_parts_at( const tripoint_bub_ms &pos,
+                const std::string &flag, part_status_flag condition ) const;
+        std::vector<const vehicle_part *> get_parts_at( const tripoint_abs_ms &pos,
                 const std::string &flag, part_status_flag condition ) const;
 
         /** Test if part can be enabled (unbroken, sufficient fuel etc), optionally displaying failures to user */
@@ -1308,7 +1316,7 @@ class vehicle
         auto part_collision( const vehicle_part_collision_options &options ) -> veh_collision;
 
         // Process the trap beneath
-        void handle_trap( const tripoint_bub_ms &p, int part );
+        void handle_trap( const tripoint_abs_ms &p, int part );
         void activate_magical_follow();
         void activate_animal_follow();
         /**
@@ -1789,6 +1797,9 @@ class vehicle
         }
         auto set_dimension( const dimension_id &dim_id ) -> void {
             dimension_id_ = dim_id;
+        }
+        auto get_mapbuffer() const -> mapbuffer& {  // *NOPAD*
+            return MAPBUFFER_REGISTRY.get( get_dimension() );
         }
         // direction, to which vehicle is turning (player control). will rotate frame on next move
         // must be a multiple of 15 degrees

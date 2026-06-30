@@ -270,8 +270,7 @@ TEST_CASE("minirose_lua_detonates", "[lua][minirose]") {
 
 TEST_CASE(
     "minirose can be disarmed after switching to an npc and back",
-    "[bionics][lua][minirose]["
-    "npc]") {
+    "[bionics][lua][minirose][npc]") {
     clear_all_state();
     auto& you = get_avatar();
     const auto minirose_id = bionic_id("bio_minirose");
@@ -281,7 +280,7 @@ TEST_CASE(
     });
 
     you.clear_bionics();
-    npc& follower = spawn_npc(tripoint_bub_ms(45, 30, 0), "test_talker");
+    npc& follower = spawn_npc(abs_to_bub(tripoint_abs_ms(45, 30, 0)), "test_talker");
     follower.set_fac(faction_id("your_followers"));
     follower.set_attitude(NPCATT_FOLLOW);
     follower.clear_bionics();
@@ -359,9 +358,10 @@ TEST_CASE("robofac_authorization_updates_real_active_creatures", "[lua][robofac]
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    auto& security = spawn_npc(tripoint_bub_ms{50, 50, 0}, "hub_security");
+    auto& security = spawn_npc(abs_to_bub(tripoint_abs_ms{50, 50, 0}), "hub_security");
     security.set_attitude(NPCATT_KILL);
-    auto& turret = spawn_test_monster("mon_robofac_turret_light", tripoint_bub_ms{51, 50, 0});
+    auto& turret =
+        spawn_test_monster("mon_robofac_turret_light", abs_to_bub(tripoint_abs_ms{51, 50, 0}));
     test_data["security"] = &security;
     test_data["turret"] = &turret;
 
@@ -402,8 +402,9 @@ TEST_CASE("lua_npc_move_to_binding_moves_real_npc", "[lua][npc]") {
 
     map& here = get_map();
     const auto start = tripoint_bub_ms{50, 50, 0};
-    const auto destination = tripoint_bub_ms{51, 50, 0};
-    for (const tripoint_bub_ms& pos : {start, destination}) {
+    const auto destination_bub = tripoint_bub_ms{51, 50, 0};
+    const auto destination_abs = map_local_to_abs(here, destination_bub);
+    for (const tripoint_bub_ms& pos : {start, destination_bub}) {
         here.ter_set(pos, ter_id("t_dirt"));
         here.furn_set(pos, furn_id("f_null"));
     }
@@ -411,12 +412,12 @@ TEST_CASE("lua_npc_move_to_binding_moves_real_npc", "[lua][npc]") {
     auto& moving_npc = spawn_npc(start, "test_talker");
     moving_npc.set_moves(1000);
     test_data["npc"] = &moving_npc;
-    test_data["destination"] = destination;
+    test_data["destination"] = destination_abs;
 
     run_lua_test_script(lua, "npc_move_to_test.lua");
 
     CHECK(test_data.get<bool>("moved"));
-    CHECK(moving_npc.bub_pos() == destination);
+    CHECK(moving_npc.abs_pos() == destination_abs);
 }
 
 TEST_CASE("lua_place_monster_pins_upgrade_time", "[lua][monster]") {
@@ -434,7 +435,7 @@ TEST_CASE("lua_place_monster_pins_upgrade_time", "[lua][monster]") {
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
     test_data["monster_id"] = monster_id;
-    test_data["pos"] = tripoint_bub_ms{5, 5, 0};
+    test_data["pos"] = tripoint_abs_ms{5, 5, 0};
 
     run_lua_test_script(lua, "place_monster_upgrade_time_test.lua");
 
@@ -496,12 +497,8 @@ TEST_CASE("luna_rejects_duplicate_member_registration", "[lua]") {
     auto lua = make_lua_state();
     auto lib = luna::begin_lib(lua, "duplicate_member_test");
     luna::set_fx(lib, "same_name", []() -> int { return 1; });
-    CHECK_THROWS_WITH(
-        luna::set_fx(lib, "same_name", []() -> int { return 2; }),
-        Catch::Contains(
-            "Duplicate Lua "
-            "binding "
-            "registration"));
+    CHECK_THROWS_WITH(luna::set_fx(lib, "same_name", []() -> int { return 2; }),
+                      Catch::Contains("Duplicate Lua binding registration"));
     luna::finalize_lib(lib);
 }
 
@@ -536,6 +533,9 @@ TEST_CASE("plumbing_lua_tripoint_migration", "[lua][plumbing]") {
     auto fake_map = lua.create_table();
     auto blood_intensity = 0;
     auto removed_blood_fields = 0;
+    fake_map["abs_to_bub"] = [](const sol::object&, const tripoint_abs_ms&) -> tripoint_bub_ms {
+        return tripoint_bub_ms(10, 10, 0);
+    };
     fake_map["bub_to_abs"] = [](const sol::object&, const tripoint_bub_ms&) -> tripoint_abs_ms {
         return tripoint_abs_ms(48, 48, 0);
     };
@@ -569,12 +569,12 @@ TEST_CASE("plumbing_lua_tripoint_migration", "[lua][plumbing]") {
     };
 
     auto fake_user = lua.create_table();
-    fake_user["get_pos_ms"] = [](const sol::object&) -> tripoint_bub_ms {
-        return tripoint_bub_ms(9, 10, 0);
+    fake_user["get_pos_ms"] = [](const sol::object&) -> tripoint_abs_ms {
+        return tripoint_abs_ms(9, 10, 0);
     };
     auto fake_user_on_fixture = lua.create_table();
-    fake_user_on_fixture["get_pos_ms"] = [](const sol::object&) -> tripoint_bub_ms {
-        return tripoint_bub_ms(10, 10, 0);
+    fake_user_on_fixture["get_pos_ms"] = [](const sol::object&) -> tripoint_abs_ms {
+        return tripoint_abs_ms(10, 10, 0);
     };
 
     auto grid = lua.create_table();
@@ -629,13 +629,13 @@ TEST_CASE("plumbing_lua_tripoint_migration", "[lua][plumbing]") {
 
     auto params = lua.create_table();
     params["user"] = fake_user;
-    params["pos"] = cata::detail::lua_coords::to_lua(tripoint_bub_ms(10, 10, 0));
+    params["pos"] = cata::detail::lua_coords::to_lua(tripoint_abs_ms(10, 10, 0));
     auto examine = plumbing["examine_shower"].get<sol::protected_function>();
     auto examine_res = examine(params);
     REQUIRE(examine_res.valid());
 
     REQUIRE(used_grid_pos.has_value());
-    CHECK(used_grid_pos->raw() == tripoint(2, 2, 0));
+    CHECK(used_grid_pos->raw() == tripoint(0, 0, 0));
 
     blood_intensity = 1;
     params["user"] = fake_user_on_fixture;
@@ -647,7 +647,7 @@ TEST_CASE("plumbing_lua_tripoint_migration", "[lua][plumbing]") {
     auto& soap = get_avatar().add_item_with_id(itype_id("soap"), 10);
     REQUIRE(soap.charges > 1);
     params["user"] = get_avatar().as_character();
-    params["pos"] = cata::detail::lua_coords::to_lua(get_avatar().bub_pos());
+    params["pos"] = cata::detail::lua_coords::to_lua(get_avatar().abs_pos());
     auto consume_res = examine(params);
     REQUIRE(consume_res.valid());
     CHECK(get_avatar().activity->id() == activity_id("ACT_WASH_SELF"));
@@ -662,6 +662,12 @@ TEST_CASE("plumbing_lua_morale_refreshes_without_stacking", "[lua][plumbing]") {
     empty_item_stack["items"] = [&lua]() -> sol::table { return lua.create_table(); };
 
     auto fake_map = lua.create_table();
+    fake_map["abs_to_bub"] = [](const sol::object&, const tripoint_abs_ms&) -> tripoint_bub_ms {
+        return tripoint_bub_ms(10, 10, 0);
+    };
+    fake_map["get_temperature_c"] = [](const sol::object&, const tripoint_bub_ms&) -> double {
+        return 20.0;
+    };
     fake_map["points_in_radius"] =
         [](const sol::object&, const tripoint_bub_ms&, int, int) -> std::vector<tripoint_bub_ms> {
         return {tripoint_bub_ms(10, 10, 0)};
@@ -673,6 +679,12 @@ TEST_CASE("plumbing_lua_morale_refreshes_without_stacking", "[lua][plumbing]") {
     fake_map["has_vehicle_part_with_feature_at"] =
         [](const sol::object&, const tripoint_bub_ms&, const std::string& feature, bool) -> bool {
         return feature == "TOWEL";
+    };
+    fake_map["abs_to_bub"] = [](const sol::object&, const tripoint_abs_ms&) -> tripoint_bub_ms {
+        return tripoint_bub_ms(10, 10, 0);
+    };
+    fake_map["get_temperature_c"] = [](const sol::object&, const tripoint_bub_ms&) -> double {
+        return 20.0;
     };
 
     auto last_message = std::string{};
@@ -909,10 +921,11 @@ TEST_CASE("lua_map_vehicle_replacement", "[lua]") {
     clear_all_state();
 
     auto& here = get_map();
-    const auto origin = tripoint_bub_ms(60, 60, 0);
+    const auto origin = tripoint_abs_ms(60, 60, 0);
     const auto original_facing = -90_degrees;
     const auto overridden_facing = 180_degrees;
-    auto* vehicle_ptr = here.add_vehicle(vproto_id("bicycle"), origin, original_facing, 0, 0);
+    auto* vehicle_ptr =
+        here.add_vehicle(vproto_id("bicycle"), abs_to_bub(origin), original_facing, 0, 0);
     REQUIRE(vehicle_ptr != nullptr);
 
     sol::state lua = make_lua_state();
@@ -931,7 +944,7 @@ TEST_CASE("lua_map_vehicle_replacement", "[lua]") {
 
     const auto vehicles = here.get_vehicles();
     REQUIRE(vehicles.size() == 1);
-    CHECK(vehicles.front().pos == origin);
+    CHECK(vehicles.front().pos == abs_to_bub(origin));
     REQUIRE(vehicles.front().v != nullptr);
     CHECK(vehicles.front().v->type == vproto_id("swivel_chair"));
     CHECK(normalize(vehicles.front().v->face.dir()) == normalize(overridden_facing));
@@ -1773,7 +1786,7 @@ TEST_CASE("lua_hook_wiring_monster_loaded", "[lua]") {
     });
     hook_cleanup cleanup_cl{cl, ci};
 
-    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
+    monster& mon = spawn_test_monster("mon_zombie", abs_to_bub(tripoint_abs_ms{5, 5, 0}));
     mon.on_load();
 
     CHECK(*mon_ptr == &mon);
@@ -1801,7 +1814,7 @@ TEST_CASE("lua_hook_wiring_monster_spawn", "[lua]") {
     });
     hook_cleanup cleanup_cs{cs, csi};
 
-    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
+    monster& mon = spawn_test_monster("mon_zombie", abs_to_bub(tripoint_abs_ms{5, 5, 0}));
 
     CHECK(*mon_ptr == &mon);
     CHECK(*cre_ptr == static_cast<Creature*>(&mon));
@@ -1812,7 +1825,7 @@ TEST_CASE("lua_hook_wiring_mon_death", "[lua]") {
     auto& state = *DynamicDataLoader::get_instance().lua;
     sol::state& lua = state.lua;
 
-    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
+    monster& mon = spawn_test_monster("mon_zombie", abs_to_bub(tripoint_abs_ms{5, 5, 0}));
 
     const auto mon_ptr = std::make_shared<monster*>(nullptr);
     const auto [list, idx] = push_hook(lua, "on_mon_death", [mon_ptr](sol::table params) {
@@ -1831,7 +1844,7 @@ TEST_CASE("lua_hook_wiring_creature_melee_attacked", "[lua]") {
     sol::state& lua = state.lua;
 
     // avatar is at {60,60,0} after clear_all_state; place target adjacent
-    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{61, 60, 0});
+    monster& mon = spawn_test_monster("mon_zombie", abs_to_bub(tripoint_abs_ms{61, 60, 0}));
 
     const auto char_ptr = std::make_shared<Character*>(nullptr);
     const auto tgt_ptr = std::make_shared<Creature*>(nullptr);
@@ -1871,7 +1884,7 @@ TEST_CASE("lua_hook_wiring_npc_loaded", "[lua]") {
     hook_cleanup cleanup_cl{cl, ci};
 
     // spawn_npc calls g->load_npcs() which calls npc::on_load() for the new NPC
-    npc& spawned = spawn_npc(tripoint_bub_ms{50, 50, 0}, "test_talker");
+    npc& spawned = spawn_npc(abs_to_bub(tripoint_abs_ms{50, 50, 0}), "test_talker");
 
     CHECK(*npc_ptr == &spawned);
     CHECK(*cre_ptr == static_cast<Creature*>(&spawned));
@@ -1955,7 +1968,7 @@ TEST_CASE("lua_hook_wiring_mon_effect_added", "[lua]") {
 
     REQUIRE(effect_test_lua_effect.is_valid());
 
-    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
+    monster& mon = spawn_test_monster("mon_zombie", abs_to_bub(tripoint_abs_ms{5, 5, 0}));
 
     const auto mon_ptr = std::make_shared<monster*>(nullptr);
     const auto eff_ptr = std::make_shared<effect*>(nullptr);
@@ -1979,7 +1992,7 @@ TEST_CASE("lua_hook_wiring_mon_effect_tick", "[lua]") {
 
     REQUIRE(effect_test_lua_effect.is_valid());
 
-    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
+    monster& mon = spawn_test_monster("mon_zombie", abs_to_bub(tripoint_abs_ms{5, 5, 0}));
 
     const auto mon_ptr = std::make_shared<monster*>(nullptr);
     const auto eff_ptr = std::make_shared<effect*>(nullptr);
@@ -2002,7 +2015,7 @@ TEST_CASE("lua_hook_wiring_mon_effect_removed", "[lua]") {
 
     REQUIRE(effect_test_lua_effect.is_valid());
 
-    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
+    monster& mon = spawn_test_monster("mon_zombie", abs_to_bub(tripoint_abs_ms{5, 5, 0}));
     mon.add_effect(effect_test_lua_effect, 1_turns);
 
     const auto cre_ptr = std::make_shared<Creature*>(nullptr);

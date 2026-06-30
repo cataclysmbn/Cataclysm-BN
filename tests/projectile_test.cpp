@@ -24,7 +24,7 @@
 #include <set>
 #include <vector>
 
-static tripoint_bub_ms projectile_end_point(
+static tripoint_abs_ms projectile_end_point(
     const std::vector<tripoint_bub_ms>& range, const item& gun, int proj_range) {
     projectile test_proj;
     test_proj.speed = gun.gun_speed();
@@ -33,9 +33,11 @@ static tripoint_bub_ms projectile_end_point(
     for (const ammo_effect_str_id& ae_id : gun.ammo_effects()) { test_proj.add_effect(ae_id); }
 
     dealt_projectile_attack attack;
+    map& here = get_map();
 
     attack = projectile_attack(
-        test_proj, range[0], range[2], dispersion_sources(), &get_avatar(), nullptr);
+        test_proj, map_local_to_abs(here, range[0]), map_local_to_abs(here, range[2]),
+        dispersion_sources(), &get_avatar(), nullptr);
 
     return attack.end_point;
 }
@@ -90,16 +92,16 @@ TEST_CASE("projectiles_through_obstacles", "[projectile]") {
 
     // Check that a rifle bullet can go through a weak wall, but dragon's breath stops early
     INFO("rifle bullet vs. wooden wall");
-    CHECK(projectile_end_point(range, *gun_penetrating, 3) == range[2]);
+    CHECK(projectile_end_point(range, *gun_penetrating, 3) == map_local_to_abs(here, range[2]));
     INFO("dragon's breath shell vs. wooden wall");
-    CHECK(projectile_end_point(range, *gun_nonpenetrating, 3) == range[0]);
+    CHECK(projectile_end_point(range, *gun_nonpenetrating, 3) == map_local_to_abs(here, range[1]));
 
     // Change obstacle to something tougher
     here.ter_set(range[1], ter_id("t_rock"));
 
     // Check that the rifle bullet cannot go through a tougher wall
     INFO("rifle bullet vs. solid rock");
-    CHECK(projectile_end_point(range, *gun_penetrating, 3) == range[0]);
+    CHECK(projectile_end_point(range, *gun_penetrating, 3) == map_local_to_abs(here, range[1]));
 }
 
 TEST_CASE("projectiles_stop_at_reality_bubble_edge", "[projectile][ballistics]") {
@@ -130,8 +132,9 @@ TEST_CASE("projectiles_stop_at_reality_bubble_edge", "[projectile][ballistics]")
     test_proj.range = 20;
     test_proj.impact = gun.gun_damage();
 
-    const auto attack =
-        projectile_attack(test_proj, shooter_pos, target_pos, dispersion_sources{}, &shooter, &gun);
+    const auto attack = projectile_attack(
+        test_proj, map_local_to_abs(here, shooter_pos), map_local_to_abs(here, target_pos),
+        dispersion_sources{}, &shooter, &gun);
 
     CHECK(here.inbounds(attack.end_point));
 }
@@ -160,11 +163,12 @@ TEST_CASE("projectiles_stop_at_z_bounds", "[projectile][ballistics]") {
     test_proj.range = 20;
     test_proj.impact = gun.gun_damage();
 
-    const auto attack =
-        projectile_attack(test_proj, shooter_pos, target_pos, dispersion_sources{}, &shooter, &gun);
+    const auto attack = projectile_attack(
+        test_proj, map_local_to_abs(here, shooter_pos), map_local_to_abs(here, target_pos),
+        dispersion_sources{}, &shooter, &gun);
 
     CHECK(here.inbounds(attack.end_point));
-    CHECK(attack.end_point == shooter_pos);
+    CHECK(attack.end_point == map_local_to_abs(here, shooter_pos));
 }
 
 TEST_CASE("adjacent_friendly_fire_prevention", "[projectile][ballistics]") {
@@ -207,14 +211,15 @@ TEST_CASE("adjacent_friendly_fire_prevention", "[projectile][ballistics]") {
 
     // Fire projectile toward target with high dispersion (simulating a miss toward the ally)
     dealt_projectile_attack attack = projectile_attack(
-        test_proj, shooter_pos, target_pos, dispersion_sources(5000), &shooter, &gun);
+        test_proj, map_local_to_abs(here, shooter_pos), map_local_to_abs(here, target_pos),
+        dispersion_sources(5000), &shooter, &gun);
 
     // Verify friendly was not hit despite being adjacent to shooter in projectile path
     const int final_friendly_hp = ally.get_hp();
     CHECK(final_friendly_hp == initial_friendly_hp);
 
     // The projectile should not stop at the friendly's position
-    CHECK(attack.end_point != friendly_pos);
+    CHECK(attack.end_point != map_local_to_abs(here, friendly_pos));
 }
 
 TEST_CASE("npc_adjacent_friendly_fire_prevention", "[projectile][ballistics]") {
@@ -265,14 +270,15 @@ TEST_CASE("npc_adjacent_friendly_fire_prevention", "[projectile][ballistics]") {
 
     // Fire projectile toward target with high dispersion
     dealt_projectile_attack attack = projectile_attack(
-        test_proj, shooter_pos, target_pos, dispersion_sources(5000), &shooter, &gun);
+        test_proj, map_local_to_abs(here, shooter_pos), map_local_to_abs(here, target_pos),
+        dispersion_sources(5000), &shooter, &gun);
 
     // Verify friendly NPC was not hit despite being adjacent to shooter
     const int final_friendly_hp = ally.get_hp();
     CHECK(final_friendly_hp == initial_friendly_hp);
 
     // The projectile should not stop at the friendly's position
-    CHECK(attack.end_point != friendly_pos);
+    CHECK(attack.end_point != map_local_to_abs(here, friendly_pos));
 }
 
 TEST_CASE("npc_protects_adjacent_player", "[projectile][ballistics]") {
@@ -319,14 +325,15 @@ TEST_CASE("npc_protects_adjacent_player", "[projectile][ballistics]") {
 
     // Fire projectile toward target with high dispersion
     dealt_projectile_attack attack = projectile_attack(
-        test_proj, shooter_pos, target_pos, dispersion_sources(5000), &shooter, &gun);
+        test_proj, map_local_to_abs(here, shooter_pos), map_local_to_abs(here, target_pos),
+        dispersion_sources(5000), &shooter, &gun);
 
     // Verify player was not hit despite being adjacent to NPC shooter
     const int final_player_hp = player.get_hp();
     CHECK(final_player_hp == initial_player_hp);
 
     // The projectile should not stop at the player's position
-    CHECK(attack.end_point != player_pos);
+    CHECK(attack.end_point != map_local_to_abs(here, player_pos));
 }
 
 TEST_CASE("monster_adjacent_ally_fire_prevention", "[projectile][ballistics]") {
@@ -364,14 +371,15 @@ TEST_CASE("monster_adjacent_ally_fire_prevention", "[projectile][ballistics]") {
 
     // Fire projectile toward target with high dispersion
     dealt_projectile_attack attack = projectile_attack(
-        test_proj, shooter_pos, target_pos, dispersion_sources(5000), &shooter, nullptr);
+        test_proj, map_local_to_abs(here, shooter_pos), map_local_to_abs(here, target_pos),
+        dispersion_sources(5000), &shooter, nullptr);
 
     // Verify allied monster was not hit despite being adjacent to shooter
     const int final_ally_hp = ally.get_hp();
     CHECK(final_ally_hp == initial_ally_hp);
 
     // The projectile should not stop at the ally's position
-    CHECK(attack.end_point != ally_pos);
+    CHECK(attack.end_point != map_local_to_abs(here, ally_pos));
 }
 
 TEST_CASE("hostile_npc_adjacent_ally_fire_prevention", "[projectile][ballistics]") {
@@ -420,14 +428,15 @@ TEST_CASE("hostile_npc_adjacent_ally_fire_prevention", "[projectile][ballistics]
 
     // Fire projectile toward target with high dispersion
     dealt_projectile_attack attack = projectile_attack(
-        test_proj, shooter_pos, target_pos, dispersion_sources(5000), &shooter, &gun);
+        test_proj, map_local_to_abs(here, shooter_pos), map_local_to_abs(here, target_pos),
+        dispersion_sources(5000), &shooter, &gun);
 
     // Verify allied hostile NPC was not hit despite being adjacent to shooter
     const int final_ally_hp = ally.get_hp();
     CHECK(final_ally_hp == initial_ally_hp);
 
     // The projectile should not stop at the ally's position
-    CHECK(attack.end_point != ally_pos);
+    CHECK(attack.end_point != map_local_to_abs(here, ally_pos));
 }
 
 TEST_CASE("friendly_monster_iff_respects_adjacent_player", "[projectile][monster][iff]") {

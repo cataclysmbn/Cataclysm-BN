@@ -265,7 +265,7 @@ void Creature::bleed() const
 {
     const field_type_id &blood_type = bloodType();
     if( blood_type ) {
-        get_map().add_splatter( blood_type, bub_pos() );
+        get_mapbuffer().add_splatter( blood_type, abs_pos() );
     }
 }
 
@@ -373,6 +373,11 @@ bool Creature::sees( const Creature &critter ) const
         return true;
     }
 
+    // Creatures cannot see between dimensions
+    if( get_dimension() != critter.get_dimension() ) {
+        return false;
+    }
+
     if( critter.is_hallucination() ) {
         // hallucinations are imaginations of the player character, npcs or monsters don't hallucinate.
         // Invisible hallucinations would be pretty useless (nobody would see them at all), therefor
@@ -380,32 +385,35 @@ bool Creature::sees( const Creature &critter ) const
         return is_player();
     }
 
-    // Creatures in different dimensions cannot see each other.
-    if( get_dimension() != critter.get_dimension() ) {
-        return false;
-    }
-
     // This check is ridiculously expensive so defer it to after everything else.
     auto visible = []( const Character * ch ) {
         return ch == nullptr || !ch->is_invisible();
     };
 
-    map &here = get_map();
+    auto &here = get_mapbuffer();
+    auto &map = get_map();
+    const bool in_bubble = get_dimension() == map.get_bound_dimension() &&
+                           is_in_reality_bubble_bounds( bub_pos() );
     const Character *ch = critter.as_character();
-    const int wanted_range = rl_dist( bub_pos(), critter.bub_pos() );
+    const int wanted_range = rl_dist( abs_pos(), critter.abs_pos() );
     // Can always see adjacent monsters on the same level, unless they're through a vehicle wall.
     // We also bypass lighting for vertically adjacent monsters, but still check for floors.
-    if( wanted_range <= 1 && ( bub_pos().z() == critter.bub_pos().z() ||
-                               here.sees( bub_pos(), critter.bub_pos(), 1 ) ) ) {
-        if( here.obscured_by_vehicle_rotation( bub_pos(), critter.bub_pos() ) ) {
+    // During data loading (NPC template parsing) the mapbuffer has no submaps
+    // loaded yet, so fetch returns nullopt.  In that case we skip tile-specific
+    // visibility modifiers (conservative default — assume no blocking terrain).
+    const auto target = abs_tile_handle::fetch( here, critter.abs_pos() );
+    if( wanted_range <= 1 && ( abs_pos().z() == critter.abs_pos().z() ||
+                               sees( critter.abs_pos(), is_avatar(), 1 ) ) ) {
+        if( here.obstructed_by_vehicle_rotation( abs_pos(), critter.abs_pos() ) ) {
             return false;
         }
         return visible( ch );
     } else if( ( wanted_range > 1 && critter.digging() ) ||
                ( critter.has_flag( MF_NIGHT_INVISIBILITY ) &&
-                 here.light_at( critter.bub_pos() ) <= lit_level::LOW ) ||
-               ( critter.is_underwater() && !is_underwater() && here.is_divable( critter.bub_pos() ) ) ||
-               ( here.has_flag_ter_or_furn( TFLAG_HIDE_PLACE, critter.bub_pos() ) &&
+                 in_bubble ? map.light_at( critter.bub_pos() ) <= lit_level::LOW :
+                 here.cheap_light_at( critter.abs_pos() ) <= LIGHT_AMBIENT_LOW ) ||
+               ( target && critter.is_underwater() && !is_underwater() && target->is_divable() ) ||
+               ( target && target->has_flag_ter_or_furn( TFLAG_HIDE_PLACE ) &&
                  !( std::abs( bub_pos().x() - critter.bub_pos().x() ) <= 1 &&
                     std::abs( bub_pos().y() - critter.bub_pos().y() ) <= 1 &&
                     std::abs( bub_pos().z() - critter.bub_pos().z() ) <= 1 ) && !critter.has_flag( MF_FLIES ) &&
@@ -414,9 +422,9 @@ bool Creature::sees( const Creature &critter ) const
     }
     if( ch != nullptr ) {
         if( ch->movement_mode_is( CMM_CROUCH ) ) {
-            const int coverage = here.obstacle_coverage( bub_pos(), critter.bub_pos() );
+            const int coverage = here.obstacle_coverage( abs_pos(), critter.abs_pos() );
             if( coverage < 30 ) {
-                return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
+                return sees( critter.abs_pos(), critter.is_avatar() ) && visible( ch );
             }
             float size_modifier = 1.0;
             switch( ch->get_size() ) {
@@ -439,22 +447,19 @@ bool Creature::sees( const Creature &critter ) const
             }
             const int vision_modifier = 30 - 0.5 * coverage * size_modifier;
             if( vision_modifier > 1 ) {
-                return sees( critter.bub_pos(), critter.is_avatar(), vision_modifier ) && visible( ch );
+                return sees( critter.abs_pos(), critter.is_avatar(), vision_modifier ) && visible( ch );
             }
             return false;
         }
     }
-    return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
+    return sees( critter.abs_pos(), critter.is_avatar() ) && visible( ch );
 }
 
-bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod ) const
+bool Creature::sees( const tripoint_abs_ms &t, bool /*is_avatar*/, int range_mod ) const
 {
-    map &here = get_map();
-    // A creature in a different dimension from the current render map cannot
-    // perform a valid sight check through that map's terrain data.
-    if( get_dimension() != here.get_bound_dimension() ) {
-        return false;
-    }
+    auto &here = get_mapbuffer();
+    const bool in_bubble = get_dimension() == here.get_dimension_id() &&
+                           is_in_reality_bubble_bounds( bub_pos() );
     // range_day and range_night depend only on creature stats, not on the target.
     // Cache them per-creature per-tick so repeated calls (e.g. from compute_plan)
     // only pay for sight_range() once.
@@ -474,11 +479,12 @@ bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod
         tl_range.range_max  = std::max( tl_range.range_day, tl_range.range_night );
     }
     const auto range_max = tl_range.range_max;
-    const auto wanted_range = rl_dist( bub_pos(), t );
+    const auto wanted_range = rl_dist( abs_pos(), t );
     if( wanted_range > range_max ) {
         return false;
     }
-    const auto ambient = here.ambient_light_at( t );
+    const auto ambient = in_bubble ? get_map().ambient_light_at( abs_to_bub( t ) ) :
+                         here.cheap_light_at( t );
     const auto range_cur = sight_range( ambient );
     const auto range_min = std::min( range_cur, range_max );
     const auto natural_light = g->natural_light_level( t.z() );
@@ -492,7 +498,8 @@ bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod
         if( range_mod > 0 ) {
             range = std::min( range, range_mod );
         }
-        return here.sees( bub_pos(), t, range );
+        return in_bubble ? get_map().sees( bub_pos(), abs_to_bub( t ), range ) :
+               here.sees( abs_pos(), t, range );
     } else {
         return false;
     }
@@ -530,13 +537,13 @@ Creature *Creature::auto_find_hostile_target( int range, int &boo_hoo, int area 
     bool angle_iff = true;      // Need to check if player is in a cone between us and target
     int pldist = rl_dist( bub_pos(), g->u.bub_pos() );
     map &here = get_map();
-    vehicle *in_veh = is_fake() ? veh_pointer_or_null( here.veh_at( bub_pos() ) ) : nullptr;
+    vehicle *in_veh = is_fake() ? veh_pointer_or_null( get_mapbuffer().veh_at( abs_pos() ) ) : nullptr;
     if( pldist < iff_dist && sees( g->u ) ) {
         area_iff = area > 0;
         angle_iff = true;
         // Player inside vehicle won't be hit by shots from the roof,
         // so we can fire "through" them just fine.
-        const optional_vpart_position vp = here.veh_at( u.bub_pos() );
+        const optional_vpart_position vp = get_mapbuffer().veh_at( g->u.abs_pos() );
         if( in_veh && veh_pointer_or_null( vp ) == in_veh && vp->is_inside() ) {
             angle_iff = false; // No angle IFF, but possibly area IFF
         } else if( pldist < 3 ) {
@@ -576,7 +583,7 @@ Creature *Creature::auto_find_hostile_target( int range, int &boo_hoo, int area 
                 // Getting point on vehicle boundaries and on line between target and turret
                 bool continueFlag = true;
                 do {
-                    const optional_vpart_position vp = here.veh_at( path_to_target.back() );
+                    const optional_vpart_position vp = get_mapbuffer().veh_at( bub_to_abs( path_to_target.back() ) );
                     vehicle *const veh = vp ? &vp->vehicle() : nullptr;
                     if( in_veh == veh ) {
                         continueFlag = false;
@@ -609,7 +616,7 @@ Creature *Creature::auto_find_hostile_target( int range, int &boo_hoo, int area 
             continue;
         }
 
-        if( in_veh != nullptr && veh_pointer_or_null( here.veh_at( m->bub_pos() ) ) == in_veh ) {
+        if( in_veh != nullptr && veh_pointer_or_null( get_mapbuffer().veh_at( m->abs_pos() ) ) == in_veh ) {
             // No shooting stuff on vehicle we're a part of
             continue;
         }
@@ -2464,26 +2471,26 @@ std::string Creature::replace_with_npc_name( std::string input ) const
     return replace_all( std::move( input ), "<npcname>", disp_name() );
 }
 
-void Creature::knock_back_from( const tripoint_bub_ms &p )
+void Creature::knock_back_from( const tripoint_abs_ms &p )
 {
-    if( p == bub_pos() ) {
+    if( p == abs_pos() ) {
         return; // No effect
     }
     if( is_hallucination() ) {
         die( nullptr );
         return;
     }
-    tripoint_bub_ms to = bub_pos();
-    if( p.x() < bub_pos().x() ) {
+    tripoint_abs_ms to = abs_pos();
+    if( p.x() < abs_pos().x() ) {
         to.x()++;
     }
-    if( p.x() > bub_pos().x() ) {
+    if( p.x() > abs_pos().x() ) {
         to.x()--;
     }
-    if( p.y() < bub_pos().y() ) {
+    if( p.y() < abs_pos().y() ) {
         to.y()++;
     }
-    if( p.y() > bub_pos().y() ) {
+    if( p.y() > abs_pos().y() ) {
         to.y()--;
     }
 
@@ -2607,9 +2614,9 @@ effects_map Creature::get_all_effects() const
     return effects_without_removed;
 }
 
-tripoint_abs_ms Creature::abs_pos() const
+tripoint_bub_ms Creature::bub_pos() const
 {
-    return bub_to_abs( bub_pos() );
+    return abs_to_bub( abs_pos() );
 }
 
 void Creature::setpos( const tripoint_abs_ms &pos )

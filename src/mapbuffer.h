@@ -24,13 +24,14 @@
 #include "dimension_info.h"
 #include "game_constants.h"
 #include "item_stack.h"
+#include "mapdata.h"
 #include "mapgen_functions.h"
 #include "memory_fast.h"
-#include "point.h"
 #include "submap_load_manager.h"
 #include "type_id.h"
 #include "vpart_position.h"
 
+enum class lit_level : int;
 class submap;
 class active_tile_data;
 class computer;
@@ -40,6 +41,7 @@ class field_entry;
 class item;
 class JsonIn;
 class npc;
+struct sound_event;
 class vehicle;
 enum ter_bitflags : int;
 enum class special_item_type : int;
@@ -74,6 +76,16 @@ enum class mapbuffer_lookup_mode : int {
 
 struct mapbuffer_lookup_options {
     mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::simulated_only;
+};
+
+struct mapbuffer_add_submap_options {
+    bool skip_luminance_refresh = false;
+};
+
+enum class submap_column_load_state : char {
+    resident,   // in submaps map, not receiving per-turn processing
+    simulated,  // resident + receiving per-turn processing
+    // not_loaded is cache absence (find() == end())
 };
 
 struct mapbuffer_valid_move_options {
@@ -149,8 +161,6 @@ struct mapbuffer_mark_submap_caches_dirty_options {
 struct mapbuffer_submap_bounds_mutation_options {
     point_abs_sm begin;
     point_abs_sm end;
-    int z_min = -OVERMAP_DEPTH;
-    int z_max = OVERMAP_HEIGHT;
     mapbuffer_lookup_options lookup = {
         .mode = mapbuffer_lookup_mode::resident_only,
     };
@@ -159,8 +169,6 @@ struct mapbuffer_submap_bounds_mutation_options {
 struct mapbuffer_fill_terrain_options {
     point_abs_sm begin;
     point_abs_sm end;
-    int z_min = -OVERMAP_DEPTH;
-    int z_max = OVERMAP_HEIGHT;
     mapbuffer_lookup_options lookup = {
         .mode = mapbuffer_lookup_mode::resident_only,
     };
@@ -170,100 +178,16 @@ struct mapbuffer_fill_terrain_options {
 struct mapbuffer_run_submap_batch_turns_options {
     point_abs_sm begin;
     point_abs_sm end;
-    int z_min = -OVERMAP_DEPTH;
-    int z_max = OVERMAP_HEIGHT;
     int turns = 0;
     mapbuffer_lookup_options lookup = {
         .mode = mapbuffer_lookup_mode::resident_only,
     };
 };
 
-class mapbuffer_abs_tile_view
-{
-    public:
-        mapbuffer_abs_tile_view( const tripoint_abs_sm &abs_sm, const point_sm_ms &local,
-                                 const submap &sm );
-
-        explicit operator bool() const;
-
-        auto abs_pos() const -> tripoint_abs_ms;
-        auto abs_submap_pos() const -> tripoint_abs_sm;
-        auto submap_pos() const -> point_sm_ms;
-
-        auto get_ter() const -> ter_id;
-        auto get_furn() const -> furn_id;
-        auto get_trap() const -> trap_id;
-        auto get_ter_t() const -> const ter_t &;
-        auto get_furn_t() const -> const furn_t &;
-        auto get_trap_t() const -> const trap &;
-        auto get_field() const -> const field &;
-        auto get_items() const -> const location_vector<item> &;
-        auto get_furn_vars() const -> const data_vars::data_set &;
-        auto get_radiation() const -> int;
-        auto get_lum() const -> std::uint8_t;
-        auto move_cost_ter_furn() const -> int;
-        auto passable_ter_furn() const -> bool;
-        auto move_cost_with_vehicle( const optional_vpart_position &vp ) const -> int;
-        auto passable_with_vehicle( const optional_vpart_position &vp ) const -> bool;
-
-    private:
-        tripoint_abs_sm abs_sm_;
-        point_sm_ms local_;
-        const submap *sm_ = nullptr;
-};
-
-class mapbuffer_abs_tile_with_vehicle_view
-{
-    public:
-        mapbuffer_abs_tile_with_vehicle_view( const mapbuffer_abs_tile_view &tile,
-                                              const optional_vpart_position &vehicle_part );
-
-        explicit operator bool() const;
-
-        auto tile() const -> const mapbuffer_abs_tile_view &;
-        auto vehicle_part() const -> const optional_vpart_position &;
-        auto move_cost() const -> int;
-        auto passable() const -> bool;
-
-    private:
-        mapbuffer_abs_tile_view tile_;
-        optional_vpart_position vehicle_part_;
-};
-
-class mapbuffer_abs_submap_view
-{
-    public:
-        mapbuffer_abs_submap_view( const tripoint_abs_sm &abs_sm, const submap &sm );
-
-        explicit operator bool() const;
-
-        auto abs_pos() const -> tripoint_abs_sm;
-        auto get_submap() const -> const submap &;
-        auto tile( const point_sm_ms &local ) const -> mapbuffer_abs_tile_view;
-        auto tiles() const -> point_range<point_sm_ms>;
-
-    private:
-        tripoint_abs_sm abs_sm_;
-        const submap *sm_ = nullptr;
-};
-
-class mapbuffer_abs_omt_view
-{
-    public:
-        mapbuffer_abs_omt_view( const tripoint_abs_omt &abs_omt,
-                                const std::array<const submap *, 4> &submaps );
-
-        explicit operator bool() const;
-
-        auto abs_pos() const -> tripoint_abs_omt;
-        auto has_any_submap() const -> bool;
-        auto is_complete() const -> bool;
-        auto get_submap_view( const point_omt_sm &local ) const
-        -> std::optional<mapbuffer_abs_submap_view>;
-
-    private:
-        tripoint_abs_omt abs_omt_;
-        std::array<const submap *, 4> submaps_ = {};
+/// Lightweight (submap*, position) pair — access sm and pos directly.
+struct submap_ref {
+    const submap *sm = nullptr;
+    tripoint_abs_sm pos;
 };
 
 class mapbuffer_bounds_view
@@ -280,18 +204,18 @@ class mapbuffer_bounds_view
 
         auto begin() const -> point_abs_sm;
         auto end() const -> point_abs_sm;
-        auto submaps() const -> std::span<const mapbuffer_abs_submap_view> {
+        auto submaps() const -> std::span<const submap_ref> {
             return submaps_;
         }
-        auto submaps( int zlev ) const -> std::span<const mapbuffer_abs_submap_view> {
+        auto submaps( int zlev ) const -> std::span<const submap_ref> {
             if( zlev < -OVERMAP_DEPTH || zlev > OVERMAP_HEIGHT ) { return {}; }
             const auto index = static_cast<std::size_t>( zlev + OVERMAP_DEPTH );
             return submaps_by_zlev_[index];
         }
         auto get_submap_view( const tripoint_abs_sm &pos ) const
-        -> std::optional<mapbuffer_abs_submap_view>;
+        -> std::optional<submap_ref>;
         auto get_submap_view( const point_rel_sm &offset, int zlev ) const
-        -> std::optional<mapbuffer_abs_submap_view>;
+        -> std::optional<submap_ref>;
         auto is_complete() const -> bool;
         auto update( const point_abs_sm &begin, const point_abs_sm &end,
                      mapbuffer *buffer = nullptr ) -> void;
@@ -306,9 +230,339 @@ class mapbuffer_bounds_view
         mapbuffer_lookup_options options_;
         point_abs_sm begin_;
         point_abs_sm end_;
-        std::vector<mapbuffer_abs_submap_view> submaps_;
-        std::array<std::vector<mapbuffer_abs_submap_view>, OVERMAP_LAYERS> submaps_by_zlev_;
+        std::vector<submap_ref> submaps_;
+        std::array<std::vector<submap_ref>, OVERMAP_LAYERS> submaps_by_zlev_;
         std::vector<const submap *> indexed_submaps_;
+};
+
+/**
+ * Lightweight absolute-tile handle that embeds vehicle data by default.
+ *
+ * Two-tier access pattern:
+ *   1. Gate: is_column_state(col, simulated) — cheap rejection
+ *   2. Fetch: abs_tile_handle::fetch(buf, p) — one hash lookup
+ *
+ * For hot iteration over all tiles in a submap:
+ *   sm.for_each_tile(abs_sm, [](const abs_tile_handle &h) { ... });
+ */
+class abs_tile_handle
+{
+    public:
+        abs_tile_handle() = default;
+
+        /// Construct from already-retrieved submap (hot path — zero map lookups).
+        /// No vehicle data.
+        abs_tile_handle( const submap &sm, tripoint_abs_sm abs_sm, point_sm_ms local );
+        /// Construct with vehicle data.
+        abs_tile_handle( const submap &sm, tripoint_abs_sm abs_sm, point_sm_ms local,
+                         optional_vpart_position veh_part );
+
+        explicit operator bool() const;
+
+        auto abs_pos() const -> tripoint_abs_ms;
+        auto abs_submap_pos() const -> tripoint_abs_sm;
+        auto submap_pos() const -> point_sm_ms;
+
+        auto ter()     const -> ter_id;
+        auto furn()    const -> furn_id;
+        ::trap_id trap_id() const;
+        auto ter_obj()   const -> const ter_t &;
+        auto furn_obj()  const -> const furn_t &;
+        auto trap_obj()  const -> const class trap &;
+        auto field()   const -> const class field &;
+        auto items()   const -> const location_vector<item> &;
+        auto furn_vars() const -> const data_vars::data_set &;
+        auto radiation() const -> int;
+        auto lum()     const -> std::uint8_t;
+
+        /// Move cost including both terrain/furniture and vehicle.
+        auto move_cost( const vehicle *ignored_vehicle = nullptr ) const -> int;
+        /// True if move_cost() != 0.
+        auto passable() const -> bool;
+
+        auto vehicle_part() const -> const optional_vpart_position &;
+
+        // ----- Read-only tile property queries (zero-lookup — data from stored pointer) -----
+
+        /// True if terrain or furniture has @p flag (string).
+        auto has_flag( const std::string &flag ) const -> bool;
+        auto has_flag_ter( const std::string &flag ) const -> bool;
+        auto has_flag_furn( const std::string &flag ) const -> bool;
+        auto has_flag_ter_or_furn( const std::string &flag ) const -> bool;
+        /// Furniture flag, then vehicle part with feature as fallback.
+        auto has_flag_furn_or_vpart( const std::string &flag ) const -> bool;
+        /// Vehicle part with feature.  Requires a handle with vehicle data.
+        auto has_flag_vpart( const std::string &flag ) const -> bool;
+
+        /// True if terrain or furniture has @p flag (ter_bitflags enum).
+        auto has_flag( ter_bitflags flag ) const -> bool;
+        auto has_flag_ter( ter_bitflags flag ) const -> bool;
+        auto has_flag_furn( ter_bitflags flag ) const -> bool;
+        auto has_flag_ter_or_furn( ter_bitflags flag ) const -> bool;
+
+        /// True if tile has a bashable vehicle part, furniture, or terrain.
+        auto is_bashable( bool allow_floor = false ) const -> bool;
+        auto is_bashable_ter( bool allow_floor = false ) const -> bool;
+        auto is_bashable_furn() const -> bool;
+        auto is_bashable_ter_furn( bool allow_floor = false ) const -> bool;
+        auto bash_strength( bool allow_floor = false ) const -> int;
+        auto bash_resistance( bool allow_floor = false ) const -> int;
+        auto bash_rating( int str, bool allow_floor = false ) const -> int;
+
+        /// SWIMMABLE + DEEP_WATER terrain, no boardable vehicle part.
+        auto is_divable() const -> bool;
+        /// CURRENT flag but not DEEP_WATER.
+        auto is_water_shallow_current() const -> bool;
+
+        /// True if any items exist at this tile.
+        auto has_items() const -> bool;
+        /// True if any field exists at this tile.
+        auto has_field_at() const -> bool;
+        /// Access a specific field entry (read-only).
+        auto get_field_entry( const field_type_id &type ) const -> const field_entry *;
+        auto get_field_age( const field_type_id &type ) const -> time_duration;
+        auto get_field_intensity( const field_type_id &type ) const -> int;
+
+        auto has_graffiti_at() const -> bool;
+        auto graffiti_at() const -> const std::string &;
+        auto has_signage() const -> bool;
+        auto get_signage() const -> std::string;
+        auto has_computer() const -> bool;
+        auto get_computer() const -> const computer *;
+
+        /// True if items can be dropped here (ter/furn only, no vehicle cargo check).
+        auto can_put_items_ter_furn() const -> bool;
+        /// True if SEALED flag absent, or LIQUIDCONT flag present (items can be accessed).
+        auto accessible_items() const -> bool;
+
+        /// Move cost from terrain and furniture only (no vehicle).
+        auto move_cost_ter_furn() const -> int;
+        /// move_cost() == 0 (includes vehicle).
+        auto impassable() const -> bool;
+        /// move_cost_ter_furn() == 0.
+        auto impassable_ter_furn() const -> bool;
+        auto passable_ter_furn() const -> bool;
+
+        /// Terrain variables (read-only).
+        auto ter_vars() const -> const data_vars::data_set &;
+
+        /// True if a harvestable plant is present.
+        auto is_harvestable() const -> bool;
+        /// True if any field entry is dangerous.
+        auto dangerous_field_at() const -> bool;
+
+        /// Display names derived from stored terrain/furniture.
+        auto furnname() const -> std::string;
+        auto tername() const -> std::string;
+        auto name() const -> std::string;
+        auto disp_name() const -> std::string;
+
+        /**
+         * Fetch a handle from mapbuffer by absolute position.
+         * One hash lookup for the submap, plus one for the vehicle footprint.
+         */
+        static auto fetch( mapbuffer &buf, tripoint_abs_ms p )
+        -> std::optional<abs_tile_handle>;
+
+        /**
+         * Same as fetch() but skips the vehicle-footprint lookup.
+         * Use only when vehicle data is known to be irrelevant.
+         */
+        static auto fetch_terrain_only( mapbuffer &buf, tripoint_abs_ms p )
+        -> std::optional<abs_tile_handle>;
+
+    private:
+        const submap *sm_ = nullptr;
+        tripoint_abs_sm abs_sm_;
+        point_sm_ms local_;
+        optional_vpart_position veh_part_;
+};
+
+/**
+ * Range over all 144 tiles of a single submap, yielding abs_tile_handle
+ * with zero hash lookups per tile.  One hash lookup in the constructor,
+ * then all 144 handles share the same submap pointer.
+ *
+ * Vehicle data is included via a mapbuffer vehicle-footprint lookup on
+ * dereference.  If the submap has no vehicles (sm.vehicles.empty()), the
+ * vehicle-footprint lookup is skipped entirely — the common case.
+ *
+ * @warning The range stores a raw submap pointer.  Do not iterate across
+ * a submap_load_manager::update() call — eviction would leave a dangling
+ * pointer.
+ */
+class submap_tile_range
+{
+    public:
+        class iterator;
+        using value_type = abs_tile_handle;
+
+        submap_tile_range( const submap &sm, tripoint_abs_sm abs_sm,
+                           bool has_vehicles, mapbuffer &buf );
+
+        auto begin() const -> iterator;
+        auto end() const -> iterator;
+        static constexpr std::size_t size() {
+            return static_cast<std::size_t>( SEEX ) * static_cast<std::size_t>( SEEY );
+        }
+
+        class iterator
+        {
+            public:
+                using value_type = abs_tile_handle;
+                using reference = const abs_tile_handle &;
+
+                iterator( const submap &sm, tripoint_abs_sm abs_sm,
+                          bool has_vehicles, mapbuffer *buf, int idx );
+
+                auto operator*() const -> abs_tile_handle;
+                auto operator++() -> iterator &;
+                bool operator==( const iterator &other ) const;
+                bool operator!=( const iterator &other ) const;
+
+            private:
+                const submap *sm_;
+                tripoint_abs_sm abs_sm_;
+                bool has_vehicles_;
+                mapbuffer *buf_;
+                int idx_;
+        };
+
+    private:
+        const submap *sm_;
+        tripoint_abs_sm abs_sm_;
+        bool has_vehicles_;
+        mapbuffer *buf_;
+};
+
+/**
+ * Range over simulated tiles, lazily yielding abs_tile_handle.
+ *
+ * Built by the three free functions:
+ *   simulated_tiles_in_radius()
+ *   simulated_tiles_in_rectangle()
+ *   simulated_tiles_on_zlevel()
+ *
+ * Tiles are yielded in submap-major, then column-major order:
+ *   submap (col 0,0, z): tile (0,0), (1,0), ..., (SEEX-1, SEEY-1)
+ *   submap (col 1,0, z): ...
+ *
+ * @warning The range stores raw submap pointers via submap_tile_range.
+ * Do not iterate across a submap_load_manager::update() call.
+ */
+class submap_tile_iterator_range
+{
+    public:
+        class iterator;
+        using value_type = abs_tile_handle;
+
+        submap_tile_iterator_range() = default;
+
+        auto begin() const -> iterator;
+        auto end() const -> iterator;
+
+        class iterator
+        {
+            public:
+                using value_type = abs_tile_handle;
+                using reference = abs_tile_handle;
+                using pointer = const abs_tile_handle *;
+                using difference_type = std::ptrdiff_t;
+                using iterator_category = std::forward_iterator_tag;
+
+                iterator() = default;
+
+                auto operator*() const -> abs_tile_handle;
+                auto operator++() -> iterator &;
+                bool operator==( const iterator &other ) const;
+                bool operator!=( const iterator &other ) const;
+
+            private:
+                friend class submap_tile_iterator_range;
+
+                // Begin iterator — starts at the first valid tile
+                iterator( mapbuffer &buf,
+                          std::vector<point_abs_sm> columns,
+                          int z,
+                          tripoint_abs_ms center,
+                          int radius,
+                          tripoint_abs_ms rect_begin,
+                          tripoint_abs_ms rect_end,
+                          int mode );
+
+                // End sentinel
+                explicit iterator( int column_count );
+
+                /** Advance to the next tile that passes the shape filter. */
+                void advance_to_valid();
+
+                mapbuffer *buf_ = nullptr;
+                std::vector<point_abs_sm> columns_;
+                int z_ = 0;
+                tripoint_abs_ms center_;
+                int radius_ = 0;
+                tripoint_abs_ms rect_begin_;
+                tripoint_abs_ms rect_end_;
+                int column_idx_ = -1;
+                int tile_idx_ = 0;
+                int mode_ = 0; // 0=all, 1=radius, 2=rectangle
+        };
+
+    private:
+        friend auto simulated_tiles_in_radius( mapbuffer &buf,
+                                               tripoint_abs_ms center, int radius ) -> submap_tile_iterator_range;
+        friend auto simulated_tiles_in_rectangle( mapbuffer &buf,
+                tripoint_abs_ms begin, tripoint_abs_ms end ) -> submap_tile_iterator_range;
+        friend auto simulated_tiles_on_zlevel( mapbuffer &buf,
+                                               int z ) -> submap_tile_iterator_range;
+
+        mapbuffer *buf_ = nullptr;
+        std::vector<point_abs_sm> columns_;
+        int z_ = 0;
+        tripoint_abs_ms center_;
+        int radius_ = 0;
+        tripoint_abs_ms rect_begin_;
+        tripoint_abs_ms rect_end_;
+        int mode_ = 0; // 0=all, 1=radius, 2=rectangle
+
+        /// Shape filter applied during iteration.
+        enum class shape : int {
+            all,        ///< No filter — emit all tiles in the collected columns.
+            radius,     ///< Chebyshev radius from center.
+            rectangle,  ///< Inclusive rectangle bounds.
+        };
+};
+
+/**
+ * A connected component of simulated submap columns.  Each island
+ * represents a set of columns that form a single connected region
+ * (4-directional adjacency) within the simulated set.
+ *
+ * The bitset provides O(1) contains() testing and efficient
+ * sub-rectangle iteration via columns_in().
+ *
+ * @warning Islands are rebuilt every time set_simulated_submaps()
+ * is called.  Do not retain references across that call.
+ */
+struct simulated_island {
+        point_abs_sm begin;   // half-open bounding box
+        point_abs_sm end;
+
+        /// True if @p p is within this island's bounding box AND the
+        /// bitset has an entry at that position.
+        bool contains( point_abs_sm p ) const;
+
+        /// Return all column positions in the intersection of
+        /// [r_begin, r_end) and [begin, end) that belong to this island.
+        auto columns_in( point_abs_sm r_begin, point_abs_sm r_end ) const
+        -> std::vector<point_abs_sm>;
+
+        /// Number of columns in this island.
+        auto size() const -> std::size_t;
+
+    private:
+        std::vector<bool> bits_;
+        friend class mapbuffer;
 };
 
 class mapbuffer_load_region
@@ -351,7 +605,7 @@ class mapbuffer_load_region
         auto view() const -> const mapbuffer_bounds_view & { // *NOPAD*
             return view_;
         }
-        auto submaps() const -> std::span<const mapbuffer_abs_submap_view> {
+        auto submaps() const -> std::span<const submap_ref> {
             return view_.submaps();
         }
 
@@ -365,29 +619,17 @@ class mapbuffer_load_region
         mapbuffer_bounds_view view_;
 };
 
-class mapbuffer_abs_tile_reader
-{
-    public:
-        mapbuffer_abs_tile_reader( mapbuffer &buffer, mapbuffer_lookup_options options = {} );
-
-        auto get_tile( const tripoint_abs_ms &p ) const -> std::optional<mapbuffer_abs_tile_view>;
-        auto get_tile_with_vehicle( const tripoint_abs_ms &p ) const
-        -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
-        auto get_submap_view( const tripoint_abs_sm &p ) const
-        -> std::optional<mapbuffer_abs_submap_view>;
-        auto get_omt_view( const tripoint_abs_omt &p ) const
-        -> std::optional<mapbuffer_abs_omt_view>;
-
-    private:
-        mapbuffer *buffer_ = nullptr;
-        mapbuffer_lookup_options options_;
-};
+// mapbuffer_abs_tile_reader was removed in Phase 2.
+// Use abs_tile_handle::fetch() / fetch_terrain_only() instead.
 
 /**
  * Store, buffer, save and load the entire world map.
  */
 class mapbuffer
 {
+        friend class abs_tile_handle;
+        friend class submap_tile_range;
+        friend class submap_tile_iterator_range;
     public:
         mapbuffer();
         ~mapbuffer();
@@ -421,6 +663,8 @@ class mapbuffer
          * is not stored and the given unique_ptr retains ownsership.
          */
         bool add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &sm );
+        bool add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &sm,
+                         mapbuffer_add_submap_options opts );
 
         /**
          * Absolute submap lookup with explicit residency/loading policy.
@@ -438,20 +682,12 @@ class mapbuffer
         auto get_submap( const tripoint_abs_sm &p,
         mapbuffer_lookup_options options = {} ) -> submap *;
 
-        auto get_abs_tile( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_tile_view>;
-        auto get_abs_tile_with_vehicle( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} )
-        -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
-        auto get_abs_submap_view( const tripoint_abs_sm &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_submap_view>;
-        auto get_abs_omt_view( const tripoint_abs_omt &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<mapbuffer_abs_omt_view>;
+        // get_abs_tile, get_abs_submap_view, get_abs_omt_view,
+        // simulated_submap_views, and make_abs_tile_reader were removed
+        // in Phase 2.  Use abs_tile_handle::fetch() / for_each_submap_tile() instead.
         auto for_each_simulated_submap(
             const std::function<void( const tripoint_abs_sm &, submap & )> &fn ) -> void;
         auto simulated_submap_positions() const -> std::vector<tripoint_abs_sm>;
-        auto simulated_submap_views() -> std::vector<mapbuffer_abs_submap_view>;
-        auto simulated_submap_views( int zlev ) -> std::vector<mapbuffer_abs_submap_view>;
         auto mark_submap_caches_dirty( const mapbuffer_mark_submap_caches_dirty_options &options )
         -> void;
         auto clear_spawns( const mapbuffer_submap_bounds_mutation_options &options ) -> void;
@@ -459,7 +695,58 @@ class mapbuffer
         auto fill_terrain( const mapbuffer_fill_terrain_options &options ) -> void;
         auto run_submap_batch_turns( const mapbuffer_run_submap_batch_turns_options &options )
         -> void;
-        auto make_abs_tile_reader( mapbuffer_lookup_options options = {} ) -> mapbuffer_abs_tile_reader;
+
+        auto is_column_state( point_abs_sm col,
+                              submap_column_load_state min_state ) const noexcept -> bool;
+
+        auto set_simulated_submaps(
+            const std::unordered_set<point_abs_sm> &columns ) -> void;
+
+        /**
+         * Return the columns that were demoted from simulated to resident in the
+         * most recent set_simulated_submaps() call.  The game loop should process
+         * these (e.g. deactivate NPCs, despawn monsters) and then call
+         * clear_last_demoted_columns().
+         */
+        auto get_last_demoted_columns() const -> const std::vector<point_abs_sm>& {  // *NOPAD*
+            return last_demoted_columns_;
+        }
+
+        /** Clear the demoted-column tracking after the game loop processes it. */
+        void clear_last_demoted_columns() {
+            last_demoted_columns_.clear();
+        }
+
+        /**
+         * Return the simulated islands built from the most recent
+         * set_simulated_submaps() call.  Span is stable until the next
+         * call to set_simulated_submaps().
+         */
+        auto simulated_islands() const -> std::span<const simulated_island>;
+
+        /**
+         * Get a range over all 144 tiles of the submap at @p p.
+         * Returns std::nullopt if the submap is not resident in memory.
+         * One hash lookup for all 144 tiles.
+         *
+         * @warning The returned range holds a raw submap pointer.  Iteration
+         * must not cross a submap_load_manager::update() call.
+         */
+        auto submap_tiles( const tripoint_abs_sm &p )
+        -> std::optional<submap_tile_range>;
+
+        auto for_each_submap_tile(
+            const submap &sm, tripoint_abs_sm abs_sm,
+            const std::function<void( const abs_tile_handle & )> &fn ) -> void;
+
+        /**
+         * Iterate all simulated submaps on @p zlev, calling @p fn for
+         * every tile on every simulated submap.
+         */
+        auto for_each_simulated_tile(
+            int zlev,
+            const std::function<void( const abs_tile_handle & )> &fn ) -> void;
+
         auto creature_tracker() -> Creature_tracker &;
         auto creature_tracker() const -> const Creature_tracker &;
         auto add_active_npc( const shared_ptr_fast<npc> &guy ) -> bool;
@@ -467,8 +754,9 @@ class mapbuffer
         auto remove_active_npc( const npc &guy ) -> void;
         auto find_active_npc( const tripoint_abs_ms &p ) const -> shared_ptr_fast<npc>;
         auto creature_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const
-        -> const Creature *;
+        -> Creature *;
         auto has_creature_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const -> bool;
+        auto tile_empty( const tripoint_abs_ms &p ) -> bool;
         auto has_loaded_vehicle( const vehicle *veh ) const -> bool;
         auto register_vehicle( vehicle *veh ) -> void;
         auto unregister_vehicle( vehicle *veh ) -> void;
@@ -476,76 +764,48 @@ class mapbuffer
         auto refresh_vehicle_registry_for_submap( const tripoint_abs_sm &p,
         mapbuffer_lookup_options options = {} ) -> void;
 
-        auto get_ter( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<ter_id>;
         auto set_ter( const tripoint_abs_ms &p, ter_id terrain,
         mapbuffer_lookup_options options = {} ) -> bool;
 
-        auto get_furn( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<furn_id>;
         auto set_furn( const tripoint_abs_ms &p, furn_id furn,
         mapbuffer_lookup_options options = {} ) -> bool;
         auto set_furn( const tripoint_abs_ms &p,
                        const mapbuffer_set_furn_options &options ) -> bool;
         auto veh_at( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> optional_vpart_position;
-        auto move_cost( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-        auto passable( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::optional<bool>;
         auto valid_move( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
         mapbuffer_valid_move_options options = {} ) -> bool;
         auto climb_difficulty( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-        auto has_flag( const std::string &flag, const tripoint_abs_ms &p,
+
+        /// Checks if there's a floor between two tiles exactly 1 z-level apart.
+        /// True = solid floor blocks the vertical attack/movement.
+        auto floor_between( const tripoint_abs_ms &first, const tripoint_abs_ms &second,
         mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_ter( const std::string &flag, const tripoint_abs_ms &p,
+
+        /// Checks LOS + move_cost constraints along a bresenham line between @p f and @p t.
+        /// Same semantics as map::clear_path but operates in absolute coordinates.
+        auto clear_path( const tripoint_abs_ms &f, const tripoint_abs_ms &t, int range,
+                         int cost_min, int cost_max,
         mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_furn( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_vpart( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_furn_or_vpart( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag( ter_bitflags flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_ter( ter_bitflags flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_furn( ter_bitflags flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto has_flag_ter_or_furn( ter_bitflags flag, const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> bool;
+        auto find_clear_path( const tripoint_abs_ms &source,
+                              const tripoint_abs_ms &destination ) -> std::vector<tripoint_abs_ms>;
+
+        auto passable( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<bool>;
         auto ter_vars( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
         auto furn_vars( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> data_vars::data_set *;
-        auto furnname( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> std::string;
-
         auto get_trap( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<trap_id>;
-        auto set_trap( const tripoint_abs_ms &p, trap_id trap,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto creature_on_trap( Creature &critter, bool may_avoid = true ) -> void;
-
         auto get_radiation( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-        auto set_radiation( const tripoint_abs_ms &p, int radiation,
-        mapbuffer_lookup_options options = {} ) -> bool;
-        auto adjust_radiation( const tripoint_abs_ms &p, int delta,
-        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-
         auto get_lum( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<std::uint8_t>;
-        auto set_lum( const tripoint_abs_ms &p, std::uint8_t luminance,
-        mapbuffer_lookup_options options = {} ) -> bool;
 
         auto get_temperature( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
-        auto set_temperature( const tripoint_abs_ms &p, int temperature,
-        mapbuffer_lookup_options options = {} ) -> bool;
 
         auto get_field( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> field *;
@@ -557,6 +817,24 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> std::optional<time_duration>;
         auto get_field_intensity( const tripoint_abs_ms &p, const field_type_id &type,
         mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+        auto set_trap( const tripoint_abs_ms &p, trap_id trap,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /** Remove whatever trap is at @p p.  No-op if there's no trap or only tr_null. */
+        auto remove_trap( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto creature_on_trap( Creature &critter, bool may_avoid = true ) -> void;
+
+        auto set_radiation( const tripoint_abs_ms &p, int radiation,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto adjust_radiation( const tripoint_abs_ms &p, int delta,
+        mapbuffer_lookup_options options = {} ) -> std::optional<int>;
+
+        auto set_lum( const tripoint_abs_ms &p, std::uint8_t luminance,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        auto set_temperature( const tripoint_abs_ms &p, int temperature,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
         auto mod_field_age( const tripoint_abs_ms &p,
                             const mapbuffer_field_age_options &options ) -> std::optional<time_duration>;
         auto mod_field_intensity( const tripoint_abs_ms &p,
@@ -571,8 +849,6 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> bool;
         auto get_items( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> location_vector<item> *;
-        auto water_from( const tripoint_abs_ms &p,
-        mapbuffer_lookup_options options = {} ) -> detached_ptr<item>;
         auto add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
         const mapbuffer_add_item_or_charges_options &options = {} ) -> detached_ptr<item>;
         auto add_item( const tripoint_abs_ms &p, detached_ptr<item> &&new_item,
@@ -642,6 +918,302 @@ class mapbuffer
         mapbuffer_lookup_options options = {} ) -> bool;
         auto partial_con_remove( const tripoint_abs_ms &p,
         mapbuffer_lookup_options options = {} ) -> bool;
+
+        // ----- Tile property queries -----
+
+        /// Returns true if the tile has a bashable vehicle part, furniture, or terrain.
+        auto is_bashable( const tripoint_abs_ms &p, bool allow_floor = false,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// Returns true if the terrain at p is bashable.
+        auto is_bashable_ter( const tripoint_abs_ms &p, bool allow_floor = false,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// Returns true if the furniture at p is bashable.
+        auto is_bashable_furn( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// Returns true if the furniture or terrain at p is bashable.
+        auto is_bashable_ter_furn( const tripoint_abs_ms &p, bool allow_floor = false,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// Returns bash.str_max of the furniture or terrain at p, or -1 if not bashable.
+        auto bash_strength( const tripoint_abs_ms &p, bool allow_floor = false,
+        mapbuffer_lookup_options options = {} ) -> int;
+        /// Returns bash.str_min of the furniture or terrain at p, or -1 if not bashable.
+        auto bash_resistance( const tripoint_abs_ms &p, bool allow_floor = false,
+        mapbuffer_lookup_options options = {} ) -> int;
+        /// Returns a success rating (-1 to 10) for a given strength, used for AI pathing.
+        auto bash_rating( int str, const tripoint_abs_ms &p, bool allow_floor = false,
+        mapbuffer_lookup_options options = {} ) -> int;
+
+        /// True if tile has SWIMMABLE + DEEP_WATER flags (and no boardable vehicle part).
+        auto is_divable( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if tile has CURRENT flag but not DEEP_WATER.
+        auto is_water_shallow_current( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// True if any items exist at the given tile.
+        auto has_items( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        // ----- Nearby / radius queries -----
+
+        /// True if a fire field or USABLE_FIRE flag exists within radius tiles.
+        auto has_nearby_fire( const tripoint_abs_ms &p, int radius = 1,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if FLAT_SURF flag (terrain, furniture, or vehicle) exists within radius.
+        auto has_nearby_table( const tripoint_abs_ms &p, int radius = 1,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if CAN_SIT flag or vehicle SEAT part exists within radius.
+        auto has_nearby_chair( const tripoint_abs_ms &p, int radius = 1,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        // ----- Flag / convenience checks -----
+
+        /// True if items can be dropped on this tile (no NOITEM/SEALED flags, or CARGO vehicle part).
+        auto can_put_items( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain/furniture allows item placement (no NOITEM/SEALED flags).
+        auto can_put_items_ter_furn( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if any field at p is dangerous.
+        auto dangerous_field_at( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if the tile is harvestable (furniture or terrain has a non-empty harvest list).
+        auto is_harvestable( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if items at p are accessible (not SEALED unless LIQUIDCONT).
+        auto accessible_items( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if at least one adjacent tile is impassable.
+        auto is_wall_adjacent( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if the tile has flammable terrain/furniture, flammable items, or field webs.
+        auto is_flammable( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if any item at p has the TINDER flag.
+        auto tinder_at( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if there are flammable items at p (respects SEALED unless ALLOW_FIELD_EFFECT).
+        auto flammable_items_at( const tripoint_abs_ms &p, int threshold = 0,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        // ----- Data getters -----
+
+        /// Returns the harvest_id for the terrain/furniture at p (respects HARVESTED flag).
+        auto get_harvest( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> const harvest_id &;
+        /// Returns the harvest names (item type names) for the terrain/furniture at p.
+        auto get_harvest_names( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> const std::set<std::string> &;
+        /// Returns the terrain id that this tile transforms into (e.g. when harvested/picked).
+        auto get_ter_transforms_into( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> ter_id;
+        /// Returns the furniture id that this tile transforms into.
+        auto get_furn_transforms_into( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> furn_id;
+        /// Returns the name of the terrain at p.
+        auto tername( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::string;
+        /// Returns the display name of the terrain/furniture/vehicle at p.
+        auto name( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::string;
+        /// Returns the display name with article ("a/the ...").
+        auto disp_name( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::string;
+        /// Returns the name of the obstacle (terrain/furniture/vehicle) at p.
+        auto obstacle_name( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::string;
+        auto sees( const tripoint_abs_ms &F, const tripoint_abs_ms &T, int range,
+        int &bresenham_slope, mapbuffer_lookup_options options = {} ) -> const bool;
+        auto sees( const tripoint_abs_ms &F, const tripoint_abs_ms &T, int range,
+        mapbuffer_lookup_options options = {} ) -> const bool;
+        auto obstacle_coverage( const tripoint_abs_ms &loc1, const tripoint_abs_ms &loc2,
+        const mapbuffer_lookup_options options = {} ) -> const int;
+        /// Returns a string containing relevant flags (e.g. "sharp", "rough").
+        auto features( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::string;
+        /// Returns the ranged target size (0.0 to 1.0) for combat purposes.
+        auto ranged_target_size( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> double;
+        /// Returns the maximum volume capacity of the tile.
+        auto max_volume( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> units::volume;
+        /// Returns the remaining free volume at the tile.
+        auto free_volume( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> units::volume;
+        /// Returns the volume currently stored at the tile.
+        auto stored_volume( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> units::volume;
+
+        // ----- Item search -----
+
+        /// True if any item at p satisfies the predicate.
+        auto has_item_with( const tripoint_abs_ms &p,
+                            const std::function<bool( const item & )> &filter,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if any adjacent tile has an item satisfying the predicate.
+        auto has_adjacent_item_with( const tripoint_abs_ms &p,
+                                     const std::function<bool( const item & )> &filter,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if any adjacent tile has furniture satisfying the predicate.
+        auto has_adjacent_furniture_with( const tripoint_abs_ms &p,
+                                          const std::function<bool( const furn_t & )> &filter,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if any adjacent tile has terrain satisfying the predicate.
+        auto has_adjacent_terrain_with( const tripoint_abs_ms &p,
+                                        const std::function<bool( const ter_t & )> &filter,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// Check if items at p are visible from 'from' (respects SEALED/CONTAINER).
+        auto sees_some_items( const tripoint_abs_ms &p, const tripoint_abs_ms &from,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// Check if items at p could be seen from 'from' (same but doesn't require items).
+        auto could_see_items( const tripoint_abs_ms &p, const tripoint_abs_ms &from,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        // ----- Movement cost helpers -----
+
+        /// Move cost ignoring vehicles.
+        auto move_cost_ter_furn( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> int;
+        /// True if terrain+furniture is impassable (ignoring vehicles).
+        auto impassable_ter_furn( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain+furniture is passable (ignoring vehicles).
+        auto passable_ter_furn( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        // ----- Movement execution helpers (off-bubble support) -----
+
+        /// Terrain ID at @p p.
+        auto ter( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<ter_id>;
+
+        /// Terrain ID at @p p.
+        auto furn( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::optional<furn_id>;
+
+        /// Furniture name at @p p.
+        auto furnname( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> std::string;
+
+        /// True if terrain or furniture at @p p has the string @p flag.
+        auto has_flag( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain or furniture at @p p has the ter_bitflags @p flag.
+        auto has_flag( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain at @p p has the string @p flag.
+        auto has_flag_ter( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain or furniture at @p p has the string @p flag.
+        auto has_flag_ter_or_furn( const std::string &flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// True if terrain or furniture at @p p has @p flag (ter_bitflags enum).
+        auto has_flag_ter_or_furn( ter_bitflags flag, const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// True if @p p has a floor or support (checks submap floor cache).
+        auto has_floor_or_support( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// True if there is a physical floor at @p p (tile has no TFLAG_NO_FLOOR).
+        auto has_floor( const tripoint_abs_ms &p, bool visible_only = false,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// True if the tile at @p p is transparent (you can see past it).
+        auto is_transparent( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// True if @p p is outside (checks submap outside cache).
+        auto is_outside( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// Combined move cost (terrain + vehicle) from @p from to @p to.
+        auto combined_movecost( const tripoint_abs_ms &from, const tripoint_abs_ms &to,
+                                const vehicle *ignored_vehicle = nullptr,
+                                int modifier = 0, bool flying = false, bool via_ramp = false,
+        mapbuffer_lookup_options options = {} ) -> int;
+
+        /// Move cost including vehicles at @p p.
+        auto move_cost( const tripoint_abs_ms &p, const vehicle *ignored_vehicle = nullptr,
+        mapbuffer_lookup_options options = {} ) -> int;
+
+        /// True if a vehicle at @p from blocks movement toward @p to via rotation.
+        auto obstructed_by_vehicle_rotation( const tripoint_abs_ms &from,
+                                             const tripoint_abs_ms &to,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        auto hit_with_acid( const tripoint_abs_ms &p,
+        const mapbuffer_lookup_options options = {} ) -> bool;
+        auto hit_with_fire( const tripoint_abs_ms &p,
+        const mapbuffer_lookup_options options = {} ) -> bool;
+        /// Check if an entity can open a door at @p p (checks OPENCLOSE_INSIDE flag and mounting).
+        auto can_open_door( const tripoint_abs_ms &p, bool inside,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// Open a door at @p p (mutates terrain/furniture to its open variant).
+        auto open_door( const tripoint_abs_ms &p, bool inside,
+        mapbuffer_lookup_options options = {} ) -> bool;
+
+        /// Bash terrain/furniture at @p p with given @p strength.
+        auto bash( const tripoint_abs_ms &p, int str, bool silent = false,
+        mapbuffer_lookup_options options = {} ) -> int;
+
+        /// Board a vehicle at @p p with @p who as passenger.
+        auto board_vehicle( const tripoint_abs_ms &p, Character &who,
+        mapbuffer_lookup_options options = {} ) -> bool;
+        /// Unboard a vehicle at @p p.
+        auto unboard_vehicle( const tripoint_abs_ms &p, bool dead_passenger = false,
+        mapbuffer_lookup_options options = {} ) -> void;
+
+        /// Apply field effects at the creature's position.
+        auto creature_in_field( Creature &critter,
+        mapbuffer_lookup_options options = {} ) -> void;
+
+        /// Iterate all loaded vehicles.
+        auto for_each_vehicle( const std::function<void( vehicle & )> &fn ) -> void;
+        /// Iterate all loaded vehicles (const overload).
+        auto for_each_vehicle( const std::function<void( const vehicle & )> &fn ) const -> void;
+
+        /// Cheap light query for off-bubble AI — sky + nearby sources + simple LOS.
+        /// No shadowcasting, no diffusion. Not suitable for rendering.
+        auto cheap_light_at( const tripoint_abs_ms &p,
+        mapbuffer_lookup_options options = {} ) -> float;
+
+        // ----- Field operations -----
+
+        /// Add a field splatter at position.
+        auto add_splatter( const field_type_id &type, const tripoint_abs_ms &where, int intensity = 1,
+        mapbuffer_lookup_options options = {} ) -> void;
+        /// Add a splatter trail between two positions.
+        auto add_splatter_trail( const field_type_id &type, const tripoint_abs_ms &from,
+                                 const tripoint_abs_ms &to,
+        mapbuffer_lookup_options options = {} ) -> void;
+        /// Add a radial splash field.
+        auto add_splash( const field_type_id &type, const tripoint_abs_ms &center, int radius,
+                         int intensity,
+        mapbuffer_lookup_options options = {} ) -> void;
+        /// Propagate a field from center.
+        auto propagate_field( const tripoint_abs_ms &center, const field_type_id &type,
+                              int amount, int max_intensity = 0,
+        mapbuffer_lookup_options options = {} ) -> void;
+
+        // ----- Item mutations -----
+
+        /// Spawn an item at p.
+        auto spawn_item( const tripoint_abs_ms &p, const itype_id &type_id,
+                         unsigned quantity = 1, int charges = 0,
+                         const time_point &birthday = calendar::start_of_cataclysm,
+                         int damlevel = 0,
+        mapbuffer_lookup_options options = {} ) -> void;
+        /// Spawn a list of items at p.
+        auto spawn_items( const tripoint_abs_ms &p,
+                          std::vector<detached_ptr<item>> new_items,
+        mapbuffer_lookup_options options = {} ) -> std::vector<detached_ptr<item>>;
+
+        // ----- Mutations -----
+
+        /// Generate rubble at p (sets terrain and furniture).
+        auto make_rubble( const tripoint_abs_ms &p, const furn_id &rubble_type,
+                          const ter_id &floor_type = t_dirt, bool overwrite = false,
+        mapbuffer_lookup_options options = {} ) -> void;
 
         /** Get a submap stored in this buffer.
          *
@@ -748,7 +1320,7 @@ class mapbuffer
          *
          * Does nothing for omts that are fully uniform (they regenerate on demand).
          */
-        void unload_omt( const tripoint_abs_omt &omt_addr, bool save = true );
+        void unload_omt( const tripoint_abs_omt &omt_addr );
 
         /**
          * Move all submaps from this buffer into @p dest, leaving this buffer empty.
@@ -883,6 +1455,19 @@ class mapbuffer
 
         auto get_boundary_terrain() const -> ter_id;
 
+        // --- Per-island sound queues ---
+        // Sounds are routed to the simulated island they originate in.
+        // Creatures read from their own island's queue, using the flood-fill
+        // path (in-bubble / primary dimension) or simple distance attenuation
+        // (out-of-bubble / other dimensions).
+        /// Queue @p evt into the island containing its origin column.
+        void queue_sound( sound_event evt );
+        /// Get the sound queue for the island containing @p col, or nullptr
+        /// if that column is not currently simulated.
+        auto island_sounds_for( point_abs_sm col ) -> std::vector<sound_event> *;
+        /// Look up the island containing @p col, or nullptr.
+        auto island_for( point_abs_sm col ) const -> const simulated_island *;
+
         auto is_outside_pocket_dimension_bounds( const tripoint_abs_sm &p ) const -> bool {
             return ::is_outside_pocket_dimension_bounds( pocket_info_, p );
         }
@@ -890,6 +1475,10 @@ class mapbuffer
         auto is_outside_pocket_dimension_bounds( const tripoint_abs_ms &p ) const -> bool {
             return ::is_outside_pocket_dimension_bounds( pocket_info_, p );
         }
+
+        /** Build simulated islands from a column set (connected-components BFS). */
+        static auto build_islands( const std::unordered_set<point_abs_sm> &columns )
+        -> std::vector<simulated_island>;
 
     private:
         // There's a very good reason this is private,
@@ -909,6 +1498,18 @@ class mapbuffer
         auto for_each_simulated_submap_position(
             const std::function<void( const tripoint_abs_sm & )> &fn,
             std::optional<int> zlev = std::nullopt ) const -> void;
+        /// Sparse column-state cache: keys present in this map are at least
+        /// resident.  simulated columns have state == simulated.  Columns not
+        /// in the map are not_loaded.  Guarded by submaps_mutex_ (same as
+        /// submaps).  Written at turn boundaries; read on the hot path.
+        std::unordered_map<point_abs_sm, submap_column_load_state> column_states_;
+        std::unordered_set<point_abs_sm> dirty_columns_;
+        /** Columns demoted from simulated to resident in the last set_simulated_submaps() call. */
+        std::vector<point_abs_sm> last_demoted_columns_;
+
+        /** Simulated islands built from the most recent set_simulated_submaps() call. */
+        std::vector<simulated_island> simulated_islands_;
+
         submap_map_t submaps;
         Creature_tracker creature_tracker_;
         std::list<shared_ptr_fast<npc>> active_npcs_;
@@ -921,12 +1522,41 @@ class mapbuffer
         std::set<tripoint_abs_sm> submaps_with_active_items_;
         std::set<tripoint_abs_sm> submaps_with_luminous_items_;
 
+        /// Column → island-index lookup (rebuilt alongside simulated_islands_).
+        std::unordered_map<point_abs_sm, size_t> column_to_island_;
+        /// Per-island sound queues (indexed parallel to simulated_islands_).
+        std::vector<std::vector<sound_event>> island_sounds_;
+
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
         /// Used to construct the correct save/load path without querying global state.
         dimension_id dimension_id_;
         std::optional<pocket_dimension_data> pocket_info_;
 };
 
+// ----- Layer 3: Island-mapped spatial iterators (free functions) -----
+
+/**
+ * All tiles within Chebyshev distance @p radius from @p center,
+ * on any simulated island at @p center.z().
+ */
+auto simulated_tiles_in_radius( mapbuffer &buf,
+                                tripoint_abs_ms center, int radius )
+-> submap_tile_iterator_range; // *NOPAD*
+
+/**
+ * All tiles in [begin, end] (inclusive both ends) that fall on
+ * simulated submaps.  Z from @p begin.z() to @p end.z().
+ */
+auto simulated_tiles_in_rectangle( mapbuffer &buf,
+                                   tripoint_abs_ms begin, tripoint_abs_ms end )
+-> submap_tile_iterator_range; // *NOPAD*
+
+/// All simulated tiles at z-level @p z in @p buf's dimension.
+auto simulated_tiles_on_zlevel( mapbuffer &buf, int z )
+-> submap_tile_iterator_range; // *NOPAD*
+
 // Included after the full mapbuffer definition to avoid circular dependencies.
 // Provides the MAPBUFFER macro and MAPBUFFER_REGISTRY global.
 #include "mapbuffer_registry.h"
+
+

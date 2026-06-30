@@ -68,7 +68,7 @@ void fungal_effects::fungalize( const tripoint_bub_ms &p, Creature *origin, doub
 {
     if( monster *const mon_ptr = g->critter_at<monster>( p ) ) {
         monster &critter = *mon_ptr;
-        if( gm.u.sees( p ) &&
+        if( gm.u.sees( bub_to_abs( p ) ) &&
             !critter.type->in_species( FUNGUS ) ) {
             add_msg( _( "The %s is covered in tiny spores!" ), critter.name() );
         }
@@ -195,7 +195,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int
             if( m.get_field_intensity( p, fd_fungal_haze ) != 0 ) {
                 if( x_in_y( growth * 10, 800 ) ) { // young trees are vulnerable
                     m.ter_set( p, t_fungus );
-                    if( gm.place_critter_at( mon_fungal_blossom, p ) && gm.u.sees( p ) ) {
+                    if( gm.place_critter_at( mon_fungal_blossom, p ) && gm.u.sees( bub_to_abs( p ) ) ) {
                         add_msg( m_warning, _( "The young tree blooms forth into a fungal blossom!" ) );
                     }
                 } else if( x_in_y( growth * 10, 400 ) ) {
@@ -211,7 +211,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int
             if( m.get_field_intensity( p, fd_fungal_haze ) != 0 ) {
                 if( x_in_y( growth * 10, 100 ) ) {
                     m.ter_set( p, t_fungus );
-                    if( gm.place_critter_at( mon_fungal_blossom, p ) && gm.u.sees( p ) ) {
+                    if( gm.place_critter_at( mon_fungal_blossom, p ) && gm.u.sees( bub_to_abs( p ) ) ) {
                         add_msg( m_warning, _( "The tree blooms forth into a fungal blossom!" ) );
                     }
                 } else if( x_in_y( growth * 10, 600 ) ) {

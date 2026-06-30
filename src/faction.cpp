@@ -517,14 +517,14 @@ int npc::faction_display( const catacurses::window &fac_w, const int width ) con
                          has_bionic( bio_infolink );
     // is the NPC even in the same area as the player?
     if( rl_dist( player_abspos, abs_omt_pos() ) > 3 ||
-        ( rl_dist( g->u.bub_pos(), bub_pos() ) > SEEX * 2 || !g->u.sees( bub_pos() ) ) ) {
+        ( rl_dist( g->u.abs_pos(), abs_pos() ) > SEEX * 2 || !g->u.sees( abs_pos() ) ) ) {
         if( u_has_radio && guy_has_radio ) {
             // TODO: better range calculation than just elevation.
             int max_range = 200;
-            max_range *= ( 1 + ( g->u.bub_pos().z() * 0.1 ) );
-            max_range *= ( 1 + ( bub_pos().z() * 0.1 ) );
-            if( ( ( g->u.bub_pos().z() >= 0 && bub_pos().z() >= 0 ) ||
-                  ( g->u.bub_pos().z() == bub_pos().z() ) ) &&
+            max_range *= ( 1 + ( g->u.abs_pos().z() * 0.1 ) );
+            max_range *= ( 1 + ( abs_pos().z() * 0.1 ) );
+            if( ( ( g->u.abs_pos().z() >= 0 && abs_pos().z() >= 0 ) ||
+                  ( g->u.abs_pos().z() == abs_pos().z() ) ) &&
                 square_dist( g->u.abs_sm_pos(), abs_sm_pos() ) <= max_range ) {
                 retval = 2;
                 can_see = _( "Within radio range" );

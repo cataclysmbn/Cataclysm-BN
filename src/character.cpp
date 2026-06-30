@@ -61,7 +61,6 @@
 #include "itype.h"
 #include "iuse.h"
 #include "iuse_actor.h"
-#include "legacy_pathfinding.h"
 #include "lightmap.h"
 #include "line.h"
 #include "make_static.h"
@@ -473,7 +472,7 @@ Character::Character() :
     custom_profession.clear();
     prof = profession::generic();
 
-    *path_settings = pathfinding_settings{ 0, 1000, 1000, 0, true, true, true, false, true };
+    *path_settings = PathfindingSettings{ 0, 1000, 1000, 0, true, true, true, false, true };
 
     move_mode = CMM_WALK;
     next_expected_position = std::nullopt;
@@ -5722,7 +5721,7 @@ void Character::update_needs( int rate_multiplier )
             }
 
             const character_funcs::comfort_level comfort =
-                character_funcs::base_comfort_value( *this, bub_pos() ).level;
+                character_funcs::base_comfort_value( *this, abs_pos() ).level;
 
             // Best possible bed increases recovery by 30% of base
             if( comfort >= character_funcs::comfort_level::very_comfortable ) {
@@ -8622,7 +8621,7 @@ void Character::cough( bool harmful, int loudness )
         add_msg( m_bad, _( "You cough heavily." ) );
     }
     sound_event se;
-    se.origin = bub_pos();
+    se.origin = abs_pos();
     se.volume = loudness;
     se.category = sounds::sound_t::speech;
     se.description = _( "a hacking cough." );
@@ -8764,7 +8763,7 @@ void Character::shout( std::string msg, bool order )
     }
 
     sound_event se;
-    se.origin = bub_pos();
+    se.origin = abs_pos();
     se.volume = noise;
     se.category = order ? sounds::sound_t::order : sounds::sound_t::alert;
     se.description = msg;
@@ -9607,7 +9606,7 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
     int dam = dealt_dams.total_damage();
 
     // TODO: Pre or post blit hit tile onto "this"'s location here
-    if( dam > 0 && g->u.sees( bub_pos() ) ) {
+    if( dam > 0 && g->u.sees( abs_pos() ) ) {
         g->draw_hit_player( *this, dam );
 
         if( is_player() && source ) {
@@ -9900,7 +9899,7 @@ void Character::spores()
     fungal_effects fe( *g, here );
     //~spore-release sound
     sound_event se;
-    se.origin = bub_pos();
+    se.origin = abs_pos();
     se.volume = 50;
     se.category = sounds::sound_t::combat;
     se.description = _( "Pouf!" );
@@ -9923,7 +9922,7 @@ void Character::blossoms()
 {
     // Player blossoms are shorter-ranged, but you can fire much more frequently if you like.
     sound_event se;
-    se.origin = bub_pos();
+    se.origin = abs_pos();
     se.volume = 50;
     se.category = sounds::sound_t::combat;
     se.description = _( "Pouf!" );
@@ -11228,25 +11227,6 @@ int Character::adjust_for_focus( int amount ) const
     return roll_remainder( tmp );
 }
 
-std::set<tripoint_bub_ms> Character::get_legacy_path_avoid() const
-{
-    std::set<tripoint_bub_ms> ret;
-    for( npc &guy : g->all_npcs() ) {
-        if( sees( guy ) ) {
-            ret.insert( guy.bub_pos() );
-        }
-    }
-
-    // TODO: Add known traps in a way that doesn't destroy performance
-
-    return ret;
-}
-
-const pathfinding_settings &Character::get_legacy_pathfinding_settings() const
-{
-    return *path_settings;
-}
-
 std::pair<PathfindingSettings, RouteSettings> Character::get_pathfinding_pair() const
 {
     PathfindingSettings path_settings;
@@ -11479,9 +11459,26 @@ void Character::place_corpse()
 
 void Character::place_corpse( const tripoint_abs_omt &om_target )
 {
-    const auto view = get_mapbuffer().get_abs_omt_view( om_target, { mapbuffer_lookup_mode::load_or_generate } );
+    auto &mb = get_mapbuffer();
+    // Ensure the OMT is loaded/generated, then pick a random submap in it.
+    mb.generate_omt( om_target );
+    const point_abs_sm sm_base = project_to<coords::sm>( om_target ).xy();
+    const auto omt_offsets = std::array {
+        point_rel_sm::zero(),
+        point_rel_sm::east(),
+        point_rel_sm::south(),
+        point_rel_sm::south_east(),
+    };
+    const auto &sm_off = random_entry( omt_offsets );
+    const tripoint_abs_sm target_sm( sm_base + sm_off, om_target.z() );
+    submap *sm = mb.lookup_submap_in_memory( target_sm );
+    if( !sm ) {
+        debugmsg( "place_corpse: submap at %s not loaded after generate_omt",
+                  target_sm.to_string() );
+        return;
+    }
+
     point_omt_ms omt_ms{ rng( 1, SEEX * 2 - 2 ), rng( 1, SEEX * 2 - 2 ) };
-    const auto sm = *view->get_submap_view( project_remain<coords::sm>( omt_ms ).quotient );
     auto sm_ms = project_remain<coords::sm>( omt_ms ).remainder;
     // This makes no sense at all. It may find a random tile without furniture, but
     // if the first try to find one fails, it will go through all tiles of the map
@@ -11491,10 +11488,10 @@ void Character::place_corpse( const tripoint_abs_omt &om_target )
     // Q: Why use furn_str_id instead of f_null?
     // TODO: fix it, see above.
 
-    if( !sm.tile( sm_ms ).passable_ter_furn() ) {
+    if( !abs_tile_handle( *sm, target_sm, sm_ms ).passable() ) {
         for( int i = 0; i < 32; i++ ) {
-            sm_ms = random_entry( sm.tiles() );
-            if( sm.tile( sm_ms ).passable_ter_furn() ) {
+            sm_ms = random_entry( submap_tiles() );
+            if( abs_tile_handle( *sm, target_sm, sm_ms ).passable() ) {
                 break;
             }
         }
@@ -11561,24 +11558,22 @@ std::vector<Creature *> Character::get_hostile_creatures( int range ) const
     } );
 }
 
-bool Character::knows_trap( const tripoint_bub_ms &pos ) const
+bool Character::knows_trap( const tripoint_abs_ms &pos ) const
 {
-    const auto p = bub_to_abs( pos );
-    return known_traps.contains( p );
+    return known_traps.contains( pos );
 }
 
-void Character::add_known_trap( const tripoint_bub_ms &pos, const trap &t )
+void Character::add_known_trap( const tripoint_abs_ms &pos, const trap &t )
 {
-    const auto p = bub_to_abs( pos );
     if( t.is_null() ) {
-        known_traps.erase( p );
+        known_traps.erase( pos );
     } else {
         // TODO: known_traps should map to a trap_str_id
-        known_traps[p] = t.id.str();
+        known_traps[pos] = t.id.str();
     }
 }
 
-bool Character::avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const
+bool Character::avoid_trap( const tripoint_abs_ms &pos, const trap &tr ) const
 {
     /** @EFFECT_DEX increases chance to avoid traps */
 
@@ -11788,19 +11783,19 @@ Attitude Character::attitude_to( const Creature &other ) const
     return Attitude::A_NEUTRAL;
 }
 
-bool Character::sees( const tripoint_bub_ms &t, bool, int ) const
+bool Character::sees( const tripoint_abs_ms &t, bool, int ) const
 {
-    if( t == bub_pos() ) {
+    if( t == abs_pos() ) {
         return true;
     }
-    const int wanted_range = rl_dist( bub_pos(), t );
+    const int wanted_range = rl_dist( abs_pos(), t );
 
     // Clairvoyance is now pretty cheap, so we can check it early
     if( wanted_range < clairvoyance() ) {
         return true;
     }
 
-    bool can_see = is_player() ? get_map().pl_sees( t, wanted_range ) :
+    bool can_see = is_player() ? get_map().pl_sees( abs_to_bub( t ), wanted_range ) :
                    Creature::sees( t );
     if( can_see && wanted_range > unimpaired_range() ) {
         can_see = false;
@@ -11822,17 +11817,17 @@ bool Character::sees( const Creature &critter ) const
     return Creature::sees( critter );
 }
 
-void Character::set_destination( const std::vector<tripoint_bub_ms> &route )
+void Character::set_destination( const std::vector<tripoint_abs_ms> &route )
 {
     set_destination( route, std::make_unique<player_activity>() );
 }
 
-void Character::set_destination( const std::vector<tripoint_bub_ms> &route,
+void Character::set_destination( const std::vector<tripoint_abs_ms> &route,
                                  std::unique_ptr<player_activity> new_destination_activity )
 {
     auto_move_route = route;
     set_destination_activity( std::move( new_destination_activity ) );
-    destination_point.emplace( bub_to_abs( route.back() ) );
+    destination_point.emplace( route.back() );
 }
 
 std::unique_ptr<player_activity> Character::clear_destination()
@@ -11876,7 +11871,7 @@ void Character::start_destination_activity()
     assign_activity( clear_destination() );
 }
 
-std::vector<tripoint_bub_ms> &Character::get_auto_move_route()
+std::vector<tripoint_abs_ms> &Character::get_auto_move_route()
 {
     return auto_move_route;
 }
@@ -11888,7 +11883,7 @@ action_id Character::get_next_auto_move_direction()
     }
 
     if( next_expected_position ) {
-        if( bub_pos() != *next_expected_position ) {
+        if( abs_pos() != *next_expected_position ) {
             // We're off course, possibly stumbling or stuck, cancel auto move
             return ACTION_NULL;
         }
@@ -11897,7 +11892,7 @@ action_id Character::get_next_auto_move_direction()
     next_expected_position.emplace( auto_move_route.front() );
     auto_move_route.erase( auto_move_route.begin() );
 
-    auto dp = *next_expected_position - bub_pos();
+    auto dp = *next_expected_position - abs_pos();
 
     // Make sure the direction is just one step and that
     // all diagonal moves have 0 z component
@@ -11909,10 +11904,10 @@ action_id Character::get_next_auto_move_direction()
     return get_movement_action_from_delta( dp, iso_rotate::yes );
 }
 
-bool Character::defer_move( const tripoint_bub_ms &next )
+bool Character::defer_move( const tripoint_abs_ms &next )
 {
     // next must be adjacent to current pos
-    if( square_dist( next, bub_pos() ) != 1 ) {
+    if( square_dist( next, abs_pos() ) != 1 ) {
         return false;
     }
     // next must be adjacent to subsequent move in any preexisting automove route
@@ -11920,7 +11915,7 @@ bool Character::defer_move( const tripoint_bub_ms &next )
         return false;
     }
     auto_move_route.insert( auto_move_route.begin(), next );
-    next_expected_position = bub_pos();
+    next_expected_position = abs_pos();
     return true;
 }
 
@@ -12173,7 +12168,7 @@ float Character::fall_damage_mod() const
 }
 
 // force is maximum damage to hp before scaling
-int Character::impact( const int force, const tripoint_bub_ms &p )
+int Character::impact( const int force, const tripoint_abs_ms &p )
 {
     // Falls over ~30m are fatal more often than not
     // But that would be quite a lot considering 21 z-levels in game
@@ -12195,7 +12190,8 @@ int Character::impact( const int force, const tripoint_bub_ms &p )
 
     // Being slammed against things rather than landing means we can't
     // control the impact as well
-    const bool slam = p != bub_pos();
+    const bool slam = p != abs_pos();
+    auto &mb = get_mapbuffer();
     std::string target_name = "a swarm of bugs";
     Creature *critter = g->critter_at( p );
     if( critter != this && critter != nullptr ) {
@@ -12206,7 +12202,7 @@ int Character::impact( const int force, const tripoint_bub_ms &p )
         // TODO: Modify based on something?
         mod = 1.0f;
         effective_force = force;
-    } else if( const optional_vpart_position vp = g->m.veh_at( p ) ) {
+    } else if( const optional_vpart_position vp = mb.veh_at( p ) ) {
         // Slamming into vehicles
         // TODO: Integrate it with vehicle collision function somehow
         target_name = vp->vehicle().disp_name();
@@ -12224,17 +12220,21 @@ int Character::impact( const int force, const tripoint_bub_ms &p )
         }
     } else {
         // Slamming into terrain/furniture
-        target_name = g->m.disp_name( p );
-        int hard_ground = g->m.ter( p )->is_diggable() ? 0 : 3;
+        target_name = mb.disp_name( p );
+        const auto tile = abs_tile_handle::fetch( mb, p );
+        int hard_ground = 0;
+        if( tile ) {
+            hard_ground = tile->ter_obj().is_diggable() ? 0 : 3;
+        }
         armor_eff = 0.25f; // Not much
         // Get cut by stuff
         // This isn't impalement on metal wreckage, more like flying through a closed window
-        cut = g->m.has_flag( TFLAG_SHARP, p ) ? 5 : 0;
+        cut = mb.has_flag( TFLAG_SHARP, p ) ? 5 : 0;
         effective_force = force + hard_ground;
         mod = slam ? 1.0f : fall_damage_mod();
-        if( g->m.has_furn( p ) ) {
+        if( tile && tile->furn() != f_null ) {
             // TODO: Make furniture matter
-        } else if( g->m.has_flag( TFLAG_SWIMMABLE, p ) ) {
+        } else if( mb.has_flag( TFLAG_SWIMMABLE, p ) ) {
             // TODO: Some formula of swimming
             effective_force /= 4;
         }
@@ -12316,14 +12316,14 @@ int Character::impact( const int force, const tripoint_bub_ms &p )
     return total_dealt;
 }
 
-void Character::knock_back_to( const tripoint_bub_ms &to )
+void Character::knock_back_to( const tripoint_abs_ms &to )
 {
-    if( to == bub_pos() ) {
+    if( to == abs_pos() ) {
         return;
     }
-
-    if( rl_dist( bub_pos(), to ) < 2 && get_map().obstructed_by_vehicle_rotation( bub_pos(), to ) ) {
-        tripoint_bub_ms intervening = to;
+    auto &here = get_mapbuffer();
+    if( rl_dist( abs_pos(), to ) < 2 && here.obstructed_by_vehicle_rotation( abs_pos(), to ) ) {
+        tripoint_abs_ms intervening = to;
         if( one_in( 2 ) ) {
             intervening.x() = bub_pos().x();
         } else {
@@ -12333,7 +12333,7 @@ void Character::knock_back_to( const tripoint_bub_ms &to )
         apply_damage( nullptr, bodypart_id( "torso" ), 3 );
         add_effect( effect_stunned, 2_turns );
         add_msg_player_or_npc( _( "You bounce off a %s!" ), _( "<npcname> bounces off a %s!" ),
-                               g->m.obstacle_name( intervening ) );
+                               here.obstacle_name( intervening ) );
         return;
     }
 
@@ -12344,7 +12344,7 @@ void Character::knock_back_to( const tripoint_bub_ms &to )
         add_effect( effect_stunned, 1_turns );
         /** @EFFECT_STR_MAX allows knocked back player to knock back, damage, stun some monsters */
         if( ( str_max - 6 ) / 4 > critter->type->size ) {
-            critter->knock_back_from( bub_pos() ); // Chain reaction!
+            critter->knock_back_from( abs_pos() ); // Chain reaction!
             critter->apply_damage( this, bodypart_id( "torso" ), ( str_max - 6 ) / 4 );
             critter->add_effect( effect_stunned, 1_turns );
         } else if( ( str_max - 6 ) / 4 == critter->type->size ) {
@@ -12370,24 +12370,22 @@ void Character::knock_back_to( const tripoint_bub_ms &to )
     }
 
     // If we're still in the function at this point, we're actually moving a tile!
-    if( g->m.has_flag( "LIQUID", to ) && g->m.has_flag( TFLAG_DEEP_WATER, to ) ) {
+    if( here.has_flag( "LIQUID", to ) && here.has_flag( TFLAG_DEEP_WATER, to ) ) {
         if( !is_npc() ) {
-            avatar_action::swim( g->m, g->u, to );
+            avatar_action::swim( g->u, to );
         }
         // TODO: NPCs can't swim!
-    } else if( g->m.impassable( to ) ) { // Wait, it's a wall
+    } else if( here.impassable_ter_furn( to ) ) { // Wait, it's a wall
 
         // It's some kind of wall.
         // TODO: who knocked us back? Maybe that creature should be the source of the damage?
         apply_damage( nullptr, bodypart_id( "torso" ), 3 );
         add_effect( effect_stunned, 2_turns );
         add_msg_player_or_npc( _( "You bounce off a %s!" ), _( "<npcname> bounces off a %s!" ),
-                               g->m.obstacle_name( to ) );
+                               here.obstacle_name( to ) );
 
     } else { // It's no wall
         setpos( to );
-
-        map &here = get_map();
         here.creature_on_trap( *this );
     }
 }

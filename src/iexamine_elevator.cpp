@@ -218,13 +218,11 @@ auto move_vehicles( const elevator_vehicles &vehs, const tripoint_bub_ms &sm_ori
 
 auto move_player( player &p, const int /*movez*/ ) -> void
 {
-    auto &here = get_map();
-
     // yes, this is inefficient, but i'm lazy
     elevator::find_elevators_nearby( p.bub_pos() )
     .transform( []( const tripoint_bub_ms & pos ) -> point_rel_sm { return g->place_player( pos ); } );
 
-    cata_event_dispatch::avatar_moves( *p.as_avatar(), here, p.abs_pos() );
+    cata_event_dispatch::avatar_moves( *p.as_avatar(), p.abs_pos() );
 }
 
 } //namespace elevator
@@ -233,10 +231,9 @@ auto move_player( player &p, const int /*movez*/ ) -> void
 
 void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
 {
-    map &here = get_map();
     const auto this_omt = project_to<coords::omt>( bub_to_abs( examp ) );
-    const auto om_terrain = get_overmapbuffer( here.get_bound_dimension() ).ter_existing(
-                                this_omt ).id().str();
+    auto &omb = get_overmapbuffer( p.get_dimension() );
+    const auto om_terrain = omb.ter_existing( this_omt ).id().str();
     const auto hook_results = cata::run_hooks( "on_elevator_try_use", [&]( auto & params ) {
         params["player"] = &p;
         params["pos"] = cata::detail::lua_coords::to_lua( examp );
@@ -260,7 +257,6 @@ void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
     }
 
     const tripoint_abs_omt that_omt{ this_omt.xy(), movez };
-    auto &omb = get_overmapbuffer( here.get_bound_dimension() );
     const int turns = get_rot_turns( this_omt, that_omt, omb );
 
     const auto elevator_dest = elevator::dest( elevator_here, sm_orig, turns, movez );

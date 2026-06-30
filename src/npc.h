@@ -52,7 +52,6 @@ class vehicle;
 struct bionic_data;
 struct mission_type;
 struct overmap_location;
-struct pathfinding_settings;
 
 enum game_message_type : int;
 class gun_mode;
@@ -943,7 +942,7 @@ class npc : public player
         Creature *current_target();
         const Creature *current_ally() const;
         Creature *current_ally();
-        tripoint_bub_ms good_escape_direction( bool include_pos = true );
+        tripoint_abs_ms good_escape_direction( bool include_pos = true );
 
         // Interaction and assessment of the world around us
         float danger_assessment();
@@ -1028,12 +1027,6 @@ class npc : public player
 
         void handle_sound( const short heard_vol, sound_event sound );
 
-        /* shift() works much like monster::shift(), and is called when the player moves
-         * from one submap to an adjacent submap.  It updates our position (shifting by
-         * 12 tiles), as well as our plans.
-         */
-        void shift( point_rel_sm s );
-
         // Movement; the following are defined in npcmove.cpp
         void move(); // Picks an action & a target and calls execute_action
         void execute_action( npc_action action ); // Performs action
@@ -1088,7 +1081,7 @@ class npc : public player
         int confident_gun_mode_range( const gun_mode &gun, int at_recoil ) const;
         int confident_throw_range( const item &, Creature * ) const;
         void invalidate_range_cache();
-        bool wont_hit_friend( const tripoint_bub_ms &tar, const item &it, bool throwing ) const;
+        bool wont_hit_friend( const tripoint_abs_ms &tar, const item &it, bool throwing ) const;
         bool enough_time_to_reload( const item &gun ) const;
         /** Can reload currently wielded gun? */
         bool can_reload_current();
@@ -1114,30 +1107,26 @@ class npc : public player
          * @param force If there is no valid path, empty the current path.
          * @returns If it updated the path.
          */
-        bool update_path( const tripoint_bub_ms &p, bool no_bashing = false, bool force = true );
-        bool can_open_door( const tripoint_bub_ms &p, bool inside ) const;
-        bool can_move_to( const tripoint_bub_ms &p, bool no_bashing = false ) const;
+        bool update_path( const tripoint_abs_ms &p, bool no_bashing = false, bool force = true );
+        bool can_open_door( const tripoint_abs_ms &p, bool inside ) const;
+        bool can_move_to( const tripoint_abs_ms &p, bool no_bashing = false ) const;
 
         // nomove is used to resolve recursive invocation
-        void move_to( const tripoint_bub_ms &p, bool no_bashing = false,
-                      std::set<tripoint_bub_ms> *nomove = nullptr );
+        void move_to( const tripoint_abs_ms &p, bool no_bashing = false,
+                      std::set<tripoint_abs_ms> *nomove = nullptr );
         // Next in <path>
         void move_to_next();
         // Maneuver so we won't shoot u
         void avoid_friendly_fire();
         void escape_explosion();
         // nomove is used to resolve recursive invocation
-        void move_away_from( const tripoint_bub_ms &p, bool no_bash_atk = false,
-                             std::set<tripoint_bub_ms> *nomove = nullptr );
+        void move_away_from( const tripoint_abs_ms &p, bool no_bash_atk = false,
+                             std::set<tripoint_abs_ms> *nomove = nullptr );
         void move_away_from( const std::vector<sphere> &spheres, bool no_bashing = false );
         // Same as if the player pressed '.'
         void move_pause();
 
         void set_movement_mode( character_movemode mode ) override;
-
-        const pathfinding_settings &get_legacy_pathfinding_settings() const override;
-        const pathfinding_settings &get_legacy_pathfinding_settings( bool no_bashing ) const;
-        std::set<tripoint_bub_ms> get_legacy_path_avoid() const override; // tripoint_bub_ms
 
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair( bool no_bashing ) const;
@@ -1153,7 +1142,7 @@ class npc : public player
         // Drop wgt and vol, including all items with less value than min_val
         void drop_items( units::mass drop_weight, units::volume drop_volume, int min_val = 0 );
         /** Picks up items and returns a list of them. */
-        std::vector<item *> pick_up_item_map( const tripoint_bub_ms &where );
+        std::vector<item *> pick_up_item_map( const tripoint_abs_ms &where );
         std::vector<item *> pick_up_item_vehicle( vehicle &veh, int part_index );
 
         bool has_item_whitelist() const;
@@ -1272,11 +1261,11 @@ class npc : public player
         bool suppress_activity_complete_message = false;
         std::string activity_failure_message;
     public:
-        std::optional<tripoint_bub_ms> last_player_seen_pos; // Where we last saw the player
+        std::optional<tripoint_abs_ms> last_player_seen_pos; // Where we last saw the player
         // Player orders a friendly NPC to move to this position
         std::optional<tripoint_abs_ms> goto_to_this_pos;
         int last_seen_player_turn = 0; // Timeout to forgetting
-        tripoint_bub_ms wanted_item_pos; // The square containing an item we want
+        tripoint_abs_ms wanted_item_pos; // The square containing an item we want
         tripoint_abs_ms
         guard_pos;  // These are the local coordinates that a guard will return to inside of their goal tripoint
         tripoint_abs_ms chair_pos =
@@ -1294,13 +1283,13 @@ class npc : public player
         /**
          * Location and index of the corpse we'd like to pulp (if any).
          */
-        std::optional<tripoint_bub_ms> pulp_location;
+        std::optional<tripoint_abs_ms> pulp_position;
         time_point restock;
         bool fetching_item = false;
         bool has_new_items = false; // If true, we have something new and should re-equip
         int worst_item_value = 0; // The value of our least-wanted item
 
-        std::vector<tripoint_bub_ms> path; // Our movement plans
+        std::vector<tripoint_abs_ms> path; // Our movement plans
 
         // Personality & other defining characteristics
         std::string companion_mission_role_id; //Set mission source or squad leader for a patrol
@@ -1385,8 +1374,8 @@ class npc : public player
         bool manually_erased_ =
             false; // Set by erase(); tells cleanup_dead() not to re-do overmap/follower removal
 
-        bool sees_dangerous_field( const tripoint_bub_ms &p ) const;
-        bool could_move_onto( const tripoint_bub_ms &p ) const;
+        bool sees_dangerous_field( const tripoint_abs_ms &p ) const;
+        bool could_move_onto( const tripoint_abs_ms &p ) const;
 
         std::vector<sphere> find_dangerous_explosives() const;
 
@@ -1406,7 +1395,7 @@ class standard_npc : public npc
         // runtime so that the correct bubble-center is used regardless of the
         // current REALITY_BUBBLE_SIZE setting.
         standard_npc( const std::string &name = "",
-                      const tripoint_bub_ms &pos = tripoint_bub_ms::min(),
+                      const tripoint_abs_ms &pos = tripoint_abs_ms::min(),
                       const std::vector<std::string> &clothing = {},
                       int sk_lvl = 4, int s_str = 8, int s_dex = 8, int s_int = 8, int s_per = 8 );
 };

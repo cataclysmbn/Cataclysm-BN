@@ -199,7 +199,7 @@ static void assert_encumbrance(npc& shooter, int encumbrance) {
     }
 }
 
-static constexpr tripoint_bub_ms shooter_pos(60, 60, 0);
+static constexpr tripoint_abs_ms shooter_pos(60, 60, 0);
 
 TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]") {
     clear_all_state();

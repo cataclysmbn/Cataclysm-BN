@@ -67,7 +67,7 @@ TEST_CASE("fire_processes_in_loaded_submap_outside_bubble", "[simulation][field]
     REQUIRE(fire != nullptr);
     CHECK(fire->get_field_age() == 1_turns);
 
-    MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS));
 }
 
 // ── Test 2 ────────────────────────────────────────────────────────────────────
@@ -76,8 +76,7 @@ TEST_CASE("fire_processes_in_loaded_submap_outside_bubble", "[simulation][field]
 // boundaries during long activities.
 TEST_CASE(
     "fire_spread_keeps_no_fire_boundary_submap_while_adjacent_to_fire",
-    "[simulation][field]["
-    "fire_spread]") {
+    "[simulation][field][fire_spread]") {
     clear_all_state();
     put_player_underground();
 

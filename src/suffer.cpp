@@ -1153,7 +1153,7 @@ void Character::suffer_from_other_mutations()
     if( has_active_mutation( trait_WINGS_INSECT ) ) {
         //~Sound of buzzing Insect Wings
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = 60;
         se.category = sounds::sound_t::movement;
         se.movement_noise = true;
@@ -1430,7 +1430,7 @@ void Character::suffer_from_bad_bionics()
             sfx::play_variant_sound( "bionics", "elec_blast_muffled", 100 );
         }
         sound_event se;
-        se.origin = bub_pos();
+        se.origin = abs_pos();
         se.volume = 90;
         se.category = sounds::sound_t::movement;
         se.movement_noise = true;

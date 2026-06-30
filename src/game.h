@@ -167,7 +167,7 @@ bool is_valid_in_w_terrain( point p );
 // There is only one game instance, so losing a few bytes of memory
 // due to padding is not much of a concern.
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
-class game : public submap_load_listener
+class game
 {
         friend class editmap;
         friend class advanced_inventory;
@@ -186,10 +186,7 @@ class game : public submap_load_listener
         game();
         ~game();
 
-        // submap_load_listener interface
-        auto on_submap_loaded( const tripoint_abs_sm &pos, const dimension_id &dim_id ) -> void override;
-        auto on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const dimension_id &dim_id ) -> void override;
+
 
         /** Loads static data that does not depend on mods or similar. */
         void load_static_data();
@@ -617,6 +614,10 @@ class game : public submap_load_listener
     public:
         /** Unloads, then loads the NPCs */
         void reload_npcs();
+        /** Evict NPCs and monsters whose submap left the simulated set.
+         *  Consults mapbuffer::get_last_demoted_columns().
+         *  Call after submap_loader.update() in the main game loop. */
+        void evict_creatures_on_demoted_submaps();
         /** Immediately removes NPC with the given id from active_npc. */
         void erase_npc( character_id id );
         /** True while npcmove() or sleep_skip_npc_process() is iterating active_npc. */
@@ -684,9 +685,9 @@ class game : public submap_load_listener
         void peek( const tripoint_rel_ms &p );
         std::optional<tripoint_bub_ms> look_debug();
 
-        bool check_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const;
+        bool check_zone( const zone_type_id &type, const tripoint_abs_ms &where ) const;
         /** Checks whether or not there is a zone of particular type nearby */
-        bool check_near_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const;
+        bool check_near_zone( const zone_type_id &type, const tripoint_abs_ms &where ) const;
         bool is_zones_manager_open() const;
         bool is_zone_submap_grid_overlay_enabled() const;
         void zones_manager();
@@ -802,10 +803,10 @@ class game : public submap_load_listener
         // force also determines damage along with dam_mult;
         // stun determines base number of turns target is stunned regardless of impact
         // stun == 0 means no stun, stun == -1 indicates only impact stun (wall or npc/monster)
-        void knockback( const tripoint_bub_ms &s, const tripoint_bub_ms &t, int force, int stun,
+        void knockback( const tripoint_abs_ms &s, const tripoint_abs_ms &t, int force, int stun,
                         int dam_mult,
                         Creature *source );
-        void knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult, Creature *source );
+        void knockback( std::vector<tripoint_abs_ms> &traj, int stun, int dam_mult, Creature *source );
 
         // Animation related functions
         void draw_bullet( const tripoint_bub_ms &t, int i, const std::vector<tripoint_bub_ms> &trajectory,
@@ -880,9 +881,9 @@ class game : public submap_load_listener
         bool npc_menu( npc &who, const bool &force = false );
 
         // Handle phasing through walls, returns true if it handled the move
-        bool phasing_move( const tripoint_bub_ms &dest, bool via_ramp = false );
+        bool phasing_move( const tripoint_abs_ms &dest, bool via_ramp = false );
         // Regular movement. Returns false if it failed for any reason
-        bool walk_move( const tripoint_bub_ms &dest, bool via_ramp = false );
+        bool walk_move( const tripoint_abs_ms &dest, bool via_ramp = false );
         void on_move_effects();
     private:
         // Game-start procedures
@@ -1270,7 +1271,7 @@ class game : public submap_load_listener
         unsigned int seed = 0;
 
         // Preview for auto move route
-        std::vector<tripoint_bub_ms> destination_preview;
+        std::vector<tripoint_abs_ms> destination_preview;
 
         std::chrono::time_point<std::chrono::steady_clock> last_mouse_edge_scroll;
         tripoint_rel_ms last_mouse_edge_scroll_vector_terrain;
@@ -1389,5 +1390,5 @@ namespace cata_event_dispatch
 // @param u The avatar moving
 // @param m The map the avatar is moving on
 // @param p The point the avatar is moving to on map m
-void avatar_moves( const avatar &u, const map &m, const tripoint_abs_ms &p );
+void avatar_moves( const avatar &u, const tripoint_abs_ms &p );
 } // namespace cata_event_dispatch

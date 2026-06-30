@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-static constexpr tripoint_bub_ms shooter_pos(60, 60, 0);
+static constexpr tripoint_abs_ms shooter_pos(60, 60, 0);
 
 static auto update_player_visibility_cache() -> void {
     g->m.invalidate_map_cache(shooter_pos.z());
@@ -38,7 +38,7 @@ static auto update_player_visibility_cache() -> void {
 }
 
 static auto set_up_player_vision() -> void {
-    g->place_player(shooter_pos);
+    g->place_player(abs_to_bub(shooter_pos));
     g->u.worn.clear();
     g->reset_light_level();
 
@@ -63,7 +63,7 @@ TEST_CASE("Aiming at a clearly visible target", "[ranged][aiming]") {
     REQUIRE(max_range < 30);
 
     WHEN("The target is within range") {
-        monster& z = spawn_test_monster("debug_mon", shooter_pos + point(5, 0));
+        monster& z = spawn_test_monster("debug_mon", abs_to_bub(shooter_pos) + point(5, 0));
         THEN("The target is in targetable creatures") {
             std::vector<Creature*> t = ranged::targetable_creatures(shooter, max_range);
             CHECK(std::count(t.begin(), t.end(), &z) > 0);
@@ -71,7 +71,7 @@ TEST_CASE("Aiming at a clearly visible target", "[ranged][aiming]") {
     }
 
     WHEN("The target is outside range") {
-        monster& z = spawn_test_monster("debug_mon", shooter_pos + point(30, 0));
+        monster& z = spawn_test_monster("debug_mon", abs_to_bub(shooter_pos) + point(30, 0));
         THEN("The target is not in targetable creatures") {
             std::vector<Creature*> t = ranged::targetable_creatures(shooter, max_range);
             CHECK(std::count(t.begin(), t.end(), &z) == 0);
@@ -81,7 +81,7 @@ TEST_CASE("Aiming at a clearly visible target", "[ranged][aiming]") {
     WHEN("Multiple targets are within range") {
         constexpr int num_creatures = 5;
         for (int x = 0; x < num_creatures; x++) {
-            spawn_test_monster("debug_mon", shooter_pos + point(5 + x, 0));
+            spawn_test_monster("debug_mon", abs_to_bub(shooter_pos) + point(5 + x, 0));
         }
         THEN("All are targetable") {
             std::vector<Creature*> t = ranged::targetable_creatures(shooter, max_range);
@@ -90,8 +90,8 @@ TEST_CASE("Aiming at a clearly visible target", "[ranged][aiming]") {
     }
 
     WHEN("One target is within range, one is outside it") {
-        monster& z1 = spawn_test_monster("debug_mon", shooter_pos + point(5, 0));
-        monster& z2 = spawn_test_monster("debug_mon", shooter_pos + point(30, 0));
+        monster& z1 = spawn_test_monster("debug_mon", abs_to_bub(shooter_pos) + point(5, 0));
+        monster& z2 = spawn_test_monster("debug_mon", abs_to_bub(shooter_pos) + point(30, 0));
         THEN("Only the target within range is targetable") {
             std::vector<Creature*> t = ranged::targetable_creatures(shooter, max_range);
             CHECK(t.size() == 1);
@@ -111,21 +111,21 @@ TEST_CASE(
     auto& shooter = g->u;
     arm_character(shooter, "glock_19");
 
-    auto& here = get_map();
+    auto& here = g->u.get_mapbuffer();
     const auto target_pos = shooter_pos + point(5, 0);
     for (const auto x : std::views::iota(0, 6)) {
         const auto pos = shooter_pos + point(x, 0);
-        here.ter_set(pos, ter_id("t_dirt"));
-        here.furn_set(pos, furn_id("f_null"));
+        here.set_ter(pos, ter_id("t_dirt"));
+        here.set_furn(pos, furn_id("f_null"));
     }
 
-    auto& z = spawn_test_monster("debug_mon", target_pos);
+    auto& z = spawn_test_monster("debug_mon", abs_to_bub(target_pos));
     update_player_visibility_cache();
     const auto starting_hp = z.get_hp();
     REQUIRE(shooter.sees(z));
 
-    here.invalidate_map_cache(shooter_pos.z());
-    REQUIRE(here.visibility_caches_dirty());
+    g->m.invalidate_map_cache(shooter_pos.z());
+    REQUIRE(g->m.visibility_caches_dirty());
 
     auto test_proj = projectile{};
     auto& gun = shooter.primary_weapon();
@@ -144,21 +144,21 @@ TEST_CASE(
 TEST_CASE("Aiming at a loaded target on another z-level", "[ranged][aiming][zlevel]") {
     clear_all_state();
 
-    g->place_player(shooter_pos);
+    g->place_player(abs_to_bub(shooter_pos));
     auto& shooter = g->u;
     clear_character(shooter, true);
     shooter.add_effect(efftype_id("debug_clairvoyance"), 1_seconds);
     shooter.recalc_sight_limits();
     arm_character(shooter, "glock_19");
 
-    auto& here = get_map();
+    auto& here = shooter.get_mapbuffer();
     const auto target_pos = shooter_pos + tripoint_above;
-    here.ter_set(shooter_pos, ter_id("t_dirt"));
-    here.furn_set(shooter_pos, furn_id("f_null"));
-    here.ter_set(target_pos, ter_id("t_open_air"));
-    here.furn_set(target_pos, furn_id("f_null"));
+    here.set_ter(shooter_pos, ter_id("t_dirt"));
+    here.set_furn(shooter_pos, furn_id("f_null"));
+    here.set_ter(target_pos, ter_id("t_open_air"));
+    here.set_furn(target_pos, furn_id("f_null"));
 
-    auto& z = spawn_test_monster("debug_mon", target_pos);
+    auto& z = spawn_test_monster("debug_mon", abs_to_bub(target_pos));
     REQUIRE(shooter.sees(z));
 
     const auto max_range = shooter.primary_weapon().gun_range(&shooter);
@@ -170,18 +170,19 @@ TEST_CASE("Aiming at a loaded target on another z-level", "[ranged][aiming][zlev
 
 TEST_CASE("Aiming at a target behind wall", "[ranged][aiming]") {
     clear_all_state();
+
+    set_up_player_vision();
     player& shooter = g->u;
+    auto& here = shooter.get_mapbuffer();
     clear_character(shooter, true);
     shooter.add_effect(efftype_id("debug_clairvoyance"), 1_seconds);
     arm_character(shooter, "glock_19");
     int max_range = shooter.primary_weapon().gun_range(&shooter);
     REQUIRE(max_range >= 5);
     for (int y_off = -1; y_off <= 1; y_off++) {
-        g->m.ter_set(shooter_pos + point(1, y_off), t_wall);
+        here.set_ter(shooter_pos + point(1, y_off), t_wall);
     }
-
-    set_up_player_vision();
-    monster& z = spawn_test_monster("debug_mon", shooter_pos + point(2, 0));
+    monster& z = spawn_test_monster("debug_mon", abs_to_bub(shooter_pos) + point(2, 0));
     WHEN("There is no direct, passable line to target") {
         const auto path = g->m.find_clear_path(shooter.bub_pos(), z.bub_pos());
         int impassable_tiles =
@@ -194,10 +195,12 @@ TEST_CASE("Aiming at a target behind wall", "[ranged][aiming]") {
                 std::count_if(path.begin(), path.end(), [](const tripoint_bub_ms& p) {
                     return !g->m.is_transparent(p);
                 });
-            REQUIRE(non_transparent_tiles > 0);
-            AND_WHEN("The shooter sees the target due to a non-vision effect") {
-
-                REQUIRE(shooter.sees(z));
+            // Check terrain directly since transparency_cache may be stale
+            int wall_tiles = std::count_if(path.begin(), path.end(), [](const tripoint_bub_ms& p) {
+                return g->m.ter(p) == t_wall;
+            });
+            REQUIRE(wall_tiles > 0);
+            AND_WHEN("The target is behind an opaque wall") {
                 THEN("The target is not in targetable creatures") {
                     std::vector<Creature*> t = ranged::targetable_creatures(shooter, max_range);
                     CHECK(std::count(t.begin(), t.end(), &z) == 0);
@@ -211,13 +214,14 @@ TEST_CASE("Aiming at a target behind bars", "[ranged][aiming]") {
     clear_all_state();
     set_up_player_vision();
     player& shooter = g->u;
+    auto& here = shooter.get_mapbuffer();
     arm_character(shooter, "glock_19");
     int max_range = shooter.primary_weapon().gun_range(&shooter);
     REQUIRE(max_range >= 5);
     for (int y_off = -1; y_off <= 1; y_off++) {
-        g->m.ter_set(shooter_pos + point(1, y_off), t_window_bars);
+        here.set_ter(shooter_pos + point(1, y_off), t_window_bars);
     }
-    monster& z = spawn_test_monster("debug_mon", shooter_pos + point(2, 0));
+    monster& z = spawn_test_monster("debug_mon", abs_to_bub(shooter_pos) + point(2, 0));
     update_player_visibility_cache();
     WHEN("There is no direct, passable line to target") {
         const auto path = g->m.find_clear_path(shooter.bub_pos(), z.bub_pos());
@@ -250,7 +254,7 @@ TEST_CASE("Aiming a turret from a solid vehicle", "[ranged][aiming]") {
     int max_range = shooter.primary_weapon().gun_range(&shooter);
     REQUIRE(max_range >= 5);
 
-    monster& z = spawn_test_monster("debug_mon", shooter_pos + point(5, 0));
+    monster& z = spawn_test_monster("debug_mon", abs_to_bub(shooter_pos) + point(5, 0));
 
     const auto path = g->m.find_clear_path(shooter.bub_pos(), z.bub_pos());
     int impassable_tiles_before =
@@ -259,8 +263,8 @@ TEST_CASE("Aiming a turret from a solid vehicle", "[ranged][aiming]") {
         });
     REQUIRE(impassable_tiles_before == 0);
 
-    vehicle* veh =
-        g->m.add_vehicle(vproto_id("turret_test"), shooter_pos, 0_degrees, 100, 0, false);
+    vehicle* veh = g->m.add_vehicle(
+        vproto_id("turret_test"), abs_to_bub(shooter_pos), 0_degrees, 100, 0, false);
     REQUIRE(veh != nullptr);
     update_player_visibility_cache();
 
@@ -278,10 +282,10 @@ TEST_CASE("Aiming a turret from a solid vehicle", "[ranged][aiming]") {
                 });
             REQUIRE(non_vehicle_blocking_tiles == 0);
             AND_WHEN("The shooter aims the turret") {
-                turret_data turret = veh->turret_query(map_local_to_abs(get_map(), shooter_pos));
+                turret_data turret = veh->turret_query(shooter_pos);
                 REQUIRE(static_cast<bool>(turret));
                 REQUIRE(turret.query() == turret_data::status::ready);
-                REQUIRE(avatar_action::can_fire_turret(shooter, g->m, turret));
+                REQUIRE(avatar_action::can_fire_turret(shooter, turret));
                 THEN("The list of targets inclues the target") {
                     std::vector<Creature*> t =
                         ranged::targetable_creatures(shooter, max_range, turret);

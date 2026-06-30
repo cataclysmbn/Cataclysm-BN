@@ -47,6 +47,7 @@ void wipe_map_terrain() {
         }
     }
     clear_vehicles();
+    g->m.clear_vehicle_cache();
     g->m.invalidate_map_cache(0);
     g->m.build_map_cache(0, true);
 }
@@ -161,6 +162,19 @@ void build_test_map(const ter_id& terrain) {
 
     g->m.invalidate_map_cache(0);
     g->m.build_map_cache(0, true);
+
+    // Ensure simulated islands exist so simulated_tiles_in_radius and
+    // for_each_simulated_submap work for tests that use this map.
+    const tripoint_abs_ms center = map_local_to_abs(g->m, tripoint_bub_ms(0, 0, 0));
+    const point_abs_sm center_sm = project_to<coords::sm>(center).xy();
+    const int radius = MAPSIZE / 2 + 1;
+    std::unordered_set<point_abs_sm> columns;
+    for (int dx = -radius; dx <= radius; ++dx) {
+        for (int dy = -radius; dy <= radius; ++dy) {
+            columns.insert(center_sm + point_rel_sm(dx, dy));
+        }
+    }
+    MAPBUFFER.set_simulated_submaps(columns);
 }
 
 void build_water_test_map(const ter_id& surface, const ter_id& mid, const ter_id& bottom) {

@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "pathfinding.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "bodypart.h"
@@ -646,11 +647,11 @@ bool Character::can_mount( const monster &critter ) const
 
 mountable_status Character::get_mountable_status( const monster &critter ) const
 {
-    const auto &avoid = get_legacy_path_avoid();
-    auto route = get_map().route( bub_pos(), critter.bub_pos(), get_legacy_pathfinding_settings(),
-                                  avoid );
-
-    if( route.empty() ) {
+    auto &pf_buffer = MAPBUFFER_REGISTRY.get( get_dimension() );
+    const auto pair = get_pathfinding_pair();
+    auto abs_route = Pathfinding::route( pf_buffer, abs_pos(), critter.abs_pos(),
+                                         pair.first, pair.second );
+    if( abs_route.empty() ) {
         return {};
     }
 
@@ -686,8 +687,8 @@ void monexamine::push( monster &z )
 
     add_msg( _( "You pushed the %s." ), pet_name );
 
-    auto delta = z.bub_pos().xy() - you.bub_pos().xy();
-    z.move_to( z.bub_pos() + delta );
+    auto delta = z.abs_pos().xy() - you.abs_pos().xy();
+    z.move_to( z.abs_pos() + delta );
 }
 
 void monexamine::rename_pet( monster &z )

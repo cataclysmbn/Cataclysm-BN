@@ -218,7 +218,7 @@ void trap::reset()
     trap_factory.reset();
 }
 
-bool trap::detect_trap( const tripoint_bub_ms &pos, const Character &p ) const
+bool trap::detect_trap( const tripoint_abs_ms &pos, const Character &p ) const
 {
     // Some decisions are based around:
     // * Starting, and thus average perception, is 8.
@@ -239,7 +239,7 @@ bool trap::detect_trap( const tripoint_bub_ms &pos, const Character &p ) const
            // ...malus if we are tired...
            ( p.has_effect( effect_lack_sleep ) ? rng( 1, 5 ) : 0 ) -
            // ...malus farther we are from trap...
-           rl_dist( p.bub_pos(), pos ) +
+           rl_dist( p.abs_pos(), pos ) +
            // Police are trained to notice Something Wrong.
            ( p.has_trait( trait_PROF_POLICE ) ? 1 : 0 ) +
            ( p.has_trait( trait_PROF_PD_DET ) ? 2 : 0 ) >
@@ -248,7 +248,7 @@ bool trap::detect_trap( const tripoint_bub_ms &pos, const Character &p ) const
 }
 
 // Whether or not, in the current state, the player can see the trap.
-bool trap::can_see( const tripoint_bub_ms &pos, const Character &p ) const
+bool trap::can_see( const tripoint_abs_ms &pos, const Character &p ) const
 {
     if( is_null() ) {
         // There is no trap at all, so logically one can not see it.
@@ -257,14 +257,14 @@ bool trap::can_see( const tripoint_bub_ms &pos, const Character &p ) const
     return visibility < 0 || p.knows_trap( pos );
 }
 
-void trap::trigger( const tripoint_bub_ms &pos, Creature *creature, item *item ) const
+void trap::trigger( const tripoint_abs_ms &pos, Creature *creature, item *item ) const
 {
     const bool is_real_creature = creature != nullptr && !creature->is_hallucination();
     if( ( is_real_creature && !creature->has_effect( dashing_effect ) ) || item != nullptr ) {
         bool triggered = act( pos, creature, item );
         if( triggered && is_real_creature ) {
             if( Character *ch = creature->as_character() ) {
-                if( !get_map().tr_at( pos ).is_always_invisible() ) {
+                if( !ch->get_mapbuffer().get_trap( pos )->obj().is_always_invisible() ) {
                     ch->add_known_trap( pos, *this );
                 }
                 get_event_bus().send<event_type::character_triggers_trap>( ch->getID(), id );
@@ -289,20 +289,21 @@ bool trap::is_funnel() const
 }
 
 
-void trap::trigger_aftermath( map &m, const tripoint_bub_ms &p ) const
+void trap::trigger_aftermath( mapbuffer &m, const tripoint_abs_ms &p ) const
 {
-    for( auto &i : m.tr_at( p ).trigger_components ) {
+    const auto &tr = m.get_trap( p )->obj();
+    for( auto &i : tr.trigger_components ) {
         const itype_id &item_type = std::get<0>( i );
         const int quantity = std::get<1>( i );
         const int charges = std::get<2>( i );
         m.spawn_item( p, item_type, quantity, charges );
     }
-    if( m.tr_at( p ).remove_trap_when_triggered() ) {
+    if( tr.remove_trap_when_triggered() ) {
         m.remove_trap( p );
     }
 }
 
-void trap::on_disarmed( map &m, const tripoint_bub_ms &p ) const
+void trap::on_disarmed( mapbuffer &m, const tripoint_abs_ms &p ) const
 {
     for( auto &i : components ) {
         const itype_id &item_type = std::get<0>( i );
@@ -310,8 +311,8 @@ void trap::on_disarmed( map &m, const tripoint_bub_ms &p ) const
         const int charges = std::get<2>( i );
         m.spawn_item( p, item_type, quantity, charges );
     }
-    for( const tripoint_bub_ms &dest : m.points_in_radius( p, trap_radius ) ) {
-        m.remove_trap( dest );
+    for( const auto &dest : simulated_tiles_in_radius( m, p, trap_radius ) ) {
+        m.remove_trap( dest.abs_pos() );
     }
 }
 

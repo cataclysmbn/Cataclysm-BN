@@ -120,12 +120,12 @@ TEST_CASE("grabbed_furniture_can_be_pulled_up_ramp", "[furniture][ramp][grab]") 
     setup_grabbed_furniture(
         tripoint_bub_ms(ramp_x + 1, 60, 0), tripoint_bub_ms(ramp_x + 2, 60, 0), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x, 60, 1));
     CHECK(here.furn(tripoint_bub_ms(ramp_x + 1, 60, 0)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x + 1, 60, 0), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x - 1, 60, 1));
     CHECK(here.furn(tripoint_bub_ms(ramp_x, 60, 1)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x, 60, 1), test_furniture);
@@ -142,17 +142,17 @@ TEST_CASE("grabbed_furniture_can_be_pushed_up_ramp", "[furniture][ramp][grab]") 
     setup_grabbed_furniture(
         tripoint_bub_ms(ramp_x + 3, 60, 0), tripoint_bub_ms(ramp_x + 2, 60, 0), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x + 2, 60, 0));
     CHECK(here.furn(tripoint_bub_ms(ramp_x + 1, 60, 0)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x + 1, 60, 0), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x + 1, 60, 0));
     CHECK(here.furn(tripoint_bub_ms(ramp_x, 60, 1)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x, 60, 1), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x, 60, 1));
     CHECK(here.furn(tripoint_bub_ms(ramp_x - 1, 60, 1)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x - 1, 60, 1), test_furniture);
@@ -169,12 +169,12 @@ TEST_CASE("grabbed_furniture_can_be_pulled_down_ramp", "[furniture][ramp][grab]"
     setup_grabbed_furniture(
         tripoint_bub_ms(ramp_x + 1, 60, 0), tripoint_bub_ms(ramp_x + 2, 60, 0), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x, 60, -1));
     CHECK(here.furn(tripoint_bub_ms(ramp_x + 1, 60, 0)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x + 1, 60, 0), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x - 1, 60, -1));
     CHECK(here.furn(tripoint_bub_ms(ramp_x, 60, -1)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x, 60, -1), test_furniture);
@@ -191,17 +191,17 @@ TEST_CASE("grabbed_furniture_can_be_pushed_down_ramp", "[furniture][ramp][grab]"
     setup_grabbed_furniture(
         tripoint_bub_ms(ramp_x + 3, 60, 0), tripoint_bub_ms(ramp_x + 2, 60, 0), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x + 2, 60, 0));
     CHECK(here.furn(tripoint_bub_ms(ramp_x + 1, 60, 0)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x + 1, 60, 0), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x + 1, 60, 0));
     CHECK(here.furn(tripoint_bub_ms(ramp_x, 60, -1)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x, 60, -1), test_furniture);
 
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     CHECK(player_character.bub_pos() == tripoint_bub_ms(ramp_x, 60, -1));
     CHECK(here.furn(tripoint_bub_ms(ramp_x - 1, 60, -1)) == test_furniture);
     check_avatar_still_grabs_furniture(tripoint_bub_ms(ramp_x - 1, 60, -1), test_furniture);
@@ -216,7 +216,7 @@ TEST_CASE("dragging_furniture_burns_extra_stamina", "[furniture][grab][stamina]"
     player_character.setpos(tripoint_bub_ms(61, 60, 0));
     player_character.set_stamina(player_character.get_stamina_max());
     const auto walking_stamina = player_character.get_stamina();
-    REQUIRE(avatar_action::move(player_character, here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(player_character, tripoint_rel_ms::west()));
     const auto walking_burn = walking_stamina - player_character.get_stamina();
 
     clear_all_state();
@@ -228,7 +228,7 @@ TEST_CASE("dragging_furniture_burns_extra_stamina", "[furniture][grab][stamina]"
     second_player_character.str_max = 8;
     second_player_character.str_cur = 8;
     const auto furniture_stamina = second_player_character.get_stamina();
-    REQUIRE(avatar_action::move(second_player_character, second_here, tripoint_rel_ms::west()));
+    REQUIRE(avatar_action::move(second_player_character, tripoint_rel_ms::west()));
     const auto furniture_burn = furniture_stamina - second_player_character.get_stamina();
 
     CHECK(furniture_burn > walking_burn);

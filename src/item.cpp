@@ -824,13 +824,11 @@ auto item::prepare_for_location_removal() -> void
         storage_temperature = vehicle_loc->storage_temperature();
     } else if( where() == item_location_type::map ) {
         auto &buffer = MAPBUFFER_REGISTRY.get( loc->get_dimension( this ) );
-        const auto tile = buffer.get_abs_tile( loc->abs_pos( this ), {
-            .mode = mapbuffer_lookup_mode::resident_only,
-        } );
+        const auto tile = abs_tile_handle::fetch( buffer, loc->abs_pos( this ) );
         if( tile ) {
-            const auto &furn = tile->get_furn_t();
+            const auto &furn = tile->furn_obj();
             storage_temperature = rot::temp::for_tile( {
-                .root_cellar = tile->get_ter() == t_rootcellar,
+                .root_cellar = tile->ter() == t_rootcellar,
                 .fridge = furn.has_flag( TFLAG_FRIDGE ),
                 .freezer = furn.has_flag( TFLAG_FREEZER ),
             } );
@@ -4007,7 +4005,13 @@ void item::damage_statblock_info( std::vector<iteminfo> &info, damage_instance a
 void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *parts, int /*batch*/,
                        bool /*debug*/ ) const
 {
-    if( !parts->test( iteminfo_parts::BASE_THROW ) ) {
+    // Show throw info when BASE_THROW is explicitly requested, or when melee
+    // combat info (damage, to-hit, moves) is being displayed — these sections
+    // are closely related and users expect to see both.
+    if( !parts->test( iteminfo_parts::BASE_THROW ) &&
+        !parts->test( iteminfo_parts::BASE_DAMAGE ) &&
+        !parts->test( iteminfo_parts::BASE_TOHIT ) &&
+        !parts->test( iteminfo_parts::BASE_MOVES ) ) {
         return;
     }
 
@@ -5060,8 +5064,8 @@ void item::handle_pickup_ownership( Character &c )
             std::vector<npc *> witnesses;
             for( npc &elem : g->all_npcs() ) {
                 // If they already want to murder you, no point in confronting you about theft
-                if( rl_dist( elem.bub_pos(), you.bub_pos() ) < g_max_view_distance && elem.get_faction() &&
-                    is_owned_by( elem ) && elem.sees( you.bub_pos() ) && !elem.guaranteed_hostile() ) {
+                if( rl_dist( elem.abs_pos(), you.abs_pos() ) < g_max_view_distance && elem.get_faction() &&
+                    is_owned_by( elem ) && elem.sees( you.abs_pos() ) && !elem.guaranteed_hostile() ) {
                     elem.say( "<witnessed_thievery>", 7 );
                     npc *npc_to_add = &elem;
                     witnesses.push_back( npc_to_add );
@@ -8142,7 +8146,6 @@ bool item::spill_contents( const tripoint_bub_ms &pos )
     if( !is_container() || is_container_empty() ) {
         return true;
     }
-
     for( detached_ptr<item> &it : contents.clear_items() ) {
         get_map().add_item_or_charges( pos, std::move( it ) );
     }
@@ -10010,7 +10013,7 @@ detached_ptr<item> item::detonate( detached_ptr<item> &&self, const tripoint_bub
 
         if( ammo_type.special_cookoff ) {
             // If it has a special effect just trigger it.
-            apply_ammo_effects( p, ammo_type.ammo_effects, self->activated_by );
+            apply_ammo_effects( bub_to_abs( p ), ammo_type.ammo_effects, self->activated_by );
         }
         charges_remaining -= rounds_exploded;
         if( charges_remaining > 0 ) {
@@ -10523,7 +10526,7 @@ detached_ptr<item> item::process_corpse( detached_ptr<item> &&self, player *carr
     if( rng( 0, self->volume() / units::legacy_volume_factor ) > self->burnt &&
         g->revive_corpse( pos, *self ) ) {
         if( carrier == nullptr ) {
-            if( get_avatar().sees( pos ) ) {
+            if( get_avatar().sees( bub_to_abs( pos ) ) ) {
                 if( self->corpse->in_species( ROBOT ) ) {
                     add_msg( m_warning, _( "A nearby robot has repaired itself and stands up!" ) );
                 } else {

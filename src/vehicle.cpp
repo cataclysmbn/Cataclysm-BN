@@ -585,7 +585,7 @@ bool vehicle::remote_controlled( const Character &who ) const
     }
 
     for( const vpart_reference &vp : get_avail_parts( "REMOTE_CONTROLS" ) ) {
-        if( rl_dist( who.bub_pos(), vp.pos() ) <= 40 ) {
+        if( rl_dist( who.abs_pos(), vp.abs_pos() ) <= 40 ) {
             return true;
         }
     }
@@ -1274,7 +1274,7 @@ void vehicle::drive_to_local_target( const tripoint_abs_ms &target, bool follow_
     if( stop ) {
         if( autopilot_on ) {
             sound_event se;
-            se.origin = bub_ms_location();
+            se.origin = abs_ms_location();
             se.volume = 60;
             se.category = sounds::sound_t::alert;
             se.description = string_format( _( "the %s emitting a beep and saying \"Obstacle detected!\"" ),
@@ -1674,9 +1674,8 @@ bool vehicle::has_security_working() const
 
 void vehicle::backfire( const int e ) const
 {
-    const auto pos = bub_part_location( engines[e] );
     sound_event se;
-    se.origin = pos;
+    se.origin = abs_part_location( engines[e] );
     se.volume = 100 + rng( 0, 20 ) + rng( 0, 20 );
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
@@ -2868,7 +2867,7 @@ void vehicle::relocate_passengers( const std::vector<Character *> &passengers )
     for( auto *passenger : passengers ) {
         for( const vpart_reference &vp : boardables ) {
             if( vp.part().passenger_id == passenger->getID() ) {
-                passenger->setpos( vp.pos() );
+                passenger->setpos( vp.abs_pos() );
             }
         }
     }
@@ -3263,6 +3262,51 @@ bool vehicle::has_part( const tripoint_bub_ms &pos, const std::string &flag, boo
     return false;
 }
 
+bool vehicle::has_part( const tripoint_abs_ms &pos, const std::string &flag, bool enabled ) const
+{
+    const auto relative_pos = pos - abs_ms_location();
+
+    for( const auto &e : parts ) {
+        if( e.precalc[0] != relative_pos.xy() || e.mount.z() + e.z_terrain[0] != relative_pos.z() ) {
+            continue;
+        }
+        if( !e.removed && ( !enabled || e.enabled ) && !e.is_broken() && e.info().has_flag( flag ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool vehicle::has_part( const tripoint_bub_ms &pos, const vpart_bitflags &flag, bool enabled ) const
+{
+    const auto relative_pos = pos - bub_ms_location();
+
+    for( const auto &e : parts ) {
+        if( e.precalc[0] != relative_pos.xy() || e.mount.z() + e.z_terrain[0] != relative_pos.z() ) {
+            continue;
+        }
+        if( !e.removed && ( !enabled || e.enabled ) && !e.is_broken() && e.info().has_flag( flag ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool vehicle::has_part( const tripoint_abs_ms &pos, const vpart_bitflags &flag, bool enabled ) const
+{
+    const auto relative_pos = pos - abs_ms_location();
+
+    for( const auto &e : parts ) {
+        if( e.precalc[0] != relative_pos.xy() || e.mount.z() + e.z_terrain[0] != relative_pos.z() ) {
+            continue;
+        }
+        if( !e.removed && ( !enabled || e.enabled ) && !e.is_broken() && e.info().has_flag( flag ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
 int vehicle::obstacle_at_position( const tripoint_mnt_veh &pos ) const
 {
     int i = part_with_feature( pos, "OBSTACLE", true );
@@ -3317,11 +3361,50 @@ std::vector<vehicle_part *> vehicle::get_parts_at( const tripoint_bub_ms &pos,
     return res;
 }
 
+std::vector<vehicle_part *> vehicle::get_parts_at( const tripoint_abs_ms &pos,
+        const std::string &flag,
+        const part_status_flag condition )
+{
+    const auto relative_pos = pos - abs_ms_location();
+    std::vector<vehicle_part *> res;
+    for( auto &e : parts ) {
+        if( e.precalc[0] != relative_pos.xy() || e.mount.z() + e.z_terrain[0] != relative_pos.z() ) {
+            continue;
+        }
+        if( !e.removed &&
+            ( flag.empty() || e.info().has_flag( flag ) ) &&
+            ( !( condition & part_status_flag::enabled ) || e.enabled ) &&
+            ( !( condition & part_status_flag::working ) || !e.is_broken() ) ) {
+            res.push_back( &e );
+        }
+    }
+    return res;
+}
 std::vector<const vehicle_part *> vehicle::get_parts_at( const tripoint_bub_ms &pos,
         const std::string &flag,
         const part_status_flag condition ) const
 {
     const auto relative_pos = pos - bub_ms_location();
+    std::vector<const vehicle_part *> res;
+    for( const auto &e : parts ) {
+        if( e.precalc[0] != relative_pos.xy() || e.mount.z() + e.z_terrain[0] != relative_pos.z() ) {
+            continue;
+        }
+        if( !e.removed &&
+            ( flag.empty() || e.info().has_flag( flag ) ) &&
+            ( !( condition & part_status_flag::enabled ) || e.enabled ) &&
+            ( !( condition & part_status_flag::working ) || !e.is_broken() ) ) {
+            res.push_back( &e );
+        }
+    }
+    return res;
+}
+
+std::vector<const vehicle_part *> vehicle::get_parts_at( const tripoint_abs_ms &pos,
+        const std::string &flag,
+        const part_status_flag condition ) const
+{
+    const auto relative_pos = pos - abs_ms_location();
     std::vector<const vehicle_part *> res;
     for( const auto &e : parts ) {
         if( e.precalc[0] != relative_pos.xy() || e.mount.z() + e.z_terrain[0] != relative_pos.z() ) {
@@ -3951,7 +4034,7 @@ std::vector<rider_data> vehicle::get_riders() const
 {
     std::vector<rider_data> res;
     for( const vpart_reference &vp : get_avail_parts( VPFLAG_BOARDABLE ) ) {
-        Creature *rider = g->critter_at( vp.pos() );
+        Creature *rider = g->critter_at( vp.abs_pos() );
         if( rider ) {
             rider_data r;
             r.prt = vp.part_index();
@@ -4579,7 +4662,7 @@ bool vehicle::do_environmental_effects()
         /* Only lower blood level if:
          * - The part is outside.
          * - The weather is any effect that would cause the player to be wet. */
-        if( vp.part().blood > 0 && g->m.is_outside( vp.pos() ) ) {
+        if( vp.part().blood > 0 && g->m.is_outside( vp.bub_pos() ) ) {
             needed = true;
             if( get_weather().weather_id->rains &&
                 get_weather().weather_id->precip != precip_class::very_light ) {
@@ -4709,7 +4792,7 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     vehicle_noise = static_cast<unsigned char>( noise );
     // TODO: other noises for non-rotor aircraft?
     sound_event se;
-    se.origin = bub_ms_location();
+    se.origin = abs_ms_location();
     se.volume = noise;
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
@@ -5890,7 +5973,7 @@ void vehicle::power_parts()
             for( auto &elem : reactors ) {
                 parts[ elem ].enabled = false;
             }
-            if( player_in_control( g->u ) || g->u.sees( bub_ms_location() ) ) {
+            if( player_in_control( g->u ) || g->u.sees( abs_ms_location() ) ) {
                 add_msg( _( "The %s's reactor dies!" ), name );
             }
         }
@@ -5924,13 +6007,13 @@ void vehicle::power_parts()
 
         is_alarm_on = false;
         camera_on = false;
-        if( player_in_control( g->u ) || g->u.sees( bub_ms_location() ) ) {
+        if( player_in_control( g->u ) || g->u.sees( abs_ms_location() ) ) {
             add_msg( _( "The %s's battery dies!" ), name );
         }
         if( engine_epower < 0 ) {
             // Not enough epower to run gas engine ignition system
             engine_on = false;
-            if( ( player_in_control( g->u ) || g->u.sees( bub_ms_location() ) ) &&
+            if( ( player_in_control( g->u ) || g->u.sees( abs_ms_location() ) ) &&
                 has_engine_type_not( fuel_type_muscle, true ) ) {
                 add_msg( _( "The %s's engine dies!" ), name );
             }
@@ -6286,7 +6369,7 @@ void vehicle::idle( bool on_map )
             noise_and_smoke( idle_rate, 1_turns );
         }
     } else {
-        if( engine_on && g->u.sees( bub_ms_location() ) &&
+        if( engine_on && g->u.sees( abs_ms_location() ) &&
             ( has_engine_type_not( fuel_type_muscle, true ) && has_engine_type_not( fuel_type_animal, true ) &&
               has_engine_type_not( fuel_type_wind, true ) && has_engine_type_not( fuel_type_mana, true ) ) ) {
             add_msg( _( "The %s's engine dies!" ), name );
@@ -6297,7 +6380,7 @@ void vehicle::idle( bool on_map )
     // Disallow running a planter underground for now
     if( !warm_enough_to_plant( g->u.abs_pos() ) || abs_ms_location().z() < 0 ) {
         for( const vpart_reference &vp : get_enabled_parts( "PLANTER" ) ) {
-            if( g->u.sees( bub_ms_location() ) ) {
+            if( g->u.sees( abs_ms_location() ) ) {
                 add_msg( _( "The %s's planter turns off due to low temperature." ), name );
             }
             vp.part().enabled = false;
@@ -6750,7 +6833,7 @@ bool vehicle::decrement_summon_timer()
             const size_t p = vp.part_index();
             dump_items_from_part( p );
         }
-        if( g->u.sees( bub_ms_location() ) ) {
+        if( g->u.sees( abs_ms_location() ) ) {
             add_msg( m_info, _( "Your %s winks out of existence." ), name );
         }
         g->m.destroy_vehicle( this );
@@ -7751,17 +7834,19 @@ int vehicle::break_off( int p, int dmg )
     if( rng( 0, part_info( p ).durability / 10 ) >= dmg ) {
         return dmg;
     }
-    const auto pos = bub_part_location( p );
+    auto &here = get_mapbuffer();
+    const auto pos = abs_part_location( p );
     const auto scatter_parts = [&]( const vehicle_part & pt ) {
         for( detached_ptr<item> &piece : pt.pieces_for_broken_part() ) {
             // inside the loop, so each piece goes to a different place
             // TODO: this may spawn items behind a wall
-            const auto where = random_entry( g->m.points_in_radius( pos, SCATTER_DISTANCE ) );
+            const auto where = random_entry( points_in_radius( pos, SCATTER_DISTANCE ) );
             // TODO: balance audit, ensure that less pieces are generated than one would need
             // to build the component (smash a vehicle box that took 10 lumps of steel,
             // find 12 steel lumps scattered after atom-smashing it with a tree trunk)
-            if( !magic ) {
-                g->m.add_item_or_charges( where, std::move( piece ) );
+            auto tile = abs_tile_handle::fetch( here, where );
+            if( tile && !magic ) {
+                here.add_item_or_charges( where, std::move( piece ) );
             }
         }
     };
@@ -7787,8 +7872,9 @@ int vehicle::break_off( int p, int dmg )
                     add_msg( m_bad, _( "The %1$s's %2$s is torn off!" ), name,
                              parts[ parts_in_square[ index ] ].name() );
                 }
-                if( !magic ) {
-                    g->m.add_item_or_charges( pos, parts[parts_in_square[index]].properties_to_item() );
+                auto tile = abs_tile_handle::fetch( here, pos );
+                if( tile && !magic ) {
+                    here.add_item_or_charges( pos, parts[parts_in_square[index]].properties_to_item() );
                 }
             }
             remove_part( parts_in_square[index] );
@@ -8072,9 +8158,14 @@ tripoint_mnt_veh vpart_position::mount() const
     return vehicle().part( part_index() ).mount;
 }
 
-tripoint_bub_ms vpart_position::pos() const
+tripoint_bub_ms vpart_position::bub_pos() const
 {
     return vehicle().bub_part_location( part_index() );
+}
+
+tripoint_abs_ms vpart_position::abs_pos() const
+{
+    return vehicle().abs_part_location( part_index() );
 }
 
 bool vpart_reference::has_feature( const std::string &f ) const

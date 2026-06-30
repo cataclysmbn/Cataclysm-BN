@@ -1314,7 +1314,7 @@ auto pickup::pick_up( const tripoint_bub_ms &p, int min, from_where get_items_fr
         }
 
         // Bail out if this square cannot be auto-picked-up
-        if( g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), p ) ) {
+        if( g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), bub_to_abs( p ) ) ) {
             return;
         } else if( g->m.has_flag( "SEALED", p ) ) {
             return;

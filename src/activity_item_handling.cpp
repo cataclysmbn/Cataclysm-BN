@@ -1,6 +1,7 @@
 #include "activity_handlers.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include "pathfinding.h"
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -49,6 +50,7 @@
 #include "iuse.h"
 #include "line.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "map_iterator.h"
 #include "map_selector.h"
 #include "mapdata.h"
@@ -1011,29 +1013,29 @@ static void move_item( player &p, item &it, const int quantity, const tripoint_b
     put_into_vehicle_or_drop( p, item_drop_reason::deliberate, std::move( moved ), dest );
 }
 
-std::vector<tripoint_bub_ms> route_adjacent( const player &p, const tripoint_bub_ms &dest )
+std::vector<tripoint_abs_ms> route_adjacent( const player &p, const tripoint_abs_ms &dest )
 {
-    auto passable_tiles = std::unordered_set<tripoint_bub_ms>();
-    map &here = get_map();
+    auto passable_tiles = std::unordered_set<tripoint_abs_ms>();
+    auto &here = p.get_mapbuffer();
 
-    for( const tripoint_bub_ms &tp : here.points_in_radius( dest, 1 ) ) {
-        if( tp != p.bub_pos() && here.passable( tp ) && !here.obstructed_by_vehicle_rotation( dest, tp ) ) {
-            passable_tiles.emplace( tp );
+    for( const auto &tp : simulated_tiles_in_radius( here, dest, 1 ) ) {
+        if( tp.abs_pos() != p.abs_pos() && tp.passable() &&
+            !here.obstructed_by_vehicle_rotation( dest, tp.abs_pos() ) ) {
+            passable_tiles.emplace( tp.abs_pos() );
         }
     }
 
-    const auto &sorted = get_sorted_tiles_by_distance( p.bub_pos(), passable_tiles );
+    const auto &sorted = get_sorted_tiles_by_distance( p.abs_pos(), passable_tiles );
 
-    const auto &avoid = p.get_legacy_path_avoid();
-    for( const tripoint_bub_ms &tp : sorted ) {
-        auto route = here.route( p.bub_pos(), tp, p.get_legacy_pathfinding_settings(), avoid );
-
+    const auto pair = p.get_pathfinding_pair();
+    for( const tripoint_abs_ms &tp : sorted ) {
+        auto route = Pathfinding::route( here, p.abs_pos(), tp, pair.first, pair.second );
         if( !route.empty() ) {
             return route;
         }
     }
 
-    return std::vector<tripoint_bub_ms>();
+    return std::vector<tripoint_abs_ms>();
 }
 
 static std::vector<construction_id> get_group_roots( const std::vector<construction_id> &all,
@@ -2392,13 +2394,10 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                     g->reload_npcs();
                     return;
                 }
-                std::vector<tripoint_bub_ms> route;
-                route = here.route( p.bub_pos(), src_loc, p.get_legacy_pathfinding_settings(),
-                                    p.get_legacy_path_avoid() );
-                if( route.empty() ) {
-                    // can't get there, can't do anything, skip it
-                    continue;
-                }
+                auto &pf_buffer = MAPBUFFER_REGISTRY.get( p.get_dimension() );
+                const auto pair = p.get_pathfinding_pair();
+                auto route = Pathfinding::route( pf_buffer, p.abs_pos(), bub_to_abs( src_loc ),
+                                                 pair.first, pair.second );
                 stage = DO;
                 p.set_destination( route, p.remove_activity() );
                 return;
@@ -2425,18 +2424,20 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
             // before we move any item, check if player is at or
             // adjacent to the loot source tile
             if( !is_adjacent_or_closer ) {
-                std::vector<tripoint_bub_ms> route;
+                std::vector<tripoint_abs_ms> route;
                 bool adjacent = false;
 
                 // get either direct route or route to nearest adjacent tile if
                 // source tile is impassable
                 if( here.passable( src_loc ) ) {
-                    route = here.route( p.bub_pos(), src_loc, p.get_legacy_pathfinding_settings(),
-                                        p.get_legacy_path_avoid() );
+                    auto &pf_buffer2 = MAPBUFFER_REGISTRY.get( p.get_dimension() );
+                    const auto pair2 = p.get_pathfinding_pair();
+                    route = Pathfinding::route( pf_buffer2, p.abs_pos(), bub_to_abs( src_loc ),
+                                                pair2.first, pair2.second );
                 } else {
                     // impassable source tile (locker etc.),
                     // get route to nearest adjacent tile instead
-                    route = route_adjacent( p, src_loc );
+                    route = route_adjacent( p, bub_to_abs( src_loc ) );
                     adjacent = true;
                 }
 
@@ -2761,7 +2762,7 @@ static std::unordered_set<tripoint_abs_ms> generic_multi_activity_locations( pla
                         found_one_point = true;
                         // only check for a valid path, as that is all that is needed to tidy something up.
                         if( square_dist( p.bub_pos(), elem ) > 1 ) {
-                            std::vector<tripoint_bub_ms> route = route_adjacent( p, elem );
+                            std::vector<tripoint_abs_ms> route = route_adjacent( p, bub_to_abs( elem ) );
                             if( route.empty() ) {
                                 found_route = false;
                             }
@@ -3188,8 +3189,8 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                     std::vector<tripoint_bub_ms> candidates;
                     for( const auto &point_elem : here.points_in_radius( src_loc, PICKUP_RANGE - 1 ) ) {
                         // we don't want to place the components where they could interfere with our ( or someone else's ) construction spots
-                        if( !p.sees( point_elem ) || ( std::ranges::find( local_src_set,
-                                                       point_elem ) != local_src_set.end() ) || !here.can_put_items_ter_furn( point_elem ) ) {
+                        if( !p.sees( bub_to_abs( point_elem ) ) || ( std::ranges::find( local_src_set,
+                                point_elem ) != local_src_set.end() ) || !here.can_put_items_ter_furn( point_elem ) ) {
                             continue;
                         }
                         candidates.push_back( point_elem );
@@ -3366,7 +3367,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
                 g->reload_npcs();
                 return false;
             }
-            const auto route = route_adjacent( p, src_loc );
+            const auto route = route_adjacent( p, bub_to_abs( src_loc ) );
             if( route.empty() ) {
                 const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
                                         activity_to_restore ) );
@@ -3403,7 +3404,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
         }
 
         if( square_dist( p.bub_pos(), src_loc ) > 1 ) {
-            auto route = route_adjacent( p, src_loc );
+            auto route = route_adjacent( p, bub_to_abs( src_loc ) );
             const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
                                     activity_to_restore ) );
 

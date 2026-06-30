@@ -280,7 +280,7 @@ void mdeath::boomer( monster &z )
 {
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -308,7 +308,7 @@ void mdeath::boomer_glow( monster &z )
 {
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -409,7 +409,7 @@ void mdeath::fungus( monster &z )
 {
     //~ the sound of a fungus dying
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 60;
     se.category = sounds::sound_t::combat;
     se.description = _( "Pouf!" );
@@ -745,9 +745,9 @@ void mdeath::broken( monster &z )
     }
 
     // TODO: make mdeath::splatter work for robots
-    if( ( broken_mon_ref.damage() >= broken_mon_ref.max_damage() ) && g->u.sees( z.bub_pos() ) ) {
+    if( ( broken_mon_ref.damage() >= broken_mon_ref.max_damage() ) && g->u.sees( z.abs_pos() ) ) {
         add_msg( m_good, _( "The %s is destroyed!" ), z.name() );
-    } else if( g->u.sees( z.bub_pos() ) ) {
+    } else if( g->u.sees( z.abs_pos() ) ) {
         add_msg( m_good, _( "The %s collapses!" ), z.name() );
     }
 }
@@ -776,7 +776,7 @@ void mdeath::gas( monster &z )
 {
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -792,7 +792,7 @@ void mdeath::smokeburst( monster &z )
 {
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -816,7 +816,7 @@ void mdeath::fungalburst( monster &z )
 
     std::string explode = string_format( _( "a %s explodes!" ), z.name() );
     sound_event se;
-    se.origin = z.bub_pos();
+    se.origin = z.abs_pos();
     se.volume = 90;
     se.category = sounds::sound_t::combat;
     se.description = explode;
@@ -872,6 +872,8 @@ void mdeath::detonate( monster &z )
     for( const auto &amm : z.ammo ) {
         amm_list.add( amm.first, amm.second );
     }
+
+    auto &here = z.get_mapbuffer();
 
     std::vector<itype_id> pre_dets;
     for( int i = 0; i < 3; i++ ) {
@@ -934,13 +936,13 @@ void mdeath::detonate( monster &z )
         detached_ptr<item> bomb_item = item::spawn( bombs.first, calendar::start_of_cataclysm );
         bomb_item->charges = bombs.second;
         bomb_item->activate();
-        g->m.add_item_or_charges( z.bub_pos(), std::move( bomb_item ) );
+        here.add_item_or_charges( z.abs_pos(), std::move( bomb_item ) );
     }
 }
 
 void mdeath::broken_ammo( monster &z )
 {
-    if( g->u.sees( z.bub_pos() ) ) {
+    if( g->u.sees( z.abs_pos() ) ) {
         //~ %s is the possessive form of the monster's name
         add_msg( m_info, _( "The %s's interior compartment sizzles with destructive energy." ),
                  z.name() );
@@ -1035,7 +1037,7 @@ void mdeath::fireball( monster &z )
         std::string explode = string_format( _( "a %s explode!" ),
                                              z.name() );
         sound_event se;
-        se.origin = z.bub_pos();
+        se.origin = z.abs_pos();
         se.volume = 140;
         se.category = sounds::sound_t::combat;
         se.description = explode;
@@ -1060,7 +1062,7 @@ void mdeath::conflagration( monster &z )
         }
         const std::string explode = string_format( _( "a %s explode!" ), z.name() );
         sound_event se;
-        se.origin = z.bub_pos();
+        se.origin = z.abs_pos();
         se.volume = 110;
         se.category = sounds::sound_t::combat;
         se.description = explode;

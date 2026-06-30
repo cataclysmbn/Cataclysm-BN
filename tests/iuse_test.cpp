@@ -13,6 +13,7 @@
 #include "map_helpers.h"
 #include "morale_types.h"
 #include "player_helpers.h"
+#include "simulated_island_helpers.h"
 #include "type_id.h"
 #include "value_ptr.h"
 
@@ -87,8 +88,8 @@ auto make_active_bionic_scanner_benchmark_fixture(
     you.recalc_sight_limits();
 
     const auto item_count = add_nearby_bionic_scanner_benchmark_items(here, you.bub_pos(), opts);
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
-    auto* const corpse_ptr = add_bionic_scanner_benchmark_corpse(here, corpse_pos);
+    const auto corpse_pos = you.abs_pos() + tripoint_east;
+    auto* const corpse_ptr = add_bionic_scanner_benchmark_corpse(here, abs_to_bub(corpse_pos));
     REQUIRE(you.sees(corpse_pos));
 
     auto backpack = item::spawn("backpack", calendar::turn);
@@ -124,15 +125,17 @@ TEST_CASE("bionic_scanner_on_ground_marks_corpses_with_cbms", "[iuse][bionic_sca
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = you.abs_pos() + tripoint_east;
     REQUIRE(you.sees(corpse_pos));
     auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
-    REQUIRE_FALSE(here.add_item_or_charges(corpse_pos, std::move(corpse), false));
-    const auto corpse_stack = here.i_at(corpse_pos);
+    REQUIRE_FALSE(
+        here.add_item_or_charges(abs_to_map_local(here, corpse_pos), std::move(corpse), false));
+    const auto corpse_stack = here.i_at(abs_to_map_local(here, corpse_pos));
     REQUIRE(corpse_stack.size() == 1);
     auto* const corpse_ptr = *corpse_stack.begin();
     REQUIRE(corpse_ptr->get_components().size() == 1);
@@ -144,7 +147,8 @@ TEST_CASE("bionic_scanner_on_ground_marks_corpses_with_cbms", "[iuse][bionic_sca
     const auto* const scanner_ptr = scanner.get();
     const auto charges_before = scanner_ptr->ammo_remaining();
     REQUIRE(charges_before > 0);
-    REQUIRE_FALSE(here.add_item_or_charges(you.bub_pos(), std::move(scanner), false));
+    REQUIRE_FALSE(
+        here.add_item_or_charges(abs_to_map_local(here, you.abs_pos()), std::move(scanner), false));
 
     here.process_items();
 
@@ -154,9 +158,7 @@ TEST_CASE("bionic_scanner_on_ground_marks_corpses_with_cbms", "[iuse][bionic_sca
 }
 
 TEST_CASE(
-    "bionic_scanner_inside_ground_container_marks_corpses_with_cbms",
-    "[iuse][bionic_"
-    "scanner]") {
+    "bionic_scanner_inside_ground_container_marks_corpses_with_cbms", "[iuse][bionic_scanner]") {
     const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     clear_map();
     clear_avatar();
@@ -165,15 +167,17 @@ TEST_CASE(
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = you.abs_pos() + tripoint_east;
     REQUIRE(you.sees(corpse_pos));
     auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
-    REQUIRE_FALSE(here.add_item_or_charges(corpse_pos, std::move(corpse), false));
-    const auto corpse_stack = here.i_at(corpse_pos);
+    REQUIRE_FALSE(
+        here.add_item_or_charges(abs_to_map_local(here, corpse_pos), std::move(corpse), false));
+    const auto corpse_stack = here.i_at(abs_to_map_local(here, corpse_pos));
     REQUIRE(corpse_stack.size() == 1);
     auto* const corpse_ptr = *corpse_stack.begin();
 
@@ -188,7 +192,8 @@ TEST_CASE(
     backpack->put_in(std::move(scanner));
     REQUIRE(backpack->needs_processing());
     REQUIRE(backpack->processing_speed() == 1);
-    REQUIRE_FALSE(here.add_item_or_charges(you.bub_pos(), std::move(backpack), false));
+    REQUIRE_FALSE(
+        here.add_item_or_charges(abs_to_map_local(here, you.abs_pos()), std::move(backpack), false));
 
     here.process_items();
 
@@ -206,15 +211,17 @@ TEST_CASE("bionic_scanner_inside_container_marks_corpses_with_cbms", "[iuse][bio
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = you.abs_pos() + tripoint_east;
     REQUIRE(you.sees(corpse_pos));
     auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
-    REQUIRE_FALSE(here.add_item_or_charges(corpse_pos, std::move(corpse), false));
-    const auto corpse_stack = here.i_at(corpse_pos);
+    REQUIRE_FALSE(
+        here.add_item_or_charges(abs_to_map_local(here, corpse_pos), std::move(corpse), false));
+    const auto corpse_stack = here.i_at(abs_to_map_local(here, corpse_pos));
     REQUIRE(corpse_stack.size() == 1);
     auto* const corpse_ptr = *corpse_stack.begin();
     REQUIRE(corpse_ptr->get_components().size() == 1);
@@ -247,16 +254,17 @@ TEST_CASE("bionic_scanner_consumes_charge_for_each_scanned_corpse", "[iuse][bion
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = you.abs_pos() + tripoint_east;
     REQUIRE(you.sees(corpse_pos));
     auto corpse_ptrs = std::vector<item*>{};
     for (auto i = 0; i < 50; ++i) {
         auto corpse = item::make_corpse(mtype_id("mon_zombie"), calendar::turn, "");
         auto* const corpse_ptr = corpse.get();
-        here.add_item(corpse_pos, std::move(corpse));
+        here.add_item(abs_to_map_local(here, corpse_pos), std::move(corpse));
         corpse_ptrs.push_back(corpse_ptr);
     }
 
@@ -287,6 +295,7 @@ TEST_CASE("bionic_scanner_marks_new_corpse_after_activation", "[iuse][bionic_sca
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
@@ -302,12 +311,13 @@ TEST_CASE("bionic_scanner_marks_new_corpse_after_activation", "[iuse][bionic_sca
     you.process_items();
     CHECK(scanner_ptr->ammo_remaining() == charges_before);
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = you.abs_pos() + tripoint_east;
     REQUIRE(you.sees(corpse_pos));
     auto corpse = item::make_corpse(mtype_id("mon_zombie_technician"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_electrosense", calendar::turn));
     auto* const corpse_ptr = corpse.get();
-    REQUIRE_FALSE(here.add_item_or_charges(corpse_pos, std::move(corpse), false));
+    REQUIRE_FALSE(
+        here.add_item_or_charges(abs_to_map_local(here, corpse_pos), std::move(corpse), false));
     here.invalidate_visibility_caches();
 
     you.process_items();
@@ -318,9 +328,7 @@ TEST_CASE("bionic_scanner_marks_new_corpse_after_activation", "[iuse][bionic_sca
 }
 
 TEST_CASE(
-    "bionic_scanner_separates_detected_corpses_from_unscanned_stack",
-    "[iuse][bionic_"
-    "scanner]") {
+    "bionic_scanner_separates_detected_corpses_from_unscanned_stack", "[iuse][bionic_scanner]") {
     const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     clear_map();
     clear_avatar();
@@ -329,17 +337,19 @@ TEST_CASE(
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = you.abs_pos() + tripoint_east;
     REQUIRE(you.sees(corpse_pos));
     auto corpse_ptrs = std::vector<item*>{};
     for (auto i = 0; i < 2; ++i) {
         auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
         corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
         auto* const corpse_ptr = corpse.get();
-        REQUIRE_FALSE(here.add_item_or_charges(corpse_pos, std::move(corpse), false));
+        REQUIRE_FALSE(
+            here.add_item_or_charges(abs_to_map_local(here, corpse_pos), std::move(corpse), false));
         corpse_ptrs.push_back(corpse_ptr);
     }
     REQUIRE(corpse_ptrs.front()->display_stacked_with(*corpse_ptrs.back()));
@@ -347,7 +357,8 @@ TEST_CASE(
     auto scanner = item::spawn("bionic_scanner_on", calendar::turn);
     scanner->ammo_set(itype_id("battery"), 1);
     scanner->activate();
-    REQUIRE_FALSE(here.add_item_or_charges(you.bub_pos(), std::move(scanner), false));
+    REQUIRE_FALSE(
+        here.add_item_or_charges(abs_to_map_local(here, you.abs_pos()), std::move(scanner), false));
 
     here.process_items();
 
@@ -375,19 +386,22 @@ TEST_CASE("bionic_scanner_updates_same_monster_corpse_pile_display", "[iuse][bio
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos();
+    const auto corpse_pos = you.abs_pos();
     REQUIRE(you.sees(corpse_pos));
     auto cbm_corpse = item::make_corpse(mtype_id("mon_zombie_technician"), calendar::turn, "");
     cbm_corpse->add_component(item::spawn("bio_electrosense", calendar::turn));
     auto* const cbm_corpse_ptr = cbm_corpse.get();
-    REQUIRE_FALSE(here.add_item_or_charges(corpse_pos, std::move(cbm_corpse), false));
+    REQUIRE_FALSE(
+        here.add_item_or_charges(abs_to_map_local(here, corpse_pos), std::move(cbm_corpse), false));
 
     auto empty_corpse = item::make_corpse(mtype_id("mon_zombie_technician"), calendar::turn, "");
     auto* const empty_corpse_ptr = empty_corpse.get();
-    REQUIRE_FALSE(here.add_item_or_charges(corpse_pos, std::move(empty_corpse), false));
+    REQUIRE_FALSE(here.add_item_or_charges(
+        abs_to_map_local(here, corpse_pos), std::move(empty_corpse), false));
     REQUIRE(cbm_corpse_ptr->display_stacked_with(*empty_corpse_ptr));
 
     auto backpack = item::spawn("backpack", calendar::turn);
@@ -415,9 +429,7 @@ TEST_CASE("bionic_scanner_updates_same_monster_corpse_pile_display", "[iuse][bio
 }
 
 TEST_CASE(
-    "bionic_scanner_separates_detected_corpse_piles_by_found_cbms",
-    "[iuse][bionic_"
-    "scanner]") {
+    "bionic_scanner_separates_detected_corpse_piles_by_found_cbms", "[iuse][bionic_scanner]") {
     const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     clear_map();
     clear_avatar();
@@ -426,20 +438,21 @@ TEST_CASE(
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_south;
+    const auto corpse_pos = you.abs_pos() + tripoint_south;
     REQUIRE(you.sees(corpse_pos));
     auto solar_corpse = item::make_corpse(mtype_id("mon_zombie_electric"), calendar::turn, "");
     solar_corpse->add_component(item::spawn("bn_bio_solar", calendar::turn));
     auto* const solar_corpse_ptr = solar_corpse.get();
-    here.add_item(corpse_pos, std::move(solar_corpse));
+    here.add_item(abs_to_map_local(here, corpse_pos), std::move(solar_corpse));
 
     auto storage_corpse = item::make_corpse(mtype_id("mon_zombie_electric"), calendar::turn, "");
     storage_corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
     auto* const storage_corpse_ptr = storage_corpse.get();
-    here.add_item(corpse_pos, std::move(storage_corpse));
+    here.add_item(abs_to_map_local(here, corpse_pos), std::move(storage_corpse));
     REQUIRE(solar_corpse_ptr->display_stacked_with(*storage_corpse_ptr));
 
     auto backpack = item::spawn("backpack", calendar::turn);
@@ -475,8 +488,7 @@ TEST_CASE(
 
 TEST_CASE(
     "bionic_scanner_separates_detected_corpse_piles_by_duplicate_cbm_count",
-    "[iuse][bionic_"
-    "scanner]") {
+    "[iuse][bionic_scanner]") {
     const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     clear_map();
     clear_avatar();
@@ -485,23 +497,24 @@ TEST_CASE(
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_south;
+    const auto corpse_pos = you.abs_pos() + tripoint_south;
     REQUIRE(you.sees(corpse_pos));
     auto one_storage_corpse =
         item::make_corpse(mtype_id("mon_zombie_electric"), calendar::turn, "");
     one_storage_corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
     auto* const one_storage_corpse_ptr = one_storage_corpse.get();
-    here.add_item(corpse_pos, std::move(one_storage_corpse));
+    here.add_item(abs_to_map_local(here, corpse_pos), std::move(one_storage_corpse));
 
     auto two_storage_corpse =
         item::make_corpse(mtype_id("mon_zombie_electric"), calendar::turn, "");
     two_storage_corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
     two_storage_corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
     auto* const two_storage_corpse_ptr = two_storage_corpse.get();
-    here.add_item(corpse_pos, std::move(two_storage_corpse));
+    here.add_item(abs_to_map_local(here, corpse_pos), std::move(two_storage_corpse));
     REQUIRE(one_storage_corpse_ptr->display_stacked_with(*two_storage_corpse_ptr));
 
     auto backpack = item::spawn("backpack", calendar::turn);
@@ -520,9 +533,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "scanned corpse bionic stack comparison benchmark",
-    "[.][benchmark][item][bionic_"
-    "scanner]") {
+    "scanned corpse bionic stack comparison benchmark", "[.][benchmark][item][bionic_scanner]") {
     auto left_corpse = item::make_corpse(mtype_id("mon_zombie_electric"), calendar::turn, "");
     auto right_corpse = item::make_corpse(mtype_id("mon_zombie_electric"), calendar::turn, "");
     static constexpr auto component_count = 24;
@@ -544,8 +555,7 @@ TEST_CASE(
 
 TEST_CASE(
     "active bionic scanner process_items benchmark near map items",
-    "[.][benchmark][item]["
-    "bionic_scanner]") {
+    "[.][benchmark][item][bionic_scanner]") {
     const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     clear_map();
     clear_avatar();
@@ -585,17 +595,19 @@ TEST_CASE("bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bio
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
     g->place_player(tripoint_bub_ms(60, 60, 0));
+    ensure_simulated_islands_for(you.abs_pos());
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = you.abs_pos() + tripoint_east;
     REQUIRE(you.sees(corpse_pos));
     auto corpse_ptrs = std::vector<item*>{};
     for (auto i = 0; i < 10; ++i) {
         auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
         corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
         auto* const corpse_ptr = corpse.get();
-        REQUIRE_FALSE(here.add_item_or_charges(corpse_pos, std::move(corpse), false));
+        REQUIRE_FALSE(
+            here.add_item_or_charges(abs_to_map_local(here, corpse_pos), std::move(corpse), false));
         corpse_ptrs.push_back(corpse_ptr);
     }
 
@@ -607,13 +619,14 @@ TEST_CASE("bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bio
     backpack->put_in(std::move(scanner));
     REQUIRE_FALSE(you.wear_item(std::move(backpack), false));
 
-    REQUIRE(scanner_ptr->type->invoke(you, *scanner_ptr, you.bub_pos()) == 0);
+    REQUIRE(
+        scanner_ptr->type->invoke(you, *scanner_ptr, abs_to_map_local(here, you.abs_pos())) == 0);
     REQUIRE(scanner_ptr->typeId() == itype_id("bionic_scanner_on"));
     REQUIRE(scanner_ptr->is_active());
     REQUIRE(scanner_ptr->needs_processing());
     REQUIRE(backpack_ptr->needs_processing());
-    here.build_map_cache(you.bub_pos().z());
-    here.update_visibility_cache(you.bub_pos().z());
+    here.build_map_cache(abs_to_map_local(here, you.abs_pos()).z());
+    here.update_visibility_cache(abs_to_map_local(here, you.abs_pos()).z());
     REQUIRE(you.sees(corpse_pos));
 
     you.process_items();

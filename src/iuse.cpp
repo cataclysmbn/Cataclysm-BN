@@ -581,6 +581,7 @@ int iuse::fungicide( player *p, item *it, bool, const tripoint_bub_ms & )
     if( p->is_npc() && !has_fungus && !has_spores ) {
         return 0;
     }
+    auto &here = p->get_mapbuffer();
 
     p->add_msg_player_or_npc( _( "You use your fungicide." ), _( "<npcname> uses some fungicide" ) );
     if( has_fungus && ( one_in( 3 ) ) ) {
@@ -594,18 +595,18 @@ int iuse::fungicide( player *p, item *it, bool, const tripoint_bub_ms & )
         }
         p->remove_effect( effect_spores );
         int spore_count = rng( 1, 6 );
-        for( const tripoint_bub_ms &dest : g->m.points_in_radius( p->bub_pos(), 1 ) ) {
+        for( const auto &dest : simulated_tiles_in_radius( here, p->abs_pos(), 1 ) ) {
             if( spore_count == 0 ) {
                 break;
             }
-            if( dest == p->bub_pos() ) {
+            if( dest.abs_pos() == p->abs_pos() ) {
                 continue;
             }
-            if( g->m.passable( dest ) && !get_map().obstructed_by_vehicle_rotation( p->bub_pos(), dest ) &&
+            if( dest.passable() && !here.obstructed_by_vehicle_rotation( p->abs_pos(), dest.abs_pos() ) &&
                 x_in_y( spore_count, 8 ) ) {
-                if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
+                if( monster *const mon_ptr = g->critter_at<monster>( dest.abs_pos() ) ) {
                     monster &critter = *mon_ptr;
-                    if( g->u.sees( dest ) &&
+                    if( g->u.sees( dest.abs_pos() ) &&
                         !critter.type->in_species( FUNGUS ) ) {
                         add_msg( m_warning, _( "The %s is covered in tiny spores!" ),
                                  critter.name() );
@@ -614,7 +615,7 @@ int iuse::fungicide( player *p, item *it, bool, const tripoint_bub_ms & )
                         critter.die( p ); // counts as kill by player
                     }
                 } else {
-                    g->place_critter_at( mon_spore, dest );
+                    g->place_critter_at( mon_spore, abs_to_bub( dest.abs_pos() ) );
                 }
                 spore_count--;
             }
@@ -2131,7 +2132,7 @@ int iuse::radio_on( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             message = string_format( _( "radio: %s" ), segments[index] );
         }
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 60;
         se.category = sounds::sound_t::electronic_speech;
         se.description = message;
@@ -2206,7 +2207,7 @@ int iuse::noise_emitter_on( player *p, item *it, bool t, const tripoint_bub_ms &
     if( t ) { // Normal use
         //~ the sound of a noise emitter when turned on
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 100;
         se.category = sounds::sound_t::alarm;
         se.description = _( "KXSHHHHRRCRKLKKK!" );
@@ -2222,7 +2223,7 @@ int iuse::noise_emitter_on( player *p, item *it, bool t, const tripoint_bub_ms &
 }
 
 // Ugly and uses variables that shouldn't be public
-int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos )
+int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos_ )
 {
     const bool possess = p->has_item( *it );
 
@@ -2235,7 +2236,9 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         // Not supported at the moment
         return 0;
     }
-    map &here = get_map();
+    auto &here = p->get_mapbuffer();
+    auto &m = get_map();
+    auto pos = bub_to_abs( pos_ );
 
     if( !p->has_enough_charges( *it, false ) ) {
         it->revert( p, true );
@@ -2252,23 +2255,25 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             corpse->get_var( "bionics_scanned_by", -1 ) == p->getID().get_value() ) {
             continue;
         }
-        const auto pt = corpse->bub_pos();
-        if( !visibility_cache_updated && here.visibility_caches_dirty() ) {
-            here.update_visibility_cache( p->bub_pos().z() );
+        const auto pt = corpse->abs_pos();
+        if( !visibility_cache_updated && m.visibility_caches_dirty() ) {
+            m.update_visibility_cache( p->bub_pos().z() );
             visibility_cache_updated = true;
         }
         if( !p->sees( pt ) ) {
             continue;
         }
 
-        using namespace std::views;
-        namespace ranges = std::ranges;
-        auto cbms = corpse->get_components()
-                    | filter( &item::is_bionic )
-                    | ranges::to<std::vector>();
+        const auto &components = corpse->get_components();
+        std::vector<const item *> cbms;
+        for( const item *maybe_cbm : components ) {
+            if( maybe_cbm && maybe_cbm->is_bionic() ) {
+                cbms.push_back( maybe_cbm );
+            }
+        }
 
         auto charges = std::max( 1, static_cast<int>( cbms.size() ) );
-        charges -= it->ammo_consume( charges, pos );
+        charges -= it->ammo_consume( charges, pos_ );
         if( possess && it->has_flag( flag_USE_UPS ) ) {
             if( p->use_charges_if_avail( itype_UPS, charges ) ) {
                 charges = 0;
@@ -2293,7 +2298,7 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             //~ %1 is corpse name, %2 is direction, %3 is bionic name
             p->add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
                                   corpse->display_name().c_str(),
-                                  direction_name( direction_from( p->bub_pos(), pt ) ).c_str(),
+                                  direction_name( direction_from( p->abs_pos(), pt ) ).c_str(),
                                   bionics_string.c_str()
                                 );
         }
@@ -2451,7 +2456,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
 
         if( pry->noise > 0 ) {
             sound_event se;
-            se.origin = pnt;
+            se.origin = bub_to_abs( pnt );
             se.volume = pry->noise;
             se.category = sounds::sound_t::combat;
             se.description = pry->sound.translated();
@@ -2463,7 +2468,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
         if( pry->alarm ) {
             g->events().send<event_type::triggers_alarm>( p->getID() );
             sound_event se;
-            se.origin = p->bub_pos();
+            se.origin = p->abs_pos();
             se.volume = 100;
             se.category = sounds::sound_t::alarm;
             se.description = _( "an alarm sound!" );
@@ -2485,7 +2490,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
                                     p->str_cur ) ) * pry_level ) {
                 p->add_msg_if_player( m_mixed, pry->break_message );
                 sound_event se;
-                se.origin = pnt;
+                se.origin = bub_to_abs( pnt );
                 se.volume = pry->break_noise;
                 se.category = sounds::sound_t::combat;
                 se.description = pry->break_sound.translated();
@@ -2503,7 +2508,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
                     se.category = sounds::sound_t::alarm;
                     se.description = _( "an alarm sound!" );
                     se.volume = 100;
-                    se.origin = p->bub_pos();
+                    se.origin = p->abs_pos();
                     se.id = "environment";
                     se.variant = "alarm";
                     sounds::sound( se );
@@ -3113,7 +3118,7 @@ int iuse::geiger( player *p, item *it, bool t, const tripoint_bub_ms &pos )
                                 rads > 25 ? _( "geiger_medium" ) : _( "geiger_low" );
 
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 50;
         se.category = sounds::sound_t::alarm;
         se.description = description;
@@ -3228,7 +3233,7 @@ int iuse::can_goo( player *p, item *it, bool, const tripoint_bub_ms & )
     }
     if( monster *const mon_ptr = g->critter_at<monster>( goop ) ) {
         monster &critter = *mon_ptr;
-        if( g->u.sees( goop ) ) {
+        if( g->u.sees( bub_to_abs( goop ) ) ) {
             add_msg( _( "Black goo emerges from the canister and envelopes a %s!" ),
                      critter.name() );
         }
@@ -3237,7 +3242,7 @@ int iuse::can_goo( player *p, item *it, bool, const tripoint_bub_ms & )
         critter.set_speed_base( critter.get_speed_base() - rng( 5, 25 ) );
         critter.set_hp( critter.get_speed() );
     } else {
-        if( g->u.sees( goop ) ) {
+        if( g->u.sees( bub_to_abs( goop ) ) ) {
             add_msg( _( "Living black goo emerges from the canister!" ) );
         }
         if( monster *const goo = g->place_critter_at( mon_blob, goop ) ) {
@@ -3254,7 +3259,7 @@ int iuse::can_goo( player *p, item *it, bool, const tripoint_bub_ms & )
             found = g->m.passable( goop ) && g->m.tr_at( goop ).is_null();
         } while( !found && tries < 10 );
         if( found ) {
-            if( g->u.sees( goop ) ) {
+            if( g->u.sees( bub_to_abs( goop ) ) ) {
                 add_msg( m_warning, _( "A nearby splatter of goo forms into a goo pit." ) );
             }
             g->m.trap_set( goop, tr_goo );
@@ -3275,7 +3280,7 @@ int iuse::throwable_extinguisher_act( player *, item *it, bool, const tripoint_b
     }
     if( g->m.get_field( pos, fd_fire ) != nullptr ) {
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 90;
         se.category = sounds::sound_t::combat;
         se.description = _( "Bang!" );
@@ -3335,7 +3340,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint_bub_ms 
     if( t ) { // Simple timer effects
         // Vol 0 = only heard if you hold it
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 40;
         se.category = sounds::sound_t::electronic_speech;
         se.description = _( "Merged!" );
@@ -3356,7 +3361,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint_bub_ms 
             current_stat = std::max( current_stat, modified_stat );
         };
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 120;
         se.category = sounds::sound_t::electronic_speech;
         se.id = "speech";
@@ -3540,7 +3545,7 @@ int iuse::grenade_inc_act( player *p, item *it, bool t, const tripoint_bub_ms &p
         // Simple timer effects
         // Vol 0 = only heard if you hold it
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 40;
         se.category = sounds::sound_t::alarm;
         se.description = _( "Tick!" );
@@ -3650,7 +3655,7 @@ int iuse::firecracker_pack_act( player *, item *it, bool, const tripoint_bub_ms 
     time_duration timer = it->age();
     if( timer < 2_turns ) {
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 30;
         se.category = sounds::sound_t::alarm;
         se.description = _( "ssss…" );
@@ -3666,7 +3671,7 @@ int iuse::firecracker_pack_act( player *, item *it, bool, const tripoint_bub_ms 
         }
         for( i = 0; i < ex; i++ ) {
             sound_event se;
-            se.origin = pos;
+            se.origin = bub_to_abs( pos );
             se.volume = 80;
             se.category = sounds::sound_t::combat;
             se.description = _( "Bang!" );
@@ -3707,7 +3712,7 @@ int iuse::firecracker_act( player *p, item *it, bool t, const tripoint_bub_ms &p
 
     if( t ) { // Simple timer effects
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 40;
         se.category = sounds::sound_t::alarm;
         se.description = _( "ssss…" );
@@ -3722,7 +3727,7 @@ int iuse::firecracker_act( player *p, item *it, bool t, const tripoint_bub_ms &p
 
     if( it->charges == 0 ) { // When that timer runs down...
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 80;
         se.category = sounds::sound_t::combat;
         se.description = _( "Bang!" );
@@ -3945,7 +3950,7 @@ void iuse::play_music( player &p, const tripoint_bub_ms &source, const int volum
     // do not process mp3 player
     if( volume != 0 ) {
         sound_event se;
-        se.origin = source;
+        se.origin = bub_to_abs( source );
         se.volume = volume;
         se.category = sounds::sound_t::music;
         se.description = sound;
@@ -4843,6 +4848,8 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
     }
     g->events().send<event_type::activates_artifact>( p->getID(), it->tname( 1, false ) );
 
+    auto &here = p->get_mapbuffer();
+
     const auto &art = it->type->artifact;
     size_t num_used = rng( 1, art->effects_activated.size() );
     if( num_used < art->effects_activated.size() ) {
@@ -4856,7 +4863,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
         sound_event se;
         switch( used ) {
             case AEA_STORM: {
-                se.origin = p->bub_pos();
+                se.origin = p->abs_pos();
                 se.volume = 160;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "Ka-BOOM!" );
@@ -4920,9 +4927,9 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
 
             case AEA_BLOOD: {
                 bool blood = false;
-                for( const tripoint_bub_ms &tmp : g->m.points_in_radius( p->bub_pos(), 4 ) ) {
-                    if( !one_in( 4 ) && g->m.add_field( tmp, fd_blood, 3 ) &&
-                        ( blood || g->u.sees( tmp ) ) ) {
+                for( const auto &tmp : simulated_tiles_in_radius( here, p->abs_pos(), 4 ) ) {
+                    if( !one_in( 4 ) && here.add_field( tmp.abs_pos(), { .type = fd_blood, .intensity = 3 } ) &&
+                        ( blood || g->u.sees( tmp.abs_pos() ) ) ) {
                         blood = true;
                     }
                 }
@@ -4949,7 +4956,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
             break;
 
             case AEA_PULSE:
-                se.origin = p->bub_pos();
+                se.origin = p->abs_pos();
                 se.volume = 80;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "The earth shakes!" );
@@ -5028,7 +5035,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
                 break;
 
             case AEA_GROWTH: {
-                monster tmptriffid( mtype_id::NULL_ID(), p->bub_pos() );
+                monster tmptriffid( mtype_id::NULL_ID(), p->abs_pos() );
                 mattack::growplants( &tmptriffid );
             }
             break;
@@ -5087,7 +5094,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
                 break;
 
             case AEA_NOISE:
-                se.origin = p->bub_pos();
+                se.origin = p->abs_pos();
                 se.volume = 135;
                 se.category = sounds::sound_t::combat;
                 se.description = string_format( _( "a deafening boom from %s %s" ),
@@ -5098,7 +5105,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
                 break;
 
             case AEA_SCREAM:
-                se.origin = p->bub_pos();
+                se.origin = p->abs_pos();
                 se.volume = 100;
                 se.category = sounds::sound_t::alert;
                 se.description = string_format( _( "a disturbing scream from %s %s" ),
@@ -5341,7 +5348,7 @@ int iuse::unfold_generic( player *p, item *it, bool, const tripoint_bub_ms & )
         if( vp.info().location != "structure" && !vp.info().has_flag( VPFLAG_EXTENDABLE ) ) {
             continue;
         }
-        const tripoint_bub_ms pp = vp.pos();
+        const tripoint_bub_ms pp = vp.bub_pos();
         if( invalid_pos( pp, can_float ) ) {
             p->add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it->tname() );
             g->m.destroy_vehicle( veh );
@@ -5502,7 +5509,7 @@ int iuse::talking_doll( player *p, item *it, bool, const tripoint_bub_ms & )
     const SpeechBubble &speech = get_speech( it->typeId().str() );
 
     sound_event se;
-    se.origin = p->bub_pos();
+    se.origin = p->abs_pos();
     se.volume = speech.volume;
     se.category = sounds::sound_t::electronic_speech;
     se.description = speech.text.translated();
@@ -5592,7 +5599,7 @@ int iuse::gun_repair( player *p, item *it, bool, const tripoint_bub_ms & )
     const float vision_mod = character_funcs::fine_detail_vision_mod( *p );
     // TODO: this may render player unable to move for minutes, and so should start an activity instead
     sound_event se;
-    se.origin = p->bub_pos();
+    se.origin = p->abs_pos();
     se.category = sounds::sound_t::activity;
     se.description = _( "crunch" );
     se.id = "tool";
@@ -5700,7 +5707,7 @@ int iuse::bell( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     if( it->typeId() == itype_cow_bell ) {
         sound_event se;
-        se.origin = p->bub_pos();
+        se.origin = p->abs_pos();
         se.volume = 70;
         se.category = sounds::sound_t::music;
         se.description = _( "Clank!  Clank!" );
@@ -5720,7 +5727,7 @@ int iuse::bell( player *p, item *it, bool, const tripoint_bub_ms & )
         }
     } else {
         sound_event se;
-        se.origin = p->bub_pos();
+        se.origin = p->abs_pos();
         se.volume = 40;
         se.category = sounds::sound_t::music;
         se.description = _( "Ring!  Ring!" );
@@ -7369,7 +7376,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
 
         p->moves -= 50;
         sound_event se;
-        se.origin = p->bub_pos();
+        se.origin = p->abs_pos();
         se.volume = 50;
         se.category = sounds::sound_t::activity;
         se.description = _( "Click." );
@@ -7642,7 +7649,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         if( it->charges == 0 ) {
 
             sound_event se;
-            se.origin = p->bub_pos();
+            se.origin = p->abs_pos();
             se.volume = 40;
             se.category = sounds::sound_t::combat;
             se.description = "Click.";
@@ -7676,7 +7683,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
         if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             sound_event se;
-            se.origin = p->bub_pos();
+            se.origin = p->abs_pos();
             se.volume = 70;
             se.category = sounds::sound_t::alarm;
             se.description = _( "a police siren, whoop WHOOP." );
@@ -7739,7 +7746,7 @@ int iuse::foodperson( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             const SpeechBubble &speech = get_speech( "foodperson_mask" );
             sound_event se;
-            se.origin = pos;
+            se.origin = bub_to_abs( pos );
             se.volume = speech.volume;
             se.category = sounds::sound_t::alarm;
             se.description = speech.text.translated();
@@ -7840,7 +7847,7 @@ int iuse::radiocaron( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     if( t ) {
         //~Sound of a radio controlled car moving around
         sound_event se;
-        se.origin = pos;
+        se.origin = bub_to_abs( pos );
         se.volume = 50;
         se.category = sounds::sound_t::movement;
         se.movement_noise = true;
@@ -7884,7 +7891,7 @@ static void emit_radio_signal( player &p, const flag_id &signal )
         if( it.has_flag( flag_RADIO_ACTIVATION ) && it.has_flag( signal ) )
         {
             sound_event se;
-            se.origin = loc;
+            se.origin = bub_to_abs( loc );
             se.volume = 50;
             se.category = sounds::sound_t::alarm;
             se.description = _( "beep" );
@@ -8201,9 +8208,9 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         const auto rctrl_parts = veh->get_avail_parts( "REMOTE_CONTROLS" );
         // Revert to original behavior if we can't find remote controls.
         if( rctrl_parts.empty() ) {
-            veh->use_controls( tripoint_bub_ms( pos ) );
+            veh->use_controls( pos );
         } else {
-            veh->use_controls( tripoint_bub_ms( rctrl_parts.begin()->pos() ) );
+            veh->use_controls( rctrl_parts.begin()->bub_pos() );
         }
     }
 
@@ -8768,9 +8775,9 @@ int iuse::directional_hologram( player *p, item *it, bool, const tripoint_bub_ms
         p->add_msg_if_player( m_info, _( "Can't create a hologram there." ) );
         return 0;
     }
-    tripoint_bub_ms target = pos;
-    target.x() = p->bub_pos().x() + 4 * SEEX * ( posp.x() - p->bub_pos().x() );
-    target.y() = p->bub_pos().y() + 4 * SEEY * ( posp.y() - p->bub_pos().y() );
+    auto target = bub_to_abs( pos );
+    target.x() = p->bub_pos().x() + 4 * SEEX * ( posp.x() - p->abs_pos().x() );
+    target.y() = p->bub_pos().y() + 4 * SEEY * ( posp.y() - p->abs_pos().y() );
     hologram->friendly = -1;
     hologram->add_effect( effect_docile, 1_hours );
     hologram->wandf = -30;

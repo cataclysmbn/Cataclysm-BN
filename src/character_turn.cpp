@@ -1217,42 +1217,42 @@ void search_surroundings( Character &who )
     if( who.controlling_vehicle ) {
         return;
     }
-    const map &here = get_map();
+    auto &here = who.get_mapbuffer();
     // Search for traps in a larger area than before because this is the only
     // way we can "find" traps that aren't marked as visible.
     // Detection formula takes care of likelihood of seeing within this range.
-    for( const auto &tp : here.points_in_radius( who.bub_pos(), 5 ) ) {
-        const trap &tr = here.tr_at( tp );
-        if( tr.is_null() || tp == who.bub_pos() ) {
+    for( const auto &tp : simulated_tiles_in_radius( here, who.abs_pos(), 5 ) ) {
+        const trap &tr = tp.trap_obj();
+        if( tr.is_null() || tp.abs_pos() == who.abs_pos() ) {
             continue;
         }
-        if( who.has_active_bionic( bio_ground_sonar ) && !who.knows_trap( tp ) &&
+        if( who.has_active_bionic( bio_ground_sonar ) && !who.knows_trap( tp.abs_pos() ) &&
             ( tr.loadid == tr_beartrap_buried ||
               tr.loadid == tr_landmine_buried || tr.loadid == tr_sinkhole ) ) {
-            const std::string direction = direction_name( direction_from( who.bub_pos(), tp ) );
+            const std::string direction = direction_name( direction_from( who.abs_pos(), tp.abs_pos() ) );
             who.add_msg_if_player( m_warning, _( "Your ground sonar detected a %1$s to the %2$s!" ),
                                    tr.name(), direction );
-            who.add_known_trap( tp, tr );
+            who.add_known_trap( tp.abs_pos(), tr );
         }
-        if( !who.sees( tp ) ) {
+        if( !who.sees( tp.abs_pos() ) ) {
             continue;
         }
-        if( tr.is_always_invisible() || tr.can_see( tp, who ) ) {
+        if( tr.is_always_invisible() || tr.can_see( tp.abs_pos(), who ) ) {
             // Already seen, or can never be seen
             continue;
         }
         // Chance to detect traps we haven't yet seen.
-        if( tr.detect_trap( tp, who ) ) {
+        if( tr.detect_trap( tp.abs_pos(), who ) ) {
             if( tr.get_visibility() > 0 ) {
                 // Only bug player about traps that aren't trivial to spot.
                 const std::string direction = direction_name(
-                                                  direction_from( who.bub_pos(), tp ) );
+                                                  direction_from( who.abs_pos(), tp.abs_pos() ) );
                 who.add_msg_if_player( _( "You've spotted a %1$s to the %2$s!" ),
                                        tr.name(), direction );
                 // Get a bit of experience for spotting traps.
                 who.practice( skill_traps, tr.get_visibility() );
             }
-            who.add_known_trap( tp, tr );
+            who.add_known_trap( tp.abs_pos(), tr );
         }
     }
 }

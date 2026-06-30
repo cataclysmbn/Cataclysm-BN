@@ -575,7 +575,7 @@ struct sound_event {
     short volume = 0;
 
     // What is the position of the sound source?
-    tripoint_bub_ms origin;
+    tripoint_abs_ms origin;
 
     // What enum sound category is this?
     sounds::sound_t category = sounds::sound_t::background;

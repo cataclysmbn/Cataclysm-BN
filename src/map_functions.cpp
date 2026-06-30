@@ -18,10 +18,9 @@ namespace
 auto remove_migo_nerve_cage_terrain( mapbuffer &buffer, const tripoint_abs_ms &p ) -> bool
 {
     auto open = false;
-    const auto tile_reader = buffer.make_abs_tile_reader();
     for( const auto &tmp : points_in_radius( p, 12 ) ) {
-        const auto tile = tile_reader.get_tile( tmp );
-        if( tile && tile->get_ter() == ter_id( "t_wall_resin_cage" ) ) {
+        const auto tile = abs_tile_handle::fetch_terrain_only( buffer, tmp );
+        if( tile && tile->ter() == ter_id( "t_wall_resin_cage" ) ) {
             buffer.set_ter( tmp, ter_id( "t_floor_resin" ) );
             open = true;
         }
@@ -38,7 +37,7 @@ auto finish_migo_nerve_cage_removal( const tripoint_bub_ms &p, const bool spawn_
         add_msg( _( "The nerve cluster collapses in on itself, to no discernible effect." ) );
     }
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 120;
     se.category = sounds::sound_t::combat;
     se.description = _( "a loud alien shriek reverberating through the structure!" );
@@ -51,7 +50,7 @@ auto finish_migo_nerve_cage_removal( const tripoint_bub_ms &p, const bool spawn_
     }
     // Don't give the mi-go free shots against the player
     spawn->mod_moves( -300 );
-    if( get_player_character().sees( p ) ) {
+    if( get_player_character().sees( bub_to_abs( p ) ) ) {
         add_msg( m_bad, _( "Something stirs and clambers out of the ruined mass of flesh and nerves!" ) );
     }
 }

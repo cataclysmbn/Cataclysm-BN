@@ -1154,7 +1154,8 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
                     const auto bash_str = static_cast<int>( std::lerp( std::sqrt( total_dmg ), total_dmg, 0.6 ) );
                     const auto bash_result = here.bash( new_position, bash_str );
 
-                    if( bash_result.did_bash && bash_result.success && get_avatar().sees( new_position ) ) {
+                    if( bash_result.did_bash && bash_result.success &&
+                        get_avatar().sees( bub_to_abs( new_position ) ) ) {
                         //~ %1$s: item name
                         add_msg( _( "%1$s flies and smashes into something!" ), target->tname() );
                     }
@@ -1646,7 +1647,7 @@ void explosion_funcs::regular( const queued_explosion &qe )
     // Cap the max volume to 191dB
     const int noise = std::min( ( base_noise + ( ex.fire ? 70 : 90 ) ), 191 );
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = noise;
     se.category = sounds::sound_t::combat;
 
@@ -1793,7 +1794,7 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
         }
     }
     sound_event se;
-    se.origin = p;
+    se.origin = bub_to_abs( p );
     se.volume = 180;
     se.category = sounds::sound_t::combat;
     se.description = _( "a huge boom!" );
@@ -1814,10 +1815,10 @@ void shockwave( const tripoint_bub_ms &p, const shockwave_data &sw, const std::s
 
 void explosion_funcs::shockwave( const queued_explosion &qe )
 {
-    const tripoint_bub_ms &p = qe.pos;
+    const auto &p = bub_to_abs( qe.pos );
     const shockwave_data &sw = qe.swave_data;
 
-    draw_explosion( p, sw.radius, c_blue, qe.graphics_name );
+    draw_explosion( qe.pos, sw.radius, c_blue, qe.graphics_name );
 
     sound_event se;
     se.origin = p;
@@ -1829,12 +1830,12 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
     sounds::sound( se );
 
     for( monster &critter : g->all_monsters() ) {
-        if( critter.bub_pos().z() != p.z() ) {
+        if( critter.abs_pos().z() != p.z() ) {
             continue;
         }
-        if( rl_dist( critter.bub_pos(), p ) <= sw.radius ) {
+        if( rl_dist( critter.abs_pos(), p ) <= sw.radius ) {
             add_msg( _( "%s is caught in the shockwave!" ), critter.name() );
-            g->knockback( p, critter.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
+            g->knockback( p, critter.abs_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
         }
     }
     // TODO: combine the two loops and the case for g->u using all_creatures()
@@ -1842,16 +1843,16 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
         if( guy.bub_pos().z() != p.z() ) {
             continue;
         }
-        if( rl_dist( guy.bub_pos(), p ) <= sw.radius ) {
+        if( rl_dist( guy.abs_pos(), p ) <= sw.radius ) {
             add_msg( _( "%s is caught in the shockwave!" ), guy.name );
-            g->knockback( p, guy.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
+            g->knockback( p, guy.abs_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
         }
     }
-    if( rl_dist( g->u.bub_pos(), p ) <= sw.radius && sw.affects_player &&
+    if( rl_dist( g->u.abs_pos(), p ) <= sw.radius && sw.affects_player &&
         ( !g->u.has_trait( trait_LEG_TENT_BRACE ) || g->u.footwear_factor() == 1 ||
           ( g->u.footwear_factor() == .5 && one_in( 2 ) ) ) ) {
         add_msg( m_bad, _( "You're caught in the shockwave!" ) );
-        g->knockback( p, g->u.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
+        g->knockback( p, g->u.abs_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
     }
 }
 
@@ -1867,15 +1868,16 @@ void scrambler_blast( const tripoint_bub_ms &p )
     }
 }
 
-void emp_blast( const tripoint_bub_ms &p )
+void emp_blast( const tripoint_bub_ms &pos )
 {
-    map &here = get_map();
     Character &u = get_player_character();
+    auto &here = u.get_mapbuffer();
+    auto p = bub_to_abs( pos );
     const auto terrain = here.ter( p );
     const auto console = here.has_flag( flag_CONSOLE, p );
-    const auto card_reader = is_emp_card_reader( terrain );
+    const auto card_reader = is_emp_card_reader( *terrain );
     auto *const mon_ptr = g->critter_at<monster>( p );
-    const auto player_here = u.bub_pos() == p;
+    const auto player_here = u.abs_pos() == p;
     const auto has_items = here.has_items( p );
 
     if( !console && !card_reader && mon_ptr == nullptr && !player_here && !has_items ) {
@@ -1889,7 +1891,7 @@ void emp_blast( const tripoint_bub_ms &p )
         if( sight ) {
             add_msg( _( "The %s is rendered non-functional!" ), here.tername( p ) );
         }
-        here.ter_set( p, t_console_broken );
+        here.set_ter( p, t_console_broken );
         return;
     }
     // TODO: More terrain effects.
@@ -1899,7 +1901,7 @@ void emp_blast( const tripoint_bub_ms &p )
             if( sight ) {
                 add_msg( _( "The card reader is rendered non-functional." ) );
             }
-            here.ter_set( p, t_card_reader_broken );
+            here.set_ter( p, t_card_reader_broken );
         }
         if( rn > 80 ) {
             if( sight ) {
@@ -1910,7 +1912,7 @@ void emp_blast( const tripoint_bub_ms &p )
                 for( const int j : iota( -3, 4 ) ) {
                     const auto p2 = p + tripoint( i, j, 0 );
                     if( here.ter( p2 ) == t_door_metal_locked ) {
-                        here.ter_set( p2, t_floor );
+                        here.set_ter( p2, t_floor );
                     }
                 }
             }
@@ -1981,7 +1983,7 @@ void emp_blast( const tripoint_bub_ms &p )
             add_msg( _( "The %s is unaffected by the EMP blast." ), critter.name() );
         }
     }
-    if( u.bub_pos() == p ) {
+    if( u.abs_pos() == p ) {
         if( u.get_power_level() > 0_kJ ) {
             add_msg( m_bad, _( "The EMP blast drains your power." ) );
             int max_drain = ( u.get_power_level() > 1000_kJ ? 1000 : units::to_kilojoule(
@@ -2000,8 +2002,9 @@ void emp_blast( const tripoint_bub_ms &p )
         }
     }
     // Drain any items of their battery charge
-    if( here.has_items( p ) ) {
-        for( auto &it : here.i_at( p ) ) {
+    const auto &tile = *abs_tile_handle::fetch( here, p );
+    if( tile.has_items() ) {
+        for( auto &it : tile.items() ) {
             if( it->is_tool() && it->ammo_current() == itype_battery ) {
                 it->charges = 0;
             }

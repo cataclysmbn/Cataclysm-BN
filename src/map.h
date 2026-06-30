@@ -33,7 +33,6 @@
 #include "hash_utils.h"
 #include "item.h"
 #include "item_stack.h"
-#include "legacy_pathfinding.h"
 #include "lightmap.h"
 #include "line.h"
 #include "lru_cache.h"
@@ -99,7 +98,6 @@ using VehicleList = std::vector<wrapped_vehicle>;
 class map;
 
 enum ter_bitflags : int;
-struct pathfinding_settings;
 template<typename T>
 struct weighted_int_list;
 struct rl_vec2d;
@@ -494,19 +492,16 @@ struct sound_instance_cache {
     // our bounds are actually radius * 2, radius * 2
     int flood_radius = 3;
 
-    // Normal tripoint origin of the sound instance.
-    tripoint_bub_ms origin;
+    // The offset from the sound origin to the bottom-left corner of the
+    // floodfill envelope (in relative ms).  Added to
+    // abs_to_bub(sound.origin) at processing time to get the current
+    // bubble-space envelope position, which keeps it consistent even if
+    // the player moves between sound creation and processing.
+    point_rel_ms envelope_offset;
 
-    // The tripoint that corresponds to index location 0.
-    // Calculated off the origin point - flood radius to x and y.
-    tripoint_bub_ms envelope_index_point;
-
-    // Offsets are used to get the right envelope index when using bubble tripoints.
-
-    // The numerical offset between index_point.x and 0. Must be calced on sound instance creation.
-    int offset_x;
-    // the numerical offset between index_point.y and 0. Must be calced on sound instance creation.
-    int offset_y;
+    // Returns the bubble-space bottom-left corner of the flood envelope,
+    // computed from the current player position via abs_to_bub.
+    tripoint_bub_ms envelope_index_point() const;
 
     // Volume in 100ths of a dB (mdB) of the sound in question
     // Indexed as: vec[x * (flood_radius * 2) + y]
@@ -532,29 +527,32 @@ struct sound_instance_cache {
     auto env_index( const point_rel_ms &p ) const -> int { return ( ( p.x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() ) ); }
 
     // Returns the corresponding flood envelope volume index provided a bubble point.
-    auto p_to_env_index( const point_bub_ms &p ) const -> int { return ( ( p.x() - offset_x ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - offset_y ) ); }
+    auto p_to_env_index( const point_bub_ms &p ) const -> int { return ( ( p.x() - envelope_index_point().x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - envelope_index_point().y() ) ); }
     // Returns the corresponding flood envelope volume index provided a bubble tripoint.
-    auto p_to_env_index( const tripoint_bub_ms &p ) const -> int { return ( ( p.x() - offset_x ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - offset_y ) ); }
+    auto p_to_env_index( const tripoint_bub_ms &p ) const -> int { return ( ( p.x() - envelope_index_point().x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - envelope_index_point().y() ) ); }
 
     // Returns true if a given bubble tripoint is inside our envelope.
     // X and Y offsets taken from our index point, the bottom left corner of our envelope.
     bool in_envelope( const tripoint_bub_ms &tp ) const {
-        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
-               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
-               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+        const tripoint_bub_ms env_pt = envelope_index_point();
+        return ( tp.x() - env_pt.x() ) >= 0 && ( tp.y() - env_pt.y() ) >= 0 &&
+               ( tp.x() - env_pt.x() ) < get_flood_envelope_by_enum( dist_enum ) &&
+               ( tp.y() - env_pt.y() ) < get_flood_envelope_by_enum( dist_enum );
     }
     // Returns true if a given bubble point is inside our envelope.
     // X and Y offsets taken from our index point, the bottom left corner of our envelope.
     bool in_envelope( const point_bub_ms &tp ) const {
-        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
-               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
-               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+        const tripoint_bub_ms env_pt = envelope_index_point();
+        return ( tp.x() - env_pt.x() ) >= 0 && ( tp.y() - env_pt.y() ) >= 0 &&
+               ( tp.x() - env_pt.x() ) < get_flood_envelope_by_enum( dist_enum ) &&
+               ( tp.y() - env_pt.y() ) < get_flood_envelope_by_enum( dist_enum );
     }
 
     // Returns true if a given point is on the border of the flood envelope.
     bool on_envelope_border( const point_bub_ms &p ) const {
-        return ( p.x() - offset_x ) == 0 || ( p.x() - offset_x ) == ( flood_radius * 2 ) ||
-               ( p.y() - offset_y ) == 0 || ( p.y() - offset_y ) == ( flood_radius * 2 );
+        const tripoint_bub_ms env_pt = envelope_index_point();
+        return ( p.x() - env_pt.x() ) == 0 || ( p.x() - env_pt.x() ) == ( flood_radius * 2 ) ||
+               ( p.y() - env_pt.y() ) == 0 || ( p.y() - env_pt.y() ) == ( flood_radius * 2 );
     }
 
     // Checks if a bubble tripoint is within the floodfill envelope. Returns the volume if true, -1 if not.
@@ -724,7 +722,7 @@ struct sound_cache {
  * When the player moves between submaps, the whole map is shifted, so that if the player moves one submap to the right,
  * (0, 0) now points to a tile one submap to the right from before
  */
-class map : public submap_load_listener
+class map
 {
         friend class editmap;
         friend class mapbuffer;
@@ -785,11 +783,7 @@ class map : public submap_load_listener
          */
         bool contains_abs_sm( const tripoint_abs_sm &p ) const;
 
-        // submap_load_listener implementation
-        void on_submap_loaded( const tripoint_abs_sm &pos,
-                               const dimension_id &dim_id ) override;
-        void on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const dimension_id &dim_id ) override;
+
 
         /**
          * Sets a dirty flag on the a given cache.
@@ -1093,21 +1087,6 @@ class map : public submap_load_listener
         std::vector<tripoint_bub_ms> get_dir_circle( const tripoint_bub_ms &f,
                 const tripoint_bub_ms &t ) const;
 
-        /**
-         * Calculate the best path using A*
-         *
-         * @param f The source location from which to path.
-         * @param t The destination to which to path.
-         * @param settings Structure describing pathfinding parameters.
-         * @param pre_closed Never path through those points. They can still be the source or the destination.
-         */
-        std::vector<tripoint_bub_ms> route( const tripoint_bub_ms &f, const tripoint_bub_ms &t,
-                                            const pathfinding_settings &settings,
-        const std::set<tripoint_bub_ms> &pre_closed = {{ }} ) const;
-        std::vector<tripoint_abs_ms> route( const tripoint_abs_ms &f, const tripoint_abs_ms &t,
-                                            const pathfinding_settings &settings,
-        const std::set<tripoint_abs_ms> &pre_closed = {{ }} ) const;
-
         // Vehicles: Common to 2D and 3D
         VehicleList get_vehicles();
         void add_vehicle_to_cache( vehicle * );
@@ -1344,6 +1323,7 @@ class map : public submap_load_listener
         }
 
         bool is_outside( const tripoint_bub_ms &p ) const;
+        bool is_outside( const tripoint_abs_ms &p ) const;
         // True when the tile has some overhead coverage within 3×3 (floor or sheltered tile
         // at z+1).  A tile can be outside yet sheltered (building overhang).
         bool is_sheltered( const tripoint_bub_ms &p ) const;
@@ -1962,17 +1942,17 @@ class map : public submap_load_listener
             return abs_sub;
         }
 
-        auto active_submap_views() const -> std::span<const mapbuffer_abs_submap_view> {
+        auto active_submap_views() const -> std::span<const submap_ref> {
             return active_submaps_.submaps();
         }
 
         auto active_submap_views( const int zlev ) const
-        -> std::span<const mapbuffer_abs_submap_view> {
+        -> std::span<const submap_ref> {
             return active_submaps_.submaps( zlev );
         }
 
         auto active_submap_view( const tripoint_abs_sm &pos ) const
-        -> std::optional<mapbuffer_abs_submap_view> {
+        -> std::optional<submap_ref> {
             return active_submaps_.get_submap_view( pos );
         }
 
@@ -2412,10 +2392,6 @@ class map : public submap_load_listener
         */
         sound_cache m_sound_cache;
         //std::vector< sound_instance_cache > sound_instance_caches;
-
-        /// Return the pathfinding flags for a single tile, rebuilding the per-submap
-        /// pf_cache if it has been marked dirty.  Works for any loaded position.
-        auto get_pf_special( const tripoint_bub_ms &p ) const -> pf_special;
 
         auto update_visibility_cache( int zlev,
         const std::function<void()> &while_gpu_pending = {} ) -> void;

@@ -22,46 +22,7 @@
 
 class mapbuffer;
 
-/**
- * Interface for objects that need to react when submaps enter or leave the
- * *simulated* set — i.e. the fully-active zone driven by all non-lazy load
- * requests (reality_bubble, fire_spread, player_base, script).
- *
- * **Important distinction:** these callbacks track simulation membership, not
- * memory residency.  A submap that transitions simulated → lazy_border fires
- * on_submap_unloaded even though it remains resident in its mapbuffer.
- * Similarly, lazy_border → evicted does NOT fire on_submap_unloaded; that
- * eviction is silent from the listener's perspective.
- *
- * Implementors that need to track memory residency rather than simulation
- * membership must maintain their own residency cache using
- * mapbuffer::lookup_submap_in_memory().
- *
- * Implementors are registered with submap_load_manager::add_listener() and
- * are notified during submap_load_manager::update().
- */
-class submap_load_listener
-{
-    public:
-        virtual ~submap_load_listener() = default;
 
-        /**
-         * Called when the submap at @p pos in dimension @p dim_id has just
-         * entered the simulated set and game logic should begin tracking it.
-         * The submap is guaranteed to be resident in its mapbuffer at this point.
-         */
-        virtual void on_submap_loaded( const tripoint_abs_sm &pos,
-                                       const dimension_id &dim_id ) = 0;
-
-        /**
-         * Called when the submap at @p pos in dimension @p dim_id has just
-         * left the simulated set.  The submap may still be resident in memory
-         * (e.g. it moved to the lazy-border zone); game logic should stop
-         * treating it as actively simulated.
-         */
-        virtual void on_submap_unloaded( const tripoint_abs_sm &pos,
-                                         const dimension_id &dim_id ) = 0;
-};
 
 /** Identifies the system that created a load request. */
 enum class load_request_source : int {
@@ -92,7 +53,7 @@ struct submap_load_request {
  * Callers create requests via request_load() and receive a handle.  They
  * call update_request() as the player moves and release_load() when the
  * region is no longer needed.  update() must be called once per turn; it
- * computes the desired-set delta and fires listener notifications.
+ * loads and evicts submaps, pushing the simulated set to mapbuffer each frame.
  */
 class submap_load_manager
 {
@@ -130,13 +91,15 @@ class submap_load_manager
         void release_load( load_request_handle handle );
 
         /**
-         * Process all active requests, fire load/unload events on listeners.
+         * Process all active requests, load newly-simulated submaps, and
+         * evict departed OMT columns.
          *
          * Simulated positions (reality_bubble, fire_spread, player_base,
-         * script) are loaded synchronously and trigger listener notifications.
-         * Lazy-border positions, when enabled, are kept resident but do NOT
-         * trigger listener notifications.  OMTs that leave the desired set are
-         * retained briefly in memory, then evicted over a small per-turn budget.
+         * script) are loaded synchronously, then pushed to mapbuffer via
+         * set_simulated_submaps().  Lazy-border positions, when enabled,
+         * are kept resident but do NOT enter the simulated set.  OMTs that
+         * leave the desired set are retained briefly in memory, then evicted
+         * over a small per-turn budget.
          *
          * Call site: game::do_turn(), game::update_map()
          */
@@ -163,6 +126,18 @@ class submap_load_manager
          * pointers across those operations.
          */
         void drain_lazy_loads();
+
+        /**
+         * Clear all cached state so the next update() does not evict submaps
+         * based on stale dimension entries.
+         *
+         * Must be called after draining lazy loads, when switching dimensions.
+         * Without this, the eviction pass in update() would call unload_omt()
+         * on the old dimension's positions — which now hold freshly-generated
+         * submaps for the new dimension in the primary slot — freeing them
+         * while m.grid still holds raw pointers to them (use-after-free crash).
+         */
+        void flush_prev_desired();
 
         /**
          * Return true if the submap at @p pos in @p dim_id is covered by any
@@ -205,29 +180,7 @@ class submap_load_manager
             return is_simulated( dim_id, pos.xy() );
         }
 
-        /**
-         * O(1) alternative to is_simulated() for hot per-submap loops.
-         *
-         * Uses the precomputed simulated set from the previous update() rather
-         * than scanning all active requests.  Call this instead of is_simulated()
-         * inside world_tick()'s for_each_submap lambda to avoid an O(log N)
-         * mapbuffer lookup + O(R) request scan for every loaded submap.
-         *
-         * @p raw_pos is the raw tripoint key as stored in mapbuffer::submaps.
-         * The z component is ignored — the simulated set is 2D (horizontal-only)
-         * because load requests are always z-level agnostic.
-         *
-         * Safe to call from world_tick(): prev_simulated_ is only modified by
-         * update(), which runs after world_tick() in the same game turn.
-         */
-        auto is_in_simulated_set( const dimension_id &dim_id,
-                                  const point_abs_sm &pos ) const noexcept -> bool {
-            return prev_simulated_.contains( { dim_id, pos } );
-        }
-        auto is_in_simulated_set( const dimension_id &dim_id,
-                                  const tripoint_abs_sm &pos ) const noexcept {
-            return is_in_simulated_set( dim_id, pos.xy() );
-        }
+
 
         /**
          * Return horizontal submap positions currently in the simulated set for
@@ -253,30 +206,7 @@ class submap_load_manager
          */
         auto non_bubble_requests() const -> std::vector<submap_load_request>;
 
-        /**
-         * Clear the previous desired set so the next update() call does not
-         * evict any submaps based on stale old-dimension entries.
-         *
-         * Call this when switching dimensions (in game::load_map) after
-         * releasing the old reality-bubble handle.  Without this, the
-         * eviction pass in update() would call unload_omt() on the old
-         * dimension's positions — which now hold freshly-generated submaps
-         * for the new dimension in the primary slot — freeing them while
-         * m.grid still holds raw pointers to them (use-after-free crash).
-         */
-        void flush_prev_desired();
 
-        /**
-         * Returns true if all background lazy-load work has been drained. Used by
-         * flush_prev_desired() to assert correct call ordering during dimension switches.
-         */
-        auto is_fully_drained() const noexcept -> bool;
-
-        /** Register a listener to receive load/unload notifications. */
-        void add_listener( submap_load_listener *listener );
-
-        /** Unregister a listener.  No-op if not registered. */
-        void remove_listener( submap_load_listener *listener );
 
     private:
         using desired_key = std::pair<dimension_id, point_abs_sm>;
@@ -326,14 +256,8 @@ class submap_load_manager
         load_request_handle next_handle_ = 1;
         std::map<load_request_handle, submap_load_request> requests_;
 
-        /** Full desired set (simulated + border) from the previous update(). */
-        key_set prev_desired_;
-
-        /** Simulated-only subset from the previous update().
-         *  Used for listener notification diffs. */
-        key_set prev_simulated_;
-
-        std::vector<submap_load_listener *> listeners_;
+        /** Previous all_desired set for departed-omt detection in update(). */
+        key_set previous_all_desired_;
 
         /** Non-simulated OMT columns kept resident for short-term backtracking. */
         retained_omt_list retained_omts_;
@@ -389,15 +313,8 @@ class submap_load_manager
         auto process_lazy_border_work() -> void;
         auto process_lazy_border_preload() -> void;
 
-        /**
-         * Omts that have entered the simulated zone at least once since they
-         * were last evicted.  Only dirty omts are written to disk on eviction;
-         * border-only omts loaded from disk are discarded without saving because
-         * their in-memory content is identical to what is already on disk.  Border
-         * omts generated from scratch or restored from pending writes are marked
-         * dirty so eviction preserves that data.
-         */
-        std::unordered_set<omt_column_key, coord_pair_hash<point_abs_omt>> dirty_omts_;
+        // dirty_omts_ removed in Phase 1 — mapbuffer owns dirty tracking
+        // via mapbuffer::dirty_columns_.  See set_simulated_submaps().
 
         /** Snapshot of all request bounds from the previous update().
          *  Used to detect steady-state and skip expensive recomputation. */

@@ -71,12 +71,13 @@ TEST_CASE("hallucination_monsters_do_not_shove_vehicles", "[vehicle][monster][ha
     build_test_map(ter_id("t_pavement"));
     clear_vehicles();
 
-    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
-    const auto veh_pos = tripoint_bub_ms(60, 59, 0);
-    auto* veh_ptr = here.add_vehicle(vproto_id("bicycle_test"), veh_pos, 270_degrees, 0, 0);
+    const auto monster_pos = tripoint_abs_ms(60, 60, 0);
+    const auto veh_pos = tripoint_abs_ms(60, 59, 0);
+    auto* veh_ptr =
+        here.add_vehicle(vproto_id("bicycle_test"), abs_to_bub(veh_pos), 270_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
-    auto& hallucination = spawn_test_monster("mon_zombie_seaweed_brute", monster_pos);
+    auto& hallucination = spawn_test_monster("mon_zombie_seaweed_brute", abs_to_bub(monster_pos));
     hallucination.hallucination = true;
     REQUIRE(hallucination.is_hallucination());
     REQUIRE(hallucination.has_flag(MF_PUSH_VEH));

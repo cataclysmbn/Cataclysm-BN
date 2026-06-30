@@ -544,7 +544,7 @@ TEST_CASE("player_move_through_vehicle_holes") {
 
     REQUIRE(get_avatar().bub_pos() == pos);
 
-    avatar_action::move(get_avatar(), get_map(), point_rel_ms::north_west());
+    avatar_action::move(get_avatar(), point_rel_ms::north_west());
 
     CHECK(get_avatar().bub_pos() == pos);
 }

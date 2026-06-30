@@ -18,7 +18,6 @@
 #include "field.h"
 #include "game_constants.h"
 #include "item.h"
-#include "legacy_pathfinding.h"
 #include "type_id.h"
 #include "monster.h"
 #include "point.h"
@@ -318,7 +317,6 @@ class submap : maptile_soa<SEEX, SEEY>
         bool   outside_cache[SEEX][SEEY]      = {};
         bool   sheltered_cache[SEEX][SEEY]    = {};
         char   floor_cache[SEEX][SEEY]        = {};
-        pf_special pf_special_cache[SEEX][SEEY]  = {};
         int    scent_values[SEEX][SEEY]       = {};
         short  absorption_cache[SEEX][SEEY]   = {};
         bool   sound_wall_cache[SEEX][SEEY]   = {};
@@ -342,7 +340,6 @@ class submap : maptile_soa<SEEX, SEEY>
         // sheltered_cache: true when some overhead cover exists within 3×3 of the tile.
         auto rebuild_outside_cache( const level_cache *above, const tripoint_bub_sm &grid_pos ) -> void;
         auto rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
-        auto rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.
         auto rebuild_transparency_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
 

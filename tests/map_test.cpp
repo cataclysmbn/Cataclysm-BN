@@ -48,8 +48,12 @@ auto setup_adjacent_pit_move(const ter_id& origin_terrain, const ter_id& destina
     g->place_player(origin);
     here.ter_set(origin, origin_terrain);
     here.ter_set(destination, destination_terrain);
-    g->u.add_known_trap(origin, here.tr_at(origin));
-    g->u.add_known_trap(destination, here.tr_at(destination));
+    g->u.add_known_trap(
+        map_local_to_abs(here, origin),
+        here.get_mapbuffer().get_trap(map_local_to_abs(here, origin))->obj());
+    g->u.add_known_trap(
+        map_local_to_abs(here, destination),
+        here.get_mapbuffer().get_trap(map_local_to_abs(here, destination))->obj());
     g->u.add_effect(effect_in_pit, 1_turns, bodypart_str_id::NULL_ID());
     g->u.str_cur = 0;
     g->u.dex_cur = 0;
@@ -129,7 +133,7 @@ TEST_CASE("moving_between_adjacent_pit_traps") {
         const auto hp_before = g->u.get_hp();
 
         CHECK(g->get_dangerous_tile(positions.destination).empty());
-        REQUIRE(avatar_action::move(g->u, get_map(), tripoint_rel_ms::east()));
+        REQUIRE(avatar_action::move(g->u, tripoint_rel_ms::east()));
 
         CHECK(g->u.bub_pos() == positions.destination);
         CHECK(g->u.get_hp() == hp_before);
@@ -142,7 +146,7 @@ TEST_CASE("moving_between_adjacent_pit_traps") {
         const auto hp_before = g->u.get_hp();
 
         CHECK_FALSE(g->get_dangerous_tile(positions.destination).empty());
-        REQUIRE(avatar_action::move(g->u, get_map(), tripoint_rel_ms::east()));
+        REQUIRE(avatar_action::move(g->u, tripoint_rel_ms::east()));
 
         CHECK(g->u.bub_pos() == positions.destination);
         CHECK(g->u.get_hp() < hp_before);
@@ -154,7 +158,7 @@ TEST_CASE("moving_between_adjacent_pit_traps") {
         const auto hp_before = g->u.get_hp();
 
         CHECK_FALSE(g->get_dangerous_tile(positions.destination).empty());
-        REQUIRE(avatar_action::move(g->u, get_map(), tripoint_rel_ms::east()));
+        REQUIRE(avatar_action::move(g->u, tripoint_rel_ms::east()));
 
         CHECK(g->u.bub_pos() == positions.destination);
         CHECK(g->u.get_hp() < hp_before);
@@ -165,7 +169,7 @@ TEST_CASE("moving_between_adjacent_pit_traps") {
         const auto hp_before = g->u.get_hp();
 
         CHECK(g->get_dangerous_tile(positions.destination).empty());
-        REQUIRE(avatar_action::move(g->u, get_map(), tripoint_rel_ms::east()));
+        REQUIRE(avatar_action::move(g->u, tripoint_rel_ms::east()));
 
         CHECK(g->u.bub_pos() == positions.destination);
         CHECK(g->u.get_hp() == hp_before);
@@ -176,7 +180,9 @@ TEST_CASE("moving_between_adjacent_pit_traps") {
         const auto positions = setup_adjacent_pit_move(ter_id("t_pit"));
         auto& here = get_map();
         here.ter_set(positions.destination, ter_id("t_pit_spiked"));
-        g->u.add_known_trap(positions.destination, here.tr_at(positions.destination));
+        g->u.add_known_trap(
+            map_local_to_abs(here, positions.destination),
+            here.get_mapbuffer().get_trap(map_local_to_abs(here, positions.destination))->obj());
 
         CHECK_FALSE(g->get_dangerous_tile(positions.destination).empty());
     }
@@ -240,7 +246,7 @@ TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
     const auto resident_only = mapbuffer_lookup_options{
         .mode = mapbuffer_lookup_mode::resident_only};
     const auto cleanup = on_out_of_scope([&]() {
-        buffer.unload_omt(project_to<coords::omt>(sm_pos), false);
+        buffer.unload_omt(project_to<coords::omt>(sm_pos));
     });
 
     auto* const sm = add_absolute_test_submap(buffer, sm_pos, ter_id("t_rock"));
@@ -250,19 +256,33 @@ TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
 
     const auto tile_pos = project_to<coords::ms>(sm_pos) + tripoint_rel_ms(3, 4, 0);
     const auto local_tile_pos = point_sm_ms(3, 4);
-    const auto terrain = buffer.get_ter(tile_pos, resident_only);
-    REQUIRE(terrain.has_value());
-    CHECK(*terrain == ter_id("t_rock"));
+    {
+        auto h = abs_tile_handle::fetch(buffer, tile_pos);
+        REQUIRE(h);
+        CHECK(h->ter() == ter_id("t_rock"));
+    }
     CHECK(buffer.set_ter(tile_pos, ter_id("t_dirt"), resident_only));
-    CHECK(buffer.get_ter(tile_pos, resident_only) == ter_id("t_dirt"));
+    {
+        auto h = abs_tile_handle::fetch(buffer, tile_pos);
+        REQUIRE(h);
+        CHECK(h->ter() == ter_id("t_dirt"));
+    }
     REQUIRE(buffer.ter_vars(tile_pos, resident_only) != nullptr);
     buffer.ter_vars(tile_pos, resident_only)->set("test_var", "terrain");
     CHECK(sm->get_ter_vars(local_tile_pos).get("test_var") == "terrain");
 
     const auto furniture = furn_str_id("f_console_table").id();
-    CHECK(buffer.get_furn(tile_pos, resident_only) == f_null);
+    {
+        auto h = abs_tile_handle::fetch(buffer, tile_pos);
+        CHECK(h);
+        CHECK(h->furn() == f_null);
+    }
     CHECK(buffer.set_furn(tile_pos, furniture, resident_only));
-    CHECK(buffer.get_furn(tile_pos, resident_only) == furniture);
+    {
+        auto h = abs_tile_handle::fetch(buffer, tile_pos);
+        CHECK(h);
+        CHECK(h->furn() == furniture);
+    }
     REQUIRE(buffer.furn_vars(tile_pos, resident_only) != nullptr);
     buffer.furn_vars(tile_pos, resident_only)->set("test_var", "furniture");
     CHECK(sm->get_furn_vars(local_tile_pos).get("test_var") == "furniture");
@@ -298,7 +318,11 @@ TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
             .lookup = resident_only,
         }));
     REQUIRE(buffer.get_field_entry(tile_pos, fd_fire, resident_only) != nullptr);
-    CHECK(buffer.has_field_at(tile_pos, resident_only));
+    {
+        auto h = abs_tile_handle::fetch(buffer, tile_pos);
+        CHECK(h);
+        CHECK(h->has_field_at());
+    }
     CHECK(sm->field_count == 1);
     REQUIRE_FALSE(sm->field_cache.empty());
     CHECK(sm->field_cache.back() == local_tile_pos);
@@ -346,7 +370,11 @@ TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
     CHECK_FALSE(buffer.remove_field(tile_pos, fd_fire, resident_only));
     CHECK_FALSE(buffer.has_field_at(tile_pos, resident_only));
     CHECK(sm->field_count == 0);
-    CHECK(buffer.get_items(tile_pos, resident_only) == &sm->get_items(local_tile_pos));
+    {
+        auto h = abs_tile_handle::fetch(buffer, tile_pos);
+        CHECK(h);
+        CHECK(&h->items() == &sm->get_items(local_tile_pos));
+    }
     CHECK(sm->get_items(local_tile_pos).empty());
     CHECK(buffer.set_furn(tile_pos, f_null, resident_only));
     auto aspirin_stack =
@@ -433,7 +461,11 @@ TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
                 .lookup = resident_only,
             })
         != nullptr);
-    CHECK(buffer.get_ter(tile_pos, resident_only) == t_console);
+    {
+        auto h = abs_tile_handle::fetch(buffer, tile_pos);
+        CHECK(h);
+        CHECK(h->ter() == t_console);
+    }
     CHECK(buffer.has_computer(tile_pos, resident_only));
     CHECK(buffer.partial_con_at(tile_pos, resident_only) == nullptr);
     CHECK(buffer.partial_con_set(
@@ -446,10 +478,13 @@ TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
     const auto missing_sm = sm_pos + tripoint_rel_sm(10, 0, 0);
     const auto missing_tile = project_to<coords::ms>(missing_sm);
     CHECK(buffer.get_submap(missing_sm, resident_only) == nullptr);
-    CHECK_FALSE(buffer.get_ter(missing_tile, resident_only).has_value());
+    CHECK_FALSE(abs_tile_handle::fetch(buffer, missing_tile));
     CHECK_FALSE(buffer.set_ter(missing_tile, ter_id("t_dirt"), resident_only));
     CHECK(buffer.ter_vars(missing_tile, resident_only) == nullptr);
-    CHECK_FALSE(buffer.get_furn(missing_tile, resident_only).has_value());
+    {
+        auto h = abs_tile_handle::fetch(buffer, missing_tile);
+        CHECK_FALSE(h);
+    }
     CHECK_FALSE(buffer.set_furn(missing_tile, furniture, resident_only));
     CHECK(buffer.furn_vars(missing_tile, resident_only) == nullptr);
     CHECK_FALSE(buffer.get_trap(missing_tile, resident_only).has_value());
@@ -462,7 +497,7 @@ TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
     CHECK_FALSE(buffer.get_temperature(missing_tile, resident_only).has_value());
     CHECK_FALSE(buffer.set_temperature(missing_tile, 42, resident_only));
     CHECK(buffer.get_field(missing_tile, resident_only) == nullptr);
-    CHECK_FALSE(buffer.has_field_at(missing_tile, resident_only));
+    CHECK_FALSE(abs_tile_handle::fetch(buffer, missing_tile));
     CHECK(buffer.get_field_entry(missing_tile, fd_fire, resident_only) == nullptr);
     CHECK_FALSE(buffer.get_field_age(missing_tile, fd_fire, resident_only).has_value());
     CHECK_FALSE(buffer.get_field_intensity(missing_tile, fd_fire, resident_only).has_value());
@@ -494,7 +529,7 @@ TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
             .lookup = resident_only,
         }));
     CHECK_FALSE(buffer.remove_field(missing_tile, fd_fire, resident_only));
-    CHECK(buffer.get_items(missing_tile, resident_only) == nullptr);
+    CHECK_FALSE(abs_tile_handle::fetch(buffer, missing_tile));
     auto missing_item = item::spawn("rock");
     auto unplaced_item = buffer.add_item(missing_tile, std::move(missing_item), resident_only);
     CHECK(unplaced_item != nullptr);
@@ -560,7 +595,7 @@ TEST_CASE("mapbuffer_load_or_generate_lookup_is_explicit") {
     auto& buffer = MAPBUFFER;
     const auto sm_pos = tripoint_abs_sm(1400, -1400, 0);
     const auto cleanup = on_out_of_scope([&]() {
-        buffer.unload_omt(project_to<coords::omt>(sm_pos), false);
+        buffer.unload_omt(project_to<coords::omt>(sm_pos));
     });
     const auto load_from_disk = mapbuffer_lookup_options{
         .mode = mapbuffer_lookup_mode::load_from_disk};
@@ -576,7 +611,7 @@ TEST_CASE("mapbuffer_load_or_generate_lookup_is_explicit") {
     submap* const generated = buffer.get_submap(sm_pos, load_or_generate);
     REQUIRE(generated != nullptr);
     CHECK(buffer.lookup_submap_in_memory(sm_pos) == generated);
-    CHECK(buffer.get_ter(project_to<coords::ms>(sm_pos), resident_only).has_value());
+    CHECK(abs_tile_handle::fetch(buffer, project_to<coords::ms>(sm_pos)).has_value());
 }
 
 TEST_CASE("creature_mapbuffer_cache_tracks_dimension_registry_slots") {
@@ -782,8 +817,8 @@ TEST_CASE("bash_through_roof_can_destroy_multiple_times") {
     static const ter_str_id t_rock_floor_no_roof("t_rock_floor_no_roof");
     static const ter_str_id t_open_air("t_open_air");
     static const tripoint_bub_ms p(65, 65, 1);
-    WHEN("A wall has a matching roof above it, but the roof turns to a stronger roof on successful "
-         "bash") {
+    WHEN(
+        "A wall has a matching roof above it, but the roof turns to a stronger roof on successful bash") {
         static const ter_str_id t_fragile_wall("t_fragile_wall");
         here.ter_set(p + tripoint_below, t_fragile_wall);
         here.ter_set(p, t_fragile_roof);
@@ -804,8 +839,8 @@ TEST_CASE("bash_through_roof_can_destroy_multiple_times") {
         }
     }
 
-    WHEN("A passable floor has a matching roof above it, but both the roof and the floor turn into "
-         "stronger variants on destroy") {
+    WHEN(
+        "A passable floor has a matching roof above it, but both the roof and the floor turn into stronger variants on destroy") {
         static const ter_str_id t_fragile_floor("t_fragile_floor");
         here.ter_set(p + tripoint_below, t_fragile_floor);
         here.ter_set(p, t_fragile_roof);

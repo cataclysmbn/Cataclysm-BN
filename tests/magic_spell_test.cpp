@@ -112,7 +112,7 @@ TEST_CASE(
     here.invalidate_map_cache(you.bub_pos().z());
     REQUIRE(here.visibility_caches_dirty());
 
-    CHECK(you.sees(you.bub_pos()));
+    CHECK(you.sees(you.abs_pos()));
 }
 
 TEST_CASE(
@@ -129,14 +129,14 @@ TEST_CASE(
     g->reset_light_level();
 
     avatar& you = get_avatar();
-    const auto caster_pos = tripoint_bub_ms(60, 60, 0);
+    const auto caster_pos = tripoint_abs_ms(60, 60, 0);
     const auto target_pos = caster_pos + point_rel_ms(5, 0);
     you.setpos(caster_pos);
     you.set_mutation(trait_id("INFRARED"));
     you.recalc_sight_limits();
 
-    monster& target = spawn_test_monster("mon_zombie", target_pos);
     map& here = get_map();
+    monster& target = spawn_test_monster("mon_zombie", abs_to_bub(target_pos));
     here.invalidate_map_cache(you.bub_pos().z());
     g->refresh_player_visibility_cache_if_needed();
 
@@ -559,8 +559,8 @@ TEST_CASE("spell area of effect", "[magic][spell][aoe]") {
 TEST_CASE("spell effect - target_attack", "[magic][spell][effect][target_attack]") {
     clear_all_state();
     // Locations for avatar and monster
-    const tripoint_bub_ms dummy_loc = {60, 60, 0};
-    const tripoint_bub_ms mummy_loc = {62, 60, 0};
+    const tripoint_abs_ms dummy_loc = {60, 60, 0};
+    const tripoint_abs_ms mummy_loc = {62, 60, 0};
 
     // For tracking spell damage
     int before_hp = 0;
@@ -570,13 +570,13 @@ TEST_CASE("spell effect - target_attack", "[magic][spell][effect][target_attack]
     avatar& dummy = g->u;
     clear_character(dummy);
     dummy.setpos(dummy_loc);
-    REQUIRE(dummy.bub_pos() == dummy_loc);
+    REQUIRE(dummy.abs_pos() == dummy_loc);
     REQUIRE(g->critter_at(dummy_loc));
     REQUIRE(g->num_creatures() == 1);
 
     // Monster/defender
-    monster& mummy = spawn_test_monster("mon_zombie", mummy_loc);
-    REQUIRE(mummy.bub_pos() == mummy_loc);
+    monster& mummy = spawn_test_monster("mon_zombie", abs_to_bub(mummy_loc));
+    REQUIRE(mummy.abs_pos() == mummy_loc);
     REQUIRE(g->critter_at(mummy_loc));
     REQUIRE(g->num_creatures() == 2);
 
@@ -611,13 +611,13 @@ TEST_CASE("spell effect - target_attack", "[magic][spell][effect][target_attack]
 TEST_CASE("spell effect - summon", "[magic][spell][effect][summon]") {
     clear_all_state();
     // Avatar/spellcaster and summoned mummy locations
-    const tripoint_bub_ms dummy_loc = {60, 60, 0};
-    const tripoint_bub_ms mummy_loc = {61, 60, 0};
+    const tripoint_abs_ms dummy_loc = {60, 60, 0};
+    const tripoint_abs_ms mummy_loc = {61, 60, 0};
 
     avatar& dummy = g->u;
     clear_character(dummy);
     dummy.setpos(dummy_loc);
-    REQUIRE(dummy.bub_pos() == dummy_loc);
+    REQUIRE(dummy.abs_pos() == dummy_loc);
     REQUIRE(g->critter_at(dummy_loc));
     REQUIRE(g->num_creatures() == 1);
 
@@ -678,7 +678,7 @@ TEST_CASE("spell effect - recover_energy", "[magic][spell][effect][recover_energ
 
         // Cast montage spell on avatar
         spell montage_spell(montage_id);
-        montage_spell.cast_spell_effect(dummy, dummy.bub_pos());
+        montage_spell.cast_spell_effect(dummy, dummy.abs_pos());
 
         // Get stamina back equal to min_damage (at level 0)
         CHECK(dummy.get_stamina() == start_stamina + montage_type.min_damage);
@@ -700,13 +700,13 @@ TEST_CASE("spell effect - recover_energy", "[magic][spell][effect][recover_energ
         dummy.set_pain(5);
         REQUIRE(dummy.get_pain() == 5);
 
-        kiss_spell.cast_spell_effect(dummy, dummy.bub_pos());
+        kiss_spell.cast_spell_effect(dummy, dummy.abs_pos());
         CHECK(dummy.get_pain() == 4);
 
-        kiss_spell.cast_spell_effect(dummy, dummy.bub_pos());
+        kiss_spell.cast_spell_effect(dummy, dummy.abs_pos());
         CHECK(dummy.get_pain() == 3);
 
-        kiss_spell.cast_spell_effect(dummy, dummy.bub_pos());
+        kiss_spell.cast_spell_effect(dummy, dummy.abs_pos());
         CHECK(dummy.get_pain() == 2);
     }
 }

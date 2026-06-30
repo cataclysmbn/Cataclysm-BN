@@ -341,15 +341,11 @@ auto submap_load_manager::evict_omt_column( const omt_column_key &key ) -> void
 {
     const auto &[dim_id, omt_xy] = key;
     auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
-    const auto was_dirty = dirty_omts_.contains( key );
-    if( was_dirty ) {
-        dirty_omts_.erase( key );
-    }
     std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
     [&]( const auto z ) {
         const auto pos = tripoint_abs_omt{ omt_xy, z };
         finish_lazy_omt_job( omt_key{ dim_id, pos } );
-        mb.unload_omt( pos, was_dirty );
+        mb.unload_omt( pos );
     } );
 }
 
@@ -470,9 +466,6 @@ auto submap_load_manager::apply_lazy_omt_result( const omt_key &key,
         const lazy_omt_load_result &result ) -> bool
 {
     MAPBUFFER_REGISTRY.get( key.first ).drain_pending_submap_destroy();
-    if( result.dirty || result.generated() ) {
-        dirty_omts_.insert( { key.first, key.second.xy() } );
-    }
     return result.generated();
 }
 
@@ -959,16 +952,12 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     using horiz_omt_key = std::pair<dimension_id, point_abs_omt>;
     std::unordered_set<horiz_omt_key, coord_pair_hash<point_abs_omt>> new_omts;
     for( const desired_key &key : simulated ) {
-        if( prev_simulated_.count( key ) == 0 ) {
+        auto &mb = MAPBUFFER_REGISTRY.get( key.first );
+        if( !mb.is_column_state( key.second, submap_column_load_state::simulated ) ) {
             new_omts.emplace( key.first, project_to<coords::omt>( key.second ) );
         }
     }
 
-    // Mark ALL z-levels for newly-simulated horizontal OMTs as dirty: they
-    // will receive game logic and must be saved to disk when evicted.
-    for( const auto &[dim_id, omt_xy] : new_omts ) {
-        dirty_omts_.insert( { dim_id, omt_xy } );
-    }
 
     // ---- Step 1: parallel disk preload for newly-simulated omts ----
     // preload_omt() is thread-safe (disk I/O outside submaps_mutex_; add
@@ -1065,45 +1054,28 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
         run_deferred_mapgen_hooks_and_omt_post_passes( generated_omt_columns );
     }
 
-    // ---- Listener notifications (simulated set only) ----
-    // The simulated set is 2-D; fire for every z-level when a horizontal
-    // position enters or leaves simulation.
     {
-        ZoneScopedN( "slm_listener_notifications" );
+        ZoneScopedN( "slm_push_simulated_to_mapbuffer" );
+        std::unordered_map<dimension_id, std::unordered_set<point_abs_sm>> by_dim;
         for( const desired_key &key : simulated ) {
-            if( prev_simulated_.count( key ) == 0 ) {
-                for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-                    const tripoint_abs_sm pos{ key.second, z };
-                    for( submap_load_listener *listener : listeners_ ) {
-                        listener->on_submap_loaded( pos, key.first );
-                    }
-                }
-            }
+            by_dim[key.first].insert( key.second );
         }
+        for( auto &[dim_id, cols] : by_dim ) {
+            MAPBUFFER_REGISTRY.get( dim_id ).set_simulated_submaps( cols );
+        }
+    }
 
-        for( const desired_key &key : prev_simulated_ ) {
-            if( simulated.count( key ) == 0 ) {
-                for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-                    const tripoint_abs_sm pos{ key.second, z };
-                    for( submap_load_listener *listener : listeners_ ) {
-                        listener->on_submap_unloaded( pos, key.first );
-                    }
-                }
-            }
-        }
-    } // slm_listener_notifications
 
     // ---- Retain departed omts (full set: simulated + border) ----
-    // prev_desired_ is now 2-D (horizontal SM positions).  Multiple entries
-    // can map to the same horizontal OMT (up to 4: the 2×2 omt footprint).
-    // omts_checked deduplicates by horizontal OMT so we retain each column
-    // exactly once.  The sibling check and the z-level loop both work in
-    // terms of the 2-D desired set.
+    // Multiple entries can map to the same horizontal OMT (up to 4: the
+    // 2×2 omt footprint).  omts_checked deduplicates by horizontal OMT so
+    // we retain each column exactly once.  The sibling check and the
+    // z-level loop both work in terms of the 2-D desired set.
     {
         ZoneScopedN( "slm_retain_departed_omts" );
         using horiz_key = std::pair<dimension_id, point_abs_omt>;
         std::unordered_set<horiz_key, coord_pair_hash<point_abs_omt>> omts_checked;
-        for( const desired_key &key : prev_desired_ ) {
+        for( const desired_key &key : previous_all_desired_ ) {
             if( all_desired.count( key ) != 0 ) {
                 continue;  // still desired — skip
             }
@@ -1132,14 +1104,16 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     process_or_defer_lazy_border_work( defer_lazy_border_work );
 
     rebuild_simulated_submaps_by_dimension( simulated );
-    prev_simulated_ = std::move( simulated );
-    prev_desired_ = std::move( all_desired );
+    previous_all_desired_ = std::move( all_desired );
 }
 
 auto submap_load_manager::is_requested( const dimension_id &dim_id,
                                         const point_abs_sm &pos ) const -> bool
 {
-    return prev_desired_.count( { dim_id, pos } ) > 0;
+    return std::ranges::any_of( requests_, [&]( const auto & kv ) {
+        const submap_load_request &req = kv.second;
+        return req.dim_id == dim_id && contains_request_pos( req, pos );
+    } );
 }
 
 auto submap_load_manager::is_properly_requested( const dimension_id &dim_id,
@@ -1228,16 +1202,9 @@ auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load
     return { view.begin(), view.end() };
 }
 
-auto submap_load_manager::is_fully_drained() const noexcept -> bool
-{
-    return lazy_omt_futures_.empty();
-}
-
 void submap_load_manager::flush_prev_desired()
 {
-    assert( is_fully_drained() );
-    prev_desired_.clear();
-    prev_simulated_.clear();
+    previous_all_desired_.clear();
     simulated_submaps_by_dimension_.clear();
     prev_requests_.clear();
     retained_omts_.clear();
@@ -1249,18 +1216,6 @@ void submap_load_manager::flush_prev_desired()
     lazy_omt_focus_.reset();
     lazy_omt_budget_credit_ = 0.0;
     lazy_omt_last_credit_turn_ = -1;
-    dirty_omts_.clear();
 }
 
-void submap_load_manager::add_listener( submap_load_listener *listener )
-{
-    if( std::find( listeners_.begin(), listeners_.end(), listener ) == listeners_.end() ) {
-        listeners_.push_back( listener );
-    }
-}
 
-void submap_load_manager::remove_listener( submap_load_listener *listener )
-{
-    listeners_.erase( std::remove( listeners_.begin(), listeners_.end(), listener ),
-                      listeners_.end() );
-}

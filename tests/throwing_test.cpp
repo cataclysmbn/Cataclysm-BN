@@ -34,7 +34,7 @@
 
 TEST_CASE("throwing distance test", "[throwing], [balance]") {
     clear_all_state();
-    const standard_npc thrower("Thrower", tripoint_bub_ms(60, 60, 0), {}, 4, 10, 10, 10, 10);
+    const standard_npc thrower("Thrower", tripoint_abs_ms(60, 60, 0), {}, 4, 10, 10, 10, 10);
     item& grenade = *item::spawn_temporary("grenade");
     CHECK(thrower.throw_range(grenade) >= 30);
     CHECK(thrower.throw_range(grenade) <= 35);
@@ -43,9 +43,9 @@ TEST_CASE("throwing distance test", "[throwing], [balance]") {
 TEST_CASE("throwing heavier items scales with strength", "[throwing], [balance]") {
     clear_all_state();
     const auto weak_thrower =
-        standard_npc("WeakThrower", tripoint_bub_ms(60, 60, 0), {}, 4, 8, 10, 10, 10);
+        standard_npc("WeakThrower", tripoint_abs_ms(60, 60, 0), {}, 4, 8, 10, 10, 10);
     const auto strong_thrower =
-        standard_npc("StrongThrower", tripoint_bub_ms(60, 60, 0), {}, 4, 14, 10, 10, 10);
+        standard_npc("StrongThrower", tripoint_abs_ms(60, 60, 0), {}, 4, 14, 10, 10, 10);
     item& bronze_anvil = *item::spawn_temporary("anvil_bronze");
 
     CHECK(weak_thrower.throw_range(bronze_anvil) < strong_thrower.throw_range(bronze_anvil));
@@ -182,6 +182,8 @@ TEST_CASE("flung creatures take damage when they slam into a wall", "[throwing][
     g->u.setpos(tripoint_bub_ms{10, 10, 0});
 
     auto& here = g->m;
+    g->u.setpos(tripoint_bub_ms{10, 10, 0});
+
     const auto source = tripoint_bub_ms{40, 30, 0};
     const auto target = tripoint_bub_ms{41, 30, 0};
     const auto landing = tripoint_bub_ms{42, 30, 0};
@@ -208,6 +210,9 @@ TEST_CASE("flung creatures stop at the reality bubble edge", "[throwing][bubble]
     clear_map();
 
     auto& here = get_map();
+    // Use the runtime bubble size (g_mapsize) rather than the compile-time MAPSIZE,
+    // since the test map is never resized by game::setup() and retains the default
+    // constructor size of MAPSIZE=35.
     const auto bubble_mapsize = 2 * g_reality_bubble_size + 3;
     const auto bubble_edge_x = SEEX * bubble_mapsize - 1;
     const auto bubble_mid_y = SEEY * bubble_mapsize / 2;
@@ -301,13 +306,12 @@ static void test_throwing_player_versus(
             CAPTURE(range);
             CAPTURE(mon.ranged_target_size());
             FAIL_CHECK(
-                "Expected and calculated midpoints must be within epsilon/4 or the test is "
-                "too fragile");
+                "Expected and calculated midpoints must be within epsilon/4 or the test is too fragile");
             return;
         }
 
         dealt_projectile_attack atk =
-            ranged::throw_item(p, mon.bub_pos(), std::move(det), std::nullopt);
+            ranged::throw_item(p, mon.abs_pos(), std::move(det), std::nullopt);
         data.hits.add(atk.hit_critter != nullptr);
         data.dmg.add(atk.dealt_dam.total_damage());
 
