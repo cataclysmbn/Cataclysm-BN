@@ -104,7 +104,6 @@ InstalledDir: /usr/bin
 > sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-22 100
 > ```
 
-
 ### macOS Environment
 
 Install dependencies via [Homebrew](https://brew.sh/):
@@ -383,27 +382,27 @@ Installation prefix for binaries, resources, and documentation files.
 
 ### CataclysmBN specific options
 
-| Option                 | Default                              | Effect                                                                            |
-| ---------------------- | ------------------------------------ | --------------------------------------------------------------------------------- |
-| `CURSES`               | `ON`                                 | Build curses version.                                                             |
-| `TILES`                | `OFF`                                | Build graphical tileset version.                                                  |
-| `SOUND`                | `ON`                                 | Build audio support.                                                              |
-| `LANGUAGES`            | `" "`                                  | Build specificed language support.                                                |
-| `TESTS`                | `ON`                                 | Build test units.                                                                 |
-| `USE_HOME_DIR`         | `ON` (`OFF` on WIN32)                | Use $HOME directory for save and config files.                                    |
-| `USE_XDG_DIR`          | `OFF`                                | Use XDG directories for save and config files.                                    |
-| `USE_PREFIX_DATA_DIR`  | `OFF`                                | Use UNIX system directories for game data in release build.                       |
-| `JSON_FORMAT`          | `OFF`                                | Build JSON formatter.                                                             |
-| `CATA_CCACHE`          | `ON`                                 | Try to find and build with ccache.                                                |
-| `BUILD_SDL3`           | `OFF`                                | Force Build SDL3 instead of using system libraries.                               |
-| `BUILD_SHADERCROSS`    | `ON`                                 | Build SDL_shadercross from source when shadercross is not on PATH.                |
-| `SHADER_TARGETS`       | `spirv;msl` (`dxil;spirv;msl` on WIN32)   | Shaders to build.                                                            |
-| `DYNAMIC_LINKING`      | `ON`                                 | Use dynamic linking. Or use static to remove MinGW dependency instead.            |
-| `LINKER`               | `" "`                                  | Custom Linker to use                                                              |
-| `BACKTRACE`            | `ON`                                 | Support for printing stack backtraces on crash.                                   |
-| `LIBBACKTRACE`         | `OFF`                                | Print backtrace with libbacktrace.                                                |
-| `USE_TRACY`            | `OFF`                                | Use tracy profiler. See [Profiling with tracy](../tracy.md) for more information. |
-| `GIT_BINARY`           | `" "`                                  | Git binary name or path.                                                          |
+| Option                | Default                                 | Effect                                                                            |
+| --------------------- | --------------------------------------- | --------------------------------------------------------------------------------- |
+| `CURSES`              | `ON`                                    | Build curses version.                                                             |
+| `TILES`               | `OFF`                                   | Build graphical tileset version.                                                  |
+| `SOUND`               | `ON`                                    | Build audio support.                                                              |
+| `LANGUAGES`           | `" "`                                   | Build specificed language support.                                                |
+| `TESTS`               | `ON`                                    | Build test units.                                                                 |
+| `USE_HOME_DIR`        | `ON` (`OFF` on WIN32)                   | Use $HOME directory for save and config files.                                    |
+| `USE_XDG_DIR`         | `OFF`                                   | Use XDG directories for save and config files.                                    |
+| `USE_PREFIX_DATA_DIR` | `OFF`                                   | Use UNIX system directories for game data in release build.                       |
+| `JSON_FORMAT`         | `OFF`                                   | Build JSON formatter.                                                             |
+| `CATA_CCACHE`         | `ON`                                    | Try to find and build with ccache.                                                |
+| `BUILD_SDL3`          | `OFF`                                   | Force Build SDL3 instead of using system libraries.                               |
+| `BUILD_SHADERCROSS`   | `ON`                                    | Build SDL_shadercross from source when shadercross is not on PATH.                |
+| `SHADER_TARGETS`      | `spirv;msl` (`dxil;spirv;msl` on WIN32) | Shaders to build.                                                                 |
+| `DYNAMIC_LINKING`     | `ON`                                    | Use dynamic linking. Or use static to remove MinGW dependency instead.            |
+| `LINKER`              | `" "`                                   | Custom Linker to use                                                              |
+| `BACKTRACE`           | `ON`                                    | Support for printing stack backtraces on crash.                                   |
+| `LIBBACKTRACE`        | `OFF`                                   | Print backtrace with libbacktrace.                                                |
+| `USE_TRACY`           | `OFF`                                   | Use tracy profiler. See [Profiling with tracy](../tracy.md) for more information. |
+| `GIT_BINARY`          | `" "`                                   | Git binary name or path.                                                          |
 
 ### Build Presets
 
