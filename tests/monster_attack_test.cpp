@@ -22,7 +22,7 @@ struct shriek_stun_setup {
 
 auto setup_shriek_stun_test() -> shriek_stun_setup {
     clear_all_state();
-    build_test_map( ter_id( "t_floor" ) );
+    build_test_map(ter_id("t_floor"));
 
     auto& target = get_avatar();
     const auto screecher_pos = tripoint_abs_ms(60, 60, 0);

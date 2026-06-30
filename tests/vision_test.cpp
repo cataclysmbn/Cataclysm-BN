@@ -161,15 +161,15 @@ static void full_map_test(
     // player's vision_threshold is based on the previous lighting level (so
     // they might, for example, have poor nightvision due to having just been
     // in daylight)
-    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
-        here.invalidate_map_cache( z );
-        here.access_cache( z ).vehicle_floor_cache[0] = '\x01';
+    for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) {
+        here.invalidate_map_cache(z);
+        here.access_cache(z).vehicle_floor_cache[0] = '\x01';
     }
     here.build_map_cache(origin.z());
     here.update_visibility_cache(origin.z());
-    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
-        here.invalidate_map_cache( z );
-        here.access_cache( z ).vehicle_floor_cache[0] = '\x01';
+    for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) {
+        here.invalidate_map_cache(z);
+        here.access_cache(z).vehicle_floor_cache[0] = '\x01';
     }
     here.build_map_cache(origin.z());
     here.update_visibility_cache(origin.z());

@@ -847,14 +847,14 @@ auto abs_tile_handle::trap_obj() const -> const trap &
 
 auto abs_tile_handle::field() const -> const class field &
 {
-    static const class field null_field;
-    return sm_? sm_->get_field( local_ ) : null_field;
+        static const class field null_field;
+        return sm_ ? sm_->get_field( local_ ) : null_field;
 }
 
 auto abs_tile_handle::items() const -> const location_vector<item> &
 {
     static const location_vector<item> null_items;
-    return sm_? sm_->get_items( local_ ) : null_items;
+    return sm_ ? sm_->get_items( local_ ) : null_items;
 }
 
 auto abs_tile_handle::furn_vars() const -> const data_vars::data_set &
