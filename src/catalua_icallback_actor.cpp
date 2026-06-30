@@ -8,6 +8,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "item.h"
+#include "monster.h"
 #include "player.h"
 
 // --- lua_iuse_actor ---
@@ -735,4 +736,88 @@ void lua_mutation_callback_actor::call_on_loss( Character &who, const trait_id &
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run mutation on_loss for '%s': %s", trait_str_id, e.what() );
     }
+}
+
+
+// --- pet_callback_actor ---
+
+lua_pet_callback_actor::lua_pet_callback_actor( const std::string &mon_str_id,
+        sol::protected_function &&on_tame,
+        sol::protected_function &&get_examine_menu_entries,
+        sol::protected_function &&on_examine_menu_entry
+        )
+    : mon_str_id( mon_str_id ),
+      on_tame_func( std::move( on_tame ) ),
+      get_examine_menu_entries_func( std::move( get_examine_menu_entries ) ),
+      on_examine_menu_entry_func( std::move( on_examine_menu_entry ) ) {}
+
+void lua_pet_callback_actor::call_on_tame( Character &who, monster &pet ) const
+{
+    if( on_tame_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::state_view lua( on_tame_func.lua_state() );
+        auto params = lua.create_table();
+        params["avatar"] = &who;
+        params["pet"] = &pet;
+        sol::protected_function_result res = on_tame_func( params );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run pet on_tame for '%s' ('%s'): %s", pet.get_name(), mon_str_id, e.what() );
+    }
+}
+
+std::vector<lua_menu_entry> lua_pet_callback_actor::call_get_examine_menu_entries( Character &who, monster &pet ) const
+{
+    if( get_examine_menu_entries_func == sol::lua_nil ) {
+        return std::vector<lua_menu_entry>();
+    }
+    try {
+        sol::state_view lua( get_examine_menu_entries_func.lua_state() );
+        auto params = lua.create_table();
+        params["avatar"] = &who;
+        params["pet"] = &pet;
+        sol::protected_function_result res = get_examine_menu_entries_func( params );
+        check_func_result( res );
+        std::vector<lua_menu_entry> entries;
+        if (sol::object ret_val = res[0]; ret_val.is<sol::table>()) {
+            const sol::table entries_table = ret_val.as<sol::table>();
+            entries.reserve(entries_table.size());
+            for (const auto &val: entries_table | std::views::values) {
+                auto id_label_pair = val.as<std::pair<std::string, std::string>>();
+                auto lua_entry = lua_menu_entry(id_label_pair.first, id_label_pair.second);
+                entries.push_back(lua_entry);
+            }
+
+        } else if (ret_val.is<sol::nil_t>()) {
+            debugmsg( "Wrong pet get_examine_menu_entries return type for '%s' ('%s'): %s", pet.get_name(), mon_str_id );
+        }
+
+        return entries;
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run pet get_examine_menu_entries for '%s' ('%s'): %s", pet.get_name(), mon_str_id, e.what() );
+    }
+    return std::vector<lua_menu_entry>();
+}
+
+void lua_pet_callback_actor::call_on_examine_menu_entry( Character &who, monster &pet, std::string entry ) const
+{
+    if( on_examine_menu_entry_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::state_view lua( on_examine_menu_entry_func.lua_state() );
+        auto params = lua.create_table();
+        params["avatar"] = &who;
+        params["pet"] = &pet;
+        params["entry"] = entry;
+        sol::protected_function_result res = on_examine_menu_entry_func( params );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run pet on_examine_menu_entry_func for '%s' ('%s'): %s", pet.get_name(), entry, e.what() );
+    }
+}
+std::string lua_pet_callback_actor::get_mon_str_id() const {
+    return mon_str_id;
 }

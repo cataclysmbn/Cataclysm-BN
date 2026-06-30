@@ -439,6 +439,7 @@ void cata::detail::reg_monster( sol::state &lua )
         // Methods
         // I really don't want to break the uniformity, but...
         luna::set_fx( ut, "get_type", []( const monster & m ) { return m.type -> id; } );
+        luna::set_fx( ut, "get_storage_item", []( const monster & m ) { return m.get_storage_item() ;});
         SET_FX_T( can_upgrade, bool() const );
         SET_FX_T( hasten_upgrade, void() );
         SET_FX_T( get_upgrade_time, int() const );
@@ -479,6 +480,14 @@ void cata::detail::reg_monster( sol::state &lua )
                 return;
             }
             mon.set_dest( target->bub_pos() );
+        } );
+        luna::set_fx( ut, "set_storage_item", []( monster & mon, item *storage ) -> void {
+            if( storage == nullptr )
+            {
+                mon.remove_storage_item();
+                return;
+            }
+            mon.set_storage_item( storage->detach() );
         } );
         luna::set_fx( ut, "clear_move_target", []( monster & mon ) -> void {
             mon.unset_dest();
