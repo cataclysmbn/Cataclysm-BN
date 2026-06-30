@@ -73,18 +73,6 @@ sqlite-devel zlib-devel
 > Neither Ubuntu or Fedora ship SDL3_mixer or shadercross
 > These libraries will be build automatically when compiling
 
-### macOS Environment
-
-Install dependencies via [Homebrew](https://brew.sh/):
-
-```sh
-brew install cmake ninja ccache sdl3 sdl3_image sdl3_ttf sdl3_mixer \
-  freetype gettext sqlite pkg-config ncurses flac
-```
-> [!NOTE]
-> Apple Clang shipped with Xcode 16+ supports the C++23 features required by CataclysmBN.
-> You do **not** need to install a separate compiler.
-
 #### Verifying Compiler Version
 
 You need Clang 22 or newer to build CataclysmBN. You can check your compiler version with:
@@ -116,14 +104,18 @@ InstalledDir: /usr/bin
 > sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-22 100
 > ```
 
-#### Building on Apple Silicon (Recommended)
+
+### macOS Environment
+
+Install dependencies via [Homebrew](https://brew.sh/):
 
 ```sh
-cmake --preset osx-arm-slim
-cmake --build --preset osx-arm-slim
+brew install cmake ninja ccache sdl3 sdl3_image sdl3_ttf sdl3_mixer \
+  freetype gettext sqlite pkg-config ncurses flac
 ```
-
-This places executables into `out/build/osx-arm-slim/`.
+> [!NOTE]
+> Apple Clang shipped with Xcode 16+ supports the C++23 features required by CataclysmBN.
+> You do **not** need to install a separate compiler.
 
 ### Windows Subsystem for Linux (WSL)
 
@@ -167,14 +159,23 @@ from one source directory.
 
 #### Build with Presets (Recommended)
 
-There's multiple predefined [build presets](#build-presets) available, which simplifies build process to just two commands:
+There's multiple predefined [build presets](#build-presets) available, which simplifies build process to just two commands.
+
+For Linux:
 
 ```sh
 cmake --preset linux-slim
 cmake --build --preset linux-slim --target cataclysm-bn-tiles
 ```
 
-This will place the executables into `out/build/linux-slim/`.
+For macOS:
+
+```sh
+cmake --preset osx-arm-slim
+cmake --build --preset osx-arm-slim
+```
+
+This will place the executable into `out/build/linux-slim/` or `out/build/osx-arm-slim/` respectively.
 
 > [!TIP]
 > To build with [clang-tidy plugin](../../reference/tooling.md#clang-tidy) and tracy profiler support, try `linux-full`.
