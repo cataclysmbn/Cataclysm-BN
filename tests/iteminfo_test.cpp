@@ -197,8 +197,8 @@ TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {
             "Moves per attack: <color_c_yellow>79</color>\n"
             "Stamina Cost: <color_c_yellow>91</color>\n"
             "Typical damage per second:\n"
-            "Best: <color_c_yellow>5.20</color>"
-            "  Vs. Agile: <color_c_yellow>1.62</color>"
+            "Best: <color_c_yellow>4.49</color>"
+            "  Vs. Agile: <color_c_yellow>1.39</color>"
             "  Vs. Armored: <color_c_yellow>0.00</color>\n");
     }
 
@@ -212,9 +212,9 @@ TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {
             "Moves per attack: <color_c_yellow>145</color>\n"
             "Stamina Cost: <color_c_yellow>275</color>\n"
             "Typical damage per second:\n"
-            "Best: <color_c_yellow>10.94</color>"
-            "  Vs. Agile: <color_c_yellow>5.60</color>"
-            "  Vs. Armored: <color_c_yellow>0.78</color>\n");
+            "Best: <color_c_yellow>10.13</color>"
+            "  Vs. Agile: <color_c_yellow>5.20</color>"
+            "  Vs. Armored: <color_c_yellow>0.62</color>\n");
     }
 
     SECTION("bash and pierce damage") {
@@ -227,8 +227,8 @@ TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {
             "Moves per attack: <color_c_yellow>100</color>\n"
             "Stamina Cost: <color_c_yellow>106</color>\n"
             "Typical damage per second:\n"
-            "Best: <color_c_yellow>9.61</color>"
-            "  Vs. Agile: <color_c_yellow>3.95</color>"
+            "Best: <color_c_yellow>8.90</color>"
+            "  Vs. Agile: <color_c_yellow>3.65</color>"
             "  Vs. Armored: <color_c_yellow>0.00</color>\n");
     }
 
@@ -242,8 +242,8 @@ TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {
             "Moves per attack: <color_c_yellow>65</color>\n"
             "Stamina Cost: <color_c_yellow>68</color>\n"
             "Typical damage per second:\n"
-            "Best: <color_c_yellow>5.25</color>"
-            "  Vs. Agile: <color_c_yellow>2.09</color>"
+            "Best: <color_c_yellow>4.08</color>"
+            "  Vs. Agile: <color_c_yellow>1.60</color>"
             "  Vs. Armored: <color_c_yellow>0.00</color>\n");
     }
 

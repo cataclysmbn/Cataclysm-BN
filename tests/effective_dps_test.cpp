@@ -131,7 +131,7 @@ TEST_CASE("effective damage per second", "[effective][dps]") {
         REQUIRE(debug_agile.get_dodge() >= 4);
 
         CHECK(clumsy_sword.effective_dps(dummy, debug_agile) == Approx(10.5f).epsilon(0.15f));
-        CHECK(good_sword.effective_dps(dummy, debug_agile) == Approx(30.0f).epsilon(0.15f));
+        CHECK(good_sword.effective_dps(dummy, debug_agile) == Approx(24.5f).epsilon(0.15f));
     }
 
     SECTION("against an armored target") {

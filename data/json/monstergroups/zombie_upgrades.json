@@ -51,8 +51,18 @@
     "type": "monstergroup",
     "default": "mon_skeleton_brute",
     "monsters": [
-      { "monster": "mon_skeleton_brute", "freq": 80, "cost_multiplier": 2 },
-      { "monster": "mon_skeleton_brute", "freq": 80, "cost_multiplier": 2 }
+      { "monster": "mon_skeleton_electric", "freq": 300, "cost_multiplier": 2 },
+      { "monster": "mon_skeleton_brute", "freq": 700, "cost_multiplier": 2 }
+    ]
+  },
+  {
+    "name": "GROUP_SKELETON_BRUTE_UPGRADE",
+    "type": "monstergroup",
+    "default": "mon_skeleton_hulk",
+    "//": "I'd put skeletal liches in here, but for some reason they disappear as soon as they are placed/spawned",
+    "monsters": [
+      { "monster": "mon_skeleton_master", "freq": 350, "cost_multiplier": 2 },
+      { "monster": "mon_skeleton_hulk", "freq": 650, "cost_multiplier": 2 }
     ]
   },
   {
@@ -74,10 +84,9 @@
     "name": "GROUP_ZOMBIE_ELECTRIC_UPGRADE",
     "default": "mon_null",
     "monsters": [
-      { "monster": "mon_zombie_nullfield", "freq": 550, "cost_multiplier": 0 },
-      { "monster": "mon_zombie_brute_shocker", "freq": 300, "cost_multiplier": 2 },
-      { "monster": "mon_skeleton_electric", "freq": 300, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_stormbringer", "freq": 250, "cost_multiplier": 2, "starts": 500 }
+      { "monster": "mon_zombie_nullfield", "freq": 650, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_brute_shocker", "freq": 400, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_stormbringer", "freq": 350, "cost_multiplier": 2, "starts": 500 }
     ]
   },
   {

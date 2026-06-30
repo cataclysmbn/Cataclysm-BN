@@ -54,6 +54,7 @@
 #include "event.h"
 #include "event_bus.h"
 #include "explosion.h"
+#include "explosion_queue.h"
 #include "field.h"
 #include "field_type.h"
 #include "flag.h"
@@ -6237,6 +6238,10 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
 
 void map::process_items()
 {
+    // Defer explosion drains during processing: an item here can be detached but
+    // still in-stack, and a re-entrant drain would re-detonate it forever (#9696).
+    explosion_handler::scoped_drain_deferral defer_explosion_drains;
+
     auto total_active_items = int64_t{ 0 };
     auto total_rottable_active_items = int64_t{ 0 };
 
