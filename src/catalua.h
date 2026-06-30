@@ -57,7 +57,7 @@ void run_on_mapgen_postprocess_hooks( lua_state &state, mapgen_constructor &m,
                                       const tripoint_abs_omt &p,
                                       const time_point &when );
 
-static const std::map<std::string, std::unique_ptr<lua_pet_callback_actor>>& get_lua_pet_actors();
+const std::map<std::string, std::unique_ptr<lua_pet_callback_actor>>& get_lua_pet_actors();
 
 /** Single item passed to run_on_mapgen_postprocess_hooks_batch(). */
 struct mapgen_hook_batch_item {
