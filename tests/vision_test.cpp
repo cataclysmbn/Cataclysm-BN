@@ -11,7 +11,6 @@
 #include "map_helpers.h"
 #include "player_helpers.h"
 #include "shadowcasting.h"
-#include "simulated_island_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle.h"
@@ -56,7 +55,6 @@ static void full_map_test(
 
     Character& player_character = get_player_character();
     g->place_player(tripoint_bub_ms(60, 60, 0));
-    ensure_simulated_islands_for(player_character.abs_pos());
     get_weather().weather_id = weather_type_id("clear");
     g->reset_light_level();
 
@@ -163,10 +161,16 @@ static void full_map_test(
     // player's vision_threshold is based on the previous lighting level (so
     // they might, for example, have poor nightvision due to having just been
     // in daylight)
-    here.invalidate_map_cache(origin.z());
+    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
+        here.invalidate_map_cache( z );
+        here.access_cache( z ).vehicle_floor_cache[0] = '\x01';
+    }
     here.build_map_cache(origin.z());
     here.update_visibility_cache(origin.z());
-    here.invalidate_map_cache(origin.z());
+    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
+        here.invalidate_map_cache( z );
+        here.access_cache( z ).vehicle_floor_cache[0] = '\x01';
+    }
     here.build_map_cache(origin.z());
     here.update_visibility_cache(origin.z());
 

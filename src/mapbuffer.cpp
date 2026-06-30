@@ -5717,6 +5717,9 @@ auto mapbuffer::add_splatter( const field_type_id &type, const tripoint_abs_ms &
                               const int intensity,
                               const mapbuffer_lookup_options options ) -> void
 {
+    if( !type.id() || intensity <= 0 ) {
+        return;
+    }
     const auto existing = get_field_intensity( where, type, options );
     if( existing.has_value() && existing.value() > 0 ) {
         mod_field_intensity( where, {

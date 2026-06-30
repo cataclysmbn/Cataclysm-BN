@@ -13,6 +13,7 @@
 #include "json.h"
 #include "map.h"
 #include "map_helpers.h"
+#include "simulated_island_helpers.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "options_helpers.h"
@@ -534,6 +535,9 @@ TEST_CASE("damage_vehicle_oob") {
 static void check_wreckage(int zlevel) {
     const tripoint_bub_ms test_origin(60, 60, zlevel);
     const auto vehicle_origin = test_origin;
+
+    g->place_player(test_origin);
+    ensure_simulated_islands_for(g->u.abs_pos());
 
     vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
