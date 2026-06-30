@@ -1289,6 +1289,7 @@ void npc::execute_action( npc_action action )
 
             if( sleep_at_this_pos.has_value() ) {
                 sleep_or_move( *sleep_at_this_pos );
+                break;
             }
 
             // Find a nice spot to sleep
