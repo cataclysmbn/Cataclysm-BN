@@ -108,28 +108,16 @@ TEST_CASE("prone_stance_weapon_dispersion", "[stance][prone][ranged]") {
     GIVEN("a rifle with bipod") {
         arm_character(shooter, "ar15", {"bipod"});
 
-        double walk_dispersion = 0.0;
-        double crouch_dispersion = 0.0;
-        double prone_dispersion = 0.0;
+        item const& wp = shooter.primary_weapon();
 
-        WHEN("standing") {
-            shooter.set_movement_mode(character_movemode::CMM_WALK);
-            dispersion_sources const walk_sources =
-                ranged::get_weapon_dispersion(shooter, shooter.primary_weapon());
-            walk_dispersion = walk_sources.max();
-        }
-        WHEN("crouching") {
-            shooter.set_movement_mode(character_movemode::CMM_CROUCH);
-            dispersion_sources const crouch_sources =
-                ranged::get_weapon_dispersion(shooter, shooter.primary_weapon());
-            crouch_dispersion = crouch_sources.max();
-        }
-        WHEN("prone") {
-            shooter.set_movement_mode(character_movemode::CMM_PRONE);
-            dispersion_sources const prone_sources =
-                ranged::get_weapon_dispersion(shooter, shooter.primary_weapon());
-            prone_dispersion = prone_sources.max();
-        }
+        shooter.set_movement_mode(character_movemode::CMM_WALK);
+        double const walk_dispersion = ranged::get_weapon_dispersion(shooter, wp).max();
+
+        shooter.set_movement_mode(character_movemode::CMM_CROUCH);
+        double const crouch_dispersion = ranged::get_weapon_dispersion(shooter, wp).max();
+
+        shooter.set_movement_mode(character_movemode::CMM_PRONE);
+        double const prone_dispersion = ranged::get_weapon_dispersion(shooter, wp).max();
 
         THEN("prone dispersion is lower than crouch dispersion") {
             REQUIRE(walk_dispersion > 0.0);
@@ -147,7 +135,13 @@ TEST_CASE("prone_stance_MOUNTED_GUN", "[stance][prone][ranged]") {
     build_test_map(ter_id("t_dirt"));
 
     GIVEN("a MOUNTED_GUN weapon (M2HB Browning)") {
-        arm_character(shooter, "m2browning");
+        // Manual setup: belt50 is pre-loaded ("count": 100), so arm_character's
+        // reload-via-default-ammo path fails (magazine is already full).
+        shooter.remove_primary_weapon();
+        detached_ptr<item> det = item::spawn("m2browning");
+        item& gun = *det;
+        shooter.i_add(std::move(det));
+        shooter.wield(gun);
 
         WHEN("standing without mountable terrain nearby") {
             shooter.set_movement_mode(character_movemode::CMM_WALK);

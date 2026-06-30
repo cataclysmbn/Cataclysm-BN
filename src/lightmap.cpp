@@ -322,16 +322,16 @@ auto color_is_set( const RGBColor &color ) -> bool
 auto pack_rgb( const RGBColor &color ) -> uint32_t
 {
     return ( static_cast<uint32_t>( color.r ) << 16 ) |
-           ( static_cast<uint32_t>( color.g ) << 8 ) |
-           static_cast<uint32_t>( color.b );
+    ( static_cast<uint32_t>( color.g ) << 8 ) |
+    static_cast<uint32_t>( color.b );
 }
 
 auto color_rgb_from_optional( const std::optional<RGBColor> &color ) -> std::optional<uint32_t>
 {
     if( !color || !color_is_set( *color ) ) {
-        return std::nullopt;
-    }
-    return pack_rgb( *color );
+    return std::nullopt;
+}
+return pack_rgb( *color );
 }
 
 auto item_light_color( const item &itm ) -> std::optional<uint32_t>
@@ -342,7 +342,7 @@ auto item_light_color( const item &itm ) -> std::optional<uint32_t>
 auto field_light_color( const field_entry &entry ) -> std::optional<uint32_t>
 {
     return color_rgb_from_optional(
-               entry.get_field_type().obj().get_light_color( entry.get_field_intensity() - 1 ) );
+           entry.get_field_type().obj().get_light_color( entry.get_field_intensity() - 1 ) );
 }
 
 auto map_data_light_color( const map_data_common_t &data ) -> std::optional<uint32_t>
@@ -353,15 +353,15 @@ auto map_data_light_color( const map_data_common_t &data ) -> std::optional<uint
 auto vehicle_light_color( const vpart_reference &part ) -> std::optional<uint32_t>
 {
     if( part.info().light_color && color_is_set( *part.info().light_color ) ) {
-        return pack_rgb( *part.info().light_color );
+    return pack_rgb( *part.info().light_color );
     }
 
     const auto [bg, fg] = part.part().get_color( true );
     if( color_is_set( fg ) ) {
-        return pack_rgb( fg );
+    return pack_rgb( fg );
     }
     if( color_is_set( bg ) ) {
-        return pack_rgb( bg );
+    return pack_rgb( bg );
     }
     return std::nullopt;
 }
@@ -417,23 +417,23 @@ auto write_colored_light_cache( level_cache &cache, const int idx, const float i
                                 const uint32_t color_rgb ) -> void
 {
     atomic_colored_light_max( cache.colored_light_cache[idx],
-                              packed_colored_light_value( intensity, color_rgb ) );
+    packed_colored_light_value( intensity, color_rgb ) );
 }
 
 auto cpu_colored_light_allows_direction( const cpu_colored_light_3d_context &ctx, const int x,
         const int y ) -> bool
 {
     if( !ctx.directional ) {
-        return true;
-    }
-    const auto dx = static_cast<float>( x - ctx.source.x() );
+    return true;
+}
+const auto dx = static_cast<float>( x - ctx.source.x() );
     const auto dy = static_cast<float>( y - ctx.source.y() );
     const auto dist_xy_sq = dx * dx + dy * dy;
     if( dist_xy_sq <= 0.0001f ) {
-        return false;
-    }
-    const auto cone_dot = ( dx * ctx.dir_x + dy * ctx.dir_y ) / std::sqrt( dist_xy_sq );
-    return cone_dot >= ctx.cone_cos;
+    return false;
+}
+const auto cone_dot = ( dx * ctx.dir_x + dy * ctx.dir_y ) / std::sqrt( dist_xy_sq );
+return cone_dot >= ctx.cone_cos;
 }
 
 auto update_cpu_colored_light_cache( void *context, const int, const int, const int,
@@ -1825,42 +1825,42 @@ void map::add_light_source( const tripoint_bub_ms &p, float luminance, uint32_t 
 lit_level map::light_at( const tripoint_bub_ms &p ) const
 {
     if( !inbounds( p ) ) {
-        return lit_level::DARK;    // Out of bounds
-    }
+    return lit_level::DARK;    // Out of bounds
+}
 
-    const auto &map_cache = get_cache_ref( p.z() );
-    record_cpu_lm_read( map_cache.lm_cpu_cache_valid, cpu_lm_light_reads_valid,
-                        cpu_lm_light_reads_stale );
-    const auto &lm = map_cache.lm;
-    const auto &sm = map_cache.sm;
-    if( sm[map_cache.idx( p.x(), p.y() )] >= LIGHT_SOURCE_BRIGHT ) {
+const auto &map_cache = get_cache_ref( p.z() );
+record_cpu_lm_read( map_cache.lm_cpu_cache_valid, cpu_lm_light_reads_valid,
+                    cpu_lm_light_reads_stale );
+const auto &lm = map_cache.lm;
+const auto &sm = map_cache.sm;
+if( sm[map_cache.idx( p.x(), p.y() )] >= LIGHT_SOURCE_BRIGHT ) {
         return lit_level::BRIGHT;
     }
 
     const float max_light = lm[map_cache.idx( p.x(), p.y() )];
     if( max_light >= LIGHT_AMBIENT_LIT ) {
-        return lit_level::LIT;
-    }
+    return lit_level::LIT;
+}
 
-    if( max_light >= LIGHT_AMBIENT_LOW ) {
-        return lit_level::LOW;
-    }
+if( max_light >= LIGHT_AMBIENT_LOW ) {
+    return lit_level::LOW;
+}
 
-    return lit_level::DARK;
+return lit_level::DARK;
 }
 
 float map::ambient_light_at( const tripoint_bub_ms &p,
                              const std::source_location location ) const
 {
     if( !inbounds( p ) ) {
-        return 0.0f;
-    }
+    return 0.0f;
+}
 
-    const auto &map_cache = get_cache_ref( p.z() );
-    if( map_cache.lm_cpu_cache_valid ) {
-        const auto key = ambient_cache_key{
-            .owner = this,
-            .x = p.x(),
+const auto &map_cache = get_cache_ref( p.z() );
+if( map_cache.lm_cpu_cache_valid ) {
+    const auto key = ambient_cache_key{
+        .owner = this,
+        .x = p.x(),
             .y = p.y(),
             .z = p.z(),
             .turn = to_turns<int>( calendar::turn - calendar::turn_zero ),
@@ -2166,17 +2166,17 @@ lit_level map::apparent_light_at( const tripoint_bub_ms &p,
 bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
 {
     if( !inbounds( t ) ) {
-        return false;
-    }
+    return false;
+}
 
-    if( max_range >= 0 && square_dist( t, g->u.bub_pos() ) > max_range ) {
+if( max_range >= 0 && square_dist( t, g->u.bub_pos() ) > max_range ) {
         return false;    // Out of range!
     }
 
 #if defined( CATA_SDL )
     const auto &map_cache = get_cache_ref( t.z() );
     if( !map_cache.visibility_cache_dirty && visibility_variables_cache.variables_set ) {
-        const auto ll = map_cache.visibility_cache[map_cache.idx( t.x(), t.y() )];
+    const auto ll = map_cache.visibility_cache[map_cache.idx( t.x(), t.y() )];
         return get_visibility( ll, visibility_variables_cache ) == VIS_CLEAR;
     }
 
@@ -2193,10 +2193,10 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
 bool map::pl_line_of_sight( const tripoint_bub_ms &t, const int max_range ) const
 {
     if( !inbounds( t ) ) {
-        return false;
-    }
+    return false;
+}
 
-    if( max_range >= 0 && square_dist( t, g->u.bub_pos() ) > max_range ) {
+if( max_range >= 0 && square_dist( t, g->u.bub_pos() ) > max_range ) {
         // Out of range!
         return false;
     }
@@ -2719,7 +2719,7 @@ void map::apply_vehicle_optics( const tripoint_bub_ms &origin, const int target_
         // Use g_visible_threshold for consistency with apparent_light_helper.
         if( !vp.info().has_flag( "CAMERA" ) &&
             target_cache.seen_cache[target_cache.idx( mirror_pos.x(),
-                                                      mirror_pos.y() )] < LIGHT_TRANSPARENCY_SOLID + g_visible_threshold ) {
+                                    mirror_pos.y() )] < LIGHT_TRANSPARENCY_SOLID + g_visible_threshold ) {
             continue;
         } else if( !vp.info().has_flag( "CAMERA_CONTROL" ) ) {
             mirrors.emplace_back( static_cast<int>( vp.part_index() ) );

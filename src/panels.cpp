@@ -95,7 +95,7 @@ auto resolve_layout_entry_name( const panel_layout_entry &entry,
                                 const std::map<std::string, std::string> &lua_name_by_id ) -> std::optional<std::string>
 {
     if( entry.lua_id ) {
-        const auto it = lua_name_by_id.find( *entry.lua_id );
+    const auto it = lua_name_by_id.find( *entry.lua_id );
         if( it == lua_name_by_id.end() ) {
             return std::nullopt;
         }
@@ -244,8 +244,8 @@ auto get_lua_widget_lines( const cata::lua_sidebar_widgets::widget_entry &widget
 auto should_render_lua_widget( const cata::lua_sidebar_widgets::widget_entry &widget ) -> bool
 {
     if( widget.panel_visible_fn ) {
-        try {
-            auto res = ( *widget.panel_visible_fn )();
+    try {
+        auto res = ( *widget.panel_visible_fn )();
             check_func_result( res );
             if( res.return_count() == 0 ) {
                 return true;
@@ -266,10 +266,10 @@ auto should_render_lua_widget( const cata::lua_sidebar_widgets::widget_entry &wi
         return false;
     }
     if( !widget.render ) {
-        return true;
-    }
-    try {
-        auto res = ( *widget.render )();
+    return true;
+}
+try {
+    auto res = ( *widget.render )();
         check_func_result( res );
         if( res.return_count() == 0 ) {
             return true;
@@ -1277,23 +1277,23 @@ static std::string carry_volume_string( const avatar &u )
 static auto get_weight_color( const avatar &u ) -> nc_color
 {
     if( u.weight_carried() > u.weight_capacity() ) {
-        return c_red;
-    } else if( u.weight_carried() > u.weight_capacity() * 0.75 ) {
-        return c_yellow;
-    } else {
-        return c_light_gray;
-    }
+    return c_red;
+} else if( u.weight_carried() > u.weight_capacity() * 0.75 ) {
+    return c_yellow;
+} else {
+    return c_light_gray;
+}
 }
 
 static auto get_volume_color( const avatar &u ) -> nc_color
 {
     if( u.volume_carried() > u.volume_capacity() * 0.85 ) {
-        return c_red;
-    } else if( u.volume_carried() > u.volume_capacity() * 0.65 ) {
-        return c_yellow;
-    } else {
-        return c_light_gray;
-    }
+    return c_red;
+} else if( u.volume_carried() > u.volume_capacity() * 0.65 ) {
+    return c_yellow;
+} else {
+    return c_light_gray;
+}
 }
 
 static void draw_weightvolume_classic( const avatar &u, const catacurses::window &w )
@@ -1556,7 +1556,7 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
     }
     // display lighting
     const std::pair<std::string, nc_color> ll = get_light_level(
-                character_funcs::fine_detail_vision_mod( get_avatar() ) );
+            character_funcs::fine_detail_vision_mod( get_avatar() ) );
     mvwprintz( w, point( 1, 3 ), c_light_gray, "%s ", _( "Light:" ) );
     wprintz( w, ll.second, ll.first );
 
@@ -1754,7 +1754,7 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
     }
     // display lighting
     const std::pair<std::string, nc_color> ll = get_light_level(
-                character_funcs::fine_detail_vision_mod( get_avatar() ) );
+            character_funcs::fine_detail_vision_mod( get_avatar() ) );
     mvwprintz( w, point( 8, 4 ), ll.second, ll.first );
     // wind
     const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
@@ -2220,7 +2220,7 @@ static void draw_lighting_classic( const avatar &u, const catacurses::window &w 
     werase( w );
 
     const std::pair<std::string, nc_color> ll = get_light_level(
-                character_funcs::fine_detail_vision_mod( get_avatar() ) );
+            character_funcs::fine_detail_vision_mod( get_avatar() ) );
     mvwprintz( w, point_zero, c_light_gray, _( "Lighting:" ) );
     mvwprintz( w, point( 10, 0 ), ll.second, ll.first );
 

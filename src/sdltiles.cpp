@@ -329,7 +329,7 @@ static void WinCreate()
             }
             if( !SetupRenderTarget() ) {
                 dbg( DL::Error ) << "Failed to initialize display buffer under accelerated rendering, "
-                                 "falling back to software rendering.";
+                                    "falling back to software rendering.";
                 software_renderer = true;
                 display_buffer.reset();
                 renderer.reset();
@@ -374,7 +374,7 @@ static void WinCreate()
     if( get_option<bool>( "ENABLE_JOYSTICK" ) && numjoy >= 1 ) {
         if( numjoy > 1 ) {
             dbg( DL::Warn ) << "You have more than one gamepads/joysticks plugged in, "
-                            "only the first will be used.";
+                               "only the first will be used.";
         }
         joystick = SDL_OpenJoystick( joystick_ids[0] );
         printErrorIf( joystick == nullptr, "SDL_OpenJoystick failed" );
@@ -652,7 +652,7 @@ void clear_window_area( const catacurses::window &win_ )
 }
 
 static std::optional<std::pair<tripoint_abs_omt, std::string>> get_mission_arrow(
-            const inclusive_cuboid<tripoint_abs_omt> &overmap_area, const tripoint_abs_omt &center )
+    const inclusive_cuboid<tripoint_abs_omt> &overmap_area, const tripoint_abs_omt &center )
 {
     const auto *mission = get_avatar().get_active_mission();
     const bool custom_waypoint_valid = get_avatar().get_custom_mission_target() !=
@@ -685,7 +685,7 @@ static std::optional<std::pair<tripoint_abs_omt, std::string>> get_mission_arrow
     }
 
     const std::vector<tripoint_abs_omt> traj = line_to( center,
-            tripoint_abs_omt( mission_target.xy(), center.z() ) );
+        tripoint_abs_omt( mission_target.xy(), center.z() ) );
 
     if( traj.empty() ) {
         debugmsg( "Failed to gen overmap mission trajectory %s %s",
@@ -902,7 +902,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
     // Cache display_oter substitution strings for the active region.
     const regional_settings &active_region_settings = ACTIVE_OVERMAP_BUFFER.get_settings(
-                center_abs_omt );
+            center_abs_omt );
     const bool om_has_display_oter = !active_region_settings.display_oter.is_empty();
     const std::string om_default_oter_str = active_region_settings.default_oter.str();
     const std::string om_display_oter_str = om_has_display_oter
@@ -1009,15 +1009,15 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                     const mongroup *mgp = *horde_it;
                     const MonsterGroup &group = mgp->type.obj();
                     const auto default_id = group.defaultMonster.is_valid()
-                    ? group.defaultMonster.str()
-                    : std::string( "mon_zombie" );
+                        ? group.defaultMonster.str()
+                        : std::string( "mon_zombie" );
                     if( group.monsters.empty() )
                     {
                         return default_id;
                     }
 
                     const auto best_entry = std::ranges::max_element( group.monsters, []( const auto & lhs,
-                            const auto & rhs )
+                        const auto & rhs )
                     {
                         return lhs.frequency < rhs.frequency;
                     } );
@@ -1189,7 +1189,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         inclusive_cuboid<tripoint_abs_omt> map_cursor_area = overmap_area;
         map_cursor_area.p_max.y()--;
         const std::optional<std::pair<tripoint_abs_omt, std::string>> mission_arrow =
-                    get_mission_arrow( map_cursor_area, center_abs_omt );
+            get_mission_arrow( map_cursor_area, center_abs_omt );
         if( mission_arrow ) {
             const tile_search_params tile { mission_arrow->second, C_NONE, empty_string, 0, 0 };
             draw_from_id_string(
@@ -1294,7 +1294,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         const std::string &note_text = ACTIVE_OVERMAP_BUFFER.note( center_abs_omt );
         if( !note_text.empty() && !overmap_label_note::is_label_only( note_text ) ) {
             const std::tuple<char, nc_color, size_t> note_info = overmap_ui::get_note_display_info(
-                        note_text );
+                    note_text );
             const size_t pos = std::get<2>( note_info );
             if( pos != std::string::npos ) {
                 const auto display_note_text =
@@ -1373,7 +1373,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
                 if( seg[0] == '<' ) {
                     const color_tag_parse_result::tag_type type = update_color_stack(
-                                color_stack, seg, report_color_error::no );
+                            color_stack, seg, report_color_error::no );
                     if( type != color_tag_parse_result::non_color_tag ) {
                         seg = rm_prefix( seg );
                     }
@@ -1418,7 +1418,7 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
     cata_cursesport::WINDOW *const win = w.get<cata_cursesport::WINDOW>();
     //Keeping track of the last drawn window
     const cata_cursesport::WINDOW *winBuffer = static_cast<cata_cursesport::WINDOW *>
-            ( ::winBuffer.lock().get() );
+        ( ::winBuffer.lock().get() );
     if( !fontScaleBuffer ) {
         fontScaleBuffer = tilecontext->get_tile_width();
     }
@@ -2300,7 +2300,7 @@ bool ignore_action_for_quick_shortcuts( const std::string &action )
              || action == "MOVE_ARMOR" // maps to ENTER
              || action == "ANY_INPUT"
              || action ==
-             "DELETE_TEMPLATE" // strictly we shouldn't have this one, but I don't like seeing the "d" on the main menu by default. :)
+                       "DELETE_TEMPLATE" // strictly we shouldn't have this one, but I don't like seeing the "d" on the main menu by default. :)
            );
 }
 
@@ -2758,9 +2758,9 @@ void update_finger_repeat_delay()
                     0.0f, 1.0f );
     finger_repeat_delay = lerp( std::pow( t, get_option<float>( "ANDROID_SENSITIVITY_POWER" ) ),
                                 static_cast<Uint64>( std::max( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
-                                        get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ),
+                                    get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ),
                                 static_cast<Uint64>( std::min( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
-                                        get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ) );
+                                    get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ) );
 }
 
 // TODO: Is there a better way to detect when string entry is allowed?
@@ -2791,7 +2791,7 @@ void handle_finger_input( Uint64 ticks )
     float dist = std::sqrt( delta_x * delta_x + delta_y * delta_y ); // in pixel space
     bool handle_diagonals = touch_input_context.is_action_registered( "LEFTUP" );
     bool is_default_mode = touch_input_context.get_category() == "DEFAULTMODE";
-    if( dist > ( get_option<float>( "ANDROID_DEADZONE_RANGE" )*std::max( WindowWidth,
+    if( dist > ( get_option<float>( "ANDROID_DEADZONE_RANGE" ) * std::max( WindowWidth,
                  WindowHeight ) ) ) {
         if( !handle_diagonals ) {
             if( delta_x >= 0 && delta_y >= 0 ) {
@@ -3682,8 +3682,8 @@ static void init_term_size_and_scaling_factor()
         int display_count = 0;
         SDL_DisplayID *display_list = SDL_GetDisplays( &display_count );
         const SDL_DisplayID current_display_id = ( display_list && current_display_idx < display_count )
-                ? display_list[current_display_idx]
-                : SDL_GetPrimaryDisplay();
+            ? display_list[current_display_idx]
+            : SDL_GetPrimaryDisplay();
         SDL_free( display_list );
 
         const SDL_DisplayMode *current_display = SDL_GetDesktopDisplayMode( current_display_id );
@@ -3847,7 +3847,7 @@ void catacurses::init_interface()
 
     try {
         font = std::make_unique<FontFallbackList>( renderer, format, fl.fontwidth, fl.fontheight,
-                windowsPalette, fl.typeface, fl.fontsize, fl.fontblending );
+               windowsPalette, fl.typeface, fl.fontsize, fl.fontblending );
         map_font = std::make_unique<FontFallbackList>( renderer, format, fl.map_fontwidth,
                    fl.map_fontheight,
                    windowsPalette, fl.map_typeface, fl.map_fontsize, fl.fontblending );
@@ -4092,10 +4092,10 @@ auto get_sdl_display_buffer_size() -> point
 {
     if( !display_buffer ) { return point_zero; }
 
-    auto width = 0.0f;
-    auto height = 0.0f;
+auto width = 0.0f;
+auto height = 0.0f;
 
-    if( !SDL_GetTextureSize( display_buffer.get(), &width, &height ) ) {
+if( !SDL_GetTextureSize( display_buffer.get(), &width, &height ) ) {
         return point_zero;
     }
     return point( width, height );
@@ -4104,7 +4104,7 @@ auto get_sdl_display_buffer_size() -> point
 auto get_sdl_window_size() -> point
 {
     return point( std::max( 1, WindowWidth / scaling_factor ),
-                  std::max( 1, WindowHeight / scaling_factor ) );
+    std::max( 1, WindowHeight / scaling_factor ) );
 }
 
 auto get_sdl_font_size() -> point
@@ -4266,7 +4266,7 @@ bool save_screenshot( const std::string &file_path )
     // Save screenshot as PNG file
     const bool ok = !printErrorIf( !IMG_SavePNG( readback.get(), file_path.c_str() ),
                                    std::string( "save_screenshot: cannot save screenshot file: " +
-                                           file_path ).c_str() );
+                                       file_path ).c_str() );
     return ok;
 }
 
