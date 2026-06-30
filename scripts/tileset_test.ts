@@ -161,6 +161,64 @@ const writeSolidPng = async (
   }).png().toFile(pathname)
 }
 
+const createMaskFixtureTileset = async (sourceDir: string): Promise<void> => {
+  await ensureDir(sourceDir)
+  await Deno.writeTextFile(join(sourceDir, "tileset.txt"), "JSON: tile_config.json\n")
+  await Deno.writeTextFile(
+    join(sourceDir, "tile_info.json"),
+    JSON.stringify(
+      [
+        { width: 2, height: 2 },
+        { "main.png": { sprites_across: 4 } },
+        { "fallback.png": { fallback: true } },
+      ],
+      null,
+      2,
+    ),
+  )
+
+  const mainDir = join(sourceDir, "pngs_main_2x2", "images0")
+  await ensureDir(mainDir)
+  await writeSolidPng(join(mainDir, "alpha.png"), 2, 2, {
+    r: 255,
+    g: 0,
+    b: 0,
+    alpha: 255,
+  })
+  await writeSolidPng(join(mainDir, "alpha_tint_mask.png"), 2, 2, {
+    r: 255,
+    g: 255,
+    b: 255,
+    alpha: 255,
+  })
+  await writeSolidPng(join(mainDir, "open_tint_mask.png"), 2, 2, {
+    r: 0,
+    g: 0,
+    b: 0,
+    alpha: 255,
+  })
+
+  await Deno.writeTextFile(
+    join(mainDir, "entries.json"),
+    JSON.stringify(
+      {
+        id: "t_alpha",
+        fg: "alpha",
+        masks: [{ type: "tint", fg: "alpha_tint_mask" }, { type: "tint", fg: "missing_mask" }, {
+          type: "tint",
+        }],
+        additional_tiles: [{
+          id: "open",
+          fg: "alpha",
+          masks: [{ type: "tint", fg: "open_tint_mask" }],
+        }],
+      },
+      null,
+      2,
+    ),
+  )
+}
+
 const createFixtureTileset = async (sourceDir: string): Promise<void> => {
   await ensureDir(sourceDir)
   await Deno.writeTextFile(join(sourceDir, "tileset.txt"), "JSON: tile_config.json\n")
@@ -317,6 +375,30 @@ const collectReferencedSpriteIndexes = (
   }
 }
 
+const collectTileEntryReferencedSpriteIndexes = (
+  tile: Record<string, unknown>,
+  target: Set<number>,
+): void => {
+  collectReferencedSpriteIndexes(tile.fg, target)
+  collectReferencedSpriteIndexes(tile.bg, target)
+
+  const masks = tile.masks
+  if (Array.isArray(masks)) {
+    for (const mask of masks) {
+      const maskEntry = mask as Record<string, unknown>
+      collectReferencedSpriteIndexes(maskEntry.fg, target)
+      collectReferencedSpriteIndexes(maskEntry.bg, target)
+    }
+  }
+
+  const additionalTiles = tile.additional_tiles
+  if (Array.isArray(additionalTiles)) {
+    for (const additionalTile of additionalTiles) {
+      collectTileEntryReferencedSpriteIndexes(additionalTile as Record<string, unknown>, target)
+    }
+  }
+}
+
 const compareReferencedSpritesOnly = async (
   leftPath: string,
   rightPath: string,
@@ -420,6 +502,53 @@ const compareDecomposedOutputs = async (leftDir: string, rightDir: string): Prom
 }
 
 Deno.test({
+  name: "tileset: compose and decompose preserve tint mask sprites",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  async fn() {
+    const tempRoot = await Deno.makeTempDir({ prefix: "tileset_mask_compose_" })
+
+    try {
+      const sourceDir = join(tempRoot, "fixture_source")
+      const outputDir = join(tempRoot, "packed")
+      await createMaskFixtureTileset(sourceDir)
+
+      await runTypescriptCompose(sourceDir, outputDir)
+
+      const tileConfig = await readJson(join(outputDir, "tile_config.json")) as {
+        "tiles-new": Array<{ tiles?: Array<Record<string, unknown>> }>
+      }
+      const firstTile = tileConfig["tiles-new"][0]?.tiles?.[0] as {
+        fg: number
+        masks: Array<{ type: string; fg: number }>
+        additional_tiles: Array<{ masks: Array<{ type: string; fg: number }> }>
+      }
+
+      assertEquals(firstTile.fg, 2)
+      assertEquals(firstTile.masks, [{ type: "tint", fg: 1 }, { type: "tint", fg: [] }, {
+        type: "tint",
+      }])
+      assertEquals(firstTile.additional_tiles[0].masks, [{ type: "tint", fg: 3 }])
+
+      await runTypescriptDecompose(outputDir)
+      const decomposedEntry = await readJson(
+        join(outputDir, "pngs_main_2x2", "images0", "t_alpha_0.json"),
+      ) as {
+        masks: Array<{ type: string; fg: string }>
+        additional_tiles: Array<{ masks: Array<{ type: string; fg: string }> }>
+      }
+
+      assertEquals(decomposedEntry.masks[0].type, "tint")
+      assertEquals(typeof decomposedEntry.masks[0].fg, "string")
+      assertEquals(decomposedEntry.additional_tiles[0].masks[0].type, "tint")
+      assertEquals(typeof decomposedEntry.additional_tiles[0].masks[0].fg, "string")
+    } finally {
+      await Deno.remove(tempRoot, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
   name: "tileset: compose output matches compose.py pixel-perfect",
   sanitizeOps: false,
   sanitizeResources: false,
@@ -472,17 +601,7 @@ Deno.test({
           const referencedIndexes = new Set<number>()
 
           for (const tile of sheet.tiles) {
-            collectReferencedSpriteIndexes(tile.fg, referencedIndexes)
-            collectReferencedSpriteIndexes(tile.bg, referencedIndexes)
-
-            const additionalTiles = tile.additional_tiles
-            if (Array.isArray(additionalTiles)) {
-              for (const additionalTile of additionalTiles) {
-                const entry = additionalTile as Record<string, unknown>
-                collectReferencedSpriteIndexes(entry.fg, referencedIndexes)
-                collectReferencedSpriteIndexes(entry.bg, referencedIndexes)
-              }
-            }
+            collectTileEntryReferencedSpriteIndexes(tile, referencedIndexes)
           }
 
           const spriteWidth = sheet.sprite_width ?? defaultWidth

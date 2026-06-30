@@ -197,6 +197,23 @@ const convertTileEntry = (entry, prefix, context) => {
     }
   }
 
+  if (Array.isArray(converted.masks)) {
+    converted.masks = converted.masks.map((mask) => {
+      const convertedMask = structuredClone(mask)
+      if (convertedMask.fg) {
+        convertedMask.fg = listOrFirst(convertLayer(convertedMask.fg, context))
+      } else {
+        delete convertedMask.fg
+      }
+      if (convertedMask.bg) {
+        convertedMask.bg = listOrFirst(convertLayer(convertedMask.bg, context))
+      } else {
+        delete convertedMask.bg
+      }
+      return convertedMask
+    })
+  }
+
   const additionalTiles = Array.isArray(converted.additional_tiles)
     ? converted.additional_tiles
     : []
@@ -449,9 +466,30 @@ const convertEntryToNames = (entry, indexToName) => {
     delete converted.bg
   }
 
+  if (Array.isArray(converted.masks)) {
+    converted.masks = converted.masks
+      .map((mask) => {
+        const convertedMask = structuredClone(mask)
+        const maskFg = convertLayerToNames(convertedMask.fg, indexToName)
+        const maskBg = convertLayerToNames(convertedMask.bg, indexToName)
+        if (maskFg.length > 0) {
+          convertedMask.fg = listOrFirst(maskFg)
+        } else {
+          delete convertedMask.fg
+        }
+        if (maskBg.length > 0) {
+          convertedMask.bg = listOrFirst(maskBg)
+        } else {
+          delete convertedMask.bg
+        }
+        return maskFg.length > 0 || maskBg.length > 0 ? convertedMask : null
+      })
+      .filter(Boolean)
+  }
+
   if (Array.isArray(converted.additional_tiles)) {
     converted.additional_tiles = converted.additional_tiles
-      .map((additional) => convertEntryToNames(additional, indexToName))
+      .map((additional) => convertEntryToNames(additional, indexToName)[1])
       .filter(Boolean)
   }
 
@@ -503,17 +541,27 @@ const decomposeSmallTileset = async (files) => {
 
   const safeId = (value) => String(value ?? "tile").replaceAll("/", "_")
 
-  for (const entry of composeSheet.tiles) {
-    const indices = new Set()
+  const collectEntryIndices = (entry, indices) => {
     collectIndicesFromLayer(entry.fg, indices)
     collectIndicesFromLayer(entry.bg, indices)
 
-    if (Array.isArray(entry.additional_tiles)) {
-      for (const additional of entry.additional_tiles) {
-        collectIndicesFromLayer(additional.fg, indices)
-        collectIndicesFromLayer(additional.bg, indices)
+    if (Array.isArray(entry.masks)) {
+      for (const mask of entry.masks) {
+        collectIndicesFromLayer(mask.fg, indices)
+        collectIndicesFromLayer(mask.bg, indices)
       }
     }
+
+    if (Array.isArray(entry.additional_tiles)) {
+      for (const additional of entry.additional_tiles) {
+        collectEntryIndices(additional, indices)
+      }
+    }
+  }
+
+  for (const entry of composeSheet.tiles) {
+    const indices = new Set()
+    collectEntryIndices(entry, indices)
 
     const ids = Array.isArray(entry.id) ? entry.id : [entry.id]
     const baseName = safeId(ids[0])
@@ -601,6 +649,130 @@ const createZipBlob = (files) => {
   return zip.generateAsync({ type: "blob" })
 }
 
+const setupSpriteEditor = () => {
+  const input = document.getElementById("sprite-editor-input")
+  const widthInput = document.getElementById("sprite-editor-width")
+  const heightInput = document.getElementById("sprite-editor-height")
+  const newButton = document.getElementById("sprite-editor-new")
+  const colorInput = document.getElementById("sprite-editor-color")
+  const downloadButton = document.getElementById("sprite-editor-download")
+  const canvas = document.getElementById("sprite-editor-canvas")
+
+  if (
+    !input || !widthInput || !heightInput || !newButton || !colorInput || !downloadButton || !canvas
+  ) {
+    return
+  }
+
+  const context = canvas.getContext("2d")
+  const backingCanvas = document.createElement("canvas")
+  const backingContext = backingCanvas.getContext("2d")
+  let scale = 16
+  let painting = false
+
+  const clampDimension = (value) => Math.max(1, Math.min(256, Number.parseInt(value, 10) || 16))
+  const currentTool = () =>
+    document.querySelector("input[name='sprite-editor-tool']:checked")?.value ?? "pen"
+  const syncSizeInputs = () => {
+    widthInput.value = String(backingCanvas.width)
+    heightInput.value = String(backingCanvas.height)
+  }
+  const redraw = () => {
+    scale = Math.max(1, Math.floor(Math.min(512 / backingCanvas.width, 512 / backingCanvas.height)))
+    canvas.width = backingCanvas.width * scale
+    canvas.height = backingCanvas.height * scale
+    context.imageSmoothingEnabled = false
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(backingCanvas, 0, 0, canvas.width, canvas.height)
+    context.strokeStyle = "rgba(128,128,128,0.35)"
+    context.lineWidth = 1
+    for (let x = 0; x <= backingCanvas.width; x += 1) {
+      context.beginPath()
+      context.moveTo(x * scale + 0.5, 0)
+      context.lineTo(x * scale + 0.5, canvas.height)
+      context.stroke()
+    }
+    for (let y = 0; y <= backingCanvas.height; y += 1) {
+      context.beginPath()
+      context.moveTo(0, y * scale + 0.5)
+      context.lineTo(canvas.width, y * scale + 0.5)
+      context.stroke()
+    }
+  }
+  const resizeBacking = (width, height) => {
+    const previous = document.createElement("canvas")
+    previous.width = backingCanvas.width
+    previous.height = backingCanvas.height
+    previous.getContext("2d").drawImage(backingCanvas, 0, 0)
+    backingCanvas.width = width
+    backingCanvas.height = height
+    backingContext.clearRect(0, 0, width, height)
+    backingContext.drawImage(previous, 0, 0)
+    syncSizeInputs()
+    redraw()
+  }
+  const drawAt = (event) => {
+    const bounds = canvas.getBoundingClientRect()
+    const x = Math.floor((event.clientX - bounds.left) / scale)
+    const y = Math.floor((event.clientY - bounds.top) / scale)
+    if (x < 0 || y < 0 || x >= backingCanvas.width || y >= backingCanvas.height) {
+      return
+    }
+    backingContext.clearRect(x, y, 1, 1)
+    if (currentTool() === "pen") {
+      backingContext.fillStyle = colorInput.value
+      backingContext.fillRect(x, y, 1, 1)
+    }
+    redraw()
+  }
+
+  resizeBacking(clampDimension(widthInput.value), clampDimension(heightInput.value))
+
+  input.addEventListener("change", async () => {
+    const file = input.files?.[0]
+    if (!file) {
+      return
+    }
+    const image = await readImageData(file)
+    backingCanvas.width = image.width
+    backingCanvas.height = image.height
+    backingContext.putImageData(image.imageData, 0, 0)
+    syncSizeInputs()
+    redraw()
+  })
+  newButton.addEventListener("click", () =>
+    resizeBacking(
+      clampDimension(widthInput.value),
+      clampDimension(heightInput.value),
+    ))
+  canvas.addEventListener("pointerdown", (event) => {
+    painting = true
+    canvas.setPointerCapture(event.pointerId)
+    drawAt(event)
+  })
+  canvas.addEventListener("pointermove", (event) => {
+    if (painting) {
+      drawAt(event)
+    }
+  })
+  canvas.addEventListener("pointerup", (event) => {
+    painting = false
+    canvas.releasePointerCapture(event.pointerId)
+  })
+  canvas.addEventListener("pointercancel", () => {
+    painting = false
+  })
+  downloadButton.addEventListener("click", async () => {
+    const blob = await canvasToPngBlob(backingCanvas)
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.download = "sprite.png"
+    anchor.click()
+    URL.revokeObjectURL(url)
+  })
+}
+
 const setupWebTool = () => {
   const input = document.getElementById("tileset-input")
   const runButton = document.getElementById("tileset-run")
@@ -671,3 +843,4 @@ const setupWebTool = () => {
 }
 
 setupWebTool()
+setupSpriteEditor()
