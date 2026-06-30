@@ -17,7 +17,7 @@
     "ammo_type": "277",
     "casing": "277_casing",
     "range": 65,
-    "damage": { "damage_type": "bullet", "amount": 60, "armor_penetration": 27 },
+    "damage": { "damage_type": "bullet", "amount": 45, "armor_penetration": 27 },
     "dispersion": 15,
     "recoil": 2500,
     "loudness": 164,
@@ -33,7 +33,7 @@
     "loudness": 166,
     "speed": 980,
     "description": "A rimless cartridge that was planned to be adopted by the US military to combat advances in modern body armor, but was quietly abandoned soon after the development of caseless. These full-power Hybrid rounds offer significant armor penetration but greatly increase recoil.",
-    "relative": { "damage": { "damage_type": "bullet", "amount": 5, "armor_penetration": 20 } },
+    "relative": { "damage": { "damage_type": "bullet", "amount": 25, "armor_penetration": 30 } },
     "proportional": { "recoil": 1.3 }
   },
   {
