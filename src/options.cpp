@@ -2846,7 +2846,7 @@ void options_manager::add_options_debug()
          false );
 
     add( "NEW_ARMOR_CALCULATION", debug, translate_marker( "New armor damage calculation" ),
-         translate_marker( "If true, armor can now take damage from attacks that don't penetrate it, but attacks in general damage armor less." ),
+         translate_marker( "If false, armor will no longer take damage from attacks that don't penetrate it, but attacks in general damage armor more." ),
          true );
 
     add_empty_line();
