@@ -96,7 +96,7 @@
     "chance": 20, // One out of x chance to complain
     "issue": "crack_smoke", // Talk tag to complain about
     "duration": "30 minutes", // How long will they be complaining
-    "speech": "<crack_smoke>" // Once again the talk tag to have spoken
+    "speech": "<crack_smoke>", // Once again the talk tag to have spoken
   },
   // Monster spawning
   "monster_spawn_chance": 2, // One in x chance to spawn monster
