@@ -8206,16 +8206,16 @@
     "type": "profession",
     "id": "mil_drone_operator",
     "name": "Military Drone Operator",
-    "description": "You realized the difference between what the army and the air force considers a 'drone operator' a bit too late. Still, you have a couple manhacks standing between you and the undead, and you don't see any Reaper drones around!",
+    "description": "You realized the difference between what the army and the air force considers a 'drone operator' a bit too late.  Still, you have a couple manhacks to stand between you and the undead.",
     "age": { "min": 20, "max": 40 },
     "points": 6,
     "skills": [
+      { "level": 1, "name": "firstaid" },
       { "level": 2, "name": "gun" },
       { "level": 2, "name": "rifle" },
       { "level": 2, "name": "shotgun" },
       { "level": 4, "name": "computer" },
       { "level": 4, "name": "electronics" },
-      { "level": 1, "name": "mechanics" },
       { "level": 2, "name": "melee" },
       { "level": 1, "name": "stabbing" },
       { "level": 1, "name": "dodge" },
@@ -8225,30 +8225,33 @@
     "traits": [ "PROF_MILITARY" ],
     "items": {
       "both": {
+        "items": [
+          "pants_army",
+          "tshirt",
+          "jacket_army",
+          "helmet_liner",
+          "helmet_army",
+          "gloves_liner",
+          "gloves_tactical",
+          "wrist_comp_budget",
+          "socks",
+          "boots_combat",
+          "canteen",
+          "molle_pack"
+        ],
         "entries": [
-          { "item": "undershirt" },
-          { "item": "jacket_army" },
-          { "item": "socks" },
-          { "item": "boots" },
-          { "item": "helmet_liner" },
-          { "item": "helmet_army" },
-          { "item": "gloves_liner" },
-          { "item": "gloves_tactical" },
-          { "item": "wrist_comp_budget" },
-          { "item": "pants_army" },
-          { "item": "molle_pack" },
+          { "group": "charged_two_way_radio" },
+          { "item": "modularvestceramic", "contents-group": "army_mags_m4" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "e_tool", "container-item": "webbing_belt" },
           { "item": "knife_combat", "container-item": "sheath" },
-          { "item": "modularvestceramic" },
-          { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-group": "army_droneop_mods" },
-          { "item": "water_clean", "container-item": "canteen" },
           { "item": "ammo_satchel_leg", "contents-group": "ammopouch_shot_droneop" },
-          { "item": "legpouch_large", "contents-group": "army_mags_m4" },
+          { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-group": "army_droneop_mods" },
           { "group": "droneop_manhacks" }
         ]
       },
-      "male": { "entries": [ { "item": "boxer_shorts" } ] },
-      "female": { "entries": [ { "item": "sports_bra" }, { "item": "boxer_shorts" } ] }
+      "male": [ "boxer_shorts" ],
+      "female": [ "boy_shorts", "sports_bra" ]
     }
   },
   {
