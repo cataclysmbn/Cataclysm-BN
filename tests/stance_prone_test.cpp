@@ -43,13 +43,13 @@ TEST_CASE("prone_stance_movement_costs", "[stance][prone][movement]") {
         }
 
         WHEN("standing -> prone") {
-            shooter.set_moves(200);
+            shooter.set_moves(400);
             shooter.set_movement_mode(character_movemode::CMM_PRONE);
-            THEN("costs 150 moves") { CHECK(shooter.get_moves() == 50); }
+            THEN("costs 300 moves") { CHECK(shooter.get_moves() == 100); }
             AND_WHEN("prone -> stand") {
-                shooter.set_moves(200);
+                shooter.set_moves(400);
                 shooter.set_movement_mode(character_movemode::CMM_WALK);
-                THEN("costs 150 moves") { CHECK(shooter.get_moves() == 50); }
+                THEN("costs 300 moves") { CHECK(shooter.get_moves() == 100); }
             }
         }
     }
@@ -59,13 +59,13 @@ TEST_CASE("prone_stance_movement_costs", "[stance][prone][movement]") {
         REQUIRE(shooter.movement_mode_is(character_movemode::CMM_CROUCH));
 
         WHEN("crouch -> prone") {
-            shooter.set_moves(200);
+            shooter.set_moves(400);
             shooter.set_movement_mode(character_movemode::CMM_PRONE);
-            THEN("costs 100 moves") { CHECK(shooter.get_moves() == 100); }
+            THEN("costs 200 moves") { CHECK(shooter.get_moves() == 200); }
             AND_WHEN("prone -> crouch") {
-                shooter.set_moves(200);
+                shooter.set_moves(400);
                 shooter.set_movement_mode(character_movemode::CMM_CROUCH);
-                THEN("costs 100 moves") { CHECK(shooter.get_moves() == 100); }
+                THEN("costs 200 moves") { CHECK(shooter.get_moves() == 200); }
             }
         }
     }
@@ -75,10 +75,10 @@ TEST_CASE("prone_stance_movement_costs", "[stance][prone][movement]") {
         REQUIRE(shooter.movement_mode_is(character_movemode::CMM_PRONE));
 
         WHEN("toggle_prone_mode returns to walk") {
-            shooter.set_moves(200);
+            shooter.set_moves(400);
             shooter.toggle_prone_mode();
-            THEN("costs 150 moves to stand") {
-                CHECK(shooter.get_moves() == 50);
+            THEN("costs 300 moves to stand") {
+                CHECK(shooter.get_moves() == 100);
                 CHECK(shooter.movement_mode_is(character_movemode::CMM_WALK));
             }
         }
