@@ -722,7 +722,6 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     if( !is_riding
         && m.has_flag( flag_LADDER, you.bub_pos() )
         && !m.passable( dest_loc )
-        && m.has_floor_or_support( dest_loc + tripoint_above )
       ) {
         ZoneScopedN( "avatar_move_walk_move_ladder" );
         if( g->walk_move( dest_loc + tripoint_above ) ) {

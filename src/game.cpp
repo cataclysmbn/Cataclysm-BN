@@ -14097,7 +14097,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         std::vector<tripoint_bub_ms> pts;
         for( const auto &pt : m.points_in_radius( stairs, 1 ) ) {
             if( m.passable( pt ) &&
-                m.has_floor_or_support( pt ) ) {
+                m.has_floor( pt ) ) {
                 pts.push_back( pt );
             }
         }
