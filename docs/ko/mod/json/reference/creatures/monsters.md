@@ -288,6 +288,8 @@ Ctxt는 동음이의어(같은 이름을 가진 두 가지 다른 것)의 경우
 
 몬스터가 죽을 때 아이템을 스폰하는 데 사용되는 아이템 그룹. 이것은 인라인 아이템 그룹이 될 수 있습니다. ITEM_SPAWN.md를 참조하세요. 기본 하위 유형은 "distribution"입니다.
 
+상속되거나 오버라이드된 몬스터에서 `"extend": { "death_drops": ... }`를 사용하면 기존 사망 드롭을 대체하지 않고 다른 드롭 그룹을 추가합니다. 최상위 `"death_drops"` 멤버는 상속된 사망 드롭을 대체합니다.
+
 ## "death_function"
 
 (array of strings, optional)

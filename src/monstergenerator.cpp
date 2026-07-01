@@ -7,6 +7,7 @@
 #include <optional>
 #include <set>
 #include <utility>
+#include <vector>
 
 #include "assign.h"
 #include "bodypart.h"
@@ -219,6 +220,25 @@ std::string enum_to_string<m_flag>( m_flag data )
 }
 
 } // namespace io
+
+namespace
+{
+
+auto add_death_drop_group( std::vector<item_group_id> &death_drops,
+                           const JsonObject &jo, const std::string &member_name ) -> void
+{
+    if( !jo.has_member( member_name ) ) {
+        return;
+    }
+
+    const auto death_drop = item_group::load_item_group( jo.get_member( member_name ),
+                            "distribution" );
+    if( death_drop ) {
+        death_drops.push_back( death_drop );
+    }
+}
+
+} // namespace
 
 // TODO: Make this like any other generic factory so we can use type_id_implement
 /** @relates string_id */
@@ -892,8 +912,13 @@ void mtype::load( const JsonObject &jo, const std::string &src )
                          "distribution" );
     }
     if( jo.has_member( "death_drops" ) ) {
-        death_drops = item_group::load_item_group( jo.get_member( "death_drops" ),
-                      "distribution" );
+        death_drops.clear();
+        add_death_drop_group( death_drops, jo, "death_drops" );
+    }
+    if( jo.has_object( "extend" ) ) {
+        auto tmp = jo.get_object( "extend" );
+        tmp.allow_omitted_members();
+        add_death_drop_group( death_drops, tmp, "death_drops" );
     }
 
     assign( jo, "harvest", harvest );
@@ -1561,9 +1586,11 @@ void MonsterGenerator::check_monster_definitions() const
                 debugmsg( "monster %s has invalid species %s", mon.id.c_str(), spec.c_str() );
             }
         }
-        if( mon.death_drops && !item_group::group_is_defined( mon.death_drops ) ) {
-            debugmsg( "monster %s has unknown death drop item group: %s", mon.id.c_str(),
-                      mon.death_drops.c_str() );
+        for( const item_group_id &death_drop : mon.death_drops ) {
+            if( !item_group::group_is_defined( death_drop ) ) {
+                debugmsg( "monster %s has unknown death drop item group: %s", mon.id.c_str(),
+                          death_drop.c_str() );
+            }
         }
         for( auto &m : mon.mat ) {
             if( m.str() == "null" || !m.is_valid() ) {
