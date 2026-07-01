@@ -530,7 +530,6 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "droneop_manhacks",
-    
     "entries": [
       { "item": "bot_manhack" },
       { "item": "bot_manhack" },
@@ -542,7 +541,7 @@
       { "item": "bot_grenade_hack" },
       { "item": "bot_c4_hack" },
       { "item": "bot_c4_hack" }
-      ]
+    ]
   },
   {
     "type": "item_group",
