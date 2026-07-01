@@ -371,7 +371,7 @@
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "ammopouch_birdshot_droneop",
+    "id": "ammopouch_shot_droneop",
     "entries": [ { "item": "shot_00", "charges": 30 } ]
   },
   {
@@ -8242,7 +8242,7 @@
           { "item": "modularvestceramic" },
           { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-group": "army_droneop_mods" },
           { "item": "water_clean", "container-item": "canteen" },
-          { "item": "ammo_satchel_leg", "contents-group": "ammopouch_birdshot_droneop" },
+          { "item": "ammo_satchel_leg", "contents-group": "ammopouch_shot_droneop" },
           { "item": "legpouch_large", "contents-group": "army_mags_m4" },
           { "group": "droneop_manhacks" }
         ]
