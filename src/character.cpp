@@ -9264,16 +9264,12 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
     // before becoming ineffective or being destroyed.
     const int num_parts_covered = armor.get_covered_body_parts().count();
     if( !one_in( num_parts_covered ) ) {
-        add_msg( m_warning, _( "Returning early because !one_in( num_parts_covered )" ) );
         return false;
     }
     const int dmg_percent = std::max( raw_dmg - armor.chip_resistance( !armor.has_flag( flag_STURDY ) ),
                                       1 );
-    add_msg( m_warning, _( "dmg_percent is %s" ), dmg_percent );
     // Chance to avoid armor damage is 50/67% (if sturdy) + 100 - ( raw_dmg - chip_resist )%
     if( !one_in( armor.has_flag( flag_STURDY ) ? 3 : 2 ) || !x_in_y( dmg_percent, 100 ) ) {
-        add_msg( m_warning,
-                 _( "Returning early because !one_in( armor.has_flag( flag_STURDY ) ? 3 : 2 ) || !x_in_y( dmg_percent, 100 )" ) );
         return false;
     }
 
