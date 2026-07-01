@@ -68,7 +68,7 @@
 #include "map.h"
 #include "map_iterator.h"
 #include "map_selector.h"
-#include "map_utils.h"
+#include "map/utils/map_utils.h"
 #include "mapdata.h"
 #include "material.h"
 #include "memory_fast.h"

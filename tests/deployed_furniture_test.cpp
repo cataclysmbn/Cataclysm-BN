@@ -3,7 +3,7 @@
 #include "game.h"
 #include "item_stack.h"
 #include "map.h"
-#include "map_utils.h"
+#include "map/utils/map_utils.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -17,7 +17,7 @@ TEST_CASE("take_down_deployed_furniture_keeps_furniture_vars", "[iexamine][deplo
     here.furn_vars(pos)->set("test_var", "kept");
 
     const auto debug_msg = capture_debugmsg_during([&]() {
-        take_down_deployed_furniture(pos, pos);
+        map_funcs::take_down_deployed_furniture(pos, pos);
     });
 
     CHECK(debug_msg.empty());

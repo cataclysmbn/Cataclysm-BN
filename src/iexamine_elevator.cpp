@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <optional>
 
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "game.h"

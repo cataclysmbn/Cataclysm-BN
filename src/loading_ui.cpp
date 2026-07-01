@@ -11,7 +11,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "cached_options.h"
 #include "color.h"
 #include "debug.h"

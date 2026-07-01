@@ -27,7 +27,7 @@
 #include "character.h"
 #include "catalua_coord.h"
 #include "cata_utility.h"
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "color.h"
 #include "creature.h"
 #include "damage.h"

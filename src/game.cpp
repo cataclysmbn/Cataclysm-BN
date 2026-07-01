@@ -129,7 +129,7 @@
 #include "npc.h"
 #include "magic/magic.h"
 #include "map.h"
-#include "map_functions.h"
+#include "map/utils/map_functions.h"
 #include "map_item_stack.h"
 #include "map_iterator.h"
 #include "map_selector.h"
