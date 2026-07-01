@@ -12,6 +12,9 @@
 #include <string_view>
 #include <vector>
 
+#include "iexamine.h"
+#include "trap.h"
+
 constexpr int LUA_API_VERSION = 2;
 
 #include "action_time_scale.h"
@@ -337,6 +340,7 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["istate_functions"] = lua.create_table();
     gt["imelee_functions"] = lua.create_table();
     gt["iranged_functions"] = lua.create_table();
+    gt["itrap_functions"] = lua.create_table();
     gt["examine_functions"] = lua.create_table();
     gt["activity_functions"] = lua.create_table();
 
@@ -467,6 +471,7 @@ namespace
 // Populated during reg_lua_icallback_actors(), resolved during resolve_lua_bionic_and_mutation_callbacks().
 std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> bionic_callback_actors;
 std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> mutation_callback_actors;
+std::map<std::string, std::unique_ptr<lua_itrap_actor>> lua_itrap_actors;
 } // namespace
 
 namespace
@@ -686,6 +691,7 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
     const sol::table istate_funcs = lua.globals()["game"]["istate_functions"];
     const sol::table imelee_funcs = lua.globals()["game"]["imelee_functions"];
     const sol::table iranged_funcs = lua.globals()["game"]["iranged_functions"];
+    const sol::table itrap_funcs = lua.globals()["game"]["itrap_functions"];
 
     auto it = iuse_funcs.begin();
     while( it != iuse_funcs.end() ) {
@@ -952,12 +958,43 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             ++it;
         }
     }
+
+    // --- itrap registration ---
+    {
+        auto it = itrap_funcs.begin();
+        while( it != itrap_funcs.end() ) {
+            const auto ref = *it;
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "itrap entry must be a table" );
+                }
+
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_trigger_aftermath = tbl.get_or<sol::function>( "on_trigger_aftermath", sol::lua_nil );
+                auto on_trigger = tbl.get_or<sol::function>( "on_trigger", sol::lua_nil );
+                auto can_trigger = tbl.get_or<sol::function>( "can_trigger", sol::lua_nil );
+                lua_itrap_actors[key] = std::make_unique<lua_itrap_actor>(
+                                            key,
+                                            std::move( can_trigger ),
+                                            std::move( on_trigger ),
+                                            std::move( on_trigger_aftermath )
+                                        );
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract itrap_functions k='%s': %s", key, e.what() );
+                break;
+            }
+            ++it;
+        }
+    }
 }
 
-void resolve_lua_bionic_and_mutation_callbacks()
+void resolve_extra_lua_callbacks()
 {
     bionic_data::resolve_lua_callbacks( bionic_callback_actors );
     mutation_branch::resolve_lua_callbacks( mutation_callback_actors );
+    trap::resolve_lua_callbacks( lua_itrap_actors );
 }
 
 void run_on_every_x_hooks( lua_state &state )
@@ -1040,6 +1077,7 @@ void lua_state_deleter::operator()( lua_state *state ) const
     cata::lua_action_menu::clear_entries();
     bionic_callback_actors.clear();
     mutation_callback_actors.clear();
+    lua_itrap_actors.clear();
     get_hook_cache().clear();
     delete state;
 }

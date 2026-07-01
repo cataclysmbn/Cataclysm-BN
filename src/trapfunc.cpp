@@ -1531,6 +1531,53 @@ bool trapfunc::snake( const tripoint_bub_ms &p, Creature *, item * )
     return true;
 }
 
+static bool lua_trap_can_trigger_check( const Character &target, const trap &trap,
+                                        const tripoint_bub_ms &loc )
+{
+    // Lua itrap can_trigger prevents triggering when returning false
+    if( const auto *itrap_cb = trap.lua_callbacks ) {
+        if( !itrap_cb->call_can_trigger( target, trap, loc ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void lua_trap_on_trigger( Character &target, trap &trap, const tripoint_bub_ms &loc )
+{
+    // Lua itrap can_trigger prevents triggering when returning false
+    if( const auto *itrap_cb = trap.lua_callbacks ) {
+        itrap_cb->call_on_trigger( target, trap, loc );
+    }
+}
+
+static void lua_trap_on_trigger_aftermath( Character &target, trap &trap,
+        const tripoint_bub_ms &loc )
+{
+    // Lua itrap can_trigger prevents triggering when returning false
+    if( const auto *itrap_cb = trap.lua_callbacks ) {
+        itrap_cb->call_on_trigger_aftermath( target, trap, loc );
+    }
+}
+
+bool trapfunc::lua( const tripoint_bub_ms &p, Creature *target, item * )
+{
+    const auto character = target->as_character();
+    auto trap = g->m.tr_at( p ); // Maybe this should be passed instead?
+    if( !lua_trap_can_trigger_check( *character, trap, p ) ) {
+        return false;
+    }
+    lua_trap_on_trigger( *character, trap, p );
+
+    // This is to respect other json fields, like remove_on_trigger
+    trap.trigger_aftermath( g->m, p );
+
+    lua_trap_on_trigger_aftermath( *character, trap, p );
+    return true;
+}
+
+
+
 /**
  * Takes the name of a trap function and returns a function pointer to it.
  * @param function_name The name of the trapfunc function to find.
@@ -1574,7 +1621,8 @@ const trap_function &trap_function_from_string( const std::string &function_name
             { "map_regen", trapfunc::map_regen },
             { "drain", trapfunc::drain },
             { "spell", trapfunc::cast_spell },
-            { "snake", trapfunc::snake }
+            { "snake", trapfunc::snake },
+            { "lua", trapfunc::lua }
         }
     };
 

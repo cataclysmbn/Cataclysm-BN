@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "catalua_icallback_actor.h"
 #include "coordinates.h"
 #include "damage.h"
 #include "detached_ptr.h"
