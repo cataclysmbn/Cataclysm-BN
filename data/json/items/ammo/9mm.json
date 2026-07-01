@@ -96,7 +96,7 @@
     "type": "AMMO",
     "name": { "str": "9x19mm Subsonic FMJ" },
     "//": "based on the Fiocchi 158 Grain FMJ. 250 ft-lbs of energy vs 364 for normal fmj, so 31% less. Settled on 10% less damage, as well as 20% less recoil and pen. Also, this makes me hate the imperial system.",
-    "description": "9x19mm ammunition with a heavy brass-jacketed 158gr bullet.  This slower bullet has sligtly lower penetration and bit more stopping power.  More importantly, beign subsonic makes it really quiet when used with a suppressor.",
+    "description": "9x19mm ammunition with a heavy brass-jacketed 158gr bullet.  This slower bullet has sligthly lower penetration and bit more stopping power.  More importantly, beign subsonic makes it really quiet when used with a suppressor.",
     "proportional": {
       "damage": { "damage_type": "bullet", "amount": 0.9, "armor_penetration": 0.8 }
     },
