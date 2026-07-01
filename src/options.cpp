@@ -2845,7 +2845,12 @@ void options_manager::add_options_debug()
          translate_marker( "If true, bayonets replace weapon attack instead of adding to it.  WIP feature, weakens bayonets heavily at the moment." ),
          false );
 
+    add( "NEW_ARMOR_CALCULATION", debug, translate_marker( "New armor damage calculation" ),
+         translate_marker( "If true, armor can now take take from attacks that don't penetrate it, but attacks in general damage armor less." ),
+         true );
+
     add_empty_line();
+
 
     add( "USE_LEGACY_PATHFINDING", debug,
          translate_marker( "Use legacy pathfinding" ),
