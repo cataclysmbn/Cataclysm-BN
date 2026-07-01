@@ -1,319 +1,139 @@
----
-title: Professions
----
+# Professions
 
-> [!CAUTION]
->
-> This article was recently split off from `JSON INFO`, and needs to be updated due to referring to ancient methods of mods extending and deleting base game professions.
+## Profession
 
-### Profession item substitution
+### Fields
 
-Defines item replacements that are applied to the starting items based upon the starting traits.
-This allows for example to replace wool items with non-wool items when the characters starts with
-the wool allergy trait.
+| Identifier        | Description                                                                                                                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id                | (_mandatory_) Unique id of the profession                                                                                                                                                                       |
+| name              | (_mandatory_) Object with `male` and `female` names, or a string for both genders to be set to it                                                                                                               |
+| description       | (_mandatory_) Description of the profession, same across both genders                                                                                                                                           |
+| vehicle           | (_optional_) Vehicle Prototype Id for the profession to start with                                                                                                                                              |
+| pets              | (_optional_) Array of `name` ( monster ids ) and `amount` ( count of monster id ) objects for starting pets                                                                                                     |
+| spells            | (_optional_) Array of `id` ( spell ids ) and `level` ( level of spell ) objects for starting spells.                                                                                                            |
+| points            | (_mandatory_) Point cost of getting the profession                                                                                                                                                              |
+| items             | (_mandatory_) Three different [item groups](/mod/json/reference/items/item_spawn/#format) or arrays of string ids ( technically legacy ). `male` for male only `female` for female only `both` for both genders |
+| no_bonus          | (_optional_) Array prevents gaining these items from profession item substitution bonuses                                                                                                                       |
+| starting_cash     | (_optional_) Amount of cash the profession starts with                                                                                                                                                          |
+| skills            | (_optional_) Array of `level` ( skill level ) and `name` ( skill id ) objects                                                                                                                                   |
+| addictions        | (_optional_) Array of `type` ( addiction type ) and `intensity` ( integer addiction intensity ) objects                                                                                                         |
+| CBMs              | (_optional_) Array of bionic ids for bionics the profession gains                                                                                                                                               |
+| traits            | (_optional_) Array of trait ids for traits the profession gains                                                                                                                                                 |
+| forbidden_traits  | (_optional_) Array of trait ids that cannot be chosen on start                                                                                                                                                  |
+| allowed_traits    | (_optional_) Array of trait ids for non starting traits which can be chosen on start                                                                                                                            |
+| forbidden_bionics | (_optional_) Array of bionic ids that cannot be chosen on start                                                                                                                                                 |
+| allowed_bionics   | (_optional_) Array of bionic ids for non starting bionics which can be chosen on start                                                                                                                          |
+| forbids_bionics   | (_optional_) Boolean to prevent choosing any bionic on start                                                                                                                                                    |
+| flags             | (_optional_) Array of flags which are [profession compatible](/mod/json/reference/json_flags/#scenarios)                                                                                                        |
+| missions          | (_optional_) Array of mission ids ( and thus missions ) to start with                                                                                                                                           |
+| npcs              | (_optional_) Array of npc class ids ( and thus npcs of that class ) to start with                                                                                                                               |
+| age               | (_optional_) Object of `min` and `max` for starting age range, or just an int for only one possible age                                                                                                         |
 
-If the JSON objects contains a "item" member, it defines a replacement for the given item, like
-this:
+### Example
 
 ```json
 {
-  "type": "profession_item_substitutions",
-  "item": "sunglasses",
+  "type": "profession",
+  "id": "wolfpack_mutant",
+  "name": "Mutant Pack Leader",
+  "description": "They treated you like an animal in that lab.  Now that you're free, you wonder if they had the right idea.  Your new friends don't seem afraid of you like they are of humans, after all.",
+  "vehicle": "covered_wagon",
+  "pets": [ { "name": "mon_wolf", "amount": 2 } ],
+  "spells": [ { "id": "summon_zombie", "level": 1 }, { "id": "necrotic_gaze", "level": 1 } ],
+  "points": 4,
+  "items": { "both": [ "subsuit_xl" ], "male": [ "briefs" ], "female": [ "bra", "panties" ] },
+  "no_bonus": [ "glasses_eye" ]
+  "starting_cash": 0,
+  "skills": [ { "level": 1, "name": "survival" } ],
+  "addictions": [ { "intensity": 10, "type": "nicotine" } ],
+  "CBMs": [ "bio_batteries", "bio_lockpick", "bio_fingerhack", "bio_power_storage_mkII" ],
+  "traits": [ "LUPINE_FUR", "TAIL_FLUFFY", "LUPINE_EARS", "THRESH_LUPINE" ],
+  "forbidden_traits": [ "CARRY_PERMIT" ],
+  "allowed_traits": [ "MUZZLE" ],
+  "forbidden_bionics": [ "bio_power_storage" ],
+  "allowed_bionics": [ "bio_razors" ],
+  "flags": [ "SCEN_ONLY" ],
+  "missions": [ "MISSION_HEIST_DRIVER" ],
+  "npcs": [ "NC_PROF_ESCAPIST_LAB", "NC_PROF_ESCAPIST_LAB", "NC_PROF_ESCAPIST_LAB" ],
+  "age": { "min": 17, "max": 35 }
+},
+```
+
+## Profession Item Substitutions
+
+### Substitutions
+
+#### Trait Based
+
+```jsonc
+{
+  "type": "profession_item_substitutions", // Mandatory type
+  "trait": "WOOLALLERGY", // Trait that is required
   "sub": [
-    { "present": [ "HYPEROPIC" ], "new": [ "fitover_sunglasses" ] },
-    { "present": [ "MYOPIC" ], "new": [ { "fitover_sunglasses", "ratio": 2 } ] }
+    {
+      "item": "blazer", // Item to replace
+      "new": ["jacket_leather_red"], // Items that replace it. One for one ratio
+    },
+    {
+      "item": "hat_hunting", // Item to replace
+      "new": [{
+        "item": "hat_cotton", // Item that replaces it
+        "ratio": 2, // For every item, give 2 to replace
+      }],
+    },
+  ],
+}
+```
+
+In the above example. With `WOOLALLERGY` trait. `blazer` is replaced with 1 `jacket_leather_red`.
+And `hat_hunting` is replaced with 2 `hat_cotton` items.
+
+#### Item based
+
+```jsonc
+{
+  "type": "profession_item_substitutions", // Mandatory type
+  "item": "sunglasses", // Item to replace
+  "sub": [
+    {
+      "present": [ "HYPEROPIC" ], // Must have all of these traits
+      "absent": [ "MYOPIC" ], // Cannot have any of these traits
+      "new": [ "fitover_sunglasses" ] // Replaced with these
+    },
+    {
+      "present": [ "MYOPIC" ], // Must have all these traits
+      "new": [ { "fitover_sunglasses", "ratio": 2 } ] // Also supports ratio replaces
+    }
   ]
 }
 ```
 
-This defines each item of type "sunglasses" shall be replaced with:
+Thus if you have `HYPEROPIC` you get one fitover sunglasses
+And `MYOPIC` gives 2 fitover sunglasses in all cases even with `HYPEROPIC`
 
-- an item "fitover_sunglasses" if the character has the "HYPEROPIC" trait,
-- two items "fitover_sunglasses" if the character has the "MYOPIC" trait.
+### Bonuses
 
-If the JSON objects contains a "trait" member, it defines a replacement for multiple items that
-applies when the character has the given trait:
+#### Itemgroup
 
-````json
+```jsonc
 {
-  "type": "profession_item_substitutions",
-  "trait": "WOOLALLERGY",
-  "sub": [
-    { "item": "blazer", "new": [ "jacket_leather_red" ] },
-    { "item": "hat_hunting", "new": [ { "item": "hat_cotton", "ratio": 2 } ] }
-  ]
-}
-```json
-This defines characters with the WOOLALLERGY trait get some items replaced:
-- "blazer" is converted into "jacket_leather_red",
-- each "hat_hunting" is converted into *two* "hat_cotton" items.
+  "type": "profession_item_substitutions", // Needed type
+  "item_group": "profession_carry_bonus",  // Itemgroup to give
+  "bonus": { "present": [ "CARRY_PERMIT" ] } // Works with both present and absent as above
+},
+```
 
-You can also set a profession to spawn a specific itemgroup, currently restricted to `bonus` entries (which can also be used with the above item substitutions). Example:
-
-```json
-  {
-    "type": "profession_item_substitutions",
-    "item_group": "profession_carry_bonus",
-    "bonus": { "present": [ "CARRY_PERMIT" ] }
-  },
-```json
 This grants a free spawn from itemgroup `profession_carry_bonus` to characters with the `CARRY_PERMIT` trait.
 
-### Professions
+#### Item
 
-Professions are specified as JSON object with "type" member set to "profession":
-
-```json
+```jsonc
 {
-    "type": "profession",
-    "id": "hunter",
-    ...
-}
-````
-
-The id member should be the unique id of the profession.
-
-The following properties (mandatory, except if noted otherwise) are supported:
-
-#### `description`
-
-(string)
-
-The in-game description.
-
-#### `name`
-
-(string or object with members "male" and "female")
-
-The in-game name, either one gender-neutral string, or an object with gender specific names.
-Example:
-
-```json
-"name": {
-    "male": "Groom",
-    "female": "Bride"
-}
+  "type": "profession_item_substitutions", // Needed type
+  "item": "glasses_eye",                   // Item to give
+  "bonus": { "present": [ "MYOPIC" ], "absent": [ "HYPEROPIC" ] } // As above present and absent works
+},
 ```
 
-#### `points`
-
-(integer)
-
-Point cost of profession. Positive values cost points and negative values grant points.
-
-#### `age`
-
-(optional, integer or object with members `min` and `max`)
-
-Defines the age that the profession should start at. A single integer forces the character to
-start at that exact age, while the object allows selecting a random age between `min` and `max`
-(inclusive). Both `min` and `max` are required when using the object form; the final values are
-clamped to the game's default limits of 16 to 55 and reordered if necessary so the lower value
-comes first.
-
-```json
-"age": 32
-
-"age": {
-    "min": 24,
-    "max": 38
-}
-```
-
-If no `age` member is defined the profession defaults to a randomly generated age between 16 and 55.
-
-#### `addictions`
-
-(optional, array of addictions)
-
-List of starting addictions. Each entry in the list should be an object with the following members:
-
-- "type": the string id of the addiction (see json_flags.md),
-- "intensity": intensity (integer) of the addiction.
-
-Example:
-
-```json
-"addictions": [
-    { "type": "nicotine", "intensity": 10 }
-]
-```
-
-Mods can modify this list (requires `"edit-mode": "modify"`, see example) via "add:addictions" and
-"remove:addictions", removing requires only the addiction type. Example:
-
-```json
-{
-  "type": "profession",
-  "id": "hunter",
-  "edit-mode": "modify",
-  "remove:addictions": ["nicotine"],
-  "add:addictions": [{ "type": "alcohol", "intensity": 10 }]
-}
-```
-
-#### `skills`
-
-(optional, array of skill levels)
-
-List of starting skills. Each entry in the list should be an object with the following members:
-
-- "name": the string id of the skill (see skills.json),
-- "level": level (integer) of the skill. This is added to the skill level that can be chosen in the
-  character creation.
-
-Example:
-
-```json
-"skills": [
-    { "name": "archery", "level": 2 }
-]
-```
-
-Mods can modify this list (requires `"edit-mode": "modify"`, see example) via "add:skills" and
-"remove:skills", removing requires only the skill id. Example:
-
-```json
-{
-  "type": "profession",
-  "id": "hunter",
-  "edit-mode": "modify",
-  "remove:skills": ["archery"],
-  "add:skills": [{ "name": "computer", "level": 2 }]
-}
-```
-
-#### `items`
-
-(optional, object with optional members "both", "male" and "female")
-
-Items the player starts with when selecting this profession. One can specify different items based
-on the gender of the character. Each lists of items should be an array of items ids, or pairs of
-item ids and snippet ids. Item ids may appear multiple times, in which case the item is created
-multiple times. The syntax for each of the three lists is identical.
-
-Example:
-
-```json
-"items": {
-    "both": [
-        "pants",
-        "rock",
-        "rock",
-        ["tshirt_text", "allyourbase"],
-        "socks"
-    ],
-    "male": [
-        "briefs"
-    ],
-    "female": [
-        "panties"
-    ]
-}
-```
-
-This gives the player pants, two rocks, a t-shirt with the snippet id "allyourbase" (giving it a
-special description), socks and (depending on the gender) briefs or panties.
-
-Mods can modify the lists of existing professions. This requires the "edit-mode" member with value
-"modify" (see example). Adding items to the lists can be done with via "add:both" / "add:male" /
-"add:female". It allows the same content (it allows adding items with snippet ids). Removing items
-is done via "remove:both" / "remove:male" / "remove:female", which may only contain items ids.
-
-Example for mods:
-
-```json
-{
-  "type": "profession",
-  "id": "hunter",
-  "edit-mode": "modify",
-  "items": {
-    "remove:both": ["rock", "tshirt_text"],
-    "add:both": ["2x4"],
-    "add:female": [["tshirt_text", "allyourbase"]]
-  }
-}
-```
-
-This mod removes one of the rocks (the other rock is still created), the t-shirt, adds a 2x4 item
-and gives female characters a t-shirt with the special snippet id.
-
-#### `pets`
-
-(optional, array of string mtype_ids )
-
-A list of strings, each is the same as a monster id player will start with these as tamed pets.
-
-#### `vehicle`
-
-(optional, string vproto_id )
-
-A string, which is the same as a vehicle ( vproto_id ) player will start with this as a nearby
-vehicle. ( it will find the nearest road and place it there, then mark it as "remembered" on the
-overmap )
-
-#### `flags`
-
-(optional, array of strings)
-
-A list of flags. TODO: document those flags here.
-
-Mods can modify this via `add:flags` and `remove:flags`.
-
-#### `cbms`
-
-(optional, array of strings)
-
-A list of CBM ids that are implanted in the character.
-
-Mods can modify this via `add:CBMs` and `remove:CBMs`.
-
-#### `traits`
-
-(optional, array of strings)
-
-A list of trait/mutation ids that are applied to the character.
-
-Mods can modify this via `add:traits` and `remove:traits`.
-
-#### `starting_cash`
-
-(optional, int)
-
-The amount of money this profession will start with upon the beginning of the cataclysm.
-
-#### `npcs`
-
-(optional, list of strings)
-
-NPCs to spawn at the start of the game. Taken as strings representing the IDs of NPC classes
-
-#### `forbidden_traits`
-
-(optional, list of trait_ids)
-
-Traits that cannot be taken due to your profession
-
-#### `allowed_traits`
-
-(optional, list of trait_ids)
-
-Traits that can be taken regardless of weather they are a starting trait
-
-#### `forbidden_bionics`
-
-(optional, list of bionic_ids)
-
-Bionics that cannot be taken due to your profession
-
-#### `allowed_bionics`
-
-(optional, list of bionic_ids)
-
-Bionics that can be taken regardless of weather they are a starting bionic
-
-#### `forbids_bionics`
-
-(optional, bool)
-
-Prohibits players from choosing bionics at start
+This grants a free item `glasses_eye` to characters with the `MYOPIC` trait, but not `HYPEROPIC`.
