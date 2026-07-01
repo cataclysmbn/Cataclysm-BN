@@ -596,7 +596,7 @@
     "symbol": "%",
     "color": "green",
     "use_action": {
-      "target": "dry_fish",
+      "target": "dry_meat_tainted",
       "msg": "You harvest the tainted meat off of the tray.",
       "container": "dehydrator_tray",
       "target_charges": 20,
