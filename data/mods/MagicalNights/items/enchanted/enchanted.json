@@ -83,6 +83,35 @@
     "flags": [ "VARSIZE" ]
   },
   {
+    "id": "spirit_armor",
+    "type": "ARMOR",
+    "name": { "str": "Spirit Armor" },
+    "description": "A magical barrier made of the user's conviction, will, and faith. Feels like a super light, permeable bubble around you and your equipment that hardens on impact. Most of it's power comes from draining inertia from anything that could harm the user.",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "price": "0 USD",
+    "price_postapoc": "0 USD",
+    "material": [ "plastic" ],
+    "symbol": "[",
+    "color": "light_red",
+    "covers": [ "head", "eyes", "mouth", "torso", "legs", "arms", "hands", "feet" ],
+    "coverage": 100,
+    "encumbrance": 0,
+    "warmth": 0,
+    "material_thickness": 4,
+    "environmental_protection": 9,
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "values": [ { "value": "ARMOR_BULLET", "add": -3, "multiply": -0.5 }, { "value": "MANA_REGEN", "multiply": -0.99 } ]
+        }
+      ]
+    },
+    "flags": [ "RAINPROOF", "STURDY", "RAD_RESIST", "AURA", "POWERARMOR_COMPATIBLE", "NO_SALVAGE", "ONLY_ONE", "PSYSHIELD_PARTIAL" ]
+  },
+  {
     "id": "debug_fireball_hammer",
     "type": "GENERIC",
     "name": "fireball hammer",
