@@ -837,6 +837,8 @@ void inventory_column::prepare_paging( const std::string &filter )
         return !entry.is_item() || !filter_fn( entry );
     } );
     entries.erase( new_end, entries.end() );
+    // don't sort with stale names
+    std::ranges::for_each( entries, &inventory_entry::update_cache );
     // Then sort them with respect to categories
     auto sort_function = [this]( const inventory_entry & lhs, const inventory_entry & rhs ) {
         if( *lhs.get_category_ptr() != *rhs.get_category_ptr() ) {
@@ -845,7 +847,7 @@ void inventory_column::prepare_paging( const std::string &filter )
             return preset.sort_compare( lhs, rhs );
         }
     };
-    std::sort( entries.begin(), entries.end(), sort_function );
+    std::ranges::stable_sort( entries, sort_function );
 
     // Recover categories
     const item_category *current_category = nullptr;

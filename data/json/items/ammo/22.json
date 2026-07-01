@@ -41,7 +41,7 @@
     "copy-from": "22_cphp",
     "type": "AMMO",
     "name": { "str": ".22 rat-shot" },
-    "description": "A .22 caliber cartridge loaded with very small pieces of shot contained within a fragmenting plastic capsule.  It has an extremely short range and penetration ability, but it can hit targets with greater ease.",
+    "description": "A .22 caliber cartridge loaded with very small pieces of shot contained within a fragmenting plastic capsule.  It has an extremely short range and penetration ability, but it can hit targets with greater ease.  Also, it is subsonic, and thus works well with suppressors.",
     "count": 100,
     "price_postapoc": "4 USD",
     "dispersion": 0,
