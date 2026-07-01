@@ -372,7 +372,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "ammopouch_birdshot_droneop",
-    "entries": [ { "item": "shot_bird", "charges": 30 } ]
+    "entries": [ { "item": "shot_00", "charges": 30 } ]
   },
   {
     "type": "item_group",
@@ -409,7 +409,7 @@
     "entries": [
       { "item": "holo_sight" },
       { "item": "shoulder_strap" },
-      { "item": "masterkey", "ammo-item": "shot_bird", "charges": 4 }
+      { "item": "masterkey", "ammo-item": "shot_00", "charges": 4 }
     ]
   },
   {
