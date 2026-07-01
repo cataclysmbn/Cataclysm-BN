@@ -89,6 +89,20 @@
   "description_affix": "covered in", // Puts this in front of every intensity level name
   "phase": "solid", // Is it solid liquid gas or plasma? Mainly gas has effect on propagation
   "is_splattering": true, // Does this apply blood to vehicle parts?
+  "apply_slime_factor": 2, // Applies scent of factor * intensity
+  "scent_neutralization": 2, // Reduces scent by this value
+  // NPC Complain
+  "npc_complain": {
+    "chance": 20, // One out of x chance to complain
+    "issue": "crack_smoke", // Talk tag to complain about
+    "duration": "30 minutes", // How long will they be complaining
+    "speech": "<crack_smoke>" // Once again the talk tag to have spoken
+  },
+  // Monster spawning
+  "monster_spawn_chance": 2, // One in x chance to spawn monster
+  "monster_spawn_count": 3, // How many monsters to spawn
+  "monster_spawn_group": "GROUP_ZOMBIE", // What monster group to spawn
+  "monster_spawn_radius": 5, // Tile radius of monster spawn locations
   // Bash data
   "bash": {
     "str_min": 1, // lower bracket of bashing damage required to bash

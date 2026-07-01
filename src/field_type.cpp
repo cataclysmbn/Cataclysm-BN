@@ -169,7 +169,6 @@ void field_type::load( const JsonObject &jo, const std::string & )
             // Use effects from previous intensity level
             intensity_level.field_effects = fallback_intensity_level.field_effects;
         }
-        // WARNING: This isn't actually used anywhere
         optional( jao, was_loaded, "scent_neutralization", intensity_level.scent_neutralization,
                   fallback_intensity_level.scent_neutralization );
         intensity_levels.emplace_back( intensity_level );
@@ -178,7 +177,6 @@ void field_type::load( const JsonObject &jo, const std::string & )
         jo.throw_error( "No intensity levels defined for field type", "id" );
     }
 
-    // WARNING: This is also unused
     if( jo.has_object( "npc_complain" ) ) {
         JsonObject joc = jo.get_object( "npc_complain" );
         int chance;
@@ -205,7 +203,6 @@ void field_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "outdoor_age_speedup", outdoor_age_speedup, 0_turns );
     optional( jo, was_loaded, "decay_amount_factor", decay_amount_factor, 0 );
     optional( jo, was_loaded, "percent_spread", percent_spread, 0 );
-    // WARNING: YET ANOTHER UNUSED FIELD
     optional( jo, was_loaded, "apply_slime_factor", apply_slime_factor, 0 );
     optional( jo, was_loaded, "gas_absorption_factor", gas_absorption_factor, 0 );
     optional( jo, was_loaded, "is_splattering", is_splattering, false );
