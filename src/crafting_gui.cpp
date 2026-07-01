@@ -38,6 +38,7 @@
 #include "npc.h"
 #include "options.h"
 #include "player_activity.h"
+#include "units_utility.h"
 #include "mod_manager.h"
 #include "output.h"
 #include "player.h"
@@ -661,7 +662,11 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
     return ctxt;
 }
 
-const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
+const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter,
+                                       const recipe *resume_recipe,
+                                       int resume_batch_size,
+                                       bool resume_batch_mode,
+                                       bool *selected_in_batch )
 {
     struct {
         const recipe *recp = nullptr;
@@ -860,6 +865,34 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
     int num_recipe = 0;
     int batch_line = 0;
     const recipe *chosen = nullptr;
+
+    const recipe *resume_rec = resume_recipe;
+    int resume_bs = resume_batch_size;
+    bool resume_batch = resume_batch_mode;
+
+    if( resume_rec && resume_batch ) {
+        batch = true;
+        chosen = resume_rec;
+    }
+
+    if( resume_rec && !resume_batch ) {
+        const std::string &cat = resume_rec->category;
+        auto it = std::find( craft_cat_list.begin(), craft_cat_list.end(), cat );
+        if( it != craft_cat_list.end() ) {
+            size_t max = craft_cat_list.size();
+            for( size_t i = 0; i < max; ++i ) {
+                if( tab.cur() == cat ) break;
+                tab.next();
+            }
+            subtab = list_circularizer<std::string>( craft_subcat_list[tab.cur()] );
+            // force subtab to ALL so the recipe is guaranteed to be in the built list for search
+            size_t smax = craft_subcat_list[tab.cur()].size();
+            for( size_t j = 0; j < smax; ++j ) {
+                if( subtab.cur() == "CSC_ALL" ) break;
+                subtab.next();
+            }
+        }
+    }
 
     const inventory &crafting_inv = crafter.crafting_inventory();
     const std::vector<npc *> helpers = character_funcs::get_crafting_helpers( crafter );
@@ -1091,7 +1124,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
 
             if( batch ) {
                 current.clear();
-                for( int i = 1; i <= 50; i++ ) {
+                for( int i = 1; i <= 250; i++ ) {
                     current.push_back( chosen );
                     available.emplace_back( crafter, chosen, i,
                                             available_recipes.contains( *chosen ) );
@@ -1309,6 +1342,23 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                     ++rcp_idx;
                 }
             }
+
+            if( resume_rec != nullptr ) {
+                if( resume_batch ) {
+                    line = std::max( 0, std::min( 249, resume_bs - 1 ) );
+                } else {
+                    int rcp_idx = 0;
+                    for( const recipe *const rcp : current ) {
+                        if( rcp == resume_rec ) {
+                            line = rcp_idx;
+                            break;
+                        }
+                        ++rcp_idx;
+                    }
+                }
+                resume_rec = nullptr;
+                resume_batch = false;
+            }
         }
         keepline = false;
 
@@ -1377,9 +1427,19 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
         } else if( action == "PAGE_UP" ) {
             recipe_info_scroll -= scroll_recipe_info_lines;
             item_info_scroll -= scroll_recipe_info_lines;
+            if( batch ) {
+                line = std::max( 0, line - 50 );
+                }
         } else if( action == "PAGE_DOWN" ) {
             recipe_info_scroll += scroll_recipe_info_lines;
             item_info_scroll += scroll_recipe_info_lines;
+            if( batch ) {
+                if ( line == 0 ) {
+                line = std::min( static_cast<int>( current.size() - 1 ), line + 49 );
+                } else {
+                line = std::min( static_cast<int>( current.size() - 1 ), line + 50 );
+                }
+            }
         } else if( action == "LEFT" ) {
             if( batch || !filterstring.empty() ) {
                 continue;
@@ -1427,6 +1487,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
             } else {
                 chosen = current[line];
                 batch_size_out = ( batch ) ? line + 1 : 1;
+                if( selected_in_batch ) *selected_in_batch = batch;
                 done = true;
                 if( highlight_unread_recipes && available_recipes.contains( *chosen ) ) {
                     uistate.read_recipes.insert( chosen->ident() );
@@ -2010,4 +2071,16 @@ bool lcmatch_any( const std::vector< std::vector<T> > &list_of_list, const std::
         }
     }
     return false;
+}
+
+auto query_large_volume( units::volume total_volume ) -> bool
+{
+    const int ml = units::to_milliliter<int>( total_volume );
+    const double user_vol = convert_volume( ml );
+    const double user_thresh = convert_volume( 1000000 );
+    const char *unit = volume_units_abbr();
+    const std::string msg = string_format(
+        _( "The volume of the components of this recipe is <color_red>%.2f %s of %.0f %s</color> which may be too large to work on.\n\nContinue?" ),
+        user_vol, unit, user_thresh, unit );
+    return query_yn( msg );
 }
