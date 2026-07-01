@@ -389,6 +389,7 @@ std::string enum_to_string<character_movemode>( character_movemode data )
         case character_movemode::CMM_WALK: return "walk";
         case character_movemode::CMM_RUN: return "run";
         case character_movemode::CMM_CROUCH: return "crouch";
+        case character_movemode::CMM_PRONE: return "prone";
             // *INDENT-ON*
         case character_movemode::CMM_COUNT:
             break;
@@ -1200,6 +1201,10 @@ int Character::swim_speed() const
     // Crouching movement mode while swimming means slower swim style, like breaststroke
     if( move_mode == CMM_CROUCH ) {
         ret += 50;
+    }
+    // Prone movement mode while swimming means very slow swimming style, like treading water
+    if( move_mode == CMM_PRONE ) {
+        ret += 150;
     }
 
     if( ret < 30 ) {
@@ -7106,6 +7111,39 @@ bool Character::is_elec_immune() const
     return is_immune_damage( DT_ELECTRIC );
 }
 
+void Character::add_effect( const efftype_id &eff_id, const time_duration &dur,
+                            const bodypart_str_id &bp,
+                            int intensity, bool force, bool deferred )
+{
+    bool const already_downed = has_effect( effect_downed );
+    Creature::add_effect( eff_id, dur, bp, intensity, force, deferred );
+    if( eff_id == effect_downed && has_effect( effect_downed ) ) {
+        if( !already_downed ) {
+            pre_down_mode = move_mode;
+        }
+        move_mode = CMM_PRONE;
+        get_map().set_seen_cache_dirty( bub_pos().z() );
+    } else if( eff_id == effect_sleep && has_effect( effect_sleep ) ) {
+        pre_sleep_mode = move_mode;
+        move_mode = CMM_PRONE;
+        get_map().set_seen_cache_dirty( bub_pos().z() );
+    }
+}
+
+bool Character::remove_effect( const efftype_id &eff_id,
+                               const bodypart_str_id &bp )
+{
+    bool const was_downed = eff_id == effect_downed && has_effect( effect_downed );
+    bool const ret = Creature::remove_effect( eff_id, bp );
+    if( was_downed && ret ) {
+        if( move_mode != pre_down_mode ) {
+            get_map().set_seen_cache_dirty( bub_pos().z() );
+        }
+        move_mode = pre_down_mode;
+    }
+    return ret;
+}
+
 bool Character::is_immune_effect( const efftype_id &eff ) const
 {
     if( eff == effect_downed ) {
@@ -7284,6 +7322,10 @@ int Character::visibility( bool, int ) const
     if( ( g->u.movement_mode_is( CMM_CROUCH ) ) ) {
         stealth_modifier += crouching_bonus;
     };
+    int const prone_bonus = 50;
+    if( g->u.movement_mode_is( CMM_PRONE ) ) {
+        stealth_modifier += prone_bonus;
+    }
     map &here = get_map();
     int const camo_modifier = 50;
     if( worn_with_flag( flag_NATURE_CAMO ) && ( here.has_flag( "PLOWABLE", bub_pos() ) ||
@@ -8202,6 +8244,9 @@ float Character::running_move_cost_modifier() const
     if( move_mode == CMM_CROUCH ) {
         movement_modifier *= 0.5;
     }
+    if( move_mode == CMM_PRONE ) {
+        movement_modifier *= 0.2;
+    }
     return movement_modifier;
 }
 
@@ -8646,6 +8691,10 @@ void Character::wake_up()
     remove_effect( effect_alarm_clock );
     if( has_effect( effect_sleep ) ) {
         g->events().send<event_type::character_wakes_up>( getID() );
+        // Restore the movement mode from before sleep, unless still downed.
+        if( !has_effect( effect_downed ) ) {
+            move_mode = pre_sleep_mode;
+        }
         remove_effect( effect_sleep );
         // Wake up might be called more than once per turn, but we only need to recalc after removing sleep
         recalc_sight_limits();

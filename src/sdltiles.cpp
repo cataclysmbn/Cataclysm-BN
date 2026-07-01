@@ -2791,7 +2791,7 @@ void handle_finger_input( Uint64 ticks )
     float dist = std::sqrt( delta_x * delta_x + delta_y * delta_y ); // in pixel space
     bool handle_diagonals = touch_input_context.is_action_registered( "LEFTUP" );
     bool is_default_mode = touch_input_context.get_category() == "DEFAULTMODE";
-    if( dist > ( get_option<float>( "ANDROID_DEADZONE_RANGE" )*std::max( WindowWidth,
+    if( dist > ( get_option<float>( "ANDROID_DEADZONE_RANGE" ) * std::max( WindowWidth,
                  WindowHeight ) ) ) {
         if( !handle_diagonals ) {
             if( delta_x >= 0 && delta_y >= 0 ) {
@@ -2996,6 +2996,10 @@ static void CheckMessages()
                 // If we're already crouching, make it simple to toggle crouching to off.
                 if( g->u.movement_mode_is( CMM_CROUCH ) ) {
                     actions.insert( ACTION_TOGGLE_CROUCH );
+                }
+                // If we're already prone, make it simple to toggle prone to off.
+                if( g->u.movement_mode_is( CMM_PRONE ) ) {
+                    actions.insert( ACTION_TOGGLE_PRONE );
                 }
 
                 // We're not already running or in combat, so remove cycle walk/run

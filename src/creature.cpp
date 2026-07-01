@@ -413,9 +413,10 @@ bool Creature::sees( const Creature &critter ) const
         return false;
     }
     if( ch != nullptr ) {
-        if( ch->movement_mode_is( CMM_CROUCH ) ) {
+        if( ch->movement_mode_is( CMM_CROUCH ) || ch->movement_mode_is( CMM_PRONE ) ) {
             const int coverage = here.obstacle_coverage( bub_pos(), critter.bub_pos() );
-            if( coverage < 30 ) {
+            const int threshold = ch->movement_mode_is( CMM_PRONE ) ? 15 : 30;
+            if( coverage < threshold ) {
                 return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
             }
             float size_modifier = 1.0;
