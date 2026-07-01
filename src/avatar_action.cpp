@@ -733,7 +733,6 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     {
         ZoneScopedN( "avatar_move_walk_move" );
         if( g->walk_move( dest_loc, via_ramp ) ) {
-            character_funcs::search_surroundings( you );
             return true;
         }
     }
