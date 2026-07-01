@@ -11,6 +11,7 @@
 class Character;
 class Creature;
 class item;
+class monster;
 struct bionic;
 struct dealt_damage_instance;
 struct tripoint;
@@ -230,4 +231,38 @@ class lua_mutation_callback_actor
         void call_on_deactivate( Character &who, const trait_id &tid ) const;
         void call_on_gain( Character &who, const trait_id &tid ) const;
         void call_on_loss( Character &who, const trait_id &tid ) const;
+};
+
+
+
+struct lua_menu_entry {
+    std::string menu_id;
+    std::string menu_label;
+
+    bool valid() const {
+        return !menu_id.empty() && !menu_label.empty();
+    }
+};
+
+/** Lua callbacks for per-mutation events. */
+class lua_pet_callback_actor
+{
+    private:
+        std::string mon_str_id;
+        sol::protected_function on_tame_func;
+        sol::protected_function get_examine_menu_entries_func;
+        sol::protected_function on_examine_menu_entry_func;
+
+    public:
+        lua_pet_callback_actor( const std::string &mon_str_id,
+                                sol::protected_function &&on_tame_func,
+                                sol::protected_function &&get_examine_menu_entries,
+                                sol::protected_function &&on_examine_menu_entry_func
+                              );
+
+        void call_on_tame( Character &who, monster &pet ) const;
+        std::vector<lua_menu_entry>  call_get_examine_menu_entries( Character &who, monster &pet ) const;
+        void call_on_examine_menu_entry( Character &who, monster &pet, std::string entry ) const;
+
+        std::string get_mon_str_id() const;
 };

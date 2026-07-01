@@ -352,6 +352,7 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["monster_attitude_functions"] = lua.create_table();
     gt["monster_ai_functions"] = lua.create_table();
     gt["npc_ai_functions"] = lua.create_table();
+    gt["pet_functions"] = lua.create_table();
 
     // hooks
     cata::define_hooks( state );
@@ -467,6 +468,7 @@ namespace
 // Populated during reg_lua_icallback_actors(), resolved during resolve_lua_bionic_and_mutation_callbacks().
 std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> bionic_callback_actors;
 std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> mutation_callback_actors;
+std::map<std::string, std::unique_ptr<lua_pet_callback_actor>> pet_callback_actors;
 } // namespace
 
 namespace
@@ -952,6 +954,36 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             ++it;
         }
     }
+
+    // --- pet callback registration ---
+    const sol::table pet_funcs = lua.globals()["game"]["pet_functions"];
+    {
+        auto it = pet_funcs.begin();
+        while( it != pet_funcs.end() ) {
+            const auto ref = *it;
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "pet_functions entry must be a table" );
+                }
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_tame = tbl.get_or<sol::function>( "on_tame", sol::lua_nil );
+                auto get_examine_menu_entries = tbl.get_or<sol::function>( "get_examine_menu_entries",
+                                                sol::lua_nil );
+                auto on_examine_menu_entry = tbl.get_or<sol::function>( "on_examine_menu_entry", sol::lua_nil );
+                pet_callback_actors[key] = std::make_unique<lua_pet_callback_actor>(
+                                               key, std::move( on_tame ), std::move( get_examine_menu_entries ),
+                                               std::move( on_examine_menu_entry )
+                                           );
+
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract pet_functions k='%s': %s", key, e.what() );
+                break;
+            }
+            ++it;
+        }
+    }
 }
 
 void resolve_lua_bionic_and_mutation_callbacks()
@@ -1009,6 +1041,15 @@ auto get_lua_activity_on_turn( const player_activity &act ) -> std::string
     return get_lua_activity_prefixed_value( act, lua_activity_on_turn_prefix );
 }
 
+const std::map<std::string, std::unique_ptr<lua_pet_callback_actor>> &get_lua_pet_actors()
+{
+    return pet_callback_actors;
+}
+
+bool has_lua()
+{
+}
+
 auto run_lua_activity_callback( const std::string &callback_id, player &who,
                                 player_activity &act ) -> void
 {
@@ -1040,6 +1081,7 @@ void lua_state_deleter::operator()( lua_state *state ) const
     cata::lua_action_menu::clear_entries();
     bionic_callback_actors.clear();
     mutation_callback_actors.clear();
+    pet_callback_actors.clear();
     get_hook_cache().clear();
     delete state;
 }

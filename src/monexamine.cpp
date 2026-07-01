@@ -11,6 +11,7 @@
 #include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_icallback_actor.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "debug.h"
@@ -111,7 +112,8 @@ bool monexamine::pet_menu( monster &z )
         check_bat,
         change_orders,
         disable_pet,
-        attack
+        attack,
+        COUNT
     };
 
     uilist amenu;
@@ -296,109 +298,177 @@ bool monexamine::pet_menu( monster &z )
     } else {
         amenu.addentry( attack, true, 'A', _( "Attack" ) );
     }
+
+    // Call lua related hooks, resolved dynamically because of wildcard support
+    const auto lua_pet_actors = z.get_lua_pet_actors();
+    std::vector<lua_menu_entry> lua_entries {};
+    std::map<int, lua_menu_entry> lua_entries_map;
+    {};
+    for( const lua_pet_callback_actor *cb_actor : lua_pet_actors ) {
+        const auto entries = cb_actor->call_get_examine_menu_entries( you, z );
+        for( const auto entry : entries ) {
+            if( entry.valid() ) {
+                lua_entries.push_back( entry );
+            }
+        }
+    }
+    std::ranges::sort( lua_entries, []( const lua_menu_entry & a, const lua_menu_entry & b ) {
+        return a.menu_label > b.menu_label;
+    } );
+
+    int last_int = COUNT - 1;
+    for( const auto entry : lua_entries ) {
+        last_int++;
+        lua_entries_map.emplace( last_int, entry );
+        amenu.addentry( last_int, true, ' ', entry.menu_label );
+    }
+
     amenu.query();
     int choice = amenu.ret;
+    std::string entry_str_id;
 
     switch( choice ) {
         case push_zlave:
+            entry_str_id = "push_zlave";
             push( z );
             break;
         case lead:
+            entry_str_id = "lead";
             start_leading( z );
             break;
         case stop_lead:
+            entry_str_id = "stop_lead";
             stop_leading( z );
             break;
         case rename:
+            entry_str_id = "rename";
             rename_pet( z );
             break;
         case attach_bag:
+            entry_str_id = "attach_bag";
             attach_bag_to( z );
             break;
         case remove_bag:
+            entry_str_id = "remove_bag";
             remove_bag_from( z );
             break;
         case drop_all:
+            entry_str_id = "drop_all";
             dump_items( z );
             break;
         case give_items:
+            entry_str_id = "give_items";
             return give_items_to( z );
         case take_items:
+            entry_str_id = "take_items";
             take_items_from( z );
             break;
         case mon_armor_add:
+            entry_str_id = "mon_armor_add";
             return add_armor( z );
         case mon_harness_remove:
+            entry_str_id = "mon_harness_remove";
             remove_harness( z );
             break;
         case mon_armor_remove:
+            entry_str_id = "mon_armor_remove";
             remove_armor( z );
             break;
         case play_with_pet:
             if( query_yn( _( "Spend a few minutes to play with your %s?" ), pet_name ) ) {
+                entry_str_id = "play_with_pet";
                 play_with( z );
             }
             break;
         case train_combat_pet:
+            entry_str_id = "train_combat_pet";
             train_pet( z );
             break;
         case slaughter:
             if( query_yn( _( "Really kill the %s?" ), pet_name ) ) {
+                entry_str_id = "slaughter";
                 kill_zslave( z );
             }
             break;
         case leash:
+            entry_str_id = "leash";
             add_leash( z );
             break;
         case unleash:
+            entry_str_id = "unleash";
             remove_leash( z );
             break;
         case attach_saddle:
+            entry_str_id = "attach_saddle";
+            attach_or_remove_saddle( z );
+            break;
         case remove_saddle:
+            entry_str_id = "remove_saddle";
             attach_or_remove_saddle( z );
             break;
         case mount:
+            entry_str_id = "mount";
             mount_pet( z );
             break;
         case tie:
+            entry_str_id = "tie";
             tie_pet( z );
             break;
         case untie:
+            entry_str_id = "untie";
             untie_pet( z );
             break;
         case milk:
+            entry_str_id = "milk";
             milk_source( z );
             break;
         case shear:
+            entry_str_id = "shear";
             shear_animal( z );
             break;
         case pay:
+            entry_str_id = "pay";
             pay_bot( z );
             break;
         case remove_bat:
+            entry_str_id = "remove_bat";
             remove_battery( z );
             break;
         case insert_bat:
+            entry_str_id = "insert_bat";
             insert_battery( z );
             break;
         case check_bat:
+            entry_str_id = "check_bat";
             break;
         case change_orders:
+            entry_str_id = "change_orders";
             toggle_ignore_targets( z );
             break;
         case disable_pet:
             if( query_yn( _( "Really deactivate your %s?" ), pet_name ) ) {
+                entry_str_id = "disable_pet";
                 deactivate_pet( z );
             }
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
+                entry_str_id = "attack";
                 avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:
+            if( choice >= COUNT ) {
+                entry_str_id = lua_entries_map[choice].menu_id;
+            }
             break;
     }
+    if( !entry_str_id.empty() ) {
+        for( const lua_pet_callback_actor *cb_actor : lua_pet_actors ) {
+            cb_actor->call_on_examine_menu_entry( you, z, entry_str_id );
+        }
+    }
+
     return true;
 }
 

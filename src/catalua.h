@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <span>
 
+class lua_pet_callback_actor;
 class Item_factory;
 class map;
 class mapgen_constructor;
@@ -55,6 +56,8 @@ auto run_lua_activity_callback( const std::string &callback_id, player &who,
 void run_on_mapgen_postprocess_hooks( lua_state &state, mapgen_constructor &m,
                                       const tripoint_abs_omt &p,
                                       const time_point &when );
+
+const std::map<std::string, std::unique_ptr<lua_pet_callback_actor>> &get_lua_pet_actors();
 
 /** Single item passed to run_on_mapgen_postprocess_hooks_batch(). */
 struct mapgen_hook_batch_item {

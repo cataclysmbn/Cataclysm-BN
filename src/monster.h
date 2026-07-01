@@ -38,6 +38,7 @@
 #include "visitable.h"
 #include "sounds.h"
 
+class lua_pet_callback_actor;
 class Character;
 class JsonIn;
 class JsonObject;
@@ -748,6 +749,8 @@ class monster : public Creature, public location_visitable<monster>
         // Faction-specific anger tracking
         void add_faction_anger( mfaction_id target_faction, int amount );
         auto get_faction_anger( mfaction_id target_faction ) const -> int;
+
+        std::vector<lua_pet_callback_actor *> get_lua_pet_actors() const;
 
         std::set<m_flag> monster_flags;
 
