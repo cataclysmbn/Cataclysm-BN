@@ -2376,6 +2376,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
+    "reversible": true,
     "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
@@ -2472,6 +2473,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
+    "reversible": true,
     "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
