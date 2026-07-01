@@ -52,7 +52,7 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "make_static.h"
 #include "map.h"
 #include "map_iterator.h"

@@ -64,7 +64,7 @@ class profession
         item_group_id _starting_items = item_group_id( "EMPTY_GROUP" );
         item_group_id _starting_items_male = item_group_id( "EMPTY_GROUP" );
         item_group_id _starting_items_female = item_group_id( "EMPTY_GROUP" );
-        itype_id no_bonus; // See profession::items and class json_item_substitution in profession.cpp
+        std::set<itype_id> no_bonus;
 
         std::vector<addiction> _starting_addictions;
         std::vector<bionic_id> _starting_CBMs;

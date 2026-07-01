@@ -17,6 +17,7 @@
     "dispersion": 150,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "barrel_volume": "250 ml",
+    "magazine_well": "100 ml",
     "magazines": [ [ "545x39", [ "ak74mag", "rpk74mag" ] ] ],
     "blackpowder_tolerance": 24,
     "flags": [ "NEVER_JAMS" ]
@@ -40,6 +41,7 @@
     "durability": 7,
     "barrel_volume": "250 ml",
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "2 rd.", 2 ], [ "AUTO", "auto", 4 ] ],
+    "magazine_well": "100 ml",
     "magazines": [ [ "545x39", [ "ak74mag", "rpk74mag" ] ] ]
   }
 ]

@@ -127,7 +127,7 @@
 #include "loading_ui.h"
 #include "locations.h"
 #include "npc.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "map_functions.h"
 #include "map_item_stack.h"

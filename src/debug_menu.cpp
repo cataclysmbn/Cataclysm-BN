@@ -59,7 +59,7 @@
 #include "json.h"
 #include "json_export.h"
 #include "language.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "mapbuffer_registry.h"
 #include "map_extras.h"

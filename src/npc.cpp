@@ -44,7 +44,7 @@
 #include "iuse_actor.h"
 #include "json.h"
 #include "locations.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "map_selector.h"
@@ -802,6 +802,7 @@ auto npc::clear_transient_movement_state_after_reposition() -> void
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
     goto_to_this_pos = std::nullopt;
+    sleep_at_this_pos = std::nullopt;
     wanted_item_pos = tripoint_bub_ms::min();
     guard_pos = tripoint_abs_ms::min();
     goal = no_goal_point;
@@ -899,6 +900,15 @@ int npc::best_skill_level() const
     }
 
     return highest_level;
+}
+
+void npc::wake_up()
+{
+    Character::wake_up();  // Call the base implementation first
+
+    if( sleep_at_this_pos.has_value() ) {
+        sleep_at_this_pos = std::nullopt;
+    }
 }
 
 namespace

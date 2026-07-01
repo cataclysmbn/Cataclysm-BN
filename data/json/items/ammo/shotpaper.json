@@ -17,7 +17,7 @@
     "stack_size": 20,
     "ammo_type": "shotpaper",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 13, "armor_penetration": 6 },
+    "damage": { "damage_type": "bullet", "amount": 13, "armor_penetration": 24 },
     "recoil": 2000,
     "loudness": 144,
     "speed": 200,
@@ -62,7 +62,7 @@
     "name": { "str": "20ga paper slug" },
     "description": "A paper cartridge containing a premeasured amount of black powder and a .605 inch lead ball.",
     "range": 32,
-    "damage": { "damage_type": "bullet", "amount": 57, "armor_penetration": 14, "armor_multiplier": 1.5 },
+    "damage": { "damage_type": "bullet", "amount": 57, "armor_penetration": 12, "armor_multiplier": 1.5 },
     "delete": { "effects": [ "SHOT" ] },
     "dispersion": 100
   }

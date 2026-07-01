@@ -54,6 +54,7 @@
 #include "event.h"
 #include "event_bus.h"
 #include "explosion.h"
+#include "explosion_queue.h"
 #include "field.h"
 #include "field_type.h"
 #include "flag.h"
@@ -6237,6 +6238,10 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
 
 void map::process_items()
 {
+    // Defer explosion drains during processing: an item here can be detached but
+    // still in-stack, and a re-entrant drain would re-detonate it forever (#9696).
+    explosion_handler::scoped_drain_deferral defer_explosion_drains;
+
     auto total_active_items = int64_t{ 0 };
     auto total_rottable_active_items = int64_t{ 0 };
 
@@ -7948,8 +7953,14 @@ void map::reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts,
     for( const tripoint_bub_ms &p : points_in_radius( f, range ) ) {
         const tripoint_bub_ms tp = { p.xy(), f.z() };
         const int tp_cost = move_cost( tp );
+        const auto &veh = veh_at( tp );
+        const auto &veh_wall = veh.obstacle_at_part();
+        // Move cost is in right bounds
+        const bool bad_move_cost = tp_cost < cost_min || tp_cost > cost_max;
+        // It lacks floor in terrain or in veh
+        const bool no_floor = !has_floor_or_support( tp ) && ( veh_wall || !veh );
         // rejection conditions
-        if( tp_cost < cost_min || tp_cost > cost_max || !has_floor_or_support( tp ) ) {
+        if( bad_move_cost || no_floor || veh_wall ) {
             continue;
         }
         // set initial cost for grid point

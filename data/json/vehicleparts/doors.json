@@ -570,7 +570,17 @@
     "copy-from": "door_abstract",
     "id": "door",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "front_left", "symbol": "y" },
+      { "direction": "front_right", "symbol": "u" },
+      { "direction": "vertical_left", "symbol": "L" },
+      { "direction": "vertical_right", "symbol": "R" },
+      { "direction": "rear_left", "symbol": "b" },
+      { "direction": "rear_right", "symbol": "n" },
+      { "direction": "door_front", "symbol": "T" },
+      { "direction": "door_rear", "symbol": "B" }
+    ]
   },
   {
     "copy-from": "door_opaque_abstract",
@@ -583,7 +593,17 @@
     "id": "door_carbon",
     "looks_like": "door",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "front_left", "symbol": "y" },
+      { "direction": "front_right", "symbol": "u" },
+      { "direction": "vertical_left", "symbol": "L" },
+      { "direction": "vertical_right", "symbol": "R" },
+      { "direction": "rear_left", "symbol": "b" },
+      { "direction": "rear_right", "symbol": "n" },
+      { "direction": "door_front", "symbol": "T" },
+      { "direction": "door_rear", "symbol": "B" }
+    ]
   },
   {
     "copy-from": "door_carbon_opaque_abstract",
@@ -596,19 +616,22 @@
     "copy-from": "hddoor_abstract",
     "id": "hddoor",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
   },
   {
     "copy-from": "hddoor_opaque_abstract",
     "id": "hddoor_opaque",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
   },
   {
     "copy-from": "door_internal_abstract",
     "id": "door_internal",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
   },
   {
     "copy-from": "hatch_abstract",
@@ -647,166 +670,14 @@
     "copy-from": "hdhatch_abstract",
     "id": "hdhatch",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
   },
   {
     "copy-from": "hdhatch_opaque_abstract",
     "id": "hdhatch_opaque",
     "symbol": "+",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_abstract",
-    "id": "door_front_left",
-    "symbol": "y",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_abstract",
-    "id": "door_vertical_left",
-    "symbol": "L",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_abstract",
-    "id": "door_front_right",
-    "symbol": "u",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_abstract",
-    "id": "door_rear_left",
-    "symbol": "b",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_abstract",
-    "id": "door_vertical_right",
-    "symbol": "R",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_abstract",
-    "id": "door_rear_right",
-    "symbol": "n",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_abstract",
-    "id": "door_front",
-    "symbol": "T",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_abstract",
-    "id": "door_rear",
-    "symbol": "B",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_carbon_abstract",
-    "id": "door_carbon_front_left",
-    "looks_like": "door_front_left",
-    "symbol": "y",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_carbon_abstract",
-    "id": "door_carbon_vertical_left",
-    "looks_like": "door_vertical_left",
-    "symbol": "L",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_carbon_abstract",
-    "id": "door_carbon_front_right",
-    "looks_like": "door_front_right",
-    "symbol": "u",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_carbon_abstract",
-    "id": "door_carbon_rear_left",
-    "looks_like": "door_rear_left",
-    "symbol": "b",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_carbon_abstract",
-    "id": "door_carbon_vertical_right",
-    "looks_like": "door_vertical_right",
-    "symbol": "R",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_carbon_abstract",
-    "id": "door_carbon_rear_right",
-    "looks_like": "door_rear_right",
-    "symbol": "n",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_carbon_abstract",
-    "id": "door_carbon_front",
-    "looks_like": "door_front",
-    "symbol": "T",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "door_carbon_abstract",
-    "id": "door_carbon_rear",
-    "looks_like": "door_rear",
-    "symbol": "B",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "hddoor_abstract",
-    "id": "hddoor_left",
-    "symbol": "L",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "hddoor_abstract",
-    "id": "hddoor_right",
-    "symbol": "R",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "hddoor_opaque_abstract",
-    "id": "hddoor_opaque_left",
-    "symbol": "L",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "hddoor_opaque_abstract",
-    "id": "hddoor_opaque_right",
-    "symbol": "R",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "hdhatch_abstract",
-    "id": "hdhatch_left",
-    "symbol": "L",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "hdhatch_abstract",
-    "id": "hdhatch_right",
-    "symbol": "R",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "hdhatch_opaque_abstract",
-    "id": "hdhatch_opaque_left",
-    "symbol": "L",
-    "looks_like": "hdhatch_left",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "hdhatch_opaque_abstract",
-    "id": "hdhatch_opaque_right",
-    "symbol": "R",
-    "looks_like": "hdhatch_right",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
   }
 ]

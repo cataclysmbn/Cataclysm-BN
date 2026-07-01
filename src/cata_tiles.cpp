@@ -7368,7 +7368,7 @@ void cata_tiles::do_tile_loading_report( const std::function<void( std::string )
     lr_generic( mtypes.begin(), mtypes.end(), []( const std::vector<mtype>::iterator & m ) {
         return ( *m ).id.str();
     }, C_MONSTER, out, "" );
-    tile_loading_report( vpart_info::all(), C_VEHICLE_PART, out, "vp_" );
+    tile_loading_report<vpart_info>( vpart_info::get_all().size(), C_VEHICLE_PART, out, "vp_" );
     tile_loading_report<trap>( trap::count(), C_TRAP, out, "" );
     tile_loading_report<field_type>( field_type::count(), C_FIELD, out, "" );
 }

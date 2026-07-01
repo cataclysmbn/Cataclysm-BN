@@ -49,7 +49,7 @@
 #include "iuse.h"
 #include "kill_tracker.h"
 #include "make_static.h"
-#include "magic_teleporter_list.h"
+#include "magic/magic_teleporter_list.h"
 #include "map.h"
 #include "map_memory.h"
 #include "martialarts.h"

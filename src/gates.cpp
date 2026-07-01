@@ -361,7 +361,9 @@ void doors::close_door( map &m, Character &who, const tripoint_bub_ms &closep )
                 didit = true;
                 who.add_msg_if_player( m_info, _( "You push the %s out of the way." ),
                                        items_in_way.size() == 1 ? items_in_way.only_item().tname() : _( "stuff" ) );
-                who.mod_moves( -std::min( items_in_way.stored_volume() / ( max_nudge / 50 ), 100 ) );
+                const auto nudge_moves = items_in_way.stored_volume() / ( max_nudge / 50 );
+                const auto max_nudge_moves = decltype( nudge_moves ) { 100 };
+                who.mod_moves( -static_cast<int>( std::min( nudge_moves, max_nudge_moves ) ) );
 
                 if( m.has_flag( "NOITEM", closep ) ) {
                     // Just plopping items back on their origin square will displace them to adjacent squares

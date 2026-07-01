@@ -64,7 +64,7 @@
 #include "json.h"
 #include "line.h"
 #include "locations.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "map_selector.h"

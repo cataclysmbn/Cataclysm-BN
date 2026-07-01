@@ -4798,9 +4798,9 @@ bool mattack::absorb_meat( monster *z )
             if( current_item_material == material_id( "flesh" ) ||
                 current_item_material == material_id( "hflesh" ) ) {
                 //We have something meaty! Calculate how much it will heal the monster
-                const int ml_of_meat = units::to_milliliter<int>( current_item->volume() );
-                const int total_charges = current_item->count();
-                const int ml_per_charge = ml_of_meat / total_charges;
+                const auto ml_of_meat = units::to_milliliter( current_item->volume() );
+                const auto total_charges = current_item->count();
+                const auto ml_per_charge = ml_of_meat / total_charges;
                 //We have a max size of meat here to avoid absorbing whole corpses.
                 if( ml_per_charge > max_meat_absorbed * 1000 ) {
                     add_msg( m_info, _( "The %1$s quivers hungrily in the direction of the %2$s." ), z->name(),

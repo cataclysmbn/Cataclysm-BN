@@ -125,60 +125,6 @@ The following ammo types are (or will soon be) available in in-repo mods
 - `545x39` 5.45x39mm
 - `270win` .270 winchester
 
-### Effects
-
-- `ACIDBOMB` Leaves a pool of acid on detonation.
-- `BEANBAG` Stuns the target.
-- `BLACKPOWDER` May clog up the gun with blackpowder fouling, which will also cause rust.
-- `BLINDS_EYES` Blinds the target if it hits the head (ranged projectiles can't actually hit the
-  eyes at the moment).
-- `BOUNCE` Inflicts target with `bounced` effect and rebounds to a nearby target without this
-  effect.
-- `COOKOFF` Explodes when lit on fire.
-- `CUSTOM_EXPLOSION` Explosion as specified in `"explosion"` field of used ammo. See `JSON_INFO.md`.
-- `DRAW_AS_LINE` Doesn't go through regular bullet animation, instead draws a line and the bullet on
-  its end for one frame.
-- `EXPLOSIVE_BIG` Large explosion without any shrapnel.
-- `EXPLOSIVE_HUGE` Huge explosion without any shrapnel.
-- `EXPLOSIVE` Explodes without any shrapnel.
-- `FLAME` Very small explosion that lights fires.
-- `FLARE` Lights the target on fire.
-- `FLASHBANG` Blinds and deafens nearby targets.
-- `FRAG` Small explosion that spreads shrapnel.
-- `INCENDIARY` Lights target on fire.
-- `LARGE_BEANBAG` Heavily stuns the target.
-- `LASER` Creates a trail of laser (the field type)
-- `LIGHTNING` Creates a trail of lightning.
-- `MININUKE_MOD` Small thermo-nuclear detonation that leaves behind radioactive fallout.
-- `MUZZLE_SMOKE` Generate a small cloud of smoke at the source.
-- `NAPALM` Explosion that spreads fire.
-- `NEVER_MISFIRES` Firing ammo without this flag may trigger a misfiring, this is independent of the
-  weapon flags.
-- `NOGIB` Prevents overkill damage on the target (target won't explode into gibs, see also the
-  monster flag NO_GIBS).
-- `NO_PENETRATE_OBSTACLES` Prevents a projectile from going through a tile with obstacles, such as
-  chainlink fences or dressers.
-- `TANGLE` When this projectile hits a target, it has a chance to tangle them up and immobilise
-  them.
-- `NO_EMBED` When an item would be spawned from the projectile, it will always be spawned on the
-  ground rather than in monster's inventory. Implied for active thrown items. Doesn't do anything on
-  projectiles that do not drop items.
-- `NO_ITEM_DAMAGE` Will not damage items on the map even when it otherwise would try to.
-- `PLASMA` Creates a trail of superheated plasma.
-- `RECOVER_[X]` Has a (X-1/X) chance to create a single charge of the used ammo at the point of
-  impact.
-- `RECYCLED` (For handmade ammo) causes the gun to misfire sometimes, this independent of the weapon
-  flags.
-- `SHOT` Multiple smaller pellets; less effective against armor but increases chance to hit and no
-  point-blank penalty
-- `SMOKE_BIG` Generates a large cloud of smoke at the target.
-- `SMOKE` Generates a cloud of smoke at the target.
-- `STREAM_BIG` Leaves a trail of intense fire fields.
-- `STREAM` Leaves a trail of fire fields.
-- `TRAIL` Creates a trail of smoke.
-- `WIDE` Prevents `HARDTOSHOOT` monster flag from having any effect. Implied by `SHOT` or liquid
-  ammo.
-
 ## Armor
 
 ### Covers
@@ -810,8 +756,10 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `BIPOD` Handling bonus only applies on MOUNTABLE map/vehicle tiles. Does not include wield time
   penalty (see SLOW_WIELD).
 - `CHARGE` Has to be charged to fire. Higher charges do more damage.
-- `COLLAPSIBLE_STOCK` Reduces weapon volume proportional to the base size of the gun (excluding any
-  mods). Does not include wield time penalty (see NEEDS_UNFOLD).
+- `COLLAPSIBLE_STOCK` **DEPRECATED**: Use `volume_multiplier` in gunmod definitions instead.
+  Previously reduced weapon volume proportional to the base size of the gun (excluding any
+  mods). `volume_multiplier: 0.67` replicates the old behavior. Does not include wield time
+  penalty (see NEEDS_UNFOLD).
 - `CONSUMABLE` Makes a gunpart have a chance to get damaged depending on ammo fired, and definable
   fields 'consume_chance' and 'consume_divisor'.
 - `CROSSBOW` Counts as a crossbow for the purpose of gunmod compatibility. Default behavior is to

@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "color.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
@@ -107,6 +107,8 @@ struct trap {
         // a valid overmap id, for map_regen action traps
         std::string map_regen;
         trap_function act;
+        // Need this so checks can be properly checked
+        std::string act_string;
         std::string name_;
         /**
          * If an item with this weight or more is thrown onto the trap, it triggers.
@@ -265,6 +267,7 @@ struct trap {
          * Checks internal consistency (reference to other things like item ids etc.)
          */
         static void check_consistency();
+        void check() const;
 
         const std::map<trap_id, std::unique_ptr<lua_itrap_actor>> &get_itrap_callbacks();
 

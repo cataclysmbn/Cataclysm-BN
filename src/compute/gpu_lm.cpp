@@ -1,52 +1,52 @@
 #if defined(CATA_SDL)
-#include "gpu_lm.h"
+#    include "gpu_lm.h"
 
-#include "cached_options.h"
-#include "calendar.h"
-#include "character.h"
-#include "debug.h"
-#include "effect.h"
-#include "field.h"
-#include "game.h"
-#include "game_constants.h"
-#include "gpu_platform.h"
-#include "item.h"
-#include "itype.h"
-#include "lightmap.h"
-#include "map.h"
-#include "math_defines.h"
-#include "monster.h"
-#include "npc.h"
-#include "path_info.h"
-#include "profile.h"
-#include "shadowcasting.h"
-#include "submap.h"
-#include "units_angle.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_lighting.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#    include "cached_options.h"
+#    include "calendar.h"
+#    include "character.h"
+#    include "debug.h"
+#    include "effect.h"
+#    include "field.h"
+#    include "game.h"
+#    include "game_constants.h"
+#    include "gpu_platform.h"
+#    include "item.h"
+#    include "itype.h"
+#    include "lightmap.h"
+#    include "map.h"
+#    include "math_defines.h"
+#    include "monster.h"
+#    include "npc.h"
+#    include "path_info.h"
+#    include "profile.h"
+#    include "shadowcasting.h"
+#    include "submap.h"
+#    include "units_angle.h"
+#    include "veh_type.h"
+#    include "vehicle.h"
+#    include "vehicle_lighting.h"
+#    include "vehicle_part.h"
+#    include "vpart_position.h"
+#    include "vpart_range.h"
 
-#include <SDL3/SDL_gpu.h>
-#include <algorithm>
-#include <array>
-#include <bit>
-#include <cmath>
-#include <cstring>
-#include <fstream>
-#include <iterator>
-#include <limits>
-#include <numeric>
-#include <optional>
-#include <ranges>
-#include <span>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <utility>
-#include <vector>
+#    include <SDL3/SDL_gpu.h>
+#    include <algorithm>
+#    include <array>
+#    include <bit>
+#    include <cmath>
+#    include <cstring>
+#    include <fstream>
+#    include <iterator>
+#    include <limits>
+#    include <numeric>
+#    include <optional>
+#    include <ranges>
+#    include <span>
+#    include <string>
+#    include <string_view>
+#    include <unordered_map>
+#    include <utility>
+#    include <vector>
 
 namespace cata_gpu {
 

@@ -305,10 +305,10 @@
     "price_postapoc": "3 USD",
     "material": [ "veggy" ],
     "primary_material": "dried_vegetable",
-    "volume": "250 ml",
+    "volume": "720 ml",
     "cooks_like": "rice_cooked",
     "milling": { "into": "flour", "conversion_rate": 3 },
-    "charges": 3,
+    "charges": 12,
     "vitamins": [ [ "iron", 3 ], [ "veggy_allergen", 1 ] ],
     "fun": -15,
     "flags": [ "NUTRIENT_OVERRIDE" ]

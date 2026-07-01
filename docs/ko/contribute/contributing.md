@@ -52,7 +52,7 @@
 
 ### C++
 
-`astyle`로 일관된 코드 스타일을 강제하고 있습니다. 자세한 내용은
+저장소 formatter helper로 일관된 C++ 코드 스타일을 강제하고 있습니다. 커밋하기 전에 `just fmt`를 실행하고, 자세한 내용은
 [CODE_STYLE](../dev/explanation/code_style)을 참고해주세요.
 
 ### JSON 스타일

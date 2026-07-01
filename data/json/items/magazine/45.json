@@ -204,7 +204,7 @@
     "type": "MAGAZINE",
     "name": { "str": "Glock 21 13-round magazine" },
     "description": "A standard capacity magazine for use with the Glock 21.",
-    "weight": "85 g",
+    "weight": "90 g",
     "volume": "105 ml",
     "price": "40 USD",
     "price_postapoc": "1 USD",

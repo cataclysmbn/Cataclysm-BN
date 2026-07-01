@@ -40,7 +40,11 @@
     "type": "item_group",
     "id": "carried_guns_smg_obscure",
     "//": "Imported or otherwise very obscure SMGs. Just mags, no loose ammo.",
-    "items": [ { "group": "everyday_skorpion_82", "prob": 100 }, { "group": "everyday_ppsh", "prob": 150 } ]
+    "items": [
+      { "group": "everyday_skorpion_82", "prob": 100 },
+      { "group": "everyday_ppsh", "prob": 150 },
+      { "group": "everyday_rm360", "prob": 50 }
+    ]
   },
   {
     "type": "item_group",

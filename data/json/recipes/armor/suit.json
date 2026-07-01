@@ -11,12 +11,7 @@
     "book_learn": [ [ "tailor_portfolio", 7 ], [ "textbook_tailor", 8 ], [ "textbook_fireman", 6 ] ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "tools": [ [ [ "soldering_standard", 160, "LIST" ], [ "surface_heat", 160, "LIST" ] ] ],
-    "components": [
-      [ [ "cleansuit", 1 ] ],
-      [ [ "duct_tape", 600 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ],
-      [ [ "plastic_sheet", 1 ] ]
-    ]
+    "components": [ [ [ "cleansuit", 1 ] ], [ [ "duct_tape", 600 ] ], [ [ "kevlar_plate", 24 ] ], [ [ "plastic_sheet", 1 ] ] ]
   },
   {
     "result": "anbc_suit",
@@ -30,12 +25,7 @@
     "book_learn": [ [ "tailor_portfolio", 7 ], [ "textbook_fireman", 7 ] ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "tools": [ [ [ "soldering_standard", 160, "LIST" ], [ "surface_heat", 160, "LIST" ] ] ],
-    "components": [
-      [ [ "hazmat_suit", 1 ] ],
-      [ [ "duct_tape", 800 ] ],
-      [ [ "swat_armor", 1 ], [ "kevlar_plate", 48 ] ],
-      [ [ "plastic_sheet", 1 ] ]
-    ]
+    "components": [ [ [ "hazmat_suit", 1 ] ], [ [ "duct_tape", 800 ] ], [ [ "kevlar_plate", 36 ] ], [ [ "plastic_sheet", 1 ] ] ]
   },
   {
     "result": "armor_blarmor",
@@ -276,8 +266,7 @@
       [ [ "fanny", 2 ], [ "dump_pouch", 1 ], [ "legrig", 2 ] ],
       [ [ "tool_belt", 1 ], [ "legrig", 1 ] ],
       [ [ "pants_army", 1 ], [ "jeans", 1 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ],
+      [ [ "kevlar_plate", 42 ] ],
       [ [ "plastic_chunk", 24 ] ]
     ]
   },
@@ -443,12 +432,7 @@
     "book_learn": [ [ "textbook_fireman", 8 ], [ "tailor_portfolio", 8 ] ],
     "using": [ [ "sewing_standard", 200 ] ],
     "tools": [ [ [ "soldering_standard", 40, "LIST" ], [ "surface_heat", 40, "LIST" ] ] ],
-    "components": [
-      [ [ "nomex", 40 ] ],
-      [ [ "kevlar_plate", 8 ] ],
-      [ [ "adhesive", 5, "LIST" ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ]
-    ]
+    "components": [ [ [ "nomex", 40 ] ], [ [ "adhesive", 5, "LIST" ] ], [ [ "kevlar_plate", 25 ] ] ]
   },
   {
     "result": "fsurvivor_suit",
@@ -479,8 +463,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 200 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar_plate", 30 ] ]
     ]
   },
   {
@@ -523,8 +506,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 400 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar_plate", 30 ] ]
     ]
   },
   {
@@ -556,8 +538,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 300 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar_plate", 40 ] ]
     ]
   },
   {
@@ -589,8 +570,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 300 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar_plate", 30 ] ]
     ]
   },
   {
@@ -646,8 +626,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 200 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar_plate", 25 ] ]
     ]
   },
   {
@@ -678,8 +657,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 200 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar_plate", 25 ] ]
     ]
   },
   {
@@ -737,8 +715,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 300 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar_plate", 30 ] ]
     ]
   },
   {
@@ -932,8 +909,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 300 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar_plate", 30 ] ]
     ]
   },
   {
@@ -974,7 +950,7 @@
     "time": "2 h 33 m",
     "book_learn": [ [ "textbook_robots", 0 ], [ "advanced_electronics", 0 ], [ "reference_fabrication1", 0 ] ],
     "using": [ [ "3d_printing_standard", 153 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 1530 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 1330 ] ] ]
   },
   {
     "result": "armor_carbonplate",
@@ -1005,7 +981,7 @@
     "components": [
       [ [ "steel_armor", 6 ] ],
       [ [ "steel_tiny", 10, "LIST" ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ],
+      [ [ "kevlar_plate", 40 ] ],
       [ [ "duct_tape", 600 ] ],
       [ [ "power_supply", 16 ] ],
       [ [ "amplifier", 12 ] ],
@@ -1161,8 +1137,8 @@
       [ [ "jacket_army", 1 ], [ "winter_jacket_army", 1 ] ],
       [ [ "pants_army", 1 ], [ "winter_pants_army", 1 ] ],
       [ [ "duct_tape", 300 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 24 ] ]
+      [ [ "modularvest", 1 ] ],
+      [ [ "kevlar_plate", 20 ] ]
     ],
     "flags": [ "SECRET" ]
   }
