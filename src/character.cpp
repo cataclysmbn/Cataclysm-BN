@@ -2902,11 +2902,6 @@ void Character::inv_set_stack_favorite( int position, bool favorite )
     inv.set_stack_favorite( position, favorite );
 }
 
-units::volume Character::inv_volume() const
-{
-    return inv.volume();
-}
-
 void Character::inv_unsort()
 {
     inv.unsort();

@@ -1293,8 +1293,6 @@ class Character : public Creature, public location_visitable<Character>
 
         detached_ptr<item> inv_remove_item( item * );
 
-        units::volume inv_volume() const;
-
         void inv_unsort();
 
         void inv_clear();
