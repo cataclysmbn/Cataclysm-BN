@@ -10252,6 +10252,15 @@ void game::zoom_in_overmap()
 #endif
 }
 
+auto game::reapply_overmap_zoom() -> void
+{
+#if defined(TILES)
+    if( use_tiles && use_tiles_overmap && overmap_tilecontext ) {
+        overmap_tilecontext->set_draw_scale( overmap_tileset_zoom );
+    }
+#endif
+}
+
 void game::reset_zoom()
 {
 #if defined(TILES)
@@ -10270,6 +10279,16 @@ void game::set_zoom( const float level )
 #else
     static_cast<void>( level );
 #endif // TILES
+}
+
+auto game::reapply_zoom() -> void
+{
+#if defined(TILES)
+    // rescale unconditionally: a shared overmap context may have changed the scale behind our back
+    if( use_tiles && tilecontext ) {
+        rescale_tileset( tileset_zoom );
+    }
+#endif
 }
 
 float game::get_zoom() const
