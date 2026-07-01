@@ -2384,7 +2384,8 @@ auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
             best_difficulty = std::min( best_difficulty, 7 );
         }
 
-        if( best_difficulty > 5 && tile && has_flag( tile->tile(), "CLIMBABLE" ) ) {
+        if( best_difficulty > 5 && tile && has_flag( tile->tile(), "CLIMBABLE" ) &&
+            !has_flag( tile->tile(), "PERMEABLE" ) ) {
             best_difficulty = 5;
         }
     }
