@@ -559,8 +559,8 @@
     "subtype": "collection",
     "id": "army_mags_rm11b",
     "entries": [
-      { "item": "8x40_10_mag", "ammo-item": "8mm_caseless", "charges": 10 },
-      { "item": "8x40_10_mag", "ammo-item": "8mm_caseless", "charges": 10 }
+      { "item": "8x40_10_mag", "ammo-item": "8mm_subsonic", "charges": 10 },
+      { "item": "8x40_10_mag", "ammo-item": "8mm_subsonic", "charges": 10 }
     ]
   },
   {
@@ -4339,7 +4339,7 @@
           { "item": "knife_hunting", "container-item": "sheath" },
           {
             "item": "rm11b_sniper_rifle",
-            "ammo-item": "8mm_caseless",
+            "ammo-item": "8mm_subsonic",
             "charges": 10,
             "contents-item": [ "shoulder_strap", "bipod" ]
           },

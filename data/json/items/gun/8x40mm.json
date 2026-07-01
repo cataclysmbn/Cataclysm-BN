@@ -76,7 +76,8 @@
     "magazine_well": "250 ml",
     "magazines": [ [ "8x40mm", [ "8x40_10_mag", "8x40_25_mag" ] ] ],
     "flags": [ "WATERPROOF_GUN", "NEVER_JAMS" ],
-    "faults": [  ]
+    "faults": [  ],
+    "default_ammo": "8mm_subsonic"
   },
   {
     "id": "rm2000_smg",

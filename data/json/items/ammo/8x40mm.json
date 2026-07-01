@@ -111,5 +111,20 @@
     "name": { "str": "8x40mm JHP" },
     "description": "8x40mm caseless rounds, jacketed hollowpoint.  Military grade ammunition for Rivtech firearms.  Being caseless rounds, these cannot be disassembled or reloaded.",
     "relative": { "damage": { "damage_type": "bullet", "amount": 11, "armor_penetration": -22 } }
+  },
+  {
+    "id": "8mm_subsonic",
+    "type": "AMMO",
+    "copy-from": "8mm_caseless",
+    "name": { "str_sp": "8x40mm Subsonic" },
+    "//": "MUCH slower than normal rounds, but only lowered recoil and pen by 20%, damage by 10%. Justified by rivtech ballistic tech",
+    "description": "8x40mm caseless, subsonic rounds with a very heavy tip.  Proprietary ammunition for Rivtech firearms.  Designed specifically for the RM11B rifle, which will shoot these incredibly quietly, but will work very well with any suppresesd weapon. Being caseless rounds, these cannot be disassembled or reloaded.",
+    "proportional": {
+      "damage": { "damage_type": "bullet", "amount": 0.85, "armor_penetration": 0.7 },
+      "recoil": 0.7
+      },
+    "loudness": 152,
+    "speed": 320,
+    "effects": [ "NEVER_MISFIRES" ]
   }
 ]

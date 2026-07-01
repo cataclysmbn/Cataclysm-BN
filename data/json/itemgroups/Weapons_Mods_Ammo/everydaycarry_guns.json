@@ -689,10 +689,10 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "hk_mp5", "ammo-group": "on_hand_9mm", "charges": [ 0, 30 ] },
-      { "group": "nested_mp5_mag", "charges-min": 0, "prob": 80 },
-      { "group": "nested_mp5_mag", "charges-min": 0, "prob": 50 },
-      { "group": "on_hand_9mm", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+      { "item": "hk_mp5sd", "ammo-group": "on_hand_9mm_sub", "charges": [ 0, 30 ] },
+      { "group": "nested_mp5_mag", "ammo-group": "on_hand_9mm_sub","charges-min": 0, "prob": 80 },
+      { "group": "nested_mp5_mag", "ammo-group": "on_hand_9mm_sub","charges-min": 0, "prob": 50 },
+      { "group": "on_hand_9mm_sub", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
   {
@@ -1278,10 +1278,10 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "rm11b_sniper_rifle", "ammo-group": "on_hand_8x40", "charges": [ 0, 10 ] },
-      { "group": "nested_rm103a_mag", "charges-min": 0, "prob": 80 },
-      { "group": "nested_rm103a_mag", "charges-min": 0, "prob": 50 },
-      { "group": "on_hand_8x40", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+      { "item": "rm11b_sniper_rifle", "ammo-group": "on_hand_8x40_sub", "charges": [ 0, 10 ] },
+      { "group": "nested_rm103a_mag", "ammo-group": "on_hand_8x40_sub", "charges-min": 0, "prob": 80 },
+      { "group": "nested_rm103a_mag", "ammo-group": "on_hand_8x40_sub", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_8x40_sub", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
   {

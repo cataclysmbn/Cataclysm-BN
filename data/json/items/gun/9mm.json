@@ -164,7 +164,8 @@
       [ "stock", 1 ]
     ],
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 3 ], [ "AUTO", "auto", 4 ] ],
-    "built_in_mods": [ "mp5sd_suppressor" ]
+    "built_in_mods": [ "mp5sd_suppressor" ],
+    "default_ammo": "9mm_subsonic_fmj"
   },
   {
     "id": "hk_mp5k",

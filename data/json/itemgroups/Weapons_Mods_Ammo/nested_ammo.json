@@ -8,8 +8,16 @@
       { "item": "9mm", "prob": 100, "charges": [ 25, 50 ] },
       { "item": "9mmfmj", "prob": 100, "charges": [ 25, 50 ] },
       { "item": "9mmP", "prob": 30, "charges": [ 25, 50 ] },
-      { "item": "9mmP2", "prob": 30, "charges": [ 25, 50 ] }
+      { "item": "9mmP2", "prob": 30, "charges": [ 25, 50 ] },
+      { "item": "9mm_subsonic_fmj", "prob": 30, "charges": [ 25, 50 ] }
     ]
+  },
+  {
+    "id": "on_hand_9mm_sub",
+    "type": "item_group",
+    "//": "a collection of ammo that would be found with a loaded, suppressed gun.",
+    "subtype": "distribution",
+    "entries": [ { "item": "9mm_subsonic_fmj", "prob": 100, "charges": [ 25, 50 ] } ]
   },
   {
     "id": "on_hand_10mm",
@@ -79,7 +87,17 @@
       { "item": "8mm_civilian", "prob": 100, "charges": [ 20, 40 ] },
       { "item": "8mm_jhp", "prob": 100, "charges": [ 20, 40 ] },
       { "item": "8mm_hvp", "prob": 30, "charges": [ 20, 40 ] },
-      { "item": "8mm_inc", "prob": 30, "charges": [ 20, 40 ] }
+      { "item": "8mm_inc", "prob": 30, "charges": [ 20, 40 ] },
+      { "item": "8mm_subsonic", "prob": 30, "charges": [ 20, 40 ] }
+    ]
+  },
+  {
+    "id": "on_hand_8x40_sub",
+    "type": "item_group",
+    "//": "a collection of ammo that would be found with a loaded, suppressed gun.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "8mm_subsonic", "prob": 100, "charges": [ 20, 40 ] }
     ]
   },
   {

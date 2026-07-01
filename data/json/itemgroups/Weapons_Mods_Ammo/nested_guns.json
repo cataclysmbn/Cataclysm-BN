@@ -954,10 +954,10 @@
     "subtype": "collection",
     "ammo": 100,
     "entries": [
-      { "item": "hk_mp5", "ammo-group": "on_hand_9mm", "charges": [ 0, 30 ] },
-      { "group": "nested_mp5_mag" },
-      { "group": "nested_mp5_mag", "prob": 50 },
-      { "group": "on_hand_9mm" }
+      { "item": "hk_mp5sd", "ammo-group": "on_hand_9mm_sub", "charges": [ 0, 30 ] },
+      { "group": "nested_mp5_mag", "ammo-group": "on_hand_9mm_sub" },
+      { "group": "nested_mp5_mag", "ammo-group": "on_hand_9mm_sub", "prob": 50 },
+      { "group": "on_hand_9mm_sub" }
     ]
   },
   {
@@ -1705,10 +1705,10 @@
     "subtype": "collection",
     "ammo": 100,
     "entries": [
-      { "item": "rm11b_sniper_rifle", "ammo-group": "on_hand_8x40", "charges": [ 0, 10 ] },
-      { "group": "nested_rm103a_mag" },
-      { "group": "nested_rm103a_mag", "prob": 50 },
-      { "group": "on_hand_8x40" }
+      { "item": "rm11b_sniper_rifle", "ammo-group": "on_hand_8x40_sub", "charges": [ 0, 10 ] },
+      { "group": "nested_rm103a_mag", "ammo-group": "on_hand_8x40_sub" },
+      { "group": "nested_rm103a_mag", "ammo-group": "on_hand_8x40_sub", "prob": 50 },
+      { "group": "on_hand_8x40_sub" }
     ]
   },
   {
