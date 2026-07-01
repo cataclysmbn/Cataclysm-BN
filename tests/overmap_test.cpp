@@ -3,6 +3,7 @@
 #include "coordinates.h"
 #include "enums.h"
 #include "game_constants.h"
+#include "map_helpers.h"
 #include "numeric_interval.h"
 #include "omdata.h"
 #include "overmap.h"
@@ -78,6 +79,7 @@ void do_lab_finale_test() {
 
 TEST_CASE("Exactly one endgame lab finale is generated in 0,0 overmap", "[overmap][slow]") {
     clear_all_state();
+    clear_overmap();
     do_lab_finale_test();
 }
 

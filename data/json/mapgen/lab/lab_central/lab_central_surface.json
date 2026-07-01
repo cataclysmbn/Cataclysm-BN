@@ -1,0 +1,1776 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_perimeter_edge" ],
+    "object": {
+      "fill_ter": "t_region_groundcover",
+      "rows": [
+        "     !            !     ",
+        "%%%%%%%%%%%%%%%%%%%%%%%%",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "^^^^^^^^^^^^^^^^^^^^^^^^",
+        "||||||||||||||||||||||||",
+        "------------------------",
+        "------------------------",
+        "------------------------",
+        "||||||||||||||||||||||||"
+      ],
+      "terrain": { "|": "t_brick_wall", "-": "t_wall_metal", "^": "t_pit", "%": "t_fence_barbed" },
+      "furniture": { "!": "f_sign_warning" },
+      "place_traps": [ { "trap": "tr_landmine_buried", "x": [ 0, 23 ], "y": [ 2, 16 ], "repeat": [ 8, 12 ] } ],
+      "signs": {
+        "!": { "signage": "DANGER: RESTRICTED AREA\nMinefield and autonomous defenses in use.  Lethal force is authorized." }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_perimeter_corner" ],
+    "object": {
+      "fill_ter": "t_region_groundcover",
+      "rows": [
+        "     !            !     ",
+        "%%%%%%%%%%%%%%%%%%%%%%% ",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "                      %!",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "                      % ",
+        "|||||||               % ",
+        "|-----|               %!",
+        "|-----|               % ",
+        "------|               % ",
+        "------|               % ",
+        "------|               % ",
+        "|---|||               % "
+      ],
+      "terrain": { "|": "t_brick_wall", "-": "t_wall_metal", "%": "t_fence_barbed" },
+      "furniture": { "!": "f_sign_warning" },
+      "place_traps": [
+        { "trap": "tr_landmine_buried", "x": [ 0, 21 ], "y": [ 2, 16 ], "repeat": [ 6, 9 ] },
+        { "trap": "tr_landmine_buried", "x": [ 7, 21 ], "y": [ 17, 23 ], "repeat": [ 2, 3 ] }
+      ],
+      "signs": { "!": { "signage": "DANGER\nMinefield and autonomous defenses in use.  Lethal force is authorized." } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_perimeter_edge_2" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "|||||||#_#||||#_#|||||||",
+        "______||+||__||+||______",
+        "________________________",
+        "________________________",
+        "%%%%%%%%%%%%%%%%%%%%%%%%"
+      ],
+      "terrain": {
+        "|": "t_brick_wall",
+        "_": "t_metal_floor_no_roof",
+        "#": "t_fortification_brick",
+        "+": "t_door_metal_interior_locked",
+        "%": "t_concrete_railing"
+      },
+      "place_monster": [ { "monster": "mon_laserturret", "x": 8, "y": 19 }, { "monster": "mon_laserturret", "x": 15, "y": 19 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_perimeter_corner_2" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "#|||#_#                 ",
+        "_______                 ",
+        "||+||_#                 ",
+        "____|_|                 ",
+        "____+_|                 ",
+        "____|_|                 ",
+        "%___|_#                 "
+      ],
+      "terrain": {
+        "|": "t_brick_wall",
+        "-": "t_wall_metal",
+        "_": "t_metal_floor_no_roof",
+        "#": "t_fortification_brick",
+        "+": "t_door_metal_interior_locked",
+        "%": "t_concrete_railing"
+      },
+      "place_monster": [
+        { "monster": "mon_laserturret", "x": 5, "y": 17 },
+        { "monster": "mon_laserturret", "x": 0, "y": 18 },
+        { "monster": "mon_laserturret", "x": 6, "y": 18 },
+        { "monster": "mon_laserturret", "x": 5, "y": 23 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_entrance" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "|________||++||========|",
+        "|________Wh..dW________|",
+        "|________Wd..hW________|",
+        "|________W....W________|",
+        "|========|.<<.|________|",
+        "%________|.<<.|________%",
+        "%________|....|________%",
+        "%________||||||________%",
+        "%________|----|________%",
+        "%_YYYYYY_||||||_YYYYYY_%",
+        "%______________________%",
+        "%______________________%",
+        "%______________________%",
+        "%______________________%",
+        "%______________________%",
+        "%______________________%",
+        "%______________________%",
+        "%______________________%",
+        "%__________SS__________%",
+        "%_________SSSS_________%",
+        "%________SS@!SS________%",
+        "%________SSRRSS________%",
+        "%R________SSSS________R%",
+        "RR_________SS_________RR"
+      ],
+      "terrain": {
+        "|": "t_brick_wall",
+        "-": "t_wall_metal",
+        "=": "t_door_metal_locked",
+        "<": "t_stairs_up",
+        "+": "t_door_metal_interior_locked",
+        ".": "t_metal_floor",
+        "!": "t_metal_floor_no_roof",
+        "@": "t_metal_floor_no_roof",
+        "_": "t_pavement",
+        "%": "t_fence_barbed",
+        "R": "t_concrete_railing",
+        "S": "t_sidewalk",
+        "W": "t_ballistic_glass",
+        "Y": "t_pavement_y"
+      },
+      "furniture": { "!": "f_sign_warning", "@": "f_statue", "d": "f_desk", "h": "f_chair" },
+      "signs": {
+        "!": {
+          "signage": "RESTRICTED AREA\nAuthorized personnel and registered vehicles only.  Photography prohibited.  Please have your identification ready."
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_entrance_2" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "%%%%%%%%%%%%%%%%%%%%%%%%",
+        "________________________",
+        "_________||++||_________",
+        "||+|||+|||....|||+|||+||",
+        "|#_#|#_#||.>>.||#_#|#_#|",
+        "         |.>>.|         ",
+        "         |....|         ",
+        "         ||++||         ",
+        "         |____|         ",
+        "         #_##_#         ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": {
+        "|": "t_brick_wall",
+        ".": "t_metal_floor",
+        "_": "t_metal_floor_no_roof",
+        "#": "t_fortification_brick",
+        ">": "t_stairs_down",
+        "+": "t_door_metal_interior_locked",
+        "%": "t_concrete_railing"
+      },
+      "place_monster": [
+        { "monster": "mon_turret_antimateriel", "x": 2, "y": 4 },
+        { "monster": "mon_turret_antimateriel", "x": 6, "y": 4 },
+        { "monster": "mon_turret_antimateriel", "x": 17, "y": 4 },
+        { "monster": "mon_turret_antimateriel", "x": 21, "y": 4 },
+        { "monster": "mon_turret_antimateriel", "x": 10, "y": 9 },
+        { "monster": "mon_turret_antimateriel", "x": 13, "y": 9 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_entrance_roof" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "         ______         ",
+        "         ______         ",
+        "         ______         ",
+        "         ______         ",
+        "         ______         ",
+        "         _R__R_         ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": { "_": "t_flat_roof", "R": "t_radio_tower" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_utilities" ],
+    "object": {
+      "fill_ter": "t_strconc_floor_no_roof",
+      "rows": [
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     fSS",
+        "                     fSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS",
+        "                     FSS"
+      ],
+      "terrain": { "F": "t_chainfence", "f": "t_chaingate_l", "S": "t_sidewalk" },
+      "place_nested": [
+        { "chunks": [ "central_lab_surface_utility_6x6" ], "x": 3, "y": 1 },
+        { "chunks": [ "central_lab_surface_utility_6x6" ], "x": 12, "y": 1 },
+        { "chunks": [ "central_lab_surface_utility_6x6" ], "x": 3, "y": 9 },
+        { "chunks": [ "central_lab_surface_utility_6x6" ], "x": 12, "y": 9 },
+        { "chunks": [ "central_lab_surface_utility_6x6" ], "x": 3, "y": 17 },
+        { "chunks": [ "central_lab_surface_utility_6x6" ], "x": 12, "y": 17 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_security_center" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "----------|++|----------",
+        "|||||||||||  |||||||||||",
+        "u                      u",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "u                      u",
+        "|++||||||||||||||||||++|",
+        "   u|eeee|    |eeee|u   ",
+        "   h|eeee| << |eeee|h   ",
+        "   h|eeee| << |eeee|h   ",
+        "   u|Eeee|    |eeeE|u   ",
+        "|++|||++|||++|||++|||++|",
+        "u                      u",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "u                      u",
+        "||                    ||",
+        "-|                    |-"
+      ],
+      "terrain": {
+        "|": "t_strconc_wall",
+        "-": "t_wall_metal",
+        "+": "t_door_metal_interior_locked",
+        "e": "t_elevator",
+        "E": "t_elevator_control",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
+        "<": "t_stairs_up"
+      },
+      "furniture": { "h": "f_chair" },
+      "place_nested": [
+        { "chunks": [ "central_lab_surface_security_center_22x5" ], "x": 1, "y": 3 },
+        { "chunks": [ "central_lab_surface_security_center_22x5" ], "x": 1, "y": 16 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_security_edge" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "||                    ||",
+        "                        ",
+        "                        ",
+        "||                    ||",
+        "-|C                  C|-",
+        "-|C                  C|-",
+        "-|C                  C|-",
+        "-|C                  C|-",
+        "-|C             &    C|-",
+        "-|C   ||========||   C|-",
+        "-|C   |__________|   C|-",
+        "-|CCCC|__________|CCCC|-",
+        "|||||||__________|||||||",
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "terrain": {
+        "|": "t_strconc_wall",
+        "-": "t_wall_metal",
+        "=": "t_door_metal_locked",
+        "&": "t_gates_mech_control",
+        "_": "t_strconc_floor_no_roof",
+        "S": "t_sidewalk"
+      },
+      "nested": { "C": { "chunks": [ "null", "central_lab_crate_1x1" ] } },
+      "place_nested": [
+        { "chunks": [ "central_lab_surface_security_edge_20x17" ], "x": 2, "y": 0 },
+        {
+          "chunks": [ "central_lab_surface_security_wall_7x1" ],
+          "x": 2,
+          "y": 0,
+          "neighbors": { "south": [ "central_lab_surface_utilities" ] }
+        },
+        {
+          "chunks": [ "central_lab_surface_security_wall_7x1" ],
+          "x": 15,
+          "y": 0,
+          "neighbors": { "south": [ "central_lab_surface_cafeteria" ] }
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_security_corner" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "|||WWWWW||___||WWWWW||SS",
+        "-|       W___W       |SS",
+        "-|       |+|+|       WSS",
+        "-|                   WSS",
+        "-|                   WSS",
+        "-|                   WSS",
+        "-|                   WSS",
+        "-|                   |SS",
+        "-|                 |W|SS",
+        "-|                 +__SS",
+        "-|                 |__SS",
+        "-|                 +__SS",
+        "-|                 |W|SS",
+        "-|                   |SS",
+        "-|                   WSS",
+        "-|                   WSS",
+        "-|                   WSS",
+        "-|                   WSS",
+        "-|                   WSS",
+        "-|                   |SS",
+        "-|||||||||||||||||||||SS",
+        "---------------------|SS"
+      ],
+      "terrain": {
+        "|": "t_strconc_wall",
+        "-": "t_wall_metal",
+        "_": "t_strconc_floor_no_roof",
+        "+": "t_door_metal_interior_locked",
+        "S": "t_sidewalk",
+        "W": "t_ballistic_glass"
+      },
+      "place_nested": [
+        { "chunks": [ "central_lab_surface_security_corner_n_3x2" ], "x": 4, "y": 3 },
+        { "chunks": [ "central_lab_surface_security_corner_n_3x2" ], "x": 16, "y": 3 },
+        { "chunks": [ "central_lab_surface_security_corner_e_2x3" ], "x": 19, "y": 5 },
+        { "chunks": [ "central_lab_surface_security_corner_e_2x3" ], "x": 19, "y": 17 },
+        { "chunks": [ "central_lab_surface_security_corner_13x13" ], "x": 4, "y": 7 },
+        {
+          "chunks": [ "central_lab_surface_security_connection_w_2x4" ],
+          "x": 0,
+          "y": 11,
+          "neighbors": { "west": [ "central_lab_surface_security_edge" ] }
+        },
+        {
+          "chunks": [ "central_lab_surface_security_connection_s_4x2" ],
+          "x": 9,
+          "y": 22,
+          "neighbors": { "south": [ "central_lab_surface_security_edge" ] }
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_security_bunker" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "||||||||||||||||||||||||",
+        "------------------------",
+        "------------------------",
+        "-||||||||||||||||||||||-",
+        "-|       | bb |       |-",
+        "-|L b    +    +    b L|-",
+        "-|L b    |    |    b L|-",
+        "-|L b    ||==||    b L|-",
+        "-|L b    |    |    b L|-",
+        "-|L b    | >> |    b L|-",
+        "-|L b    | >> |    b L|-",
+        "-|       |    |       |-",
+        "-||||+|||||++|||||+||||-",
+        "-|       |u  u|       |-",
+        "-|7    ddW    Wdd    7|-",
+        "-|7    hdW    Wdh    7|-",
+        "-|7    ddW    Wdd    7|-",
+        "-|7      |u  u|      7|-",
+        "-|7  h ||||  |||| h  7|-",
+        "-|  666|--|==|--|666  |-",
+        "-|||||||--|  r--|||||||-",
+        "----------|  |----------"
+      ],
+      "terrain": {
+        "|": "t_strconc_wall",
+        "-": "t_wall_metal",
+        "+": "t_door_metal_interior_locked",
+        "=": "t_door_metal_locked",
+        "6": "t_console_broken",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
+        "r": "t_card_science",
+        "S": "t_sidewalk",
+        "W": "t_ballistic_glass",
+        ">": "t_stairs_down"
+      },
+      "furniture": { "b": "f_bench", "d": "f_desk", "h": "f_chair", "L": "f_locker", "7": "f_control_station" },
+      "place_traps": [
+        { "trap": "tr_dissector", "x": 10, "y": 15 },
+        { "trap": "tr_dissector", "x": 11, "y": 15 },
+        { "trap": "tr_dissector", "x": 12, "y": 15 },
+        { "trap": "tr_dissector", "x": 13, "y": 15 },
+        { "trap": "tr_dissector", "x": 10, "y": 19 },
+        { "trap": "tr_dissector", "x": 11, "y": 19 },
+        { "trap": "tr_dissector", "x": 12, "y": 19 },
+        { "trap": "tr_dissector", "x": 13, "y": 19 }
+      ],
+      "items": { "d": { "item": "office", "chance": 50, "repeat": 4 }, "L": { "item": "gear_labsecurity", "chance": 50, "repeat": 2 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_security_center_roof" ],
+    "object": {
+      "fill_ter": "t_metal_floor_no_roof",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "    ||||||||||||||||    ",
+        "    |eeee|    |eeee|    ",
+        "    |eeee| >> |eeee|    ",
+        "    |eeee| >> |eeee|    ",
+        "    |Eeee|    |eeeE|    ",
+        "    ||++|||++|||++||    ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": {
+        "|": "t_strconc_wall",
+        "-": "t_wall_metal",
+        "+": "t_door_metal_interior_locked",
+        "e": "t_elevator",
+        "E": "t_elevator_control",
+        ">": "t_stairs_down"
+      },
+      "place_nested": [
+        {
+          "chunks": [ [ "null", 25 ], [ "roof_4x4_utility", 25 ], [ "roof_4x4_utility_1", 25 ], [ "solar_panels_4X4", 25 ] ],
+          "x": [ 1, 19 ],
+          "y": [ 1, 4 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_security_edge_roof" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "______------------______",
+        "______-          -______",
+        "______-          -______",
+        "-------          -------",
+        "                        ",
+        "                        "
+      ],
+      "terrain": { "_": "t_metal_floor_no_roof", "-": "t_strconc_floor_no_roof" },
+      "place_nested": [
+        {
+          "chunks": [ [ "null", 25 ], [ "roof_4x4_utility", 25 ], [ "roof_4x4_utility_1", 25 ], [ "solar_panels_4X4", 25 ] ],
+          "x": [ 1, 19 ],
+          "y": [ 1, 13 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_security_edge_roof_2" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "------------------------",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________"
+      ],
+      "terrain": { "_": "t_metal_floor_no_roof", "-": "t_strconc_floor_no_roof" },
+      "place_nested": [
+        {
+          "chunks": [ [ "null", 25 ], [ "roof_4x4_utility", 25 ], [ "roof_4x4_utility_1", 25 ], [ "solar_panels_4X4", 25 ] ],
+          "x": [ 1, 19 ],
+          "y": [ 4, 19 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_security_helipad" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "______............______",
+        "_____.............._____",
+        "____................____",
+        "____...yy......yy...____",
+        "____...yy......yy...____",
+        "____...yy......yy...____",
+        "____...yy......yy...____",
+        "____...yyyyyyyyyy...____",
+        "____...yyyyyyyyyy...____",
+        "____...yy......yy...____",
+        "____...yy......yy...____",
+        "____...yy......yy...____",
+        "____...yy......yy...____",
+        "____................____",
+        "_____.............._____",
+        "______............______",
+        "________________________",
+        "________________________",
+        "______------------______",
+        "______-          -______",
+        "______-          -______",
+        "-------          -------",
+        "                        ",
+        "                        "
+      ],
+      "terrain": { ".": "t_pavement", "y": "t_pavement_y", "_": "t_metal_floor_no_roof", "-": "t_strconc_floor_no_roof" },
+      "place_vehicles": [ { "vehicle": "mil_helicopters", "x": [ 11, 12 ], "y": 3, "chance": 50, "rotation": 270 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_security_corner_roof" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "----------   ---------  ",
+        "_________-   -_______-  ",
+        "_________-----_______-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "___________________---  ",
+        "___________________-    ",
+        "___________________-    ",
+        "___________________-    ",
+        "___________________---  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  ",
+        "_____________________-  "
+      ],
+      "terrain": { "_": "t_metal_floor_no_roof", "-": "t_strconc_floor_no_roof" },
+      "place_nested": [
+        {
+          "chunks": [ [ "null", 25 ], [ "roof_4x4_utility", 25 ], [ "roof_4x4_utility_1", 25 ], [ "solar_panels_4X4", 25 ] ],
+          "x": [ 1, 14 ],
+          "y": [ 6, 19 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_loading_bay" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        " |||||||||||||||||||---|",
+        " W...|.............|---|",
+        " W...+.............|---|",
+        " Wdh.|.............|---|",
+        "!|WWW|.............|||||",
+        "_=GGGGGGGGGGGGGI...|,,,,",
+        "_=GGGGGGGGGGGGGR<..|,,,,",
+        "_=GGGGGGGGGGGGGR<..|,,,,",
+        "_=GGGGGGGGGGGGG....=,,,,",
+        "_=GGGGGGGGGGGGG....=,,,,",
+        "_=GGGGGGGGGGGGG....=,,,,",
+        "_=GGGGGGGGGGGGG....=,,,,",
+        "_=GGGGGGGGGGGGG....=,,,,",
+        "_=GGGGGGGGGGGGG....=,,,,",
+        "_=GGGGGGGGGGGGG....=,,,,",
+        "_=GGGGGGGGGGGGG....=,,,,",
+        "_=GGGGGGGGGGGGGR<.&|&,,,",
+        "_=GGGGGGGGGGGGGR<..|,,,,",
+        "_=GGGGGGGGGGGGGI...|g,,,",
+        " |&................|||||",
+        " |...CCCCCCCC......|---|",
+        " |...CCCCCCCC......|---|",
+        " |.................|---|",
+        " |||||||||||||||||||---|"
+      ],
+      "terrain": {
+        " ": "t_region_groundcover",
+        ",": "t_strconc_floor_no_roof",
+        "!": "t_region_groundcover",
+        "|": "t_brick_wall",
+        "-": "t_wall_metal",
+        "=": "t_door_metal_locked",
+        "<": "t_ladder_up",
+        "+": "t_door_metal_interior_locked",
+        "&": "t_gates_mech_control",
+        ".": "t_metal_floor",
+        "_": "t_pavement",
+        "d": "t_metal_floor",
+        "G": "t_grate",
+        "g": "t_gutter_downspout",
+        "h": "t_metal_floor",
+        "I": "t_column",
+        "R": "t_concrete_railing",
+        "W": "t_ballistic_glass"
+      },
+      "furniture": { "!": "f_sign_warning", "d": "f_desk", "h": "f_chair" },
+      "nested": { "C": { "chunks": [ "null", "central_lab_crate_1x1" ] } },
+      "signs": {
+        "!": {
+          "signage": "RESTRICTED AREA\nAuthorized personnel and registered vehicles only.  Photography prohibited.  Please have your identification ready."
+        }
+      },
+      "place_vehicles": [
+        { "vehicle": "military_cargo_truck", "x": [ 7, 10 ], "y": 7, "chance": 50, "rotation": 0 },
+        { "vehicle": "forklift", "x": [ 9, 12 ], "y": [ 15, 17 ], "chance": 75, "rotation": 180 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_loading_bay_2" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        " #||||||||||||||#_#|___R",
+        " __|___________||+||___R",
+        " #_+___________________R",
+        " __|___________________R",
+        " ||||||||||||||||+||RRRR",
+        " |/////////////RGGG|    ",
+        " |/////////////R>GG|    ",
+        " |/////////////R>GG|    ",
+        " |/////////////RGGG|    ",
+        " |/////////////RGGG|    ",
+        " |/////////////RGGG|    ",
+        " |/////////////RGGG|    ",
+        " |/////////////RGGG|    ",
+        " |/////////////RGGG|    ",
+        " |/////////////RGGG|    ",
+        " |/////////////RGGG|    ",
+        " |/////////////R>GG|    ",
+        " |/////////////R>GG|g   ",
+        " |/////////////RGGG|    ",
+        " ||||||||||||||||+||RRRR",
+        " __|___________________R",
+        " #_+___________________R",
+        " __|___________||+||___R",
+        " #||||||||||||||#_#|___R"
+      ],
+      "terrain": {
+        "/": "t_open_air_rooved",
+        "|": "t_brick_wall",
+        ">": "t_ladder_down",
+        "+": "t_door_metal_interior_locked",
+        ".": "t_metal_floor",
+        "_": "t_metal_floor_no_roof",
+        "#": "t_fortification_brick",
+        "G": "t_grate_indoor",
+        "g": "t_gutter_downspout",
+        "R": "t_concrete_railing"
+      },
+      "furniture": { "!": "f_sign_warning", "d": "f_desk", "h": "f_chair" },
+      "place_monster": [
+        { "monster": "mon_laserturret", "x": 17, "y": 0 },
+        { "monster": "mon_turret_antimateriel", "x": 1, "y": 1 },
+        { "monster": "mon_turret_antimateriel", "x": 1, "y": 3 },
+        { "monster": "mon_turret_antimateriel", "x": 1, "y": 20 },
+        { "monster": "mon_turret_antimateriel", "x": 1, "y": 22 },
+        { "monster": "mon_laserturret", "x": 17, "y": 23 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_loading_bay_roof" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        " -------------------    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________-    ",
+        " -_________________o    ",
+        " -_________________-    ",
+        " -------------------    ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": { "_": "t_flat_roof", "-": "t_gutter", "o": "t_gutter_drop" },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ]
+          ],
+          "x": [ 3, 16 ],
+          "y": [ 6, 9 ]
+        },
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ]
+          ],
+          "x": [ 3, 16 ],
+          "y": [ 13, 16 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_warehouse" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "_____________________FSS",
+        "_____________________FSS",
+        "__|||||||||++|||||||||SS",
+        "__|CCCCCC      CCCCCC|SS",
+        "__|CCCCCC      CCCCCC|SS",
+        "__|CC              CC|SS",
+        "__|CC              CC|SS",
+        "__|                CC|SS",
+        "__=                CC|SS",
+        "__=                  |SS",
+        "__=                  |SS",
+        "__=                  +SS",
+        "__=                  +SS",
+        "__=                  |SS",
+        "__=                  |SS",
+        "__=                CC|SS",
+        "_&|&               CC|SS",
+        "__|CC              CC|SS",
+        "__|CC              CC|SS",
+        "__|CCCCCC      CCCCCC|SS",
+        "_g|CCCCCC      CCCCCC|SS",
+        "FF|||||||||++|||||||||SS",
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "terrain": {
+        "|": "t_strconc_wall",
+        "=": "t_door_metal_locked",
+        "+": "t_door_metal_interior_locked",
+        "&": "t_gates_mech_control",
+        "_": "t_strconc_floor_no_roof",
+        "F": "t_chainfence",
+        "g": "t_gutter_downspout",
+        "S": "t_sidewalk"
+      },
+      "nested": { "C": { "chunks": [ "null", "central_lab_crate_1x1" ] } },
+      "place_vehicles": [ { "vehicle": "forklift", "x": [ 10, 14 ], "y": [ 10, 14 ], "chance": 75, "rotation": 270 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_warehouse_roof" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "  --------------------  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  o__________________-  ",
+        "  --------------------  ",
+        "                        "
+      ],
+      "terrain": { "_": "t_flat_roof", "-": "t_gutter", "o": "t_gutter_drop" },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ]
+          ],
+          "x": [ 4, 18 ],
+          "y": [ 3, 9 ]
+        },
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ]
+          ],
+          "x": [ 4, 18 ],
+          "y": [ 13, 19 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_plaza" ],
+    "object": {
+      "fill_ter": "t_region_groundcover",
+      "rows": [
+        "%%%%%%%%%%%SS%%%%%%%%%%%",
+        "%%%%%%%bb%%SS%%bb%%%%%%%",
+        "%%SSSSSSSSSSSSSSSSSSSS%%",
+        "%%SSSSSSSSSSSSSSSSSSSS%%",
+        "%%SS                SS%%",
+        "%%SS                SS%%",
+        "%%SS                SS%%",
+        "%bSS                SSb%",
+        "%bSS                SSb%",
+        "%%SS                SS%%",
+        "%%SS                SS%%",
+        "SSSS                SSSS",
+        "SSSS                SSSS",
+        "%%SS                SS%%",
+        "%%SS                SS%%",
+        "%bSS                SSb%",
+        "%bSS                SSb%",
+        "%%SS                SS%%",
+        "%%SS                SS%%",
+        "%%SS                SS%%",
+        "%%SSSSSSSSSSSSSSSSSSSS%%",
+        "%%SSSSSSSSSSSSSSSSSSSS%%",
+        "%%%%%%%bb%%SS%%bb%%%%%%%",
+        "%%%%%%%%%%%SS%%%%%%%%%%%"
+      ],
+      "terrain": {
+        "%": [ [ "t_region_groundcover", 90 ], [ "t_region_shrub_decorative", 9 ], "t_region_tree_shade" ],
+        "b": "t_region_groundcover_barren",
+        "S": "t_sidewalk"
+      },
+      "furniture": { "b": "f_bench" },
+      "place_nested": [ { "chunks": [ "central_lab_surface_plaza_16x16" ], "x": 4, "y": 4 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_office" ],
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SS||WWWWWWWWWWWWWWW||||+",
+        "SS|                 |h r",
+        "SSW                 |h r",
+        "SSW                 +  r",
+        "SSW                 +  r",
+        "SSW                 |  d",
+        "SS|                 |  r",
+        "SS||||||||||||||++|||  r",
+        "SS|LL|T |ssst|         r",
+        "SS|  |  |    |        rr",
+        "SS|+|||+|    +rrrrrrrrr<",
+        "SS|          +rrrrrrrrr<",
+        "SS|+|+|+|    |        rr",
+        "SS|T|T|T|ssst|         r",
+        "SS||||||||||||||++|||  r",
+        "SS|                 |  r",
+        "SSW                 |  d",
+        "SSW                 +  r",
+        "SSW                 +  r",
+        "SSW                 |  r",
+        "SS|                 |  r",
+        "SS||WWWWWWWWWWWWWWW||||+",
+        "SSgSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "terrain": {
+        "|": "t_wall_w",
+        "+": "t_door_c",
+        "<": "t_stairs_up",
+        "d": "t_carpet_red",
+        "g": "t_gutter_downspout",
+        "r": "t_carpet_red",
+        "S": "t_sidewalk",
+        "W": "t_reinforced_glass_shutter"
+      },
+      "furniture": { "d": "f_desk", "h": "f_chair", "L": "f_locker", "s": "f_sink", "t": "f_trashcan" },
+      "toilets": { "T": {  } },
+      "items": {
+        "d": { "item": "office", "chance": 50, "repeat": 4 },
+        "L": { "item": "cleaning", "chance": 50, "repeat": 4 },
+        "t": { "item": "trash_cart", "chance": 25, "repeat": 3 }
+      },
+      "place_nested": [
+        { "chunks": [ "central_lab_surface_office_17x6" ], "x": 3, "y": 2 },
+        { "chunks": [ "central_lab_surface_office_17x6" ], "x": 3, "y": 16 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_office_2" ],
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "////////////////////////",
+        "//||WWWWWWWWWWWWWWW|||WW",
+        "//|                 |BhH",
+        "//W                 |  r",
+        "//W                 +  r",
+        "//W                 +  r",
+        "//W                 |  r",
+        "//|                 |  r",
+        "//||||||||||||||++|||  r",
+        "//|LL|T |ssst|         r",
+        "//|  |  |    |        rr",
+        "//|+|||+|    +rrrrrrrrr>",
+        "//|          +rrrrrrrrr>",
+        "//|+|+|+|    |        rr",
+        "//|T|T|T|ssst|         r",
+        "//||||||||||||||++|||  r",
+        "//|                 |  r",
+        "//W                 |  r",
+        "//W                 +  r",
+        "//W                 +  r",
+        "//W                 |  r",
+        "//|                 |BhH",
+        "//||WWWWWWWWWWWWWWW|||WW",
+        "///g////////////////////"
+      ],
+      "terrain": {
+        "/": "t_open_air",
+        "|": "t_wall_w",
+        "+": "t_door_c",
+        ">": "t_stairs_down",
+        "g": "t_gutter_downspout",
+        "H": "t_carpet_red",
+        "r": "t_carpet_red",
+        "W": "t_reinforced_glass_shutter"
+      },
+      "furniture": { "B": "f_bookcase", "h": "f_chair", "H": "f_chair", "L": "f_locker", "s": "f_sink", "t": "f_trashcan" },
+      "toilets": { "T": {  } },
+      "items": {
+        "B": { "item": "lab_bookshelves", "chance": 25, "repeat": 3 },
+        "L": { "item": "cleaning", "chance": 50, "repeat": 4 },
+        "t": { "item": "trash_cart", "chance": 25, "repeat": 3 }
+      },
+      "place_nested": [
+        { "chunks": [ "central_lab_surface_office_17x6" ], "x": 3, "y": 2 },
+        { "chunks": [ "central_lab_surface_office_17x6" ], "x": 3, "y": 16 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_office_roof" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "  ----------------------",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -o--------------------",
+        "                        "
+      ],
+      "terrain": { "_": "t_flat_roof", "-": "t_gutter", "o": "t_gutter_drop" },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ],
+            [ "roof_2x2_utilities", 25 ],
+            [ "roof_2x2_utilities_b", 25 ],
+            [ "roof_2x2_utilities_c", 25 ],
+            [ "roof_2x2_utilities_d", 25 ]
+          ],
+          "x": [ 4, 21 ],
+          "y": [ 3, 9 ]
+        },
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ],
+            [ "roof_2x2_utilities", 25 ],
+            [ "roof_2x2_utilities_b", 25 ],
+            [ "roof_2x2_utilities_c", 25 ],
+            [ "roof_2x2_utilities_d", 25 ]
+          ],
+          "x": [ 4, 21 ],
+          "y": [ 13, 19 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_medical_center" ],
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SS||||||||||||||||||||SS",
+        "SS|   |   |   |   | T|SS",
+        "SS|   |   |   |   |  |SS",
+        "SS|   |   |   |   | s|SS",
+        "SS||+|||+|||+|||+||+||SS",
+        "SS|f                f|SS",
+        "SS|f                f|SS",
+        "SS||||||+||WW||  |||||SS",
+        "SS|      c    |  |   |SS",
+        "SS+      ch   W  +   |SS",
+        "SS+      c    W  |   |SS",
+        "SS|      ch   |  |||||SS",
+        "SSWe     ccGGc|  |   |SS",
+        "SSWh          +  +   |SS",
+        "SSWh          |  |   |SS",
+        "SSWh          |  |||||SS",
+        "SSWh          |  |   |SS",
+        "SSWh          |  +   |SS",
+        "SS|ehhhhhe    |ff|   |SS",
+        "SS||WWWWWW|++|||||||||SS",
+        "SSSSSSSSSSSSSSSSSSSSgSSS",
+        "SSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "terrain": { "|": "t_wall_w", "+": "t_door_c", "g": "t_gutter_downspout", "S": "t_sidewalk", "W": "t_reinforced_glass_shutter" },
+      "furniture": { "c": "f_counter", "e": "f_table", "f": "f_glass_cabinet", "G": "f_counter_gate_c", "h": "f_chair", "s": "f_sink" },
+      "toilets": { "T": {  } },
+      "items": {
+        "e": { "item": "magazines", "chance": 50, "repeat": 4 },
+        "f": [ { "item": "doctors_books", "chance": 50, "repeat": 2 }, { "item": "tools_medical", "chance": 25, "repeat": 2 } ]
+      },
+      "place_nested": [
+        { "chunks": [ "central_lab_surface_medcenter_v_3x3" ], "x": 3, "y": 3 },
+        { "chunks": [ "central_lab_surface_medcenter_v_3x3" ], "x": 7, "y": 3 },
+        { "chunks": [ "central_lab_surface_medcenter_v_3x3" ], "x": 11, "y": 3 },
+        { "chunks": [ "central_lab_surface_medcenter_v_3x3" ], "x": 15, "y": 3 },
+        { "chunks": [ "central_lab_surface_medcenter_h_3x3" ], "x": 18, "y": 10 },
+        { "chunks": [ "central_lab_surface_medcenter_h_3x3" ], "x": 18, "y": 14 },
+        { "chunks": [ "central_lab_surface_medcenter_h_3x3" ], "x": 18, "y": 18 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_medical_center_roof" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "  --------------------  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  ------------------o-  ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": { "_": "t_flat_roof", "-": "t_gutter", "o": "t_gutter_drop" },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ],
+            [ "roof_2x2_utilities", 25 ],
+            [ "roof_2x2_utilities_b", 25 ],
+            [ "roof_2x2_utilities_c", 25 ],
+            [ "roof_2x2_utilities_d", 25 ]
+          ],
+          "x": [ 4, 18 ],
+          "y": [ 4, 9 ]
+        },
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ],
+            [ "roof_2x2_utilities", 25 ],
+            [ "roof_2x2_utilities_b", 25 ],
+            [ "roof_2x2_utilities_c", 25 ],
+            [ "roof_2x2_utilities_d", 25 ]
+          ],
+          "x": [ 4, 18 ],
+          "y": [ 13, 18 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_cafeteria" ],
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SS||WWWWWW|++|WWWWWW||SS",
+        "Sg|                  |SS",
+        "SSW                  WSS",
+        "SSW bbbbbb    bbbbbb WSS",
+        "SSW eeeeee    eeeeee WSS",
+        "SSW eeeeee    eeeeee WSS",
+        "SSW bbbbbb    bbbbbb WSS",
+        "SSW                  WSS",
+        "SS|tt              tt|SS",
+        "SS|W|  beeb  beeb  |W|SS",
+        "SS__+  beeb  beeb  +__SS",
+        "SS__|  beeb  beeb  |__SS",
+        "SS__+  beeb  beeb  +__SS",
+        "SS|W|  beeb  beeb  |W|SS",
+        "SS|tt              tt|SS",
+        "SSW                  WSS",
+        "SSW                  WSS",
+        "SSW  vv          VV  WSS",
+        "SSW  |||cccccccc|||  WSS",
+        "SSW  |s          o|  WSS",
+        "SSW  |s          o|  WSS",
+        "SS|L +   cFFFFc   + L|SS"
+      ],
+      "terrain": {
+        "|": "t_wall_b",
+        "+": "t_door_c",
+        "_": "t_strconc_floor_no_roof",
+        "g": "t_gutter_downspout",
+        "S": "t_sidewalk",
+        "W": "t_reinforced_glass_shutter"
+      },
+      "furniture": {
+        "b": "f_bench",
+        "c": "f_counter",
+        "e": "f_table",
+        "F": "f_fridge",
+        "L": "f_locker",
+        "o": "f_oven",
+        "s": "f_sink",
+        "t": "f_trashcan",
+        "V": "f_vending_c",
+        "v": "f_vending_c"
+      },
+      "items": {
+        "e": { "item": "fast_table", "chance": 25 },
+        "F": { "item": "fast_fridge", "chance": 50, "repeat": 10 },
+        "L": { "item": "cleaning", "chance": 50, "repeat": 4 },
+        "o": { "item": "oven", "chance": 75, "repeat": 3 },
+        "s": { "item": "restaur_sink", "chance": 75, "repeat": 5 },
+        "t": { "item": "trash_cart", "chance": 50, "repeat": 6 },
+        "V": { "item": "vending_food", "chance": 80 },
+        "v": { "item": "vending_drink", "chance": 80 }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_cafeteria_roof" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "  --------------------  ",
+        "  o__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  ---______________---  ",
+        "    -______________-    ",
+        "    -______________-    ",
+        "    -______________-    ",
+        "  ---______________---  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  ",
+        "  -__________________-  "
+      ],
+      "terrain": { "_": "t_flat_roof", "-": "t_gutter", "o": "t_gutter_drop" },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ],
+            [ "roof_2x2_utilities", 25 ],
+            [ "roof_2x2_utilities_b", 25 ],
+            [ "roof_2x2_utilities_c", 25 ],
+            [ "roof_2x2_utilities_d", 25 ]
+          ],
+          "x": [ 4, 18 ],
+          "y": [ 4, 8 ]
+        },
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ],
+            [ "roof_2x2_utilities", 25 ],
+            [ "roof_2x2_utilities_b", 25 ],
+            [ "roof_2x2_utilities_c", 25 ],
+            [ "roof_2x2_utilities_d", 25 ]
+          ],
+          "x": [ 4, 18 ],
+          "y": [ 17, 21 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_dorms" ],
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "SS|||||||||||||||||||||+",
+        "SS|                 |  G",
+        "SS|                 |  G",
+        "SS|                 +  G",
+        "SS|                 +  G",
+        "SS|                 |  G",
+        "SS|                 |  G",
+        "SS|||||||||||||||||||  G",
+        "SS|                 |  G",
+        "SS|                 | GG",
+        "SS|                 + G<",
+        "SS|                 + G<",
+        "SS|                 | GG",
+        "SS|                 |  G",
+        "SS|||||||||||||||||||  G",
+        "SS|                 |  G",
+        "SS|                 |  G",
+        "SS|                 +  G",
+        "SS|                 +  G",
+        "SS|                 |  G",
+        "SS|                 |  G",
+        "SS|||||||||||||||||||||+",
+        "SSgSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "terrain": {
+        "|": "t_wall_b",
+        "+": "t_door_c",
+        "G": "t_carpet_green",
+        "g": "t_gutter_downspout",
+        "S": "t_sidewalk",
+        "<": "t_stairs_up"
+      },
+      "place_nested": [
+        { "chunks": [ "central_lab_surface_dorm_17x6" ], "x": 3, "y": 2 },
+        { "chunks": [ "central_lab_surface_dorm_17x6" ], "x": 3, "y": 9 },
+        { "chunks": [ "central_lab_surface_dorm_17x6" ], "x": 3, "y": 16 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_dorms_2" ],
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "////////////////////////",
+        "//||||||||||||||||||||WW",
+        "//|                 |dwG",
+        "//|                 |  G",
+        "//|                 +  G",
+        "//|                 +  G",
+        "//|                 |  G",
+        "//|                 |  G",
+        "//|||||||||||||||||||  G",
+        "//|                 |  G",
+        "//|                 | GG",
+        "//|                 + G>",
+        "//|                 + G>",
+        "//|                 | GG",
+        "//|                 |  G",
+        "//|||||||||||||||||||  G",
+        "//|                 |  G",
+        "//|                 |  G",
+        "//|                 +  G",
+        "//|                 +  G",
+        "//|                 |  G",
+        "//|                 |dwG",
+        "//||||||||||||||||||||WW",
+        "///g////////////////////"
+      ],
+      "terrain": {
+        "/": "t_open_air",
+        "|": "t_wall_b",
+        "+": "t_door_c",
+        "G": "t_carpet_green",
+        "g": "t_gutter_downspout",
+        "W": "t_reinforced_glass_shutter",
+        ">": "t_stairs_down"
+      },
+      "furniture": { "d": "f_dryer", "w": "f_washer" },
+      "place_nested": [
+        { "chunks": [ "central_lab_surface_dorm_17x6" ], "x": 3, "y": 2 },
+        { "chunks": [ "central_lab_surface_dorm_17x6" ], "x": 3, "y": 9 },
+        { "chunks": [ "central_lab_surface_dorm_17x6" ], "x": 3, "y": 16 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_dorms_roof" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "  ----------------------",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -_____________________",
+        "  -o--------------------",
+        "                        "
+      ],
+      "terrain": { "_": "t_flat_roof", "-": "t_gutter", "o": "t_gutter_drop" },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ],
+            [ "roof_2x2_utilities", 25 ],
+            [ "roof_2x2_utilities_b", 25 ],
+            [ "roof_2x2_utilities_c", 25 ],
+            [ "roof_2x2_utilities_d", 25 ]
+          ],
+          "x": [ 4, 21 ],
+          "y": [ 3, 9 ]
+        },
+        {
+          "chunks": [
+            [ "null", 25 ],
+            [ "roof_2x2_infrastructure", 25 ],
+            [ "roof_2x2_infrastructure_1", 25 ],
+            [ "roof_2x2_infrastructure_2", 25 ],
+            [ "roof_2x2_utilities", 25 ],
+            [ "roof_2x2_utilities_b", 25 ],
+            [ "roof_2x2_utilities_c", 25 ],
+            [ "roof_2x2_utilities_d", 25 ]
+          ],
+          "x": [ 4, 21 ],
+          "y": [ 13, 19 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_parking" ],
+    "object": {
+      "fill_ter": "t_pavement",
+      "rows": [
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "     Y     Y     Y     Y",
+        "SSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "terrain": { "S": "t_sidewalk", "Y": "t_pavement_y" },
+      "place_vehicles": [
+        { "vehicle": "parkinglotbasic", "x": 1, "y": 3, "chance": 50, "rotation": 270 },
+        { "vehicle": "parkinglotbasic", "x": 7, "y": 3, "chance": 50, "rotation": 270 },
+        { "vehicle": "parkinglotbasic", "x": 13, "y": 3, "chance": 50, "rotation": 270 },
+        { "vehicle": "parkinglotbasic", "x": 19, "y": 3, "chance": 50, "rotation": 270 },
+        { "vehicle": "parkinglotbasic", "x": 3, "y": 20, "chance": 50, "rotation": 90 },
+        { "vehicle": "parkinglotbasic", "x": 9, "y": 20, "chance": 50, "rotation": 90 },
+        { "vehicle": "parkinglotbasic", "x": 15, "y": 20, "chance": 50, "rotation": 90 },
+        { "vehicle": "parkinglotbasic", "x": 21, "y": 20, "chance": 50, "rotation": 90 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_surface_parking_center" ],
+    "object": {
+      "fill_ter": "t_pavement",
+      "rows": [
+        "SSSSSSSSSSSSSSSSSSSSSSSS",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "Y                      Y",
+        "S        SSSSSS        S"
+      ],
+      "terrain": { "S": "t_sidewalk", "Y": "t_pavement_y" },
+      "place_vehicles": [ { "vehicle": "military_vehicles", "x": [ 10, 12 ], "y": 3, "chance": 50, "rotation": 0 } ]
+    }
+  }
+]

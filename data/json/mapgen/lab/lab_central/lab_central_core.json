@@ -1,0 +1,298 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_core_center" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "---------|    |---------",
+        "-|||||||||    |||||||||-",
+        "-|U                  U|-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "||                    ||",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "||                    ||",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|U                  U|-",
+        "-|||||||||    |||||||||-",
+        "---------|    |---------"
+      ],
+      "terrain": { "|": "t_rock_smooth", "-": "t_rock", "U": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "central_lab_layout_a_20x20", 25 ],
+            [ "central_lab_layout_b_20x20", 25 ],
+            [ "central_lab_layout_c_20x20", 25 ],
+            [ "central_lab_layout_d_20x20", 25 ],
+            [ "central_lab_layout_e_20x20", 25 ],
+            [ "central_lab_layout_f_20x20", 25 ]
+          ],
+          "x": 2,
+          "y": 2
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_n_4x4", 40 ], [ "central_lab_blockage_n_4x4", 10 ] ],
+          "x": 10,
+          "y": 0
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_s_4x4", 40 ], [ "central_lab_blockage_s_4x4", 10 ] ],
+          "x": 10,
+          "y": 20
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_e_4x4", 40 ], [ "central_lab_blockage_e_4x4", 10 ] ],
+          "x": 20,
+          "y": 10
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_w_4x4", 40 ], [ "central_lab_blockage_w_4x4", 10 ] ],
+          "x": 0,
+          "y": 10
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_core_edge" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "------------------------",
+        "-||||||||||||||||||||||-",
+        "-|U                  U|-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "||                    ||",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "||                    ||",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|U                  U|-",
+        "-|||||||||    |||||||||-",
+        "---------|    |---------"
+      ],
+      "terrain": { "|": "t_rock_smooth", "-": "t_rock", "U": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "central_lab_layout_a_20x20", 25 ],
+            [ "central_lab_layout_b_20x20", 25 ],
+            [ "central_lab_layout_c_20x20", 25 ],
+            [ "central_lab_layout_d_20x20", 25 ],
+            [ "central_lab_layout_e_20x20", 25 ],
+            [ "central_lab_layout_f_20x20", 25 ]
+          ],
+          "x": 2,
+          "y": 2
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_s_4x4", 40 ], [ "central_lab_blockage_s_4x4", 10 ] ],
+          "x": 10,
+          "y": 20
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_e_4x4", 40 ], [ "central_lab_blockage_e_4x4", 10 ] ],
+          "x": 20,
+          "y": 10
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_blockage_w_4x4", 40 ], [ "central_lab_blockage_w_4x4", 10 ] ],
+          "x": 0,
+          "y": 10
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_core_corner" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "------------------------",
+        "-||||||||||||||||||||||-",
+        "-|U                  U|-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "||                    |-",
+        "                      |-",
+        "                      |-",
+        "                      |-",
+        "                      |-",
+        "||                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|U                  U|-",
+        "-|||||||||    |||||||||-",
+        "---------|    |---------"
+      ],
+      "terrain": { "|": "t_rock_smooth", "-": "t_rock", "U": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "central_lab_layout_a_20x20", 25 ],
+            [ "central_lab_layout_b_20x20", 25 ],
+            [ "central_lab_layout_c_20x20", 25 ],
+            [ "central_lab_layout_d_20x20", 25 ],
+            [ "central_lab_layout_e_20x20", 25 ],
+            [ "central_lab_layout_f_20x20", 25 ]
+          ],
+          "x": 2,
+          "y": 2
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_s_4x4", 40 ], [ "central_lab_blockage_s_4x4", 10 ] ],
+          "x": 10,
+          "y": 20
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_w_4x4", 40 ], [ "central_lab_blockage_w_4x4", 10 ] ],
+          "x": 0,
+          "y": 10
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_up" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "------------------------",
+        "-||||||||||||||||||||||-",
+        "-|U                  U|-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "||                    ||",
+        "                        ",
+        "           <<           ",
+        "           <<           ",
+        "                        ",
+        "||                    ||",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|U                  U|-",
+        "-|||||||||    |||||||||-",
+        "---------|    |---------"
+      ],
+      "terrain": { "|": "t_rock_smooth", "-": "t_rock", "<": "t_stairs_up", "U": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "place_nested": [
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_s_4x4", 40 ], [ "central_lab_blockage_s_4x4", 10 ] ],
+          "x": 10,
+          "y": 20
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_e_4x4", 40 ], [ "central_lab_blockage_e_4x4", 10 ] ],
+          "x": 20,
+          "y": 10
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_blockage_w_4x4", 40 ], [ "central_lab_blockage_w_4x4", 10 ] ],
+          "x": 0,
+          "y": 10
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_down" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "------------------------",
+        "-||||||||||||||||||||||-",
+        "-|U                  U|-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "||                    ||",
+        "                        ",
+        "           >>           ",
+        "           >>           ",
+        "                        ",
+        "||                    ||",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|U                  U|-",
+        "-|||||||||    |||||||||-",
+        "---------|    |---------"
+      ],
+      "terrain": { "|": "t_rock_smooth", "-": "t_rock", ">": "t_stairs_down", "U": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "place_nested": [
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_s_4x4", 40 ], [ "central_lab_blockage_s_4x4", 10 ] ],
+          "x": 10,
+          "y": 20
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_locked_e_4x4", 40 ], [ "central_lab_blockage_e_4x4", 10 ] ],
+          "x": 20,
+          "y": 10
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_blockage_w_4x4", 40 ], [ "central_lab_blockage_w_4x4", 10 ] ],
+          "x": 0,
+          "y": 10
+        }
+      ]
+    }
+  }
+]

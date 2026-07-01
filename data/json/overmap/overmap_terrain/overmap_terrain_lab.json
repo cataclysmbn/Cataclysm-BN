@@ -250,6 +250,145 @@
   },
   {
     "type": "overmap_terrain",
+    "id": [ "central_lab_perimeter_corner", "central_lab_perimeter_corner_2" ],
+    "name": "perimeter wall",
+    "color": "dark_gray",
+    "sym": "┐",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_perimeter_edge", "central_lab_perimeter_edge_2" ],
+    "copy-from": "central_lab_perimeter_corner",
+    "sym": "─"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "central_lab_surface_utilities",
+    "name": "utilities",
+    "color": "dark_gray",
+    "sym": "u",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "central_lab_surface_security_bunker",
+      "central_lab_surface_security_center",
+      "central_lab_surface_security_corner",
+      "central_lab_surface_security_edge",
+      "central_lab_surface_security_center_roof",
+      "central_lab_surface_security_corner_roof",
+      "central_lab_surface_security_edge_roof",
+      "central_lab_surface_security_edge_roof_2"
+    ],
+    "name": "security building",
+    "color": "i_dark_gray",
+    "sym": "s",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "central_lab_surface_security_helipad",
+    "copy-from": "central_lab_surface_security_edge_roof",
+    "name": "helipad",
+    "sym": "H"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_loading_bay", "central_lab_surface_loading_bay_2", "central_lab_surface_loading_bay_roof" ],
+    "name": "loading bay",
+    "color": "light_blue",
+    "sym": "+",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_medical_center", "central_lab_surface_medical_center_roof" ],
+    "name": "medical center",
+    "color": "light_red",
+    "sym": "<",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_entrance", "central_lab_surface_entrance_2", "central_lab_surface_entrance_roof" ],
+    "name": "entrance gate",
+    "color": "light_blue",
+    "sym": "+",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_warehouse", "central_lab_surface_warehouse_roof" ],
+    "name": "warehouse",
+    "color": "light_blue",
+    "sym": "w",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_parking", "central_lab_surface_parking_center" ],
+    "name": "parking lot",
+    "color": "dark_gray",
+    "sym": "O",
+    "see_cost": 1
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "central_lab_surface_plaza",
+    "name": "plaza",
+    "color": "green",
+    "sym": "O",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_cafeteria", "central_lab_surface_cafeteria_roof" ],
+    "name": "cafeteria",
+    "color": "i_light_blue",
+    "sym": "c",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_dorms", "central_lab_surface_dorms_2", "central_lab_surface_dorms_roof" ],
+    "name": "dormitories",
+    "color": "i_blue",
+    "sym": "+",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_office", "central_lab_surface_office_2", "central_lab_surface_office_roof" ],
+    "name": "office building",
+    "color": "i_light_gray",
+    "sym": "o",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_core_center", "central_lab_core_edge", "central_lab_core_corner" ],
+    "name": "central lab - core",
+    "sym": "L",
+    "color": "cyan",
+    "see_cost": 5,
+    "flags": [ "RISK_HIGH" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "copy-from": "central_lab_core_center",
+    "id": "central_lab_down",
+    "name": "central lab - stairs",
+    "color": "light_blue"
+  },
+  {
+    "type": "overmap_terrain",
+    "copy-from": "central_lab_down",
+    "id": [ "central_lab_up" ]
+  },
+  {
+    "type": "overmap_terrain",
     "id": "central_lab_endgame",
     "name": "central lab",
     "sym": "L",
