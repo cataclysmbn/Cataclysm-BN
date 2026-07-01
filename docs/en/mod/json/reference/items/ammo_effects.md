@@ -18,7 +18,7 @@ There are two types of ammo_effects. Hardcoded ammo effects and jsonized ammo ef
 | APPLY_SAP              | Applies the sap effect for turns scaling off damage                          |
 | BEANBAG                | Applies the stun effect for a short duration                                 |
 | BLINDS_EYES            | Applies blind if hits eyes                                                   |
-| BOUNCE                 | Bounces and hits other targets in a nearby area                              |
+| BOUNCE                 | Bounces and hits other targets in a nearby area also gives the `WIDE` effect |
 | BURST                  | Drops contents on impact, but is also destroyed                              |
 | CUSTOM_EXPLOSION       | Uses the explosion data of the item                                          |
 | DRAW_AS_LINE           | Drawn instantly without animation                                            |
@@ -40,6 +40,9 @@ There are two types of ammo_effects. Hardcoded ammo effects and jsonized ammo ef
 | WHIP                   | Scares wildlife hit by it, will also apply disarm sometimes on reach attacks |
 | BLACKPOWDER            | Will cause build up of damaging gunk                                         |
 | RECYCLED               | Causes a 1 in 256 chance to fail to fire                                     |
+| RECOVER_X              | Has a (X-1/X) chance to recover one charge of used ammo at the impact        |
+| WIDE                   | Currently has no effect, suppost to make `HARDTOSHOOT` have no effect        |
+| SHOT                   | Force applies the `WIDE` effect                                              |
 
 ### Fields
 
