@@ -91,18 +91,18 @@ All members are mandatory.
 
 #### Effect
 
-| Identifier                   | Description                                                                                                                                                    |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| intensity                    | (_mandatory_) This effect will be applied every x turns                                                                                                        |
-| duration                     | (_mandatory_) How long the effect lasts                                                                                                                        |
-| effect_id_str                | (_mandatory_) String of the effect id to give                                                                                                                  |
-| effect_intensity             | (_mandatory_) Intensity of the effect to give                                                                                                                  |
-| bodypart_string              | (_optional_) Bodypart to apply the effect to, default whole body                                                                                               |
-| effect_msg                   | (_mandatory_) Message to give when gaining the effect                                                                                                          |
-| effect_msg_frequency         | (_mandatory_) Percent chance to display the message on gaining effect                                                                                          |
-| effect_msg_blocked_frequency | (_mandatory_) Percent chance to display the protection message on preventing effect                                                                            |
-| message_type                 | (_mandatory_) Type of message; 0 == Good, 1 == Bad, 2 == Mixed, 3 == Warning, 4 == Info, 5 == Neutral                                                          |
-| precipitation_name           | (_mandatory_) Name to display in string "Your umbrella protects you from the `precipitation_name`"                                                             |
+| Identifier                   | Description                                                                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| intensity                    | (_mandatory_) This effect will be applied every x turns                                                                                                       |
+| duration                     | (_mandatory_) How long the effect lasts                                                                                                                       |
+| effect_id_str                | (_mandatory_) String of the effect id to give                                                                                                                 |
+| effect_intensity             | (_mandatory_) Intensity of the effect to give                                                                                                                 |
+| bodypart_string              | (_optional_) Bodypart to apply the effect to, default whole body                                                                                              |
+| effect_msg                   | (_mandatory_) Message to give when gaining the effect                                                                                                         |
+| effect_msg_frequency         | (_mandatory_) Percent chance to display the message on gaining effect                                                                                         |
+| effect_msg_blocked_frequency | (_mandatory_) Percent chance to display the protection message on preventing effect                                                                           |
+| message_type                 | (_mandatory_) Type of message; 0 == Good, 1 == Bad, 2 == Mixed, 3 == Warning, 4 == Info, 5 == Neutral                                                         |
+| precipitation_name           | (_mandatory_) Name to display in string "Your umbrella protects you from the `precipitation_name`"                                                            |
 | protection_data              | (_optional_) Array of `check` flags or traits ( along with `DEFAULT` which is always applied ) and `odds` ( one in x chance ) to be protected from the effect |
 
 ##### Example:

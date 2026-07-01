@@ -14,8 +14,8 @@ The other is below
 
 ### Fields
 
-| Identifier | Description                                           |
-| ---------- | ----------------------------------------------------- |
+| Identifier | Description                                            |
+| ---------- | ------------------------------------------------------ |
 | values     | (_mandatory_) An array of [damage units](#damage-unit) |
 
 ### Example
