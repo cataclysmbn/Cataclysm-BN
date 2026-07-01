@@ -53,7 +53,7 @@ All members are mandatory.
 ##### Names
 
 - `morale`: Gives player morale, requires additional defined fields
-- `effect`: Gives player an effect, requires additional defined fields
+- `effect`: Gives players an effect, requires additional defined fields
 - `wet`: Causes players to become wet, amount is intensity
 - `thunder`: Thunder is caused with a one in intensity chance
 - `lightning`: Lighning is caused with a one in intensity chance
