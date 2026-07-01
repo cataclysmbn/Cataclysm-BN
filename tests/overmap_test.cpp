@@ -189,3 +189,156 @@ TEST_CASE("mutable_overmap_placement", "[overmap][slow]") {
         CHECK(successes > num_trials_per_overmap / 2);
     }
 }
+
+#if defined(TILES)
+
+// Regression tests for issue #9688: the main view and the (possibly shared) overmap
+// tile context each track their own zoom, and switching views must re-assert the
+// taking-over view's zoom on the context. The old overmap_ui.cpp save/restore shim
+// forced the overmap to the default scale on open and relied on game::set_zoom's
+// equality guard on close, desyncing the rendered scale from the stored zoom in
+// both directions.
+
+#    include "cached_options.h"
+#    include "cata_tiles.h"
+#    include "game.h"
+#    include "options_helpers.h"
+#    include "sdltiles.h"
+#    include "tile_helpers.h"
+
+#    include <cmath>
+#    include <map>
+
+namespace {
+
+/// Tile widths at each canonical zoom scale, used to read back which zoom a context
+/// is actually rendering at. Distinctness is what makes that read-back unambiguous.
+auto zoom_scale_widths() -> std::map<float, int> {
+    std::map<float, int> widths;
+    for (const float scale : {4.f, 8.f, 16.f, 32.f, 64.f}) {
+        tilecontext->set_draw_scale(scale);
+        widths[scale] = tilecontext->get_tile_width();
+    }
+    REQUIRE(widths.at(4.f) > 0);
+    REQUIRE(widths.at(4.f) < widths.at(8.f));
+    REQUIRE(widths.at(8.f) < widths.at(16.f));
+    REQUIRE(widths.at(16.f) < widths.at(32.f));
+    REQUIRE(widths.at(32.f) < widths.at(64.f));
+    return widths;
+}
+
+/// game::overmap_tileset_zoom is private state with no getter and persists across
+/// tests; walk it back to the default scale by observing where the context lands.
+void normalize_overmap_zoom(const std::map<float, int>& widths) {
+    for (int i = 0; i < 6; ++i) {
+        g->reapply_overmap_zoom();
+        if (overmap_tilecontext->get_tile_width() == widths.at(16.f)) { return; }
+        g->zoom_in_overmap();
+    }
+    FAIL("could not walk the overmap zoom back to the default scale");
+}
+
+} // namespace
+
+TEST_CASE("zoom_bookkeeping_matches_rendered_scale", "[overmap][zoom][tiles]") {
+    clear_all_state();
+    tile_context_fixture fixture(/*alias_overmap_context=*/true);
+    if (!fixture.valid()) {
+        WARN("skipped: this environment cannot create a headless SDL renderer");
+        return;
+    }
+    const auto widths = zoom_scale_widths();
+    // Start every section from a known state: both views at the default scale.
+    normalize_overmap_zoom(widths);
+    g->set_zoom(DEFAULT_TILESET_ZOOM);
+    g->reapply_zoom();
+    REQUIRE(tilecontext->get_tile_width() == widths.at(16.f));
+
+    SECTION("main view steps through the zoom ladder and wraps at both ends") {
+        for (const float expected : {32.f, 64.f, 4.f, 8.f}) { // wraps 64 -> 4
+            g->zoom_in();
+            CHECK(g->get_zoom() == expected);
+            CHECK(tilecontext->get_tile_width() == widths.at(expected));
+        }
+        for (const float expected : {4.f, 64.f}) { // wraps 4 -> 64
+            g->zoom_out();
+            CHECK(g->get_zoom() == expected);
+            CHECK(tilecontext->get_tile_width() == widths.at(expected));
+        }
+    }
+
+    SECTION("zoom stepping recovers from an off-grid zoom value") {
+        g->set_zoom(20.f); // between the 16 and 32 steps
+        REQUIRE(g->get_zoom() == 20.f);
+        g->zoom_in(); // rounds to the nearest step index, then steps
+        CHECK(g->get_zoom() == 32.f);
+        g->set_zoom(20.f);
+        g->zoom_out();
+        CHECK(g->get_zoom() == 8.f);
+    }
+
+    SECTION("half steps with ZOOM_STEP_COUNT 2") {
+        const override_option zoom_steps("ZOOM_STEP_COUNT", "2");
+        g->zoom_in();
+        CHECK(g->get_zoom() == Approx(std::pow(2., 4.5)));
+        g->zoom_in();
+        CHECK(g->get_zoom() == Approx(32.f));
+    }
+
+    SECTION("overmap zoom does not leak into the main view on a shared context") {
+        // "Open" the overmap and zoom it fully out; the main view's bookkeeping
+        // must not move.
+        g->reapply_overmap_zoom();
+        REQUIRE(overmap_tilecontext->get_tile_width() == widths.at(16.f));
+        g->zoom_out_overmap();
+        g->zoom_out_overmap();
+        REQUIRE(overmap_tilecontext->get_tile_width() == widths.at(4.f));
+        CHECK(g->get_zoom() == 16.f);
+
+        // "Close" it: the main view must re-assert its own scale even though
+        // tileset_zoom never changed - set_zoom's equality guard would skip this,
+        // which was the main-view half of issue #9688.
+        g->reapply_zoom();
+        CHECK(tilecontext->get_tile_width() == widths.at(16.f));
+
+        // "Reopen": the overmap comes back at its own remembered zoom, not the
+        // default the legacy shim forced - the overmap half of issue #9688...
+        g->reapply_overmap_zoom();
+        CHECK(overmap_tilecontext->get_tile_width() == widths.at(4.f));
+        // ...and the zoom keys step from the displayed level.
+        g->zoom_in_overmap();
+        CHECK(overmap_tilecontext->get_tile_width() == widths.at(8.f));
+
+        g->reapply_zoom();
+        CHECK(tilecontext->get_tile_width() == widths.at(16.f));
+        normalize_overmap_zoom(widths);
+        g->reapply_zoom();
+    }
+}
+
+TEST_CASE("separate_overmap_tile_context_keeps_independent_scale", "[overmap][zoom][tiles]") {
+    clear_all_state();
+    tile_context_fixture fixture(/*alias_overmap_context=*/false);
+    if (!fixture.valid()) {
+        WARN("skipped: this environment cannot create a headless SDL renderer");
+        return;
+    }
+    REQUIRE(tilecontext != overmap_tilecontext);
+    const auto widths = zoom_scale_widths();
+    normalize_overmap_zoom(widths);
+    g->set_zoom(DEFAULT_TILESET_ZOOM);
+    g->reapply_zoom();
+
+    // Main-view zooming leaves the overmap context alone...
+    g->zoom_in();
+    CHECK(tilecontext->get_tile_width() == widths.at(32.f));
+    CHECK(overmap_tilecontext->get_tile_width() == widths.at(16.f));
+    // ...and overmap zooming leaves the main context alone.
+    g->zoom_out_overmap();
+    CHECK(overmap_tilecontext->get_tile_width() == widths.at(8.f));
+    CHECK(tilecontext->get_tile_width() == widths.at(32.f));
+
+    normalize_overmap_zoom(widths);
+}
+
+#endif // TILES

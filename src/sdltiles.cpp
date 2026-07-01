@@ -4285,6 +4285,11 @@ const SDL_Renderer_Ptr &get_sdl_renderer()
     return renderer;
 }
 
+auto set_sdl_renderer( SDL_Renderer_Ptr r ) -> void
+{
+    renderer = std::move( r );
+}
+
 const SDL_Window_Ptr &get_sdl_window()
 {
     return window;
