@@ -19,6 +19,7 @@
 #include <point.h>
 #include <ranges>
 #include <set>
+#include <sstream>
 #include <submap.h>
 #include <tuple>
 #include <unordered_set>
@@ -6348,6 +6349,59 @@ void overmap::place_radios()
     }
 }
 
+static auto pruned_overmap_stash_path( const dimension_id &dim_id,
+                                       const point_abs_om &loc ) -> std::string
+{
+    const auto dim_id_str = dim_id.str();
+    const auto prefix = dim_id_str.empty() ? std::string{} : "dimensions/"
+                        + dim_id_str + "/";
+    return string_format( "pruned_overmap/%so.%d.%d", prefix, loc.x(), loc.y() );
+}
+
+auto overmap::load_pruned_overmap_stash( const dimension_id &dim_id ) -> void
+{
+    const auto stash_path = pruned_overmap_stash_path( dim_id, loc );
+    auto loaded = false;
+    g->get_active_world()->read_map_entry( stash_path, [&]( std::istream & fin ) {
+        auto json = JsonIn( fin, stash_path );
+        json.start_object();
+        while( !json.end_object() ) {
+            const auto member = json.get_member_name();
+            if( member == "tracked_vehicles" ) {
+                json.start_array();
+                while( !json.end_array() ) {
+                    const auto vehicle = json.get_object();
+                    if( !vehicle.has_int( "id" ) || !vehicle.has_int( "x" ) || !vehicle.has_int( "y" ) ) {
+                        continue;
+                    }
+                    auto tracker = om_vehicle{};
+                    tracker.p = point_om_omt( vehicle.get_int( "x" ), vehicle.get_int( "y" ) );
+                    if( vehicle.has_string( "name" ) ) {
+                        tracker.name = vehicle.get_string( "name" );
+                    }
+                    vehicles[vehicle.get_int( "id" )] = tracker;
+                }
+            } else if( member == "npcs" ) {
+                json.start_array();
+                while( !json.end_array() ) {
+                    auto new_npc = make_shared_fast<npc>();
+                    new_npc->deserialize( json );
+                    if( !new_npc->get_fac_id().str().empty() ) {
+                        new_npc->set_fac( new_npc->get_fac_id() );
+                    }
+                    npcs.push_back( new_npc );
+                }
+            } else {
+                json.skip_value();
+            }
+        }
+        loaded = true;
+    } );
+    if( loaded ) {
+        g->get_active_world()->delete_map_entry( stash_path );
+    }
+}
+
 auto overmap::open( const dimension_id &dim_id,
                     overmap_special_batch &enabled_specials ) -> void
 {
@@ -6374,6 +6428,7 @@ auto overmap::open( const dimension_id &dim_id,
 
         // pointers looks like (north, south, west, east)
         generate( pointers[0], pointers[3], pointers[1], pointers[2], enabled_specials );
+        load_pruned_overmap_stash( dim_id );
     }
 }
 
