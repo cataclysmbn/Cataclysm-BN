@@ -16,7 +16,7 @@ The other is below
 
 | Identifier | Description                                           |
 | ---------- | ----------------------------------------------------- |
-| values     | (_mandatory_) A array of [damage units](#damage-unit) |
+| values     | (_mandatory_) An array of [damage units](#damage-unit) |
 
 ### Example
 

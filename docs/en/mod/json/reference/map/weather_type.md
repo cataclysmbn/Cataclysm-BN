@@ -53,7 +53,7 @@ All members are mandatory.
 ##### Names
 
 - `morale`: Gives player morale, requires additional defined fields
-- `effect`: Gives playerrs an effect, requires additional defined fields
+- `effect`: Gives player an effect, requires additional defined fields
 - `wet`: Causes players to become wet, amount is intensity
 - `thunder`: Thunder is caused with a one in intensity chance
 - `lightning`: Lighning is caused with a one in intensity chance
@@ -102,8 +102,8 @@ All members are mandatory.
 | effect_msg_frequency         | (_mandatory_) Percent chance to display the message on gaining effect                                                                                          |
 | effect_msg_blocked_frequency | (_mandatory_) Percent chance to display the protection message on preventing effect                                                                            |
 | message_type                 | (_mandatory_) Type of message; 0 == Good, 1 == Bad, 2 == Mixed, 3 == Warning, 4 == Info, 5 == Neutral                                                          |
-| precipitation_name           | (_mandatory_) Name to display in string "The <field> is blocked by your umbrella!" messages appear                                                             |
-| protection_data              | (_mandatory_) Array of `check` flags or traits ( along with `DEFAULT` which is always applied ) and `odds` ( one in x chance ) to be protected from the effect |
+| precipitation_name           | (_mandatory_) Name to display in string "Your umbrella protects you from the `precipitation_name`." messages appear                                                             |
+| protection_data              | (_optional_) Array of `check` flags or traits ( along with `DEFAULT` which is always applied ) and `odds` ( one in x chance ) to be protected from the effect |
 
 ##### Example:
 

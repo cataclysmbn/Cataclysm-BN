@@ -13,7 +13,7 @@ Kept here for global reference.
 
 | Identifier      | Description                                                                  |
 | --------------- | ---------------------------------------------------------------------------- |
-| damage          | (_optional_)the amount of damage the explosion does                          |
+| damage          | (_optional_) the amount of damage the explosion does                          |
 | radius          | (_optional_) the radius of the explosion                                     |
 | fragment        | (_optional_) See [projectiles](/mod/json/reference/misc/projectiles/#fields) |
 | fragment_effect | (_optional_) Array of [fragment effects](#fragment-effect)                   |
