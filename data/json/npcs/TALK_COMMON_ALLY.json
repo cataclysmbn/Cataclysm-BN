@@ -878,6 +878,12 @@
         "effect": "do_farming"
       },
       {
+        "text": "Please go get some sleep.",
+        "topic": "TALK_DONE",
+        "condition": { "and": [ { "not": "npc_has_activity" }, "npc_is_sleepy" ] },
+        "effect": "go_to_sleep"
+      },
+      {
         "text": "Can you craft this item?",
         "topic": "TALK_DONE",
         "condition": { "and": [ { "not": "npc_has_activity" }, { "not": { "npc_has_trait": "HALLUCINATION" } } ] },

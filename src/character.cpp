@@ -9245,16 +9245,17 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
     if( du.amount <= 0 ) {
         return false;
     }
+    // Don't damage armor as much when bypassed by armor piercing
+    // Most armor piercing damage comes from bypassing armor, not forcing through
+    const int raw_dmg = du.amount * std::min( 1.0f, du.damage_multiplier );
     armor.mitigate_damage( du );
     // We're indestructible, bail out here.
     if( armor.has_flag( flag_UNBREAKABLE ) ) {
         return false;
     }
 
-    // We want armor's own resistance to this type, not the resistance it grants
-    const int armors_own_resist = armor.damage_resist( du.type, true );
-    if( armors_own_resist > 1000 ) {
-        // This is some weird type that doesn't damage armors
+    // This is some weird type that doesn't damage armors
+    if( armor.damage_resist( du.type, true ) > 1000 ) {
         return false;
     }
 
@@ -9265,22 +9266,11 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
     if( !one_in( num_parts_covered ) ) {
         return false;
     }
-
-    // Don't damage armor as much when bypassed by armor piercing
-    // Most armor piercing damage comes from bypassing armor, not forcing through
-    const int raw_dmg = du.amount * std::min( 1.0f, du.damage_multiplier );
-    if( raw_dmg > armors_own_resist ) {
-        // If damage is above armor value, the chance to avoid armor damage is
-        // 50% + 50% * 1/dmg
-        if( one_in( raw_dmg ) || one_in( 2 ) ) {
-            return false;
-        }
-    } else {
-        // Sturdy items and power armors never take chip damage.
-        // Other armors have 0.5% of getting damaged from hits below their armor value.
-        if( armor.has_flag( flag_STURDY ) || !one_in( 200 ) ) {
-            return false;
-        }
+    const int dmg_percent = std::max( raw_dmg - armor.chip_resistance( !armor.has_flag( flag_STURDY ) ),
+                                      1 );
+    // Chance to avoid armor damage is 50/67% (if sturdy) + 100 - ( raw_dmg - chip_resist )%
+    if( !one_in( armor.has_flag( flag_STURDY ) ? 3 : 2 ) || !x_in_y( dmg_percent, 100 ) ) {
+        return false;
     }
 
     const material_type &material = armor.get_random_material();
