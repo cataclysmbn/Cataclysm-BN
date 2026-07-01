@@ -1638,7 +1638,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
     "using": [ [ "3d_printing_standard", 18 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 175 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 145 ] ] ]
   },
   {
     "result": "bondage_mask",

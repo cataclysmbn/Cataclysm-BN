@@ -1450,7 +1450,7 @@
     "book_learn": [ [ "textbook_computer", 4 ], [ "advanced_electronics", 4 ], [ "textbook_anarch", 4 ], [ "reference_fabrication1", 4 ] ],
     "using": [ [ "3d_printing_standard", 10 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ [ [ "carbon_fiber_filament", 80 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 30 ] ] ]
   },
   {
     "type": "recipe",
@@ -1464,7 +1464,7 @@
     "book_learn": [ [ "textbook_computer", 5 ], [ "advanced_electronics", 5 ], [ "textbook_anarch", 5 ], [ "reference_fabrication1", 5 ] ],
     "using": [ [ "3d_printing_standard", 15 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 } ],
-    "components": [ [ [ "carbon_fiber_filament", 120 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 50 ] ] ]
   },
   {
     "type": "recipe",
@@ -1478,7 +1478,7 @@
     "book_learn": [ [ "textbook_computer", 4 ], [ "advanced_electronics", 4 ], [ "textbook_anarch", 4 ], [ "reference_fabrication1", 4 ] ],
     "using": [ [ "3d_printing_standard", 10 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ [ [ "carbon_fiber_filament", 100 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 25 ] ] ]
   },
   {
     "type": "recipe",

@@ -390,7 +390,7 @@
     "type": "GUNMOD",
     "name": { "str": "carbon fiber upper receiver" },
     "description": "A 3D-printed carbon fiber replacement upper receiver for AR-15 pattern rifles.  Significantly lighter than the original aluminum receiver with no impact on accuracy or reliability.",
-    "weight": "80 g",
+    "weight": "240 g",
     "volume": "250 ml",
     "integral_volume": "0 ml",
     "integral_weight": "-400 g",

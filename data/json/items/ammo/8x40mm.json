@@ -89,7 +89,7 @@
     "price_postapoc": "500 USD",
     "count": 20,
     "loudness": 168,
-    "speed": 1150,
+    "speed": 1000,
     "//": "Balanced as AP, with 25% higher damage and 50% higher arpen",
     "relative": { "damage": { "damage_type": "bullet", "amount": 4, "armor_penetration": 34 } },
     "proportional": { "dispersion": 1.5, "recoil": 1.5 }
