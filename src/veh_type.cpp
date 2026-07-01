@@ -50,6 +50,8 @@ class npc;
 
 std::unordered_map<vproto_id, vehicle_prototype> vtypes;
 
+std::unordered_set<vproto_id> vtypes_blacklisted;
+
 namespace
 {
 generic_factory<vpart_info> all_vparts( "Vehicle Parts" );
@@ -1480,4 +1482,14 @@ std::vector<vproto_id> vehicle_prototype::get_all()
         result.push_back( vp.first );
     }
     return result;
+}
+
+void vehicle_prototype::load_vehicle_blacklist( const JsonObject &json )
+{
+    json.read( "vehicles", vtypes_blacklisted, true );
+}
+
+const std::unordered_set<vproto_id> vehicle_prototype::get_vehicle_blacklist()
+{
+    return vtypes_blacklisted;
 }

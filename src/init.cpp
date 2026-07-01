@@ -475,6 +475,7 @@ void DynamicDataLoader::initialize()
     add( "score", &score::load_score );
     add( "achievement", &achievement::load_achievement );
     add( "named_color", &RGBColor::load_named_color );
+    add( "vehicle_blacklist", &vehicle_prototype::load_vehicle_blacklist );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
 #else
@@ -701,6 +702,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
                 }
             },
             { _( "Vehicle parts" ), &vpart_info::finalize_all },
+            { _( "Vehicle Groups" ), &VehicleGroup::finalize },
             { _( "Traps" ), &trap::finalize },
             { _( "Terrain" ), &set_ter_ids },
             { _( "Furniture" ), &finalize_furn },
