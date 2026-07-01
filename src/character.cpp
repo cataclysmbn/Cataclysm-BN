@@ -9246,8 +9246,7 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
         return false;
     }
     // This triggers if the "New armor damage calculation" setting is enabled.
-    if( get_option<bool>( "NEW_ARMOR_CALCULATION" ) )
-    {
+    if( get_option<bool>( "NEW_ARMOR_CALCULATION" ) ) {
         // Don't damage armor as much when bypassed by armor piercing
         // Most armor piercing damage comes from bypassing armor, not forcing through
         const int raw_dmg = du.amount * std::min( 1.0f, du.damage_multiplier );
@@ -9267,7 +9266,7 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
         // before becoming ineffective or being destroyed.
         const int num_parts_covered = armor.get_covered_body_parts().count();
         if( !one_in( num_parts_covered ) ) {
-           return false;
+            return false;
         }
         const int dmg_percent = std::max( raw_dmg - armor.chip_resistance( !armor.has_flag( flag_STURDY ) ),
                                           1 );
@@ -9277,15 +9276,14 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
         }
     }
     // This triggers if the "New armor damage calculation" setting is false.
-    else
-    {
+    else {
         armor.mitigate_damage( du );
         // We're indestructible, bail out here.
         if( armor.has_flag( flag_UNBREAKABLE ) ) {
             return false;
-     }
+        }
 
-      // We want armor's own resistance to this type, not the resistance it grants
+        // We want armor's own resistance to this type, not the resistance it grants
         const int armors_own_resist = armor.damage_resist( du.type, true );
         if( armors_own_resist > 1000 ) {
             // This is some weird type that doesn't damage armors
@@ -9310,7 +9308,7 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
                 return false;
             }
         }  else {
-             // Sturdy items and power armors never take chip damage.
+            // Sturdy items and power armors never take chip damage.
             // Other armors have 0.5% of getting damaged from hits below their armor value.
             if( armor.has_flag( flag_STURDY ) || !one_in( 200 ) ) {
                 return false;
@@ -9319,7 +9317,7 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
     }
     const material_type &material = armor.get_random_material();
     std::string damage_verb = ( du.type == DT_BASH ) ? material.bash_dmg_verb() :
-                             material.cut_dmg_verb();
+                              material.cut_dmg_verb();
 
     const std::string pre_damage_name = armor.tname();
     const std::string pre_damage_adj = armor.get_base_material().dmg_adj( armor.damage_level( 4 ) );
@@ -9339,7 +9337,7 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
                              rng( 2 * itype::damage_scale, 3 * itype::damage_scale ) : itype::damage_scale, du.type );
 
 
-    }
+}
 
 
 
