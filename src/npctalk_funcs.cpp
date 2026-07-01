@@ -374,6 +374,7 @@ void talk_function::wake_up( npc &p )
     p.remove_effect( effect_lying_down );
     p.remove_effect( effect_npc_suspend );
     p.remove_effect( effect_sleep );
+    p.sleep_at_this_pos = std::nullopt;
     // TODO: Get mad at player for waking us up unless we're in danger
 }
 
@@ -985,4 +986,9 @@ void talk_function::npc_thankful( npc &p )
 void talk_function::clear_overrides( npc &p )
 {
     p.rules.clear_overrides();
+}
+
+void talk_function::go_to_sleep( npc &p )
+{
+    p.execute_action( "npc_sleep" );
 }
