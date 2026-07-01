@@ -119,8 +119,7 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.cash = 0;
     dummy.dodges_left = 1;
 
-    const tripoint_abs_ms spot(60, 60, 0);
-    dummy.setpos(spot);
+    dummy.setpos( test_origin_abs );
 
     dummy.invalidate_crafting_inventory();
 }

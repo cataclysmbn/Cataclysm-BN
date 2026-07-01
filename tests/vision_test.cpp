@@ -54,7 +54,7 @@ static void full_map_test(
     const ter_id t_open_air("t_open_air");
 
     Character& player_character = get_player_character();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    player_character.setpos( test_origin_abs );
     get_weather().weather_id = weather_type_id("clear");
     g->reset_light_level();
 
@@ -83,7 +83,7 @@ static void full_map_test(
         REQUIRE(line.size() == static_cast<size_t>(width));
     }
 
-    tripoint_bub_ms origin;
+    tripoint_abs_ms origin;
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             switch (setup[y][x]) {
@@ -91,7 +91,7 @@ static void full_map_test(
                 case 'U':
                 case 'H':
                 case 'u':
-                    origin = player_character.bub_pos() - point_rel_ms(x, y);
+                    origin = player_character.abs_pos() - point_rel_ms(x, y);
                     if (setup[y][x] == 'V') {
                         player_character.worn.push_back(item::spawn("wearable_light_on"));
                     }
@@ -103,7 +103,7 @@ static void full_map_test(
     {
         // Sanity check on player placement
         REQUIRE(origin.z() < OVERMAP_HEIGHT);
-        auto player_offset = player_character.bub_pos() - origin;
+        auto player_offset = player_character.abs_pos() - origin;
         REQUIRE(player_offset.y() >= 0);
         REQUIRE(player_offset.y() < height);
         REQUIRE(player_offset.x() >= 0);
@@ -112,8 +112,9 @@ static void full_map_test(
         REQUIRE(
             (player_char == 'U' || player_char == 'u' || player_char == 'V' || player_char == 'H'));
     }
-
-    map& here = get_map();
+    
+    auto& map = get_map();
+    auto& here = get_map().get_mapbuffer();
     vehicle* veh = nullptr;
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
@@ -123,29 +124,29 @@ static void full_map_test(
                 case ' ':
                     break;
                 case 'L':
-                    here.ter_set(p, t_utility_light);
-                    here.ter_set(above, t_flat_roof);
+                    here.set_ter(p, t_utility_light);
+                    here.set_ter(above, t_flat_roof);
                     break;
                 case '#':
                 case 'H':
-                    here.ter_set(p, t_brick_wall);
-                    here.ter_set(above, t_flat_roof);
+                    here.set_ter(p, t_brick_wall);
+                    here.set_ter(above, t_flat_roof);
                     break;
                 case '=':
-                    here.ter_set(p, t_window_frame);
-                    here.ter_set(above, t_flat_roof);
+                    here.set_ter(p, t_window_frame);
+                    here.set_ter(above, t_flat_roof);
                     break;
                 case '-':
                 case 'u':
-                    here.ter_set(p, t_floor);
-                    here.ter_set(above, t_flat_roof);
+                    here.set_ter(p, t_floor);
+                    here.set_ter(above, t_flat_roof);
                     break;
                 case 'U':
                 case 'V':
                     // Already handled above
                     break;
                 case 'C':
-                    veh = here.add_vehicle(vproto_id(vehicle_id), p, vehicle_rotation, 0, 0);
+                    veh = map.add_vehicle(vproto_id(vehicle_id), abs_to_bub(p), vehicle_rotation, 0, 0);
                     REQUIRE(veh != nullptr);
                     for (const vpart_reference& vp : veh->get_avail_parts("OPENABLE")) {
                         veh->close(vp.part_index());
@@ -162,21 +163,19 @@ static void full_map_test(
     // they might, for example, have poor nightvision due to having just been
     // in daylight)
     for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) {
-        here.invalidate_map_cache(z);
-        here.access_cache(z).vehicle_floor_cache[0] = '\x01';
+        map.invalidate_map_cache(z);
     }
-    here.build_map_cache(origin.z());
-    here.update_visibility_cache(origin.z());
+    map.build_map_cache(origin.z());
+    map.update_visibility_cache(origin.z());
     for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) {
-        here.invalidate_map_cache(z);
-        here.access_cache(z).vehicle_floor_cache[0] = '\x01';
+        map.invalidate_map_cache(z);
     }
-    here.build_map_cache(origin.z());
-    here.update_visibility_cache(origin.z());
+    map.build_map_cache(origin.z());
+    map.update_visibility_cache(origin.z());
 
-    const level_cache& cache = here.access_cache(origin.z());
-    const level_cache& above_cache = here.access_cache(origin.z() + 1);
-    const visibility_variables& vvcache = here.get_visibility_variables_cache();
+    const level_cache& cache = map.access_cache(origin.z());
+    const level_cache& above_cache = map.access_cache(origin.z() + 1);
+    const visibility_variables& vvcache = map.get_visibility_variables_cache();
 
     std::ostringstream fields;
     std::ostringstream transparency;
@@ -194,10 +193,10 @@ static void full_map_test(
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             const auto p = origin + point_rel_ms(x, y);
-            const auto& visibility_cache = here.get_visibility_variables_cache();
+            const auto& visibility_cache = map.get_visibility_variables_cache();
             const map::apparent_light_info al =
-                map::apparent_light_helper(cache, p, visibility_cache.visibility_scale_factor);
-            for (auto& pr : here.field_at(p)) { fields << pr.second.name() << ','; }
+                map::apparent_light_helper(cache, abs_to_bub(p), visibility_cache.visibility_scale_factor);
+            for (auto& pr : map.field_at(abs_to_bub(p))) { fields << pr.second.name() << ','; }
             fields << ' ';
             transparency << std::setw(6) << cache.transparency_cache[cache.idx(p.x(), p.y())] << ' ';
             seen << std::setw(6) << cache.seen_cache[cache.idx(p.x(), p.y())] << ' ';
@@ -242,7 +241,7 @@ static void full_map_test(
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             const auto p = origin + point_rel_ms(x, y);
-            const lit_level level = here.apparent_light_at(p, vvcache);
+            const lit_level level = map.apparent_light_at(abs_to_bub(p), vvcache);
             const char exp_char = expected_results[y][x];
             if (exp_char < '0' || exp_char > '9') {
                 FAIL("unexpected result char '" << expected_results[y][x] << "'");

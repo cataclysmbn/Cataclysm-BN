@@ -11,6 +11,13 @@
 class npc;
 class player;
 
+// Absolute map origin used as the default test center.
+// Coincides with the traditional tripoint_bub_ms( 60, 60, 0 ) bubble center
+// after a fresh clear_all_state() / clear_character().
+// Tests should use setpos( test_origin_abs ) + ensure_simulated_islands_for()
+// rather than place_player() for map-spawn behavior.
+static constexpr tripoint_abs_ms test_origin_abs( 60, 60, 0 );
+
 int get_remaining_charges(const std::string& tool_id);
 bool player_has_item_of_type(const std::string&);
 void clear_character(player&, bool debug_storage = true);

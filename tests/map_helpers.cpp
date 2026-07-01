@@ -14,6 +14,8 @@
 #include "mapdata.h"
 #include "npc.h"
 #include "overmapbuffer.h"
+#include "player_helpers.h"
+#include "simulated_island_helpers.h"
 #include "submap.h"
 #include "type_id.h"
 
@@ -127,6 +129,10 @@ void clear_map() {
     // test's Catch2 WHEN section do not bleed into the next run.  The tracker
     // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.
     get_distribution_grid_tracker().clear();
+
+    // Ensure simulated islands exist so simulated_tiles_in_radius and
+    // for_each_simulated_submap work for tests that use this map.
+    ensure_simulated_islands_for( test_origin_abs );
 }
 
 void put_player_underground() {

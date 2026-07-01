@@ -129,15 +129,14 @@ TEST_CASE(
     g->reset_light_level();
 
     avatar& you = get_avatar();
-    const auto caster_pos = tripoint_abs_ms(60, 60, 0);
-    const auto target_pos = caster_pos + point_rel_ms(5, 0);
-    you.setpos(caster_pos);
+    const auto target_pos = test_origin_abs + point_rel_ms(5, 0);
+    you.setpos( test_origin_abs );
     you.set_mutation(trait_id("INFRARED"));
     you.recalc_sight_limits();
 
     map& here = get_map();
     monster& target = spawn_test_monster("mon_zombie", abs_to_bub(target_pos));
-    here.invalidate_map_cache(you.bub_pos().z());
+    here.invalidate_map_cache(you.abs_pos().z());
     g->refresh_player_visibility_cache_if_needed();
 
     spell hostile_spell(spell_id("test_spell_pew"));

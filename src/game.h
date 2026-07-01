@@ -953,8 +953,15 @@ class game
 
         void butcher(); // Butcher a corpse  'B'
     public:
+        // Apply tile-entry gameplay effects at the player's current position.
+        // Handles rough/sharp terrain damage, signage, creature displacement,
+        // vehicle unboarding, auto-forage/butcher, etc.
+        // Does NOT set the player's position — call u.setpos() first if needed.
+        void apply_movement_effects();
+
         // Places the player at the specified point; hurts feet, lists items etc.
         auto place_player( const tripoint_bub_ms &dest ) -> point_rel_sm;
+        auto place_player( const tripoint_abs_ms &dest ) -> point_rel_sm;
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;
