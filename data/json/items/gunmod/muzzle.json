@@ -137,7 +137,7 @@
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
     "handling_modifier": 5,
     "loudness_modifier": -80,
-    "speed": -807,
+    "speed": -660,
     "flags": [ "IRREMOVABLE" ]
   },
   {
