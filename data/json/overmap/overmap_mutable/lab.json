@@ -64,13 +64,13 @@
     "shared": { "size": [ 4, 4 ] },
     "phases": [
       [
-        { "overmap": "lab", "scale": "size", "max": { "poisson": 3 } },
+        { "overmap": "lab", "scale": "size", "max": { "poisson": 4 } },
         {
           "name": "stairs_and_core",
           "chunk": [ { "overmap": "lab_stairs", "pos": [ 0, 0, 0 ] }, { "overmap": "lab_core", "pos": [ 0, 0, -1 ] } ],
           "z": "bottom",
           "scale": "size",
-          "max": { "poisson": 2 }
+          "max": { "poisson": 4 }
         }
       ],
       [
@@ -84,9 +84,9 @@
           "max": { "chance": 0.2 }
         }
       ],
-      [ { "overmap": "lab_train_depot", "z": -2, "scale": "size", "max": { "chance": 0.15 } } ],
-      [ { "overmap": "lab_train_depot", "z": -4, "scale": "size", "max": { "chance": 0.05 } } ],
-      [ { "overmap": "lab", "z": "bottom", "scale": "size", "max": { "poisson": 1 } } ],
+      [ { "overmap": "lab_train_depot", "z": -2, "scale": "size", "max": { "chance": 1 } } ],
+      [ { "overmap": "lab_train_depot", "z": -4, "scale": "size", "max": { "chance": 1 } } ],
+      [ { "overmap": "lab", "z": "bottom", "scale": "size", "max": { "poisson": 2 } } ],
       [ { "overmap": "lab_finale", "z": "bottom", "max": 1 } ]
     ]
   },
@@ -96,7 +96,7 @@
     "subtype": "mutable",
     "locations": [ "subterranean_empty" ],
     "city_distance": [ 10, -1 ],
-    "occurrences": [ 1, 2 ],
+    "occurrences": [ 50, 100 ],
     "flags": [ "LAB", "UNIQUE" ],
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road" } ],
     "check_for_locations": [
@@ -166,13 +166,13 @@
     "phases": [
       [ { "overmap": "ice_lab_core", "max": 1 } ],
       [
-        { "overmap": "ice_lab", "scale": "size", "max": { "poisson": 3 } },
+        { "overmap": "ice_lab", "scale": "size", "max": { "poisson": 4 } },
         {
           "name": "stairs_and_core",
           "chunk": [ { "overmap": "ice_lab_stairs", "pos": [ 0, 0, 0 ] }, { "overmap": "ice_lab_core", "pos": [ 0, 0, -1 ] } ],
           "z": "bottom",
           "scale": "size",
-          "max": { "poisson": 2 }
+          "max": { "poisson": 4 }
         }
       ],
       [
@@ -186,9 +186,9 @@
           "max": { "chance": 0.2 }
         }
       ],
-      [ { "overmap": "lab_train_depot", "z": -2, "scale": "size", "max": { "chance": 0.15 } } ],
-      [ { "overmap": "lab_train_depot", "z": -4, "scale": "size", "max": { "chance": 0.05 } } ],
-      [ { "overmap": "ice_lab", "z": "bottom", "scale": "size", "max": { "poisson": 1 } } ],
+      [ { "overmap": "lab_train_depot", "z": -2, "scale": "size", "max": { "chance": 1 } } ],
+      [ { "overmap": "lab_train_depot", "z": -4, "scale": "size", "max": { "chance": 1 } } ],
+      [ { "overmap": "ice_lab", "z": "bottom", "scale": "size", "max": { "poisson": 2 } } ],
       [ { "overmap": "ice_lab_finale", "z": "bottom", "max": 1 } ]
     ]
   },

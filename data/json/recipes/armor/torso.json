@@ -1446,7 +1446,7 @@
     "time": "1 h 11 m",
     "book_learn": [ [ "textbook_computer", 3 ], [ "advanced_electronics", 3 ], [ "reference_fabrication1", 3 ] ],
     "using": [ [ "3d_printing_standard", 71 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 710 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 510 ] ] ]
   },
   {
     "result": "waistcoat",

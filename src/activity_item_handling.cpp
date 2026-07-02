@@ -22,7 +22,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "calendar.h"
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "character.h"
 #include "character_functions.h"
 #include "clzones.h"
@@ -82,7 +82,7 @@
 #include "vehicle_selector.h"
 #include "vpart_position.h"
 #include "weather.h"
-#include "map_utils.h"
+#include "map/utils/map_utils.h"
 
 namespace views = std::views;
 
@@ -3659,14 +3659,11 @@ bool find_auto_consume( player &p, const consume_type type )
 
     using namespace cata::ranges;
 
-    auto get_spoil = []( const item * a ) { return a->spoilage_sort_order(); };
-
-    std::optional<item *> stalest = mgr.get_near( consume_type_zone, pos,
-                                    ACTIVITY_SEARCH_DISTANCE )
-                                    | views::filter( [&]( const auto & loc ) -> bool { return loc.z() == p.abs_pos().z(); } )
-                                    | flat_map( get_items_at )
-                                    | views::filter( ok_to_consume )
-                                    | min_by( get_spoil );
+    auto stalest = mgr.get_near( consume_type_zone, pos, ACTIVITY_SEARCH_DISTANCE )
+                   | views::filter( [&]( const auto & loc ) -> bool { return loc.z() == p.abs_pos().z(); } )
+                   | flat_map( map_funcs::get_items_at )
+                   | views::filter( ok_to_consume )
+                   | min_by( &item::spoilage_sort_order );
     if( !stalest ) {
         return false;
     }

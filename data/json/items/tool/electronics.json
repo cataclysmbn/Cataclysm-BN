@@ -316,7 +316,7 @@
     "id": "wrist_comp_control",
     "name": { "str": "wrist control computer" },
     "copy-from": "wrist_comp_budget",
-    "description": "A fancy wrist-mounted computer, with a menagerie of useful features, such as SD reading, a built-in thermometer, and even a radiation monitor!",
+    "description": "A modified wrist-mounted computer, now capable of transmitting in the ultra-high frequencies utilized by robots.  Activate it to command robots from afar or utilize its other features.",
     "weight": "112 g",
     "price": "120 USD",
     "price_postapoc": "100 USD",

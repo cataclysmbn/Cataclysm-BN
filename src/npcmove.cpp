@@ -19,7 +19,7 @@
 #include "creature_tracker.h"
 #include "bionics.h"
 #include "bodypart.h"
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"

@@ -950,7 +950,7 @@
     "time": "2 h 33 m",
     "book_learn": [ [ "textbook_robots", 0 ], [ "advanced_electronics", 0 ], [ "reference_fabrication1", 0 ] ],
     "using": [ [ "3d_printing_standard", 153 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 1530 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 1330 ] ] ]
   },
   {
     "result": "armor_carbonplate",

@@ -8,7 +8,9 @@
 #include "item.h"
 #include "line.h"
 #include "map.h"
+#include "map/utils/map_functions.h"
 #include "map_helpers.h"
+#include "monattack.h"
 #include "monster.h"
 #include "monster_action.h"
 #include "options.h"
@@ -16,10 +18,12 @@
 #include "player.h"
 #include "state_helpers.h"
 #include "test_statistics.h"
+#include "type_id.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <list>
@@ -32,6 +36,55 @@
 #include <vector>
 
 using move_statistics = statistics<int>;
+
+namespace {
+
+auto count_items_at(const tripoint_bub_ms& pos, const itype_id& type) -> int {
+    return std::ranges::count_if(get_map().i_at(pos), [&type](const auto* it) {
+        return it->typeId() == type;
+    });
+}
+
+} // namespace
+
+TEST_CASE("extended monster death drops append to inherited drops", "[monster][death_drops]") {
+    clear_all_state();
+    const auto global_spawn_rate = override_option("ITEM_SPAWNRATE", "1.0");
+    const auto rock_spawn_rate = override_option("SPAWN_RATE_rocks", "1.0");
+    const auto wood_spawn_rate = override_option("SPAWN_RATE_scrap_wood", "1.0");
+    static_cast<void>(global_spawn_rate);
+    static_cast<void>(rock_spawn_rate);
+    static_cast<void>(wood_spawn_rate);
+    move_player_out_of_the_way();
+
+    auto& here = get_map();
+    build_test_map(ter_id("t_floor"));
+
+    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
+    here.i_clear(monster_pos);
+
+    auto& test_monster = spawn_test_monster("mon_test_death_drops_append", monster_pos);
+    test_monster.drop_items_on_death();
+
+    CHECK(count_items_at(monster_pos, itype_id("rock")) == 1);
+    CHECK(count_items_at(monster_pos, itype_id("stick")) == 1);
+}
+
+TEST_CASE("empty top-level monster death drops replace inherited drops", "[monster][death_drops]") {
+    clear_all_state();
+    move_player_out_of_the_way();
+
+    auto& here = get_map();
+    build_test_map(ter_id("t_floor"));
+
+    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
+    here.i_clear(monster_pos);
+
+    auto& test_monster = spawn_test_monster("mon_test_death_drops_clear", monster_pos);
+    test_monster.drop_items_on_death();
+
+    CHECK(here.i_at(monster_pos).empty());
+}
 
 TEST_CASE("hallucination_monsters_do_not_open_real_doors", "[monster][hallucination]") {
     clear_all_state();
@@ -458,5 +511,167 @@ TEST_CASE("monster_vertical_melee_respects_floors", "[monster][z-level]") {
 
         CHECK(here.veh_at(you.bub_pos()).part_with_feature("BOARDABLE", true).has_value());
         CHECK_FALSE(grabber.attack_at(you.bub_pos()));
+    }
+}
+
+TEST_CASE("physical_clear_path_respects_vehicle_floors", "[map][z-level]") {
+    clear_all_state();
+    clear_map();
+
+    auto& here = get_map();
+    const auto lower_pos = tripoint_bub_ms{60, 60, 1};
+    const auto upper_pos = tripoint_bub_ms{60, 60, 2};
+
+    SECTION("open air does not block physical paths") {
+        CHECK(map_funcs::physical_clear_path({
+            .m = here,
+            .from = lower_pos,
+            .to = upper_pos,
+            .require_clear_path = false,
+        }));
+    }
+
+    SECTION("terrain floors block physical paths") {
+        here.ter_set(upper_pos, ter_id("t_floor"));
+
+        CHECK_FALSE(map_funcs::physical_clear_path({
+            .m = here,
+            .from = lower_pos,
+            .to = upper_pos,
+            .require_clear_path = false,
+        }));
+    }
+
+    SECTION("vehicle floors block physical paths") {
+        auto* veh = here.add_vehicle(vproto_id("none"), upper_pos, 0_degrees, 0, 0);
+
+        REQUIRE(veh != nullptr);
+        veh->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"));
+        veh->install_part(tripoint_mnt_veh::zero(), vpart_id("seat"));
+        here.add_vehicle_to_cache(veh);
+
+        CHECK_FALSE(map_funcs::physical_clear_path({
+            .m = here,
+            .from = lower_pos,
+            .to = upper_pos,
+            .require_clear_path = false,
+        }));
+    }
+
+    SECTION("vehicle obstacles block physical paths") {
+        const auto obstacle_pos = tripoint_bub_ms{61, 60, 2};
+        auto* veh = here.add_vehicle(vproto_id("none"), obstacle_pos, 0_degrees, 0, 0);
+
+        REQUIRE(veh != nullptr);
+        veh->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"));
+        veh->install_part(tripoint_mnt_veh::zero(), vpart_id("windshield"));
+        here.add_vehicle_to_cache(veh);
+
+        CHECK(here.veh_at(obstacle_pos).obstacle_at_part().has_value());
+        CHECK_FALSE(map_funcs::physical_clear_path({
+            .m = here,
+            .from = obstacle_pos + tripoint_west,
+            .to = obstacle_pos + tripoint_east,
+            .require_clear_path = false,
+        }));
+    }
+
+    SECTION("lower-z paths cannot enter helicopter cabins through open air") {
+        const auto helicopter_pos = tripoint_bub_ms{60, 60, 2};
+        auto* const helicopter =
+            here.add_vehicle(vproto_id("2seater2"), helicopter_pos, 0_degrees, 0, 0);
+
+        REQUIRE(helicopter != nullptr);
+        const auto seat_part =
+            helicopter->part_with_feature(tripoint_mnt_veh::zero(), "SEAT", true);
+        REQUIRE(seat_part != -1);
+        const auto seat_pos = helicopter->bub_part_location(seat_part);
+
+        CHECK(here.veh_at(seat_pos)->is_inside());
+        CHECK_FALSE(map_funcs::physical_clear_path({
+            .m = here,
+            .from = seat_pos + tripoint_below + tripoint_east * 4,
+            .to = seat_pos,
+            .require_clear_path = false,
+        }));
+    }
+}
+
+TEST_CASE("zombie_technician_pull_through_helicopter_windshield_is_blocked", "[monster][vehicle]") {
+    clear_all_state();
+    clear_map();
+
+    avatar& you = get_avatar();
+    auto& here = get_map();
+    const auto helicopter_pos = tripoint_bub_ms{60, 60, 2};
+    const auto pipe_id = itype_id("pipe");
+    auto* const helicopter =
+        here.add_vehicle(vproto_id("2seater2"), helicopter_pos, 0_degrees, 0, 0);
+
+    REQUIRE(helicopter != nullptr);
+    const auto seat_part = helicopter->part_with_feature(tripoint_mnt_veh::zero(), "SEAT", true);
+    REQUIRE(seat_part != -1);
+    const auto seat_pos = helicopter->bub_part_location(seat_part);
+    const auto windshield_pos = seat_pos + tripoint_east;
+    const auto technician_pos = windshield_pos + tripoint_east;
+
+    REQUIRE(here.veh_at(windshield_pos).obstacle_at_part().has_value());
+    you.setpos(seat_pos);
+    you.str_cur = 4;
+    you.remove_primary_weapon();
+    you.wield(item::spawn(pipe_id));
+    REQUIRE(you.primary_weapon().typeId() == pipe_id);
+
+    monster& technician = spawn_test_monster("mon_zombie_technician", technician_pos);
+    technician.set_goal(you.bub_pos());
+    REQUIRE(technician.sees(you));
+
+    CHECK_FALSE(mattack::pull_metal_weapon(&technician));
+    CHECK(you.primary_weapon().typeId() == pipe_id);
+}
+
+TEST_CASE("zombie_technician_pull_weakens_with_distance", "[monster][balance]") {
+    CHECK(mattack::pull_metal_weapon_success_chance(100, 0) == 100);
+    CHECK(mattack::pull_metal_weapon_success_chance(100, 1) == 100);
+    CHECK(mattack::pull_metal_weapon_success_chance(100, 2) == 100);
+    CHECK(mattack::pull_metal_weapon_success_chance(100, 4) == 25);
+    CHECK(mattack::pull_metal_weapon_success_chance(100, 12) == 2);
+    CHECK(mattack::pull_metal_weapon_success_chance(0, 1) == 0);
+}
+
+TEST_CASE("zombie_technician_pull_uses_physical_clear_path", "[monster][z-level]") {
+    clear_all_state();
+    clear_map();
+
+    avatar& you = get_avatar();
+    auto& here = get_map();
+    const auto target_pos = tripoint_bub_ms{60, 60, 2};
+    const auto technician_pos = target_pos + tripoint_below;
+    const auto flaregun_id = itype_id("flaregun");
+
+    you.setpos(target_pos);
+    you.str_cur = 4;
+    you.remove_primary_weapon();
+    you.wield(item::spawn(flaregun_id));
+    REQUIRE(you.primary_weapon().typeId() == flaregun_id);
+
+    monster& technician = spawn_test_monster("mon_zombie_technician", technician_pos);
+    technician.set_goal(you.bub_pos());
+
+    SECTION("open air allows metal pulls") {
+        CHECK(mattack::pull_metal_weapon(&technician));
+        CHECK(you.primary_weapon().is_null());
+    }
+
+    SECTION("vehicle floors block metal pulls") {
+        auto* veh = here.add_vehicle(vproto_id("none"), target_pos, 0_degrees, 0, 0);
+
+        REQUIRE(veh != nullptr);
+        veh->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"));
+        veh->install_part(tripoint_mnt_veh::zero(), vpart_id("seat"));
+        here.add_vehicle_to_cache(veh);
+
+        CHECK_FALSE(mattack::pull_metal_weapon(&technician));
+        CHECK(you.primary_weapon().typeId() == flaregun_id);
     }
 }

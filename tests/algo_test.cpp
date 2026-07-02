@@ -1,7 +1,7 @@
 #pragma GCC diagnostic ignored "-Wunused-macros"
 #define CATCH_CONFIG_ENABLE_PAIR_STRINGMAKER
-#include "cata_algo.h"
 #include "catch/catch.hpp"
+#include "utils/algo.h"
 
 #include <algorithm>
 #include <ranges>
@@ -46,6 +46,38 @@ TEST_CASE("find_cycles") {
     };
     check_cycle_finding(g, expected);
 }
+struct foo {
+    int i;
+    auto value() const -> int { return i; }
+    auto operator<=>(const foo&) const = default;
+};
+
+struct fold_accumulator {
+    int total = 0;
+    auto add(int value) && -> fold_accumulator {
+        total += value;
+        return *this;
+    }
+};
+
+TEST_CASE("sort_by_rating", "[algo]") {
+    auto input = std::vector{foo{3}, foo{1}, foo{2}};
+
+    cata::sort_by_rating(input.begin(), input.end(), &foo::value);
+
+    CHECK(input == std::vector{foo{1}, foo{2}, foo{3}});
+}
+
+TEST_CASE("group_by", "[algo]") {
+    auto input = std::vector{foo{1}, foo{2}, foo{3}};
+
+    auto output = cata::group_by(input, &foo::i);
+
+    CHECK(output[1] == std::vector{foo{1}});
+    CHECK(output[2] == std::vector{foo{2}});
+    CHECK(output[3] == std::vector{foo{3}});
+}
+
 TEST_CASE("flat_map", "[ranges]") {
     using namespace cata::ranges;
     auto fn = [](const int i) -> std::vector<int> { return {i, i * 2}; };
@@ -64,11 +96,6 @@ TEST_CASE("flat_map", "[ranges]") {
         CHECK(output.empty());
     }
 }
-
-struct foo {
-    int i;
-    auto operator<=>(const foo&) const = default; // *NOPAD*
-};
 
 TEST_CASE("max", "[ranges]") {
     using namespace cata::ranges;
@@ -111,6 +138,21 @@ TEST_CASE("max_by", "[ranges]") {
 
         CHECK(output.value() == foo{1});
     }
+
+    SECTION("member function selector") {
+        auto input = std::vector{foo{1}, foo{2}, foo{3}};
+        auto output = input | max_by(&foo::value);
+
+        CHECK(output.value() == foo{3});
+    }
+
+    SECTION("stored member object selector") {
+        auto input = std::vector{foo{1}, foo{2}, foo{3}};
+        auto by_i = max_by(&foo::i);
+        auto output = input | by_i;
+
+        CHECK(output.value() == foo{3});
+    }
 }
 
 TEST_CASE("min", "[ranges]") {
@@ -130,6 +172,15 @@ TEST_CASE("min", "[ranges]") {
         CHECK(!output.has_value());
     }
 }
+TEST_CASE("fold_left", "[ranges]") {
+    using namespace cata::ranges;
+
+    auto input = std::vector{1, 2, 3};
+    auto output = input | fold_left(fold_accumulator{}, &fold_accumulator::add);
+
+    CHECK(output.total == 6);
+}
+
 TEST_CASE("min_by", "[ranges]") {
     using namespace cata::ranges;
 
@@ -152,6 +203,21 @@ TEST_CASE("min_by", "[ranges]") {
         auto output = input | min_by([](const foo& f) { return -f.i; });
 
         CHECK(output.value() == foo{3});
+    }
+
+    SECTION("member function selector") {
+        auto input = std::vector{foo{1}, foo{2}, foo{3}};
+        auto output = input | min_by(&foo::value);
+
+        CHECK(output.value() == foo{1});
+    }
+
+    SECTION("stored member object selector") {
+        auto input = std::vector{foo{1}, foo{2}, foo{3}};
+        auto by_i = min_by(&foo::i);
+        auto output = input | by_i;
+
+        CHECK(output.value() == foo{1});
     }
 }
 

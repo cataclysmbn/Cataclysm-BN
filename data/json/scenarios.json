@@ -786,6 +786,7 @@
       "bionic_spy",
       "national_guard",
       "mili_burner",
+      "mil_drone_operator",
       "hitman",
       "assassin",
       "politician",
@@ -962,6 +963,7 @@
       "bio_specops",
       "elite_specops",
       "mili_burner",
+      "mil_drone_operator",
       "labtech",
       "bionic_labtech",
       "medic",
@@ -1039,6 +1041,7 @@
       "prof_combat_engineer",
       "prof_combat_medic",
       "mili_burner",
+      "mil_drone_operator",
       "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START" ],

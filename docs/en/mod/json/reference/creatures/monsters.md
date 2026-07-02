@@ -314,13 +314,13 @@ Monster dodge skill. 0 to 10 in base game. See GAME_BALANCE.txt for an explanati
 
 (array of objects, optional)
 
-| Property            | Description                                                                                                                                                                 |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `damage_type`       | Type of damage. Valid entries: `"true"`, `"bash"`, `"cut"`, `"stab"`, `"bullet"`, `"biological"`, `"acid"`, `"heat"`, `"cold"`, `"dark"`, `"light"`, `"psi"`, `"electric"`. |
-| `amount`            | Amount of damage dealt.                                                                                                                                                     |
-| `armor_penetration` | Amount of armor ignored by this damage instance.                                                                                                                            |
-| `armor_multiplier`  | Multiplier applied to `armor_penetration`.                                                                                                                                  |
-| `damage_multiplier` | Multiplier applied to `amount`.                                                                                                                                             |
+| Property            | Description                                                                       |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `damage_type`       | Type of damage. See [damage types](/mod/json/reference/misc/damage/#damage-types) |
+| `amount`            | Amount of damage dealt.                                                           |
+| `armor_penetration` | Amount of armor ignored by this damage instance.                                  |
+| `armor_multiplier`  | Multiplier applied to `armor_penetration`.                                        |
+| `damage_multiplier` | Multiplier applied to `amount`.                                                   |
 
 ```json
 "melee_damage": [ { "damage_type": "electric", "amount": 4.0, "armor_penetration": 1, "armor_multiplier": 1.2, "damage_multiplier": 1.4 } ],
@@ -385,6 +385,8 @@ Can freely be a collection to imply two weapons wielded in both hands, as items 
 
 An item group that is used to spawn items when the monster dies. This can be an inlined item group,
 see ITEM_SPAWN.md. The default subtype is "distribution".
+
+Use `"extend": { "death_drops": ... }` in an inherited or overridden monster to add another drop group without replacing existing death drops. A top-level `"death_drops"` member replaces inherited death drops.
 
 ## "death_function"
 
