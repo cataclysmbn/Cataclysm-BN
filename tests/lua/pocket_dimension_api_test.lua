@@ -168,6 +168,12 @@ test_data["pregen_special_overlap_travel"] = gapi.place_player_dimension_at({
 
 test_data["after_invalid_dim"] = gapi.get_current_dimension_id()
 test_data["after_invalid_map_dim"] = gapi.get_map():get_bound_dimension()
+test_data["delete_missing_dimension"] = gapi.delete_dimension("lua_missing_pocket")
+test_data["reset_missing_dimension"] = gapi.reset_dimension("lua_missing_pocket")
+test_data["delete_dot_dimension"] = gapi.delete_dimension(".")
+test_data["reset_dotdot_dimension"] = gapi.reset_dimension("..")
+test_data["delete_unloaded_dimension"] = gapi.delete_dimension("lua_test_unloaded_delete")
+test_data["reset_unloaded_dimension"] = gapi.reset_dimension("lua_test_unloaded_reset")
 
 test_data["pregen_special_entered"] = gapi.place_player_dimension_at({
   dimension_id = dimension_id .. "_special",
@@ -223,6 +229,37 @@ test_data["same_dimension_travel"] = gapi.place_player_dimension_at({
 })
 test_data["same_dimension_after_pos"] = gapi.get_avatar():abs_pos()
 test_data["same_dimension_dim"] = gapi.get_current_dimension_id()
+test_data["delete_current_dimension"] = gapi.delete_dimension(dimension_id)
+test_data["reset_current_dimension"] = gapi.reset_dimension(dimension_id)
+
+test_data["return_before_reset"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = return_ms,
+})
+test_data["reset_dimension"] = gapi.reset_dimension(dimension_id)
+test_data["reentered_after_reset"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+})
+test_data["reentered_after_reset_dim"] = gapi.get_current_dimension_id()
+test_data["reentered_after_reset_outside_is_oob"] = gapi.get_map():is_out_of_bounds(test_data["outside_local"])
+
+test_data["return_before_delete"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = return_ms,
+})
+test_data["delete_dimension"] = gapi.delete_dimension(dimension_id)
+test_data["after_delete_dim"] = gapi.get_current_dimension_id()
+test_data["after_delete_map_dim"] = gapi.get_map():get_bound_dimension()
+test_data["recreated_after_delete"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = overmap_terrain,
+})
+test_data["recreated_after_delete_dim"] = gapi.get_current_dimension_id()
 
 test_data["final_return_travel"] = gapi.place_player_dimension_at({
   dimension_id = "",

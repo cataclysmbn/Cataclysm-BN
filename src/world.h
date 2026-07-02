@@ -194,6 +194,8 @@ class world
                              bool optional = true ) const;
         bool read_from_file_json( const std::string &path, file_read_json_fn reader,
                                   bool optional = true ) const;
+        auto has_dimension_data( const std::string &dim_id ) -> bool;
+        auto delete_dimension_data( const std::string &dim_id ) -> bool;
 
         /**
          * Convert (copy) the save data from the old format to the new format.

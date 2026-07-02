@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <sstream>
@@ -407,6 +408,79 @@ auto write_to_db( sqlite3 *db, const std::string &path, file_write_fn writer ) -
     write_payload_to_db( db, make_db_write_payload( path, writer ) );
 }
 
+auto lexicographic_prefix_end( std::string prefix ) -> std::string
+{
+    for( auto index = prefix.size(); index > 0; --index ) {
+        const auto byte = static_cast<unsigned char>( prefix[index - 1] );
+        if( byte != std::numeric_limits<unsigned char>::max() ) {
+            prefix[index - 1] = static_cast<char>( byte + 1 );
+            prefix.resize( index );
+            return prefix;
+        }
+    }
+
+    return {};
+}
+
+auto file_prefix_exists_in_db( sqlite3 *db, const std::string &path_prefix ) -> bool
+{
+    const auto path_prefix_end = lexicographic_prefix_end( path_prefix );
+    const auto *sql = path_prefix_end.empty()
+                      ? "SELECT 1 FROM files WHERE path >= :path_prefix LIMIT 1"
+                      : "SELECT 1 FROM files WHERE path >= :path_prefix AND path < :path_prefix_end LIMIT 1";
+    auto *stmt = static_cast<sqlite3_stmt *>( nullptr );
+
+    if( sqlite3_prepare_v2( db, sql, -1, &stmt, nullptr ) != SQLITE_OK ) {
+        dbg( DL::Error ) << "Failed to prepare statement: " << sqlite3_errmsg( db ) << '\n';
+        throw std::runtime_error( "DB query failed" );
+    }
+
+    if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path_prefix" ),
+                           path_prefix.c_str(), -1, SQLITE_TRANSIENT ) != SQLITE_OK ||
+        ( !path_prefix_end.empty() &&
+          sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path_prefix_end" ),
+                             path_prefix_end.c_str(), -1, SQLITE_TRANSIENT ) != SQLITE_OK ) ) {
+        dbg( DL::Error ) << "Failed to bind parameter: " << sqlite3_errmsg( db ) << '\n';
+        sqlite3_finalize( stmt );
+        throw std::runtime_error( "DB query failed" );
+    }
+
+    const auto found = sqlite3_step( stmt ) == SQLITE_ROW;
+    sqlite3_finalize( stmt );
+    return found;
+}
+
+auto delete_from_db_by_prefix( sqlite3 *db, const std::string &path_prefix ) -> void
+{
+    const auto path_prefix_end = lexicographic_prefix_end( path_prefix );
+    const auto *sql = path_prefix_end.empty()
+                      ? "DELETE FROM files WHERE path >= :path_prefix"
+                      : "DELETE FROM files WHERE path >= :path_prefix AND path < :path_prefix_end";
+    auto *stmt = static_cast<sqlite3_stmt *>( nullptr );
+
+    if( sqlite3_prepare_v2( db, sql, -1, &stmt, nullptr ) != SQLITE_OK ) {
+        dbg( DL::Error ) << "Failed to prepare statement: " << sqlite3_errmsg( db ) << '\n';
+        throw std::runtime_error( "DB query failed" );
+    }
+
+    if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path_prefix" ),
+                           path_prefix.c_str(), -1, SQLITE_TRANSIENT ) != SQLITE_OK ||
+        ( !path_prefix_end.empty() &&
+          sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path_prefix_end" ),
+                             path_prefix_end.c_str(), -1, SQLITE_TRANSIENT ) != SQLITE_OK ) ) {
+        dbg( DL::Error ) << "Failed to bind parameter: " << sqlite3_errmsg( db ) << '\n';
+        sqlite3_finalize( stmt );
+        throw std::runtime_error( "DB query failed" );
+    }
+
+    if( sqlite3_step( stmt ) != SQLITE_DONE ) {
+        dbg( DL::Error ) << "Failed to execute query: " << sqlite3_errmsg( db ) << '\n';
+        sqlite3_finalize( stmt );
+        throw std::runtime_error( "DB query failed" );
+    }
+    sqlite3_finalize( stmt );
+}
+
 auto read_from_db( sqlite3 *db, const std::string &path, file_read_fn reader,
                    bool optional ) -> bool
 {
@@ -489,7 +563,9 @@ class sqlite_map_db
         auto begin_transaction() -> void;
         auto commit_transaction() -> void;
         auto write( const std::string &path, file_write_fn writer ) -> void;
+        auto delete_prefix( const std::string &path_prefix ) -> void;
         auto exists( const std::string &path ) const -> bool;
+        auto exists_prefix( const std::string &path_prefix ) const -> bool;
         auto read( const std::string &path, file_read_fn reader, bool optional ) const -> bool;
         auto read_json( const std::string &path, file_read_json_fn reader, bool optional ) const -> bool;
 
@@ -544,9 +620,20 @@ auto sqlite_map_db::write( const std::string &path, file_write_fn writer ) -> vo
     write_payload_to_db( writer_db_, payload );
 }
 
+auto sqlite_map_db::delete_prefix( const std::string &path_prefix ) -> void
+{
+    const auto lock = std::lock_guard<std::mutex>( write_mutex_ );
+    delete_from_db_by_prefix( writer_db_, path_prefix );
+}
+
 auto sqlite_map_db::exists( const std::string &path ) const -> bool
 {
     return file_exist_in_db( read_connection(), path );
+}
+
+auto sqlite_map_db::exists_prefix( const std::string &path_prefix ) const -> bool
+{
+    return file_prefix_exists_in_db( read_connection(), path_prefix );
 }
 
 auto sqlite_map_db::read( const std::string &path, file_read_fn reader,
@@ -666,6 +753,12 @@ static std::string dim_prefix_path( const std::string &dim_id )
         return {};
     }
     return "dimensions/" + dim_id + "/";
+}
+
+auto is_safe_dimension_data_id( const std::string &dim_id ) -> bool
+{
+    return !dim_id.empty() && dim_id != "." && dim_id != ".." &&
+           dim_id.find_first_of( "/\\" ) == std::string::npos;
 }
 
 static std::string get_omt_dirname( const std::string &dim_id, const tripoint_abs_omt &omt_addr )
@@ -977,6 +1070,53 @@ bool world::read_from_file_json( const std::string &path, file_read_json_fn read
                                  bool optional ) const
 {
     return ::read_from_file_json( info->folder_path() + "/" + path, reader, optional );
+}
+
+auto world::has_dimension_data( const std::string &dim_id ) -> bool
+{
+    if( !is_safe_dimension_data_id( dim_id ) ) {
+        return false;
+    }
+
+    const auto dim_prefix = dim_prefix_path( dim_id );
+    const auto dimension_data_path = info->folder_path() + "/dimension_data_" + dim_id + ".gsav";
+    if( ::file_exist( dimension_data_path ) ) {
+        return true;
+    }
+
+    if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
+        return map_db->exists_prefix( dim_prefix ) ||
+               file_prefix_exists_in_db( get_player_db(), dim_prefix );
+    }
+
+    return ::dir_exist( info->folder_path() + "/" + dim_prefix ) ||
+           ::dir_exist( info->folder_path() + "/" + get_player_path() + dim_prefix ) ||
+           ::dir_exist( info->folder_path() + "/" + get_player_path() + ".mm1/" + dim_prefix );
+}
+
+auto world::delete_dimension_data( const std::string &dim_id ) -> bool
+{
+    if( !is_safe_dimension_data_id( dim_id ) ) {
+        return false;
+    }
+
+    const auto dim_prefix = dim_prefix_path( dim_id );
+    auto success = true;
+    if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
+        map_db->delete_prefix( dim_prefix );
+        delete_from_db_by_prefix( get_player_db(), dim_prefix );
+    } else {
+        success = remove_tree( info->folder_path() + "/" + dim_prefix ) && success;
+        success = remove_tree( info->folder_path() + "/" + get_player_path() + dim_prefix ) && success;
+        success = remove_tree( info->folder_path() + "/" + get_player_path() + ".mm1/" + dim_prefix ) &&
+                  success;
+    }
+
+    const auto dimension_data_path = info->folder_path() + "/dimension_data_" + dim_id + ".gsav";
+    if( ::file_exist( dimension_data_path ) ) {
+        success = remove_file( dimension_data_path ) && success;
+    }
+    return success;
 }
 
 static void replaceBackslashes( std::string &input )
