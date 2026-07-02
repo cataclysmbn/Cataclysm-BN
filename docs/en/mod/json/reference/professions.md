@@ -92,17 +92,13 @@ Example: A soldier just finished with marksman training would have 6 in marksman
 
 8: EXPERT
 You are trained in that skill as a specialization to an expert degree. About the level of a graduate degree.
-Example: A soldier just finished with sniper training would have 8 in marksmanship.
+Example: A soldier just finished with sniper training would have 8 in marksmanship. An "average" professional athlete would have 8 in athletics.
 
 9: Previous, but with experience
 
 10: VETERAN
 You are trained to an expert degree and have years of experience of experience as well as talent surpassing others in the field.
-Example: A professional athlete would have 10 in athletics. A tier one spec ops would have 10 in marksmanship. A high profile chemist would have 10 in cooking.
-
-11: LEGENDARY
-You are a standout within your field even amongst the best. You are famous, or infamous, for your skill within your field. Note that this skill level is normally unachievable through levelling in game, and thus this should be reserved for professions that represent truly exceptional individuals.
-Example: An olympic medalist would have 11 in athletics. A nobel prize chemist would have 11 in cooking.
+Example: A renowned professional athlete would have 10 in athletics. A tier one spec ops would have 10 in marksmanship. A high profile chemist would have 10 in cooking.
 
 ## Profession Item Substitutions
 
