@@ -299,6 +299,8 @@ class game : public submap_load_listener
                                   const std::optional<pocket_dimension_data> &pd_info = std::nullopt,
                                   const std::optional<tripoint_abs_sm> &load_pos = std::nullopt,
                                   const std::function<void()> &pre_load_callback = nullptr );
+        auto delete_dimension( const dimension_id &dim_id ) -> bool;
+        auto reset_dimension( const dimension_id &dim_id ) -> bool;
 
         /**
          * Return the dimension ID the player is currently in.

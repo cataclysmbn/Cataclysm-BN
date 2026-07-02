@@ -425,6 +425,7 @@ class zone_manager
                                        zone_data &new_zone );
 
         bool remove( zone_data &zone );
+        auto remove_dimension_zones( const dimension_id &dim_id ) -> bool;
 
         unsigned int size() const {
             return zones.size();

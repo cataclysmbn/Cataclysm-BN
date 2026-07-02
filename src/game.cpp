@@ -156,6 +156,7 @@
 #include "overmap.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "panels.h"
 #include "path_info.h"
 #include "pathfinding.h"
@@ -14551,6 +14552,72 @@ const dimension_info *game::get_current_dimension_info() const
 std::string game::get_dimension_prefix() const
 {
     return current_dimension_id_.str();
+}
+
+auto game::delete_dimension( const dimension_id &dim_id ) -> bool
+{
+    if( dim_id.is_empty() || dim_id == current_dimension_id_ ) {
+        return false;
+    }
+
+    auto *active_world = get_active_world();
+    if( !active_world ) {
+        return false;
+    }
+
+    const auto is_loaded = loaded_dimensions_.contains( dim_id );
+    if( !is_loaded && !active_world->has_dimension_data( dim_id.str() ) ) {
+        return false;
+    }
+
+    submap_loader.drain_lazy_loads();
+    if( !active_world->delete_dimension_data( dim_id.str() ) ) {
+        return false;
+    }
+
+    auto &zones = zone_manager::get_manager();
+    if( zones.remove_dimension_zones( dim_id ) && !zones.save_zones() ) {
+        return false;
+    }
+
+    if( auto tracker_it = grid_trackers_.find( dim_id ); tracker_it != grid_trackers_.end() ) {
+        submap_loader.remove_listener( tracker_it->second.get() );
+        grid_trackers_.erase( tracker_it );
+    }
+
+    if( kept_pocket_dimension_id_ == dim_id ) {
+        kept_pocket_dimension_id_ = dimension_id();
+    }
+
+    loaded_dimensions_.erase( dim_id );
+    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+    unload_overmapbuffer_dimension( dim_id );
+
+    return true;
+}
+
+auto game::reset_dimension( const dimension_id &dim_id ) -> bool
+{
+    if( dim_id.is_empty() || dim_id == current_dimension_id_ ) {
+        return false;
+    }
+
+    auto preserved_info = std::optional<dimension_info> {};
+    if( const auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+        preserved_info = it->second;
+    }
+
+    if( !delete_dimension( dim_id ) ) {
+        if( preserved_info ) {
+            loaded_dimensions_[dim_id] = *preserved_info;
+        }
+        return false;
+    }
+
+    if( preserved_info ) {
+        loaded_dimensions_[dim_id] = *preserved_info;
+    }
+    return true;
 }
 
 auto game::set_active_dimension_id( const dimension_id &dim_id ) -> void

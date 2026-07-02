@@ -533,6 +533,16 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "place_player_dimension_at", []( sol::table opts ) -> bool {
         return place_player_dimension_at( parse_dimension_travel_options( opts ) );
     } );
+    DOC( "Deletes an inactive, non-primary dimension from memory and save storage." );
+    DOC_PARAMS( "dim_id: string" );
+    luna::set_fx( lib, "delete_dimension", []( const std::string & dim_id ) -> bool {
+        return g->delete_dimension( dimension_id( dim_id ) );
+    } );
+    DOC( "Deletes generated data for an inactive, non-primary dimension while keeping its loaded metadata." );
+    DOC_PARAMS( "dim_id: string" );
+    luna::set_fx( lib, "reset_dimension", []( const std::string & dim_id ) -> bool {
+        return g->reset_dimension( dimension_id( dim_id ) );
+    } );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );

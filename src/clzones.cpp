@@ -1366,6 +1366,23 @@ bool zone_manager::remove( zone_data &zone )
     return true;
 }
 
+auto zone_manager::remove_dimension_zones( const dimension_id &dim_id ) -> bool
+{
+    if( dim_id.is_empty() ) {
+        return false;
+    }
+
+    const auto removed = std::erase_if( zones, [&]( const zone_data & zone ) {
+        return zone.get_dimension() == dim_id;
+    } );
+    if( removed == 0 ) {
+        return false;
+    }
+
+    cache_data();
+    return true;
+}
+
 void zone_manager::swap( zone_data &a, zone_data &b )
 {
     if( a.get_is_vehicle() || b.get_is_vehicle() ) {
