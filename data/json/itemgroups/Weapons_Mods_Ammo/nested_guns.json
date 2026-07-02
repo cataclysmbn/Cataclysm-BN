@@ -954,7 +954,7 @@
     "subtype": "collection",
     "ammo": 100,
     "entries": [
-      { "item": "hk_mp5", "ammo-group": "on_hand_9mm", "charges": [ 0, 30 ] },
+      { "item": "hk_mp5sd", "ammo-group": "on_hand_9mm", "charges": [ 0, 30 ] },
       { "group": "nested_mp5_mag" },
       { "group": "nested_mp5_mag", "prob": 50 },
       { "group": "on_hand_9mm" }
