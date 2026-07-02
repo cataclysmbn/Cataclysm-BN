@@ -211,6 +211,14 @@ auto get_dimension_entry_point( const dimension_travel_options &opts ) -> tripoi
     return opts.target_ms.value_or( get_dimension_entry_point( opts.target_omt ) );
 }
 
+auto is_safe_dimension_save_id( const dimension_id &dim_id ) -> bool
+{
+    const auto raw_dim_id = dim_id.str();
+    return raw_dim_id.empty() ||
+           ( raw_dim_id != "." && raw_dim_id != ".." &&
+             raw_dim_id.find_first_of( "/\\" ) == std::string::npos );
+}
+
 auto parse_dimension_travel_options( const sol::table &opts ) -> dimension_travel_options
 {
     const auto target_ms = read_optional_abs_ms( opts, "target_ms" );
@@ -235,9 +243,6 @@ auto parse_dimension_travel_options( const sol::table &opts ) -> dimension_trave
 auto make_pocket_dimension_data( const dimension_travel_options &opts ) ->
 std::optional<pocket_dimension_data>
 {
-    if( !opts.bounds_min_omt && !opts.bounds_max_omt ) {
-        return std::nullopt;
-    }
     if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
         return std::nullopt;
     }
@@ -253,6 +258,102 @@ std::optional<pocket_dimension_data>
     return pocket_data;
 }
 
+auto point_is_in_bounds( const tripoint_abs_omt &point, const tripoint_abs_omt &min_bound,
+                         const tripoint_abs_omt &max_bound ) -> bool
+{
+    return point.x() >= min_bound.x() && point.x() <= max_bound.x() &&
+           point.y() >= min_bound.y() && point.y() <= max_bound.y() &&
+           point.z() >= min_bound.z() && point.z() <= max_bound.z();
+}
+
+auto has_ordered_dimension_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return true;
+    }
+
+    return opts.bounds_min_omt->x() <= opts.bounds_max_omt->x() &&
+           opts.bounds_min_omt->y() <= opts.bounds_max_omt->y() &&
+           opts.bounds_min_omt->z() <= opts.bounds_max_omt->z();
+}
+
+auto target_coordinates_match( const dimension_travel_options &opts ) -> bool
+{
+    return !opts.target_ms || project_to<coords::omt>( *opts.target_ms ) == opts.target_omt;
+}
+
+auto target_fits_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return true;
+    }
+
+    return point_is_in_bounds( opts.target_omt, *opts.bounds_min_omt, *opts.bounds_max_omt );
+}
+
+auto has_dimension_generation_config( const dimension_travel_options &opts ) -> bool
+{
+    return opts.world_type || opts.bounds_min_omt || opts.bounds_max_omt || opts.boundary_terrain ||
+           opts.boundary_overmap_terrain || ( opts.overmap_terrain && !opts.overmap_terrain->empty() ) ||
+           opts.pregen_special_id || opts.pregen_special_omt;
+}
+
+auto boundary_terrain_is_valid( const dimension_travel_options &opts ) -> bool
+{
+    if( opts.boundary_terrain && !ter_str_id( *opts.boundary_terrain ).is_valid() ) {
+        return false;
+    }
+
+    if( opts.boundary_overmap_terrain &&
+        !oter_str_id( *opts.boundary_overmap_terrain ).is_valid() ) {
+        return false;
+    }
+
+    return true;
+}
+
+auto pregen_special_fits_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.pregen_special_id ) {
+        return true;
+    }
+
+    const auto special_id = overmap_special_id( *opts.pregen_special_id );
+    if( !special_id.is_valid() ) {
+        return false;
+    }
+
+    const auto &special = special_id.obj();
+    if( special.get_subtype() != overmap_special_subtype::fixed || special.has_flag( "BLOB" ) ||
+        !special.connections.empty() || !special.get_nested_specials().empty() ) {
+        return false;
+    }
+
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return true;
+    }
+
+    const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
+    const auto overmap_terrain_overlaps = [&]( const tripoint_abs_omt & pos ) {
+        const auto overmap_terrain_origin = opts.bounds_min_omt.value_or( opts.target_omt );
+        return opts.overmap_terrain &&
+        std::ranges::any_of( *opts.overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+            return overmap_terrain_origin + entry.offset == pos;
+        } );
+    };
+
+    if( overmap_terrain_overlaps( special_omt ) ) {
+        return false;
+    }
+
+    return point_is_in_bounds( special_omt, *opts.bounds_min_omt, *opts.bounds_max_omt ) &&
+    std::ranges::all_of( special.required_locations(), [&]( const auto & loc ) {
+        const auto pos = special_omt + loc.p;
+        return point_is_in_bounds( pos, *opts.bounds_min_omt, *opts.bounds_max_omt ) &&
+               !overmap_terrain_overlaps( pos );
+    } );
+}
+
 auto overmap_terrain_layout_fits_bounds( const dimension_travel_options &opts ) -> bool
 {
     if( !opts.overmap_terrain || opts.overmap_terrain->empty() ) {
@@ -263,20 +364,28 @@ auto overmap_terrain_layout_fits_bounds( const dimension_travel_options &opts ) 
     }
 
     return std::ranges::all_of( *opts.overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
-        const auto pos = *opts.bounds_min_omt + entry.offset;
-        return pos.x() >= opts.bounds_min_omt->x() && pos.x() <= opts.bounds_max_omt->x() &&
-               pos.y() >= opts.bounds_min_omt->y() && pos.y() <= opts.bounds_max_omt->y() &&
-               pos.z() >= opts.bounds_min_omt->z() && pos.z() <= opts.bounds_max_omt->z();
+        return point_is_in_bounds( *opts.bounds_min_omt + entry.offset, *opts.bounds_min_omt,
+                                   *opts.bounds_max_omt );
     } );
 }
 
 auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) -> bool
 {
-    if( !opts.has_target ) {
+    if( !opts.has_target || !is_safe_dimension_save_id( opts.dim_id ) ||
+        !target_coordinates_match( opts ) ) {
         return false;
     }
 
-    if( opts.bounds_min_omt.has_value() != opts.bounds_max_omt.has_value() ) {
+    if( opts.dim_id.is_empty() && has_dimension_generation_config( opts ) ) {
+        return false;
+    }
+
+    if( opts.bounds_min_omt.has_value() != opts.bounds_max_omt.has_value() ||
+        !has_ordered_dimension_bounds( opts ) || !target_fits_bounds( opts ) ) {
+        return false;
+    }
+
+    if( !boundary_terrain_is_valid( opts ) ) {
         return false;
     }
 
@@ -284,11 +393,8 @@ auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) ->
         return false;
     }
 
-    if( opts.pregen_special_id ) {
-        const auto special_id = overmap_special_id( *opts.pregen_special_id );
-        if( !special_id.is_valid() ) {
-            return false;
-        }
+    if( !pregen_special_fits_bounds( opts ) ) {
+        return false;
     }
 
     return true;
@@ -336,14 +442,14 @@ std::function<void()>
 
     return [dim_id, special_id, special_omt, overmap_terrain_origin, overmap_terrain]() {
         auto &dim_omb = get_overmapbuffer( dim_id );
+        std::ranges::for_each( overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+            dim_omb.ter_set( overmap_terrain_origin + entry.offset, entry.terrain.id() );
+        } );
         if( special_id ) {
             auto global_location = dim_omb.get_om_global( special_omt );
             auto &om = *global_location.om;
             om.place_special_forced( *special_id, global_location.local, om_direction::type::north );
         }
-        std::ranges::for_each( overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
-            dim_omb.ter_set( overmap_terrain_origin + entry.offset, entry.terrain.id() );
-        } );
     };
 }
 
@@ -353,11 +459,11 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
         return false;
     }
 
-    auto pocket_data = make_pocket_dimension_data( opts );
-    const auto has_bounds = opts.bounds_min_omt.has_value() || opts.bounds_max_omt.has_value();
-    if( has_bounds && !pocket_data ) {
-        return false;
+    if( opts.dim_id == g->get_current_dimension_id() ) {
+        return true;
     }
+
+    auto pocket_data = make_pocket_dimension_data( opts );
 
     auto world_type = world_type_id{};
     if( opts.world_type ) {
