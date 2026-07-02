@@ -1455,8 +1455,8 @@
       ]
     },
     "bash": {
-      "str_min": 5,
-      "str_max": 10,
+      "str_min": 10,
+      "str_max": 20,
       "sound": "whump!",
       "sound_fail": "whack!",
       "sound_vol": 90,
@@ -1507,8 +1507,8 @@
       ]
     },
     "bash": {
-      "str_min": 5,
-      "str_max": 10,
+      "str_min": 10,
+      "str_max": 20,
       "sound": "whump!",
       "sound_fail": "whack!",
       "sound_vol": 90,
@@ -1560,8 +1560,8 @@
       ]
     },
     "bash": {
-      "str_min": 5,
-      "str_max": 10,
+      "str_min": 10,
+      "str_max": 20,
       "sound": "whump!",
       "sound_fail": "whack!",
       "sound_vol": 90,
