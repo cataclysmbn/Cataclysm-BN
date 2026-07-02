@@ -59,6 +59,7 @@
   "age": { "min": 17, "max": 35 }
 },
 ```
+
 ## Skill Level Framework
 
 These are general breakpoints for skill starting values when adding professions. Remember that these are just rough guidelines, and you can certainly change things around if you feel like its neccesary or fun. Also, remember that you can assign points to skills at character creation, so make sure to judge skills based on the profession, not just on potential backstory.
