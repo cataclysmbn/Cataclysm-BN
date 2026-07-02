@@ -60,6 +60,46 @@
 },
 ```
 
+## Skill Level Framework
+
+These are general breakpoints for skill starting values when adding professions. Remember that these are just rough guidelines, and you can certainly change things around if you feel like its neccesary or fun. Also, remember that you can assign points to skills at character creation, so make sure to judge skills based on the profession, not just on potential backstory.
+
+0: NO EXPERIENCE
+The default level of knowledge obtained through interaction with society and general day to day tasks. Though untrained, you have a general awareness of the topic.
+Example: An average US high school graduate, without regard for hobbies, advanced courses, jobs, etc, would have 0 in all skills.
+
+1: HOBBYIST
+You are a hobbyist with a small amount of experience.
+Example: A person who reads magazines about guns and has gone to the range once or twice would have 1 in marksmanship.
+
+2: ENTHUSIAST
+You are an enthusiast with some experience, or have basic training in the topic.
+Example: A person who visits the range somewhat frequently and has learned the basics from the range instructor would have 2 in marksmanship. A soldier just finished with basic training would have 2 first aid, as they are trained but it is not their specialty, vs something like a combat medic who would have higher first aid.
+
+3: Previous, but with experience
+
+4: TRAINED
+You are trained in that skill as a specialization to an average degree. About the level of an associate's degree.
+Example: A soldier just finished with infantry training would have 4 in marksmanship.
+
+5: Previous, but with experience
+
+6: HIGHLY TRAINED
+You are trained in that skill as a specialization to an advanced degree. About the level of a bachelor's degree.
+Example: A soldier just finished with marksman training would have 6 in marksmanship.
+
+7: Previous, but with experience
+
+8: EXPERT
+You are trained in that skill as a specialization to an expert degree. About the level of a graduate degree.
+Example: A soldier just finished with sniper training would have 8 in marksmanship. An "average" professional athlete would have 8 in athletics.
+
+9: Previous, but with experience
+
+10: VETERAN
+You are trained to an expert degree and have years of experience of experience as well as talent surpassing others in the field.
+Example: A renowned professional athlete would have 10 in athletics. A tier one spec ops would have 10 in marksmanship. A high profile chemist would have 10 in cooking.
+
 ## Profession Item Substitutions
 
 ### Substitutions

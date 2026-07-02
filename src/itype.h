@@ -41,6 +41,7 @@ class lua_iequippable_actor;
 class lua_istate_actor;
 class lua_imelee_actor;
 class lua_iranged_actor;
+class lua_itrap_actor;
 class player;
 class relic;
 template <typename E> struct enum_traits;
@@ -1014,6 +1015,7 @@ struct itype {
         const lua_istate_actor *istate_callbacks = nullptr;
         const lua_imelee_actor *imelee_callbacks = nullptr;
         const lua_iranged_actor *iranged_callbacks = nullptr;
+        const lua_itrap_actor *itrap_callbacks = nullptr;
 
         /** Fields to emit when item is in active state */
         std::set<emit_id> emits;

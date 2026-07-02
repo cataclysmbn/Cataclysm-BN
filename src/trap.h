@@ -14,6 +14,7 @@
 #include "units.h"
 #include "catalua_type_operators.h"
 
+class lua_itrap_actor;
 class Character;
 class Creature;
 class JsonObject;
@@ -62,6 +63,7 @@ bool map_regen( const tripoint_bub_ms &p, Creature *c, item *i );
 bool drain( const tripoint_bub_ms &p, Creature *c, item *i );
 bool snake( const tripoint_bub_ms &p, Creature *c, item *i );
 bool cast_spell( const tripoint_bub_ms &p, Creature *critter, item * );
+bool lua( const tripoint_bub_ms &p, Creature *target, item *trap );
 } // namespace trapfunc
 
 struct vehicle_handle_trap_data {
@@ -266,6 +268,16 @@ struct trap {
          */
         static void check_consistency();
         void check() const;
+
+        const std::map<trap_id, std::unique_ptr<lua_itrap_actor>> &get_itrap_callbacks();
+
+        static void resolve_lua_callbacks( const std::map<std::string, std::unique_ptr<lua_itrap_actor>>
+                                           &actors );
+
+        /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+         *  Mutable because it is wired post-construction through const factory references. */
+        mutable const lua_itrap_actor *lua_callbacks = nullptr;
+
         /*@}*/
         static size_t count();
 
@@ -317,5 +329,3 @@ tr_hum,
 tr_shadow,
 tr_drain,
 tr_snake;
-
-

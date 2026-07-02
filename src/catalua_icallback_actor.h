@@ -231,3 +231,29 @@ class lua_mutation_callback_actor
         void call_on_gain( Character &who, const trait_id &tid ) const;
         void call_on_loss( Character &who, const trait_id &tid ) const;
 };
+
+/** Lua callbacks for trap events. */
+class lua_itrap_actor : public lua_icallback_actor_base
+{
+    private:
+        sol::protected_function can_trigger_func;
+        sol::protected_function on_trigger_func;
+        sol::protected_function on_trigger_aftermath_func;
+
+
+
+    public:
+        lua_itrap_actor( const std::string &item_id,
+                         sol::protected_function &&can_trigger_func,
+                         sol::protected_function &&on_trigger_func,
+                         sol::protected_function &&on_trigger_aftermath_func
+                       );
+
+        /** Returns false to prevent triggering the trap. */
+        bool call_can_trigger( const Character &who, const trap &trap, const tripoint_bub_ms &loc ) const;
+        /** Called after triggering. */
+        void call_on_trigger( Character &who, trap &trap, const tripoint_bub_ms &loc ) const;
+        /** Called after trap aftermath. */
+        void call_on_trigger_aftermath( Character &who, trap &trap, const tripoint_bub_ms &loc ) const;
+
+};
