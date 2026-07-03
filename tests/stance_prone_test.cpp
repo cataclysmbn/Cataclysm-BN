@@ -171,4 +171,3 @@ TEST_CASE("prone_stance_ranged_effects", "[stance][prone][ranged]") {
             }
         }
     }
-
