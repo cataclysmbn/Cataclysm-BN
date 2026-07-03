@@ -158,6 +158,23 @@ local new_npc = map:place_npc(place_point, "thug")
 new_npc:erase()
 ```
 
+### NPCへの操作切り替えに反応する
+
+プレイヤーが仲間NPCの操作に切り替えた後でmodの状態を更新したい場合は
+`on_control_npc` フックを使います。このフックは切り替え後に実行されるため、
+現在操作中のキャラクターは `gapi.get_avatar()` で取得します。
+
+```lua
+local mod = game.mod_runtime[game.current_mod]
+game.add_hook("on_control_npc", function(...) return mod.on_control_npc(...) end)
+
+mod.on_control_npc = function(params)
+    local controlled = gapi.get_avatar()
+
+    gapi.add_msg(MsgType.good, string.format("現在 %s を操作しています。", controlled:get_name()))
+end
+```
+
 ## 天気フック
 
 ### 天気の変化に反応する
