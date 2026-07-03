@@ -51,9 +51,21 @@ void money::serialize( JsonOut &jsout ) const
 }
 
 template<>
+void sound::serialize( JsonOut &jsout ) const
+{
+    jsout.write( string_format( "%d dB", value_ ) );
+}
+
+template<>
 void money::deserialize( JsonIn &jsin )
 {
     *this = read_from_json_string<money>( jsin, units::money_units );
+}
+
+template<>
+void sound::deserialize( JsonIn &jsin )
+{
+    *this = read_from_json_string<sound>( jsin, units::sound_units );
 }
 
 template<>

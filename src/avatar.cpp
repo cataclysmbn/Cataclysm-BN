@@ -219,6 +219,9 @@ void avatar::control_npc( npc &np )
     g->reset_light_level();
     // setpos() keeps the loaded map window aligned with the new avatar.
     setpos( controlled_npc_pos );
+    cata::run_hooks( "on_control_npc", [ & ]( auto & params ) {
+        params["npc"] = &np;
+    } );
 }
 
 void avatar::toggle_map_memory()

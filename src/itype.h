@@ -41,6 +41,7 @@ class lua_iequippable_actor;
 class lua_istate_actor;
 class lua_imelee_actor;
 class lua_iranged_actor;
+class lua_itrap_actor;
 class player;
 class relic;
 template <typename E> struct enum_traits;
@@ -540,7 +541,7 @@ struct islot_gun : common_ranged_data {
      * Volume of the noise made when reloading this weapon.
      * Base reload volume set to 40dB spl. Below 20dB spl is effectively silent.
      */
-    int reload_noise_volume = 40;
+    units::sound reload_noise_volume = 40_dB;
 
     /** Maximum aim achievable using base weapon sights */
     int sight_dispersion = 30;
@@ -1014,6 +1015,7 @@ struct itype {
         const lua_istate_actor *istate_callbacks = nullptr;
         const lua_imelee_actor *imelee_callbacks = nullptr;
         const lua_iranged_actor *iranged_callbacks = nullptr;
+        const lua_itrap_actor *itrap_callbacks = nullptr;
 
         /** Fields to emit when item is in active state */
         std::set<emit_id> emits;

@@ -96,6 +96,17 @@ const std::vector<const trap *> &trap::get_funnels()
     return funnel_traps;
 }
 
+void trap::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_itrap_actor>> &actors )
+{
+    for( const trap &mb : trap_factory.get_all() ) {
+        auto it = actors.find( mb.id.str() );
+        if( it != actors.end() ) {
+            mb.lua_callbacks = it->second.get();
+        }
+    }
+}
+
 size_t trap::count()
 {
     return trap_factory.size();
@@ -179,7 +190,7 @@ void trap::load( const JsonObject &jo, const std::string & )
         vehicle_data.chance = jv.get_int( "chance", 100 );
         vehicle_data.damage = jv.get_int( "damage", 0 );
         vehicle_data.shrapnel = jv.get_int( "shrapnel", 0 );
-        vehicle_data.sound_volume = jv.get_int( "sound_volume", 0 );
+        assign( jv, "sound_volume", vehicle_data.sound_volume );
         jv.read( "sound", vehicle_data.sound );
         vehicle_data.sound_type = jv.get_string( "sound_type", "" );
         vehicle_data.sound_variant = jv.get_string( "sound_variant", "" );

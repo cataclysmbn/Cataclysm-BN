@@ -129,7 +129,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -190,7 +190,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -252,7 +252,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": 0,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -659,7 +659,7 @@
         "targeting_cost": 125,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"120mm HEAT, up.  Targeting.  On the way.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_crits": true,
         "description": "The mini-tank fires its 120mm gun!",
         "no_ammo_sound": "a hollow click!"

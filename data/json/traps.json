@@ -23,7 +23,7 @@
     "action": "bubble",
     "remove_on_trigger": true,
     "drops": [ "bubblewrap" ],
-    "vehicle_data": { "sound_volume": 18, "sound": "Pop!" }
+    "vehicle_data": { "sound_volume": "45 dB", "sound": "Pop!" }
   },
   {
     "type": "trap",
@@ -37,7 +37,7 @@
     "action": "glass",
     "remove_on_trigger": true,
     "drops": [ "glass_shard" ],
-    "vehicle_data": { "sound_volume": 10, "sound": "Crunch!" }
+    "vehicle_data": { "sound_volume": "40 dB", "sound": "Crunch!" }
   },
   {
     "type": "trap",
@@ -154,7 +154,7 @@
     "drops": [ "beartrap" ],
     "vehicle_data": {
       "damage": 300,
-      "sound_volume": 8,
+      "sound_volume": "38 dB",
       "sound": "SNAP!",
       "sound_type": "trap",
       "sound_variant": "bear_trap",
@@ -178,7 +178,7 @@
     "drops": [ "beartrap" ],
     "vehicle_data": {
       "damage": 300,
-      "sound_volume": 8,
+      "sound_volume": "38 dB",
       "sound": "SNAP!",
       "sound_type": "trap",
       "sound_variant": "bear_trap",
@@ -255,7 +255,7 @@
     "remove_on_trigger": true,
     "trigger_items": [ "can_alarm_trap" ],
     "drops": [ "can_alarm_trap" ],
-    "vehicle_data": { "sound_volume": 25, "sound": "empty cans clattering!" }
+    "vehicle_data": { "sound_volume": "48 dB", "sound": "empty cans clattering!" }
   },
   {
     "type": "trap",
@@ -275,7 +275,7 @@
     "vehicle_data": {
       "chance": 30,
       "damage": 300,
-      "sound_volume": 1,
+      "sound_volume": "20 dB",
       "sound": "Clank!",
       "sound_type": "fire_gun",
       "sound_variant": "crossbow",
@@ -300,7 +300,7 @@
     "vehicle_data": {
       "chance": 70,
       "damage": 300,
-      "sound_volume": 60,
+      "sound_volume": "56 dB",
       "sound": "Bang!",
       "sound_type": "fire_gun",
       "sound_variant": "shotgun_d",
@@ -324,7 +324,7 @@
     "vehicle_data": {
       "chance": 70,
       "damage": 300,
-      "sound_volume": 60,
+      "sound_volume": "56 dB",
       "sound": "Bang!",
       "sound_type": "fire_gun",
       "sound_variant": "shotgun_s",
@@ -356,7 +356,13 @@
     "avoidance": 4,
     "difficulty": 99,
     "action": "blade",
-    "vehicle_data": { "damage": 300, "sound_volume": 1, "sound": "Swinnng!", "sound_type": "smash_success", "sound_variant": "hit_vehicle" }
+    "vehicle_data": {
+      "damage": 300,
+      "sound_volume": "20 dB",
+      "sound": "Swinnng!",
+      "sound_type": "smash_success",
+      "sound_variant": "hit_vehicle"
+    }
   },
   {
     "type": "trap",
@@ -375,7 +381,7 @@
       "do_explosion": true,
       "damage": 1000,
       "shrapnel": 8,
-      "sound_volume": 10,
+      "sound_volume": "40 dB",
       "sound": "Boom!",
       "sound_type": "explosion",
       "sound_variant": "default"
@@ -398,7 +404,7 @@
       "do_explosion": true,
       "damage": 1000,
       "shrapnel": 8,
-      "sound_volume": 10,
+      "sound_volume": "40 dB",
       "sound": "Boom!",
       "sound_type": "explosion",
       "sound_variant": "default"
@@ -440,7 +446,7 @@
     "difficulty": 2,
     "action": "dissector",
     "drops": [ "broken_dissector" ],
-    "vehicle_data": { "damage": 500, "sound_volume": 10, "sound": "BRZZZAP!", "sound_type": "trap", "sound_variant": "dissector" }
+    "vehicle_data": { "damage": 500, "sound_volume": "40 dB", "sound": "BRZZZAP!", "sound_type": "trap", "sound_variant": "dissector" }
   },
   {
     "type": "trap",
@@ -533,7 +539,7 @@
       "do_explosion": true,
       "damage": 1000,
       "shrapnel": 12,
-      "sound_volume": 18,
+      "sound_volume": "45 dB",
       "sound": "Boom!",
       "sound_type": "explosion",
       "sound_variant": "default"

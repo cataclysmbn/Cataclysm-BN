@@ -2242,6 +2242,14 @@ bool game::do_turn()
         m.process_items();
     }
     {
+        // Deferred drains must run before monmove()'s cleanup_dead() frees their sources.
+        ZoneScopedN( "do_turn_explosions_after_items" );
+        auto &explosions = explosion_handler::get_explosion_queue();
+        if( explosions.take_deferred_drain_request() ) {
+            explosions.execute();
+        }
+    }
+    {
         ZoneScopedN( "do_turn_creature_in_field" );
         m.creature_in_field( u );
     }
@@ -5593,6 +5601,7 @@ void game::cleanup_dead()
     if( npc_is_dead ) {
         for( auto it = active_npc.begin(); it != active_npc.end(); ) {
             if( ( *it )->is_dead() ) {
+                explosion_handler::get_explosion_queue().invalidate_source( it->get() );
                 if( !( *it )->is_manually_erased() ) {
                     // Normal death path — npc::erase() was not called, so do cleanup here.
                     remove_npc_follower( ( *it )->getID() );
@@ -7323,6 +7332,7 @@ void game::erase_npc( character_id id )
         debugmsg( "game::erase_npc: NPC (%d) not found in active_npc.", id.get_value() );
         return;
     }
+    explosion_handler::get_explosion_queue().invalidate_source( it->get() );
     ( *it )->get_mapbuffer().remove_active_npc( **it );
     active_npc.erase( it );
 }

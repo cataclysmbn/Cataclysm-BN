@@ -129,6 +129,9 @@ using mass = quantity<std::int64_t, mass_in_milligram_tag>;
 
 class volume_in_milliliter_tag;
 using volume = quantity<std::int64_t, volume_in_milliliter_tag>;
+
+class sound_in_decibel_tag;
+using sound = quantity<int, sound_in_decibel_tag>;
 } // namespace units
 
 struct islot_container;
@@ -222,6 +225,7 @@ LUNA_VAL( units::angle, "Angle" );
 LUNA_VAL( units::energy, "Energy" );
 LUNA_VAL( units::mass, "Mass" );
 LUNA_VAL( units::volume, "Volume" );
+LUNA_VAL( units::sound, "Sound" );
 LUNA_VAL( relic, "Relic" )
 LUNA_VAL( book_recipe, "BookRecipe" );
 LUNA_VAL( common_ranged_data, "RangedData" );
