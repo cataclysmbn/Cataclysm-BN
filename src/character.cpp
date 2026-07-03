@@ -7120,7 +7120,6 @@ void Character::add_effect( const efftype_id &eff_id, const time_duration &dur,
         get_map().set_seen_cache_dirty( bub_pos().z() );
     } else if( eff_id == effect_sleep && has_effect( effect_sleep ) ) {
         pre_sleep_mode = move_mode;
-        move_mode = CMM_PRONE;
         get_map().set_seen_cache_dirty( bub_pos().z() );
     }
 }
