@@ -617,6 +617,12 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_try_monster_interaction", []( const sol::table & ) {} );
 
+    DOC( "Called when the player swaps control to an npc.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC being controlled.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_control_npc", []( const sol::table & ) {} );
+
     DOC( "Called just before the dialogue window opens and the first topic is chosen.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `npc` (NPC): The NPC speaking  " );
