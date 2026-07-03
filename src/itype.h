@@ -541,7 +541,7 @@ struct islot_gun : common_ranged_data {
      * Volume of the noise made when reloading this weapon.
      * Base reload volume set to 40dB spl. Below 20dB spl is effectively silent.
      */
-    int reload_noise_volume = 40;
+    units::sound reload_noise_volume = 40_dB;
 
     /** Maximum aim achievable using base weapon sights */
     int sight_dispersion = 30;

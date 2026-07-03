@@ -2146,8 +2146,11 @@ void explosion_queue::execute()
     // bomb's blast killing a searchlight) would re-detonate it forever. Defer to
     // the turn-loop drain, which runs after processing (same turn).
     if( drains_deferred() ) {
+        deferred_drain_requested = true;
         return;
     }
+    // Any real drain satisfies a pending suppressed request.
+    deferred_drain_requested = false;
 
     // Per-drain backstop (not the #9696 fix): cap one runaway drain that re-feeds
     // its own queue. Per drain, not per turn, so it never drops a later,

@@ -1,8 +1,11 @@
+#include "assign.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
+#include "debug.h"
 #include "fstream_utils.h"
 #include "json.h"
 #include "options_helpers.h"
+#include "sounds.h"
 #include "units.h"
 #include "units_serde.h"
 #include "units_utility.h"
@@ -67,6 +70,39 @@ static units::energy parse_energy_quantity(const std::string& json) {
     std::istringstream buffer(json);
     JsonIn jsin(buffer);
     return read_from_json_string<units::energy>(jsin, units::energy_units);
+}
+
+auto parse_sound_quantity(const std::string& json) -> units::sound {
+    std::istringstream buffer(json);
+    JsonIn jsin(buffer);
+    return read_from_json_string<units::sound>(jsin, units::sound_units);
+}
+
+auto assign_sound_quantity(const std::string& json) -> units::sound {
+    std::istringstream buffer(json);
+    JsonIn jsin(buffer);
+    JsonObject jo = jsin.get_object();
+    auto result = 0_dB;
+    assign(jo, "volume", result);
+    return result;
+}
+
+TEST_CASE("sound parsing from JSON", "[units]") {
+    CHECK_THROWS(parse_sound_quantity("\"\""));     // empty string
+    CHECK_THROWS(parse_sound_quantity("27"));       // not a string at all
+    CHECK_THROWS(parse_sound_quantity("\"    \"")); // only spaces
+    CHECK_THROWS(parse_sound_quantity("\"27\""));   // no sound unit
+
+    CHECK(parse_sound_quantity("\"100 dB\"") == 100_dB);
+    CHECK(assign_sound_quantity("{ \"volume\": \"100 dB\" }") == 100_dB);
+
+    auto legacy_sound = 0_dB;
+    const auto warning = capture_debugmsg_during([&legacy_sound]() {
+        legacy_sound = assign_sound_quantity("{ \"volume\": 2 }");
+    });
+    CHECK(warning.find("legacy sound volume values used") != std::string::npos);
+    CHECK(legacy_sound
+          == units::from_decibel(approximate_dB_volume_from_legacy_tile_distance_vol(2)));
 }
 
 TEST_CASE("energy parsing from JSON", "[units]") {

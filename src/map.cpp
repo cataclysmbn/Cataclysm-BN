@@ -4289,7 +4289,8 @@ static auto get_sound_volume( const map_bash_info &bash, const bash_params &para
     // Set maxvol to 140dB, which can be deafening for extreme impacts.
     const auto maxvol = 140;
     const auto impact_strength = params.destroy ? bash.str_max : params.strength;
-    return bash.sound_vol.value_or( std::clamp( minvol + impact_strength, minvol, maxvol ) );
+    return units::to_decibel( bash.sound_vol.value_or(
+                                  units::from_decibel( std::clamp( minvol + impact_strength, minvol, maxvol ) ) ) );
 }
 
 static void set_bash_sound_source( sound_event &se, const bash_params &params )
@@ -4673,7 +4674,8 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
 
     if( !result.success ) {
         // Cap out bash volume to 120dB for sanity checking.
-        int sound_volume = std::min( 120, bash->sound_fail_vol.value_or( 70 ) );
+        const auto sound_volume =
+            std::min( 120, units::to_decibel( bash->sound_fail_vol.value_or( 70_dB ) ) );
 
         result.did_bash = true;
         if( !params.silent ) {

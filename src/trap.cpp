@@ -190,7 +190,7 @@ void trap::load( const JsonObject &jo, const std::string & )
         vehicle_data.chance = jv.get_int( "chance", 100 );
         vehicle_data.damage = jv.get_int( "damage", 0 );
         vehicle_data.shrapnel = jv.get_int( "shrapnel", 0 );
-        vehicle_data.sound_volume = jv.get_int( "sound_volume", 0 );
+        assign( jv, "sound_volume", vehicle_data.sound_volume );
         jv.read( "sound", vehicle_data.sound );
         vehicle_data.sound_type = jv.get_string( "sound_type", "" );
         vehicle_data.sound_variant = jv.get_string( "sound_variant", "" );

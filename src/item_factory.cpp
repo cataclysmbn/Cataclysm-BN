@@ -1950,7 +1950,7 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
     assign( jo, "clip_size", slot.clip, strict, 0 );
     assign( jo, "reload", slot.reload_time, strict, 0 );
     assign( jo, "reload_noise", slot.reload_noise, strict );
-    assign( jo, "reload_noise_volume_dB", slot.reload_noise_volume, strict, 0, 191 );
+    assign( jo, "reload_noise_volume_dB", slot.reload_noise_volume, strict, 0_dB, 191_dB );
     // Depreciated alias, use barrel_volume instead.
     assign( jo, "barrel_length", slot.barrel_volume, strict, 0_ml );
     assign( jo, "barrel_volume", slot.barrel_volume, strict, 0_ml );
@@ -1971,10 +1971,8 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
         }
     }
     // Depreciated alias, use reload_noise_dB_volume instead.
-    if( jo.has_int( "reload_noise_volume" ) ) {
-        int volume = jo.get_int( "reload_noise_volume" );
-        volume = approximate_dB_volume_from_legacy_tile_distance_vol( volume );
-        slot.reload_noise_volume = volume;
+    if( jo.has_member( "reload_noise_volume" ) ) {
+        assign( jo, "reload_noise_volume", slot.reload_noise_volume, strict, 0_dB, 191_dB );
     }
     assign( jo, "modes", slot.modes );
 }

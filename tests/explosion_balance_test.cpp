@@ -293,9 +293,23 @@ TEST_CASE("explosion queue defers drains during item processing", "[explosion][e
         CHECK_FALSE(queue.empty());
     }
 
+    // The suppressed drain is remembered so the turn loop can run it before cleanup_dead().
+    CHECK(queue.take_deferred_drain_request());
+    CHECK_FALSE(queue.take_deferred_drain_request()); // consumed by the take
+
     // The turn-loop drain (outside the window) empties the queue.
     queue.execute();
     CHECK(queue.empty());
+
+    {
+        // A suppressed request satisfied by any real drain must not linger.
+        explosion_handler::scoped_drain_deferral defer;
+        explosion_handler::explosion(origin, ex, nullptr);
+        queue.execute(); // suppressed: sets the request
+    }
+    queue.execute(); // real drain satisfies it
+    CHECK(queue.empty());
+    CHECK_FALSE(queue.take_deferred_drain_request()); // no stale flag
 }
 
 TEST_CASE("EMP bomb processed next to a searchlight does not run away", "[explosion][emp]") {
@@ -332,4 +346,28 @@ TEST_CASE("EMP bomb processed next to a searchlight does not run away", "[explos
 
     REQUIRE(searchlight.is_dead()); // scenario actually triggered
     CHECK(queue.empty());           // ...and terminated with no runaway
+}
+
+TEST_CASE("queued explosions drop their source when the creature is removed", "[explosion]") {
+    clear_all_state();
+
+    const auto source_pos = tripoint_bub_ms{61, 60, 0};
+    auto& source = spawn_test_monster("mon_zombie", source_pos);
+    const Creature* source_ptr = &source;
+
+    auto& queue = explosion_handler::get_explosion_queue();
+    queue.clear();
+    const auto ex = explosion_data{.damage = 10, .radius = 2.0f};
+    explosion_handler::explosion(source_pos, ex, &source);
+    REQUIRE(queue.references_source(source_ptr));
+
+    // The source dies and is destroyed while its blast is still queued (e.g. a
+    // drain deferred during map::process_items() outliving cleanup_dead()).
+    source.set_hp(0);
+    g->cleanup_dead();
+
+    // The source object is gone from here on; only the saved address may be used.
+    CHECK_FALSE(queue.references_source(source_ptr));
+    queue.execute(); // the drain must not touch the destroyed source
+    CHECK(queue.empty());
 }

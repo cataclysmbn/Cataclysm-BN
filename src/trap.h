@@ -73,7 +73,7 @@ struct vehicle_handle_trap_data {
     int chance = 100;
     int damage = 0;
     int shrapnel = 0;
-    int sound_volume = 0;
+    units::sound sound_volume = 0_dB;
     translation sound;
     std::string sound_type;
     std::string sound_variant;

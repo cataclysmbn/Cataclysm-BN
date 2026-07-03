@@ -214,9 +214,9 @@ static void load_map_bash_tent_centers( const JsonArray &ja, std::vector<furn_st
     }
 }
 
-static void correct_if_magic( std::optional<int> &val )
+static void correct_if_magic( std::optional<units::sound> &val )
 {
-    if( val && *val < 0 ) {
+    if( val && *val < 0_dB ) {
         val.reset();
     }
 }
@@ -224,7 +224,7 @@ static void correct_if_magic( std::optional<int> &val )
 map_bash_info::map_bash_info() : str_min( -1 ), str_max( -1 ),
     str_min_blocked( -1 ), str_max_blocked( -1 ),
     str_min_supported( -1 ), str_max_supported( -1 ),
-    explosive( 0 ), sound_vol( -1 ), sound_fail_vol( -1 ),
+    explosive( 0 ), sound_vol( -1_dB ), sound_fail_vol( -1_dB ),
     collapse_radius( 1 ), destroy_only( false ), bash_below( false ),
     drop_group( "EMPTY_GROUP" ),
     ter_set( ter_str_id::NULL_ID() ), furn_set( furn_str_id::NULL_ID() ) {}

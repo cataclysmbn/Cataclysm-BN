@@ -790,7 +790,7 @@
       "fields_radius": 3,
       "fields_min_intensity": 1,
       "fields_max_intensity": 3,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin, try throwing it instead."
     },
