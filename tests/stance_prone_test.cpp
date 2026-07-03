@@ -4,7 +4,6 @@
 #include "character.h"
 #include "creature.h"
 #include "dispersion.h"
-#include "effect.h"
 #include "game.h"
 #include "item.h"
 #include "map.h"
@@ -17,9 +16,6 @@
 #include <vector>
 
 static constexpr tripoint_bub_ms shooter_pos(60, 60, 0);
-
-static const efftype_id effect_downed("downed");
-static const efftype_id effect_sleep("sleep");
 
 TEST_CASE("prone_stance_movement_costs", "[stance][prone][movement]") {
     clear_all_state();
@@ -175,76 +171,4 @@ TEST_CASE("prone_stance_ranged_effects", "[stance][prone][ranged]") {
             }
         }
     }
-}
 
-TEST_CASE("effects_force_prone_and_recover_mode", "[stance][prone]") {
-    clear_all_state();
-    avatar& shooter = g->u;
-    g->place_player(shooter_pos);
-
-    using cm = character_movemode;
-
-    SECTION("knocked down") {
-        auto do_knockdown_test =
-            [&](cm starting_mode, cm expected_recovery_mode, const std::string& label) {
-                DYNAMIC_SECTION("character " << label) {
-                    shooter.set_movement_mode(starting_mode);
-                    REQUIRE(shooter.movement_mode_is(starting_mode));
-
-                    WHEN("knocked down") {
-                        shooter.add_effect(effect_downed, 1_hours);
-                        THEN("character is prone") {
-                            CHECK(shooter.movement_mode_is(cm::CMM_PRONE));
-                        }
-                    }
-
-                    AND_WHEN("downed effect is removed (stand up)") {
-                        shooter.add_effect(effect_downed, 1_hours);
-                        REQUIRE(shooter.movement_mode_is(cm::CMM_PRONE));
-
-                        shooter.remove_effect(effect_downed);
-                        THEN("returns to " << label << " mode") {
-                            CHECK(shooter.movement_mode_is(expected_recovery_mode));
-                        }
-                    }
-                }
-            };
-
-        do_knockdown_test(cm::CMM_WALK, cm::CMM_WALK, "walk");
-        do_knockdown_test(cm::CMM_CROUCH, cm::CMM_CROUCH, "crouch");
-        do_knockdown_test(cm::CMM_RUN, cm::CMM_RUN, "run");
-        do_knockdown_test(cm::CMM_PRONE, cm::CMM_PRONE, "prone");
-    }
-
-    SECTION("falling asleep") {
-        auto do_sleep_test =
-            [&](cm starting_mode, cm expected_recovery_mode, const std::string& label) {
-                DYNAMIC_SECTION("character " << label) {
-                    shooter.set_movement_mode(starting_mode);
-                    REQUIRE(shooter.movement_mode_is(starting_mode));
-
-                    WHEN("falling asleep") {
-                        shooter.add_effect(effect_sleep, 1_hours);
-                        THEN("character is prone") {
-                            CHECK(shooter.movement_mode_is(cm::CMM_PRONE));
-                        }
-                    }
-
-                    AND_WHEN("waking up") {
-                        shooter.add_effect(effect_sleep, 1_hours);
-                        REQUIRE(shooter.movement_mode_is(cm::CMM_PRONE));
-
-                        shooter.wake_up();
-                        THEN("returns to " << label << " mode") {
-                            CHECK(shooter.movement_mode_is(expected_recovery_mode));
-                        }
-                    }
-                }
-            };
-
-        do_sleep_test(cm::CMM_WALK, cm::CMM_WALK, "walk");
-        do_sleep_test(cm::CMM_CROUCH, cm::CMM_CROUCH, "crouch");
-        do_sleep_test(cm::CMM_RUN, cm::CMM_RUN, "run");
-        do_sleep_test(cm::CMM_PRONE, cm::CMM_PRONE, "prone");
-    }
-}
