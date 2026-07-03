@@ -676,6 +676,9 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
 
         bio.powered = bio.info().has_flag( flag_BIONIC_TOGGLED ) || bio.info().charge_time > 0;
 
+        if( bio.info().is_remote_fueled ) {
+            find_remote_fuel();
+        }
         if( bio.info().charge_time > 0 ) {
             bio.charge_timer = bio.info().charge_time;
         }
@@ -1440,22 +1443,15 @@ bool Character::burn_fuel( bionic &bio, bool start )
                             mod_power_level( units::from_kilojoule( fuel_energy ) * effective_efficiency );
                         }
                     } else if( is_cable_powered ) {
-                        auto to_consume = bio.info().remote_fuel_draw;
-                        if( get_power_level() >= get_max_power_level() ) {
-                            to_consume = 0_J;
-                        }
-                        const auto unconsumed = consume_remote_fuel( to_consume );
-                        // we don't check if to_consume != unconsumed cuz we wouldn't get there otherwise
+                        const units::energy power_needed = ( get_max_power_level() - get_power_level() ) /
+                                                           effective_efficiency;
+                        const units::energy to_consume = std::min( bio.info().remote_fuel_draw, power_needed );
                         if( to_consume > 0_J ) {
-                            if( unconsumed == 0_J ) {
-                                mod_power_level( bio.info().remote_fuel_draw * effective_efficiency );
-                                current_fuel_stock -= units::to_kilojoule( to_consume );
-                            } else {
-                                mod_power_level( ( to_consume - unconsumed ) * effective_efficiency );
-                                current_fuel_stock = 0;
-                            }
+                            const auto unconsumed = consume_remote_fuel( to_consume );
+                            mod_power_level( ( to_consume - unconsumed ) * effective_efficiency );
+                            current_fuel_stock -= units::to_kilojoule( to_consume - unconsumed );
+                            set_value( "rem_" + fuel.str(), std::to_string( current_fuel_stock ) );
                         }
-                        set_value( "rem_" + fuel.str(), std::to_string( current_fuel_stock ) );
                     } else {
                         current_fuel_stock -= 1;
                         set_value( fuel.str(), std::to_string( current_fuel_stock ) );
@@ -1682,6 +1678,10 @@ units::energy Character::consume_remote_fuel( units::energy amount )
         }
     }
 
+    // We truncate anything less than 1 kJ, so we may have left some unfulfilled
+    if( amount > units::from_kilojoule( amount_kj ) ) {
+        unconsumed_amount += ( amount - units::from_kilojoule( amount_kj ) );
+    }
     return unconsumed_amount;
 }
 

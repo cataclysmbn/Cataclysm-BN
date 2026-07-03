@@ -59,7 +59,7 @@
     "id": "sunlight",
     "symbol": "?",
     "color": "white",
-    "name": { "str_sp": "sun light" },
+    "name": { "str_sp": "sunlight" },
     "description": "seeing this is a bug",
     "stackable": true,
     "price": "0 cent",
