@@ -1906,7 +1906,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "helmet_liner",
           "helmet_army",
@@ -1944,7 +1944,7 @@
       "both": {
         "items": [
           "pants",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "helmet_liner",
           "helmet_steel",
@@ -1990,7 +1990,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "helmet_liner",
           "helmet_army",
@@ -2041,7 +2041,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "helmet_liner",
           "helmet_army",
@@ -2090,7 +2090,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "helmet_liner",
           "helmet_army",
@@ -2148,7 +2148,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "helmet_liner",
           "helmet_army",
@@ -2200,7 +2200,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "helmet_liner",
           "helmet_army",
@@ -2256,7 +2256,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "gloves_liner",
           "gloves_tactical",
@@ -2355,7 +2355,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "gloves_liner",
           "gloves_tactical",
@@ -2484,7 +2484,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "gloves_liner",
           "gloves_tactical",
@@ -2534,7 +2534,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "gloves_liner",
           "gloves_tactical",
@@ -4253,7 +4253,8 @@
       "both": {
         "items": [
           "winter_pants_army",
-          "tshirt",
+          "undershirt",
+          "jacket_army",
           "winter_jacket_army",
           "winter_gloves_army",
           "mask_ski",
@@ -4317,7 +4318,8 @@
       "both": {
         "items": [
           "winter_pants_army",
-          "tshirt",
+          "undershirt",
+          "jacket_army",
           "winter_jacket_army",
           "winter_gloves_army",
           "rucksack",
@@ -4376,7 +4378,8 @@
       "both": {
         "items": [
           "winter_pants_army",
-          "tshirt",
+          "undershirt",
+          "jacket_army",
           "winter_jacket_army",
           "gloves_liner",
           "gloves_tactical",
@@ -5499,7 +5502,7 @@
     "skills": [ { "level": 1, "name": "swimming" }, { "level": 1, "name": "gun" }, { "level": 1, "name": "firstaid" } ],
     "items": {
       "both": {
-        "items": [ "shorts", "tshirt", "socks", "smart_phone", "lowtops", "wristwatch" ],
+        "items": [ "shorts", "undershirt", "socks", "smart_phone", "lowtops", "wristwatch" ],
         "entries": [ { "item": "personal_gobag", "custom-flags": [ "FIT" ] } ]
       },
       "male": [ "boxer_shorts" ],
@@ -5765,7 +5768,7 @@
         "items": [
           "socks",
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "boots_combat",
           "gloves_liner",
@@ -7659,7 +7662,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "helmet_liner",
           "helmet_army",
@@ -8227,7 +8230,7 @@
       "both": {
         "items": [
           "pants_army",
-          "tshirt",
+          "undershirt",
           "jacket_army",
           "helmet_liner",
           "helmet_army",
@@ -8593,7 +8596,7 @@
       { "level": 3, "name": "throw" }
     ],
     "items": {
-      "both": { "items": [ "pants_army", "tshirt", "jacket_army", "socks", "boots_combat", "wristwatch", "smart_phone" ] },
+      "both": { "items": [ "pants_army", "undershirt", "jacket_army", "socks", "boots_combat", "wristwatch", "smart_phone" ] },
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boxer_shorts" ]
     }
