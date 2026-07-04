@@ -1,11 +1,6 @@
 #include "catch/catch.hpp"
-
-#include <cstddef>
-#include <sstream>
-#include <string>
-
-#include "creature.h"
 #include "coordinates.h"
+#include "creature.h"
 #include "game_constants.h"
 #include "item.h"
 #include "item_factory.h"
@@ -16,65 +11,64 @@
 #include "string_formatter.h"
 #include "type_id.h"
 
-static const tripoint_bub_ms dude_pos( g_half_mapsize_x, g_half_mapsize_y, 0 );
+#include <cstddef>
+#include <sstream>
+#include <string>
 
-static std::vector<const itype *> find_weapons()
-{
-    std::vector<const itype *> result;
-    for( const itype *it : item_controller->all() ) {
-        if( it->melee[DT_BASH] + it->melee[DT_CUT] + it->melee[DT_STAB] >= 10 ) {
-            result.push_back( it );
+static const tripoint_bub_ms dude_pos(g_half_mapsize_x, g_half_mapsize_y, 0);
+
+static std::vector<const itype*> find_weapons() {
+    std::vector<const itype*> result;
+    for (const itype* it : item_controller->all()) {
+        if (it->melee[DT_BASH] + it->melee[DT_CUT] + it->melee[DT_STAB] >= 10) {
+            result.push_back(it);
         }
     }
 
     return result;
 }
 
-static void print_stats( const player &p, const std::vector<const itype *> &weapons,
-                         const monster &m )
-{
+static void print_stats(
+    const player& p, const std::vector<const itype*>& weapons, const monster& m) {
     std::vector<std::pair<std::string, double>> weapon_stats;
-    for( const itype *w : weapons ) {
-        item &wp = *item::spawn_temporary( w );
-        weapon_stats.emplace_back( wp.tname( 1, false ), wp.effective_dps( p, m ) );
+    for (const itype* w : weapons) {
+        item& wp = *item::spawn_temporary(w);
+        weapon_stats.emplace_back(wp.tname(1, false), wp.effective_dps(p, m));
     }
-    std::sort( weapon_stats.begin(), weapon_stats.end(), []( const auto & l, const auto & r ) {
+    std::sort(weapon_stats.begin(), weapon_stats.end(), [](const auto& l, const auto& r) {
         return l.second < r.second;
-    } );
-    for( const auto &pr : weapon_stats ) {
-        cata_printf( "%-30s : %.1f\n", pr.first.c_str(), pr.second );
+    });
+    for (const auto& pr : weapon_stats) {
+        cata_printf("%-30s : %.1f\n", pr.first.c_str(), pr.second);
     }
 }
 
-TEST_CASE( "Weak character using melee weapons against a brute", "[.][melee][balance]" )
-{
-    monster zed( mtype_id( "mon_zombie_brute" ) );
+TEST_CASE("Weak character using melee weapons against a brute", "[.][melee][balance]") {
+    monster zed(mtype_id("mon_zombie_brute"));
     auto weapons = find_weapons();
 
-    SECTION( "8/8/8/8, no skills" ) {
-        standard_npc dude( "TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8 );
-        print_stats( dude, weapons, zed );
+    SECTION("8/8/8/8, no skills") {
+        standard_npc dude("TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8);
+        print_stats(dude, weapons, zed);
     }
 }
 
-TEST_CASE( "Average character using melee weapons against a hulk", "[.][melee][balance]" )
-{
-    monster zed( mtype_id( "mon_zombie_hulk" ) );
+TEST_CASE("Average character using melee weapons against a hulk", "[.][melee][balance]") {
+    monster zed(mtype_id("mon_zombie_hulk"));
     auto weapons = find_weapons();
 
-    SECTION( "12/10/8/8, 3 in all skills" ) {
-        standard_npc dude( "TestCharacter", dude_pos, {}, 3, 12, 10, 8, 8 );
-        print_stats( dude, weapons, zed );
+    SECTION("12/10/8/8, 3 in all skills") {
+        standard_npc dude("TestCharacter", dude_pos, {}, 3, 12, 10, 8, 8);
+        print_stats(dude, weapons, zed);
     }
 }
 
-TEST_CASE( "Strong character using melee weapons against a kevlar zombie", "[.][melee][balance]" )
-{
-    monster zed( mtype_id( "mon_zombie_kevlar_1" ) );
+TEST_CASE("Strong character using melee weapons against a kevlar zombie", "[.][melee][balance]") {
+    monster zed(mtype_id("mon_zombie_kevlar_1"));
     auto weapons = find_weapons();
 
-    SECTION( "12/10/8/8, 3 in all skills" ) {
-        standard_npc dude( "TestCharacter", dude_pos, {}, 3, 12, 10, 8, 8 );
-        print_stats( dude, weapons, zed );
+    SECTION("12/10/8/8, 3 in all skills") {
+        standard_npc dude("TestCharacter", dude_pos, {}, 3, 12, 10, 8, 8);
+        print_stats(dude, weapons, zed);
     }
 }

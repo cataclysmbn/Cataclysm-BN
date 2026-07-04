@@ -49,6 +49,7 @@
 #include "iuse_actor.h"
 #include "line.h"
 #include "map.h"
+#include "map/utils/map_functions.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "martialarts.h"
@@ -853,6 +854,16 @@ bool mattack::shocking_reveal( monster *z )
     return true;
 }
 
+auto mattack::pull_metal_weapon_success_chance( const int base_success, const int distance ) -> int
+{
+    // Approximate magnetic force falloff: close pulls keep the old chance, then weaken by
+    // distance squared.
+    constexpr auto unattenuated_distance = 2;
+    const auto effective_distance = std::max( distance, unattenuated_distance );
+    return std::clamp( base_success * unattenuated_distance * unattenuated_distance /
+                       ( effective_distance * effective_distance ), 0, 100 );
+}
+
 bool mattack::pull_metal_weapon( monster *z )
 {
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -873,8 +884,14 @@ bool mattack::pull_metal_weapon( monster *z )
     }
 
     // Can't see/reach target, no attack
-    if( !z->sees( *target ) || !g->m.clear_path( z->bub_pos(), target->bub_pos(),
-            max_distance, 1, 100 ) ) {
+    if( !z->sees( *target ) || !map_funcs::physical_clear_path( {
+    .m = g->m,
+    .from = z->bub_pos(),
+        .to = target->bub_pos(),
+        .range = max_distance,
+        .cost_min = 1,
+        .cost_max = 100,
+    } ) ) {
         return false;
     }
     player *foe = dynamic_cast< player * >( target );
@@ -895,6 +912,8 @@ bool mattack::pull_metal_weapon( monster *z )
                 ///\EFFECT_MELEE increases resistance to pull_metal_weapon special attack
                 success = std::max( 100 - ( 6 * ( foe->str_cur - 6 ) ) - ( 6 * wp_skill ), 0 );
             }
+            success = pull_metal_weapon_success_chance( success,
+                      rl_dist( z->bub_pos(), target->bub_pos() ) );
             auto m_type = foe == &g->u ? m_bad : m_neutral;
             if( rng( 1, 100 ) <= success ) {
                 target->add_msg_player_or_npc( m_type, _( "%s is pulled away from your hands!" ),
@@ -4856,9 +4875,9 @@ bool mattack::absorb_meat( monster *z )
             if( current_item_material == material_id( "flesh" ) ||
                 current_item_material == material_id( "hflesh" ) ) {
                 //We have something meaty! Calculate how much it will heal the monster
-                const int ml_of_meat = units::to_milliliter<int>( current_item->volume() );
-                const int total_charges = current_item->count();
-                const int ml_per_charge = ml_of_meat / total_charges;
+                const auto ml_of_meat = units::to_milliliter( current_item->volume() );
+                const auto total_charges = current_item->count();
+                const auto ml_per_charge = ml_of_meat / total_charges;
                 //We have a max size of meat here to avoid absorbing whole corpses.
                 if( ml_per_charge > max_meat_absorbed * 1000 ) {
                     add_msg( m_info, _( "The %1$s quivers hungrily in the direction of the %2$s." ), z->name(),

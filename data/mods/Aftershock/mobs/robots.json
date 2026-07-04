@@ -401,7 +401,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -433,7 +433,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -464,7 +464,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -495,7 +495,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -527,7 +527,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -559,7 +559,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ]
   },
@@ -607,7 +607,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -5,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 20
+        "targeting_volume": "46 dB"
       }
     ]
   },
@@ -636,7 +636,7 @@
         "laser_lock": true,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ]
   },
@@ -665,7 +665,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ]
   },
@@ -690,7 +690,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ]
   },

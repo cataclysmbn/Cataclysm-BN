@@ -1,15 +1,6 @@
-#include "catch/catch.hpp"
-
-#include <memory>
-#include <optional>
-#include <set>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "avatar.h"
 #include "calendar.h"
+#include "catch/catch.hpp"
 #include "coordinates.h"
 #include "faction.h"
 #include "field.h"
@@ -35,255 +26,236 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
+#include <memory>
+#include <optional>
+#include <set>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
 class Creature;
 
-TEST_CASE( "hallucination_npcs_do_not_drop_inventory", "[npc][hallucination]" )
-{
+TEST_CASE("hallucination_npcs_do_not_drop_inventory", "[npc][hallucination]") {
     clear_all_state();
-    auto &here = get_map();
+    auto& here = get_map();
 
-    const auto npc_pos = tripoint_bub_ms( 60, 60, 0 );
-    npc &hallucination_npc = spawn_npc( npc_pos, "test_talker" );
+    const auto npc_pos = tripoint_bub_ms(60, 60, 0);
+    npc& hallucination_npc = spawn_npc(npc_pos, "test_talker");
     hallucination_npc.hallucination = true;
-    hallucination_npc.i_add( item::spawn( "rock" ) );
+    hallucination_npc.i_add(item::spawn("rock"));
 
-    REQUIRE( here.i_at( npc_pos ).empty() );
+    REQUIRE(here.i_at(npc_pos).empty());
 
-    hallucination_npc.die( &get_avatar() );
+    hallucination_npc.die(&get_avatar());
 
-    CHECK( hallucination_npc.is_dead() );
-    CHECK( here.i_at( npc_pos ).empty() );
-    CHECK_FALSE( get_avatar().has_item_with_id( itype_id( "rock" ) ) );
+    CHECK(hallucination_npc.is_dead());
+    CHECK(here.i_at(npc_pos).empty());
+    CHECK_FALSE(get_avatar().has_item_with_id(itype_id("rock")));
 }
 
-TEST_CASE( "hallucination_npcs_do_not_push_real_npcs", "[npc][hallucination]" )
-{
+TEST_CASE("hallucination_npcs_do_not_push_real_npcs", "[npc][hallucination]") {
     clear_all_state();
-    build_test_map( ter_id( "t_floor" ) );
+    build_test_map(ter_id("t_floor"));
 
-    const auto hallucination_pos = tripoint_bub_ms( 50, 50, 0 );
-    const auto bystander_pos = tripoint_bub_ms( 51, 50, 0 );
-    npc &bystander = spawn_npc( bystander_pos, "test_talker" );
-    npc &hallucination_npc = spawn_npc( hallucination_pos, "test_talker" );
+    const auto hallucination_pos = tripoint_bub_ms(50, 50, 0);
+    const auto bystander_pos = tripoint_bub_ms(51, 50, 0);
+    npc& bystander = spawn_npc(bystander_pos, "test_talker");
+    npc& hallucination_npc = spawn_npc(hallucination_pos, "test_talker");
     hallucination_npc.hallucination = true;
-    REQUIRE( hallucination_npc.is_hallucination() );
-    REQUIRE( hallucination_npc.bub_pos() == hallucination_pos );
-    REQUIRE( bystander.bub_pos() == bystander_pos );
+    REQUIRE(hallucination_npc.is_hallucination());
+    REQUIRE(hallucination_npc.bub_pos() == hallucination_pos);
+    REQUIRE(bystander.bub_pos() == bystander_pos);
 
-    hallucination_npc.move_to( bystander_pos, true, nullptr );
+    hallucination_npc.move_to(bystander_pos, true, nullptr);
 
-    CHECK( hallucination_npc.bub_pos() == hallucination_pos );
-    CHECK( bystander.bub_pos() == bystander_pos );
+    CHECK(hallucination_npc.bub_pos() == hallucination_pos);
+    CHECK(bystander.bub_pos() == bystander_pos);
 }
 
-TEST_CASE( "hallucination_npcs_do_not_board_real_vehicles", "[npc][hallucination]" )
-{
+TEST_CASE("hallucination_npcs_do_not_board_real_vehicles", "[npc][hallucination]") {
     clear_all_state();
-    auto &here = get_map();
-    build_test_map( ter_id( "t_pavement" ) );
+    auto& here = get_map();
+    build_test_map(ter_id("t_pavement"));
     clear_vehicles();
 
-    const auto npc_pos = tripoint_bub_ms( 63, 59, 0 );
-    const auto seat_pos = tripoint_bub_ms( 63, 60, 0 );
-    auto *veh_ptr = here.add_vehicle( vproto_id( "bicycle_test" ), seat_pos, 0_degrees, 0, 0 );
-    REQUIRE( veh_ptr != nullptr );
-    REQUIRE( here.veh_at( seat_pos ).part_with_feature( VPFLAG_BOARDABLE, true ).has_value() );
+    const auto npc_pos = tripoint_bub_ms(63, 59, 0);
+    const auto seat_pos = tripoint_bub_ms(63, 60, 0);
+    auto* veh_ptr = here.add_vehicle(vproto_id("bicycle_test"), seat_pos, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
+    REQUIRE(here.veh_at(seat_pos).part_with_feature(VPFLAG_BOARDABLE, true).has_value());
 
-    npc &hallucination_npc = spawn_npc( npc_pos, "test_talker" );
+    npc& hallucination_npc = spawn_npc(npc_pos, "test_talker");
     hallucination_npc.hallucination = true;
-    REQUIRE( hallucination_npc.is_hallucination() );
-    hallucination_npc.move_to( seat_pos, true, nullptr );
+    REQUIRE(hallucination_npc.is_hallucination());
+    hallucination_npc.move_to(seat_pos, true, nullptr);
 
-    CHECK( hallucination_npc.bub_pos() == seat_pos );
-    CHECK_FALSE( hallucination_npc.in_vehicle );
-    CHECK( veh_ptr->get_passenger( here.veh_at( seat_pos ).part_with_feature( VPFLAG_BOARDABLE,
-                                   true )->part_index() ) == nullptr );
+    CHECK(hallucination_npc.bub_pos() == seat_pos);
+    CHECK_FALSE(hallucination_npc.in_vehicle);
+    CHECK(veh_ptr->get_passenger(
+              here.veh_at(seat_pos).part_with_feature(VPFLAG_BOARDABLE, true)->part_index())
+          == nullptr);
 }
 
-static void on_load_test( npc &who, const time_duration &from, const time_duration &to )
-{
+static void on_load_test(npc& who, const time_duration& from, const time_duration& to) {
     calendar::turn = calendar::turn_zero + from;
     who.on_unload();
     calendar::turn = calendar::turn_zero + to;
     who.on_load();
 }
 
-static void test_needs( const npc &who, const numeric_interval<int> &kcal_lost,
-                        const numeric_interval<int> &thirst,
-                        const numeric_interval<int> &fatigue )
-{
+static void test_needs(
+    const npc& who, const numeric_interval<int>& kcal_lost, const numeric_interval<int>& thirst,
+    const numeric_interval<int>& fatigue) {
     int kcal_below_max = who.max_stored_kcal() - who.get_stored_kcal();
-    CHECK( kcal_below_max <= kcal_lost.max );
-    CHECK( kcal_below_max >= kcal_lost.min );
-    CHECK( who.get_thirst() <= thirst.max );
-    CHECK( who.get_thirst() >= thirst.min );
-    CHECK( who.get_fatigue() <= fatigue.max );
-    CHECK( who.get_fatigue() >= fatigue.min );
+    CHECK(kcal_below_max <= kcal_lost.max);
+    CHECK(kcal_below_max >= kcal_lost.min);
+    CHECK(who.get_thirst() <= thirst.max);
+    CHECK(who.get_thirst() >= thirst.min);
+    CHECK(who.get_fatigue() <= fatigue.max);
+    CHECK(who.get_fatigue() >= fatigue.min);
 }
 
-static void create_model( npc &model_npc )
-{
-    model_npc.randomize( NC_NONE );
-    for( const trait_id &tr : model_npc.get_mutations() ) {
-        model_npc.unset_mutation( tr );
-    }
-    model_npc.set_stored_kcal( model_npc.max_stored_kcal() );
-    model_npc.set_thirst( 0 );
-    model_npc.set_fatigue( 0 );
-    model_npc.remove_effect( efftype_id( "sleep" ) );
+static void create_model(npc& model_npc) {
+    model_npc.randomize(NC_NONE);
+    for (const trait_id& tr : model_npc.get_mutations()) { model_npc.unset_mutation(tr); }
+    model_npc.set_stored_kcal(model_npc.max_stored_kcal());
+    model_npc.set_thirst(0);
+    model_npc.set_fatigue(0);
+    model_npc.remove_effect(efftype_id("sleep"));
     // An ugly hack to prevent NPC falling asleep during testing due to massive fatigue
-    model_npc.set_mutation( trait_id( "WEB_WEAVER" ) );
-
+    model_npc.set_mutation(trait_id("WEB_WEAVER"));
 }
 
-static std::string get_list_of_npcs( const std::string &title )
-{
+static std::string get_list_of_npcs(const std::string& title) {
 
     std::ostringstream npc_list;
     npc_list << title << ":\n";
-    for( const npc &n : g->all_npcs() ) {
-        npc_list << "  " << &n << ": " << n.name << '\n';
-    }
+    for (const npc& n : g->all_npcs()) { npc_list << "  " << &n << ": " << n.name << '\n'; }
     return npc_list.str();
 }
 
-TEST_CASE( "on_load-sane-values", "[.]" )
-{
+TEST_CASE("on_load-sane-values", "[.]") {
     clear_all_state();
-    SECTION( "Awake for 10 minutes, gaining hunger/thirst/fatigue" ) {
+    SECTION("Awake for 10 minutes, gaining hunger/thirst/fatigue") {
         npc test_npc;
-        create_model( test_npc );
+        create_model(test_npc);
         const int five_min_ticks = 2;
-        on_load_test( test_npc, 0_turns, 5_minutes * five_min_ticks );
+        on_load_test(test_npc, 0_turns, 5_minutes * five_min_ticks);
         const int margin = 2;
 
-        const numeric_interval<int> hunger( islot_comestible::kcal_per_nutr * five_min_ticks / 4, margin,
-                                            margin );
-        const numeric_interval<int> thirst( five_min_ticks / 4, margin, margin );
-        const numeric_interval<int> fatigue( five_min_ticks, margin, margin );
+        const numeric_interval<int>
+            hunger(islot_comestible::kcal_per_nutr * five_min_ticks / 4, margin, margin);
+        const numeric_interval<int> thirst(five_min_ticks / 4, margin, margin);
+        const numeric_interval<int> fatigue(five_min_ticks, margin, margin);
 
-        test_needs( test_npc, hunger, thirst, fatigue );
+        test_needs(test_npc, hunger, thirst, fatigue);
     }
 
-    SECTION( "Awake for 2 days, gaining hunger/thirst/fatigue" ) {
+    SECTION("Awake for 2 days, gaining hunger/thirst/fatigue") {
         npc test_npc;
-        create_model( test_npc );
+        create_model(test_npc);
         const auto five_min_ticks = 2_days / 5_minutes;
-        on_load_test( test_npc, 0_turns, 5_minutes * five_min_ticks );
+        on_load_test(test_npc, 0_turns, 5_minutes * five_min_ticks);
 
         const int margin = 20;
-        const numeric_interval<int> hunger( islot_comestible::kcal_per_nutr * five_min_ticks / 4, margin,
-                                            margin );
-        const numeric_interval<int> thirst( five_min_ticks / 4, margin, margin );
-        const numeric_interval<int> fatigue( five_min_ticks, margin, margin );
+        const numeric_interval<int>
+            hunger(islot_comestible::kcal_per_nutr * five_min_ticks / 4, margin, margin);
+        const numeric_interval<int> thirst(five_min_ticks / 4, margin, margin);
+        const numeric_interval<int> fatigue(five_min_ticks, margin, margin);
 
-        test_needs( test_npc, hunger, thirst, fatigue );
+        test_needs(test_npc, hunger, thirst, fatigue);
     }
 
-    SECTION( "Sleeping for 6 hours, gaining hunger/thirst (not testing fatigue due to lack of effects processing)" ) {
+    SECTION("Sleeping for 6 hours, gaining hunger/thirst (not testing fatigue due to lack of "
+            "effects processing)") {
         npc test_npc;
-        create_model( test_npc );
-        test_npc.add_effect( efftype_id( "sleep" ), 6_hours );
-        test_npc.set_fatigue( 1000 );
+        create_model(test_npc);
+        test_npc.add_effect(efftype_id("sleep"), 6_hours);
+        test_npc.set_fatigue(1000);
         const auto five_min_ticks = 6_hours / 5_minutes;
         /*
-        // Fatigue regeneration starts at 1 per 5min, but linearly increases to 2 per 5min at 2 hours or more
-        const int expected_fatigue_change =
+        // Fatigue regeneration starts at 1 per 5min, but linearly increases to 2 per 5min at 2
+        hours or more const int expected_fatigue_change =
             ((1.0f + 2.0f) / 2.0f * 2_hours / 5_minutes ) +
             (2.0f * (6_hours - 2_hours) / 5_minutes);
         */
-        on_load_test( test_npc, 0_turns, 5_minutes * five_min_ticks );
+        on_load_test(test_npc, 0_turns, 5_minutes * five_min_ticks);
 
         const int margin = 10;
-        const numeric_interval<int> hunger( islot_comestible::kcal_per_nutr * five_min_ticks / 8, margin,
-                                            margin );
-        const numeric_interval<int> thirst( five_min_ticks / 8, margin, margin );
-        const numeric_interval<int> fatigue( test_npc.get_fatigue(), 0, 0 );
+        const numeric_interval<int>
+            hunger(islot_comestible::kcal_per_nutr * five_min_ticks / 8, margin, margin);
+        const numeric_interval<int> thirst(five_min_ticks / 8, margin, margin);
+        const numeric_interval<int> fatigue(test_npc.get_fatigue(), 0, 0);
 
-        test_needs( test_npc, hunger, thirst, fatigue );
+        test_needs(test_npc, hunger, thirst, fatigue);
     }
 }
 
-TEST_CASE( "on_load-similar-to-per-turn", "[.]" )
-{
+TEST_CASE("on_load-similar-to-per-turn", "[.]") {
     clear_all_state();
-    SECTION( "Awake for 10 minutes, gaining hunger/thirst/fatigue" ) {
+    SECTION("Awake for 10 minutes, gaining hunger/thirst/fatigue") {
         npc on_load_npc;
-        create_model( on_load_npc );
+        create_model(on_load_npc);
         npc iterated_npc;
-        create_model( iterated_npc );
+        create_model(iterated_npc);
         const int five_min_ticks = 2;
-        on_load_test( on_load_npc, 0_turns, 5_minutes * five_min_ticks );
-        for( time_duration turn = 0_turns; turn < 5_minutes * five_min_ticks; turn += 1_turns ) {
-            iterated_npc.update_body( 1_turns );
+        on_load_test(on_load_npc, 0_turns, 5_minutes * five_min_ticks);
+        for (time_duration turn = 0_turns; turn < 5_minutes * five_min_ticks; turn += 1_turns) {
+            iterated_npc.update_body(1_turns);
         }
 
         const int margin = 2;
-        const numeric_interval<int> hunger( iterated_npc.max_stored_kcal() -
-                                            iterated_npc.get_stored_kcal(), margin, margin );
-        const numeric_interval<int> thirst( iterated_npc.get_thirst(), margin, margin );
-        const numeric_interval<int> fatigue( iterated_npc.get_fatigue(), margin, margin );
+        const numeric_interval<int>
+            hunger(iterated_npc.max_stored_kcal() - iterated_npc.get_stored_kcal(), margin, margin);
+        const numeric_interval<int> thirst(iterated_npc.get_thirst(), margin, margin);
+        const numeric_interval<int> fatigue(iterated_npc.get_fatigue(), margin, margin);
 
-        test_needs( on_load_npc, hunger, thirst, fatigue );
+        test_needs(on_load_npc, hunger, thirst, fatigue);
     }
 
-    SECTION( "Awake for 6 hours, gaining hunger/thirst/fatigue" ) {
+    SECTION("Awake for 6 hours, gaining hunger/thirst/fatigue") {
         npc on_load_npc;
-        create_model( on_load_npc );
+        create_model(on_load_npc);
         npc iterated_npc;
-        create_model( on_load_npc );
+        create_model(on_load_npc);
         const auto five_min_ticks = 6_hours / 5_minutes;
-        on_load_test( on_load_npc, 0_turns, 5_minutes * five_min_ticks );
-        for( time_duration turn = 0_turns; turn < 5_minutes * five_min_ticks; turn += 1_turns ) {
-            iterated_npc.update_body( 1_turns );
+        on_load_test(on_load_npc, 0_turns, 5_minutes * five_min_ticks);
+        for (time_duration turn = 0_turns; turn < 5_minutes * five_min_ticks; turn += 1_turns) {
+            iterated_npc.update_body(1_turns);
         }
 
         const int margin = 10;
-        const numeric_interval<int> hunger( iterated_npc.max_stored_kcal() -
-                                            iterated_npc.get_stored_kcal(), margin, margin );
-        const numeric_interval<int> thirst( iterated_npc.get_thirst(), margin, margin );
-        const numeric_interval<int> fatigue( iterated_npc.get_fatigue(), margin, margin );
+        const numeric_interval<int>
+            hunger(iterated_npc.max_stored_kcal() - iterated_npc.get_stored_kcal(), margin, margin);
+        const numeric_interval<int> thirst(iterated_npc.get_thirst(), margin, margin);
+        const numeric_interval<int> fatigue(iterated_npc.get_fatigue(), margin, margin);
 
-        test_needs( on_load_npc, hunger, thirst, fatigue );
+        test_needs(on_load_npc, hunger, thirst, fatigue);
     }
 }
 
-TEST_CASE( "snippet-tag-test" )
-{
+TEST_CASE("snippet-tag-test") {
     clear_all_state();
     // Actually used tags
-    static const std::set<std::string> npc_talk_tags = {
-        {
-            "<name_b>", "<thirsty>", "<swear!>",
-            "<sad>", "<greet>", "<no>",
-            "<im_leaving_you>", "<ill_kill_you>", "<ill_die>",
-            "<wait>", "<no_faction>", "<name_g>",
-            "<keep_up>", "<yawn>", "<very>",
-            "<okay>", "<really>",
-            "<let_me_pass>", "<done_mugging>", "<happy>",
-            "<drop_it>", "<swear>", "<lets_talk>",
-            "<hands_up>", "<move>", "<hungry>",
-            "<fuck_you>",
-        }
-    };
+    static const std::set<std::string> npc_talk_tags = {{
+        "<name_b>",     "<thirsty>",        "<swear!>",       "<sad>",          "<greet>",
+        "<no>",         "<im_leaving_you>", "<ill_kill_you>", "<ill_die>",      "<wait>",
+        "<no_faction>", "<name_g>",         "<keep_up>",      "<yawn>",         "<very>",
+        "<okay>",       "<really>",         "<let_me_pass>",  "<done_mugging>", "<happy>",
+        "<drop_it>",    "<swear>",          "<lets_talk>",    "<hands_up>",     "<move>",
+        "<hungry>",     "<fuck_you>",
+    }};
 
-    for( const auto &tag : npc_talk_tags ) {
-        for( int i = 0; i < 100; i++ ) {
-            CHECK( SNIPPET.random_from_category( tag ).has_value() );
-        }
+    for (const auto& tag : npc_talk_tags) {
+        for (int i = 0; i < 100; i++) { CHECK(SNIPPET.random_from_category(tag).has_value()); }
     }
 
     // Special tags, those should have no replacements
-    static const std::set<std::string> special_tags = {
-        {
-            "<yrwp>", "<mywp>", "<ammo>"
-        }
-    };
+    static const std::set<std::string> special_tags = {{"<yrwp>", "<mywp>", "<ammo>"}};
 
-    for( const std::string &tag : special_tags ) {
-        for( int i = 0; i < 100; i++ ) {
-            CHECK( !SNIPPET.random_from_category( tag ).has_value() );
-        }
+    for (const std::string& tag : special_tags) {
+        for (int i = 0; i < 100; i++) { CHECK(!SNIPPET.random_from_category(tag).has_value()); }
     }
 }
 
@@ -295,307 +267,295 @@ TEST_CASE( "snippet-tag-test" )
  */
 constexpr int height = 5, width = 17;
 constexpr char setup[height][width + 1] = {
-    "U ###############",
-    "V #R#AAA#W# # #C#",
-    "  #A#A#A# #M#B# #",
-    "  ###AAA#########",
-    "    #####        ",
+    "U ###############", "V #R#AAA#W# # #C#", "  #A#A#A# #M#B# #",
+    "  ###AAA#########", "    #####        ",
 };
 
-static void check_npc_movement( const tripoint_bub_ms &origin )
-{
-    const efftype_id effect_bouldering( "bouldering" );
+static void check_npc_movement(const tripoint_bub_ms& origin) {
+    const efftype_id effect_bouldering("bouldering");
 
-    INFO( "Should not crash from infinite recursion" );
-    for( int y = 0; y < height; ++y ) {
-        for( int x = 0; x < width; ++x ) {
-            switch( setup[y][x] ) {
+    INFO("Should not crash from infinite recursion");
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            switch (setup[y][x]) {
                 case 'A':
                 case 'R':
                 case 'W':
                 case 'M':
                 case 'B':
                 case 'C':
-                    tripoint_bub_ms p = origin + point_rel_ms( x, y );
-                    npc *guy = g->critter_at<npc>( p );
-                    REQUIRE( guy != nullptr );
+                    tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                    npc* guy = g->critter_at<npc>(p);
+                    REQUIRE(guy != nullptr);
                     guy->move();
                     break;
             }
         }
     }
 
-    INFO( "NPC on acid should not acquire unstable footing status" );
-    for( int y = 0; y < height; ++y ) {
-        for( int x = 0; x < width; ++x ) {
-            if( setup[y][x] == 'A' ) {
-                tripoint_bub_ms p = origin + point_rel_ms( x, y );
-                npc *guy = g->critter_at<npc>( p );
-                REQUIRE( guy != nullptr );
-                CHECK( !guy->has_effect( effect_bouldering ) );
+    INFO("NPC on acid should not acquire unstable footing status");
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            if (setup[y][x] == 'A') {
+                tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                npc* guy = g->critter_at<npc>(p);
+                REQUIRE(guy != nullptr);
+                CHECK(!guy->has_effect(effect_bouldering));
             }
         }
     }
 
-    INFO( "NPC on rubbles should not lose unstable footing status" );
-    for( int y = 0; y < height; ++y ) {
-        for( int x = 0; x < width; ++x ) {
-            if( setup[y][x] == 'R' ) {
-                tripoint_bub_ms p = origin + point_rel_ms( x, y );
-                npc *guy = g->critter_at<npc>( p );
-                REQUIRE( guy != nullptr );
-                CHECK( guy->has_effect( effect_bouldering ) );
+    INFO("NPC on rubbles should not lose unstable footing status");
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            if (setup[y][x] == 'R') {
+                tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                npc* guy = g->critter_at<npc>(p);
+                REQUIRE(guy != nullptr);
+                CHECK(guy->has_effect(effect_bouldering));
             }
         }
     }
 
-    INFO( "NPC in vehicle should not escape from dangerous terrain" );
-    for( int y = 0; y < height; ++y ) {
-        for( int x = 0; x < width; ++x ) {
-            switch( setup[y][x] ) {
+    INFO("NPC in vehicle should not escape from dangerous terrain");
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            switch (setup[y][x]) {
                 case 'W':
                 case 'M':
-                    CAPTURE( setup[y][x] );
-                    tripoint_bub_ms p = origin + point_rel_ms( x, y );
-                    npc *guy = g->critter_at<npc>( p );
-                    CHECK( guy != nullptr );
+                    CAPTURE(setup[y][x]);
+                    tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                    npc* guy = g->critter_at<npc>(p);
+                    CHECK(guy != nullptr);
                     break;
             }
         }
     }
 
-    INFO( "NPC not in vehicle should escape from dangerous terrain" );
-    for( int y = 0; y < height; ++y ) {
-        for( int x = 0; x < width; ++x ) {
-            switch( setup[y][x] ) {
+    INFO("NPC not in vehicle should escape from dangerous terrain");
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            switch (setup[y][x]) {
                 case 'B':
                 case 'C':
-                    tripoint_bub_ms p = origin + point_rel_ms( x, y );
-                    npc *guy = g->critter_at<npc>( p );
-                    CHECK( guy == nullptr );
+                    tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                    npc* guy = g->critter_at<npc>(p);
+                    CHECK(guy == nullptr);
                     break;
             }
         }
     }
 }
 
-TEST_CASE( "npc-movement" )
-{
+TEST_CASE("npc-movement") {
     clear_all_state();
-    const ter_id t_reinforced_glass( "t_reinforced_glass" );
-    const ter_id t_floor( "t_floor" );
-    const furn_id f_rubble( "f_rubble" );
-    const furn_id f_null( "f_null" );
-    const vpart_id vpart_frame_vertical( "frame_vertical" );
-    const vpart_id vpart_seat( "seat" );
+    const ter_id t_reinforced_glass("t_reinforced_glass");
+    const ter_id t_floor("t_floor");
+    const furn_id f_rubble("f_rubble");
+    const furn_id f_null("f_null");
+    const vpart_id vpart_frame_vertical("frame_vertical");
+    const vpart_id vpart_seat("seat");
 
-    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
+    g->place_player(tripoint_bub_ms(60, 60, 0));
 
-    Character &player_character = get_player_character();
-    map &here = get_map();
-    for( int y = 0; y < height; ++y ) {
-        for( int x = 0; x < width; ++x ) {
+    Character& player_character = get_player_character();
+    map& here = get_map();
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
             const char type = setup[y][x];
-            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms( x, y );
+            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms(x, y);
             // create walls
-            if( type == '#' ) {
-                here.ter_set( p, t_reinforced_glass );
+            if (type == '#') {
+                here.ter_set(p, t_reinforced_glass);
             } else {
-                here.ter_set( p, t_floor );
+                here.ter_set(p, t_floor);
             }
             // spawn acid
             // a copy is needed because we will remove elements from it
-            const field fs = here.field_at( p );
-            for( const auto &f : fs ) {
-                here.remove_field( p, f.first );
-            }
-            if( type == 'A' || type == 'R' || type == 'W' || type == 'M'
-                || type == 'B' || type == 'C' ) {
+            const field fs = here.field_at(p);
+            for (const auto& f : fs) { here.remove_field(p, f.first); }
+            if (type == 'A' || type == 'R' || type == 'W' || type == 'M' || type == 'B'
+                || type == 'C') {
 
-                here.add_field( p, fd_acid, 3 );
+                here.add_field(p, fd_acid, 3);
             }
             // spawn rubbles
-            if( type == 'R' ) {
-                here.furn_set( p, f_rubble );
+            if (type == 'R') {
+                here.furn_set(p, f_rubble);
             } else {
-                here.furn_set( p, f_null );
+                here.furn_set(p, f_null);
             }
             // create vehicles
-            if( type == 'V' || type == 'W' || type == 'M' ) {
-                vehicle *veh = here.add_vehicle( vproto_id( "none" ), p, 270_degrees, 0, 0 );
-                REQUIRE( veh != nullptr );
-                veh->install_part( tripoint_mnt_veh::zero(), vpart_frame_vertical );
-                veh->install_part( tripoint_mnt_veh::zero(), vpart_seat );
-                here.add_vehicle_to_cache( veh );
+            if (type == 'V' || type == 'W' || type == 'M') {
+                vehicle* veh = here.add_vehicle(vproto_id("none"), p, 270_degrees, 0, 0);
+                REQUIRE(veh != nullptr);
+                veh->install_part(tripoint_mnt_veh::zero(), vpart_frame_vertical);
+                veh->install_part(tripoint_mnt_veh::zero(), vpart_seat);
+                here.add_vehicle_to_cache(veh);
             }
             // spawn npcs
-            if( type == 'A' || type == 'R' || type == 'W' || type == 'M'
-                || type == 'B' || type == 'C' ) {
+            if (type == 'A' || type == 'R' || type == 'W' || type == 'M' || type == 'B'
+                || type == 'C') {
 
                 shared_ptr_fast<npc> guy = make_shared_fast<npc>();
                 do {
                     guy->randomize();
                     // Repeat until we get an NPC vulnerable to acid
-                } while( guy->is_immune_field( fd_acid ) );
-                const auto remain = project_remain<coords::sm>( map_local_to_abs( here, p ) );
-                guy->spawn_at_precise( remain.quotient, remain.remainder_tripoint );
+                } while (guy->is_immune_field(fd_acid));
+                const auto remain = project_remain<coords::sm>(map_local_to_abs(here, p));
+                guy->spawn_at_precise(remain.quotient, remain.remainder_tripoint);
                 // Set the shopkeep mission; this means that
                 // the NPC deems themselves to be guarding and stops them
                 // wandering off in search of distant ammo caches, etc.
                 guy->mission = NPC_MISSION_SHOPKEEP;
                 // This prevents npcs occasionally teleporting away
-                guy->assign_activity( activity_id( "ACT_MEDITATE" ) );
-                //Sometimes they spawn with sledge hammers and bash down the walls
+                guy->assign_activity(activity_id("ACT_MEDITATE"));
+                // Sometimes they spawn with sledge hammers and bash down the walls
                 guy->remove_primary_weapon();
-                ACTIVE_OVERMAP_BUFFER.insert_npc( guy );
+                ACTIVE_OVERMAP_BUFFER.insert_npc(guy);
                 g->load_npcs();
-                guy->set_attitude( ( type == 'M' || type == 'C' ) ? NPCATT_NULL : NPCATT_FOLLOW );
+                guy->set_attitude((type == 'M' || type == 'C') ? NPCATT_NULL : NPCATT_FOLLOW);
             }
         }
     }
 
     // check preconditions
-    for( int y = 0; y < height; ++y ) {
-        for( int x = 0; x < width; ++x ) {
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
             const char type = setup[y][x];
-            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms( x, y );
-            if( type == '#' ) {
-                REQUIRE( !here.passable( p ) );
+            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms(x, y);
+            if (type == '#') {
+                REQUIRE(!here.passable(p));
             } else {
-                REQUIRE( here.passable( p ) );
+                REQUIRE(here.passable(p));
             }
-            if( type == 'R' ) {
-                REQUIRE( here.has_flag( "UNSTABLE", p ) );
+            if (type == 'R') {
+                REQUIRE(here.has_flag("UNSTABLE", p));
             } else {
-                REQUIRE( !here.has_flag( "UNSTABLE", p ) );
+                REQUIRE(!here.has_flag("UNSTABLE", p));
             }
-            if( type == 'V' || type == 'W' || type == 'M' ) {
-                REQUIRE( here.veh_at( p ).part_with_feature( VPFLAG_BOARDABLE, true ).has_value() );
+            if (type == 'V' || type == 'W' || type == 'M') {
+                REQUIRE(here.veh_at(p).part_with_feature(VPFLAG_BOARDABLE, true).has_value());
             } else {
-                REQUIRE( !here.veh_at( p ).part_with_feature( VPFLAG_BOARDABLE, true ).has_value() );
+                REQUIRE(!here.veh_at(p).part_with_feature(VPFLAG_BOARDABLE, true).has_value());
             }
-            npc *guy = g->critter_at<npc>( p );
-            if( type == 'A' || type == 'R' || type == 'W' || type == 'M'
-                || type == 'B' || type == 'C' ) {
+            npc* guy = g->critter_at<npc>(p);
+            if (type == 'A' || type == 'R' || type == 'W' || type == 'M' || type == 'B'
+                || type == 'C') {
 
-                REQUIRE( guy != nullptr );
-                REQUIRE( guy->is_dangerous_fields( here.field_at( p ) ) );
+                REQUIRE(guy != nullptr);
+                REQUIRE(guy->is_dangerous_fields(here.field_at(p)));
             } else {
-                REQUIRE( guy == nullptr );
+                REQUIRE(guy == nullptr);
             }
         }
     }
 
-    SECTION( "NPCs escape dangerous terrain by pushing other NPCs" ) {
-        check_npc_movement( player_character.bub_pos() );
+    SECTION("NPCs escape dangerous terrain by pushing other NPCs") {
+        check_npc_movement(player_character.bub_pos());
     }
 
-    SECTION( "Player in vehicle & NPCs escaping dangerous terrain" ) {
+    SECTION("Player in vehicle & NPCs escaping dangerous terrain") {
         const auto origin = player_character.bub_pos();
 
-        for( int y = 0; y < height; ++y ) {
-            for( int x = 0; x < width; ++x ) {
-                if( setup[y][x] == 'V' ) {
-                    g->place_player( player_character.bub_pos() + point_rel_ms( x, y ) );
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                if (setup[y][x] == 'V') {
+                    g->place_player(player_character.bub_pos() + point_rel_ms(x, y));
                     break;
                 }
             }
         }
 
-        check_npc_movement( origin );
+        check_npc_movement(origin);
     }
 }
 
-TEST_CASE( "control_npc_updates_positions_and_reality_bubble", "[npc][control]" )
-{
+TEST_CASE("control_npc_updates_positions_and_reality_bubble", "[npc][control]") {
     clear_all_state();
 
-    avatar &you = get_avatar();
-    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
-    npc &follower = spawn_npc( tripoint_bub_ms( 10, 10, 0 ), "test_talker" );
-    follower.set_fac( faction_id( "your_followers" ) );
-    follower.set_attitude( NPCATT_FOLLOW );
-    REQUIRE( follower.is_player_ally() );
+    avatar& you = get_avatar();
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+    npc& follower = spawn_npc(tripoint_bub_ms(10, 10, 0), "test_talker");
+    follower.set_fac(faction_id("your_followers"));
+    follower.set_attitude(NPCATT_FOLLOW);
+    REQUIRE(follower.is_player_ally());
 
     const auto previous_avatar_pos = you.abs_pos();
     const auto controlled_npc_pos = follower.abs_pos();
     const auto old_map_origin = get_map().get_abs_sub();
-    REQUIRE( previous_avatar_pos != controlled_npc_pos );
+    REQUIRE(previous_avatar_pos != controlled_npc_pos);
 
-    you.control_npc( follower );
+    you.control_npc(follower);
 
-    CHECK( you.abs_pos() == controlled_npc_pos );
-    CHECK( follower.abs_pos() == previous_avatar_pos );
-    CHECK( get_map().get_abs_sub() == player_reality_bubble_origin().xy() );
-    CHECK( get_map().get_abs_sub() != old_map_origin );
-    CHECK( get_map().inbounds( you.bub_pos() ) );
+    CHECK(you.abs_pos() == controlled_npc_pos);
+    CHECK(follower.abs_pos() == previous_avatar_pos);
+    CHECK(get_map().get_abs_sub() == player_reality_bubble_origin().xy());
+    CHECK(get_map().get_abs_sub() != old_map_origin);
+    CHECK(get_map().inbounds(you.bub_pos()));
 }
 
-TEST_CASE( "npc_can_target_player" )
-{
+TEST_CASE("npc_can_target_player") {
     clear_all_state();
     // Set to daytime for visibiliity
     calendar::turn = calendar::turn_zero + 12_hours;
 
     g->faction_manager_ptr->create_if_needed();
 
-    g->place_player( tripoint_bub_ms::zero() );
+    g->place_player(tripoint_bub_ms::zero());
 
     clear_npcs();
     clear_creatures();
 
-    Character &player_character = get_player_character();
-    npc &hostile = spawn_npc( player_character.bub_pos() + point_south, "thug" );
-    REQUIRE( rl_dist( player_character.bub_pos(), hostile.bub_pos() ) <= 1 );
-    hostile.set_attitude( NPCATT_KILL );
+    Character& player_character = get_player_character();
+    npc& hostile = spawn_npc(player_character.bub_pos() + point_south, "thug");
+    REQUIRE(rl_dist(player_character.bub_pos(), hostile.bub_pos()) <= 1);
+    hostile.set_attitude(NPCATT_KILL);
     hostile.name = "Enemy NPC";
 
-    INFO( get_list_of_npcs( "NPCs after spawning one" ) );
+    INFO(get_list_of_npcs("NPCs after spawning one"));
 
     hostile.regen_ai_cache();
-    REQUIRE( hostile.current_target() != nullptr );
-    CHECK( hostile.current_target() == static_cast<Creature *>( &player_character ) );
+    REQUIRE(hostile.current_target() != nullptr);
+    CHECK(hostile.current_target() == static_cast<Creature*>(&player_character));
 }
 
-TEST_CASE( "npc_move_through_vehicle_holes" )
-{
+TEST_CASE("npc_move_through_vehicle_holes") {
     clear_all_state();
-    map &here = get_map();
-    g->place_player( tripoint_bub_ms( 65, 55, 0 ) );
-    tripoint_bub_ms origin( 60, 60, 0 );
+    map& here = get_map();
+    g->place_player(tripoint_bub_ms(65, 55, 0));
+    tripoint_bub_ms origin(60, 60, 0);
 
-    get_map().add_vehicle( vproto_id( "apc" ), origin, -45_degrees, 0, 0 );
-    get_map().build_map_cache( 0 );
+    get_map().add_vehicle(vproto_id("apc"), origin, -45_degrees, 0, 0);
+    get_map().build_map_cache(0);
 
-    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
+    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms(-2, 1, 0);
 
     shared_ptr_fast<npc> guy = make_shared_fast<npc>();
     guy->randomize();
-    const auto remain = project_remain<coords::sm>( map_local_to_abs( here, mon_origin ) );
-    guy->spawn_at_precise( remain.quotient, remain.remainder_tripoint );
+    const auto remain = project_remain<coords::sm>(map_local_to_abs(here, mon_origin));
+    guy->spawn_at_precise(remain.quotient, remain.remainder_tripoint);
 
-    ACTIVE_OVERMAP_BUFFER.insert_npc( guy );
+    ACTIVE_OVERMAP_BUFFER.insert_npc(guy);
     g->load_npcs();
 
-    guy->move_to( mon_origin + tripoint_north_west, true, nullptr );
+    guy->move_to(mon_origin + tripoint_north_west, true, nullptr);
 
-    const npc *m = g->critter_at<npc>( mon_origin );
-    CHECK( m != nullptr );
+    const npc* m = g->critter_at<npc>(mon_origin);
+    CHECK(m != nullptr);
 
-    const npc *m2 = g->critter_at<npc>( mon_origin + tripoint_north_west );
-    CHECK( m2 == nullptr );
-
+    const npc* m2 = g->critter_at<npc>(mon_origin + tripoint_north_west);
+    CHECK(m2 == nullptr);
 }
 
-TEST_CASE( "random npc spawn chance" )
-{
-    CHECK( npc_overmap::spawn_chance_in_hour( 0, 1.0 ) == Approx( 1.0 / 24.0 ) );
-    CHECK( npc_overmap::spawn_chance_in_hour( 0, 100.0 ) == 1.0 );
+TEST_CASE("random npc spawn chance") {
+    CHECK(npc_overmap::spawn_chance_in_hour(0, 1.0) == Approx(1.0 / 24.0));
+    CHECK(npc_overmap::spawn_chance_in_hour(0, 100.0) == 1.0);
 
     static constexpr int days_in_year = 14 * 4;
-    CHECK( npc_overmap::spawn_chance_in_hour( days_in_year, 1.0 ) == Approx( 1.0 / 24.0 ) );
+    CHECK(npc_overmap::spawn_chance_in_hour(days_in_year, 1.0) == Approx(1.0 / 24.0));
 
-    CHECK( npc_overmap::spawn_chance_in_hour( 2 * days_in_year, 1.0 ) == Approx( 0.5 / 24.0 ) );
-    CHECK( npc_overmap::spawn_chance_in_hour( 4 * days_in_year, 1.0 ) == Approx( 0.25 / 24.0 ) );
-    CHECK( npc_overmap::spawn_chance_in_hour( 8 * days_in_year, 1.0 ) == Approx( 0.125 / 24.0 ) );
+    CHECK(npc_overmap::spawn_chance_in_hour(2 * days_in_year, 1.0) == Approx(0.5 / 24.0));
+    CHECK(npc_overmap::spawn_chance_in_hour(4 * days_in_year, 1.0) == Approx(0.25 / 24.0));
+    CHECK(npc_overmap::spawn_chance_in_hour(8 * days_in_year, 1.0) == Approx(0.125 / 24.0));
 }

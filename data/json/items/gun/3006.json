@@ -103,6 +103,7 @@
     "min_cycle_recoil": 3420,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ],
     "barrel_volume": "1000 ml",
+    "magazine_well": "100 ml",
     "magazines": [ [ "3006", [ "m1918mag", "m1918bigmag" ] ] ]
   },
   {

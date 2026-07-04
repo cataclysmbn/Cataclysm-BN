@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <ranges>
 
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "character.h"
 #include "debug.h"
 #include "distribution_grid.h"

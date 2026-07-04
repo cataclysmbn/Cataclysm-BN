@@ -28,7 +28,6 @@
     "range": 110,
     "loudness": 170,
     "speed": 923,
-    "//": "Base damage of 131, balance reduction to roughly 75%.",
     "damage": { "damage_type": "bullet", "amount": 100, "armor_penetration": 44 },
     "dispersion": 150,
     "recoil": 5000,
@@ -56,7 +55,7 @@
     "count": 10,
     "loudness": 172,
     "speed": 940,
-    "//": "Balanced as AP, 7/8 damage, arpen matches damage.",
+    "//": "Balanced as AP, 7/8 damage, arpen 6/7 that of damage.",
     "relative": { "damage": { "damage_type": "bullet", "amount": -12, "armor_penetration": 31 } },
     "dispersion": 600
   },

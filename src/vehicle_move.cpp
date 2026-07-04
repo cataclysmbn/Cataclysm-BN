@@ -1051,10 +1051,10 @@ void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
     }
 
     if( veh_data.chance >= rng( 1, 100 ) ) {
-        if( veh_data.sound_volume > 0 ) {
+        if( veh_data.sound_volume > 0_dB ) {
             sound_event se;
             se.origin = p;
-            se.volume = veh_data.sound_volume;
+            se.volume = units::to_decibel( veh_data.sound_volume );
             se.category = sounds::sound_t::combat;
             se.description = veh_data.sound.translated();
             se.id = veh_data.sound_type;

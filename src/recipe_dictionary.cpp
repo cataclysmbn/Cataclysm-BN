@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "cata_utility.h"
 #include "debug.h"
 #include "init.h"

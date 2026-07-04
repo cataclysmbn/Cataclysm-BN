@@ -88,7 +88,7 @@
       { "group": "everyday_m27iar_military", "prob": 10, "charges": [ 0, 30 ] },
       { "group": "everyday_h&k416a5_military", "prob": 5, "charges": [ 0, 30 ] },
       { "group": "everyday_scar_h_military", "prob": 5, "charges": [ 0, 30 ] },
-      { "item": "m16a4", "prob": 5, "charges": [ 0, 30 ] }
+      { "item": "m16a4", "prob": 5, "charges": [ 0, 30 ], "contents-group": "military_accessories_standard" }
     ]
   },
   {
@@ -141,7 +141,7 @@
     "subtype": "distribution",
     "entries": [
       { "group": "everyday_m110a1", "prob": 75, "charges": [ 0, 20 ] },
-      { "group": "everyday_m2010", "prob": 20, "charges": [ 0, 5 ] },
+      { "group": "everyday_m2010_military", "prob": 20, "charges": [ 0, 5 ] },
       { "group": "everyday_m107a1", "prob": 5, "charges": [ 0, 10 ] }
     ]
   },
@@ -151,9 +151,9 @@
     "//": "Mostly LMGs but allows the occasional GPMG too",
     "subtype": "distribution",
     "entries": [
-      { "group": "everyday_m249", "prob": 75, "charges": [ 0, 100 ] },
+      { "group": "everyday_m249_military", "prob": 75, "charges": [ 0, 100 ] },
       { "group": "everyday_m27iar_fire_support", "prob": 15, "charges": [ 0, 100 ] },
-      { "group": "everyday_m240", "prob": 10, "charges": [ 0, 100 ] }
+      { "group": "everyday_m240_military", "prob": 10, "charges": [ 0, 100 ] }
     ]
   },
   {
@@ -227,7 +227,12 @@
     "subtype": "collection",
     "entries": [
       {
-        "distribution": [ { "item": "holo_sight", "prob": 50 }, { "item": "acog_scope", "prob": 30 }, { "item": "red_dot_sight", "prob": 20 } ]
+        "distribution": [
+          { "item": "hybrid_sight", "prob": 50 },
+          { "item": "holo_sight", "prob": 30 },
+          { "item": "acog_scope", "prob": 10 },
+          { "item": "red_dot_sight", "prob": 10 }
+        ]
       },
       { "distribution": [ { "item": "grip", "prob": 70 }, { "item": "m203", "prob": 30 } ] },
       { "item": "offset_sights", "prob": 30 },
@@ -242,6 +247,7 @@
     "subtype": "distribution",
     "entries": [
       { "item": "holo_sight", "prob": 100 },
+      { "item": "hybrid_sight", "prob": 100 },
       { "item": "acog_scope", "prob": 100 },
       { "item": "red_dot_sight", "prob": 100 },
       { "item": "pistol_grip", "prob": 100 },
@@ -776,6 +782,7 @@
       [ "bot_mininuke_hack", 1 ],
       [ "bot_secubot", 10 ],
       [ "bot_talon_m202a1", 10 ],
+      [ "bot_talon_m249", 10 ],
       [ "bot_dispatch_military", 5 ],
       [ "bot_turret_longrange", 5 ],
       [ "bot_turret_antimateriel", 1 ],

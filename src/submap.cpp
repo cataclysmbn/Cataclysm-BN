@@ -619,7 +619,7 @@ auto submap::rebuild_transparency_cache( const map &m, const tripoint_bub_sm &gr
     const float sight_penalty = get_weather().weather_id->sight_penalty;
 
     for( const auto &sp : submap_tiles() ) {
-        if( ( get_ter( sp ).obj().transparent || !get_furn( sp ).obj().transparent ) ) {
+        if( ( get_ter( sp ).obj().transparent && get_furn( sp ).obj().transparent ) ) {
             auto value = LIGHT_TRANSPARENCY_OPEN_AIR;
             if( outside_cache[sp.x()][sp.y()] ) {
                 value *= sight_penalty;

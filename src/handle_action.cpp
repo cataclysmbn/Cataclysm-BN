@@ -62,7 +62,7 @@
 #include "iuse.h"
 #include "lightmap.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "make_static.h"
 #include "map.h"
 #include "map_selector.h"
@@ -868,7 +868,7 @@ static void smash()
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
             sound_event se;
             se.origin = smashp;
-            se.volume = bash_info.sound_vol.value_or( 0 );
+            se.volume = units::to_decibel( bash_info.sound_vol.value_or( 0_dB ) );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound.translated();
             se.id = "smash";
@@ -883,7 +883,7 @@ static void smash()
         } else {
             sound_event se;
             se.origin = smashp;
-            se.volume = bash_info.sound_fail_vol.value_or( 0 );
+            se.volume = units::to_decibel( bash_info.sound_fail_vol.value_or( 0_dB ) );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound_fail.translated();
             se.id = "smash";
@@ -1659,7 +1659,8 @@ static void open_movement_mode_menu()
     as_m.entries.emplace_back( CMM_RUN, true, 'r', _( "Run" ) );
     as_m.entries.emplace_back( CMM_WALK, true, 'w', _( "Walk" ) );
     as_m.entries.emplace_back( CMM_CROUCH, true, 'c', _( "Crouch" ) );
-    as_m.entries.emplace_back( CMM_COUNT, true, '"', _( "Cycle move mode (run/walk/crouch)" ) );
+    as_m.entries.emplace_back( CMM_PRONE, true, 'p', _( "Prone" ) );
+    as_m.entries.emplace_back( CMM_COUNT, true, '"', _( "Cycle move mode" ) );
     as_m.selected = 1;
     as_m.query();
 
@@ -2111,6 +2112,10 @@ bool game::handle_action()
                 u.toggle_crouch_mode();
                 break;
 
+            case ACTION_TOGGLE_PRONE:
+                u.toggle_prone_mode();
+                break;
+
             case ACTION_OPEN_MOVEMENT:
                 open_movement_mode_menu();
                 break;
@@ -2124,6 +2129,7 @@ bool game::handle_action()
             case ACTION_MOVE_LEFT:
             case ACTION_MOVE_FORTH_LEFT: {
                 ZoneScopedN( "handle_action_movement" );
+                character_funcs::search_surroundings( u );
                 if( !u.get_value( "remote_controlling" ).empty() &&
                     ( u.has_active_item_with_action( "RADIOCONTROL" ) ||
                       u.has_active_bionic( bio_remote ) ) ) {

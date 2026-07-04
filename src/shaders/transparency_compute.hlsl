@@ -59,7 +59,7 @@ void main(uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID)
     bool furn_transparent = furn_lut[sm.furn_ids[tile]] != 0;
 
     float value;
-    if (ter_transparent || !furn_transparent) {
+    if (ter_transparent && furn_transparent) {
         value = LIGHT_TRANSPARENCY_OPEN_AIR;
         if (sm.outside_flags[tile] != 0) {
             value *= sight_penalty;

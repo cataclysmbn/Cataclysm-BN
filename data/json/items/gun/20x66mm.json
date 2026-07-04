@@ -102,6 +102,7 @@
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "250 ml",
     "magazines": [ [ "20x66mm", [ "20x66_10_mag" ] ] ],
     "flags": [ "WATERPROOF_GUN", "NEVER_JAMS" ]
   }

@@ -1963,17 +1963,17 @@
     "type": "GENERIC",
     "copy-from": "knife_combat",
     "name": { "str": "carbon fiber knife" },
-    "description": "A custom 3D-printed combat knife made out of carbon fiber.  It is more lightweight than a normal knife thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
+    "description": "A custom 3D-printed combat knife made out of carbon fiber and a steel edge.  It is more lightweight than a normal knife thanks to its method of manufacturing.",
     "weight": "300 g",
-    "material": [ "carbon_fiber" ]
+    "material": [ "carbon_fiber", "steel" ]
   },
   {
     "id": "sword_carbon",
     "type": "GENERIC",
     "copy-from": "katana",
     "name": { "str": "carbon fiber katana" },
-    "description": "A custom 3D-printed single-bladed sword made out of carbon fiber.  It is more lightweight than a normal sword thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed single-bladed sword made out of carbon fiber and a steel edge.  It is more lightweight than a normal sword thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -1981,8 +1981,8 @@
     "type": "GENERIC",
     "copy-from": "broadsword",
     "name": { "str": "carbon fiber sword" },
-    "description": "A custom 3D-printed double-bladed sword made out of carbon fiber.  It is more lightweight than a normal sword thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed double-bladed sword made out of carbon fiber and a steel edge.  It is more lightweight than a normal sword thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -1990,8 +1990,8 @@
     "type": "GENERIC",
     "copy-from": "nodachi",
     "name": { "str": "carbon fiber nodachi" },
-    "description": "A custom 3D-printed single-bladed two-handed sword made out of carbon fiber.  It is more lightweight than a normal sword thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed single-bladed two-handed sword made out of carbon fiber and a steel edge.  It is more lightweight than a normal sword thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -1999,8 +1999,8 @@
     "type": "GENERIC",
     "copy-from": "zweihander",
     "name": { "str": "carbon fiber greatsword" },
-    "description": "A custom 3D-printed two-handed sword made out of carbon fiber.  It is more lightweight than a normal sword thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed two-handed sword made out of carbon fiber and a steel edge.  It is more lightweight than a normal sword thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {

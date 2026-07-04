@@ -15,6 +15,7 @@
     "dispersion": 90,
     "min_cycle_recoil": 4770,
     "barrel_volume": "500 ml",
+    "magazine_well": "100 ml",
     "magazines": [ [ "300", [ "m2010mag" ] ] ],
     "flags": [ "NEVER_JAMS" ]
   },

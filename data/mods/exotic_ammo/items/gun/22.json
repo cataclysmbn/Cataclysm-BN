@@ -3,7 +3,7 @@
     "id": "rm360_carbine",
     "looks_like": "ar15",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "name": { "str_sp": "RM360 rotary carbine" },
     "weapon_category": [ "RIFLES", "AUTOLOADING" ],
     "description": "This unusual Rivtech carbine features five rotating barrels and a large capacity helical magazine.  Durable and easy to handle, it was designed to overcome the deficiencies of its low power .22LR cartridge by rapidly delivering a large number of projectiles.",

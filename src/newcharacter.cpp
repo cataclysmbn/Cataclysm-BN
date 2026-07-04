@@ -42,7 +42,7 @@
 #include "json.h"
 #include "lightmap.h"
 #include "npc_class.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "make_static.h"
 #include "mapsharing.h"
 #include "martialarts.h"

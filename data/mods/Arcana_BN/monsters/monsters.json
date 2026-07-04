@@ -31,7 +31,7 @@
     "luminance": 200,
     "harvest": "exempt",
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "arcana_lingering_chill", "base_mod": -1.0 }, { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "arcana_lingering_chill", "base_mod": -1 }, { "effect": "dazed", "base_mod": -1 } ],
     "special_attacks": [
       {
         "id": "slam",
@@ -322,7 +322,7 @@
     "vision_night": 30,
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "special_attacks": [
       {
         "type": "bite",
@@ -359,7 +359,7 @@
     "vision_night": 10,
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
     "extend": { "flags": [ "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS", "PET_HARNESSABLE", "CANT_CLONE" ] },
@@ -378,7 +378,7 @@
     "species": [ "ARCANA_SUMMONED" ],
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
     "extend": {
@@ -406,7 +406,7 @@
     "path_settings": { "max_dist": 10 },
     "special_attacks": [ [ "SMASH", 25 ] ],
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
     "extend": { "flags": [ "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS", "PET_HARNESSABLE", "CANT_CLONE" ] },
@@ -426,7 +426,7 @@
     "species": [ "ARCANA_SUMMONED" ],
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_drops": {  },
     "special_attacks": [ [ "RANGED_PULL", 20 ], [ "LUNGE", 10 ] ],
     "extend": {
@@ -455,7 +455,7 @@
     "mountable_weight_ratio": 0.9,
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
     "extend": { "flags": [ "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS", "CANPLAY", "PET_HARNESSABLE", "CANT_CLONE" ] }
@@ -473,7 +473,7 @@
     "vision_night": 10,
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "attack_effs": [ { "id": "stunned", "duration": 5, "chance": 30 } ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
@@ -497,7 +497,7 @@
     "armor_bullet": 8,
     "melee_damage": [ { "damage_type": "electric", "amount": 10 } ],
     "regenerates": 10,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "extend": { "flags": [ "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS", "CANPLAY", "CANT_CLONE" ] },
     "delete": { "flags": [ "STUMBLES" ] }
   },
@@ -514,7 +514,7 @@
     "vision_night": 40,
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "special_attacks": [
       {
         "type": "spell",
@@ -554,7 +554,7 @@
     "death_drops": {  },
     "special_attacks": [ { "type": "bite", "cooldown": 15 } ],
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "extend": { "flags": [ "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS", "CANPLAY", "PET_HARNESSABLE", "CANT_CLONE" ] },
     "delete": { "flags": [ "BASHES" ] }
   },
@@ -571,7 +571,7 @@
     "species": [ "ARCANA_SUMMONED" ],
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
     "death_drops": "mon_bound_glyph_death_drops_universal",
     "revert_to_itype": "summon_triffid_bound",
@@ -603,7 +603,7 @@
     "armor_bullet": 5,
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
     "special_attacks": [ { "type": "bite", "cooldown": 5 } ],
@@ -624,7 +624,7 @@
     "melee_damage": [ { "damage_type": "dark", "amount": 9 } ],
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "vision_day": 50,
     "vision_night": 50,
     "armor_stab": 10,
@@ -646,7 +646,7 @@
     "mountable_weight_ratio": 0.9,
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
     "special_attacks": [ { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 23, "armor_multiplier": 0.8 } ] } ],
     "death_drops": "mon_bound_glyph_death_drops_universal",
@@ -664,7 +664,7 @@
     "mountable_weight_ratio": 0.9,
     "path_settings": { "max_dist": 10 },
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "vision_day": 50,
     "vision_night": 50,
     "death_drops": "mon_bound_glyph_death_drops_universal",
@@ -699,7 +699,7 @@
     "vision_night": 40,
     "path_settings": { "max_dist": 10 },
     "regenerates": 5,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_drops": "mon_bound_glyph_death_drops_universal",
     "revert_to_itype": "summon_shoggoth_bound",
     "extend": { "flags": [ "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS", "PET_HARNESSABLE", "CAN_BE_ORDERED", "CANT_CLONE" ] },
@@ -825,7 +825,7 @@
     "vision_day": 30,
     "vision_night": 10,
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1.0 } ],
+    "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_drops": {  },
     "death_function": [ "MELT" ],
     "extend": {
@@ -1204,7 +1204,7 @@
         "require_targeting_monster": true,
         "targeting_cost": 100,
         "targeting_sound": "\"Ave martello!\"  The maddened hunter raises its hammer high!",
-        "targeting_volume": 30,
+        "targeting_volume": "50 dB",
         "description": "The maddened hunter's hammer gives off a blinding flash!",
         "no_ammo_sound": "a cry of anger!"
       }
@@ -1248,7 +1248,7 @@
         "require_targeting_monster": true,
         "targeting_cost": 100,
         "targeting_sound": "\"May He forge your chains!\"  The maddened keeper raises its symbol of judgment!",
-        "targeting_volume": 30,
+        "targeting_volume": "50 dB",
         "description": "Lightning arcs from the maddened keeper's symbol of judgment!",
         "no_ammo_sound": "a cry of anger!",
         "no_crits": true
@@ -1291,7 +1291,7 @@
         "require_targeting_monster": true,
         "targeting_cost": 100,
         "targeting_sound": "\"Burn!\"  The maddened sanguinist levels its hellfire staff!",
-        "targeting_volume": 30,
+        "targeting_volume": "50 dB",
         "description": "Flames erupt from the maddened sanguinist's hellfire staff!",
         "no_ammo_sound": "a cry of anger!",
         "no_crits": true

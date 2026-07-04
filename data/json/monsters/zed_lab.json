@@ -87,7 +87,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "an electric hum!",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "faint beeping."
       }
     ],

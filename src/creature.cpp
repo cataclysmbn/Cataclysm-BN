@@ -413,9 +413,10 @@ bool Creature::sees( const Creature &critter ) const
         return false;
     }
     if( ch != nullptr ) {
-        if( ch->movement_mode_is( CMM_CROUCH ) ) {
+        if( ch->movement_mode_is( CMM_CROUCH ) || ch->movement_mode_is( CMM_PRONE ) ) {
             const int coverage = here.obstacle_coverage( bub_pos(), critter.bub_pos() );
-            if( coverage < 30 ) {
+            const int threshold = ch->movement_mode_is( CMM_PRONE ) ? 15 : 30;
+            if( coverage < threshold ) {
                 return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
             }
             float size_modifier = 1.0;
@@ -878,6 +879,9 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
     const double ammo_severity_bonus = proj.aimedcritbonus;
     const double ammo_severity_max_bonus = proj.aimedcritmaxbonus;
 
+    // Targeting UI teardown can dirty the SDL visibility cache just before a shot resolves.
+    // Ranged damage messages depend on the same visibility query, so refresh it here first.
+    g->refresh_player_visibility_cache_if_needed();
     const bool u_see_this = g->u.sees( *this );
 
     const int avoid_roll = dodge_roll();

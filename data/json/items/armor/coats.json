@@ -410,8 +410,8 @@
     "id": "jacket_army",
     "repairs_like": "trenchcoat",
     "type": "ARMOR",
-    "name": { "str_sp": "army jacket" },
-    "description": "A tough jacket with lots of pockets.  Favored by the military.",
+    "name": { "str_sp": "army blouse" },
+    "description": "A tough blouse with lots of pockets.  Favored by the military.",
     "weight": "780 g",
     "volume": "3 L",
     "price": "35 USD",
@@ -427,7 +427,7 @@
     "warmth": 20,
     "material_thickness": 2,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
-    "flags": [ "VARSIZE", "POCKETS", "OUTER", "ALLOWS_WINGS" ]
+    "flags": [ "VARSIZE", "POCKETS", "ALLOWS_WINGS" ]
   },
   {
     "id": "jacket_chef",

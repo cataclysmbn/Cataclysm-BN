@@ -51,7 +51,7 @@ There are a couple of guidelines we suggest sticking to:
 
 ### C++
 
-Code style is enforced across the codebase by `astyle`. See
+C++ style is enforced by the repository formatter helpers. Run `just fmt` before committing; see
 [CODE_STYLE](./../dev/explanation/code_style.md) for details.
 
 ### JSON

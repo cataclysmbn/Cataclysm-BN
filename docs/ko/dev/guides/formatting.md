@@ -27,7 +27,7 @@ Cataclysm: Bright Nights에서 코드를 포맷하고 린트하는 방법을 설
 
 ## C++ 포매팅
 
-최상위 C++ 파일은 [astyle](http://astyle.sourceforge.net/)로 포맷됩니다. 소스 하위 디렉터리의 C++ 파일은 [clang-format](https://clang.llvm.org/docs/ClangFormat.html)으로 포맷됩니다.
+Top-level `src/*.cpp`와 `src/*.h` 파일은 [astyle](http://astyle.sourceforge.net/)을 사용합니다. 대부분의 다른 C++ 파일은 [clang-format](https://clang.llvm.org/docs/ClangFormat.html)을 사용합니다. `tools/clang-tidy-plugin/test/` 같은 포매터에 민감한 fixture는 변경하지 않습니다.
 
 ```sh
 # 포매터 설치 (Ubuntu/Debian)
@@ -40,15 +40,15 @@ sudo dnf install astyle clang-tools-extra
 brew install astyle clang-format
 ```
 
-### 스크립트 사용
+### Helper 사용
 
 ```sh
 just fmt-cpp
-# 또는
-build-scripts/format-cpp.sh
+# 또는 staged 파일 전체
+just fmt
 ```
 
-스타일 설정은 저장소 루트의 `.astylerc`와 `.clang-format`에 있습니다.
+이미 CMake 빌드 트리가 있고 `bash`를 사용할 수 있다면 `cmake --build <build-dir> --target format`도 같은 C++ helper를 호출합니다. 스타일 설정은 저장소 루트의 `.astylerc`와 `.clang-format`에 있습니다.
 
 ## JSON 포매팅
 
@@ -148,10 +148,10 @@ CI 파이프라인은 이러한 검사를 자동으로 실행합니다:
 
 ### VS Code
 
-자동 포매팅을 위해 다음 확장을 설치하세요:
+C++에는 저장소 helper를 사용하고 Markdown/TypeScript에는 Deno 확장을 사용하세요:
 
-- **C++**: [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) (astyle 통합 포함)
-- **Deno**: [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno) (Markdown/TypeScript용)
+- **C++**: `just fmt-cpp` 실행
+- **Deno**: [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno)
 
 ### Visual Studio
 
@@ -176,19 +176,15 @@ Visual Studio를 닫았다가 다시 열어 `PATH`를 다시 읽게 하세요.
 3. **View > Other Windows > CMake Targets View**를 엽니다.
 4. 커밋하기 전에 `format` 타겟을 빌드합니다.
 
-Visual Studio의 일반 **Format Document** 명령은 이 타겟을 실행하지 않습니다. 저장소 스타일을 적용하려면
-`format` 타겟을 사용하세요. 이 타겟은 top-level C++ 파일에는 `astyle`을, `src/` 하위 디렉터리의 C++ 파일에는
-`clang-format`을 실행합니다.
+Visual Studio의 일반 **Format Document** 명령은 저장소 스타일을 실행하지 않습니다. 터미널에서 `just fmt-cpp`를
+실행하세요. CMake `format` 타겟은 `bash`가 있는 환경용 wrapper입니다.
 
 ### Vim/Neovim
 
-설정에 추가:
+astyle이나 clang-format을 직접 호출하지 말고 helper를 사용하세요:
 
 ```vim
-" 저장시 astyle로 C++ 포맷
-autocmd BufWritePre *.cpp,*.h !astyle --options=.astylerc %
-
-" deno로 포맷
+autocmd BufWritePre *.cpp,*.h !just fmt-cpp %
 autocmd BufWritePre *.md,*.ts !deno fmt %
 ```
 
@@ -223,9 +219,8 @@ build-scripts/format-cpp.sh
 
 ### C++ 포매터가 다른 결과를 생성
 
-저장소 루트의 포매터 설정을 사용하는지 확인하세요:
+저장소 루트에서 helper를 사용해 파일마다 올바른 포매터를 적용하세요:
 
 ```sh
-astyle --options=.astylerc src/*.cpp
-clang-format -i src/utils/*.cpp src/utils/*.h
+just fmt-cpp
 ```

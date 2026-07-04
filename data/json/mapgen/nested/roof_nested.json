@@ -7,11 +7,10 @@
       "mapgensize": [ 4, 4 ],
       "rows": [
         "xxxx",
-        "xct_",
-        "x___",
-        "____"
+        "xct ",
+        "x   ",
+        "    "
       ],
-      "terrain": { "_": "t_flat_roof" },
       "furniture": { "c": "f_camp_chair", "x": "f_sandbag_wall", "t": [ [ "f_table", 9 ], "f_table_flipped" ] },
       "place_loot": [
         { "group": "roof_trash", "x": [ 0, 3 ], "y": 3, "chance": 30, "repeat": [ 1, 2 ] },
@@ -28,12 +27,11 @@
     "object": {
       "mapgensize": [ 4, 4 ],
       "rows": [
-        "_ct_",
-        "____",
-        "_b_c",
-        "c___"
+        " ct ",
+        "    ",
+        " b c",
+        "c   "
       ],
-      "terrain": { "_": "t_flat_roof", "c": "t_flat_roof", "b": "t_flat_roof", "t": "t_flat_roof" },
       "furniture": { "c": "f_camp_chair", "b": "f_brazier", "t": [ [ "f_table", 9 ], "f_table_flipped" ] },
       "place_items": [
         { "item": "roof_trash", "x": [ 0, 3 ], "y": [ 0, 3 ], "chance": 35, "repeat": [ 1, 2 ] },

@@ -1,0 +1,40 @@
+[
+  {
+    "id": "afs_titanium_barrel",
+    "type": "GUNMOD",
+    "name": { "str": "titanium barrel" },
+    "description": "A precision-machined titanium replacement barrel.  Significantly lighter than steel with improved heat dissipation, resulting in a more controllable weapon.",
+    "weight": "200 g",
+    "volume": "250 ml",
+    "integral_volume": "0 ml",
+    "price": "1200 USD",
+    "price_postapoc": "25 USD",
+    "material": [ "titanium" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "barrel",
+    "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "SHOTGUNS" ] ],
+    "install_time": "30 m",
+    "weight_multiplier": 0.8,
+    "handling_modifier": 2
+  },
+  {
+    "id": "afs_titanium_barrel_short",
+    "type": "GUNMOD",
+    "name": { "str": "short titanium barrel" },
+    "description": "A shortened titanium replacement barrel designed for compact weapons.  Lighter than standard barrels with improved heat management.",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "integral_volume": "0 ml",
+    "price": "900 USD",
+    "price_postapoc": "20 USD",
+    "material": [ "titanium" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "barrel",
+    "mod_target_category": [ [ "PISTOLS" ], [ "SUBMACHINE_GUNS" ], [ "REVOLVERS" ] ],
+    "install_time": "20 m",
+    "weight_multiplier": 0.9,
+    "handling_modifier": 2
+  }
+]

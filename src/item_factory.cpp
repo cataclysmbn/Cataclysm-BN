@@ -249,11 +249,11 @@ void Item_factory::finalize_pre( itype &obj )
         obj.price_post = obj.price;
     }
     // use base volume if integral volume unspecified
-    if( obj.integral_volume < 0_ml ) {
+    if( obj.integral_volume == -1_ml ) {
         obj.integral_volume = obj.volume;
     }
     // use base weight if integral weight unspecified
-    if( obj.integral_weight < 0_gram ) {
+    if( obj.integral_weight == -1_gram ) {
         obj.integral_weight = obj.weight;
     }
     // for ammo and comestibles stack size defaults to count of initial charges
@@ -285,12 +285,6 @@ void Item_factory::finalize_pre( itype &obj )
     erase_if( obj.item_tags, []( const flag_id & f ) {
         return f.str().starts_with( "LIGHT_" );
     } );
-
-    // Set max volume for containers to prevent integer overflow
-    if( obj.container && obj.container->contains > 10000_liter ) {
-        debugmsg( obj.id.str() + " storage volume is too large, reducing to 10000 liters" );
-        obj.container->contains = 10000_liter;
-    }
 
     if( obj.ammo ) {
         // for ammo not specifying loudness (or an explicit less than zero) derive value from other properties
@@ -1956,7 +1950,7 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
     assign( jo, "clip_size", slot.clip, strict, 0 );
     assign( jo, "reload", slot.reload_time, strict, 0 );
     assign( jo, "reload_noise", slot.reload_noise, strict );
-    assign( jo, "reload_noise_volume_dB", slot.reload_noise_volume, strict, 0, 191 );
+    assign( jo, "reload_noise_volume_dB", slot.reload_noise_volume, strict, 0_dB, 191_dB );
     // Depreciated alias, use barrel_volume instead.
     assign( jo, "barrel_length", slot.barrel_volume, strict, 0_ml );
     assign( jo, "barrel_volume", slot.barrel_volume, strict, 0_ml );
@@ -1977,10 +1971,8 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
         }
     }
     // Depreciated alias, use reload_noise_dB_volume instead.
-    if( jo.has_int( "reload_noise_volume" ) ) {
-        int volume = jo.get_int( "reload_noise_volume" );
-        volume = approximate_dB_volume_from_legacy_tile_distance_vol( volume );
-        slot.reload_noise_volume = volume;
+    if( jo.has_member( "reload_noise_volume" ) ) {
+        assign( jo, "reload_noise_volume", slot.reload_noise_volume, strict, 0_dB, 191_dB );
     }
     assign( jo, "modes", slot.modes );
 }
@@ -2463,6 +2455,7 @@ void Item_factory::load( islot_gunmod &slot, const JsonObject &jo, const std::st
     assign( jo, "ammo_to_fire_multiplier", slot.ammo_to_fire_multiplier );
     assign( jo, "ammo_to_fire_modifier", slot.ammo_to_fire_modifier );
     assign( jo, "weight_multiplier", slot.weight_multiplier );
+    assign( jo, "volume_multiplier", slot.volume_multiplier );
     assign( jo, "speed", slot.speed );
     assign( jo, "aimedcritbonus", slot.aimedcritbonus );
     assign( jo, "aimedcritmaxbonus", slot.aimedcritmaxbonus );
@@ -2669,12 +2662,12 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
 
     assign( jo, "category", def.category_force, strict );
     assign( jo, "weight", def.weight, strict, 0_gram );
-    assign( jo, "integral_weight", def.integral_weight, strict, 0_gram );
+    assign( jo, "integral_weight", def.integral_weight );
     assign( jo, "volume", def.volume );
+    assign( jo, "integral_volume", def.integral_volume );
     assign( jo, "price", def.price, false, 0_cent );
     assign( jo, "price_postapoc", def.price_post, false, 0_cent );
     assign( jo, "stackable", def.stackable_, strict );
-    assign( jo, "integral_volume", def.integral_volume );
     assign( jo, "bashing", def.melee[DT_BASH], strict, 0 );
     assign( jo, "cutting", def.melee[DT_CUT], strict, 0 );
     assign( jo, "to_hit", def.m_to_hit, strict );

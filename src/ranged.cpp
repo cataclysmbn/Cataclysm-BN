@@ -50,7 +50,7 @@
 #include "item_functions.h"
 #include "itype.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "material.h"
 #include "math_defines.h"
@@ -481,8 +481,6 @@ class target_ui
         // List of visible hostile targets
         std::vector<Creature *> targets;
 
-        // 'true' if map has z levels and 3D fov is on
-        bool allow_zlevel_shift = false;
         // Snap camera to cursor. Can be permanently toggled in settings
         // or temporarily in this window
         bool snap_to_target = false;
@@ -823,24 +821,31 @@ double Creature::ranged_target_size() const
         return 0.0;
     }
     bool is_crouched = false;
+    bool is_prone = false;
     if( Character *ch = const_cast<Creature &>( *this ).as_character() ) {
         if( ch->movement_mode_is( CMM_CROUCH ) ) {
             is_crouched = true;
         }
+        if( ch->movement_mode_is( CMM_PRONE ) ) {
+            is_prone = true;
+        }
     }
-    if( has_flag( MF_HARDTOSHOOT ) || is_crouched ) {
+    if( has_flag( MF_HARDTOSHOOT ) || is_crouched || is_prone ) {
         switch( get_size() ) {
             case creature_size::tiny:
                 // We can't be smaller than tiny, but we can make the hit rate lower.
                 return 0.05;
             case creature_size::small:
-                return occupied_tile_fraction( creature_size::tiny );
+                return is_prone ? 0.05 : occupied_tile_fraction( creature_size::tiny );
             case creature_size::medium:
-                return occupied_tile_fraction( creature_size::small );
+                return is_prone ? occupied_tile_fraction( creature_size::tiny )
+                       : occupied_tile_fraction( creature_size::small );
             case creature_size::large:
-                return occupied_tile_fraction( creature_size::medium );
+                return is_prone ? occupied_tile_fraction( creature_size::small )
+                       : occupied_tile_fraction( creature_size::medium );
             case creature_size::huge:
-                return occupied_tile_fraction( creature_size::large );
+                return is_prone ? occupied_tile_fraction( creature_size::medium )
+                       : occupied_tile_fraction( creature_size::large );
             default:
                 break;
         }
@@ -1072,7 +1077,7 @@ void npc::pretend_fire( npc *source, int shots, item &gun )
 }
 
 
-namespace
+namespace ranged
 {
 
 auto is_mountable( const map &m, const tripoint_bub_ms &pos ) -> bool
@@ -1104,8 +1109,16 @@ auto can_use_heavy_weapon( const Character &who, const map &m, const tripoint_bu
     if( who.is_mounted() && who.mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
         return true;
     }
+    if( who.movement_mode_is( CMM_PRONE ) ) {
+        return true;
+    }
     return is_mountable_nearby( m, pos );
 }
+
+} // namespace ranged
+
+namespace
+{
 
 auto firing_vehicle( map &here, const Character &who ) -> vehicle * // *NOPAD*
 {
@@ -1209,7 +1222,7 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
 dispersion_sources calculate_dispersion( const map &m, const Character &who, const item &gun,
         int at_recoil, bool burst )
 {
-    const bool bipod = can_use_heavy_weapon( who, m, who.bub_pos() );
+    const bool bipod = ranged::can_use_heavy_weapon( who, m, who.bub_pos() );
 
     const int gun_recoil = gun.gun_recoil( bipod );
     const int eff_recoil = at_recoil + ( burst ? ranged::burst_penalty( who, gun, gun_recoil ) : 0 );
@@ -1224,8 +1237,6 @@ static int calc_gun_volume( const item &gun )
     const item &parent = ( gun.parent_item() != nullptr &&
                            gun.has_flag( flag_USE_PARENT_GUN ) ) ? *gun.parent_item() : gun;
     const bool am_dat = gun.ammo_data();
-    // If our ammo is subsonic, loudness mods from the gun and gunmods can reduce noise freely.
-    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will still make a sonic boom.
     // Start our noise at zero.
     int noise = 0;
     int speed = parent.gun_speed( am_dat );
@@ -1251,8 +1262,8 @@ static int calc_gun_volume( const item &gun )
     if( suppressed ) {
         // Speed of sound in atmosphere @ seat level is 343 m/s
         if( speed < 344 ) {
-            // We are suppressed and subsonic. We take the least of 100 or current noise.
-            noise = std::min( 100, noise );
+            // We are suppressed and subsonic. We take the least of 100 or current noise minus 15.
+            noise = std::min( 100, noise - 15 );
         } else {
             // We are suppressed but still super sonic. Cap our volume to 120.
             noise = std::min( 120, noise );
@@ -1508,12 +1519,12 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         const Character &shooter = who;
         // Now actually apply recoil for the future shots
         // But only for one shot, because bursts kinda suck
-        int gun_recoil = gun.gun_recoil( can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) );
+        int gun_recoil = gun.gun_recoil( ranged::can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) );
 
         // If user is currently able to fire a mounted gun freely, penalize dispersion
         // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
         if( gun.has_flag( flag_MOUNTED_GUN ) &&
-            !can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
+            !ranged::can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
             if( who.get_size() == creature_size::large ) {
                 gun_recoil = gun_recoil * 2;
             } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -1969,6 +1980,9 @@ static void do_aim( avatar &you, const item &relevant, const double min_recoil )
         // Increase aim at the cost of moves
         you.mod_moves( -1 );
         you.recoil = std::max( min_recoil, you.recoil - aim_amount );
+    } else {
+        // If aim is already maxed, we're just waiting, so pass the turn.
+        you.set_moves( 0 );
     }
 }
 
@@ -2207,7 +2221,7 @@ static bool pl_sees( const Creature &cr )
 }
 
 // Handle capping aim level when the player cannot see the target tile or there is nothing to aim at.
-static double calculate_aim_cap( const Character &p, const tripoint_bub_ms &target )
+double ranged::calculate_aim_cap( const Character &p, const tripoint_bub_ms &target )
 {
     double min_recoil = 0.0;
     const Creature *victim = g->critter_at( target, true );
@@ -2236,7 +2250,7 @@ static int print_aim( const Character &p, const catacurses::window &w, int line_
     dispersion_sources dispersion = ranged::get_weapon_dispersion( p, weapon );
     dispersion.add_range( ranged::recoil_vehicle( p ) );
 
-    const double min_recoil = calculate_aim_cap( p, pos );
+    const double min_recoil = ranged::calculate_aim_cap( p, pos );
     const double effective_recoil = ranged::effective_dispersion( p,
                                     p.primary_weapon().sight_dispersion() );
     const double min_dispersion = std::max( min_recoil, effective_recoil );
@@ -2675,6 +2689,10 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
     if( who.movement_mode_is( CMM_CROUCH ) ) {
         dispersion.add_multiplier( 0.75 );
     }
+    // If we're prone, even more stable aim.
+    if( who.movement_mode_is( CMM_PRONE ) ) {
+        dispersion.add_multiplier( 0.5 );
+    }
 
     // Remotely-fired turrets with installed laser designator
     if( who.has_trait( trait_LASER_GUIDED ) ) {
@@ -2692,7 +2710,8 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     // If user is currently able to fire a mounted gun freely, penalize dispersion
     // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
-    if( obj.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
+    if( obj.has_flag( flag_MOUNTED_GUN ) &&
+        !ranged::can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
         if( who.get_size() == creature_size::large ) {
             dispersion.add_range( 500 );
         } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -3234,10 +3253,8 @@ void target_ui::init_window_and_input()
     ctxt.register_action( "zoom_out" );
     ctxt.register_action( "zoom_in" );
     ctxt.register_action( "TOGGLE_MOVE_CURSOR_VIEW" );
-    if( allow_zlevel_shift ) {
-        ctxt.register_action( "LEVEL_UP" );
-        ctxt.register_action( "LEVEL_DOWN" );
-    }
+    ctxt.register_action( "LEVEL_UP" );
+    ctxt.register_action( "LEVEL_DOWN" );
     if( mode == TargetMode::Fire || mode == TargetMode::TurretManual || ( mode == TargetMode::Shape &&
             relevant->is_gun() ) ) {
         ctxt.register_action( "SWITCH_MODE" );
@@ -3907,7 +3924,7 @@ bool target_ui::action_aim()
 {
     set_last_target();
     apply_aim_turning_penalty();
-    const double min_recoil = calculate_aim_cap( *you, dst );
+    const double min_recoil = ranged::calculate_aim_cap( *you, dst );
     for( int i = 0; i < 10; ++i ) {
         do_aim( *you, *relevant, min_recoil );
     }
@@ -3933,7 +3950,7 @@ bool target_ui::action_aim_and_shoot( const std::string &action )
     int aim_threshold = it->threshold;
     set_last_target();
     apply_aim_turning_penalty();
-    const double min_recoil = calculate_aim_cap( *you, dst );
+    const double min_recoil = ranged::calculate_aim_cap( *you, dst );
     do {
         do_aim( *you, relevant ? *relevant : null_item_reference(), min_recoil );
     } while( you->moves > 0 && you->recoil > aim_threshold &&
@@ -4261,9 +4278,7 @@ void target_ui::panel_cursor_info( int &text_y )
 
     std::vector<std::string> labels;
     labels.push_back( label_range );
-    if( allow_zlevel_shift ) {
-        labels.push_back( string_format( _( "Elevation: %d" ), dst.z() - src.z() ) );
-    }
+    labels.push_back( string_format( _( "Elevation: %d" ), dst.z() - src.z() ) );
     labels.push_back( string_format( _( "Targets: %d" ), targets.size() ) );
 
     nc_color col = c_light_gray;
@@ -4591,7 +4606,7 @@ auto ranged::gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::
 
     if( gmode->has_flag( flag_MOUNTED_GUN ) ) {
         const Character &shooter = you;
-        if( !can_use_heavy_weapon( shooter, m, shooter.bub_pos() ) &&
+        if( !ranged::can_use_heavy_weapon( shooter, m, shooter.bub_pos() ) &&
             !( you.get_size() > creature_size::medium ) &&
             !you.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) ) {
             messages.push_back( string_format(

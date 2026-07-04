@@ -54,6 +54,7 @@
 #include "event.h"
 #include "event_bus.h"
 #include "explosion.h"
+#include "explosion_queue.h"
 #include "field.h"
 #include "field_type.h"
 #include "flag.h"
@@ -77,7 +78,7 @@
 #include "iuse_actor.h"
 #include "lightmap.h"
 #include "line.h"
-#include "map_functions.h"
+#include "map/utils/map_functions.h"
 #include "map_iterator.h"
 #include "map_memory.h"
 #include "map_selector.h"
@@ -4288,7 +4289,8 @@ static auto get_sound_volume( const map_bash_info &bash, const bash_params &para
     // Set maxvol to 140dB, which can be deafening for extreme impacts.
     const auto maxvol = 140;
     const auto impact_strength = params.destroy ? bash.str_max : params.strength;
-    return bash.sound_vol.value_or( std::clamp( minvol + impact_strength, minvol, maxvol ) );
+    return units::to_decibel( bash.sound_vol.value_or(
+                                  units::from_decibel( std::clamp( minvol + impact_strength, minvol, maxvol ) ) ) );
 }
 
 static void set_bash_sound_source( sound_event &se, const bash_params &params )
@@ -4672,7 +4674,8 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
 
     if( !result.success ) {
         // Cap out bash volume to 120dB for sanity checking.
-        int sound_volume = std::min( 120, bash->sound_fail_vol.value_or( 70 ) );
+        const auto sound_volume =
+            std::min( 120, units::to_decibel( bash->sound_fail_vol.value_or( 70_dB ) ) );
 
         result.did_bash = true;
         if( !params.silent ) {
@@ -6237,6 +6240,10 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
 
 void map::process_items()
 {
+    // Defer explosion drains during processing: an item here can be detached but
+    // still in-stack, and a re-entrant drain would re-detonate it forever (#9696).
+    explosion_handler::scoped_drain_deferral defer_explosion_drains;
+
     auto total_active_items = int64_t{ 0 };
     auto total_rottable_active_items = int64_t{ 0 };
 
@@ -7948,8 +7955,14 @@ void map::reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts,
     for( const tripoint_bub_ms &p : points_in_radius( f, range ) ) {
         const tripoint_bub_ms tp = { p.xy(), f.z() };
         const int tp_cost = move_cost( tp );
+        const auto &veh = veh_at( tp );
+        const auto &veh_wall = veh.obstacle_at_part();
+        // Move cost is in right bounds
+        const bool bad_move_cost = tp_cost < cost_min || tp_cost > cost_max;
+        // It lacks floor in terrain or in veh
+        const bool no_floor = !has_floor_or_support( tp ) && ( veh_wall || !veh );
         // rejection conditions
-        if( tp_cost < cost_min || tp_cost > cost_max || !has_floor_or_support( tp ) ) {
+        if( bad_move_cost || no_floor || veh_wall ) {
             continue;
         }
         // set initial cost for grid point

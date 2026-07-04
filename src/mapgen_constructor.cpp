@@ -35,10 +35,12 @@
 #include "text_snippets.h"
 #include "thread_pool.h"
 #include "trap.h"
+#include "units_utility.h"
 #include "vehicle.h"
 #include "vehicle_group.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+#include "vpart_range.h"
 #include "veh_type.h"
 
 static const trait_id trait_NPC_STATIC_NPC( "NPC_STATIC_NPC" );
@@ -484,6 +486,13 @@ auto mapgen_constructor::furn_set( const point_omt_ms &p, const furn_id &furnitu
         return false;
     }
     sm->set_furn( local, furniture );
+    const auto &new_furniture = furniture.obj();
+    if( new_furniture.active ) {
+        cata::poly_serialized<active_tile_data> atd;
+        atd.reset( new_furniture.active->clone() );
+        atd->set_last_updated( calendar::turn );
+        sm->active_furniture[local] = atd;
+    }
     return true;
 }
 
@@ -1201,10 +1210,127 @@ auto mapgen_constructor::add_vehicle( const std::variant<vgroup_id, vproto_id> &
     if( place_on_submap == nullptr ) {
         return nullptr;
     }
-    auto *const result = veh.get();
-    place_on_submap->vehicles.push_back( std::move( veh ) );
-    place_on_submap->is_uniform = false;
-    return result;
+    auto result = add_vehicle( std::move( veh ), true );
+    if( result ) {
+        auto *const real_result = result.get();
+        place_on_submap->vehicles.push_back( std::move( result ) );
+        place_on_submap->is_uniform = false;
+        return real_result;
+    }
+    return nullptr;
+}
+
+auto mapgen_constructor::add_vehicle( std::unique_ptr<vehicle> veh,
+                                      const bool merge_wrecks ) -> std::unique_ptr<vehicle>
+{
+    //We only want to check once per square, so loop over all structural parts
+    std::vector<int> frame_indices = veh->all_standalone_parts();
+
+    const bool can_float = !veh->get_avail_parts( "FLOATS" ).empty();
+
+    bool needs_smashing = false;
+    for( const int pt : frame_indices ) {
+        //Don't spawn anything in water
+        const auto abs_pos = veh->abs_part_location( pt );
+        const auto omt_pos = project_remain<coords::omt>( abs_pos ).remainder;
+
+        if( has_flag_ter( TFLAG_DEEP_WATER, omt_pos ) && !can_float ) {
+            return nullptr;
+        }
+        // Don't spawn shopping carts on top of another vehicle or other obstacle.
+        if( veh->type == vproto_id( "shopping_cart" ) ) {
+            if( veh_at( omt_pos ) || impassable( omt_pos ) ) {
+                return nullptr;
+            }
+        }
+        //For other vehicles, simulate collisions with (non-shopping cart) stuff
+        vehicle *const other_veh = veh_pointer_or_null( veh_at( omt_pos ) );
+        if( other_veh != nullptr && other_veh->type != vproto_id( "shopping_cart" ) ) {
+            if( !merge_wrecks ) {
+                return nullptr;
+            }
+
+            // Hard wreck-merging limit: 250 tiles
+            // Merging is slow for big vehicles which lags the mapgen
+            if( frame_indices.size() + other_veh->all_standalone_parts().size() > 250 ) {
+                return nullptr;
+            }
+
+            // We must remove the vehicle from the map before we move away its parts
+            std::unique_ptr<vehicle> old_veh = detach_vehicle( other_veh );
+            if( old_veh == nullptr ) {
+                return nullptr;
+            }
+
+            for( const vpart_reference &vpr : old_veh->get_all_parts() ) {
+                const auto part_pos = veh->abs_to_mount( old_veh->abs_part_location( vpr.part() ) );
+                auto transferred_part = vehicle_part{ vpr.part(), & *veh };
+                transferred_part.direction = normalize( old_veh->face.dir() + transferred_part.direction -
+                                                        veh->face.dir() );
+                veh->install_part( part_pos, std::move( transferred_part ) );
+            }
+
+            veh->name = _( "Wreckage" );
+
+
+            // Try again with the wreckage
+            std::unique_ptr<vehicle> new_veh = add_vehicle( std::move( veh ), true );
+            if( new_veh != nullptr ) {
+                new_veh->smash( *this );
+                return new_veh;
+            }
+
+            // If adding the wreck failed, we want to restore the vehicle we tried to merge with
+            add_vehicle( std::move( old_veh ), false );
+            return nullptr;
+
+        } else if( impassable( omt_pos ) ) {
+            if( !merge_wrecks ) {
+                return nullptr;
+            }
+
+            // There's a wall or other obstacle here; destroy it
+            destroy( omt_pos );
+
+            // Some weird terrain, don't place the vehicle
+            if( impassable( omt_pos ) ) {
+                return nullptr;
+            }
+
+            needs_smashing = true;
+        }
+    }
+    if( needs_smashing ) {
+        veh->smash( *this );
+    }
+    return veh;
+}
+
+auto mapgen_constructor::detach_vehicle( vehicle *veh ) -> std::unique_ptr<vehicle>
+{
+    if( veh == nullptr ) {
+        debugmsg( "mapgen_constructor::detach_vehicle was passed nullptr" );
+        return std::unique_ptr<vehicle>();
+    }
+    auto *const sm = submap_at_grid( project_remain<coords::omt>( veh->abs_sm_pos ).remainder );
+    if( sm == nullptr ) {
+        debugmsg( "detach_vehicle can't find submap!  name=%s, submap:%d,%d,%d",
+                  veh->name, veh->abs_sm_pos.x(), veh->abs_sm_pos.y(), veh->abs_sm_pos.z() );
+        return std::unique_ptr<vehicle>();
+    }
+    auto iter = std::ranges::find_if( sm->vehicles, [&]( const auto & candidate ) {
+        return candidate.get() == veh;
+    } );
+    if( iter != sm->vehicles.end() ) {
+        std::unique_ptr<vehicle> result = std::move( *iter );
+        sm->vehicles.erase( iter );
+        result->detach();
+        result->refresh_position();
+        return std::move( result );
+    }
+    debugmsg( "detach_vehicle can't find it!  name=%s, submap:%d,%d,%d", veh->name, veh->abs_sm_pos.x(),
+              veh->abs_sm_pos.y(), veh->abs_sm_pos.z() );
+    return std::unique_ptr<vehicle>();
 }
 
 auto mapgen_constructor::destroy_vehicle( vehicle *veh ) -> void

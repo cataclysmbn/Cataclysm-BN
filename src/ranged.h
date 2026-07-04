@@ -73,6 +73,7 @@ int range_with_even_chance_of_good_hit( int dispersion );
 namespace ranged
 {
 
+double calculate_aim_cap( const Character &p, const tripoint_bub_ms &target );
 /**
  * Common checks for gunmode (when firing a weapon / manually firing turret)
  * @param messages Used to store messages describing failed checks
@@ -139,6 +140,9 @@ int effective_dispersion( const Character &who, int dispersion );
 
 /** Get weapon's dispersion value modified accoring to character stats */
 dispersion_sources get_weapon_dispersion( const Character &who, const item &obj );
+
+/** Returns whether the character can effectively use a heavy/MOUNTED_GUN weapon */
+bool can_use_heavy_weapon( const Character &who, const map &m, const tripoint_bub_ms &pos );
 
 struct aim_type {
     std::string name;

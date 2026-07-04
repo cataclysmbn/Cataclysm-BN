@@ -125,6 +125,7 @@ enum character_movemode : int {
     CMM_WALK = 0,
     CMM_RUN,
     CMM_CROUCH,
+    CMM_PRONE,
     CMM_COUNT
 };
 
@@ -1293,8 +1294,6 @@ class Character : public Creature, public location_visitable<Character>
 
         detached_ptr<item> inv_remove_item( item * );
 
-        units::volume inv_volume() const;
-
         void inv_unsort();
 
         void inv_clear();
@@ -1665,7 +1664,6 @@ class Character : public Creature, public location_visitable<Character>
         bool is_rad_immune() const;
         /** Returns true if the player is immune to throws */
         bool is_throw_immune() const;
-
         /**
          * Returns >0 if character is sitting/lying and relatively inactive.
          * 1 represents sleep on comfortable bed, so anything above that should be rare.

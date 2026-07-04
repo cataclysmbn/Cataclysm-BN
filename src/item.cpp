@@ -71,7 +71,7 @@
 #include "iuse_actor.h"
 #include "line.h"
 #include "locations.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "mapbuffer.h"
 #include "martialarts.h"
@@ -639,7 +639,7 @@ void item::activate()
     invalidate_processing_cache_upwards();
 }
 
-bool item::revert( const Character *ch, bool alert )
+bool item::revert( Character *ch, bool alert )
 {
     const auto &tooldata = type->tool;
     // Can't be reverted, prevents destruction of irrevertable items.
@@ -650,6 +650,9 @@ bool item::revert( const Character *ch, bool alert )
         ch->add_msg_if_player( m_info, _( tooldata->revert_msg ), tname() );
     }
     convert( *tooldata->revert_to );
+    if( ch ) {
+        ch->recalculate_enchantment_cache();
+    }
     return true;
 }
 
@@ -1098,16 +1101,20 @@ int item::charges_per_volume( const units::volume &vol ) const
             debugmsg( "Item '%s' with zero volume", tname() );
             return INFINITE_CHARGES;
         }
-        // Type cast to prevent integer overflow with large volume containers like the cargo
-        // dimension
-        return vol * static_cast<int64_t>( type->stack_size ) / type->volume;
+        if( type->stack_size > 0 && vol > units::volume_max / type->stack_size ) {
+            return INFINITE_CHARGES;
+        }
+        const auto result = vol * static_cast<decltype( units::to_milliliter( vol ) )>(
+                                type->stack_size ) / type->volume;
+        return static_cast<int>( std::min( result, static_cast<decltype( result )>( INFINITE_CHARGES ) ) );
     } else {
         units::volume my_volume = volume();
         if( my_volume == 0_ml ) {
             debugmsg( "Item '%s' with zero volume", tname() );
             return INFINITE_CHARGES;
         }
-        return vol / my_volume;
+        const auto result = vol / my_volume;
+        return static_cast<int>( std::min( result, static_cast<decltype( result )>( INFINITE_CHARGES ) ) );
     }
 }
 
@@ -4192,22 +4199,10 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
     }
 
     if( parts->test( iteminfo_parts::BASE_RIGIDITY ) ) {
-        if( const islot_armor *armor = find_armor_data() ) {
-            if( !type->rigid ) {
-                info.emplace_back( "BASE",
-                                   _( "* This item is <info>not rigid</info>.  Its"
-                                      " volume and encumbrance increase with contents." ) );
-            } else {
-                bool any_encumb_increase = std::ranges::any_of( armor->data,
-                []( armor_portion_data data ) {
-                    return data.encumber != data.max_encumber;
-                } );
-                if( any_encumb_increase ) {
-                    info.emplace_back( "BASE",
-                                       _( "* This item is <info>not rigid</info>.  Its"
-                                          " volume and encumbrance increase with contents." ) );
-                }
-            }
+        if( is_non_rigid() ) {
+            info.emplace_back( "BASE",
+                               _( "* This item is <info>not rigid</info>.  Its"
+                                  " volume and encumbrance increase with contents." ) );
         }
     }
 
@@ -5381,7 +5376,11 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         tagtext += string_format( " (%s)", group_id_str );
     } else if( has_var( "NANOFAB_ITEM_ID" ) ) {
         itype_id item = itype_id( get_var( "NANOFAB_ITEM_ID" ) );
-        tagtext += string_format( " (%s [%d])", nname( item ), std::max( 1, item->volume / 250_ml ) * 5 );
+        const auto volume_ratio = item->volume / 250_ml;
+        const auto min_charge_units = decltype( volume_ratio ) { 1 };
+        const auto max_charge_units = decltype( volume_ratio ) { INT_MAX / 5 };
+        const auto charge_units = std::clamp( volume_ratio, min_charge_units, max_charge_units );
+        tagtext += string_format( " (%s [%d])", nname( item ), static_cast<int>( charge_units * 5 ) );
     }
 
     if( already_used_by_player( you ) ) {
@@ -5714,6 +5713,9 @@ units::mass item::weight( bool include_contents, bool integral ) const
         if( !magazine_integral() && magazine_current() ) {
             ret += std::max( magazine_current()->weight(), 0_gram );
         }
+
+        // clamp: prevent negative/zero weight from aggressive mod combinations
+        ret = std::max( ret, type->weight / 100 );
     } else if( include_contents ) {
         ret += contents.item_weight_modifier();
     }
@@ -5828,19 +5830,26 @@ units::volume item::volume( bool integral ) const
     }
 
     if( is_gun() ) {
+        // apply volume multipliers from gunmods (multiplicative, before additive)
+        for( const item *mod : gunmods() ) {
+            ret *= mod->type->gunmod->volume_multiplier;
+        }
+
         for( const item *elem : gunmods() ) {
             ret += elem->volume( true );
         }
 
-        // TODO: implement stock_length property for guns
+        // COLLAPSIBLE_STOCK flag (replaced by volume_multiplier above but can use both for whatever reason)
         if( has_flag( flag_COLLAPSIBLE_STOCK ) ) {
-            // consider only the base size of the gun (without mods)
             ret -= ( type->volume / 3 );
         }
 
         if( gunmod_find( itype_barrel_small ) ) {
             ret -= type->gun->barrel_volume;
         }
+
+        // clamp: prevent negative/zero volume from aggressive mod combinations
+        ret = std::max( ret, type->volume / 100 );
     }
 
     return ret;
@@ -6115,6 +6124,21 @@ bool item::can_shatter() const
 {
     static const std::set<material_id> is_glass{ material_id( "glass" ) };
     return only_made_of( is_glass ) || has_flag( flag_SHATTERS );
+}
+
+bool item::is_non_rigid() const
+{
+    if( const islot_armor *armor = find_armor_data() ) {
+        if( !type->rigid ) {
+            return true;
+        }
+        bool any_encumb_increase = std::ranges::any_of( armor->data,
+        []( armor_portion_data data ) {
+            return data.encumber != data.max_encumber;
+        } );
+        return any_encumb_increase;
+    }
+    return false;
 }
 
 void item::unset_flags()
@@ -6720,24 +6744,29 @@ int item::get_encumber( const Character &who, const bodypart_id &bodypart ) cons
 
     contents_volume += contents.item_size_modifier();
 
-    if( who.is_worn( *this ) ) {
+    if( who.is_worn( *this ) && this->is_non_rigid() ) {
         const islot_armor *armor = find_armor_data();
 
         if( armor != nullptr ) {
             for( const armor_portion_data &entry : armor->data ) {
-                if( entry.covers.test( bodypart.id() ) ) {
-                    if( entry.max_encumber != 0 ) {
-                        units::volume char_storage( 0_ml );
+                if( entry.max_encumber != 0 && entry.covers.test( bodypart.id() ) ) {
+                    units::volume rigid_storage( 0_ml );
+                    units::volume non_rigid_storage( 0_ml );
+                    const units::volume volume_carried = who.volume_carried();
 
-                        for( const item * const &e : who.worn ) {
-                            char_storage += e->get_storage();
+                    for( const item * const &e : who.worn ) {
+                        if( e->is_non_rigid() ) {
+                            non_rigid_storage += e->get_storage();
+                        } else {
+                            rigid_storage += e->get_storage();
                         }
+                    }
 
-                        if( char_storage != 0_ml ) {
-                            // Cast up to 64 to prevent overflow. Dividing before would prevent this but lose data.
-                            contents_volume += units::from_milliliter( static_cast<int64_t>( armor->storage.value() ) *
-                                               who.inv_volume().value() / char_storage.value() );
-                        }
+                    if( volume_carried > rigid_storage && non_rigid_storage > 0_ml ) {
+                        // Cast up to 64 to prevent overflow. Dividing before would prevent this but lose data.
+                        contents_volume += units::from_milliliter( static_cast<int64_t>( armor->storage.value() ) *
+                                           ( static_cast<int64_t>( volume_carried.value() ) - rigid_storage.value() ) /
+                                           non_rigid_storage.value() );
                     }
                 }
             }
@@ -6762,11 +6791,7 @@ int item::get_encumber_when_containing(
         if( entry.covers.test( bodypart.id() ) ) {
             encumber = entry.encumber;
             // Non-rigid items add additional encumbrance proportional to their volume
-            bool any_encumb_increase = std::ranges::any_of( armor->data,
-            []( armor_portion_data data ) {
-                return data.encumber != data.max_encumber;
-            } );
-            if( !type->rigid || any_encumb_increase ) {
+            if( this->is_non_rigid() ) {
                 const int capacity = get_total_capacity().value();
                 if( entry.max_encumber == 0 ) {
                     encumber += contents_volume / 500_ml;
@@ -6839,7 +6864,9 @@ int item::get_avg_coverage() const
     const islot_armor *armor = find_armor_data();
     if( !armor ) {
         // handle wearable guns (e.g. shoulder strap) as special case
-        return is_gun() ? std::min( volume() / 500_ml, 100 ) : 0;
+        const auto volume_coverage = volume() / 500_ml;
+        const auto max_coverage = decltype( volume_coverage ) { 100 };
+        return is_gun() ? static_cast<int>( std::min( volume_coverage, max_coverage ) ) : 0;
     }
     int avg_coverage = 0;
     int avg_ctr = 0;

@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "catalua_icallback_actor.h"
 #include "coordinates.h"
 #include "damage.h"
 #include "detached_ptr.h"
@@ -361,7 +362,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param alert whether to display any messages
          * @return true if item reverted or false if no revert available.
          */
-        bool revert( const Character *ch, bool alert = true );
+        bool revert( Character *ch, bool alert = true );
 
         /**
          * Add or remove energy from a battery.
@@ -1727,6 +1728,9 @@ class item : public location_visitable<item>, public game_object<item>
 
         /**If item made out of glass, or has the SHATTERS flag?*/
         bool can_shatter() const;
+
+        /** If the item is non-rigid: either has rigid = false or max_encumber higher than encumber */
+        bool is_non_rigid() const;
 
         /**
          * @name Item properties

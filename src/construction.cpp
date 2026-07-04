@@ -1961,8 +1961,7 @@ void construct::done_grave( const tripoint_bub_ms &p )
 
 static vpart_id vpart_from_item( const itype_id &item_id )
 {
-    for( const auto &e : vpart_info::all() ) {
-        const vpart_info &vp = e.second;
+    for( const auto &vp : vpart_info::get_all() ) {
         if( vp.item == item_id && vp.has_flag( flag_INITIAL_PART ) ) {
             return vp.get_id();
         }
@@ -1970,8 +1969,7 @@ static vpart_id vpart_from_item( const itype_id &item_id )
     // The INITIAL_PART flag is optional, if no part (based on the given item) has it, just use the
     // first part that is based in the given item (this is fine for example if there is only one
     // such type anyway).
-    for( const auto &e : vpart_info::all() ) {
-        const vpart_info &vp = e.second;
+    for( const auto &vp : vpart_info::get_all() ) {
         if( vp.item == item_id ) {
             return vp.get_id();
         }
@@ -2418,8 +2416,7 @@ void construction::finalize()
     }
     if( vehicle_start ) {
         std::vector<item_comp> frame_items;
-        for( const auto &e : vpart_info::all() ) {
-            const vpart_info &vp = e.second;
+        for( const auto &vp : vpart_info::get_all() ) {
             if( !vp.has_flag( flag_INITIAL_PART ) ) {
                 continue;
             }

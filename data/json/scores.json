@@ -30,6 +30,11 @@
     "statistic": "num_moves_crouched"
   },
   {
+    "id": "score_distance_crawled",
+    "type": "score",
+    "statistic": "num_moves_crawled"
+  },
+  {
     "id": "score_distance_swam",
     "type": "score",
     "statistic": "num_moves_swam"

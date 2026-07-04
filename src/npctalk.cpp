@@ -47,7 +47,7 @@
 #include "json.h"
 #include "line.h"
 #include "make_static.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "mapgen_functions.h"
 #include "martialarts.h"
@@ -3206,6 +3206,7 @@ void talk_effect_t::parse_string_effect( const std::string &effect_id, const Jso
             WRAP( npc_die ),
             WRAP( npc_thankful ),
             WRAP( clear_overrides ),
+            WRAP( go_to_sleep ),
             WRAP( nothing )
 #undef WRAP
         }

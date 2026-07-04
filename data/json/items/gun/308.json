@@ -17,6 +17,7 @@
     "min_cycle_recoil": 2700,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "barrel_volume": "500 ml",
+    "magazine_well": "50 ml",
     "magazines": [ [ "308", [ "falmag", "falbigmag", "fal_makeshiftmag" ] ] ]
   },
   {
@@ -37,6 +38,7 @@
     "dispersion": 150,
     "min_cycle_recoil": 2700,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 3 ], [ "AUTO", "auto", 4 ] ],
+    "magazine_well": "50 ml",
     "magazines": [ [ "308", [ "g3mag", "g3bigmag", "g3_makeshiftmag" ] ] ]
   },
   {
@@ -58,6 +60,7 @@
     "durability": 9,
     "modes": [ [ "DEFAULT", "low auto", 6 ], [ "AUTO", "high auto", 18 ] ],
     "magazines": [ [ "308", [ "belt308" ] ] ],
+    "magazine_well": "25 ml",
     "extend": { "flags": [ "NEVER_JAMS" ] }
   },
   {
@@ -126,6 +129,7 @@
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "50 ml",
     "magazines": [ [ "308", [ "m14mag", "m14smallmag", "m14_makeshiftmag" ] ] ]
   },
   {
@@ -162,6 +166,7 @@
       [ "sling", 1 ],
       [ "stock", 1 ]
     ],
+    "magazine_well": "25 ml",
     "magazines": [ [ "308", [ "belt308" ] ] ]
   },
   {
@@ -197,6 +202,7 @@
       [ "sling", 1 ],
       [ "stock", 1 ]
     ],
+    "magazine_well": "25 ml",
     "magazines": [ [ "308", [ "belt308" ] ] ]
   },
   {
@@ -286,6 +292,7 @@
     "min_cycle_recoil": 2700,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "default_mods": [ "adjustable_stock" ],
+    "magazine_well": "150 ml",
     "magazines": [ [ "308", [ "hk417mag_20rd", "hk417mag_10rd", "hk417_makeshiftmag" ] ] ]
   },
   {
@@ -306,6 +313,7 @@
     "dispersion": 120,
     "min_cycle_recoil": 2700,
     "default_mods": [ "adjustable_stock", "bipod", "rifle_scope", "suppressor" ],
+    "magazine_well": "150 ml",
     "magazines": [ [ "308", [ "hk417mag_20rd", "hk417mag_10rd", "hk417_makeshiftmag" ] ] ]
   },
   {
@@ -326,6 +334,7 @@
     "dispersion": 150,
     "durability": 7,
     "min_cycle_recoil": 2700,
+    "magazine_well": "150 ml",
     "magazines": [ [ "308", [ "ar10mag_20rd", "ar10_makeshiftmag" ] ] ]
   }
 ]

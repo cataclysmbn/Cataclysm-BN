@@ -47,6 +47,7 @@
     "durability": 7,
     "min_cycle_recoil": 270,
     "blackpowder_tolerance": 24,
+    "magazine_well": "75 ml",
     "magazines": [ [ "380", [ "fn1910mag" ] ] ]
   },
   {
@@ -64,6 +65,7 @@
     "color": "dark_gray",
     "ammo": "380",
     "min_cycle_recoil": 270,
+    "magazine_well": "75 ml",
     "magazines": [ [ "380", [ "rugerlcpmag" ] ] ]
   },
   {

@@ -22,7 +22,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "calendar.h"
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "character.h"
 #include "character_functions.h"
 #include "clzones.h"
@@ -82,7 +82,7 @@
 #include "vehicle_selector.h"
 #include "vpart_position.h"
 #include "weather.h"
-#include "map_utils.h"
+#include "map/utils/map_utils.h"
 
 namespace views = std::views;
 
@@ -737,6 +737,7 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
         items.pop_front();
     }
 
+    p.recalculate_enchantment_cache();
     return res;
 }
 
@@ -846,7 +847,8 @@ void stash_activity_actor::do_turn( player_activity &, Character &who )
     }
 }
 
-static double get_capacity_fraction( int capacity, int volume )
+static auto get_capacity_fraction( const units::volume capacity,
+                                   const units::volume volume ) -> double
 {
     // fraction of capacity the item would occupy
     // fr = 1 is for capacity smaller than is size of item
@@ -854,7 +856,7 @@ static double get_capacity_fraction( int capacity, int volume )
     double fr = 1;
 
     if( capacity > volume ) {
-        fr = static_cast<double>( volume ) / capacity;
+        fr = units::to_milliliter<double>( volume ) / units::to_milliliter<double>( capacity );
     }
 
     return fr;
@@ -879,12 +881,9 @@ static int move_cost_inv( const item &it, const tripoint_bub_ms &src, const trip
     const int mc_per_tile = 100;
 
     // only free inventory capacity
-    const int inventory_capacity = units::to_milliliter( g->u.volume_capacity() -
-                                   g->u.volume_carried() );
+    const auto inventory_capacity = g->u.volume_capacity() - g->u.volume_carried();
 
-    const int item_volume = units::to_milliliter( it.volume() );
-
-    const double fr = get_capacity_fraction( inventory_capacity, item_volume );
+    const double fr = get_capacity_fraction( inventory_capacity, it.volume() );
 
     // approximation of movement cost between source and destination
     const int move_cost = mc_per_tile * rl_dist( src, dest ) * fr;
@@ -907,12 +906,7 @@ static int move_cost_cart( const item &it, const tripoint_bub_ms &src, const tri
     // typical flat ground move cost
     const int mc_per_tile = 100;
 
-    // only free cart capacity
-    const int cart_capacity = units::to_milliliter( capacity );
-
-    const int item_volume = units::to_milliliter( it.volume() );
-
-    const double fr = get_capacity_fraction( cart_capacity, item_volume );
+    const double fr = get_capacity_fraction( capacity, it.volume() );
 
     // approximation of movement cost between source and destination
     const int move_cost = mc_per_tile * rl_dist( src, dest ) * fr;
@@ -3665,14 +3659,11 @@ bool find_auto_consume( player &p, const consume_type type )
 
     using namespace cata::ranges;
 
-    auto get_spoil = []( const item * a ) { return a->spoilage_sort_order(); };
-
-    std::optional<item *> stalest = mgr.get_near( consume_type_zone, pos,
-                                    ACTIVITY_SEARCH_DISTANCE )
-                                    | views::filter( [&]( const auto & loc ) -> bool { return loc.z() == p.abs_pos().z(); } )
-                                    | flat_map( get_items_at )
-                                    | views::filter( ok_to_consume )
-                                    | min_by( get_spoil );
+    auto stalest = mgr.get_near( consume_type_zone, pos, ACTIVITY_SEARCH_DISTANCE )
+                   | views::filter( [&]( const auto & loc ) -> bool { return loc.z() == p.abs_pos().z(); } )
+                   | flat_map( map_funcs::get_items_at )
+                   | views::filter( ok_to_consume )
+                   | min_by( &item::spoilage_sort_order );
     if( !stalest ) {
         return false;
     }

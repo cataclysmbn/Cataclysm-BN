@@ -390,6 +390,7 @@ std::string enum_to_string<character_movemode>( character_movemode data )
         case character_movemode::CMM_WALK: return "walk";
         case character_movemode::CMM_RUN: return "run";
         case character_movemode::CMM_CROUCH: return "crouch";
+        case character_movemode::CMM_PRONE: return "prone";
             // *INDENT-ON*
         case character_movemode::CMM_COUNT:
             break;
@@ -1201,6 +1202,10 @@ int Character::swim_speed() const
     // Crouching movement mode while swimming means slower swim style, like breaststroke
     if( move_mode == CMM_CROUCH ) {
         ret += 50;
+    }
+    // Prone movement mode while swimming means very slow swimming style, like treading water
+    if( move_mode == CMM_PRONE ) {
+        ret += 150;
     }
 
     if( ret < 30 ) {
@@ -2901,11 +2906,6 @@ const item &Character::inv_find_item( int position ) const
 void Character::inv_set_stack_favorite( int position, bool favorite )
 {
     inv.set_stack_favorite( position, favorite );
-}
-
-units::volume Character::inv_volume() const
-{
-    return inv.volume();
 }
 
 void Character::inv_unsort()
@@ -7285,6 +7285,10 @@ int Character::visibility( bool, int ) const
     if( ( g->u.movement_mode_is( CMM_CROUCH ) ) ) {
         stealth_modifier += crouching_bonus;
     };
+    int const prone_bonus = 50;
+    if( g->u.movement_mode_is( CMM_PRONE ) ) {
+        stealth_modifier += prone_bonus;
+    }
     map &here = get_map();
     int const camo_modifier = 50;
     if( worn_with_flag( flag_NATURE_CAMO ) && ( here.has_flag( "PLOWABLE", bub_pos() ) ||
@@ -8208,6 +8212,9 @@ float Character::running_move_cost_modifier() const
     if( move_mode == CMM_CROUCH ) {
         movement_modifier *= 0.5;
     }
+    if( move_mode == CMM_PRONE ) {
+        movement_modifier *= 0.2;
+    }
     return movement_modifier;
 }
 
@@ -8534,7 +8541,8 @@ int Character::item_handling_cost( const item &it, bool penalties, int base_cost
     int mv = base_cost;
     if( penalties ) {
         // 40 moves per liter, up to 200 at 5 liters
-        mv += std::min( 200, it.volume() / 20_ml );
+        const auto volume_moves = it.volume() / 20_ml;
+        mv += static_cast<int>( std::min( volume_moves, decltype( volume_moves ) { 200 } ) );
     }
 
     if( primary_weapon().typeId() == itype_e_handcuffs ) {
@@ -9250,51 +9258,82 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
     if( du.amount <= 0 ) {
         return false;
     }
-    armor.mitigate_damage( du );
-    // We're indestructible, bail out here.
-    if( armor.has_flag( flag_UNBREAKABLE ) ) {
-        return false;
-    }
+    // This triggers if the "New armor damage calculation" setting is enabled.
+    if( get_option<bool>( "NEW_ARMOR_CALCULATION" ) ) {
+        // Don't damage armor as much when bypassed by armor piercing
+        // Most armor piercing damage comes from bypassing armor, not forcing through
+        const int raw_dmg = du.amount * std::min( 1.0f, du.damage_multiplier );
+        armor.mitigate_damage( du );
+        // We're indestructible, bail out here.
+        if( armor.has_flag( flag_UNBREAKABLE ) ) {
+            return false;
+        }
 
-    // We want armor's own resistance to this type, not the resistance it grants
-    const int armors_own_resist = armor.damage_resist( du.type, true );
-    if( armors_own_resist > 1000 ) {
         // This is some weird type that doesn't damage armors
-        return false;
-    }
-
-    // Scale chance of article taking damage based on the number of parts it covers.
-    // This represents large articles being able to take more punishment
-    // before becoming ineffective or being destroyed.
-    const int num_parts_covered = armor.get_covered_body_parts().count();
-    if( !one_in( num_parts_covered ) ) {
-        return false;
-    }
-
-    // Don't damage armor as much when bypassed by armor piercing
-    // Most armor piercing damage comes from bypassing armor, not forcing through
-    const int raw_dmg = du.amount * std::min( 1.0f, du.damage_multiplier );
-    if( raw_dmg > armors_own_resist ) {
-        // If damage is above armor value, the chance to avoid armor damage is
-        // 50% + 50% * 1/dmg
-        if( one_in( raw_dmg ) || one_in( 2 ) ) {
+        if( armor.damage_resist( du.type, true ) > 1000 ) {
             return false;
         }
-    } else {
-        // Sturdy items and power armors never take chip damage.
-        // Other armors have 0.5% of getting damaged from hits below their armor value.
-        if( armor.has_flag( flag_STURDY ) || !one_in( 200 ) ) {
+
+        // Scale chance of article taking damage based on the number of parts it covers.
+        // This represents large articles being able to take more punishment
+        // before becoming ineffective or being destroyed.
+        const int num_parts_covered = armor.get_covered_body_parts().count();
+        if( !one_in( num_parts_covered ) ) {
+            return false;
+        }
+        const int dmg_percent = std::max( raw_dmg - armor.chip_resistance( !armor.has_flag( flag_STURDY ) ),
+                                          1 );
+        // Chance to avoid armor damage is 50/67% (if sturdy) + 100 - ( raw_dmg - chip_resist )%
+        if( !one_in( armor.has_flag( flag_STURDY ) ? 3 : 2 ) || !x_in_y( dmg_percent, 100 ) ) {
             return false;
         }
     }
+    // This triggers if the "New armor damage calculation" setting is false.
+    else {
+        armor.mitigate_damage( du );
+        // We're indestructible, bail out here.
+        if( armor.has_flag( flag_UNBREAKABLE ) ) {
+            return false;
+        }
 
+        // We want armor's own resistance to this type, not the resistance it grants
+        const int armors_own_resist = armor.damage_resist( du.type, true );
+        if( armors_own_resist > 1000 ) {
+            // This is some weird type that doesn't damage armors
+            return false;
+        }
+
+        // Scale chance of article taking damage based on the number of parts it covers.
+        // This represents large articles being able to take more punishment
+        // before becoming ineffective or being destroyed.
+        const int num_parts_covered = armor.get_covered_body_parts().count();
+        if( !one_in( num_parts_covered ) ) {
+            return false;
+        }
+
+        // Don't damage armor as much when bypassed by armor piercing
+        // Most armor piercing damage comes from bypassing armor, not forcing through
+        const int raw_dmg = du.amount * std::min( 1.0f, du.damage_multiplier );
+        if( raw_dmg > armors_own_resist ) {
+            // If damage is above armor value, the chance to avoid armor damage is
+            // 50% + 50% * 1/dmg
+            if( one_in( raw_dmg ) || one_in( 2 ) ) {
+                return false;
+            }
+        }  else {
+            // Sturdy items and power armors never take chip damage.
+            // Other armors have 0.5% of getting damaged from hits below their armor value.
+            if( armor.has_flag( flag_STURDY ) || !one_in( 200 ) ) {
+                return false;
+            }
+        }
+    }
     const material_type &material = armor.get_random_material();
     std::string damage_verb = ( du.type == DT_BASH ) ? material.bash_dmg_verb() :
                               material.cut_dmg_verb();
 
     const std::string pre_damage_name = armor.tname();
     const std::string pre_damage_adj = armor.get_base_material().dmg_adj( armor.damage_level( 4 ) );
-
     // add "further" if the damage adjective and verb are the same
     std::string format_string = ( pre_damage_adj == damage_verb ) ?
                                 _( "Your %1$s is %2$s further!" ) : _( "Your %1$s is %2$s!" );
@@ -9360,8 +9399,10 @@ void Character::on_dodge( Creature *source, int difficulty )
     // dodging throws of our aim unless we are either skilled at dodging or using a small weapon
     const item &weapon = primary_weapon();
     if( is_armed() && weapon.is_gun() ) {
-        recoil += std::max( weapon.volume() / 250_ml - get_skill_level( skill_dodge ), 0 ) * rng( 0,
-                  100 );
+        const auto dodge_volume_recoil = weapon.volume() / 250_ml - get_skill_level( skill_dodge );
+        const auto volume_recoil = std::max( dodge_volume_recoil, decltype( dodge_volume_recoil ) { 0 } );
+        recoil += static_cast<int>( std::min( volume_recoil,
+                                              static_cast<decltype( volume_recoil )>( MAX_RECOIL ) ) ) * rng( 0, 100 );
         recoil = std::min( MAX_RECOIL, recoil );
     }
 
@@ -10748,12 +10789,12 @@ int Character::temp_corrected_by_climate_control( int temperature )
         temperature -= bonus_from_enchantments( temperature,
                                                 enchantment_value_id( "CLIMATE_CONTROL_COOLING" ) );
         if( in_climate_control() ) {
-            temperature -= 750;
+            temperature -= 1250;
         }
         return std::max( BODYTEMP_NORM, temperature );
     } else {
         if( in_climate_control() ) {
-            temperature += 750;
+            temperature += 1250;
         }
         temperature += bonus_from_enchantments( temperature,
                                                 enchantment_value_id( "CLIMATE_CONTROL_HEATING" ) );
@@ -10937,14 +10978,14 @@ std::vector<detached_ptr<item>> Character::use_charges( const itype_id &what, in
             qty -= std::min( qty, power_drain );
             return res;
         }
-        if( has_power() && has_active_bionic( bio_ups ) ) {
+        if( has_power() && has_active_bionic( bio_ups ) && filter( null_item_reference() ) ) {
             int bio = std::min( units::to_kilojoule( get_power_level() ), qty );
             mod_power_level( units::from_kilojoule( -bio ) );
             qty -= std::min( qty, bio );
         }
 
         remove_items_with( [ & ]( detached_ptr<item> &&e ) {
-            if( e->has_flag( flag_IS_UPS ) && e->ammo_remaining() > 0 ) {
+            if( e->has_flag( flag_IS_UPS ) && e->ammo_remaining() > 0 && filter( *e ) ) {
                 int ups_eff_mult = e->type->tool->ups_eff_mult;
                 detached_ptr<item> split = item::spawn( *e );
                 split->ammo_set( e->ammo_current(), e->ammo_remaining() );
@@ -11128,6 +11169,7 @@ void Character::use_fire( const int quantity )
 
 void Character::on_item_wear( item &it )
 {
+    recalculate_enchantment_cache();
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_effect( mut );
         recalc_sight_limits();
@@ -11146,6 +11188,7 @@ void Character::on_item_wear( item &it )
 
 void Character::on_item_takeoff( item &it )
 {
+    recalculate_enchantment_cache();
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_loss_effect( mut );
         recalc_sight_limits();

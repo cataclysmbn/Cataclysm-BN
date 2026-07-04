@@ -68,7 +68,7 @@
         "targeting_cost": 150,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 20,
+        "targeting_volume": "46 dB",
         "no_ammo_sound": "beep!"
       }
     ],
@@ -133,7 +133,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Universal curfew is in effect.  Please return to your home.  This unit is authorized to open fire.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -197,7 +197,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 20,
+        "targeting_volume": "46 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -270,7 +270,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -335,7 +335,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -400,7 +400,7 @@
         "targeting_cost": 600,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -465,7 +465,7 @@
         "targeting_cost": 800,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
