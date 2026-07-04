@@ -153,7 +153,7 @@
     "repairs_like": "kevlar",
     "type": "ARMOR",
     "name": { "str": "ballistic mask" },
-    "description": "A protective reinforced Kevlar mask that covers the face.  Provides excellent protection from ballistic threats.",
+    "description": "A protective reinforced Kevlar mask that covers the face.  Provides protection from ballistic threats up to 9x19mm.",
     "weight": "512 g",
     "volume": "750 ml",
     "price": "200 USD",
@@ -169,6 +169,7 @@
     "warmth": 10,
     "material_thickness": 4,
     "environmental_protection": 1,
+    "resistance": { "bullet": 36 },
     "flags": [ "WATER_FRIENDLY", "STURDY" ]
   },
   {

@@ -970,7 +970,7 @@
     "book_learn": [ [ "textbook_fireman", 7 ], [ "atomic_survival", 8 ], [ "textbook_gaswarfare", 9 ] ],
     "using": [ [ "adhesive", 2 ], [ "sewing_standard", 20 ] ],
     "tools": [ [ [ "soldering_standard", 80, "LIST" ], [ "surface_heat", 80, "LIST" ] ] ],
-    "components": [ [ [ "mask_bunker", 1 ] ], [ [ "nomex", 4 ] ], [ [ "mask_bal", 1 ], [ "kevlar_plate", 4 ] ] ]
+    "components": [ [ [ "mask_bunker", 1 ] ], [ [ "nomex", 4 ] ], [ [ "kevlar_plate", 4 ] ] ]
   },
   {
     "result": "mask_gas",
@@ -1054,12 +1054,7 @@
     "autolearn": true,
     "using": [ [ "adhesive", 2 ], [ "sewing_standard", 20 ] ],
     "tools": [ [ [ "soldering_standard", 80, "LIST" ], [ "surface_heat", 80, "LIST" ] ] ],
-    "components": [
-      [ [ "rebreather", 1 ] ],
-      [ [ "goggles_swim", 1 ] ],
-      [ [ "plastic_chunk", 4 ] ],
-      [ [ "mask_bal", 1 ], [ "kevlar_plate", 4 ] ]
-    ]
+    "components": [ [ [ "rebreather", 1 ] ], [ [ "goggles_swim", 1 ] ], [ [ "plastic_chunk", 4 ] ], [ [ "kevlar_plate", 4 ] ] ]
   },
   {
     "result": "mask_hsurvivor",
@@ -1078,7 +1073,7 @@
       [ [ "mask_filter", 2 ], [ "mask_gas", 1 ], [ "mask_bunker", 1 ] ],
       [ [ "glasses_safety", 2 ], [ "glasses_bal", 1 ] ],
       [ [ "steel_standard", 2, "LIST" ] ],
-      [ [ "mask_bal", 1 ], [ "kevlar_plate", 4 ] ]
+      [ [ "kevlar_plate", 4 ] ]
     ]
   },
   {
@@ -1098,7 +1093,7 @@
       [ [ "mask_filter", 2 ], [ "mask_gas", 1 ], [ "mask_bunker", 1 ] ],
       [ [ "glasses_safety", 2 ], [ "glasses_bal", 1 ] ],
       [ [ "alloy_sheet", 2 ] ],
-      [ [ "mask_bal", 1 ], [ "kevlar_plate", 4 ] ]
+      [ [ "kevlar_plate", 4 ] ]
     ]
   },
   {
@@ -1117,7 +1112,7 @@
       [ [ "mask_filter", 2 ], [ "mask_gas", 1 ], [ "mask_bunker", 1 ] ],
       [ [ "glasses_safety", 2 ], [ "glasses_bal", 1 ] ],
       [ [ "fabric_standard", 3, "LIST" ] ],
-      [ [ "mask_bal", 1 ], [ "kevlar_plate", 4 ] ]
+      [ [ "kevlar_plate", 4 ] ]
     ]
   },
   {
@@ -1161,7 +1156,7 @@
       [ [ "mask_filter", 2 ], [ "mask_gas", 1 ], [ "mask_bunker", 1 ] ],
       [ [ "glasses_safety", 2 ], [ "glasses_bal", 1 ] ],
       [ [ "fabric_hides_proper", 3, "LIST" ] ],
-      [ [ "mask_bal", 1 ], [ "kevlar_plate", 4 ] ]
+      [ [ "kevlar_plate", 4 ] ]
     ]
   },
   {
@@ -1179,7 +1174,7 @@
     "components": [
       [ [ "mask_filter", 2 ], [ "mask_gas", 1 ], [ "mask_bunker", 1 ] ],
       [ [ "glasses_safety", 2 ], [ "glasses_bal", 1 ] ],
-      [ [ "mask_bal", 1 ], [ "kevlar_plate", 4 ] ],
+      [ [ "kevlar_plate", 4 ] ],
       [ [ "fur", 6 ] ]
     ]
   },

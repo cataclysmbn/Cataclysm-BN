@@ -67,7 +67,7 @@
     "id": "shield_ballistic",
     "type": "ARMOR",
     "name": { "str": "ballistic shield" },
-    "description": "A heavy composite shield used by SWAT teams and other armed forces.  It can handle the occasional pistol bullet, but its heavy-duty nature means it's quite encumbering and doesn't cover the legs very well.",
+    "description": "A heavy composite shield used by SWAT teams and other armed forces.  It can handle pistol bullets up to .40 S&W, but its heavy-duty nature means it's quite encumbering and doesn't cover the legs very well.",
     "weight": "8 kg",
     "volume": "4 L",
     "price": "1000 USD",
@@ -92,7 +92,7 @@
     "looks_like": "shield_riot",
     "type": "ARMOR",
     "name": { "str": "large ballistic shield" },
-    "description": "A tall composite shield used by SWAT teams and other armed forces, rated for pistol bullets.  Covers the body and legs quite well, but is much heavier and more encumbering than lighter models.",
+    "description": "A tall composite shield used by SWAT teams and other armed forces, rated for pistol bullets up to .40 S&W.  Covers the body and legs quite well, but is much heavier and more encumbering than lighter models.",
     "proportional": { "weight": 1.5, "volume": 1.5, "price": 1.5, "price_postapoc": 1.5 },
     "relative": { "to_hit": -1, "encumbrance": 10, "bashing": 4 },
     "techniques": [ "WBLOCK_3" ]
