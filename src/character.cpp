@@ -389,6 +389,7 @@ std::string enum_to_string<character_movemode>( character_movemode data )
         case character_movemode::CMM_WALK: return "walk";
         case character_movemode::CMM_RUN: return "run";
         case character_movemode::CMM_CROUCH: return "crouch";
+        case character_movemode::CMM_PRONE: return "prone";
             // *INDENT-ON*
         case character_movemode::CMM_COUNT:
             break;
@@ -1200,6 +1201,10 @@ int Character::swim_speed() const
     // Crouching movement mode while swimming means slower swim style, like breaststroke
     if( move_mode == CMM_CROUCH ) {
         ret += 50;
+    }
+    // Prone movement mode while swimming means very slow swimming style, like treading water
+    if( move_mode == CMM_PRONE ) {
+        ret += 150;
     }
 
     if( ret < 30 ) {
@@ -7279,6 +7284,10 @@ int Character::visibility( bool, int ) const
     if( ( g->u.movement_mode_is( CMM_CROUCH ) ) ) {
         stealth_modifier += crouching_bonus;
     };
+    int const prone_bonus = 50;
+    if( g->u.movement_mode_is( CMM_PRONE ) ) {
+        stealth_modifier += prone_bonus;
+    }
     map &here = get_map();
     int const camo_modifier = 50;
     if( worn_with_flag( flag_NATURE_CAMO ) && ( here.has_flag( "PLOWABLE", bub_pos() ) ||
@@ -8196,6 +8205,9 @@ float Character::running_move_cost_modifier() const
     }
     if( move_mode == CMM_CROUCH ) {
         movement_modifier *= 0.5;
+    }
+    if( move_mode == CMM_PRONE ) {
+        movement_modifier *= 0.2;
     }
     return movement_modifier;
 }
@@ -10960,14 +10972,14 @@ std::vector<detached_ptr<item>> Character::use_charges( const itype_id &what, in
             qty -= std::min( qty, power_drain );
             return res;
         }
-        if( has_power() && has_active_bionic( bio_ups ) ) {
+        if( has_power() && has_active_bionic( bio_ups ) && filter( null_item_reference() ) ) {
             int bio = std::min( units::to_kilojoule( get_power_level() ), qty );
             mod_power_level( units::from_kilojoule( -bio ) );
             qty -= std::min( qty, bio );
         }
 
         remove_items_with( [ & ]( detached_ptr<item> &&e ) {
-            if( e->has_flag( flag_IS_UPS ) && e->ammo_remaining() > 0 ) {
+            if( e->has_flag( flag_IS_UPS ) && e->ammo_remaining() > 0 && filter( *e ) ) {
                 int ups_eff_mult = e->type->tool->ups_eff_mult;
                 detached_ptr<item> split = item::spawn( *e );
                 split->ammo_set( e->ammo_current(), e->ammo_remaining() );

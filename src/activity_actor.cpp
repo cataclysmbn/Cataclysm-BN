@@ -556,7 +556,7 @@ void dig_activity_actor::finish( player_activity &act, Character &who )
                       item_group::items_from( item_group_id( byproducts_item_group ),
                               calendar::turn ) );
 
-    const int act_exertion = act.moves_total;
+    const int act_exertion = moves_total;
 
     who.mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     who.mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
@@ -642,7 +642,7 @@ void dig_channel_activity_actor::finish( player_activity &act, Character &who )
                       item_group::items_from( item_group_id( byproducts_item_group ),
                               calendar::turn ) );
 
-    const int act_exertion = act.moves_total;
+    const int act_exertion = moves_total;
 
     who.mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     who.mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );

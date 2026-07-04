@@ -3398,6 +3398,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "reset_move" );
     ctxt.register_action( "toggle_run" );
     ctxt.register_action( "toggle_crouch" );
+    ctxt.register_action( "toggle_prone" );
     ctxt.register_action( "open_movement" );
     ctxt.register_action( "open" );
     ctxt.register_action( "close" );
@@ -7854,6 +7855,9 @@ void game::control_vehicle()
                 return;
             }
             u.controlling_vehicle = true;
+            if( u.movement_mode_is( CMM_PRONE ) ) {
+                u.set_movement_mode( CMM_WALK );
+            }
             add_msg( _( "You take control of the %s." ), veh->name );
         } else {
             if( !veh->handle_potential_theft( u ) ) {
@@ -12700,6 +12704,8 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
                 volume += 10;
             } else if( u.movement_mode_is( CMM_CROUCH ) ) {
                 volume -= 10;
+            } else if( u.movement_mode_is( CMM_PRONE ) ) {
+                volume -= 20;
             }
             sound_event se;
             se.origin = dest_loc;
