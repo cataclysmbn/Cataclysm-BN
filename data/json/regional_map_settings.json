@@ -1261,6 +1261,26 @@
         "pawn_pf": 50
       }
     },
+    "isolated_city": {
+      "enabled": true,
+      "city_size": -1,
+      "min_city_size": 6,
+      "max_city_size": 12,
+      "city_spacing": 8,
+      "island_radius": -1,
+      "shore_width": 2,
+      "land_padding": -1,
+      "road_padding": -1,
+      "coastline_variance": -1,
+      "register_city": true,
+      "base_oter": "lake_surface",
+      "land_oter": "field",
+      "shore_oter": "lake_shore",
+      "center_oter": "road_nesw_manhole",
+      "road_connection": "local_road",
+      "required_specials": [ { "special": "marina", "placement": "shore", "min_island_radius": 12 } ],
+      "optional_specials": [ { "special": "o_airport", "placement": "land", "min_city_size": 8, "min_island_radius": 20, "chance": 35 } ]
+    },
     "weather": {
       "spring_temp": 8,
       "summer_temp": 16,

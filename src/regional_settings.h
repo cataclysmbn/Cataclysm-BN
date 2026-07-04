@@ -66,6 +66,62 @@ struct city_settings {
     void finalize();
 };
 
+struct isolated_city_special_settings {
+    /// Overmap special placed as part of an isolated city.
+    overmap_special_id special;
+    /// Candidate origin placement: center, land, or shore.
+    std::string placement = "land";
+    /// This anchor applies only to generated cities at least this large.
+    int min_city_size = 0;
+    /// This anchor applies only to generated cities at most this large. -1 means no maximum.
+    int max_city_size = -1;
+    /// This anchor applies only to islands at least this large.
+    int min_island_radius = 0;
+    /// This anchor applies only to islands at most this large. -1 means no maximum.
+    int max_island_radius = -1;
+    /// Chance in percent; ignored for required anchors.
+    int chance = 100;
+};
+
+struct isolated_city_settings {
+    /// Enables an extra city-placement pass after ordinary roads are built.
+    bool enabled = false;
+    /// -1 means use the CITY_SIZE world option; values <= 0 place no cities.
+    int city_size = -1;
+    /// Generated cities smaller than this are discarded and retried.
+    int min_city_size = 1;
+    /// Generated cities larger than this are clamped down. -1 means no maximum.
+    int max_city_size = -1;
+    /// -1 means use the CITY_SPACING world option.
+    int city_spacing = -1;
+    /// -1 derives the stamped terrain radius from the generated city size.
+    int island_radius = -1;
+    /// Width of the optional outer shore_oter ring.
+    int shore_width = 2;
+    /// -1 derives extra land around structures from the generated city size.
+    int land_padding = -1;
+    /// -1 derives extra land around roads from the generated city size.
+    int road_padding = -1;
+    /// -1 derives coastline irregularity from the island radius; 0 keeps a compact outline.
+    int coastline_variance = -1;
+    /// Adds generated cities to the overmap city list for later distance checks.
+    bool register_city = true;
+    /// Terrain that must fill the whole target patch; empty means default_oter.
+    oter_str_id base_oter;
+    /// Terrain stamped inside the patch before roads and buildings are placed.
+    oter_str_id land_oter = oter_str_id( "field" );
+    /// Optional terrain stamped on the outer ring of the patch.
+    oter_str_id shore_oter;
+    /// Terrain placed at the city center before internal roads are built.
+    oter_str_id center_oter = oter_str_id( "road_nesw_manhole" );
+    /// Connection used for the generated city's internal road network.
+    overmap_connection_id road_connection = overmap_connection_id( "local_road" );
+    /// Required specials; if any applicable one cannot be placed, the city is retried elsewhere.
+    std::vector<isolated_city_special_settings> required_specials;
+    /// Optional specials attempted after required specials.
+    std::vector<isolated_city_special_settings> optional_specials;
+};
+
 struct ter_furn_id {
     ter_id ter;
     furn_id furn;
@@ -196,6 +252,10 @@ struct overmap_lake_settings {
     double noise_threshold_lake = 0.0;
     int lake_size_min = 20;
     int lake_depth = -5;
+    /// Optional underground OMT column stamped below generated lake-surface tiles.
+    std::vector<oter_str_id> lake_surface_column_oters;
+    /// Optional underground OMT column stamped below generated lake-shore tiles.
+    std::vector<oter_str_id> lake_shore_column_oters;
     std::vector<std::string> unfinalized_shore_extendable_overmap_terrain;
     std::vector<oter_id> shore_extendable_overmap_terrain;
     std::vector<shore_extendable_overmap_terrain_alias> shore_extendable_overmap_terrain_aliases;
@@ -259,6 +319,7 @@ struct regional_settings {
     shared_ptr_fast<weighted_int_list<ter_str_id>> default_groundcover_str;
 
     city_settings     city_spec;      // put what where in a city of what kind
+    isolated_city_settings isolated_city;
     groundcover_extra field_coverage;
     forest_mapgen_settings forest_composition;
     forest_trail_settings forest_trail;
@@ -287,5 +348,3 @@ void load_region_settings( const JsonObject &jo );
 void reset_region_settings();
 void load_region_overlay( const JsonObject &jo );
 void apply_region_overlay( const JsonObject &jo, regional_settings &region );
-
-

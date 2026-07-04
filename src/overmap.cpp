@@ -100,6 +100,211 @@ enum {
     BUILDINGCHANCE = 4
 };
 
+namespace
+{
+
+struct city_generation_profile {
+    int size = 1;
+    int finale_distance = 1;
+    bool attempt_finale = false;
+};
+
+struct isolated_city_tile {
+    tripoint_om_omt pos;
+    float distance = 0.0f;
+};
+
+struct isolated_city_special_placement {
+    tripoint_om_omt pos;
+    om_direction::type dir = om_direction::type::invalid;
+};
+
+struct isolated_city_special_placement_options {
+    const overmap_special &special;
+    const std::vector<isolated_city_tile> &island_tiles;
+    tripoint_om_omt center;
+    std::string placement;
+    int land_radius = 0;
+};
+
+struct isolated_city_trim_options {
+    const std::vector<isolated_city_tile> &island_tiles;
+    const std::unordered_set<tripoint_om_omt> &shore_anchor_tiles;
+    tripoint_om_omt center;
+    int island_radius = 0;
+    int shore_width = 0;
+    int land_padding = 0;
+    int road_padding = 0;
+    int coastline_variance = 0;
+};
+
+auto random_city_generation_profile( const int base_city_size, const bool finales_enabled )
+-> city_generation_profile
+{
+    auto size = rng( base_city_size - 1, base_city_size + 1 );
+    auto finale_distance = 1;
+    auto attempt_finale = false;
+
+    if( one_in( 3 ) ) {
+        size = 1;
+    } else if( one_in( 2 ) ) {
+        size = size * 2 / 3;
+    } else if( one_in( 2 ) ) {
+        attempt_finale = true;
+        size = size * 3 / 2;
+        finale_distance = 5;
+    } else {
+        attempt_finale = true;
+        size = size * 2;
+        finale_distance = 15;
+    }
+
+    return {
+        .size = std::max( size, 1 ),
+        .finale_distance = finale_distance,
+        .attempt_finale = attempt_finale && finales_enabled
+    };
+}
+
+auto isolated_city_tiles_in_radius( const tripoint_om_omt &center, const int radius )
+-> std::vector<isolated_city_tile>
+{
+    using namespace std::views;
+
+    auto result = std::vector<isolated_city_tile>();
+    result.reserve( ( radius * 2 + 1 ) * ( radius * 2 + 1 ) );
+
+    for( const auto x : iota( center.x() - radius, center.x() + radius + 1 ) ) {
+        for( const auto y : iota( center.y() - radius, center.y() + radius + 1 ) ) {
+            const auto candidate = tripoint_om_omt( x, y, 0 );
+            const auto distance = trig_dist( candidate.xy(), center.xy() );
+            if( distance <= radius ) {
+                result.push_back( { .pos = candidate, .distance = distance } );
+            }
+        }
+    }
+
+    return result;
+}
+
+auto isolated_city_special_candidate_allowed( const isolated_city_tile &tile,
+        const isolated_city_special_placement_options &opts ) -> bool
+{
+    if( opts.placement == "center" ) {
+        return tile.pos == opts.center;
+    }
+    if( opts.placement == "shore" ) {
+        const auto inner_edge = std::max( 0, opts.land_radius - opts.special.longest_side() );
+        const auto outer_edge = opts.land_radius + opts.special.longest_side();
+        return tile.distance >= inner_edge && tile.distance <= outer_edge;
+    }
+    return tile.distance <= opts.land_radius;
+}
+
+auto isolated_city_temporary_terrain( const oter_id &oter, const oter_id &land_oter,
+                                      const std::optional<oter_id> &shore_oter ) -> bool
+{
+    return oter == land_oter || ( shore_oter.has_value() && oter == *shore_oter );
+}
+
+auto isolated_city_lake_column_terrain( const oter_id &oter ) -> bool
+{
+    static const oter_id lake_underwater_shore( "lake_underwater_shore" );
+    static const oter_id lake_water_cube( "lake_water_cube" );
+    static const oter_id lake_bed( "lake_bed" );
+
+    return oter == lake_underwater_shore || oter == lake_water_cube || oter == lake_bed;
+}
+
+auto isolated_city_lake_column_or_default_terrain( const oter_id &oter,
+        const oter_id &default_oter ) -> bool
+{
+    return isolated_city_lake_column_terrain( oter ) || oter == default_oter;
+}
+
+auto isolated_city_shape_buffer( const int city_size ) -> int
+{
+    return std::clamp( city_size / 4 + 3, 4, 5 );
+}
+
+auto isolated_city_road_buffer( const int city_size ) -> int
+{
+    return std::clamp( city_size / 6 + 1, 1, 2 );
+}
+
+auto isolated_city_default_land_padding( const int city_size ) -> int
+{
+    return std::clamp( isolated_city_shape_buffer( city_size ) + 1, 5, 8 );
+}
+
+auto isolated_city_default_road_padding( const int city_size ) -> int
+{
+    return std::clamp( isolated_city_road_buffer( city_size ) + 1, 2, 4 );
+}
+
+auto isolated_city_default_coastline_variance( const int island_radius ) -> int
+{
+    return std::clamp( island_radius / 5, 2, 6 );
+}
+
+auto isolated_city_coastline_adjustment( const tripoint_om_omt &center,
+        const tripoint_om_omt &pos, const int variance ) -> int
+{
+    if( variance <= 0 ) {
+        return 0;
+    }
+
+    const auto dx = static_cast<double>( pos.x() - center.x() );
+    const auto dy = static_cast<double>( pos.y() - center.y() );
+    const auto angle = std::atan2( static_cast<double>( dy ), static_cast<double>( dx ) );
+    const auto phase_a = center.x() * 0.173 + center.y() * 0.071;
+    const auto phase_b = center.x() * 0.047 - center.y() * 0.139;
+    const auto phase_c = center.x() * 0.031 + center.y() * 0.211;
+    const auto local = pos.x() * 0.37 + pos.y() * 0.23 + phase_c;
+    const auto wobble = std::sin( angle * 2.0 + phase_a ) * 0.55 +
+                        std::sin( angle * 5.0 + phase_b ) * 0.35 +
+                        std::sin( local ) * 0.10;
+    return std::clamp( static_cast<int>( std::lround( wobble * variance ) ),
+                       -variance, variance );
+}
+
+auto isolated_city_near_development( const tripoint_om_omt &pos,
+                                     const std::vector<tripoint_om_omt> &developed,
+                                     const int distance ) -> bool
+{
+    namespace ranges = std::ranges;
+
+    return ranges::any_of( developed, [&pos, distance]( const tripoint_om_omt & dev ) {
+        return trig_dist( pos.xy(), dev.xy() ) <= distance;
+    } );
+}
+
+auto isolated_city_nearest_development_distance( const tripoint_om_omt &pos,
+        const std::vector<tripoint_om_omt> &developed ) -> std::optional<float>
+{
+    auto nearest = std::optional<float>();
+    for( const auto &dev : developed ) {
+        const auto distance = trig_dist( pos.xy(), dev.xy() );
+        if( !nearest.has_value() || distance < *nearest ) {
+            nearest = distance;
+        }
+    }
+    return nearest;
+}
+
+auto isolated_city_direction_toward( const tripoint_om_omt &from, const tripoint_om_omt &to )
+-> om_direction::type
+{
+    const auto dx = to.x() - from.x();
+    const auto dy = to.y() - from.y();
+    if( std::abs( dx ) > std::abs( dy ) ) {
+        return dx > 0 ? om_direction::type::east : om_direction::type::west;
+    }
+    return dy > 0 ? om_direction::type::south : om_direction::type::north;
+}
+
+} // namespace
+
 ////////////////
 oter_id  ot_null,
          ot_crater,
@@ -3333,7 +3538,11 @@ void overmap::generate( const overmap *north, const overmap *east,
         place_forest_trails();
     }
     place_roads( north, east, south, west );
+    // Isolated cities reuse normal city generation but stay disconnected from external roads.
+    place_isolated_cities();
     place_specials( enabled_specials );
+    // Optional regional lake columns fill untouched underground default terrain below lakes.
+    place_lake_columns();
     if( settings->forest_trail.chance > 0 ) {
         place_forest_trailheads();
     }
@@ -4458,6 +4667,46 @@ void overmap::place_rivers( const overmap *north, const overmap *east, const ove
     }
 }
 
+auto overmap::place_lake_columns() -> void
+{
+    const auto &surface_column = settings->overmap_lake.lake_surface_column_oters;
+    const auto &shore_column = settings->overmap_lake.lake_shore_column_oters;
+    if( surface_column.empty() && shore_column.empty() ) {
+        return;
+    }
+
+    const auto place_column = [this]( const tripoint_om_omt & surface,
+    const std::vector < oter_str_id > &column ) {
+        using namespace std::views;
+
+        for( const auto offset : iota( 0, static_cast < int >( column.size() ) ) ) {
+            const auto z = -offset - 1;
+            if( z < -OVERMAP_DEPTH ) {
+                break;
+            }
+
+            const auto column_pos = tripoint_om_omt( surface.xy(), z );
+            const auto target = oter_id( column[offset] );
+            if( target.is_valid() && ter( column_pos ) == get_default_terrain( z ) ) {
+                ter_set( column_pos, target );
+            }
+        }
+    };
+
+    using namespace std::views;
+    for( const auto x : iota( 0, OMAPX ) ) {
+        for( const auto y : iota( 0, OMAPY ) ) {
+            const auto surface = tripoint_om_omt( x, y, 0 );
+            const auto &surface_oter = ter( surface );
+            if( surface_oter->is_lake() ) {
+                place_column( surface, surface_column );
+            } else if( surface_oter->is_lake_shore() ) {
+                place_column( surface, shore_column );
+            }
+        }
+    }
+}
+
 void overmap::place_swamps()
 {
     // Buffer our river terrains by a variable radius and increment a counter for the location each
@@ -4791,6 +5040,611 @@ void overmap::place_cities()
             finale_attempts++;
         } while( ( tmp.attempt_finale && !tmp.finale_placed &&
                    finale_attempts < finale_max_tries ) );
+    }
+}
+
+auto overmap::place_isolated_cities() -> void
+{
+    namespace ranges = std::ranges;
+
+    const auto &config = settings->isolated_city;
+    if( !config.enabled ) {
+        return;
+    }
+
+    const auto configured_city_size = config.city_size >= 0 ? config.city_size :
+                                      get_option < int > ( "CITY_SIZE" );
+    const auto maximum_city_size = config.max_city_size >= 0 ? config.max_city_size :
+                                   std::numeric_limits < int >::max();
+    const auto city_size = std::min( configured_city_size, maximum_city_size );
+    if( city_size <= 0 || maximum_city_size < config.min_city_size ) {
+        return;
+    }
+
+    const auto city_spacing = std::max( config.city_spacing >= 0 ? config.city_spacing :
+                                        get_option < int > ( "CITY_SPACING" ), 0 );
+
+    const auto base_oter_str = config.base_oter.str().empty() ? settings->default_oter :
+                               config.base_oter;
+    const auto has_shore_oter = !config.shore_oter.str().empty();
+    if( !base_oter_str.is_valid() || !config.land_oter.is_valid() ||
+        ( has_shore_oter && !config.shore_oter.is_valid() ) ||
+        !config.center_oter.is_valid() || !config.road_connection.is_valid() ||
+    !ranges::all_of( config.required_specials, []( const auto & anchor ) {
+    return anchor.special.is_valid();
+    } ) ||
+    !ranges::all_of( config.optional_specials, []( const auto & anchor ) {
+        return anchor.special.is_valid();
+    } ) ) {
+        debugmsg( "Invalid isolated_city settings for region %s: base_oter=%s land_oter=%s "
+                  "shore_oter=%s center_oter=%s road_connection=%s",
+                  settings->id.c_str(), base_oter_str.c_str(), config.land_oter.c_str(),
+                  config.shore_oter.c_str(), config.center_oter.c_str(),
+                  config.road_connection.c_str() );
+        return;
+    }
+
+    const auto base_oter = oter_id( base_oter_str );
+    const auto land_oter = oter_id( config.land_oter );
+    const auto center_oter = oter_id( config.center_oter );
+    const auto shore_oter = has_shore_oter ?
+                            std::optional < oter_id > ( oter_id( config.shore_oter ) ) : std::nullopt;
+    const auto &road_connection = *config.road_connection;
+    const auto sewer_tunnel_id = overmap_connection_id( "sewer_tunnel" );
+    const auto &sewer_tunnel = *sewer_tunnel_id;
+    const auto road_manhole = oter_id( "road_nesw_manhole" );
+    const auto sewer_isolated = oter_id( "sewer_isolated" );
+
+    const auto omts_per_overmap = static_cast < double >( OMAPX * OMAPY );
+    const auto city_map_coverage_ratio = 1.0 / std::pow( 2.0, city_spacing );
+    const auto omts_per_city = ( city_size * 2 + 1 ) * ( city_size * 2 + 1 ) * 3 / 4.0;
+    const auto num_cities = roll_remainder( omts_per_overmap * city_map_coverage_ratio /
+                                            omts_per_city );
+
+    const auto max_radius = std::min( OMAPX, OMAPY ) / 2 - 2;
+    if( max_radius <= 0 ) {
+        return;
+    }
+
+    const auto find_special_placement =
+        [this]( const isolated_city_special_placement_options & opts )
+    -> std::optional < isolated_city_special_placement > {
+        auto candidates = std::vector < tripoint_om_omt > ();
+        const auto special_radius = opts.special.longest_side();
+
+        if( opts.placement == "shore" )
+        {
+            const auto outer_edge = opts.land_radius + special_radius;
+            candidates.reserve( ( outer_edge * 2 + 1 ) * ( outer_edge * 2 + 1 ) );
+            using namespace std::views;
+            for( const auto x : iota( opts.center.x() - outer_edge,
+                                      opts.center.x() + outer_edge + 1 ) ) {
+                for( const auto y : iota( opts.center.y() - outer_edge,
+                                          opts.center.y() + outer_edge + 1 ) ) {
+                    const auto candidate = tripoint_om_omt( x, y, 0 );
+                    const auto distance = trig_dist( candidate.xy(), opts.center.xy() );
+                    if( distance <= outer_edge ) {
+                        candidates.push_back( candidate );
+                    }
+                }
+            }
+        } else
+        {
+            candidates.reserve( opts.island_tiles.size() );
+            for( const auto &tile : opts.island_tiles ) {
+                if( isolated_city_special_candidate_allowed( tile, opts ) ) {
+                    candidates.push_back( tile.pos );
+                }
+            }
+        }
+
+        std::shuffle( candidates.begin(), candidates.end(), rng_get_engine() );
+        for( const auto &candidate : candidates )
+        {
+            if( opts.placement == "shore" ) {
+                const auto inward = isolated_city_direction_toward( candidate, opts.center );
+                const auto dir = om_direction::opposite( inward );
+                if( can_place_special( opts.special, candidate, dir, false ) ) {
+                    return isolated_city_special_placement{ .pos = candidate, .dir = dir };
+                }
+                const auto fallback_dir = random_special_rotation( opts.special, candidate, false );
+                if( fallback_dir != om_direction::type::invalid ) {
+                    return isolated_city_special_placement{ .pos = candidate, .dir = fallback_dir };
+                }
+                continue;
+            }
+            const auto dir = random_special_rotation( opts.special, candidate, false );
+            if( dir != om_direction::type::invalid ) {
+                return isolated_city_special_placement{ .pos = candidate, .dir = dir };
+            }
+        }
+        return std::nullopt;
+    };
+
+    const auto anchor_applies = []( const isolated_city_special_settings & anchor,
+    const int size, const int island_radius ) {
+        return size >= anchor.min_city_size && island_radius >= anchor.min_island_radius &&
+               ( anchor.max_city_size < 0 || size <= anchor.max_city_size ) &&
+               ( anchor.max_island_radius < 0 || island_radius <= anchor.max_island_radius );
+    };
+
+    const auto trim_island_to_city_shape =
+        [this, &base_oter, &land_oter, &shore_oter, &road_connection](
+    const isolated_city_trim_options & opts ) {
+        auto structure_tiles = std::vector < tripoint_om_omt > ();
+        auto road_tiles = std::vector < tripoint_om_omt > ();
+        structure_tiles.reserve( opts.island_tiles.size() );
+        road_tiles.reserve( opts.island_tiles.size() );
+        for( const auto &tile : opts.island_tiles ) {
+            if( opts.shore_anchor_tiles.contains( tile.pos ) ) {
+                continue;
+            }
+            const auto &current_oter = ter( tile.pos );
+            if( current_oter != base_oter &&
+                !isolated_city_temporary_terrain( current_oter, land_oter, shore_oter ) ) {
+                if( road_connection.can_start_at( current_oter ) ) {
+                    road_tiles.push_back( tile.pos );
+                } else {
+                    structure_tiles.push_back( tile.pos );
+                }
+            }
+        }
+
+        if( structure_tiles.empty() && road_tiles.empty() ) {
+            return;
+        }
+
+        if( structure_tiles.empty() ) {
+            structure_tiles = road_tiles;
+        }
+
+        const auto land_buffer = opts.land_padding;
+        const auto road_buffer = opts.road_padding;
+        const auto protected_structure_distance = land_buffer > 0 ? std::max( 1,
+                land_buffer - std::max( 2, opts.coastline_variance / 3 ) ) : 0;
+        const auto protected_road_distance = road_buffer > 0 ? std::max( 1,
+                                             road_buffer - 1 ) : 0;
+        auto retained_land_tiles = std::unordered_set < tripoint_om_omt > ();
+        for( const auto &tile : opts.island_tiles ) {
+            const auto &current_oter = ter( tile.pos );
+            if( !isolated_city_temporary_terrain( current_oter, land_oter, shore_oter ) ) {
+                continue;
+            }
+            const auto structure_distance = isolated_city_nearest_development_distance(
+                                                tile.pos, structure_tiles );
+            const auto road_distance = isolated_city_nearest_development_distance( tile.pos,
+                                       road_tiles );
+            const auto coastline_adjustment = isolated_city_coastline_adjustment( opts.center,
+                                              tile.pos, opts.coastline_variance );
+            const auto near_structure = structure_distance.has_value() &&
+                                        *structure_distance <= std::max(
+                                            protected_structure_distance,
+                                            land_buffer + coastline_adjustment );
+            const auto protected_structure = structure_distance.has_value() &&
+                                             *structure_distance <= protected_structure_distance;
+            const auto protected_road = road_distance.has_value() &&
+                                        *road_distance <= protected_road_distance;
+            const auto road_adjustment = coastline_adjustment / 2;
+            const auto near_adjusted_road = road_distance.has_value() &&
+                                            *road_distance <= std::max(
+                                                protected_road_distance, road_buffer + road_adjustment );
+            if( protected_structure || protected_road || near_structure || near_adjusted_road ) {
+                ter_set( tile.pos, land_oter );
+                retained_land_tiles.insert( tile.pos );
+            } else {
+                ter_set( tile.pos, base_oter );
+            }
+        }
+
+        const auto retained_land_neighbor_count =
+        [&retained_land_tiles]( const tripoint_om_omt & pos ) {
+            using namespace std::views;
+
+            auto result = 0;
+            for( const auto dx : iota( -1, 2 ) ) {
+                for( const auto dy : iota( -1, 2 ) ) {
+                    if( dx == 0 && dy == 0 ) {
+                        continue;
+                    }
+                    if( retained_land_tiles.contains( pos + point_rel_omt( dx, dy ) ) ) {
+                        result += 1;
+                    }
+                }
+            }
+            return result;
+        };
+
+        const auto protected_retained_land =
+            [&structure_tiles, &road_tiles, protected_structure_distance,
+                          protected_road_distance]( const tripoint_om_omt & pos ) {
+            const auto structure_distance = isolated_city_nearest_development_distance( pos,
+                                            structure_tiles );
+            const auto road_distance = isolated_city_nearest_development_distance( pos,
+                                       road_tiles );
+            return ( structure_distance.has_value() &&
+                     *structure_distance <= protected_structure_distance ) ||
+                   ( road_distance.has_value() && *road_distance <= protected_road_distance );
+        };
+
+        using namespace std::views;
+        for( const auto pass : iota( 0, 2 ) ) {
+            auto carved_tiles = std::vector < tripoint_om_omt > ();
+            for( const auto &tile : opts.island_tiles ) {
+                if( ter( tile.pos ) != land_oter || !retained_land_tiles.contains( tile.pos ) ) {
+                    continue;
+                }
+                const auto neighbor_count = retained_land_neighbor_count( tile.pos );
+                if( neighbor_count >= 8 || protected_retained_land( tile.pos ) ) {
+                    continue;
+                }
+
+                auto carve_chance = 0;
+                if( neighbor_count <= 2 ) {
+                    carve_chance = 1;
+                } else if( neighbor_count <= 3 ) {
+                    carve_chance = 3;
+                } else if( pass > 0 && neighbor_count <= 4 ) {
+                    carve_chance = 5;
+                }
+                if( carve_chance > 0 && one_in( carve_chance ) ) {
+                    carved_tiles.push_back( tile.pos );
+                }
+            }
+            for( const auto &tile : carved_tiles ) {
+                ter_set( tile, base_oter );
+                retained_land_tiles.erase( tile );
+            }
+        }
+
+        auto solid_tiles = std::vector < tripoint_om_omt > ();
+        solid_tiles.reserve( opts.island_tiles.size() );
+        const auto is_shore_oter = [&shore_oter]( const oter_id & oter ) {
+            return shore_oter.has_value() && oter == *shore_oter;
+        };
+        for( const auto &tile : opts.island_tiles ) {
+            if( opts.shore_anchor_tiles.contains( tile.pos ) ) {
+                continue;
+            }
+            const auto &current_oter = ter( tile.pos );
+            if( current_oter != base_oter && !is_shore_oter( current_oter ) ) {
+                solid_tiles.push_back( tile.pos );
+            }
+        }
+
+        const auto clear_submerged_lake_column = [this]( const tripoint_om_omt & surface ) {
+            using namespace std::views;
+
+            for( const auto z : iota( -OVERMAP_DEPTH, 0 ) ) {
+                const auto column_pos = tripoint_om_omt( surface.xy(), z );
+                if( isolated_city_lake_column_terrain( ter( column_pos ) ) ) {
+                    ter_set( column_pos, get_default_terrain( z ) );
+                }
+            }
+        };
+        for( const auto &tile : solid_tiles ) {
+            clear_submerged_lake_column( tile );
+        }
+
+        if( !shore_oter.has_value() || opts.shore_width <= 0 ) {
+            return;
+        }
+
+        const auto set_submerged_lake_shore_column =
+        [this]( const tripoint_om_omt & surface ) {
+            using namespace std::views;
+
+            static const oter_id lake_underwater_shore( "lake_underwater_shore" );
+            const auto shore_depth = std::max( -OVERMAP_DEPTH,
+                                               settings->overmap_lake.lake_depth );
+            for( const auto z : iota( shore_depth, 0 ) ) {
+                const auto column_pos = tripoint_om_omt( surface.xy(), z );
+                const auto &current_oter = ter( column_pos );
+                if( isolated_city_lake_column_or_default_terrain( current_oter,
+                        get_default_terrain( z ) ) ) {
+                    ter_set( column_pos, lake_underwater_shore );
+                }
+            }
+        };
+
+        auto shore_scan_radius = opts.island_radius + opts.shore_width;
+        for( const auto &tile : solid_tiles ) {
+            shore_scan_radius = std::max( shore_scan_radius,
+                                          static_cast < int >( std::ceil( trig_dist( tile.xy(), opts.center.xy() ) ) ) +
+                                          opts.shore_width );
+        }
+        const auto shore_scan_tiles = isolated_city_tiles_in_radius( opts.center,
+                                      shore_scan_radius );
+
+        for( const auto &tile : shore_scan_tiles ) {
+            if( !inbounds( tile.pos ) ) {
+                continue;
+            }
+            const auto is_shore_anchor_tile = opts.shore_anchor_tiles.contains( tile.pos );
+            if( ter( tile.pos ) != base_oter ||
+                ( overmap_special_placements.contains( tile.pos ) && !is_shore_anchor_tile ) ) {
+                continue;
+            }
+            if( isolated_city_near_development( tile.pos, solid_tiles, opts.shore_width ) ) {
+                ter_set( tile.pos, *shore_oter );
+                set_submerged_lake_shore_column( tile.pos );
+            }
+        }
+    };
+
+    const auto connect_anchor_to_city_roads =
+        [this, &road_connection]( const city & town,
+    const std::vector < tripoint_om_omt > &anchor_tiles ) {
+        auto anchor_footprint = std::unordered_set < tripoint_om_omt > ();
+        auto candidates = std::vector < tripoint_om_omt > ();
+        auto candidate_set = std::unordered_set < tripoint_om_omt > ();
+        for( const auto &tile : anchor_tiles ) {
+            if( tile.z() == 0 ) {
+                anchor_footprint.insert( tile );
+            }
+        }
+        for( const auto &tile : anchor_footprint ) {
+            for( const auto dir : om_direction::all ) {
+                const auto candidate = tile + om_direction::displace( dir );
+                if( !inbounds( candidate ) || candidate.z() != 0 ||
+                    anchor_footprint.contains( candidate ) ||
+                    overmap_special_placements.contains( candidate ) ||
+                    !road_connection.can_start_at( ter( candidate ) ) ) {
+                    continue;
+                }
+                if( candidate_set.insert( candidate ).second ) {
+                    candidates.push_back( candidate );
+                }
+            }
+        }
+
+        namespace ranges = std::ranges;
+        ranges::sort( candidates, [&town]( const auto & lhs, const auto & rhs ) {
+            return trig_dist( lhs.xy(), town.pos ) < trig_dist( rhs.xy(), town.pos );
+        } );
+        return ranges::any_of( candidates, [this, &town, &road_connection]( const auto & candidate ) {
+            return build_connection( town.pos, candidate.xy(), candidate.z(), road_connection, false );
+        } );
+    };
+
+    auto layer_backup_p = std::make_unique < std::array < map_layer, OVERMAP_LAYERS>>();
+    auto &layer_backup = *layer_backup_p;
+
+    const auto max_placement_attempts = std::max( OMAPX + OMAPY, num_cities * 200 );
+    auto placed = 0;
+    auto placement_attempts = 0;
+    auto skipped_small = 0;
+    auto skipped_center = 0;
+    auto skipped_occupied = 0;
+    auto failed_required_anchor = 0;
+    auto failed_anchor_connection = 0;
+
+    while( placed < num_cities && placement_attempts < max_placement_attempts ) {
+        placement_attempts += 1;
+
+        auto town = city();
+        const auto profile = random_city_generation_profile( city_size,
+                             settings->city_spec.finales.finalized );
+        const auto size = std::min( profile.size, maximum_city_size );
+        if( size < config.min_city_size ) {
+            skipped_small += 1;
+            continue;
+        }
+        town.attempt_finale = profile.attempt_finale;
+
+        const auto land_padding = config.land_padding >= 0 ? config.land_padding :
+                                  isolated_city_default_land_padding( size );
+        const auto road_padding = config.road_padding >= 0 ? config.road_padding :
+                                  isolated_city_default_road_padding( size );
+        const auto wanted_radius = config.island_radius >= 0 ? config.island_radius : size * 2 + 5;
+        const auto min_radius = std::min( size + 3, max_radius );
+        const auto island_radius = std::clamp( wanted_radius, min_radius, max_radius );
+        const auto shore_width = shore_oter.has_value() ? std::clamp( config.shore_width, 0,
+                                 island_radius ) : 0;
+        const auto land_radius = island_radius - shore_width;
+        const auto coastline_variance = config.coastline_variance >= 0 ?
+                                        config.coastline_variance :
+                                        isolated_city_default_coastline_variance( island_radius );
+        const auto city_generation_radius = std::clamp(
+                                                std::max( island_radius,
+                                                        size * 2 + land_padding + shore_width +
+                                                        std::max( 2, coastline_variance / 2 ) ),
+                                                min_radius, max_radius );
+        const auto city_shape_outer_radius = size + land_padding;
+        const auto city_shape_radius = std::min( land_radius, city_shape_outer_radius );
+        const auto center = tripoint_om_omt( rng( city_generation_radius + 1,
+                                             OMAPX - city_generation_radius - 2 ),
+                                             rng( city_generation_radius + 1,
+                                                     OMAPY - city_generation_radius - 2 ), 0 );
+
+        if( ter( center ) != base_oter ) {
+            skipped_center += 1;
+            continue;
+        }
+
+        const auto island_tiles = isolated_city_tiles_in_radius( center, city_generation_radius );
+        if( !ranges::all_of( island_tiles, [this, &base_oter]( const isolated_city_tile & tile ) {
+        return ter( tile.pos ) == base_oter;
+        } ) ) {
+            skipped_occupied += 1;
+            continue;
+        }
+
+        layer_backup = layer;
+        const auto overmap_special_placements_backup = overmap_special_placements;
+        const auto joins_used_backup = joins_used;
+        const auto mapgen_arg_storage_backup = mapgen_arg_storage;
+        const auto mapgen_args_index_backup = mapgen_args_index;
+        const auto mapgen_args_init_flags_backup = mapgen_args_init_flags_;
+        const auto connections_out_backup = connections_out;
+        const auto connection_cache_backup = connection_cache;
+        const auto restore_placement_state = [&]() {
+            layer = layer_backup;
+            overmap_special_placements = overmap_special_placements_backup;
+            joins_used = joins_used_backup;
+            mapgen_arg_storage = mapgen_arg_storage_backup;
+            mapgen_args_index = mapgen_args_index_backup;
+            mapgen_args_init_flags_ = mapgen_args_init_flags_backup;
+            connections_out = connections_out_backup;
+            connection_cache = connection_cache_backup;
+        };
+
+        const auto placement_land_radius = shore_oter.has_value() ? city_generation_radius - 1 :
+                                           city_generation_radius;
+        for( const auto &tile : island_tiles ) {
+            const auto tile_oter = shore_oter.has_value() && tile.distance > placement_land_radius ?
+                                   *shore_oter : land_oter;
+            ter_set( tile.pos, tile_oter );
+        }
+
+        town.pos = center.xy();
+        town.size = size;
+        town.finale_placed = false;
+        town.finale_counter = rng( 0, profile.finale_distance );
+
+        ter_set( center, center_oter );
+        if( center_oter == road_manhole ) {
+            ter_set( center + tripoint_below, sewer_isolated );
+        }
+
+        auto shore_anchor_tiles = std::unordered_set < tripoint_om_omt > ();
+        auto anchor_placements = std::vector < std::vector < tripoint_om_omt>>();
+        auto delayed_required_anchors = std::vector < isolated_city_special_settings > ();
+        auto delayed_optional_anchors = std::vector < isolated_city_special_settings > ();
+
+        const auto place_anchor = [&]( const isolated_city_special_settings & anchor ) {
+            if( !anchor_applies( anchor, size, island_radius ) ) {
+                return true;
+            }
+            const auto &special = *anchor.special;
+            const auto placement_radius = anchor.placement == "shore" ? island_radius :
+                                          city_shape_radius;
+            const auto placement = find_special_placement( {
+                .special = special,
+                .island_tiles = island_tiles,
+                .center = center,
+                .placement = anchor.placement,
+                .land_radius = placement_radius
+            } );
+            if( !placement.has_value() ) {
+                return false;
+            }
+            const auto placed_tiles = place_special( special, placement->pos, placement->dir, town,
+                                      false, false );
+            anchor_placements.push_back( placed_tiles );
+            if( anchor.placement == "shore" ) {
+                for( const auto &placed_tile : placed_tiles ) {
+                    if( placed_tile.z() == 0 ) {
+                        shore_anchor_tiles.insert( placed_tile );
+                    }
+                }
+            }
+            return true;
+        };
+
+        auto required_specials_placed = true;
+        for( const auto &anchor : config.required_specials ) {
+            if( anchor.placement == "shore" ) {
+                delayed_required_anchors.push_back( anchor );
+                continue;
+            }
+            if( !place_anchor( anchor ) ) {
+                required_specials_placed = false;
+                failed_required_anchor += 1;
+                break;
+            }
+        }
+        if( !required_specials_placed ) {
+            restore_placement_state();
+            continue;
+        }
+
+        for( const auto &anchor : config.optional_specials ) {
+            if( !anchor_applies( anchor, size, island_radius ) || anchor.chance <= 0 ) {
+                continue;
+            }
+            if( anchor.placement == "shore" ) {
+                delayed_optional_anchors.push_back( anchor );
+                continue;
+            }
+            if( anchor.chance >= 100 || x_in_y( anchor.chance, 100 ) ) {
+                place_anchor( anchor );
+            }
+        }
+
+        auto sewers = std::vector < tripoint_om_omt > ();
+        const auto start_dir = om_direction::random();
+        auto cur_dir = start_dir;
+        do {
+            build_city_street( road_connection, town.pos, size, cur_dir, town, sewers );
+        } while( ( cur_dir = om_direction::turn_right( cur_dir ) ) != start_dir );
+
+        for( const auto &sewer : sewers ) {
+            build_connection( town.pos, sewer.xy(), sewer.z(), sewer_tunnel, false );
+        }
+
+        const auto anchor_shore_width = std::min( shore_width, 1 );
+        trim_island_to_city_shape( {
+            .island_tiles = island_tiles,
+            .shore_anchor_tiles = shore_anchor_tiles,
+            .center = center,
+            .island_radius = city_generation_radius,
+            .shore_width = anchor_shore_width,
+            .land_padding = land_padding,
+            .road_padding = road_padding,
+            .coastline_variance = coastline_variance
+        } );
+
+        for( const auto &anchor : delayed_required_anchors ) {
+            if( !place_anchor( anchor ) ) {
+                required_specials_placed = false;
+                failed_required_anchor += 1;
+                break;
+            }
+        }
+        if( !required_specials_placed ) {
+            restore_placement_state();
+            continue;
+        }
+
+        for( const auto &anchor : delayed_optional_anchors ) {
+            if( anchor.chance >= 100 || x_in_y( anchor.chance, 100 ) ) {
+                place_anchor( anchor );
+            }
+        }
+
+        for( const auto &anchor_tiles : anchor_placements ) {
+            if( !connect_anchor_to_city_roads( town, anchor_tiles ) ) {
+                failed_anchor_connection += 1;
+            }
+        }
+
+        trim_island_to_city_shape( {
+            .island_tiles = island_tiles,
+            .shore_anchor_tiles = shore_anchor_tiles,
+            .center = center,
+            .island_radius = city_generation_radius,
+            .shore_width = shore_width,
+            .land_padding = land_padding,
+            .road_padding = road_padding,
+            .coastline_variance = coastline_variance
+        } );
+
+        if( config.register_city ) {
+            cities.push_back( town );
+        }
+        placed += 1;
+        placement_attempts = 0;
+    }
+
+    if( num_cities > 0 && placed == 0 ) {
+        dbg( DL::Info ) << "isolated city placement failed for region " << settings->id
+                        << ": wanted=" << num_cities
+                        << " attempts=" << placement_attempts
+                        << " skipped_small=" << skipped_small
+                        << " skipped_center=" << skipped_center
+                        << " skipped_occupied=" << skipped_occupied
+                        << " failed_required_anchor=" << failed_required_anchor
+                        << " failed_anchor_connection=" << failed_anchor_connection;
     }
 }
 
@@ -6234,9 +7088,15 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
 
         const bool unique = iter.special_details->has_flag( "UNIQUE" );
         const bool globally_unique = iter.special_details->has_flag( "GLOBALLY_UNIQUE" );
+        const auto already_placed = [&special]( const auto & placement ) {
+            return placement.second == special.id;
+        };
 
         int amount_to_place;
-        if( unique || globally_unique ) {
+        if( ( unique || globally_unique ) &&
+            std::ranges::any_of( overmap_special_placements, already_placed ) ) {
+            amount_to_place = 0;
+        } else if( unique || globally_unique ) {
             const overmap_special_id &id = iter.special_details->id;
             if( special.has_flag( "ENDGAME" ) && globally_unique ) {
                 amount_to_place = is_true_center ? 1 : 0;
