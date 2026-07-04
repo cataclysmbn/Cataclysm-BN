@@ -436,7 +436,7 @@ void activity_handlers::burrow_finish( player_activity *act, player *p )
         p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 45_seconds ) ) );
         p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
         p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 3_minutes ) ) );
-        p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 1_seconds ) ) );
+        p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
     }
     act->set_to_null();
     p->add_msg_if_player( m_good, _( "You finish burrowing." ) );
@@ -1916,7 +1916,7 @@ void activity_handlers::pickaxe_finish( player_activity *act, player *p )
         p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 45_seconds ) ) );
         p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
         p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 3_minutes ) ) );
-        p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 1_seconds ) ) );
+        p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
     }
     act->set_to_null();
     p->add_msg_player_or_npc( m_good,
@@ -4183,7 +4183,7 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
     p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
-    p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 1_seconds ) ) );
+    p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
 
     resume_for_multi_activities( *p );
 }
@@ -4244,7 +4244,7 @@ void activity_handlers::chop_logs_finish( player_activity *act, player *p )
     p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
-    p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 1_seconds ) ) );
+    p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
 
     resume_for_multi_activities( *p );
 }
@@ -4318,7 +4318,7 @@ void activity_handlers::jackhammer_finish( player_activity *act, player *p )
         p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 45_seconds ) ) );
         p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
         p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 3_minutes ) ) );
-        p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 1_seconds ) ) );
+        p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
     }
     p->add_msg_player_or_npc( m_good,
                               _( "You finish drilling." ),
@@ -4372,7 +4372,7 @@ void activity_handlers::fill_pit_finish( player_activity *act, player *p )
     p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 20_seconds ) ) );
     p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 3_minutes ) ) );
     p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 90_seconds ) ) );
-    p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 1_seconds ) ) );
+    p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
     p->add_msg_if_player( m_good, _( "You finish filling up %s." ), old_ter->name() );
     act->set_to_null();
 }
