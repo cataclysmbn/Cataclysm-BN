@@ -1,6 +1,8 @@
 [
   {
-    "type": "mapgen", "method": "json",    "om_terrain": [
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [
       [
         "nuclear_plant_0_0_-1",
         "nuclear_plant_1_0_-1",
