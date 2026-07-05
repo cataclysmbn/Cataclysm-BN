@@ -285,7 +285,6 @@ static const bionic_id bio_ods( "bio_ods" );
 static const bionic_id bio_railgun( "bio_railgun" );
 static const bionic_id bio_recycler( "bio_recycler" );
 static const bionic_id bio_shock_absorber( "bio_shock_absorber" );
-static const bionic_id bio_storage( "bio_storage" );
 static const bionic_id bio_synaptic_regen( "bio_synaptic_regen" );
 static const bionic_id bio_tattoo_led( "bio_tattoo_led" );
 static const bionic_id bio_tools( "bio_tools" );

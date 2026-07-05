@@ -1134,6 +1134,16 @@
     "installation_data": "AID_bio_weight"
   },
   {
+    "id": "bio_storage",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Internal Storage CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "Space inside your chest cavity has been converted into a storage area.  You may carry an extra 2 liters of volume.",
+    "price": "4 kUSD",
+    "difficulty": 7
+  },
+  {
     "id": "bio_shock_absorber",
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
