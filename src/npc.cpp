@@ -581,7 +581,7 @@ static detached_ptr<item> get_clothing_item( const npc_class_id &type, const std
 void starting_clothes( npc &who, const npc_class_id &type, bool male )
 {
     std::vector<detached_ptr<item>> ret;
-    if( type->worn_override.is_valid() ) {
+    if( item_group::group_is_defined( type->worn_override ) ) {
         ret = item_group::items_from( type->worn_override );
     } else {
         ret.push_back( get_clothing_item( type, "pants", male ) );
@@ -628,7 +628,7 @@ void starting_inv( npc &who, const npc_class_id &type )
 {
     std::vector<detached_ptr<item>> res;
     who.inv_clear();
-    if( type->carry_override.is_valid() ) {
+    if( item_group::group_is_defined( type->carry_override ) ) {
         for( detached_ptr<item> &it : item_group::items_from( type->carry_override ) ) {
             who.i_add( std::move( it ) );
         }
@@ -940,7 +940,7 @@ auto best_weapon_category( const skill_id &best_skill ) -> std::string
 
 void npc::starting_weapon( const npc_class_id &type )
 {
-    if( type->weapon_override.is_valid() ) {
+    if( item_group::group_is_defined( type->weapon_override ) ) {
         set_primary_weapon( item_group::item_from( type->weapon_override, calendar::turn ) );
         return;
     }

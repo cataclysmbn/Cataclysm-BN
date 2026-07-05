@@ -127,19 +127,19 @@ void npc_class::check_consistency()
     }
 
     for( auto &cl : npc_class_factory.get_all() ) {
-        if( !cl.shopkeeper_item_group.is_valid() ) {
+        if( !item_group::group_is_defined( cl.shopkeeper_item_group ) ) {
             debugmsg( "Missing shopkeeper item group %s", cl.shopkeeper_item_group.c_str() );
         }
 
-        if( cl.worn_override && !cl.worn_override.is_valid() ) {
+        if( cl.worn_override && !item_group::group_is_defined( cl.worn_override ) ) {
             debugmsg( "Missing worn override item group %s", cl.worn_override.c_str() );
         }
 
-        if( cl.carry_override && !cl.carry_override.is_valid() ) {
+        if( cl.carry_override && !item_group::group_is_defined( cl.carry_override ) ) {
             debugmsg( "Missing carry override item group %s", cl.carry_override.c_str() );
         }
 
-        if( cl.weapon_override && !cl.weapon_override.is_valid() ) {
+        if( cl.weapon_override && !item_group::group_is_defined( cl.weapon_override ) ) {
             debugmsg( "Missing weapon override item group %s", cl.weapon_override.c_str() );
         }
 

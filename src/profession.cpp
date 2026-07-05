@@ -17,7 +17,6 @@
 #include "item.h"
 #include "item_contents.h"
 #include "item_group.h"
-#include "item_group_readers.h"
 #include "itype.h"
 #include "json.h"
 #include "mission.h"
@@ -211,12 +210,25 @@ void profession::load( const JsonObject &jo, const std::string & )
     if( !was_loaded || jo.has_member( "items" ) ) {
         JsonObject items_obj = jo.get_object( "items" );
 
-        optional( items_obj, was_loaded, "both", _starting_items, itemgroup_reader( "collection" ),
-                  item_group::empty );
-        optional( items_obj, was_loaded, "male", _starting_items_male, itemgroup_reader( "collection" ),
-                  item_group::empty );
-        optional( items_obj, was_loaded, "female", _starting_items_female,
-                  itemgroup_reader( "collection" ), item_group::empty );
+        if( items_obj.has_array( "both" ) ) {
+            optional( items_obj, was_loaded, "both", legacy_starting_items, item_reader {} );
+        }
+        if( items_obj.has_object( "both" ) ) {
+            _starting_items = item_group::load_item_group( items_obj.get_member( "both" ), "collection" );
+        }
+        if( items_obj.has_array( "male" ) ) {
+            optional( items_obj, was_loaded, "male", legacy_starting_items_male, item_reader {} );
+        }
+        if( items_obj.has_object( "male" ) ) {
+            _starting_items_male = item_group::load_item_group( items_obj.get_member( "male" ), "collection" );
+        }
+        if( items_obj.has_array( "female" ) ) {
+            optional( items_obj, was_loaded, "female",  legacy_starting_items_female, item_reader {} );
+        }
+        if( items_obj.has_object( "female" ) ) {
+            _starting_items_female = item_group::load_item_group( items_obj.get_member( "female" ),
+                                     "collection" );
+        }
     }
     optional( jo, was_loaded, "no_bonus", no_bonus, auto_flags_reader<itype_id> {} );
 
@@ -311,13 +323,13 @@ void profession::check_definition() const
         }
     }
 
-    if( !_starting_items.is_valid() ) {
+    if( !item_group::group_is_defined( _starting_items ) ) {
         debugmsg( "_starting_items group is undefined" );
     }
-    if( !_starting_items_male.is_valid() ) {
+    if( !item_group::group_is_defined( _starting_items_male ) ) {
         debugmsg( "_starting_items_male group is undefined" );
     }
-    if( !_starting_items_female.is_valid() ) {
+    if( !item_group::group_is_defined( _starting_items_female ) ) {
         debugmsg( "_starting_items_female group is undefined" );
     }
     if( _starting_vehicle && !_starting_vehicle.is_valid() ) {
@@ -691,9 +703,9 @@ void json_item_substitution::load( const JsonObject &jo )
         }
     } else if( itemgroup_mode ) {
         if( jo.has_member( "bonus" ) ) {
-            item_group_id igroup_bonus;
-            mandatory( jo, false, "item_group", igroup_bonus, itemgroup_reader( "collection" ) );
-            itemgroup_bonuses.emplace_back( igroup_bonus, trait_requirements( jo.get_object( "bonus" ) ) );
+            itemgroup_bonuses.emplace_back( item_group::load_item_group( jo.get_member( "item_group" ),
+                                            "collection" ),
+                                            trait_requirements( jo.get_object( "bonus" ) ) );
         }
     } else {
         for( const JsonObject sub : jo.get_array( "sub" ) ) {

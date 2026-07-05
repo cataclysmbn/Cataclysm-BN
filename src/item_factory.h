@@ -15,6 +15,8 @@
 #include "iuse.h"
 #include "type_id.h"
 
+class Item_group;
+class Item_spawn_data;
 class lua_iwieldable_actor;
 class lua_iwearable_actor;
 class lua_iequippable_actor;
@@ -125,6 +127,14 @@ class Item_factory
          */
         void load_item_group( const JsonArray &entries, const item_group_id &group_id, bool is_collection,
                               int ammo_chance, int magazine_chance );
+        /**
+         * Get the item group object. Returns null if the item group does not exists.
+         */
+        Item_spawn_data *get_group( const item_group_id &item_group_id );
+        /**
+         * Returns the idents of all item groups that are known.
+         */
+        std::vector<item_group_id> get_all_group_names();
         /**
          * Sets the chance of the specified item in the group.
          * @param group_id Group to add item to
@@ -244,6 +254,9 @@ class Item_factory
 
         mutable std::map<itype_id, std::unique_ptr<itype>> m_runtimes;
 
+        using GroupMap = std::map<item_group_id, std::unique_ptr<Item_spawn_data>>;
+        GroupMap m_template_groups;
+
         std::unordered_map<itype_id, ammotype> migrated_ammo;
         std::unordered_map<itype_id, itype_id> migrated_magazines;
 
@@ -311,7 +324,23 @@ class Item_factory
         static std::optional<JsonArray> extend_has_member( const JsonObject &jo,
                 const std::string &member );
 
+        /**
+         * Helper function for Item_group loading
+         *
+         * If obj contains an array or string titled name + "-item" or name + "-group",
+         * this resets ptr and adds the item(s) or group(s) to it.
+         *
+         * @param ptr Data we operate on, results are stored here
+         * @param obj Json object being searched
+         * @param name Name of item or group we are searching for
+         * @param parent The item group that obj is in. Used so that the result's magazine and ammo
+         * probabilities can be inherited.
+         * @returns Whether anything was loaded.
+         */
+        bool load_sub_ref( std::unique_ptr<Item_spawn_data> &ptr, const JsonObject &obj,
+                           const std::string &name, const Item_group &parent );
         bool load_string( std::vector<std::string> &vec, const JsonObject &obj, const std::string &name );
+        void add_entry( Item_group &ig, const JsonObject &obj );
 
         void load_basic_info( const JsonObject &jo, itype &def, const std::string &src );
         void set_qualities_from_json( const JsonObject &jo, const std::string &member, itype &def );

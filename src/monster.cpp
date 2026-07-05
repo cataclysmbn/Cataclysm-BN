@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -3534,12 +3536,17 @@ void monster::drop_items_on_death()
     if( is_hallucination() ) {
         return;
     }
-    if( !type->death_drops ) {
+    if( type->death_drops.empty() ) {
         return;
     }
 
-    auto items = item_group::items_from( type->death_drops,
+    auto items = item_group::items_from( type->death_drops.front(),
                                          calendar::start_of_cataclysm );
+    for( const item_group_id &death_drop : type->death_drops | std::views::drop( 1 ) ) {
+        auto group_items = item_group::items_from( death_drop,
+                           calendar::start_of_cataclysm );
+        std::ranges::move( group_items, std::back_inserter( items ) );
+    }
 
     // Apply both global and category-specific spawn rates
     const auto global_spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );

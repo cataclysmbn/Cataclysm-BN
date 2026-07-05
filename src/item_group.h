@@ -7,7 +7,6 @@
 #include <utility>
 #include <set>
 
-#include "calendar.h"
 #include "item.h"
 #include "type_id.h"
 
@@ -19,15 +18,17 @@ class time_point;
 
 namespace item_group
 {
-static const item_group_id empty = item_group_id( "EMPTY_GROUP" );
 /**
  * Returns a random item from the item group, handles packaged food by putting it into its
  * container and returning the container item.
  * Note that this may return a null-item, if the group does not exist, is empty or did not
  * create an item this time. You have to check this with @ref item::is_null.
  */
-detached_ptr<item> item_from( const item_group_id &group_id,
-                              const time_point &birthday = calendar::start_of_cataclysm );
+detached_ptr<item> item_from( const item_group_id &group_id, const time_point &birthday );
+/**
+ * Same as above but with implicit birthday at turn 0.
+ */
+detached_ptr<item> item_from( const item_group_id &group_id );
 
 using ItemList = std::vector<item *>;
 /**
@@ -40,12 +41,17 @@ using ItemList = std::vector<item *>;
  * stuff into containers if that is required.
  * The returned list may contain any number of items (or be empty), but it will never
  * contain null-items.
- * @param group_id The identifier of the item group. Validity check through @ref string_id::is_valid.
+ * @param group_id The identifier of the item group. You may check its validity
+ * with @ref group_is_defined.
  * @param birthday The birthday (@ref item::bday) of the items created by this function.
  */
 std::vector<detached_ptr<item>> items_from( const item_group_id &group_id,
-                             const time_point &birthday = calendar::start_of_cataclysm );
+                             const time_point &birthday );
 
+/**
+ * Same as above but with implicit birthday at turn 0.
+ */
+std::vector<detached_ptr<item>> items_from( const item_group_id &group_id );
 /**
  * Check whether a specific item group contains a specific item type.
  */
@@ -55,13 +61,40 @@ bool group_contains_item( const item_group_id &group_id, const itype_id &type_id
  */
 std::set<const itype *> every_possible_item_from( const item_group_id &group_id );
 /**
+ * Check whether an item group of the given id exists. You may use this to either choose an
+ * alternative group or check the json definitions for consistency (spawn data in json that
+ * refers to a non-existing group is broken), or just alert the player.
+ */
+bool group_is_defined( const item_group_id &group_id );
+/**
  * Shows an menu to debug the item groups.
  */
 void debug_spawn();
-
-void insert_itemgroup( Item_group group );
-
-item_group_id get_unique_group_id();
+/**
+ * See @ref Item_factory::load_item_group
+ */
+void load_item_group( const JsonObject &jsobj, const item_group_id &group_id,
+                      const std::string &subtype );
+/**
+ * Get an item group id and (optionally) load an inlined item group.
+ *
+ * If the value is string, it's assumed to be an item group id and it's
+ * returned directly.
+ *
+ * If the value is a JSON object, it is loaded as item group. The group will be given a
+ * unique id (if the JSON object contains an id, it is ignored) and that id will be returned.
+ * If the JSON object does not contain a subtype, the given default is used.
+ *
+ * If the value is a JSON array, it is loaded as item group: the default_subtype will be
+ * used as subtype of the new item group and the array is loaded like the "entries" array of
+ * a item group definition (see format of item groups).
+ *
+ * @param stream Stream to load from
+ * @param default_subtype If an inlined item group is loaded this is used as the default
+ * subtype. It must be either "distribution" or "collection". See @ref Item_group.
+ * @throw JsonError as usual for JSON errors, including invalid input values.
+ */
+item_group_id load_item_group( const JsonValue &value, const std::string &default_subtype );
 } // namespace item_group
 
 /**
@@ -74,7 +107,6 @@ class Item_spawn_data
         using ItemList = std::vector<item *>;
         using RecursionList = std::vector<std::string>;
 
-        Item_spawn_data() = default;
         Item_spawn_data( int _probability ) : probability( _probability ) { }
         virtual ~Item_spawn_data() = default;
         /**
@@ -112,10 +144,10 @@ class Item_spawn_data
         virtual std::vector<detached_ptr<item>> every_item_modified( bool modify = true ) const = 0;
 
         /** probability, used by the parent object. */
-        int probability = 0;
+        int probability;
 
         // Weather it was checked already
-        bool checked = false;
+        bool checked;
 };
 
 using ItemFn = std::function < detached_ptr<item> ( detached_ptr<item> &&it ) >;
@@ -141,7 +173,7 @@ class Item_modifier
          * Ammo for guns. If NULL the gun spawns without ammo.
          * This takes @ref charges and @ref with_ammo into account.
          */
-        std::shared_ptr<Item_spawn_data> ammo;
+        std::unique_ptr<Item_spawn_data> ammo;
         /**
          * Item should spawn inside this container, can be NULL,
          * if item should not spawn in a container.
@@ -151,11 +183,11 @@ class Item_modifier
          * If it is created with the non-default charges, but it still fits
          * it is not changed.
          */
-        std::shared_ptr<Item_spawn_data> container;
+        std::unique_ptr<Item_spawn_data> container;
         /**
          * This is used to create the contents of an item.
          */
-        std::shared_ptr<Item_spawn_data> contents;
+        std::unique_ptr<Item_spawn_data> contents;
 
         /**
          * Custom flags to be added to the item.
@@ -206,7 +238,6 @@ class Single_item_creator : public Item_spawn_data
             S_NONE,
         };
 
-        Single_item_creator() = default;
         Single_item_creator( const std::string &id, Type type, int probability );
         ~Single_item_creator() override = default;
 
@@ -245,11 +276,10 @@ class Item_group : public Item_spawn_data
             G_DISTRIBUTION
         };
 
-        Item_group() = default;
         Item_group( Type type, int probability, int ammo_chance, int magazine_chance );
         ~Item_group() override = default;
 
-        Type type;
+        const Type type;
         /**
          * Item data to create item from and probability
          * that items should be created.
@@ -258,7 +288,7 @@ class Item_group : public Item_spawn_data
          * If type is G_DISTRIBUTION, probability is relative,
          * the sum probability is sum_prob.
          */
-        using prop_list = std::vector<std::shared_ptr<Item_spawn_data> >;
+        using prop_list = std::vector<std::unique_ptr<Item_spawn_data> >;
 
         void add_item_entry( const itype_id &itemid, int probability );
         void add_group_entry( const item_group_id &groupid, int probability );
@@ -267,13 +297,12 @@ class Item_group : public Item_spawn_data
          * @ref Item_factory::add_entry, @ref add_item_entry or @ref add_group_entry). Its purpose is to add
          * a Single_item_creator or Item_group to @ref items.
          */
-        void add_entry( std::shared_ptr<Item_spawn_data> ptr );
-        // This function loads the relevant data from json
-        void add_entry( const JsonObject &obj );
+        void add_entry( std::unique_ptr<Item_spawn_data> ptr );
 
         std::vector<detached_ptr<item>> create( const time_point &birthday,
                                                 RecursionList &rec ) const override;
         detached_ptr<item> create_single( const time_point &birthday, RecursionList &rec ) const override;
+        void check_consistency( const std::string &context ) const override;
         bool remove_item( const itype_id &itemid ) override;
         bool remove_specific_item( const std::string &itemid );
         bool remove_specific_group( const std::string &itemid );
@@ -295,36 +324,16 @@ class Item_group : public Item_spawn_data
          * @ref Single_item_creator's @ref Item_modifier via @ref Single_item_creator::inherit_ammo_mag_chances()
          */
         /** Every item in this group has this chance [0-100%] for items to spawn with ammo (plus default magazine if necessary) */
-        int with_ammo = 0;
+        const int with_ammo;
         /** Every item in this group has this chance [0-100%] for items to spawn with their default magazine (if any) */
-        int with_magazine = 0;
-
-        item_group_id id = item_group_id::NULL_ID();
-        bool was_loaded = false;
-        bool is_inline = false;
-
-        static void load_item_groups( const JsonObject &jo, const std::string &src );
-
-        void load( const JsonObject &jo, const std::string &src );
-
-        void load( const JsonObject &jo, const std::string &src, const std::string &subtype );
-
-        static void check_all();
-
-        void check() const;
-
-        void check_consistency( const std::string &context ) const override;
-
-        static std::vector<Item_group> get_all();
-
-        static void reset();
+        const int with_magazine;
 
     protected:
         /**
          * Contains the sum of the probability of all entries
          * that this group contains.
          */
-        int sum_prob = 0;
+        int sum_prob;
         /**
          * Links to the entries in this group.
          */

@@ -306,28 +306,6 @@ Example:
 }
 ```
 
-Additionally when working with nested item groups, with copied from objects they are automatically extended.
-So
-
-```json
-"death_drops": [ "stick" ]
-```
-
-In monster A with
-
-```json
-"death_drops": {
-  "entries": [ { "item": "fetid_goop" } ],
-  "purge": true
-}
-```
-
-In monster B means that
-
-A has "stick", while B recieved "stick" as it's base, purged "stick", then added "fetid_goop" as it's next item type
-
-All fields allowed in normal itemgroup entires are allowed in inline group entries
-
 ---
 
 ### Notes
