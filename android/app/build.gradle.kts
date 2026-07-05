@@ -1,5 +1,5 @@
-import com.android.build.gradle.BaseExtension
 import org.gradle.internal.os.OperatingSystem
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.ByteArrayOutputStream
 import java.net.URL
 import java.text.SimpleDateFormat
@@ -7,13 +7,21 @@ import java.util.Date
 import java.util.Properties
 import java.util.TimeZone
 
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     //options.compilerArgs.add("-Xlint:deprecation")
 }
 
-plugins {
-    id("com.android.application")
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
 
 val localProperties = Properties()
@@ -228,14 +236,14 @@ fun generateVersionHeader() {
 
 generateVersionHeader()
 
-fun BaseExtension.configureCommonAndroid() {
+android {
     namespace = "com.cleverraven.cataclysmdda"
-    compileSdkVersion(overrideCompileSdkVersion)
+    compileSdk = overrideCompileSdkVersion
     ndkVersion = overrideNdkVersion
 
     defaultConfig {
-        minSdkVersion(overrideMinSdkVersion)
-        targetSdkVersion(overrideTargetSdkVersion)
+        minSdk = overrideMinSdkVersion
+        targetSdk = overrideTargetSdkVersion
         versionCode = (System.getenv("UPSTREAM_BUILD_NUMBER") ?: "1").toInt()
         versionName = versionHeaderFile.readText().split('"')[1]
         applicationId = "com.cataclysmbnteam.cataclysmbn"
@@ -256,7 +264,7 @@ fun BaseExtension.configureCommonAndroid() {
                 arguments(*cmakeArguments.toTypedArray())
             }
         }
-        testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     splits {
@@ -279,7 +287,7 @@ fun BaseExtension.configureCommonAndroid() {
         }
     }
 
-    flavorDimensions("version")
+    flavorDimensions += "version"
 
     productFlavors {
         create("stable") {
@@ -361,14 +369,22 @@ fun BaseExtension.configureCommonAndroid() {
         }
     }
 
-    lintOptions {
-        isAbortOnError = false
+    lint {
+        abortOnError = false
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     sourceSets {
         getByName("main") {
-            java.srcDirs("src/main/java")
-            resources.srcDirs("src/main/res")
+            java.srcDirs("src/main/java", "src/main/kotlin")
         }
         getByName("stable") {}
         getByName("experimental") {
@@ -377,10 +393,16 @@ fun BaseExtension.configureCommonAndroid() {
     }
 }
 
-extensions.configure<BaseExtension>("android") {
-    configureCommonAndroid()
-}
-
 dependencies {
     add("api", fileTree(mapOf("include" to listOf("*.jar"), "dir" to "libs")))
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.preference.ktx)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }
