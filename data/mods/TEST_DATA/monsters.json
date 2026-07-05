@@ -25,5 +25,59 @@
     "species": [ "ZOMBIE", "HUMAN" ],
     "symbol": "Z",
     "upgrades": { "age_grow": 14, "into": "mon_zombie" }
+  },
+  {
+    "id": "mon_test_death_drops",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "death drop test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": [ "rock" ]
+  },
+  {
+    "id": "mon_test_death_drops_append",
+    "copy-from": "mon_test_death_drops",
+    "type": "MONSTER",
+    "name": { "str": "death drop append test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": [ "stick" ]
+  },
+  {
+    "id": "mon_test_death_drops_replace",
+    "copy-from": "mon_test_death_drops_append",
+    "type": "MONSTER",
+    "name": { "str": "death drop replace test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": { "entries": [ { "item": "fetid_goop" } ], "purge": true }
+  },
+  {
+    "id": "rocks_and_sticks",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "rock" }, { "item": "stick" } ]
+  },
+  {
+    "id": "mon_test_death_drops_string_append",
+    "copy-from": "mon_test_death_drops_replace",
+    "type": "MONSTER",
+    "name": { "str": "death drop string append test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": "rocks_and_sticks"
+  },
+  {
+    "id": "mon_test_death_drops_group_append",
+    "copy-from": "mon_test_death_drops_replace",
+    "type": "MONSTER",
+    "name": { "str": "death drop string append test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": { "entries": [ { "group": "rocks_and_sticks" } ] }
+  },
+  {
+    "id": "mon_test_death_drops_delete",
+    "copy-from": "mon_test_death_drops_group_append",
+    "type": "MONSTER",
+    "name": { "str": "death drop delete test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": { "delete": [ { "item": "fetid_goop" } ] }
   }
 ]

@@ -424,7 +424,7 @@ double vehicle_part::consume_energy( const itype_id &ftype, double energy_j )
         }
         //TODO!: push up
         item &fuel_consumed = *item::spawn_temporary( ftype, calendar::turn, charges_to_use );
-        return energy_p_mL * units::to_milliliter<int>( fuel_consumed.volume( true ) );
+        return energy_p_mL * units::to_milliliter( fuel_consumed.volume( true ) );
     }
     return 0.0;
 }

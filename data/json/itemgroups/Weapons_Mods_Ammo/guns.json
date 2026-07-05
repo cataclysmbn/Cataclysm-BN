@@ -268,8 +268,8 @@
     "//": "Makeshift or otherwise poor quality pistols.",
     "items": [
       { "item": "ashot", "prob": 100 },
-      { "item": "surv_hand_cannon", "prob": 100, "charges-min": 0, "charges-max": 5 },
-      { "item": "surv_six_shooter", "prob": 100, "charges-min": 0, "charges-max": 6 }
+      { "group": "nested_pipe_pistol", "prob": 100 },
+      { "group": "nested_handmade_revolver", "prob": 100 }
     ]
   },
   {
@@ -395,7 +395,7 @@
     "type": "item_group",
     "id": "guns_smg_improvised",
     "//": "Makeshift or otherwise poor quality SMGs.",
-    "items": [ [ "smg_40", 40 ], [ "smg_45", 40 ], [ "smg_9mm", 100 ] ]
+    "items": [ { "group": "nested_smg_luty", "prob": 100 } ]
   },
   {
     "type": "item_group",
@@ -735,12 +735,7 @@
     "type": "item_group",
     "id": "guns_rifle_improvised",
     "//": "Makeshift or otherwise poor quality rifles.",
-    "items": [
-      { "item": "rifle_22", "prob": 60 },
-      { "item": "rifle_3006", "prob": 30 },
-      { "item": "rifle_9mm", "prob": 60 },
-      { "item": "surv_carbine_223", "prob": 120, "charges-min": 0, "charges-max": 5 }
-    ]
+    "items": [ { "group": "nested_pipe_rifle", "prob": 60 }, { "group": "nested_handmade_carbine", "prob": 120 } ]
   },
   {
     "type": "item_group",
@@ -1016,6 +1011,17 @@
       { "group": "guns_smg_obscure", "prob": 30 },
       { "group": "guns_rifle_obscure", "prob": 70 },
       { "group": "guns_shotgun_obscure", "prob": 30 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_obscure",
+    "//": "Imported or otherwise very obscure guns of all types. Can be found, rarely, on survivors and other gun nuts.",
+    "items": [
+      { "group": "carried_guns_pistol_obscure", "prob": 100 },
+      { "group": "carried_guns_smg_obscure", "prob": 30 },
+      { "group": "carried_guns_rifle_obscure", "prob": 50 },
+      { "group": "carried_guns_shotgun_obscure", "prob": 30 }
     ]
   },
   {

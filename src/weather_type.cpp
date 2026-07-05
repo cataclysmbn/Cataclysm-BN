@@ -4,6 +4,7 @@
 #include "game_constants.h"
 #include "generic_factory.h"
 #include "bodypart.h"
+#include "type_id_implement.h"
 #include "weather.h"
 
 namespace
@@ -11,6 +12,7 @@ namespace
 generic_factory<weather_type> weather_type_factory( "weather_type" );
 } // namespace
 
+IMPLEMENT_STRING_AND_INT_IDS( weather_type, weather_type_factory );
 
 namespace io
 {
@@ -97,19 +99,6 @@ std::string enum_to_string<weather_sound_category>( weather_sound_category data 
 }
 
 } // namespace io
-
-template<>
-const weather_type &weather_type_id::obj() const
-{
-    return weather_type_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<weather_type>::is_valid() const
-{
-    return weather_type_factory.is_valid( *this );
-}
 
 void weather_type::check() const
 {

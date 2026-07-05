@@ -68,7 +68,6 @@ mod.on_character_death_hook = function()
     -- Convert abs_ms to abs_omt
     local omt_pos = anchor_pos:to_omt()
     if omt_pos == nil then return end
-    ---@cast omt_pos TripointAbsOmt
     gapi.place_player_overmap_at(omt_pos)
 
     -- Convert abs_ms to local_ms

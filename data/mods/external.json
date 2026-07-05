@@ -15,6 +15,16 @@
     "url": "https://github.com/NobleJake/ProjectPackRat/archive/refs/heads/main.zip"
   },
   {
+    "id": "overhaul",
+    "version": "0.0.2",
+    "url": "https://github.com/scarf005/Overhaul/archive/refs/tags/v0.0.2.zip"
+  },
+  {
+    "id": "overhaul_additions",
+    "version": "0.0.2",
+    "url": "https://github.com/scarf005/Overhaul/archive/refs/tags/v0.0.2.zip"
+  },
+  {
     "id": "otopack_bn_mk_2",
     "version": "2026.2.12",
     "url": "https://github.com/NarandBD/Otopack-BN-Mk-2/archive/refs/tags/sorrynotsorry.zip"

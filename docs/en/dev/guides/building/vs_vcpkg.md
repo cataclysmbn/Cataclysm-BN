@@ -135,15 +135,10 @@ debug individual tests from the unit test sessions.
 
 ### Code style
 
-We use `Artistic Style` source code formatter to keep the style of our C++ code consistent. While
-it's available as pre-built Windows executables, which you could install and run or configure to
-automatically format the code before commit, a much more convenient option for Visual Studio users
-is to install a specific extension, see
-["Astyle extensions for Visual Studio" in tooling](../../reference/tooling.md#astyle-extensions-for-visual-studio)
-for more info.
+Run `just fmt-cpp` before committing C++ changes. The CMake `format` target is also available from Visual Studio when `bash` is on `PATH`.
 
 As of October 2022, the code style check is run automatically on each PR on GitHub, so if you forgot
-to style your changes you'll see the corresponsing check failing.
+to style your changes you'll see the corresponding check failing.
 
 ### Make a distribution
 

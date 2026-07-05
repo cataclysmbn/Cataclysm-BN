@@ -239,8 +239,7 @@ veh_interact::veh_interact( vehicle &veh, tripoint_mnt_veh p )
     get_avatar().view_offset = tripoint_rel_ms::zero();
 
     // Only build the shapes map and the wheel list once
-    for( const auto &e : vpart_info::all() ) {
-        const vpart_info &vp = e.second;
+    for( const auto &vp : vpart_info::get_all() ) {
         vpart_shapes[ vp.name() + vp.item.str() ].push_back( &vp );
         if( vp.has_flag( "WHEEL" ) ) {
             wheel_types.push_back( &vp );
@@ -2317,8 +2316,7 @@ void veh_interact::move_cursor( tripoint_rel_veh d, int dstart_at )
     can_mount.clear();
     if( !obstruct ) {
         int divider_index = 0;
-        for( const auto &e : vpart_info::all() ) {
-            const vpart_info &vp = e.second;
+        for( const auto &vp : vpart_info::get_all() ) {
             if( has_critter && vp.has_flag( VPFLAG_OBSTACLE ) ) {
                 continue;
             }
@@ -3118,39 +3116,9 @@ void veh_interact::display_details( const vpart_info *part )
 
 void veh_interact::count_durability()
 {
-    const vehicle_part_range vpr = veh->get_all_parts();
-    int qty = std::accumulate( vpr.begin(), vpr.end(), 0,
-    []( int lhs, const vpart_reference & rhs ) {
-        return lhs + std::max( rhs.part().base->damage(), 0 );
-    } );
-
-    int total = std::accumulate( vpr.begin(), vpr.end(), 0,
-    []( int lhs, const vpart_reference & rhs ) {
-        return lhs + rhs.part().base->max_damage();
-    } );
-
-    int pct = total ? 100 * qty / total : 0;
-
-    if( pct < 5 ) {
-        total_durability_text = _( "like new" );
-        total_durability_color = c_light_green;
-
-    } else if( pct < 33 ) {
-        total_durability_text = _( "dented" );
-        total_durability_color = c_yellow;
-
-    } else if( pct < 66 ) {
-        total_durability_text = _( "battered" );
-        total_durability_color = c_magenta;
-
-    } else if( pct < 100 ) {
-        total_durability_text = _( "wrecked" );
-        total_durability_color = c_red;
-
-    } else {
-        total_durability_text = _( "destroyed" );
-        total_durability_color = c_dark_gray;
-    }
+    auto info = veh->vehicle_damage_summary();
+    total_durability_text = info.first;
+    total_durability_color = info.second;
 }
 
 void act_vehicle_siphon( vehicle *veh )

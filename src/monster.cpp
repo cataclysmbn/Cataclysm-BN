@@ -133,6 +133,22 @@ static const species_id PLANT( "PLANT" );
 static const species_id ROBOT( "ROBOT" );
 static const species_id ZOMBIE( "ZOMBIE" );
 
+namespace
+{
+
+auto adjacent_grabber_for( const monster &target ) -> Creature *
+{
+    for( const auto &p : get_map().points_in_radius( target.bub_pos(), 1, 0 ) ) {
+        Creature *const grabber = g->critter_at<Creature>( p );
+        if( grabber != nullptr && grabber != &target && grabber->has_effect( effect_grabbing ) ) {
+            return grabber;
+        }
+    }
+    return nullptr;
+}
+
+} // namespace
+
 static const trait_id trait_ANIMALDISCORD( "ANIMALDISCORD" );
 static const trait_id trait_ANIMALDISCORD2( "ANIMALDISCORD2" );
 static const trait_id trait_ANIMALEMPATH( "ANIMALEMPATH" );
@@ -507,6 +523,15 @@ void monster::allow_upgrade()
 int monster::next_upgrade_time()
 {
     if( type->age_grow > 0 ) {
+        const int scaling = get_option<int>( "ANIMAL_LIFE_CYCLE_SCALING" );
+        if( type->has_flag( MF_ANIMAL ) && scaling == 0 ) {
+            return std::max( 1, static_cast<int>( std::ceil( type->age_grow *
+                                                  calendar::season_ratio() ) ) );
+        }
+        if( type->has_flag( MF_ANIMAL ) ) {
+            return std::max( 1, static_cast<int>( std::ceil( type->age_grow * scaling /
+                                                  100.0 ) ) );
+        }
         return type->age_grow;
     }
     const int scaled_half_life = type->half_life * get_option<float>( "MONSTER_UPGRADE_FACTOR" );
@@ -601,10 +626,21 @@ void monster::try_reproduce()
     if( !type->baby_timer ) {
         return;
     }
+    time_duration baby_timer_scaling = *type->baby_timer;
+    const int scaling = get_option<int>( "ANIMAL_LIFE_CYCLE_SCALING" );
+    if( type->has_flag( MF_ANIMAL ) && scaling == 0 ) {
+        baby_timer_scaling = time_duration::from_days( std::max( 1,
+                             static_cast<int>( std::ceil( to_days<int>( *type->baby_timer ) *
+                                               calendar::season_ratio() ) ) ) );
+    } else if( type->has_flag( MF_ANIMAL ) ) {
+        baby_timer_scaling = time_duration::from_days( std::max( 1,
+                             static_cast<int>( std::ceil( to_days<int>( *type->baby_timer ) *
+                                               scaling / 100.0 ) ) ) );
+    }
 
     if( !baby_timer ) {
         // Assume this is a freshly spawned monster (because baby_timer is not set yet), set the point when it reproduce to somewhere in the future.
-        baby_timer.emplace( calendar::turn + *type->baby_timer );
+        baby_timer.emplace( calendar::turn + baby_timer_scaling );
     }
 
     bool season_spawn = false;
@@ -642,7 +678,7 @@ void monster::try_reproduce()
         if( ( season_match && female && one_in( chance ) ) ) {
             reproduce();
         }
-        *baby_timer += *type->baby_timer;
+        *baby_timer += baby_timer_scaling;
     }
 }
 
@@ -2614,6 +2650,11 @@ bool monster::move_effects( bool )
         }
     }
     if( has_effect( effect_grabbed ) ) {
+        Creature *const grabber = adjacent_grabber_for( *this );
+        if( grabber == nullptr ) {
+            remove_effect( effect_grabbed );
+            return true;
+        }
         if( dice( type->melee_dice + type->melee_sides, 3 ) < get_effect_int( effect_grabbed ) ||
             !one_in( 4 ) ) {
             return false;
@@ -2622,6 +2663,7 @@ bool monster::move_effects( bool )
                 add_msg( _( "The %s breaks free from the grab!" ), name() );
             }
             remove_effect( effect_grabbed );
+            grabber->remove_effect( effect_grabbing );
         }
     }
     return true;
@@ -3014,15 +3056,20 @@ void monster::process_turn()
     }
     // Persist grabs as long as there's an adjacent target.
     if( has_effect( effect_grabbing ) ) {
-        for( auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
-            const player *const p = g->critter_at<player>( dest );
-            if( p && p->has_effect( effect_grabbed ) ) {
+        auto found_grabbed_target = false;
+        for( const auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
+            const Creature *const target = g->critter_at<Creature>( dest );
+            if( target != nullptr && target != this && target->has_effect( effect_grabbed ) ) {
+                found_grabbed_target = true;
                 add_effect( effect_grabbing, 2_turns );
             }
         }
+        if( !found_grabbed_target ) {
+            remove_effect( effect_grabbing );
+        }
     }
     // We update electrical fields here since they act every turn.
-    if( has_flag( MF_ELECTRIC_FIELD ) ) {
+    if( !is_hallucination() && has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
             if( action_time_scale::once_every_this_tick( 10_turns ) ) {
                 sound_event se;
@@ -3299,6 +3346,12 @@ void monster::die( Creature *nkiller )
                                       _( "The last enemy holding <npcname> collapses!" ) );
             p->remove_effect( effect_grabbed );
         }
+    }
+    if( has_effect( effect_grabbed ) ) {
+        if( Creature *const grabber = adjacent_grabber_for( *this ) ) {
+            grabber->remove_effect( effect_grabbing );
+        }
+        remove_effect( effect_grabbed );
     }
     if( !is_hallucination() ) {
         for( detached_ptr<item> &it : inv.clear() ) {

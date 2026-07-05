@@ -25,21 +25,8 @@
     "copy-from": "wing_mirror_abstract",
     "id": "wing_mirror",
     "symbol": "o",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "wing_mirror_abstract",
-    "id": "wing_mirror_left",
-    "looks_like": "wing_mirror",
-    "symbol": "o",
-    "type": "vehicle_part"
-  },
-  {
-    "copy-from": "wing_mirror_abstract",
-    "id": "wing_mirror_right",
-    "looks_like": "wing_mirror",
-    "symbol": "o",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "left", "symbol": "l" }, { "direction": "right", "symbol": "r" } ]
   },
   {
     "type": "vehicle_part",

@@ -44,7 +44,7 @@
 #include "iuse_actor.h"
 #include "json.h"
 #include "locations.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "map_selector.h"
@@ -581,7 +581,7 @@ static detached_ptr<item> get_clothing_item( const npc_class_id &type, const std
 void starting_clothes( npc &who, const npc_class_id &type, bool male )
 {
     std::vector<detached_ptr<item>> ret;
-    if( item_group::group_is_defined( type->worn_override ) ) {
+    if( type->worn_override.is_valid() ) {
         ret = item_group::items_from( type->worn_override );
     } else {
         ret.push_back( get_clothing_item( type, "pants", male ) );
@@ -628,7 +628,7 @@ void starting_inv( npc &who, const npc_class_id &type )
 {
     std::vector<detached_ptr<item>> res;
     who.inv_clear();
-    if( item_group::group_is_defined( type->carry_override ) ) {
+    if( type->carry_override.is_valid() ) {
         for( detached_ptr<item> &it : item_group::items_from( type->carry_override ) ) {
             who.i_add( std::move( it ) );
         }
@@ -802,6 +802,7 @@ auto npc::clear_transient_movement_state_after_reposition() -> void
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
     goto_to_this_pos = std::nullopt;
+    sleep_at_this_pos = std::nullopt;
     wanted_item_pos = tripoint_bub_ms::min();
     guard_pos = tripoint_abs_ms::min();
     goal = no_goal_point;
@@ -901,6 +902,15 @@ int npc::best_skill_level() const
     return highest_level;
 }
 
+void npc::wake_up()
+{
+    Character::wake_up();  // Call the base implementation first
+
+    if( sleep_at_this_pos.has_value() ) {
+        sleep_at_this_pos = std::nullopt;
+    }
+}
+
 namespace
 {
 
@@ -930,7 +940,7 @@ auto best_weapon_category( const skill_id &best_skill ) -> std::string
 
 void npc::starting_weapon( const npc_class_id &type )
 {
-    if( item_group::group_is_defined( type->weapon_override ) ) {
+    if( type->weapon_override.is_valid() ) {
         set_primary_weapon( item_group::item_from( type->weapon_override, calendar::turn ) );
         return;
     }

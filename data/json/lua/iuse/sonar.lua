@@ -38,7 +38,6 @@ sonar.register = function(mod)
     local abs_ms = gapi.bub_to_abs(pos)
     local center_omt = abs_ms:to_omt()
     if center_omt == nil then return 0 end
-    ---@cast center_omt TripointAbsOmt
     local radius = 7
     local depth_steps = 5
     local any_revealed = false

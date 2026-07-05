@@ -2692,11 +2692,12 @@ void options_manager::add_options_performance()
         //                        "fires to be simulated correctly. "
         //                        "0 disables out-of-bubble fire spread loading entirely. " ),
         //      0, 250, 25 );
-        add( "RETAINED_OMT_CACHE_MULTIPLIER", page_id,
+        add( "RETAINED_OMT_CACHE_LENGTH", page_id,
              translate_marker( "Retained Map Cache" ),
-             translate_marker( "Keep more map data loaded to reduce lag when moving around the same general area, "
-                               "at the cost of memory usage." ),
-             1, 20, is_android ? 1 : 3 );
+             translate_marker( "Side length of the extra overmap-terrain MRU cache. "
+                               "The retained cache budget is this value squared; lazy border "
+                               "loading is budgeted separately." ),
+             4, 50, is_android ? 10 : 24 );
         add( "POWER_PORTAL_LOAD_RADIUS", page_id,
              translate_marker( "Power portal load radius (submaps)" ),
              translate_marker( "Radius in submaps around each end of a power-portal link that is "
@@ -2844,6 +2845,10 @@ void options_manager::add_options_debug()
          translate_marker( "If true, bayonets replace weapon attack instead of adding to it.  WIP feature, weakens bayonets heavily at the moment." ),
          false );
 
+    add( "NEW_ARMOR_CALCULATION", debug, translate_marker( "New armor damage calculation" ),
+         translate_marker( "If true, armor will be able to take damage from attacks that don't penetrate it, but attacks in general damage armor less frequently." ),
+         true );
+
     add_empty_line();
 
     add( "USE_LEGACY_PATHFINDING", debug,
@@ -2951,6 +2956,10 @@ void options_manager::add_options_world_default()
     add( "ALWAYS_EVOLVE", world_default,
          translate_marker( "Zombies Always Evolve" ),
          translate_marker( "When reaching the maximum half lives, instead of never evolving they will evolve at that time." ),
+         false );
+    add( "CROWD_CRUSH", world_default,
+         translate_marker( "Crowd crush" ),
+         translate_marker( "When enabled, being grabbed by enough adjacent creatures can drain breath and eventually cause crushing damage." ),
          false );
 
     add_empty_line();
@@ -3310,8 +3319,16 @@ void options_manager::add_options_world_default()
          0, 1000, 100, COPT_NO_HIDE, "%i%%"
        );
 
-    add( "GROWTH_SCALING", world_default, translate_marker( "Growth scaling percentage" ),
+    add( "GROWTH_SCALING", world_default, translate_marker( "Crop growth scaling percentage" ),
          translate_marker( "Sets the time of crop growth in percents.  '50' is two times faster than default, '200' is two times longer.  '0' automatically scales growth time to match the world's season length." ),
+         0, 1000, 0, COPT_NO_HIDE, "%i%%"
+       );
+
+    add( "ANIMAL_LIFE_CYCLE_SCALING", world_default,
+         translate_marker( "Animal life cycle scaling" ),
+         translate_marker( "Sets the time of animal reproduction and growth in percents.  "
+                           "'50' is two times faster than default, '200' is two times longer.  "
+                           "'0' automatically scales animal life cycle time to match the world's season length." ),
          0, 1000, 0, COPT_NO_HIDE, "%i%%"
        );
 
@@ -4466,7 +4483,7 @@ void options_manager::cache_to_globals()
     parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
     parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
     lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
-    retained_omt_cache_multiplier = ::get_option<int>( "RETAINED_OMT_CACHE_MULTIPLIER" );
+    retained_omt_cache_length = ::get_option<int>( "RETAINED_OMT_CACHE_LENGTH" );
 
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );

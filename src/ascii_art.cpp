@@ -8,6 +8,7 @@
 #include "generic_factory.h"
 #include "output.h"
 #include "string_id.h"
+#include "type_id_implement.h"
 
 static const int ascii_art_width = 42;
 
@@ -16,17 +17,7 @@ namespace
 generic_factory<ascii_art> ascii_art_factory( "ascii_art" );
 } // namespace
 
-template<>
-const ascii_art &string_id<ascii_art>::obj() const
-{
-    return ascii_art_factory.obj( *this );
-}
-
-template<>
-bool string_id<ascii_art>::is_valid() const
-{
-    return ascii_art_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( ascii_art, ascii_art_factory );
 
 void ascii_art::reset()
 {

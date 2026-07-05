@@ -139,6 +139,12 @@
     "value_constraints": { "movement_mode": { "equals": "crouch" }, "mounted": { "equals": false }, "swimming": { "equals": false } }
   },
   {
+    "id": "moves_crawled",
+    "type": "event_transformation",
+    "event_transformation": "moves_expand_pre_move_mode",
+    "value_constraints": { "movement_mode": { "equals": "prone" }, "mounted": { "equals": false }, "swimming": { "equals": false } }
+  },
+  {
     "id": "moves_swam",
     "type": "event_transformation",
     "event_transformation": "moves_expand_pre_move_mode",
@@ -183,6 +189,13 @@
     "stat_type": "count",
     "event_transformation": "moves_crouched",
     "description": { "str": "square crouched", "str_pl": "squares crouched" }
+  },
+  {
+    "id": "num_moves_crawled",
+    "type": "event_statistic",
+    "stat_type": "count",
+    "event_transformation": "moves_crawled",
+    "description": { "str": "square crawled", "str_pl": "squares crawled" }
   },
   {
     "id": "num_moves_swam",

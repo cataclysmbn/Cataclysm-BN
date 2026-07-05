@@ -504,6 +504,8 @@
     "city": {
       "shop_radius": 0,
       "shop_sigma": 0,
+      "apartment_radius": 0,
+      "apartment_sigma": 0,
       "park_radius": 0,
       "park_sigma": 0,
       "houses": { "Pond": 0 },

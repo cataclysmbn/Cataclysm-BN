@@ -45,6 +45,12 @@ trajectory mode_fire( avatar &you, aim_activity_actor &activity );
 /** Throwing item */
 trajectory mode_throw( avatar &you, item &relevant, bool blind_throwing );
 
+/** Throwing a grabbed creature */
+trajectory mode_throw_creature( avatar &you, const Creature &thrown_creature, int range );
+
+/** Throwing or shoving a grabbed vehicle */
+trajectory mode_throw_vehicle( avatar &you, const tripoint_bub_ms &grabbed_part_pos, int range );
+
 /** Reach attacking */
 trajectory mode_reach( avatar &you, item &weapon );
 
@@ -67,6 +73,7 @@ int range_with_even_chance_of_good_hit( int dispersion );
 namespace ranged
 {
 
+double calculate_aim_cap( const Character &p, const tripoint_bub_ms &target );
 /**
  * Common checks for gunmode (when firing a weapon / manually firing turret)
  * @param messages Used to store messages describing failed checks
@@ -134,6 +141,9 @@ int effective_dispersion( const Character &who, int dispersion );
 /** Get weapon's dispersion value modified accoring to character stats */
 dispersion_sources get_weapon_dispersion( const Character &who, const item &obj );
 
+/** Returns whether the character can effectively use a heavy/MOUNTED_GUN weapon */
+bool can_use_heavy_weapon( const Character &who, const map &m, const tripoint_bub_ms &pos );
+
 struct aim_type {
     std::string name;
     std::string action;
@@ -188,6 +198,12 @@ int fire_gun( Character &who, const tripoint_bub_ms &target, int shots = 1 );
  */
 int fire_gun( Character &who, const tripoint_bub_ms &target, int shots, item &gun,
               item *ammo, const std::optional<tripoint_bub_ms> &shot_origin = std::nullopt );
+
+/** Generates a projectile for throwing the item, used to show actual damage.*/
+auto throw_damage_projectile( const item &it, const int skill, const int str ) -> projectile;
+
+/** Expected stamina cost for throwing a given item. */
+auto throw_stamina_cost( const Character &thrower, const item &item ) -> int;
 
 /** Expected thrown damage with a given item, given the thrower's effective strength and skill. */
 auto throw_damage( const item &it, const int skill, const int str ) -> int;

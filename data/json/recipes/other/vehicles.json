@@ -2198,7 +2198,7 @@
     "time": "10 m",
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
     "using": [ [ "3d_printing_standard", 5 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 50 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 150 ] ] ]
   },
   {
     "result": "carbon_plate",
@@ -2211,7 +2211,7 @@
     "time": "10 m",
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
     "using": [ [ "3d_printing_standard", 15 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 150 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 400 ] ] ]
   },
   {
     "result": "wing_carbon_item",
@@ -2224,7 +2224,7 @@
     "time": "10 m",
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
     "using": [ [ "3d_printing_standard", 10 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 75 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 400 ] ] ]
   },
   {
     "type": "recipe",
@@ -2234,6 +2234,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
+    "reversible": true,
     "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
@@ -2293,7 +2294,7 @@
     "time": "20 m",
     "batch_time_factors": [ 60, 1 ],
     "using": [ [ "3d_printing_standard", 20 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 200 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 300 ] ] ]
   },
   {
     "type": "recipe",
@@ -2307,7 +2308,7 @@
     "time": "20 m",
     "batch_time_factors": [ 60, 1 ],
     "using": [ [ "3d_printing_standard", 20 ], [ "rope_natural", 4 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 400 ], [ "frame_carbon", 2 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 1800 ], [ "frame_carbon", 6 ] ] ]
   },
   {
     "type": "recipe",
@@ -2375,6 +2376,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
+    "reversible": true,
     "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
@@ -2471,6 +2473,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
+    "reversible": true,
     "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [

@@ -17,6 +17,7 @@ enum class iteminfo_parts : size_t {
     BASE_DAMAGE,
     BASE_TOHIT,
     BASE_MOVES,
+    BASE_THROW,
     BASE_REQUIREMENTS,
     BASE_MATERIAL,
     BASE_CONTENTS,

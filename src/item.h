@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "catalua_icallback_actor.h"
 #include "coordinates.h"
 #include "damage.h"
 #include "detached_ptr.h"
@@ -361,7 +362,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param alert whether to display any messages
          * @return true if item reverted or false if no revert available.
          */
-        bool revert( const Character *ch, bool alert = true );
+        bool revert( Character *ch, bool alert = true );
 
         /**
          * Add or remove energy from a battery.
@@ -581,6 +582,8 @@ class item : public location_visitable<item>, public game_object<item>
                           bool debug ) const;
         void combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                           bool debug ) const;
+        void throw_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
+                         bool debug ) const;
         void damage_statblock_info( std::vector<iteminfo> &info, damage_instance attack,
                                     bool line_by_line ) const;
         void contents_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
@@ -1315,6 +1318,7 @@ class item : public location_visitable<item>, public game_object<item>
          * Whether the item should be processed (by calling @ref process).
          */
         bool needs_processing() const;
+        auto invalidate_processing_cache_upwards() -> void;
         /**
          * The rate at which an item should be processed, in number of turns between updates.
          */
@@ -1724,6 +1728,9 @@ class item : public location_visitable<item>, public game_object<item>
 
         /**If item made out of glass, or has the SHATTERS flag?*/
         bool can_shatter() const;
+
+        /** If the item is non-rigid: either has rigid = false or max_encumber higher than encumber */
+        bool is_non_rigid() const;
 
         /**
          * @name Item properties
@@ -2459,9 +2466,15 @@ class item : public location_visitable<item>, public game_object<item>
         static detached_ptr<item> process_internal( detached_ptr<item> &&self, player *carrier,
                 const tripoint_bub_ms &pos, bool activate,
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
+        static auto actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
+                                   temperature_flag temperature,
+                                   const weather_manager &weather, bool seals ) -> detached_ptr<item>;
+        static auto actualize_rot( detached_ptr<item> &&self,
+                                   const rot_context &context, bool seals ) -> detached_ptr<item>;
         static auto process_rot( detached_ptr<item> &&self,
                                  const absolute_rot_process_options &options ) -> detached_ptr<item>;
         auto is_in_preserving_container() const -> bool;
+        auto is_in_sealing_container() const -> bool;
         auto mark_rot_checked_now() -> void;
 
         /** Helper for checking reloadability. **/

@@ -75,8 +75,8 @@
 #include "json.h"
 #include "kill_tracker.h"
 #include "lru_cache.h"
-#include "magic.h"
-#include "magic_teleporter_list.h"
+#include "magic/magic.h"
+#include "magic/magic_teleporter_list.h"
 #include "map.h"
 #include "map_memory.h"
 #include "mapdata.h"
@@ -536,10 +536,10 @@ void Character::load( const JsonObject &data )
 
     JsonObject vits = data.get_object( "vitamin_levels" );
     vits.allow_omitted_members();
-    for( const std::pair<const vitamin_id, vitamin> &v : vitamin::all() ) {
-        if( vits.has_member( v.first.str() ) ) {
-            int lvl = vits.get_int( v.first.str() );
-            vitamin_levels[v.first] = clamp( lvl, v.first->min(), v.first->max() );
+    for( const auto &v : vitamin::all() ) {
+        if( vits.has_member( v.id.str() ) ) {
+            int lvl = vits.get_int( v.id.str() );
+            vitamin_levels[v.id] = clamp( lvl, v.id->min(), v.id->max() );
         }
     }
     data.read( "consumption_history", consumption_history );
@@ -2751,7 +2751,13 @@ void item::io( Archive &archive )
     archive.io( "item_counter", item_counter, static_cast<decltype( item_counter )>( 0 ) );
     archive.io( "rot", rot, 0_turns );
     archive.io( "last_rot_check", last_rot_check, calendar::start_of_cataclysm );
+    if constexpr( !Archive::is_input::value ) {
+        erase_if( techniques, []( const matec_id & technique ) { return !technique.is_valid(); } );
+    }
     archive.io( "techniques", techniques, io::empty_default_tag() );
+    if constexpr( Archive::is_input::value ) {
+        erase_if( techniques, []( const matec_id & technique ) { return !technique.is_valid(); } );
+    }
     {
         auto serialized_melee = std::vector<damage_instance_serialization::serialized_damage_unit> {};
         auto serialized_ranged = std::vector<damage_instance_serialization::serialized_damage_unit> {};

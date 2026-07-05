@@ -109,7 +109,9 @@
     "vision_day": 50,
     "revert_to_itype": "bot_secubot",
     "starting_ammo": { "556": 30 },
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
     "special_attacks": [
+      [ "PHOTOGRAPH", 60 ],
       {
         "type": "gun",
         "cooldown": 3,
@@ -129,7 +131,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -171,7 +173,9 @@
     "vision_day": 50,
     "revert_to_itype": "bot_talon_m202a1",
     "starting_ammo": { "m235tpa": 4 },
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
     "special_attacks": [
+      [ "PHOTOGRAPH", 60 ],
       {
         "type": "gun",
         "cooldown": 5,
@@ -190,7 +194,69 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
+        "no_ammo_sound": "a chk!"
+      }
+    ],
+    "death_drops": {  },
+    "death_function": [ "BROKEN" ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "ELECTRONIC",
+      "COLDPROOF",
+      "NO_BREATHE",
+      "PATH_AVOID_DANGER_1",
+      "LOUDMOVES",
+      "DROPS_AMMO",
+      "BIOPROOF"
+    ]
+  },
+  {
+    "id": "mon_talon_m249",
+    "type": "MONSTER",
+    "name": { "str": "M249 autonomous TALON UGV" },
+    "description": "A TALON unmanned ground vehicle equipped with an M249.  It is a small tracked UGV with an array of motors and sensors covering its weapon mount, designed to provide high volume, if inaccurate, fire.",
+    "default_faction": "defense_bot",
+    "species": [ "ROBOT" ],
+    "diff": 10,
+    "volume": "150 L",
+    "weight": "40750 g",
+    "hp": 80,
+    "speed": 40,
+    "material": [ "steel" ],
+    "symbol": "R",
+    "color": "dark_gray",
+    "aggression": 100,
+    "morale": 100,
+    "armor_bash": 14,
+    "armor_cut": 14,
+    "armor_bullet": 30,
+    "armor_fire": 15,
+    "vision_day": 50,
+    "revert_to_itype": "bot_talon_m249",
+    "starting_ammo": { "556": 200 },
+    "special_attacks": [
+      {
+        "type": "gun",
+        "cooldown": 3,
+        "move_cost": 150,
+        "gun_type": "talon_m249",
+        "ammo_type": "556",
+        "//": "A quarter as effective as a nice, stable turret",
+        "fake_skills": [ [ "gun", 2 ], [ "rifle", 2 ] ],
+        "fake_str": 4,
+        "fake_dex": 3,
+        "ranges": [ [ 0, 30, "DEFAULT" ] ],
+        "require_targeting_npc": true,
+        "require_targeting_monster": true,
+        "target_moving_vehicles": true,
+        "laser_lock": false,
+        "no_crits": true,
+        "targeting_cost": 200,
+        "targeting_timeout_extend": 0,
+        "targeting_sound": "\"Hostile detected.\"",
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -361,7 +427,8 @@
     "vision_night": 10,
     "revert_to_itype": "bot_dispatch",
     "starting_ammo": { "bot_c4_hack": 2, "bot_flashbang_hack": 3, "bot_gasbomb_hack": 3, "bot_grenade_hack": 10 },
-    "special_attacks": [ [ "GRENADIER", 10 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "GRENADIER", 10 ] ],
     "death_drops": { "groups": [ [ "robots", 1 ] ] },
     "death_function": [ "BROKEN" ],
     "flags": [
@@ -407,7 +474,8 @@
     "vision_night": 10,
     "revert_to_itype": "bot_dispatch_military",
     "starting_ammo": { "bot_c4_hack": 10, "bot_flashbang_hack": 10, "bot_gasbomb_hack": 10, "bot_grenade_hack": 20, "bot_mininuke_hack": 1 },
-    "special_attacks": [ [ "GRENADIER_ELITE", 10 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "GRENADIER_ELITE", 10 ] ],
     "death_drops": { "groups": [ [ "robots", 1 ] ] },
     "death_function": [ "BROKEN" ],
     "flags": [
@@ -454,7 +522,8 @@
     "revert_to_itype": "bot_tankbot",
     "starting_ammo": { "556": 1000, "40x46mm_m433": 20, "atgm_heat": 4 },
     "path_settings": { "max_dist": 20 },
-    "special_attacks": [ [ "MULTI_ROBOT", 3 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "MULTI_ROBOT", 3 ] ],
     "death_drops": { "groups": [ [ "robots", 4 ], [ "tankbot", 1 ] ] },
     "death_function": [ "BROKEN" ],
     "anger_triggers": [ "HURT", "FRIEND_ATTACKED" ],
@@ -500,7 +569,8 @@
     "armor_bullet": 6,
     "path_settings": { "max_dist": 5 },
     "revert_to_itype": "bot_tripod",
-    "special_attacks": [ [ "FLAMETHROWER", 10 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "FLAMETHROWER", 10 ] ],
     "death_drops": { "groups": [ [ "robots", 4 ], [ "tripod", 1 ] ] },
     "death_function": [ "BROKEN" ],
     "flags": [
@@ -544,7 +614,8 @@
     "revert_to_itype": "bot_chickenbot",
     "starting_ammo": { "556": 1000, "40x46mm_m433": 100 },
     "path_settings": { "max_dist": 10 },
-    "special_attacks": [ [ "CHICKENBOT", 4 ] ],
+    "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "CHICKENBOT", 4 ] ],
     "death_function": [ "BROKEN" ],
     "flags": [ "FACTION_MEMORY", "SEES", "HEARS", "BASHES", "NO_BREATHE", "ELECTRONIC", "PRIORITIZE_TARGETS", "DROPS_AMMO" ]
   },
@@ -577,7 +648,9 @@
     "armor_fire": 5,
     "vision_day": 50,
     "starting_ammo": { "120mm_usable_heat": 25 },
+    "//2": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
     "special_attacks": [
+      [ "PHOTOGRAPH", 60 ],
       [ "PARROT", 20 ],
       {
         "type": "gun",
@@ -597,7 +670,7 @@
         "targeting_cost": 125,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"120mm HEAT, up.  Targeting.  On the way.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_crits": true,
         "description": "The mini-tank fires its 120mm gun!",
         "no_ammo_sound": "a hollow click!"

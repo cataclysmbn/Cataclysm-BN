@@ -46,8 +46,6 @@ export const findTranslationWarnings = (
     files.flatMap(changedDocPaths).filter(({ lang }) => languages.includes(lang)),
     ({ path }) => path,
   )
-  if (changed.size <= 1) return []
-
   const existing = Map.groupBy(
     existingDocs.filter(({ lang }) => languages.includes(lang)),
     ({ path }) => path,

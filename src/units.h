@@ -15,6 +15,7 @@
 #include "units_money.h"
 #include "units_temperature.h"
 #include "units_probability.h"
+#include "units/sound.h"
 
 namespace units
 {
@@ -55,6 +56,11 @@ inline std::ostream &operator<<( std::ostream &o, temperature_in_millidegree_cel
 inline std::ostream &operator<<( std::ostream &o, probability_in_one_in_million_tag )
 {
     return o << "pm";
+}
+
+inline std::ostream &operator<<( std::ostream &o, sound_in_decibel_tag )
+{
+    return o << "dB";
 }
 
 template<typename value_type, typename tag_type>
@@ -109,6 +115,10 @@ static const std::vector<std::pair<std::string, probability>> probability_units 
         { "pm", 1_pm },
         { "pct", 1_pct },
         { "%", 1_pct }
+    }
+};
+static const std::vector<std::pair<std::string, sound>> sound_units = { {
+        { "dB", 1_dB }
     }
 };
 } // namespace units

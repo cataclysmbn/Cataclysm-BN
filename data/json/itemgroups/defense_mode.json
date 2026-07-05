@@ -103,7 +103,7 @@
       { "item": "whiskey" },
       { "item": "can_beans" },
       { "item": "mre_beef" },
-      { "item": "flour" },
+      { "item": "flour", "charges": [ 5, 40 ] },
       { "item": "inhaler" },
       { "item": "codeine" },
       { "item": "oxycodone" },

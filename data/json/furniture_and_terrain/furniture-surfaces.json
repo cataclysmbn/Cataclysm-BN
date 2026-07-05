@@ -312,7 +312,7 @@
     "required_str": 5,
     "deployed_item": "tourist_table",
     "looks_like": "f_table",
-    "flags": [ "TRANSPARENT", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "SHORT", "FLAT_SURF", "BASH_TRANSFORM" ],
     "deconstruct": { "items": [ { "item": "tourist_table", "count": 1 } ] },
     "bash": {
       "str_min": 16,
@@ -359,7 +359,7 @@
     "prompt": "Set tourist table upright",
     "message": "You set the tourist table back upright.",
     "extend": { "flags": [ "CLIMB_SIMPLE" ] },
-    "delete": { "flags": [ "FLAT_SURF" ], "workbench": { "multiplier": 1.05, "mass": "100 kg", "volume": "35L" } }
+    "delete": { "flags": [ "FLAT_SURF", "BASH_TRANSFORM" ], "workbench": { "multiplier": 1.05, "mass": "100 kg", "volume": "35L" } }
   },
   {
     "type": "furniture",
@@ -371,7 +371,7 @@
     "move_cost_mod": 2,
     "coverage": 40,
     "required_str": 5,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF", "BASH_TRANSFORM" ],
     "deconstruct": { "items": [ { "item": "2x4", "count": 4 }, { "item": "wood_panel", "count": 1 }, { "item": "nail", "charges": 8 } ] },
     "bash": {
       "str_min": 12,
@@ -420,7 +420,7 @@
     "prompt": "Set table upright",
     "message": "You set the table back on its feet.",
     "extend": { "flags": [ "CLIMB_SIMPLE" ] },
-    "delete": { "flags": [ "FLAT_SURF" ], "workbench": { "multiplier": 1.1, "mass": "200 kg", "volume": "75L" } }
+    "delete": { "flags": [ "FLAT_SURF", "BASH_TRANSFORM" ], "workbench": { "multiplier": 1.1, "mass": "200 kg", "volume": "75L" } }
   },
   {
     "type": "furniture",
@@ -433,7 +433,7 @@
     "move_cost_mod": 2,
     "coverage": 20,
     "required_str": 5,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF", "BASH_TRANSFORM" ],
     "deconstruct": { "items": [ { "item": "2x4", "count": 2 }, { "item": "wood_panel", "count": 1 }, { "item": "nail", "charges": 8 } ] },
     "bash": {
       "str_min": 10,
@@ -481,6 +481,6 @@
     "transforms_into": "f_coffee_table",
     "prompt": "Set coffee table upright",
     "message": "You tip the coffee table back onto its feet.",
-    "delete": { "flags": [ "FLAT_SURF" ], "workbench": { "multiplier": 0.85, "mass": "200 kg", "volume": "75L" } }
+    "delete": { "flags": [ "FLAT_SURF", "BASH_TRANSFORM" ], "workbench": { "multiplier": 0.85, "mass": "200 kg", "volume": "75L" } }
   }
 ]

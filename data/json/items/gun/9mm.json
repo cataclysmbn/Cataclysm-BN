@@ -137,6 +137,7 @@
       [ "sling", 1 ],
       [ "stock", 1 ]
     ],
+    "magazine_well": "100 ml",
     "magazines": [ [ "9mm", [ "mp5mag", "mp5bigmag" ] ] ]
   },
   {
@@ -238,6 +239,7 @@
     "armor_data": { "covers": [ "arm_either", "hand_either" ], "coverage": 10, "encumbrance": 30, "material_thickness": 2 },
     "flags": [ "OVERSIZE", "RELOAD_EJECT", "BELTED", "RESTRICT_HANDS", "WORN_GUN" ],
     "valid_mod_locations": [  ],
+    "magazine_well": "500 ml",
     "magazines": [ [ "9mm", [ "mp5mag" ] ] ]
   },
   {
@@ -332,49 +334,6 @@
     "magazines": [ [ "9mm", [ "px4mag" ] ] ]
   },
   {
-    "id": "rifle_9mm",
-    "copy-from": "rifle_home_made",
-    "type": "GUN",
-    "name": { "str": "pipe rifle: 9x19mm", "str_pl": "pipe rifles: 9x19mm" },
-    "//": "Despite its quality, it IS a small rifle, although not as effective as a genuine pistol carbine.",
-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",
-    "weight": "2114 g",
-    "volume": "2 L",
-    "price": "100 USD",
-    "price_postapoc": "5 USD",
-    "ascii_picture": "ps_pipe_gun",
-    "bashing": 10,
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "9mm",
-    "barrel_volume": "750 ml"
-  },
-  {
-    "id": "smg_9mm",
-    "copy-from": "smg_base",
-    "type": "GUN",
-    "name": { "str": "Luty SMG: 9x19mm", "str_pl": "Luty SMGs: 9x19mm" },
-    "description": "A Luty pattern makeshift smoothbore SMG crudely constructed out of various steel parts using some of the more advanced powered hand tools; likely one of the most complex guns that are feasible to make outside of a machine shop, but still very unreliable.  This one is chambered for 9x19mm cartridges and accepts STEN compatible magazines.",
-    "//": "Crafting recipe must make use of angle grinder, bench grinder, set square and vise, which don't yet exist in game.",
-    "weight": "3274 g",
-    "volume": "1750 ml",
-    "price": "200 USD",
-    "price_postapoc": "750 cent",
-    "material": "steel",
-    "color": "dark_gray",
-    "ammo": "9mm",
-    "ranged_damage": { "damage_type": "bullet", "amount": -3 },
-    "dispersion": 590,
-    "durability": 4,
-    "blackpowder_tolerance": 24,
-    "min_cycle_recoil": 380,
-    "handling": 20,
-    "loudness": 0,
-    "modes": [ [ "DEFAULT", "burst", 5 ] ],
-    "barrel_volume": "250 ml",
-    "magazines": [ [ "9mm", [ "survivor9mm_mag", "stenmag" ] ] ]
-  },
-  {
     "id": "sten",
     "copy-from": "smg_base",
     "type": "GUN",
@@ -408,6 +367,7 @@
       [ "sights", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "magazine_well": "100 ml",
     "magazines": [ [ "9mm", [ "stenmag", "survivor9mm_mag" ] ] ]
   },
   {
@@ -441,7 +401,7 @@
     "type": "GUN",
     "name": { "str_sp": "USP 9mm" },
     "description": "A popular pistol, widely used among law enforcement.  Extensively tested for durability, it has been found to stay accurate even after being subjected to extreme abuse.",
-    "weight": "770 g",
+    "weight": "690 g",
     "volume": "500 ml",
     "price": "680 USD",
     "price_postapoc": "25 USD",
@@ -668,8 +628,8 @@
     "looks_like": "90two",
     "type": "GUN",
     "name": { "str": "carbon fiber machine pistol" },
-    "description": "This 3D printed machine pistol is made completely without any metal parts.  As a result, it is very lightweight.",
-    "material": [ "carbon_fiber" ],
+    "description": "This 3D printed machine pistol is made completely without any metal parts except the barrel.  As a result, it is very lightweight.",
+    "material": [ "carbon_fiber", "steel" ],
     "durability": 3,
     "weight": "370 g",
     "volume": "600 ml",
@@ -706,8 +666,36 @@
     "handling": 40,
     "built_in_mods": [ "folding_stock" ],
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 2 ], [ "AUTO", "auto", 6 ] ],
+    "magazine_well": "500 ml",
     "magazines": [
       [ "9mm", [ "kriss_vector_9mm_mag", "glock17_17", "glock17_22", "glock_drum_50rd", "glock_drum_100rd", "glockbigmag" ] ]
     ]
+  },
+  {
+    "id": "smg_luty",
+    "copy-from": "smg_base",
+    "type": "GUN",
+    "name": { "str": "Luty SMG" },
+    "looks_like": "smg_9mm",
+    "description": "A Luty pattern makeshift smoothbore SMG crudely constructed out of various steel parts using some of the more advanced powered hand tools; likely one of the most complex guns that are feasible to make outside of a machine shop, but still very unreliable.  This one is chambered for 9x19mm cartridges by default and accepts STEN compatible magazines.  The modular design allows for field conversion to .40 S&W or .45 ACP.",
+    "//": "Crafting recipe must make use of angle grinder, bench grinder, set square and vise, which don't yet exist in game.",
+    "weight": "3275 g",
+    "volume": "1750 ml",
+    "price": "200 USD",
+    "price_postapoc": "750 cent",
+    "material": "steel",
+    "color": "dark_gray",
+    "ammo": "9mm",
+    "ranged_damage": { "damage_type": "bullet", "amount": -3 },
+    "dispersion": 590,
+    "durability": 4,
+    "blackpowder_tolerance": 24,
+    "min_cycle_recoil": 380,
+    "handling": 20,
+    "loudness": 0,
+    "modes": [ [ "DEFAULT", "burst", 5 ] ],
+    "barrel_volume": "250 ml",
+    "magazine_well": "100 ml",
+    "magazines": [ [ "9mm", [ "survivor9mm_mag", "stenmag" ] ] ]
   }
 ]

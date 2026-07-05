@@ -147,8 +147,11 @@ class generic_factory
         std::string type_name;
         std::string id_member_name;
         std::string alias_member_name;
+        std::string reset_member_name;
         // TEMPORARY until 0.G: Remove "ident" support
         const std::string legacy_id_member_name = "ident";
+
+        bool copy_from_self;
 
         bool find_id( const string_id<T> &id, int_id<T> &result ) const {
             if( id._version == version ) {
@@ -196,10 +199,13 @@ class generic_factory
          * loaded object alias(es).
          */
         generic_factory( const std::string &type_name, const std::string &id_member_name = "id",
-                         const std::string &alias_member_name = "alias" )
+                         const std::string &alias_member_name = "alias",
+                         const std::string &reset_member_name = "reset", const bool copy_from_self = false )
             : type_name( type_name ),
               id_member_name( id_member_name ),
               alias_member_name( alias_member_name ),
+              reset_member_name( reset_member_name ),
+              copy_from_self( copy_from_self ),
               dummy_obj() {
         }
 
@@ -242,6 +248,15 @@ class generic_factory
                     }
                 }
                 def.was_loaded = true;
+            } else if( copy_from_self && jo.has_string( id_member_name ) ) {
+                if( !jo.has_bool( reset_member_name ) || !jo.get_bool( reset_member_name ) ) {
+                    const std::string source = jo.get_string( id_member_name );
+                    auto base = map.find( string_id<T>( source ) );
+                    if( base != map.end() ) {
+                        def = obj( base->second );
+                        def.was_loaded = true;
+                    }
+                }
             }
 
             if( jo.has_string( abstract_member_name ) ) {
@@ -542,6 +557,7 @@ Loading (inside a `T::load(JsonObject &jo)` function) can be done with two funct
 - `optional` is for optional data, it has the same parameters and an additional default
   value that will be used if the JSON data does not contain the requested data. It may
   throw an error if the existing data is not valid (e.g. string instead of requested int).
+  It has a boolean return for if data was loaded, in case special cases need to be applied.
 
 The functions are designed to work with the `generic_factory` and therefor support the
 `was_loaded` parameter (set be `generic_factory::load`). If that parameter is `true`, it
@@ -783,7 +799,7 @@ inline bool handle_relative( const JsonObject &jo, const std::string &name, Memb
 
 // No template magic here, yay!
 template<typename MemberType>
-inline void optional( const JsonObject &jo, const bool was_loaded, const std::string &name,
+inline bool optional( const JsonObject &jo, const bool was_loaded, const std::string &name,
                       MemberType &member )
 {
     if( !jo.read( name, member ) && !handle_proportional( jo, name, member ) &&
@@ -791,7 +807,9 @@ inline void optional( const JsonObject &jo, const bool was_loaded, const std::st
         if( !was_loaded ) {
             member = MemberType();
         }
+        return false;
     }
+    return true;
 }
 /*
 Template trickery, not for the faint of heart. It is required because there are two functions
@@ -805,7 +823,7 @@ otherwise it is assumed to be the reader.
 */
 template<typename MemberType, typename DefaultType = MemberType>
 requires( std::is_constructible_v<MemberType, const DefaultType &> )
-inline void optional( const JsonObject &jo, const bool was_loaded, const std::string &name,
+inline bool optional( const JsonObject &jo, const bool was_loaded, const std::string &name,
                       MemberType &member, const DefaultType &default_value )
 {
     if( !jo.read( name, member ) && !handle_proportional( jo, name, member ) &&
@@ -813,30 +831,36 @@ inline void optional( const JsonObject &jo, const bool was_loaded, const std::st
         if( !was_loaded ) {
             member = default_value;
         }
+        return false;
     }
+    return true;
 }
 
 template<typename MemberType, typename ReaderType, typename DefaultType = MemberType>
 requires( !std::is_constructible_v<MemberType, const ReaderType &> )
-inline void optional( const JsonObject &jo, const bool was_loaded, const std::string &name,
+inline bool optional( const JsonObject &jo, const bool was_loaded, const std::string &name,
                       MemberType &member, const ReaderType &reader )
 {
     if( !reader( jo, name, member, was_loaded ) ) {
         if( !was_loaded ) {
             member = MemberType();
         }
+        return false;
     }
+    return true;
 }
 
 template<typename MemberType, typename ReaderType, typename DefaultType = MemberType>
-inline void optional( const JsonObject &jo, const bool was_loaded, const std::string &name,
+inline bool optional( const JsonObject &jo, const bool was_loaded, const std::string &name,
                       MemberType &member, const ReaderType &reader, const DefaultType &default_value )
 {
     if( !reader( jo, name, member, was_loaded ) ) {
         if( !was_loaded ) {
             member = default_value;
         }
+        return false;
     }
+    return true;
 }
 /**@}*/
 

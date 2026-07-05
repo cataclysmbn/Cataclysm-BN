@@ -17,7 +17,7 @@
       "str_max": 16,
       "sound": "glass breaking",
       "sound_fail": "whack!",
-      "sound_vol": 90,
+      "sound_vol": "90 dB",
       "furn_set": "f_bigmirror_b",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] } ],
       "//": "destroy_threshold equal to str_min as fragile glass breaks into standing mirror frame, reduction matches that of broken mirror",

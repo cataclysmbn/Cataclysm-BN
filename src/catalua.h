@@ -79,6 +79,6 @@ void run_on_mapgen_postprocess_hooks_batch( lua_state &state, mapgen_constructor
 /** Return true if at least one on_mapgen_postprocess hook is registered. */
 bool has_mapgen_postprocess_hooks( lua_state &state );
 void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory );
-void resolve_lua_bionic_and_mutation_callbacks();
+void resolve_extra_lua_callbacks();
 
 } // namespace cata

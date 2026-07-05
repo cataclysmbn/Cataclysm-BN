@@ -170,6 +170,8 @@ class submap : maptile_soa<SEEX, SEEY>
             return lum[p.x()][p.y()];
         }
 
+        auto static_emitter_tiles() const -> const std::vector<point_sm_ms> &;
+
         void set_lum( const point_sm_ms &p, uint8_t luminance ) {
             is_uniform = false;
             lum[p.x()][p.y()] = luminance;
@@ -300,7 +302,7 @@ class submap : maptile_soa<SEEX, SEEY>
          *  std::nullopt = dirty (needs rebuild by scanning all tiles).
          *  Empty vector = no emitters present.
          *  Rebuilt lazily; invalidated by set_ter/set_all_ter/set_furn/set_all_furn. */
-        std::optional<std::vector<point_sm_ms>> emitter_cache;
+        mutable std::optional<std::vector<point_sm_ms>> emitter_cache;
         // Serialized as "turn_last_touched" (absolute turn number).
         // Initialized to calendar::turn_zero; legacy saves that predate
         // serialization will receive the maximum-capped catchup on first load.

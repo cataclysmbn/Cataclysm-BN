@@ -159,8 +159,7 @@
         "om_terrain": "office_tower_collapse_b_a0",
         "om_special": "office_tower_collapsed",
         "reveal_radius": 1,
-        "random": true,
-        "search_range": 180,
+        "search_range": 500,
         "z": -1
       },
       "update_mapgen": [ { "place_nested": [ { "chunks": [ "robofac_mi3_photonics_chunk" ], "x": 10, "y": 22 } ] } ]

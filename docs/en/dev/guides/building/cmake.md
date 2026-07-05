@@ -8,25 +8,29 @@ You'll need to have these libraries and their development headers installed in o
 CataclysmBN:
 
 - General
-  - `cmake` >= 3.0.0
+  - `cmake` >= 3.2.4
   - `clang` >= 22
   - `gcc-libs` or equivalent C++ runtime libraries
   - `glibc`
   - `zlib`
   - `bzip2`
   - `sqlite3`
+  - `SDL` >= 3.0.0 *
+  - `SDL_shadercross` >= 3.0.0 *
 - Curses
   - `ncurses`
 - Tiles
-  - `SDL` >= 2.0.0
-  - `SDL_image` >= 2.0.0 (with PNG and JPEG support)
-  - `SDL_mixer` >= 2.0.0 (with Ogg Vorbis support)
-  - `SDL_ttf` >= 2.0.0
+  - `SDL_image` >= 3.0.0 (with PNG and JPEG support) *
+  - `SDL_mixer` >= 3.0.0 (with Ogg Vorbis support) *
+  - `SDL_ttf` >= 3.0.0 *
   - `freetype`
 - Sound
   - `vorbis`
   - `libbz2`
   - `libz`
+
+> [!NOTE]
+> Dependancies marked with * will be built automatically if missing.
 
 In order to compile localization files, you'll also need `gettext` package.
 
@@ -47,11 +51,11 @@ cd Cataclysm-BN
 
 Obtain packages specified above with your system package manager.
 
-- For Ubuntu-based distros (24.04 onwards):
+- For Ubuntu-based distros (26.04 onwards):
 
 ```sh
 sudo apt install git cmake ninja-build mold clang-22 llvm-22 ccache \
-libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
+libsdl3-dev libsdl3-image-dev libsdl3-ttf-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
 ```
@@ -60,10 +64,14 @@ gettext libflac++-dev libsqlite3-dev zlib1g-dev
 
 ```sh
 sudo dnf install git cmake ninja-build mold clang llvm ccache \
-SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
+SDL3-devel SDL3_image-devel SDL3_ttf-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
 ```
+
+> [!NOTE]
+> Neither Ubuntu or Fedora ship SDL3_mixer or shadercross
+> These libraries will be build automatically when compiling
 
 #### Verifying Compiler Version
 
@@ -101,34 +109,13 @@ InstalledDir: /usr/bin
 Install dependencies via [Homebrew](https://brew.sh/):
 
 ```sh
-brew install cmake ninja ccache sdl2 sdl2_image sdl2_ttf sdl2_mixer \
+brew install cmake ninja ccache sdl3 sdl3_image sdl3_ttf sdl3_mixer \
   freetype gettext sqlite pkg-config ncurses flac
 ```
 
 > [!NOTE]
 > Apple Clang shipped with Xcode 16+ supports the C++23 features required by CataclysmBN.
 > You do **not** need to install a separate compiler.
-
-#### Building on Apple Silicon (Recommended)
-
-```sh
-cmake --preset osx-arm-slim
-cmake --build --preset osx-arm-slim
-```
-
-This places executables into `out/build/osx-arm-slim/`.
-
-#### Creating a macOS Distribution
-
-The macOS distribution presets build a DMG with the `dmgdist` target. `dmgbuild` must be available on `PATH`. Tiles builds also package SDL2 frameworks from `~/Library/Frameworks` or `/Library/Frameworks`.
-
-```sh
-python3 -m pip install dmgbuild biplist
-cmake --preset osx-tiles-arm-dist
-cmake --build --preset osx-tiles-arm-dist
-```
-
-Use `osx-curses-arm-dist`, `osx-tiles-arm-dist`, `osx-curses-x64-dist`, or `osx-tiles-x64-dist` for the desired architecture and UI.
 
 ### Windows Subsystem for Linux (WSL)
 
@@ -172,29 +159,38 @@ from one source directory.
 
 #### Build with Presets (Recommended)
 
-There's multiple predefined [build presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) available, which simplifies build process to just two commands:
+There's multiple predefined [build presets](#build-presets) available, which simplifies build process to just two commands.
+
+For Linux:
 
 ```sh
 cmake --preset linux-slim
-cmake --build build --preset linux-slim --target cataclysm-bn-tiles
+cmake --build --preset linux-slim --target cataclysm-bn-tiles
 ```
 
-This will place the executables into `out/build/linux-slim/`.
+For macOS:
+
+```sh
+cmake --preset osx-arm-slim
+cmake --build --preset osx-arm-slim
+```
+
+This will place the executable into `out/build/linux-slim/` or `out/build/osx-arm-slim/` respectively.
 
 > [!TIP]
-> To build with [clang-tidy plugin](../../reference/tooling.md#clang-tidy) and tracy profiler built-in, try `linux-full`.
+> To build with [clang-tidy plugin](../../reference/tooling.md#clang-tidy) and tracy profiler support, try `linux-full`.
 
 > [!NOTE]
 > You can build multiple targets at once with:
 >
 > ```sh
-> cmake --build build --preset linux-slim --target cataclysm-bn-tiles cata_test-tiles
+> cmake --build --preset linux-slim --target cataclysm-bn-tiles cata_test-tiles
 > ```
 >
 > Or limit maximum number of threads with `--parallel` option:
 >
 > ```sh
-> cmake --build build --preset linux-slim --target cataclysm-bn-tiles --parallel 4
+> cmake --build --preset linux-slim --target cataclysm-bn-tiles --parallel 4
 > ```
 
 #### Build without Presets
@@ -202,23 +198,26 @@ This will place the executables into `out/build/linux-slim/`.
 To build CataclysmBN out of source:
 
 ```sh
-mkdir build
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+mkdir -p out/build/custom
+cmake -B out/build/custom -DCMAKE_BUILD_TYPE=Release
+cmake --build out/build/custom
 ```
 
-The above example creates a build directory inside the source directory, but that's not required -
-you can just as easily create it in a completely different location.
+The above example creates a build directory under `out/build/`, but that's not required - you can
+just as easily create it in a completely different location.
 
 To install CataclysmBN after building (as root using su or sudo if necessary):
 
 ```sh
-cmake --install build
+cmake --install out/build/custom
 ```
 
 ### Creating Distribution Packages
 
-Use the `dist-tiles` or `dist-curses` presets to create portable distribution packages:
+> [!TIP]
+> Check [build presets](#build-presets) for a list of distribution presets.
+
+Use a build preset to create a portable distribution package:
 
 ```sh
 # Configure for tiles distribution
@@ -229,14 +228,6 @@ cmake --build --preset dist-tiles
 
 # Create distribution package
 cmake --install build --prefix cataclysmbn-linux-tiles
-```
-
-For curses-only builds:
-
-```sh
-cmake --preset dist-curses
-cmake --build --preset dist-curses
-cmake --install build --prefix cataclysmbn-linux-curses
 ```
 
 This creates a self-contained directory with the following structure:
@@ -265,15 +256,6 @@ tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
 > The `cataclysm-launcher` script sets up the correct working directory and library paths.
 > Use it to run the game from any location.
 
-#### Distribution Presets
-
-| Preset         | Description                             |
-| -------------- | --------------------------------------- |
-| `dist-tiles`   | Linux: Tiles + Sound + Languages        |
-| `dist-curses`  | Linux: Curses + Languages               |
-| `osx-arm-dist` | macOS ARM: Tiles + Sound + Languages    |
-| `lint`         | Minimal build for formatting tools only |
-
 #### Portable vs System Install
 
 | Option          | `USE_PREFIX_DATA_DIR=OFF` | `USE_PREFIX_DATA_DIR=ON`   |
@@ -282,19 +264,8 @@ tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
 | Config location | `./config/`               | `~/.config/cataclysm-bn/`  |
 | Best for        | Portable/release builds   | System packages (deb/rpm)  |
 
-To change build options, you can either pass the options on the command line:
-
-```sh
-cmake .. -DOPTION_NAME=option_value
-```
-
-Or use either the `ccmake` or `cmake-gui` front-ends, which display all options and their cached
-values on a console and graphical UI, respectively.
-
-```sh
-ccmake ..
-cmake-gui ..
-```
+> [!TIP]
+> Check [build options](#build-options) for information on how to configure builds
 
 ## Build for Visual Studio / MSBuild
 
@@ -343,24 +314,22 @@ set SDL2MIXERDIR=C:\path\to\SDL2_mixer-devel-2.0.4-VC
 
 (for powershell the syntax is `$env:SDL2DIR="C:\path\to\SDL2-devel-2.0.9-VC"`).
 
-Make a build directory and run cmake configuration step
+Run the CMake configuration step
 
 ```sh
 cd <path to cbn sources>
-mkdir build
-cmake -B build -DTILES=ON -DLANGUAGES=none -DBACKTRACE=OFF -DSOUND=ON
+cmake -B out/build/msbuild -DTILES=ON -DLANGUAGES=none -DBACKTRACE=OFF -DSOUND=ON
 ```
 
 Build!
 
 ```
-cmake --build build -j 2 -- /p:Configuration=Release
+cmake --build out/build/msbuild --config Release --parallel 2
 ```
 
-The `-j 2` flag controls build parallelism - you can omit it if you wish. The
-`/p:Configuration=Release` flag is passed directly to MSBuild and controls optimizations. If you
-omit it, the `Debug` configuration would be built instead. For powershell you'll need to have an
-extra `--` after the first one.
+The `--parallel 2` flag controls build parallelism - you can omit it if you wish. The
+`--config Release` flag selects the optimized Visual Studio configuration. If you omit it, the
+`Debug` configuration would be built instead.
 
 The resulting files will be put into a `Release` directory inside your source Cataclysm-BN folder.
 To make them run you'd need to first move them to the source Cataclysm-BN directory itself (so that
@@ -377,12 +346,23 @@ Run the game. Should work.
 
 ## Build Options
 
-A full list of options supported by CMake, you may either run the `ccmake` or `cmake-gui`
-front-ends, or run `cmake` and open the generated CMakeCache.txt from the build directory in a text
-editor.
+To change build options, you may either pass the options on the command line:
 
-```
+```sh
 cmake -DOPTION_NAME1=option_value1 [-DOPTION_NAME2=option_value2 [...]]
+```
+
+Or use either the `ccmake` or `cmake-gui` front-ends, which display all options and their cached
+values on a console and graphical UI, respectively.
+
+```sh
+cmake --preset linux-slim
+ccmake out/build/linux-slim
+```
+
+```sh
+cmake --preset linux-slim
+cmake-gui -S . -B out/build/linux-slim
 ```
 
 ### CMake specific options
@@ -402,33 +382,60 @@ Installation prefix for binaries, resources, and documentation files.
 
 ### CataclysmBN specific options
 
-- CURSES=`<boolean>`
+| Option                | Default                                 | Effect                                                                            |
+| --------------------- | --------------------------------------- | --------------------------------------------------------------------------------- |
+| `CURSES`              | `ON`                                    | Build curses version.                                                             |
+| `TILES`               | `OFF`                                   | Build graphical tileset version.                                                  |
+| `SOUND`               | `ON`                                    | Build audio support.                                                              |
+| `LANGUAGES`           | `" "`                                   | Build specificed language support.                                                |
+| `TESTS`               | `ON`                                    | Build test units.                                                                 |
+| `USE_HOME_DIR`        | `ON` (`OFF` on WIN32)                   | Use $HOME directory for save and config files.                                    |
+| `USE_XDG_DIR`         | `OFF`                                   | Use XDG directories for save and config files.                                    |
+| `USE_PREFIX_DATA_DIR` | `OFF`                                   | Use UNIX system directories for game data in release build.                       |
+| `JSON_FORMAT`         | `OFF`                                   | Build JSON formatter.                                                             |
+| `CATA_CCACHE`         | `ON`                                    | Try to find and build with ccache.                                                |
+| `BUILD_SDL3`          | `OFF`                                   | Force Build SDL3 instead of using system libraries.                               |
+| `BUILD_SHADERCROSS`   | `ON`                                    | Build SDL_shadercross from source when shadercross is not on PATH.                |
+| `SHADER_TARGETS`      | `spirv;msl` (`dxil;spirv;msl` on WIN32) | Shaders to build.                                                                 |
+| `DYNAMIC_LINKING`     | `ON`                                    | Use dynamic linking. Or use static to remove MinGW dependency instead.            |
+| `LINKER`              | `" "`                                   | Custom Linker to use                                                              |
+| `BACKTRACE`           | `ON`                                    | Support for printing stack backtraces on crash.                                   |
+| `LIBBACKTRACE`        | `OFF`                                   | Print backtrace with libbacktrace.                                                |
+| `USE_TRACY`           | `OFF`                                   | Use tracy profiler. See [Profiling with tracy](../tracy.md) for more information. |
+| `GIT_BINARY`          | `" "`                                   | Git binary name or path.                                                          |
 
-Build curses version.
+### Build Presets
 
-- TILES=`<boolean>`
+Check the [cmake docs](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) for more information
 
-Build graphical tileset version.
+| Preset Name                | Description                                         |
+| -------------------------- | --------------------------------------------------- |
+| `linux-curses`             | Linux Slim Build (Curses)                           |
+| `linux-slim`               | Linux Slim Build (Tiles, Sounds)                    |
+| `linux-full`               | Linux Full Build (Tiles, Sounds, Clang-Tidy, Tracy) |
+| `linux-cross-aarch64`      |                                                     |
+| `linux-slim-cross-aarch64` |                                                     |
+| `linux-full-cross-aarch64` |                                                     |
+| `dist-tiles`               | Linux Distribution (Tiles, Sounds, Languages)       |
+| `dist-curses`              | Linux Distribution (Curses, Languages)              |
+| `osx-curses-x64-dist`      | macOS x64 Distribution (Curses, Languages)          |
+| `osx-tiles-x64-dist`       | macOS x64 Distribution (Tiles, Sounds, Languages)   |
+| `osx-arm-slim`             | macOS ARM Slim Build (Tiles, Sounds)                |
+| `osx-curses-arm-dist`      | macOS ARM Distribution (Curses, Languages)          |
+| `osx-tiles-arm-dist`       | macOS ARM Distribution (Tiles, Sounds, Languages)   |
+| `osx-arm-dist`             | macOS ARM Distribution (Tiles, Sounds, Languages)   |
+| `lint`                     | Lint and Format Only                                |
+| `ci-curses`                | CI Build (Curses)                                   |
+| `ci-tiles`                 | CI Build (Tiles, Sound)                             |
 
-- SOUND=`<boolean>`
-
-Support for in-game sounds & music.
-
-- USE_HOME_DIR=`<boolean>`
-
-Use user's home directory for save files.
-
-- LANGUAGES=`<str>`
-
-Compile localization files for specified languages. Example:
-
-```
--DLANGUAGES="cs;de;el;es_AR;es_ES"
-```
-
-Note that language files are only compiled automatically when building the `RELEASE` build type. For
-other build types, you need to add the `translations_compile` target to the `make` command, for
-example `make all translations_compile`.
+> [!NOTE]
+>
+> The macOS distribution presets build a DMG with the `dmgdist` target. `dmgbuild` must be available on `PATH`.
+> If you do not have dmgdist and biplist installed already, you can install them using pip
+>
+> ```sh
+> python3 -m pip install dmgbuild biplist
+> ```
 
 ### Building with Translations Locally
 
@@ -482,64 +489,3 @@ If you do not have Transifex access, use the artifact produced by the translatio
 
 > [!NOTE]
 > Release archives only include compiled `lang/mo` files for packaged builds. They do not contain the `lang/po` sources required to rebuild translations locally.
-
-- DYNAMIC_LINKING=`<boolean>`
-
-Use dynamic linking. Or use static to remove MinGW dependency instead.
-
-- CUSTOM LINKER=`<str>`
-
-Choose custom linkers such as [gold], [lld] or [mold].
-
-- Choose ld if you don't use libbacktrace.
-- Choose mold if use libbacktrace. It's the fastest linker, outperforming gold by 24x.
-
-[gold]: https://en.wikipedia.org/wiki/Gold_(linker)
-[lld]: https://lld.llvm.org
-[mold]: https://github.com/rui314/mold
-
-- BACKTRACE=`<boolean>`
-
-On crash, print a backtrace to the console. Defaults to `ON` for debug builds.
-
-- LIBBACKTRACE=`<boolean>`
-
-Print backtrace with [libbacktrace]. This allows lld and mold to print backtrace, and is generally
-much faster.
-
-[libbacktrace]: https://github.com/ianlancetaylor/libbacktrace
-
-Supported installed external dependencies are preferred before downloading source fallbacks. Set
-`CMAKE_PREFIX_PATH` to a local prefix such as `$HOME/.local` to use locally installed packages.
-
-- USE_TRACY=`<boolean>`
-
-Use tracy profiler. See [Profiling with tracy](../tracy.md) for more information.
-
-- GIT_BINARY=`<str>`
-
-Override default Git binary name or path.
-
-- USE_PREFIX_DATA_DIR=`<boolean>`
-
-Use UNIX system directories for game data in release build.
-
-- USE_XDG_DIR=`<boolean>`
-
-Use XDG directories for save and config files.
-
-- TESTS=`<boolean>`
-
-Whether to build tests.
-
-- JSON_FORMAT=`<boolean>`
-
-Build the `json_formatter` tool and enable `style-json` / `style-json-parallel` targets for
-formatting JSON files. See [Formatting & Linting](../formatting.md) for usage.
-
-So a CMake command for building Cataclysm-BN in release mode with tiles and sound support will look
-as follows, provided it is run in build directory located in the project.
-
-```sh
-cmake ../ -DCMAKE_BUILD_TYPE=Release -DTILES=ON -DSOUND=ON
-```

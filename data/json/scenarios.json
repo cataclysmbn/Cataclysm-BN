@@ -772,6 +772,7 @@
       "mil_grenadier",
       "mil_marksman",
       "prof_combat_engineer",
+      "prof_combat_medic",
       "specops",
       "specops_frogman",
       "power_armor_soldier",
@@ -784,6 +785,8 @@
       "elite_specops",
       "bionic_spy",
       "national_guard",
+      "mili_burner",
+      "mil_drone_operator",
       "hitman",
       "assassin",
       "politician",
@@ -948,6 +951,7 @@
       "mil_grenadier",
       "mil_marksman",
       "prof_combat_engineer",
+      "prof_combat_medic",
       "specops",
       "specops_frogman",
       "power_armor_soldier",
@@ -958,6 +962,8 @@
       "bio_sniper",
       "bio_specops",
       "elite_specops",
+      "mili_burner",
+      "mil_drone_operator",
       "labtech",
       "bionic_labtech",
       "medic",
@@ -1033,6 +1039,9 @@
       "mili_pilot",
       "fighter_pilot",
       "prof_combat_engineer",
+      "prof_combat_medic",
+      "mili_burner",
+      "mil_drone_operator",
       "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START" ],
@@ -1118,5 +1127,15 @@
       "bio_geiger"
     ],
     "flags": [ "CHALLENGE", "LONE_START" ]
+  },
+  {
+    "type": "scenario",
+    "id": "subway",
+    "name": "The Metro",
+    "points": -2,
+    "description": "In the chaos of the Cataclysm, you decided to make a run for the subway tunnels, hoping to find refuge away from the horrors on the surface.  Now, you find yourself in the dark tunnels of the subway system, and yet you feel like you're not alone...",
+    "allowed_locs": [ "sloc_subway" ],
+    "start_name": "Subway Tunnels",
+    "flags": [ "CITY_START", "LONE_START" ]
   }
 ]

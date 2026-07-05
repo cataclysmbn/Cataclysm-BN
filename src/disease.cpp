@@ -4,23 +4,14 @@
 #include "debug.h"
 #include "generic_factory.h"
 #include "string_id.h"
+#include "type_id_implement.h"
 
 namespace
 {
 generic_factory<disease_type> disease_factory( "disease_type" );
 } // namespace
 
-template<>
-const disease_type &string_id<disease_type>::obj() const
-{
-    return disease_factory.obj( *this );
-}
-
-template<>
-bool string_id<disease_type>::is_valid() const
-{
-    return disease_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( disease_type, disease_factory );
 
 void disease_type::load_disease_type( const JsonObject &jo, const std::string &src )
 {

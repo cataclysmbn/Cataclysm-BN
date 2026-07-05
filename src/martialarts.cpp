@@ -38,6 +38,7 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "translations.h"
+#include "type_id_implement.h"
 #include "ui_manager.h"
 #include "value_ptr.h"
 
@@ -57,18 +58,10 @@ generic_factory<martialart> martialarts( "martial art style" );
 generic_factory<ma_buff> ma_buffs( "martial art buff" );
 } // namespace
 
-template<>
-const weapon_category &weapon_category_id::obj() const
-{
-    return weapon_category_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool weapon_category_id::is_valid() const
-{
-    return weapon_category_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( weapon_category, weapon_category_factory );
+IMPLEMENT_STRING_AND_INT_IDS( ma_technique, ma_techniques );
+IMPLEMENT_STRING_AND_INT_IDS( martialart, martialarts );
+IMPLEMENT_STRING_AND_INT_IDS( ma_buff, ma_buffs );
 
 void weapon_category::load_weapon_categories( const JsonObject &jo, const std::string &src )
 {
@@ -220,6 +213,7 @@ void ma_technique::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "knockback_dist", knockback_dist, 0 );
     optional( jo, was_loaded, "knockback_spread", knockback_spread, 0 );
     optional( jo, was_loaded, "powerful_knockback", powerful_knockback, false );
+    optional( jo, was_loaded, "controlled_knockback", controlled_knockback, false );
     optional( jo, was_loaded, "knockback_follow", knockback_follow, false );
 
     optional( jo, was_loaded, "aoe", aoe, "" );
@@ -227,23 +221,6 @@ void ma_technique::load( const JsonObject &jo, const std::string &src )
 
     reqs.load( jo, src );
     bonuses.load( jo );
-}
-
-// Not implemented on purpose (martialart objects have no integer id)
-// int_id<T> string_id<mabuff>::id() const;
-
-/** @relates string_id */
-template<>
-const ma_technique &string_id<ma_technique>::obj() const
-{
-    return ma_techniques.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<ma_technique>::is_valid() const
-{
-    return ma_techniques.is_valid( *this );
 }
 
 void ma_buff::load( const JsonObject &jo, const std::string &src )
@@ -263,23 +240,6 @@ void ma_buff::load( const JsonObject &jo, const std::string &src )
 
     reqs.load( jo, src );
     bonuses.load( jo );
-}
-
-// Not implemented on purpose (martialart objects have no integer id)
-// int_id<T> string_id<mabuff>::id() const;
-
-/** @relates string_id */
-template<>
-const ma_buff &string_id<ma_buff>::obj() const
-{
-    return ma_buffs.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<ma_buff>::is_valid() const
-{
-    return ma_buffs.is_valid( *this );
 }
 
 void load_martial_art( const JsonObject &jo, const std::string &src )
@@ -342,23 +302,6 @@ void martialart::load( const JsonObject &jo, const std::string & )
 
     optional( jo, was_loaded, "arm_block_with_bio_armor_arms", arm_block_with_bio_armor_arms, false );
     optional( jo, was_loaded, "leg_block_with_bio_armor_legs", leg_block_with_bio_armor_legs, false );
-}
-
-// Not implemented on purpose (martialart objects have no integer id)
-// int_id<T> string_id<martialart>::id() const;
-
-/** @relates string_id */
-template<>
-const martialart &string_id<martialart>::obj() const
-{
-    return martialarts.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<martialart>::is_valid() const
-{
-    return martialarts.is_valid( *this );
 }
 
 std::vector<matype_id> all_martialart_types()
@@ -696,6 +639,7 @@ ma_technique::ma_technique()
     knockback_dist = 0;
     knockback_spread = 0; // adding randomness to knockback, like tec_throw
     powerful_knockback = false;
+    controlled_knockback = false;
     knockback_follow = false; // player follows the knocked-back party into their former tile
 
     // offensive
@@ -1505,6 +1449,11 @@ std::string ma_technique::get_description() const
     if( knockback_dist ) {
         dump += string_format( _( "* Will <info>knock back</info> enemies <stat>%d %s</stat>" ),
                                knockback_dist, vgettext( "tile", "tiles", knockback_dist ) ) + "\n";
+    }
+
+    if( controlled_knockback ) {
+        dump += _( "* Can <info>control</info> the knockback direction in manual combat mode." ) +
+                std::string( "\n" );
     }
 
     if( knockback_follow ) {

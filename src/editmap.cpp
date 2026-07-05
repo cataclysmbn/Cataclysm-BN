@@ -658,7 +658,8 @@ void editmap::draw_main_ui_overlay()
             for( int x = 0; x < 2; x++ ) {
                 for( int y = 0; y < 2; y++ ) {
                     const auto sm_pos = tripoint_bub_sm{ x, y, target.z() };
-                    submap *sm = tmpmap.get_submap_at_grid( sm_pos );
+                    submap *sm = tmpmap.get_mapbuffer().lookup_submap_in_memory(
+                                     map_local_to_abs( tmpmap, sm_pos ) );
                     if( sm ) {
                         const auto sm_origin = project_to<coords::ms>( sm_pos ) + origin_p.raw();
                         for( const auto &sp : sm->spawns ) {
@@ -1916,8 +1917,10 @@ void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
                     const auto dest_pos = tripoint_bub_sm( x, y, target.z() ) + target_sub;
                     const auto src_pos = tripoint_bub_sm{ x, y, target.z() };
 
-                    submap *destsm = here.get_submap_at_grid( dest_pos );
-                    submap *srcsm = tmpmap.get_submap_at_grid( src_pos );
+                    submap *destsm = here.get_mapbuffer().lookup_submap_in_memory(
+                                         map_local_to_abs( here, dest_pos ) );
+                    submap *srcsm = tmpmap.get_mapbuffer().lookup_submap_in_memory(
+                                        map_local_to_abs( tmpmap, src_pos ) );
 
                     submap::swap( *destsm,  *srcsm );
 
@@ -1936,7 +1939,8 @@ void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
             for( int x = 0; x < here.getmapsize(); x++ ) {
                 for( int y = 0; y < here.getmapsize(); y++ ) {
                     const auto dest_pos = tripoint_bub_sm( x, y, target.z() );
-                    const submap *destsm = here.get_submap_at_grid( dest_pos );
+                    const submap *destsm = here.get_mapbuffer().lookup_submap_in_memory(
+                                               map_local_to_abs( here, dest_pos ) );
                     here.update_vehicle_list( destsm, target.z() ); // update real map's vcaches
                 }
             }
@@ -1978,7 +1982,9 @@ vehicle *editmap::mapgen_veh_query( const tripoint_abs_omt &omt_tgt )
     std::vector<vehicle *> possible_vehicles;
     for( int x = 0; x < 2; x++ ) {
         for( int y = 0; y < 2; y++ ) {
-            submap *destsm = target_bay.get_submap_at_grid( tripoint_bub_sm{ x, y, target.z() } );
+            const auto pos = tripoint_bub_sm{ x, y, target.z() };
+            submap *destsm = target_bay.get_mapbuffer().lookup_submap_in_memory(
+                                 map_local_to_abs( target_bay, pos ) );
             for( const auto &vehicle : destsm->vehicles ) {
                 possible_vehicles.push_back( vehicle.get() );
             }
@@ -2011,7 +2017,9 @@ bool editmap::mapgen_veh_destroy( const tripoint_abs_omt &omt_tgt, vehicle *car_
     target_bay.load( project_to<coords::sm>( omt_tgt.xy() ), false );
     for( int x = 0; x < 2; x++ ) {
         for( int y = 0; y < 2; y++ ) {
-            submap *destsm = target_bay.get_submap_at_grid( tripoint_bub_sm{ x, y, target.z() } );
+            const auto pos = tripoint_bub_sm{ x, y, target.z() };
+            submap *destsm = target_bay.get_mapbuffer().lookup_submap_in_memory(
+                                 map_local_to_abs( target_bay, pos ) );
             for( auto &z : destsm->vehicles ) {
                 if( z.get() == car_target ) {
                     std::unique_ptr<vehicle> old_veh = target_bay.detach_vehicle( z.get() );

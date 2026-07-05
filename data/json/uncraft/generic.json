@@ -571,7 +571,7 @@
       [ [ "targeting_module", 1 ] ],
       [ [ "identification_module", 1 ] ],
       [ [ "omni_wheel", 1 ] ],
-      [ [ "copbot_chassis", 1 ] ],
+      [ [ "policebot_chassis", 1 ] ],
       [ [ "android_arms", 1 ] ],
       [ [ "power_supply", 4 ] ],
       [ [ "solar_cell", 2 ] ],
@@ -745,7 +745,7 @@
       [ [ "targeting_module", 1 ] ],
       [ [ "identification_module", 1 ] ],
       [ [ "omni_wheel", 1 ] ],
-      [ [ "copbot_chassis", 1 ] ],
+      [ [ "policebot_chassis", 1 ] ],
       [ [ "android_arms", 1 ] ],
       [ [ "power_supply", 4 ] ],
       [ [ "solar_cell", 2 ] ],
@@ -797,6 +797,30 @@
       [ [ "power_supply", 4 ] ],
       [ [ "solar_cell", 2 ] ],
       [ [ "m202_flash", 1 ] ],
+      [ [ "canister_empty", 1 ] ]
+    ]
+  },
+  {
+    "result": "broken_talon_m249",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "2 h",
+    "using": [ [ "soldering_standard", 20 ], [ "welding_standard", 5 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "ai_module", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "memory_module", 1 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "omni_wheel", 1 ] ],
+      [ [ "copbot_chassis", 1 ] ],
+      [ [ "gun_module", 1 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "solar_cell", 2 ] ],
+      [ [ "m249", 1 ] ],
       [ [ "canister_empty", 1 ] ]
     ]
   },
@@ -871,7 +895,7 @@
       [ [ "antenna", 1 ] ],
       [ [ "robot_controls", 1 ] ],
       [ [ "omni_wheel", 1 ] ],
-      [ [ "copbot_chassis", 1 ] ]
+      [ [ "policebot_chassis", 1 ] ]
     ]
   },
   {
@@ -1493,6 +1517,15 @@
     "time": "1 h",
     "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
     "components": [ [ [ "alloy_sheet", 10 ] ], [ [ "scrap", 60 ] ], [ [ "steel_chunk", 20 ] ] ]
+  },
+  {
+    "result": "policebot_chassis",
+    "type": "uncraft",
+    "skill_used": "mechanics",
+    "difficulty": 4,
+    "time": "1 h",
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [ [ [ "sheet_metal_small", 20 ] ], [ [ "scrap", 60 ] ], [ [ "steel_chunk", 20 ] ] ]
   },
   {
     "result": "android_chassis",

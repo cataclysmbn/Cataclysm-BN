@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -392,7 +393,7 @@ bool monexamine::pet_menu( monster &z )
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
-                get_player_character().melee_attack( z, true );
+                avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:
@@ -610,7 +611,7 @@ bool monexamine::mfriend_menu( monster &z )
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
-                get_player_character().melee_attack( z, true );
+                avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:
@@ -881,8 +882,9 @@ void monexamine::play_with( monster &z )
 {
     std::string pet_name = z.get_name();
     avatar &you = get_avatar();
-    int turns = rng( 50, 125 ) * 100;
+    const int turns = rng( 50, 125 ) * 100;
     you.assign_activity( ACT_PLAY_WITH_PET, turns );
+    you.activity->monsters.push_back( g->shared_from( z ) );
     you.activity->str_values.push_back( pet_name );
     z.add_effect( effect_ai_waiting, time_duration::from_turns( turns ) );
     z.on_pet_bonding( you.as_character() );

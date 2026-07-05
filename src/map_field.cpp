@@ -529,8 +529,6 @@ void map::player_in_field( player &u )
 
 void map::creature_in_field( Creature &critter )
 {
-    ZoneScoped;
-
     bool in_vehicle = false;
     bool inside_vehicle = false;
     player *u = critter.as_player();

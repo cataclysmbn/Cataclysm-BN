@@ -58,12 +58,13 @@
 #include "item_action.h"
 #include "item_category.h"
 #include "item_factory.h"
+#include "item_group.h"
 #include "json.h"
 #include "language.h"
 #include "loading_ui.h"
 #include "lru_cache.h"
-#include "magic.h"
-#include "magic_ter_furn_transform.h"
+#include "magic/magic.h"
+#include "magic/magic_ter_furn_transform.h"
 #include "map_extras.h"
 #include "mapbuffer.h"
 #include "map_feature_descriptions.h"
@@ -304,9 +305,7 @@ void DynamicDataLoader::initialize()
     add( "snippet", []( const JsonObject & jo ) {
         SNIPPET.load_snippet( jo );
     } );
-    add( "item_group", []( const JsonObject & jo ) {
-        item_controller->load_item_group( jo );
-    } );
+    add( "item_group", &Item_group::load_item_groups );
     add( "trait_group", []( const JsonObject & jo ) {
         mutation_branch::load_trait_group( jo );
     } );
@@ -314,8 +313,8 @@ void DynamicDataLoader::initialize()
         item_action_generator::generator().load_item_action( jo );
     } );
 
-    add( "vehicle_part",  &vpart_info::load );
-    add( "vehicle_color_palette",  &VehiclePalette::load );
+    add( "vehicle_part",  &vpart_info::load_vehicle_parts );
+    add( "vehicle_color_palette",  &VehiclePalette::load_palette );
     add( "vehicle",  &vehicle_prototype::load );
     add( "vehicle_group",  &VehicleGroup::load );
     add( "vehicle_placement",  &VehiclePlacement::load );
@@ -700,7 +699,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
                     requirement_data::finalize();
                 }
             },
-            { _( "Vehicle parts" ), &vpart_info::finalize },
+            { _( "Vehicle parts" ), &vpart_info::finalize_all },
             { _( "Traps" ), &trap::finalize },
             { _( "Terrain" ), &set_ter_ids },
             { _( "Furniture" ), &finalize_furn },
@@ -780,10 +779,11 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
                     item_controller->check_definitions();
                 }
             },
+            { _( "Item Group" ), &Item_group::check_all },
             { _( "Materials" ), &materials::check },
             { _( "Engine faults" ), &fault::check_consistency },
-            { _( "Vehicle parts" ), &vpart_info::check },
-            { _( "Vehicle palettes" ), &VehiclePalette::check },
+            { _( "Vehicle parts" ), &vpart_info::check_consistency },
+            { _( "Vehicle palettes" ), &VehiclePalette::check_definitions },
             { _( "Vehicle groups" ), &VehicleGroup::check },
             { _( "Mapgen definitions" ), &check_mapgen_definitions },
             { _( "Mapgen palettes" ), &mapgen_palette::check_definitions },
@@ -912,7 +912,7 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
 
     loader.finalize_loaded_data( ui );
 
-    cata::resolve_lua_bionic_and_mutation_callbacks();
+    cata::resolve_extra_lua_callbacks();
 
     for( const mod_id &mod : available ) {
         if( mod->lua_api_version ) {
@@ -1084,6 +1084,8 @@ auto init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
             load_and_finalize_packs( ui, _( "Checking mods" ), mods_list );
         } catch( const std::exception &err ) {
             std::cerr << "Error loading data: " << err.what() << '\n';
+        } catch( const JsonError &err ) {
+            debugmsg( "(json-error)\n%s", err.what() );
         }
 
         std::string world_name = world_generator->active_world->info->world_name;

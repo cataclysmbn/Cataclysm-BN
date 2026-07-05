@@ -245,7 +245,8 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
         }
     }
 
-    if( !get_option<bool>( "AIM_AFTER_FIRING" ) ) {
+    if( !get_option<bool>( "AIM_AFTER_FIRING" ) ||
+        who.recoil <= ranged::calculate_aim_cap( who, fin_trajectory.back() ) ) {
         restore_view();
         return;
     }
@@ -555,11 +556,12 @@ void dig_activity_actor::finish( player_activity &act, Character &who )
                       item_group::items_from( item_group_id( byproducts_item_group ),
                               calendar::turn ) );
 
-    const int act_exertion = act.moves_total;
+    const int act_exertion = moves_total;
 
     who.mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     who.mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     who.mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
+    who.mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
     if( grave ) {
         who.add_msg_if_player( m_good, _( "You finish exhuming a grave." ) );
     } else {
@@ -640,11 +642,12 @@ void dig_channel_activity_actor::finish( player_activity &act, Character &who )
                       item_group::items_from( item_group_id( byproducts_item_group ),
                               calendar::turn ) );
 
-    const int act_exertion = act.moves_total;
+    const int act_exertion = moves_total;
 
     who.mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     who.mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     who.mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
+    who.mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
     who.add_msg_if_player( m_good, _( "You finish digging up %s." ),
                            here.ter( location )->name() );
 

@@ -4,5 +4,12 @@
     "type": "vehicle_part",
     "copy-from": "wheel_caster",
     "rolling_resistance": 0.5
+  },
+  {
+    "id": "test_large_cargo_space",
+    "type": "vehicle_part",
+    "copy-from": "cargo_space",
+    "name": { "str": "TEST large cargo space" },
+    "size": "3000000 L"
   }
 ]

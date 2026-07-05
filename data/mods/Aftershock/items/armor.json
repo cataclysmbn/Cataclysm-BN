@@ -208,7 +208,7 @@
   },
   {
     "id": "xltac_fullhelmet",
-    "repairs_like": "xlkevlar",
+    "repairs_like": "kevlar",
     "type": "ARMOR",
     "category": "armor",
     "name": { "str": "XL tactical full helmet" },

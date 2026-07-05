@@ -17,6 +17,7 @@
 #include "item.h"
 #include "item_contents.h"
 #include "item_group.h"
+#include "item_group_readers.h"
 #include "itype.h"
 #include "json.h"
 #include "mission.h"
@@ -24,12 +25,15 @@
 #include "pldata.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 
 namespace
 {
 generic_factory<profession> all_profs( "profession" );
 const profession_id generic_profession_id( "unemployed" );
 } // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( profession, all_profs );
 
 static class json_item_substitution
 {
@@ -60,24 +64,11 @@ static class json_item_substitution
         std::vector<std::pair<itype_id, trait_requirements>> bonuses;
         std::vector<std::pair<item_group_id, trait_requirements>> itemgroup_bonuses;
     public:
-        std::vector<detached_ptr<item>> get_bonus_items( const std::vector<trait_id> &traits ) const;
+        std::vector<detached_ptr<item>> get_bonus_items( const std::vector<trait_id> &traits,
+                                     const std::set<itype_id> &no_bonus ) const;
         std::vector<detached_ptr<item>> get_substitution( const item &it,
                                      const std::vector<trait_id> &traits ) const;
 } item_substitutions;
-
-/** @relates string_id */
-template<>
-const profession &string_id<profession>::obj() const
-{
-    return all_profs.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<profession>::is_valid() const
-{
-    return all_profs.is_valid( *this );
-}
 
 profession::profession()
     : _name_male( no_translation( "null" ) ),
@@ -220,27 +211,14 @@ void profession::load( const JsonObject &jo, const std::string & )
     if( !was_loaded || jo.has_member( "items" ) ) {
         JsonObject items_obj = jo.get_object( "items" );
 
-        if( items_obj.has_array( "both" ) ) {
-            optional( items_obj, was_loaded, "both", legacy_starting_items, item_reader {} );
-        }
-        if( items_obj.has_object( "both" ) ) {
-            _starting_items = item_group::load_item_group( items_obj.get_member( "both" ), "collection" );
-        }
-        if( items_obj.has_array( "male" ) ) {
-            optional( items_obj, was_loaded, "male", legacy_starting_items_male, item_reader {} );
-        }
-        if( items_obj.has_object( "male" ) ) {
-            _starting_items_male = item_group::load_item_group( items_obj.get_member( "male" ), "collection" );
-        }
-        if( items_obj.has_array( "female" ) ) {
-            optional( items_obj, was_loaded, "female",  legacy_starting_items_female, item_reader {} );
-        }
-        if( items_obj.has_object( "female" ) ) {
-            _starting_items_female = item_group::load_item_group( items_obj.get_member( "female" ),
-                                     "collection" );
-        }
+        optional( items_obj, was_loaded, "both", _starting_items, itemgroup_reader( "collection" ),
+                  item_group::empty );
+        optional( items_obj, was_loaded, "male", _starting_items_male, itemgroup_reader( "collection" ),
+                  item_group::empty );
+        optional( items_obj, was_loaded, "female", _starting_items_female,
+                  itemgroup_reader( "collection" ), item_group::empty );
     }
-    optional( jo, was_loaded, "no_bonus", no_bonus );
+    optional( jo, was_loaded, "no_bonus", no_bonus, auto_flags_reader<itype_id> {} );
 
     optional( jo, was_loaded, "starting_cash", _starting_cash );
 
@@ -327,17 +305,19 @@ void profession::check_definition() const
     check_item_definitions( legacy_starting_items );
     check_item_definitions( legacy_starting_items_female );
     check_item_definitions( legacy_starting_items_male );
-    if( !no_bonus.is_empty() && !no_bonus.is_valid() ) {
-        debugmsg( "no_bonus item '%s' is not an itype_id", no_bonus.c_str() );
+    for( const auto &no_bonus_id : no_bonus ) {
+        if( !no_bonus_id.is_valid() ) {
+            debugmsg( "no_bonus item '%s' is not an itype_id", no_bonus_id.c_str() );
+        }
     }
 
-    if( !item_group::group_is_defined( _starting_items ) ) {
+    if( !_starting_items.is_valid() ) {
         debugmsg( "_starting_items group is undefined" );
     }
-    if( !item_group::group_is_defined( _starting_items_male ) ) {
+    if( !_starting_items_male.is_valid() ) {
         debugmsg( "_starting_items_male group is undefined" );
     }
-    if( !item_group::group_is_defined( _starting_items_female ) ) {
+    if( !_starting_items_female.is_valid() ) {
         debugmsg( "_starting_items_female group is undefined" );
     }
     if( _starting_vehicle && !_starting_vehicle.is_valid() ) {
@@ -484,7 +464,7 @@ std::vector<detached_ptr<item>> profession::items( bool male,
                    std::make_move_iterator( group_gender.begin() ),
                    std::make_move_iterator( group_gender.end() ) );
 
-    std::vector<detached_ptr<item>> bonus = item_substitutions.get_bonus_items( traits );
+    std::vector<detached_ptr<item>> bonus = item_substitutions.get_bonus_items( traits, no_bonus );
     result.insert( result.end(),
                    std::make_move_iterator( bonus.begin() ),
                    std::make_move_iterator( bonus.end() ) );
@@ -711,9 +691,9 @@ void json_item_substitution::load( const JsonObject &jo )
         }
     } else if( itemgroup_mode ) {
         if( jo.has_member( "bonus" ) ) {
-            itemgroup_bonuses.emplace_back( item_group::load_item_group( jo.get_member( "item_group" ),
-                                            "collection" ),
-                                            trait_requirements( jo.get_object( "bonus" ) ) );
+            item_group_id igroup_bonus;
+            mandatory( jo, false, "item_group", igroup_bonus, itemgroup_reader( "collection" ) );
+            itemgroup_bonuses.emplace_back( igroup_bonus, trait_requirements( jo.get_object( "bonus" ) ) );
         }
     } else {
         for( const JsonObject sub : jo.get_array( "sub" ) ) {
@@ -823,11 +803,11 @@ std::vector<detached_ptr<item>> json_item_substitution::get_substitution( const 
 }
 
 std::vector<detached_ptr<item>> json_item_substitution::get_bonus_items( const std::vector<trait_id>
-                             &traits ) const
+                             &traits, const std::set<itype_id> &no_bonus ) const
 {
     std::vector<detached_ptr<item>> ret;
     for( const auto &pair : bonuses ) {
-        if( pair.second.meets_condition( traits ) ) {
+        if( pair.second.meets_condition( traits ) && !no_bonus.contains( pair.first ) ) {
             auto bonus_item = item::spawn( pair.first, advanced_spawn_time(), item::default_charges_tag {} );
             if( !bonus_item->magazine_current() &&
                 bonus_item->magazine_default() != itype_id::NULL_ID() ) {
@@ -839,9 +819,11 @@ std::vector<detached_ptr<item>> json_item_substitution::get_bonus_items( const s
     for( const auto &pair : itemgroup_bonuses ) {
         if( pair.second.meets_condition( traits ) ) {
             auto items = item_group::items_from( pair.first );
-            ret.insert( ret.end(),
-                        std::make_move_iterator( items.begin() ),
-                        std::make_move_iterator( items.end() ) );
+            for( auto &bonus_item : items ) {
+                if( !no_bonus.contains( bonus_item->typeId() ) ) {
+                    ret.push_back( std::move( bonus_item ) );
+                }
+            }
         }
     }
     return ret;

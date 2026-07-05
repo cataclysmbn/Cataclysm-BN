@@ -34,6 +34,7 @@
 #include "itype.h"
 #include "line.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "messages.h"
@@ -90,9 +91,6 @@ static const efftype_id effect_deaf( "deaf" );
 static const efftype_id effect_narcosis( "narcosis" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_slept_through_alarm( "slept_through_alarm" );
-
-static const trait_id trait_HEAVYSLEEPER2( "HEAVYSLEEPER2" );
-static const trait_id trait_HEAVYSLEEPER( "HEAVYSLEEPER" );
 
 static const itype_id fuel_type_muscle( "muscle" );
 static const itype_id fuel_type_wind( "wind" );
@@ -1718,7 +1716,8 @@ bool map::build_absorption_cache( const int zlev )
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
 
             const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-            auto *cur_submap = get_submap_at_grid( sm_pos );
+            auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                   map_local_to_abs( *this, sm_pos ) );
             const auto sm_offset = project_to<coords::ms>( sm_pos );
 
             if( cur_submap == nullptr ) {
@@ -2727,17 +2726,16 @@ void sounds::process_sound_markers( Character *who )
             const int db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening );
             // See if we need to wake someone up
             // Remember we are working with dB spl volumes instead of tile volumes and dB spl is a logarithmic unit. 60dB is normal conversation, 80-100 is a car horn, ~160 is a gunshot, 180+ can kill a human.
-            // We want somewhat less swingy results, so use d10s
-            // Noise past 60dB should automatically wake up not heavy sleepers.
-            // Noise past 100dB should automatically wake up heavy sleepers.
-            // Noise past 120dB will cause pain and should automatically wake up heavy sleeper 2.
+            // Noise past +10 dB should automatically wake up normal sleepers.
+            // Noise past +40 dB should automatically wake up heavy sleepers.
+            // Noise past +60 dB will cause pain and should automatically wake up heavy sleeper 2.
             if( who->has_effect( effect_sleep ) ) {
-                if( ( ( !( who->has_trait( trait_HEAVYSLEEPER ) ||
-                           who->has_trait( trait_HEAVYSLEEPER2 ) ) && dice( 6, 10 ) <= db_vol ) ||
-                      ( who->has_trait( trait_HEAVYSLEEPER ) && dice( 10, 10 ) <= db_vol ) ||
-                      ( who->has_trait( trait_HEAVYSLEEPER2 ) && dice( 12, 10 ) <= db_vol ) ) &&
-                    !who->has_effect( effect_narcosis ) ) {
-                    //Not kidding about sleep-through-firefight
+                const int diff_db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening - tile_vol );
+                int wake_up_vol = 10;
+                wake_up_vol += who->bonus_from_enchantments( wake_up_vol,
+                               enchantment_value_id( "SLEEP_DB_RESIST" ) );
+
+                if( rng( wake_up_vol / 2, wake_up_vol ) <= db_vol && !who->has_effect( effect_narcosis ) ) {
                     who->wake_up();
                     who->add_msg_if_player( m_warning, _( "Something is making noise." ) );
                 } else {
@@ -2748,14 +2746,16 @@ void sounds::process_sound_markers( Character *who )
                                              element.sound.description;
 
             // don't print our own noise or things without descriptions
-            if( ( element.sound.from_monster || element.sound.from_player || element.sound.from_npc ) &&
-                ( element.sound.origin != who->bub_pos() ) &&
-                !get_map().pl_sees( element.sound.origin, distance_to_sound ) ) {
-                if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
-                    !get_safemode().is_sound_safe( element.sound.description, distance_to_sound ) ) {
-                    const std::string final_description = ensure_punctuation( description, '!' );
-                    const std::string query = string_format( _( "Heard %s!" ), final_description );
-                    g->cancel_activity_or_ignore_query( distraction_type::noise, query );
+            if( !element.sound.from_player ) {
+                if( ( element.sound.from_monster || element.sound.from_npc ) &&
+                    ( element.sound.origin != who->bub_pos() ) &&
+                    !get_map().pl_sees( element.sound.origin, distance_to_sound ) ) {
+                    if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
+                        !get_safemode().is_sound_safe( element.sound.description, distance_to_sound ) ) {
+                        const std::string final_description = ensure_punctuation( description, '!' );
+                        const std::string query = string_format( _( "Heard %s!" ), final_description );
+                        g->cancel_activity_or_ignore_query( distraction_type::noise, query );
+                    }
                 }
             }
 
@@ -2970,7 +2970,9 @@ std::vector<tripoint_bub_ms> sounds::get_footstep_markers()
     std::vector<tripoint_bub_ms> footsteps;
     footsteps.reserve( sound_markers.size() );
     for( const auto &mark : sound_markers ) {
-        footsteps.push_back( mark.first );
+        if( !g->u.sees( mark.first ) ) {
+            footsteps.push_back( mark.first );
+        }
     }
     return footsteps;
 }

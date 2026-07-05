@@ -21,6 +21,7 @@
 #include "string_id.h"
 #include "trait_group.h"
 #include "translations.h"
+#include "type_id_implement.h"
 
 using TraitGroupMap =
     std::map<trait_group::Trait_group_tag, shared_ptr_fast<Trait_group>>;
@@ -35,21 +36,11 @@ namespace
 generic_factory<mutation_branch> trait_factory( "trait" );
 } // namespace
 
+IMPLEMENT_STRING_AND_INT_IDS( mutation_branch, trait_factory );
+
 static std::vector<dream> all_dreams;
 std::map<mutation_category_id, std::vector<trait_id> > mutations_category;
 std::map<mutation_category_id, mutation_category_trait> mutation_category_traits;
-
-template<>
-const mutation_branch &string_id<mutation_branch>::obj() const
-{
-    return trait_factory.obj( *this );
-}
-
-template<>
-bool string_id<mutation_branch>::is_valid() const
-{
-    return trait_factory.is_valid( *this );
-}
 
 template<>
 bool string_id<Trait_group>::is_valid() const

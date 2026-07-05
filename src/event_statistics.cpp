@@ -18,6 +18,7 @@
 #include "json.h"
 #include "stats_tracker.h"
 #include "string_formatter.h"
+#include "type_id_implement.h"
 
 // event_transformation and event_statistic are both objects defined in json
 // and managed via generic_factory.
@@ -54,17 +55,9 @@ generic_factory<score> score_factory( "score" );
 
 } // namespace
 
-template<>
-const event_transformation &string_id<event_transformation>::obj() const
-{
-    return event_transformation_factory.obj( *this );
-}
-
-template<>
-bool string_id<event_transformation>::is_valid() const
-{
-    return event_transformation_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( event_transformation, event_transformation_factory );
+IMPLEMENT_STRING_AND_INT_IDS( event_statistic, event_statistic_factory );
+IMPLEMENT_STRING_AND_INT_IDS( score, score_factory );
 
 void event_transformation::load_transformation( const JsonObject &jo, const std::string &src )
 {
@@ -81,18 +74,6 @@ void event_transformation::reset()
     event_transformation_factory.reset();
 }
 
-template<>
-const event_statistic &string_id<event_statistic>::obj() const
-{
-    return event_statistic_factory.obj( *this );
-}
-
-template<>
-bool string_id<event_statistic>::is_valid() const
-{
-    return event_statistic_factory.is_valid( *this );
-}
-
 void event_statistic::load_statistic( const JsonObject &jo, const std::string &src )
 {
     event_statistic_factory.load( jo, src );
@@ -106,18 +87,6 @@ void event_statistic::check_consistency()
 void event_statistic::reset()
 {
     event_statistic_factory.reset();
-}
-
-template<>
-const score &string_id<score>::obj() const
-{
-    return score_factory.obj( *this );
-}
-
-template<>
-bool string_id<score>::is_valid() const
-{
-    return score_factory.is_valid( *this );
 }
 
 void score::load_score( const JsonObject &jo, const std::string &src )

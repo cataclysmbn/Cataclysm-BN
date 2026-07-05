@@ -49,7 +49,7 @@
 #include "iuse.h"
 #include "kill_tracker.h"
 #include "make_static.h"
-#include "magic_teleporter_list.h"
+#include "magic/magic_teleporter_list.h"
 #include "map.h"
 #include "map_memory.h"
 #include "martialarts.h"
@@ -219,6 +219,9 @@ void avatar::control_npc( npc &np )
     g->reset_light_level();
     // setpos() keeps the loaded map window aligned with the new avatar.
     setpos( controlled_npc_pos );
+    cata::run_hooks( "on_control_npc", [ & ]( auto & params ) {
+        params["npc"] = &np;
+    } );
 }
 
 void avatar::toggle_map_memory()
@@ -1288,8 +1291,12 @@ void avatar::set_movement_mode( character_movemode new_mode )
                     add_msg( _( "You nudge your steed into a steady trot." ) );
                 }
             } else {
-                // Spend moves to stand up if crouched, otherwise just stop running.
-                if( move_mode == CMM_CROUCH ) {
+                // Spend moves to stand up if crouched or prone, otherwise just stop running.
+                if( move_mode == CMM_PRONE ) {
+                    mod_moves( -300 );
+                    recoil = MAX_RECOIL;
+                    add_msg( _( "You get up from the ground." ) );
+                } else if( move_mode == CMM_CROUCH ) {
                     mod_moves( -100 );
                     recoil = MAX_RECOIL;
                     add_msg( _( "You stand up." ) );
@@ -1311,8 +1318,12 @@ void avatar::set_movement_mode( character_movemode new_mode )
                         add_msg( _( "You spur your steed into a gallop." ) );
                     }
                 } else {
-                    // Spend moves to stand up if crouched, otherwise just stop running.
-                    if( move_mode == CMM_CROUCH ) {
+                    // Spend moves to stand up if crouched or prone, otherwise just stop running.
+                    if( move_mode == CMM_PRONE ) {
+                        mod_moves( -300 );
+                        recoil = MAX_RECOIL;
+                        add_msg( _( "You get up from the ground and start running." ) );
+                    } else if( move_mode == CMM_CROUCH ) {
                         mod_moves( -100 );
                         recoil = MAX_RECOIL;
                         add_msg( _( "You stand up and start running." ) );
@@ -1342,11 +1353,45 @@ void avatar::set_movement_mode( character_movemode new_mode )
                 }
             } else {
                 // Don't spend moves if we were already crouching.
-                if( move_mode != CMM_CROUCH ) {
+                if( move_mode != CMM_CROUCH && move_mode != CMM_PRONE ) {
                     recoil = MAX_RECOIL;
                     mod_moves( -100 );
+                    add_msg( _( "You start crouching." ) );
+                } else if( move_mode == CMM_PRONE ) {
+                    recoil = MAX_RECOIL;
+                    mod_moves( -200 );
+                    add_msg( _( "You rise from prone to a crouch." ) );
                 }
-                add_msg( _( "You start crouching." ) );
+            }
+            break;
+        }
+        case CMM_PRONE: {
+            if( is_mounted() ) {
+                if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
+                    add_msg( m_bad, _( "Your mech cannot go prone." ) );
+                } else {
+                    add_msg( m_bad, _( "You cannot go prone while mounted." ) );
+                }
+                return;
+            }
+            if( controlling_vehicle ) {
+                add_msg( m_bad, _( "You cannot go prone while driving." ) );
+                return;
+            }
+            if( is_hauling() ) {
+                stop_hauling();
+            }
+            // Spend moves to go prone — cost depends on current stance
+            if( move_mode == CMM_CROUCH ) {
+                mod_moves( -200 );
+                recoil = MAX_RECOIL;
+                add_msg( _( "You go prone from a crouching position." ) );
+            } else if( move_mode != CMM_PRONE ) {
+                mod_moves( -300 );
+                recoil = MAX_RECOIL;
+                add_msg( _( "You drop to the ground." ) );
+            } else {
+                add_msg( _( "You are already prone." ) );
             }
             break;
         }
@@ -1354,8 +1399,9 @@ void avatar::set_movement_mode( character_movemode new_mode )
             return;
         }
     }
-    if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ) {
-        // crouching affects visibility
+    if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ||
+        move_mode == CMM_PRONE || new_mode == CMM_PRONE ) {
+        // crouching and prone affect visibility
         get_map().set_seen_cache_dirty( bub_pos().z() );
     }
     move_mode = new_mode;
@@ -1376,6 +1422,15 @@ void avatar::toggle_crouch_mode()
         set_movement_mode( CMM_WALK );
     } else {
         set_movement_mode( CMM_CROUCH );
+    }
+}
+
+void avatar::toggle_prone_mode()
+{
+    if( move_mode == CMM_PRONE ) {
+        set_movement_mode( CMM_WALK );
+    } else {
+        set_movement_mode( CMM_PRONE );
     }
 }
 

@@ -15,11 +15,13 @@
 #include "debug.h"
 #include "enum_conversions.h"
 #include "generic_factory.h"
+#include "generic_readers.h"
 #include "harvest.h"
 #include "iexamine.h"
 #include "int_id.h"
 #include "item.h"
 #include "item_group.h"
+#include "item_group_readers.h"
 #include "json.h"
 #include "make_static.h"
 #include "output.h"
@@ -29,6 +31,7 @@
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 
 static const std::string flag_TRANSPARENT( "TRANSPARENT" );
 
@@ -118,101 +121,8 @@ auto parse_fluid_grid_role( const std::string &role ) -> std::optional<fluid_gri
 
 } // namespace
 
-/** @relates int_id */
-template<>
-bool int_id<ter_t>::is_valid() const
-{
-    return terrain_data.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-const ter_t &int_id<ter_t>::obj() const
-{
-    return terrain_data.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const string_id<ter_t> &int_id<ter_t>::id() const
-{
-    return terrain_data.convert( *this );
-}
-
-/** @relates int_id */
-template<>
-int_id<ter_t> string_id<ter_t>::id() const
-{
-    return terrain_data.convert( *this, t_null );
-}
-
-/** @relates int_id */
-template<>
-int_id<ter_t>::int_id( const string_id<ter_t> &id ) : _id( id.id() )
-{
-}
-
-/** @relates string_id */
-template<>
-const ter_t &string_id<ter_t>::obj() const
-{
-    return terrain_data.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<ter_t>::is_valid() const
-{
-    return terrain_data.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-bool int_id<furn_t>::is_valid() const
-{
-    return furniture_data.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-const furn_t &int_id<furn_t>::obj() const
-{
-    return furniture_data.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const string_id<furn_t> &int_id<furn_t>::id() const
-{
-    return furniture_data.convert( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<furn_t>::is_valid() const
-{
-    return furniture_data.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const furn_t &string_id<furn_t>::obj() const
-{
-    return furniture_data.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<furn_t> string_id<furn_t>::id() const
-{
-    return furniture_data.convert( *this, f_null );
-}
-
-/** @relates int_id */
-template<>
-int_id<furn_t>::int_id( const string_id<furn_t> &id ) : _id( id.id() )
-{
-}
+IMPLEMENT_STRING_AND_INT_IDS( ter_t, terrain_data );
+IMPLEMENT_STRING_AND_INT_IDS( furn_t, furniture_data );
 
 static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { {
         { "DESTROY_ITEM",             TFLAG_DESTROY_ITEM },   // add/spawn_item*()
@@ -272,6 +182,7 @@ static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { 
         { "ELEVATOR",                 TFLAG_ELEVATOR },       // This is an elevator.
         { "NO_MEMORY",                TFLAG_NO_MEMORY },      // This should not be added to map memory
         { "ROAD",                     TFLAG_ROAD },           // Some floors have this flag, as do some passable transformation of otherwise impassible terrain/furniture. Very notably, open doors.
+        { "BASH_TRANSFORM",           TFLAG_BASH_TRANSFORM }, // Bashing this terrain/furniture but failing to destroy it has a chance to transform it, if it's capable of transforming.
     }
 };
 
@@ -306,9 +217,9 @@ static void load_map_bash_tent_centers( const JsonArray &ja, std::vector<furn_st
     }
 }
 
-static void correct_if_magic( std::optional<int> &val )
+static void correct_if_magic( std::optional<units::sound> &val )
 {
-    if( val && *val < 0 ) {
+    if( val && *val < 0_dB ) {
         val.reset();
     }
 }
@@ -316,7 +227,7 @@ static void correct_if_magic( std::optional<int> &val )
 map_bash_info::map_bash_info() : str_min( -1 ), str_max( -1 ),
     str_min_blocked( -1 ), str_max_blocked( -1 ),
     str_min_supported( -1 ), str_max_supported( -1 ),
-    explosive( 0 ), sound_vol( -1 ), sound_fail_vol( -1 ),
+    explosive( 0 ), sound_vol( -1_dB ), sound_fail_vol( -1_dB ),
     collapse_radius( 1 ), destroy_only( false ), bash_below( false ),
     drop_group( "EMPTY_GROUP" ),
     ter_set( ter_str_id::NULL_ID() ), furn_set( furn_str_id::NULL_ID() ) {}
@@ -359,9 +270,7 @@ void map_bash_info::deserialize( JsonIn &jsin )
     assign( jo, "move_cost", fd_bash_move_cost );
     assign( jo, "msg_success", field_bash_msg_success );
 
-    if( jo.has_member( "items" ) ) {
-        drop_group = item_group::load_item_group( jo.get_member( "items" ), "collection" );
-    }
+    itemgroup_reader( "collection" )( jo, "items", drop_group, false );
 
     if( jo.has_array( "tent_centers" ) ) {
         load_map_bash_tent_centers( jo.get_array( "tent_centers" ), tent_centers );
@@ -424,11 +333,7 @@ void map_dig_info::deserialize( JsonIn &jsin )
     assign( jo, "result_ter", result_ter );
     assign( jo, "num_minutes", num_minutes );
     // Support for individual items specified or an itemgroup
-    if( jo.has_array( "items" ) ) {
-        result_items = item_group::load_item_group( jo.get_member( "items" ), "collection" );
-    } else if( jo.has_string( "items" ) ) {
-        assign( jo, "items", result_items );
-    }
+    itemgroup_reader( "collection" )( jo, "items", result_items, false );
 }
 
 map_deconstruct_info::map_deconstruct_info() : can_do( false ), deconstruct_above( false ),
@@ -449,7 +354,7 @@ bool map_deconstruct_info::load( const JsonObject &jsobj, const std::string &mem
     can_do = true;
     deconstruct_above = j.get_bool( "deconstruct_above", false );
 
-    drop_group = item_group::load_item_group( j.get_member( "items" ), "collection" );
+    itemgroup_reader( "collection" )( j, "items", drop_group, false );
     return true;
 }
 
@@ -515,16 +420,14 @@ bool pry_result::load( const JsonObject &jsobj, const std::string &member,
             break;
     }
 
-    if( j.has_member( "pry_items" ) ) {
-        pry_items = item_group::load_item_group( j.get_member( "pry_items" ), "collection" );
-    } else {
-        pry_items = item_group_id( "EMPTY_GROUP" );
+    const auto &empty_group = item_group_id( "EMPTY_GROUP" );
+
+    if( !itemgroup_reader( "collection" )( j, "pry_items", pry_items, false ) ) {
+        pry_items = empty_group;
     }
 
-    if( j.has_member( "break_items" ) ) {
-        break_items = item_group::load_item_group( j.get_member( "break_items" ), "collection" );
-    } else {
-        break_items = item_group_id( "EMPTY_GROUP" );
+    if( !itemgroup_reader( "collection" )( j, "break_items", break_items, false ) ) {
+        break_items = empty_group;
     }
 
     j.read( "sound", sound );
@@ -1486,7 +1389,7 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
 
 static void check_bash_items( const map_bash_info &mbi, const std::string &id, bool is_terrain )
 {
-    if( !item_group::group_is_defined( mbi.drop_group ) ) {
+    if( !mbi.drop_group.is_valid() ) {
         debugmsg( "%s: bash result item group %s does not exist", id.c_str(), mbi.drop_group.c_str() );
     }
     if( mbi.str_max != -1 ) {
@@ -1511,7 +1414,7 @@ static void check_decon_items( const map_deconstruct_info &mbi, const std::strin
     if( !mbi.can_do ) {
         return;
     }
-    if( !item_group::group_is_defined( mbi.drop_group ) ) {
+    if( !mbi.drop_group.is_valid() ) {
         debugmsg( "%s: deconstruct result item group %s does not exist", id.c_str(),
                   mbi.drop_group.c_str() );
     }
@@ -1533,7 +1436,7 @@ static void check_pry_items( const pry_result &pry, const std::string &id,
     if( pry.pry_quality == -1 ) {
         return;
     }
-    if( !item_group::group_is_defined( pry.break_items ) ) {
+    if( !pry.break_items.is_valid() ) {
         debugmsg( "%s: pry breakage result item group %s does not exist", id.c_str(),
                   pry.break_items.c_str() );
     }

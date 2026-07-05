@@ -652,7 +652,7 @@
         [ "fanny", 1 ]
       ],
       [ [ "duct_tape", 150 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 16 ] ]
+      [ [ "kevlar_plate", 16 ] ]
     ]
   },
   {
@@ -665,7 +665,7 @@
     "reversible": true,
     "decomp_learn": 0,
     "autolearn": true,
-    "components": [ [ [ "modularvest", 1 ] ], [ [ "ceramic_armor", 4 ] ] ],
+    "components": [ [ [ "modularvest", 1 ] ], [ [ "ceramic_armor", 8 ] ] ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -704,7 +704,7 @@
     "reversible": true,
     "decomp_learn": 0,
     "autolearn": true,
-    "components": [ [ [ "modularvest", 1 ] ], [ [ "alloy_sheet", 4 ] ] ],
+    "components": [ [ [ "modularvest", 1 ] ], [ [ "alloy_sheet", 8 ] ] ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -1306,20 +1306,6 @@
     "components": [ [ [ "nylon", 10 ] ] ]
   },
   {
-    "result": "xlkevlar",
-    "type": "recipe",
-    "category": "CC_ARMOR",
-    "subcategory": "CSC_ARMOR_TORSO",
-    "skill_used": "tailor",
-    "difficulty": 6,
-    "time": "50 m",
-    "reversible": true,
-    "decomp_learn": 4,
-    "autolearn": true,
-    "using": [ [ "sewing_standard", 54 ] ],
-    "components": [ [ [ "kevlar_plate", 43 ] ] ]
-  },
-  {
     "result": "vest_leather",
     "type": "recipe",
     "id_suffix": "from_patches",
@@ -1460,7 +1446,7 @@
     "time": "1 h 11 m",
     "book_learn": [ [ "textbook_computer", 3 ], [ "advanced_electronics", 3 ], [ "reference_fabrication1", 3 ] ],
     "using": [ [ "3d_printing_standard", 71 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 710 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 510 ] ] ]
   },
   {
     "result": "waistcoat",

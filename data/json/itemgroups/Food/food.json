@@ -32,11 +32,13 @@
   {
     "type": "item_group",
     "id": "dry_goods",
+    "//": "mostly used for household spawns.",
     "ammo": 75,
     "magazine": 100,
     "subtype": "distribution",
     "entries": [
-      { "item": "flour", "prob": 50 },
+      { "item": "flour", "prob": 45, "charges": [ 5, 40 ] },
+      { "item": "flour", "prob": 5, "charges": [ 5, 120 ], "container-item": "box_medium" },
       { "item": "yeast", "prob": 50 },
       { "item": "cornmeal", "prob": 40 },
       { "item": "dry_meat", "prob": 10 },
@@ -210,7 +212,7 @@
       { "item": "soup_dumplings", "prob": 15 },
       { "item": "curry_veggy", "prob": 15 },
       { "item": "curry_meat", "prob": 15 },
-      { "item": "flour", "prob": 30 },
+      { "item": "flour", "prob": 30, "charges": [ 5, 40 ] },
       { "item": "milk_powder", "prob": 20 },
       { "item": "cornmeal", "prob": 30 },
       { "item": "powder_eggs", "prob": 20 },

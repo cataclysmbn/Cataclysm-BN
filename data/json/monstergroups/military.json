@@ -186,5 +186,17 @@
       { "monster": "mon_feral_human_pipe", "freq": 30, "cost_multiplier": 1 },
       { "monster": "mon_feral_soldier", "freq": 30, "cost_multiplier": 1 }
     ]
+  },
+  {
+    "name": "GROUP_PA_BOSSES",
+    "type": "monstergroup",
+    "default": "mon_feral_pa_boss",
+    "monsters": [
+      { "monster": "mon_feral_pa_boss", "freq": 25, "cost_multiplier": 0 },
+      { "monster": "mon_feral_pa_boss_melee", "freq": 50, "cost_multiplier": 0, "starts": 336 },
+      { "monster": "mon_feral_pa_boss_shotgun", "freq": 50, "cost_multiplier": 0, "starts": 336 },
+      { "monster": "mon_feral_pa_boss_grenade", "freq": 75, "cost_multiplier": 0, "starts": 1008 },
+      { "monster": "mon_feral_pa_boss_blaster", "freq": 75, "cost_multiplier": 0, "starts": 1008 }
+    ]
   }
 ]

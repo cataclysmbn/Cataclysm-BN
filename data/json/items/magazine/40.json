@@ -76,7 +76,7 @@
     "type": "MAGAZINE",
     "name": { "str": "Glock 22 magazine" },
     "description": "A compact light-weight polymer magazine for use with Glock pistols chambered for .40 S&W or .357 SIG.",
-    "weight": "125 g",
+    "weight": "80 g",
     "volume": "250 ml",
     "price": "32 USD",
     "price_postapoc": "1 USD",

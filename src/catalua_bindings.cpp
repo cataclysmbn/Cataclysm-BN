@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <ctime>
 #include <chrono>
 
@@ -41,6 +42,7 @@
 #include "units_angle.h"
 #include "units_energy.h"
 #include "units_mass.h"
+#include "units/sound.h"
 #include "units_volume.h"
 #include "vitamin.h"
 
@@ -126,14 +128,29 @@ void cata::detail::reg_units( sol::state &lua )
                 luna::no_constructor
             );
 
-        luna::set_fx( ut, "from_milliliter", &units::from_milliliter<int> );
-        luna::set_fx( ut, "from_liter", &units::from_liter<int> );
-        luna::set_fx( ut, "to_milliliter", &units::to_milliliter<int> );
+        luna::set_fx( ut, "from_milliliter", &units::from_milliliter<std::int64_t> );
+        luna::set_fx( ut, "from_liter", &units::from_liter<std::int64_t> );
+        luna::set_fx( ut, "to_milliliter", &units::to_milliliter<std::int64_t> );
         luna::set_fx( ut, "to_liter", &units::to_liter );
 
         luna::set_fx( ut, sol::meta_function::equal_to, &units::volume::operator== );
         luna::set_fx( ut, sol::meta_function::less_than, &units::volume::operator< );
         luna::set_fx( ut, sol::meta_function::less_than_or_equal_to, &units::volume::operator<= );
+    }
+    {
+        sol::usertype<units::sound> ut =
+            luna::new_usertype<units::sound>(
+                lua,
+                luna::no_bases,
+                luna::no_constructor
+            );
+
+        luna::set_fx( ut, "from_decibel", &units::from_decibel<int> );
+        luna::set_fx( ut, "to_decibel", &units::to_decibel<int> );
+
+        luna::set_fx( ut, sol::meta_function::equal_to, &units::sound::operator== );
+        luna::set_fx( ut, sol::meta_function::less_than, &units::sound::operator< );
+        luna::set_fx( ut, sol::meta_function::less_than_or_equal_to, &units::sound::operator<= );
     }
 }
 
@@ -265,6 +282,7 @@ void cata::detail::reg_technique( sol::state &lua )
         luna::set( ut, "knockback_dist", &ma_technique::knockback_dist );
         luna::set( ut, "knockback_spread", &ma_technique::knockback_spread );
         luna::set( ut, "powerful_knockback", &ma_technique::powerful_knockback );
+        luna::set( ut, "controlled_knockback", &ma_technique::controlled_knockback );
         luna::set( ut, "crit_tec", &ma_technique::crit_tec );
         luna::set( ut, "crit_ok", &ma_technique::crit_ok );
         luna::set( ut, "knockback_follow", &ma_technique::knockback_follow );
@@ -598,6 +616,12 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "Return false to prevent monster interaction actions from running.  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_try_monster_interaction", []( const sol::table & ) {} );
+
+    DOC( "Called when the player swaps control to an npc.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC being controlled.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_control_npc", []( const sol::table & ) {} );
 
     DOC( "Called just before the dialogue window opens and the first topic is chosen.  " );
     DOC( "The hook receives a table with keys:  " );

@@ -40,7 +40,7 @@ Cataclysm: Bright Nightsへの貢献は簡単です：
 
 ### C++
 
-コードスタイルは `astyle` によって強制されます。詳細は [CODE_STYLE](./../dev/explanation/code_style.md) を参照してください。
+C++ コードスタイルはリポジトリの formatter helper によって強制されます。コミット前に `just fmt` を実行してください。詳細は [CODE_STYLE](./../dev/explanation/code_style.md) を参照してください。
 
 ### JSON
 

@@ -1,5 +1,6 @@
 #include "game.h" // IWYU pragma: associated
 
+#include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <chrono>
@@ -20,6 +21,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "avatar_functions.h"
+#include "bodypart.h"
 #include "bionics.h"
 #include "bionics_ui.h"
 #include "calendar.h"
@@ -60,7 +62,7 @@
 #include "iuse.h"
 #include "lightmap.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "make_static.h"
 #include "map.h"
 #include "map_selector.h"
@@ -71,6 +73,7 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "mutation_ui.h"
+#include "npc.h"
 #include "options.h"
 #include "output.h"
 #include "overmap_ui.h"
@@ -90,6 +93,7 @@
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "translations.h"
+#include "travel/travel_destination.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include "utils/url.h"
@@ -121,6 +125,8 @@ static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
 static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
 
 static const efftype_id effect_alarm_clock( "alarm_clock" );
+static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_laserlocked( "laserlocked" );
 static const efftype_id effect_relax_gas( "relax_gas" );
 
@@ -130,6 +136,78 @@ static const itype_id itype_pistol_lanyard( "pistol_lanyard" );
 static const skill_id skill_melee( "melee" );
 
 static const quality_id qual_CUT( "CUT" );
+
+namespace
+{
+
+const flag_id flag_NO_GRAB( "NO_GRAB" );
+
+auto nearby_grabbed_creature( const avatar &you ) -> Creature *
+{
+    for( const auto &p : get_map().points_in_radius( you.bub_pos(), 1 ) ) {
+        Creature *const target = g->critter_at<Creature>( p, true );
+        if( target != nullptr && target != &you && target->has_effect( effect_grabbed ) ) {
+            return target;
+        }
+    }
+    return nullptr;
+}
+
+auto release_grabbed_creature( avatar &you ) -> bool
+{
+    if( !you.has_effect( effect_grabbing ) ) {
+        return false;
+    }
+
+    Creature *const target = nearby_grabbed_creature( you );
+    if( target != nullptr ) {
+        add_msg( _( "You release %s." ), target->disp_name() );
+        target->remove_effect( effect_grabbed );
+    } else {
+        add_msg( _( "You release your grip." ) );
+    }
+    you.remove_effect( effect_grabbing );
+    return true;
+}
+
+auto can_grab_creature( const Creature &target ) -> bool
+{
+    return !target.is_hallucination() && !target.has_effect_with_flag( flag_NO_GRAB ) &&
+           !target.has_effect( effect_grabbed ) && !target.has_flag( MF_GRAB_IMMUNE );
+}
+
+auto confirm_grab_npc( const npc &target ) -> bool
+{
+    return target.is_enemy() ||
+           query_yn( _( "You may be attacked!  Proceed?" ) );
+}
+
+auto grab_creature( avatar &you, Creature &target ) -> void
+{
+    if( !can_grab_creature( target ) ) {
+        add_msg( m_info, _( "You can't grab %s." ), target.disp_name() );
+        return;
+    }
+
+    if( npc *const guy = target.as_npc(); guy != nullptr && !confirm_grab_npc( *guy ) ) {
+        return;
+    }
+
+    if( monster *const mon = target.as_monster() ) {
+        mon->on_hit( &you, body_part_torso.id(), nullptr, false );
+    } else if( npc *const guy = target.as_npc(); guy != nullptr && !guy->is_enemy() ) {
+        guy->make_angry();
+    }
+
+    const auto grab_strength = std::clamp( you.get_str() / 2, 1, 15 );
+    target.add_effect( effect_grabbed, 1_days, body_part_torso, grab_strength );
+    you.add_effect( effect_grabbing, 1_days, body_part_torso, grab_strength );
+    you.mod_moves( -100 );
+    you.mod_stamina( -std::max( 50, grab_strength * 20 ) );
+    add_msg( _( "You grab %s." ), target.disp_name() );
+}
+
+} // namespace
 
 static const bionic_id bio_remote( "bio_remote" );
 
@@ -651,6 +729,10 @@ static void grab()
     avatar &you = g->u;
     map &here = get_map();
 
+    if( release_grabbed_creature( you ) ) {
+        return;
+    }
+
     if( you.get_grab_type() != OBJECT_NONE ) {
         if( const auto target = vehicle_grab_target_at( here, you.bub_pos() + you.grab_point ) ) {
             add_msg( _( "You release the %s." ), target->vp.vehicle().name );
@@ -674,7 +756,9 @@ static void grab()
         you.grab( OBJECT_NONE );
         return;
     }
-    if( const auto target = vehicle_grab_target_at( here, grabp ) ) {
+    if( Creature *const target = g->critter_at<Creature>( grabp, false ) ) {
+        grab_creature( you, *target );
+    } else if( const auto target = vehicle_grab_target_at( here, grabp ) ) {
         if( !target->vp.vehicle().handle_potential_theft( get_avatar() ) ) {
             return;
         }
@@ -784,7 +868,7 @@ static void smash()
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
             sound_event se;
             se.origin = smashp;
-            se.volume = bash_info.sound_vol.value_or( 0 );
+            se.volume = units::to_decibel( bash_info.sound_vol.value_or( 0_dB ) );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound.translated();
             se.id = "smash";
@@ -799,7 +883,7 @@ static void smash()
         } else {
             sound_event se;
             se.origin = smashp;
-            se.volume = bash_info.sound_fail_vol.value_or( 0 );
+            se.volume = units::to_decibel( bash_info.sound_fail_vol.value_or( 0_dB ) );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound_fail.translated();
             se.id = "smash";
@@ -1575,7 +1659,8 @@ static void open_movement_mode_menu()
     as_m.entries.emplace_back( CMM_RUN, true, 'r', _( "Run" ) );
     as_m.entries.emplace_back( CMM_WALK, true, 'w', _( "Walk" ) );
     as_m.entries.emplace_back( CMM_CROUCH, true, 'c', _( "Crouch" ) );
-    as_m.entries.emplace_back( CMM_COUNT, true, '"', _( "Cycle move mode (run/walk/crouch)" ) );
+    as_m.entries.emplace_back( CMM_PRONE, true, 'p', _( "Prone" ) );
+    as_m.entries.emplace_back( CMM_COUNT, true, '"', _( "Cycle move mode" ) );
     as_m.selected = 1;
     as_m.query();
 
@@ -1871,13 +1956,13 @@ bool game::handle_action()
             const std::optional<tripoint_bub_ms> mouse_pos = ctxt.get_coordinates( w_terrain );
             if( !mouse_pos ) {
                 return false;
-            } else if( !u.sees( *mouse_pos ) ) {
-                // Not clicked in visible terrain
-                return false;
             }
             mouse_target = mouse_pos;
 
             if( act == ACTION_SELECT ) {
+                if( !avatar_knows_travel_destination( u, *mouse_target ) ) {
+                    return false;
+                }
                 // Note: The following has the potential side effect of
                 // setting auto-move destination state in addition to setting
                 // act.
@@ -1885,6 +1970,10 @@ bool game::handle_action()
                     return false;
                 }
             } else if( act == ACTION_SEC_SELECT ) {
+                if( !u.sees( *mouse_target ) ) {
+                    // Right-click actions examine or target current terrain and creatures.
+                    return false;
+                }
                 if( !try_get_right_click_action( act, *mouse_target ) ) {
                     return false;
                 }
@@ -2023,6 +2112,10 @@ bool game::handle_action()
                 u.toggle_crouch_mode();
                 break;
 
+            case ACTION_TOGGLE_PRONE:
+                u.toggle_prone_mode();
+                break;
+
             case ACTION_OPEN_MOVEMENT:
                 open_movement_mode_menu();
                 break;
@@ -2036,6 +2129,7 @@ bool game::handle_action()
             case ACTION_MOVE_LEFT:
             case ACTION_MOVE_FORTH_LEFT: {
                 ZoneScopedN( "handle_action_movement" );
+                character_funcs::search_surroundings( u );
                 if( !u.get_value( "remote_controlling" ).empty() &&
                     ( u.has_active_item_with_action( "RADIOCONTROL" ) ||
                       u.has_active_bionic( bio_remote ) ) ) {
@@ -2999,6 +3093,10 @@ bool game::handle_action()
 
             case ACTION_AUTOATTACK:
                 avatar_action::autoattack( u, m );
+                break;
+
+            case ACTION_TOGGLE_MANUAL_COMBAT_MODE:
+                avatar_action::toggle_manual_combat_mode();
                 break;
 
             default:

@@ -69,12 +69,12 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
-#include "magic_teleporter_list.h"
+#include "magic/magic_teleporter_list.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "map_selector.h"
-#include "map_functions.h"
-#include "map_utils.h"
+#include "map/utils/map_functions.h"
+#include "map/utils/map_utils.h"
 #include "mapdata.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
@@ -271,8 +271,9 @@ void iexamine::cvdmachine( player &p, const tripoint_bub_ms & )
     }
 
     // Require materials proportional to selected item volume
-    auto qty = loc->volume() / units::legacy_volume_factor;
-    qty = std::max( 1, qty );
+    const auto volume_ratio = loc->volume() / units::legacy_volume_factor;
+    const auto volume_qty = std::max( volume_ratio, decltype( volume_ratio ) { 1 } );
+    const auto qty = static_cast<int>( std::min( volume_qty, decltype( volume_qty ) { INT_MAX } ) );
     auto reqs = *requirement_id( "cvd_diamond" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
@@ -347,8 +348,12 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
         menu.text = _( "Choose a recipe:" );
         for( size_t i = 0; i < recipe_ids.size(); ++i ) {
             itype_id item = itype_id( recipe_ids[i] );
+            const auto volume_ratio = item->volume / 250_ml;
+            const auto min_charge_units = decltype( volume_ratio ) { 1 };
+            const auto max_charge_units = decltype( volume_ratio ) { INT_MAX / 5 };
+            const auto charge_units = std::clamp( volume_ratio, min_charge_units, max_charge_units );
             auto button_text = string_format( "%s [%d]", item->nname( 1 ),
-                                              std::max( 1, item->volume / 250_ml ) * 5 );
+                                              static_cast<int>( charge_units * 5 ) );
             menu.addentry( i, true, -1, button_text );
         }
         menu.query();
@@ -380,7 +385,9 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
         new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn, item_count );
     }
 
-    auto qty = std::max( 1, new_item->volume() / 250_ml );
+    const auto volume_ratio = new_item->volume() / 250_ml;
+    const auto requested_qty = std::max( volume_ratio, decltype( volume_ratio ) { 1 } );
+    const auto qty = static_cast<int>( std::min( requested_qty, decltype( requested_qty ) { INT_MAX } ) );
     auto reqs = *requirement_id( "nanofabricator" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
@@ -1416,7 +1423,7 @@ void iexamine::deployed_furniture( player &p, const tripoint_bub_ms &pos )
     }
     p.add_msg_if_player( m_info, _( "You take down the %s." ),
                          here.furn( pos ).obj().name() );
-    take_down_deployed_furniture( pos, pos );
+    map_funcs::take_down_deployed_furniture( pos, pos );
 }
 
 static std::pair<itype_id, const deploy_tent_actor *> find_tent_itype( const furn_str_id &id )
@@ -1950,7 +1957,7 @@ void iexamine::transform( player &p, const tripoint_bub_ms &pos )
             case 2: {
                 add_msg( m_info, _( "You take down the %s." ),
                          g->m.furnname( pos ) );
-                take_down_deployed_furniture( pos, pos );
+                map_funcs::take_down_deployed_furniture( pos, pos );
                 return;
             }
             case 3: {
@@ -3340,7 +3347,7 @@ void iexamine::fireplace( player &p, const tripoint_bub_ms &examp )
             }
             p.add_msg_if_player( m_info, _( "You take down the %s." ),
                                  here.furnname( examp ) );
-            take_down_deployed_furniture( examp, examp );
+            map_funcs::take_down_deployed_furniture( examp, examp );
             return;
         }
         case 4: {
@@ -5759,7 +5766,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
         case ledge_action::pull_up_rope: {
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
                                  below_rope_name.value_or( std::string{} ) );
-            take_down_deployed_furniture( buffer, below_rope, p.abs_pos() );
+            map_funcs::take_down_deployed_furniture( buffer, below_rope, p.abs_pos() );
             break;
         }
         case ledge_action::spin_web_bridge: {

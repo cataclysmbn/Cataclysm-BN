@@ -20,6 +20,7 @@
 #include "generic_factory.h"
 #include "item.h"
 #include "item_group.h"
+#include "item_group_readers.h"
 #include "json.h"
 #include "mattack_actors.h"
 #include "monattack.h"
@@ -80,6 +81,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_NOHEAD: return "NOHEAD";
         case MF_HARDTOSHOOT: return "HARDTOSHOOT";
         case MF_GRABS: return "GRABS";
+        case MF_GRAB_IMMUNE: return "GRAB_IMMUNE";
         case MF_BASHES: return "BASHES";
         case MF_GROUP_BASH: return "GROUP_BASH";
         case MF_DESTROYS: return "DESTROYS";
@@ -209,6 +211,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_FACTION_MEMORY: return "FACTION_MEMORY";
         case MF_COMBAT_MOUNT: return "COMBAT_MOUNT";
         case MF_CANT_TRAIN: return "CANT_TRAIN";
+        case MF_POLICE_EYEBOT: return "POLICE_EYEBOT";
         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
@@ -219,6 +222,7 @@ std::string enum_to_string<m_flag>( m_flag data )
 
 } // namespace io
 
+// TODO: Make this like any other generic factory so we can use type_id_implement
 /** @relates string_id */
 template<>
 const mtype &string_id<mtype>::obj() const
@@ -885,14 +889,10 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         melee_damage.add_damage( DT_CUT, bonus_cut );
     }
 
-    if( jo.has_member( "monster_weapon" ) ) {
-        monster_weapon = item_group::load_item_group( jo.get_member( "monster_weapon" ),
-                         "distribution" );
-    }
-    if( jo.has_member( "death_drops" ) ) {
-        death_drops = item_group::load_item_group( jo.get_member( "death_drops" ),
-                      "distribution" );
-    }
+    optional( jo, was_loaded, "monster_weapon", monster_weapon, itemgroup_reader( "distribution" ),
+              item_group::empty );
+    optional( jo, was_loaded, "death_drops", death_drops, itemgroup_reader( "distribution" ),
+              item_group::empty );
 
     assign( jo, "harvest", harvest );
 
@@ -1559,7 +1559,7 @@ void MonsterGenerator::check_monster_definitions() const
                 debugmsg( "monster %s has invalid species %s", mon.id.c_str(), spec.c_str() );
             }
         }
-        if( mon.death_drops && !item_group::group_is_defined( mon.death_drops ) ) {
+        if( mon.death_drops && !mon.death_drops.is_valid() ) {
             debugmsg( "monster %s has unknown death drop item group: %s", mon.id.c_str(),
                       mon.death_drops.c_str() );
         }
@@ -1580,7 +1580,7 @@ void MonsterGenerator::check_monster_definitions() const
             debugmsg( "monster %s has unknown mech_battery: %s", mon.id.c_str(),
                       mon.mech_battery.c_str() );
         }
-        if( mon.monster_weapon && !item_group::group_is_defined( mon.monster_weapon ) ) {
+        if( mon.monster_weapon && !mon.monster_weapon.is_valid() ) {
             debugmsg( "monster %s has unknown monster weapon item group: %s", mon.id.c_str(),
                       mon.monster_weapon.c_str() );
         }

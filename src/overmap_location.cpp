@@ -11,6 +11,7 @@
 #include "omdata.h"
 #include "overmap.h"
 #include "rng.h"
+#include "type_id_implement.h"
 
 namespace
 {
@@ -19,17 +20,7 @@ generic_factory<overmap_location> locations( "overmap location" );
 
 } // namespace
 
-template<>
-bool string_id<overmap_location>::is_valid() const
-{
-    return locations.is_valid( *this );
-}
-
-template<>
-const overmap_location &string_id<overmap_location>::obj() const
-{
-    return locations.obj( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( overmap_location, locations );
 
 bool overmap_location::test( const oter_id &oter ) const
 {

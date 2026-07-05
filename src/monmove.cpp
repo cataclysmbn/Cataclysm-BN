@@ -40,6 +40,7 @@
 #include "line.h"
 #include "make_static.h"
 #include "map.h"
+#include "map/utils/map_functions.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "mattack_common.h"
@@ -359,7 +360,11 @@ bool monster::can_squeeze_to( const tripoint_bub_ms &p ) const
 
 bool monster::can_move_to( const tripoint_bub_ms &p ) const
 {
-    return can_reach_to( p ) && will_move_to( p );
+    if( p == bub_pos() ) {
+        return true;
+    }
+    return !has_effect( effect_grabbed ) && can_reach_to( p ) && will_move_to( p ) &&
+           !has_flag( MF_STATIONARY );
 }
 
 void monster::set_dest( const tripoint_bub_ms &p )
@@ -1780,8 +1785,11 @@ void monster::execute_action( const monster_action_t &action )
         }
         case monster_action_kind::open_door: {
             ZoneScopedN( "mon_execute_open_door" );
-            did_something = !pacified && can_open_doors &&
-                            here.open_door( this, dest, !here.is_outside( bub_pos() ) );
+            if( !pacified && can_open_doors ) {
+                did_something = is_hallucination()
+                                ? move_to( dest, false, false, resolved_action.stagger_adjust )
+                                : here.open_door( this, dest, !here.is_outside( bub_pos() ) );
+            }
             break;
         }
         case monster_action_kind::bash: {
@@ -1939,7 +1947,7 @@ void monster::nursebot_operate( player *dragged_foe )
 // Values converted from tiles to dB
 void monster::footsteps( const tripoint_bub_ms &p )
 {
-    if( made_footstep ) {
+    if( is_hallucination() || made_footstep ) {
         return;
     }
     made_footstep = true;
@@ -2328,18 +2336,16 @@ bool monster::attack_at( const tripoint_bub_ms &p )
     if( has_flag( MF_PACIFIST ) ) {
         return false;
     }
-    if( p.z() != bub_pos().z() ) {
-        auto &here = get_map();
-        const auto upper_z = std::max( p.z(), bub_pos().z() );
-        const auto vehicle_floor_between =
-            here.veh_at( tripoint_bub_ms( bub_pos().xy(), upper_z ) ).part_with_feature( "BOARDABLE",
-                    true ).has_value() ||
-            here.veh_at( tripoint_bub_ms( p.xy(), upper_z ) ).part_with_feature( "BOARDABLE",
-                    true ).has_value();
-
-        if( here.floor_between( bub_pos(), p ) || vehicle_floor_between ) {
-            return false;
-        }
+    if( p.z() != bub_pos().z() && !map_funcs::physical_clear_path( {
+    .m = get_map(),
+        .from = bub_pos(),
+        .to = p,
+        .range = rl_dist( bub_pos(), p ),
+        .cost_min = 0,
+        .cost_max = 100,
+        .require_clear_path = false,
+    } ) ) {
+        return false;
     }
 
     if( p == g->u.bub_pos() ) {
@@ -2965,6 +2971,9 @@ int monster::turns_to_reach( const point_bub_ms &p )
 void monster::shove_vehicle( const tripoint_bub_ms &remote_destination,
                              const tripoint_bub_ms &nearby_destination )
 {
+    if( is_hallucination() ) {
+        return;
+    }
     if( this->has_flag( MF_PUSH_VEH ) ) {
         auto vp = g->m.veh_at( nearby_destination );
         if( vp ) {

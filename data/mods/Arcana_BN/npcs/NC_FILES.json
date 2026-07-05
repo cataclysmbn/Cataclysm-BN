@@ -912,8 +912,7 @@
     "magazine": 100,
     "items": [
       [ "sten", 15 ],
-      [ "surv_six_shooter", 10 ],
-      [ "surv_hand_cannon", 10 ],
+      [ "handmade_revolver", 10 ],
       [ "2_shot_special", 10 ],
       [ "ruger_mini", 5 ],
       [ "knife_butcher", 10 ],

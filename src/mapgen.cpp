@@ -43,10 +43,11 @@
 #include "item.h"
 #include "item_factory.h"
 #include "item_group.h"
+#include "item_group_readers.h"
 #include "itype.h"
 #include "json.h"
 #include "line.h"
-#include "magic_ter_furn_transform.h"
+#include "magic/magic_ter_furn_transform.h"
 #include "map.h"
 #include "map_extras.h"
 #include "map_iterator.h"
@@ -2071,8 +2072,7 @@ class jmapgen_item_group : public jmapgen_piece
         item_group_id group_id;
         jmapgen_int chance;
         jmapgen_item_group( const JsonObject &jsi ) : chance( jsi, "chance", 1, 1 ) {
-            JsonValue group = jsi.get_member( "item" );
-            group_id = item_group::load_item_group( group, "collection" );
+            itemgroup_reader( "collection" )( jsi, "item", group_id, false );
             repeat = jmapgen_int( jsi, "repeat", 1, 1 );
         }
         void check( const std::string &context, const mapgen_parameters & ) const override {
@@ -5825,7 +5825,7 @@ std::vector<item *> map::place_items( const item_group_id &loc, const int chance
         debugmsg( "map::place_items() called with an invalid chance (%d)", chance );
         return res;
     }
-    if( !item_group::group_is_defined( loc ) ) {
+    if( !loc.is_valid() ) {
         it = itype_id( loc.str() );
         if( !it.is_valid() ) {
             const tripoint_abs_omt omt( project_to<coords::omt>( get_avatar().abs_pos() ) );
@@ -6037,7 +6037,7 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
 
     if( placed_vehicle != nullptr ) {
         const auto placed_vehicle_sm = abs_to_map_local( *this, placed_vehicle->abs_sm_pos );
-        auto *place_on_submap = get_submap_at_grid( placed_vehicle_sm );
+        auto *place_on_submap = get_mapbuffer().lookup_submap_in_memory( placed_vehicle->abs_sm_pos );
         place_on_submap->vehicles.push_back( std::move( placed_vehicle_up ) );
         place_on_submap->is_uniform = false;
         invalidate_max_populated_zlev( placed_vehicle_sm.z() );
@@ -6165,12 +6165,13 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
 
 computer *map::add_computer( const tripoint_bub_ms &p, const std::string &name, int security )
 {
-    // TODO: Turn this off?
-    ter_set( p, t_console );
-    point_sm_ms l;
-    submap *const place_on_submap = get_submap_at( p, l );
-    place_on_submap->set_computer( l, computer( name, security ) );
-    return place_on_submap->get_computer( l );
+    return get_mapbuffer().add_computer( map_local_to_abs( *this, p ), {
+        .name = name,
+        .security = security,
+        .lookup = {
+            .mode = mapbuffer_lookup_mode::resident_only,
+        },
+    } );
 }
 
 /**
@@ -6223,8 +6224,8 @@ void map::rotate( int turns, const bool setpos_safe )
     //
     auto swap_submaps = [&]( const tripoint_bub_sm & p1, const tripoint_bub_sm & p2 ) {
 
-        submap *sm1 = get_submap_at_grid( p1 );
-        submap *sm2 = get_submap_at_grid( p2 );
+        submap *sm1 = get_mapbuffer().lookup_submap_in_memory( map_local_to_abs( *this, p1 ) );
+        submap *sm2 = get_mapbuffer().lookup_submap_in_memory( map_local_to_abs( *this, p2 ) );
         submap::swap( *sm1, *sm2 );
 
     };
@@ -6249,7 +6250,7 @@ void map::rotate( int turns, const bool setpos_safe )
     for( int j = 0; j < 2; ++j ) {
         for( int i = 0; i < 2; ++i ) {
             tripoint_bub_sm p( i, j, player_pos.z() );
-            auto sm = get_submap_at_grid( p );
+            auto sm = get_mapbuffer().lookup_submap_in_memory( map_local_to_abs( *this, p ) );
 
             sm->rotate( turns );
 

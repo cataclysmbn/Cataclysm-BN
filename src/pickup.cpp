@@ -760,7 +760,7 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
 
             if( selected >= 0 && selected <= static_cast<int>( stacked_here.size() ) - 1 ) {
                 item *loc = *stacked_here[matches[selected]].front();
-                temperature_flag temperature = rot::temperature_flag_for_location( get_map(), *loc );
+                temperature_flag temperature = rot::temp::for_location( get_map(), *loc );
 
                 std::vector<iteminfo> this_item = selected_item.info( temperature );
 

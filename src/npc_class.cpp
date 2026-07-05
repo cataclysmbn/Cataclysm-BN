@@ -17,6 +17,7 @@
 #include "rng.h"
 #include "skill.h"
 #include "trait_group.h"
+#include "type_id_implement.h"
 #include "json.h"
 
 static const std::array<npc_class_id, 19> legacy_ids = {{
@@ -64,19 +65,7 @@ npc_class_id NC_HALLU( "NC_HALLU" );
 
 generic_factory<npc_class> npc_class_factory( "npc_class" );
 
-/** @relates string_id */
-template<>
-const npc_class &string_id<npc_class>::obj() const
-{
-    return npc_class_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<npc_class>::is_valid() const
-{
-    return npc_class_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( npc_class, npc_class_factory );
 
 npc_class::npc_class() : id( NC_NONE )
 {
@@ -138,19 +127,19 @@ void npc_class::check_consistency()
     }
 
     for( auto &cl : npc_class_factory.get_all() ) {
-        if( !item_group::group_is_defined( cl.shopkeeper_item_group ) ) {
+        if( !cl.shopkeeper_item_group.is_valid() ) {
             debugmsg( "Missing shopkeeper item group %s", cl.shopkeeper_item_group.c_str() );
         }
 
-        if( cl.worn_override && !item_group::group_is_defined( cl.worn_override ) ) {
+        if( cl.worn_override && !cl.worn_override.is_valid() ) {
             debugmsg( "Missing worn override item group %s", cl.worn_override.c_str() );
         }
 
-        if( cl.carry_override && !item_group::group_is_defined( cl.carry_override ) ) {
+        if( cl.carry_override && !cl.carry_override.is_valid() ) {
             debugmsg( "Missing carry override item group %s", cl.carry_override.c_str() );
         }
 
-        if( cl.weapon_override && !item_group::group_is_defined( cl.weapon_override ) ) {
+        if( cl.weapon_override && !cl.weapon_override.is_valid() ) {
             debugmsg( "Missing weapon override item group %s", cl.weapon_override.c_str() );
         }
 

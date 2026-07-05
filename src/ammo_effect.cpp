@@ -6,6 +6,7 @@
 #include "generic_factory.h"
 #include "int_id.h"
 #include "json.h"
+#include "type_id_implement.h"
 
 namespace
 {
@@ -14,53 +15,7 @@ generic_factory<ammo_effect> all_ammo_effects( "ammo effects" );
 
 } // namespace
 
-/** @relates int_id */
-template<>
-bool int_id<ammo_effect>::is_valid() const
-{
-    return all_ammo_effects.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-const ammo_effect &int_id<ammo_effect>::obj() const
-{
-    return all_ammo_effects.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const string_id<ammo_effect> &int_id<ammo_effect>::id() const
-{
-    return all_ammo_effects.convert( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<ammo_effect>::is_valid() const
-{
-    return all_ammo_effects.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const ammo_effect &string_id<ammo_effect>::obj() const
-{
-    return all_ammo_effects.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<ammo_effect> string_id<ammo_effect>::id() const
-{
-    return all_ammo_effects.convert( *this, AE_NULL );
-}
-
-/** @relates int_id */
-template<>
-int_id<ammo_effect>::int_id( const string_id<ammo_effect> &id ) : _id( id.id() )
-{
-}
+IMPLEMENT_STRING_AND_INT_IDS( ammo_effect, all_ammo_effects );
 
 void ammo_effect::load( const JsonObject &jo, const std::string & )
 {

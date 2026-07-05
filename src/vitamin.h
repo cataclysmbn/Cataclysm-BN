@@ -30,18 +30,14 @@ struct enum_traits<vitamin_type> {
 class vitamin
 {
     public:
-        vitamin() : id_( vitamin_id( "null" ) ), rate_( 1_hours ) {}
-
-        const vitamin_id &id() const {
-            return id_;
-        }
+        vitamin() : rate_( 1_hours ) {}
 
         const vitamin_type &type() const {
             return type_;
         }
 
         bool is_null() const {
-            return id_ == vitamin_id( "null" );
+            return id == vitamin_id::NULL_ID();
         }
 
         std::string name() const {
@@ -84,19 +80,24 @@ class vitamin
         int severity( int qty ) const;
 
         /** Load vitamin from JSON definition */
-        static void load_vitamin( const JsonObject &jo );
+        static void load_vitamin( const JsonObject &jo, const std::string &src );
+
+        void load( const JsonObject &jo, const std::string &src );
 
         /** Get all currently loaded vitamins */
-        static const std::map<vitamin_id, vitamin> &all();
+        static const std::vector<vitamin> &all();
 
         /** Check consistency of all loaded vitamins */
         static void check_consistency();
+        void check() const;
 
         /** Clear all loaded vitamins (invalidating any pointers) */
         static void reset();
 
+        vitamin_id id = vitamin_id::NULL_ID();
+
+        bool was_loaded;
     private:
-        vitamin_id id_;
         vitamin_type type_ = vitamin_type::num_vitamin_types;
         translation name_;
         efftype_id deficiency_;
@@ -108,7 +109,7 @@ class vitamin
         std::vector<std::pair<int, int>> disease_excess_;
         std::set<std::string> flags_;
     public:
-        LUA_TYPE_OPS( vitamin, id_ );
+        LUA_TYPE_OPS( vitamin, id );
 };
 
 

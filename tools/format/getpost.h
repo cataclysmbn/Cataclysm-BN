@@ -26,32 +26,31 @@ THE SOFTWARE.
 #define __GETPOST_H__
 
 #include <cstring>
-#include <string>
-#include <stdlib.h>
 #include <map>
 #include <new>
+#include <stdlib.h>
+#include <string>
 
-inline std::string urlDecode( std::string str )
-{
+inline std::string urlDecode(std::string str) {
     std::string temp;
     int i;
     char tmp[5], tmpchar;
-    strcpy( tmp, "0x" );
+    strcpy(tmp, "0x");
     int size = str.size();
-    for( i = 0; i < size; i++ ) {
-        if( str[i] == '%' ) {
-            if( i + 2 < size ) {
+    for (i = 0; i < size; i++) {
+        if (str[i] == '%') {
+            if (i + 2 < size) {
                 tmp[2] = str[i + 1];
                 tmp[3] = str[i + 2];
                 tmp[4] = '\0';
-                tmpchar = static_cast<char>( strtol( tmp, nullptr, 0 ) );
+                tmpchar = static_cast<char>(strtol(tmp, nullptr, 0));
                 temp += tmpchar;
                 i += 2;
                 continue;
             } else {
                 break;
             }
-        } else if( str[i] == '+' ) {
+        } else if (str[i] == '+') {
             temp += ' ';
         } else {
             temp += str[i];
@@ -60,87 +59,81 @@ inline std::string urlDecode( std::string str )
     return temp;
 }
 
-inline void initializeGet( std::map <std::string, std::string> &Get )
-{
+inline void initializeGet(std::map<std::string, std::string>& Get) {
     std::string tmpkey, tmpvalue;
-    std::string *tmpstr = &tmpkey;
-    char *raw_get = getenv( "QUERY_STRING" );
-    if( raw_get == nullptr ) {
+    std::string* tmpstr = &tmpkey;
+    char* raw_get = getenv("QUERY_STRING");
+    if (raw_get == nullptr) {
         Get.clear();
         return;
     }
-    while( *raw_get != '\0' ) {
-        if( *raw_get == '&' ) {
-            if( tmpkey != "" ) {
-                Get[urlDecode( tmpkey )] = urlDecode( tmpvalue );
-            }
+    while (*raw_get != '\0') {
+        if (*raw_get == '&') {
+            if (tmpkey != "") { Get[urlDecode(tmpkey)] = urlDecode(tmpvalue); }
             tmpkey.clear();
             tmpvalue.clear();
             tmpstr = &tmpkey;
-        } else if( *raw_get == '=' ) {
+        } else if (*raw_get == '=') {
             tmpstr = &tmpvalue;
         } else {
-            ( *tmpstr ) += ( *raw_get );
+            (*tmpstr) += (*raw_get);
         }
         raw_get++;
     }
-    //enter the last pair to the map
-    if( tmpkey != "" ) {
-        Get[urlDecode( tmpkey )] = urlDecode( tmpvalue );
+    // enter the last pair to the map
+    if (tmpkey != "") {
+        Get[urlDecode(tmpkey)] = urlDecode(tmpvalue);
         tmpkey.clear();
         tmpvalue.clear();
     }
 }
 
-inline void initializePost( std::map <std::string, std::string> &Post )
-{
+inline void initializePost(std::map<std::string, std::string>& Post) {
     std::string tmpkey, tmpvalue;
-    std::string *tmpstr = &tmpkey;
+    std::string* tmpstr = &tmpkey;
     int content_length;
-    char *ibuffer;
-    char *buffer = nullptr;
-    char *strlength = getenv( "CONTENT_LENGTH" );
-    if( strlength == nullptr ) {
+    char* ibuffer;
+    char* buffer = nullptr;
+    char* strlength = getenv("CONTENT_LENGTH");
+    if (strlength == nullptr) {
         Post.clear();
         return;
     }
-    content_length = atoi( strlength );
-    if( content_length == 0 ) {
+    content_length = atoi(strlength);
+    if (content_length == 0) {
         Post.clear();
         return;
     }
 
     try {
-        buffer = new char[content_length * sizeof( char )];
-    } catch( std::bad_alloc &xa ) {
+        buffer = new char[content_length * sizeof(char)];
+    } catch (std::bad_alloc& xa) {
         Post.clear();
         return;
     }
-    if( fread( buffer, sizeof( char ), content_length,
-               stdin ) != static_cast<unsigned int>( content_length ) ) {
+    if (fread(buffer, sizeof(char), content_length, stdin)
+        != static_cast<unsigned int>(content_length)) {
         Post.clear();
         return;
     }
-    *( buffer + content_length ) = '\0';
+    *(buffer + content_length) = '\0';
     ibuffer = buffer;
-    while( *ibuffer != '\0' ) {
-        if( *ibuffer == '&' ) {
-            if( tmpkey != "" ) {
-                Post[urlDecode( tmpkey )] = urlDecode( tmpvalue );
-            }
+    while (*ibuffer != '\0') {
+        if (*ibuffer == '&') {
+            if (tmpkey != "") { Post[urlDecode(tmpkey)] = urlDecode(tmpvalue); }
             tmpkey.clear();
             tmpvalue.clear();
             tmpstr = &tmpkey;
-        } else if( *ibuffer == '=' ) {
+        } else if (*ibuffer == '=') {
             tmpstr = &tmpvalue;
         } else {
-            ( *tmpstr ) += ( *ibuffer );
+            (*tmpstr) += (*ibuffer);
         }
         ibuffer++;
     }
-    //enter the last pair to the map
-    if( tmpkey != "" ) {
-        Post[urlDecode( tmpkey )] = urlDecode( tmpvalue );
+    // enter the last pair to the map
+    if (tmpkey != "") {
+        Post[urlDecode(tmpkey)] = urlDecode(tmpvalue);
         tmpkey.clear();
         tmpvalue.clear();
     }

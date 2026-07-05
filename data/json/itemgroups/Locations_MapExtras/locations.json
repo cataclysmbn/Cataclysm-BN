@@ -1589,7 +1589,8 @@
       { "group": "auto_sears", "prob": 20 },
       { "item": "survnote", "prob": 5 },
       { "item": "thermos", "prob": 25 },
-      { "item": "textbook_launcher", "prob": 3 }
+      { "item": "textbook_launcher", "prob": 3 },
+      { "group": "on_hand_762", "prob": 3, "charges": [ 1, 100 ] }
     ]
   },
   {

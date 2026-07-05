@@ -46,7 +46,6 @@ local is_in_hub01 = function(ch)
   if ch == nil then return false end
   local omt_pos = ch:global_square_location():to_omt()
   if omt_pos == nil then return false end
-  ---@cast omt_pos TripointAbsOmt
   return overmapbuffer.check_ot("robofachq", OtMatchType.PREFIX, omt_pos)
 end
 
@@ -59,7 +58,6 @@ local hub01_scan_center = function()
   if not has_hub01_clearance(player) then return nil end
   if not is_in_hub01(player) then return nil end
   local center = player:global_square_location():to_omt()
-  ---@cast center TripointAbsOmt?
   return center
 end
 

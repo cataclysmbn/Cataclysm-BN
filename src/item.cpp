@@ -19,6 +19,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_set>
+#include <vector>
 
 #include "action_time_scale.h"
 #include "active_tile_data_def.h"
@@ -70,8 +71,9 @@
 #include "iuse_actor.h"
 #include "line.h"
 #include "locations.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "martialarts.h"
 #include "material.h"
 #include "melee.h"
@@ -309,16 +311,16 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
 
     if( has_flag( flag_NANOFAB_TEMPLATE ) ) {
         // Define all nanofab subgroups from nanofab_recipes.json
-        auto all_groups = item_controller->get_all_group_names();
+        auto all_groups = Item_group::get_all();
 
         // Prepare a vector to hold nanofab groups dynamically
         std::vector<item_group_id> nanofab_groups;
 
         // Populate it dynamically (this is probably pretty performance intensive, but allows for modded templates)
         for( const auto &group : all_groups ) {
-            const std::string &name = group.str();
+            const std::string &name = group.id.str();
             if( name.starts_with( "nanofab_template_" ) ) {
-                nanofab_groups.push_back( group );
+                nanofab_groups.push_back( group.id );
             }
         }
 
@@ -607,6 +609,7 @@ void item::convert( const itype_id &new_type )
 {
     type = &*new_type;
     relic_data = type->relic_data;
+    invalidate_processing_cache_upwards();
 }
 
 void item::deactivate()
@@ -616,25 +619,10 @@ void item::deactivate()
     }
 
     active = false;
+    invalidate_processing_cache_upwards();
     if( is_tool() ) {
         type->tool->turns_active = 0;
     }
-
-    // Is not placed in the world, so either a template of some kind or a temporary item.
-    if( !has_position() ) {
-        return;
-    }
-    switch( where() ) {
-        case item_location_type::map:
-            get_map().make_inactive( *this );
-            break;
-        case item_location_type::vehicle:
-            get_map().veh_at( abs_pos() )->vehicle().make_inactive( *this );
-            break;
-        default:
-            break;
-    }
-
 }
 
 void item::activate()
@@ -648,24 +636,10 @@ void item::activate()
     }
 
     active = true;
-
-    // Is not placed in the world, so either a template of some kind or a temporary item.
-    if( !has_position() ) {
-        return;
-    }
-    switch( where() ) {
-        case item_location_type::map:
-            get_map().make_active( *this );
-            break;
-        case item_location_type::vehicle:
-            get_map().veh_at( abs_pos() )->vehicle().make_active( *this );
-            break;
-        default:
-            break;
-    }
+    invalidate_processing_cache_upwards();
 }
 
-bool item::revert( const Character *ch, bool alert )
+bool item::revert( Character *ch, bool alert )
 {
     const auto &tooldata = type->tool;
     // Can't be reverted, prevents destruction of irrevertable items.
@@ -676,6 +650,9 @@ bool item::revert( const Character *ch, bool alert )
         ch->add_msg_if_player( m_info, _( tooldata->revert_msg ), tname() );
     }
     convert( *tooldata->revert_to );
+    if( ch ) {
+        ch->recalculate_enchantment_cache();
+    }
     return true;
 }
 
@@ -828,19 +805,54 @@ void item::set_damage( int qty )
 
 auto item::prepare_for_location_removal() -> void
 {
-    if( !goes_bad() ) {
-        return;
-    }
     if( is_in_preserving_container() ) {
         mark_rot_checked_now();
         return;
     }
-    if( is_loaded() && has_position() ) {
-        const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
-        const auto temperature = vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
-                                 rot::temperature_flag_for_location( get_map(), *this );
-        update_rot( bub_pos(), temperature, get_weather() );
+    const auto contents_need_location = !contents.empty() && contents.has_processing_items() &&
+                                        !( type->container && type->container->preserves );
+    if( !goes_bad() && !contents_need_location ) {
+        return;
     }
+    if( !is_loaded() || !has_position() ) {
+        return;
+    }
+
+    auto storage_temperature = temperature_flag::TEMP_NORMAL;
+    const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
+    if( vehicle_loc != nullptr ) {
+        storage_temperature = vehicle_loc->storage_temperature();
+    } else if( where() == item_location_type::map ) {
+        auto &buffer = MAPBUFFER_REGISTRY.get( loc->get_dimension( this ) );
+        const auto tile = buffer.get_abs_tile( loc->abs_pos( this ), {
+            .mode = mapbuffer_lookup_mode::resident_only,
+        } );
+        if( tile ) {
+            const auto &furn = tile->get_furn_t();
+            storage_temperature = rot::temp::for_tile( {
+                .root_cellar = tile->get_ter() == t_rootcellar,
+                .fridge = furn.has_flag( TFLAG_FRIDGE ),
+                .freezer = furn.has_flag( TFLAG_FREEZER ),
+            } );
+        } else {
+            storage_temperature = rot::temp::for_location( get_map(), *this );
+        }
+    } else {
+        storage_temperature = rot::temp::for_location( get_map(), *this );
+    }
+    const auto pos = bub_pos();
+
+    if( goes_bad() ) {
+        update_rot( pos, storage_temperature, get_weather() );
+    }
+    if( !contents_need_location ) {
+        return;
+    }
+
+    const auto seals = is_in_sealing_container() || ( type->container && type->container->seals );
+    contents.remove_top_items_with( [pos, storage_temperature, seals]( detached_ptr<item> &&it ) {
+        return item::actualize_rot( std::move( it ), pos, storage_temperature, get_weather(), seals );
+    } );
 }
 
 detached_ptr<item> item::split( int qty )
@@ -906,7 +918,7 @@ bool item::attempt_split( int qty,
     const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
     const auto split_temperature = !split_needs_rot_actualization ? temperature_flag::TEMP_NORMAL :
                                    vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
-                                   rot::temperature_flag_for_location( get_map(), *this );
+                                   rot::temp::for_location( get_map(), *this );
     detached_ptr<item> det = unsafe_split( qty );
     if( det && split_from_preserving_container ) {
         det->mark_rot_checked_now();
@@ -975,14 +987,15 @@ body_part_set item::get_covered_body_parts( const side s ) const
 {
     body_part_set res;
 
-    if( is_gun() ) {
-        // Currently only used for guns with the should strap mod, other guns might
-        // go on another bodypart.
-        res.set( bodypart_str_id( "torso" ) );
-    }
-
     const islot_armor *armor = find_armor_data();
     if( armor == nullptr ) {
+        // Mods currently cannot set armor data
+        // So for the two strap mods, force it to use torso
+        // But as there are worn guns now, this is inapplicable to all guns
+        // Only those without armor data
+        if( is_gun() ) {
+            res.set( bodypart_str_id( "torso" ) );
+        }
         return res;
     }
 
@@ -1088,18 +1101,41 @@ int item::charges_per_volume( const units::volume &vol ) const
             debugmsg( "Item '%s' with zero volume", tname() );
             return INFINITE_CHARGES;
         }
-        // Type cast to prevent integer overflow with large volume containers like the cargo
-        // dimension
-        return vol * static_cast<int64_t>( type->stack_size ) / type->volume;
+        if( type->stack_size > 0 && vol > units::volume_max / type->stack_size ) {
+            return INFINITE_CHARGES;
+        }
+        const auto result = vol * static_cast<decltype( units::to_milliliter( vol ) )>(
+                                type->stack_size ) / type->volume;
+        return static_cast<int>( std::min( result, static_cast<decltype( result )>( INFINITE_CHARGES ) ) );
     } else {
         units::volume my_volume = volume();
         if( my_volume == 0_ml ) {
             debugmsg( "Item '%s' with zero volume", tname() );
             return INFINITE_CHARGES;
         }
-        return vol / my_volume;
+        const auto result = vol / my_volume;
+        return static_cast<int>( std::min( result, static_cast<decltype( result )>( INFINITE_CHARGES ) ) );
     }
 }
+
+namespace
+{
+
+auto bionic_component_type_ids( const item &corpse ) -> std::vector<itype_id>
+{
+    using namespace std::views;
+    namespace ranges = std::ranges;
+    auto result = corpse.get_components()
+                  | filter( &item::is_bionic )
+                  | transform( &item::typeId )
+                  | ranges::to<std::vector>();
+    ranges::sort( result, []( const itype_id & lhs, const itype_id & rhs ) {
+        return lhs < rhs;
+    } );
+    return result;
+}
+
+} // namespace
 
 bool item::display_stacked_with( const item &rhs, bool check_components ) const
 {
@@ -1128,7 +1164,13 @@ bool item::stacks_with( const item &rhs, bool check_components, bool skip_type_c
     }
 
     if( is_corpse() || rhs.is_corpse() ) {
-        return this->is_corpse() && rhs.is_corpse() && ( *this->get_mtype() == *rhs.get_mtype() );
+        if( !is_corpse() || !rhs.is_corpse() || ( *get_mtype() != *rhs.get_mtype() ) ||
+            get_var( "bionics_scanned_by", -1 ) != rhs.get_var( "bionics_scanned_by", -1 ) ||
+            has_flag( flag_CBM_SCANNED ) != rhs.has_flag( flag_CBM_SCANNED ) ) {
+            return false;
+        }
+        return !has_flag( flag_CBM_SCANNED ) ||
+               bionic_component_type_ids( *this ) == bionic_component_type_ids( rhs );
     }
 
     if( damage_ != rhs.damage_ ) {
@@ -3962,6 +4004,81 @@ void item::damage_statblock_info( std::vector<iteminfo> &info, damage_instance a
     info.emplace_back( "BASE", sep, "", iteminfo::no_newline );
 }
 
+void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *parts, int /*batch*/,
+                       bool /*debug*/ ) const
+{
+    if( !parts->test( iteminfo_parts::BASE_THROW ) ) {
+        return;
+    }
+
+    const avatar &you = get_avatar();
+    const int throw_range = you.throw_range( *this );
+
+    if( throw_range == 0 ) {
+        return;
+    }
+
+    insert_separation_line( info );
+
+    const int dmg_bash = base_damage_thrown().type_damage( DT_BASH );
+    const int dmg_cut = base_damage_thrown().type_damage( DT_CUT );
+    const int dmg_stab = base_damage_thrown().type_damage( DT_STAB );
+
+    const projectile proj =
+        ranged::throw_damage_projectile( *this, you.get_skill_level( skill_throw ),
+                                         you.get_str() );
+
+    const int proj_dmg_bash = proj.impact.type_damage( DT_BASH );
+    const int proj_dmg_cut = proj.impact.type_damage( DT_CUT );
+    const int proj_dmg_stab = proj.impact.type_damage( DT_STAB );
+
+    if( dmg_bash || dmg_cut || dmg_stab ) {
+        std::string sep;
+        info.emplace_back( "BASE", _( "<bold>Base throw damage</bold>: " ), "", iteminfo::no_newline );
+        if( dmg_bash ) {
+            info.emplace_back( "BASE", _( "Bash: " ), "", iteminfo::no_newline, dmg_bash );
+            sep = " ";
+        }
+        if( dmg_cut ) {
+            info.emplace_back( "BASE", sep + _( "Cut: " ), "", iteminfo::no_newline, dmg_cut );
+            sep = " ";
+        }
+        if( dmg_stab ) {
+            info.emplace_back( "BASE", sep + _( "Pierce: " ), "", iteminfo::no_newline, dmg_stab );
+        }
+        info.emplace_back( "BASE", "\n", "", iteminfo::no_newline );
+    }
+
+    if( proj_dmg_bash || proj_dmg_cut || proj_dmg_stab ) {
+        std::string sep;
+        info.emplace_back( "BASE", _( "<bold>Throw damage</bold>: " ), "", iteminfo::no_newline );
+        if( proj_dmg_bash ) {
+            info.emplace_back( "BASE", _( "Bash: " ), "", iteminfo::no_newline, proj_dmg_bash );
+            sep = " ";
+        }
+        if( proj_dmg_cut ) {
+            info.emplace_back( "BASE", sep + _( "Cut: " ), "", iteminfo::no_newline, proj_dmg_cut );
+            sep = " ";
+        }
+        if( proj_dmg_stab ) {
+            info.emplace_back( "BASE", sep + _( "Pierce: " ), "", iteminfo::no_newline, proj_dmg_stab );
+        }
+        info.emplace_back( "BASE", "\n", "", iteminfo::no_newline );
+    }
+
+    info.emplace_back( "BASE", _( "Throw range: " ), "<num>", iteminfo::no_flags, throw_range );
+
+    const int throw_cost = ranged::throw_cost( you, *this );
+    info.emplace_back( "BASE", _( "Moves per throw: " ), "<num>", iteminfo::lower_is_better,
+                       throw_cost );
+
+    const int stamina_cost = ranged::throw_stamina_cost( you, *this );
+    info.emplace_back( "BASE", _( "Stamina cost: " ), "<num>", iteminfo::lower_is_better,
+                       stamina_cost );
+
+    insert_separation_line( info );
+}
+
 void item::contents_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                           bool debug ) const
 {
@@ -4082,22 +4199,10 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
     }
 
     if( parts->test( iteminfo_parts::BASE_RIGIDITY ) ) {
-        if( const islot_armor *armor = find_armor_data() ) {
-            if( !type->rigid ) {
-                info.emplace_back( "BASE",
-                                   _( "* This item is <info>not rigid</info>.  Its"
-                                      " volume and encumbrance increase with contents." ) );
-            } else {
-                bool any_encumb_increase = std::ranges::any_of( armor->data,
-                []( armor_portion_data data ) {
-                    return data.encumber != data.max_encumber;
-                } );
-                if( any_encumb_increase ) {
-                    info.emplace_back( "BASE",
-                                       _( "* This item is <info>not rigid</info>.  Its"
-                                          " volume and encumbrance increase with contents." ) );
-                }
-            }
+        if( is_non_rigid() ) {
+            info.emplace_back( "BASE",
+                               _( "* This item is <info>not rigid</info>.  Its"
+                                  " volume and encumbrance increase with contents." ) );
         }
     }
 
@@ -4446,6 +4551,7 @@ std::vector<iteminfo> item::info( const iteminfo_query &parts_ref, int batch,
     container_info( info, parts, batch, debug );
     contents_info( info, parts, batch, debug );
     combat_info( info, parts, batch, debug );
+    throw_info( info, parts, batch, debug );
 
     magazine_info( info, parts, batch, debug );
     ammo_info( info, parts, batch, debug );
@@ -5002,6 +5108,7 @@ void item::on_contents_changed()
     }
 
     encumbrance_update_ = true;
+    invalidate_processing_cache_upwards();
 
     if( !has_position() || where() != item_location_type::vehicle ) {
         return;
@@ -5201,7 +5308,7 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
             tagtext += _( " (fresh)" );
         }
         if( is_loaded() ) {
-            const auto temp = rot::temperature_flag_for_location( get_map(), *this );
+            const auto temp = rot::temp::for_location( get_map(), *this );
             if( temp == temperature_flag::TEMP_FREEZER ) {
                 tagtext += _( " (frozen)" );
             } else if( temp == temperature_flag::TEMP_FRIDGE || temp == temperature_flag::TEMP_ROOT_CELLAR ) {
@@ -5269,7 +5376,11 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         tagtext += string_format( " (%s)", group_id_str );
     } else if( has_var( "NANOFAB_ITEM_ID" ) ) {
         itype_id item = itype_id( get_var( "NANOFAB_ITEM_ID" ) );
-        tagtext += string_format( " (%s [%d])", nname( item ), std::max( 1, item->volume / 250_ml ) * 5 );
+        const auto volume_ratio = item->volume / 250_ml;
+        const auto min_charge_units = decltype( volume_ratio ) { 1 };
+        const auto max_charge_units = decltype( volume_ratio ) { INT_MAX / 5 };
+        const auto charge_units = std::clamp( volume_ratio, min_charge_units, max_charge_units );
+        tagtext += string_format( " (%s [%d])", nname( item ), static_cast<int>( charge_units * 5 ) );
     }
 
     if( already_used_by_player( you ) ) {
@@ -5602,6 +5713,9 @@ units::mass item::weight( bool include_contents, bool integral ) const
         if( !magazine_integral() && magazine_current() ) {
             ret += std::max( magazine_current()->weight(), 0_gram );
         }
+
+        // clamp: prevent negative/zero weight from aggressive mod combinations
+        ret = std::max( ret, type->weight / 100 );
     } else if( include_contents ) {
         ret += contents.item_weight_modifier();
     }
@@ -5716,19 +5830,26 @@ units::volume item::volume( bool integral ) const
     }
 
     if( is_gun() ) {
+        // apply volume multipliers from gunmods (multiplicative, before additive)
+        for( const item *mod : gunmods() ) {
+            ret *= mod->type->gunmod->volume_multiplier;
+        }
+
         for( const item *elem : gunmods() ) {
             ret += elem->volume( true );
         }
 
-        // TODO: implement stock_length property for guns
+        // COLLAPSIBLE_STOCK flag (replaced by volume_multiplier above but can use both for whatever reason)
         if( has_flag( flag_COLLAPSIBLE_STOCK ) ) {
-            // consider only the base size of the gun (without mods)
             ret -= ( type->volume / 3 );
         }
 
         if( gunmod_find( itype_barrel_small ) ) {
             ret -= type->gun->barrel_volume;
         }
+
+        // clamp: prevent negative/zero volume from aggressive mod combinations
+        ret = std::max( ret, type->volume / 100 );
     }
 
     return ret;
@@ -6005,9 +6126,30 @@ bool item::can_shatter() const
     return only_made_of( is_glass ) || has_flag( flag_SHATTERS );
 }
 
+bool item::is_non_rigid() const
+{
+    if( const islot_armor *armor = find_armor_data() ) {
+        if( !type->rigid ) {
+            return true;
+        }
+        bool any_encumb_increase = std::ranges::any_of( armor->data,
+        []( armor_portion_data data ) {
+            return data.encumber != data.max_encumber;
+        } );
+        return any_encumb_increase;
+    }
+    return false;
+}
+
 void item::unset_flags()
 {
+    const bool affects_processing = item_tags.count( flag_RADIO_ACTIVATION ) ||
+                                    item_tags.count( flag_ETHEREAL_ITEM ) ||
+                                    item_tags.count( flag_PROCESSING );
     item_tags.clear();
+    if( affects_processing ) {
+        invalidate_processing_cache_upwards();
+    }
 }
 
 bool item::has_fault( const fault_id &fault ) const
@@ -6071,7 +6213,12 @@ bool item::has_vitamin( const vitamin_id &v ) const
 void item::set_flag( const flag_id &flag )
 {
     if( flag.is_valid() ) {
-        item_tags.insert( flag );
+        const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM ||
+                                        flag == flag_PROCESSING;
+        const bool inserted = item_tags.insert( flag ).second;
+        if( inserted && affects_processing ) {
+            invalidate_processing_cache_upwards();
+        }
     } else {
         debugmsg( "Attempted to set invalid flag_id %s", flag.str() );
     }
@@ -6079,7 +6226,12 @@ void item::set_flag( const flag_id &flag )
 
 void item::unset_flag( const flag_id &flag )
 {
-    item_tags.erase( flag );
+    const bool affects_processing = flag == flag_RADIO_ACTIVATION || flag == flag_ETHEREAL_ITEM ||
+                                    flag == flag_PROCESSING;
+    const bool erased = item_tags.erase( flag ) > 0;
+    if( erased && affects_processing ) {
+        invalidate_processing_cache_upwards();
+    }
 }
 
 void item::set_flag_recursive( const flag_id &flag )
@@ -6275,6 +6427,16 @@ auto item::is_in_preserving_container() const -> bool
 {
     for( const item *parent = parent_item(); parent != nullptr; parent = parent->parent_item() ) {
         if( parent->type && parent->type->container && parent->type->container->preserves ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto item::is_in_sealing_container() const -> bool
+{
+    for( const item *parent = parent_item(); parent != nullptr; parent = parent->parent_item() ) {
+        if( parent->type && parent->type->container && parent->type->container->seals ) {
             return true;
         }
     }
@@ -6582,24 +6744,29 @@ int item::get_encumber( const Character &who, const bodypart_id &bodypart ) cons
 
     contents_volume += contents.item_size_modifier();
 
-    if( who.is_worn( *this ) ) {
+    if( who.is_worn( *this ) && this->is_non_rigid() ) {
         const islot_armor *armor = find_armor_data();
 
         if( armor != nullptr ) {
             for( const armor_portion_data &entry : armor->data ) {
-                if( entry.covers.test( bodypart.id() ) ) {
-                    if( entry.max_encumber != 0 ) {
-                        units::volume char_storage( 0_ml );
+                if( entry.max_encumber != 0 && entry.covers.test( bodypart.id() ) ) {
+                    units::volume rigid_storage( 0_ml );
+                    units::volume non_rigid_storage( 0_ml );
+                    const units::volume volume_carried = who.volume_carried();
 
-                        for( const item * const &e : who.worn ) {
-                            char_storage += e->get_storage();
+                    for( const item * const &e : who.worn ) {
+                        if( e->is_non_rigid() ) {
+                            non_rigid_storage += e->get_storage();
+                        } else {
+                            rigid_storage += e->get_storage();
                         }
+                    }
 
-                        if( char_storage != 0_ml ) {
-                            // Cast up to 64 to prevent overflow. Dividing before would prevent this but lose data.
-                            contents_volume += units::from_milliliter( static_cast<int64_t>( armor->storage.value() ) *
-                                               who.inv_volume().value() / char_storage.value() );
-                        }
+                    if( volume_carried > rigid_storage && non_rigid_storage > 0_ml ) {
+                        // Cast up to 64 to prevent overflow. Dividing before would prevent this but lose data.
+                        contents_volume += units::from_milliliter( static_cast<int64_t>( armor->storage.value() ) *
+                                           ( static_cast<int64_t>( volume_carried.value() ) - rigid_storage.value() ) /
+                                           non_rigid_storage.value() );
                     }
                 }
             }
@@ -6624,11 +6791,7 @@ int item::get_encumber_when_containing(
         if( entry.covers.test( bodypart.id() ) ) {
             encumber = entry.encumber;
             // Non-rigid items add additional encumbrance proportional to their volume
-            bool any_encumb_increase = std::ranges::any_of( armor->data,
-            []( armor_portion_data data ) {
-                return data.encumber != data.max_encumber;
-            } );
-            if( !type->rigid || any_encumb_increase ) {
+            if( this->is_non_rigid() ) {
                 const int capacity = get_total_capacity().value();
                 if( entry.max_encumber == 0 ) {
                     encumber += contents_volume / 500_ml;
@@ -6701,7 +6864,9 @@ int item::get_avg_coverage() const
     const islot_armor *armor = find_armor_data();
     if( !armor ) {
         // handle wearable guns (e.g. shoulder strap) as special case
-        return is_gun() ? std::min( volume() / 500_ml, 100 ) : 0;
+        const auto volume_coverage = volume() / 500_ml;
+        const auto max_coverage = decltype( volume_coverage ) { 100 };
+        return is_gun() ? static_cast<int>( std::min( volume_coverage, max_coverage ) ) : 0;
     }
     int avg_coverage = 0;
     int avg_ctr = 0;
@@ -7479,9 +7644,11 @@ bool item::is_brewable() const
 
 bool item::is_food_container() const
 {
-    return ( !contents.empty() && contents.front().is_food() ) ||
-           ( is_craft() &&
-             craft_data_->making->create_result()->is_food_container() );
+    namespace ranges = std::ranges;
+    return ranges::any_of( contents.all_items_top(), []( const item * contained_item ) {
+        return contained_item != nullptr &&
+               ( contained_item->is_food() || contained_item->is_food_container() );
+    } ) || ( is_craft() && craft_data_->making->create_result()->is_food_container() );
 }
 
 bool item::is_med_container() const
@@ -7499,17 +7666,27 @@ const mtype *item::get_mtype() const
     return corpse;
 }
 
+namespace
+{
+
 template<typename Item>
-static Item *get_food_impl( Item *it )
+auto get_food_impl( Item *it ) -> Item * // *NOPAD*
 {
     if( it->is_food() ) {
         return it;
-    } else if( it->is_food_container() && !it->contents.empty() ) {
-        return &it->contents.front();
-    } else {
-        return nullptr;
     }
+    for( auto *const contained_item : it->contents.all_items_top() ) {
+        if( contained_item == nullptr ) {
+            continue;
+        }
+        if( auto *food = get_food_impl( contained_item ) ) {
+            return food;
+        }
+    }
+    return nullptr;
 }
+
+} // namespace
 
 item *item::get_food()
 {
@@ -9888,7 +10065,14 @@ auto item::process_rot( detached_ptr<item> &&self,
 
     self->update_rot( options.context );
 
-    if( self->has_rotten_away() && options.carrier == nullptr && !options.seals ) {
+    auto rotted_away = false;
+    if( self->is_corpse() && !self->can_revive() ) {
+        rotted_away = self->rot > 10_days;
+    } else {
+        const auto shelf_life = self->get_shelf_life();
+        rotted_away = self->is_food() && shelf_life != 0_turns && self->rot / shelf_life > 2.0;
+    }
+    if( rotted_away && options.carrier == nullptr && !options.seals ) {
         return detached_ptr<item>();
     }
     return std::move( self );
@@ -9898,16 +10082,29 @@ auto item::actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
                           const temperature_flag temperature,
                           const weather_manager &weather ) -> detached_ptr<item>
 {
+    return actualize_rot( std::move( self ), pnt, temperature, weather, false );
+}
+
+auto item::actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
+                          const temperature_flag temperature,
+                          const weather_manager &weather, const bool seals ) -> detached_ptr<item>
+{
     return actualize_rot( std::move( self ), {
         .position = bub_to_abs( pnt ),
         .temperature = temperature,
         .weather = &weather,
         .local_temperature = g != nullptr && !g->new_game ? get_map().get_temperature( pnt ) : 0,
-    } );
+    }, seals );
 }
 
 auto item::actualize_rot( detached_ptr<item> &&self,
                           const rot_context &context ) -> detached_ptr<item>
+{
+    return actualize_rot( std::move( self ), context, false );
+}
+
+auto item::actualize_rot( detached_ptr<item> &&self,
+                          const rot_context &context, const bool seals ) -> detached_ptr<item>
 {
     // Guard against null or invalid items that can survive save/load cycles
     // during dimension transitions (e.g. zombie items from deferred arena cleanup).
@@ -9920,36 +10117,22 @@ auto item::actualize_rot( detached_ptr<item> &&self,
     }
     if( self->goes_bad() ) {
         return process_rot( std::move( self ), {
-            .seals = false,
+            .seals = seals,
             .carrier = nullptr,
             .context = context,
         } );
     } else if( self->type->container && self->type->container->preserves ) {
-        // Containers like tin cans preserves all items inside, they do not rot at all.
-        return std::move( self );
-    } else if( self->type->container && self->type->container->seals ) {
-        // Items inside rot but do not vanish as the container seals them in.
-        self->contents.remove_top_items_with( [&context]( detached_ptr<item> &&it ) {
-            if( !it || !it->type || it->type == nullitem() ) {
-                return std::move( it );
-            }
-            if( it->goes_bad() ) {
-                it = process_rot( std::move( it ), {
-                    .seals = true,
-                    .carrier = nullptr,
-                    .context = context,
-                } );
-            }
-            return std::move( it );
-        } );
-        return std::move( self );
-    } else {
-        // Check and remove rotten contents, but always keep the container.
-        self->contents.remove_top_items_with( [&context]( detached_ptr<item> &&it ) {
-            return actualize_rot( std::move( it ), context );
-        } );
+        // Containers like tin cans preserve all items inside; they do not rot at all.
         return std::move( self );
     }
+
+    const auto child_seals = seals || ( self->type->container && self->type->container->seals );
+    // Check and remove rotten contents, but always keep the container.
+    // If this item or an ancestor seals its contents, nested rotten contents rot but stay contained.
+    self->contents.remove_top_items_with( [&context, child_seals]( detached_ptr<item> &&it ) {
+        return actualize_rot( std::move( it ), context, child_seals );
+    } );
+    return std::move( self );
 }
 
 bool item_ptr_compare_by_charges( const item *left, const item *right )
@@ -10069,18 +10252,58 @@ uint64_t item::make_component_hash() const
 bool item::needs_processing() const
 {
     return is_active() || has_flag( flag_RADIO_ACTIVATION ) || has_flag( flag_ETHEREAL_ITEM ) ||
-           ( !contents.empty() && is_container() && contents.front().needs_processing() ) ||
+           ( !contents.empty() && contents.has_processing_items() ) ||
            ( magazine_current() && magazine_current()->needs_processing() ) ||
            is_artifact() || is_relic() || goes_bad();
 }
 
+auto item::invalidate_processing_cache_upwards() -> void
+{
+    auto *top = this;
+    for( auto *current = this; current != nullptr; current = current->parent_item() ) {
+        current->contents.invalidate_processing_cache();
+        top = current;
+    }
+
+    if( !top->has_position() ) {
+        return;
+    }
+
+    switch( top->where() ) {
+        case item_location_type::map:
+            if( top->needs_processing() ) {
+                get_map().make_active( *top );
+            } else {
+                get_map().make_inactive( *top );
+            }
+            break;
+        case item_location_type::vehicle:
+            if( const auto vp = get_map().veh_at( top->bub_pos() ) ) {
+                if( top->needs_processing() ) {
+                    vp->vehicle().make_active( *top );
+                } else {
+                    vp->vehicle().make_inactive( *top );
+                }
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 int item::processing_speed() const
 {
-    if( is_corpse() || is_food() || is_food_container() ) {
-        return to_turns<int>( 10_minutes );
+    auto speed = is_corpse() || is_food() || is_food_container() ? to_turns<int>( 10_minutes ) : 1;
+    for( const item *contained_item : contents.processing_items() ) {
+        if( contained_item != nullptr ) {
+            speed = std::min( speed, contained_item->processing_speed() );
+        }
     }
-    // Unless otherwise indicated, update every turn.
-    return 1;
+    if( const item *magazine = magazine_current(); magazine != nullptr &&
+        magazine->needs_processing() ) {
+        speed = std::min( speed, magazine->processing_speed() );
+    }
+    return speed;
 }
 
 auto item::process_rot( detached_ptr<item> &&self,
@@ -10127,7 +10350,7 @@ void item::update_rot_from_location( const temperature_flag temperature )
     auto flag = temperature;
     if( is_loaded() && has_position() ) {
         pos = bub_pos();
-        flag = rot::temperature_flag_for_location( get_map(), *this );
+        flag = rot::temp::for_location( get_map(), *this );
     }
     update_rot( pos, flag, get_weather() );
 }
@@ -10891,20 +11114,71 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
     if( !self ) {
         return std::move( self );
     }
-    const bool preserves = self->type->container && self->type->container->preserves;
-    const bool seals = self->type->container && self->type->container->seals;
-    item &obj = *self;
+    const auto preserves = self->type->container && self->type->container->preserves;
+    const auto seals = self->type->container && self->type->container->seals;
+    auto &obj = *self;
+    using namespace std::views;
+    namespace ranges = std::ranges;
 
-    obj.remove_items_with( [&]( detached_ptr<item> &&it ) {
-        if( preserves ) {
+    struct content_processing_options {
+        bool parent_preserves = false;
+        bool parent_seals = false;
+    };
+
+    const auto processing_items = []( const auto & contents ) {
+        return contents.processing_items()
+        | filter( []( const item * content_item ) { return content_item != nullptr; } )
+        | transform( []( item * content_item ) { return cache_reference<item>( *content_item ); } )
+        | ranges::to<std::vector>();
+    };
+
+    auto process_content = [&]( auto &&process_content, detached_ptr<item> &&it,
+    const content_processing_options & opts ) -> detached_ptr<item> {
+        if( !it )
+        {
+            return std::move( it );
+        }
+
+        const auto content_preserves = opts.parent_preserves ||
+        ( it->type->container && it->type->container->preserves );
+        const auto content_seals = opts.parent_seals ||
+        ( it->type->container && it->type->container->seals );
+
+        for( const cache_reference<item> &content_item : processing_items( it->contents ) )
+        {
+            if( !content_item ) {
+                continue;
+            }
+            content_item->attempt_detach( [&]( detached_ptr<item> &&nested ) {
+                return process_content( process_content, std::move( nested ), {
+                    .parent_preserves = content_preserves,
+                    .parent_seals = content_seals
+                } );
+            } );
+        }
+
+        if( content_preserves )
+        {
             it->last_rot_check = calendar::turn;
         }
-        it = it->process_internal( std::move( it ), carrier, pos, activate, seals, flag,
-                                   weather_generator );
-        return VisitResponse::NEXT;
-    } );
-    detached_ptr<item> res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
-                             weather_generator );
+        return process_internal( std::move( it ), carrier, pos, activate, content_seals, flag,
+                                 weather_generator );
+    };
+
+    for( const cache_reference<item> &content_item : processing_items( obj.contents ) ) {
+        if( !content_item ) {
+            continue;
+        }
+        content_item->attempt_detach( [&]( detached_ptr<item> &&it ) {
+            return process_content( process_content, std::move( it ), {
+                .parent_preserves = preserves,
+                .parent_seals = seals
+            } );
+        } );
+    }
+
+    auto res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
+                                 weather_generator );
     return res;
 }
 

@@ -231,6 +231,213 @@ local add_class_annotation = function(annotations, class_name, annotation)
   return (annotations:gsub(pattern, "%1" .. annotation .. "\n"))
 end
 
+---@class LuaCoordNamePart
+---@field suffix string
+
+---@class LuaCoordScaleSpec : LuaCoordNamePart
+---@field method string
+---@field map_squares integer
+
+---@type LuaCoordNamePart[]
+local coord_origins = {
+  { suffix = "Rel" },
+  { suffix = "Abs" },
+  { suffix = "Bub" },
+  { suffix = "Mnt" },
+  { suffix = "Sm" },
+  { suffix = "Omt" },
+  { suffix = "Mmr" },
+  { suffix = "Seg" },
+  { suffix = "Om" },
+}
+
+---@type LuaCoordScaleSpec[]
+local coord_scales = {
+  { suffix = "Ms", method = "ms", map_squares = 1 },
+  { suffix = "Veh", method = "veh", map_squares = 1 },
+  { suffix = "Sm", method = "sm", map_squares = 12 },
+  { suffix = "Omt", method = "omt", map_squares = 24 },
+  { suffix = "Mmr", method = "mmr", map_squares = 96 },
+  { suffix = "Seg", method = "seg", map_squares = 768 },
+  { suffix = "Om", method = "om", map_squares = 4320 },
+}
+
+---@type table<string, LuaCoordNamePart>
+local coord_origin_by_remainder_scale = {
+  Veh = { suffix = "Mnt" },
+  Sm = { suffix = "Sm" },
+  Omt = { suffix = "Omt" },
+  Mmr = { suffix = "Mmr" },
+  Seg = { suffix = "Seg" },
+  Om = { suffix = "Om" },
+}
+
+---@param kind "Point" | "Tripoint"
+---@param origin LuaCoordNamePart
+---@param scale LuaCoordScaleSpec
+---@return string
+local coord_class_name = function(kind, origin, scale) return kind .. origin.suffix .. scale.suffix end
+
+---@param annotations string
+---@param class_name string
+---@return boolean
+local has_coord_class = function(annotations, class_name)
+  return string.find(annotations, "---@class " .. class_name .. " : ", 1, true) ~= nil
+end
+
+---@param lines string[]
+---@param line string
+---@param seen table<string, boolean>
+local add_unique_line = function(lines, line, seen)
+  if seen[line] then return end
+  seen[line] = true
+  table.insert(lines, line)
+end
+
+---@param source LuaCoordScaleSpec
+---@param result LuaCoordScaleSpec
+---@return boolean
+local exact_scale_conversion = function(source, result)
+  if source.map_squares > result.map_squares then return source.map_squares % result.map_squares == 0 end
+  return result.map_squares % source.map_squares == 0
+end
+
+---@param source LuaCoordScaleSpec
+---@param result LuaCoordScaleSpec
+---@return boolean
+local can_project_remain_scale = function(source, result)
+  return result.map_squares > source.map_squares and result.map_squares % source.map_squares == 0
+end
+
+---@param class_name string
+---@return string[]
+local raw_offset_types_for = function(class_name)
+  if string.match(class_name, "^Point") then return { "Point" } end
+  return { "Point", "Tripoint" }
+end
+
+---@param annotations string
+---@param kind "Point" | "Tripoint"
+---@param origin LuaCoordNamePart
+---@param scale LuaCoordScaleSpec
+---@return string
+local coord_specific_annotation = function(annotations, kind, origin, scale)
+  local class_name = coord_class_name(kind, origin, scale)
+  if not has_coord_class(annotations, class_name) then return "" end
+
+  ---@type string[]
+  local lines = {}
+  ---@type table<string, boolean>
+  local seen = {}
+
+  if kind == "Tripoint" then
+    local xy_type = coord_class_name("Point", origin, scale)
+    if has_coord_class(annotations, xy_type) then
+      add_unique_line(lines, "---@field xy fun(self: " .. class_name .. "): " .. xy_type, seen)
+    end
+  end
+
+  for _, result_scale in ipairs(coord_scales) do
+    local result_type = coord_class_name(kind, origin, result_scale)
+    if
+      result_scale.suffix ~= scale.suffix
+      and exact_scale_conversion(scale, result_scale)
+      and has_coord_class(annotations, result_type)
+    then
+      add_unique_line(
+        lines,
+        "---@field to_" .. result_scale.method .. " fun(self: " .. class_name .. "): " .. result_type,
+        seen
+      )
+    end
+
+    local remainder_origin = coord_origin_by_remainder_scale[result_scale.suffix]
+    if remainder_origin and can_project_remain_scale(scale, result_scale) then
+      local quotient_type = coord_class_name(kind, origin, result_scale)
+      local remainder_type = coord_class_name("Point", remainder_origin, scale)
+      if has_coord_class(annotations, quotient_type) and has_coord_class(annotations, remainder_type) then
+        add_unique_line(
+          lines,
+          "---@field project_remain_"
+            .. result_scale.method
+            .. " fun(self: "
+            .. class_name
+            .. "): ("
+            .. quotient_type
+            .. ", "
+            .. remainder_type
+            .. ")",
+          seen
+        )
+      end
+    end
+  end
+
+  for _, raw_offset_type in ipairs(raw_offset_types_for(class_name)) do
+    add_unique_line(lines, "---@operator add(" .. raw_offset_type .. "): " .. class_name, seen)
+    add_unique_line(lines, "---@operator sub(" .. raw_offset_type .. "): " .. class_name, seen)
+  end
+
+  local relative_result_type = coord_class_name(kind, { suffix = "Rel" }, scale)
+  if origin.suffix ~= "Rel" and has_coord_class(annotations, relative_result_type) then
+    for _, relative_kind in ipairs(kind == "Tripoint" and { "Point", "Tripoint" } or { "Point" }) do
+      local relative_type = coord_class_name(relative_kind, { suffix = "Rel" }, scale)
+      if has_coord_class(annotations, relative_type) then
+        add_unique_line(lines, "---@operator add(" .. relative_type .. "): " .. class_name, seen)
+        add_unique_line(lines, "---@operator sub(" .. relative_type .. "): " .. class_name, seen)
+      end
+    end
+    add_unique_line(lines, "---@operator sub(" .. class_name .. "): " .. relative_result_type, seen)
+  elseif origin.suffix == "Rel" then
+    add_unique_line(lines, "---@operator mul(integer): " .. class_name, seen)
+    for _, other_origin in ipairs(coord_origins) do
+      local other_type = coord_class_name(kind, other_origin, scale)
+      if other_origin.suffix ~= "Rel" and has_coord_class(annotations, other_type) then
+        add_unique_line(lines, "---@operator add(" .. other_type .. "): " .. other_type, seen)
+      end
+    end
+  end
+
+  for _, fine_scale in ipairs(coord_scales) do
+    local remainder_origin = coord_origin_by_remainder_scale[scale.suffix]
+    if
+      remainder_origin
+      and scale.map_squares > fine_scale.map_squares
+      and scale.map_squares % fine_scale.map_squares == 0
+    then
+      for _, fine_kind in ipairs(kind == "Point" and { "Point", "Tripoint" } or { "Point" }) do
+        local fine_type = coord_class_name(fine_kind, remainder_origin, fine_scale)
+        local result_type = coord_class_name(kind == "Point" and fine_kind or kind, origin, fine_scale)
+        if has_coord_class(annotations, fine_type) and has_coord_class(annotations, result_type) then
+          add_unique_line(
+            lines,
+            "---@field project_combine fun(self: " .. class_name .. ", fine: " .. fine_type .. "): " .. result_type,
+            seen
+          )
+        end
+      end
+    end
+  end
+
+  return table.concat(lines, "\n")
+end
+
+---@param annotations string
+---@return string
+local add_coord_specific_annotations = function(annotations)
+  for _, kind in ipairs({ "Point", "Tripoint" }) do
+    for _, origin in ipairs(coord_origins) do
+      for _, scale in ipairs(coord_scales) do
+        local annotation = coord_specific_annotation(annotations, kind, origin, scale)
+        if annotation ~= "" then
+          annotations = add_class_annotation(annotations, coord_class_name(kind, origin, scale), annotation)
+        end
+      end
+    end
+  end
+  return annotations
+end
+
 --[[
     Formats ---@overload annotations and function stub for constructors ('new' function).
   ]]
@@ -368,7 +575,7 @@ doc_gen_func.impl = function()
 ---@field mod_runtime table<string, any>
 ---@field mod_storage table<string, any>
 ---@field on_every_x_hooks table
----@field iuse_functions table<string, fun(params: ItemUseParams): integer | IuseFunctionTable>
+---@field iuse_functions table<string, (fun(params: ItemUseParams): integer) | IuseFunctionTable>
 ---@field iwieldable_functions table<string, IwieldableFunctionTable>
 ---@field iwearable_functions table<string, IwearableFunctionTable>
 ---@field iequippable_functions table<string, IequippableFunctionTable>
@@ -728,7 +935,7 @@ on_npc_loaded = {}
     if name == "TripointCoord" then return "---@class " .. name .. "\n" end
     return "---@class " .. name .. " : TripointCoord\n"
   end)
-  full_ret = add_class_annotation(full_ret, "TripointAbsOmt", "---@operator add(TripointRelOmt): TripointAbsOmt")
+  full_ret = add_coord_specific_annotations(full_ret)
 
   return full_ret
 end
