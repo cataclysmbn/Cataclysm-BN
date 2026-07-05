@@ -1,5 +1,24 @@
 [
   {
+    "id": "SUS_office_supplies",
+    "type": "item_group",
+    "//": "SUS item groups are collections that contain a reasonable realistic distribution of items that might spawn in a given storage furniture.",
+    "//2": "This group is for a storage furniture containing supplies for an office.",
+    "subtype": "collection",
+    "entries": [
+      { "item": "eink_tablet_pc", "prob": 30, "count": [ 1, 2 ] },
+      { "item": "laptop", "prob": 60, "count": [ 1, 4 ] },
+      { "item": "usb_drive", "prob": 60, "count": [ 3, 8 ] },
+      { "item": "mobile_memory_card_used", "prob": 60, "count": [ 2, 7 ] },
+      { "item": "battery_charger", "prob": 80 },
+      { "item": "file", "count": [ 8, 20 ], "prob": 80 },
+      { "item": "paper", "count": [ 40, 90 ], "prob": 80 },
+      { "item": "pen", "count": [ 40, 100 ], "prob": 80 },
+      { "item": "stapler", "prob": 60, "count": [ 3, 10 ] },
+      { "item": "scissors", "prob": 35, "count": [ 4, 10 ] }
+    ]
+  },
+  {
     "id": "SUS_office_desk",
     "type": "item_group",
     "//": "SUS item groups are collections that contain a reasonable realistic distribution of items that might spawn in a given storage furniture.",
