@@ -2746,14 +2746,16 @@ void sounds::process_sound_markers( Character *who )
                                              element.sound.description;
 
             // don't print our own noise or things without descriptions
-            if( ( element.sound.from_monster || element.sound.from_player || element.sound.from_npc ) &&
-                ( element.sound.origin != who->bub_pos() ) &&
-                !get_map().pl_sees( element.sound.origin, distance_to_sound ) ) {
-                if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
-                    !get_safemode().is_sound_safe( element.sound.description, distance_to_sound ) ) {
-                    const std::string final_description = ensure_punctuation( description, '!' );
-                    const std::string query = string_format( _( "Heard %s!" ), final_description );
-                    g->cancel_activity_or_ignore_query( distraction_type::noise, query );
+            if( !element.sound.from_player ) {
+                if( ( element.sound.from_monster || element.sound.from_npc ) &&
+                    ( element.sound.origin != who->bub_pos() ) &&
+                    !get_map().pl_sees( element.sound.origin, distance_to_sound ) ) {
+                    if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
+                        !get_safemode().is_sound_safe( element.sound.description, distance_to_sound ) ) {
+                        const std::string final_description = ensure_punctuation( description, '!' );
+                        const std::string query = string_format( _( "Heard %s!" ), final_description );
+                        g->cancel_activity_or_ignore_query( distraction_type::noise, query );
+                    }
                 }
             }
 
