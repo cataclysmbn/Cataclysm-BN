@@ -1137,5 +1137,37 @@
     "allowed_locs": [ "sloc_subway" ],
     "start_name": "Subway Tunnels",
     "flags": [ "CITY_START", "LONE_START" ]
+  },
+  {
+    "type": "scenario",
+    "id": "nuclear_plant_start",
+    "name": "Challenge - Emergency Shutdown",
+    "points": -5,
+    "description": "When the Cataclysm happened, you were working in a nuclear power plant.  Now you're trapped inside, surrounded by the shambling bodies of what used to be your coworkers.  The reactor's shut down, but you don't know if there's been a radiation leak and you need to get away from here fast before you find out the hard way.",
+    "start_name": "Nuclear Power Plant",
+    "professions": [
+      "labtech",
+      "bionic_labtech",
+      "security",
+      "medic",
+      "bio_medic",
+      "bionic_mentat",
+      "bionic_spy",
+      "hacker",
+      "bionic_worker",
+      "hazmat_unit",
+      "unemployed"
+    ],
+    "allowed_locs": [ "nuclear_plant" ],
+    "flags": [ "CHALLENGE", "LONE_START" ],
+    "bionics": [
+      "bio_atomic_battery",
+      "bio_fuel_cell_hydrogen",
+      "bio_synaptic_regen",
+      "bio_blood_anal",
+      "bio_memory",
+      "bio_electrosense",
+      "bio_geiger"
+    ]
   }
 ]
