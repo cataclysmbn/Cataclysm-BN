@@ -2270,7 +2270,6 @@ void options_manager::add_options_graphics()
          display_list.front().first, COPT_CURSES_HIDE );
 #endif
 
-#if !defined(__ANDROID__) // Android is always fullscreen
     add( "FULLSCREEN", graphics, translate_marker( "Fullscreen" ),
          translate_marker( "Starts Cataclysm in one of the fullscreen modes.  Requires restart." ),
     { { "no", translate_marker( "No" ) }, { "maximized", translate_marker( "Maximized" ) }, { "fullscreen", translate_marker( "Fullscreen" ) }, { "windowedbl", translate_marker( "Windowed borderless" ) } },
@@ -2280,7 +2279,6 @@ void options_manager::add_options_graphics()
     add( "MINIMIZE_ON_FOCUS_LOSS", graphics,
          translate_marker( "Minimize on focus loss" ),
          translate_marker( "Minimize fullscreen window when it loses focus.  Requires restart." ), false );
-#endif
 
 #if !defined(__ANDROID__)
 #   if !defined(TILES)

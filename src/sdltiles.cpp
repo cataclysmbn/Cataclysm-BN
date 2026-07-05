@@ -215,7 +215,6 @@ static void WinCreate()
     WindowHeight = TERMINAL_HEIGHT * fontheight * scaling_factor;
     window_flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
-#if !defined(__ANDROID__)
     const auto screen_mode = get_option<std::string>( "FULLSCREEN" );
     const auto minimize = get_option<bool>( "MINIMIZE_ON_FOCUS_LOSS" );
 
@@ -230,7 +229,6 @@ static void WinCreate()
     } else if( screen_mode == "maximized" ) {
         window_flags |= SDL_WINDOW_MAXIMIZED;
     }
-#endif
 
     int display = std::stoi( get_option<std::string>( "DISPLAY" ) );
     {
@@ -266,17 +264,12 @@ static void WinCreate()
                            SDL_WINDOWPOS_CENTERED_DISPLAY( display ) );
     SDL_StartTextInput( ::window.get() );
 
-#if !defined(__ANDROID__)
-    // On Android SDL seems janky in windowed mode so we're fullscreen all the time.
-    // Fullscreen mode is now modified so it obeys terminal width/height, rather than
-    // overwriting it with this calculation.
     if( fullscreen || ( window_flags & SDL_WINDOW_MAXIMIZED ) ) {
         SDL_GetWindowSize( ::window.get(), &WindowWidth, &WindowHeight );
         // Ignore previous values, use the whole window, but nothing more.
         TERMINAL_WIDTH = WindowWidth / fontwidth / scaling_factor;
         TERMINAL_HEIGHT = WindowHeight / fontheight / scaling_factor;
     }
-#endif
     // Initialize framebuffer caches
     terminal_framebuffer.resize( TERMINAL_HEIGHT );
     for( int i = 0; i < TERMINAL_HEIGHT; i++ ) {
@@ -348,11 +341,6 @@ static void WinCreate()
                               fontheight * FULL_SCREEN_HEIGHT * scaling_factor );
 
 #if defined(__ANDROID__)
-    // TODO: Not too sure why this works to make fullscreen on Android behave. :/
-    if( fullscreen || ( window_flags & SDL_WINDOW_MAXIMIZED ) ) {
-        SDL_GetWindowSize( ::window.get(), &WindowWidth, &WindowHeight );
-    }
-
     // Load virtual joystick texture
     touch_joystick = CreateTextureFromSurface( renderer, load_image( "android/joystick.png" ) );
 #endif
@@ -3232,14 +3220,9 @@ static void CheckMessages()
                     g->quicksave();
                 }
                 break;
-            // SDL sends a pixel size changed event whenever the screen rotates orientation
+            // SDL sends pixel size changed event on screen rotation or keyboard open/close
             case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-                WindowWidth = ev.window.data1;
-                WindowHeight = ev.window.data2;
-                SDL_Delay( 500 );
-                SDL_GetWindowSurface( window.get() );
-                refresh_display();
-                needupdate = true;
+                handle_resize( ev.window.data1, ev.window.data2 );
                 break;
 #endif
             case SDL_EVENT_WINDOW_SHOWN:
