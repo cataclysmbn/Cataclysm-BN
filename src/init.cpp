@@ -58,7 +58,6 @@
 #include "item_action.h"
 #include "item_category.h"
 #include "item_factory.h"
-#include "item_group.h"
 #include "json.h"
 #include "language.h"
 #include "loading_ui.h"
@@ -305,7 +304,9 @@ void DynamicDataLoader::initialize()
     add( "snippet", []( const JsonObject & jo ) {
         SNIPPET.load_snippet( jo );
     } );
-    add( "item_group", &Item_group::load_item_groups );
+    add( "item_group", []( const JsonObject & jo ) {
+        item_controller->load_item_group( jo );
+    } );
     add( "trait_group", []( const JsonObject & jo ) {
         mutation_branch::load_trait_group( jo );
     } );
@@ -779,7 +780,6 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
                     item_controller->check_definitions();
                 }
             },
-            { _( "Item Group" ), &Item_group::check_all },
             { _( "Materials" ), &materials::check },
             { _( "Engine faults" ), &fault::check_consistency },
             { _( "Vehicle parts" ), &vpart_info::check_consistency },

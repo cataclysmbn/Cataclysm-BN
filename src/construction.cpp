@@ -35,7 +35,6 @@
 #include "int_id.h"
 #include "item.h"
 #include "item_group.h"
-#include "item_group_readers.h"
 #include "item_stack.h"
 #include "iuse.h"
 #include "json.h"
@@ -2282,7 +2281,10 @@ void construction::load( const JsonObject &jo, const std::string &/*src*/ )
     optional( jo, was_loaded, "post_flags", post_flags );
     optional( jo, was_loaded, "needs_diggable", needs_diggable, false );
 
-    optional( jo, was_loaded, "byproducts", byproduct_item_group, itemgroup_reader( "collection" ) );
+    if( jo.has_member( "byproducts" ) ) {
+        byproduct_item_group = item_group::load_item_group( jo.get_member( "byproducts" ),
+                               "collection" );
+    }
 
     static const std::map<std::string, std::function<bool( const tripoint_bub_ms & )>> pre_special_map
     = { {

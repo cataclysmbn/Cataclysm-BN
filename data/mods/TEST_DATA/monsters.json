@@ -27,57 +27,43 @@
     "upgrades": { "age_grow": 14, "into": "mon_zombie" }
   },
   {
-    "id": "mon_test_death_drops",
-    "copy-from": "debug_mon",
-    "type": "MONSTER",
-    "name": { "str": "death drop test monster" },
-    "description": "This monster exists only for testing purposes.",
-    "death_drops": [ "rock" ]
+    "type": "item_group",
+    "id": "test_monster_death_drop_base",
+    "subtype": "collection",
+    "items": [ "rock" ]
+  },
+  {
+    "type": "item_group",
+    "id": "test_monster_death_drop_append",
+    "subtype": "collection",
+    "items": [ "stick" ]
   },
   {
     "id": "mon_test_death_drops_append",
-    "copy-from": "mon_test_death_drops",
+    "copy-from": "debug_mon",
     "type": "MONSTER",
     "name": { "str": "death drop append test monster" },
     "description": "This monster exists only for testing purposes.",
-    "death_drops": [ "stick" ]
+    "death_drops": "test_monster_death_drop_base"
   },
   {
-    "id": "mon_test_death_drops_replace",
+    "id": "mon_test_death_drops_append",
     "copy-from": "mon_test_death_drops_append",
     "type": "MONSTER",
-    "name": { "str": "death drop replace test monster" },
-    "description": "This monster exists only for testing purposes.",
-    "death_drops": { "entries": [ { "item": "fetid_goop" } ], "purge": true }
+    "extend": { "death_drops": "test_monster_death_drop_append" }
   },
   {
-    "id": "rocks_and_sticks",
-    "type": "item_group",
-    "subtype": "collection",
-    "entries": [ { "item": "rock" }, { "item": "stick" } ]
-  },
-  {
-    "id": "mon_test_death_drops_string_append",
-    "copy-from": "mon_test_death_drops_replace",
+    "id": "mon_test_death_drops_clear",
+    "copy-from": "debug_mon",
     "type": "MONSTER",
-    "name": { "str": "death drop string append test monster" },
+    "name": { "str": "death drop clear test monster" },
     "description": "This monster exists only for testing purposes.",
-    "death_drops": "rocks_and_sticks"
+    "death_drops": "test_monster_death_drop_base"
   },
   {
-    "id": "mon_test_death_drops_group_append",
-    "copy-from": "mon_test_death_drops_replace",
+    "id": "mon_test_death_drops_clear",
+    "copy-from": "mon_test_death_drops_clear",
     "type": "MONSTER",
-    "name": { "str": "death drop string append test monster" },
-    "description": "This monster exists only for testing purposes.",
-    "death_drops": { "entries": [ { "group": "rocks_and_sticks" } ] }
-  },
-  {
-    "id": "mon_test_death_drops_delete",
-    "copy-from": "mon_test_death_drops_group_append",
-    "type": "MONSTER",
-    "name": { "str": "death drop delete test monster" },
-    "description": "This monster exists only for testing purposes.",
-    "death_drops": { "delete": [ { "item": "fetid_goop" } ] }
+    "death_drops": ""
   }
 ]

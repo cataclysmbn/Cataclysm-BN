@@ -8,10 +8,6 @@
 #include <utility>
 #include <vector>
 
-TEST_CASE("empty itemgroup is indeed empty", "[item_group][empty]") {
-    CHECK(item_group::items_from(item_group::empty).empty());
-}
-
 TEST_CASE("spawn with default charges and with ammo", "[item_group]") {
     Item_modifier default_charges;
     default_charges.with_ammo = 100;

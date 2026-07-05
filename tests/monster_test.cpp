@@ -18,10 +18,12 @@
 #include "player.h"
 #include "state_helpers.h"
 #include "test_statistics.h"
+#include "type_id.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <list>
@@ -34,6 +36,55 @@
 #include <vector>
 
 using move_statistics = statistics<int>;
+
+namespace {
+
+auto count_items_at(const tripoint_bub_ms& pos, const itype_id& type) -> int {
+    return std::ranges::count_if(get_map().i_at(pos), [&type](const auto* it) {
+        return it->typeId() == type;
+    });
+}
+
+} // namespace
+
+TEST_CASE("extended monster death drops append to inherited drops", "[monster][death_drops]") {
+    clear_all_state();
+    const auto global_spawn_rate = override_option("ITEM_SPAWNRATE", "1.0");
+    const auto rock_spawn_rate = override_option("SPAWN_RATE_rocks", "1.0");
+    const auto wood_spawn_rate = override_option("SPAWN_RATE_scrap_wood", "1.0");
+    static_cast<void>(global_spawn_rate);
+    static_cast<void>(rock_spawn_rate);
+    static_cast<void>(wood_spawn_rate);
+    move_player_out_of_the_way();
+
+    auto& here = get_map();
+    build_test_map(ter_id("t_floor"));
+
+    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
+    here.i_clear(monster_pos);
+
+    auto& test_monster = spawn_test_monster("mon_test_death_drops_append", monster_pos);
+    test_monster.drop_items_on_death();
+
+    CHECK(count_items_at(monster_pos, itype_id("rock")) == 1);
+    CHECK(count_items_at(monster_pos, itype_id("stick")) == 1);
+}
+
+TEST_CASE("empty top-level monster death drops replace inherited drops", "[monster][death_drops]") {
+    clear_all_state();
+    move_player_out_of_the_way();
+
+    auto& here = get_map();
+    build_test_map(ter_id("t_floor"));
+
+    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
+    here.i_clear(monster_pos);
+
+    auto& test_monster = spawn_test_monster("mon_test_death_drops_clear", monster_pos);
+    test_monster.drop_items_on_death();
+
+    CHECK(here.i_at(monster_pos).empty());
+}
 
 TEST_CASE("hallucination_monsters_do_not_open_real_doors", "[monster][hallucination]") {
     clear_all_state();
@@ -623,77 +674,4 @@ TEST_CASE("zombie_technician_pull_uses_physical_clear_path", "[monster][z-level]
         CHECK_FALSE(mattack::pull_metal_weapon(&technician));
         CHECK(you.primary_weapon().typeId() == flaregun_id);
     }
-}
-
-TEST_CASE("monster death drops append to inherited drops", "[monster][death_drops]") {
-    clear_all_state();
-    const auto& test_append = mtype_id("mon_test_death_drops_append");
-    const auto items = item_group::items_from(test_append->death_drops);
-
-    bool has_rock = false;
-    bool has_stick = false;
-    for (const auto& item : items) {
-        if (item->typeId() == itype_id("rock")) { has_rock = true; }
-        if (item->typeId() == itype_id("stick")) { has_stick = true; }
-    }
-
-    CHECK(has_rock);
-    CHECK(has_stick);
-}
-
-TEST_CASE("monster death drops can purge inherited drops", "[monster][death_drops]") {
-    clear_all_state();
-    const auto& test_append = mtype_id("mon_test_death_drops_replace");
-    const auto items = item_group::items_from(test_append->death_drops);
-
-    bool has_rock = false;
-    bool has_stick = false;
-    bool has_goop = false;
-    for (const auto& item : items) {
-        if (item->typeId() == itype_id("rock")) { has_rock = true; }
-        if (item->typeId() == itype_id("stick")) { has_stick = true; }
-        if (item->typeId() == itype_id("fetid_goop")) { has_goop = true; }
-    }
-
-    CHECK(!has_rock);
-    CHECK(!has_stick);
-    CHECK(has_goop);
-}
-
-TEST_CASE("monster death drops can itemgroup strings append", "[monster][death_drops]") {
-    clear_all_state();
-    const auto& test_append = mtype_id("mon_test_death_drops_string_append");
-    const auto items = item_group::items_from(test_append->death_drops);
-
-    bool has_rock = false;
-    bool has_stick = false;
-    bool has_goop = false;
-    for (const auto& item : items) {
-        if (item->typeId() == itype_id("rock")) { has_rock = true; }
-        if (item->typeId() == itype_id("stick")) { has_stick = true; }
-        if (item->typeId() == itype_id("fetid_goop")) { has_goop = true; }
-    }
-
-    CHECK(has_rock);
-    CHECK(has_stick);
-    CHECK(has_goop);
-}
-
-TEST_CASE("monster death drops can delete things", "[monster][death_drops]") {
-    clear_all_state();
-    const auto& test_append = mtype_id("mon_test_death_drops_delete");
-    const auto items = item_group::items_from(test_append->death_drops);
-
-    bool has_rock = false;
-    bool has_stick = false;
-    bool has_goop = false;
-    for (const auto& item : items) {
-        if (item->typeId() == itype_id("rock")) { has_rock = true; }
-        if (item->typeId() == itype_id("stick")) { has_stick = true; }
-        if (item->typeId() == itype_id("fetid_goop")) { has_goop = true; }
-    }
-
-    CHECK(has_rock);
-    CHECK(has_stick);
-    CHECK(!has_goop);
 }

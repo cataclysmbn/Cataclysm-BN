@@ -788,7 +788,7 @@ auto mapgen_constructor::place_items( const item_group_id &loc, const int chance
         debugmsg( "mapgen_constructor::place_items() called with invalid chance %d", chance );
         return res;
     }
-    if( !loc.is_valid() ) {
+    if( !item_group::group_is_defined( loc ) ) {
         it = itype_id( loc.str() );
         if( !it.is_valid() ) {
             const oter_id &oid = get_overmapbuffer( get_bound_dimension() ).ter( get_abs_omt() );
