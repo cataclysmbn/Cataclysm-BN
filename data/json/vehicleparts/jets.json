@@ -75,7 +75,7 @@
     "description": "This is a lightweight hover repulsor module mounted on the underside of a vehicle.  It offers unparalleled maneuverability, allowing the vehicle to glide and fly effortlessly over rough terrain and obstacles.  Though originally intended to be frictionless, unknown antigrav phenomena nonetheless causes vehicles to experience a force similar to friction.",
     "damage_modifier": 50,
     "breaks_into": [ { "item": "scrap", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 8, 16 ] } ],
-    "flags": [ "BALLOON", "WHEEL", "FLOATS", "ROTOR", "STABLE", "SELF_JACK", "VARIABLE_SIZE", "TRACKED" ],
+    "flags": [ "BALLOON", "WHEEL", "FLOATS", "ROTOR", "STABLE", "SELF_JACK", "VARIABLE_SIZE", "TRACKED", "TRAP_PROOF" ],
     "damage_reduction": { "all": 40 }
   }
 ]
