@@ -1404,7 +1404,6 @@
     "skill_used": "tailor",
     "difficulty": 5,
     "time": "2 h 30 m",
-    "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 3 ] ],
     "using": [ [ "sewing_standard", 32 ] ],
     "components": [ [ [ "rag", 16 ] ] ]
@@ -1417,7 +1416,6 @@
     "skill_used": "tailor",
     "difficulty": 7,
     "time": "5 h",
-    "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 4 ] ],
     "using": [ [ "sewing_standard", 48 ] ],
     "components": [ [ [ "rag", 25 ] ] ]
@@ -1430,7 +1428,6 @@
     "skill_used": "tailor",
     "difficulty": 5,
     "time": "2 h 30 m",
-    "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 4 ] ],
     "using": [ [ "sewing_standard", 60 ] ],
     "components": [ [ [ "rag", 12 ] ] ]
@@ -1456,7 +1453,6 @@
     "skill_used": "tailor",
     "difficulty": 5,
     "time": "2 h 30 m",
-    "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 3 ] ],
     "using": [ [ "sewing_standard", 32 ] ],
     "components": [ [ [ "rag", 16 ] ] ]
@@ -1469,7 +1465,6 @@
     "skill_used": "tailor",
     "difficulty": 7,
     "time": "5 h",
-    "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 4 ] ],
     "using": [ [ "sewing_standard", 48 ] ],
     "components": [ [ [ "rag", 20 ] ] ]
@@ -1482,7 +1477,6 @@
     "skill_used": "tailor",
     "difficulty": 6,
     "time": "4 h",
-    "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 4 ] ],
     "using": [ [ "sewing_standard", 48 ] ],
     "components": [ [ [ "rag", 20 ] ] ]
