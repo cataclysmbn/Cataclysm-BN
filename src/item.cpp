@@ -4034,46 +4034,46 @@ void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *par
 
     if( dmg_bash || dmg_cut || dmg_stab ) {
         std::string sep;
-        info.emplace_back( "BASE", _( "<bold>Base throw damage</bold>: " ), "", iteminfo::no_newline );
+        info.emplace_back( "BASE_THROW", _( "<bold>Base throw damage</bold>: " ), "", iteminfo::no_newline );
         if( dmg_bash ) {
-            info.emplace_back( "BASE", _( "Bash: " ), "", iteminfo::no_newline, dmg_bash );
+            info.emplace_back( "BASE_THROW", _( "Bash: " ), "", iteminfo::no_newline, dmg_bash );
             sep = " ";
         }
         if( dmg_cut ) {
-            info.emplace_back( "BASE", sep + _( "Cut: " ), "", iteminfo::no_newline, dmg_cut );
+            info.emplace_back( "BASE_THROW", sep + _( "Cut: " ), "", iteminfo::no_newline, dmg_cut );
             sep = " ";
         }
         if( dmg_stab ) {
-            info.emplace_back( "BASE", sep + _( "Pierce: " ), "", iteminfo::no_newline, dmg_stab );
+            info.emplace_back( "BASE_THROW", sep + _( "Pierce: " ), "", iteminfo::no_newline, dmg_stab );
         }
-        info.emplace_back( "BASE", "\n", "", iteminfo::no_newline );
+        info.emplace_back( "BASE_THROW", "\n", "", iteminfo::no_newline );
     }
 
     if( proj_dmg_bash || proj_dmg_cut || proj_dmg_stab ) {
         std::string sep;
-        info.emplace_back( "BASE", _( "<bold>Throw damage</bold>: " ), "", iteminfo::no_newline );
+        info.emplace_back( "THROW", _( "<bold>Throw damage</bold>: " ), "", iteminfo::no_newline );
         if( proj_dmg_bash ) {
-            info.emplace_back( "BASE", _( "Bash: " ), "", iteminfo::no_newline, proj_dmg_bash );
+            info.emplace_back( "THROW", _( "Bash: " ), "", iteminfo::no_newline, proj_dmg_bash );
             sep = " ";
         }
         if( proj_dmg_cut ) {
-            info.emplace_back( "BASE", sep + _( "Cut: " ), "", iteminfo::no_newline, proj_dmg_cut );
+            info.emplace_back( "THROW", sep + _( "Cut: " ), "", iteminfo::no_newline, proj_dmg_cut );
             sep = " ";
         }
         if( proj_dmg_stab ) {
-            info.emplace_back( "BASE", sep + _( "Pierce: " ), "", iteminfo::no_newline, proj_dmg_stab );
+            info.emplace_back( "THROW", sep + _( "Pierce: " ), "", iteminfo::no_newline, proj_dmg_stab );
         }
-        info.emplace_back( "BASE", "\n", "", iteminfo::no_newline );
+        info.emplace_back( "THROW", "\n", "", iteminfo::no_newline );
     }
 
-    info.emplace_back( "BASE", _( "Throw range: " ), "<num>", iteminfo::no_flags, throw_range );
+    info.emplace_back( "THROW", _( "Throw range: " ), "<num>", iteminfo::no_flags, throw_range );
 
     const int throw_cost = ranged::throw_cost( you, *this );
-    info.emplace_back( "BASE", _( "Moves per throw: " ), "<num>", iteminfo::lower_is_better,
+    info.emplace_back( "THROW", _( "Moves per throw: " ), "<num>", iteminfo::lower_is_better,
                        throw_cost );
 
     const int stamina_cost = ranged::throw_stamina_cost( you, *this );
-    info.emplace_back( "BASE", _( "Stamina cost: " ), "<num>", iteminfo::lower_is_better,
+    info.emplace_back( "THROW", _( "Stamina cost: " ), "<num>", iteminfo::lower_is_better,
                        stamina_cost );
 
     insert_separation_line( info );
