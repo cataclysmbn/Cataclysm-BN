@@ -1021,6 +1021,7 @@ void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
 {
     int pwh = part_with_feature( part, VPFLAG_WHEEL, true );
     if( pwh < 0 ) {
+        return;
     }
     if( part_with_feature( part, VPFLAG_TRAP_PROOF, true ) >= 0 ) {
         return;
