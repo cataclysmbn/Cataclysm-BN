@@ -904,9 +904,9 @@ TEST_CASE("list of item qualities", "[item][iteminfo][quality]") {
         test_info_equals(
             "test_halligan", q,
             "--\n"
-            "Has level <color_c_cyan>1 digging</color> quality.\n"
-            "Has level <color_c_cyan>2 hammering</color> quality.\n"
-            "Has level <color_c_cyan>4 prying</color> quality.\n");
+            "Has level <color_c_yellow>1</color> <color_c_cyan>digging</color> quality.\n"
+            "Has level <color_c_yellow>2</color> <color_c_cyan>hammering</color> quality.\n"
+            "Has level <color_c_yellow>4</color> <color_c_cyan>prying</color> quality.\n");
     }
 
     SECTION("bottle jack") {
@@ -914,19 +914,19 @@ TEST_CASE("list of item qualities", "[item][iteminfo][quality]") {
         test_info_equals(
             "test_jack_small", q,
             "--\n"
-            "Has level <color_c_cyan>4 jacking</color> quality and is rated at "
-            "<color_c_cyan>4409</color> lbs\n");
+            "Has level <color_c_yellow>4</color> <color_c_cyan>jacking</color> quality and is rated at "
+            "<color_c_cyan>4409</color> lbs.\n");
     }
 
     SECTION("sonic screwdriver") {
         test_info_equals(
             "test_sonic_screwdriver", q,
             "--\n"
-            "Has level <color_c_cyan>30 lockpicking</color> quality.\n"
-            "Has level <color_c_cyan>2 prying</color> quality.\n"
-            "Has level <color_c_cyan>2 screw driving</color> quality.\n"
-            "Has level <color_c_cyan>1 fine screw driving</color> quality.\n"
-            "Has level <color_c_cyan>1 bolt turning</color> quality.\n");
+            "Has level <color_c_yellow>30</color> <color_c_cyan>lockpicking</color> quality.\n"
+            "Has level <color_c_yellow>2</color> <color_c_cyan>prying</color> quality.\n"
+            "Has level <color_c_yellow>2</color> <color_c_cyan>screw driving</color> quality.\n"
+            "Has level <color_c_yellow>1</color> <color_c_cyan>fine screw driving</color> quality.\n"
+            "Has level <color_c_yellow>1</color> <color_c_cyan>bolt turning</color> quality.\n");
     }
 }
 
