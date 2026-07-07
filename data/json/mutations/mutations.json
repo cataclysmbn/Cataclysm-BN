@@ -7112,5 +7112,45 @@
     "cancels": [ "BRAWLER", "GUNSHY" ],
     "valid": false,
     "purifiable": false
+  },
+  {
+    "type": "mutation",
+    "id": "BLIND",
+    "name": { "str": "Blind" },
+    "points": -12,
+    "description": "You're totally blind, requiring you to cautiously feel out your surroundings.  Prevents crafting and construction aside from simple tasks that can be done blindfolded, and hinders many other actions as well.",
+    "starting_trait": true,
+    "valid": false,
+    "//": "Has both because `prevents` has no impact on character creation.",
+    "cancels": [
+      "NIGHTVISION",
+      "NIGHTVISION2",
+      "NIGHTVISION3",
+      "ELFA_NV",
+      "ELFA_FNV",
+      "FEL_NV",
+      "URSINE_EYE",
+      "EAGLEEYED",
+      "MYOPIC",
+      "HYPEROPIC"
+    ],
+    "prevents": [
+      "NIGHTVISION",
+      "NIGHTVISION2",
+      "NIGHTVISION3",
+      "ELFA_NV",
+      "ELFA_FNV",
+      "FEL_NV",
+      "URSINE_EYE",
+      "EAGLEEYED",
+      "MYOPIC",
+      "HYPEROPIC"
+    ],
+    "mut_enchantments": [
+      {
+        "condition": "ALWAYS",
+        "ench_effects": [ { "effect": "blind", "intensity": 1 } ]
+      }
+    ]
   }
 ]
