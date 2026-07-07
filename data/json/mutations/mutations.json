@@ -852,6 +852,7 @@
     "points": -6,
     "description": "You never learned to read!  Books and computers are off-limits to you.",
     "starting_trait": true,
+    "random_starting_trait": false,
     "valid": false,
     "purifiable": false,
     "cancels": [ "FASTREADER", "SLOWREADER", "PROF_DICEMASTER", "LOVES_BOOKS" ]
@@ -6982,6 +6983,7 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
+    "random_starting_trait": false,
     "cancels": [ "GUNSHY", "CARRY_PERMIT" ],
     "valid": false
   },
@@ -6992,6 +6994,7 @@
     "points": -4,
     "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
+    "random_starting_trait": false,
     "cancels": [ "BRAWLER", "CARRY_PERMIT" ],
     "valid": false
   },
@@ -7012,6 +7015,7 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, traveling with vehicles is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
+    "random_starting_trait": false,
     "valid": false,
     "purifiable": false
   },

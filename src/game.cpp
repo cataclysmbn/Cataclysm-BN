@@ -15032,9 +15032,6 @@ auto game::vertical_shift( const int z_before, const int z_after ) -> void
     debug_assert_player_map_origin( "vertical_shift" );
 
     m.spawn_monsters( true );
-    // this may be required after a vertical shift if z-levels are not enabled
-    // the critter is unloaded/loaded, and it needs to reconstruct its rider data after being reloaded.
-    validate_mounted_npcs();
     vertical_notes( z_before, z_after );
     update_overmap_seen();
 }

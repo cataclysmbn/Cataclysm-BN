@@ -747,19 +747,23 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             you.moves -= 100;
         }
         // Add to map memory if blind
+        // TODO: make this not ugly by having the rotation and connections without
+        // Also revealing the nearby tiles to the player
         if( you.is_blind() ) {
-            std::string obstacle;
             if( m.veh_at( dest_loc ) ) {
                 char part_mod = 0;
                 const vpart_id &vp_id = m.veh_at( dest_loc )->vehicle().part_id_string( m.veh_at(
                                             dest_loc )->part_index(), false, part_mod );
-                obstacle = "vp_" + vp_id.str();
+                you.memorize_tile( bub_to_abs( dest_loc ), "vp_" + vp_id.str(), 0, 0 );
             } else {
-                obstacle = m.has_furn( dest_loc ) ? m.furn( dest_loc ).id().str() : m.ter(
-                               dest_loc ).id().str();
+                if( m.has_furn( dest_loc ) ) {
+                    you.memorize_tile( bub_to_abs( dest_loc ), m.furn( dest_loc ).id().str(), 0, 0 );
+                } else {
+                    std::string ter = m.ter( dest_loc ).id().str();
+                    you.memorize_tile( bub_to_abs( dest_loc ), ter, 0, 0 );
+                    you.memorize_terrain_tile( bub_to_abs( dest_loc ), ter, 0, 0 );
+                }
             }
-            // TODO: Figure out how to make subtile and rotation work right here
-            you.memorize_tile( bub_to_abs( dest_loc ), obstacle, 0, 0 );
         }
     } else if( m.ter( dest_loc ) == t_door_locked || m.ter( dest_loc ) == t_door_locked_peep ||
                m.ter( dest_loc ) == t_door_locked_alarm || m.ter( dest_loc ) == t_door_locked_interior ) {

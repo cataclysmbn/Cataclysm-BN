@@ -45,6 +45,7 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
+#include "skill.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "string_utils.h"
@@ -621,8 +622,16 @@ static std::vector<std::string> recipe_info(
         []( const itype_id & type_id ) {
             return colorize( item::nname( type_id ), c_cyan );
         } );
-        oss << _( "book count: " ) << books_with_recipe.size() << "\n";
-        oss << string_format( _( "Written in: %s\n" ), enumerated_books );
+        if( books_with_recipe.size() != 0 ) {
+            oss << _( "book count: " ) << books_with_recipe.size() << "\n";
+            oss << string_format( _( "Written in: %s\n" ), enumerated_books );
+        }
+        if( !recp.autolearn_requirements.empty() ) {
+            oss << _( "Autolearn when all are met:\n" );
+            for( const auto [skill, level] : recp.autolearn_requirements ) {
+                oss << string_format( _( "  Skill %s at level %s\n" ), skill->name(), level );
+            }
+        }
     }
     std::vector<std::string> tmp = foldstring( oss.str(), fold_width );
     result.insert( result.end(), tmp.begin(), tmp.end() );
