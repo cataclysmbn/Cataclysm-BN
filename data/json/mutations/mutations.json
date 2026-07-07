@@ -7146,11 +7146,6 @@
       "MYOPIC",
       "HYPEROPIC"
     ],
-    "mut_enchantments": [
-      {
-        "condition": "ALWAYS",
-        "ench_effects": [ { "effect": "blind", "intensity": 1 } ]
-      }
-    ]
+    "mut_enchantments": [ { "condition": "ALWAYS", "ench_effects": [ { "effect": "blind", "intensity": 1 } ] } ]
   }
 ]
