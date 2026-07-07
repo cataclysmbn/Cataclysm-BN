@@ -7124,6 +7124,7 @@
     "points": -12,
     "description": "You're totally blind, requiring you to cautiously feel out your surroundings.  Prevents crafting and construction aside from simple tasks that can be done blindfolded, and hinders many other actions as well.",
     "starting_trait": true,
+    "random_starting_trait": false,
     "valid": false,
     "//": "Has both because `prevents` has no impact on character creation.",
     "cancels": [
