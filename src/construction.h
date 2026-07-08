@@ -45,6 +45,8 @@ struct construction {
         construction_category_id category = construction_category_id( "OTHER" );
         // Which group does this construction belong to.
         construction_group_str_id group;
+        // Optional description to replace the terrain/furniture one
+        translation description;
         // Additional note displayed along with construction requirements.
         translation pre_note;
 
@@ -52,9 +54,9 @@ struct construction {
         ter_str_id pre_terrain;
         furn_str_id pre_furniture;
 
-        // Final object after construction
-        ter_str_id post_terrain;
-        furn_str_id post_furniture;
+        // Final objects after construction
+        std::vector<ter_str_id> post_terrain;
+        std::vector<furn_str_id> post_furniture;
 
         // Item group of byproducts created by the construction on success.
         item_group_id byproduct_item_group;
@@ -107,6 +109,15 @@ struct construction {
 
         // Can be built in the dark
         bool dark_craftable = false;
+
+        // Checks if all terrains are valid
+        bool is_post_terrain_valid() const;
+
+        // Checks if all furnitures are valid
+        bool is_post_furniture_valid() const;
+
+        // Query the desired post terrain/furniture
+        int query_post_terrain_or_furniture() const;
 
     private:
         std::string get_time_string() const;

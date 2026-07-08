@@ -230,51 +230,16 @@
   },
   {
     "type": "construction",
-    "id": "constr_carpet_red",
-    "group": "carpet_floor_red",
+    "id": "constr_carpet",
+    "description": "Carpet the floor with a variety of options by using the same carpet or transmuting others.",
+    "group": "carpet_floor",
     "category": "DECORATE",
     "required_skills": [ [ "fabrication", 1 ] ],
     "time": "20 m",
     "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
-    "components": [ [ [ "nail", 4 ] ], [ [ "r_carpet", 1 ] ] ],
+    "components": [ [ [ "nail", 4 ] ], [ [ "r_carpet", 1 ], [ "p_carpet", 1 ], [ "y_carpet", 1 ], [ "g_carpet", 1 ] ] ],
     "pre_terrain": "t_floor",
-    "post_terrain": "t_carpet_red"
-  },
-  {
-    "type": "construction",
-    "id": "constr_carpet_purple",
-    "group": "carpet_floor_purple",
-    "category": "DECORATE",
-    "required_skills": [ [ "fabrication", 1 ] ],
-    "time": "20 m",
-    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
-    "components": [ [ [ "nail", 4 ] ], [ [ "p_carpet", 1 ] ] ],
-    "pre_terrain": "t_floor",
-    "post_terrain": "t_carpet_purple"
-  },
-  {
-    "type": "construction",
-    "id": "constr_carpet_yellow",
-    "group": "carpet_floor_yellow",
-    "category": "DECORATE",
-    "required_skills": [ [ "fabrication", 1 ] ],
-    "time": "20 m",
-    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
-    "components": [ [ [ "nail", 4 ] ], [ [ "y_carpet", 1 ] ] ],
-    "pre_terrain": "t_floor",
-    "post_terrain": "t_carpet_yellow"
-  },
-  {
-    "type": "construction",
-    "id": "constr_carpet_green",
-    "group": "carpet_floor_green",
-    "category": "DECORATE",
-    "required_skills": [ [ "fabrication", 1 ] ],
-    "time": "20 m",
-    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
-    "components": [ [ [ "nail", 4 ] ], [ [ "g_carpet", 1 ] ] ],
-    "pre_terrain": "t_floor",
-    "post_terrain": "t_carpet_green"
+    "post_terrain": [ "t_carpet_red", "t_carpet_purple", "t_carpet_yellow", "t_carpet_green" ]
   },
   {
     "type": "construction",

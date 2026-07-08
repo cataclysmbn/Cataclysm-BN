@@ -811,23 +811,8 @@
   },
   {
     "type": "construction_group",
-    "id": "carpet_floor_green",
-    "name": "Carpet Floor Green"
-  },
-  {
-    "type": "construction_group",
-    "id": "carpet_floor_purple",
-    "name": "Carpet Floor Purple"
-  },
-  {
-    "type": "construction_group",
-    "id": "carpet_floor_red",
-    "name": "Carpet Floor Red"
-  },
-  {
-    "type": "construction_group",
-    "id": "carpet_floor_yellow",
-    "name": "Carpet Floor Yellow"
+    "id": "carpet_floor",
+    "name": "Carpet Floor"
   },
   {
     "type": "construction_group",
@@ -988,11 +973,6 @@
     "type": "construction_group",
     "id": "install_industrial_freezer",
     "name": "Install Industrial Freezer"
-  },
-  {
-    "type": "construction_group",
-    "id": "install_glass_freezer",
-    "name": "Plug In Glass Freezer"
   },
   {
     "type": "construction_group",

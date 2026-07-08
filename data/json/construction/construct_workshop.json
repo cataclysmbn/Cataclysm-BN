@@ -340,15 +340,16 @@
   {
     "type": "construction",
     "id": "constr_gridfreezer",
+    "description": "Install a freezer either with a glass or a normal door.",
     "group": "install_freezer",
     "category": "WORKSHOP",
     "required_skills": [  ],
     "time": "10 m",
     "qualities": [  ],
-    "components": [ [ [ "freezer", 1 ] ] ],
+    "components": [ [ [ "glass_freezer", 1 ], [ "freezer", 1 ] ] ],
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
-    "post_furniture": "f_freezer"
+    "post_furniture": [ "f_freezer", "f_glass_freezer" ]
   },
   {
     "type": "construction",
@@ -361,19 +362,6 @@
     "pre_special": "check_empty",
     "post_furniture": "f_freezer_industrial",
     "components": [ [ [ "freezer_industrial", 1 ] ] ]
-  },
-  {
-    "type": "construction",
-    "id": "constr_gridglass_freezer",
-    "group": "install_glass_freezer",
-    "category": "WORKSHOP",
-    "required_skills": [  ],
-    "time": "10 m",
-    "qualities": [  ],
-    "components": [ [ [ "glass_freezer", 1 ] ] ],
-    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
-    "pre_special": "check_empty",
-    "post_furniture": "f_glass_freezer"
   },
   {
     "type": "construction",
