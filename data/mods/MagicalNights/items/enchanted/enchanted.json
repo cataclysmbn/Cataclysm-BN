@@ -110,7 +110,6 @@
             { "value": "ARMOR_COLD", "add": -2, "multiply": -0.5 },
             { "value": "ARMOR_LIGHT", "add": -2, "multiply": -0.5 },
             { "value": "ARMOR_DARK", "add": -2, "multiply": -0.5 },
-            { "value": "ARMOR_PSI ", "add": -2, "multiply": -0.5 },
             { "value": "ARMOR_ELECTRIC", "add": -2, "multiply": -0.5 }
           ]
         }
