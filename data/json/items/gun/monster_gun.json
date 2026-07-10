@@ -241,5 +241,39 @@
         ]
       ]
     ]
+  },
+  {
+    "id": "anomaly_thrown_rock",
+    "weapon_category": [ "ELASTIC" ],
+    "type": "GUN",
+    "symbol": "%",
+    "color": "red",
+    "name": { "str": "PE-025-X throw" },
+    "description": "Used by PE-025-X boss.",
+    "material": [ "stone" ],
+    "flags": [
+      "PRIMITIVE_RANGED_WEAPON",
+      "NEVER_JAMS",
+      "NONCONDUCTIVE",
+      "NO_REPAIR",
+      "WATERPROOF_GUN",
+      "NO_SALVAGE",
+      "NO_UNLOAD",
+      "WATERPROOF_GUN",
+      "NEVER_JAMS"
+    ],
+    "skill": "throw",
+    "ammo": [ "rock" ],
+    "ammo_effects": [ "NEVER_MISFIRES" ],
+    "clip_size": 1,
+    "ranged_damage": { "damage_type": "bash", "amount": 20 },
+    "weight": "0 g",
+    "volume": "0 ml",
+    "bashing": 1,
+    "to_hit": 1,
+    "loudness": 40,
+    "range": 40,
+    "dispersion": 1000,
+    "durability": 8
   }
 ]
