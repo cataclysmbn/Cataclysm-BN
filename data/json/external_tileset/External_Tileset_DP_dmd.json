@@ -87,7 +87,27 @@
           { "id": [ "holo_sight", "overlay_wielded_holo_sight" ], "fg": 66 },
           { "id": [ "hybrid_sight", "overlay_wielded_hybrid_sight" ], "fg": 67 },
           { "id": "mon_zombie_kevlar_0", "fg": 68, "bg": 30 },
-          { "id": "corpse_mon_zombie_kevlar_0", "fg": 69 }
+          { "id": "corpse_mon_zombie_kevlar_0", "fg": 69 },
+          {
+            "id": "t_nether_glass_floor",
+            "fg": [
+              { "weight": 500, "sprite": 70 },
+              { "weight": 500, "sprite": 71 },
+              { "weight": 500, "sprite": 72 },
+              { "weight": 500, "sprite": 73 },
+              { "weight": 500, "sprite": 74 }
+            ],
+            "bg": 70,
+            "animated": true,
+            "rotates": false
+          },
+          { "id": "mon_suspended_merc_summon", "fg": 75 },
+          { "id": "mon_anomaly_boss_clone", "fg": 78 },
+          { "id": "mon_task_force_shade", "fg": 79 },
+          { "id": [ "pants_tacticool", "overlay_wielded_pants_tacticool" ], "fg": 80 },
+          { "id": "overlay_worn_pants_tacticool", "fg": 81 },
+          { "id": [ "jacket_tacticool", "overlay_wielded_jacket_tacticool" ], "fg": 82 },
+          { "id": "overlay_worn_jacket_tacticool", "fg": 83 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
