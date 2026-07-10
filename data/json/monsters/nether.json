@@ -1101,7 +1101,7 @@
   {
     "id": "mon_suspended_merc_summon",
     "type": "MONSTER",
-    "name": { "str": "shrapnel swarm", "str_pl": "shrapnel swarms" },
+    "name": { "str": "shrapnel swarm" },
     "description": "This swarm of metal is made of various casings, fired bullets, and shrapnel.  The swarm orbits around a central, invisible force at high speed, and it seems to be heading towards you.",
     "default_faction": "nether",
     "species": [ "UNKNOWN" ],
