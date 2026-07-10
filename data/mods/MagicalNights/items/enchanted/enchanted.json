@@ -91,7 +91,7 @@
     "volume": "1 ml",
     "price": "0 USD",
     "price_postapoc": "0 USD",
-    "material": [ "plastic" ],
+    "material": [ "concentrated_mana" ],
     "symbol": "[",
     "color": "light_red",
     "covers": [ "head", "eyes", "mouth", "torso", "legs", "arms", "hands", "feet" ],
