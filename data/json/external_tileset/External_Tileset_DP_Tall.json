@@ -65,7 +65,10 @@
           { "id": "corpse_mon_wasp_mega_acid", "fg": 45 },
           { "id": "mon_kraken_boss", "fg": 46 },
           { "id": "mon_kraken_boss_tentacle", "fg": 47 },
-          { "id": "creepy_doll", "fg": 48 }
+          { "id": "creepy_doll", "fg": 48 },
+          { "id": "mon_suspended_shade", "fg": 49 },
+          { "id": "mon_suspended_merc", "fg": 50 },
+          { "id": "mon_anomaly_boss", "fg": 51 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,
