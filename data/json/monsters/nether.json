@@ -1138,7 +1138,7 @@
       "FLIES",
       "BIOPROOF",
       "NOT_HALLUCINATION",
-      "NO_GRAB"
+      "GRAB_IMMUNE"
     ]
   },
   {
@@ -1203,7 +1203,7 @@
       "WEBWALK",
       "IMMOBILE",
       "STUN_IMMUNE",
-      "NO_GRAB"
+      "GRAB_IMMUNE"
     ]
   },
   {
@@ -1278,7 +1278,7 @@
       "PSIPROOF",
       "BIOPROOF",
       "STUN_IMMUNE",
-      "NO_GRAB"
+      "GRAB_IMMUNE"
     ]
   },
   {
