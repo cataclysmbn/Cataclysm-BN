@@ -3495,7 +3495,7 @@
       { "point": [ 3, -2, -2 ], "connection": "subway_tunnel", "from": [ 3, -1, -2 ] }
     ],
     "locations": [ "land" ],
-    "occurrences": [ 100, 100 ],
+    "occurrences": [ 25, 100 ],
     "flags": [ "LAB", "ELECTRIC_GRID", "UNIQUE" ]
   },
   {
