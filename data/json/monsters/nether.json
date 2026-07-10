@@ -1128,7 +1128,18 @@
     "vision_night": 55,
     "death_drops": "mon_suspended_merc_summon_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "GOODHEARING", "NOHEAD", "NO_BREATHE", "HARDTOSHOOT", "FLIES", "BIOPROOF", "NOT_HALLUCINATION", "NO_GRAB" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "GOODHEARING",
+      "NOHEAD",
+      "NO_BREATHE",
+      "HARDTOSHOOT",
+      "FLIES",
+      "BIOPROOF",
+      "NOT_HALLUCINATION",
+      "NO_GRAB"
+    ]
   },
   {
     "id": "mon_anomaly_boss",
