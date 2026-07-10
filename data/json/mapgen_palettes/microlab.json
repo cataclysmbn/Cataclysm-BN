@@ -8,6 +8,8 @@
       "3": "t_door_locked",
       "2": "t_door_glass_frosted_lab_c",
       "4": "t_door_metal_pickable",
+      "X": "t_region_shrub_decorative",
+      "P": "t_carpet_red",
       "5": "t_door_metal_locked",
       "6": "t_console_broken",
       "[": "t_door_glass_c",
@@ -48,7 +50,8 @@
       "t": "f_table",
       "R": "f_table",
       "^": "f_indoor_plant",
-      "x": "f_safe_l"
+      "x": "f_safe_l",
+      "N": "f_glass_cabinet"
     },
     "toilets": { ";": {  } },
     "items": {
@@ -62,7 +65,8 @@
       "c": [ { "item": "tools_science", "chance": 50, "repeat": 3 }, { "item": "supplies_reagents_lab", "chance": 10 } ],
       "R": [ { "item": "robots", "chance": 50, "repeat": 2 }, { "item": "supplies_electronics", "chance": 50, "repeat": 3 } ],
       "O": [ { "item": "tools_robotics", "chance": 50, "repeat": 3 }, { "item": "schematics", "chance": 5 } ],
-      "i": { "item": "cleaning", "chance": 20 }
+      "i": { "item": "cleaning", "chance": 20 },
+      "N": { "item": "fireman_cabinet", "chance": 100 }
     },
     "vendingmachines": { "V": {  } }
   }
