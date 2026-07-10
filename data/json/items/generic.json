@@ -176,6 +176,23 @@
   },
   {
     "type": "GENERIC",
+    "id": "physics_anomaly_description",
+    "copy-from": "file",
+    "name": { "str": "CONTAINMENT PROCEDURES: PE-025-X" },
+    "description": "A white piece of paper, with a fancy-looking logo printed on its upper left corner.  It'd probably be very fascinating reading material.",
+    "snippet_category": "physics_anomaly_description",
+    "extend": { "flags": "SNIPPET_NEEDS_LITERACY" }
+  },
+  {
+    "type": "GENERIC",
+    "id": "physics_anomaly_epsilon",
+    "copy-from": "physics_anomaly_description",
+    "name": { "str": "PROCEDURE 025-EPSILON" },
+    "snippet_category": "physics_anomaly_epsilon",
+    "extend": { "flags": "SNIPPET_NEEDS_LITERACY" }
+  },
+  {
+    "type": "GENERIC",
     "id": "fp_loyalty_card",
     "category": "scrap_plastic",
     "symbol": "-",
