@@ -3489,11 +3489,9 @@
       { "point": [ 3, -1, -10 ], "overmap": "microlab_nether_glass_entrance_north" },
       { "point": [ 3, -2, -10 ], "overmap": "microlab_nether_glass_hallway_north" },
       { "point": [ 3, -3, -10 ], "overmap": "microlab_nether_glass_hallway_north" },
-      { "point": [ 3, -4, -10 ], "overmap": "microlab_nether_glass_end_north" },
+      { "point": [ 3, -4, -10 ], "overmap": "microlab_nether_glass_end_north" }
     ],
-    "connections": [
-      { "point": [ 3, -2, -2 ], "connection": "subway_tunnel", "from": [ 3, -1, -2 ] }
-    ],
+    "connections": [ { "point": [ 3, -2, -2 ], "connection": "subway_tunnel", "from": [ 3, -1, -2 ] } ],
     "locations": [ "land" ],
     "occurrences": [ 25, 100 ],
     "flags": [ "LAB", "ELECTRIC_GRID", "UNIQUE" ]

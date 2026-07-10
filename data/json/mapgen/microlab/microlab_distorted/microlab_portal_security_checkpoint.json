@@ -3,13 +3,11 @@
     "type": "item_group",
     "id": "damaged_anchor",
     "subtype": "collection",
-    "entries": [
-      { "item": "dimensional_anchor", "prob": 100, "damage": [ 3, 4 ], "charges": 0 }
-    ]
+    "entries": [ { "item": "dimensional_anchor", "prob": 100, "damage": [ 3, 4 ], "charges": 0 } ]
   },
   {
-    "type": "mapgen", 
-    "method": "json",    
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [
       [
         "microlab_portal_security1",
@@ -78,7 +76,7 @@
         "|   c|  ll|YY|ll   |c        $       $ ccc  ccc  111|811111  111118F1111 ccc$                                          |",
         "|||||||||||||||||||||||||||||||||||||||||||||||||||||81PP1111 11P18|||||||||||||||||||||||||||||||||||||||||||||||||||||"
       ],
-      "palettes": [ "microlab" ],      
+      "palettes": [ "microlab" ],
       "terrain": {
         "G": "t_card_science",
         "W": "t_gates_mech_control_lab",
@@ -88,7 +86,7 @@
         "8": "t_nether_glass_wall",
         "$": "t_metal_ventilation_shutter",
         "7": "t_machinery_light",
-        "&": "t_machinery_electronic",
+        "&": "t_machinery_electronic"
       },
       "furniture": {
         "A": "f_counter",
@@ -105,13 +103,10 @@
         "A": { "item": "sample_t_substrate", "chance": 100 },
         "Ñ": [ { "item": "guns_milspec", "chance": 10 }, { "item": "ammo_milspec", "chance": 70 } ],
         "Ó": { "item": "slime_scrap", "chance": 100, "repeat": 3 },
-        "ä": { "item": "damaged_anchor", "chance": 100 }, 
-        "ü": { "item": "damaged_anchor", "chance": 100 } 
+        "ä": { "item": "damaged_anchor", "chance": 100 },
+        "ü": { "item": "damaged_anchor", "chance": 100 }
       },
-      "monster": { 
-        "ä": { "monster": "mon_shade_boss" }, 
-        "ü": { "monster": "mon_suspended_merc" } 
-      },
+      "monster": { "ä": { "monster": "mon_shade_boss" }, "ü": { "monster": "mon_suspended_merc" } },
       "computers": {
         "9": {
           "name": "Unstable Matter Isolation Chamber",

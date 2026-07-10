@@ -13,7 +13,8 @@
     "benign": false
   },
   {
-    "type": "mapgen", "method": "json",    
+    "type": "mapgen",
+    "method": "json",
     "update_mapgen_id": "microlab_portal_elevator_physics_shift",
     "object": { "place_nested": [ { "chunks": [ "microlab_portal_elevator_physics_shift" ], "x": 0, "y": 0 } ] }
   },
@@ -31,12 +32,14 @@
     "benign": false
   },
   {
-    "type": "mapgen", "method": "json",    
+    "type": "mapgen",
+    "method": "json",
     "update_mapgen_id": "microlab_nether_glass_shift",
     "object": { "place_nested": [ { "chunks": [ "microlab_nether_glass_shift" ], "x": 0, "y": 0 } ] }
   },
   {
-    "type": "mapgen", "method": "json",    
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": "microlab_portal_dressroom",
     "object": {
       "fill_ter": "t_strconc_floor",
@@ -66,9 +69,15 @@
         "|##|||            |####|",
         "||||||            ||||||"
       ],
-      "palettes": [ "microlab" ],      "furniture": { "L": "f_locker" },
+      "palettes": [ "microlab" ],
+      "furniture": { "L": "f_locker" },
       "items": {
-        "l": [ { "item": "lab_shoes", "chance": 100 }, { "item": "lab_torso", "chance": 100 }, { "item": "lab_pants", "chance": 100 }, { "item": "underwear", "chance": 100 } ],
+        "l": [
+          { "item": "lab_shoes", "chance": 100 },
+          { "item": "lab_torso", "chance": 100 },
+          { "item": "lab_pants", "chance": 100 },
+          { "item": "underwear", "chance": 100 }
+        ],
         "L": { "item": "portal_room_gear", "chance": 100 },
         "r": [ { "item": "guns_milspec", "chance": 10 }, { "item": "ammo_milspec", "chance": 70 } ]
       },
@@ -76,7 +85,9 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",    "om_terrain": [ [ "microlab_portal_elevator" ] ],
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "microlab_portal_elevator" ] ],
     "object": {
       "fill_ter": "t_strconc_floor",
       "rows": [
@@ -105,12 +116,14 @@
         "########################",
         "########################"
       ],
-      "palettes": [ "microlab" ],      
+      "palettes": [ "microlab" ],
       "terrain": { "`": "t_open_air" }
     }
   },
   {
-    "type": "mapgen", "method": "json",    "om_terrain": [ [ "microlab_portal_elevator_physics_glass" ] ],
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "microlab_portal_elevator_physics_glass" ] ],
     "object": {
       "fill_ter": "t_strconc_floor",
       "rows": [
@@ -142,13 +155,13 @@
       "palettes": [ "microlab" ],
       "traps": { "9": "tr_microlab_portal_elevator_physics_shift" },
       "terrain": { "`": "t_open_air", "1": "t_nether_glass_floor", "9": "t_nether_glass_floor", "8": "t_nether_glass_wall" },
-      "items": {
-        "S": [ { "item": "physics_anomaly_description", "chance": 100 } ]
-      }
+      "items": { "S": [ { "item": "physics_anomaly_description", "chance": 100 } ] }
     }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_portal_elevator_physics_shift",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_portal_elevator_physics_shift",
     "object": {
       "mapgensize": [ 24, 24 ],
       "rows": [
@@ -177,12 +190,14 @@
         "                        ",
         "                        "
       ],
-      "palettes": [ "microlab" ],      
+      "palettes": [ "microlab" ],
       "terrain": { ".": "t_nether_glass_floor", "2": "t_door_glass_frosted_lab_o" }
     }
   },
   {
-    "type": "mapgen", "method": "json",    "om_terrain": [ [ "microlab_portal_elevator_nether_glass" ] ],
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "microlab_portal_elevator_nether_glass" ] ],
     "object": {
       "fill_ter": "t_strconc_floor",
       "rows": [
@@ -211,15 +226,15 @@
         "########################",
         "########################"
       ],
-      "palettes": [ "microlab" ],      
+      "palettes": [ "microlab" ],
       "terrain": { ",": "t_nether_glass_floor", "8": "t_nether_glass_wall" },
-      "items": {
-        "S": [ { "item": "physics_anomaly_epsilon", "chance": 100 } ]
-      }
+      "items": { "S": [ { "item": "physics_anomaly_epsilon", "chance": 100 } ] }
     }
   },
   {
-    "type": "mapgen", "method": "json",    "om_terrain": [ [ "microlab_nether_glass_entrance" ] ],
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "microlab_nether_glass_entrance" ] ],
     "object": {
       "fill_ter": "t_strconc_floor",
       "rows": [
@@ -248,13 +263,15 @@
         "###8,,,,,,,,,,,,,,,,,888",
         "#88,,,,,,,,,,,,,,,,,,,,8"
       ],
-      "palettes": [ "microlab" ],      
+      "palettes": [ "microlab" ],
       "terrain": { ",": "t_nether_glass_floor", "8": "t_nether_glass_wall", "9": "t_carpet_red" },
-      "traps": { "9": "tr_microlab_nether_glass_shift" },
+      "traps": { "9": "tr_microlab_nether_glass_shift" }
     }
   },
   {
-    "type": "mapgen", "method": "json",    "om_terrain": [ [ "microlab_nether_glass_hallway" ] ],
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "microlab_nether_glass_hallway" ] ],
     "object": {
       "fill_ter": "t_strconc_floor",
       "rows": [
@@ -283,12 +300,14 @@
         "8,,,,,,,,,,,,,,,,,,,,888",
         "8,,,,,,,,,,,,,,,,,,,,,,8"
       ],
-      "palettes": [ "microlab" ],      
-      "terrain": { ",": "t_nether_glass_floor", "8": "t_nether_glass_wall", "9": "t_carpet_red" },
+      "palettes": [ "microlab" ],
+      "terrain": { ",": "t_nether_glass_floor", "8": "t_nether_glass_wall", "9": "t_carpet_red" }
     }
   },
   {
-    "type": "mapgen", "method": "json",    "om_terrain": [ [ "microlab_nether_glass_end" ] ],
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "microlab_nether_glass_end" ] ],
     "object": {
       "fill_ter": "t_strconc_floor",
       "rows": [
@@ -315,17 +334,17 @@
         "88,,,,,,,,,,,,,,,,,,,,,8",
         "8,,,,,,,,,,,,,,,,,,,,,,8",
         "8,,,,,,,,,,,,,,,,,,,,,,8",
-        "8,,,,,,,,,,,,,,,,,,,,,,8",
+        "8,,,,,,,,,,,,,,,,,,,,,,8"
       ],
-      "palettes": [ "microlab" ],      
+      "palettes": [ "microlab" ],
       "terrain": { ",": "t_nether_glass_floor", "8": "t_nether_glass_wall", "9": "t_carpet_red" },
-      "monster": { 
-        "ä": { "monster": "mon_anomaly_boss" }
-      }
+      "monster": { "ä": { "monster": "mon_anomaly_boss" } }
     }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_nether_glass_shift",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_nether_glass_shift",
     "object": {
       "mapgensize": [ 24, 24 ],
       "rows": [
@@ -354,12 +373,14 @@
         "                        ",
         "                        "
       ],
-      "palettes": [ "microlab" ],      
+      "palettes": [ "microlab" ],
       "terrain": { ",": "t_nether_glass_floor" }
     }
   },
   {
-    "type": "mapgen", "method": "json",    "om_terrain": [ [ "microlab_nether_glass_roof" ] ],
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "microlab_nether_glass_roof" ] ],
     "object": {
       "fill_ter": "t_strconc_floor",
       "rows": [
@@ -388,7 +409,7 @@
         "888888888888888888888888",
         "888888888888888888888888"
       ],
-      "palettes": [ "microlab" ],      
+      "palettes": [ "microlab" ],
       "terrain": { "8": "t_nether_glass_floor" }
     }
   }

@@ -98,10 +98,7 @@
       { "item": "boots_combat" },
       { "item": "modularvestsuper", "prob": 100 },
       {
-        "distribution": [
-          { "item": "goggles_nv", "prob": 75 },
-          { "item": "goggles_nv_enhanced", "prob": 25 }
-        ],
+        "distribution": [ { "item": "goggles_nv", "prob": 75 }, { "item": "goggles_nv_enhanced", "prob": 25 } ],
         "prob": 100
       },
       { "group": "clothing_watch", "prob": 100 },

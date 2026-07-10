@@ -25,7 +25,9 @@
     "toilets": { ";": {  } }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_distorted_chunk",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_distorted_chunk",
     "object": {
       "mapgensize": [ 12, 12 ],
       "rows": [
@@ -43,13 +45,13 @@
         "|..      ..|"
       ],
       "palettes": [ "microlab_distorted_chunk" ],
-      "place_monster": [
-        { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 2 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 2 ] } ]
     }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_distorted_chunk",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_distorted_chunk",
     "object": {
       "mapgensize": [ 12, 12 ],
       "rows": [
@@ -67,13 +69,13 @@
         "|.|.  ||| .|"
       ],
       "palettes": [ "microlab_distorted_chunk" ],
-      "place_monster": [
-        { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 2 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 2 ] } ]
     }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_distorted_chunk",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_distorted_chunk",
     "object": {
       "mapgensize": [ 12, 12 ],
       "rows": [
@@ -91,13 +93,13 @@
         "|..      ..|"
       ],
       "palettes": [ "microlab_distorted_chunk" ],
-      "place_monster": [
-        { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 2 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 2 ] } ]
     }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_distorted_chunk",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_distorted_chunk",
     "object": {
       "mapgensize": [ 12, 12 ],
       "rows": [
@@ -115,13 +117,13 @@
         "  ||| . |   "
       ],
       "palettes": [ "microlab_distorted_chunk" ],
-      "place_monster": [
-        { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 2 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 2 ] } ]
     }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_distorted_hallway_chunk",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_distorted_hallway_chunk",
     "object": {
       "mapgensize": [ 12, 12 ],
       "rows": [
@@ -139,13 +141,13 @@
         " ||         "
       ],
       "palettes": [ "microlab_distorted_chunk" ],
-      "place_monster": [
-        { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] } ]
     }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_distorted_hallway_chunk",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_distorted_hallway_chunk",
     "object": {
       "mapgensize": [ 12, 12 ],
       "rows": [
@@ -163,13 +165,13 @@
         "|.|.        "
       ],
       "palettes": [ "microlab_distorted_chunk" ],
-      "place_monster": [
-        { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] } ]
     }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_distorted_hallway_chunk",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_distorted_hallway_chunk",
     "object": {
       "mapgensize": [ 12, 12 ],
       "rows": [
@@ -187,13 +189,13 @@
         "|           "
       ],
       "palettes": [ "microlab_distorted_chunk" ],
-      "place_monster": [
-        { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] } ]
     }
   },
   {
-    "type": "mapgen", "method": "json",    "nested_mapgen_id": "microlab_distorted_hallway_chunk",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "microlab_distorted_hallway_chunk",
     "object": {
       "mapgensize": [ 12, 12 ],
       "rows": [
@@ -211,9 +213,7 @@
         "|         .."
       ],
       "palettes": [ "microlab_distorted_chunk" ],
-      "place_monster": [
-        { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_SUSPENDED_SHADE", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] } ]
     }
   }
 ]

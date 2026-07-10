@@ -127,7 +127,13 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [ "microlab_portal_elevator_nether_glass", "microlab_nether_glass_entrance", "microlab_nether_glass_hallway", "microlab_nether_glass_end", "microlab_nether_glass_roof" ],
+    "id": [
+      "microlab_portal_elevator_nether_glass",
+      "microlab_nether_glass_entrance",
+      "microlab_nether_glass_hallway",
+      "microlab_nether_glass_end",
+      "microlab_nether_glass_roof"
+    ],
     "name": "lost level",
     "color": "black",
     "sym": " ",

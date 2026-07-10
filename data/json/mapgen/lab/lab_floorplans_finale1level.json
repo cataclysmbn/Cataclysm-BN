@@ -228,7 +228,14 @@
       "mapping": {
         "R": { "item": [ { "item": "dimensional_anchor" }, { "item": "phase_immersion_suit" } ] },
         "r": { "items": [ { "item": "portal_room_gear", "chance": 100 } ] },
-        "l": { "items": [ { "item": "lab_shoes", "chance": 100 }, { "item": "lab_torso", "chance": 100 }, { "item": "lab_pants", "chance": 100 }, { "item": "underwear", "chance": 100 } ] },
+        "l": {
+          "items": [
+            { "item": "lab_shoes", "chance": 100 },
+            { "item": "lab_torso", "chance": 100 },
+            { "item": "lab_pants", "chance": 100 },
+            { "item": "underwear", "chance": 100 }
+          ]
+        },
         "D": {
           "item": [
             { "item": "sample_t_substrate" },
@@ -280,9 +287,7 @@
       "palettes": [ "lab_palette" ],
       "monster": { "?": { "monster": "mon_shade_boss" } },
       "terrain": { "o": "t_radio_tower" },
-      "mapping": {
-        "r": { "items": [ { "item": "portal_room_gear", "chance": 100 } ] }
-      },
+      "mapping": { "r": { "items": [ { "item": "portal_room_gear", "chance": 100 } ] } },
       "computers": {
         "6": {
           "name": "Sub-prime Contact Console",

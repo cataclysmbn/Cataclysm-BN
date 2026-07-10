@@ -33,9 +33,7 @@
       ],
       "palettes": [ "microlab" ],
       "terrain": { "X": "t_region_shrub_decorative", "P": "t_carpet_red", "Y": "t_nether_glass_floor" },
-      "place_nested": [
-        { "chunks": [ "microlab_distorted_hallway_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
-      ]
+      "place_nested": [ { "chunks": [ "microlab_distorted_hallway_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] } ]
     }
   },
   {
@@ -72,9 +70,7 @@
       ],
       "palettes": [ "microlab" ],
       "terrain": { "X": "t_region_shrub_decorative", "P": "t_carpet_red", "Y": "t_nether_glass_floor" },
-      "place_nested": [
-        { "chunks": [ "microlab_distorted_hallway_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
-      ]
+      "place_nested": [ { "chunks": [ "microlab_distorted_hallway_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] } ]
     }
   },
   {
@@ -111,9 +107,7 @@
       ],
       "palettes": [ "microlab" ],
       "terrain": { "X": "t_region_shrub_decorative", "P": "t_carpet_red", "Y": "t_nether_glass_floor" },
-      "place_nested": [
-        { "chunks": [ "microlab_distorted_hallway_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
-      ]
+      "place_nested": [ { "chunks": [ "microlab_distorted_hallway_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] } ]
     }
   },
   {
@@ -150,9 +144,7 @@
       ],
       "palettes": [ "microlab" ],
       "terrain": { "X": "t_region_shrub_decorative", "P": "t_carpet_red", "Y": "t_nether_glass_floor" },
-      "place_nested": [
-        { "chunks": [ "microlab_distorted_hallway_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
-      ]
+      "place_nested": [ { "chunks": [ "microlab_distorted_hallway_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] } ]
     }
   }
 ]

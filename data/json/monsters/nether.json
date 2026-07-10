@@ -976,7 +976,18 @@
     "death_function": [ "MELT" ],
     "death_drops": "mon_shade_boss_death_drops",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "BASHES", "GROUP_BASH", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1", "NO_BREATHE", "HARDTOSHOOT", "NOT_HALLUCINATION", "NOHEAD" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "BASHES",
+      "GROUP_BASH",
+      "CAN_OPEN_DOORS",
+      "PATH_AVOID_DANGER_1",
+      "NO_BREATHE",
+      "HARDTOSHOOT",
+      "NOT_HALLUCINATION",
+      "NOHEAD"
+    ]
   },
   {
     "id": "mon_shade_boss_clone",
@@ -1037,31 +1048,14 @@
     "armor_bash": 0,
     "armor_cut": 0,
     "armor_bullet": 0,
-    "path_settings": {
-      "max_dist": 0,
-      "allow_open_doors": true,
-      "avoid_traps": true,
-      "avoid_sharp": true
-    },
+    "path_settings": { "max_dist": 0, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "luminance": 10,
     "harvest": "exempt",
     "vision_day": 10,
     "vision_night": 2,
-    "special_attacks": [
-      [ "SUICIDE", 20 ],
-      { "type": "leap", "cooldown": 10, "max_range": 10 }
-    ],
+    "special_attacks": [ [ "SUICIDE", 20 ], { "type": "leap", "cooldown": 10, "max_range": 10 } ],
     "death_drops": "mon_suspended_shade_death_drops",
-    "on_death": {
-      "spawn_mon_near": {
-        "distance": 1,
-        "ids": [
-          "mon_shadow",
-          "mon_shadow",
-          "mon_shadow"
-        ]
-      }
-    },
+    "on_death": { "spawn_mon_near": { "distance": 1, "ids": [ "mon_shadow", "mon_shadow", "mon_shadow" ] } },
     "flags": [ "SEES", "HEARS", "NO_BREATHE", "HARDTOSHOOT", "IMMOBILE", "NOT_HALLUCINATION", "NOHEAD", "ACIDPROOF" ]
   },
   {
@@ -1088,21 +1082,14 @@
     "armor_bash": 40,
     "armor_cut": 50,
     "armor_bullet": 70,
-    "path_settings": {
-      "max_dist": 0,
-      "allow_open_doors": true,
-      "avoid_traps": true,
-      "avoid_sharp": true
-    },
+    "path_settings": { "max_dist": 0, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "harvest": "exempt",
     "vision_day": 40,
     "vision_night": 30,
     "special_attacks": [
       {
         "type": "spell",
-        "spell_data": {
-          "id": "suspended_task_force_swarm", "hit_self": true
-        },
+        "spell_data": { "id": "suspended_task_force_swarm", "hit_self": true },
         "cooldown": 30,
         "monster_message": "A swarm of casings and bullets breaks off from the swarm and flies towards you!"
       }
@@ -1114,22 +1101,15 @@
   {
     "id": "mon_suspended_merc_summon",
     "type": "MONSTER",
-    "name": {
-      "str": "shrapnel swarm",
-      "str_pl": "shrapnel swarms"
-    },
+    "name": { "str": "shrapnel swarm", "str_pl": "shrapnel swarms" },
     "description": "This swarm of metal is made of various casings, fired bullets, and shrapnel.  The swarm orbits around a central, invisible force at high speed, and it seems to be heading towards you.",
     "default_faction": "nether",
-    "species": [
-      "UNKNOWN"
-    ],
+    "species": [ "UNKNOWN" ],
     "volume": "1230 ml",
     "weight": "1230 g",
     "hp": 10,
     "speed": 150,
-    "material": [
-      "brass"
-    ],
+    "material": [ "brass" ],
     "symbol": "V",
     "color": "yellow",
     "aggression": 100,
@@ -1138,38 +1118,17 @@
     "melee_dice": 1,
     "melee_dice_sides": 6,
     "melee_damage": [
-      {
-        "damage_type": "bullet",
-        "amount": 18
-      },
-      {
-        "damage_type": "stab",
-        "amount": 12
-      },
-      {
-        "damage_type": "cut",
-        "amount": 22
-      }
+      { "damage_type": "bullet", "amount": 18 },
+      { "damage_type": "stab", "amount": 12 },
+      { "damage_type": "cut", "amount": 22 }
     ],
-    "special_attacks": [
-      [ "SUICIDE", 20 ]
-    ],
+    "special_attacks": [ [ "SUICIDE", 20 ] ],
     "dodge": 20,
     "vision_day": 55,
     "vision_night": 55,
     "death_drops": "mon_suspended_merc_summon_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [
-      "SEES",
-      "HEARS",
-      "GOODHEARING",
-      "NOHEAD",
-      "NO_BREATHE",
-      "HARDTOSHOOT",
-      "FLIES",
-      "BIOPROOF",
-      "NOT_HALLUCINATION"
-    ]
+    "flags": [ "SEES", "HEARS", "GOODHEARING", "NOHEAD", "NO_BREATHE", "HARDTOSHOOT", "FLIES", "BIOPROOF", "NOT_HALLUCINATION" ]
   },
   {
     "id": "mon_anomaly_boss",
@@ -1212,7 +1171,28 @@
     ],
     "death_function": [ "MELT" ],
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "GOODHEARING", "NO_BREATHE", "NOT_HALLUCINATION", "NOHEAD", "FLIES", "ATTACKMON", "PLASTIC", "ACIDPROOF", "FIREPROOF", "SLUDGEPROOF", "COLDPROOF", "DARKPROOF", "LIGHTPROOF", "PSIPROOF", "BIOPROOF", "WEBWALK", "IMMOBILE", "STUN_IMMUNE" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "GOODHEARING",
+      "NO_BREATHE",
+      "NOT_HALLUCINATION",
+      "NOHEAD",
+      "FLIES",
+      "ATTACKMON",
+      "PLASTIC",
+      "ACIDPROOF",
+      "FIREPROOF",
+      "SLUDGEPROOF",
+      "COLDPROOF",
+      "DARKPROOF",
+      "LIGHTPROOF",
+      "PSIPROOF",
+      "BIOPROOF",
+      "WEBWALK",
+      "IMMOBILE",
+      "STUN_IMMUNE"
+    ]
   },
   {
     "id": "mon_anomaly_boss_clone",
@@ -1236,9 +1216,7 @@
     "vision_day": 150,
     "vision_night": 150,
     "path_settings": { "max_dist": 40, "allow_open_doors": false, "avoid_traps": false, "avoid_sharp": false },
-    "starting_ammo": {
-      "rock": 10000
-    },
+    "starting_ammo": { "rock": 10000 },
     "special_attacks": [
       [ "GRAB_DRAG", 4 ],
       [ "RANGED_PULL", 3 ],
@@ -1251,26 +1229,11 @@
         "gun_type": "anomaly_thrown_rock",
         "ammo_type": "rock",
         "no_ammo_sound": "",
-        "fake_skills": [
-          [
-            "gun",
-            2
-          ],
-          [
-            "throw",
-            2
-          ]
-        ],
+        "fake_skills": [ [ "gun", 2 ], [ "throw", 2 ] ],
         "fake_dex": 6,
         "fake_per": 6,
         "require_targeting_player": false,
-        "ranges": [
-          [
-            2,
-            40,
-            "DEFAULT"
-          ]
-        ],
+        "ranges": [ [ 2, 40, "DEFAULT" ] ],
         "description": "A heavy rock flies off from the anomaly!",
         "no_crits": true
       },
@@ -1283,20 +1246,36 @@
     ],
     "death_function": [ "MELT" ],
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "GOODHEARING", "BASHES", "NO_BREATHE", "NOT_HALLUCINATION", "NOHEAD", "FLIES", "ATTACKMON", "PLASTIC", "ACIDPROOF", "FIREPROOF", "SLUDGEPROOF", "COLDPROOF", "DARKPROOF", "LIGHTPROOF", "PSIPROOF", "BIOPROOF", "STUN_IMMUNE" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "GOODHEARING",
+      "BASHES",
+      "NO_BREATHE",
+      "NOT_HALLUCINATION",
+      "NOHEAD",
+      "FLIES",
+      "ATTACKMON",
+      "PLASTIC",
+      "ACIDPROOF",
+      "FIREPROOF",
+      "SLUDGEPROOF",
+      "COLDPROOF",
+      "DARKPROOF",
+      "LIGHTPROOF",
+      "PSIPROOF",
+      "BIOPROOF",
+      "STUN_IMMUNE"
+    ]
   },
   {
     "id": "mon_task_force_shade",
     "type": "MONSTER",
-    "name": {
-      "str": "vengeful shade"
-    },
+    "name": { "str": "vengeful shade" },
     "description": "This shifting figure dons a suit of hazmat gear under it's heavy armor, over which it wears a large harness which reads '025-XPE'.  Despite its striking appearance, it seems to be focused instead on the anomalies around it.  It may be your only hope to finally stop this anomaly.",
     "default_faction": "player",
     "bodytype": "human",
-    "species": [
-      "NETHER", "HUMAN"
-    ],
+    "species": [ "NETHER", "HUMAN" ],
     "volume": "62500 ml",
     "weight": "81500 g",
     "hp": 120,
@@ -1320,52 +1299,25 @@
     "vision_day": 50,
     "vision_night": 50,
     "path_settings": { "max_dist": 40, "allow_open_doors": false, "avoid_traps": false, "avoid_sharp": false },
-    "starting_ammo": {
-      "8mm_caseless": 120
-    },
+    "starting_ammo": { "8mm_caseless": 120 },
     "special_attacks": [
-      [
-        "PARROT_AT_DANGER",
-        5
-      ],
+      [ "PARROT_AT_DANGER", 5 ],
       {
         "type": "gun",
         "cooldown": 20,
         "move_cost": 150,
         "gun_type": "rm51_assault_rifle",
         "ammo_type": "8mm_caseless",
-        "fake_skills": [
-          [
-            "gun",
-            8
-          ],
-          [
-            "rifle",
-            8
-          ]
-        ],
+        "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_dex": 8,
         "fake_per": 10,
-        "ranges": [
-          [
-            0,
-            30,
-            "BURST"
-          ],
-          [
-            0,
-            30,
-            "AUTO"
-          ]
-        ],
+        "ranges": [ [ 0, 30, "BURST" ], [ 0, 30, "AUTO" ] ],
         "require_targeting_player": false,
         "description": "The vengeful shade fires their rifle!",
         "no_crits": true
       }
     ],
-    "death_function": [
-      "DISAPPEAR"
-    ],
+    "death_function": [ "DISAPPEAR" ],
     "flags": [
       "SEES",
       "HEARS",

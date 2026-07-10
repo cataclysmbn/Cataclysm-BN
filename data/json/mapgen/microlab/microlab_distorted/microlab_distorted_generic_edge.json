@@ -38,7 +38,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -81,7 +81,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -124,7 +124,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -167,7 +167,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -210,7 +210,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -253,7 +253,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -296,7 +296,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -339,7 +339,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -382,7 +382,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -425,7 +425,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -468,7 +468,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
@@ -511,7 +511,7 @@
         { "chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "west": "microlab_rock_border" } },
         { "chunks": [ "microlab_distorted_chunk" ], "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 3 ] }
       ],
-      "palettes": [ "microlab" ],       
+      "palettes": [ "microlab" ],
       "terrain": { "Y": "t_nether_glass_floor" }
     }
   },
