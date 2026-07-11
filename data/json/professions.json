@@ -2409,7 +2409,7 @@
           { "item": "two_way_radio", "contents-item": [ "battery_ups" ] },
           { "item": "knife_combat", "container-item": "power_armor_leg_hardpoint" },
           { "item": "power_armor_grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
-          { "item": "laser_rifle", "contents-item": [ "acog_scope" ], "custom-flags": [ "auto_wield" ] }
+          { "item": "laser_rifle", "contents-item": [ "hybrid_sight" ], "custom-flags": [ "auto_wield" ] }
         ]
       },
       "male": [ "boxer_shorts" ],
