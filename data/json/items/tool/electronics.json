@@ -17,6 +17,8 @@
     "ammo": "battery",
     "initial_charges": 5000,
     "max_charges": 5000,
+    "ups_eff_mult": 2,
+    "ups_recharge_rate": 10,
     "looks_like": "battery",
     "//": "Twice the recharge rate, half the size of a heavy plutonium battery.",
     "relic_data": { "recharge_scheme": [ { "type": "time", "interval": "12 m", "rate": 40 } ] },
