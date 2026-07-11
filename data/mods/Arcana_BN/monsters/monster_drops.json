@@ -1821,20 +1821,14 @@
     "id": "mon_suspended_shade_death_drops",
     "//": "Adds to existing group",
     "subtype": "collection",
-    "entries": [
-      { "item": "shadow_gem", "prob": 50 },
-      { "item": "essence_blood", "count": [ 2, 4 ] }
-    ]
+    "entries": [ { "item": "shadow_gem", "prob": 50 }, { "item": "essence_blood", "count": [ 2, 4 ] } ]
   },
   {
     "type": "item_group",
     "id": "mon_suspended_merc_death_drops",
     "//": "Adds to existing group",
     "subtype": "collection",
-    "entries": [
-      { "item": "iron_thorn", "prob": 50 },
-      { "item": "essence_blood", "count": [ 2, 4 ] }
-    ]
+    "entries": [ { "item": "iron_thorn", "prob": 50 }, { "item": "essence_blood", "count": [ 2, 4 ] } ]
   },
   {
     "type": "item_group",
