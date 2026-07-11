@@ -2005,38 +2005,34 @@ int known_magic::select_spell(Character& guy) {
     spellcasting_callback cb(known_spells, casting_ignore);
     spell_menu.callback = &cb;
     const auto all_category = trait_NONE.str();
-    spell_menu.add_category( all_category, _( "All" ) );
+    spell_menu.add_category(all_category, _("All"));
 
-    const auto is_valid_spell_class = []( const trait_id &spell_class ) -> bool {
+    const auto is_valid_spell_class = [](const trait_id& spell_class) -> bool {
         return spell_class != trait_NONE && spell_class.is_valid();
     };
     auto categories = std::vector<std::pair<std::string, std::string>>{};
-    for( const auto *known_spell : known_spells ) {
+    for (const auto* known_spell : known_spells) {
         const auto spell_class = known_spell->spell_class();
-        if( !is_valid_spell_class( spell_class ) ) {
-            continue;
-        }
-        categories.emplace_back( spell_class.str(), spell_class->name() );
+        if (!is_valid_spell_class(spell_class)) { continue; }
+        categories.emplace_back(spell_class.str(), spell_class->name());
     }
     namespace ranges = std::ranges;
-    ranges::sort( categories, {}, &std::pair<std::string, std::string>::first );
-    const auto unique_end = ranges::unique( categories, {},
-                                           &std::pair<std::string, std::string>::first ).begin();
-    categories.erase( unique_end, categories.end() );
-    ranges::sort( categories, localized_compare,
-                  &std::pair<std::string, std::string>::second );
-    for( const auto &[key, name] : categories ) {
-        spell_menu.add_category( key, name );
-    }
-    spell_menu.set_category_filter( [&known_spells, is_valid_spell_class, all_category](
-    const auto &entry, const auto &category ) -> bool {
-        if( category == all_category ) { return true; }
-        if( entry.retval < 0 || static_cast<size_t>( entry.retval ) >= known_spells.size() ) {
-            return false;
-        }
-        const auto spell_class = known_spells[entry.retval]->spell_class();
-        return is_valid_spell_class( spell_class ) && spell_class.str() == category;
-    } );
+    ranges::sort(categories, {}, &std::pair<std::string, std::string>::first);
+    const auto unique_end =
+        ranges::unique(categories, {}, &std::pair<std::string, std::string>::first).begin();
+    categories.erase(unique_end, categories.end());
+    ranges::sort(categories, localized_compare, &std::pair<std::string, std::string>::second);
+    for (const auto& [key, name] : categories) { spell_menu.add_category(key, name); }
+    spell_menu.set_category_filter(
+        [&known_spells, is_valid_spell_class,
+         all_category](const auto& entry, const auto& category) -> bool {
+            if (category == all_category) { return true; }
+            if (entry.retval < 0 || static_cast<size_t>(entry.retval) >= known_spells.size()) {
+                return false;
+            }
+            const auto spell_class = known_spells[entry.retval]->spell_class();
+            return is_valid_spell_class(spell_class) && spell_class.str() == category;
+        });
 
     std::set<int> used_invlets{cb.reserved_invlets};
 
