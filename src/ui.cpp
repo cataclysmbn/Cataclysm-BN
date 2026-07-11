@@ -209,12 +209,19 @@ void uilist::init()
     hotkeys = DEFAULT_HOTKEYS;
     input_category = "UILIST";
     additional_actions.clear();
+    categories.clear();
+    category_filter = {};
+    current_category = 0;
 }
 
 input_context uilist::create_main_input_context() const
 {
     input_context ctxt( input_category );
     ctxt.register_updown();
+    if( !categories.empty() ) {
+        ctxt.register_action( "LEFT", to_translation( "Previous category" ) );
+        ctxt.register_action( "RIGHT", to_translation( "Next category" ) );
+    }
     ctxt.register_action( "PAGE_UP", to_translation( "Fast scroll up" ) );
     ctxt.register_action( "PAGE_DOWN", to_translation( "Fast scroll down" ) );
     ctxt.register_action( "HOME", to_translation( "Go to first entry" ) );
@@ -283,6 +290,10 @@ void uilist::filterlist()
     }
 
     for( int i = 0; i < num_entries; i++ ) {
+        if( !categories.empty() && category_filter &&
+            !category_filter( entries[i], categories[current_category].first ) ) {
+            continue;
+        }
         if( filtering ) {
             if( exact_match_only ) {
                 if( !( entries[i].txt == filter ) ) {
@@ -356,6 +367,20 @@ void uilist::set_filter( const std::string &fstr )
 {
     filter = fstr;
     filterlist();
+}
+
+auto uilist::add_category( const std::string &key, const std::string &name ) -> void
+{
+    if( key.empty() || name.empty() ) {
+        return;
+    }
+    categories.emplace_back( key, name );
+}
+
+auto uilist::set_category_filter( const
+                                  std::function<bool( const uilist_entry &, const std::string & )> &filter ) -> void
+{
+    category_filter = filter;
 }
 
 void uilist::inputfilter()
@@ -595,7 +620,8 @@ void uilist::setup()
     }
 
     vmax = entries.size();
-    int additional_lines = 2 + text_separator_line + // add two for top & bottom borders
+    const auto category_lines = categories.empty() ? 0 : 1;
+    int additional_lines = 2 + text_separator_line + category_lines + // borders and category tabs
                            static_cast<int>( textformatted.size() );
     if( desc_enabled ) {
         additional_lines += desc_lines + 1; // add one for description separator line
@@ -702,6 +728,13 @@ void uilist::show( ui_adaptor &ui )
         }
         mvwputch( window, point( w_width - 1, text_lines + 1 ), border_color, LINE_XOXX );
         estart += text_lines + 1; // +1 for the horizontal line.
+    }
+
+    if( !categories.empty() ) {
+        const auto &category_text = categories[current_category].second;
+        const auto category_width = std::max( 1, w_width - pad_right - 4 );
+        trim_and_print( window, point( 2, estart++ ), category_width, title_color, _color_error,
+                        "%s", category_text );
     }
 
     calcStartPos( vshift, fselected, vmax, fentries.size() );
@@ -951,6 +984,10 @@ void uilist::query( bool loop, int timeout )
             /* nothing */
         } else if( filtering && ret_act == "FILTER" ) {
             inputfilter();
+        } else if( !categories.empty() && ( ret_act == "LEFT" || ret_act == "RIGHT" ) ) {
+            const auto offset = ret_act == "RIGHT" ? 1 : categories.size() - 1;
+            current_category = ( current_category + offset ) % categories.size();
+            filterlist();
         } else if( ret_act == "ANY_INPUT" && iter != keymap.end() ) {
             // only handle "ANY_INPUT" since "HELP_KEYBINDINGS" is already
             // handled by the input context and the caller might want to handle

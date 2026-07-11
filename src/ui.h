@@ -297,6 +297,10 @@ class uilist // NOLINT(cata-xy)
                            const std::string &desc = "" );
         void settext( const std::string &str );
 
+        auto add_category( const std::string &key, const std::string &name ) -> void;
+        auto set_category_filter( const
+                                  std::function<bool( const uilist_entry &, const std::string & )> &filter ) -> void;
+
         void reset();
 
         // Can be called before `uilist::query` to keep the uilist on UI stack after
@@ -403,6 +407,10 @@ class uilist // NOLINT(cata-xy)
 
         std::unique_ptr<string_input_popup> filter_popup;
         std::string filter;
+
+        std::vector<std::pair<std::string, std::string>> categories;
+        std::function<bool( const uilist_entry &, const std::string & )> category_filter;
+        size_t current_category = 0;
 
         int max_entry_len;
         int max_column_len;
