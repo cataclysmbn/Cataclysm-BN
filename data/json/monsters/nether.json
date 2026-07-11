@@ -1253,7 +1253,7 @@
         "type": "spell",
         "spell_data": { "id": "summon_task_force" },
         "cooldown": 65,
-        "monster_message": "Vengeful shades appear around you!"
+        "monster_message": "Vengeful shades appear around you, coming to your aid!"
       }
     ],
     "death_function": [ "MELT" ],
