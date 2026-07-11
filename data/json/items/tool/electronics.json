@@ -4,7 +4,7 @@
     "type": "TOOL",
     "category": "electronics",
     "name": { "str": "advanced UPS", "str_pl": "advanced UPS's" },
-    "description": "This is an advanced version of the unified power supply, or UPS.  Designed for military use to power advanced weapons, it uses plutonium fuel cells which provide better efficiency, but are not rechargeable.  It can power many household electronics as well.",
+    "description": "This is an advanced version of the unified power supply, or UPS.  Designed for military use to power advanced weapons, it uses plutonium fuel cells which provide better recharging rates at the cost of capacitor size, and are not modular.  It can power many household electronics as well.",
     "weight": "500 g",
     "volume": "2 L",
     "price": "5600 USD",
@@ -14,11 +14,13 @@
     "material": [ "aluminum", "plastic" ],
     "symbol": ";",
     "color": "light_green",
-    "ammo": "plutonium",
-    "max_charges": 2500,
-    "ups_eff_mult": 2,
-    "ups_recharge_rate": 10,
-    "flags": [ "IS_UPS" ]
+    "ammo": "battery",
+    "initial_charges": 5000,
+    "max_charges": 5000,
+    "looks_like": "battery",
+    "//": "Twice the recharge rate, half the size of a heavy plutonium battery.",
+    "relic_data": { "recharge_scheme": [ { "type": "time", "interval": "12 m", "rate": 40 } ] },
+    "flags": [ "IS_UPS", "LEAK_DAM", "RADIOACTIVE" ]
   },
   {
     "id": "camera",
