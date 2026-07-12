@@ -44,8 +44,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -154,8 +154,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -187,8 +187,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -220,8 +220,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -253,8 +253,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -286,8 +286,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -318,8 +318,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -351,8 +351,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -2354,5 +2354,104 @@
     },
     "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
     "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic",
+    "copy-from": "t_wall",
+    "name": "plastered wooden fortification",
+    "description": "A wooden wall faced with plaster, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "light_gray",
+    "coverage": 80,
+    "bash": {
+      "str_min": 40,
+      "str_max": 210,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_null",
+      "items": "wall_bash_results",
+      "//": "Reduction ranges from 1x to 2x the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210, "block_unaimed_chance": "75%" }
+    },
+    "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
+    "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_r",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered red fortification",
+    "description": "A plastered wooden wall painted red, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "red",
+    "looks_like": "t_wall_r",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_w",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered white fortification",
+    "description": "A plastered wooden wall painted white, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "white",
+    "looks_like": "t_wall_w",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_b",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered blue fortification",
+    "description": "A plastered wooden wall painted blue, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "blue",
+    "looks_like": "t_wall_b",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_g",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered green fortification",
+    "description": "A plastered wooden wall painted green, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "green",
+    "looks_like": "t_wall_g",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_y",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered yellow fortification",
+    "description": "A plastered wooden wall painted yellow, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "yellow",
+    "looks_like": "t_wall_y",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_P",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered pink fortification",
+    "description": "A plastered wooden wall painted pink, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "pink",
+    "looks_like": "t_wall_P",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_p",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered purple fortification",
+    "description": "A plastered wooden wall painted purple, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "magenta",
+    "looks_like": "t_wall_p",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
   }
 ]
