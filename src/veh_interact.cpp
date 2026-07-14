@@ -2113,7 +2113,7 @@ void veh_interact::do_siphon()
         hide_ui( true );
         const item &base = pt.get_base();
         const int idx = veh->find_part( base );//TODO!: Wtf is this way of finding the part number?
-        liquid_handler::handle_liquid( veh, idx, 0 );
+        liquid_handler::handle_liquid( veh, idx, 1 );
     };
 
     overview( sel, act );
