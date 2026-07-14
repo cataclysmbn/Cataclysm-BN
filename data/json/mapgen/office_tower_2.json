@@ -1,7 +1,8 @@
 [
   {
     "type": "mapgen",
- "method": "json",    "om_terrain": [
+    "method": "json",
+    "om_terrain": [
       [ "office_tower_2_a1", "office_tower_2_a2", "office_tower_2_a3" ],
       [ "office_tower_2_b1", "office_tower_2_b2", "office_tower_2_b3" ]
     ],
@@ -64,7 +65,8 @@
   },
   {
     "type": "mapgen",
- "method": "json",    "om_terrain": [
+    "method": "json",
+    "om_terrain": [
       [ "office_tower_2_a1_1", "office_tower_2_a2_1", "office_tower_2_a3_1" ],
       [ "office_tower_2_b1_1", "office_tower_2_b2_1", "office_tower_2_b3_1" ]
     ],
@@ -127,7 +129,8 @@
   },
   {
     "type": "mapgen",
- "method": "json",    "om_terrain": [
+    "method": "json",
+    "om_terrain": [
       [ "office_tower_2_a1_2", "office_tower_2_a2_2", "null" ],
       [ "office_tower_2_b1_2", "office_tower_2_b2_2", "office_tower_2_b3_2" ]
     ],
@@ -194,7 +197,8 @@
   },
   {
     "type": "mapgen",
- "method": "json",    "om_terrain": [
+    "method": "json",
+    "om_terrain": [
       [ "office_tower_2_a1_roof", "office_tower_2_a2_roof", "null" ],
       [ "office_tower_2_b1_roof", "office_tower_2_b2_roof", "office_tower_2_b3_roof" ]
     ],
@@ -255,7 +259,8 @@
   },
   {
     "type": "mapgen",
- "method": "json",    "om_terrain": [ "office_tower_2_a1_tower_lab" ],
+    "method": "json",
+    "om_terrain": [ "office_tower_2_a1_tower_lab" ],
     "object": {
       "fill_ter": "t_linoleum_white",
       "rows": [
@@ -299,7 +304,8 @@
   },
   {
     "type": "mapgen",
- "method": "json",    "om_terrain": [ "office_tower_2_b3_tower_lab" ],
+    "method": "json",
+    "om_terrain": [ "office_tower_2_b3_tower_lab" ],
     "object": {
       "fill_ter": "t_linoleum_white",
       "rows": [
@@ -335,7 +341,8 @@
   },
   {
     "type": "mapgen",
- "method": "json",    "om_terrain": [
+    "method": "json",
+    "om_terrain": [
       [ "office_tower_lab_a1_roof", "office_tower_lab_a2_roof", "null" ],
       [ "office_tower_lab_b1_roof", "office_tower_lab_b2_roof", "office_tower_lab_b3_roof" ]
     ],
