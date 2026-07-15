@@ -17,7 +17,7 @@
   {
     "id": "INTELLIGENCE",
     "type": "enchantment_value",
-    "desc": "Affects Intellegence"
+    "desc": "Affects Intelligence"
   },
   {
     "id": "HEALTH_POINTS",
