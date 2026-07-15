@@ -103,7 +103,7 @@
       "place_nested": [
         { "chunks": [ [ "lost_squad_chunk_bodies", 100 ] ], "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 2, 6 ] },
         {
-          "chunks": [ [ "lost_squad_chunk_zombies", 50 ], [ "lost_squad_chunk_robot", 50 ] ],
+          "chunks": [ [ "lost_squad_chunk_zombies", 40 ], [ "lost_squad_chunk_robot", 40 ], [ "lost_squad_chunk_portal", 20 ] ],
           "x": [ 1, 22 ],
           "y": [ 1, 22 ]
         }
@@ -145,7 +145,6 @@
     "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "group": "GROUP_ROBOT_MX_MILITARY", "chance": 100, "x": 0, "y": 0 } ] }
   },
   {
-    "//": "unused until traps are correctly visible again",
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "lost_squad_chunk_portal",
