@@ -1165,6 +1165,7 @@
     "armor_stab": 1000000,
     "armor_bullet": 1000000,
     "armor_electric": 1000000,
+    "armor_fire": 1000000,
     "dodge": 20,
     "harvest": "exempt",
     "vision_day": 150,
