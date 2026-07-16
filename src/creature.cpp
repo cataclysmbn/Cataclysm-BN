@@ -1185,7 +1185,7 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
     const int total_damage = dealt_dam.total_damage();
     const int env_resist = get_env_resist( bp_hit );
 
-    const bool should_blind = proj.has_effect( ammo_effect_BLINDS_EYES );
+    const bool should_blind = proj.has_effect( ammo_effect_BLINDS_EYES ) && ( bp_hit == bodypart_str_id( "head" ) || bp_hit == bodypart_str_id( "eyes" ) );
     const int blind_strength = should_blind ? total_damage - env_resist : 0;
     if( should_blind ) {
         const auto blind_duration = blind_strength > 0 ? rng( 3_turns, 10_turns ) : rng( 1_turns, 3_turns );

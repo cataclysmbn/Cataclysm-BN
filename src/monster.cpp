@@ -2094,6 +2094,10 @@ bool monster::is_immune_effect( const efftype_id &effect ) const
         return type->in_species( PLANT );
     }
 
+    if( effect == effect_blind ) {
+        return !has_flag( MF_SEES );
+    }
+
     // Used by screecher zombies to prevent dazing monsters that can't hear
     if( effect == effect_deaf ) {
         return !has_flag( MF_HEARS );
