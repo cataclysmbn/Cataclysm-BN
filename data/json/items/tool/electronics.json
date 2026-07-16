@@ -22,7 +22,7 @@
     "looks_like": "battery",
     "//": "Twice the recharge rate, half the size of a heavy plutonium battery.",
     "relic_data": { "recharge_scheme": [ { "type": "time", "interval": "12 m", "rate": 40 } ] },
-    "flags": [ "IS_UPS", "LEAK_DAM", "RADIOACTIVE" ]
+    "flags": [ "IS_UPS", "LEAK_DAM", "RADIOACTIVE", "NO_RELOAD", "NO_UNLOAD" ]
   },
   {
     "id": "camera",
