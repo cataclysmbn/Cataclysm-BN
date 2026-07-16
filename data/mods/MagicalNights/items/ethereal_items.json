@@ -653,5 +653,40 @@
       }
     ],
     "extend": { "flags": [ "LIGHT_10", "MAGIC_FOCUS" ] }
+  },
+  {
+    "id": "spirit_armor",
+    "type": "ARMOR",
+    "name": { "str": "Spirit Armor" },
+    "description": "A magical barrier made of the user's conviction, will, and faith. Feels like a super light, permeable bubble around you and your equipment that hardens on impact. Most of it's power comes from draining inertia from anything that could harm the user.",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "price": "0 USD",
+    "price_postapoc": "0 USD",
+    "material": [ "concentrated_mana" ],
+    "symbol": "[",
+    "color": "light_red",
+    "covers": [ "head", "eyes", "mouth", "torso", "legs", "arms", "hands", "feet" ],
+    "coverage": 100,
+    "encumbrance": 0,
+    "warmth": 0,
+    "material_thickness": 1,
+    "environmental_protection": 9,
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "values": [
+            { "value": "ARMOR_HEAT", "add": -2, "multiply": -0.5 },
+            { "value": "ARMOR_COLD", "add": -2, "multiply": -0.5 },
+            { "value": "ARMOR_LIGHT", "add": -2, "multiply": -0.5 },
+            { "value": "ARMOR_DARK", "add": -2, "multiply": -0.5 },
+            { "value": "ARMOR_ELECTRIC", "add": -2, "multiply": -0.5 }
+          ]
+        }
+      ]
+    },
+    "flags": [ "RAINPROOF", "STURDY", "RAD_RESIST", "AURA", "POWERARMOR_COMPATIBLE", "NO_SALVAGE", "ONLY_ONE", "PSYSHIELD_PARTIAL" ]
   }
 ]
