@@ -1130,6 +1130,9 @@ class cata_tiles
         // measured in map coordinates, *not* in pixels.
         int screentile_width = 0;
         int screentile_height = 0;
+        // The viewport pixel dimensions passed to draw()
+        int viewport_width = 0;
+        int viewport_height = 0;
         float tile_ratiox = 0.0f;
         float tile_ratioy = 0.0f;
 
