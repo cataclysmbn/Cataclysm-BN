@@ -492,6 +492,8 @@ void cata_tiles::load_tileset(
     tileset_ptr = std::move( new_tileset_ptr );
     tileset_mod_list_stamp = mod_list;
 
+    tile_iso = tileset_ptr->get_tile_iso();
+
     set_draw_scale( 16 );
 
     minimap->set_type( tile_iso ? pixel_minimap_type::iso : pixel_minimap_type::ortho );
@@ -2221,6 +2223,7 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
         ts.tile_width = curr_info.get_int( "width" );
         ts.zlevel_height = curr_info.get_int( "zlevel_height", 0 );
         tile_iso = curr_info.get_bool( "iso", false );
+        ts.is_iso = tile_iso;
         ts.tile_pixelscale = curr_info.get_float( "pixelscale", 1.0f );
         ts.prevent_occlusion_min_dist = curr_info.get_float( "retract_dist_min", -1.0f );
         ts.prevent_occlusion_max_dist = curr_info.get_float( "retract_dist_max", 0.0f );
@@ -3055,6 +3058,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     init_light();
     map &here = get_map();
 
+    tile_iso = tileset_ptr ? tileset_ptr->get_tile_iso() : false;
     const bool iso_mode = tile_iso;
 
     const bool show_zones_overlay = g->show_zone_overlay && !iso_mode;
@@ -3136,7 +3140,6 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     op = dest;
     viewport_width = width;
     viewport_height = height;
-    // Rounding up to include incomplete tiles at the bottom/right edges
     if( iso_mode ) {
         // In iso, tile grid spacing uses tile_width for both axes
         screentile_width = divide_round_up( width * 2, tile_width ) + 1;
@@ -3560,9 +3563,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 const int &x = temp_x;
                 const int &y = temp_y;
                 const auto queue_draw_point = [&]( tile_render_info info ) {
-                    info.screen_row = row + ( tile_iso
-                        && info.pos.z() != center.z()
-                        && tile_width > 0
+                    info.screen_row = row + ( tile_iso && info.pos.z() != center.z() && tile_width > 0
                         ? ( center.z() - info.pos.z() )
                           * tileset_ptr->get_zlevel_height() * 4 / tile_width
                         : 0 );
@@ -5192,7 +5193,6 @@ bool cata_tiles::draw_block( const tripoint_bub_ms &p, SDL_Color color, int scal
         rect.h = ( rect.h * 2 ) / 3;
         rect.w = ( rect.w * 3 ) / 4;
     }
-    // translate from player-relative to screen relative tile position
     const point screen = player_to_screen( p.xy() );
     rect.x = screen.x + ( tile_width - rect.w ) / 2;
     rect.y = screen.y + ( tile_height - rect.h ) / 2;
@@ -7371,19 +7371,27 @@ void cata_tiles::do_tile_loading_report( const std::function<void( std::string )
     tile_loading_report<field_type>( field_type::count(), C_FIELD, out, "" );
 }
 
-point cata_tiles::player_to_screen( point_bub_ms p ) const
+point cata_tiles::player_to_tile( point_bub_ms p ) const
 {
     if( tile_iso ) {
-        const auto dx = p.x() - o.x();
-        const auto dy = p.y() - o.y();
-        const auto screen_x = ( dx + dy ) * tile_width / 2;
-        const auto screen_y = ( dy - dx ) * tile_width / 4;
-        return point{ screen_x + op.x + viewport_width / 2,
-                      screen_y + op.y + viewport_height / 2 };
+        return point{
+            p.y() + p.x() + screentile_width / 2 - o.y() - o.x(),
+            p.y() - p.x() + screentile_height / 2 - o.y() + o.x()
+        };
     }
-    const auto dx = p.x() - o.x();
-    const auto dy = p.y() - o.y();
-    return point{ dx * tile_width + op.x, dy * tile_height + op.y };
+    return point{ p.x() - o.x(), p.y() - o.y() };
+}
+
+point cata_tiles::player_to_screen( point_bub_ms p ) const
+{
+    const point colrow = player_to_tile( p );
+    if( tile_iso ) {
+        return op + point{
+            divide_round_down( ( colrow.x - 1 ) * tile_width, 2 ),
+            divide_round_down( ( colrow.y + 1 ) * tile_width, 4 ) - tile_height,
+        };
+    }
+    return op + point{ colrow.x * tile_width, colrow.y * tile_height };
 }
 
 template<typename Iter, typename Func>

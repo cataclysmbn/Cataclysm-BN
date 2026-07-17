@@ -850,9 +850,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     get_window_tile_counts( width, height, s.x, s.y );
 
     op = point( dest.x * fontwidth, dest.y * fontheight );
-    // Rounding up to include incomplete tiles at the bottom/right edges
-    screentile_width = divide_round_up( width, tile_width );
-    screentile_height = divide_round_up( height, tile_height );
+    screentile_width = s.x;
+    screentile_height = s.y;
 
     const int min_col = 0;
     const int max_col = s.x;
