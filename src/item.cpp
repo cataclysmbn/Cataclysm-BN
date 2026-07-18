@@ -3455,7 +3455,7 @@ void item::component_info( std::vector<iteminfo> &info, const iteminfo_query *pa
         // TODO: Extract into a more proper place (function in namespace)
         std::string bionics_string = enumerate_as_string( components.begin(), components.end(),
         []( const item * const & entry ) -> std::string {
-            return entry->is_bionic() ? entry->display_name() : "";
+            return entry->is_bionic() ? entry->type_name() : "";
         }, enumeration_conjunction::none );
         info.emplace_back( "DESCRIPTION", string_format( _( "Contains: %s" ),
                            bionics_string ) );
