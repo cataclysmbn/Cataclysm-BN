@@ -12,8 +12,11 @@
 #include <string_view>
 #include <vector>
 
+#include "enchantments/enchantment_condition.h"
 #include "iexamine.h"
+#include "sol/sol.hpp"
 #include "trap.h"
+#include "type_id.h"
 
 constexpr int LUA_API_VERSION = 2;
 
@@ -409,6 +412,63 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
 
         debugmsg( "add_hook expects function or table entry, got type: %s for hook: %s",
                   sol::type_name( lua, entry.get_type() ).c_str(), hook_name.c_str() );
+    };
+
+    gt["add_lua_condition"] = [&lua]( const std::string & condition_name, const sol::object & entry ) {
+        auto *L = lua.lua_state();
+
+        if( entry.is<sol::table>() ) {
+            auto table = entry.as<sol::table>();
+            sol::protected_function global = sol::lua_nil;
+            sol::protected_function item = sol::lua_nil;
+            sol::protected_function character = sol::lua_nil;
+            sol::protected_function item_and_character = sol::lua_nil;
+            if( table["global"].valid() ) {
+                if( table["global"].get_type() == sol::type::function ) {
+                    global = table["global"].get_or<sol::function>( sol::lua_nil );
+                } else {
+                    debugmsg( "add_lua_condition table value `global` expects function, got type: %s for condition: %s",
+                              sol::type_name( lua, table["global"].get_type() ).c_str(), condition_name.c_str() );
+                }
+            }
+            if( table["item"].valid() ) {
+                if( table["item"].get_type() == sol::type::function ) {
+                    item = table["item"].get_or<sol::function>( sol::lua_nil );
+                } else {
+                    debugmsg( "add_lua_condition table value `item` expects function, got type: %s for condition: %s",
+                              sol::type_name( lua, table["item"].get_type() ).c_str(), condition_name.c_str() );
+                }
+            }
+            if( table["character"].valid() ) {
+                if( table["character"].get_type() == sol::type::function ) {
+                    character = table["character"].get_or<sol::function>( sol::lua_nil );
+                } else {
+                    debugmsg( "add_lua_condition table value `character` expects function, got type: %s for condition: %s",
+                              sol::type_name( lua, table["character"].get_type() ).c_str(), condition_name.c_str() );
+                }
+            }
+            if( table["item_and_character"].valid() ) {
+                if( table["item_and_character"].get_type() == sol::type::function ) {
+                    item_and_character = table["item_and_character"].get_or<sol::function>( sol::lua_nil );
+                } else {
+                    debugmsg( "add_lua_condition table value `item_and_character` expects function, got type: %s for condition: %s",
+                              sol::type_name( lua, table["item_and_character"].get_type() ).c_str(), condition_name.c_str() );
+                }
+            }
+
+            enchantment_condition::condition_functions[condition_name] =
+                std::make_shared<enchantment_condition_lua>(
+                    condition_name,
+                    std::move( global ),
+                    std::move( character ),
+                    std::move( item ),
+                    std::move( item_and_character )
+                );
+            return;
+        }
+
+        debugmsg( "add_lua_condition expects table, got type: %s for condition: %s",
+                  sol::type_name( lua, entry.get_type() ).c_str(), condition_name.c_str() );
     };
 }
 

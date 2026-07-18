@@ -1,0 +1,22 @@
+[
+  {
+    "type": "snippet",
+    "category": "physics_anomaly_description",
+    "text": [
+      {
+        "id": "physics_anomaly_description_1",
+        "text": "OBJECT CLASS: Gamma-Red\nHAZARD TYPES: Incorporeal, Aggression, Ballistic, Geological, Transmutation, Destabilization, Gravitational\n\nCONTAINMENT PROTOCOLS: Research and containment sites are to be constructed at each instance of PE-025-X. Standard unstable matter containment chambers are to be constructed around each instance of PE-025-X. All personnel within 20 meters of PE-025-X are required to wear a powered dimensional anchor.\nADDENDUM-025-1: Following incident 025-3-12, all personnel are forbidden from entering PE-025-X containment levels, except for those participating in Procedure 025-Epsilon. See Procedure 025-Epsilon for additional information.\n\nDESCRIPTION: PE-025-X are a series of energetic anomalies ressembling spheres of plasma that spontaneously appeared following expeditions into the 4th dimension. PE-025-X instances all appear to exist within empty areas deep underground. PE-025-X instances display the ability to manipulate objects around them using an unknown force and spontaneously create additional gravitational anomalies.\n\nINCIDENT 025-3-12: Following immersion EXO-I-343, PE-025-X instances were universally observed to become aggressive, and began attacking research personnel with thrown objects. Additionally, PE-025-X instances have gained the ability to slowly transmute nearby terrain into an unknown material, at a rate of about 2.5 cm per day. Said unknown material appears to be impervious to nearly all damage, including pickaxes, scalpels, jackhammers, and even a C-4 breaching charge. Procedure 025-Epsilon is being developed to permanently terminate PE-025-X instances."
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "physics_anomaly_epsilon",
+    "text": [
+      {
+        "id": "physics_anomaly_epsilon_1",
+        "text": "DESCRIPTION: Procedure 025-Epsilon will terminate all known instances of PE-025-X following Incident 025-3-12. This procedure will be simultaneously performed at all known PE-025-X sites. See Containment Procedures for additional information.\n\nPROCEDURE: Procedure 025-Epsilon is to be performed by a XEDRA Armed Task Force consisting of no less than six (6) members equipped with special hazmat and ballistic protection. All task force members must wear a powered dimensional anchor, and one (1) member must wear a 025-XPE modified dimensional anchor. The task force will descend to PE-025-X's containment layer using the still-operational elevators and enter the containment chamber. The task force will then approach PE-025-X to a distance of a meter, upon which the 025-XPE modified anchor should collapse the extradimensional energies that sustain PE-025-X instances. All task force members will then hold position until the arrival of additional personnel."
+      }
+    ]
+  }
+]

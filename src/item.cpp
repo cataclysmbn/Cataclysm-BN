@@ -5870,10 +5870,9 @@ int item::lift_strength() const
 
 int item::attack_cost() const
 {
-    int base = 65 + ( volume() / 62.5_ml + weight() / 60_gram ) / count();
-    int bonus = bonus_from_enchantments_wielded( base, enchantment_value_id( "ITEM_ATTACK_COST" ),
-                true );
-    return std::max( 0, base + bonus );
+    int cost = 65 + ( volume() / 62.5_ml + weight() / 60_gram ) / count();
+    cost += bonus_from_enchantments( cost, enchantment_value_id( "ITEM_ATTACK_COST" ) );
+    return std::max( 0, cost );
 }
 
 int item::stamina_cost() const
@@ -5926,8 +5925,8 @@ int item::damage_melee( const attack_statblock &attack, damage_type dt ) const
 
     }
     auto internal_name = damage_unit( dt, 0.0 ).get_internal_name();
-    res += bonus_from_enchantments_wielded( res, enchantment_value_id( "ITEM_DAMAGE_" + internal_name ),
-                                            true );
+    res += bonus_from_enchantments( res, enchantment_value_id( "ITEM_DAMAGE_" + internal_name ),
+                                    true );
     // Apply melee damage bonus
     const auto &bonus = get_melee_damage_bonus();
     res += bonus.type_damage( dt );
@@ -5969,8 +5968,8 @@ std::map<std::string, attack_statblock> item::get_attacks() const
                     break;
             }
 
-            du.amount += bonus_from_enchantments_wielded( du.amount,
-                         enchantment_value_id( "ITEM_DAMAGE_" + du.get_internal_name() ), true );
+            du.amount += bonus_from_enchantments( du.amount,
+                                                  enchantment_value_id( "ITEM_DAMAGE_" + du.get_internal_name() ), true );
             // Apply melee damage bonus
             du.amount += bonus.type_damage( du.type );
         }
@@ -8067,35 +8066,31 @@ const std::vector<enchantment> &item::get_enchantments() const
 double item::bonus_from_enchantments( const Character &owner, double base,
                                       enchantment_value_id value, bool round ) const
 {
-    double add = 0.0;
-    double mul = 0.0;
+    double ret = 0.0;
     for( const enchantment &ench : get_enchantments() ) {
         if( ench.is_active( owner, *this ) ) {
-            add += ench.get_value_add( value );
-            mul += ench.get_value_multiply( value );
+            ret += ench.calc_bonus( value, base, round );
         }
     }
-    // TODO: this part duplicates enchantment::calc_bonus()
-    double ret = add + base * mul;
+    // In case of floating point errors
     if( round ) {
         ret = trunc( ret );
     }
     return ret;
 }
 
-double item::bonus_from_enchantments_wielded( double base, enchantment_value_id value,
-        bool round ) const
+double item::bonus_from_enchantments( double base, enchantment_value_id value,
+                                      bool round ) const
 {
-    double add = 0.0;
-    double mul = 0.0;
+    double ret = 0.0;
     for( const enchantment &ench : get_enchantments() ) {
-        if( ench.is_active_when_wielded() ) {
-            add += ench.get_value_add( value );
-            mul += ench.get_value_multiply( value );
+        // Check if it has the value first, because these enchantments
+        // Are more limited in scope then most enchantments
+        if( ench.has_value( value ) && ench.is_active( *this ) ) {
+            ret += ench.calc_bonus( value, base, round );
         }
     }
-    // TODO: this part duplicates enchantment::calc_bonus()
-    double ret = add + base * mul;
+    // In case of floating point errors
     if( round ) {
         ret = trunc( ret );
     }
@@ -10485,7 +10480,7 @@ std::vector<trait_id> item::mutations_from_wearing( const Character &guy ) const
 
     const auto rel_data = is_relic( true ) ? relic_data : type->relic_data;
     for( const enchantment &ench : rel_data->get_enchantments() ) {
-        if( ench.is_active( guy, is_active() ) ) {
+        if( ench.is_active( guy, *this ) ) {
             for( const trait_id &mut : ench.get_mutations() ) {
                 // this may not be perfectly accurate due to conditions
                 muts.push_back( mut );

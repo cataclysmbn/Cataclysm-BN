@@ -117,7 +117,7 @@
     "id": "mring_dodge_bonus_1",
     "name": "eel ring",
     "description": "A thin silver band ring, depicting an eel coiled on itself.  Allows you to dodge an extra attack per turn.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "BONUS_DODGE", "add": 1 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "BONUS_DODGE", "add": 1 } ] } ] }
   },
   {
     "copy-from": "mring_gold",
@@ -125,7 +125,7 @@
     "id": "mring_dodge_bonus_2",
     "name": { "str": "bicephalous eel ring" },
     "description": "A thin gold band ring, depicting a bicephalous eel coiled on itself.  Allows you to dodge two extra attacks per turn.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "BONUS_DODGE", "add": 2 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "BONUS_DODGE", "add": 2 } ] } ] }
   },
   {
     "copy-from": "mring_copper",
@@ -133,7 +133,7 @@
     "id": "mring_strength_1",
     "name": { "str": "ring of strength +1", "str_pl": "rings of strength +1" },
     "description": "A copper ring that makes you a little stronger when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "STRENGTH", "add": 1 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "STRENGTH", "add": 1 } ] } ] }
   },
   {
     "copy-from": "mring_silver",
@@ -141,7 +141,7 @@
     "id": "mring_strength_2",
     "name": { "str": "ring of strength +2", "str_pl": "rings of strength +2" },
     "description": "A silver ring that makes you a good bit stronger when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "STRENGTH", "add": 2 } ] } ] }
   },
   {
     "copy-from": "mring_gold",
@@ -149,7 +149,7 @@
     "id": "mring_strength_3",
     "name": { "str": "ring of strength +3", "str_pl": "rings of strength +3" },
     "description": "A golden ring that makes you surprisingly stronger when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "STRENGTH", "add": 3 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "STRENGTH", "add": 3 } ] } ] }
   },
   {
     "copy-from": "mring_platinum",
@@ -157,7 +157,7 @@
     "id": "mring_strength_4",
     "name": { "str": "ring of strength +4", "str_pl": "rings of strength +4" },
     "description": "A platinum ring that makes you much stronger when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "STRENGTH", "add": 4 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "STRENGTH", "add": 4 } ] } ] }
   },
   {
     "copy-from": "mring_copper",
@@ -165,7 +165,7 @@
     "id": "mring_dexterity_1",
     "name": { "str": "ring of dexterity +1", "str_pl": "rings of dexterity +1" },
     "description": "A copper ring that makes you a little more agile when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "DEXTERITY", "add": 1 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "DEXTERITY", "add": 1 } ] } ] }
   },
   {
     "copy-from": "mring_silver",
@@ -173,7 +173,7 @@
     "id": "mring_dexterity_2",
     "name": { "str": "ring of dexterity +2", "str_pl": "rings of dexterity +2" },
     "description": "A silver ring that makes you a good bit more agile when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "DEXTERITY", "add": 2 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "DEXTERITY", "add": 2 } ] } ] }
   },
   {
     "copy-from": "mring_gold",
@@ -181,7 +181,7 @@
     "id": "mring_dexterity_3",
     "name": { "str": "ring of dexterity +3", "str_pl": "rings of dexterity +3" },
     "description": "A golden ring that makes you surprisingly more agile when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "DEXTERITY", "add": 3 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "DEXTERITY", "add": 3 } ] } ] }
   },
   {
     "copy-from": "mring_platinum",
@@ -189,7 +189,7 @@
     "id": "mring_dexterity_4",
     "name": { "str": "ring of dexterity +4", "str_pl": "rings of dexterity +4" },
     "description": "A platinum ring that makes you much more agile when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "DEXTERITY", "add": 4 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "DEXTERITY", "add": 4 } ] } ] }
   },
   {
     "copy-from": "mring_copper",
@@ -197,7 +197,7 @@
     "id": "mring_intelligence_1",
     "name": { "str": "ring of intelligence +1", "str_pl": "rings of intelligence +1" },
     "description": "A copper ring that makes you a little more intelligent when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "INTELLIGENCE", "add": 1 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "INTELLIGENCE", "add": 1 } ] } ] }
   },
   {
     "copy-from": "mring_silver",
@@ -205,7 +205,7 @@
     "id": "mring_intelligence_2",
     "name": { "str": "ring of intelligence +2", "str_pl": "rings of intelligence +2" },
     "description": "A silver ring that makes you a good bit more intelligent when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "INTELLIGENCE", "add": 2 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "INTELLIGENCE", "add": 2 } ] } ] }
   },
   {
     "copy-from": "mring_gold",
@@ -213,7 +213,7 @@
     "id": "mring_intelligence_3",
     "name": { "str": "ring of intelligence +3", "str_pl": "rings of intelligence +3" },
     "description": "A golden ring that makes you surprisingly more intelligent when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "INTELLIGENCE", "add": 3 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "INTELLIGENCE", "add": 3 } ] } ] }
   },
   {
     "copy-from": "mring_platinum",
@@ -221,7 +221,7 @@
     "id": "mring_intelligence_4",
     "name": { "str": "ring of intelligence +4", "str_pl": "rings of intelligence +4" },
     "description": "A platinum ring that makes you much more intelligent when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "INTELLIGENCE", "add": 4 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "INTELLIGENCE", "add": 4 } ] } ] }
   },
   {
     "copy-from": "mring_copper",
@@ -229,7 +229,7 @@
     "id": "mring_perception_1",
     "name": { "str": "ring of perception +1", "str_pl": "rings of perception +1" },
     "description": "A copper ring that makes you a little more perceptive when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "PERCEPTION", "add": 1 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "PERCEPTION", "add": 1 } ] } ] }
   },
   {
     "copy-from": "mring_silver",
@@ -237,7 +237,7 @@
     "id": "mring_perception_2",
     "name": { "str": "ring of perception +2", "str_pl": "rings of perception +2" },
     "description": "A silver ring that makes you a good bit more perceptive when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "PERCEPTION", "add": 2 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "PERCEPTION", "add": 2 } ] } ] }
   },
   {
     "copy-from": "mring_gold",
@@ -245,7 +245,7 @@
     "id": "mring_perception_3",
     "name": { "str": "ring of perception +3", "str_pl": "rings of perception +3" },
     "description": "A golden ring that makes you eye-openingly more perceptive when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "PERCEPTION", "add": 3 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "PERCEPTION", "add": 3 } ] } ] }
   },
   {
     "copy-from": "mring_platinum",
@@ -253,7 +253,7 @@
     "id": "mring_perception_4",
     "name": { "str": "ring of perception +4", "str_pl": "rings of perception +4" },
     "description": "A platinum ring that makes you much more perceptive when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "PERCEPTION", "add": 4 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "PERCEPTION", "add": 4 } ] } ] }
   },
   {
     "copy-from": "mring_copper",
@@ -261,7 +261,7 @@
     "id": "mring_speed_3",
     "name": { "str": "ring of speed +3", "str_pl": "rings of speed +3" },
     "description": "A copper ring that makes you a little faster when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "SPEED", "add": 3 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "SPEED", "add": 3 } ] } ] }
   },
   {
     "copy-from": "mring_silver",
@@ -269,7 +269,7 @@
     "id": "mring_speed_5",
     "name": { "str": "ring of speed +5", "str_pl": "rings of speed +5" },
     "description": "A silver ring that makes you a good bit faster when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "SPEED", "add": 5 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "SPEED", "add": 5 } ] } ] }
   },
   {
     "copy-from": "mring_gold",
@@ -277,7 +277,7 @@
     "id": "mring_speed_7",
     "name": { "str": "ring of speed +7", "str_pl": "rings of speed +7" },
     "description": "A golden ring that makes you quite hasty when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "SPEED", "add": 7 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "SPEED", "add": 7 } ] } ] }
   },
   {
     "copy-from": "mring_platinum",
@@ -285,7 +285,7 @@
     "id": "mring_speed_10",
     "name": { "str": "ring of speed +10", "str_pl": "rings of speed +10" },
     "description": "A platinum ring that makes you much faster when you wear it.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "SPEED", "add": 10 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "SPEED", "add": 10 } ] } ] }
   },
   {
     "copy-from": "mring_copper",
@@ -296,8 +296,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "values": [ { "value": "ARMOR_CUT", "add": -2 }, { "value": "ARMOR_BASH", "add": -2 }, { "value": "ARMOR_STAB", "add": -2 } ]
         }
       ]
@@ -312,8 +311,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "values": [ { "value": "ARMOR_CUT", "add": -4 }, { "value": "ARMOR_BASH", "add": -4 }, { "value": "ARMOR_STAB", "add": -4 } ]
         }
       ]
@@ -328,8 +326,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "values": [ { "value": "ARMOR_CUT", "add": -6 }, { "value": "ARMOR_BASH", "add": -6 }, { "value": "ARMOR_STAB", "add": -6 } ]
         }
       ]
@@ -344,8 +341,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "values": [ { "value": "ARMOR_CUT", "add": -8 }, { "value": "ARMOR_BASH", "add": -8 }, { "value": "ARMOR_STAB", "add": -8 } ]
         }
       ]

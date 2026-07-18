@@ -333,8 +333,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "values": [
             { "value": "PERCEPTION", "add": 5 },
             { "value": "RANGED_DISPERSION", "add": -200 },

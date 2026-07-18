@@ -17,7 +17,7 @@
   {
     "id": "INTELLIGENCE",
     "type": "enchantment_value",
-    "desc": "Affects Intellegence"
+    "desc": "Affects Intelligence"
   },
   {
     "id": "HEALTH_POINTS",
@@ -33,6 +33,12 @@
     "id": "ATTACK_COST",
     "type": "enchantment_value",
     "desc": "Affects Attack Speed",
+    "increase_good": false
+  },
+  {
+    "id": "THROW_ATTACK_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Throwing Attack Speed",
     "increase_good": false
   },
   {
@@ -232,6 +238,11 @@
     "id": "EFFECTIVE_FOCUS",
     "type": "enchantment_value",
     "desc": "Affects Focus"
+  },
+  {
+    "id": "FOOD_FUN",
+    "type": "enchantment_value",
+    "desc": "Affects Food Taste"
   },
   {
     "id": "BONUS_DODGE",
@@ -448,7 +459,8 @@
       [ "BIOLOGICAL", "Affects Outgoing Biological Damage ( This Item Only )" ],
       [ "TRUE", "Affects Outgoing True Damage ( This Item Only )" ]
     ],
-    "desc": "Affects All Outgoing Damage ( This Item Only )"
+    "desc": "Affects All Outgoing Damage ( This Item Only )",
+    "unsupported_conditions": [ "character", "item_and_character" ]
   },
   {
     "id": "ITEM_ARMOR",
@@ -474,6 +486,13 @@
   {
     "id": "ITEM_ATTACK_COST",
     "type": "enchantment_value",
-    "desc": "Affects Attack Cost ( This Item Only )"
+    "desc": "Affects Attack Cost ( This Item Only )",
+    "unsupported_conditions": [ "character", "item_and_character" ]
+  },
+  {
+    "id": "ITEM_THROW_ATTACK_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Throwing Attack Cost ( This Item Only )",
+    "unsupported_conditions": [ "character", "item_and_character" ]
   }
 ]

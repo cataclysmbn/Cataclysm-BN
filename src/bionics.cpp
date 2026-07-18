@@ -35,6 +35,7 @@
 #include "dispersion.h"
 #include "effect.h"
 #include "enchantments/enchantment.h"
+#include "enchantments/enchantment_condition.h"
 #include "enum_conversions.h"
 #include "enums.h"
 #include "event.h"
@@ -417,8 +418,12 @@ void bionic_data::check() const
             rep.warn( "uses undefined enchantment \"%s\"", eid.str() );
         }
     }
+    std::set<enchantment_condition_type> incompatible_cond_types = {
+        enchantment_condition_type::ITEM,
+        enchantment_condition_type::ITEM_CHARACTER
+    };
     for( const auto &ench : id->bio_enchantments ) {
-        ench.check();
+        ench.check( incompatible_cond_types );
     }
     for( const auto &it : occupied_bodyparts ) {
         if( !it.first.is_valid() ) {

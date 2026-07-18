@@ -2431,10 +2431,10 @@ class item : public location_visitable<item>, public game_object<item>
 
         /**
          * Calculate bonus from enchantments that affect this item only,
-         * assume it's wielded and all enchantments' conditions are satisfied.
+         * Only supports item only conditions.
          */
-        double bonus_from_enchantments_wielded( double base, enchantment_value_id value,
-                                                bool round = false ) const;
+        double bonus_from_enchantments( double base, enchantment_value_id value,
+                                        bool round = false ) const;
 
         /** Returns the type of location where the item is found */
         item_location_type where() const;

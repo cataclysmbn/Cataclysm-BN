@@ -11,7 +11,7 @@
     "color": "light_gray",
     "flags": [ "TRADER_AVOID" ],
     "relic_data": {
-      "passive_effects": [ { "has": "HELD", "condition": "ALWAYS", "ench_effects": [ { "effect": "debug_clairvoyance", "intensity": 1 } ] } ]
+      "passive_effects": [ { "conditions": [ "HELD" ], "ench_effects": [ { "effect": "debug_clairvoyance", "intensity": 1 } ] } ]
     }
   },
   {
@@ -26,7 +26,7 @@
     "color": "light_gray",
     "flags": [ "TRADER_AVOID" ],
     "relic_data": {
-      "passive_effects": [ { "has": "HELD", "condition": "ABOVEGROUND", "ench_effects": [ { "effect": "debug_irradiation", "intensity": 1 } ] } ]
+      "passive_effects": [ { "conditions": [ "HELD", "ABOVEGROUND" ], "ench_effects": [ { "effect": "debug_irradiation", "intensity": 1 } ] } ]
     }
   },
   {
@@ -102,8 +102,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "intermittent_activation": { "effects": [ { "frequency": "15 minutes", "spell_effects": [ { "id": "AEP_ATTENTION_SPELL" } ] } ] },
           "ench_effects": [ { "effect": "clairvoyance_plus", "intensity": 1 } ]
         }

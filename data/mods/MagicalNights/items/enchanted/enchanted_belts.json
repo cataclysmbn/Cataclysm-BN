@@ -29,9 +29,7 @@
     "copy-from": "mbelt_leather",
     "id": "mbelt_haste",
     "name": { "str": "Belt of Haste", "str_pl": "Belts of Haste" },
-    "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "SPEED", "multiply": 0.15, "add": 5 } ] } ]
-    }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "SPEED", "multiply": 0.15, "add": 5 } ] } ] }
   },
   {
     "type": "TOOL_ARMOR",
@@ -43,9 +41,7 @@
     "material_thickness": 10,
     "environmental_protection": 20,
     "weight_capacity_bonus": "50 kg",
-    "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "STRENGTH", "multiply": 1 } ] } ]
-    }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "STRENGTH", "multiply": 1 } ] } ] }
   },
   {
     "type": "TOOL_ARMOR",
@@ -152,6 +148,6 @@
     "copy-from": "mbelt_leather",
     "type": "ARMOR",
     "name": { "str": "belt of strength +2", "str_pl": "belts of strength +2" },
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "STRENGTH", "add": 2 } ] } ] }
   }
 ]

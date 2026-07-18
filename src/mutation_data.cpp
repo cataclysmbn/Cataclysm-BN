@@ -643,8 +643,12 @@ void mutation_branch::check_consistency()
         for( const enchantment_id &ench : mdata.enchantments ) {
             ench->check();
         }
+        std::set<enchantment_condition_type> incompatible_cond_types = {
+            enchantment_condition_type::ITEM,
+            enchantment_condition_type::ITEM_CHARACTER
+        };
         for( const auto &ench : mdata.mut_enchantments ) {
-            ench.check();
+            ench.check( incompatible_cond_types );
         }
         for( const auto &flag : mdata.flags ) {
             if( !flag.is_valid() ) {

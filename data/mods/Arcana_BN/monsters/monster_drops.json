@@ -1818,6 +1818,26 @@
   },
   {
     "type": "item_group",
+    "id": "mon_suspended_shade_death_drops",
+    "//": "Adds to existing group",
+    "subtype": "collection",
+    "entries": [ { "item": "shadow_gem", "prob": 50 }, { "item": "essence_blood", "count": [ 2, 4 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_suspended_merc_death_drops",
+    "//": "Adds to existing group",
+    "subtype": "collection",
+    "entries": [ { "item": "iron_thorn", "prob": 50 }, { "item": "essence_blood", "count": [ 2, 4 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_anomaly_boss_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "engraved_stone" }, { "item": "essence", "count": [ 1, 3 ] } ]
+  },
+  {
+    "type": "item_group",
     "id": "mon_triffid_radiant_boss_death_drops",
     "subtype": "collection",
     "entries": [

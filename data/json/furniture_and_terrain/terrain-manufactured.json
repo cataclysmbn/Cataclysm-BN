@@ -65,7 +65,7 @@
     "color": "brown_red",
     "move_cost": 0,
     "coverage": 50,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "REDUCE_SCENT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "LIQUIDCONT", "REDUCE_SCENT" ],
     "bash": {
       "str_min": 40,
       "str_max": 100,

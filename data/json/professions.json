@@ -479,15 +479,6 @@
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "army_mags_power_armor",
-    "entries": [
-      { "item": "stanag100", "ammo-item": "556_incendiary", "charges": 100 },
-      { "item": "heavy_plus_battery_cell", "ammo-item": "battery", "charges": 1500 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "subtype": "collection",
     "id": "army_mags_rm51",
     "entries": [
       { "item": "8x40_50_mag", "ammo-item": "8mm_caseless", "charges": 50 },
@@ -2388,7 +2379,7 @@
     "type": "profession",
     "id": "power_armor_soldier",
     "name": "Power Armor Soldier",
-    "description": "Those new plutonium power banks they were rolling out never arrived, nevermind the experimental new weapons, but at least your unit received the latest generation of powered armor.  The rest of your squad has fallen, but your gear might see you through.",
+    "description": "Your unit received the latest generation of powered armor, running off those new plutonium power banks they were rolling out and equipped with experimental energy weapons.  The rest of your squad has fallen, but your gear might see you through.",
     "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
@@ -2414,17 +2405,11 @@
           "power_armor_canteen"
         ],
         "entries": [
-          { "item": "heavy_plus_battery_cell", "charges": 1500, "container-item": "UPS_off" },
+          { "item": "adv_UPS_off", "charges": 5000 },
           { "item": "two_way_radio", "contents-item": [ "battery_ups" ] },
-          { "item": "power_armor_chest_rig", "contents-group": "army_mags_power_armor" },
           { "item": "knife_combat", "container-item": "power_armor_leg_hardpoint" },
-          {
-            "item": "stanag100",
-            "ammo-item": "556_incendiary",
-            "charges": 100,
-            "container-item": "m27iar",
-            "custom-flags": [ "auto_wield" ]
-          }
+          { "item": "power_armor_grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
+          { "item": "laser_rifle", "contents-item": [ "hybrid_sight" ], "custom-flags": [ "auto_wield" ] }
         ]
       },
       "male": [ "boxer_shorts" ],

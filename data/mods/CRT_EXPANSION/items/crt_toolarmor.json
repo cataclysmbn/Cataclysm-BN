@@ -35,8 +35,7 @@
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "DEXTERITY", "add": 2 },
@@ -91,8 +90,7 @@
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "DEXTERITY", "add": 2 },
@@ -160,8 +158,7 @@
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "DEXTERITY", "add": 2 },
@@ -212,8 +209,7 @@
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "DEXTERITY", "add": 2 },

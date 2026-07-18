@@ -39,8 +39,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "values": [ { "value": "ARMOR_CUT", "add": -2 }, { "value": "ARMOR_BASH", "add": -2 }, { "value": "ARMOR_STAB", "add": -2 } ]
         }
       ]
@@ -57,8 +56,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "values": [ { "value": "ARMOR_CUT", "add": -4 }, { "value": "ARMOR_BASH", "add": -4 }, { "value": "ARMOR_STAB", "add": -4 } ]
         }
       ]
@@ -75,9 +73,7 @@
     "charges_per_use": 24,
     "artifact_data": { "charge_type": "ARTC_TIME" },
     "flags": [ "BELTED", "STURDY", "BLOCK_WHILE_WORN" ],
-    "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR_ELECTRIC", "add": -5 } ] } ]
-    },
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "ARMOR_ELECTRIC", "add": -5 } ] } ] },
     "use_action": { "type": "cast_spell", "spell_id": "jolt", "no_fail": true, "level": 15, "need_worn": true }
   },
   {
@@ -91,9 +87,7 @@
     "charges_per_use": 24,
     "artifact_data": { "charge_type": "ARTC_TIME" },
     "flags": [ "BELTED", "STURDY", "BLOCK_WHILE_WORN" ],
-    "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR_ELECTRIC", "add": -10 } ] } ]
-    },
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "ARMOR_ELECTRIC", "add": -10 } ] } ] },
     "use_action": { "type": "cast_spell", "spell_id": "lightning_bolt", "no_fail": true, "level": 15, "need_worn": true }
   }
 ]

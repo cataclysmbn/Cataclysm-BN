@@ -190,7 +190,7 @@
     "looks_like": "mon_zombie_soldier",
     "diff": 30,
     "attack_cost": 100,
-    "harvest": "CBM_OP2",
+    "harvest": "zombie_maybe_mil_bionics_acid",
     "relative": { "hp": 160, "speed": -20, "melee_skill": 8, "armor_bash": 15, "armor_cut": 10, "armor_bullet": 10 },
     "delete": { "flags": [ "BLEED" ], "categories": [ "CLASSIC" ] },
     "upgrades": { "half_life": 42, "into_group": "GROUP_NULL", "into": "mon_zombie_soldier_acid_3" },

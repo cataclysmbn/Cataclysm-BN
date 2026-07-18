@@ -570,7 +570,7 @@
     "color": "yellow",
     "covers": [ "head" ],
     "coverage": 90,
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR_PSI", "add": -10 } ] } ] },
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "ARMOR_PSI", "add": -10 } ] } ] },
     "flags": [
       "OVERSIZE",
       "PSYSHIELD_PARTIAL",

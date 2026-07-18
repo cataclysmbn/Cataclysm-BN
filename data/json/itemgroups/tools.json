@@ -98,6 +98,7 @@
       [ "scissors", 80 ],
       [ "screwdriver", 70 ],
       [ "hammer", 60 ],
+      [ "wrench", 50 ],
       [ "pliers", 60 ],
       [ "thermometer", 50 ],
       [ "magnifying_glass", 50 ],
@@ -276,6 +277,7 @@
       { "group": "charged_UPS", "prob": 5 },
       [ "jack", 80 ],
       [ "jack_small", 80 ],
+      [ "wrench", 80 ],
       {
         "collection": [
           { "item": "oxy_torch", "prob": 100 },

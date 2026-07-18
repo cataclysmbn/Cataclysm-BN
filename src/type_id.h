@@ -60,6 +60,9 @@ using enchantment_value_id = string_id<enchantment_value>;
 class enchantment_flag;
 using enchantment_flag_id = string_id<enchantment_flag>;
 
+class enchantment_condition;
+using enchantment_condition_id = string_id<enchantment_condition>;
+
 class fault;
 using fault_id = string_id<fault>;
 

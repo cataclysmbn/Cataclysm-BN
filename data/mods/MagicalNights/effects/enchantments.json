@@ -7,14 +7,14 @@
   {
     "id": "ench_windrun",
     "type": "enchantment",
-    "has": "WORN",
+    "conditions": [ "WORN" ],
     "ench_effects": [ { "effect": "enchant_windrun", "intensity": 1 } ],
     "values": [ { "value": "MOVE_COST", "multiply": -0.5 } ]
   },
   {
     "id": "ench_mjolnir",
     "type": "enchantment",
-    "has": "WIELD",
+    "conditions": [ "WIELD" ],
     "hit_you_effect": [
       { "id": "lightning_bolt", "hit_self": false, "once_in": 5, "message": "Mjolnir's lightning arcs out and pierces %2$s!" }
     ],
@@ -23,7 +23,7 @@
   {
     "id": "ench_gungnir",
     "type": "enchantment",
-    "has": "WIELD",
+    "conditions": [ "WIELD" ],
     "hit_you_effect": [
       {
         "id": "gungnir_apply",
@@ -35,7 +35,7 @@
   {
     "id": "ench_laevateinn",
     "type": "enchantment",
-    "has": "WIELD",
+    "conditions": [ "WIELD" ],
     "hit_you_effect": [
       { "id": "ethereal_grasp", "hit_self": false, "once_in": 5, "message": "The trickster's staff hobbles thine enemies!" },
       { "id": "summon_lemon", "once_in": 5, "hit_self": true, "message": "The trickster's staff summons a lemon!" },

@@ -99,5 +99,10 @@
     "type": "monstergroup",
     "name": "GROUP_TINDALOS",
     "default": "mon_hound_tindalos"
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_SUSPENDED_SHADE",
+    "default": "mon_suspended_shade"
   }
 ]
