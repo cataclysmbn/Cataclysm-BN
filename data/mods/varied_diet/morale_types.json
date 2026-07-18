@@ -1,0 +1,12 @@
+[
+  {
+    "id": "morale_varied_diet",
+    "type": "morale_type",
+    "text": "Varied diet"
+  },
+  {
+    "id": "morale_food_repetition",
+    "type": "morale_type",
+    "text": "Repetitive meals"
+  }
+]
